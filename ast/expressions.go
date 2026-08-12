@@ -130,6 +130,9 @@ func (*BLangRemoteMethodCallAction) actionOrExpression() {}
 func (*BLangClientResourceAccessAction) actionNode()         {}
 func (*BLangClientResourceAccessAction) actionOrExpression() {}
 
+func (*BLangQueryAction) actionNode()         {}
+func (*BLangQueryAction) actionOrExpression() {}
+
 type ResourceAccessSegmentKind uint8
 
 const (
@@ -235,10 +238,18 @@ type (
 		RhsExpr BLangExpression
 		OpKind  model.OperatorKind
 	}
+	bLangQueryClauseListBase struct {
+		QueryClauseList []BLangNode
+	}
 	BLangQueryExpr struct {
 		bLangExpressionBase
-		QueryClauseList    []BLangNode
+		bLangQueryClauseListBase
 		QueryConstructType TypeKind
+	}
+	BLangQueryAction struct {
+		bLangNodeBase
+		bLangQueryClauseListBase
+		DoClause *BLangDoClause
 	}
 
 	BLangCheckedExpr struct {
@@ -252,7 +263,14 @@ type (
 
 	BLangTrapExpr struct {
 		bLangExpressionBase
-		Expr BLangExpression
+		Expr BLangActionOrExpression
+	}
+	// BLangStatementExpression is introduced during desugaring when statements
+	// must remain within an enclosing expression's evaluation region.
+	BLangStatementExpression struct {
+		bLangExpressionBase
+		Stmt StatementNode
+		Expr BLangActionOrExpression
 	}
 
 	BLangCommitExpr struct {
@@ -506,6 +524,7 @@ type (
 var (
 	_ BinaryExpressionNode                                   = &BLangBinaryExpr{}
 	_ QueryExpressionNode                                    = &BLangQueryExpr{}
+	_ QueryActionNode                                        = &BLangQueryAction{}
 	_ SimpleVariableReferenceNode                            = &BLangSimpleVarRef{}
 	_ SimpleVariableReferenceNode                            = &BLangLocalVarRef{}
 	_ LiteralNode                                            = &BLangConstRef{}
@@ -524,6 +543,7 @@ var (
 	_ BLangExpression                                        = &BLangInvocation{}
 	_ BLangAction                                            = &BLangRemoteMethodCallAction{}
 	_ BLangAction                                            = &BLangClientResourceAccessAction{}
+	_ BLangAction                                            = &BLangQueryAction{}
 	_ BLangExpression                                        = &BLangQueryExpr{}
 	_ GroupExpressionNode                                    = &BLangGroupExpr{}
 	_ TypedescExpressionNode                                 = &BLangTypedescExpr{}
@@ -546,6 +566,7 @@ var (
 	_ NamedArgNode                                           = &BLangNamedArgsExpression{}
 	_ TrapNode                                               = &BLangTrapExpr{}
 	_ BLangExpression                                        = &BLangTrapExpr{}
+	_ BLangExpression                                        = &BLangStatementExpression{}
 	_ BLangExpression                                        = &BLangNewExpression{}
 )
 
@@ -558,6 +579,7 @@ var (
 	_ BLangExpression = &BLangLambdaFunction{}
 	_ BLangNode       = &BLangBinaryExpr{}
 	_ BLangNode       = &BLangQueryExpr{}
+	_ BLangNode       = &BLangQueryAction{}
 	_ BLangNode       = &BLangCheckedExpr{}
 	_ BLangNode       = &BLangCheckPanickedExpr{}
 	_ BLangNode       = &BLangCommitExpr{}
@@ -586,6 +608,7 @@ var (
 	_ BLangNode       = &BLangMappingConstructorExpr{}
 	_ BLangNode       = &BLangMappingKeyValueField{}
 	_ BLangNode       = &BLangTrapExpr{}
+	_ BLangNode       = &BLangStatementExpression{}
 	_ BLangNode       = &BLangNewExpression{}
 )
 
@@ -726,7 +749,7 @@ func (b *BLangBinaryExpr) GetOperatorKind() model.OperatorKind {
 	return b.OpKind
 }
 
-func (b *BLangQueryExpr) GetQueryClauses() []Node {
+func (b *bLangQueryClauseListBase) GetQueryClauses() []Node {
 	result := make([]Node, len(b.QueryClauseList))
 	for i := range b.QueryClauseList {
 		result[i] = b.QueryClauseList[i]
@@ -734,12 +757,27 @@ func (b *BLangQueryExpr) GetQueryClauses() []Node {
 	return result
 }
 
-func (b *BLangQueryExpr) AddQueryClause(queryClause Node) {
+func (b *bLangQueryClauseListBase) AddQueryClause(queryClause Node) {
 	if node, ok := queryClause.(BLangNode); ok {
 		b.QueryClauseList = append(b.QueryClauseList, node)
 		return
 	}
 	panic("query clause is not a BLangNode")
+}
+
+func (b *BLangQueryAction) GetDoClause() DoClauseNode {
+	if b.DoClause == nil {
+		return nil
+	}
+	return b.DoClause
+}
+
+func (b *BLangQueryAction) SetDoClause(doClause DoClauseNode) {
+	if doClause == nil {
+		b.DoClause = nil
+		return
+	}
+	b.DoClause = doClause.(*BLangDoClause)
 }
 
 func (b *BLangCheckedExpr) GetExpression() BLangActionOrExpression {
@@ -1095,7 +1133,7 @@ func (b *BLangNamedArgsExpression) SetExpression(expr BLangExpression) {
 	b.Expr = expr
 }
 
-func (b *BLangTrapExpr) GetExpression() BLangExpression {
+func (b *BLangTrapExpr) GetExpression() BLangActionOrExpression {
 	return b.Expr
 }
 

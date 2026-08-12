@@ -127,10 +127,11 @@ type (
 	}
 
 	blockSymbolResolver struct {
-		parent     symbolResolver
-		scope      model.BlockLevelScope
-		node       ast.BLangNode
-		varTracker *varTracker
+		parent        symbolResolver
+		scope         model.BlockLevelScope
+		node          ast.BLangNode
+		varTracker    *varTracker
+		hiddenSymbols map[model.SymbolRef]bool
 	}
 )
 
@@ -350,7 +351,7 @@ func (ms *compilationUnitSymbolResolver) GetClassDefns() map[model.SymbolRef]*as
 
 func (bs *blockSymbolResolver) GetSymbol(name string) (model.SymbolRef, scopeKind, bool) {
 	ref, ok := bs.scope.MainSpace().GetSymbol(name)
-	if ok {
+	if ok && !bs.hiddenSymbols[ref] {
 		return ref, blockScopeKind, true
 	}
 	return bs.parent.GetSymbol(name)
@@ -1355,7 +1356,14 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 	case *ast.BLangAnnotAccessExpr:
 		resolveAnnotationReference(resolver, n.PkgAlias, n.AnnotationName, n.GetPosition(), n)
 	case *ast.BLangQueryExpr:
-		return newBlockSymbolResolverWithBlockScope(resolver, n)
+		resolveQuerySymbols(resolver, n, n.QueryClauseList)
+		return nil
+	case *ast.BLangQueryAction:
+		queryResolver := resolveQuerySymbols(resolver, n, n.QueryClauseList)
+		if n.DoClause != nil {
+			ast.Walk(queryResolver, n.DoClause)
+		}
+		return nil
 	case *ast.BLangInvocation:
 		if n.GetExpression() != nil {
 			createDeferredMethodSymbol(resolver, n)
@@ -1377,6 +1385,65 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 		n.Inclusions = resolveRecordTypeInclusions(resolver, n.TypeInclusions)
 	}
 	return resolver
+}
+
+func resolveQuerySymbols(parent symbolResolver, node ast.BLangNode, clauses []ast.BLangNode) *blockSymbolResolver {
+	resolver := newBlockSymbolResolverWithBlockScope(parent, node)
+	bindings := make(map[model.SymbolRef]bool)
+	for _, clause := range clauses {
+		switch clause := clause.(type) {
+		case *ast.BLangJoinClause:
+			if clause.Collection != nil {
+				ast.Walk(resolver.withHiddenSymbols(bindings), clause.Collection.(ast.BLangNode))
+			}
+			if clause.OnClause.OnExpr != nil {
+				ast.Walk(resolver, clause.OnClause.OnExpr.(ast.BLangNode))
+			}
+			if clause.VariableDefinitionNode != nil {
+				ast.Walk(resolver, clause.VariableDefinitionNode)
+			}
+			if clause.OnClause.EqualsExpr != nil {
+				ast.Walk(resolver.withHiddenSymbols(bindings), clause.OnClause.EqualsExpr.(ast.BLangNode))
+			}
+			addQueryBinding(bindings, clause.VariableDefinitionNode)
+		case *ast.BLangLimitClause:
+			if clause.Expression != nil {
+				ast.Walk(resolver.withHiddenSymbols(bindings), clause.Expression.(ast.BLangNode))
+			}
+		default:
+			ast.Walk(resolver, clause)
+			addQueryClauseBindings(bindings, clause)
+		}
+	}
+	return resolver
+}
+
+func (bs *blockSymbolResolver) withHiddenSymbols(symbols map[model.SymbolRef]bool) *blockSymbolResolver {
+	resolver := *bs
+	resolver.hiddenSymbols = maps.Clone(symbols)
+	return &resolver
+}
+
+func addQueryClauseBindings(bindings map[model.SymbolRef]bool, clause ast.BLangNode) {
+	switch clause := clause.(type) {
+	case *ast.BLangFromClause:
+		addQueryBinding(bindings, clause.VariableDefinitionNode)
+	case *ast.BLangLetClause:
+		for i := range clause.LetVarDeclarations {
+			addQueryBinding(bindings, &clause.LetVarDeclarations[i])
+		}
+	case *ast.BLangGroupByClause:
+		for i := range clause.GroupingKeyList {
+			addQueryBinding(bindings, clause.GroupingKeyList[i].VariableDef)
+		}
+	}
+}
+
+func addQueryBinding(bindings map[model.SymbolRef]bool, variableDef *ast.BLangSimpleVariableDef) {
+	if variableDef == nil || variableDef.Var == nil || !ast.SymbolIsSet(variableDef.Var) {
+		return
+	}
+	bindings[variableDef.Var.Symbol()] = true
 }
 
 func resolveMappingConstructor[T symbolResolver](resolver T, n *ast.BLangMappingConstructorExpr) ast.Visitor {
@@ -1547,7 +1614,7 @@ func isShadowed(resolver *blockSymbolResolver, name string) bool {
 		// Issue here is mapping constructor treats some of it's keys as simple variable ref; which is wrong but since they are variable they have symbols
 		// and we have to resolve them. But they are not real variables
 		if _, isMappingScope := current.node.(*ast.BLangMappingConstructorExpr); !isMappingScope {
-			if _, ok := current.scope.MainSpace().GetSymbol(name); ok {
+			if ref, ok := current.scope.MainSpace().GetSymbol(name); ok && !current.hiddenSymbols[ref] {
 				return true
 			}
 		}

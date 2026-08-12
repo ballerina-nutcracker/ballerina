@@ -30,6 +30,11 @@ const (
 	moduleName = "lang.string"
 )
 
+type stringIteratorHandle struct {
+	value  string
+	offset int
+}
+
 func stringLength(args []values.BalValue) (values.BalValue, error) {
 	return int64(utf8.RuneCountInString(args[0].(string))), nil
 }
@@ -48,9 +53,8 @@ func stringFromBytes(args []values.BalValue) (values.BalValue, error) {
 }
 
 func initStringModule(rt *runtime.Runtime) {
-	env := rt.GetTypeEnv()
 	ld := semtypes.NewListDefinition()
-	byteArrTy := ld.DefineListTypeWrappedWithEnvSemType(env, semtypes.BYTE)
+	byteArrTy := ld.DefineListTypeWrappedWithEnvSemType(rt.GetTypeEnv(), semtypes.BYTE)
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return stringLength(args)
@@ -63,6 +67,25 @@ func initStringModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBytes", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return stringFromBytes(args)
 	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "createIteratorHandle", createStringIteratorHandle)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "iteratorHasNext", stringIteratorHasNext)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "iteratorNext", stringIteratorNext)
+}
+
+func createStringIteratorHandle(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return &stringIteratorHandle{value: args[0].(string)}, nil
+}
+
+func stringIteratorHasNext(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	iterator := args[0].(*stringIteratorHandle)
+	return iterator.offset < len(iterator.value), nil
+}
+
+func stringIteratorNext(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	iterator := args[0].(*stringIteratorHandle)
+	char, size := utf8.DecodeRuneInString(iterator.value[iterator.offset:])
+	iterator.offset += size
+	return string(char), nil
 }
 
 func init() {

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: from clause variable type is incompatible with collection member type
+  --> multiple-from-e.bal:19:14
+   |
+19 |         from string right in [10, 20] // @error incompatible intermediate from binding
+   |              ^^^^^^^^^^^^

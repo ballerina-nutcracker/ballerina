@@ -46,7 +46,10 @@ func walkQueryExpr(cx *functionContext, expr *ast.BLangQueryExpr) desugaredNode[
 	} else {
 		collectClause = expr.QueryClauseList[finalClauseIndex].(*ast.BLangCollectClause)
 	}
-	if collectClause != nil || queryExprNeedsRowPipeline(expr, 1, finalClauseIndex) {
+	fromCollectionTy := fromClause.Collection.GetDeterminedType()
+	if collectClause != nil ||
+		semtypes.IsSubtype(cx.typeCtx(), fromCollectionTy, semtypes.Union(semtypes.STRING, semtypes.XML)) ||
+		queryExprNeedsRowPipeline(expr, 1, finalClauseIndex) {
 		return walkQueryExprWithRows(cx, expr, fromClause, selectClause, collectClause, finalClauseIndex, onConflictClause)
 	}
 	orderByClauseIndices := queryOrderByClauseIndices(expr, 1, finalClauseIndex)
@@ -153,7 +156,7 @@ func walkQueryExpr(cx *functionContext, expr *ast.BLangQueryExpr) desugaredNode[
 func queryExprNeedsRowPipeline(queryExpr *ast.BLangQueryExpr, startClauseIndex int, endClauseIndex int) bool {
 	for i := startClauseIndex; i < endClauseIndex; i++ {
 		switch queryExpr.QueryClauseList[i].(type) {
-		case *ast.BLangJoinClause, *ast.BLangGroupByClause:
+		case *ast.BLangFromClause, *ast.BLangJoinClause, *ast.BLangGroupByClause:
 			return true
 		}
 	}
@@ -191,15 +194,15 @@ type queryOrderStageInput struct {
 func createQueryCollectionSource(
 	cx *functionContext,
 	initStmts *[]ast.StatementNode,
-	collectionExpr ast.BLangExpression,
+	collectionExpr ast.BLangActionOrExpression,
 	pos diagnostics.Location,
 ) (*ast.BLangSimpleVarRef, *ast.BLangSimpleVarRef, *ast.BLangSimpleVarRef, semtypes.SemType, bool) {
 	collResult := walkExpression(cx, collectionExpr)
 	*initStmts = append(*initStmts, collResult.initStmts...)
-	collExpr := collResult.replacementNode.(ast.BLangExpression)
+	collExpr := collResult.replacementNode
 	collTy := collExpr.GetDeterminedType()
 
-	collVarDef, collRef := assignToLocal(cx, collExpr, pos)
+	collVarDef, collRef := assignActionOrExpressionToLocal(cx, collExpr, pos)
 	*initStmts = append(*initStmts, collVarDef)
 
 	lengthSource := ast.BLangExpression(collRef)
@@ -226,6 +229,76 @@ func createQueryCollectionSource(
 		return nil, nil, nil, semtypes.SemType{}, false
 	}
 	return collRef, keysRef, lenRef, collTy, true
+}
+
+// createQueryPipelineCollectionSource keeps list/map sources indexable and turns string, XML,
+// stream, or object:Iterable sources into a receiver pulled by the generated next loop.
+func createQueryPipelineCollectionSource(
+	cx *functionContext,
+	initStmts *[]ast.StatementNode,
+	collectionExpr ast.BLangActionOrExpression,
+	pos diagnostics.Location,
+) (queryActionCollectionSource, bool) {
+	collectionTy := collectionExpr.GetDeterminedType()
+	tyCtx := cx.typeCtx()
+	if semtypes.IsSubtype(tyCtx, collectionTy, semtypes.LIST) ||
+		semtypes.IsSubtype(tyCtx, collectionTy, semtypes.MAPPING) {
+		collectionRef, keysRef, rowCountRef, _, ok := createQueryCollectionSource(
+			cx, initStmts, collectionExpr, pos,
+		)
+		return queryActionCollectionSource{
+			collectionRef: collectionRef,
+			keysRef:       keysRef,
+			rowCountRef:   rowCountRef,
+		}, ok
+	}
+
+	collectionResult := walkExpression(cx, collectionExpr)
+	*initStmts = append(*initStmts, collectionResult.initStmts...)
+	collectionValue := collectionResult.replacementNode
+	collectionTy = collectionValue.GetDeterminedType()
+	collectionVarDef, collectionRef := assignActionOrExpressionToLocal(cx, collectionValue, pos)
+	*initStmts = append(*initStmts, collectionVarDef)
+
+	switch {
+	case semtypes.IsSubtype(tyCtx, collectionTy, semtypes.STREAM):
+		return queryActionCollectionSource{
+			nextReceiverRef: collectionRef,
+			nextReceiverTy:  collectionTy,
+		}, true
+	case semtypes.IsSubtype(tyCtx, collectionTy, semtypes.STRING),
+		semtypes.IsSubtype(tyCtx, collectionTy, semtypes.XML),
+		semtypes.IsSubtype(tyCtx, collectionTy, semtypes.OBJECT):
+		iteratorInvocation := createIteratorInvocation(cx, collectionRef, collectionTy, pos)
+		if iteratorInvocation == nil {
+			return queryActionCollectionSource{}, false
+		}
+		iteratorVarDef, iteratorRef := assignToLocal(cx, iteratorInvocation, pos)
+		*initStmts = append(*initStmts, iteratorVarDef)
+		return queryActionCollectionSource{
+			nextReceiverRef: iteratorRef,
+			nextReceiverTy:  iteratorInvocation.GetDeterminedType(),
+		}, true
+	default:
+		cx.internalError("query action collection type should have been validated during type resolution")
+		return queryActionCollectionSource{}, false
+	}
+}
+
+// createQueryActionNextInvocation gives generated stream next calls the implementor method type;
+// BIR still recognizes the actual stream receiver and emits a stream-next instruction.
+func createQueryActionNextInvocation(
+	cx *functionContext,
+	receiver *ast.BLangSimpleVarRef,
+	receiverTy semtypes.SemType,
+) *ast.BLangInvocation {
+	methodReceiverTy := receiverTy
+	if semtypes.IsSubtype(cx.typeCtx(), receiverTy, semtypes.STREAM) {
+		valueTy := semtypes.StreamValueType(cx.typeCtx(), receiverTy)
+		completionTy := semtypes.StreamCompletionType(cx.typeCtx(), receiverTy)
+		methodReceiverTy = semtypes.CreateStreamImplementorType(cx.typeCtx(), valueTy, completionTy)
+	}
+	return createMethodInvocation(cx, receiver, "next", methodReceiverTy, nil, receiver.GetPosition())
 }
 
 func walkQueryExprWithRows(
@@ -287,6 +360,8 @@ func walkQueryExprWithRows(
 
 	for i := 1; i < finalClauseIndex; i++ {
 		switch clause := expr.QueryClauseList[i].(type) {
+		case *ast.BLangFromClause:
+			bindings, rowsRef, ok = appendQueryFromClauseRows(cx, rowsRef, bindings, clause, basePos, &initStmts)
 		case *ast.BLangJoinClause:
 			bindings, rowsRef, ok = appendQueryJoinClauseRows(cx, rowsRef, bindings, clause, basePos, &initStmts)
 		case *ast.BLangLetClause:
@@ -343,6 +418,966 @@ func walkQueryExprWithRows(
 	}
 }
 
+// walkQueryAction lowers a query action into setup statements, streaming loops, and a nil-or-error result.
+// Frame-local clauses are nested into each loop iteration and end in the do body; order-by and
+// group-by clauses materialize rows and start a new streaming segment after the barrier.
+func walkQueryAction(cx *functionContext, action *ast.BLangQueryAction) desugaredNode[ast.BLangActionOrExpression] {
+	basePos := action.GetPosition()
+	var initStmts []ast.StatementNode
+
+	resultTy := action.GetDeterminedType()
+	resultName, resultSymbol := cx.addDesugardSymbol(resultTy, model.SymbolKindVariable, false, basePos)
+	resultVar := &ast.BLangSimpleVariable{
+		Name: &ast.BLangIdentifier{Value: resultName},
+	}
+	resultVar.SetDeterminedType(resultTy)
+	resultVar.SetInitialExpression(createQueryNilLiteral(basePos))
+	resultVar.SetSymbol(resultSymbol)
+	resultVarDef := &ast.BLangSimpleVariableDef{Var: resultVar}
+	setPositionIfMissing(resultVarDef, basePos)
+	initStmts = append(initStmts, resultVarDef)
+
+	resultRef := &ast.BLangSimpleVarRef{VariableName: resultVar.Name}
+	resultRef.SetSymbol(resultSymbol)
+	resultRef.SetDeterminedType(resultTy)
+	setPositionIfMissing(resultRef, basePos)
+
+	if len(action.QueryClauseList) == 0 {
+		cx.internalError("query action shape should have been validated during type resolution")
+		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+	}
+	fromClause, ok := action.QueryClauseList[0].(*ast.BLangFromClause)
+	if !ok {
+		cx.internalError("query action must start with a from clause")
+		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+	}
+	if action.DoClause == nil || action.DoClause.Body == nil {
+		cx.internalError("query action requires a do clause")
+		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+	}
+
+	fromBinding, ok := queryRowBindingFromVarDef(cx, fromClause.VariableDefinitionNode, "from")
+	if !ok {
+		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+	}
+	initStmts = append(initStmts, createQueryBindingDeclaration(fromBinding, basePos))
+
+	completionState := queryActionCompletionState{resultRef: resultRef}
+	controlInfo := queryActionControlFlow(action.DoClause.Body)
+	var controlState *queryActionControlFlowState
+	if controlInfo.hasBreak || controlInfo.hasContinue {
+		if len(cx.loopVarStack) == 0 {
+			cx.internalError("query action break/continue must have an enclosing loop")
+			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+		}
+		controlState = &queryActionControlFlowState{}
+		stopVarDef, stopRef := assignToLocal(cx, createBoolLiteral(false, basePos), basePos)
+		initStmts = append(initStmts, stopVarDef)
+		controlState.stopRef = stopRef
+		completionState.controlStopRef = stopRef
+		if controlInfo.hasBreak {
+			breakVarDef, breakRef := assignToLocal(cx, createBoolLiteral(false, basePos), basePos)
+			initStmts = append(initStmts, breakVarDef)
+			controlState.breakRef = breakRef
+		}
+		if controlInfo.hasContinue {
+			continueVarDef, continueRef := assignToLocal(cx, createBoolLiteral(false, basePos), basePos)
+			initStmts = append(initStmts, continueVarDef)
+			controlState.continueRef = continueRef
+		}
+	}
+	if !semtypes.IsEmpty(cx.typeCtx(), semtypes.Intersect(resultTy, semtypes.ERROR)) {
+		stopVarDef, stopRef := assignToLocal(cx, createBoolLiteral(false, basePos), basePos)
+		initStmts = append(initStmts, stopVarDef)
+		completionState.stopRef = stopRef
+	}
+
+	collectionSource, ok := createQueryPipelineCollectionSource(cx, &initStmts, fromClause.Collection, basePos)
+	if !ok {
+		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+	}
+	pipelineState, ok := prepareQueryActionPipeline(
+		cx, action.QueryClauseList, completionState, &initStmts, basePos,
+	)
+	if !ok {
+		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+	}
+
+	segmentStart := 1
+	bindings := []queryRowBinding{fromBinding}
+	var rowsRef *ast.BLangSimpleVarRef
+	firstSegment := true
+	for {
+		barrierIndex := nextQueryActionBarrier(action.QueryClauseList, segmentStart)
+		segmentEnd := len(action.QueryClauseList)
+		if barrierIndex >= 0 {
+			segmentEnd = barrierIndex
+		}
+
+		var terminal queryActionSegmentTerminal
+		var segmentRowsRef *ast.BLangSimpleVarRef
+		if barrierIndex >= 0 {
+			segmentRowsRef = createQueryListStore(cx, &initStmts, basePos)
+			terminal = queryActionRowTerminal(cx, segmentRowsRef, basePos)
+		} else {
+			if controlState != nil {
+				cx.pushLoopVar(nil)
+				controlState.loopDepth = len(cx.loopVarStack)
+				cx.pushQueryActionControl(controlState)
+			}
+			doResult := walkBlockStmt(cx, action.DoClause.Body)
+			if controlState != nil {
+				cx.popQueryActionControl()
+				cx.popLoopVar()
+			}
+			doBlock, isBlock := doResult.replacementNode.(*ast.BLangBlockStmt)
+			if !isBlock {
+				cx.internalError("query action do clause should desugar to a block statement")
+				return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+			}
+			doStmts := append([]ast.StatementNode{}, doResult.initStmts...)
+			doStmts = append(doStmts, doBlock.Stmts...)
+			terminal = func([]queryRowBinding) ([]ast.StatementNode, bool) {
+				return doStmts, true
+			}
+		}
+
+		segmentStmts, outputBindings, stopRefs, ok := buildQueryActionSegmentStmts(
+			cx,
+			action.QueryClauseList,
+			segmentStart,
+			segmentEnd,
+			bindings,
+			terminal,
+			pipelineState,
+			&initStmts,
+			basePos,
+		)
+		if !ok {
+			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+		}
+
+		if firstSegment {
+			appendQueryActionCollectionSegment(
+				cx, collectionSource, fromBinding, segmentStmts, stopRefs, completionState, &initStmts, basePos,
+			)
+			firstSegment = false
+		} else if !appendQueryActionRowsSegment(cx, rowsRef, bindings, segmentStmts, stopRefs, &initStmts, basePos) {
+			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+		}
+		bindings = outputBindings
+
+		if barrierIndex < 0 {
+			break
+		}
+
+		rowsRef = segmentRowsRef
+		switch clause := action.QueryClauseList[barrierIndex].(type) {
+		case *ast.BLangOrderByClause:
+			ok = applyQueryOrderByClauseToRows(cx, rowsRef, bindings, clause, basePos, &initStmts)
+		case *ast.BLangGroupByClause:
+			bindings, rowsRef, ok = applyQueryGroupByClauseToRows(cx, rowsRef, bindings, clause, basePos, &initStmts)
+		default:
+			cx.internalError("query action barrier should be order by or group by")
+			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+		}
+		if !ok {
+			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
+		}
+		segmentStart = barrierIndex + 1
+	}
+
+	if controlState != nil {
+		appendQueryActionControlDispatch(cx, controlState, &initStmts, basePos)
+	}
+	return desugaredNode[ast.BLangActionOrExpression]{
+		initStmts:       initStmts,
+		replacementNode: resultRef,
+	}
+}
+
+type queryActionSegmentTerminal func([]queryRowBinding) ([]ast.StatementNode, bool)
+
+type queryActionPipelineState struct {
+	limits     map[*ast.BLangLimitClause]queryActionLimitState
+	joins      map[*ast.BLangJoinClause]queryActionJoinState
+	completion queryActionCompletionState
+}
+
+type queryActionCompletionState struct {
+	resultRef      *ast.BLangSimpleVarRef
+	stopRef        *ast.BLangSimpleVarRef
+	controlStopRef *ast.BLangSimpleVarRef
+}
+
+// Type resolution rejects stream and object:Iterable sources for query expressions,
+// so their iterator segments cannot produce completion errors.
+func queryExpressionCompletionState() queryActionCompletionState {
+	return queryActionCompletionState{}
+}
+
+type queryActionControlFlowState struct {
+	loopDepth   int
+	stopRef     *ast.BLangSimpleVarRef
+	breakRef    *ast.BLangSimpleVarRef
+	continueRef *ast.BLangSimpleVarRef
+}
+
+type queryActionCollectionSource struct {
+	collectionRef   *ast.BLangSimpleVarRef
+	keysRef         *ast.BLangSimpleVarRef
+	rowCountRef     *ast.BLangSimpleVarRef
+	nextReceiverRef *ast.BLangSimpleVarRef
+	nextReceiverTy  semtypes.SemType
+}
+
+type queryActionLimitState struct {
+	limitRef   *ast.BLangSimpleVarRef
+	counterRef *ast.BLangSimpleVarRef
+	stopRef    *ast.BLangSimpleVarRef
+}
+
+type queryActionJoinState struct {
+	binding     queryRowBinding
+	rowsRef     *ast.BLangSimpleVarRef
+	rowCountRef *ast.BLangSimpleVarRef
+	keyTy       semtypes.SemType
+}
+
+// prepareQueryActionPipeline emits the clause state that must exist before frame processing.
+// It evaluates each limit once and caches each join's right-side [value, key] rows in clause order.
+func prepareQueryActionPipeline(
+	cx *functionContext,
+	clauses []ast.BLangNode,
+	completion queryActionCompletionState,
+	initStmts *[]ast.StatementNode,
+	pos diagnostics.Location,
+) (queryActionPipelineState, bool) {
+	state := queryActionPipelineState{
+		limits:     make(map[*ast.BLangLimitClause]queryActionLimitState),
+		joins:      make(map[*ast.BLangJoinClause]queryActionJoinState),
+		completion: completion,
+	}
+	for i := 1; i < len(clauses); i++ {
+		switch clause := clauses[i].(type) {
+		case *ast.BLangLimitClause:
+			limitState, ok := prepareQueryActionLimit(cx, clause, initStmts)
+			if !ok {
+				return queryActionPipelineState{}, false
+			}
+			state.limits[clause] = limitState
+		case *ast.BLangJoinClause:
+			joinState, ok := prepareQueryActionJoin(cx, clause, completion, initStmts, pos)
+			if !ok {
+				return queryActionPipelineState{}, false
+			}
+			state.joins[clause] = joinState
+		}
+	}
+	return state, true
+}
+
+// prepareQueryActionLimit generates state equivalent to:
+//
+//	limit = <expression>; panic if limit < 0; count = 0; stopped = limit == 0
+//
+// The returned references are used by the segment loop to count emitted frames and stop upstream pulls.
+func prepareQueryActionLimit(
+	cx *functionContext,
+	clause *ast.BLangLimitClause,
+	initStmts *[]ast.StatementNode,
+) (queryActionLimitState, bool) {
+	clausePos := clause.GetPosition()
+	limitResult := walkExpression(cx, clause.Expression)
+	limitExpr, ok := limitResult.replacementNode.(ast.BLangExpression)
+	if !ok {
+		cx.internalError("query action limit expression should have been validated during type resolution")
+		return queryActionLimitState{}, false
+	}
+	*initStmts = append(*initStmts, limitResult.initStmts...)
+	limitVarDef, limitRef := assignToLocal(cx, limitExpr, clausePos)
+	*initStmts = append(*initStmts, limitVarDef, createNegativeLimitPanicIf(cx, limitRef, clausePos))
+	counterRef := createQueryCounterRef(cx, initStmts, clausePos)
+	stopVarDef, stopRef := assignToLocal(cx, createBoolLiteral(false, clausePos), clausePos)
+	*initStmts = append(*initStmts, stopVarDef)
+
+	zeroLimitCond := &ast.BLangBinaryExpr{
+		LhsExpr: createQueryVarRefAt(limitRef, clausePos),
+		RhsExpr: createIntLiteral(0),
+		OpKind:  model.OperatorKind_EQUAL,
+	}
+	zeroLimitCond.SetDeterminedType(semtypes.BOOLEAN)
+	zeroLimitIf := &ast.BLangIf{
+		Expr: zeroLimitCond,
+		Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{
+			createQueryBoolAssignment(stopRef, true, clausePos),
+		}},
+	}
+	zeroLimitIf.SetScope(cx.currentScope())
+	zeroLimitIf.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(zeroLimitIf, clausePos)
+	*initStmts = append(*initStmts, zeroLimitIf)
+
+	return queryActionLimitState{
+		limitRef:   limitRef,
+		counterRef: counterRef,
+		stopRef:    stopRef,
+	}, true
+}
+
+// prepareQueryActionJoin evaluates the right side once and generates a cache-building loop:
+//
+//	for each value in <join collection> { rows.push([value, <right key>]); }
+//
+// Streaming left-side frames later scan this cache instead of reevaluating the join collection or key.
+func prepareQueryActionJoin(
+	cx *functionContext,
+	clause *ast.BLangJoinClause,
+	completion queryActionCompletionState,
+	initStmts *[]ast.StatementNode,
+	pos diagnostics.Location,
+) (queryActionJoinState, bool) {
+	binding, ok := queryRowBindingFromVarDef(cx, clause.VariableDefinitionNode, "join")
+	if !ok {
+		return queryActionJoinState{}, false
+	}
+	*initStmts = append(*initStmts, createQueryBindingDeclaration(binding, clause.GetPosition()))
+	rowsRef := createQueryListStore(cx, initStmts, pos)
+	collectionSource, ok := createQueryPipelineCollectionSource(cx, initStmts, clause.Collection, pos)
+	if !ok {
+		return queryActionJoinState{}, false
+	}
+	rhsResult := walkExpression(cx, clause.OnClause.EqualsExpr)
+	rhsExpr, ok := rhsResult.replacementNode.(ast.BLangExpression)
+	if !ok {
+		cx.internalError("query action join key expression should have been validated during type resolution")
+		return queryActionJoinState{}, false
+	}
+	rowTuple := createQueryRowTupleExpr(
+		nil,
+		[]ast.BLangExpression{createQueryBindingVarRef(binding), rhsExpr},
+		pos,
+	)
+	pushRow := createArrayPushInvocation(cx.pkgCtx, rowsRef, rowTuple)
+	if pushRow == nil {
+		return queryActionJoinState{}, false
+	}
+	pushStmt := &ast.BLangExpressionStmt{Expr: pushRow}
+	setPositionIfMissing(pushStmt, pos)
+	bodyStmts := append([]ast.StatementNode{}, rhsResult.initStmts...)
+	bodyStmts = append(bodyStmts, pushStmt)
+	// Join right sides are initialized independently; the shared completion state only
+	// prevents failed pipelines from emitting frames after all join caches are prepared.
+	appendQueryActionCollectionSegment(
+		cx,
+		collectionSource,
+		binding,
+		bodyStmts,
+		nil,
+		completion,
+		initStmts,
+		pos,
+	)
+	rowCountRef := collectionSource.rowCountRef
+	if rowCountRef == nil {
+		rowCountRef, ok = createQueryLengthRef(cx, initStmts, rowsRef, pos)
+		if !ok {
+			return queryActionJoinState{}, false
+		}
+	}
+
+	keyTy := rhsExpr.GetDeterminedType()
+	if semtypes.IsZero(keyTy) {
+		keyTy = semtypes.ANY
+	}
+	return queryActionJoinState{
+		binding:     binding,
+		rowsRef:     rowsRef,
+		rowCountRef: rowCountRef,
+		keyTy:       keyTy,
+	}, true
+}
+
+// nextQueryActionBarrier finds the next clause that requires all input frames before it can emit output.
+func nextQueryActionBarrier(clauses []ast.BLangNode, start int) int {
+	for i := start; i < len(clauses); i++ {
+		switch clauses[i].(type) {
+		case *ast.BLangOrderByClause, *ast.BLangGroupByClause:
+			return i
+		}
+	}
+	return -1
+}
+
+// queryActionRowTerminal creates a segment terminal that materializes the current bindings as:
+//
+//	rows.push([binding1, binding2, ...]);
+func queryActionRowTerminal(
+	cx *functionContext,
+	rowsRef *ast.BLangSimpleVarRef,
+	pos diagnostics.Location,
+) queryActionSegmentTerminal {
+	return func(bindings []queryRowBinding) ([]ast.StatementNode, bool) {
+		rowTuple := createQueryRowTupleExpr(bindings, nil, pos)
+		pushRow := createArrayPushInvocation(cx.pkgCtx, rowsRef, rowTuple)
+		if pushRow == nil {
+			return nil, false
+		}
+		pushStmt := &ast.BLangExpressionStmt{Expr: pushRow}
+		setPositionIfMissing(pushStmt, pos)
+		return []ast.StatementNode{pushStmt}, true
+	}
+}
+
+// buildQueryActionSegmentStmts recursively nests frame-local clauses around a terminal operation.
+// It generates nested loops for from/join, assignments for let, and conditional blocks for where/limit,
+// producing a shape such as: let assignment; if where { for fromValue { <join>; <terminal> } }.
+func buildQueryActionSegmentStmts(
+	cx *functionContext,
+	clauses []ast.BLangNode,
+	clauseIndex int,
+	endClauseIndex int,
+	bindings []queryRowBinding,
+	terminal queryActionSegmentTerminal,
+	pipelineState queryActionPipelineState,
+	initStmts *[]ast.StatementNode,
+	pos diagnostics.Location,
+) ([]ast.StatementNode, []queryRowBinding, []*ast.BLangSimpleVarRef, bool) {
+	if clauseIndex == endClauseIndex {
+		stmts, ok := terminal(bindings)
+		return stmts, bindings, queryActionCompletionStopRefs(pipelineState.completion), ok
+	}
+
+	switch clause := clauses[clauseIndex].(type) {
+	case *ast.BLangFromClause:
+		fromBinding, ok := queryRowBindingFromVarDef(cx, clause.VariableDefinitionNode, "from")
+		if !ok {
+			return nil, nil, nil, false
+		}
+		*initStmts = append(*initStmts, createQueryBindingDeclaration(fromBinding, clause.GetPosition()))
+		newBindings := append(append([]queryRowBinding{}, bindings...), fromBinding)
+		nextStmts, outputBindings, stopRefs, ok := buildQueryActionSegmentStmts(
+			cx, clauses, clauseIndex+1, endClauseIndex, newBindings, terminal, pipelineState, initStmts, pos,
+		)
+		if !ok {
+			return nil, nil, nil, false
+		}
+		var fromStmts []ast.StatementNode
+		collectionSource, ok := createQueryPipelineCollectionSource(
+			cx, &fromStmts, clause.Collection, clause.GetPosition(),
+		)
+		if !ok {
+			return nil, nil, nil, false
+		}
+		appendQueryActionCollectionSegment(
+			cx,
+			collectionSource,
+			fromBinding,
+			nextStmts,
+			stopRefs,
+			pipelineState.completion,
+			&fromStmts,
+			clause.GetPosition(),
+		)
+		return fromStmts, outputBindings, stopRefs, true
+	case *ast.BLangLetClause:
+		letStmts := make([]ast.StatementNode, 0, len(clause.LetVarDeclarations))
+		newBindings := append([]queryRowBinding{}, bindings...)
+		for i := range clause.LetVarDeclarations {
+			varDef := &clause.LetVarDeclarations[i]
+			if varDef.Var == nil || varDef.Var.Expr == nil {
+				cx.internalError("query let clause bindings should have been validated during type resolution")
+				return nil, nil, nil, false
+			}
+			binding, ok := queryRowBindingFromVarDef(cx, varDef, "let")
+			if !ok {
+				return nil, nil, nil, false
+			}
+			*initStmts = append(*initStmts, createQueryBindingDeclaration(binding, clause.GetPosition()))
+			letResult := walkExpression(cx, varDef.Var.Expr)
+			letStmts = append(letStmts, letResult.initStmts...)
+			letStmts = append(letStmts, createQueryBindingAssignment(
+				binding,
+				letResult.replacementNode,
+				clause.GetPosition(),
+			))
+			newBindings = append(newBindings, binding)
+		}
+		nextStmts, outputBindings, stopRefs, ok := buildQueryActionSegmentStmts(
+			cx, clauses, clauseIndex+1, endClauseIndex, newBindings, terminal, pipelineState, initStmts, pos,
+		)
+		return append(letStmts, nextStmts...), outputBindings, stopRefs, ok
+	case *ast.BLangWhereClause:
+		whereResult := walkExpression(cx, clause.Expression)
+		whereStmts := append([]ast.StatementNode{}, whereResult.initStmts...)
+		whereExpr, isExpression := whereResult.replacementNode.(ast.BLangExpression)
+		if !isExpression {
+			whereVarDef, whereRef := assignActionOrExpressionToLocal(cx, whereResult.replacementNode, clause.GetPosition())
+			whereStmts = append(whereStmts, whereVarDef)
+			whereExpr = whereRef
+		}
+		nextStmts, outputBindings, stopRefs, ok := buildQueryActionSegmentStmts(
+			cx, clauses, clauseIndex+1, endClauseIndex, bindings, terminal, pipelineState, initStmts, pos,
+		)
+		if !ok {
+			return nil, nil, nil, false
+		}
+		whereIf := &ast.BLangIf{
+			Expr: whereExpr,
+			Body: ast.BLangBlockStmt{Stmts: nextStmts},
+		}
+		whereIf.SetScope(cx.currentScope())
+		whereIf.SetDeterminedType(semtypes.NEVER)
+		setPositionIfMissing(whereIf, clause.GetPosition())
+		return append(whereStmts, whereIf), outputBindings, stopRefs, true
+	case *ast.BLangLimitClause:
+		limitState, exists := pipelineState.limits[clause]
+		if !exists {
+			cx.internalError("query action limit state should have been prepared")
+			return nil, nil, nil, false
+		}
+		nextStmts, outputBindings, downstreamStops, ok := buildQueryActionSegmentStmts(
+			cx, clauses, clauseIndex+1, endClauseIndex, bindings, terminal, pipelineState, initStmts, pos,
+		)
+		if !ok {
+			return nil, nil, nil, false
+		}
+		withinLimit := &ast.BLangBinaryExpr{
+			LhsExpr: createQueryVarRefAt(limitState.counterRef, clause.GetPosition()),
+			RhsExpr: createQueryVarRefAt(limitState.limitRef, clause.GetPosition()),
+			OpKind:  model.OperatorKind_LESS_THAN,
+		}
+		withinLimit.SetDeterminedType(semtypes.BOOLEAN)
+		reachedLimit := &ast.BLangBinaryExpr{
+			LhsExpr: createQueryVarRefAt(limitState.counterRef, clause.GetPosition()),
+			RhsExpr: createQueryVarRefAt(limitState.limitRef, clause.GetPosition()),
+			OpKind:  model.OperatorKind_GREATER_EQUAL,
+		}
+		reachedLimit.SetDeterminedType(semtypes.BOOLEAN)
+		reachedLimitIf := &ast.BLangIf{
+			Expr: reachedLimit,
+			Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{
+				createQueryBoolAssignment(limitState.stopRef, true, clause.GetPosition()),
+			}},
+		}
+		reachedLimitIf.SetScope(cx.currentScope())
+		reachedLimitIf.SetDeterminedType(semtypes.NEVER)
+		setPositionIfMissing(reachedLimitIf, clause.GetPosition())
+		limitBody := []ast.StatementNode{createIncrementStmt(limitState.counterRef), reachedLimitIf}
+		limitBody = append(limitBody, nextStmts...)
+		limitIf := &ast.BLangIf{
+			Expr: withinLimit,
+			Body: ast.BLangBlockStmt{Stmts: limitBody},
+		}
+		limitIf.SetScope(cx.currentScope())
+		limitIf.SetDeterminedType(semtypes.NEVER)
+		setPositionIfMissing(limitIf, clause.GetPosition())
+		stopRefs := append([]*ast.BLangSimpleVarRef{limitState.stopRef}, downstreamStops...)
+		return []ast.StatementNode{limitIf}, outputBindings, stopRefs, true
+	case *ast.BLangJoinClause:
+		joinState, exists := pipelineState.joins[clause]
+		if !exists {
+			cx.internalError("query action join state should have been prepared")
+			return nil, nil, nil, false
+		}
+		newBindings := append(append([]queryRowBinding{}, bindings...), joinState.binding)
+		nextStmts, outputBindings, stopRefs, ok := buildQueryActionSegmentStmts(
+			cx, clauses, clauseIndex+1, endClauseIndex, newBindings, terminal, pipelineState, initStmts, pos,
+		)
+		if !ok {
+			return nil, nil, nil, false
+		}
+		joinStmts, ok := buildStreamingQueryActionJoin(cx, clause, joinState, nextStmts, stopRefs, pos)
+		return joinStmts, outputBindings, stopRefs, ok
+	default:
+		cx.internalError("query clause shape should have been validated during type resolution")
+		return nil, nil, nil, false
+	}
+}
+
+// appendQueryActionCollectionSegment generates an indexed loop for lists/maps or a lazy next loop
+// for streams and object:Iterable values, stopping when a downstream limit or completion error fires.
+func appendQueryActionCollectionSegment(
+	cx *functionContext,
+	source queryActionCollectionSource,
+	binding queryRowBinding,
+	segmentStmts []ast.StatementNode,
+	stopRefs []*ast.BLangSimpleVarRef,
+	completion queryActionCompletionState,
+	initStmts *[]ast.StatementNode,
+	pos diagnostics.Location,
+) {
+	if source.rowCountRef == nil {
+		appendQueryActionIteratorSegment(cx, source, binding, segmentStmts, stopRefs, completion, initStmts, pos)
+		return
+	}
+	loopCounterRef := createQueryCounterRef(cx, initStmts, pos)
+	elementAccess := queryElementAccess(source.collectionRef, source.keysRef, loopCounterRef, binding.valueTy)
+	bodyStmts := []ast.StatementNode{createQueryBindingAssignment(binding, elementAccess, pos)}
+	bodyStmts = append(bodyStmts, segmentStmts...)
+	bodyStmts = append(bodyStmts, createIncrementStmt(loopCounterRef))
+	appendQueryActionWhile(cx, loopCounterRef, source.rowCountRef, bodyStmts, stopRefs, initStmts, pos)
+}
+
+// appendQueryActionIteratorSegment generates a lazy next loop. Nil marks normal completion,
+// an error becomes the query-action result and stops the whole pipeline, and records emit frames.
+func appendQueryActionIteratorSegment(
+	cx *functionContext,
+	source queryActionCollectionSource,
+	binding queryRowBinding,
+	segmentStmts []ast.StatementNode,
+	stopRefs []*ast.BLangSimpleVarRef,
+	completion queryActionCompletionState,
+	initStmts *[]ast.StatementNode,
+	pos diagnostics.Location,
+) {
+	doneVarDef, doneRef := assignToLocal(cx, createBoolLiteral(false, pos), pos)
+	*initStmts = append(*initStmts, doneVarDef)
+
+	nextInvocation := createQueryActionNextInvocation(cx, source.nextReceiverRef, source.nextReceiverTy)
+	nextReturnTy := nextInvocation.GetDeterminedType()
+	nextVarDef, nextRef := assignToLocal(cx, nextInvocation, pos)
+	bodyStmts := []ast.StatementNode{nextVarDef}
+
+	nilIf := &ast.BLangIf{
+		Expr: createQueryActionTypeTest(nextRef, semtypes.NIL, pos),
+		Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{
+			createQueryBoolAssignment(doneRef, true, pos),
+		}},
+	}
+	nilIf.SetScope(cx.currentScope())
+	nilIf.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(nilIf, pos)
+	bodyStmts = append(bodyStmts, nilIf)
+
+	errorTy := semtypes.Intersect(nextReturnTy, semtypes.ERROR)
+	if !semtypes.IsEmpty(cx.typeCtx(), errorTy) {
+		if completion.resultRef == nil || completion.stopRef == nil {
+			cx.internalError("query action completion state is missing for an error-producing iterator")
+			return
+		}
+		errorValueRef := createQueryVarRefAt(nextRef, pos)
+		errorValueRef.SetDeterminedType(errorTy)
+		resultAssign := &ast.BLangAssignment{
+			VarRef: createQueryVarRefAt(completion.resultRef, pos),
+			Expr:   errorValueRef,
+		}
+		resultAssign.SetDeterminedType(semtypes.NEVER)
+		setPositionIfMissing(resultAssign, pos)
+		firstErrorCond := &ast.BLangUnaryExpr{
+			Expr:     createQueryVarRefAt(completion.stopRef, pos),
+			Operator: model.OperatorKind_NOT,
+		}
+		firstErrorCond.SetDeterminedType(semtypes.BOOLEAN)
+		firstErrorIf := &ast.BLangIf{
+			Expr: firstErrorCond,
+			Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{
+				resultAssign,
+				createQueryBoolAssignment(completion.stopRef, true, pos),
+			}},
+		}
+		firstErrorIf.SetScope(cx.currentScope())
+		firstErrorIf.SetDeterminedType(semtypes.NEVER)
+		setPositionIfMissing(firstErrorIf, pos)
+		errorIf := &ast.BLangIf{
+			Expr: createQueryActionTypeTest(nextRef, semtypes.ERROR, pos),
+			Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{
+				firstErrorIf,
+				createQueryBoolAssignment(doneRef, true, pos),
+			}},
+		}
+		errorIf.SetScope(cx.currentScope())
+		errorIf.SetDeterminedType(semtypes.NEVER)
+		setPositionIfMissing(errorIf, pos)
+		bodyStmts = append(bodyStmts, errorIf)
+	}
+
+	nextValueRef := createQueryVarRefAt(nextRef, pos)
+	nextValueRef.SetDeterminedType(semtypes.MAPPING)
+	valueAccess := &ast.BLangIndexBasedAccess{IndexExpr: createStringLiteral("value", pos)}
+	valueAccess.Expr = nextValueRef
+	valueAccess.SetDeterminedType(binding.valueTy)
+	setPositionIfMissing(valueAccess, pos)
+	valueBody := []ast.StatementNode{createQueryBindingAssignment(binding, valueAccess, pos)}
+	valueBody = append(valueBody, segmentStmts...)
+	valueIf := &ast.BLangIf{
+		Expr: createQueryActionTypeTest(nextRef, semtypes.MAPPING, pos),
+		Body: ast.BLangBlockStmt{Stmts: valueBody},
+	}
+	valueIf.SetScope(cx.currentScope())
+	valueIf.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(valueIf, pos)
+	bodyStmts = append(bodyStmts, valueIf)
+
+	condition := &ast.BLangUnaryExpr{
+		Expr:     createQueryVarRefAt(doneRef, pos),
+		Operator: model.OperatorKind_NOT,
+	}
+	condition.SetDeterminedType(semtypes.BOOLEAN)
+	appendQueryActionConditionalWhile(cx, condition, bodyStmts, stopRefs, initStmts, pos)
+}
+
+func createQueryActionTypeTest(
+	expr *ast.BLangSimpleVarRef,
+	ty semtypes.SemType,
+	pos diagnostics.Location,
+) *ast.BLangTypeTestExpr {
+	test := &ast.BLangTypeTestExpr{
+		Expr: createQueryVarRefAt(expr, pos),
+		Type: ast.TypeData{Type: ty},
+	}
+	test.SetDeterminedType(semtypes.BOOLEAN)
+	setPositionIfMissing(test, pos)
+	return test
+}
+
+func queryActionCompletionStopRefs(completion queryActionCompletionState) []*ast.BLangSimpleVarRef {
+	var stopRefs []*ast.BLangSimpleVarRef
+	if completion.stopRef != nil {
+		stopRefs = append(stopRefs, completion.stopRef)
+	}
+	if completion.controlStopRef != nil {
+		stopRefs = append(stopRefs, completion.controlStopRef)
+	}
+	return stopRefs
+}
+
+// appendQueryActionRowsSegment generates a loop over rows materialized by a preceding barrier.
+// Each iteration restores the row's bindings before executing the next streaming segment.
+func appendQueryActionRowsSegment(
+	cx *functionContext,
+	rowsRef *ast.BLangSimpleVarRef,
+	bindings []queryRowBinding,
+	segmentStmts []ast.StatementNode,
+	stopRefs []*ast.BLangSimpleVarRef,
+	initStmts *[]ast.StatementNode,
+	pos diagnostics.Location,
+) bool {
+	rowCountRef, ok := createQueryLengthRef(cx, initStmts, rowsRef, pos)
+	if !ok {
+		return false
+	}
+	loopCounterRef := createQueryCounterRef(cx, initStmts, pos)
+	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.LIST, pos)
+	rowAccess.IndexExpr = loopCounterRef
+	rowVarDef, rowRef := assignToLocal(cx, rowAccess, pos)
+	bodyStmts := []ast.StatementNode{rowVarDef}
+	bodyStmts = appendQueryRowRestoreStmts(bodyStmts, rowRef, bindings, pos)
+	bodyStmts = append(bodyStmts, segmentStmts...)
+	bodyStmts = append(bodyStmts, createIncrementStmt(loopCounterRef))
+	appendQueryActionWhile(cx, loopCounterRef, rowCountRef, bodyStmts, stopRefs, initStmts, pos)
+	return true
+}
+
+// appendQueryActionWhile appends a generated while loop with the shape:
+//
+//	while counter < rowCount && !stop1 && !stop2 { <bodyStmts> }
+//
+// The caller includes the counter increment in bodyStmts so specialized loops can control progression.
+func appendQueryActionWhile(
+	cx *functionContext,
+	loopCounterRef *ast.BLangSimpleVarRef,
+	rowCountRef *ast.BLangSimpleVarRef,
+	bodyStmts []ast.StatementNode,
+	stopRefs []*ast.BLangSimpleVarRef,
+	initStmts *[]ast.StatementNode,
+	pos diagnostics.Location,
+) {
+	cond := &ast.BLangBinaryExpr{
+		LhsExpr: loopCounterRef,
+		RhsExpr: rowCountRef,
+		OpKind:  model.OperatorKind_LESS_THAN,
+	}
+	cond.SetDeterminedType(semtypes.BOOLEAN)
+	appendQueryActionConditionalWhile(cx, cond, bodyStmts, stopRefs, initStmts, pos)
+}
+
+func appendQueryActionConditionalWhile(
+	cx *functionContext,
+	condition ast.BLangExpression,
+	bodyStmts []ast.StatementNode,
+	stopRefs []*ast.BLangSimpleVarRef,
+	initStmts *[]ast.StatementNode,
+	pos diagnostics.Location,
+) {
+	loopCond := queryActionLoopCondition(condition, stopRefs, pos)
+	whileStmt := &ast.BLangWhile{
+		Expr: loopCond,
+		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
+	}
+	whileStmt.SetScope(cx.currentScope())
+	whileStmt.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(whileStmt, pos)
+	*initStmts = append(*initStmts, whileStmt)
+}
+
+// buildStreamingQueryActionJoin generates a nested scan of the cached right-side join rows for one
+// left frame. Matching rows execute nextStmts immediately; an outer join performs one extra sentinel
+// iteration that binds nil and executes nextStmts when no cached row matched.
+func buildStreamingQueryActionJoin(
+	cx *functionContext,
+	clause *ast.BLangJoinClause,
+	state queryActionJoinState,
+	nextStmts []ast.StatementNode,
+	stopRefs []*ast.BLangSimpleVarRef,
+	pos diagnostics.Location,
+) ([]ast.StatementNode, bool) {
+	lhsResult := walkExpression(cx, clause.OnClause.OnExpr)
+	stmts := append([]ast.StatementNode{}, lhsResult.initStmts...)
+	lhsVarDef, lhsRef := assignActionOrExpressionToLocal(cx, lhsResult.replacementNode, pos)
+	stmts = append(stmts, lhsVarDef)
+
+	var matchedRef *ast.BLangSimpleVarRef
+	if clause.IsOuterJoinFlag {
+		matchedVarDef, matchedLocalRef := assignToLocal(cx, createBoolLiteral(false, pos), pos)
+		stmts = append(stmts, matchedVarDef)
+		matchedRef = matchedLocalRef
+	}
+
+	var innerSetup []ast.StatementNode
+	innerCounterRef := createQueryCounterRef(cx, &innerSetup, pos)
+	stmts = append(stmts, innerSetup...)
+	rowAccess := createQueryRowSlotAccess(state.rowsRef, 0, semtypes.LIST, pos)
+	rowAccess.IndexExpr = innerCounterRef
+	rowVarDef, rowRef := assignToLocal(cx, rowAccess, pos)
+	joinValueAccess := createQueryRowSlotAccess(rowRef, 0, state.binding.valueTy, pos)
+	joinKeyAccess := createQueryRowSlotAccess(rowRef, 1, state.keyTy, pos)
+
+	if !clause.IsOuterJoinFlag {
+		innerBody := []ast.StatementNode{
+			rowVarDef,
+			createQueryBindingAssignment(state.binding, joinValueAccess, pos),
+		}
+		matchCond := &ast.BLangBinaryExpr{
+			LhsExpr: createQueryVarRefAt(lhsRef, pos),
+			RhsExpr: joinKeyAccess,
+			OpKind:  model.OperatorKind_EQUAL,
+		}
+		matchCond.SetDeterminedType(semtypes.BOOLEAN)
+		matchIf := &ast.BLangIf{
+			Expr: matchCond,
+			Body: ast.BLangBlockStmt{Stmts: nextStmts},
+		}
+		matchIf.SetScope(cx.currentScope())
+		matchIf.SetDeterminedType(semtypes.NEVER)
+		setPositionIfMissing(matchIf, clause.GetPosition())
+		innerBody = append(innerBody, matchIf, createIncrementStmt(innerCounterRef))
+		appendQueryActionWhile(cx, innerCounterRef, state.rowCountRef, innerBody, stopRefs, &stmts, pos)
+		return stmts, true
+	}
+
+	emitVarDef, emitRef := assignToLocal(cx, createBoolLiteral(false, pos), pos)
+	realIterationBody := []ast.StatementNode{
+		rowVarDef,
+		createQueryBindingAssignment(state.binding, joinValueAccess, pos),
+	}
+	matchCond := &ast.BLangBinaryExpr{
+		LhsExpr: createQueryVarRefAt(lhsRef, pos),
+		RhsExpr: joinKeyAccess,
+		OpKind:  model.OperatorKind_EQUAL,
+	}
+	matchCond.SetDeterminedType(semtypes.BOOLEAN)
+	markMatch := []ast.StatementNode{
+		createQueryBoolAssignment(matchedRef, true, pos),
+		createQueryBoolAssignment(emitRef, true, pos),
+	}
+	matchIf := &ast.BLangIf{Expr: matchCond, Body: ast.BLangBlockStmt{Stmts: markMatch}}
+	matchIf.SetScope(cx.currentScope())
+	matchIf.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(matchIf, pos)
+	realIterationBody = append(realIterationBody, matchIf)
+
+	notMatched := &ast.BLangUnaryExpr{
+		Expr:     createQueryVarRefAt(matchedRef, pos),
+		Operator: model.OperatorKind_NOT,
+	}
+	notMatched.SetDeterminedType(semtypes.BOOLEAN)
+	unmatchedBody := []ast.StatementNode{
+		createQueryBindingAssignment(state.binding, createQueryNilLiteral(pos), pos),
+		createQueryBoolAssignment(emitRef, true, pos),
+	}
+	unmatchedIf := &ast.BLangIf{Expr: notMatched, Body: ast.BLangBlockStmt{Stmts: unmatchedBody}}
+	unmatchedIf.SetScope(cx.currentScope())
+	unmatchedIf.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(unmatchedIf, pos)
+
+	realIterationCond := &ast.BLangBinaryExpr{
+		LhsExpr: createQueryVarRefAt(innerCounterRef, pos),
+		RhsExpr: createQueryVarRefAt(state.rowCountRef, pos),
+		OpKind:  model.OperatorKind_LESS_THAN,
+	}
+	realIterationCond.SetDeterminedType(semtypes.BOOLEAN)
+	iterationIf := &ast.BLangIf{
+		Expr:     realIterationCond,
+		Body:     ast.BLangBlockStmt{Stmts: realIterationBody},
+		ElseStmt: &ast.BLangBlockStmt{Stmts: []ast.StatementNode{unmatchedIf}},
+	}
+	iterationIf.SetScope(cx.currentScope())
+	iterationIf.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(iterationIf, pos)
+
+	emitIf := &ast.BLangIf{
+		Expr: createQueryVarRefAt(emitRef, pos),
+		Body: ast.BLangBlockStmt{Stmts: nextStmts},
+	}
+	emitIf.SetScope(cx.currentScope())
+	emitIf.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(emitIf, pos)
+
+	innerBody := []ast.StatementNode{emitVarDef, iterationIf, emitIf, createIncrementStmt(innerCounterRef)}
+	innerCond := &ast.BLangBinaryExpr{
+		LhsExpr: innerCounterRef,
+		RhsExpr: state.rowCountRef,
+		OpKind:  model.OperatorKind_LESS_EQUAL,
+	}
+	innerCond.SetDeterminedType(semtypes.BOOLEAN)
+	loopCond := queryActionLoopCondition(innerCond, stopRefs, pos)
+	innerWhile := &ast.BLangWhile{Expr: loopCond, Body: ast.BLangBlockStmt{Stmts: innerBody}}
+	innerWhile.SetScope(cx.currentScope())
+	innerWhile.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(innerWhile, pos)
+	return append(stmts, innerWhile), true
+}
+
+// queryActionLoopCondition extends a loop condition with one !stopped operand per downstream limit.
+func queryActionLoopCondition(
+	baseCond ast.BLangExpression,
+	stopRefs []*ast.BLangSimpleVarRef,
+	pos diagnostics.Location,
+) ast.BLangExpression {
+	cond := baseCond
+	for _, stopRef := range stopRefs {
+		notStopped := &ast.BLangUnaryExpr{
+			Expr:     createQueryVarRefAt(stopRef, pos),
+			Operator: model.OperatorKind_NOT,
+		}
+		notStopped.SetDeterminedType(semtypes.BOOLEAN)
+		andExpr := &ast.BLangBinaryExpr{
+			LhsExpr: cond,
+			RhsExpr: notStopped,
+			OpKind:  model.OperatorKind_AND,
+		}
+		andExpr.SetDeterminedType(semtypes.BOOLEAN)
+		cond = andExpr
+	}
+	return cond
+}
+
+// createQueryBoolAssignment creates a typed AST assignment equivalent to ref = value.
+func createQueryBoolAssignment(
+	ref *ast.BLangSimpleVarRef,
+	value bool,
+	pos diagnostics.Location,
+) *ast.BLangAssignment {
+	assign := &ast.BLangAssignment{
+		VarRef: createQueryVarRefAt(ref, pos),
+		Expr:   createBoolLiteral(value, pos),
+	}
+	assign.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(assign, pos)
+	return assign
+}
+
 func appendInitialQueryRows(
 	cx *functionContext,
 	rowsRef *ast.BLangSimpleVarRef,
@@ -355,12 +1390,10 @@ func appendInitialQueryRows(
 		return nil, false
 	}
 	*initStmts = append(*initStmts, createQueryBindingDeclaration(loopBinding, pos))
-	collRef, keysRef, rowCountRef, _, ok := createQueryCollectionSource(cx, initStmts, fromClause.Collection, pos)
+	collectionSource, ok := createQueryPipelineCollectionSource(cx, initStmts, fromClause.Collection, pos)
 	if !ok {
 		return nil, false
 	}
-	loopCounterRef := createQueryCounterRef(cx, initStmts, pos)
-	elementAccess := queryElementAccess(collRef, keysRef, loopCounterRef, loopBinding.valueTy)
 
 	rowTuple := createQueryRowTupleExpr(
 		nil,
@@ -374,28 +1407,82 @@ func appendInitialQueryRows(
 	pushStmt := &ast.BLangExpressionStmt{Expr: pushRow}
 	setPositionIfMissing(pushStmt, pos)
 
-	bodyStmts := []ast.StatementNode{
-		createQueryBindingAssignment(loopBinding, elementAccess, pos),
-		pushStmt,
-		createIncrementStmt(loopCounterRef),
-	}
+	appendQueryActionCollectionSegment(
+		cx, collectionSource, loopBinding, []ast.StatementNode{pushStmt}, nil,
+		queryExpressionCompletionState(), initStmts, pos,
+	)
 
-	cond := &ast.BLangBinaryExpr{
-		LhsExpr: loopCounterRef,
+	return []queryRowBinding{loopBinding}, true
+}
+
+// appendQueryFromClauseRows expands every input row with every value produced by an intermediate
+// from clause. The collection setup and inner loop are generated inside the outer row loop because
+// the collection expression can reference bindings restored from the current input row.
+func appendQueryFromClauseRows(
+	cx *functionContext,
+	rowsRef *ast.BLangSimpleVarRef,
+	bindings []queryRowBinding,
+	clause *ast.BLangFromClause,
+	pos diagnostics.Location,
+	initStmts *[]ast.StatementNode,
+) ([]queryRowBinding, *ast.BLangSimpleVarRef, bool) {
+	fromBinding, ok := queryRowBindingFromVarDef(cx, clause.VariableDefinitionNode, "from")
+	if !ok {
+		return nil, nil, false
+	}
+	*initStmts = append(*initStmts, createQueryBindingDeclaration(fromBinding, clause.GetPosition()))
+	newRowsRef := createQueryListStore(cx, initStmts, pos)
+	rowCountRef, ok := createQueryLengthRef(cx, initStmts, rowsRef, pos)
+	if !ok {
+		return nil, nil, false
+	}
+	outerCounterRef := createQueryCounterRef(cx, initStmts, pos)
+	rowAccess := createQueryRowSlotAccess(rowsRef, 0, semtypes.LIST, pos)
+	rowAccess.IndexExpr = outerCounterRef
+	rowVarDef, rowRef := assignToLocal(cx, rowAccess, pos)
+
+	outerBody := []ast.StatementNode{rowVarDef}
+	outerBody = appendQueryRowRestoreStmts(outerBody, rowRef, bindings, pos)
+	collectionSource, ok := createQueryPipelineCollectionSource(
+		cx, &outerBody, clause.Collection, clause.GetPosition(),
+	)
+	if !ok {
+		return nil, nil, false
+	}
+	rowTuple := createQueryRowTupleExpr(
+		bindings,
+		[]ast.BLangExpression{createQueryBindingVarRef(fromBinding)},
+		pos,
+	)
+	pushRow := createArrayPushInvocation(cx.pkgCtx, newRowsRef, rowTuple)
+	if pushRow == nil {
+		return nil, nil, false
+	}
+	pushStmt := &ast.BLangExpressionStmt{Expr: pushRow}
+	setPositionIfMissing(pushStmt, clause.GetPosition())
+	appendQueryActionCollectionSegment(
+		cx, collectionSource, fromBinding, []ast.StatementNode{pushStmt}, nil,
+		queryExpressionCompletionState(), &outerBody, clause.GetPosition(),
+	)
+	outerBody = append(outerBody, createIncrementStmt(outerCounterRef))
+
+	outerCond := &ast.BLangBinaryExpr{
+		LhsExpr: outerCounterRef,
 		RhsExpr: rowCountRef,
 		OpKind:  model.OperatorKind_LESS_THAN,
 	}
-	cond.SetDeterminedType(semtypes.BOOLEAN)
-	whileStmt := &ast.BLangWhile{
-		Expr: cond,
-		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
+	outerCond.SetDeterminedType(semtypes.BOOLEAN)
+	outerWhile := &ast.BLangWhile{
+		Expr: outerCond,
+		Body: ast.BLangBlockStmt{Stmts: outerBody},
 	}
-	whileStmt.SetScope(cx.currentScope())
-	whileStmt.SetDeterminedType(semtypes.NEVER)
-	setPositionIfMissing(whileStmt, pos)
-	*initStmts = append(*initStmts, whileStmt)
+	outerWhile.SetScope(cx.currentScope())
+	outerWhile.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(outerWhile, clause.GetPosition())
+	*initStmts = append(*initStmts, outerWhile)
 
-	return []queryRowBinding{loopBinding}, true
+	newBindings := append(append([]queryRowBinding{}, bindings...), fromBinding)
+	return newBindings, newRowsRef, true
 }
 
 func queryRowBindingFromVarDef(
@@ -443,7 +1530,7 @@ func createQueryBindingVarRef(binding queryRowBinding) *ast.BLangSimpleVarRef {
 
 func createQueryBindingAssignment(
 	binding queryRowBinding,
-	expr ast.BLangExpression,
+	expr ast.BLangActionOrExpression,
 	pos diagnostics.Location,
 ) *ast.BLangAssignment {
 	assign := &ast.BLangAssignment{
@@ -484,6 +1571,114 @@ func appendQueryRowRestoreStmts(
 		))
 	}
 	return bodyStmts
+}
+
+// queryActionControlFlow finds transfers that cross this query action's generated loops.
+// Source loops and lambdas own their transfers, while nested query actions propagate through this one.
+func queryActionControlFlow(body *ast.BLangBlockStmt) queryActionControlFlowInfo {
+	info := queryActionControlFlowInfo{}
+	visitor := &queryActionControlFlowVisitor{info: &info}
+	ast.Walk(visitor, body)
+	return info
+}
+
+type queryActionControlFlowInfo struct {
+	hasBreak    bool
+	hasContinue bool
+}
+
+type queryActionControlFlowVisitor struct {
+	info *queryActionControlFlowInfo
+}
+
+var _ ast.Visitor = &queryActionControlFlowVisitor{}
+
+func (v *queryActionControlFlowVisitor) Visit(node ast.BLangNode) ast.Visitor {
+	if node == nil {
+		return nil
+	}
+	switch node.(type) {
+	case *ast.BLangWhile, *ast.BLangForeach, *ast.BLangLambdaFunction:
+		return nil
+	case *ast.BLangBreak:
+		v.info.hasBreak = true
+		return nil
+	case *ast.BLangContinue:
+		v.info.hasContinue = true
+		return nil
+	}
+	return v
+}
+
+func (v *queryActionControlFlowVisitor) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
+	return nil
+}
+
+// walkQueryActionLoopControl stops the generated query loops and records the transfer to perform
+// after they unwind. The synthetic continue skips the remainder of the current generated loop body.
+func walkQueryActionLoopControl(
+	state *queryActionControlFlowState,
+	isBreak bool,
+	pos diagnostics.Location,
+) desugaredNode[ast.StatementNode] {
+	controlRef := state.continueRef
+	if isBreak {
+		controlRef = state.breakRef
+	}
+	controlStmt := &ast.BLangContinue{}
+	controlStmt.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(controlStmt, pos)
+	return desugaredNode[ast.StatementNode]{
+		initStmts: []ast.StatementNode{
+			createQueryBoolAssignment(controlRef, true, pos),
+			createQueryBoolAssignment(state.stopRef, true, pos),
+		},
+		replacementNode: controlStmt,
+	}
+}
+
+// appendQueryActionControlDispatch emits the original transfer after all generated query loops.
+// Continue is lowered here so a surrounding desugared foreach still advances its loop variable.
+func appendQueryActionControlDispatch(
+	cx *functionContext,
+	state *queryActionControlFlowState,
+	initStmts *[]ast.StatementNode,
+	pos diagnostics.Location,
+) {
+	if state.breakRef != nil {
+		breakStmt := &ast.BLangBreak{}
+		breakStmt.SetDeterminedType(semtypes.NEVER)
+		setPositionIfMissing(breakStmt, pos)
+		breakResult := walkStatement(cx, breakStmt)
+		bodyStmts := append([]ast.StatementNode{}, breakResult.initStmts...)
+		bodyStmts = append(bodyStmts, breakResult.replacementNode)
+		*initStmts = append(*initStmts, createQueryActionControlIf(cx, state.breakRef, bodyStmts, pos))
+	}
+	if state.continueRef != nil {
+		continueStmt := &ast.BLangContinue{}
+		continueStmt.SetDeterminedType(semtypes.NEVER)
+		setPositionIfMissing(continueStmt, pos)
+		continueResult := walkStatement(cx, continueStmt)
+		bodyStmts := append([]ast.StatementNode{}, continueResult.initStmts...)
+		bodyStmts = append(bodyStmts, continueResult.replacementNode)
+		*initStmts = append(*initStmts, createQueryActionControlIf(cx, state.continueRef, bodyStmts, pos))
+	}
+}
+
+func createQueryActionControlIf(
+	cx *functionContext,
+	conditionRef *ast.BLangSimpleVarRef,
+	bodyStmts []ast.StatementNode,
+	pos diagnostics.Location,
+) *ast.BLangIf {
+	ifStmt := &ast.BLangIf{
+		Expr: createQueryVarRefAt(conditionRef, pos),
+		Body: ast.BLangBlockStmt{Stmts: bodyStmts},
+	}
+	ifStmt.SetScope(cx.currentScope())
+	ifStmt.SetDeterminedType(semtypes.NEVER)
+	setPositionIfMissing(ifStmt, pos)
+	return ifStmt
 }
 
 func createQueryRowTupleExpr(
@@ -546,11 +1741,11 @@ func applyQueryLetClauseToRows(
 			return nil, false
 		}
 		*initStmts = append(*initStmts, createQueryBindingDeclaration(binding, pos))
-		letResult := walkExpression(cx, varDef.Var.Expr.(ast.BLangExpression))
+		letResult := walkExpression(cx, varDef.Var.Expr)
 		bodyStmts = appendModelStatements(bodyStmts, letResult.initStmts)
 		bodyStmts = append(bodyStmts, createQueryBindingAssignment(
 			binding,
-			letResult.replacementNode.(ast.BLangExpression),
+			letResult.replacementNode,
 			pos,
 		))
 
@@ -671,7 +1866,7 @@ func applyQueryGroupByClauseToRows(
 			keyExprs = append(keyExprs, keyResult.replacementNode.(ast.BLangExpression))
 		case groupingKey.VariableDef != nil:
 			varDef := groupingKey.VariableDef
-			keyResult := walkExpression(cx, varDef.Var.Expr.(ast.BLangExpression))
+			keyResult := walkExpression(cx, varDef.Var.Expr)
 			bodyStmts = appendModelStatements(bodyStmts, keyResult.initStmts)
 			keyExpr := keyResult.replacementNode.(ast.BLangExpression)
 			if queryVarDefHasBindableSymbol(varDef) {
@@ -972,19 +2167,13 @@ func appendQueryJoinClauseRows(
 	}
 
 	var joinSetup []ast.StatementNode
-	joinCollRef, joinKeysRef, joinRowCountRef, _, ok := createQueryCollectionSource(cx, &joinSetup, clause.Collection, pos)
+	joinSource, ok := createQueryPipelineCollectionSource(cx, &joinSetup, clause.Collection, pos)
 	if !ok {
 		return nil, nil, false
 	}
 	outerBody = appendModelStatements(outerBody, joinSetup)
 
-	var innerSetup []ast.StatementNode
-	innerCounterRef := createQueryCounterRef(cx, &innerSetup, pos)
-	outerBody = appendModelStatements(outerBody, innerSetup)
-
-	joinElementAccess := queryElementAccess(joinCollRef, joinKeysRef, innerCounterRef, joinBinding.valueTy)
-	innerBody := []ast.StatementNode{createQueryBindingAssignment(joinBinding, joinElementAccess, pos)}
-
+	var innerBody []ast.StatementNode
 	rhsResult := walkExpression(cx, clause.OnClause.EqualsExpr)
 	innerBody = appendModelStatements(innerBody, rhsResult.initStmts)
 
@@ -1020,22 +2209,11 @@ func appendQueryJoinClauseRows(
 	}
 	matchIf.SetScope(cx.currentScope())
 	matchIf.SetDeterminedType(semtypes.NEVER)
-	innerBody = append(innerBody, matchIf, createIncrementStmt(innerCounterRef))
-
-	innerCond := &ast.BLangBinaryExpr{
-		LhsExpr: innerCounterRef,
-		RhsExpr: joinRowCountRef,
-		OpKind:  model.OperatorKind_LESS_THAN,
-	}
-	innerCond.SetDeterminedType(semtypes.BOOLEAN)
-	innerWhile := &ast.BLangWhile{
-		Expr: innerCond,
-		Body: ast.BLangBlockStmt{Stmts: innerBody},
-	}
-	innerWhile.SetScope(cx.currentScope())
-	innerWhile.SetDeterminedType(semtypes.NEVER)
-	setPositionIfMissing(innerWhile, pos)
-	outerBody = append(outerBody, innerWhile)
+	innerBody = append(innerBody, matchIf)
+	appendQueryActionCollectionSegment(
+		cx, joinSource, joinBinding, innerBody, nil,
+		queryExpressionCompletionState(), &outerBody, pos,
+	)
 
 	if matchedRef != nil {
 		notMatched := &ast.BLangUnaryExpr{
@@ -1658,7 +2836,12 @@ func appendQuerySelectResultStmts(
 ) ([]ast.StatementNode, bool) {
 	selectResult := walkExpression(cx, selectClause.Expression)
 	bodyStmts = append(bodyStmts, selectResult.initStmts...)
-	selectExpr := selectResult.replacementNode.(ast.BLangExpression)
+	selectExpr, isExpression := selectResult.replacementNode.(ast.BLangExpression)
+	if !isExpression {
+		selectVarDef, selectRef := assignActionOrExpressionToLocal(cx, selectResult.replacementNode, basePos)
+		bodyStmts = append(bodyStmts, selectVarDef)
+		selectExpr = selectRef
+	}
 
 	switch queryExpr.QueryConstructType {
 	case ast.TypeKind_MAP:
@@ -1810,11 +2993,11 @@ func appendQueryIntermediateClauseStmts(
 					*initStmts = append(*initStmts, createQueryBindingDeclaration(binding, clause.GetPosition()))
 					declaredBindings[binding.symbol] = true
 				}
-				letResult := walkExpression(cx, varDef.Var.Expr.(ast.BLangExpression))
+				letResult := walkExpression(cx, varDef.Var.Expr)
 				bodyStmts = append(bodyStmts, letResult.initStmts...)
 				bodyStmts = append(bodyStmts, createQueryBindingAssignment(
 					binding,
-					letResult.replacementNode.(ast.BLangExpression),
+					letResult.replacementNode,
 					clause.GetPosition(),
 				))
 			}

@@ -1,0 +1,78 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 15
+    %0 = ConstantLoad <nil>
+    $desugar$0 = %0;
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad 2
+    %5 = ConstantLoad 2
+    %6 = newArray [int, int, never...][%5]{%3, %4}
+    $desugar$1 = %6;
+    %8 = length($desugar$1) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %8;
+    %10 = ConstantLoad 0
+    $desugar$3 = %10;
+    GOTO bb3;
+  }
+  bb3 {
+    %13 = $desugar$3;
+    %14 = $desugar$2;
+    %12 = < %13 %14;
+    %12 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 9
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    (1, value) = %0;
+    %2 = (1, value);
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %1 = == %2 %4;
+    %1 ? bb6 : bb7;
+  }
+  bb5 {
+    PopScopeFrame
+    %1 = $desugar$0;
+    GOTO bb8;
+  }
+  bb6 {
+    PushScopeFrame 2
+    %0 = ConstantLoad boom
+    %1 = newError error(%0)
+    (3, %2) = %1;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    panic %2;
+  }
+  bb7 {
+    PushScopeFrame 0
+    PopScopeFrame
+    %6 = (1, $desugar$3);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$3) = %5;
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb8 {
+    result = %1;
+    %4 = result is error
+    %5 = %4;
+    %6 = println(%5) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+  
+  error-table {
+    [bb1, bb7] -> bb8, %1
+  }
+}

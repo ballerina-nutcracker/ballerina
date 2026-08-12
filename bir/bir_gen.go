@@ -991,12 +991,22 @@ func handleActionOrExpression(ctx context, curBB *BIRBasicBlock, expr ast.BLangA
 		return newExpression(ctx, curBB, expr)
 	case *desugar.BLangServiceInit:
 		return serviceInitExpression(ctx, curBB, expr)
+	case *ast.BLangStatementExpression:
+		stmtEffect := handleStatement(ctx, curBB, expr.Stmt)
+		return handleActionOrExpression(ctx, stmtEffect.block, expr.Expr)
 	case *ast.BLangLambdaFunction:
 		return lambdaFunction(ctx, curBB, expr)
 	case *ast.BLangRemoteMethodCallAction:
 		return generateCall(ctx, curBB, expr)
 	case *ast.BLangClientResourceAccessAction:
 		return generateResourceAccessCall(ctx, curBB, expr)
+	case *ast.BLangQueryAction:
+		ctx.internalError("query action reached BIR generation without being desugared", expr.GetPosition())
+		fallback := &ast.BLangLiteral{}
+		fallback.SetValue(nil)
+		fallback.SetDeterminedType(expr.GetDeterminedType())
+		fallback.SetPosition(expr.GetPosition())
+		return literal(ctx, curBB, fallback)
 	case *ast.BLangTypedescExpr:
 		return typedescExpression(ctx, curBB, expr)
 	case *ast.BLangXMLSequenceLiteral:
@@ -1768,18 +1778,19 @@ func trapExpression(ctx context, curBB *BIRBasicBlock, expr *ast.BLangTrapExpr) 
 	curBB.Terminator = NewGoto(trapStartBB, ctx.function().loc(expr.GetPosition()))
 
 	innerEffect := handleActionOrExpression(ctx, trapStartBB, expr.Expr)
-	trapEndBB := innerEffect.block
+	normalEndBB := innerEffect.block
 
 	mov := NewMove(innerEffect.result, resultOperand, ctx.function().loc(expr.GetPosition()))
-	trapEndBB.Instructions = append(trapEndBB.Instructions, mov)
-
-	afterTrapBB := ctx.function().addBB()
-	trapEndBB.Terminator = NewGoto(afterTrapBB, ctx.function().loc(expr.GetPosition()))
+	normalEndBB.Instructions = append(normalEndBB.Instructions, mov)
 
 	fn := ctx.function()
+	trapEndBBNumber := len(fn.bbs) - 1
+	afterTrapBB := ctx.function().addBB()
+	normalEndBB.Terminator = NewGoto(afterTrapBB, ctx.function().loc(expr.GetPosition()))
+
 	fn.errorEntries = append(fn.errorEntries, BIRErrorEntry{
 		Start:   trapStartBB.Number,
-		End:     trapEndBB.Number,
+		End:     trapEndBBNumber,
 		Target:  afterTrapBB.Number,
 		ErrorOp: resultOperand,
 	})

@@ -1,0 +1,29 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (function alwaysFails () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal query action checkpanic))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (list-constructor-expr
+              (literal 1)))
+          (do-clause
+            (block-stmt
+              (assignment
+                (wildcard-binding-pattern)
+                (simple-var-ref value))
+              (assignment
+                (wildcard-binding-pattern)
+                (check-panicked-expr
+                  (invocation alwaysFails ()))))))))))

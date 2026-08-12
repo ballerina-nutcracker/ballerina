@@ -1,0 +1,168 @@
+(main
+  (bb0 (bb1) (bb1)
+    (var-def
+      (variable employees (type
+        (array-type
+          (user-defined-type Employee) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Alex))
+            (key-value
+              (literal dept)
+              (literal OPS))
+            (key-value
+              (literal age)
+              (literal 23)))
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Ranjan))
+            (key-value
+              (literal dept)
+              (literal ENG))
+            (key-value
+              (literal age)
+              (literal 30)))
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Mia))
+            (key-value
+              (literal dept)
+              (literal ENG))
+            (key-value
+              (literal age)
+              (literal 27)))
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal John))
+            (key-value
+              (literal dept)
+              (literal HR))
+            (key-value
+              (literal age)
+              (literal 33)))))))
+    (var-def
+      (variable departments (type
+        (array-type
+          (user-defined-type Department) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (mapping-constructor-expr
+            (key-value
+              (literal code)
+              (literal ENG))
+            (key-value
+              (literal title)
+              (literal Engineering)))
+          (mapping-constructor-expr
+            (key-value
+              (literal code)
+              (literal OPS))
+            (key-value
+              (literal title)
+              (literal Operations)))
+          (mapping-constructor-expr
+            (key-value
+              (literal code)
+              (literal HR))
+            (key-value
+              (literal title)
+              (literal People)))))))
+    (var-def
+      (variable labels (type
+        (value-type string)) (expr
+        (literal ))))
+    (var-def
+      (variable ageTotal (type
+        (value-type int)) (expr
+        (literal 0))))
+    (var-def
+      (variable result (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (query-action
+          (from-clause
+            (var-def
+              (variable employee))
+            (simple-var-ref employees))
+          (join-clause
+            (var-def
+              (variable department))
+            (simple-var-ref departments)
+            (on-clause
+              (field-based-access dept
+                (simple-var-ref employee))
+              (field-based-access code
+                (simple-var-ref department))))
+          (where-clause
+            (binary-expr ==
+              (field-based-access title
+                (simple-var-ref department))
+              (literal Engineering)))
+          (let-clause
+            (var-def
+              (variable nextAge (type
+                (value-type int)) (expr
+                (binary-expr +
+                  (field-based-access age
+                    (simple-var-ref employee))
+                  (literal 1))))))
+          (order-by-clause
+            (order-key descending
+              (field-based-access age
+                (simple-var-ref employee))))
+          (limit-clause
+            (literal 2))
+          (do-clause
+            (block-stmt
+              (assignment
+                (simple-var-ref labels)
+                (binary-expr +
+                  (binary-expr +
+                    (binary-expr +
+                      (binary-expr +
+                        (simple-var-ref labels)
+                        (field-based-access name
+                          (simple-var-ref employee)))
+                      (literal :))
+                    (field-based-access title
+                      (simple-var-ref department)))
+                  (literal ;)))
+              (compound-assignment +
+                (simple-var-ref ageTotal)
+                (simple-var-ref nextAge))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref result)
+          (value-type null)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref labels))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ageTotal))))
+  )
+  (bb1 (bb0) (bb0)
+    (assignment
+      (simple-var-ref labels)
+      (binary-expr +
+        (binary-expr +
+          (binary-expr +
+            (binary-expr +
+              (simple-var-ref labels)
+              (field-based-access name
+                (simple-var-ref employee)))
+            (literal :))
+          (field-based-access title
+            (simple-var-ref department)))
+        (literal ;)))
+    (compound-assignment +
+      (simple-var-ref ageTotal)
+      (simple-var-ref nextAge))
+  )
+)

@@ -1,0 +1,568 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 
+    chars = %1;
+    %3 = ConstantLoad <nil>
+    $desugar$0 = %3;
+    %6 = ConstantLoad A😀අ
+    $desugar$1 = %6;
+    %8 = iterator($desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %8;
+    %10 = ConstantLoad false
+    $desugar$3 = %10;
+    GOTO bb2;
+  }
+  bb2 {
+    %12 = ! $desugar$3;
+    %12 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 4
+    %0 = next((1, $desugar$2)) -> bb5;
+  }
+  bb4 {
+    result = $desugar$0;
+    %14 = result is nil
+    %15 = %14;
+    %16 = println(%15) -> bb10;
+  }
+  bb5 {
+    $desugar$5 = %0;
+    %2 = $desugar$5 is nil
+    %2 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$3) = %0;
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb7 {
+    %3 = $desugar$5 is mapping
+    %3 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$5)[%1];
+    (2, char) = %0;
+    %2 = + (2, chars) (2, char);
+    (2, chars) = %2;
+    PopScopeFrame
+    GOTO bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb10 {
+    %18 = ConstantLoad A😀අ
+    %17 = == chars %18;
+    %19 = %17;
+    %20 = println(%19) -> bb11;
+  }
+  bb11 {
+    %21 = length(chars) -> bb12;
+  }
+  bb12 {
+    %22 = %21;
+    %23 = println(%22) -> bb13;
+  }
+  bb13 {
+    %24 = ConstantLoad a
+    %25 = newXMLElement(%24, ())
+    %26 = ConstantLoad text
+    %27 = newXMLText(%26)
+    %28 = ConstantLoad note
+    %29 = newXMLComment(%28)
+    %30 = newXMLSequence{%25, %27, %29}
+    items = %30;
+    %32 = ConstantLoad <nil>
+    $desugar$6 = %32;
+    $desugar$7 = items;
+    %36 = iterator($desugar$7) -> bb14;
+  }
+  bb14 {
+    $desugar$8 = %36;
+    %38 = ConstantLoad false
+    $desugar$9 = %38;
+    GOTO bb15;
+  }
+  bb15 {
+    %40 = ! $desugar$9;
+    %40 ? bb16 : bb17;
+  }
+  bb16 {
+    PushScopeFrame 4
+    %0 = next((1, $desugar$8)) -> bb18;
+  }
+  bb17 {
+    result = $desugar$6;
+    %41 = result is nil
+    %42 = %41;
+    %43 = println(%42) -> bb24;
+  }
+  bb18 {
+    $desugar$11 = %0;
+    %2 = $desugar$11 is nil
+    %2 ? bb19 : bb20;
+  }
+  bb19 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$9) = %0;
+    PopScopeFrame
+    GOTO bb20;
+  }
+  bb20 {
+    %3 = $desugar$11 is mapping
+    %3 ? bb21 : bb23;
+  }
+  bb21 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$11)[%1];
+    (2, item) = %0;
+    %2 = println((2, item)) -> bb22;
+  }
+  bb22 {
+    PopScopeFrame
+    GOTO bb23;
+  }
+  bb23 {
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb24 {
+    %44 = ConstantLoad <nil>
+    $desugar$12 = %44;
+    %47 = ConstantLoad xy
+    $desugar$13 = %47;
+    %49 = iterator($desugar$13) -> bb25;
+  }
+  bb25 {
+    $desugar$14 = %49;
+    %52 = ConstantLoad false
+    $desugar$20 = %52;
+    GOTO bb26;
+  }
+  bb26 {
+    %54 = ! $desugar$20;
+    %54 ? bb27 : bb28;
+  }
+  bb27 {
+    PushScopeFrame 4
+    %0 = next((1, $desugar$14)) -> bb29;
+  }
+  bb28 {
+    result = $desugar$12;
+    %55 = result is nil
+    %56 = %55;
+    %57 = println(%56) -> bb44;
+  }
+  bb29 {
+    $desugar$22 = %0;
+    %2 = $desugar$22 is nil
+    %2 ? bb30 : bb31;
+  }
+  bb30 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$20) = %0;
+    PopScopeFrame
+    GOTO bb31;
+  }
+  bb31 {
+    %3 = $desugar$22 is mapping
+    %3 ? bb32 : bb43;
+  }
+  bb32 {
+    PushScopeFrame 13
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$22)[%1];
+    (2, char) = %0;
+    %2 = ConstantLoad a
+    %3 = newXMLElement(%2, ())
+    %4 = ConstantLoad b
+    %5 = newXMLElement(%4, ())
+    %6 = newXMLSequence{%3, %5}
+    $desugar$15 = %6;
+    %8 = iterator($desugar$15) -> bb33;
+  }
+  bb33 {
+    $desugar$16 = %8;
+    %10 = ConstantLoad false
+    $desugar$17 = %10;
+    GOTO bb34;
+  }
+  bb34 {
+    %12 = ! $desugar$17;
+    %12 ? bb35 : bb36;
+  }
+  bb35 {
+    PushScopeFrame 4
+    %0 = next((1, $desugar$16)) -> bb37;
+  }
+  bb36 {
+    PopScopeFrame
+    GOTO bb43;
+  }
+  bb37 {
+    $desugar$19 = %0;
+    %2 = $desugar$19 is nil
+    %2 ? bb38 : bb39;
+  }
+  bb38 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$17) = %0;
+    PopScopeFrame
+    GOTO bb39;
+  }
+  bb39 {
+    %3 = $desugar$19 is mapping
+    %3 ? bb40 : bb42;
+  }
+  bb40 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$19)[%1];
+    (4, element) = %0;
+    %2 = println((4, char),(4, element)) -> bb41;
+  }
+  bb41 {
+    PopScopeFrame
+    GOTO bb42;
+  }
+  bb42 {
+    PopScopeFrame
+    GOTO bb34;
+  }
+  bb43 {
+    PopScopeFrame
+    GOTO bb26;
+  }
+  bb44 {
+    %58 = ConstantLoad <nil>
+    $desugar$23 = %58;
+    %61 = ConstantLoad bd
+    $desugar$24 = %61;
+    %63 = iterator($desugar$24) -> bb45;
+  }
+  bb45 {
+    $desugar$25 = %63;
+    %66 = ConstantLoad 0
+    %67 = newArray list[%66]{}
+    $desugar$26 = %67;
+    %69 = ConstantLoad abcd
+    $desugar$27 = %69;
+    %71 = iterator($desugar$27) -> bb46;
+  }
+  bb46 {
+    $desugar$28 = %71;
+    %73 = ConstantLoad false
+    $desugar$29 = %73;
+    GOTO bb47;
+  }
+  bb47 {
+    %75 = ! $desugar$29;
+    %75 ? bb48 : bb49;
+  }
+  bb48 {
+    PushScopeFrame 4
+    %0 = next((1, $desugar$28)) -> bb50;
+  }
+  bb49 {
+    %76 = length($desugar$26) -> bb56;
+  }
+  bb50 {
+    $desugar$31 = %0;
+    %2 = $desugar$31 is nil
+    %2 ? bb51 : bb52;
+  }
+  bb51 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$29) = %0;
+    PopScopeFrame
+    GOTO bb52;
+  }
+  bb52 {
+    %3 = $desugar$31 is mapping
+    %3 ? bb53 : bb55;
+  }
+  bb53 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$31)[%1];
+    (2, actual) = %0;
+    %2 = ConstantLoad 2
+    %3 = newArray list[%2]{(2, actual), (2, actual)}
+    %4 = push((2, $desugar$26),%3) -> bb54;
+  }
+  bb54 {
+    PopScopeFrame
+    GOTO bb55;
+  }
+  bb55 {
+    PopScopeFrame
+    GOTO bb47;
+  }
+  bb56 {
+    $desugar$32 = %76;
+    %78 = ConstantLoad false
+    $desugar$36 = %78;
+    GOTO bb57;
+  }
+  bb57 {
+    %80 = ! $desugar$36;
+    %80 ? bb58 : bb59;
+  }
+  bb58 {
+    PushScopeFrame 4
+    %0 = next((1, $desugar$25)) -> bb60;
+  }
+  bb59 {
+    result = $desugar$23;
+    %81 = result is nil
+    %82 = %81;
+    %83 = println(%82) -> bb71;
+  }
+  bb60 {
+    $desugar$38 = %0;
+    %2 = $desugar$38 is nil
+    %2 ? bb61 : bb62;
+  }
+  bb61 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$36) = %0;
+    PopScopeFrame
+    GOTO bb62;
+  }
+  bb62 {
+    %3 = $desugar$38 is mapping
+    %3 ? bb63 : bb70;
+  }
+  bb63 {
+    PushScopeFrame 8
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$38)[%1];
+    (2, expected) = %0;
+    $desugar$33 = (2, expected);
+    %3 = ConstantLoad 0
+    $desugar$34 = %3;
+    GOTO bb64;
+  }
+  bb64 {
+    %6 = $desugar$34;
+    %7 = (2, $desugar$32);
+    %5 = < %6 %7;
+    %5 ? bb65 : bb66;
+  }
+  bb65 {
+    PushScopeFrame 11
+    %0 = (3, $desugar$26)[(1, $desugar$34)];
+    $desugar$35 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$35[%3];
+    (3, actual) = %2;
+    %6 = ConstantLoad 1
+    %5 = $desugar$35[%6];
+    %4 = == (1, $desugar$33) %5;
+    %4 ? bb67 : bb69;
+  }
+  bb66 {
+    PopScopeFrame
+    GOTO bb70;
+  }
+  bb67 {
+    PushScopeFrame 1
+    %0 = println((4, actual)) -> bb68;
+  }
+  bb68 {
+    PopScopeFrame
+    GOTO bb69;
+  }
+  bb69 {
+    %8 = (1, $desugar$34);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$34) = %7;
+    PopScopeFrame
+    GOTO bb64;
+  }
+  bb70 {
+    PopScopeFrame
+    GOTO bb57;
+  }
+  bb71 {
+    %84 = ConstantLoad b
+    %85 = newXMLElement(%84, ())
+    expectedElements = %85;
+    %87 = ConstantLoad <nil>
+    $desugar$39 = %87;
+    $desugar$40 = expectedElements;
+    %91 = iterator($desugar$40) -> bb72;
+  }
+  bb72 {
+    $desugar$41 = %91;
+    %94 = ConstantLoad 0
+    %95 = newArray list[%94]{}
+    $desugar$42 = %95;
+    %97 = ConstantLoad a
+    %98 = newXMLElement(%97, ())
+    %99 = ConstantLoad b
+    %100 = newXMLElement(%99, ())
+    %101 = newXMLSequence{%98, %100}
+    $desugar$43 = %101;
+    %103 = iterator($desugar$43) -> bb73;
+  }
+  bb73 {
+    $desugar$44 = %103;
+    %105 = ConstantLoad false
+    $desugar$45 = %105;
+    GOTO bb74;
+  }
+  bb74 {
+    %107 = ! $desugar$45;
+    %107 ? bb75 : bb76;
+  }
+  bb75 {
+    PushScopeFrame 4
+    %0 = next((1, $desugar$44)) -> bb77;
+  }
+  bb76 {
+    %108 = length($desugar$42) -> bb83;
+  }
+  bb77 {
+    $desugar$47 = %0;
+    %2 = $desugar$47 is nil
+    %2 ? bb78 : bb79;
+  }
+  bb78 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$45) = %0;
+    PopScopeFrame
+    GOTO bb79;
+  }
+  bb79 {
+    %3 = $desugar$47 is mapping
+    %3 ? bb80 : bb82;
+  }
+  bb80 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$47)[%1];
+    (2, actual) = %0;
+    %2 = ConstantLoad 2
+    %3 = newArray list[%2]{(2, actual), (2, actual)}
+    %4 = push((2, $desugar$42),%3) -> bb81;
+  }
+  bb81 {
+    PopScopeFrame
+    GOTO bb82;
+  }
+  bb82 {
+    PopScopeFrame
+    GOTO bb74;
+  }
+  bb83 {
+    $desugar$48 = %108;
+    %110 = ConstantLoad false
+    $desugar$52 = %110;
+    GOTO bb84;
+  }
+  bb84 {
+    %112 = ! $desugar$52;
+    %112 ? bb85 : bb86;
+  }
+  bb85 {
+    PushScopeFrame 4
+    %0 = next((1, $desugar$41)) -> bb87;
+  }
+  bb86 {
+    result = $desugar$39;
+    %113 = result is nil
+    %114 = %113;
+    %115 = println(%114) -> bb98;
+  }
+  bb87 {
+    $desugar$54 = %0;
+    %2 = $desugar$54 is nil
+    %2 ? bb88 : bb89;
+  }
+  bb88 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (2, $desugar$52) = %0;
+    PopScopeFrame
+    GOTO bb89;
+  }
+  bb89 {
+    %3 = $desugar$54 is mapping
+    %3 ? bb90 : bb97;
+  }
+  bb90 {
+    PushScopeFrame 8
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$54)[%1];
+    (2, left) = %0;
+    $desugar$49 = (2, left);
+    %3 = ConstantLoad 0
+    $desugar$50 = %3;
+    GOTO bb91;
+  }
+  bb91 {
+    %6 = $desugar$50;
+    %7 = (2, $desugar$48);
+    %5 = < %6 %7;
+    %5 ? bb92 : bb93;
+  }
+  bb92 {
+    PushScopeFrame 11
+    %0 = (3, $desugar$42)[(1, $desugar$50)];
+    $desugar$51 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$51[%3];
+    (3, actual) = %2;
+    %6 = ConstantLoad 1
+    %5 = $desugar$51[%6];
+    %4 = == (1, $desugar$49) %5;
+    %4 ? bb94 : bb96;
+  }
+  bb93 {
+    PopScopeFrame
+    GOTO bb97;
+  }
+  bb94 {
+    PushScopeFrame 1
+    %0 = println((4, actual)) -> bb95;
+  }
+  bb95 {
+    PopScopeFrame
+    GOTO bb96;
+  }
+  bb96 {
+    %8 = (1, $desugar$50);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$50) = %7;
+    PopScopeFrame
+    GOTO bb91;
+  }
+  bb97 {
+    PopScopeFrame
+    GOTO bb84;
+  }
+  bb98 {
+    return;
+  }
+}

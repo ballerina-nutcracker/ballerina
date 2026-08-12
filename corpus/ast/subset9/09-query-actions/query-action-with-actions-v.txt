@@ -1,0 +1,352 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition NumberClient
+    (function $remote$checkedOffset () (
+      (union-type
+        (value-type int)
+        (error-type)))
+      (block-function-body
+        (return
+          (literal 20))))
+    (function $remote$checkedValues () (
+      (union-type
+        (array-type
+          (value-type int) dimensions: 1 ([]))
+        (error-type)))
+      (block-function-body
+        (return
+          (list-constructor-expr
+            (literal 4)
+            (literal 5)))))
+    (function $remote$fallible (
+      (variable value (type
+        (value-type int)))) (
+      (union-type
+        (value-type int)
+        (error-type)))
+      (block-function-body
+        (if
+          (binary-expr ==
+            (simple-var-ref value)
+            (literal 2))
+          (block-stmt
+            (return
+              (error-constructor-expr (
+                (literal value two failed))))) ())
+        (block-stmt
+          (return
+            (simple-var-ref value)))))
+    (function $remote$offset () (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 10))))
+    (function $remote$scale (
+      (variable value (type
+        (value-type int)))
+      (variable factor (type
+        (value-type int)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (simple-var-ref value)
+            (simple-var-ref factor)))))
+    (function $remote$values () (
+      (array-type
+        (value-type int) dimensions: 1 ([])))
+      (block-function-body
+        (return
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3))))))
+  (class-definition NumberResourceClient
+    (resource-function get name:values
+      (array-type
+        (value-type int) dimensions: 1 ([]))
+      (block-function-body
+        (return
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+    (resource-function get name:offset
+      (value-type int)
+      (block-function-body
+        (return
+          (literal 5))))
+    (resource-function get name:scale
+      (param value
+        (value-type int))
+      (param factor
+        (value-type int))
+      (value-type int)
+      (block-function-body
+        (return
+          (binary-expr *
+            (simple-var-ref value)
+            (simple-var-ref factor))))))
+  (function runCheckedAction (
+    (variable numbers (type
+      (user-defined-type NumberClient)))
+    (variable results (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (checked-expr
+              (remote-method-call checkedValues expr:
+                (simple-var-ref numbers) ())))
+          (let-clause
+            (var-def
+              (variable offset (type
+                (value-type int)) (expr
+                (checked-expr
+                  (remote-method-call checkedOffset expr:
+                    (simple-var-ref numbers) ()))))))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation push expr:
+                  (simple-var-ref results) (
+                  (binary-expr +
+                    (simple-var-ref value)
+                    (simple-var-ref offset)))))))))))
+  (function runFailingAction (
+    (variable numbers (type
+      (user-defined-type NumberClient)))
+    (variable results (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (remote-method-call values expr:
+              (simple-var-ref numbers) ()))
+          (do-clause
+            (block-stmt
+              (var-def
+                (variable result (type
+                  (value-type int)) (expr
+                  (checked-expr
+                    (remote-method-call fallible expr:
+                      (simple-var-ref numbers) (
+                      (simple-var-ref value)))))))
+              (expression-stmt
+                (invocation push expr:
+                  (simple-var-ref results) (
+                  (simple-var-ref result))))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable numbers (type
+          (user-defined-type NumberClient)) (expr
+          (new ()))))
+      (var-def
+        (variable results (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (remote-method-call values expr:
+              (simple-var-ref numbers) ()))
+          (let-clause
+            (var-def
+              (variable offset (type
+                (value-type int)) (expr
+                (remote-method-call offset expr:
+                  (simple-var-ref numbers) ())))))
+          (do-clause
+            (block-stmt
+              (var-def
+                (variable scaled (type
+                  (value-type int)) (expr
+                  (remote-method-call scale expr:
+                    (simple-var-ref numbers) (
+                    (simple-var-ref value)
+                    (literal 2))))))
+              (expression-stmt
+                (invocation push expr:
+                  (simple-var-ref results) (
+                  (binary-expr +
+                    (simple-var-ref scaled)
+                    (simple-var-ref offset)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref results))))
+      (assignment
+        (simple-var-ref results)
+        (list-constructor-expr))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (remote-method-call values expr:
+              (simple-var-ref numbers) ()))
+          (let-clause
+            (var-def
+              (variable offset (type
+                (value-type int)) (expr
+                (remote-method-call offset expr:
+                  (simple-var-ref numbers) ())))))
+          (do-clause
+            (block-stmt
+              (var-def
+                (variable scaled (type
+                  (value-type int)) (expr
+                  (remote-method-call scale expr:
+                    (simple-var-ref numbers) (
+                    (simple-var-ref value)
+                    (literal 3))))))
+              (expression-stmt
+                (invocation push expr:
+                  (simple-var-ref results) (
+                  (binary-expr +
+                    (simple-var-ref scaled)
+                    (simple-var-ref offset)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref results))))
+      (assignment
+        (simple-var-ref results)
+        (list-constructor-expr))
+      (var-def
+        (variable checkedResult (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (invocation runCheckedAction (
+            (simple-var-ref numbers)
+            (simple-var-ref results))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref checkedResult)
+            (value-type null)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref results))))
+      (var-def
+        (variable resources (type
+          (user-defined-type NumberResourceClient)) (expr
+          (new ()))))
+      (assignment
+        (simple-var-ref results)
+        (list-constructor-expr))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (client-resource-access get expr:
+              (simple-var-ref resources) name:values))
+          (let-clause
+            (var-def
+              (variable offset (type
+                (value-type int)) (expr
+                (client-resource-access get expr:
+                  (simple-var-ref resources) name:offset)))))
+          (do-clause
+            (block-stmt
+              (var-def
+                (variable scaled (type
+                  (value-type int)) (expr
+                  (client-resource-access get expr:
+                    (simple-var-ref resources) name:scale computed:
+                    (simple-var-ref value) computed:
+                    (literal 4)))))
+              (expression-stmt
+                (invocation push expr:
+                  (simple-var-ref results) (
+                  (binary-expr +
+                    (simple-var-ref scaled)
+                    (simple-var-ref offset)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref results))))
+      (var-def
+        (variable nestedTotal (type
+          (value-type int)) (expr
+          (literal 0))))
+      (expression-stmt
+        (query-action
+          (from-clause
+            (var-def
+              (variable value))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)))
+          (let-clause
+            (var-def
+              (variable nestedResult (type
+                (union-type
+                  (error-type)
+                  (value-type null))) (expr
+                (query-action
+                  (from-clause
+                    (var-def
+                      (variable nestedValue))
+                    (list-constructor-expr
+                      (simple-var-ref value)
+                      (binary-expr +
+                        (simple-var-ref value)
+                        (literal 1))))
+                  (do-clause
+                    (block-stmt
+                      (compound-assignment +
+                        (simple-var-ref nestedTotal)
+                        (simple-var-ref nestedValue)))))))))
+          (where-clause
+            (type-test-expr is
+              (simple-var-ref nestedResult)
+              (value-type null)))
+          (do-clause
+            (block-stmt
+              (compound-assignment +
+                (simple-var-ref nestedTotal)
+                (binary-expr *
+                  (simple-var-ref value)
+                  (literal 10)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nestedTotal))))
+      (assignment
+        (simple-var-ref results)
+        (list-constructor-expr))
+      (var-def
+        (variable failedResult (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (invocation runFailingAction (
+            (simple-var-ref numbers)
+            (simple-var-ref results))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref failedResult)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref results)))))))

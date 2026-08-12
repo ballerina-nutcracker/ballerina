@@ -1,0 +1,396 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad name
+    %2 = ConstantLoad Alex
+    %3 = ConstantLoad dept
+    %4 = ConstantLoad OPS
+    %5 = ConstantLoad age
+    %6 = ConstantLoad 23
+    %7 = newMap {| age: int, dept: string, name: string, never... |}{%1=%2, %3=%4, %5=%6}
+    %8 = ConstantLoad name
+    %9 = ConstantLoad Ranjan
+    %10 = ConstantLoad dept
+    %11 = ConstantLoad ENG
+    %12 = ConstantLoad age
+    %13 = ConstantLoad 30
+    %14 = newMap {| age: int, dept: string, name: string, never... |}{%8=%9, %10=%11, %12=%13}
+    %15 = ConstantLoad name
+    %16 = ConstantLoad Mia
+    %17 = ConstantLoad dept
+    %18 = ConstantLoad ENG
+    %19 = ConstantLoad age
+    %20 = ConstantLoad 27
+    %21 = newMap {| age: int, dept: string, name: string, never... |}{%15=%16, %17=%18, %19=%20}
+    %22 = ConstantLoad name
+    %23 = ConstantLoad John
+    %24 = ConstantLoad dept
+    %25 = ConstantLoad HR
+    %26 = ConstantLoad age
+    %27 = ConstantLoad 33
+    %28 = newMap {| age: int, dept: string, name: string, never... |}{%22=%23, %24=%25, %26=%27}
+    %29 = ConstantLoad 4
+    %30 = newArray [{| age: int, dept: string, name: string, never... |}...][%29]{%7, %14, %21, %28}
+    employees = %30;
+    %32 = ConstantLoad code
+    %33 = ConstantLoad ENG
+    %34 = ConstantLoad title
+    %35 = ConstantLoad Engineering
+    %36 = newMap {| code: string, title: string, never... |}{%32=%33, %34=%35}
+    %37 = ConstantLoad code
+    %38 = ConstantLoad OPS
+    %39 = ConstantLoad title
+    %40 = ConstantLoad Operations
+    %41 = newMap {| code: string, title: string, never... |}{%37=%38, %39=%40}
+    %42 = ConstantLoad code
+    %43 = ConstantLoad HR
+    %44 = ConstantLoad title
+    %45 = ConstantLoad People
+    %46 = newMap {| code: string, title: string, never... |}{%42=%43, %44=%45}
+    %47 = ConstantLoad 3
+    %48 = newArray [{| code: string, title: string, never... |}...][%47]{%36, %41, %46}
+    departments = %48;
+    %50 = ConstantLoad 
+    labels = %50;
+    %52 = ConstantLoad 0
+    ageTotal = %52;
+    %54 = ConstantLoad <nil>
+    $desugar$0 = %54;
+    $desugar$1 = employees;
+    %58 = length($desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %58;
+    %61 = ConstantLoad 0
+    %62 = newArray list[%61]{}
+    $desugar$3 = %62;
+    $desugar$4 = departments;
+    %65 = length($desugar$4) -> bb2;
+  }
+  bb2 {
+    $desugar$5 = %65;
+    %67 = ConstantLoad 0
+    $desugar$6 = %67;
+    GOTO bb3;
+  }
+  bb3 {
+    %70 = $desugar$6;
+    %71 = $desugar$5;
+    %69 = < %70 %71;
+    %69 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 10
+    %0 = (1, $desugar$4)[(1, $desugar$6)];
+    (1, department) = %0;
+    %2 = ConstantLoad code
+    %1 = (1, department)[%2];
+    %3 = ConstantLoad 2
+    %4 = newArray list[%3]{(1, department), %1}
+    %5 = push((1, $desugar$3),%4) -> bb6;
+  }
+  bb5 {
+    %72 = ConstantLoad 2
+    $desugar$7 = %72;
+    %75 = $desugar$7;
+    %76 = ConstantLoad 0
+    %77 = %76;
+    %74 = < %75 %77;
+    %74 ? bb7 : bb8;
+  }
+  bb6 {
+    %7 = (1, $desugar$6);
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    (1, $desugar$6) = %6;
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb7 {
+    PushScopeFrame 2
+    %0 = ConstantLoad limit cannot be negative
+    %1 = newError error(%0)
+    (1, %78) = %1;
+    PopScopeFrame
+    panic %78;
+  }
+  bb8 {
+    %79 = ConstantLoad 0
+    $desugar$8 = %79;
+    %81 = ConstantLoad false
+    $desugar$9 = %81;
+    %84 = $desugar$7;
+    %85 = ConstantLoad 0
+    %86 = %85;
+    %83 = == %84 %86;
+    %83 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, $desugar$9) = %0;
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    %87 = ConstantLoad 0
+    %88 = newArray list[%87]{}
+    $desugar$10 = %88;
+    %91 = ConstantLoad 0
+    $desugar$14 = %91;
+    GOTO bb11;
+  }
+  bb11 {
+    %94 = $desugar$14;
+    %95 = $desugar$2;
+    %93 = < %94 %95;
+    %93 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 13
+    %0 = (1, $desugar$1)[(1, $desugar$14)];
+    (1, employee) = %0;
+    %2 = ConstantLoad dept
+    %1 = (1, employee)[%2];
+    $desugar$11 = %1;
+    %4 = ConstantLoad 0
+    $desugar$12 = %4;
+    GOTO bb14;
+  }
+  bb13 {
+    %96 = ConstantLoad 0
+    %97 = newArray list[%96]{}
+    $desugar$15 = %97;
+    %99 = ConstantLoad 0
+    %100 = newArray list[%99]{}
+    $desugar$16 = %100;
+    %102 = ConstantLoad 0
+    %103 = newArray list[%102]{}
+    $desugar$17 = %103;
+    %105 = push($desugar$17,$desugar$10) -> bb22;
+  }
+  bb14 {
+    %7 = $desugar$12;
+    %8 = (1, $desugar$5);
+    %6 = < %7 %8;
+    %6 ? bb15 : bb16;
+  }
+  bb15 {
+    PushScopeFrame 11
+    %0 = (2, $desugar$3)[(1, $desugar$12)];
+    $desugar$13 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$13[%3];
+    (2, department) = %2;
+    %6 = ConstantLoad 1
+    %5 = $desugar$13[%6];
+    %4 = == (1, $desugar$11) %5;
+    %4 ? bb17 : bb21;
+  }
+  bb16 {
+    %10 = (1, $desugar$14);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, $desugar$14) = %9;
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb17 {
+    PushScopeFrame 4
+    %2 = ConstantLoad title
+    %1 = (3, department)[%2];
+    %3 = ConstantLoad Engineering
+    %0 = == %1 %3;
+    %0 ? bb18 : bb20;
+  }
+  bb18 {
+    PushScopeFrame 9
+    %2 = ConstantLoad age
+    %1 = (4, employee)[%2];
+    %3 = %1;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %0 = + %3 %5;
+    (4, nextAge) = %0;
+    %6 = ConstantLoad 3
+    %7 = newArray list[%6]{(4, employee), (4, department), (4, nextAge)}
+    %8 = push((4, $desugar$10),%7) -> bb19;
+  }
+  bb19 {
+    PopScopeFrame
+    GOTO bb20;
+  }
+  bb20 {
+    PopScopeFrame
+    GOTO bb21;
+  }
+  bb21 {
+    %8 = (1, $desugar$12);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$12) = %7;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb22 {
+    %106 = length($desugar$10) -> bb23;
+  }
+  bb23 {
+    $desugar$18 = %106;
+    %108 = ConstantLoad 0
+    $desugar$19 = %108;
+    GOTO bb24;
+  }
+  bb24 {
+    %111 = $desugar$19;
+    %112 = $desugar$18;
+    %110 = < %111 %112;
+    %110 ? bb25 : bb26;
+  }
+  bb25 {
+    PushScopeFrame 19
+    %0 = (1, $desugar$10)[(1, $desugar$19)];
+    $desugar$20 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$20[%3];
+    (1, employee) = %2;
+    %5 = ConstantLoad 1
+    %4 = $desugar$20[%5];
+    (1, department) = %4;
+    %7 = ConstantLoad 2
+    %6 = $desugar$20[%7];
+    (1, nextAge) = %6;
+    %9 = ConstantLoad age
+    %8 = (1, employee)[%9];
+    %10 = ConstantLoad 1
+    %11 = newArray list[%10]{%8}
+    %12 = push((1, $desugar$15),%11) -> bb27;
+  }
+  bb26 {
+    %113 = ConstantLoad false
+    %114 = ConstantLoad 1
+    %115 = newArray list[%114]{%113}
+    %116 = querySort($desugar$15,%115,$desugar$16,$desugar$17) -> bb29;
+  }
+  bb27 {
+    %13 = (1, $desugar$19);
+    %14 = push((1, $desugar$16),%13) -> bb28;
+  }
+  bb28 {
+    %16 = (1, $desugar$19);
+    %17 = ConstantLoad 1
+    %18 = %17;
+    %15 = + %16 %18;
+    (1, $desugar$19) = %15;
+    PopScopeFrame
+    GOTO bb24;
+  }
+  bb29 {
+    %117 = length($desugar$10) -> bb30;
+  }
+  bb30 {
+    $desugar$21 = %117;
+    %119 = ConstantLoad 0
+    $desugar$22 = %119;
+    GOTO bb31;
+  }
+  bb31 {
+    %123 = $desugar$22;
+    %124 = $desugar$21;
+    %122 = < %123 %124;
+    %121 = %122;
+    %122 ? bb32 : bb33;
+  }
+  bb32 {
+    %125 = ! $desugar$9;
+    %121 = %125;
+    GOTO bb33;
+  }
+  bb33 {
+    %121 ? bb34 : bb35;
+  }
+  bb34 {
+    PushScopeFrame 15
+    %0 = (1, $desugar$10)[(1, $desugar$22)];
+    $desugar$23 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$23[%3];
+    (1, employee) = %2;
+    %5 = ConstantLoad 1
+    %4 = $desugar$23[%5];
+    (1, department) = %4;
+    %7 = ConstantLoad 2
+    %6 = $desugar$23[%7];
+    (1, nextAge) = %6;
+    %9 = (1, $desugar$8);
+    %10 = (1, $desugar$7);
+    %8 = < %9 %10;
+    %8 ? bb36 : bb39;
+  }
+  bb35 {
+    result = $desugar$0;
+    %127 = result is nil
+    %128 = %127;
+    %129 = println(%128) -> bb40;
+  }
+  bb36 {
+    PushScopeFrame 20
+    %1 = (2, $desugar$8);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = + %1 %3;
+    (2, $desugar$8) = %0;
+    %5 = (2, $desugar$8);
+    %6 = (2, $desugar$7);
+    %4 = >= %5 %6;
+    %4 ? bb37 : bb38;
+  }
+  bb37 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (3, $desugar$9) = %0;
+    PopScopeFrame
+    GOTO bb38;
+  }
+  bb38 {
+    %12 = ConstantLoad name
+    %11 = (2, employee)[%12];
+    %10 = + (2, labels) %11;
+    %13 = ConstantLoad :
+    %9 = + %10 %13;
+    %15 = ConstantLoad title
+    %14 = (2, department)[%15];
+    %8 = + %9 %14;
+    %16 = ConstantLoad ;
+    %7 = + %8 %16;
+    (2, labels) = %7;
+    %18 = (2, ageTotal);
+    %19 = (2, nextAge);
+    %17 = + %18 %19;
+    (2, ageTotal) = %17;
+    PopScopeFrame
+    GOTO bb39;
+  }
+  bb39 {
+    %12 = (1, $desugar$22);
+    %13 = ConstantLoad 1
+    %14 = %13;
+    %11 = + %12 %14;
+    (1, $desugar$22) = %11;
+    PopScopeFrame
+    GOTO bb31;
+  }
+  bb40 {
+    %130 = println(labels) -> bb41;
+  }
+  bb41 {
+    %131 = ageTotal;
+    %132 = println(%131) -> bb42;
+  }
+  bb42 {
+    return;
+  }
+}

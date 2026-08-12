@@ -1,0 +1,195 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable chars (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable char (type
+                  (value-type string))))
+              (literal A😀අ))
+            (select-clause
+              (simple-var-ref char))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref chars) ()))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (simple-var-ref chars)
+              (literal 0))
+            (literal A)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (simple-var-ref chars)
+              (literal 1))
+            (literal 😀)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (simple-var-ref chars)
+              (literal 2))
+            (literal අ)))))
+      (var-def
+        (variable ordered (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable char (type
+                  (value-type string))))
+              (literal cba))
+            (where-clause
+              (binary-expr !=
+                (simple-var-ref char)
+                (literal b)))
+            (order-by-clause
+              (order-key ascending
+                (simple-var-ref char)))
+            (limit-clause
+              (literal 2))
+            (select-clause
+              (simple-var-ref char))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref ordered))))
+      (var-def
+        (variable items (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (union-type
+              (union-type
+                (user-defined-type xml Element)
+                (user-defined-type xml Text))
+              (user-defined-type xml Comment)))) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-text-literal text)
+            (xml-comment-literal note)))))
+      (var-def
+        (variable selectedItems (type
+          (array-type
+            (value-type xml) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable item))
+              (simple-var-ref items))
+            (select-clause
+              (simple-var-ref item))))))
+      (foreach
+        (var-def
+          (variable item (type
+            (value-type xml))))
+        (simple-var-ref selectedItems)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref item))))))
+      (var-def
+        (variable products (type
+          (array-type
+            (tuple-type
+              (value-type string)
+              (user-defined-type xml Element)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable char (type
+                  (value-type string))))
+              (literal xy))
+            (from-clause
+              (var-def
+                (variable element (type
+                  (user-defined-type xml Element))))
+              (xml-sequence-literal
+                (xml-element-literal a)
+                (xml-element-literal b)))
+            (select-clause
+              (list-constructor-expr
+                (simple-var-ref char)
+                (simple-var-ref element)))))))
+      (foreach
+        (var-def
+          (variable product (type
+            (tuple-type
+              (value-type string)
+              (user-defined-type xml Element)))))
+        (simple-var-ref products)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref product)
+                (literal 0))
+              (index-based-access
+                (simple-var-ref product)
+                (literal 1)))))))
+      (var-def
+        (variable matchedChars (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable expected (type
+                  (value-type string))))
+              (literal bd))
+            (join-clause
+              (var-def
+                (variable actual (type
+                  (value-type string))))
+              (literal abcd)
+              (on-clause
+                (simple-var-ref expected)
+                (simple-var-ref actual)))
+            (select-clause
+              (simple-var-ref actual))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref matchedChars))))
+      (var-def
+        (variable expectedElements (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (xml-element-literal b))))
+      (var-def
+        (variable matchedElements (type
+          (array-type
+            (user-defined-type xml Element) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable left (type
+                  (user-defined-type xml Element))))
+              (simple-var-ref expectedElements))
+            (join-clause
+              (var-def
+                (variable actual (type
+                  (user-defined-type xml Element))))
+              (xml-sequence-literal
+                (xml-element-literal a)
+                (xml-element-literal b))
+              (on-clause
+                (simple-var-ref left)
+                (simple-var-ref actual)))
+            (select-clause
+              (simple-var-ref actual))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref matchedElements)
+            (literal 0))))))))

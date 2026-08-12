@@ -51,7 +51,7 @@ type packageContext struct {
 	defaultClosureOwners   map[model.SymbolRef]struct{}
 	desugarSymbolCounter   int
 	typeContext            semtypes.Context
-	xmlIteratorTypes       *semtypes.SemTypeCache
+	iteratorTypes          *semtypes.SemTypeCache
 }
 
 var _ desugarContext = &packageContext{}
@@ -64,7 +64,7 @@ func newPackageContext(compilerCtx *context.CompilerContext, pkg *ast.BLangPacka
 		addedImplicitImports: make(map[string]bool),
 		defaultClosureOwners: make(map[model.SymbolRef]struct{}),
 		typeContext:          semtypes.ContextFrom(compilerCtx.GetTypeEnv()),
-		xmlIteratorTypes:     semtypes.NewSemTypeCache(),
+		iteratorTypes:        semtypes.NewSemTypeCache(),
 	}
 }
 
@@ -199,6 +199,7 @@ type functionContext struct {
 	scopeStack           []model.Scope
 	desugarSymbolCounter int
 	loopVarStack         []ast.LExpr // Stack to track loop variables (nil for while, varRef for desugared foreach)
+	queryActionControls  []*queryActionControlFlowState
 	defaultClosureVars   map[model.SymbolRef]model.SymbolRef
 	generatedFunctions   []*ast.BLangFunction
 	// typeContext is the non-shared type context for this function. It is owned
@@ -284,6 +285,29 @@ func (ctx *functionContext) currentLoopVar() ast.LExpr {
 		return nil
 	}
 	return ctx.loopVarStack[len(ctx.loopVarStack)-1]
+}
+
+func (ctx *functionContext) pushQueryActionControl(state *queryActionControlFlowState) {
+	ctx.queryActionControls = append(ctx.queryActionControls, state)
+}
+
+func (ctx *functionContext) popQueryActionControl() {
+	if len(ctx.queryActionControls) == 0 {
+		ctx.internalError("cannot pop from empty query action control stack")
+		return
+	}
+	ctx.queryActionControls = ctx.queryActionControls[:len(ctx.queryActionControls)-1]
+}
+
+func (ctx *functionContext) currentQueryActionControl() *queryActionControlFlowState {
+	if len(ctx.queryActionControls) == 0 {
+		return nil
+	}
+	state := ctx.queryActionControls[len(ctx.queryActionControls)-1]
+	if len(ctx.loopVarStack) != state.loopDepth {
+		return nil
+	}
+	return state
 }
 
 func (ctx *functionContext) nextDesugarSymbolName() string {

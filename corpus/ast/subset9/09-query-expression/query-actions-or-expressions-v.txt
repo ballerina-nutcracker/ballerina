@@ -1,0 +1,376 @@
+(compilation-unit  regular-source
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition NumberClient
+    (function $remote$checkedFactor () (
+      (union-type
+        (value-type int)
+        (error-type)))
+      (block-function-body
+        (return
+          (literal 3))))
+    (function $remote$checkedValues () (
+      (union-type
+        (array-type
+          (value-type int) dimensions: 1 ([]))
+        (error-type)))
+      (block-function-body
+        (return
+          (list-constructor-expr
+            (literal 4)
+            (literal 5)))))
+    (function $remote$factor () (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 2))))
+    (function $remote$fallible (
+      (variable value (type
+        (value-type int)))) (
+      (union-type
+        (value-type int)
+        (error-type)))
+      (block-function-body
+        (if
+          (binary-expr ==
+            (simple-var-ref value)
+            (literal 2))
+          (block-stmt
+            (return
+              (error-constructor-expr (
+                (literal value two failed))))) ())
+        (block-stmt
+          (return
+            (binary-expr *
+              (simple-var-ref value)
+              (literal 10))))))
+    (function $remote$pair (
+      (variable value (type
+        (value-type int)))) (
+      (tuple-type
+        (value-type string)
+        (value-type int)))
+      (block-function-body
+        (var-def
+          (variable key (type
+            (value-type string)) (expr
+            (literal three))))
+        (if
+          (binary-expr ==
+            (simple-var-ref value)
+            (literal 1))
+          (block-stmt
+            (assignment
+              (simple-var-ref key)
+              (literal one))) (
+          (if
+            (binary-expr ==
+              (simple-var-ref value)
+              (literal 2))
+            (block-stmt
+              (assignment
+                (simple-var-ref key)
+                (literal two))) ())))
+        (return
+          (list-constructor-expr
+            (simple-var-ref key)
+            (binary-expr *
+              (simple-var-ref value)
+              (literal 10))))))
+    (function $remote$scale (
+      (variable value (type
+        (value-type int)))
+      (variable factor (type
+        (value-type int)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (simple-var-ref value)
+            (simple-var-ref factor)))))
+    (function $remote$values () (
+      (array-type
+        (value-type int) dimensions: 1 ([])))
+      (block-function-body
+        (return
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3))))))
+  (class-definition NumberResourceClient
+    (resource-function get name:values
+      (array-type
+        (value-type int) dimensions: 1 ([]))
+      (block-function-body
+        (return
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+    (resource-function get name:factor
+      (value-type int)
+      (block-function-body
+        (return
+          (literal 4))))
+    (resource-function get name:scale
+      (param value
+        (value-type int))
+      (param factor
+        (value-type int))
+      (value-type int)
+      (block-function-body
+        (return
+          (binary-expr *
+            (simple-var-ref value)
+            (simple-var-ref factor))))))
+  (function checkedQuery (
+    (variable numbers (type
+      (user-defined-type NumberClient)))) (
+    (union-type
+      (array-type
+        (value-type int) dimensions: 1 ([]))
+      (error-type)))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable value))
+            (checked-expr
+              (remote-method-call checkedValues expr:
+                (simple-var-ref numbers) ())))
+          (let-clause
+            (var-def
+              (variable factor (type
+                (value-type int)) (expr
+                (checked-expr
+                  (remote-method-call checkedFactor expr:
+                    (simple-var-ref numbers) ()))))))
+          (select-clause
+            (checked-expr
+              (remote-method-call scale expr:
+                (simple-var-ref numbers) (
+                (simple-var-ref value)
+                (simple-var-ref factor)))))))))
+  (function failingCheckedQuery (
+    (variable numbers (type
+      (user-defined-type NumberClient)))) (
+    (union-type
+      (array-type
+        (value-type int) dimensions: 1 ([]))
+      (error-type)))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable value))
+            (remote-method-call values expr:
+              (simple-var-ref numbers) ()))
+          (select-clause
+            (checked-expr
+              (remote-method-call fallible expr:
+                (simple-var-ref numbers) (
+                (simple-var-ref value)))))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable numbers (type
+          (user-defined-type NumberClient)) (expr
+          (new ()))))
+      (var-def
+        (variable selected (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable value))
+              (remote-method-call values expr:
+                (simple-var-ref numbers) ()))
+            (let-clause
+              (var-def
+                (variable factor (type
+                  (value-type int)) (expr
+                  (remote-method-call factor expr:
+                    (simple-var-ref numbers) ())))))
+            (select-clause
+              (remote-method-call scale expr:
+                (simple-var-ref numbers) (
+                (simple-var-ref value)
+                (simple-var-ref factor))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref selected))))
+      (assignment
+        (simple-var-ref selected)
+        (query-expr
+          (from-clause
+            (var-def
+              (variable value))
+            (remote-method-call values expr:
+              (simple-var-ref numbers) ()))
+          (let-clause
+            (var-def
+              (variable factor (type
+                (value-type int)) (expr
+                (remote-method-call factor expr:
+                  (simple-var-ref numbers) ())))))
+          (select-clause
+            (remote-method-call scale expr:
+              (simple-var-ref numbers) (
+              (simple-var-ref value)
+              (simple-var-ref factor))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref selected))))
+      (var-def
+        (variable mapped (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable value))
+              (remote-method-call values expr:
+                (simple-var-ref numbers) ()))
+            (select-clause
+              (remote-method-call pair expr:
+                (simple-var-ref numbers) (
+                (simple-var-ref value))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref mapped)
+            (literal one))
+          (index-based-access
+            (simple-var-ref mapped)
+            (literal two))
+          (index-based-access
+            (simple-var-ref mapped)
+            (literal three)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation checkedQuery (
+              (simple-var-ref numbers)))))))
+      (var-def
+        (variable resources (type
+          (user-defined-type NumberResourceClient)) (expr
+          (new ()))))
+      (assignment
+        (simple-var-ref selected)
+        (query-expr
+          (from-clause
+            (var-def
+              (variable value))
+            (client-resource-access get expr:
+              (simple-var-ref resources) name:values))
+          (let-clause
+            (var-def
+              (variable factor (type
+                (value-type int)) (expr
+                (client-resource-access get expr:
+                  (simple-var-ref resources) name:factor)))))
+          (select-clause
+            (client-resource-access get expr:
+              (simple-var-ref resources) name:scale computed:
+              (simple-var-ref value) computed:
+              (simple-var-ref factor)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref selected))))
+      (var-def
+        (variable nestedTotal (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable actionResults (type
+          (array-type
+            (union-type
+              (error-type)
+              (value-type null)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable value))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))
+            (select-clause
+              (query-action
+                (from-clause
+                  (var-def
+                    (variable nestedValue))
+                  (list-constructor-expr
+                    (simple-var-ref value)
+                    (binary-expr +
+                      (simple-var-ref value)
+                      (literal 1))))
+                (do-clause
+                  (block-stmt
+                    (compound-assignment +
+                      (simple-var-ref nestedTotal)
+                      (simple-var-ref nestedValue))))))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr &&
+            (type-test-expr is
+              (index-based-access
+                (simple-var-ref actionResults)
+                (literal 0))
+              (value-type null))
+            (type-test-expr is
+              (index-based-access
+                (simple-var-ref actionResults)
+                (literal 1))
+              (value-type null))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nestedTotal))))
+      (var-def
+        (variable fallibleValues (type
+          (array-type
+            (union-type
+              (value-type int)
+              (error-type)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable value))
+              (remote-method-call values expr:
+                (simple-var-ref numbers) ()))
+            (select-clause
+              (remote-method-call fallible expr:
+                (simple-var-ref numbers) (
+                (simple-var-ref value))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref fallibleValues)
+            (literal 0))
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref fallibleValues)
+              (literal 1))
+            (error-type))
+          (index-based-access
+            (simple-var-ref fallibleValues)
+            (literal 2)))))
+      (var-def
+        (variable failedResult (type
+          (union-type
+            (array-type
+              (value-type int) dimensions: 1 ([]))
+            (error-type))) (expr
+          (invocation failingCheckedQuery (
+            (simple-var-ref numbers))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref failedResult)
+            (error-type))))))))

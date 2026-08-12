@@ -1,0 +1,592 @@
+module $anon.. v 0.0.0;
+class NumberClient {
+
+  $remote$checkedOffset() -> int|error{
+    bb0 {
+      %2 = ConstantLoad 20
+      %0 = %2;
+      return;
+    }
+  }
+
+  $remote$checkedValues() -> error|[int...]{
+    bb0 {
+      %2 = ConstantLoad 4
+      %3 = ConstantLoad 5
+      %4 = ConstantLoad 2
+      %5 = newArray [int...][%4]{%2, %3}
+      %0 = %5;
+      return;
+    }
+  }
+
+  $remote$fallible(int) -> int|error{
+    bb0 {
+      %4 = value;
+      %5 = ConstantLoad 2
+      %6 = %5;
+      %3 = == %4 %6;
+      %3 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %0 = ConstantLoad value two failed
+      %1 = newError error(%0)
+      (1, %0) = %1;
+      PopScopeFrame
+      return;
+    }
+    bb2 {
+      PushScopeFrame 0
+      (1, %0) = (1, value);
+      PopScopeFrame
+      return;
+    }
+  }
+
+  $remote$offset() -> int{
+    bb0 {
+      %2 = ConstantLoad 10
+      %0 = %2;
+      return;
+    }
+  }
+
+  $remote$scale(int,int) -> int{
+    bb0 {
+      %5 = value;
+      %6 = factor;
+      %4 = * %5 %6;
+      %0 = %4;
+      return;
+    }
+  }
+
+  $remote$values() -> [int...]{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad 2
+      %4 = ConstantLoad 3
+      %5 = ConstantLoad 3
+      %6 = newArray [int...][%5]{%2, %3, %4}
+      %0 = %6;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class NumberResourceClient {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get values NumberResourceClient.$resource$get$0() -> [int...]{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad 2
+      %4 = ConstantLoad 3
+      %5 = ConstantLoad 3
+      %6 = newArray [int...][%5]{%2, %3, %4}
+      %0 = %6;
+      return;
+    }
+  }
+
+  resource get offset NumberResourceClient.$resource$get$1() -> int{
+    bb0 {
+      %2 = ConstantLoad 5
+      %0 = %2;
+      return;
+    }
+  }
+
+  resource get scale/[int]/[int] NumberResourceClient.$resource$get$2(int,int) -> int{
+    bb0 {
+      %5 = value;
+      %6 = factor;
+      %4 = * %5 %6;
+      %0 = %4;
+      return;
+    }
+  }
+}
+runCheckedAction(client object { private remote function $remote$checkedOffset() returns int|error; private remote function $remote$checkedValues() returns error|[int...]; private remote function $remote$fallible(int) returns int|error; private remote function $remote$offset() returns int; private remote function $remote$scale(int, int) returns int; private remote function $remote$values() returns [int...]; public function init() returns nil },[int...]) -> nil|error{
+  bb0 {
+    %3 = ConstantLoad <nil>
+    $desugar$0 = %3;
+    %6 = $remote$checkedValues(numbers) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %6;
+    %8 = $desugar$1 is error
+    %8 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, $desugar$1);
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    $desugar$2 = $desugar$1;
+    %10 = length($desugar$2) -> bb4;
+  }
+  bb4 {
+    $desugar$3 = %10;
+    %13 = ConstantLoad 0
+    $desugar$5 = %13;
+    GOTO bb5;
+  }
+  bb5 {
+    %16 = $desugar$5;
+    %17 = $desugar$3;
+    %15 = < %16 %17;
+    %15 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 13
+    %0 = (1, $desugar$2)[(1, $desugar$5)];
+    (1, value) = %0;
+    %1 = $remote$checkedOffset((1, numbers)) -> bb8;
+  }
+  bb7 {
+    return;
+  }
+  bb8 {
+    $desugar$4 = %1;
+    %3 = $desugar$4 is error
+    %3 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$4);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    (1, offset) = $desugar$4;
+    %5 = (1, value);
+    %6 = (1, offset);
+    %4 = + %5 %6;
+    %7 = %4;
+    %8 = push((1, results),%7) -> bb11;
+  }
+  bb11 {
+    %10 = (1, $desugar$5);
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, $desugar$5) = %9;
+    PopScopeFrame
+    GOTO bb5;
+  }
+}
+runFailingAction(client object { private remote function $remote$checkedOffset() returns int|error; private remote function $remote$checkedValues() returns error|[int...]; private remote function $remote$fallible(int) returns int|error; private remote function $remote$offset() returns int; private remote function $remote$scale(int, int) returns int; private remote function $remote$values() returns [int...]; public function init() returns nil },[int...]) -> nil|error{
+  bb0 {
+    %3 = ConstantLoad <nil>
+    $desugar$0 = %3;
+    %6 = $remote$values(numbers) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %6;
+    %8 = length($desugar$1) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %8;
+    %10 = ConstantLoad 0
+    $desugar$4 = %10;
+    GOTO bb3;
+  }
+  bb3 {
+    %13 = $desugar$4;
+    %14 = $desugar$2;
+    %12 = < %13 %14;
+    %12 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 12
+    %0 = (1, $desugar$1)[(1, $desugar$4)];
+    (1, value) = %0;
+    %1 = (1, value);
+    %2 = $remote$fallible((1, numbers),%1) -> bb6;
+  }
+  bb5 {
+    return;
+  }
+  bb6 {
+    $desugar$3 = %2;
+    %4 = $desugar$3 is error
+    %4 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 0
+    (2, %0) = (1, $desugar$3);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    result = $desugar$3;
+    %6 = result;
+    %7 = push((1, results),%6) -> bb9;
+  }
+  bb9 {
+    %9 = (1, $desugar$4);
+    %10 = ConstantLoad 1
+    %11 = %10;
+    %8 = + %9 %11;
+    (1, $desugar$4) = %8;
+    PopScopeFrame
+    GOTO bb3;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:NumberClient
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    numbers = %3;
+    %6 = ConstantLoad 0
+    %7 = newArray [int...][%6]{}
+    results = %7;
+    %9 = ConstantLoad <nil>
+    $desugar$0 = %9;
+    %12 = $remote$values(numbers) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %12;
+    %14 = length($desugar$1) -> bb6;
+  }
+  bb6 {
+    $desugar$2 = %14;
+    %17 = ConstantLoad 0
+    $desugar$3 = %17;
+    GOTO bb7;
+  }
+  bb7 {
+    %20 = $desugar$3;
+    %21 = $desugar$2;
+    %19 = < %20 %21;
+    %19 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 16
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    (1, value) = %0;
+    %1 = $remote$offset((1, numbers)) -> bb10;
+  }
+  bb9 {
+    %22 = println(results) -> bb13;
+  }
+  bb10 {
+    (1, offset) = %1;
+    %2 = (1, value);
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %5 = $remote$scale((1, numbers),%2,%4) -> bb11;
+  }
+  bb11 {
+    scaled = %5;
+    %8 = scaled;
+    %9 = (1, offset);
+    %7 = + %8 %9;
+    %10 = %7;
+    %11 = push((1, results),%10) -> bb12;
+  }
+  bb12 {
+    %13 = (1, $desugar$3);
+    %14 = ConstantLoad 1
+    %15 = %14;
+    %12 = + %13 %15;
+    (1, $desugar$3) = %12;
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb13 {
+    %23 = ConstantLoad 0
+    %24 = newArray [int...][%23]{}
+    results = %24;
+    %25 = ConstantLoad <nil>
+    $desugar$4 = %25;
+    %28 = $remote$values(numbers) -> bb14;
+  }
+  bb14 {
+    $desugar$5 = %28;
+    %30 = length($desugar$5) -> bb15;
+  }
+  bb15 {
+    $desugar$6 = %30;
+    %33 = ConstantLoad 0
+    $desugar$7 = %33;
+    GOTO bb16;
+  }
+  bb16 {
+    %36 = $desugar$7;
+    %37 = $desugar$6;
+    %35 = < %36 %37;
+    %35 ? bb17 : bb18;
+  }
+  bb17 {
+    PushScopeFrame 16
+    %0 = (1, $desugar$5)[(1, $desugar$7)];
+    (1, value) = %0;
+    %1 = $remote$offset((1, numbers)) -> bb19;
+  }
+  bb18 {
+    %38 = println(results) -> bb22;
+  }
+  bb19 {
+    (1, offset) = %1;
+    %2 = (1, value);
+    %3 = ConstantLoad 3
+    %4 = %3;
+    %5 = $remote$scale((1, numbers),%2,%4) -> bb20;
+  }
+  bb20 {
+    scaled = %5;
+    %8 = scaled;
+    %9 = (1, offset);
+    %7 = + %8 %9;
+    %10 = %7;
+    %11 = push((1, results),%10) -> bb21;
+  }
+  bb21 {
+    %13 = (1, $desugar$7);
+    %14 = ConstantLoad 1
+    %15 = %14;
+    %12 = + %13 %15;
+    (1, $desugar$7) = %12;
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb22 {
+    %39 = ConstantLoad 0
+    %40 = newArray [int...][%39]{}
+    results = %40;
+    %41 = runCheckedAction(numbers,results) -> bb23;
+  }
+  bb23 {
+    checkedResult = %41;
+    %43 = checkedResult is nil
+    %44 = %43;
+    %45 = println(%44) -> bb24;
+  }
+  bb24 {
+    %46 = println(results) -> bb25;
+  }
+  bb25 {
+    %47 = newObject $anon/.:NumberResourceClient
+    %48 = init(%47) -> bb26;
+  }
+  bb26 {
+    %50 = %48 is nil
+    %50 ? bb27 : bb28;
+  }
+  bb27 {
+    %49 = %47;
+    GOTO bb29;
+  }
+  bb28 {
+    %49 = %48;
+    GOTO bb29;
+  }
+  bb29 {
+    resources = %49;
+    %52 = ConstantLoad 0
+    %53 = newArray [int...][%52]{}
+    results = %53;
+    %54 = ConstantLoad <nil>
+    $desugar$8 = %54;
+    %57 = ConstantLoad values
+    %58 = resources->[%57].get() -> bb30;
+  }
+  bb30 {
+    $desugar$9 = %58;
+    %60 = length($desugar$9) -> bb31;
+  }
+  bb31 {
+    $desugar$10 = %60;
+    %63 = ConstantLoad 0
+    $desugar$11 = %63;
+    GOTO bb32;
+  }
+  bb32 {
+    %66 = $desugar$11;
+    %67 = $desugar$10;
+    %65 = < %66 %67;
+    %65 ? bb33 : bb34;
+  }
+  bb33 {
+    PushScopeFrame 18
+    %0 = (1, $desugar$9)[(1, $desugar$11)];
+    (1, value) = %0;
+    %1 = ConstantLoad offset
+    %2 = (1, resources)->[%1].get() -> bb35;
+  }
+  bb34 {
+    %68 = println(results) -> bb38;
+  }
+  bb35 {
+    (1, offset) = %2;
+    %3 = ConstantLoad scale
+    %4 = (1, value);
+    %5 = ConstantLoad 4
+    %6 = %5;
+    %7 = (1, resources)->[%3,%4,%6].get() -> bb36;
+  }
+  bb36 {
+    scaled = %7;
+    %10 = scaled;
+    %11 = (1, offset);
+    %9 = + %10 %11;
+    %12 = %9;
+    %13 = push((1, results),%12) -> bb37;
+  }
+  bb37 {
+    %15 = (1, $desugar$11);
+    %16 = ConstantLoad 1
+    %17 = %16;
+    %14 = + %15 %17;
+    (1, $desugar$11) = %14;
+    PopScopeFrame
+    GOTO bb32;
+  }
+  bb38 {
+    %69 = ConstantLoad 0
+    nestedTotal = %69;
+    %71 = ConstantLoad <nil>
+    $desugar$12 = %71;
+    %74 = ConstantLoad 1
+    %75 = ConstantLoad 2
+    %76 = ConstantLoad 2
+    %77 = newArray [int, int, never...][%76]{%74, %75}
+    $desugar$13 = %77;
+    %79 = length($desugar$13) -> bb39;
+  }
+  bb39 {
+    $desugar$14 = %79;
+    %82 = ConstantLoad 0
+    $desugar$19 = %82;
+    GOTO bb40;
+  }
+  bb40 {
+    %85 = $desugar$19;
+    %86 = $desugar$14;
+    %84 = < %85 %86;
+    %84 ? bb41 : bb42;
+  }
+  bb41 {
+    PushScopeFrame 23
+    %0 = (1, $desugar$13)[(1, $desugar$19)];
+    (1, value) = %0;
+    %1 = ConstantLoad <nil>
+    $desugar$15 = %1;
+    %5 = (1, value);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    %8 = ConstantLoad 2
+    %9 = newArray [int, int, never...][%8]{(1, value), %4}
+    $desugar$16 = %9;
+    %11 = length($desugar$16) -> bb43;
+  }
+  bb42 {
+    %87 = nestedTotal;
+    %88 = println(%87) -> bb49;
+  }
+  bb43 {
+    $desugar$17 = %11;
+    %13 = ConstantLoad 0
+    $desugar$18 = %13;
+    GOTO bb44;
+  }
+  bb44 {
+    %16 = $desugar$18;
+    %17 = $desugar$17;
+    %15 = < %16 %17;
+    %15 ? bb45 : bb46;
+  }
+  bb45 {
+    PushScopeFrame 8
+    %0 = (1, $desugar$16)[(1, $desugar$18)];
+    (1, nestedValue) = %0;
+    %2 = (2, nestedTotal);
+    %3 = (1, nestedValue);
+    %1 = + %2 %3;
+    (2, nestedTotal) = %1;
+    %5 = (1, $desugar$18);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$18) = %4;
+    PopScopeFrame
+    GOTO bb44;
+  }
+  bb46 {
+    (1, nestedResult) = $desugar$15;
+    %18 = (1, nestedResult) is nil
+    %18 ? bb47 : bb48;
+  }
+  bb47 {
+    PushScopeFrame 7
+    %1 = (2, nestedTotal);
+    %3 = (2, value);
+    %4 = ConstantLoad 10
+    %5 = %4;
+    %2 = * %3 %5;
+    %6 = %2;
+    %0 = + %1 %6;
+    (2, nestedTotal) = %0;
+    PopScopeFrame
+    GOTO bb48;
+  }
+  bb48 {
+    %20 = (1, $desugar$19);
+    %21 = ConstantLoad 1
+    %22 = %21;
+    %19 = + %20 %22;
+    (1, $desugar$19) = %19;
+    PopScopeFrame
+    GOTO bb40;
+  }
+  bb49 {
+    %89 = ConstantLoad 0
+    %90 = newArray [int...][%89]{}
+    results = %90;
+    %91 = runFailingAction(numbers,results) -> bb50;
+  }
+  bb50 {
+    failedResult = %91;
+    %93 = failedResult is error
+    %94 = %93;
+    %95 = println(%94) -> bb51;
+  }
+  bb51 {
+    %96 = println(results) -> bb52;
+  }
+  bb52 {
+    return;
+  }
+}
