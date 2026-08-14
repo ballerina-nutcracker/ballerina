@@ -1,0 +1,18 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable options (type
+        (user-defined-type Outer)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal allowDataProjection)
+            (mapping-constructor-expr
+              (key-value
+                (literal nilAsOptionalField)
+                (literal true))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access allowDataProjection
+          (simple-var-ref options)))))
+  )
+)

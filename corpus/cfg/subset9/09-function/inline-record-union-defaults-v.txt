@@ -18,10 +18,7 @@
         (mapping-constructor-expr
           (key-value
             (literal kind)
-            (literal one))
-          (key-value
-            (literal first)
-            (literal 11))))))
+            (literal one))))))
     (type-test-expr is
       (simple-var-ref first)
       (record-type
@@ -55,10 +52,7 @@
         (mapping-constructor-expr
           (key-value
             (literal code)
-            (literal 2))
-          (key-value
-            (literal second)
-            (literal 12))))))
+            (literal 2))))))
     (type-test-expr is
       (simple-var-ref second)
       (record-type
