@@ -1,0 +1,38 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad allowDataProjection
+    %2 = ConstantLoad nilAsOptionalField
+    %3 = ConstantLoad true
+    %4 = newMap {| absentAsNilableType: boolean, nilAsOptionalField: boolean, anydata... |}{%2=%3} defaults{nilAsOptionalField=$anon/.:$desugar$0, absentAsNilableType=$anon/.:$desugar$1}
+    %5 = newMap {| allowDataProjection: false|{| absentAsNilableType: boolean, nilAsOptionalField: boolean, anydata... |}, never... |}{%1=%4} defaults{allowDataProjection=$anon/.:$desugar$2}
+    options = %5;
+    %8 = ConstantLoad allowDataProjection
+    %7 = options[%8];
+    %9 = println(%7) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$desugar$0() -> boolean{
+  bb0 {
+    %1 = ConstantLoad false
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> boolean{
+  bb0 {
+    %1 = ConstantLoad false
+    %0 = %1;
+    return;
+  }
+}
+$desugar$2() -> false|{| absentAsNilableType: boolean, nilAsOptionalField: boolean, anydata... |}{
+  bb0 {
+    %1 = newMap {| absentAsNilableType: boolean, nilAsOptionalField: boolean, anydata... |}{} defaults{nilAsOptionalField=$anon/.:$desugar$0, absentAsNilableType=$anon/.:$desugar$1}
+    %0 = %1;
+    return;
+  }
+}

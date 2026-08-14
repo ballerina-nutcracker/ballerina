@@ -16,14 +16,14 @@
 
 import ballerina/io;
 
-public function main() {
-    (record {| string kind; int first = 11; |}|record {| int code; int second = 12; |}) first = {kind: "one"};
-    if first is record {| string kind; int first; |} {
-        io:println(first.first); // @output 11
-    }
+type Outer record {|
+    record {
+        boolean nilAsOptionalField = false;
+        boolean absentAsNilableType = false;
+    }|false allowDataProjection = {};
+|};
 
-    (record {| string kind; int first = 11; |}|record {| int code; int second = 12; |}) second = {code: 2};
-    if second is record {| int code; int second; |} {
-        io:println(second.second); // @output 12
-    }
+public function main() {
+    Outer options = {allowDataProjection: {nilAsOptionalField: true}};
+    io:println(options.allowDataProjection); // @output {"nilAsOptionalField":true,"absentAsNilableType":false}
 }

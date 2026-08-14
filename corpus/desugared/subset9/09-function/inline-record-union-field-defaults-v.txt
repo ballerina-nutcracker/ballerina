@@ -1,0 +1,46 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Outer
+    (record-type
+      (field allowDataProjection
+        (union-type
+          (record-type
+            (field nilAsOptionalField
+              (value-type boolean)
+              (literal false))
+            (field absentAsNilableType
+              (value-type boolean)
+              (literal false)))
+          (finite-type
+            (literal false)))
+        (mapping-constructor-expr))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable options (type
+          (user-defined-type Outer)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal allowDataProjection)
+              (mapping-constructor-expr
+                (key-value
+                  (literal nilAsOptionalField)
+                  (literal true))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref options)
+            (literal allowDataProjection)))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal false))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (literal false))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr)))))

@@ -25,7 +25,6 @@ type Bar record {|
 |};
 
 public function main() {
-    // JBallerina allows this but according to the spec applicable contexually expected type determination is independent of default values
-    Foo|Bar f = {}; // @error
-    io:println(f is Foo);
+    Foo|Bar f = {};
+    io:println(f is Foo); // @output true
 }

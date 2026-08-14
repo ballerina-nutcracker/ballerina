@@ -4339,6 +4339,15 @@ func resolveMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField) {
 	kv.SetDeterminedType(semtypes.Never)
 }
 
+func defaultableMappingFields(t typeResolver, atom *semtypes.MappingAtomicType) []string {
+	defaults, _ := t.mappingDefaults(atom)
+	fields := make([]string, len(defaults))
+	for i, field := range defaults {
+		fields[i] = field.FieldName
+	}
+	return fields
+}
+
 func selectMappingInherentType(t typeResolver, expr *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, *semtypes.MappingAtomicType, bool) {
 	expectedMappingType := semtypes.Intersect(expectedType, semtypes.Mapping)
 	tc := t.typeContext()
@@ -4360,8 +4369,11 @@ func selectMappingInherentType(t typeResolver, expr *ast.BLangMappingConstructor
 	}
 	sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
 
+	defaultableFields := func(atom *semtypes.MappingAtomicType) []string {
+		return defaultableMappingFields(t, atom)
+	}
 	for _, alt := range alts {
-		if semtypes.MappingAlternativeAllowsFields(tc, alt, fields) {
+		if semtypes.MappingAlternativeAllowsFields(tc, alt, fields, defaultableFields) {
 			validAlts = append(validAlts, alt)
 		}
 	}
