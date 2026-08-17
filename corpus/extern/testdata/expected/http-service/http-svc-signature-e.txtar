@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: http resource method must have at most one parameter
+  --> http-svc-signature-e.bal:44:35
+   |
+44 |     resource function post tooMany(http:Request first, http:Request second) { // @error
+   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: http resource method must have at most one parameter
+  --> http-svc-signature-e.bal:49:31
+   |
+49 |     resource function put rest(http:Request... requests) { // @error
+   |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: http resource method parameter must be a subtype of http:Request
+  --> http-svc-signature-e.bal:40:37
+   |
+40 |     resource function get wrongType(int value) { // @error
+   |                                     ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: http resource method parameter must be a subtype of http:Request
+  --> http-svc-signature-e.bal:61:37
+   |
+61 |     resource function patch checked(string value) { // @error
+   |                                     ^^^^^^^^^^^^
