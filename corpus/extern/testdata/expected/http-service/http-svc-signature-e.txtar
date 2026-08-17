@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: http resource method must have at most one http:Request parameter
+  --> http-svc-signature-e.bal:40:35
+   |
+40 |     resource function post tooMany(http:Request first, http:Request second) { // @error
+   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: http resource method must have at most one http:Request parameter
+  --> http-svc-signature-e.bal:53:36
+   |
+53 |     resource function patch checked(http:Request first, http:Request second) { // @error
+   |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

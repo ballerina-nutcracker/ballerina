@@ -141,6 +141,10 @@ func createBalaProjectConfig(fsys fs.FS, balaPath string) (balaProjectConfigResu
 		BallerinaTomlFile,
 		string(ballerinaTomlContent),
 	)
+	compilerPluginTomlDoc, err := readOptionalPackageDocument(fsys, balaPath, CompilerPluginTomlFile, defaultModuleConfig.ModuleID())
+	if err != nil {
+		return balaProjectConfigResult{}, err
+	}
 
 	// manifest.Readme(), if set, is already bala-relative (e.g. "docs/README.md")
 	// — copyBallerinaToml rewrites it to that location when packing.
@@ -157,13 +161,14 @@ func createBalaProjectConfig(fsys fs.FS, balaPath string) (balaProjectConfigResu
 	}
 
 	config := NewPackageConfig(PackageConfigParams{
-		PackageID:       packageID,
-		PackageManifest: manifest,
-		PackagePath:     balaPath,
-		DefaultModule:   defaultModuleConfig,
-		OtherModules:    otherModules,
-		BallerinaToml:   ballerinaTomlDoc,
-		ReadmeMd:        readmeMdDoc,
+		PackageID:          packageID,
+		PackageManifest:    manifest,
+		PackagePath:        balaPath,
+		DefaultModule:      defaultModuleConfig,
+		OtherModules:       otherModules,
+		BallerinaToml:      ballerinaTomlDoc,
+		ReadmeMd:           readmeMdDoc,
+		CompilerPluginToml: compilerPluginTomlDoc,
 	})
 
 	return balaProjectConfigResult{
@@ -215,6 +220,10 @@ func createBalaProjectConfigLegacy(fsys fs.FS, balaPath string) (balaProjectConf
 	if err != nil {
 		return balaProjectConfigResult{}, err
 	}
+	compilerPluginTomlDoc, err := readOptionalPackageDocument(fsys, balaPath, CompilerPluginTomlFile, defaultModuleConfig.ModuleID())
+	if err != nil {
+		return balaProjectConfigResult{}, err
+	}
 
 	// pkgJSON.Readme, if set, is bala-relative (Java's BalaWriter writes it
 	// as "docs/<filename>").
@@ -231,13 +240,14 @@ func createBalaProjectConfigLegacy(fsys fs.FS, balaPath string) (balaProjectConf
 	}
 
 	config := NewPackageConfig(PackageConfigParams{
-		PackageID:       packageID,
-		PackageManifest: manifest,
-		PackagePath:     balaPath,
-		DefaultModule:   defaultModuleConfig,
-		OtherModules:    moduleConfigs,
-		BallerinaToml:   nil,
-		ReadmeMd:        readmeMdDoc,
+		PackageID:          packageID,
+		PackageManifest:    manifest,
+		PackagePath:        balaPath,
+		DefaultModule:      defaultModuleConfig,
+		OtherModules:       moduleConfigs,
+		BallerinaToml:      nil,
+		ReadmeMd:           readmeMdDoc,
+		CompilerPluginToml: compilerPluginTomlDoc,
 	})
 
 	return balaProjectConfigResult{
@@ -621,6 +631,10 @@ func createBuildProjectConfig(fsys fs.FS, projectDirPath string) (PackageConfig,
 	}
 	ballerinaTomlDocID := NewDocumentID(BallerinaTomlFile, defaultModuleID)
 	ballerinaTomlDoc := NewDocumentConfig(ballerinaTomlDocID, BallerinaTomlFile, string(ballerinaTomlContent))
+	compilerPluginTomlDoc, err := readOptionalPackageDocument(fsys, projectDirPath, CompilerPluginTomlFile, defaultModuleID)
+	if err != nil {
+		return PackageConfig{}, err
+	}
 
 	// Load the readme named by the manifest (default "README.md", or an
 	// explicit/custom path declared via `readme = "..."` in Ballerina.toml).
@@ -636,14 +650,26 @@ func createBuildProjectConfig(fsys fs.FS, projectDirPath string) (PackageConfig,
 
 	// Build PackageConfig
 	return NewPackageConfig(PackageConfigParams{
-		PackageID:       packageID,
-		PackageManifest: manifest,
-		PackagePath:     projectDirPath,
-		DefaultModule:   defaultModuleConfig,
-		OtherModules:    otherModules,
-		BallerinaToml:   ballerinaTomlDoc,
-		ReadmeMd:        readmeMdDoc,
+		PackageID:          packageID,
+		PackageManifest:    manifest,
+		PackagePath:        projectDirPath,
+		DefaultModule:      defaultModuleConfig,
+		OtherModules:       otherModules,
+		BallerinaToml:      ballerinaTomlDoc,
+		CompilerPluginToml: compilerPluginTomlDoc,
+		ReadmeMd:           readmeMdDoc,
 	}), nil
+}
+
+func readOptionalPackageDocument(fsys fs.FS, packagePath, name string, moduleID ModuleID) (DocumentConfig, error) {
+	content, err := fs.ReadFile(fsys, path.Join(packagePath, name))
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return NewDocumentConfig(NewDocumentID(name, moduleID), name, string(content)), nil
 }
 
 // createDefaultModuleConfig creates a ModuleConfig for the default module.

@@ -178,11 +178,8 @@ func (p *Package) CloudToml() any {
 }
 
 // CompilerPluginToml returns the CompilerPlugin.toml document for this package, or nil if absent.
-// TODO(P2.x): Implement when CompilerPluginToml type is available.
-func (p *Package) CompilerPluginToml() any {
-	// TODO(P2.x): Return *CompilerPluginToml once the type is implemented.
-	// Java lazy-loads from packageContext.compilerPluginTomlContext()
-	return nil
+func (p *Package) CompilerPluginToml() *CompilerPluginToml {
+	return newCompilerPluginToml(p.packageCtx.getCompilerPluginTomlContext(), p)
 }
 
 // BalToolToml returns the BalTool.toml document for this package, or nil if absent.
@@ -286,25 +283,27 @@ func (p *Package) duplicate(project Project) *Package {
 // PackageModifier handles immutable package modifications.
 // It follows the Builder pattern per project conventions.
 type PackageModifier struct {
-	packageID            PackageID
-	packageManifest      PackageManifest
-	moduleContextMap     map[ModuleID]*moduleContext
-	project              Project
-	compilationOptions   CompilationOptions
-	ballerinaTomlContext *tomlDocumentContext
-	readmeMdContext      *mdDocumentContext
+	packageID                 PackageID
+	packageManifest           PackageManifest
+	moduleContextMap          map[ModuleID]*moduleContext
+	project                   Project
+	compilationOptions        CompilationOptions
+	ballerinaTomlContext      *tomlDocumentContext
+	readmeMdContext           *mdDocumentContext
+	compilerPluginTomlContext *tomlDocumentContext
 }
 
 // newPackageModifier creates a PackageModifier from an existing package.
 func newPackageModifier(oldPackage *Package) *PackageModifier {
 	return &PackageModifier{
-		packageID:            oldPackage.PackageID(),
-		packageManifest:      oldPackage.Manifest(),
-		moduleContextMap:     oldPackage.packageCtx.getModuleContextMap(),
-		project:              oldPackage.project,
-		compilationOptions:   oldPackage.packageCtx.getCompilationOptions(),
-		ballerinaTomlContext: oldPackage.packageCtx.getBallerinaTomlContext(),
-		readmeMdContext:      oldPackage.packageCtx.getReadmeMdContext(),
+		packageID:                 oldPackage.PackageID(),
+		packageManifest:           oldPackage.Manifest(),
+		moduleContextMap:          oldPackage.packageCtx.getModuleContextMap(),
+		project:                   oldPackage.project,
+		compilationOptions:        oldPackage.packageCtx.getCompilationOptions(),
+		ballerinaTomlContext:      oldPackage.packageCtx.getBallerinaTomlContext(),
+		readmeMdContext:           oldPackage.packageCtx.getReadmeMdContext(),
+		compilerPluginTomlContext: oldPackage.packageCtx.getCompilerPluginTomlContext(),
 	}
 }
 
@@ -351,6 +350,7 @@ func (pm *PackageModifier) Apply() *Package {
 		pm.moduleContextMap,
 		pm.ballerinaTomlContext,
 		pm.readmeMdContext,
+		pm.compilerPluginTomlContext,
 	)
 
 	// Create new Package with the new context

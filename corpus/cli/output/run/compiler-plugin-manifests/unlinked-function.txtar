@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: compiler plugin implementation not linked for testorg/pkgb:Missing at after-semantics
+  --> pkga/modules/util/util.bal:17:1
+   |
+17 | import testorg/pkgb;
+   | ^^^^^^^^^^^^^^^^^^^^
+
+ballerina: compilation contains errors
+-- exitcode --
+1

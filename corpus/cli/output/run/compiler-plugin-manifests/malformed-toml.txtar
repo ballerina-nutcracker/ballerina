@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid CompilerPlugin.toml for testorg/pkgb: TOML parse error: expected second ']' to close array-of-tables header
+  --> pkga/modules/util/util.bal:17:1
+   |
+17 | import testorg/pkgb;
+   | ^^^^^^^^^^^^^^^^^^^^
+
+ballerina: compilation contains errors
+-- exitcode --
+1
