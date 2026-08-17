@@ -26,14 +26,15 @@ import (
 // packageContext holds internal state for a Package.
 // It manages module contexts and package-level metadata.
 type packageContext struct {
-	project              Project
-	packageID            PackageID
-	packageManifest      PackageManifest
-	compilationOptions   CompilationOptions
-	moduleContextMap     map[ModuleID]*moduleContext
-	moduleIDs            []ModuleID
-	defaultModuleContext *moduleContext       // cached default module
-	ballerinaTomlContext *tomlDocumentContext // Ballerina.toml context (nil if not present)
+	project                   Project
+	packageID                 PackageID
+	packageManifest           PackageManifest
+	compilationOptions        CompilationOptions
+	moduleContextMap          map[ModuleID]*moduleContext
+	moduleIDs                 []ModuleID
+	defaultModuleContext      *moduleContext       // cached default module
+	ballerinaTomlContext      *tomlDocumentContext // Ballerina.toml context (nil if not present)
+	compilerPluginTomlContext *tomlDocumentContext // CompilerPlugin.toml context (nil if not present)
 
 	// Lazy-initialized fields (thread-safe via sync.Once, matching documentContext pattern).
 	packageCompilation     *PackageCompilation
@@ -71,16 +72,21 @@ func newPackageContext(project Project, packageConfig PackageConfig, compilation
 	if packageConfig.HasBallerinaToml() {
 		ballerinaTomlCtx = newTomlDocumentContext(packageConfig.BallerinaToml())
 	}
+	var compilerPluginTomlCtx *tomlDocumentContext
+	if packageConfig.HasCompilerPluginToml() {
+		compilerPluginTomlCtx = newTomlDocumentContext(packageConfig.CompilerPluginToml())
+	}
 
 	return &packageContext{
-		project:              project,
-		packageID:            packageConfig.PackageID(),
-		packageManifest:      packageConfig.PackageManifest(),
-		compilationOptions:   compilationOptions,
-		moduleContextMap:     moduleContextMap,
-		moduleIDs:            moduleIDs,
-		defaultModuleContext: defaultModuleCtx,
-		ballerinaTomlContext: ballerinaTomlCtx,
+		project:                   project,
+		packageID:                 packageConfig.PackageID(),
+		packageManifest:           packageConfig.PackageManifest(),
+		compilationOptions:        compilationOptions,
+		moduleContextMap:          moduleContextMap,
+		moduleIDs:                 moduleIDs,
+		defaultModuleContext:      defaultModuleCtx,
+		ballerinaTomlContext:      ballerinaTomlCtx,
+		compilerPluginTomlContext: compilerPluginTomlCtx,
 	}
 }
 
@@ -93,6 +99,7 @@ func newPackageContextFromMaps(
 	compilationOptions CompilationOptions,
 	moduleContextMap map[ModuleID]*moduleContext,
 	ballerinaTomlContext *tomlDocumentContext,
+	compilerPluginTomlContext *tomlDocumentContext,
 ) *packageContext {
 	// Ensure moduleContextMap is initialized to prevent nil map panics
 	if moduleContextMap == nil {
@@ -110,14 +117,15 @@ func newPackageContextFromMaps(
 	}
 
 	return &packageContext{
-		project:              project,
-		packageID:            packageID,
-		packageManifest:      packageManifest,
-		compilationOptions:   compilationOptions,
-		moduleContextMap:     moduleContextMap,
-		moduleIDs:            moduleIDs,
-		defaultModuleContext: defaultModuleContext,
-		ballerinaTomlContext: ballerinaTomlContext,
+		project:                   project,
+		packageID:                 packageID,
+		packageManifest:           packageManifest,
+		compilationOptions:        compilationOptions,
+		moduleContextMap:          moduleContextMap,
+		moduleIDs:                 moduleIDs,
+		defaultModuleContext:      defaultModuleContext,
+		ballerinaTomlContext:      ballerinaTomlContext,
+		compilerPluginTomlContext: compilerPluginTomlContext,
 	}
 }
 
@@ -227,6 +235,10 @@ func (p *packageContext) getBallerinaTomlContext() *tomlDocumentContext {
 	return p.ballerinaTomlContext
 }
 
+func (p *packageContext) getCompilerPluginTomlContext() *tomlDocumentContext {
+	return p.compilerPluginTomlContext
+}
+
 // moduleDependencyGraph returns the module dependency graph for this package.
 // The graph contains only modules within this package (not external dependencies).
 // For source packages, it analyzes imports. For bala packages, it returns a simple
@@ -305,5 +317,6 @@ func (p *packageContext) duplicate(project Project) *packageContext {
 		p.compilationOptions,
 		moduleContextMap,
 		p.ballerinaTomlContext, // Ballerina.toml is immutable, can share reference
+		p.compilerPluginTomlContext,
 	)
 }

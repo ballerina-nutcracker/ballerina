@@ -39,6 +39,7 @@ const (
 	StageSemanticAnalysis       CompilationStage = "Semantic Analysis"
 	StageCFGCreation            CompilationStage = "CFG Creation"
 	StageCFGAnalysis            CompilationStage = "CFG Analysis"
+	StageCompilerPlugin         CompilationStage = "Compiler Plugin"
 	StageDesugaring             CompilationStage = "Desugaring"
 	StageBIRGeneration          CompilationStage = "BIR Generation"
 )
