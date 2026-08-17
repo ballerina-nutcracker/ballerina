@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: compiler plugin implementation not linked for testorg/pluginprovider:Missing at after-semantics
+  --> main.bal:18:1
+   |
+18 | import testorg/pluginprovider;
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ballerina: compilation contains errors
+-- exitcode --
+1

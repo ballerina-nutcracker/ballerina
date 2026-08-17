@@ -60,6 +60,7 @@ type moduleContext struct {
 	bPackageSymbol  any // TODO(S3): BPackageSymbol once compiler symbol types are migrated
 	compilerCtx     *context.CompilerContext
 	importedSymbols map[string]model.ExportedSymbolSpace
+	explicitImports []moduleImport
 	birPkg          *bir.BIRPackage
 }
 
@@ -248,8 +249,9 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	// Build compilation units from syntax trees.
 	compilationOptions := moduleCtx.project.BuildOptions().CompilationOptions()
 	compilationUnits := buildCompilationUnits(compilerCtx, syntaxTrees, compilationOptions)
+	moduleCtx.explicitImports = collectExplicitImports(compilationUnits, moduleCtx.moduleDescriptor.Org().Value())
 
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
@@ -303,9 +305,8 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	semantics.ResolvePublicNodeTypes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
 }
 
-// analyzeAndDesugar performs CFG creation, semantic analysis, CFG analysis, and desugaring.
-// This phase can run in parallel across modules after all modules complete Phase 1.
-func analyzeAndDesugar(moduleCtx *moduleContext) {
+// analyzeAndCreateCFG performs local type resolution, semantic analysis, and CFG analysis.
+func analyzeAndCreateCFG(moduleCtx *moduleContext) {
 	if moduleCtx.bLangPkg == nil || moduleCtx.compilerCtx == nil {
 		return
 	}
@@ -314,24 +315,24 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 	compilerCtx := moduleCtx.compilerCtx
 	compilationOptions := moduleCtx.project.BuildOptions().CompilationOptions()
 
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
 	// Resolve types of function bodies and inner nodes
 	semantics.ResolvePrivateNodesTypes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
 	semantics.AnalyzeSemantics(moduleCtx.compilerCtx, pkgNode, moduleCtx.importedSymbols)
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
 	// Create control flow graph after semantic analysis.
 	cfg := semantics.CreateControlFlowGraph(compilerCtx, pkgNode)
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
@@ -347,23 +348,58 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 		fmt.Fprintln(os.Stderr, "===================END CFG===================")
 	}
 
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
 	// Run CFG analyses (reachability and explicit return) after semantic analysis.
 	semantics.AnalyzeCFG(moduleCtx.compilerCtx, pkgNode, cfg)
-	if compilerCtx.HasDiagnostics() {
+}
+
+func desugarModule(moduleCtx *moduleContext) {
+	if moduleCtx.bLangPkg == nil || moduleCtx.compilerCtx == nil {
 		return
 	}
-
+	compilerCtx := moduleCtx.compilerCtx
 	// Desugar package "lowering" AST to an AST that BIR gen can handle.
 	moduleCtx.bLangPkg = desugar.DesugarPackage(moduleCtx.compilerCtx, moduleCtx.bLangPkg, moduleCtx.importedSymbols)
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
 	moduleCtx.compilationState = moduleCompilationStateCompiled
+}
+
+type moduleImport struct {
+	org        string
+	moduleName string
+	position   diagnostics.Location
+}
+
+func collectExplicitImports(compilationUnits []*ast.BLangCompilationUnit, defaultOrg string) []moduleImport {
+	var imports []moduleImport
+	for _, unit := range compilationUnits {
+		for _, node := range unit.GetTopLevelNodes() {
+			importNode, ok := node.(*ast.BLangImportPackage)
+			if !ok {
+				continue
+			}
+			org := defaultOrg
+			if importNode.OrgName != nil && importNode.OrgName.Value != "" {
+				org = importNode.OrgName.Value
+			}
+			parts := make([]string, len(importNode.PkgNameComps))
+			for i := range importNode.PkgNameComps {
+				parts[i] = importNode.PkgNameComps[i].Value
+			}
+			imports = append(imports, moduleImport{
+				org:        org,
+				moduleName: strings.Join(parts, "."),
+				position:   importNode.GetPosition(),
+			})
+		}
+	}
+	return imports
 }
 
 // parseDocumentsParallel parses source and test documents in parallel.
