@@ -41,11 +41,14 @@ This document defines how AI/code agents should work with this repository: codin
 8. Analyze CFG
    - Reachability analysis
    - Explicit return analysis
-9. Desugar AST
-10. Generate BIR
-11. Interpret generated BIR
+9. Run compiler plugins
+10. Desugar AST
+11. Generate BIR
+12. Interpret generated BIR
 
-Stages 1–10 are the compilation pipeline (source → BIR); stage 11 is the interpreter (BIR execution).
+Stages 1–11 are the compilation pipeline (source → BIR); stage 12 is the interpreter (BIR execution).
+
+Stage 9 runs only in the projects pipeline: it runs the plugins declared in the `CompilerPlugin.toml` of each package a module explicitly imports. `test_util/testphases/phases.go` skips it.
 
 Execution of these stages is defined in `projects/package_compilation.go` and `projects/module_context.go` (`test_util/testphases/phases.go` for corpus tests).
 
@@ -53,7 +56,7 @@ Execution of these stages is defined in `projects/package_compilation.go` and `p
 
 Stages 1–4 run across modules in dependency order (stages 3–4 need each dependency’s symbols and types). Stages 1–2 run per module: parse files in parallel, then build ASTs. If any module reports an error in stages 1–4 (via an `*Error` method on the compiler context, e.g. `SemanticError`, `SyntaxError`), the pipeline must stop before stage 5 — no module may proceed to local-node resolution or beyond.
 
-Stages 5–9 then run concurrently across modules. After each of those stages, a module checks diagnostics and must not continue that module on error. Stage 10 (BIR) runs only after every module has finished 1–9 with no errors (`cli/cmd/run.go` / `projects/ballerina_backend.go`). If compilation still has errors, stage 11 (interpretation) must not run.
+Stages 5–8 then run concurrently across modules. After each of those stages, a module checks diagnostics and must not continue that module on error. Stages 9 (compiler plugins) and 10 (desugar) each start only after every module has finished the previous stage with no errors, and run concurrently across modules. Stage 11 (BIR) runs only after every module has finished 1–10 with no errors (`cli/cmd/run.go` / `projects/ballerina_backend.go`). If compilation still has errors, stage 12 (interpretation) must not run.
 
 ## Tests
 
