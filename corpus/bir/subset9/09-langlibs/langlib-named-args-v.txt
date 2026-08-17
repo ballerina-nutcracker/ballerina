@@ -1,0 +1,94 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 2
+    %5 = ConstantLoad 4
+    %6 = newArray [int...][%5]{%1, %2, %3, %4}
+    a = %6;
+    %8 = ConstantLoad 2
+    %9 = %8;
+    %10 = indexOf(a,%9) -> bb1;
+  }
+  bb1 {
+    %11 = %10;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %13 = ConstantLoad 2
+    %14 = %13;
+    %15 = ConstantLoad 2
+    %16 = %15;
+    %17 = indexOf(a,%14,%16) -> bb3;
+  }
+  bb3 {
+    %18 = %17;
+    %19 = println(%18) -> bb4;
+  }
+  bb4 {
+    %20 = ConstantLoad 2
+    %21 = %20;
+    %22 = ConstantLoad 2
+    %23 = %22;
+    %24 = indexOf(a,%21,%23) -> bb5;
+  }
+  bb5 {
+    %25 = %24;
+    %26 = println(%25) -> bb6;
+  }
+  bb6 {
+    %27 = ConstantLoad 10
+    %28 = ConstantLoad 20
+    %29 = ConstantLoad 30
+    %30 = ConstantLoad 3
+    %31 = newArray [int...][%30]{%27, %28, %29}
+    b = %31;
+    %33 = ConstantLoad 0
+    %34 = %33;
+    %35 = remove(b,%34) -> bb7;
+  }
+  bb7 {
+    %36 = %35;
+    %37 = println(%36) -> bb8;
+  }
+  bb8 {
+    %38 = println(b) -> bb9;
+  }
+  bb9 {
+    %39 = ConstantLoad a
+    %40 = ConstantLoad 1
+    %41 = ConstantLoad b
+    %42 = ConstantLoad 2
+    %43 = newMap {| int... |}{%39=%40, %41=%42}
+    m = %43;
+    %45 = ConstantLoad a
+    %46 = remove(m,%45) -> bb10;
+  }
+  bb10 {
+    %47 = %46;
+    %48 = println(%47) -> bb11;
+  }
+  bb11 {
+    %49 = ConstantLoad 42
+    %50 = fromString(%49) -> bb12;
+  }
+  bb12 {
+    %51 = println(%50) -> bb13;
+  }
+  bb13 {
+    %52 = ConstantLoad hello
+    %53 = ConstantLoad 1
+    %54 = %53;
+    %55 = ConstantLoad 3
+    %56 = %55;
+    %57 = substring(%52,%54,%56) -> bb14;
+  }
+  bb14 {
+    %58 = println(%57) -> bb15;
+  }
+  bb15 {
+    return;
+  }
+}

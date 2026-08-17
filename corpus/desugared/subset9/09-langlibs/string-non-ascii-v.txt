@@ -1,0 +1,74 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string toLowerAscii (
+            (literal HÉLLO))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string toUpperAscii (
+            (literal héllo))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string toUpperAscii (
+            (literal ß))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string toLowerAscii (
+            (literal ΣΟΦΟΣ))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string toUpperAscii (
+            (literal 日本語))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string toUpperAscii (
+            (literal aÉb))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string equalsIgnoreCaseAscii (
+            (literal HÉLLO)
+            (literal héllo))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string equalsIgnoreCaseAscii (
+            (literal HELLO)
+            (literal hello))))))
+      (var-def
+        (variable ctl (type
+          (value-type string)) (expr
+          (literal abc))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string length (
+            (simple-var-ref ctl))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string length (
+            (invocation lang.string trim (
+              (simple-var-ref ctl))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string trim (
+            (literal 	
+ abc ))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string length (
+            (literal a😀b))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string substring (
+            (literal a😀b)
+            (literal 1)
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (invocation lang.string toBytes (
+              (literal héllo😀)))))))))))

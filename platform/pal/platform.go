@@ -82,6 +82,11 @@ type (
 	Time struct {
 		Now          func() time.Time
 		MonotonicNow func() time.Duration
+		// After returns a channel that receives once d has elapsed. It is a raw
+		// platform timer primitive, not a blocking sleep: callers decide how to
+		// wait on it (e.g. combined with a strand yield point) to honor the
+		// language spec's guarantees for runtime:sleep.
+		After func(d time.Duration) <-chan time.Time
 	}
 	HTTP struct {
 		// NewClient builds an outbound HTTP client (native: net/http; WASM: fetch).

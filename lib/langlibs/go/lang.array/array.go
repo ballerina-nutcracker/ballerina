@@ -19,6 +19,7 @@ package array
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -31,39 +32,43 @@ const (
 	moduleName = "lang.array"
 )
 
-func arrayLength(args []values.BalValue) (values.BalValue, error) {
+func arrayLength(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	list := args[0].(*values.List)
 	return int64(list.Len()), nil
 }
 
-func arrayToBase64(args []values.BalValue) (values.BalValue, error) {
+func arrayToBase64(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	list := args[0].(*values.List)
 	data := list.ToByteSlice()
 	return base64.StdEncoding.EncodeToString(data), nil
 }
 
-func arrayToBase16(args []values.BalValue) (values.BalValue, error) {
+func arrayToBase16(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	list := args[0].(*values.List)
 	data := list.ToByteSlice()
 	return hex.EncodeToString(data), nil
 }
 
-func arrayFromBase64(byteArrTy semtypes.SemType, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	s := args[0].(string)
-	data, err := base64.StdEncoding.DecodeString(s)
-	if err != nil {
-		return values.NewErrorWithMessage("failed to decode base64 string"), nil
+func arrayFromBase64(byteArrTy semtypes.SemType) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		s := args[0].(string)
+		data, err := base64.StdEncoding.DecodeString(s)
+		if err != nil {
+			return values.NewErrorWithMessage("failed to decode base64 string"), nil
+		}
+		return values.ByteSliceToList(byteArrTy, ctx.TypeEnv(), data), nil
 	}
-	return values.ByteSliceToList(byteArrTy, ctx.TypeEnv(), data), nil
 }
 
-func arrayFromBase16(byteArrTy semtypes.SemType, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	s := args[0].(string)
-	data, err := hex.DecodeString(s)
-	if err != nil {
-		return values.NewErrorWithMessage("failed to decode base16 string"), nil
+func arrayFromBase16(byteArrTy semtypes.SemType) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		s := args[0].(string)
+		data, err := hex.DecodeString(s)
+		if err != nil {
+			return values.NewErrorWithMessage("failed to decode base16 string"), nil
+		}
+		return values.ByteSliceToList(byteArrTy, ctx.TypeEnv(), data), nil
 	}
-	return values.ByteSliceToList(byteArrTy, ctx.TypeEnv(), data), nil
 }
 
 func arrayPush(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -104,30 +109,64 @@ func arrayMap(ctx *extern.Context, args []values.BalValue) (values.BalValue, err
 	return values.NewList(resultTy, atomic, false, filler, 0, items), nil
 }
 
+// arrayIndexOf bails out before the int64->int conversion below: on a
+// 32-bit int platform (e.g. wasm) a large startIndex would truncate,
+// possibly to a negative value, and list.Get is unchecked.
+// It also returns nil (no match) once startIndex reaches the list's
+// length, before the loop below ever indexes into it.
+func arrayIndexOf(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	list := args[0].(*values.List)
+	val := args[1]
+	startIndex := int64(0)
+	if len(args) > 2 && args[2] != nil {
+		if si, ok := args[2].(int64); ok {
+			startIndex = si
+		}
+	}
+	if startIndex < 0 {
+		panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", startIndex)))
+	}
+	if startIndex >= int64(list.Len()) {
+		return nil, nil
+	}
+	for i := int(startIndex); i < list.Len(); i++ {
+		if values.DeepEquals(list.Get(i), val) {
+			return int64(i), nil
+		}
+	}
+	return nil, nil
+}
+
+func arrayRemove(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	list := args[0].(*values.List)
+	index := args[1].(int64)
+	if index < 0 || index >= int64(list.Len()) {
+		panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", index)))
+	}
+	return list.RemoveAt(ctx.TypeCtx(), int(index)), nil
+}
+
+func arrayRemoveAll(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	list := args[0].(*values.List)
+	list.Clear()
+	return nil, nil
+}
+
 func initArrayModule(rt *runtime.Runtime) {
 	env := rt.GetTypeEnv()
 	ld := semtypes.NewListDefinition()
 	byteArrTy := ld.Define(env, nil, semtypes.ListRest(semtypes.Byte))
 
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return arrayLength(args)
-	})
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBase64", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return arrayToBase64(args)
-	})
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBase16", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return arrayToBase16(args)
-	})
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBase64", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return arrayFromBase64(byteArrTy, ctx, args)
-	})
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBase16", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return arrayFromBase16(byteArrTy, ctx, args)
-	})
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "push", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return arrayPush(ctx, args)
-	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", arrayLength)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBase64", arrayToBase64)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBase16", arrayToBase16)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBase64", arrayFromBase64(byteArrTy))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBase16", arrayFromBase16(byteArrTy))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "push", arrayPush)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "map", arrayMap)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "indexOf", arrayIndexOf)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "remove", arrayRemove)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "removeAll", arrayRemoveAll)
 }
 
 func init() {

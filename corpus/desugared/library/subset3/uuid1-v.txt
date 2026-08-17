@@ -1,0 +1,100 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina uuid (as uuid))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable nilStr (type
+          (value-type string)) (expr
+          (invocation uuid nilAsString ()))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nilStr))))
+      (var-def
+        (variable nilValid (type
+          (value-type boolean)) (expr
+          (invocation uuid validate (
+            (simple-var-ref nilStr))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nilValid))))
+      (var-def
+        (variable notValid (type
+          (value-type boolean)) (expr
+          (invocation uuid validate (
+            (literal not-a-uuid))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref notValid))))
+      (var-def
+        (variable nilRec (type
+          (user-defined-type uuid Uuid)) (expr
+          (invocation uuid nilAsRecord ()))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref nilRec)
+            (literal timeLow)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref nilRec)
+            (literal node)))))
+      (var-def
+        (variable v4 (type
+          (value-type string)) (expr
+          (invocation uuid createType4AsString ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation uuid validate (
+            (simple-var-ref v4))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation uuid getVersion (
+            (simple-var-ref v4))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$0))) ())
+      (var-def
+        (variable ver (type
+          (user-defined-type uuid Version)) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref ver)
+            (literal V4)))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation uuid createType4AsRecord ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (return
+            (simple-var-ref $desugar$1))) ())
+      (var-def
+        (variable v4rec (type
+          (user-defined-type uuid Uuid)) (expr
+          (simple-var-ref $desugar$1))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (index-based-access
+              (simple-var-ref v4rec)
+              (literal timeLow))
+            (literal 0)))))
+      (var-def
+        (variable rand (type
+          (value-type string)) (expr
+          (invocation uuid createRandomUuid ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation uuid validate (
+            (simple-var-ref rand)))))))))

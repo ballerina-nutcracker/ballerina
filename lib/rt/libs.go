@@ -25,6 +25,7 @@ import (
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.float"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.int"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.map"
+	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.runtime"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.string"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.value"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.xml"
@@ -38,4 +39,5 @@ import (
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/random/0.0.1/go1.26/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/time/0.0.1/go1.26/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/url/0.0.1/go1.26/native"
+	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/uuid/0.0.1/go1.26/native"
 )

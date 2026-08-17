@@ -1,0 +1,166 @@
+(main
+  (bb0 () (bb1 bb4)
+    (var-def
+      (variable v3a (type
+        (union-type
+          (value-type string)
+          (user-defined-type uuid Error))) (expr
+        (invocation uuid createType3AsString (
+          (simple-var-ref uuid NAME_SPACE_DNS)
+          (literal ballerina.io))))))
+    (var-def
+      (variable v3b (type
+        (union-type
+          (value-type string)
+          (user-defined-type uuid Error))) (expr
+        (invocation uuid createType3AsString (
+          (simple-var-ref uuid NAME_SPACE_DNS)
+          (literal ballerina.io))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v3a)
+          (value-type string)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v3b)
+          (value-type string)))))
+    (binary-expr &&
+      (type-test-expr is
+        (simple-var-ref v3a)
+        (value-type string))
+      (type-test-expr is
+        (simple-var-ref v3b)
+        (value-type string)))
+  )
+  (bb1 (bb0) (bb2 bb3)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref v3a)
+          (simple-var-ref v3b)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation uuid validate (
+          (simple-var-ref v3a))))))
+    (var-def
+      (variable ver (type
+        (union-type
+          (user-defined-type uuid Version)
+          (user-defined-type uuid Error))) (expr
+        (invocation uuid getVersion (
+          (simple-var-ref v3a))))))
+    (type-test-expr is
+      (simple-var-ref ver)
+      (user-defined-type uuid Version))
+  )
+  (bb2 (bb1) (bb3)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref ver)
+          (simple-var-ref uuid V3)))))
+  )
+  (bb3 (bb2 bb1) (bb4))
+  (bb4 (bb3 bb0) (bb5 bb8)
+    (var-def
+      (variable v5a (type
+        (union-type
+          (value-type string)
+          (user-defined-type uuid Error))) (expr
+        (invocation uuid createType5AsString (
+          (simple-var-ref uuid NAME_SPACE_DNS)
+          (literal ballerina.io))))))
+    (var-def
+      (variable v5b (type
+        (union-type
+          (value-type string)
+          (user-defined-type uuid Error))) (expr
+        (invocation uuid createType5AsString (
+          (simple-var-ref uuid NAME_SPACE_DNS)
+          (literal ballerina.io))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v5a)
+          (value-type string)))))
+    (binary-expr &&
+      (type-test-expr is
+        (simple-var-ref v5a)
+        (value-type string))
+      (type-test-expr is
+        (simple-var-ref v5b)
+        (value-type string)))
+  )
+  (bb5 (bb4) (bb6 bb7)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref v5a)
+          (simple-var-ref v5b)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation uuid validate (
+          (simple-var-ref v5a))))))
+    (var-def
+      (variable ver2 (type
+        (union-type
+          (user-defined-type uuid Version)
+          (user-defined-type uuid Error))) (expr
+        (invocation uuid getVersion (
+          (simple-var-ref v5a))))))
+    (type-test-expr is
+      (simple-var-ref ver2)
+      (user-defined-type uuid Version))
+  )
+  (bb6 (bb5) (bb7)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref ver2)
+          (simple-var-ref uuid V5)))))
+  )
+  (bb7 (bb6 bb5) (bb8))
+  (bb8 (bb7 bb4) (bb9 bb10)
+    (var-def
+      (variable emptyErr (type
+        (union-type
+          (value-type string)
+          (user-defined-type uuid Error))) (expr
+        (invocation uuid createType3AsString (
+          (simple-var-ref uuid NAME_SPACE_DNS)
+          (literal ))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref emptyErr)
+          (user-defined-type uuid Error)))))
+    (var-def
+      (variable v1 (type
+        (value-type string)) (expr
+        (invocation uuid createType1AsString ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation uuid validate (
+          (simple-var-ref v1))))))
+    (var-def
+      (variable ver1 (type
+        (union-type
+          (user-defined-type uuid Version)
+          (user-defined-type uuid Error))) (expr
+        (invocation uuid getVersion (
+          (simple-var-ref v1))))))
+    (type-test-expr is
+      (simple-var-ref ver1)
+      (user-defined-type uuid Version))
+  )
+  (bb9 (bb8) (bb10)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref ver1)
+          (simple-var-ref uuid V1)))))
+  )
+  (bb10 (bb9 bb8) ())
+)

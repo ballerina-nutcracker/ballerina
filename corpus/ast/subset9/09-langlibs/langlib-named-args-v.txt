@@ -1,0 +1,84 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation indexOf expr:
+            (simple-var-ref a) (
+            (named-arg val
+              (literal 2)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation indexOf expr:
+            (simple-var-ref a) (
+            (literal 2)
+            (named-arg startIndex
+              (literal 2)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation indexOf expr:
+            (simple-var-ref a) (
+            (named-arg val
+              (literal 2))
+            (named-arg startIndex
+              (literal 2)))))))
+      (var-def
+        (variable b (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 10)
+            (literal 20)
+            (literal 30)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation remove expr:
+            (simple-var-ref b) (
+            (named-arg index
+              (literal 0)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))
+            (key-value
+              (literal b)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation remove expr:
+            (simple-var-ref m) (
+            (named-arg k
+              (literal a)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation int fromString (
+            (named-arg s
+              (literal 42)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation substring expr:
+            (literal hello) (
+            (named-arg startIndex
+              (literal 1))
+            (named-arg endIndex
+              (literal 3))))))))))

@@ -1,0 +1,77 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable nilStr (type
+        (value-type string)) (expr
+        (invocation uuid nilAsString ()))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nilStr))))
+    (var-def
+      (variable nilValid (type
+        (value-type boolean)) (expr
+        (invocation uuid validate (
+          (simple-var-ref nilStr))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nilValid))))
+    (var-def
+      (variable notValid (type
+        (value-type boolean)) (expr
+        (invocation uuid validate (
+          (literal not-a-uuid))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref notValid))))
+    (var-def
+      (variable nilRec (type
+        (user-defined-type uuid Uuid)) (expr
+        (invocation uuid nilAsRecord ()))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access timeLow
+          (simple-var-ref nilRec)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access node
+          (simple-var-ref nilRec)))))
+    (var-def
+      (variable v4 (type
+        (value-type string)) (expr
+        (invocation uuid createType4AsString ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation uuid validate (
+          (simple-var-ref v4))))))
+    (var-def
+      (variable ver (type
+        (user-defined-type uuid Version)) (expr
+        (checked-expr
+          (invocation uuid getVersion (
+            (simple-var-ref v4)))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref ver)
+          (simple-var-ref uuid V4)))))
+    (var-def
+      (variable v4rec (type
+        (user-defined-type uuid Uuid)) (expr
+        (checked-expr
+          (invocation uuid createType4AsRecord ())))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >=
+          (field-based-access timeLow
+            (simple-var-ref v4rec))
+          (literal 0)))))
+    (var-def
+      (variable rand (type
+        (value-type string)) (expr
+        (invocation uuid createRandomUuid ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation uuid validate (
+          (simple-var-ref rand))))))
+  )
+)

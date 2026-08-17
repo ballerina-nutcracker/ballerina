@@ -6460,7 +6460,8 @@ func lowerInvocationArgs(t typeResolver, args []ast.BLangExpression, fnRef model
 		if !ok {
 			return args, true
 		}
-		sig = model.NewUntypedFunctionSignature(opaqueFunctionParams(opaque.Name(), model.TypedFunctionSignature{}), opaque.Name() == "push")
+		params := opaqueInvocationParams(opaque, args)
+		sig = model.NewUntypedFunctionSignature(params, hasRestParam(params))
 	}
 	return lowerInvocationArgsInner(t, args, sig, fnRef, expectedType, pos)
 }
@@ -7706,8 +7707,10 @@ var (
 
 func init() {
 	arrayOpaqueMonomorphizers = []opaqueFnMonomorphizer{
-		model.OpaqueFnArrayPush: monomorphizeArrayPush,
-		model.OpaqueFnArrayMap:  monomorphizeArrayMap,
+		model.OpaqueFnArrayPush:    monomorphizeArrayPush,
+		model.OpaqueFnArrayMap:     monomorphizeArrayMap,
+		model.OpaqueFnArrayIndexOf: monomorphizeArrayIndexOf,
+		model.OpaqueFnArrayRemove:  monomorphizeArrayRemove,
 	}
 	mapOpaqueMonomorphizers = []opaqueFnMonomorphizer{
 		model.OpaqueFnMapRemove: monomorphizeMapRemove,
@@ -7779,7 +7782,10 @@ func containerArgExpr(args []ast.BLangExpression, paramName string) (ast.BLangEx
 }
 
 // storeMonomorphizedOpaqueFn builds the monomorphic symbol for sig, adds it to
-// the opaque symbol's space, sets its type, and caches it under cacheKeys.
+// the opaque symbol's space, sets its type, and caches it under cacheKeys
+// (typically the container type, plus any extra keys a monomorphizer needs to
+// disambiguate call sites that share a container type but resolve
+// differently, e.g. by arity).
 func storeMonomorphizedOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, sig model.TypedFunctionSignature, loc diagnostics.Location, cacheKeys ...semtypes.SemType) (model.SymbolRef, bool) {
 	mono := &monomorphicOpaqueFn{FunctionSymbol: model.NewFunctionSymbol(sym.Name(), sig, true, loc), poly: polymorphicRef}
 	mono.SetType(typeFromFunctionSignature(t, sig))
@@ -7787,7 +7793,8 @@ func storeMonomorphizedOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol,
 	idx := space.AppendSymbol(mono)
 	mono.name = fmt.Sprintf("%s$mono$%d", sym.Name(), idx)
 	ref := space.RefAt(idx)
-	handle := t.allocateFunctionSignature(opaqueFunctionParams(sym.Name(), sig), sym.Name() == "push")
+	params := opaqueFunctionParams(sym, sig)
+	handle := t.allocateFunctionSignature(params, hasRestParam(params))
 	if !t.associateFunctionSignature(ref, handle) {
 		t.internalError("function signature already set", loc)
 		return model.SymbolRef{}, false
@@ -7798,17 +7805,56 @@ func storeMonomorphizedOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol,
 	return ref, true
 }
 
-func opaqueFunctionParams(name string, sig model.TypedFunctionSignature) []model.Param {
-	switch name {
-	case "push":
-		return []model.Param{{Name: "arr"}, {Name: "vals", Flag: model.ParamFlagRestParam}}
-	case "map":
-		return []model.Param{{Name: "arr"}, {Name: "func"}}
-	case "remove":
-		return []model.Param{{Name: "m"}, {Name: "k"}}
-	default:
+// opaqueFunctionParams returns the declared parameters of an opaque function,
+// so that named arguments resolve as they do in jBallerina. The names live on
+// the symbol because they are package-scoped: array:remove takes (arr, index)
+// while map:remove takes (m, k).
+//
+// A monomorphized signature can be shorter than the declaration when a
+// defaultable parameter was omitted at the call site (indexOf resolves to 2 or
+// 3 params), so the names are truncated to the signature's arity.
+func opaqueFunctionParams(sym *model.OpaqueFunctionSymbol, sig model.TypedFunctionSignature) []model.Param {
+	params := sym.Params
+	if len(params) == 0 {
 		return make([]model.Param, len(sig.ParamTypes))
 	}
+	// A zero-value signature means the caller wants the declaration itself, not
+	// a monomorphized instance of it, so every declared parameter is kept.
+	if len(sig.ParamTypes) > 0 && len(params) > len(sig.ParamTypes) {
+		return params[:len(sig.ParamTypes)]
+	}
+	return params
+}
+
+func hasRestParam(params []model.Param) bool {
+	return len(params) > 0 && params[len(params)-1].Flag == model.ParamFlagRestParam
+}
+
+// opaqueInvocationParams returns the declared parameters an opaque function
+// call actually binds, dropping trailing defaultable ones the call site neither
+// fills positionally nor names. Opaque functions carry no default expression to
+// desugar — the extern applies the default itself, and the monomorphizer picks
+// an arity to match — so a parameter the caller omits must not appear in the
+// signature at all, or lowering would report it as missing.
+func opaqueInvocationParams(sym *model.OpaqueFunctionSymbol, args []ast.BLangExpression) []model.Param {
+	params := sym.Params
+	positional := 0
+	named := make(map[string]bool, len(args))
+	for _, arg := range args {
+		if a, ok := arg.(*ast.BLangNamedArgsExpression); ok {
+			named[a.Name.GetValue()] = true
+			continue
+		}
+		positional++
+	}
+	for len(params) > positional {
+		last := params[len(params)-1]
+		if last.Flag&model.ParamFlagDefaultable == 0 || named[last.Name] {
+			break
+		}
+		params = params[:len(params)-1]
+	}
+	return params
 }
 
 func monomorphizeArrayPush(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
@@ -7838,6 +7884,84 @@ func monomorphizeArrayPush(t typeResolver, sym *model.OpaqueFunctionSymbol, poly
 		RestParamType: valType,
 		ReturnType:    semtypes.Nil,
 		Flags:         model.FuncSymbolFlagIsolated,
+	}
+	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
+	return ref, chain, ok
+}
+
+func monomorphizeArrayIndexOf(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
+	containerExpr, ok := containerArgExpr(args, "arr")
+	if !ok {
+		t.semanticError("missing container argument", pos)
+		return model.SymbolRef{}, chain, false
+	}
+	containerTy, effect, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
+	if !ok {
+		return model.SymbolRef{}, chain, false
+	}
+	chain = effect.ifTrue
+	// startIndex defaults to 0 per spec (`indexOf(arr, val, int startIndex = 0)`).
+	// Opaque functions don't go through the general defaultable-param desugaring
+	// path (see padArgTypesForDefaults), so instead we monomorphize a 2- or
+	// 3-param signature to match what the call site actually provided; the Go
+	// extern already defaults startIndex to 0 when it isn't passed. The cache
+	// key must include the arity marker too, since two call sites can share
+	// the same containerTy but resolve to different arities.
+	hasStartIndex := len(args) > 2
+	arityKey := semtypes.Nil
+	if hasStartIndex {
+		arityKey = semtypes.Int
+	}
+	if sym.Lookup != nil {
+		if ref, ok := sym.Lookup(containerTy, arityKey); ok {
+			return ref, chain, true
+		}
+	}
+	cx := t.typeContext()
+	if !semtypes.IsSubtype(cx, containerTy, semtypes.List) {
+		t.semanticError("expect first argument to be a subtype of (any|error)[]", pos)
+		return model.SymbolRef{}, chain, false
+	}
+	valType := semtypes.ListProj(cx, containerTy, semtypes.Int)
+	paramTypes := []semtypes.SemType{containerTy, valType}
+	if hasStartIndex {
+		paramTypes = append(paramTypes, semtypes.Int)
+	}
+	sig := model.TypedFunctionSignature{
+		ParamTypes: paramTypes,
+		ReturnType: semtypes.Union(semtypes.Int, semtypes.Nil),
+		Flags:      model.FuncSymbolFlagIsolated,
+	}
+	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy, arityKey)
+	return ref, chain, ok
+}
+
+func monomorphizeArrayRemove(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
+	containerExpr, ok := containerArgExpr(args, "arr")
+	if !ok {
+		t.semanticError("missing container argument", pos)
+		return model.SymbolRef{}, chain, false
+	}
+	containerTy, effect, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
+	if !ok {
+		return model.SymbolRef{}, chain, false
+	}
+	chain = effect.ifTrue
+	if sym.Lookup != nil {
+		if ref, ok := sym.Lookup(containerTy); ok {
+			return ref, chain, true
+		}
+	}
+	cx := t.typeContext()
+	if !semtypes.IsSubtype(cx, containerTy, semtypes.List) {
+		t.semanticError("expect first argument to be a subtype of (any|error)[]", pos)
+		return model.SymbolRef{}, chain, false
+	}
+	elementType := semtypes.ListProj(cx, containerTy, semtypes.Int)
+	sig := model.TypedFunctionSignature{
+		ParamTypes: []semtypes.SemType{containerTy, semtypes.Int},
+		ReturnType: elementType,
+		Flags:      model.FuncSymbolFlagIsolated,
 	}
 	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
 	return ref, chain, ok

@@ -39,6 +39,11 @@ type OpaqueFunctionSymbol struct {
 	name        string
 	ID          int          // per-package opaque id; serialization handle and (with the package) selects the monomorphizer
 	SymbolSpace *SymbolSpace // space the monomorphized function is added to
+	// Params are the declared parameters, in order, so named arguments resolve
+	// the same way they do in jBallerina. They belong to the symbol rather than
+	// to a lookup keyed by function name, because the same name means different
+	// things in different packages (array:remove vs map:remove).
+	Params []Param
 	// Monomorphization cache functions, if function it self don't support caching then function pointers are nil
 	Lookup          func(keys ...semtypes.SemType) (SymbolRef, bool)
 	Store           func(ref SymbolRef, keys ...semtypes.SemType)
@@ -47,16 +52,18 @@ type OpaqueFunctionSymbol struct {
 
 const (
 	// lang.array
-	OpaqueFnArrayPush = 0
-	OpaqueFnArrayMap  = 1
+	OpaqueFnArrayPush    = 0
+	OpaqueFnArrayMap     = 1
+	OpaqueFnArrayIndexOf = 2
+	OpaqueFnArrayRemove  = 3
 	// lang.map
 	OpaqueFnMapRemove = 0
 	// lang.xml
 	OpaqueFnXMLIterator = 4
 )
 
-func newOpaqueFunctionSymbol(name string, id int, isIsolatedParam func(int) bool) *OpaqueFunctionSymbol {
-	return &OpaqueFunctionSymbol{name: name, ID: id, IsIsolatedParam: isIsolatedParam}
+func newOpaqueFunctionSymbol(name string, id int, isIsolatedParam func(int) bool, params ...Param) *OpaqueFunctionSymbol {
+	return &OpaqueFunctionSymbol{name: name, ID: id, IsIsolatedParam: isIsolatedParam, Params: params}
 }
 
 func noIsolatedParams(int) bool { return false }
@@ -124,11 +131,21 @@ func OpaqueSymbols(pkg PackageIdentifier) []Symbol {
 		return langXMLOpaqueSymbols()
 	case "lang.array":
 		return []Symbol{
-			newOpaqueFunctionSymbol("push", OpaqueFnArrayPush, noIsolatedParams),
-			newOpaqueFunctionSymbol("map", OpaqueFnArrayMap, func(index int) bool { return index == 1 }),
+			newOpaqueFunctionSymbol("push", OpaqueFnArrayPush, noIsolatedParams,
+				Param{Name: "arr"}, Param{Name: "vals", Flag: ParamFlagRestParam}),
+			newOpaqueFunctionSymbol("map", OpaqueFnArrayMap, func(index int) bool { return index == 1 },
+				Param{Name: "arr"}, Param{Name: "func"}),
+			// startIndex defaults to 0; the Go extern applies that default when
+			// the call site omits it, so no default expression is carried here.
+			newOpaqueFunctionSymbol("indexOf", OpaqueFnArrayIndexOf, noIsolatedParams,
+				Param{Name: "arr"}, Param{Name: "val"},
+				Param{Name: "startIndex", Flag: ParamFlagDefaultable}),
+			newOpaqueFunctionSymbol("remove", OpaqueFnArrayRemove, noIsolatedParams,
+				Param{Name: "arr"}, Param{Name: "index"}),
 		}
 	case "lang.map":
-		return []Symbol{newOpaqueFunctionSymbol("remove", OpaqueFnMapRemove, noIsolatedParams)}
+		return []Symbol{newOpaqueFunctionSymbol("remove", OpaqueFnMapRemove, noIsolatedParams,
+			Param{Name: "m"}, Param{Name: "k"})}
 	default:
 		return nil
 	}
