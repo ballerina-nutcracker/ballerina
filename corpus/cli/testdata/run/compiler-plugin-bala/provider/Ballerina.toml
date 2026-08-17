@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "pluginprovider"
+version = "0.1.0"

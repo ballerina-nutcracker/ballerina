@@ -1,0 +1,7 @@
+[[plugin]]
+stage = "after-semantics"
+function = "Validate"
+
+[[plugin]]
+stage = "after-semantics"
+function = "Validate"

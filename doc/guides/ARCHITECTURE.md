@@ -16,7 +16,7 @@ Source becomes BIR in five phases:
 | Desugar | [`desugar/`](../../desugar/) | Syntactic sugar lowered to core constructs; uses `values/` for compile-time constants |
 | Generate BIR | [`birgen/`](../../birgen/), [`bir/`](../../bir/) | `birgen/` generates BIR; `bir/` is the model and codec. Uses `values/` when building type descriptors |
 
-Eleven stages run that work (1–10 produce BIR; 11 interprets it):
+Twelve stages run that work (1–11 produce BIR; 12 interprets it):
 
 1. Generate syntax tree
 2. Generate abstract syntax tree (AST)
@@ -26,15 +26,16 @@ Eleven stages run that work (1–10 produce BIR; 11 interprets it):
 6. Semantic analysis
 7. Generate control flow graph (CFG)
 8. Analyze CFG (reachability, explicit return)
-9. Desugar AST
-10. Generate BIR
-11. Interpret BIR
+9. Run compiler plugins
+10. Desugar AST
+11. Generate BIR
+12. Interpret BIR
 
 Stage 1 parses each file in a module in parallel. Stage 2 builds a compilation unit per file, in sequence. Modules then compile one at a time, in dependency order, because stages 3–4 need each dependency’s symbols and types first. Stage 3 resolves imports, merges those compilation units into one module AST, and resolves symbols. If any module errors in stages 1–4, the package stops before stage 5.
 
-Stages 5–9 run in parallel across modules. After each of those stages, a module checks diagnostics and stops on error. Stage 10 (BIR) runs for the whole package only after every module has finished 1–9 with no errors. Stage 11 interprets that BIR.
+Stages 5–8 run in parallel across modules. After each of those stages, a module checks diagnostics and stops on error. Stage 9 runs, only in the projects pipeline, the plugins declared in the `CompilerPlugin.toml` of each package a module explicitly imports. Stages 9 and 10 each start only after every module has finished the previous stage with no errors, and run in parallel across modules. Stage 11 (BIR) runs for the whole package only after every module has finished 1–10 with no errors. Stage 12 interprets that BIR.
 
-The driver is `projects/package_compilation.go`: it compiles modules in dependency order, runs stages 1–4 one module at a time, and stops the package if those fail. Stages 5–9 then run in parallel across modules. Each module’s stages 1–9 live in `projects/module_context.go`. `cli/cmd/run.go` asks `projects/ballerina_backend.go` to generate BIR (`birgen.GenBir`) and then interprets it, only when compilation reported no errors. Corpus tests run stages 1–10 via `test_util/testphases/phases.go`. See [AGENTS.md](../../AGENTS.md) for the error-handling rules.
+The driver is `projects/package_compilation.go`: it compiles modules in dependency order, runs stages 1–4 one module at a time, and stops the package if those fail. Stages 5–10 then run in parallel across modules, behind the barriers above. Each module’s stages 1–8 and 10 live in `projects/module_context.go`; stage 9 (`runCompilerPlugins`) lives in `projects/package_compilation.go`. `cli/cmd/run.go` asks `projects/ballerina_backend.go` to generate BIR (`birgen.GenBir`) and then interprets it, only when compilation reported no errors. Corpus tests run stages 1–11 via `test_util/testphases/phases.go`, which skips stage 9. See [AGENTS.md](../../AGENTS.md) for the error-handling rules.
 
 ## Runtime
 

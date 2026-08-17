@@ -1,0 +1,10 @@
+[package]
+org = "testorg"
+name = "pluginconsumer"
+version = "0.1.0"
+
+[[dependency]]
+org = "testorg"
+name = "pluginprovider"
+version = "0.1.0"
+repository = "local"

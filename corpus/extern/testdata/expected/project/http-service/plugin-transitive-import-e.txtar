@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: http resource method must have at most one http:Request parameter
+  --> modules/direct/direct.bal:22:29
+   |
+22 |     resource function post m(helper:Req first, helper:Req second) { // @error
+   |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
