@@ -171,6 +171,11 @@ func (p PackageConfig) CompilerPluginToml() DocumentConfig {
 	return p.compilerPluginToml
 }
 
+// HasCompilerPluginToml returns true if this package has a CompilerPlugin.toml file.
+func (p PackageConfig) HasCompilerPluginToml() bool {
+	return p.compilerPluginToml != nil
+}
+
 // BalToolToml returns the BalTool.toml document config, or nil if not present.
 func (p PackageConfig) BalToolToml() DocumentConfig {
 	return p.balToolToml
