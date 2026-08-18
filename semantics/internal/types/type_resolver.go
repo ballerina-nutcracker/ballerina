@@ -4086,8 +4086,9 @@ func resolveObjectNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpress
 	initFnTy := semtypes.ObjectMemberType(cx, initKey, determinedTy)
 	initRef, hasInitRef := initMethodSymbol(t, determinedTy)
 	if hasInitRef {
-		args, ok := lowerInvocationArgs(t, e.ArgsExprs, initRef, semtypes.SemType{}, e.GetPosition())
-		if !ok {
+		args, fail := lowerInvocationArgs(t, e.ArgsExprs, initRef, semtypes.SemType{}, e.GetPosition())
+		if fail != nil {
+			fail(t)
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 		setNewExpressionArgs(t, e, args)
@@ -6647,6 +6648,10 @@ func finishResolveMethodCall(t typeResolver, chain *binding, receiverTy semtypes
 	argListTy := argLd.Define(t.typeEnv(), argTys,
 		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	retTy := semtypes.FunctionReturnType(t.typeContext(), fnTy, argListTy)
+	if semtypes.IsZero(retTy) {
+		t.semanticError("incompatible arguments for function call", node.GetPosition())
+		return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
+	}
 	sig := model.TypedFunctionSignature{ParamTypes: argTys, ReturnType: retTy}
 	symbolRef := t.createFunctionSymbol(methodSymbol.SymbolSpace(), methodName, sig, fnTy)
 	var signatureRef model.FunctionSignatureRef
@@ -6932,8 +6937,9 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 	switch sym := baseSymbol.(type) {
 	case model.DependentlyTypedFunctionSymbol:
 		setInvocationResolvedSymbol(t, inv, fnSymbol)
-		args, ok := lowerInvocationArgs(t, inv.CallArgs(), fnSymbol, expectedType, inv.GetPosition())
-		if !ok {
+		args, fail := lowerInvocationArgs(t, inv.CallArgs(), fnSymbol, expectedType, inv.GetPosition())
+		if fail != nil {
+			fail(t)
 			return nil, fnSymbol, chain, false
 		}
 		setInvocationCallArgs(t, inv, args)
@@ -6967,8 +6973,9 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 		return argTys, monoRef, chain, true
 	case *model.OpaqueFunctionSymbol:
 		setInvocationResolvedSymbol(t, inv, fnSymbol)
-		args, ok := lowerInvocationArgs(t, inv.CallArgs(), fnSymbol, expectedType, inv.GetPosition())
-		if !ok {
+		args, fail := lowerInvocationArgs(t, inv.CallArgs(), fnSymbol, expectedType, inv.GetPosition())
+		if fail != nil {
+			fail(t)
 			return nil, fnSymbol, chain, false
 		}
 		setInvocationCallArgs(t, inv, args)
@@ -7006,8 +7013,9 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 		}
 		sig := sym.TypedSignature()
 		setInvocationResolvedSymbol(t, inv, fnSymbol)
-		args, ok := lowerInvocationArgs(t, inv.CallArgs(), fnSymbol, semtypes.SemType{}, inv.GetPosition())
-		if !ok {
+		args, fail := lowerInvocationArgs(t, inv.CallArgs(), fnSymbol, semtypes.SemType{}, inv.GetPosition())
+		if fail != nil {
+			fail(t)
 			return nil, fnSymbol, chain, false
 		}
 		setInvocationCallArgs(t, inv, args)
@@ -7032,8 +7040,9 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 		}
 
 		if _, hasSig := t.functionSignature(narrowedSymbol); hasSig {
-			args, ok := lowerInvocationArgs(t, inv.CallArgs(), narrowedSymbol, expectedType, inv.GetPosition())
-			if !ok {
+			args, fail := lowerInvocationArgs(t, inv.CallArgs(), narrowedSymbol, expectedType, inv.GetPosition())
+			if fail != nil {
+				fail(t)
 				return nil, narrowedSymbol, chain, false
 			}
 			setInvocationCallArgs(t, inv, args)
@@ -7067,6 +7076,20 @@ type lowerArgSlot struct {
 	includedFieldPos diagnostics.Location
 }
 
+type lowerFailure func(typeResolver)
+
+func semanticLowerFailure(msg string, pos diagnostics.Location) lowerFailure {
+	return func(t typeResolver) {
+		t.semanticError(msg, pos)
+	}
+}
+
+func internalLowerFailure(msg string, pos diagnostics.Location) lowerFailure {
+	return func(t typeResolver) {
+		t.internalError(msg, pos)
+	}
+}
+
 // lowerInvocationArgs lower arguments for invocation "like" expression (function/method call, new expression, client remote method call action, etc), such that after lowering
 // we only have positional arguments. This means,
 //
@@ -7077,17 +7100,18 @@ type lowerArgSlot struct {
 //	NOTE: lowering depends on there being a UntypedFunctionSignature, if not using non positional arguments in an unsupported error. If you need to handle any such case you need to
 //	properly set the UntypedFunctionSignature.
 //	NOTE: lowering also validate the arguments it lower to be valid except for their type (lowering is untyped)
-func lowerInvocationArgs(t typeResolver, args []ast.BLangExpression, fnRef model.SymbolRef, expectedType semtypes.SemType, pos diagnostics.Location) ([]ast.BLangExpression, bool) {
+func lowerInvocationArgs(t typeResolver, args []ast.BLangExpression, fnRef model.SymbolRef, expectedType semtypes.SemType, pos diagnostics.Location) ([]ast.BLangExpression, lowerFailure) {
 	sig, ok := t.functionSignature(fnRef)
 	if !ok {
 		opaque, ok := t.getSymbol(fnRef).(*model.OpaqueFunctionSymbol)
 		if !ok {
-			return args, true
+			return args, nil
 		}
 		pkg := t.compilerContext().SymbolPackage(fnRef).Package
-		sig = model.NewUntypedFunctionSignature(opaqueFunctionParams(pkg, opaque.Name(), model.TypedFunctionSignature{}), opaque.Name() == "push")
+		params := opaqueFunctionParams(pkg, opaque.Name(), model.TypedFunctionSignature{})
+		sig = model.NewUntypedFunctionSignature(params, opaqueParamsHaveRest(params))
 	}
-	return lowerInvocationArgsInner(t, args, sig, fnRef, expectedType, pos)
+	return lowerInvocationArgsWithSignature(t, args, sig, fnRef, expectedType, pos)
 }
 
 func functionParamTypes(t typeResolver, fnRef model.SymbolRef) []semtypes.SemType {
@@ -7102,7 +7126,7 @@ func functionParamTypes(t typeResolver, fnRef model.SymbolRef) []semtypes.SemTyp
 	}
 }
 
-func lowerInvocationArgsInner(t typeResolver, args []ast.BLangExpression, sig model.UntypedFunctionSignature, fn model.SymbolRef, expectedType semtypes.SemType, pos diagnostics.Location) ([]ast.BLangExpression, bool) {
+func lowerInvocationArgsWithSignature(t typeResolver, args []ast.BLangExpression, sig model.UntypedFunctionSignature, fn model.SymbolRef, expectedType semtypes.SemType, pos diagnostics.Location) ([]ast.BLangExpression, lowerFailure) {
 	fixedCount := sig.FixedParamCount()
 	slots := make([]lowerArgSlot, fixedCount)
 	var restArgs []ast.BLangExpression
@@ -7113,23 +7137,23 @@ func lowerInvocationArgsInner(t typeResolver, args []ast.BLangExpression, sig mo
 	for i, arg := range args {
 		if named, ok := arg.(*ast.BLangNamedArgsExpression); ok {
 			seenNamed = true
-			if !lowerNamedCallArg(t, sig, slots, seenNames, named) {
-				return nil, false
+			if fail := lowerNamedCallArg(t, sig, slots, seenNames, named); fail != nil {
+				return nil, fail
 			}
 			continue
 		}
 		if seenNamed {
-			t.semanticError("positional argument not allowed after named argument", arg.GetPosition())
-			return nil, false
+			return nil, semanticLowerFailure("positional argument not allowed after named argument", arg.GetPosition())
 		}
 		if i < fixedCount {
 			if slots[i].expr != nil || len(slots[i].includedFields) > 0 {
-				t.semanticError(fmt.Sprintf("repeated values for parameter %s", sig.ParamNames[i]), arg.GetPosition())
-				return nil, false
+				return nil, semanticLowerFailure(fmt.Sprintf("repeated values for parameter %s", sig.ParamNames[i]), arg.GetPosition())
 			}
 			slots[i].expr = arg
-		} else {
+		} else if sig.HasRest {
 			restArgs = append(restArgs, arg)
+		} else {
+			return nil, semanticLowerFailure("too many arguments", arg.GetPosition())
 		}
 	}
 
@@ -7148,28 +7172,24 @@ func lowerInvocationArgsInner(t typeResolver, args []ast.BLangExpression, sig mo
 		}
 		dp, ok := sig.DefaultableParam(i)
 		if !ok {
-			t.semanticError(fmt.Sprintf("missing required parameter '%s'", sig.ParamNames[i]), pos)
-			return nil, false
+			return nil, semanticLowerFailure(fmt.Sprintf("missing required parameter '%s'", sig.ParamNames[i]), pos)
 		}
 		if dp.Kind == model.DefaultableParamKindInferredTypedesc {
 			if semtypes.IsZero(expectedType) {
-				t.semanticError(fmt.Sprintf("cannot infer typedesc argument for parameter '%s': no contextually expected type", sig.ParamNames[i]), pos)
-				return nil, false
+				return nil, semanticLowerFailure(fmt.Sprintf("cannot infer typedesc argument for parameter '%s': no contextually expected type", sig.ParamNames[i]), pos)
 			}
 			paramTypes := functionParamTypes(t, fn)
 			if i >= len(paramTypes) {
-				t.internalError("function parameter type not found", pos)
-				return nil, false
+				return nil, internalLowerFailure("function parameter type not found", pos)
 			}
 			depSym, ok := t.getSymbol(fn).(model.DependentlyTypedFunctionSymbol)
 			if !ok {
-				t.internalError("inferred typedesc param on non-dependent function", pos)
-				return nil, false
+				return nil, internalLowerFailure("inferred typedesc param on non-dependent function", pos)
 			}
 			constraint := semtypes.TypedescConstraint(t.typeContext(), paramTypes[i])
-			defaultArg, ok := lowerInferredTypedescDefaultArg(t, constraint, expectedType, depSym.ReturnType(), i, pos)
-			if !ok {
-				return nil, false
+			defaultArg, fail := lowerInferredTypedescDefaultArg(t, constraint, expectedType, depSym.ReturnType(), i, pos)
+			if fail != nil {
+				return nil, fail
 			}
 			slots[i].expr = defaultArg
 			continue
@@ -7184,64 +7204,67 @@ func lowerInvocationArgsInner(t typeResolver, args []ast.BLangExpression, sig mo
 		newArgs[i] = slots[i].expr
 	}
 	copy(newArgs[fixedCount:], restArgs)
-	return newArgs, true
+	return newArgs, nil
 }
 
-func lowerInferredTypedescDefaultArg(t typeResolver, constraint, expectedType semtypes.SemType, returnOp model.TypeOp, paramIndex int, pos diagnostics.Location) (ast.BLangExpression, bool) {
+func lowerInferredTypedescDefaultArg(t typeResolver, constraint, expectedType semtypes.SemType, returnOp model.TypeOp, paramIndex int, pos diagnostics.Location) (ast.BLangExpression, lowerFailure) {
 	ctx := t.typeContext()
-	inferred, referenced, ok := inferTypedescConstraint(t, returnOp, paramIndex, constraint, expectedType, pos)
-	if !ok {
-		return nil, false
+	inferred, referenced, fail := inferTypedescConstraint(t, returnOp, paramIndex, constraint, expectedType, pos)
+	if fail != nil {
+		return nil, fail
 	}
 	if !referenced {
-		t.internalError("inferred typedesc parameter is not referenced by return type", pos)
-		return nil, false
+		return nil, internalLowerFailure("inferred typedesc parameter is not referenced by return type", pos)
 	}
 	if semtypes.IsEmpty(ctx, inferred) {
-		t.semanticError(fmt.Sprintf("cannot infer maximal type such that it is a subtype of both %s and %s",
-			semtypes.ToString(ctx, constraint), semtypes.ToString(ctx, expectedType)), pos)
-		return nil, false
+		return nil, semanticLowerFailure(
+			fmt.Sprintf("cannot infer maximal type such that it is a subtype of both %s and %s",
+				semtypes.ToString(ctx, constraint), semtypes.ToString(ctx, expectedType)),
+			pos,
+		)
 	}
 	ty := semtypes.TypedescContaining(t.typeEnv(), inferred)
 	expr := &ast.BLangTypedescExpr{Constraint: inferred}
 	expr.SetPosition(pos)
 	setNodeType(t, expr, ty)
-	return expr, true
+	return expr, nil
 }
 
-func inferTypedescConstraint(t typeResolver, op model.TypeOp, paramIndex int, constraint, candidate semtypes.SemType, pos diagnostics.Location) (semtypes.SemType, bool, bool) {
+func inferTypedescConstraint(t typeResolver, op model.TypeOp, paramIndex int, constraint, candidate semtypes.SemType, pos diagnostics.Location) (semtypes.SemType, bool, lowerFailure) {
 	ctx := t.typeContext()
 	switch current := op.(type) {
 	case *model.RefTypeOp:
 		if current.Index != paramIndex {
-			return semtypes.Never, false, true
+			return semtypes.Never, false, nil
 		}
 		if !semtypes.IsSubtype(ctx, candidate, constraint) {
 			candidate = semtypes.Intersect(constraint, candidate)
 		}
-		return candidate, true, true
+		return candidate, true, nil
 	case *model.IdentityTypeOp:
-		return semtypes.Never, false, true
+		return semtypes.Never, false, nil
 	case *model.ArrayTypeOp:
 		if !typeOpReferencesParam(current.Element, paramIndex) {
-			return semtypes.Never, false, true
+			return semtypes.Never, false, nil
 		}
 		shape := arraySemType(ctx, semtypes.Val, current.Length, current.IsOpen)
 		compatibleCandidate := semtypes.Intersect(candidate, shape)
 		if semtypes.IsEmpty(ctx, compatibleCandidate) {
-			t.semanticError(fmt.Sprintf("cannot infer typedesc argument from incompatible expected array type %s", semtypes.ToString(ctx, candidate)), pos)
-			return semtypes.Never, true, false
+			return semtypes.Never, true, semanticLowerFailure(
+				fmt.Sprintf("cannot infer typedesc argument from incompatible expected array type %s", semtypes.ToString(ctx, candidate)),
+				pos,
+			)
 		}
 		member := semtypes.ListProj(ctx, compatibleCandidate, semtypes.Int)
 		if semtypes.IsEmpty(ctx, member) {
-			return constraint, true, true
+			return constraint, true, nil
 		}
 		return inferTypedescConstraint(t, current.Element, paramIndex, constraint, member, pos)
 	case *model.BinaryTypeOp:
 		lhsDepends := typeOpReferencesParam(current.Lhs, paramIndex)
 		rhsDepends := typeOpReferencesParam(current.Rhs, paramIndex)
 		if !lhsDepends && !rhsDepends {
-			return semtypes.Never, false, true
+			return semtypes.Never, false, nil
 		}
 		if lhsDepends && !rhsDepends {
 			return inferTypedescConstraint(t, current.Lhs, paramIndex, constraint,
@@ -7251,21 +7274,20 @@ func inferTypedescConstraint(t typeResolver, op model.TypeOp, paramIndex int, co
 			return inferTypedescConstraint(t, current.Rhs, paramIndex, constraint,
 				inferBinaryOperandCandidate(ctx, current.Kind, candidate, current.Lhs.FixedPart(ctx)), pos)
 		}
-		lhs, _, ok := inferTypedescConstraint(t, current.Lhs, paramIndex, constraint, candidate, pos)
-		if !ok {
-			return semtypes.Never, true, false
+		lhs, _, fail := inferTypedescConstraint(t, current.Lhs, paramIndex, constraint, candidate, pos)
+		if fail != nil {
+			return semtypes.Never, true, fail
 		}
-		rhs, _, ok := inferTypedescConstraint(t, current.Rhs, paramIndex, constraint, candidate, pos)
-		if !ok {
-			return semtypes.Never, true, false
+		rhs, _, fail := inferTypedescConstraint(t, current.Rhs, paramIndex, constraint, candidate, pos)
+		if fail != nil {
+			return semtypes.Never, true, fail
 		}
 		if current.Kind == model.TypeOpUnion {
-			return semtypes.Intersect(lhs, rhs), true, true
+			return semtypes.Intersect(lhs, rhs), true, nil
 		}
-		return semtypes.Union(lhs, rhs), true, true
+		return semtypes.Union(lhs, rhs), true, nil
 	default:
-		t.internalError(fmt.Sprintf("unknown dependent return type op: %T", op), pos)
-		return semtypes.Never, false, false
+		return semtypes.Never, false, internalLowerFailure(fmt.Sprintf("unknown dependent return type op: %T", op), pos)
 	}
 }
 
@@ -7303,26 +7325,24 @@ func arraySemType(ctx semtypes.Context, element semtypes.SemType, length int, is
 	return definition.Define(ctx.Env(), []semtypes.SemType{element}, semtypes.ListFixedLength(length))
 }
 
-func lowerNamedCallArg(t typeResolver, sig model.UntypedFunctionSignature, slots []lowerArgSlot, seenNames map[string]diagnostics.Location, expr *ast.BLangNamedArgsExpression) bool {
+func lowerNamedCallArg(t typeResolver, sig model.UntypedFunctionSignature, slots []lowerArgSlot, seenNames map[string]diagnostics.Location, expr *ast.BLangNamedArgsExpression) lowerFailure {
 	name := expr.Name.GetValue()
 	if _, seen := seenNames[name]; seen {
-		t.semanticError(fmt.Sprintf("duplicate arguments for %s", name), expr.GetPosition())
-		return false
+		return semanticLowerFailure(fmt.Sprintf("duplicate arguments for %s", name), expr.GetPosition())
 	}
 	seenNames[name] = expr.GetPosition()
 
 	idx, result := sig.Index(name)
 	if result != model.ParamIndexFound {
-		reportParamIndexError(t, result, hasIncludedRecordParam(sig, sig.FixedParamCount()), name, expr.GetPosition())
-		return false
+		return reportParamIndexError(result, hasIncludedRecordParam(sig, sig.FixedParamCount()), name, expr.GetPosition())
 	}
 	if sig.ParamFlags[idx]&model.ParamFlagIncludedRecordParam != 0 && name != sig.ParamNames[idx] {
 		// field for included record param
 		if slots[idx].expr != nil {
-			t.semanticError(
+			return semanticLowerFailure(
 				fmt.Sprintf("record value and field-level arguments for the same included record parameter '%s'", sig.ParamNames[idx]),
-				expr.GetPosition())
-			return false
+				expr.GetPosition(),
+			)
 		}
 		slots[idx].includedFields = append(slots[idx].includedFields, mappingField{name: name, expr: expr.Expr, pos: expr.GetPosition()})
 		if slots[idx].includedFieldPos == (diagnostics.Location{}) {
@@ -7330,22 +7350,21 @@ func lowerNamedCallArg(t typeResolver, sig model.UntypedFunctionSignature, slots
 			slots[idx].includedFieldPos = expr.GetPosition()
 		}
 		setNodeType(t, expr.Name, semtypes.Never)
-		return true
+		return nil
 	} else {
 		// actual named parameter
 		if slots[idx].expr != nil {
-			t.semanticError(fmt.Sprintf("repeated values for parameter %s", name), expr.GetPosition())
-			return false
+			return semanticLowerFailure(fmt.Sprintf("repeated values for parameter %s", name), expr.GetPosition())
 		}
 		if len(slots[idx].includedFields) > 0 {
-			t.semanticError(
+			return semanticLowerFailure(
 				fmt.Sprintf("record value and field-level arguments for the same included record parameter '%s'", sig.ParamNames[idx]),
-				expr.GetPosition())
-			return false
+				expr.GetPosition(),
+			)
 		}
 		slots[idx].expr = expr.Expr
 		setNodeType(t, expr.Name, semtypes.Never)
-		return true
+		return nil
 	}
 }
 
@@ -7396,18 +7415,17 @@ func hasIncludedRecordParam(sig model.UntypedFunctionSignature, nRequired int) b
 	return false
 }
 
-func reportParamIndexError(t typeResolver, result model.ParamIndexResult, hasIncludedRecord bool, name string, pos diagnostics.Location) {
+func reportParamIndexError(result model.ParamIndexResult, hasIncludedRecord bool, name string, pos diagnostics.Location) lowerFailure {
 	switch result {
 	case model.ParamIndexNotFound:
 		if hasIncludedRecord {
-			t.semanticError(fmt.Sprintf("no included record parameter accepts named argument '%s'", name), pos)
-			return
+			return semanticLowerFailure(fmt.Sprintf("no included record parameter accepts named argument '%s'", name), pos)
 		}
-		t.semanticError(fmt.Sprintf("no such parameter %s", name), pos)
+		return semanticLowerFailure(fmt.Sprintf("no such parameter %s", name), pos)
 	case model.ParamIndexAmbiguous:
-		t.semanticError(fmt.Sprintf("named argument '%s' matches multiple included record parameters", name), pos)
+		return semanticLowerFailure(fmt.Sprintf("named argument '%s' matches multiple included record parameters", name), pos)
 	default:
-		t.internalError("invalid parameter index result", pos)
+		return internalLowerFailure("invalid parameter index result", pos)
 	}
 }
 
@@ -8599,7 +8617,8 @@ func storeMonomorphizedOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol,
 	mono.name = fmt.Sprintf("%s$mono$%d", sym.Name(), idx)
 	ref := space.RefAt(idx)
 	pkg := t.compilerContext().SymbolPackage(polymorphicRef).Package
-	handle := t.allocateFunctionSignature(opaqueFunctionParams(pkg, sym.Name(), sig), sym.Name() == "push")
+	params := opaqueFunctionParams(pkg, sym.Name(), sig)
+	handle := t.allocateFunctionSignature(params, opaqueParamsHaveRest(params))
 	if !t.associateFunctionSignature(ref, handle) {
 		t.internalError("function signature already set", loc)
 		return model.SymbolRef{}, false
@@ -8610,11 +8629,12 @@ func storeMonomorphizedOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol,
 	return ref, true
 }
 
-// opaqueFunctionParams returns parameter names for an opaque function. Opaque
-// symbols carry no function signature of their own, so named arguments and
-// defaultable parameters are not supported for them; the names here exist only
-// for the ones that already had them. Attaching real (untyped) signatures to
-// opaque symbols is the proper fix and is tracked separately.
+// opaqueFunctionParams returns the parameter list for an opaque lang-lib
+// function. Opaque symbols carry no function signature of their own, so this
+// table stands in for one: it must cover every function in
+// model.OpaqueSymbols, otherwise arity checking during argument lowering has
+// nothing to check against. Attaching real (untyped) signatures to opaque
+// symbols is the proper fix and is tracked separately.
 func opaqueFunctionParams(pkg, name string, sig model.TypedFunctionSignature) []model.Param {
 	switch pkg {
 	case "lang.array":
@@ -8623,13 +8643,26 @@ func opaqueFunctionParams(pkg, name string, sig model.TypedFunctionSignature) []
 			return []model.Param{{Name: "arr"}, {Name: "vals", Flag: model.ParamFlagRestParam}}
 		case "map":
 			return []model.Param{{Name: "arr"}, {Name: "func"}}
-		case "toStream":
+		case "indexOf":
+			// `startIndex` is defaultable in the spec, but opaque functions skip
+			// the defaultable-param desugaring; monomorphizeArrayIndexOf keys off
+			// the argument count instead, so model it as a rest param to leave it
+			// optional without lowering padding a default in.
+			return []model.Param{{Name: "arr"}, {Name: "val"}, {Name: "startIndex", Flag: model.ParamFlagRestParam}}
+		case "remove":
+			return []model.Param{{Name: "arr"}, {Name: "index"}}
+		case "toStream", "removeAll":
 			return []model.Param{{Name: "arr"}}
 		}
 	case "lang.map":
 		switch name {
 		case "remove", "get":
 			return []model.Param{{Name: "m"}, {Name: "k"}}
+		}
+	case "lang.xml":
+		switch name {
+		case "iterator":
+			return []model.Param{{Name: "x"}}
 		}
 	}
 	// Opaque symbols carry no signature of their own, so named arguments cannot
@@ -8671,6 +8704,12 @@ func monomorphizeArrayToStream(t typeResolver, sym *model.OpaqueFunctionSymbol, 
 	}
 	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
 	return ref, chain, ok
+}
+
+// opaqueParamsHaveRest reports whether params ends in a rest parameter, which is
+// what UntypedFunctionSignature needs to size its fixed-parameter prefix.
+func opaqueParamsHaveRest(params []model.Param) bool {
+	return len(params) > 0 && params[len(params)-1].Flag&model.ParamFlagRestParam != 0
 }
 
 func monomorphizeArrayPush(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
