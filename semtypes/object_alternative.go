@@ -29,6 +29,50 @@ func (a ObjectAlternative) InitFunctionType() SemType {
 	return a.initFunctionType
 }
 
+// ObjectPositiveAtom returns the sole positive object mapping atom, excluding
+// the readonly constraint.
+func ObjectPositiveAtom(cx Context, t SemType) (*MappingAtomicType, bool) {
+	mappingTy := convertObjectToMappingTy(cx, t)
+	if mappingTy.some() == 0 {
+		return nil, false
+	}
+	paths := []bddPath{}
+	bddPathsPositive(getComplexSubtypeData(mappingTy, btMapping).(bdd), &paths, bddPathFrom())
+	if len(paths) != 1 || len(paths[0].neg) != 0 {
+		return nil, false
+	}
+	atoms := paths[0].pos
+	var candidate atom
+	switch len(atoms) {
+	case 1:
+		if isObjectReadonlyAtom(atoms[0]) {
+			return nil, false
+		}
+		candidate = atoms[0]
+	case 2:
+		switch {
+		case isObjectReadonlyAtom(atoms[0]):
+			candidate = atoms[1]
+		case isObjectReadonlyAtom(atoms[1]):
+			candidate = atoms[0]
+		default:
+			return nil, false
+		}
+	default:
+		return nil, false
+	}
+	mappingAtom := cx.MappingAtomType(candidate)
+	if mappingAtom == nil {
+		return nil, false
+	}
+	return mappingAtom, true
+}
+
+func isObjectReadonlyAtom(atom atom) bool {
+	rec, ok := atom.(*recAtom)
+	return ok && rec.index() == bddRecAtomObjectReadonly
+}
+
 func IsAtomicObjectType(cx Context, t SemType) bool {
 	return IsSubtype(cx, t, Object) && len(ObjectAlternatives(cx, t)) == 1
 }
