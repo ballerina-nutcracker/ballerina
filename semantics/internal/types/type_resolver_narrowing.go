@@ -263,8 +263,8 @@ func diff(c1, c2 *binding) *binding {
 	return result
 }
 
-func singletonExprEffect(chain *binding, expr ast.BLangActionOrExpression) (expressionEffect, bool) {
-	return singletonResultEffect(chain, expr.GetDeterminedType())
+func singletonExprEffect(t typeResolver, chain *binding, expr ast.BLangActionOrExpression) (expressionEffect, bool) {
+	return singletonResultEffect(chain, nodeType(t, expr))
 }
 
 func singletonResultEffect(chain *binding, ty semtypes.SemType) (expressionEffect, bool) {

@@ -51,9 +51,9 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 	case *ast.BLangGroupExpr:
 		return e.evaluate(expr.Expression)
 	case *ast.BLangVarRef:
-		return e.evaluateConstantReference(expr.Symbol(), expr.GetDeterminedType())
+		return e.evaluateConstantReference(expr.Symbol(), nodeType(e.resolver, expr))
 	case *ast.BLangConstRef:
-		return e.evaluateConstantReference(expr.Symbol(), expr.GetDeterminedType())
+		return e.evaluateConstantReference(expr.Symbol(), nodeType(e.resolver, expr))
 	case *ast.BLangMappingConstructorExpr:
 		return e.evaluateMappingConstructor(expr)
 	case *ast.BLangListConstructorExpr:
@@ -65,7 +65,7 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 	case *ast.BLangNilConditionalExpr:
 		return e.evaluateNilConditionalExpression(expr)
 	case *ast.BLangBinaryExpr:
-		ty := expr.GetDeterminedType()
+		ty := nodeType(e.resolver, expr)
 		if expr.OpKind == model.OperatorKind_ADD && !semtypes.IsZero(ty) && semtypes.IsSubtypeSimple(ty, semtypes.String) {
 			if value, ok := constantSingleShapeValue(ty); ok {
 				return value, nil
@@ -75,7 +75,7 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 	case *ast.BLangTypeConversionExpr:
 		return e.evaluateTypeConversion(expr)
 	case *ast.BLangTemplateExpr:
-		if value, ok := constantSingleShapeValue(expr.GetDeterminedType()); ok {
+		if value, ok := constantSingleShapeValue(nodeType(e.resolver, expr)); ok {
 			return value, nil
 		}
 		return e.evaluateStringTemplate(expr)
@@ -560,7 +560,7 @@ func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangType
 	if err != nil {
 		return nil, err
 	}
-	targetType := expr.TypeDescriptor.GetDeterminedType()
+	targetType := nodeType(e.resolver, expr.TypeDescriptor)
 	converted, err := values.CastValue(e.resolver.typeContext(), value, targetType)
 	if err != nil {
 		return nil, constantCastDiagnostic(value, targetType, err)
