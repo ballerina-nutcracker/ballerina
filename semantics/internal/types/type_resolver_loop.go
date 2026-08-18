@@ -197,10 +197,6 @@ func (l *loopTypeResolver) nextDefaultFnName() string {
 	return l.parentResolver.nextDefaultFnName()
 }
 
-func (l *loopTypeResolver) lookupClassMethodSymbol(receiverTy semtypes.SemType, methodName string) (model.SymbolRef, bool) {
-	return l.parentResolver.lookupClassMethodSymbol(receiverTy, methodName)
-}
-
 func (l *loopTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool {
 	return l.parentResolver.ensureNotEmpty(ty, onEmpty)
 }
