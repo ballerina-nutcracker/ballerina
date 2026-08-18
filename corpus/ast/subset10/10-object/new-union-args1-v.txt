@@ -1,0 +1,227 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Named
+    (function init (
+      (variable name (type
+        (value-type string)))
+      (variable count (type
+        (value-type int)) (expr
+        (literal 1)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref name))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref count)))))))
+  (class-definition ByID
+    (function init (
+      (variable id (type
+        (value-type int)))
+      (variable label (type
+        (value-type string)) (expr
+        (literal id)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref id))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref label)))))))
+  (class-definition Required
+    (function init (
+      (variable value (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value)))))))
+  (class-definition Defaulted
+    (function init (
+      (variable value (type
+        (value-type string)) (expr
+        (literal default)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value)))))))
+  (type-definition Config
+    (record-type
+      (field path
+        (value-type string))
+      (field recursive
+        (value-type boolean)
+        (literal false))))
+  (class-definition Configured
+    (function init (
+      (variable config (type
+        (user-defined-type Config)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref config)))))))
+  (class-definition Numeric
+    (function init (
+      (variable id (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref id)))))))
+  (class-definition DecimalFirst
+    (function init (
+      (variable value (type
+        (value-type decimal)))
+      (variable marker (type
+        (value-type int)) (expr
+        (literal 0)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition FloatSecond
+    (function init (
+      (variable value (type
+        (value-type float)))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition InnerA)
+  (class-definition InnerB)
+  (class-definition OuterA
+    (function init (
+      (variable value (type
+        (user-defined-type InnerA)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition OuterB
+    (function init (
+      (variable value (type
+        (user-defined-type InnerB)))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable named (type
+          (union-type
+            (user-defined-type Named)
+            (user-defined-type ByID))) (expr
+          (new (
+            (named-arg name
+              (literal value)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref named)
+            (user-defined-type Named)))))
+      (var-def
+        (variable defaulted (type
+          (union-type
+            (user-defined-type Required)
+            (user-defined-type Defaulted))) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref defaulted)
+            (user-defined-type Defaulted)))))
+      (var-def
+        (variable configured (type
+          (union-type
+            (user-defined-type Configured)
+            (user-defined-type Numeric))) (expr
+          (new (
+            (named-arg path
+              (literal /tmp)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref configured)
+            (user-defined-type Configured)))))
+      (var-def
+        (variable literal (type
+          (union-type
+            (user-defined-type DecimalFirst)
+            (user-defined-type FloatSecond))) (expr
+          (new (
+            (literal 1)
+            (literal float))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref literal)
+            (user-defined-type FloatSecond)))))
+      (var-def
+        (variable nested (type
+          (union-type
+            (user-defined-type OuterA)
+            (user-defined-type OuterB))) (expr
+          (new (
+            (new ())
+            (literal outer))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref nested)
+            (user-defined-type OuterB)))))
+      (var-def
+        (variable explicit (type
+          (union-type
+            (user-defined-type Named)
+            (user-defined-type ByID))) (expr
+          (new
+            (user-defined-type Named) (
+            (literal name))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref explicit)
+            (user-defined-type Named)))))
+      (var-def
+        (variable positional (type
+          (union-type
+            (user-defined-type Named)
+            (user-defined-type ByID))) (expr
+          (new (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref positional)
+            (user-defined-type ByID))))))))

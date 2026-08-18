@@ -1,0 +1,27 @@
+(IntValue
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref value))))
+    )
+  )
+)
+(StringValue
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref value))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref selected)
+          (user-defined-type IntValue)))))
+  )
+)
