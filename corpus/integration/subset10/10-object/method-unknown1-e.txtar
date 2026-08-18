@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: method not found: missing
+  --> method-unknown1-e.bal:22:5
+   |
+22 |     value.missing(); // @error method not found
+   |     ^^^^^^^^^^^^^^^
