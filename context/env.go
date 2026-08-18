@@ -335,6 +335,47 @@ func (c *CompilerEnvironment) SymbolType(symbol model.SymbolRef) semtypes.SemTyp
 	return c.GetSymbol(symbol).Type()
 }
 
+func (c *CompilerEnvironment) FunctionTypedSignature(symbol model.SymbolRef) (model.TypedFunctionSignature, bool) {
+	function, ok := c.GetSymbol(symbol).(model.FunctionSymbol)
+	if !ok {
+		return model.TypedFunctionSignature{}, false
+	}
+	if _, dependent := function.(model.DependentlyTypedFunctionSymbol); dependent {
+		return model.TypedFunctionSignature{}, false
+	}
+	return function.TypedSignature(), true
+}
+
+func (c *CompilerEnvironment) SetFunctionTypedSignature(symbol model.SymbolRef, signature model.TypedFunctionSignature) bool {
+	function, ok := c.GetSymbol(symbol).(model.FunctionSymbol)
+	if !ok {
+		return false
+	}
+	if _, dependent := function.(model.DependentlyTypedFunctionSymbol); dependent {
+		return false
+	}
+	function.SetTypedSignature(signature)
+	return true
+}
+
+func (c *CompilerEnvironment) DependentlyTypedFunctionType(symbol model.SymbolRef) ([]semtypes.SemType, model.TypeOp, bool) {
+	function, ok := c.GetSymbol(symbol).(model.DependentlyTypedFunctionSymbol)
+	if !ok {
+		return nil, nil, false
+	}
+	return function.ParamTypes(), function.ReturnType(), true
+}
+
+func (c *CompilerEnvironment) SetDependentlyTypedFunctionType(symbol model.SymbolRef, paramTypes []semtypes.SemType, returnType model.TypeOp) bool {
+	function, ok := c.GetSymbol(symbol).(model.DependentlyTypedFunctionSymbol)
+	if !ok {
+		return false
+	}
+	function.SetParamTypes(paramTypes)
+	function.SetReturnType(returnType)
+	return true
+}
+
 func (c *CompilerEnvironment) SymbolLocation(symbol model.SymbolRef) diagnostics.Location {
 	return c.GetSymbol(symbol).Location()
 }

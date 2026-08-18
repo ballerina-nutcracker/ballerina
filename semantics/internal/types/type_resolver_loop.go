@@ -51,13 +51,7 @@ func (l *loopTypeResolver) nextMonoFnName(origName string) string {
 	return l.parentResolver.nextMonoFnName(origName)
 }
 func (l *loopTypeResolver) typeEnv() semtypes.Env { return l.parentResolver.typeEnv() }
-func (l *loopTypeResolver) nodeType(node ast.BLangNode) semtypes.SemType {
-	return l.parentResolver.nodeType(node)
-}
-func (l *loopTypeResolver) setNodeType(node ast.BLangNode, ty semtypes.SemType) {
-	l.parentResolver.setNodeType(node, ty)
-}
-func (l *loopTypeResolver) isEphemeral() bool { return l.parentResolver.isEphemeral() }
+func (l *loopTypeResolver) isEphemeral() bool     { return l.parentResolver.isEphemeral() }
 func (l *loopTypeResolver) xmlIteratorTypeCache() *semtypes.SemTypeCache {
 	return l.parentResolver.xmlIteratorTypeCache()
 }
@@ -180,14 +174,6 @@ func (l *loopTypeResolver) setObjectMethodTable(atom *semtypes.MappingAtomicType
 
 func (l *loopTypeResolver) objectMethodTable(atom *semtypes.MappingAtomicType) (model.MethodTable, bool) {
 	return l.parentResolver.objectMethodTable(atom)
-}
-
-func (l *loopTypeResolver) setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef) {
-	l.parentResolver.setClassAtomSymbol(mat, symbol)
-}
-
-func (l *loopTypeResolver) getClassAtomSymbol(mat *semtypes.MappingAtomicType) (model.SymbolRef, bool) {
-	return l.parentResolver.getClassAtomSymbol(mat)
 }
 
 func (l *loopTypeResolver) currentScope() model.Scope     { return l.parentResolver.currentScope() }

@@ -471,22 +471,12 @@ func (sr *symbolReader) readClassSymbol(space *model.SymbolSpace, isNetwork bool
 	}
 	sym.SetType(ty)
 	annotations := sr.readAnnotationValues()
-	methods := make(map[string]model.SymbolRef)
 	for _, m := range sr.readInclusionMembers(space) {
 		sym.AddMember(m)
-		if md, ok := m.(*model.MethodDescriptor); ok {
-			methods[md.MemberName()] = md.MethodRef
-		}
 	}
 	ids := sr.readDistinctTypes(space)
 	sym.SetDistinctTypeIDs(ids)
 	sym.SetType(intersectDistinctAtoms(ty, ids, semtypes.ObjectDefinitionDistinct))
-	var hasInit bool
-	read(sr.r, &hasInit)
-	if hasInit {
-		methods["init"] = sr.readSymbolRef(space)
-	}
-	sym.SetMethods(methods)
 	if isNetwork {
 		var rmCount int64
 		read(sr.r, &rmCount)

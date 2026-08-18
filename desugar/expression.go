@@ -1264,11 +1264,15 @@ func initFunctionSymbol(cx *functionContext, expr *ast.BLangNewExpression) (mode
 	if expr.ClassSymbol.IsEmpty() {
 		return model.UntypedFunctionSignature{}, false
 	}
-	classSym, ok := cx.getSymbol(expr.ClassSymbol).(model.ClassSymbol)
+	atom := semtypes.ToObjectAtomicType(cx.typeCtx(), cx.symbolType(expr.ClassSymbol))
+	if atom == nil {
+		return model.UntypedFunctionSignature{}, false
+	}
+	table, ok := cx.pkgCtx.compilerCtx.ObjectMethodTable(atom)
 	if !ok {
 		return model.UntypedFunctionSignature{}, false
 	}
-	initRef, ok := classSym.MethodSymbol("init")
+	initRef, ok := table.Methods["init"]
 	if !ok {
 		return model.UntypedFunctionSignature{}, false
 	}

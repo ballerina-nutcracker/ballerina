@@ -1,0 +1,352 @@
+module $anon.. v 0.0.0;
+class Named {
+
+  init(string,int) -> nil{
+    bb0 {
+      _ = name;
+      _ = count;
+      return;
+    }
+  }
+}
+class ByID {
+
+  init(int,string) -> nil{
+    bb0 {
+      _ = id;
+      _ = label;
+      return;
+    }
+  }
+}
+class Required {
+
+  init(int) -> nil{
+    bb0 {
+      _ = value;
+      return;
+    }
+  }
+}
+class Defaulted {
+
+  init(string) -> nil{
+    bb0 {
+      _ = value;
+      return;
+    }
+  }
+}
+class Configured {
+
+  init({| path: string, recursive: boolean, never... |}) -> nil{
+    bb0 {
+      _ = config;
+      return;
+    }
+  }
+}
+class Numeric {
+
+  init(int) -> nil{
+    bb0 {
+      _ = id;
+      return;
+    }
+  }
+}
+class DecimalFirst {
+
+  init(decimal,int) -> nil{
+    bb0 {
+      _ = value;
+      _ = marker;
+      return;
+    }
+  }
+}
+class FloatSecond {
+
+  init(float,string) -> nil{
+    bb0 {
+      _ = value;
+      _ = marker;
+      return;
+    }
+  }
+}
+class InnerA {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class InnerB {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class OuterA {
+
+  init(object { public function init() returns nil },int) -> nil{
+    bb0 {
+      _ = value;
+      _ = marker;
+      return;
+    }
+  }
+}
+class OuterB {
+
+  init(object { public function init() returns nil },string) -> nil{
+    bb0 {
+      _ = value;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad value
+    $desugar$0 = %1;
+    %3 = $default$0($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %3;
+    %5 = newObject $anon/.:Named
+    %6 = init(%5,$desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    %8 = %6 is nil
+    %8 ? bb3 : bb4;
+  }
+  bb3 {
+    %7 = %5;
+    GOTO bb5;
+  }
+  bb4 {
+    %7 = %6;
+    GOTO bb5;
+  }
+  bb5 {
+    named = %7;
+    %10 = named is object { public function init(string, int) returns nil }
+    %11 = %10;
+    %12 = println(%11) -> bb6;
+  }
+  bb6 {
+    %13 = $default$2() -> bb7;
+  }
+  bb7 {
+    $desugar$2 = %13;
+    %15 = newObject $anon/.:Defaulted
+    %16 = init(%15,$desugar$2) -> bb8;
+  }
+  bb8 {
+    %18 = %16 is nil
+    %18 ? bb9 : bb10;
+  }
+  bb9 {
+    %17 = %15;
+    GOTO bb11;
+  }
+  bb10 {
+    %17 = %16;
+    GOTO bb11;
+  }
+  bb11 {
+    defaulted = %17;
+    %20 = defaulted is object { public function init(string) returns nil }
+    %21 = %20;
+    %22 = println(%21) -> bb12;
+  }
+  bb12 {
+    %23 = newObject $anon/.:Configured
+    %24 = ConstantLoad path
+    %25 = ConstantLoad /tmp
+    %26 = newMap {| path: string, recursive: boolean, never... |}{%24=%25} defaults{recursive=$anon/.:$desugar$0}
+    %27 = init(%23,%26) -> bb13;
+  }
+  bb13 {
+    %29 = %27 is nil
+    %29 ? bb14 : bb15;
+  }
+  bb14 {
+    %28 = %23;
+    GOTO bb16;
+  }
+  bb15 {
+    %28 = %27;
+    GOTO bb16;
+  }
+  bb16 {
+    configured = %28;
+    %31 = configured is object { public function init({| path: string, recursive: boolean, never... |}) returns nil }
+    %32 = %31;
+    %33 = println(%32) -> bb17;
+  }
+  bb17 {
+    %34 = newObject $anon/.:FloatSecond
+    %35 = ConstantLoad 1
+    %36 = ConstantLoad float
+    %37 = init(%34,%35,%36) -> bb18;
+  }
+  bb18 {
+    %39 = %37 is nil
+    %39 ? bb19 : bb20;
+  }
+  bb19 {
+    %38 = %34;
+    GOTO bb21;
+  }
+  bb20 {
+    %38 = %37;
+    GOTO bb21;
+  }
+  bb21 {
+    literal = %38;
+    %41 = literal is object { public function init(float, string) returns nil }
+    %42 = %41;
+    %43 = println(%42) -> bb22;
+  }
+  bb22 {
+    %44 = newObject $anon/.:OuterB
+    %45 = newObject $anon/.:InnerB
+    %46 = init(%45) -> bb23;
+  }
+  bb23 {
+    %48 = %46 is nil
+    %48 ? bb24 : bb25;
+  }
+  bb24 {
+    %47 = %45;
+    GOTO bb26;
+  }
+  bb25 {
+    %47 = %46;
+    GOTO bb26;
+  }
+  bb26 {
+    %49 = ConstantLoad outer
+    %50 = init(%44,%47,%49) -> bb27;
+  }
+  bb27 {
+    %52 = %50 is nil
+    %52 ? bb28 : bb29;
+  }
+  bb28 {
+    %51 = %44;
+    GOTO bb30;
+  }
+  bb29 {
+    %51 = %50;
+    GOTO bb30;
+  }
+  bb30 {
+    nested = %51;
+    %54 = nested is object { public function init(object { public function init() returns nil }, string) returns nil }
+    %55 = %54;
+    %56 = println(%55) -> bb31;
+  }
+  bb31 {
+    %57 = ConstantLoad name
+    $desugar$3 = %57;
+    %59 = $default$0($desugar$3) -> bb32;
+  }
+  bb32 {
+    $desugar$4 = %59;
+    %61 = newObject $anon/.:Named
+    %62 = init(%61,$desugar$3,$desugar$4) -> bb33;
+  }
+  bb33 {
+    %64 = %62 is nil
+    %64 ? bb34 : bb35;
+  }
+  bb34 {
+    %63 = %61;
+    GOTO bb36;
+  }
+  bb35 {
+    %63 = %62;
+    GOTO bb36;
+  }
+  bb36 {
+    explicit = %63;
+    %66 = explicit is object { public function init(string, int) returns nil }
+    %67 = %66;
+    %68 = println(%67) -> bb37;
+  }
+  bb37 {
+    %69 = ConstantLoad 1
+    $desugar$5 = %69;
+    %71 = $desugar$5;
+    %72 = $default$1(%71) -> bb38;
+  }
+  bb38 {
+    $desugar$6 = %72;
+    %74 = newObject $anon/.:ByID
+    %75 = init(%74,$desugar$5,$desugar$6) -> bb39;
+  }
+  bb39 {
+    %77 = %75 is nil
+    %77 ? bb40 : bb41;
+  }
+  bb40 {
+    %76 = %74;
+    GOTO bb42;
+  }
+  bb41 {
+    %76 = %75;
+    GOTO bb42;
+  }
+  bb42 {
+    positional = %76;
+    %79 = positional is object { public function init(int, string) returns nil }
+    %80 = %79;
+    %81 = println(%80) -> bb43;
+  }
+  bb43 {
+    return;
+  }
+}
+$desugar$0() -> boolean{
+  bb0 {
+    %1 = ConstantLoad false
+    %0 = %1;
+    return;
+  }
+}
+$default$0(string) -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}
+$default$1(int) -> string{
+  bb0 {
+    %2 = ConstantLoad id
+    %0 = %2;
+    return;
+  }
+}
+$default$2() -> string{
+  bb0 {
+    %1 = ConstantLoad default
+    %0 = %1;
+    return;
+  }
+}
+$default$3(decimal) -> int{
+  bb0 {
+    %2 = ConstantLoad 0
+    %0 = %2;
+    return;
+  }
+}

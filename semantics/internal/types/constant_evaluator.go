@@ -51,9 +51,9 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 	case *ast.BLangGroupExpr:
 		return e.evaluate(expr.Expression)
 	case *ast.BLangVarRef:
-		return e.evaluateConstantReference(expr.Symbol(), nodeType(e.resolver, expr))
+		return e.evaluateConstantReference(expr.Symbol(), expr.GetDeterminedType())
 	case *ast.BLangConstRef:
-		return e.evaluateConstantReference(expr.Symbol(), nodeType(e.resolver, expr))
+		return e.evaluateConstantReference(expr.Symbol(), expr.GetDeterminedType())
 	case *ast.BLangMappingConstructorExpr:
 		return e.evaluateMappingConstructor(expr)
 	case *ast.BLangListConstructorExpr:
@@ -65,7 +65,7 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 	case *ast.BLangNilConditionalExpr:
 		return e.evaluateNilConditionalExpression(expr)
 	case *ast.BLangBinaryExpr:
-		ty := nodeType(e.resolver, expr)
+		ty := expr.GetDeterminedType()
 		if expr.OpKind == model.OperatorKind_ADD && !semtypes.IsZero(ty) && semtypes.IsSubtypeSimple(ty, semtypes.String) {
 			if value, ok := constantSingleShapeValue(ty); ok {
 				return value, nil
@@ -75,7 +75,7 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 	case *ast.BLangTypeConversionExpr:
 		return e.evaluateTypeConversion(expr)
 	case *ast.BLangTemplateExpr:
-		if value, ok := constantSingleShapeValue(nodeType(e.resolver, expr)); ok {
+		if value, ok := constantSingleShapeValue(expr.GetDeterminedType()); ok {
 			return value, nil
 		}
 		return e.evaluateStringTemplate(expr)
@@ -132,7 +132,7 @@ func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLang
 		entries = append(entries, values.MapEntry{Key: key, Value: value})
 	}
 
-	ty := nodeType(e.resolver, expr)
+	ty := expr.GetDeterminedType()
 	atomic := semtypes.ToMappingAtomicType(e.resolver.typeContext(), ty)
 	if atomic == nil {
 		return nil, fmt.Errorf("constant mapping type is not atomic")
@@ -182,7 +182,7 @@ func (e *constantExpressionEvaluator) evaluateListConstructor(expr *ast.BLangLis
 		initial = append(initial, filler())
 	}
 	restFiller, _ := values.FillerFactoryFor(e.resolver.typeContext(), expr.AtomicType.Rest())
-	return values.NewList(nodeType(e.resolver, expr), &expr.AtomicType, true, restFiller, len(initial), initial), nil
+	return values.NewList(expr.GetDeterminedType(), &expr.AtomicType, true, restFiller, len(initial), initial), nil
 }
 
 func (e *constantExpressionEvaluator) evaluateUnaryExpression(expr *ast.BLangUnaryExpr) (values.BalValue, error) {
@@ -516,7 +516,7 @@ func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangType
 	if err != nil {
 		return nil, err
 	}
-	targetType := nodeType(e.resolver, expr.TypeDescriptor)
+	targetType := expr.TypeDescriptor.GetDeterminedType()
 	converted, err := values.CastValue(e.resolver.typeContext(), value, targetType)
 	if err != nil {
 		return nil, constantCastDiagnostic(value, targetType, err)

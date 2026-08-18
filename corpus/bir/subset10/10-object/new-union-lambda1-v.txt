@@ -1,0 +1,88 @@
+module $anon.. v 0.0.0;
+class DecFn {
+
+  init(function() returns decimal,int) -> nil{
+    bb0 {
+      _ = callback;
+      _ = marker;
+      return;
+    }
+  }
+}
+class FloatFn {
+
+  init(function() returns float,string) -> nil{
+    bb0 {
+      _ = callback;
+      _ = marker;
+      return;
+    }
+  }
+}
+$anonFunc$_0() -> 1{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$anonFunc$_1() -> 1{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:FloatFn
+    %2 = fp $anon/.:$anonFunc$_0
+    %3 = ConstantLoad x
+    %4 = init(%1,%2,%3) -> bb1;
+  }
+  bb1 {
+    %6 = %4 is nil
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %5 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %5 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    inferredInt = %5;
+    %8 = newObject $anon/.:FloatFn
+    %9 = fp $anon/.:$anonFunc$_1
+    %10 = ConstantLoad y
+    %11 = init(%8,%9,%10) -> bb5;
+  }
+  bb5 {
+    %13 = %11 is nil
+    %13 ? bb6 : bb7;
+  }
+  bb6 {
+    %12 = %8;
+    GOTO bb8;
+  }
+  bb7 {
+    %12 = %11;
+    GOTO bb8;
+  }
+  bb8 {
+    inferredFloat = %12;
+    %15 = inferredInt is object { public function init(function() returns float, string) returns nil }
+    %16 = %15;
+    %17 = println(%16) -> bb9;
+  }
+  bb9 {
+    %18 = inferredFloat is object { public function init(function() returns float, string) returns nil }
+    %19 = %18;
+    %20 = println(%19) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}
