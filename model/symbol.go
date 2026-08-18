@@ -374,6 +374,13 @@ type (
 		FnRef     SymbolRef
 	}
 
+	// MethodTable associates an object mapping atom with the symbols that
+	// declare its non-resource methods.
+	MethodTable struct {
+		Owner   SymbolRef
+		Methods map[string]SymbolRef
+	}
+
 	VariableSymbol struct {
 		symbolBase
 		flags valueSymbolFlags
@@ -472,6 +479,15 @@ type (
 		fieldNames [][]string
 	}
 )
+
+// NewMethodTable returns a method table retaining methods. A nil map is
+// normalized to an empty map.
+func NewMethodTable(owner SymbolRef, methods map[string]SymbolRef) MethodTable {
+	if methods == nil {
+		methods = make(map[string]SymbolRef)
+	}
+	return MethodTable{Owner: owner, Methods: methods}
+}
 
 func (ref SymbolRef) IsEmpty() bool {
 	return ref == SymbolRef{}
