@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: object type cannot be instantiated without a class
+  --> new-object-type1-e.bal:22:12
+   |
+22 |     return new Foo(); // @error object type cannot be instantiated without a class
+   |            ^^^^^^^^^

@@ -1,0 +1,60 @@
+(DecFn
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callback))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(FloatFn
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callback))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable inferredInt (type
+        (union-type
+          (user-defined-type DecFn)
+          (user-defined-type FloatFn))) (expr
+        (new (
+          (lambda
+            (function $anonFunc$_0 () ()
+              (expr-function-body
+                (literal 1))))
+          (literal x))))))
+    (var-def
+      (variable inferredFloat (type
+        (union-type
+          (user-defined-type DecFn)
+          (user-defined-type FloatFn))) (expr
+        (new (
+          (lambda
+            (function $anonFunc$_1 () ()
+              (expr-function-body
+                (literal 1))))
+          (literal y))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref inferredInt)
+          (user-defined-type FloatFn)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref inferredFloat)
+          (user-defined-type FloatFn)))))
+  )
+)
