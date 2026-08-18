@@ -124,20 +124,21 @@ func ObjectMemberType(ctx Context, name, ty SemType) SemType {
 	return mappingMemberTypeInner(ctx, memberMap, StringConst("value"))
 }
 
-func convertObjectToMappingTy(ctx Context, ty SemType) SemType {
+// convertObjectToMappingTy structurally reinterprets the object component as a mapping type.
+func convertObjectToMappingTy(_ Context, ty SemType) SemType {
 	objectTy := Intersect(ty, Object)
-	if IsEmpty(ctx, objectTy) {
+	bdd := subtypeDataAt(objectTy, btObject)
+	if isNothingSubtype(bdd) {
 		return SemType{}
 	}
-	bdd := subtypeDataAt(objectTy, btObject)
 	return createBasicSemType(btMapping, bdd)
 }
 
-func convertMappingToObjectTy(ctx Context, ty SemType) SemType {
+func convertMappingToObjectTy(_ Context, ty SemType) SemType {
 	mappingTy := Intersect(ty, Mapping)
-	if IsEmpty(ctx, mappingTy) {
+	bdd := subtypeDataAt(mappingTy, btMapping)
+	if isNothingSubtype(bdd) {
 		return SemType{}
 	}
-	bdd := subtypeDataAt(mappingTy, btMapping)
 	return createBasicSemType(btObject, bdd)
 }

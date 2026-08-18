@@ -174,6 +174,14 @@ func (l *loopTypeResolver) mappingDefaults(atom *semtypes.MappingAtomicType) ([]
 	return l.parentResolver.mappingDefaults(atom)
 }
 
+func (l *loopTypeResolver) setObjectMethodTable(atom *semtypes.MappingAtomicType, table model.MethodTable) {
+	l.parentResolver.setObjectMethodTable(atom, table)
+}
+
+func (l *loopTypeResolver) objectMethodTable(atom *semtypes.MappingAtomicType) (model.MethodTable, bool) {
+	return l.parentResolver.objectMethodTable(atom)
+}
+
 func (l *loopTypeResolver) setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef) {
 	l.parentResolver.setClassAtomSymbol(mat, symbol)
 }
