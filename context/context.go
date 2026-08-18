@@ -197,6 +197,14 @@ func (c *CompilerContext) MappingDefaults(mat *semtypes.MappingAtomicType) ([]mo
 	return c.env.MappingDefaults(mat)
 }
 
+func (c *CompilerContext) SetObjectMethodTable(mat *semtypes.MappingAtomicType, table model.MethodTable) {
+	c.env.SetObjectMethodTable(mat, table)
+}
+
+func (c *CompilerContext) ObjectMethodTable(mat *semtypes.MappingAtomicType) (model.MethodTable, bool) {
+	return c.env.ObjectMethodTable(mat)
+}
+
 func (c *CompilerContext) DistinctTypeID(symbol model.SymbolRef) int {
 	return c.env.DistinctTypeID(symbol)
 }

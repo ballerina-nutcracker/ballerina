@@ -103,6 +103,8 @@ type typeResolver interface {
 
 	setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault)
 	mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool)
+	setObjectMethodTable(atom *semtypes.MappingAtomicType, table model.MethodTable)
+	objectMethodTable(atom *semtypes.MappingAtomicType) (model.MethodTable, bool)
 	setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef)
 	getClassAtomSymbol(mat *semtypes.MappingAtomicType) (model.SymbolRef, bool)
 	currentScope() model.Scope
@@ -132,24 +134,40 @@ const (
 	resolutionDone
 )
 
-type mappingDefaultsResolverBase struct {
+type atomSideTableBase struct {
 	atomicTypeInterner      *semtypes.AtomicTypeInterner
 	mappingDefaultsByHandle map[semtypes.InternHandle][]model.FieldDefault
+	methodTablesByHandle    map[semtypes.InternHandle]model.MethodTable
 }
 
-func newMappingDefaultsResolverBase() *mappingDefaultsResolverBase {
-	return &mappingDefaultsResolverBase{
+func newAtomSideTableBase() *atomSideTableBase {
+	return &atomSideTableBase{
 		atomicTypeInterner:      semtypes.NewAtomicTypeInterner(),
 		mappingDefaultsByHandle: make(map[semtypes.InternHandle][]model.FieldDefault),
+		methodTablesByHandle:    make(map[semtypes.InternHandle]model.MethodTable),
 	}
 }
 
-func (r *mappingDefaultsResolverBase) setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+func (r *atomSideTableBase) setObjectMethodTable(atom *semtypes.MappingAtomicType, table model.MethodTable) {
+	handle := r.atomicTypeInterner.Intern(atom)
+	r.methodTablesByHandle[handle] = table
+}
+
+func (r *atomSideTableBase) objectMethodTable(atom *semtypes.MappingAtomicType) (model.MethodTable, bool) {
+	handle, ok := r.atomicTypeInterner.Lookup(atom)
+	if !ok {
+		return model.MethodTable{}, false
+	}
+	table, ok := r.methodTablesByHandle[handle]
+	return table, ok
+}
+
+func (r *atomSideTableBase) setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
 	handle := r.atomicTypeInterner.Intern(atom)
 	r.mappingDefaultsByHandle[handle] = defaults
 }
 
-func (r *mappingDefaultsResolverBase) mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
+func (r *atomSideTableBase) mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
 	handle, ok := r.atomicTypeInterner.Lookup(atom)
 	if !ok {
 		return nil, false
@@ -317,6 +335,14 @@ func (t *packageTypeResolver) mappingDefaults(atom *semtypes.MappingAtomicType) 
 	return t.ctx.MappingDefaults(atom)
 }
 
+func (t *packageTypeResolver) setObjectMethodTable(atom *semtypes.MappingAtomicType, table model.MethodTable) {
+	t.ctx.SetObjectMethodTable(atom, table)
+}
+
+func (t *packageTypeResolver) objectMethodTable(atom *semtypes.MappingAtomicType) (model.MethodTable, bool) {
+	return t.ctx.ObjectMethodTable(atom)
+}
+
 func (t *packageTypeResolver) setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef) {
 	t.classAtomSymbols[mat] = symbol
 }
@@ -386,7 +412,7 @@ func (t *packageTypeResolver) setCapturedVars(vars map[model.SymbolRef]bool) {
 }
 
 type functionTypeResolver struct {
-	*mappingDefaultsResolverBase
+	*atomSideTableBase
 	parentResolver       typeResolver
 	tyCtx                semtypes.Context
 	retTy                semtypes.SemType
@@ -524,9 +550,20 @@ func (f *functionTypeResolver) ensureResolved(ref model.SymbolRef, depth int) bo
 
 func (f *functionTypeResolver) mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
 	if _, ok := f.atomicTypeInterner.Lookup(atom); ok {
-		return f.mappingDefaultsResolverBase.mappingDefaults(atom)
+		return f.atomSideTableBase.mappingDefaults(atom)
 	}
 	return f.parentResolver.mappingDefaults(atom)
+}
+
+func (f *functionTypeResolver) setObjectMethodTable(atom *semtypes.MappingAtomicType, table model.MethodTable) {
+	f.atomSideTableBase.setObjectMethodTable(atom, table)
+}
+
+func (f *functionTypeResolver) objectMethodTable(atom *semtypes.MappingAtomicType) (model.MethodTable, bool) {
+	if _, ok := f.atomicTypeInterner.Lookup(atom); ok {
+		return f.atomSideTableBase.objectMethodTable(atom)
+	}
+	return f.parentResolver.objectMethodTable(atom)
 }
 
 func (f *functionTypeResolver) setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef) {
@@ -719,12 +756,12 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 	allImports := make(map[string]ast.BLangImportPackage)
 	resolveFieldInitsInScope := func(scope model.Scope, fields []*ast.BLangVariable) {
 		ft := &functionTypeResolver{
-			mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
-			parentResolver:              p,
-			tyCtx:                       semtypes.ContextFrom(p.typeEnv()),
-			implicitImports:             make(map[string]ast.BLangImportPackage),
-			monoCounters:                make(map[string]int),
-			scope:                       scope,
+			atomSideTableBase: newAtomSideTableBase(),
+			parentResolver:    p,
+			tyCtx:             semtypes.ContextFrom(p.typeEnv()),
+			implicitImports:   make(map[string]ast.BLangImportPackage),
+			monoCounters:      make(map[string]int),
+			scope:             scope,
 		}
 		for _, fieldNode := range fields {
 			field := fieldNode
@@ -959,13 +996,13 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 		return nil
 	}
 	ft := &functionTypeResolver{
-		mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
-		parentResolver:              p,
-		tyCtx:                       semtypes.ContextFrom(p.typeEnv()),
-		implicitImports:             make(map[string]ast.BLangImportPackage),
-		monoCounters:                make(map[string]int),
-		scope:                       fn.Scope(),
-		isolatedContext:             fn.IsIsolated(),
+		atomSideTableBase: newAtomSideTableBase(),
+		parentResolver:    p,
+		tyCtx:             semtypes.ContextFrom(p.typeEnv()),
+		implicitImports:   make(map[string]ast.BLangImportPackage),
+		monoCounters:      make(map[string]int),
+		scope:             fn.Scope(),
+		isolatedContext:   fn.IsIsolated(),
 	}
 	if !isPolymorphicFnSymbol(fnSym) {
 		ft.retTy = fnSym.TypedSignature().ReturnType
@@ -2104,14 +2141,14 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 	// Create a function type resolver for the lambda so expectedReturnType() is correct
 	fnSym := t.getSymbol(e.Function.Symbol()).(model.FunctionSymbol)
 	ft := &functionTypeResolver{
-		mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
-		parentResolver:              t,
-		tyCtx:                       semtypes.ContextFrom(t.typeEnv()),
-		retTy:                       fnSym.TypedSignature().ReturnType,
-		implicitImports:             make(map[string]ast.BLangImportPackage),
-		monoCounters:                make(map[string]int),
-		scope:                       e.Function.Scope(),
-		isolatedContext:             fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0,
+		atomSideTableBase: newAtomSideTableBase(),
+		parentResolver:    t,
+		tyCtx:             semtypes.ContextFrom(t.typeEnv()),
+		retTy:             fnSym.TypedSignature().ReturnType,
+		implicitImports:   make(map[string]ast.BLangImportPackage),
+		monoCounters:      make(map[string]int),
+		scope:             e.Function.Scope(),
+		isolatedContext:   fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0,
 	}
 
 	// Push function boundary marker onto the chain
@@ -2210,14 +2247,14 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		Flags:         flags,
 	})
 	ft := &functionTypeResolver{
-		mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
-		parentResolver:              t,
-		tyCtx:                       semtypes.ContextFrom(t.typeEnv()),
-		retTy:                       expectedReturnTy,
-		implicitImports:             make(map[string]ast.BLangImportPackage),
-		monoCounters:                make(map[string]int),
-		scope:                       e.Function.Scope(),
-		isolatedContext:             flags&model.FuncSymbolFlagIsolated != 0,
+		atomSideTableBase: newAtomSideTableBase(),
+		parentResolver:    t,
+		tyCtx:             semtypes.ContextFrom(t.typeEnv()),
+		retTy:             expectedReturnTy,
+		implicitImports:   make(map[string]ast.BLangImportPackage),
+		monoCounters:      make(map[string]int),
+		scope:             e.Function.Scope(),
+		isolatedContext:   flags&model.FuncSymbolFlagIsolated != 0,
 	}
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
 	prevCaptured := t.getCapturedVars()
@@ -2316,7 +2353,14 @@ func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth 
 		return false
 	}
 	defn.SetCycleDepth(depth)
-	semType, ok := resolveBType(t, defn.GetTypeData().TypeDescriptor.(ast.BType), depth)
+	typeDescriptor := defn.GetTypeData().TypeDescriptor.(ast.BType)
+	var semType semtypes.SemType
+	var ok bool
+	if objectType, isObjectType := typeDescriptor.(*ast.BLangObjectType); isObjectType {
+		semType, ok = resolveObjectType(t, objectType, depth, defn.Symbol())
+	} else {
+		semType, ok = resolveBType(t, typeDescriptor, depth)
+	}
 	if ok {
 		semType = resolveDistinctTypeDefinition(t, defn, semType)
 	}
@@ -2707,6 +2751,7 @@ func resolveClassDefinitionType(t typeResolver, classDef *ast.BLangClassDefiniti
 	typeData.Type = semType
 	classDef.SetTypeData(typeData)
 	addInclusionsToClassSymbol(t, classDef)
+	registerClassMethodTable(t, semType, classDef)
 	if selfRef, ok := classDef.Scope().GetSymbol("self"); ok {
 		t.setSymbolType(selfRef, semType)
 	}
@@ -2764,6 +2809,7 @@ func resolveServiceType(t typeResolver, svc *ast.BLangService, depth int, attach
 	if !ok {
 		return false
 	}
+	registerFunctionMethodTable(t, objectBodyTy, model.SymbolRef{}, svc.Methods, svc.InitFunction, svc.GetPosition())
 	structuralServiceTy := semtypes.StripObjectDistinctAtoms(serviceTy)
 	if !semtypes.IsSubtype(t.typeContext(), objectBodyTy, structuralServiceTy) {
 		t.semanticError("service body does not implement the service type", svc.GetPosition())
@@ -7488,14 +7534,14 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		}
 		return fnType, true
 	case *ast.BLangObjectType:
-		return resolveObjectType(t, ty, depth)
+		return resolveObjectType(t, ty, depth, model.SymbolRef{})
 	default:
 		t.unimplemented("unsupported type", diagnostics.Location{})
 		return semtypes.SemType{}, false
 	}
 }
 
-func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int) (semtypes.SemType, bool) {
+func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int, owner model.SymbolRef) (semtypes.SemType, bool) {
 	defn := ty.Definition
 	if defn != nil {
 		return defn.GetSemType(t.typeEnv()), true
@@ -7549,7 +7595,66 @@ func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int) (semt
 	networkQual := semtypeNetworkQualifier(ty.NetworkQuals)
 	qualifiers := semtypes.ObjectQualifiersFrom(ty.Isolated, false, networkQual)
 	semType := od.Define(t.typeEnv(), qualifiers, members)
+	methods := make(map[string]model.SymbolRef)
+	for _, included := range incMembers {
+		md, ok := included.(*model.MethodDescriptor)
+		if !ok || md.MemberKind() == model.InclusionMemberKindResourceMethod {
+			continue
+		}
+		methods[md.MemberName()] = md.MethodRef
+	}
+	for member := range ty.Members() {
+		method, ok := member.(*ast.BMethodDecl)
+		if !ok || method.MemberKind() == ast.ObjectMemberKindResourceMethod {
+			continue
+		}
+		methods[method.Name()] = method.Symbol()
+	}
+	survivingMethods := make(map[string]model.SymbolRef)
+	for _, member := range members {
+		if member.Kind != semtypes.MemberKindMethod && member.Kind != semtypes.MemberKindRemoteMethod {
+			continue
+		}
+		if ref, ok := methods[member.Name]; ok {
+			survivingMethods[member.Name] = ref
+		}
+	}
+	registerMethodTable(t, semType, owner, survivingMethods, ty.GetPosition())
 	return semType, true
+}
+
+func registerMethodTable(t typeResolver, objectTy semtypes.SemType, owner model.SymbolRef,
+	methods map[string]model.SymbolRef, pos diagnostics.Location,
+) {
+	atom := semtypes.ToObjectAtomicType(t.typeContext(), objectTy)
+	if atom == nil {
+		t.internalError("failed to get atomic type for object method table", pos)
+		return
+	}
+	t.setObjectMethodTable(atom, model.NewMethodTable(owner, methods))
+}
+
+// registerFunctionMethodTable records class and service methods against the object's mapping atom.
+// Resource methods are excluded because they use separate path-based metadata.
+func registerFunctionMethodTable(t typeResolver, objectTy semtypes.SemType, owner model.SymbolRef,
+	methods map[string]*ast.BLangFunction, initFn *ast.BLangFunction, pos diagnostics.Location,
+) {
+	table := make(map[string]model.SymbolRef, len(methods)+1)
+	for name, method := range methods {
+		if method.IsResource() {
+			continue
+		}
+		table[name] = method.Symbol()
+	}
+	if initFn != nil {
+		table["init"] = initFn.Symbol()
+	}
+	registerMethodTable(t, objectTy, owner, table, pos)
+}
+
+func registerClassMethodTable(t typeResolver, objectTy semtypes.SemType, classDef *ast.BLangClassDefinition) {
+	registerFunctionMethodTable(t, objectTy, classDef.Symbol(), classDef.Methods, classDef.InitFunction,
+		classDef.GetPosition())
 }
 
 // directMember represents a member declared directly on a type (not inherited via inclusion).

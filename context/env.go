@@ -106,6 +106,7 @@ type CompilerEnvironment struct {
 	distinctTypes              distinctTypeTracker
 	langLibDistinctTypeSymbols langLibDistinctTypeRegistry
 	mappingDefaults            sync.Map // *semtypes.MappingAtomicType -> []model.FieldDefault
+	objectMethodTables         sync.Map // *semtypes.MappingAtomicType -> model.MethodTable
 	// symbolAnnotations holds annotation values keyed by symbol ref, instead of
 	// a field on each symbol — most symbols carry no annotations, so this avoids
 	// a per-symbol word and keeps lookup keyed by reference. Values are written
@@ -152,6 +153,32 @@ func (c *CompilerEnvironment) MappingDefaultsSnapshot() map[*semtypes.MappingAto
 	snapshot := make(map[*semtypes.MappingAtomicType][]model.FieldDefault)
 	c.mappingDefaults.Range(func(key, value any) bool {
 		snapshot[key.(*semtypes.MappingAtomicType)] = value.([]model.FieldDefault)
+		return true
+	})
+	return snapshot
+}
+
+// SetObjectMethodTable associates an object atom with its method table.
+// Callers must not mutate the table after storing it.
+func (c *CompilerEnvironment) SetObjectMethodTable(mat *semtypes.MappingAtomicType, table model.MethodTable) {
+	c.objectMethodTables.Store(mat, table)
+}
+
+// ObjectMethodTable returns the method table associated with an object atom.
+// Callers must treat the result as read-only.
+func (c *CompilerEnvironment) ObjectMethodTable(mat *semtypes.MappingAtomicType) (model.MethodTable, bool) {
+	table, ok := c.objectMethodTables.Load(mat)
+	if !ok {
+		return model.MethodTable{}, false
+	}
+	return table.(model.MethodTable), true
+}
+
+// ObjectMethodTableSnapshot returns a read-only snapshot for serialization.
+func (c *CompilerEnvironment) ObjectMethodTableSnapshot() map[*semtypes.MappingAtomicType]model.MethodTable {
+	snapshot := make(map[*semtypes.MappingAtomicType]model.MethodTable)
+	c.objectMethodTables.Range(func(key, value any) bool {
+		snapshot[key.(*semtypes.MappingAtomicType)] = value.(model.MethodTable)
 		return true
 	})
 	return snapshot

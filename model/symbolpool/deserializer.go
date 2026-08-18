@@ -82,6 +82,7 @@ func (sr *symbolReader) deserialize() (result model.ExportedSymbolSpace, err err
 
 	mainSpace := sr.readSymbolSpace()
 	sr.readMappingDefaults(mainSpace)
+	sr.readObjectMethodTables(mainSpace)
 	annotationSpace := sr.readSymbolSpace()
 
 	return model.NewExportedSymbolSpaces([]*model.SymbolSpace{mainSpace}, []*model.SymbolSpace{annotationSpace}), nil
@@ -186,6 +187,42 @@ func (sr *symbolReader) readMappingDefaults(space *model.SymbolSpace) {
 			}
 		}
 		sr.env.SetMappingDefaults(atom, defaults)
+	}
+}
+
+func (sr *symbolReader) readObjectMethodTables(space *model.SymbolSpace) {
+	var count int64
+	read(sr.r, &count)
+	if count < 0 {
+		panic(fmt.Sprintf("invalid object method-table entry count: %d", count))
+	}
+	seen := make(map[int32]struct{}, count)
+	for i := int64(0); i < count; i++ {
+		var atomIndex int32
+		read(sr.r, &atomIndex)
+		if _, duplicate := seen[atomIndex]; duplicate {
+			panic(fmt.Sprintf("duplicate object method-table atom index: %d", atomIndex))
+		}
+		seen[atomIndex] = struct{}{}
+		atom, ok := sr.tp.MappingAtomicTypeAt(atomIndex)
+		if !ok {
+			panic(fmt.Sprintf("invalid object method-table atom index: %d", atomIndex))
+		}
+		owner := sr.readSymbolRef(space)
+		var methodCount int64
+		read(sr.r, &methodCount)
+		if methodCount < 0 {
+			panic(fmt.Sprintf("invalid object method count: %d", methodCount))
+		}
+		methods := make(map[string]model.SymbolRef, methodCount)
+		for j := int64(0); j < methodCount; j++ {
+			name := sr.readStringCP()
+			if _, duplicate := methods[name]; duplicate {
+				panic(fmt.Sprintf("duplicate object method name: %s", name))
+			}
+			methods[name] = sr.readSymbolRef(space)
+		}
+		sr.env.SetObjectMethodTable(atom, model.NewMethodTable(owner, methods))
 	}
 }
 

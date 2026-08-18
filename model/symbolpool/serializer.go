@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"sort"
 
+	balCommon "github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -29,7 +30,7 @@ import (
 
 const (
 	symMagic   = "\x53\x59\x4d\x42"
-	symVersion = 10
+	symVersion = 11
 )
 
 const (
@@ -117,6 +118,9 @@ func (sw *symbolWriter) serialize(exported model.ExportedSymbolSpace) ([]byte, e
 	if err := sw.writeMappingDefaults(mainBody, tpEncoding); err != nil {
 		return nil, err
 	}
+	if err := sw.writeObjectMethodTables(mainBody, tpEncoding); err != nil {
+		return nil, err
+	}
 
 	buf := &bytes.Buffer{}
 	if _, err := buf.Write([]byte(symMagic)); err != nil {
@@ -189,6 +193,58 @@ func (sw *symbolWriter) writeMappingDefaults(buf *bytes.Buffer, tpEncoding semty
 				return err
 			}
 			if err := sw.writeSymbolRef(buf, fieldDefault.FnRef); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type serializedObjectMethodTable struct {
+	atomIndex int32
+	table     model.MethodTable
+}
+
+func (sw *symbolWriter) writeObjectMethodTables(buf *bytes.Buffer, tpEncoding semtypes.TypePoolEncoding) error {
+	var entries []serializedObjectMethodTable
+	for atom, table := range sw.compilerEnv.ObjectMethodTableSnapshot() {
+		index, ok := tpEncoding.MappingAtomicTypeIndex(atom)
+		if !ok {
+			if _, local := sw.refMap[table.Owner]; local {
+				owner := sw.compilerEnv.GetSymbol(table.Owner)
+				_, isObject := owner.(model.ObjectType)
+				balCommon.Assert(func() bool { return !isObject || !owner.IsPublic() })
+			}
+			continue
+		}
+		entries = append(entries, serializedObjectMethodTable{atomIndex: index, table: table})
+	}
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].atomIndex < entries[j].atomIndex
+	})
+	if err := write(buf, int64(len(entries))); err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if err := write(buf, entry.atomIndex); err != nil {
+			return err
+		}
+		if err := sw.writeSymbolRef(buf, entry.table.Owner); err != nil {
+			return err
+		}
+		names := make([]string, 0, len(entry.table.Methods))
+		for name := range entry.table.Methods {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		if err := write(buf, int64(len(names))); err != nil {
+			return err
+		}
+		for _, name := range names {
+			if err := sw.writeStringCP(buf, name); err != nil {
+				return err
+			}
+			if err := sw.writeSymbolRef(buf, entry.table.Methods[name]); err != nil {
 				return err
 			}
 		}
