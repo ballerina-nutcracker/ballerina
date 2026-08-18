@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "crossmoduleobjecttypemethod"
+version = "0.1.0"

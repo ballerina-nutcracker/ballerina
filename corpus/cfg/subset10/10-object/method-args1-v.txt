@@ -1,0 +1,116 @@
+(CalculatorImpl
+  (add
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (simple-var-ref x)
+          (simple-var-ref y)))
+    )
+  )
+  (configured
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (field-based-access x
+            (simple-var-ref config))
+          (field-based-access y
+            (simple-var-ref config))))
+    )
+  )
+)
+(NodeImpl
+  (next
+    (bb0 () ()
+      (return
+        (literal <nil>))
+    )
+  )
+  (value
+    (bb0 () ()
+      (return
+        (simple-var-ref fallback))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable calculator (type
+        (user-defined-type Calculator)) (expr
+        (new
+          (user-defined-type CalculatorImpl) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation add expr:
+          (simple-var-ref calculator) (
+          (literal 3) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation add expr:
+          (simple-var-ref calculator) (
+          (literal 4)
+          (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation configured expr:
+          (simple-var-ref calculator) (
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 6))))))))
+    (var-def
+      (variable localCalculator (type
+        (object-type
+          (method-decl add public (
+            (param x
+              (value-type int))
+            (param y
+              (value-type int))) (
+            (value-type int))))) (expr
+        (simple-var-ref calculator))))
+    (expression-stmt
+      (invocation io println (
+        (invocation add expr:
+          (simple-var-ref localCalculator) (
+          (literal 5) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation add expr:
+          (simple-var-ref moduleCalculator) (
+          (literal 6) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation useInline (
+          (simple-var-ref calculator))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation add expr:
+          (invocation returnInline ()) (
+          (literal 7)
+          (literal 4))))))
+    (var-def
+      (variable node (type
+        (user-defined-type Node)) (expr
+        (new
+          (user-defined-type NodeImpl) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation value expr:
+          (simple-var-ref node) ( <default>)))))
+  )
+)
+(returnInline
+  (bb0 () ()
+    (return
+      (new
+        (user-defined-type CalculatorImpl) ()))
+  )
+)
+(useInline
+  (bb0 () ()
+    (return
+      (invocation add expr:
+        (simple-var-ref value) (
+        (literal 8) <default>)))
+  )
+)

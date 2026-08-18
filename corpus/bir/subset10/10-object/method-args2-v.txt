@@ -1,0 +1,162 @@
+module $anon.. v 0.0.0;
+class ReadonlyValue {
+
+  get(int,int) -> int{
+    bb0 {
+      %5 = value;
+      %6 = increment;
+      %4 = + %5 %6;
+      %0 = %4;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class CallerImpl {
+
+  $remote$add(int,int) -> int{
+    bb0 {
+      %5 = value;
+      %6 = increment;
+      %4 = + %5 %6;
+      %0 = %4;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+useReadonly(readonly&object { public function get(int, int) returns int }) -> int{
+  bb0 {
+    %2 = ConstantLoad 3
+    $desugar$0 = %2;
+    %4 = $desugar$0;
+    %5 = $default$0(%4) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %5;
+    %7 = $desugar$0;
+    %8 = $desugar$1;
+    %9 = get(value,%7,%8) -> bb2;
+  }
+  bb2 {
+    %0 = %9;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:ReadonlyValue
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    value = %3;
+    narrowed = value;
+    %7 = narrowed is object { public function get(int, int) returns int }
+    %7 ? bb5 : bb8;
+  }
+  bb5 {
+    PushScopeFrame 7
+    %0 = ConstantLoad 5
+    %1 = %0;
+    %2 = ConstantLoad 4
+    %3 = %2;
+    %4 = get((1, narrowed),%1,%3) -> bb6;
+  }
+  bb6 {
+    %5 = %4;
+    %6 = println(%5) -> bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb8 {
+    PushScopeFrame 16
+    %0 = newObject $anon/.:CallerImpl
+    %1 = init(%0) -> bb9;
+  }
+  bb9 {
+    %3 = %1 is nil
+    %3 ? bb10 : bb11;
+  }
+  bb10 {
+    %2 = %0;
+    GOTO bb12;
+  }
+  bb11 {
+    %2 = %1;
+    GOTO bb12;
+  }
+  bb12 {
+    caller = %2;
+    %5 = ConstantLoad 6
+    $desugar$0 = %5;
+    %7 = $desugar$0;
+    %8 = $default$2(%7) -> bb13;
+  }
+  bb13 {
+    $desugar$1 = %8;
+    %10 = $desugar$0;
+    %11 = $desugar$1;
+    %12 = $remote$add(caller,%10,%11) -> bb14;
+  }
+  bb14 {
+    result = %12;
+    %14 = result;
+    %15 = println(%14) -> bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    return;
+  }
+}
+$default$0(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+$default$2(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+$default$1(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+$default$3(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
