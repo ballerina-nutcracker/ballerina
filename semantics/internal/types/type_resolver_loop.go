@@ -51,6 +51,13 @@ func (l *loopTypeResolver) nextMonoFnName(origName string) string {
 	return l.parentResolver.nextMonoFnName(origName)
 }
 func (l *loopTypeResolver) typeEnv() semtypes.Env { return l.parentResolver.typeEnv() }
+func (l *loopTypeResolver) nodeType(node ast.BLangNode) semtypes.SemType {
+	return l.parentResolver.nodeType(node)
+}
+func (l *loopTypeResolver) setNodeType(node ast.BLangNode, ty semtypes.SemType) {
+	l.parentResolver.setNodeType(node, ty)
+}
+func (l *loopTypeResolver) isEphemeral() bool { return l.parentResolver.isEphemeral() }
 func (l *loopTypeResolver) xmlIteratorTypeCache() *semtypes.SemTypeCache {
 	return l.parentResolver.xmlIteratorTypeCache()
 }
