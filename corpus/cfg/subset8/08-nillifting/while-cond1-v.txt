@@ -1,0 +1,29 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable current (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr !=
+      (binary-expr +
+        (simple-var-ref current)
+        (literal 1))
+      (literal 5))
+  )
+  (bb2 (bb1) (bb1)
+    (assignment
+      (simple-var-ref current)
+      (binary-expr +
+        (simple-var-ref current)
+        (literal 1)))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref current))))
+  )
+)

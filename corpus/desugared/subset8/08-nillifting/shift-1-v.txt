@@ -16,89 +16,29 @@
             (value-type null))) (expr
           (literal <nil>))))
       (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref x))))
-      (var-def
-        (variable $desugar$1 (expr
-          (simple-var-ref y))))
-      (var-def
-        (variable $desugar$2 (expr
-          (literal <nil>))))
-      (if
-        (binary-expr ||
-          (type-test-expr is
-            (simple-var-ref $desugar$0))
-          (type-test-expr is
-            (simple-var-ref $desugar$1)))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$2)
-            (binary-expr <<
-              (simple-var-ref $desugar$0)
-              (simple-var-ref $desugar$1))))))
-      (var-def
         (variable a (type
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (simple-var-ref $desugar$2))))
-      (var-def
-        (variable $desugar$3 (expr
-          (simple-var-ref x))))
-      (var-def
-        (variable $desugar$4 (expr
-          (simple-var-ref y))))
-      (var-def
-        (variable $desugar$5 (expr
-          (literal <nil>))))
-      (if
-        (binary-expr ||
-          (type-test-expr is
-            (simple-var-ref $desugar$3))
-          (type-test-expr is
-            (simple-var-ref $desugar$4)))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$5)
-            (binary-expr >>
-              (simple-var-ref $desugar$3)
-              (simple-var-ref $desugar$4))))))
+          (binary-expr <<
+            (simple-var-ref x)
+            (simple-var-ref y)))))
       (var-def
         (variable b (type
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (simple-var-ref $desugar$5))))
-      (var-def
-        (variable $desugar$6 (expr
-          (simple-var-ref x))))
-      (var-def
-        (variable $desugar$7 (expr
-          (simple-var-ref y))))
-      (var-def
-        (variable $desugar$8 (expr
-          (literal <nil>))))
-      (if
-        (binary-expr ||
-          (type-test-expr is
-            (simple-var-ref $desugar$6))
-          (type-test-expr is
-            (simple-var-ref $desugar$7)))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$8)
-            (binary-expr >>>
-              (simple-var-ref $desugar$6)
-              (simple-var-ref $desugar$7))))))
+          (binary-expr >>
+            (simple-var-ref x)
+            (simple-var-ref y)))))
       (var-def
         (variable c (type
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (simple-var-ref $desugar$8))))
+          (binary-expr >>>
+            (simple-var-ref x)
+            (simple-var-ref y)))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref a))))
@@ -121,89 +61,29 @@
             (value-type null))) (expr
           (literal 10))))
       (var-def
-        (variable $desugar$9 (expr
-          (simple-var-ref i))))
-      (var-def
-        (variable $desugar$10 (expr
-          (simple-var-ref j))))
-      (var-def
-        (variable $desugar$11 (expr
-          (literal <nil>))))
-      (if
-        (binary-expr ||
-          (type-test-expr is
-            (simple-var-ref $desugar$9))
-          (type-test-expr is
-            (simple-var-ref $desugar$10)))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$11)
-            (binary-expr <<
-              (simple-var-ref $desugar$9)
-              (simple-var-ref $desugar$10))))))
-      (var-def
         (variable a1 (type
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (simple-var-ref $desugar$11))))
-      (var-def
-        (variable $desugar$12 (expr
-          (simple-var-ref i))))
-      (var-def
-        (variable $desugar$13 (expr
-          (simple-var-ref y))))
-      (var-def
-        (variable $desugar$14 (expr
-          (literal <nil>))))
-      (if
-        (binary-expr ||
-          (type-test-expr is
-            (simple-var-ref $desugar$12))
-          (type-test-expr is
-            (simple-var-ref $desugar$13)))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$14)
-            (binary-expr >>
-              (simple-var-ref $desugar$12)
-              (simple-var-ref $desugar$13))))))
+          (binary-expr <<
+            (simple-var-ref i)
+            (simple-var-ref j)))))
       (var-def
         (variable b1 (type
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (simple-var-ref $desugar$14))))
-      (var-def
-        (variable $desugar$15 (expr
-          (simple-var-ref i))))
-      (var-def
-        (variable $desugar$16 (expr
-          (simple-var-ref y))))
-      (var-def
-        (variable $desugar$17 (expr
-          (literal <nil>))))
-      (if
-        (binary-expr ||
-          (type-test-expr is
-            (simple-var-ref $desugar$15))
-          (type-test-expr is
-            (simple-var-ref $desugar$16)))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$17)
-            (binary-expr >>>
-              (simple-var-ref $desugar$15)
-              (simple-var-ref $desugar$16))))))
+          (binary-expr >>
+            (simple-var-ref i)
+            (simple-var-ref y)))))
       (var-def
         (variable c1 (type
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (simple-var-ref $desugar$17))))
+          (binary-expr >>>
+            (simple-var-ref i)
+            (simple-var-ref y)))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref a1))))

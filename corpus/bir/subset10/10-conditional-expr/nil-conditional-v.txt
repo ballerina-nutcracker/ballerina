@@ -236,522 +236,539 @@ main() -> nil{
   }
   bb5 {
     nonNil = %1;
-    %8 = ConstantLoad 30
-    %9 = %8;
-    %10 = lhs(%9) -> bb6;
+    %9 = ConstantLoad 30
+    %10 = %9;
+    %11 = lhs(%10) -> bb6;
   }
   bb6 {
-    $desugar$2 = %10;
-    %13 = $desugar$2 is nil
-    %13 ? bb7 : bb12;
+    %12 = %11 is nil
+    %12 ? bb7 : bb8;
   }
   bb7 {
-    PushScopeFrame 7
-    %0 = ConstantLoad 40
-    %1 = %0;
-    %2 = lhs(%1) -> bb8;
+    %13 = ConstantLoad 40
+    %14 = %13;
+    %15 = lhs(%14) -> bb9;
   }
   bb8 {
-    $desugar$0 = %2;
-    %4 = ConstantLoad <nil>
-    $desugar$1 = %4;
-    %6 = $desugar$0 is nil
-    %6 ? bb9 : bb10;
-  }
-  bb9 {
-    PushScopeFrame 0
-    PopScopeFrame
-    GOTO bb11;
-  }
-  bb10 {
-    PushScopeFrame 4
-    %1 = (1, $desugar$0);
-    %2 = ConstantLoad 1
-    %3 = %2;
-    %0 = + %1 %3;
-    (1, $desugar$1) = %0;
-    PopScopeFrame
-    GOTO bb11;
-  }
-  bb11 {
-    (1, $desugar$3) = $desugar$1;
-    PopScopeFrame
+    %8 = %11;
     GOTO bb13;
   }
+  bb9 {
+    %16 = %15;
+    %17 = ConstantLoad 1
+    %18 = %16 is nil
+    %18 ? bb10 : bb11;
+  }
+  bb10 {
+    %19 = ConstantLoad <nil>
+    GOTO bb12;
+  }
+  bb11 {
+    %19 = + %16 %17;
+    GOTO bb12;
+  }
   bb12 {
-    PushScopeFrame 0
-    (1, $desugar$3) = (1, $desugar$2);
-    PopScopeFrame
+    %8 = %19;
     GOTO bb13;
   }
   bb13 {
-    nonNilComposite = $desugar$3;
-    %16 = ConstantLoad <nil>
-    %17 = %16;
-    %18 = lhs(%17) -> bb14;
+    nonNilComposite = %8;
+    %22 = ConstantLoad <nil>
+    %23 = %22;
+    %24 = lhs(%23) -> bb14;
   }
   bb14 {
-    %19 = %18 is nil
-    %19 ? bb15 : bb16;
+    %25 = %24 is nil
+    %25 ? bb15 : bb16;
   }
   bb15 {
-    %20 = rhs() -> bb17;
+    %26 = rhs() -> bb17;
   }
   bb16 {
-    %15 = %18;
+    %21 = %24;
     GOTO bb18;
   }
   bb17 {
-    %15 = %20;
+    %21 = %26;
     GOTO bb18;
   }
   bb18 {
-    fallback = %15;
-    %23 = ConstantLoad value
-    %24 = %23 is nil
-    %24 ? bb19 : bb20;
+    fallback = %21;
+    %29 = ConstantLoad value
+    %30 = %29 is nil
+    %30 ? bb19 : bb20;
   }
   bb19 {
-    %25 = ConstantLoad 100
-    %22 = %25;
+    %31 = ConstantLoad 100
+    %28 = %31;
     GOTO bb21;
   }
   bb20 {
-    %22 = %23;
+    %28 = %29;
     GOTO bb21;
   }
   bb21 {
-    staticallyNonNil = %22;
-    %27 = ConstantLoad <nil>
-    nilValue = %27;
-    %30 = nilValue is nil
-    %30 ? bb22 : bb23;
+    staticallyNonNil = %28;
+    %33 = ConstantLoad <nil>
+    nilValue = %33;
+    %36 = nilValue is nil
+    %36 ? bb22 : bb23;
   }
   bb22 {
-    %31 = ConstantLoad 50
-    %29 = %31;
+    %37 = ConstantLoad 50
+    %35 = %37;
     GOTO bb24;
   }
   bb23 {
-    %29 = nilValue;
+    %35 = nilValue;
     GOTO bb24;
   }
   bb24 {
-    staticallyNil = %29;
-    %35 = ConstantLoad <nil>
-    %36 = %35;
-    %37 = lhs(%36) -> bb25;
+    staticallyNil = %35;
+    %41 = ConstantLoad <nil>
+    %42 = %41;
+    %43 = lhs(%42) -> bb25;
   }
   bb25 {
-    %38 = %37 is nil
-    %38 ? bb26 : bb27;
+    %44 = %43 is nil
+    %44 ? bb26 : bb27;
   }
   bb26 {
-    %39 = ConstantLoad 20
-    %40 = %39;
-    %41 = lhs(%40) -> bb28;
+    %45 = ConstantLoad 20
+    %46 = %45;
+    %47 = lhs(%46) -> bb28;
   }
   bb27 {
-    %34 = %37;
+    %40 = %43;
     GOTO bb29;
   }
   bb28 {
-    %34 = %41;
+    %40 = %47;
     GOTO bb29;
   }
   bb29 {
-    %42 = %34 is nil
-    %42 ? bb30 : bb31;
+    %48 = %40 is nil
+    %48 ? bb30 : bb31;
   }
   bb30 {
-    %43 = rhs() -> bb32;
+    %49 = rhs() -> bb32;
   }
   bb31 {
-    %33 = %34;
+    %39 = %40;
     GOTO bb33;
   }
   bb32 {
-    %33 = %43;
+    %39 = %49;
     GOTO bb33;
   }
   bb33 {
-    nested = %33;
-    %46 = ConstantLoad false
-    %46 ? bb34 : bb35;
+    nested = %39;
+    %52 = ConstantLoad false
+    %52 ? bb34 : bb35;
   }
   bb34 {
-    %48 = ConstantLoad 30
-    %49 = %48;
-    %50 = lhs(%49) -> bb37;
+    %54 = ConstantLoad 30
+    %55 = %54;
+    %56 = lhs(%55) -> bb37;
   }
   bb35 {
-    %53 = ConstantLoad 60
-    %45 = %53;
+    %59 = ConstantLoad 60
+    %51 = %59;
     GOTO bb36;
   }
   bb36 {
-    lazyOuterBranch = %45;
-    %55 = ConstantLoad mixed
-    %56 = mixedResult(%55) -> bb42;
+    lazyOuterBranch = %51;
+    %61 = ConstantLoad mixed
+    %62 = mixedResult(%61) -> bb42;
   }
   bb37 {
-    %51 = %50 is nil
-    %51 ? bb38 : bb39;
+    %57 = %56 is nil
+    %57 ? bb38 : bb39;
   }
   bb38 {
-    %52 = rhs() -> bb40;
+    %58 = rhs() -> bb40;
   }
   bb39 {
-    %47 = %50;
+    %53 = %56;
     GOTO bb41;
   }
   bb40 {
-    %47 = %52;
+    %53 = %58;
     GOTO bb41;
   }
   bb41 {
-    %45 = %47;
+    %51 = %53;
     GOTO bb36;
   }
   bb42 {
-    mixedString = %56;
-    %58 = ConstantLoad <nil>
-    %59 = %58;
-    %60 = mixedResult(%59) -> bb43;
+    mixedString = %62;
+    %64 = ConstantLoad <nil>
+    %65 = %64;
+    %66 = mixedResult(%65) -> bb43;
   }
   bb43 {
-    mixedNil = %60;
-    %62 = ConstantLoad <nil>
-    %63 = %62;
-    %64 = nilSubtype(%63) -> bb44;
+    mixedNil = %66;
+    %68 = ConstantLoad <nil>
+    %69 = %68;
+    %70 = nilSubtype(%69) -> bb44;
   }
   bb44 {
-    nilSubtypeResult = %64;
-    %66 = ConstantLoad <nil>
-    %67 = %66;
-    %68 = optionalNever(%67) -> bb45;
+    nilSubtypeResult = %70;
+    %72 = ConstantLoad <nil>
+    %73 = %72;
+    %74 = optionalNever(%73) -> bb45;
   }
   bb45 {
-    optionalNeverResult = %68;
-    %70 = ConstantLoad 120
-    %71 = %70;
-    %72 = ConstantLoad false
-    %73 = %72;
-    %74 = checkedRhs(%71,%73) -> bb46;
-  }
-  bb46 {
-    lazyCheck = %74;
-    %76 = ConstantLoad <nil>
+    optionalNeverResult = %74;
+    %76 = ConstantLoad 120
     %77 = %76;
     %78 = ConstantLoad false
     %79 = %78;
-    %80 = checkedRhs(%77,%79) -> bb47;
+    %80 = checkedRhs(%77,%79) -> bb46;
   }
-  bb47 {
-    failedCheck = %80;
+  bb46 {
+    lazyCheck = %80;
     %82 = ConstantLoad <nil>
     %83 = %82;
-    %84 = checkedOuter(%83) -> bb48;
+    %84 = ConstantLoad false
+    %85 = %84;
+    %86 = checkedRhs(%83,%85) -> bb47;
+  }
+  bb47 {
+    failedCheck = %86;
+    %88 = ConstantLoad <nil>
+    %89 = %88;
+    %90 = checkedOuter(%89) -> bb48;
   }
   bb48 {
-    outerNil = %84;
-    %86 = ConstantLoad outer
-    %87 = newError error(%86)
-    %88 = checkedOuter(%87) -> bb49;
+    outerNil = %90;
+    %92 = ConstantLoad outer
+    %93 = newError error(%92)
+    %94 = checkedOuter(%93) -> bb49;
   }
   bb49 {
-    outerError = %88;
+    outerError = %94;
     GOTO bb50;
   }
   bb50 {
-    %92 = ConstantLoad 130
-    %93 = %92 is nil
-    %93 ? bb51 : bb52;
+    %98 = ConstantLoad 130
+    %99 = %98 is nil
+    %99 ? bb51 : bb52;
   }
   bb51 {
-    %96 = ConstantLoad false
-    %97 = %96;
-    %98 = nullableCheckedValue(%97) -> bb53;
+    %101 = ConstantLoad false
+    %102 = %101;
+    %103 = nullableCheckedValue(%102) -> bb53;
   }
   bb52 {
-    %91 = %92;
-    GOTO bb57;
+    %97 = %98;
+    GOTO bb60;
   }
   bb53 {
-    %99 = %98 is error
-    %99 ? bb54 : bb55;
+    %104 = %103 is error
+    %104 ? bb54 : bb55;
   }
   bb54 {
-    panic %98;
+    panic %103;
   }
   bb55 {
-    %95 = %98;
+    %100 = %103;
     GOTO bb56;
   }
   bb56 {
-    %100 = %95;
-    %101 = ConstantLoad 1
-    %102 = %101;
-    %94 = + %100 %102;
-    %91 = %94;
-    GOTO bb57;
+    %105 = %100;
+    %106 = ConstantLoad 1
+    %107 = %105 is nil
+    %107 ? bb57 : bb58;
   }
   bb57 {
-    %90 = %91;
-    GOTO bb58;
+    %108 = ConstantLoad <nil>
+    GOTO bb59;
   }
   bb58 {
-    lazyCheckpanic = %90;
+    %108 = + %105 %106;
     GOTO bb59;
   }
   bb59 {
-    %106 = ConstantLoad <nil>
-    %107 = %106 is nil
-    %107 ? bb60 : bb61;
+    %97 = %108;
+    GOTO bb60;
   }
   bb60 {
-    %110 = ConstantLoad false
-    %111 = %110;
-    %112 = nullableCheckedValue(%111) -> bb62;
+    %96 = %97;
+    GOTO bb61;
   }
   bb61 {
-    %105 = %106;
-    GOTO bb66;
+    lazyCheckpanic = %96;
+    GOTO bb62;
   }
   bb62 {
-    %113 = %112 is error
+    %112 = ConstantLoad <nil>
+    %113 = %112 is nil
     %113 ? bb63 : bb64;
   }
   bb63 {
-    panic %112;
+    %115 = ConstantLoad false
+    %116 = %115;
+    %117 = nullableCheckedValue(%116) -> bb65;
   }
   bb64 {
-    %109 = %112;
-    GOTO bb65;
+    %111 = %112;
+    GOTO bb72;
   }
   bb65 {
-    %114 = %109;
-    %115 = ConstantLoad 1
-    %116 = %115;
-    %108 = + %114 %116;
-    %105 = %108;
-    GOTO bb66;
+    %118 = %117 is error
+    %118 ? bb66 : bb67;
   }
   bb66 {
-    %104 = %105;
-    GOTO bb67;
+    panic %117;
   }
   bb67 {
-    trappedCheckpanic = %104;
+    %114 = %117;
     GOTO bb68;
   }
   bb68 {
-    %121 = ConstantLoad false
-    %122 = %121;
-    %123 = nullableCheckedValue(%122) -> bb69;
+    %119 = %114;
+    %120 = ConstantLoad 1
+    %121 = %119 is nil
+    %121 ? bb69 : bb70;
   }
   bb69 {
-    %124 = %123 is error
-    %124 ? bb70 : bb71;
+    %122 = ConstantLoad <nil>
+    GOTO bb71;
   }
   bb70 {
-    panic %123;
+    %122 = + %119 %120;
+    GOTO bb71;
   }
   bb71 {
-    %120 = %123;
+    %111 = %122;
     GOTO bb72;
   }
   bb72 {
-    %125 = %120 is nil
-    %125 ? bb73 : bb74;
+    %110 = %111;
+    GOTO bb73;
   }
   bb73 {
-    %126 = ConstantLoad 140
-    %119 = %126;
-    GOTO bb75;
+    trappedCheckpanic = %110;
+    GOTO bb74;
   }
   bb74 {
-    %119 = %120;
-    GOTO bb75;
+    %127 = ConstantLoad false
+    %128 = %127;
+    %129 = nullableCheckedValue(%128) -> bb75;
   }
   bb75 {
-    %118 = %119;
-    GOTO bb76;
+    %130 = %129 is error
+    %130 ? bb76 : bb77;
   }
   bb76 {
-    lhsCheckpanic = %118;
-    GOTO bb77;
+    panic %129;
   }
   bb77 {
-    %132 = ConstantLoad false
-    %133 = %132;
-    %134 = nullableCheckedValue(%133) -> bb78;
+    %126 = %129;
+    GOTO bb78;
   }
   bb78 {
-    %135 = %134 is error
-    %135 ? bb79 : bb80;
+    %131 = %126 is nil
+    %131 ? bb79 : bb80;
   }
   bb79 {
-    panic %134;
+    %132 = ConstantLoad 140
+    %125 = %132;
+    GOTO bb81;
   }
   bb80 {
-    %131 = %134;
+    %125 = %126;
     GOTO bb81;
   }
   bb81 {
-    %136 = %131;
-    %137 = ConstantLoad 1
-    %138 = %137;
-    %130 = + %136 %138;
-    %139 = %130 is nil
-    %139 ? bb82 : bb83;
+    %124 = %125;
+    GOTO bb82;
   }
   bb82 {
-    %140 = ConstantLoad 150
-    %129 = %140;
-    GOTO bb84;
+    lhsCheckpanic = %124;
+    GOTO bb83;
   }
   bb83 {
-    %129 = %130;
-    GOTO bb84;
+    %137 = ConstantLoad false
+    %138 = %137;
+    %139 = nullableCheckedValue(%138) -> bb84;
   }
   bb84 {
-    %128 = %129;
-    GOTO bb85;
+    %140 = %139 is error
+    %140 ? bb85 : bb86;
   }
   bb85 {
-    wrappedLhsCheckpanic = %128;
-    GOTO bb86;
+    panic %139;
   }
   bb86 {
-    %145 = ConstantLoad <nil>
-    %146 = %145 is nil
-    %146 ? bb87 : bb88;
+    %136 = %139;
+    GOTO bb87;
   }
   bb87 {
-    %147 = ConstantLoad false
-    %148 = %147;
-    %149 = checkedValue(%148) -> bb89;
+    %141 = %136;
+    %142 = ConstantLoad 1
+    %143 = %141 is nil
+    %143 ? bb88 : bb89;
   }
   bb88 {
-    %144 = %145;
+    %144 = ConstantLoad <nil>
     GOTO bb90;
   }
   bb89 {
-    %144 = %149;
+    %144 = + %141 %142;
     GOTO bb90;
   }
   bb90 {
-    %150 = %144 is error
-    %150 ? bb91 : bb92;
+    %145 = %144 is nil
+    %145 ? bb91 : bb92;
   }
   bb91 {
-    panic %144;
+    %146 = ConstantLoad 150
+    %135 = %146;
+    GOTO bb93;
   }
   bb92 {
-    %143 = %144;
+    %135 = %144;
     GOTO bb93;
   }
   bb93 {
-    %142 = %143;
+    %134 = %135;
     GOTO bb94;
   }
   bb94 {
-    outerCheckpanic = %142;
-    %152 = nonNil;
-    %153 = println(%152) -> bb95;
+    wrappedLhsCheckpanic = %134;
+    GOTO bb95;
   }
   bb95 {
-    %154 = nonNilComposite;
-    %155 = println(%154) -> bb96;
+    %151 = ConstantLoad <nil>
+    %152 = %151 is nil
+    %152 ? bb96 : bb97;
   }
   bb96 {
-    %156 = fallback;
-    %157 = println(%156) -> bb97;
+    %153 = ConstantLoad false
+    %154 = %153;
+    %155 = checkedValue(%154) -> bb98;
   }
   bb97 {
-    %158 = println(staticallyNonNil) -> bb98;
+    %150 = %151;
+    GOTO bb99;
   }
   bb98 {
-    %159 = staticallyNil;
-    %160 = println(%159) -> bb99;
+    %150 = %155;
+    GOTO bb99;
   }
   bb99 {
-    %161 = nested;
-    %162 = println(%161) -> bb100;
+    %156 = %150 is error
+    %156 ? bb100 : bb101;
   }
   bb100 {
-    %163 = lazyOuterBranch;
-    %164 = println(%163) -> bb101;
+    panic %150;
   }
   bb101 {
-    %165 = println(mixedString) -> bb102;
+    %149 = %150;
+    GOTO bb102;
   }
   bb102 {
-    %166 = println(mixedNil) -> bb103;
+    %148 = %149;
+    GOTO bb103;
   }
   bb103 {
-    %167 = nilSubtypeResult;
-    %168 = println(%167) -> bb104;
+    outerCheckpanic = %148;
+    %158 = nonNil;
+    %159 = println(%158) -> bb104;
   }
   bb104 {
-    %169 = optionalNeverResult;
-    %170 = println(%169) -> bb105;
+    %160 = nonNilComposite;
+    %161 = println(%160) -> bb105;
   }
   bb105 {
-    %171 = println(lazyCheck) -> bb106;
+    %162 = fallback;
+    %163 = println(%162) -> bb106;
   }
   bb106 {
-    %172 = failedCheck is error
-    %173 = %172;
-    %174 = println(%173) -> bb107;
+    %164 = println(staticallyNonNil) -> bb107;
   }
   bb107 {
-    %175 = println(outerNil) -> bb108;
+    %165 = staticallyNil;
+    %166 = println(%165) -> bb108;
   }
   bb108 {
-    %176 = outerError is error
-    %177 = %176;
-    %178 = println(%177) -> bb109;
+    %167 = nested;
+    %168 = println(%167) -> bb109;
   }
   bb109 {
-    %179 = println(lazyCheckpanic) -> bb110;
+    %169 = lazyOuterBranch;
+    %170 = println(%169) -> bb110;
   }
   bb110 {
-    %180 = trappedCheckpanic is error
-    %181 = %180;
-    %182 = println(%181) -> bb111;
+    %171 = println(mixedString) -> bb111;
   }
   bb111 {
-    %183 = lhsCheckpanic is error
-    %184 = %183;
-    %185 = println(%184) -> bb112;
+    %172 = println(mixedNil) -> bb112;
   }
   bb112 {
-    %186 = wrappedLhsCheckpanic is error
-    %187 = %186;
-    %188 = println(%187) -> bb113;
+    %173 = nilSubtypeResult;
+    %174 = println(%173) -> bb113;
   }
   bb113 {
-    %189 = outerCheckpanic is error
-    %190 = %189;
-    %191 = println(%190) -> bb114;
+    %175 = optionalNeverResult;
+    %176 = println(%175) -> bb114;
   }
   bb114 {
-    %192 = println(lhsCalls) -> bb115;
+    %177 = println(lazyCheck) -> bb115;
   }
   bb115 {
-    %193 = println(rhsCalls) -> bb116;
+    %178 = failedCheck is error
+    %179 = %178;
+    %180 = println(%179) -> bb116;
   }
   bb116 {
+    %181 = println(outerNil) -> bb117;
+  }
+  bb117 {
+    %182 = outerError is error
+    %183 = %182;
+    %184 = println(%183) -> bb118;
+  }
+  bb118 {
+    %185 = println(lazyCheckpanic) -> bb119;
+  }
+  bb119 {
+    %186 = trappedCheckpanic is error
+    %187 = %186;
+    %188 = println(%187) -> bb120;
+  }
+  bb120 {
+    %189 = lhsCheckpanic is error
+    %190 = %189;
+    %191 = println(%190) -> bb121;
+  }
+  bb121 {
+    %192 = wrappedLhsCheckpanic is error
+    %193 = %192;
+    %194 = println(%193) -> bb122;
+  }
+  bb122 {
+    %195 = outerCheckpanic is error
+    %196 = %195;
+    %197 = println(%196) -> bb123;
+  }
+  bb123 {
+    %198 = println(lhsCalls) -> bb124;
+  }
+  bb124 {
+    %199 = println(rhsCalls) -> bb125;
+  }
+  bb125 {
     return;
   }
   
   error-table {
-    [bb50, bb57] -> bb58, %90
-    [bb59, bb66] -> bb67, %104
-    [bb68, bb75] -> bb76, %118
-    [bb77, bb84] -> bb85, %128
-    [bb86, bb93] -> bb94, %142
+    [bb50, bb60] -> bb61, %96
+    [bb62, bb72] -> bb73, %110
+    [bb74, bb81] -> bb82, %124
+    [bb83, bb93] -> bb94, %134
+    [bb95, bb102] -> bb103, %148
   }
 }

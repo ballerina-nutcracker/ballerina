@@ -28,81 +28,21 @@
       (assignment
         (simple-var-ref y)
         (literal <nil>))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref x))))
-      (var-def
-        (variable $desugar$1 (expr
-          (simple-var-ref y))))
-      (var-def
-        (variable $desugar$2 (expr
-          (literal <nil>))))
-      (if
-        (binary-expr ||
-          (type-test-expr is
-            (simple-var-ref $desugar$0))
-          (type-test-expr is
-            (simple-var-ref $desugar$1)))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$2)
-            (binary-expr &
-              (simple-var-ref $desugar$0)
-              (simple-var-ref $desugar$1))))))
       (assignment
         (simple-var-ref a)
-        (simple-var-ref $desugar$2))
-      (var-def
-        (variable $desugar$3 (expr
-          (simple-var-ref x))))
-      (var-def
-        (variable $desugar$4 (expr
-          (simple-var-ref y))))
-      (var-def
-        (variable $desugar$5 (expr
-          (literal <nil>))))
-      (if
-        (binary-expr ||
-          (type-test-expr is
-            (simple-var-ref $desugar$3))
-          (type-test-expr is
-            (simple-var-ref $desugar$4)))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$5)
-            (binary-expr ^
-              (simple-var-ref $desugar$3)
-              (simple-var-ref $desugar$4))))))
+        (binary-expr &
+          (simple-var-ref x)
+          (simple-var-ref y)))
       (assignment
         (simple-var-ref b)
-        (simple-var-ref $desugar$5))
-      (var-def
-        (variable $desugar$6 (expr
-          (simple-var-ref x))))
-      (var-def
-        (variable $desugar$7 (expr
-          (simple-var-ref y))))
-      (var-def
-        (variable $desugar$8 (expr
-          (literal <nil>))))
-      (if
-        (binary-expr ||
-          (type-test-expr is
-            (simple-var-ref $desugar$6))
-          (type-test-expr is
-            (simple-var-ref $desugar$7)))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$8)
-            (binary-expr |
-              (simple-var-ref $desugar$6)
-              (simple-var-ref $desugar$7))))))
+        (binary-expr ^
+          (simple-var-ref x)
+          (simple-var-ref y)))
       (assignment
         (simple-var-ref c)
-        (simple-var-ref $desugar$8))))
+        (binary-expr |
+          (simple-var-ref x)
+          (simple-var-ref y)))))
   (function main () (
     (value-type null))
     (block-function-body

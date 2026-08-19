@@ -1,0 +1,32 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable nilValue (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal <nil>))))
+      (var-def
+        (variable result (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (binary-expr +
+            (invocation sideEffect ())
+            (simple-var-ref nilValue)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (value-type null)))))))
+  (function sideEffect () (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal side-effect))))
+      (return
+        (literal 1)))))
