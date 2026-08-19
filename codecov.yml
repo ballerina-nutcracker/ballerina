@@ -10,3 +10,6 @@ coverage:
     patch:
       default:
         target: 80%
+
+comment:
+  hide_project_coverage: false
