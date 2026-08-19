@@ -1,0 +1,50 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad true
+    b = %1;
+    %3 = ConstantLoad 0
+    zero = %3;
+    GOTO bb1;
+  }
+  bb1 {
+    %6 = b;
+    b ? bb2 : bb3;
+  }
+  bb2 {
+    %9 = value() -> bb4;
+  }
+  bb3 {
+    %5 = %6;
+    GOTO bb5;
+  }
+  bb4 {
+    %10 = %9;
+    %11 = zero;
+    %8 = / %10 %11;
+    %12 = %8;
+    %13 = ConstantLoad 0
+    %14 = %13;
+    %7 = > %12 %14;
+    %6 = %7;
+    GOTO bb3;
+  }
+  bb5 {
+    result = %5;
+    %16 = println(result) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+
+  error-table {
+    [bb1, bb4] -> bb5, %5
+  }
+}
+value() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}

@@ -74,6 +74,11 @@ func (fn *functionContext) addBB() *bir.BIRBasicBlock {
 	return &bb
 }
 
+// lastBBNumber returns the number assigned to the most recently allocated basic block.
+func (fn *functionContext) lastBBNumber() int {
+	return len(fn.bbs) - 1
+}
+
 func (fn *functionContext) loc(pos diagnostics.Location) bir.Location {
 	return birLoc(fn.pkgCtx.CompilerContext.DiagnosticEnv(), pos)
 }
@@ -1448,23 +1453,67 @@ func wildcardBindingPattern(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLa
 	}
 }
 
-func unaryExpression(ctx context, bb *bir.BIRBasicBlock, expr *ast.BLangUnaryExpr) expressionEffect {
-	var kind bir.InstructionKind
-	switch expr.Operator {
+// operatorKindToUnaryInstructionKind maps an AST unary operator to its BIR instruction kind.
+func operatorKindToUnaryInstructionKind(op model.OperatorKind) bir.InstructionKind {
+	switch op {
 	case model.OperatorKind_NOT:
-		kind = bir.InstructionKindNot
+		return bir.InstructionKindNot
 	case model.OperatorKind_SUB:
-		kind = bir.InstructionKindNegate
+		return bir.InstructionKindNegate
 	case model.OperatorKind_BITWISE_COMPLEMENT:
-		kind = bir.InstructionKindBitwiseComplement
+		return bir.InstructionKindBitwiseComplement
 	default:
 		panic("unexpected unary operator kind")
+	}
+}
+
+// isNilLiftableUnaryOp reports whether an operator propagates a nil operand as nil.
+func isNilLiftableUnaryOp(op model.OperatorKind) bool {
+	switch op {
+	case model.OperatorKind_ADD, model.OperatorKind_SUB, model.OperatorKind_BITWISE_COMPLEMENT:
+		return true
+	default:
+		return false
+	}
+}
+
+// nilLiftedUnaryExpression evaluates a nullable operand and applies the operator only when it is non-nil.
+func nilLiftedUnaryExpression(ctx context, bb *bir.BIRBasicBlock, expr *ast.BLangUnaryExpr) expressionEffect {
+	if expr.Operator == model.OperatorKind_ADD {
+		return handleActionOrExpression(ctx, bb, expr.Expr)
+	}
+	pos := ctx.function().loc(expr.GetPosition())
+	opEffect := handleActionOrExpression(ctx, bb, expr.Expr)
+	isNil := nilTest(ctx, opEffect.block, opEffect.result, pos)
+
+	nilBB := ctx.function().addBB()
+	opBB := ctx.function().addBB()
+	doneBB := ctx.function().addBB()
+	opEffect.block.Terminator = bir.NewBranch(isNil, nilBB, opBB, pos)
+
+	result := ctx.addTempVar(expr.GetDeterminedType())
+	nilBB.Instructions = append(nilBB.Instructions, bir.NewConstantLoad(result, nil, pos))
+	nilBB.Terminator = bir.NewGoto(doneBB, pos)
+	opBB.Instructions = append(opBB.Instructions, bir.NewUnaryOp(operatorKindToUnaryInstructionKind(expr.Operator), result, opEffect.result, pos))
+	opBB.Terminator = bir.NewGoto(doneBB, pos)
+	return expressionEffect{result: result, block: doneBB}
+}
+
+func unaryExpression(ctx context, bb *bir.BIRBasicBlock, expr *ast.BLangUnaryExpr) expressionEffect {
+	if isNilLiftableUnaryOp(expr.Operator) {
+		ty := expr.Expr.GetDeterminedType()
+		if semtypes.ContainsBasicType(ty, semtypes.Nil) {
+			return nilLiftedUnaryExpression(ctx, bb, expr)
+		}
+	}
+	if expr.Operator == model.OperatorKind_ADD {
+		return handleActionOrExpression(ctx, bb, expr.Expr)
 	}
 	opEffect := handleActionOrExpression(ctx, bb, expr.Expr)
 
 	resultOperand := ctx.addTempVar(expr.GetDeterminedType())
 	curBB := opEffect.block
-	unaryOp := bir.NewUnaryOp(kind, resultOperand, opEffect.result, ctx.function().loc(expr.GetPosition()))
+	unaryOp := bir.NewUnaryOp(operatorKindToUnaryInstructionKind(expr.Operator), resultOperand, opEffect.result, ctx.function().loc(expr.GetPosition()))
 	curBB.Instructions = append(curBB.Instructions, unaryOp)
 	return expressionEffect{
 		result: resultOperand,
@@ -1647,15 +1696,91 @@ func binaryExpressionInner(ctx context, curBB *bir.BIRBasicBlock, opKind model.O
 	}
 }
 
+// isNilLiftableBinaryOp reports whether an operator propagates a nil operand as nil.
+func isNilLiftableBinaryOp(op model.OperatorKind) bool {
+	switch op {
+	case model.OperatorKind_ADD, model.OperatorKind_SUB, // additive-expr
+		model.OperatorKind_MUL, model.OperatorKind_DIV, model.OperatorKind_MOD, // multiplicative-expr
+		model.OperatorKind_BITWISE_LEFT_SHIFT, model.OperatorKind_BITWISE_RIGHT_SHIFT,
+		model.OperatorKind_BITWISE_UNSIGNED_RIGHT_SHIFT,                                               //shift-expr
+		model.OperatorKind_BITWISE_AND, model.OperatorKind_BITWISE_OR, model.OperatorKind_BITWISE_XOR: // binary-bitwise-expr
+		return true
+	default:
+		return false
+	}
+}
+
+// nilLiftedOperands reports which operands are nullable and whether the operation needs lifting.
+func nilLiftedOperands(op model.OperatorKind, lhsTy, rhsTy semtypes.SemType) (lhsNullable, rhsNullable, lifted bool) {
+	if !isNilLiftableBinaryOp(op) {
+		return false, false, false
+	}
+	lhsNullable = semtypes.ContainsBasicType(lhsTy, semtypes.Nil)
+	rhsNullable = semtypes.ContainsBasicType(rhsTy, semtypes.Nil)
+	return lhsNullable, rhsNullable, lhsNullable || rhsNullable
+}
+
+// pinOperand create a copy of value before evaluating a later, potentially mutating operand.
+func pinOperand(ctx context, effect expressionEffect, ty semtypes.SemType, pos bir.Location) expressionEffect {
+	temp := ctx.addTempVar(ty)
+	effect.block.Instructions = append(effect.block.Instructions, bir.NewMove(effect.result, temp, pos))
+	return expressionEffect{result: temp, block: effect.block}
+}
+
+// nilTest emits a nil type test and returns its boolean result.
+func nilTest(ctx context, bb *bir.BIRBasicBlock, operand *bir.BIROperand, pos bir.Location) *bir.BIROperand {
+	result := ctx.addTempVar(semtypes.Boolean)
+	bb.Instructions = append(bb.Instructions, bir.NewTypeTest(semtypes.Nil, result, operand, pos))
+	return result
+}
+
+// nilLiftedBinaryExpression evaluates both operands in source order and branches around the operation when either is nil.
+func nilLiftedBinaryExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangBinaryExpr, lhsNullable, rhsNullable bool) expressionEffect {
+	pos := ctx.function().loc(expr.GetPosition())
+	lhsEffect := handleActionOrExpression(ctx, curBB, expr.LhsExpr)
+	lhsEffect = pinOperand(ctx, lhsEffect, expr.LhsExpr.GetDeterminedType(), pos)
+	rhsEffect := handleActionOrExpression(ctx, lhsEffect.block, expr.RhsExpr)
+	curBB = rhsEffect.block
+
+	var nilOperand *bir.BIROperand
+	if lhsNullable {
+		nilOperand = nilTest(ctx, curBB, lhsEffect.result, pos)
+	}
+	if rhsNullable {
+		rhsNil := nilTest(ctx, curBB, rhsEffect.result, pos)
+		if nilOperand == nil {
+			nilOperand = rhsNil
+		} else {
+			anyNil := ctx.addTempVar(semtypes.Boolean)
+			curBB.Instructions = append(curBB.Instructions, bir.NewBinaryOp(bir.InstructionKindOr, anyNil, nilOperand, rhsNil, pos))
+			nilOperand = anyNil
+		}
+	}
+
+	nilBB := ctx.function().addBB()
+	opBB := ctx.function().addBB()
+	doneBB := ctx.function().addBB()
+	curBB.Terminator = bir.NewBranch(nilOperand, nilBB, opBB, pos)
+
+	result := ctx.addTempVar(expr.GetDeterminedType())
+	nilBB.Instructions = append(nilBB.Instructions, bir.NewConstantLoad(result, nil, pos))
+	nilBB.Terminator = bir.NewGoto(doneBB, pos)
+	opBB.Instructions = append(opBB.Instructions, bir.NewBinaryOp(operatorKindToBinaryInstructionKind(expr.OpKind), result, lhsEffect.result, rhsEffect.result, pos))
+	opBB.Terminator = bir.NewGoto(doneBB, pos)
+	return expressionEffect{result: result, block: doneBB}
+}
+
 func binaryExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangBinaryExpr) expressionEffect {
+	if lhsNullable, rhsNullable, lifted := nilLiftedOperands(expr.OpKind, expr.LhsExpr.GetDeterminedType(), expr.RhsExpr.GetDeterminedType()); lifted {
+		return nilLiftedBinaryExpression(ctx, curBB, expr, lhsNullable, rhsNullable)
+	}
 	switch expr.OpKind {
 	case model.OperatorKind_AND:
 		return logicalAndExpression(ctx, curBB, expr)
 	case model.OperatorKind_OR:
 		return logicalOrExpression(ctx, curBB, expr)
-	default:
-		return binaryExpressionInner(ctx, curBB, expr.OpKind, expr.LhsExpr, expr.RhsExpr, expr.GetDeterminedType(), ctx.function().loc(expr.GetPosition()))
 	}
+	return binaryExpressionInner(ctx, curBB, expr.OpKind, expr.LhsExpr, expr.RhsExpr, expr.GetDeterminedType(), ctx.function().loc(expr.GetPosition()))
 }
 
 func checkedExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BLangActionOrExpression, resultType semtypes.SemType, isPanic bool, exprPos diagnostics.Location) expressionEffect {
@@ -1805,6 +1930,9 @@ func trapExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangTrapEx
 
 	innerEffect := handleActionOrExpression(ctx, trapStartBB, expr.Expr)
 	trapEndBB := innerEffect.block
+	// Operand lowering can allocate blocks after its returned join block, so capture the
+	// allocation frontier before afterTrapBB is added and include every operand block.
+	regionEnd := ctx.function().lastBBNumber()
 
 	mov := bir.NewMove(innerEffect.result, resultOperand, ctx.function().loc(expr.GetPosition()))
 	trapEndBB.Instructions = append(trapEndBB.Instructions, mov)
@@ -1815,7 +1943,7 @@ func trapExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangTrapEx
 	fn := ctx.function()
 	fn.errorEntries = append(fn.errorEntries, bir.BIRErrorEntry{
 		Start:   trapStartBB.Number,
-		End:     trapEndBB.Number,
+		End:     regionEnd,
 		Target:  afterTrapBB.Number,
 		ErrorOp: resultOperand,
 	})

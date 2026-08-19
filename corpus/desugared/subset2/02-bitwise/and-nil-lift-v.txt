@@ -9,22 +9,8 @@
             (value-type int)
             (value-type null))) (expr
           (literal <nil>))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref x))))
-      (var-def
-        (variable $desugar$1 (expr
-          (literal <nil>))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$1)
-            (binary-expr &
-              (simple-var-ref $desugar$0)
-              (literal 1))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$1)))))))
+          (binary-expr &
+            (simple-var-ref x)
+            (literal 1))))))))

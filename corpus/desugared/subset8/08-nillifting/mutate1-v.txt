@@ -1,0 +1,51 @@
+(package
+  (import-package ballerina io (as io))
+  (variable number (type
+    (union-type
+      (value-type int)
+      (value-type null))))
+  (variable text (type
+    (union-type
+      (value-type string)
+      (value-type null))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref number)
+        (literal 1))
+      (assignment
+        (simple-var-ref text)
+        (literal a))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref number)
+            (invocation mutateNumber ())))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref text)
+            (invocation mutateText ())))))))
+  (function mutateNumber () (
+    (union-type
+      (value-type int)
+      (value-type null)))
+    (block-function-body
+      (assignment
+        (simple-var-ref number)
+        (literal 100))
+      (return
+        (literal 1))))
+  (function mutateText () (
+    (union-type
+      (value-type string)
+      (value-type null)))
+    (block-function-body
+      (assignment
+        (simple-var-ref text)
+        (literal mutated))
+      (return
+        (literal b)))))

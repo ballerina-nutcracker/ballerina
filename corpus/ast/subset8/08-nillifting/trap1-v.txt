@@ -1,0 +1,67 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable left (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal 1))))
+      (var-def
+        (variable right (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal 2))))
+      (var-def
+        (variable sum (expr
+          (trap-expr
+            (binary-expr +
+              (simple-var-ref left)
+              (simple-var-ref right))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref sum))))
+      (var-def
+        (variable negated (expr
+          (trap-expr
+            (unary-expr -
+              (simple-var-ref left))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref negated))))
+      (var-def
+        (variable nilValue (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal <nil>))))
+      (var-def
+        (variable nilSum (expr
+          (trap-expr
+            (binary-expr +
+              (simple-var-ref left)
+              (simple-var-ref nilValue))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref nilSum)
+            (value-type null)))))
+      (var-def
+        (variable zero (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal 0))))
+      (var-def
+        (variable divided (expr
+          (trap-expr
+            (binary-expr /
+              (simple-var-ref left)
+              (simple-var-ref zero))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref divided)))))))
