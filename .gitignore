@@ -19,6 +19,11 @@ profile.cov
 # Dependency directories
 # vendor/
 
+# Python caches and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
 # Go workspace checksum
 go.work.sum
 
