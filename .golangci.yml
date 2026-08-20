@@ -4,6 +4,7 @@ linters:
   default: standard
   enable:
     - depguard
+    - dupl
   settings:
     depguard:
       rules:

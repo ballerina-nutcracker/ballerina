@@ -33,25 +33,32 @@ import (
 	"golang.org/x/crypto/pkcs12"
 )
 
+func privateKeyFromKeyStore(rt *runtime.Runtime, args []values.BalValue) (any, *values.Error) {
+	ks, _ := args[0].(*values.Map)
+	alias, _ := args[1].(string)
+	keyPwd, _ := args[2].(string)
+	path := mapString(ks, "path")
+	data, err := rt.Platform().FS.ReadFile(path)
+	if err != nil {
+		return nil, cryptoError(fmt.Sprintf("PKCS12 KeyStore not found at: %s", path))
+	}
+	key, _, err := pkcs12.Decode(data, mapString(ks, "password"))
+	if err == nil {
+		return key, nil
+	}
+	key, _, err = pkcs12.Decode(data, keyPwd)
+	if err != nil {
+		return nil, cryptoError(fmt.Sprintf("Key cannot be recovered by using given key alias: %s", alias))
+	}
+	return key, nil
+}
+
 func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeRsaPrivateKeyFromKeyStore",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			ks, _ := args[0].(*values.Map)
-			alias, _ := args[1].(string)
-			keyPwd, _ := args[2].(string)
-			path := mapString(ks, "path")
-			ksPwd := mapString(ks, "password")
-			data, err := rt.Platform().FS.ReadFile(path)
-			if err != nil {
-				return cryptoError(fmt.Sprintf("PKCS12 KeyStore not found at: %s", path)), nil
-			}
-			key, _, err := pkcs12.Decode(data, ksPwd)
-			if err != nil {
-				// Try with key password if store password failed
-				key, _, err = pkcs12.Decode(data, keyPwd)
-				if err != nil {
-					return cryptoError(fmt.Sprintf("Key cannot be recovered by using given key alias: %s", alias)), nil
-				}
+			key, keyError := privateKeyFromKeyStore(rt, args)
+			if keyError != nil {
+				return keyError, nil
 			}
 			rsaKey, ok := key.(*rsa.PrivateKey)
 			if !ok {
@@ -62,21 +69,9 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeEcPrivateKeyFromKeyStore",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			ks, _ := args[0].(*values.Map)
-			alias, _ := args[1].(string)
-			keyPwd, _ := args[2].(string)
-			path := mapString(ks, "path")
-			ksPwd := mapString(ks, "password")
-			data, err := rt.Platform().FS.ReadFile(path)
-			if err != nil {
-				return cryptoError(fmt.Sprintf("PKCS12 KeyStore not found at: %s", path)), nil
-			}
-			key, _, err := pkcs12.Decode(data, ksPwd)
-			if err != nil {
-				key, _, err = pkcs12.Decode(data, keyPwd)
-				if err != nil {
-					return cryptoError(fmt.Sprintf("Key cannot be recovered by using given key alias: %s", alias)), nil
-				}
+			key, keyError := privateKeyFromKeyStore(rt, args)
+			if keyError != nil {
+				return keyError, nil
 			}
 			ecKey, ok := key.(*ecdsa.PrivateKey)
 			if !ok {

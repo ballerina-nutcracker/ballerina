@@ -295,6 +295,38 @@ func (c *centralAPIClientImpl) PullPackage(org, name, version string, fsys fs.FS
 	return nil
 }
 
+func decodePackageResolutionResponse[T any](c *centralAPIClientImpl, resp *http.Response, requestBody, responseBody []byte) (*T, error) {
+	if isApplicationJSONContentType(resp.Header.Get(ContentType)) {
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var resolutionResponse *T
+			if err := json.Unmarshal(responseBody, &resolutionResponse); err != nil {
+				return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrPackageResolution))
+			}
+			return resolutionResponse, nil
+		case http.StatusUnauthorized:
+			return nil, c.handleUnauthorizedResponse(requestBody)
+		case http.StatusBadRequest:
+			var errResp models.Error
+			if err := json.Unmarshal(responseBody, &errResp); err != nil {
+				return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrPackageResolution))
+			}
+			if errResp.Message != "" {
+				return nil, NewConnectionError(errResp.Message)
+			}
+		case http.StatusInternalServerError, http.StatusServiceUnavailable:
+			var errResp models.Error
+			if err := json.Unmarshal(responseBody, &errResp); err != nil {
+				return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrPackageResolution))
+			}
+			if errResp.Message != "" {
+				return nil, NewConnectionError(fmt.Sprintf("%s. reason: %s", ErrPackageResolution, errResp.Message))
+			}
+		}
+	}
+	return nil, NewConnectionError(ErrPackageResolution)
+}
+
 func (c *centralAPIClientImpl) ResolvePackageNames(request models.PackageNameResolutionRequest, supportedPlatform, ballerinaVersion string) (*models.PackageNameResolutionResponse, error) {
 	response, err := c.resolvePackageNamesInternal(request, supportedPlatform, ballerinaVersion)
 	if err != nil {
@@ -338,42 +370,7 @@ func (c *centralAPIClientImpl) resolvePackageNamesInternal(request models.Packag
 
 	c.logResponseVerbose(resp, string(respBodyBytes))
 
-	contentType := resp.Header.Get(ContentType)
-	if isApplicationJSONContentType(contentType) {
-		switch resp.StatusCode {
-		case http.StatusOK:
-			var resolutionResponse *models.PackageNameResolutionResponse
-			if err := json.Unmarshal(respBodyBytes, &resolutionResponse); err != nil {
-				return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrPackageResolution))
-			}
-			return resolutionResponse, nil
-
-		case http.StatusUnauthorized:
-			return nil, c.handleUnauthorizedResponse(bodyBytes)
-
-		case http.StatusBadRequest:
-			var errResp models.Error
-			if err := json.Unmarshal(respBodyBytes, &errResp); err != nil {
-				return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrPackageResolution))
-			}
-
-			if errResp.Message != "" {
-				return nil, NewConnectionError(errResp.Message)
-			}
-
-		case http.StatusInternalServerError, http.StatusServiceUnavailable:
-			var errResp models.Error
-			if err := json.Unmarshal(respBodyBytes, &errResp); err != nil {
-				return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrPackageResolution))
-			}
-
-			if errResp.Message != "" {
-				return nil, NewConnectionError(fmt.Sprintf("%s. reason: %s", ErrPackageResolution, errResp.Message))
-			}
-		}
-	}
-
-	return nil, NewConnectionError(ErrPackageResolution)
+	return decodePackageResolutionResponse[models.PackageNameResolutionResponse](c, resp, bodyBytes, respBodyBytes)
 }
 
 func (c *centralAPIClientImpl) ResolveDependencies(request models.PackageResolutionRequest, supportedPlatform, ballerinaVersion string) (*models.PackageResolutionResponse, error) {
@@ -418,42 +415,7 @@ func (c *centralAPIClientImpl) resolveDependenciesInternal(request models.Packag
 
 	c.logResponseVerbose(resp, string(respBodyBytes))
 
-	contentType := resp.Header.Get(ContentType)
-	if isApplicationJSONContentType(contentType) {
-		switch resp.StatusCode {
-		case http.StatusOK:
-			var resolutionResponse *models.PackageResolutionResponse
-			if err := json.Unmarshal(respBodyBytes, &resolutionResponse); err != nil {
-				return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrPackageResolution))
-			}
-			return resolutionResponse, nil
-
-		case http.StatusUnauthorized:
-			return nil, c.handleUnauthorizedResponse(bodyBytes)
-
-		case http.StatusBadRequest:
-			var errResp models.Error
-			if err := json.Unmarshal(respBodyBytes, &errResp); err != nil {
-				return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrPackageResolution))
-			}
-
-			if errResp.Message != "" {
-				return nil, NewConnectionError(errResp.Message)
-			}
-
-		case http.StatusInternalServerError, http.StatusServiceUnavailable:
-			var errResp models.Error
-			if err := json.Unmarshal(respBodyBytes, &errResp); err != nil {
-				return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrPackageResolution))
-			}
-
-			if errResp.Message != "" {
-				return nil, NewConnectionError(fmt.Sprintf("%s. reason: %s", ErrPackageResolution, errResp.Message))
-			}
-		}
-	}
-
-	return nil, NewConnectionError(ErrPackageResolution)
+	return decodePackageResolutionResponse[models.PackageResolutionResponse](c, resp, bodyBytes, respBodyBytes)
 }
 
 func (c *centralAPIClientImpl) GetConnectors(params map[string]string, supportedPlatform, ballerinaVersion string) (any, error) {
@@ -466,50 +428,7 @@ func (c *centralAPIClientImpl) GetConnectors(params map[string]string, supported
 }
 
 func (c *centralAPIClientImpl) getConnectorsInternal(params map[string]string, supportedPlatform, ballerinaVersion string) (any, error) {
-	baseURL, err := url.Parse(c.baseURL)
-	if err != nil {
-		return nil, err
-	}
-
-	baseURL.Path = path.Join(baseURL.Path, ConnectorsPath)
-	query := baseURL.Query()
-	for key, value := range params {
-		query.Set(key, value)
-	}
-	baseURL.RawQuery = query.Encode()
-
-	req, err := c.newRequest(http.MethodGet, baseURL.String(), supportedPlatform, ballerinaVersion, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	c.logRequestInitVerbose(req)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	c.logRequestConnectVerbose(req, fmt.Sprintf("%s%s", Separator, ConnectorsPath))
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	c.logResponseVerbose(resp, string(bodyBytes))
-
-	contentType := resp.Header.Get(ContentType)
-	if isApplicationJSONContentType(contentType) && resp.StatusCode == http.StatusOK {
-		var connectors any
-		if err := json.Unmarshal(bodyBytes, &connectors); err != nil {
-			return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrCannotGetConnector))
-		}
-		return connectors, nil
-	}
-
-	return nil, c.handleResponseErrors(resp, ErrCannotGetConnector, bodyBytes)
+	return c.getEntitiesInternal(ConnectorsPath, ConnectorsPath, params, supportedPlatform, ballerinaVersion, ErrCannotGetConnector)
 }
 
 func (c *centralAPIClientImpl) GetConnector(id, supportedPlatform, ballerinaVersion string) (map[string]any, error) {
@@ -522,41 +441,9 @@ func (c *centralAPIClientImpl) GetConnector(id, supportedPlatform, ballerinaVers
 }
 
 func (c *centralAPIClientImpl) getConnectorInternal(id, supportedPlatform, ballerinaVersion string) (map[string]any, error) {
-	urlStr := fmt.Sprintf("%s%s%s", c.baseURL, ConnectorPathPrefix, id)
-
-	req, err := c.newRequest(http.MethodGet, urlStr, supportedPlatform, ballerinaVersion, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	c.logRequestInitVerbose(req)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	c.logRequestConnectVerbose(req, fmt.Sprintf("%s%s", ConnectorPathPrefix, id))
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	c.logResponseVerbose(resp, string(bodyBytes))
-
-	contentType := resp.Header.Get(ContentType)
-
-	if isApplicationJSONContentType(contentType) && resp.StatusCode == http.StatusOK {
-		var connector map[string]any
-		if err := json.Unmarshal(bodyBytes, &connector); err != nil {
-			return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrCannotGetConnector))
-		}
-		return connector, nil
-	}
-
-	return nil, c.handleResponseErrors(resp, fmt.Sprintf("%sid: %s", ErrCannotGetConnector, id), bodyBytes)
+	return c.getEntityInternal(ConnectorPathPrefix, id, supportedPlatform, ballerinaVersion,
+		fmt.Sprintf("%s. reason: unexpected error", ErrCannotGetConnector),
+		fmt.Sprintf("%sid: %s", ErrCannotGetConnector, id))
 }
 
 func (c *centralAPIClientImpl) GetConnectorByInfo(connector models.ConnectorInfo, supportedPlatform, ballerinaVersion string) (map[string]any, error) {
@@ -617,12 +504,15 @@ func (c *centralAPIClientImpl) GetTriggers(params map[string]string, supportedPl
 }
 
 func (c *centralAPIClientImpl) getTriggersInternal(params map[string]string, supportedPlatform, ballerinaVersion string) (any, error) {
+	return c.getEntitiesInternal(TriggersPath, ConnectorsPath, params, supportedPlatform, ballerinaVersion, ErrCannotGetTriggers)
+}
+
+func (c *centralAPIClientImpl) getEntitiesInternal(entityPath, logPath string, params map[string]string, supportedPlatform, ballerinaVersion, responseError string) (any, error) {
 	baseURL, err := url.Parse(c.baseURL)
 	if err != nil {
 		return nil, err
 	}
-
-	baseURL.Path = path.Join(baseURL.Path, TriggersPath)
+	baseURL.Path = path.Join(baseURL.Path, entityPath)
 	query := baseURL.Query()
 	for key, value := range params {
 		query.Set(key, value)
@@ -633,7 +523,6 @@ func (c *centralAPIClientImpl) getTriggersInternal(params map[string]string, sup
 	if err != nil {
 		return nil, err
 	}
-
 	c.logRequestInitVerbose(req)
 
 	resp, err := c.httpClient.Do(req)
@@ -642,25 +531,21 @@ func (c *centralAPIClientImpl) getTriggersInternal(params map[string]string, sup
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	c.logRequestConnectVerbose(req, fmt.Sprintf("%s%s", Separator, ConnectorsPath))
-
+	c.logRequestConnectVerbose(req, fmt.Sprintf("%s%s", Separator, logPath))
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-
 	c.logResponseVerbose(resp, string(bodyBytes))
 
-	contentType := resp.Header.Get(ContentType)
-	if isApplicationJSONContentType(contentType) && resp.StatusCode == http.StatusOK {
-		var connectors any
-		if err := json.Unmarshal(bodyBytes, &connectors); err != nil {
-			return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", ErrCannotGetTriggers))
+	if isApplicationJSONContentType(resp.Header.Get(ContentType)) && resp.StatusCode == http.StatusOK {
+		var entities any
+		if err := json.Unmarshal(bodyBytes, &entities); err != nil {
+			return nil, NewCentralClientError(fmt.Sprintf("%s. reason: unexpected error", responseError))
 		}
-		return connectors, nil
+		return entities, nil
 	}
-
-	return nil, c.handleResponseErrors(resp, ErrCannotGetTriggers, bodyBytes)
+	return nil, c.handleResponseErrors(resp, responseError, bodyBytes)
 }
 
 func (c *centralAPIClientImpl) GetTrigger(id, supportedPlatform, ballerinaVersion string) (map[string]any, error) {
@@ -673,13 +558,17 @@ func (c *centralAPIClientImpl) GetTrigger(id, supportedPlatform, ballerinaVersio
 }
 
 func (c *centralAPIClientImpl) getTriggerInternal(id, supportedPlatform, ballerinaVersion string) (map[string]any, error) {
-	urlStr := fmt.Sprintf("%s%s%s", c.baseURL, TriggerPathPrefix, id)
+	return c.getEntityInternal(TriggerPathPrefix, id, supportedPlatform, ballerinaVersion,
+		fmt.Sprintf("%s reason: unexpected error", ErrCannotGetTrigger),
+		fmt.Sprintf("%sid: %s", ErrCannotGetTrigger, id))
+}
 
-	req, err := c.newRequest(http.MethodGet, urlStr, supportedPlatform, ballerinaVersion, nil)
+func (c *centralAPIClientImpl) getEntityInternal(pathPrefix, id, supportedPlatform, ballerinaVersion, unexpectedError, responseError string) (map[string]any, error) {
+	resourcePath := pathPrefix + id
+	req, err := c.newRequest(http.MethodGet, c.baseURL+resourcePath, supportedPlatform, ballerinaVersion, nil)
 	if err != nil {
 		return nil, err
 	}
-
 	c.logRequestInitVerbose(req)
 
 	resp, err := c.httpClient.Do(req)
@@ -688,25 +577,21 @@ func (c *centralAPIClientImpl) getTriggerInternal(id, supportedPlatform, balleri
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	c.logRequestConnectVerbose(req, fmt.Sprintf("%s%s", TriggerPathPrefix, id))
-
+	c.logRequestConnectVerbose(req, resourcePath)
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-
 	c.logResponseVerbose(resp, string(bodyBytes))
 
-	contentType := resp.Header.Get(ContentType)
-	if isApplicationJSONContentType(contentType) && resp.StatusCode == http.StatusOK {
-		var trigger map[string]any
-		if err := json.Unmarshal(bodyBytes, &trigger); err != nil {
-			return nil, NewCentralClientError(fmt.Sprintf("%s reason: unexpected error", ErrCannotGetTrigger))
+	if isApplicationJSONContentType(resp.Header.Get(ContentType)) && resp.StatusCode == http.StatusOK {
+		var entity map[string]any
+		if err := json.Unmarshal(bodyBytes, &entity); err != nil {
+			return nil, NewCentralClientError(unexpectedError)
 		}
-		return trigger, nil
+		return entity, nil
 	}
-
-	return nil, c.handleResponseErrors(resp, fmt.Sprintf("%sid: %s", ErrCannotGetTrigger, id), bodyBytes)
+	return nil, c.handleResponseErrors(resp, responseError, bodyBytes)
 }
 
 func (c *centralAPIClientImpl) AccessToken() string {

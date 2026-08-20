@@ -460,6 +460,25 @@ func initHttpModule(rt *runtime.Runtime) {
 		return bindResponse(ctx, &types, resp, args[5]), nil
 	}
 
+	execNoBody := func(ctx *extern.Context, verb string, args []values.BalValue) (values.BalValue, error) {
+		self := args[0].(*values.Object)
+		path := args[1].(string)
+		var reqHeaders map[string][]string
+		if len(args) > 2 {
+			reqHeaders = extractHeaders(args[2])
+		}
+		reqHeaders = applyCompressionHeaders(compressionModeOf(self), reqHeaders)
+		urlVal, _ := self.Get("url")
+		clientHandle, _ := self.Get("$httpClient")
+		statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
+			goCtxOrBackground(ctx), verb, urlVal.(string)+path, nil, 0, "", reqHeaders)
+		if err != nil {
+			return values.NewErrorWithMessage(err.Error()), nil
+		}
+		resp := buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream)
+		return bindResponse(ctx, &types, resp, args[3]), nil
+	}
+
 	// Client class def.
 	clientClassDef := &bir.BIRClassDef{
 		Name:      model.Name("Client"),
@@ -760,22 +779,7 @@ func initHttpModule(rt *runtime.Runtime) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$get",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			path := args[1].(string)
-			var reqHeaders map[string][]string
-			if len(args) > 2 {
-				reqHeaders = extractHeaders(args[2])
-			}
-			reqHeaders = applyCompressionHeaders(compressionModeOf(self), reqHeaders)
-			urlVal, _ := self.Get("url")
-			clientHandle, _ := self.Get("$httpClient")
-			statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
-				goCtxOrBackground(ctx), "GET", urlVal.(string)+path, nil, 0, "", reqHeaders)
-			if err != nil {
-				return values.NewErrorWithMessage(err.Error()), nil
-			}
-			resp := buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream)
-			return bindResponse(ctx, &types, resp, args[3]), nil
+			return execNoBody(ctx, "GET", args)
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$post",
@@ -804,22 +808,7 @@ func initHttpModule(rt *runtime.Runtime) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$options",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			path := args[1].(string)
-			var reqHeaders map[string][]string
-			if len(args) > 2 {
-				reqHeaders = extractHeaders(args[2])
-			}
-			reqHeaders = applyCompressionHeaders(compressionModeOf(self), reqHeaders)
-			urlVal, _ := self.Get("url")
-			clientHandle, _ := self.Get("$httpClient")
-			statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
-				goCtxOrBackground(ctx), "OPTIONS", urlVal.(string)+path, nil, 0, "", reqHeaders)
-			if err != nil {
-				return values.NewErrorWithMessage(err.Error()), nil
-			}
-			resp := buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream)
-			return bindResponse(ctx, &types, resp, args[3]), nil
+			return execNoBody(ctx, "OPTIONS", args)
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$put",
