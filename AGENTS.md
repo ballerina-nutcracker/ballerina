@@ -15,6 +15,11 @@ This document defines how AI/code agents should work with this repository: codin
 
 - Each bal/go file should have the correct license header
 
+## Scripts
+
+- Use Python, shell, or a Windows script format (`.ps1`, `.bat`, or `.cmd`) for scripts; do not add JavaScript scripts
+- Prefer Python unless a script is expected to run only on Unix systems
+
 ## PAL (Platform Abstraction Layer)
 
 - All platform interactions (e.g. io, http, fs) must go through PAL, not the underlying platform directly.
@@ -88,7 +93,7 @@ Stages 5–9 then run concurrently across modules. After each of those stages, a
 
 ## Commit messages and PR titles
 
-- Every commit subject and the PR title must follow Conventional Commits: `<type>(<optional scope>): <description>` (`.github/workflows/lint-pr.yml`, enforced by `.github/scripts/validate-commits.js`)
+- Every commit subject and the PR title must follow Conventional Commits: `<type>(<optional scope>): <description>` (`.github/workflows/lint-pr.yml`, enforced by `.github/scripts/validate_commits.py`)
 - Allowed types: `feat`, `fix`, `build`, `chore`, `ci`, `docs`, `style`, `refactor`, `perf`, `test`, `revert`
 - Max subject length is 72 characters
 - The description must start with a lowercase letter

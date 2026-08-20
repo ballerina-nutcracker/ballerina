@@ -19,7 +19,7 @@ We appreciate your help!
 
 ## Build the source code
 
-- Ensure you have [Go 1.26 or later](https://go.dev/dl/).
+- Ensure you have [Go 1.26 or later](https://go.dev/dl/) and Python 3 (required by the development scripts and commit hook).
 - Release build: `go build -o bal ./cli/cmd`
 - Debug build (enables profiling): `go build -tags debug -o bal-debug ./cli/cmd`
 
