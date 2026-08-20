@@ -24,24 +24,11 @@ fi
 commit_message_file=$1
 subject=$(head -n 1 "$commit_message_file" | tr -d '\r')
 
-if ! git rev-parse --quiet --verify MERGE_HEAD >/dev/null 2>&1 && [[ ! "$subject" =~ ^fixup! ]]; then
-    conventional_commit_pattern='^(feat|fix|build|chore|ci|docs|style|refactor|perf|test|revert)(\([^)]+\))?!?: [a-z].+$'
-    if [[ ! "$subject" =~ $conventional_commit_pattern ]]; then
-        cat >&2 <<EOF
-Commit subject does not follow the Conventional Commits format:
-  $subject
-
-Expected: <type>(<optional scope>): <description>
-Types: feat, fix, build, chore, ci, docs, style, refactor, perf, test, revert
-The description must start with a lowercase letter.
-EOF
-        exit 1
-    fi
-
-    if (( ${#subject} > 72 )); then
-        printf 'Commit subject is %d characters; the maximum is 72.\n' "${#subject}" >&2
-        exit 1
-    fi
+if ! git rev-parse --quiet --verify MERGE_HEAD >/dev/null 2>&1 \
+    && [[ "$subject" != "fixup! "* ]] \
+    && [[ "$subject" != "squash! "* ]]; then
+    repo_root=$(git rev-parse --show-toplevel)
+    python3 "$repo_root/.github/scripts/validate_commits.py" "$subject"
 fi
 
 missing_license=()
