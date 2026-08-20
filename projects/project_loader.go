@@ -423,9 +423,8 @@ func (l *ProjectLoader) loadWorkspaceProject(projectPath string, cfg ProjectLoad
 		result, err := l.loadBuildProjectInWorkspace(fullPkgPath, cfg, env)
 		if err != nil {
 			allDiags = append(allDiags, createSimpleDiagnostic(
-				diagnostics.Error,
-				"failed to load package '"+pkgPath+"': "+err.Error(),
-			))
+
+				"failed to load package '"+pkgPath+"': "+err.Error()))
 			continue
 		}
 
@@ -479,9 +478,8 @@ func parseWorkspaceManifestFromToml(toml *tomlparser.Toml, fsys fs.FS, workspace
 	packagesRaw, ok := workspaceTable.GetArray("packages")
 	if !ok || len(packagesRaw) == 0 {
 		diags = append(diags, createSimpleDiagnostic(
-			diagnostics.Error,
-			"no packages found in the workspace Ballerina.toml file",
-		))
+
+			"no packages found in the workspace Ballerina.toml file"))
 		return newWorkspaceManifest(nil, diags)
 	}
 
@@ -492,9 +490,8 @@ func parseWorkspaceManifestFromToml(toml *tomlparser.Toml, fsys fs.FS, workspace
 		str, ok := item.(string)
 		if !ok {
 			diags = append(diags, createSimpleDiagnostic(
-				diagnostics.Error,
-				fmt.Sprintf("workspace.packages[%d] must be a string, got %T", i, item),
-			))
+
+				fmt.Sprintf("workspace.packages[%d] must be a string, got %T", i, item)))
 			continue
 		}
 		packagesArray = append(packagesArray, str)
@@ -512,9 +509,8 @@ func parseWorkspaceManifestFromToml(toml *tomlparser.Toml, fsys fs.FS, workspace
 		cleanPkgPath := path.Clean(pkgPath)
 		if path.IsAbs(cleanPkgPath) || cleanPkgPath == ".." || strings.HasPrefix(cleanPkgPath, "../") {
 			diags = append(diags, createSimpleDiagnostic(
-				diagnostics.Error,
-				"workspace package path must stay within the workspace root: '"+pkgPath+"'",
-			))
+
+				"workspace package path must stay within the workspace root: '"+pkgPath+"'"))
 			continue
 		}
 
@@ -524,9 +520,8 @@ func parseWorkspaceManifestFromToml(toml *tomlparser.Toml, fsys fs.FS, workspace
 		// Check if package directory and Ballerina.toml exist
 		if _, err := fs.Stat(fsys, tomlPath); err != nil {
 			diags = append(diags, createSimpleDiagnostic(
-				diagnostics.Error,
-				"could not locate the package path '"+pkgPath+"'",
-			))
+
+				"could not locate the package path '"+pkgPath+"'"))
 			continue
 		}
 
@@ -537,8 +532,8 @@ func parseWorkspaceManifestFromToml(toml *tomlparser.Toml, fsys fs.FS, workspace
 }
 
 // createSimpleDiagnostic creates a diagnostic without location information.
-func createSimpleDiagnostic(severity diagnostics.DiagnosticSeverity, message string) diagnostics.Diagnostic {
-	info := diagnostics.NewDiagnosticInfo(nil, message, severity)
+func createSimpleDiagnostic(message string) diagnostics.Diagnostic {
+	info := diagnostics.NewDiagnosticInfo(nil, message, diagnostics.Error)
 	loc := diagnostics.NewBallerinaTomlLocation(0, 0)
 	return diagnostics.NewDefaultDiagnostic(info, loc, nil)
 }

@@ -56,7 +56,7 @@ func (m *MappingDefinition) GetSemType(env Env) SemType {
 	if IsZero(s) {
 		rec := env.recMappingAtom()
 		m.rec = &rec
-		return m.createSemType(env, &rec)
+		return m.createSemType(&rec)
 	} else {
 		return s
 	}
@@ -104,10 +104,10 @@ func (m *MappingDefinition) defineFromCells(env Env, fields []cellField, rest Se
 	} else {
 		a = env.mappingAtom(&atomicType)
 	}
-	return m.createSemType(env, a)
+	return m.createSemType(a)
 }
 
-func (m *MappingDefinition) createSemType(env Env, atom atom) SemType {
+func (m *MappingDefinition) createSemType(atom atom) SemType {
 	bdd := bddAtom(atom)
 	s := getBasicSubtype(btMapping, bdd)
 	m.semType = s

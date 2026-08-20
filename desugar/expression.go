@@ -783,7 +783,7 @@ func synthesizeInferredTypedescArg(cx *functionContext, tdTy semtypes.SemType, p
 
 func assignToLocal(cx *functionContext, initExpr ast.BLangExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangVarRef) {
 	ty := initExpr.GetDeterminedType()
-	tempName, tempSymRef := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false, pos)
+	tempName, tempSymRef := cx.addDesugardSymbol(ty, model.SymbolKindVariable, pos)
 	tempVar := &ast.BLangVariable{Name: newIdentifier(tempName)}
 	tempVar.Name.SetDeterminedType(semtypes.Never)
 	tempVar.SetDeterminedType(semtypes.Never)
@@ -1133,7 +1133,7 @@ func isNilLiftableUnaryOp(op model.OperatorKind) bool {
 }
 
 func createOperandTempVar(cx *functionContext, ty semtypes.SemType, initExpr ast.BLangExpression, pos diagnostics.Location, initStmts []ast.StatementNode) (*ast.BLangIdentifier, model.SymbolRef, []ast.StatementNode) {
-	name, symbol := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false, pos)
+	name, symbol := cx.addDesugardSymbol(ty, model.SymbolKindVariable, pos)
 	varName := newIdentifier(name)
 	tempVar := &ast.BLangVariable{Name: varName}
 	tempVar.Name.SetDeterminedType(semtypes.Never)
@@ -1151,7 +1151,7 @@ func createNilResultVar(cx *functionContext, ty semtypes.SemType, pos diagnostic
 	nilLit.SetDeterminedType(semtypes.Nil)
 	setPositionIfMissing(nilLit, pos)
 
-	name, symbol := cx.addDesugardSymbol(ty, model.SymbolKindVariable, false, pos)
+	name, symbol := cx.addDesugardSymbol(ty, model.SymbolKindVariable, pos)
 	varName := newIdentifier(name)
 	tempVar := &ast.BLangVariable{Name: varName}
 	tempVar.Name.SetDeterminedType(semtypes.Never)

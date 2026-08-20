@@ -391,7 +391,7 @@ func newDeprecatedPackageMockClient(balaContent []byte, balaFileName string) htt
 			}, nil
 		}
 
-		return newBinaryResponse(http.StatusOK, balaContent, req), nil
+		return newBinaryResponse(balaContent, req), nil
 	})
 
 	return http.Client{
@@ -425,7 +425,7 @@ func newRetryMockClient(balaContent []byte, balaFileName string, attemptCount, d
 			return nil, fmt.Errorf("Connection reset by peer")
 		}
 
-		resp := newBinaryResponse(http.StatusOK, balaContent, req)
+		resp := newBinaryResponse(balaContent, req)
 		resp.Header.Set("RESOLVED_REQUESTED_URI", "https://fileserver.dev-central.ballerina.io/2.0/foo/sf/1.3.5/"+balaFileName)
 		return resp, nil
 	})
@@ -461,10 +461,10 @@ func newJSONResponse(status int, body string, req *http.Request) *http.Response 
 	}
 }
 
-func newBinaryResponse(status int, content []byte, req *http.Request) *http.Response {
+func newBinaryResponse(content []byte, req *http.Request) *http.Response {
 	return &http.Response{
-		StatusCode: status,
-		Status:     http.StatusText(status),
+		StatusCode: http.StatusOK,
+		Status:     http.StatusText(http.StatusOK),
 		Body:       io.NopCloser(strings.NewReader(string(content))),
 		Header: http.Header{
 			"Content-Type":   []string{ApplicationOctetStream},
@@ -486,7 +486,7 @@ func newMockTransport(packageJSON, packageSearchJSON, balaContent []byte) http.R
 
 		if strings.Contains(req.URL.Host, "fileserver.dev-central.ballerina.io") {
 			if strings.HasSuffix(path, ".bala") {
-				return newBinaryResponse(http.StatusOK, balaContent, req), nil
+				return newBinaryResponse(balaContent, req), nil
 			}
 		}
 
@@ -614,7 +614,7 @@ func handlePullPackageRequest(path string, balaContent []byte, req *http.Request
 			Close:      true,
 		}, nil
 	case "/2.0/pullorg/pkg/1.0.0/pkg-2020r2-any-1.0.0.bala":
-		return newBinaryResponse(http.StatusOK, balaContent, req), nil
+		return newBinaryResponse(balaContent, req), nil
 	default:
 		if strings.Contains(path, "/notfound/") {
 			return newJSONResponse(http.StatusNotFound, `{"message":"package not found: pullorg/notfound:1.0.0"}`, req), nil

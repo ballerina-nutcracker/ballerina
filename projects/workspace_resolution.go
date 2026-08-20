@@ -99,9 +99,8 @@ func (r *WorkspaceResolution) buildDependencyGraph() *DependencyGraph[*BuildProj
 				}
 			}
 			diags = append(diags, createSimpleDiagnostic(
-				diagnostics.Error,
-				"circular dependency detected in workspace: "+strings.Join(cycleNames, " -> "),
-			))
+
+				"circular dependency detected in workspace: "+strings.Join(cycleNames, " -> ")))
 		}
 	}
 

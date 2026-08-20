@@ -673,7 +673,7 @@ func assignmentStatementInner(ctx context, ref ast.BLangExpression, valueEffect 
 	case *ast.BLangIndexBasedAccess:
 		return assignToMemberStatement(ctx, varRef, valueEffect, pos)
 	case *ast.BLangWildCardBindingPattern:
-		return assignToWildcardBindingPattern(ctx, varRef, valueEffect, pos)
+		return assignToWildcardBindingPattern(ctx, valueEffect, pos)
 	case *ast.BLangVarRef:
 		return assignToSimpleVariable(ctx, varRef, valueEffect, pos)
 	default:
@@ -681,8 +681,8 @@ func assignmentStatementInner(ctx context, ref ast.BLangExpression, valueEffect 
 	}
 }
 
-func assignToWildcardBindingPattern(ctx context, varRef *ast.BLangWildCardBindingPattern, valueEffect expressionEffect, pos bir.Location) statementEffect {
-	refEffect := wildcardBindingPattern(ctx, valueEffect.block, varRef)
+func assignToWildcardBindingPattern(ctx context, valueEffect expressionEffect, pos bir.Location) statementEffect {
+	refEffect := wildcardBindingPattern(ctx, valueEffect.block)
 	currBB := refEffect.block
 	mov := bir.NewMove(valueEffect.result, refEffect.result, pos)
 	currBB.Instructions = append(currBB.Instructions, mov)
@@ -973,7 +973,7 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 	case *ast.BLangUnaryExpr:
 		return unaryExpression(ctx, curBB, expr)
 	case *ast.BLangWildCardBindingPattern:
-		return wildcardBindingPattern(ctx, curBB, expr)
+		return wildcardBindingPattern(ctx, curBB)
 	case *ast.BLangGroupExpr:
 		return groupExpression(ctx, curBB, expr)
 	case *ast.BLangIndexBasedAccess:
@@ -1441,7 +1441,7 @@ func groupExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangGroup
 	return handleActionOrExpression(ctx, curBB, expr.Expression)
 }
 
-func wildcardBindingPattern(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangWildCardBindingPattern) expressionEffect {
+func wildcardBindingPattern(ctx context, curBB *bir.BIRBasicBlock) expressionEffect {
 	return expressionEffect{
 		result: ctx.addTempVar(semtypes.Never),
 		block:  curBB,
@@ -1894,14 +1894,14 @@ func transformClassBody(
 			fn.FunctionLookupKey = lookupKey
 		}
 		methodName := rm.GetName().GetValue()
-		entry := buildResourceMethodEntry(ctx, rm, fn)
+		entry := buildResourceMethodEntry(rm, fn)
 		birClassDef.RTable[methodName] = append(birClassDef.RTable[methodName], entry)
 	}
 
 	return birClassDef
 }
 
-func buildResourceMethodEntry(ctx *packageContext, rm *ast.BLangResourceMethod, fn *bir.BIRFunction) bir.BIRResourceMethod {
+func buildResourceMethodEntry(rm *ast.BLangResourceMethod, fn *bir.BIRFunction) bir.BIRResourceMethod {
 	var pathSegments []bir.ResourcePathSegmentDef
 	restTy := semtypes.Never
 	for i := range rm.ResourcePath {

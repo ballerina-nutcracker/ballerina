@@ -84,7 +84,7 @@ func populateBalaArchive(zw *zip.Writer, pkg *Package, resolution *PackageResolu
 	if err := copyBallerinaToml(zw, pkg); err != nil {
 		return err
 	}
-	if err := writeDependenciesToml(zw, pkg, resolution); err != nil {
+	if err := writeDependenciesToml(zw, resolution); err != nil {
 		return err
 	}
 	if err := writeModuleSources(zw, pkg); err != nil {
@@ -121,7 +121,7 @@ func copyBallerinaToml(zw *zip.Writer, pkg *Package) error {
 // writeDependenciesToml emits Dependencies.toml into zw: a lock file with one
 // [[package]] entry per node in the resolved dependency graph, in topological
 // order. Each entry lists its direct dependencies as an inline-table array.
-func writeDependenciesToml(zw *zip.Writer, pkg *Package, resolution *PackageResolution) error {
+func writeDependenciesToml(zw *zip.Writer, resolution *PackageResolution) error {
 	var b strings.Builder
 	b.WriteString("# AUTO-GENERATED FILE. DO NOT MODIFY.\n")
 	b.WriteString("#\n")

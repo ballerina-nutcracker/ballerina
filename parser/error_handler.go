@@ -26,8 +26,8 @@ import (
 	"strings"
 )
 
-func logRecoveredPanic(ctx common.ParserRuleContext, location string, recovered any) {
-	traceRecovery(ctx, func() string {
+func logRecoveredPanic(location string, recovered any) {
+	traceRecovery(func() string {
 		stackTrace := debug.Stack()
 		return fmt.Sprintf("[parser] recovered panic in %s: %v\n[parser] stack trace:\n%s", location, recovered, stackTrace)
 	})
@@ -131,7 +131,7 @@ func formatResultValue(result recoveryResult) string {
 	return fmt.Sprintf("matches:%d removeFixes:%d fixes:%d solution:%s", result.matches, result.removeFixes, len(result.fixes), solutionStr)
 }
 
-func traceRecovery(ctx common.ParserRuleContext, messageFn func() string) {
+func traceRecovery(messageFn func() string) {
 	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, messageFn)
 }
 
@@ -343,13 +343,13 @@ type abstractParserErrorHandlerMethods struct {
 }
 
 func (m *abstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRuleContext, nextToken st.STToken, isCompletion bool) (result *solution) {
-	traceRecovery(currentCtx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(Recover start %s %s %s)",
 			formatParserRuleContext(currentCtx),
 			formatSTToken(nextToken),
 			formatBool(isCompletion))
 	})
-	defer traceRecovery(currentCtx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(Recover end (%s %s %s) %s)", formatParserRuleContext(currentCtx), formatSTToken(nextToken), formatBool(isCompletion), formatSolution(result))
 	})
 
@@ -367,19 +367,19 @@ func (m *abstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRule
 		fix = m.getResolution(currentCtx, nextToken)
 	}
 	if fix != nil {
-		m.applyFix(currentCtx, fix)
+		m.applyFix(fix)
 		return fix
 	}
 	// Fail safe. This means we can't find a path to recover.
 	if isCompletion {
 		if m.Self.GetItterCount() == completionItterLimit {
-			traceRecovery(currentCtx, func() string {
+			traceRecovery(func() string {
 				return "fail safe reached"
 			})
 		}
 	} else {
 		if m.Self.GetItterCount() == resolutionItterLimit {
-			traceRecovery(currentCtx, func() string {
+			traceRecovery(func() string {
 				return "fail safe reached"
 			})
 		}
@@ -388,7 +388,7 @@ func (m *abstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRule
 }
 
 func (m *abstractParserErrorHandlerMethods) getResolution(currentCtx common.ParserRuleContext, nextToken st.STToken) *solution {
-	traceRecovery(currentCtx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(getResolution start %s %s)",
 			formatParserRuleContext(currentCtx),
 			formatSTToken(nextToken))
@@ -435,7 +435,7 @@ func (m *abstractParserErrorHandlerMethods) getCompletion(context common.ParserR
 		// TODO: check if we panic inside this method
 		defer func() {
 			if r := recover(); r != nil {
-				logRecoveredPanic(context, "getCompletion", r)
+				logRecoveredPanic("getCompletion", r)
 				if false {
 					panic("assertion failed")
 				}
@@ -450,32 +450,27 @@ func (m *abstractParserErrorHandlerMethods) getCompletion(context common.ParserR
 }
 
 func (m *abstractParserErrorHandlerMethods) ConsumeInvalidToken() (result st.STToken) {
-	ctxStack := m.Self.GetCtxStack()
-	var ctx common.ParserRuleContext
-	if len(ctxStack) > 0 {
-		ctx = ctxStack[len(ctxStack)-1]
-	}
-	traceRecovery(ctx, func() string {
+	traceRecovery(func() string {
 		return "(ConsumeInvalidToken start)"
 	})
-	defer traceRecovery(ctx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(ConsumeInvalidToken end %s)", formatSTToken(result))
 	})
 	return m.Self.GetTokenReader().Read()
 }
 
-func (m *abstractParserErrorHandlerMethods) applyFix(currentCtx common.ParserRuleContext, fix *solution) {
+func (m *abstractParserErrorHandlerMethods) applyFix(fix *solution) {
 	switch fix.Action {
 	case actionRemove:
 		fix.RemovedToken = m.Self.ConsumeInvalidToken()
 		fix.RecoveredNode = m.Self.GetTokenReader().Peek()
 		fix.TokenKind = m.Self.GetTokenReader().Peek().Kind()
 	case actionInsert:
-		fix.RecoveredNode = m.handleMissingToken(currentCtx, fix)
+		fix.RecoveredNode = m.handleMissingToken(fix)
 	}
 }
 
-func (m *abstractParserErrorHandlerMethods) handleMissingToken(currentCtx common.ParserRuleContext, fix *solution) st.STNode {
+func (m *abstractParserErrorHandlerMethods) handleMissingToken(fix *solution) st.STNode {
 	return createMissingTokenWithDiagnosticsFromParserRules(fix.TokenKind, fix.Ctx)
 }
 
@@ -487,17 +482,17 @@ func (m *abstractParserErrorHandlerMethods) getCtxStackSnapshot() []common.Parse
 }
 
 func (m *abstractParserErrorHandlerMethods) seekMatchStart(currentCtx common.ParserRuleContext) (bestMatch *recoveryResult) {
-	traceRecovery(currentCtx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(seekMatchStart start %s)", formatParserRuleContext(currentCtx))
 	})
-	defer traceRecovery(currentCtx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(seekMatchStart end (%s) %s)", formatParserRuleContext(currentCtx), formatResult(bestMatch))
 	})
 	tempCtxStack := m.Self.GetCtxStack()
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				logRecoveredPanic(currentCtx, "seekMatchStart", r)
+				logRecoveredPanic("seekMatchStart", r)
 				if false {
 					panic("assertion failed")
 				}
@@ -513,10 +508,10 @@ func (m *abstractParserErrorHandlerMethods) seekMatchStart(currentCtx common.Par
 }
 
 func (m *abstractParserErrorHandlerMethods) seekMatchInSubTree(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) (result *recoveryResult) {
-	traceRecovery(currentCtx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(seekMatchInSubTree start %s %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(currentCtx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(seekMatchInSubTree end (%s %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatBool(isEntryPoint), formatResult(result))
 	})
 	tempCtxStack := m.Self.GetCtxStack()
@@ -527,73 +522,58 @@ func (m *abstractParserErrorHandlerMethods) seekMatchInSubTree(currentCtx common
 }
 
 func (m *abstractParserErrorHandlerMethods) StartContext(context common.ParserRuleContext) {
-	traceRecovery(context, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(StartContext start %s)", formatParserRuleContext(context))
 	})
 	ctxStack := m.Self.GetCtxStack()
 	m.Self.SetCtxStack(append(ctxStack, context))
-	traceRecovery(context, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(StartContext end (%s))", formatParserRuleContext(context))
 	})
 }
 
 func (m *abstractParserErrorHandlerMethods) EndContext() {
-	ctxStack := m.Self.GetCtxStack()
-	var ctx common.ParserRuleContext
-	if len(ctxStack) > 0 {
-		ctx = ctxStack[len(ctxStack)-1]
-	}
-	traceRecovery(ctx, func() string {
+	traceRecovery(func() string {
 		return "(EndContext start)"
 	})
-	ctxStack = m.Self.GetCtxStack()
+	ctxStack := m.Self.GetCtxStack()
 	m.Self.SetCtxStack(ctxStack[:len(ctxStack)-1])
-	traceRecovery(ctx, func() string {
+	traceRecovery(func() string {
 		return "(EndContext end)"
 	})
 }
 
 func (m *abstractParserErrorHandlerMethods) SwitchContext(context common.ParserRuleContext) {
-	traceRecovery(context, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(SwitchContext start %s)", formatParserRuleContext(context))
 	})
 	ctxStack := m.Self.GetCtxStack()
 	ctxStack = ctxStack[:len(ctxStack)-1]
 	m.Self.SetCtxStack(append(ctxStack, context))
-	traceRecovery(context, func() string {
+	traceRecovery(func() string {
 		return "(SwitchContext end)"
 	})
 }
 
 func (m *abstractParserErrorHandlerMethods) GetParentContext() (result common.ParserRuleContext) {
-	ctxStack := m.Self.GetCtxStack()
-	var ctx common.ParserRuleContext
-	if len(ctxStack) > 0 {
-		ctx = ctxStack[len(ctxStack)-1]
-	}
-	traceRecovery(ctx, func() string {
+	traceRecovery(func() string {
 		return "(GetParentContext start)"
 	})
-	defer traceRecovery(ctx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(GetParentContext end %s)", formatParserRuleContext(result))
 	})
-	ctxStack = m.Self.GetCtxStack()
+	ctxStack := m.Self.GetCtxStack()
 	return ctxStack[len(ctxStack)-1]
 }
 
 func (m *abstractParserErrorHandlerMethods) GetGrandParentContext() (result common.ParserRuleContext) {
-	ctxStack := m.Self.GetCtxStack()
-	var ctx common.ParserRuleContext
-	if len(ctxStack) > 0 {
-		ctx = ctxStack[len(ctxStack)-1]
-	}
-	traceRecovery(ctx, func() string {
+	traceRecovery(func() string {
 		return "(GetGrandParentContext start)"
 	})
-	defer traceRecovery(ctx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(GetGrandParentContext end %s)", formatParserRuleContext(result))
 	})
-	ctxStack = m.Self.GetCtxStack()
+	ctxStack := m.Self.GetCtxStack()
 	parent := ctxStack[len(ctxStack)-1]
 	ctxStack = ctxStack[:len(ctxStack)-1]
 
@@ -604,10 +584,10 @@ func (m *abstractParserErrorHandlerMethods) GetGrandParentContext() (result comm
 }
 
 func (m *abstractParserErrorHandlerMethods) HasAncestorContext(context common.ParserRuleContext) (result bool) {
-	traceRecovery(context, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(HasAncestorContext start %s)", formatParserRuleContext(context))
 	})
-	defer traceRecovery(context, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(HasAncestorContext end (%s) %s)", formatParserRuleContext(context), formatBool(result))
 	})
 	ctxStack := m.Self.GetCtxStack()
@@ -615,30 +595,20 @@ func (m *abstractParserErrorHandlerMethods) HasAncestorContext(context common.Pa
 }
 
 func (m *abstractParserErrorHandlerMethods) GetContextStack() (result []common.ParserRuleContext) {
-	ctxStack := m.Self.GetCtxStack()
-	var ctx common.ParserRuleContext
-	if len(ctxStack) > 0 {
-		ctx = ctxStack[len(ctxStack)-1]
-	}
-	traceRecovery(ctx, func() string {
+	traceRecovery(func() string {
 		return "(GetContextStack start)"
 	})
-	defer traceRecovery(ctx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(GetContextStack end %s)", formatContextStack(result))
 	})
 	return m.Self.GetCtxStack()
 }
 
 func (m *abstractParserErrorHandlerMethods) seekInAlternativesPaths(lookahead int, currentDepth int, currentMatches int, alternativeRules []common.ParserRuleContext, isEntryPoint bool) (result *recoveryResult) {
-	ctxStack := m.Self.GetCtxStack()
-	var ctx common.ParserRuleContext
-	if len(ctxStack) > 0 {
-		ctx = ctxStack[len(ctxStack)-1]
-	}
-	traceRecovery(ctx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(seekInAlternativesPaths start %d %d %d %s %s)", lookahead, currentDepth, currentMatches, formatContextStack(alternativeRules), formatBool(isEntryPoint))
 	})
-	defer traceRecovery(ctx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(seekInAlternativesPaths end (%d %d %d %s %s) %s)", lookahead, currentDepth, currentMatches, formatContextStack(alternativeRules), formatBool(isEntryPoint), formatResult(result))
 	})
 	results := make([][]*recoveryResult, lookaheadLimit)
@@ -651,7 +621,7 @@ func (m *abstractParserErrorHandlerMethods) seekInAlternativesPaths(lookahead in
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
-					logRecoveredPanic(rule, "seekInAlternativesPaths", r)
+					logRecoveredPanic("seekInAlternativesPaths", r)
 					if false {
 						panic("assertion failed")
 					}
@@ -713,15 +683,10 @@ func (m *abstractParserErrorHandlerMethods) hasFoundBestAlternative(result *reco
 }
 
 func (m *abstractParserErrorHandlerMethods) getFinalResult(currentMatches int, bestMatch *recoveryResult) (result *recoveryResult) {
-	ctxStack := m.Self.GetCtxStack()
-	var ctx common.ParserRuleContext
-	if len(ctxStack) > 0 {
-		ctx = ctxStack[len(ctxStack)-1]
-	}
-	traceRecovery(ctx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(getFinalResult start %d %s)", currentMatches, formatResult(bestMatch))
 	})
-	defer traceRecovery(ctx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(getFinalResult end (%d %s) %s)", currentMatches, formatResult(bestMatch), formatResult(result))
 	})
 	bestMatch.matches += currentMatches
@@ -729,10 +694,10 @@ func (m *abstractParserErrorHandlerMethods) getFinalResult(currentMatches int, b
 }
 
 func (m *abstractParserErrorHandlerMethods) fixAndContinue(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result *recoveryResult) {
-	traceRecovery(currentCtx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(fixAndContinue start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(currentCtx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(fixAndContinue end (%s %d %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResult(result))
 	})
 	fixedPathResult := m.fixAndContinueCore(currentCtx, lookahead, currentDepth)
@@ -745,10 +710,10 @@ func (m *abstractParserErrorHandlerMethods) fixAndContinue(currentCtx common.Par
 }
 
 func (m *abstractParserErrorHandlerMethods) fixAndContinueCore(currentCtx common.ParserRuleContext, lookahead int, currentDepth int) (fixedPathResult *recoveryResult) {
-	traceRecovery(currentCtx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(fixAndContinueCore start %s %d %d)", formatParserRuleContext(currentCtx), lookahead, currentDepth)
 	})
-	defer traceRecovery(currentCtx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(fixAndContinueCore end (%s %d %d) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatResult(fixedPathResult))
 	})
 	deletionResult := m.seekMatchInSubTree(currentCtx, lookahead+1, currentDepth+1, false)
@@ -1069,10 +1034,10 @@ func (b *ballerinaParserErrorHandler) isEndOfObjectTypeNode(nextLookahead int) b
 }
 
 func (b *ballerinaParserErrorHandler) SeekMatch(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) (result *recoveryResult) {
-	traceRecovery(currentCtx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(SeekMatch start %s %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(currentCtx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(SeekMatch end (%s %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatBool(isEntryPoint), formatResult(result))
 	})
 	var hasMatch bool
@@ -2148,10 +2113,10 @@ func (b *ballerinaParserErrorHandler) getShortestAlternative(currentCtx common.P
 }
 
 func (b *ballerinaParserErrorHandler) seekMatchInAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result recoveryResult) {
-	traceRecovery(currentCtx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(seekMatchInAlternativePaths start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(currentCtx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(seekMatchInAlternativePaths end (%s %d %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResultValue(result))
 	})
 	var alternativeRules []common.ParserRuleContext
@@ -2399,10 +2364,10 @@ func (b *ballerinaParserErrorHandler) seekMatchInAlternativePaths(currentCtx com
 }
 
 func (b *ballerinaParserErrorHandler) seekMatchInStmtRelatedAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result recoveryResult) {
-	traceRecovery(currentCtx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(seekMatchInStmtRelatedAlternativePaths start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(currentCtx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(seekMatchInStmtRelatedAlternativePaths end (%s %d %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResultValue(result))
 	})
 	var alternativeRules []common.ParserRuleContext
@@ -2588,10 +2553,10 @@ func (b *ballerinaParserErrorHandler) seekMatchInStmtRelatedAlternativePaths(cur
 }
 
 func (b *ballerinaParserErrorHandler) seekMatchInExprRelatedAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result recoveryResult) {
-	traceRecovery(currentCtx, func() string {
+	traceRecovery(func() string {
 		return fmt.Sprintf("(seekMatchInExprRelatedAlternativePaths start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(currentCtx, func() string {
+	defer traceRecovery(func() string {
 		return fmt.Sprintf("(seekMatchInExprRelatedAlternativePaths end (%s %d %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResultValue(result))
 	})
 	var alternativeRules []common.ParserRuleContext

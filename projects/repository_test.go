@@ -27,12 +27,12 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
-func newTestRepository(path string) *projects.FileSystemRepository {
-	return projects.NewFileSystemRepository(os.DirFS(path), ".")
+func newTestRepository() *projects.FileSystemRepository {
+	return projects.NewFileSystemRepository(os.DirFS("testdata/repo/bala"), ".")
 }
 
 func TestRepository_GetPackageVersions(t *testing.T) {
-	repo := newTestRepository("testdata/repo/bala")
+	repo := newTestRepository()
 
 	tests := []struct {
 		name     string
@@ -91,7 +91,7 @@ func TestRepository_GetPackageVersions(t *testing.T) {
 }
 
 func TestRepository_Exists(t *testing.T) {
-	repo := newTestRepository("testdata/repo/bala")
+	repo := newTestRepository()
 
 	tests := []struct {
 		name     string
@@ -122,7 +122,7 @@ func TestRepository_Exists(t *testing.T) {
 }
 
 func TestRepository_ContextCancellation(t *testing.T) {
-	repo := newTestRepository("testdata/repo/bala")
+	repo := newTestRepository()
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 

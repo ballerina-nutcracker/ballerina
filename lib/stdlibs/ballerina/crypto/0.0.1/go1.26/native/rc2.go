@@ -21,8 +21,8 @@ type rc2Cipher struct {
 	k [64]uint16
 }
 
-func rc2New(key []byte, t1 int) (cipher.Block, error) {
-	return &rc2Cipher{k: rc2ExpandKey(key, t1)}, nil
+func rc2New(key []byte, t1 int) cipher.Block {
+	return &rc2Cipher{k: rc2ExpandKey(key, t1)}
 }
 
 func (*rc2Cipher) BlockSize() int { return rc2BlockSize }

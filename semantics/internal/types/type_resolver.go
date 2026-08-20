@@ -633,11 +633,11 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 		return true
 	}
 	if defn, ok := t.typeDefnNodes[ref]; ok {
-		_, ok := resolveTypeDefinition(t, defn, depth)
+		ok := resolveTypeDefinition(t, defn, depth)
 		return ok
 	}
 	if classDef, ok := t.classDefnNodes[ref]; ok {
-		_, ok := resolveClassTypeDefinition(t, classDef, depth)
+		ok := resolveClassTypeDefinition(t, classDef, depth)
 		return ok
 	}
 	if c, inMap := t.packageConstants[ref]; inMap {
@@ -932,7 +932,7 @@ func topologicallySortConstants(t typeResolver, constants []*ast.BLangVariable) 
 	return order, true
 }
 
-func resolveInvokableSignature(t typeResolver, fn common.FunctionDecl, fnSym model.FunctionSymbol, requiredParams []ast.BLangVariable, depth int) (semtypes.SemType, []semtypes.SemType, semtypes.SemType, semtypes.SemType, bool) {
+func resolveInvokableSignature(t typeResolver, fn common.FunctionDecl, fnSym model.FunctionSymbol, requiredParams []ast.BLangVariable, depth int) (semtypes.SemType, bool) {
 	restoreContext := setIsolatedContext(t, fn.IsIsolated())
 	defer restoreContext()
 	paramTypes := make([]semtypes.SemType, len(requiredParams))
@@ -941,7 +941,7 @@ func resolveInvokableSignature(t typeResolver, fn common.FunctionDecl, fnSym mod
 		resolveSimpleVariableInner(t, nil, param, depth+1)
 		if fnType, ok := param.TypeNode().(*ast.BLangFunctionType); ok {
 			if !finalizeResolvedFunctionSignature(t, fnType) {
-				return semtypes.SemType{}, nil, semtypes.SemType{}, semtypes.SemType{}, false
+				return semtypes.SemType{}, false
 			}
 		}
 		setOtherNodesAsNever(param)
@@ -967,7 +967,7 @@ func resolveInvokableSignature(t typeResolver, fn common.FunctionDecl, fnSym mod
 		var ok bool
 		returnTy, ok = resolveBType(t, retTd, depth+1)
 		if !ok {
-			return semtypes.SemType{}, nil, semtypes.SemType{}, semtypes.SemType{}, false
+			return semtypes.SemType{}, false
 		}
 		setOtherNodesAsNever(retTd)
 	} else {
@@ -983,7 +983,7 @@ func resolveInvokableSignature(t typeResolver, fn common.FunctionDecl, fnSym mod
 	sig.ReturnType = returnTy
 	sig.RestParamType = restTy
 	fnSym.SetTypedSignature(sig)
-	return fnType, paramTypes, restTy, returnTy, true
+	return fnType, true
 }
 
 func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functionTypeResolver {
@@ -1044,13 +1044,13 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 
 	for i := range pkg.TypeDefinitions {
 		defn := pkg.TypeDefinitions[i]
-		if _, ok := resolveTypeDefinition(t, defn, 0); !ok {
+		if ok := resolveTypeDefinition(t, defn, 0); !ok {
 			return
 		}
 	}
 	for i := range pkg.ClassDefinitions {
 		classDef := pkg.ClassDefinitions[i]
-		if _, ok := resolveClassTypeDefinition(t, classDef, 0); !ok {
+		if ok := resolveClassTypeDefinition(t, classDef, 0); !ok {
 			return
 		}
 	}
@@ -1487,7 +1487,7 @@ func setTypeAnnotationValue(t typeResolver, symbol model.SymbolRef, key string, 
 	t.compilerContext().SetSymbolAnnotationValue(symbol, key, value)
 }
 
-func resolveBlockStatements(t typeResolver, chain *binding, stmts []ast.StatementNode) (statementEffect, bool) {
+func resolveBlockStatements(t typeResolver, chain *binding, stmts []ast.StatementNode) statementEffect {
 	result := chain
 	for i, each := range stmts {
 		eachResult, ok := resolveStatement(t, result, each)
@@ -1503,10 +1503,10 @@ func resolveBlockStatements(t typeResolver, chain *binding, stmts []ast.Statemen
 				// we are doing type resolution here anyway to give error message to these statements
 				resolveBlockStatements(t, chain, rest)
 			}
-			return statementEffect{result, true}, true
+			return statementEffect{result, true}
 		}
 	}
-	return statementEffect{result, false}, true
+	return statementEffect{result, false}
 }
 
 func resolveStatement(t typeResolver, chain *binding, stmt ast.StatementNode) (statementEffect, bool) {
@@ -1635,10 +1635,7 @@ func resolveStatementInner(t typeResolver, chain *binding, stmt ast.StatementNod
 		if !ok {
 			return defaultStmtEffect(chain), false
 		}
-		ifTrueEffect, ok := resolveBlockStatements(t, exprEffect.ifTrue, s.Body.Stmts)
-		if !ok {
-			return defaultStmtEffect(chain), false
-		}
+		ifTrueEffect := resolveBlockStatements(t, exprEffect.ifTrue, s.Body.Stmts)
 		s.Body.SetDeterminedType(semtypes.Never)
 		var ifFalseEffect statementEffect
 		if s.ElseStmt != nil {
@@ -1656,10 +1653,7 @@ func resolveStatementInner(t typeResolver, chain *binding, stmt ast.StatementNod
 			return defaultStmtEffect(chain), false
 		}
 		loopT := &loopTypeResolver{parentResolver: t}
-		bodyEffect, ok := resolveBlockStatements(loopT, exprEffect.ifTrue, s.Body.Stmts)
-		if !ok {
-			return defaultStmtEffect(chain), false
-		}
+		bodyEffect := resolveBlockStatements(loopT, exprEffect.ifTrue, s.Body.Stmts)
 		s.Body.SetDeterminedType(semtypes.Never)
 		resolveOnFailClause(t, chain, &s.OnFailClause)
 		validateLoopAssignments(t, loopT, bodyEffect, chain)
@@ -1679,13 +1673,13 @@ func resolveStatementInner(t typeResolver, chain *binding, stmt ast.StatementNod
 		}
 		return statementEffect{nil, true}, true
 	case *ast.BLangBlockStmt:
-		return resolveBlockStatements(t, chain, s.Stmts)
+		return resolveBlockStatements(t, chain, s.Stmts), true
 	case *ast.BLangLock:
 		restoreContext := setIsolatedContext(t, true)
-		effect, ok := resolveBlockStatements(t, chain, s.Body.Stmts)
+		effect := resolveBlockStatements(t, chain, s.Body.Stmts)
 		restoreContext()
 		s.Body.SetDeterminedType(semtypes.Never)
-		return effect, ok
+		return effect, true
 	case *ast.BLangForeach:
 		collectionTy, _, ok := resolveActionOrExpression(t, chain, s.Collection, semtypes.SemType{})
 		if !ok {
@@ -1711,13 +1705,10 @@ func resolveStatementInner(t typeResolver, chain *binding, stmt ast.StatementNod
 		// foreach may run zero times, so the post-loop chain starts from the
 		// loop-entry chain. Body completion and any break paths are merged in.
 		loopT := &loopTypeResolver{parentResolver: t}
-		bodyEffect, ok := resolveBlockStatements(loopT, chain, s.Body.Stmts)
+		bodyEffect := resolveBlockStatements(loopT, chain, s.Body.Stmts)
 		s.Body.SetDeterminedType(semtypes.Never)
 		if s.OnFailClause != nil {
 			resolveOnFailClause(t, chain, s.OnFailClause)
-		}
-		if !ok {
-			return defaultStmtEffect(chain), false
 		}
 		validateLoopAssignments(t, loopT, bodyEffect, chain)
 		result := chain
@@ -1791,7 +1782,7 @@ func resolveFunctionSignature(t typeResolver, fn *ast.BLangFunction, depth int) 
 		return ty, true
 	}
 	fnSymbol := fnSym.(model.FunctionSymbol)
-	fnType, _, _, _, ok := resolveInvokableSignature(t, fn, fnSymbol, fn.GetParameters(), depth)
+	fnType, ok := resolveInvokableSignature(t, fn, fnSymbol, fn.GetParameters(), depth)
 	if !ok {
 		return semtypes.SemType{}, false
 	}
@@ -2256,24 +2247,24 @@ func allocateDefaultFnSymbol(t typeResolver, fieldTy semtypes.SemType, loc diagn
 	return ref
 }
 
-func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth int) (semtypes.SemType, bool) {
+func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth int) bool {
 	if ty := t.symbolType(defn.Symbol()); !semtypes.IsZero(ty) {
-		return ty, true
+		return true
 	}
 	if defn.GetName() != nil {
 		setOtherNodesAsNever(defn.GetName())
 	}
 	if depth == defn.GetCycleDepth() {
 		t.semanticError(fmt.Sprintf("invalid cycle detected for type definition %s", defn.GetName().GetValue()), defn.GetPosition())
-		return semtypes.SemType{}, false
+		return false
 	}
 	defn.SetCycleDepth(depth)
 	semType, ok := resolveBType(t, defn.GetTypeData().TypeDescriptor.(ast.BType), depth)
 	if ok {
-		semType, ok = resolveDistinctTypeDefinition(t, defn, semType)
+		semType = resolveDistinctTypeDefinition(t, defn, semType)
 	}
 	if !ok {
-		return semtypes.SemType{}, false
+		return false
 	}
 	if semtypes.IsZero(defn.GetDeterminedType()) {
 		defn.SetDeterminedType(semType)
@@ -2288,51 +2279,48 @@ func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth 
 		t.ensureNotEmpty(semType, func() {
 			t.semanticError(fmt.Sprintf("type definition %s is empty", name), pos)
 		})
-		return semType, true
+		return true
 	}
-	return defn.GetDeterminedType(), true
+	return true
 }
 
-func resolveClassTypeDefinition(t typeResolver, classDef *ast.BLangClassDefinition, depth int) (semtypes.SemType, bool) {
+func resolveClassTypeDefinition(t typeResolver, classDef *ast.BLangClassDefinition, depth int) bool {
 	if ty := t.symbolType(classDef.Symbol()); !semtypes.IsZero(ty) {
-		return ty, true
+		return true
 	}
 	if classDef.GetName() != nil {
 		setOtherNodesAsNever(classDef.GetName())
 	}
 	if depth == classDef.GetCycleDepth() {
 		t.semanticError(fmt.Sprintf("invalid cycle detected for type definition %s", classDef.GetName().GetValue()), classDef.GetPosition())
-		return semtypes.SemType{}, false
+		return false
 	}
 	classDef.SetCycleDepth(depth)
-	semType, ok := resolveClassDefinitionType(t, classDef, depth)
-	if !ok {
-		return semtypes.SemType{}, false
-	}
-	return semType, true
+	_, ok := resolveClassDefinitionType(t, classDef, depth)
+	return ok
 }
 
-func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinition, semType semtypes.SemType) (semtypes.SemType, bool) {
+func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinition, semType semtypes.SemType) semtypes.SemType {
 	switch typeDesc := typeDef.GetTypeData().TypeDescriptor.(type) {
 	case *ast.BLangObjectType:
-		return appendDistinctObjectAtoms(t, semType, typeDef.Symbol(), typeDesc.Inclusions), true
+		return appendDistinctObjectAtoms(t, semType, typeDef.Symbol(), typeDesc.Inclusions)
 	case *ast.BLangErrorTypeNode:
-		return appendDistinctErrorAtoms(t, semType, typeDef), true
+		return appendDistinctErrorAtoms(t, semType, typeDef)
 	case *ast.BLangUserDefinedType:
 		if !typeDef.IsDistinct() {
-			return semType, true
+			return semType
 		}
 		parent := t.getSymbol(typeDesc.Symbol())
 		switch parent.(type) {
 		case *model.ErrorTypeSymbol:
-			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ErrorDistinct), true
+			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ErrorDistinct)
 		case model.ObjectType:
-			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ObjectDefinitionDistinct), true
+			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ObjectDefinitionDistinct)
 		default:
-			return semType, true
+			return semType
 		}
 	default:
-		return semType, true
+		return semType
 	}
 }
 
@@ -6109,7 +6097,7 @@ func resolveResourceMethodSignature(t typeResolver, isClient bool, isService boo
 	sym.SetPathListType(pathTy)
 	sym.SetPathParams(pathParamRefs)
 
-	_, _, _, _, ok = resolveInvokableSignature(t, method, sym, method.GetParameters(), depth)
+	_, ok = resolveInvokableSignature(t, method, sym, method.GetParameters(), depth)
 	if !ok {
 		return false
 	}
@@ -7567,10 +7555,7 @@ func functionTypeTypedSignature(fnType *ast.BLangFunctionType) model.TypedFuncti
 }
 
 func resolveMatchClause(t typeResolver, chain *binding, clause *ast.BLangMatchClause) (statementEffect, bool) {
-	bodyEffect, ok := resolveBlockStatements(t, chain, clause.Body.Stmts)
-	if !ok {
-		return defaultStmtEffect(chain), false
-	}
+	bodyEffect := resolveBlockStatements(t, chain, clause.Body.Stmts)
 	clause.Body.SetDeterminedType(semtypes.Never)
 	clause.SetDeterminedType(semtypes.Never)
 	return bodyEffect, true

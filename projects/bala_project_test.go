@@ -210,7 +210,7 @@ func TestBalaProject_Platform_GoNative(t *testing.T) {
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
-	repo := newTestRepository("testdata/repo/bala")
+	repo := newTestRepository()
 	ctx := context.Background()
 	opts := projects.ResolutionOptions{}
 
@@ -239,7 +239,7 @@ func TestBalaProject_NativeGoSourceFS(t *testing.T) {
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
-	repo := newTestRepository("testdata/repo/bala")
+	repo := newTestRepository()
 	ctx := context.Background()
 
 	pkg, err := repo.GetPackage(ctx, "mockorg", "nativepkg", "1.0.0", projects.ResolutionOptions{})

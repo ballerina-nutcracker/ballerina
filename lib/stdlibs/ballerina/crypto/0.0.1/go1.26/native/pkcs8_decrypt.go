@@ -119,13 +119,9 @@ func pkcs12PBEDecryptRC2(algID pkix.AlgorithmIdentifier, data []byte, password s
 		return nil, fmt.Errorf("failed to parse RC2-40 PBE params: %w", err)
 	}
 	pwdBMP := bmpEncodePassword(password)
-	const u, v = 20, 64
-	key := pkcs12KDF(params.Salt, pwdBMP, params.Iterations, 1, 5, u, v)
-	iv := pkcs12KDF(params.Salt, pwdBMP, params.Iterations, 2, 8, u, v)
-	block, err := rc2New(key, 40)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create RC2 cipher: %w", err)
-	}
+	key := pkcs12KDF(params.Salt, pwdBMP, params.Iterations, 1, 5)
+	iv := pkcs12KDF(params.Salt, pwdBMP, params.Iterations, 2, 8)
+	block := rc2New(key, 40)
 	return cbcDecryptAndUnpad(data, block, iv)
 }
 
@@ -137,9 +133,8 @@ func pkcs12PBEDecrypt3DES(algID pkix.AlgorithmIdentifier, data []byte, password 
 		return nil, fmt.Errorf("failed to parse 3DES PBE params: %w", err)
 	}
 	pwdBMP := bmpEncodePassword(password)
-	const u, v = 20, 64
-	key := pkcs12KDF(params.Salt, pwdBMP, params.Iterations, 1, keySize, u, v)
-	iv := pkcs12KDF(params.Salt, pwdBMP, params.Iterations, 2, 8, u, v)
+	key := pkcs12KDF(params.Salt, pwdBMP, params.Iterations, 1, keySize)
+	iv := pkcs12KDF(params.Salt, pwdBMP, params.Iterations, 2, 8)
 	if keySize == 16 {
 		key = append(key, key[:8]...)
 	}
@@ -250,8 +245,9 @@ func bmpEncodePassword(s string) []byte {
 }
 
 // pkcs12KDF implements RFC 7292 Appendix B.2 key derivation.
-// id=1 for key material, id=2 for IV. u and v are the hash's output/block sizes in bytes.
-func pkcs12KDF(salt, password []byte, iterations int, id byte, size, u, v int) []byte {
+// id=1 for key material, id=2 for IV.
+func pkcs12KDF(salt, password []byte, iterations int, id byte, size int) []byte {
+	const u, v = sha1.Size, 64
 	D := bytes.Repeat([]byte{id}, v)
 	S := pkcs12FillRepeats(salt, v)
 	P := pkcs12FillRepeats(password, v)

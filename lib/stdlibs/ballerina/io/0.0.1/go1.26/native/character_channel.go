@@ -61,13 +61,10 @@ func lookupCharset(charset string) (encoding.Encoding, error) {
 	return enc, nil
 }
 
-func charReaderOf(self *values.Object) (*bufio.Reader, bool) {
-	v, ok := self.Get("$charReader")
-	if !ok {
-		return nil, false
-	}
-	r, ok := v.(*bufio.Reader)
-	return r, ok
+func charReaderOf(self *values.Object) *bufio.Reader {
+	v, _ := self.Get("$charReader")
+	r, _ := v.(*bufio.Reader)
+	return r
 }
 
 func byteChannelOf(self *values.Object) (*values.Object, bool) {
@@ -446,7 +443,7 @@ func (e *characterChannelExterns) readableRead(_ *extern.Context, args []values.
 	if eofReached(self) {
 		return byteChannelEofError(), nil
 	}
-	r, _ := charReaderOf(self)
+	r := charReaderOf(self)
 	var sb strings.Builder
 	for i := int64(0); i < numberOfChars; i++ {
 		ch, _, err := r.ReadRune()
@@ -467,7 +464,7 @@ func (e *characterChannelExterns) readableReadString(_ *extern.Context, args []v
 	if isClosed(self) {
 		return charChannelClosedError(), nil
 	}
-	r, _ := charReaderOf(self)
+	r := charReaderOf(self)
 	content, err := drainChars(self, r)
 	if err != nil {
 		return fileIOError("error occurred while reading characters from the channel. " + err.Error()), nil
@@ -480,7 +477,7 @@ func (e *characterChannelExterns) readableReadAllLines(_ *extern.Context, args [
 	if isClosed(self) {
 		return charChannelClosedError(), nil
 	}
-	r, _ := charReaderOf(self)
+	r := charReaderOf(self)
 	content, err := drainChars(self, r)
 	if err != nil {
 		return fileIOError("error occurred while reading characters from the channel. " + err.Error()), nil
@@ -498,7 +495,7 @@ func (e *characterChannelExterns) readableReadJson(ctx *extern.Context, args []v
 	if isClosed(self) {
 		return charChannelClosedError(), nil
 	}
-	r, _ := charReaderOf(self)
+	r := charReaderOf(self)
 	content, err := drainChars(self, r)
 	if err != nil {
 		return fileIOError("error occurred while reading characters from the channel. " + err.Error()), nil
@@ -521,7 +518,7 @@ func (e *characterChannelExterns) readableReadXml(ctx *extern.Context, args []va
 	if isClosed(self) {
 		return charChannelClosedError(), nil
 	}
-	r, _ := charReaderOf(self)
+	r := charReaderOf(self)
 	content, err := drainChars(self, r)
 	if err != nil {
 		return fileIOError("error occurred while reading characters from the channel. " + err.Error()), nil
@@ -540,7 +537,7 @@ func (e *characterChannelExterns) readableReadProperty(_ *extern.Context, args [
 	if isClosed(self) {
 		return charChannelClosedError(), nil
 	}
-	r, _ := charReaderOf(self)
+	r := charReaderOf(self)
 	props, err := channelProperties(self, r)
 	if err != nil {
 		return fileIOError("error occurred while reading characters from the channel. " + err.Error()), nil
@@ -558,7 +555,7 @@ func (e *characterChannelExterns) readableReadAllProperties(ctx *extern.Context,
 	if isClosed(self) {
 		return charChannelClosedError(), nil
 	}
-	r, _ := charReaderOf(self)
+	r := charReaderOf(self)
 	props, err := channelProperties(self, r)
 	if err != nil {
 		return fileIOError("error occurred while reading characters from the channel. " + err.Error()), nil
@@ -575,7 +572,7 @@ func (e *characterChannelExterns) readableLineStream(_ *extern.Context, args []v
 	if isClosed(self) {
 		return charChannelClosedError(), nil
 	}
-	r, _ := charReaderOf(self)
+	r := charReaderOf(self)
 	next := func() values.BalValue {
 		line, ok, readErr := readLineCRLF(r)
 		if readErr != nil {

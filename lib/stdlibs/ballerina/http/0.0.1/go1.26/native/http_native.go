@@ -419,7 +419,7 @@ func initHttpModule(rt *runtime.Runtime) {
 
 	// execBody serves post, put, patch and delete, whose parameter lists are identical:
 	// [self, path, message, headers, mediaType, targetType].
-	execBody := func(ctx *extern.Context, verb string, args []values.BalValue) (values.BalValue, error) {
+	execBody := func(ctx *extern.Context, verb string, args []values.BalValue) values.BalValue {
 		self := args[0].(*values.Object)
 		path := args[1].(string)
 		var bodyReader io.Reader
@@ -429,7 +429,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			var ct string
 			bodyReader, contentLength, ct = msgToBody(ctx.TypeCtx(), args[2])
 			if bodyReader == nil && ct == "json_error" {
-				return values.NewErrorWithMessage("failed to serialize body to JSON"), nil
+				return values.NewErrorWithMessage("failed to serialize body to JSON")
 			}
 			contentType = ct
 		}
@@ -454,13 +454,13 @@ func initHttpModule(rt *runtime.Runtime) {
 		statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
 			goCtxOrBackground(ctx), verb, urlVal.(string)+path, bodyReader, contentLength, contentType, reqHeaders)
 		if err != nil {
-			return values.NewErrorWithMessage(err.Error()), nil
+			return values.NewErrorWithMessage(err.Error())
 		}
 		resp := buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream)
-		return bindResponse(ctx, &types, resp, args[5]), nil
+		return bindResponse(ctx, &types, resp, args[5])
 	}
 
-	execNoBody := func(ctx *extern.Context, verb string, args []values.BalValue) (values.BalValue, error) {
+	execNoBody := func(ctx *extern.Context, verb string, args []values.BalValue) values.BalValue {
 		self := args[0].(*values.Object)
 		path := args[1].(string)
 		var reqHeaders map[string][]string
@@ -473,10 +473,10 @@ func initHttpModule(rt *runtime.Runtime) {
 		statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
 			goCtxOrBackground(ctx), verb, urlVal.(string)+path, nil, 0, "", reqHeaders)
 		if err != nil {
-			return values.NewErrorWithMessage(err.Error()), nil
+			return values.NewErrorWithMessage(err.Error())
 		}
 		resp := buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream)
-		return bindResponse(ctx, &types, resp, args[3]), nil
+		return bindResponse(ctx, &types, resp, args[3])
 	}
 
 	// Client class def.
@@ -779,12 +779,12 @@ func initHttpModule(rt *runtime.Runtime) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$get",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			return execNoBody(ctx, "GET", args)
+			return execNoBody(ctx, "GET", args), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$post",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			return execBody(ctx, "POST", args)
+			return execBody(ctx, "POST", args), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$head",
@@ -808,22 +808,22 @@ func initHttpModule(rt *runtime.Runtime) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$options",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			return execNoBody(ctx, "OPTIONS", args)
+			return execNoBody(ctx, "OPTIONS", args), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$put",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			return execBody(ctx, "PUT", args)
+			return execBody(ctx, "PUT", args), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$patch",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			return execBody(ctx, "PATCH", args)
+			return execBody(ctx, "PATCH", args), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$delete",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			return execBody(ctx, "DELETE", args)
+			return execBody(ctx, "DELETE", args), nil
 		})
 
 	// execute: args = [self, httpVerb, path, message, headers, mediaType, targetType]

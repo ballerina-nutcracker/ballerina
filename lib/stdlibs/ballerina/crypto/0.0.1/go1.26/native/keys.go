@@ -64,7 +64,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if !ok {
 				return cryptoError("Not a valid RSA key"), nil
 			}
-			return buildPrivateKeyMap(types, ctx, rsaKey, "RSA"), nil
+			return buildPrivateKeyMap(types, ctx, rsaKey), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeEcPrivateKeyFromKeyStore",
@@ -77,7 +77,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if !ok {
 				return cryptoError("Not a valid EC key"), nil
 			}
-			return buildPrivateKeyMap(types, ctx, ecKey, "RSA"), nil // algorithm reported as RSA for EC in jBallerina
+			return buildPrivateKeyMap(types, ctx, ecKey), nil // algorithm reported as RSA for EC in jBallerina
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeRsaPrivateKeyFromKeyFile",
@@ -99,7 +99,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if !ok {
 				return cryptoError("Not a valid RSA key"), nil
 			}
-			return buildPrivateKeyMap(types, ctx, rsaKey, "RSA"), nil
+			return buildPrivateKeyMap(types, ctx, rsaKey), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeRsaPrivateKeyFromContent",
@@ -117,7 +117,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if !ok {
 				return cryptoError("Not a valid RSA key"), nil
 			}
-			return buildPrivateKeyMap(types, ctx, rsaKey, "RSA"), nil
+			return buildPrivateKeyMap(types, ctx, rsaKey), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeEcPrivateKeyFromKeyFile",
@@ -139,7 +139,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if !ok {
 				return cryptoError("Not a valid EC key"), nil
 			}
-			return buildPrivateKeyMap(types, ctx, ecKey, "RSA"), nil
+			return buildPrivateKeyMap(types, ctx, ecKey), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeRsaPublicKeyFromTrustStore",
@@ -160,7 +160,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if !ok {
 				return cryptoError("Not a valid RSA key"), nil
 			}
-			return buildPublicKeyMap(types, ctx, rsaPub, "RSA", cert), nil
+			return buildPublicKeyMap(types, ctx, rsaPub, cert), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeEcPublicKeyFromTrustStore",
@@ -181,7 +181,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if !ok {
 				return cryptoError("Not a valid EC key"), nil
 			}
-			return buildPublicKeyMap(types, ctx, ecPub, "RSA", cert), nil
+			return buildPublicKeyMap(types, ctx, ecPub, cert), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeRsaPublicKeyFromCertFile",
@@ -199,7 +199,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if !ok {
 				return cryptoError("Not a valid RSA key"), nil
 			}
-			return buildPublicKeyMap(types, ctx, rsaPub, "RSA", cert), nil
+			return buildPublicKeyMap(types, ctx, rsaPub, cert), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeRsaPublicKeyFromContent",
@@ -213,7 +213,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if !ok {
 				return cryptoError("Not a valid RSA key"), nil
 			}
-			return buildPublicKeyMap(types, ctx, rsaPub, "RSA", cert), nil
+			return buildPublicKeyMap(types, ctx, rsaPub, cert), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "decodeEcPublicKeyFromCertFile",
@@ -231,7 +231,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 			if !ok {
 				return cryptoError("Not a valid EC key"), nil
 			}
-			return buildPublicKeyMap(types, ctx, ecPub, "RSA", cert), nil
+			return buildPublicKeyMap(types, ctx, ecPub, cert), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "buildRsaPublicKey",
@@ -244,7 +244,7 @@ func registerKeyFunctions(rt *runtime.Runtime, types cryptoTypes) {
 				return cryptoError("Invalid RSA modulus or exponent hex string"), nil
 			}
 			pub := &rsa.PublicKey{N: modBytes, E: int(expBytes.Int64())}
-			return buildPublicKeyMap(types, ctx, pub, "RSA", nil), nil
+			return buildPublicKeyMap(types, ctx, pub, nil), nil
 		})
 }
 
@@ -296,17 +296,17 @@ func parseCertificatePEM(data []byte) (*x509.Certificate, error) {
 // buildPrivateKeyMap constructs a Ballerina PrivateKey record, associating the
 // Go key with it via keyData (see keydata.go) so sign/decrypt externs can
 // retrieve it.
-func buildPrivateKeyMap(types cryptoTypes, ctx *extern.Context, key any, algorithm string) *values.Map {
+func buildPrivateKeyMap(types cryptoTypes, ctx *extern.Context, key any) *values.Map {
 	m := values.NewMap(types.keyMapTy, semtypes.ToMappingAtomicType(ctx.TypeCtx(), types.keyMapTy), false, []values.MapEntry{
-		{Key: "algorithm", Value: algorithm},
+		{Key: "algorithm", Value: "RSA"},
 	})
 	setKeyData(m, key)
 	return m
 }
 
 // buildPublicKeyMap constructs a Ballerina PublicKey record with optional certificate.
-func buildPublicKeyMap(types cryptoTypes, ctx *extern.Context, key any, algorithm string, cert *x509.Certificate) *values.Map {
-	entries := []values.MapEntry{{Key: "algorithm", Value: algorithm}}
+func buildPublicKeyMap(types cryptoTypes, ctx *extern.Context, key any, cert *x509.Certificate) *values.Map {
+	entries := []values.MapEntry{{Key: "algorithm", Value: "RSA"}}
 	if cert != nil {
 		entries = append(entries, values.MapEntry{Key: "certificate", Value: buildCertMap(types, ctx, cert)})
 	}

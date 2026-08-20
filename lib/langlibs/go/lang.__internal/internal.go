@@ -94,13 +94,13 @@ func initInternalModule(rt *runtime.Runtime) {
 		rows := args[0].(*values.List)
 		keyRows := args[1].(*values.List)
 		scalarFlags := args[2].(*values.List)
-		return queryGroup(ctx, rows, keyRows, scalarFlags)
+		return queryGroup(ctx, rows, keyRows, scalarFlags), nil
 	})
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "queryCollect", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		rows := args[0].(*values.List)
 		slotCount := args[1].(int64)
 		flattenFlags := args[2].(*values.List)
-		return queryCollect(ctx, rows, int(slotCount), flattenFlags)
+		return queryCollect(ctx, rows, int(slotCount), flattenFlags), nil
 	})
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "escapeXMLContent", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return values.EscapeXMLContent(values.String(args[0], nil)), nil
@@ -120,7 +120,7 @@ func newQueryList(ctx *extern.Context) *values.List {
 	return values.NewList(semtypes.List, semtypes.ToListAtomicType(ctx.TypeEnv(), semtypes.List), false, nil, 0, nil)
 }
 
-func queryGroup(ctx *extern.Context, rows *values.List, keyRows *values.List, scalarFlags *values.List) (*values.List, error) {
+func queryGroup(ctx *extern.Context, rows *values.List, keyRows *values.List, scalarFlags *values.List) *values.List {
 	rowCount := rows.Len()
 	slotCount := scalarFlags.Len()
 	scalarSlots := make([]bool, slotCount)
@@ -144,7 +144,7 @@ func queryGroup(ctx *extern.Context, rows *values.List, keyRows *values.List, sc
 		}
 		appendQueryGroupRow(ctx, groups[groupIndex].row, sourceRow, scalarSlots)
 	}
-	return result, nil
+	return result
 }
 
 func findQueryGroup(groupIndices queryGroupIndex, keyRow *values.List) (int, string, bool) {
@@ -280,7 +280,7 @@ func appendQueryGroupRow(ctx *extern.Context, groupRow *values.List, sourceRow *
 	}
 }
 
-func queryCollect(ctx *extern.Context, rows *values.List, slotCount int, flattenFlags *values.List) (*values.List, error) {
+func queryCollect(ctx *extern.Context, rows *values.List, slotCount int, flattenFlags *values.List) *values.List {
 	flattenSlots := make([]bool, slotCount)
 	for slot := 0; slot < slotCount; slot++ {
 		flattenSlots[slot] = flattenFlags.Get(slot).(bool)
@@ -303,7 +303,7 @@ func queryCollect(ctx *extern.Context, rows *values.List, slotCount int, flatten
 			}
 		}
 	}
-	return resultRow, nil
+	return resultRow
 }
 
 func reorderListInPlace(ctx *extern.Context, list *values.List, order []int) {
