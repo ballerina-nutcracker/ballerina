@@ -156,7 +156,7 @@ Install the repository's commit hook after cloning:
 make install-hooks
 ```
 
-The hook validates commit subjects, license headers on new Go and Ballerina files, and Go formatting, then runs `make -j4 build lint`. Merge and `fixup!` commit subjects are exempt from message validation, but still run the remaining checks. Set `SKIP_COMMIT_HOOKS` to bypass all checks for a single commit:
+The hook requires Python 3 and validates commit subjects, license headers on new Go and Ballerina files, and Go formatting, then runs `make -j4 build lint`. Merge, `fixup!`, and `squash!` commit subjects are exempt from local message validation, but still run the remaining checks. Set `SKIP_COMMIT_HOOKS` to bypass all checks for a single commit:
 
 ```bash
 SKIP_COMMIT_HOOKS=1 git commit

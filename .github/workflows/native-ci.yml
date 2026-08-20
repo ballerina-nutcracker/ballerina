@@ -16,6 +16,9 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Test commit-message validator
+        run: python3 .github/scripts/test_validate_commits.py
+
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
