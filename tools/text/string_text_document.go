@@ -22,9 +22,7 @@ const (
 )
 
 // StringTextDocument represents a TextDocument created with a string.
-type StringTextDocument interface {
-	TextDocument
-}
+type StringTextDocument = TextDocument
 
 type stringTextDocumentImpl struct {
 	text    string

@@ -16,12 +16,6 @@
 
 package semtypes
 
-type bddCommonOpsData any
-
-type bddCommonOps interface {
-	bddCommonOpsData
-}
-
 type bddOpMemoKey struct {
 	B1 bdd
 	B2 bdd
@@ -35,9 +29,7 @@ type bddOpMemo struct {
 
 type bddCommonOpsBase struct{}
 
-type bddCommonOpsMethods struct {
-	Self bddCommonOps
-}
+type bddCommonOpsMethods struct{}
 
 func bddAtom(atom atom) bddNode {
 	return bddNodeCreate(atom, bddAll(), bddNothing(), bddNothing())

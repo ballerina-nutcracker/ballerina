@@ -226,19 +226,14 @@ type InputClauseNode interface {
 	IsDeclaredWithVar() bool
 }
 
-type FromClauseNode interface {
-	InputClauseNode
-}
+type FromClauseNode = InputClauseNode
 
 type SelectClauseNode interface {
 	Node
 	GetExpression() BLangExpression
 }
 
-type CollectClauseNode interface {
-	Node
-	GetExpression() BLangExpression
-}
+type CollectClauseNode = SelectClauseNode
 
 type DoClauseNode interface {
 	Node

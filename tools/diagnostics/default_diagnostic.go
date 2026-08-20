@@ -18,11 +18,8 @@ package diagnostics
 
 import "fmt"
 
-// DefaultDiagnostic is an internal implementation of the Diagnostic interface that is used by the DiagnosticFactory
-// to create diagnostics.
-type DefaultDiagnostic interface {
-	Diagnostic
-}
+// DefaultDiagnostic is an alias retained for diagnostics created by the DiagnosticFactory.
+type DefaultDiagnostic = Diagnostic
 
 type defaultDiagnosticImpl struct {
 	diagnosticBase
