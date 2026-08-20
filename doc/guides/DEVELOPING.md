@@ -133,10 +133,20 @@ Code coverage is tracked via [Codecov](https://codecov.io/gh/ballerina-nutcracke
 
 ```bash
 gofmt -l -s .
-golangci-lint run
+make -j4 lint
 ```
 
-CI runs `golangci-lint` v2.10 (configuration in [`.golangci.yml`](../../.golangci.yml)), and the Native CI workflow fails on any file not formatted with `gofmt -s`.
+The `build`, `vet`, and `lint` targets run per-module commands and support Make parallelism:
+
+```bash
+make -j4 build
+make -j4 vet
+make -j4 lint
+```
+
+Linting uses a module's `.golangci.yml` when present and otherwise falls back to the shared [root configuration](../../.golangci.yml). Module configurations enable `dupl`, `iface`, and `unparam`; compiler stages that prohibit panics additionally enable `forbidigo`.
+
+CI runs `golangci-lint` v2.10, and the Native CI workflow fails on any file not formatted with `gofmt -s`.
 
 ## Git hooks
 

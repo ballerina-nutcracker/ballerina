@@ -16,13 +16,7 @@
 
 package semtypes
 
-type commonOps interface {
-	commonBasicTypeOps
-	Union(t1 subtypeData, t2 subtypeData) subtypeData
-	Intersect(t1 subtypeData, t2 subtypeData) subtypeData
-	Diff(t1 subtypeData, t2 subtypeData) subtypeData
-	complement(t subtypeData) subtypeData
-}
+type commonOps = commonBasicTypeOps
 
 type commonOpsBase struct {
 	commonOpsMethods
