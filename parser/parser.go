@@ -1662,7 +1662,7 @@ func (b *ballerinaParser) createFunctionDefinition(metadata st.STNode, visibilit
 		functionKeyword, name, resourcePath, funcSignature, body)
 }
 
-func (b *ballerinaParser) createMethodDefinition(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
+func (b *ballerinaParser) validateMethodQualifiers(visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode) (st.STNode, st.STNode) {
 	var validatedList []st.STNode
 	hasRemoteQual := false
 	i := 0
@@ -1699,7 +1699,11 @@ func (b *ballerinaParser) createMethodDefinition(metadata st.STNode, visibilityQ
 			validatedList = append([]st.STNode{visibilityQualifier}, validatedList...)
 		}
 	}
-	qualifiers := st.CreateNodeList(validatedList...)
+	return st.CreateNodeList(validatedList...), functionKeyword
+}
+
+func (b *ballerinaParser) createMethodDefinition(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
+	qualifiers, functionKeyword := b.validateMethodQualifiers(visibilityQualifier, qualifierList, functionKeyword)
 	resourcePath := st.CreateEmptyNodeList()
 	body := b.parseFunctionBody()
 	return st.CreateFunctionDefinitionNode(st.OBJECT_METHOD_DEFINITION, metadata, qualifiers,
@@ -1707,43 +1711,7 @@ func (b *ballerinaParser) createMethodDefinition(metadata st.STNode, visibilityQ
 }
 
 func (b *ballerinaParser) createMethodDeclaration(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, funcSignature st.STNode) st.STNode {
-	var validatedList []st.STNode
-	hasRemoteQual := false
-	i := 0
-	for ; i < len(qualifierList); i++ {
-		qualifier := qualifierList[i]
-		nextIndex := (i + 1)
-		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
-			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
-				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(qualifier).Text())
-			continue
-		}
-		if qualifier.Kind() == st.REMOTE_KEYWORD {
-			hasRemoteQual = true
-			validatedList = append(validatedList, qualifier)
-			continue
-		}
-		if b.isRegularFuncQual(qualifier.Kind()) {
-			validatedList = append(validatedList, qualifier)
-			continue
-		}
-		if len(qualifierList) == nextIndex {
-			functionKeyword = st.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
-		} else {
-			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
-		}
-	}
-	if visibilityQualifier != nil {
-		if hasRemoteQual {
-			b.updateFirstNodeInListWithLeadingInvalidNode(validatedList, visibilityQualifier,
-				&common.ERROR_REMOTE_METHOD_HAS_A_VISIBILITY_QUALIFIER)
-		} else {
-			validatedList = append([]st.STNode{visibilityQualifier}, validatedList...)
-		}
-	}
-	qualifiers := st.CreateNodeList(validatedList...)
+	qualifiers, functionKeyword := b.validateMethodQualifiers(visibilityQualifier, qualifierList, functionKeyword)
 	resourcePath := st.CreateEmptyNodeList()
 	semicolon := b.parseSemicolon()
 	return st.CreateMethodDeclarationNode(st.METHOD_DECLARATION, metadata, qualifiers,
@@ -3144,43 +3112,14 @@ func (b *ballerinaParser) isObjectNetworkQual(tokenKind st.SyntaxKind) bool {
 }
 
 func (b *ballerinaParser) createClassTypeQualNodeList(qualifierList []st.STNode) st.STNode {
-	var validatedList []st.STNode
-	hasNetworkQual := false
-	i := 0
-	for ; i < len(qualifierList); i++ {
-		qualifier := qualifierList[i]
-		nextIndex := (i + 1)
-		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
-			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
-				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(qualifier).Text())
-			continue
-		}
-		if b.isObjectNetworkQual(qualifier.Kind()) {
-			if hasNetworkQual {
-				b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
-					&common.ERROR_MORE_THAN_ONE_OBJECT_NETWORK_QUALIFIERS)
-			} else {
-				validatedList = append(validatedList, qualifier)
-				hasNetworkQual = true
-			}
-			continue
-		}
-		if b.isClassTypeQual(qualifier.Kind()) {
-			validatedList = append(validatedList, qualifier)
-			continue
-		}
-		if len(qualifierList) == nextIndex {
-			b.addInvalidNodeToNextToken(qualifier, &common.ERROR_QUALIFIER_NOT_ALLOWED,
-				st.ToToken(qualifier).Text())
-		} else {
-			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
-		}
-	}
-	return st.CreateNodeList(validatedList...)
+	return b.createTypeQualNodeList(qualifierList, b.isClassTypeQual)
 }
 
 func (b *ballerinaParser) createObjectTypeQualNodeList(qualifierList []st.STNode) st.STNode {
+	return b.createTypeQualNodeList(qualifierList, b.isObjectTypeQual)
+}
+
+func (b *ballerinaParser) createTypeQualNodeList(qualifierList []st.STNode, isTypeQual func(st.SyntaxKind) bool) st.STNode {
 	var validatedList []st.STNode
 	hasNetworkQual := false
 	i := 0
@@ -3202,7 +3141,7 @@ func (b *ballerinaParser) createObjectTypeQualNodeList(qualifierList []st.STNode
 			}
 			continue
 		}
-		if b.isObjectTypeQual(qualifier.Kind()) {
+		if isTypeQual(qualifier.Kind()) {
 			validatedList = append(validatedList, qualifier)
 			continue
 		}

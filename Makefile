@@ -15,11 +15,20 @@
 
 SHELL := /bin/bash
 PYTHON ?= python3
-WORKSPACE_MODULES = go list -m -f '{{if .Main}}{{.Dir}}{{end}}' all
+LIST_WORKSPACE_MODULES = go list -m -f '{{if .Main}}{{.Dir}}{{end}}' all
+WORKSPACE_MODULE_DIRS := $(shell $(LIST_WORKSPACE_MODULES))
+WORKSPACE_MODULES := . $(patsubst $(CURDIR)/%,%,$(filter-out $(CURDIR),$(WORKSPACE_MODULE_DIRS)))
+BUILD_MODULES := $(filter-out compiler-tools/%,$(WORKSPACE_MODULES))
+LINT_MODULES := $(filter-out compiler-tools/%,$(WORKSPACE_MODULES))
+BUILD_MODULE_TARGETS := $(addprefix build-module/,$(BUILD_MODULES))
+VET_MODULE_TARGETS := $(addprefix vet-module/,$(WORKSPACE_MODULES))
+LINT_MODULE_TARGETS := $(addprefix lint-module/,$(LINT_MODULES))
 TEST_RUNNER = .github/scripts/run_native_tests.py
 
-.PHONY: build test test-coverage test-race vet lint check update-testdata release install-hooks \
+.PHONY: build vet lint force test test-coverage test-race check update-testdata release install-hooks \
 	test-wasm test-wasm-corpus-light test-wasm-corpus-integration benchmark-corpus
+
+force:
 
 install-hooks:
 	@git config --local core.hooksPath .githooks
@@ -28,13 +37,11 @@ install-hooks:
 release:
 	@bash .github/scripts/release_dist.sh "$(VERSION)" "$(or $(REMOTE),origin)"
 
-build:
-	@set -euo pipefail; \
-	while IFS= read -r dir; do \
-		case "$$dir" in */compiler-tools/*) continue ;; esac; \
-		echo "Building $${dir##*/}"; \
-		(cd "$$dir" && go build ./...); \
-	done < <($(WORKSPACE_MODULES))
+build: $(BUILD_MODULE_TARGETS)
+
+build-module/%: force
+	@echo "Building $*"
+	@(cd "$*" && go build ./...)
 
 test:
 	@$(PYTHON) $(TEST_RUNNER)
@@ -45,20 +52,21 @@ test-coverage:
 test-race:
 	@$(PYTHON) $(TEST_RUNNER) --race
 
-vet:
-	@set -euo pipefail; \
-	while IFS= read -r dir; do \
-		echo "Vetting $${dir##*/}"; \
-		(cd "$$dir" && go vet ./...); \
-	done < <($(WORKSPACE_MODULES))
+vet: $(VET_MODULE_TARGETS)
 
-lint:
-	@set -euo pipefail; \
-	while IFS= read -r dir; do \
-		case "$$dir" in */compiler-tools/*) continue ;; esac; \
-		echo "Linting $${dir##*/}"; \
-		(cd "$$dir" && golangci-lint run ./...); \
-	done < <($(WORKSPACE_MODULES))
+vet-module/%: force
+	@echo "Vetting $*"
+	@(cd "$*" && go vet ./...)
+
+lint: $(LINT_MODULE_TARGETS)
+
+lint-module/%: force
+	@config="$(CURDIR)/.golangci.yml"; \
+	if [[ -f "$(CURDIR)/$*/.golangci.yml" ]]; then \
+		config="$(CURDIR)/$*/.golangci.yml"; \
+	fi; \
+	echo "Linting $* ($$config)"; \
+	(cd "$*" && golangci-lint run --allow-parallel-runners --concurrency 1 --config "$$config" ./...)
 
 check: build vet lint test
 
@@ -67,7 +75,7 @@ update-testdata:
 	while IFS= read -r dir; do \
 		case "$$dir" in */compiler-tools/*) continue ;; esac; \
 		(cd "$$dir" && go test ./... -update) || true; \
-	done < <($(WORKSPACE_MODULES))
+	done < <($(LIST_WORKSPACE_MODULES))
 
 test-wasm:
 	@set -euo pipefail; \
@@ -78,7 +86,7 @@ test-wasm:
 		if [[ -n "$$packages" ]]; then \
 			go test -p=1 -skip 'TestParseCorpusFiles|TestJBalUnitTests|TestJBalUnitBIRTests' -timeout 30m $$packages -exec="$$wasm_exec"; \
 		fi; \
-	done < <($(WORKSPACE_MODULES))
+	done < <($(LIST_WORKSPACE_MODULES))
 
 test-wasm-corpus-light:
 	@wasm_exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec"; \

@@ -1684,10 +1684,8 @@ func binaryExpressionInner(ctx context, curBB *bir.BIRBasicBlock, opKind model.O
 
 func binaryExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangBinaryExpr) expressionEffect {
 	switch expr.OpKind {
-	case model.OperatorKind_AND:
-		return logicalAndExpression(ctx, curBB, expr)
-	case model.OperatorKind_OR:
-		return logicalOrExpression(ctx, curBB, expr)
+	case model.OperatorKind_AND, model.OperatorKind_OR:
+		return logicalExpression(ctx, curBB, expr)
 	default:
 		return binaryExpressionInner(ctx, curBB, expr.OpKind, expr.LhsExpr, expr.RhsExpr, expr.GetDeterminedType(), ctx.function().loc(expr.GetPosition()))
 	}
@@ -1727,54 +1725,25 @@ func checkedExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BLangActi
 	return expressionEffect{result: resultOperand, block: doneBB}
 }
 
-func logicalAndExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangBinaryExpr) expressionEffect {
+func logicalExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangBinaryExpr) expressionEffect {
+	pos := ctx.function().loc(expr.GetPosition())
 	resultOperand := ctx.addTempVar(expr.GetDeterminedType())
 
 	lhsEffect := handleActionOrExpression(ctx, curBB, expr.LhsExpr)
 	curBB = lhsEffect.block
-
-	mov := bir.NewMove(lhsEffect.result, resultOperand, ctx.function().loc(expr.GetPosition()))
-	curBB.Instructions = append(curBB.Instructions, mov)
+	curBB.Instructions = append(curBB.Instructions, bir.NewMove(lhsEffect.result, resultOperand, pos))
 
 	evalRhsBB := ctx.function().addBB()
 	doneBB := ctx.function().addBB()
-
-	curBB.Terminator = bir.NewBranch(lhsEffect.result, evalRhsBB, doneBB, ctx.function().loc(expr.GetPosition()))
-
-	rhsEffect := handleActionOrExpression(ctx, evalRhsBB, expr.RhsExpr)
-	rhsBB := rhsEffect.block
-
-	rhsMov := bir.NewMove(rhsEffect.result, resultOperand, ctx.function().loc(expr.GetPosition()))
-
-	rhsBB.Instructions = append(rhsBB.Instructions, rhsMov)
-	rhsBB.Terminator = bir.NewGoto(doneBB, ctx.function().loc(expr.GetPosition()))
-
-	return expressionEffect{
-		result: resultOperand,
-		block:  doneBB,
+	if expr.OpKind == model.OperatorKind_AND {
+		curBB.Terminator = bir.NewBranch(lhsEffect.result, evalRhsBB, doneBB, pos)
+	} else {
+		curBB.Terminator = bir.NewBranch(lhsEffect.result, doneBB, evalRhsBB, pos)
 	}
-}
-
-func logicalOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangBinaryExpr) expressionEffect {
-	resultOperand := ctx.addTempVar(expr.GetDeterminedType())
-
-	lhsEffect := handleActionOrExpression(ctx, curBB, expr.LhsExpr)
-	curBB = lhsEffect.block
-
-	mov := bir.NewMove(lhsEffect.result, resultOperand, ctx.function().loc(expr.GetPosition()))
-	curBB.Instructions = append(curBB.Instructions, mov)
-
-	evalRhsBB := ctx.function().addBB()
-	doneBB := ctx.function().addBB()
-
-	curBB.Terminator = bir.NewBranch(lhsEffect.result, doneBB, evalRhsBB, ctx.function().loc(expr.GetPosition()))
 
 	rhsEffect := handleActionOrExpression(ctx, evalRhsBB, expr.RhsExpr)
-	rhsBB := rhsEffect.block
-
-	rhsMov := bir.NewMove(rhsEffect.result, resultOperand, ctx.function().loc(expr.GetPosition()))
-	rhsBB.Instructions = append(rhsBB.Instructions, rhsMov)
-	rhsBB.Terminator = bir.NewGoto(doneBB, ctx.function().loc(expr.GetPosition()))
+	rhsEffect.block.Instructions = append(rhsEffect.block.Instructions, bir.NewMove(rhsEffect.result, resultOperand, pos))
+	rhsEffect.block.Terminator = bir.NewGoto(doneBB, pos)
 
 	return expressionEffect{
 		result: resultOperand,
