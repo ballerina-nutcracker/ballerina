@@ -93,7 +93,7 @@ func listProjPathInnerVal(cx Context, k subtypeData, pos conjunctionHandle, neg 
 		}
 	}
 	// return listProjExclude(cx, k, members, rest, listConjunction(cx, neg));
-	indices := listSamples(cx, members, rest, neg)
+	indices := listSamples(cx, members, neg)
 	projIndices, keyIndices := listProjSamples(indices, k)
 	sampleTypes, nRequired := listSampleTypes(cx, members, rest, projIndices)
 	return listProjExcludeInnerVal(cx, projIndices, keyIndices, sampleTypes, nRequired, neg)

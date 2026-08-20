@@ -247,15 +247,14 @@ func (a *abstractParser) updateLastNodeInListWithInvalidNode(nodeList []st.STNod
 	return nodeList
 }
 
-func (a *abstractParser) updateFirstNodeInListWithLeadingInvalidNode(nodeList []st.STNode, invalidParam st.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) []st.STNode {
-	return a.updateANodeInListWithLeadingInvalidNode(nodeList, 0, invalidParam, diagnosticCode, args)
+func (a *abstractParser) updateFirstNodeInListWithLeadingInvalidNode(nodeList []st.STNode, invalidParam st.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) {
+	a.updateANodeInListWithLeadingInvalidNode(nodeList, 0, invalidParam, diagnosticCode, args)
 }
 
-func (a *abstractParser) updateANodeInListWithLeadingInvalidNode(nodeList []st.STNode, indexOfTheNode int, invalidParam st.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) []st.STNode {
+func (a *abstractParser) updateANodeInListWithLeadingInvalidNode(nodeList []st.STNode, indexOfTheNode int, invalidParam st.STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) {
 	node := nodeList[indexOfTheNode]
 	newNode := st.CloneWithLeadingInvalidNodeMinutiae(node, invalidParam, diagnosticCode, args)
 	nodeList[indexOfTheNode] = newNode
-	return nodeList
 }
 
 func (a *abstractParser) invalidateRestAndAddToTrailingMinutiae(node st.STNode) st.STNode {
@@ -2700,8 +2699,8 @@ func (b *ballerinaParser) isEndOfFuncBodyBlock(nextTokenKind st.SyntaxKind, isAn
 	return b.isEndOfStatements()
 }
 
-func (b *ballerinaParser) isEndOfRecordTypeNode(_ st.SyntaxKind) bool {
-	return b.isEndOfModuleLevelNode(1)
+func (b *ballerinaParser) isEndOfRecordTypeNode() bool {
+	return b.isEndOfModuleLevelNode()
 }
 
 func (b *ballerinaParser) isEndOfObjectTypeNode() bool {
@@ -2713,12 +2712,12 @@ func (b *ballerinaParser) isEndOfStatements() bool {
 	case st.RESOURCE_KEYWORD:
 		return true
 	default:
-		return b.isEndOfModuleLevelNode(1)
+		return b.isEndOfModuleLevelNode()
 	}
 }
 
-func (b *ballerinaParser) isEndOfModuleLevelNode(peekIndex int) bool {
-	return b.isEndOfModuleLevelNodeInner(peekIndex, false)
+func (b *ballerinaParser) isEndOfModuleLevelNode() bool {
+	return b.isEndOfModuleLevelNodeInner(1, false)
 }
 
 func (b *ballerinaParser) isEndOfModuleLevelNodeInner(peekIndex int, isObject bool) bool {
@@ -2732,7 +2731,7 @@ func (b *ballerinaParser) isEndOfModuleLevelNodeInner(peekIndex int, isObject bo
 		st.CLASS_KEYWORD:
 		return true
 	case st.SERVICE_KEYWORD:
-		return b.isServiceDeclStart(common.PARSER_RULE_CONTEXT_OBJECT_CONSTRUCTOR_MEMBER, 1)
+		return b.isServiceDeclStart(1)
 	case st.PUBLIC_KEYWORD:
 		return ((!isObject) && b.isEndOfModuleLevelNodeInner(peekIndex+1, false))
 	case st.FUNCTION_KEYWORD:
@@ -2759,7 +2758,7 @@ func (b *ballerinaParser) isEndOfParameter(tokenKind st.SyntaxKind) bool {
 		st.AT_TOKEN:
 		return true
 	default:
-		return b.isEndOfModuleLevelNode(1)
+		return b.isEndOfModuleLevelNode()
 	}
 }
 
@@ -2775,7 +2774,7 @@ func (b *ballerinaParser) isEndOfParametersList(tokenKind st.SyntaxKind) bool {
 		st.RIGHT_DOUBLE_ARROW_TOKEN:
 		return true
 	default:
-		return b.isEndOfModuleLevelNode(1)
+		return b.isEndOfModuleLevelNode()
 	}
 }
 
@@ -3201,14 +3200,12 @@ func (b *ballerinaParser) parseRecordTypeDescriptor() st.STNode {
 	recordKeyword := b.parseRecordKeyword()
 	bodyStartDelimiter := b.parseRecordBodyStartDelimiter()
 	var recordFields []st.STNode
-	token := b.peek()
 	recordRestDescriptor := st.CreateEmptyNode()
-	for !b.isEndOfRecordTypeNode(token.Kind()) {
+	for !b.isEndOfRecordTypeNode() {
 		field := b.parseFieldOrRestDescriptor()
 		if field == nil {
 			break
 		}
-		token = b.peek()
 		if (field.Kind() == st.RECORD_REST_TYPE) && (bodyStartDelimiter.Kind() == st.OPEN_BRACE_TOKEN) {
 			if len(recordFields) == 0 {
 				bodyStartDelimiter = st.CloneWithTrailingInvalidNodeMinutiae(bodyStartDelimiter, field,
@@ -3220,14 +3217,13 @@ func (b *ballerinaParser) parseRecordTypeDescriptor() st.STNode {
 			continue
 		} else if field.Kind() == st.RECORD_REST_TYPE {
 			recordRestDescriptor = field
-			for !b.isEndOfRecordTypeNode(token.Kind()) {
+			for !b.isEndOfRecordTypeNode() {
 				invalidField := b.parseFieldOrRestDescriptor()
 				if invalidField == nil {
 					break
 				}
 				recordRestDescriptor = st.CloneWithTrailingInvalidNodeMinutiae(recordRestDescriptor,
 					invalidField, &common.ERROR_MORE_RECORD_FIELDS_AFTER_REST_FIELD)
-				token = b.peek()
 			}
 			break
 		}
@@ -3517,11 +3513,10 @@ func (b *ballerinaParser) parseQuestionMark() st.STNode {
 }
 
 func (b *ballerinaParser) parseStatements() st.STNode {
-	res, _ := b.parseStatementsInner(nil)
-	return res
+	return b.parseStatementsInner(nil)
 }
 
-func (b *ballerinaParser) parseStatementsInner(stmts []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseStatementsInner(stmts []st.STNode) st.STNode {
 	for !b.isEndOfStatements() {
 		stmt := b.parseStatement()
 		if stmt == nil {
@@ -3536,7 +3531,7 @@ func (b *ballerinaParser) parseStatementsInner(stmts []st.STNode) (st.STNode, []
 		}
 		stmts = append(stmts, stmt)
 	}
-	return st.CreateNodeList(stmts...), stmts
+	return st.CreateNodeList(stmts...)
 }
 
 func (b *ballerinaParser) parseStatement() st.STNode {
@@ -3770,9 +3765,9 @@ func (b *ballerinaParser) parseVarDeclTypeDescRhsInner(typeDesc st.STNode, metad
 }
 
 // Return result, and modified varDeclQuals
-func (b *ballerinaParser) parseVarDeclRhs(metadata st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, isModuleVar bool) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseVarDeclRhs(metadata st.STNode, typedBindingPattern st.STNode) (st.STNode, []st.STNode) {
 	publicQualifier := st.CreateEmptyNode()
-	return b.parseVarDeclRhsInner(metadata, publicQualifier, varDeclQuals, typedBindingPattern, isModuleVar)
+	return b.parseVarDeclRhsInner(metadata, publicQualifier, nil, typedBindingPattern, false)
 }
 
 // Return result, and modified varDeclQuals
@@ -4104,8 +4099,8 @@ func (b *ballerinaParser) parseActionOrExpressionInLhs(annots st.STNode) st.STNo
 	return b.parseExpressionInner(operatorPrecedenceDefault, annots, false, true, false)
 }
 
-func (b *ballerinaParser) parseExpressionPossibleRhsExpr(isRhsExpr bool) st.STNode {
-	return b.parseExpressionWithPrecedence(operatorPrecedenceDefault, isRhsExpr, false)
+func (b *ballerinaParser) parseExpressionPossibleRhsExpr() st.STNode {
+	return b.parseExpressionWithPrecedence(operatorPrecedenceDefault, false, false)
 }
 
 func (b *ballerinaParser) isValidLVExpr(expression st.STNode) bool {
@@ -4582,8 +4577,8 @@ func (b *ballerinaParser) parseParenthesizedArgList() st.STNode {
 	return st.CreateParenthesizedArgList(openParan, arguments, closeParan)
 }
 
-func (b *ballerinaParser) parseExpressionRhs(precedenceLevel operatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
-	return b.parseExpressionRhsInner(precedenceLevel, lhsExpr, isRhsExpr, allowActions, false, false)
+func (b *ballerinaParser) parseExpressionRhs(lhsExpr st.STNode, isRhsExpr bool, allowActions bool) st.STNode {
+	return b.parseExpressionRhsInner(defaultOpPrecedence, lhsExpr, isRhsExpr, allowActions, false, false)
 }
 
 func (b *ballerinaParser) parseExpressionRhsInner(currentPrecedenceLevel operatorPrecedence, lhsExpr st.STNode, isRhsExpr bool, allowActions bool, isInMatchGuard bool, isInConditionalExpr bool) st.STNode {
@@ -5286,7 +5281,7 @@ func (b *ballerinaParser) parseNamedOrPositionalArg() st.STNode {
 	case st.COMMA_TOKEN, st.CLOSE_PAREN_TOKEN:
 		return st.CreatePositionalArgumentNode(argNameOrExpr)
 	}
-	argNameOrExpr = b.parseExpressionRhs(defaultOpPrecedence, argNameOrExpr, true, false)
+	argNameOrExpr = b.parseExpressionRhs(argNameOrExpr, true, false)
 	return st.CreatePositionalArgumentNode(argNameOrExpr)
 }
 
@@ -6417,7 +6412,7 @@ func (b *ballerinaParser) parseListenersMemberEnd() st.STNode {
 	}
 }
 
-func (b *ballerinaParser) isServiceDeclStart(currentContext common.ParserRuleContext, lookahead int) bool {
+func (b *ballerinaParser) isServiceDeclStart(lookahead int) bool {
 	switch b.peekN(lookahead + 1).Kind() {
 	case st.IDENTIFIER_TOKEN:
 		tokenAfterIdentifier := b.peekN(lookahead + 2).Kind()
@@ -8754,11 +8749,10 @@ func (b *ballerinaParser) parseTupleMemberTypeDescList() st.STNode {
 		return st.CreateEmptyNodeList()
 	}
 	typeDesc := b.parseTupleMember()
-	res, _ := b.parseTupleTypeMembers(typeDesc, typeDescList)
-	return res
+	return b.parseTupleTypeMembers(typeDesc, typeDescList)
 }
 
-func (b *ballerinaParser) parseTupleTypeMembers(firstMember st.STNode, memberList []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseTupleTypeMembers(firstMember st.STNode, memberList []st.STNode) st.STNode {
 	var tupleMemberRhs st.STNode
 	for !b.isEndOfTypeList(b.peek().Kind()) {
 		if firstMember.Kind() == st.REST_TYPE {
@@ -8774,7 +8768,7 @@ func (b *ballerinaParser) parseTupleTypeMembers(firstMember st.STNode, memberLis
 		firstMember = b.parseTupleMember()
 	}
 	memberList = append(memberList, firstMember)
-	return st.CreateNodeList(memberList...), memberList
+	return st.CreateNodeList(memberList...)
 }
 
 func (b *ballerinaParser) parseTupleMember() st.STNode {
@@ -11422,11 +11416,11 @@ func (b *ballerinaParser) parseStmtStartsWithTypeOrExpr(annots st.STNode, qualif
 func (b *ballerinaParser) parseStmtStartsWithTypedBPOrExprRhs(annots st.STNode, typedBindingPatternOrExpr st.STNode) st.STNode {
 	if typedBindingPatternOrExpr.Kind() == st.TYPED_BINDING_PATTERN {
 		b.switchContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
-		res, _ := b.parseVarDeclRhs(annots, nil, typedBindingPatternOrExpr, false)
+		res, _ := b.parseVarDeclRhs(annots, typedBindingPatternOrExpr)
 		return res
 	}
 	expr := b.getExpression(typedBindingPatternOrExpr)
-	expr = b.getExpression(b.parseExpressionRhs(defaultOpPrecedence, expr, false, true))
+	expr = b.getExpression(b.parseExpressionRhs(expr, false, true))
 	return b.parseStatementStartWithExprRhs(expr)
 }
 
@@ -11721,7 +11715,7 @@ func (b *ballerinaParser) parseAnonFuncExprOrFuncTypeDescWithComponents(qualifie
 		annots := st.CreateEmptyNodeList()
 		anonFunc := st.CreateExplicitAnonymousFunctionExpressionNode(annots, qualifierList,
 			functionKeyword, funcSignature, funcBody)
-		return b.parseExpressionRhs(defaultOpPrecedence, anonFunc, false, true)
+		return b.parseExpressionRhs(anonFunc, false, true)
 	case st.IDENTIFIER_TOKEN:
 		fallthrough
 	default:
@@ -12133,7 +12127,7 @@ func (b *ballerinaParser) parseFieldBindingPatternWithName(simpleNameReference s
 }
 
 func (b *ballerinaParser) isEndOfMappingBindingPattern(nextTokenKind st.SyntaxKind) bool {
-	return ((nextTokenKind == st.CLOSE_BRACE_TOKEN) || b.isEndOfModuleLevelNode(1))
+	return ((nextTokenKind == st.CLOSE_BRACE_TOKEN) || b.isEndOfModuleLevelNode())
 }
 
 func (b *ballerinaParser) parseErrorTypeDescOrErrorBP(annots st.STNode) st.STNode {
@@ -12422,12 +12416,12 @@ func (b *ballerinaParser) parseTypedBindingPatternOrMemberAccess(typeDescOrExpr 
 }
 
 func (b *ballerinaParser) parseAsMemberAccessExpr(typeNameOrExpr st.STNode, openBracket st.STNode, member st.STNode) st.STNode {
-	member = b.parseExpressionRhs(defaultOpPrecedence, member, false, true)
+	member = b.parseExpressionRhs(member, false, true)
 	closeBracket := b.parseCloseBracket()
 	b.endContext()
 	keyExpr := st.CreateNodeList(member)
 	memberAccessExpr := st.CreateIndexedExpressionNode(typeNameOrExpr, openBracket, keyExpr, closeBracket)
-	return b.parseExpressionRhs(defaultOpPrecedence, memberAccessExpr, false, false)
+	return b.parseExpressionRhs(memberAccessExpr, false, false)
 }
 
 func (b *ballerinaParser) isBracketedListEnd(nextTokenKind st.SyntaxKind) bool {
@@ -12903,7 +12897,7 @@ func (b *ballerinaParser) parseStatementStartBracketedListMemberWithQualifiers(q
 		if (nextToken.Kind() != st.OPEN_BRACKET_TOKEN) && b.isValidTypeContinuationToken(nextToken) {
 			return b.parseComplexTypeDescriptor(identifier, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE, false)
 		}
-		return b.parseExpressionRhs(defaultOpPrecedence, identifier, false, true)
+		return b.parseExpressionRhs(identifier, false, true)
 	case st.OPEN_BRACE_TOKEN:
 		b.reportInvalidQualifierList(qualifiers)
 		return b.parseMappingBindingPatterOrMappingConstructor()
@@ -12920,7 +12914,7 @@ func (b *ballerinaParser) parseStatementStartBracketedListMemberWithQualifiers(q
 	case st.XML_KEYWORD, st.STRING_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
 		if b.getNextNextToken().Kind() == st.BACKTICK_TOKEN {
-			return b.parseExpressionPossibleRhsExpr(false)
+			return b.parseExpressionPossibleRhsExpr()
 		}
 		return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
 	case st.TABLE_KEYWORD, st.STREAM_KEYWORD:
@@ -12928,7 +12922,7 @@ func (b *ballerinaParser) parseStatementStartBracketedListMemberWithQualifiers(q
 		if b.getNextNextToken().Kind() == st.LT_TOKEN {
 			return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
 		}
-		return b.parseExpressionPossibleRhsExpr(false)
+		return b.parseExpressionPossibleRhsExpr()
 	case st.OPEN_PAREN_TOKEN:
 		return b.parseTypeDescOrExprWithQualifiers(qualifiers)
 	case st.FUNCTION_KEYWORD:
@@ -12938,7 +12932,7 @@ func (b *ballerinaParser) parseStatementStartBracketedListMemberWithQualifiers(q
 	default:
 		if b.isValidExpressionStart(nextToken.Kind(), 1) {
 			b.reportInvalidQualifierList(qualifiers)
-			return b.parseExpressionPossibleRhsExpr(false)
+			return b.parseExpressionPossibleRhsExpr()
 		}
 		if b.isTypeStartingToken(nextToken.Kind()) {
 			return b.parseTypeDescriptorWithQualifier(qualifiers, common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
@@ -13022,7 +13016,7 @@ func (b *ballerinaParser) parseTupleTypeDescOrListConstructorMember(annots st.ST
 			ellipsis := b.parseEllipsis()
 			return st.CreateRestDescriptorNode(identifier, ellipsis)
 		}
-		return b.parseExpressionRhs(defaultOpPrecedence, identifier, false, false)
+		return b.parseExpressionRhs(identifier, false, false)
 	case st.OPEN_BRACE_TOKEN:
 		return b.parseMappingConstructorExpr()
 	case st.ERROR_KEYWORD:
@@ -13033,21 +13027,21 @@ func (b *ballerinaParser) parseTupleTypeDescOrListConstructorMember(annots st.ST
 		return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
 	case st.XML_KEYWORD, st.STRING_KEYWORD:
 		if b.getNextNextToken().Kind() == st.BACKTICK_TOKEN {
-			return b.parseExpressionPossibleRhsExpr(false)
+			return b.parseExpressionPossibleRhsExpr()
 		}
 		return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
 	case st.TABLE_KEYWORD, st.STREAM_KEYWORD:
 		if b.getNextNextToken().Kind() == st.LT_TOKEN {
 			return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
 		}
-		return b.parseExpressionPossibleRhsExpr(false)
+		return b.parseExpressionPossibleRhsExpr()
 	case st.OPEN_PAREN_TOKEN:
 		return b.parseTypeDescOrExpr()
 	case st.AT_TOKEN:
 		return b.parseTupleMember()
 	default:
 		if b.isValidExpressionStart(nextToken.Kind(), 1) {
-			return b.parseExpressionPossibleRhsExpr(false)
+			return b.parseExpressionPossibleRhsExpr()
 		}
 		if b.isTypeStartingToken(nextToken.Kind()) {
 			return b.parseTypeDescriptor(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TUPLE)
@@ -13096,18 +13090,18 @@ func (b *ballerinaParser) parseStmtStartsWithTupleTypeOrExprRhs(annots st.STNode
 			return typedBindingPattern
 		}
 		b.switchContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
-		res, _ := b.parseVarDeclRhs(annots, nil, typedBindingPattern, false)
+		res, _ := b.parseVarDeclRhs(annots, typedBindingPattern)
 		return res
 	}
 	expr := b.getExpression(tupleTypeOrListConst)
-	expr = b.parseExpressionRhs(defaultOpPrecedence, expr, false, true)
+	expr = b.parseExpressionRhs(expr, false, true)
 	return b.parseStatementStartWithExprRhs(expr)
 }
 
 func (b *ballerinaParser) parseAsTupleTypeDesc(annots st.STNode, openBracket st.STNode, memberList []st.STNode, member st.STNode, isRoot bool) st.STNode {
 	memberList = b.getTupleMemberList(memberList)
 	b.startContext(common.PARSER_RULE_CONTEXT_TUPLE_MEMBERS)
-	tupleTypeMembers, memberList := b.parseTupleTypeMembers(member, memberList) //nolint:staticcheck,ineffassign // memberList will be used when tuple rest descriptor is fully implemented
+	tupleTypeMembers := b.parseTupleTypeMembers(member, memberList)
 	closeBracket := b.parseCloseBracket()
 	b.endContext()
 	tupleType := st.CreateTupleTypeDescriptorNode(openBracket, tupleTypeMembers, closeBracket)
@@ -13118,7 +13112,7 @@ func (b *ballerinaParser) parseAsTupleTypeDesc(annots st.STNode, openBracket st.
 	}
 	typedBindingPattern := b.parseTypedBindingPatternTypeRhsWithRoot(typeDesc, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT, true)
 	b.switchContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
-	res, _ := b.parseVarDeclRhs(annots, nil, typedBindingPattern, false)
+	res, _ := b.parseVarDeclRhs(annots, typedBindingPattern)
 	return res
 }
 
@@ -13438,7 +13432,7 @@ func (b *ballerinaParser) parseStatementStartsWithOpenBrace() st.STNode {
 			b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
 			fields := st.CreateEmptyNodeList()
 			expr := st.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace)
-			expr = b.parseExpressionRhs(defaultOpPrecedence, expr, false, true)
+			expr = b.parseExpressionRhs(expr, false, true)
 			return b.parseStatementStartWithExprRhs(expr)
 		default:
 			statements := st.CreateEmptyNodeList()
@@ -13464,7 +13458,7 @@ func (b *ballerinaParser) parseStatementStartsWithOpenBrace() st.STNode {
 	default:
 		var stmts []st.STNode
 		stmts = append(stmts, member)
-		statements, stmts := b.parseStatementsInner(stmts) //nolint:staticcheck,ineffassign // stmts will be used for error recovery
+		statements := b.parseStatementsInner(stmts)
 		closeBrace := b.parseCloseBrace()
 		b.endContext()
 		return st.CreateBlockStatementNode(openBrace, statements, closeBrace)
@@ -13485,19 +13479,19 @@ func (b *ballerinaParser) parseStmtAsMappingBindingPatternStart(openBrace st.STN
 func (b *ballerinaParser) parseStmtAsMappingConstructorStart(openBrace st.STNode, firstMember st.STNode) st.STNode {
 	b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR)
-	mappingCons, _ := b.parseAsMappingConstructor(openBrace, nil, firstMember)
-	expr := b.parseExpressionRhs(defaultOpPrecedence, mappingCons, false, true)
+	mappingCons := b.parseAsMappingConstructor(openBrace, nil, firstMember)
+	expr := b.parseExpressionRhs(mappingCons, false, true)
 	return b.parseStatementStartWithExprRhs(expr)
 }
 
-func (b *ballerinaParser) parseAsMappingConstructor(openBrace st.STNode, members []st.STNode, member st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseAsMappingConstructor(openBrace st.STNode, members []st.STNode, member st.STNode) st.STNode {
 	members = append(members, member)
 	members = b.getExpressionList(members, true)
 	b.switchContext(common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR)
 	fields := b.finishParseMappingConstructorFields(members)
 	closeBrace := b.parseCloseBrace()
 	b.endContext()
-	return st.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace), members
+	return st.CreateMappingConstructorExpressionNode(openBrace, fields, closeBrace)
 }
 
 func (b *ballerinaParser) parseStmtAsMappingBPOrMappingConsStart(openBrace st.STNode, member st.STNode) st.STNode {
@@ -13511,12 +13505,12 @@ func (b *ballerinaParser) parseStmtAsMappingBPOrMappingConsStart(openBrace st.ST
 		bpOrConstructor = b.parseMappingBindingPatternOrMappingConstructorWithCloseBrace(openBrace, members, closeBrace)
 	} else {
 		members = append(members, memberEnd)
-		bpOrConstructor, members = b.parseMappingBindingPatternOrMappingConstructor(openBrace, members) //nolint:staticcheck,ineffassign // members will be used when mapping binding pattern is fully implemented
+		bpOrConstructor = b.parseMappingBindingPatternOrMappingConstructor(openBrace, members)
 	}
 	switch bpOrConstructor.Kind() {
 	case st.MAPPING_CONSTRUCTOR:
 		b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
-		expr := b.parseExpressionRhs(defaultOpPrecedence, bpOrConstructor, false, true)
+		expr := b.parseExpressionRhs(bpOrConstructor, false, true)
 		return b.parseStatementStartWithExprRhs(expr)
 	case st.MAPPING_BINDING_PATTERN:
 		b.switchContext(common.PARSER_RULE_CONTEXT_ASSIGNMENT_STMT)
@@ -13532,7 +13526,7 @@ func (b *ballerinaParser) parseStmtAsMappingBPOrMappingConsStart(openBrace st.ST
 		}
 		b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
 		expr := b.getExpression(bpOrConstructor)
-		expr = b.parseExpressionRhs(defaultOpPrecedence, expr, false, true)
+		expr = b.parseExpressionRhs(expr, false, true)
 		return b.parseStatementStartWithExprRhs(expr)
 	}
 }
@@ -13556,7 +13550,7 @@ func (b *ballerinaParser) parseStatementStartingBracedListFirstMember(isOpenBrac
 		}
 		b.switchContext(common.PARSER_RULE_CONTEXT_BLOCK_STMT)
 		b.startContext(common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
-		expr := b.parseExpressionRhs(defaultOpPrecedence, key, false, true)
+		expr := b.parseExpressionRhs(key, false, true)
 		return b.parseStatementStartWithExprRhs(expr)
 	case st.OPEN_BRACKET_TOKEN:
 		annots := st.CreateEmptyNodeList()
@@ -13634,7 +13628,7 @@ func (b *ballerinaParser) parseIdentifierRhsInStmtStartingBrace(readonlyKeyword 
 			bindingPattern := st.CreateCaptureBindingPatternNode(identifier)
 			typedBindingPattern := st.CreateTypedBindingPatternNode(readonlyKeyword, bindingPattern)
 			annots := st.CreateEmptyNodeList()
-			res, _ := b.parseVarDeclRhs(annots, nil, typedBindingPattern, false)
+			res, _ := b.parseVarDeclRhs(annots, typedBindingPattern)
 			return res
 		}
 		b.startContext(common.PARSER_RULE_CONTEXT_AMBIGUOUS_STMT)
@@ -13663,7 +13657,7 @@ func (b *ballerinaParser) parseQualifiedIdentifierRhsInStmtStartBrace(identifier
 		b.startContext(common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 		typeBindingPattern := b.parseTypedBindingPatternTypeRhs(qualifiedNameRef, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 		annots := st.CreateEmptyNodeList()
-		res, _ := b.parseVarDeclRhs(annots, nil, typeBindingPattern, false)
+		res, _ := b.parseVarDeclRhs(annots, typeBindingPattern)
 		return res
 	case st.OPEN_BRACKET_TOKEN:
 		return b.parseMemberRhsInStmtStartWithBrace(identifier, colon, secondIdentifier, secondNameRef)
@@ -13672,7 +13666,7 @@ func (b *ballerinaParser) parseQualifiedIdentifierRhsInStmtStartBrace(identifier
 			common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN, true)
 		typeBindingPattern := b.parseTypedBindingPatternTypeRhs(typeDesc, common.PARSER_RULE_CONTEXT_VAR_DECL_STMT)
 		annots := st.CreateEmptyNodeList()
-		res, _ := b.parseVarDeclRhs(annots, nil, typeBindingPattern, false)
+		res, _ := b.parseVarDeclRhs(annots, typeBindingPattern)
 		return res
 	case st.EQUAL_TOKEN, st.SEMICOLON_TOKEN:
 		return b.parseStatementStartWithExprRhs(qualifiedNameRef)
@@ -13738,8 +13732,7 @@ func (b *ballerinaParser) getBracedListType(member st.STNode) st.SyntaxKind {
 func (b *ballerinaParser) parseMappingBindingPatterOrMappingConstructor() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_MAPPING_BP_OR_MAPPING_CONSTRUCTOR)
 	openBrace := b.parseOpenBrace()
-	res, _ := b.parseMappingBindingPatternOrMappingConstructor(openBrace, nil)
-	return res
+	return b.parseMappingBindingPatternOrMappingConstructor(openBrace, nil)
 }
 
 func (b *ballerinaParser) isBracedListEnd(nextTokenKind st.SyntaxKind) bool {
@@ -13751,7 +13744,7 @@ func (b *ballerinaParser) isBracedListEnd(nextTokenKind st.SyntaxKind) bool {
 	}
 }
 
-func (b *ballerinaParser) parseMappingBindingPatternOrMappingConstructor(openBrace st.STNode, memberList []st.STNode) (st.STNode, []st.STNode) {
+func (b *ballerinaParser) parseMappingBindingPatternOrMappingConstructor(openBrace st.STNode, memberList []st.STNode) st.STNode {
 	nextToken := b.peek()
 	for !b.isBracedListEnd(nextToken.Kind()) {
 		member := b.parseMappingBindingPatterOrMappingConstructorMember()
@@ -13760,7 +13753,8 @@ func (b *ballerinaParser) parseMappingBindingPatternOrMappingConstructor(openBra
 		case st.MAPPING_CONSTRUCTOR:
 			return b.parseAsMappingConstructor(openBrace, memberList, member)
 		case st.MAPPING_BINDING_PATTERN:
-			return b.parseAsMappingBindingPattern(openBrace, memberList, member)
+			node, _ := b.parseAsMappingBindingPattern(openBrace, memberList, member)
+			return node
 		case st.MAPPING_BP_OR_MAPPING_CONSTRUCTOR:
 			fallthrough
 		default:
@@ -13774,7 +13768,7 @@ func (b *ballerinaParser) parseMappingBindingPatternOrMappingConstructor(openBra
 		nextToken = b.peek()
 	}
 	closeBrace := b.parseCloseBrace()
-	return b.parseMappingBindingPatternOrMappingConstructorWithCloseBrace(openBrace, memberList, closeBrace), memberList
+	return b.parseMappingBindingPatternOrMappingConstructorWithCloseBrace(openBrace, memberList, closeBrace)
 }
 
 func (b *ballerinaParser) parseMappingBindingPatterOrMappingConstructorMember() st.STNode {
@@ -13940,7 +13934,7 @@ func (b *ballerinaParser) parseListBindingPatternOrListConstructorMember() st.ST
 		if b.isWildcardBP(identifier) {
 			return b.getWildcardBindingPattern(identifier)
 		}
-		return b.parseExpressionRhs(defaultOpPrecedence, identifier, false, false)
+		return b.parseExpressionRhs(identifier, false, false)
 	case st.OPEN_BRACE_TOKEN:
 		return b.parseMappingBindingPatterOrMappingConstructor()
 	case st.ELLIPSIS_TOKEN:
@@ -13980,7 +13974,7 @@ func (b *ballerinaParser) parseAsListConstructor(openBracket st.STNode, memberLi
 	closeBracket := b.parseCloseBracket()
 	listConstructor := st.CreateListConstructorExpressionNode(openBracket, listMembers, closeBracket)
 	b.endContext()
-	expr := b.parseExpressionRhs(operatorPrecedenceDefault, listConstructor, false, true)
+	expr := b.parseExpressionRhs(listConstructor, false, true)
 	if !isRoot {
 		return expr, memberList
 	}
@@ -14005,7 +13999,7 @@ func (b *ballerinaParser) parseListBindingPatternOrListConstructorWithCloseBrack
 			memberExpressions := st.CreateNodeList(members...)
 			lbpOrListCons = st.CreateListConstructorExpressionNode(openBracket, memberExpressions,
 				closeBracket)
-			lbpOrListCons = b.parseExpressionRhs(defaultOpPrecedence, lbpOrListCons, false, true)
+			lbpOrListCons = b.parseExpressionRhs(lbpOrListCons, false, true)
 			break
 		}
 		members = b.getBindingPatternsList(members, true)
@@ -14046,7 +14040,7 @@ func (b *ballerinaParser) parseMemberRhsInStmtStartWithBrace(identifier st.STNod
 }
 
 func (b *ballerinaParser) parseMemberWithExprInRhs(identifier st.STNode, colon st.STNode, secondIdentifier st.STNode, memberAccessExpr st.STNode) st.STNode {
-	expr := b.parseExpressionRhs(defaultOpPrecedence, memberAccessExpr, false, true)
+	expr := b.parseExpressionRhs(memberAccessExpr, false, true)
 	switch b.peek().Kind() {
 	case st.COMMA_TOKEN, st.CLOSE_BRACE_TOKEN:
 		b.switchContext(common.PARSER_RULE_CONTEXT_EXPRESSION_STATEMENT)
@@ -14084,7 +14078,7 @@ func (b *ballerinaParser) parseInferredTypeDescDefaultOrExpressionInner(ltToken 
 	if b.isTypeStartingToken(nextToken.Kind()) || (nextToken.Kind() == st.AT_TOKEN) {
 		b.startContext(common.PARSER_RULE_CONTEXT_TYPE_CAST)
 		expr := b.parseTypeCastExprInner(ltToken, true, false, false)
-		return b.parseExpressionRhs(defaultOpPrecedence, expr, true, false)
+		return b.parseExpressionRhs(expr, true, false)
 	}
 	b.recoverWithBlockContext(nextToken, common.PARSER_RULE_CONTEXT_TYPE_CAST_PARAM_START_OR_INFERRED_TYPEDESC_DEFAULT_END)
 	return b.parseInferredTypeDescDefaultOrExpressionInner(ltToken)

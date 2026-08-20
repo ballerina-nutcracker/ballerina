@@ -4652,7 +4652,7 @@ func (n *nodeBuilder) transformMatchStatement(matchStatementNode *st.MatchStatem
 		// Handle match patterns
 		matchPatterns := matchClauseNode.MatchPatterns()
 		for matchPattern := range matchPatterns.Iterator() {
-			bLangMatchPattern := n.transformMatchPattern(matchPattern, matchStmtExpr)
+			bLangMatchPattern := n.transformMatchPattern(matchPattern)
 			if bLangMatchPattern != nil {
 				bLangMatchClause.Patterns = append(bLangMatchClause.Patterns, bLangMatchPattern)
 			}
@@ -4668,7 +4668,7 @@ func (n *nodeBuilder) transformMatchStatement(matchStatementNode *st.MatchStatem
 	return matchStatement
 }
 
-func (n *nodeBuilder) transformMatchPattern(matchPattern st.Node, matchStmtExpr ast.BLangExpression) ast.BLangMatchPattern {
+func (n *nodeBuilder) transformMatchPattern(matchPattern st.Node) ast.BLangMatchPattern {
 	matchPatternPos := n.getPosition(matchPattern)
 	kind := matchPattern.Kind()
 

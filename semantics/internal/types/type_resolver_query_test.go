@@ -405,7 +405,7 @@ func TestResolveQueryExprCollectClauseRejectsConstructType(t *testing.T) {
 func TestResolveQueryExprCollectAggregatesVariables(t *testing.T) {
 	resolver, cx := newTestQueryResolver()
 	space := cx.NewSymbolSpace(*cx.GetDefaultPackage())
-	xSymbolRef := addTestValueSymbol(cx, space, "x", semtypes.SemType{})
+	xSymbolRef := addTestValueSymbol(space, "x")
 	xDef := newSimpleVarDef("x", nil, nil)
 	xDef.Var.SetSymbol(xSymbolRef)
 	collectXRef := newSimpleVarRef("x", xSymbolRef)
@@ -433,8 +433,8 @@ func TestResolveQueryExprCollectAggregatesVariables(t *testing.T) {
 func TestResolveQueryExprGroupByClauseAggregatesNonGroupingVars(t *testing.T) {
 	resolver, cx := newTestQueryResolver()
 	space := cx.NewSymbolSpace(*cx.GetDefaultPackage())
-	xSymbolRef := addTestValueSymbol(cx, space, "x", semtypes.SemType{})
-	ySymbolRef := addTestValueSymbol(cx, space, "y", semtypes.SemType{})
+	xSymbolRef := addTestValueSymbol(space, "x")
+	ySymbolRef := addTestValueSymbol(space, "y")
 
 	xDef := newSimpleVarDef("x", nil, nil)
 	xDef.Var.SetSymbol(xSymbolRef)
@@ -471,8 +471,8 @@ func TestResolveQueryExprGroupByClauseAggregatesNonGroupingVars(t *testing.T) {
 func TestResolveQueryExprCollectDoesNotReaggregateGroupByVars(t *testing.T) {
 	resolver, cx := newTestQueryResolver()
 	space := cx.NewSymbolSpace(*cx.GetDefaultPackage())
-	xSymbolRef := addTestValueSymbol(cx, space, "x", semtypes.SemType{})
-	ySymbolRef := addTestValueSymbol(cx, space, "y", semtypes.SemType{})
+	xSymbolRef := addTestValueSymbol(space, "x")
+	ySymbolRef := addTestValueSymbol(space, "y")
 
 	xDef := newSimpleVarDef("x", nil, nil)
 	xDef.Var.SetSymbol(xSymbolRef)
@@ -515,8 +515,8 @@ func TestResolveQueryExprCollectDoesNotReaggregateGroupByVars(t *testing.T) {
 func TestResolveQueryExprGroupByVarDeclaration(t *testing.T) {
 	resolver, cx := newTestQueryResolver()
 	space := cx.NewSymbolSpace(*cx.GetDefaultPackage())
-	xSymbolRef := addTestValueSymbol(cx, space, "x", semtypes.SemType{})
-	nSymbolRef := addTestValueSymbol(cx, space, "n", semtypes.SemType{})
+	xSymbolRef := addTestValueSymbol(space, "x")
+	nSymbolRef := addTestValueSymbol(space, "n")
 
 	xDef := newSimpleVarDef("x", nil, nil)
 	xDef.Var.SetSymbol(xSymbolRef)
@@ -915,13 +915,10 @@ func newSimpleVarDef(name string, typeNode ast.BType, expr ast.BLangExpression) 
 	return varDef
 }
 
-func addTestValueSymbol(cx *context.CompilerContext, space *model.SymbolSpace, name string, ty semtypes.SemType) model.SymbolRef {
+func addTestValueSymbol(space *model.SymbolSpace, name string) model.SymbolRef {
 	valueSymbol := model.NewVariableSymbol(name, false, false, false, queryTestPos)
 	space.AddSymbol(name, &valueSymbol)
 	symbolRef, _ := space.GetSymbol(name)
-	if !semtypes.IsZero(ty) {
-		cx.SetSymbolType(symbolRef, ty)
-	}
 	return symbolRef
 }
 

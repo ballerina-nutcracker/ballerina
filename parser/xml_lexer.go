@@ -141,8 +141,8 @@ func (l *xmlLexer) getXMLLiteralValueToken(kind st.SyntaxKind) st.STToken {
 	return st.CreateLiteralValueToken(kind, lexeme, leadingTrivia, trailingTrivia)
 }
 
-func (l *xmlLexer) getXMLText(kind st.SyntaxKind) st.STToken {
-	return l.getXMLLiteralValueToken(kind)
+func (l *xmlLexer) getXMLText() st.STToken {
+	return l.getXMLLiteralValueToken(st.XML_TEXT_CONTENT)
 }
 
 func (l *xmlLexer) getXMLNameToken(allowLeadingWS bool) st.STToken {
@@ -396,7 +396,7 @@ scan:
 		}
 	}
 
-	return l.getXMLText(st.XML_TEXT_CONTENT)
+	return l.getXMLText()
 }
 
 func (l *xmlLexer) processXMLReferenceInQuotedString(startingQuote rune) {
@@ -490,7 +490,7 @@ scan:
 	}
 
 	l.EndMode()
-	return l.getXMLText(st.XML_TEXT_CONTENT)
+	return l.getXMLText()
 }
 
 // XML_COMMENT and XML_CDATA_SECTION modes
@@ -558,7 +558,7 @@ scan:
 		}
 	}
 
-	return l.getXMLText(st.XML_TEXT_CONTENT)
+	return l.getXMLText()
 }
 
 // XML_PI mode
@@ -635,7 +635,7 @@ scan:
 		}
 	}
 
-	return l.getXMLText(st.XML_TEXT_CONTENT)
+	return l.getXMLText()
 }
 
 // kindStringValue maps a SyntaxKind to its source-text representation for diagnostic messages.
