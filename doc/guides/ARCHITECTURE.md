@@ -1,8 +1,8 @@
 # Architecture
 
-Ballerina Nutcracker compiles a `.bal` program to **Ballerina Intermediate Representation (BIR)** and then interprets that BIR (`bal run`), or embeds the BIR with the runtime into a standalone binary (`bal build`). Almost everything below is a Go package that ships in the `bal` binary; Ballerina Central, the local repository, the host OS, and the browser sit outside it.
+Ballerina Nutcracker compiles a `.bal` program to **Ballerina Intermediate Representation (BIR)** and then interprets that BIR (`bal run`), or embeds the BIR with the runtime into a standalone binary (`bal build`). Almost everything below is a Go package that ships in the `bal` binary; the central cache, the local repository, the host OS, and the browser sit outside it.
 
-![Ballerina Nutcracker architecture: the bal CLI (new, run, pack, build, push, version) is the entry point. parser/ produces st/; nodebuilder/ produces ast/. semantics/ resolves types; desugar/ and birgen/ lower to BIR. The runtime interprets BIR. Native stdlib uses extern calls; pure-Ballerina modules run as BIR. PAL is platform/pal; palnative is on the host OS and pal_wasm.go on the browser. Central is for package fetch; bal push writes the local repository.](../img/architecture.png)
+![Ballerina Nutcracker architecture: the bal CLI (new, run, pack, build, push, version) is the entry point. parser/ produces st/; nodebuilder/ produces ast/. semantics/ resolves types; desugar/ and birgen/ lower to BIR. The runtime interprets BIR. Native stdlib uses extern calls; pure-Ballerina modules run as BIR. PAL is platform/pal; palnative is on the host OS and pal_wasm.go on the browser. The central cache is the on-disk default for dependency resolution; bal push writes the local repository.](../img/architecture.png)
 
 ## Compilation pipeline
 
@@ -60,7 +60,7 @@ Where a module needs native code, its Go implementation is registered by [`lib/r
 
 Everything the **runtime and the library** do to the outside world goes through this layer rather than calling the OS or the Go standard library directly.
 
-That rule applies to the runtime and the library, not the toolchain. The CLI reaches Central only through `projects/centralclient` (`net/http`). `compiler-tools/` does not talk to Central.
+That rule applies to the runtime and the library, not the toolchain, which uses the Go standard library directly.
 
 `projects/` reads package sources through an `fs.FS` the caller provides: `cli/` passes `os.DirFS`, and the language and standard libraries pass bundled `embed.FS` trees. `projects/` still uses `os` directly to write `.bala` files and debug dumps.
 
@@ -93,9 +93,11 @@ Modules such as `ast`, `projects`, `runtime`, and `semtypes` stay as normal `cli
 
 ## Boundaries
 
-Solid arrows in the diagram are function calls inside one process (or local filesystem writes). The dashed arrow is the network call to Central. Things that sit outside the binary:
+Teal outlines are packages that ship in the `bal` binary. Gray outlines sit outside it. Teal arrows are the main compile-and-run path (source → BIR → runtime → PAL). Gray arrows are supporting links such as dependency resolution, extern calls, and PAL reaching the host or browser.
 
-- **Ballerina Central** — the remote `.bala` registry, reached over the network by `projects/centralclient` during dependency resolution.
-- **Local repository** — on-disk under `repositories/local/bala`, written by `bal push --repository=local` so other packages can depend on `repository = "local"`. Not a network call.
+Things that sit outside the binary:
+
+- **The central cache** — on-disk under `repositories/central.ballerina.io/bala`. `projects.RemoteRepository` wraps it as the last entry in the resolver chain: a package already in the cache resolves, and a miss ends the lookup.
+- **Local repository** — on-disk under `repositories/local/bala`, written by `bal push --repository=local` so other packages can depend on `repository = "local"`.
 - **The host OS** — filesystem, network, environment and signals, reached by the runtime through `platform/palnative`.
 - **The browser** — the [Ballerina Playground](https://github.com/ballerina-nutcracker/playground) implements the same `pal.Platform` for WebAssembly (`pal_wasm.go`), so the same program can run in a tab without changing Ballerina source.
