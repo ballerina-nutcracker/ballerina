@@ -29,7 +29,7 @@ import (
 
 const (
 	symMagic   = "\x53\x59\x4d\x42"
-	symVersion = 8
+	symVersion = 9
 )
 
 const (
@@ -98,6 +98,12 @@ func Marshal(exported model.ExportedSymbolSpace, env *context.CompilerEnvironmen
 // alongside their symbol.
 func (sw *symbolWriter) symbolAnnotations(ref model.SymbolRef) values.AnnotationValues {
 	return sw.compilerEnv.SymbolAnnotationValues(ref)
+}
+
+// recordFieldAnnotations returns the per-field annotation values stored for the
+// record type at ref, so they are written alongside their symbol.
+func (sw *symbolWriter) recordFieldAnnotations(ref model.SymbolRef) values.FieldAnnotationValues {
+	return sw.compilerEnv.RecordFieldAnnotationValues(ref)
 }
 
 func (sw *symbolWriter) serialize(exported model.ExportedSymbolSpace) ([]byte, error) {
@@ -252,7 +258,7 @@ func (sw *symbolWriter) writeSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym 
 	case model.ClassSymbol:
 		return sw.writeClassSymbol(buf, symTagClass, s, sw.symbolAnnotations(ref))
 	case *model.RecordSymbol:
-		return sw.writeRecordSymbol(buf, s, sw.symbolAnnotations(ref))
+		return sw.writeRecordSymbol(buf, s, sw.symbolAnnotations(ref), sw.recordFieldAnnotations(ref))
 	case *model.ObjectTypeSymbol:
 		return sw.writeObjectTypeSymbol(buf, s, sw.symbolAnnotations(ref))
 	case *model.ErrorTypeSymbol:
@@ -314,7 +320,12 @@ func (sw *symbolWriter) writeTypeSymbol(buf *bytes.Buffer, ref model.SymbolRef, 
 	return sw.writeFunctionSignatureIndex(buf, ref)
 }
 
-func (sw *symbolWriter) writeRecordSymbol(buf *bytes.Buffer, sym *model.RecordSymbol, annotations values.AnnotationValues) error {
+func (sw *symbolWriter) writeRecordSymbol(
+	buf *bytes.Buffer,
+	sym *model.RecordSymbol,
+	annotations values.AnnotationValues,
+	fieldAnnotations values.FieldAnnotationValues,
+) error {
 	if err := write(buf, symTagRecord); err != nil {
 		return err
 	}
@@ -322,6 +333,9 @@ func (sw *symbolWriter) writeRecordSymbol(buf *bytes.Buffer, sym *model.RecordSy
 		return err
 	}
 	if err := sw.writeAnnotationValues(buf, annotations); err != nil {
+		return err
+	}
+	if err := sw.writeFieldAnnotationValues(buf, fieldAnnotations); err != nil {
 		return err
 	}
 	return sw.writeInclusionMembers(buf, sym.Members())

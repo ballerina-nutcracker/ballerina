@@ -1187,36 +1187,38 @@ func resolveAnnotationDeclaration(t typeResolver, annotation *ast.BLangAnnotatio
 func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage) {
 	initialGlobalCount := len(pkg.GlobalVars)
 	for i := range pkg.Annotations {
-		resolveAnnotationAttachments(t, pkg.Annotations[i], ast.PointAnnotation, model.SymbolRef{})
+		resolveAnnotationAttachments(t, pkg.Annotations[i], ast.PointAnnotation, nil)
 	}
 	for i := range pkg.TypeDefinitions {
 		defn := pkg.TypeDefinitions[i]
-		resolveAnnotationAttachments(t, defn, ast.PointType, defn.Symbol())
+		resolveAnnotationAttachments(t, defn, ast.PointType, symbolAnnotationSink(t, defn.Symbol()))
 		switch typeDesc := defn.GetTypeData().TypeDescriptor.(type) {
 		case *ast.BLangRecordType:
-			for _, field := range typeDesc.FieldPtrs() {
-				resolveAnnotationAttachments(t, field, ast.PointRecordField, model.SymbolRef{})
+			for name, field := range typeDesc.FieldPtrs() {
+				resolveAnnotationAttachments(t, field, ast.PointRecordField,
+					recordFieldAnnotationSink(t, defn.Symbol(), name))
 			}
 		case *ast.BLangObjectType:
 			for member := range typeDesc.Members() {
 				if field, ok := member.(*ast.BObjectField); ok {
-					resolveAnnotationAttachments(t, field, ast.PointObjectField, model.SymbolRef{})
+					resolveAnnotationAttachments(t, field, ast.PointObjectField, nil)
 				}
 			}
 		}
 	}
+	inheritIncludedRecordFieldAnnotations(t, pkg)
 	for i := range pkg.ClassDefinitions {
 		classDef := pkg.ClassDefinitions[i]
 		classPoint := ast.PointClass
 		if classDef.IsService() {
 			classPoint = ast.PointService
 		}
-		resolveAnnotationAttachments(t, classDef, classPoint, classDef.Symbol())
+		resolveAnnotationAttachments(t, classDef, classPoint, symbolAnnotationSink(t, classDef.Symbol()))
 		resolveClassBodyAnnotationAttachments(t, classDef.Fields, classDef.InitFunction, classDef.Methods, classDef.ResourceMethods)
 	}
 	for i := range pkg.Services {
 		svc := pkg.Services[i]
-		resolveAnnotationAttachments(t, svc, ast.PointService, svc.Symbol())
+		resolveAnnotationAttachments(t, svc, ast.PointService, symbolAnnotationSink(t, svc.Symbol()))
 		resolveClassBodyAnnotationAttachments(t, svc.Fields, svc.InitFunction, svc.Methods, svc.ResourceMethods)
 	}
 	for i := range pkg.Functions {
@@ -1226,10 +1228,10 @@ func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage)
 		resolveFunctionAnnotationAttachments(t, pkg.InitFunction, false)
 	}
 	for i := range pkg.Constants {
-		resolveAnnotationAttachments(t, pkg.Constants[i], ast.PointConst, model.SymbolRef{})
+		resolveAnnotationAttachments(t, pkg.Constants[i], ast.PointConst, nil)
 	}
 	for i := range pkg.GlobalVars {
-		resolveAnnotationAttachments(t, pkg.GlobalVars[i], ast.PointVar, model.SymbolRef{})
+		resolveAnnotationAttachments(t, pkg.GlobalVars[i], ast.PointVar, nil)
 	}
 	if initialGlobalCount < len(pkg.GlobalVars) {
 		globals := make([]*ast.BLangVariable, 0, len(pkg.GlobalVars))
@@ -1243,7 +1245,7 @@ func resolveClassBodyAnnotationAttachments(t typeResolver, fields []*ast.BLangVa
 	methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod,
 ) {
 	for _, field := range fields {
-		resolveAnnotationAttachments(t, field, ast.PointObjectField, model.SymbolRef{})
+		resolveAnnotationAttachments(t, field, ast.PointObjectField, nil)
 	}
 	if initFn != nil {
 		resolveFunctionAnnotationAttachments(t, initFn, true)
@@ -1302,16 +1304,109 @@ func resolveInvokableAnnotationAttachments(
 	fn ast.InvokableNode,
 	point ast.Point,
 ) {
-	resolveAnnotationAttachments(t, fn, point, model.SymbolRef{})
+	resolveAnnotationAttachments(t, fn, point, nil)
 	parameters := fn.GetParameters()
 	for i := range parameters {
-		resolveAnnotationAttachments(t, &parameters[i], ast.PointParameter, parameters[i].Symbol())
+		resolveAnnotationAttachments(t, &parameters[i], ast.PointParameter, symbolAnnotationSink(t, parameters[i].Symbol()))
 	}
 	if restParam := fn.GetRestParam(); restParam != nil {
-		resolveAnnotationAttachments(t, restParam, ast.PointParameter, restParam.Symbol())
+		resolveAnnotationAttachments(t, restParam, ast.PointParameter, symbolAnnotationSink(t, restParam.Symbol()))
 	}
 	if ret := fn.GetReturnTypeDescriptor(); ret != nil {
-		resolveAnnotationAttachments(t, ret, ast.PointReturn, model.SymbolRef{})
+		resolveAnnotationAttachments(t, ret, ast.PointReturn, nil)
+	}
+}
+
+// inheritIncludedRecordFieldAnnotations copies the annotations of included
+// record fields onto the records that include them, so that
+//
+//	type Derived record {| *Base; |};
+//
+// sees the annotations declared on Base's fields. jBallerina drops them at the
+// inclusion boundary; we keep them, because a field pulled in by an inclusion is
+// the same field, and validation driven by field annotations would otherwise
+// silently skip every included field.
+//
+// This runs as a second pass so that it does not depend on the order type
+// definitions appear in the source. Inclusions of types from other modules need
+// no recursion: those annotations were already merged when that module was
+// compiled, and reach us through the symbol pool.
+func inheritIncludedRecordFieldAnnotations(t typeResolver, pkg *ast.BLangPackage) {
+	inclusions := make(map[model.SymbolRef][]model.SymbolRef)
+	for i := range pkg.TypeDefinitions {
+		defn := pkg.TypeDefinitions[i]
+		record, ok := defn.GetTypeData().TypeDescriptor.(*ast.BLangRecordType)
+		if !ok || len(record.Inclusions) == 0 || !ast.SymbolIsSet(defn) {
+			continue
+		}
+		inclusions[defn.Symbol()] = record.Inclusions
+	}
+	for symbol := range inclusions {
+		inherited := includedRecordFieldAnnotations(t, symbol, inclusions, make(map[model.SymbolRef]bool))
+		for field, annotations := range inherited {
+			for key, value := range annotations {
+				t.compilerContext().SetRecordFieldAnnotationValue(symbol, field, key, value)
+			}
+		}
+	}
+}
+
+// includedRecordFieldAnnotations returns the field annotations visible on the
+// record type at symbol: those reachable through its inclusions, overlaid by the
+// ones declared on its own fields. The visiting set keeps a cyclic inclusion
+// chain from recursing forever.
+func includedRecordFieldAnnotations(
+	t typeResolver,
+	symbol model.SymbolRef,
+	inclusions map[model.SymbolRef][]model.SymbolRef,
+	visiting map[model.SymbolRef]bool,
+) values.FieldAnnotationValues {
+	merged := values.NewFieldAnnotationValues()
+	if visiting[symbol] {
+		return merged
+	}
+	visiting[symbol] = true
+	defer delete(visiting, symbol)
+	for _, included := range inclusions[symbol] {
+		for field, annotations := range includedRecordFieldAnnotations(t, included, inclusions, visiting) {
+			for key, value := range annotations {
+				merged.Set(field, key, value)
+			}
+		}
+	}
+	for field, annotations := range t.compilerContext().RecordFieldAnnotationValues(symbol) {
+		for key, value := range annotations {
+			merged.Set(field, key, value)
+		}
+	}
+	return merged
+}
+
+// annotationSink records the runtime-visible annotation values resolved at one
+// attachment site. A nil sink means the site keeps no runtime-visible values.
+type annotationSink func(key string, value values.AnnotationValue)
+
+// symbolAnnotationSink stores annotation values against symbol. It returns nil
+// for the zero symbol, which marks an attachment site whose values are only
+// validated and never kept.
+func symbolAnnotationSink(t typeResolver, symbol model.SymbolRef) annotationSink {
+	if symbol == (model.SymbolRef{}) {
+		return nil
+	}
+	return func(key string, value values.AnnotationValue) {
+		t.compilerContext().SetSymbolAnnotationValue(symbol, key, value)
+	}
+}
+
+// recordFieldAnnotationSink stores annotation values against the field named
+// field of the record type defined by typeDefinition. Record types are
+// structural, so the field has no symbol of its own to key on.
+func recordFieldAnnotationSink(t typeResolver, typeDefinition model.SymbolRef, field string) annotationSink {
+	if typeDefinition == (model.SymbolRef{}) {
+		return nil
+	}
+	return func(key string, value values.AnnotationValue) {
+		t.compilerContext().SetRecordFieldAnnotationValue(typeDefinition, field, key, value)
 	}
 }
 
@@ -1319,7 +1414,7 @@ func resolveAnnotationAttachments(
 	t typeResolver,
 	node ast.AnnotatableNode,
 	point ast.Point,
-	ownerSymbol model.SymbolRef,
+	sink annotationSink,
 ) {
 	seen := make(map[string]bool)
 	repeatedValues := make(map[string]*repeatedAnnotationValue)
@@ -1390,7 +1485,7 @@ func resolveAnnotationAttachments(
 		if !runtimeValue {
 			ann.AnnotationValue = value
 		}
-		storeValue := ownerSymbol != (model.SymbolRef{}) && sym.IsRuntimeVisibleAt(pointKey)
+		storeValue := sink != nil && sym.IsRuntimeVisibleAt(pointKey)
 		if repeated && storeValue {
 			group := repeatedValues[key]
 			if group == nil {
@@ -1405,12 +1500,12 @@ func resolveAnnotationAttachments(
 		}
 		if runtimeValue {
 			if storeValue {
-				setSymbolAnnotationValue(t, ownerSymbol, key, createRuntimeAnnotationGlobal(t, ann.Expr))
+				sink(key, createRuntimeAnnotationGlobal(t, ann.Expr))
 			}
 			continue
 		}
 		if storeValue {
-			setSymbolAnnotationValue(t, ownerSymbol, key, value)
+			sink(key, value)
 		}
 	}
 
@@ -1428,12 +1523,12 @@ func resolveAnnotationAttachments(
 			}
 			expr.SetPosition(group.expressions[0].GetPosition())
 			expr.SetDeterminedType(group.listType)
-			setSymbolAnnotationValue(t, ownerSymbol, key, createRuntimeAnnotationGlobal(t, expr))
+			sink(key, createRuntimeAnnotationGlobal(t, expr))
 			continue
 		}
 		restFiller, _ := values.FillerFactoryFor(t.typeContext(), atomic.Rest())
 		value := values.NewList(group.listType, atomic, true, restFiller, len(group.values), group.values)
-		setSymbolAnnotationValue(t, ownerSymbol, key, value)
+		sink(key, value)
 	}
 }
 
@@ -1526,10 +1621,6 @@ func createRuntimeAnnotationGlobal(t typeResolver, expr ast.BLangExpression) *va
 		Module:       resolver.pkg.PackageID.PkgName.Value(),
 		GlobalName:   name,
 	}
-}
-
-func setSymbolAnnotationValue(t typeResolver, symbol model.SymbolRef, key string, value values.AnnotationValue) {
-	t.compilerContext().SetSymbolAnnotationValue(symbol, key, value)
 }
 
 func resolveBlockStatements(t typeResolver, chain *binding, stmts []ast.StatementNode) (statementEffect, bool) {
@@ -3727,6 +3818,7 @@ func resolveTypedescExpr(t typeResolver, chain *binding, e *ast.BLangTypedescExp
 	}
 	e.Constraint = constraint
 	e.AnnotationValues = annotationValuesForTypeDescriptor(t, typeDesc)
+	e.FieldAnnotationValues = recordFieldAnnotationValuesForTypeDescriptor(t, typeDesc)
 	ty := semtypes.TypedescContaining(t.typeEnv(), constraint)
 	setExpectedType(e, ty)
 	return ty, defaultExpressionEffect(chain), true
@@ -3768,6 +3860,17 @@ func annotationValuesForTypeDescriptor(t typeResolver, typeDesc ast.TypeDescript
 		return values.NewAnnotationValues()
 	}
 	return t.compilerContext().SymbolAnnotationValues(udt.Symbol())
+}
+
+func recordFieldAnnotationValuesForTypeDescriptor(
+	t typeResolver,
+	typeDesc ast.TypeDescriptor,
+) values.FieldAnnotationValues {
+	udt, ok := typeDesc.(*ast.BLangUserDefinedType)
+	if !ok || !ast.SymbolIsSet(udt) {
+		return values.NewFieldAnnotationValues()
+	}
+	return t.compilerContext().RecordFieldAnnotationValues(udt.Symbol())
 }
 
 func resolveXMLTextLiteral(_ typeResolver, chain *binding, e *ast.BLangXMLTextLiteral) (semtypes.SemType, expressionEffect, bool) {

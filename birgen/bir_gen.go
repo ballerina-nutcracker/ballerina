@@ -1058,7 +1058,7 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 
 func typedescExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangTypedescExpr) expressionEffect {
 	resultOperand := ctx.addTempVar(expr.GetDeterminedType())
-	td := values.NewTypeDesc(expr.Constraint, expr.AnnotationValues)
+	td := values.NewTypeDescWithFieldAnnotations(expr.Constraint, expr.AnnotationValues, expr.FieldAnnotationValues)
 	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(resultOperand, td, ctx.function().loc(expr.GetPosition())))
 	return expressionEffect{
 		result: resultOperand,
@@ -1798,7 +1798,11 @@ func simpleVariableReference(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BL
 	sym := ctx.getSymbol(symRef)
 	if sym.Kind() == model.SymbolKindType {
 		resultOperand := ctx.addTempVar(expr.GetDeterminedType())
-		td := values.NewTypeDesc(ctx.symbolType(symRef), ctx.compilerContext().SymbolAnnotationValues(symRef))
+		td := values.NewTypeDescWithFieldAnnotations(
+			ctx.symbolType(symRef),
+			ctx.compilerContext().SymbolAnnotationValues(symRef),
+			ctx.compilerContext().RecordFieldAnnotationValues(symRef),
+		)
 		curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(resultOperand, td, ctx.function().loc(expr.GetPosition())))
 		return expressionEffect{
 			result: resultOperand,

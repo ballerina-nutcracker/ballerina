@@ -462,6 +462,219 @@ func TestAnnotationRuntimeMetadata(t *testing.T) {
 	runExtern(t, projectCase("annotation-runtime-v"), testharness.NewTestPal(), externs)
 }
 
+func TestRecordFieldAnnotations(t *testing.T) {
+	const org, module = "$anon", "record-field-annotations-v"
+	annotationKey := func(name string) string {
+		return model.AnnotationKey(model.PackageIdentifier{
+			Organization: org,
+			Package:      module,
+			Version:      "0.0.0",
+		}, name)
+	}
+	fieldMetaKey := annotationKey("fieldMeta")
+	extraMetaKey := annotationKey("extraMeta")
+	markerKey := annotationKey("marker")
+
+	typedescArg := func(args []values.BalValue) (*values.TypeDesc, error) {
+		td, ok := args[0].(*values.TypeDesc)
+		if !ok {
+			return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+		}
+		return td, nil
+	}
+	// metaName reports the "name" field of a Meta annotation value, or
+	// "<absent>" when the field carries no such annotation.
+	metaName := func(ctx *extern.Context, args []values.BalValue, key string) (values.BalValue, error) {
+		td, err := typedescArg(args)
+		if err != nil {
+			return nil, err
+		}
+		field, ok := args[1].(string)
+		if !ok {
+			return nil, fmt.Errorf("expected string field name, got %T", args[1])
+		}
+		annotations, ok := ctx.RecordFieldAnnotations(td, field)
+		if !ok {
+			return "<absent>", nil
+		}
+		value, ok := annotations[key]
+		if !ok {
+			return "<absent>", nil
+		}
+		mapping, ok := value.(*values.Map)
+		if !ok {
+			return nil, fmt.Errorf("annotation value has type %T", value)
+		}
+		name, ok := mapping.Get("name")
+		if !ok {
+			return nil, fmt.Errorf("annotation value has no 'name' field")
+		}
+		return name, nil
+	}
+
+	externs := []testharness.ExternRegistration{
+		{Org: org, Module: module, FuncName: "annotatedFields",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				td, err := typedescArg(args)
+				if err != nil {
+					return nil, err
+				}
+				return strings.Join(ctx.AnnotatedRecordFields(td), ","), nil
+			}},
+		{Org: org, Module: module, FuncName: "fieldMetaName",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				return metaName(ctx, args, fieldMetaKey)
+			}},
+		{Org: org, Module: module, FuncName: "extraMetaName",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				return metaName(ctx, args, extraMetaKey)
+			}},
+		{Org: org, Module: module, FuncName: "hasMarker",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				td, err := typedescArg(args)
+				if err != nil {
+					return nil, err
+				}
+				field, ok := args[1].(string)
+				if !ok {
+					return nil, fmt.Errorf("expected string field name, got %T", args[1])
+				}
+				annotations, ok := ctx.RecordFieldAnnotations(td, field)
+				if !ok {
+					return false, nil
+				}
+				return annotations[markerKey] == true, nil
+			}},
+	}
+	runExtern(t, fileCase("record-field-annotations-v"), testharness.NewTestPal(), externs)
+}
+
+func TestRecordFieldAnnotationsStructural(t *testing.T) {
+	const org, module = "$anon", "record-field-annotations-2-v"
+	annotationKey := func(name string) string {
+		return model.AnnotationKey(model.PackageIdentifier{
+			Organization: org,
+			Package:      module,
+			Version:      "0.0.0",
+		}, name)
+	}
+	fieldMetaKey := annotationKey("fieldMeta")
+	repeatableKey := annotationKey("repeatable")
+
+	fieldAnnotations := func(ctx *extern.Context, args []values.BalValue) (values.AnnotationValues, bool, error) {
+		td, ok := args[0].(*values.TypeDesc)
+		if !ok {
+			return nil, false, fmt.Errorf("expected typedesc, got %T", args[0])
+		}
+		field, ok := args[1].(string)
+		if !ok {
+			return nil, false, fmt.Errorf("expected string field name, got %T", args[1])
+		}
+		annotations, found := ctx.RecordFieldAnnotations(td, field)
+		return annotations, found, nil
+	}
+	metaName := func(value values.AnnotationValue) (string, error) {
+		mapping, ok := value.(*values.Map)
+		if !ok {
+			return "", fmt.Errorf("annotation value has type %T", value)
+		}
+		name, ok := mapping.Get("name")
+		if !ok {
+			return "", fmt.Errorf("annotation value has no 'name' field")
+		}
+		return values.String(name, nil), nil
+	}
+
+	externs := []testharness.ExternRegistration{
+		{Org: org, Module: module, FuncName: "annotatedFields",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				td, ok := args[0].(*values.TypeDesc)
+				if !ok {
+					return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+				}
+				return strings.Join(ctx.AnnotatedRecordFields(td), ","), nil
+			}},
+		{Org: org, Module: module, FuncName: "fieldMetaName",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				annotations, found, err := fieldAnnotations(ctx, args)
+				if err != nil || !found {
+					return "<absent>", err
+				}
+				value, ok := annotations[fieldMetaKey]
+				if !ok {
+					return "<absent>", nil
+				}
+				return metaName(value)
+			}},
+		{Org: org, Module: module, FuncName: "repeatableNames",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				annotations, found, err := fieldAnnotations(ctx, args)
+				if err != nil || !found {
+					return "<absent>", err
+				}
+				list, ok := annotations[repeatableKey].(*values.List)
+				if !ok {
+					return nil, fmt.Errorf("repeated annotation has type %T", annotations[repeatableKey])
+				}
+				names := make([]string, 0, list.Len())
+				for i := 0; i < list.Len(); i++ {
+					name, err := metaName(list.Get(i))
+					if err != nil {
+						return nil, err
+					}
+					names = append(names, name)
+				}
+				return strings.Join(names, "|"), nil
+			}},
+	}
+	runExtern(t, fileCase("record-field-annotations-2-v"), testharness.NewTestPal(), externs)
+}
+
+func TestRecordFieldAnnotationsCrossModule(t *testing.T) {
+	const org, module = "testorg", "recordfieldannotations"
+	fieldMetaKey := model.AnnotationKey(model.PackageIdentifier{
+		Organization: org,
+		Package:      module + ".types",
+		Version:      "0.1.0",
+	}, "fieldMeta")
+
+	externs := []testharness.ExternRegistration{
+		{Org: org, Module: module, FuncName: "annotatedFields",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				td, ok := args[0].(*values.TypeDesc)
+				if !ok {
+					return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+				}
+				return strings.Join(ctx.AnnotatedRecordFields(td), ","), nil
+			}},
+		{Org: org, Module: module, FuncName: "fieldMetaName",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				td, ok := args[0].(*values.TypeDesc)
+				if !ok {
+					return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+				}
+				field, ok := args[1].(string)
+				if !ok {
+					return nil, fmt.Errorf("expected string field name, got %T", args[1])
+				}
+				annotations, found := ctx.RecordFieldAnnotations(td, field)
+				if !found {
+					return "<absent>", nil
+				}
+				mapping, ok := annotations[fieldMetaKey].(*values.Map)
+				if !ok {
+					return "<absent>", nil
+				}
+				name, ok := mapping.Get("name")
+				if !ok {
+					return nil, fmt.Errorf("annotation value has no 'name' field")
+				}
+				return name, nil
+			}},
+	}
+	runExtern(t, projectCase("record-field-annotations-project-v"), testharness.NewTestPal(), externs)
+}
+
 func TestStartMethod(t *testing.T) {
 	externs := []testharness.ExternRegistration{
 		{
@@ -730,6 +943,153 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 	if got := pal.Stdout(); got != expected {
 		t.Errorf("expected %q, got %q", expected, got)
 	}
+}
+
+// TestRecordFieldAnnotationsSymbolPoolRoundtrip compiles a dependency module,
+// pushes its symbols through the symbol pool codec into a fresh environment,
+// then recompiles the consumer against the deserialized symbols. This is the
+// path a prebuilt .bala dependency takes, and it is the only way per-field
+// annotations reach a consumer compiled in a separate process.
+func TestRecordFieldAnnotationsSymbolPoolRoundtrip(t *testing.T) {
+	projectDir := filepath.Join(testDataDir, "record-field-annotations-project-v")
+	mainBalPath := filepath.Join(projectDir, "main.bal")
+	absProjectDir, err := filepath.Abs(projectDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const (
+		org         = "testorg"
+		packageRoot = "recordfieldannotations"
+		typesMod    = "recordfieldannotations.types"
+	)
+	fieldMetaKey := model.AnnotationKey(model.PackageIdentifier{
+		Organization: org,
+		Package:      typesMod,
+		Version:      "0.1.0",
+	}, "fieldMeta")
+
+	ballerinaEnvFs := os.DirFS(getBallerinaEnvPath(t))
+	result, err := projects.Load(os.DirFS(absProjectDir), ".", projects.ProjectLoadConfig{
+		BallerinaEnvFs: ballerinaEnvFs,
+	})
+	if err != nil {
+		t.Fatalf("failed to load project: %v", err)
+	}
+	if result.Diagnostics().HasErrors() {
+		t.Fatal("project load had errors")
+	}
+	compilation := result.Project().CurrentPackage().Compilation()
+	if compilation.DiagnosticResult().HasErrors() {
+		for _, d := range compilation.DiagnosticResult().Diagnostics() {
+			t.Logf("diagnostic: %v", d)
+		}
+		t.Fatal("compilation had errors")
+	}
+
+	backend := projects.NewBallerinaBackend(compilation)
+	birPkgs := backend.BIRPackages()
+	mainPkg := backend.BIR()
+	exportedSymbols := backend.ExportedSymbols()
+	typeEnv := result.Project().Environment().TypeEnv()
+
+	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	publicSymbols := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
+	deserializedPkgs := make([]*bir.BIRPackage, 0, len(birPkgs))
+	for _, pkg := range birPkgs {
+		if pkg == mainPkg {
+			continue
+		}
+		pkgIdent := semantics.PackageIdentifier{
+			OrgName:    pkg.PackageID.OrgName.Value(),
+			ModuleName: pkg.PackageID.PkgName.Value(),
+		}
+		exported, ok := exportedSymbols[pkgIdent]
+		if !ok {
+			t.Fatalf("exported symbols not found for %s", pkgIdent.ModuleName)
+		}
+		symBytes, err := symbolpool.Marshal(exported, result.Project().Environment().CompilerEnvironment())
+		if err != nil {
+			t.Fatalf("symbol Marshal for %s: %v", pkgIdent.ModuleName, err)
+		}
+		deserializedExported, err := symbolpool.Unmarshal(freshEnv, symBytes)
+		if err != nil {
+			t.Fatalf("symbol Unmarshal for %s: %v", pkgIdent.ModuleName, err)
+		}
+		publicSymbols[pkgIdent] = deserializedExported
+
+		birBytes, err := bircodec.Marshal(typeEnv, pkg)
+		if err != nil {
+			t.Fatalf("BIR Marshal for %s: %v", pkgIdent.ModuleName, err)
+		}
+		deserializedPkg, err := bircodec.Unmarshal(context.NewCompilerContext(freshEnv), birBytes)
+		if err != nil {
+			t.Fatalf("BIR Unmarshal for %s: %v", pkgIdent.ModuleName, err)
+		}
+		deserializedPkgs = append(deserializedPkgs, deserializedPkg)
+	}
+
+	_, mainBIR := compileSingleFileModule(t, freshEnv, mainBalPath,
+		model.Name(org),
+		[]model.Name{model.Name(packageRoot)},
+		publicSymbols,
+		org,
+	)
+	deserializedPkgs = append(deserializedPkgs, mainBIR)
+
+	pal := testharness.NewTestPal()
+	defer pal.Close()
+	rt := runtime.NewRuntime(pal.Platform(), freshEnv.GetTypeEnv())
+	registerFieldAnnotationExterns(rt, org, packageRoot, fieldMetaKey)
+	for _, pkg := range deserializedPkgs {
+		if err := rt.Init(*pkg); err != nil {
+			t.Fatalf("runtime error: %v", err)
+		}
+	}
+	rt.Listen()
+	<-rt.ExitStatus
+
+	const expected = "name\nimported-name\n<absent>\ncreatedAt,note\nimported-createdAt\n"
+	if got := pal.Stdout(); got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
+// registerFieldAnnotationExterns registers the natives used by the
+// record-field-annotations project fixture.
+func registerFieldAnnotationExterns(rt *runtime.Runtime, org, module, fieldMetaKey string) {
+	runtime.RegisterExternFunction(rt, org, module, "annotatedFields",
+		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			td, ok := args[0].(*values.TypeDesc)
+			if !ok {
+				return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+			}
+			return strings.Join(ctx.AnnotatedRecordFields(td), ","), nil
+		})
+	runtime.RegisterExternFunction(rt, org, module, "fieldMetaName",
+		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			td, ok := args[0].(*values.TypeDesc)
+			if !ok {
+				return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+			}
+			field, ok := args[1].(string)
+			if !ok {
+				return nil, fmt.Errorf("expected string field name, got %T", args[1])
+			}
+			annotations, found := ctx.RecordFieldAnnotations(td, field)
+			if !found {
+				return "<absent>", nil
+			}
+			mapping, ok := annotations[fieldMetaKey].(*values.Map)
+			if !ok {
+				return "<absent>", nil
+			}
+			name, ok := mapping.Get("name")
+			if !ok {
+				return nil, fmt.Errorf("annotation value has no 'name' field")
+			}
+			return name, nil
+		})
 }
 
 // compileSingleFileModule parses a .bal file and runs the full compilation

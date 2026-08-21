@@ -111,9 +111,11 @@ func NewRuntime(platform pal.Platform, tyEnv semtypes.Env) *Runtime {
 			return exec.LookupFunction(cx.Env, org, module, name)
 		},
 	}, extern.MetadataHandles{
-		Signature:         exec.FunctionSignature,
-		Metadata:          exec.FunctionMetadata,
-		ObjectAnnotations: exec.ObjectAnnotations,
+		Signature:              exec.FunctionSignature,
+		Metadata:               exec.FunctionMetadata,
+		ObjectAnnotations:      exec.ObjectAnnotations,
+		RecordFieldAnnotations: exec.RecordFieldAnnotations,
+		AnnotatedRecordFields:  exec.AnnotatedRecordFields,
 	})
 	rt.env = env
 	for _, init := range moduleInitializers {

@@ -181,6 +181,19 @@ func (c *CompilerContext) SymbolAnnotationValues(symbol model.SymbolRef) values.
 	return c.env.SymbolAnnotationValues(symbol)
 }
 
+func (c *CompilerContext) SetRecordFieldAnnotationValue(
+	symbol model.SymbolRef,
+	field string,
+	key string,
+	value values.AnnotationValue,
+) {
+	c.env.SetRecordFieldAnnotationValue(symbol, field, key, value)
+}
+
+func (c *CompilerContext) RecordFieldAnnotationValues(symbol model.SymbolRef) values.FieldAnnotationValues {
+	return c.env.RecordFieldAnnotationValues(symbol)
+}
+
 func (c *CompilerContext) DistinctTypeID(symbol model.SymbolRef) int {
 	return c.env.DistinctTypeID(symbol)
 }

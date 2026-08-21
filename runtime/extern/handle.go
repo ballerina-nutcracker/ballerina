@@ -80,6 +80,12 @@ type MetadataHandles struct {
 	Signature         func(*Context, any) (FunctionSignature, bool)
 	Metadata          func(*Context, any) (FunctionMetadata, bool)
 	ObjectAnnotations func(*Context, *values.Object) (values.AnnotationValues, bool)
+	// RecordFieldAnnotations resolves the annotations attached to one field of
+	// a record type descriptor.
+	RecordFieldAnnotations func(*Context, *values.TypeDesc, string) (values.AnnotationValues, bool)
+	// AnnotatedRecordFields lists the annotated field names of a record type
+	// descriptor.
+	AnnotatedRecordFields func(*Context, *values.TypeDesc) []string
 }
 
 // LookupObjectMethod resolves a regular method on obj. The second return is
@@ -133,6 +139,19 @@ func (c *Context) MethodMetadata(h MethodHandle) (FunctionMetadata, bool) {
 // the object's class or service declaration.
 func (c *Context) ObjectAnnotations(obj *values.Object) (values.AnnotationValues, bool) {
 	return c.Env.metadata.ObjectAnnotations(c, obj)
+}
+
+// RecordFieldAnnotations returns the runtime-visible annotations attached to the
+// field named field of the record type td denotes. The second return is false if
+// td denotes a type with no annotations on that field.
+func (c *Context) RecordFieldAnnotations(td *values.TypeDesc, field string) (values.AnnotationValues, bool) {
+	return c.Env.metadata.RecordFieldAnnotations(c, td, field)
+}
+
+// AnnotatedRecordFields returns the names of td's record fields that carry at
+// least one runtime-visible annotation, in a deterministic order.
+func (c *Context) AnnotatedRecordFields(td *values.TypeDesc) []string {
+	return c.Env.metadata.AnnotatedRecordFields(c, td)
 }
 
 // InvokeMethod calls the method captured by h. For object and remote

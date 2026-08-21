@@ -416,6 +416,9 @@ type (
 		// constant.
 		Constraint       semtypes.SemType
 		AnnotationValues values.AnnotationValues
+		// FieldAnnotationValues holds the annotations attached to the fields of
+		// the record type this typedesc denotes, keyed by field name.
+		FieldAnnotationValues values.FieldAnnotationValues
 	}
 
 	BLangInferredTypedescDefault struct {

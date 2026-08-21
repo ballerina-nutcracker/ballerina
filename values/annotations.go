@@ -16,6 +16,8 @@
 
 package values
 
+import "sort"
+
 // AnnotationValue is the evaluated Ballerina value stored for an annotation.
 type AnnotationValue = BalValue
 
@@ -38,4 +40,33 @@ func (r *RuntimeAnnotationValueRef) GlobalLookupKey() string {
 // NewAnnotationValues returns an initialized annotation value map.
 func NewAnnotationValues() AnnotationValues {
 	return make(AnnotationValues)
+}
+
+// FieldAnnotationValues maps a record field name to the annotation values
+// attached to that field.
+type FieldAnnotationValues map[string]AnnotationValues
+
+// NewFieldAnnotationValues returns an initialized per-field annotation map.
+func NewFieldAnnotationValues() FieldAnnotationValues {
+	return make(FieldAnnotationValues)
+}
+
+// Set records value under key as an annotation of field.
+func (f FieldAnnotationValues) Set(field string, key string, value AnnotationValue) {
+	annotations, ok := f[field]
+	if !ok {
+		annotations = NewAnnotationValues()
+		f[field] = annotations
+	}
+	annotations[key] = value
+}
+
+// SortedFields returns the annotated field names in a deterministic order.
+func (f FieldAnnotationValues) SortedFields() []string {
+	fields := make([]string, 0, len(f))
+	for field := range f {
+		fields = append(fields, field)
+	}
+	sort.Strings(fields)
+	return fields
 }

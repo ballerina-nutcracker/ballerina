@@ -47,3 +47,21 @@ func resolveAnnotationValues(ctx *extern.Context, annotations values.AnnotationV
 	}
 	return resolved, true
 }
+
+// RecordFieldAnnotations resolves the runtime-visible annotation values attached
+// to the field named field of the record type td denotes. The second return is
+// false if the field carries no annotations or a runtime annotation value could
+// not be loaded.
+func RecordFieldAnnotations(ctx *extern.Context, td *values.TypeDesc, field string) (values.AnnotationValues, bool) {
+	annotations, ok := td.FieldAnnotations[field]
+	if !ok {
+		return values.NewAnnotationValues(), false
+	}
+	return resolveAnnotationValues(ctx, annotations)
+}
+
+// AnnotatedRecordFields returns the names of the record fields of td that carry
+// at least one runtime-visible annotation, in a deterministic order.
+func AnnotatedRecordFields(_ *extern.Context, td *values.TypeDesc) []string {
+	return td.FieldAnnotations.SortedFields()
+}

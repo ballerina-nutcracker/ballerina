@@ -110,8 +110,12 @@ type CompilerEnvironment struct {
 	// a per-symbol word and keeps lookup keyed by reference. Values are written
 	// single-threaded during top-level resolution and read concurrently later.
 	symbolAnnotations sync.Map // model.SymbolRef -> values.AnnotationValues
-	statsEnabled      bool
-	diagnosticContext *diagnostics.DiagnosticEnv
+	// recordFieldAnnotations holds the annotation values attached to individual
+	// record fields, keyed by the enclosing type definition's symbol ref. Record
+	// types are structural, so a field has no symbol of its own to key on.
+	recordFieldAnnotations sync.Map // model.SymbolRef -> values.FieldAnnotationValues
+	statsEnabled           bool
+	diagnosticContext      *diagnostics.DiagnosticEnv
 }
 
 // SetSymbolAnnotationValue records an annotation value for the given symbol.
@@ -128,6 +132,28 @@ func (c *CompilerEnvironment) SymbolAnnotationValues(symbol model.SymbolRef) val
 		return av.(values.AnnotationValues)
 	}
 	return values.NewAnnotationValues()
+}
+
+// SetRecordFieldAnnotationValue records an annotation value attached to the
+// field named field of the record type defined by symbol.
+func (c *CompilerEnvironment) SetRecordFieldAnnotationValue(
+	symbol model.SymbolRef,
+	field string,
+	key string,
+	value values.AnnotationValue,
+) {
+	actual, _ := c.recordFieldAnnotations.LoadOrStore(symbol, values.NewFieldAnnotationValues())
+	actual.(values.FieldAnnotationValues).Set(field, key, value)
+}
+
+// RecordFieldAnnotationValues returns the per-field annotation values for the
+// record type defined by symbol, or an empty set if it has none. Callers should
+// treat the returned map as read-only compiler metadata.
+func (c *CompilerEnvironment) RecordFieldAnnotationValues(symbol model.SymbolRef) values.FieldAnnotationValues {
+	if av, ok := c.recordFieldAnnotations.Load(symbol); ok {
+		return av.(values.FieldAnnotationValues)
+	}
+	return values.NewFieldAnnotationValues()
 }
 
 func (c *CompilerEnvironment) DiagnosticEnv() *diagnostics.DiagnosticEnv {
