@@ -3,172 +3,152 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad /tmp/bal_io_byte_channel_closed.bin
     path = %1;
-    %4 = closure_fp $anon/.:main$493$0$thunk$0
-    %5 = main$493$0$thunk$0() -> bb1;
+    $desugar$0 = path;
+    %5 = ConstantLoad 1
+    %6 = ConstantLoad 2
+    %7 = ConstantLoad 3
+    %8 = ConstantLoad 3
+    %9 = newArray [int:Unsigned8...][%8]{%5, %6, %7}
+    $desugar$1 = %9;
+    %11 = $default$4($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    %6 = %5 is error
-    %6 ? bb2 : bb3;
+    $desugar$2 = %11;
+    %13 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %0 = %5;
-    return;
+    %14 = %13 is error
+    %14 ? bb3 : bb4;
   }
   bb3 {
-    %3 = %5;
-    GOTO bb4;
+    %0 = %13;
+    return;
   }
   bb4 {
-    %8 = openReadableFile(path) -> bb5;
+    %3 = %13;
+    GOTO bb5;
   }
   bb5 {
-    %9 = %8 is error
-    %9 ? bb6 : bb7;
+    %16 = openReadableFile(path) -> bb6;
   }
   bb6 {
-    %0 = %8;
-    return;
+    %17 = %16 is error
+    %17 ? bb7 : bb8;
   }
   bb7 {
-    %7 = %8;
-    GOTO bb8;
-  }
-  bb8 {
-    reader = %7;
-    %12 = close(reader) -> bb9;
-  }
-  bb9 {
-    %13 = %12 is error
-    %13 ? bb10 : bb11;
-  }
-  bb10 {
-    %0 = %12;
+    %0 = %16;
     return;
   }
+  bb8 {
+    %15 = %16;
+    GOTO bb9;
+  }
+  bb9 {
+    reader = %15;
+    %20 = close(reader) -> bb10;
+  }
+  bb10 {
+    %21 = %20 is error
+    %21 ? bb11 : bb12;
+  }
   bb11 {
-    %11 = %12;
-    GOTO bb12;
+    %0 = %20;
+    return;
   }
   bb12 {
-    %14 = close(reader) -> bb13;
+    %19 = %20;
+    GOTO bb13;
   }
   bb13 {
-    secondClose = %14;
-    %16 = secondClose is error
-    %17 = %16;
-    %18 = println(%17) -> bb14;
+    %22 = close(reader) -> bb14;
   }
   bb14 {
-    %19 = secondClose is error
-    %19 ? bb15 : bb18;
+    secondClose = %22;
+    %24 = secondClose is error
+    %25 = %24;
+    %26 = println(%25) -> bb15;
   }
   bb15 {
-    PushScopeFrame 2
-    %0 = message((1, secondClose)) -> bb16;
+    %27 = secondClose is error
+    %27 ? bb16 : bb19;
   }
   bb16 {
-    %1 = println(%0) -> bb17;
+    PushScopeFrame 2
+    %0 = message((1, secondClose)) -> bb17;
   }
   bb17 {
-    PopScopeFrame
-    GOTO bb18;
+    %1 = println(%0) -> bb18;
   }
   bb18 {
-    PushScopeFrame 25
-    %0 = ConstantLoad 1
-    %1 = %0;
-    %2 = read((1, reader),%1) -> bb19;
+    PopScopeFrame
+    GOTO bb19;
   }
   bb19 {
+    PushScopeFrame 27
+    %0 = ConstantLoad 1
+    %1 = %0;
+    %2 = read((1, reader),%1) -> bb20;
+  }
+  bb20 {
     readAfterClose = %2;
     %4 = readAfterClose is error
     %5 = %4;
-    %6 = println(%5) -> bb20;
-  }
-  bb20 {
-    %8 = closure_fp $anon/.:main$493$0$thunk$1
-    %9 = main$493$0$thunk$1() -> bb21;
+    %6 = println(%5) -> bb21;
   }
   bb21 {
-    %10 = %9 is error
-    %10 ? bb22 : bb23;
+    $desugar$3 = (1, path);
+    %9 = $default$11($desugar$3) -> bb22;
   }
   bb22 {
-    (1, %0) = %9;
-    PopScopeFrame
-    return;
+    $desugar$4 = %9;
+    %11 = openWritableFile($desugar$3,$desugar$4) -> bb23;
   }
   bb23 {
-    %7 = %9;
-    GOTO bb24;
+    %12 = %11 is error
+    %12 ? bb24 : bb25;
   }
   bb24 {
-    writer = %7;
-    %13 = close(writer) -> bb25;
+    (1, %0) = %11;
+    PopScopeFrame
+    return;
   }
   bb25 {
-    %14 = %13 is error
-    %14 ? bb26 : bb27;
+    %7 = %11;
+    GOTO bb26;
   }
   bb26 {
-    (1, %0) = %13;
-    PopScopeFrame
-    return;
+    writer = %7;
+    %15 = close(writer) -> bb27;
   }
   bb27 {
-    %12 = %13;
-    GOTO bb28;
+    %16 = %15 is error
+    %16 ? bb28 : bb29;
   }
   bb28 {
-    %15 = ConstantLoad 1
-    %16 = ConstantLoad 1
-    %17 = newArray [int:Unsigned8...][%16]{%15}
-    %18 = ConstantLoad 0
-    %19 = %18;
-    %20 = write(writer,%17,%19) -> bb29;
-  }
-  bb29 {
-    writeAfterClose = %20;
-    %22 = writeAfterClose is error
-    %23 = %22;
-    %24 = println(%23) -> bb30;
-  }
-  bb30 {
+    (1, %0) = %15;
     PopScopeFrame
     return;
   }
-}
-main$493$0$thunk$0() -> nil|error{
-  bb0 {
-    $desugar$0 = (1, path);
-    %2 = ConstantLoad 1
-    %3 = ConstantLoad 2
-    %4 = ConstantLoad 3
-    %5 = ConstantLoad 3
-    %6 = newArray [int:Unsigned8...][%5]{%2, %3, %4}
-    $desugar$1 = %6;
-    %8 = $default$4($desugar$0,$desugar$1) -> bb1;
+  bb29 {
+    %14 = %15;
+    GOTO bb30;
   }
-  bb1 {
-    $desugar$2 = %8;
-    %10 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  bb30 {
+    %17 = ConstantLoad 1
+    %18 = ConstantLoad 1
+    %19 = newArray [int:Unsigned8...][%18]{%17}
+    %20 = ConstantLoad 0
+    %21 = %20;
+    %22 = write(writer,%19,%21) -> bb31;
   }
-  bb2 {
-    %0 = %10;
-    return;
+  bb31 {
+    writeAfterClose = %22;
+    %24 = writeAfterClose is error
+    %25 = %24;
+    %26 = println(%25) -> bb32;
   }
-}
-main$493$0$thunk$1() -> error|object { private function attachFile(string, "APPEND"|"OVERWRITE") returns nil|error; public function close() returns nil|error; public function init() returns nil; public function write([int:Unsigned8...], int) returns int|error }{
-  bb0 {
-    $desugar$3 = (2, path);
-    %2 = $default$11($desugar$3) -> bb1;
-  }
-  bb1 {
-    $desugar$4 = %2;
-    %4 = openWritableFile($desugar$3,$desugar$4) -> bb2;
-  }
-  bb2 {
-    %0 = %4;
+  bb32 {
+    PopScopeFrame
     return;
   }
 }

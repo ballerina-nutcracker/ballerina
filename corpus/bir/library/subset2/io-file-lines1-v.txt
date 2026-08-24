@@ -3,89 +3,79 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad /tmp/bal_io_lines1.txt
     path = %1;
-    %4 = closure_fp $anon/.:main$493$0$thunk$0
-    %5 = main$493$0$thunk$0() -> bb1;
+    $desugar$0 = path;
+    %5 = ConstantLoad Alpha
+    %6 = ConstantLoad Beta
+    %7 = ConstantLoad Gamma
+    %8 = ConstantLoad 3
+    %9 = newArray [string...][%8]{%5, %6, %7}
+    $desugar$1 = %9;
+    %11 = $default$2($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    %6 = %5 is error
-    %6 ? bb2 : bb3;
+    $desugar$2 = %11;
+    %13 = fileWriteLines($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %0 = %5;
-    return;
+    %14 = %13 is error
+    %14 ? bb3 : bb4;
   }
   bb3 {
-    %3 = %5;
-    GOTO bb4;
-  }
-  bb4 {
-    %8 = fileReadLines(path) -> bb5;
-  }
-  bb5 {
-    %9 = %8 is error
-    %9 ? bb6 : bb7;
-  }
-  bb6 {
-    %0 = %8;
+    %0 = %13;
     return;
   }
+  bb4 {
+    %3 = %13;
+    GOTO bb5;
+  }
+  bb5 {
+    %16 = fileReadLines(path) -> bb6;
+  }
+  bb6 {
+    %17 = %16 is error
+    %17 ? bb7 : bb8;
+  }
   bb7 {
-    %7 = %8;
-    GOTO bb8;
+    %0 = %16;
+    return;
   }
   bb8 {
-    lines = %7;
-    $desugar$3 = lines;
-    %12 = ConstantLoad 0
-    $desugar$4 = %12;
-    %14 = length($desugar$3) -> bb9;
+    %15 = %16;
+    GOTO bb9;
   }
   bb9 {
-    $desugar$5 = %14;
-    GOTO bb10;
+    lines = %15;
+    $desugar$3 = lines;
+    %20 = ConstantLoad 0
+    $desugar$4 = %20;
+    %22 = length($desugar$3) -> bb10;
   }
   bb10 {
-    %17 = $desugar$4;
-    %18 = $desugar$5;
-    %16 = < %17 %18;
-    %16 ? bb11 : bb12;
+    $desugar$5 = %22;
+    GOTO bb11;
   }
   bb11 {
+    %25 = $desugar$4;
+    %26 = $desugar$5;
+    %24 = < %25 %26;
+    %24 ? bb12 : bb13;
+  }
+  bb12 {
     PushScopeFrame 7
     %0 = (1, $desugar$3)[(1, $desugar$4)];
     line = %0;
-    %2 = println(line) -> bb13;
-  }
-  bb12 {
-    return;
+    %2 = println(line) -> bb14;
   }
   bb13 {
+    return;
+  }
+  bb14 {
     %4 = (1, $desugar$4);
     %5 = ConstantLoad 1
     %6 = %5;
     %3 = + %4 %6;
     (1, $desugar$4) = %3;
     PopScopeFrame
-    GOTO bb10;
-  }
-}
-main$493$0$thunk$0() -> nil|error{
-  bb0 {
-    $desugar$0 = (1, path);
-    %2 = ConstantLoad Alpha
-    %3 = ConstantLoad Beta
-    %4 = ConstantLoad Gamma
-    %5 = ConstantLoad 3
-    %6 = newArray [string...][%5]{%2, %3, %4}
-    $desugar$1 = %6;
-    %8 = $default$2($desugar$0,$desugar$1) -> bb1;
-  }
-  bb1 {
-    $desugar$2 = %8;
-    %10 = fileWriteLines($desugar$0,$desugar$1,$desugar$2) -> bb2;
-  }
-  bb2 {
-    %0 = %10;
-    return;
+    GOTO bb11;
   }
 }

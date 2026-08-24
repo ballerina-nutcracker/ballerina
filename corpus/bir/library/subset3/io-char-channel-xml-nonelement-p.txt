@@ -1,84 +1,74 @@
 module $anon.. v 0.0.0;
 main() -> nil|error{
   bb0 {
-    %2 = fp $anon/.:main$493$0$thunk$0
-    %3 = main$493$0$thunk$0() -> bb1;
+    %2 = ConstantLoad /tmp/bal_io_char_xml_nonelement.xml
+    $desugar$0 = %2;
+    %4 = $default$11($desugar$0) -> bb1;
   }
   bb1 {
-    %4 = %3 is error
-    %4 ? bb2 : bb3;
+    $desugar$1 = %4;
+    %6 = openWritableFile($desugar$0,$desugar$1) -> bb2;
   }
   bb2 {
-    %0 = %3;
-    return;
+    %7 = %6 is error
+    %7 ? bb3 : bb4;
   }
   bb3 {
-    %1 = %3;
-    GOTO bb4;
+    %0 = %6;
+    return;
   }
   bb4 {
-    wb = %1;
-    %6 = newObject ballerina/io:WritableCharacterChannel
-    %7 = ConstantLoad UTF-8
-    %8 = init(%6,wb,%7) -> bb5;
+    %1 = %6;
+    GOTO bb5;
   }
   bb5 {
-    %10 = %8 is nil
-    %10 ? bb6 : bb7;
+    wb = %1;
+    %9 = newObject ballerina/io:WritableCharacterChannel
+    %10 = ConstantLoad UTF-8
+    %11 = init(%9,wb,%10) -> bb6;
   }
   bb6 {
-    %9 = %6;
-    GOTO bb8;
+    %13 = %11 is nil
+    %13 ? bb7 : bb8;
   }
   bb7 {
-    %9 = %8;
-    GOTO bb8;
+    %12 = %9;
+    GOTO bb9;
   }
   bb8 {
-    wc = %9;
-    %12 = ConstantLoad c
-    %13 = newXMLComment(%12)
-    %14 = ConstantLoad note
-    %15 = newXMLElement(%14, ())
-    %16 = newXMLSequence{%13, %15}
-    seq = %16;
-    %19 = ConstantLoad system
-    %20 = ConstantLoad note.dtd
-    %21 = newMap {| internalSubset: nil|string, public: nil|string, system: nil|string, never... |}{%19=%20} defaults{system=ballerina/io:$desugar$0, public=ballerina/io:$desugar$1, internalSubset=ballerina/io:$desugar$2}
-    %22 = writeXml(wc,seq,%21) -> bb9;
+    %12 = %11;
+    GOTO bb9;
   }
   bb9 {
-    %23 = %22 is error
-    %23 ? bb10 : bb11;
+    wc = %12;
+    %15 = ConstantLoad c
+    %16 = newXMLComment(%15)
+    %17 = ConstantLoad note
+    %18 = newXMLElement(%17, ())
+    %19 = newXMLSequence{%16, %18}
+    seq = %19;
+    %22 = ConstantLoad system
+    %23 = ConstantLoad note.dtd
+    %24 = newMap {| internalSubset: nil|string, public: nil|string, system: nil|string, never... |}{%22=%23} defaults{system=ballerina/io:$desugar$0, public=ballerina/io:$desugar$1, internalSubset=ballerina/io:$desugar$2}
+    %25 = writeXml(wc,seq,%24) -> bb10;
   }
   bb10 {
-    %0 = %22;
-    return;
+    %26 = %25 is error
+    %26 ? bb11 : bb12;
   }
   bb11 {
-    %18 = %22;
-    GOTO bb12;
-  }
-  bb12 {
-    %24 = ConstantLoad unreached
-    %25 = println(%24) -> bb13;
-  }
-  bb13 {
+    %0 = %25;
     return;
   }
-}
-main$493$0$thunk$0() -> error|object { private function attachFile(string, "APPEND"|"OVERWRITE") returns nil|error; public function close() returns nil|error; public function init() returns nil; public function write([int:Unsigned8...], int) returns int|error }{
-  bb0 {
-    %1 = ConstantLoad /tmp/bal_io_char_xml_nonelement.xml
-    $desugar$0 = %1;
-    %3 = $default$11($desugar$0) -> bb1;
+  bb12 {
+    %21 = %25;
+    GOTO bb13;
   }
-  bb1 {
-    $desugar$1 = %3;
-    %5 = openWritableFile($desugar$0,$desugar$1) -> bb2;
+  bb13 {
+    %27 = ConstantLoad unreached
+    %28 = println(%27) -> bb14;
   }
-  bb2 {
-    %0 = %5;
+  bb14 {
     return;
   }
 }

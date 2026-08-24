@@ -3,640 +3,610 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad /tmp/bal_io_char_write.txt
     path = %1;
-    %4 = closure_fp $anon/.:main$493$0$thunk$0
-    %5 = main$493$0$thunk$0() -> bb1;
+    $desugar$0 = path;
+    %5 = $default$11($desugar$0) -> bb1;
   }
   bb1 {
-    %6 = %5 is error
-    %6 ? bb2 : bb3;
+    $desugar$1 = %5;
+    %7 = openWritableFile($desugar$0,$desugar$1) -> bb2;
   }
   bb2 {
-    %0 = %5;
-    return;
+    %8 = %7 is error
+    %8 ? bb3 : bb4;
   }
   bb3 {
-    %3 = %5;
-    GOTO bb4;
+    %0 = %7;
+    return;
   }
   bb4 {
-    wb = %3;
-    %8 = newObject ballerina/io:WritableCharacterChannel
-    %9 = ConstantLoad UTF-8
-    %10 = init(%8,wb,%9) -> bb5;
+    %3 = %7;
+    GOTO bb5;
   }
   bb5 {
-    %12 = %10 is nil
-    %12 ? bb6 : bb7;
+    wb = %3;
+    %10 = newObject ballerina/io:WritableCharacterChannel
+    %11 = ConstantLoad UTF-8
+    %12 = init(%10,wb,%11) -> bb6;
   }
   bb6 {
-    %11 = %8;
-    GOTO bb8;
+    %14 = %12 is nil
+    %14 ? bb7 : bb8;
   }
   bb7 {
-    %11 = %10;
-    GOTO bb8;
+    %13 = %10;
+    GOTO bb9;
   }
   bb8 {
-    wc = %11;
-    %15 = ConstantLoad héllo wörld
-    %16 = ConstantLoad 0
-    %17 = %16;
-    %18 = write(wc,%15,%17) -> bb9;
+    %13 = %12;
+    GOTO bb9;
   }
   bb9 {
-    %19 = %18 is error
-    %19 ? bb10 : bb11;
+    wc = %13;
+    %17 = ConstantLoad héllo wörld
+    %18 = ConstantLoad 0
+    %19 = %18;
+    %20 = write(wc,%17,%19) -> bb10;
   }
   bb10 {
-    %0 = %18;
-    return;
+    %21 = %20 is error
+    %21 ? bb11 : bb12;
   }
   bb11 {
-    %14 = %18;
-    GOTO bb12;
+    %0 = %20;
+    return;
   }
   bb12 {
-    n1 = %14;
-    %21 = n1;
-    %22 = println(%21) -> bb13;
+    %16 = %20;
+    GOTO bb13;
   }
   bb13 {
-    %24 = ConstantLoad abc
-    %25 = ConstantLoad 1
-    %26 = %25;
-    %27 = write(wc,%24,%26) -> bb14;
+    n1 = %16;
+    %23 = n1;
+    %24 = println(%23) -> bb14;
   }
   bb14 {
-    %28 = %27 is error
-    %28 ? bb15 : bb16;
+    %26 = ConstantLoad abc
+    %27 = ConstantLoad 1
+    %28 = %27;
+    %29 = write(wc,%26,%28) -> bb15;
   }
   bb15 {
-    %0 = %27;
-    return;
+    %30 = %29 is error
+    %30 ? bb16 : bb17;
   }
   bb16 {
-    %23 = %27;
-    GOTO bb17;
+    %0 = %29;
+    return;
   }
   bb17 {
-    n2 = %23;
-    %30 = n2;
-    %31 = println(%30) -> bb18;
+    %25 = %29;
+    GOTO bb18;
   }
   bb18 {
-    %33 = ConstantLoad !
-    %34 = writeLine(wc,%33) -> bb19;
+    n2 = %25;
+    %32 = n2;
+    %33 = println(%32) -> bb19;
   }
   bb19 {
-    %35 = %34 is error
-    %35 ? bb20 : bb21;
+    %35 = ConstantLoad !
+    %36 = writeLine(wc,%35) -> bb20;
   }
   bb20 {
-    %0 = %34;
-    return;
+    %37 = %36 is error
+    %37 ? bb21 : bb22;
   }
   bb21 {
-    %32 = %34;
-    GOTO bb22;
-  }
-  bb22 {
-    %37 = close(wc) -> bb23;
-  }
-  bb23 {
-    %38 = %37 is error
-    %38 ? bb24 : bb25;
-  }
-  bb24 {
-    %0 = %37;
+    %0 = %36;
     return;
   }
+  bb22 {
+    %34 = %36;
+    GOTO bb23;
+  }
+  bb23 {
+    %39 = close(wc) -> bb24;
+  }
+  bb24 {
+    %40 = %39 is error
+    %40 ? bb25 : bb26;
+  }
   bb25 {
-    %36 = %37;
-    GOTO bb26;
+    %0 = %39;
+    return;
   }
   bb26 {
-    %39 = close(wc) -> bb27;
+    %38 = %39;
+    GOTO bb27;
   }
   bb27 {
-    closedWrite = %39;
-    %41 = closedWrite is error
-    %41 ? bb28 : bb31;
+    %41 = close(wc) -> bb28;
   }
   bb28 {
-    PushScopeFrame 2
-    %0 = message((1, closedWrite)) -> bb29;
+    closedWrite = %41;
+    %43 = closedWrite is error
+    %43 ? bb29 : bb32;
   }
   bb29 {
-    %1 = println(%0) -> bb30;
+    PushScopeFrame 2
+    %0 = message((1, closedWrite)) -> bb30;
   }
   bb30 {
-    PopScopeFrame
-    GOTO bb31;
+    %1 = println(%0) -> bb31;
   }
   bb31 {
+    PopScopeFrame
+    GOTO bb32;
+  }
+  bb32 {
     PushScopeFrame 6
     %0 = ConstantLoad x
     %1 = ConstantLoad 0
     %2 = %1;
-    %3 = write((1, wc),%0,%2) -> bb32;
-  }
-  bb32 {
-    afterClose = %3;
-    %5 = afterClose is error
-    %5 ? bb33 : bb36;
+    %3 = write((1, wc),%0,%2) -> bb33;
   }
   bb33 {
-    PushScopeFrame 2
-    %0 = message((1, afterClose)) -> bb34;
+    afterClose = %3;
+    %5 = afterClose is error
+    %5 ? bb34 : bb37;
   }
   bb34 {
-    %1 = println(%0) -> bb35;
+    PushScopeFrame 2
+    %0 = message((1, afterClose)) -> bb35;
   }
   bb35 {
-    PopScopeFrame
-    GOTO bb36;
+    %1 = println(%0) -> bb36;
   }
   bb36 {
-    PushScopeFrame 125
-    %1 = fileReadString((2, path)) -> bb37;
+    PopScopeFrame
+    GOTO bb37;
   }
   bb37 {
-    %2 = %1 is error
-    %2 ? bb38 : bb39;
+    PushScopeFrame 129
+    %1 = fileReadString((2, path)) -> bb38;
   }
   bb38 {
+    %2 = %1 is error
+    %2 ? bb39 : bb40;
+  }
+  bb39 {
     (2, %0) = %1;
     PopScopeFrame
     PopScopeFrame
     return;
   }
-  bb39 {
-    %0 = %1;
-    GOTO bb40;
-  }
   bb40 {
-    %3 = println(%0) -> bb41;
+    %0 = %1;
+    GOTO bb41;
   }
   bb41 {
-    %5 = ConstantLoad APPEND
-    %6 = openWritableFile((2, path),%5) -> bb42;
+    %3 = println(%0) -> bb42;
   }
   bb42 {
-    %7 = %6 is error
-    %7 ? bb43 : bb44;
+    %5 = ConstantLoad APPEND
+    %6 = openWritableFile((2, path),%5) -> bb43;
   }
   bb43 {
+    %7 = %6 is error
+    %7 ? bb44 : bb45;
+  }
+  bb44 {
     (2, %0) = %6;
     PopScopeFrame
     PopScopeFrame
     return;
   }
-  bb44 {
-    %4 = %6;
-    GOTO bb45;
-  }
   bb45 {
+    %4 = %6;
+    GOTO bb46;
+  }
+  bb46 {
     ab = %4;
     %9 = newObject ballerina/io:WritableCharacterChannel
     %10 = ConstantLoad UTF-8
-    %11 = init(%9,ab,%10) -> bb46;
-  }
-  bb46 {
-    %13 = %11 is nil
-    %13 ? bb47 : bb48;
+    %11 = init(%9,ab,%10) -> bb47;
   }
   bb47 {
-    %12 = %9;
-    GOTO bb49;
+    %13 = %11 is nil
+    %13 ? bb48 : bb49;
   }
   bb48 {
-    %12 = %11;
-    GOTO bb49;
+    %12 = %9;
+    GOTO bb50;
   }
   bb49 {
+    %12 = %11;
+    GOTO bb50;
+  }
+  bb50 {
     ac = %12;
     %16 = ConstantLoad +more
     %17 = ConstantLoad 0
     %18 = %17;
-    %19 = write(ac,%16,%18) -> bb50;
-  }
-  bb50 {
-    %20 = %19 is error
-    %20 ? bb51 : bb52;
+    %19 = write(ac,%16,%18) -> bb51;
   }
   bb51 {
+    %20 = %19 is error
+    %20 ? bb52 : bb53;
+  }
+  bb52 {
     (2, %0) = %19;
     PopScopeFrame
     PopScopeFrame
     return;
   }
-  bb52 {
-    %15 = %19;
-    GOTO bb53;
-  }
   bb53 {
-    %21 = %15;
-    %23 = close(ac) -> bb54;
+    %15 = %19;
+    GOTO bb54;
   }
   bb54 {
-    %24 = %23 is error
-    %24 ? bb55 : bb56;
+    %21 = %15;
+    %23 = close(ac) -> bb55;
   }
   bb55 {
+    %24 = %23 is error
+    %24 ? bb56 : bb57;
+  }
+  bb56 {
     (2, %0) = %23;
     PopScopeFrame
     PopScopeFrame
     return;
   }
-  bb56 {
-    %22 = %23;
-    GOTO bb57;
-  }
   bb57 {
-    %26 = fileReadString((2, path)) -> bb58;
+    %22 = %23;
+    GOTO bb58;
   }
   bb58 {
-    %27 = %26 is error
-    %27 ? bb59 : bb60;
+    %26 = fileReadString((2, path)) -> bb59;
   }
   bb59 {
+    %27 = %26 is error
+    %27 ? bb60 : bb61;
+  }
+  bb60 {
     (2, %0) = %26;
     PopScopeFrame
     PopScopeFrame
     return;
   }
-  bb60 {
-    %25 = %26;
-    GOTO bb61;
-  }
   bb61 {
-    %28 = println(%25) -> bb62;
+    %25 = %26;
+    GOTO bb62;
   }
   bb62 {
-    %29 = ConstantLoad /tmp/bal_io_char_write_latin1.txt
-    lpath = %29;
-    %32 = closure_fp $anon/.:main$493$0$thunk$1
-    %33 = main$493$0$thunk$1() -> bb63;
+    %28 = println(%25) -> bb63;
   }
   bb63 {
-    %34 = %33 is error
-    %34 ? bb64 : bb65;
+    %29 = ConstantLoad /tmp/bal_io_char_write_latin1.txt
+    lpath = %29;
+    $desugar$2 = lpath;
+    %33 = $default$11($desugar$2) -> bb64;
   }
   bb64 {
-    (2, %0) = %33;
-    PopScopeFrame
-    PopScopeFrame
-    return;
+    $desugar$3 = %33;
+    %35 = openWritableFile($desugar$2,$desugar$3) -> bb65;
   }
   bb65 {
-    %31 = %33;
-    GOTO bb66;
+    %36 = %35 is error
+    %36 ? bb66 : bb67;
   }
   bb66 {
-    lb = %31;
-    %36 = newObject ballerina/io:WritableCharacterChannel
-    %37 = ConstantLoad ISO-8859-1
-    %38 = init(%36,lb,%37) -> bb67;
+    (2, %0) = %35;
+    PopScopeFrame
+    PopScopeFrame
+    return;
   }
   bb67 {
-    %40 = %38 is nil
-    %40 ? bb68 : bb69;
+    %31 = %35;
+    GOTO bb68;
   }
   bb68 {
-    %39 = %36;
-    GOTO bb70;
+    lb = %31;
+    %38 = newObject ballerina/io:WritableCharacterChannel
+    %39 = ConstantLoad ISO-8859-1
+    %40 = init(%38,lb,%39) -> bb69;
   }
   bb69 {
-    %39 = %38;
-    GOTO bb70;
+    %42 = %40 is nil
+    %42 ? bb70 : bb71;
   }
   bb70 {
-    lc = %39;
-    %43 = ConstantLoad café
-    %44 = ConstantLoad 0
-    %45 = %44;
-    %46 = write(lc,%43,%45) -> bb71;
+    %41 = %38;
+    GOTO bb72;
   }
   bb71 {
-    %47 = %46 is error
-    %47 ? bb72 : bb73;
+    %41 = %40;
+    GOTO bb72;
   }
   bb72 {
-    (2, %0) = %46;
-    PopScopeFrame
-    PopScopeFrame
-    return;
+    lc = %41;
+    %45 = ConstantLoad café
+    %46 = ConstantLoad 0
+    %47 = %46;
+    %48 = write(lc,%45,%47) -> bb73;
   }
   bb73 {
-    %42 = %46;
-    GOTO bb74;
+    %49 = %48 is error
+    %49 ? bb74 : bb75;
   }
   bb74 {
-    n3 = %42;
-    %49 = n3;
-    %50 = println(%49) -> bb75;
+    (2, %0) = %48;
+    PopScopeFrame
+    PopScopeFrame
+    return;
   }
   bb75 {
-    %52 = close(lc) -> bb76;
+    %44 = %48;
+    GOTO bb76;
   }
   bb76 {
-    %53 = %52 is error
-    %53 ? bb77 : bb78;
+    n3 = %44;
+    %51 = n3;
+    %52 = println(%51) -> bb77;
   }
   bb77 {
-    (2, %0) = %52;
-    PopScopeFrame
-    PopScopeFrame
-    return;
+    %54 = close(lc) -> bb78;
   }
   bb78 {
-    %51 = %52;
-    GOTO bb79;
+    %55 = %54 is error
+    %55 ? bb79 : bb80;
   }
   bb79 {
-    %55 = fileReadBytes(lpath) -> bb80;
+    (2, %0) = %54;
+    PopScopeFrame
+    PopScopeFrame
+    return;
   }
   bb80 {
-    %56 = %55 is error
-    %56 ? bb81 : bb82;
+    %53 = %54;
+    GOTO bb81;
   }
   bb81 {
-    (2, %0) = %55;
-    PopScopeFrame
-    PopScopeFrame
-    return;
+    %57 = fileReadBytes(lpath) -> bb82;
   }
   bb82 {
-    %54 = %55;
-    GOTO bb83;
+    %58 = %57 is error
+    %58 ? bb83 : bb84;
   }
   bb83 {
-    latinBytes = %54;
-    %58 = length(latinBytes) -> bb84;
+    (2, %0) = %57;
+    PopScopeFrame
+    PopScopeFrame
+    return;
   }
   bb84 {
-    %59 = %58;
-    %60 = println(%59) -> bb85;
+    %56 = %57;
+    GOTO bb85;
   }
   bb85 {
-    %62 = openReadableFile(lpath) -> bb86;
+    latinBytes = %56;
+    %60 = length(latinBytes) -> bb86;
   }
   bb86 {
-    %63 = %62 is error
-    %63 ? bb87 : bb88;
+    %61 = %60;
+    %62 = println(%61) -> bb87;
   }
   bb87 {
-    (2, %0) = %62;
-    PopScopeFrame
-    PopScopeFrame
-    return;
+    %64 = openReadableFile(lpath) -> bb88;
   }
   bb88 {
-    %61 = %62;
-    GOTO bb89;
+    %65 = %64 is error
+    %65 ? bb89 : bb90;
   }
   bb89 {
-    lrb = %61;
-    %65 = newObject ballerina/io:ReadableCharacterChannel
-    %66 = ConstantLoad ISO-8859-1
-    %67 = init(%65,lrb,%66) -> bb90;
+    (2, %0) = %64;
+    PopScopeFrame
+    PopScopeFrame
+    return;
   }
   bb90 {
-    %69 = %67 is nil
-    %69 ? bb91 : bb92;
+    %63 = %64;
+    GOTO bb91;
   }
   bb91 {
-    %68 = %65;
-    GOTO bb93;
+    lrb = %63;
+    %67 = newObject ballerina/io:ReadableCharacterChannel
+    %68 = ConstantLoad ISO-8859-1
+    %69 = init(%67,lrb,%68) -> bb92;
   }
   bb92 {
-    %68 = %67;
-    GOTO bb93;
+    %71 = %69 is nil
+    %71 ? bb93 : bb94;
   }
   bb93 {
-    lrc = %68;
-    %72 = readString(lrc) -> bb94;
+    %70 = %67;
+    GOTO bb95;
   }
   bb94 {
-    %73 = %72 is error
-    %73 ? bb95 : bb96;
+    %70 = %69;
+    GOTO bb95;
   }
   bb95 {
-    (2, %0) = %72;
-    PopScopeFrame
-    PopScopeFrame
-    return;
+    lrc = %70;
+    %74 = readString(lrc) -> bb96;
   }
   bb96 {
-    %71 = %72;
-    GOTO bb97;
+    %75 = %74 is error
+    %75 ? bb97 : bb98;
   }
   bb97 {
-    %74 = println(%71) -> bb98;
+    (2, %0) = %74;
+    PopScopeFrame
+    PopScopeFrame
+    return;
   }
   bb98 {
-    %76 = close(lrc) -> bb99;
+    %73 = %74;
+    GOTO bb99;
   }
   bb99 {
-    %77 = %76 is error
-    %77 ? bb100 : bb101;
+    %76 = println(%73) -> bb100;
   }
   bb100 {
-    (2, %0) = %76;
-    PopScopeFrame
-    PopScopeFrame
-    return;
+    %78 = close(lrc) -> bb101;
   }
   bb101 {
-    %75 = %76;
-    GOTO bb102;
+    %79 = %78 is error
+    %79 ? bb102 : bb103;
   }
   bb102 {
-    %78 = ConstantLoad /tmp/bal_io_char_write_utf16.bin
-    upath = %78;
-    %81 = closure_fp $anon/.:main$493$0$thunk$2
-    %82 = main$493$0$thunk$2() -> bb103;
+    (2, %0) = %78;
+    PopScopeFrame
+    PopScopeFrame
+    return;
   }
   bb103 {
-    %83 = %82 is error
-    %83 ? bb104 : bb105;
+    %77 = %78;
+    GOTO bb104;
   }
   bb104 {
-    (2, %0) = %82;
-    PopScopeFrame
-    PopScopeFrame
-    return;
+    %80 = ConstantLoad /tmp/bal_io_char_write_utf16.bin
+    upath = %80;
+    $desugar$4 = upath;
+    %84 = $default$11($desugar$4) -> bb105;
   }
   bb105 {
-    %80 = %82;
-    GOTO bb106;
+    $desugar$5 = %84;
+    %86 = openWritableFile($desugar$4,$desugar$5) -> bb106;
   }
   bb106 {
-    ub = %80;
-    %85 = newObject ballerina/io:WritableCharacterChannel
-    %86 = ConstantLoad UTF-16
-    %87 = init(%85,ub,%86) -> bb107;
+    %87 = %86 is error
+    %87 ? bb107 : bb108;
   }
   bb107 {
-    %89 = %87 is nil
-    %89 ? bb108 : bb109;
-  }
-  bb108 {
-    %88 = %85;
-    GOTO bb110;
-  }
-  bb109 {
-    %88 = %87;
-    GOTO bb110;
-  }
-  bb110 {
-    uc = %88;
-    %92 = ConstantLoad hi
-    %93 = writeLine(uc,%92) -> bb111;
-  }
-  bb111 {
-    %94 = %93 is error
-    %94 ? bb112 : bb113;
-  }
-  bb112 {
-    (2, %0) = %93;
+    (2, %0) = %86;
     PopScopeFrame
     PopScopeFrame
     return;
   }
+  bb108 {
+    %82 = %86;
+    GOTO bb109;
+  }
+  bb109 {
+    ub = %82;
+    %89 = newObject ballerina/io:WritableCharacterChannel
+    %90 = ConstantLoad UTF-16
+    %91 = init(%89,ub,%90) -> bb110;
+  }
+  bb110 {
+    %93 = %91 is nil
+    %93 ? bb111 : bb112;
+  }
+  bb111 {
+    %92 = %89;
+    GOTO bb113;
+  }
+  bb112 {
+    %92 = %91;
+    GOTO bb113;
+  }
   bb113 {
-    %91 = %93;
-    GOTO bb114;
+    uc = %92;
+    %96 = ConstantLoad hi
+    %97 = writeLine(uc,%96) -> bb114;
   }
   bb114 {
-    %96 = ConstantLoad bye
-    %97 = writeLine(uc,%96) -> bb115;
+    %98 = %97 is error
+    %98 ? bb115 : bb116;
   }
   bb115 {
-    %98 = %97 is error
-    %98 ? bb116 : bb117;
-  }
-  bb116 {
     (2, %0) = %97;
     PopScopeFrame
     PopScopeFrame
     return;
   }
-  bb117 {
+  bb116 {
     %95 = %97;
-    GOTO bb118;
+    GOTO bb117;
+  }
+  bb117 {
+    %100 = ConstantLoad bye
+    %101 = writeLine(uc,%100) -> bb118;
   }
   bb118 {
-    %100 = close(uc) -> bb119;
+    %102 = %101 is error
+    %102 ? bb119 : bb120;
   }
   bb119 {
-    %101 = %100 is error
-    %101 ? bb120 : bb121;
+    (2, %0) = %101;
+    PopScopeFrame
+    PopScopeFrame
+    return;
   }
   bb120 {
-    (2, %0) = %100;
-    PopScopeFrame
-    PopScopeFrame
-    return;
+    %99 = %101;
+    GOTO bb121;
   }
   bb121 {
-    %99 = %100;
-    GOTO bb122;
+    %104 = close(uc) -> bb122;
   }
   bb122 {
-    %103 = fileReadBytes(upath) -> bb123;
+    %105 = %104 is error
+    %105 ? bb123 : bb124;
   }
   bb123 {
-    %104 = %103 is error
-    %104 ? bb124 : bb125;
+    (2, %0) = %104;
+    PopScopeFrame
+    PopScopeFrame
+    return;
   }
   bb124 {
-    (2, %0) = %103;
-    PopScopeFrame
-    PopScopeFrame
-    return;
+    %103 = %104;
+    GOTO bb125;
   }
   bb125 {
-    %102 = %103;
-    GOTO bb126;
+    %107 = fileReadBytes(upath) -> bb126;
   }
   bb126 {
-    utf16Bytes = %102;
-    %106 = length(utf16Bytes) -> bb127;
+    %108 = %107 is error
+    %108 ? bb127 : bb128;
   }
   bb127 {
-    %107 = %106;
-    %108 = println(%107) -> bb128;
+    (2, %0) = %107;
+    PopScopeFrame
+    PopScopeFrame
+    return;
   }
   bb128 {
-    %110 = ConstantLoad 0
-    %109 = utf16Bytes[%110];
-    %111 = %109;
-    %112 = println(%111) -> bb129;
+    %106 = %107;
+    GOTO bb129;
   }
   bb129 {
-    %114 = ConstantLoad 1
-    %113 = utf16Bytes[%114];
-    %115 = %113;
-    %116 = println(%115) -> bb130;
+    utf16Bytes = %106;
+    %110 = length(utf16Bytes) -> bb130;
   }
   bb130 {
-    %118 = ConstantLoad 8
-    %117 = utf16Bytes[%118];
-    %119 = %117;
-    %120 = println(%119) -> bb131;
+    %111 = %110;
+    %112 = println(%111) -> bb131;
   }
   bb131 {
-    %122 = ConstantLoad 9
-    %121 = utf16Bytes[%122];
-    %123 = %121;
-    %124 = println(%123) -> bb132;
+    %114 = ConstantLoad 0
+    %113 = utf16Bytes[%114];
+    %115 = %113;
+    %116 = println(%115) -> bb132;
   }
   bb132 {
+    %118 = ConstantLoad 1
+    %117 = utf16Bytes[%118];
+    %119 = %117;
+    %120 = println(%119) -> bb133;
+  }
+  bb133 {
+    %122 = ConstantLoad 8
+    %121 = utf16Bytes[%122];
+    %123 = %121;
+    %124 = println(%123) -> bb134;
+  }
+  bb134 {
+    %126 = ConstantLoad 9
+    %125 = utf16Bytes[%126];
+    %127 = %125;
+    %128 = println(%127) -> bb135;
+  }
+  bb135 {
     PopScopeFrame
     PopScopeFrame
-    return;
-  }
-}
-main$493$0$thunk$0() -> error|object { private function attachFile(string, "APPEND"|"OVERWRITE") returns nil|error; public function close() returns nil|error; public function init() returns nil; public function write([int:Unsigned8...], int) returns int|error }{
-  bb0 {
-    $desugar$0 = (1, path);
-    %2 = $default$11($desugar$0) -> bb1;
-  }
-  bb1 {
-    $desugar$1 = %2;
-    %4 = openWritableFile($desugar$0,$desugar$1) -> bb2;
-  }
-  bb2 {
-    %0 = %4;
-    return;
-  }
-}
-main$493$0$thunk$1() -> error|object { private function attachFile(string, "APPEND"|"OVERWRITE") returns nil|error; public function close() returns nil|error; public function init() returns nil; public function write([int:Unsigned8...], int) returns int|error }{
-  bb0 {
-    $desugar$2 = (1, lpath);
-    %2 = $default$11($desugar$2) -> bb1;
-  }
-  bb1 {
-    $desugar$3 = %2;
-    %4 = openWritableFile($desugar$2,$desugar$3) -> bb2;
-  }
-  bb2 {
-    %0 = %4;
-    return;
-  }
-}
-main$493$0$thunk$2() -> error|object { private function attachFile(string, "APPEND"|"OVERWRITE") returns nil|error; public function close() returns nil|error; public function init() returns nil; public function write([int:Unsigned8...], int) returns int|error }{
-  bb0 {
-    $desugar$4 = (1, upath);
-    %2 = $default$11($desugar$4) -> bb1;
-  }
-  bb1 {
-    $desugar$5 = %2;
-    %4 = openWritableFile($desugar$4,$desugar$5) -> bb2;
-  }
-  bb2 {
-    %0 = %4;
     return;
   }
 }

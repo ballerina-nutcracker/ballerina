@@ -1,91 +1,6 @@
 module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = fp $anon/.:main$493$0$thunk$0
-    %2 = main$493$0$thunk$0() -> bb1;
-  }
-  bb1 {
-    %3 = %2;
-    %4 = println(%3) -> bb2;
-  }
-  bb2 {
-    %5 = fp $anon/.:main$493$0$thunk$1
-    %6 = main$493$0$thunk$1() -> bb3;
-  }
-  bb3 {
-    %7 = %6;
-    %8 = println(%7) -> bb4;
-  }
-  bb4 {
-    %9 = fp $anon/.:main$493$0$thunk$2
-    %10 = main$493$0$thunk$2() -> bb5;
-  }
-  bb5 {
-    %11 = %10;
-    %12 = println(%11) -> bb6;
-  }
-  bb6 {
-    %13 = fp $anon/.:main$493$0$thunk$3
-    %14 = main$493$0$thunk$3() -> bb7;
-  }
-  bb7 {
-    %15 = %14;
-    %16 = println(%15) -> bb8;
-  }
-  bb8 {
-    %17 = fp $anon/.:main$493$0$thunk$4
-    %18 = main$493$0$thunk$4() -> bb9;
-  }
-  bb9 {
-    %19 = %18;
-    %20 = println(%19) -> bb10;
-  }
-  bb10 {
-    %21 = fp $anon/.:main$493$0$thunk$5
-    %22 = main$493$0$thunk$5() -> bb11;
-  }
-  bb11 {
-    %23 = %22;
-    %24 = println(%23) -> bb12;
-  }
-  bb12 {
-    %25 = fp $anon/.:main$493$0$thunk$6
-    %26 = main$493$0$thunk$6() -> bb13;
-  }
-  bb13 {
-    %27 = %26;
-    %28 = println(%27) -> bb14;
-  }
-  bb14 {
-    %29 = fp $anon/.:main$493$0$thunk$7
-    %30 = main$493$0$thunk$7() -> bb15;
-  }
-  bb15 {
-    %31 = %30;
-    %32 = println(%31) -> bb16;
-  }
-  bb16 {
-    %33 = fp $anon/.:main$493$0$thunk$8
-    %34 = main$493$0$thunk$8() -> bb17;
-  }
-  bb17 {
-    %35 = %34;
-    %36 = println(%35) -> bb18;
-  }
-  bb18 {
-    %37 = fp $anon/.:main$493$0$thunk$9
-    %38 = main$493$0$thunk$9() -> bb19;
-  }
-  bb19 {
-    %39 = %38;
-    %40 = println(%39) -> bb20;
-  }
-  bb20 {
-    return;
-  }
-}
-main$493$0$thunk$0() -> float{
-  bb0 {
     %1 = ConstantLoad 2.5
     $desugar$0 = %1;
     %3 = $desugar$0;
@@ -98,184 +13,169 @@ main$493$0$thunk$0() -> float{
     %8 = round(%6,%7) -> bb2;
   }
   bb2 {
-    %0 = %8;
-    return;
+    %9 = %8;
+    %10 = println(%9) -> bb3;
   }
-}
-main$493$0$thunk$1() -> float{
-  bb0 {
-    %1 = ConstantLoad 3.5
-    $desugar$2 = %1;
-    %3 = $desugar$2;
-    %4 = $default$0(%3) -> bb1;
+  bb3 {
+    %11 = ConstantLoad 3.5
+    $desugar$2 = %11;
+    %13 = $desugar$2;
+    %14 = $default$0(%13) -> bb4;
   }
-  bb1 {
-    $desugar$3 = %4;
-    %6 = $desugar$2;
-    %7 = $desugar$3;
-    %8 = round(%6,%7) -> bb2;
+  bb4 {
+    $desugar$3 = %14;
+    %16 = $desugar$2;
+    %17 = $desugar$3;
+    %18 = round(%16,%17) -> bb5;
   }
-  bb2 {
-    %0 = %8;
-    return;
+  bb5 {
+    %19 = %18;
+    %20 = println(%19) -> bb6;
   }
-}
-main$493$0$thunk$2() -> float{
-  bb0 {
-    %1 = ConstantLoad 2.5
-    %2 = unknown %1;
-    $desugar$4 = %2;
-    %4 = $desugar$4;
-    %5 = $default$0(%4) -> bb1;
+  bb6 {
+    %21 = ConstantLoad 2.5
+    %22 = unknown %21;
+    $desugar$4 = %22;
+    %24 = $desugar$4;
+    %25 = $default$0(%24) -> bb7;
   }
-  bb1 {
-    $desugar$5 = %5;
-    %7 = $desugar$4;
-    %8 = $desugar$5;
-    %9 = round(%7,%8) -> bb2;
+  bb7 {
+    $desugar$5 = %25;
+    %27 = $desugar$4;
+    %28 = $desugar$5;
+    %29 = round(%27,%28) -> bb8;
   }
-  bb2 {
-    %0 = %9;
-    return;
+  bb8 {
+    %30 = %29;
+    %31 = println(%30) -> bb9;
   }
-}
-main$493$0$thunk$3() -> float{
-  bb0 {
-    %1 = ConstantLoad 2.4
-    $desugar$6 = %1;
-    %3 = $desugar$6;
-    %4 = $default$0(%3) -> bb1;
+  bb9 {
+    %32 = ConstantLoad 2.4
+    $desugar$6 = %32;
+    %34 = $desugar$6;
+    %35 = $default$0(%34) -> bb10;
   }
-  bb1 {
-    $desugar$7 = %4;
-    %6 = $desugar$6;
-    %7 = $desugar$7;
-    %8 = round(%6,%7) -> bb2;
+  bb10 {
+    $desugar$7 = %35;
+    %37 = $desugar$6;
+    %38 = $desugar$7;
+    %39 = round(%37,%38) -> bb11;
   }
-  bb2 {
-    %0 = %8;
-    return;
+  bb11 {
+    %40 = %39;
+    %41 = println(%40) -> bb12;
   }
-}
-main$493$0$thunk$4() -> float{
-  bb0 {
-    %1 = ConstantLoad 2.6
-    $desugar$8 = %1;
-    %3 = $desugar$8;
-    %4 = $default$0(%3) -> bb1;
+  bb12 {
+    %42 = ConstantLoad 2.6
+    $desugar$8 = %42;
+    %44 = $desugar$8;
+    %45 = $default$0(%44) -> bb13;
   }
-  bb1 {
-    $desugar$9 = %4;
-    %6 = $desugar$8;
-    %7 = $desugar$9;
-    %8 = round(%6,%7) -> bb2;
+  bb13 {
+    $desugar$9 = %45;
+    %47 = $desugar$8;
+    %48 = $desugar$9;
+    %49 = round(%47,%48) -> bb14;
   }
-  bb2 {
-    %0 = %8;
-    return;
+  bb14 {
+    %50 = %49;
+    %51 = println(%50) -> bb15;
   }
-}
-main$493$0$thunk$5() -> float{
-  bb0 {
-    %1 = ConstantLoad 0
-    $desugar$10 = %1;
-    %3 = $desugar$10;
-    %4 = $default$0(%3) -> bb1;
+  bb15 {
+    %52 = ConstantLoad 0
+    $desugar$10 = %52;
+    %54 = $desugar$10;
+    %55 = $default$0(%54) -> bb16;
   }
-  bb1 {
-    $desugar$11 = %4;
-    %6 = $desugar$10;
-    %7 = $desugar$11;
-    %8 = round(%6,%7) -> bb2;
+  bb16 {
+    $desugar$11 = %55;
+    %57 = $desugar$10;
+    %58 = $desugar$11;
+    %59 = round(%57,%58) -> bb17;
   }
-  bb2 {
-    %0 = %8;
-    return;
+  bb17 {
+    %60 = %59;
+    %61 = println(%60) -> bb18;
   }
-}
-main$493$0$thunk$6() -> float{
-  bb0 {
-    %1 = ConstantLoad 0
-    %2 = unknown %1;
-    $desugar$12 = %2;
-    %4 = $desugar$12;
-    %5 = $default$0(%4) -> bb1;
+  bb18 {
+    %62 = ConstantLoad 0
+    %63 = unknown %62;
+    $desugar$12 = %63;
+    %65 = $desugar$12;
+    %66 = $default$0(%65) -> bb19;
   }
-  bb1 {
-    $desugar$13 = %5;
-    %7 = $desugar$12;
-    %8 = $desugar$13;
-    %9 = round(%7,%8) -> bb2;
+  bb19 {
+    $desugar$13 = %66;
+    %68 = $desugar$12;
+    %69 = $desugar$13;
+    %70 = round(%68,%69) -> bb20;
   }
-  bb2 {
-    %0 = %9;
-    return;
+  bb20 {
+    %71 = %70;
+    %72 = println(%71) -> bb21;
   }
-}
-main$493$0$thunk$7() -> float{
-  bb0 {
-    %2 = ConstantLoad 1
-    %3 = %2;
-    %4 = ConstantLoad 0
-    %5 = %4;
-    %1 = / %3 %5;
-    $desugar$14 = %1;
-    %7 = $desugar$14;
-    %8 = $default$0(%7) -> bb1;
+  bb21 {
+    %74 = ConstantLoad 1
+    %75 = %74;
+    %76 = ConstantLoad 0
+    %77 = %76;
+    %73 = / %75 %77;
+    $desugar$14 = %73;
+    %79 = $desugar$14;
+    %80 = $default$0(%79) -> bb22;
   }
-  bb1 {
-    $desugar$15 = %8;
-    %10 = $desugar$14;
-    %11 = $desugar$15;
-    %12 = round(%10,%11) -> bb2;
+  bb22 {
+    $desugar$15 = %80;
+    %82 = $desugar$14;
+    %83 = $desugar$15;
+    %84 = round(%82,%83) -> bb23;
   }
-  bb2 {
-    %0 = %12;
-    return;
+  bb23 {
+    %85 = %84;
+    %86 = println(%85) -> bb24;
   }
-}
-main$493$0$thunk$8() -> float{
-  bb0 {
-    %2 = ConstantLoad 1
-    %3 = unknown %2;
-    %4 = %3;
-    %5 = ConstantLoad 0
-    %6 = %5;
-    %1 = / %4 %6;
-    $desugar$16 = %1;
-    %8 = $desugar$16;
-    %9 = $default$0(%8) -> bb1;
+  bb24 {
+    %88 = ConstantLoad 1
+    %89 = unknown %88;
+    %90 = %89;
+    %91 = ConstantLoad 0
+    %92 = %91;
+    %87 = / %90 %92;
+    $desugar$16 = %87;
+    %94 = $desugar$16;
+    %95 = $default$0(%94) -> bb25;
   }
-  bb1 {
-    $desugar$17 = %9;
-    %11 = $desugar$16;
-    %12 = $desugar$17;
-    %13 = round(%11,%12) -> bb2;
+  bb25 {
+    $desugar$17 = %95;
+    %97 = $desugar$16;
+    %98 = $desugar$17;
+    %99 = round(%97,%98) -> bb26;
   }
-  bb2 {
-    %0 = %13;
-    return;
+  bb26 {
+    %100 = %99;
+    %101 = println(%100) -> bb27;
   }
-}
-main$493$0$thunk$9() -> float{
-  bb0 {
-    %2 = ConstantLoad 0
-    %3 = %2;
-    %4 = ConstantLoad 0
-    %5 = %4;
-    %1 = / %3 %5;
-    $desugar$18 = %1;
-    %7 = $desugar$18;
-    %8 = $default$0(%7) -> bb1;
+  bb27 {
+    %103 = ConstantLoad 0
+    %104 = %103;
+    %105 = ConstantLoad 0
+    %106 = %105;
+    %102 = / %104 %106;
+    $desugar$18 = %102;
+    %108 = $desugar$18;
+    %109 = $default$0(%108) -> bb28;
   }
-  bb1 {
-    $desugar$19 = %8;
-    %10 = $desugar$18;
-    %11 = $desugar$19;
-    %12 = round(%10,%11) -> bb2;
+  bb28 {
+    $desugar$19 = %109;
+    %111 = $desugar$18;
+    %112 = $desugar$19;
+    %113 = round(%111,%112) -> bb29;
   }
-  bb2 {
-    %0 = %12;
+  bb29 {
+    %114 = %113;
+    %115 = println(%114) -> bb30;
+  }
+  bb30 {
     return;
   }
 }

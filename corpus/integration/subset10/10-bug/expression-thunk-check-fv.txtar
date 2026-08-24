@@ -1,3 +1,0 @@
--- stdout --
--- stderr --
-fatal[INTERNAL_ERROR]: check expression cannot be lowered inside a generated expression thunk

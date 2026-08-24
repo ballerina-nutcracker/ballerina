@@ -3,327 +3,277 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad /tmp/bal_io_mkdir_xyz/string/a/b/string.txt
     stringPath = %1;
-    %4 = closure_fp $anon/.:main$493$0$thunk$0
-    %5 = main$493$0$thunk$0() -> bb1;
+    $desugar$0 = stringPath;
+    %5 = ConstantLoad hello
+    $desugar$1 = %5;
+    %7 = $default$1($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    %6 = %5 is error
-    %6 ? bb2 : bb3;
+    $desugar$2 = %7;
+    %9 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %0 = %5;
-    return;
+    %10 = %9 is error
+    %10 ? bb3 : bb4;
   }
   bb3 {
-    %3 = %5;
-    GOTO bb4;
-  }
-  bb4 {
-    %8 = fileReadString(stringPath) -> bb5;
-  }
-  bb5 {
-    %9 = %8 is error
-    %9 ? bb6 : bb7;
-  }
-  bb6 {
-    %0 = %8;
-    return;
-  }
-  bb7 {
-    %7 = %8;
-    GOTO bb8;
-  }
-  bb8 {
-    %10 = println(%7) -> bb9;
-  }
-  bb9 {
-    %11 = ConstantLoad /tmp/bal_io_mkdir_xyz/lines/a/b/lines.txt
-    linesPath = %11;
-    %14 = closure_fp $anon/.:main$493$0$thunk$1
-    %15 = main$493$0$thunk$1() -> bb10;
-  }
-  bb10 {
-    %16 = %15 is error
-    %16 ? bb11 : bb12;
-  }
-  bb11 {
-    %0 = %15;
-    return;
-  }
-  bb12 {
-    %13 = %15;
-    GOTO bb13;
-  }
-  bb13 {
-    %18 = fileReadLines(linesPath) -> bb14;
-  }
-  bb14 {
-    %19 = %18 is error
-    %19 ? bb15 : bb16;
-  }
-  bb15 {
-    %0 = %18;
-    return;
-  }
-  bb16 {
-    %17 = %18;
-    GOTO bb17;
-  }
-  bb17 {
-    %20 = println(%17) -> bb18;
-  }
-  bb18 {
-    %21 = ConstantLoad /tmp/bal_io_mkdir_xyz/bytes/a/b/bytes.dat
-    bytesPath = %21;
-    %24 = closure_fp $anon/.:main$493$0$thunk$2
-    %25 = main$493$0$thunk$2() -> bb19;
-  }
-  bb19 {
-    %26 = %25 is error
-    %26 ? bb20 : bb21;
-  }
-  bb20 {
-    %0 = %25;
-    return;
-  }
-  bb21 {
-    %23 = %25;
-    GOTO bb22;
-  }
-  bb22 {
-    %28 = fileReadBytes(bytesPath) -> bb23;
-  }
-  bb23 {
-    %29 = %28 is error
-    %29 ? bb24 : bb25;
-  }
-  bb24 {
-    %0 = %28;
-    return;
-  }
-  bb25 {
-    %27 = %28;
-    GOTO bb26;
-  }
-  bb26 {
-    %30 = println(%27) -> bb27;
-  }
-  bb27 {
-    %31 = ConstantLoad /tmp/bal_io_mkdir_xyz/json/a/b/data.json
-    jsonPath = %31;
-    %34 = ConstantLoad k
-    %35 = ConstantLoad v
-    %36 = newMap {| json... |}{%34=%35}
-    %37 = fileWriteJson(jsonPath,%36) -> bb28;
-  }
-  bb28 {
-    %38 = %37 is error
-    %38 ? bb29 : bb30;
-  }
-  bb29 {
-    %0 = %37;
-    return;
-  }
-  bb30 {
-    %33 = %37;
-    GOTO bb31;
-  }
-  bb31 {
-    %40 = fileReadJson(jsonPath) -> bb32;
-  }
-  bb32 {
-    %41 = %40 is error
-    %41 ? bb33 : bb34;
-  }
-  bb33 {
-    %0 = %40;
-    return;
-  }
-  bb34 {
-    %39 = %40;
-    GOTO bb35;
-  }
-  bb35 {
-    %42 = println(%39) -> bb36;
-  }
-  bb36 {
-    %43 = ConstantLoad /tmp/bal_io_mkdir_xyz/xml/a/b/data.xml
-    xmlPath = %43;
-    %46 = closure_fp $anon/.:main$493$0$thunk$3
-    %47 = main$493$0$thunk$3() -> bb37;
-  }
-  bb37 {
-    %48 = %47 is error
-    %48 ? bb38 : bb39;
-  }
-  bb38 {
-    %0 = %47;
-    return;
-  }
-  bb39 {
-    %45 = %47;
-    GOTO bb40;
-  }
-  bb40 {
-    %50 = fileReadXml(xmlPath) -> bb41;
-  }
-  bb41 {
-    %51 = %50 is error
-    %51 ? bb42 : bb43;
-  }
-  bb42 {
-    %0 = %50;
-    return;
-  }
-  bb43 {
-    %49 = %50;
-    GOTO bb44;
-  }
-  bb44 {
-    %52 = println(%49) -> bb45;
-  }
-  bb45 {
-    %53 = ConstantLoad /tmp/bal_io_mkdir_xyz/append/c/d/append.txt
-    appendPath = %53;
-    %56 = closure_fp $anon/.:main$493$0$thunk$4
-    %57 = main$493$0$thunk$4() -> bb46;
-  }
-  bb46 {
-    %58 = %57 is error
-    %58 ? bb47 : bb48;
-  }
-  bb47 {
-    %0 = %57;
-    return;
-  }
-  bb48 {
-    %55 = %57;
-    GOTO bb49;
-  }
-  bb49 {
-    %60 = ConstantLoad Second
-    %61 = ConstantLoad APPEND
-    %62 = fileWriteString(appendPath,%60,%61) -> bb50;
-  }
-  bb50 {
-    %63 = %62 is error
-    %63 ? bb51 : bb52;
-  }
-  bb51 {
-    %0 = %62;
-    return;
-  }
-  bb52 {
-    %59 = %62;
-    GOTO bb53;
-  }
-  bb53 {
-    %65 = fileReadString(appendPath) -> bb54;
-  }
-  bb54 {
-    %66 = %65 is error
-    %66 ? bb55 : bb56;
-  }
-  bb55 {
-    %0 = %65;
-    return;
-  }
-  bb56 {
-    %64 = %65;
-    GOTO bb57;
-  }
-  bb57 {
-    %67 = println(%64) -> bb58;
-  }
-  bb58 {
-    return;
-  }
-}
-main$493$0$thunk$0() -> nil|error{
-  bb0 {
-    $desugar$0 = (1, stringPath);
-    %2 = ConstantLoad hello
-    $desugar$1 = %2;
-    %4 = $default$1($desugar$0,$desugar$1) -> bb1;
-  }
-  bb1 {
-    $desugar$2 = %4;
-    %6 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
-  }
-  bb2 {
-    %0 = %6;
-    return;
-  }
-}
-main$493$0$thunk$1() -> nil|error{
-  bb0 {
-    $desugar$3 = (1, linesPath);
-    %2 = ConstantLoad one
-    %3 = ConstantLoad two
-    %4 = ConstantLoad 2
-    %5 = newArray [string...][%4]{%2, %3}
-    $desugar$4 = %5;
-    %7 = $default$2($desugar$3,$desugar$4) -> bb1;
-  }
-  bb1 {
-    $desugar$5 = %7;
-    %9 = fileWriteLines($desugar$3,$desugar$4,$desugar$5) -> bb2;
-  }
-  bb2 {
     %0 = %9;
     return;
   }
-}
-main$493$0$thunk$2() -> nil|error{
-  bb0 {
-    $desugar$6 = (1, bytesPath);
-    %2 = ConstantLoad 1
-    %3 = ConstantLoad 2
-    %4 = ConstantLoad 3
-    %5 = ConstantLoad 3
-    %6 = newArray [int:Unsigned8...][%5]{%2, %3, %4}
-    $desugar$7 = %6;
-    %8 = $default$4($desugar$6,$desugar$7) -> bb1;
+  bb4 {
+    %3 = %9;
+    GOTO bb5;
   }
-  bb1 {
-    $desugar$8 = %8;
-    %10 = fileWriteBytes($desugar$6,$desugar$7,$desugar$8) -> bb2;
+  bb5 {
+    %12 = fileReadString(stringPath) -> bb6;
   }
-  bb2 {
-    %0 = %10;
+  bb6 {
+    %13 = %12 is error
+    %13 ? bb7 : bb8;
+  }
+  bb7 {
+    %0 = %12;
     return;
   }
-}
-main$493$0$thunk$3() -> nil|error{
-  bb0 {
-    $desugar$9 = (1, xmlPath);
-    %2 = ConstantLoad a
-    %3 = newXMLElement(%2, ())
-    $desugar$10 = %3;
-    %5 = $default$6($desugar$9,$desugar$10) -> bb1;
+  bb8 {
+    %11 = %12;
+    GOTO bb9;
   }
-  bb1 {
-    $desugar$11 = %5;
-    %7 = fileWriteXml($desugar$9,$desugar$10,$desugar$11) -> bb2;
+  bb9 {
+    %14 = println(%11) -> bb10;
   }
-  bb2 {
-    %0 = %7;
+  bb10 {
+    %15 = ConstantLoad /tmp/bal_io_mkdir_xyz/lines/a/b/lines.txt
+    linesPath = %15;
+    $desugar$3 = linesPath;
+    %19 = ConstantLoad one
+    %20 = ConstantLoad two
+    %21 = ConstantLoad 2
+    %22 = newArray [string...][%21]{%19, %20}
+    $desugar$4 = %22;
+    %24 = $default$2($desugar$3,$desugar$4) -> bb11;
+  }
+  bb11 {
+    $desugar$5 = %24;
+    %26 = fileWriteLines($desugar$3,$desugar$4,$desugar$5) -> bb12;
+  }
+  bb12 {
+    %27 = %26 is error
+    %27 ? bb13 : bb14;
+  }
+  bb13 {
+    %0 = %26;
     return;
   }
-}
-main$493$0$thunk$4() -> nil|error{
-  bb0 {
-    $desugar$12 = (1, appendPath);
-    %2 = ConstantLoad First
-    $desugar$13 = %2;
-    %4 = $default$1($desugar$12,$desugar$13) -> bb1;
+  bb14 {
+    %17 = %26;
+    GOTO bb15;
   }
-  bb1 {
-    $desugar$14 = %4;
-    %6 = fileWriteString($desugar$12,$desugar$13,$desugar$14) -> bb2;
+  bb15 {
+    %29 = fileReadLines(linesPath) -> bb16;
   }
-  bb2 {
-    %0 = %6;
+  bb16 {
+    %30 = %29 is error
+    %30 ? bb17 : bb18;
+  }
+  bb17 {
+    %0 = %29;
+    return;
+  }
+  bb18 {
+    %28 = %29;
+    GOTO bb19;
+  }
+  bb19 {
+    %31 = println(%28) -> bb20;
+  }
+  bb20 {
+    %32 = ConstantLoad /tmp/bal_io_mkdir_xyz/bytes/a/b/bytes.dat
+    bytesPath = %32;
+    $desugar$6 = bytesPath;
+    %36 = ConstantLoad 1
+    %37 = ConstantLoad 2
+    %38 = ConstantLoad 3
+    %39 = ConstantLoad 3
+    %40 = newArray [int:Unsigned8...][%39]{%36, %37, %38}
+    $desugar$7 = %40;
+    %42 = $default$4($desugar$6,$desugar$7) -> bb21;
+  }
+  bb21 {
+    $desugar$8 = %42;
+    %44 = fileWriteBytes($desugar$6,$desugar$7,$desugar$8) -> bb22;
+  }
+  bb22 {
+    %45 = %44 is error
+    %45 ? bb23 : bb24;
+  }
+  bb23 {
+    %0 = %44;
+    return;
+  }
+  bb24 {
+    %34 = %44;
+    GOTO bb25;
+  }
+  bb25 {
+    %47 = fileReadBytes(bytesPath) -> bb26;
+  }
+  bb26 {
+    %48 = %47 is error
+    %48 ? bb27 : bb28;
+  }
+  bb27 {
+    %0 = %47;
+    return;
+  }
+  bb28 {
+    %46 = %47;
+    GOTO bb29;
+  }
+  bb29 {
+    %49 = println(%46) -> bb30;
+  }
+  bb30 {
+    %50 = ConstantLoad /tmp/bal_io_mkdir_xyz/json/a/b/data.json
+    jsonPath = %50;
+    %53 = ConstantLoad k
+    %54 = ConstantLoad v
+    %55 = newMap {| json... |}{%53=%54}
+    %56 = fileWriteJson(jsonPath,%55) -> bb31;
+  }
+  bb31 {
+    %57 = %56 is error
+    %57 ? bb32 : bb33;
+  }
+  bb32 {
+    %0 = %56;
+    return;
+  }
+  bb33 {
+    %52 = %56;
+    GOTO bb34;
+  }
+  bb34 {
+    %59 = fileReadJson(jsonPath) -> bb35;
+  }
+  bb35 {
+    %60 = %59 is error
+    %60 ? bb36 : bb37;
+  }
+  bb36 {
+    %0 = %59;
+    return;
+  }
+  bb37 {
+    %58 = %59;
+    GOTO bb38;
+  }
+  bb38 {
+    %61 = println(%58) -> bb39;
+  }
+  bb39 {
+    %62 = ConstantLoad /tmp/bal_io_mkdir_xyz/xml/a/b/data.xml
+    xmlPath = %62;
+    $desugar$9 = xmlPath;
+    %66 = ConstantLoad a
+    %67 = newXMLElement(%66, ())
+    $desugar$10 = %67;
+    %69 = $default$6($desugar$9,$desugar$10) -> bb40;
+  }
+  bb40 {
+    $desugar$11 = %69;
+    %71 = fileWriteXml($desugar$9,$desugar$10,$desugar$11) -> bb41;
+  }
+  bb41 {
+    %72 = %71 is error
+    %72 ? bb42 : bb43;
+  }
+  bb42 {
+    %0 = %71;
+    return;
+  }
+  bb43 {
+    %64 = %71;
+    GOTO bb44;
+  }
+  bb44 {
+    %74 = fileReadXml(xmlPath) -> bb45;
+  }
+  bb45 {
+    %75 = %74 is error
+    %75 ? bb46 : bb47;
+  }
+  bb46 {
+    %0 = %74;
+    return;
+  }
+  bb47 {
+    %73 = %74;
+    GOTO bb48;
+  }
+  bb48 {
+    %76 = println(%73) -> bb49;
+  }
+  bb49 {
+    %77 = ConstantLoad /tmp/bal_io_mkdir_xyz/append/c/d/append.txt
+    appendPath = %77;
+    $desugar$12 = appendPath;
+    %81 = ConstantLoad First
+    $desugar$13 = %81;
+    %83 = $default$1($desugar$12,$desugar$13) -> bb50;
+  }
+  bb50 {
+    $desugar$14 = %83;
+    %85 = fileWriteString($desugar$12,$desugar$13,$desugar$14) -> bb51;
+  }
+  bb51 {
+    %86 = %85 is error
+    %86 ? bb52 : bb53;
+  }
+  bb52 {
+    %0 = %85;
+    return;
+  }
+  bb53 {
+    %79 = %85;
+    GOTO bb54;
+  }
+  bb54 {
+    %88 = ConstantLoad Second
+    %89 = ConstantLoad APPEND
+    %90 = fileWriteString(appendPath,%88,%89) -> bb55;
+  }
+  bb55 {
+    %91 = %90 is error
+    %91 ? bb56 : bb57;
+  }
+  bb56 {
+    %0 = %90;
+    return;
+  }
+  bb57 {
+    %87 = %90;
+    GOTO bb58;
+  }
+  bb58 {
+    %93 = fileReadString(appendPath) -> bb59;
+  }
+  bb59 {
+    %94 = %93 is error
+    %94 ? bb60 : bb61;
+  }
+  bb60 {
+    %0 = %93;
+    return;
+  }
+  bb61 {
+    %92 = %93;
+    GOTO bb62;
+  }
+  bb62 {
+    %95 = println(%92) -> bb63;
+  }
+  bb63 {
     return;
   }
 }

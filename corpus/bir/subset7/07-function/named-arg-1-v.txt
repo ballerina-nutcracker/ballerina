@@ -30,14 +30,21 @@ main() -> nil{
     %7 = println(%6) -> bb2;
   }
   bb2 {
-    %8 = fp $anon/.:main$493$2$thunk$0
-    %9 = main$493$2$thunk$0() -> bb3;
+    %8 = $default$0() -> bb3;
   }
   bb3 {
-    %10 = %9;
-    %11 = println(%10) -> bb4;
+    $desugar$0 = %8;
+    %10 = ConstantLoad 5
+    $desugar$1 = %10;
+    %12 = $desugar$0;
+    %13 = $desugar$1;
+    %14 = bar(%12,%13) -> bb4;
   }
   bb4 {
+    %15 = %14;
+    %16 = println(%15) -> bb5;
+  }
+  bb5 {
     return;
   }
 }
@@ -52,23 +59,6 @@ $default$1(int) -> int{
   bb0 {
     %2 = ConstantLoad 10
     %0 = %2;
-    return;
-  }
-}
-main$493$2$thunk$0() -> int{
-  bb0 {
-    %1 = $default$0() -> bb1;
-  }
-  bb1 {
-    $desugar$0 = %1;
-    %3 = ConstantLoad 5
-    $desugar$1 = %3;
-    %5 = $desugar$0;
-    %6 = $desugar$1;
-    %7 = bar(%5,%6) -> bb2;
-  }
-  bb2 {
-    %0 = %7;
     return;
   }
 }

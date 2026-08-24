@@ -101,29 +101,47 @@ main() -> nil|error{
     %22 = println(%21) -> bb18;
   }
   bb18 {
-    %24 = fp $anon/.:main$493$1$thunk$0
-    %25 = main$493$1$thunk$0() -> bb19;
+    %24 = ConstantLoad /etc
+    $desugar$0 = %24;
+    %26 = $default$0($desugar$0) -> bb19;
   }
   bb19 {
-    %26 = %25 is error
-    %26 ? bb20 : bb21;
+    $desugar$1 = %26;
+    %28 = newObject $anon/.:Listener
+    %29 = init(%28,$desugar$0,$desugar$1) -> bb20;
   }
   bb20 {
-    %0 = %25;
-    return;
+    %31 = %29 is nil
+    %31 ? bb21 : bb22;
   }
   bb21 {
-    %23 = %25;
-    GOTO bb22;
+    %30 = %28;
+    GOTO bb23;
   }
   bb22 {
-    defaulted = %23;
-    %28 = describe(defaulted) -> bb23;
+    %30 = %29;
+    GOTO bb23;
   }
   bb23 {
-    %29 = println(%28) -> bb24;
+    %32 = %30 is error
+    %32 ? bb24 : bb25;
   }
   bb24 {
+    %0 = %30;
+    return;
+  }
+  bb25 {
+    %23 = %30;
+    GOTO bb26;
+  }
+  bb26 {
+    defaulted = %23;
+    %34 = describe(defaulted) -> bb27;
+  }
+  bb27 {
+    %35 = println(%34) -> bb28;
+  }
+  bb28 {
     return;
   }
 }
@@ -131,34 +149,6 @@ $default$0(string) -> boolean{
   bb0 {
     %2 = ConstantLoad false
     %0 = %2;
-    return;
-  }
-}
-main$493$1$thunk$0() -> error|isolated object { public function describe() returns string; public function init(string, boolean) returns nil|error; private string path; private boolean recursive }{
-  bb0 {
-    %1 = ConstantLoad /etc
-    $desugar$0 = %1;
-    %3 = $default$0($desugar$0) -> bb1;
-  }
-  bb1 {
-    $desugar$1 = %3;
-    %5 = newObject $anon/.:Listener
-    %6 = init(%5,$desugar$0,$desugar$1) -> bb2;
-  }
-  bb2 {
-    %8 = %6 is nil
-    %8 ? bb3 : bb4;
-  }
-  bb3 {
-    %7 = %5;
-    GOTO bb5;
-  }
-  bb4 {
-    %7 = %6;
-    GOTO bb5;
-  }
-  bb5 {
-    %0 = %7;
     return;
   }
 }

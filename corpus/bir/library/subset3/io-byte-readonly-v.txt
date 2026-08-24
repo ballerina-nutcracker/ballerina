@@ -3,185 +3,175 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad /tmp/bal_io_byte_readonly.bin
     path = %1;
-    %4 = closure_fp $anon/.:main$493$0$thunk$0
-    %5 = main$493$0$thunk$0() -> bb1;
+    $desugar$0 = path;
+    %5 = ConstantLoad 1
+    %6 = ConstantLoad 2
+    %7 = ConstantLoad 3
+    %8 = ConstantLoad 4
+    %9 = ConstantLoad 5
+    %10 = ConstantLoad 5
+    %11 = newArray [int:Unsigned8...][%10]{%5, %6, %7, %8, %9}
+    $desugar$1 = %11;
+    %13 = $default$4($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    %6 = %5 is error
-    %6 ? bb2 : bb3;
+    $desugar$2 = %13;
+    %15 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %0 = %5;
-    return;
+    %16 = %15 is error
+    %16 ? bb3 : bb4;
   }
   bb3 {
-    %3 = %5;
-    GOTO bb4;
+    %0 = %15;
+    return;
   }
   bb4 {
-    %8 = fileReadBytes(path) -> bb5;
+    %3 = %15;
+    GOTO bb5;
   }
   bb5 {
-    %9 = %8 is error
-    %9 ? bb6 : bb7;
+    %18 = fileReadBytes(path) -> bb6;
   }
   bb6 {
-    %0 = %8;
-    return;
+    %19 = %18 is error
+    %19 ? bb7 : bb8;
   }
   bb7 {
-    %7 = %8;
-    GOTO bb8;
-  }
-  bb8 {
-    bytes = %7;
-    %11 = bytes is readonly&[int:Unsigned8...]
-    %12 = %11;
-    %13 = println(%12) -> bb9;
-  }
-  bb9 {
-    %14 = length(bytes) -> bb10;
-  }
-  bb10 {
-    %15 = %14;
-    %16 = println(%15) -> bb11;
-  }
-  bb11 {
-    %18 = ConstantLoad 2
-    %19 = %18;
-    %20 = fileReadBlocksAsStream(path,%19) -> bb12;
-  }
-  bb12 {
-    %21 = %20 is error
-    %21 ? bb13 : bb14;
-  }
-  bb13 {
-    %0 = %20;
+    %0 = %18;
     return;
   }
+  bb8 {
+    %17 = %18;
+    GOTO bb9;
+  }
+  bb9 {
+    bytes = %17;
+    %21 = bytes is readonly&[int:Unsigned8...]
+    %22 = %21;
+    %23 = println(%22) -> bb10;
+  }
+  bb10 {
+    %24 = length(bytes) -> bb11;
+  }
+  bb11 {
+    %25 = %24;
+    %26 = println(%25) -> bb12;
+  }
+  bb12 {
+    %28 = ConstantLoad 2
+    %29 = %28;
+    %30 = fileReadBlocksAsStream(path,%29) -> bb13;
+  }
+  bb13 {
+    %31 = %30 is error
+    %31 ? bb14 : bb15;
+  }
   bb14 {
-    %17 = %20;
-    GOTO bb15;
+    %0 = %30;
+    return;
   }
   bb15 {
-    blocks = %17;
-    %23 = streamNext blocks
-    first = %23;
-    %25 = first is {| value: readonly&[int:Unsigned8...], never... |}
-    %25 ? bb16 : bb18;
+    %27 = %30;
+    GOTO bb16;
   }
   bb16 {
+    blocks = %27;
+    %33 = streamNext blocks
+    first = %33;
+    %35 = first is {| value: readonly&[int:Unsigned8...], never... |}
+    %35 ? bb17 : bb19;
+  }
+  bb17 {
     PushScopeFrame 5
     %1 = ConstantLoad value
     %0 = (1, first)[%1];
     %2 = %0 is readonly&[int:Unsigned8...]
     %3 = %2;
-    %4 = println(%3) -> bb17;
-  }
-  bb17 {
-    PopScopeFrame
-    GOTO bb18;
+    %4 = println(%3) -> bb18;
   }
   bb18 {
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb19 {
     PushScopeFrame 21
     %1 = streamClose (1, blocks)
     %2 = %1 is error
-    %2 ? bb19 : bb20;
+    %2 ? bb20 : bb21;
   }
-  bb19 {
+  bb20 {
     (1, %0) = %1;
     PopScopeFrame
     return;
   }
-  bb20 {
-    %0 = %1;
-    GOTO bb21;
-  }
   bb21 {
-    %4 = openReadableFile((1, path)) -> bb22;
+    %0 = %1;
+    GOTO bb22;
   }
   bb22 {
-    %5 = %4 is error
-    %5 ? bb23 : bb24;
+    %4 = openReadableFile((1, path)) -> bb23;
   }
   bb23 {
+    %5 = %4 is error
+    %5 ? bb24 : bb25;
+  }
+  bb24 {
     (1, %0) = %4;
     PopScopeFrame
     return;
   }
-  bb24 {
-    %3 = %4;
-    GOTO bb25;
-  }
   bb25 {
-    channel = %3;
-    %8 = readAll(channel) -> bb26;
+    %3 = %4;
+    GOTO bb26;
   }
   bb26 {
-    %9 = %8 is error
-    %9 ? bb27 : bb28;
+    channel = %3;
+    %8 = readAll(channel) -> bb27;
   }
   bb27 {
+    %9 = %8 is error
+    %9 ? bb28 : bb29;
+  }
+  bb28 {
     (1, %0) = %8;
     PopScopeFrame
     return;
   }
-  bb28 {
-    %7 = %8;
-    GOTO bb29;
-  }
   bb29 {
+    %7 = %8;
+    GOTO bb30;
+  }
+  bb30 {
     all = %7;
     %11 = all is readonly&[int:Unsigned8...]
     %12 = %11;
-    %13 = println(%12) -> bb30;
+    %13 = println(%12) -> bb31;
   }
-  bb30 {
+  bb31 {
     %15 = ConstantLoad 4
     %14 = all[%15];
     %16 = %14;
-    %17 = println(%16) -> bb31;
-  }
-  bb31 {
-    %19 = close(channel) -> bb32;
+    %17 = println(%16) -> bb32;
   }
   bb32 {
-    %20 = %19 is error
-    %20 ? bb33 : bb34;
+    %19 = close(channel) -> bb33;
   }
   bb33 {
+    %20 = %19 is error
+    %20 ? bb34 : bb35;
+  }
+  bb34 {
     (1, %0) = %19;
     PopScopeFrame
     return;
   }
-  bb34 {
-    %18 = %19;
-    GOTO bb35;
-  }
   bb35 {
+    %18 = %19;
+    GOTO bb36;
+  }
+  bb36 {
     PopScopeFrame
-    return;
-  }
-}
-main$493$0$thunk$0() -> nil|error{
-  bb0 {
-    $desugar$0 = (1, path);
-    %2 = ConstantLoad 1
-    %3 = ConstantLoad 2
-    %4 = ConstantLoad 3
-    %5 = ConstantLoad 4
-    %6 = ConstantLoad 5
-    %7 = ConstantLoad 5
-    %8 = newArray [int:Unsigned8...][%7]{%2, %3, %4, %5, %6}
-    $desugar$1 = %8;
-    %10 = $default$4($desugar$0,$desugar$1) -> bb1;
-  }
-  bb1 {
-    $desugar$2 = %10;
-    %12 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
-  }
-  bb2 {
-    %0 = %12;
     return;
   }
 }

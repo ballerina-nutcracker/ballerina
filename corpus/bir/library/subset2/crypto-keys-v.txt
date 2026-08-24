@@ -75,1168 +75,1068 @@ j8SfkAvXrHcCIDBDbfZxrJtPWany9a7fCZBKyWG8nNy2HkzSxYeJ2GHh
 -----END CERTIFICATE-----
 
     ecCert = %7;
-    %10 = closure_fp $anon/.:main$493$0$thunk$0
-    %11 = main$493$0$thunk$0() -> bb1;
+    %10 = ConstantLoad /tmp/bal_rsa_key.pem
+    $desugar$0 = %10;
+    $desugar$1 = rsaKey;
+    %13 = $default$1($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    %12 = %11 is error
-    %12 ? bb2 : bb3;
+    $desugar$2 = %13;
+    %15 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %0 = %11;
-    return;
+    %16 = %15 is error
+    %16 ? bb3 : bb4;
   }
   bb3 {
-    %9 = %11;
-    GOTO bb4;
-  }
-  bb4 {
-    %14 = closure_fp $anon/.:main$493$0$thunk$1
-    %15 = main$493$0$thunk$1() -> bb5;
-  }
-  bb5 {
-    %16 = %15 is error
-    %16 ? bb6 : bb7;
-  }
-  bb6 {
     %0 = %15;
     return;
   }
+  bb4 {
+    %9 = %15;
+    GOTO bb5;
+  }
+  bb5 {
+    %18 = ConstantLoad /tmp/bal_rsa_cert.pem
+    $desugar$3 = %18;
+    $desugar$4 = rsaCert;
+    %21 = $default$1($desugar$3,$desugar$4) -> bb6;
+  }
+  bb6 {
+    $desugar$5 = %21;
+    %23 = fileWriteString($desugar$3,$desugar$4,$desugar$5) -> bb7;
+  }
   bb7 {
-    %13 = %15;
-    GOTO bb8;
+    %24 = %23 is error
+    %24 ? bb8 : bb9;
   }
   bb8 {
-    %18 = closure_fp $anon/.:main$493$0$thunk$2
-    %19 = main$493$0$thunk$2() -> bb9;
-  }
-  bb9 {
-    %20 = %19 is error
-    %20 ? bb10 : bb11;
-  }
-  bb10 {
-    %0 = %19;
-    return;
-  }
-  bb11 {
-    %17 = %19;
-    GOTO bb12;
-  }
-  bb12 {
-    %22 = closure_fp $anon/.:main$493$0$thunk$3
-    %23 = main$493$0$thunk$3() -> bb13;
-  }
-  bb13 {
-    %24 = %23 is error
-    %24 ? bb14 : bb15;
-  }
-  bb14 {
     %0 = %23;
     return;
   }
+  bb9 {
+    %17 = %23;
+    GOTO bb10;
+  }
+  bb10 {
+    %26 = ConstantLoad /tmp/bal_ec_key.pem
+    $desugar$6 = %26;
+    $desugar$7 = ecKey;
+    %29 = $default$1($desugar$6,$desugar$7) -> bb11;
+  }
+  bb11 {
+    $desugar$8 = %29;
+    %31 = fileWriteString($desugar$6,$desugar$7,$desugar$8) -> bb12;
+  }
+  bb12 {
+    %32 = %31 is error
+    %32 ? bb13 : bb14;
+  }
+  bb13 {
+    %0 = %31;
+    return;
+  }
+  bb14 {
+    %25 = %31;
+    GOTO bb15;
+  }
   bb15 {
-    %21 = %23;
-    GOTO bb16;
+    %34 = ConstantLoad /tmp/bal_ec_cert.pem
+    $desugar$9 = %34;
+    $desugar$10 = ecCert;
+    %37 = $default$1($desugar$9,$desugar$10) -> bb16;
   }
   bb16 {
-    %26 = fp $anon/.:main$493$0$thunk$4
-    %27 = main$493$0$thunk$4() -> bb17;
+    $desugar$11 = %37;
+    %39 = fileWriteString($desugar$9,$desugar$10,$desugar$11) -> bb17;
   }
   bb17 {
-    %28 = %27 is error
-    %28 ? bb18 : bb19;
+    %40 = %39 is error
+    %40 ? bb18 : bb19;
   }
   bb18 {
-    %0 = %27;
+    %0 = %39;
     return;
   }
   bb19 {
-    %25 = %27;
+    %33 = %39;
     GOTO bb20;
   }
   bb20 {
-    rsaPk = %25;
-    %31 = ConstantLoad /tmp/bal_rsa_cert.pem
-    %32 = decodeRsaPublicKeyFromCertFile(%31) -> bb21;
+    %42 = ConstantLoad /tmp/bal_rsa_key.pem
+    $desugar$12 = %42;
+    %44 = $default$0($desugar$12) -> bb21;
   }
   bb21 {
-    %33 = %32 is error
-    %33 ? bb22 : bb23;
+    $desugar$13 = %44;
+    %46 = decodeRsaPrivateKeyFromKeyFile($desugar$12,$desugar$13) -> bb22;
   }
   bb22 {
-    %0 = %32;
-    return;
+    %47 = %46 is error
+    %47 ? bb23 : bb24;
   }
   bb23 {
-    %30 = %32;
-    GOTO bb24;
+    %0 = %46;
+    return;
   }
   bb24 {
-    rsaPub = %30;
-    %36 = ConstantLoad algorithm
-    %35 = rsaPk[%36];
-    %37 = println(%35) -> bb25;
+    %41 = %46;
+    GOTO bb25;
   }
   bb25 {
-    %39 = ConstantLoad algorithm
-    %38 = rsaPub[%39];
-    %40 = println(%38) -> bb26;
+    rsaPk = %41;
+    %50 = ConstantLoad /tmp/bal_rsa_cert.pem
+    %51 = decodeRsaPublicKeyFromCertFile(%50) -> bb26;
   }
   bb26 {
-    %41 = ConstantLoad 1
-    %42 = ConstantLoad 2
-    %43 = ConstantLoad 3
-    %44 = ConstantLoad 4
-    %45 = ConstantLoad 5
-    %46 = ConstantLoad 6
-    %47 = ConstantLoad 7
-    %48 = ConstantLoad 8
-    %49 = ConstantLoad 8
-    %50 = newArray [int:Unsigned8...][%49]{%41, %42, %43, %44, %45, %46, %47, %48}
-    data = %50;
-    %53 = signRsaSha256(data,rsaPk) -> bb27;
+    %52 = %51 is error
+    %52 ? bb27 : bb28;
   }
   bb27 {
-    %54 = %53 is error
-    %54 ? bb28 : bb29;
+    %0 = %51;
+    return;
   }
   bb28 {
-    %0 = %53;
-    return;
+    %49 = %51;
+    GOTO bb29;
   }
   bb29 {
-    %52 = %53;
-    GOTO bb30;
+    rsaPub = %49;
+    %55 = ConstantLoad algorithm
+    %54 = rsaPk[%55];
+    %56 = println(%54) -> bb30;
   }
   bb30 {
-    s256 = %52;
-    %57 = verifyRsaSha256Signature(data,s256,rsaPub) -> bb31;
+    %58 = ConstantLoad algorithm
+    %57 = rsaPub[%58];
+    %59 = println(%57) -> bb31;
   }
   bb31 {
-    %58 = %57 is error
-    %58 ? bb32 : bb33;
+    %60 = ConstantLoad 1
+    %61 = ConstantLoad 2
+    %62 = ConstantLoad 3
+    %63 = ConstantLoad 4
+    %64 = ConstantLoad 5
+    %65 = ConstantLoad 6
+    %66 = ConstantLoad 7
+    %67 = ConstantLoad 8
+    %68 = ConstantLoad 8
+    %69 = newArray [int:Unsigned8...][%68]{%60, %61, %62, %63, %64, %65, %66, %67}
+    data = %69;
+    %72 = signRsaSha256(data,rsaPk) -> bb32;
   }
   bb32 {
-    %0 = %57;
-    return;
+    %73 = %72 is error
+    %73 ? bb33 : bb34;
   }
   bb33 {
-    %56 = %57;
-    GOTO bb34;
+    %0 = %72;
+    return;
   }
   bb34 {
-    %59 = %56;
-    %60 = println(%59) -> bb35;
+    %71 = %72;
+    GOTO bb35;
   }
   bb35 {
-    %62 = signRsaSha384(data,rsaPk) -> bb36;
+    s256 = %71;
+    %76 = verifyRsaSha256Signature(data,s256,rsaPub) -> bb36;
   }
   bb36 {
-    %63 = %62 is error
-    %63 ? bb37 : bb38;
+    %77 = %76 is error
+    %77 ? bb37 : bb38;
   }
   bb37 {
-    %0 = %62;
+    %0 = %76;
     return;
   }
   bb38 {
-    %61 = %62;
+    %75 = %76;
     GOTO bb39;
   }
   bb39 {
-    s384 = %61;
-    %66 = verifyRsaSha384Signature(data,s384,rsaPub) -> bb40;
+    %78 = %75;
+    %79 = println(%78) -> bb40;
   }
   bb40 {
-    %67 = %66 is error
-    %67 ? bb41 : bb42;
+    %81 = signRsaSha384(data,rsaPk) -> bb41;
   }
   bb41 {
-    %0 = %66;
-    return;
+    %82 = %81 is error
+    %82 ? bb42 : bb43;
   }
   bb42 {
-    %65 = %66;
-    GOTO bb43;
+    %0 = %81;
+    return;
   }
   bb43 {
-    %68 = %65;
-    %69 = println(%68) -> bb44;
+    %80 = %81;
+    GOTO bb44;
   }
   bb44 {
-    %71 = signRsaSha512(data,rsaPk) -> bb45;
+    s384 = %80;
+    %85 = verifyRsaSha384Signature(data,s384,rsaPub) -> bb45;
   }
   bb45 {
-    %72 = %71 is error
-    %72 ? bb46 : bb47;
+    %86 = %85 is error
+    %86 ? bb46 : bb47;
   }
   bb46 {
-    %0 = %71;
+    %0 = %85;
     return;
   }
   bb47 {
-    %70 = %71;
+    %84 = %85;
     GOTO bb48;
   }
   bb48 {
-    s512 = %70;
-    %75 = verifyRsaSha512Signature(data,s512,rsaPub) -> bb49;
+    %87 = %84;
+    %88 = println(%87) -> bb49;
   }
   bb49 {
-    %76 = %75 is error
-    %76 ? bb50 : bb51;
+    %90 = signRsaSha512(data,rsaPk) -> bb50;
   }
   bb50 {
-    %0 = %75;
-    return;
+    %91 = %90 is error
+    %91 ? bb51 : bb52;
   }
   bb51 {
-    %74 = %75;
-    GOTO bb52;
+    %0 = %90;
+    return;
   }
   bb52 {
-    %77 = %74;
-    %78 = println(%77) -> bb53;
+    %89 = %90;
+    GOTO bb53;
   }
   bb53 {
-    %80 = signRsaSha1(data,rsaPk) -> bb54;
+    s512 = %89;
+    %94 = verifyRsaSha512Signature(data,s512,rsaPub) -> bb54;
   }
   bb54 {
-    %81 = %80 is error
-    %81 ? bb55 : bb56;
+    %95 = %94 is error
+    %95 ? bb55 : bb56;
   }
   bb55 {
-    %0 = %80;
+    %0 = %94;
     return;
   }
   bb56 {
-    %79 = %80;
+    %93 = %94;
     GOTO bb57;
   }
   bb57 {
-    s1 = %79;
-    %84 = verifyRsaSha1Signature(data,s1,rsaPub) -> bb58;
+    %96 = %93;
+    %97 = println(%96) -> bb58;
   }
   bb58 {
-    %85 = %84 is error
-    %85 ? bb59 : bb60;
+    %99 = signRsaSha1(data,rsaPk) -> bb59;
   }
   bb59 {
-    %0 = %84;
-    return;
+    %100 = %99 is error
+    %100 ? bb60 : bb61;
   }
   bb60 {
-    %83 = %84;
-    GOTO bb61;
+    %0 = %99;
+    return;
   }
   bb61 {
-    %86 = %83;
-    %87 = println(%86) -> bb62;
+    %98 = %99;
+    GOTO bb62;
   }
   bb62 {
-    %89 = signRsaMd5(data,rsaPk) -> bb63;
+    s1 = %98;
+    %103 = verifyRsaSha1Signature(data,s1,rsaPub) -> bb63;
   }
   bb63 {
-    %90 = %89 is error
-    %90 ? bb64 : bb65;
+    %104 = %103 is error
+    %104 ? bb64 : bb65;
   }
   bb64 {
-    %0 = %89;
+    %0 = %103;
     return;
   }
   bb65 {
-    %88 = %89;
+    %102 = %103;
     GOTO bb66;
   }
   bb66 {
-    sMd5 = %88;
-    %93 = verifyRsaMd5Signature(data,sMd5,rsaPub) -> bb67;
+    %105 = %102;
+    %106 = println(%105) -> bb67;
   }
   bb67 {
-    %94 = %93 is error
-    %94 ? bb68 : bb69;
+    %108 = signRsaMd5(data,rsaPk) -> bb68;
   }
   bb68 {
-    %0 = %93;
-    return;
+    %109 = %108 is error
+    %109 ? bb69 : bb70;
   }
   bb69 {
-    %92 = %93;
-    GOTO bb70;
+    %0 = %108;
+    return;
   }
   bb70 {
-    %95 = %92;
-    %96 = println(%95) -> bb71;
+    %107 = %108;
+    GOTO bb71;
   }
   bb71 {
-    %98 = signRsaSsaPss256(data,rsaPk) -> bb72;
+    sMd5 = %107;
+    %112 = verifyRsaMd5Signature(data,sMd5,rsaPub) -> bb72;
   }
   bb72 {
-    %99 = %98 is error
-    %99 ? bb73 : bb74;
+    %113 = %112 is error
+    %113 ? bb73 : bb74;
   }
   bb73 {
-    %0 = %98;
-    return;
-  }
-  bb74 {
-    %97 = %98;
-    GOTO bb75;
-  }
-  bb75 {
-    sPss = %97;
-    %102 = verifyRsaSsaPss256Signature(data,sPss,rsaPub) -> bb76;
-  }
-  bb76 {
-    %103 = %102 is error
-    %103 ? bb77 : bb78;
-  }
-  bb77 {
-    %0 = %102;
-    return;
-  }
-  bb78 {
-    %101 = %102;
-    GOTO bb79;
-  }
-  bb79 {
-    %104 = %101;
-    %105 = println(%104) -> bb80;
-  }
-  bb80 {
-    %107 = ConstantLoad 9
-    %108 = ConstantLoad 9
-    %109 = ConstantLoad 9
-    %110 = ConstantLoad 3
-    %111 = newArray [int:Unsigned8...][%110]{%107, %108, %109}
-    %112 = verifyRsaSha256Signature(%111,s256,rsaPub) -> bb81;
-  }
-  bb81 {
-    %113 = %112 is error
-    %113 ? bb82 : bb83;
-  }
-  bb82 {
     %0 = %112;
     return;
   }
+  bb74 {
+    %111 = %112;
+    GOTO bb75;
+  }
+  bb75 {
+    %114 = %111;
+    %115 = println(%114) -> bb76;
+  }
+  bb76 {
+    %117 = signRsaSsaPss256(data,rsaPk) -> bb77;
+  }
+  bb77 {
+    %118 = %117 is error
+    %118 ? bb78 : bb79;
+  }
+  bb78 {
+    %0 = %117;
+    return;
+  }
+  bb79 {
+    %116 = %117;
+    GOTO bb80;
+  }
+  bb80 {
+    sPss = %116;
+    %121 = verifyRsaSsaPss256Signature(data,sPss,rsaPub) -> bb81;
+  }
+  bb81 {
+    %122 = %121 is error
+    %122 ? bb82 : bb83;
+  }
+  bb82 {
+    %0 = %121;
+    return;
+  }
   bb83 {
-    %106 = %112;
+    %120 = %121;
     GOTO bb84;
   }
   bb84 {
-    %114 = %106;
-    %115 = println(%114) -> bb85;
+    %123 = %120;
+    %124 = println(%123) -> bb85;
   }
   bb85 {
-    %117 = closure_fp $anon/.:main$493$0$thunk$5
-    %118 = main$493$0$thunk$5() -> bb86;
+    %126 = ConstantLoad 9
+    %127 = ConstantLoad 9
+    %128 = ConstantLoad 9
+    %129 = ConstantLoad 3
+    %130 = newArray [int:Unsigned8...][%129]{%126, %127, %128}
+    %131 = verifyRsaSha256Signature(%130,s256,rsaPub) -> bb86;
   }
   bb86 {
-    %119 = %118 is error
-    %119 ? bb87 : bb88;
+    %132 = %131 is error
+    %132 ? bb87 : bb88;
   }
   bb87 {
-    %0 = %118;
+    %0 = %131;
     return;
   }
   bb88 {
-    %116 = %118;
+    %125 = %131;
     GOTO bb89;
   }
   bb89 {
-    ct = %116;
-    %123 = closure_fp $anon/.:main$493$0$thunk$6
-    %124 = main$493$0$thunk$6() -> bb90;
+    %133 = %125;
+    %134 = println(%133) -> bb90;
   }
   bb90 {
-    %125 = %124 is error
-    %125 ? bb91 : bb92;
+    $desugar$14 = data;
+    $desugar$15 = rsaPub;
+    %138 = $default$17($desugar$14,$desugar$15) -> bb91;
   }
   bb91 {
-    %0 = %124;
-    return;
+    $desugar$16 = %138;
+    %140 = encryptRsaEcb($desugar$14,$desugar$15,$desugar$16) -> bb92;
   }
   bb92 {
-    %122 = %124;
-    GOTO bb93;
+    %141 = %140 is error
+    %141 ? bb93 : bb94;
   }
   bb93 {
-    %121 = == %122 data;
-    %126 = %121;
-    %127 = println(%126) -> bb94;
+    %0 = %140;
+    return;
   }
   bb94 {
-    %129 = ConstantLoad OAEPwithMD5andMGF1
-    %130 = encryptRsaEcb(data,rsaPub,%129) -> bb95;
+    %135 = %140;
+    GOTO bb95;
   }
   bb95 {
-    %131 = %130 is error
-    %131 ? bb96 : bb97;
+    ct = %135;
+    $desugar$17 = ct;
+    $desugar$18 = rsaPk;
+    %147 = $default$22($desugar$17,$desugar$18) -> bb96;
   }
   bb96 {
-    %0 = %130;
-    return;
+    $desugar$19 = %147;
+    %149 = decryptRsaEcb($desugar$17,$desugar$18,$desugar$19) -> bb97;
   }
   bb97 {
-    %128 = %130;
-    GOTO bb98;
+    %150 = %149 is error
+    %150 ? bb98 : bb99;
   }
   bb98 {
-    oaepMd5 = %128;
-    %135 = ConstantLoad OAEPwithMD5andMGF1
-    %136 = decryptRsaEcb(oaepMd5,rsaPk,%135) -> bb99;
+    %0 = %149;
+    return;
   }
   bb99 {
-    %137 = %136 is error
-    %137 ? bb100 : bb101;
+    %144 = %149;
+    GOTO bb100;
   }
   bb100 {
-    %0 = %136;
-    return;
+    %143 = == %144 data;
+    %151 = %143;
+    %152 = println(%151) -> bb101;
   }
   bb101 {
-    %134 = %136;
-    GOTO bb102;
+    %154 = ConstantLoad OAEPwithMD5andMGF1
+    %155 = encryptRsaEcb(data,rsaPub,%154) -> bb102;
   }
   bb102 {
-    %133 = == %134 data;
-    %138 = %133;
-    %139 = println(%138) -> bb103;
+    %156 = %155 is error
+    %156 ? bb103 : bb104;
   }
   bb103 {
-    %141 = ConstantLoad OAEPWithSHA1AndMGF1
-    %142 = encryptRsaEcb(data,rsaPub,%141) -> bb104;
+    %0 = %155;
+    return;
   }
   bb104 {
-    %143 = %142 is error
-    %143 ? bb105 : bb106;
+    %153 = %155;
+    GOTO bb105;
   }
   bb105 {
-    %0 = %142;
-    return;
+    oaepMd5 = %153;
+    %160 = ConstantLoad OAEPwithMD5andMGF1
+    %161 = decryptRsaEcb(oaepMd5,rsaPk,%160) -> bb106;
   }
   bb106 {
-    %140 = %142;
-    GOTO bb107;
+    %162 = %161 is error
+    %162 ? bb107 : bb108;
   }
   bb107 {
-    oaep1 = %140;
-    %147 = ConstantLoad OAEPWithSHA1AndMGF1
-    %148 = decryptRsaEcb(oaep1,rsaPk,%147) -> bb108;
+    %0 = %161;
+    return;
   }
   bb108 {
-    %149 = %148 is error
-    %149 ? bb109 : bb110;
+    %159 = %161;
+    GOTO bb109;
   }
   bb109 {
-    %0 = %148;
-    return;
+    %158 = == %159 data;
+    %163 = %158;
+    %164 = println(%163) -> bb110;
   }
   bb110 {
-    %146 = %148;
-    GOTO bb111;
+    %166 = ConstantLoad OAEPWithSHA1AndMGF1
+    %167 = encryptRsaEcb(data,rsaPub,%166) -> bb111;
   }
   bb111 {
-    %145 = == %146 data;
-    %150 = %145;
-    %151 = println(%150) -> bb112;
+    %168 = %167 is error
+    %168 ? bb112 : bb113;
   }
   bb112 {
-    %153 = ConstantLoad OAEPWithSHA256AndMGF1
-    %154 = encryptRsaEcb(data,rsaPub,%153) -> bb113;
+    %0 = %167;
+    return;
   }
   bb113 {
-    %155 = %154 is error
-    %155 ? bb114 : bb115;
+    %165 = %167;
+    GOTO bb114;
   }
   bb114 {
-    %0 = %154;
-    return;
+    oaep1 = %165;
+    %172 = ConstantLoad OAEPWithSHA1AndMGF1
+    %173 = decryptRsaEcb(oaep1,rsaPk,%172) -> bb115;
   }
   bb115 {
-    %152 = %154;
-    GOTO bb116;
+    %174 = %173 is error
+    %174 ? bb116 : bb117;
   }
   bb116 {
-    oaep256 = %152;
-    %159 = ConstantLoad OAEPWithSHA256AndMGF1
-    %160 = decryptRsaEcb(oaep256,rsaPk,%159) -> bb117;
+    %0 = %173;
+    return;
   }
   bb117 {
-    %161 = %160 is error
-    %161 ? bb118 : bb119;
+    %171 = %173;
+    GOTO bb118;
   }
   bb118 {
-    %0 = %160;
-    return;
+    %170 = == %171 data;
+    %175 = %170;
+    %176 = println(%175) -> bb119;
   }
   bb119 {
-    %158 = %160;
-    GOTO bb120;
+    %178 = ConstantLoad OAEPWithSHA256AndMGF1
+    %179 = encryptRsaEcb(data,rsaPub,%178) -> bb120;
   }
   bb120 {
-    %157 = == %158 data;
-    %162 = %157;
-    %163 = println(%162) -> bb121;
+    %180 = %179 is error
+    %180 ? bb121 : bb122;
   }
   bb121 {
-    %165 = ConstantLoad OAEPwithSHA384andMGF1
-    %166 = encryptRsaEcb(data,rsaPub,%165) -> bb122;
+    %0 = %179;
+    return;
   }
   bb122 {
-    %167 = %166 is error
-    %167 ? bb123 : bb124;
+    %177 = %179;
+    GOTO bb123;
   }
   bb123 {
-    %0 = %166;
-    return;
+    oaep256 = %177;
+    %184 = ConstantLoad OAEPWithSHA256AndMGF1
+    %185 = decryptRsaEcb(oaep256,rsaPk,%184) -> bb124;
   }
   bb124 {
-    %164 = %166;
-    GOTO bb125;
+    %186 = %185 is error
+    %186 ? bb125 : bb126;
   }
   bb125 {
-    oaep384 = %164;
-    %171 = ConstantLoad OAEPwithSHA384andMGF1
-    %172 = decryptRsaEcb(oaep384,rsaPk,%171) -> bb126;
+    %0 = %185;
+    return;
   }
   bb126 {
-    %173 = %172 is error
-    %173 ? bb127 : bb128;
+    %183 = %185;
+    GOTO bb127;
   }
   bb127 {
-    %0 = %172;
-    return;
+    %182 = == %183 data;
+    %187 = %182;
+    %188 = println(%187) -> bb128;
   }
   bb128 {
-    %170 = %172;
-    GOTO bb129;
+    %190 = ConstantLoad OAEPwithSHA384andMGF1
+    %191 = encryptRsaEcb(data,rsaPub,%190) -> bb129;
   }
   bb129 {
-    %169 = == %170 data;
-    %174 = %169;
-    %175 = println(%174) -> bb130;
+    %192 = %191 is error
+    %192 ? bb130 : bb131;
   }
   bb130 {
-    %177 = ConstantLoad OAEPwithSHA512andMGF1
-    %178 = encryptRsaEcb(data,rsaPub,%177) -> bb131;
+    %0 = %191;
+    return;
   }
   bb131 {
-    %179 = %178 is error
-    %179 ? bb132 : bb133;
+    %189 = %191;
+    GOTO bb132;
   }
   bb132 {
-    %0 = %178;
-    return;
+    oaep384 = %189;
+    %196 = ConstantLoad OAEPwithSHA384andMGF1
+    %197 = decryptRsaEcb(oaep384,rsaPk,%196) -> bb133;
   }
   bb133 {
-    %176 = %178;
-    GOTO bb134;
+    %198 = %197 is error
+    %198 ? bb134 : bb135;
   }
   bb134 {
-    oaep512 = %176;
-    %183 = ConstantLoad OAEPwithSHA512andMGF1
-    %184 = decryptRsaEcb(oaep512,rsaPk,%183) -> bb135;
+    %0 = %197;
+    return;
   }
   bb135 {
-    %185 = %184 is error
-    %185 ? bb136 : bb137;
+    %195 = %197;
+    GOTO bb136;
   }
   bb136 {
-    %0 = %184;
-    return;
+    %194 = == %195 data;
+    %199 = %194;
+    %200 = println(%199) -> bb137;
   }
   bb137 {
-    %182 = %184;
-    GOTO bb138;
+    %202 = ConstantLoad OAEPwithSHA512andMGF1
+    %203 = encryptRsaEcb(data,rsaPub,%202) -> bb138;
   }
   bb138 {
-    %181 = == %182 data;
-    %186 = %181;
-    %187 = println(%186) -> bb139;
+    %204 = %203 is error
+    %204 ? bb139 : bb140;
   }
   bb139 {
-    %189 = fp $anon/.:main$493$0$thunk$7
-    %190 = main$493$0$thunk$7() -> bb140;
-  }
-  bb140 {
-    %191 = %190 is error
-    %191 ? bb141 : bb142;
-  }
-  bb141 {
-    %0 = %190;
-    return;
-  }
-  bb142 {
-    %188 = %190;
-    GOTO bb143;
-  }
-  bb143 {
-    ecPk = %188;
-    %194 = ConstantLoad /tmp/bal_ec_cert.pem
-    %195 = decodeEcPublicKeyFromCertFile(%194) -> bb144;
-  }
-  bb144 {
-    %196 = %195 is error
-    %196 ? bb145 : bb146;
-  }
-  bb145 {
-    %0 = %195;
-    return;
-  }
-  bb146 {
-    %193 = %195;
-    GOTO bb147;
-  }
-  bb147 {
-    ecPub = %193;
-    %199 = signSha256withEcdsa(data,ecPk) -> bb148;
-  }
-  bb148 {
-    %200 = %199 is error
-    %200 ? bb149 : bb150;
-  }
-  bb149 {
-    %0 = %199;
-    return;
-  }
-  bb150 {
-    %198 = %199;
-    GOTO bb151;
-  }
-  bb151 {
-    e256 = %198;
-    %203 = verifySha256withEcdsaSignature(data,e256,ecPub) -> bb152;
-  }
-  bb152 {
-    %204 = %203 is error
-    %204 ? bb153 : bb154;
-  }
-  bb153 {
     %0 = %203;
     return;
   }
-  bb154 {
-    %202 = %203;
-    GOTO bb155;
+  bb140 {
+    %201 = %203;
+    GOTO bb141;
   }
-  bb155 {
-    %205 = %202;
-    %206 = println(%205) -> bb156;
+  bb141 {
+    oaep512 = %201;
+    %208 = ConstantLoad OAEPwithSHA512andMGF1
+    %209 = decryptRsaEcb(oaep512,rsaPk,%208) -> bb142;
   }
-  bb156 {
-    %208 = signSha384withEcdsa(data,ecPk) -> bb157;
+  bb142 {
+    %210 = %209 is error
+    %210 ? bb143 : bb144;
   }
-  bb157 {
-    %209 = %208 is error
-    %209 ? bb158 : bb159;
-  }
-  bb158 {
-    %0 = %208;
+  bb143 {
+    %0 = %209;
     return;
   }
-  bb159 {
-    %207 = %208;
-    GOTO bb160;
+  bb144 {
+    %207 = %209;
+    GOTO bb145;
   }
-  bb160 {
-    e384 = %207;
-    %212 = verifySha384withEcdsaSignature(data,e384,ecPub) -> bb161;
+  bb145 {
+    %206 = == %207 data;
+    %211 = %206;
+    %212 = println(%211) -> bb146;
   }
-  bb161 {
-    %213 = %212 is error
-    %213 ? bb162 : bb163;
+  bb146 {
+    %214 = ConstantLoad /tmp/bal_ec_key.pem
+    $desugar$20 = %214;
+    %216 = $default$2($desugar$20) -> bb147;
   }
-  bb162 {
-    %0 = %212;
-    return;
+  bb147 {
+    $desugar$21 = %216;
+    %218 = decodeEcPrivateKeyFromKeyFile($desugar$20,$desugar$21) -> bb148;
   }
-  bb163 {
-    %211 = %212;
-    GOTO bb164;
-  }
-  bb164 {
-    %214 = %211;
-    %215 = println(%214) -> bb165;
-  }
-  bb165 {
-    %217 = closure_fp $anon/.:main$493$0$thunk$8
-    %218 = main$493$0$thunk$8() -> bb166;
-  }
-  bb166 {
+  bb148 {
     %219 = %218 is error
-    %219 ? bb167 : bb168;
+    %219 ? bb149 : bb150;
   }
-  bb167 {
+  bb149 {
     %0 = %218;
     return;
   }
+  bb150 {
+    %213 = %218;
+    GOTO bb151;
+  }
+  bb151 {
+    ecPk = %213;
+    %222 = ConstantLoad /tmp/bal_ec_cert.pem
+    %223 = decodeEcPublicKeyFromCertFile(%222) -> bb152;
+  }
+  bb152 {
+    %224 = %223 is error
+    %224 ? bb153 : bb154;
+  }
+  bb153 {
+    %0 = %223;
+    return;
+  }
+  bb154 {
+    %221 = %223;
+    GOTO bb155;
+  }
+  bb155 {
+    ecPub = %221;
+    %227 = signSha256withEcdsa(data,ecPk) -> bb156;
+  }
+  bb156 {
+    %228 = %227 is error
+    %228 ? bb157 : bb158;
+  }
+  bb157 {
+    %0 = %227;
+    return;
+  }
+  bb158 {
+    %226 = %227;
+    GOTO bb159;
+  }
+  bb159 {
+    e256 = %226;
+    %231 = verifySha256withEcdsaSignature(data,e256,ecPub) -> bb160;
+  }
+  bb160 {
+    %232 = %231 is error
+    %232 ? bb161 : bb162;
+  }
+  bb161 {
+    %0 = %231;
+    return;
+  }
+  bb162 {
+    %230 = %231;
+    GOTO bb163;
+  }
+  bb163 {
+    %233 = %230;
+    %234 = println(%233) -> bb164;
+  }
+  bb164 {
+    %236 = signSha384withEcdsa(data,ecPk) -> bb165;
+  }
+  bb165 {
+    %237 = %236 is error
+    %237 ? bb166 : bb167;
+  }
+  bb166 {
+    %0 = %236;
+    return;
+  }
+  bb167 {
+    %235 = %236;
+    GOTO bb168;
+  }
   bb168 {
-    %216 = %218;
-    GOTO bb169;
+    e384 = %235;
+    %240 = verifySha384withEcdsaSignature(data,e384,ecPub) -> bb169;
   }
   bb169 {
-    ctPriv = %216;
-    %223 = closure_fp $anon/.:main$493$0$thunk$9
-    %224 = main$493$0$thunk$9() -> bb170;
+    %241 = %240 is error
+    %241 ? bb170 : bb171;
   }
   bb170 {
-    %225 = %224 is error
-    %225 ? bb171 : bb172;
+    %0 = %240;
+    return;
   }
   bb171 {
-    %0 = %224;
-    return;
+    %239 = %240;
+    GOTO bb172;
   }
   bb172 {
-    %222 = %224;
-    GOTO bb173;
+    %242 = %239;
+    %243 = println(%242) -> bb173;
   }
   bb173 {
-    %221 = == %222 data;
-    %226 = %221;
-    %227 = println(%226) -> bb174;
+    $desugar$22 = data;
+    $desugar$23 = rsaPk;
+    %247 = $default$17($desugar$22,$desugar$23) -> bb174;
   }
   bb174 {
-    $desugar$28 = data;
-    $desugar$29 = rsaPk;
-    %230 = $default$22($desugar$28,$desugar$29) -> bb175;
+    $desugar$24 = %247;
+    %249 = encryptRsaEcb($desugar$22,$desugar$23,$desugar$24) -> bb175;
   }
   bb175 {
-    $desugar$30 = %230;
-    %232 = decryptRsaEcb($desugar$28,$desugar$29,$desugar$30) -> bb176;
+    %250 = %249 is error
+    %250 ? bb176 : bb177;
   }
   bb176 {
-    decErr = %232;
-    %234 = decErr is error
-    %235 = %234;
-    %236 = println(%235) -> bb177;
+    %0 = %249;
+    return;
   }
   bb177 {
-    $desugar$31 = ct;
-    $desugar$32 = rsaPub;
-    %239 = $default$22($desugar$31,$desugar$32) -> bb178;
+    %244 = %249;
+    GOTO bb178;
   }
   bb178 {
-    $desugar$33 = %239;
-    %241 = decryptRsaEcb($desugar$31,$desugar$32,$desugar$33) -> bb179;
+    ctPriv = %244;
+    $desugar$25 = ctPriv;
+    $desugar$26 = rsaPk;
+    %256 = $default$22($desugar$25,$desugar$26) -> bb179;
   }
   bb179 {
-    decPubErr = %241;
-    %243 = decPubErr is error
-    %244 = %243;
-    %245 = println(%244) -> bb180;
+    $desugar$27 = %256;
+    %258 = decryptRsaEcb($desugar$25,$desugar$26,$desugar$27) -> bb180;
   }
   bb180 {
-    %247 = ConstantLoad 9
-    %248 = ConstantLoad 9
-    %249 = ConstantLoad 9
-    %250 = ConstantLoad 3
-    %251 = newArray [int:Unsigned8...][%250]{%247, %248, %249}
-    %252 = verifyRsaSsaPss256Signature(%251,sPss,rsaPub) -> bb181;
+    %259 = %258 is error
+    %259 ? bb181 : bb182;
   }
   bb181 {
-    %253 = %252 is error
-    %253 ? bb182 : bb183;
+    %0 = %258;
+    return;
   }
   bb182 {
-    %0 = %252;
-    return;
+    %253 = %258;
+    GOTO bb183;
   }
   bb183 {
-    %246 = %252;
-    GOTO bb184;
+    %252 = == %253 data;
+    %260 = %252;
+    %261 = println(%260) -> bb184;
   }
   bb184 {
-    %254 = %246;
-    %255 = println(%254) -> bb185;
+    $desugar$28 = data;
+    $desugar$29 = rsaPk;
+    %264 = $default$22($desugar$28,$desugar$29) -> bb185;
   }
   bb185 {
-    %256 = signRsaSha256(data,ecPk) -> bb186;
+    $desugar$30 = %264;
+    %266 = decryptRsaEcb($desugar$28,$desugar$29,$desugar$30) -> bb186;
   }
   bb186 {
-    rsaSignEc = %256;
-    %258 = rsaSignEc is error
-    %259 = %258;
-    %260 = println(%259) -> bb187;
+    decErr = %266;
+    %268 = decErr is error
+    %269 = %268;
+    %270 = println(%269) -> bb187;
   }
   bb187 {
-    %261 = verifyRsaSha256Signature(data,s256,ecPub) -> bb188;
+    $desugar$31 = ct;
+    $desugar$32 = rsaPub;
+    %273 = $default$22($desugar$31,$desugar$32) -> bb188;
   }
   bb188 {
-    rsaVerifyEc = %261;
-    %263 = rsaVerifyEc is error
-    %264 = %263;
-    %265 = println(%264) -> bb189;
+    $desugar$33 = %273;
+    %275 = decryptRsaEcb($desugar$31,$desugar$32,$desugar$33) -> bb189;
   }
   bb189 {
-    %266 = signRsaSsaPss256(data,ecPk) -> bb190;
+    decPubErr = %275;
+    %277 = decPubErr is error
+    %278 = %277;
+    %279 = println(%278) -> bb190;
   }
   bb190 {
-    pssSignEc = %266;
-    %268 = pssSignEc is error
-    %269 = %268;
-    %270 = println(%269) -> bb191;
+    %281 = ConstantLoad 9
+    %282 = ConstantLoad 9
+    %283 = ConstantLoad 9
+    %284 = ConstantLoad 3
+    %285 = newArray [int:Unsigned8...][%284]{%281, %282, %283}
+    %286 = verifyRsaSsaPss256Signature(%285,sPss,rsaPub) -> bb191;
   }
   bb191 {
-    %271 = verifyRsaSsaPss256Signature(data,sPss,ecPub) -> bb192;
+    %287 = %286 is error
+    %287 ? bb192 : bb193;
   }
   bb192 {
-    pssVerifyEc = %271;
-    %273 = pssVerifyEc is error
-    %274 = %273;
-    %275 = println(%274) -> bb193;
+    %0 = %286;
+    return;
   }
   bb193 {
-    %276 = signSha256withEcdsa(data,rsaPk) -> bb194;
+    %280 = %286;
+    GOTO bb194;
   }
   bb194 {
-    ecSignRsa = %276;
-    %278 = ecSignRsa is error
-    %279 = %278;
-    %280 = println(%279) -> bb195;
+    %288 = %280;
+    %289 = println(%288) -> bb195;
   }
   bb195 {
-    %281 = verifySha256withEcdsaSignature(data,e256,rsaPub) -> bb196;
+    %290 = signRsaSha256(data,ecPk) -> bb196;
   }
   bb196 {
-    ecVerifyRsa = %281;
-    %283 = ecVerifyRsa is error
-    %284 = %283;
-    %285 = println(%284) -> bb197;
+    rsaSignEc = %290;
+    %292 = rsaSignEc is error
+    %293 = %292;
+    %294 = println(%293) -> bb197;
   }
   bb197 {
-    %286 = ConstantLoad /tmp/bal_no_such.pem
-    $desugar$34 = %286;
-    %288 = $default$0($desugar$34) -> bb198;
+    %295 = verifyRsaSha256Signature(data,s256,ecPub) -> bb198;
   }
   bb198 {
-    $desugar$35 = %288;
-    %290 = decodeRsaPrivateKeyFromKeyFile($desugar$34,$desugar$35) -> bb199;
+    rsaVerifyEc = %295;
+    %297 = rsaVerifyEc is error
+    %298 = %297;
+    %299 = println(%298) -> bb199;
   }
   bb199 {
-    rsaKeyMissing = %290;
-    %292 = rsaKeyMissing is error
-    %293 = %292;
-    %294 = println(%293) -> bb200;
+    %300 = signRsaSsaPss256(data,ecPk) -> bb200;
   }
   bb200 {
-    %295 = ConstantLoad /tmp/bal_no_such.pem
-    $desugar$36 = %295;
-    %297 = $default$2($desugar$36) -> bb201;
+    pssSignEc = %300;
+    %302 = pssSignEc is error
+    %303 = %302;
+    %304 = println(%303) -> bb201;
   }
   bb201 {
-    $desugar$37 = %297;
-    %299 = decodeEcPrivateKeyFromKeyFile($desugar$36,$desugar$37) -> bb202;
+    %305 = verifyRsaSsaPss256Signature(data,sPss,ecPub) -> bb202;
   }
   bb202 {
-    ecKeyMissing = %299;
-    %301 = ecKeyMissing is error
-    %302 = %301;
-    %303 = println(%302) -> bb203;
+    pssVerifyEc = %305;
+    %307 = pssVerifyEc is error
+    %308 = %307;
+    %309 = println(%308) -> bb203;
   }
   bb203 {
-    %304 = ConstantLoad /tmp/bal_no_such.pem
-    %305 = decodeRsaPublicKeyFromCertFile(%304) -> bb204;
+    %310 = signSha256withEcdsa(data,rsaPk) -> bb204;
   }
   bb204 {
-    rsaCertMissing = %305;
-    %307 = rsaCertMissing is error
-    %308 = %307;
-    %309 = println(%308) -> bb205;
+    ecSignRsa = %310;
+    %312 = ecSignRsa is error
+    %313 = %312;
+    %314 = println(%313) -> bb205;
   }
   bb205 {
-    %310 = ConstantLoad /tmp/bal_no_such.pem
-    %311 = decodeEcPublicKeyFromCertFile(%310) -> bb206;
+    %315 = verifySha256withEcdsaSignature(data,e256,rsaPub) -> bb206;
   }
   bb206 {
-    ecCertMissing = %311;
-    %313 = ecCertMissing is error
-    %314 = %313;
-    %315 = println(%314) -> bb207;
+    ecVerifyRsa = %315;
+    %317 = ecVerifyRsa is error
+    %318 = %317;
+    %319 = println(%318) -> bb207;
   }
   bb207 {
-    %316 = ConstantLoad /tmp/bal_ec_key.pem
-    $desugar$38 = %316;
-    %318 = $default$0($desugar$38) -> bb208;
+    %320 = ConstantLoad /tmp/bal_no_such.pem
+    $desugar$34 = %320;
+    %322 = $default$0($desugar$34) -> bb208;
   }
   bb208 {
-    $desugar$39 = %318;
-    %320 = decodeRsaPrivateKeyFromKeyFile($desugar$38,$desugar$39) -> bb209;
+    $desugar$35 = %322;
+    %324 = decodeRsaPrivateKeyFromKeyFile($desugar$34,$desugar$35) -> bb209;
   }
   bb209 {
-    ecAsRsaKey = %320;
-    %322 = ecAsRsaKey is error
-    %323 = %322;
-    %324 = println(%323) -> bb210;
+    rsaKeyMissing = %324;
+    %326 = rsaKeyMissing is error
+    %327 = %326;
+    %328 = println(%327) -> bb210;
   }
   bb210 {
-    %325 = ConstantLoad /tmp/bal_rsa_key.pem
-    $desugar$40 = %325;
-    %327 = $default$2($desugar$40) -> bb211;
+    %329 = ConstantLoad /tmp/bal_no_such.pem
+    $desugar$36 = %329;
+    %331 = $default$2($desugar$36) -> bb211;
   }
   bb211 {
-    $desugar$41 = %327;
-    %329 = decodeEcPrivateKeyFromKeyFile($desugar$40,$desugar$41) -> bb212;
+    $desugar$37 = %331;
+    %333 = decodeEcPrivateKeyFromKeyFile($desugar$36,$desugar$37) -> bb212;
   }
   bb212 {
-    rsaAsEcKey = %329;
-    %331 = rsaAsEcKey is error
-    %332 = %331;
-    %333 = println(%332) -> bb213;
+    ecKeyMissing = %333;
+    %335 = ecKeyMissing is error
+    %336 = %335;
+    %337 = println(%336) -> bb213;
   }
   bb213 {
-    %334 = ConstantLoad /tmp/bal_ec_cert.pem
-    %335 = decodeRsaPublicKeyFromCertFile(%334) -> bb214;
+    %338 = ConstantLoad /tmp/bal_no_such.pem
+    %339 = decodeRsaPublicKeyFromCertFile(%338) -> bb214;
   }
   bb214 {
-    ecAsRsaCert = %335;
-    %337 = ecAsRsaCert is error
-    %338 = %337;
-    %339 = println(%338) -> bb215;
+    rsaCertMissing = %339;
+    %341 = rsaCertMissing is error
+    %342 = %341;
+    %343 = println(%342) -> bb215;
   }
   bb215 {
-    %340 = ConstantLoad /tmp/bal_rsa_cert.pem
-    %341 = decodeEcPublicKeyFromCertFile(%340) -> bb216;
+    %344 = ConstantLoad /tmp/bal_no_such.pem
+    %345 = decodeEcPublicKeyFromCertFile(%344) -> bb216;
   }
   bb216 {
-    rsaAsEcCert = %341;
-    %343 = rsaAsEcCert is error
-    %344 = %343;
-    %345 = println(%344) -> bb217;
+    ecCertMissing = %345;
+    %347 = ecCertMissing is error
+    %348 = %347;
+    %349 = println(%348) -> bb217;
   }
   bb217 {
-    %346 = ConstantLoad 1
-    %347 = ConstantLoad 2
-    %348 = ConstantLoad 3
-    %349 = ConstantLoad 3
-    %350 = newArray [int:Unsigned8...][%349]{%346, %347, %348}
-    junk = %350;
-    $desugar$42 = junk;
-    %353 = $default$1($desugar$42) -> bb218;
+    %350 = ConstantLoad /tmp/bal_ec_key.pem
+    $desugar$38 = %350;
+    %352 = $default$0($desugar$38) -> bb218;
   }
   bb218 {
-    $desugar$43 = %353;
-    %355 = decodeRsaPrivateKeyFromContent($desugar$42,$desugar$43) -> bb219;
+    $desugar$39 = %352;
+    %354 = decodeRsaPrivateKeyFromKeyFile($desugar$38,$desugar$39) -> bb219;
   }
   bb219 {
-    junkKey = %355;
-    %357 = junkKey is error
-    %358 = %357;
-    %359 = println(%358) -> bb220;
+    ecAsRsaKey = %354;
+    %356 = ecAsRsaKey is error
+    %357 = %356;
+    %358 = println(%357) -> bb220;
   }
   bb220 {
-    %361 = ConstantLoad /tmp/bal_ec_key.pem
-    %362 = fileReadBytes(%361) -> bb221;
+    %359 = ConstantLoad /tmp/bal_rsa_key.pem
+    $desugar$40 = %359;
+    %361 = $default$2($desugar$40) -> bb221;
   }
   bb221 {
-    %363 = %362 is error
-    %363 ? bb222 : bb223;
+    $desugar$41 = %361;
+    %363 = decodeEcPrivateKeyFromKeyFile($desugar$40,$desugar$41) -> bb222;
   }
   bb222 {
-    %0 = %362;
-    return;
+    rsaAsEcKey = %363;
+    %365 = rsaAsEcKey is error
+    %366 = %365;
+    %367 = println(%366) -> bb223;
   }
   bb223 {
-    %360 = %362;
-    GOTO bb224;
+    %368 = ConstantLoad /tmp/bal_ec_cert.pem
+    %369 = decodeRsaPublicKeyFromCertFile(%368) -> bb224;
   }
   bb224 {
-    ecKeyBytes = %360;
-    $desugar$44 = ecKeyBytes;
-    %366 = $default$1($desugar$44) -> bb225;
+    ecAsRsaCert = %369;
+    %371 = ecAsRsaCert is error
+    %372 = %371;
+    %373 = println(%372) -> bb225;
   }
   bb225 {
-    $desugar$45 = %366;
-    %368 = decodeRsaPrivateKeyFromContent($desugar$44,$desugar$45) -> bb226;
+    %374 = ConstantLoad /tmp/bal_rsa_cert.pem
+    %375 = decodeEcPublicKeyFromCertFile(%374) -> bb226;
   }
   bb226 {
-    ecAsRsaContent = %368;
-    %370 = ecAsRsaContent is error
-    %371 = %370;
-    %372 = println(%371) -> bb227;
+    rsaAsEcCert = %375;
+    %377 = rsaAsEcCert is error
+    %378 = %377;
+    %379 = println(%378) -> bb227;
   }
   bb227 {
-    %374 = ConstantLoad /tmp/bal_ec_cert.pem
-    %375 = fileReadBytes(%374) -> bb228;
+    %380 = ConstantLoad 1
+    %381 = ConstantLoad 2
+    %382 = ConstantLoad 3
+    %383 = ConstantLoad 3
+    %384 = newArray [int:Unsigned8...][%383]{%380, %381, %382}
+    junk = %384;
+    $desugar$42 = junk;
+    %387 = $default$1($desugar$42) -> bb228;
   }
   bb228 {
-    %376 = %375 is error
-    %376 ? bb229 : bb230;
+    $desugar$43 = %387;
+    %389 = decodeRsaPrivateKeyFromContent($desugar$42,$desugar$43) -> bb229;
   }
   bb229 {
-    %0 = %375;
-    return;
+    junkKey = %389;
+    %391 = junkKey is error
+    %392 = %391;
+    %393 = println(%392) -> bb230;
   }
   bb230 {
-    %373 = %375;
-    GOTO bb231;
+    %395 = ConstantLoad /tmp/bal_ec_key.pem
+    %396 = fileReadBytes(%395) -> bb231;
   }
   bb231 {
-    ecCertBytes = %373;
-    %378 = decodeRsaPublicKeyFromContent(ecCertBytes) -> bb232;
+    %397 = %396 is error
+    %397 ? bb232 : bb233;
   }
   bb232 {
-    ecAsRsaCertContent = %378;
-    %380 = ecAsRsaCertContent is error
-    %381 = %380;
-    %382 = println(%381) -> bb233;
+    %0 = %396;
+    return;
   }
   bb233 {
+    %394 = %396;
+    GOTO bb234;
+  }
+  bb234 {
+    ecKeyBytes = %394;
+    $desugar$44 = ecKeyBytes;
+    %400 = $default$1($desugar$44) -> bb235;
+  }
+  bb235 {
+    $desugar$45 = %400;
+    %402 = decodeRsaPrivateKeyFromContent($desugar$44,$desugar$45) -> bb236;
+  }
+  bb236 {
+    ecAsRsaContent = %402;
+    %404 = ecAsRsaContent is error
+    %405 = %404;
+    %406 = println(%405) -> bb237;
+  }
+  bb237 {
+    %408 = ConstantLoad /tmp/bal_ec_cert.pem
+    %409 = fileReadBytes(%408) -> bb238;
+  }
+  bb238 {
+    %410 = %409 is error
+    %410 ? bb239 : bb240;
+  }
+  bb239 {
+    %0 = %409;
     return;
   }
-}
-main$493$0$thunk$0() -> nil|error{
-  bb0 {
-    %1 = ConstantLoad /tmp/bal_rsa_key.pem
-    $desugar$0 = %1;
-    $desugar$1 = (1, rsaKey);
-    %4 = $default$1($desugar$0,$desugar$1) -> bb1;
+  bb240 {
+    %407 = %409;
+    GOTO bb241;
   }
-  bb1 {
-    $desugar$2 = %4;
-    %6 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  bb241 {
+    ecCertBytes = %407;
+    %412 = decodeRsaPublicKeyFromContent(ecCertBytes) -> bb242;
   }
-  bb2 {
-    %0 = %6;
-    return;
+  bb242 {
+    ecAsRsaCertContent = %412;
+    %414 = ecAsRsaCertContent is error
+    %415 = %414;
+    %416 = println(%415) -> bb243;
   }
-}
-main$493$0$thunk$1() -> nil|error{
-  bb0 {
-    %1 = ConstantLoad /tmp/bal_rsa_cert.pem
-    $desugar$3 = %1;
-    $desugar$4 = (1, rsaCert);
-    %4 = $default$1($desugar$3,$desugar$4) -> bb1;
-  }
-  bb1 {
-    $desugar$5 = %4;
-    %6 = fileWriteString($desugar$3,$desugar$4,$desugar$5) -> bb2;
-  }
-  bb2 {
-    %0 = %6;
-    return;
-  }
-}
-main$493$0$thunk$2() -> nil|error{
-  bb0 {
-    %1 = ConstantLoad /tmp/bal_ec_key.pem
-    $desugar$6 = %1;
-    $desugar$7 = (1, ecKey);
-    %4 = $default$1($desugar$6,$desugar$7) -> bb1;
-  }
-  bb1 {
-    $desugar$8 = %4;
-    %6 = fileWriteString($desugar$6,$desugar$7,$desugar$8) -> bb2;
-  }
-  bb2 {
-    %0 = %6;
-    return;
-  }
-}
-main$493$0$thunk$3() -> nil|error{
-  bb0 {
-    %1 = ConstantLoad /tmp/bal_ec_cert.pem
-    $desugar$9 = %1;
-    $desugar$10 = (1, ecCert);
-    %4 = $default$1($desugar$9,$desugar$10) -> bb1;
-  }
-  bb1 {
-    $desugar$11 = %4;
-    %6 = fileWriteString($desugar$9,$desugar$10,$desugar$11) -> bb2;
-  }
-  bb2 {
-    %0 = %6;
-    return;
-  }
-}
-main$493$0$thunk$4() -> error|{| algorithm: "ML-DSA-65"|"ML-KEM-768"|"RSA", never... |}{
-  bb0 {
-    %1 = ConstantLoad /tmp/bal_rsa_key.pem
-    $desugar$12 = %1;
-    %3 = $default$0($desugar$12) -> bb1;
-  }
-  bb1 {
-    $desugar$13 = %3;
-    %5 = decodeRsaPrivateKeyFromKeyFile($desugar$12,$desugar$13) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$493$0$thunk$5() -> error|[int:Unsigned8...]{
-  bb0 {
-    $desugar$14 = (1, data);
-    $desugar$15 = (1, rsaPub);
-    %3 = $default$17($desugar$14,$desugar$15) -> bb1;
-  }
-  bb1 {
-    $desugar$16 = %3;
-    %5 = encryptRsaEcb($desugar$14,$desugar$15,$desugar$16) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$493$0$thunk$6() -> error|[int:Unsigned8...]{
-  bb0 {
-    $desugar$17 = (1, ct);
-    $desugar$18 = (1, rsaPk);
-    %3 = $default$22($desugar$17,$desugar$18) -> bb1;
-  }
-  bb1 {
-    $desugar$19 = %3;
-    %5 = decryptRsaEcb($desugar$17,$desugar$18,$desugar$19) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$493$0$thunk$7() -> error|{| algorithm: "ML-DSA-65"|"ML-KEM-768"|"RSA", never... |}{
-  bb0 {
-    %1 = ConstantLoad /tmp/bal_ec_key.pem
-    $desugar$20 = %1;
-    %3 = $default$2($desugar$20) -> bb1;
-  }
-  bb1 {
-    $desugar$21 = %3;
-    %5 = decodeEcPrivateKeyFromKeyFile($desugar$20,$desugar$21) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$493$0$thunk$8() -> error|[int:Unsigned8...]{
-  bb0 {
-    $desugar$22 = (1, data);
-    $desugar$23 = (1, rsaPk);
-    %3 = $default$17($desugar$22,$desugar$23) -> bb1;
-  }
-  bb1 {
-    $desugar$24 = %3;
-    %5 = encryptRsaEcb($desugar$22,$desugar$23,$desugar$24) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$493$0$thunk$9() -> error|[int:Unsigned8...]{
-  bb0 {
-    $desugar$25 = (1, ctPriv);
-    $desugar$26 = (1, rsaPk);
-    %3 = $default$22($desugar$25,$desugar$26) -> bb1;
-  }
-  bb1 {
-    $desugar$27 = %3;
-    %5 = decryptRsaEcb($desugar$25,$desugar$26,$desugar$27) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
+  bb243 {
     return;
   }
 }

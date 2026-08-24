@@ -290,309 +290,249 @@ main() -> nil|error{
     %120 = println(%119) -> bb67;
   }
   bb67 {
-    %121 = closure_fp $anon/.:main$493$0$thunk$0
-    %122 = main$493$0$thunk$0() -> bb68;
+    %121 = ConstantLoad X-Resp
+    $desugar$9 = %121;
+    %123 = $default$4($desugar$9) -> bb68;
   }
   bb68 {
-    %123 = %122;
-    %124 = println(%123) -> bb69;
+    $desugar$10 = %123;
+    %125 = hasHeader(res,$desugar$9,$desugar$10) -> bb69;
   }
   bb69 {
-    %126 = closure_fp $anon/.:main$493$0$thunk$1
-    %127 = main$493$0$thunk$1() -> bb70;
+    %126 = %125;
+    %127 = println(%126) -> bb70;
   }
   bb70 {
-    %128 = %127 is error
-    %128 ? bb71 : bb72;
+    %129 = ConstantLoad X-Resp
+    $desugar$11 = %129;
+    %131 = $default$1($desugar$11) -> bb71;
   }
   bb71 {
-    %0 = %127;
-    return;
+    $desugar$12 = %131;
+    %133 = getHeader(res,$desugar$11,$desugar$12) -> bb72;
   }
   bb72 {
-    %125 = %127;
-    GOTO bb73;
+    %134 = %133 is error
+    %134 ? bb73 : bb74;
   }
   bb73 {
-    %129 = println(%125) -> bb74;
-  }
-  bb74 {
-    %131 = closure_fp $anon/.:main$493$0$thunk$2
-    %132 = main$493$0$thunk$2() -> bb75;
-  }
-  bb75 {
-    %133 = %132 is error
-    %133 ? bb76 : bb77;
-  }
-  bb76 {
-    %0 = %132;
+    %0 = %133;
     return;
   }
+  bb74 {
+    %128 = %133;
+    GOTO bb75;
+  }
+  bb75 {
+    %135 = println(%128) -> bb76;
+  }
+  bb76 {
+    %137 = ConstantLoad X-Resp
+    $desugar$13 = %137;
+    %139 = $default$3($desugar$13) -> bb77;
+  }
   bb77 {
-    %130 = %132;
-    GOTO bb78;
+    $desugar$14 = %139;
+    %141 = getHeaders(res,$desugar$13,$desugar$14) -> bb78;
   }
   bb78 {
-    rs = %130;
-    %135 = length(rs) -> bb79;
+    %142 = %141 is error
+    %142 ? bb79 : bb80;
   }
   bb79 {
-    %136 = %135;
-    %137 = println(%136) -> bb80;
+    %0 = %141;
+    return;
   }
   bb80 {
-    %139 = closure_fp $anon/.:main$493$0$thunk$3
-    %140 = main$493$0$thunk$3() -> bb81;
+    %136 = %141;
+    GOTO bb81;
   }
   bb81 {
-    %141 = length(%140) -> bb82;
+    rs = %136;
+    %144 = length(rs) -> bb82;
   }
   bb82 {
-    %142 = %141;
-    %143 = ConstantLoad 1
-    %144 = %143;
-    %138 = >= %142 %144;
-    %145 = %138;
+    %145 = %144;
     %146 = println(%145) -> bb83;
   }
   bb83 {
-    %148 = ConstantLoad text/plain
-    %149 = setContentType(res,%148) -> bb84;
+    %148 = $default$2() -> bb84;
   }
   bb84 {
-    %150 = %149 is error
-    %150 ? bb85 : bb86;
+    $desugar$15 = %148;
+    %150 = getHeaderNames(res,$desugar$15) -> bb85;
   }
   bb85 {
-    %0 = %149;
-    return;
+    %151 = length(%150) -> bb86;
   }
   bb86 {
-    %147 = %149;
-    GOTO bb87;
+    %152 = %151;
+    %153 = ConstantLoad 1
+    %154 = %153;
+    %147 = >= %152 %154;
+    %155 = %147;
+    %156 = println(%155) -> bb87;
   }
   bb87 {
-    %151 = getContentType(res) -> bb88;
+    %158 = ConstantLoad text/plain
+    %159 = setContentType(res,%158) -> bb88;
   }
   bb88 {
-    %152 = println(%151) -> bb89;
+    %160 = %159 is error
+    %160 ? bb89 : bb90;
   }
   bb89 {
-    %153 = ConstantLoad resp body
-    $desugar$16 = %153;
-    %155 = $default$9($desugar$16) -> bb90;
-  }
-  bb90 {
-    $desugar$17 = %155;
-    %157 = setTextPayload(res,$desugar$16,$desugar$17) -> bb91;
-  }
-  bb91 {
-    %159 = getTextPayload(res) -> bb92;
-  }
-  bb92 {
-    %160 = %159 is error
-    %160 ? bb93 : bb94;
-  }
-  bb93 {
     %0 = %159;
     return;
   }
+  bb90 {
+    %157 = %159;
+    GOTO bb91;
+  }
+  bb91 {
+    %161 = getContentType(res) -> bb92;
+  }
+  bb92 {
+    %162 = println(%161) -> bb93;
+  }
+  bb93 {
+    %163 = ConstantLoad resp body
+    $desugar$16 = %163;
+    %165 = $default$9($desugar$16) -> bb94;
+  }
   bb94 {
-    %158 = %159;
-    GOTO bb95;
+    $desugar$17 = %165;
+    %167 = setTextPayload(res,$desugar$16,$desugar$17) -> bb95;
   }
   bb95 {
-    %161 = println(%158) -> bb96;
+    %169 = getTextPayload(res) -> bb96;
   }
   bb96 {
-    %162 = ConstantLoad 1
-    %163 = ConstantLoad 2
-    %164 = ConstantLoad 3
-    %165 = ConstantLoad 3
-    %166 = newArray [json...][%165]{%162, %163, %164}
-    $desugar$18 = %166;
-    %168 = $default$8($desugar$18) -> bb97;
+    %170 = %169 is error
+    %170 ? bb97 : bb98;
   }
   bb97 {
-    $desugar$19 = %168;
-    %170 = setJsonPayload(res,$desugar$18,$desugar$19) -> bb98;
+    %0 = %169;
+    return;
   }
   bb98 {
-    %172 = getJsonPayload(res) -> bb99;
+    %168 = %169;
+    GOTO bb99;
   }
   bb99 {
-    %173 = %172 is error
-    %173 ? bb100 : bb101;
+    %171 = println(%168) -> bb100;
   }
   bb100 {
-    %0 = %172;
-    return;
+    %172 = ConstantLoad 1
+    %173 = ConstantLoad 2
+    %174 = ConstantLoad 3
+    %175 = ConstantLoad 3
+    %176 = newArray [json...][%175]{%172, %173, %174}
+    $desugar$18 = %176;
+    %178 = $default$8($desugar$18) -> bb101;
   }
   bb101 {
-    %171 = %172;
-    GOTO bb102;
+    $desugar$19 = %178;
+    %180 = setJsonPayload(res,$desugar$18,$desugar$19) -> bb102;
   }
   bb102 {
-    rj = %171;
-    %175 = println(rj) -> bb103;
+    %182 = getJsonPayload(res) -> bb103;
   }
   bb103 {
-    %176 = ConstantLoad 10
-    %177 = ConstantLoad 20
-    %178 = ConstantLoad 30
-    %179 = ConstantLoad 3
-    %180 = newArray [int:Unsigned8...][%179]{%176, %177, %178}
-    $desugar$20 = %180;
-    %182 = $default$7($desugar$20) -> bb104;
+    %183 = %182 is error
+    %183 ? bb104 : bb105;
   }
   bb104 {
-    $desugar$21 = %182;
-    %184 = setBinaryPayload(res,$desugar$20,$desugar$21) -> bb105;
+    %0 = %182;
+    return;
   }
   bb105 {
-    %186 = getBinaryPayload(res) -> bb106;
+    %181 = %182;
+    GOTO bb106;
   }
   bb106 {
-    %187 = %186 is error
-    %187 ? bb107 : bb108;
+    rj = %181;
+    %185 = println(rj) -> bb107;
   }
   bb107 {
-    %0 = %186;
-    return;
+    %186 = ConstantLoad 10
+    %187 = ConstantLoad 20
+    %188 = ConstantLoad 30
+    %189 = ConstantLoad 3
+    %190 = newArray [int:Unsigned8...][%189]{%186, %187, %188}
+    $desugar$20 = %190;
+    %192 = $default$7($desugar$20) -> bb108;
   }
   bb108 {
-    %185 = %186;
-    GOTO bb109;
+    $desugar$21 = %192;
+    %194 = setBinaryPayload(res,$desugar$20,$desugar$21) -> bb109;
   }
   bb109 {
-    rb = %185;
-    %189 = length(rb) -> bb110;
+    %196 = getBinaryPayload(res) -> bb110;
   }
   bb110 {
-    %190 = %189;
-    %191 = println(%190) -> bb111;
+    %197 = %196 is error
+    %197 ? bb111 : bb112;
   }
   bb111 {
-    %192 = ConstantLoad X-Resp
-    $desugar$22 = %192;
-    %194 = $default$6($desugar$22) -> bb112;
+    %0 = %196;
+    return;
   }
   bb112 {
-    $desugar$23 = %194;
-    %196 = removeHeader(res,$desugar$22,$desugar$23) -> bb113;
+    %195 = %196;
+    GOTO bb113;
   }
   bb113 {
-    %197 = closure_fp $anon/.:main$493$0$thunk$4
-    %198 = main$493$0$thunk$4() -> bb114;
+    rb = %195;
+    %199 = length(rb) -> bb114;
   }
   bb114 {
-    %199 = %198;
-    %200 = println(%199) -> bb115;
+    %200 = %199;
+    %201 = println(%200) -> bb115;
   }
   bb115 {
-    %201 = $default$5() -> bb116;
+    %202 = ConstantLoad X-Resp
+    $desugar$22 = %202;
+    %204 = $default$6($desugar$22) -> bb116;
   }
   bb116 {
-    $desugar$26 = %201;
-    %203 = removeAllHeaders(res,$desugar$26) -> bb117;
+    $desugar$23 = %204;
+    %206 = removeHeader(res,$desugar$22,$desugar$23) -> bb117;
   }
   bb117 {
-    %204 = closure_fp $anon/.:main$493$0$thunk$5
-    %205 = main$493$0$thunk$5() -> bb118;
+    %207 = ConstantLoad X-Resp
+    $desugar$24 = %207;
+    %209 = $default$4($desugar$24) -> bb118;
   }
   bb118 {
-    %206 = %205;
-    %207 = println(%206) -> bb119;
+    $desugar$25 = %209;
+    %211 = hasHeader(res,$desugar$24,$desugar$25) -> bb119;
   }
   bb119 {
-    return;
+    %212 = %211;
+    %213 = println(%212) -> bb120;
   }
-}
-main$493$0$thunk$0() -> boolean{
-  bb0 {
-    %1 = ConstantLoad X-Resp
-    $desugar$9 = %1;
-    %3 = $default$4($desugar$9) -> bb1;
+  bb120 {
+    %214 = $default$5() -> bb121;
   }
-  bb1 {
-    $desugar$10 = %3;
-    %5 = hasHeader((1, res),$desugar$9,$desugar$10) -> bb2;
+  bb121 {
+    $desugar$26 = %214;
+    %216 = removeAllHeaders(res,$desugar$26) -> bb122;
   }
-  bb2 {
-    %0 = %5;
-    return;
+  bb122 {
+    %217 = ConstantLoad Content-Type
+    $desugar$27 = %217;
+    %219 = $default$4($desugar$27) -> bb123;
   }
-}
-main$493$0$thunk$1() -> string|error{
-  bb0 {
-    %1 = ConstantLoad X-Resp
-    $desugar$11 = %1;
-    %3 = $default$1($desugar$11) -> bb1;
+  bb123 {
+    $desugar$28 = %219;
+    %221 = hasHeader(res,$desugar$27,$desugar$28) -> bb124;
   }
-  bb1 {
-    $desugar$12 = %3;
-    %5 = getHeader((1, res),$desugar$11,$desugar$12) -> bb2;
+  bb124 {
+    %222 = %221;
+    %223 = println(%222) -> bb125;
   }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$493$0$thunk$2() -> error|[string...]{
-  bb0 {
-    %1 = ConstantLoad X-Resp
-    $desugar$13 = %1;
-    %3 = $default$3($desugar$13) -> bb1;
-  }
-  bb1 {
-    $desugar$14 = %3;
-    %5 = getHeaders((1, res),$desugar$13,$desugar$14) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$493$0$thunk$3() -> [string...]{
-  bb0 {
-    %1 = $default$2() -> bb1;
-  }
-  bb1 {
-    $desugar$15 = %1;
-    %3 = getHeaderNames((1, res),$desugar$15) -> bb2;
-  }
-  bb2 {
-    %0 = %3;
-    return;
-  }
-}
-main$493$0$thunk$4() -> boolean{
-  bb0 {
-    %1 = ConstantLoad X-Resp
-    $desugar$24 = %1;
-    %3 = $default$4($desugar$24) -> bb1;
-  }
-  bb1 {
-    $desugar$25 = %3;
-    %5 = hasHeader((1, res),$desugar$24,$desugar$25) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$493$0$thunk$5() -> boolean{
-  bb0 {
-    %1 = ConstantLoad Content-Type
-    $desugar$27 = %1;
-    %3 = $default$4($desugar$27) -> bb1;
-  }
-  bb1 {
-    $desugar$28 = %3;
-    %5 = hasHeader((1, res),$desugar$27,$desugar$28) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
+  bb125 {
     return;
   }
 }

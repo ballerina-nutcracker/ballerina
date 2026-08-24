@@ -1,0 +1,95 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (function checkedInt (
+    (variable shouldFail (type
+      (value-type boolean)))) (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (if
+        (simple-var-ref shouldFail)
+        (block-stmt
+          (return
+            (error-constructor-expr (
+              (literal checked int failed))))) ())
+      (block-stmt
+        (return
+          (literal 10)))))
+  (function fallibleDefaulted (
+    (variable value (type
+      (value-type int)))
+    (variable increment (type
+      (value-type int)) (expr
+      (literal 1)))) (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref value)
+          (simple-var-ref increment)))))
+  (function checkedValues (
+    (variable shouldFail (type
+      (value-type boolean)))) (
+    (union-type
+      (array-type
+        (union-type
+          (value-type int)
+          (error-type)) dimensions: 1 ([]))
+      (error-type)))
+    (block-function-body
+      (return
+        (list-constructor-expr
+          (expression-thunk
+          (lambda
+            (function checkedValues$493$2$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (checked-expr
+                      (invocation checkedInt (
+                        (simple-var-ref shouldFail)))))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (invocation $default$0 (
+                      (simple-var-ref $desugar$0))))))
+                (return
+                  (invocation fallibleDefaulted (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1))))))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation checkedValues (
+            (literal false))))))
+      (var-def
+        (variable failed (type
+          (union-type
+            (array-type
+              (union-type
+                (value-type int)
+                (error-type)) dimensions: 1 ([]))
+            (error-type))) (expr
+          (invocation checkedValues (
+            (literal true))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref failed)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation lang.error message (
+                (simple-var-ref failed))))))) ())
+      (block-stmt)))
+  (function $default$0 (
+    (variable value (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (literal 1)))))
