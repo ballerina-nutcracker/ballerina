@@ -2904,8 +2904,12 @@ func collectObjectIncludedMembers(t typeResolver, inclusions []model.SymbolRef, 
 	for _, m := range incMembers {
 		if m.MemberKind() == model.InclusionMemberKindRestType {
 			t.internalError("unexpected rest inclusion", pos)
+			return nil, false
 		}
-		member := inclusionMemberToSemtypeMember(m)
+		member, ok := inclusionMemberToSemtypeMember(t, m, pos)
+		if !ok {
+			return nil, false
+		}
 		includedMembers[member.Name] = append(includedMembers[member.Name], member)
 	}
 	return includedMembers, true
@@ -4350,7 +4354,10 @@ func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e
 
 	for _, f := range e.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
-		keyName := common.MappingKeyName(kv.Key)
+		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
+		if !ok {
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
 		requiredType := mat.FieldInnerVal(keyName)
 		kv.ValueExpr.SetDeterminedType(semtypes.SemType{})
 		if _, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, requiredType); !ok {
@@ -4413,7 +4420,11 @@ func selectMappingInherentType(t typeResolver, expr *ast.BLangMappingConstructor
 	fields := make([]semtypes.MappingFieldInfo, len(expr.Fields))
 	for i, f := range expr.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
-		fields[i] = semtypes.MappingFieldInfo{Name: common.MappingKeyName(kv.Key), Type: kv.ValueExpr.GetDeterminedType()}
+		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
+		if !ok {
+			return semtypes.SemType{}, nil, false
+		}
+		fields[i] = semtypes.MappingFieldInfo{Name: keyName, Type: kv.ValueExpr.GetDeterminedType()}
 	}
 	sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
 
@@ -7663,8 +7674,12 @@ func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int) (semt
 	for _, m := range incMembers {
 		if m.MemberKind() == model.InclusionMemberKindRestType {
 			t.internalError("unexpected rest inclusion", ty.GetPosition())
+			return semtypes.SemType{}, false
 		}
-		member := inclusionMemberToSemtypeMember(m)
+		member, ok := inclusionMemberToSemtypeMember(t, m, ty.GetPosition())
+		if !ok {
+			return semtypes.SemType{}, false
+		}
 		includedMembers[member.Name] = append(includedMembers[member.Name], member)
 	}
 
@@ -7681,10 +7696,14 @@ func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int) (semt
 		if !ok {
 			return semtypes.SemType{}, false
 		}
+		kind, ok := semtypeMemberKind(t, m.MemberKind(), ty.GetPosition())
+		if !ok {
+			return semtypes.SemType{}, false
+		}
 		directMembers = append(directMembers, directMember{
 			name:       m.Name(),
 			valueTy:    valueTy,
-			kind:       semtypeMemberKind(m.MemberKind()),
+			kind:       kind,
 			visibility: semtypeVisibility(m.IsPublic()),
 			immutable:  m.MemberKind() != ast.ObjectMemberKindField,
 			pos:        ty.GetPosition(),
@@ -7697,7 +7716,10 @@ func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int) (semt
 	}
 
 	// Step 3: Create semtype
-	networkQual := semtypeNetworkQualifier(ty.NetworkQuals)
+	networkQual, ok := semtypeNetworkQualifier(t, ty.NetworkQuals, ty.GetPosition())
+	if !ok {
+		return semtypes.SemType{}, false
+	}
 	qualifiers := semtypes.ObjectQualifiersFrom(ty.Isolated, false, networkQual)
 	semType := od.Define(t.typeEnv(), qualifiers, members)
 	return semType, true
@@ -8068,38 +8090,44 @@ func resolveMatchPattern(t typeResolver, chain *binding, pattern ast.BLangMatchP
 	}
 }
 
-func semtypeMemberKind(kind ast.ObjectMemberKind) semtypes.MemberKind {
+func semtypeMemberKind(t typeResolver, kind ast.ObjectMemberKind, loc diagnostics.Location) (semtypes.MemberKind, bool) {
 	switch kind {
 	case ast.ObjectMemberKindField:
-		return semtypes.MemberKindField
+		return semtypes.MemberKindField, true
 	case ast.ObjectMemberKindMethod:
-		return semtypes.MemberKindMethod
+		return semtypes.MemberKindMethod, true
 	case ast.ObjectMemberKindRemoteMethod:
-		return semtypes.MemberKindRemoteMethod
+		return semtypes.MemberKindRemoteMethod, true
 	case ast.ObjectMemberKindResourceMethod:
-		return semtypes.MemberKindResourceMethod
+		return semtypes.MemberKindResourceMethod, true
 	default:
-		panic("invalid member kind")
+		t.internalError("invalid member kind", loc)
+		return 0, false
 	}
 }
 
-func inclusionMemberKindToSemtype(kind model.InclusionMemberKind) semtypes.MemberKind {
+func inclusionMemberKindToSemtype(t typeResolver, kind model.InclusionMemberKind, loc diagnostics.Location) (semtypes.MemberKind, bool) {
 	switch kind {
 	case model.InclusionMemberKindField:
-		return semtypes.MemberKindField
+		return semtypes.MemberKindField, true
 	case model.InclusionMemberKindMethod:
-		return semtypes.MemberKindMethod
+		return semtypes.MemberKindMethod, true
 	case model.InclusionMemberKindRemoteMethod:
-		return semtypes.MemberKindRemoteMethod
+		return semtypes.MemberKindRemoteMethod, true
 	case model.InclusionMemberKindResourceMethod:
-		return semtypes.MemberKindResourceMethod
+		return semtypes.MemberKindResourceMethod, true
 	default:
-		panic("invalid inclusion member kind")
+		t.internalError("invalid inclusion member kind", loc)
+		return 0, false
 	}
 }
 
-func inclusionMemberToSemtypeMember(m model.InclusionMember) semtypes.Member {
+func inclusionMemberToSemtypeMember(t typeResolver, m model.InclusionMember, loc diagnostics.Location) (semtypes.Member, bool) {
 	kind := m.MemberKind()
+	memberKind, ok := inclusionMemberKindToSemtype(t, kind, loc)
+	if !ok {
+		return semtypes.Member{}, false
+	}
 	vis := semtypes.VisibilityPrivate
 	if fd, ok := m.(*model.FieldDescriptor); ok {
 		vis = semtypeVisibility(fd.IsPublic())
@@ -8109,10 +8137,10 @@ func inclusionMemberToSemtypeMember(m model.InclusionMember) semtypes.Member {
 	return semtypes.Member{
 		Name:       m.MemberName(),
 		ValueType:  m.MemberType(),
-		Kind:       inclusionMemberKindToSemtype(kind),
+		Kind:       memberKind,
 		Visibility: vis,
 		Immutable:  kind != model.InclusionMemberKindField,
-	}
+	}, true
 }
 
 func semtypeVisibility(isPublic bool) semtypes.Visibility {
@@ -8122,16 +8150,17 @@ func semtypeVisibility(isPublic bool) semtypes.Visibility {
 	return semtypes.VisibilityPrivate
 }
 
-func semtypeNetworkQualifier(nq ast.ObjectNetworkQuals) semtypes.NetworkQualifier {
+func semtypeNetworkQualifier(t typeResolver, nq ast.ObjectNetworkQuals, loc diagnostics.Location) (semtypes.NetworkQualifier, bool) {
 	switch nq {
 	case ast.ObjectNetworkQualsNone:
-		return semtypes.NetworkQualifierNone
+		return semtypes.NetworkQualifierNone, true
 	case ast.ObjectNetworkQualsClient:
-		return semtypes.NetworkQualifierClient
+		return semtypes.NetworkQualifierClient, true
 	case ast.ObjectNetworkQualsService:
-		return semtypes.NetworkQualifierService
+		return semtypes.NetworkQualifierService, true
 	default:
-		panic("invalid network qualifier")
+		t.internalError("invalid network qualifier", loc)
+		return 0, false
 	}
 }
 
@@ -8233,8 +8262,8 @@ func containerArgExpr(args []ast.BLangExpression, paramName string) (ast.BLangEx
 }
 
 // storeMonomorphizedOpaqueFn builds the monomorphic symbol for sig, adds it to
-// the opaque symbol's space, sets its type, and caches it under cacheKeys.
-func storeMonomorphizedOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, sig model.TypedFunctionSignature, loc diagnostics.Location, cacheKeys ...semtypes.SemType) (model.SymbolRef, bool) {
+// the opaque symbol's space, sets its type, and caches it under the cache keys.
+func storeMonomorphizedOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, sig model.TypedFunctionSignature, loc diagnostics.Location, cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType) (model.SymbolRef, bool) {
 	mono := &monomorphicOpaqueFn{FunctionSymbol: model.NewFunctionSymbol(sym.Name(), sig, true, loc), poly: polymorphicRef}
 	mono.SetType(typeFromFunctionSignature(t, sig))
 	space := sym.SymbolSpace
@@ -8247,7 +8276,7 @@ func storeMonomorphizedOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol,
 		return model.SymbolRef{}, false
 	}
 	if sym.Store != nil {
-		sym.Store(ref, cacheKeys...)
+		sym.Store(ref, cacheKey, cacheKeyRest...)
 	}
 	return ref, true
 }
@@ -8278,7 +8307,7 @@ func monomorphizeArrayPush(t typeResolver, sym *model.OpaqueFunctionSymbol, poly
 	containerTy, effect := containerResult.ty, containerResult.effect
 	chain = effect.ifTrue
 	if sym.Lookup != nil {
-		if ref, ok := sym.Lookup(containerTy); ok {
+		if ref, found := sym.Lookup(containerTy); found {
 			return ref, chain, true
 		}
 	}
@@ -8365,7 +8394,7 @@ func monomorphizeArrayMap(t typeResolver, sym *model.OpaqueFunctionSymbol, polym
 	}
 	callbackParamTy := typeFromFunctionSignature(t, callbackSig)
 	if sym.Lookup != nil {
-		if ref, ok := sym.Lookup(containerTy, resultMemberTy, callbackParamTy); ok {
+		if ref, found := sym.Lookup(containerTy, resultMemberTy, callbackParamTy); found {
 			return ref, chain, true
 		}
 	}
@@ -8394,7 +8423,7 @@ func monomorphizeXMLIterator(t typeResolver, sym *model.OpaqueFunctionSymbol, po
 	containerTy, effect := containerResult.ty, containerResult.effect
 	chain = effect.ifTrue
 	if sym.Lookup != nil {
-		if ref, ok := sym.Lookup(containerTy); ok {
+		if ref, found := sym.Lookup(containerTy); found {
 			return ref, chain, true
 		}
 	}
@@ -8458,7 +8487,7 @@ func monomorphizeMapMemberFunction(t typeResolver, sym *model.OpaqueFunctionSymb
 	containerTy, effect := containerResult.ty, containerResult.effect
 	chain = effect.ifTrue
 	if sym.Lookup != nil {
-		if ref, ok := sym.Lookup(containerTy); ok {
+		if ref, found := sym.Lookup(containerTy); found {
 			return ref, chain, true
 		}
 	}

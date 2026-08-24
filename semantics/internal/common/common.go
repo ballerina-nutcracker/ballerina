@@ -112,14 +112,15 @@ func mapQuerySelectExpectedTypeWithValue(env semtypes.Env, valueTy semtypes.SemT
 	return ld.Define(env, []semtypes.SemType{semtypes.String, valueTy})
 }
 
-func MappingKeyName(key *ast.BLangMappingKey) string {
+func MappingKeyName(ctx *context.CompilerContext, key *ast.BLangMappingKey) (string, bool) {
 	switch expr := key.Expr.(type) {
 	case *ast.BLangLiteral:
-		return expr.Value.(string)
+		return expr.Value.(string), true
 	case *ast.BLangVarRef:
-		return expr.VariableName.GetValue()
+		return expr.VariableName.GetValue(), true
 	default:
-		panic(fmt.Sprintf("unexpected record key expression type: %T", key.Expr))
+		ctx.InternalError(fmt.Sprintf("unexpected record key expression type: %T", key.Expr), key.GetPosition())
+		return "", false
 	}
 }
 

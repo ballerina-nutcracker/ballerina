@@ -1492,7 +1492,10 @@ func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstr
 	}
 	for _, f := range expr.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
-		keyName := common.MappingKeyName(kv.Key)
+		keyName, ok := common.MappingKeyName(a.ctx(), kv.Key)
+		if !ok {
+			return false
+		}
 		if seen[keyName] {
 			a.semanticErr(fmt.Sprintf("duplicate key '%s' in mapping constructor", keyName), kv.Key.GetPosition())
 			return false
