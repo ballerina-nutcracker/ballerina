@@ -27,10 +27,6 @@
 )
 (valueFromLock
   (bb0 () ()
-    (var-def
-      (variable c (type
-        (user-defined-type Client)) (expr
-        (new ()))))
     (return
       (trap-expr
         (remote-method-call value expr:

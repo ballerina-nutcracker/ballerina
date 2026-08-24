@@ -2,6 +2,8 @@
   (import-package ballerina lang array (as array))
   (import-package ballerina io (as io))
   (import-package ballerina lang array (as lang.array))
+  (variable lockGuard (type
+    (value-type int)))
   (type-definition MappedRecord
     (record-type
       (field values
@@ -29,6 +31,11 @@
             (value-type int)) (expr
             (invocation increment (
               (literal 0)))))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref lockGuard)
+        (literal 0))))
   (function increment (
     (variable value (type
       (value-type int)))) (
@@ -79,6 +86,9 @@
     (block-function-body
       (lock
         (block-stmt
+          (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
           (var-def
             (variable explicitLength (type
               (value-type int)) (expr
@@ -230,6 +240,9 @@
     (block-function-body
       (lock
         (block-stmt
+          (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
           (var-def
             (variable _ (type
               (value-type int)) (expr

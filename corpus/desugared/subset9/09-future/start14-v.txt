@@ -1,5 +1,7 @@
 (package
   (import-package ballerina io (as io))
+  (variable c (type
+    (user-defined-type Client)))
   (class-definition Client
     (function init () ()
       (block-function-body))
@@ -13,6 +15,11 @@
             (key-value
               (literal answer)
               (literal 42)))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref c)
+        (new ()))))
   (function valueFromLock () (
     (union-type
       (constrained-type
@@ -20,10 +27,6 @@
         (value-type int))
       (error-type)))
     (block-function-body
-      (var-def
-        (variable c (type
-          (user-defined-type Client)) (expr
-          (new ()))))
       (lock
         (block-stmt
           (return

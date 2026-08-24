@@ -1,5 +1,8 @@
 (caller
   (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref lockGuard)
+      (literal 0))
     (expression-stmt
       (invocation startIndirectly ()))
   )

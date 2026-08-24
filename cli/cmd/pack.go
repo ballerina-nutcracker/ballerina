@@ -221,6 +221,11 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 
 	balaDir := filepath.Join(absPath, projects.TargetDir, balaSubdir)
 	backend := projects.NewBallerinaBackend(compilation)
+	backendDiags := backend.DiagnosticResult()
+	if backendDiags.HasErrors() {
+		printDiagnostics(fsys, stderr, backendDiags, !isTerminal(), compilation.DiagnosticEnv())
+		return packError("BIR generation failed; .bala not produced")
+	}
 	balaPath, err := backend.EmitBala(balaDir)
 	if err != nil {
 		return packError("write bala: %w", err)

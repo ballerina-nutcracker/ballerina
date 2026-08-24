@@ -12,6 +12,9 @@
             (key-value
               (literal answer)
               (literal 42)))))))
+  (variable c (type
+    (user-defined-type Client)) (expr
+    (new ())))
   (function valueFromLock () (
     (union-type
       (constrained-type
@@ -19,10 +22,6 @@
         (value-type int))
       (error-type)))
     (block-function-body
-      (var-def
-        (variable c (type
-          (user-defined-type Client)) (expr
-          (new ()))))
       (lock
         (block-stmt
           (return

@@ -1,5 +1,15 @@
 -- stdout --
 -- stderr --
+error[SEMANTIC_ERROR]: no restricted variable referenced in lock statement
+  --> lock-trapped-action-transfer-1-e.bal:46:5
+   |
+46 |     lock { // @error
+   |     ^^^^^^^^^^^^^^^^
+47 |         return trap c->value(localValues);
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+48 |     }
+   |     ^
+
 error[SEMANTIC_ERROR]: not an isolated expression
   --> lock-trapped-action-transfer-1-e.bal:31:16
    |

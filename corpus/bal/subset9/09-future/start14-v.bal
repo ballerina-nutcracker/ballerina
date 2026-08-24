@@ -15,14 +15,15 @@
 
 import ballerina/io;
 
-client class Client {
+isolated client class Client {
     isolated remote function value() returns map<int> {
         return {answer: 42};
     }
 }
 
+isolated Client c = new;
+
 function valueFromLock() returns map<int>|error {
-    Client c = new;
     lock {
         return trap c->value();
     }

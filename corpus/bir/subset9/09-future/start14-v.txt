@@ -1,4 +1,5 @@
 module $anon.. v 0.0.0;
+c  isolated client object { private remote function $remote$value() returns {| int... |}; public function init() returns nil };
 class Client {
 
   $remote$value() -> {| int... |}{
@@ -19,50 +20,33 @@ class Client {
 }
 valueFromLock() -> error|{| int... |}{
   bb0 {
-    %1 = newObject $anon/.:Client
-    %2 = %1.init() -> bb1;
+    lock-start "$anon/.:c" GOTO bb1;
   }
   bb1 {
-    %4 = %2 is nil
-    %4 ? bb2 : bb3;
+    PushScopeFrame 2
+    GOTO bb2;
   }
   bb2 {
-    %3 = %1;
-    GOTO bb4;
+    %1 = c.$remote$value() -> bb3;
   }
   bb3 {
-    %3 = %2;
+    %0 = %1;
     GOTO bb4;
   }
   bb4 {
-    c = %3;
-    lock-start "" GOTO bb5;
-  }
-  bb5 {
-    PushScopeFrame 2
-    GOTO bb6;
-  }
-  bb6 {
-    %1 = (1, c).$remote$value() -> bb7;
-  }
-  bb7 {
-    %0 = %1;
-    GOTO bb8;
-  }
-  bb8 {
     (1, %0) = %0;
     PopScopeFrame
-    lock-end "" GOTO bb9;
+    lock-end "$anon/.:c" GOTO bb5;
   }
-  bb9 {
+  bb5 {
     return;
   }
-  bb10 {
+  bb6 {
     return;
   }
   
   error-table {
-    [bb6, bb7] -> bb8, %0
+    [bb2, bb3] -> bb4, %0
   }
 }
 main() -> nil|error{

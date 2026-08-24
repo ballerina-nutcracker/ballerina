@@ -10,6 +10,9 @@
   (variable count (type
     (value-type int)) (expr
     (literal 0)))
+  (variable lockGuard (type
+    (value-type int)) (expr
+    (literal 0)))
   (function increment (
     (variable amount (type
       (value-type int)))) (
@@ -18,6 +21,9 @@
       (lock
         (block-stmt
           (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
+          (compound-assignment +
             (simple-var-ref count)
             (simple-var-ref amount))))))
   (function main () (
@@ -25,6 +31,9 @@
     (block-function-body
       (lock
         (block-stmt
+          (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
           (compound-assignment +
             (simple-var-ref count)
             (literal 1))))
@@ -44,6 +53,9 @@
           (literal 10))))
       (lock
         (block-stmt
+          (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
           (compound-assignment +
             (simple-var-ref value)
             (remote-method-call next expr:

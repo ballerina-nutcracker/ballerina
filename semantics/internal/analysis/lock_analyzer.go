@@ -151,7 +151,14 @@ func validateLockStmt(a analyzer, lock *ast.BLangLock) bool {
 	if !validateLockInvocations(a, &lock.Body) {
 		return false
 	}
-	return validateLockBody(a, lock)
+	if !validateLockBody(a, lock) {
+		return false
+	}
+	if lock.RestrictedSymbol.IsEmpty() {
+		a.semanticErr("no restricted variable referenced in lock statement", lock.GetPosition())
+		return false
+	}
+	return true
 }
 
 // resolveRestricted determines the lock's restricted variable, caching

@@ -43,7 +43,7 @@ function restrictedReceiverFromLock() returns map<int>|error {
 function unrestrictedValuesFromLock() returns map<int>|error {
     Client c = new;
     int[] localValues = [42];
-    lock {
+    lock { // @error
         return trap c->value(localValues);
     }
 }

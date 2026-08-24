@@ -13,6 +13,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+isolated int lockGuard = 0;
+
 isolated function isolatedWorker() {
 }
 
@@ -22,6 +24,7 @@ isolated function startIndirectly() {
 
 function caller() {
     lock {
+        lockGuard += 0;
         startIndirectly();
     }
 }

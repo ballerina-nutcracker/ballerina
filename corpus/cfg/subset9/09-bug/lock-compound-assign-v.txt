@@ -9,12 +9,18 @@
 (increment
   (bb0 () ()
     (compound-assignment +
+      (simple-var-ref lockGuard)
+      (literal 0))
+    (compound-assignment +
       (simple-var-ref count)
       (simple-var-ref amount))
   )
 )
 (main
   (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref lockGuard)
+      (literal 0))
     (compound-assignment +
       (simple-var-ref count)
       (literal 1))
@@ -32,6 +38,9 @@
       (variable value (type
         (value-type int)) (expr
         (literal 10))))
+    (compound-assignment +
+      (simple-var-ref lockGuard)
+      (literal 0))
     (compound-assignment +
       (simple-var-ref value)
       (remote-method-call next expr:

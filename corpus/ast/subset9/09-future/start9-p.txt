@@ -1,5 +1,8 @@
 (compilation-unit
 (package-id $anon . 0.0.0)
+  (variable lockGuard (type
+    (value-type int)) (expr
+    (literal 0)))
   (function isolatedWorker () (
     (value-type null))
     (block-function-body))
@@ -15,6 +18,9 @@
     (block-function-body
       (lock
         (block-stmt
+          (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
           (expression-stmt
             (invocation startIndirectly ()))))))
   (function main () (

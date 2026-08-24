@@ -1,4 +1,5 @@
 module $anon.. v 0.0.0;
+lockGuard  int;
 isolatedWorker() -> nil{
   bb0 {
     return;
@@ -15,15 +16,19 @@ startIndirectly() -> nil{
 }
 caller() -> nil{
   bb0 {
-    lock-start "" GOTO bb1;
+    lock-start "$anon/.:lockGuard" GOTO bb1;
   }
   bb1 {
-    PushScopeFrame 1
-    %0 = startIndirectly() -> bb2;
+    PushScopeFrame 4
+    %1 = ConstantLoad 0
+    %2 = %1;
+    %0 = + lockGuard %2;
+    lockGuard = %0;
+    %3 = startIndirectly() -> bb2;
   }
   bb2 {
     PopScopeFrame
-    lock-end "" GOTO bb3;
+    lock-end "$anon/.:lockGuard" GOTO bb3;
   }
   bb3 {
     return;

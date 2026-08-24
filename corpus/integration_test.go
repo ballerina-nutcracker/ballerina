@@ -705,7 +705,11 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 		return nil, fmt.Errorf("desugaring failed")
 	}
 
-	return birgen.GenBir(cx, pkg), nil
+	birPkg := birgen.GenBir(cx, pkg)
+	if birPkg == nil {
+		return nil, fmt.Errorf("BIR generation failed")
+	}
+	return birPkg, nil
 }
 
 func BenchmarkIntegration(b *testing.B) {
