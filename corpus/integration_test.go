@@ -668,7 +668,10 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("symbol resolution failed")
 	}
-	pkg := nodebuilder.ToPackageFromCompilationUnits(syntaxTrees)
+	pkg := nodebuilder.ToPackageFromCompilationUnits(cx, syntaxTrees)
+	if cx.HasDiagnostics() {
+		return nil, fmt.Errorf("package assembly failed")
+	}
 	pkg.Imports = nil
 	pkg.PackageID = pkgID
 	pkg.Scope = pkgScope

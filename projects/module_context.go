@@ -280,7 +280,7 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 		moduleCtx.moduleDescriptor.Org().value,
 	)
 	moduleCtx.importedSymbols = importedSymbols
-	pkgNode := nodebuilder.ToPackageFromCompilationUnits(compilationUnits)
+	pkgNode := nodebuilder.ToPackageFromCompilationUnits(compilerCtx, compilationUnits)
 	pkgNode.Imports = nil
 	pkgNode.PackageID = pkgID
 	pkgNode.Scope = pkgScope

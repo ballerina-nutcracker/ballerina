@@ -210,7 +210,7 @@ type (
 
 	BLangFunctionTypeParam struct {
 		bLangNodeBase
-		Name                *BLangIdentifier
+		Name                IdentifierNode
 		TypeDesc            BType
 		InitExpr            BLangExpression
 		AnnAttachments      []BLangAnnotationAttachment
@@ -617,7 +617,7 @@ func (b *BLangFunctionTypeParam) ParamName() string {
 	if b.Name == nil {
 		return ""
 	}
-	return b.Name.Value
+	return b.Name.GetValue()
 }
 
 func (b *BLangFunctionTypeParam) Type() BType {
