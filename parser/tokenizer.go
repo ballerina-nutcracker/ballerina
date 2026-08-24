@@ -17,29 +17,48 @@
 package parser
 
 import (
+	compilercontext "github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/st"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
+
+func failedToken() st.STToken {
+	return st.CreateToken(st.EOF_TOKEN, st.CreateEmptyNodeList(), st.CreateEmptyNodeList())
+}
 
 type tokenReader struct {
 	lexer             tokenLexer
 	currentToken      st.STToken
 	tokenBuffer       tokenBuffer
 	currentTokenIndex int
+	ctx               *compilercontext.CompilerContext
+	fileName          string
+	location          diagnostics.Location
 }
 
-func createTokenReader(lexer tokenLexer) *tokenReader {
+func createTokenReader(ctx *compilercontext.CompilerContext, fileName string, lexer tokenLexer) *tokenReader {
+	location := diagnostics.NewLocation(ctx.DiagnosticEnv(), fileName, 0, 0)
 	return &tokenReader{
 		lexer:             lexer,
 		currentToken:      nil,
 		currentTokenIndex: 0,
+		ctx:               ctx,
+		fileName:          fileName,
+		location:          location,
 		tokenBuffer: tokenBuffer{
-			capacity:   bufferSize,
+			capacity:   20,
 			tokens:     make([]st.STToken, bufferSize),
 			endIndex:   -1,
 			startIndex: -1,
 			size:       0,
+			ctx:        ctx,
+			location:   location,
 		},
 	}
+}
+
+func (t *tokenReader) internalError(message string) {
+	t.ctx.InternalError(message, t.location)
 }
 
 func (t *tokenReader) Read() st.STToken {
@@ -55,21 +74,20 @@ func (t *tokenReader) Read() st.STToken {
 func (t *tokenReader) Peek() st.STToken {
 	if t.tokenBuffer.size > 0 {
 		return t.tokenBuffer.peek()
-	} else {
-		token := t.lexer.NextToken()
-		t.tokenBuffer.add(token)
-		return token
 	}
+	token := t.lexer.NextToken()
+	t.tokenBuffer.add(token)
+	return token
 }
 
 func (t *tokenReader) PeekN(n int) st.STToken {
 	if n >= bufferSize {
-		panic("n is too large")
+		t.internalError("n is too large")
+		return failedToken()
 	}
 	remaining := n - t.tokenBuffer.size
 	for remaining > 0 {
-		token := t.lexer.NextToken()
-		t.tokenBuffer.add(token)
+		t.tokenBuffer.add(t.lexer.NextToken())
 		remaining--
 	}
 	return t.tokenBuffer.peekN(n)
@@ -107,11 +125,18 @@ type tokenBuffer struct {
 	endIndex   int
 	startIndex int
 	size       int
+	ctx        *compilercontext.CompilerContext
+	location   diagnostics.Location
+}
+
+func (t *tokenBuffer) internalError(message string) {
+	t.ctx.InternalError(message, t.location)
 }
 
 func (t *tokenBuffer) add(token st.STToken) {
 	if t.size == t.capacity {
-		panic("buffer overflow")
+		t.internalError("buffer overflow")
+		return
 	}
 
 	if t.endIndex == t.capacity-1 {
@@ -134,12 +159,13 @@ func (t *tokenBuffer) peek() st.STToken {
 
 func (t *tokenBuffer) peekN(n int) st.STToken {
 	if n > t.size {
-		panic("n is too large")
+		t.internalError("n is too large")
+		return failedToken()
 	}
 
 	index := t.startIndex + n - 1
 	if index >= t.capacity {
-		index = index - t.capacity
+		index -= t.capacity
 	}
 
 	return t.tokens[index]

@@ -17,6 +17,7 @@
 package parser
 
 import (
+	compilercontext "github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/parser/common"
 	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -30,8 +31,8 @@ type documentationLexer struct {
 	previousBacktickMode parserMode
 }
 
-func newDocumentationLexer(charReader text.CharReader, leadingTriviaList []st.STNode, diagnostics []st.STNodeDiagnostic) *documentationLexer {
-	lexer := newLexer(charReader)
+func newDocumentationLexer(ctx *compilercontext.CompilerContext, fileName string, charReader text.CharReader, leadingTriviaList []st.STNode, diagnostics []st.STNodeDiagnostic) *documentationLexer {
+	lexer := newLexer(ctx, fileName, charReader)
 	lexer.context.leadingTriviaList = leadingTriviaList
 	lexer.context.diagnostics = diagnostics
 	lexer.StartMode(parserModeDocLineStartHash)
@@ -209,7 +210,8 @@ func (dl *documentationLexer) processEndOfLine() st.STNode {
 		}
 		return st.CreateMinutiae(st.END_OF_LINE_MINUTIAE, dl.getLexeme())
 	default:
-		panic("unreachable")
+		dl.internalError("unreachable")
+		return st.CreateEmptyNode()
 	}
 }
 
