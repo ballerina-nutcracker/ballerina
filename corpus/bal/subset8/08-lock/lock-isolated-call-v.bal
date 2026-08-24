@@ -16,12 +16,15 @@
 
 import ballerina/io;
 
+isolated int lockGuard = 0;
+
 isolated function foo() {
     io:println("foo called"); // @output foo called
 }
 
 function callFoo() returns int {
     lock {
+        lockGuard += 0;
         foo();
         return 1;
     }

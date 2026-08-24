@@ -795,7 +795,12 @@ func compileSingleFileModule(
 	assertNoDiagnostics(t, cx, "AnalyzeCFG")
 	pkg = desugar.DesugarPackage(cx, pkg, importedSymbols)
 	assertNoDiagnostics(t, cx, "DesugarPackage")
-	return exported, birgen.GenBir(cx, pkg)
+	birPkg := birgen.GenBir(cx, pkg)
+	if birPkg == nil {
+		assertNoDiagnostics(t, cx, "GenBir")
+		t.Fatal("BIR generation failed without a diagnostic")
+	}
+	return exported, birPkg
 }
 
 func assertNoDiagnostics(t *testing.T, cx *context.CompilerContext, stage string) {

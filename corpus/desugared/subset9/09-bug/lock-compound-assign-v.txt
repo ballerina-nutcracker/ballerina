@@ -2,6 +2,8 @@
   (import-package ballerina io (as io))
   (variable count (type
     (value-type int)))
+  (variable lockGuard (type
+    (value-type int)))
   (class-definition Counter
     (function init () ()
       (block-function-body))
@@ -14,6 +16,9 @@
     (block-function-body
       (assignment
         (simple-var-ref count)
+        (literal 0))
+      (assignment
+        (simple-var-ref lockGuard)
         (literal 0))))
   (function increment (
     (variable amount (type
@@ -23,6 +28,9 @@
       (lock
         (block-stmt
           (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
+          (compound-assignment +
             (simple-var-ref count)
             (simple-var-ref amount))))))
   (function main () (
@@ -30,6 +38,9 @@
     (block-function-body
       (lock
         (block-stmt
+          (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
           (compound-assignment +
             (simple-var-ref count)
             (literal 1))))
@@ -49,6 +60,9 @@
           (literal 10))))
       (lock
         (block-stmt
+          (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
           (compound-assignment +
             (simple-var-ref value)
             (remote-method-call next expr:

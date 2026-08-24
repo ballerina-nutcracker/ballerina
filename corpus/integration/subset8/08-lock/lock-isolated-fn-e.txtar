@@ -11,3 +11,13 @@ error[SEMANTIC_ERROR]: access of mutable variable
    |
 21 |         a = a + 1; // @error
    |         ^
+
+error[SEMANTIC_ERROR]: no restricted variable referenced in lock statement
+  --> lock-isolated-fn-e.bal:20:5
+   |
+20 |     lock {
+   |     ^^^^^^
+21 |         a = a + 1; // @error
+   |         ^^^^^^^^^^^^^^^^^^^^
+22 |     }
+   |     ^

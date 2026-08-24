@@ -1,4 +1,5 @@
 module $anon.. v 0.0.0;
+lockGuard  int;
 class NonIsolatedInit {
 
   init() -> nil{
@@ -70,32 +71,36 @@ $anonFunc$_1(int) -> int{
 }
 mapInsideLock([int...]) -> int{
   bb0 {
-    lock-start "" GOTO bb1;
+    lock-start "$anon/.:lockGuard" GOTO bb1;
   }
   bb1 {
-    PushScopeFrame 11
-    %0 = fp $anon/.:isolatedIncrement
-    %1 = map((1, values),%0) -> bb2;
+    PushScopeFrame 14
+    %1 = ConstantLoad 0
+    %2 = %1;
+    %0 = + lockGuard %2;
+    lockGuard = %0;
+    %3 = fp $anon/.:isolatedIncrement
+    %4 = map((1, values),%3) -> bb2;
   }
   bb2 {
-    %2 = length(%1) -> bb3;
+    %5 = length(%4) -> bb3;
   }
   bb3 {
-    explicitLength = %2;
-    %4 = fp $anon/.:$anonFunc$_1
-    %5 = map((1, values),%4) -> bb4;
+    explicitLength = %5;
+    %7 = fp $anon/.:$anonFunc$_1
+    %8 = map((1, values),%7) -> bb4;
   }
   bb4 {
-    %6 = length(%5) -> bb5;
+    %9 = length(%8) -> bb5;
   }
   bb5 {
-    inferredLength = %6;
-    %9 = explicitLength;
-    %10 = inferredLength;
-    %8 = + %9 %10;
-    (1, %0) = %8;
+    inferredLength = %9;
+    %12 = explicitLength;
+    %13 = inferredLength;
+    %11 = + %12 %13;
+    (1, %0) = %11;
     PopScopeFrame
-    lock-end "" GOTO bb6;
+    lock-end "$anon/.:lockGuard" GOTO bb6;
   }
   bb6 {
     return;
@@ -230,24 +235,28 @@ mapWithInferredCapture([int...]) -> [int...]{
 }
 mapAcrossIsolationContexts([int...]) -> [int...]{
   bb0 {
-    lock-start "" GOTO bb1;
+    lock-start "$anon/.:lockGuard" GOTO bb1;
   }
   bb1 {
-    PushScopeFrame 8
-    %0 = ConstantLoad 1
-    %1 = ConstantLoad 1
-    %2 = newArray [int, never...][%1]{%0}
-    %3 = <[int...]>(%2)
-    %4 = fp $anon/.:isolatedIncrement
-    %5 = map(%3,%4) -> bb2;
+    PushScopeFrame 11
+    %1 = ConstantLoad 0
+    %2 = %1;
+    %0 = + lockGuard %2;
+    lockGuard = %0;
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad 1
+    %5 = newArray [int, never...][%4]{%3}
+    %6 = <[int...]>(%5)
+    %7 = fp $anon/.:isolatedIncrement
+    %8 = map(%6,%7) -> bb2;
   }
   bb2 {
-    %6 = length(%5) -> bb3;
+    %9 = length(%8) -> bb3;
   }
   bb3 {
-    _ = %6;
+    _ = %9;
     PopScopeFrame
-    lock-end "" GOTO bb4;
+    lock-end "$anon/.:lockGuard" GOTO bb4;
   }
   bb4 {
     %2 = fp $anon/.:increment

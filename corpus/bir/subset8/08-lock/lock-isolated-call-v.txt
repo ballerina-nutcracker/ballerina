@@ -1,4 +1,5 @@
 module $anon.. v 0.0.0;
+lockGuard  int;
 foo() -> nil{
   bb0 {
     %1 = ConstantLoad foo called
@@ -10,17 +11,21 @@ foo() -> nil{
 }
 callFoo() -> int{
   bb0 {
-    lock-start "" GOTO bb1;
+    lock-start "$anon/.:lockGuard" GOTO bb1;
   }
   bb1 {
-    PushScopeFrame 2
-    %0 = foo() -> bb2;
+    PushScopeFrame 5
+    %1 = ConstantLoad 0
+    %2 = %1;
+    %0 = + lockGuard %2;
+    lockGuard = %0;
+    %3 = foo() -> bb2;
   }
   bb2 {
-    %1 = ConstantLoad 1
-    (1, %0) = %1;
+    %4 = ConstantLoad 1
+    (1, %0) = %4;
     PopScopeFrame
-    lock-end "" GOTO bb3;
+    lock-end "$anon/.:lockGuard" GOTO bb3;
   }
   bb3 {
     return;

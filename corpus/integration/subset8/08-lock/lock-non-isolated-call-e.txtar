@@ -5,3 +5,13 @@ error[SEMANTIC_ERROR]: invocation of a non-isolated function inside lock stateme
    |
 29 |         foo(); // @error
    |         ^^^^^
+
+error[SEMANTIC_ERROR]: no restricted variable referenced in lock statement
+  --> lock-non-isolated-call-e.bal:35:5
+   |
+35 |     lock { // @error
+   |     ^^^^^^^^^^^^^^^^
+36 |         int _ = 1;
+   |         ^^^^^^^^^^
+37 |     }
+   |     ^

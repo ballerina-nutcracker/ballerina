@@ -289,6 +289,11 @@ func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, f
 	}
 
 	backend := projects.NewBallerinaBackend(compilation)
+	backendDiags := backend.DiagnosticResult()
+	if backendDiags.HasErrors() {
+		printDiagnostics(fsys, stderr, backendDiags, !isTerminal(), compilation.DiagnosticEnv())
+		return buildError("BIR generation failed; executable not produced")
+	}
 	birPkgs := backend.BIRPackages()
 	if len(birPkgs) == 0 {
 		return buildError("BIR generation failed: no BIR package produced")

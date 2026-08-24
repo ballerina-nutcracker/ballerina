@@ -486,13 +486,14 @@ func createModelPackageID(compilerCtx *context.CompilerContext, desc ModuleDescr
 
 // generateCodeInternal generates BIR for this module from the compiled BLangPackage.
 // -> CompilerPhaseRunner.performBirGenPhases(bLangPackage)
-func generateCodeInternal(moduleCtx *moduleContext) {
+func generateCodeInternal(moduleCtx *moduleContext) bool {
 	if moduleCtx.bLangPkg == nil || moduleCtx.compilerCtx == nil {
-		return
+		return false
 	}
 	moduleCtx.compilerCtx.StartStage(context.StageBIRGeneration)
 	moduleCtx.birPkg = birgen.GenBir(moduleCtx.compilerCtx, moduleCtx.bLangPkg)
 	moduleCtx.compilerCtx.EndStage()
+	return moduleCtx.birPkg != nil
 }
 
 // getBLangPackage returns the compiled BLangPackage.

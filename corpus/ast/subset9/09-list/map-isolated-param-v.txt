@@ -2,6 +2,9 @@
 (package-id $anon . 0.0.0)
   (import-package ballerina io (as io))
   (import-package ballerina lang array (as array))
+  (variable lockGuard (type
+    (value-type int)) (expr
+    (literal 0)))
   (function increment (
     (variable value (type
       (value-type int)))) (
@@ -52,6 +55,9 @@
     (block-function-body
       (lock
         (block-stmt
+          (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
           (var-def
             (variable explicitLength (type
               (value-type int)) (expr
@@ -229,6 +235,9 @@
     (block-function-body
       (lock
         (block-stmt
+          (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
           (var-def
             (variable _ (type
               (value-type int)) (expr
