@@ -110,7 +110,10 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			fnCfg := analyzeFunction(ctx, fn)
+			fnCfg, ok := analyzeFunction(ctx, fn)
+			if !ok {
+				return
+			}
 			mu.Lock()
 			cfg.funcCfgs[fn.Symbol()] = fnCfg
 			mu.Unlock()
@@ -121,7 +124,10 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 		initFn := pkg.InitFunction
 		go func() {
 			defer wg.Done()
-			fnCfg := analyzeFunction(ctx, initFn)
+			fnCfg, ok := analyzeFunction(ctx, initFn)
+			if !ok {
+				return
+			}
 			mu.Lock()
 			cfg.funcCfgs[initFn.Symbol()] = fnCfg
 			mu.Unlock()
@@ -130,7 +136,10 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	analyzeClassBody := func(dest map[model.SymbolRef]functionCFG, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
 		analyzeMethod := func(sym model.SymbolRef, body ast.FunctionBodyNode) {
 			wg.Go(func() {
-				fnCfg := analyzeFunctionBody(ctx, body)
+				fnCfg, ok := analyzeFunctionBody(ctx, body)
+				if !ok {
+					return
+				}
 				mu.Lock()
 				dest[sym] = fnCfg
 				mu.Unlock()
@@ -160,11 +169,11 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	return cfg
 }
 
-func analyzeFunction(ctx *context.CompilerContext, fn *ast.BLangFunction) functionCFG {
+func analyzeFunction(ctx *context.CompilerContext, fn *ast.BLangFunction) (functionCFG, bool) {
 	return analyzeFunctionBody(ctx, fn.Body)
 }
 
-func analyzeFunctionBody(ctx *context.CompilerContext, body ast.FunctionBodyNode) functionCFG {
+func analyzeFunctionBody(ctx *context.CompilerContext, body ast.FunctionBodyNode) (functionCFG, bool) {
 	tyCtx := semtypes.ContextFrom(ctx.GetTypeEnv())
 	analyzer := functionControlFlowAnalyzer{
 		ctx:   ctx,
@@ -211,30 +220,29 @@ func continueEffect(bb bbRef) stmtEffect {
 	return stmtEffect{nextBB: bb}
 }
 
-func (analyzer *functionControlFlowAnalyzer) analyzeBody(body ast.FunctionBodyNode) functionCFG {
+func (analyzer *functionControlFlowAnalyzer) analyzeBody(body ast.FunctionBodyNode) (functionCFG, bool) {
 	switch fnBody := body.(type) {
 	case *ast.BLangBlockFunctionBody:
-		analyzer.analyzeBlockFunctionBody(fnBody)
+		if !analyzer.analyzeBlockFunctionBody(fnBody) {
+			return functionCFG{}, false
+		}
 	case *ast.BLangExprFunctionBody:
-		analyzer.analyzeExprFunctionBody(fnBody)
+		analyzer.ctx.InternalError("expression-bodied function CFG is not supported", fnBody.GetPosition())
+		return functionCFG{}, false
 	case *ast.BLangExternFunctionBody:
 		// No body to analyze
 	}
-	return analyzer.getCfg()
+	return analyzer.getCfg(), true
 }
 
-func (analyzer *functionControlFlowAnalyzer) analyzeExprFunctionBody(fnBody *ast.BLangExprFunctionBody) {
-	// TODO: we need to deal with ternary expression which will have control flow so bbs
-	panic("unimplemented")
-}
-
-func (analyzer *functionControlFlowAnalyzer) analyzeBlockFunctionBody(fnBody *ast.BLangBlockFunctionBody) {
+func (analyzer *functionControlFlowAnalyzer) analyzeBlockFunctionBody(fnBody *ast.BLangBlockFunctionBody) bool {
 	rootBB := basicBlock{}
 	analyzer.bbs = append(analyzer.bbs, rootBB)
-	_ = analyzer.analyzeStatements(rootBB.ref(), fnBody.Stmts)
+	_, ok := analyzer.analyzeStatements(rootBB.ref(), fnBody.Stmts)
+	return ok
 }
 
-func (analyzer *functionControlFlowAnalyzer) analyzeStatements(curBB bbRef, statements []ast.StatementNode) stmtEffect {
+func (analyzer *functionControlFlowAnalyzer) analyzeStatements(curBB bbRef, statements []ast.StatementNode) (stmtEffect, bool) {
 	currentBB := curBB
 
 	for _, stmt := range statements {
@@ -246,14 +254,17 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatements(curBB bbRef, stat
 			currentBB = analyzer.createNewBB()
 		}
 
-		effect := analyzer.analyzeStatement(currentBB, stmt)
+		effect, ok := analyzer.analyzeStatement(currentBB, stmt)
+		if !ok {
+			return stmtEffect{}, false
+		}
 
 		// Update current block for next statement
 		currentBB = effect.nextBB
 	}
 
 	// Return the final block where control flow continues
-	return continueEffect(currentBB)
+	return continueEffect(currentBB), true
 }
 
 func (analyzer *functionControlFlowAnalyzer) addEdge(from, to bbRef) {
@@ -288,23 +299,23 @@ func (analyzer *functionControlFlowAnalyzer) addNode(bb bbRef, node ast.Node) {
 }
 
 // analyzeStatement dispatches to the appropriate handler based on statement type
-func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt ast.StatementNode) stmtEffect {
+func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt ast.StatementNode) (stmtEffect, bool) {
 	ternaryChecker := &ternaryExpressionChecker{}
 	ast.Walk(ternaryChecker, stmt.(ast.BLangNode))
-	if ternaryChecker.hasTernaryExpression {
-		return createTernaryExpressionEffect(analyzer, curBB, ternaryChecker.ifTrue, ternaryChecker.ifFalse)
+	if ternaryChecker.expression != nil {
+		return createTernaryExpressionEffect(analyzer, curBB, ternaryChecker.expression)
 	}
 	switch s := stmt.(type) {
 	case *ast.BLangReturn:
-		return analyzer.analyzeReturn(curBB, s)
+		return analyzer.analyzeReturn(curBB, s), true
 	case *ast.BLangPanic:
-		return analyzer.analyzePanic(curBB, s)
+		return analyzer.analyzePanic(curBB, s), true
 	case *ast.BLangExpressionStmt:
 		analyzer.addNode(curBB, stmt)
 		if expr, ok := s.Expr.(ast.BLangExpression); ok && alwaysTerminatesViaCheck(analyzer.tyCtx, expr) {
-			return terminatedEffect()
+			return terminatedEffect(), true
 		}
-		return continueEffect(curBB)
+		return continueEffect(curBB), true
 	case *ast.BLangIf:
 		return analyzer.analyzeIf(curBB, s)
 	case *ast.BLangBlockStmt:
@@ -320,47 +331,47 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 		analyzer.addNode(curBB, stmt)
 		if len(analyzer.loops) == 0 {
 			analyzer.ctx.SemanticError("break statement not allowed outside loop", stmt.GetPosition())
-			return continueEffect(curBB)
+			return continueEffect(curBB), true
 		}
 		loopData := analyzer.loops[len(analyzer.loops)-1]
 		analyzer.addEdge(curBB, loopData.loopEnd)
-		return terminatedEffect()
+		return terminatedEffect(), true
 	case *ast.BLangContinue:
 		analyzer.addNode(curBB, stmt)
 		if len(analyzer.loops) == 0 {
 			analyzer.ctx.SemanticError("continue statement not allowed outside loop", stmt.GetPosition())
-			return continueEffect(curBB)
+			return continueEffect(curBB), true
 		}
 		loopData := analyzer.loops[len(analyzer.loops)-1]
 		analyzer.addEdge(curBB, loopData.loopHead)
-		return terminatedEffect()
+		return terminatedEffect(), true
 	case *ast.BLangMatchStatement:
 		return analyzer.analyzeMatch(curBB, s)
 	default:
 		// For unimplemented statement types, just add to current block and continue
 		analyzer.addNode(curBB, stmt)
-		return continueEffect(curBB)
+		return continueEffect(curBB), true
 	}
 }
 
-func createTernaryExpressionEffect(analyzer *functionControlFlowAnalyzer, curBB bbRef, expressionNode1, expressionNode2 ast.BLangExpression) stmtEffect {
-	panic("unimplemented")
+func createTernaryExpressionEffect(analyzer *functionControlFlowAnalyzer, _ bbRef, expression ast.BLangExpression) (stmtEffect, bool) {
+	analyzer.ctx.InternalError("ternary expression CFG is not supported", expression.GetPosition())
+	return stmtEffect{}, false
 }
 
 type ternaryExpressionChecker struct {
-	hasTernaryExpression bool
-	ifTrue               ast.BLangExpression
-	ifFalse              ast.BLangExpression
+	expression ast.BLangExpression
 }
 
 var _ ast.Visitor = &ternaryExpressionChecker{}
 
 func (c *ternaryExpressionChecker) Visit(node ast.BLangNode) ast.Visitor {
-	if c.hasTernaryExpression {
+	if c.expression != nil {
 		return nil
 	}
-	if _, ok := node.(*ast.BLangElvisExpr); ok {
-		panic("unimplemented")
+	if expression, ok := node.(*ast.BLangElvisExpr); ok {
+		c.expression = expression
+		return nil
 	}
 	return c
 }
@@ -406,7 +417,7 @@ func alwaysTerminatesViaCheck(tyCtx semtypes.Context, expr ast.BLangExpression) 
 
 // Branching statement handlers
 
-func (analyzer *functionControlFlowAnalyzer) analyzeBlockStmt(curBB bbRef, stmt *ast.BLangBlockStmt) stmtEffect {
+func (analyzer *functionControlFlowAnalyzer) analyzeBlockStmt(curBB bbRef, stmt *ast.BLangBlockStmt) (stmtEffect, bool) {
 	// Block statement just recursively analyzes its statements
 	return analyzer.analyzeStatements(curBB, stmt.Stmts)
 }
@@ -416,10 +427,13 @@ var (
 	falseTy = semtypes.BooleanConst(false)
 )
 
-func (analyzer *functionControlFlowAnalyzer) analyzeIf(curBB bbRef, stmt *ast.BLangIf) stmtEffect {
+func (analyzer *functionControlFlowAnalyzer) analyzeIf(curBB bbRef, stmt *ast.BLangIf) (stmtEffect, bool) {
 	initBB := curBB
 	ifTrue := analyzer.createNewBB()
-	ifTrueEffect := analyzer.analyzeBlockStmt(ifTrue, &stmt.Body)
+	ifTrueEffect, ok := analyzer.analyzeBlockStmt(ifTrue, &stmt.Body)
+	if !ok {
+		return stmtEffect{}, false
+	}
 	finally := analyzer.createNewBB()
 	if !ifTrueEffect.isTerminal() {
 		analyzer.addEdge(ifTrueEffect.nextBB, finally)
@@ -430,7 +444,10 @@ func (analyzer *functionControlFlowAnalyzer) analyzeIf(curBB bbRef, stmt *ast.BL
 	}
 	if stmt.ElseStmt != nil {
 		ifFalse := analyzer.createNewBB()
-		ifFalseEffect := analyzer.analyzeStatement(ifFalse, stmt.ElseStmt)
+		ifFalseEffect, ok := analyzer.analyzeStatement(ifFalse, stmt.ElseStmt)
+		if !ok {
+			return stmtEffect{}, false
+		}
 		if !ifFalseEffect.isTerminal() {
 			analyzer.addEdge(ifFalseEffect.nextBB, finally)
 		}
@@ -440,7 +457,7 @@ func (analyzer *functionControlFlowAnalyzer) analyzeIf(curBB bbRef, stmt *ast.BL
 	} else if !analyzer.isTrue(stmt.Expr) {
 		analyzer.addEdge(initBB, finally)
 	}
-	return continueEffect(finally)
+	return continueEffect(finally), true
 }
 
 func (analyzer *functionControlFlowAnalyzer) isFalse(node ast.BLangExpression) bool {
@@ -451,7 +468,7 @@ func (analyzer *functionControlFlowAnalyzer) isTrue(node ast.BLangExpression) bo
 	return semtypes.IsSameType(analyzer.tyCtx, node.GetDeterminedType(), trueTy)
 }
 
-func (analyzer *functionControlFlowAnalyzer) analyzeWhile(curBB bbRef, stmt *ast.BLangWhile) stmtEffect {
+func (analyzer *functionControlFlowAnalyzer) analyzeWhile(curBB bbRef, stmt *ast.BLangWhile) (stmtEffect, bool) {
 	loopHead := analyzer.createNewBB()
 	loopBody := analyzer.createNewBB()
 	loopEnd := analyzer.createNewBB()
@@ -470,7 +487,11 @@ func (analyzer *functionControlFlowAnalyzer) analyzeWhile(curBB bbRef, stmt *ast
 	if !analyzer.isTrue(expr) {
 		analyzer.addEdge(loopHead, loopEnd)
 	}
-	bodyEffect := analyzer.analyzeBlockStmt(loopBody, &stmt.Body)
+	bodyEffect, ok := analyzer.analyzeBlockStmt(loopBody, &stmt.Body)
+	if !ok {
+		analyzer.loops = analyzer.loops[:len(analyzer.loops)-1]
+		return stmtEffect{}, false
+	}
 	bodyEnd := bodyEffect.nextBB
 	// Can happend with return/panic, continue or break respectively at the end. In all these cases we don't need to add explicit
 	//  edges.
@@ -479,10 +500,10 @@ func (analyzer *functionControlFlowAnalyzer) analyzeWhile(curBB bbRef, stmt *ast
 	}
 	// Pop the loop from the stack now that we're done analyzing it
 	analyzer.loops = analyzer.loops[:len(analyzer.loops)-1]
-	return continueEffect(loopEnd)
+	return continueEffect(loopEnd), true
 }
 
-func (analyzer *functionControlFlowAnalyzer) analyzeMatch(curBB bbRef, stmt *ast.BLangMatchStatement) stmtEffect {
+func (analyzer *functionControlFlowAnalyzer) analyzeMatch(curBB bbRef, stmt *ast.BLangMatchStatement) (stmtEffect, bool) {
 	analyzer.addNode(curBB, stmt.Expr)
 	finally := analyzer.createNewBB()
 	hasIncoming := false
@@ -490,7 +511,10 @@ func (analyzer *functionControlFlowAnalyzer) analyzeMatch(curBB bbRef, stmt *ast
 		clause := &stmt.MatchClauses[i]
 		clauseBB := analyzer.createNewBB()
 		analyzer.addEdge(curBB, clauseBB)
-		clauseEffect := analyzer.analyzeBlockStmt(clauseBB, &clause.Body)
+		clauseEffect, ok := analyzer.analyzeBlockStmt(clauseBB, &clause.Body)
+		if !ok {
+			return stmtEffect{}, false
+		}
 		if !clauseEffect.isTerminal() {
 			analyzer.addEdge(clauseEffect.nextBB, finally)
 			hasIncoming = true
@@ -501,9 +525,9 @@ func (analyzer *functionControlFlowAnalyzer) analyzeMatch(curBB bbRef, stmt *ast
 		hasIncoming = true
 	}
 	if !hasIncoming {
-		return terminatedEffect()
+		return terminatedEffect(), true
 	}
-	return continueEffect(finally)
+	return continueEffect(finally), true
 }
 
 func (cfg *functionCFG) markBackedges() {
@@ -544,7 +568,7 @@ func (cfg *functionCFG) markBackedges() {
 	}
 }
 
-func (analyzer *functionControlFlowAnalyzer) analyzeForeach(curBB bbRef, stmt *ast.BLangForeach) stmtEffect {
+func (analyzer *functionControlFlowAnalyzer) analyzeForeach(curBB bbRef, stmt *ast.BLangForeach) (stmtEffect, bool) {
 	loopHead := analyzer.createNewBB()
 	loopBody := analyzer.createNewBB()
 	loopEnd := analyzer.createNewBB()
@@ -561,12 +585,16 @@ func (analyzer *functionControlFlowAnalyzer) analyzeForeach(curBB bbRef, stmt *a
 	}
 	analyzer.addEdge(loopHead, loopBody)
 	analyzer.addEdge(loopHead, loopEnd)
-	bodyEffect := analyzer.analyzeBlockStmt(loopBody, &stmt.Body)
+	bodyEffect, ok := analyzer.analyzeBlockStmt(loopBody, &stmt.Body)
+	if !ok {
+		analyzer.loops = analyzer.loops[:len(analyzer.loops)-1]
+		return stmtEffect{}, false
+	}
 	if !bodyEffect.isTerminal() {
 		analyzer.addEdge(bodyEffect.nextBB, loopHead)
 	}
 	analyzer.loops = analyzer.loops[:len(analyzer.loops)-1]
-	return continueEffect(loopEnd)
+	return continueEffect(loopEnd), true
 }
 
 func (analyzer *functionControlFlowAnalyzer) getCfg() functionCFG {

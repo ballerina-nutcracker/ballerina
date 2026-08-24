@@ -915,7 +915,7 @@ func fillinOpaqueSymbol(sym model.Symbol, space *model.SymbolSpace) {
 	fn.Lookup, fn.Store = newMonomorphizationCache()
 }
 
-func newMonomorphizationCache() (func(...semtypes.SemType) (model.SymbolRef, bool), func(model.SymbolRef, ...semtypes.SemType)) {
+func newMonomorphizationCache() (func(...semtypes.SemType) (model.SymbolRef, bool, bool), func(model.SymbolRef, ...semtypes.SemType) bool) {
 	type cacheNode struct {
 		children map[semtypes.InternHandle]*cacheNode
 		ref      model.SymbolRef
@@ -925,9 +925,9 @@ func newMonomorphizationCache() (func(...semtypes.SemType) (model.SymbolRef, boo
 	var mu sync.Mutex
 	interner := semtypes.NewSemtypeInterner()
 	root := cacheNode{children: make(map[semtypes.InternHandle]*cacheNode)}
-	nodeFor := func(keys []semtypes.SemType, create bool) *cacheNode {
+	nodeFor := func(keys []semtypes.SemType, create bool) (*cacheNode, bool) {
 		if len(keys) == 0 {
-			panic("monomorphization cache requires at least one key type")
+			return nil, false
 		}
 		node := &root
 		for _, key := range keys {
@@ -935,30 +935,37 @@ func newMonomorphizationCache() (func(...semtypes.SemType) (model.SymbolRef, boo
 			next := node.children[handle]
 			if next == nil {
 				if !create {
-					return nil
+					return nil, true
 				}
 				next = &cacheNode{children: make(map[semtypes.InternHandle]*cacheNode)}
 				node.children[handle] = next
 			}
 			node = next
 		}
-		return node
+		return node, true
 	}
-	lookup := func(keys ...semtypes.SemType) (model.SymbolRef, bool) {
+	lookup := func(keys ...semtypes.SemType) (model.SymbolRef, bool, bool) {
 		mu.Lock()
 		defer mu.Unlock()
-		node := nodeFor(keys, false)
-		if node == nil || !node.stored {
-			return model.SymbolRef{}, false
+		node, ok := nodeFor(keys, false)
+		if !ok {
+			return model.SymbolRef{}, false, false
 		}
-		return node.ref, true
+		if node == nil || !node.stored {
+			return model.SymbolRef{}, false, true
+		}
+		return node.ref, true, true
 	}
-	store := func(ref model.SymbolRef, keys ...semtypes.SemType) {
+	store := func(ref model.SymbolRef, keys ...semtypes.SemType) bool {
 		mu.Lock()
 		defer mu.Unlock()
-		node := nodeFor(keys, true)
+		node, ok := nodeFor(keys, true)
+		if !ok {
+			return false
+		}
 		node.ref = ref
 		node.stored = true
+		return true
 	}
 	return lookup, store
 }

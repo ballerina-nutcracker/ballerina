@@ -36,21 +36,37 @@ func NewDeferredMethodSymbol(name string, space *model.SymbolSpace) *DeferredMet
 
 func (d *DeferredMethodSymbol) MethodName() string              { return d.name }
 func (d *DeferredMethodSymbol) SymbolSpace() *model.SymbolSpace { return d.space }
-func (d *DeferredMethodSymbol) Name() string                    { panic("method symbol has not been resolved yet") }
+
+//nolint:forbidigo // Intentional guard: deferred method symbols must be resolved before access.
+func (d *DeferredMethodSymbol) Name() string { panic("method symbol has not been resolved yet") }
+
+//nolint:forbidigo // Intentional guard: deferred method symbols must be resolved before access.
 func (d *DeferredMethodSymbol) Type() semtypes.SemType {
 	panic("method symbol has not been resolved yet")
 }
+
+//nolint:forbidigo // Intentional guard: deferred method symbols must be resolved before access.
 func (d *DeferredMethodSymbol) Kind() model.SymbolKind {
 	panic("method symbol has not been resolved yet")
 }
+
+//nolint:forbidigo // Intentional guard: deferred method symbols must be resolved before access.
 func (d *DeferredMethodSymbol) SetType(semtypes.SemType) {
 	panic("method symbol has not been resolved yet")
 }
+
+//nolint:forbidigo // Intentional guard: deferred method symbols must be resolved before access.
 func (d *DeferredMethodSymbol) Location() diagnostics.Location {
 	panic("method symbol has not been resolved yet")
 }
+
+//nolint:forbidigo // Intentional guard: deferred method symbols must be resolved before access.
 func (d *DeferredMethodSymbol) SetLocation(diagnostics.Location) {
 	panic("method symbol has not been resolved yet")
 }
-func (d *DeferredMethodSymbol) IsPublic() bool     { panic("method symbol has not been resolved yet") }
+
+//nolint:forbidigo // Intentional guard: deferred method symbols must be resolved before access.
+func (d *DeferredMethodSymbol) IsPublic() bool { panic("method symbol has not been resolved yet") }
+
+//nolint:forbidigo // Intentional guard: deferred method symbols must be resolved before access.
 func (d *DeferredMethodSymbol) Copy() model.Symbol { panic("method symbol has not been resolved yet") }
