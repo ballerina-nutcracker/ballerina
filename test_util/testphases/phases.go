@@ -271,6 +271,10 @@ func RunPipelineWithContent(env *context.CompilerEnvironment, cx *context.Compil
 	}
 
 	// Phase 10: BIR Generation
-	result.BIRPackage = birgen.GenBir(cx, result.Package)
+	birPkg, ok := birgen.GenBir(cx, result.Package)
+	if !ok {
+		return result, nil
+	}
+	result.BIRPackage = birPkg
 	return result, nil
 }

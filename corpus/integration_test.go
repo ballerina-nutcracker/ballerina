@@ -685,7 +685,11 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 
 	pkg = desugar.DesugarPackage(cx, pkg, importedSymbols)
 
-	return birgen.GenBir(cx, pkg), nil
+	birPkg, ok := birgen.GenBir(cx, pkg)
+	if !ok {
+		return nil, fmt.Errorf("BIR generation failed")
+	}
+	return birPkg, nil
 }
 
 func BenchmarkIntegration(b *testing.B) {

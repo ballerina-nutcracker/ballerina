@@ -254,6 +254,13 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 
 	// Create backend and generate BIR
 	backend := projects.NewBallerinaBackend(compilation)
+	backendDiags := backend.DiagnosticResult()
+	if backendDiags.DiagnosticCount() > 0 {
+		printDiagnostics(fsys, os.Stderr, backendDiags, !isTerminal(), compilation.DiagnosticEnv())
+	}
+	if backendDiags.HasErrors() {
+		return fmt.Errorf("BIR generation failed")
+	}
 	birPkgs := backend.BIRPackages()
 
 	if len(birPkgs) == 0 {

@@ -215,6 +215,9 @@
 )
 (mapAcrossIsolationContexts
   (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref lockGuard)
+      (literal 0))
     (var-def
       (variable _ (type
         (value-type int)) (expr
@@ -256,6 +259,9 @@
 )
 (mapInsideLock
   (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref lockGuard)
+      (literal 0))
     (var-def
       (variable explicitLength (type
         (value-type int)) (expr

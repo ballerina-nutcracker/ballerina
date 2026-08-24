@@ -23,15 +23,18 @@ isolated client class Counter {
 }
 
 int count = 0;
+isolated int lockGuard = 0;
 
 function increment(int amount) {
     lock {
+        lockGuard += 0;
         count += amount;
     }
 }
 
 public function main() {
     lock {
+        lockGuard += 0;
         count += 1;
     }
     increment(2);
@@ -40,6 +43,7 @@ public function main() {
     Counter c = new ();
     int value = 10;
     lock {
+        lockGuard += 0;
         value += c->next();
     }
     io:println(value); // @output 15
