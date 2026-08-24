@@ -40,8 +40,8 @@ type OpaqueFunctionSymbol struct {
 	ID          int          // per-package opaque id; serialization handle and (with the package) selects the monomorphizer
 	SymbolSpace *SymbolSpace // space the monomorphized function is added to
 	// Monomorphization cache functions, if function it self don't support caching then function pointers are nil
-	Lookup          func(keys ...semtypes.SemType) (SymbolRef, bool)
-	Store           func(ref SymbolRef, keys ...semtypes.SemType)
+	Lookup          func(cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType) (SymbolRef, bool)
+	Store           func(ref SymbolRef, cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType)
 	IsIsolatedParam func(index int) bool
 }
 
