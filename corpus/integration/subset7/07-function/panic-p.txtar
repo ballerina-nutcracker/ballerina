@@ -1,6 +1,4 @@
 -- stdout --
 -- stderr --
 error: divide by zero
-        at $anonFunc$_1(panic-p.bal:22)
-           $anonFunc$_0(panic-p.bal:24)
-           main(panic-p.bal:30)
+        at main(panic-p.bal:22)
