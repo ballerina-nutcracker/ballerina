@@ -342,6 +342,10 @@ type abstractParserErrorHandlerMethods struct {
 	Self abstractParserErrorHandler
 }
 
+func (m *abstractParserErrorHandlerMethods) internalError(message string) {
+	m.Self.GetTokenReader().internalError(message)
+}
+
 func (m *abstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRuleContext, nextToken st.STToken, isCompletion bool) (result *solution) {
 	traceRecovery(func() string {
 		return fmt.Sprintf("(Recover start %s %s %s)",
@@ -437,7 +441,8 @@ func (m *abstractParserErrorHandlerMethods) getCompletion(context common.ParserR
 			if r := recover(); r != nil {
 				logRecoveredPanic("getCompletion", r)
 				if false {
-					panic("assertion failed")
+					m.internalError("assertion failed")
+					return
 				}
 				sol = m.getResolution(context, nextToken)
 			}
@@ -494,7 +499,8 @@ func (m *abstractParserErrorHandlerMethods) seekMatchStart(currentCtx common.Par
 			if r := recover(); r != nil {
 				logRecoveredPanic("seekMatchStart", r)
 				if false {
-					panic("assertion failed")
+					m.internalError("assertion failed")
+					return
 				}
 				bestMatch = newResult(make([]*solution, 0), lookaheadLimit-1)
 				bestMatch.solution = newSolution(actionRemove, currentCtx, st.SyntaxKind(0), currentCtx.String())
@@ -623,7 +629,8 @@ func (m *abstractParserErrorHandlerMethods) seekInAlternativesPaths(lookahead in
 				if r := recover(); r != nil {
 					logRecoveredPanic("seekInAlternativesPaths", r)
 					if false {
-						panic("assertion failed")
+						m.internalError("assertion failed")
+						return
 					}
 					shouldContinue = true
 				}
@@ -2108,7 +2115,8 @@ func (b *ballerinaParserErrorHandler) getShortestAlternative(currentCtx common.P
 	case common.PARSER_RULE_CONTEXT_NATURAL_EXPRESSION_START:
 		return common.PARSER_RULE_CONTEXT_NATURAL_KEYWORD
 	default:
-		panic("Alternative path entry not found")
+		b.internalError("Alternative path entry not found")
+		return common.PARSER_RULE_CONTEXT_EOF
 	}
 }
 
@@ -2176,7 +2184,8 @@ func (b *ballerinaParserErrorHandler) seekMatchInAlternativePaths(currentCtx com
 		alternativeRules = recordBodyStart
 	case common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR:
 		if !b.isInTypeDescContext() {
-			panic("assertion failed")
+			b.internalError("assertion failed")
+			return recoveryResult{}
 		}
 		alternativeRules = typeDescriptors
 	case common.PARSER_RULE_CONTEXT_TYPE_DESC_WITHOUT_ISOLATED:
@@ -2396,7 +2405,8 @@ func (b *ballerinaParserErrorHandler) seekMatchInStmtRelatedAlternativePaths(cur
 		alternativeRules = expressionStatementStart
 	case common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS:
 		if !b.isInTypeDescContext() {
-			panic("assertion failed")
+			b.internalError("assertion failed")
+			return recoveryResult{}
 		}
 		alternativeRules = typeDescRhs
 	case common.PARSER_RULE_CONTEXT_STREAM_TYPE_FIRST_PARAM_RHS:
@@ -2669,7 +2679,8 @@ func (b *ballerinaParserErrorHandler) seekMatchInExprRelatedAlternativePaths(cur
 	case common.PARSER_RULE_CONTEXT_OPTIONAL_PARENTHESIZED_ARG_LIST:
 		alternativeRules = optionalParenthesizedArgList
 	default:
-		panic("seekMatchInExprRelatedAlternativePaths found: " + currentCtx.String())
+		b.internalError("seekMatchInExprRelatedAlternativePaths found: " + currentCtx.String())
+		return recoveryResult{}
 	}
 	return *b.seekInAlternativesPaths(lookahead, currentDepth, matchingRulesCount, alternativeRules, isEntryPoint)
 }
@@ -2789,7 +2800,8 @@ func (b *ballerinaParserErrorHandler) seekMatchInExpressionRhs(lookahead int, cu
 	} else if parentCtx == common.PARSER_RULE_CONTEXT_CLIENT_RESOURCE_ACCESS_ACTION {
 		nextContext = common.PARSER_RULE_CONTEXT_CLOSE_BRACKET
 	} else {
-		panic("seekMatchInExpressionRhs found: " + parentCtx.String())
+		b.internalError("seekMatchInExpressionRhs found: " + parentCtx.String())
+		return recoveryResult{}
 	}
 	alternatives = b.getExpressionRhsAlternatives(nextContext)
 	if allowFuncCall {
@@ -3648,7 +3660,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForKeywords(currentCtx common.P
 		case common.PARSER_RULE_CONTEXT_XML_NAMESPACE_DECLARATION:
 			return common.PARSER_RULE_CONTEXT_NAMESPACE_PREFIX
 		}
-		panic("next rule of as keyword found: " + parentCtx.String())
+		b.internalError("next rule of as keyword found: " + parentCtx.String())
+		return common.ParserRuleContext{}
 	case common.PARSER_RULE_CONTEXT_CONTINUE_KEYWORD, common.PARSER_RULE_CONTEXT_BREAK_KEYWORD:
 		return common.PARSER_RULE_CONTEXT_SEMICOLON
 	case common.PARSER_RULE_CONTEXT_RETURN_KEYWORD:
@@ -3800,7 +3813,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForKeywords(currentCtx common.P
 		if ((parentCtx == common.PARSER_RULE_CONTEXT_MAPPING_CONSTRUCTOR) || (parentCtx == common.PARSER_RULE_CONTEXT_MAPPING_BP_OR_MAPPING_CONSTRUCTOR)) || (parentCtx == common.PARSER_RULE_CONTEXT_MAPPING_FIELD) {
 			return common.PARSER_RULE_CONTEXT_SPECIFIC_FIELD
 		}
-		panic("next rule of readonly keyword found: " + currentCtx.String())
+		b.internalError("next rule of readonly keyword found: " + currentCtx.String())
+		return common.ParserRuleContext{}
 	case common.PARSER_RULE_CONTEXT_DISTINCT_KEYWORD:
 		return common.PARSER_RULE_CONTEXT_TYPE_DESCRIPTOR
 	case common.PARSER_RULE_CONTEXT_VAR_KEYWORD:
@@ -3811,7 +3825,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForKeywords(currentCtx common.P
 		return common.PARSER_RULE_CONTEXT_BINDING_PATTERN
 	case common.PARSER_RULE_CONTEXT_EQUALS_KEYWORD:
 		if b.GetParentContext() != common.PARSER_RULE_CONTEXT_ON_CLAUSE {
-			panic("assertion failed")
+			b.internalError("assertion failed")
+			return common.ParserRuleContext{}
 		}
 		b.EndContext()
 		return common.PARSER_RULE_CONTEXT_EXPRESSION
@@ -3829,7 +3844,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForKeywords(currentCtx common.P
 		}
 		return common.PARSER_RULE_CONTEXT_LT
 	default:
-		panic("getNextRuleForKeywords found: " + currentCtx.String())
+		b.internalError("getNextRuleForKeywords found: " + currentCtx.String())
+		return common.ParserRuleContext{}
 	}
 }
 
@@ -4137,7 +4153,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForParamType() common.ParserRul
 	case common.PARSER_RULE_CONTEXT_REST_PARAM:
 		return common.PARSER_RULE_CONTEXT_ELLIPSIS
 	default:
-		panic("getNextRuleForParamType found: " + parentCtx.String())
+		b.internalError("getNextRuleForParamType found: " + parentCtx.String())
+		return common.ParserRuleContext{}
 	}
 }
 
@@ -4204,7 +4221,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForComma() common.ParserRuleCon
 		b.EndContext()
 		return common.PARSER_RULE_CONTEXT_NAMED_ARG_MATCH_PATTERN_RHS
 	default:
-		panic("getNextRuleForComma found: " + parentCtx.String())
+		b.internalError("getNextRuleForComma found: " + parentCtx.String())
+		return common.ParserRuleContext{}
 	}
 }
 
@@ -4271,7 +4289,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForTypeDescriptor() common.Pars
 		case common.PARSER_RULE_CONTEXT_NAMED_WORKER_DECL:
 			return common.PARSER_RULE_CONTEXT_BLOCK_STMT
 		default:
-			panic("next rule of type-desc-in-return-type found: " + parentCtx.String())
+			b.internalError("next rule of type-desc-in-return-type found: " + parentCtx.String())
+			return common.ParserRuleContext{}
 		}
 	case common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_EXPRESSION:
 		b.EndContext()
@@ -4370,7 +4389,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForEqualOp() common.ParserRuleC
 		if b.isStatement(parentCtx) {
 			return common.PARSER_RULE_CONTEXT_EXPRESSION
 		}
-		panic("getNextRuleForEqualOp found: " + parentCtx.String())
+		b.internalError("getNextRuleForEqualOp found: " + parentCtx.String())
+		return common.ParserRuleContext{}
 	}
 }
 
@@ -4491,7 +4511,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForCloseBrace(nextLookahead int
 		b.EndContext()
 		return common.PARSER_RULE_CONTEXT_REGULAR_COMPOUND_STMT_RHS
 	default:
-		panic("getNextRuleForCloseBrace found: " + parentCtx.String())
+		b.internalError("getNextRuleForCloseBrace found: " + parentCtx.String())
+		return common.ParserRuleContext{}
 	}
 }
 
@@ -4633,7 +4654,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForVarName() common.ParserRuleC
 		if b.isStatement(parentCtx) {
 			return common.PARSER_RULE_CONTEXT_VAR_DECL_STMT_RHS
 		}
-		panic("getNextRuleForVarName found: " + parentCtx.String())
+		b.internalError("getNextRuleForVarName found: " + parentCtx.String())
+		return common.ParserRuleContext{}
 	}
 }
 
@@ -4718,7 +4740,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForSemicolon(nextLookahead int)
 	} else if parentCtx == common.PARSER_RULE_CONTEXT_COMP_UNIT {
 		return common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE
 	} else {
-		panic("getNextRuleForSemicolon found: " + parentCtx.String())
+		b.internalError("getNextRuleForSemicolon found: " + parentCtx.String())
+		return common.ParserRuleContext{}
 	}
 }
 
@@ -5031,7 +5054,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForIdentifier() common.ParserRu
 		if b.isInTypeDescContext() {
 			return common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS
 		}
-		panic("getNextRuleForIdentifier found: " + parentCtx.String())
+		b.internalError("getNextRuleForIdentifier found: " + parentCtx.String())
+		return common.ParserRuleContext{}
 	}
 }
 
@@ -5099,7 +5123,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForTypeReference() common.Parse
 		if b.isInTypeDescContext() {
 			return common.PARSER_RULE_CONTEXT_TYPE_DESC_RHS
 		}
-		panic("getNextRuleForTypeReference found: " + parentCtx.String())
+		b.internalError("getNextRuleForTypeReference found: " + parentCtx.String())
+		return common.ParserRuleContext{}
 	}
 }
 
@@ -5140,7 +5165,8 @@ func (b *ballerinaParserErrorHandler) getNextRuleForFuncTypeFuncKeywordRhs() com
 		b.SwitchContext(common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER)
 	}
 	if !b.isInTypeDescContext() {
-		panic("assertion failed")
+		b.internalError("assertion failed")
+		return common.ParserRuleContext{}
 	}
 	b.StartContext(common.PARSER_RULE_CONTEXT_FUNC_TYPE_DESC)
 	return common.PARSER_RULE_CONTEXT_FUNC_TYPE_FUNC_KEYWORD_RHS_START

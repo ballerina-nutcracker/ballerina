@@ -437,5 +437,6 @@ func (p *xmlParser) parseXMLCharacterSet() st.STNode {
 	case st.INTERPOLATION_START_TOKEN:
 		return p.parseInterpolation()
 	}
-	panic("xmlParser.parseXMLCharacterSet: unexpected token")
+	p.internalError("xmlParser.parseXMLCharacterSet: unexpected token")
+	return st.CreateEmptyNode()
 }

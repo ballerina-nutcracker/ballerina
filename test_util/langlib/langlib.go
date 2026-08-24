@@ -33,6 +33,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/nodebuilder"
 	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
@@ -226,13 +227,18 @@ func compileBundledLib(cx *context.CompilerContext, cache map[string]model.Expor
 	}
 
 	cx.DiagnosticEnv().RegisterFile(lib.balPath, text.NewStringTextDocument(string(content)))
+	parseDiagnosticBaseline := len(cx.Diagnostics())
 	syntaxTree, err := parser.GetSyntaxTree(cx, lib.balPath, string(content))
 	if err != nil {
-		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: parse %s: %w", lib.implicitID, err)
+		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: parse %s: %w", lib.balPath, err)
 	}
+	if len(cx.Diagnostics()) > parseDiagnosticBaseline {
+		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: parse %s produced diagnostics", lib.balPath)
+	}
+	assemblyDiagnosticBaseline := len(cx.Diagnostics())
 	cu := nodebuilder.GetCompilationUnit(cx, syntaxTree)
 	if cu == nil {
-		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: AST generation failed for %s", lib.implicitID)
+		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: AST generation failed for %s", lib.balPath)
 	}
 	nameComps := make([]model.Name, len(lib.nameComps))
 	for i, c := range lib.nameComps {
@@ -252,8 +258,8 @@ func compileBundledLib(cx *context.CompilerContext, cache map[string]model.Expor
 		lib.org,
 	)
 	pkg := nodebuilder.ToPackageFromCompilationUnits(cx, compilationUnits)
-	if cx.HasErrors() {
-		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: package assembly failed for %s", lib.implicitID)
+	if hasErrorDiagnostics(cx.Diagnostics()[assemblyDiagnosticBaseline:]) {
+		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: package assembly failed for %s", lib.balPath)
 	}
 	pkg.PackageID = pkgID
 	pkg.Scope = pkgScope
@@ -261,4 +267,14 @@ func compileBundledLib(cx *context.CompilerContext, cache map[string]model.Expor
 	semantics.ResolvePublicNodeTypes(cx, pkg, imported)
 	cache[lib.balPath] = exported
 	return exported, nil
+}
+
+func hasErrorDiagnostics(diags []diagnostics.Diagnostic) bool {
+	for _, diag := range diags {
+		switch diag.DiagnosticInfo().Severity() {
+		case diagnostics.Error, diagnostics.Fatal:
+			return true
+		}
+	}
+	return false
 }
