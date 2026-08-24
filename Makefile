@@ -16,8 +16,9 @@
 SHELL := /bin/bash
 PYTHON ?= python3
 LIST_WORKSPACE_MODULES = go list -m -f '{{if .Main}}{{.Dir}}{{end}}' all
-WORKSPACE_MODULE_DIRS := $(shell $(LIST_WORKSPACE_MODULES))
-WORKSPACE_MODULES := . $(patsubst $(CURDIR)/%,%,$(filter-out $(CURDIR),$(WORKSPACE_MODULE_DIRS)))
+WORKSPACE_ROOT := $(subst \,/,$(CURDIR))
+WORKSPACE_MODULE_DIRS := $(subst \,/,$(shell $(LIST_WORKSPACE_MODULES)))
+WORKSPACE_MODULES := . $(patsubst $(WORKSPACE_ROOT)/%,%,$(filter-out $(WORKSPACE_ROOT),$(WORKSPACE_MODULE_DIRS)))
 BUILD_MODULES := $(filter-out compiler-tools/%,$(WORKSPACE_MODULES))
 LINT_MODULES := $(filter-out compiler-tools/%,$(WORKSPACE_MODULES))
 BUILD_MODULE_TARGETS := $(addprefix build-module/,$(BUILD_MODULES))
