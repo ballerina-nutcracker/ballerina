@@ -326,6 +326,6 @@ func prettyPrintFallback(p *ast.PrettyPrinter, node ast.BLangNode) {
 		p.PrintString("service-init")
 		p.EndNode()
 	default:
-		panic(fmt.Sprintf("desugar pretty printer: unsupported node %T", n))
+		panic(fmt.Sprintf("desugar pretty printer: unsupported node %T", n)) //nolint:forbidigo // Fail when the test printer misses a desugar-owned node.
 	}
 }

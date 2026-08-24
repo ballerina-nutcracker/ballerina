@@ -164,7 +164,8 @@ func walkExpression(cx *functionContext, node ast.BLangActionOrExpression) desug
 	case *ast.BLangXMLTemplateExpr:
 		return walkXMLTemplateExpr(cx, expr)
 	default:
-		panic(fmt.Sprintf("unexpected expression type: %T", node))
+		cx.internalError(fmt.Sprintf("unexpected expression type: %T", node), node.GetPosition())
+		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: node}
 	}
 }
 
@@ -615,12 +616,12 @@ func createLangMapGetInvocation(cx *functionContext, mapExpr ast.BLangExpression
 	const pkgName = "lang.map"
 	space, ok := cx.getImportedSymbolSpace(pkgName)
 	if !ok {
-		cx.internalError(pkgName + " symbol space not found")
+		cx.internalError(pkgName+" symbol space not found", pos)
 		return nil
 	}
 	symbolRef, ok := space.GetSymbol("get")
 	if !ok {
-		cx.internalError(pkgName + ":get symbol not found")
+		cx.internalError(pkgName+":get symbol not found", pos)
 		return nil
 	}
 	cx.addImplicitImport(pkgName, ast.BLangImportPackage{
@@ -807,7 +808,7 @@ func escapeXMLTemplateInsertion(cx *functionContext, insert ast.BLangExpression,
 	case ast.XMLTemplateInsertionKindContent:
 		return createLangInternalInvocation(cx, "escapeXMLContent", semtypes.String, []ast.BLangExpression{insert}, insert.GetPosition())
 	default:
-		cx.internalError("unexpected xml template insert kind")
+		cx.internalError("unexpected xml template insert kind", insert.GetPosition())
 		return insert
 	}
 }
@@ -823,12 +824,12 @@ func xmlTemplateNamespaceDecls(cx *functionContext, refs []model.SymbolRef) []xm
 		symbol := cx.getSymbol(ref)
 		key, err := model.XMLNamespaceDeclKey(symbol)
 		if err != nil {
-			cx.internalError(err.Error())
+			cx.internalError(err.Error(), symbol.Location())
 			continue
 		}
 		uri, err := model.XMLNamespaceURI(symbol)
 		if err != nil {
-			cx.internalError(err.Error())
+			cx.internalError(err.Error(), symbol.Location())
 			continue
 		}
 		decls = append(decls, xmlNamespaceDecl{key: key, uri: uri})
@@ -908,7 +909,8 @@ func walkCallArgs(cx *functionContext, args []ast.BLangExpression, pos diagnosti
 	if shouldHoistArgs(args) {
 		sig, ok := fnSig()
 		if !ok {
-			cx.internalError("expected function signature to default expressions")
+			cx.internalError("expected function signature to default expressions", pos)
+			return nil, args
 		}
 		return hoistAndAddDefaultInvocations(cx, args, sig, pos)
 	}
@@ -975,7 +977,7 @@ func hoistAndAddDefaultInvocations(cx *functionContext, args []ast.BLangExpressi
 	return hoistInit, hoistedArgs
 }
 
-func invocationSymbol(expr invocable) (model.SymbolRef, bool) {
+func invocationSymbol(cx *functionContext, expr invocable) (model.SymbolRef, bool) {
 	switch e := expr.(type) {
 	case *ast.BLangInvocation:
 		if e.RawSymbol == nil {
@@ -988,7 +990,8 @@ func invocationSymbol(expr invocable) (model.SymbolRef, bool) {
 		}
 		return e.ResolvedSymbol(), true
 	default:
-		panic("unexpected")
+		cx.internalError(fmt.Sprintf("unexpected invocation type: %T", expr), expr.GetPosition())
+		return model.SymbolRef{}, false
 	}
 }
 
@@ -1179,7 +1182,7 @@ func walkTrapExpr(cx *functionContext, expr *ast.BLangTrapExpr) desugaredNode[as
 	if len(result.initStmts) > 0 {
 		// I don't think this can ever happen but if it does we need to think about how to add these statements in to the
 		// trap region in BIR gen
-		cx.internalError("Init statements will be hoisted outside of trap region")
+		cx.internalError("Init statements will be hoisted outside of trap region", expr.GetPosition())
 	}
 	expr.Expr = result.replacementNode
 	return desugaredNode[ast.BLangActionOrExpression]{initStmts: nil, replacementNode: expr}

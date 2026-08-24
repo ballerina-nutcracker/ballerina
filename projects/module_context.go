@@ -370,6 +370,9 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 	compilerCtx.StartStage(context.StageDesugaring)
 	moduleCtx.bLangPkg = desugar.DesugarPackage(moduleCtx.compilerCtx, moduleCtx.bLangPkg, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
+	if compilerCtx.HasDiagnostics() {
+		return
+	}
 
 	moduleCtx.compilationState = moduleCompilationStateCompiled
 }

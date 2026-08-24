@@ -59,7 +59,8 @@ func walkStatement(cx *functionContext, node ast.StatementNode) desugaredNode[as
 	case *ast.BLangXMLNS:
 		return desugaredNode[ast.StatementNode]{replacementNode: stmt}
 	default:
-		panic("unexpected statement type")
+		cx.internalError("unexpected statement type", node.GetPosition())
+		return desugaredNode[ast.StatementNode]{replacementNode: node}
 	}
 }
 
@@ -483,17 +484,17 @@ func desugarForEachOnList(cx *functionContext, collection ast.BLangActionOrExpre
 
 func createLengthInvocation(cx *functionContext, collection ast.BLangExpression) *ast.BLangInvocation {
 	pkgName := "lang.array"
+	basePos := collection.GetPosition()
 	space, ok := cx.getImportedSymbolSpace(pkgName)
 	if !ok {
-		cx.internalError(pkgName + " symbol space not found")
+		cx.internalError(pkgName+" symbol space not found", basePos)
 		return nil
 	}
 	symbolRef, ok := space.GetSymbol("length")
 	if !ok {
-		cx.internalError(pkgName + ":length symbol not found")
+		cx.internalError(pkgName+":length symbol not found", basePos)
 		return nil
 	}
-	basePos := collection.GetPosition()
 
 	orgIdent := newIdentifier("ballerina")
 	pkgLangIdent := ast.BLangIdentifier{Value: "lang"}
@@ -674,12 +675,12 @@ func createKeysInvocation(cx *functionContext, collection ast.BLangExpression) *
 	pkgName := "lang.map"
 	space, ok := cx.getImportedSymbolSpace(pkgName)
 	if !ok {
-		cx.internalError(pkgName + " symbol space not found")
+		cx.internalError(pkgName+" symbol space not found", collection.GetPosition())
 		return nil
 	}
 	symbolRef, ok := space.GetSymbol("keys")
 	if !ok {
-		cx.internalError(pkgName + ":keys symbol not found")
+		cx.internalError(pkgName+":keys symbol not found", collection.GetPosition())
 		return nil
 	}
 	fnSymbol := cx.getSymbol(symbolRef).(model.FunctionSymbol)
@@ -837,12 +838,12 @@ func createXMLIteratorInvocation(cx *functionContext, receiver ast.BLangExpressi
 	pkgName := "lang.xml"
 	space, ok := cx.pkgCtx.getImportedSymbolSpace(pkgName)
 	if !ok {
-		cx.pkgCtx.internalError(pkgName + " symbol space not found")
+		cx.pkgCtx.internalError(pkgName+" symbol space not found", receiver.GetPosition())
 		return nil
 	}
 	iteratorRef, ok := space.GetSymbol("iterator")
 	if !ok {
-		cx.pkgCtx.internalError(pkgName + ":iterator symbol not found")
+		cx.pkgCtx.internalError(pkgName+":iterator symbol not found", receiver.GetPosition())
 		return nil
 	}
 	cx.pkgCtx.addImplicitImport(pkgName, ast.BLangImportPackage{

@@ -804,6 +804,7 @@ func compileSingleFileModule(
 	semantics.AnalyzeCFG(cx, pkg, cfg)
 	assertNoDiagnostics(t, cx, "AnalyzeCFG")
 	pkg = desugar.DesugarPackage(cx, pkg, importedSymbols)
+	assertNoDiagnostics(t, cx, "DesugarPackage")
 	return exported, birgen.GenBir(cx, pkg)
 }
 
