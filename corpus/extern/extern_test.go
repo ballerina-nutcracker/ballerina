@@ -788,7 +788,8 @@ func compileSingleFileModule(
 		defaultOrg,
 	)
 	assertNoDiagnostics(t, cx, "ResolveSymbols")
-	pkg := nodebuilder.ToPackageFromCompilationUnits(compilationUnits)
+	pkg := nodebuilder.ToPackageFromCompilationUnits(cx, compilationUnits)
+	assertNoDiagnostics(t, cx, "ToPackageFromCompilationUnits")
 	pkg.PackageID = pkgID
 	pkg.Scope = pkgScope
 	pkg.Imports = nil
