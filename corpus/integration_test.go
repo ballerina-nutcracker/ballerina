@@ -701,6 +701,9 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 	}
 
 	pkg = desugar.DesugarPackage(cx, pkg, importedSymbols)
+	if cx.HasDiagnostics() {
+		return nil, fmt.Errorf("desugaring failed")
+	}
 
 	return birgen.GenBir(cx, pkg), nil
 }

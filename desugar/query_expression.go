@@ -218,7 +218,7 @@ func createQueryCollectionSource(
 		keysRef = keysLocalRef
 		lengthSource = keysRef
 	default:
-		cx.internalError("query collection type should have been validated during type resolution")
+		cx.internalError("query collection type should have been validated during type resolution", collectionExpr.GetPosition())
 		return nil, nil, nil, false
 	}
 
@@ -303,7 +303,7 @@ func walkQueryExprWithRows(
 		case *ast.BLangOrderByClause:
 			ok = applyQueryOrderByClauseToRows(cx, rowsRef, bindings, clause, basePos, &initStmts)
 		default:
-			cx.internalError("query clause shape should have been validated during type resolution")
+			cx.internalError("query clause shape should have been validated during type resolution", clause.GetPosition())
 			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 		}
 		if !ok {
@@ -411,7 +411,7 @@ func queryRowBindingFromVarDef(
 		cx.internalError(fmt.Sprintf(
 			"query %s clause binding should have been validated during type resolution",
 			clauseName,
-		))
+		), varDef.GetPosition())
 		return queryRowBinding{}, false
 	}
 	valueTy := cx.symbolType(varDef.Var.Symbol())
@@ -542,7 +542,7 @@ func applyQueryLetClauseToRows(
 	for i := range clause.LetVarDeclarations {
 		varDef := &clause.LetVarDeclarations[i]
 		if varDef.Var == nil || varDef.Var.Expr == nil {
-			cx.internalError("query let clause bindings should have been validated during type resolution")
+			cx.internalError("query let clause bindings should have been validated during type resolution", varDef.GetPosition())
 			return nil, false
 		}
 		binding, ok := queryRowBindingFromVarDef(cx, varDef, "let")
@@ -696,7 +696,7 @@ func applyQueryGroupByClauseToRows(
 			}
 			keyExprs = append(keyExprs, keyExpr)
 		default:
-			cx.internalError("query group by clause keys should have been validated during type resolution")
+			cx.internalError("query group by clause keys should have been validated during type resolution", clause.GetPosition())
 			return nil, nil, false
 		}
 	}
@@ -1708,7 +1708,7 @@ func appendQuerySelectResultStmts(
 
 		if onConflictClause != nil {
 			if seenKeysRef == nil {
-				cx.internalError("on conflict query lowering requires seen-key map")
+				cx.internalError("on conflict query lowering requires seen-key map", onConflictClause.GetPosition())
 				return nil, false
 			}
 			seenLookup := &ast.BLangIndexBasedAccess{
@@ -1818,7 +1818,7 @@ func appendQueryIntermediateClauseStmts(
 			for i := range clause.LetVarDeclarations {
 				varDef := &clause.LetVarDeclarations[i]
 				if varDef.Var == nil || varDef.Var.Expr == nil {
-					cx.internalError("query let clause bindings should have been validated during type resolution")
+					cx.internalError("query let clause bindings should have been validated during type resolution", varDef.GetPosition())
 					return nil, false
 				}
 				binding, ok := queryRowBindingFromVarDef(cx, varDef, "let")
@@ -1914,10 +1914,10 @@ func appendQueryIntermediateClauseStmts(
 
 			bodyStmts = append(bodyStmts, createIncrementStmt(limitCounterRef))
 		case *ast.BLangOrderByClause:
-			cx.internalError("query order by clauses should have been split before generic intermediate lowering")
+			cx.internalError("query order by clauses should have been split before generic intermediate lowering", clause.GetPosition())
 			return nil, false
 		default:
-			cx.internalError("query clause shape should have been validated during type resolution")
+			cx.internalError("query clause shape should have been validated during type resolution", clause.GetPosition())
 			return nil, false
 		}
 	}
@@ -1994,12 +1994,12 @@ func createQuerySortInvocation(
 	pkgName := langInternalPackageName
 	space, ok := cx.getImportedSymbolSpace(pkgName)
 	if !ok {
-		cx.internalError(pkgName + " symbol space not found")
+		cx.internalError(pkgName+" symbol space not found", keysExpr.GetPosition())
 		return nil
 	}
 	symbolRef, ok := space.GetSymbol("querySort")
 	if !ok {
-		cx.internalError(pkgName + ":querySort symbol not found")
+		cx.internalError(pkgName+":querySort symbol not found", keysExpr.GetPosition())
 		return nil
 	}
 	cx.addImplicitImport(pkgName, ast.BLangImportPackage{
@@ -2064,12 +2064,12 @@ func createPushInvocation(cx *functionContext, listExpr ast.BLangExpression, val
 	pkgName := "lang.array"
 	space, ok := cx.getImportedSymbolSpace(pkgName)
 	if !ok {
-		cx.internalError(pkgName + " symbol space not found")
+		cx.internalError(pkgName+" symbol space not found", listExpr.GetPosition())
 		return nil
 	}
 	symbolRef, ok := space.GetSymbol("push")
 	if !ok {
-		cx.internalError(pkgName + ":push symbol not found")
+		cx.internalError(pkgName+":push symbol not found", listExpr.GetPosition())
 		return nil
 	}
 	cx.addImplicitImport(pkgName, ast.BLangImportPackage{
