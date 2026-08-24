@@ -22,6 +22,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/st"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
@@ -38,20 +39,29 @@ func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *st.Syn
 }
 
 func ToPackageFromCompilationUnits(compilationUnits []*ast.BLangCompilationUnit) *ast.BLangPackage {
+	return toPackageFromCompilationUnits(nil, compilationUnits)
+}
+
+func ToPackageFromCompilationUnitsWithContext(cx *context.CompilerContext, compilationUnits []*ast.BLangCompilationUnit) *ast.BLangPackage {
+	return toPackageFromCompilationUnits(cx, compilationUnits)
+}
+
+func toPackageFromCompilationUnits(cx *context.CompilerContext, compilationUnits []*ast.BLangCompilationUnit) *ast.BLangPackage {
 	pkg := ast.NewBLangPackage()
 	for _, compilationUnit := range compilationUnits {
 		packageID := compilationUnit.GetPackageID()
 		if pkg.PackageID == nil {
 			pkg.PackageID = packageID
 		} else if packageID != nil && pkg.PackageID != packageID {
-			panic("compilation units have different package IDs")
+			reportPackageAssemblyError(cx, "compilation units have different package IDs", compilationUnit.GetPosition())
+			return pkg
 		}
-		addCompilationUnitNodesToPackage(pkg, compilationUnit)
+		addCompilationUnitNodesToPackage(cx, pkg, compilationUnit)
 	}
 	return pkg
 }
 
-func addCompilationUnitNodesToPackage(pkg *ast.BLangPackage, compilationUnit *ast.BLangCompilationUnit) {
+func addCompilationUnitNodesToPackage(cx *context.CompilerContext, pkg *ast.BLangPackage, compilationUnit *ast.BLangCompilationUnit) {
 	for _, node := range compilationUnit.GetTopLevelNodes() {
 		switch node := node.(type) {
 		case *ast.BLangImportPackage:
@@ -79,7 +89,17 @@ func addCompilationUnitNodesToPackage(pkg *ast.BLangPackage, compilationUnit *as
 		case *ast.BLangClassDefinition:
 			pkg.ClassDefinitions = append(pkg.ClassDefinitions, node)
 		default:
-			panic(fmt.Sprintf("unexpected top-level node type: %T", node))
+			pos := compilationUnit.GetPosition()
+			if node != nil {
+				pos = node.GetPosition()
+			}
+			reportPackageAssemblyError(cx, fmt.Sprintf("unexpected top-level node type: %T", node), pos)
 		}
+	}
+}
+
+func reportPackageAssemblyError(cx *context.CompilerContext, message string, pos diagnostics.Location) {
+	if cx != nil {
+		cx.InternalError(message, pos)
 	}
 }

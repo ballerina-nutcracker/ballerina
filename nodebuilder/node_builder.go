@@ -52,6 +52,21 @@ func (n *nodeBuilder) de() *diagnostics.DiagnosticEnv {
 	return n.cx.DiagnosticEnv()
 }
 
+func (n *nodeBuilder) position(node st.Node) diagnostics.Location {
+	if node == nil {
+		return diagnostics.NewBuiltinLocation()
+	}
+	return n.getPosition(node)
+}
+
+func (n *nodeBuilder) internalError(message string, node st.Node) {
+	n.cx.InternalError(message, n.position(node))
+}
+
+func (n *nodeBuilder) unimplemented(message string, node st.Node) {
+	n.cx.Unimplemented(message, n.position(node))
+}
+
 func newNodeBuilder(cx *context.CompilerContext) *nodeBuilder {
 	return newNodeBuilderWithMode(cx, nodeBuilderModeStrict)
 }
@@ -526,7 +541,8 @@ func (n *nodeBuilder) transformSyntaxNode(node st.Node) ast.BLangNode {
 	case st.Token:
 		return n.transformToken(t)
 	default:
-		panic("transformSyntaxNode: unsupported node type")
+		n.internalError(fmt.Sprintf("transformSyntaxNode: unsupported node type %T", node), node)
+		return nil
 	}
 }
 
@@ -792,12 +808,12 @@ func normalizedIdentifierValue(value string) (string, bool) {
 }
 
 // createIdentifierFromToken creates an identifier from a token, handling missing tokens and validation
-func createIdentifierFromToken(pos diagnostics.Location, token st.Token) ast.BLangIdentifier {
-	return createIdentifierFromTokenInternal(pos, token, false)
+func (n *nodeBuilder) createIdentifierFromToken(pos diagnostics.Location, token st.Token) ast.BLangIdentifier {
+	return n.createIdentifierFromTokenInternal(pos, token, false)
 }
 
 // createIdentifierFromTokenInternal creates an identifier from a token with XML handling option
-func createIdentifierFromTokenInternal(pos diagnostics.Location, token st.Token, isXML bool) ast.BLangIdentifier {
+func (n *nodeBuilder) createIdentifierFromTokenInternal(pos diagnostics.Location, token st.Token, isXML bool) ast.BLangIdentifier {
 	if token == nil {
 		// Return empty identifier for nil token
 		return createIdentifier(pos, nil, nil)
@@ -808,9 +824,11 @@ func createIdentifierFromTokenInternal(pos diagnostics.Location, token st.Token,
 
 	// Handle missing tokens or empty identifier literal prefix
 	if token.IsMissing() || identifierName == IDENTIFIER_LITERAL_PREFIX {
-		panic("unimplemented")
+		n.cx.InternalError("missing or invalid identifier token", pos)
+		return createIdentifier(pos, nil, nil)
 	} else if !isXML && (identifierName == "_" || identifierName == IDENTIFIER_LITERAL_PREFIX+"_") {
-		panic("unimplemented")
+		n.cx.InternalError("invalid identifier token", pos)
+		return createIdentifier(pos, nil, nil)
 	}
 
 	return createIdentifier(pos, &identifierName, &identifierName)
@@ -836,10 +854,10 @@ func (n *nodeBuilder) createTypeNode(typeNode st.Node) ast.TypeDescriptor {
 	if err == nil {
 		return result
 	}
-	if n.mode == nodeBuilderModeRecover {
-		return n.badTypeNode(typeNode)
+	if n.mode != nodeBuilderModeRecover {
+		n.internalError(err.Error(), typeNode)
 	}
-	panic(err)
+	return n.badTypeNode(typeNode)
 }
 
 func (n *nodeBuilder) createTypeNodeInner(typeNode st.Node) (ast.TypeDescriptor, error) {
@@ -916,7 +934,7 @@ func (n *nodeBuilder) createBuiltInTypeNode(typeNode st.Node) ast.TypeDescriptor
 		if simpleNameRef.Kind() == st.VAR_TYPE_DESC {
 			return nil
 		} else if simpleNameRef.Name().IsMissing() {
-			name := getNextMissingNodeName(n.PackageID)
+			name := n.getNextMissingNodeName(n.PackageID, simpleNameRef.Name())
 			identifier := createIdentifier(n.getPosition(simpleNameRef.Name()), &name, &name)
 			pkgAlias := ast.BLangIdentifier{}
 			return createUserDefinedType(n.getPosition(typeNode), pkgAlias, identifier)
@@ -927,11 +945,12 @@ func (n *nodeBuilder) createBuiltInTypeNode(typeNode st.Node) ast.TypeDescriptor
 		if token, ok := typeNode.(st.Token); ok {
 			typeText = token.Text()
 		} else {
-			panic("createBuiltInTypeNode: unexpected node type")
+			n.internalError("createBuiltInTypeNode: unexpected node type", typeNode)
+			return nil
 		}
 	}
 
-	typeKind := stringToTypeKind(typeText)
+	typeKind := n.stringToTypeKind(typeText, typeNode)
 
 	kind := typeNode.Kind()
 	switch kind {
@@ -968,18 +987,18 @@ func setIdentifierValue(identifier ast.IdentifierNode, value string) {
 
 func (n *nodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, token st.Token) ast.IdentifierNode {
 	if token == nil {
-		if n.mode == nodeBuilderModeRecover {
-			return n.badIdentifier(token)
+		if n.mode != nodeBuilderModeRecover {
+			n.cx.InternalError("missing identifier token", pos)
 		}
-		panic("missing identifier token")
+		return n.badIdentifier(token)
 	}
 	if token.IsMissing() || isUnsupportedIdentifierToken(token) {
-		if n.mode == nodeBuilderModeRecover {
-			return n.badIdentifier(token)
+		if n.mode != nodeBuilderModeRecover {
+			n.cx.InternalError("invalid identifier", pos)
 		}
-		panic("invalid identifier")
+		return n.badIdentifier(token)
 	}
-	identifier := createIdentifierFromToken(pos, token)
+	identifier := n.createIdentifierFromToken(pos, token)
 	return &identifier
 }
 
@@ -1023,7 +1042,8 @@ func (n *nodeBuilder) createBLangNameReference(node st.Node) [2]ast.IdentifierNo
 func (n *nodeBuilder) isFunctionCallAsync(functionCallBLangExpression *st.FunctionCallExpressionNode) bool {
 	parent := functionCallBLangExpression.Parent()
 	if parent == nil {
-		panic("isFunctionCallAsync: parent is nil")
+		n.internalError("isFunctionCallAsync: parent is nil", functionCallBLangExpression)
+		return false
 	}
 	return parent.Kind() == st.START_ACTION
 }
@@ -1032,10 +1052,9 @@ func (n *nodeBuilder) isFunctionCallAsync(functionCallBLangExpression *st.Functi
 func (n *nodeBuilder) createBLangInvocation(nameNode st.Node, arguments st.NodeList[st.FunctionArgumentNode], position diagnostics.Location, isAsync bool) *ast.BLangInvocation {
 	var bLInvocation ast.BLangInvocation
 	if isAsync {
-		panic("unimplemented")
-	} else {
-		bLInvocation = ast.BLangInvocation{}
+		n.unimplemented("asynchronous function calls are not implemented", nameNode)
 	}
+	bLInvocation = ast.BLangInvocation{}
 
 	nameReference := n.createBLangNameReference(nameNode)
 	bLInvocation.PkgAlias = nameReference[0]
@@ -1115,22 +1134,23 @@ func (n *nodeBuilder) getIntegerLiteral(literal st.Node, textValue string) any {
 		if textValue[0] == '0' && len(textValue) > 1 {
 			n.cx.SyntaxError("invalid integer literal: leading zero", n.getPosition(literal))
 		}
-		return parseLong(textValue, textValue, 10)
+		return n.parseLong(literal, textValue, textValue, 10)
 	case st.HEX_INTEGER_LITERAL_TOKEN:
 		processedNodeValue := strings.ToLower(textValue)
 		processedNodeValue = strings.ReplaceAll(processedNodeValue, "0x", "")
-		return parseLong(textValue, processedNodeValue, 16)
+		return n.parseLong(literal, textValue, processedNodeValue, 16)
 	}
 	return nil
 }
 
 // parseLong parses a long integer value
-func parseLong(originalNodeValue, processedNodeValue string, radix int) any {
+func (n *nodeBuilder) parseLong(literal st.Node, originalNodeValue, processedNodeValue string, radix int) any {
 	val, err := strconv.ParseInt(processedNodeValue, radix, 64)
 	if err != nil {
 		fVal, fErr := strconv.ParseFloat(processedNodeValue, 64)
 		if fErr != nil {
-			panic("Unimplemented")
+			n.internalError("failed to parse numeric literal", literal)
+			return originalNodeValue
 		}
 		if math.IsInf(fVal, 0) {
 			return originalNodeValue
@@ -1326,11 +1346,10 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLa
 		}
 		node, err := n.transformImportTopLevel(importDecl)
 		if err != nil {
-			if n.mode == nodeBuilderModeRecover {
-				node = n.badTopLevel(importDecl)
-			} else {
-				panic(err)
+			if n.mode != nodeBuilderModeRecover {
+				n.internalError(err.Error(), importDecl)
 			}
+			node = n.badTopLevel(importDecl)
 		}
 		compilationUnit.AddTopLevelNode(node)
 	}
@@ -1351,7 +1370,8 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLa
 		}
 		node, err := n.transformTopLevel(memberNode)
 		if err != nil {
-			panic(err)
+			n.internalError(err.Error(), memberNode)
+			node = n.badTopLevel(memberNode)
 		}
 		compilationUnit.AddTopLevelNode(node)
 	}
@@ -1428,11 +1448,11 @@ func (n *nodeBuilder) populateFuncSignature(data *ast.InvokableData, funcSignatu
 }
 
 func (n *nodeBuilder) transformFunctionDefinition(funcDefNode *st.FunctionDefinition) ast.BLangNode {
-	// Check for resource functions - panic for now
 	relativeResourcePath := funcDefNode.RelativeResourcePath()
 	hasResourcePath := relativeResourcePath.Size() > 0
 	if hasResourcePath {
-		panic("transformFunctionDefinition: resource functions not yet supported")
+		n.unimplemented("transformFunctionDefinition: resource functions not yet supported", funcDefNode)
+		return nil
 	}
 
 	// Create function node
@@ -1571,7 +1591,7 @@ func (n *nodeBuilder) transformListenerDeclaration(listenerDeclarationNode *st.L
 	pos := n.getPositionWithoutMetadata(listenerDeclarationNode)
 	nameToken := listenerDeclarationNode.VariableName()
 	namePos := n.getPosition(nameToken)
-	identifier := createIdentifierFromToken(namePos, nameToken)
+	identifier := n.createIdentifierFromToken(namePos, nameToken)
 
 	typeDesc := listenerDeclarationNode.TypeDescriptor()
 	isDeclaredWithVar := typeDesc == nil || typeDesc.IsMissing()
@@ -1592,7 +1612,7 @@ func (n *nodeBuilder) transformListenerDeclaration(listenerDeclarationNode *st.L
 
 	if metadata != nil && !metadata.IsMissing() {
 		if annotations := metadata.Annotations(); annotations.Size() > 0 {
-			panic("transformListenerDeclaration: annotations not yet supported")
+			n.unimplemented("transformListenerDeclaration: annotations not yet supported", annotations.Get(0))
 		}
 		bLSimpleVar.MarkdownDocumentationAttachment = n.createMarkdownDocumentationAttachment(getDocumentationString(metadata))
 	}
@@ -1610,7 +1630,7 @@ func isAllowedDistinctTypeDescriptor(kind st.SyntaxKind) bool {
 }
 
 func (n *nodeBuilder) transformTypeDefinition(typeDefinitionNode *st.TypeDefinitionNode) ast.BLangNode {
-	identifierNode := createIdentifierFromToken(n.getPosition(typeDefinitionNode.TypeName()), typeDefinitionNode.TypeName())
+	identifierNode := n.createIdentifierFromToken(n.getPosition(typeDefinitionNode.TypeName()), typeDefinitionNode.TypeName())
 	var flags model.Flag
 	if visibility := typeDefinitionNode.VisibilityQualifier(); visibility != nil && visibility.Kind() == st.PUBLIC_KEYWORD {
 		flags |= model.FlagPublic
@@ -1713,7 +1733,7 @@ func (n *nodeBuilder) populateServiceAttachPoint(service *ast.BLangService, node
 		}
 		switch tok.Kind() {
 		case st.IDENTIFIER_TOKEN:
-			ident := createIdentifierFromToken(n.getPosition(tok), tok)
+			ident := n.createIdentifierFromToken(n.getPosition(tok), tok)
 			service.AbsoluteResourcePath = append(service.AbsoluteResourcePath, ident)
 		case st.SLASH_TOKEN:
 			// Slash tokens between segments are ignored.
@@ -1762,7 +1782,7 @@ func (n *nodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) 
 			typeRef := member.(*st.TypeReferenceNode)
 			members.UnresolvedInclusions = append(members.UnresolvedInclusions, n.createTypeNode(typeRef.TypeName()).(*ast.BLangUserDefinedType))
 		default:
-			panic("collectClassDefnMembers: unsupported member kind")
+			n.internalError("collectClassDefnMembers: unsupported member kind", member)
 		}
 	}
 	return members
@@ -1798,7 +1818,8 @@ func (n *nodeBuilder) transformAssignmentStatement(assignmentStatementNode *st.A
 	lhsKind := assignmentStatementNode.VarRef().Kind()
 	switch lhsKind {
 	case st.LIST_BINDING_PATTERN, st.MAPPING_BINDING_PATTERN, st.ERROR_BINDING_PATTERN:
-		panic("unimplemented")
+		n.unimplemented("binding-pattern assignment is not implemented", assignmentStatementNode.VarRef())
+		return nil
 	default:
 		break
 	}
@@ -1868,17 +1889,20 @@ func (n *nodeBuilder) createBLangVarDef(location diagnostics.Location, typedBind
 		return bLVarDef
 
 	case st.MAPPING_BINDING_PATTERN:
-		panic("MAPPING_BINDING_PATTERN unimplemented")
+		n.unimplemented("MAPPING_BINDING_PATTERN unimplemented", bindingPattern)
 
 	case st.LIST_BINDING_PATTERN:
-		panic("LIST_BINDING_PATTERN unimplemented")
+		n.unimplemented("LIST_BINDING_PATTERN unimplemented", bindingPattern)
 
 	case st.ERROR_BINDING_PATTERN:
-		panic("ERROR_BINDING_PATTERN unimplemented")
+		n.unimplemented("ERROR_BINDING_PATTERN unimplemented", bindingPattern)
 
 	default:
-		panic("Syntax kind is not a valid binding pattern")
+		n.internalError("syntax kind is not a valid binding pattern", bindingPattern)
 	}
+	bLVarDef := &ast.BLangVariableDef{Var: variable}
+	bLVarDef.SetPosition(location)
+	return bLVarDef
 }
 
 func (n *nodeBuilder) transformBlockStatement(blockStatementNode *st.BlockStatementNode) ast.BLangNode {
@@ -1898,10 +1922,10 @@ func (n *nodeBuilder) transformStatement(statement st.StatementNode) ast.Stateme
 	if err == nil {
 		return result
 	}
-	if n.mode == nodeBuilderModeRecover {
-		return n.badStmt(statement)
+	if n.mode != nodeBuilderModeRecover {
+		n.internalError(err.Error(), statement)
 	}
-	panic(err)
+	return n.badStmt(statement)
 }
 
 func (n *nodeBuilder) transformStatementInner(statement st.StatementNode) (ast.StatementNode, error) {
@@ -1930,7 +1954,7 @@ func (n *nodeBuilder) generateAndAddBLangStatements(statementNodes st.NodeList[s
 		}
 		if currentStatement.Kind() == st.FORK_STATEMENT {
 			forkStmt := currentStatement.(*st.ForkStatementNode)
-			n.generateForkStatements(statements, forkStmt)
+			n.generateForkStatements(forkStmt)
 			continue
 		}
 		// If there is an `if` statement without an `else`, all the statements following that `if` statement
@@ -1966,7 +1990,8 @@ func (n *nodeBuilder) transformBreakStatement(breakStatementNode *st.BreakStatem
 }
 
 func (n *nodeBuilder) transformFailStatement(failStatementNode *st.FailStatementNode) ast.BLangNode {
-	panic("transformFailStatement unimplemented")
+	n.unimplemented("transformFailStatement unimplemented", failStatementNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformExpressionStatement(expressionStatement *st.ExpressionStatementNode) ast.BLangNode {
@@ -1994,10 +2019,10 @@ func (n *nodeBuilder) createExpression(expressionNode st.Node) ast.BLangExpressi
 	if err == nil {
 		return result
 	}
-	if n.mode == nodeBuilderModeRecover {
-		return n.badExprOrAction(expressionNode)
+	if n.mode != nodeBuilderModeRecover {
+		n.internalError(err.Error(), expressionNode)
 	}
-	panic(err)
+	return n.badExprOrAction(expressionNode)
 }
 
 func (n *nodeBuilder) createExpressionInner(expressionNode st.Node) (ast.BLangExpression, error) {
@@ -2018,10 +2043,10 @@ func (n *nodeBuilder) createActionOrExpression(actionOrExpression st.Node) ast.B
 	if err == nil {
 		return result
 	}
-	if n.mode == nodeBuilderModeRecover {
-		return n.badExprOrAction(actionOrExpression)
+	if n.mode != nodeBuilderModeRecover {
+		n.internalError(err.Error(), actionOrExpression)
 	}
-	panic(err)
+	return n.badExprOrAction(actionOrExpression)
 }
 
 func (n *nodeBuilder) createActionOrExpressionInner(actionOrExpression st.Node) (ast.BLangActionOrExpression, error) {
@@ -2096,7 +2121,8 @@ func (n *nodeBuilder) transformIfElseStatement(ifElseStatementNode *st.IfElseSta
 }
 
 func (n *nodeBuilder) transformElseBlock(elseBlockNode *st.ElseBlockNode) ast.BLangNode {
-	panic("transformElseBlock unimplemented")
+	n.unimplemented("transformElseBlock unimplemented", elseBlockNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformWhileStatement(whileStatementNode *st.WhileStatementNode) ast.BLangNode {
@@ -2133,7 +2159,8 @@ func (n *nodeBuilder) transformReturnStatement(returnStatementNode *st.ReturnSta
 }
 
 func (n *nodeBuilder) transformLocalTypeDefinitionStatement(localTypeDefinitionStatementNode *st.LocalTypeDefinitionStatementNode) ast.BLangNode {
-	panic("transformLocalTypeDefinitionStatement unimplemented")
+	n.unimplemented("transformLocalTypeDefinitionStatement unimplemented", localTypeDefinitionStatementNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformLockStatement(lockStatementNode *st.LockStatementNode) ast.BLangNode {
@@ -2149,7 +2176,8 @@ func (n *nodeBuilder) transformLockStatement(lockStatementNode *st.LockStatement
 }
 
 func (n *nodeBuilder) transformForkStatement(forkStatementNode *st.ForkStatementNode) ast.BLangNode {
-	panic("transformForkStatement unimplemented")
+	n.unimplemented("transformForkStatement unimplemented", forkStatementNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformForEachStatement(forEachStatementNode *st.ForEachStatementNode) ast.BLangNode {
@@ -2176,7 +2204,8 @@ func (n *nodeBuilder) transformForEachStatement(forEachStatementNode *st.ForEach
 
 func (n *nodeBuilder) transformBinaryExpression(binaryBLangExpression *st.BinaryExpressionNode) ast.BLangNode {
 	if binaryBLangExpression.Operator().Kind() == st.ELVIS_TOKEN {
-		panic("transformBinaryExpression: elvis operator not supported")
+		n.unimplemented("transformBinaryExpression: elvis operator not supported", binaryBLangExpression.Operator())
+		return nil
 	}
 
 	bLBinaryExpr := ast.BLangBinaryExpr{}
@@ -2215,7 +2244,8 @@ func (n *nodeBuilder) transformCheckExpression(checkBLangExpression *st.CheckExp
 func (n *nodeBuilder) transformFieldAccessExpression(fieldAccessBLangExpression *st.FieldAccessExpressionNode) ast.BLangNode {
 	fieldName := fieldAccessBLangExpression.FieldName()
 	if fieldName.Kind() == st.QUALIFIED_NAME_REFERENCE {
-		panic("transformFieldAccessExpression: QUALIFIED_NAME_REFERENCE unsupported")
+		n.unimplemented("transformFieldAccessExpression: QUALIFIED_NAME_REFERENCE unsupported", fieldName)
+		return nil
 	}
 
 	bLFieldBasedAccess := &ast.BLangFieldBaseAccess{}
@@ -2259,7 +2289,8 @@ func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorBL
 		field := fields.Get(i)
 		switch field.Kind() {
 		case st.SPREAD_FIELD:
-			panic("mapping constructor spread field not implemented")
+			n.unimplemented("mapping constructor spread field not implemented", field)
+			continue
 		case st.COMPUTED_NAME_FIELD:
 			computedNameField := field.(*st.ComputedNameFieldNode)
 			keyExpr := n.createExpression(computedNameField.FieldNameExpr())
@@ -2277,7 +2308,8 @@ func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorBL
 		case st.SPECIFIC_FIELD:
 			specificField := field.(*st.SpecificFieldNode)
 			if specificField.ValueExpr() == nil {
-				panic("mapping constructor var-name field not implemented")
+				n.unimplemented("mapping constructor var-name field not implemented", specificField)
+				continue
 			}
 			_, isStringLit := specificField.FieldName().(*st.BasicLiteralNode)
 			keyKind := ast.MappingKeyIdentifier
@@ -2297,7 +2329,7 @@ func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorBL
 			keyValueField.SetPosition(n.getPosition(specificField))
 			mappingConstructor.Fields = append(mappingConstructor.Fields, keyValueField)
 		default:
-			panic(fmt.Sprintf("unexpected mapping field kind: %v", field.Kind()))
+			n.internalError(fmt.Sprintf("unexpected mapping field kind: %v", field.Kind()), field)
 		}
 	}
 	mappingConstructor.SetPosition(n.getPosition(mappingConstructorBLangExpression))
@@ -2309,7 +2341,8 @@ func (n *nodeBuilder) transformIndexedExpression(indexedBLangExpression *st.Inde
 	indexBasedAccess.SetPosition(n.getPosition(indexedBLangExpression))
 	keys := indexedBLangExpression.KeyExpression()
 	if keys.Size() == 0 {
-		panic("missing key expression in member access expression")
+		n.internalError("missing key expression in member access expression", indexedBLangExpression)
+		return indexBasedAccess
 	} else if keys.Size() == 1 {
 		indexBasedAccess.IndexExpr = n.createExpression(keys.Get(0))
 	} else {
@@ -2328,7 +2361,8 @@ func (n *nodeBuilder) transformIndexedExpression(indexedBLangExpression *st.Inde
 }
 
 func (n *nodeBuilder) transformTypeofExpression(typeofBLangExpression *st.TypeofExpressionNode) ast.BLangNode {
-	panic("transformTypeofExpression unimplemented")
+	n.unimplemented("transformTypeofExpression unimplemented", typeofBLangExpression)
+	return nil
 }
 
 func (n *nodeBuilder) transformUnaryExpression(unaryBLangExpression *st.UnaryExpressionNode) ast.BLangNode {
@@ -2372,11 +2406,12 @@ func foldNegativeIntLiteral(lit *ast.BLangLiteral) bool {
 }
 
 func (n *nodeBuilder) transformComputedNameField(computedNameFieldNode *st.ComputedNameFieldNode) ast.BLangNode {
-	panic("transformComputedNameField unimplemented")
+	n.unimplemented("transformComputedNameField unimplemented", computedNameFieldNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformConstantDeclaration(constantDeclarationNode *st.ConstantDeclarationNode) ast.BLangNode {
-	nameIdentifier := createIdentifierFromToken(
+	nameIdentifier := n.createIdentifierFromToken(
 		n.getPosition(constantDeclarationNode.VariableName()),
 		constantDeclarationNode.VariableName(),
 	)
@@ -2495,19 +2530,23 @@ func (n *nodeBuilder) transformRestParameter(restParameterNode *st.RestParameter
 }
 
 func (n *nodeBuilder) transformImportOrgName(importOrgNameNode *st.ImportOrgNameNode) ast.BLangNode {
-	panic("transformImportOrgName unimplemented")
+	n.unimplemented("transformImportOrgName unimplemented", importOrgNameNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformImportPrefix(importPrefixNode *st.ImportPrefixNode) ast.BLangNode {
-	panic("transformImportPrefix unimplemented")
+	n.unimplemented("transformImportPrefix unimplemented", importPrefixNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformSpecificField(specificFieldNode *st.SpecificFieldNode) ast.BLangNode {
-	panic("transformSpecificField unimplemented")
+	n.unimplemented("transformSpecificField unimplemented", specificFieldNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformSpreadField(spreadFieldNode *st.SpreadFieldNode) ast.BLangNode {
-	panic("transformSpreadField unimplemented")
+	n.unimplemented("transformSpreadField unimplemented", spreadFieldNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformNamedArgument(namedArgumentNode *st.NamedArgumentNode) ast.BLangNode {
@@ -2524,7 +2563,8 @@ func (n *nodeBuilder) transformPositionalArgument(positionalArgumentNode *st.Pos
 }
 
 func (n *nodeBuilder) transformRestArgument(restArgumentNode *st.RestArgumentNode) ast.BLangNode {
-	panic("transformRestArgument unimplemented")
+	n.unimplemented("transformRestArgument unimplemented", restArgumentNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformInferredTypedescDefault(inferredTypedescDefaultNode *st.InferredTypedescDefaultNode) ast.BLangNode {
@@ -2652,7 +2692,7 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 			typeRef := member.(*st.TypeReferenceNode)
 			objectType.AddUnresolvedInclusion(n.createTypeNode(typeRef.TypeName()).(*ast.BLangUserDefinedType))
 		default:
-			panic("unexpected member kind in object type descriptor")
+			n.internalError("unexpected member kind in object type descriptor", member)
 		}
 	}
 
@@ -2660,7 +2700,8 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 }
 
 func (n *nodeBuilder) transformObjectConstructorExpression(objectConstructorBLangExpression *st.ObjectConstructorExpressionNode) ast.BLangNode {
-	panic("transformObjectConstructorExpression unimplemented")
+	n.unimplemented("transformObjectConstructorExpression unimplemented", objectConstructorBLangExpression)
+	return nil
 }
 
 func (n *nodeBuilder) transformRecordTypeDescriptor(recordTypeDescriptorNode *st.RecordTypeDescriptorNode) ast.BLangNode {
@@ -2708,7 +2749,7 @@ func (n *nodeBuilder) transformRecordTypeDescriptor(recordTypeDescriptorNode *st
 			typeRef := field.(*st.TypeReferenceNode)
 			recordType.TypeInclusions = append(recordType.TypeInclusions, n.createTypeNode(typeRef.TypeName()).(ast.BType))
 		default:
-			panic("unexpected field kind in record type descriptor")
+			n.internalError("unexpected field kind in record type descriptor", field)
 		}
 	}
 	if restDesc := recordTypeDescriptorNode.RecordRestDescriptor(); restDesc != nil {
@@ -2720,11 +2761,13 @@ func (n *nodeBuilder) transformRecordTypeDescriptor(recordTypeDescriptorNode *st
 }
 
 func (n *nodeBuilder) transformReturnTypeDescriptor(returnTypeDescriptorNode *st.ReturnTypeDescriptorNode) ast.BLangNode {
-	panic("transformReturnTypeDescriptor unimplemented")
+	n.unimplemented("transformReturnTypeDescriptor unimplemented", returnTypeDescriptorNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformNilTypeDescriptor(nilTypeDescriptorNode *st.NilTypeDescriptorNode) ast.BLangNode {
-	panic("transformNilTypeDescriptor unimplemented")
+	n.unimplemented("transformNilTypeDescriptor unimplemented", nilTypeDescriptorNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformOptionalTypeDescriptor(optionalTypeDescriptorNode *st.OptionalTypeDescriptorNode) ast.BLangNode {
@@ -2738,23 +2781,28 @@ func (n *nodeBuilder) transformOptionalTypeDescriptor(optionalTypeDescriptorNode
 }
 
 func (n *nodeBuilder) transformObjectField(objectFieldNode *st.ObjectFieldNode) ast.BLangNode {
-	panic("transformObjectField unimplemented")
+	n.unimplemented("transformObjectField unimplemented", objectFieldNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformRecordField(recordFieldNode *st.RecordFieldNode) ast.BLangNode {
-	panic("transformRecordField unimplemented")
+	n.unimplemented("transformRecordField unimplemented", recordFieldNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformRecordFieldWithDefaultValue(recordFieldWithDefaultValueNode *st.RecordFieldWithDefaultValueNode) ast.BLangNode {
-	panic("transformRecordFieldWithDefaultValue unimplemented")
+	n.unimplemented("transformRecordFieldWithDefaultValue unimplemented", recordFieldWithDefaultValueNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformRecordRestDescriptor(recordRestDescriptorNode *st.RecordRestDescriptorNode) ast.BLangNode {
-	panic("transformRecordRestDescriptor unimplemented")
+	n.unimplemented("transformRecordRestDescriptor unimplemented", recordRestDescriptorNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformTypeReference(typeReferenceNode *st.TypeReferenceNode) ast.BLangNode {
-	panic("transformTypeReference unimplemented")
+	n.unimplemented("transformTypeReference unimplemented", typeReferenceNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformAnnotation(annotationNode *st.AnnotationNode) ast.BLangNode {
@@ -2857,7 +2905,8 @@ func (n *nodeBuilder) transformMapTypeDescriptor(mapTypeDescriptorNode *st.MapTy
 
 	mapTypeParamsNode := mapTypeDescriptorNode.MapTypeParamsNode()
 	if mapTypeParamsNode == nil || mapTypeParamsNode.TypeNode() == nil {
-		panic("map type requires type parameter")
+		n.internalError("map type requires type parameter", mapTypeDescriptorNode)
+		return nil
 	}
 	constraint := n.createTypeNode(mapTypeParamsNode.TypeNode())
 
@@ -2870,11 +2919,12 @@ func (n *nodeBuilder) transformMapTypeDescriptor(mapTypeDescriptorNode *st.MapTy
 }
 
 func (n *nodeBuilder) transformNilLiteral(nilLiteralNode *st.NilLiteralNode) ast.BLangNode {
-	panic("transformNilLiteral unimplemented")
+	n.unimplemented("transformNilLiteral unimplemented", nilLiteralNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformAnnotationDeclaration(annotationDeclarationNode *st.AnnotationDeclarationNode) ast.BLangNode {
-	name := createIdentifierFromToken(n.getPosition(annotationDeclarationNode.AnnotationTag()), annotationDeclarationNode.AnnotationTag())
+	name := n.createIdentifierFromToken(n.getPosition(annotationDeclarationNode.AnnotationTag()), annotationDeclarationNode.AnnotationTag())
 	var flags model.Flag
 	if visibility := annotationDeclarationNode.VisibilityQualifier(); visibility != nil && visibility.Kind() == st.PUBLIC_KEYWORD {
 		flags |= model.FlagPublic
@@ -2983,7 +3033,7 @@ func (n *nodeBuilder) transformXMLNamespaceDeclarationNode(node xmlNamespaceDecl
 	}
 	var prefix *ast.BLangIdentifier
 	if prefixTok := node.NamespacePrefix(); prefixTok != nil {
-		identifier := createIdentifierFromToken(n.getPosition(prefixTok), prefixTok)
+		identifier := n.createIdentifierFromToken(n.getPosition(prefixTok), prefixTok)
 		prefix = &identifier
 	}
 	return ast.NewBLangXMLNS(n.getPosition(node), namespaceURI, prefix)
@@ -3003,7 +3053,7 @@ func (n *nodeBuilder) transformFunctionBodyBlock(functionBodyBlockNode *st.Funct
 	stmtList := statements
 	namedWorkerDeclarator := functionBodyBlockNode.NamedWorkerDeclarator()
 	if namedWorkerDeclarator != nil {
-		panic("unimplemented")
+		n.unimplemented("named worker declarators are not implemented", namedWorkerDeclarator)
 	}
 
 	n.generateAndAddBLangStatements(functionBodyBlockNode.Statements(), &stmtList, 0, functionBodyBlockNode)
@@ -3013,24 +3063,28 @@ func (n *nodeBuilder) transformFunctionBodyBlock(functionBodyBlockNode *st.Funct
 	return bLFuncBody
 }
 
-func (n *nodeBuilder) generateForkStatements(statements *[]ast.StatementNode, forkStatementNode *st.ForkStatementNode) {
-	panic("generateForkStatements unimplemented")
+func (n *nodeBuilder) generateForkStatements(forkStatementNode *st.ForkStatementNode) {
+	n.unimplemented("generateForkStatements unimplemented", forkStatementNode)
 }
 
 func (n *nodeBuilder) transformNamedWorkerDeclaration(namedWorkerDeclarationNode *st.NamedWorkerDeclarationNode) ast.BLangNode {
-	panic("transformNamedWorkerDeclaration unimplemented")
+	n.unimplemented("transformNamedWorkerDeclaration unimplemented", namedWorkerDeclarationNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformNamedWorkerDeclarator(namedWorkerDeclarator *st.NamedWorkerDeclarator) ast.BLangNode {
-	panic("transformNamedWorkerDeclarator unimplemented")
+	n.unimplemented("transformNamedWorkerDeclarator unimplemented", namedWorkerDeclarator)
+	return nil
 }
 
 func (n *nodeBuilder) transformBasicLiteral(basicLiteralNode *st.BasicLiteralNode) ast.BLangNode {
-	panic("transformBasicLiteral unimplemented")
+	n.unimplemented("transformBasicLiteral unimplemented", basicLiteralNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformSimpleNameReference(simpleNameReferenceNode *st.SimpleNameReferenceNode) ast.BLangNode {
-	panic("transformSimpleNameReference unimplemented")
+	n.unimplemented("transformSimpleNameReference unimplemented", simpleNameReferenceNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformQualifiedNameReference(qualifiedNameReferenceNode *st.QualifiedNameReferenceNode) ast.BLangNode {
@@ -3043,7 +3097,8 @@ func (n *nodeBuilder) transformQualifiedNameReference(qualifiedNameReferenceNode
 }
 
 func (n *nodeBuilder) transformBuiltinSimpleNameReference(builtinSimpleNameReferenceNode *st.BuiltinSimpleNameReferenceNode) ast.BLangNode {
-	panic("transformBuiltinSimpleNameReference unimplemented")
+	n.unimplemented("transformBuiltinSimpleNameReference unimplemented", builtinSimpleNameReferenceNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformTrapExpression(trapBLangExpression *st.TrapExpressionNode) ast.BLangNode {
@@ -3078,18 +3133,20 @@ func (n *nodeBuilder) transformTypeCastExpression(typeCastBLangExpression *st.Ty
 	if typeCastParamNode != nil && typeCastParamNode.Type() != nil {
 		typeConversionNode.TypeDescriptor = n.createTypeNode(typeCastParamNode.Type()).(ast.BType)
 	} else {
-		panic("type cast param node type is not present")
+		n.internalError("type cast param node type is not present", typeCastBLangExpression)
+		return typeConversionNode
 	}
 	typeConversionNode.Expression = n.createExpression(typeCastBLangExpression.Expression())
 	annotations := typeCastParamNode.Annotations()
 	if annotations.Size() > 0 {
-		panic("annotations not yet implemented")
+		n.unimplemented("type cast annotations are not yet implemented", annotations.Get(0))
 	}
 	return typeConversionNode
 }
 
 func (n *nodeBuilder) transformTypeCastParam(typeCastParamNode *st.TypeCastParamNode) ast.BLangNode {
-	panic("transformTypeCastParam unimplemented")
+	n.unimplemented("transformTypeCastParam unimplemented", typeCastParamNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformUnionTypeDescriptor(unionTypeDescriptorNode *st.UnionTypeDescriptorNode) ast.BLangNode {
@@ -3101,11 +3158,13 @@ func (n *nodeBuilder) transformUnionTypeDescriptor(unionTypeDescriptorNode *st.U
 }
 
 func (n *nodeBuilder) transformTableConstructorExpression(tableConstructorBLangExpression *st.TableConstructorExpressionNode) ast.BLangNode {
-	panic("transformTableConstructorExpression unimplemented")
+	n.unimplemented("transformTableConstructorExpression unimplemented", tableConstructorBLangExpression)
+	return nil
 }
 
 func (n *nodeBuilder) transformKeySpecifier(keySpecifierNode *st.KeySpecifierNode) ast.BLangNode {
-	panic("transformKeySpecifier unimplemented")
+	n.unimplemented("transformKeySpecifier unimplemented", keySpecifierNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformStreamTypeDescriptor(streamTypeDescriptorNode *st.StreamTypeDescriptorNode) ast.BLangNode {
@@ -3135,11 +3194,13 @@ func (n *nodeBuilder) transformStreamTypeDescriptor(streamTypeDescriptorNode *st
 }
 
 func (n *nodeBuilder) transformStreamTypeParams(streamTypeParamsNode *st.StreamTypeParamsNode) ast.BLangNode {
-	panic("transformStreamTypeParams unimplemented")
+	n.unimplemented("transformStreamTypeParams unimplemented", streamTypeParamsNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformLetExpression(letBLangExpression *st.LetExpressionNode) ast.BLangNode {
-	panic("transformLetExpression unimplemented")
+	n.unimplemented("transformLetExpression unimplemented", letBLangExpression)
+	return nil
 }
 
 func (n *nodeBuilder) transformLetVariableDeclaration(letVariableDeclarationNode *st.LetVariableDeclarationNode) ast.BLangNode {
@@ -3151,7 +3212,7 @@ func (n *nodeBuilder) transformLetVariableDeclaration(letVariableDeclarationNode
 	)
 	annotations := letVariableDeclarationNode.Annotations()
 	if annotations.Size() > 0 {
-		panic("annotations not yet supported")
+		n.unimplemented("let variable annotations are not yet supported", annotations.Get(0))
 	}
 	return varDef
 }
@@ -3831,19 +3892,23 @@ func (n *nodeBuilder) transformXMLElement(xMLElementNode *st.XMLElementNode) ast
 }
 
 func (n *nodeBuilder) transformXMLStartTag(xMLStartTagNode *st.XMLStartTagNode) ast.BLangNode {
-	panic("transformXMLStartTag unimplemented")
+	n.unimplemented("transformXMLStartTag unimplemented", xMLStartTagNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformXMLEndTag(xMLEndTagNode *st.XMLEndTagNode) ast.BLangNode {
-	panic("transformXMLEndTag unimplemented")
+	n.unimplemented("transformXMLEndTag unimplemented", xMLEndTagNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformXMLSimpleName(xMLSimpleNameNode *st.XMLSimpleNameNode) ast.BLangNode {
-	panic("transformXMLSimpleName unimplemented")
+	n.unimplemented("transformXMLSimpleName unimplemented", xMLSimpleNameNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformXMLQualifiedName(xMLQualifiedNameNode *st.XMLQualifiedNameNode) ast.BLangNode {
-	panic("transformXMLQualifiedName unimplemented")
+	n.unimplemented("transformXMLQualifiedName unimplemented", xMLQualifiedNameNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformXMLEmptyElement(xMLEmptyElementNode *st.XMLEmptyElementNode) ast.BLangNode {
@@ -3938,7 +4003,8 @@ func (n *nodeBuilder) transformXMLProcessingInstruction(xMLProcessingInstruction
 }
 
 func (n *nodeBuilder) transformTableTypeDescriptor(tableTypeDescriptorNode *st.TableTypeDescriptorNode) ast.BLangNode {
-	panic("transformTableTypeDescriptor unimplemented")
+	n.unimplemented("transformTableTypeDescriptor unimplemented", tableTypeDescriptorNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformTypeParameter(typeParameterNode *st.TypeParameterNode) ast.BLangNode {
@@ -3946,7 +4012,8 @@ func (n *nodeBuilder) transformTypeParameter(typeParameterNode *st.TypeParameter
 }
 
 func (n *nodeBuilder) transformKeyTypeConstraint(keyTypeConstraintNode *st.KeyTypeConstraintNode) ast.BLangNode {
-	panic("transformKeyTypeConstraint unimplemented")
+	n.unimplemented("transformKeyTypeConstraint unimplemented", keyTypeConstraintNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformFunctionTypeDescriptor(functionTypeDescriptorNode *st.FunctionTypeDescriptorNode) ast.BLangNode {
@@ -4012,7 +4079,10 @@ type typedParameterNode interface {
 func (n *nodeBuilder) createFunctionTypeParam(param st.ParameterNode) *ast.BLangFunctionTypeParam {
 	typedParam, ok := param.(typedParameterNode)
 	if !ok {
-		panic("createFunctionTypeParam: unsupported parameter type")
+		n.internalError("createFunctionTypeParam: unsupported parameter type", param)
+		ftParam := &ast.BLangFunctionTypeParam{}
+		ftParam.SetPosition(n.position(param))
+		return ftParam
 	}
 	paramName := typedParam.ParamName()
 	typeName := typedParam.TypeName()
@@ -4022,7 +4092,7 @@ func (n *nodeBuilder) createFunctionTypeParam(param st.ParameterNode) *ast.BLang
 	ftParam.SetPosition(n.getPosition(param))
 
 	if paramName != nil {
-		name := createIdentifierFromToken(n.getPosition(paramName), paramName)
+		name := n.createIdentifierFromToken(n.getPosition(paramName), paramName)
 		name.SetPosition(n.getPosition(paramName))
 		ftParam.Name = &name
 	}
@@ -4038,14 +4108,15 @@ func (n *nodeBuilder) createFunctionTypeParam(param st.ParameterNode) *ast.BLang
 	}
 
 	if annotations.Size() > 0 {
-		panic("function type param annotations not yet supported")
+		n.unimplemented("function type param annotations not yet supported", annotations.Get(0))
 	}
 
 	return &ftParam
 }
 
 func (n *nodeBuilder) transformFunctionSignature(functionSignatureNode *st.FunctionSignatureNode) ast.BLangNode {
-	panic("transformFunctionSignature unimplemented")
+	n.unimplemented("transformFunctionSignature unimplemented", functionSignatureNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformExplicitAnonymousFunctionExpression(anonFuncExprNode *st.ExplicitAnonymousFunctionExpressionNode) ast.BLangNode {
@@ -4125,7 +4196,8 @@ func (n *nodeBuilder) transformImplicitNewExpression(implicitNewBLangExpression 
 }
 
 func (n *nodeBuilder) transformParenthesizedArgList(parenthesizedArgList *st.ParenthesizedArgList) ast.BLangNode {
-	panic("transformParenthesizedArgList unimplemented")
+	n.unimplemented("transformParenthesizedArgList unimplemented", parenthesizedArgList)
+	return nil
 }
 
 func (n *nodeBuilder) transformQueryConstructType(queryConstructTypeNode *st.QueryConstructTypeNode) ast.BLangNode {
@@ -4197,7 +4269,8 @@ func (n *nodeBuilder) transformOnConflictClause(onConflictClauseNode *st.OnConfl
 }
 
 func (n *nodeBuilder) transformQueryPipeline(queryPipelineNode *st.QueryPipelineNode) ast.BLangNode {
-	panic("transformQueryPipeline unimplemented")
+	n.unimplemented("transformQueryPipeline unimplemented", queryPipelineNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformSelectClause(selectClauseNode *st.SelectClauseNode) ast.BLangNode {
@@ -4260,7 +4333,8 @@ func (n *nodeBuilder) transformQueryExpression(queryBLangExpression *st.QueryExp
 }
 
 func (n *nodeBuilder) transformQueryAction(queryActionNode *st.QueryActionNode) ast.BLangNode {
-	panic("transformQueryAction unimplemented")
+	n.unimplemented("transformQueryAction unimplemented", queryActionNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformIntersectionTypeDescriptor(intersectionTypeDescriptorNode *st.IntersectionTypeDescriptorNode) ast.BLangNode {
@@ -4272,7 +4346,8 @@ func (n *nodeBuilder) transformIntersectionTypeDescriptor(intersectionTypeDescri
 }
 
 func (n *nodeBuilder) transformImplicitAnonymousFunctionParameters(implicitAnonymousFunctionParameters *st.ImplicitAnonymousFunctionParameters) ast.BLangNode {
-	panic("transformImplicitAnonymousFunctionParameters unimplemented")
+	n.unimplemented("transformImplicitAnonymousFunctionParameters unimplemented", implicitAnonymousFunctionParameters)
+	return nil
 }
 
 func (n *nodeBuilder) transformImplicitAnonymousFunctionExpression(node *st.ImplicitAnonymousFunctionExpressionNode) ast.BLangNode {
@@ -4324,11 +4399,13 @@ func (n *nodeBuilder) transformImplicitAnonymousFunctionExpression(node *st.Impl
 }
 
 func (n *nodeBuilder) transformStartAction(startActionNode *st.StartActionNode) ast.BLangNode {
-	panic("transformStartAction unimplemented")
+	n.unimplemented("transformStartAction unimplemented", startActionNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformFlushAction(flushActionNode *st.FlushActionNode) ast.BLangNode {
-	panic("transformFlushAction unimplemented")
+	n.unimplemented("transformFlushAction unimplemented", flushActionNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformSingletonTypeDescriptor(singletonTypeDescriptorNode *st.SingletonTypeDescriptorNode) ast.BLangNode {
@@ -4339,15 +4416,18 @@ func (n *nodeBuilder) transformSingletonTypeDescriptor(singletonTypeDescriptorNo
 }
 
 func (n *nodeBuilder) transformMethodDeclaration(methodDeclarationNode *st.MethodDeclarationNode) ast.BLangNode {
-	panic("transformMethodDeclaration unimplemented")
+	n.unimplemented("transformMethodDeclaration unimplemented", methodDeclarationNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformTypedBindingPattern(typedBindingPatternNode *st.TypedBindingPatternNode) ast.BLangNode {
-	panic("transformTypedBindingPattern unimplemented")
+	n.unimplemented("transformTypedBindingPattern unimplemented", typedBindingPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformCaptureBindingPattern(captureBindingPatternNode *st.CaptureBindingPatternNode) ast.BLangNode {
-	panic("transformCaptureBindingPattern unimplemented")
+	n.unimplemented("transformCaptureBindingPattern unimplemented", captureBindingPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformWildcardBindingPattern(wildcardBindingPatternNode *st.WildcardBindingPatternNode) ast.BLangNode {
@@ -4357,75 +4437,93 @@ func (n *nodeBuilder) transformWildcardBindingPattern(wildcardBindingPatternNode
 }
 
 func (n *nodeBuilder) transformListBindingPattern(listBindingPatternNode *st.ListBindingPatternNode) ast.BLangNode {
-	panic("transformListBindingPattern unimplemented")
+	n.unimplemented("transformListBindingPattern unimplemented", listBindingPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformMappingBindingPattern(mappingBindingPatternNode *st.MappingBindingPatternNode) ast.BLangNode {
-	panic("transformMappingBindingPattern unimplemented")
+	n.unimplemented("transformMappingBindingPattern unimplemented", mappingBindingPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformFieldBindingPatternFull(fieldBindingPatternFullNode *st.FieldBindingPatternFullNode) ast.BLangNode {
-	panic("transformFieldBindingPatternFull unimplemented")
+	n.unimplemented("transformFieldBindingPatternFull unimplemented", fieldBindingPatternFullNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformFieldBindingPatternVarname(fieldBindingPatternVarnameNode *st.FieldBindingPatternVarnameNode) ast.BLangNode {
-	panic("transformFieldBindingPatternVarname unimplemented")
+	n.unimplemented("transformFieldBindingPatternVarname unimplemented", fieldBindingPatternVarnameNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformRestBindingPattern(restBindingPatternNode *st.RestBindingPatternNode) ast.BLangNode {
-	panic("transformRestBindingPattern unimplemented")
+	n.unimplemented("transformRestBindingPattern unimplemented", restBindingPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformErrorBindingPattern(errorBindingPatternNode *st.ErrorBindingPatternNode) ast.BLangNode {
-	panic("transformErrorBindingPattern unimplemented")
+	n.unimplemented("transformErrorBindingPattern unimplemented", errorBindingPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformNamedArgBindingPattern(namedArgBindingPatternNode *st.NamedArgBindingPatternNode) ast.BLangNode {
-	panic("transformNamedArgBindingPattern unimplemented")
+	n.unimplemented("transformNamedArgBindingPattern unimplemented", namedArgBindingPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformAsyncSendAction(asyncSendActionNode *st.AsyncSendActionNode) ast.BLangNode {
-	panic("transformAsyncSendAction unimplemented")
+	n.unimplemented("transformAsyncSendAction unimplemented", asyncSendActionNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformSyncSendAction(syncSendActionNode *st.SyncSendActionNode) ast.BLangNode {
-	panic("transformSyncSendAction unimplemented")
+	n.unimplemented("transformSyncSendAction unimplemented", syncSendActionNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReceiveAction(receiveActionNode *st.ReceiveActionNode) ast.BLangNode {
-	panic("transformReceiveAction unimplemented")
+	n.unimplemented("transformReceiveAction unimplemented", receiveActionNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReceiveFields(receiveFieldsNode *st.ReceiveFieldsNode) ast.BLangNode {
-	panic("transformReceiveFields unimplemented")
+	n.unimplemented("transformReceiveFields unimplemented", receiveFieldsNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformAlternateReceive(alternateReceiveNode *st.AlternateReceiveNode) ast.BLangNode {
-	panic("transformAlternateReceive unimplemented")
+	n.unimplemented("transformAlternateReceive unimplemented", alternateReceiveNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformRestDescriptor(restDescriptorNode *st.RestDescriptorNode) ast.BLangNode {
-	panic("transformRestDescriptor unimplemented")
+	n.unimplemented("transformRestDescriptor unimplemented", restDescriptorNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformDoubleGTToken(doubleGTTokenNode *st.DoubleGTTokenNode) ast.BLangNode {
-	panic("transformDoubleGTToken unimplemented")
+	n.unimplemented("transformDoubleGTToken unimplemented", doubleGTTokenNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformTrippleGTToken(trippleGTTokenNode *st.TrippleGTTokenNode) ast.BLangNode {
-	panic("transformTrippleGTToken unimplemented")
+	n.unimplemented("transformTrippleGTToken unimplemented", trippleGTTokenNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformWaitAction(waitActionNode *st.WaitActionNode) ast.BLangNode {
-	panic("transformWaitAction unimplemented")
+	n.unimplemented("transformWaitAction unimplemented", waitActionNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformWaitFieldsList(waitFieldsListNode *st.WaitFieldsListNode) ast.BLangNode {
-	panic("transformWaitFieldsList unimplemented")
+	n.unimplemented("transformWaitFieldsList unimplemented", waitFieldsListNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformWaitField(waitFieldNode *st.WaitFieldNode) ast.BLangNode {
-	panic("transformWaitField unimplemented")
+	n.unimplemented("transformWaitField unimplemented", waitFieldNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformAnnotAccessExpression(annotAccessBLangExpression *st.AnnotAccessExpressionNode) ast.BLangNode {
@@ -4441,7 +4539,8 @@ func (n *nodeBuilder) transformAnnotAccessExpression(annotAccessBLangExpression 
 func (n *nodeBuilder) transformOptionalFieldAccessExpression(optionalFieldAccessBLangExpression *st.OptionalFieldAccessExpressionNode) ast.BLangNode {
 	fieldName := optionalFieldAccessBLangExpression.FieldName()
 	if fieldName.Kind() == st.QUALIFIED_NAME_REFERENCE {
-		panic("transformOptionalFieldAccessExpression: QUALIFIED_NAME_REFERENCE expected")
+		n.internalError("transformOptionalFieldAccessExpression: unexpected QUALIFIED_NAME_REFERENCE", fieldName)
+		return nil
 	}
 
 	containerExpr := optionalFieldAccessBLangExpression.Expression()
@@ -4461,7 +4560,8 @@ func (n *nodeBuilder) transformOptionalFieldAccessExpression(optionalFieldAccess
 }
 
 func (n *nodeBuilder) transformConditionalExpression(conditionalBLangExpression *st.ConditionalExpressionNode) ast.BLangNode {
-	panic("transformConditionalExpression unimplemented")
+	n.unimplemented("transformConditionalExpression unimplemented", conditionalBLangExpression)
+	return nil
 }
 
 func (n *nodeBuilder) transformEnumDeclaration(enumDeclarationNode *st.EnumDeclarationNode) ast.BLangNode {
@@ -4492,7 +4592,7 @@ func (n *nodeBuilder) transformEnumDeclaration(enumDeclarationNode *st.EnumDecla
 	}
 
 	identifierPos := n.getPosition(enumDeclarationNode.Identifier())
-	identifier := createIdentifierFromToken(identifierPos, enumDeclarationNode.Identifier())
+	identifier := n.createIdentifierFromToken(identifierPos, enumDeclarationNode.Identifier())
 	var documentation *ast.BLangMarkdownDocumentation
 	if metadata := enumDeclarationNode.Metadata(); metadata != nil && !metadata.IsMissing() {
 		documentation = n.createMarkdownDocumentationAttachment(getDocumentationString(metadata))
@@ -4529,7 +4629,7 @@ func (n *nodeBuilder) transformEnumMember(enumMemberNode *st.EnumMemberNode) ast
 }
 
 func (n *nodeBuilder) transformEnumMemberWithVisibility(enumMemberNode *st.EnumMemberNode, publicQualifier bool) *ast.BLangVariable {
-	identifier := createIdentifierFromToken(n.getPosition(enumMemberNode.Identifier()), enumMemberNode.Identifier())
+	identifier := n.createIdentifierFromToken(n.getPosition(enumMemberNode.Identifier()), enumMemberNode.Identifier())
 	var expr ast.BLangExpression
 	if exprNode := enumMemberNode.ConstExprNode(); exprNode != nil {
 		expr = n.createExpression(exprNode)
@@ -4578,59 +4678,73 @@ func (n *nodeBuilder) transformArrayTypeDescriptor(arrayTypeDescriptorNode *st.A
 }
 
 func (n *nodeBuilder) transformArrayDimension(arrayDimensionNode *st.ArrayDimensionNode) ast.BLangNode {
-	panic("transformArrayDimension unimplemented")
+	n.unimplemented("transformArrayDimension unimplemented", arrayDimensionNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformTransactionStatement(transactionStatementNode *st.TransactionStatementNode) ast.BLangNode {
-	panic("transformTransactionStatement unimplemented")
+	n.unimplemented("transformTransactionStatement unimplemented", transactionStatementNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformRollbackStatement(rollbackStatementNode *st.RollbackStatementNode) ast.BLangNode {
-	panic("transformRollbackStatement unimplemented")
+	n.unimplemented("transformRollbackStatement unimplemented", rollbackStatementNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformRetryStatement(retryStatementNode *st.RetryStatementNode) ast.BLangNode {
-	panic("transformRetryStatement unimplemented")
+	n.unimplemented("transformRetryStatement unimplemented", retryStatementNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformCommitAction(commitActionNode *st.CommitActionNode) ast.BLangNode {
-	panic("transformCommitAction unimplemented")
+	n.unimplemented("transformCommitAction unimplemented", commitActionNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformTransactionalExpression(transactionalBLangExpression *st.TransactionalExpressionNode) ast.BLangNode {
-	panic("transformTransactionalExpression unimplemented")
+	n.unimplemented("transformTransactionalExpression unimplemented", transactionalBLangExpression)
+	return nil
 }
 
 func (n *nodeBuilder) transformByteArrayLiteral(byteArrayLiteralNode *st.ByteArrayLiteralNode) ast.BLangNode {
-	panic("transformByteArrayLiteral unimplemented")
+	n.unimplemented("transformByteArrayLiteral unimplemented", byteArrayLiteralNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformXMLFilterExpression(xMLFilterBLangExpression *st.XMLFilterExpressionNode) ast.BLangNode {
-	panic("transformXMLFilterExpression unimplemented")
+	n.unimplemented("transformXMLFilterExpression unimplemented", xMLFilterBLangExpression)
+	return nil
 }
 
 func (n *nodeBuilder) transformXMLStepExpression(xMLStepBLangExpression *st.XMLStepExpressionNode) ast.BLangNode {
-	panic("transformXMLStepExpression unimplemented")
+	n.unimplemented("transformXMLStepExpression unimplemented", xMLStepBLangExpression)
+	return nil
 }
 
 func (n *nodeBuilder) transformXMLNamePatternChaining(xMLNamePatternChainingNode *st.XMLNamePatternChainingNode) ast.BLangNode {
-	panic("transformXMLNamePatternChaining unimplemented")
+	n.unimplemented("transformXMLNamePatternChaining unimplemented", xMLNamePatternChainingNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformXMLStepIndexedExtend(xMLStepIndexedExtendNode *st.XMLStepIndexedExtendNode) ast.BLangNode {
-	panic("transformXMLStepIndexedExtend unimplemented")
+	n.unimplemented("transformXMLStepIndexedExtend unimplemented", xMLStepIndexedExtendNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformXMLStepMethodCallExtend(xMLStepMethodCallExtendNode *st.XMLStepMethodCallExtendNode) ast.BLangNode {
-	panic("transformXMLStepMethodCallExtend unimplemented")
+	n.unimplemented("transformXMLStepMethodCallExtend unimplemented", xMLStepMethodCallExtendNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformXMLAtomicNamePattern(xMLAtomicNamePatternNode *st.XMLAtomicNamePatternNode) ast.BLangNode {
-	panic("transformXMLAtomicNamePattern unimplemented")
+	n.unimplemented("transformXMLAtomicNamePattern unimplemented", xMLAtomicNamePatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformTypeReferenceTypeDesc(typeReferenceTypeDescNode *st.TypeReferenceTypeDescNode) ast.BLangNode {
-	panic("transformTypeReferenceTypeDesc unimplemented")
+	n.unimplemented("transformTypeReferenceTypeDesc unimplemented", typeReferenceTypeDescNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformMatchStatement(matchStatementNode *st.MatchStatementNode) ast.BLangNode {
@@ -4720,11 +4834,13 @@ func (n *nodeBuilder) transformMatchPattern(matchPattern st.Node) ast.BLangMatch
 }
 
 func (n *nodeBuilder) transformMatchClause(matchClauseNode *st.MatchClauseNode) ast.BLangNode {
-	panic("transformMatchClause unimplemented")
+	n.unimplemented("transformMatchClause unimplemented", matchClauseNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformMatchGuard(matchGuardNode *st.MatchGuardNode) ast.BLangNode {
-	panic("transformMatchGuard unimplemented")
+	n.unimplemented("transformMatchGuard unimplemented", matchGuardNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformDistinctTypeDescriptor(distinctTypeDescriptorNode *st.DistinctTypeDescriptorNode) ast.BLangNode {
@@ -4735,27 +4851,33 @@ func (n *nodeBuilder) transformDistinctTypeDescriptor(distinctTypeDescriptorNode
 }
 
 func (n *nodeBuilder) transformListMatchPattern(listMatchPatternNode *st.ListMatchPatternNode) ast.BLangNode {
-	panic("transformListMatchPattern unimplemented")
+	n.unimplemented("transformListMatchPattern unimplemented", listMatchPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformRestMatchPattern(restMatchPatternNode *st.RestMatchPatternNode) ast.BLangNode {
-	panic("transformRestMatchPattern unimplemented")
+	n.unimplemented("transformRestMatchPattern unimplemented", restMatchPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformMappingMatchPattern(mappingMatchPatternNode *st.MappingMatchPatternNode) ast.BLangNode {
-	panic("transformMappingMatchPattern unimplemented")
+	n.unimplemented("transformMappingMatchPattern unimplemented", mappingMatchPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformFieldMatchPattern(fieldMatchPatternNode *st.FieldMatchPatternNode) ast.BLangNode {
-	panic("transformFieldMatchPattern unimplemented")
+	n.unimplemented("transformFieldMatchPattern unimplemented", fieldMatchPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformErrorMatchPattern(errorMatchPatternNode *st.ErrorMatchPatternNode) ast.BLangNode {
-	panic("transformErrorMatchPattern unimplemented")
+	n.unimplemented("transformErrorMatchPattern unimplemented", errorMatchPatternNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformNamedArgMatchPattern(namedArgMatchPatternNode *st.NamedArgMatchPatternNode) ast.BLangNode {
-	panic("transformNamedArgMatchPattern unimplemented")
+	n.unimplemented("transformNamedArgMatchPattern unimplemented", namedArgMatchPatternNode)
+	return nil
 }
 
 // Helper functions for markdown documentation transformation
@@ -4995,7 +5117,8 @@ func (n *nodeBuilder) transformOrderByClause(orderByClauseNode *st.OrderByClause
 	for orderKey := range orderKeys.Iterator() {
 		keyNode, ok := n.transformOrderKey(orderKey).(*ast.BLangOrderKey)
 		if !ok {
-			panic("expected BLangOrderKey")
+			n.internalError("expected BLangOrderKey", orderKey)
+			continue
 		}
 		orderByClause.OrderByKeyList = append(orderByClause.OrderByKeyList, *keyNode)
 	}
@@ -5029,13 +5152,15 @@ func (n *nodeBuilder) transformGroupByClause(groupByClauseNode *st.GroupByClause
 		if node.Kind() == st.SIMPLE_NAME_REFERENCE || node.Kind() == st.IDENTIFIER_TOKEN {
 			varRef, ok := n.createExpression(node).(*ast.BLangVarRef)
 			if !ok {
-				panic("expected grouping key variable reference to be a simple variable reference")
+				n.internalError("expected grouping key variable reference to be a simple variable reference", node)
+				continue
 			}
 			groupingKey = ast.NewBLangGroupingKeyWithVariableRef(n.getPosition(node), varRef)
 		} else {
 			keyNode, ok := n.transformGroupingKeyVarDeclaration(node.(*st.GroupingKeyVarDeclarationNode)).(*ast.BLangGroupingKey)
 			if !ok {
-				panic("expected grouping key declaration to produce a BLangGroupingKey")
+				n.internalError("expected grouping key declaration to produce a BLangGroupingKey", node)
+				continue
 			}
 			groupingKey = keyNode
 		}
@@ -5068,11 +5193,13 @@ func (n *nodeBuilder) transformGroupingKeyVarDeclaration(groupingKeyVarDeclarati
 }
 
 func (n *nodeBuilder) transformOnFailClause(onFailClauseNode *st.OnFailClauseNode) ast.BLangNode {
-	panic("transformOnFailClause unimplemented")
+	n.unimplemented("transformOnFailClause unimplemented", onFailClauseNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformDoStatement(doStatementNode *st.DoStatementNode) ast.BLangNode {
-	panic("transformDoStatement unimplemented")
+	n.unimplemented("transformDoStatement unimplemented", doStatementNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefinitionNode) ast.BLangNode {
@@ -5086,7 +5213,7 @@ func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefi
 	n.populateMetadata(classDefinitionNode.Metadata(), &blangClass)
 
 	// Set name
-	nameIdentifier := createIdentifierFromToken(n.getPosition(classDefinitionNode.ClassName()), classDefinitionNode.ClassName())
+	nameIdentifier := n.createIdentifierFromToken(n.getPosition(classDefinitionNode.ClassName()), classDefinitionNode.ClassName())
 	blangClass.Name = &nameIdentifier
 
 	members := n.collectClassDefnMembers(classDefinitionNode.Members())
@@ -5121,7 +5248,7 @@ func classQualifierFlags(qualifiers st.NodeList[st.Token]) model.Flag {
 }
 
 func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode) *ast.BLangVariable {
-	identifier := createIdentifierFromToken(n.getPosition(objectField.FieldName()), objectField.FieldName())
+	identifier := n.createIdentifierFromToken(n.getPosition(objectField.FieldName()), objectField.FieldName())
 	var flags model.Flag
 	if vis := objectField.VisibilityQualifier(); vis != nil && vis.Kind() == st.PUBLIC_KEYWORD {
 		flags |= model.FlagPublic
@@ -5162,7 +5289,7 @@ func (n *nodeBuilder) transformResourcePathParameter(resourcePathParameterNode *
 	seg.SetPosition(n.getPosition(resourcePathParameterNode))
 	nameTok := resourcePathParameterNode.ParamName()
 	if nameTok != nil && !nameTok.IsMissing() {
-		seg.Name = createIdentifierFromToken(n.getPosition(nameTok), nameTok).Value
+		seg.Name = n.createIdentifierFromToken(n.getPosition(nameTok), nameTok).Value
 	}
 	if td := resourcePathParameterNode.TypeDescriptor(); td != nil {
 		seg.ParamType = n.createTypeNode(td).(ast.BType)
@@ -5217,7 +5344,8 @@ func (n *nodeBuilder) createResourcePathSegments(pathNodes st.NodeList[st.Node])
 }
 
 func (n *nodeBuilder) transformRequiredExpression(requiredBLangExpression *st.RequiredExpressionNode) ast.BLangNode {
-	panic("transformRequiredExpression unimplemented")
+	n.unimplemented("transformRequiredExpression unimplemented", requiredBLangExpression)
+	return nil
 }
 
 func (n *nodeBuilder) transformErrorConstructorExpression(errorConstructorBLangExpression *st.ErrorConstructorExpressionNode) ast.BLangNode {
@@ -5271,7 +5399,8 @@ func (n *nodeBuilder) transformParameterizedTypeDescriptor(parameterizedTypeDesc
 	case st.XML_TYPE_DESC:
 		return n.transformXMLTypeDescriptor(parameterizedTypeDescriptorNode)
 	}
-	panic("transformParameterizedTypeDescriptor supported only for error, typedesc and xml type descriptors")
+	n.internalError("transformParameterizedTypeDescriptor supported only for error, typedesc and xml type descriptors", parameterizedTypeDescriptorNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformTypedescTypeDescriptor(node *st.ParameterizedTypeDescriptorNode) ast.BLangNode {
@@ -5394,107 +5523,133 @@ func (n *nodeBuilder) transformComputedResourceAccessSegment(node *st.ComputedRe
 }
 
 func (n *nodeBuilder) transformResourceAccessRestSegment(resourceAccessRestSegmentNode *st.ResourceAccessRestSegmentNode) ast.BLangNode {
-	panic("transformResourceAccessRestSegment unimplemented")
+	n.unimplemented("transformResourceAccessRestSegment unimplemented", resourceAccessRestSegmentNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReSequence(reSequenceNode *st.ReSequenceNode) ast.BLangNode {
-	panic("transformReSequence unimplemented")
+	n.unimplemented("transformReSequence unimplemented", reSequenceNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReAtomQuantifier(reAtomQuantifierNode *st.ReAtomQuantifierNode) ast.BLangNode {
-	panic("transformReAtomQuantifier unimplemented")
+	n.unimplemented("transformReAtomQuantifier unimplemented", reAtomQuantifierNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReAtomCharOrEscape(reAtomCharOrEscapeNode *st.ReAtomCharOrEscapeNode) ast.BLangNode {
-	panic("transformReAtomCharOrEscape unimplemented")
+	n.unimplemented("transformReAtomCharOrEscape unimplemented", reAtomCharOrEscapeNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReQuoteEscape(reQuoteEscapeNode *st.ReQuoteEscapeNode) ast.BLangNode {
-	panic("transformReQuoteEscape unimplemented")
+	n.unimplemented("transformReQuoteEscape unimplemented", reQuoteEscapeNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReSimpleCharClassEscape(reSimpleCharClassEscapeNode *st.ReSimpleCharClassEscapeNode) ast.BLangNode {
-	panic("transformReSimpleCharClassEscape unimplemented")
+	n.unimplemented("transformReSimpleCharClassEscape unimplemented", reSimpleCharClassEscapeNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReUnicodePropertyEscape(reUnicodePropertyEscapeNode *st.ReUnicodePropertyEscapeNode) ast.BLangNode {
-	panic("transformReUnicodePropertyEscape unimplemented")
+	n.unimplemented("transformReUnicodePropertyEscape unimplemented", reUnicodePropertyEscapeNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReUnicodeScript(reUnicodeScriptNode *st.ReUnicodeScriptNode) ast.BLangNode {
-	panic("transformReUnicodeScript unimplemented")
+	n.unimplemented("transformReUnicodeScript unimplemented", reUnicodeScriptNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReUnicodeGeneralCategory(reUnicodeGeneralCategoryNode *st.ReUnicodeGeneralCategoryNode) ast.BLangNode {
-	panic("transformReUnicodeGeneralCategory unimplemented")
+	n.unimplemented("transformReUnicodeGeneralCategory unimplemented", reUnicodeGeneralCategoryNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReCharacterClass(reCharacterClassNode *st.ReCharacterClassNode) ast.BLangNode {
-	panic("transformReCharacterClass unimplemented")
+	n.unimplemented("transformReCharacterClass unimplemented", reCharacterClassNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReCharSetRangeWithReCharSet(reCharSetRangeWithReCharSetNode *st.ReCharSetRangeWithReCharSetNode) ast.BLangNode {
-	panic("transformReCharSetRangeWithReCharSet unimplemented")
+	n.unimplemented("transformReCharSetRangeWithReCharSet unimplemented", reCharSetRangeWithReCharSetNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReCharSetRange(reCharSetRangeNode *st.ReCharSetRangeNode) ast.BLangNode {
-	panic("transformReCharSetRange unimplemented")
+	n.unimplemented("transformReCharSetRange unimplemented", reCharSetRangeNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReCharSetAtomWithReCharSetNoDash(reCharSetAtomWithReCharSetNoDashNode *st.ReCharSetAtomWithReCharSetNoDashNode) ast.BLangNode {
-	panic("transformReCharSetAtomWithReCharSetNoDash unimplemented")
+	n.unimplemented("transformReCharSetAtomWithReCharSetNoDash unimplemented", reCharSetAtomWithReCharSetNoDashNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReCharSetRangeNoDashWithReCharSet(reCharSetRangeNoDashWithReCharSetNode *st.ReCharSetRangeNoDashWithReCharSetNode) ast.BLangNode {
-	panic("transformReCharSetRangeNoDashWithReCharSet unimplemented")
+	n.unimplemented("transformReCharSetRangeNoDashWithReCharSet unimplemented", reCharSetRangeNoDashWithReCharSetNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReCharSetRangeNoDash(reCharSetRangeNoDashNode *st.ReCharSetRangeNoDashNode) ast.BLangNode {
-	panic("transformReCharSetRangeNoDash unimplemented")
+	n.unimplemented("transformReCharSetRangeNoDash unimplemented", reCharSetRangeNoDashNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReCharSetAtomNoDashWithReCharSetNoDash(reCharSetAtomNoDashWithReCharSetNoDashNode *st.ReCharSetAtomNoDashWithReCharSetNoDashNode) ast.BLangNode {
-	panic("transformReCharSetAtomNoDashWithReCharSetNoDash unimplemented")
+	n.unimplemented("transformReCharSetAtomNoDashWithReCharSetNoDash unimplemented", reCharSetAtomNoDashWithReCharSetNoDashNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReCapturingGroups(reCapturingGroupsNode *st.ReCapturingGroupsNode) ast.BLangNode {
-	panic("transformReCapturingGroups unimplemented")
+	n.unimplemented("transformReCapturingGroups unimplemented", reCapturingGroupsNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReFlagExpression(reFlagBLangExpression *st.ReFlagExpressionNode) ast.BLangNode {
-	panic("transformReFlagExpression unimplemented")
+	n.unimplemented("transformReFlagExpression unimplemented", reFlagBLangExpression)
+	return nil
 }
 
 func (n *nodeBuilder) transformReFlagsOnOff(reFlagsOnOffNode *st.ReFlagsOnOffNode) ast.BLangNode {
-	panic("transformReFlagsOnOff unimplemented")
+	n.unimplemented("transformReFlagsOnOff unimplemented", reFlagsOnOffNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReFlags(reFlagsNode *st.ReFlagsNode) ast.BLangNode {
-	panic("transformReFlags unimplemented")
+	n.unimplemented("transformReFlags unimplemented", reFlagsNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReAssertion(reAssertionNode *st.ReAssertionNode) ast.BLangNode {
-	panic("transformReAssertion unimplemented")
+	n.unimplemented("transformReAssertion unimplemented", reAssertionNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReQuantifier(reQuantifierNode *st.ReQuantifierNode) ast.BLangNode {
-	panic("transformReQuantifier unimplemented")
+	n.unimplemented("transformReQuantifier unimplemented", reQuantifierNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReBracedQuantifier(reBracedQuantifierNode *st.ReBracedQuantifierNode) ast.BLangNode {
-	panic("transformReBracedQuantifier unimplemented")
+	n.unimplemented("transformReBracedQuantifier unimplemented", reBracedQuantifierNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformMemberTypeDescriptor(memberTypeDescriptorNode *st.MemberTypeDescriptorNode) ast.BLangNode {
-	panic("transformMemberTypeDescriptor unimplemented")
+	n.unimplemented("transformMemberTypeDescriptor unimplemented", memberTypeDescriptorNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformReceiveField(receiveFieldNode *st.ReceiveFieldNode) ast.BLangNode {
-	panic("transformReceiveField unimplemented")
+	n.unimplemented("transformReceiveField unimplemented", receiveFieldNode)
+	return nil
 }
 
 func (n *nodeBuilder) transformNaturalExpression(naturalBLangExpression *st.NaturalExpressionNode) ast.BLangNode {
-	panic("transformNaturalExpression unimplemented")
+	n.unimplemented("transformNaturalExpression unimplemented", naturalBLangExpression)
+	return nil
 }
 
 func (n *nodeBuilder) transformToken(token st.Token) ast.BLangNode {
@@ -5506,15 +5661,17 @@ func (n *nodeBuilder) transformToken(token st.Token) ast.BLangNode {
 		if isTokenInRegExp(kind) {
 			return n.createSimpleLiteral(token).(ast.BLangNode)
 		}
-		panic("transformToken: Syntax kind is not supported: " + kind.StrValue())
+		n.internalError("transformToken: syntax kind is not supported: "+kind.StrValue(), token)
+		return nil
 	}
 }
 
 func (n *nodeBuilder) transformIdentifierToken(identifier *st.IdentifierToken) ast.BLangNode {
-	panic("transformIdentifierToken unimplemented")
+	n.unimplemented("transformIdentifierToken unimplemented", identifier)
+	return nil
 }
 
-func stringToTypeKind(typeText string) ast.TypeKind {
+func (n *nodeBuilder) stringToTypeKind(typeText string, node st.Node) ast.TypeKind {
 	switch typeText {
 	case "int":
 		return ast.TypeKindInt
@@ -5563,7 +5720,8 @@ func stringToTypeKind(typeText string) ast.TypeKind {
 	case "function":
 		return ast.TypeKindFunction
 	default:
-		panic("stringToTypeKind: invalid type name: " + typeText)
+		n.internalError("stringToTypeKind: invalid type name: "+typeText, node)
+		return ast.TypeKindNever
 	}
 }
 
@@ -5575,8 +5733,9 @@ func createUserDefinedType(pos diagnostics.Location, pkgAlias ast.BLangIdentifie
 	return &userDefinedType
 }
 
-func getNextMissingNodeName(pkgID *model.PackageID) string {
-	panic("getNextMissingNodeName unimplemented")
+func (n *nodeBuilder) getNextMissingNodeName(pkgID *model.PackageID, node st.Node) string {
+	n.internalError("missing type-name token", node)
+	return n.cx.GetNextAnonymousTypeKey(pkgID)
 }
 
 func (n *nodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode, varPos diagnostics.Location) *ast.BLangVariable {
@@ -5588,7 +5747,10 @@ func (n *nodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode,
 		simpleVar.SetPosition(varPos)
 		return simpleVar
 	case st.MAPPING_BINDING_PATTERN, st.LIST_BINDING_PATTERN, st.ERROR_BINDING_PATTERN, st.REST_BINDING_PATTERN:
-		panic("unimplemented")
+		n.unimplemented("binding pattern is not implemented", bindingPattern)
+		simpleVar := ast.NewBLangVariable(varPos, nil, nil, nil, false, 0)
+		simpleVar.SetPosition(varPos)
+		return simpleVar
 	case st.CAPTURE_BINDING_PATTERN:
 		fallthrough
 	default:

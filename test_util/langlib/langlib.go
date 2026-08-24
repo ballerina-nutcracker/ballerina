@@ -274,7 +274,10 @@ func compileBundledLib(cx *context.CompilerContext, cache map[string]model.Expor
 		make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace),
 		lib.org,
 	)
-	pkg := nodebuilder.ToPackageFromCompilationUnits(compilationUnits)
+	pkg := nodebuilder.ToPackageFromCompilationUnitsWithContext(cx, compilationUnits)
+	if cx.HasErrors() {
+		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: package assembly failed for %s", lib.implicitID)
+	}
 	pkg.PackageID = pkgID
 	pkg.Scope = pkgScope
 	pkg.Imports = nil
