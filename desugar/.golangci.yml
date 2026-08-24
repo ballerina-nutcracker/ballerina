@@ -1,1 +1,1 @@
-../.golangci/strict.yml
+../.golangci/no-panic.yml
