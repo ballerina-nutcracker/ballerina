@@ -7,53 +7,43 @@ main() -> nil{
     %4 = ConstantLoad 3
     %5 = newArray [int...][%4]{%1, %2, %3}
     xs = %5;
-    %7 = closure_fp $anon/.:main$506$0$thunk$0
-    %8 = %7() -> bb1;
+    $desugar$0 = xs;
+    %8 = length($desugar$0) -> bb1;
   }
   bb1 {
-    %9 = %8;
-    return;
-  }
-}
-main$506$0$thunk$0() -> [int...]{
-  bb0 {
-    $desugar$0 = (1, xs);
-    %2 = length($desugar$0) -> bb1;
-  }
-  bb1 {
-    $desugar$1 = %2;
-    %4 = ConstantLoad 0
-    %5 = newArray list[%4]{}
-    $desugar$2 = %5;
-    %8 = ConstantLoad 0
-    $desugar$3 = %8;
-    %10 = ConstantLoad 1
-    %11 = unknown %10;
-    $desugar$4 = %11;
-    %14 = $desugar$4;
-    %15 = ConstantLoad 0
-    %16 = %15;
-    %13 = < %14 %16;
-    %13 ? bb2 : bb3;
+    $desugar$1 = %8;
+    %10 = ConstantLoad 0
+    %11 = newArray list[%10]{}
+    $desugar$2 = %11;
+    %14 = ConstantLoad 0
+    $desugar$3 = %14;
+    %16 = ConstantLoad 1
+    %17 = unknown %16;
+    $desugar$4 = %17;
+    %20 = $desugar$4;
+    %21 = ConstantLoad 0
+    %22 = %21;
+    %19 = < %20 %22;
+    %19 ? bb2 : bb3;
   }
   bb2 {
     PushScopeFrame 2
     %0 = ConstantLoad limit cannot be negative
     %1 = newError error(%0)
-    (1, %17) = %1;
+    (1, %23) = %1;
     PopScopeFrame
-    panic %17;
+    panic %23;
   }
   bb3 {
-    %18 = ConstantLoad 0
-    $desugar$5 = %18;
+    %24 = ConstantLoad 0
+    $desugar$5 = %24;
     GOTO bb4;
   }
   bb4 {
-    %21 = $desugar$3;
-    %22 = $desugar$1;
-    %20 = < %21 %22;
-    %20 ? bb5 : bb6;
+    %27 = $desugar$3;
+    %28 = $desugar$1;
+    %26 = < %27 %28;
+    %26 ? bb5 : bb6;
   }
   bb5 {
     PushScopeFrame 14
@@ -65,7 +55,7 @@ main$506$0$thunk$0() -> [int...]{
     %1 ? bb7 : bb8;
   }
   bb6 {
-    %0 = $desugar$2;
+    %29 = $desugar$2;
     return;
   }
   bb7 {

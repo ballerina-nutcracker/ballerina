@@ -32,344 +32,294 @@ main() -> nil|error{
   }
   bb7 {
     c1 = %1;
-    %11 = closure_fp $anon/.:main$502$0$thunk$0
-    %12 = main$502$0$thunk$0() -> bb8;
+    %11 = ConstantLoad /path
+    $desugar$0 = %11;
+    %13 = $default$21($desugar$0) -> bb8;
   }
   bb8 {
-    %13 = %12 is error
-    %13 ? bb9 : bb10;
+    $desugar$1 = %13;
+    %15 = ConstantLoad typedesc
+    $desugar$2 = %15;
+    %17 = $remote$get(c1,$desugar$0,$desugar$1,$desugar$2) -> bb9;
   }
   bb9 {
-    %0 = %12;
-    return;
+    %18 = %17 is error
+    %18 ? bb10 : bb11;
   }
   bb10 {
-    %10 = %12;
-    GOTO bb11;
+    %0 = %17;
+    return;
   }
   bb11 {
-    r1 = %10;
-    %16 = ConstantLoad statusCode
-    %15 = r1[%16];
-    %17 = %15;
-    %18 = println(%17) -> bb12;
+    %10 = %17;
+    GOTO bb12;
   }
   bb12 {
-    %20 = newObject ballerina/http:Client
-    %21 = ConstantLoad https://example.com
-    %22 = ConstantLoad compression
-    %23 = ConstantLoad AUTO
-    %24 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| cacheSize: int, cacheValidityPeriod: int, type: "OCSP_CRL"|"OCSP_STAPLING", never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%22=%23} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
-    %25 = init(%20,%21,%24) -> bb13;
+    r1 = %10;
+    %21 = ConstantLoad statusCode
+    %20 = r1[%21];
+    %22 = %20;
+    %23 = println(%22) -> bb13;
   }
   bb13 {
-    %27 = %25 is nil
-    %27 ? bb14 : bb15;
+    %25 = newObject ballerina/http:Client
+    %26 = ConstantLoad https://example.com
+    %27 = ConstantLoad compression
+    %28 = ConstantLoad AUTO
+    %29 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| cacheSize: int, cacheValidityPeriod: int, type: "OCSP_CRL"|"OCSP_STAPLING", never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%27=%28} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
+    %30 = init(%25,%26,%29) -> bb14;
   }
   bb14 {
-    %26 = %20;
-    GOTO bb16;
+    %32 = %30 is nil
+    %32 ? bb15 : bb16;
   }
   bb15 {
-    %26 = %25;
-    GOTO bb16;
+    %31 = %25;
+    GOTO bb17;
   }
   bb16 {
-    %28 = %26 is error
-    %28 ? bb17 : bb18;
+    %31 = %30;
+    GOTO bb17;
   }
   bb17 {
-    %0 = %26;
-    return;
+    %33 = %31 is error
+    %33 ? bb18 : bb19;
   }
   bb18 {
-    %19 = %26;
-    GOTO bb19;
+    %0 = %31;
+    return;
   }
   bb19 {
-    c2 = %19;
-    %31 = closure_fp $anon/.:main$502$0$thunk$1
-    %32 = main$502$0$thunk$1() -> bb20;
+    %24 = %31;
+    GOTO bb20;
   }
   bb20 {
-    %33 = %32 is error
-    %33 ? bb21 : bb22;
+    c2 = %24;
+    %36 = ConstantLoad /path
+    $desugar$3 = %36;
+    %38 = $default$21($desugar$3) -> bb21;
   }
   bb21 {
-    %0 = %32;
-    return;
+    $desugar$4 = %38;
+    %40 = ConstantLoad typedesc
+    $desugar$5 = %40;
+    %42 = $remote$get(c2,$desugar$3,$desugar$4,$desugar$5) -> bb22;
   }
   bb22 {
-    %30 = %32;
-    GOTO bb23;
+    %43 = %42 is error
+    %43 ? bb23 : bb24;
   }
   bb23 {
-    r2 = %30;
-    %36 = ConstantLoad statusCode
-    %35 = r2[%36];
-    %37 = %35;
-    %38 = println(%37) -> bb24;
+    %0 = %42;
+    return;
   }
   bb24 {
-    %40 = newObject ballerina/http:Client
-    %41 = ConstantLoad https://example.com
-    %42 = ConstantLoad compression
-    %43 = ConstantLoad ALWAYS
-    %44 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| cacheSize: int, cacheValidityPeriod: int, type: "OCSP_CRL"|"OCSP_STAPLING", never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%42=%43} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
-    %45 = init(%40,%41,%44) -> bb25;
+    %35 = %42;
+    GOTO bb25;
   }
   bb25 {
-    %47 = %45 is nil
-    %47 ? bb26 : bb27;
+    r2 = %35;
+    %46 = ConstantLoad statusCode
+    %45 = r2[%46];
+    %47 = %45;
+    %48 = println(%47) -> bb26;
   }
   bb26 {
-    %46 = %40;
-    GOTO bb28;
+    %50 = newObject ballerina/http:Client
+    %51 = ConstantLoad https://example.com
+    %52 = ConstantLoad compression
+    %53 = ConstantLoad ALWAYS
+    %54 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| cacheSize: int, cacheValidityPeriod: int, type: "OCSP_CRL"|"OCSP_STAPLING", never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%52=%53} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
+    %55 = init(%50,%51,%54) -> bb27;
   }
   bb27 {
-    %46 = %45;
-    GOTO bb28;
+    %57 = %55 is nil
+    %57 ? bb28 : bb29;
   }
   bb28 {
-    %48 = %46 is error
-    %48 ? bb29 : bb30;
+    %56 = %50;
+    GOTO bb30;
   }
   bb29 {
-    %0 = %46;
-    return;
+    %56 = %55;
+    GOTO bb30;
   }
   bb30 {
-    %39 = %46;
-    GOTO bb31;
+    %58 = %56 is error
+    %58 ? bb31 : bb32;
   }
   bb31 {
-    c3 = %39;
-    %51 = closure_fp $anon/.:main$502$0$thunk$2
-    %52 = main$502$0$thunk$2() -> bb32;
+    %0 = %56;
+    return;
   }
   bb32 {
-    %53 = %52 is error
-    %53 ? bb33 : bb34;
+    %49 = %56;
+    GOTO bb33;
   }
   bb33 {
-    %0 = %52;
-    return;
+    c3 = %49;
+    %61 = ConstantLoad /path
+    $desugar$6 = %61;
+    %63 = $default$21($desugar$6) -> bb34;
   }
   bb34 {
-    %50 = %52;
-    GOTO bb35;
+    $desugar$7 = %63;
+    %65 = ConstantLoad typedesc
+    $desugar$8 = %65;
+    %67 = $remote$get(c3,$desugar$6,$desugar$7,$desugar$8) -> bb35;
   }
   bb35 {
-    r3 = %50;
-    %56 = ConstantLoad statusCode
-    %55 = r3[%56];
-    %57 = %55;
-    %58 = println(%57) -> bb36;
+    %68 = %67 is error
+    %68 ? bb36 : bb37;
   }
   bb36 {
-    %60 = newObject ballerina/http:Client
-    %61 = ConstantLoad https://example.com
-    %62 = ConstantLoad compression
-    %63 = ConstantLoad NEVER
-    %64 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| cacheSize: int, cacheValidityPeriod: int, type: "OCSP_CRL"|"OCSP_STAPLING", never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%62=%63} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
-    %65 = init(%60,%61,%64) -> bb37;
-  }
-  bb37 {
-    %67 = %65 is nil
-    %67 ? bb38 : bb39;
-  }
-  bb38 {
-    %66 = %60;
-    GOTO bb40;
-  }
-  bb39 {
-    %66 = %65;
-    GOTO bb40;
-  }
-  bb40 {
-    %68 = %66 is error
-    %68 ? bb41 : bb42;
-  }
-  bb41 {
-    %0 = %66;
+    %0 = %67;
     return;
   }
+  bb37 {
+    %60 = %67;
+    GOTO bb38;
+  }
+  bb38 {
+    r3 = %60;
+    %71 = ConstantLoad statusCode
+    %70 = r3[%71];
+    %72 = %70;
+    %73 = println(%72) -> bb39;
+  }
+  bb39 {
+    %75 = newObject ballerina/http:Client
+    %76 = ConstantLoad https://example.com
+    %77 = ConstantLoad compression
+    %78 = ConstantLoad NEVER
+    %79 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| cacheSize: int, cacheValidityPeriod: int, type: "OCSP_CRL"|"OCSP_STAPLING", never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%77=%78} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
+    %80 = init(%75,%76,%79) -> bb40;
+  }
+  bb40 {
+    %82 = %80 is nil
+    %82 ? bb41 : bb42;
+  }
+  bb41 {
+    %81 = %75;
+    GOTO bb43;
+  }
   bb42 {
-    %59 = %66;
+    %81 = %80;
     GOTO bb43;
   }
   bb43 {
-    c4 = %59;
-    %71 = closure_fp $anon/.:main$502$0$thunk$3
-    %72 = main$502$0$thunk$3() -> bb44;
+    %83 = %81 is error
+    %83 ? bb44 : bb45;
   }
   bb44 {
-    %73 = %72 is error
-    %73 ? bb45 : bb46;
+    %0 = %81;
+    return;
   }
   bb45 {
-    %0 = %72;
-    return;
+    %74 = %81;
+    GOTO bb46;
   }
   bb46 {
-    %70 = %72;
-    GOTO bb47;
+    c4 = %74;
+    %86 = ConstantLoad /path
+    $desugar$9 = %86;
+    %88 = $default$21($desugar$9) -> bb47;
   }
   bb47 {
-    r4 = %70;
-    %76 = ConstantLoad statusCode
-    %75 = r4[%76];
-    %77 = %75;
-    %78 = println(%77) -> bb48;
+    $desugar$10 = %88;
+    %90 = ConstantLoad typedesc
+    $desugar$11 = %90;
+    %92 = $remote$get(c4,$desugar$9,$desugar$10,$desugar$11) -> bb48;
   }
   bb48 {
-    %80 = newObject ballerina/http:Client
-    %81 = ConstantLoad https://example.com
-    %82 = ConstantLoad timeout
-    %83 = ConstantLoad 15
-    %84 = ConstantLoad httpVersion
-    %85 = ConstantLoad 1.1
-    %86 = ConstantLoad compression
-    %87 = ConstantLoad NEVER
-    %88 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| cacheSize: int, cacheValidityPeriod: int, type: "OCSP_CRL"|"OCSP_STAPLING", never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%82=%83, %84=%85, %86=%87} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
-    %89 = init(%80,%81,%88) -> bb49;
+    %93 = %92 is error
+    %93 ? bb49 : bb50;
   }
   bb49 {
-    %91 = %89 is nil
-    %91 ? bb50 : bb51;
-  }
-  bb50 {
-    %90 = %80;
-    GOTO bb52;
-  }
-  bb51 {
-    %90 = %89;
-    GOTO bb52;
-  }
-  bb52 {
-    %92 = %90 is error
-    %92 ? bb53 : bb54;
-  }
-  bb53 {
-    %0 = %90;
+    %0 = %92;
     return;
   }
+  bb50 {
+    %85 = %92;
+    GOTO bb51;
+  }
+  bb51 {
+    r4 = %85;
+    %96 = ConstantLoad statusCode
+    %95 = r4[%96];
+    %97 = %95;
+    %98 = println(%97) -> bb52;
+  }
+  bb52 {
+    %100 = newObject ballerina/http:Client
+    %101 = ConstantLoad https://example.com
+    %102 = ConstantLoad timeout
+    %103 = ConstantLoad 15
+    %104 = ConstantLoad httpVersion
+    %105 = ConstantLoad 1.1
+    %106 = ConstantLoad compression
+    %107 = ConstantLoad NEVER
+    %108 = newMap {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| cacheSize: int, cacheValidityPeriod: int, type: "OCSP_CRL"|"OCSP_STAPLING", never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}{%102=%103, %104=%105, %106=%107} defaults{timeout=ballerina/http:$desugar$17, followRedirects=ballerina/http:$desugar$18, httpVersion=ballerina/http:$desugar$19, secureSocket=ballerina/http:$desugar$20, poolConfig=ballerina/http:$desugar$21, compression=ballerina/http:$desugar$22, responseLimits=ballerina/http:$desugar$23, proxy=ballerina/http:$desugar$24}
+    %109 = init(%100,%101,%108) -> bb53;
+  }
+  bb53 {
+    %111 = %109 is nil
+    %111 ? bb54 : bb55;
+  }
   bb54 {
-    %79 = %90;
-    GOTO bb55;
+    %110 = %100;
+    GOTO bb56;
   }
   bb55 {
-    c5 = %79;
-    %95 = closure_fp $anon/.:main$502$0$thunk$4
-    %96 = main$502$0$thunk$4() -> bb56;
+    %110 = %109;
+    GOTO bb56;
   }
   bb56 {
-    %97 = %96 is error
-    %97 ? bb57 : bb58;
+    %112 = %110 is error
+    %112 ? bb57 : bb58;
   }
   bb57 {
-    %0 = %96;
+    %0 = %110;
     return;
   }
   bb58 {
-    %94 = %96;
+    %99 = %110;
     GOTO bb59;
   }
   bb59 {
-    r5 = %94;
-    %100 = ConstantLoad statusCode
-    %99 = r5[%100];
-    %101 = %99;
-    %102 = println(%101) -> bb60;
+    c5 = %99;
+    %115 = ConstantLoad /path
+    $desugar$12 = %115;
+    %117 = $default$21($desugar$12) -> bb60;
   }
   bb60 {
-    %103 = ConstantLoad <nil>
-    %0 = %103;
+    $desugar$13 = %117;
+    %119 = ConstantLoad typedesc
+    $desugar$14 = %119;
+    %121 = $remote$get(c5,$desugar$12,$desugar$13,$desugar$14) -> bb61;
+  }
+  bb61 {
+    %122 = %121 is error
+    %122 ? bb62 : bb63;
+  }
+  bb62 {
+    %0 = %121;
     return;
   }
-}
-main$502$0$thunk$0() -> error|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }{
-  bb0 {
-    %1 = ConstantLoad /path
-    $desugar$0 = %1;
-    %3 = $default$21($desugar$0) -> bb1;
+  bb63 {
+    %114 = %121;
+    GOTO bb64;
   }
-  bb1 {
-    $desugar$1 = %3;
-    %5 = ConstantLoad typedesc
-    $desugar$2 = %5;
-    %7 = $remote$get((1, c1),$desugar$0,$desugar$1,$desugar$2) -> bb2;
+  bb64 {
+    r5 = %114;
+    %125 = ConstantLoad statusCode
+    %124 = r5[%125];
+    %126 = %124;
+    %127 = println(%126) -> bb65;
   }
-  bb2 {
-    %0 = %7;
-    return;
-  }
-}
-main$502$0$thunk$1() -> error|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }{
-  bb0 {
-    %1 = ConstantLoad /path
-    $desugar$3 = %1;
-    %3 = $default$21($desugar$3) -> bb1;
-  }
-  bb1 {
-    $desugar$4 = %3;
-    %5 = ConstantLoad typedesc
-    $desugar$5 = %5;
-    %7 = $remote$get((1, c2),$desugar$3,$desugar$4,$desugar$5) -> bb2;
-  }
-  bb2 {
-    %0 = %7;
-    return;
-  }
-}
-main$502$0$thunk$2() -> error|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }{
-  bb0 {
-    %1 = ConstantLoad /path
-    $desugar$6 = %1;
-    %3 = $default$21($desugar$6) -> bb1;
-  }
-  bb1 {
-    $desugar$7 = %3;
-    %5 = ConstantLoad typedesc
-    $desugar$8 = %5;
-    %7 = $remote$get((1, c3),$desugar$6,$desugar$7,$desugar$8) -> bb2;
-  }
-  bb2 {
-    %0 = %7;
-    return;
-  }
-}
-main$502$0$thunk$3() -> error|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }{
-  bb0 {
-    %1 = ConstantLoad /path
-    $desugar$9 = %1;
-    %3 = $default$21($desugar$9) -> bb1;
-  }
-  bb1 {
-    $desugar$10 = %3;
-    %5 = ConstantLoad typedesc
-    $desugar$11 = %5;
-    %7 = $remote$get((1, c4),$desugar$9,$desugar$10,$desugar$11) -> bb2;
-  }
-  bb2 {
-    %0 = %7;
-    return;
-  }
-}
-main$502$0$thunk$4() -> error|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }{
-  bb0 {
-    %1 = ConstantLoad /path
-    $desugar$12 = %1;
-    %3 = $default$21($desugar$12) -> bb1;
-  }
-  bb1 {
-    $desugar$13 = %3;
-    %5 = ConstantLoad typedesc
-    $desugar$14 = %5;
-    %7 = $remote$get((1, c5),$desugar$12,$desugar$13,$desugar$14) -> bb2;
-  }
-  bb2 {
-    %0 = %7;
+  bb65 {
+    %128 = ConstantLoad <nil>
+    %0 = %128;
     return;
   }
 }

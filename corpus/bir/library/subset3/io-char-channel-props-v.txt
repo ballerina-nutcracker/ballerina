@@ -16,607 +16,517 @@ uni=\u00E9clair
 nl=a\nb
 
     content = %3;
-    %6 = closure_fp $anon/.:main$502$0$thunk$0
-    %7 = main$502$0$thunk$0() -> bb1;
+    $desugar$0 = path;
+    $desugar$1 = content;
+    %8 = $default$1($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    %8 = %7 is error
-    %8 ? bb2 : bb3;
+    $desugar$2 = %8;
+    %10 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %0 = %7;
-    return;
+    %11 = %10 is error
+    %11 ? bb3 : bb4;
   }
   bb3 {
-    %5 = %7;
-    GOTO bb4;
-  }
-  bb4 {
-    %10 = openReadableFile(path) -> bb5;
-  }
-  bb5 {
-    %11 = %10 is error
-    %11 ? bb6 : bb7;
-  }
-  bb6 {
     %0 = %10;
     return;
   }
+  bb4 {
+    %5 = %10;
+    GOTO bb5;
+  }
+  bb5 {
+    %13 = openReadableFile(path) -> bb6;
+  }
+  bb6 {
+    %14 = %13 is error
+    %14 ? bb7 : bb8;
+  }
   bb7 {
-    %9 = %10;
-    GOTO bb8;
-  }
-  bb8 {
-    rb = %9;
-    %13 = newObject ballerina/io:ReadableCharacterChannel
-    %14 = ConstantLoad UTF-8
-    %15 = init(%13,rb,%14) -> bb9;
-  }
-  bb9 {
-    %17 = %15 is nil
-    %17 ? bb10 : bb11;
-  }
-  bb10 {
-    %16 = %13;
-    GOTO bb12;
-  }
-  bb11 {
-    %16 = %15;
-    GOTO bb12;
-  }
-  bb12 {
-    rc = %16;
-    %20 = closure_fp $anon/.:main$502$0$thunk$1
-    %21 = main$502$0$thunk$1() -> bb13;
-  }
-  bb13 {
-    %22 = %21 is error
-    %22 ? bb14 : bb15;
-  }
-  bb14 {
-    %0 = %21;
+    %0 = %13;
     return;
   }
+  bb8 {
+    %12 = %13;
+    GOTO bb9;
+  }
+  bb9 {
+    rb = %12;
+    %16 = newObject ballerina/io:ReadableCharacterChannel
+    %17 = ConstantLoad UTF-8
+    %18 = init(%16,rb,%17) -> bb10;
+  }
+  bb10 {
+    %20 = %18 is nil
+    %20 ? bb11 : bb12;
+  }
+  bb11 {
+    %19 = %16;
+    GOTO bb13;
+  }
+  bb12 {
+    %19 = %18;
+    GOTO bb13;
+  }
+  bb13 {
+    rc = %19;
+    %23 = ConstantLoad name
+    $desugar$3 = %23;
+    %25 = $default$7($desugar$3) -> bb14;
+  }
+  bb14 {
+    $desugar$4 = %25;
+    %27 = readProperty(rc,$desugar$3,$desugar$4) -> bb15;
+  }
   bb15 {
-    %19 = %21;
-    GOTO bb16;
+    %28 = %27 is error
+    %28 ? bb16 : bb17;
   }
   bb16 {
-    %23 = println(%19) -> bb17;
-  }
-  bb17 {
-    %24 = ConstantLoad [
-    %26 = closure_fp $anon/.:main$502$0$thunk$2
-    %27 = main$502$0$thunk$2() -> bb18;
-  }
-  bb18 {
-    %28 = %27 is error
-    %28 ? bb19 : bb20;
-  }
-  bb19 {
     %0 = %27;
     return;
   }
+  bb17 {
+    %22 = %27;
+    GOTO bb18;
+  }
+  bb18 {
+    %29 = println(%22) -> bb19;
+  }
+  bb19 {
+    %30 = ConstantLoad [
+    %32 = ConstantLoad spaced.key
+    $desugar$5 = %32;
+    %34 = $default$7($desugar$5) -> bb20;
+  }
   bb20 {
-    %25 = %27;
-    GOTO bb21;
+    $desugar$6 = %34;
+    %36 = readProperty(rc,$desugar$5,$desugar$6) -> bb21;
   }
   bb21 {
-    %29 = ConstantLoad ]
-    %30 = println(%24,%25,%29) -> bb22;
+    %37 = %36 is error
+    %37 ? bb22 : bb23;
   }
   bb22 {
-    %32 = ConstantLoad missing
-    %33 = ConstantLoad fallback
-    %34 = readProperty(rc,%32,%33) -> bb23;
+    %0 = %36;
+    return;
   }
   bb23 {
-    %35 = %34 is error
-    %35 ? bb24 : bb25;
+    %31 = %36;
+    GOTO bb24;
   }
   bb24 {
-    %0 = %34;
-    return;
+    %38 = ConstantLoad ]
+    %39 = println(%30,%31,%38) -> bb25;
   }
   bb25 {
-    %31 = %34;
-    GOTO bb26;
+    %41 = ConstantLoad missing
+    %42 = ConstantLoad fallback
+    %43 = readProperty(rc,%41,%42) -> bb26;
   }
   bb26 {
-    %36 = println(%31) -> bb27;
+    %44 = %43 is error
+    %44 ? bb27 : bb28;
   }
   bb27 {
-    %38 = closure_fp $anon/.:main$502$0$thunk$3
-    %39 = main$502$0$thunk$3() -> bb28;
+    %0 = %43;
+    return;
   }
   bb28 {
-    %40 = %39 is error
-    %40 ? bb29 : bb30;
+    %40 = %43;
+    GOTO bb29;
   }
   bb29 {
-    %0 = %39;
-    return;
+    %45 = println(%40) -> bb30;
   }
   bb30 {
-    %37 = %39;
-    GOTO bb31;
+    %47 = ConstantLoad esc:aped
+    $desugar$7 = %47;
+    %49 = $default$7($desugar$7) -> bb31;
   }
   bb31 {
-    %41 = println(%37) -> bb32;
+    $desugar$8 = %49;
+    %51 = readProperty(rc,$desugar$7,$desugar$8) -> bb32;
   }
   bb32 {
-    %43 = closure_fp $anon/.:main$502$0$thunk$4
-    %44 = main$502$0$thunk$4() -> bb33;
+    %52 = %51 is error
+    %52 ? bb33 : bb34;
   }
   bb33 {
-    %45 = %44 is error
-    %45 ? bb34 : bb35;
+    %0 = %51;
+    return;
   }
   bb34 {
-    %0 = %44;
-    return;
+    %46 = %51;
+    GOTO bb35;
   }
   bb35 {
-    %42 = %44;
-    GOTO bb36;
+    %53 = println(%46) -> bb36;
   }
   bb36 {
-    %46 = println(%42) -> bb37;
+    %55 = ConstantLoad multi
+    $desugar$9 = %55;
+    %57 = $default$7($desugar$9) -> bb37;
   }
   bb37 {
-    %48 = closure_fp $anon/.:main$502$0$thunk$5
-    %49 = main$502$0$thunk$5() -> bb38;
+    $desugar$10 = %57;
+    %59 = readProperty(rc,$desugar$9,$desugar$10) -> bb38;
   }
   bb38 {
-    %50 = %49 is error
-    %50 ? bb39 : bb40;
+    %60 = %59 is error
+    %60 ? bb39 : bb40;
   }
   bb39 {
-    %0 = %49;
-    return;
-  }
-  bb40 {
-    %47 = %49;
-    GOTO bb41;
-  }
-  bb41 {
-    %51 = println(%47) -> bb42;
-  }
-  bb42 {
-    %53 = closure_fp $anon/.:main$502$0$thunk$6
-    %54 = main$502$0$thunk$6() -> bb43;
-  }
-  bb43 {
-    %55 = %54 is error
-    %55 ? bb44 : bb45;
-  }
-  bb44 {
-    %0 = %54;
-    return;
-  }
-  bb45 {
-    %52 = %54;
-    GOTO bb46;
-  }
-  bb46 {
-    %56 = println(%52) -> bb47;
-  }
-  bb47 {
-    %58 = closure_fp $anon/.:main$502$0$thunk$7
-    %59 = main$502$0$thunk$7() -> bb48;
-  }
-  bb48 {
-    %60 = %59 is error
-    %60 ? bb49 : bb50;
-  }
-  bb49 {
     %0 = %59;
     return;
   }
+  bb40 {
+    %54 = %59;
+    GOTO bb41;
+  }
+  bb41 {
+    %61 = println(%54) -> bb42;
+  }
+  bb42 {
+    %63 = ConstantLoad tabbed
+    $desugar$11 = %63;
+    %65 = $default$7($desugar$11) -> bb43;
+  }
+  bb43 {
+    $desugar$12 = %65;
+    %67 = readProperty(rc,$desugar$11,$desugar$12) -> bb44;
+  }
+  bb44 {
+    %68 = %67 is error
+    %68 ? bb45 : bb46;
+  }
+  bb45 {
+    %0 = %67;
+    return;
+  }
+  bb46 {
+    %62 = %67;
+    GOTO bb47;
+  }
+  bb47 {
+    %69 = println(%62) -> bb48;
+  }
+  bb48 {
+    %71 = ConstantLoad uni
+    $desugar$13 = %71;
+    %73 = $default$7($desugar$13) -> bb49;
+  }
+  bb49 {
+    $desugar$14 = %73;
+    %75 = readProperty(rc,$desugar$13,$desugar$14) -> bb50;
+  }
   bb50 {
-    %57 = %59;
-    GOTO bb51;
+    %76 = %75 is error
+    %76 ? bb51 : bb52;
   }
   bb51 {
-    nl = %57;
-    %62 = length(nl) -> bb52;
+    %0 = %75;
+    return;
   }
   bb52 {
-    %63 = %62;
-    %64 = println(%63) -> bb53;
+    %70 = %75;
+    GOTO bb53;
   }
   bb53 {
-    %66 = readAllProperties(rc) -> bb54;
+    %77 = println(%70) -> bb54;
   }
   bb54 {
-    %67 = %66 is error
-    %67 ? bb55 : bb56;
+    %79 = ConstantLoad nl
+    $desugar$15 = %79;
+    %81 = $default$7($desugar$15) -> bb55;
   }
   bb55 {
-    %0 = %66;
-    return;
+    $desugar$16 = %81;
+    %83 = readProperty(rc,$desugar$15,$desugar$16) -> bb56;
   }
   bb56 {
-    %65 = %66;
-    GOTO bb57;
+    %84 = %83 is error
+    %84 ? bb57 : bb58;
   }
   bb57 {
-    all = %65;
-    %69 = length(all) -> bb58;
+    %0 = %83;
+    return;
   }
   bb58 {
-    %70 = %69;
-    %71 = println(%70) -> bb59;
+    %78 = %83;
+    GOTO bb59;
   }
   bb59 {
-    %74 = ConstantLoad empty
-    %73 = all[%74];
-    %75 = ConstantLoad 
-    %72 = == %73 %75;
-    %76 = %72;
-    %77 = println(%76) -> bb60;
+    nl = %78;
+    %86 = length(nl) -> bb60;
   }
   bb60 {
-    %79 = close(rc) -> bb61;
+    %87 = %86;
+    %88 = println(%87) -> bb61;
   }
   bb61 {
-    %80 = %79 is error
-    %80 ? bb62 : bb63;
+    %90 = readAllProperties(rc) -> bb62;
   }
   bb62 {
-    %0 = %79;
-    return;
+    %91 = %90 is error
+    %91 ? bb63 : bb64;
   }
   bb63 {
-    %78 = %79;
-    GOTO bb64;
-  }
-  bb64 {
-    %81 = ConstantLoad /tmp/bal_io_char_props_out.properties
-    wpath = %81;
-    %84 = closure_fp $anon/.:main$502$0$thunk$8
-    %85 = main$502$0$thunk$8() -> bb65;
-  }
-  bb65 {
-    %86 = %85 is error
-    %86 ? bb66 : bb67;
-  }
-  bb66 {
-    %0 = %85;
+    %0 = %90;
     return;
   }
+  bb64 {
+    %89 = %90;
+    GOTO bb65;
+  }
+  bb65 {
+    all = %89;
+    %93 = length(all) -> bb66;
+  }
+  bb66 {
+    %94 = %93;
+    %95 = println(%94) -> bb67;
+  }
   bb67 {
-    %83 = %85;
-    GOTO bb68;
+    %98 = ConstantLoad empty
+    %97 = all[%98];
+    %99 = ConstantLoad 
+    %96 = == %97 %99;
+    %100 = %96;
+    %101 = println(%100) -> bb68;
   }
   bb68 {
-    wb = %83;
-    %88 = newObject ballerina/io:WritableCharacterChannel
-    %89 = ConstantLoad UTF-8
-    %90 = init(%88,wb,%89) -> bb69;
+    %103 = close(rc) -> bb69;
   }
   bb69 {
-    %92 = %90 is nil
-    %92 ? bb70 : bb71;
+    %104 = %103 is error
+    %104 ? bb70 : bb71;
   }
   bb70 {
-    %91 = %88;
-    GOTO bb72;
+    %0 = %103;
+    return;
   }
   bb71 {
-    %91 = %90;
+    %102 = %103;
     GOTO bb72;
   }
   bb72 {
-    wc = %91;
-    %95 = ConstantLoad key one
-    %96 = ConstantLoad value=1
-    %97 = ConstantLoad plain
-    %98 = ConstantLoad text
-    %99 = ConstantLoad uni
-    %100 = ConstantLoad ü
-    %101 = ConstantLoad tab
-    %102 = ConstantLoad a	b
-    %103 = ConstantLoad line
-    %104 = ConstantLoad a
-b
-    %105 = newMap {| string... |}{%95=%96, %97=%98, %99=%100, %101=%102, %103=%104}
-    %106 = ConstantLoad first line
-second line
-    %107 = writeProperties(wc,%105,%106) -> bb73;
+    %105 = ConstantLoad /tmp/bal_io_char_props_out.properties
+    wpath = %105;
+    $desugar$17 = wpath;
+    %109 = $default$11($desugar$17) -> bb73;
   }
   bb73 {
-    %108 = %107 is error
-    %108 ? bb74 : bb75;
+    $desugar$18 = %109;
+    %111 = openWritableFile($desugar$17,$desugar$18) -> bb74;
   }
   bb74 {
-    %0 = %107;
-    return;
+    %112 = %111 is error
+    %112 ? bb75 : bb76;
   }
   bb75 {
-    %94 = %107;
-    GOTO bb76;
+    %0 = %111;
+    return;
   }
   bb76 {
-    %110 = close(wc) -> bb77;
+    %107 = %111;
+    GOTO bb77;
   }
   bb77 {
-    %111 = %110 is error
-    %111 ? bb78 : bb79;
+    wb = %107;
+    %114 = newObject ballerina/io:WritableCharacterChannel
+    %115 = ConstantLoad UTF-8
+    %116 = init(%114,wb,%115) -> bb78;
   }
   bb78 {
-    %0 = %110;
-    return;
+    %118 = %116 is nil
+    %118 ? bb79 : bb80;
   }
   bb79 {
-    %109 = %110;
-    GOTO bb80;
+    %117 = %114;
+    GOTO bb81;
   }
   bb80 {
-    %113 = fileReadLines(wpath) -> bb81;
+    %117 = %116;
+    GOTO bb81;
   }
   bb81 {
-    %114 = %113 is error
-    %114 ? bb82 : bb83;
+    wc = %117;
+    %121 = ConstantLoad key one
+    %122 = ConstantLoad value=1
+    %123 = ConstantLoad plain
+    %124 = ConstantLoad text
+    %125 = ConstantLoad uni
+    %126 = ConstantLoad ü
+    %127 = ConstantLoad tab
+    %128 = ConstantLoad a	b
+    %129 = ConstantLoad line
+    %130 = ConstantLoad a
+b
+    %131 = newMap {| string... |}{%121=%122, %123=%124, %125=%126, %127=%128, %129=%130}
+    %132 = ConstantLoad first line
+second line
+    %133 = writeProperties(wc,%131,%132) -> bb82;
   }
   bb82 {
-    %0 = %113;
-    return;
+    %134 = %133 is error
+    %134 ? bb83 : bb84;
   }
   bb83 {
-    %112 = %113;
-    GOTO bb84;
-  }
-  bb84 {
-    outLines = %112;
-    %117 = ConstantLoad 0
-    %116 = outLines[%117];
-    %118 = println(%116) -> bb85;
-  }
-  bb85 {
-    %120 = ConstantLoad 1
-    %119 = outLines[%120];
-    %121 = println(%119) -> bb86;
-  }
-  bb86 {
-    %123 = openReadableFile(wpath) -> bb87;
-  }
-  bb87 {
-    %124 = %123 is error
-    %124 ? bb88 : bb89;
-  }
-  bb88 {
-    %0 = %123;
-    return;
-  }
-  bb89 {
-    %122 = %123;
-    GOTO bb90;
-  }
-  bb90 {
-    vb = %122;
-    %126 = newObject ballerina/io:ReadableCharacterChannel
-    %127 = ConstantLoad UTF-8
-    %128 = init(%126,vb,%127) -> bb91;
-  }
-  bb91 {
-    %130 = %128 is nil
-    %130 ? bb92 : bb93;
-  }
-  bb92 {
-    %129 = %126;
-    GOTO bb94;
-  }
-  bb93 {
-    %129 = %128;
-    GOTO bb94;
-  }
-  bb94 {
-    vc = %129;
-    %133 = readAllProperties(vc) -> bb95;
-  }
-  bb95 {
-    %134 = %133 is error
-    %134 ? bb96 : bb97;
-  }
-  bb96 {
     %0 = %133;
     return;
   }
+  bb84 {
+    %120 = %133;
+    GOTO bb85;
+  }
+  bb85 {
+    %136 = close(wc) -> bb86;
+  }
+  bb86 {
+    %137 = %136 is error
+    %137 ? bb87 : bb88;
+  }
+  bb87 {
+    %0 = %136;
+    return;
+  }
+  bb88 {
+    %135 = %136;
+    GOTO bb89;
+  }
+  bb89 {
+    %139 = fileReadLines(wpath) -> bb90;
+  }
+  bb90 {
+    %140 = %139 is error
+    %140 ? bb91 : bb92;
+  }
+  bb91 {
+    %0 = %139;
+    return;
+  }
+  bb92 {
+    %138 = %139;
+    GOTO bb93;
+  }
+  bb93 {
+    outLines = %138;
+    %143 = ConstantLoad 0
+    %142 = outLines[%143];
+    %144 = println(%142) -> bb94;
+  }
+  bb94 {
+    %146 = ConstantLoad 1
+    %145 = outLines[%146];
+    %147 = println(%145) -> bb95;
+  }
+  bb95 {
+    %149 = openReadableFile(wpath) -> bb96;
+  }
+  bb96 {
+    %150 = %149 is error
+    %150 ? bb97 : bb98;
+  }
   bb97 {
-    %132 = %133;
-    GOTO bb98;
+    %0 = %149;
+    return;
   }
   bb98 {
-    written = %132;
-    %136 = length(written) -> bb99;
+    %148 = %149;
+    GOTO bb99;
   }
   bb99 {
-    %137 = %136;
-    %138 = println(%137) -> bb100;
+    vb = %148;
+    %152 = newObject ballerina/io:ReadableCharacterChannel
+    %153 = ConstantLoad UTF-8
+    %154 = init(%152,vb,%153) -> bb100;
   }
   bb100 {
-    %140 = ConstantLoad key one
-    %139 = written[%140];
-    %141 = println(%139) -> bb101;
+    %156 = %154 is nil
+    %156 ? bb101 : bb102;
   }
   bb101 {
-    %143 = ConstantLoad plain
-    %142 = written[%143];
-    %144 = println(%142) -> bb102;
+    %155 = %152;
+    GOTO bb103;
   }
   bb102 {
-    %146 = ConstantLoad uni
-    %145 = written[%146];
-    %147 = println(%145) -> bb103;
+    %155 = %154;
+    GOTO bb103;
   }
   bb103 {
-    %150 = ConstantLoad tab
-    %149 = written[%150];
-    %151 = ConstantLoad a	b
-    %148 = == %149 %151;
-    %152 = %148;
-    %153 = println(%152) -> bb104;
+    vc = %155;
+    %159 = readAllProperties(vc) -> bb104;
   }
   bb104 {
-    %156 = ConstantLoad line
-    %155 = written[%156];
-    %157 = ConstantLoad a
-b
-    %154 = == %155 %157;
-    %158 = %154;
-    %159 = println(%158) -> bb105;
+    %160 = %159 is error
+    %160 ? bb105 : bb106;
   }
   bb105 {
-    %161 = close(vc) -> bb106;
+    %0 = %159;
+    return;
   }
   bb106 {
-    %162 = %161 is error
-    %162 ? bb107 : bb108;
+    %158 = %159;
+    GOTO bb107;
   }
   bb107 {
-    %0 = %161;
-    return;
+    written = %158;
+    %162 = length(written) -> bb108;
   }
   bb108 {
-    %160 = %161;
-    GOTO bb109;
+    %163 = %162;
+    %164 = println(%163) -> bb109;
   }
   bb109 {
+    %166 = ConstantLoad key one
+    %165 = written[%166];
+    %167 = println(%165) -> bb110;
+  }
+  bb110 {
+    %169 = ConstantLoad plain
+    %168 = written[%169];
+    %170 = println(%168) -> bb111;
+  }
+  bb111 {
+    %172 = ConstantLoad uni
+    %171 = written[%172];
+    %173 = println(%171) -> bb112;
+  }
+  bb112 {
+    %176 = ConstantLoad tab
+    %175 = written[%176];
+    %177 = ConstantLoad a	b
+    %174 = == %175 %177;
+    %178 = %174;
+    %179 = println(%178) -> bb113;
+  }
+  bb113 {
+    %182 = ConstantLoad line
+    %181 = written[%182];
+    %183 = ConstantLoad a
+b
+    %180 = == %181 %183;
+    %184 = %180;
+    %185 = println(%184) -> bb114;
+  }
+  bb114 {
+    %187 = close(vc) -> bb115;
+  }
+  bb115 {
+    %188 = %187 is error
+    %188 ? bb116 : bb117;
+  }
+  bb116 {
+    %0 = %187;
     return;
   }
-}
-main$502$0$thunk$0() -> nil|error{
-  bb0 {
-    $desugar$0 = (1, path);
-    $desugar$1 = (1, content);
-    %3 = $default$1($desugar$0,$desugar$1) -> bb1;
+  bb117 {
+    %186 = %187;
+    GOTO bb118;
   }
-  bb1 {
-    $desugar$2 = %3;
-    %5 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$502$0$thunk$1() -> string|error{
-  bb0 {
-    %1 = ConstantLoad name
-    $desugar$3 = %1;
-    %3 = $default$7($desugar$3) -> bb1;
-  }
-  bb1 {
-    $desugar$4 = %3;
-    %5 = readProperty((1, rc),$desugar$3,$desugar$4) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$502$0$thunk$2() -> string|error{
-  bb0 {
-    %1 = ConstantLoad spaced.key
-    $desugar$5 = %1;
-    %3 = $default$7($desugar$5) -> bb1;
-  }
-  bb1 {
-    $desugar$6 = %3;
-    %5 = readProperty((1, rc),$desugar$5,$desugar$6) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$502$0$thunk$3() -> string|error{
-  bb0 {
-    %1 = ConstantLoad esc:aped
-    $desugar$7 = %1;
-    %3 = $default$7($desugar$7) -> bb1;
-  }
-  bb1 {
-    $desugar$8 = %3;
-    %5 = readProperty((1, rc),$desugar$7,$desugar$8) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$502$0$thunk$4() -> string|error{
-  bb0 {
-    %1 = ConstantLoad multi
-    $desugar$9 = %1;
-    %3 = $default$7($desugar$9) -> bb1;
-  }
-  bb1 {
-    $desugar$10 = %3;
-    %5 = readProperty((1, rc),$desugar$9,$desugar$10) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$502$0$thunk$5() -> string|error{
-  bb0 {
-    %1 = ConstantLoad tabbed
-    $desugar$11 = %1;
-    %3 = $default$7($desugar$11) -> bb1;
-  }
-  bb1 {
-    $desugar$12 = %3;
-    %5 = readProperty((1, rc),$desugar$11,$desugar$12) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$502$0$thunk$6() -> string|error{
-  bb0 {
-    %1 = ConstantLoad uni
-    $desugar$13 = %1;
-    %3 = $default$7($desugar$13) -> bb1;
-  }
-  bb1 {
-    $desugar$14 = %3;
-    %5 = readProperty((1, rc),$desugar$13,$desugar$14) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$502$0$thunk$7() -> string|error{
-  bb0 {
-    %1 = ConstantLoad nl
-    $desugar$15 = %1;
-    %3 = $default$7($desugar$15) -> bb1;
-  }
-  bb1 {
-    $desugar$16 = %3;
-    %5 = readProperty((1, rc),$desugar$15,$desugar$16) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$502$0$thunk$8() -> error|object { private function attachFile(string, "APPEND"|"OVERWRITE") returns nil|error; public function close() returns nil|error; public function init() returns nil; public function write([int:Unsigned8...], int) returns int|error }{
-  bb0 {
-    $desugar$17 = (1, wpath);
-    %2 = $default$11($desugar$17) -> bb1;
-  }
-  bb1 {
-    $desugar$18 = %2;
-    %4 = openWritableFile($desugar$17,$desugar$18) -> bb2;
-  }
-  bb2 {
-    %0 = %4;
+  bb118 {
     return;
   }
 }

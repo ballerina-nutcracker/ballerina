@@ -105,277 +105,237 @@ O7ekKjOszIhNsvlgkHI=
     %11 = ConstantLoad 4
     %12 = newArray [int:Unsigned8...][%11]{%7, %8, %9, %10}
     data = %12;
-    %15 = closure_fp $anon/.:main$502$0$thunk$0
-    %16 = main$502$0$thunk$0() -> bb1;
+    %15 = ConstantLoad /tmp/bal_crypto_enc.pem
+    $desugar$0 = %15;
+    $desugar$1 = pbes2;
+    %18 = $default$1($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    %17 = %16 is error
-    %17 ? bb2 : bb3;
+    $desugar$2 = %18;
+    %20 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %0 = %16;
-    return;
+    %21 = %20 is error
+    %21 ? bb3 : bb4;
   }
   bb3 {
-    %14 = %16;
-    GOTO bb4;
+    %0 = %20;
+    return;
   }
   bb4 {
-    %19 = ConstantLoad /tmp/bal_crypto_enc.pem
-    %20 = ConstantLoad secret
-    %21 = decodeRsaPrivateKeyFromKeyFile(%19,%20) -> bb5;
+    %14 = %20;
+    GOTO bb5;
   }
   bb5 {
-    %22 = %21 is error
-    %22 ? bb6 : bb7;
+    %23 = ConstantLoad /tmp/bal_crypto_enc.pem
+    %24 = ConstantLoad secret
+    %25 = decodeRsaPrivateKeyFromKeyFile(%23,%24) -> bb6;
   }
   bb6 {
-    %0 = %21;
-    return;
+    %26 = %25 is error
+    %26 ? bb7 : bb8;
   }
   bb7 {
-    %18 = %21;
-    GOTO bb8;
+    %0 = %25;
+    return;
   }
   bb8 {
-    pkPbes2 = %18;
-    %26 = signRsaSha256(data,pkPbes2) -> bb9;
+    %22 = %25;
+    GOTO bb9;
   }
   bb9 {
-    %27 = %26 is error
-    %27 ? bb10 : bb11;
+    pkPbes2 = %22;
+    %30 = signRsaSha256(data,pkPbes2) -> bb10;
   }
   bb10 {
-    %0 = %26;
-    return;
+    %31 = %30 is error
+    %31 ? bb11 : bb12;
   }
   bb11 {
-    %25 = %26;
-    GOTO bb12;
+    %0 = %30;
+    return;
   }
   bb12 {
-    %28 = length(%25) -> bb13;
+    %29 = %30;
+    GOTO bb13;
   }
   bb13 {
-    %29 = %28;
-    %30 = ConstantLoad 0
-    %31 = %30;
-    %24 = > %29 %31;
-    %32 = %24;
-    %33 = println(%32) -> bb14;
+    %32 = length(%29) -> bb14;
   }
   bb14 {
-    %35 = closure_fp $anon/.:main$502$0$thunk$1
-    %36 = main$502$0$thunk$1() -> bb15;
+    %33 = %32;
+    %34 = ConstantLoad 0
+    %35 = %34;
+    %28 = > %33 %35;
+    %36 = %28;
+    %37 = println(%36) -> bb15;
   }
   bb15 {
-    %37 = %36 is error
-    %37 ? bb16 : bb17;
+    %39 = ConstantLoad /tmp/bal_crypto_enc.pem
+    $desugar$3 = %39;
+    $desugar$4 = pbe3des;
+    %42 = $default$1($desugar$3,$desugar$4) -> bb16;
   }
   bb16 {
-    %0 = %36;
-    return;
+    $desugar$5 = %42;
+    %44 = fileWriteString($desugar$3,$desugar$4,$desugar$5) -> bb17;
   }
   bb17 {
-    %34 = %36;
-    GOTO bb18;
+    %45 = %44 is error
+    %45 ? bb18 : bb19;
   }
   bb18 {
-    %39 = ConstantLoad /tmp/bal_crypto_enc.pem
-    %40 = ConstantLoad secret
-    %41 = decodeRsaPrivateKeyFromKeyFile(%39,%40) -> bb19;
+    %0 = %44;
+    return;
   }
   bb19 {
-    %42 = %41 is error
-    %42 ? bb20 : bb21;
+    %38 = %44;
+    GOTO bb20;
   }
   bb20 {
-    %0 = %41;
-    return;
+    %47 = ConstantLoad /tmp/bal_crypto_enc.pem
+    %48 = ConstantLoad secret
+    %49 = decodeRsaPrivateKeyFromKeyFile(%47,%48) -> bb21;
   }
   bb21 {
-    %38 = %41;
-    GOTO bb22;
+    %50 = %49 is error
+    %50 ? bb22 : bb23;
   }
   bb22 {
-    pk3des = %38;
-    %46 = signRsaSha256(data,pk3des) -> bb23;
+    %0 = %49;
+    return;
   }
   bb23 {
-    %47 = %46 is error
-    %47 ? bb24 : bb25;
+    %46 = %49;
+    GOTO bb24;
   }
   bb24 {
-    %0 = %46;
-    return;
+    pk3des = %46;
+    %54 = signRsaSha256(data,pk3des) -> bb25;
   }
   bb25 {
-    %45 = %46;
-    GOTO bb26;
+    %55 = %54 is error
+    %55 ? bb26 : bb27;
   }
   bb26 {
-    %48 = length(%45) -> bb27;
+    %0 = %54;
+    return;
   }
   bb27 {
-    %49 = %48;
-    %50 = ConstantLoad 0
-    %51 = %50;
-    %44 = > %49 %51;
-    %52 = %44;
-    %53 = println(%52) -> bb28;
+    %53 = %54;
+    GOTO bb28;
   }
   bb28 {
-    %55 = closure_fp $anon/.:main$502$0$thunk$2
-    %56 = main$502$0$thunk$2() -> bb29;
+    %56 = length(%53) -> bb29;
   }
   bb29 {
-    %57 = %56 is error
-    %57 ? bb30 : bb31;
+    %57 = %56;
+    %58 = ConstantLoad 0
+    %59 = %58;
+    %52 = > %57 %59;
+    %60 = %52;
+    %61 = println(%60) -> bb30;
   }
   bb30 {
-    %0 = %56;
-    return;
+    %63 = ConstantLoad /tmp/bal_crypto_enc.pem
+    $desugar$6 = %63;
+    $desugar$7 = pbeRc2;
+    %66 = $default$1($desugar$6,$desugar$7) -> bb31;
   }
   bb31 {
-    %54 = %56;
-    GOTO bb32;
+    $desugar$8 = %66;
+    %68 = fileWriteString($desugar$6,$desugar$7,$desugar$8) -> bb32;
   }
   bb32 {
-    %59 = ConstantLoad /tmp/bal_crypto_enc.pem
-    %60 = ConstantLoad secret
-    %61 = decodeRsaPrivateKeyFromKeyFile(%59,%60) -> bb33;
+    %69 = %68 is error
+    %69 ? bb33 : bb34;
   }
   bb33 {
-    %62 = %61 is error
-    %62 ? bb34 : bb35;
+    %0 = %68;
+    return;
   }
   bb34 {
-    %0 = %61;
-    return;
+    %62 = %68;
+    GOTO bb35;
   }
   bb35 {
-    %58 = %61;
-    GOTO bb36;
+    %71 = ConstantLoad /tmp/bal_crypto_enc.pem
+    %72 = ConstantLoad secret
+    %73 = decodeRsaPrivateKeyFromKeyFile(%71,%72) -> bb36;
   }
   bb36 {
-    pkRc2 = %58;
-    %66 = signRsaSha256(data,pkRc2) -> bb37;
+    %74 = %73 is error
+    %74 ? bb37 : bb38;
   }
   bb37 {
-    %67 = %66 is error
-    %67 ? bb38 : bb39;
+    %0 = %73;
+    return;
   }
   bb38 {
-    %0 = %66;
-    return;
+    %70 = %73;
+    GOTO bb39;
   }
   bb39 {
-    %65 = %66;
-    GOTO bb40;
+    pkRc2 = %70;
+    %78 = signRsaSha256(data,pkRc2) -> bb40;
   }
   bb40 {
-    %68 = length(%65) -> bb41;
+    %79 = %78 is error
+    %79 ? bb41 : bb42;
   }
   bb41 {
-    %69 = %68;
-    %70 = ConstantLoad 0
-    %71 = %70;
-    %64 = > %69 %71;
-    %72 = %64;
-    %73 = println(%72) -> bb42;
+    %0 = %78;
+    return;
   }
   bb42 {
-    %75 = closure_fp $anon/.:main$502$0$thunk$3
-    %76 = main$502$0$thunk$3() -> bb43;
+    %77 = %78;
+    GOTO bb43;
   }
   bb43 {
-    %77 = %76 is error
-    %77 ? bb44 : bb45;
+    %80 = length(%77) -> bb44;
   }
   bb44 {
-    %0 = %76;
-    return;
+    %81 = %80;
+    %82 = ConstantLoad 0
+    %83 = %82;
+    %76 = > %81 %83;
+    %84 = %76;
+    %85 = println(%84) -> bb45;
   }
   bb45 {
-    %74 = %76;
-    GOTO bb46;
+    %87 = ConstantLoad /tmp/bal_crypto_enc.pem
+    $desugar$9 = %87;
+    $desugar$10 = pbes2;
+    %90 = $default$1($desugar$9,$desugar$10) -> bb46;
   }
   bb46 {
-    %78 = ConstantLoad /tmp/bal_crypto_enc.pem
-    %79 = ConstantLoad wrong
-    %80 = decodeRsaPrivateKeyFromKeyFile(%78,%79) -> bb47;
+    $desugar$11 = %90;
+    %92 = fileWriteString($desugar$9,$desugar$10,$desugar$11) -> bb47;
   }
   bb47 {
-    bad = %80;
-    %82 = bad is error
-    %83 = %82;
-    %84 = println(%83) -> bb48;
+    %93 = %92 is error
+    %93 ? bb48 : bb49;
   }
   bb48 {
+    %0 = %92;
     return;
   }
-}
-main$502$0$thunk$0() -> nil|error{
-  bb0 {
-    %1 = ConstantLoad /tmp/bal_crypto_enc.pem
-    $desugar$0 = %1;
-    $desugar$1 = (1, pbes2);
-    %4 = $default$1($desugar$0,$desugar$1) -> bb1;
+  bb49 {
+    %86 = %92;
+    GOTO bb50;
   }
-  bb1 {
-    $desugar$2 = %4;
-    %6 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  bb50 {
+    %94 = ConstantLoad /tmp/bal_crypto_enc.pem
+    %95 = ConstantLoad wrong
+    %96 = decodeRsaPrivateKeyFromKeyFile(%94,%95) -> bb51;
   }
-  bb2 {
-    %0 = %6;
-    return;
+  bb51 {
+    bad = %96;
+    %98 = bad is error
+    %99 = %98;
+    %100 = println(%99) -> bb52;
   }
-}
-main$502$0$thunk$1() -> nil|error{
-  bb0 {
-    %1 = ConstantLoad /tmp/bal_crypto_enc.pem
-    $desugar$3 = %1;
-    $desugar$4 = (1, pbe3des);
-    %4 = $default$1($desugar$3,$desugar$4) -> bb1;
-  }
-  bb1 {
-    $desugar$5 = %4;
-    %6 = fileWriteString($desugar$3,$desugar$4,$desugar$5) -> bb2;
-  }
-  bb2 {
-    %0 = %6;
-    return;
-  }
-}
-main$502$0$thunk$2() -> nil|error{
-  bb0 {
-    %1 = ConstantLoad /tmp/bal_crypto_enc.pem
-    $desugar$6 = %1;
-    $desugar$7 = (1, pbeRc2);
-    %4 = $default$1($desugar$6,$desugar$7) -> bb1;
-  }
-  bb1 {
-    $desugar$8 = %4;
-    %6 = fileWriteString($desugar$6,$desugar$7,$desugar$8) -> bb2;
-  }
-  bb2 {
-    %0 = %6;
-    return;
-  }
-}
-main$502$0$thunk$3() -> nil|error{
-  bb0 {
-    %1 = ConstantLoad /tmp/bal_crypto_enc.pem
-    $desugar$9 = %1;
-    $desugar$10 = (1, pbes2);
-    %4 = $default$1($desugar$9,$desugar$10) -> bb1;
-  }
-  bb1 {
-    $desugar$11 = %4;
-    %6 = fileWriteString($desugar$9,$desugar$10,$desugar$11) -> bb2;
-  }
-  bb2 {
-    %0 = %6;
+  bb52 {
     return;
   }
 }

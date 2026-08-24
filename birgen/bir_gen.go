@@ -954,11 +954,6 @@ func handleExprFunctionBody(ctx context, body *ast.BLangExprFunctionBody) {
 }
 
 func lambdaFunction(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangLambdaFunction) expressionEffect {
-	effect, _ := loadLambdaFunction(ctx, curBB, expr)
-	return effect
-}
-
-func loadLambdaFunction(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangLambdaFunction) (expressionEffect, *bir.BIRFunction) {
 	root := newFunctionRoot(ctx.function().pkgCtx, ctx)
 	birFunc := transformFunctionInner(root, expr.Function, nil)
 	ctx.function().pkgCtx.birPkg.Functions = append(ctx.function().pkgCtx.birPkg.Functions, *birFunc)
@@ -972,21 +967,29 @@ func loadLambdaFunction(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangLa
 	if root.fn.isClosure {
 		ctx.function().isClosure = true
 	}
-	return expressionEffect{result: resultOperand, block: curBB}, birFunc
+	return expressionEffect{result: resultOperand, block: curBB}
 }
 
 func expressionThunk(ctx context, curBB *bir.BIRBasicBlock, expr *desugar.BLangExpressionThunk) expressionEffect {
-	fpEffect, birFunc := loadLambdaFunction(ctx, curBB, expr.Lambda)
-	thenBB := ctx.function().addBB()
-	resultOperand := ctx.addTempVar(expr.GetDeterminedType())
-	callSite := bir.CallSite{
-		Kind:      bir.CallKindFunctionPointer,
-		Name:      birFunc.Name,
-		FpOperand: fpEffect.result,
+	body, ok := expr.Lambda.Function.Body.(*ast.BLangBlockFunctionBody)
+	if !ok || len(body.Stmts) == 0 {
+		ctx.internalError("expression thunk must have a non-empty block body", expr.GetPosition())
+		return expressionEffect{result: ctx.addTempVar(expr.GetDeterminedType()), block: curBB}
 	}
-	call := bir.NewCall(callSite, thenBB, resultOperand, ctx.function().loc(expr.GetPosition()))
-	fpEffect.block.Terminator = call
-	return expressionEffect{result: resultOperand, block: thenBB}
+	returnStmt, ok := body.Stmts[len(body.Stmts)-1].(*ast.BLangReturn)
+	if !ok {
+		ctx.internalError("expression thunk must end with a return statement", expr.GetPosition())
+		return expressionEffect{result: ctx.addTempVar(expr.GetDeterminedType()), block: curBB}
+	}
+	for _, stmt := range body.Stmts[:len(body.Stmts)-1] {
+		effect := handleStatement(ctx, curBB, stmt)
+		curBB = effect.block
+		if curBB == nil {
+			ctx.internalError("expression thunk setup cannot complete abruptly", stmt.GetPosition())
+			return expressionEffect{result: ctx.addTempVar(expr.GetDeterminedType())}
+		}
+	}
+	return handleActionOrExpression(ctx, curBB, returnStmt.Expr)
 }
 
 type expressionEffect struct {
