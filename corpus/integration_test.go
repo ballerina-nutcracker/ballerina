@@ -614,6 +614,9 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 		if err != nil {
 			return nil, fmt.Errorf("parsing %s: %v", relPath, err)
 		}
+		if cx.HasDiagnostics() {
+			return nil, fmt.Errorf("parsing %s produced diagnostics", relPath)
+		}
 		cu := nodebuilder.GetCompilationUnit(cx, st)
 		syntaxTrees = append(syntaxTrees, cu)
 	}

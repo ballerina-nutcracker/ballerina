@@ -29,8 +29,8 @@ type xmlLexer struct {
 	*lexer
 }
 
-func newXMLLexer(reader text.CharReader) *xmlLexer {
-	inner := newLexer(reader)
+func newXMLLexer(reader text.CharReader, reporters ...*parserFailureReporter) *xmlLexer {
+	inner := newLexer(reader, reporters...)
 	inner.StartMode(parserModeXmlContent)
 	return &xmlLexer{lexer: inner}
 }
@@ -68,7 +68,8 @@ func (l *xmlLexer) NextToken() st.STToken {
 	case parserModeXmlCdataSection:
 		token = l.readTokenInXMLCommentOrCDATA(true)
 	default:
-		panic("xmlLexer.NextToken: unexpected parser mode")
+		l.internalError("xmlLexer.NextToken: unexpected parser mode")
+		return failedToken()
 	}
 
 	if len(l.context.diagnostics) > 0 {

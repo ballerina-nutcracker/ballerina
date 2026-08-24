@@ -247,7 +247,7 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 		moduleCtx.testDocContextMap,
 	)
 
-	if len(syntaxTrees) == 0 {
+	if compilerCtx.HasDiagnostics() || len(syntaxTrees) == 0 {
 		return
 	}
 

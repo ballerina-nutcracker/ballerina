@@ -253,6 +253,9 @@ func compileBundledLib(cx *context.CompilerContext, cache map[string]model.Expor
 	if err != nil {
 		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: parse %s: %w", lib.implicitID, err)
 	}
+	if cx.HasDiagnostics() {
+		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: parse %s produced diagnostics", lib.implicitID)
+	}
 	cu := nodebuilder.GetCompilationUnit(cx, syntaxTree)
 	if cu == nil {
 		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: AST generation failed for %s", lib.implicitID)

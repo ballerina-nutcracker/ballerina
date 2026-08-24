@@ -30,8 +30,8 @@ type documentationLexer struct {
 	previousBacktickMode parserMode
 }
 
-func newDocumentationLexer(charReader text.CharReader, leadingTriviaList []st.STNode, diagnostics []st.STNodeDiagnostic) *documentationLexer {
-	lexer := newLexer(charReader)
+func newDocumentationLexer(charReader text.CharReader, leadingTriviaList []st.STNode, diagnostics []st.STNodeDiagnostic, reporters ...*parserFailureReporter) *documentationLexer {
+	lexer := newLexer(charReader, reporters...)
 	lexer.context.leadingTriviaList = leadingTriviaList
 	lexer.context.diagnostics = diagnostics
 	lexer.StartMode(parserModeDocLineStartHash)
@@ -209,7 +209,8 @@ func (dl *documentationLexer) processEndOfLine() st.STNode {
 		}
 		return st.CreateMinutiae(st.END_OF_LINE_MINUTIAE, dl.getLexeme())
 	default:
-		panic("unreachable")
+		dl.internalError("unreachable")
+		return st.CreateEmptyNode()
 	}
 }
 

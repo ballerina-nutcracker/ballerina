@@ -38,12 +38,14 @@ type tokenLexer interface {
 	SwitchMode(mode parserMode)
 	EndMode()
 	GetCurrentMode() parserMode
+	failureReporter() *parserFailureReporter
 }
 
 // TODO: introduce diagnostic context with flags and a channel
 type lexer struct {
-	reader  text.CharReader
-	context lexerContext
+	reader   text.CharReader
+	context  lexerContext
+	reporter *parserFailureReporter
 }
 
 type lexerContext struct {
@@ -53,11 +55,24 @@ type lexerContext struct {
 	diagnostics       []st.STNodeDiagnostic
 }
 
-func newLexer(reader text.CharReader) *lexer {
-	return &lexer{
-		reader:  reader,
-		context: lexerContext{},
+func newLexer(reader text.CharReader, reporters ...*parserFailureReporter) *lexer {
+	var reporter *parserFailureReporter
+	if len(reporters) > 0 {
+		reporter = reporters[0]
 	}
+	return &lexer{
+		reader:   reader,
+		context:  lexerContext{},
+		reporter: reporter,
+	}
+}
+
+func (l *lexer) failureReporter() *parserFailureReporter {
+	return l.reporter
+}
+
+func (l *lexer) internalError(message string) {
+	l.reporter.internalError(message)
 }
 
 func (l *lexer) StartMode(mode parserMode) {
@@ -73,7 +88,8 @@ func (l *lexer) SwitchMode(mode parserMode) {
 
 func (l *lexer) EndMode() {
 	if len(l.context.modeStack) == 0 {
-		panic("cannot end mode: mode stack is empty")
+		l.internalError("cannot end mode: mode stack is empty")
+		return
 	}
 	l.context.modeStack = l.context.modeStack[:len(l.context.modeStack)-1]
 	if len(l.context.modeStack) == 0 {
@@ -1263,7 +1279,8 @@ func (l *lexer) processEndOfLine() st.STNode {
 		}
 		return st.CreateMinutiae(st.END_OF_LINE_MINUTIAE, l.getLexeme())
 	default:
-		panic("unreachable")
+		l.internalError("unreachable")
+		return st.CreateEmptyNode()
 	}
 }
 

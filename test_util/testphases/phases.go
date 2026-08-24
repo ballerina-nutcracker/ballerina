@@ -194,6 +194,9 @@ func RunPipelineWithContent(env *context.CompilerEnvironment, cx *context.Compil
 	if err != nil {
 		return nil, fmt.Errorf("parsing failed: %w", err)
 	}
+	if cx.HasDiagnostics() {
+		return nil, fmt.Errorf("parsing failed with diagnostics")
+	}
 	if phase == PhaseParse {
 		return result, nil
 	}

@@ -25,54 +25,84 @@ type tokenReader struct {
 	currentToken      st.STToken
 	tokenBuffer       tokenBuffer
 	currentTokenIndex int
+	reporter          *parserFailureReporter
 }
 
 func createTokenReader(lexer tokenLexer) *tokenReader {
+	reporter := lexer.failureReporter()
 	return &tokenReader{
 		lexer:             lexer,
 		currentToken:      nil,
 		currentTokenIndex: 0,
+		reporter:          reporter,
 		tokenBuffer: tokenBuffer{
 			capacity:   bufferSize,
 			tokens:     make([]st.STToken, bufferSize),
 			endIndex:   -1,
 			startIndex: -1,
 			size:       0,
+			reporter:   reporter,
 		},
 	}
 }
 
+func (t *tokenReader) internalError(message string) {
+	t.reporter.internalError(message)
+}
+
 func (t *tokenReader) Read() st.STToken {
+	if t.reporter.hasFailed() {
+		return failedToken()
+	}
 	if t.tokenBuffer.size > 0 {
 		t.currentToken = t.tokenBuffer.consume()
 	} else {
 		t.currentToken = t.lexer.NextToken()
+	}
+	if t.reporter.hasFailed() {
+		return failedToken()
 	}
 	t.currentTokenIndex++
 	return t.currentToken
 }
 
 func (t *tokenReader) Peek() st.STToken {
+	if t.reporter.hasFailed() {
+		return failedToken()
+	}
 	if t.tokenBuffer.size > 0 {
 		return t.tokenBuffer.peek()
-	} else {
-		token := t.lexer.NextToken()
-		t.tokenBuffer.add(token)
-		return token
 	}
+	token := t.lexer.NextToken()
+	if t.reporter.hasFailed() {
+		return failedToken()
+	}
+	t.tokenBuffer.add(token)
+	return token
 }
 
 func (t *tokenReader) PeekN(n int) st.STToken {
+	if t.reporter.hasFailed() {
+		return failedToken()
+	}
 	if n >= bufferSize {
-		panic("n is too large")
+		t.internalError("n is too large")
+		return failedToken()
 	}
 	remaining := n - t.tokenBuffer.size
 	for remaining > 0 {
 		token := t.lexer.NextToken()
+		if t.reporter.hasFailed() {
+			return failedToken()
+		}
 		t.tokenBuffer.add(token)
 		remaining--
 	}
-	return t.tokenBuffer.peekN(n)
+	token := t.tokenBuffer.peekN(n)
+	if t.reporter.hasFailed() {
+		return failedToken()
+	}
+	return token
 }
 
 func (t *tokenReader) Head() st.STToken {
@@ -107,11 +137,17 @@ type tokenBuffer struct {
 	endIndex   int
 	startIndex int
 	size       int
+	reporter   *parserFailureReporter
+}
+
+func (t *tokenBuffer) internalError(message string) {
+	t.reporter.internalError(message)
 }
 
 func (t *tokenBuffer) add(token st.STToken) {
 	if t.size == t.capacity {
-		panic("buffer overflow")
+		t.internalError("buffer overflow")
+		return
 	}
 
 	if t.endIndex == t.capacity-1 {
@@ -134,7 +170,8 @@ func (t *tokenBuffer) peek() st.STToken {
 
 func (t *tokenBuffer) peekN(n int) st.STToken {
 	if n > t.size {
-		panic("n is too large")
+		t.internalError("n is too large")
+		return failedToken()
 	}
 
 	index := t.startIndex + n - 1

@@ -146,6 +146,9 @@ func TestRecoveringNodeBuilderReportsNestedSyntaxDiagnosticOnce(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if cx.HasDiagnostics() {
+		t.Fatal("parser reported diagnostics")
+	}
 
 	diagnosticsBeforeBuild := len(cx.Diagnostics())
 	builder := newRecoveringNodeBuilder(cx)
@@ -200,6 +203,9 @@ func buildNodeBuilderCompilationUnit(t *testing.T, source string, recovering boo
 	syntaxTree, err := parser.GetSyntaxTree(cx, "test.bal", source)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if cx.HasDiagnostics() {
+		t.Fatal("parser reported diagnostics")
 	}
 
 	if !recovering {
