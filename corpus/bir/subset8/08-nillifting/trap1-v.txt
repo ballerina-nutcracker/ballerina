@@ -114,7 +114,7 @@ main() -> nil{
   bb24 {
     return;
   }
-
+  
   error-table {
     [bb1, bb4] -> bb5, %5
     [bb7, bb10] -> bb11, %13

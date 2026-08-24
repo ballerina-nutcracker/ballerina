@@ -36,7 +36,7 @@ main() -> nil{
   bb6 {
     return;
   }
-
+  
   error-table {
     [bb1, bb4] -> bb5, %5
   }

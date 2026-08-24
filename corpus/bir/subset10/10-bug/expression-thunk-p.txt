@@ -1,0 +1,56 @@
+module $anon.. v 0.0.0;
+panicValues() -> [int...]{
+  bb0 {
+    %1 = ConstantLoad panic across thunk
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int...][%1]{}
+    $desugar$0 = %2;
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %6 = push($desugar$0,%5) -> bb1;
+  }
+  bb1 {
+    %7 = panicValues() -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %7;
+    %9 = length($desugar$1) -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %9;
+    %11 = ConstantLoad 0
+    $desugar$3 = %11;
+    GOTO bb4;
+  }
+  bb4 {
+    %14 = $desugar$3;
+    %15 = $desugar$2;
+    %13 = < %14 %15;
+    %13 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    %1 = %0;
+    %2 = push((1, $desugar$0),%1) -> bb7;
+  }
+  bb6 {
+    _ = $desugar$0;
+    return;
+  }
+  bb7 {
+    %4 = (1, $desugar$3);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$3) = %3;
+    PopScopeFrame
+    GOTO bb4;
+  }
+}

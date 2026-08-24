@@ -15,23 +15,28 @@
           (binary-expr +
             (literal <root xmlns="http://default" xmlns:a="http://a.com">)
             (literal <a:item a:key="v">text</a:item><child/></root>)))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref nsPath))))
-      (var-def
-        (variable $desugar$1 (expr
-          (simple-var-ref nsContent))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref nsPath))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (simple-var-ref nsContent))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable nsResult (type
           (value-type xml)) (expr
@@ -49,23 +54,28 @@
         (variable multiContent (type
           (value-type string)) (expr
           (literal <!DOCTYPE note><!-- a comment --><?target data?><a/><b/>))))
-      (var-def
-        (variable $desugar$3 (expr
-          (simple-var-ref multiPath))))
-      (var-def
-        (variable $desugar$4 (expr
-          (simple-var-ref multiContent))))
-      (var-def
-        (variable $desugar$5 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$4))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$4)
-            (simple-var-ref $desugar$5)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$1 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$3 (expr
+                    (simple-var-ref multiPath))))
+                (var-def
+                  (variable $desugar$4 (expr
+                    (simple-var-ref multiContent))))
+                (var-def
+                  (variable $desugar$5 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$4))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$3)
+                    (simple-var-ref $desugar$4)
+                    (simple-var-ref $desugar$5))))))))))
       (var-def
         (variable multiResult (type
           (value-type xml)) (expr
@@ -79,24 +89,29 @@
         (variable emptyPath (type
           (value-type string)) (expr
           (literal /tmp/bal_io_xml_empty.xml))))
-      (var-def
-        (variable $desugar$6 (expr
-          (simple-var-ref emptyPath))))
-      (var-def
-        (variable $desugar$7 (expr
-          (literal    
-  ))))
-      (var-def
-        (variable $desugar$8 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$6)
-            (simple-var-ref $desugar$7))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$6)
-            (simple-var-ref $desugar$7)
-            (simple-var-ref $desugar$8)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$2 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$6 (expr
+                    (simple-var-ref emptyPath))))
+                (var-def
+                  (variable $desugar$7 (expr
+                    (literal    
+  ))))
+                (var-def
+                  (variable $desugar$8 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$6)
+                      (simple-var-ref $desugar$7))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$6)
+                    (simple-var-ref $desugar$7)
+                    (simple-var-ref $desugar$8))))))))))
       (var-def
         (variable emptyResult (type
           (value-type xml)) (expr
@@ -112,23 +127,28 @@
         (variable badPath (type
           (value-type string)) (expr
           (literal /tmp/bal_io_xml_bad.xml))))
-      (var-def
-        (variable $desugar$9 (expr
-          (simple-var-ref badPath))))
-      (var-def
-        (variable $desugar$10 (expr
-          (literal <root><unclosed></root>))))
-      (var-def
-        (variable $desugar$11 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$9)
-            (simple-var-ref $desugar$10))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$9)
-            (simple-var-ref $desugar$10)
-            (simple-var-ref $desugar$11)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$3 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$9 (expr
+                    (simple-var-ref badPath))))
+                (var-def
+                  (variable $desugar$10 (expr
+                    (literal <root><unclosed></root>))))
+                (var-def
+                  (variable $desugar$11 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$9)
+                      (simple-var-ref $desugar$10))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$9)
+                    (simple-var-ref $desugar$10)
+                    (simple-var-ref $desugar$11))))))))))
       (var-def
         (variable badResult (type
           (union-type
@@ -145,23 +165,28 @@
         (variable strayPath (type
           (value-type string)) (expr
           (literal /tmp/bal_io_xml_stray.xml))))
-      (var-def
-        (variable $desugar$12 (expr
-          (simple-var-ref strayPath))))
-      (var-def
-        (variable $desugar$13 (expr
-          (literal </root>))))
-      (var-def
-        (variable $desugar$14 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$12)
-            (simple-var-ref $desugar$13))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$12)
-            (simple-var-ref $desugar$13)
-            (simple-var-ref $desugar$14)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$4 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$12 (expr
+                    (simple-var-ref strayPath))))
+                (var-def
+                  (variable $desugar$13 (expr
+                    (literal </root>))))
+                (var-def
+                  (variable $desugar$14 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$12)
+                      (simple-var-ref $desugar$13))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$12)
+                    (simple-var-ref $desugar$13)
+                    (simple-var-ref $desugar$14))))))))))
       (var-def
         (variable strayResult (type
           (union-type

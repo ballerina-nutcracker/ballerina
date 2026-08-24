@@ -1,305 +1,395 @@
 module $anon.. v 0.0.0;
 main() -> nil|error{
   bb0 {
-    %1 = ConstantLoad https://example.com
-    $desugar$0 = %1;
-    %3 = $default$15($desugar$0) -> bb1;
+    %2 = fp $anon/.:main$493$1$thunk$0
+    %3 = main$493$1$thunk$0() -> bb1;
   }
   bb1 {
-    $desugar$1 = %3;
-    %6 = newObject ballerina/http:Client
-    %7 = init(%6,$desugar$0,$desugar$1) -> bb2;
+    %4 = %3 is error
+    %4 ? bb2 : bb3;
   }
   bb2 {
-    %9 = %7 is nil
-    %9 ? bb3 : bb4;
+    %0 = %3;
+    return;
   }
   bb3 {
-    %8 = %6;
-    GOTO bb5;
+    %1 = %3;
+    GOTO bb4;
   }
   bb4 {
-    %8 = %7;
-    GOTO bb5;
+    c = %1;
+    %7 = closure_fp $anon/.:main$493$1$thunk$1
+    %8 = main$493$1$thunk$1() -> bb5;
   }
   bb5 {
-    %10 = %8 is error
-    %10 ? bb6 : bb7;
+    %9 = %8 is error
+    %9 ? bb6 : bb7;
   }
   bb6 {
     %0 = %8;
     return;
   }
   bb7 {
-    %5 = %8;
+    %6 = %8;
     GOTO bb8;
   }
   bb8 {
-    c = %5;
-    %12 = ConstantLoad /path
-    $desugar$2 = %12;
-    %14 = $default$21($desugar$2) -> bb9;
+    r = %6;
+    %12 = ConstantLoad statusCode
+    %11 = r[%12];
+    %13 = %11;
+    %14 = println(%13) -> bb9;
   }
   bb9 {
-    $desugar$3 = %14;
-    %16 = ConstantLoad typedesc
-    $desugar$4 = %16;
-    %19 = $remote$get(c,$desugar$2,$desugar$3,$desugar$4) -> bb10;
+    %16 = closure_fp $anon/.:main$493$1$thunk$2
+    %17 = main$493$1$thunk$2() -> bb10;
   }
   bb10 {
-    %20 = %19 is error
-    %20 ? bb11 : bb12;
+    %18 = %17 is error
+    %18 ? bb11 : bb12;
   }
   bb11 {
-    %0 = %19;
+    %0 = %17;
     return;
   }
   bb12 {
-    %18 = %19;
+    %15 = %17;
     GOTO bb13;
   }
   bb13 {
-    r = %18;
-    %23 = ConstantLoad statusCode
-    %22 = r[%23];
-    %24 = %22;
-    %25 = println(%24) -> bb14;
+    ru = %15;
+    %20 = ru is string
+    %21 = %20;
+    %22 = println(%21) -> bb14;
   }
   bb14 {
-    %26 = ConstantLoad /path
-    $desugar$5 = %26;
-    %28 = $default$21($desugar$5) -> bb15;
+    %24 = closure_fp $anon/.:main$493$1$thunk$3
+    %25 = main$493$1$thunk$3() -> bb15;
   }
   bb15 {
-    $desugar$6 = %28;
-    %30 = ConstantLoad typedesc
-    $desugar$7 = %30;
-    %33 = $remote$get(c,$desugar$5,$desugar$6,$desugar$7) -> bb16;
+    %26 = %25 is error
+    %26 ? bb16 : bb17;
   }
   bb16 {
-    %34 = %33 is error
-    %34 ? bb17 : bb18;
+    %0 = %25;
+    return;
   }
   bb17 {
-    %0 = %33;
-    return;
+    %23 = %25;
+    GOTO bb18;
   }
   bb18 {
-    %32 = %33;
-    GOTO bb19;
+    text = %23;
+    %28 = println(text) -> bb19;
   }
   bb19 {
-    ru = %32;
-    %36 = ru is string
-    %37 = %36;
-    %38 = println(%37) -> bb20;
+    %30 = closure_fp $anon/.:main$493$1$thunk$4
+    %31 = main$493$1$thunk$4() -> bb20;
   }
   bb20 {
-    %39 = ConstantLoad /path
-    $desugar$8 = %39;
-    %41 = $default$21($desugar$8) -> bb21;
+    %32 = %31 is error
+    %32 ? bb21 : bb22;
   }
   bb21 {
-    $desugar$9 = %41;
-    %43 = ConstantLoad typedesc
-    $desugar$10 = %43;
-    %46 = $remote$get(c,$desugar$8,$desugar$9,$desugar$10) -> bb22;
+    %0 = %31;
+    return;
   }
   bb22 {
-    %47 = %46 is error
-    %47 ? bb23 : bb24;
+    %29 = %31;
+    GOTO bb23;
   }
   bb23 {
-    %0 = %46;
-    return;
+    optText = %29;
+    %34 = println(optText) -> bb24;
   }
   bb24 {
-    %45 = %46;
-    GOTO bb25;
+    %36 = closure_fp $anon/.:main$493$1$thunk$5
+    %37 = main$493$1$thunk$5() -> bb25;
   }
   bb25 {
-    text = %45;
-    %49 = println(text) -> bb26;
+    %38 = %37 is error
+    %38 ? bb26 : bb27;
   }
   bb26 {
-    %50 = ConstantLoad /path
-    $desugar$11 = %50;
-    %52 = $default$21($desugar$11) -> bb27;
+    %0 = %37;
+    return;
   }
   bb27 {
-    $desugar$12 = %52;
-    %54 = ConstantLoad typedesc
-    $desugar$13 = %54;
-    %57 = $remote$get(c,$desugar$11,$desugar$12,$desugar$13) -> bb28;
+    %35 = %37;
+    GOTO bb28;
   }
   bb28 {
-    %58 = %57 is error
-    %58 ? bb29 : bb30;
+    bytes = %35;
+    %40 = length(bytes) -> bb29;
   }
   bb29 {
-    %0 = %57;
-    return;
+    %41 = %40;
+    %42 = println(%41) -> bb30;
   }
   bb30 {
-    %56 = %57;
-    GOTO bb31;
+    %44 = closure_fp $anon/.:main$493$1$thunk$6
+    %45 = main$493$1$thunk$6() -> bb31;
   }
   bb31 {
-    optText = %56;
-    %60 = println(optText) -> bb32;
+    %46 = %45 is error
+    %46 ? bb32 : bb33;
   }
   bb32 {
-    %61 = ConstantLoad /path
-    $desugar$14 = %61;
-    %63 = $default$21($desugar$14) -> bb33;
-  }
-  bb33 {
-    $desugar$15 = %63;
-    %65 = ConstantLoad typedesc
-    $desugar$16 = %65;
-    %68 = $remote$get(c,$desugar$14,$desugar$15,$desugar$16) -> bb34;
-  }
-  bb34 {
-    %69 = %68 is error
-    %69 ? bb35 : bb36;
-  }
-  bb35 {
-    %0 = %68;
+    %0 = %45;
     return;
   }
+  bb33 {
+    %43 = %45;
+    GOTO bb34;
+  }
+  bb34 {
+    optBytes = %43;
+    %48 = optBytes is [int:Unsigned8...]
+    %49 = %48;
+    %50 = println(%49) -> bb35;
+  }
+  bb35 {
+    %52 = closure_fp $anon/.:main$493$1$thunk$7
+    %53 = main$493$1$thunk$7() -> bb36;
+  }
   bb36 {
-    %67 = %68;
-    GOTO bb37;
+    %54 = %53 is error
+    %54 ? bb37 : bb38;
   }
   bb37 {
-    bytes = %67;
-    %71 = length(bytes) -> bb38;
+    %0 = %53;
+    return;
   }
   bb38 {
-    %72 = %71;
-    %73 = println(%72) -> bb39;
+    %51 = %53;
+    GOTO bb39;
   }
   bb39 {
-    %74 = ConstantLoad /path
-    $desugar$17 = %74;
-    %76 = $default$21($desugar$17) -> bb40;
+    nothing = %51;
+    %56 = nothing;
+    %57 = println(%56) -> bb40;
   }
   bb40 {
-    $desugar$18 = %76;
-    %78 = ConstantLoad typedesc
-    $desugar$19 = %78;
-    %81 = $remote$get(c,$desugar$17,$desugar$18,$desugar$19) -> bb41;
+    %59 = closure_fp $anon/.:main$493$1$thunk$8
+    %60 = main$493$1$thunk$8() -> bb41;
   }
   bb41 {
-    %82 = %81 is error
-    %82 ? bb42 : bb43;
+    %61 = %60 is error
+    %61 ? bb42 : bb43;
   }
   bb42 {
-    %0 = %81;
+    %0 = %60;
     return;
   }
   bb43 {
-    %80 = %81;
+    %58 = %60;
     GOTO bb44;
   }
   bb44 {
-    optBytes = %80;
-    %84 = optBytes is [int:Unsigned8...]
-    %85 = %84;
-    %86 = println(%85) -> bb45;
+    explicitText = %58;
+    %63 = println(explicitText) -> bb45;
   }
   bb45 {
-    %87 = ConstantLoad /path
-    $desugar$20 = %87;
-    %89 = $default$21($desugar$20) -> bb46;
+    %64 = ConstantLoad /path
+    $desugar$26 = %64;
+    %66 = $default$21($desugar$26) -> bb46;
   }
   bb46 {
-    $desugar$21 = %89;
-    %91 = ConstantLoad typedesc
-    $desugar$22 = %91;
-    %94 = $remote$get(c,$desugar$20,$desugar$21,$desugar$22) -> bb47;
+    $desugar$27 = %66;
+    %68 = ConstantLoad typedesc
+    $desugar$28 = %68;
+    %70 = $remote$get(c,$desugar$26,$desugar$27,$desugar$28) -> bb47;
   }
   bb47 {
-    %95 = %94 is error
-    %95 ? bb48 : bb49;
+    person = %70;
+    %72 = person is error
+    %73 = %72;
+    %74 = println(%73) -> bb48;
   }
   bb48 {
-    %0 = %94;
-    return;
+    %75 = ConstantLoad /path
+    $desugar$29 = %75;
+    %77 = $default$21($desugar$29) -> bb49;
   }
   bb49 {
-    %93 = %94;
-    GOTO bb50;
+    $desugar$30 = %77;
+    %79 = ConstantLoad typedesc
+    $desugar$31 = %79;
+    %81 = $remote$get(c,$desugar$29,$desugar$30,$desugar$31) -> bb50;
   }
   bb50 {
-    nothing = %93;
-    %97 = nothing;
-    %98 = println(%97) -> bb51;
+    asXml = %81;
+    %83 = asXml is error
+    %84 = %83;
+    %85 = println(%84) -> bb51;
   }
   bb51 {
-    %99 = ConstantLoad /path
-    $desugar$23 = %99;
-    %101 = $default$21($desugar$23) -> bb52;
-  }
-  bb52 {
-    $desugar$24 = %101;
-    %103 = ConstantLoad typedesc
-    $desugar$25 = %103;
-    %106 = $remote$get(c,$desugar$23,$desugar$24,$desugar$25) -> bb53;
-  }
-  bb53 {
-    %107 = %106 is error
-    %107 ? bb54 : bb55;
-  }
-  bb54 {
-    %0 = %106;
+    %86 = ConstantLoad <nil>
+    %0 = %86;
     return;
   }
-  bb55 {
-    %105 = %106;
-    GOTO bb56;
+}
+main$493$1$thunk$0() -> error|isolated client object { private remote function $remote$delete(string, nil|boolean|int|float|decimal|string|[json...]|{| json... |}|object { public function addHeader(string, string) returns nil; public string extraPathInfo; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string) returns string|error; public function getHeaderNames() returns [string...]; public function getHeaders(string) returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getQueryParamValue(string) returns nil|string; public function getQueryParamValues(string) returns nil|[string...]; public function getQueryParams() returns {| [string...]... |}; public function getTextPayload() returns string|error; public function hasHeader(string) returns boolean; public string httpVersion; public function init() returns nil; private function initNative() returns nil; public string method; public string rawPath; public function removeAllHeaders() returns nil; public function removeHeader(string) returns nil; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public string userAgent }, nil|{| string|[string...]... |}, nil|string, typedesc<nil|boolean|int|float|decimal|string|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }; private remote function $remote$execute(string, string, nil|boolean|int|float|decimal|string|[json...]|{| json... |}|object { public function addHeader(string, string) returns nil; public string extraPathInfo; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string) returns string|error; public function getHeaderNames() returns [string...]; public function getHeaders(string) returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getQueryParamValue(string) returns nil|string; public function getQueryParamValues(string) returns nil|[string...]; public function getQueryParams() returns {| [string...]... |}; public function getTextPayload() returns string|error; public function hasHeader(string) returns boolean; public string httpVersion; public function init() returns nil; private function initNative() returns nil; public string method; public string rawPath; public function removeAllHeaders() returns nil; public function removeHeader(string) returns nil; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public string userAgent }, nil|{| string|[string...]... |}, nil|string, typedesc<nil|boolean|int|float|decimal|string|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }; private remote function $remote$forward(string, object { public function addHeader(string, string) returns nil; public string extraPathInfo; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string) returns string|error; public function getHeaderNames() returns [string...]; public function getHeaders(string) returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getQueryParamValue(string) returns nil|string; public function getQueryParamValues(string) returns nil|[string...]; public function getQueryParams() returns {| [string...]... |}; public function getTextPayload() returns string|error; public function hasHeader(string) returns boolean; public string httpVersion; public function init() returns nil; private function initNative() returns nil; public string method; public string rawPath; public function removeAllHeaders() returns nil; public function removeHeader(string) returns nil; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public string userAgent }, typedesc<nil|boolean|int|float|decimal|string|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }; private remote function $remote$get(string, nil|{| string|[string...]... |}, typedesc<nil|boolean|int|float|decimal|string|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }; private remote function $remote$head(string, nil|{| string|[string...]... |}) returns error|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }; private remote function $remote$options(string, nil|{| string|[string...]... |}, typedesc<nil|boolean|int|float|decimal|string|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }; private remote function $remote$patch(string, nil|boolean|int|float|decimal|string|[json...]|{| json... |}|object { public function addHeader(string, string) returns nil; public string extraPathInfo; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string) returns string|error; public function getHeaderNames() returns [string...]; public function getHeaders(string) returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getQueryParamValue(string) returns nil|string; public function getQueryParamValues(string) returns nil|[string...]; public function getQueryParams() returns {| [string...]... |}; public function getTextPayload() returns string|error; public function hasHeader(string) returns boolean; public string httpVersion; public function init() returns nil; private function initNative() returns nil; public string method; public string rawPath; public function removeAllHeaders() returns nil; public function removeHeader(string) returns nil; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public string userAgent }, nil|{| string|[string...]... |}, nil|string, typedesc<nil|boolean|int|float|decimal|string|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }; private remote function $remote$post(string, nil|boolean|int|float|decimal|string|[json...]|{| json... |}|object { public function addHeader(string, string) returns nil; public string extraPathInfo; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string) returns string|error; public function getHeaderNames() returns [string...]; public function getHeaders(string) returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getQueryParamValue(string) returns nil|string; public function getQueryParamValues(string) returns nil|[string...]; public function getQueryParams() returns {| [string...]... |}; public function getTextPayload() returns string|error; public function hasHeader(string) returns boolean; public string httpVersion; public function init() returns nil; private function initNative() returns nil; public string method; public string rawPath; public function removeAllHeaders() returns nil; public function removeHeader(string) returns nil; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public string userAgent }, nil|{| string|[string...]... |}, nil|string, typedesc<nil|boolean|int|float|decimal|string|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }; private remote function $remote$put(string, nil|boolean|int|float|decimal|string|[json...]|{| json... |}|object { public function addHeader(string, string) returns nil; public string extraPathInfo; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string) returns string|error; public function getHeaderNames() returns [string...]; public function getHeaders(string) returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getQueryParamValue(string) returns nil|string; public function getQueryParamValues(string) returns nil|[string...]; public function getQueryParams() returns {| [string...]... |}; public function getTextPayload() returns string|error; public function hasHeader(string) returns boolean; public string httpVersion; public function init() returns nil; private function initNative() returns nil; public string method; public string rawPath; public function removeAllHeaders() returns nil; public function removeHeader(string) returns nil; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public string userAgent }, nil|{| string|[string...]... |}, nil|string, typedesc<nil|boolean|int|float|decimal|string|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }; public function init(string, {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| cacheSize: int, cacheValidityPeriod: int, type: "OCSP_CRL"|"OCSP_STAPLING", never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}) returns nil|error; private function initNative(string, {| compression: "ALWAYS"|"AUTO"|"NEVER", followRedirects: nil|{| allowAuthHeaders: boolean, enabled: boolean, maxCount: int, never... |}, httpVersion: "1.0"|"1.1"|"2.0", poolConfig: nil|{| maxActiveConnections: int, maxActiveStreamsPerConnection: int, maxIdleConnections: int, waitTime: decimal, never... |}, proxy: nil|{| host: string, password: string, port: int, userName: string, never... |}, responseLimits: {| maxEntityBodySize: int, maxHeaderSize: int, maxStatusLineLength: int, never... |}, secureSocket: nil|{| cert: string, certValidation: nil|{| cacheSize: int, cacheValidityPeriod: int, type: "OCSP_CRL"|"OCSP_STAPLING", never... |}, ciphers: [string...], enable: boolean, handshakeTimeout: decimal, key: {| certFile: string, keyFile: string, keyPassword: string, never... |}, protocol: nil|{| name: "DTLS"|"SSL"|"TLS", versions: [string...], never... |}, serverName: string, sessionTimeout: decimal, shareSession: boolean, verifyHostName: boolean, never... |}, timeout: decimal, never... |}) returns nil|error }{
+  bb0 {
+    %1 = ConstantLoad https://example.com
+    $desugar$0 = %1;
+    %3 = $default$15($desugar$0) -> bb1;
   }
-  bb56 {
-    explicitText = %105;
-    %109 = println(explicitText) -> bb57;
+  bb1 {
+    $desugar$1 = %3;
+    %5 = newObject ballerina/http:Client
+    %6 = init(%5,$desugar$0,$desugar$1) -> bb2;
   }
-  bb57 {
-    %110 = ConstantLoad /path
-    $desugar$26 = %110;
-    %112 = $default$21($desugar$26) -> bb58;
+  bb2 {
+    %8 = %6 is nil
+    %8 ? bb3 : bb4;
   }
-  bb58 {
-    $desugar$27 = %112;
-    %114 = ConstantLoad typedesc
-    $desugar$28 = %114;
-    %116 = $remote$get(c,$desugar$26,$desugar$27,$desugar$28) -> bb59;
+  bb3 {
+    %7 = %5;
+    GOTO bb5;
   }
-  bb59 {
-    person = %116;
-    %118 = person is error
-    %119 = %118;
-    %120 = println(%119) -> bb60;
+  bb4 {
+    %7 = %6;
+    GOTO bb5;
   }
-  bb60 {
-    %121 = ConstantLoad /path
-    $desugar$29 = %121;
-    %123 = $default$21($desugar$29) -> bb61;
+  bb5 {
+    %0 = %7;
+    return;
   }
-  bb61 {
-    $desugar$30 = %123;
-    %125 = ConstantLoad typedesc
-    $desugar$31 = %125;
-    %127 = $remote$get(c,$desugar$29,$desugar$30,$desugar$31) -> bb62;
+}
+main$493$1$thunk$1() -> error|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }{
+  bb0 {
+    %1 = ConstantLoad /path
+    $desugar$2 = %1;
+    %3 = $default$21($desugar$2) -> bb1;
   }
-  bb62 {
-    asXml = %127;
-    %129 = asXml is error
-    %130 = %129;
-    %131 = println(%130) -> bb63;
+  bb1 {
+    $desugar$3 = %3;
+    %5 = ConstantLoad typedesc
+    $desugar$4 = %5;
+    %7 = $remote$get((1, c),$desugar$2,$desugar$3,$desugar$4) -> bb2;
   }
-  bb63 {
-    %132 = ConstantLoad <nil>
-    %0 = %132;
+  bb2 {
+    %0 = %7;
+    return;
+  }
+}
+main$493$1$thunk$2() -> string|error|object { public function addHeader(string, string, "LEADING"|"TRAILING") returns nil; public function getBinaryPayload() returns error|[int:Unsigned8...]; public function getContentType() returns string; public function getHeader(string, "LEADING"|"TRAILING") returns string|error; public function getHeaderNames("LEADING"|"TRAILING") returns [string...]; public function getHeaders(string, "LEADING"|"TRAILING") returns error|[string...]; public function getJsonPayload() returns nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}; public function getTextPayload() returns string|error; public function hasHeader(string, "LEADING"|"TRAILING") returns boolean; public function init() returns nil; private function initNative() returns nil; public string reasonPhrase; public function removeAllHeaders("LEADING"|"TRAILING") returns nil; public function removeHeader(string, "LEADING"|"TRAILING") returns nil; public string resolvedRequestedURI; public string server; public function setBinaryPayload([int:Unsigned8...], nil|string) returns nil; public function setContentType(string) returns nil|error; public function setHeader(string, string) returns nil; public function setJsonPayload(json, nil|string) returns nil; public function setTextPayload(string, nil|string) returns nil; public int statusCode }{
+  bb0 {
+    %1 = ConstantLoad /path
+    $desugar$5 = %1;
+    %3 = $default$21($desugar$5) -> bb1;
+  }
+  bb1 {
+    $desugar$6 = %3;
+    %5 = ConstantLoad typedesc
+    $desugar$7 = %5;
+    %7 = $remote$get((1, c),$desugar$5,$desugar$6,$desugar$7) -> bb2;
+  }
+  bb2 {
+    %0 = %7;
+    return;
+  }
+}
+main$493$1$thunk$3() -> string|error{
+  bb0 {
+    %1 = ConstantLoad /path
+    $desugar$8 = %1;
+    %3 = $default$21($desugar$8) -> bb1;
+  }
+  bb1 {
+    $desugar$9 = %3;
+    %5 = ConstantLoad typedesc
+    $desugar$10 = %5;
+    %7 = $remote$get((1, c),$desugar$8,$desugar$9,$desugar$10) -> bb2;
+  }
+  bb2 {
+    %0 = %7;
+    return;
+  }
+}
+main$493$1$thunk$4() -> nil|string|error{
+  bb0 {
+    %1 = ConstantLoad /path
+    $desugar$11 = %1;
+    %3 = $default$21($desugar$11) -> bb1;
+  }
+  bb1 {
+    $desugar$12 = %3;
+    %5 = ConstantLoad typedesc
+    $desugar$13 = %5;
+    %7 = $remote$get((1, c),$desugar$11,$desugar$12,$desugar$13) -> bb2;
+  }
+  bb2 {
+    %0 = %7;
+    return;
+  }
+}
+main$493$1$thunk$5() -> error|[int:Unsigned8...]{
+  bb0 {
+    %1 = ConstantLoad /path
+    $desugar$14 = %1;
+    %3 = $default$21($desugar$14) -> bb1;
+  }
+  bb1 {
+    $desugar$15 = %3;
+    %5 = ConstantLoad typedesc
+    $desugar$16 = %5;
+    %7 = $remote$get((1, c),$desugar$14,$desugar$15,$desugar$16) -> bb2;
+  }
+  bb2 {
+    %0 = %7;
+    return;
+  }
+}
+main$493$1$thunk$6() -> nil|error|[int:Unsigned8...]{
+  bb0 {
+    %1 = ConstantLoad /path
+    $desugar$17 = %1;
+    %3 = $default$21($desugar$17) -> bb1;
+  }
+  bb1 {
+    $desugar$18 = %3;
+    %5 = ConstantLoad typedesc
+    $desugar$19 = %5;
+    %7 = $remote$get((1, c),$desugar$17,$desugar$18,$desugar$19) -> bb2;
+  }
+  bb2 {
+    %0 = %7;
+    return;
+  }
+}
+main$493$1$thunk$7() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /path
+    $desugar$20 = %1;
+    %3 = $default$21($desugar$20) -> bb1;
+  }
+  bb1 {
+    $desugar$21 = %3;
+    %5 = ConstantLoad typedesc
+    $desugar$22 = %5;
+    %7 = $remote$get((1, c),$desugar$20,$desugar$21,$desugar$22) -> bb2;
+  }
+  bb2 {
+    %0 = %7;
+    return;
+  }
+}
+main$493$1$thunk$8() -> string|error{
+  bb0 {
+    %1 = ConstantLoad /path
+    $desugar$23 = %1;
+    %3 = $default$21($desugar$23) -> bb1;
+  }
+  bb1 {
+    $desugar$24 = %3;
+    %5 = ConstantLoad typedesc
+    $desugar$25 = %5;
+    %7 = $remote$get((1, c),$desugar$23,$desugar$24,$desugar$25) -> bb2;
+  }
+  bb2 {
+    %0 = %7;
     return;
   }
 }

@@ -19,7 +19,6 @@ package desugar
 
 import (
 	"fmt"
-	"sort"
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -52,6 +51,7 @@ type packageContext struct {
 	desugarSymbolCounter   int
 	typeContext            semtypes.Context
 	xmlIteratorTypes       *semtypes.SemTypeCache
+	thunkFunctionTypes     *semtypes.SemTypeCache
 }
 
 var _ desugarContext = &packageContext{}
@@ -65,6 +65,7 @@ func newPackageContext(compilerCtx *context.CompilerContext, pkg *ast.BLangPacka
 		defaultClosureOwners: make(map[model.SymbolRef]struct{}),
 		typeContext:          semtypes.ContextFrom(compilerCtx.GetTypeEnv()),
 		xmlIteratorTypes:     semtypes.NewSemTypeCache(),
+		thunkFunctionTypes:   semtypes.NewSemTypeCache(),
 	}
 }
 
@@ -86,20 +87,6 @@ func newIdentifier(value string) *ast.BLangIdentifier {
 	identifier.SetDeterminedType(semtypes.Never)
 	identifier.SetPosition(diagnostics.NewBuiltinLocation())
 	return identifier
-}
-
-func sortedGeneratedFunctions(generatedFunctions []*ast.BLangFunction) []*ast.BLangFunction {
-	// Ideally this shouldn't be needed (this is used only to keep desguared functions in generated closures in same order)
-	functions := append([]*ast.BLangFunction(nil), generatedFunctions...)
-	sort.Slice(functions, func(i, j int) bool {
-		left := functions[i].Symbol()
-		right := functions[j].Symbol()
-		if left.SpaceIndex != right.SpaceIndex {
-			return left.SpaceIndex < right.SpaceIndex
-		}
-		return left.Index < right.Index
-	})
-	return functions
 }
 
 func (ctx *packageContext) addDefaultClosureOwner(expr ast.BLangActionOrExpression) {
@@ -203,8 +190,10 @@ func (ctx *packageContext) unimplemented(msg string) {
 
 type functionContext struct {
 	pkgCtx               *packageContext
+	owner                model.SymbolRef
 	scopeStack           []model.Scope
 	desugarSymbolCounter int
+	thunkCounter         int
 	loopVarStack         []ast.LExpr // Stack to track loop variables (nil for while, varRef for desugared foreach)
 	defaultClosureVars   map[model.SymbolRef]model.SymbolRef
 	generatedFunctions   []*ast.BLangFunction
@@ -317,6 +306,15 @@ func (ctx *functionContext) getSymbol(ref model.SymbolRef) model.Symbol {
 
 func (ctx *functionContext) typeEnv() semtypes.Env {
 	return ctx.pkgCtx.typeEnv()
+}
+
+func (ctx *functionContext) thunkFunctionType(returnTy semtypes.SemType) semtypes.SemType {
+	return ctx.pkgCtx.thunkFunctionTypes.GetOrBuild(returnTy, func() semtypes.SemType {
+		paramsDef := semtypes.NewListDefinition()
+		paramsTy := paramsDef.Define(ctx.typeEnv(), nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
+		fnDef := semtypes.NewFunctionDefinition()
+		return fnDef.Define(ctx.typeEnv(), paramsTy, returnTy, semtypes.FunctionQualifiersFrom(ctx.typeEnv(), false, false))
+	})
 }
 
 type desugarContext interface {
@@ -1230,27 +1228,42 @@ type desugaredTypeDescResult struct {
 	functions    []*ast.BLangFunction
 }
 
-func desugarLocalDefaultClosure(cx *functionContext, fn *ast.BLangFunction) []ast.StatementNode {
+type localDefaultClosure struct {
+	declaration ast.StatementNode
+	assignment  ast.StatementNode
+}
+
+func desugarLocalDefaultClosure(cx *functionContext, fn *ast.BLangFunction) localDefaultClosure {
 	fnType := cx.symbolType(fn.Symbol())
 	lambda := &ast.BLangLambdaFunction{Function: fn}
 	lambda.SetDeterminedType(fnType)
 	setPositionIfMissing(lambda, fn.GetPosition())
 
 	result := walkExpression(cx, lambda)
-	varDef, varRef := assignToLocal(cx, result.replacementNode.(ast.BLangExpression), fn.GetPosition())
+	varDef, varRef := assignToLocal(cx, result.(ast.BLangExpression), fn.GetPosition())
+	declaration := varDef.(*ast.BLangVariableDef)
+	lambdaExpr := declaration.Var.Expr
+	declaration.Var.SetInitialExpression(nil)
+
+	assignment := &ast.BLangAssignment{VarRef: varRef, Expr: lambdaExpr}
+	assignment.SetDeterminedType(semtypes.Never)
+	setPositionIfMissing(assignment, fn.GetPosition())
 	if cx.defaultClosureVars == nil {
 		cx.defaultClosureVars = make(map[model.SymbolRef]model.SymbolRef)
 	}
 	cx.defaultClosureVars[fn.Symbol()] = varRef.Symbol()
-	return append(result.initStmts, varDef)
+	return localDefaultClosure{declaration: declaration, assignment: assignment}
 }
 
 func desugarLocalTypeDescDefaults(cx *functionContext, functions []*ast.BLangFunction) []ast.StatementNode {
-	var initStmts []ast.StatementNode
+	declarations := make([]ast.StatementNode, 0, len(functions))
+	assignments := make([]ast.StatementNode, 0, len(functions))
 	for _, fn := range functions {
-		initStmts = append(initStmts, desugarLocalDefaultClosure(cx, fn)...)
+		closure := desugarLocalDefaultClosure(cx, fn)
+		declarations = append(declarations, closure.declaration)
+		assignments = append(assignments, closure.assignment)
 	}
-	return initStmts
+	return append(declarations, assignments...)
 }
 
 func desugarRecordFieldDefault(cx *functionContext, field desugaredRecordFieldResult) ast.StatementNode {
@@ -1581,6 +1594,8 @@ func remapSymbolRefs(node ast.BLangNode, mapping map[model.SymbolRef]model.Symbo
 	if len(mapping) == 0 {
 		return
 	}
+	// This runs on source defaults before desugaring, so the tree cannot yet
+	// contain desugar-only nodes that ast.Walk does not know about.
 	ast.Walk(symbolRemapper{mapping: mapping}, node)
 }
 
@@ -1687,7 +1702,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	for _, result := range serviceResults {
 		generatedFunctions = append(generatedFunctions, result...)
 	}
-	pkg.Functions = append(pkg.Functions, sortedGeneratedFunctions(generatedFunctions)...)
+	pkg.Functions = append(pkg.Functions, generatedFunctions...)
 	if panicErr != nil {
 		panic(panicErr)
 	}
@@ -1784,19 +1799,14 @@ func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) 
 	if rm.Body == nil {
 		return nil
 	}
-	cx := &functionContext{pkgCtx: pkgCtx}
+	cx := &functionContext{pkgCtx: pkgCtx, owner: rm.Symbol()}
 	cx.pushScope(rm.Scope())
 	defer cx.popScope()
 	switch body := rm.Body.(type) {
 	case *ast.BLangBlockFunctionBody:
 		walkBlockFunctionBody(cx, body)
 	case *ast.BLangExprFunctionBody:
-		result := walkExpression(cx, body.Expr.(ast.BLangActionOrExpression))
-		if len(result.initStmts) > 0 {
-			rm.Body = convertExprBodyToBlockBody(body, result)
-		} else {
-			body.Expr = result.replacementNode.(ast.BLangExpression)
-		}
+		body.Expr = walkExpression(cx, body.Expr.(ast.BLangActionOrExpression)).(ast.BLangExpression)
 	}
 	return cx.generatedFunctions
 }
@@ -1804,7 +1814,7 @@ func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) 
 // desugarFunction returns a desugared function and functions generated while
 // desugaring it.
 func desugarFunction(pkgCtx *packageContext, fn *ast.BLangFunction) (*ast.BLangFunction, []*ast.BLangFunction) {
-	cx := &functionContext{pkgCtx: pkgCtx}
+	cx := &functionContext{pkgCtx: pkgCtx, owner: fn.Symbol()}
 	return desugarFunctionWithContext(cx, fn), cx.generatedFunctions
 }
 
@@ -1828,14 +1838,7 @@ func desugarFunctionWithContext(cx *functionContext, fn *ast.BLangFunction) *ast
 		walkBlockFunctionBody(cx, body)
 	case *ast.BLangExprFunctionBody:
 		if body.Expr != nil {
-			result := walkExpression(cx, body.Expr.(ast.BLangActionOrExpression))
-			// For expression bodies, init statements need special handling
-			// They should be converted to a block body with statements
-			if len(result.initStmts) > 0 {
-				fn.Body = convertExprBodyToBlockBody(body, result)
-			} else {
-				body.Expr = result.replacementNode.(ast.BLangExpression)
-			}
+			body.Expr = walkExpression(cx, body.Expr.(ast.BLangActionOrExpression)).(ast.BLangExpression)
 		}
 	case *ast.BLangExternFunctionBody:
 		// Nothing to desugar
@@ -1844,26 +1847,14 @@ func desugarFunctionWithContext(cx *functionContext, fn *ast.BLangFunction) *ast
 	return fn
 }
 
-// convertExprBodyToBlockBody converts expression function body to block body
-// when there are init statements from desugaring
-func convertExprBodyToBlockBody(
-	exprBody *ast.BLangExprFunctionBody,
-	result desugaredNode[ast.BLangActionOrExpression],
-) *ast.BLangBlockFunctionBody {
-	// Create return statement with the desugared expression
-	returnStmt := &ast.BLangReturn{
-		Expr: result.replacementNode,
-	}
-
-	// Build block with init statements + return
-	stmts := make([]ast.StatementNode, 0, len(result.initStmts)+1)
-	stmts = append(stmts, result.initStmts...)
-	stmts = append(stmts, returnStmt)
-
-	return &ast.BLangBlockFunctionBody{
-		Stmts: stmts,
-	}
+// BLangExpressionThunk is a desugar-only expression that evaluates a
+// generated zero-argument lambda immediately at the source expression site.
+type BLangExpressionThunk struct {
+	ast.AbstractExpression
+	Lambda *ast.BLangLambdaFunction
 }
+
+var _ ast.BLangExpression = &BLangExpressionThunk{}
 
 // BLangServiceInit is a desugar-only expression that constructs an
 // instance of the (anonymous) class body of the referenced service.

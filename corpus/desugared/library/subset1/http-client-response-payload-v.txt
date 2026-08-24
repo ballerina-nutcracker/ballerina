@@ -8,38 +8,48 @@
       (value-type null)))
     (block-function-body
       (var-def
-        (variable $desugar$0 (expr
-          (literal https://example.com))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$15 (
-            (simple-var-ref $desugar$0))))))
-      (var-def
         (variable c (type
           (user-defined-type http Client)) (expr
           (checked-expr
-            (new (
-              (simple-var-ref $desugar$0)
-              (simple-var-ref $desugar$1)))))))
-      (var-def
-        (variable $desugar$2 (expr
-          (literal /path))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation $default$21 (
-            (simple-var-ref $desugar$2))))))
-      (var-def
-        (variable $desugar$4 (expr
-          (typedesc-expr))))
+            (expression-thunk
+            (lambda
+              (function main$493$0$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (literal https://example.com))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$15 (
+                        (simple-var-ref $desugar$0))))))
+                  (return
+                    (new (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))))))))
       (var-def
         (variable r (type
           (user-defined-type http Response)) (expr
           (checked-expr
-            (remote-method-call get expr:
-              (simple-var-ref c) (
-              (simple-var-ref $desugar$2)
-              (simple-var-ref $desugar$3)
-              (simple-var-ref $desugar$4)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$0$thunk$1 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$2 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$3 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$2))))))
+                  (var-def
+                    (variable $desugar$4 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c) (
+                      (simple-var-ref $desugar$2)
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$4))))))))))))
       (var-def
         (variable b (expr
           (checked-expr

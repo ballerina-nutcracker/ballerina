@@ -327,13 +327,18 @@
           (index-based-access
             (simple-var-ref recordValue)
             (literal values)))))
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation $default$0 ()))))
       (expression-stmt
         (invocation io println (
-          (invocation withMappedDefault (
-            (simple-var-ref $desugar$0))))))
+          (expression-thunk
+          (lambda
+            (function main$493$15$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (invocation $default$0 ()))))
+                (return
+                  (invocation withMappedDefault (
+                    (simple-var-ref $desugar$0)))))))))))
       (expression-stmt
         (invocation io println (
           (invocation mapWithCapture (

@@ -22,23 +22,28 @@
             (literal 5)
             (literal 6)
             (literal 7)))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref blockPath))))
-      (var-def
-        (variable $desugar$1 (expr
-          (simple-var-ref content))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$4 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteBytes (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref blockPath))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (simple-var-ref content))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$4 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteBytes (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable s (type
           (stream-type
@@ -163,33 +168,31 @@
                 (variable defaultPath (type
                   (value-type string)) (expr
                   (literal /tmp/bal_io_stream_read_blocks_default.bin))))
-              (var-def
-                (variable $desugar$3 (expr
-                  (simple-var-ref defaultPath))))
-              (var-def
-                (variable $desugar$4 (expr
-                  (list-constructor-expr
-                    (literal 9)
-                    (literal 8)
-                    (literal 7)))))
-              (var-def
-                (variable $desugar$5 (expr
-                  (invocation $default$4 (
-                    (simple-var-ref $desugar$3)
-                    (simple-var-ref $desugar$4))))))
               (expression-stmt
                 (checked-expr
-                  (invocation io fileWriteBytes (
-                    (simple-var-ref $desugar$3)
-                    (simple-var-ref $desugar$4)
-                    (simple-var-ref $desugar$5)))))
-              (var-def
-                (variable $desugar$6 (expr
-                  (simple-var-ref defaultPath))))
-              (var-def
-                (variable $desugar$7 (expr
-                  (invocation $default$0 (
-                    (simple-var-ref $desugar$6))))))
+                  (expression-thunk
+                  (lambda
+                    (function main$493$0$thunk$1 () ()
+                      (block-function-body
+                        (var-def
+                          (variable $desugar$3 (expr
+                            (simple-var-ref defaultPath))))
+                        (var-def
+                          (variable $desugar$4 (expr
+                            (list-constructor-expr
+                              (literal 9)
+                              (literal 8)
+                              (literal 7)))))
+                        (var-def
+                          (variable $desugar$5 (expr
+                            (invocation $default$4 (
+                              (simple-var-ref $desugar$3)
+                              (simple-var-ref $desugar$4))))))
+                        (return
+                          (invocation io fileWriteBytes (
+                            (simple-var-ref $desugar$3)
+                            (simple-var-ref $desugar$4)
+                            (simple-var-ref $desugar$5))))))))))
               (var-def
                 (variable defaultStream (type
                   (stream-type
@@ -198,9 +201,21 @@
                       (user-defined-type io Error)
                       (value-type null)))) (expr
                   (checked-expr
-                    (invocation io fileReadBlocksAsStream (
-                      (simple-var-ref $desugar$6)
-                      (simple-var-ref $desugar$7)))))))
+                    (expression-thunk
+                    (lambda
+                      (function main$493$0$thunk$2 () ()
+                        (block-function-body
+                          (var-def
+                            (variable $desugar$6 (expr
+                              (simple-var-ref defaultPath))))
+                          (var-def
+                            (variable $desugar$7 (expr
+                              (invocation $default$0 (
+                                (simple-var-ref $desugar$6))))))
+                          (return
+                            (invocation io fileReadBlocksAsStream (
+                              (simple-var-ref $desugar$6)
+                              (simple-var-ref $desugar$7))))))))))))
               (var-def
                 (variable d1 (type
                   (union-type

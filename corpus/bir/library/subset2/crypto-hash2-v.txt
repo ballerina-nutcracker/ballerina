@@ -16,107 +16,157 @@ main() -> nil{
     %13 = ConstantLoad 4
     %14 = newArray [int:Unsigned8...][%13]{%9, %10, %11, %12}
     salt = %14;
-    $desugar$0 = input;
-    %17 = $default$3($desugar$0) -> bb1;
+    %16 = closure_fp $anon/.:main$493$0$thunk$0
+    %17 = main$493$0$thunk$0() -> bb1;
   }
   bb1 {
-    $desugar$1 = %17;
-    %19 = hashMd5($desugar$0,$desugar$1) -> bb2;
+    %18 = length(%17) -> bb2;
   }
   bb2 {
-    %20 = length(%19) -> bb3;
+    %19 = %18;
+    %20 = println(%19) -> bb3;
   }
   bb3 {
-    %21 = %20;
-    %22 = println(%21) -> bb4;
+    %21 = closure_fp $anon/.:main$493$0$thunk$1
+    %22 = main$493$0$thunk$1() -> bb4;
   }
   bb4 {
-    $desugar$2 = input;
-    %24 = $default$4($desugar$2) -> bb5;
+    %23 = length(%22) -> bb5;
   }
   bb5 {
-    $desugar$3 = %24;
-    %26 = hashSha1($desugar$2,$desugar$3) -> bb6;
+    %24 = %23;
+    %25 = println(%24) -> bb6;
   }
   bb6 {
-    %27 = length(%26) -> bb7;
+    %26 = closure_fp $anon/.:main$493$0$thunk$2
+    %27 = main$493$0$thunk$2() -> bb7;
   }
   bb7 {
-    %28 = %27;
-    %29 = println(%28) -> bb8;
+    %28 = length(%27) -> bb8;
   }
   bb8 {
-    $desugar$4 = input;
-    %31 = $default$6($desugar$4) -> bb9;
+    %29 = %28;
+    %30 = println(%29) -> bb9;
   }
   bb9 {
-    $desugar$5 = %31;
-    %33 = hashSha384($desugar$4,$desugar$5) -> bb10;
+    %31 = closure_fp $anon/.:main$493$0$thunk$3
+    %32 = main$493$0$thunk$3() -> bb10;
   }
   bb10 {
-    %34 = length(%33) -> bb11;
+    %33 = length(%32) -> bb11;
   }
   bb11 {
-    %35 = %34;
-    %36 = println(%35) -> bb12;
+    %34 = %33;
+    %35 = println(%34) -> bb12;
   }
   bb12 {
-    $desugar$6 = input;
-    %38 = $default$7($desugar$6) -> bb13;
+    %36 = closure_fp $anon/.:main$493$0$thunk$4
+    %37 = main$493$0$thunk$4() -> bb13;
   }
   bb13 {
-    $desugar$7 = %38;
-    %40 = hashSha512($desugar$6,$desugar$7) -> bb14;
+    %38 = length(%37) -> bb14;
   }
   bb14 {
-    %41 = length(%40) -> bb15;
+    %39 = %38;
+    %40 = println(%39) -> bb15;
   }
   bb15 {
-    %42 = %41;
-    %43 = println(%42) -> bb16;
+    %41 = hashMd5(input,salt) -> bb16;
   }
   bb16 {
-    $desugar$8 = input;
-    %45 = $default$8($desugar$8) -> bb17;
+    %42 = length(%41) -> bb17;
   }
   bb17 {
-    $desugar$9 = %45;
-    %47 = hashKeccak256($desugar$8,$desugar$9) -> bb18;
+    %43 = %42;
+    %44 = println(%43) -> bb18;
   }
   bb18 {
-    %48 = length(%47) -> bb19;
+    %45 = hashSha256(input,salt) -> bb19;
   }
   bb19 {
-    %49 = %48;
-    %50 = println(%49) -> bb20;
+    %46 = length(%45) -> bb20;
   }
   bb20 {
-    %51 = hashMd5(input,salt) -> bb21;
+    %47 = %46;
+    %48 = println(%47) -> bb21;
   }
   bb21 {
-    %52 = length(%51) -> bb22;
+    %49 = crc32b(input) -> bb22;
   }
   bb22 {
-    %53 = %52;
-    %54 = println(%53) -> bb23;
+    %50 = println(%49) -> bb23;
   }
   bb23 {
-    %55 = hashSha256(input,salt) -> bb24;
+    return;
   }
-  bb24 {
-    %56 = length(%55) -> bb25;
+}
+main$493$0$thunk$0() -> [int:Unsigned8...]{
+  bb0 {
+    $desugar$0 = (1, input);
+    %2 = $default$3($desugar$0) -> bb1;
   }
-  bb25 {
-    %57 = %56;
-    %58 = println(%57) -> bb26;
+  bb1 {
+    $desugar$1 = %2;
+    %4 = hashMd5($desugar$0,$desugar$1) -> bb2;
   }
-  bb26 {
-    %59 = crc32b(input) -> bb27;
+  bb2 {
+    %0 = %4;
+    return;
   }
-  bb27 {
-    %60 = println(%59) -> bb28;
+}
+main$493$0$thunk$1() -> [int:Unsigned8...]{
+  bb0 {
+    $desugar$2 = (1, input);
+    %2 = $default$4($desugar$2) -> bb1;
   }
-  bb28 {
+  bb1 {
+    $desugar$3 = %2;
+    %4 = hashSha1($desugar$2,$desugar$3) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+}
+main$493$0$thunk$2() -> [int:Unsigned8...]{
+  bb0 {
+    $desugar$4 = (1, input);
+    %2 = $default$6($desugar$4) -> bb1;
+  }
+  bb1 {
+    $desugar$5 = %2;
+    %4 = hashSha384($desugar$4,$desugar$5) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+}
+main$493$0$thunk$3() -> [int:Unsigned8...]{
+  bb0 {
+    $desugar$6 = (1, input);
+    %2 = $default$7($desugar$6) -> bb1;
+  }
+  bb1 {
+    $desugar$7 = %2;
+    %4 = hashSha512($desugar$6,$desugar$7) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+}
+main$493$0$thunk$4() -> [int:Unsigned8...]{
+  bb0 {
+    $desugar$8 = (1, input);
+    %2 = $default$8($desugar$8) -> bb1;
+  }
+  bb1 {
+    $desugar$9 = %2;
+    %4 = hashKeccak256($desugar$8,$desugar$9) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
     return;
   }
 }

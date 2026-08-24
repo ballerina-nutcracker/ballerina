@@ -31,16 +31,21 @@
         (invocation io println (
           (simple-var-ref code))))
       (var-def
-        (variable $desugar$0 (expr
-          (invocation $default$0 ()))))
-      (var-def
         (variable out (type
           (array-type
             (value-type byte) dimensions: 1 ([]))) (expr
           (checked-expr
-            (invocation output expr:
-              (simple-var-ref p) (
-              (simple-var-ref $desugar$0)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$0$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (invocation $default$0 ()))))
+                  (return
+                    (invocation output expr:
+                      (simple-var-ref p) (
+                      (simple-var-ref $desugar$0))))))))))))
       (expression-stmt
         (invocation io println (
           (binary-expr >

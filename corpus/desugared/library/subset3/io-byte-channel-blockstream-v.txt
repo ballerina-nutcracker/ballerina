@@ -10,30 +10,35 @@
         (variable path (type
           (value-type string)) (expr
           (literal /tmp/bal_io_byte_channel_blockstream.bin))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (list-constructor-expr
-            (literal 1)
-            (literal 2)
-            (literal 3)
-            (literal 4)
-            (literal 5)
-            (literal 6)
-            (literal 7)))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$4 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteBytes (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref path))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (list-constructor-expr
+                      (literal 1)
+                      (literal 2)
+                      (literal 3)
+                      (literal 4)
+                      (literal 5)
+                      (literal 6)
+                      (literal 7)))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$4 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteBytes (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable channel (type
           (user-defined-type io ReadableByteChannel)) (expr

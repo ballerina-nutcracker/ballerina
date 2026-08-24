@@ -1,0 +1,19 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function panicValues () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal panic across thunk))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 0)
+            (invocation panicValues ()))))))))

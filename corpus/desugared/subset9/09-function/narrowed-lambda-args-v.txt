@@ -35,12 +35,14 @@
                 (return
                   (simple-var-ref value))))))))
       (var-def
-        (variable $desugar$0 (expr
-          (lambda
-            (function $default$1 () ()
-              (block-function-body
-                (return
-                  (literal 30))))))))
+        (variable $desugar$0))
+      (assignment
+        (simple-var-ref $desugar$0)
+        (lambda
+          (function $default$1 () ()
+            (block-function-body
+              (return
+                (literal 30))))))
       (if
         (type-test-expr is
           (simple-var-ref narrowed)
@@ -54,12 +56,14 @@
                 (literal 12))))))) (
         (block-stmt
           (var-def
-            (variable $desugar$1 (expr
-              (lambda
-                (function $default$2 () ()
-                  (block-function-body
-                    (return
-                      (literal 20))))))))
+            (variable $desugar$1))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (lambda
+              (function $default$2 () ()
+                (block-function-body
+                  (return
+                    (literal 20))))))
           (if
             (type-test-expr is
               (simple-var-ref narrowed)
@@ -67,13 +71,18 @@
                 (value-type int)) (
                 (value-type int))))
             (block-stmt
-              (var-def
-                (variable $desugar$2 (expr
-                  (invocation $desugar$1 ()))))
               (expression-stmt
                 (invocation io println (
-                  (invocation narrowed (
-                    (simple-var-ref $desugar$2))))))
+                  (expression-thunk
+                  (lambda
+                    (function main$493$5$thunk$0 () ()
+                      (block-function-body
+                        (var-def
+                          (variable $desugar$2 (expr
+                            (invocation $desugar$1 ()))))
+                        (return
+                          (invocation narrowed (
+                            (simple-var-ref $desugar$2)))))))))))
               (expression-stmt
                 (invocation io println (
                   (invocation narrowed (
@@ -135,13 +144,18 @@
             (simple-var-ref narrowedAlias)
             (user-defined-type ChainedFAlias))
           (block-stmt
-            (var-def
-              (variable $desugar$3 (expr
-                (invocation $default$0 ()))))
             (expression-stmt
               (invocation io println (
-                (invocation narrowedAlias (
-                  (simple-var-ref $desugar$3))))))
+                (expression-thunk
+                (lambda
+                  (function main$493$5$thunk$1 () ()
+                    (block-function-body
+                      (var-def
+                        (variable $desugar$3 (expr
+                          (invocation $default$0 ()))))
+                      (return
+                        (invocation narrowedAlias (
+                          (simple-var-ref $desugar$3)))))))))))
             (expression-stmt
               (invocation io println (
                 (invocation narrowedAlias (
@@ -163,12 +177,14 @@
                     (return
                       (simple-var-ref value))))))))
           (var-def
-            (variable $desugar$4 (expr
-              (lambda
-                (function $default$3 () ()
-                  (block-function-body
-                    (return
-                      (literal 7))))))))
+            (variable $desugar$4))
+          (assignment
+            (simple-var-ref $desugar$4)
+            (lambda
+              (function $default$3 () ()
+                (block-function-body
+                  (return
+                    (literal 7))))))
           (if
             (type-test-expr !is
               (simple-var-ref negated)
@@ -180,13 +196,18 @@
                 (invocation io println (
                   (literal unexpected))))) (
             (block-stmt
-              (var-def
-                (variable $desugar$5 (expr
-                  (invocation $desugar$4 ()))))
               (expression-stmt
                 (invocation io println (
-                  (invocation negated (
-                    (simple-var-ref $desugar$5))))))
+                  (expression-thunk
+                  (lambda
+                    (function main$493$5$thunk$2 () ()
+                      (block-function-body
+                        (var-def
+                          (variable $desugar$5 (expr
+                            (invocation $desugar$4 ()))))
+                        (return
+                          (invocation negated (
+                            (simple-var-ref $desugar$5)))))))))))
               (expression-stmt
                 (invocation io println (
                   (invocation negated (

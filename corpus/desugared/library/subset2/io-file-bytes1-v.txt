@@ -20,23 +20,28 @@
             (literal 108)
             (literal 108)
             (literal 111)))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (simple-var-ref written))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$4 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteBytes (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref path))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (simple-var-ref written))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$4 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteBytes (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable readBack (type
           (array-type

@@ -20,41 +20,135 @@ main() -> nil{
     %17 = ConstantLoad 4
     %18 = newArray [[string, int, never...]...][%17]{%4, %8, %12, %16}
     seed = %18;
-    $desugar$0 = seed;
-    %21 = length($desugar$0) -> bb1;
+    %20 = closure_fp $anon/.:main$493$0$thunk$0
+    %21 = main$493$0$thunk$0() -> bb1;
   }
   bb1 {
-    $desugar$1 = %21;
-    %23 = newMap {| int... |}{}
-    $desugar$2 = %23;
-    %26 = ConstantLoad 0
-    $desugar$3 = %26;
-    %28 = ConstantLoad 3
-    $desugar$4 = %28;
-    %31 = $desugar$4;
-    %32 = ConstantLoad 0
-    %33 = %32;
-    %30 = < %31 %33;
-    %30 ? bb2 : bb3;
+    $desugar$7 = %21;
+    %23 = keys($desugar$7) -> bb2;
+  }
+  bb2 {
+    $desugar$8 = %23;
+    %25 = length($desugar$8) -> bb3;
+  }
+  bb3 {
+    $desugar$9 = %25;
+    %27 = ConstantLoad 0
+    %28 = newArray list[%27]{}
+    $desugar$10 = %28;
+    %31 = ConstantLoad 0
+    $desugar$11 = %31;
+    %33 = ConstantLoad 2
+    $desugar$12 = %33;
+    %36 = $desugar$12;
+    %37 = ConstantLoad 0
+    %38 = %37;
+    %35 = < %36 %38;
+    %35 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = ConstantLoad limit cannot be negative
+    %1 = newError error(%0)
+    (1, %39) = %1;
+    PopScopeFrame
+    panic %39;
+  }
+  bb5 {
+    %40 = ConstantLoad 0
+    $desugar$13 = %40;
+    GOTO bb6;
+  }
+  bb6 {
+    %43 = $desugar$11;
+    %44 = $desugar$9;
+    %42 = < %43 %44;
+    %42 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 15
+    %1 = (1, $desugar$8)[(1, $desugar$11)];
+    %0 = (1, $desugar$7)[%1];
+    (1, x) = %0;
+    %3 = (1, $desugar$13);
+    %4 = (1, $desugar$12);
+    %2 = >= %3 %4;
+    %2 ? bb9 : bb10;
+  }
+  bb8 {
+    out = $desugar$10;
+    %46 = println(out) -> bb12;
+  }
+  bb9 {
+    PushScopeFrame 4
+    %1 = (2, $desugar$11);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = + %1 %3;
+    (2, $desugar$11) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb10 {
+    %6 = (1, $desugar$13);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$13) = %5;
+    %9 = (1, x);
+    %10 = push((1, $desugar$10),%9) -> bb11;
+  }
+  bb11 {
+    %12 = (1, $desugar$11);
+    %13 = ConstantLoad 1
+    %14 = %13;
+    %11 = + %12 %14;
+    (1, $desugar$11) = %11;
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb12 {
+    return;
+  }
+}
+main$493$0$thunk$0() -> {| int... |}{
+  bb0 {
+    $desugar$0 = (1, seed);
+    %2 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %2;
+    %4 = newMap {| int... |}{}
+    $desugar$2 = %4;
+    %7 = ConstantLoad 0
+    $desugar$3 = %7;
+    %9 = ConstantLoad 3
+    $desugar$4 = %9;
+    %12 = $desugar$4;
+    %13 = ConstantLoad 0
+    %14 = %13;
+    %11 = < %12 %14;
+    %11 ? bb2 : bb3;
   }
   bb2 {
     PushScopeFrame 2
     %0 = ConstantLoad limit cannot be negative
     %1 = newError error(%0)
-    (1, %34) = %1;
+    (1, %15) = %1;
     PopScopeFrame
-    panic %34;
+    panic %15;
   }
   bb3 {
-    %35 = ConstantLoad 0
-    $desugar$5 = %35;
+    %16 = ConstantLoad 0
+    $desugar$5 = %16;
     GOTO bb4;
   }
   bb4 {
-    %38 = $desugar$3;
-    %39 = $desugar$1;
-    %37 = < %38 %39;
-    %37 ? bb5 : bb6;
+    %19 = $desugar$3;
+    %20 = $desugar$1;
+    %18 = < %19 %20;
+    %18 ? bb5 : bb6;
   }
   bb5 {
     PushScopeFrame 27
@@ -66,8 +160,8 @@ main() -> nil{
     %1 ? bb7 : bb8;
   }
   bb6 {
-    $desugar$7 = $desugar$2;
-    %41 = keys($desugar$7) -> bb9;
+    %0 = $desugar$2;
+    return;
   }
   bb7 {
     PushScopeFrame 4
@@ -109,89 +203,5 @@ main() -> nil{
     (1, $desugar$3) = %23;
     PopScopeFrame
     GOTO bb4;
-  }
-  bb9 {
-    $desugar$8 = %41;
-    %43 = length($desugar$8) -> bb10;
-  }
-  bb10 {
-    $desugar$9 = %43;
-    %45 = ConstantLoad 0
-    %46 = newArray list[%45]{}
-    $desugar$10 = %46;
-    %49 = ConstantLoad 0
-    $desugar$11 = %49;
-    %51 = ConstantLoad 2
-    $desugar$12 = %51;
-    %54 = $desugar$12;
-    %55 = ConstantLoad 0
-    %56 = %55;
-    %53 = < %54 %56;
-    %53 ? bb11 : bb12;
-  }
-  bb11 {
-    PushScopeFrame 2
-    %0 = ConstantLoad limit cannot be negative
-    %1 = newError error(%0)
-    (1, %57) = %1;
-    PopScopeFrame
-    panic %57;
-  }
-  bb12 {
-    %58 = ConstantLoad 0
-    $desugar$13 = %58;
-    GOTO bb13;
-  }
-  bb13 {
-    %61 = $desugar$11;
-    %62 = $desugar$9;
-    %60 = < %61 %62;
-    %60 ? bb14 : bb15;
-  }
-  bb14 {
-    PushScopeFrame 15
-    %1 = (1, $desugar$8)[(1, $desugar$11)];
-    %0 = (1, $desugar$7)[%1];
-    (1, x) = %0;
-    %3 = (1, $desugar$13);
-    %4 = (1, $desugar$12);
-    %2 = >= %3 %4;
-    %2 ? bb16 : bb17;
-  }
-  bb15 {
-    out = $desugar$10;
-    %64 = println(out) -> bb19;
-  }
-  bb16 {
-    PushScopeFrame 4
-    %1 = (2, $desugar$11);
-    %2 = ConstantLoad 1
-    %3 = %2;
-    %0 = + %1 %3;
-    (2, $desugar$11) = %0;
-    PopScopeFrame
-    PopScopeFrame
-    GOTO bb13;
-  }
-  bb17 {
-    %6 = (1, $desugar$13);
-    %7 = ConstantLoad 1
-    %8 = %7;
-    %5 = + %6 %8;
-    (1, $desugar$13) = %5;
-    %9 = (1, x);
-    %10 = push((1, $desugar$10),%9) -> bb18;
-  }
-  bb18 {
-    %12 = (1, $desugar$11);
-    %13 = ConstantLoad 1
-    %14 = %13;
-    %11 = + %12 %14;
-    (1, $desugar$11) = %11;
-    PopScopeFrame
-    GOTO bb13;
-  }
-  bb19 {
-    return;
   }
 }

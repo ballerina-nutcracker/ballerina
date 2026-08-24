@@ -9,29 +9,34 @@
         (variable path (type
           (value-type string)) (expr
           (literal /tmp/bal_io_stream_read_lines2.txt))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (list-constructor-expr
-            (literal 97)
-            (literal 13)
-            (literal 10)
-            (literal 98)
-            (literal 13)
-            (literal 99)))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$4 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteBytes (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref path))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (list-constructor-expr
+                      (literal 97)
+                      (literal 13)
+                      (literal 10)
+                      (literal 98)
+                      (literal 13)
+                      (literal 99)))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$4 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteBytes (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable s (type
           (stream-type

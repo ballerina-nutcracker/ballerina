@@ -1,617 +1,613 @@
 module $anon.. v 0.0.0;
 roundtrip("BE"|"LE",string) -> nil|error{
   bb0 {
-    $desugar$0 = path;
-    %4 = $default$11($desugar$0) -> bb1;
+    %4 = closure_fp $anon/.:roundtrip$493$0$thunk$0
+    %5 = roundtrip$493$0$thunk$0() -> bb1;
   }
   bb1 {
-    $desugar$1 = %4;
-    %7 = openWritableFile($desugar$0,$desugar$1) -> bb2;
+    %6 = %5 is error
+    %6 ? bb2 : bb3;
   }
   bb2 {
-    %8 = %7 is error
-    %8 ? bb3 : bb4;
+    %0 = %5;
+    return;
   }
   bb3 {
-    %0 = %7;
-    return;
+    %3 = %5;
+    GOTO bb4;
   }
   bb4 {
-    %6 = %7;
-    GOTO bb5;
+    wb = %3;
+    %8 = newObject ballerina/io:WritableDataChannel
+    %9 = init(%8,wb,ord) -> bb5;
   }
   bb5 {
-    wb = %6;
-    %10 = newObject ballerina/io:WritableDataChannel
-    %11 = init(%10,wb,ord) -> bb6;
+    %11 = %9 is nil
+    %11 ? bb6 : bb7;
   }
   bb6 {
-    %13 = %11 is nil
-    %13 ? bb7 : bb8;
+    %10 = %8;
+    GOTO bb8;
   }
   bb7 {
-    %12 = %10;
-    GOTO bb9;
+    %10 = %9;
+    GOTO bb8;
   }
   bb8 {
-    %12 = %11;
-    GOTO bb9;
+    wd = %10;
+    %14 = ConstantLoad 4660
+    %15 = %14;
+    %16 = writeInt16(wd,%15) -> bb9;
   }
   bb9 {
-    wd = %12;
-    %16 = ConstantLoad 4660
-    %17 = %16;
-    %18 = writeInt16(wd,%17) -> bb10;
+    %17 = %16 is error
+    %17 ? bb10 : bb11;
   }
   bb10 {
-    %19 = %18 is error
-    %19 ? bb11 : bb12;
+    %0 = %16;
+    return;
   }
   bb11 {
-    %0 = %18;
-    return;
+    %13 = %16;
+    GOTO bb12;
   }
   bb12 {
-    %15 = %18;
-    GOTO bb13;
+    %19 = ConstantLoad 2
+    %20 = unknown %19;
+    %21 = %20;
+    %22 = writeInt16(wd,%21) -> bb13;
   }
   bb13 {
-    %21 = ConstantLoad 2
-    %22 = unknown %21;
-    %23 = %22;
-    %24 = writeInt16(wd,%23) -> bb14;
+    %23 = %22 is error
+    %23 ? bb14 : bb15;
   }
   bb14 {
-    %25 = %24 is error
-    %25 ? bb15 : bb16;
+    %0 = %22;
+    return;
   }
   bb15 {
-    %0 = %24;
-    return;
+    %18 = %22;
+    GOTO bb16;
   }
   bb16 {
-    %20 = %24;
-    GOTO bb17;
+    %25 = ConstantLoad 305419896
+    %26 = %25;
+    %27 = writeInt32(wd,%26) -> bb17;
   }
   bb17 {
-    %27 = ConstantLoad 305419896
-    %28 = %27;
-    %29 = writeInt32(wd,%28) -> bb18;
+    %28 = %27 is error
+    %28 ? bb18 : bb19;
   }
   bb18 {
-    %30 = %29 is error
-    %30 ? bb19 : bb20;
+    %0 = %27;
+    return;
   }
   bb19 {
-    %0 = %29;
-    return;
+    %24 = %27;
+    GOTO bb20;
   }
   bb20 {
-    %26 = %29;
-    GOTO bb21;
+    %30 = ConstantLoad 40000
+    %31 = unknown %30;
+    %32 = %31;
+    %33 = writeInt32(wd,%32) -> bb21;
   }
   bb21 {
-    %32 = ConstantLoad 40000
-    %33 = unknown %32;
-    %34 = %33;
-    %35 = writeInt32(wd,%34) -> bb22;
+    %34 = %33 is error
+    %34 ? bb22 : bb23;
   }
   bb22 {
-    %36 = %35 is error
-    %36 ? bb23 : bb24;
+    %0 = %33;
+    return;
   }
   bb23 {
-    %0 = %35;
-    return;
+    %29 = %33;
+    GOTO bb24;
   }
   bb24 {
-    %31 = %35;
-    GOTO bb25;
+    %36 = ConstantLoad 81985529216486895
+    %37 = %36;
+    %38 = writeInt64(wd,%37) -> bb25;
   }
   bb25 {
-    %38 = ConstantLoad 81985529216486895
-    %39 = %38;
-    %40 = writeInt64(wd,%39) -> bb26;
+    %39 = %38 is error
+    %39 ? bb26 : bb27;
   }
   bb26 {
-    %41 = %40 is error
-    %41 ? bb27 : bb28;
+    %0 = %38;
+    return;
   }
   bb27 {
-    %0 = %40;
-    return;
+    %35 = %38;
+    GOTO bb28;
   }
   bb28 {
-    %37 = %40;
-    GOTO bb29;
+    %41 = ConstantLoad 5
+    %42 = unknown %41;
+    %43 = %42;
+    %44 = writeInt64(wd,%43) -> bb29;
   }
   bb29 {
-    %43 = ConstantLoad 5
-    %44 = unknown %43;
-    %45 = %44;
-    %46 = writeInt64(wd,%45) -> bb30;
+    %45 = %44 is error
+    %45 ? bb30 : bb31;
   }
   bb30 {
-    %47 = %46 is error
-    %47 ? bb31 : bb32;
+    %0 = %44;
+    return;
   }
   bb31 {
-    %0 = %46;
-    return;
+    %40 = %44;
+    GOTO bb32;
   }
   bb32 {
-    %42 = %46;
-    GOTO bb33;
+    %47 = ConstantLoad 3.5
+    %48 = %47;
+    %49 = writeFloat32(wd,%48) -> bb33;
   }
   bb33 {
-    %49 = ConstantLoad 3.5
-    %50 = %49;
-    %51 = writeFloat32(wd,%50) -> bb34;
+    %50 = %49 is error
+    %50 ? bb34 : bb35;
   }
   bb34 {
-    %52 = %51 is error
-    %52 ? bb35 : bb36;
+    %0 = %49;
+    return;
   }
   bb35 {
-    %0 = %51;
-    return;
+    %46 = %49;
+    GOTO bb36;
   }
   bb36 {
-    %48 = %51;
-    GOTO bb37;
+    %52 = ConstantLoad 2.718281828459045
+    %53 = %52;
+    %54 = writeFloat64(wd,%53) -> bb37;
   }
   bb37 {
-    %54 = ConstantLoad 2.718281828459045
-    %55 = %54;
-    %56 = writeFloat64(wd,%55) -> bb38;
+    %55 = %54 is error
+    %55 ? bb38 : bb39;
   }
   bb38 {
-    %57 = %56 is error
-    %57 ? bb39 : bb40;
+    %0 = %54;
+    return;
   }
   bb39 {
-    %0 = %56;
-    return;
+    %51 = %54;
+    GOTO bb40;
   }
   bb40 {
-    %53 = %56;
-    GOTO bb41;
+    %57 = ConstantLoad true
+    %58 = %57;
+    %59 = writeBool(wd,%58) -> bb41;
   }
   bb41 {
-    %59 = ConstantLoad true
-    %60 = %59;
-    %61 = writeBool(wd,%60) -> bb42;
+    %60 = %59 is error
+    %60 ? bb42 : bb43;
   }
   bb42 {
-    %62 = %61 is error
-    %62 ? bb43 : bb44;
+    %0 = %59;
+    return;
   }
   bb43 {
-    %0 = %61;
-    return;
+    %56 = %59;
+    GOTO bb44;
   }
   bb44 {
-    %58 = %61;
-    GOTO bb45;
+    %62 = ConstantLoad false
+    %63 = %62;
+    %64 = writeBool(wd,%63) -> bb45;
   }
   bb45 {
-    %64 = ConstantLoad false
-    %65 = %64;
-    %66 = writeBool(wd,%65) -> bb46;
+    %65 = %64 is error
+    %65 ? bb46 : bb47;
   }
   bb46 {
-    %67 = %66 is error
-    %67 ? bb47 : bb48;
+    %0 = %64;
+    return;
   }
   bb47 {
-    %0 = %66;
-    return;
+    %61 = %64;
+    GOTO bb48;
   }
   bb48 {
-    %63 = %66;
-    GOTO bb49;
+    %67 = ConstantLoad héllo
+    %68 = ConstantLoad UTF-8
+    %69 = writeString(wd,%67,%68) -> bb49;
   }
   bb49 {
-    %69 = ConstantLoad héllo
-    %70 = ConstantLoad UTF-8
-    %71 = writeString(wd,%69,%70) -> bb50;
+    %70 = %69 is error
+    %70 ? bb50 : bb51;
   }
   bb50 {
-    %72 = %71 is error
-    %72 ? bb51 : bb52;
+    %0 = %69;
+    return;
   }
   bb51 {
-    %0 = %71;
-    return;
+    %66 = %69;
+    GOTO bb52;
   }
   bb52 {
-    %68 = %71;
-    GOTO bb53;
+    %72 = ConstantLoad 0
+    %73 = %72;
+    %74 = writeVarInt(wd,%73) -> bb53;
   }
   bb53 {
-    %74 = ConstantLoad 0
-    %75 = %74;
-    %76 = writeVarInt(wd,%75) -> bb54;
+    %75 = %74 is error
+    %75 ? bb54 : bb55;
   }
   bb54 {
-    %77 = %76 is error
-    %77 ? bb55 : bb56;
+    %0 = %74;
+    return;
   }
   bb55 {
-    %0 = %76;
-    return;
+    %71 = %74;
+    GOTO bb56;
   }
   bb56 {
-    %73 = %76;
-    GOTO bb57;
+    %77 = ConstantLoad 300
+    %78 = %77;
+    %79 = writeVarInt(wd,%78) -> bb57;
   }
   bb57 {
-    %79 = ConstantLoad 300
-    %80 = %79;
-    %81 = writeVarInt(wd,%80) -> bb58;
+    %80 = %79 is error
+    %80 ? bb58 : bb59;
   }
   bb58 {
-    %82 = %81 is error
-    %82 ? bb59 : bb60;
+    %0 = %79;
+    return;
   }
   bb59 {
-    %0 = %81;
-    return;
+    %76 = %79;
+    GOTO bb60;
   }
   bb60 {
-    %78 = %81;
-    GOTO bb61;
+    %82 = ConstantLoad 300
+    %83 = unknown %82;
+    %84 = %83;
+    %85 = writeVarInt(wd,%84) -> bb61;
   }
   bb61 {
-    %84 = ConstantLoad 300
-    %85 = unknown %84;
-    %86 = %85;
-    %87 = writeVarInt(wd,%86) -> bb62;
+    %86 = %85 is error
+    %86 ? bb62 : bb63;
   }
   bb62 {
-    %88 = %87 is error
-    %88 ? bb63 : bb64;
+    %0 = %85;
+    return;
   }
   bb63 {
-    %0 = %87;
-    return;
+    %81 = %85;
+    GOTO bb64;
   }
   bb64 {
-    %83 = %87;
-    GOTO bb65;
+    %88 = close(wd) -> bb65;
   }
   bb65 {
-    %90 = close(wd) -> bb66;
+    %89 = %88 is error
+    %89 ? bb66 : bb67;
   }
   bb66 {
-    %91 = %90 is error
-    %91 ? bb67 : bb68;
+    %0 = %88;
+    return;
   }
   bb67 {
-    %0 = %90;
-    return;
+    %87 = %88;
+    GOTO bb68;
   }
   bb68 {
-    %89 = %90;
-    GOTO bb69;
+    %91 = openReadableFile(path) -> bb69;
   }
   bb69 {
-    %93 = openReadableFile(path) -> bb70;
+    %92 = %91 is error
+    %92 ? bb70 : bb71;
   }
   bb70 {
-    %94 = %93 is error
-    %94 ? bb71 : bb72;
+    %0 = %91;
+    return;
   }
   bb71 {
-    %0 = %93;
-    return;
+    %90 = %91;
+    GOTO bb72;
   }
   bb72 {
-    %92 = %93;
-    GOTO bb73;
+    rb = %90;
+    %94 = newObject ballerina/io:ReadableDataChannel
+    %95 = init(%94,rb,ord) -> bb73;
   }
   bb73 {
-    rb = %92;
-    %96 = newObject ballerina/io:ReadableDataChannel
-    %97 = init(%96,rb,ord) -> bb74;
+    %97 = %95 is nil
+    %97 ? bb74 : bb75;
   }
   bb74 {
-    %99 = %97 is nil
-    %99 ? bb75 : bb76;
+    %96 = %94;
+    GOTO bb76;
   }
   bb75 {
-    %98 = %96;
-    GOTO bb77;
+    %96 = %95;
+    GOTO bb76;
   }
   bb76 {
-    %98 = %97;
-    GOTO bb77;
+    rd = %96;
+    %100 = readInt16(rd) -> bb77;
   }
   bb77 {
-    rd = %98;
-    %102 = readInt16(rd) -> bb78;
+    %101 = %100 is error
+    %101 ? bb78 : bb79;
   }
   bb78 {
-    %103 = %102 is error
-    %103 ? bb79 : bb80;
+    %0 = %100;
+    return;
   }
   bb79 {
-    %0 = %102;
-    return;
+    %99 = %100;
+    GOTO bb80;
   }
   bb80 {
-    %101 = %102;
-    GOTO bb81;
+    %102 = %99;
+    %103 = println(%102) -> bb81;
   }
   bb81 {
-    %104 = %101;
-    %105 = println(%104) -> bb82;
+    %105 = readInt16(rd) -> bb82;
   }
   bb82 {
-    %107 = readInt16(rd) -> bb83;
+    %106 = %105 is error
+    %106 ? bb83 : bb84;
   }
   bb83 {
-    %108 = %107 is error
-    %108 ? bb84 : bb85;
+    %0 = %105;
+    return;
   }
   bb84 {
-    %0 = %107;
-    return;
+    %104 = %105;
+    GOTO bb85;
   }
   bb85 {
-    %106 = %107;
-    GOTO bb86;
+    %107 = %104;
+    %108 = println(%107) -> bb86;
   }
   bb86 {
-    %109 = %106;
-    %110 = println(%109) -> bb87;
+    %110 = readInt32(rd) -> bb87;
   }
   bb87 {
-    %112 = readInt32(rd) -> bb88;
+    %111 = %110 is error
+    %111 ? bb88 : bb89;
   }
   bb88 {
-    %113 = %112 is error
-    %113 ? bb89 : bb90;
+    %0 = %110;
+    return;
   }
   bb89 {
-    %0 = %112;
-    return;
+    %109 = %110;
+    GOTO bb90;
   }
   bb90 {
-    %111 = %112;
-    GOTO bb91;
+    %112 = %109;
+    %113 = println(%112) -> bb91;
   }
   bb91 {
-    %114 = %111;
-    %115 = println(%114) -> bb92;
+    %115 = readInt32(rd) -> bb92;
   }
   bb92 {
-    %117 = readInt32(rd) -> bb93;
+    %116 = %115 is error
+    %116 ? bb93 : bb94;
   }
   bb93 {
-    %118 = %117 is error
-    %118 ? bb94 : bb95;
+    %0 = %115;
+    return;
   }
   bb94 {
-    %0 = %117;
-    return;
+    %114 = %115;
+    GOTO bb95;
   }
   bb95 {
-    %116 = %117;
-    GOTO bb96;
+    %117 = %114;
+    %118 = println(%117) -> bb96;
   }
   bb96 {
-    %119 = %116;
-    %120 = println(%119) -> bb97;
+    %120 = readInt64(rd) -> bb97;
   }
   bb97 {
-    %122 = readInt64(rd) -> bb98;
+    %121 = %120 is error
+    %121 ? bb98 : bb99;
   }
   bb98 {
-    %123 = %122 is error
-    %123 ? bb99 : bb100;
+    %0 = %120;
+    return;
   }
   bb99 {
-    %0 = %122;
-    return;
+    %119 = %120;
+    GOTO bb100;
   }
   bb100 {
-    %121 = %122;
-    GOTO bb101;
+    %122 = %119;
+    %123 = println(%122) -> bb101;
   }
   bb101 {
-    %124 = %121;
-    %125 = println(%124) -> bb102;
+    %125 = readInt64(rd) -> bb102;
   }
   bb102 {
-    %127 = readInt64(rd) -> bb103;
+    %126 = %125 is error
+    %126 ? bb103 : bb104;
   }
   bb103 {
-    %128 = %127 is error
-    %128 ? bb104 : bb105;
+    %0 = %125;
+    return;
   }
   bb104 {
-    %0 = %127;
-    return;
+    %124 = %125;
+    GOTO bb105;
   }
   bb105 {
-    %126 = %127;
-    GOTO bb106;
+    %127 = %124;
+    %128 = println(%127) -> bb106;
   }
   bb106 {
-    %129 = %126;
-    %130 = println(%129) -> bb107;
+    %130 = readFloat32(rd) -> bb107;
   }
   bb107 {
-    %132 = readFloat32(rd) -> bb108;
+    %131 = %130 is error
+    %131 ? bb108 : bb109;
   }
   bb108 {
-    %133 = %132 is error
-    %133 ? bb109 : bb110;
+    %0 = %130;
+    return;
   }
   bb109 {
-    %0 = %132;
-    return;
+    %129 = %130;
+    GOTO bb110;
   }
   bb110 {
-    %131 = %132;
-    GOTO bb111;
+    %132 = %129;
+    %133 = println(%132) -> bb111;
   }
   bb111 {
-    %134 = %131;
-    %135 = println(%134) -> bb112;
+    %135 = readFloat64(rd) -> bb112;
   }
   bb112 {
-    %137 = readFloat64(rd) -> bb113;
+    %136 = %135 is error
+    %136 ? bb113 : bb114;
   }
   bb113 {
-    %138 = %137 is error
-    %138 ? bb114 : bb115;
+    %0 = %135;
+    return;
   }
   bb114 {
-    %0 = %137;
-    return;
+    %134 = %135;
+    GOTO bb115;
   }
   bb115 {
-    %136 = %137;
-    GOTO bb116;
+    %137 = %134;
+    %138 = println(%137) -> bb116;
   }
   bb116 {
-    %139 = %136;
-    %140 = println(%139) -> bb117;
+    %140 = readBool(rd) -> bb117;
   }
   bb117 {
-    %142 = readBool(rd) -> bb118;
+    %141 = %140 is error
+    %141 ? bb118 : bb119;
   }
   bb118 {
-    %143 = %142 is error
-    %143 ? bb119 : bb120;
+    %0 = %140;
+    return;
   }
   bb119 {
-    %0 = %142;
-    return;
+    %139 = %140;
+    GOTO bb120;
   }
   bb120 {
-    %141 = %142;
-    GOTO bb121;
+    %142 = %139;
+    %143 = println(%142) -> bb121;
   }
   bb121 {
-    %144 = %141;
-    %145 = println(%144) -> bb122;
+    %145 = readBool(rd) -> bb122;
   }
   bb122 {
-    %147 = readBool(rd) -> bb123;
+    %146 = %145 is error
+    %146 ? bb123 : bb124;
   }
   bb123 {
-    %148 = %147 is error
-    %148 ? bb124 : bb125;
+    %0 = %145;
+    return;
   }
   bb124 {
-    %0 = %147;
-    return;
+    %144 = %145;
+    GOTO bb125;
   }
   bb125 {
-    %146 = %147;
-    GOTO bb126;
+    %147 = %144;
+    %148 = println(%147) -> bb126;
   }
   bb126 {
-    %149 = %146;
-    %150 = println(%149) -> bb127;
+    %150 = ConstantLoad 6
+    %151 = %150;
+    %152 = ConstantLoad UTF-8
+    %153 = readString(rd,%151,%152) -> bb127;
   }
   bb127 {
-    %152 = ConstantLoad 6
-    %153 = %152;
-    %154 = ConstantLoad UTF-8
-    %155 = readString(rd,%153,%154) -> bb128;
+    %154 = %153 is error
+    %154 ? bb128 : bb129;
   }
   bb128 {
-    %156 = %155 is error
-    %156 ? bb129 : bb130;
+    %0 = %153;
+    return;
   }
   bb129 {
-    %0 = %155;
-    return;
+    %149 = %153;
+    GOTO bb130;
   }
   bb130 {
-    %151 = %155;
-    GOTO bb131;
+    %155 = println(%149) -> bb131;
   }
   bb131 {
-    %157 = println(%151) -> bb132;
+    %157 = readVarInt(rd) -> bb132;
   }
   bb132 {
-    %159 = readVarInt(rd) -> bb133;
+    %158 = %157 is error
+    %158 ? bb133 : bb134;
   }
   bb133 {
-    %160 = %159 is error
-    %160 ? bb134 : bb135;
+    %0 = %157;
+    return;
   }
   bb134 {
-    %0 = %159;
-    return;
+    %156 = %157;
+    GOTO bb135;
   }
   bb135 {
-    %158 = %159;
-    GOTO bb136;
+    %159 = %156;
+    %160 = println(%159) -> bb136;
   }
   bb136 {
-    %161 = %158;
-    %162 = println(%161) -> bb137;
+    %162 = readVarInt(rd) -> bb137;
   }
   bb137 {
-    %164 = readVarInt(rd) -> bb138;
+    %163 = %162 is error
+    %163 ? bb138 : bb139;
   }
   bb138 {
-    %165 = %164 is error
-    %165 ? bb139 : bb140;
+    %0 = %162;
+    return;
   }
   bb139 {
-    %0 = %164;
-    return;
+    %161 = %162;
+    GOTO bb140;
   }
   bb140 {
-    %163 = %164;
-    GOTO bb141;
+    %164 = %161;
+    %165 = println(%164) -> bb141;
   }
   bb141 {
-    %166 = %163;
-    %167 = println(%166) -> bb142;
+    %167 = readVarInt(rd) -> bb142;
   }
   bb142 {
-    %169 = readVarInt(rd) -> bb143;
+    %168 = %167 is error
+    %168 ? bb143 : bb144;
   }
   bb143 {
-    %170 = %169 is error
-    %170 ? bb144 : bb145;
+    %0 = %167;
+    return;
   }
   bb144 {
-    %0 = %169;
-    return;
+    %166 = %167;
+    GOTO bb145;
   }
   bb145 {
-    %168 = %169;
-    GOTO bb146;
+    %169 = %166;
+    %170 = println(%169) -> bb146;
   }
   bb146 {
-    %171 = %168;
-    %172 = println(%171) -> bb147;
+    %172 = close(rd) -> bb147;
   }
   bb147 {
-    %174 = close(rd) -> bb148;
+    %173 = %172 is error
+    %173 ? bb148 : bb149;
   }
   bb148 {
-    %175 = %174 is error
-    %175 ? bb149 : bb150;
-  }
-  bb149 {
-    %0 = %174;
+    %0 = %172;
     return;
   }
-  bb150 {
-    %173 = %174;
-    GOTO bb151;
+  bb149 {
+    %171 = %172;
+    GOTO bb150;
   }
-  bb151 {
+  bb150 {
     return;
   }
 }
@@ -807,6 +803,20 @@ main() -> nil|error{
     %138 = println(%137) -> bb18;
   }
   bb18 {
+    return;
+  }
+}
+roundtrip$493$0$thunk$0() -> error|object { private function attachFile(string, "APPEND"|"OVERWRITE") returns nil|error; public function close() returns nil|error; public function init() returns nil; public function write([int:Unsigned8...], int) returns int|error }{
+  bb0 {
+    $desugar$0 = (1, path);
+    %2 = $default$11($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %2;
+    %4 = openWritableFile($desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
     return;
   }
 }

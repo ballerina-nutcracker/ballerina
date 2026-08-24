@@ -10,19 +10,24 @@
       (value-type null)))
     (block-function-body
       (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$11 (
-            (simple-var-ref $desugar$0))))))
-      (var-def
         (variable wb (type
           (user-defined-type io WritableByteChannel)) (expr
           (checked-expr
-            (invocation io openWritableFile (
-              (simple-var-ref $desugar$0)
-              (simple-var-ref $desugar$1)))))))
+            (expression-thunk
+            (lambda
+              (function roundtrip$493$0$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (simple-var-ref path))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$11 (
+                        (simple-var-ref $desugar$0))))))
+                  (return
+                    (invocation io openWritableFile (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))))))))
       (var-def
         (variable wd (type
           (user-defined-type io WritableDataChannel)) (expr

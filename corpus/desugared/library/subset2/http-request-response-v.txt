@@ -202,63 +202,83 @@
           (index-based-access
             (simple-var-ref res)
             (literal statusCode)))))
-      (var-def
-        (variable $desugar$9 (expr
-          (literal X-Resp))))
-      (var-def
-        (variable $desugar$10 (expr
-          (invocation $default$4 (
-            (simple-var-ref $desugar$9))))))
       (expression-stmt
         (invocation io println (
-          (invocation hasHeader expr:
-            (simple-var-ref res) (
-            (simple-var-ref $desugar$9)
-            (simple-var-ref $desugar$10))))))
-      (var-def
-        (variable $desugar$11 (expr
-          (literal X-Resp))))
-      (var-def
-        (variable $desugar$12 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$11))))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$9 (expr
+                    (literal X-Resp))))
+                (var-def
+                  (variable $desugar$10 (expr
+                    (invocation $default$4 (
+                      (simple-var-ref $desugar$9))))))
+                (return
+                  (invocation hasHeader expr:
+                    (simple-var-ref res) (
+                    (simple-var-ref $desugar$9)
+                    (simple-var-ref $desugar$10)))))))))))
       (expression-stmt
         (invocation io println (
           (checked-expr
-            (invocation getHeader expr:
-              (simple-var-ref res) (
-              (simple-var-ref $desugar$11)
-              (simple-var-ref $desugar$12)))))))
-      (var-def
-        (variable $desugar$13 (expr
-          (literal X-Resp))))
-      (var-def
-        (variable $desugar$14 (expr
-          (invocation $default$3 (
-            (simple-var-ref $desugar$13))))))
+            (expression-thunk
+            (lambda
+              (function main$493$0$thunk$1 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$11 (expr
+                      (literal X-Resp))))
+                  (var-def
+                    (variable $desugar$12 (expr
+                      (invocation $default$1 (
+                        (simple-var-ref $desugar$11))))))
+                  (return
+                    (invocation getHeader expr:
+                      (simple-var-ref res) (
+                      (simple-var-ref $desugar$11)
+                      (simple-var-ref $desugar$12))))))))))))
       (var-def
         (variable rs (type
           (array-type
             (value-type string) dimensions: 1 ([]))) (expr
           (checked-expr
-            (invocation getHeaders expr:
-              (simple-var-ref res) (
-              (simple-var-ref $desugar$13)
-              (simple-var-ref $desugar$14)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$0$thunk$2 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$13 (expr
+                      (literal X-Resp))))
+                  (var-def
+                    (variable $desugar$14 (expr
+                      (invocation $default$3 (
+                        (simple-var-ref $desugar$13))))))
+                  (return
+                    (invocation getHeaders expr:
+                      (simple-var-ref res) (
+                      (simple-var-ref $desugar$13)
+                      (simple-var-ref $desugar$14))))))))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.array length (
             (simple-var-ref rs))))))
-      (var-def
-        (variable $desugar$15 (expr
-          (invocation $default$2 ()))))
       (expression-stmt
         (invocation io println (
           (binary-expr >=
             (invocation lang.array length (
-              (invocation getHeaderNames expr:
-                (simple-var-ref res) (
-                (simple-var-ref $desugar$15)))))
+              (expression-thunk
+              (lambda
+                (function main$493$0$thunk$3 () ()
+                  (block-function-body
+                    (var-def
+                      (variable $desugar$15 (expr
+                        (invocation $default$2 ()))))
+                    (return
+                      (invocation getHeaderNames expr:
+                        (simple-var-ref res) (
+                        (simple-var-ref $desugar$15))))))))))
             (literal 1)))))
       (expression-stmt
         (checked-expr
@@ -348,19 +368,24 @@
           (simple-var-ref res) (
           (simple-var-ref $desugar$22)
           (simple-var-ref $desugar$23))))
-      (var-def
-        (variable $desugar$24 (expr
-          (literal X-Resp))))
-      (var-def
-        (variable $desugar$25 (expr
-          (invocation $default$4 (
-            (simple-var-ref $desugar$24))))))
       (expression-stmt
         (invocation io println (
-          (invocation hasHeader expr:
-            (simple-var-ref res) (
-            (simple-var-ref $desugar$24)
-            (simple-var-ref $desugar$25))))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$4 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$24 (expr
+                    (literal X-Resp))))
+                (var-def
+                  (variable $desugar$25 (expr
+                    (invocation $default$4 (
+                      (simple-var-ref $desugar$24))))))
+                (return
+                  (invocation hasHeader expr:
+                    (simple-var-ref res) (
+                    (simple-var-ref $desugar$24)
+                    (simple-var-ref $desugar$25)))))))))))
       (var-def
         (variable $desugar$26 (expr
           (invocation $default$5 ()))))
@@ -368,16 +393,21 @@
         (invocation removeAllHeaders expr:
           (simple-var-ref res) (
           (simple-var-ref $desugar$26))))
-      (var-def
-        (variable $desugar$27 (expr
-          (literal Content-Type))))
-      (var-def
-        (variable $desugar$28 (expr
-          (invocation $default$4 (
-            (simple-var-ref $desugar$27))))))
       (expression-stmt
         (invocation io println (
-          (invocation hasHeader expr:
-            (simple-var-ref res) (
-            (simple-var-ref $desugar$27)
-            (simple-var-ref $desugar$28)))))))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$5 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$27 (expr
+                    (literal Content-Type))))
+                (var-def
+                  (variable $desugar$28 (expr
+                    (invocation $default$4 (
+                      (simple-var-ref $desugar$27))))))
+                (return
+                  (invocation hasHeader expr:
+                    (simple-var-ref res) (
+                    (simple-var-ref $desugar$27)
+                    (simple-var-ref $desugar$28))))))))))))))

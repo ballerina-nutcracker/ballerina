@@ -52,17 +52,14 @@ main() -> nil{
     %9 = println(res) -> bb6;
   }
   bb6 {
-    %10 = $default$0() -> bb7;
+    %10 = closure_fp $anon/.:main$493$1$thunk$0
+    %11 = main$493$1$thunk$0() -> bb7;
   }
   bb7 {
-    $desugar$0 = %10;
-    %12 = $remote$getT(c,$desugar$0) -> bb8;
+    res = %11;
+    %12 = println(res) -> bb8;
   }
   bb8 {
-    res = %12;
-    %13 = println(res) -> bb9;
-  }
-  bb9 {
     return;
   }
 }
@@ -70,6 +67,19 @@ $default$0() -> string{
   bb0 {
     %1 = ConstantLoad bar
     %0 = %1;
+    return;
+  }
+}
+main$493$1$thunk$0() -> string{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = $remote$getT((1, c),$desugar$0) -> bb2;
+  }
+  bb2 {
+    %0 = %3;
     return;
   }
 }

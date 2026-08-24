@@ -14,149 +14,169 @@
       (value-type null)))
     (block-function-body
       (var-def
-        (variable $desugar$0 (expr
-          (literal https://example.com))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$15 (
-            (simple-var-ref $desugar$0))))))
-      (var-def
         (variable c (type
           (user-defined-type http Client)) (expr
           (checked-expr
-            (new (
-              (simple-var-ref $desugar$0)
-              (simple-var-ref $desugar$1)))))))
-      (var-def
-        (variable $desugar$2 (expr
-          (literal /path))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation $default$21 (
-            (simple-var-ref $desugar$2))))))
-      (var-def
-        (variable $desugar$4 (expr
-          (typedesc-expr))))
+            (expression-thunk
+            (lambda
+              (function main$493$1$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (literal https://example.com))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$15 (
+                        (simple-var-ref $desugar$0))))))
+                  (return
+                    (new (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))))))))
       (var-def
         (variable r (type
           (user-defined-type http Response)) (expr
           (checked-expr
-            (remote-method-call get expr:
-              (simple-var-ref c) (
-              (simple-var-ref $desugar$2)
-              (simple-var-ref $desugar$3)
-              (simple-var-ref $desugar$4)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$1$thunk$1 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$2 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$3 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$2))))))
+                  (var-def
+                    (variable $desugar$4 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c) (
+                      (simple-var-ref $desugar$2)
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$4))))))))))))
       (expression-stmt
         (invocation io println (
           (index-based-access
             (simple-var-ref r)
             (literal statusCode)))))
       (var-def
-        (variable $desugar$5 (expr
-          (literal /path))))
-      (var-def
-        (variable $desugar$6 (expr
-          (invocation $default$21 (
-            (simple-var-ref $desugar$5))))))
-      (var-def
-        (variable $desugar$7 (expr
-          (typedesc-expr))))
-      (var-def
         (variable ru (type
           (union-type
             (user-defined-type http Response)
             (value-type string))) (expr
           (checked-expr
-            (remote-method-call get expr:
-              (simple-var-ref c) (
-              (simple-var-ref $desugar$5)
-              (simple-var-ref $desugar$6)
-              (simple-var-ref $desugar$7)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$1$thunk$2 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$5 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$6 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$5))))))
+                  (var-def
+                    (variable $desugar$7 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c) (
+                      (simple-var-ref $desugar$5)
+                      (simple-var-ref $desugar$6)
+                      (simple-var-ref $desugar$7))))))))))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
             (simple-var-ref ru)
             (value-type string)))))
       (var-def
-        (variable $desugar$8 (expr
-          (literal /path))))
-      (var-def
-        (variable $desugar$9 (expr
-          (invocation $default$21 (
-            (simple-var-ref $desugar$8))))))
-      (var-def
-        (variable $desugar$10 (expr
-          (typedesc-expr))))
-      (var-def
         (variable text (type
           (value-type string)) (expr
           (checked-expr
-            (remote-method-call get expr:
-              (simple-var-ref c) (
-              (simple-var-ref $desugar$8)
-              (simple-var-ref $desugar$9)
-              (simple-var-ref $desugar$10)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$1$thunk$3 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$8 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$9 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$8))))))
+                  (var-def
+                    (variable $desugar$10 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c) (
+                      (simple-var-ref $desugar$8)
+                      (simple-var-ref $desugar$9)
+                      (simple-var-ref $desugar$10))))))))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref text))))
-      (var-def
-        (variable $desugar$11 (expr
-          (literal /path))))
-      (var-def
-        (variable $desugar$12 (expr
-          (invocation $default$21 (
-            (simple-var-ref $desugar$11))))))
-      (var-def
-        (variable $desugar$13 (expr
-          (typedesc-expr))))
       (var-def
         (variable optText (type
           (union-type
             (value-type string)
             (value-type null))) (expr
           (checked-expr
-            (remote-method-call get expr:
-              (simple-var-ref c) (
-              (simple-var-ref $desugar$11)
-              (simple-var-ref $desugar$12)
-              (simple-var-ref $desugar$13)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$1$thunk$4 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$11 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$12 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$11))))))
+                  (var-def
+                    (variable $desugar$13 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c) (
+                      (simple-var-ref $desugar$11)
+                      (simple-var-ref $desugar$12)
+                      (simple-var-ref $desugar$13))))))))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref optText))))
-      (var-def
-        (variable $desugar$14 (expr
-          (literal /path))))
-      (var-def
-        (variable $desugar$15 (expr
-          (invocation $default$21 (
-            (simple-var-ref $desugar$14))))))
-      (var-def
-        (variable $desugar$16 (expr
-          (typedesc-expr))))
       (var-def
         (variable bytes (type
           (array-type
             (value-type byte) dimensions: 1 ([]))) (expr
           (checked-expr
-            (remote-method-call get expr:
-              (simple-var-ref c) (
-              (simple-var-ref $desugar$14)
-              (simple-var-ref $desugar$15)
-              (simple-var-ref $desugar$16)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$1$thunk$5 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$14 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$15 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$14))))))
+                  (var-def
+                    (variable $desugar$16 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c) (
+                      (simple-var-ref $desugar$14)
+                      (simple-var-ref $desugar$15)
+                      (simple-var-ref $desugar$16))))))))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.array length (
             (simple-var-ref bytes))))))
-      (var-def
-        (variable $desugar$17 (expr
-          (literal /path))))
-      (var-def
-        (variable $desugar$18 (expr
-          (invocation $default$21 (
-            (simple-var-ref $desugar$17))))))
-      (var-def
-        (variable $desugar$19 (expr
-          (typedesc-expr))))
       (var-def
         (variable optBytes (type
           (union-type
@@ -164,11 +184,26 @@
               (value-type byte) dimensions: 1 ([]))
             (value-type null))) (expr
           (checked-expr
-            (remote-method-call get expr:
-              (simple-var-ref c) (
-              (simple-var-ref $desugar$17)
-              (simple-var-ref $desugar$18)
-              (simple-var-ref $desugar$19)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$1$thunk$6 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$17 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$18 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$17))))))
+                  (var-def
+                    (variable $desugar$19 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c) (
+                      (simple-var-ref $desugar$17)
+                      (simple-var-ref $desugar$18)
+                      (simple-var-ref $desugar$19))))))))))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
@@ -176,46 +211,56 @@
             (array-type
               (value-type byte) dimensions: 1 ([]))))))
       (var-def
-        (variable $desugar$20 (expr
-          (literal /path))))
-      (var-def
-        (variable $desugar$21 (expr
-          (invocation $default$21 (
-            (simple-var-ref $desugar$20))))))
-      (var-def
-        (variable $desugar$22 (expr
-          (typedesc-expr))))
-      (var-def
         (variable nothing (type
           (value-type null)) (expr
           (checked-expr
-            (remote-method-call get expr:
-              (simple-var-ref c) (
-              (simple-var-ref $desugar$20)
-              (simple-var-ref $desugar$21)
-              (simple-var-ref $desugar$22)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$1$thunk$7 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$20 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$21 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$20))))))
+                  (var-def
+                    (variable $desugar$22 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c) (
+                      (simple-var-ref $desugar$20)
+                      (simple-var-ref $desugar$21)
+                      (simple-var-ref $desugar$22))))))))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref nothing))))
       (var-def
-        (variable $desugar$23 (expr
-          (literal /path))))
-      (var-def
-        (variable $desugar$24 (expr
-          (invocation $default$21 (
-            (simple-var-ref $desugar$23))))))
-      (var-def
-        (variable $desugar$25 (expr
-          (typedesc-expr
-            (value-type string)))))
-      (var-def
         (variable explicitText (expr
           (checked-expr
-            (remote-method-call get expr:
-              (simple-var-ref c) (
-              (simple-var-ref $desugar$23)
-              (simple-var-ref $desugar$24)
-              (simple-var-ref $desugar$25)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$1$thunk$8 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$23 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$24 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$23))))))
+                  (var-def
+                    (variable $desugar$25 (expr
+                      (typedesc-expr
+                        (value-type string)))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c) (
+                      (simple-var-ref $desugar$23)
+                      (simple-var-ref $desugar$24)
+                      (simple-var-ref $desugar$25))))))))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref explicitText))))

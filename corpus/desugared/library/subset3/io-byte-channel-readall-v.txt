@@ -10,28 +10,33 @@
         (variable path (type
           (value-type string)) (expr
           (literal /tmp/bal_io_byte_channel_readall.bin))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (list-constructor-expr
-            (literal 10)
-            (literal 20)
-            (literal 30)
-            (literal 40)
-            (literal 50)))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$4 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteBytes (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref path))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (list-constructor-expr
+                      (literal 10)
+                      (literal 20)
+                      (literal 30)
+                      (literal 40)
+                      (literal 50)))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$4 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteBytes (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable channel (type
           (user-defined-type io ReadableByteChannel)) (expr

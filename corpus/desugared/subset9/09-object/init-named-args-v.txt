@@ -67,19 +67,24 @@
           (invocation describe expr:
             (simple-var-ref mixed) ()))))
       (var-def
-        (variable $desugar$0 (expr
-          (literal /etc))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$0 (
-            (simple-var-ref $desugar$0))))))
-      (var-def
         (variable defaulted (type
           (user-defined-type Listener)) (expr
           (checked-expr
-            (new (
-              (simple-var-ref $desugar$0)
-              (simple-var-ref $desugar$1)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$1$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (literal /etc))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$0 (
+                        (simple-var-ref $desugar$0))))))
+                  (return
+                    (new (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))))))))
       (expression-stmt
         (invocation io println (
           (invocation describe expr:

@@ -32,17 +32,22 @@
           (invocation foo (
             (literal 100)
             (literal 10))))))
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation $default$0 ()))))
-      (var-def
-        (variable $desugar$1 (expr
-          (literal 5))))
       (expression-stmt
         (invocation io println (
-          (invocation bar (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))))
+          (expression-thunk
+          (lambda
+            (function main$493$2$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (invocation $default$0 ()))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (literal 5))))
+                (return
+                  (invocation bar (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)))))))))))))
   (function $default$0 () ()
     (block-function-body
       (return

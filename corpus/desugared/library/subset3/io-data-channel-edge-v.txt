@@ -198,19 +198,24 @@
                 (value-type string)) (expr
                 (literal /tmp/bal_io_dc_varint.bin))))
             (var-def
-              (variable $desugar$8 (expr
-                (simple-var-ref path))))
-            (var-def
-              (variable $desugar$9 (expr
-                (invocation $default$11 (
-                  (simple-var-ref $desugar$8))))))
-            (var-def
               (variable wb (type
                 (user-defined-type io WritableByteChannel)) (expr
                 (checked-expr
-                  (invocation io openWritableFile (
-                    (simple-var-ref $desugar$8)
-                    (simple-var-ref $desugar$9)))))))
+                  (expression-thunk
+                  (lambda
+                    (function main$493$0$thunk$0 () ()
+                      (block-function-body
+                        (var-def
+                          (variable $desugar$8 (expr
+                            (simple-var-ref path))))
+                        (var-def
+                          (variable $desugar$9 (expr
+                            (invocation $default$11 (
+                              (simple-var-ref $desugar$8))))))
+                        (return
+                          (invocation io openWritableFile (
+                            (simple-var-ref $desugar$8)
+                            (simple-var-ref $desugar$9))))))))))))
             (var-def
               (variable $desugar$10 (expr
                 (simple-var-ref wb))))

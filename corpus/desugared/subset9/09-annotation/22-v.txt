@@ -76,7 +76,45 @@
       (mapping-constructor-expr
         (key-value
           (literal values)
-          (simple-var-ref $desugar$0))))
+          (expression-thunk
+          (lambda
+            (function init$521$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (list-constructor-expr))))
+                (expression-stmt
+                  (invocation lang.array push (
+                    (simple-var-ref $desugar$0)
+                    (literal 0))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (simple-var-ref runtimeList))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation lang.array length (
+                      (simple-var-ref $desugar$1))))))
+                (var-def
+                  (variable $desugar$3 (expr
+                    (numeric-literal 0))))
+                (while
+                  (binary-expr <
+                    (simple-var-ref $desugar$3)
+                    (simple-var-ref $desugar$2))
+                  (block-stmt
+                    (expression-stmt
+                      (invocation lang.array push (
+                        (simple-var-ref $desugar$0)
+                        (index-based-access
+                          (simple-var-ref $desugar$1)
+                          (simple-var-ref $desugar$3)))))
+                    (assignment
+                      (simple-var-ref $desugar$3)
+                      (binary-expr +
+                        (simple-var-ref $desugar$3)
+                        (numeric-literal 1)))))
+                (return
+                  (simple-var-ref $desugar$0)))))))))
     (value-type int))
   (type-definition TemplateTarget
     (annotation-attachment templateInfo
@@ -137,45 +175,50 @@
         (list-constructor-expr
           (literal 7)
           (literal 8)))
-      (var-def
-        (variable $desugar$0 (expr
-          (list-constructor-expr))))
-      (expression-stmt
-        (invocation lang.array push (
-          (simple-var-ref $desugar$0)
-          (literal 0))))
-      (var-def
-        (variable $desugar$1 (expr
-          (simple-var-ref runtimeList))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation lang.array length (
-            (simple-var-ref $desugar$1))))))
-      (var-def
-        (variable $desugar$3 (expr
-          (numeric-literal 0))))
-      (while
-        (binary-expr <
-          (simple-var-ref $desugar$3)
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (expression-stmt
-            (invocation lang.array push (
-              (simple-var-ref $desugar$0)
-              (index-based-access
-                (simple-var-ref $desugar$1)
-                (simple-var-ref $desugar$3)))))
-          (assignment
-            (simple-var-ref $desugar$3)
-            (binary-expr +
-              (simple-var-ref $desugar$3)
-              (numeric-literal 1)))))
       (assignment
         (simple-var-ref $annotation$3)
         (mapping-constructor-expr
           (key-value
             (literal values)
-            (simple-var-ref $desugar$0))))
+            (expression-thunk
+            (lambda
+              (function init$521$0$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (list-constructor-expr))))
+                  (expression-stmt
+                    (invocation lang.array push (
+                      (simple-var-ref $desugar$0)
+                      (literal 0))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (simple-var-ref runtimeList))))
+                  (var-def
+                    (variable $desugar$2 (expr
+                      (invocation lang.array length (
+                        (simple-var-ref $desugar$1))))))
+                  (var-def
+                    (variable $desugar$3 (expr
+                      (numeric-literal 0))))
+                  (while
+                    (binary-expr <
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$2))
+                    (block-stmt
+                      (expression-stmt
+                        (invocation lang.array push (
+                          (simple-var-ref $desugar$0)
+                          (index-based-access
+                            (simple-var-ref $desugar$1)
+                            (simple-var-ref $desugar$3)))))
+                      (assignment
+                        (simple-var-ref $desugar$3)
+                        (binary-expr +
+                          (simple-var-ref $desugar$3)
+                          (numeric-literal 1)))))
+                  (return
+                    (simple-var-ref $desugar$0)))))))))
       (assignment
         (simple-var-ref $annotation$4)
         (mapping-constructor-expr

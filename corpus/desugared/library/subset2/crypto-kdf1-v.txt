@@ -35,33 +35,38 @@
             (literal 110)
             (literal 102)
             (literal 111)))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref input))))
-      (var-def
-        (variable $desugar$1 (expr
-          (literal 32))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$15 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation $default$16 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.array length (
             (group-expr
               (checked-expr
-                (invocation crypto hkdfSha256 (
-                  (simple-var-ref $desugar$0)
-                  (simple-var-ref $desugar$1)
-                  (simple-var-ref $desugar$2)
-                  (simple-var-ref $desugar$3))))))))))
+                (expression-thunk
+                (lambda
+                  (function main$493$0$thunk$0 () ()
+                    (block-function-body
+                      (var-def
+                        (variable $desugar$0 (expr
+                          (simple-var-ref input))))
+                      (var-def
+                        (variable $desugar$1 (expr
+                          (literal 32))))
+                      (var-def
+                        (variable $desugar$2 (expr
+                          (invocation $default$15 (
+                            (simple-var-ref $desugar$0)
+                            (simple-var-ref $desugar$1))))))
+                      (var-def
+                        (variable $desugar$3 (expr
+                          (invocation $default$16 (
+                            (simple-var-ref $desugar$0)
+                            (simple-var-ref $desugar$1)
+                            (simple-var-ref $desugar$2))))))
+                      (return
+                        (invocation crypto hkdfSha256 (
+                          (simple-var-ref $desugar$0)
+                          (simple-var-ref $desugar$1)
+                          (simple-var-ref $desugar$2)
+                          (simple-var-ref $desugar$3)))))))))))))))
       (var-def
         (variable d1 (type
           (array-type

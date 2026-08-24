@@ -34,18 +34,23 @@
   (function main () (
     (value-type null))
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation nextVal ()))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$0 (
-            (simple-var-ref $desugar$0))))))
       (expression-stmt
         (invocation io println (
-          (invocation foo (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
+          (expression-thunk
+          (lambda
+            (function main$493$3$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (invocation nextVal ()))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (invocation $default$0 (
+                      (simple-var-ref $desugar$0))))))
+                (return
+                  (invocation foo (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)))))))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref counter))))))

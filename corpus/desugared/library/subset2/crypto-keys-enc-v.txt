@@ -119,23 +119,28 @@ O7ekKjOszIhNsvlgkHI=
             (literal 2)
             (literal 3)
             (literal 4)))))
-      (var-def
-        (variable $desugar$0 (expr
-          (literal /tmp/bal_crypto_enc.pem))))
-      (var-def
-        (variable $desugar$1 (expr
-          (simple-var-ref pbes2))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (literal /tmp/bal_crypto_enc.pem))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (simple-var-ref pbes2))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable pkPbes2 (type
           (user-defined-type crypto PrivateKey)) (expr
@@ -153,23 +158,28 @@ O7ekKjOszIhNsvlgkHI=
                     (simple-var-ref data)
                     (simple-var-ref pkPbes2)))))))
             (literal 0)))))
-      (var-def
-        (variable $desugar$3 (expr
-          (literal /tmp/bal_crypto_enc.pem))))
-      (var-def
-        (variable $desugar$4 (expr
-          (simple-var-ref pbe3des))))
-      (var-def
-        (variable $desugar$5 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$4))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$4)
-            (simple-var-ref $desugar$5)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$1 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$3 (expr
+                    (literal /tmp/bal_crypto_enc.pem))))
+                (var-def
+                  (variable $desugar$4 (expr
+                    (simple-var-ref pbe3des))))
+                (var-def
+                  (variable $desugar$5 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$4))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$3)
+                    (simple-var-ref $desugar$4)
+                    (simple-var-ref $desugar$5))))))))))
       (var-def
         (variable pk3des (type
           (user-defined-type crypto PrivateKey)) (expr
@@ -187,23 +197,28 @@ O7ekKjOszIhNsvlgkHI=
                     (simple-var-ref data)
                     (simple-var-ref pk3des)))))))
             (literal 0)))))
-      (var-def
-        (variable $desugar$6 (expr
-          (literal /tmp/bal_crypto_enc.pem))))
-      (var-def
-        (variable $desugar$7 (expr
-          (simple-var-ref pbeRc2))))
-      (var-def
-        (variable $desugar$8 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$6)
-            (simple-var-ref $desugar$7))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$6)
-            (simple-var-ref $desugar$7)
-            (simple-var-ref $desugar$8)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$2 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$6 (expr
+                    (literal /tmp/bal_crypto_enc.pem))))
+                (var-def
+                  (variable $desugar$7 (expr
+                    (simple-var-ref pbeRc2))))
+                (var-def
+                  (variable $desugar$8 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$6)
+                      (simple-var-ref $desugar$7))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$6)
+                    (simple-var-ref $desugar$7)
+                    (simple-var-ref $desugar$8))))))))))
       (var-def
         (variable pkRc2 (type
           (user-defined-type crypto PrivateKey)) (expr
@@ -221,23 +236,28 @@ O7ekKjOszIhNsvlgkHI=
                     (simple-var-ref data)
                     (simple-var-ref pkRc2)))))))
             (literal 0)))))
-      (var-def
-        (variable $desugar$9 (expr
-          (literal /tmp/bal_crypto_enc.pem))))
-      (var-def
-        (variable $desugar$10 (expr
-          (simple-var-ref pbes2))))
-      (var-def
-        (variable $desugar$11 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$9)
-            (simple-var-ref $desugar$10))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$9)
-            (simple-var-ref $desugar$10)
-            (simple-var-ref $desugar$11)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$3 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$9 (expr
+                    (literal /tmp/bal_crypto_enc.pem))))
+                (var-def
+                  (variable $desugar$10 (expr
+                    (simple-var-ref pbes2))))
+                (var-def
+                  (variable $desugar$11 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$9)
+                      (simple-var-ref $desugar$10))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$9)
+                    (simple-var-ref $desugar$10)
+                    (simple-var-ref $desugar$11))))))))))
       (var-def
         (variable bad (type
           (union-type

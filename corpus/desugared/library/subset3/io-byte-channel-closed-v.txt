@@ -10,26 +10,31 @@
         (variable path (type
           (value-type string)) (expr
           (literal /tmp/bal_io_byte_channel_closed.bin))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (list-constructor-expr
-            (literal 1)
-            (literal 2)
-            (literal 3)))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$4 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteBytes (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref path))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (list-constructor-expr
+                      (literal 1)
+                      (literal 2)
+                      (literal 3)))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$4 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteBytes (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable reader (type
           (user-defined-type io ReadableByteChannel)) (expr
@@ -77,19 +82,24 @@
               (simple-var-ref readAfterClose)
               (user-defined-type io Error)))))
         (var-def
-          (variable $desugar$3 (expr
-            (simple-var-ref path))))
-        (var-def
-          (variable $desugar$4 (expr
-            (invocation $default$11 (
-              (simple-var-ref $desugar$3))))))
-        (var-def
           (variable writer (type
             (user-defined-type io WritableByteChannel)) (expr
             (checked-expr
-              (invocation io openWritableFile (
-                (simple-var-ref $desugar$3)
-                (simple-var-ref $desugar$4)))))))
+              (expression-thunk
+              (lambda
+                (function main$493$0$thunk$1 () ()
+                  (block-function-body
+                    (var-def
+                      (variable $desugar$3 (expr
+                        (simple-var-ref path))))
+                    (var-def
+                      (variable $desugar$4 (expr
+                        (invocation $default$11 (
+                          (simple-var-ref $desugar$3))))))
+                    (return
+                      (invocation io openWritableFile (
+                        (simple-var-ref $desugar$3)
+                        (simple-var-ref $desugar$4))))))))))))
         (expression-stmt
           (checked-expr
             (invocation close expr:

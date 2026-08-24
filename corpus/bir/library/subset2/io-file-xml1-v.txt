@@ -15,46 +15,56 @@ main() -> nil|error{
     %12 = newXMLSequence{%7, %11}
     %13 = newXMLElement(%3, %12)
     data = %13;
-    $desugar$0 = path;
-    $desugar$1 = data;
-    %17 = $default$6($desugar$0,$desugar$1) -> bb1;
+    %16 = closure_fp $anon/.:main$493$0$thunk$0
+    %17 = main$493$0$thunk$0() -> bb1;
   }
   bb1 {
-    $desugar$2 = %17;
-    %20 = fileWriteXml($desugar$0,$desugar$1,$desugar$2) -> bb2;
+    %18 = %17 is error
+    %18 ? bb2 : bb3;
   }
   bb2 {
-    %21 = %20 is error
-    %21 ? bb3 : bb4;
+    %0 = %17;
+    return;
   }
   bb3 {
+    %15 = %17;
+    GOTO bb4;
+  }
+  bb4 {
+    %20 = fileReadXml(path) -> bb5;
+  }
+  bb5 {
+    %21 = %20 is error
+    %21 ? bb6 : bb7;
+  }
+  bb6 {
     %0 = %20;
     return;
   }
-  bb4 {
-    %19 = %20;
-    GOTO bb5;
-  }
-  bb5 {
-    %23 = fileReadXml(path) -> bb6;
-  }
-  bb6 {
-    %24 = %23 is error
-    %24 ? bb7 : bb8;
-  }
   bb7 {
-    %0 = %23;
-    return;
+    %19 = %20;
+    GOTO bb8;
   }
   bb8 {
-    %22 = %23;
-    GOTO bb9;
+    result = %19;
+    %23 = println(result) -> bb9;
   }
   bb9 {
-    result = %22;
-    %26 = println(result) -> bb10;
+    return;
   }
-  bb10 {
+}
+main$493$0$thunk$0() -> nil|error{
+  bb0 {
+    $desugar$0 = (1, path);
+    $desugar$1 = (1, data);
+    %3 = $default$6($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %3;
+    %5 = fileWriteXml($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
     return;
   }
 }

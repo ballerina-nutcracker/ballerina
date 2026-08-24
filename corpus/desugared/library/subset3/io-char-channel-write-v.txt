@@ -12,19 +12,24 @@
           (value-type string)) (expr
           (literal /tmp/bal_io_char_write.txt))))
       (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$11 (
-            (simple-var-ref $desugar$0))))))
-      (var-def
         (variable wb (type
           (user-defined-type io WritableByteChannel)) (expr
           (checked-expr
-            (invocation io openWritableFile (
-              (simple-var-ref $desugar$0)
-              (simple-var-ref $desugar$1)))))))
+            (expression-thunk
+            (lambda
+              (function main$493$0$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (simple-var-ref path))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$11 (
+                        (simple-var-ref $desugar$0))))))
+                  (return
+                    (invocation io openWritableFile (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))))))))
       (var-def
         (variable wc (type
           (user-defined-type io WritableCharacterChannel)) (expr
@@ -137,19 +142,24 @@
               (value-type string)) (expr
               (literal /tmp/bal_io_char_write_latin1.txt))))
           (var-def
-            (variable $desugar$2 (expr
-              (simple-var-ref lpath))))
-          (var-def
-            (variable $desugar$3 (expr
-              (invocation $default$11 (
-                (simple-var-ref $desugar$2))))))
-          (var-def
             (variable lb (type
               (user-defined-type io WritableByteChannel)) (expr
               (checked-expr
-                (invocation io openWritableFile (
-                  (simple-var-ref $desugar$2)
-                  (simple-var-ref $desugar$3)))))))
+                (expression-thunk
+                (lambda
+                  (function main$493$0$thunk$1 () ()
+                    (block-function-body
+                      (var-def
+                        (variable $desugar$2 (expr
+                          (simple-var-ref lpath))))
+                      (var-def
+                        (variable $desugar$3 (expr
+                          (invocation $default$11 (
+                            (simple-var-ref $desugar$2))))))
+                      (return
+                        (invocation io openWritableFile (
+                          (simple-var-ref $desugar$2)
+                          (simple-var-ref $desugar$3))))))))))))
           (var-def
             (variable lc (type
               (user-defined-type io WritableCharacterChannel)) (expr
@@ -208,19 +218,24 @@
               (value-type string)) (expr
               (literal /tmp/bal_io_char_write_utf16.bin))))
           (var-def
-            (variable $desugar$4 (expr
-              (simple-var-ref upath))))
-          (var-def
-            (variable $desugar$5 (expr
-              (invocation $default$11 (
-                (simple-var-ref $desugar$4))))))
-          (var-def
             (variable ub (type
               (user-defined-type io WritableByteChannel)) (expr
               (checked-expr
-                (invocation io openWritableFile (
-                  (simple-var-ref $desugar$4)
-                  (simple-var-ref $desugar$5)))))))
+                (expression-thunk
+                (lambda
+                  (function main$493$0$thunk$2 () ()
+                    (block-function-body
+                      (var-def
+                        (variable $desugar$4 (expr
+                          (simple-var-ref upath))))
+                      (var-def
+                        (variable $desugar$5 (expr
+                          (invocation $default$11 (
+                            (simple-var-ref $desugar$4))))))
+                      (return
+                        (invocation io openWritableFile (
+                          (simple-var-ref $desugar$4)
+                          (simple-var-ref $desugar$5))))))))))))
           (var-def
             (variable uc (type
               (user-defined-type io WritableCharacterChannel)) (expr

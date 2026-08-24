@@ -16,23 +16,28 @@
             (xml-attribute attr
               (literal val))
             (xml-element-literal child)))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (simple-var-ref data))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$6 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteXml (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref path))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (simple-var-ref data))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$6 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteXml (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable result (type
           (value-type xml)) (expr
@@ -46,23 +51,28 @@
         (variable data2 (type
           (value-type xml)) (expr
           (xml-element-literal updated))))
-      (var-def
-        (variable $desugar$3 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$4 (expr
-          (simple-var-ref data2))))
-      (var-def
-        (variable $desugar$5 (expr
-          (invocation $default$6 (
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$4))))))
       (expression-stmt
         (checked-expr
-          (invocation io fileWriteXml (
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$4)
-            (simple-var-ref $desugar$5)))))
+          (expression-thunk
+          (lambda
+            (function main$493$0$thunk$1 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$3 (expr
+                    (simple-var-ref path))))
+                (var-def
+                  (variable $desugar$4 (expr
+                    (simple-var-ref data2))))
+                (var-def
+                  (variable $desugar$5 (expr
+                    (invocation $default$6 (
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$4))))))
+                (return
+                  (invocation io fileWriteXml (
+                    (simple-var-ref $desugar$3)
+                    (simple-var-ref $desugar$4)
+                    (simple-var-ref $desugar$5))))))))))
       (var-def
         (variable result2 (type
           (value-type xml)) (expr
