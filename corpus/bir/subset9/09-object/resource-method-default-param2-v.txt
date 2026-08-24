@@ -43,87 +43,73 @@ main() -> nil|error{
   }
   bb4 {
     store = %3;
-    %6 = $default$0() -> bb5;
+    %7 = closure_fp $anon/.:main$506$1$thunk$0
+    %8 = %7() -> bb5;
   }
   bb5 {
-    $desugar$0 = %6;
-    %9 = ConstantLoad price
-    %10 = $desugar$0;
-    %11 = store->[%9].get(%10) -> bb6;
+    %9 = %8 is error
+    %9 ? bb6 : bb7;
   }
   bb6 {
-    %12 = %11 is error
-    %12 ? bb7 : bb8;
+    %0 = %8;
+    return;
   }
   bb7 {
-    %0 = %11;
-    return;
+    %6 = %8;
+    GOTO bb8;
   }
   bb8 {
-    %8 = %11;
-    GOTO bb9;
+    defaultPrice = %6;
+    %12 = closure_fp $anon/.:main$506$1$thunk$1
+    %13 = %12() -> bb9;
   }
   bb9 {
-    defaultPrice = %8;
-    %14 = ConstantLoad 40
-    $desugar$1 = %14;
-    %16 = $desugar$1;
-    %17 = $default$1(%16) -> bb10;
+    %14 = %13 is error
+    %14 ? bb10 : bb11;
   }
   bb10 {
-    $desugar$2 = %17;
-    %20 = ConstantLoad total
-    %21 = $desugar$1;
-    %22 = $desugar$2;
-    %23 = store->[%20].get(%21,%22) -> bb11;
+    %0 = %13;
+    return;
   }
   bb11 {
-    %24 = %23 is error
-    %24 ? bb12 : bb13;
+    %11 = %13;
+    GOTO bb12;
   }
   bb12 {
-    %0 = %23;
-    return;
+    defaultTax = %11;
+    %17 = ConstantLoad total
+    %18 = ConstantLoad 40
+    %19 = %18;
+    %20 = ConstantLoad 5
+    %21 = %20;
+    %22 = store->[%17].get(%19,%21) -> bb13;
   }
   bb13 {
-    %19 = %23;
-    GOTO bb14;
+    %23 = %22 is error
+    %23 ? bb14 : bb15;
   }
   bb14 {
-    defaultTax = %19;
-    %27 = ConstantLoad total
-    %28 = ConstantLoad 40
-    %29 = %28;
-    %30 = ConstantLoad 5
-    %31 = %30;
-    %32 = store->[%27].get(%29,%31) -> bb15;
-  }
-  bb15 {
-    %33 = %32 is error
-    %33 ? bb16 : bb17;
-  }
-  bb16 {
-    %0 = %32;
+    %0 = %22;
     return;
   }
+  bb15 {
+    %16 = %22;
+    GOTO bb16;
+  }
+  bb16 {
+    explicitTax = %16;
+    %25 = defaultPrice;
+    %26 = println(%25) -> bb17;
+  }
   bb17 {
-    %26 = %32;
-    GOTO bb18;
+    %27 = defaultTax;
+    %28 = println(%27) -> bb18;
   }
   bb18 {
-    explicitTax = %26;
-    %35 = defaultPrice;
-    %36 = println(%35) -> bb19;
+    %29 = explicitTax;
+    %30 = println(%29) -> bb19;
   }
   bb19 {
-    %37 = defaultTax;
-    %38 = println(%37) -> bb20;
-  }
-  bb20 {
-    %39 = explicitTax;
-    %40 = println(%39) -> bb21;
-  }
-  bb21 {
     return;
   }
 }
@@ -141,6 +127,40 @@ $default$1(int) -> int{
     %5 = %4;
     %2 = / %3 %5;
     %0 = %2;
+    return;
+  }
+}
+main$506$1$thunk$0() -> int|error{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = ConstantLoad price
+    %4 = $desugar$0;
+    %5 = (1, store)->[%3].get(%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+main$506$1$thunk$1() -> int|error{
+  bb0 {
+    %1 = ConstantLoad 40
+    $desugar$1 = %1;
+    %3 = $desugar$1;
+    %4 = $default$1(%3) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %4;
+    %6 = ConstantLoad total
+    %7 = $desugar$1;
+    %8 = $desugar$2;
+    %9 = (1, store)->[%6].get(%7,%8) -> bb2;
+  }
+  bb2 {
+    %0 = %9;
     return;
   }
 }

@@ -1,0 +1,70 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_xml1.xml
+    path = %1;
+    %3 = ConstantLoad book
+    %4 = ConstantLoad title
+    %5 = ConstantLoad Clean Code
+    %6 = newXMLText(%5)
+    %7 = newXMLElement(%4, %6)
+    %8 = ConstantLoad author
+    %9 = ConstantLoad Robert C. Martin
+    %10 = newXMLText(%9)
+    %11 = newXMLElement(%8, %10)
+    %12 = newXMLSequence{%7, %11}
+    %13 = newXMLElement(%3, %12)
+    data = %13;
+    %16 = closure_fp $anon/.:main$502$0$thunk$0
+    %17 = main$502$0$thunk$0() -> bb1;
+  }
+  bb1 {
+    %18 = %17 is error
+    %18 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %17;
+    return;
+  }
+  bb3 {
+    %15 = %17;
+    GOTO bb4;
+  }
+  bb4 {
+    %20 = fileReadXml(path) -> bb5;
+  }
+  bb5 {
+    %21 = %20 is error
+    %21 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %20;
+    return;
+  }
+  bb7 {
+    %19 = %20;
+    GOTO bb8;
+  }
+  bb8 {
+    result = %19;
+    %23 = println(result) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}
+main$502$0$thunk$0() -> nil|error{
+  bb0 {
+    $desugar$0 = (1, path);
+    $desugar$1 = (1, data);
+    %3 = $default$6($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %3;
+    %5 = fileWriteXml($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}

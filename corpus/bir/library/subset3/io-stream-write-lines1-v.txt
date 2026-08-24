@@ -1,0 +1,252 @@
+module $anon.. v 0.0.0;
+class LineProvider {
+  lines [string...]
+  idx int
+
+  init([string...]) -> nil{
+    bb0 {
+      %3 = ConstantLoad 0
+      %4 = ConstantLoad idx
+      self[%4] = %3;
+      %5 = ConstantLoad lines
+      self[%5] = lines;
+      return;
+    }
+  }
+
+  next() -> nil|error|{| value: string, never... |}{
+    bb0 {
+      %4 = ConstantLoad idx
+      %3 = self[%4];
+      %5 = %3;
+      %7 = ConstantLoad lines
+      %6 = self[%7];
+      %8 = length(%6) -> bb1;
+    }
+    bb1 {
+      %9 = %8;
+      %2 = >= %5 %9;
+      %2 ? bb2 : bb3;
+    }
+    bb2 {
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+    bb3 {
+      PushScopeFrame 14
+      %2 = ConstantLoad idx
+      %1 = (1, self)[%2];
+      %4 = ConstantLoad lines
+      %3 = (1, self)[%4];
+      %0 = %3[%1];
+      line = %0;
+      %6 = ConstantLoad idx
+      %7 = (1, self)[%6];
+      %8 = %7;
+      %9 = ConstantLoad 1
+      %10 = %9;
+      %11 = + %8 %10;
+      (1, self)[%6] = %11;
+      %12 = ConstantLoad value
+      %13 = newMap {| value: string, never... |}{%12=line}
+      (1, %0) = %13;
+      PopScopeFrame
+      return;
+    }
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_stream_write_lines1.txt
+    path = %1;
+    %3 = newObject $anon/.:LineProvider
+    %4 = ConstantLoad One
+    %5 = ConstantLoad Two
+    %6 = ConstantLoad Three
+    %7 = ConstantLoad 3
+    %8 = newArray [string...][%7]{%4, %5, %6}
+    %9 = init(%3,%8) -> bb1;
+  }
+  bb1 {
+    %11 = %9 is nil
+    %11 ? bb2 : bb3;
+  }
+  bb2 {
+    %10 = %3;
+    GOTO bb4;
+  }
+  bb3 {
+    %10 = %9;
+    GOTO bb4;
+  }
+  bb4 {
+    %12 = newStream stream %10
+    lineStream = %12;
+    %15 = closure_fp $anon/.:main$502$1$thunk$0
+    %16 = main$502$1$thunk$0() -> bb5;
+  }
+  bb5 {
+    %17 = %16 is error
+    %17 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %16;
+    return;
+  }
+  bb7 {
+    %14 = %16;
+    GOTO bb8;
+  }
+  bb8 {
+    %19 = fileReadLines(path) -> bb9;
+  }
+  bb9 {
+    %20 = %19 is error
+    %20 ? bb10 : bb11;
+  }
+  bb10 {
+    %0 = %19;
+    return;
+  }
+  bb11 {
+    %18 = %19;
+    GOTO bb12;
+  }
+  bb12 {
+    lines = %18;
+    $desugar$3 = lines;
+    %23 = ConstantLoad 0
+    $desugar$4 = %23;
+    %25 = length($desugar$3) -> bb13;
+  }
+  bb13 {
+    $desugar$5 = %25;
+    GOTO bb14;
+  }
+  bb14 {
+    %28 = $desugar$4;
+    %29 = $desugar$5;
+    %27 = < %28 %29;
+    %27 ? bb15 : bb16;
+  }
+  bb15 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$3)[(1, $desugar$4)];
+    line = %0;
+    %2 = println(line) -> bb17;
+  }
+  bb16 {
+    %30 = newObject $anon/.:LineProvider
+    %31 = ConstantLoad Four
+    %32 = ConstantLoad 1
+    %33 = newArray [string...][%32]{%31}
+    %34 = init(%30,%33) -> bb18;
+  }
+  bb17 {
+    %4 = (1, $desugar$4);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$4) = %3;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb18 {
+    %36 = %34 is nil
+    %36 ? bb19 : bb20;
+  }
+  bb19 {
+    %35 = %30;
+    GOTO bb21;
+  }
+  bb20 {
+    %35 = %34;
+    GOTO bb21;
+  }
+  bb21 {
+    %37 = newStream stream %35
+    appendStream = %37;
+    %40 = ConstantLoad APPEND
+    %41 = fileWriteLinesFromStream(path,appendStream,%40) -> bb22;
+  }
+  bb22 {
+    %42 = %41 is error
+    %42 ? bb23 : bb24;
+  }
+  bb23 {
+    %0 = %41;
+    return;
+  }
+  bb24 {
+    %39 = %41;
+    GOTO bb25;
+  }
+  bb25 {
+    %44 = fileReadLines(path) -> bb26;
+  }
+  bb26 {
+    %45 = %44 is error
+    %45 ? bb27 : bb28;
+  }
+  bb27 {
+    %0 = %44;
+    return;
+  }
+  bb28 {
+    %43 = %44;
+    GOTO bb29;
+  }
+  bb29 {
+    allLines = %43;
+    $desugar$6 = allLines;
+    %48 = ConstantLoad 0
+    $desugar$7 = %48;
+    %50 = length($desugar$6) -> bb30;
+  }
+  bb30 {
+    $desugar$8 = %50;
+    GOTO bb31;
+  }
+  bb31 {
+    %53 = $desugar$7;
+    %54 = $desugar$8;
+    %52 = < %53 %54;
+    %52 ? bb32 : bb33;
+  }
+  bb32 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$6)[(1, $desugar$7)];
+    line = %0;
+    %2 = println(line) -> bb34;
+  }
+  bb33 {
+    return;
+  }
+  bb34 {
+    %4 = (1, $desugar$7);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$7) = %3;
+    PopScopeFrame
+    GOTO bb31;
+  }
+}
+main$502$1$thunk$0() -> nil|error{
+  bb0 {
+    $desugar$0 = (1, path);
+    $desugar$1 = (1, lineStream);
+    %3 = $default$3($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %3;
+    %5 = fileWriteLinesFromStream($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}

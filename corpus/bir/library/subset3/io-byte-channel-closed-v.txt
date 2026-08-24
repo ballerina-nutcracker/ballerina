@@ -1,0 +1,174 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_byte_channel_closed.bin
+    path = %1;
+    %4 = closure_fp $anon/.:main$502$0$thunk$0
+    %5 = main$502$0$thunk$0() -> bb1;
+  }
+  bb1 {
+    %6 = %5 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+  bb3 {
+    %3 = %5;
+    GOTO bb4;
+  }
+  bb4 {
+    %8 = openReadableFile(path) -> bb5;
+  }
+  bb5 {
+    %9 = %8 is error
+    %9 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %8;
+    return;
+  }
+  bb7 {
+    %7 = %8;
+    GOTO bb8;
+  }
+  bb8 {
+    reader = %7;
+    %12 = close(reader) -> bb9;
+  }
+  bb9 {
+    %13 = %12 is error
+    %13 ? bb10 : bb11;
+  }
+  bb10 {
+    %0 = %12;
+    return;
+  }
+  bb11 {
+    %11 = %12;
+    GOTO bb12;
+  }
+  bb12 {
+    %14 = close(reader) -> bb13;
+  }
+  bb13 {
+    secondClose = %14;
+    %16 = secondClose is error
+    %17 = %16;
+    %18 = println(%17) -> bb14;
+  }
+  bb14 {
+    %19 = secondClose is error
+    %19 ? bb15 : bb18;
+  }
+  bb15 {
+    PushScopeFrame 2
+    %0 = message((1, secondClose)) -> bb16;
+  }
+  bb16 {
+    %1 = println(%0) -> bb17;
+  }
+  bb17 {
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb18 {
+    PushScopeFrame 25
+    %0 = ConstantLoad 1
+    %1 = %0;
+    %2 = read((1, reader),%1) -> bb19;
+  }
+  bb19 {
+    readAfterClose = %2;
+    %4 = readAfterClose is error
+    %5 = %4;
+    %6 = println(%5) -> bb20;
+  }
+  bb20 {
+    %8 = closure_fp $anon/.:main$502$0$thunk$1
+    %9 = main$502$0$thunk$1() -> bb21;
+  }
+  bb21 {
+    %10 = %9 is error
+    %10 ? bb22 : bb23;
+  }
+  bb22 {
+    (1, %0) = %9;
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    %7 = %9;
+    GOTO bb24;
+  }
+  bb24 {
+    writer = %7;
+    %13 = close(writer) -> bb25;
+  }
+  bb25 {
+    %14 = %13 is error
+    %14 ? bb26 : bb27;
+  }
+  bb26 {
+    (1, %0) = %13;
+    PopScopeFrame
+    return;
+  }
+  bb27 {
+    %12 = %13;
+    GOTO bb28;
+  }
+  bb28 {
+    %15 = ConstantLoad 1
+    %16 = ConstantLoad 1
+    %17 = newArray [int:Unsigned8...][%16]{%15}
+    %18 = ConstantLoad 0
+    %19 = %18;
+    %20 = write(writer,%17,%19) -> bb29;
+  }
+  bb29 {
+    writeAfterClose = %20;
+    %22 = writeAfterClose is error
+    %23 = %22;
+    %24 = println(%23) -> bb30;
+  }
+  bb30 {
+    PopScopeFrame
+    return;
+  }
+}
+main$502$0$thunk$0() -> nil|error{
+  bb0 {
+    $desugar$0 = (1, path);
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad 2
+    %4 = ConstantLoad 3
+    %5 = ConstantLoad 3
+    %6 = newArray [int:Unsigned8...][%5]{%2, %3, %4}
+    $desugar$1 = %6;
+    %8 = $default$4($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %8;
+    %10 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %10;
+    return;
+  }
+}
+main$502$0$thunk$1() -> error|object { private function attachFile(string, "APPEND"|"OVERWRITE") returns nil|error; public function close() returns nil|error; public function init() returns nil; public function write([int:Unsigned8...], int) returns int|error }{
+  bb0 {
+    $desugar$3 = (2, path);
+    %2 = $default$11($desugar$3) -> bb1;
+  }
+  bb1 {
+    $desugar$4 = %2;
+    %4 = openWritableFile($desugar$3,$desugar$4) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+}

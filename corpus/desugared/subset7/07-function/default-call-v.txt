@@ -53,18 +53,23 @@
             (literal 2)
             (literal 3)
             (literal 4)))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref values))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$0 (
-            (simple-var-ref $desugar$0))))))
       (expression-stmt
         (invocation io println (
-          (invocation foo (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))))
+          (expression-thunk
+          (lambda
+            (function main$506$1$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref values))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (invocation $default$0 (
+                      (simple-var-ref $desugar$0))))))
+                (return
+                  (invocation foo (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)))))))))))))
   (function $default$0 (
     (variable vals (type
       (value-type )))) ()

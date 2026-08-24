@@ -1,0 +1,136 @@
+(package
+  (import-package ballerina http (as http))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (expression-thunk
+            (lambda
+              (function main$502$0$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (literal https://example.com))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$15 (
+                        (simple-var-ref $desugar$0))))))
+                  (return
+                    (new (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))))))))
+      (var-def
+        (variable _ (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)
+              (mapping-constructor-expr
+                (key-value
+                  (literal responseLimits)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal maxStatusLineLength)
+                      (literal 4096))
+                    (key-value
+                      (literal maxHeaderSize)
+                      (literal 8192))
+                    (key-value
+                      (literal maxEntityBodySize)
+                      (unary-expr -
+                        (literal 1))))))))))))
+      (var-def
+        (variable _ (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)
+              (mapping-constructor-expr
+                (key-value
+                  (literal responseLimits)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal maxHeaderSize)
+                      (literal 16384))
+                    (key-value
+                      (literal maxEntityBodySize)
+                      (literal 1000000)))))))))))
+      (var-def
+        (variable _ (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)
+              (mapping-constructor-expr
+                (key-value
+                  (literal responseLimits)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal maxEntityBodySize)
+                      (literal 0)))))))))))
+      (var-def
+        (variable negStatusLine (type
+          (union-type
+            (user-defined-type http Client)
+            (error-type))) (expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr
+              (key-value
+                (literal responseLimits)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal maxStatusLineLength)
+                    (unary-expr -
+                      (literal 1)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref negStatusLine)
+            (error-type)))))
+      (var-def
+        (variable negHeaderSize (type
+          (union-type
+            (user-defined-type http Client)
+            (error-type))) (expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr
+              (key-value
+                (literal responseLimits)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal maxHeaderSize)
+                    (unary-expr -
+                      (literal 1)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref negHeaderSize)
+            (error-type)))))
+      (var-def
+        (variable negBody (type
+          (union-type
+            (user-defined-type http Client)
+            (error-type))) (expr
+          (new (
+            (literal https://example.com)
+            (mapping-constructor-expr
+              (key-value
+                (literal responseLimits)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal maxEntityBodySize)
+                    (unary-expr -
+                      (literal 2)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref negBody)
+            (error-type))))))))

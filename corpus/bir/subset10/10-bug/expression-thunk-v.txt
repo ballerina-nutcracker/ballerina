@@ -1,0 +1,784 @@
+module $anon.. v 0.0.0;
+conditionCalls  int;
+defaultCalls  int;
+optionalBaseCalls  int;
+class CaptureCounter {
+  value int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad value
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  run() -> int{
+    bb0 {
+      %2 = ConstantLoad 1
+      local = %2;
+      %4 = closure_fp $anon/.:$anonFunc$_0
+      outerFn = %4;
+      %6 = outerFn() -> bb1;
+    }
+    bb1 {
+      %0 = %6;
+      return;
+    }
+  }
+}
+$anonFunc$_1() -> int{
+  bb0 {
+    %2 = (2, local);
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %1 = + %2 %4;
+    (2, local) = %1;
+    %5 = ConstantLoad value
+    %6 = (2, self)[%5];
+    %7 = %6;
+    %8 = (2, local);
+    %9 = + %7 %8;
+    (2, self)[%5] = %9;
+    %11 = ConstantLoad value
+    %10 = (2, self)[%11];
+    %0 = %10;
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %1 = closure_fp $anon/.:$anonFunc$_1
+    inner = %1;
+    %3 = ConstantLoad 0
+    %4 = newArray [int...][%3]{}
+    $desugar$0 = %4;
+    %6 = inner() -> bb1;
+  }
+  bb1 {
+    %7 = %6;
+    %8 = push($desugar$0,%7) -> bb2;
+  }
+  bb2 {
+    %9 = inner() -> bb3;
+  }
+  bb3 {
+    %10 = ConstantLoad 1
+    %11 = newArray [int...][%10]{%9}
+    $desugar$1 = %11;
+    %13 = length($desugar$1) -> bb4;
+  }
+  bb4 {
+    $desugar$2 = %13;
+    %15 = ConstantLoad 0
+    $desugar$3 = %15;
+    GOTO bb5;
+  }
+  bb5 {
+    %18 = $desugar$3;
+    %19 = $desugar$2;
+    %17 = < %18 %19;
+    %17 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    %1 = %0;
+    %2 = push((1, $desugar$0),%1) -> bb8;
+  }
+  bb7 {
+    values = $desugar$0;
+    %22 = ConstantLoad 1
+    %21 = values[%22];
+    %0 = %21;
+    return;
+  }
+  bb8 {
+    %4 = (1, $desugar$3);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$3) = %3;
+    PopScopeFrame
+    GOTO bb5;
+  }
+}
+panicValues() -> [int...]{
+  bb0 {
+    %1 = ConstantLoad inside thunk
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+conditionValues() -> [int...]{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + conditionCalls %3;
+    conditionCalls = %1;
+    %5 = ConstantLoad 4
+    %6 = %5;
+    %4 = < conditionCalls %6;
+    %4 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad 1
+    %1 = newArray [int...][%0]{conditionCalls}
+    (1, %0) = %1;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad 0
+    %1 = newArray [int...][%0]{}
+    (1, %0) = %1;
+    PopScopeFrame
+    return;
+  }
+}
+optionalBase() -> {| x: int, never... |}{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + optionalBaseCalls %3;
+    optionalBaseCalls = %1;
+    %4 = ConstantLoad x
+    %5 = ConstantLoad 42
+    %6 = newMap {| x: int, never... |}{%4=%5}
+    %0 = %6;
+    return;
+  }
+}
+nextDefault() -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + defaultCalls %3;
+    defaultCalls = %1;
+    %0 = defaultCalls;
+    return;
+  }
+}
+defaulted(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+queryDefault([int...]) -> [int...]{
+  bb0 {
+    %0 = values;
+    return;
+  }
+}
+spreadDefault([int...]) -> [int...]{
+  bb0 {
+    %0 = values;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    %2 = fp $anon/.:main$506$13$thunk$0
+    %3 = %2() -> bb2;
+  }
+  bb2 {
+    %1 = %3;
+    GOTO bb3;
+  }
+  bb3 {
+    trapped = %1;
+    %5 = trapped is error
+    %6 = %5;
+    %7 = println(%6) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad false
+    %8 = %9;
+    %9 ? bb5 : bb6;
+  }
+  bb5 {
+    %11 = fp $anon/.:main$506$13$thunk$1
+    %12 = %11() -> bb7;
+  }
+  bb6 {
+    andResult = %8;
+    %19 = ConstantLoad true
+    %18 = %19;
+    %19 ? bb10 : bb9;
+  }
+  bb7 {
+    %13 = length(%12) -> bb8;
+  }
+  bb8 {
+    %14 = %13;
+    %15 = ConstantLoad 0
+    %16 = %15;
+    %10 = > %14 %16;
+    %8 = %10;
+    GOTO bb6;
+  }
+  bb9 {
+    %21 = fp $anon/.:main$506$13$thunk$2
+    %22 = %21() -> bb11;
+  }
+  bb10 {
+    orResult = %18;
+    %28 = andResult;
+    %29 = ConstantLoad :
+    %30 = orResult;
+    %31 = println(%28,%29,%30) -> bb13;
+  }
+  bb11 {
+    %23 = length(%22) -> bb12;
+  }
+  bb12 {
+    %24 = %23;
+    %25 = ConstantLoad 0
+    %26 = %25;
+    %20 = > %24 %26;
+    %18 = %20;
+    GOTO bb10;
+  }
+  bb13 {
+    %32 = ConstantLoad 0
+    loopCount = %32;
+    GOTO bb14;
+  }
+  bb14 {
+    %35 = fp $anon/.:main$506$13$thunk$3
+    %36 = %35() -> bb15;
+  }
+  bb15 {
+    %37 = length(%36) -> bb16;
+  }
+  bb16 {
+    %38 = %37;
+    %39 = ConstantLoad 1
+    %40 = %39;
+    %34 = > %38 %40;
+    %34 ? bb17 : bb18;
+  }
+  bb17 {
+    PushScopeFrame 4
+    %1 = (1, loopCount);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = + %1 %3;
+    (1, loopCount) = %0;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb18 {
+    %41 = loopCount;
+    %42 = ConstantLoad :
+    %43 = println(%41,%42,conditionCalls) -> bb19;
+  }
+  bb19 {
+    %44 = fp $anon/.:main$506$13$thunk$4
+    %45 = %44() -> bb20;
+  }
+  bb20 {
+    %46 = %45;
+    %47 = ConstantLoad :
+    %48 = fp $anon/.:main$506$13$thunk$5
+    %49 = %48() -> bb21;
+  }
+  bb21 {
+    %50 = %49;
+    %51 = ConstantLoad :
+    %52 = println(%46,%47,%50,%51,defaultCalls) -> bb22;
+  }
+  bb22 {
+    %53 = fp $anon/.:main$506$13$thunk$6
+    %54 = %53() -> bb23;
+  }
+  bb23 {
+    %55 = println(%54) -> bb24;
+  }
+  bb24 {
+    %56 = fp $anon/.:main$506$13$thunk$7
+    %57 = %56() -> bb25;
+  }
+  bb25 {
+    %58 = println(%57) -> bb26;
+  }
+  bb26 {
+    %59 = optionalBase() -> bb27;
+  }
+  bb27 {
+    %60 = ConstantLoad x
+    %61 = %59[%60];
+    optionalValue = %61;
+    %63 = optionalValue;
+    %64 = ConstantLoad :
+    %65 = println(%63,%64,optionalBaseCalls) -> bb28;
+  }
+  bb28 {
+    GOTO bb29;
+  }
+  bb29 {
+    %67 = fp $anon/.:main$506$13$thunk$8
+    %68 = %67() -> bb30;
+  }
+  bb30 {
+    %66 = %68;
+    GOTO bb31;
+  }
+  bb31 {
+    checkpanicTrapped = %66;
+    %70 = checkpanicTrapped is error
+    %71 = %70;
+    %72 = println(%71) -> bb32;
+  }
+  bb32 {
+    %73 = newObject $anon/.:CaptureCounter
+    %74 = %73.init() -> bb33;
+  }
+  bb33 {
+    %76 = %74 is nil
+    %76 ? bb34 : bb35;
+  }
+  bb34 {
+    %75 = %73;
+    GOTO bb36;
+  }
+  bb35 {
+    %75 = %74;
+    GOTO bb36;
+  }
+  bb36 {
+    counter = %75;
+    %78 = counter.run() -> bb37;
+  }
+  bb37 {
+    %79 = %78;
+    %80 = println(%79) -> bb38;
+  }
+  bb38 {
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %1
+    [bb29, bb30] -> bb31, %66
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = nextDefault() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> [int...]{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int, int, never...][%3]{%1, %2}
+    $desugar$0 = %4;
+    %6 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %6;
+    %8 = ConstantLoad 0
+    %9 = newArray list[%8]{}
+    $desugar$2 = %9;
+    %12 = ConstantLoad 0
+    $desugar$3 = %12;
+    GOTO bb2;
+  }
+  bb2 {
+    %15 = $desugar$3;
+    %16 = $desugar$1;
+    %14 = < %15 %16;
+    %14 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    (1, value) = %0;
+    %2 = (1, value);
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %1 = * %2 %4;
+    %5 = %1;
+    %6 = push((1, $desugar$2),%5) -> bb5;
+  }
+  bb4 {
+    %0 = $desugar$2;
+    return;
+  }
+  bb5 {
+    %8 = (1, $desugar$3);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$3) = %7;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
+$default$2() -> [int...]{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int...][%1]{}
+    $desugar$0 = %2;
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %6 = push($desugar$0,%5) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad 1
+    %8 = ConstantLoad 2
+    %9 = ConstantLoad 2
+    %10 = newArray [int...][%9]{%7, %8}
+    $desugar$1 = %10;
+    %12 = length($desugar$1) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %12;
+    %14 = ConstantLoad 0
+    $desugar$3 = %14;
+    GOTO bb3;
+  }
+  bb3 {
+    %17 = $desugar$3;
+    %18 = $desugar$2;
+    %16 = < %17 %18;
+    %16 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    %1 = %0;
+    %2 = push((1, $desugar$0),%1) -> bb6;
+  }
+  bb5 {
+    %0 = $desugar$0;
+    return;
+  }
+  bb6 {
+    %4 = (1, $desugar$3);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$3) = %3;
+    PopScopeFrame
+    GOTO bb3;
+  }
+}
+main$506$13$thunk$0() -> [int, int...]{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int, int...][%1]{}
+    $desugar$0 = %2;
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %6 = push($desugar$0,%5) -> bb1;
+  }
+  bb1 {
+    %7 = panicValues() -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %7;
+    %9 = length($desugar$1) -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %9;
+    %11 = ConstantLoad 0
+    $desugar$3 = %11;
+    GOTO bb4;
+  }
+  bb4 {
+    %14 = $desugar$3;
+    %15 = $desugar$2;
+    %13 = < %14 %15;
+    %13 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    %1 = %0;
+    %2 = push((1, $desugar$0),%1) -> bb7;
+  }
+  bb6 {
+    %0 = $desugar$0;
+    return;
+  }
+  bb7 {
+    %4 = (1, $desugar$3);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$3) = %3;
+    PopScopeFrame
+    GOTO bb4;
+  }
+}
+main$506$13$thunk$1() -> [int, int...]{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int, int...][%1]{}
+    $desugar$4 = %2;
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %6 = push($desugar$4,%5) -> bb1;
+  }
+  bb1 {
+    %7 = panicValues() -> bb2;
+  }
+  bb2 {
+    $desugar$5 = %7;
+    %9 = length($desugar$5) -> bb3;
+  }
+  bb3 {
+    $desugar$6 = %9;
+    %11 = ConstantLoad 0
+    $desugar$7 = %11;
+    GOTO bb4;
+  }
+  bb4 {
+    %14 = $desugar$7;
+    %15 = $desugar$6;
+    %13 = < %14 %15;
+    %13 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$5)[(1, $desugar$7)];
+    %1 = %0;
+    %2 = push((1, $desugar$4),%1) -> bb7;
+  }
+  bb6 {
+    %0 = $desugar$4;
+    return;
+  }
+  bb7 {
+    %4 = (1, $desugar$7);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$7) = %3;
+    PopScopeFrame
+    GOTO bb4;
+  }
+}
+main$506$13$thunk$2() -> [int, int...]{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int, int...][%1]{}
+    $desugar$8 = %2;
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %6 = push($desugar$8,%5) -> bb1;
+  }
+  bb1 {
+    %7 = panicValues() -> bb2;
+  }
+  bb2 {
+    $desugar$9 = %7;
+    %9 = length($desugar$9) -> bb3;
+  }
+  bb3 {
+    $desugar$10 = %9;
+    %11 = ConstantLoad 0
+    $desugar$11 = %11;
+    GOTO bb4;
+  }
+  bb4 {
+    %14 = $desugar$11;
+    %15 = $desugar$10;
+    %13 = < %14 %15;
+    %13 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$9)[(1, $desugar$11)];
+    %1 = %0;
+    %2 = push((1, $desugar$8),%1) -> bb7;
+  }
+  bb6 {
+    %0 = $desugar$8;
+    return;
+  }
+  bb7 {
+    %4 = (1, $desugar$11);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$11) = %3;
+    PopScopeFrame
+    GOTO bb4;
+  }
+}
+main$506$13$thunk$3() -> [int, int...]{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int, int...][%1]{}
+    $desugar$12 = %2;
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %6 = push($desugar$12,%5) -> bb1;
+  }
+  bb1 {
+    %7 = conditionValues() -> bb2;
+  }
+  bb2 {
+    $desugar$13 = %7;
+    %9 = length($desugar$13) -> bb3;
+  }
+  bb3 {
+    $desugar$14 = %9;
+    %11 = ConstantLoad 0
+    $desugar$15 = %11;
+    GOTO bb4;
+  }
+  bb4 {
+    %14 = $desugar$15;
+    %15 = $desugar$14;
+    %13 = < %14 %15;
+    %13 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$13)[(1, $desugar$15)];
+    %1 = %0;
+    %2 = push((1, $desugar$12),%1) -> bb7;
+  }
+  bb6 {
+    %0 = $desugar$12;
+    return;
+  }
+  bb7 {
+    %4 = (1, $desugar$15);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$15) = %3;
+    PopScopeFrame
+    GOTO bb4;
+  }
+}
+main$506$13$thunk$4() -> int{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$16 = %1;
+    %3 = $desugar$16;
+    %4 = defaulted(%3) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+}
+main$506$13$thunk$5() -> int{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$17 = %1;
+    %3 = $desugar$17;
+    %4 = defaulted(%3) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+}
+main$506$13$thunk$6() -> [int...]{
+  bb0 {
+    %1 = $default$1() -> bb1;
+  }
+  bb1 {
+    $desugar$18 = %1;
+    %3 = queryDefault($desugar$18) -> bb2;
+  }
+  bb2 {
+    %0 = %3;
+    return;
+  }
+}
+main$506$13$thunk$7() -> [int...]{
+  bb0 {
+    %1 = $default$2() -> bb1;
+  }
+  bb1 {
+    $desugar$19 = %1;
+    %3 = spreadDefault($desugar$19) -> bb2;
+  }
+  bb2 {
+    %0 = %3;
+    return;
+  }
+}
+main$506$13$thunk$8() -> [int, int...]{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int, int...][%1]{}
+    $desugar$20 = %2;
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %6 = push($desugar$20,%5) -> bb1;
+  }
+  bb1 {
+    %8 = panicValues() -> bb2;
+  }
+  bb2 {
+    %9 = %8 is error
+    %9 ? bb3 : bb4;
+  }
+  bb3 {
+    panic %8;
+  }
+  bb4 {
+    %7 = %8;
+    GOTO bb5;
+  }
+  bb5 {
+    $desugar$21 = %7;
+    %11 = length($desugar$21) -> bb6;
+  }
+  bb6 {
+    $desugar$22 = %11;
+    %13 = ConstantLoad 0
+    $desugar$23 = %13;
+    GOTO bb7;
+  }
+  bb7 {
+    %16 = $desugar$23;
+    %17 = $desugar$22;
+    %15 = < %16 %17;
+    %15 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$21)[(1, $desugar$23)];
+    %1 = %0;
+    %2 = push((1, $desugar$20),%1) -> bb10;
+  }
+  bb9 {
+    %0 = $desugar$20;
+    return;
+  }
+  bb10 {
+    %4 = (1, $desugar$23);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$23) = %3;
+    PopScopeFrame
+    GOTO bb7;
+  }
+}

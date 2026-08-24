@@ -159,56 +159,61 @@
               (simple-var-ref required))))) ())
       (block-stmt
         (var-def
-          (variable $desugar$3 (expr
-            (simple-var-ref j))))
-        (var-def
-          (variable $desugar$4 (expr
-            (error-constructor-expr (
-              (literal lax field access failed))))))
-        (if
-          (type-test-expr is
-            (simple-var-ref $desugar$3))
-          (block-stmt
-            (assignment
-              (simple-var-ref $desugar$4)
-              (simple-var-ref $desugar$3))) (
-          (if
-            (type-test-expr !is
-              (simple-var-ref $desugar$3))
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$4)
-                (error-constructor-expr (
-                  (literal lax field access receiver is not a mapping))))) (
-            (block-stmt
-              (var-def
-                (variable $desugar$5 (expr
-                  (trap-expr
-                    (invocation lang.map get (
-                      (simple-var-ref $desugar$3)
-                      (literal a)))))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$5))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$4)
-                    (simple-var-ref $desugar$5))) (
-                (if
-                  (type-test-expr is
-                    (simple-var-ref $desugar$5))
-                  (block-stmt
-                    (assignment
-                      (simple-var-ref $desugar$4)
-                      (simple-var-ref $desugar$5))) (
-                  (block-stmt
-                    (assignment
-                      (simple-var-ref $desugar$4)
-                      (error-constructor-expr (
-                        (literal invalid lax field member))))))))))))))
-        (var-def
           (variable $desugar$6 (expr
-            (simple-var-ref $desugar$4))))
+            (expression-thunk
+            (lambda
+              (function main$506$7$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$3 (expr
+                      (simple-var-ref j))))
+                  (var-def
+                    (variable $desugar$4 (expr
+                      (error-constructor-expr (
+                        (literal lax field access failed))))))
+                  (if
+                    (type-test-expr is
+                      (simple-var-ref $desugar$3))
+                    (block-stmt
+                      (assignment
+                        (simple-var-ref $desugar$4)
+                        (simple-var-ref $desugar$3))) (
+                    (if
+                      (type-test-expr !is
+                        (simple-var-ref $desugar$3))
+                      (block-stmt
+                        (assignment
+                          (simple-var-ref $desugar$4)
+                          (error-constructor-expr (
+                            (literal lax field access receiver is not a mapping))))) (
+                      (block-stmt
+                        (var-def
+                          (variable $desugar$5 (expr
+                            (trap-expr
+                              (invocation lang.map get (
+                                (simple-var-ref $desugar$3)
+                                (literal a)))))))
+                        (if
+                          (type-test-expr is
+                            (simple-var-ref $desugar$5))
+                          (block-stmt
+                            (assignment
+                              (simple-var-ref $desugar$4)
+                              (simple-var-ref $desugar$5))) (
+                          (if
+                            (type-test-expr is
+                              (simple-var-ref $desugar$5))
+                            (block-stmt
+                              (assignment
+                                (simple-var-ref $desugar$4)
+                                (simple-var-ref $desugar$5))) (
+                            (block-stmt
+                              (assignment
+                                (simple-var-ref $desugar$4)
+                                (error-constructor-expr (
+                                  (literal invalid lax field member))))))))))))))
+                  (return
+                    (simple-var-ref $desugar$4)))))))))
         (var-def
           (variable $desugar$7 (expr
             (error-constructor-expr (
@@ -264,56 +269,61 @@
           (invocation io println (
             (simple-var-ref nested))))
         (var-def
-          (variable $desugar$9 (expr
-            (simple-var-ref j))))
-        (var-def
-          (variable $desugar$10 (expr
-            (error-constructor-expr (
-              (literal lax field access failed))))))
-        (if
-          (type-test-expr is
-            (simple-var-ref $desugar$9))
-          (block-stmt
-            (assignment
-              (simple-var-ref $desugar$10)
-              (simple-var-ref $desugar$9))) (
-          (if
-            (type-test-expr !is
-              (simple-var-ref $desugar$9))
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$10)
-                (error-constructor-expr (
-                  (literal lax field access receiver is not a mapping))))) (
-            (block-stmt
-              (var-def
-                (variable $desugar$11 (expr
-                  (trap-expr
-                    (invocation lang.map get (
-                      (simple-var-ref $desugar$9)
-                      (literal a)))))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$11))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$10)
-                    (simple-var-ref $desugar$11))) (
-                (if
-                  (type-test-expr is
-                    (simple-var-ref $desugar$11))
-                  (block-stmt
-                    (assignment
-                      (simple-var-ref $desugar$10)
-                      (simple-var-ref $desugar$11))) (
-                  (block-stmt
-                    (assignment
-                      (simple-var-ref $desugar$10)
-                      (error-constructor-expr (
-                        (literal invalid lax field member))))))))))))))
-        (var-def
           (variable $desugar$12 (expr
-            (simple-var-ref $desugar$10))))
+            (expression-thunk
+            (lambda
+              (function main$506$7$thunk$1 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$9 (expr
+                      (simple-var-ref j))))
+                  (var-def
+                    (variable $desugar$10 (expr
+                      (error-constructor-expr (
+                        (literal lax field access failed))))))
+                  (if
+                    (type-test-expr is
+                      (simple-var-ref $desugar$9))
+                    (block-stmt
+                      (assignment
+                        (simple-var-ref $desugar$10)
+                        (simple-var-ref $desugar$9))) (
+                    (if
+                      (type-test-expr !is
+                        (simple-var-ref $desugar$9))
+                      (block-stmt
+                        (assignment
+                          (simple-var-ref $desugar$10)
+                          (error-constructor-expr (
+                            (literal lax field access receiver is not a mapping))))) (
+                      (block-stmt
+                        (var-def
+                          (variable $desugar$11 (expr
+                            (trap-expr
+                              (invocation lang.map get (
+                                (simple-var-ref $desugar$9)
+                                (literal a)))))))
+                        (if
+                          (type-test-expr is
+                            (simple-var-ref $desugar$11))
+                          (block-stmt
+                            (assignment
+                              (simple-var-ref $desugar$10)
+                              (simple-var-ref $desugar$11))) (
+                          (if
+                            (type-test-expr is
+                              (simple-var-ref $desugar$11))
+                            (block-stmt
+                              (assignment
+                                (simple-var-ref $desugar$10)
+                                (simple-var-ref $desugar$11))) (
+                            (block-stmt
+                              (assignment
+                                (simple-var-ref $desugar$10)
+                                (error-constructor-expr (
+                                  (literal invalid lax field member))))))))))))))
+                  (return
+                    (simple-var-ref $desugar$10)))))))))
         (var-def
           (variable $desugar$13 (expr
             (error-constructor-expr (
@@ -381,56 +391,61 @@
                     (literal b)
                     (literal 4))))))))
         (var-def
-          (variable $desugar$15 (expr
-            (simple-var-ref outerMap))))
-        (var-def
-          (variable $desugar$16 (expr
-            (error-constructor-expr (
-              (literal lax field access failed))))))
-        (if
-          (type-test-expr is
-            (simple-var-ref $desugar$15))
-          (block-stmt
-            (assignment
-              (simple-var-ref $desugar$16)
-              (simple-var-ref $desugar$15))) (
-          (if
-            (type-test-expr !is
-              (simple-var-ref $desugar$15))
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$16)
-                (error-constructor-expr (
-                  (literal lax field access receiver is not a mapping))))) (
-            (block-stmt
-              (var-def
-                (variable $desugar$17 (expr
-                  (trap-expr
-                    (invocation lang.map get (
-                      (simple-var-ref $desugar$15)
-                      (literal a)))))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$17))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$16)
-                    (simple-var-ref $desugar$17))) (
-                (if
-                  (type-test-expr is
-                    (simple-var-ref $desugar$17))
-                  (block-stmt
-                    (assignment
-                      (simple-var-ref $desugar$16)
-                      (simple-var-ref $desugar$17))) (
-                  (block-stmt
-                    (assignment
-                      (simple-var-ref $desugar$16)
-                      (error-constructor-expr (
-                        (literal invalid lax field member))))))))))))))
-        (var-def
           (variable $desugar$18 (expr
-            (simple-var-ref $desugar$16))))
+            (expression-thunk
+            (lambda
+              (function main$506$7$thunk$2 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$15 (expr
+                      (simple-var-ref outerMap))))
+                  (var-def
+                    (variable $desugar$16 (expr
+                      (error-constructor-expr (
+                        (literal lax field access failed))))))
+                  (if
+                    (type-test-expr is
+                      (simple-var-ref $desugar$15))
+                    (block-stmt
+                      (assignment
+                        (simple-var-ref $desugar$16)
+                        (simple-var-ref $desugar$15))) (
+                    (if
+                      (type-test-expr !is
+                        (simple-var-ref $desugar$15))
+                      (block-stmt
+                        (assignment
+                          (simple-var-ref $desugar$16)
+                          (error-constructor-expr (
+                            (literal lax field access receiver is not a mapping))))) (
+                      (block-stmt
+                        (var-def
+                          (variable $desugar$17 (expr
+                            (trap-expr
+                              (invocation lang.map get (
+                                (simple-var-ref $desugar$15)
+                                (literal a)))))))
+                        (if
+                          (type-test-expr is
+                            (simple-var-ref $desugar$17))
+                          (block-stmt
+                            (assignment
+                              (simple-var-ref $desugar$16)
+                              (simple-var-ref $desugar$17))) (
+                          (if
+                            (type-test-expr is
+                              (simple-var-ref $desugar$17))
+                            (block-stmt
+                              (assignment
+                                (simple-var-ref $desugar$16)
+                                (simple-var-ref $desugar$17))) (
+                            (block-stmt
+                              (assignment
+                                (simple-var-ref $desugar$16)
+                                (error-constructor-expr (
+                                  (literal invalid lax field member))))))))))))))
+                  (return
+                    (simple-var-ref $desugar$16)))))))))
         (var-def
           (variable $desugar$19 (expr
             (error-constructor-expr (
@@ -613,110 +628,120 @@
                   (invocation io println (
                     (simple-var-ref optionalPresent))))) ())
             (block-stmt
-              (var-def
-                (variable $desugar$24 (expr
-                  (simple-var-ref j))))
-              (var-def
-                (variable $desugar$25 (expr
-                  (error-constructor-expr (
-                    (literal lax field access failed))))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$24))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$25)
-                    (simple-var-ref $desugar$24))) (
-                (if
-                  (type-test-expr !is
-                    (simple-var-ref $desugar$24))
-                  (block-stmt
-                    (assignment
-                      (simple-var-ref $desugar$25)
-                      (error-constructor-expr (
-                        (literal lax field access receiver is not a mapping))))) (
-                  (block-stmt
-                    (var-def
-                      (variable $desugar$26 (expr
-                        (trap-expr
-                          (invocation lang.map get (
-                            (simple-var-ref $desugar$24)
-                            (literal missing)))))))
-                    (if
-                      (type-test-expr is
-                        (simple-var-ref $desugar$26))
-                      (block-stmt
-                        (assignment
-                          (simple-var-ref $desugar$25)
-                          (simple-var-ref $desugar$26))) (
-                      (if
-                        (type-test-expr is
-                          (simple-var-ref $desugar$26))
-                        (block-stmt
-                          (assignment
-                            (simple-var-ref $desugar$25)
-                            (simple-var-ref $desugar$26))) (
-                        (block-stmt
-                          (assignment
-                            (simple-var-ref $desugar$25)
-                            (error-constructor-expr (
-                              (literal invalid lax field member))))))))))))))
               (expression-stmt
                 (invocation printError (
                   (literal required missing)
-                  (simple-var-ref $desugar$25))))
-              (var-def
-                (variable $desugar$27 (expr
-                  (simple-var-ref j))))
-              (var-def
-                (variable $desugar$28 (expr
-                  (literal <nil>))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$27))
-                (block-stmt) (
-                (if
-                  (type-test-expr is
-                    (simple-var-ref $desugar$27))
-                  (block-stmt
-                    (assignment
-                      (simple-var-ref $desugar$28)
-                      (simple-var-ref $desugar$27))) (
-                  (if
-                    (type-test-expr !is
-                      (simple-var-ref $desugar$27))
-                    (block-stmt
-                      (assignment
-                        (simple-var-ref $desugar$28)
-                        (error-constructor-expr (
-                          (literal lax field access receiver is not a mapping))))) (
-                    (block-stmt
-                      (var-def
-                        (variable $desugar$29 (expr
-                          (trap-expr
-                            (invocation lang.map get (
-                              (simple-var-ref $desugar$27)
-                              (literal missing)))))))
-                      (if
-                        (type-test-expr is
-                          (simple-var-ref $desugar$29))
-                        (block-stmt) (
+                  (expression-thunk
+                  (lambda
+                    (function main$506$7$thunk$3 () ()
+                      (block-function-body
+                        (var-def
+                          (variable $desugar$24 (expr
+                            (simple-var-ref j))))
+                        (var-def
+                          (variable $desugar$25 (expr
+                            (error-constructor-expr (
+                              (literal lax field access failed))))))
                         (if
                           (type-test-expr is
-                            (simple-var-ref $desugar$29))
+                            (simple-var-ref $desugar$24))
                           (block-stmt
                             (assignment
-                              (simple-var-ref $desugar$28)
-                              (simple-var-ref $desugar$29))) (
-                          (block-stmt
-                            (assignment
-                              (simple-var-ref $desugar$28)
-                              (error-constructor-expr (
-                                (literal invalid lax field member))))))))))))))))
+                              (simple-var-ref $desugar$25)
+                              (simple-var-ref $desugar$24))) (
+                          (if
+                            (type-test-expr !is
+                              (simple-var-ref $desugar$24))
+                            (block-stmt
+                              (assignment
+                                (simple-var-ref $desugar$25)
+                                (error-constructor-expr (
+                                  (literal lax field access receiver is not a mapping))))) (
+                            (block-stmt
+                              (var-def
+                                (variable $desugar$26 (expr
+                                  (trap-expr
+                                    (invocation lang.map get (
+                                      (simple-var-ref $desugar$24)
+                                      (literal missing)))))))
+                              (if
+                                (type-test-expr is
+                                  (simple-var-ref $desugar$26))
+                                (block-stmt
+                                  (assignment
+                                    (simple-var-ref $desugar$25)
+                                    (simple-var-ref $desugar$26))) (
+                                (if
+                                  (type-test-expr is
+                                    (simple-var-ref $desugar$26))
+                                  (block-stmt
+                                    (assignment
+                                      (simple-var-ref $desugar$25)
+                                      (simple-var-ref $desugar$26))) (
+                                  (block-stmt
+                                    (assignment
+                                      (simple-var-ref $desugar$25)
+                                      (error-constructor-expr (
+                                        (literal invalid lax field member))))))))))))))
+                        (return
+                          (simple-var-ref $desugar$25)))))))))
               (expression-stmt
                 (invocation printNil (
                   (literal optional missing)
-                  (simple-var-ref $desugar$28))))
+                  (expression-thunk
+                  (lambda
+                    (function main$506$7$thunk$4 () ()
+                      (block-function-body
+                        (var-def
+                          (variable $desugar$27 (expr
+                            (simple-var-ref j))))
+                        (var-def
+                          (variable $desugar$28 (expr
+                            (literal <nil>))))
+                        (if
+                          (type-test-expr is
+                            (simple-var-ref $desugar$27))
+                          (block-stmt) (
+                          (if
+                            (type-test-expr is
+                              (simple-var-ref $desugar$27))
+                            (block-stmt
+                              (assignment
+                                (simple-var-ref $desugar$28)
+                                (simple-var-ref $desugar$27))) (
+                            (if
+                              (type-test-expr !is
+                                (simple-var-ref $desugar$27))
+                              (block-stmt
+                                (assignment
+                                  (simple-var-ref $desugar$28)
+                                  (error-constructor-expr (
+                                    (literal lax field access receiver is not a mapping))))) (
+                              (block-stmt
+                                (var-def
+                                  (variable $desugar$29 (expr
+                                    (trap-expr
+                                      (invocation lang.map get (
+                                        (simple-var-ref $desugar$27)
+                                        (literal missing)))))))
+                                (if
+                                  (type-test-expr is
+                                    (simple-var-ref $desugar$29))
+                                  (block-stmt) (
+                                  (if
+                                    (type-test-expr is
+                                      (simple-var-ref $desugar$29))
+                                    (block-stmt
+                                      (assignment
+                                        (simple-var-ref $desugar$28)
+                                        (simple-var-ref $desugar$29))) (
+                                    (block-stmt
+                                      (assignment
+                                        (simple-var-ref $desugar$28)
+                                        (error-constructor-expr (
+                                          (literal invalid lax field member))))))))))))))))
+                        (return
+                          (simple-var-ref $desugar$28)))))))))
               (var-def
                 (variable $desugar$30 (expr
                   (simple-var-ref j))))
@@ -780,57 +805,62 @@
                     (invocation io println (
                       (literal required present nil))))) ())
               (block-stmt
-                (var-def
-                  (variable $desugar$33 (expr
-                    (simple-var-ref j))))
-                (var-def
-                  (variable $desugar$34 (expr
-                    (error-constructor-expr (
-                      (literal lax field access failed))))))
                 (if
                   (type-test-expr is
-                    (simple-var-ref $desugar$33))
-                  (block-stmt
-                    (assignment
-                      (simple-var-ref $desugar$34)
-                      (simple-var-ref $desugar$33))) (
-                  (if
-                    (type-test-expr !is
-                      (simple-var-ref $desugar$33))
-                    (block-stmt
-                      (assignment
-                        (simple-var-ref $desugar$34)
-                        (error-constructor-expr (
-                          (literal lax field access receiver is not a mapping))))) (
-                    (block-stmt
-                      (var-def
-                        (variable $desugar$35 (expr
-                          (trap-expr
-                            (invocation lang.map get (
-                              (simple-var-ref $desugar$33)
-                              (literal absent)))))))
-                      (if
-                        (type-test-expr is
-                          (simple-var-ref $desugar$35))
-                        (block-stmt
-                          (assignment
-                            (simple-var-ref $desugar$34)
-                            (simple-var-ref $desugar$35))) (
-                        (if
-                          (type-test-expr is
-                            (simple-var-ref $desugar$35))
-                          (block-stmt
-                            (assignment
-                              (simple-var-ref $desugar$34)
-                              (simple-var-ref $desugar$35))) (
-                          (block-stmt
-                            (assignment
-                              (simple-var-ref $desugar$34)
+                    (expression-thunk
+                    (lambda
+                      (function main$506$7$thunk$5 () ()
+                        (block-function-body
+                          (var-def
+                            (variable $desugar$33 (expr
+                              (simple-var-ref j))))
+                          (var-def
+                            (variable $desugar$34 (expr
                               (error-constructor-expr (
-                                (literal invalid lax field member))))))))))))))
-                (if
-                  (type-test-expr is
-                    (simple-var-ref $desugar$34)
+                                (literal lax field access failed))))))
+                          (if
+                            (type-test-expr is
+                              (simple-var-ref $desugar$33))
+                            (block-stmt
+                              (assignment
+                                (simple-var-ref $desugar$34)
+                                (simple-var-ref $desugar$33))) (
+                            (if
+                              (type-test-expr !is
+                                (simple-var-ref $desugar$33))
+                              (block-stmt
+                                (assignment
+                                  (simple-var-ref $desugar$34)
+                                  (error-constructor-expr (
+                                    (literal lax field access receiver is not a mapping))))) (
+                              (block-stmt
+                                (var-def
+                                  (variable $desugar$35 (expr
+                                    (trap-expr
+                                      (invocation lang.map get (
+                                        (simple-var-ref $desugar$33)
+                                        (literal absent)))))))
+                                (if
+                                  (type-test-expr is
+                                    (simple-var-ref $desugar$35))
+                                  (block-stmt
+                                    (assignment
+                                      (simple-var-ref $desugar$34)
+                                      (simple-var-ref $desugar$35))) (
+                                  (if
+                                    (type-test-expr is
+                                      (simple-var-ref $desugar$35))
+                                    (block-stmt
+                                      (assignment
+                                        (simple-var-ref $desugar$34)
+                                        (simple-var-ref $desugar$35))) (
+                                    (block-stmt
+                                      (assignment
+                                        (simple-var-ref $desugar$34)
+                                        (error-constructor-expr (
+                                          (literal invalid lax field member))))))))))))))
+                          (return
+                            (simple-var-ref $desugar$34))))))
                     (error-type))
                   (block-stmt
                     (expression-stmt
@@ -841,318 +871,348 @@
                     (variable nilReceiver (type
                       (builtin-ref-type json)) (expr
                       (literal <nil>))))
-                  (var-def
-                    (variable $desugar$36 (expr
-                      (simple-var-ref nilReceiver))))
-                  (var-def
-                    (variable $desugar$37 (expr
-                      (error-constructor-expr (
-                        (literal lax field access failed))))))
-                  (if
-                    (type-test-expr is
-                      (simple-var-ref $desugar$36))
-                    (block-stmt
-                      (assignment
-                        (simple-var-ref $desugar$37)
-                        (simple-var-ref $desugar$36))) (
-                    (if
-                      (type-test-expr !is
-                        (simple-var-ref $desugar$36))
-                      (block-stmt
-                        (assignment
-                          (simple-var-ref $desugar$37)
-                          (error-constructor-expr (
-                            (literal lax field access receiver is not a mapping))))) (
-                      (block-stmt
-                        (var-def
-                          (variable $desugar$38 (expr
-                            (trap-expr
-                              (invocation lang.map get (
-                                (simple-var-ref $desugar$36)
-                                (literal value)))))))
-                        (if
-                          (type-test-expr is
-                            (simple-var-ref $desugar$38))
-                          (block-stmt
-                            (assignment
-                              (simple-var-ref $desugar$37)
-                              (simple-var-ref $desugar$38))) (
-                          (if
-                            (type-test-expr is
-                              (simple-var-ref $desugar$38))
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$37)
-                                (simple-var-ref $desugar$38))) (
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$37)
-                                (error-constructor-expr (
-                                  (literal invalid lax field member))))))))))))))
                   (expression-stmt
                     (invocation printError (
                       (literal required nil receiver)
-                      (simple-var-ref $desugar$37))))
-                  (var-def
-                    (variable $desugar$39 (expr
-                      (simple-var-ref nilReceiver))))
-                  (var-def
-                    (variable $desugar$40 (expr
-                      (literal <nil>))))
-                  (if
-                    (type-test-expr is
-                      (simple-var-ref $desugar$39))
-                    (block-stmt) (
-                    (if
-                      (type-test-expr is
-                        (simple-var-ref $desugar$39))
-                      (block-stmt
-                        (assignment
-                          (simple-var-ref $desugar$40)
-                          (simple-var-ref $desugar$39))) (
-                      (if
-                        (type-test-expr !is
-                          (simple-var-ref $desugar$39))
-                        (block-stmt
-                          (assignment
-                            (simple-var-ref $desugar$40)
-                            (error-constructor-expr (
-                              (literal lax field access receiver is not a mapping))))) (
-                        (block-stmt
-                          (var-def
-                            (variable $desugar$41 (expr
-                              (trap-expr
-                                (invocation lang.map get (
-                                  (simple-var-ref $desugar$39)
-                                  (literal value)))))))
-                          (if
-                            (type-test-expr is
-                              (simple-var-ref $desugar$41))
-                            (block-stmt) (
+                      (expression-thunk
+                      (lambda
+                        (function main$506$7$thunk$6 () ()
+                          (block-function-body
+                            (var-def
+                              (variable $desugar$36 (expr
+                                (simple-var-ref nilReceiver))))
+                            (var-def
+                              (variable $desugar$37 (expr
+                                (error-constructor-expr (
+                                  (literal lax field access failed))))))
                             (if
                               (type-test-expr is
-                                (simple-var-ref $desugar$41))
+                                (simple-var-ref $desugar$36))
                               (block-stmt
                                 (assignment
-                                  (simple-var-ref $desugar$40)
-                                  (simple-var-ref $desugar$41))) (
-                              (block-stmt
-                                (assignment
-                                  (simple-var-ref $desugar$40)
-                                  (error-constructor-expr (
-                                    (literal invalid lax field member))))))))))))))))
+                                  (simple-var-ref $desugar$37)
+                                  (simple-var-ref $desugar$36))) (
+                              (if
+                                (type-test-expr !is
+                                  (simple-var-ref $desugar$36))
+                                (block-stmt
+                                  (assignment
+                                    (simple-var-ref $desugar$37)
+                                    (error-constructor-expr (
+                                      (literal lax field access receiver is not a mapping))))) (
+                                (block-stmt
+                                  (var-def
+                                    (variable $desugar$38 (expr
+                                      (trap-expr
+                                        (invocation lang.map get (
+                                          (simple-var-ref $desugar$36)
+                                          (literal value)))))))
+                                  (if
+                                    (type-test-expr is
+                                      (simple-var-ref $desugar$38))
+                                    (block-stmt
+                                      (assignment
+                                        (simple-var-ref $desugar$37)
+                                        (simple-var-ref $desugar$38))) (
+                                    (if
+                                      (type-test-expr is
+                                        (simple-var-ref $desugar$38))
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$37)
+                                          (simple-var-ref $desugar$38))) (
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$37)
+                                          (error-constructor-expr (
+                                            (literal invalid lax field member))))))))))))))
+                            (return
+                              (simple-var-ref $desugar$37)))))))))
                   (expression-stmt
                     (invocation printNil (
                       (literal optional nil receiver)
-                      (simple-var-ref $desugar$40))))
+                      (expression-thunk
+                      (lambda
+                        (function main$506$7$thunk$7 () ()
+                          (block-function-body
+                            (var-def
+                              (variable $desugar$39 (expr
+                                (simple-var-ref nilReceiver))))
+                            (var-def
+                              (variable $desugar$40 (expr
+                                (literal <nil>))))
+                            (if
+                              (type-test-expr is
+                                (simple-var-ref $desugar$39))
+                              (block-stmt) (
+                              (if
+                                (type-test-expr is
+                                  (simple-var-ref $desugar$39))
+                                (block-stmt
+                                  (assignment
+                                    (simple-var-ref $desugar$40)
+                                    (simple-var-ref $desugar$39))) (
+                                (if
+                                  (type-test-expr !is
+                                    (simple-var-ref $desugar$39))
+                                  (block-stmt
+                                    (assignment
+                                      (simple-var-ref $desugar$40)
+                                      (error-constructor-expr (
+                                        (literal lax field access receiver is not a mapping))))) (
+                                  (block-stmt
+                                    (var-def
+                                      (variable $desugar$41 (expr
+                                        (trap-expr
+                                          (invocation lang.map get (
+                                            (simple-var-ref $desugar$39)
+                                            (literal value)))))))
+                                    (if
+                                      (type-test-expr is
+                                        (simple-var-ref $desugar$41))
+                                      (block-stmt) (
+                                      (if
+                                        (type-test-expr is
+                                          (simple-var-ref $desugar$41))
+                                        (block-stmt
+                                          (assignment
+                                            (simple-var-ref $desugar$40)
+                                            (simple-var-ref $desugar$41))) (
+                                        (block-stmt
+                                          (assignment
+                                            (simple-var-ref $desugar$40)
+                                            (error-constructor-expr (
+                                              (literal invalid lax field member))))))))))))))))
+                            (return
+                              (simple-var-ref $desugar$40)))))))))
                   (var-def
                     (variable scalarReceiver (type
                       (builtin-ref-type json)) (expr
                       (literal 1))))
-                  (var-def
-                    (variable $desugar$42 (expr
-                      (simple-var-ref scalarReceiver))))
-                  (var-def
-                    (variable $desugar$43 (expr
-                      (error-constructor-expr (
-                        (literal lax field access failed))))))
-                  (if
-                    (type-test-expr is
-                      (simple-var-ref $desugar$42))
-                    (block-stmt
-                      (assignment
-                        (simple-var-ref $desugar$43)
-                        (simple-var-ref $desugar$42))) (
-                    (if
-                      (type-test-expr !is
-                        (simple-var-ref $desugar$42))
-                      (block-stmt
-                        (assignment
-                          (simple-var-ref $desugar$43)
-                          (error-constructor-expr (
-                            (literal lax field access receiver is not a mapping))))) (
-                      (block-stmt
-                        (var-def
-                          (variable $desugar$44 (expr
-                            (trap-expr
-                              (invocation lang.map get (
-                                (simple-var-ref $desugar$42)
-                                (literal value)))))))
-                        (if
-                          (type-test-expr is
-                            (simple-var-ref $desugar$44))
-                          (block-stmt
-                            (assignment
-                              (simple-var-ref $desugar$43)
-                              (simple-var-ref $desugar$44))) (
-                          (if
-                            (type-test-expr is
-                              (simple-var-ref $desugar$44))
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$43)
-                                (simple-var-ref $desugar$44))) (
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$43)
-                                (error-constructor-expr (
-                                  (literal invalid lax field member))))))))))))))
                   (expression-stmt
                     (invocation printError (
                       (literal required non-mapping receiver)
-                      (simple-var-ref $desugar$43))))
-                  (var-def
-                    (variable $desugar$45 (expr
-                      (simple-var-ref scalarReceiver))))
-                  (var-def
-                    (variable $desugar$46 (expr
-                      (literal <nil>))))
-                  (if
-                    (type-test-expr is
-                      (simple-var-ref $desugar$45))
-                    (block-stmt) (
-                    (if
-                      (type-test-expr is
-                        (simple-var-ref $desugar$45))
-                      (block-stmt
-                        (assignment
-                          (simple-var-ref $desugar$46)
-                          (simple-var-ref $desugar$45))) (
-                      (if
-                        (type-test-expr !is
-                          (simple-var-ref $desugar$45))
-                        (block-stmt
-                          (assignment
-                            (simple-var-ref $desugar$46)
-                            (error-constructor-expr (
-                              (literal lax field access receiver is not a mapping))))) (
-                        (block-stmt
-                          (var-def
-                            (variable $desugar$47 (expr
-                              (trap-expr
-                                (invocation lang.map get (
-                                  (simple-var-ref $desugar$45)
-                                  (literal value)))))))
-                          (if
-                            (type-test-expr is
-                              (simple-var-ref $desugar$47))
-                            (block-stmt) (
+                      (expression-thunk
+                      (lambda
+                        (function main$506$7$thunk$8 () ()
+                          (block-function-body
+                            (var-def
+                              (variable $desugar$42 (expr
+                                (simple-var-ref scalarReceiver))))
+                            (var-def
+                              (variable $desugar$43 (expr
+                                (error-constructor-expr (
+                                  (literal lax field access failed))))))
                             (if
                               (type-test-expr is
-                                (simple-var-ref $desugar$47))
+                                (simple-var-ref $desugar$42))
                               (block-stmt
                                 (assignment
-                                  (simple-var-ref $desugar$46)
-                                  (simple-var-ref $desugar$47))) (
-                              (block-stmt
-                                (assignment
-                                  (simple-var-ref $desugar$46)
-                                  (error-constructor-expr (
-                                    (literal invalid lax field member))))))))))))))))
+                                  (simple-var-ref $desugar$43)
+                                  (simple-var-ref $desugar$42))) (
+                              (if
+                                (type-test-expr !is
+                                  (simple-var-ref $desugar$42))
+                                (block-stmt
+                                  (assignment
+                                    (simple-var-ref $desugar$43)
+                                    (error-constructor-expr (
+                                      (literal lax field access receiver is not a mapping))))) (
+                                (block-stmt
+                                  (var-def
+                                    (variable $desugar$44 (expr
+                                      (trap-expr
+                                        (invocation lang.map get (
+                                          (simple-var-ref $desugar$42)
+                                          (literal value)))))))
+                                  (if
+                                    (type-test-expr is
+                                      (simple-var-ref $desugar$44))
+                                    (block-stmt
+                                      (assignment
+                                        (simple-var-ref $desugar$43)
+                                        (simple-var-ref $desugar$44))) (
+                                    (if
+                                      (type-test-expr is
+                                        (simple-var-ref $desugar$44))
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$43)
+                                          (simple-var-ref $desugar$44))) (
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$43)
+                                          (error-constructor-expr (
+                                            (literal invalid lax field member))))))))))))))
+                            (return
+                              (simple-var-ref $desugar$43)))))))))
                   (expression-stmt
                     (invocation printError (
                       (literal optional non-mapping receiver)
-                      (simple-var-ref $desugar$46))))
-                  (var-def
-                    (variable $desugar$48 (expr
-                      (simple-var-ref j))))
-                  (var-def
-                    (variable $desugar$49 (expr
-                      (error-constructor-expr (
-                        (literal lax field access failed))))))
-                  (if
-                    (type-test-expr is
-                      (simple-var-ref $desugar$48))
-                    (block-stmt
-                      (assignment
-                        (simple-var-ref $desugar$49)
-                        (simple-var-ref $desugar$48))) (
-                    (if
-                      (type-test-expr !is
-                        (simple-var-ref $desugar$48))
-                      (block-stmt
-                        (assignment
-                          (simple-var-ref $desugar$49)
-                          (error-constructor-expr (
-                            (literal lax field access receiver is not a mapping))))) (
-                      (block-stmt
-                        (var-def
-                          (variable $desugar$50 (expr
-                            (trap-expr
-                              (invocation lang.map get (
-                                (simple-var-ref $desugar$48)
-                                (literal missing)))))))
-                        (if
-                          (type-test-expr is
-                            (simple-var-ref $desugar$50))
-                          (block-stmt
-                            (assignment
-                              (simple-var-ref $desugar$49)
-                              (simple-var-ref $desugar$50))) (
-                          (if
-                            (type-test-expr is
-                              (simple-var-ref $desugar$50))
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$49)
-                                (simple-var-ref $desugar$50))) (
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$49)
-                                (error-constructor-expr (
-                                  (literal invalid lax field member))))))))))))))
-                  (var-def
-                    (variable $desugar$51 (expr
-                      (simple-var-ref $desugar$49))))
-                  (var-def
-                    (variable $desugar$52 (expr
-                      (error-constructor-expr (
-                        (literal lax field access failed))))))
-                  (if
-                    (type-test-expr is
-                      (simple-var-ref $desugar$51))
-                    (block-stmt
-                      (assignment
-                        (simple-var-ref $desugar$52)
-                        (simple-var-ref $desugar$51))) (
-                    (if
-                      (type-test-expr !is
-                        (simple-var-ref $desugar$51))
-                      (block-stmt
-                        (assignment
-                          (simple-var-ref $desugar$52)
-                          (error-constructor-expr (
-                            (literal lax field access receiver is not a mapping))))) (
-                      (block-stmt
-                        (var-def
-                          (variable $desugar$53 (expr
-                            (trap-expr
-                              (invocation lang.map get (
-                                (simple-var-ref $desugar$51)
-                                (literal next)))))))
-                        (if
-                          (type-test-expr is
-                            (simple-var-ref $desugar$53))
-                          (block-stmt
-                            (assignment
-                              (simple-var-ref $desugar$52)
-                              (simple-var-ref $desugar$53))) (
-                          (if
-                            (type-test-expr is
-                              (simple-var-ref $desugar$53))
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$52)
-                                (simple-var-ref $desugar$53))) (
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$52)
-                                (error-constructor-expr (
-                                  (literal invalid lax field member))))))))))))))
+                      (expression-thunk
+                      (lambda
+                        (function main$506$7$thunk$9 () ()
+                          (block-function-body
+                            (var-def
+                              (variable $desugar$45 (expr
+                                (simple-var-ref scalarReceiver))))
+                            (var-def
+                              (variable $desugar$46 (expr
+                                (literal <nil>))))
+                            (if
+                              (type-test-expr is
+                                (simple-var-ref $desugar$45))
+                              (block-stmt) (
+                              (if
+                                (type-test-expr is
+                                  (simple-var-ref $desugar$45))
+                                (block-stmt
+                                  (assignment
+                                    (simple-var-ref $desugar$46)
+                                    (simple-var-ref $desugar$45))) (
+                                (if
+                                  (type-test-expr !is
+                                    (simple-var-ref $desugar$45))
+                                  (block-stmt
+                                    (assignment
+                                      (simple-var-ref $desugar$46)
+                                      (error-constructor-expr (
+                                        (literal lax field access receiver is not a mapping))))) (
+                                  (block-stmt
+                                    (var-def
+                                      (variable $desugar$47 (expr
+                                        (trap-expr
+                                          (invocation lang.map get (
+                                            (simple-var-ref $desugar$45)
+                                            (literal value)))))))
+                                    (if
+                                      (type-test-expr is
+                                        (simple-var-ref $desugar$47))
+                                      (block-stmt) (
+                                      (if
+                                        (type-test-expr is
+                                          (simple-var-ref $desugar$47))
+                                        (block-stmt
+                                          (assignment
+                                            (simple-var-ref $desugar$46)
+                                            (simple-var-ref $desugar$47))) (
+                                        (block-stmt
+                                          (assignment
+                                            (simple-var-ref $desugar$46)
+                                            (error-constructor-expr (
+                                              (literal invalid lax field member))))))))))))))))
+                            (return
+                              (simple-var-ref $desugar$46)))))))))
                   (expression-stmt
                     (invocation printError (
                       (literal propagated earlier error)
-                      (simple-var-ref $desugar$52))))
+                      (expression-thunk
+                      (lambda
+                        (function main$506$7$thunk$11 () ()
+                          (block-function-body
+                            (var-def
+                              (variable $desugar$51 (expr
+                                (expression-thunk
+                                (lambda
+                                  (function main$506$7$thunk$10 () ()
+                                    (block-function-body
+                                      (var-def
+                                        (variable $desugar$48 (expr
+                                          (simple-var-ref j))))
+                                      (var-def
+                                        (variable $desugar$49 (expr
+                                          (error-constructor-expr (
+                                            (literal lax field access failed))))))
+                                      (if
+                                        (type-test-expr is
+                                          (simple-var-ref $desugar$48))
+                                        (block-stmt
+                                          (assignment
+                                            (simple-var-ref $desugar$49)
+                                            (simple-var-ref $desugar$48))) (
+                                        (if
+                                          (type-test-expr !is
+                                            (simple-var-ref $desugar$48))
+                                          (block-stmt
+                                            (assignment
+                                              (simple-var-ref $desugar$49)
+                                              (error-constructor-expr (
+                                                (literal lax field access receiver is not a mapping))))) (
+                                          (block-stmt
+                                            (var-def
+                                              (variable $desugar$50 (expr
+                                                (trap-expr
+                                                  (invocation lang.map get (
+                                                    (simple-var-ref $desugar$48)
+                                                    (literal missing)))))))
+                                            (if
+                                              (type-test-expr is
+                                                (simple-var-ref $desugar$50))
+                                              (block-stmt
+                                                (assignment
+                                                  (simple-var-ref $desugar$49)
+                                                  (simple-var-ref $desugar$50))) (
+                                              (if
+                                                (type-test-expr is
+                                                  (simple-var-ref $desugar$50))
+                                                (block-stmt
+                                                  (assignment
+                                                    (simple-var-ref $desugar$49)
+                                                    (simple-var-ref $desugar$50))) (
+                                                (block-stmt
+                                                  (assignment
+                                                    (simple-var-ref $desugar$49)
+                                                    (error-constructor-expr (
+                                                      (literal invalid lax field member))))))))))))))
+                                      (return
+                                        (simple-var-ref $desugar$49)))))))))
+                            (var-def
+                              (variable $desugar$52 (expr
+                                (error-constructor-expr (
+                                  (literal lax field access failed))))))
+                            (if
+                              (type-test-expr is
+                                (simple-var-ref $desugar$51))
+                              (block-stmt
+                                (assignment
+                                  (simple-var-ref $desugar$52)
+                                  (simple-var-ref $desugar$51))) (
+                              (if
+                                (type-test-expr !is
+                                  (simple-var-ref $desugar$51))
+                                (block-stmt
+                                  (assignment
+                                    (simple-var-ref $desugar$52)
+                                    (error-constructor-expr (
+                                      (literal lax field access receiver is not a mapping))))) (
+                                (block-stmt
+                                  (var-def
+                                    (variable $desugar$53 (expr
+                                      (trap-expr
+                                        (invocation lang.map get (
+                                          (simple-var-ref $desugar$51)
+                                          (literal next)))))))
+                                  (if
+                                    (type-test-expr is
+                                      (simple-var-ref $desugar$53))
+                                    (block-stmt
+                                      (assignment
+                                        (simple-var-ref $desugar$52)
+                                        (simple-var-ref $desugar$53))) (
+                                    (if
+                                      (type-test-expr is
+                                        (simple-var-ref $desugar$53))
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$52)
+                                          (simple-var-ref $desugar$53))) (
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$52)
+                                          (error-constructor-expr (
+                                            (literal invalid lax field member))))))))))))))
+                            (return
+                              (simple-var-ref $desugar$52)))))))))
                   (var-def
                     (variable openJSON (type
                       (user-defined-type OpenJSONRecord)) (expr
@@ -1182,56 +1242,61 @@
                         (builtin-ref-type json))) (expr
                       (simple-var-ref openJSON))))
                   (var-def
-                    (variable $desugar$54 (expr
-                      (simple-var-ref openJSONMap))))
-                  (var-def
-                    (variable $desugar$55 (expr
-                      (error-constructor-expr (
-                        (literal lax field access failed))))))
-                  (if
-                    (type-test-expr is
-                      (simple-var-ref $desugar$54))
-                    (block-stmt
-                      (assignment
-                        (simple-var-ref $desugar$55)
-                        (simple-var-ref $desugar$54))) (
-                    (if
-                      (type-test-expr !is
-                        (simple-var-ref $desugar$54))
-                      (block-stmt
-                        (assignment
-                          (simple-var-ref $desugar$55)
-                          (error-constructor-expr (
-                            (literal lax field access receiver is not a mapping))))) (
-                      (block-stmt
-                        (var-def
-                          (variable $desugar$56 (expr
-                            (trap-expr
-                              (invocation lang.map get (
-                                (simple-var-ref $desugar$54)
-                                (literal nested)))))))
-                        (if
-                          (type-test-expr is
-                            (simple-var-ref $desugar$56))
-                          (block-stmt
-                            (assignment
-                              (simple-var-ref $desugar$55)
-                              (simple-var-ref $desugar$56))) (
-                          (if
-                            (type-test-expr is
-                              (simple-var-ref $desugar$56))
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$55)
-                                (simple-var-ref $desugar$56))) (
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$55)
-                                (error-constructor-expr (
-                                  (literal invalid lax field member))))))))))))))
-                  (var-def
                     (variable $desugar$57 (expr
-                      (simple-var-ref $desugar$55))))
+                      (expression-thunk
+                      (lambda
+                        (function main$506$7$thunk$12 () ()
+                          (block-function-body
+                            (var-def
+                              (variable $desugar$54 (expr
+                                (simple-var-ref openJSONMap))))
+                            (var-def
+                              (variable $desugar$55 (expr
+                                (error-constructor-expr (
+                                  (literal lax field access failed))))))
+                            (if
+                              (type-test-expr is
+                                (simple-var-ref $desugar$54))
+                              (block-stmt
+                                (assignment
+                                  (simple-var-ref $desugar$55)
+                                  (simple-var-ref $desugar$54))) (
+                              (if
+                                (type-test-expr !is
+                                  (simple-var-ref $desugar$54))
+                                (block-stmt
+                                  (assignment
+                                    (simple-var-ref $desugar$55)
+                                    (error-constructor-expr (
+                                      (literal lax field access receiver is not a mapping))))) (
+                                (block-stmt
+                                  (var-def
+                                    (variable $desugar$56 (expr
+                                      (trap-expr
+                                        (invocation lang.map get (
+                                          (simple-var-ref $desugar$54)
+                                          (literal nested)))))))
+                                  (if
+                                    (type-test-expr is
+                                      (simple-var-ref $desugar$56))
+                                    (block-stmt
+                                      (assignment
+                                        (simple-var-ref $desugar$55)
+                                        (simple-var-ref $desugar$56))) (
+                                    (if
+                                      (type-test-expr is
+                                        (simple-var-ref $desugar$56))
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$55)
+                                          (simple-var-ref $desugar$56))) (
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$55)
+                                          (error-constructor-expr (
+                                            (literal invalid lax field member))))))))))))))
+                            (return
+                              (simple-var-ref $desugar$55)))))))))
                   (var-def
                     (variable $desugar$58 (expr
                       (error-constructor-expr (
@@ -1356,108 +1421,118 @@
                         (key-value
                           (literal age)
                           (literal 30))))))
-                  (var-def
-                    (variable $desugar$63 (expr
-                      (simple-var-ref user))))
-                  (var-def
-                    (variable $desugar$64 (expr
-                      (error-constructor-expr (
-                        (literal lax field access failed))))))
-                  (if
-                    (type-test-expr is
-                      (simple-var-ref $desugar$63))
-                    (block-stmt
-                      (assignment
-                        (simple-var-ref $desugar$64)
-                        (simple-var-ref $desugar$63))) (
-                    (if
-                      (type-test-expr !is
-                        (simple-var-ref $desugar$63))
-                      (block-stmt
-                        (assignment
-                          (simple-var-ref $desugar$64)
-                          (error-constructor-expr (
-                            (literal lax field access receiver is not a mapping))))) (
-                      (block-stmt
-                        (var-def
-                          (variable $desugar$65 (expr
-                            (trap-expr
-                              (invocation lang.map get (
-                                (simple-var-ref $desugar$63)
-                                (literal name)))))))
-                        (if
-                          (type-test-expr is
-                            (simple-var-ref $desugar$65))
-                          (block-stmt
-                            (assignment
-                              (simple-var-ref $desugar$64)
-                              (simple-var-ref $desugar$65))) (
-                          (if
-                            (type-test-expr is
-                              (simple-var-ref $desugar$65))
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$64)
-                                (simple-var-ref $desugar$65))) (
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$64)
-                                (error-constructor-expr (
-                                  (literal invalid lax field member))))))))))))))
                   (expression-stmt
                     (invocation io println (
-                      (simple-var-ref $desugar$64))))
-                  (var-def
-                    (variable $desugar$66 (expr
-                      (simple-var-ref user))))
-                  (var-def
-                    (variable $desugar$67 (expr
-                      (error-constructor-expr (
-                        (literal lax field access failed))))))
-                  (if
-                    (type-test-expr is
-                      (simple-var-ref $desugar$66))
-                    (block-stmt
-                      (assignment
-                        (simple-var-ref $desugar$67)
-                        (simple-var-ref $desugar$66))) (
-                    (if
-                      (type-test-expr !is
-                        (simple-var-ref $desugar$66))
-                      (block-stmt
-                        (assignment
-                          (simple-var-ref $desugar$67)
-                          (error-constructor-expr (
-                            (literal lax field access receiver is not a mapping))))) (
-                      (block-stmt
-                        (var-def
-                          (variable $desugar$68 (expr
-                            (trap-expr
-                              (invocation lang.map get (
-                                (simple-var-ref $desugar$66)
-                                (literal age)))))))
-                        (if
-                          (type-test-expr is
-                            (simple-var-ref $desugar$68))
-                          (block-stmt
-                            (assignment
-                              (simple-var-ref $desugar$67)
-                              (simple-var-ref $desugar$68))) (
-                          (if
-                            (type-test-expr is
-                              (simple-var-ref $desugar$68))
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$67)
-                                (simple-var-ref $desugar$68))) (
-                            (block-stmt
-                              (assignment
-                                (simple-var-ref $desugar$67)
+                      (expression-thunk
+                      (lambda
+                        (function main$506$7$thunk$13 () ()
+                          (block-function-body
+                            (var-def
+                              (variable $desugar$63 (expr
+                                (simple-var-ref user))))
+                            (var-def
+                              (variable $desugar$64 (expr
                                 (error-constructor-expr (
-                                  (literal invalid lax field member))))))))))))))
+                                  (literal lax field access failed))))))
+                            (if
+                              (type-test-expr is
+                                (simple-var-ref $desugar$63))
+                              (block-stmt
+                                (assignment
+                                  (simple-var-ref $desugar$64)
+                                  (simple-var-ref $desugar$63))) (
+                              (if
+                                (type-test-expr !is
+                                  (simple-var-ref $desugar$63))
+                                (block-stmt
+                                  (assignment
+                                    (simple-var-ref $desugar$64)
+                                    (error-constructor-expr (
+                                      (literal lax field access receiver is not a mapping))))) (
+                                (block-stmt
+                                  (var-def
+                                    (variable $desugar$65 (expr
+                                      (trap-expr
+                                        (invocation lang.map get (
+                                          (simple-var-ref $desugar$63)
+                                          (literal name)))))))
+                                  (if
+                                    (type-test-expr is
+                                      (simple-var-ref $desugar$65))
+                                    (block-stmt
+                                      (assignment
+                                        (simple-var-ref $desugar$64)
+                                        (simple-var-ref $desugar$65))) (
+                                    (if
+                                      (type-test-expr is
+                                        (simple-var-ref $desugar$65))
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$64)
+                                          (simple-var-ref $desugar$65))) (
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$64)
+                                          (error-constructor-expr (
+                                            (literal invalid lax field member))))))))))))))
+                            (return
+                              (simple-var-ref $desugar$64)))))))))
                   (expression-stmt
                     (invocation io println (
-                      (simple-var-ref $desugar$67))))
+                      (expression-thunk
+                      (lambda
+                        (function main$506$7$thunk$14 () ()
+                          (block-function-body
+                            (var-def
+                              (variable $desugar$66 (expr
+                                (simple-var-ref user))))
+                            (var-def
+                              (variable $desugar$67 (expr
+                                (error-constructor-expr (
+                                  (literal lax field access failed))))))
+                            (if
+                              (type-test-expr is
+                                (simple-var-ref $desugar$66))
+                              (block-stmt
+                                (assignment
+                                  (simple-var-ref $desugar$67)
+                                  (simple-var-ref $desugar$66))) (
+                              (if
+                                (type-test-expr !is
+                                  (simple-var-ref $desugar$66))
+                                (block-stmt
+                                  (assignment
+                                    (simple-var-ref $desugar$67)
+                                    (error-constructor-expr (
+                                      (literal lax field access receiver is not a mapping))))) (
+                                (block-stmt
+                                  (var-def
+                                    (variable $desugar$68 (expr
+                                      (trap-expr
+                                        (invocation lang.map get (
+                                          (simple-var-ref $desugar$66)
+                                          (literal age)))))))
+                                  (if
+                                    (type-test-expr is
+                                      (simple-var-ref $desugar$68))
+                                    (block-stmt
+                                      (assignment
+                                        (simple-var-ref $desugar$67)
+                                        (simple-var-ref $desugar$68))) (
+                                    (if
+                                      (type-test-expr is
+                                        (simple-var-ref $desugar$68))
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$67)
+                                          (simple-var-ref $desugar$68))) (
+                                      (block-stmt
+                                        (assignment
+                                          (simple-var-ref $desugar$67)
+                                          (error-constructor-expr (
+                                            (literal invalid lax field member))))))))))))))
+                            (return
+                              (simple-var-ref $desugar$67)))))))))
                   (expression-stmt
                     (invocation strictAccesses ()))))))))))
   (function strictAccesses () (

@@ -1,0 +1,234 @@
+module $anon.. v 0.0.0;
+class BlockProvider {
+  blocks [[int:Unsigned8...]...]
+  idx int
+
+  init([[int:Unsigned8...]...]) -> nil{
+    bb0 {
+      %3 = ConstantLoad 0
+      %4 = ConstantLoad idx
+      self[%4] = %3;
+      %5 = ConstantLoad blocks
+      self[%5] = blocks;
+      return;
+    }
+  }
+
+  next() -> nil|error|{| value: [int:Unsigned8...], never... |}{
+    bb0 {
+      %4 = ConstantLoad idx
+      %3 = self[%4];
+      %5 = %3;
+      %7 = ConstantLoad blocks
+      %6 = self[%7];
+      %8 = length(%6) -> bb1;
+    }
+    bb1 {
+      %9 = %8;
+      %2 = >= %5 %9;
+      %2 ? bb2 : bb3;
+    }
+    bb2 {
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+    bb3 {
+      PushScopeFrame 14
+      %2 = ConstantLoad idx
+      %1 = (1, self)[%2];
+      %4 = ConstantLoad blocks
+      %3 = (1, self)[%4];
+      %0 = %3[%1];
+      block = %0;
+      %6 = ConstantLoad idx
+      %7 = (1, self)[%6];
+      %8 = %7;
+      %9 = ConstantLoad 1
+      %10 = %9;
+      %11 = + %8 %10;
+      (1, self)[%6] = %11;
+      %12 = ConstantLoad value
+      %13 = newMap {| value: [int:Unsigned8...], never... |}{%12=block}
+      (1, %0) = %13;
+      PopScopeFrame
+      return;
+    }
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_stream_write_blocks1.bin
+    path = %1;
+    %3 = newObject $anon/.:BlockProvider
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 2
+    %6 = ConstantLoad 3
+    %7 = ConstantLoad 3
+    %8 = newArray [int:Unsigned8...][%7]{%4, %5, %6}
+    %9 = ConstantLoad 4
+    %10 = ConstantLoad 5
+    %11 = ConstantLoad 2
+    %12 = newArray [int:Unsigned8...][%11]{%9, %10}
+    %13 = ConstantLoad 6
+    %14 = ConstantLoad 1
+    %15 = newArray [int:Unsigned8...][%14]{%13}
+    %16 = ConstantLoad 3
+    %17 = newArray [[int:Unsigned8...]...][%16]{%8, %12, %15}
+    %18 = init(%3,%17) -> bb1;
+  }
+  bb1 {
+    %20 = %18 is nil
+    %20 ? bb2 : bb3;
+  }
+  bb2 {
+    %19 = %3;
+    GOTO bb4;
+  }
+  bb3 {
+    %19 = %18;
+    GOTO bb4;
+  }
+  bb4 {
+    %21 = newStream stream %19
+    byteStream = %21;
+    %24 = closure_fp $anon/.:main$502$1$thunk$0
+    %25 = main$502$1$thunk$0() -> bb5;
+  }
+  bb5 {
+    %26 = %25 is error
+    %26 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %25;
+    return;
+  }
+  bb7 {
+    %23 = %25;
+    GOTO bb8;
+  }
+  bb8 {
+    %28 = fileReadBytes(path) -> bb9;
+  }
+  bb9 {
+    %29 = %28 is error
+    %29 ? bb10 : bb11;
+  }
+  bb10 {
+    %0 = %28;
+    return;
+  }
+  bb11 {
+    %27 = %28;
+    GOTO bb12;
+  }
+  bb12 {
+    readBack = %27;
+    %31 = length(readBack) -> bb13;
+  }
+  bb13 {
+    %32 = %31;
+    %33 = println(%32) -> bb14;
+  }
+  bb14 {
+    %35 = ConstantLoad 0
+    %34 = readBack[%35];
+    %36 = %34;
+    %37 = println(%36) -> bb15;
+  }
+  bb15 {
+    %39 = ConstantLoad 5
+    %38 = readBack[%39];
+    %40 = %38;
+    %41 = println(%40) -> bb16;
+  }
+  bb16 {
+    %42 = newObject $anon/.:BlockProvider
+    %43 = ConstantLoad 7
+    %44 = ConstantLoad 8
+    %45 = ConstantLoad 2
+    %46 = newArray [int:Unsigned8...][%45]{%43, %44}
+    %47 = ConstantLoad 1
+    %48 = newArray [[int:Unsigned8...]...][%47]{%46}
+    %49 = init(%42,%48) -> bb17;
+  }
+  bb17 {
+    %51 = %49 is nil
+    %51 ? bb18 : bb19;
+  }
+  bb18 {
+    %50 = %42;
+    GOTO bb20;
+  }
+  bb19 {
+    %50 = %49;
+    GOTO bb20;
+  }
+  bb20 {
+    %52 = newStream stream %50
+    appendStream = %52;
+    %55 = ConstantLoad APPEND
+    %56 = fileWriteBlocksFromStream(path,appendStream,%55) -> bb21;
+  }
+  bb21 {
+    %57 = %56 is error
+    %57 ? bb22 : bb23;
+  }
+  bb22 {
+    %0 = %56;
+    return;
+  }
+  bb23 {
+    %54 = %56;
+    GOTO bb24;
+  }
+  bb24 {
+    %59 = fileReadBytes(path) -> bb25;
+  }
+  bb25 {
+    %60 = %59 is error
+    %60 ? bb26 : bb27;
+  }
+  bb26 {
+    %0 = %59;
+    return;
+  }
+  bb27 {
+    %58 = %59;
+    GOTO bb28;
+  }
+  bb28 {
+    combined = %58;
+    %62 = length(combined) -> bb29;
+  }
+  bb29 {
+    %63 = %62;
+    %64 = println(%63) -> bb30;
+  }
+  bb30 {
+    %66 = ConstantLoad 7
+    %65 = combined[%66];
+    %67 = %65;
+    %68 = println(%67) -> bb31;
+  }
+  bb31 {
+    return;
+  }
+}
+main$502$1$thunk$0() -> nil|error{
+  bb0 {
+    $desugar$0 = (1, path);
+    $desugar$1 = (1, byteStream);
+    %3 = $default$5($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %3;
+    %5 = fileWriteBlocksFromStream($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}

@@ -80,13 +80,24 @@ func formatCallStack(cs *callStack) []string {
 	entries := cs.Entries()
 	const maxFrames = 32
 	out := make([]string, 0, len(entries))
+	var hiddenLocation bir.Location
 	for i := len(entries) - 1; i >= 0; i-- {
+		entry := entries[i]
+		if isDesugaredFunction(entry.frame.FunctionKey()) {
+			if bir.IsLocationEmpty(hiddenLocation) {
+				hiddenLocation = entry.location
+			}
+			continue
+		}
 		if len(out) >= maxFrames {
 			out = append(out, "...")
 			break
 		}
-		entry := entries[i]
 		loc := entry.location
+		if !bir.IsLocationEmpty(hiddenLocation) {
+			loc = hiddenLocation
+			hiddenLocation = bir.Location{}
+		}
 		if bir.IsLocationEmpty(loc) {
 			out = append(out, fmt.Sprintf("%s(unknown)", prettyFunctionName(entry.frame.FunctionKey())))
 			continue
@@ -108,6 +119,16 @@ func formatRuntimePanic(message string, stack []string) string {
 		}
 	}
 	return strings.TrimSuffix(b.String(), "\n")
+}
+
+func isDesugaredFunction(functionKey string) bool {
+	name := functionKey
+	if idx := strings.LastIndex(name, ":"); idx != -1 {
+		name = name[idx+1:]
+	}
+	return strings.HasPrefix(name, "$default$") ||
+		strings.HasPrefix(name, "$anonFunc$") ||
+		strings.Contains(name, "$thunk$")
 }
 
 func prettyFunctionName(functionKey string) string {

@@ -1,0 +1,105 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable missing (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_missing_xyz.dat))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation io fileReadString (
+              (simple-var-ref missing)))
+            (user-defined-type io Error)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation io fileReadLines (
+              (simple-var-ref missing)))
+            (user-defined-type io Error)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation io fileReadBytes (
+              (simple-var-ref missing)))
+            (user-defined-type io Error)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation io fileReadJson (
+              (simple-var-ref missing)))
+            (user-defined-type io Error)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation io fileReadXml (
+              (simple-var-ref missing)))
+            (user-defined-type io Error)))))
+      (var-def
+        (variable badJson (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_bad_json.json))))
+      (expression-stmt
+        (checked-expr
+          (expression-thunk
+          (lambda
+            (function main$502$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref badJson))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (literal {not valid json}))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation io fileReadJson (
+              (simple-var-ref badJson)))
+            (user-defined-type io Error)))))
+      (var-def
+        (variable trailingJson (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_trailing_json.json))))
+      (expression-stmt
+        (checked-expr
+          (expression-thunk
+          (lambda
+            (function main$502$0$thunk$1 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$3 (expr
+                    (simple-var-ref trailingJson))))
+                (var-def
+                  (variable $desugar$4 (expr
+                    (literal {"k": 1} extra))))
+                (var-def
+                  (variable $desugar$5 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$4))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$3)
+                    (simple-var-ref $desugar$4)
+                    (simple-var-ref $desugar$5))))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation io fileReadJson (
+              (simple-var-ref trailingJson)))
+            (user-defined-type io Error))))))))

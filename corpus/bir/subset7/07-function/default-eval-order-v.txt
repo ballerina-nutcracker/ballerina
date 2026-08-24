@@ -21,6 +21,32 @@ foo(int,int) -> int{
 }
 main() -> nil{
   bb0 {
+    %1 = fp $anon/.:main$506$3$thunk$0
+    %2 = %1() -> bb1;
+  }
+  bb1 {
+    %3 = %2;
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = println(counter) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$default$0(int) -> int{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+main$506$3$thunk$0() -> int{
+  bb0 {
     %1 = nextVal() -> bb1;
   }
   bb1 {
@@ -35,23 +61,7 @@ main() -> nil{
     %8 = foo(%6,%7) -> bb3;
   }
   bb3 {
-    %9 = %8;
-    %10 = println(%9) -> bb4;
-  }
-  bb4 {
-    %11 = println(counter) -> bb5;
-  }
-  bb5 {
-    return;
-  }
-}
-$default$0(int) -> int{
-  bb0 {
-    %3 = x;
-    %4 = ConstantLoad 1
-    %5 = %4;
-    %2 = + %3 %5;
-    %0 = %2;
+    %0 = %8;
     return;
   }
 }

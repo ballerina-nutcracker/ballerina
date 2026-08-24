@@ -1,0 +1,163 @@
+(package
+  (import-package ballerina http (as http))
+  (import-package ballerina io (as io))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable c1 (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)
+              (mapping-constructor-expr
+                (key-value
+                  (literal secureSocket)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal enable)
+                      (literal false)))))))))))
+      (var-def
+        (variable r1 (type
+          (user-defined-type http Response)) (expr
+          (checked-expr
+            (expression-thunk
+            (lambda
+              (function main$502$0$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$0))))))
+                  (var-def
+                    (variable $desugar$2 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c1) (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1)
+                      (simple-var-ref $desugar$2))))))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r1)
+            (literal statusCode)))))
+      (var-def
+        (variable c2 (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)
+              (mapping-constructor-expr
+                (key-value
+                  (literal secureSocket)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal enable)
+                      (literal false))
+                    (key-value
+                      (literal verifyHostName)
+                      (literal false))
+                    (key-value
+                      (literal shareSession)
+                      (literal false))
+                    (key-value
+                      (literal serverName)
+                      (literal example.com))
+                    (key-value
+                      (literal ciphers)
+                      (list-constructor-expr
+                        (literal TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)))
+                    (key-value
+                      (literal handshakeTimeout)
+                      (literal 10)))))))))))
+      (var-def
+        (variable r2 (type
+          (user-defined-type http Response)) (expr
+          (checked-expr
+            (expression-thunk
+            (lambda
+              (function main$502$0$thunk$1 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$3 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$4 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$3))))))
+                  (var-def
+                    (variable $desugar$5 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c2) (
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$4)
+                      (simple-var-ref $desugar$5))))))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r2)
+            (literal statusCode)))))
+      (var-def
+        (variable c3 (type
+          (user-defined-type http Client)) (expr
+          (checked-expr
+            (new (
+              (literal https://example.com)
+              (mapping-constructor-expr
+                (key-value
+                  (literal secureSocket)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal enable)
+                      (literal false))
+                    (key-value
+                      (literal protocol)
+                      (mapping-constructor-expr
+                        (key-value
+                          (literal name)
+                          (literal TLS))
+                        (key-value
+                          (literal versions)
+                          (list-constructor-expr
+                            (literal TLSv1.2)
+                            (literal TLSv1.3))))))))))))))
+      (var-def
+        (variable r3 (type
+          (user-defined-type http Response)) (expr
+          (checked-expr
+            (expression-thunk
+            (lambda
+              (function main$502$0$thunk$2 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$6 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$7 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$6))))))
+                  (var-def
+                    (variable $desugar$8 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c3) (
+                      (simple-var-ref $desugar$6)
+                      (simple-var-ref $desugar$7)
+                      (simple-var-ref $desugar$8))))))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r3)
+            (literal statusCode)))))
+      (return
+        (literal <nil>)))))
