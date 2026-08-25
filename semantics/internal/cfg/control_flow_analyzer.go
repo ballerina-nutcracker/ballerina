@@ -494,6 +494,8 @@ func (cfg *functionCFG) markBackedges() {
 				cfg.bbs[childID].backedgeParents = append(cfg.bbs[childID].backedgeParents, id)
 			case white:
 				dfs(childID)
+			case black:
+				continue
 			}
 		}
 		colors[id] = black

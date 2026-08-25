@@ -65,8 +65,9 @@ func (p *xmlParser) isEndOfXMLContent(kind st.SyntaxKind, isInXMLElement bool) b
 	case st.LT_TOKEN:
 		nextNextKind := p.getNextNextToken().Kind()
 		return isInXMLElement && (nextNextKind == st.SLASH_TOKEN || nextNextKind == st.LT_TOKEN)
+	default:
+		return false
 	}
-	return false
 }
 
 func (p *xmlParser) parseXMLContentItem() st.STNode {
@@ -204,9 +205,10 @@ func (p *xmlParser) parseXMLNCName() st.STNode {
 		xmlNCName := p.parseXMLNCName()
 		return st.CloneWithLeadingInvalidNodeMinutiae(xmlNCName, interpolation,
 			&common.ERROR_INTERPOLATION_IS_NOT_ALLOWED_FOR_XML_TAG_NAMES)
+	default:
+		p.recover(token, common.PARSER_RULE_CONTEXT_XML_NAME, false)
+		return p.parseXMLNCName()
 	}
-	p.recover(token, common.PARSER_RULE_CONTEXT_XML_NAME, false)
-	return p.parseXMLNCName()
 }
 
 func (p *xmlParser) parseXMLQualifiedIdentifier(identifier st.STNode) st.STNode {
@@ -237,8 +239,9 @@ func (p *xmlParser) isEndOfXMLAttributes(kind st.SyntaxKind) bool {
 		st.XML_PI_START_TOKEN,
 		st.XML_CDATA_START_TOKEN:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func (p *xmlParser) parseXMLAttribute() st.STNode {
@@ -293,17 +296,19 @@ func (p *xmlParser) isEndOfXMLAttributeValue(kind st.SyntaxKind) bool {
 		st.SINGLE_QUOTE_TOKEN,
 		st.IDENTIFIER_TOKEN:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func (p *xmlParser) parseXMLText() st.STNode {
 	switch p.peek().Kind() {
 	case st.INTERPOLATION_START_TOKEN, st.EOF_TOKEN, st.BACKTICK_TOKEN, st.LT_TOKEN:
 		return nil
+	default:
+		content := p.parseCharData()
+		return st.CreateXMLTextNode(content)
 	}
-	content := p.parseCharData()
-	return st.CreateXMLTextNode(content)
 }
 
 func (p *xmlParser) parseCharData() st.STNode {
@@ -351,8 +356,9 @@ func (p *xmlParser) isEndOfXMLComment(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.EOF_TOKEN, st.BACKTICK_TOKEN, st.LT_TOKEN, st.GT_TOKEN, st.XML_COMMENT_END_TOKEN:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func (p *xmlParser) parseXMLCdataSection() st.STNode {
@@ -373,8 +379,9 @@ func (p *xmlParser) isEndOfXMLCdata(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.EOF_TOKEN, st.BACKTICK_TOKEN, st.XML_CDATA_END_TOKEN:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func (p *xmlParser) parseXMLCdataEnd() st.STNode {
@@ -426,8 +433,9 @@ func (p *xmlParser) isEndOfXMLPI(kind st.SyntaxKind) bool {
 	switch kind {
 	case st.EOF_TOKEN, st.BACKTICK_TOKEN, st.LT_TOKEN, st.GT_TOKEN, st.XML_PI_END_TOKEN:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func (p *xmlParser) parseXMLCharacterSet() st.STNode {
@@ -436,7 +444,8 @@ func (p *xmlParser) parseXMLCharacterSet() st.STNode {
 		return p.consume()
 	case st.INTERPOLATION_START_TOKEN:
 		return p.parseInterpolation()
+	default:
+		p.internalError("xmlParser.parseXMLCharacterSet: unexpected token")
+		return st.CreateEmptyNode()
 	}
-	p.internalError("xmlParser.parseXMLCharacterSet: unexpected token")
-	return st.CreateEmptyNode()
 }

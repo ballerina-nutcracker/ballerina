@@ -39,6 +39,7 @@ func (d *DeferredMethodSymbol) SymbolSpace() *model.SymbolSpace { return d.space
 
 // A deferred method exposes only MethodName and SymbolSpace until type resolution
 // replaces it. Calling any other model.Symbol method violates that invariant.
+//
 //nolint:forbidigo // Intentional guard: deferred method symbols must be resolved before access.
 func (d *DeferredMethodSymbol) Name() string { panic("method symbol has not been resolved yet") }
 
