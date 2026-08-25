@@ -6483,7 +6483,7 @@ func finishResolveMethodCall(t typeResolver, chain *binding, receiverTy semtypes
 	retTy := semtypes.FunctionReturnType(t.typeContext(), fnTy, argListTy)
 	sig := model.TypedFunctionSignature{ParamTypes: argTys, ReturnType: retTy}
 	symbolRef := t.createFunctionSymbol(methodSymbol.SymbolSpace(), methodName, sig, fnTy)
-	signatureRef := model.FunctionSignatureRef(0)
+	var signatureRef model.FunctionSignatureRef
 	if sourceMethodRef, found := classMethodSymbolForReceiver(t, receiverTy, methodName, fnTy); found {
 		signatureRef, found = t.functionSignatureRef(sourceMethodRef)
 		if !found {
@@ -7501,12 +7501,13 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 				}
 				members[i] = memberTy
 			}
-			rest, ok := semtypes.Never, true //nolint:ineffassign // ok default overwritten when ty.Rest is non-nil
+			rest := semtypes.Never
 			if ty.Rest != nil {
-				rest, ok = resolveBType(t, ty.Rest, depth+1)
+				resolvedRest, ok := resolveBType(t, ty.Rest, depth+1)
 				if !ok {
 					return semtypes.SemType{}, false
 				}
+				rest = resolvedRest
 			}
 			return d.Define(t.typeEnv(), members, semtypes.ListRest(rest)), true
 		}

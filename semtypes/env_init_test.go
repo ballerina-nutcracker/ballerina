@@ -24,10 +24,6 @@ import (
 func TestEnvInitAtomTable(t *testing.T) {
 	env := CreateTypeEnv()
 
-	env.atomTableMutex.Lock()
-	atomTable := env.atomTable //nolint:staticcheck,ineffassign // atomTable will be used for direct atom table assertions
-	env.atomTableMutex.Unlock()
-
 	// Ensure atoms are in the table by calling Env methods
 	cellAtomicVal := cellAtomicTypeFrom(Val, CellMutabilityLimited)
 	typeAtom0 := env.cellAtom(&cellAtomicVal)
@@ -63,7 +59,7 @@ func TestEnvInitAtomTable(t *testing.T) {
 
 	// Now check the atomTable
 	env.atomTableMutex.Lock()
-	atomTable = env.atomTable
+	atomTable := env.atomTable
 	env.atomTableMutex.Unlock()
 
 	// Check that the atomTable contains at least the expected entries

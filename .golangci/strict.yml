@@ -10,6 +10,7 @@ linters:
     - iotamixing
     - reassign
     - unparam
+    - wastedassign
   settings:
     exhaustive:
       default-signifies-exhaustive: true
