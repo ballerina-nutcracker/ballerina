@@ -1,0 +1,20 @@
+-- stdout --
+/p/0/42/-5
+/p/true/false
+/p/1.0/1.5/-2.75
+/p/1e10/1e-7
+/p/NaN/Infinity/-Infinity
+/p?bad=NaN&pi=Infinity
+/p/1.0/2.500
+/p/albums/tracks
+/p/albums/tracks
+/p/albums?tag=rock&count=3&exact=true
+/p/albums?tags=rock,jazz,folk
+/p/albums?ratio=1.5&big=1e10&dec=2.500
+/p/albums?q=a+b
+/p/albums?q=a%26b%3Dc
+/p/albums?tag=rock
+/p/albums?tag=rock
+/
+/?tag=rock
+-- stderr --
