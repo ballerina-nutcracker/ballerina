@@ -1556,6 +1556,11 @@ func analyzeBinaryExpr[A analyzer](a A, binaryExpr *ast.BLangBinaryExpr, expecte
 				a.semanticErr(fmt.Sprintf("expect anydata types for %s", string(binaryExpr.GetOperatorKind())), binaryExpr.GetPosition())
 				return false
 			}
+		case model.OperatorKind_REF_EQUAL, model.OperatorKind_REF_NOT_EQUAL:
+			// Reference equality does not require anydata operands.
+		default:
+			a.internalErr(fmt.Sprintf("unexpected equality operator %s", binaryExpr.GetOperatorKind()), binaryExpr.GetPosition())
+			return false
 		}
 	} else if common.IsBitWiseExpr(binaryExpr) {
 		if !analyzeBitWiseExpr(a, binaryExpr, lhsTy, rhsTy) {
@@ -1948,6 +1953,8 @@ func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 		case model.SymbolKindAnnotation:
 			a.semanticErr("cannot assign to annotation", variable.GetPosition())
 			return false
+		case model.SymbolKindVariable, model.SymbolKindXMLNS:
+			// Continue with regular assignment analysis.
 		}
 	}
 	if !analyzeActionOrExpression(a, variable, semtypes.SemType{}) {

@@ -144,7 +144,7 @@ make -j4 vet
 make -j4 lint
 ```
 
-Linting uses a module's `.golangci.yml` when present and otherwise falls back to the shared [root configuration](../../.golangci.yml). Module configurations enable `dupl`, `iface`, and `unparam`; compiler stages that prohibit panics additionally enable `forbidigo`.
+Linting uses a module's `.golangci.yml` when present and otherwise falls back to the shared [root configuration](../../.golangci.yml).
 
 CI runs `golangci-lint` v2.10, and the Native CI workflow fails on any file not formatted with `gofmt -s`.
 

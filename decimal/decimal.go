@@ -134,6 +134,8 @@ func FromFloat64(f float64) (*Decimal, *Error) {
 // is canonicalised to Ballerina's representation: -0 is collapsed to +0.
 func validate(d *Decimal, cond apd.Condition) *Error {
 	switch d.v.Form {
+	case apd.Finite:
+		// Continue validating the operation condition.
 	case apd.NaN, apd.NaNSignaling:
 		return &Error{Kind: ErrInvalid}
 	case apd.Infinite:

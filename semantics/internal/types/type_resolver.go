@@ -1618,9 +1618,10 @@ func resolveCompoundAssignmentInner(t typeResolver, chain *binding, lhsTy semtyp
 		return resolveAndExprInner(t, chain, lhsTy, defaultExpressionEffect(chain), rhs, pos)
 	case model.OperatorKind_OR:
 		return resolveOrExprInner(t, chain, lhsTy, defaultExpressionEffect(chain), rhs, pos)
+	default:
+		t.internalError(fmt.Sprintf("unexpected compound assignment operator %s", string(op)), pos)
+		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	t.internalError(fmt.Sprintf("unexpected compound assignment operator %s", string(op)), pos)
-	return semtypes.SemType{}, expressionEffect{}, false
 }
 
 func resolveAssignment(t typeResolver, chain *binding, s assignmentNode) (statementEffect, bool) {
@@ -2663,6 +2664,8 @@ func methodDescriptor(method *ast.BMethodDecl, fnRef model.SymbolRef) model.Meth
 		kind = model.InclusionMemberKindRemoteMethod
 	case ast.ObjectMemberKindResourceMethod:
 		kind = model.InclusionMemberKindResourceMethod
+	case ast.ObjectMemberKindField, ast.ObjectMemberKindMethod:
+		// Preserve the ordinary method descriptor kind.
 	}
 	md := model.NewMethodDescriptor(method.Name(), kind, method.IsPublic(), fnRef)
 	md.SetMemberType(method.GetDeterminedType())
@@ -5426,6 +5429,11 @@ func resolveShiftExprInner(t typeResolver, chain *binding, lhsTy semtypes.SemTyp
 				break
 			}
 		}
+	case model.OperatorKind_BITWISE_LEFT_SHIFT:
+		// The default int result type is correct for left shift.
+	default:
+		t.internalError(fmt.Sprintf("unexpected shift operator %s", string(op)), pos)
+		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	if nilLifted {
 		resultTy = semtypes.Union(resultTy, semtypes.Nil)

@@ -472,6 +472,8 @@ func (m *abstractParserErrorHandlerMethods) applyFix(fix *solution) {
 		fix.TokenKind = m.Self.GetTokenReader().Peek().Kind()
 	case actionInsert:
 		fix.RecoveredNode = m.handleMissingToken(fix)
+	case actionKeep:
+		// No fix to apply.
 	}
 }
 

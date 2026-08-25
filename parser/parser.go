@@ -199,6 +199,8 @@ func (a *abstractParser) recover(token st.STToken, currentCtx common.ParserRuleC
 		a.addInvalidTokenToNextToken(sol.RemovedToken)
 	case actionInsert:
 		a.insertedToken = st.ToToken(sol.RecoveredNode)
+	case actionKeep:
+		// Keep the current parser state.
 	}
 	return sol
 }
@@ -5328,6 +5330,8 @@ func (b *ballerinaParser) parseNamedOrPositionalArg() st.STNode {
 		return st.CreateNamedArgumentNode(argNameOrExpr, equal, valExpr)
 	case st.COMMA_TOKEN, st.CLOSE_PAREN_TOKEN:
 		return st.CreatePositionalArgumentNode(argNameOrExpr)
+	default:
+		// Continue parsing the expression below.
 	}
 	argNameOrExpr = b.parseExpressionRhs(argNameOrExpr, true, false)
 	return st.CreatePositionalArgumentNode(argNameOrExpr)
@@ -14560,6 +14564,8 @@ func (b *ballerinaParser) getBindingPattern(ambiguousNode st.STNode, isListBP bo
 			return st.CreateEmptyNode()
 		}
 		return st.CreateRestBindingPatternNode(restArg.Ellipsis, restArg.Expression)
+	default:
+		// Convert invalid forms to a binding pattern below.
 	}
 	var identifier st.STNode
 	identifier = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)

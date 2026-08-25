@@ -1139,8 +1139,9 @@ func (n *nodeBuilder) getIntegerLiteral(literal st.Node, textValue string) any {
 		processedNodeValue := strings.ToLower(textValue)
 		processedNodeValue = strings.ReplaceAll(processedNodeValue, "0x", "")
 		return n.parseLong(literal, textValue, processedNodeValue, 16)
+	default:
+		return nil
 	}
-	return nil
 }
 
 // parseLong parses a long integer value
@@ -1403,6 +1404,8 @@ func functionQualifierFlags(qualifierList st.NodeList[st.Token]) model.Flag {
 			flags |= model.FlagResource
 		case st.ISOLATED_KEYWORD:
 			flags |= model.FlagIsolated
+		default:
+			continue
 		}
 	}
 	return flags
@@ -2589,6 +2592,8 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 		case st.READONLY_KEYWORD:
 			// https://github.com/ballerina-nutcracker/ballerina/issues/537",
 			n.cx.Unimplemented("readonly object type descriptors are not implemented", n.getPosition(q))
+		default:
+			continue
 		}
 	}
 
@@ -2631,6 +2636,8 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 					isIsolated = true
 				case st.TRANSACTIONAL_KEYWORD:
 					isTransactional = true
+				default:
+					continue
 				}
 			}
 			if methodKind == ast.ObjectMemberKindRemoteMethod {
@@ -2869,6 +2876,8 @@ func (n *nodeBuilder) moduleVariableFlags(node *st.ModuleVariableDeclarationNode
 			flags |= model.FlagIsolated
 		case st.CONFIGURABLE_KEYWORD:
 			n.cx.Unimplemented("configurable module variables are not supported yet", pos)
+		default:
+			continue
 		}
 	}
 	return flags
@@ -4025,6 +4034,8 @@ func (n *nodeBuilder) transformFunctionTypeDescriptor(functionTypeDescriptorNode
 			flags |= model.FlagIsolated
 		case st.TRANSACTIONAL_KEYWORD:
 			flags |= model.FlagTransactional
+		default:
+			continue
 		}
 	}
 
@@ -5242,6 +5253,8 @@ func classQualifierFlags(qualifiers st.NodeList[st.Token]) model.Flag {
 			flags |= model.FlagService
 		case st.ISOLATED_KEYWORD:
 			flags |= model.FlagIsolated
+		default:
+			continue
 		}
 	}
 	return flags
@@ -5398,9 +5411,10 @@ func (n *nodeBuilder) transformParameterizedTypeDescriptor(parameterizedTypeDesc
 		return n.transformTypedescTypeDescriptor(parameterizedTypeDescriptorNode)
 	case st.XML_TYPE_DESC:
 		return n.transformXMLTypeDescriptor(parameterizedTypeDescriptorNode)
+	default:
+		n.internalError("transformParameterizedTypeDescriptor supported only for error, typedesc and xml type descriptors", parameterizedTypeDescriptorNode)
+		return nil
 	}
-	n.internalError("transformParameterizedTypeDescriptor supported only for error, typedesc and xml type descriptors", parameterizedTypeDescriptorNode)
-	return nil
 }
 
 func (n *nodeBuilder) transformTypedescTypeDescriptor(node *st.ParameterizedTypeDescriptorNode) ast.BLangNode {

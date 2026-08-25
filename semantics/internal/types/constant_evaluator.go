@@ -213,6 +213,8 @@ func (e *constantExpressionEvaluator) evaluateUnaryExpression(expr *ast.BLangUna
 		if value, ok := value.(bool); ok {
 			return !value, nil
 		}
+	default:
+		// Report unsupported operations below.
 	}
 	return nil, fmt.Errorf("unsupported constant unary operation %s on %T", expr.Operator, value)
 }
@@ -239,6 +241,8 @@ func (e *constantExpressionEvaluator) evaluateBinaryExpression(expr *ast.BLangBi
 		if value {
 			return true, nil
 		}
+	default:
+		// Other operators require both operands.
 	}
 
 	rhs, err := e.evaluate(expr.RhsExpr)

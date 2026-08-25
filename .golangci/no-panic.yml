@@ -5,10 +5,13 @@ linters:
   enable:
     - depguard
     - dupl
+    - exhaustive
     - iface
     - unparam
     - forbidigo
   settings:
+    exhaustive:
+      default-signifies-exhaustive: true
     forbidigo:
       forbid:
         - pattern: ^panic$

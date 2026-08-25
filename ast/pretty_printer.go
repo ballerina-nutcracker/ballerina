@@ -1938,6 +1938,8 @@ func (p *PrettyPrinter) printObjectType(node *BLangObjectType) {
 		p.PrintString("isolated")
 	}
 	switch node.NetworkQuals {
+	case ObjectNetworkQualsNone:
+		// No network qualifier to print.
 	case ObjectNetworkQualsClient:
 		p.PrintString("client")
 	case ObjectNetworkQualsService:
