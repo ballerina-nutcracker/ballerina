@@ -1,0 +1,14 @@
+-- stdout --
+200
+GET
+/verb/albums/1
+POST
+PUT
+PATCH
+DELETE
+DELETE
+HEAD
+OPTIONS
+GET
+POST
+-- stderr --
