@@ -1099,8 +1099,10 @@ func (n *nodeBuilder) getIntegerLiteral(literal st.Node, textValue string) any {
 		processedNodeValue := strings.ToLower(textValue)
 		processedNodeValue = strings.ReplaceAll(processedNodeValue, "0x", "")
 		return n.parseLong(literal, textValue, processedNodeValue, 16)
+	default:
+		n.internalError("unexpected integer literal token kind", literal)
+		return nil
 	}
-	return nil
 }
 
 // parseLong parses a long integer value
@@ -1349,7 +1351,7 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLa
 	return &compilationUnit
 }
 
-func functionQualifierFlags(qualifierList st.NodeList[st.Token]) model.Flag {
+func (n *nodeBuilder) functionQualifierFlags(qualifierList st.NodeList[st.Token]) model.Flag {
 	var flags model.Flag
 	for qualifier := range qualifierList.Iterator() {
 		switch qualifier.Kind() {
@@ -1363,6 +1365,10 @@ func functionQualifierFlags(qualifierList st.NodeList[st.Token]) model.Flag {
 			flags |= model.FlagResource
 		case st.ISOLATED_KEYWORD:
 			flags |= model.FlagIsolated
+		case st.PRIVATE_KEYWORD:
+			// Private functions do not require a flag.
+		default:
+			n.internalError("unexpected function qualifier", qualifier)
 		}
 	}
 	return flags
@@ -1427,7 +1433,7 @@ func (n *nodeBuilder) transformFunctionDefinition(funcDefNode *st.FunctionDefini
 
 func (n *nodeBuilder) createFunctionNode(funcName *st.IdentifierToken, qualifierList st.NodeList[st.Token], funcSignature *st.FunctionSignatureNode, funcBody st.FunctionBodyNode) *ast.BLangFunction {
 	name := n.createIdentifierNodeFromToken(n.getPosition(funcName), funcName)
-	data := ast.InvokableData{Name: name, Flags: functionQualifierFlags(qualifierList)}
+	data := ast.InvokableData{Name: name, Flags: n.functionQualifierFlags(qualifierList)}
 	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, name.GetValue())
 	defer func() {
 		n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
@@ -2556,6 +2562,8 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 		case st.READONLY_KEYWORD:
 			// https://github.com/ballerina-nutcracker/ballerina/issues/537",
 			n.cx.Unimplemented("readonly object type descriptors are not implemented", n.getPosition(q))
+		default:
+			n.internalError("unexpected object type qualifier", q)
 		}
 	}
 
@@ -2598,6 +2606,10 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 					isIsolated = true
 				case st.TRANSACTIONAL_KEYWORD:
 					isTransactional = true
+				case st.PRIVATE_KEYWORD:
+					// Private methods do not require a flag.
+				default:
+					n.internalError("unexpected object method qualifier", q)
 				}
 			}
 			if methodKind == ast.ObjectMemberKindRemoteMethod {
@@ -2836,6 +2848,8 @@ func (n *nodeBuilder) moduleVariableFlags(node *st.ModuleVariableDeclarationNode
 			flags |= model.FlagIsolated
 		case st.CONFIGURABLE_KEYWORD:
 			n.cx.Unimplemented("configurable module variables are not supported yet", pos)
+		default:
+			n.internalError("unexpected module variable qualifier", qualifier)
 		}
 	}
 	return flags
@@ -3993,6 +4007,8 @@ func (n *nodeBuilder) transformFunctionTypeDescriptor(functionTypeDescriptorNode
 			flags |= model.FlagIsolated
 		case st.TRANSACTIONAL_KEYWORD:
 			flags |= model.FlagTransactional
+		default:
+			n.internalError("unexpected function type qualifier", token)
 		}
 	}
 
@@ -4092,7 +4108,7 @@ func (n *nodeBuilder) transformExplicitAnonymousFunctionExpression(anonFuncExprN
 		Position: n.getPosition(anonFuncExprNode),
 		Name:     &ident,
 		Body:     n.transformSyntaxNode(anonFuncExprNode.FunctionBody()).(ast.FunctionBodyNode),
-		Flags:    model.FlagLambda | model.FlagAnonymous | functionQualifierFlags(anonFuncExprNode.QualifierList()),
+		Flags:    model.FlagLambda | model.FlagAnonymous | n.functionQualifierFlags(anonFuncExprNode.QualifierList()),
 	}
 	n.populateFuncSignature(&data, anonFuncExprNode.FunctionSignature())
 	bLFunction := ast.NewBLangFunction(data)
@@ -5242,7 +5258,7 @@ func (n *nodeBuilder) transformDoStatement(doStatementNode *st.DoStatementNode) 
 }
 
 func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefinitionNode) ast.BLangNode {
-	flags := classQualifierFlags(classDefinitionNode.ClassTypeQualifiers())
+	flags := n.classQualifierFlags(classDefinitionNode.ClassTypeQualifiers())
 	if visibility := classDefinitionNode.VisibilityQualifier(); visibility != nil && visibility.Kind() == st.PUBLIC_KEYWORD {
 		flags |= model.FlagPublic
 	}
@@ -5267,7 +5283,7 @@ func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefi
 	return &blangClass
 }
 
-func classQualifierFlags(qualifiers st.NodeList[st.Token]) model.Flag {
+func (n *nodeBuilder) classQualifierFlags(qualifiers st.NodeList[st.Token]) model.Flag {
 	var flags model.Flag
 	for qualifier := range qualifiers.Iterator() {
 		switch qualifier.Kind() {
@@ -5281,6 +5297,8 @@ func classQualifierFlags(qualifiers st.NodeList[st.Token]) model.Flag {
 			flags |= model.FlagService
 		case st.ISOLATED_KEYWORD:
 			flags |= model.FlagIsolated
+		default:
+			n.internalError("unexpected class qualifier", qualifier)
 		}
 	}
 	return flags
@@ -5341,7 +5359,7 @@ func (n *nodeBuilder) createResourceMethodNode(funcDef *st.FunctionDefinition) *
 	data := ast.InvokableData{
 		Position: n.getPositionWithoutMetadata(funcDef),
 		Name:     name,
-		Flags:    functionQualifierFlags(funcDef.QualifierList()) | model.FlagAttached | model.FlagResource,
+		Flags:    n.functionQualifierFlags(funcDef.QualifierList()) | model.FlagAttached | model.FlagResource,
 	}
 	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, name.GetValue())
 	n.populateFuncSignature(&data, funcDef.FunctionSignature())
@@ -5439,9 +5457,10 @@ func (n *nodeBuilder) transformParameterizedTypeDescriptor(parameterizedTypeDesc
 		return n.transformFutureTypeDescriptor(parameterizedTypeDescriptorNode)
 	case st.XML_TYPE_DESC:
 		return n.transformXMLTypeDescriptor(parameterizedTypeDescriptorNode)
+	default:
+		n.internalError("transformParameterizedTypeDescriptor supported only for error, typedesc, future and xml type descriptors", parameterizedTypeDescriptorNode)
+		return nil
 	}
-	n.internalError("transformParameterizedTypeDescriptor supported only for error, typedesc, future and xml type descriptors", parameterizedTypeDescriptorNode)
-	return nil
 }
 
 func (n *nodeBuilder) transformFutureTypeDescriptor(node *st.ParameterizedTypeDescriptorNode) ast.BLangNode {

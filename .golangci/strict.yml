@@ -5,9 +5,12 @@ linters:
   enable:
     - depguard
     - dupl
+    - exhaustive
     - iface
     - unparam
   settings:
+    exhaustive:
+      default-signifies-exhaustive: true
     depguard:
       rules:
         no-test-util-in-production:
