@@ -14,7 +14,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 |---------------------------------------------------|---|---|---|---|
 | [avro](avro/0.0.1/go1.26/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](crypto/0.0.1/go1.26/README.md)           | 26 | 1 | 5 | 81% |
-| [http](http/0.0.1/go1.26/README.md)               | 28 | 7 | 38 | 38% |
+| [http](http/0.0.1/go1.26/README.md)               | 28 | 8 | 37 | 38% |
 | [io](io/0.0.1/go1.26/README.md)                   | 21 | 2 | 4 | 78% |
 | [log](log/0.0.1/go1.26/README.md)                 | 7 | 2 | 15 | 29% |
 | [math.vector](math.vector/0.0.1/go1.26/README.md) | 5 | 0 | 0 | 100% |
@@ -22,7 +22,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [random](random/0.0.1/go1.26/README.md)           | 3 | 1 | 1 | 60% |
 | [time](time/0.0.1/go1.26/README.md)               | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.26/README.md)                 | 3 | 0 | 1 | 75% |
-| **Total**                                         | **150** | **16** | **64** | **65%** |
+| **Total**                                         | **150** | **17** | **63** | **65%** |
 
 ## Notable Behavioural Changes
 
@@ -54,6 +54,8 @@ tables instead.
 - **A nil target type discards the payload.** jBallerina routes a `()` target through the string payload builder, so a non-empty body is handed back as a `string` even though `()` was requested. The Go-native version returns `()` and drops the body, keeping the bound value inside the requested type.
 - **Status-code error messages use the registered reason phrase.** jBallerina reports the reason phrase the server actually sent. The PAL transport contract surfaces only the status code, so the Go-native version derives the message from the status code's registered phrase (for example `Not Found` for 404). A code outside the IANA registry — 499, which nginx sends for a client-closed request, among others — has no registered phrase, and the message becomes `status code <code>` rather than being left empty.
 - **A status error with an absent body keeps its reason phrase.** jBallerina extracts the error response body with the builder its `Content-Type` selects, and an extraction failure replaces the reason phrase with `http:ApplicationResponseError creation failed: <code> response payload extraction failed`. A 4xx or 5xx sent with `Content-Type: application/json` and no body at all trips that path, because a JSON decoder rejects an empty document. The Go-native version treats an absent body as having no payload, so the message stays the reason phrase and the error detail's `body` is `()`.
+- **Request targets are percent-encoded, where jBallerina leaves them mostly raw.** jBallerina builds the request target by string concatenation and lets Netty encode only the space, so a path or query value carrying a delimiter changes the request's meaning — `q=a&b=c` arrives as two query parameters, and `<`, `>`, `"`, `|`, `\`, `^`, `` ` ``, `{`, `}` and non-ASCII bytes go out raw in a technically invalid request line. The Go-native version escapes path segments through Go's `net/url` and query keys and values with `url.QueryEscape`, so a delimiter inside a value stays inside that value and every target is a valid URI. Two consequences: a space in a query value becomes `+` rather than `%20`, and a literal `%` that does not begin a valid escape (`/a%b`) makes Go's URL parser reject the path, returning an `error` where jBallerina sends it raw. This is a deliberate choice of the stricter behaviour over byte-level parity, and is open to revisiting if a real client depends on jBallerina's raw form.
+- **Path and query values use Ballerina's `toString`, not Java's.** jBallerina renders a path segment or query value with Java's `String.valueOf`, which for `float` is `Double.toString` — so it emits `1.0E10` and `1.0E-7`, diverging from what `lang.float:toString` produces for the same value. The Go-native version renders every segment and query value with Ballerina's own `toString` semantics, giving `1e10` and `1e-7`; `int`, `boolean`, `decimal` and `string` are unaffected and match jBallerina exactly. This keeps one rendering rule across the language and the library instead of reproducing a Java-specific format, and is likewise open to revisiting.
 - **`gracefulStop` waits for in-flight requests to drain.** In jBallerina, `gracefulStop` effectively behaves like an immediate stop — it returns promptly without waiting for active requests, so calling it from within a resource on its own listener succeeds. The Go-native version implements the `http:Listener` contract literally and blocks until in-flight requests complete or the graceful-stop timeout (default 60s) elapses. A resource that calls `gracefulStop` on the listener serving it therefore self-deadlocks until the timeout elapses and then returns an error, rather than succeeding.
 
 ### io
