@@ -542,6 +542,28 @@ public type RequestMessage anydata|Request;
 # in this implementation, since Server-Sent Events are not available.
 public type TargetType typedesc<Response|anydata>;
 
+# Defines the path parameter types.
+public type PathParamType boolean|int|float|decimal|string;
+
+# Defines the possible simple query parameter types.
+public type SimpleQueryParamType boolean|int|float|decimal|string;
+
+# Defines the query parameter type supported with client resource methods.
+public type QueryParamType SimpleQueryParamType[]|SimpleQueryParamType;
+
+# Defines the record type of query parameters supported with client resource methods.
+# + headers - headers which cannot be used as a query field
+# + targetType - targetType which cannot be used as a query field
+# + message - message which cannot be used as a query field
+# + mediaType - mediaType which cannot be used as a query field
+public type QueryParams record {|
+    never headers?;
+    never targetType?;
+    never message?;
+    never mediaType?;
+    QueryParamType...;
+|};
+
 // Represents HTTP methods.
 public enum Method {
     GET,
@@ -793,4 +815,90 @@ public isolated client class Client {
     #             if the request or the data binding fails
     remote isolated function forward(string path, Request request,
             TargetType targetType = <>) returns targetType|error = external;
+
+    # Retrieves a representation of the specified resource, addressed with the client resource
+    # access path syntax (`client->/albums/[id]`).
+    #
+    # The `targetType` parameter of jBallerina's client resource methods is absent here, so the
+    # raw `Response` is always returned; see the README's *Resource function call syntax* row.
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + params - Query parameters, supplied as named arguments
+    # + return - The `http:Response`, or an `error` if the request fails
+    isolated resource function get [PathParamType... path](map<string|string[]>? headers = (),
+            *QueryParams params) returns Response|error = external;
+
+    # Creates a new resource or submits data to a resource for processing, addressed with the
+    # client resource access path syntax (`client->/albums.post(payload)`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + params - Query parameters, supplied as named arguments
+    # + return - The `http:Response`, or an `error` if the request fails
+    isolated resource function post [PathParamType... path](RequestMessage message,
+            map<string|string[]>? headers = (), string? mediaType = (),
+            *QueryParams params) returns Response|error = external;
+
+    # Creates a new resource or replaces a representation of the specified resource, addressed
+    # with the client resource access path syntax (`client->/albums/[id].put(payload)`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + params - Query parameters, supplied as named arguments
+    # + return - The `http:Response`, or an `error` if the request fails
+    isolated resource function put [PathParamType... path](RequestMessage message,
+            map<string|string[]>? headers = (), string? mediaType = (),
+            *QueryParams params) returns Response|error = external;
+
+    # Applies a partial modification to the specified resource, addressed with the client
+    # resource access path syntax (`client->/albums/[id].patch(payload)`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + params - Query parameters, supplied as named arguments
+    # + return - The `http:Response`, or an `error` if the request fails
+    isolated resource function patch [PathParamType... path](RequestMessage message,
+            map<string|string[]>? headers = (), string? mediaType = (),
+            *QueryParams params) returns Response|error = external;
+
+    # Deletes the specified resource, addressed with the client resource access path syntax
+    # (`client->/albums/[id].delete()`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + message - An optional request body (`string`, `byte[]`, JSON-compatible value, or
+    #             `http:Request`)
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + params - Query parameters, supplied as named arguments
+    # + return - The `http:Response`, or an `error` if the request fails
+    isolated resource function delete [PathParamType... path](RequestMessage message = (),
+            map<string|string[]>? headers = (), string? mediaType = (),
+            *QueryParams params) returns Response|error = external;
+
+    # Retrieves the headers of the specified resource without a body, addressed with the client
+    # resource access path syntax (`client->/albums/[id].head()`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + params - Query parameters, supplied as named arguments
+    # + return - The `http:Response`, or an `error` if the request fails
+    isolated resource function head [PathParamType... path](map<string|string[]>? headers = (),
+            *QueryParams params) returns Response|error = external;
+
+    # Retrieves the communication options available for the specified resource, addressed with
+    # the client resource access path syntax (`client->/albums.options()`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + params - Query parameters, supplied as named arguments
+    # + return - The `http:Response`, or an `error` if the request fails
+    isolated resource function options [PathParamType... path](map<string|string[]>? headers = (),
+            *QueryParams params) returns Response|error = external;
 }

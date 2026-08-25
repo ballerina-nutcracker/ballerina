@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no included record parameter accepts named argument 'mediaType'
+  --> http-client-resource-e.bal:34:40
+   |
+34 |     http:Response _ = check c->/albums(mediaType = "text/plain"); // @error mediaType is a never field
+   |                                        ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: no included record parameter accepts named argument 'message'
+  --> http-client-resource-e.bal:33:40
+   |
+33 |     http:Response _ = check c->/albums(message = "body"); // @error message is a never field
+   |                                        ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: no included record parameter accepts named argument 'targetType'
+  --> http-client-resource-e.bal:32:40
+   |
+32 |     http:Response _ = check c->/albums(targetType = "json"); // @error targetType is a never field
+   |                                        ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: no matching resource method 'get'
+  --> http-client-resource-e.bal:28:29
+   |
+28 |     http:Response _ = check c->/albums/[album]; // @error record is not a PathParamType
+   |                             ^^^^^^^^^^^^^^^^^^
