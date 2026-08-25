@@ -40,6 +40,18 @@ The driver is `projects/package_compilation.go`: it compiles modules in dependen
 
 [`runtime/`](../../runtime/) holds the BIR interpreter — the dispatch loop, strands and call frames, and module lifecycle. The extern bridge in `runtime/extern` is how BIR calls reach native Go implementations.
 
+### Concurrency
+
+The runtime maps Ballerina concurrency onto Go as follows:
+
+- Each strand executes in a separate goroutine and has its own runtime context.
+- Each strand belongs to a Ballerina thread. A Ballerina thread is a logical scheduling group, not an operating-system thread or a Go thread. See the Ballerina specification on [threads and strands](https://ballerina.io/spec/lang/master/#section_7.2).
+- An isolated `start` action creates a strand on a separate Ballerina thread, allowing it to execute in parallel with the current strand. A non-isolated `start` action creates a strand on the current strand's Ballerina thread; these strands can make progress concurrently, but never execute in parallel. See the specification for the [`start` action](https://ballerina.io/spec/lang/master/#section_7.6).
+  - Two strands belonging to the same thread will never be executed in parallel, where as strands belonging to different threads may execute in parallel
+- Scheduling within a Ballerina thread is cooperative. A strand yields at a yield point, allowing another strand on the same thread to continue. An `extern` function can yield explicitly with `<-ctx.Yield()`.
+  - When a non-isolated started function completes, the runtime calls `ctx.Complete()`, allowing the next queued strand on the same thread to continue.
+- The runtime does not guarantee how different Ballerina threads are scheduled relative to one another; their goroutines are scheduled by Go.
+
 ## Values and the Type System
 
 [`values/`](../../values/) is the representation of Ballerina values (lists, maps, XML, objects, errors, streams). `runtime/` and `runtime/extern` use it at execute time. `semantics/` and `desugar/` also use it for compile-time constants, and `birgen/` when building type descriptors.
