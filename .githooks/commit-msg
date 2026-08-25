@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+# Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+#
+# WSO2 LLC. licenses this file to you under the Apache License,
+# Version 2.0 (the "License"); you may not use this file except
+# in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -euo pipefail
+
+if [[ -n "${SKIP_COMMIT_HOOKS:-}" ]]; then
+    exit 0
+fi
+
+commit_message_file=$1
+subject=$(head -n 1 "$commit_message_file" | tr -d '\r')
+
+if ! git rev-parse --quiet --verify MERGE_HEAD >/dev/null 2>&1 && [[ ! "$subject" =~ ^fixup! ]]; then
+    conventional_commit_pattern='^(feat|fix|build|chore|ci|docs|style|refactor|perf|test|revert)(\([^)]+\))?!?: [a-z].+$'
+    if [[ ! "$subject" =~ $conventional_commit_pattern ]]; then
+        cat >&2 <<EOF
+Commit subject does not follow the Conventional Commits format:
+  $subject
+
+Expected: <type>(<optional scope>): <description>
+Types: feat, fix, build, chore, ci, docs, style, refactor, perf, test, revert
+The description must start with a lowercase letter.
+EOF
+        exit 1
+    fi
+
+    if (( ${#subject} > 72 )); then
+        printf 'Commit subject is %d characters; the maximum is 72.\n' "${#subject}" >&2
+        exit 1
+    fi
+fi
+
+current_year=$(date +%Y)
+license_header=$(cat <<EOF
+// Copyright (c) $current_year, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+EOF
+)
+license_header_lines=$(printf '%s\n' "$license_header" | wc -l)
+
+missing_license=()
+while IFS= read -r -d '' file; do
+    if [[ -f "$file" ]] && [[ "$(head -n "$license_header_lines" -- "$file")" != "$license_header" ]]; then
+        missing_license+=("$file")
+    fi
+done < <(git diff --cached --name-only --diff-filter=A -z -- '*.go' '*.bal')
+
+if (( ${#missing_license[@]} > 0 )); then
+    printf 'The following new files are missing license headers:\n' >&2
+    printf '  %s\n' "${missing_license[@]}" >&2
+    exit 1
+fi
+
+unformatted=$(gofmt -l -s .)
+if [[ -n "$unformatted" ]]; then
+    printf 'Go formatting check failed:\n%s\n' "$unformatted" >&2
+    exit 1
+fi
+
+if ! command -v golangci-lint >/dev/null 2>&1; then
+    cat >&2 <<'EOF'
+golangci-lint is required to run commit checks.
+Install the version used by CI with:
+  go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.10.1
+EOF
+    exit 1
+fi
+
+make -j4 build lint

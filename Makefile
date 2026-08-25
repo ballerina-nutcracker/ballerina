@@ -18,8 +18,12 @@ PYTHON ?= python3
 WORKSPACE_MODULES = go list -m -f '{{if .Main}}{{.Dir}}{{end}}' all
 TEST_RUNNER = .github/scripts/run_native_tests.py
 
-.PHONY: build test test-coverage test-race vet lint check update-testdata release \
+.PHONY: build test test-coverage test-race vet lint check update-testdata release install-hooks \
 	test-wasm test-wasm-corpus-light test-wasm-corpus-integration benchmark-corpus
+
+install-hooks:
+	@git config --local core.hooksPath .githooks
+	@echo "Git hooks installed."
 
 release:
 	@bash .github/scripts/release_dist.sh "$(VERSION)" "$(or $(REMOTE),origin)"
