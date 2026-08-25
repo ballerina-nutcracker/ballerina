@@ -32,27 +32,27 @@ import ballerina/io;
 
 public function main() returns error? {
     // Plain HTTP client with a 10-second timeout and custom pool settings
-    http:Client client = check new ("http://httpbin.org", {
+    http:Client httpClient = check new ("http://httpbin.org", {
         timeout: 10,
         poolConfig: {maxIdleConnections: 50}
     });
 
     // GET request
-    http:Response getResp = check client->get("/get");
+    http:Response getResp = check httpClient->get("/get");
     io:println("Status: ", getResp.statusCode);
     json body = check getResp.getJsonPayload();
     io:println("Body: ", body);
 
     // POST request with a JSON payload
     json payload = {name: "Alice", age: 30};
-    http:Response postResp = check client->post("/post", payload);
+    http:Response postResp = check httpClient->post("/post", payload);
     io:println("POST status: ", postResp.statusCode);
 
     // Forward an inbound request to an upstream service
     http:Request req = new;
     req.method = "PUT";
     req.setJsonPayload({id: 1, data: "updated"});
-    http:Response fwdResp = check client->forward("/resource/1", req);
+    http:Response fwdResp = check httpClient->forward("/resource/1", req);
     io:println("Forward status: ", fwdResp.statusCode);
 
     // TLS client with a custom CA certificate
