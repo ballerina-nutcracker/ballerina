@@ -1,0 +1,149 @@
+(package
+  (import-package ballerina io (as io))
+  (variable calls (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref calls)
+        (literal 0))))
+  (function nullable () (
+    (union-type
+      (value-type int)
+      (value-type null)))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref calls)
+        (literal 1))
+      (return
+        (literal <nil>))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable absent (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal <nil>))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref absent))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal <nil>))))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$0))
+        (block-stmt) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$0)
+              (literal 1))))))
+      (var-def
+        (variable liftedLhs (type
+          (value-type int)) (expr
+          (nil-conditional-expr
+            (group-expr
+              (simple-var-ref $desugar$1))
+            (literal 10)))))
+      (var-def
+        (variable $desugar$4 (expr
+          (literal <nil>))))
+      (var-def
+        (variable $desugar$5))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$4))
+        (block-stmt
+          (var-def
+            (variable $desugar$2 (expr
+              (simple-var-ref absent))))
+          (var-def
+            (variable $desugar$3 (expr
+              (literal <nil>))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$2))
+            (block-stmt) (
+            (block-stmt
+              (assignment
+                (simple-var-ref $desugar$3)
+                (binary-expr +
+                  (simple-var-ref $desugar$2)
+                  (literal 1))))))
+          (assignment
+            (simple-var-ref $desugar$5)
+            (group-expr
+              (nil-conditional-expr
+                (group-expr
+                  (simple-var-ref $desugar$3))
+                (literal 20))))) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$4)))))
+      (var-def
+        (variable liftedRhs (type
+          (value-type int)) (expr
+          (simple-var-ref $desugar$5))))
+      (var-def
+        (variable present (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal 30))))
+      (var-def
+        (variable $desugar$8 (expr
+          (simple-var-ref present))))
+      (var-def
+        (variable $desugar$9))
+      (if
+        (type-test-expr is
+          (simple-var-ref $desugar$8))
+        (block-stmt
+          (var-def
+            (variable $desugar$6 (expr
+              (invocation nullable ()))))
+          (var-def
+            (variable $desugar$7 (expr
+              (literal <nil>))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$6))
+            (block-stmt) (
+            (block-stmt
+              (assignment
+                (simple-var-ref $desugar$7)
+                (binary-expr +
+                  (simple-var-ref $desugar$6)
+                  (literal 1))))))
+          (assignment
+            (simple-var-ref $desugar$9)
+            (group-expr
+              (nil-conditional-expr
+                (group-expr
+                  (simple-var-ref $desugar$7))
+                (literal 40))))) (
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$9)
+            (simple-var-ref $desugar$8)))))
+      (var-def
+        (variable lazyRhs (type
+          (value-type int)) (expr
+          (simple-var-ref $desugar$9))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref liftedLhs))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref liftedRhs))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref lazyRhs))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref calls)))))))

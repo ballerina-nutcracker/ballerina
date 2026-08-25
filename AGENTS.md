@@ -56,7 +56,8 @@ Stages 5–9 then run concurrently across modules. After each of those stages, a
 
 ### Corpus layout
 
-- `corpus/bal/` and per-stage golden dirs (`corpus/ast/`, etc.) — compiler pipeline corpus walked by `*/corpus_*_test.go` in each package
+- `corpus/bal/` and per-stage golden dirs (`corpus/ast/`, `corpus/cfg/`, `corpus/desugared/`, `corpus/bir/`) — compiler pipeline corpus walked by `*/corpus_*_test.go` in each package
+- `corpus/lib/` — standard-library corpus, a sibling root of `corpus/bal/` (not nested under it). These exercise native Go the compiler never sees, so they have **no per-stage goldens**; their only goldens are the end-to-end `corpus/integration/lib/**.txtar`, run by `TestLibIntegration`. The stage packages do not see them at all: `corpus/lib/` is outside `corpus/bal/`, so `GetValidAndPanicTests` never picks it up and the per-stage drivers are unchanged. `TestLibIntegration` compiles and runs each test through the whole pipeline and validates its `@output`/`@error`/`@panic` markers, which is the coverage a stage driver would have added
 - `corpus/*_test.go` (`package corpus`) — end-to-end integration drivers (CLI, extern, package resolution, BIR roundtrip, etc.)
 - `corpus/<area>/testdata/` — fixtures for integration drivers (`extern/`, `cli/`, `package-resolution/`, etc.); no Go files in fixture dirs except embedded native modules under test balas
 
@@ -80,6 +81,8 @@ Stages 5–9 then run concurrently across modules. After each of those stages, a
 - IMPORTANT: This is the preferred way of testing for any interpreter stage.
 
 - Project test cases ends up in `./corpus/project/` and project names fallow the same convention.
+
+- Standard-library test cases end up in `./corpus/lib/subset<N>/` and follow the same naming convention. Add the golden with `go test ./corpus -update`; there is no per-stage golden to add.
 
 #### Test markers
 - `@output`: test cases can write to standard out using `io:println` and use output marker to indicate expected output.

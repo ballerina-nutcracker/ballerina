@@ -1,0 +1,130 @@
+(package
+  (import-package ballerina io (as io))
+  (function value (
+    (variable good (type
+      (value-type boolean)))) (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (ternary-expr
+          (simple-var-ref good)
+          (literal 10)
+          (error-constructor-expr (
+            (literal bad)))))))
+  (function condition (
+    (variable good (type
+      (value-type boolean)))) (
+    (union-type
+      (value-type boolean)
+      (error-type)))
+    (block-function-body
+      (return
+        (ternary-expr
+          (simple-var-ref good)
+          (literal true)
+          (error-constructor-expr (
+            (literal condition)))))))
+  (function checked (
+    (variable flag (type
+      (value-type boolean)))) (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (checked-expr
+          (group-expr
+            (ternary-expr
+              (simple-var-ref flag)
+              (invocation value (
+                (literal true)))
+              (invocation value (
+                (literal false)))))))))
+  (function panicValue () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal panic))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation checked (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation checked (
+              (literal false)))
+            (error-type)))))
+      (var-def
+        (variable safe (type
+          (value-type int)) (expr
+          (ternary-expr
+            (literal true)
+            (literal 1)
+            (group-expr
+              (check-panicked-expr
+                (invocation panicValue ())))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref safe))))
+      (var-def
+        (variable conditionPanic (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (group-expr
+              (ternary-expr
+                (group-expr
+                  (check-panicked-expr
+                    (invocation condition (
+                      (literal false)))))
+                (literal 1)
+                (literal 2)))))))
+      (var-def
+        (variable thenPanic (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (group-expr
+              (ternary-expr
+                (literal true)
+                (group-expr
+                  (check-panicked-expr
+                    (invocation panicValue ())))
+                (literal 2)))))))
+      (var-def
+        (variable elsePanic (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (group-expr
+              (ternary-expr
+                (literal false)
+                (literal 1)
+                (group-expr
+                  (check-panicked-expr
+                    (invocation panicValue ())))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref conditionPanic)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref thenPanic)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref elsePanic)
+            (error-type))))))))

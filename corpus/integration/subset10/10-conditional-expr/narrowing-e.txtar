@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> narrowing-e.bal:21:41
+   |
+21 |     int result = value is int ? value : acceptInt(value); // @error
+   |                                         ^^^^^^^^^^^^^^^^

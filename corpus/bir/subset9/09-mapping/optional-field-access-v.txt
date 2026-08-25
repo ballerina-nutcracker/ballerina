@@ -539,12 +539,321 @@ main() -> nil{
     GOTO bb77;
   }
   bb77 {
+    PushScopeFrame 22
+    %0 = ConstantLoad x
+    %1 = ConstantLoad 10
+    %2 = ConstantLoad nilValue
+    %3 = ConstantLoad <nil>
+    %4 = newMap {| json... |}{%0=%1, %2=%3}
+    laxMap = %4;
+    $desugar$34 = laxMap;
+    %7 = ConstantLoad <nil>
+    $desugar$35 = %7;
+    %9 = $desugar$34 is nil
+    %9 ? bb78 : bb79;
+  }
+  bb78 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb95;
+  }
+  bb79 {
+    %10 = $desugar$34 is error
+    %10 ? bb80 : bb81;
+  }
+  bb80 {
+    PushScopeFrame 0
+    (1, $desugar$35) = (1, $desugar$34);
+    PopScopeFrame
+    GOTO bb94;
+  }
+  bb81 {
+    %11 = $desugar$34 !is mapping
+    %11 ? bb82 : bb83;
+  }
+  bb82 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$35) = %1;
+    PopScopeFrame
+    GOTO bb93;
+  }
+  bb83 {
+    PushScopeFrame 6
+    GOTO bb84;
+  }
+  bb84 {
+    %1 = ConstantLoad x
+    %2 = get((1, $desugar$34),%1) -> bb85;
+  }
+  bb85 {
+    %0 = %2;
+    GOTO bb86;
+  }
+  bb86 {
+    $desugar$36 = %0;
+    %4 = $desugar$36 is error
+    %4 ? bb87 : bb88;
+  }
+  bb87 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb92;
+  }
+  bb88 {
+    %5 = $desugar$36 is json
+    %5 ? bb89 : bb90;
+  }
+  bb89 {
+    PushScopeFrame 0
+    (2, $desugar$35) = (1, $desugar$36);
+    PopScopeFrame
+    GOTO bb91;
+  }
+  bb90 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$35) = %1;
+    PopScopeFrame
+    GOTO bb91;
+  }
+  bb91 {
+    GOTO bb92;
+  }
+  bb92 {
+    PopScopeFrame
+    GOTO bb93;
+  }
+  bb93 {
+    GOTO bb94;
+  }
+  bb94 {
+    GOTO bb95;
+  }
+  bb95 {
+    laxMapX = $desugar$35;
+    %13 = println(laxMapX) -> bb96;
+  }
+  bb96 {
+    $desugar$37 = laxMap;
+    %15 = ConstantLoad <nil>
+    $desugar$38 = %15;
+    %17 = $desugar$37 is nil
+    %17 ? bb97 : bb98;
+  }
+  bb97 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb114;
+  }
+  bb98 {
+    %18 = $desugar$37 is error
+    %18 ? bb99 : bb100;
+  }
+  bb99 {
+    PushScopeFrame 0
+    (1, $desugar$38) = (1, $desugar$37);
+    PopScopeFrame
+    GOTO bb113;
+  }
+  bb100 {
+    %19 = $desugar$37 !is mapping
+    %19 ? bb101 : bb102;
+  }
+  bb101 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$38) = %1;
+    PopScopeFrame
+    GOTO bb112;
+  }
+  bb102 {
+    PushScopeFrame 6
+    GOTO bb103;
+  }
+  bb103 {
+    %1 = ConstantLoad missing
+    %2 = get((1, $desugar$37),%1) -> bb104;
+  }
+  bb104 {
+    %0 = %2;
+    GOTO bb105;
+  }
+  bb105 {
+    $desugar$39 = %0;
+    %4 = $desugar$39 is error
+    %4 ? bb106 : bb107;
+  }
+  bb106 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb111;
+  }
+  bb107 {
+    %5 = $desugar$39 is json
+    %5 ? bb108 : bb109;
+  }
+  bb108 {
+    PushScopeFrame 0
+    (2, $desugar$38) = (1, $desugar$39);
+    PopScopeFrame
+    GOTO bb110;
+  }
+  bb109 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$38) = %1;
+    PopScopeFrame
+    GOTO bb110;
+  }
+  bb110 {
+    GOTO bb111;
+  }
+  bb111 {
+    PopScopeFrame
+    GOTO bb112;
+  }
+  bb112 {
+    GOTO bb113;
+  }
+  bb113 {
+    GOTO bb114;
+  }
+  bb114 {
+    laxMapMissing = $desugar$38;
+    %21 = laxMapMissing is nil
+    %21 ? bb115 : bb117;
+  }
+  bb115 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax map missing
+    %1 = println(%0) -> bb116;
+  }
+  bb116 {
+    PopScopeFrame
+    GOTO bb117;
+  }
+  bb117 {
+    PushScopeFrame 8
+    $desugar$40 = (1, laxMap);
+    %1 = ConstantLoad <nil>
+    $desugar$41 = %1;
+    %3 = $desugar$40 is nil
+    %3 ? bb118 : bb119;
+  }
+  bb118 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb135;
+  }
+  bb119 {
+    %4 = $desugar$40 is error
+    %4 ? bb120 : bb121;
+  }
+  bb120 {
+    PushScopeFrame 0
+    (1, $desugar$41) = (1, $desugar$40);
+    PopScopeFrame
+    GOTO bb134;
+  }
+  bb121 {
+    %5 = $desugar$40 !is mapping
+    %5 ? bb122 : bb123;
+  }
+  bb122 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$41) = %1;
+    PopScopeFrame
+    GOTO bb133;
+  }
+  bb123 {
+    PushScopeFrame 6
+    GOTO bb124;
+  }
+  bb124 {
+    %1 = ConstantLoad nilValue
+    %2 = get((1, $desugar$40),%1) -> bb125;
+  }
+  bb125 {
+    %0 = %2;
+    GOTO bb126;
+  }
+  bb126 {
+    $desugar$42 = %0;
+    %4 = $desugar$42 is error
+    %4 ? bb127 : bb128;
+  }
+  bb127 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb132;
+  }
+  bb128 {
+    %5 = $desugar$42 is json
+    %5 ? bb129 : bb130;
+  }
+  bb129 {
+    PushScopeFrame 0
+    (2, $desugar$41) = (1, $desugar$42);
+    PopScopeFrame
+    GOTO bb131;
+  }
+  bb130 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$41) = %1;
+    PopScopeFrame
+    GOTO bb131;
+  }
+  bb131 {
+    GOTO bb132;
+  }
+  bb132 {
+    PopScopeFrame
+    GOTO bb133;
+  }
+  bb133 {
+    GOTO bb134;
+  }
+  bb134 {
+    GOTO bb135;
+  }
+  bb135 {
+    laxMapNil = $desugar$41;
+    %7 = laxMapNil is nil
+    %7 ? bb136 : bb138;
+  }
+  bb136 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax map nil
+    %1 = println(%0) -> bb137;
+  }
+  bb137 {
+    PopScopeFrame
+    GOTO bb138;
+  }
+  bb138 {
     PushScopeFrame 0
     PopScopeFrame
     PopScopeFrame
     PopScopeFrame
     PopScopeFrame
     PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
     return;
+  }
+  
+  error-table {
+    [bb84, bb85] -> bb86, %0
+    [bb103, bb104] -> bb105, %0
+    [bb124, bb125] -> bb126, %0
   }
 }

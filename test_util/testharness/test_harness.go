@@ -65,7 +65,22 @@ import (
 // source. kind determines the corresponding expected-output directory and
 // extension, resolved relative to filepath.Dir(inputDir).
 func GetSingleFileTestCases(inputDir string, kind test_util.TestKind, mask test_util.TestSuffix) ([]test_util.TestCase, error) {
+	return singleFileTestCases(inputDir, "", kind, mask)
+}
+
+// GetNestedSingleFileTestCases is GetSingleFileTestCases for a corpus root
+// other than bal/, keeping that root's own name as the leading segment of Name
+// and of the expected-output path (as GetProjectTestCases does) so relative
+// paths cannot collide with bal/'s.
+func GetNestedSingleFileTestCases(inputDir string, kind test_util.TestKind, mask test_util.TestSuffix) ([]test_util.TestCase, error) {
+	return singleFileTestCases(inputDir, filepath.Base(inputDir), kind, mask)
+}
+
+func singleFileTestCases(inputDir, namePrefix string, kind test_util.TestKind, mask test_util.TestSuffix) ([]test_util.TestCase, error) {
 	outputDir, outputExt := outputDirAndExt(filepath.Dir(inputDir), kind)
+	if namePrefix != "" {
+		outputDir = filepath.Join(outputDir, namePrefix)
+	}
 	var cases []test_util.TestCase
 	err := filepath.Walk(inputDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -75,8 +90,12 @@ func GetSingleFileTestCases(inputDir string, kind test_util.TestKind, mask test_
 			return nil
 		}
 		rel, _ := filepath.Rel(inputDir, path)
+		name := filepath.ToSlash(rel)
+		if namePrefix != "" {
+			name = namePrefix + "/" + name
+		}
 		tc := test_util.TestCase{
-			Name:         rel,
+			Name:         name,
 			InputPath:    path,
 			ExpectedPath: filepath.Join(outputDir, strings.TrimSuffix(rel, ".bal")+outputExt),
 		}

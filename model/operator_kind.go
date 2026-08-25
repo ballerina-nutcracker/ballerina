@@ -43,7 +43,7 @@ const (
 	OperatorKind_DECREMENT                    OperatorKind = "--"
 	OperatorKind_CHECK                        OperatorKind = "check"
 	OperatorKind_CHECK_PANIC                  OperatorKind = "checkpanic"
-	OperatorKind_ELVIS                        OperatorKind = "?:"
+	OperatorKind_NIL_CONDITIONAL              OperatorKind = "?:"
 	OperatorKind_BITWISE_AND                  OperatorKind = "&"
 	OperatorKind_BITWISE_OR                   OperatorKind = "|"
 	OperatorKind_BITWISE_XOR                  OperatorKind = "^"
@@ -107,7 +107,7 @@ func OperatorKindValueFrom(opValue string) OperatorKind {
 	case "checkpanic":
 		return OperatorKind_CHECK_PANIC
 	case "?:":
-		return OperatorKind_ELVIS
+		return OperatorKind_NIL_CONDITIONAL
 	case "&":
 		return OperatorKind_BITWISE_AND
 	case "|":

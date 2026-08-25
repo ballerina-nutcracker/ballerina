@@ -28,7 +28,7 @@ import (
 // platform they run normally. Entries are corpus-relative path suffixes.
 var WindowsUnsupportedTests = []string{
 	// os:exec runs a real `echo` subprocess, which is not an executable on Windows.
-	"library/subset2/os-exec-v.bal",
+	"lib/subset2/os-exec-v.bal",
 }
 
 // WASMUnsupportedTests lists corpus tests that cannot run under GOOS=js (the
@@ -36,7 +36,7 @@ var WindowsUnsupportedTests = []string{
 // Entries are corpus-relative path suffixes.
 var WASMUnsupportedTests = []string{
 	// os:exec requires spawning a subprocess; no executables exist in the WASM sandbox.
-	"library/subset2/os-exec-v.bal",
+	"lib/subset2/os-exec-v.bal",
 }
 
 // UnsupportedTests is the single authoritative list of corpus tests that pi

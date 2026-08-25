@@ -94,10 +94,14 @@ type invokableNode interface {
 	ast.BLangNode
 	IsNative() bool
 	Symbol() model.SymbolRef
+	GetBody() ast.FunctionBodyNode
 }
 
 func analyzeInvokableExplicitReturn(ctx *context.CompilerContext, fn invokableNode, cfg *PackageCFG) {
 	if fn.IsNative() {
+		return
+	}
+	if _, ok := fn.GetBody().(*ast.BLangExprFunctionBody); ok {
 		return
 	}
 	sym := ctx.GetSymbol(fn.Symbol()).(model.FunctionSymbol)

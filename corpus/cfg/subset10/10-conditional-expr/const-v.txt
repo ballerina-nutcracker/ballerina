@@ -1,0 +1,19 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref SELECTED))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref FALSE_SELECTED))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref NIL_SELECTED))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref NON_NIL_SELECTED))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref NESTED_NIL_SELECTED))))
+  )
+)

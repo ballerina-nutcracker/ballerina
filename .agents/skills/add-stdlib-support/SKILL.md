@@ -183,17 +183,15 @@ Follow `AGENTS.md` (root) — Coding style, Symbols, and PAL sections. Do not re
 
 ### Where library corpus tests live
 
-Corpus tests for a stdlib port go under `corpus/bal/library/subset<N>/` — a **flat** directory of `<name>-<suffix>.bal` files, e.g. `corpus/bal/library/subset2/crypto-hash1-v.bal`. This is a different directory family from the generic language-feature subsets (`corpus/bal/subset1/` … `corpus/bal/subset9/`, each internally split into `NN-category/` subfolders like `08-network/`) — do not put library tests there.
+Corpus tests for a stdlib port go under `corpus/lib/subset<N>/` — a **flat** directory of `<name>-<suffix>.bal` files, e.g. `corpus/lib/subset2/crypto-hash1-v.bal`. This is a sibling of `corpus/bal/` (the generic language-feature subsets, `corpus/bal/subset1/` … `corpus/bal/subset9/`, each internally split into `NN-category/` subfolders like `08-network/`) and of `corpus/project/` — do not put library tests under `corpus/bal/`.
 
-Each `library/subset<N>` is a released library-support milestone, documented in `doc/library/subset<N>.md` (the language-feature milestones in `doc/lang/subset<N>.md` are an unrelated numbering track — `library/subset2` and `lang/subset2` are not the same milestone).
+Each `lib/subset<N>` is a released library-support milestone, documented in `doc/library/subset<N>.md` (the language-feature milestones in `doc/lang/subset<N>.md` are an unrelated numbering track — `lib/subset2` and `lang/subset2` are not the same milestone).
 
 **Ask the developer which subset this port's tests belong in before writing any test file** — this is a release-scoping decision, not something to infer:
-- An **existing** subset (e.g. `subset2`) — the new module joins that release milestone, alongside `corpus/bal/library/subset2/`'s existing files.
-- A **new** subset (`subset<N+1>`, one past the highest existing `library/subsetN` directory) — create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern ("Subset N extends the released subset N-1 with …").
+- An **existing** subset (e.g. `subset2`) — the new module joins that release milestone, alongside `corpus/lib/subset2/`'s existing files.
+- A **new** subset (`subset<N+1>`, one past the highest existing `lib/subsetN` directory) — create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern ("Subset N extends the released subset N-1 with …").
 
-Per-stage golden directories (`corpus/ast/library/subset<N>/`, `corpus/bir/...`, etc.) mirror this layout and are regenerated automatically via `-update` — they follow whichever subset directory the `.bal` files live in.
-
-After the tests pass, add (or extend) the `## [<name>](<jBallerina spec URL>)` section in that subset's `doc/library/subset<N>.md`, documenting the surface actually exercised by these corpus tests — follow the existing heading + `Function | Notes` table (or bullet list) style in `subset1.md`/`subset2.md`. This is a separate, lighter-weight doc from the per-package `README.md` (Step 9) — both need updating.
+`corpus/lib/` has its own end-to-end pipeline, `TestLibIntegration` in `corpus/integration_test.go`, validated against `corpus/integration/lib/subset<N>/*.txtar` — mirroring `corpus/project/`'s `TestProjectIntegration`. It carries no per-stage goldens under `corpus/ast/`, `corpus/bir/`, `corpus/cfg/` or `corpus/desugared/`: those goldens hold only the test file's own compilation unit — the library itself stays opaque — so they add nothing for a library. The per-stage drivers do not run library tests at all: discovery for those walks `corpus/bal/` only, so moving library tests out of it left every stage test file unchanged. Their compiler-stage coverage comes from `TestLibIntegration` running the whole pipeline per test -- and the same import/extern paths are already exercised densely by `corpus/bal/`, 1686 of whose tests import a stdlib.
 
 ### Test conventions
 
@@ -243,7 +241,7 @@ Before declaring done, check every box:
 - [ ] `go test ./corpus/...` — all corpus tests pass.
 - [ ] `go run ./cli/cmd run <showcase>.bal` (or `./bal run <showcase>.bal` if the binary is built) — output matches the `@output` markers exactly.
 - [ ] `git diff corpus/` reviewed; every regenerated golden-file line is intentional.
-- [ ] New corpus test files follow naming (no leading zeros, correct suffix) and live under `corpus/bal/library/subset<N>/` (the subset confirmed with the developer in Step 8), not the generic `corpus/bal/subset1..9/` tree.
+- [ ] New corpus test files follow naming (no leading zeros, correct suffix) and live under `corpus/lib/subset<N>/` (the subset confirmed with the developer in Step 8), not the generic `corpus/bal/subset1..9/` tree.
 - [ ] Local coverage of the new `native/` package is **≥80%** (Step 8's `go tool cover -func=... | grep total` command). This is what Codecov's patch-coverage check in CI (`native-ci.yml` + `codecov.yml`) will otherwise fail the PR on.
 
 ### Parity & contract
@@ -272,5 +270,5 @@ Summarise:
 - The complete parity table from Step 5.
 - The measured `native/` coverage % from Step 8's verify command.
 - The `validate-stdlib-contract` verdict.
-- Which `corpus/bal/library/subset<N>/` the tests were added to (new or existing) and confirmation `doc/library/subset<N>.md` was updated.
+- Which `corpus/lib/subset<N>/` the tests were added to (new or existing) and confirmation `doc/library/subset<N>.md` was updated.
 - Any language-limitation or dependency-bug issue drafted per `references/reporting-limitations.md`, and whether the developer filed it.

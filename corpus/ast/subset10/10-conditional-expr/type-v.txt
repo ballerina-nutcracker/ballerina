@@ -1,0 +1,59 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function flag () (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (literal true))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable condition (type
+          (value-type boolean)) (expr
+          (invocation flag ()))))
+      (var-def
+        (variable contextualFloat (type
+          (value-type float)) (expr
+          (ternary-expr
+            (simple-var-ref condition)
+            (literal 1)
+            (literal 5.5)))))
+      (var-def
+        (variable contextualUnion (type
+          (union-type
+            (value-type int)
+            (value-type float))) (expr
+          (ternary-expr
+            (simple-var-ref condition)
+            (literal 1)
+            (literal 5.5)))))
+      (var-def
+        (variable selectedTrue (type
+          (value-type int)) (expr
+          (ternary-expr
+            (literal true)
+            (literal 1)
+            (literal 5.5)))))
+      (var-def
+        (variable selectedFalse (type
+          (value-type int)) (expr
+          (ternary-expr
+            (literal false)
+            (literal 5.5)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref contextualFloat))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref contextualUnion)
+            (value-type int)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref selectedTrue))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref selectedFalse)))))))

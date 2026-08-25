@@ -1,0 +1,210 @@
+(acceptInt
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref value))
+    (return
+      (literal int))
+  )
+)
+(acceptString
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref value))
+    (return
+      (literal string))
+  )
+)
+(classify
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type int))
+        (invocation acceptInt (
+          (simple-var-ref value)))
+        (invocation acceptString (
+          (simple-var-ref value)))))
+  )
+)
+(getValue
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (simple-var-ref useInt)
+        (literal 10)
+        (literal ten)))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable value (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (invocation getValue (
+          (literal true))))))
+    (var-def
+      (variable intValue (type
+        (value-type int)) (expr
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref value)
+            (value-type int))
+          (simple-var-ref value)
+          (literal 0)))))
+    (var-def
+      (variable stringValue (type
+        (value-type string)) (expr
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref value)
+            (value-type int))
+          (literal )
+          (simple-var-ref value)))))
+    (var-def
+      (variable negated (type
+        (value-type int)) (expr
+        (ternary-expr
+          (unary-expr !
+            (group-expr
+              (type-test-expr is
+                (simple-var-ref value)
+                (value-type string))))
+          (simple-var-ref value)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref intValue))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref stringValue))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref negated))))
+    (expression-stmt
+      (invocation io println (
+        (invocation classify (
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation classify (
+          (literal one))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation nested (
+          (literal true))))))
+    (var-def
+      (variable flag (type
+        (value-type boolean)) (expr
+        (literal true))))
+    (ternary-expr
+      (simple-var-ref flag)
+      (group-expr
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type int)))
+      (group-expr
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type int))))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable narrowedByTernary (type
+        (value-type int)) (expr
+        (simple-var-ref value))))
+    (expression-stmt
+      (invocation io println (
+        (literal ternary condition))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref narrowedByTernary))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (nil-conditional-expr
+      (group-expr
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type int)))
+      (literal false))
+  )
+  (bb3 (bb2) (bb4)
+    (var-def
+      (variable narrowedByNonNilLhs (type
+        (value-type int)) (expr
+        (simple-var-ref value))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref narrowedByNonNilLhs))
+  )
+  (bb4 (bb3 bb2) (bb5 bb6)
+    (nil-conditional-expr
+      (literal <nil>)
+      (type-test-expr is
+        (simple-var-ref value)
+        (value-type int)))
+  )
+  (bb5 (bb4) (bb6)
+    (var-def
+      (variable narrowedByRhs (type
+        (value-type int)) (expr
+        (simple-var-ref value))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref narrowedByRhs))
+  )
+  (bb6 (bb5 bb4) (bb7 bb8)
+    (assignment
+      (wildcard-binding-pattern)
+      (nil-conditional-expr
+        (group-expr
+          (ternary-expr
+            (simple-var-ref flag)
+            (group-expr
+              (type-test-expr is
+                (simple-var-ref value)
+                (value-type int)))
+            (literal <nil>)))
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type int))))
+    (type-test-expr is
+      (simple-var-ref value)
+      (value-type int))
+  )
+  (bb7 (bb6) (bb8)
+    (var-def
+      (variable singleton (type
+        (value-type int)) (expr
+        (ternary-expr
+          (literal true)
+          (simple-var-ref value)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref singleton))))
+  )
+  (bb8 (bb7 bb6) ())
+)
+(nested
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type int))
+        (invocation acceptInt (
+          (simple-var-ref value)))
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref value)
+            (value-type string))
+          (invocation acceptString (
+            (simple-var-ref value)))
+          (literal boolean))))
+  )
+)

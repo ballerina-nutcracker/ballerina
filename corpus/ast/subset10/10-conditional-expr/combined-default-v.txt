@@ -1,0 +1,37 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function combined (
+    (variable input (type
+      (record-type
+        (field value
+          (value-type int)
+          (ternary-expr
+            (literal true)
+            (literal 50)
+            (literal 60))))) (expr
+      (ternary-expr
+        (literal true)
+        (mapping-constructor-expr)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 70))))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (field-based-access value
+          (simple-var-ref input)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation combined ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation combined (
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal 80)))))))))))

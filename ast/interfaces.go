@@ -153,11 +153,6 @@ type LiteralNode interface {
 	SetIsConstant(isConstant bool)
 }
 
-type ElvisExpressionNode interface {
-	GetLeftExpression() BLangExpression
-	GetRightExpression() BLangExpression
-}
-
 type MappingField interface {
 	Node
 	IsKeyValueField() bool

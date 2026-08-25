@@ -1,0 +1,54 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const CONDITION () (
+    (literal true)))
+  (const THEN () (
+    (literal 10)))
+  (const ELSE () (
+    (literal 20)))
+  (const SELECTED () (
+    (ternary-expr
+      (simple-var-ref CONDITION)
+      (simple-var-ref THEN)
+      (simple-var-ref ELSE))))
+  (const FALSE_SELECTED () (
+    (ternary-expr
+      (literal false)
+      (literal wrong)
+      (simple-var-ref THEN))))
+  (const NIL () (
+    (literal <nil>)))
+  (const NIL_SELECTED () (
+    (nil-conditional-expr
+      (simple-var-ref NIL)
+      (literal 30))))
+  (const NON_NIL_SELECTED () (
+    (nil-conditional-expr
+      (literal value)
+      (literal 40))))
+  (const NESTED_NIL_SELECTED () (
+    (nil-conditional-expr
+      (group-expr
+        (nil-conditional-expr
+          (literal <nil>)
+          (simple-var-ref NIL)))
+      (simple-var-ref THEN))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref SELECTED))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref FALSE_SELECTED))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref NIL_SELECTED))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref NON_NIL_SELECTED))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref NESTED_NIL_SELECTED)))))))

@@ -1,0 +1,373 @@
+(abort
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal failed))))
+  )
+)
+(checkedOuter
+  (bb0 () ()
+    (return
+      (checked-expr
+        (group-expr
+          (nil-conditional-expr
+            (simple-var-ref lhs)
+            (literal 100)))))
+  )
+)
+(checkedRhs
+  (bb0 () ()
+    (return
+      (nil-conditional-expr
+        (simple-var-ref lhs)
+        (checked-expr
+          (invocation checkedValue (
+            (simple-var-ref good))))))
+  )
+)
+(checkedValue
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (simple-var-ref good)
+        (literal 90)
+        (error-constructor-expr (
+          (literal checked)))))
+  )
+)
+(lhs
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref lhsCalls)
+      (literal 1))
+    (return
+      (simple-var-ref value))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable nonNil (type
+        (value-type int)) (expr
+        (nil-conditional-expr
+          (invocation lhs (
+            (literal 10)))
+          (invocation rhs ())))))
+    (var-def
+      (variable nonNilComposite (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (nil-conditional-expr
+          (invocation lhs (
+            (literal 30)))
+          (binary-expr +
+            (invocation lhs (
+              (literal 40)))
+            (literal 1))))))
+    (var-def
+      (variable fallback (type
+        (value-type int)) (expr
+        (nil-conditional-expr
+          (invocation lhs (
+            (literal <nil>)))
+          (invocation rhs ())))))
+    (var-def
+      (variable staticallyNonNil (type
+        (value-type string)) (expr
+        (nil-conditional-expr
+          (literal value)
+          (literal 100)))))
+    (var-def
+      (variable nilValue (type
+        (value-type null)) (expr
+        (literal <nil>))))
+    (var-def
+      (variable staticallyNil (type
+        (value-type int)) (expr
+        (nil-conditional-expr
+          (simple-var-ref nilValue)
+          (literal 50)))))
+    (var-def
+      (variable nested (type
+        (value-type int)) (expr
+        (nil-conditional-expr
+          (nil-conditional-expr
+            (invocation lhs (
+              (literal <nil>)))
+            (invocation lhs (
+              (literal 20))))
+          (invocation rhs ())))))
+    (var-def
+      (variable lazyOuterBranch (type
+        (value-type int)) (expr
+        (ternary-expr
+          (literal false)
+          (nil-conditional-expr
+            (invocation lhs (
+              (literal 30)))
+            (invocation rhs ()))
+          (literal 60)))))
+    (var-def
+      (variable mixedString (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (invocation mixedResult (
+          (literal mixed))))))
+    (var-def
+      (variable mixedNil (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (invocation mixedResult (
+          (literal <nil>))))))
+    (var-def
+      (variable nilSubtypeResult (type
+        (value-type int)) (expr
+        (invocation nilSubtype (
+          (literal <nil>))))))
+    (var-def
+      (variable optionalNeverResult (type
+        (value-type int)) (expr
+        (invocation optionalNever (
+          (literal <nil>))))))
+    (var-def
+      (variable lazyCheck (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation checkedRhs (
+          (literal 120)
+          (literal false))))))
+    (var-def
+      (variable failedCheck (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation checkedRhs (
+          (literal <nil>)
+          (literal false))))))
+    (var-def
+      (variable outerNil (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation checkedOuter (
+          (literal <nil>))))))
+    (var-def
+      (variable outerError (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation checkedOuter (
+          (error-constructor-expr (
+            (literal outer))))))))
+    (var-def
+      (variable lazyCheckpanic (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (group-expr
+            (nil-conditional-expr
+              (literal 130)
+              (binary-expr +
+                (group-expr
+                  (check-panicked-expr
+                    (invocation nullableCheckedValue (
+                      (literal false)))))
+                (literal 1))))))))
+    (var-def
+      (variable trappedCheckpanic (type
+        (union-type
+          (union-type
+            (value-type int)
+            (value-type null))
+          (error-type))) (expr
+        (trap-expr
+          (group-expr
+            (nil-conditional-expr
+              (literal <nil>)
+              (binary-expr +
+                (group-expr
+                  (check-panicked-expr
+                    (invocation nullableCheckedValue (
+                      (literal false)))))
+                (literal 1))))))))
+    (var-def
+      (variable lhsCheckpanic (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (group-expr
+            (nil-conditional-expr
+              (group-expr
+                (check-panicked-expr
+                  (invocation nullableCheckedValue (
+                    (literal false)))))
+              (literal 140)))))))
+    (var-def
+      (variable wrappedLhsCheckpanic (type
+        (union-type
+          (union-type
+            (value-type int)
+            (value-type null))
+          (error-type))) (expr
+        (trap-expr
+          (group-expr
+            (nil-conditional-expr
+              (group-expr
+                (binary-expr +
+                  (group-expr
+                    (check-panicked-expr
+                      (invocation nullableCheckedValue (
+                        (literal false)))))
+                  (literal 1)))
+              (literal 150)))))))
+    (var-def
+      (variable outerCheckpanic (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (check-panicked-expr
+            (group-expr
+              (nil-conditional-expr
+                (literal <nil>)
+                (invocation checkedValue (
+                  (literal false))))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nonNil))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nonNilComposite))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fallback))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref staticallyNonNil))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref staticallyNil))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nested))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref lazyOuterBranch))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref mixedString))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref mixedNil))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nilSubtypeResult))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref optionalNeverResult))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref lazyCheck))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref failedCheck)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref outerNil))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref outerError)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref lazyCheckpanic))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref trappedCheckpanic)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref lhsCheckpanic)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref wrappedLhsCheckpanic)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref outerCheckpanic)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref lhsCalls))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref rhsCalls))))
+  )
+)
+(mixedResult
+  (bb0 () ()
+    (return
+      (nil-conditional-expr
+        (simple-var-ref value)
+        (literal 1)))
+  )
+)
+(neverResult
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type never)) (expr
+        (nil-conditional-expr
+          (invocation abort ())
+          (literal 1)))))
+  )
+)
+(nilSubtype
+  (bb0 () ()
+    (return
+      (nil-conditional-expr
+        (simple-var-ref value)
+        (literal 70)))
+  )
+)
+(nullableCheckedValue
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (simple-var-ref good)
+        (literal 110)
+        (error-constructor-expr (
+          (literal panic)))))
+  )
+)
+(optionalNever
+  (bb0 () ()
+    (return
+      (nil-conditional-expr
+        (simple-var-ref value)
+        (literal 80)))
+  )
+)
+(rhs
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref rhsCalls)
+      (literal 1))
+    (return
+      (literal 42))
+  )
+)

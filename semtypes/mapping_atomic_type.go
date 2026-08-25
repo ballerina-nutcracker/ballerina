@@ -69,6 +69,18 @@ const (
 	matchAll
 )
 
+func AllMapConstraintTypesMatch(cx Context, ty SemType, predicate func(SemType) bool) bool {
+	return mappingAtomsMatch(cx, ty, matchAll, func(cx Context, atom *MappingAtomicType) bool {
+		for i, name := range atom.names {
+			if atom.IsOptional(cx, name) && IsNever(cellInnerVal(atom.types[i])) {
+				continue
+			}
+			return false
+		}
+		return predicate(cellInnerVal(atom.rest))
+	})
+}
+
 func AnyMappingAtomHasFieldByName(cx Context, ty SemType, key string) bool {
 	return mappingAtomsMatch(cx, ty, matchAny, func(_ Context, atom *MappingAtomicType) bool {
 		return mappingAtomHasFieldByName(atom, key)

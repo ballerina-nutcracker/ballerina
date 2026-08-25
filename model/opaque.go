@@ -51,6 +51,7 @@ const (
 	OpaqueFnArrayMap  = 1
 	// lang.map
 	OpaqueFnMapRemove = 0
+	OpaqueFnMapGet    = 1
 	// lang.xml
 	OpaqueFnXMLIterator = 4
 )
@@ -128,7 +129,10 @@ func OpaqueSymbols(pkg PackageIdentifier) []Symbol {
 			newOpaqueFunctionSymbol("map", OpaqueFnArrayMap, func(index int) bool { return index == 1 }),
 		}
 	case "lang.map":
-		return []Symbol{newOpaqueFunctionSymbol("remove", OpaqueFnMapRemove, noIsolatedParams)}
+		return []Symbol{
+			newOpaqueFunctionSymbol("remove", OpaqueFnMapRemove, noIsolatedParams),
+			newOpaqueFunctionSymbol("get", OpaqueFnMapGet, noIsolatedParams),
+		}
 	default:
 		return nil
 	}

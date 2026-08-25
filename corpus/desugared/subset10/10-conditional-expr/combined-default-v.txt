@@ -1,0 +1,58 @@
+(package
+  (import-package ballerina io (as io))
+  (function combined (
+    (variable input (type
+      (record-type
+        (field value
+          (value-type int)
+          (ternary-expr
+            (literal true)
+            (literal 50)
+            (literal 60))))) (expr
+      (ternary-expr
+        (literal true)
+        (mapping-constructor-expr)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 70))))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (index-based-access
+          (simple-var-ref input)
+          (literal value)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$0 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation combined (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation combined (
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal 80))))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (literal true)
+          (mapping-constructor-expr)
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 70)))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (literal true)
+          (literal 50)
+          (literal 60))))))

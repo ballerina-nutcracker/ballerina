@@ -107,9 +107,9 @@ Coding rules: follow `AGENTS.md` (license header on every new file, no per-line 
 
 ### Tests
 
-Library corpus tests live under `corpus/bal/library/subset<N>/` — a flat directory of `<name>-<suffix>.bal` files, e.g. `corpus/bal/library/subset2/crypto-hash1-v.bal` — a different, stdlib-specific directory family from the generic `corpus/bal/subset1..9/NN-category/` language-feature tests. Each `library/subset<N>` is a released library-support milestone documented in `doc/library/subset<N>.md`.
+Library corpus tests live under `corpus/lib/subset<N>/` — a flat directory of `<name>-<suffix>.bal` files, e.g. `corpus/lib/subset2/crypto-hash1-v.bal` — a sibling of `corpus/bal/` (the generic `corpus/bal/subset1..9/NN-category/` language-feature tests) and of `corpus/project/`. Each `lib/subset<N>` is a released library-support milestone documented in `doc/library/subset<N>.md`.
 
-Find this stdlib's existing tests first: `find corpus/bal/library -name '<name>-*.bal'` locates which `subset<N>` it currently lives in — reuse that one by default. **Ask the developer to confirm** rather than assuming, though: if this gap-fill is significant enough to be its own release milestone, they may want it filed under a *new* `subset<N+1>` instead (create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern in that case). Suffixes per `AGENTS.md`: `*-v.bal` (valid), `*-e.bal` (compile errors), `*-p.bal` (panics). No leading zeros in numeric parts. **`*-v.bal` tests must produce empty stderr** — structure the test (e.g. filtered log levels) so nothing is emitted there.
+Find this stdlib's existing tests first: `find corpus/lib -name '<name>-*.bal'` locates which `subset<N>` it currently lives in — reuse that one by default. **Ask the developer to confirm** rather than assuming, though: if this gap-fill is significant enough to be its own release milestone, they may want it filed under a *new* `subset<N+1>` instead (create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern in that case). Suffixes per `AGENTS.md`: `*-v.bal` (valid), `*-e.bal` (compile errors), `*-p.bal` (panics). No leading zeros in numeric parts. **`*-v.bal` tests must produce empty stderr** — structure the test (e.g. filtered log levels) so nothing is emitted there.
 
 Cover the new behaviour from `.bal` — a corpus test exercises the full compiler → BIR → interpreter pipeline and is measured by the native-coverage harness (`-coverpkg=./lib/stdlibs/...` over `./corpus/...`). Add a Go unit test only for branches genuinely unreachable from Ballerina (defensive type/arity guards, nil guards, interface-contract paths), kept minimal with a comment explaining why. Don't write wrong-type extern arg guards — the type checker rejects wrong types at compile time. See the **`manage-corpus-tests`** "Test philosophy" section. If you find existing native code that can never execute through Ballerina, remove it rather than testing it.
 
@@ -129,6 +129,8 @@ go test ./corpus -update
 ```
 Review `git diff corpus/` before committing, and revert any unrelated golden drift `-update` introduces (some stages have non-deterministic ordering).
 
+A library test's `-update` run only ever writes `corpus/integration/lib/**.txtar`: it has no `ExpectedPath` (see `add-stdlib-support`), so it never touches `corpus/ast/`, `corpus/bir/`, `corpus/cfg/` or `corpus/desugared/`. A diff appearing there for this test means something is misconfigured.
+
 ### Documentation
 
 Update the README row via the **`stdlib-readme-format`** skill:
@@ -145,7 +147,7 @@ Update the README row via the **`stdlib-readme-format`** skill:
 - [ ] `make vet` — no vet warnings in any workspace module.
 - [ ] `go test ./corpus/...` — all corpus tests pass.
 - [ ] `go run ./cli/cmd run <test>.bal` for the new corpus test(s) — output matches `@output` markers.
-- [ ] New corpus test files live under `corpus/bal/library/subset<N>/` (the subset confirmed with the developer above), not the generic `corpus/bal/subset1..9/` tree.
+- [ ] New corpus test files live under `corpus/lib/subset<N>/` (the subset confirmed with the developer above), not the generic `corpus/bal/subset1..9/` tree.
 - [ ] `doc/library/subset<N>.md` documents the newly-covered surface.
 - [ ] Every new/touched line in `native/` is exercised (checked via `go tool cover -func=...` or `-html=...`, not the package-total %) — Codecov's patch-coverage check (`codecov.yml`, `native-ci.yml`) targets 80% on just the diff and will fail the PR otherwise.
 - [ ] README row status reflects what's now implemented.
@@ -160,4 +162,4 @@ Update the README row via the **`stdlib-readme-format`** skill:
 
 ### Final report
 
-In one short paragraph: which row was promoted, what was added (function names, file paths), which `corpus/bal/library/subset<N>/` the tests landed in (and whether `doc/library/subset<N>.md` was created or extended), any divergences recorded, the `validate-stdlib-contract` verdict, confirmation that the new/touched lines are covered (per the coverage-gate check above), and any language-limitation or dependency-bug issue drafted for upstream reporting.
+In one short paragraph: which row was promoted, what was added (function names, file paths), which `corpus/lib/subset<N>/` the tests landed in (and whether `doc/library/subset<N>.md` was created or extended), any divergences recorded, the `validate-stdlib-contract` verdict, confirmation that the new/touched lines are covered (per the coverage-gate check above), and any language-limitation or dependency-bug issue drafted for upstream reporting.

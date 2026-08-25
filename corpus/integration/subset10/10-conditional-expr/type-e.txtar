@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got 1
+  --> type-e.bal:24:13
+   |
+24 |     int b = 1 ? 2 : 3; // @error
+   |             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got 1|5.5
+  --> type-e.bal:23:13
+   |
+23 |     int a = condition ? 1 : 5.5; // @error
+   |             ^^^^^^^^^^^^^^^^^^^

@@ -25,7 +25,7 @@ import (
 )
 
 // The time module's behaviour is exercised end-to-end through the corpus tests
-// in corpus/bal/library/subset2/time-*.bal and civil-*.bal, which run the full
+// in corpus/lib/subset2/time-*.bal and civil-*.bal, which run the full
 // compiler -> BIR -> interpreter pipeline. The unit tests below cover only the
 // defensive fallbacks in the argument/value helpers: the Ballerina type checker
 // guarantees argument types and arity, so these branches cannot be reached from

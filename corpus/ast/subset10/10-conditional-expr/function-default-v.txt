@@ -1,0 +1,85 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function acceptInt (
+    (variable value (type
+      (value-type int)))) (
+    (value-type string))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref value))
+      (return
+        (literal int))))
+  (function acceptString (
+    (variable value (type
+      (value-type string)))) (
+    (value-type string))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref value))
+      (return
+        (literal string))))
+  (function classify (
+    (variable value (type
+      (union-type
+        (value-type int)
+        (value-type string))))
+    (variable result (type
+      (value-type string)) (expr
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type int))
+        (invocation acceptInt (
+          (simple-var-ref value)))
+        (invocation acceptString (
+          (simple-var-ref value))))))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (simple-var-ref result))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation classify (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation classify (
+            (literal one))))))
+      (var-def
+        (variable fn (type
+          (function-type (
+            (union-type
+              (value-type int)
+              (value-type string))
+            (value-type string)) (
+            (value-type string)))) (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable actual (type
+                (union-type
+                  (value-type int)
+                  (value-type string))))
+              (variable supplied (type
+                (value-type string)) (expr
+                (literal unused)))) (
+              (value-type string))
+              (block-function-body
+                (assignment
+                  (wildcard-binding-pattern)
+                  (simple-var-ref actual))
+                (return
+                  (simple-var-ref supplied))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fn (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fn (
+            (literal two)))))))))

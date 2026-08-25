@@ -1,0 +1,757 @@
+module $anon.. v 0.0.0;
+lhsCalls  int;
+rhsCalls  int;
+lhs(nil|int) -> nil|int{
+  bb0 {
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %2 = + lhsCalls %4;
+    lhsCalls = %2;
+    %0 = value;
+    return;
+  }
+}
+rhs() -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + rhsCalls %3;
+    rhsCalls = %1;
+    %4 = ConstantLoad 42
+    %0 = %4;
+    return;
+  }
+}
+abort() -> never{
+  bb0 {
+    %1 = ConstantLoad failed
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+neverResult() -> nil{
+  bb0 {
+    %2 = abort() -> bb1;
+  }
+  bb1 {
+    %3 = %2 is nil
+    %3 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = ConstantLoad 1
+    %1 = %4;
+    GOTO bb4;
+  }
+  bb3 {
+    %1 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    _ = %1;
+    return;
+  }
+}
+mixedResult(nil|int|string) -> int|string{
+  bb0 {
+    %3 = value is nil
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %4 = ConstantLoad 1
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb2 {
+    %2 = value;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+}
+nilSubtype(nil) -> int{
+  bb0 {
+    %3 = value is nil
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %4 = ConstantLoad 70
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb2 {
+    %2 = value;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+}
+optionalNever(nil) -> int{
+  bb0 {
+    %3 = value is nil
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %4 = ConstantLoad 80
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb2 {
+    %2 = value;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+}
+checkedValue(boolean) -> int|error{
+  bb0 {
+    good ? bb1 : bb2;
+  }
+  bb1 {
+    %3 = ConstantLoad 90
+    %2 = %3;
+    GOTO bb3;
+  }
+  bb2 {
+    %4 = ConstantLoad checked
+    %5 = newError error(%4)
+    %2 = %5;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+}
+checkedRhs(nil|int,boolean) -> int|error{
+  bb0 {
+    %4 = lhs is nil
+    %4 ? bb1 : bb2;
+  }
+  bb1 {
+    %6 = good;
+    %7 = checkedValue(%6) -> bb3;
+  }
+  bb2 {
+    %3 = lhs;
+    GOTO bb7;
+  }
+  bb3 {
+    %8 = %7 is error
+    %8 ? bb4 : bb5;
+  }
+  bb4 {
+    %0 = %7;
+    return;
+  }
+  bb5 {
+    %5 = %7;
+    GOTO bb6;
+  }
+  bb6 {
+    %3 = %5;
+    GOTO bb7;
+  }
+  bb7 {
+    %0 = %3;
+    return;
+  }
+}
+checkedOuter(nil|int|error) -> int|error{
+  bb0 {
+    %4 = lhs is nil
+    %4 ? bb1 : bb2;
+  }
+  bb1 {
+    %5 = ConstantLoad 100
+    %3 = %5;
+    GOTO bb3;
+  }
+  bb2 {
+    %3 = lhs;
+    GOTO bb3;
+  }
+  bb3 {
+    %6 = %3 is error
+    %6 ? bb4 : bb5;
+  }
+  bb4 {
+    %0 = %3;
+    return;
+  }
+  bb5 {
+    %2 = %3;
+    GOTO bb6;
+  }
+  bb6 {
+    %0 = %2;
+    return;
+  }
+}
+nullableCheckedValue(boolean) -> nil|int|error{
+  bb0 {
+    good ? bb1 : bb2;
+  }
+  bb1 {
+    %3 = ConstantLoad 110
+    %2 = %3;
+    GOTO bb3;
+  }
+  bb2 {
+    %4 = ConstantLoad panic
+    %5 = newError error(%4)
+    %2 = %5;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad 10
+    %3 = %2;
+    %4 = lhs(%3) -> bb1;
+  }
+  bb1 {
+    %5 = %4 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %6 = rhs() -> bb4;
+  }
+  bb3 {
+    %1 = %4;
+    GOTO bb5;
+  }
+  bb4 {
+    %1 = %6;
+    GOTO bb5;
+  }
+  bb5 {
+    nonNil = %1;
+    %8 = ConstantLoad 30
+    %9 = %8;
+    %10 = lhs(%9) -> bb6;
+  }
+  bb6 {
+    $desugar$2 = %10;
+    %13 = $desugar$2 is nil
+    %13 ? bb7 : bb12;
+  }
+  bb7 {
+    PushScopeFrame 7
+    %0 = ConstantLoad 40
+    %1 = %0;
+    %2 = lhs(%1) -> bb8;
+  }
+  bb8 {
+    $desugar$0 = %2;
+    %4 = ConstantLoad <nil>
+    $desugar$1 = %4;
+    %6 = $desugar$0 is nil
+    %6 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb10 {
+    PushScopeFrame 4
+    %1 = (1, $desugar$0);
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %0 = + %1 %3;
+    (1, $desugar$1) = %0;
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb11 {
+    (1, $desugar$3) = $desugar$1;
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb12 {
+    PushScopeFrame 0
+    (1, $desugar$3) = (1, $desugar$2);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb13 {
+    nonNilComposite = $desugar$3;
+    %16 = ConstantLoad <nil>
+    %17 = %16;
+    %18 = lhs(%17) -> bb14;
+  }
+  bb14 {
+    %19 = %18 is nil
+    %19 ? bb15 : bb16;
+  }
+  bb15 {
+    %20 = rhs() -> bb17;
+  }
+  bb16 {
+    %15 = %18;
+    GOTO bb18;
+  }
+  bb17 {
+    %15 = %20;
+    GOTO bb18;
+  }
+  bb18 {
+    fallback = %15;
+    %23 = ConstantLoad value
+    %24 = %23 is nil
+    %24 ? bb19 : bb20;
+  }
+  bb19 {
+    %25 = ConstantLoad 100
+    %22 = %25;
+    GOTO bb21;
+  }
+  bb20 {
+    %22 = %23;
+    GOTO bb21;
+  }
+  bb21 {
+    staticallyNonNil = %22;
+    %27 = ConstantLoad <nil>
+    nilValue = %27;
+    %30 = nilValue is nil
+    %30 ? bb22 : bb23;
+  }
+  bb22 {
+    %31 = ConstantLoad 50
+    %29 = %31;
+    GOTO bb24;
+  }
+  bb23 {
+    %29 = nilValue;
+    GOTO bb24;
+  }
+  bb24 {
+    staticallyNil = %29;
+    %35 = ConstantLoad <nil>
+    %36 = %35;
+    %37 = lhs(%36) -> bb25;
+  }
+  bb25 {
+    %38 = %37 is nil
+    %38 ? bb26 : bb27;
+  }
+  bb26 {
+    %39 = ConstantLoad 20
+    %40 = %39;
+    %41 = lhs(%40) -> bb28;
+  }
+  bb27 {
+    %34 = %37;
+    GOTO bb29;
+  }
+  bb28 {
+    %34 = %41;
+    GOTO bb29;
+  }
+  bb29 {
+    %42 = %34 is nil
+    %42 ? bb30 : bb31;
+  }
+  bb30 {
+    %43 = rhs() -> bb32;
+  }
+  bb31 {
+    %33 = %34;
+    GOTO bb33;
+  }
+  bb32 {
+    %33 = %43;
+    GOTO bb33;
+  }
+  bb33 {
+    nested = %33;
+    %46 = ConstantLoad false
+    %46 ? bb34 : bb35;
+  }
+  bb34 {
+    %48 = ConstantLoad 30
+    %49 = %48;
+    %50 = lhs(%49) -> bb37;
+  }
+  bb35 {
+    %53 = ConstantLoad 60
+    %45 = %53;
+    GOTO bb36;
+  }
+  bb36 {
+    lazyOuterBranch = %45;
+    %55 = ConstantLoad mixed
+    %56 = mixedResult(%55) -> bb42;
+  }
+  bb37 {
+    %51 = %50 is nil
+    %51 ? bb38 : bb39;
+  }
+  bb38 {
+    %52 = rhs() -> bb40;
+  }
+  bb39 {
+    %47 = %50;
+    GOTO bb41;
+  }
+  bb40 {
+    %47 = %52;
+    GOTO bb41;
+  }
+  bb41 {
+    %45 = %47;
+    GOTO bb36;
+  }
+  bb42 {
+    mixedString = %56;
+    %58 = ConstantLoad <nil>
+    %59 = %58;
+    %60 = mixedResult(%59) -> bb43;
+  }
+  bb43 {
+    mixedNil = %60;
+    %62 = ConstantLoad <nil>
+    %63 = %62;
+    %64 = nilSubtype(%63) -> bb44;
+  }
+  bb44 {
+    nilSubtypeResult = %64;
+    %66 = ConstantLoad <nil>
+    %67 = %66;
+    %68 = optionalNever(%67) -> bb45;
+  }
+  bb45 {
+    optionalNeverResult = %68;
+    %70 = ConstantLoad 120
+    %71 = %70;
+    %72 = ConstantLoad false
+    %73 = %72;
+    %74 = checkedRhs(%71,%73) -> bb46;
+  }
+  bb46 {
+    lazyCheck = %74;
+    %76 = ConstantLoad <nil>
+    %77 = %76;
+    %78 = ConstantLoad false
+    %79 = %78;
+    %80 = checkedRhs(%77,%79) -> bb47;
+  }
+  bb47 {
+    failedCheck = %80;
+    %82 = ConstantLoad <nil>
+    %83 = %82;
+    %84 = checkedOuter(%83) -> bb48;
+  }
+  bb48 {
+    outerNil = %84;
+    %86 = ConstantLoad outer
+    %87 = newError error(%86)
+    %88 = checkedOuter(%87) -> bb49;
+  }
+  bb49 {
+    outerError = %88;
+    GOTO bb50;
+  }
+  bb50 {
+    %92 = ConstantLoad 130
+    %93 = %92 is nil
+    %93 ? bb51 : bb52;
+  }
+  bb51 {
+    %96 = ConstantLoad false
+    %97 = %96;
+    %98 = nullableCheckedValue(%97) -> bb53;
+  }
+  bb52 {
+    %91 = %92;
+    GOTO bb57;
+  }
+  bb53 {
+    %99 = %98 is error
+    %99 ? bb54 : bb55;
+  }
+  bb54 {
+    panic %98;
+  }
+  bb55 {
+    %95 = %98;
+    GOTO bb56;
+  }
+  bb56 {
+    %100 = %95;
+    %101 = ConstantLoad 1
+    %102 = %101;
+    %94 = + %100 %102;
+    %91 = %94;
+    GOTO bb57;
+  }
+  bb57 {
+    %90 = %91;
+    GOTO bb58;
+  }
+  bb58 {
+    lazyCheckpanic = %90;
+    GOTO bb59;
+  }
+  bb59 {
+    %106 = ConstantLoad <nil>
+    %107 = %106 is nil
+    %107 ? bb60 : bb61;
+  }
+  bb60 {
+    %110 = ConstantLoad false
+    %111 = %110;
+    %112 = nullableCheckedValue(%111) -> bb62;
+  }
+  bb61 {
+    %105 = %106;
+    GOTO bb66;
+  }
+  bb62 {
+    %113 = %112 is error
+    %113 ? bb63 : bb64;
+  }
+  bb63 {
+    panic %112;
+  }
+  bb64 {
+    %109 = %112;
+    GOTO bb65;
+  }
+  bb65 {
+    %114 = %109;
+    %115 = ConstantLoad 1
+    %116 = %115;
+    %108 = + %114 %116;
+    %105 = %108;
+    GOTO bb66;
+  }
+  bb66 {
+    %104 = %105;
+    GOTO bb67;
+  }
+  bb67 {
+    trappedCheckpanic = %104;
+    GOTO bb68;
+  }
+  bb68 {
+    %121 = ConstantLoad false
+    %122 = %121;
+    %123 = nullableCheckedValue(%122) -> bb69;
+  }
+  bb69 {
+    %124 = %123 is error
+    %124 ? bb70 : bb71;
+  }
+  bb70 {
+    panic %123;
+  }
+  bb71 {
+    %120 = %123;
+    GOTO bb72;
+  }
+  bb72 {
+    %125 = %120 is nil
+    %125 ? bb73 : bb74;
+  }
+  bb73 {
+    %126 = ConstantLoad 140
+    %119 = %126;
+    GOTO bb75;
+  }
+  bb74 {
+    %119 = %120;
+    GOTO bb75;
+  }
+  bb75 {
+    %118 = %119;
+    GOTO bb76;
+  }
+  bb76 {
+    lhsCheckpanic = %118;
+    GOTO bb77;
+  }
+  bb77 {
+    %132 = ConstantLoad false
+    %133 = %132;
+    %134 = nullableCheckedValue(%133) -> bb78;
+  }
+  bb78 {
+    %135 = %134 is error
+    %135 ? bb79 : bb80;
+  }
+  bb79 {
+    panic %134;
+  }
+  bb80 {
+    %131 = %134;
+    GOTO bb81;
+  }
+  bb81 {
+    %136 = %131;
+    %137 = ConstantLoad 1
+    %138 = %137;
+    %130 = + %136 %138;
+    %139 = %130 is nil
+    %139 ? bb82 : bb83;
+  }
+  bb82 {
+    %140 = ConstantLoad 150
+    %129 = %140;
+    GOTO bb84;
+  }
+  bb83 {
+    %129 = %130;
+    GOTO bb84;
+  }
+  bb84 {
+    %128 = %129;
+    GOTO bb85;
+  }
+  bb85 {
+    wrappedLhsCheckpanic = %128;
+    GOTO bb86;
+  }
+  bb86 {
+    %145 = ConstantLoad <nil>
+    %146 = %145 is nil
+    %146 ? bb87 : bb88;
+  }
+  bb87 {
+    %147 = ConstantLoad false
+    %148 = %147;
+    %149 = checkedValue(%148) -> bb89;
+  }
+  bb88 {
+    %144 = %145;
+    GOTO bb90;
+  }
+  bb89 {
+    %144 = %149;
+    GOTO bb90;
+  }
+  bb90 {
+    %150 = %144 is error
+    %150 ? bb91 : bb92;
+  }
+  bb91 {
+    panic %144;
+  }
+  bb92 {
+    %143 = %144;
+    GOTO bb93;
+  }
+  bb93 {
+    %142 = %143;
+    GOTO bb94;
+  }
+  bb94 {
+    outerCheckpanic = %142;
+    %152 = nonNil;
+    %153 = println(%152) -> bb95;
+  }
+  bb95 {
+    %154 = nonNilComposite;
+    %155 = println(%154) -> bb96;
+  }
+  bb96 {
+    %156 = fallback;
+    %157 = println(%156) -> bb97;
+  }
+  bb97 {
+    %158 = println(staticallyNonNil) -> bb98;
+  }
+  bb98 {
+    %159 = staticallyNil;
+    %160 = println(%159) -> bb99;
+  }
+  bb99 {
+    %161 = nested;
+    %162 = println(%161) -> bb100;
+  }
+  bb100 {
+    %163 = lazyOuterBranch;
+    %164 = println(%163) -> bb101;
+  }
+  bb101 {
+    %165 = println(mixedString) -> bb102;
+  }
+  bb102 {
+    %166 = println(mixedNil) -> bb103;
+  }
+  bb103 {
+    %167 = nilSubtypeResult;
+    %168 = println(%167) -> bb104;
+  }
+  bb104 {
+    %169 = optionalNeverResult;
+    %170 = println(%169) -> bb105;
+  }
+  bb105 {
+    %171 = println(lazyCheck) -> bb106;
+  }
+  bb106 {
+    %172 = failedCheck is error
+    %173 = %172;
+    %174 = println(%173) -> bb107;
+  }
+  bb107 {
+    %175 = println(outerNil) -> bb108;
+  }
+  bb108 {
+    %176 = outerError is error
+    %177 = %176;
+    %178 = println(%177) -> bb109;
+  }
+  bb109 {
+    %179 = println(lazyCheckpanic) -> bb110;
+  }
+  bb110 {
+    %180 = trappedCheckpanic is error
+    %181 = %180;
+    %182 = println(%181) -> bb111;
+  }
+  bb111 {
+    %183 = lhsCheckpanic is error
+    %184 = %183;
+    %185 = println(%184) -> bb112;
+  }
+  bb112 {
+    %186 = wrappedLhsCheckpanic is error
+    %187 = %186;
+    %188 = println(%187) -> bb113;
+  }
+  bb113 {
+    %189 = outerCheckpanic is error
+    %190 = %189;
+    %191 = println(%190) -> bb114;
+  }
+  bb114 {
+    %192 = println(lhsCalls) -> bb115;
+  }
+  bb115 {
+    %193 = println(rhsCalls) -> bb116;
+  }
+  bb116 {
+    return;
+  }
+  
+  error-table {
+    [bb50, bb57] -> bb58, %90
+    [bb59, bb66] -> bb67, %104
+    [bb68, bb75] -> bb76, %118
+    [bb77, bb84] -> bb85, %128
+    [bb86, bb93] -> bb94, %142
+  }
+}

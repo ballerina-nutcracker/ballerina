@@ -27,7 +27,7 @@ import (
 // its own destination buffer when encode/decode runs through url:encode/decode,
 // so the short-destination case is only observable by calling Transform directly.
 // All other url behaviour is exercised by the corpus tests in
-// corpus/bal/library/subset2/url-*.bal.
+// corpus/lib/subset2/url-*.bal.
 func TestAsciiTransformerShortDst(t *testing.T) {
 	t.Parallel()
 	// Destination smaller than the ASCII source forces ErrShortDst once dst fills.

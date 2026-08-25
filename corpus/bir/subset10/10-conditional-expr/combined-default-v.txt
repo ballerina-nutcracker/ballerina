@@ -1,0 +1,77 @@
+module $anon.. v 0.0.0;
+combined({| value: int, never... |}) -> int{
+  bb0 {
+    %3 = ConstantLoad value
+    %2 = input[%3];
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = combined($desugar$0) -> bb2;
+  }
+  bb2 {
+    %4 = %3;
+    %5 = println(%4) -> bb3;
+  }
+  bb3 {
+    %6 = ConstantLoad value
+    %7 = ConstantLoad 80
+    %8 = newMap {| value: int, never... |}{%6=%7}
+    %9 = combined(%8) -> bb4;
+  }
+  bb4 {
+    %10 = %9;
+    %11 = println(%10) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$default$0() -> {| value: int, never... |}{
+  bb0 {
+    %2 = ConstantLoad true
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    %3 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$desugar$0}
+    %1 = %3;
+    GOTO bb3;
+  }
+  bb2 {
+    %4 = ConstantLoad value
+    %5 = ConstantLoad 70
+    %6 = newMap {| value: int, never... |}{%4=%5}
+    %1 = %6;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %1;
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %2 = ConstantLoad true
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    %3 = ConstantLoad 50
+    %1 = %3;
+    GOTO bb3;
+  }
+  bb2 {
+    %4 = ConstantLoad 60
+    %1 = %4;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %1;
+    return;
+  }
+}

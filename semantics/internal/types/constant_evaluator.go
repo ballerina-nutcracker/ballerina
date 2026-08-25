@@ -60,6 +60,10 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 		return e.evaluateListConstructor(expr)
 	case *ast.BLangUnaryExpr:
 		return e.evaluateUnaryExpression(expr)
+	case *ast.BLangTernaryExpr:
+		return e.evaluateTernaryExpression(expr)
+	case *ast.BLangNilConditionalExpr:
+		return e.evaluateNilConditionalExpression(expr)
 	case *ast.BLangBinaryExpr:
 		ty := expr.GetDeterminedType()
 		if expr.OpKind == model.OperatorKind_ADD && !semtypes.IsZero(ty) && semtypes.IsSubtypeSimple(ty, semtypes.String) {
@@ -215,6 +219,32 @@ func (e *constantExpressionEvaluator) evaluateUnaryExpression(expr *ast.BLangUna
 		}
 	}
 	return nil, fmt.Errorf("unsupported constant unary operation %s on %T", expr.Operator, value)
+}
+
+func (e *constantExpressionEvaluator) evaluateTernaryExpression(expr *ast.BLangTernaryExpr) (values.BalValue, error) {
+	condition, err := e.evaluate(expr.Condition)
+	if err != nil {
+		return nil, err
+	}
+	conditionValue, ok := condition.(bool)
+	if !ok {
+		return nil, fmt.Errorf("constant conditional operand has type %T", condition)
+	}
+	if conditionValue {
+		return e.evaluate(expr.ThenExpr)
+	}
+	return e.evaluate(expr.ElseExpr)
+}
+
+func (e *constantExpressionEvaluator) evaluateNilConditionalExpression(expr *ast.BLangNilConditionalExpr) (values.BalValue, error) {
+	lhs, err := e.evaluate(expr.LhsExpr)
+	if err != nil {
+		return nil, err
+	}
+	if lhs != nil {
+		return lhs, nil
+	}
+	return e.evaluate(expr.RhsExpr)
 }
 
 func (e *constantExpressionEvaluator) evaluateBinaryExpression(expr *ast.BLangBinaryExpr) (values.BalValue, error) {

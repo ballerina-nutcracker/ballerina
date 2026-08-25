@@ -332,4 +332,52 @@
                     (invocation io println (
                       (invocation message expr:
                         (simple-var-ref maybeError) ()))))) ())
-              (block-stmt))))))))
+              (block-stmt
+                (var-def
+                  (variable laxMap (type
+                    (constrained-type
+                      (builtin-ref-type map)
+                      (builtin-ref-type json))) (expr
+                    (mapping-constructor-expr
+                      (key-value
+                        (literal x)
+                        (literal 10))
+                      (key-value
+                        (literal nilValue)
+                        (literal <nil>))))))
+                (var-def
+                  (variable laxMapX (type
+                    (builtin-ref-type json)) (expr
+                    (optional-field-based-access x
+                      (simple-var-ref laxMap)))))
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref laxMapX))))
+                (var-def
+                  (variable laxMapMissing (type
+                    (builtin-ref-type json)) (expr
+                    (optional-field-based-access missing
+                      (simple-var-ref laxMap)))))
+                (if
+                  (type-test-expr is
+                    (simple-var-ref laxMapMissing)
+                    (value-type null))
+                  (block-stmt
+                    (expression-stmt
+                      (invocation io println (
+                        (literal lax map missing))))) ())
+                (block-stmt
+                  (var-def
+                    (variable laxMapNil (type
+                      (builtin-ref-type json)) (expr
+                      (optional-field-based-access nilValue
+                        (simple-var-ref laxMap)))))
+                  (if
+                    (type-test-expr is
+                      (simple-var-ref laxMapNil)
+                      (value-type null))
+                    (block-stmt
+                      (expression-stmt
+                        (invocation io println (
+                          (literal lax map nil))))) ())
+                  (block-stmt))))))))))

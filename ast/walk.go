@@ -335,6 +335,17 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, node.RhsExpr.(BLangNode))
 		}
 
+	case *BLangTernaryExpr:
+		if node.Condition != nil {
+			Walk(v, node.Condition.(BLangNode))
+		}
+		if node.ThenExpr != nil {
+			Walk(v, node.ThenExpr.(BLangNode))
+		}
+		if node.ElseExpr != nil {
+			Walk(v, node.ElseExpr.(BLangNode))
+		}
+
 	case *BLangQueryExpr:
 		for i := range node.QueryClauseList {
 			Walk(v, node.QueryClauseList[i])
@@ -345,7 +356,7 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, node.Expr.(BLangNode))
 		}
 
-	case *BLangElvisExpr:
+	case *BLangNilConditionalExpr:
 		if node.LhsExpr != nil {
 			Walk(v, node.LhsExpr.(BLangNode))
 		}

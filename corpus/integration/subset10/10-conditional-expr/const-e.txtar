@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> const-e.bal:19:11
+   |
+19 | const A = runtimeCondition ? 1 : 2; // @error
+   |           ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> const-e.bal:20:18
+   |
+20 | const B = true ? runtimeValue : 2; // @error
+   |                  ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> const-e.bal:21:22
+   |
+21 | const C = true ? 1 : runtimeValue; // @error
+   |                      ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> const-e.bal:22:11
+   |
+22 | const D = runtimeValue ?: 1; // @error
+   |           ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> const-e.bal:23:17
+   |
+23 | const E = () ?: runtimeValue; // @error
+   |                 ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> const-e.bal:24:16
+   |
+24 | const F = 1 ?: runtimeValue; // @error
+   |                ^^^^^^^^^^^^

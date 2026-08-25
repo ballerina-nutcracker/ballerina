@@ -50,6 +50,8 @@ import (
 )
 
 const (
+	corpusLibBaseDir = "../corpus/lib"
+
 	corpusProjectBaseDir            = "../corpus/project"
 	corpusProjectIntegrationBaseDir = "../corpus/integration/project"
 
@@ -122,6 +124,21 @@ type testResult struct {
 
 func TestIntegration(t *testing.T) {
 	cases, err := testharness.GetSingleFileTestCases("../corpus/bal", test_util.Integration, test_util.SuffixAny)
+	if err != nil {
+		t.Fatalf("discovery: %v", err)
+	}
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			runHarnessCase(t, tc)
+		})
+	}
+}
+
+// TestLibIntegration runs the standard-library corpus end-to-end. These tests
+// carry no per-stage goldens, so this is the only place their output is pinned.
+func TestLibIntegration(t *testing.T) {
+	cases, err := testharness.GetNestedSingleFileTestCases(corpusLibBaseDir, test_util.Integration, test_util.SuffixAny)
 	if err != nil {
 		t.Fatalf("discovery: %v", err)
 	}

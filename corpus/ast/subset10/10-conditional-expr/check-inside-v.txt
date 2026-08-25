@@ -1,0 +1,115 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function number () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (literal 1))))
+  (function boolValue () (
+    (union-type
+      (value-type boolean)
+      (error-type)))
+    (block-function-body
+      (return
+        (literal true))))
+  (function failure () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal failure))))))
+  (function checkedOperands () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type int)) (expr
+          (ternary-expr
+            (checked-expr
+              (invocation boolValue ()))
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable b (type
+          (value-type int)) (expr
+          (ternary-expr
+            (literal true)
+            (checked-expr
+              (invocation number ()))
+            (literal 2)))))
+      (var-def
+        (variable c (type
+          (value-type int)) (expr
+          (ternary-expr
+            (literal false)
+            (checked-expr
+              (invocation failure ()))
+            (checked-expr
+              (invocation number ()))))))
+      (return
+        (binary-expr +
+          (binary-expr +
+            (simple-var-ref a)
+            (simple-var-ref b))
+          (simple-var-ref c)))))
+  (function selectedFailure () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (ternary-expr
+          (literal true)
+          (checked-expr
+            (invocation failure ()))
+          (literal 2)))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable fn (type
+          (function-type () (
+            (union-type
+              (value-type int)
+              (error-type))))) (expr
+          (ternary-expr
+            (literal true)
+            (lambda
+              (function $anonFunc$_0 () (
+                (union-type
+                  (value-type int)
+                  (error-type)))
+                (block-function-body
+                  (return
+                    (checked-expr
+                      (invocation number ()))))))
+            (lambda
+              (function $anonFunc$_1 () (
+                (union-type
+                  (value-type int)
+                  (error-type)))
+                (block-function-body
+                  (return
+                    (literal 0)))))))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation checkedOperands ())))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation selectedFailure ())
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation fn ()))))))))

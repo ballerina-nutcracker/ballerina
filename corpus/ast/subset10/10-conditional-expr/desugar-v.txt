@@ -1,0 +1,76 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable calls (type
+    (value-type int)) (expr
+    (literal 0)))
+  (function nullable () (
+    (union-type
+      (value-type int)
+      (value-type null)))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref calls)
+        (literal 1))
+      (return
+        (literal <nil>))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable absent (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal <nil>))))
+      (var-def
+        (variable liftedLhs (type
+          (value-type int)) (expr
+          (nil-conditional-expr
+            (group-expr
+              (binary-expr +
+                (simple-var-ref absent)
+                (literal 1)))
+            (literal 10)))))
+      (var-def
+        (variable liftedRhs (type
+          (value-type int)) (expr
+          (nil-conditional-expr
+            (literal <nil>)
+            (group-expr
+              (nil-conditional-expr
+                (group-expr
+                  (binary-expr +
+                    (simple-var-ref absent)
+                    (literal 1)))
+                (literal 20)))))))
+      (var-def
+        (variable present (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal 30))))
+      (var-def
+        (variable lazyRhs (type
+          (value-type int)) (expr
+          (nil-conditional-expr
+            (simple-var-ref present)
+            (group-expr
+              (nil-conditional-expr
+                (group-expr
+                  (binary-expr +
+                    (invocation nullable ())
+                    (literal 1)))
+                (literal 40)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref liftedLhs))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref liftedRhs))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref lazyRhs))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref calls)))))))

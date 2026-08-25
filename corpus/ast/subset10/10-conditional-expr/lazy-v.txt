@@ -1,0 +1,90 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable calls (type
+    (value-type int)) (expr
+    (literal 0)))
+  (function mark (
+    (variable value (type
+      (value-type boolean)))) (
+    (value-type boolean))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref calls)
+        (literal 1))
+      (return
+        (simple-var-ref value))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type boolean)) (expr
+          (binary-expr &&
+            (group-expr
+              (ternary-expr
+                (literal true)
+                (literal true)
+                (invocation mark (
+                  (literal false)))))
+            (invocation mark (
+              (literal true)))))))
+      (var-def
+        (variable b (type
+          (value-type boolean)) (expr
+          (binary-expr &&
+            (group-expr
+              (ternary-expr
+                (literal false)
+                (literal true)
+                (literal false)))
+            (group-expr
+              (ternary-expr
+                (literal true)
+                (invocation mark (
+                  (literal true)))
+                (invocation mark (
+                  (literal false)))))))))
+      (var-def
+        (variable c (type
+          (value-type boolean)) (expr
+          (binary-expr ||
+            (group-expr
+              (ternary-expr
+                (literal true)
+                (literal false)
+                (literal true)))
+            (group-expr
+              (ternary-expr
+                (literal false)
+                (invocation mark (
+                  (literal false)))
+                (invocation mark (
+                  (literal true)))))))))
+      (var-def
+        (variable d (type
+          (value-type boolean)) (expr
+          (binary-expr ||
+            (literal true)
+            (group-expr
+              (ternary-expr
+                (literal true)
+                (invocation mark (
+                  (literal false)))
+                (invocation mark (
+                  (literal false)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref d))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref calls)))))))

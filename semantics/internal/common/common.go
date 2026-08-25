@@ -154,6 +154,13 @@ func ValidateConstantExpr(ctx *context.CompilerContext, expr ast.BLangExpression
 	case *ast.BLangBinaryExpr:
 		ValidateConstantExpr(ctx, e.LhsExpr, onNonConst)
 		ValidateConstantExpr(ctx, e.RhsExpr, onNonConst)
+	case *ast.BLangTernaryExpr:
+		ValidateConstantExpr(ctx, e.Condition, onNonConst)
+		ValidateConstantExpr(ctx, e.ThenExpr, onNonConst)
+		ValidateConstantExpr(ctx, e.ElseExpr, onNonConst)
+	case *ast.BLangNilConditionalExpr:
+		ValidateConstantExpr(ctx, e.LhsExpr, onNonConst)
+		ValidateConstantExpr(ctx, e.RhsExpr, onNonConst)
 	case *ast.BLangListConstructorExpr:
 		for _, member := range e.Exprs {
 			ValidateConstantExpr(ctx, member, onNonConst)

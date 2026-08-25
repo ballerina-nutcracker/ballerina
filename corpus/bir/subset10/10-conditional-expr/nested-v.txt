@@ -1,0 +1,198 @@
+module $anon.. v 0.0.0;
+trace  string;
+mark(string,int) -> int{
+  bb0 {
+    %3 = + trace label;
+    trace = %3;
+    %0 = value;
+    return;
+  }
+}
+add(int,int) -> int{
+  bb0 {
+    %4 = a;
+    %5 = b;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad false
+    flag = %1;
+    %4 = ConstantLoad 10
+    %5 = %4;
+    flag ? bb1 : bb2;
+  }
+  bb1 {
+    %7 = ConstantLoad x
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %10 = mark(%7,%9) -> bb4;
+  }
+  bb2 {
+    %11 = ConstantLoad y
+    %12 = ConstantLoad 2
+    %13 = %12;
+    %14 = mark(%11,%13) -> bb5;
+  }
+  bb3 {
+    %15 = %6;
+    %3 = + %5 %15;
+    arithmetic = %3;
+    flag ? bb6 : bb7;
+  }
+  bb4 {
+    %6 = %10;
+    GOTO bb3;
+  }
+  bb5 {
+    %6 = %14;
+    GOTO bb3;
+  }
+  bb6 {
+    %18 = ConstantLoad 3
+    %17 = %18;
+    GOTO bb8;
+  }
+  bb7 {
+    %19 = ConstantLoad 4
+    %17 = %19;
+    GOTO bb8;
+  }
+  bb8 {
+    %20 = ConstantLoad 5
+    %21 = ConstantLoad 2
+    %22 = newArray [int...][%21]{%17, %20}
+    values = %22;
+    %25 = ConstantLoad 0
+    flag ? bb9 : bb10;
+  }
+  bb9 {
+    %27 = ConstantLoad 6
+    %26 = %27;
+    GOTO bb11;
+  }
+  bb10 {
+    %28 = ConstantLoad 7
+    %26 = %28;
+    GOTO bb11;
+  }
+  bb11 {
+    %29 = ConstantLoad 1
+    %30 = newArray [6|7, never...][%29]{%26}
+    %24 = %30[%25];
+    indexed = %24;
+    %32 = ConstantLoad value
+    flag ? bb12 : bb13;
+  }
+  bb12 {
+    %34 = ConstantLoad 8
+    %33 = %34;
+    GOTO bb14;
+  }
+  bb13 {
+    %35 = ConstantLoad 9
+    %33 = %35;
+    GOTO bb14;
+  }
+  bb14 {
+    %36 = newMap {| int... |}{%32=%33}
+    mapped = %36;
+    flag ? bb15 : bb16;
+  }
+  bb15 {
+    %39 = ConstantLoad 1
+    %38 = %39;
+    GOTO bb17;
+  }
+  bb16 {
+    %41 = ConstantLoad true
+    %41 ? bb18 : bb19;
+  }
+  bb17 {
+    associated = %38;
+    %45 = ConstantLoad a
+    %46 = ConstantLoad 10
+    %47 = %46;
+    %48 = mark(%45,%47) -> bb21;
+  }
+  bb18 {
+    %42 = ConstantLoad 2
+    %40 = %42;
+    GOTO bb20;
+  }
+  bb19 {
+    %43 = ConstantLoad 3
+    %40 = %43;
+    GOTO bb20;
+  }
+  bb20 {
+    %38 = %40;
+    GOTO bb17;
+  }
+  bb21 {
+    %49 = %48;
+    flag ? bb22 : bb23;
+  }
+  bb22 {
+    %51 = ConstantLoad b
+    %52 = ConstantLoad 20
+    %53 = %52;
+    %54 = mark(%51,%53) -> bb25;
+  }
+  bb23 {
+    %55 = ConstantLoad c
+    %56 = ConstantLoad 30
+    %57 = %56;
+    %58 = mark(%55,%57) -> bb26;
+  }
+  bb24 {
+    %59 = %50;
+    %60 = add(%49,%59) -> bb27;
+  }
+  bb25 {
+    %50 = %54;
+    GOTO bb24;
+  }
+  bb26 {
+    %50 = %58;
+    GOTO bb24;
+  }
+  bb27 {
+    called = %60;
+    %62 = arithmetic;
+    %63 = println(%62) -> bb28;
+  }
+  bb28 {
+    %65 = ConstantLoad 0
+    %64 = values[%65];
+    %66 = %64;
+    %67 = println(%66) -> bb29;
+  }
+  bb29 {
+    %68 = indexed;
+    %69 = println(%68) -> bb30;
+  }
+  bb30 {
+    %71 = ConstantLoad value
+    %70 = mapped[%71];
+    %72 = %70;
+    %73 = println(%72) -> bb31;
+  }
+  bb31 {
+    %74 = associated;
+    %75 = println(%74) -> bb32;
+  }
+  bb32 {
+    %76 = called;
+    %77 = println(%76) -> bb33;
+  }
+  bb33 {
+    %78 = println(trace) -> bb34;
+  }
+  bb34 {
+    return;
+  }
+}

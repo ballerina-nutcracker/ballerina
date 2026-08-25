@@ -38,8 +38,7 @@ type basicBlock struct {
 	// that don't terminate normally (panic) and for those that mark the end of function scope (return) this
 	// will be empty
 	children []int
-	// Nodes inside this block. Almost always these are statements but ternary expression will have expressions
-	// as children.
+	// Nodes inside this block.
 	nodes []ast.Node
 }
 
@@ -224,8 +223,9 @@ func (analyzer *functionControlFlowAnalyzer) analyzeBody(body ast.FunctionBodyNo
 }
 
 func (analyzer *functionControlFlowAnalyzer) analyzeExprFunctionBody(fnBody *ast.BLangExprFunctionBody) {
-	// TODO: we need to deal with ternary expression which will have control flow so bbs
-	panic("unimplemented")
+	rootBB := basicBlock{}
+	analyzer.bbs = append(analyzer.bbs, rootBB)
+	analyzer.addNode(rootBB.ref(), fnBody.Expr)
 }
 
 func (analyzer *functionControlFlowAnalyzer) analyzeBlockFunctionBody(fnBody *ast.BLangBlockFunctionBody) {
@@ -289,11 +289,6 @@ func (analyzer *functionControlFlowAnalyzer) addNode(bb bbRef, node ast.Node) {
 
 // analyzeStatement dispatches to the appropriate handler based on statement type
 func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt ast.StatementNode) stmtEffect {
-	ternaryChecker := &ternaryExpressionChecker{}
-	ast.Walk(ternaryChecker, stmt.(ast.BLangNode))
-	if ternaryChecker.hasTernaryExpression {
-		return createTernaryExpressionEffect(analyzer, curBB, ternaryChecker.ifTrue, ternaryChecker.ifFalse)
-	}
 	switch s := stmt.(type) {
 	case *ast.BLangReturn:
 		return analyzer.analyzeReturn(curBB, s)
@@ -341,32 +336,6 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 		analyzer.addNode(curBB, stmt)
 		return continueEffect(curBB)
 	}
-}
-
-func createTernaryExpressionEffect(analyzer *functionControlFlowAnalyzer, curBB bbRef, expressionNode1, expressionNode2 ast.BLangExpression) stmtEffect {
-	panic("unimplemented")
-}
-
-type ternaryExpressionChecker struct {
-	hasTernaryExpression bool
-	ifTrue               ast.BLangExpression
-	ifFalse              ast.BLangExpression
-}
-
-var _ ast.Visitor = &ternaryExpressionChecker{}
-
-func (c *ternaryExpressionChecker) Visit(node ast.BLangNode) ast.Visitor {
-	if c.hasTernaryExpression {
-		return nil
-	}
-	if _, ok := node.(*ast.BLangElvisExpr); ok {
-		panic("unimplemented")
-	}
-	return c
-}
-
-func (c *ternaryExpressionChecker) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
-	return nil
 }
 
 // Terminal statement handlers - these terminate control flow

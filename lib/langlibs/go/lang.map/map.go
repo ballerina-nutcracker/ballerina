@@ -33,6 +33,16 @@ func mapLength(_ *extern.Context, args []values.BalValue) (values.BalValue, erro
 	return int64(m.Len()), nil
 }
 
+func mapGet(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	m := args[0].(*values.Map)
+	key := args[1].(string)
+	value, found := m.Get(key)
+	if !found {
+		panic(values.NewErrorWithMessage("missing map key"))
+	}
+	return value, nil
+}
+
 func mapKeys(env semtypes.Env) extern.NativeFunc {
 	ld := semtypes.NewListDefinition()
 	stringArrayTy := ld.Define(env, nil, semtypes.ListRest(semtypes.String))
@@ -59,6 +69,7 @@ func mapRemove(ctx *extern.Context, args []values.BalValue) (values.BalValue, er
 
 func initMapModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", mapLength)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "get", mapGet)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "keys", mapKeys(rt.GetTypeEnv()))
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "remove", mapRemove)
 }

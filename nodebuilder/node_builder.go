@@ -2175,18 +2175,24 @@ func (n *nodeBuilder) transformForEachStatement(forEachStatementNode *st.ForEach
 }
 
 func (n *nodeBuilder) transformBinaryExpression(binaryBLangExpression *st.BinaryExpressionNode) ast.BLangNode {
+	if binaryBLangExpression.Operator() == nil {
+		bLBinaryExpr := ast.BLangBinaryExpr{}
+		bLBinaryExpr.SetPosition(n.getPosition(binaryBLangExpression))
+		n.cx.InternalError("binary expression is missing an operator token", bLBinaryExpr.GetPosition())
+		return &bLBinaryExpr
+	}
 	if binaryBLangExpression.Operator().Kind() == st.ELVIS_TOKEN {
-		panic("transformBinaryExpression: elvis operator not supported")
+		return ast.NewBLangNilConditionalExpr(
+			n.getPosition(binaryBLangExpression),
+			n.createExpression(binaryBLangExpression.LhsExpr()),
+			n.createExpression(binaryBLangExpression.RhsExpr()),
+		)
 	}
 
 	bLBinaryExpr := ast.BLangBinaryExpr{}
 	bLBinaryExpr.SetPosition(n.getPosition(binaryBLangExpression))
 	bLBinaryExpr.LhsExpr = n.createExpression(binaryBLangExpression.LhsExpr())
 	bLBinaryExpr.RhsExpr = n.createExpression(binaryBLangExpression.RhsExpr())
-	if binaryBLangExpression.Operator() == nil {
-		n.cx.InternalError("binary expression is missing an operator token", bLBinaryExpr.GetPosition())
-		return &bLBinaryExpr
-	}
 	bLBinaryExpr.OpKind = model.OperatorKindValueFrom(binaryBLangExpression.Operator().Text())
 	return &bLBinaryExpr
 }
@@ -4461,7 +4467,12 @@ func (n *nodeBuilder) transformOptionalFieldAccessExpression(optionalFieldAccess
 }
 
 func (n *nodeBuilder) transformConditionalExpression(conditionalBLangExpression *st.ConditionalExpressionNode) ast.BLangNode {
-	panic("transformConditionalExpression unimplemented")
+	return ast.NewBLangTernaryExpr(
+		n.getPosition(conditionalBLangExpression),
+		n.createExpression(conditionalBLangExpression.LhsExpression()),
+		n.createExpression(conditionalBLangExpression.MiddleExpression()),
+		n.createExpression(conditionalBLangExpression.EndExpression()),
+	)
 }
 
 func (n *nodeBuilder) transformEnumDeclaration(enumDeclarationNode *st.EnumDeclarationNode) ast.BLangNode {

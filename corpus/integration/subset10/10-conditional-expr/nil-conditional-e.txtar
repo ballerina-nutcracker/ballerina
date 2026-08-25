@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> nil-conditional-e.bal:18:13
+   |
+18 |     int _ = value ?: 1; // @error
+   |             ^^^^^^^^^^

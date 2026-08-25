@@ -1,0 +1,24 @@
+-- stdout --
+10
+30
+42
+value
+50
+20
+60
+mixed
+1
+70
+80
+120
+true
+100
+true
+130
+true
+true
+true
+true
+5
+1
+-- stderr --

@@ -1,0 +1,145 @@
+(package
+  (import-package ballerina io (as io))
+  (function acceptInt (
+    (variable value (type
+      (value-type int)))) (
+    (value-type string))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref value))
+      (return
+        (literal int))))
+  (function acceptString (
+    (variable value (type
+      (value-type string)))) (
+    (value-type string))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref value))
+      (return
+        (literal string))))
+  (function classify (
+    (variable value (type
+      (union-type
+        (value-type int)
+        (value-type string))))
+    (variable result (type
+      (value-type string)) (expr
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type int))
+        (invocation acceptInt (
+          (simple-var-ref value)))
+        (invocation acceptString (
+          (simple-var-ref value))))))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (simple-var-ref result))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 1))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation classify (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (literal one))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation classify (
+            (simple-var-ref $desugar$2)
+            (simple-var-ref $desugar$3))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (lambda
+            (function $default$1 (
+              (variable value (type
+                (value-type )))) ()
+              (block-function-body
+                (return
+                  (ternary-expr
+                    (type-test-expr is
+                      (simple-var-ref value)
+                      (value-type int))
+                    (invocation acceptInt (
+                      (simple-var-ref value)))
+                    (invocation acceptString (
+                      (simple-var-ref value)))))))))))
+      (var-def
+        (variable fn (type
+          (function-type (
+            (union-type
+              (value-type int)
+              (value-type string))
+            (value-type string)) (
+            (value-type string)))) (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable actual (type
+                (union-type
+                  (value-type int)
+                  (value-type string))))
+              (variable supplied (type
+                (value-type string)) (expr
+                (literal unused)))) (
+              (value-type string))
+              (block-function-body
+                (assignment
+                  (wildcard-binding-pattern)
+                  (simple-var-ref actual))
+                (return
+                  (simple-var-ref supplied))))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (literal 2))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation $desugar$4 (
+            (simple-var-ref $desugar$5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fn (
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (literal two))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation $desugar$4 (
+            (simple-var-ref $desugar$7))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fn (
+            (simple-var-ref $desugar$7)
+            (simple-var-ref $desugar$8))))))))
+  (function $default$0 (
+    (variable value (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref value)
+            (value-type int))
+          (invocation acceptInt (
+            (simple-var-ref value)))
+          (invocation acceptString (
+            (simple-var-ref value))))))))
