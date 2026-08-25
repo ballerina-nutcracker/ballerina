@@ -12483,7 +12483,7 @@ func (b *ballerinaParser) parseTypedBindingPatternOrMemberAccess(typeDescOrExpr 
 			var memberList []st.STNode
 			memberList = append(memberList, b.getBindingPattern(member, true))
 			memberList = append(memberList, memberEnd)
-			bindingPattern, memberList := b.parseAsListBindingPattern(openBracket, memberList) //nolint:staticcheck,ineffassign // memberList will be used when list binding pattern is fully implemented
+			bindingPattern, _ := b.parseAsListBindingPattern(openBracket, memberList)
 			typeDesc := b.getTypeDescFromExpr(typeDescOrExpr)
 			return st.CreateTypedBindingPatternNode(typeDesc, bindingPattern)
 		}
@@ -12745,11 +12745,10 @@ func (b *ballerinaParser) mergeTypesWithIntersection(lhsTypeDesc st.STNode, bitw
 				b.internalError("expected *st.STUnionTypeDescriptorNode")
 				return st.CreateEmptyNode()
 			}
-			//nolint:staticcheck // rhsTypeDesc reassigned but not yet used in return path
 			rhsTypeDesc = b.replaceLeftMostUnionWithAIntersection(lhsUnionTypeDesc.RightTypeDesc,
 				bitwiseAndToken, rhsUnionTypeDesc)
-			return b.replaceLeftMostUnionWithAUnion(lhsUnionTypeDesc.LeftTypeDesc,
-				lhsUnionTypeDesc.PipeToken, rhsUnionTypeDesc)
+			return b.createUnionTypeDesc(lhsUnionTypeDesc.LeftTypeDesc,
+				lhsUnionTypeDesc.PipeToken, rhsTypeDesc)
 		}
 	}
 	if rhsTypeDesc.Kind() == st.UNION_TYPE_DESC {

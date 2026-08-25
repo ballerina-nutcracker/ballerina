@@ -1842,12 +1842,6 @@ func (n *nodeBuilder) createBLangVarDef(location diagnostics.Location, typedBind
 
 	variable := n.getBLangVariableNode(bindingPattern, location)
 
-	var qualifiers []st.Token
-	if finalKeyword != nil {
-		qualifiers = append(qualifiers, finalKeyword) //nolint:staticcheck,ineffassign // qualifierList creation not yet implemented
-	}
-	// qualifierList := st.CreateNodeListWithFacade(qualifiers)
-
 	switch bindingPattern.Kind() {
 	case st.CAPTURE_BINDING_PATTERN, st.WILDCARD_BINDING_PATTERN:
 		var expr ast.BLangActionOrExpression
