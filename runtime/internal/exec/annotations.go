@@ -48,20 +48,22 @@ func resolveAnnotationValues(ctx *extern.Context, annotations values.AnnotationV
 	return resolved, true
 }
 
-// RecordFieldAnnotations resolves the runtime-visible annotation values attached
-// to the field named field of the record type td denotes. The second return is
-// false if the field carries no annotations or a runtime annotation value could
+// TypeAnnotations resolves the runtime-visible annotations of the type td
+// denotes: those attached to the type itself and those attached to each of its
+// record fields. The second return is false if a runtime annotation value could
 // not be loaded.
-func RecordFieldAnnotations(ctx *extern.Context, td *values.TypeDesc, field string) (values.AnnotationValues, bool) {
-	annotations, ok := td.FieldAnnotations[field]
+func TypeAnnotations(ctx *extern.Context, td *values.TypeDesc) (extern.TypeAnnotations, bool) {
+	annotations, ok := resolveAnnotationValues(ctx, td.Annotations)
 	if !ok {
-		return values.NewAnnotationValues(), false
+		return extern.TypeAnnotations{}, false
 	}
-	return resolveAnnotationValues(ctx, annotations)
-}
-
-// AnnotatedRecordFields returns the names of the record fields of td that carry
-// at least one runtime-visible annotation, in a deterministic order.
-func AnnotatedRecordFields(_ *extern.Context, td *values.TypeDesc) []string {
-	return td.FieldAnnotations.SortedFields()
+	fields := make(map[string]values.AnnotationValues, len(td.FieldAnnotations))
+	for field, fieldAnnotations := range td.FieldAnnotations {
+		resolved, ok := resolveAnnotationValues(ctx, fieldAnnotations)
+		if !ok {
+			return extern.TypeAnnotations{}, false
+		}
+		fields[field] = resolved
+	}
+	return extern.TypeAnnotations{Annotations: annotations, Fields: fields}, true
 }

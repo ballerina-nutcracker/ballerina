@@ -19,13 +19,23 @@ type Meta record {|
 |};
 
 annotation Meta fieldMeta on record field;
+annotation Meta[] repeatable on record field;
 annotation marker on record field;
+
+function runtimeName() returns string {
+    return "computed";
+}
 
 type Person record {|
     @fieldMeta {name: "person-name"}
     string name;
     @marker
     int age;
+    @repeatable {name: "one"}
+    @repeatable {name: "two"}
+    string tags;
+    @fieldMeta {name: runtimeName()}
+    string dynamic;
     string plain;
 |};
 

@@ -655,7 +655,11 @@ func (bw *birWriter) writeConstValueByTag(buf *bytes.Buffer, tag typeTag, value 
 		}
 		bw.writeType(buf, td.Type)
 		bw.writeAnnotationValues(buf, td.Annotations)
-		fields := td.FieldAnnotations.SortedFields()
+		fields := make([]string, 0, len(td.FieldAnnotations))
+		for field := range td.FieldAnnotations {
+			fields = append(fields, field)
+		}
+		sort.Strings(fields)
 		bw.writeLength(buf, len(fields))
 		for _, field := range fields {
 			bw.writeStringCPEntry(buf, field)

@@ -18,8 +18,11 @@ package corpus
 
 import (
 	"bytes"
+	"fmt"
 	"maps"
 	"slices"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -31,8 +34,9 @@ import (
 
 // TestRecordFieldAnnotationsSurviveBIRRoundtrip checks that the per-field
 // annotations baked into a typedesc constant are preserved by BIR
-// serialization. Record field annotations are only reachable from native code,
-// so the corpus output-comparison roundtrip cannot observe them.
+// serialization, values included. Record field annotations are only reachable
+// from native code, so the corpus output-comparison roundtrip cannot observe
+// them.
 func TestRecordFieldAnnotationsSurviveBIRRoundtrip(t *testing.T) {
 	const fixture = "testdata/record-field-annotations.bal"
 
@@ -43,7 +47,7 @@ func TestRecordFieldAnnotationsSurviveBIRRoundtrip(t *testing.T) {
 	}
 
 	rootPkg := birPkgs[len(birPkgs)-1]
-	before := recordFieldAnnotationKeys(rootPkg)
+	before := recordFieldAnnotationDigest(rootPkg)
 	if len(before) == 0 {
 		t.Fatalf("no typedesc constant with field annotations found in %s", fixture)
 	}
@@ -58,22 +62,19 @@ func TestRecordFieldAnnotationsSurviveBIRRoundtrip(t *testing.T) {
 		t.Fatalf("BIR deserialization failed: %v", err)
 	}
 
-	after := recordFieldAnnotationKeys(deserialized)
-	if len(before) != len(after) {
-		t.Fatalf("typedesc constant count changed: before %d, after %d", len(before), len(after))
-	}
-	for i, want := range before {
-		if got := after[i]; !maps.Equal(want, got) {
-			t.Errorf("field annotations for typedesc %d not preserved\nbefore: %v\nafter:  %v", i, want, got)
-		}
+	after := recordFieldAnnotationDigest(deserialized)
+	if !slices.Equal(before, after) {
+		t.Errorf("field annotations not preserved across the BIR roundtrip\nbefore:\n%s\nafter:\n%s",
+			strings.Join(before, "\n"), strings.Join(after, "\n"))
 	}
 }
 
-// recordFieldAnnotationKeys collects, for every typedesc constant loaded by the
-// package, a field name -> sorted annotation keys mapping. Values are compared
-// by key because annotation values are not comparable by ==.
-func recordFieldAnnotationKeys(pkg *bir.BIRPackage) []map[string]string {
-	var result []map[string]string
+// recordFieldAnnotationDigest renders every typedesc constant loaded by the
+// package as deterministic "field key=value" lines, so that a roundtrip
+// comparison catches a dropped or corrupted annotation value and not just a
+// missing key.
+func recordFieldAnnotationDigest(pkg *bir.BIRPackage) []string {
+	var digest []string
 	collect := func(fn *bir.BIRFunction) {
 		if fn == nil {
 			return
@@ -88,12 +89,13 @@ func recordFieldAnnotationKeys(pkg *bir.BIRPackage) []map[string]string {
 				if !ok || len(td.FieldAnnotations) == 0 {
 					continue
 				}
-				entry := make(map[string]string, len(td.FieldAnnotations))
-				for _, field := range td.FieldAnnotations.SortedFields() {
-					keys := slices.Sorted(maps.Keys(td.FieldAnnotations[field]))
-					entry[field] = joinKeys(keys)
+				for _, field := range slices.Sorted(maps.Keys(td.FieldAnnotations)) {
+					annotations := td.FieldAnnotations[field]
+					for _, key := range slices.Sorted(maps.Keys(annotations)) {
+						digest = append(digest, fmt.Sprintf("%s %s=%s", field, key,
+							renderAnnotationValue(annotations[key])))
+					}
 				}
-				result = append(result, entry)
 			}
 		}
 	}
@@ -101,16 +103,36 @@ func recordFieldAnnotationKeys(pkg *bir.BIRPackage) []map[string]string {
 		collect(&pkg.Functions[i])
 	}
 	collect(pkg.InitFunction)
-	return result
+	sort.Strings(digest)
+	return digest
 }
 
-func joinKeys(keys []string) string {
-	out := ""
-	for i, key := range keys {
-		if i > 0 {
-			out += ","
+// renderAnnotationValue renders an annotation value structurally. Annotation
+// values are not comparable by ==, and a mapping's own String() is not stable
+// across a roundtrip for our purposes, so mappings and lists are rendered
+// field by field.
+func renderAnnotationValue(value values.AnnotationValue) string {
+	switch value := value.(type) {
+	case *values.Map:
+		keys := value.Keys()
+		sort.Strings(keys)
+		parts := make([]string, 0, len(keys))
+		for _, key := range keys {
+			entry, _ := value.Get(key)
+			parts = append(parts, fmt.Sprintf("%s:%s", key, renderAnnotationValue(entry)))
 		}
-		out += key
+		return "{" + strings.Join(parts, ",") + "}"
+	case *values.List:
+		parts := make([]string, 0, value.Len())
+		for i := 0; i < value.Len(); i++ {
+			parts = append(parts, renderAnnotationValue(value.Get(i)))
+		}
+		return "[" + strings.Join(parts, ",") + "]"
+	case *values.RuntimeAnnotationValueRef:
+		// A non-constant annotation value is a reference to a module global; the
+		// reference itself is what the codec has to preserve.
+		return "ref(" + value.GlobalLookupKey() + ")"
+	default:
+		return fmt.Sprintf("%v", value)
 	}
-	return out
 }

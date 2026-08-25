@@ -79,6 +79,19 @@ type Overriding record {|
     string tag;
 |};
 
+// A record alias carries the aliased record's field annotations, through a
+// chain of aliases as well.
+type Alias Base;
+
+type AliasOfAlias Alias;
+
+// A field the including record declares itself is a new declaration: it carries
+// exactly the annotations written on it, and none of the inherited ones.
+type Shadowing record {|
+    *Base;
+    string id;
+|};
+
 type Repeated record {|
     @repeatable {name: "one"}
     @repeatable {name: "two"}
@@ -102,6 +115,10 @@ public function main() {
     io:println(annotatedFields(Diamond)); //@output tag
     io:println(fieldMetaName(Diamond, "tag")); //@output diamond-tag
     io:println(fieldMetaName(Overriding, "tag")); //@output overridden
+    io:println(fieldMetaName(Alias, "id")); //@output base-id
+    io:println(fieldMetaName(AliasOfAlias, "id")); //@output base-id
+    io:println(annotatedFields(Shadowing)); //@output
+    io:println(fieldMetaName(Shadowing, "id")); //@output <absent>
     io:println(repeatableNames(Repeated, "tags")); //@output one|two
     io:println(annotatedFields(WithRest)); //@output known
 }

@@ -24,7 +24,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
-	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 type LiteralKind uint8
@@ -414,11 +413,7 @@ type (
 		// Constraint is the semtype of the type this typedesc denotes — the T in
 		// typedesc<T>. BIR lowers the expression to a TypeDesc{Type: Constraint}
 		// constant.
-		Constraint       semtypes.SemType
-		AnnotationValues values.AnnotationValues
-		// FieldAnnotationValues holds the annotations attached to the fields of
-		// the record type this typedesc denotes, keyed by field name.
-		FieldAnnotationValues values.FieldAnnotationValues
+		Constraint semtypes.SemType
 	}
 
 	BLangInferredTypedescDefault struct {

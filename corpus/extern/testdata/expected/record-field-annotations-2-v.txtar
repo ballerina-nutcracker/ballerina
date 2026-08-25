@@ -9,6 +9,10 @@ middle-mid
 tag
 diamond-tag
 overridden
+base-id
+base-id
+
+<absent>
 one|two
 known
 -- stderr --

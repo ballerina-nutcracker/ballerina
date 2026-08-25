@@ -16,8 +16,6 @@
 
 package values
 
-import "sort"
-
 // AnnotationValue is the evaluated Ballerina value stored for an annotation.
 type AnnotationValue = BalValue
 
@@ -59,14 +57,4 @@ func (f FieldAnnotationValues) Set(field string, key string, value AnnotationVal
 		f[field] = annotations
 	}
 	annotations[key] = value
-}
-
-// SortedFields returns the annotated field names in a deterministic order.
-func (f FieldAnnotationValues) SortedFields() []string {
-	fields := make([]string, 0, len(f))
-	for field := range f {
-		fields = append(fields, field)
-	}
-	sort.Strings(fields)
-	return fields
 }

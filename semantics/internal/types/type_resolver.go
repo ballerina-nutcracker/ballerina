@@ -1206,7 +1206,7 @@ func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage)
 			}
 		}
 	}
-	inheritIncludedRecordFieldAnnotations(t, pkg)
+	propagateRecordFieldAnnotations(t, pkg)
 	for i := range pkg.ClassDefinitions {
 		classDef := pkg.ClassDefinitions[i]
 		classPoint := ast.PointClass
@@ -1317,32 +1317,63 @@ func resolveInvokableAnnotationAttachments(
 	}
 }
 
-// inheritIncludedRecordFieldAnnotations copies the annotations of included
-// record fields onto the records that include them, so that
+// recordFieldAnnotationSource describes where a type definition can pick up
+// field annotations other than its own: the records it includes, or the type it
+// aliases. declaredFields names the fields the definition declares itself, which
+// shadow anything inherited for the same field.
+type recordFieldAnnotationSource struct {
+	sources        []model.SymbolRef
+	declaredFields map[string]bool
+}
+
+// propagateRecordFieldAnnotations copies the annotations of included record
+// fields onto the records that include them, so that
 //
 //	type Derived record {| *Base; |};
 //
 // sees the annotations declared on Base's fields. jBallerina drops them at the
 // inclusion boundary; we keep them, because a field pulled in by an inclusion is
 // the same field, and validation driven by field annotations would otherwise
-// silently skip every included field.
+// silently skip every included field. Aliases (type Alias Base) carry them for
+// the same reason.
+//
+// A field the including record declares itself shadows the inherited one, even
+// when it carries no annotations of its own: it is a new declaration, and its
+// annotations are exactly the ones written on it.
 //
 // This runs as a second pass so that it does not depend on the order type
-// definitions appear in the source. Inclusions of types from other modules need
-// no recursion: those annotations were already merged when that module was
-// compiled, and reach us through the symbol pool.
-func inheritIncludedRecordFieldAnnotations(t typeResolver, pkg *ast.BLangPackage) {
-	inclusions := make(map[model.SymbolRef][]model.SymbolRef)
+// definitions appear in the source. Sources in other modules need no recursion:
+// their annotations were already merged when that module was compiled, and reach
+// us through the symbol pool.
+func propagateRecordFieldAnnotations(t typeResolver, pkg *ast.BLangPackage) {
+	sources := make(map[model.SymbolRef]recordFieldAnnotationSource)
 	for i := range pkg.TypeDefinitions {
 		defn := pkg.TypeDefinitions[i]
-		record, ok := defn.GetTypeData().TypeDescriptor.(*ast.BLangRecordType)
-		if !ok || len(record.Inclusions) == 0 || !ast.SymbolIsSet(defn) {
+		if !ast.SymbolIsSet(defn) {
 			continue
 		}
-		inclusions[defn.Symbol()] = record.Inclusions
+		switch typeDesc := defn.GetTypeData().TypeDescriptor.(type) {
+		case *ast.BLangRecordType:
+			if len(typeDesc.Inclusions) == 0 {
+				continue
+			}
+			declared := make(map[string]bool)
+			for name := range typeDesc.FieldPtrs() {
+				declared[name] = true
+			}
+			sources[defn.Symbol()] = recordFieldAnnotationSource{
+				sources:        typeDesc.Inclusions,
+				declaredFields: declared,
+			}
+		case *ast.BLangUserDefinedType:
+			if !ast.SymbolIsSet(typeDesc) {
+				continue
+			}
+			sources[defn.Symbol()] = recordFieldAnnotationSource{sources: []model.SymbolRef{typeDesc.Symbol()}}
+		}
 	}
-	for symbol := range inclusions {
-		inherited := includedRecordFieldAnnotations(t, symbol, inclusions, make(map[model.SymbolRef]bool))
+	for symbol := range sources {
+		inherited := propagatedRecordFieldAnnotations(t, symbol, sources, make(map[model.SymbolRef]bool))
 		for field, annotations := range inherited {
 			for key, value := range annotations {
 				t.compilerContext().SetRecordFieldAnnotationValue(symbol, field, key, value)
@@ -1351,24 +1382,31 @@ func inheritIncludedRecordFieldAnnotations(t typeResolver, pkg *ast.BLangPackage
 	}
 }
 
-// includedRecordFieldAnnotations returns the field annotations visible on the
-// record type at symbol: those reachable through its inclusions, overlaid by the
-// ones declared on its own fields. The visiting set keeps a cyclic inclusion
-// chain from recursing forever.
-func includedRecordFieldAnnotations(
+// propagatedRecordFieldAnnotations returns the field annotations visible on the
+// type at symbol: those reachable through its inclusions or alias target, minus
+// the fields it redeclares, overlaid by the ones declared on its own fields.
+func propagatedRecordFieldAnnotations(
 	t typeResolver,
 	symbol model.SymbolRef,
-	inclusions map[model.SymbolRef][]model.SymbolRef,
+	sources map[model.SymbolRef]recordFieldAnnotationSource,
 	visiting map[model.SymbolRef]bool,
 ) values.FieldAnnotationValues {
 	merged := values.NewFieldAnnotationValues()
 	if visiting[symbol] {
+		// Cyclic inclusions and alias chains are rejected before annotation
+		// resolution, so reaching this means that invariant no longer holds and
+		// the metadata we would emit is incomplete.
+		t.internalError("cyclic type reference while propagating record field annotations", diagnostics.Location{})
 		return merged
 	}
 	visiting[symbol] = true
 	defer delete(visiting, symbol)
-	for _, included := range inclusions[symbol] {
-		for field, annotations := range includedRecordFieldAnnotations(t, included, inclusions, visiting) {
+	source := sources[symbol]
+	for _, from := range source.sources {
+		for field, annotations := range propagatedRecordFieldAnnotations(t, from, sources, visiting) {
+			if source.declaredFields[field] {
+				continue
+			}
 			for key, value := range annotations {
 				merged.Set(field, key, value)
 			}
@@ -3817,8 +3855,6 @@ func resolveTypedescExpr(t typeResolver, chain *binding, e *ast.BLangTypedescExp
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	e.Constraint = constraint
-	e.AnnotationValues = annotationValuesForTypeDescriptor(t, typeDesc)
-	e.FieldAnnotationValues = recordFieldAnnotationValuesForTypeDescriptor(t, typeDesc)
 	ty := semtypes.TypedescContaining(t.typeEnv(), constraint)
 	setExpectedType(e, ty)
 	return ty, defaultExpressionEffect(chain), true
@@ -3852,25 +3888,6 @@ func resolveAnnotAccessExpr(t typeResolver, chain *binding, e *ast.BLangAnnotAcc
 		setOtherNodesAsNever(e.AnnotationName)
 	}
 	return ty, effect, true
-}
-
-func annotationValuesForTypeDescriptor(t typeResolver, typeDesc ast.TypeDescriptor) values.AnnotationValues {
-	udt, ok := typeDesc.(*ast.BLangUserDefinedType)
-	if !ok || !ast.SymbolIsSet(udt) {
-		return values.NewAnnotationValues()
-	}
-	return t.compilerContext().SymbolAnnotationValues(udt.Symbol())
-}
-
-func recordFieldAnnotationValuesForTypeDescriptor(
-	t typeResolver,
-	typeDesc ast.TypeDescriptor,
-) values.FieldAnnotationValues {
-	udt, ok := typeDesc.(*ast.BLangUserDefinedType)
-	if !ok || !ast.SymbolIsSet(udt) {
-		return values.NewFieldAnnotationValues()
-	}
-	return t.compilerContext().RecordFieldAnnotationValues(udt.Symbol())
 }
 
 func resolveXMLTextLiteral(_ typeResolver, chain *binding, e *ast.BLangXMLTextLiteral) (semtypes.SemType, expressionEffect, bool) {

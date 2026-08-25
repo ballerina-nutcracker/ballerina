@@ -296,7 +296,11 @@ func (sr *symbolReader) readAnnotationValue() values.AnnotationValue {
 // writeFieldAnnotationValues writes per-record-field annotation maps with field
 // names in sorted order so that serialization is deterministic.
 func (sw *symbolWriter) writeFieldAnnotationValues(buf *bytes.Buffer, fieldAnnotations values.FieldAnnotationValues) error {
-	fields := fieldAnnotations.SortedFields()
+	fields := make([]string, 0, len(fieldAnnotations))
+	for field := range fieldAnnotations {
+		fields = append(fields, field)
+	}
+	sort.Strings(fields)
 	if err := write(buf, int64(len(fields))); err != nil {
 		return err
 	}

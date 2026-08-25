@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -493,11 +494,11 @@ func TestRecordFieldAnnotations(t *testing.T) {
 		if !ok {
 			return nil, fmt.Errorf("expected string field name, got %T", args[1])
 		}
-		annotations, ok := ctx.RecordFieldAnnotations(td, field)
+		typeAnnotations, ok := ctx.TypeAnnotations(td)
 		if !ok {
 			return "<absent>", nil
 		}
-		value, ok := annotations[key]
+		value, ok := typeAnnotations.Fields[field][key]
 		if !ok {
 			return "<absent>", nil
 		}
@@ -519,7 +520,7 @@ func TestRecordFieldAnnotations(t *testing.T) {
 				if err != nil {
 					return nil, err
 				}
-				return strings.Join(ctx.AnnotatedRecordFields(td), ","), nil
+				return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
 			}},
 		{Org: org, Module: module, FuncName: "fieldMetaName",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -539,11 +540,11 @@ func TestRecordFieldAnnotations(t *testing.T) {
 				if !ok {
 					return nil, fmt.Errorf("expected string field name, got %T", args[1])
 				}
-				annotations, ok := ctx.RecordFieldAnnotations(td, field)
+				typeAnnotations, ok := ctx.TypeAnnotations(td)
 				if !ok {
 					return false, nil
 				}
-				return annotations[markerKey] == true, nil
+				return typeAnnotations.Fields[field][markerKey] == true, nil
 			}},
 	}
 	runExtern(t, fileCase("record-field-annotations-v"), testharness.NewTestPal(), externs)
@@ -570,7 +571,11 @@ func TestRecordFieldAnnotationsStructural(t *testing.T) {
 		if !ok {
 			return nil, false, fmt.Errorf("expected string field name, got %T", args[1])
 		}
-		annotations, found := ctx.RecordFieldAnnotations(td, field)
+		typeAnnotations, ok := ctx.TypeAnnotations(td)
+		if !ok {
+			return nil, false, nil
+		}
+		annotations, found := typeAnnotations.Fields[field]
 		return annotations, found, nil
 	}
 	metaName := func(value values.AnnotationValue) (string, error) {
@@ -592,7 +597,7 @@ func TestRecordFieldAnnotationsStructural(t *testing.T) {
 				if !ok {
 					return nil, fmt.Errorf("expected typedesc, got %T", args[0])
 				}
-				return strings.Join(ctx.AnnotatedRecordFields(td), ","), nil
+				return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
 			}},
 		{Org: org, Module: module, FuncName: "fieldMetaName",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -645,7 +650,7 @@ func TestRecordFieldAnnotationsCrossModule(t *testing.T) {
 				if !ok {
 					return nil, fmt.Errorf("expected typedesc, got %T", args[0])
 				}
-				return strings.Join(ctx.AnnotatedRecordFields(td), ","), nil
+				return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
 			}},
 		{Org: org, Module: module, FuncName: "fieldMetaName",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -657,11 +662,11 @@ func TestRecordFieldAnnotationsCrossModule(t *testing.T) {
 				if !ok {
 					return nil, fmt.Errorf("expected string field name, got %T", args[1])
 				}
-				annotations, found := ctx.RecordFieldAnnotations(td, field)
-				if !found {
+				typeAnnotations, ok := ctx.TypeAnnotations(td)
+				if !ok {
 					return "<absent>", nil
 				}
-				mapping, ok := annotations[fieldMetaKey].(*values.Map)
+				mapping, ok := typeAnnotations.Fields[field][fieldMetaKey].(*values.Map)
 				if !ok {
 					return "<absent>", nil
 				}
@@ -1064,7 +1069,7 @@ func registerFieldAnnotationExterns(rt *runtime.Runtime, org, module, fieldMetaK
 			if !ok {
 				return nil, fmt.Errorf("expected typedesc, got %T", args[0])
 			}
-			return strings.Join(ctx.AnnotatedRecordFields(td), ","), nil
+			return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
 		})
 	runtime.RegisterExternFunction(rt, org, module, "fieldMetaName",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -1076,11 +1081,11 @@ func registerFieldAnnotationExterns(rt *runtime.Runtime, org, module, fieldMetaK
 			if !ok {
 				return nil, fmt.Errorf("expected string field name, got %T", args[1])
 			}
-			annotations, found := ctx.RecordFieldAnnotations(td, field)
-			if !found {
+			typeAnnotations, ok := ctx.TypeAnnotations(td)
+			if !ok {
 				return "<absent>", nil
 			}
-			mapping, ok := annotations[fieldMetaKey].(*values.Map)
+			mapping, ok := typeAnnotations.Fields[field][fieldMetaKey].(*values.Map)
 			if !ok {
 				return "<absent>", nil
 			}
@@ -1090,6 +1095,22 @@ func registerFieldAnnotationExterns(rt *runtime.Runtime, org, module, fieldMetaK
 			}
 			return name, nil
 		})
+}
+
+// sortedAnnotatedFields lists the annotated field names of td in a stable order.
+// TypeAnnotations returns an unordered map because record fields are unordered;
+// the tests sort so that their expected output is deterministic.
+func sortedAnnotatedFields(ctx *extern.Context, td *values.TypeDesc) []string {
+	typeAnnotations, ok := ctx.TypeAnnotations(td)
+	if !ok {
+		return nil
+	}
+	fields := make([]string, 0, len(typeAnnotations.Fields))
+	for field := range typeAnnotations.Fields {
+		fields = append(fields, field)
+	}
+	sort.Strings(fields)
+	return fields
 }
 
 // compileSingleFileModule parses a .bal file and runs the full compilation
