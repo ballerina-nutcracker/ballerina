@@ -111,6 +111,10 @@ func (l *loopTypeResolver) functionSignatureRef(owner model.SymbolRef) (model.Fu
 	return l.parentResolver.functionSignatureRef(owner)
 }
 
+func (l *loopTypeResolver) returnFunctionSignatureRef(source model.FunctionSignatureRef) (model.FunctionSignatureRef, bool) {
+	return l.parentResolver.returnFunctionSignatureRef(source)
+}
+
 func (l *loopTypeResolver) updateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
 	l.parentResolver.updateFunctionSignatureIncludedRecords(ref, includedRecords)
 }

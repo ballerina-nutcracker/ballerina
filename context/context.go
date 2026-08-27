@@ -121,6 +121,14 @@ func (c *CompilerContext) FunctionSignatureRef(fn model.SymbolRef) (model.Functi
 	return c.env.FunctionSignatureRef(fn)
 }
 
+func (c *CompilerContext) AssociateReturnFunctionSignature(source, target model.FunctionSignatureRef) bool {
+	return c.env.AssociateReturnFunctionSignature(source, target)
+}
+
+func (c *CompilerContext) ReturnFunctionSignatureRef(source model.FunctionSignatureRef) (model.FunctionSignatureRef, bool) {
+	return c.env.ReturnFunctionSignatureRef(source)
+}
+
 func (c *CompilerContext) UpdateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
 	c.env.UpdateFunctionSignatureIncludedRecords(ref, includedRecords)
 }

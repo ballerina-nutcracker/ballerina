@@ -65,6 +65,12 @@ type expressionEffect struct {
 	ifFalse *binding
 }
 
+type expressionResult struct {
+	ty                semtypes.SemType
+	effect            expressionEffect
+	functionSignature model.FunctionSignatureRef
+}
+
 type statementEffect struct {
 	binding *binding
 	// nonCompletion indicates the statement is return/panic etc which spec treats narrowed type as never

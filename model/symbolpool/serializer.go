@@ -221,6 +221,20 @@ func (sw *symbolWriter) collectFunctionSignature(ref model.SymbolRef) {
 	}
 	sw.sigMap[sigRef] = len(sw.sigRefs)
 	sw.sigRefs = append(sw.sigRefs, sigRef)
+	if returnRef, ok := sw.compilerEnv.ReturnFunctionSignatureRef(sigRef); ok {
+		sw.collectFunctionSignatureRef(returnRef)
+	}
+}
+
+func (sw *symbolWriter) collectFunctionSignatureRef(ref model.FunctionSignatureRef) {
+	if _, exists := sw.sigMap[ref]; exists {
+		return
+	}
+	sw.sigMap[ref] = len(sw.sigRefs)
+	sw.sigRefs = append(sw.sigRefs, ref)
+	if returnRef, ok := sw.compilerEnv.ReturnFunctionSignatureRef(ref); ok {
+		sw.collectFunctionSignatureRef(returnRef)
+	}
 }
 
 func (sw *symbolWriter) writeFunctionSignatureTable(buf *bytes.Buffer) error {
@@ -229,6 +243,17 @@ func (sw *symbolWriter) writeFunctionSignatureTable(buf *bytes.Buffer) error {
 	}
 	for _, ref := range sw.sigRefs {
 		if err := sw.writeUntypedFunctionSignature(buf, sw.compilerEnv.GetFunctionSignatureByRef(ref)); err != nil {
+			return err
+		}
+		returnIndex := int64(-1)
+		if returnRef, ok := sw.compilerEnv.ReturnFunctionSignatureRef(ref); ok {
+			index, found := sw.sigMap[returnRef]
+			if !found {
+				return fmt.Errorf("return function signature reference not present in signature table: %v", returnRef)
+			}
+			returnIndex = int64(index)
+		}
+		if err := write(buf, returnIndex); err != nil {
 			return err
 		}
 	}

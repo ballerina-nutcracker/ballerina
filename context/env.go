@@ -272,6 +272,14 @@ func (c *CompilerEnvironment) FunctionSignatureRef(sym model.SymbolRef) (model.F
 	return c.functionSignatures.Ref(sym)
 }
 
+func (c *CompilerEnvironment) AssociateReturnFunctionSignature(source, target model.FunctionSignatureRef) bool {
+	return c.functionSignatures.AssociateReturn(source, target)
+}
+
+func (c *CompilerEnvironment) ReturnFunctionSignatureRef(source model.FunctionSignatureRef) (model.FunctionSignatureRef, bool) {
+	return c.functionSignatures.ReturnRef(source)
+}
+
 func (c *CompilerEnvironment) UpdateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
 	c.functionSignatures.UpdateIncludedRecords(ref, includedRecords)
 }

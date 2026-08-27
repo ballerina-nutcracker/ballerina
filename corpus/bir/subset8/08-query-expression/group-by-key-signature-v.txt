@@ -599,9 +599,9 @@ main() -> nil{
   }
   bb77 {
     groupedByNil = $desugar$42;
-    %183 = ConstantLoad 1
-    %184 = ConstantLoad 1
-    %185 = ConstantLoad 2
+    %183 = ConstantLoad 1.0
+    %184 = ConstantLoad 1.00
+    %185 = ConstantLoad 2.0
     %186 = ConstantLoad 3
     %187 = newArray [decimal...][%186]{%183, %184, %185}
     decimals = %187;

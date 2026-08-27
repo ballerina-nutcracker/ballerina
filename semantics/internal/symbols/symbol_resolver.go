@@ -68,17 +68,13 @@ type symbolResolver interface {
 	TypeContext() semtypes.Context
 	GetTypeDefns() map[model.SymbolRef]*ast.BLangTypeDefinition
 	GetClassDefns() map[model.SymbolRef]*ast.BLangClassDefinition
+	nextDefaultSymbolName() string
 }
 
 type (
 	compilationUnitImportsWithSymbols struct {
 		compilationUnit *ast.BLangCompilationUnit
 		imports         map[string]model.ExportedSymbolSpace
-	}
-
-	defaultSymbolAllocator interface {
-		GetCtx() *context.CompilerContext
-		nextDefaultSymbolName() string
 	}
 
 	prevPos struct {
@@ -386,11 +382,7 @@ func (bs *blockSymbolResolver) GetCtx() *context.CompilerContext {
 }
 
 func (bs *blockSymbolResolver) nextDefaultSymbolName() string {
-	if alloc, ok := bs.parent.(defaultSymbolAllocator); ok {
-		return alloc.nextDefaultSymbolName()
-	}
-	bs.GetCtx().InternalError("default symbol allocator not found", diagnostics.Location{})
-	return "$default$error"
+	return bs.parent.nextDefaultSymbolName()
 }
 
 func (bs *blockSymbolResolver) TypeContext() semtypes.Context {
@@ -1005,7 +997,7 @@ func isExternalFunctionBody(body ast.FunctionBodyNode) bool {
 	return ok
 }
 
-func ensureFunctionTypeSignature(alloc defaultSymbolAllocator, targetScope model.Scope, fnType *ast.BLangFunctionType) (model.FunctionSignatureRef, bool) {
+func ensureFunctionTypeSignature(resolver symbolResolver, targetScope model.Scope, fnType *ast.BLangFunctionType) (model.FunctionSignatureRef, bool) {
 	if fnType.IsAnyFunction() {
 		return 0, false
 	}
@@ -1013,8 +1005,8 @@ func ensureFunctionTypeSignature(alloc defaultSymbolAllocator, targetScope model
 		// Already set
 		return ref, true
 	}
-	params := signatureParams(alloc, targetScope, fnType)
-	ref := alloc.GetCtx().AllocateFunctionSignature(params, fnType.RestParameter() != nil)
+	params := signatureParams(resolver, targetScope, fnType)
+	ref := resolver.GetCtx().AllocateFunctionSignature(params, fnType.RestParameter() != nil)
 	fnType.SetSignatureRef(ref)
 	return ref, true
 }
@@ -1032,17 +1024,24 @@ func associateFunctionSignatureFromTypeDescriptor[T symbolResolver](resolver T, 
 
 func functionSignatureRefFromTypeDescriptor[T symbolResolver](resolver T, typeNode any, pos diagnostics.Location) (model.FunctionSignatureRef, bool) {
 	switch ty := typeNode.(type) {
+	case *ast.BLangReturnTypeDescriptor:
+		return functionSignatureRefFromTypeDescriptor(resolver, ty.TypeDescriptor, pos)
 	case *ast.BLangFunctionType:
-		alloc, ok := any(resolver).(defaultSymbolAllocator)
-		if !ok {
-			internalError(resolver, "default symbol allocator not found", pos)
-			return 0, false
-		}
-		return ensureFunctionTypeSignature(alloc, resolver.GetScope(), ty)
+		return ensureFunctionTypeSignature(resolver, resolver.GetScope(), ty)
 	case *ast.BLangUserDefinedType:
 		return resolver.GetCtx().FunctionSignatureRef(ty.Symbol())
 	default:
 		return 0, false
+	}
+}
+
+func associateReturnFunctionSignature[T symbolResolver](resolver T, source model.FunctionSignatureRef, returnType any, pos diagnostics.Location) {
+	target, found := functionSignatureRefFromTypeDescriptor(resolver, returnType, pos)
+	if !found {
+		return
+	}
+	if !resolver.GetCtx().AssociateReturnFunctionSignature(source, target) {
+		internalError(resolver, "function return signature already set", pos)
 	}
 }
 
@@ -1051,22 +1050,24 @@ type symbolFunctionSignature interface {
 	Symbol() model.SymbolRef
 }
 
-func allocateSymbols(alloc defaultSymbolAllocator, targetScope model.Scope, sig symbolFunctionSignature, pos diagnostics.Location) (model.FunctionSignatureRef, bool) {
+func allocateSymbols(alloc symbolResolver, targetScope model.Scope, sig symbolFunctionSignature, pos diagnostics.Location) (model.FunctionSignatureRef, bool) {
 	cx := alloc.GetCtx()
 	owner := sig.Symbol()
 	if owner.IsEmpty() {
 		return 0, false
 	}
 	if ref, ok := cx.FunctionSignatureRef(owner); ok {
+		associateReturnFunctionSignature(alloc, ref, sig.ReturnType(), pos)
 		return ref, true
 	}
 	params := signatureParams(alloc, targetScope, sig)
 	ref := cx.AllocateFunctionSignature(params, sig.RestParameter() != nil)
 	associateFunctionSignatureRef(cx, owner, ref, pos)
+	associateReturnFunctionSignature(alloc, ref, sig.ReturnType(), pos)
 	return ref, true
 }
 
-func signatureParams(alloc defaultSymbolAllocator, targetScope model.Scope, sig ast.FunctionSignature) []model.Param {
+func signatureParams(alloc symbolResolver, targetScope model.Scope, sig ast.FunctionSignature) []model.Param {
 	requiredParams := sig.Parameters()
 	params := make([]model.Param, 0, len(requiredParams)+1)
 	for _, param := range requiredParams {
@@ -1265,12 +1266,7 @@ func walkSimpleVariableChildren[T symbolResolver](resolver T, variable *ast.BLan
 }
 
 func resolveFunctionTypeSymbols[T symbolResolver](resolver T, fnType *ast.BLangFunctionType) {
-	alloc, ok := any(resolver).(defaultSymbolAllocator)
-	if !ok {
-		internalError(resolver, "default symbol allocator not found", fnType.GetPosition())
-		return
-	}
-	ensureFunctionTypeSignature(alloc, resolver.GetScope(), fnType)
+	ensureFunctionTypeSignature(resolver, resolver.GetScope(), fnType)
 	paramScope := resolver.GetCtx().NewBlockScope(resolver.GetScope(), resolver.GetPkgID())
 	paramResolver := &blockSymbolResolver{parent: resolver, scope: paramScope, node: fnType}
 	for i := range fnType.RequiredParams {
@@ -1308,6 +1304,9 @@ func resolveFunctionTypeSymbols[T symbolResolver](resolver T, fnType *ast.BLangF
 	}
 	if fnType.ReturnTypeDescriptor != nil {
 		ast.Walk(resolver, fnType.ReturnTypeDescriptor.(ast.BLangNode))
+	}
+	if ref := fnType.SignatureRef(); ref != 0 {
+		associateReturnFunctionSignature(resolver, ref, fnType.ReturnTypeDescriptor, fnType.GetPosition())
 	}
 }
 

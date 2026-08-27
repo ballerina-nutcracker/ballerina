@@ -304,6 +304,9 @@ func (b *bLangInvokableNodeBase) RestParameter() Param {
 }
 
 func (b *bLangInvokableNodeBase) ReturnType() TypeDescriptor {
+	if b.returnTypeDescriptor == nil {
+		return nil
+	}
 	return b.returnTypeDescriptor
 }
 

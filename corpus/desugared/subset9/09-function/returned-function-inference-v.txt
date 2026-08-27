@@ -1,0 +1,313 @@
+(package
+  (import-package ballerina io (as io))
+  (variable moduleFunction)
+  (type-definition ReturnedFunction
+    (function-type (
+      (value-type int)) (
+      (value-type int))))
+  (type-definition ReturnedAlias
+    (user-defined-type ReturnedFunction))
+  (type-definition DeclaredFunction
+    (function-type (
+      (value-type int)) (
+      (value-type int))))
+  (class-definition Factory
+    (function init () ()
+      (block-function-body))
+    (function create (
+      (variable methodArg (type
+        (value-type int)) (expr
+        (literal 2)))) (
+      (function-type (
+        (value-type int)) (
+        (value-type int))))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (simple-var-ref methodArg))))
+        (return
+          (lambda
+            (function $anonFunc$_1 (
+              (variable implementationArg (type
+                (value-type int)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref implementationArg)))))))))
+  (class-definition RemoteFactory
+    (function init () ()
+      (block-function-body))
+    (function $remote$create (
+      (variable remoteOuterArg (type
+        (value-type int)) (expr
+        (literal 5)))) (
+      (function-type (
+        (value-type int)) (
+        (value-type int))))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (simple-var-ref remoteOuterArg))))
+        (return
+          (lambda
+            (function $anonFunc$_2 (
+              (variable implementationArg (type
+                (value-type int)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref implementationArg)))))))))
+  (function init () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$2 ()))))
+      (assignment
+        (simple-var-ref moduleFunction)
+        (invocation getFunction (
+          (simple-var-ref $desugar$0))))))
+  (function getFunction (
+    (variable outerArg (type
+      (value-type int)) (expr
+      (literal 1)))) (
+    (user-defined-type ReturnedAlias))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref outerArg))))
+      (return
+        (lambda
+          (function $anonFunc$_0 (
+            (variable implementationArg (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref implementationArg))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$2 ()))))
+      (var-def
+        (variable inferred (expr
+          (invocation getFunction (
+            (simple-var-ref $desugar$0))))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$0 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation inferred (
+            (simple-var-ref $desugar$1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation inferred (
+            (literal 11))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$2 ()))))
+      (var-def
+        (variable grouped (expr
+          (group-expr
+            (invocation getFunction (
+              (simple-var-ref $desugar$2)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation grouped (
+            (literal 12))))))
+      (var-def
+        (variable inferredAgain (expr
+          (invocation getFunction (
+            (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation inferredAgain (
+            (literal 13))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$2 ()))))
+      (var-def
+        (variable inferredDefaultOuter (expr
+          (invocation getFunction (
+            (simple-var-ref $desugar$3))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation inferredDefaultOuter (
+            (literal 14))))))
+      (var-def
+        (variable factory (type
+          (user-defined-type Factory)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation $default$4 ()))))
+      (var-def
+        (variable fromMethod (expr
+          (invocation create expr:
+            (simple-var-ref factory) (
+            (simple-var-ref $desugar$4))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation $default$3 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromMethod (
+            (simple-var-ref $desugar$5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromMethod (
+            (literal 31))))))
+      (var-def
+        (variable fromMethodAgain (expr
+          (invocation create expr:
+            (simple-var-ref factory) (
+            (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromMethodAgain (
+            (literal 32))))))
+      (var-def
+        (variable remoteFactory (type
+          (user-defined-type RemoteFactory)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation $default$6 ()))))
+      (var-def
+        (variable fromRemoteMethod (expr
+          (remote-method-call create expr:
+            (simple-var-ref remoteFactory) (
+            (simple-var-ref $desugar$6))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation $default$5 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromRemoteMethod (
+            (simple-var-ref $desugar$7))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromRemoteMethod (
+            (literal 51))))))
+      (var-def
+        (variable fromRemoteMethodAgain (expr
+          (remote-method-call create expr:
+            (simple-var-ref remoteFactory) (
+            (literal 6))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromRemoteMethodAgain (
+            (literal 52))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation $default$0 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation moduleFunction (
+            (simple-var-ref $desugar$8))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation moduleFunction (
+            (literal 15))))))
+      (var-def
+        (variable $desugar$9 (expr
+          (invocation $default$2 ()))))
+      (var-def
+        (variable explicitlyTyped (type
+          (user-defined-type DeclaredFunction)) (expr
+          (invocation getFunction (
+            (simple-var-ref $desugar$9))))))
+      (var-def
+        (variable $desugar$10 (expr
+          (invocation $default$1 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation explicitlyTyped (
+            (simple-var-ref $desugar$10))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation explicitlyTyped (
+            (literal 21))))))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation $default$2 ()))))
+      (var-def
+        (variable positiveNarrowed (type
+          (union-type
+            (user-defined-type ReturnedAlias)
+            (value-type string))) (expr
+          (invocation getFunction (
+            (simple-var-ref $desugar$11))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref positiveNarrowed)
+          (user-defined-type ReturnedAlias))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation positiveNarrowed (
+                (literal 16))))))) ())
+      (block-stmt
+        (var-def
+          (variable $desugar$12 (expr
+            (invocation $default$2 ()))))
+        (var-def
+          (variable negatedNarrowed (type
+            (union-type
+              (user-defined-type ReturnedAlias)
+              (value-type string))) (expr
+            (invocation getFunction (
+              (simple-var-ref $desugar$12))))))
+        (if
+          (type-test-expr !is
+            (simple-var-ref negatedNarrowed)
+            (user-defined-type ReturnedAlias))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal unexpected))))) (
+          (block-stmt
+            (var-def
+              (variable $desugar$13 (expr
+                (invocation $default$0 ()))))
+            (expression-stmt
+              (invocation io println (
+                (invocation negatedNarrowed (
+                  (simple-var-ref $desugar$13))))))
+            (expression-stmt
+              (invocation io println (
+                (invocation negatedNarrowed (
+                  (literal 17))))))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 10))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal 20))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $default$4 () ()
+    (block-function-body
+      (return
+        (literal 2))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (literal 30))))
+  (function $default$6 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $default$5 () ()
+    (block-function-body
+      (return
+        (literal 50)))))

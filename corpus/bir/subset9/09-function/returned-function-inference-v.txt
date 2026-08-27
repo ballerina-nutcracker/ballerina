@@ -1,0 +1,449 @@
+module $anon.. v 0.0.0;
+moduleFunction  function(int) returns int;
+class Factory {
+
+  create(int) -> function(int) returns int{
+    bb0 {
+      _ = methodArg;
+      %4 = fp $anon/.:$anonFunc$_1
+      %0 = %4;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class RemoteFactory {
+
+  $remote$create(int) -> function(int) returns int{
+    bb0 {
+      _ = remoteOuterArg;
+      %4 = fp $anon/.:$anonFunc$_2
+      %0 = %4;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %0 = implementationArg;
+    return;
+  }
+}
+$anonFunc$_2(int) -> int{
+  bb0 {
+    %0 = implementationArg;
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %0 = implementationArg;
+    return;
+  }
+}
+getFunction(int) -> function(int) returns int{
+  bb0 {
+    _ = outerArg;
+    %3 = fp $anon/.:$anonFunc$_0
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = $default$2() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = $desugar$0;
+    %4 = getFunction(%3) -> bb2;
+  }
+  bb2 {
+    inferred = %4;
+    %6 = $default$0() -> bb3;
+  }
+  bb3 {
+    $desugar$1 = %6;
+    %8 = $desugar$1;
+    %9 = inferred(%8) -> bb4;
+  }
+  bb4 {
+    %10 = %9;
+    %11 = println(%10) -> bb5;
+  }
+  bb5 {
+    %12 = ConstantLoad 11
+    %13 = %12;
+    %14 = inferred(%13) -> bb6;
+  }
+  bb6 {
+    %15 = %14;
+    %16 = println(%15) -> bb7;
+  }
+  bb7 {
+    %17 = $default$2() -> bb8;
+  }
+  bb8 {
+    $desugar$2 = %17;
+    %19 = $desugar$2;
+    %20 = getFunction(%19) -> bb9;
+  }
+  bb9 {
+    grouped = %20;
+    %22 = ConstantLoad 12
+    %23 = %22;
+    %24 = grouped(%23) -> bb10;
+  }
+  bb10 {
+    %25 = %24;
+    %26 = println(%25) -> bb11;
+  }
+  bb11 {
+    %27 = ConstantLoad 3
+    %28 = %27;
+    %29 = getFunction(%28) -> bb12;
+  }
+  bb12 {
+    inferredAgain = %29;
+    %31 = ConstantLoad 13
+    %32 = %31;
+    %33 = inferredAgain(%32) -> bb13;
+  }
+  bb13 {
+    %34 = %33;
+    %35 = println(%34) -> bb14;
+  }
+  bb14 {
+    %36 = $default$2() -> bb15;
+  }
+  bb15 {
+    $desugar$3 = %36;
+    %38 = $desugar$3;
+    %39 = getFunction(%38) -> bb16;
+  }
+  bb16 {
+    inferredDefaultOuter = %39;
+    %41 = ConstantLoad 14
+    %42 = %41;
+    %43 = inferredDefaultOuter(%42) -> bb17;
+  }
+  bb17 {
+    %44 = %43;
+    %45 = println(%44) -> bb18;
+  }
+  bb18 {
+    %46 = newObject $anon/.:Factory
+    %47 = init(%46) -> bb19;
+  }
+  bb19 {
+    %49 = %47 is nil
+    %49 ? bb20 : bb21;
+  }
+  bb20 {
+    %48 = %46;
+    GOTO bb22;
+  }
+  bb21 {
+    %48 = %47;
+    GOTO bb22;
+  }
+  bb22 {
+    factory = %48;
+    %51 = $default$4() -> bb23;
+  }
+  bb23 {
+    $desugar$4 = %51;
+    %53 = $desugar$4;
+    %54 = create(factory,%53) -> bb24;
+  }
+  bb24 {
+    fromMethod = %54;
+    %56 = $default$3() -> bb25;
+  }
+  bb25 {
+    $desugar$5 = %56;
+    %58 = $desugar$5;
+    %59 = fromMethod(%58) -> bb26;
+  }
+  bb26 {
+    %60 = %59;
+    %61 = println(%60) -> bb27;
+  }
+  bb27 {
+    %62 = ConstantLoad 31
+    %63 = %62;
+    %64 = fromMethod(%63) -> bb28;
+  }
+  bb28 {
+    %65 = %64;
+    %66 = println(%65) -> bb29;
+  }
+  bb29 {
+    %67 = ConstantLoad 4
+    %68 = %67;
+    %69 = create(factory,%68) -> bb30;
+  }
+  bb30 {
+    fromMethodAgain = %69;
+    %71 = ConstantLoad 32
+    %72 = %71;
+    %73 = fromMethodAgain(%72) -> bb31;
+  }
+  bb31 {
+    %74 = %73;
+    %75 = println(%74) -> bb32;
+  }
+  bb32 {
+    %76 = newObject $anon/.:RemoteFactory
+    %77 = init(%76) -> bb33;
+  }
+  bb33 {
+    %79 = %77 is nil
+    %79 ? bb34 : bb35;
+  }
+  bb34 {
+    %78 = %76;
+    GOTO bb36;
+  }
+  bb35 {
+    %78 = %77;
+    GOTO bb36;
+  }
+  bb36 {
+    remoteFactory = %78;
+    %81 = $default$6() -> bb37;
+  }
+  bb37 {
+    $desugar$6 = %81;
+    %83 = $desugar$6;
+    %84 = $remote$create(remoteFactory,%83) -> bb38;
+  }
+  bb38 {
+    fromRemoteMethod = %84;
+    %86 = $default$5() -> bb39;
+  }
+  bb39 {
+    $desugar$7 = %86;
+    %88 = $desugar$7;
+    %89 = fromRemoteMethod(%88) -> bb40;
+  }
+  bb40 {
+    %90 = %89;
+    %91 = println(%90) -> bb41;
+  }
+  bb41 {
+    %92 = ConstantLoad 51
+    %93 = %92;
+    %94 = fromRemoteMethod(%93) -> bb42;
+  }
+  bb42 {
+    %95 = %94;
+    %96 = println(%95) -> bb43;
+  }
+  bb43 {
+    %97 = ConstantLoad 6
+    %98 = %97;
+    %99 = $remote$create(remoteFactory,%98) -> bb44;
+  }
+  bb44 {
+    fromRemoteMethodAgain = %99;
+    %101 = ConstantLoad 52
+    %102 = %101;
+    %103 = fromRemoteMethodAgain(%102) -> bb45;
+  }
+  bb45 {
+    %104 = %103;
+    %105 = println(%104) -> bb46;
+  }
+  bb46 {
+    %106 = $default$0() -> bb47;
+  }
+  bb47 {
+    $desugar$8 = %106;
+    %108 = $desugar$8;
+    %109 = moduleFunction(%108) -> bb48;
+  }
+  bb48 {
+    %110 = %109;
+    %111 = println(%110) -> bb49;
+  }
+  bb49 {
+    %112 = ConstantLoad 15
+    %113 = %112;
+    %114 = moduleFunction(%113) -> bb50;
+  }
+  bb50 {
+    %115 = %114;
+    %116 = println(%115) -> bb51;
+  }
+  bb51 {
+    %117 = $default$2() -> bb52;
+  }
+  bb52 {
+    $desugar$9 = %117;
+    %119 = $desugar$9;
+    %120 = getFunction(%119) -> bb53;
+  }
+  bb53 {
+    explicitlyTyped = %120;
+    %122 = $default$1() -> bb54;
+  }
+  bb54 {
+    $desugar$10 = %122;
+    %124 = $desugar$10;
+    %125 = explicitlyTyped(%124) -> bb55;
+  }
+  bb55 {
+    %126 = %125;
+    %127 = println(%126) -> bb56;
+  }
+  bb56 {
+    %128 = ConstantLoad 21
+    %129 = %128;
+    %130 = explicitlyTyped(%129) -> bb57;
+  }
+  bb57 {
+    %131 = %130;
+    %132 = println(%131) -> bb58;
+  }
+  bb58 {
+    %133 = $default$2() -> bb59;
+  }
+  bb59 {
+    $desugar$11 = %133;
+    %135 = $desugar$11;
+    %136 = getFunction(%135) -> bb60;
+  }
+  bb60 {
+    positiveNarrowed = %136;
+    %138 = positiveNarrowed is function(int) returns int
+    %138 ? bb61 : bb64;
+  }
+  bb61 {
+    PushScopeFrame 5
+    %0 = ConstantLoad 16
+    %1 = %0;
+    %2 = positiveNarrowed(%1) -> bb62;
+  }
+  bb62 {
+    %3 = %2;
+    %4 = println(%3) -> bb63;
+  }
+  bb63 {
+    PopScopeFrame
+    GOTO bb64;
+  }
+  bb64 {
+    PushScopeFrame 6
+    %0 = $default$2() -> bb65;
+  }
+  bb65 {
+    $desugar$12 = %0;
+    %2 = $desugar$12;
+    %3 = getFunction(%2) -> bb66;
+  }
+  bb66 {
+    negatedNarrowed = %3;
+    %5 = negatedNarrowed !is function(int) returns int
+    %5 ? bb67 : bb69;
+  }
+  bb67 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unexpected
+    %1 = println(%0) -> bb68;
+  }
+  bb68 {
+    PopScopeFrame
+    GOTO bb75;
+  }
+  bb69 {
+    PushScopeFrame 11
+    %0 = $default$0() -> bb70;
+  }
+  bb70 {
+    $desugar$13 = %0;
+    %2 = $desugar$13;
+    %3 = negatedNarrowed(%2) -> bb71;
+  }
+  bb71 {
+    %4 = %3;
+    %5 = println(%4) -> bb72;
+  }
+  bb72 {
+    %6 = ConstantLoad 17
+    %7 = %6;
+    %8 = negatedNarrowed(%7) -> bb73;
+  }
+  bb73 {
+    %9 = %8;
+    %10 = println(%9) -> bb74;
+  }
+  bb74 {
+    PopScopeFrame
+    GOTO bb75;
+  }
+  bb75 {
+    PopScopeFrame
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 10
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 20
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$4() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 30
+    %0 = %1;
+    return;
+  }
+}
+$default$6() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$5() -> int{
+  bb0 {
+    %1 = ConstantLoad 50
+    %0 = %1;
+    return;
+  }
+}

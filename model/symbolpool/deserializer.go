@@ -553,9 +553,22 @@ func (sr *symbolReader) readFunctionSignatureTable(space *model.SymbolSpace) {
 	var count int64
 	read(sr.r, &count)
 	sr.sigHandles = make([]model.FunctionSignatureRef, count)
+	returnIndexes := make([]int64, count)
 	for i := int64(0); i < count; i++ {
 		params, hasRest := sr.readUntypedFunctionSignatureParams(space)
 		sr.sigHandles[i] = sr.env.AllocateFunctionSignature(params, hasRest)
+		read(sr.r, &returnIndexes[i])
+	}
+	for i, returnIndex := range returnIndexes {
+		if returnIndex < 0 {
+			continue
+		}
+		if returnIndex >= int64(len(sr.sigHandles)) {
+			panic(fmt.Sprintf("invalid return function signature index: %d", returnIndex))
+		}
+		if !sr.env.AssociateReturnFunctionSignature(sr.sigHandles[i], sr.sigHandles[returnIndex]) {
+			panic(fmt.Sprintf("conflicting return function signature association: %d", i))
+		}
 	}
 }
 
