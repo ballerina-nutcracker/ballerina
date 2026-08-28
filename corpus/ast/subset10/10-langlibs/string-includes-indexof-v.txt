@@ -1,0 +1,88 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (literal location.buildingCode))))
+      (expression-stmt
+        (invocation io println (
+          (invocation includes expr:
+            (simple-var-ref s) (
+            (literal .))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation indexOf expr:
+            (simple-var-ref s) (
+            (literal .))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation includes expr:
+            (simple-var-ref s) (
+            (literal []))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation indexOf expr:
+            (simple-var-ref s) (
+            (literal []))))))
+      (var-def
+        (variable multi (type
+          (value-type string)) (expr
+          (literal a.b.c))))
+      (expression-stmt
+        (invocation io println (
+          (invocation indexOf expr:
+            (simple-var-ref multi) (
+            (literal .))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation indexOf expr:
+            (simple-var-ref multi) (
+            (literal .)
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation includes expr:
+            (simple-var-ref multi) (
+            (literal .)
+            (literal 4))))))
+      (var-def
+        (variable unicode (type
+          (value-type string)) (expr
+          (literal héllo wörld))))
+      (expression-stmt
+        (invocation io println (
+          (invocation indexOf expr:
+            (simple-var-ref unicode) (
+            (literal wörld))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation includes expr:
+            (simple-var-ref unicode) (
+            (literal ö))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation includes expr:
+            (literal ) (
+            (literal ))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation indexOf expr:
+            (literal ) (
+            (literal ))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation indexOf expr:
+            (literal abc) (
+            (literal )
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation indexOf expr:
+            (literal abc) (
+            (literal x)
+            (unary-expr -
+              (literal 5))))))))))

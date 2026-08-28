@@ -191,6 +191,18 @@ func (m *Map) Keys() []string {
 }
 
 func (m *Map) String(visited map[uintptr]bool) string {
+	return m.stringify(visited, func(v BalValue, visited map[uintptr]bool) string {
+		return toString(v, visited, false)
+	})
+}
+
+func (m *Map) BalString(visited map[uintptr]bool) string {
+	return m.stringify(visited, BalString)
+}
+
+// stringify is the shared cycle-detecting traversal behind String and
+// BalString; the two differ only in how each value is rendered.
+func (m *Map) stringify(visited map[uintptr]bool, format func(BalValue, map[uintptr]bool) string) string {
 	ptr := uintptr(unsafe.Pointer(m))
 	if visited[ptr] {
 		return "{...}"
@@ -207,7 +219,7 @@ func (m *Map) String(visited map[uintptr]bool) string {
 		}
 		fmt.Fprintf(&b, "%q", e.key)
 		b.WriteByte(':')
-		b.WriteString(toString(e.value, visited, false))
+		b.WriteString(format(e.value, visited))
 		i++
 	}
 	b.WriteByte('}')

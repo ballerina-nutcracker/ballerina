@@ -1,0 +1,196 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (literal location.buildingCode))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref s))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal .))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string includes (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (simple-var-ref s))))
+      (var-def
+        (variable $desugar$4 (expr
+          (literal .))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$3)
+            (simple-var-ref $desugar$4))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string indexOf (
+            (simple-var-ref $desugar$3)
+            (simple-var-ref $desugar$4)
+            (simple-var-ref $desugar$5))))))
+      (var-def
+        (variable $desugar$6 (expr
+          (simple-var-ref s))))
+      (var-def
+        (variable $desugar$7 (expr
+          (literal []))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string includes (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7)
+            (simple-var-ref $desugar$8))))))
+      (var-def
+        (variable $desugar$9 (expr
+          (simple-var-ref s))))
+      (var-def
+        (variable $desugar$10 (expr
+          (literal []))))
+      (var-def
+        (variable $desugar$11 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$9)
+            (simple-var-ref $desugar$10))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string indexOf (
+            (simple-var-ref $desugar$9)
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11))))))
+      (var-def
+        (variable multi (type
+          (value-type string)) (expr
+          (literal a.b.c))))
+      (var-def
+        (variable $desugar$12 (expr
+          (simple-var-ref multi))))
+      (var-def
+        (variable $desugar$13 (expr
+          (literal .))))
+      (var-def
+        (variable $desugar$14 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$12)
+            (simple-var-ref $desugar$13))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string indexOf (
+            (simple-var-ref $desugar$12)
+            (simple-var-ref $desugar$13)
+            (simple-var-ref $desugar$14))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string indexOf (
+            (simple-var-ref multi)
+            (literal .)
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string includes (
+            (simple-var-ref multi)
+            (literal .)
+            (literal 4))))))
+      (var-def
+        (variable unicode (type
+          (value-type string)) (expr
+          (literal héllo wörld))))
+      (var-def
+        (variable $desugar$15 (expr
+          (simple-var-ref unicode))))
+      (var-def
+        (variable $desugar$16 (expr
+          (literal wörld))))
+      (var-def
+        (variable $desugar$17 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$15)
+            (simple-var-ref $desugar$16))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string indexOf (
+            (simple-var-ref $desugar$15)
+            (simple-var-ref $desugar$16)
+            (simple-var-ref $desugar$17))))))
+      (var-def
+        (variable $desugar$18 (expr
+          (simple-var-ref unicode))))
+      (var-def
+        (variable $desugar$19 (expr
+          (literal ö))))
+      (var-def
+        (variable $desugar$20 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$18)
+            (simple-var-ref $desugar$19))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string includes (
+            (simple-var-ref $desugar$18)
+            (simple-var-ref $desugar$19)
+            (simple-var-ref $desugar$20))))))
+      (var-def
+        (variable $desugar$21 (expr
+          (literal ))))
+      (var-def
+        (variable $desugar$22 (expr
+          (literal ))))
+      (var-def
+        (variable $desugar$23 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$21)
+            (simple-var-ref $desugar$22))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string includes (
+            (simple-var-ref $desugar$21)
+            (simple-var-ref $desugar$22)
+            (simple-var-ref $desugar$23))))))
+      (var-def
+        (variable $desugar$24 (expr
+          (literal ))))
+      (var-def
+        (variable $desugar$25 (expr
+          (literal ))))
+      (var-def
+        (variable $desugar$26 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$24)
+            (simple-var-ref $desugar$25))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string indexOf (
+            (simple-var-ref $desugar$24)
+            (simple-var-ref $desugar$25)
+            (simple-var-ref $desugar$26))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string indexOf (
+            (literal abc)
+            (literal )
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string indexOf (
+            (literal abc)
+            (literal x)
+            (unary-expr -
+              (literal 5))))))))))

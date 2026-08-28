@@ -1,0 +1,192 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad location.buildingCode
+    s = %1;
+    $desugar$0 = s;
+    %4 = ConstantLoad .
+    $desugar$1 = %4;
+    %6 = $default$1($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %6;
+    %8 = $desugar$2;
+    %9 = includes($desugar$0,$desugar$1,%8) -> bb2;
+  }
+  bb2 {
+    %10 = %9;
+    %11 = println(%10) -> bb3;
+  }
+  bb3 {
+    $desugar$3 = s;
+    %13 = ConstantLoad .
+    $desugar$4 = %13;
+    %15 = $default$0($desugar$3,$desugar$4) -> bb4;
+  }
+  bb4 {
+    $desugar$5 = %15;
+    %17 = $desugar$5;
+    %18 = indexOf($desugar$3,$desugar$4,%17) -> bb5;
+  }
+  bb5 {
+    %19 = %18;
+    %20 = println(%19) -> bb6;
+  }
+  bb6 {
+    $desugar$6 = s;
+    %22 = ConstantLoad []
+    $desugar$7 = %22;
+    %24 = $default$1($desugar$6,$desugar$7) -> bb7;
+  }
+  bb7 {
+    $desugar$8 = %24;
+    %26 = $desugar$8;
+    %27 = includes($desugar$6,$desugar$7,%26) -> bb8;
+  }
+  bb8 {
+    %28 = %27;
+    %29 = println(%28) -> bb9;
+  }
+  bb9 {
+    $desugar$9 = s;
+    %31 = ConstantLoad []
+    $desugar$10 = %31;
+    %33 = $default$0($desugar$9,$desugar$10) -> bb10;
+  }
+  bb10 {
+    $desugar$11 = %33;
+    %35 = $desugar$11;
+    %36 = indexOf($desugar$9,$desugar$10,%35) -> bb11;
+  }
+  bb11 {
+    %37 = %36;
+    %38 = println(%37) -> bb12;
+  }
+  bb12 {
+    %39 = ConstantLoad a.b.c
+    multi = %39;
+    $desugar$12 = multi;
+    %42 = ConstantLoad .
+    $desugar$13 = %42;
+    %44 = $default$0($desugar$12,$desugar$13) -> bb13;
+  }
+  bb13 {
+    $desugar$14 = %44;
+    %46 = $desugar$14;
+    %47 = indexOf($desugar$12,$desugar$13,%46) -> bb14;
+  }
+  bb14 {
+    %48 = %47;
+    %49 = println(%48) -> bb15;
+  }
+  bb15 {
+    %50 = ConstantLoad .
+    %51 = ConstantLoad 2
+    %52 = %51;
+    %53 = indexOf(multi,%50,%52) -> bb16;
+  }
+  bb16 {
+    %54 = %53;
+    %55 = println(%54) -> bb17;
+  }
+  bb17 {
+    %56 = ConstantLoad .
+    %57 = ConstantLoad 4
+    %58 = %57;
+    %59 = includes(multi,%56,%58) -> bb18;
+  }
+  bb18 {
+    %60 = %59;
+    %61 = println(%60) -> bb19;
+  }
+  bb19 {
+    %62 = ConstantLoad héllo wörld
+    unicode = %62;
+    $desugar$15 = unicode;
+    %65 = ConstantLoad wörld
+    $desugar$16 = %65;
+    %67 = $default$0($desugar$15,$desugar$16) -> bb20;
+  }
+  bb20 {
+    $desugar$17 = %67;
+    %69 = $desugar$17;
+    %70 = indexOf($desugar$15,$desugar$16,%69) -> bb21;
+  }
+  bb21 {
+    %71 = %70;
+    %72 = println(%71) -> bb22;
+  }
+  bb22 {
+    $desugar$18 = unicode;
+    %74 = ConstantLoad ö
+    $desugar$19 = %74;
+    %76 = $default$1($desugar$18,$desugar$19) -> bb23;
+  }
+  bb23 {
+    $desugar$20 = %76;
+    %78 = $desugar$20;
+    %79 = includes($desugar$18,$desugar$19,%78) -> bb24;
+  }
+  bb24 {
+    %80 = %79;
+    %81 = println(%80) -> bb25;
+  }
+  bb25 {
+    %82 = ConstantLoad 
+    $desugar$21 = %82;
+    %84 = ConstantLoad 
+    $desugar$22 = %84;
+    %86 = $default$1($desugar$21,$desugar$22) -> bb26;
+  }
+  bb26 {
+    $desugar$23 = %86;
+    %88 = $desugar$23;
+    %89 = includes($desugar$21,$desugar$22,%88) -> bb27;
+  }
+  bb27 {
+    %90 = %89;
+    %91 = println(%90) -> bb28;
+  }
+  bb28 {
+    %92 = ConstantLoad 
+    $desugar$24 = %92;
+    %94 = ConstantLoad 
+    $desugar$25 = %94;
+    %96 = $default$0($desugar$24,$desugar$25) -> bb29;
+  }
+  bb29 {
+    $desugar$26 = %96;
+    %98 = $desugar$26;
+    %99 = indexOf($desugar$24,$desugar$25,%98) -> bb30;
+  }
+  bb30 {
+    %100 = %99;
+    %101 = println(%100) -> bb31;
+  }
+  bb31 {
+    %102 = ConstantLoad abc
+    %103 = ConstantLoad 
+    %104 = ConstantLoad 5
+    %105 = %104;
+    %106 = indexOf(%102,%103,%105) -> bb32;
+  }
+  bb32 {
+    %107 = %106;
+    %108 = println(%107) -> bb33;
+  }
+  bb33 {
+    %109 = ConstantLoad abc
+    %110 = ConstantLoad x
+    %111 = ConstantLoad 5
+    %112 = unknown %111;
+    %113 = %112;
+    %114 = indexOf(%109,%110,%113) -> bb34;
+  }
+  bb34 {
+    %115 = %114;
+    %116 = println(%115) -> bb35;
+  }
+  bb35 {
+    return;
+  }
+}
