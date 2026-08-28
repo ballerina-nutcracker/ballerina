@@ -1,0 +1,32 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type xml)) (expr
+        (xml-sequence-literal
+          (xml-element-literal root)
+          (xml-element-literal other)))))
+    (var-def
+      (variable roots (type
+        (constrained-type
+          (builtin-ref-type xml)
+          (user-defined-type xml Element))) (expr
+        (xml-filter-expression
+          (simple-var-ref x)
+          (xml-name-pattern-identifier root)))))
+    (var-def
+      (variable elements (type
+        (constrained-type
+          (builtin-ref-type xml)
+          (user-defined-type xml Element))) (expr
+        (xml-filter-expression
+          (simple-var-ref x)
+          (xml-name-pattern-wildcard)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref roots))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref elements))))
+  )
+)

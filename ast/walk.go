@@ -546,6 +546,11 @@ func Walk(v Visitor, node BLangNode) {
 	case *BLangXMLTextLiteral:
 		// Leaf node
 
+	case *BLangXMLFilterExpression:
+		if node.Expression != nil {
+			Walk(v, node.Expression)
+		}
+
 	// Section 7: Expressions - Worker
 	case *BLangWorkerReceive:
 		if node.WorkerIdentifier != nil {

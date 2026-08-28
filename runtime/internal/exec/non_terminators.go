@@ -239,7 +239,6 @@ func execNewXMLPI(ctx *extern.Context, instr *bir.NewXMLPI, frame *Frame) {
 }
 
 func execNewXMLElement(ctx *extern.Context, instr *bir.NewXMLElement, frame *Frame) {
-	name := getOperandValue(ctx, instr.NameOp, frame).(string)
 	var children values.XMLValue
 	if instr.ChildrenOp != nil {
 		raw := getOperandValue(ctx, instr.ChildrenOp, frame)
@@ -257,7 +256,12 @@ func execNewXMLElement(ctx *extern.Context, instr *bir.NewXMLElement, frame *Fra
 	if instr.NamespacesOp != nil {
 		namespaces = getOperandValue(ctx, instr.NamespacesOp, frame).(*values.Map)
 	}
-	setOperandValue(ctx, instr.LhsOp, frame, values.NewXMLElement(name, attrs, namespaces, children, xmlResultReadonly(ctx, instr.LhsOp)))
+	setOperandValue(ctx, instr.LhsOp, frame, values.NewXMLElement(instr.Prefix, instr.LocalName, instr.NamespaceURI, attrs, namespaces, children, xmlResultReadonly(ctx, instr.LhsOp)))
+}
+
+func execXMLFilter(ctx *extern.Context, instr *bir.XMLFilter, frame *Frame) {
+	source := getOperandValue(ctx, instr.Source, frame)
+	setOperandValue(ctx, instr.LhsOp, frame, filterXML(source, instr.Filters))
 }
 
 func xmlResultReadonly(ctx *extern.Context, op *bir.BIROperand) bool {

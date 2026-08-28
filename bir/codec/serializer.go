@@ -372,7 +372,9 @@ func (bw *birWriter) writeInstruction(buf *bytes.Buffer, instr bir.BIRInstructio
 	case *bir.PopScopeFrame:
 		// no fields to write
 	case *bir.NewXMLElement:
-		bw.writeOperand(buf, instr.NameOp)
+		bw.writeStringCPEntry(buf, instr.Prefix)
+		bw.writeStringCPEntry(buf, instr.LocalName)
+		bw.writeStringCPEntry(buf, instr.NamespaceURI)
 		write(buf, instr.ChildrenOp != nil)
 		if instr.ChildrenOp != nil {
 			bw.writeOperand(buf, instr.ChildrenOp)
@@ -384,6 +386,15 @@ func (bw *birWriter) writeInstruction(buf *bytes.Buffer, instr bir.BIRInstructio
 		write(buf, instr.NamespacesOp != nil)
 		if instr.NamespacesOp != nil {
 			bw.writeOperand(buf, instr.NamespacesOp)
+		}
+		bw.writeOperand(buf, instr.LhsOp)
+	case *bir.XMLFilter:
+		bw.writeOperand(buf, instr.Source)
+		bw.writeLength(buf, len(instr.Filters))
+		for _, pattern := range instr.Filters {
+			write(buf, uint8(pattern.Kind))
+			bw.writeStringCPEntry(buf, pattern.NamespaceURI)
+			bw.writeStringCPEntry(buf, pattern.Identifier)
 		}
 		bw.writeOperand(buf, instr.LhsOp)
 	case *bir.NewXMLPI:
