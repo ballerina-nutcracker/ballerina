@@ -117,100 +117,150 @@ main() -> nil|error{
     %46 = println(s) -> bb25;
   }
   bb25 {
-    %47 = ConstantLoad name
-    %48 = ConstantLoad Alice
-    %49 = newMap {| json... |}{%47=%48}
-    noAge = %49;
+    %47 = ConstantLoad 7
+    plainInt = %47;
+    %50 = plainInt;
     %51 = ConstantLoad typedesc
-    %52 = fromJsonWithType(noAge,%51) -> bb26;
+    %52 = fromJsonWithType(%50,%51) -> bb26;
   }
   bb26 {
     %53 = %52 is error
-    %54 = %53;
-    %55 = println(%54) -> bb27;
+    %53 ? bb27 : bb28;
   }
   bb27 {
-    %56 = ConstantLoad name
-    %57 = ConstantLoad Alice
-    %58 = ConstantLoad age
-    %59 = ConstantLoad <nil>
-    %60 = newMap {| json... |}{%56=%57, %58=%59}
-    nullAge = %60;
-    %63 = ConstantLoad typedesc
-    %64 = fromJsonWithType(nullAge,%63) -> bb28;
+    %0 = %52;
+    return;
   }
   bb28 {
-    %65 = %64 is error
-    %65 ? bb29 : bb30;
+    %49 = %52;
+    GOTO bb29;
   }
   bb29 {
-    %0 = %64;
-    return;
+    viaInt = %49;
+    %55 = viaInt;
+    %56 = println(%55) -> bb30;
   }
   bb30 {
-    %62 = %64;
-    GOTO bb31;
+    %57 = ConstantLoad name
+    %58 = ConstantLoad Alice
+    %59 = ConstantLoad age
+    %60 = ConstantLoad 30
+    %61 = newMap {| age: int, name: string, never... |}{%57=%58, %59=%60}
+    plainRecord = %61;
+    %64 = ConstantLoad typedesc
+    %65 = fromJsonWithType(plainRecord,%64) -> bb31;
   }
   bb31 {
-    nilAgePerson = %62;
-    %67 = println(nilAgePerson) -> bb32;
+    %66 = %65 is error
+    %66 ? bb32 : bb33;
   }
   bb32 {
-    %68 = ConstantLoad 1
-    %69 = ConstantLoad 2
-    %70 = ConstantLoad 3
-    %71 = ConstantLoad 4
-    %72 = ConstantLoad 4
-    %73 = newArray [json...][%72]{%68, %69, %70, %71}
-    arr = %73;
-    %76 = ConstantLoad typedesc
-    %77 = fromJsonWithType(arr,%76) -> bb33;
-  }
-  bb33 {
-    %78 = %77 is error
-    %78 ? bb34 : bb35;
-  }
-  bb34 {
-    %0 = %77;
+    %0 = %65;
     return;
   }
+  bb33 {
+    %63 = %65;
+    GOTO bb34;
+  }
+  bb34 {
+    viaRecord = %63;
+    %68 = println(viaRecord) -> bb35;
+  }
   bb35 {
-    %75 = %77;
-    GOTO bb36;
+    %69 = ConstantLoad name
+    %70 = ConstantLoad Alice
+    %71 = newMap {| json... |}{%69=%70}
+    noAge = %71;
+    %73 = ConstantLoad typedesc
+    %74 = fromJsonWithType(noAge,%73) -> bb36;
   }
   bb36 {
-    inferred = %75;
-    %80 = println(inferred) -> bb37;
+    %75 = %74 is error
+    %76 = %75;
+    %77 = println(%76) -> bb37;
   }
   bb37 {
-    %81 = ConstantLoad name
-    %82 = ConstantLoad Alice
-    %83 = ConstantLoad age
-    %84 = ConstantLoad 30
-    %85 = newMap {| json... |}{%81=%82, %83=%84}
-    p = %85;
-    %88 = ConstantLoad typedesc
-    %89 = fromJsonWithType(p,%88) -> bb38;
+    %78 = ConstantLoad name
+    %79 = ConstantLoad Alice
+    %80 = ConstantLoad age
+    %81 = ConstantLoad <nil>
+    %82 = newMap {| json... |}{%78=%79, %80=%81}
+    nullAge = %82;
+    %85 = ConstantLoad typedesc
+    %86 = fromJsonWithType(nullAge,%85) -> bb38;
   }
   bb38 {
-    %90 = %89 is error
-    %90 ? bb39 : bb40;
+    %87 = %86 is error
+    %87 ? bb39 : bb40;
   }
   bb39 {
-    %0 = %89;
+    %0 = %86;
     return;
   }
   bb40 {
-    %87 = %89;
+    %84 = %86;
     GOTO bb41;
   }
   bb41 {
-    person = %87;
-    %92 = println(person) -> bb42;
+    nilAgePerson = %84;
+    %89 = println(nilAgePerson) -> bb42;
   }
   bb42 {
-    %93 = ConstantLoad <nil>
-    %0 = %93;
+    %90 = ConstantLoad 1
+    %91 = ConstantLoad 2
+    %92 = ConstantLoad 3
+    %93 = ConstantLoad 4
+    %94 = ConstantLoad 4
+    %95 = newArray [json...][%94]{%90, %91, %92, %93}
+    arr = %95;
+    %98 = ConstantLoad typedesc
+    %99 = fromJsonWithType(arr,%98) -> bb43;
+  }
+  bb43 {
+    %100 = %99 is error
+    %100 ? bb44 : bb45;
+  }
+  bb44 {
+    %0 = %99;
+    return;
+  }
+  bb45 {
+    %97 = %99;
+    GOTO bb46;
+  }
+  bb46 {
+    inferred = %97;
+    %102 = println(inferred) -> bb47;
+  }
+  bb47 {
+    %103 = ConstantLoad name
+    %104 = ConstantLoad Alice
+    %105 = ConstantLoad age
+    %106 = ConstantLoad 30
+    %107 = newMap {| json... |}{%103=%104, %105=%106}
+    p = %107;
+    %110 = ConstantLoad typedesc
+    %111 = fromJsonWithType(p,%110) -> bb48;
+  }
+  bb48 {
+    %112 = %111 is error
+    %112 ? bb49 : bb50;
+  }
+  bb49 {
+    %0 = %111;
+    return;
+  }
+  bb50 {
+    %109 = %111;
+    GOTO bb51;
+  }
+  bb51 {
+    person = %109;
+    %114 = println(person) -> bb52;
+  }
+  bb52 {
+    %115 = ConstantLoad <nil>
+    %0 = %115;
     return;
   }
 }
