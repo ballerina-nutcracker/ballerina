@@ -84,6 +84,9 @@ func NewPlatform() (pal.Platform, func()) {
 				_, err = f.Write(data)
 				return err
 			},
+			Stat:     os.Stat,
+			ReadDir:  os.ReadDir,
+			MkdirAll: os.MkdirAll,
 			OpenReadable: func(path string) (io.ReadCloser, error) {
 				return os.Open(path)
 			},
