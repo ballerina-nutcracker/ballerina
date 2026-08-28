@@ -5,18 +5,16 @@ main() -> nil{
     %1 ? bb1 : bb3;
   }
   bb1 {
-    PushScopeFrame 11
-    %0 = ConstantLoad foo:f
-    %1 = ConstantLoad bar:x
-    %2 = newXMLElement(%1, ())
-    %3 = ConstantLoad xmlns:bar
-    %4 = ConstantLoad https:foo/baz
-    %5 = ConstantLoad xmlns:foo
-    %6 = ConstantLoad https:foo/bar
-    %7 = newMap {| string... |}{%3=%4, %5=%6}
-    %8 = newXMLElement(%0, %2, (), %7)
-    elem = %8;
-    %10 = println(elem) -> bb2;
+    PushScopeFrame 9
+    %0 = newXMLElement("bar:x", namespace="https:foo/baz", ())
+    %1 = ConstantLoad xmlns:bar
+    %2 = ConstantLoad https:foo/baz
+    %3 = ConstantLoad xmlns:foo
+    %4 = ConstantLoad https:foo/bar
+    %5 = newMap {| string... |}{%1=%2, %3=%4}
+    %6 = newXMLElement("foo:f", namespace="https:foo/bar", %0, (), %5)
+    elem = %6;
+    %8 = println(elem) -> bb2;
   }
   bb2 {
     PopScopeFrame

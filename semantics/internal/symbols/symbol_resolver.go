@@ -1341,6 +1341,10 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 			ast.Walk(resolver, child)
 		}
 		return nil
+	case *ast.BLangXMLFilterExpression:
+		for i, pattern := range n.NamePattern {
+			n.NamePattern[i] = resolveAtomicNamePattern(resolver, resolver.GetScope(), pattern)
+		}
 	case *ast.BLangFieldBaseAccess:
 		if common.IsSelfFieldAccess(n) {
 			if classScope, ok := getEnclosingClassBodyScope(resolver); ok {

@@ -979,6 +979,8 @@ func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression
 		return analyzeTemplateExpr(a, expr, expectedType)
 	case *ast.BLangXMLTemplateExpr:
 		return analyzeXMLTemplateExpr(a, expr, expectedType)
+	case *ast.BLangXMLFilterExpression:
+		return analyzeXMLFilterExpr(a, expr, expectedType)
 	case *ast.BLangXMLAttribute:
 		// XML attributes are metadata on elements and should not be analyzed as standalone expressions
 		// Their values are already analyzed as part of XMLElement processing
@@ -2005,6 +2007,13 @@ func analyzeClassBodyMembers[A analyzer](a A, fields []*ast.BLangVariable, initF
 		validateResourceMethodReturnType(a, fa.retTy, rm)
 		walkMethodBody(fa, rm)
 	}
+}
+
+func analyzeXMLFilterExpr[A analyzer](a A, filterExpr *ast.BLangXMLFilterExpression, expectedType semtypes.SemType) bool {
+	if !analyzeActionOrExpression(a, filterExpr.Expression, semtypes.XML) {
+		return false
+	}
+	return validateResolvedType(a, filterExpr, expectedType)
 }
 
 type assignmentNode interface {

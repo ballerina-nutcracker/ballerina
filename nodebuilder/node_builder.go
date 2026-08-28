@@ -3795,33 +3795,40 @@ func (n *nodeBuilder) buildStringTemplateExpr(node *st.TemplateExpressionNode, p
 }
 
 func (n *nodeBuilder) xmlNameToString(name st.XMLNameNode) string {
+	prefix, localName := n.xmlName(name)
+	if prefix == "" {
+		return localName
+	}
+	return prefix + ":" + localName
+}
+
+func (n *nodeBuilder) xmlName(name st.XMLNameNode) (string, string) {
 	pos := n.getPosition(name)
 	switch name := name.(type) {
 	case *st.XMLSimpleNameNode:
 		tok := name.Name()
 		if tok == nil {
 			n.cx.InternalError("xml simple name missing identifier token", pos)
-			return ""
+			return "", ""
 		}
-		return tok.Text()
+		return "", tok.Text()
 	case *st.XMLQualifiedNameNode:
-		// TODO: we will a have to revisit this when we support namespaces
 		prefixNode := name.Prefix()
 		localNode := name.Name()
 		if prefixNode == nil || localNode == nil {
 			n.cx.InternalError("xml qualified name missing prefix or local part", pos)
-			return ""
+			return "", ""
 		}
 		prefixTok := prefixNode.Name()
 		localTok := localNode.Name()
 		if prefixTok == nil || localTok == nil {
 			n.cx.InternalError("xml qualified name component missing identifier token", pos)
-			return ""
+			return "", ""
 		}
-		return prefixTok.Text() + ":" + localTok.Text()
+		return prefixTok.Text(), localTok.Text()
 	}
 	n.cx.InternalError(fmt.Sprintf("unexpected xml name kind: %T", name), pos)
-	return ""
+	return "", ""
 }
 
 func (n *nodeBuilder) xmlAttributes(attrs st.NodeList[*st.XMLAttributeNode]) []ast.BLangXMLAttribute {
@@ -3837,7 +3844,7 @@ func (n *nodeBuilder) transformXMLElement(xMLElementNode *st.XMLElementNode) ast
 	elem := &ast.BLangXMLElementLiteral{}
 	elem.SetPosition(n.getPosition(xMLElementNode))
 	if start := xMLElementNode.StartTag(); start != nil {
-		elem.Name = n.xmlNameToString(start.Name())
+		elem.Prefix, elem.LocalName = n.xmlName(start.Name())
 		elem.Attrs = n.xmlAttributes(start.Attributes())
 	}
 	var children []ast.BLangExpression
@@ -3890,7 +3897,7 @@ func (n *nodeBuilder) transformXMLQualifiedName(xMLQualifiedNameNode *st.XMLQual
 func (n *nodeBuilder) transformXMLEmptyElement(xMLEmptyElementNode *st.XMLEmptyElementNode) ast.BLangNode {
 	elem := &ast.BLangXMLElementLiteral{}
 	elem.SetPosition(n.getPosition(xMLEmptyElementNode))
-	elem.Name = n.xmlNameToString(xMLEmptyElementNode.Name())
+	elem.Prefix, elem.LocalName = n.xmlName(xMLEmptyElementNode.Name())
 	elem.Attrs = n.xmlAttributes(xMLEmptyElementNode.Attributes())
 	return elem
 }
@@ -4761,9 +4768,56 @@ func (n *nodeBuilder) transformByteArrayLiteral(byteArrayLiteralNode *st.ByteArr
 	return nil
 }
 
-func (n *nodeBuilder) transformXMLFilterExpression(xMLFilterBLangExpression *st.XMLFilterExpressionNode) ast.BLangNode {
-	n.unimplemented("transformXMLFilterExpression unimplemented", xMLFilterBLangExpression)
-	return nil
+func (n *nodeBuilder) transformXMLFilterExpression(node *st.XMLFilterExpressionNode) ast.BLangNode {
+	expr := &ast.BLangXMLFilterExpression{
+		Expression:  n.createExpression(node.Expression()),
+		NamePattern: n.createXMLNamePatterns(node.XmlPatternChain()),
+	}
+	expr.SetPosition(n.getPosition(node))
+	return expr
+}
+
+func (n *nodeBuilder) createXMLNamePatterns(chain *st.XMLNamePatternChainingNode) []ast.BLangAtomicNamePattern {
+	patterns := make([]ast.BLangAtomicNamePattern, 0)
+	patternNodes := chain.XmlNamePattern()
+	for node := range patternNodes.Iterator() {
+		if node.Kind() == st.PIPE_TOKEN {
+			continue
+		}
+		patterns = append(patterns, n.createXMLAtomicNamePattern(node))
+	}
+	return patterns
+}
+
+func (n *nodeBuilder) createXMLAtomicNamePattern(node st.Node) ast.BLangAtomicNamePattern {
+	switch node := node.(type) {
+	case st.Token:
+		if node.Kind() != st.ASTERISK_TOKEN {
+			n.internalError("unexpected XML name pattern token", node)
+		}
+		return ast.BLangAtomicNamePattern{Kind: ast.NamePatternKindWildCard}
+	case *st.SimpleNameReferenceNode:
+		return ast.BLangAtomicNamePattern{
+			Kind:       ast.NamePatternKindIdentifier,
+			Identifier: n.createIdentifierNodeFromToken(n.getPosition(node.Name()), node.Name()),
+		}
+	case *st.XMLAtomicNamePatternNode:
+		kind := ast.NamePatternKindQualifiedIdentifier
+		var identifier ast.IdentifierNode
+		if node.Name().Kind() == st.ASTERISK_TOKEN {
+			kind = ast.NamePatternKindPrefix
+		} else {
+			identifier = n.createIdentifierNodeFromToken(n.getPosition(node.Name()), node.Name())
+		}
+		return ast.BLangAtomicNamePattern{
+			Kind:            kind,
+			Identifier:      identifier,
+			NamespacePrefix: n.createIdentifierNodeFromToken(n.getPosition(node.Prefix()), node.Prefix()),
+		}
+	default:
+		n.internalError(fmt.Sprintf("unexpected XML name pattern node %T", node), node)
+		return ast.BLangAtomicNamePattern{}
+	}
 }
 
 func (n *nodeBuilder) transformXMLStepExpression(xMLStepBLangExpression *st.XMLStepExpressionNode) ast.BLangNode {

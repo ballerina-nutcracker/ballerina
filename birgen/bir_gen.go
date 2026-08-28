@@ -1157,6 +1157,8 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 		return xmlCommentLiteral(ctx, curBB, expr)
 	case *ast.BLangXMLTextLiteral:
 		return xmlTextLiteral(ctx, curBB, expr)
+	case *ast.BLangXMLFilterExpression:
+		return xmlFilterExpression(ctx, curBB, expr)
 	case *ast.BLangTemplateExpr:
 		return templateExpression(ctx, curBB, expr)
 	default:
@@ -1283,10 +1285,51 @@ func xmlPILiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLPILit
 	return expressionEffect{result: resultOp, block: curBB}, true
 }
 
+func xmlFilterExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLFilterExpression) (expressionEffect, bool) {
+	receiver, ok := handleActionOrExpression(ctx, curBB, expr.Expression)
+	if !ok {
+		return receiver, false
+	}
+	patterns := make([]bir.XMLNamePattern, len(expr.NamePattern))
+	for i, pattern := range expr.NamePattern {
+		birPattern := bir.XMLNamePattern{}
+		switch pattern.Kind {
+		case ast.NamePatternKindWildCard:
+			birPattern.Kind = bir.XMLNamePatternKindWildCard
+		case ast.NamePatternKindIdentifier:
+			birPattern.Kind = bir.XMLNamePatternKindIdentifier
+			birPattern.Identifier = pattern.Identifier.GetValue()
+		case ast.NamePatternKindQualifiedIdentifier, ast.NamePatternKindPrefix:
+			if pattern.NamespaceSymbol.IsEmpty() {
+				ctx.internalError("XML name pattern has no resolved namespace symbol", expr.GetPosition())
+				return expressionEffect{}, false
+			}
+			uri, err := model.XMLNamespaceURI(ctx.getSymbol(pattern.NamespaceSymbol))
+			if err != nil {
+				ctx.internalError(err.Error(), expr.GetPosition())
+				return expressionEffect{}, false
+			}
+			birPattern.NamespaceURI = uri
+			if pattern.Kind == ast.NamePatternKindQualifiedIdentifier {
+				birPattern.Kind = bir.XMLNamePatternKindQualifiedIdentifier
+				birPattern.Identifier = pattern.Identifier.GetValue()
+			} else {
+				birPattern.Kind = bir.XMLNamePatternKindPrefix
+			}
+		default:
+			ctx.internalError("unexpected XML name pattern kind", expr.GetPosition())
+			return expressionEffect{}, false
+		}
+		patterns[i] = birPattern
+	}
+	resultOp := ctx.addTempVar(expr.GetDeterminedType())
+	pos := ctx.function().loc(expr.GetPosition())
+	receiver.block.Instructions = append(receiver.block.Instructions, bir.NewXMLFilterInstr(resultOp, receiver.result, patterns, pos))
+	return expressionEffect{result: resultOp, block: receiver.block}, true
+}
+
 func xmlElementLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLElementLiteral) (expressionEffect, bool) {
 	pos := ctx.function().loc(expr.GetPosition())
-	nameOp := ctx.addTempVar(semtypes.String)
-	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(nameOp, expr.Name, pos))
 	var contentOp *bir.BIROperand
 	if expr.Content != nil {
 		eff, ok := handleActionOrExpression(ctx, curBB, expr.Content)
@@ -1317,8 +1360,17 @@ func xmlElementLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXML
 			return expressionEffect{}, false
 		}
 	}
+	namespaceURI := ""
+	if !expr.NamespaceSymbol.IsEmpty() {
+		var err error
+		namespaceURI, err = model.XMLNamespaceURI(ctx.getSymbol(expr.NamespaceSymbol))
+		if err != nil {
+			ctx.internalError(err.Error(), expr.GetPosition())
+			return expressionEffect{}, false
+		}
+	}
 	resultOp := ctx.addTempVar(expr.GetDeterminedType())
-	curBB.Instructions = append(curBB.Instructions, bir.NewXMLElementInstr(resultOp, nameOp, contentOp, attrsOp, namespacesOp, pos))
+	curBB.Instructions = append(curBB.Instructions, bir.NewXMLElementInstr(resultOp, expr.Prefix, expr.LocalName, namespaceURI, contentOp, attrsOp, namespacesOp, pos))
 	return expressionEffect{result: resultOp, block: curBB}, true
 }
 
