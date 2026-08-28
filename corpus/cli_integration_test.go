@@ -1986,6 +1986,40 @@ func TestBalBuildOutputPathBlocked(t *testing.T) {
 	}
 }
 
+// TestBalBuildOutputDirNotWritable covers an existing output directory
+// that isn't writable — creating the packer's temp file must fail
+// cleanly rather than partially writing over a previous executable.
+func TestBalBuildOutputDirNotWritable(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX permission bits don't apply on windows")
+	}
+	if os.Geteuid() == 0 {
+		t.Skip("root ignores POSIX permission bits, so the directory wouldn't actually be unwritable")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+
+	outDir := t.TempDir()
+	if err := os.Chmod(outDir, 0o500); err != nil {
+		t.Fatalf("chmod outDir: %v", err)
+	}
+	defer func() { _ = os.Chmod(outDir, 0o700) }() // let t.TempDir() clean up
+	outPath := filepath.Join(outDir, "program")
+
+	_, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outPath)
+	if exitCode == 0 {
+		t.Fatal("expected a non-zero exit code when the output directory isn't writable")
+	}
+	if !strings.Contains(stderr, "write executable") {
+		t.Errorf("expected a 'write executable' error, got stderr:\n%s", stderr)
+	}
+}
+
 // TestBalBuildNoHomeNoBalEnv covers getBallerinaEnvPath's fallback when
 // BAL_ENV is unset: it resolves the user's home directory itself, which
 // fails if neither is available — e.g. a minimal container environment.
@@ -2063,11 +2097,22 @@ func TestBalBuildRuntimeStubPathOverride(t *testing.T) {
 
 	t.Run("valid override is used as the stub", func(t *testing.T) {
 		t.Parallel()
-		overridePath := filepath.Join(t.TempDir(), "custom-stub")
-		const stubContent = "custom-stub-bytes"
-		if err := os.WriteFile(overridePath, []byte(stubContent), 0o755); err != nil {
-			t.Fatalf("writing override stub: %v", err)
+		// An arbitrary byte blob no longer works as a "stub" now that
+		// every platform's packer requires a genuine format header to
+		// splice a section into (raw-append never cared). Instead, prove
+		// precedence unambiguously: the override is a real, structurally
+		// valid stub for a DIFFERENT architecture than the host — if
+		// ResolveStub's default <dist>/rt/<os>-<arch> lookup were used
+		// instead of the override, packing would either fail (arch
+		// mismatch with the default's own resolution) or, if it
+		// succeeded, the output would carry the HOST's arch, not the
+		// override's — so inspecting the produced binary's actual
+		// architecture cleanly distinguishes the two cases.
+		overrideArch := "amd64"
+		if runtime.GOARCH == "amd64" {
+			overrideArch = "arm64"
 		}
+		overridePath := buildCrossBalrtStub(t, repoRoot, t.TempDir(), runtime.GOOS, overrideArch)
 		balBin := buildBalBinaryWithRuntimeStubOverride(t, repoRoot, coverDir, overridePath)
 
 		stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
@@ -2083,12 +2128,12 @@ func TestBalBuildRuntimeStubPathOverride(t *testing.T) {
 		line, _, _ := strings.Cut(rest, "\n")
 		binPath := strings.TrimSpace(line)
 
-		data, err := os.ReadFile(binPath)
+		gotArch, err := binaryArch(binPath)
 		if err != nil {
-			t.Fatalf("reading produced binary: %v", err)
+			t.Fatalf("reading produced binary's architecture: %v", err)
 		}
-		if !bytes.HasPrefix(data, []byte(stubContent)) {
-			t.Error("expected the produced binary to start with the override stub's own bytes; ResolveStub must have used RuntimeStubPath rather than the default rt/ lookup")
+		if gotArch != overrideArch {
+			t.Errorf("produced binary has arch %q, want %q (the override's) — ResolveStub must have used RuntimeStubPath rather than the default rt/ lookup", gotArch, overrideArch)
 		}
 	})
 
@@ -2132,35 +2177,224 @@ func TestBalBuildRuntimeStubPathOverride(t *testing.T) {
 	})
 }
 
-// packedTrailerSize mirrors cli/internal/executable.Pack's own trailer
-// layout (8-byte little-endian payload offset + 8-byte magic marker),
-// duplicated here rather than imported since that package is cli/internal
-// and unreachable from corpus — this is a black-box test of the packed
-// executable format bal build/pack produce, not a peek at their internals.
-const packedTrailerSize = 16
+// TestBalBuildAtomicWriteOnPackFailure covers splice.Embed's atomic-write
+// guarantee: a failed rebuild (RuntimeStubPath pointing at a directory)
+// must leave the previous output untouched, with no leftover temp file.
+func TestBalBuildAtomicWriteOnPackFailure(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+	outBin := filepath.Join(t.TempDir(), hostExeSuffix("myprogram"))
 
-// corruptPackedTrailerOffset overwrites the offset half of a packed
-// executable's trailer with an out-of-range value. The magic bytes are left
-// intact, so TryLoad still recognizes the file as claiming to be a compiled
-// program but fails to load it — exercising the err != nil branch in bal's
-// and balrt's own main(), distinct from the not-a-compiled-program branch a
-// plain (non-packed) file would hit.
-func corruptPackedTrailerOffset(t *testing.T, path string) {
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+	if exitCode != 0 {
+		t.Fatalf("first build failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
+	}
+	before, err := os.ReadFile(outBin)
+	if err != nil {
+		t.Fatalf("reading first build output: %v", err)
+	}
+
+	badBalBin := buildBalBinaryWithRuntimeStubOverride(t, repoRoot, coverDir, t.TempDir()) // a directory, not a file
+	_, _, exitCode = runCLICommandWithEnv(t, badBalBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+	if exitCode == 0 {
+		t.Fatal("expected the rebuild to fail when the stub is a directory")
+	}
+
+	after, err := os.ReadFile(outBin)
+	if err != nil {
+		t.Fatalf("reading output after failed rebuild: %v", err)
+	}
+	if !bytes.Equal(before, after) {
+		t.Fatal("expected the output to be untouched after a failed rebuild, but its contents changed")
+	}
+	entries, err := os.ReadDir(filepath.Dir(outBin))
+	if err != nil {
+		t.Fatalf("reading output dir: %v", err)
+	}
+	for _, e := range entries {
+		if e.Name() != filepath.Base(outBin) {
+			t.Errorf("expected no leftover temp file, found %q", e.Name())
+		}
+	}
+}
+
+// TestBalBuildRebuildPreservesExecutableBit covers a regression risk
+// shared by every platform's packer: O_TRUNC reuses the inode, so
+// rebuilding into the same path could silently lose the executable bit.
+func TestBalBuildRebuildPreservesExecutableBit(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+	outBin := filepath.Join(t.TempDir(), hostExeSuffix("myprogram"))
+
+	for i := range 2 {
+		if i == 1 {
+			if err := os.Chmod(outBin, 0o644); err != nil { // simulate a stale non-executable file at that inode
+				t.Fatalf("chmod: %v", err)
+			}
+		}
+		_, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+			[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+		if exitCode != 0 {
+			t.Fatalf("build #%d failed: exit=%d\nstderr:\n%s", i+1, exitCode, stderr)
+		}
+	}
+
+	info, err := os.Stat(outBin)
+	if err != nil {
+		t.Fatalf("stat after rebuild: %v", err)
+	}
+	if runtime.GOOS != "windows" && info.Mode()&0o111 == 0 {
+		t.Fatalf("expected output to still be executable after rebuild, got mode %v", info.Mode())
+	}
+}
+
+// Mirror splice's section name constants — duplicated since cli/internal
+// is unreachable from corpus. Keeps these tests black-box.
+const (
+	linuxPayloadSectionName   = ".balexe.payload"
+	windowsPayloadSectionName = ".balexe"
+	darwinPayloadSegmentName  = "__BALEXE"
+	darwinPayloadSectionName  = "__payload"
+)
+
+// corruptPackedPayload corrupts a packed executable's payload so it's
+// still recognized as "claims to be a compiled program" but fails to
+// load — exercising the err != nil branch, distinct from a plain
+// (non-packed) file's not-a-compiled-program branch.
+func corruptPackedPayload(t *testing.T, path string) {
 	t.Helper()
+	switch runtime.GOOS {
+	case "linux":
+		corruptLinuxPayloadSection(t, path)
+	case "windows":
+		corruptWindowsPayloadSection(t, path)
+	case "darwin":
+		corruptDarwinPayloadSection(t, path)
+	default:
+		t.Fatalf("corruptPackedPayload: unsupported GOOS %q", runtime.GOOS)
+	}
+}
+
+// corruptLinuxPayloadSection corrupts the leading package-count header of
+// a linux-target build's embedded ELF payload section, so unmarshalPayload
+// fails deterministically with "invalid package count".
+func corruptLinuxPayloadSection(t *testing.T, path string) {
+	t.Helper()
+	f, err := elf.Open(path)
+	if err != nil {
+		t.Fatalf("opening %s as ELF: %v", path, err)
+	}
+	sec := f.Section(linuxPayloadSectionName)
+	if sec == nil {
+		_ = f.Close()
+		t.Fatalf("%s has no %q section to corrupt", path, linuxPayloadSectionName)
+	}
+	off, size := sec.Offset, sec.Size
+	_ = f.Close()
+	if size < 4 {
+		t.Fatalf("%s's payload section is too small to corrupt meaningfully", path)
+	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("reading %s: %v", path, err)
 	}
-	if len(data) < packedTrailerSize {
-		t.Fatalf("%s is too small to have a packed trailer", path)
-	}
-	trailer := data[len(data)-packedTrailerSize:]
-	for i := range 8 {
-		trailer[i] = 0xFF // offset = max uint64, guaranteed out of range
+	for i := range 4 {
+		data[off+uint64(i)] = 0xFF
 	}
 	if err := os.WriteFile(path, data, 0o755); err != nil {
 		t.Fatalf("writing corrupted %s: %v", path, err)
 	}
+}
+
+// corruptWindowsPayloadSection is corruptLinuxPayloadSection's PE
+// counterpart: the section's raw file offset (sec.Offset) is exactly
+// where the true payload starts (VirtualSize-bounded, file-alignment
+// padding follows it), so corrupting the leading 4 bytes there hits the
+// same package-count header.
+func corruptWindowsPayloadSection(t *testing.T, path string) {
+	t.Helper()
+	f, err := pe.Open(path)
+	if err != nil {
+		t.Fatalf("opening %s as PE: %v", path, err)
+	}
+	sec := f.Section(windowsPayloadSectionName)
+	if sec == nil {
+		_ = f.Close()
+		t.Fatalf("%s has no %q section to corrupt", path, windowsPayloadSectionName)
+	}
+	off, virtualSize := sec.Offset, sec.VirtualSize
+	_ = f.Close()
+	if virtualSize < 4 {
+		t.Fatalf("%s's payload section is too small to corrupt meaningfully", path)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("reading %s: %v", path, err)
+	}
+	for i := range 4 {
+		data[uint64(off)+uint64(i)] = 0xFF
+	}
+	if err := os.WriteFile(path, data, 0o755); err != nil {
+		t.Fatalf("writing corrupted %s: %v", path, err)
+	}
+}
+
+// corruptDarwinPayloadSection is corruptLinuxPayloadSection's Mach-O
+// counterpart: corrupts the leading 4 bytes of the __BALEXE,__payload
+// section's real content.
+func corruptDarwinPayloadSection(t *testing.T, path string) {
+	t.Helper()
+	f, err := macho.Open(path)
+	if err != nil {
+		t.Fatalf("opening %s as Mach-O: %v", path, err)
+	}
+	var off, size uint64
+	found := false
+	for _, s := range f.Sections {
+		if s.Name == darwinPayloadSectionName && s.Seg == darwinPayloadSegmentName {
+			off, size = uint64(s.Offset), s.Size
+			found = true
+			break
+		}
+	}
+	_ = f.Close()
+	if !found {
+		t.Fatalf("%s has no %s,%s section to corrupt", path, darwinPayloadSegmentName, darwinPayloadSectionName)
+	}
+	if size < 4 {
+		t.Fatalf("%s's payload section is too small to corrupt meaningfully", path)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("reading %s: %v", path, err)
+	}
+	for i := range 4 {
+		data[off+uint64(i)] = 0xFF
+	}
+	if err := os.WriteFile(path, data, 0o755); err != nil {
+		t.Fatalf("writing corrupted %s: %v", path, err)
+	}
+}
+
+// expectedCorruptionErrorSubstring is corruptPackedPayload's counterpart
+// error-message assertion: every platform's section reader reports
+// whatever unmarshalPayload's own framing check found wrong with the
+// section's bytes.
+func expectedCorruptionErrorSubstring() string {
+	return "corrupt embedded program"
 }
 
 // buildBalAsStubOutput builds a "packer" bal binary using the real bal
@@ -2217,10 +2451,11 @@ func TestBalrtRejectsPlainExecution(t *testing.T) {
 }
 
 // TestBalBuildCorruptedOutputReportsError covers running a bal build output
-// (the common case: balrt as the runner stub) whose trailer has been
-// corrupted after the fact — the magic marker still says "compiled
-// program", but the payload is bad, so balrt's own main() must report a
-// clear error rather than crash or silently do nothing.
+// (the common case: balrt as the runner stub) whose embedded payload has
+// been corrupted after the fact — the file still declares itself a
+// compiled program (magic trailer or payload section, depending on
+// platform), but the payload itself is bad, so balrt's own main() must
+// report a clear error rather than crash or silently do nothing.
 func TestBalBuildCorruptedOutputReportsError(t *testing.T) {
 	t.Parallel()
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
@@ -2236,14 +2471,15 @@ func TestBalBuildCorruptedOutputReportsError(t *testing.T) {
 		t.Fatalf("bal build failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
 	}
 
-	corruptPackedTrailerOffset(t, outBin)
+	corruptPackedPayload(t, outBin)
 
 	_, runErr, runExit := runCLICommand(t, outBin, repoRoot, coverDir)
 	if runExit == 0 {
 		t.Fatal("expected a corrupted build output to fail rather than run")
 	}
-	if !strings.Contains(runErr, "ballerina:") || !strings.Contains(runErr, "invalid embedded payload offset") {
-		t.Errorf("expected a clear 'ballerina: invalid embedded payload offset ...' error, got:\n%s", runErr)
+	wantSubstr := expectedCorruptionErrorSubstring()
+	if !strings.Contains(runErr, "ballerina:") || !strings.Contains(runErr, wantSubstr) {
+		t.Errorf("expected a clear 'ballerina: ...%s...' error, got:\n%s", wantSubstr, runErr)
 	}
 }
 
@@ -2283,8 +2519,8 @@ func TestBalBinaryAsRuntimeStub(t *testing.T) {
 // TestBalBinaryAsRuntimeStub_CorruptedOutputReportsError is
 // TestBalBuildCorruptedOutputReportsError's counterpart for bal.go's own
 // main(): the produced executable here is bal's own machine code (not
-// balrt's), so corrupting its trailer exercises bal.go's err != nil branch
-// specifically.
+// balrt's), so corrupting its embedded payload exercises bal.go's
+// err != nil branch specifically.
 func TestBalBinaryAsRuntimeStub_CorruptedOutputReportsError(t *testing.T) {
 	t.Parallel()
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
@@ -2294,14 +2530,15 @@ func TestBalBinaryAsRuntimeStub_CorruptedOutputReportsError(t *testing.T) {
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 
 	producedBin := buildBalAsStubOutput(t, balBin, repoRoot, coverDir, projectDir)
-	corruptPackedTrailerOffset(t, producedBin)
+	corruptPackedPayload(t, producedBin)
 
 	_, runErr, runExit := runCLICommand(t, producedBin, repoRoot, coverDir)
 	if runExit == 0 {
 		t.Fatal("expected a corrupted bal-as-stub output to fail rather than run")
 	}
-	if !strings.Contains(runErr, "ballerina:") || !strings.Contains(runErr, "invalid embedded payload offset") {
-		t.Errorf("expected a clear 'ballerina: invalid embedded payload offset ...' error, got:\n%s", runErr)
+	wantSubstr := expectedCorruptionErrorSubstring()
+	if !strings.Contains(runErr, "ballerina:") || !strings.Contains(runErr, wantSubstr) {
+		t.Errorf("expected a clear 'ballerina: ...%s...' error, got:\n%s", wantSubstr, runErr)
 	}
 }
 
@@ -2351,6 +2588,12 @@ func buildCrossBalrtStub(t *testing.T, repoRoot, rtDir, goos, goarch string) str
 		name += ".exe"
 	}
 	outputPath := filepath.Join(rtDir, goos+"-"+goarch, name)
+	if goos == runtime.GOOS && goarch == runtime.GOARCH {
+		// ensureCLIIntegrationBalBinaries already built this exact path as
+		// the shared, coverage-instrumented host stub — rebuilding here
+		// (without -cover) would silently clobber it and lose coverage.
+		return outputPath
+	}
 	if err := os.MkdirAll(filepath.Dir(outputPath), 0o755); err != nil {
 		t.Fatalf("creating rt dir for %s/%s: %v", goos, goarch, err)
 	}
@@ -2422,6 +2665,309 @@ func TestBalBuildCrossCompile(t *testing.T) {
 	if wantFormat := expectedBinaryFormat(targetOS); gotFormat != wantFormat {
 		t.Fatalf("cross-compiled binary %s has format %q, want %q for target OS %q — the wrong platform's stub was likely used",
 			binPath, gotFormat, wantFormat, targetOS)
+	}
+}
+
+// TestBalBuildLinuxTargetPayloadRoundTrips covers bal build
+// --target-os=linux end to end: the output must be a real ELF64 binary
+// with the payload in a genuine section (splice.EmbedELF), never raw
+// trailing bytes. Runs on any host — inspects structure, doesn't execute.
+func TestBalBuildLinuxTargetPayloadRoundTrips(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	buildCrossBalrtStub(t, repoRoot, filepath.Join(filepath.Dir(balBin), "rt"), "linux", "amd64")
+
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		"--target-os", "linux", "--target-arch", "amd64")
+	if exitCode != 0 {
+		t.Fatalf("linux-target bal build failed (exit %d)\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+	}
+	const createdPrefix = "Created "
+	idx := strings.Index(stdout, createdPrefix)
+	if idx == -1 {
+		t.Fatalf("expected bal build stdout to report a %q line, got:\n%s", createdPrefix, stdout)
+	}
+	binPath := strings.TrimSpace(strings.SplitN(stdout[idx+len(createdPrefix):], "\n", 2)[0])
+
+	f, err := elf.Open(binPath)
+	if err != nil {
+		t.Fatalf("opening %s as ELF: %v", binPath, err)
+	}
+	defer func() { _ = f.Close() }()
+
+	sec := f.Section(linuxPayloadSectionName)
+	if sec == nil {
+		t.Fatalf("expected a %q section in the linux-target build output", linuxPayloadSectionName)
+	}
+	if sec.Size == 0 {
+		t.Fatalf("expected a non-empty %q section", linuxPayloadSectionName)
+	}
+	if sec.Flags&elf.SHF_ALLOC != 0 {
+		t.Fatalf("expected the payload section to omit SHF_ALLOC (inert to the loader), got flags %v", sec.Flags)
+	}
+}
+
+// TestBalBuildLinuxTargetRunsOnHost covers actually executing a
+// linux/amd64 bal build output — gated to a matching host since only
+// there can the produced binary run directly.
+func TestBalBuildLinuxTargetRunsOnHost(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS != "linux" || runtime.GOARCH != "amd64" {
+		t.Skip("requires a linux/amd64 host to execute the produced binary directly")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+	outBin := filepath.Join(t.TempDir(), "myprogram")
+
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+	if exitCode != 0 {
+		t.Fatalf("bal build failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
+	}
+
+	runOut, runErr, runExit := runCLICommand(t, outBin, repoRoot, coverDir)
+	if runExit != 0 {
+		t.Fatalf("expected the packed linux binary to run successfully, got exit=%d\nstdout:\n%s\nstderr:\n%s", runExit, runOut, runErr)
+	}
+}
+
+// TestBalBuildWindowsTargetPayloadRoundTrips covers bal build
+// --target-os=windows end to end: the output must be a real PE64 binary
+// with the payload in a genuine section (splice.EmbedPE), never raw
+// trailing bytes. Runs on any host — inspects structure, doesn't execute.
+func TestBalBuildWindowsTargetPayloadRoundTrips(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	buildCrossBalrtStub(t, repoRoot, filepath.Join(filepath.Dir(balBin), "rt"), "windows", "amd64")
+
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		"--target-os", "windows", "--target-arch", "amd64")
+	if exitCode != 0 {
+		t.Fatalf("windows-target bal build failed (exit %d)\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+	}
+	const createdPrefix = "Created "
+	idx := strings.Index(stdout, createdPrefix)
+	if idx == -1 {
+		t.Fatalf("expected bal build stdout to report a %q line, got:\n%s", createdPrefix, stdout)
+	}
+	binPath := strings.TrimSpace(strings.SplitN(stdout[idx+len(createdPrefix):], "\n", 2)[0])
+
+	f, err := pe.Open(binPath)
+	if err != nil {
+		t.Fatalf("opening %s as PE: %v", binPath, err)
+	}
+	defer func() { _ = f.Close() }()
+
+	sec := f.Section(windowsPayloadSectionName)
+	if sec == nil {
+		t.Fatalf("expected a %q section in the windows-target build output", windowsPayloadSectionName)
+	}
+	if sec.VirtualSize == 0 {
+		t.Fatalf("expected a non-empty %q section", windowsPayloadSectionName)
+	}
+	if sec.Characteristics&uint32(pe.IMAGE_SCN_MEM_EXECUTE) != 0 || sec.Characteristics&uint32(pe.IMAGE_SCN_MEM_WRITE) != 0 {
+		t.Fatalf("expected the payload section to be non-executable and non-writable, got characteristics %#x", sec.Characteristics)
+	}
+}
+
+// TestBalBuildWindowsArm64TargetPayloadRoundTrips is
+// TestBalBuildWindowsTargetPayloadRoundTrips for windows/arm64 — the PE
+// splicer doesn't branch on machine type, but this confirms the produced
+// binary is genuinely arm64, not just structurally a valid PE.
+func TestBalBuildWindowsArm64TargetPayloadRoundTrips(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	buildCrossBalrtStub(t, repoRoot, filepath.Join(filepath.Dir(balBin), "rt"), "windows", "arm64")
+
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		"--target-os", "windows", "--target-arch", "arm64")
+	if exitCode != 0 {
+		t.Fatalf("windows/arm64-target bal build failed (exit %d)\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+	}
+	const createdPrefix = "Created "
+	idx := strings.Index(stdout, createdPrefix)
+	if idx == -1 {
+		t.Fatalf("expected bal build stdout to report a %q line, got:\n%s", createdPrefix, stdout)
+	}
+	binPath := strings.TrimSpace(strings.SplitN(stdout[idx+len(createdPrefix):], "\n", 2)[0])
+
+	arch, err := binaryArch(binPath)
+	if err != nil {
+		t.Fatalf("detecting architecture of %s: %v", binPath, err)
+	}
+	if arch != "arm64" {
+		t.Fatalf("expected an arm64 binary, got %s", arch)
+	}
+
+	f, err := pe.Open(binPath)
+	if err != nil {
+		t.Fatalf("opening %s as PE: %v", binPath, err)
+	}
+	defer func() { _ = f.Close() }()
+
+	sec := f.Section(windowsPayloadSectionName)
+	if sec == nil {
+		t.Fatalf("expected a %q section in the windows-target build output", windowsPayloadSectionName)
+	}
+	if sec.VirtualSize == 0 {
+		t.Fatalf("expected a non-empty %q section", windowsPayloadSectionName)
+	}
+}
+
+// TestBalBuildWindowsTargetExecutes covers actually executing a
+// windows bal build output (host's own arch) — gated to a windows host
+// since only there can the produced binary run directly.
+func TestBalBuildWindowsTargetExecutes(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS != "windows" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
+		t.Skip("requires a windows/amd64 or windows/arm64 host to execute the produced binary directly")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+	outBin := filepath.Join(t.TempDir(), "myprogram.exe")
+
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+	if exitCode != 0 {
+		t.Fatalf("bal build failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
+	}
+
+	runOut, runErr, runExit := runCLICommand(t, outBin, repoRoot, coverDir)
+	if runExit != 0 {
+		t.Fatalf("expected the packed windows binary to run successfully, got exit=%d\nstdout:\n%s\nstderr:\n%s", runExit, runOut, runErr)
+	}
+}
+
+// TestBalBuildDarwinTargetPayloadRoundTrips covers bal build
+// --target-os=darwin end to end: the output must be a real Mach-O64
+// binary with the payload in a genuine section (splice.EmbedMachO),
+// never raw trailing bytes. Runs on any host — inspects structure only;
+// see TestBalBuildDarwinTargetPassesCodesignStrict for signature/execution.
+func TestBalBuildDarwinTargetPayloadRoundTrips(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	buildCrossBalrtStub(t, repoRoot, filepath.Join(filepath.Dir(balBin), "rt"), "darwin", "arm64")
+
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		"--target-os", "darwin", "--target-arch", "arm64")
+	if exitCode != 0 {
+		t.Fatalf("darwin-target bal build failed (exit %d)\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+	}
+	const createdPrefix = "Created "
+	idx := strings.Index(stdout, createdPrefix)
+	if idx == -1 {
+		t.Fatalf("expected bal build stdout to report a %q line, got:\n%s", createdPrefix, stdout)
+	}
+	binPath := strings.TrimSpace(strings.SplitN(stdout[idx+len(createdPrefix):], "\n", 2)[0])
+
+	f, err := macho.Open(binPath)
+	if err != nil {
+		t.Fatalf("opening %s as Mach-O: %v", binPath, err)
+	}
+	defer func() { _ = f.Close() }()
+
+	var sec *macho.Section
+	for _, s := range f.Sections {
+		if s.Name == darwinPayloadSectionName && s.Seg == darwinPayloadSegmentName {
+			sec = s
+			break
+		}
+	}
+	if sec == nil {
+		t.Fatalf("expected a %s,%s section in the darwin-target build output", darwinPayloadSegmentName, darwinPayloadSectionName)
+	}
+	if sec.Size == 0 {
+		t.Fatalf("expected a non-empty %s,%s section", darwinPayloadSegmentName, darwinPayloadSectionName)
+	}
+}
+
+// TestBalBuildDarwinTargetPassesCodesignStrict covers the exact bug this
+// packing migration fixes: a host-built (no cross-compile involved) bal
+// build output must pass `codesign --verify --strict` — which raw-append
+// output never could on arm64 — and must actually execute correctly.
+// Gated to darwin with the codesign tool available.
+func TestBalBuildDarwinTargetPassesCodesignStrict(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS != "darwin" {
+		t.Skip("requires a darwin host with the codesign tool")
+	}
+	if _, err := exec.LookPath("codesign"); err != nil {
+		t.Skip("codesign not found on PATH")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+	outBin := filepath.Join(t.TempDir(), "myprogram")
+
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+	if exitCode != 0 {
+		t.Fatalf("bal build failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
+	}
+
+	verify := exec.Command("codesign", "--verify", "--strict", "-v", outBin)
+	if out, err := verify.CombinedOutput(); err != nil {
+		t.Fatalf("codesign --verify --strict failed: %v\n%s", err, out)
+	}
+
+	runOut, runErr, runExit := runCLICommand(t, outBin, repoRoot, coverDir)
+	if runExit != 0 {
+		t.Fatalf("expected the packed darwin binary to run successfully, got exit=%d\nstdout:\n%s\nstderr:\n%s", runExit, runOut, runErr)
+	}
+}
+
+// TestBalBuildDarwinCrossCompileAmd64PassesCodesignStrict covers the
+// from-scratch signing path: darwin/amd64 stubs are never signed by
+// Go's linker, unlike arm64 which TestBalBuildDarwinTargetPassesCodesignStrict
+// re-signs. Cross-compiled, so no amd64 host needed — verifies the
+// signature only, doesn't execute the binary.
+func TestBalBuildDarwinCrossCompileAmd64PassesCodesignStrict(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS != "darwin" {
+		t.Skip("requires a darwin host with the codesign tool")
+	}
+	if _, err := exec.LookPath("codesign"); err != nil {
+		t.Skip("codesign not found on PATH")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	buildCrossBalrtStub(t, repoRoot, filepath.Join(filepath.Dir(balBin), "rt"), "darwin", "amd64")
+
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		"--target-os", "darwin", "--target-arch", "amd64")
+	if exitCode != 0 {
+		t.Fatalf("darwin/amd64 cross-compile build failed (exit %d)\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+	}
+	const createdPrefix = "Created "
+	idx := strings.Index(stdout, createdPrefix)
+	if idx == -1 {
+		t.Fatalf("expected bal build stdout to report a %q line, got:\n%s", createdPrefix, stdout)
+	}
+	binPath := strings.TrimSpace(strings.SplitN(stdout[idx+len(createdPrefix):], "\n", 2)[0])
+
+	verify := exec.Command("codesign", "--verify", "--strict", "-v", binPath)
+	if out, err := verify.CombinedOutput(); err != nil {
+		t.Fatalf("codesign --verify --strict failed: %v\n%s", err, out)
 	}
 }
 
@@ -2761,6 +3307,7 @@ func twoNonHostNativeTargets(t *testing.T) (osA, archA, osB, archB string) {
 		{"darwin", "amd64"},
 		{"darwin", "arm64"},
 		{"windows", "amd64"},
+		{"windows", "arm64"},
 	}
 	var picked [][2]string
 	for _, c := range candidates {
@@ -2877,13 +3424,6 @@ func TestBalBuildNativeDependencyPartialTargetOverride(t *testing.T) {
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
 		t.Skip("skipping CLI integration test on WASM")
 	}
-	if runtime.GOOS == "windows" {
-		// windows only has one supported arch (amd64) in the curated
-		// supportedPlatforms list, so there's no valid arch-only override
-		// target to test with when the host OS defaults to windows.
-		t.Skip("no alternate supported architecture for windows in the curated platform list")
-	}
-
 	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
 
 	tempHome := t.TempDir()

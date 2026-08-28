@@ -84,3 +84,4 @@ jobs:
       - name: Run all modules
         shell: bash
         run: make test
+

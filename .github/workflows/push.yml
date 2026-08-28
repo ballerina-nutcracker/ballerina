@@ -40,7 +40,7 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
+          platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64" "windows/arm64")
           for platform in "${platforms[@]}"; do
             GOOS="${platform%/*}"
             GOARCH="${platform#*/}"
@@ -62,7 +62,7 @@ jobs:
           # release archive bundles every supported platform's balrt, not
           # just its own, so cross-compilation works right after extracting
           # a single archive.
-          platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
+          platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64" "windows/arm64")
           for platform in "${platforms[@]}"; do
             GOOS="${platform%/*}"
             GOARCH="${platform#*/}"
@@ -82,8 +82,8 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           mkdir -p artifacts
-          bal_platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
-          rt_platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
+          bal_platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64" "windows/arm64")
+          rt_platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64" "windows/arm64")
           for platform in "${bal_platforms[@]}"; do
             GOOS="${platform%/*}"
             GOARCH="${platform#*/}"
@@ -134,3 +134,9 @@ jobs:
         with:
           name: ballerina-nutcracker-windows-amd64
           path: artifacts/ballerina-nutcracker-windows-amd64
+
+      - name: Upload windows-arm64
+        uses: actions/upload-artifact@v7
+        with:
+          name: ballerina-nutcracker-windows-arm64
+          path: artifacts/ballerina-nutcracker-windows-arm64

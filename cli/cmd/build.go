@@ -26,6 +26,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/cli/internal/executable"
 	"github.com/ballerina-nutcracker/ballerina/cli/internal/nativeexec"
+	"github.com/ballerina-nutcracker/ballerina/cli/internal/splice"
 	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -341,7 +342,14 @@ func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, f
 		stubPath = sp
 	}
 
-	if err := executable.Pack(stubPath, birPkgs, tyEnv, outPath); err != nil {
+	payload, mErr := executable.MarshalPayload(birPkgs, tyEnv)
+	if mErr != nil {
+		return buildError("%w", mErr)
+	}
+	// splice.Embed's own default case is unreachable today: ValidatePlatform
+	// (already run above via ResolveStub/buildNativeStub) only ever allows
+	// targetPlatform.OS to be darwin/linux/windows.
+	if err := splice.Embed(stubPath, payload, outPath, targetPlatform.OS); err != nil {
 		return buildError("write executable: %w", err)
 	}
 

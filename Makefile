@@ -74,7 +74,7 @@ test-wasm:
 	wasm_exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec"; \
 	while IFS= read -r dir; do \
 		case "$$dir" in */compiler-tools/*) continue ;; esac; \
-		packages="$$(cd "$$dir" && go list ./... | sed -e '/^github.com\/ballerina-nutcracker\/ballerina\/corpus$$/d' -e '/^github.com\/ballerina-nutcracker\/ballerina\/cli\/internal\/nativerunner$$/d')"; \
+		packages="$$(cd "$$dir" && go list ./... | sed -e '/^github.com\/ballerina-nutcracker\/ballerina\/corpus$$/d' -e '/^github.com\/ballerina-nutcracker\/ballerina\/cli\/internal\/nativerunner$$/d' -e '/^github.com\/ballerina-nutcracker\/ballerina\/cli\/internal\/splice$$/d')"; \
 		if [[ -n "$$packages" ]]; then \
 			go test -p=1 -skip 'TestParseCorpusFiles|TestJBalUnitTests|TestJBalUnitBIRTests' -timeout 30m $$packages -exec="$$wasm_exec"; \
 		fi; \
