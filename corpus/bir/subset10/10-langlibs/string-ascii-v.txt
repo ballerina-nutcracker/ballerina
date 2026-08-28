@@ -47,7 +47,7 @@ main() -> nil{
     %20 = ConstantLoad 6
     $desugar$1 = %20;
     %22 = $desugar$1;
-    %23 = $default$0($desugar$0,%22) -> bb13;
+    %23 = $default$2($desugar$0,%22) -> bb13;
   }
   bb13 {
     $desugar$2 = %23;

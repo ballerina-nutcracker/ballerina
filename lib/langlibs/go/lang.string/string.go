@@ -36,6 +36,51 @@ func stringLength(_ *extern.Context, args []values.BalValue) (values.BalValue, e
 	return int64(utf8.RuneCountInString(args[0].(string))), nil
 }
 
+// runeSearch finds substr in s starting from startIndex (a codepoint index,
+// clamped to 0 when negative, per lang.string:indexOf semantics). It reports
+// the match as a codepoint index rather than a byte offset, without ever
+// allocating a copy of s.
+func runeSearch(s, substr string, startIndex int64) (int64, bool) {
+	if startIndex < 0 {
+		startIndex = 0
+	}
+	// Walk to the byte offset of the startIndex'th rune, tracking how many
+	// runes were skipped along the way (this is min(startIndex, RuneCount(s))
+	// whether or not the loop finds an exact match, since it stops
+	// incrementing once byteOffset is set but keeps counting otherwise).
+	byteOffset := len(s)
+	skipped := int64(0)
+	for i := range s {
+		if skipped == startIndex {
+			byteOffset = i
+			break
+		}
+		skipped++
+	}
+	// UTF-8 is self-synchronizing, so a byte-level match of a valid UTF-8
+	// substring always starts on a codepoint boundary.
+	matchOffset := strings.Index(s[byteOffset:], substr)
+	if matchOffset < 0 {
+		return 0, false
+	}
+	// Count only the unseen span up to the match; the skipped prefix's rune
+	// count is already known, so it isn't rescanned.
+	return skipped + int64(utf8.RuneCountInString(s[byteOffset:byteOffset+matchOffset])), true
+}
+
+func stringIndexOf(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	idx, found := runeSearch(args[0].(string), args[1].(string), args[2].(int64))
+	if !found {
+		return nil, nil
+	}
+	return idx, nil
+}
+
+func stringIncludes(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	_, found := runeSearch(args[0].(string), args[1].(string), args[2].(int64))
+	return found, nil
+}
+
 func stringToBytes(byteArrTy semtypes.SemType) extern.NativeFunc {
 	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return values.ByteSliceToList(byteArrTy, ctx.TypeEnv(), []byte(args[0].(string))), nil
@@ -102,6 +147,8 @@ func initStringModule(rt *runtime.Runtime) {
 	byteArrTy := ld.Define(env, nil, semtypes.ListRest(semtypes.Byte))
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", stringLength)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "indexOf", stringIndexOf)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "includes", stringIncludes)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBytes", stringToBytes(byteArrTy))
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromBytes", stringFromBytes)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "substring", stringSubstring)
