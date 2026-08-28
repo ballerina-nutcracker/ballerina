@@ -28,6 +28,21 @@ public function main() {
     string s = "Anne";
     io:println(s.toBalString()); // @output "Anne"
 
+    string quoted = "she said \"hi\" \\ ok";
+    io:println(quoted.toBalString()); // @output "she said \"hi\" \\ ok"
+
+    string whitespace = "a\tb\nc\rd";
+    io:println(whitespace.toBalString()); // @output "a\tb\nc\rd"
+
+    // control characters outside \t/\n/\r have no short escape in Ballerina
+    // (unlike Go's \a/\b/\f/\v/\xHH), so they render as \u{hex}.
+    string ctrl = "a\u{7}b\u{8}c\u{7f}d";
+    io:println(ctrl.toBalString()); // @output "a\u{7}b\u{8}c\u{7f}d"
+
+    map<anydata> ctrlKey = {};
+    ctrlKey["a\u{8}b"] = 1;
+    io:println(ctrlKey.toBalString()); // @output {"a\u{8}b":1}
+
     boolean b = true;
     io:println(b.toBalString()); // @output true
 
