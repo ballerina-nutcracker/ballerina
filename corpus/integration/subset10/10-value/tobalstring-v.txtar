@@ -1,6 +1,10 @@
 -- stdout --
 12
 "Anne"
+"she said \"hi\" \\ ok"
+"a\tb\nc\rd"
+"a\u{7}b\u{8}c\u{7f}d"
+{"a\u{8}b":1}
 true
 12.342
 float:NaN

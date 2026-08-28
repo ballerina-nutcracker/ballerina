@@ -19,6 +19,7 @@ package values
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -223,7 +224,7 @@ func BalString(v BalValue, visited map[uintptr]bool) string {
 	case nil:
 		return "()"
 	case string:
-		return strconv.Quote(t)
+		return balStringLiteral(t)
 	case int64:
 		return strconv.FormatInt(t, 10)
 	case float64:
@@ -260,4 +261,38 @@ func BalString(v BalValue, visited map[uintptr]bool) string {
 	default:
 		return "<unsupported>"
 	}
+}
+
+// balStringLiteral quotes s as a Ballerina string literal. Unlike Go's
+// strconv.Quote/%q, Ballerina's string-literal grammar (parser/lexer.go's
+// processStringLiteral) accepts only \\, \", \t, \n, \r and \u{hex} — there
+// is no \a, \b, \f, \v or bare \xHH — so every other non-printable rune is
+// escaped as \u{hex} instead of Go's shorthand forms.
+func balStringLiteral(s string) string {
+	var b strings.Builder
+	b.WriteByte('"')
+	for _, r := range s {
+		switch r {
+		case '\\':
+			b.WriteString(`\\`)
+		case '"':
+			b.WriteString(`\"`)
+		case '\t':
+			b.WriteString(`\t`)
+		case '\n':
+			b.WriteString(`\n`)
+		case '\r':
+			b.WriteString(`\r`)
+		default:
+			if strconv.IsPrint(r) {
+				b.WriteRune(r)
+			} else {
+				b.WriteString(`\u{`)
+				b.WriteString(strconv.FormatInt(int64(r), 16))
+				b.WriteByte('}')
+			}
+		}
+	}
+	b.WriteByte('"')
+	return b.String()
 }

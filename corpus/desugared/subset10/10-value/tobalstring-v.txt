@@ -27,6 +27,46 @@
           (invocation lang.value toBalString (
             (simple-var-ref s))))))
       (var-def
+        (variable quoted (type
+          (value-type string)) (expr
+          (literal she said "hi" \ ok))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref quoted))))))
+      (var-def
+        (variable whitespace (type
+          (value-type string)) (expr
+          (literal a	b
+cd))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref whitespace))))))
+      (var-def
+        (variable ctrl (type
+          (value-type string)) (expr
+          (literal abcd))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref ctrl))))))
+      (var-def
+        (variable ctrlKey (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type anydata))) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (simple-var-ref ctrlKey)
+          (literal ab))
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref ctrlKey))))))
+      (var-def
         (variable b (type
           (value-type boolean)) (expr
           (literal true))))

@@ -18,141 +18,177 @@ main() -> nil{
     %9 = println(%8) -> bb4;
   }
   bb4 {
-    %10 = ConstantLoad true
-    b = %10;
-    %12 = b;
-    %13 = toBalString(%12) -> bb5;
+    %10 = ConstantLoad she said "hi" \ ok
+    quoted = %10;
+    %12 = toBalString(quoted) -> bb5;
   }
   bb5 {
-    %14 = println(%13) -> bb6;
+    %13 = println(%12) -> bb6;
   }
   bb6 {
-    %15 = ConstantLoad 12.342
-    f1 = %15;
-    %17 = f1;
-    %18 = toBalString(%17) -> bb7;
+    %14 = ConstantLoad a	b
+cd
+    whitespace = %14;
+    %16 = toBalString(whitespace) -> bb7;
   }
   bb7 {
-    %19 = println(%18) -> bb8;
+    %17 = println(%16) -> bb8;
   }
   bb8 {
-    %21 = ConstantLoad 0
-    %22 = %21;
-    %23 = ConstantLoad 0
-    %24 = %23;
-    %20 = / %22 %24;
-    nanVal = %20;
-    %26 = nanVal;
-    %27 = toBalString(%26) -> bb9;
+    %18 = ConstantLoad abcd
+    ctrl = %18;
+    %20 = toBalString(ctrl) -> bb9;
   }
   bb9 {
-    %28 = println(%27) -> bb10;
+    %21 = println(%20) -> bb10;
   }
   bb10 {
-    %30 = ConstantLoad 1
-    %31 = %30;
-    %32 = ConstantLoad 0
-    %33 = %32;
-    %29 = / %31 %33;
-    infVal = %29;
-    %35 = infVal;
-    %36 = toBalString(%35) -> bb11;
+    %22 = newMap {| anydata... |}{}
+    ctrlKey = %22;
+    %24 = ConstantLoad 1
+    %25 = ConstantLoad ab
+    ctrlKey[%25] = %24;
+    %26 = toBalString(ctrlKey) -> bb11;
   }
   bb11 {
-    %37 = println(%36) -> bb12;
+    %27 = println(%26) -> bb12;
   }
   bb12 {
-    %38 = ConstantLoad 345.2425341
-    d1 = %38;
-    %40 = d1;
-    %41 = toBalString(%40) -> bb13;
+    %28 = ConstantLoad true
+    b = %28;
+    %30 = b;
+    %31 = toBalString(%30) -> bb13;
   }
   bb13 {
-    %42 = println(%41) -> bb14;
+    %32 = println(%31) -> bb14;
   }
   bb14 {
-    %43 = ConstantLoad 1
-    d2 = %43;
-    %45 = d2;
-    %46 = toBalString(%45) -> bb15;
+    %33 = ConstantLoad 12.342
+    f1 = %33;
+    %35 = f1;
+    %36 = toBalString(%35) -> bb15;
   }
   bb15 {
-    %47 = println(%46) -> bb16;
+    %37 = println(%36) -> bb16;
   }
   bb16 {
-    %48 = ConstantLoad <nil>
-    nilVal = %48;
-    %50 = nilVal;
-    %51 = toBalString(%50) -> bb17;
+    %39 = ConstantLoad 0
+    %40 = %39;
+    %41 = ConstantLoad 0
+    %42 = %41;
+    %38 = / %40 %42;
+    nanVal = %38;
+    %44 = nanVal;
+    %45 = toBalString(%44) -> bb17;
   }
   bb17 {
-    %52 = println(%51) -> bb18;
+    %46 = println(%45) -> bb18;
   }
   bb18 {
-    %53 = ConstantLoad 1
-    %54 = ConstantLoad Sam
-    %55 = ConstantLoad 12.3
-    %56 = ConstantLoad 12.12
-    %57 = ConstantLoad value
-    %58 = ConstantLoad 12
-    %59 = newMap {| anydata... |}{%57=%58}
-    %60 = ConstantLoad 5
-    %61 = newArray [anydata...][%60]{%53, %54, %55, %56, %59}
-    data = %61;
-    %63 = toBalString(data) -> bb19;
+    %48 = ConstantLoad 1
+    %49 = %48;
+    %50 = ConstantLoad 0
+    %51 = %50;
+    %47 = / %49 %51;
+    infVal = %47;
+    %53 = infVal;
+    %54 = toBalString(%53) -> bb19;
   }
   bb19 {
-    %64 = println(%63) -> bb20;
+    %55 = println(%54) -> bb20;
   }
   bb20 {
-    %65 = ConstantLoad id
-    %66 = ConstantLoad 5
-    %67 = newMap {| anydata... |}{%65=%66}
-    key = %67;
-    %69 = toBalString(key) -> bb21;
+    %56 = ConstantLoad 345.2425341
+    d1 = %56;
+    %58 = d1;
+    %59 = toBalString(%58) -> bb21;
   }
   bb21 {
-    %70 = println(%69) -> bb22;
+    %60 = println(%59) -> bb22;
   }
   bb22 {
-    %71 = ConstantLoad city
-    %72 = ConstantLoad Colombo
-    %73 = ConstantLoad country
-    %74 = ConstantLoad Sri Lanka
-    %75 = newMap {| city: string, country: string, never... |}{%71=%72, %73=%74}
-    addr = %75;
-    %77 = toBalString(addr) -> bb23;
+    %61 = ConstantLoad 1
+    d2 = %61;
+    %63 = d2;
+    %64 = toBalString(%63) -> bb23;
   }
   bb23 {
-    %78 = println(%77) -> bb24;
+    %65 = println(%64) -> bb24;
   }
   bb24 {
-    %79 = ConstantLoad a
-    %80 = ConstantLoad 1
-    %81 = ConstantLoad b
-    %82 = ConstantLoad c
-    %83 = ConstantLoad 2
-    %84 = newMap {| anydata... |}{%82=%83}
-    %85 = newMap {| anydata... |}{%79=%80, %81=%84}
-    nested = %85;
-    %87 = toBalString(nested) -> bb25;
+    %66 = ConstantLoad <nil>
+    nilVal = %66;
+    %68 = nilVal;
+    %69 = toBalString(%68) -> bb25;
   }
   bb25 {
-    %88 = println(%87) -> bb26;
+    %70 = println(%69) -> bb26;
   }
   bb26 {
-    %89 = ConstantLoad 1
-    %90 = ConstantLoad 2
-    %91 = ConstantLoad 3
-    %92 = ConstantLoad 3
-    %93 = newArray [int...][%92]{%89, %90, %91}
-    nums = %93;
-    %95 = toBalString(nums) -> bb27;
+    %71 = ConstantLoad 1
+    %72 = ConstantLoad Sam
+    %73 = ConstantLoad 12.3
+    %74 = ConstantLoad 12.12
+    %75 = ConstantLoad value
+    %76 = ConstantLoad 12
+    %77 = newMap {| anydata... |}{%75=%76}
+    %78 = ConstantLoad 5
+    %79 = newArray [anydata...][%78]{%71, %72, %73, %74, %77}
+    data = %79;
+    %81 = toBalString(data) -> bb27;
   }
   bb27 {
-    %96 = println(%95) -> bb28;
+    %82 = println(%81) -> bb28;
   }
   bb28 {
+    %83 = ConstantLoad id
+    %84 = ConstantLoad 5
+    %85 = newMap {| anydata... |}{%83=%84}
+    key = %85;
+    %87 = toBalString(key) -> bb29;
+  }
+  bb29 {
+    %88 = println(%87) -> bb30;
+  }
+  bb30 {
+    %89 = ConstantLoad city
+    %90 = ConstantLoad Colombo
+    %91 = ConstantLoad country
+    %92 = ConstantLoad Sri Lanka
+    %93 = newMap {| city: string, country: string, never... |}{%89=%90, %91=%92}
+    addr = %93;
+    %95 = toBalString(addr) -> bb31;
+  }
+  bb31 {
+    %96 = println(%95) -> bb32;
+  }
+  bb32 {
+    %97 = ConstantLoad a
+    %98 = ConstantLoad 1
+    %99 = ConstantLoad b
+    %100 = ConstantLoad c
+    %101 = ConstantLoad 2
+    %102 = newMap {| anydata... |}{%100=%101}
+    %103 = newMap {| anydata... |}{%97=%98, %99=%102}
+    nested = %103;
+    %105 = toBalString(nested) -> bb33;
+  }
+  bb33 {
+    %106 = println(%105) -> bb34;
+  }
+  bb34 {
+    %107 = ConstantLoad 1
+    %108 = ConstantLoad 2
+    %109 = ConstantLoad 3
+    %110 = ConstantLoad 3
+    %111 = newArray [int...][%110]{%107, %108, %109}
+    nums = %111;
+    %113 = toBalString(nums) -> bb35;
+  }
+  bb35 {
+    %114 = println(%113) -> bb36;
+  }
+  bb36 {
     return;
   }
 }
