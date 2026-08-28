@@ -1,13 +1,12 @@
 module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = ConstantLoad bar:foo
-    %2 = ConstantLoad xmlns:bar
-    %3 = ConstantLoad https:foo/baz
-    %4 = newMap {| string... |}{%2=%3}
-    %5 = newXMLElement(%1, (), (), %4)
-    f = %5;
-    %7 = println(f) -> bb1;
+    %1 = ConstantLoad xmlns:bar
+    %2 = ConstantLoad https:foo/baz
+    %3 = newMap {| string... |}{%1=%2}
+    %4 = newXMLElement("bar:foo", namespace="https:foo/baz", (), (), %3)
+    f = %4;
+    %6 = println(f) -> bb1;
   }
   bb1 {
     return;

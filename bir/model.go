@@ -303,6 +303,7 @@ const (
 	InstructionKindPushScope
 	InstructionKindPopScope
 	InstructionKindWaitAll
+	InstructionKindXMLFilter
 )
 
 func BB(number int) BIRBasicBlock {

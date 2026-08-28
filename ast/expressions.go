@@ -40,6 +40,15 @@ const (
 	LiteralKindByteArray
 )
 
+type NamePatternKind uint8
+
+const (
+	NamePatternKindWildCard NamePatternKind = iota
+	NamePatternKindIdentifier
+	NamePatternKindQualifiedIdentifier
+	NamePatternKindPrefix
+)
+
 type BLangActionOrExpression interface {
 	BLangNode
 	actionOrExpression()
@@ -564,10 +573,12 @@ type (
 
 	BLangXMLElementLiteral struct {
 		bLangExpressionBase
-		Name       string
-		Attrs      []BLangXMLAttribute
-		Content    BLangExpression
-		Namespaces []model.SymbolRef // Namespaces referred from this node
+		Prefix          string
+		LocalName       string
+		NamespaceSymbol model.SymbolRef
+		Attrs           []BLangXMLAttribute
+		Content         BLangExpression
+		Namespaces      []model.SymbolRef // Namespaces referred from this node
 	}
 
 	BLangXMLAttribute struct {
@@ -590,6 +601,19 @@ type (
 	BLangXMLTextLiteral struct {
 		bLangExpressionBase
 		Body string
+	}
+
+	BLangAtomicNamePattern struct {
+		Kind            NamePatternKind
+		Identifier      IdentifierNode
+		NamespacePrefix IdentifierNode // Symbol resolver will update the correct symbol and after that only use the symbol
+		NamespaceSymbol model.SymbolRef
+	}
+
+	BLangXMLFilterExpression struct {
+		bLangExpressionBase
+		Expression  BLangExpression
+		NamePattern []BLangAtomicNamePattern
 	}
 )
 
@@ -622,6 +646,8 @@ var (
 	_ NamedArgNode                = &BLangNamedArgsExpression{}
 	_ BLangExpression             = &BLangTrapExpr{}
 	_ BLangExpression             = &BLangNewExpression{}
+	_ BLangExpression             = &BLangXMLFilterExpression{}
+	_ BLangNode                   = &BLangXMLFilterExpression{}
 )
 
 var (

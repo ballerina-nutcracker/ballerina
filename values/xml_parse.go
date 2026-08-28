@@ -117,8 +117,8 @@ func parseXMLStrict(bc *xmlBuildCtx, content string) (XMLValue, error) {
 		case xml.StartElement:
 			ns := cloneStringMap(currentNS)
 			attrs, namespaces := bc.xmlAttrsAndNamespaces(t.Attr, ns)
-			name := xmlQualifiedName(t.Name, ns, true)
-			stack = append(stack, xmlParseElement{e: NewXMLElement(name, attrs, namespaces, nil, bc.readonly), ns: currentNS})
+			prefix := xmlNamePrefix(xmlQualifiedName(t.Name, ns, true))
+			stack = append(stack, xmlParseElement{e: NewXMLElement(prefix, t.Name.Local, t.Name.Space, attrs, namespaces, nil, bc.readonly), ns: currentNS})
 			currentNS = ns
 			continue
 		case xml.EndElement:
@@ -230,6 +230,13 @@ func xmlQualifiedName(name xml.Name, ns map[string]string, element bool) string 
 	return name.Local
 }
 
+func xmlNamePrefix(name string) string {
+	if i := strings.IndexByte(name, ':'); i >= 0 {
+		return name[:i]
+	}
+	return ""
+}
+
 func cloneStringMap(in map[string]string) map[string]string {
 	out := make(map[string]string, len(in))
 	for k, v := range in {
@@ -284,6 +291,9 @@ func (c xmlNsCtx) qualifiedName(name xml.Name) string {
 		}
 		return prefix + ":" + name.Local
 	}
+	if name.Space == xmlNamespaceURI {
+		return "xml:" + name.Local
+	}
 	return name.Local
 }
 
@@ -330,7 +340,7 @@ func parseXMLItems(bc *xmlBuildCtx, dec *xml.Decoder, ctx xmlNsCtx, topLevel boo
 
 func parseXMLElement(bc *xmlBuildCtx, dec *xml.Decoder, start xml.StartElement, parentCtx xmlNsCtx) (*XMLElement, error) {
 	ctx := parentCtx.child(start.Attr)
-	name := ctx.qualifiedName(start.Name)
+	prefix := xmlNamePrefix(ctx.qualifiedName(start.Name))
 
 	var attrsEntries []MapEntry
 	var nsEntries []MapEntry
@@ -358,5 +368,5 @@ func parseXMLElement(bc *xmlBuildCtx, dec *xml.Decoder, start xml.StartElement, 
 		childVal = NewNormalizedXMLSequence(children)
 	}
 
-	return NewXMLElement(name, attrs, namespaces, childVal, bc.readonly), nil
+	return NewXMLElement(prefix, start.Name.Local, start.Name.Space, attrs, namespaces, childVal, bc.readonly), nil
 }
