@@ -6373,21 +6373,21 @@ func resolveMethodCall(t typeResolver, chain *binding, expr *ast.BLangInvocation
 	var pkgAlias ast.BLangIdentifier
 	switch {
 	case semtypes.IsSubtype(t.typeContext(), recieverTy, semtypes.List):
-		symbolRef, pkgAlias, ok = resolveLangLibImport(t, "lang.array", methodSymbol.MethodName(), expr)
+		symbolRef, pkgAlias, ok = tryResolveLangLibImport(t, "lang.array", methodSymbol.MethodName(), expr)
 	case semtypes.IsSubtype(t.typeContext(), recieverTy, semtypes.Int):
-		symbolRef, pkgAlias, ok = resolveLangLibImport(t, "lang.int", methodSymbol.MethodName(), expr)
+		symbolRef, pkgAlias, ok = tryResolveLangLibImport(t, "lang.int", methodSymbol.MethodName(), expr)
 	case semtypes.IsSubtype(t.typeContext(), recieverTy, semtypes.Decimal):
-		symbolRef, pkgAlias, ok = resolveLangLibImport(t, "lang.decimal", methodSymbol.MethodName(), expr)
+		symbolRef, pkgAlias, ok = tryResolveLangLibImport(t, "lang.decimal", methodSymbol.MethodName(), expr)
 	case semtypes.IsSubtype(t.typeContext(), recieverTy, semtypes.Float):
-		symbolRef, pkgAlias, ok = resolveLangLibImport(t, "lang.float", methodSymbol.MethodName(), expr)
+		symbolRef, pkgAlias, ok = tryResolveLangLibImport(t, "lang.float", methodSymbol.MethodName(), expr)
 	case semtypes.IsSubtype(t.typeContext(), recieverTy, semtypes.Mapping):
-		symbolRef, pkgAlias, ok = resolveLangLibImport(t, "lang.map", methodSymbol.MethodName(), expr)
+		symbolRef, pkgAlias, ok = tryResolveLangLibImport(t, "lang.map", methodSymbol.MethodName(), expr)
 	case semtypes.IsSubtype(t.typeContext(), recieverTy, semtypes.Error):
-		symbolRef, pkgAlias, ok = resolveLangLibImport(t, "lang.error", methodSymbol.MethodName(), expr)
+		symbolRef, pkgAlias, ok = tryResolveLangLibImport(t, "lang.error", methodSymbol.MethodName(), expr)
 	case semtypes.IsSubtype(t.typeContext(), recieverTy, semtypes.String):
-		symbolRef, pkgAlias, ok = resolveLangLibImport(t, "lang.string", methodSymbol.MethodName(), expr)
+		symbolRef, pkgAlias, ok = tryResolveLangLibImport(t, "lang.string", methodSymbol.MethodName(), expr)
 	case semtypes.IsSubtype(t.typeContext(), recieverTy, semtypes.XML):
-		symbolRef, pkgAlias, ok = resolveLangLibImport(t, "lang.xml", methodSymbol.MethodName(), expr)
+		symbolRef, pkgAlias, ok = tryResolveLangLibImport(t, "lang.xml", methodSymbol.MethodName(), expr)
 	default:
 		ok = false
 	}
@@ -6736,6 +6736,17 @@ func resolveRemoteMethodCallAction(t typeResolver, chain *binding, expr *ast.BLa
 }
 
 func resolveLangLibImport(t typeResolver, pkgName string, methodName string, expr *ast.BLangInvocation) (model.SymbolRef, ast.BLangIdentifier, bool) {
+	symbolRef, pkgAlias, ok := tryResolveLangLibImport(t, pkgName, methodName, expr)
+	if !ok {
+		t.semanticError("method not found: "+methodName, expr.GetPosition())
+	}
+	return symbolRef, pkgAlias, ok
+}
+
+// tryResolveLangLibImport is resolveLangLibImport without the "method not
+// found" diagnostic, so a miss can be reported only once the lang.value
+// fallback also fails.
+func tryResolveLangLibImport(t typeResolver, pkgName string, methodName string, expr *ast.BLangInvocation) (model.SymbolRef, ast.BLangIdentifier, bool) {
 	symbolSpace, ok := t.lookupImportedSymbols(pkgName)
 	if !ok {
 		t.internalError(fmt.Sprintf("%s symbol space not found", pkgName), expr.GetPosition())
