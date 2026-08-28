@@ -213,3 +213,51 @@ func toString(v BalValue, visited map[uintptr]bool, isDirect bool) string {
 		return "<unsupported>"
 	}
 }
+
+// BalString renders v in Ballerina's expression style, as used by
+// lang.value:toBalString: unlike String, strings are quoted at every level
+// (including the top), nil renders as "()" rather than the empty string,
+// decimals carry a trailing "d", and non-finite floats carry a "float:" prefix.
+func BalString(v BalValue, visited map[uintptr]bool) string {
+	switch t := v.(type) {
+	case nil:
+		return "()"
+	case string:
+		return strconv.Quote(t)
+	case int64:
+		return strconv.FormatInt(t, 10)
+	case float64:
+		formatted := FormatFloat(t)
+		switch formatted {
+		case "NaN", "Infinity", "-Infinity":
+			return "float:" + formatted
+		default:
+			return formatted
+		}
+	case bool:
+		return strconv.FormatBool(t)
+	case *decimal.Decimal:
+		return t.FormatBallerina() + "d"
+	case *List:
+		return t.BalString(visited)
+	case *Map:
+		return t.BalString(visited)
+	// Error/object/function/stream/typedesc/xml expression-style rendering is
+	// out of scope for the persist use case this backs; fall back to the
+	// informal renderer rather than inventing an unverified format.
+	case *Error:
+		return t.String(visited)
+	case *Function:
+		return "function " + t.LookupKey
+	case *Object:
+		return "object"
+	case *Stream:
+		return "stream"
+	case *TypeDesc:
+		return "typedesc"
+	case XMLValue:
+		return t.XMLString()
+	default:
+		return "<unsupported>"
+	}
+}

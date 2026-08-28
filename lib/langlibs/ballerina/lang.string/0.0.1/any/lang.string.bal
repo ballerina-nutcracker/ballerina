@@ -20,6 +20,24 @@
 # + return - the number of characters (code points) in `str`
 public isolated function length(string str) returns int = external;
 
+# Finds the first occurrence of one string in another string.
+#
+# + str - the string in which to search
+# + substr - the string to search for
+# + startIndex - index to start searching from
+# + return - index of the first occurrence of parameter `substr` in parameter `str` that is >= parameter `startIndex`,
+#     or `()` if there is no such occurrence
+public isolated function indexOf(string str, string substr, int startIndex = 0) returns int? = external;
+
+# Tests whether a string includes another string.
+#
+# + str - the string in which to search
+# + substr - the string to search for
+# + startIndex - index to start searching from
+# + return - `true` if there is an occurrence of parameter `substr` in parameter `str` at an index >= parameter `startIndex`,
+#     or `false` otherwise
+public isolated function includes(string str, string substr, int startIndex = 0) returns boolean = external;
+
 # Returns a byte array for a string using UTF-8 encoding.
 #
 # + str - the string value

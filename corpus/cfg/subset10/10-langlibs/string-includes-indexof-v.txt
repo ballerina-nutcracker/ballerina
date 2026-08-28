@@ -1,0 +1,86 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (literal location.buildingCode))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string includes (
+          (simple-var-ref s)
+          (literal .) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string indexOf (
+          (simple-var-ref s)
+          (literal .) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string includes (
+          (simple-var-ref s)
+          (literal []) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string indexOf (
+          (simple-var-ref s)
+          (literal []) <default>)))))
+    (var-def
+      (variable multi (type
+        (value-type string)) (expr
+        (literal a.b.c))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string indexOf (
+          (simple-var-ref multi)
+          (literal .) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string indexOf (
+          (simple-var-ref multi)
+          (literal .)
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string includes (
+          (simple-var-ref multi)
+          (literal .)
+          (literal 4))))))
+    (var-def
+      (variable unicode (type
+        (value-type string)) (expr
+        (literal héllo wörld))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string indexOf (
+          (simple-var-ref unicode)
+          (literal wörld) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string includes (
+          (simple-var-ref unicode)
+          (literal ö) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string includes (
+          (literal )
+          (literal ) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string indexOf (
+          (literal )
+          (literal ) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string indexOf (
+          (literal abc)
+          (literal )
+          (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string indexOf (
+          (literal abc)
+          (literal x)
+          (unary-expr -
+            (literal 5)))))))
+  )
+)

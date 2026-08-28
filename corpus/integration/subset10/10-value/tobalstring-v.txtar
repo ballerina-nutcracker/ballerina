@@ -1,0 +1,16 @@
+-- stdout --
+12
+"Anne"
+true
+12.342
+float:NaN
+float:Infinity
+345.2425341d
+1d
+()
+[1,"Sam",12.3,12.12d,{"value":12}]
+{"id":5}
+{"city":"Colombo","country":"Sri Lanka"}
+{"a":1,"b":{"c":2}}
+[1,2,3]
+-- stderr --

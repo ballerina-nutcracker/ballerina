@@ -145,6 +145,18 @@ func (l *List) checkMemberType(tc semtypes.Context, idx int, value BalValue) {
 }
 
 func (l *List) String(visited map[uintptr]bool) string {
+	return l.stringify(visited, func(v BalValue, visited map[uintptr]bool) string {
+		return toString(v, visited, false)
+	})
+}
+
+func (l *List) BalString(visited map[uintptr]bool) string {
+	return l.stringify(visited, BalString)
+}
+
+// stringify is the shared cycle-detecting traversal behind String and
+// BalString; the two differ only in how each element is rendered.
+func (l *List) stringify(visited map[uintptr]bool, format func(BalValue, map[uintptr]bool) string) string {
 	ptr := uintptr(unsafe.Pointer(l))
 	if visited[ptr] {
 		return "[...]"
@@ -162,7 +174,7 @@ func (l *List) String(visited map[uintptr]bool) string {
 		if i > 0 {
 			b.WriteByte(',')
 		}
-		b.WriteString(toString(l.Get(i), visited, false))
+		b.WriteString(format(l.Get(i), visited))
 	}
 	b.WriteByte(']')
 	return b.String()

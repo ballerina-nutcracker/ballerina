@@ -68,3 +68,9 @@ public isolated function cloneWithType(anydata v, typedesc<anydata> t = <>) retu
 # + t - type to convert to
 # + return - value belonging to type parameter `t` or error if this cannot be done
 public isolated function fromJsonWithType(json v, typedesc<anydata> t = <>) returns t|error  = external;
+
+# Converts a value to a string that describes the value in Ballerina syntax.
+#
+# + v - the value to be converted to a string
+# + return - a string resulting from the conversion
+public isolated function toBalString(any v) returns string = external;
