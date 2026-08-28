@@ -47,3 +47,23 @@ func resolveAnnotationValues(ctx *extern.Context, annotations values.AnnotationV
 	}
 	return resolved, true
 }
+
+// TypeAnnotations resolves the runtime-visible annotations of the type td
+// denotes: those attached to the type itself and those attached to each of its
+// record fields. The second return is false if a runtime annotation value could
+// not be loaded.
+func TypeAnnotations(ctx *extern.Context, td *values.TypeDesc) (extern.TypeAnnotations, bool) {
+	annotations, ok := resolveAnnotationValues(ctx, td.Annotations)
+	if !ok {
+		return extern.TypeAnnotations{}, false
+	}
+	fields := make(map[string]values.AnnotationValues, len(td.FieldAnnotations))
+	for field, fieldAnnotations := range td.FieldAnnotations {
+		resolved, ok := resolveAnnotationValues(ctx, fieldAnnotations)
+		if !ok {
+			return extern.TypeAnnotations{}, false
+		}
+		fields[field] = resolved
+	}
+	return extern.TypeAnnotations{Annotations: annotations, Fields: fields}, true
+}

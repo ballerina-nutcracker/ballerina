@@ -654,15 +654,16 @@ func (bw *birWriter) writeConstValueByTag(buf *bytes.Buffer, tag typeTag, value 
 			panic(fmt.Sprintf("expected typedesc for tag %v, got %T", tag, value))
 		}
 		bw.writeType(buf, td.Type)
-		keys := make([]string, 0, len(td.Annotations))
-		for key := range td.Annotations {
-			keys = append(keys, key)
+		bw.writeAnnotationValues(buf, td.Annotations)
+		fields := make([]string, 0, len(td.FieldAnnotations))
+		for field := range td.FieldAnnotations {
+			fields = append(fields, field)
 		}
-		sort.Strings(keys)
-		write(buf, int64(len(keys)))
-		for _, key := range keys {
-			bw.writeStringCPEntry(buf, key)
-			bw.writeConstValue(buf, td.Annotations[key])
+		sort.Strings(fields)
+		bw.writeLength(buf, len(fields))
+		for _, field := range fields {
+			bw.writeStringCPEntry(buf, field)
+			bw.writeAnnotationValues(buf, td.FieldAnnotations[field])
 		}
 	case typeTagRuntimeRef:
 		ref, ok := value.(*values.RuntimeAnnotationValueRef)

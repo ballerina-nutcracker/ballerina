@@ -1146,14 +1146,14 @@ func (br *birReader) readConstValueByTag(tag typeTag) any {
 		return values.NewList(ty, atomic, isReadonly, restFiller, int(count), initial)
 	case typeTagTypedesc:
 		ty := br.readType()
-		var count int64
-		br.read(&count)
-		annotations := values.NewAnnotationValues()
-		for i := int64(0); i < count; i++ {
-			key := string(br.readStringCPEntry())
-			annotations[key] = br.readConstValue()
+		annotations := br.readAnnotationValues()
+		fieldCount := br.readLength()
+		fieldAnnotations := values.NewFieldAnnotationValues()
+		for range fieldCount {
+			field := string(br.readStringCPEntry())
+			fieldAnnotations[field] = br.readAnnotationValues()
 		}
-		return values.NewTypeDesc(ty, annotations)
+		return values.NewTypeDescWithFieldAnnotations(ty, annotations, fieldAnnotations)
 	case typeTagRuntimeRef:
 		return &values.RuntimeAnnotationValueRef{
 			Organization: string(br.readStringCPEntry()),

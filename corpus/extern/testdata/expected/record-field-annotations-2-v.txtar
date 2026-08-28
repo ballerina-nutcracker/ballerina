@@ -1,0 +1,18 @@
+-- stdout --
+id
+extra,id
+base-id
+derived-extra
+mid,own,tag
+root-tag
+middle-mid
+tag
+diamond-tag
+overridden
+base-id
+base-id
+
+<absent>
+one|two
+known
+-- stderr --

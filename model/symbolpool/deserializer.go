@@ -121,6 +121,16 @@ func (sr *symbolReader) storeAnnotations(ref model.SymbolRef, annotations values
 	}
 }
 
+// storeRecordFieldAnnotations records deserialized per-field annotation values
+// on the compiler environment, keyed by the record type symbol's ref.
+func (sr *symbolReader) storeRecordFieldAnnotations(ref model.SymbolRef, fieldAnnotations values.FieldAnnotationValues) {
+	for field, annotations := range fieldAnnotations {
+		for key, value := range annotations {
+			sr.env.SetRecordFieldAnnotationValue(ref, field, key, value)
+		}
+	}
+}
+
 func (sr *symbolReader) readPackageIdentifier() *model.PackageID {
 	org := sr.readStringCP()
 	pkg := sr.readStringCP()
@@ -223,11 +233,13 @@ func (sr *symbolReader) readRecordSymbol(space *model.SymbolSpace) {
 	sym := model.NewRecordSymbol(name, isPublic, diagnostics.NewBuiltinLocation())
 	sym.SetType(ty)
 	annotations := sr.readAnnotationValues()
+	fieldAnnotations := sr.readFieldAnnotationValues()
 	for _, m := range sr.readInclusionMembers(space) {
 		sym.AddMember(m)
 	}
 	ref := addDeserializedSymbol(space, name, &sym)
 	sr.storeAnnotations(ref, annotations)
+	sr.storeRecordFieldAnnotations(ref, fieldAnnotations)
 }
 
 func (sr *symbolReader) readObjectTypeSymbol(space *model.SymbolSpace) {

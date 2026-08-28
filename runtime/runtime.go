@@ -114,6 +114,7 @@ func NewRuntime(platform pal.Platform, tyEnv semtypes.Env) *Runtime {
 		Signature:         exec.FunctionSignature,
 		Metadata:          exec.FunctionMetadata,
 		ObjectAnnotations: exec.ObjectAnnotations,
+		TypeAnnotations:   exec.TypeAnnotations,
 	})
 	rt.env = env
 	for _, init := range moduleInitializers {

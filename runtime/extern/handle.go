@@ -60,6 +60,15 @@ type FunctionMetadata struct {
 	RestParam *ParameterMetadata
 }
 
+// TypeAnnotations contains the runtime-visible annotations of a type: those
+// attached to the type itself, and those attached to each field of a record
+// type. Fields holds an entry only for a field that carries annotations; record
+// fields are unordered, so callers that need an order impose their own.
+type TypeAnnotations struct {
+	Annotations values.AnnotationValues
+	Fields      map[string]values.AnnotationValues
+}
+
 // DispatchHandles carry the runtime's method-resolution and invocation
 // implementations. They are installed once by InitEnv and used by the
 // Context.Lookup*/InvokeMethod/StartMethod methods. Lookup hooks return the
@@ -80,6 +89,9 @@ type MetadataHandles struct {
 	Signature         func(*Context, any) (FunctionSignature, bool)
 	Metadata          func(*Context, any) (FunctionMetadata, bool)
 	ObjectAnnotations func(*Context, *values.Object) (values.AnnotationValues, bool)
+	// TypeAnnotations resolves the annotations of a type descriptor, including
+	// those attached to the fields of a record type.
+	TypeAnnotations func(*Context, *values.TypeDesc) (TypeAnnotations, bool)
 }
 
 // LookupObjectMethod resolves a regular method on obj. The second return is
@@ -133,6 +145,12 @@ func (c *Context) MethodMetadata(h MethodHandle) (FunctionMetadata, bool) {
 // the object's class or service declaration.
 func (c *Context) ObjectAnnotations(obj *values.Object) (values.AnnotationValues, bool) {
 	return c.Env.metadata.ObjectAnnotations(c, obj)
+}
+
+// TypeAnnotations returns the runtime-visible annotations of the type td
+// denotes, including the annotations on each field of a record type.
+func (c *Context) TypeAnnotations(td *values.TypeDesc) (TypeAnnotations, bool) {
+	return c.Env.metadata.TypeAnnotations(c, td)
 }
 
 // InvokeMethod calls the method captured by h. For object and remote

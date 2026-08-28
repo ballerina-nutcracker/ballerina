@@ -292,3 +292,37 @@ func (sr *symbolReader) readAnnotationValue() values.AnnotationValue {
 		panic(fmt.Sprintf("unknown annotation value tag: %d", tag))
 	}
 }
+
+// writeFieldAnnotationValues writes per-record-field annotation maps with field
+// names in sorted order so that serialization is deterministic.
+func (sw *symbolWriter) writeFieldAnnotationValues(buf *bytes.Buffer, fieldAnnotations values.FieldAnnotationValues) error {
+	fields := make([]string, 0, len(fieldAnnotations))
+	for field := range fieldAnnotations {
+		fields = append(fields, field)
+	}
+	sort.Strings(fields)
+	if err := write(buf, int64(len(fields))); err != nil {
+		return err
+	}
+	for _, field := range fields {
+		if err := sw.writeStringCP(buf, field); err != nil {
+			return err
+		}
+		if err := sw.writeAnnotationValues(buf, fieldAnnotations[field]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// readFieldAnnotationValues reads the map written by writeFieldAnnotationValues.
+func (sr *symbolReader) readFieldAnnotationValues() values.FieldAnnotationValues {
+	var count int64
+	read(sr.r, &count)
+	fieldAnnotations := values.NewFieldAnnotationValues()
+	for range count {
+		field := sr.readStringCP()
+		fieldAnnotations[field] = sr.readAnnotationValues()
+	}
+	return fieldAnnotations
+}

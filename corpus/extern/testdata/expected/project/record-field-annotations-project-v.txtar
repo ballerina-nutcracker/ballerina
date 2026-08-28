@@ -1,0 +1,7 @@
+-- stdout --
+name
+imported-name
+<absent>
+createdAt,note
+imported-createdAt
+-- stderr --
