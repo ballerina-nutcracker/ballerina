@@ -24,6 +24,12 @@ error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
 56 |             return outerXs.length(); // @error
    |                    ^^^^^^^
 
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolated-lambda-2-e.bal:65:20
+   |
+65 |             return nestedXs.length(); // @error
+   |                    ^^^^^^^^
+
 error[SEMANTIC_ERROR]: invocation of a non-isolated function
   --> isolated-lambda-2-e.bal:24:16
    |

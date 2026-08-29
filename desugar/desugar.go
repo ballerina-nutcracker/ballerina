@@ -373,7 +373,7 @@ func (s *desugaredSymbol) Copy() model.Symbol {
 	return &cp
 }
 
-func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.SymbolKind, isPublic bool, pos diagnostics.Location) (string, model.SymbolRef) {
+func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.SymbolKind, pos diagnostics.Location) (string, model.SymbolRef) {
 	if len(ctx.scopeStack) == 0 {
 		ctx.internalError("cannot add desugared symbol when scope stack is empty")
 	}
@@ -383,7 +383,7 @@ func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.Sy
 		ty:       ty,
 		kind:     kind,
 		location: pos,
-		isPublic: isPublic,
+		isPublic: false,
 	}
 	ctx.currentScope().AddSymbol(name, symbol)
 	ref, _ := ctx.currentScope().GetSymbol(name)
@@ -1261,7 +1261,7 @@ func desugarRecordFieldDefault(cx *functionContext, field desugaredRecordFieldRe
 	lambda.SetDeterminedType(fnType)
 	setPositionIfMissing(lambda, fn.GetPosition())
 
-	varName, varSymRef := cx.addDesugardSymbol(fnType, model.SymbolKindVariable, false, fn.GetPosition())
+	varName, varSymRef := cx.addDesugardSymbol(fnType, model.SymbolKindVariable, fn.GetPosition())
 	varIdent := newIdentifier(varName)
 	simpleVar := &ast.BLangVariable{Name: varIdent}
 	simpleVar.Expr = lambda
@@ -1794,7 +1794,7 @@ func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) 
 	case *ast.BLangExprFunctionBody:
 		result := walkExpression(cx, body.Expr.(ast.BLangActionOrExpression))
 		if len(result.initStmts) > 0 {
-			rm.Body = convertExprBodyToBlockBody(body, result)
+			rm.Body = convertExprBodyToBlockBody(result)
 		} else {
 			body.Expr = result.replacementNode.(ast.BLangExpression)
 		}
@@ -1833,7 +1833,7 @@ func desugarFunctionWithContext(cx *functionContext, fn *ast.BLangFunction) *ast
 			// For expression bodies, init statements need special handling
 			// They should be converted to a block body with statements
 			if len(result.initStmts) > 0 {
-				fn.Body = convertExprBodyToBlockBody(body, result)
+				fn.Body = convertExprBodyToBlockBody(result)
 			} else {
 				body.Expr = result.replacementNode.(ast.BLangExpression)
 			}
@@ -1848,7 +1848,6 @@ func desugarFunctionWithContext(cx *functionContext, fn *ast.BLangFunction) *ast
 // convertExprBodyToBlockBody converts expression function body to block body
 // when there are init statements from desugaring
 func convertExprBodyToBlockBody(
-	exprBody *ast.BLangExprFunctionBody,
 	result desugaredNode[ast.BLangActionOrExpression],
 ) *ast.BLangBlockFunctionBody {
 	// Create return statement with the desugared expression

@@ -43,6 +43,7 @@ import (
 // services. The program stays alive while the runtime is in its listening
 // state — the runtime lifecycle owns signal handling and shutdown.
 type listenerState struct {
+	types       *httpTypes
 	host        string
 	port        int
 	timeout     time.Duration
@@ -60,7 +61,7 @@ type serviceEntry struct {
 
 // registerListenerExterns registers the Listener class definition and its
 // extern methods. Called from initHttpModule.
-func registerListenerExterns(rt *runtime.Runtime) {
+func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 	listenerClassDef := &bir.BIRClassDef{
 		Name:      model.Name("Listener"),
 		LookupKey: "ballerina/http:Listener",
@@ -87,6 +88,7 @@ func registerListenerExterns(rt *runtime.Runtime) {
 			self := args[0].(*values.Object)
 			port := int(args[1].(int64))
 			state := &listenerState{
+				types:       types,
 				host:        "0.0.0.0",
 				port:        port,
 				timeout:     60 * time.Second,
@@ -490,7 +492,7 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 			writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResult(rt, w, r, result)
+		writeResult(rt, ctx.TypeCtx(), state.types, w, r, accessorKey, result)
 		return
 	}
 	// The path matched a service but no resource under the requested method. If
@@ -612,60 +614,99 @@ func writeErrorJSON(rt *runtime.Runtime, w http.ResponseWriter, r *http.Request,
 	_, _ = w.Write(body)
 }
 
-// writeResult writes a Ballerina resource method return value as an HTTP response.
-func writeResult(rt *runtime.Runtime, w http.ResponseWriter, r *http.Request, result values.BalValue) {
+// writeResult writes a Ballerina resource method return value as an HTTP response,
+// following jBallerina's Caller.returnResponse (http_connection.bal:141-196).
+func writeResult(rt *runtime.Runtime, tc semtypes.Context, types *httpTypes,
+	w http.ResponseWriter, r *http.Request, accessor string, result values.BalValue) {
 	switch v := result.(type) {
 	case nil:
 		w.WriteHeader(http.StatusAccepted)
 	case *values.Error:
 		writeErrorJSON(rt, w, r, http.StatusInternalServerError, v.Message)
 	case *values.Object:
-		statusCodeVal, _ := v.Get("statusCode")
-		statusCode := http.StatusOK
-		// Go's WriteHeader panics outside [100, 999]; fall back to 200 for an
-		// out-of-range value rather than crashing the handler.
-		if sc, ok := statusCodeVal.(int64); ok && sc >= 100 && sc <= 999 {
-			statusCode = int(sc)
+		holder, ok := responseBodyOf(v)
+		if !ok {
+			writeErrorJSON(rt, w, r, http.StatusInternalServerError,
+				"unexpected return type from resource method")
+			return
 		}
-		bodyVal, _ := v.Get("body")
-		holder, _ := bodyVal.(*responseBodyHolder)
+		writeResponseObject(w, v, holder)
+	default:
+		writeAnydataResult(rt, tc, types, w, r, accessor, v)
+	}
+}
 
-		// Emit headers from the response object, excluding hop-by-hop headers.
-		// Forwarding hop-by-hop headers (e.g. Transfer-Encoding, Connection) from a
-		// backend response to the downstream client violates RFC 7230 §6.1 and can
-		// cause framing errors in HTTP/1.1 keep-alive connections.
-		if hdrsVal, ok := v.Get("$headers"); ok {
-			if hdrs, ok := hdrsVal.(*values.Map); ok {
-				for _, k := range hdrs.Keys() {
-					if _, skip := hopByHopHeaders[strings.ToLower(k)]; skip {
-						continue
-					}
-					val, _ := hdrs.Get(k)
-					list := val.(*values.List)
-					for i := range list.Len() {
-						s, _ := list.Get(i).(string)
-						if i == 0 {
-							w.Header().Set(k, s)
-						} else {
-							w.Header().Add(k, s)
-						}
+// An http:Response is identified by its internal body slot rather than by its type, which is
+// a bare semtypes.Object for every object. The holder type is private to this package, so no
+// Ballerina-defined object can forge it.
+func responseBodyOf(obj *values.Object) (*responseBodyHolder, bool) {
+	bodyVal, ok := obj.Get("body")
+	if !ok {
+		return nil, false
+	}
+	holder, ok := bodyVal.(*responseBodyHolder)
+	return holder, ok
+}
+
+// The 201 rule keys on the declared accessor, not the request method, so a `default`
+// resource reached by a POST stays 200 — matching jBallerina.
+func writeAnydataResult(rt *runtime.Runtime, tc semtypes.Context, types *httpTypes,
+	w http.ResponseWriter, r *http.Request, accessor string, v values.BalValue) {
+	body, contentType, err := outboundPayload(tc, types, v)
+	if err != nil {
+		writeErrorJSON(rt, w, r, http.StatusInternalServerError,
+			"failed to serialize resource return value: "+err.Error())
+		return
+	}
+	status := http.StatusOK
+	if accessor == "post" {
+		status = http.StatusCreated
+	}
+	if contentType != "" {
+		w.Header().Set("Content-Type", contentType)
+	}
+	w.WriteHeader(status)
+	_, _ = w.Write(body)
+}
+
+func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *responseBodyHolder) {
+	statusCodeVal, _ := resp.Get("statusCode")
+	statusCode := http.StatusOK
+	// Go's WriteHeader panics outside [100, 999]; fall back to 200 for an
+	// out-of-range value rather than crashing the handler.
+	if sc, ok := statusCodeVal.(int64); ok && sc >= 100 && sc <= 999 {
+		statusCode = int(sc)
+	}
+
+	// Forwarding hop-by-hop headers (e.g. Transfer-Encoding, Connection) from a
+	// backend response to the downstream client violates RFC 7230 §6.1 and can
+	// cause framing errors in HTTP/1.1 keep-alive connections. Headers the
+	// response's own Connection value nominates are hop-by-hop too.
+	if hdrsVal, ok := resp.Get("$headers"); ok {
+		if hdrs, ok := hdrsVal.(*values.Map); ok {
+			skip := hopByHopSkipSet(headerListValues(hdrs, "connection"))
+			for _, k := range hdrs.Keys() {
+				if _, ok := skip[strings.ToLower(k)]; ok {
+					continue
+				}
+				val, _ := hdrs.Get(k)
+				list := val.(*values.List)
+				for i := range list.Len() {
+					s, _ := list.Get(i).(string)
+					if i == 0 {
+						w.Header().Set(k, s)
+					} else {
+						w.Header().Add(k, s)
 					}
 				}
 			}
 		}
-		// WriteHeader must be called before writing the body; once body bytes
-		// start flowing via writeStream, headers are already committed.
-		w.WriteHeader(statusCode)
-		if holder != nil {
-			// Headers are already committed; a write error here can't be recovered
-			// with a JSON error body, so just stop.
-			if err := holder.writeStream(w); err != nil {
-				return
-			}
-		}
-	default:
-		writeErrorJSON(rt, w, r, http.StatusInternalServerError, "unexpected return type from resource method")
 	}
+	// WriteHeader must be called before writing the body; once body bytes
+	// start flowing via writeStream, headers are already committed, so a write error here
+	// can't be recovered with a JSON error body.
+	w.WriteHeader(statusCode)
+	_ = holder.writeStream(w)
 }
 
 // copyBufPool reuses 32 KB buffers for streaming a backend response body to the

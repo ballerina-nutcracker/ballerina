@@ -1050,21 +1050,20 @@ type symbolFunctionSignature interface {
 	Symbol() model.SymbolRef
 }
 
-func allocateSymbols(alloc symbolResolver, targetScope model.Scope, sig symbolFunctionSignature, pos diagnostics.Location) (model.FunctionSignatureRef, bool) {
+func allocateSymbols(alloc symbolResolver, targetScope model.Scope, sig symbolFunctionSignature, pos diagnostics.Location) {
 	cx := alloc.GetCtx()
 	owner := sig.Symbol()
 	if owner.IsEmpty() {
-		return 0, false
+		return
 	}
 	if ref, ok := cx.FunctionSignatureRef(owner); ok {
 		associateReturnFunctionSignature(alloc, ref, sig.ReturnType(), pos)
-		return ref, true
+		return
 	}
 	params := signatureParams(alloc, targetScope, sig)
 	ref := cx.AllocateFunctionSignature(params, sig.RestParameter() != nil)
 	associateFunctionSignatureRef(cx, owner, ref, pos)
 	associateReturnFunctionSignature(alloc, ref, sig.ReturnType(), pos)
-	return ref, true
 }
 
 func signatureParams(alloc symbolResolver, targetScope model.Scope, sig ast.FunctionSignature) []model.Param {

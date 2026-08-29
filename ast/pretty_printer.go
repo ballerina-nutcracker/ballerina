@@ -141,15 +141,15 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	case *BLangArrayType:
 		p.printArrayType(t)
 	case *BLangBreak:
-		p.printBreak(t)
+		p.printBreak()
 	case *BLangContinue:
-		p.printContinue(t)
+		p.printContinue()
 	case *BLangAssignment:
 		p.printAssignment(t)
 	case *BLangIndexBasedAccess:
 		p.printIndexBasedAccess(t)
 	case *BLangWildCardBindingPattern:
-		p.printWildCardBindingPattern(t)
+		p.printWildCardBindingPattern()
 	case *BLangCompoundAssignment:
 		p.printCompoundAssignment(t)
 	case *BLangUnionTypeNode:
@@ -247,7 +247,7 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	case *BLangConstPattern:
 		p.printConstPattern(t)
 	case *BLangWildCardMatchPattern:
-		p.printWildCardMatchPattern(t)
+		p.printWildCardMatchPattern()
 	case *BLangMatchClause:
 		p.printMatchClause(t)
 	case *BLangFunctionType:
@@ -1407,14 +1407,14 @@ func (p *PrettyPrinter) printConstant(node *BLangVariable) {
 }
 
 // Break statement printer
-func (p *PrettyPrinter) printBreak(node *BLangBreak) {
+func (p *PrettyPrinter) printBreak() {
 	p.StartNode()
 	p.PrintString("break")
 	p.EndNode()
 }
 
 // Continue statement printer
-func (p *PrettyPrinter) printContinue(node *BLangContinue) {
+func (p *PrettyPrinter) printContinue() {
 	p.StartNode()
 	p.PrintString("continue")
 	p.EndNode()
@@ -1544,7 +1544,7 @@ func (p *PrettyPrinter) printMappingKeyValueField(kv *BLangMappingKeyValueField)
 }
 
 // Wildcard binding pattern printer
-func (p *PrettyPrinter) printWildCardBindingPattern(node *BLangWildCardBindingPattern) {
+func (p *PrettyPrinter) printWildCardBindingPattern() {
 	p.StartNode()
 	p.PrintString("wildcard-binding-pattern")
 	p.EndNode()
@@ -2390,7 +2390,7 @@ func (p *PrettyPrinter) printConstPattern(node *BLangConstPattern) {
 	p.EndNode()
 }
 
-func (p *PrettyPrinter) printWildCardMatchPattern(node *BLangWildCardMatchPattern) {
+func (p *PrettyPrinter) printWildCardMatchPattern() {
 	p.StartNode()
 	p.PrintString("wildcard-match-pattern")
 	p.EndNode()

@@ -6,143 +6,56 @@ on:
       - 'v*'
 
 jobs:
-  build:
-    name: Build the Ballerina CLI for all platforms
+  version:
+    name: Resolve version
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           lfs: false
           fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.26'
+          persist-credentials: false
 
       - name: Get version
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          version="${GITHUB_REF#refs/tags/v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # Any -suffix (e.g. -rc.1) means prerelease.
+          if [[ "$version" == *-* ]]; then
+            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Validate matching module tags
         run: bash .github/scripts/release_dist.sh --check-tags "$GITHUB_REF_NAME" "$GITHUB_SHA"
 
-      - name: Build the Ballerina CLI for all platforms
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
-          for platform in "${platforms[@]}"; do
-            GOOS="${platform%/*}"
-            GOARCH="${platform#*/}"
-            output_dir="dist/${GOOS}-${GOARCH}"
-            mkdir -p "$output_dir"
-            ext=""
-            [[ "$GOOS" == "windows" ]] && ext=".exe"
-            echo "Building for $GOOS/$GOARCH..."
-            CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build \
-              -ldflags="-s -w -X main.Version=$VERSION" \
-              -o "${output_dir}/bal${ext}" \
-              ./cli/cmd
-          done
-
-      - name: Build balrt for all supported platforms
-        run: |
-          # bal build's --target-os/--target-arch resolves its runner stub at
-          # <dist>/rt/<os>-<arch>/balrt (executable.ResolveStub) — every
-          # release archive bundles every supported platform's balrt, not
-          # just its own, so cross-compilation works right after extracting
-          # a single archive.
-          platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
-          for platform in "${platforms[@]}"; do
-            GOOS="${platform%/*}"
-            GOARCH="${platform#*/}"
-            output_dir="dist-rt/${GOOS}-${GOARCH}"
-            mkdir -p "$output_dir"
-            ext=""
-            [[ "$GOOS" == "windows" ]] && ext=".exe"
-            echo "Building balrt for $GOOS/$GOARCH..."
-            CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build \
-              -ldflags="-s -w" \
-              -o "${output_dir}/balrt${ext}" \
-              ./cli/internal/balrt
-          done
-
-      - name: Prepare artifacts
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          mkdir -p artifacts
-          bal_platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
-          rt_platforms=("linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64" "windows/amd64")
-          for platform in "${bal_platforms[@]}"; do
-            GOOS="${platform%/*}"
-            GOARCH="${platform#*/}"
-            src_dir="dist/${GOOS}-${GOARCH}"
-            ext=""
-            [[ "$GOOS" == "windows" ]] && ext=".exe"
-            artifact_dir="artifacts/ballerina-nutcracker-${GOOS}-${GOARCH}/ballerina-${VERSION}"
-            mkdir -p "$artifact_dir"
-            cp "$src_dir/bal${ext}" "$artifact_dir/bal${ext}"
-
-            for rt_platform in "${rt_platforms[@]}"; do
-              RGOOS="${rt_platform%/*}"
-              RGOARCH="${rt_platform#*/}"
-              rt_ext=""
-              [[ "$RGOOS" == "windows" ]] && rt_ext=".exe"
-              rt_dir="$artifact_dir/rt/${RGOOS}-${RGOARCH}"
-              mkdir -p "$rt_dir"
-              cp "dist-rt/${RGOOS}-${RGOARCH}/balrt${rt_ext}" "$rt_dir/balrt${rt_ext}"
-            done
-          done
-
-      - name: Upload linux-amd64
-        uses: actions/upload-artifact@v7
-        with:
-          name: ballerina-nutcracker-linux-amd64
-          path: artifacts/ballerina-nutcracker-linux-amd64
-
-      - name: Upload linux-arm64
-        uses: actions/upload-artifact@v7
-        with:
-          name: ballerina-nutcracker-linux-arm64
-          path: artifacts/ballerina-nutcracker-linux-arm64
-
-      - name: Upload darwin-amd64
-        uses: actions/upload-artifact@v7
-        with:
-          name: ballerina-nutcracker-darwin-amd64
-          path: artifacts/ballerina-nutcracker-darwin-amd64
-
-      - name: Upload darwin-arm64
-        uses: actions/upload-artifact@v7
-        with:
-          name: ballerina-nutcracker-darwin-arm64
-          path: artifacts/ballerina-nutcracker-darwin-arm64
-
-      - name: Upload windows-amd64
-        uses: actions/upload-artifact@v7
-        with:
-          name: ballerina-nutcracker-windows-amd64
-          path: artifacts/ballerina-nutcracker-windows-amd64
+  build:
+    name: Build distribution
+    needs: version
+    uses: ./.github/workflows/build-dist.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+      ref: ${{ github.sha }}
+    permissions:
+      contents: read
 
   release:
     name: Create Release
-    needs: build
+    needs: [version, build]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
 
     steps:
-      - name: Get version
-        id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -150,7 +63,7 @@ jobs:
 
       - name: Prepare release files
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
           mkdir -p release
           for artifact_dir in dist/ballerina-nutcracker-*; do
@@ -167,3 +80,4 @@ jobs:
         with:
           files: release/*.zip
           generate_release_notes: true
+          prerelease: ${{ needs.version.outputs.is_prerelease }}

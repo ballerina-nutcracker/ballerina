@@ -520,7 +520,7 @@ func initializeInvokableAnalyzer(parent analyzer, function invokableSignatureNod
 // the function's parameters (and `self` for methods). Body-local variables
 // are added later as normal semantic analysis encounters their definitions.
 func buildFunctionLocals(parent analyzer, fn invokableSignatureNode) *localScope {
-	scope := newLocalScope(enclosingFunctionLocals(parent), true)
+	scope := newLocalScope(enclosingFunctionLocals(parent))
 	finishBuildFunctionLocals(parent, scope, fn.RequiredParameters(), fn.GetRestParam())
 	return scope
 }
@@ -686,7 +686,7 @@ func initializeResourceMethodAnalyzer(parent analyzer, rm *ast.BLangResourceMeth
 }
 
 func buildResourceMethodLocals(parent analyzer, method *ast.BLangResourceMethod) *localScope {
-	scope := newLocalScope(nil, true)
+	scope := newLocalScope(nil)
 	for i := range method.ResourcePath {
 		seg := &method.ResourcePath[i]
 		if seg.Kind == ast.ResourcePathSegmentName || seg.Name == "" {
@@ -1899,7 +1899,7 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		return nil
 	case *ast.BLangClassDefinition:
 		analyzeClassLikeDefn(a, n.Fields, n.InitFunction, n.Methods, n.ResourceMethods, n.Inclusions,
-			n.InclusionPositions, n.IsIsolated(), n.GetPosition(), enclosingFromClass(n))
+			n.InclusionPositions, n.IsIsolated(), enclosingFromClass(n))
 		return nil
 	case *ast.BLangService:
 		for _, expr := range n.AttachedExprs {
@@ -1907,7 +1907,7 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		}
 		validateServiceListenerTypes(a, n)
 		analyzeClassLikeDefn(a, n.Fields, n.InitFunction, n.Methods, n.ResourceMethods, n.Inclusions,
-			n.InclusionPositions, n.IsIsolated(), n.GetPosition(), enclosingFromService(n))
+			n.InclusionPositions, n.IsIsolated(), enclosingFromService(n))
 		return nil
 	default:
 		return a
@@ -1964,9 +1964,9 @@ func hasSingleApplicableAttachPointListType(cx semtypes.Context, svc *ast.BLangS
 	return found
 }
 
-func analyzeClassLikeDefn[A analyzer](a A, fields []*ast.BLangVariable, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, inclusions []model.SymbolRef, inclusionPositions []diagnostics.Location, isolated bool, pos diagnostics.Location, enclosing *enclosingClassBody) {
+func analyzeClassLikeDefn[A analyzer](a A, fields []*ast.BLangVariable, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, inclusions []model.SymbolRef, inclusionPositions []diagnostics.Location, isolated bool, enclosing *enclosingClassBody) {
 	analyzeClassBodyMembers(a, fields, initFn, methods, resourceMethods, enclosing)
-	validateClassDefn(a, inclusions, inclusionPositions, resourceMethods, isolated, fields, pos)
+	validateClassDefn(a, inclusions, inclusionPositions, resourceMethods, isolated, fields)
 }
 
 // analyzeClassBodyMembers performs semantic analysis over the fields,
@@ -2138,7 +2138,7 @@ func validateRecordFieldDefaults[A analyzer](a A, node *ast.BLangRecordType) {
 	}
 }
 
-func validateClassDefn[A analyzer](a A, inclusions []model.SymbolRef, inclusionPositions []diagnostics.Location, resourceMethods []*ast.BLangResourceMethod, isolated bool, fields []*ast.BLangVariable, pos diagnostics.Location) {
+func validateClassDefn[A analyzer](a A, inclusions []model.SymbolRef, inclusionPositions []diagnostics.Location, resourceMethods []*ast.BLangResourceMethod, isolated bool, fields []*ast.BLangVariable) {
 	if isolated {
 		validateIsolatedClassFields(a, fields)
 	} else {

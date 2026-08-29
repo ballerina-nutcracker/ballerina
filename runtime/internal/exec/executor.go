@@ -110,7 +110,7 @@ func executeFunctionWithTrap(ctx *extern.Context, birFunc *bir.BIRFunction, bb *
 	currentFrame := frame
 	for {
 		curBBNumber := bb.Number
-		nextBB, nextFrame, recovered := executeBasicBlockWithTrap(ctx, bb, frame, currentFrame)
+		nextBB, nextFrame, recovered := executeBasicBlockWithTrap(ctx, bb, currentFrame)
 
 		if recovered != nil {
 			// Resolve the innermost error-table entry covering the current block and
@@ -138,7 +138,7 @@ func executeFunctionNoTrap(ctx *extern.Context, bb *bir.BIRBasicBlock, frame *Fr
 	currentFrame := frame
 	for {
 		var nextBB *bir.BIRBasicBlock
-		nextBB, currentFrame = executeBasicBlock(ctx, bb, frame, currentFrame)
+		nextBB, currentFrame = executeBasicBlock(ctx, bb, currentFrame)
 		bb = nextBB
 		if bb == nil {
 			break
@@ -146,7 +146,7 @@ func executeFunctionNoTrap(ctx *extern.Context, bb *bir.BIRBasicBlock, frame *Fr
 	}
 }
 
-func executeBasicBlockWithTrap(ctx *extern.Context, bb *bir.BIRBasicBlock, frame *Frame, currentFrame *Frame) (nextBB *bir.BIRBasicBlock, nextFrame *Frame, recovered any) {
+func executeBasicBlockWithTrap(ctx *extern.Context, bb *bir.BIRBasicBlock, currentFrame *Frame) (nextBB *bir.BIRBasicBlock, nextFrame *Frame, recovered any) {
 	defer func() {
 		if r := recover(); r != nil {
 			nextFrame = currentFrame
@@ -161,7 +161,7 @@ func executeBasicBlockWithTrap(ctx *extern.Context, bb *bir.BIRBasicBlock, frame
 	return execTerminator(ctx, bb.Terminator, currentFrame), currentFrame, nil
 }
 
-func executeBasicBlock(ctx *extern.Context, bb *bir.BIRBasicBlock, frame *Frame, currentFrame *Frame) (*bir.BIRBasicBlock, *Frame) {
+func executeBasicBlock(ctx *extern.Context, bb *bir.BIRBasicBlock, currentFrame *Frame) (*bir.BIRBasicBlock, *Frame) {
 	for _, inst := range bb.Instructions {
 		getCallStack(ctx).SetCurrentLocation(inst.GetPos())
 		currentFrame = execInstruction(ctx, inst, currentFrame)

@@ -106,15 +106,6 @@ func TxtarFilesStdoutStderr(stdout, stderr string) []txtar.File {
 	}
 }
 
-// TxtarFilesStdoutStderrExitcode builds txtar file entries for stdout, stderr, and exitcode.
-func TxtarFilesStdoutStderrExitcode(stdout, stderr, exitCode string) []txtar.File {
-	return []txtar.File{
-		{Name: "stdout", Data: []byte(stdout)},
-		{Name: "stderr", Data: []byte(stderr)},
-		{Name: "exitcode", Data: []byte(exitCode)},
-	}
-}
-
 // UpdateTxtarArchiveIfNeeded writes the given txtar files to path when content differs from the existing file.
 // It returns true when a new or changed file was written.
 func UpdateTxtarArchiveIfNeeded(t *testing.T, expectedPath string, files []txtar.File) bool {

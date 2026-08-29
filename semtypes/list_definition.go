@@ -63,7 +63,7 @@ func (l *ListDefinition) GetSemType(env Env) SemType {
 	if IsZero(s) {
 		rec := env.recListAtom()
 		l.rec = &rec
-		return l.createSemType(env, &rec)
+		return l.createSemType(&rec)
 	} else {
 		return s
 	}
@@ -102,7 +102,7 @@ func (l *ListDefinition) defineFromCells(env Env, initial []SemType, fixedLength
 	} else {
 		atom = env.listAtom(&atomicType)
 	}
-	return l.createSemType(env, atom)
+	return l.createSemType(atom)
 }
 
 func (l *ListDefinition) fixedLengthNormalize(array fixedLengthArray) fixedLengthArray {
@@ -122,7 +122,7 @@ func (l *ListDefinition) fixedLengthNormalize(array fixedLengthArray) fixedLengt
 	return fixedLengthArrayFrom(initial[:i+2], array.FixedLength)
 }
 
-func (l *ListDefinition) createSemType(env Env, atom atom) SemType {
+func (l *ListDefinition) createSemType(atom atom) SemType {
 	bdd := bddAtom(atom)
 	semType := getBasicSubtype(btList, bdd)
 	l.semType = semType

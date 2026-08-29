@@ -62,9 +62,11 @@ public function main() returns error? {
     Person|error person = c->get("/path");
     io:println(person is error); // @output true
 
-    // xml targets are not supported.
-    xml|error asXml = c->get("/path");
-    io:println(asXml is error); // @output true
+    // An xml target with no Content-Type falls back to the target type; the stub body
+    // parses as an xml text node.
+    xml asXml = check c->get("/path");
+    io:println(asXml); // @output test body
+    io:println(asXml is xml:Text); // @output true
 
     return;
 }

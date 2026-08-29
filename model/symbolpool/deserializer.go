@@ -90,7 +90,7 @@ func (sr *symbolReader) readResourceMethodSymbol(space *model.SymbolSpace) {
 	name, isPublic, ty := sr.readSymbolBase()
 	methodName := sr.readStringCP()
 	pathType := sr.readType()
-	typedSig, sigHandle := sr.readFunctionSignatureBody(space)
+	typedSig, sigHandle := sr.readFunctionSignatureBody()
 	rm := model.NewResourceMethodSymbol(name, methodName, isPublic, diagnostics.NewBuiltinLocation())
 	rm.SetType(ty)
 	rm.SetTypedSignature(typedSig)
@@ -501,7 +501,7 @@ func (sr *symbolReader) readAnnotationSymbol(space *model.SymbolSpace) {
 func (sr *symbolReader) readFunctionSymbol(space *model.SymbolSpace) {
 	name, isPublic, ty := sr.readSymbolBase()
 
-	typedSig, sigHandle := sr.readFunctionSignatureBody(space)
+	typedSig, sigHandle := sr.readFunctionSignatureBody()
 	sym := model.NewFunctionSymbol(name, typedSig, isPublic, diagnostics.NewBuiltinLocation())
 	sym.SetType(ty)
 	ref := addDeserializedSymbol(space, name, sym)
@@ -510,7 +510,7 @@ func (sr *symbolReader) readFunctionSymbol(space *model.SymbolSpace) {
 	}
 }
 
-func (sr *symbolReader) readFunctionSignatureBody(space *model.SymbolSpace) (model.TypedFunctionSignature, int64) {
+func (sr *symbolReader) readFunctionSignatureBody() (model.TypedFunctionSignature, int64) {
 	var paramCount int64
 	read(sr.r, &paramCount)
 	paramTypes := make([]semtypes.SemType, paramCount)

@@ -174,8 +174,10 @@ This builds `tree-gen` into the repository root and runs `go test ./... -update`
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o dist/bal ./cli/cmd
 ```
 
-Releases are produced for `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`, and `windows/amd64`. Set the version string reported by `bal version` with:
+Releases are produced for `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`, and `windows/amd64`.
+
+A plain build reports `bal version` as `dev`. To strip symbols/debug info (matching release builds) or set a real version string, pass ldflags explicitly:
 
 ```bash
-go build -ldflags="-s -w -X main.Version=0.5.0" -o bal ./cli/cmd
+go build -ldflags="-s -w -X main.Version=0.7.0" -o bal ./cli/cmd
 ```

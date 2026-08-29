@@ -268,22 +268,32 @@ public class Response {
 
     private isolated function initNative() = external;
 
-    # Sets the response body to a plain string and Content-Type to `text/plain`.
+    # Sets the response body to a plain string, defaulting Content-Type to `text/plain`.
     #
     # + payload     - The string payload
-    # + contentType - Optional MIME type; defaults to `text/plain`
+    # + contentType - Optional MIME type; defaults to `text/plain` when a Content-Type
+    #                 is not already set
     public isolated function setTextPayload(string payload, string? contentType = ()) = external;
 
-    # Sets the response body to a JSON value and Content-Type to `application/json`.
+    # Sets the response body to a JSON value, defaulting Content-Type to `application/json`.
     #
     # + payload     - The JSON payload
-    # + contentType - Optional MIME type; defaults to `application/json`
+    # + contentType - Optional MIME type; defaults to `application/json` when a Content-Type
+    #                 is not already set
     public isolated function setJsonPayload(json payload, string? contentType = ()) = external;
 
-    # Sets the response body to a byte array and Content-Type to `application/octet-stream`.
+    # Sets the response body to an XML value, defaulting Content-Type to `application/xml`.
+    #
+    # + payload     - The XML payload
+    # + contentType - Optional MIME type; defaults to `application/xml` when the response
+    #                 does not already carry a Content-Type
+    public isolated function setXmlPayload(xml payload, string? contentType = ()) = external;
+
+    # Sets the response body to a byte array, defaulting Content-Type to `application/octet-stream`.
     #
     # + payload     - The binary payload
-    # + contentType - Optional MIME type; defaults to `application/octet-stream`
+    # + contentType - Optional MIME type; defaults to `application/octet-stream` when a
+    #                 Content-Type is not already set
     public isolated function setBinaryPayload(byte[] payload, string? contentType = ()) = external;
 
     # Sets or replaces a response header.
@@ -330,6 +340,12 @@ public class Response {
     #
     # + return - The parsed `json` value, or an `error` if the body is not valid JSON
     public isolated function getJsonPayload() returns json|error = external;
+
+    # Parses the response body as XML.
+    #
+    # + return - The parsed `xml` value, or an `error` if the body is empty or is not
+    #            well-formed XML
+    public isolated function getXmlPayload() returns xml|error = external;
 
     # Returns the response body as a byte array.
     #
@@ -395,22 +411,32 @@ public class Request {
     # The extra path info for the request.
     public string extraPathInfo = "";
 
-    # Sets the request body as plain text with `Content-Type: text/plain`.
+    # Sets the request body as plain text, defaulting Content-Type to `text/plain`.
     #
     # + payload     - The text body to set
-    # + contentType - Optional MIME type; defaults to `text/plain`
+    # + contentType - Optional MIME type; defaults to `text/plain` when a Content-Type
+    #                 is not already set
     public isolated function setTextPayload(string payload, string? contentType = ()) = external;
 
-    # Sets the request body as JSON with `Content-Type: application/json`.
+    # Sets the request body as JSON, defaulting Content-Type to `application/json`.
     #
     # + payload     - The JSON value to set
-    # + contentType - Optional MIME type; defaults to `application/json`
+    # + contentType - Optional MIME type; defaults to `application/json` when a Content-Type
+    #                 is not already set
     public isolated function setJsonPayload(json payload, string? contentType = ()) = external;
 
-    # Sets the request body as bytes with `Content-Type: application/octet-stream`.
+    # Sets the request body as XML, defaulting Content-Type to `application/xml`.
+    #
+    # + payload     - The XML value to set
+    # + contentType - Optional MIME type; defaults to `application/xml` when the request
+    #                 does not already carry a Content-Type
+    public isolated function setXmlPayload(xml payload, string? contentType = ()) = external;
+
+    # Sets the request body as bytes, defaulting Content-Type to `application/octet-stream`.
     #
     # + payload     - The byte array to set
-    # + contentType - Optional MIME type; defaults to `application/octet-stream`
+    # + contentType - Optional MIME type; defaults to `application/octet-stream` when a
+    #                 Content-Type is not already set
     public isolated function setBinaryPayload(byte[] payload, string? contentType = ()) = external;
 
     # Sets a header on the request. Replaces any existing value for the header.
@@ -459,6 +485,12 @@ public class Request {
     # + return - The parsed `json` value, or an `error` if the body is not valid JSON
     public isolated function getJsonPayload() returns json|error = external;
 
+    # Parses the request body as XML.
+    #
+    # + return - The parsed `xml` value, or an `error` if the body is empty or is not
+    #            well-formed XML
+    public isolated function getXmlPayload() returns xml|error = external;
+
     # Returns the request body as a byte array.
     #
     # + return - The request body as `byte[]`, or an `error` if extraction fails
@@ -500,10 +532,10 @@ public class Request {
     public isolated function getQueryParamValues(string key) returns string[]? = external;
 }
 
-// Represents an HTTP outbound request entity. Accepts any JSON-compatible value or an
-// existing `Request` object. The `mime:Entity[]` and `stream` subtypes of jBallerina's
+// Represents an HTTP outbound request entity. Accepts any `anydata` value (including `xml`)
+// or an existing `Request` object. The `mime:Entity[]` and `stream` subtypes of jBallerina's
 // `RequestMessage` are not supported in this implementation.
-public type RequestMessage json|Request;
+public type RequestMessage anydata|Request;
 
 # Represents the types of the `targetType` parameter of the client remote methods.
 # The `stream<SseEvent, error?>` member of jBallerina's `TargetType` is not supported
@@ -610,9 +642,10 @@ public isolated class Listener {
 # **Not supported:** `submit`/`getResponse`, HTTP/2 server push methods
 # (`hasPromise`, `getNextPromise`, etc.), and resource function syntax (`client->/path.get(...)`).
 #
-# **Message body:** The `message` parameter accepts `RequestMessage` (`json|Request`).
+# **Message body:** The `message` parameter accepts `RequestMessage` (`anydata|Request`).
 # The `Content-Type` is inferred when not explicitly overridden via `mediaType`:
 # - `string` → `text/plain`
+# - `xml` → `application/xml`
 # - `byte[]` → `application/octet-stream`
 # - `http:Request` → content type and body taken from the request
 # - everything else → serialised as `application/json`
@@ -622,8 +655,9 @@ public isolated class Listener {
 # **Return type:** Every method except `head` binds the response to the contextually
 # expected type through the `targetType` parameter. `http:Response` (or any union
 # containing it) yields the raw response; any other `anydata` type is deserialised from
-# the response body according to the `Content-Type` header. `xml` targets are not
-# supported. When there is no contextually expected type (for example when assigning to
+# the response body according to the `Content-Type` header. An `xml` target is bound from
+# an `application/xml` or `text/xml` body. When there is no contextually expected type
+# (for example when assigning to
 # `var`), pass the target explicitly: `c->get("/path", targetType = http:Response)`.
 #
 # **Error types:** Errors are plain `error` values. The upstream distinct error types
@@ -662,7 +696,7 @@ public isolated client class Client {
     # Creates a new resource or submits data to a resource for processing.
     #
     # + path - The request path (appended to the base URL)
-    # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, or `http:Request`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
     # + targetType - The expected return type, used for automatic data binding. Inferred from
@@ -675,7 +709,7 @@ public isolated client class Client {
     # Creates a new resource or replaces a representation of the specified resource.
     #
     # + path - The request path (appended to the base URL)
-    # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, or `http:Request`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
     # + targetType - The expected return type, used for automatic data binding. Inferred from
@@ -688,7 +722,7 @@ public isolated client class Client {
     # Applies a partial modification to the specified resource.
     #
     # + path - The request path (appended to the base URL)
-    # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, or `http:Request`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
     # + targetType - The expected return type, used for automatic data binding. Inferred from
@@ -701,14 +735,14 @@ public isolated client class Client {
     # Deletes the specified resource.
     #
     # + path - The request path (appended to the base URL)
-    # + message - Optional request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + message - Optional request body (`string`, `xml`, `byte[]`, JSON-compatible value, or `http:Request`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
     # + targetType - The expected return type, used for automatic data binding. Inferred from
     #                the contextually expected type when not passed explicitly
     # + return - The bound payload, the `http:Response`, or an `error` if the request or the
     #            data binding fails
-    remote isolated function delete(string path, RequestMessage? message = (), map<string|string[]>? headers = (),
+    remote isolated function delete(string path, RequestMessage message = (), map<string|string[]>? headers = (),
             string? mediaType = (), TargetType targetType = <>) returns targetType|error = external;
 
     # Requests headers from the specified resource without fetching the response body.
@@ -736,7 +770,7 @@ public isolated client class Client {
     #
     # + httpVerb - The HTTP method to use (e.g., `"GET"`, `"POST"`, `"PUT"`)
     # + path - The request path (appended to the base URL)
-    # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, or `http:Request`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
     # + targetType - The expected return type, used for automatic data binding. Inferred from

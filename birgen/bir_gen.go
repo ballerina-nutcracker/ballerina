@@ -708,7 +708,7 @@ func assignmentStatementInner(ctx context, ref ast.BLangExpression, valueEffect 
 	case *ast.BLangIndexBasedAccess:
 		return assignToMemberStatement(ctx, varRef, valueEffect, pos)
 	case *ast.BLangWildCardBindingPattern:
-		return assignToWildcardBindingPattern(ctx, varRef, valueEffect, pos)
+		return assignToWildcardBindingPattern(ctx, valueEffect, pos)
 	case *ast.BLangVarRef:
 		return assignToSimpleVariable(ctx, varRef, valueEffect, pos)
 	default:
@@ -716,8 +716,8 @@ func assignmentStatementInner(ctx context, ref ast.BLangExpression, valueEffect 
 	}
 }
 
-func assignToWildcardBindingPattern(ctx context, varRef *ast.BLangWildCardBindingPattern, valueEffect expressionEffect, pos bir.Location) statementEffect {
-	refEffect := wildcardBindingPattern(ctx, valueEffect.block, varRef)
+func assignToWildcardBindingPattern(ctx context, valueEffect expressionEffect, pos bir.Location) statementEffect {
+	refEffect := wildcardBindingPattern(ctx, valueEffect.block)
 	currBB := refEffect.block
 	mov := bir.NewMove(valueEffect.result, refEffect.result, pos)
 	currBB.Instructions = append(currBB.Instructions, mov)
@@ -1012,7 +1012,7 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 	case *ast.BLangUnaryExpr:
 		return unaryExpression(ctx, curBB, expr)
 	case *ast.BLangWildCardBindingPattern:
-		return wildcardBindingPattern(ctx, curBB, expr)
+		return wildcardBindingPattern(ctx, curBB)
 	case *ast.BLangGroupExpr:
 		return groupExpression(ctx, curBB, expr)
 	case *ast.BLangIndexBasedAccess:
@@ -1533,7 +1533,7 @@ func groupExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangGroup
 	return handleActionOrExpression(ctx, curBB, expr.Expression)
 }
 
-func wildcardBindingPattern(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangWildCardBindingPattern) expressionEffect {
+func wildcardBindingPattern(ctx context, curBB *bir.BIRBasicBlock) expressionEffect {
 	return expressionEffect{
 		result: ctx.addTempVar(semtypes.Never),
 		block:  curBB,
@@ -1767,10 +1767,8 @@ func binaryExpressionInner(ctx context, curBB *bir.BIRBasicBlock, opKind model.O
 
 func binaryExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangBinaryExpr) expressionEffect {
 	switch expr.OpKind {
-	case model.OperatorKind_AND:
-		return logicalAndExpression(ctx, curBB, expr)
-	case model.OperatorKind_OR:
-		return logicalOrExpression(ctx, curBB, expr)
+	case model.OperatorKind_AND, model.OperatorKind_OR:
+		return logicalExpression(ctx, curBB, expr)
 	default:
 		return binaryExpressionInner(ctx, curBB, expr.OpKind, expr.LhsExpr, expr.RhsExpr, expr.GetDeterminedType(), ctx.function().loc(expr.GetPosition()))
 	}
@@ -1860,54 +1858,25 @@ func checkedExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BLangActi
 	return expressionEffect{result: resultOperand, block: doneBB}
 }
 
-func logicalAndExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangBinaryExpr) expressionEffect {
+func logicalExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangBinaryExpr) expressionEffect {
+	pos := ctx.function().loc(expr.GetPosition())
 	resultOperand := ctx.addTempVar(expr.GetDeterminedType())
 
 	lhsEffect := handleActionOrExpression(ctx, curBB, expr.LhsExpr)
 	curBB = lhsEffect.block
-
-	mov := bir.NewMove(lhsEffect.result, resultOperand, ctx.function().loc(expr.GetPosition()))
-	curBB.Instructions = append(curBB.Instructions, mov)
+	curBB.Instructions = append(curBB.Instructions, bir.NewMove(lhsEffect.result, resultOperand, pos))
 
 	evalRhsBB := ctx.function().addBB()
 	doneBB := ctx.function().addBB()
-
-	curBB.Terminator = bir.NewBranch(lhsEffect.result, evalRhsBB, doneBB, ctx.function().loc(expr.GetPosition()))
-
-	rhsEffect := handleActionOrExpression(ctx, evalRhsBB, expr.RhsExpr)
-	rhsBB := rhsEffect.block
-
-	rhsMov := bir.NewMove(rhsEffect.result, resultOperand, ctx.function().loc(expr.GetPosition()))
-
-	rhsBB.Instructions = append(rhsBB.Instructions, rhsMov)
-	rhsBB.Terminator = bir.NewGoto(doneBB, ctx.function().loc(expr.GetPosition()))
-
-	return expressionEffect{
-		result: resultOperand,
-		block:  doneBB,
+	if expr.OpKind == model.OperatorKind_AND {
+		curBB.Terminator = bir.NewBranch(lhsEffect.result, evalRhsBB, doneBB, pos)
+	} else {
+		curBB.Terminator = bir.NewBranch(lhsEffect.result, doneBB, evalRhsBB, pos)
 	}
-}
-
-func logicalOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangBinaryExpr) expressionEffect {
-	resultOperand := ctx.addTempVar(expr.GetDeterminedType())
-
-	lhsEffect := handleActionOrExpression(ctx, curBB, expr.LhsExpr)
-	curBB = lhsEffect.block
-
-	mov := bir.NewMove(lhsEffect.result, resultOperand, ctx.function().loc(expr.GetPosition()))
-	curBB.Instructions = append(curBB.Instructions, mov)
-
-	evalRhsBB := ctx.function().addBB()
-	doneBB := ctx.function().addBB()
-
-	curBB.Terminator = bir.NewBranch(lhsEffect.result, doneBB, evalRhsBB, ctx.function().loc(expr.GetPosition()))
 
 	rhsEffect := handleActionOrExpression(ctx, evalRhsBB, expr.RhsExpr)
-	rhsBB := rhsEffect.block
-
-	rhsMov := bir.NewMove(rhsEffect.result, resultOperand, ctx.function().loc(expr.GetPosition()))
-	rhsBB.Instructions = append(rhsBB.Instructions, rhsMov)
-	rhsBB.Terminator = bir.NewGoto(doneBB, ctx.function().loc(expr.GetPosition()))
+	rhsEffect.block.Instructions = append(rhsEffect.block.Instructions, bir.NewMove(rhsEffect.result, resultOperand, pos))
+	rhsEffect.block.Terminator = bir.NewGoto(doneBB, pos)
 
 	return expressionEffect{
 		result: resultOperand,
@@ -2084,14 +2053,14 @@ func transformClassBody(
 		}
 		fn.FunctionLookupKey = lookupKey
 		methodName := rm.GetName().GetValue()
-		entry := buildResourceMethodEntry(ctx, rm, fn)
+		entry := buildResourceMethodEntry(rm, fn)
 		birClassDef.RTable[methodName] = append(birClassDef.RTable[methodName], entry)
 	}
 
 	return birClassDef
 }
 
-func buildResourceMethodEntry(ctx *packageContext, rm *ast.BLangResourceMethod, fn *bir.BIRFunction) bir.BIRResourceMethod {
+func buildResourceMethodEntry(rm *ast.BLangResourceMethod, fn *bir.BIRFunction) bir.BIRResourceMethod {
 	var pathSegments []bir.ResourcePathSegmentDef
 	restTy := semtypes.Never
 	for i := range rm.ResourcePath {

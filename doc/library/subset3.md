@@ -4,7 +4,8 @@ Subset 3 extends the released [subset 2](subset2.md) with the `avro` module —
 Avro binary serialization and deserialization driven by an Avro schema string —
 plus stream-based file read/write additions and byte channels in the `io`
 module, building on the language's new `stream` type, and with client-side
-response data binding for the `http` module.
+response data binding, XML payloads, and `anydata` resource returns for the
+`http` module.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -162,7 +163,8 @@ The builder is selected from the response `Content-Type`, matching jBallerina's 
 | `text/plain` | `string`, `byte[]`, and their nilable forms |
 | `application/octet-stream` | `byte[]` and `byte[]?` |
 | `application/x-www-form-urlencoded` | `map<string>`, `string`, and their nilable forms; repeated keys keep the last value |
-| absent or unrecognised | `string`, `byte[]`, and their nilable forms are read directly; every other target is parsed as JSON |
+| `application/xml`, `text/xml`, and `+xml` / `.xml` / `-xml` suffixes | `xml` and `xml?`, any union admitting `xml`, and narrower subtypes such as `xml:Element` when the parsed value inhabits them |
+| absent or unrecognised | `string`, `xml`, `byte[]`, and their nilable forms are read directly (in that order); every other target is parsed as JSON |
 
 A target that does not fit the response media type returns an `error` — for example a record target for a `text/plain` response. JSON conversion uses the same routine as `lang.value:fromJsonWithType`.
 
@@ -178,10 +180,29 @@ Colour? c3 = check c->get("/empty");   // text/plain "" — ()
 
 The nilable form of such a target binds the same way: an absent body gives `()`, and a body that is present but does not fit the target is an `error`. Only the nilable form turns an absent body into `()` — a narrow target that is not nilable is handed the builder's empty value (`""`, `[]`, or `{}`), and rejects it unless the narrow type happens to admit it.
 
-Not covered in this subset: `xml` targets and `application/xml` responses (not yet implemented — the runtime does have an `xml` type), `stream<http:SseEvent, error?>` targets, status code response records (`http:StatusCodeClient`, `getStatusCodeRecord()`), and the `validation` / `laxDataBinding` client configuration flags.
+An `xml` target is the one builder that rejects an empty body outright: there is no empty `xml` value to bind, so a non-nilable `xml` target returns an error named `NoContentError` with the message `No content`. The nilable form `xml?` still gives `()`.
+
+Not covered in this subset: `stream<http:SseEvent, error?>` targets, status code response records (`http:StatusCodeClient`, `getStatusCodeRecord()`), and the `validation` / `laxDataBinding` client configuration flags.
 
 ### Response
 
 | Feature | Notes |
 |---|---|
 | `getTextPayload` | Now returns `string\|error`, matching jBallerina's signature; extraction failures (for example exceeding `responseLimits.maxEntityBodySize`) surface as an `error` instead of being returned through a `string` signature |
+| `setXmlPayload` / `getXmlPayload` | Available on both `http:Request` and `http:Response`. `setXmlPayload` defaults the Content-Type to `application/xml`, keeping an already-set Content-Type when no override is passed |
+
+### Outbound XML
+
+`RequestMessage` is now `anydata|http:Request`, so an `xml` value can be sent directly and is inferred as `application/xml`:
+
+```ballerina
+xml echoed = check c->post("/echo", xml `<p>hi</p>`);
+```
+
+Resource functions may now return any `anydata` value in addition to `http:Response`, `error`, and `()`. The Content-Type is inferred from the returned value's type — `xml` gives `application/xml`, `string` gives `text/plain`, `byte[]` gives `application/octet-stream`, and everything else is serialised as `application/json`. A non-nil return is answered with 201 for a `post` accessor and 200 otherwise; `()` stays 202 and an `error` stays a 500 envelope.
+
+```ballerina
+resource function get album() returns xml {
+    return xml `<album><title>Kind of Blue</title></album>`;
+}
+```

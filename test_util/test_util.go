@@ -55,7 +55,6 @@ type TestCase struct {
 type TestSuffix uint
 
 const (
-	SuffixNone        TestSuffix = 0
 	SuffixValid       TestSuffix = 1 << iota // -v
 	SuffixError                              // -e
 	SuffixPanic                              // -p
@@ -103,15 +102,6 @@ func IsFutureTest(path string) bool {
 		strings.HasSuffix(path, "-fp.bal")
 }
 
-// GetValidTests returns all valid test pairs for the given test kind
-// It only returns test cases where the input file ends with "-v.bal"
-// (future tests `-fv.bal` are excluded).
-func GetValidTests(t testing.TB, kind TestKind) []TestCase {
-	return GetTests(t, kind, func(path string) bool {
-		return strings.HasSuffix(path, "-v.bal") && !IsFutureTest(path)
-	})
-}
-
 // GetErrorTests returns all error test pairs for the given test kind
 // It only returns test cases where the input file ends with "-e.bal"
 // (future tests `-fe.bal` are excluded).
@@ -130,12 +120,6 @@ func GetValidAndPanicTests(t testing.TB, kind TestKind) []TestCase {
 		}
 		return strings.HasSuffix(path, "-v.bal") || strings.HasSuffix(path, "-p.bal")
 	})
-}
-
-// GetFutureTests returns all future test pairs for the given test kind
-// (`-fv.bal`, `-fe.bal`, `-fp.bal`).
-func GetFutureTests(t testing.TB, kind TestKind) []TestCase {
-	return GetTests(t, kind, IsFutureTest)
 }
 
 // GetTests returns test pairs for the given test kind, filtered by the provided function

@@ -59,7 +59,7 @@ func bindResponse(ctx *extern.Context, types *httpTypes, resp *values.Object, ta
 	}
 	result := performDataBinding(ctx, types, resp, target)
 	if _, failed := result.(*values.Error); failed {
-		// A mismatch error (e.g. incompatibleTargetError, unsupportedXMLTarget) can return
+		// A mismatch error (e.g. incompatibleTargetError) can return
 		// before the body is ever read, leaving the underlying stream/connection open.
 		_, _ = responseBody(resp)
 	}
@@ -99,8 +99,8 @@ func statusCodeError(ctx *extern.Context, types *httpTypes, resp *values.Object,
 	return values.NewError(semtypes.Error, reasonPhrase(statusCode), nil, typeName, detail)
 }
 
-// Extracts the error body the way jBallerina's getPayload does, except that an xml body is
-// read as text — xml payload binding is not implemented yet.
+// Extracts the error body the way jBallerina's getPayload does, matching the media type with
+// the regexes rather than an exact primary/sub-type match.
 func statusErrorPayload(ctx *extern.Context, types *httpTypes, resp *values.Object) (values.BalValue, *values.Error) {
 	body, err := responseBody(resp)
 	if err != nil {
@@ -115,6 +115,8 @@ func statusErrorPayload(ctx *extern.Context, types *httpTypes, resp *values.Obje
 	switch {
 	case jsonContentType.MatchString(contentType):
 		return decodeJSONBody(ctx, types, body)
+	case xmlContentType.MatchString(contentType):
+		return decodeXMLBody(ctx, body, "response")
 	case octetStreamContentType.MatchString(contentType):
 		return byteArrayValue(ctx, types, body), nil
 	default:
@@ -170,7 +172,7 @@ func performDataBinding(ctx *extern.Context, types *httpTypes, resp *values.Obje
 	case contentType == "":
 		return builderFromType(ctx, types, resp, target)
 	case xmlContentType.MatchString(contentType):
-		return unsupportedXMLTarget(contentType)
+		return xmlPayloadBuilder(ctx, resp, target, contentType)
 	case textContentType.MatchString(contentType):
 		return textPayloadBuilder(ctx, types, resp, target, contentType)
 	case urlEncodedContentType.MatchString(contentType):
@@ -190,13 +192,25 @@ func builderFromType(ctx *extern.Context, types *httpTypes, resp *values.Object,
 	switch {
 	case narrowsTo(tc, target, semtypes.String):
 		return bindAtTarget(tc, textValue(resp), semtypes.String, target)
-	case semtypes.IsSubtype(tc, target, semtypes.Union(semtypes.XML, semtypes.Nil)):
-		return unsupportedXMLTarget("")
+	case narrowsTo(tc, target, semtypes.XML):
+		return bindAtTarget(tc, xmlValue(ctx, resp), semtypes.XML, target)
 	case narrowsTo(tc, target, types.byteArrTy):
 		return bindAtTarget(tc, binaryValue(ctx, types, resp), types.byteArrTy, target)
 	default:
 		return jsonPayloadBuilder(ctx, types, resp, target)
 	}
+}
+
+func xmlPayloadBuilder(ctx *extern.Context, resp *values.Object,
+	target semtypes.SemType, contentType string) values.BalValue {
+	tc := ctx.TypeCtx()
+	// A union member narrower than xml (e.g. xml:Element) only intersects XML rather than
+	// admitting or narrowing to it, so the target is accepted whenever some member could
+	// hold an xml value; bindAtTarget then converts to (or rejects) the exact member.
+	if semtypes.IsEmpty(tc, semtypes.Intersect(target, semtypes.XML)) {
+		return incompatibleTargetError(tc, target, contentType)
+	}
+	return bindAtTarget(tc, xmlValue(ctx, resp), semtypes.XML, target)
 }
 
 func textPayloadBuilder(ctx *extern.Context, types *httpTypes, resp *values.Object,
@@ -288,15 +302,6 @@ func payloadBindingError(message string, cause *values.Error) *values.Error {
 		"PayloadBindingClientError", nil)
 }
 
-// xml payload binding is not implemented yet, so neither an xml target nor an xml body can
-// be bound. The runtime does have an xml type — see values.ParseAsXMLValue.
-func unsupportedXMLTarget(contentType string) *values.Error {
-	if contentType == "" {
-		return payloadBindingError("xml target types are not supported", nil)
-	}
-	return payloadBindingError("'"+contentType+"' responses are not supported", nil)
-}
-
 // incompatibleTargetError is only reached from a builder the Content-Type selected, so the
 // media type is always known.
 func incompatibleTargetError(tc semtypes.Context, target semtypes.SemType, contentType string) *values.Error {
@@ -381,6 +386,35 @@ func formDataValue(ctx *extern.Context, types *httpTypes, resp *values.Object) v
 		out.Put(tc, key, vals[len(vals)-1])
 	}
 	return out
+}
+
+// Both callers are reached only after performDataBinding has already called responseBody
+// once (and returned its error, if any), so the cached, always-successful re-read here never
+// needs its own error check.
+func xmlValue(ctx *extern.Context, resp *values.Object) values.BalValue {
+	body, _ := responseBody(resp)
+	payload, xmlErr := decodeXMLBody(ctx, body, "response")
+	if xmlErr != nil {
+		return xmlErr
+	}
+	return payload
+}
+
+// Error names and messages come from jBallerina (http_commons.bal:367), though neither
+// distinct type is declared here. The Go parser's wording differs from Java's, so it goes in
+// the cause rather than the message callers assert on.
+func decodeXMLBody(ctx *extern.Context, body []byte, source string) (values.BalValue, *values.Error) {
+	if len(body) == 0 {
+		return nil, values.NewError(semtypes.Error, "No content",
+			values.NewErrorWithMessage("Empty xml payload"), "NoContentError", nil)
+	}
+	parsed, err := values.ParseAsXMLValue(ctx.TypeCtx(), values.FromBytes(body), values.XMLLenientMode)
+	if err != nil {
+		return nil, values.NewError(semtypes.Error,
+			"Error occurred while retrieving the xml payload from the "+source,
+			values.NewErrorWithMessage(err.Error()), "GenericClientError", nil)
+	}
+	return parsed, nil
 }
 
 func decodeJSONBody(ctx *extern.Context, types *httpTypes, body []byte) (values.BalValue, *values.Error) {

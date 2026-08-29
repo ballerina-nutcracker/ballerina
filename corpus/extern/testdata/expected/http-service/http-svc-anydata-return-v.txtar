@@ -1,0 +1,25 @@
+-- stdout --
+200
+application/xml
+<a><b>1</b></a>
+text/plain
+hello
+application/octet-stream
+hi
+application/json
+42
+application/json
+true
+application/json
+{"title":"Kind of Blue","year":1959}
+application/json
+[1,2,3]
+<a><b>1</b></a>
+Kind of Blue
+201
+200
+202
+500
+500
+500
+-- stderr --

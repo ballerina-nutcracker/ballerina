@@ -810,7 +810,7 @@ func (c *centralAPIClientImpl) pullPackageInternal(org, name, version string, fs
 			c.logResponseVerbose(downloadResp, "")
 
 			if downloadResp.StatusCode == http.StatusOK {
-				isNightlyBuild := strings.Contains(ballerinaVersion, "SNAPSHOT")
+				isNightlyBuild := strings.Contains(ballerinaVersion, "-dev")
 
 				deprecMsg := ""
 				if isDeprecated {

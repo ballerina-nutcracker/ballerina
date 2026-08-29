@@ -69,7 +69,7 @@ func listFormulaIsEmpty(cx Context, pos conjunctionHandle, neg conjunctionHandle
 			return true
 		}
 	}
-	indices := listSamples(cx, members, rest, neg)
+	indices := listSamples(cx, members, neg)
 	memberTypes, nRequired := listSampleTypes(cx, members, rest, indices)
 	memberTypesArray := make([]SemType, len(memberTypes))
 	copy(memberTypesArray, memberTypes)
@@ -143,7 +143,7 @@ func listSampleTypes(cx Context, members fixedLengthArray, rest SemType, indices
 	return memberTypes, nRequired
 }
 
-func listSamples(cx Context, members fixedLengthArray, rest SemType, neg conjunctionHandle) []int {
+func listSamples(cx Context, members fixedLengthArray, neg conjunctionHandle) []int {
 	maxInitialLength := len(members.initial)
 	var fixedLengths []int
 	fixedLengths = append(fixedLengths, members.FixedLength)

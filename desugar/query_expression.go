@@ -54,12 +54,12 @@ func walkQueryExpr(cx *functionContext, expr *ast.BLangQueryExpr) desugaredNode[
 	basePos := expr.GetPosition()
 
 	var initStmts []ast.StatementNode
-	collRef, keysRef, lenRef, _, ok := createQueryCollectionSource(cx, &initStmts, fromClause.Collection, basePos)
+	collRef, keysRef, lenRef, ok := createQueryCollectionSource(cx, &initStmts, fromClause.Collection, basePos)
 	if !ok {
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	}
 
-	resultName, resultSymbol := cx.addDesugardSymbol(queryTy, model.SymbolKindVariable, false, basePos)
+	resultName, resultSymbol := cx.addDesugardSymbol(queryTy, model.SymbolKindVariable, basePos)
 	resultVar := &ast.BLangVariable{
 		Name: newIdentifier(resultName),
 	}
@@ -194,7 +194,7 @@ func createQueryCollectionSource(
 	initStmts *[]ast.StatementNode,
 	collectionExpr ast.BLangExpression,
 	pos diagnostics.Location,
-) (*ast.BLangVarRef, *ast.BLangVarRef, *ast.BLangVarRef, semtypes.SemType, bool) {
+) (*ast.BLangVarRef, *ast.BLangVarRef, *ast.BLangVarRef, bool) {
 	collResult := walkExpression(cx, collectionExpr)
 	*initStmts = append(*initStmts, collResult.initStmts...)
 	collExpr := collResult.replacementNode.(ast.BLangExpression)
@@ -211,7 +211,7 @@ func createQueryCollectionSource(
 	case semtypes.IsSubtype(tyCtx, collTy, semtypes.Mapping):
 		keysInvocation := createKeysInvocation(cx, collRef)
 		if keysInvocation == nil {
-			return nil, nil, nil, semtypes.SemType{}, false
+			return nil, nil, nil, false
 		}
 		keysVarDef, keysLocalRef := assignToLocal(cx, keysInvocation, pos)
 		*initStmts = append(*initStmts, keysVarDef)
@@ -219,14 +219,14 @@ func createQueryCollectionSource(
 		lengthSource = keysRef
 	default:
 		cx.internalError("query collection type should have been validated during type resolution")
-		return nil, nil, nil, semtypes.SemType{}, false
+		return nil, nil, nil, false
 	}
 
 	lenRef, ok := createQueryLengthRef(cx, initStmts, lengthSource, pos)
 	if !ok {
-		return nil, nil, nil, semtypes.SemType{}, false
+		return nil, nil, nil, false
 	}
-	return collRef, keysRef, lenRef, collTy, true
+	return collRef, keysRef, lenRef, true
 }
 
 func walkQueryExprWithRows(
@@ -242,7 +242,7 @@ func walkQueryExprWithRows(
 	basePos := expr.GetPosition()
 	var initStmts []ast.StatementNode
 
-	resultName, resultSymbol := cx.addDesugardSymbol(queryTy, model.SymbolKindVariable, false, basePos)
+	resultName, resultSymbol := cx.addDesugardSymbol(queryTy, model.SymbolKindVariable, basePos)
 	resultVar := &ast.BLangVariable{
 		Name: newIdentifier(resultName),
 	}
@@ -358,7 +358,7 @@ func appendInitialQueryRows(
 		return nil, false
 	}
 	*initStmts = append(*initStmts, createQueryBindingDeclaration(loopBinding, pos))
-	collRef, keysRef, rowCountRef, _, ok := createQueryCollectionSource(cx, initStmts, fromClause.Collection, pos)
+	collRef, keysRef, rowCountRef, ok := createQueryCollectionSource(cx, initStmts, fromClause.Collection, pos)
 	if !ok {
 		return nil, false
 	}
@@ -976,7 +976,7 @@ func appendQueryJoinClauseRows(
 	}
 
 	var joinSetup []ast.StatementNode
-	joinCollRef, joinKeysRef, joinRowCountRef, _, ok := createQueryCollectionSource(cx, &joinSetup, clause.Collection, pos)
+	joinCollRef, joinKeysRef, joinRowCountRef, ok := createQueryCollectionSource(cx, &joinSetup, clause.Collection, pos)
 	if !ok {
 		return nil, nil, false
 	}
@@ -1199,7 +1199,7 @@ func createQueryCounterRef(
 	initStmts *[]ast.StatementNode,
 	pos diagnostics.Location,
 ) *ast.BLangVarRef {
-	counterName, counterSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, pos)
+	counterName, counterSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, pos)
 	counterVar := &ast.BLangVariable{
 		Name: newIdentifier(counterName),
 	}
@@ -1229,7 +1229,7 @@ func createQueryLengthRef(
 	if lengthInvocation == nil {
 		return nil, false
 	}
-	lengthName, lengthSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, pos)
+	lengthName, lengthSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, pos)
 	lengthVar := &ast.BLangVariable{Name: newIdentifier(lengthName)}
 	lengthVar.Name.SetDeterminedType(semtypes.Never)
 	lengthVar.SetDeterminedType(semtypes.Never)
@@ -1463,7 +1463,7 @@ func createQueryListStore(
 	initStmts *[]ast.StatementNode,
 	pos diagnostics.Location,
 ) *ast.BLangVarRef {
-	listName, listSymbol := cx.addDesugardSymbol(semtypes.List, model.SymbolKindVariable, false, pos)
+	listName, listSymbol := cx.addDesugardSymbol(semtypes.List, model.SymbolKindVariable, pos)
 	emptyList := &ast.BLangListConstructorExpr{Exprs: []ast.BLangExpression{}}
 	emptyList.SetDeterminedType(semtypes.List)
 	emptyList.AtomicType = semtypes.ListAtomicInner
@@ -1490,7 +1490,7 @@ func createQueryMapStore(
 	initStmts *[]ast.StatementNode,
 	pos diagnostics.Location,
 ) *ast.BLangVarRef {
-	mapName, mapSymbol := cx.addDesugardSymbol(semtypes.Mapping, model.SymbolKindVariable, false, pos)
+	mapName, mapSymbol := cx.addDesugardSymbol(semtypes.Mapping, model.SymbolKindVariable, pos)
 	emptyMap := &ast.BLangMappingConstructorExpr{Fields: []ast.MappingField{}}
 	emptyMap.SetDeterminedType(semtypes.Mapping)
 	setPositionIfMissing(emptyMap, pos)
@@ -1675,7 +1675,7 @@ func appendQuerySelectResultStmts(
 	switch queryExpr.QueryConstructType {
 	case ast.TypeKindMap:
 		selectTy := selectExpr.GetDeterminedType()
-		pairName, pairSymbol := cx.addDesugardSymbol(selectTy, model.SymbolKindVariable, false, selectClause.GetPosition())
+		pairName, pairSymbol := cx.addDesugardSymbol(selectTy, model.SymbolKindVariable, selectClause.GetPosition())
 		pairVar := &ast.BLangVariable{
 			Name: newIdentifier(pairName),
 		}
@@ -1729,7 +1729,7 @@ func appendQuerySelectResultStmts(
 
 			conflictExpr := conflictResult.replacementNode.(ast.BLangExpression)
 			conflictTy := conflictExpr.GetDeterminedType()
-			conflictName, conflictSymbol := cx.addDesugardSymbol(conflictTy, model.SymbolKindVariable, false, onConflictClause.GetPosition())
+			conflictName, conflictSymbol := cx.addDesugardSymbol(conflictTy, model.SymbolKindVariable, onConflictClause.GetPosition())
 			conflictVar := &ast.BLangVariable{
 				Name: newIdentifier(conflictName),
 			}
@@ -1870,7 +1870,7 @@ func appendQueryIntermediateClauseStmts(
 			*initStmts = append(*initStmts, limitVarDef)
 			*initStmts = append(*initStmts, createNegativeLimitPanicIf(cx, limitRef, limitPos))
 
-			limitCounterName, limitCounterSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, false, limitPos)
+			limitCounterName, limitCounterSymbol := cx.addDesugardSymbol(semtypes.Int, model.SymbolKindVariable, limitPos)
 			limitCounterVar := &ast.BLangVariable{
 				Name: newIdentifier(limitCounterName),
 			}

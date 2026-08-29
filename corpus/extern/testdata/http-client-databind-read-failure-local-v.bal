@@ -37,6 +37,15 @@ public function main() returns error? {
     string|error viaText = c->get("/trunc-text");
     io:println(viaText is error); // @output true
 
+    xml|error viaXml = c->get("/trunc-xml");
+    io:println(viaXml is error); // @output true
+
+    // A raw http:Response target never reads the body, so the failure only surfaces once
+    // getXmlPayload() is called directly on it.
+    http:Response rawXml = check c->get("/trunc-xml");
+    xml|error direct = rawXml.getXmlPayload();
+    io:println(direct is error); // @output true
+
     // A narrow target adds a conversion step the read failure has to survive.
     Colour|error viaNarrowText = c->get("/trunc-text");
     io:println(viaNarrowText is error); // @output true

@@ -33,6 +33,13 @@ def module_cwd(repo_root: Path, module: str) -> Path:
     return repo_root if module == "." else repo_root / module
 
 
+def read_module_path(module_dir: Path) -> str:
+    # `go list -m` without a target lists every workspace module under
+    # go.work, not just this one. `go mod edit -json` reads go.mod directly.
+    info = json.loads(run_cmd(["go", "mod", "edit", "-json"], cwd=module_dir))
+    return info["Module"]["Path"]
+
+
 def run_cmd(args: list[str], cwd: Path | None = None, env: dict[str, str] | None = None) -> str:
     result = subprocess.run(
         args,
@@ -52,6 +59,14 @@ def discover_modules(repo_root: Path) -> list[str]:
     return sorted(set(modules), key=lambda value: (value != ".", value))
 
 
+def discover_root_owned_packages(repo_root: Path) -> str:
+    # `go list ./...` from the root module resolves only packages it owns
+    # (e.g. test_util) — unlike a path-prefix pattern, which also matches
+    # every sibling module sharing that prefix.
+    packages = run_cmd(["go", "list", "./..."], cwd=repo_root).splitlines()
+    return ",".join(packages)
+
+
 def build_module_info(repo_root: Path, module: str) -> ModuleInfo:
     return ModuleInfo(
         module=module,
@@ -61,7 +76,7 @@ def build_module_info(repo_root: Path, module: str) -> ModuleInfo:
 
 
 def normalize_coverage_profile(
-    repo_root: Path, profile_path: Path, module_path: str, module_dir: str
+    repo_root: Path, profile_path: Path, module_path: str, module_dir: str, root_module_path: str
 ) -> None:
     if not profile_path.exists():
         return
@@ -73,6 +88,7 @@ def normalize_coverage_profile(
     root_prefix = f"{repo_root}/"
     source_prefix = module_path + "/"
     target_prefix = cleaned_module_dir + "/" if cleaned_module_dir else ""
+    root_module_prefix = root_module_path + "/"
     normalized_lines: list[str] = []
 
     for line in profile_path.read_text(encoding="utf-8").splitlines():
@@ -82,6 +98,9 @@ def normalize_coverage_profile(
 
         if module_path and module_path != cleaned_module_dir and line.startswith(source_prefix):
             line = target_prefix + line[len(source_prefix) :]
+        elif module_path != root_module_path and line.startswith(root_module_prefix):
+            # A root-module package (e.g. test_util) exercised by a sibling module.
+            line = line[len(root_module_prefix) :]
 
         if not line:
             normalized_lines.append(line)
@@ -101,7 +120,12 @@ def normalize_coverage_profile(
 
 
 def run_tests_for_module(
-    repo_root: Path, info: ModuleInfo, with_coverage: bool, go_parallel: str, race: bool
+    repo_root: Path,
+    info: ModuleInfo,
+    with_coverage: bool,
+    go_parallel: str,
+    race: bool,
+    root_owned_packages: str,
 ) -> None:
     module = info.module
     cmd = [
@@ -132,7 +156,9 @@ def run_tests_for_module(
         env["BAL_GOCOVERDIR" if module == "." else "CODECOV_INTEGRATION_COVERDIR"] = str(
             coverage_dir
         )
-        cover_packages = ROOT_COVER_PACKAGES if module == "." else "./..."
+        cover_packages = (
+            ROOT_COVER_PACKAGES if module == "." else f"./...,{root_owned_packages}"
+        )
         cmd.extend(
             [f"-coverpkg={cover_packages}", f"-coverprofile={profile}", "-covermode=atomic"]
         )
@@ -157,14 +183,25 @@ def run_tests_for_module(
 
 
 def run_modules_in_parallel(
-    repo_root: Path, modules: list[ModuleInfo], with_coverage: bool, go_parallel: str, race: bool
+    repo_root: Path,
+    modules: list[ModuleInfo],
+    with_coverage: bool,
+    go_parallel: str,
+    race: bool,
+    root_owned_packages: str,
 ) -> bool:
     failed = False
     with ThreadPoolExecutor(max_workers=MAX_PARALLEL) as pool:
         future_to_module = {}
         for info in modules:
             future = pool.submit(
-                run_tests_for_module, repo_root, info, with_coverage, go_parallel, race
+                run_tests_for_module,
+                repo_root,
+                info,
+                with_coverage,
+                go_parallel,
+                race,
+                root_owned_packages,
             )
             future_to_module[future] = info.module
 
@@ -179,11 +216,12 @@ def run_modules_in_parallel(
 
 def normalize_all_coverage_profiles(repo_root: Path, modules: list[ModuleInfo]) -> None:
     coverage_dir = repo_root / ".artifacts" / "coverage"
+    root_module_path = read_module_path(repo_root)
     for info in modules:
-        module_path = run_cmd(["go", "list", "-m", "-f", "{{.Path}}"], cwd=info.cwd)
+        module_path = read_module_path(info.cwd)
         for profile_name in (f"{info.safe_name}.out", f"{info.safe_name}-executable.out"):
             normalize_coverage_profile(
-                repo_root, coverage_dir / profile_name, module_path, info.module
+                repo_root, coverage_dir / profile_name, module_path, info.module, root_module_path
             )
 
 
@@ -204,7 +242,10 @@ def main() -> int:
     suffix = f" with {' and '.join(details)}" if details else ""
     print(f"Running tests{suffix}")
 
-    if run_modules_in_parallel(repo_root, modules, args.with_coverage, go_parallel, args.race):
+    root_owned_packages = discover_root_owned_packages(repo_root) if args.with_coverage else ""
+    if run_modules_in_parallel(
+        repo_root, modules, args.with_coverage, go_parallel, args.race, root_owned_packages
+    ):
         return 1
 
     if args.with_coverage:

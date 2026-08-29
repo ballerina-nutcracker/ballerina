@@ -90,6 +90,14 @@ service /db on new http:Listener(19221) {
         return r;
     }
 
+    // A 4xx whose error detail body is application/xml is still parsed as xml.
+    resource function get missingXml() returns http:Response {
+        http:Response r = new;
+        r.statusCode = 404;
+        r.setTextPayload("<error>gone</error>", "application/xml");
+        return r;
+    }
+
     resource function get blob() returns http:Response {
         http:Response r = new;
         r.setBinaryPayload([1, 2, 3]);
@@ -187,6 +195,13 @@ public function testMain() returns error? {
         io:println("5xx: ", serverErr.message()); // @output 5xx: Internal Server Error
     }
 
+    // A 4xx whose error detail body is application/xml is still read via the xml builder,
+    // not the text fallback.
+    Person|error xmlErrBody = c->get("/db/missingXml");
+    if xmlErrBody is error {
+        io:println("4xx-xml: ", xmlErrBody.message()); // @output 4xx-xml: Not Found
+    }
+
     // An http:Response target bypasses the status-code mapping entirely.
     http:Response raw = check c->get("/db/missing");
     io:println(raw.statusCode); // @output 404
@@ -227,10 +242,10 @@ public function testMain() returns error? {
         io:println(wrongMime.message()); // @output incompatible '{| age: int, name: string, never... |}' found for 'text/plain' mime type
     }
 
-    // xml payload binding is not implemented yet.
-    string|error asXml = c->get("/db/xmlBody");
-    if asXml is error {
-        io:println(asXml.message()); // @output Payload binding failed: 'application/xml' responses are not supported
+    // An application/xml response has no string builder, so a string target is rejected.
+    string|error asString = c->get("/db/xmlBody");
+    if asString is error {
+        io:println(asString.message()); // @output incompatible 'string' found for 'application/xml' mime type
     }
 
     // A body that is not a member of an enum target fails conversion.

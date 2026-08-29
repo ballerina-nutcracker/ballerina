@@ -725,33 +725,26 @@ func validateIsolatedFunction(a analyzer, fn invokableSignatureNode) {
 //     unless they are isolated. (we detect that they are in lock statements in normal semantic analysis)
 //  4. Captures of outer-scope locally-declared variables (including
 //     parameters of an enclosing function) must be effectively final and
-//     have a type that is a subtype of `Isolated`. Lambdas push a new
-//     function-boundary frame so refs that resolve past that frame land on
-//     the capture branch of checkRead; non-lambda closures (record-field
-//     defaults, default-parameter expressions) reach the same rule via the
-//     fall-through branch on a missing scope lookup.
+//     have a type that is a subtype of `Isolated`. Closure boundaries validate
+//     captures explicitly before walking their bodies.
 func isIsolatedFunctionInner(a analyzer, node ast.BLangNode, scope *localScope) {
 	if scope == nil {
-		scope = newLocalScope(nil, true)
+		scope = newLocalScope(nil)
 	}
 	v := &isolatedFnVisitor{a: a, scope: scope}
 	ast.Walk(v, node)
 }
 
-// localScope is a lexical scope frame in a parent-linked chain. A frame
-// marked fnBoundary starts a new function frame: lookups that pass through
-// such a frame are captures of an enclosing function's locals.
+// localScope is a lexical scope frame in a parent-linked chain.
 type localScope struct {
-	parent     *localScope
-	fnBoundary bool
-	vars       map[model.SymbolRef]varDeclMetadata
+	parent *localScope
+	vars   map[model.SymbolRef]varDeclMetadata
 }
 
-func newLocalScope(parent *localScope, fnBoundary bool) *localScope {
+func newLocalScope(parent *localScope) *localScope {
 	return &localScope{
-		parent:     parent,
-		fnBoundary: fnBoundary,
-		vars:       map[model.SymbolRef]varDeclMetadata{},
+		parent: parent,
+		vars:   map[model.SymbolRef]varDeclMetadata{},
 	}
 }
 
@@ -759,20 +752,13 @@ func (s *localScope) define(sym model.SymbolRef, md varDeclMetadata) {
 	s.vars[sym] = md
 }
 
-// lookup walks the scope chain. The third return is true iff at least one
-// function-boundary frame was crossed before the symbol was found, i.e. the
-// reference is a capture of an enclosing function's local.
-func (s *localScope) lookup(sym model.SymbolRef) (varDeclMetadata, bool, bool) {
-	crossed := false
+func (s *localScope) lookup(sym model.SymbolRef) (varDeclMetadata, bool) {
 	for cur := s; cur != nil; cur = cur.parent {
 		if md, ok := cur.vars[sym]; ok {
-			return md, true, crossed
-		}
-		if cur.fnBoundary {
-			crossed = true
+			return md, true
 		}
 	}
-	return varDeclMetadata{}, false, false
+	return varDeclMetadata{}, false
 }
 
 type isolatedFnVisitor struct {
@@ -854,7 +840,7 @@ func (visitor *isolatedFnVisitor) walkInvocableOperands(call ast.Invocable) {
 func (visitor *isolatedFnVisitor) walkLambda(node *ast.BLangLambdaFunction) {
 	fn := node.Function
 	validateIsolatedCapture(visitor.a, visitor.scope, fn.GetBody().(ast.BLangNode))
-	inner := newLocalScope(visitor.scope, true)
+	inner := newLocalScope(visitor.scope)
 	for _, param := range fn.RequiredParams {
 		sym := param.Symbol()
 		inner.define(sym, varDeclMetadata{Type: visitor.a.ctx().SymbolType(sym), Final: true})
@@ -893,9 +879,13 @@ func (v *captureVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	if n == nil {
 		return v
 	}
+	switch n.(type) {
+	case *ast.BLangLambdaFunction, *ast.BLangFunction:
+		return nil
+	}
 	if ref, ok := n.(*ast.BLangVarRef); ok {
 		unnarrowed := v.a.ctx().UnnarrowedSymbol(ref.Symbol())
-		if md, found, _ := v.outer.lookup(unnarrowed); found {
+		if md, found := v.outer.lookup(unnarrowed); found {
 			if !md.Final || !semtypes.IsSubtype(v.a.tyCtx(), md.Type, v.isolated) {
 				v.a.semanticErr("invalid capture of mutable variable in isolated lambda", ref.GetPosition())
 			}
@@ -912,7 +902,7 @@ func (v *captureVisitor) VisitTypeData(_ *ast.TypeData) ast.Visitor { return v }
 // Restricted-variable resolution goes through resolveRestricted so it
 // happens at most once per lock regardless of which pass reaches it first.
 func (visitor *isolatedFnVisitor) walkLock(node *ast.BLangLock) {
-	inner := newLocalScope(visitor.scope, false)
+	inner := newLocalScope(visitor.scope)
 	if resolveRestricted(visitor.a, node) && !node.RestrictedSymbol.IsEmpty() {
 		inner.define(node.RestrictedSymbol, varDeclMetadata{})
 	}
@@ -946,7 +936,7 @@ func checkIsolatedNewWithContext(ctx *context.CompilerContext, tyCtx semtypes.Co
 func (visitor *isolatedFnVisitor) checkRead(ref *ast.BLangVarRef) {
 	tyCtx := visitor.a.tyCtx()
 	unnarrowed := visitor.a.ctx().UnnarrowedSymbol(ref.Symbol())
-	if _, ok, _ := visitor.scope.lookup(unnarrowed); ok {
+	if _, ok := visitor.scope.lookup(unnarrowed); ok {
 		// local declaration
 		return
 	}

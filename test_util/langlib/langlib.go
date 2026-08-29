@@ -213,29 +213,6 @@ func Build(cx *context.CompilerContext, publicSymbols map[semantics.PackageIdent
 	return &Symbols{ImplicitImports: implicitImports, PublicSymbols: publicSymbols}, nil
 }
 
-func ImplicitImports(cx *context.CompilerContext) (map[string]model.ExportedSymbolSpace, error) {
-	symbols, err := Build(cx, nil)
-	if err != nil {
-		return nil, err
-	}
-	return symbols.ImplicitImports, nil
-}
-
-// SeedPublicSymbols compiles bundled libraries into cx and registers them in
-// publicSymbols keyed by package identifier, so a hand-rolled driver resolves
-// them like any other dependency when the user code imports them. This includes
-// implicitly-used langlibs (e.g. lang.array) so user code which also imports
-// them explicitly resolves, plus bundled stdlibs that corpus tests import
-// directly (e.g. ballerina/io). A nil publicSymbols map is initialized and
-// returned.
-func SeedPublicSymbols(cx *context.CompilerContext, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace) (map[semantics.PackageIdentifier]model.ExportedSymbolSpace, error) {
-	symbols, err := Build(cx, publicSymbols)
-	if err != nil {
-		return nil, err
-	}
-	return symbols.PublicSymbols, nil
-}
-
 // compileBundledLib compiles a single bundled library's source into cx and
 // returns its exported symbol space, reusing a previous compilation in the same
 // build if present.

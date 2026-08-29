@@ -8,5 +8,6 @@ true
 
 test body
 true
+test body
 true
 -- stderr --
