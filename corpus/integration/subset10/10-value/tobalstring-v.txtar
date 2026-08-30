@@ -17,4 +17,6 @@ float:Infinity
 {"city":"Colombo","country":"Sri Lanka"}
 {"a":1,"b":{"c":2}}
 [1,2,3]
+[error("boom",code=42,ratio=1.5d,note=())]
+[error("failure2",error("failure1"),extra=3.14d)]
 -- stderr --
