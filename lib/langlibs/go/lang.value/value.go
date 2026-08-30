@@ -38,9 +38,7 @@ func initValueModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "toString", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return values.String(args[0], make(map[uintptr]bool)), nil
 	})
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBalString", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return values.BalString(args[0], make(map[uintptr]bool)), nil
-	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBalString", toBalString)
 }
 
 func cloneWithType(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -50,4 +48,8 @@ func cloneWithType(ctx *extern.Context, args []values.BalValue) (values.BalValue
 		return convErr, nil
 	}
 	return result, nil
+}
+
+func toBalString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return values.BalString(args[0], make(map[uintptr]bool)), nil
 }
