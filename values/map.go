@@ -201,11 +201,9 @@ func (m *Map) BalString(visited map[uintptr]bool) string {
 }
 
 // stringify is the shared cycle-detecting traversal behind String and
-// BalString; the two differ only in how each key and value is rendered.
-// keyFormat and valueFormat must agree on an escaping convention (Go's
-// strconv.Quote for String, Ballerina's balStringLiteral for BalString) so
-// that a key and a nested string value in the same output are escaped
-// consistently.
+// BalString. keyFormat and valueFormat must use the same escaping
+// convention (strconv.Quote for String, balStringLiteral for BalString),
+// or a key and a nested string value would end up escaped inconsistently.
 func (m *Map) stringify(visited map[uintptr]bool, keyFormat func(string) string, valueFormat func(BalValue, map[uintptr]bool) string) string {
 	ptr := uintptr(unsafe.Pointer(m))
 	if visited[ptr] {

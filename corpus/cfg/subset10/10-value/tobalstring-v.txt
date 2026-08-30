@@ -237,5 +237,71 @@
       (invocation io println (
         (invocation lang.value toBalString (
           (simple-var-ref causeWrapper))))))
+    (var-def
+      (variable e3 (type
+        (error-type)) (expr
+        (error-constructor-expr (
+          (literal boom)) (
+          (named-arg a\-b
+            (literal 5)))))))
+    (var-def
+      (variable keyWrapper (type
+        (array-type
+          (union-type
+            (value-type any)
+            (error-type)) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (simple-var-ref e3)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.value toBalString (
+          (simple-var-ref keyWrapper))))))
+    (var-def
+      (variable jsonVal (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal STRING))
+          (key-value
+            (literal b)
+            (literal 12))
+          (key-value
+            (literal c)
+            (literal 12.4))
+          (key-value
+            (literal d)
+            (literal true))
+          (key-value
+            (literal e)
+            (mapping-constructor-expr
+              (key-value
+                (literal x)
+                (literal x))
+              (key-value
+                (literal y)
+                (literal <nil>))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.value toBalString (
+          (simple-var-ref jsonVal))))))
+    (var-def
+      (variable tupleVal (type
+        (tuple-type
+          (value-type string)
+          (value-type int)
+          (value-type decimal)
+          (value-type float))) (expr
+        (list-constructor-expr
+          (literal TOM)
+          (literal 10)
+          (literal 90.12)
+          (binary-expr /
+            (literal 0)
+            (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.value toBalString (
+          (simple-var-ref tupleVal))))))
   )
 )

@@ -25,8 +25,8 @@ public isolated function length(string str) returns int = external;
 # + str - the string in which to search
 # + substr - the string to search for
 # + startIndex - index to start searching from
-# + return - index of the first occurrence of parameter `substr` in parameter `str` that is >= parameter `startIndex`,
-#     or `()` if there is no such occurrence
+# + return - index of the first occurrence of `substr` in `str` that is >= `startIndex`,
+#    or `()` if there is no such occurrence
 public isolated function indexOf(string str, string substr, int startIndex = 0) returns int? = external;
 
 # Tests whether a string includes another string.
@@ -34,8 +34,8 @@ public isolated function indexOf(string str, string substr, int startIndex = 0) 
 # + str - the string in which to search
 # + substr - the string to search for
 # + startIndex - index to start searching from
-# + return - `true` if there is an occurrence of parameter `substr` in parameter `str` at an index >= parameter `startIndex`,
-#     or `false` otherwise
+# + return - `true` if there is an occurrence of `substr` in `str` at an index >= `startIndex`,
+#    or `false` otherwise
 public isolated function includes(string str, string substr, int startIndex = 0) returns boolean = external;
 
 # Returns a byte array for a string using UTF-8 encoding.

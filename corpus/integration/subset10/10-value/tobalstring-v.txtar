@@ -19,4 +19,7 @@ float:Infinity
 [1,2,3]
 [error("boom",code=42,ratio=1.5d,note=())]
 [error("failure2",error("failure1"),extra=3.14d)]
+[error("boom",'a\\\-b=5)]
+{"a":"STRING","b":12,"c":12.4,"d":true,"e":{"x":"x","y":()}}
+["TOM",10,90.12d,float:NaN]
 -- stderr --
