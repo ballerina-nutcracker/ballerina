@@ -16,7 +16,6 @@ TIMEOUT = "2h"
 PROFILE_LINE_PATTERN = re.compile(
     r"^(.+):([0-9]+\.[0-9]+,[0-9]+\.[0-9]+\s+[0-9]+\s+[0-9]+)$"
 )
-ROOT_COVER_PACKAGES = "github.com/ballerina-nutcracker/ballerina/..."
 
 
 class ModuleInfo(NamedTuple):
@@ -59,12 +58,24 @@ def discover_modules(repo_root: Path) -> list[str]:
     return sorted(set(modules), key=lambda value: (value != ".", value))
 
 
-def discover_root_owned_packages(repo_root: Path) -> str:
-    # `go list ./...` from the root module resolves only packages it owns
-    # (e.g. test_util) — unlike a path-prefix pattern, which also matches
-    # every sibling module sharing that prefix.
-    packages = run_cmd(["go", "list", "./..."], cwd=repo_root).splitlines()
-    return ",".join(packages)
+def discover_all_workspace_packages(repo_root: Path, modules: list[ModuleInfo]) -> str:
+    packages: list[str] = []
+    for info in modules:
+        pkgs = run_cmd(["go", "list", "./..."], cwd=info.cwd).splitlines()
+        packages.extend(pkgs)
+    return ",".join(sorted(set(packages)))
+
+
+def build_module_prefix_map(modules: list[ModuleInfo]) -> list[tuple[str, str]]:
+    prefix_map: list[tuple[str, str]] = []
+    for info in modules:
+        mod_path = read_module_path(info.cwd)
+        cleaned_dir = info.module.removeprefix("./")
+        dir_prefix = (cleaned_dir + "/") if cleaned_dir not in ("", ".") else ""
+        prefix_map.append((mod_path + "/", dir_prefix))
+    # Match longest module path prefixes first (e.g. submodules before root module)
+    prefix_map.sort(key=lambda item: len(item[0]), reverse=True)
+    return prefix_map
 
 
 def build_module_info(repo_root: Path, module: str) -> ModuleInfo:
@@ -76,31 +87,18 @@ def build_module_info(repo_root: Path, module: str) -> ModuleInfo:
 
 
 def normalize_coverage_profile(
-    repo_root: Path, profile_path: Path, module_path: str, module_dir: str, root_module_path: str
+    repo_root: Path, profile_path: Path, prefix_map: list[tuple[str, str]]
 ) -> None:
     if not profile_path.exists():
         return
 
-    cleaned_module_dir = module_dir.removeprefix("./")
-    if cleaned_module_dir == ".":
-        cleaned_module_dir = ""
-
     root_prefix = f"{repo_root}/"
-    source_prefix = module_path + "/"
-    target_prefix = cleaned_module_dir + "/" if cleaned_module_dir else ""
-    root_module_prefix = root_module_path + "/"
     normalized_lines: list[str] = []
 
     for line in profile_path.read_text(encoding="utf-8").splitlines():
         if line.startswith("mode:"):
             normalized_lines.append(line)
             continue
-
-        if module_path and module_path != cleaned_module_dir and line.startswith(source_prefix):
-            line = target_prefix + line[len(source_prefix) :]
-        elif module_path != root_module_path and line.startswith(root_module_prefix):
-            # A root-module package (e.g. test_util) exercised by a sibling module.
-            line = line[len(root_module_prefix) :]
 
         if not line:
             normalized_lines.append(line)
@@ -114,6 +112,12 @@ def normalize_coverage_profile(
         path, rest = match.groups()
         if path.startswith(root_prefix):
             path = path[len(root_prefix) :]
+        else:
+            for mod_prefix, dir_prefix in prefix_map:
+                if path.startswith(mod_prefix):
+                    path = dir_prefix + path[len(mod_prefix) :]
+                    break
+
         normalized_lines.append(f"{path}:{rest}")
 
     profile_path.write_text("\n".join(normalized_lines) + "\n", encoding="utf-8")
@@ -125,7 +129,7 @@ def run_tests_for_module(
     with_coverage: bool,
     go_parallel: str,
     race: bool,
-    root_owned_packages: str,
+    workspace_packages: str,
 ) -> None:
     module = info.module
     cmd = [
@@ -156,11 +160,8 @@ def run_tests_for_module(
         env["BAL_GOCOVERDIR" if module == "." else "CODECOV_INTEGRATION_COVERDIR"] = str(
             coverage_dir
         )
-        cover_packages = (
-            ROOT_COVER_PACKAGES if module == "." else f"./...,{root_owned_packages}"
-        )
         cmd.extend(
-            [f"-coverpkg={cover_packages}", f"-coverprofile={profile}", "-covermode=atomic"]
+            [f"-coverpkg={workspace_packages}", f"-coverprofile={profile}", "-covermode=atomic"]
         )
 
     cmd.append("./...")
@@ -188,7 +189,7 @@ def run_modules_in_parallel(
     with_coverage: bool,
     go_parallel: str,
     race: bool,
-    root_owned_packages: str,
+    workspace_packages: str,
 ) -> bool:
     failed = False
     with ThreadPoolExecutor(max_workers=MAX_PARALLEL) as pool:
@@ -201,7 +202,7 @@ def run_modules_in_parallel(
                 with_coverage,
                 go_parallel,
                 race,
-                root_owned_packages,
+                workspace_packages,
             )
             future_to_module[future] = info.module
 
@@ -214,14 +215,14 @@ def run_modules_in_parallel(
     return failed
 
 
-def normalize_all_coverage_profiles(repo_root: Path, modules: list[ModuleInfo]) -> None:
+def normalize_all_coverage_profiles(
+    repo_root: Path, modules: list[ModuleInfo], prefix_map: list[tuple[str, str]]
+) -> None:
     coverage_dir = repo_root / ".artifacts" / "coverage"
-    root_module_path = read_module_path(repo_root)
     for info in modules:
-        module_path = read_module_path(info.cwd)
         for profile_name in (f"{info.safe_name}.out", f"{info.safe_name}-executable.out"):
             normalize_coverage_profile(
-                repo_root, coverage_dir / profile_name, module_path, info.module, root_module_path
+                repo_root, coverage_dir / profile_name, prefix_map
             )
 
 
@@ -242,14 +243,17 @@ def main() -> int:
     suffix = f" with {' and '.join(details)}" if details else ""
     print(f"Running tests{suffix}")
 
-    root_owned_packages = discover_root_owned_packages(repo_root) if args.with_coverage else ""
+    workspace_packages = (
+        discover_all_workspace_packages(repo_root, modules) if args.with_coverage else ""
+    )
     if run_modules_in_parallel(
-        repo_root, modules, args.with_coverage, go_parallel, args.race, root_owned_packages
+        repo_root, modules, args.with_coverage, go_parallel, args.race, workspace_packages
     ):
         return 1
 
     if args.with_coverage:
-        normalize_all_coverage_profiles(repo_root, modules)
+        prefix_map = build_module_prefix_map(modules)
+        normalize_all_coverage_profiles(repo_root, modules, prefix_map)
     return 0
 
 
