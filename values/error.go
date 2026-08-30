@@ -20,6 +20,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // Error represents a Ballerina error value at runtime.
@@ -50,43 +51,98 @@ func NewErrorWithMessage(message string) *Error {
 
 // String returns the Ballerina string representation of the error.
 func (e *Error) String(visited map[uintptr]bool) string {
-	return e.render(visited, strconv.Quote, func(v BalValue, visited map[uintptr]bool) string {
+	var b strings.Builder
+	writeTypeName(&b, e.TypeName)
+	b.WriteString(strconv.Quote(e.Message))
+	if e.Cause != nil {
+		b.WriteByte(',')
+		b.WriteString(toString(e.Cause, visited, false))
+	}
+	writeDetail(&b, e.Detail, visited, func(v BalValue, visited map[uintptr]bool) string {
 		return toString(v, visited, false)
 	})
+	b.WriteByte(')')
+	return b.String()
 }
 
-// BalString returns the Ballerina expression-style representation of the
-// error, so nested decimal/float/string detail values keep their
-// expression-style forms (a "d" suffix, a "float:" prefix, valid Ballerina
-// escaping) instead of String's informal ones.
 func (e *Error) BalString(visited map[uintptr]bool) string {
-	return e.render(visited, balStringLiteral, BalString)
+	var b strings.Builder
+	writeTypeName(&b, e.TypeName)
+	b.WriteString(balStringLiteral(e.Message))
+	if e.Cause != nil {
+		b.WriteByte(',')
+		b.WriteString(BalString(e.Cause, visited))
+	}
+	writeDetail(&b, e.Detail, visited, BalString)
+	b.WriteByte(')')
+	return b.String()
 }
 
-func (e *Error) render(visited map[uintptr]bool, quote func(string) string, format func(BalValue, map[uintptr]bool) string) string {
-	var b strings.Builder
-	if e.TypeName != "" {
+func writeTypeName(b *strings.Builder, typeName string) {
+	if typeName != "" {
 		b.WriteString("error ")
-		b.WriteString(e.TypeName)
+		b.WriteString(typeName)
 		b.WriteString(" (")
 	} else {
 		b.WriteString("error(")
 	}
-	b.WriteString(quote(e.Message))
+}
 
-	if e.Cause != nil {
-		b.WriteByte(',')
-		b.WriteString(format(e.Cause, visited))
+func writeDetail(b *strings.Builder, detail *Map, visited map[uintptr]bool, format func(BalValue, map[uintptr]bool) string) {
+	if detail == nil {
+		return
 	}
-	if e.Detail != nil {
-		for entry := e.Detail.head; entry != nil; entry = entry.next {
-			b.WriteByte(',')
-			b.WriteString(entry.key)
-			b.WriteByte('=')
-			b.WriteString(format(entry.value, visited))
+	for entry := detail.head; entry != nil; entry = entry.next {
+		b.WriteByte(',')
+		b.WriteString(balDetailKey(entry.key))
+		b.WriteByte('=')
+		b.WriteString(format(entry.value, visited))
+	}
+}
+
+// balDetailKey renders a detail-map key as a Ballerina identifier, since
+// it's written bare before "=" in error(...) syntax. A key that isn't
+// already a valid identifier (e.g. from a quoted-identifier named arg) is
+// rendered as a quoted one instead, with non-identifier runes escaped.
+func balDetailKey(key string) string {
+	if isBareIdentifier(key) {
+		return key
+	}
+	var b strings.Builder
+	b.WriteByte('\'')
+	for _, r := range key {
+		if isIdentifierRune(r) {
+			b.WriteRune(r)
+		} else {
+			b.WriteByte('\\')
+			b.WriteRune(r)
 		}
 	}
-
-	b.WriteByte(')')
 	return b.String()
+}
+
+func isBareIdentifier(key string) bool {
+	if key == "" {
+		return false
+	}
+	for i, r := range key {
+		if i == 0 {
+			if !isIdentifierInitialRune(r) {
+				return false
+			}
+			continue
+		}
+		if !isIdentifierRune(r) {
+			return false
+		}
+	}
+	return true
+}
+
+func isIdentifierInitialRune(r rune) bool {
+	return r == '_' || unicode.IsLetter(r)
+}
+
+func isIdentifierRune(r rune) bool {
+	return isIdentifierInitialRune(r) || unicode.IsDigit(r)
 }

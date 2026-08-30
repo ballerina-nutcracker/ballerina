@@ -226,6 +226,60 @@ cd
     %143 = println(%142) -> bb40;
   }
   bb40 {
+    %144 = ConstantLoad boom
+    %145 = ConstantLoad a\-b
+    %146 = ConstantLoad 5
+    %147 = newMap mapping{%145=%146}
+    %148 = newError error(%144, %147)
+    e3 = %148;
+    %150 = ConstantLoad 1
+    %151 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%150]{e3}
+    keyWrapper = %151;
+    %153 = toBalString(keyWrapper) -> bb41;
+  }
+  bb41 {
+    %154 = println(%153) -> bb42;
+  }
+  bb42 {
+    %155 = ConstantLoad a
+    %156 = ConstantLoad STRING
+    %157 = ConstantLoad b
+    %158 = ConstantLoad 12
+    %159 = ConstantLoad c
+    %160 = ConstantLoad 12.4
+    %161 = ConstantLoad d
+    %162 = ConstantLoad true
+    %163 = ConstantLoad e
+    %164 = ConstantLoad x
+    %165 = ConstantLoad x
+    %166 = ConstantLoad y
+    %167 = ConstantLoad <nil>
+    %168 = newMap {| json... |}{%164=%165, %166=%167}
+    %169 = newMap {| json... |}{%155=%156, %157=%158, %159=%160, %161=%162, %163=%168}
+    jsonVal = %169;
+    %171 = toBalString(jsonVal) -> bb43;
+  }
+  bb43 {
+    %172 = println(%171) -> bb44;
+  }
+  bb44 {
+    %173 = ConstantLoad TOM
+    %174 = ConstantLoad 10
+    %175 = ConstantLoad 90.12
+    %177 = ConstantLoad 0
+    %178 = %177;
+    %179 = ConstantLoad 0
+    %180 = %179;
+    %176 = / %178 %180;
+    %181 = ConstantLoad 4
+    %182 = newArray [string, int, decimal, float, never...][%181]{%173, %174, %175, %176}
+    tupleVal = %182;
+    %184 = toBalString(tupleVal) -> bb45;
+  }
+  bb45 {
+    %185 = println(%184) -> bb46;
+  }
+  bb46 {
     return;
   }
 }

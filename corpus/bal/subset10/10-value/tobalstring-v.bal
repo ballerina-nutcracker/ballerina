@@ -91,4 +91,16 @@ public function main() {
     error e2 = error("failure2", cause, extra = 3.14d);
     (any|error)[] causeWrapper = [e2];
     io:println(causeWrapper.toBalString()); // @output [error("failure2",error("failure1"),extra=3.14d)]
+
+    // A detail key that isn't a bare identifier (from a quoted identifier
+    // named-arg) must still render as a valid identifier, quoted this time.
+    error e3 = error("boom", 'a\-b = 5);
+    (any|error)[] keyWrapper = [e3];
+    io:println(keyWrapper.toBalString()); // @output [error("boom",'a\\\-b=5)]
+
+    json jsonVal = {a: "STRING", b: 12, c: 12.4, d: true, e: {x: "x", y: ()}};
+    io:println(jsonVal.toBalString()); // @output {"a":"STRING","b":12,"c":12.4,"d":true,"e":{"x":"x","y":()}}
+
+    [string, int, decimal, float] tupleVal = ["TOM", 10, 90.12, 0.0 / 0.0];
+    io:println(tupleVal.toBalString()); // @output ["TOM",10,90.12d,float:NaN]
 }

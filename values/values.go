@@ -296,3 +296,7 @@ func balStringLiteral(s string) string {
 	b.WriteByte('"')
 	return b.String()
 }
+
+func toStringNested(v BalValue, visited map[uintptr]bool) string {
+	return toString(v, visited, false)
+}
