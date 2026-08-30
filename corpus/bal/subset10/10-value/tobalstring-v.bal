@@ -78,4 +78,17 @@ public function main() {
 
     int[] nums = [1, 2, 3];
     io:println(nums.toBalString()); // @output [1,2,3]
+
+    // toBalString isn't callable directly on error (error isn't a subtype of
+    // any), so nest it in a list to reach Error.BalString: detail values must
+    // keep their expression-style forms (decimal "d" suffix, "()" for nil),
+    // not the informal ones (no suffix, empty string).
+    error e1 = error("boom", code = 42, ratio = 1.5d, note = ());
+    (any|error)[] errWrapper = [e1];
+    io:println(errWrapper.toBalString()); // @output [error("boom",code=42,ratio=1.5d,note=())]
+
+    error cause = error("failure1");
+    error e2 = error("failure2", cause, extra = 3.14d);
+    (any|error)[] causeWrapper = [e2];
+    io:println(causeWrapper.toBalString()); // @output [error("failure2",error("failure1"),extra=3.14d)]
 }

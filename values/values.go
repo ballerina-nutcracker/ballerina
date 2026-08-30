@@ -243,11 +243,11 @@ func BalString(v BalValue, visited map[uintptr]bool) string {
 		return t.BalString(visited)
 	case *Map:
 		return t.BalString(visited)
-	// Error/object/function/stream/typedesc/xml expression-style rendering is
-	// out of scope for the persist use case this backs; fall back to the
-	// informal renderer rather than inventing an unverified format.
 	case *Error:
-		return t.String(visited)
+		return t.BalString(visited)
+	// object/function/stream/typedesc/xml expression-style rendering is out
+	// of scope for the persist use case this backs; fall back to the
+	// informal renderer rather than inventing an unverified format.
 	case *Function:
 		return "function " + t.LookupKey
 	case *Object:

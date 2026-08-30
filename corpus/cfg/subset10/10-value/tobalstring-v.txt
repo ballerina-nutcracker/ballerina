@@ -189,5 +189,53 @@
       (invocation io println (
         (invocation lang.value toBalString (
           (simple-var-ref nums))))))
+    (var-def
+      (variable e1 (type
+        (error-type)) (expr
+        (error-constructor-expr (
+          (literal boom)) (
+          (named-arg code
+            (literal 42))
+          (named-arg ratio
+            (literal 1.5))
+          (named-arg note
+            (literal <nil>)))))))
+    (var-def
+      (variable errWrapper (type
+        (array-type
+          (union-type
+            (value-type any)
+            (error-type)) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (simple-var-ref e1)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.value toBalString (
+          (simple-var-ref errWrapper))))))
+    (var-def
+      (variable cause (type
+        (error-type)) (expr
+        (error-constructor-expr (
+          (literal failure1))))))
+    (var-def
+      (variable e2 (type
+        (error-type)) (expr
+        (error-constructor-expr (
+          (literal failure2)
+          (simple-var-ref cause)) (
+          (named-arg extra
+            (literal 3.14)))))))
+    (var-def
+      (variable causeWrapper (type
+        (array-type
+          (union-type
+            (value-type any)
+            (error-type)) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (simple-var-ref e2)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.value toBalString (
+          (simple-var-ref causeWrapper))))))
   )
 )

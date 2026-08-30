@@ -50,6 +50,20 @@ func NewErrorWithMessage(message string) *Error {
 
 // String returns the Ballerina string representation of the error.
 func (e *Error) String(visited map[uintptr]bool) string {
+	return e.render(visited, strconv.Quote, func(v BalValue, visited map[uintptr]bool) string {
+		return toString(v, visited, false)
+	})
+}
+
+// BalString returns the Ballerina expression-style representation of the
+// error, so nested decimal/float/string detail values keep their
+// expression-style forms (a "d" suffix, a "float:" prefix, valid Ballerina
+// escaping) instead of String's informal ones.
+func (e *Error) BalString(visited map[uintptr]bool) string {
+	return e.render(visited, balStringLiteral, BalString)
+}
+
+func (e *Error) render(visited map[uintptr]bool, quote func(string) string, format func(BalValue, map[uintptr]bool) string) string {
 	var b strings.Builder
 	if e.TypeName != "" {
 		b.WriteString("error ")
@@ -58,18 +72,18 @@ func (e *Error) String(visited map[uintptr]bool) string {
 	} else {
 		b.WriteString("error(")
 	}
-	b.WriteString(strconv.Quote(e.Message))
+	b.WriteString(quote(e.Message))
 
 	if e.Cause != nil {
 		b.WriteByte(',')
-		b.WriteString(toString(e.Cause, visited, false))
+		b.WriteString(format(e.Cause, visited))
 	}
 	if e.Detail != nil {
 		for entry := e.Detail.head; entry != nil; entry = entry.next {
 			b.WriteByte(',')
 			b.WriteString(entry.key)
 			b.WriteByte('=')
-			b.WriteString(toString(entry.value, visited, false))
+			b.WriteString(format(entry.value, visited))
 		}
 	}
 

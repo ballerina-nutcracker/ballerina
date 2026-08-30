@@ -189,6 +189,43 @@ cd
     %114 = println(%113) -> bb36;
   }
   bb36 {
+    %115 = ConstantLoad boom
+    %116 = ConstantLoad code
+    %117 = ConstantLoad 42
+    %118 = ConstantLoad ratio
+    %119 = ConstantLoad 1.5
+    %120 = ConstantLoad note
+    %121 = ConstantLoad <nil>
+    %122 = newMap mapping{%116=%117, %118=%119, %120=%121}
+    %123 = newError error(%115, %122)
+    e1 = %123;
+    %125 = ConstantLoad 1
+    %126 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%125]{e1}
+    errWrapper = %126;
+    %128 = toBalString(errWrapper) -> bb37;
+  }
+  bb37 {
+    %129 = println(%128) -> bb38;
+  }
+  bb38 {
+    %130 = ConstantLoad failure1
+    %131 = newError error(%130)
+    cause = %131;
+    %133 = ConstantLoad failure2
+    %134 = ConstantLoad extra
+    %135 = ConstantLoad 3.14
+    %136 = newMap mapping{%134=%135}
+    %137 = newError error(%133, cause, %136)
+    e2 = %137;
+    %139 = ConstantLoad 1
+    %140 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%139]{e2}
+    causeWrapper = %140;
+    %142 = toBalString(causeWrapper) -> bb39;
+  }
+  bb39 {
+    %143 = println(%142) -> bb40;
+  }
+  bb40 {
     return;
   }
 }
