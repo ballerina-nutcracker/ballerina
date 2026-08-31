@@ -54,6 +54,7 @@ const (
 	typeOpTagRef
 	typeOpTagUnion
 	typeOpTagIntersect
+	typeOpTagArray
 )
 
 const (
@@ -828,6 +829,17 @@ func (sw *symbolWriter) writeTypeOp(buf *bytes.Buffer, op model.TypeOp) error {
 			return err
 		}
 		return sw.writeTypeOp(buf, o.Rhs)
+	case *model.ArrayTypeOp:
+		if err := write(buf, typeOpTagArray); err != nil {
+			return err
+		}
+		if err := sw.writeTypeOp(buf, o.Element); err != nil {
+			return err
+		}
+		if err := write(buf, int64(o.Length)); err != nil {
+			return err
+		}
+		return write(buf, o.IsOpen)
 	default:
 		return fmt.Errorf("unsupported TypeOp: %T", op)
 	}

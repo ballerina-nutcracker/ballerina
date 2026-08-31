@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot infer maximal type such that it is a subtype of both int|string and [float...]
+  --> dependent-fn-array-e.bal:43:17
+   |
+43 |     float[] _ = constrained(); // @error
+   |                 ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot infer typedesc argument for parameter 'T': no contextually expected type
+  --> dependent-fn-array-e.bal:42:13
+   |
+42 |     var _ = open(); // @error
+   |             ^^^^^^
+
+error[SEMANTIC_ERROR]: cannot infer typedesc argument from incompatible expected array type [string, string, string, never...]
+  --> dependent-fn-array-e.bal:41:19
+   |
+41 |     string[3] _ = fixed(); // @error
+   |                   ^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot infer typedesc argument from incompatible expected array type string
+  --> dependent-fn-array-e.bal:40:16
+   |
+40 |     string _ = open(); // @error
+   |                ^^^^^^
