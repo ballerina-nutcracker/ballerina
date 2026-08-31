@@ -142,7 +142,7 @@ const (
 type TypeOp interface {
 	Apply(ctx semtypes.Context, args []semtypes.SemType) semtypes.SemType
 	// FixedPart returns the part of the return type that does not depend on any typedesc parameter.
-	FixedPart() semtypes.SemType
+	FixedPart(ctx semtypes.Context) semtypes.SemType
 }
 
 type BinaryTypeOp struct {
@@ -160,9 +160,9 @@ func (binary *BinaryTypeOp) Apply(ctx semtypes.Context, args []semtypes.SemType)
 	return semtypes.Intersect(lhs, rhs)
 }
 
-func (binary *BinaryTypeOp) FixedPart() semtypes.SemType {
-	lhs := binary.Lhs.FixedPart()
-	rhs := binary.Rhs.FixedPart()
+func (binary *BinaryTypeOp) FixedPart(ctx semtypes.Context) semtypes.SemType {
+	lhs := binary.Lhs.FixedPart(ctx)
+	rhs := binary.Rhs.FixedPart(ctx)
 	if binary.Kind == TypeOpUnion {
 		return semtypes.Union(lhs, rhs)
 	}
@@ -177,7 +177,7 @@ func (identity *IdentityTypeOp) Apply(_ semtypes.Context, _ []semtypes.SemType) 
 	return identity.Type
 }
 
-func (identity *IdentityTypeOp) FixedPart() semtypes.SemType {
+func (identity *IdentityTypeOp) FixedPart(_ semtypes.Context) semtypes.SemType {
 	return identity.Type
 }
 
@@ -190,9 +190,42 @@ func (ref *RefTypeOp) Apply(ctx semtypes.Context, args []semtypes.SemType) semty
 	return semtypes.TypedescConstraint(ctx, args[ref.Index])
 }
 
-func (ref *RefTypeOp) FixedPart() semtypes.SemType {
+func (ref *RefTypeOp) FixedPart(_ semtypes.Context) semtypes.SemType {
 	return semtypes.Never
 }
+
+// ArrayTypeOp applies one array dimension to the type produced by Element.
+// When IsOpen is true, the operation produces Element[] and Length is ignored.
+// Otherwise, the operation produces Element[Length], including when Length is zero.
+// Multidimensional arrays are represented by nested ArrayTypeOp values.
+type ArrayTypeOp struct {
+	Element TypeOp
+	Length  int
+	IsOpen  bool
+}
+
+func (op *ArrayTypeOp) Apply(ctx semtypes.Context, args []semtypes.SemType) semtypes.SemType {
+	return op.arrayType(ctx, op.Element.Apply(ctx, args))
+}
+
+func (op *ArrayTypeOp) FixedPart(ctx semtypes.Context) semtypes.SemType {
+	return op.arrayType(ctx, op.Element.FixedPart(ctx))
+}
+
+func (op *ArrayTypeOp) arrayType(ctx semtypes.Context, element semtypes.SemType) semtypes.SemType {
+	definition := semtypes.NewListDefinition()
+	if op.IsOpen {
+		return definition.Define(ctx.Env(), nil, semtypes.ListRest(element))
+	}
+	return definition.Define(ctx.Env(), []semtypes.SemType{element}, semtypes.ListFixedLength(op.Length))
+}
+
+var (
+	_ TypeOp = &ArrayTypeOp{}
+	_ TypeOp = &BinaryTypeOp{}
+	_ TypeOp = &IdentityTypeOp{}
+	_ TypeOp = &RefTypeOp{}
+)
 
 type SymbolKind uint
 

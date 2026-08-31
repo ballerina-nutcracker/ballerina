@@ -22,4 +22,6 @@ public function main() {
     io:println(a);
     string b = helper:inferred(1);
     io:println(b);
+    string[2][] values = helper:inferredNestedFixedArray();
+    io:println(values[1][0]);
 }
