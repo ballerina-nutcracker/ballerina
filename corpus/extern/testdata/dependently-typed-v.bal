@@ -17,6 +17,7 @@
 import ballerina/io;
 
 type Point record {| int x; int y; |};
+type StringArray string[];
 
 public function main() {
     int a = inferred(0);
@@ -66,6 +67,49 @@ public function main() {
     Getter g = new;
     string & readonly s = g->get();
     io:println(s); // @output immutable
+
+    string[] openArray = inferredOpenArray();
+    io:println(openArray[0]); // @output open
+
+    string[]|error openArrayInUnion = inferredOpenArray();
+    if openArrayInUnion is string[] {
+        io:println(openArrayInUnion[0]); // @output open
+    }
+
+    string[2] fixedArray = inferredFixedArray();
+    io:println(fixedArray[1]); // @output fixed
+
+    string[] fixedArrayAsOpen = inferredFixedArray();
+    io:println(fixedArrayAsOpen[0]); // @output fixed
+
+    string[0] zeroArray = inferredZeroArray();
+    io:println(zeroArray.length()); // @output 0
+
+    string[][] nestedArray = inferredNestedArray();
+    io:println(nestedArray[0][0]); // @output nested
+
+    string[]|error outsideUnion = inferredArrayOutsideUnion();
+    if outsideUnion is string[] {
+        io:println(outsideUnion[0]); // @output outside
+    }
+
+    (string|error)[] insideUnion = inferredArrayInsideUnion();
+    io:println(insideUnion[0]); // @output inside
+
+    (string & readonly)[] insideIntersection = inferredArrayInsideIntersection();
+    io:println(insideIntersection[0]); // @output readonly
+
+    string[][] explicitArray = inferredOpenArray(StringArray);
+    io:println(explicitArray[0][0]); // @output explicit
+
+    string[2] explicitFixedArray = inferredFixedArray(string);
+    io:println(explicitFixedArray[0]); // @output fixed
+
+    string[0] explicitZeroArray = inferredZeroArray(string);
+    io:println(explicitZeroArray.length()); // @output 0
+
+    string[][] explicitNestedArray = inferredNestedArray(string);
+    io:println(explicitNestedArray[0][0]); // @output nested
 }
 
 function inferred(int val, typedesc retTy = <>) returns retTy = external;
@@ -79,6 +123,20 @@ function shiftBy(Point p, int dx, int dy, typedesc retTy = <>) returns retTy = e
 function inferredWithDefault(int val = 42, typedesc retTy = <>) returns retTy = external;
 
 function inferredMaybeError(typedesc<any|error> retTy = <>) returns retTy = external;
+
+function inferredOpenArray(typedesc retTy = <>) returns retTy[] = external;
+
+function inferredFixedArray(typedesc retTy = <>) returns retTy[2] = external;
+
+function inferredZeroArray(typedesc retTy = <>) returns retTy[0] = external;
+
+function inferredNestedArray(typedesc retTy = <>) returns retTy[][] = external;
+
+function inferredArrayOutsideUnion(typedesc retTy = <>) returns retTy[]|error = external;
+
+function inferredArrayInsideUnion(typedesc<anydata> retTy = <>) returns (retTy|error)[] = external;
+
+function inferredArrayInsideIntersection(typedesc retTy = <>) returns (retTy & readonly)[] = external;
 
 isolated client class Getter {
     isolated remote function get(typedesc<anydata> targetType = <>) returns targetType & readonly = external;

@@ -549,6 +549,8 @@ func returnTypeReferencesTypedescParam(node ast.BLangNode, typedescParams map[st
 		}
 		_, ok := typedescParams[n.TypeName.Value]
 		return ok
+	case *ast.BLangArrayType:
+		return returnTypeReferencesTypedescParam(n.Elemtype.TypeDescriptor.(ast.BLangNode), typedescParams)
 	case *ast.BLangUnionTypeNode:
 		if lhs, ok := n.Lhs().TypeDescriptor.(ast.BLangNode); ok && returnTypeReferencesTypedescParam(lhs, typedescParams) {
 			return true

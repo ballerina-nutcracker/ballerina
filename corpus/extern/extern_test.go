@@ -175,6 +175,13 @@ func TestDependentlyTyped(t *testing.T) {
 			}
 			panic(values.NewErrorWithMessage("inferredMaybeError: expected error to be in typedesc"))
 		}},
+		{Org: org, Module: mod, FuncName: "inferredOpenArray", Impl: dependentArrayExtern(arrayReturnOpen)},
+		{Org: org, Module: mod, FuncName: "inferredFixedArray", Impl: dependentArrayExtern(arrayReturnFixed)},
+		{Org: org, Module: mod, FuncName: "inferredZeroArray", Impl: dependentArrayExtern(arrayReturnZero)},
+		{Org: org, Module: mod, FuncName: "inferredNestedArray", Impl: dependentArrayExtern(arrayReturnNested)},
+		{Org: org, Module: mod, FuncName: "inferredArrayOutsideUnion", Impl: dependentArrayExtern(arrayReturnOutsideUnion)},
+		{Org: org, Module: mod, FuncName: "inferredArrayInsideUnion", Impl: dependentArrayExtern(arrayReturnInsideUnion)},
+		{Org: org, Module: mod, FuncName: "inferredArrayInsideIntersection", Impl: dependentArrayExtern(arrayReturnInsideIntersection)},
 		{Org: org, Module: mod, FuncName: "Getter." + model.RemoteMethodName("get"), Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			td, ok := args[1].(*values.TypeDesc)
 			if !ok {
@@ -187,6 +194,82 @@ func TestDependentlyTyped(t *testing.T) {
 		}},
 	}
 	runExtern(t, fileCase("dependently-typed-v"), testharness.NewTestPal(), externs)
+}
+
+type arrayReturnKind uint8
+
+const (
+	arrayReturnOpen arrayReturnKind = iota
+	arrayReturnFixed
+	arrayReturnZero
+	arrayReturnNested
+	arrayReturnOutsideUnion
+	arrayReturnInsideUnion
+	arrayReturnInsideIntersection
+)
+
+func dependentArrayExtern(kind arrayReturnKind) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		td, ok := args[0].(*values.TypeDesc)
+		if !ok {
+			return nil, fmt.Errorf("expected typedesc argument, got %T", args[0])
+		}
+		if kind == arrayReturnZero {
+			if !semtypes.IsSameType(ctx.TypeCtx(), td.Type, semtypes.Val) && !semtypes.IsSameType(ctx.TypeCtx(), td.Type, semtypes.String) {
+				return nil, fmt.Errorf("expected maximal or explicit string typedesc constraint for zero-length array, got %s", semtypes.ToString(ctx.TypeCtx(), td.Type))
+			}
+		} else if !semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.List) && !semtypes.IsSameType(ctx.TypeCtx(), td.Type, semtypes.String) {
+			return nil, fmt.Errorf("expected string or explicit array typedesc constraint, got %s", semtypes.ToString(ctx.TypeCtx(), td.Type))
+		}
+		element := td.Type
+		label := "open"
+		size := 1
+		switch kind {
+		case arrayReturnFixed:
+			label = "fixed"
+			size = 2
+		case arrayReturnZero:
+			return newExternList(ctx, externArrayType(ctx, element, 0, false), nil), nil
+		case arrayReturnNested:
+			inner := newExternList(ctx, externArrayType(ctx, element, 0, true), []values.BalValue{"nested"})
+			return newExternList(ctx, externArrayType(ctx, inner.Type, 0, true), []values.BalValue{inner}), nil
+		case arrayReturnOutsideUnion:
+			label = "outside"
+		case arrayReturnInsideUnion:
+			element = semtypes.Union(element, semtypes.Error)
+			label = "inside"
+		case arrayReturnInsideIntersection:
+			element = semtypes.Intersect(element, semtypes.ValReadonly)
+			label = "readonly"
+		}
+		if semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.List) {
+			inner := newExternList(ctx, td.Type, []values.BalValue{"explicit"})
+			return newExternList(ctx, externArrayType(ctx, td.Type, 0, true), []values.BalValue{inner}), nil
+		}
+		items := make([]values.BalValue, size)
+		for i := range items {
+			items[i] = label
+		}
+		length := 0
+		isOpen := true
+		if kind == arrayReturnFixed {
+			length = 2
+			isOpen = false
+		}
+		return newExternList(ctx, externArrayType(ctx, element, length, isOpen), items), nil
+	}
+}
+
+func externArrayType(ctx *extern.Context, element semtypes.SemType, length int, isOpen bool) semtypes.SemType {
+	definition := semtypes.NewListDefinition()
+	if isOpen {
+		return definition.Define(ctx.TypeEnv(), nil, semtypes.ListRest(element))
+	}
+	return definition.Define(ctx.TypeEnv(), []semtypes.SemType{element}, semtypes.ListFixedLength(length))
+}
+
+func newExternList(ctx *extern.Context, ty semtypes.SemType, items []values.BalValue) *values.List {
+	return values.NewList(ty, semtypes.ToListAtomicType(ctx.TypeEnv(), ty), false, nil, len(items), items)
 }
 
 func TestDependentlyTypedAlias(t *testing.T) {
@@ -718,6 +801,17 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 		}
 		panic(values.NewErrorWithMessage("unsupported inferred typedesc constraint"))
 	})
+	runtime.RegisterExternFunction(rt, org, helperMod, "inferredNestedFixedArray", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		td, ok := args[0].(*values.TypeDesc)
+		if !ok {
+			return nil, fmt.Errorf("expected typedesc argument, got %T", args[0])
+		}
+		innerTy := externArrayType(ctx, td.Type, 0, true)
+		first := newExternList(ctx, innerTy, []values.BalValue{"first"})
+		second := newExternList(ctx, innerTy, []values.BalValue{"serialized"})
+		outerTy := externArrayType(ctx, innerTy, 2, false)
+		return newExternList(ctx, outerTy, []values.BalValue{first, second}), nil
+	})
 	for _, pkg := range deserializedPkgs {
 		if err := rt.Init(*pkg); err != nil {
 			t.Fatalf("runtime error: %v", err)
@@ -726,7 +820,7 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 	rt.Listen()
 	<-rt.ExitStatus
 
-	const expected = "1\nfoo\n"
+	const expected = "1\nfoo\nserialized\n"
 	if got := pal.Stdout(); got != expected {
 		t.Errorf("expected %q, got %q", expected, got)
 	}

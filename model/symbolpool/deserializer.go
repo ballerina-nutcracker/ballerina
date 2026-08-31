@@ -646,6 +646,13 @@ func (sr *symbolReader) readTypeOp() model.TypeOp {
 		lhs := sr.readTypeOp()
 		rhs := sr.readTypeOp()
 		return &model.BinaryTypeOp{Kind: model.TypeOpIntersection, Lhs: lhs, Rhs: rhs}
+	case typeOpTagArray:
+		element := sr.readTypeOp()
+		var length int64
+		read(sr.r, &length)
+		var isOpen bool
+		read(sr.r, &isOpen)
+		return &model.ArrayTypeOp{Element: element, Length: int(length), IsOpen: isOpen}
 	default:
 		panic(fmt.Sprintf("unknown TypeOp tag: %d", tag))
 	}

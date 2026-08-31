@@ -622,6 +622,8 @@ func typeOpReferencesIndex(op model.TypeOp, i int) bool {
 		return o.Index == i
 	case *model.BinaryTypeOp:
 		return typeOpReferencesIndex(o.Lhs, i) || typeOpReferencesIndex(o.Rhs, i)
+	case *model.ArrayTypeOp:
+		return typeOpReferencesIndex(o.Element, i)
 	}
 	return false
 }
@@ -636,6 +638,8 @@ func checkDependentReturnParts(a analyzer, ctx semtypes.Context, op model.TypeOp
 		// IdentityTypeOp is a defined/concrete return part, e.g. error or int.
 		// A single part has no sibling to overlap with, so it is disjoint by itself.
 		return false, true
+	case *model.ArrayTypeOp:
+		return checkDependentReturnParts(a, ctx, o.Element, paramTypes, loc)
 	case *model.BinaryTypeOp:
 		lhsDepends, lhsDisjoint := checkDependentReturnParts(a, ctx, o.Lhs, paramTypes, loc)
 		rhsDepends, rhsDisjoint := checkDependentReturnParts(a, ctx, o.Rhs, paramTypes, loc)

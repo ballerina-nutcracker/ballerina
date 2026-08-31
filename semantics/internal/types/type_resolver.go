@@ -2090,7 +2090,7 @@ type param struct {
 
 // buildReturnTypeOp translates a return-type-descriptor AST node into a TypeOp tree.
 // A user-defined-type node whose name matches a typedesc parameter becomes a RefTypeOp.
-// Union and intersection nodes recurse. Everything else is resolved to a concrete semtype
+// Array, union, and intersection nodes recurse. Everything else is resolved to a concrete semtype
 // and wrapped in an IdentityTypeOp.
 func buildReturnTypeOp(t typeResolver, params map[string]param, node ast.BLangNode) (model.TypeOp, bool) {
 	switch n := node.(type) {
@@ -2116,6 +2116,24 @@ func buildReturnTypeOp(t typeResolver, params map[string]param, node ast.BLangNo
 			return nil, false
 		}
 		return &model.BinaryTypeOp{Kind: model.TypeOpIntersection, Lhs: lhs, Rhs: rhs}, true
+	case *ast.BLangArrayType:
+		element, ok := buildReturnTypeOp(t, params, n.Elemtype.TypeDescriptor.(ast.BLangNode))
+		if !ok {
+			return nil, false
+		}
+		for i := len(n.Sizes); i > 0; i-- {
+			lengthExpr := n.Sizes[i-1]
+			if lengthExpr == nil {
+				element = &model.ArrayTypeOp{Element: element, IsOpen: true}
+				continue
+			}
+			length, ok := resolveFixedArraySize(t, lengthExpr)
+			if !ok {
+				return nil, false
+			}
+			element = &model.ArrayTypeOp{Element: element, Length: length}
+		}
+		return element, true
 	case *ast.BLangUserDefinedType:
 		if n.PkgAlias.GetValue() == "" {
 			if p, ok := params[n.TypeName.Value]; ok && semtypes.IsSubtype(t.typeContext(), p.ty, semtypes.Typedesc) {
@@ -6898,7 +6916,7 @@ func lowerInvocationArgsInner(t typeResolver, args []ast.BLangExpression, sig mo
 				return nil, false
 			}
 			constraint := semtypes.TypedescConstraint(t.typeContext(), paramTypes[i])
-			defaultArg, ok := lowerInferredTypedescDefaultArg(t, constraint, expectedType, depSym.ReturnType().FixedPart(), pos)
+			defaultArg, ok := lowerInferredTypedescDefaultArg(t, constraint, expectedType, depSym.ReturnType(), i, pos)
 			if !ok {
 				return nil, false
 			}
@@ -6918,14 +6936,15 @@ func lowerInvocationArgsInner(t typeResolver, args []ast.BLangExpression, sig mo
 	return newArgs, true
 }
 
-func lowerInferredTypedescDefaultArg(t typeResolver, constraint, expectedType, fixedReturnType semtypes.SemType, pos diagnostics.Location) (ast.BLangExpression, bool) {
+func lowerInferredTypedescDefaultArg(t typeResolver, constraint, expectedType semtypes.SemType, returnOp model.TypeOp, paramIndex int, pos diagnostics.Location) (ast.BLangExpression, bool) {
 	ctx := t.typeContext()
-	inferred := semtypes.Diff(expectedType, fixedReturnType)
-	if semtypes.IsEmpty(ctx, inferred) {
-		inferred = expectedType
+	inferred, referenced, ok := inferTypedescConstraint(t, returnOp, paramIndex, constraint, expectedType, pos)
+	if !ok {
+		return nil, false
 	}
-	if !semtypes.IsSubtype(ctx, inferred, constraint) {
-		inferred = semtypes.Intersect(constraint, inferred)
+	if !referenced {
+		t.internalError("inferred typedesc parameter is not referenced by return type", pos)
+		return nil, false
 	}
 	if semtypes.IsEmpty(ctx, inferred) {
 		t.semanticError(fmt.Sprintf("cannot infer maximal type such that it is a subtype of both %s and %s",
@@ -6937,6 +6956,100 @@ func lowerInferredTypedescDefaultArg(t typeResolver, constraint, expectedType, f
 	expr.SetPosition(pos)
 	setExpectedType(expr, ty)
 	return expr, true
+}
+
+func inferTypedescConstraint(t typeResolver, op model.TypeOp, paramIndex int, constraint, candidate semtypes.SemType, pos diagnostics.Location) (semtypes.SemType, bool, bool) {
+	ctx := t.typeContext()
+	switch current := op.(type) {
+	case *model.RefTypeOp:
+		if current.Index != paramIndex {
+			return semtypes.Never, false, true
+		}
+		if !semtypes.IsSubtype(ctx, candidate, constraint) {
+			candidate = semtypes.Intersect(constraint, candidate)
+		}
+		return candidate, true, true
+	case *model.IdentityTypeOp:
+		return semtypes.Never, false, true
+	case *model.ArrayTypeOp:
+		if !typeOpReferencesParam(current.Element, paramIndex) {
+			return semtypes.Never, false, true
+		}
+		shape := arraySemType(ctx, semtypes.Val, current.Length, current.IsOpen)
+		compatibleCandidate := semtypes.Intersect(candidate, shape)
+		if semtypes.IsEmpty(ctx, compatibleCandidate) {
+			t.semanticError(fmt.Sprintf("cannot infer typedesc argument from incompatible expected array type %s", semtypes.ToString(ctx, candidate)), pos)
+			return semtypes.Never, true, false
+		}
+		member := semtypes.ListProj(ctx, compatibleCandidate, semtypes.Int)
+		if semtypes.IsEmpty(ctx, member) {
+			return constraint, true, true
+		}
+		return inferTypedescConstraint(t, current.Element, paramIndex, constraint, member, pos)
+	case *model.BinaryTypeOp:
+		lhsDepends := typeOpReferencesParam(current.Lhs, paramIndex)
+		rhsDepends := typeOpReferencesParam(current.Rhs, paramIndex)
+		if !lhsDepends && !rhsDepends {
+			return semtypes.Never, false, true
+		}
+		if lhsDepends && !rhsDepends {
+			return inferTypedescConstraint(t, current.Lhs, paramIndex, constraint,
+				inferBinaryOperandCandidate(ctx, current.Kind, candidate, current.Rhs.FixedPart(ctx)), pos)
+		}
+		if rhsDepends && !lhsDepends {
+			return inferTypedescConstraint(t, current.Rhs, paramIndex, constraint,
+				inferBinaryOperandCandidate(ctx, current.Kind, candidate, current.Lhs.FixedPart(ctx)), pos)
+		}
+		lhs, _, ok := inferTypedescConstraint(t, current.Lhs, paramIndex, constraint, candidate, pos)
+		if !ok {
+			return semtypes.Never, true, false
+		}
+		rhs, _, ok := inferTypedescConstraint(t, current.Rhs, paramIndex, constraint, candidate, pos)
+		if !ok {
+			return semtypes.Never, true, false
+		}
+		if current.Kind == model.TypeOpUnion {
+			return semtypes.Intersect(lhs, rhs), true, true
+		}
+		return semtypes.Union(lhs, rhs), true, true
+	default:
+		t.internalError(fmt.Sprintf("unknown dependent return type op: %T", op), pos)
+		return semtypes.Never, false, false
+	}
+}
+
+func inferBinaryOperandCandidate(ctx semtypes.Context, kind model.BinaryTypeOpKind, candidate, fixed semtypes.SemType) semtypes.SemType {
+	if kind != model.TypeOpUnion {
+		return candidate
+	}
+	inferred := semtypes.Diff(candidate, fixed)
+	if semtypes.IsEmpty(ctx, inferred) {
+		return candidate
+	}
+	return inferred
+}
+
+func typeOpReferencesParam(op model.TypeOp, paramIndex int) bool {
+	switch current := op.(type) {
+	case *model.RefTypeOp:
+		return current.Index == paramIndex
+	case *model.ArrayTypeOp:
+		return typeOpReferencesParam(current.Element, paramIndex)
+	case *model.BinaryTypeOp:
+		return typeOpReferencesParam(current.Lhs, paramIndex) || typeOpReferencesParam(current.Rhs, paramIndex)
+	case *model.IdentityTypeOp:
+		return false
+	default:
+		return false
+	}
+}
+
+func arraySemType(ctx semtypes.Context, element semtypes.SemType, length int, isOpen bool) semtypes.SemType {
+	definition := semtypes.NewListDefinition()
+	if isOpen {
+		return definition.Define(ctx.Env(), nil, semtypes.ListRest(element))
+	}
+	return definition.Define(ctx.Env(), []semtypes.SemType{element}, semtypes.ListFixedLength(length))
 }
 
 func lowerNamedCallArg(t typeResolver, sig model.UntypedFunctionSignature, slots []lowerArgSlot, seenNames map[string]diagnostics.Location, expr *ast.BLangNamedArgsExpression) bool {

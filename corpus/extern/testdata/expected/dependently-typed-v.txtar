@@ -15,4 +15,17 @@ bar
 7
 error
 immutable
+open
+open
+fixed
+fixed
+0
+nested
+outside
+inside
+readonly
+explicit
+fixed
+0
+nested
 -- stderr --
