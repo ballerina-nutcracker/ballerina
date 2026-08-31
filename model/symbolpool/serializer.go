@@ -29,7 +29,7 @@ import (
 
 const (
 	symMagic   = "\x53\x59\x4d\x42"
-	symVersion = 9
+	symVersion = 10
 )
 
 const (
@@ -46,6 +46,7 @@ const (
 	symTagConstantValue
 	symTagOpaque
 	symTagErrorType
+	symTagDependentlyTypedResourceMethod
 )
 
 const (
@@ -290,10 +291,12 @@ func (sw *symbolWriter) writeSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym 
 		return sw.writeValueSymbol(buf, ref, s)
 	case *model.AnnotationSymbol:
 		return sw.writeAnnotationSymbol(buf, s)
+	case model.DependentlyTypedResourceMethodSymbol:
+		return sw.writeDependentlyTypedResourceMethodSymbol(buf, ref, s)
+	case model.ResourceMethodSymbol:
+		return sw.writeResourceMethodSymbol(buf, ref, s)
 	case model.DependentlyTypedFunctionSymbol:
 		return sw.writeDependentlyTypedFunctionSymbol(buf, ref, s)
-	case *model.ResourceMethodSymbol:
-		return sw.writeResourceMethodSymbol(buf, ref, s)
 	case model.FunctionSymbol:
 		return sw.writeFunctionSymbol(buf, ref, s)
 	default:
@@ -655,7 +658,7 @@ func (sw *symbolWriter) writeFunctionSignatureBody(buf *bytes.Buffer, ref model.
 	return sw.writeFunctionSignatureIndex(buf, ref)
 }
 
-func (sw *symbolWriter) writeResourceMethodSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym *model.ResourceMethodSymbol) error {
+func (sw *symbolWriter) writeResourceMethodSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym model.ResourceMethodSymbol) error {
 	if err := write(buf, symTagResourceMethod); err != nil {
 		return err
 	}
@@ -669,6 +672,40 @@ func (sw *symbolWriter) writeResourceMethodSymbol(buf *bytes.Buffer, ref model.S
 		return err
 	}
 	return sw.writeFunctionSignatureBody(buf, ref, sym.TypedSignature())
+}
+
+func (sw *symbolWriter) writeDependentlyTypedResourceMethodSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym model.DependentlyTypedResourceMethodSymbol) error {
+	if err := write(buf, symTagDependentlyTypedResourceMethod); err != nil {
+		return err
+	}
+	if err := sw.writeStringCP(buf, sym.Name()); err != nil {
+		return err
+	}
+	if err := write(buf, sym.IsPublic()); err != nil {
+		return err
+	}
+	if err := sw.writeStringCP(buf, sym.MethodName()); err != nil {
+		return err
+	}
+	if err := sw.writeType(buf, sym.PathListType()); err != nil {
+		return err
+	}
+	paramTypes := sym.ParamTypes()
+	if err := write(buf, int64(len(paramTypes))); err != nil {
+		return err
+	}
+	for _, pt := range paramTypes {
+		if err := sw.writeType(buf, pt); err != nil {
+			return err
+		}
+	}
+	if err := write(buf, uint8(sym.FuncFlags())); err != nil {
+		return err
+	}
+	if err := sw.writeFunctionSignatureIndex(buf, ref); err != nil {
+		return err
+	}
+	return sw.writeTypeOp(buf, sym.ReturnType())
 }
 
 func (sw *symbolWriter) writeDependentlyTypedFunctionSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym model.DependentlyTypedFunctionSymbol) error {

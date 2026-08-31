@@ -101,6 +101,32 @@ func (sr *symbolReader) readResourceMethodSymbol(space *model.SymbolSpace) {
 	}
 }
 
+func (sr *symbolReader) readDependentlyTypedResourceMethodSymbol(space *model.SymbolSpace) {
+	name := sr.readStringCP()
+	var isPublic bool
+	read(sr.r, &isPublic)
+	methodName := sr.readStringCP()
+	pathType := sr.readType()
+	var paramCount int64
+	read(sr.r, &paramCount)
+	paramTypes := make([]semtypes.SemType, paramCount)
+	for i := int64(0); i < paramCount; i++ {
+		paramTypes[i] = sr.readType()
+	}
+	var flags uint8
+	read(sr.r, &flags)
+	sym := model.NewDependentlyTypedResourceMethodSymbol(name, methodName, model.FuncSymbolFlags(flags), isPublic, diagnostics.NewBuiltinLocation())
+	sym.SetPathListType(pathType)
+	sym.SetParamTypes(paramTypes)
+	var sigHandle int64
+	read(sr.r, &sigHandle)
+	sym.SetReturnType(sr.readTypeOp())
+	ref := addDeserializedSymbol(space, name, sym)
+	if sigHandle >= 0 {
+		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[sigHandle])
+	}
+}
+
 func addDeserializedSymbol(space *model.SymbolSpace, name string, sym model.Symbol) model.SymbolRef {
 	if !sym.IsPublic() {
 		if _, exists := space.GetSymbol(name); exists {
@@ -191,6 +217,8 @@ func (sr *symbolReader) readSymbol(space *model.SymbolSpace, opaque []model.Symb
 		sr.readDependentlyTypedFunctionSymbol(space)
 	case symTagResourceMethod:
 		sr.readResourceMethodSymbol(space)
+	case symTagDependentlyTypedResourceMethod:
+		sr.readDependentlyTypedResourceMethodSymbol(space)
 	default:
 		panic(fmt.Sprintf("unknown symbol tag: %d", tag))
 	}

@@ -1684,7 +1684,7 @@ func analyzeClientResourceAccessAction[A analyzer](a A, expr *ast.BLangClientRes
 
 func resolvedResourceMethodPathType[A analyzer](a A, expr *ast.BLangClientResourceAccessAction) semtypes.SemType {
 	ref := expr.MethodSymbol()
-	rmSym, ok := a.getSymbol(ref).(*model.ResourceMethodSymbol)
+	rmSym, ok := a.getSymbol(ref).(model.ResourceMethodSymbol)
 	if !ok {
 		return semtypes.SemType{}
 	}
@@ -2118,13 +2118,13 @@ func validateDuplicateResourceMethods[A analyzer](a A, rms []*ast.BLangResourceM
 	tyCtx := a.tyCtx()
 	ctx := a.ctx()
 	for i := 1; i < len(rms); i++ {
-		later, ok := ctx.GetSymbol(rms[i].Symbol()).(*model.ResourceMethodSymbol)
+		later, ok := ctx.GetSymbol(rms[i].Symbol()).(model.ResourceMethodSymbol)
 		if !ok {
 			a.internalErr("expected resource method symbol", rms[i].GetPosition())
 			continue
 		}
 		for j := 0; j < i; j++ {
-			earlier, ok := ctx.GetSymbol(rms[j].Symbol()).(*model.ResourceMethodSymbol)
+			earlier, ok := ctx.GetSymbol(rms[j].Symbol()).(model.ResourceMethodSymbol)
 			if !ok {
 				a.internalErr("expected resource method symbol", rms[j].GetPosition())
 				continue

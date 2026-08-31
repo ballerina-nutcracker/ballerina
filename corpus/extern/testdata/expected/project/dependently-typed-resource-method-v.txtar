@@ -1,0 +1,4 @@
+-- stdout --
+explicit
+42
+-- stderr --

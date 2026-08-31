@@ -63,6 +63,7 @@ parser/testdata/**/*.json
 coverage_report.html
 .claude/
 .pi/
+.codex/
 
 # Ephemeral report produced by the validate-stdlib-contract skill
 CONTRACT_VALIDATION.md

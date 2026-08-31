@@ -279,6 +279,102 @@ func TestExternResourceMethod(t *testing.T) {
 	runExtern(t, projectCase("resource-method-v"), testharness.NewTestPal(), externs)
 }
 
+func TestDependentlyTypedResourceMethod(t *testing.T) {
+	projectDir := filepath.Join(testDataDir, "dependently-typed-resource-method-v")
+	absProjectDir, err := filepath.Abs(projectDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := projects.Load(os.DirFS(absProjectDir), ".", projects.ProjectLoadConfig{
+		BallerinaEnvFs: os.DirFS(getBallerinaEnvPath(t)),
+	})
+	if err != nil {
+		t.Fatalf("failed to load project: %v", err)
+	}
+	compilation := result.Project().CurrentPackage().Compilation()
+	if compilation.DiagnosticResult().HasErrors() {
+		for _, d := range compilation.DiagnosticResult().Diagnostics() {
+			t.Logf("diagnostic: %v", d)
+		}
+		t.Fatal("compilation had errors")
+	}
+	backend := projects.NewBallerinaBackend(compilation)
+	apiID := semantics.PackageIdentifier{OrgName: "testorg", ModuleName: "dependentresourcemethod.api"}
+	exported, ok := backend.ExportedSymbols()[apiID]
+	if !ok {
+		t.Fatal("exported symbols not found for dependentresourcemethod.api")
+	}
+	symBytes, err := symbolpool.Marshal(exported, result.Project().Environment().CompilerEnvironment())
+	if err != nil {
+		t.Fatalf("symbol Marshal: %v", err)
+	}
+	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	deserialized, err := symbolpool.Unmarshal(freshEnv, symBytes)
+	if err != nil {
+		t.Fatalf("symbol Unmarshal: %v", err)
+	}
+	var clientRef model.SymbolRef
+	for _, space := range deserialized.MainSpaces {
+		if ref, found := space.GetSymbol("Client"); found {
+			clientRef = ref
+			break
+		}
+	}
+	if clientRef.IsEmpty() {
+		t.Fatal("deserialized Client symbol not found")
+	}
+	clientSym, ok := freshEnv.GetSymbol(clientRef).(*model.NetworkClassSymbol)
+	if !ok {
+		t.Fatalf("expected network class symbol, got %T", freshEnv.GetSymbol(clientRef))
+	}
+	resourceRefs := clientSym.ResourceMethods()
+	if len(resourceRefs) != 1 {
+		t.Fatalf("expected one resource method, got %d", len(resourceRefs))
+	}
+	resourceRef := resourceRefs[0]
+	resourceSym, ok := freshEnv.GetSymbol(resourceRef).(model.DependentlyTypedResourceMethodSymbol)
+	if !ok {
+		t.Fatalf("expected dependent resource method symbol, got %T", freshEnv.GetSymbol(resourceRef))
+	}
+	if resourceSym.MethodName() != "get" || semtypes.IsZero(resourceSym.PathListType()) {
+		t.Fatal("resource accessor or path-list type was not preserved")
+	}
+	if len(resourceSym.PathParams()) != 0 {
+		t.Fatal("declaration-local path parameters must not be serialized")
+	}
+	if len(resourceSym.ParamTypes()) != 1 {
+		t.Fatal("dependent parameter types or return TypeOp were not preserved")
+	}
+	retOp, ok := resourceSym.ReturnType().(*model.BinaryTypeOp)
+	if !ok || retOp.Kind != model.TypeOpUnion {
+		t.Fatalf("expected union return TypeOp, got %T", resourceSym.ReturnType())
+	}
+	if _, ok := retOp.Lhs.(*model.RefTypeOp); !ok {
+		t.Fatalf("expected dependent return reference, got %T", retOp.Lhs)
+	}
+	if _, ok := freshEnv.FunctionSignatureRef(resourceRef); !ok {
+		t.Fatal("resource function signature association was not preserved")
+	}
+
+	externs := []testharness.ExternRegistration{{
+		Org: "testorg", Module: "dependentresourcemethod.api", FuncName: "Client.$resource$get$0",
+		Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			td, ok := args[len(args)-1].(*values.TypeDesc)
+			if !ok {
+				return nil, fmt.Errorf("expected typedesc argument, got %T", args[len(args)-1])
+			}
+			switch {
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.String):
+				return "explicit", nil
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int):
+				return int64(42), nil
+			}
+			panic(values.NewErrorWithMessage("unsupported targetType"))
+		},
+	}}
+	runExtern(t, projectCase("dependently-typed-resource-method-v"), testharness.NewTestPal(), externs)
+}
+
 func TestListenerDispatch(t *testing.T) {
 	// `trigger` writes through pal.IO.Stdout directly to mirror what
 	// io:println does at runtime, without requiring a closure over the

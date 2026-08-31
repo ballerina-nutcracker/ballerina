@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "dependentresourcemethod"
+version = "0.1.0"
