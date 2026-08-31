@@ -123,6 +123,8 @@ The `LineStream` and `BlockStream` public helper classes are not declared;
 
 The client remote methods now bind the response payload directly to the contextually expected type instead of only returning an `http:Response`.
 
+The client can also address a resource with the client resource access syntax (`client->/albums/[id]`) rather than only through a remote method with a string path.
+
 ### Client — response data binding
 
 Every remote method except `head` takes a trailing `targetType` parameter with an inferred typedesc default:
@@ -183,6 +185,62 @@ The nilable form of such a target binds the same way: an absent body gives `()`,
 An `xml` target is the one builder that rejects an empty body outright: there is no empty `xml` value to bind, so a non-nilable `xml` target returns an error named `NoContentError` with the message `No content`. The nilable form `xml?` still gives `()`.
 
 Not covered in this subset: `stream<http:SseEvent, error?>` targets, status code response records (`http:StatusCodeClient`, `getStatusCodeRecord()`), and the `validation` / `laxDataBinding` client configuration flags.
+
+### Client — resource methods
+
+All seven accessors are declared as resource methods on `http:Client`, so a request can be written as a path rather than as a string argument:
+
+```ballerina
+resource isolated function get [PathParamType... path](map<string|string[]>? headers = (),
+        *QueryParams params) returns Response|error = external;
+```
+
+`PathParamType` is `boolean|int|float|decimal|string`. Each segment of the call site's path becomes one element of `path`, whether it was written as a name or as a computed segment, and `get` is the accessor used when the call site names none:
+
+```ballerina
+http:Client c = check new ("https://example.com");
+
+http:Response a = check c->/albums/[42]/tracks;      // GET /albums/42/tracks
+http:Response b = check c->/albums.post(payload);    // POST /albums
+http:Response d = check c->/albums/[42].delete();    // DELETE /albums/42
+http:Response e = check c->/;                        // GET /
+```
+
+`post`, `put`, `patch` and `delete` take a leading `message`, plus `headers` and `mediaType`, exactly as their remote counterparts do; `delete`'s `message` is defaultable. `head` and `options` take only `headers`.
+
+Query parameters are named arguments, collected by the `*QueryParams` included record parameter:
+
+```ballerina
+public type QueryParamType SimpleQueryParamType[]|SimpleQueryParamType;
+
+public type QueryParams record {|
+    never headers?;
+    never targetType?;
+    never message?;
+    never mediaType?;
+    QueryParamType...;
+|};
+```
+
+The four `never` fields reserve the names the method's own parameters use, so `headers`, `targetType`, `message` and `mediaType` cannot be smuggled in as query parameters.
+
+| Call | Request target |
+|---|---|
+| `c->/albums(tag = "rock", count = 3)` | `/albums?tag=rock&count=3` |
+| `c->/albums(tags = ["rock", "jazz"])` | `/albums?tags=rock,jazz` |
+| `c->/albums(q = "a b")` | `/albums?q=a+b` |
+| `c->/albums(q = "a&b=c")` | `/albums?q=a%26b%3Dc` |
+| `c->/p/[1.0]/[1.0e10]` | `/p/1.0/1e10` |
+| `c->/p/[d]` where `decimal d = 2.500` | `/p/2.500` |
+
+An array-valued query parameter is rendered as a single comma-joined pair rather than as a repeated key, and parameters keep the order the named arguments were written in.
+
+Two renderings deliberately differ from jBallerina's wire format, in both cases by preferring the Go-native or language-consistent behaviour over byte-level parity. Each is recorded in the [`http` README](../../lib/stdlibs/ballerina/http/0.0.1/go1.26/README.md) under **Notable Behavioural Changes** and is open to revisiting:
+
+- **Values use Ballerina's `toString`.** jBallerina formats a segment with Java's `String.valueOf`, so a `float` goes out as `Double.toString` gives it — `1.0E10`. Here every segment and query value goes through Ballerina's own `toString`, giving `1e10`. `int`, `boolean`, `decimal` and `string` are identical either way; a whole float still keeps its `.0` and a decimal still keeps its trailing zeros.
+- **Query components are escaped.** jBallerina concatenates the target and lets the transport encode only the space, so a value containing `&` or `=` silently splits into extra parameters. Here keys and values are escaped with `url.QueryEscape`, so such a value stays one parameter — at the cost of a space rendering as `+` rather than `%20`.
+
+Not covered in this subset: the `targetType` parameter. jBallerina's resource methods are dependently typed on `TargetType targetType = <>`, which the interpreter does not yet support for resource methods (#825), so these methods return the raw `http:Response` and a target of any other type is a compile error. Use the remote method form when the payload needs binding. The `@http:Query` annotation for renaming a query parameter on the wire is also not supported.
 
 ### Response
 
