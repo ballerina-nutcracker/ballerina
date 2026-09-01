@@ -26,7 +26,7 @@
 // CE-E5a/E5b out-of-band to publish publishDiagnostics.
 //
 // The synchronous Compile(ctx, CompileRequest) is retained as the fast path for
-// semantic-query consumers (10/11): it reads SnapshotStore.Stable first (cache
+// semtic-query consumers (10/11): it reads SnapshotStore.Stable first (cache
 // hit) and falls back to compiling inline.
 package compile
 
@@ -534,8 +534,16 @@ func (s *CompilationService) Compile(ctx context.Context, req CompileRequest) (C
 	return CompileResult{Diagnostics: diags}, nil
 }
 
-// extractForURI extracts the diagnostics for a single file path (the 08 inline
-// path, retained as Compile's fallback).
+// extractForURI extracts the diagnostics for a single file path (the 08
+// inline path, retained as Compile's fallback). It drives only the target
+// module and its same-package dependencies (packageDriver.advanceModule)
+// instead of the whole package, so a single-file diagnostic read does not
+// pay for every other module's Phase 2 — ticket 37's per-module granularity.
+// This is Compile()'s only caller, and it can run concurrently with
+// CompilationService's background runCycle (realCompilePackage) over the same
+// package the first time a root is compiled; that's safe without a lock here
+// because CompilerEnvironment guards its own shared state field-by-field —
+// see multimodule.go's Concurrency doc comment.
 func extractForURI(project projects.Project, pkg *projects.Package, fileName string) []CompilerDiagnostic {
 	docID, ok := project.DocumentID(fileName)
 	if !ok {
@@ -550,11 +558,20 @@ func extractForURI(project projects.Project, pkg *projects.Package, fileName str
 		return nil
 	}
 	text := doc.TextDocument().String()
-	compilation := pkg.Compilation()
-	env := compilation.DiagnosticEnv()
 	lineStarts := computeLineStarts(text)
+
+	compEnv := pkg.Project().Environment().CompilerEnvironment()
+
+	pd := newPackageDriver(pkg)
+	pd.advanceModule(stageCFGAnalyzed, module)
+	d, ok := pd.drivers[module.ModuleID()]
+	if !ok {
+		return nil
+	}
+
+	env := compEnv.DiagnosticEnv()
 	var diags []CompilerDiagnostic
-	for _, diag := range compilation.DiagnosticResult().Diagnostics() {
+	for _, diag := range d.diagnosticContext().Diagnostics() {
 		location := diag.Location()
 		if !diagnostics.LocationHasSource(location) {
 			continue
@@ -569,60 +586,74 @@ func extractForURI(project projects.Project, pkg *projects.Package, fileName str
 
 // realCompilePackage runs the package's compile and extracts all diagnostics
 // grouped by file, plus the resolution subset and the resolution-error flag
-// (branch 2: resolution vs compilation classification).
+// (branch 2: resolution vs compilation classification). It drives every
+// module of pkg through the LS staged driver (ticket 37, packageDriver)
+// instead of pkg.Compilation(). pkg.Resolution() is independent of
+// pkg.Compilation() and is unchanged: the resolution subset/flag still come
+// from it directly. It can run concurrently with extractForURI over the same
+// CompilerEnvironment without a lock here — see multimodule.go's Concurrency
+// doc comment.
 func realCompilePackage(pkg *projects.Package) cycleResult {
-	comp := pkg.Compilation()
-	env := comp.DiagnosticEnv()
 	descriptor := pkg.Descriptor().Name().Value()
-	byFile, resByFile, resErr := extractByFile(pkg, comp, env)
+	compEnv := pkg.Project().Environment().CompilerEnvironment()
+
+	pd := newPackageDriver(pkg)
+	pd.advanceAll(stageCFGAnalyzed)
+
+	resolution := pkg.Resolution().DiagnosticResult()
+	byFile, resByFile := extractByFile(pkg, pd.allDiagnostics(), resolution.Diagnostics(), compEnv.DiagnosticEnv())
 	return cycleResult{
 		byFile:            byFile,
 		resByFile:         resByFile,
-		resolutionErrored: resErr,
+		resolutionErrored: resolution.HasErrors(),
 		descriptor:        descriptor,
 	}
 }
 
-// extractByFile extracts all diagnostics and the resolution subset, grouped by
-// the env.FileName key (= the document's SyntaxTree.FilePath, i.e. the
-// registrationKey / file path for current-package files). Documents are
-// resolved within the captured immutable package so the extraction never
-// reads the project's live currentPackage (which a concurrent Apply's modifier
-// chain may swap). Diagnostics whose file is not a document in the package
-// (dependency/manifest diags) are skipped.
-func extractByFile(pkg *projects.Package, comp *projects.PackageCompilation, env *diagnostics.DiagnosticEnv) (byFile, resByFile map[string][]CompilerDiagnostic, resErr bool) {
-	byFile = make(map[string][]CompilerDiagnostic)
-	resByFile = make(map[string][]CompilerDiagnostic)
-	type docInfo struct {
-		text       string
-		lineStarts []int
-	}
-	cache := make(map[string]docInfo)
-	resolve := func(fname string) (docInfo, bool) {
-		if d, ok := cache[fname]; ok {
-			return d, true
+// docInfo caches a document's text and precomputed line starts for
+// diagnostic conversion.
+type docInfo struct {
+	text       string
+	lineStarts []int
+}
+
+// buildDocIndex maps every document in pkg to its docInfo, keyed by
+// moduleFileRegistrationKey(module, doc.Name()) — the same key
+// moduleDriver.ensureParsed registers documents under in the shared
+// DiagnosticEnv, so a diagnostic's Location resolves via env.FileName back to
+// its source text without calling Document.SyntaxTree() (which would parse
+// through the module's own private, module-owned CompilerContext under a
+// different key scheme and a different lifecycle than this driver's).
+func buildDocIndex(pkg *projects.Package) map[string]docInfo {
+	idx := make(map[string]docInfo)
+	for _, moduleID := range pkg.ModuleIDs() {
+		module := pkg.Module(moduleID)
+		if module == nil {
+			continue
 		}
-		for _, moduleID := range pkg.ModuleIDs() {
-			module := pkg.Module(moduleID)
-			if module == nil {
+		for _, docID := range module.DocumentIDs() {
+			doc := module.Document(docID)
+			if doc == nil {
 				continue
 			}
-			for _, docID := range module.DocumentIDs() {
-				doc := module.Document(docID)
-				if doc == nil {
-					continue
-				}
-				if doc.SyntaxTree().FilePath() == fname {
-					text := doc.TextDocument().String()
-					info := docInfo{text: text, lineStarts: computeLineStarts(text)}
-					cache[fname] = info
-					return info, true
-				}
-			}
+			text := doc.TextDocument().String()
+			key := moduleFileRegistrationKey(module, doc.Name())
+			idx[key] = docInfo{text: text, lineStarts: computeLineStarts(text)}
 		}
-		cache[fname] = docInfo{}
-		return docInfo{}, false
 	}
+	return idx
+}
+
+// extractByFile groups compileDiags and resDiags by the env.FileName key,
+// resolving each key against pkg's own documents (buildDocIndex). Documents
+// are resolved within the captured immutable package so the extraction never
+// reads the project's live currentPackage (which a concurrent Apply's
+// modifier chain may swap). Diagnostics whose file is not a document in the
+// package (dependency/manifest diags) are skipped.
+func extractByFile(pkg *projects.Package, compileDiags, resDiags []diagnostics.Diagnostic, env *diagnostics.DiagnosticEnv) (byFile, resByFile map[string][]CompilerDiagnostic) {
+	byFile = make(map[string][]CompilerDiagnostic)
+	resByFile = make(map[string][]CompilerDiagnostic)
+	idx := buildDocIndex(pkg)
 	extract := func(diags []diagnostics.Diagnostic, target map[string][]CompilerDiagnostic) {
 		for _, diag := range diags {
 			location := diag.Location()
@@ -630,18 +661,16 @@ func extractByFile(pkg *projects.Package, comp *projects.PackageCompilation, env
 				continue
 			}
 			fname := env.FileName(location)
-			info, ok := resolve(fname)
+			info, ok := idx[fname]
 			if !ok {
 				continue
 			}
-			d := convertDiag(info.text, info.lineStarts, diag)
-			target[fname] = append(target[fname], d)
+			target[fname] = append(target[fname], convertDiag(info.text, info.lineStarts, diag))
 		}
 	}
-	extract(comp.DiagnosticResult().Diagnostics(), byFile)
-	extract(comp.Resolution().DiagnosticResult().Diagnostics(), resByFile)
-	resErr = comp.Resolution().DiagnosticResult().HasErrors()
-	return byFile, resByFile, resErr
+	extract(compileDiags, byFile)
+	extract(resDiags, resByFile)
+	return byFile, resByFile
 }
 
 // convertDiag converts one compiler diagnostic to a CompilerDiagnostic using
