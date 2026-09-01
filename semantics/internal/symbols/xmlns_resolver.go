@@ -204,7 +204,7 @@ func resolveXMLElementLiteralNamespaces[T symbolResolver](resolver T, scope mode
 	e.NamespaceSymbol = resolveXMLNameRef(resolver, childScope, name, e.GetPosition(), rootNeeds, true)
 	for i := range e.Attrs {
 		attr := &e.Attrs[i]
-		resolveXMLNameRef(resolver, childScope, attr.Name, attr.GetPosition(), rootNeeds, false)
+		attr.NamespaceSymbol = resolveXMLNameRef(resolver, childScope, attr.Name, attr.GetPosition(), rootNeeds, false)
 	}
 
 	if e.Content != nil {
@@ -404,6 +404,7 @@ func resolveAtomicNamePattern[T symbolResolver](resolver T, scope model.Scope, p
 			pattern.Kind = ast.NamePatternKindQualifiedIdentifier
 			pattern.NamespaceSymbol = ref
 		}
+	case ast.NamePatternKindWildCard:
 	}
 	return pattern
 }

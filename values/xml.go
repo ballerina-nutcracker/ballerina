@@ -91,26 +91,67 @@ func (e *XMLElement) QualifiedName() string {
 	return e.Prefix + ":" + e.LocalName
 }
 
+func (e *XMLElement) ExpandedName() string {
+	return ExpandedXMLName(e.NamespaceURI, e.LocalName)
+}
+
+func (e *XMLElement) SetExpandedName(name string) {
+	if e.isReadonly {
+		panic(NewErrorWithMessage("cannot mutate readonly XML element"))
+	}
+	uri, local, err := ParseExpandedXMLName(name)
+	if err != nil || uri == XMLNSNamespaceURI {
+		if err == nil {
+			err = fmt.Errorf("element name cannot use the XMLNS namespace")
+		}
+		panic(NewErrorWithMessage(err.Error()))
+	}
+	if uri == "" {
+		if value, ok := e.Namespaces.Get("xmlns"); ok && value.(string) != "" {
+			panic(NewErrorWithMessage("unnamespaced XML element conflicts with its local default namespace"))
+		}
+	}
+	e.Prefix, e.LocalName, e.NamespaceURI = "", local, uri
+}
+
+func (e *XMLElement) SetXMLChildren(children XMLValue) {
+	if e.isReadonly {
+		panic(NewErrorWithMessage("cannot mutate readonly XML element"))
+	}
+	normalized := NewNormalizedXMLSequence([]XMLValue{children})
+	if XMLContainsElement(normalized, e) {
+		panic(NewErrorWithMessage("XML child cycle"))
+	}
+	e.Children = normalized
+}
+
+func XMLContainsElement(value XMLValue, target *XMLElement) bool {
+	visited := map[*XMLElement]bool{}
+	var contains func(XMLValue) bool
+	contains = func(value XMLValue) bool {
+		for _, item := range value.IterItems() {
+			element, ok := item.(*XMLElement)
+			if !ok {
+				continue
+			}
+			if element == target {
+				return true
+			}
+			if !visited[element] {
+				visited[element] = true
+				if contains(element.Children) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	return contains(value)
+}
+
 func (e *XMLElement) XMLString() string {
 	var b strings.Builder
-	name := e.QualifiedName()
-	b.WriteByte('<')
-	b.WriteString(name)
-	writeXMLStringMap(&b, e.Attributes, "attribute")
-	writeXMLStringMap(&b, e.Namespaces, "namespace")
-	body := ""
-	if e.Children != nil {
-		body = e.Children.XMLString()
-	}
-	if body == "" {
-		b.WriteString("/>")
-		return b.String()
-	}
-	b.WriteByte('>')
-	b.WriteString(body)
-	b.WriteString("</")
-	b.WriteString(name)
-	b.WriteByte('>')
+	e.writeXMLString(&b, newXMLNamespaceState(), 0)
 	return b.String()
 }
 
@@ -185,7 +226,12 @@ func (t *XMLText) Type() semtypes.SemType { return t.semType }
 
 func (t *XMLText) Readonly() bool { return true }
 
-func (t *XMLText) IterItems() []XMLValue { return []XMLValue{t} }
+func (t *XMLText) IterItems() []XMLValue {
+	if t.Body == "" {
+		return nil
+	}
+	return []XMLValue{t}
+}
 
 func (t *XMLText) XMLString() string {
 	return EscapeXMLContent(t.Body)
@@ -204,12 +250,28 @@ func (c *XMLComment) XMLString() string {
 	return "<!--" + c.Body + "-->"
 }
 
-func NewXMLElement(prefix, localName, namespaceURI string, attrs, namespaces *Map, children XMLValue, isReadonly bool) *XMLElement {
+func NewXMLElement(tc semtypes.Context, prefix, localName, namespaceURI string, attrs, namespaces *Map, children XMLValue, isReadonly bool) *XMLElement {
+	if attrs == nil {
+		attrs = NewXMLStringMap(tc, isReadonly, nil)
+	}
+	if namespaces == nil {
+		namespaces = NewXMLStringMap(tc, isReadonly, nil)
+	}
+	if children == nil {
+		children = NewXMLText("")
+	}
+	children = NewNormalizedXMLSequence([]XMLValue{children})
 	ty := semtypes.XMLElement
 	if isReadonly {
 		ty = semtypes.ReadonlyXMLElement
 	}
 	return &XMLElement{Prefix: prefix, LocalName: localName, NamespaceURI: namespaceURI, Attributes: attrs, Namespaces: namespaces, Children: children, semType: ty, isReadonly: isReadonly}
+}
+
+func NewXMLStringMap(tc semtypes.Context, isReadonly bool, entries []MapEntry) *Map {
+	md := semtypes.NewMappingDefinition()
+	ty := md.Define(tc.Env(), nil, semtypes.String)
+	return NewMap(ty, semtypes.ToMappingAtomicType(tc, ty), isReadonly, entries)
 }
 
 func NewXMLProcessingInstruction(target, data string, isReadonly bool) *XMLProcessingInstruction {
@@ -218,6 +280,13 @@ func NewXMLProcessingInstruction(target, data string, isReadonly bool) *XMLProce
 		ty = semtypes.ReadonlyXMLProcessingInstruction
 	}
 	return &XMLProcessingInstruction{Target: target, Data: data, semType: ty, isReadonly: isReadonly}
+}
+
+func NewValidatedXMLProcessingInstruction(target, data string, isReadonly bool) *XMLProcessingInstruction {
+	if err := ValidateXMLProcessingInstruction(target, data); err != nil {
+		panic(NewErrorWithMessage(err.Error()))
+	}
+	return NewXMLProcessingInstruction(target, data, isReadonly)
 }
 
 func NewXMLText(body string) *XMLText {
@@ -232,48 +301,103 @@ func NewXMLComment(body string, isReadonly bool) *XMLComment {
 	return &XMLComment{Body: body, semType: ty, isReadonly: isReadonly}
 }
 
-func xmlSequenceType(children []XMLValue) (semtypes.SemType, bool) {
+func NewValidatedXMLComment(body string, isReadonly bool) *XMLComment {
+	if err := ValidateXMLComment(body); err != nil {
+		panic(NewErrorWithMessage(err.Error()))
+	}
+	return NewXMLComment(body, isReadonly)
+}
+
+func xmlSequenceProperties(children []XMLValue) (semtypes.SemType, bool) {
 	var childUnion = semtypes.Never
 	isReadonly := true
 	for _, child := range children {
 		childUnion = semtypes.Union(childUnion, child.Type())
 		isReadonly = isReadonly && child.Readonly()
 	}
-	return semtypes.XMLSequence(childUnion), isReadonly
+	return childUnion, isReadonly
 }
 
-// NewNormalizedXMLSequence builds an XML sequence in normalized form.
-// It drops nil items, flattens nested XMLSequence values, and merges adjacent
-// XMLText values. Merging reuses the left XMLText operand and mutates its Body.
-func NewNormalizedXMLSequence(items []XMLValue) *XMLSequence {
-	var flat []XMLValue
-	for _, item := range items {
+func newXMLSequence(children []XMLValue, itemType semtypes.SemType, isReadonly bool) *XMLSequence {
+	return &XMLSequence{
+		Children:   children,
+		semType:    semtypes.XMLSequence(itemType),
+		isReadonly: isReadonly,
+	}
+}
+
+// ConcatXML concatenates two canonical XML values.
+func ConcatXML(left, right XMLValue) XMLValue {
+	leftItems, rightItems := left.IterItems(), right.IterItems()
+	if len(leftItems) == 0 {
+		return right
+	}
+	if len(rightItems) == 0 {
+		return left
+	}
+	leftSeq, ok := left.(*XMLSequence)
+	if !ok {
+		return NewNormalizedXMLSequence([]XMLValue{left, right})
+	}
+	if _, leftText := leftItems[len(leftItems)-1].(*XMLText); leftText {
+		if _, rightText := rightItems[0].(*XMLText); rightText {
+			return NewNormalizedXMLSequence([]XMLValue{left, right})
+		}
+	}
+	itemType := semtypes.XMLItemType(leftSeq.semType)
+	isReadonly := leftSeq.isReadonly
+	for _, item := range rightItems {
+		itemType = semtypes.Union(itemType, item.Type())
+		isReadonly = isReadonly && item.Readonly()
+	}
+	children := make([]XMLValue, len(leftSeq.Children), len(leftSeq.Children)+len(rightItems))
+	copy(children, leftSeq.Children)
+	children = append(children, rightItems...)
+	return newXMLSequence(children, itemType, isReadonly)
+}
+
+// NewNormalizedXMLSequence builds the canonical XML representation for items.
+func NewNormalizedXMLSequence(items []XMLValue) XMLValue {
+	normalized := make([]XMLValue, 0, len(items))
+	var pendingText strings.Builder
+	flushText := func() {
+		if pendingText.Len() == 0 {
+			return
+		}
+		normalized = append(normalized, NewXMLText(pendingText.String()))
+		pendingText.Reset()
+	}
+	var appendItem func(XMLValue)
+	appendItem = func(item XMLValue) {
 		if item == nil {
-			continue
+			return
 		}
 		if seq, ok := item.(*XMLSequence); ok {
-			flat = append(flat, seq.Children...)
-			continue
-		}
-		flat = append(flat, item)
-	}
-	merged := make([]XMLValue, 0, len(flat))
-	for _, item := range flat {
-		if t, ok := item.(*XMLText); ok && len(merged) > 0 {
-			if last, ok := merged[len(merged)-1].(*XMLText); ok {
-				last.Body += t.Body
-				continue
+			for _, child := range seq.Children {
+				appendItem(child)
 			}
+			return
 		}
-		merged = append(merged, item)
+		if text, ok := item.(*XMLText); ok {
+			if text.Body != "" {
+				pendingText.WriteString(text.Body)
+			}
+			return
+		}
+		flushText()
+		normalized = append(normalized, item)
 	}
-	ty, isReadonly := xmlSequenceType(merged)
-	return &XMLSequence{Children: merged, semType: ty, isReadonly: isReadonly}
-}
-
-// NewXMLConcatSequence builds a sequence for XML concatenation without copying values.
-// It reuses the passed-in backing slice; mutating it after the call has undefined behavior.
-func NewXMLConcatSequence(items ...XMLValue) *XMLSequence {
-	ty, isReadonly := xmlSequenceType(items)
-	return &XMLSequence{Children: items, semType: ty, isReadonly: isReadonly}
+	for _, item := range items {
+		appendItem(item)
+	}
+	flushText()
+	switch len(normalized) {
+	case 0:
+		return NewXMLText("")
+	case 1:
+		return normalized[0]
+	default:
+		itemType, isReadonly := xmlSequenceProperties(normalized)
+		return newXMLSequence(normalized, itemType, isReadonly)
+	}
 }

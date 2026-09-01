@@ -1,0 +1,13 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {urn:{bad}name
+    %2 = newMap {| string... |}{}
+    %3 = newXMLSequence{}
+    %4 = createElement(%1,%2,%3) -> bb1;
+  }
+  bb1 {
+    %5 = %4;
+    return;
+  }
+}

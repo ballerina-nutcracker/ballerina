@@ -1,7 +1,7 @@
 module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = ConstantLoad bar:ff
+    %1 = ConstantLoad {https:foo/bar}ff
     %2 = ConstantLoad fff
     %3 = newMap {| string... |}{%1=%2}
     %4 = newXMLElement("bar:x", namespace="https:foo/bar", (), %3)
