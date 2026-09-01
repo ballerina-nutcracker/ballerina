@@ -52,6 +52,11 @@ var WASMUnsupportedTests = []string{
 // "subset8/08-foo/bar-v.bal"). They are matched as suffixes against either a
 // relative test name or an absolute path.
 var UnsupportedTests = []string{
+	// Empty XML is represented as XMLText at runtime, so its iterator loses the
+	// statically inferred xml<never> constituent type at the extern boundary.
+	// https://github.com/ballerina-nutcracker/ballerina/issues/853
+	"subset10/10-xml-navigation/empty-iterator-static-type-v.bal",
+
 	// --- Needs constant folding ---
 	// https://github.com/ballerina-nutcracker/ballerina/issues/83
 

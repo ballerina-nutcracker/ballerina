@@ -1,0 +1,62 @@
+-- stdout --
+true
+true
+true
+true
+true
+true
+true
+0
+<p:child p:a="v" xmlns:p="urn:u" xmlns:q="urn:u"/>
+{"{urn:u}a":"v","{http://www.w3.org/2000/xmlns/}p":"urn:u","{http://www.w3.org/2000/xmlns/}q":"urn:u"}
+true
+false
+true
+original
+true
+{"xmlns":"urn:bad"}
+true
+true
+true
+2
+true:2
+true:2
+<left><shared/></left><right><shared/></right>
+true
+<shared/>
+true
+<atomic><old/></atomic>
+<root xmlns:p="urn:order" xmlns:q="urn:order"><p:x/></root>
+<root xmlns:p="urn:order" xmlns:q="urn:order"><p:x/></root>
+<x xmlns:p="urn:default" xmlns="urn:default"/>
+{"{http://www.w3.org/2000/xmlns/}p":"urn:default","{http://www.w3.org/2000/xmlns/}xmlns":"urn:default"}
+true
+true
+{urn:default}x
+true
+true
+true
+true
+true
+true
+true
+<root xmlns:ns0="urn:occupied"><child ns1:value="v" xmlns:ns1="urn:generated"/><child ns1:value="v" xmlns:ns1="urn:generated"/></root>
+<root xmlns:p="urn:shared"><p:child ns1:value="v" xmlns:ns1="urn:other"/></root>
+<root xmlns="urn:reuse"><child/></root>
+<escaped xml:lang="en" plain="a&amp;&quot;b">x&lt;&amp;</escaped>
+<escaped xml:lang="en" plain="a&amp;&quot;b">x&lt;&amp;</escaped>
+{"{http://www.w3.org/XML/1998/namespace}lang":"en","plain":"a&\"b"}
+{urn:default-parent}child
+0
+1
+true
+true
+true
+true
+true
+true
+<readonly><child/></readonly>
+true
+true
+<p:wrapper id="reachable" xmlns:p="urn:readonly"><nested/></p:wrapper>
+-- stderr --

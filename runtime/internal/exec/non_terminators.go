@@ -256,7 +256,7 @@ func execNewXMLElement(ctx *extern.Context, instr *bir.NewXMLElement, frame *Fra
 	if instr.NamespacesOp != nil {
 		namespaces = getOperandValue(ctx, instr.NamespacesOp, frame).(*values.Map)
 	}
-	setOperandValue(ctx, instr.LhsOp, frame, values.NewXMLElement(instr.Prefix, instr.LocalName, instr.NamespaceURI, attrs, namespaces, children, xmlResultReadonly(ctx, instr.LhsOp)))
+	setOperandValue(ctx, instr.LhsOp, frame, values.NewXMLElement(ctx.TypeCtx(), instr.Prefix, instr.LocalName, instr.NamespaceURI, attrs, namespaces, children, xmlResultReadonly(ctx, instr.LhsOp)))
 }
 
 func execXMLFilter(ctx *extern.Context, instr *bir.XMLFilter, frame *Frame) {
