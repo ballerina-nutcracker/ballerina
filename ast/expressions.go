@@ -583,8 +583,9 @@ type (
 
 	BLangXMLAttribute struct {
 		bLangExpressionBase
-		Name  string
-		Value BLangExpression
+		Name            string
+		NamespaceSymbol model.SymbolRef
+		Value           BLangExpression
 	}
 
 	BLangXMLPILiteral struct {

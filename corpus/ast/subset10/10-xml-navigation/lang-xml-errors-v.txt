@@ -1,0 +1,1008 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable callbackCount (type
+    (value-type int)) (expr
+    (literal 0)))
+  (variable filterFailureCount (type
+    (value-type int)) (expr
+    (literal 0)))
+  (variable forEachFailureCount (type
+    (value-type int)) (expr
+    (literal 0)))
+  (function failSecond (
+    (variable item (type
+      (union-type
+        (user-defined-type xml Element)
+        (user-defined-type xml Text))))) (
+    (value-type xml))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref callbackCount)
+        (literal 1))
+      (if
+        (binary-expr ==
+          (simple-var-ref callbackCount)
+          (literal 2))
+        (block-stmt
+          (panic
+            (error-constructor-expr (
+              (literal stop))))) ())
+      (block-stmt
+        (return
+          (simple-var-ref item)))))
+  (function failFilterSecond (
+    (variable item (type
+      (union-type
+        (user-defined-type xml Element)
+        (user-defined-type xml Text))))) (
+    (value-type boolean))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref item))
+      (compound-assignment +
+        (simple-var-ref filterFailureCount)
+        (literal 1))
+      (if
+        (binary-expr ==
+          (simple-var-ref filterFailureCount)
+          (literal 2))
+        (block-stmt
+          (panic
+            (error-constructor-expr (
+              (literal stop filter))))) ())
+      (block-stmt
+        (return
+          (literal true)))))
+  (function failForEachSecond (
+    (variable item (type
+      (union-type
+        (user-defined-type xml Element)
+        (user-defined-type xml Text))))) (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref item))
+      (compound-assignment +
+        (simple-var-ref forEachFailureCount)
+        (literal 1))
+      (if
+        (binary-expr ==
+          (simple-var-ref forEachFailureCount)
+          (literal 2))
+        (block-stmt
+          (panic
+            (error-constructor-expr (
+              (literal stop forEach))))) ())
+      (block-stmt)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable invalid (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal <a>)
+            (literal <?xml version="1.0"?><a/>)
+            (literal <!DOCTYPE a><a/>)
+            (literal <?XmL bad?>)
+            (literal <p:a/>)
+            (literal <a xmlns:p=""/>)
+            (literal <a xmlns:xml="urn:bad"/>)))))
+      (foreach
+        (var-def
+          (variable xmlSource (type
+            (value-type string))))
+        (simple-var-ref invalid)
+        (block-stmt
+          (var-def
+            (variable result (type
+              (union-type
+                (value-type xml)
+                (error-type))) (expr
+              (invocation xml fromString (
+                (simple-var-ref xmlSource))))))
+          (expression-stmt
+            (invocation io println (
+              (type-test-expr is
+                (simple-var-ref result)
+                (error-type)))))))
+      (var-def
+        (variable parsed (type
+          (value-type xml)) (expr
+          (check-panicked-expr
+            (invocation xml fromString (
+              (literal <outer xmlns:p="urn:u" xmlns:q="urn:u"><p:child q:a="v"/></outer>)))))))
+      (var-def
+        (variable parsedEmpty (type
+          (value-type xml)) (expr
+          (check-panicked-expr
+            (invocation xml fromString (
+              (literal )))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref parsedEmpty) ()))))
+      (var-def
+        (variable child (type
+          (user-defined-type xml Element)) (expr
+          (type-conversion-expr
+            (invocation get expr:
+              (invocation children expr:
+                (simple-var-ref parsed) ()) (
+              (literal 0)))
+            (user-defined-type xml Element)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref child))))
+      (expression-stmt
+        (invocation io println (
+          (invocation getAttributes expr:
+            (simple-var-ref child) ()))))
+      (var-def
+        (variable a (type
+          (value-type xml)) (expr
+          (check-panicked-expr
+            (invocation xml fromString (
+              (literal <p:x xmlns:p="urn:u" xmlns:q="urn:u"/>)))))))
+      (var-def
+        (variable b (type
+          (value-type xml)) (expr
+          (check-panicked-expr
+            (invocation xml fromString (
+              (literal <q:x xmlns:p="urn:u" xmlns:q="urn:u"/>)))))))
+      (var-def
+        (variable c (type
+          (value-type xml)) (expr
+          (check-panicked-expr
+            (invocation xml fromString (
+              (literal <p:x xmlns:p="urn:v" xmlns:q="urn:v"/>)))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref a)
+            (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref a)
+            (simple-var-ref c)))))
+      (var-def
+        (variable element (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal original)
+            (mapping-constructor-expr)
+            (xml-sequence-literal))))))
+      (var-def
+        (variable nameFailure (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation setName expr:
+              (simple-var-ref element) (
+              (literal {bad)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref nameFailure)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation getName expr:
+            (simple-var-ref element) ()))))
+      (var-def
+        (variable badAttrs (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal xmlns)
+              (literal urn:bad))))))
+      (var-def
+        (variable emptyChildren (type
+          (value-type xml)) (expr
+          (xml-sequence-literal))))
+      (var-def
+        (variable constructorFailure (type
+          (union-type
+            (error-type)
+            (user-defined-type xml Element))) (expr
+          (trap-expr
+            (invocation xml createElement (
+              (literal x)
+              (simple-var-ref badAttrs)
+              (simple-var-ref emptyChildren)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref constructorFailure)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref badAttrs))))
+      (var-def
+        (variable commentFailure (type
+          (union-type
+            (error-type)
+            (user-defined-type xml Comment))) (expr
+          (trap-expr
+            (invocation xml createComment (
+              (literal bad--comment)))))))
+      (var-def
+        (variable piFailure (type
+          (union-type
+            (error-type)
+            (user-defined-type xml ProcessingInstruction))) (expr
+          (trap-expr
+            (invocation xml createProcessingInstruction (
+              (literal XML)
+              (literal bad)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref commentFailure)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref piFailure)
+            (error-type)))))
+      (var-def
+        (variable callbackSource (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (union-type
+              (user-defined-type xml Element)
+              (user-defined-type xml Text)))) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-text-literal text)
+            (xml-element-literal b)))))
+      (var-def
+        (variable callbackFailure (type
+          (union-type
+            (error-type)
+            (value-type xml))) (expr
+          (trap-expr
+            (invocation map expr:
+              (simple-var-ref callbackSource) (
+              (simple-var-ref failSecond)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref callbackFailure)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref callbackCount))))
+      (var-def
+        (variable filterFailure (type
+          (union-type
+            (error-type)
+            (value-type xml))) (expr
+          (trap-expr
+            (invocation filter expr:
+              (simple-var-ref callbackSource) (
+              (simple-var-ref failFilterSecond)))))))
+      (var-def
+        (variable forEachFailure (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation forEach expr:
+              (simple-var-ref callbackSource) (
+              (simple-var-ref failForEachSecond)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref filterFailure)
+            (error-type))
+          (literal :)
+          (simple-var-ref filterFailureCount))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref forEachFailure)
+            (error-type))
+          (literal :)
+          (simple-var-ref forEachFailureCount))))
+      (var-def
+        (variable shared (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal shared)
+            (mapping-constructor-expr)
+            (xml-sequence-literal))))))
+      (var-def
+        (variable left (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal left)
+            (mapping-constructor-expr)
+            (simple-var-ref shared))))))
+      (var-def
+        (variable right (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal right)
+            (mapping-constructor-expr)
+            (simple-var-ref shared))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref left)
+          (simple-var-ref right))))
+      (var-def
+        (variable indirectCycle (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation setChildren expr:
+              (simple-var-ref shared) (
+              (simple-var-ref left)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref indirectCycle)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref shared))))
+      (var-def
+        (variable atomicParent (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal atomic)
+            (mapping-constructor-expr)
+            (xml-element-literal old))))))
+      (var-def
+        (variable directCycle (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation setChildren expr:
+              (simple-var-ref atomicParent) (
+              (simple-var-ref atomicParent)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref directCycle)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref atomicParent))))
+      (var-def
+        (variable orderedBindings (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}p)
+              (literal urn:order))
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}q)
+              (literal urn:order))))))
+      (var-def
+        (variable inheritedName (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal {urn:order}x)
+            (mapping-constructor-expr)
+            (xml-sequence-literal))))))
+      (var-def
+        (variable inheritedRoot (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal root)
+            (simple-var-ref orderedBindings)
+            (simple-var-ref inheritedName))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref inheritedRoot))))
+      (var-def
+        (variable localBinding (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}q)
+              (literal urn:order))))))
+      (var-def
+        (variable prunedChild (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal {urn:order}x)
+            (simple-var-ref localBinding)
+            (xml-sequence-literal))))))
+      (var-def
+        (variable prunedRoot (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal root)
+            (simple-var-ref orderedBindings)
+            (simple-var-ref prunedChild))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref prunedRoot))))
+      (var-def
+        (variable defaultFirst (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}p)
+              (literal urn:default))
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}xmlns)
+              (literal urn:default))))))
+      (var-def
+        (variable defaultElement (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal {urn:default}x)
+            (simple-var-ref defaultFirst)
+            (xml-sequence-literal))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref defaultElement))))
+      (expression-stmt
+        (invocation io println (
+          (invocation getAttributes expr:
+            (simple-var-ref defaultElement) ()))))
+      (var-def
+        (variable conflictingDefault (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}xmlns)
+              (literal urn:conflict))))))
+      (var-def
+        (variable defaultFailure (type
+          (union-type
+            (error-type)
+            (user-defined-type xml Element))) (expr
+          (trap-expr
+            (invocation xml createElement (
+              (literal plain)
+              (simple-var-ref conflictingDefault)
+              (xml-sequence-literal)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref defaultFailure)
+            (error-type)))))
+      (var-def
+        (variable conflictingRename (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation setName expr:
+              (simple-var-ref defaultElement) (
+              (literal plain)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref conflictingRename)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation getName expr:
+            (simple-var-ref defaultElement) ()))))
+      (var-def
+        (variable malformedElementFilter (type
+          (union-type
+            (error-type)
+            (value-type xml))) (expr
+          (trap-expr
+            (invocation elements expr:
+              (group-expr
+                (xml-element-literal x)) (
+              (literal {bad)))))))
+      (var-def
+        (variable malformedChildFilter (type
+          (union-type
+            (error-type)
+            (value-type xml))) (expr
+          (trap-expr
+            (invocation elementChildren expr:
+              (group-expr
+                (xml-element-literal x
+                  (xml-element-literal y))) (
+              (literal {bad)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref malformedElementFilter)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref malformedChildFilter)
+            (error-type)))))
+      (var-def
+        (variable malformedName (type
+          (union-type
+            (error-type)
+            (user-defined-type xml Element))) (expr
+          (trap-expr
+            (invocation xml createElement (
+              (literal {}x)
+              (mapping-constructor-expr)
+              (xml-sequence-literal)))))))
+      (var-def
+        (variable malformedBraceName (type
+          (union-type
+            (error-type)
+            (user-defined-type xml Element))) (expr
+          (trap-expr
+            (invocation xml createElement (
+              (literal {urn:{u}x)
+              (mapping-constructor-expr)
+              (xml-sequence-literal)))))))
+      (var-def
+        (variable trailingComment (type
+          (union-type
+            (error-type)
+            (user-defined-type xml Comment))) (expr
+          (trap-expr
+            (invocation xml createComment (
+              (literal bad-)))))))
+      (var-def
+        (variable malformedTarget (type
+          (union-type
+            (error-type)
+            (user-defined-type xml ProcessingInstruction))) (expr
+          (trap-expr
+            (invocation xml createProcessingInstruction (
+              (literal bad target)
+              (literal x)))))))
+      (var-def
+        (variable badText (type
+          (union-type
+            (error-type)
+            (user-defined-type xml Text))) (expr
+          (trap-expr
+            (invocation xml createText (
+              (literal )))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref malformedName)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref malformedBraceName)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref trailingComment)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref malformedTarget)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref badText)
+            (error-type)))))
+      (var-def
+        (variable collisionBinding (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}ns0)
+              (literal urn:occupied))))))
+      (var-def
+        (variable generatedAttribute (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {urn:generated}value)
+              (literal v))))))
+      (var-def
+        (variable generatedChild (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal child)
+            (simple-var-ref generatedAttribute)
+            (xml-sequence-literal))))))
+      (var-def
+        (variable collisionRoot (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal root)
+            (simple-var-ref collisionBinding)
+            (invocation xml concat (
+              (simple-var-ref generatedChild)
+              (simple-var-ref generatedChild))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref collisionRoot))))
+      (var-def
+        (variable inheritedNs0 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}p)
+              (literal urn:shared))))))
+      (var-def
+        (variable prunedNs0AndAttribute (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {urn:other}value)
+              (literal v))
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}ns0)
+              (literal urn:shared))))))
+      (var-def
+        (variable prunedCollisionChild (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal {urn:shared}child)
+            (simple-var-ref prunedNs0AndAttribute)
+            (xml-sequence-literal))))))
+      (var-def
+        (variable prunedCollisionRoot (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal root)
+            (simple-var-ref inheritedNs0)
+            (simple-var-ref prunedCollisionChild))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref prunedCollisionRoot))))
+      (var-def
+        (variable defaultNamespace (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}xmlns)
+              (literal urn:reuse))))))
+      (var-def
+        (variable defaultChild (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal {urn:reuse}child)
+            (mapping-constructor-expr)
+            (xml-sequence-literal))))))
+      (var-def
+        (variable defaultRoot (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal {urn:reuse}root)
+            (simple-var-ref defaultNamespace)
+            (simple-var-ref defaultChild))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref defaultRoot))))
+      (var-def
+        (variable reservedAndEscaped (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {http://www.w3.org/XML/1998/namespace}lang)
+              (literal en))
+            (key-value
+              (literal plain)
+              (literal a&"b))))))
+      (var-def
+        (variable escaped (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal escaped)
+            (simple-var-ref reservedAndEscaped)
+            (invocation xml createText (
+              (literal x<&))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref escaped))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref escaped))))
+      (expression-stmt
+        (invocation io println (
+          (invocation getAttributes expr:
+            (simple-var-ref escaped) ()))))
+      (var-def
+        (variable inheritedDefault (type
+          (value-type xml)) (expr
+          (check-panicked-expr
+            (invocation xml fromString (
+              (literal <root xmlns="urn:default-parent"><child/></root>)))))))
+      (var-def
+        (variable inheritedDefaultChild (type
+          (user-defined-type xml Element)) (expr
+          (type-conversion-expr
+            (invocation get expr:
+              (invocation getChildren expr:
+                (group-expr
+                  (type-conversion-expr
+                    (simple-var-ref inheritedDefault)
+                    (user-defined-type xml Element))) ()) (
+              (literal 0)))
+            (user-defined-type xml Element)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation getName expr:
+            (simple-var-ref inheritedDefaultChild) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (invocation getAttributes expr:
+              (simple-var-ref inheritedDefaultChild) ()) ()))))
+      (var-def
+        (variable nonXMLWhitespace (type
+          (value-type string)) (expr
+          (literal  ))))
+      (var-def
+        (variable whitespaceValue (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string " ")
+            (xml-template-content-insertion
+              (simple-var-ref nonXMLWhitespace))
+            (template-string " ")))))
+      (var-def
+        (variable strippedWhitespace (type
+          (value-type xml)) (expr
+          (invocation strip expr:
+            (simple-var-ref whitespaceValue) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref strippedWhitespace) ()))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (invocation data expr:
+              (simple-var-ref strippedWhitespace) ())
+            (binary-expr +
+              (binary-expr +
+                (literal  )
+                (simple-var-ref nonXMLWhitespace))
+              (literal  ))))))
+      (var-def
+        (variable badXMLBinding (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}xml)
+              (literal urn:not-xml))))))
+      (var-def
+        (variable badXMLNSBinding (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}xmlns)
+              (literal http://www.w3.org/2000/xmlns/))))))
+      (var-def
+        (variable badXMLBindingResult (type
+          (union-type
+            (error-type)
+            (user-defined-type xml Element))) (expr
+          (trap-expr
+            (invocation xml createElement (
+              (literal x)
+              (simple-var-ref badXMLBinding)
+              (xml-sequence-literal)))))))
+      (var-def
+        (variable badXMLNSBindingResult (type
+          (union-type
+            (error-type)
+            (user-defined-type xml Element))) (expr
+          (trap-expr
+            (invocation xml createElement (
+              (literal x)
+              (simple-var-ref badXMLNSBinding)
+              (xml-sequence-literal)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref badXMLBindingResult)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref badXMLNSBindingResult)
+            (error-type)))))
+      (var-def
+        (variable emptyInsertion (type
+          (value-type string)) (expr
+          (literal ))))
+      (var-def
+        (variable readonlyValue (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<readonly><child/>")
+            (xml-template-content-insertion
+              (simple-var-ref emptyInsertion))
+            (template-string "</readonly>")))))
+      (var-def
+        (variable readonlyElement (type
+          (intersection-type
+            (user-defined-type xml Element)
+            (value-type readonly))) (expr
+          (type-conversion-expr
+            (simple-var-ref readonlyValue)
+            (intersection-type
+              (user-defined-type xml Element)
+              (value-type readonly))))))
+      (var-def
+        (variable readonlyChild (type
+          (intersection-type
+            (user-defined-type xml Element)
+            (value-type readonly))) (expr
+          (type-conversion-expr
+            (invocation get expr:
+              (invocation getChildren expr:
+                (simple-var-ref readonlyElement) ()) (
+              (literal 0)))
+            (intersection-type
+              (user-defined-type xml Element)
+              (value-type readonly))))))
+      (var-def
+        (variable readonlyNameFailure (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation setName expr:
+              (simple-var-ref readonlyElement) (
+              (literal changed)))))))
+      (var-def
+        (variable readonlyChildFailure (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation setChildren expr:
+              (simple-var-ref readonlyElement) (
+              (literal changed)))))))
+      (var-def
+        (variable nestedReadonlyFailure (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation setName expr:
+              (simple-var-ref readonlyChild) (
+              (literal changed)))))))
+      (var-def
+        (variable readonlySnapshot (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (invocation getAttributes expr:
+            (simple-var-ref readonlyElement) ()))))
+      (assignment
+        (index-based-access
+          (simple-var-ref readonlySnapshot)
+          (literal safe))
+        (literal yes))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref readonlyNameFailure)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref readonlyChildFailure)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref nestedReadonlyFailure)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref readonlyElement))))
+      (var-def
+        (variable readonlyReachability (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<p:wrapper xmlns:p=\"urn:readonly\" id=\"reachable\"><nested/>")
+            (xml-template-content-insertion
+              (simple-var-ref emptyInsertion))
+            (template-string "</p:wrapper>")))))
+      (var-def
+        (variable reachableRoot (type
+          (intersection-type
+            (user-defined-type xml Element)
+            (value-type readonly))) (expr
+          (type-conversion-expr
+            (simple-var-ref readonlyReachability)
+            (intersection-type
+              (user-defined-type xml Element)
+              (value-type readonly))))))
+      (var-def
+        (variable reachableChild (type
+          (intersection-type
+            (user-defined-type xml Element)
+            (value-type readonly))) (expr
+          (type-conversion-expr
+            (invocation get expr:
+              (invocation getChildren expr:
+                (simple-var-ref reachableRoot) ()) (
+              (literal 0)))
+            (intersection-type
+              (user-defined-type xml Element)
+              (value-type readonly))))))
+      (var-def
+        (variable reachableNameFailure (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation setName expr:
+              (simple-var-ref reachableRoot) (
+              (literal changed)))))))
+      (var-def
+        (variable reachableChildrenFailure (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation setChildren expr:
+              (simple-var-ref reachableChild) (
+              (literal changed)))))))
+      (var-def
+        (variable reachableSnapshot (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (invocation getAttributes expr:
+            (simple-var-ref reachableRoot) ()))))
+      (assignment
+        (index-based-access
+          (simple-var-ref reachableSnapshot)
+          (literal id))
+        (literal snapshot-only))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref reachableNameFailure)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref reachableChildrenFailure)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref readonlyReachability)))))))

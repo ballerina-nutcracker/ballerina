@@ -1,0 +1,12 @@
+(main
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation lang.xml slice (
+        (xml-sequence-literal
+          (xml-element-literal a)
+          (xml-element-literal b))
+        (literal 2)
+        (literal 1))))
+  )
+)
