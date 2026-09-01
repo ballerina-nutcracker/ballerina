@@ -1,0 +1,1085 @@
+module $anon.. v 0.0.0;
+callbackCount  int;
+filterFailureCount  int;
+forEachFailureCount  int;
+failSecond(xml<xml:Text|xml:Element>) -> xml{
+  bb0 {
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %2 = + callbackCount %4;
+    callbackCount = %2;
+    %6 = ConstantLoad 2
+    %7 = %6;
+    %5 = == callbackCount %7;
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad stop
+    %1 = newError error(%0)
+    (1, %8) = %1;
+    PopScopeFrame
+    panic %8;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, %0) = (1, item);
+    PopScopeFrame
+    return;
+  }
+}
+failFilterSecond(xml<xml:Text|xml:Element>) -> boolean{
+  bb0 {
+    %2 = item;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %3 = + filterFailureCount %5;
+    filterFailureCount = %3;
+    %7 = ConstantLoad 2
+    %8 = %7;
+    %6 = == filterFailureCount %8;
+    %6 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad stop filter
+    %1 = newError error(%0)
+    (1, %9) = %1;
+    PopScopeFrame
+    panic %9;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}
+failForEachSecond(xml<xml:Text|xml:Element>) -> nil{
+  bb0 {
+    %2 = item;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %3 = + forEachFailureCount %5;
+    forEachFailureCount = %3;
+    %7 = ConstantLoad 2
+    %8 = %7;
+    %6 = == forEachFailureCount %8;
+    %6 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad stop forEach
+    %1 = newError error(%0)
+    (1, %9) = %1;
+    PopScopeFrame
+    panic %9;
+  }
+  bb2 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad <a>
+    %2 = ConstantLoad <?xml version="1.0"?><a/>
+    %3 = ConstantLoad <!DOCTYPE a><a/>
+    %4 = ConstantLoad <?XmL bad?>
+    %5 = ConstantLoad <p:a/>
+    %6 = ConstantLoad <a xmlns:p=""/>
+    %7 = ConstantLoad <a xmlns:xml="urn:bad"/>
+    %8 = ConstantLoad 7
+    %9 = newArray [string...][%8]{%1, %2, %3, %4, %5, %6, %7}
+    invalid = %9;
+    $desugar$0 = invalid;
+    %12 = ConstantLoad 0
+    $desugar$1 = %12;
+    %14 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %14;
+    GOTO bb2;
+  }
+  bb2 {
+    %17 = $desugar$1;
+    %18 = $desugar$2;
+    %16 = < %17 %18;
+    %16 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    xmlSource = %0;
+    %2 = fromString(xmlSource) -> bb5;
+  }
+  bb4 {
+    %20 = ConstantLoad <outer xmlns:p="urn:u" xmlns:q="urn:u"><p:child q:a="v"/></outer>
+    %21 = fromString(%20) -> bb7;
+  }
+  bb5 {
+    result = %2;
+    %4 = result is error
+    %5 = %4;
+    %6 = println(%5) -> bb6;
+  }
+  bb6 {
+    %8 = (1, $desugar$1);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$1) = %7;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb7 {
+    %22 = %21 is error
+    %22 ? bb8 : bb9;
+  }
+  bb8 {
+    panic %21;
+  }
+  bb9 {
+    %19 = %21;
+    GOTO bb10;
+  }
+  bb10 {
+    parsed = %19;
+    %25 = ConstantLoad 
+    %26 = fromString(%25) -> bb11;
+  }
+  bb11 {
+    %27 = %26 is error
+    %27 ? bb12 : bb13;
+  }
+  bb12 {
+    panic %26;
+  }
+  bb13 {
+    %24 = %26;
+    GOTO bb14;
+  }
+  bb14 {
+    parsedEmpty = %24;
+    %29 = length(parsedEmpty) -> bb15;
+  }
+  bb15 {
+    %30 = %29;
+    %31 = println(%30) -> bb16;
+  }
+  bb16 {
+    %32 = children(parsed) -> bb17;
+  }
+  bb17 {
+    %33 = ConstantLoad 0
+    %34 = %33;
+    %35 = get(%32,%34) -> bb18;
+  }
+  bb18 {
+    %36 = <xml:Element>(%35)
+    child = %36;
+    %38 = println(child) -> bb19;
+  }
+  bb19 {
+    %39 = getAttributes(child) -> bb20;
+  }
+  bb20 {
+    %40 = println(%39) -> bb21;
+  }
+  bb21 {
+    %42 = ConstantLoad <p:x xmlns:p="urn:u" xmlns:q="urn:u"/>
+    %43 = fromString(%42) -> bb22;
+  }
+  bb22 {
+    %44 = %43 is error
+    %44 ? bb23 : bb24;
+  }
+  bb23 {
+    panic %43;
+  }
+  bb24 {
+    %41 = %43;
+    GOTO bb25;
+  }
+  bb25 {
+    a = %41;
+    %47 = ConstantLoad <q:x xmlns:p="urn:u" xmlns:q="urn:u"/>
+    %48 = fromString(%47) -> bb26;
+  }
+  bb26 {
+    %49 = %48 is error
+    %49 ? bb27 : bb28;
+  }
+  bb27 {
+    panic %48;
+  }
+  bb28 {
+    %46 = %48;
+    GOTO bb29;
+  }
+  bb29 {
+    b = %46;
+    %52 = ConstantLoad <p:x xmlns:p="urn:v" xmlns:q="urn:v"/>
+    %53 = fromString(%52) -> bb30;
+  }
+  bb30 {
+    %54 = %53 is error
+    %54 ? bb31 : bb32;
+  }
+  bb31 {
+    panic %53;
+  }
+  bb32 {
+    %51 = %53;
+    GOTO bb33;
+  }
+  bb33 {
+    c = %51;
+    %56 = == a b;
+    %57 = %56;
+    %58 = println(%57) -> bb34;
+  }
+  bb34 {
+    %59 = == a c;
+    %60 = %59;
+    %61 = println(%60) -> bb35;
+  }
+  bb35 {
+    %62 = ConstantLoad original
+    %63 = newMap {| string... |}{}
+    %64 = newXMLSequence{}
+    %65 = createElement(%62,%63,%64) -> bb36;
+  }
+  bb36 {
+    element = %65;
+    GOTO bb37;
+  }
+  bb37 {
+    %68 = ConstantLoad {bad
+    %69 = setName(element,%68) -> bb38;
+  }
+  bb38 {
+    %67 = %69;
+    GOTO bb39;
+  }
+  bb39 {
+    nameFailure = %67;
+    %71 = nameFailure is error
+    %72 = %71;
+    %73 = println(%72) -> bb40;
+  }
+  bb40 {
+    %74 = getName(element) -> bb41;
+  }
+  bb41 {
+    %75 = println(%74) -> bb42;
+  }
+  bb42 {
+    %76 = ConstantLoad xmlns
+    %77 = ConstantLoad urn:bad
+    %78 = newMap {| string... |}{%76=%77}
+    badAttrs = %78;
+    %80 = newXMLSequence{}
+    emptyChildren = %80;
+    GOTO bb43;
+  }
+  bb43 {
+    %83 = ConstantLoad x
+    %84 = createElement(%83,badAttrs,emptyChildren) -> bb44;
+  }
+  bb44 {
+    %82 = %84;
+    GOTO bb45;
+  }
+  bb45 {
+    constructorFailure = %82;
+    %86 = constructorFailure is error
+    %87 = %86;
+    %88 = println(%87) -> bb46;
+  }
+  bb46 {
+    %89 = println(badAttrs) -> bb47;
+  }
+  bb47 {
+    GOTO bb48;
+  }
+  bb48 {
+    %91 = ConstantLoad bad--comment
+    %92 = createComment(%91) -> bb49;
+  }
+  bb49 {
+    %90 = %92;
+    GOTO bb50;
+  }
+  bb50 {
+    commentFailure = %90;
+    GOTO bb51;
+  }
+  bb51 {
+    %95 = ConstantLoad XML
+    %96 = ConstantLoad bad
+    %97 = createProcessingInstruction(%95,%96) -> bb52;
+  }
+  bb52 {
+    %94 = %97;
+    GOTO bb53;
+  }
+  bb53 {
+    piFailure = %94;
+    %99 = commentFailure is error
+    %100 = %99;
+    %101 = println(%100) -> bb54;
+  }
+  bb54 {
+    %102 = piFailure is error
+    %103 = %102;
+    %104 = println(%103) -> bb55;
+  }
+  bb55 {
+    %105 = newXMLElement("a", ())
+    %106 = ConstantLoad text
+    %107 = newXMLText(%106)
+    %108 = newXMLElement("b", ())
+    %109 = newXMLSequence{%105, %107, %108}
+    callbackSource = %109;
+    GOTO bb56;
+  }
+  bb56 {
+    %112 = fp $anon/.:failSecond
+    %113 = map(callbackSource,%112) -> bb57;
+  }
+  bb57 {
+    %111 = %113;
+    GOTO bb58;
+  }
+  bb58 {
+    callbackFailure = %111;
+    %115 = callbackFailure is error
+    %116 = %115;
+    %117 = println(%116) -> bb59;
+  }
+  bb59 {
+    %118 = println(callbackCount) -> bb60;
+  }
+  bb60 {
+    GOTO bb61;
+  }
+  bb61 {
+    %120 = fp $anon/.:failFilterSecond
+    %121 = filter(callbackSource,%120) -> bb62;
+  }
+  bb62 {
+    %119 = %121;
+    GOTO bb63;
+  }
+  bb63 {
+    filterFailure = %119;
+    GOTO bb64;
+  }
+  bb64 {
+    %124 = fp $anon/.:failForEachSecond
+    %125 = forEach(callbackSource,%124) -> bb65;
+  }
+  bb65 {
+    %123 = %125;
+    GOTO bb66;
+  }
+  bb66 {
+    forEachFailure = %123;
+    %127 = filterFailure is error
+    %128 = %127;
+    %129 = ConstantLoad :
+    %130 = println(%128,%129,filterFailureCount) -> bb67;
+  }
+  bb67 {
+    %131 = forEachFailure is error
+    %132 = %131;
+    %133 = ConstantLoad :
+    %134 = println(%132,%133,forEachFailureCount) -> bb68;
+  }
+  bb68 {
+    %135 = ConstantLoad shared
+    %136 = newMap {| string... |}{}
+    %137 = newXMLSequence{}
+    %138 = createElement(%135,%136,%137) -> bb69;
+  }
+  bb69 {
+    shared = %138;
+    %140 = ConstantLoad left
+    %141 = newMap {| string... |}{}
+    %142 = createElement(%140,%141,shared) -> bb70;
+  }
+  bb70 {
+    left = %142;
+    %144 = ConstantLoad right
+    %145 = newMap {| string... |}{}
+    %146 = createElement(%144,%145,shared) -> bb71;
+  }
+  bb71 {
+    right = %146;
+    %148 = println(left,right) -> bb72;
+  }
+  bb72 {
+    GOTO bb73;
+  }
+  bb73 {
+    %150 = setChildren(shared,left) -> bb74;
+  }
+  bb74 {
+    %149 = %150;
+    GOTO bb75;
+  }
+  bb75 {
+    indirectCycle = %149;
+    %152 = indirectCycle is error
+    %153 = %152;
+    %154 = println(%153) -> bb76;
+  }
+  bb76 {
+    %155 = println(shared) -> bb77;
+  }
+  bb77 {
+    %156 = ConstantLoad atomic
+    %157 = newMap {| string... |}{}
+    %158 = newXMLElement("old", ())
+    %159 = createElement(%156,%157,%158) -> bb78;
+  }
+  bb78 {
+    atomicParent = %159;
+    GOTO bb79;
+  }
+  bb79 {
+    %162 = setChildren(atomicParent,atomicParent) -> bb80;
+  }
+  bb80 {
+    %161 = %162;
+    GOTO bb81;
+  }
+  bb81 {
+    directCycle = %161;
+    %164 = directCycle is error
+    %165 = %164;
+    %166 = println(%165) -> bb82;
+  }
+  bb82 {
+    %167 = println(atomicParent) -> bb83;
+  }
+  bb83 {
+    %168 = ConstantLoad {http://www.w3.org/2000/xmlns/}p
+    %169 = ConstantLoad urn:order
+    %170 = ConstantLoad {http://www.w3.org/2000/xmlns/}q
+    %171 = ConstantLoad urn:order
+    %172 = newMap {| string... |}{%168=%169, %170=%171}
+    orderedBindings = %172;
+    %174 = ConstantLoad {urn:order}x
+    %175 = newMap {| string... |}{}
+    %176 = newXMLSequence{}
+    %177 = createElement(%174,%175,%176) -> bb84;
+  }
+  bb84 {
+    inheritedName = %177;
+    %179 = ConstantLoad root
+    %180 = createElement(%179,orderedBindings,inheritedName) -> bb85;
+  }
+  bb85 {
+    inheritedRoot = %180;
+    %182 = println(inheritedRoot) -> bb86;
+  }
+  bb86 {
+    %183 = ConstantLoad {http://www.w3.org/2000/xmlns/}q
+    %184 = ConstantLoad urn:order
+    %185 = newMap {| string... |}{%183=%184}
+    localBinding = %185;
+    %187 = ConstantLoad {urn:order}x
+    %188 = newXMLSequence{}
+    %189 = createElement(%187,localBinding,%188) -> bb87;
+  }
+  bb87 {
+    prunedChild = %189;
+    %191 = ConstantLoad root
+    %192 = createElement(%191,orderedBindings,prunedChild) -> bb88;
+  }
+  bb88 {
+    prunedRoot = %192;
+    %194 = println(prunedRoot) -> bb89;
+  }
+  bb89 {
+    %195 = ConstantLoad {http://www.w3.org/2000/xmlns/}p
+    %196 = ConstantLoad urn:default
+    %197 = ConstantLoad {http://www.w3.org/2000/xmlns/}xmlns
+    %198 = ConstantLoad urn:default
+    %199 = newMap {| string... |}{%195=%196, %197=%198}
+    defaultFirst = %199;
+    %201 = ConstantLoad {urn:default}x
+    %202 = newXMLSequence{}
+    %203 = createElement(%201,defaultFirst,%202) -> bb90;
+  }
+  bb90 {
+    defaultElement = %203;
+    %205 = println(defaultElement) -> bb91;
+  }
+  bb91 {
+    %206 = getAttributes(defaultElement) -> bb92;
+  }
+  bb92 {
+    %207 = println(%206) -> bb93;
+  }
+  bb93 {
+    %208 = ConstantLoad {http://www.w3.org/2000/xmlns/}xmlns
+    %209 = ConstantLoad urn:conflict
+    %210 = newMap {| string... |}{%208=%209}
+    conflictingDefault = %210;
+    GOTO bb94;
+  }
+  bb94 {
+    %213 = ConstantLoad plain
+    %214 = newXMLSequence{}
+    %215 = createElement(%213,conflictingDefault,%214) -> bb95;
+  }
+  bb95 {
+    %212 = %215;
+    GOTO bb96;
+  }
+  bb96 {
+    defaultFailure = %212;
+    %217 = defaultFailure is error
+    %218 = %217;
+    %219 = println(%218) -> bb97;
+  }
+  bb97 {
+    GOTO bb98;
+  }
+  bb98 {
+    %221 = ConstantLoad plain
+    %222 = setName(defaultElement,%221) -> bb99;
+  }
+  bb99 {
+    %220 = %222;
+    GOTO bb100;
+  }
+  bb100 {
+    conflictingRename = %220;
+    %224 = conflictingRename is error
+    %225 = %224;
+    %226 = println(%225) -> bb101;
+  }
+  bb101 {
+    %227 = getName(defaultElement) -> bb102;
+  }
+  bb102 {
+    %228 = println(%227) -> bb103;
+  }
+  bb103 {
+    GOTO bb104;
+  }
+  bb104 {
+    %230 = newXMLElement("x", ())
+    %231 = ConstantLoad {bad
+    %232 = elements(%230,%231) -> bb105;
+  }
+  bb105 {
+    %229 = %232;
+    GOTO bb106;
+  }
+  bb106 {
+    malformedElementFilter = %229;
+    GOTO bb107;
+  }
+  bb107 {
+    %235 = newXMLElement("y", ())
+    %236 = newXMLElement("x", %235)
+    %237 = ConstantLoad {bad
+    %238 = elementChildren(%236,%237) -> bb108;
+  }
+  bb108 {
+    %234 = %238;
+    GOTO bb109;
+  }
+  bb109 {
+    malformedChildFilter = %234;
+    %240 = malformedElementFilter is error
+    %241 = %240;
+    %242 = println(%241) -> bb110;
+  }
+  bb110 {
+    %243 = malformedChildFilter is error
+    %244 = %243;
+    %245 = println(%244) -> bb111;
+  }
+  bb111 {
+    GOTO bb112;
+  }
+  bb112 {
+    %247 = ConstantLoad {}x
+    %248 = newMap {| string... |}{}
+    %249 = newXMLSequence{}
+    %250 = createElement(%247,%248,%249) -> bb113;
+  }
+  bb113 {
+    %246 = %250;
+    GOTO bb114;
+  }
+  bb114 {
+    malformedName = %246;
+    GOTO bb115;
+  }
+  bb115 {
+    %253 = ConstantLoad {urn:{u}x
+    %254 = newMap {| string... |}{}
+    %255 = newXMLSequence{}
+    %256 = createElement(%253,%254,%255) -> bb116;
+  }
+  bb116 {
+    %252 = %256;
+    GOTO bb117;
+  }
+  bb117 {
+    malformedBraceName = %252;
+    GOTO bb118;
+  }
+  bb118 {
+    %259 = ConstantLoad bad-
+    %260 = createComment(%259) -> bb119;
+  }
+  bb119 {
+    %258 = %260;
+    GOTO bb120;
+  }
+  bb120 {
+    trailingComment = %258;
+    GOTO bb121;
+  }
+  bb121 {
+    %263 = ConstantLoad bad target
+    %264 = ConstantLoad x
+    %265 = createProcessingInstruction(%263,%264) -> bb122;
+  }
+  bb122 {
+    %262 = %265;
+    GOTO bb123;
+  }
+  bb123 {
+    malformedTarget = %262;
+    GOTO bb124;
+  }
+  bb124 {
+    %268 = ConstantLoad 
+    %269 = createText(%268) -> bb125;
+  }
+  bb125 {
+    %267 = %269;
+    GOTO bb126;
+  }
+  bb126 {
+    badText = %267;
+    %271 = malformedName is error
+    %272 = %271;
+    %273 = println(%272) -> bb127;
+  }
+  bb127 {
+    %274 = malformedBraceName is error
+    %275 = %274;
+    %276 = println(%275) -> bb128;
+  }
+  bb128 {
+    %277 = trailingComment is error
+    %278 = %277;
+    %279 = println(%278) -> bb129;
+  }
+  bb129 {
+    %280 = malformedTarget is error
+    %281 = %280;
+    %282 = println(%281) -> bb130;
+  }
+  bb130 {
+    %283 = badText is error
+    %284 = %283;
+    %285 = println(%284) -> bb131;
+  }
+  bb131 {
+    %286 = ConstantLoad {http://www.w3.org/2000/xmlns/}ns0
+    %287 = ConstantLoad urn:occupied
+    %288 = newMap {| string... |}{%286=%287}
+    collisionBinding = %288;
+    %290 = ConstantLoad {urn:generated}value
+    %291 = ConstantLoad v
+    %292 = newMap {| string... |}{%290=%291}
+    generatedAttribute = %292;
+    %294 = ConstantLoad child
+    %295 = newXMLSequence{}
+    %296 = createElement(%294,generatedAttribute,%295) -> bb132;
+  }
+  bb132 {
+    generatedChild = %296;
+    %298 = ConstantLoad root
+    %299 = concat(generatedChild,generatedChild) -> bb133;
+  }
+  bb133 {
+    %300 = createElement(%298,collisionBinding,%299) -> bb134;
+  }
+  bb134 {
+    collisionRoot = %300;
+    %302 = println(collisionRoot) -> bb135;
+  }
+  bb135 {
+    %303 = ConstantLoad {http://www.w3.org/2000/xmlns/}p
+    %304 = ConstantLoad urn:shared
+    %305 = newMap {| string... |}{%303=%304}
+    inheritedNs0 = %305;
+    %307 = ConstantLoad {urn:other}value
+    %308 = ConstantLoad v
+    %309 = ConstantLoad {http://www.w3.org/2000/xmlns/}ns0
+    %310 = ConstantLoad urn:shared
+    %311 = newMap {| string... |}{%307=%308, %309=%310}
+    prunedNs0AndAttribute = %311;
+    %313 = ConstantLoad {urn:shared}child
+    %314 = newXMLSequence{}
+    %315 = createElement(%313,prunedNs0AndAttribute,%314) -> bb136;
+  }
+  bb136 {
+    prunedCollisionChild = %315;
+    %317 = ConstantLoad root
+    %318 = createElement(%317,inheritedNs0,prunedCollisionChild) -> bb137;
+  }
+  bb137 {
+    prunedCollisionRoot = %318;
+    %320 = println(prunedCollisionRoot) -> bb138;
+  }
+  bb138 {
+    %321 = ConstantLoad {http://www.w3.org/2000/xmlns/}xmlns
+    %322 = ConstantLoad urn:reuse
+    %323 = newMap {| string... |}{%321=%322}
+    defaultNamespace = %323;
+    %325 = ConstantLoad {urn:reuse}child
+    %326 = newMap {| string... |}{}
+    %327 = newXMLSequence{}
+    %328 = createElement(%325,%326,%327) -> bb139;
+  }
+  bb139 {
+    defaultChild = %328;
+    %330 = ConstantLoad {urn:reuse}root
+    %331 = createElement(%330,defaultNamespace,defaultChild) -> bb140;
+  }
+  bb140 {
+    defaultRoot = %331;
+    %333 = println(defaultRoot) -> bb141;
+  }
+  bb141 {
+    %334 = ConstantLoad {http://www.w3.org/XML/1998/namespace}lang
+    %335 = ConstantLoad en
+    %336 = ConstantLoad plain
+    %337 = ConstantLoad a&"b
+    %338 = newMap {| string... |}{%334=%335, %336=%337}
+    reservedAndEscaped = %338;
+    %340 = ConstantLoad escaped
+    %341 = ConstantLoad x<&
+    %342 = createText(%341) -> bb142;
+  }
+  bb142 {
+    %343 = createElement(%340,reservedAndEscaped,%342) -> bb143;
+  }
+  bb143 {
+    escaped = %343;
+    %345 = println(escaped) -> bb144;
+  }
+  bb144 {
+    %346 = println(escaped) -> bb145;
+  }
+  bb145 {
+    %347 = getAttributes(escaped) -> bb146;
+  }
+  bb146 {
+    %348 = println(%347) -> bb147;
+  }
+  bb147 {
+    %350 = ConstantLoad <root xmlns="urn:default-parent"><child/></root>
+    %351 = fromString(%350) -> bb148;
+  }
+  bb148 {
+    %352 = %351 is error
+    %352 ? bb149 : bb150;
+  }
+  bb149 {
+    panic %351;
+  }
+  bb150 {
+    %349 = %351;
+    GOTO bb151;
+  }
+  bb151 {
+    inheritedDefault = %349;
+    %354 = <xml:Element>(inheritedDefault)
+    %355 = getChildren(%354) -> bb152;
+  }
+  bb152 {
+    %356 = ConstantLoad 0
+    %357 = %356;
+    %358 = get(%355,%357) -> bb153;
+  }
+  bb153 {
+    %359 = <xml:Element>(%358)
+    inheritedDefaultChild = %359;
+    %361 = getName(inheritedDefaultChild) -> bb154;
+  }
+  bb154 {
+    %362 = println(%361) -> bb155;
+  }
+  bb155 {
+    %363 = getAttributes(inheritedDefaultChild) -> bb156;
+  }
+  bb156 {
+    %364 = length(%363) -> bb157;
+  }
+  bb157 {
+    %365 = %364;
+    %366 = println(%365) -> bb158;
+  }
+  bb158 {
+    %367 = ConstantLoad  
+    nonXMLWhitespace = %367;
+    %369 = escapeXMLContent(nonXMLWhitespace) -> bb159;
+  }
+  bb159 {
+    %370 = evalTemplate[xml](" ", %369, " ")
+    whitespaceValue = %370;
+    %372 = strip(whitespaceValue) -> bb160;
+  }
+  bb160 {
+    strippedWhitespace = %372;
+    %374 = length(strippedWhitespace) -> bb161;
+  }
+  bb161 {
+    %375 = %374;
+    %376 = println(%375) -> bb162;
+  }
+  bb162 {
+    %378 = data(strippedWhitespace) -> bb163;
+  }
+  bb163 {
+    %381 = ConstantLoad  
+    %380 = + %381 nonXMLWhitespace;
+    %382 = ConstantLoad  
+    %379 = + %380 %382;
+    %377 = == %378 %379;
+    %383 = %377;
+    %384 = println(%383) -> bb164;
+  }
+  bb164 {
+    %385 = ConstantLoad {http://www.w3.org/2000/xmlns/}xml
+    %386 = ConstantLoad urn:not-xml
+    %387 = newMap {| string... |}{%385=%386}
+    badXMLBinding = %387;
+    %389 = ConstantLoad {http://www.w3.org/2000/xmlns/}xmlns
+    %390 = ConstantLoad http://www.w3.org/2000/xmlns/
+    %391 = newMap {| string... |}{%389=%390}
+    badXMLNSBinding = %391;
+    GOTO bb165;
+  }
+  bb165 {
+    %394 = ConstantLoad x
+    %395 = newXMLSequence{}
+    %396 = createElement(%394,badXMLBinding,%395) -> bb166;
+  }
+  bb166 {
+    %393 = %396;
+    GOTO bb167;
+  }
+  bb167 {
+    badXMLBindingResult = %393;
+    GOTO bb168;
+  }
+  bb168 {
+    %399 = ConstantLoad x
+    %400 = newXMLSequence{}
+    %401 = createElement(%399,badXMLNSBinding,%400) -> bb169;
+  }
+  bb169 {
+    %398 = %401;
+    GOTO bb170;
+  }
+  bb170 {
+    badXMLNSBindingResult = %398;
+    %403 = badXMLBindingResult is error
+    %404 = %403;
+    %405 = println(%404) -> bb171;
+  }
+  bb171 {
+    %406 = badXMLNSBindingResult is error
+    %407 = %406;
+    %408 = println(%407) -> bb172;
+  }
+  bb172 {
+    %409 = ConstantLoad 
+    emptyInsertion = %409;
+    %411 = escapeXMLContent(emptyInsertion) -> bb173;
+  }
+  bb173 {
+    %412 = evalTemplate[xml]("<readonly><child/>", %411, "</readonly>")
+    readonlyValue = %412;
+    %414 = <xml<xml:Element>>(readonlyValue)
+    readonlyElement = %414;
+    %416 = getChildren(readonlyElement) -> bb174;
+  }
+  bb174 {
+    %417 = ConstantLoad 0
+    %418 = %417;
+    %419 = get(%416,%418) -> bb175;
+  }
+  bb175 {
+    %420 = <xml<xml:Element>>(%419)
+    readonlyChild = %420;
+    GOTO bb176;
+  }
+  bb176 {
+    %423 = ConstantLoad changed
+    %424 = setName(readonlyElement,%423) -> bb177;
+  }
+  bb177 {
+    %422 = %424;
+    GOTO bb178;
+  }
+  bb178 {
+    readonlyNameFailure = %422;
+    GOTO bb179;
+  }
+  bb179 {
+    %427 = ConstantLoad changed
+    %428 = setChildren(readonlyElement,%427) -> bb180;
+  }
+  bb180 {
+    %426 = %428;
+    GOTO bb181;
+  }
+  bb181 {
+    readonlyChildFailure = %426;
+    GOTO bb182;
+  }
+  bb182 {
+    %431 = ConstantLoad changed
+    %432 = setName(readonlyChild,%431) -> bb183;
+  }
+  bb183 {
+    %430 = %432;
+    GOTO bb184;
+  }
+  bb184 {
+    nestedReadonlyFailure = %430;
+    %434 = getAttributes(readonlyElement) -> bb185;
+  }
+  bb185 {
+    readonlySnapshot = %434;
+    %436 = ConstantLoad yes
+    %437 = ConstantLoad safe
+    readonlySnapshot[%437] = %436;
+    %438 = readonlyNameFailure is error
+    %439 = %438;
+    %440 = println(%439) -> bb186;
+  }
+  bb186 {
+    %441 = readonlyChildFailure is error
+    %442 = %441;
+    %443 = println(%442) -> bb187;
+  }
+  bb187 {
+    %444 = nestedReadonlyFailure is error
+    %445 = %444;
+    %446 = println(%445) -> bb188;
+  }
+  bb188 {
+    %447 = println(readonlyElement) -> bb189;
+  }
+  bb189 {
+    %448 = escapeXMLContent(emptyInsertion) -> bb190;
+  }
+  bb190 {
+    %449 = evalTemplate[xml]("<p:wrapper xmlns:p=\"urn:readonly\" id=\"reachable\"><nested/>", %448, "</p:wrapper>")
+    readonlyReachability = %449;
+    %451 = <xml<xml:Element>>(readonlyReachability)
+    reachableRoot = %451;
+    %453 = getChildren(reachableRoot) -> bb191;
+  }
+  bb191 {
+    %454 = ConstantLoad 0
+    %455 = %454;
+    %456 = get(%453,%455) -> bb192;
+  }
+  bb192 {
+    %457 = <xml<xml:Element>>(%456)
+    reachableChild = %457;
+    GOTO bb193;
+  }
+  bb193 {
+    %460 = ConstantLoad changed
+    %461 = setName(reachableRoot,%460) -> bb194;
+  }
+  bb194 {
+    %459 = %461;
+    GOTO bb195;
+  }
+  bb195 {
+    reachableNameFailure = %459;
+    GOTO bb196;
+  }
+  bb196 {
+    %464 = ConstantLoad changed
+    %465 = setChildren(reachableChild,%464) -> bb197;
+  }
+  bb197 {
+    %463 = %465;
+    GOTO bb198;
+  }
+  bb198 {
+    reachableChildrenFailure = %463;
+    %467 = getAttributes(reachableRoot) -> bb199;
+  }
+  bb199 {
+    reachableSnapshot = %467;
+    %469 = ConstantLoad snapshot-only
+    %470 = ConstantLoad id
+    reachableSnapshot[%470] = %469;
+    %471 = reachableNameFailure is error
+    %472 = %471;
+    %473 = println(%472) -> bb200;
+  }
+  bb200 {
+    %474 = reachableChildrenFailure is error
+    %475 = %474;
+    %476 = println(%475) -> bb201;
+  }
+  bb201 {
+    %477 = println(readonlyReachability) -> bb202;
+  }
+  bb202 {
+    return;
+  }
+  
+  error-table {
+    [bb37, bb38] -> bb39, %67
+    [bb43, bb44] -> bb45, %82
+    [bb48, bb49] -> bb50, %90
+    [bb51, bb52] -> bb53, %94
+    [bb56, bb57] -> bb58, %111
+    [bb61, bb62] -> bb63, %119
+    [bb64, bb65] -> bb66, %123
+    [bb73, bb74] -> bb75, %149
+    [bb79, bb80] -> bb81, %161
+    [bb94, bb95] -> bb96, %212
+    [bb98, bb99] -> bb100, %220
+    [bb104, bb105] -> bb106, %229
+    [bb107, bb108] -> bb109, %234
+    [bb112, bb113] -> bb114, %246
+    [bb115, bb116] -> bb117, %252
+    [bb118, bb119] -> bb120, %258
+    [bb121, bb122] -> bb123, %262
+    [bb124, bb125] -> bb126, %267
+    [bb165, bb166] -> bb167, %393
+    [bb168, bb169] -> bb170, %398
+    [bb176, bb177] -> bb178, %422
+    [bb179, bb180] -> bb181, %426
+    [bb182, bb183] -> bb184, %430
+    [bb193, bb194] -> bb195, %459
+    [bb196, bb197] -> bb198, %463
+  }
+}
