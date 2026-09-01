@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: illegal XML character U+0001
+        at main(lang-xml-concat-character-p.bal:17)

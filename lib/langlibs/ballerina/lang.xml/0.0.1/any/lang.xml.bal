@@ -17,3 +17,35 @@
 // The XML subtypes (Element, Comment, Text, ProcessingInstruction) are
 // built-in types that cannot be expressed in source; they are provided through
 // the compiler's opaque-symbol mechanism.
+
+public const string XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
+public const string XMLNS_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
+public const string space = "{http://www.w3.org/XML/1998/namespace}space";
+public const string lang = "{http://www.w3.org/XML/1998/namespace}lang";
+public const string base = "{http://www.w3.org/XML/1998/namespace}base";
+
+public isolated function length(xml x) returns int = external;
+public isolated function concat((xml|string)... xs) returns xml = external;
+public isolated function getName(Element elem) returns string = external;
+public isolated function setName(Element elem, string xName) = external;
+public isolated function getAttributes(Element x) returns map<string> = external;
+public isolated function getChildren(Element elem) returns xml = external;
+public isolated function setChildren(Element elem, xml|string children) = external;
+public isolated function getDescendants(Element elem) returns xml = external;
+public isolated function data(xml x) returns string = external;
+public isolated function getTarget(ProcessingInstruction x) returns string = external;
+public isolated function getContent(ProcessingInstruction|Comment x) returns string = external;
+
+public isolated function createElement(string name,
+        map<string> attributes = {}, xml children = xml``) returns Element = external;
+public isolated function createProcessingInstruction(string target, string content)
+        returns ProcessingInstruction = external;
+public isolated function createComment(string content) returns Comment = external;
+public isolated function createText(string data) returns Text = external;
+
+public isolated function strip(xml x) returns xml = external;
+public isolated function elements(xml x, string? nm = ()) returns xml<Element> = external;
+public isolated function children(xml x) returns xml = external;
+public isolated function elementChildren(xml x, string? nm = ()) returns xml<Element> = external;
+public isolated function text(xml x) returns Text = external;
+public isolated function fromString(string s) returns xml|error = external;
