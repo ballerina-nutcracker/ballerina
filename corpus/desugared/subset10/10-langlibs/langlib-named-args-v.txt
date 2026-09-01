@@ -1,0 +1,77 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang map (as lang.map))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array indexOf (
+            (simple-var-ref a)
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array indexOf (
+            (simple-var-ref a)
+            (literal 2)
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array indexOf (
+            (simple-var-ref a)
+            (literal 2)
+            (literal 2))))))
+      (var-def
+        (variable b (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 10)
+            (literal 20)
+            (literal 30)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array remove (
+            (simple-var-ref b)
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))
+            (key-value
+              (literal b)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map remove (
+            (simple-var-ref m)
+            (literal a))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation int fromString (
+            (literal 42))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string substring (
+            (literal hello)
+            (literal 1)
+            (literal 3)))))))))

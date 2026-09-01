@@ -907,6 +907,11 @@ func fillinOpaqueSymbol(sym model.Symbol, space *model.SymbolSpace) {
 	fn.Lookup, fn.Store = newMonomorphizationCache()
 }
 
+// newMonomorphizationCache builds a cache keyed by one or more semtypes (e.g.
+// a container type, plus any extra keys a monomorphizer needs to disambiguate
+// call sites that share a container type but resolve differently, such as by
+// arity). Each key is interned independently and looked up through a trie so
+// call sites can share prefixes of keys.
 func newMonomorphizationCache() (func(...semtypes.SemType) (model.SymbolRef, bool), func(model.SymbolRef, ...semtypes.SemType)) {
 	type cacheNode struct {
 		children map[semtypes.InternHandle]*cacheNode

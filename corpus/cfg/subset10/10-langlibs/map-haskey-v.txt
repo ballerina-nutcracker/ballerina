@@ -1,0 +1,36 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type string))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))
+          (key-value
+            (literal b)
+            (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.map hasKey (
+          (simple-var-ref m)
+          (literal a))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.map hasKey (
+          (simple-var-ref m)
+          (literal z))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation lang.map remove (
+        (simple-var-ref m)
+        (literal a))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.map hasKey (
+          (simple-var-ref m)
+          (literal a))))))
+  )
+)

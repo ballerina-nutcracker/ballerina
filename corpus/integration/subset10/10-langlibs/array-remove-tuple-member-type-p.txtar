@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: inherent type violation
+        at main(array-remove-tuple-member-type-p.bal:19)

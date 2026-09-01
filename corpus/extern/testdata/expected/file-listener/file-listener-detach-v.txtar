@@ -1,0 +1,4 @@
+-- stdout --
+countAfterFirst=1
+countAfterDetach=1
+-- stderr --

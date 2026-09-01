@@ -14,6 +14,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 |---------------------------------------------------|---|---|---|---|
 | [avro](avro/0.0.1/go1.26/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](crypto/0.0.1/go1.26/README.md)           | 26 | 1 | 5 | 81% |
+| [file](file/0.0.1/go1.26/README.md)               | 21 | 0 | 0 | 100% |
 | [http](http/0.0.1/go1.26/README.md)               | 28 | 7 | 38 | 38% |
 | [io](io/0.0.1/go1.26/README.md)                   | 21 | 2 | 4 | 78% |
 | [log](log/0.0.1/go1.26/README.md)                 | 7 | 2 | 15 | 29% |
@@ -22,7 +23,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [random](random/0.0.1/go1.26/README.md)           | 3 | 1 | 1 | 60% |
 | [time](time/0.0.1/go1.26/README.md)               | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.26/README.md)                 | 3 | 0 | 1 | 75% |
-| **Total**                                         | **150** | **16** | **64** | **65%** |
+| **Total**                                         | **171** | **16** | **64** | **68%** |
 
 ## Notable Behavioural Changes
 
@@ -42,6 +43,15 @@ tables instead.
 ### crypto
 
 - **AES-CBC and AES-ECB always apply PKCS7 padding.** jBallerina selects PKCS5 or no padding based on the `padding` parameter value; the Go-native version always applies PKCS7 padding for CBC and ECB modes regardless of the parameter — Go's `cipher` package does not expose a separate no-padding mode. Programs relying on `NONE` padding will produce incorrect output.
+
+### file
+
+- **`distinct` error types flattened.** jBallerina declares each error type (e.g. `FileNotFoundError`, `PermissionError`) as a `distinct` subtype of `file:Error`, allowing precise `is`-checks. The Go-native version declares them as plain type aliases of `Error` — they are structurally identical at runtime. Code that uses `error is file:FileNotFoundError` to distinguish error kinds will not work as expected.
+- **Path separator detection on Windows.** `isWindows` is determined at startup by checking whether the `OS` environment variable is set. On non-standard Windows environments where this variable is absent the path functions will behave as on POSIX.
+- **`Service` is not `distinct`.** jBallerina declares `file:Service` as `distinct service object {}`. The Go-native version declares it as a plain (non-`distinct`) `service object {}` marker, since this interpreter's `distinct` support only covers named/top-level types, not the inline `distinct service object {}` descriptor jBallerina uses here, and its parser does not support the `service <TypeDesc> "literal" on expr` syntax needed to bind a distinct type to an anonymous service body. Code that uses `error is file:Service`-style nominal checks on the service type will not work as expected.
+- **`gracefulStop()` also releases the OS watch.** jBallerina's `gracefulStop()` is a no-op that leaves the directory-watching thread running until process exit; the Go-native version closes the underlying OS watch deterministically on either `gracefulStop()` or `immediateStop()`, since a single long-lived process here may create and stop many listeners (e.g. across test runs) rather than one listener per JVM process.
+- **`attach()` returns its validation error instead of panicking.** jBallerina's directory listener throws the "at least a single resource required" validation failure as an uncaught exception, observable in Ballerina only via `trap`. The Go-native version returns it through `attach()`'s documented `error?` return type.
+- **`getMetaData` / `readDir` drop the `readonly` intersection.** jBallerina returns `(MetaData & readonly)|Error` from `getMetaData` and `(MetaData[] & readonly)|Error` from `readDir`. The Go-native version returns plain `MetaData|Error` and `MetaData[]|Error` — this interpreter does not yet support `readonly &` intersection types. Code that relies on the returned value being immutable (e.g. assigning it to a `readonly` binding, or expecting a mutation attempt to panic) will not behave as expected.
 
 ### http
 

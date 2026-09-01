@@ -1,0 +1,21 @@
+-- stdout --
+true
+baz.txt
+/foo/bar
+/foo/bar/baz
+3
+foo
+bar
+baz
+true
+false
+/bar/baz
+baz
+true
+true
+false
+false
+true
+true
+true
+-- stderr --
