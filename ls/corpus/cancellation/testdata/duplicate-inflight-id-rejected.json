@@ -1,0 +1,70 @@
+{
+  "source": "",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 14,
+      "method": "$pal/blockRequest",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 14,
+      "method": "$pal/blockRequest",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/releaseRequest",
+      "params": {
+        "id": 14
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          }        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 14,
+      "error": {
+        "code": -32600,
+        "message": "request id already in flight"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 14,
+      "result": {
+        "released": true
+      }
+    }
+  ]
+}
