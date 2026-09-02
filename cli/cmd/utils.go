@@ -146,7 +146,11 @@ func printDiagnostic(fsys fs.FS, w io.Writer, d diagnostics.Diagnostic, noColors
 		de.EndLine(location), de.EndColumn(location),
 	)
 	printDiagnosticLocation(w, s, loc)
-	printSourceSnippet(w, s, loc, fsys, s.severityColor(d.DiagnosticInfo().Severity()))
+	if document := de.TextDocument(location); document != nil {
+		printSourceSnippetContent(w, s, loc, document.String(), s.severityColor(d.DiagnosticInfo().Severity()))
+	} else {
+		printSourceSnippet(w, s, loc, fsys, s.severityColor(d.DiagnosticInfo().Severity()))
+	}
 	_, _ = fmt.Fprintln(w)
 }
 
@@ -176,7 +180,11 @@ func printSourceSnippet(w io.Writer, s outputStyle, loc diagnosticLocation, fsys
 	if err != nil {
 		return
 	}
-	lines := strings.Split(string(content), "\n")
+	printSourceSnippetContent(w, s, loc, string(content), severityColor)
+}
+
+func printSourceSnippetContent(w io.Writer, s outputStyle, loc diagnosticLocation, content, severityColor string) {
+	lines := strings.Split(content, "\n")
 	if loc.startLine >= len(lines) {
 		return
 	}
