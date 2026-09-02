@@ -19,22 +19,19 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	goruntime "runtime"
 	"strings"
 
-	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/cli/internal/nativeexec"
 	"github.com/ballerina-nutcracker/ballerina/cli/internal/nativerunner"
-	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/rt"
 	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
+	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/projects"
-	"github.com/ballerina-nutcracker/ballerina/runtime"
-	"github.com/ballerina-nutcracker/ballerina/semtypes"
-	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 	"github.com/spf13/cobra"
 )
@@ -121,34 +118,6 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	}
 	defer func() { _ = profiler.Stop() }()
 
-	flags := uint16(0)
-
-	if buildOpts.DumpTokens() {
-		flags |= debugcommon.DUMP_TOKENS
-	}
-	if buildOpts.DumpST() {
-		flags |= debugcommon.DUMP_ST
-	}
-	if buildOpts.TraceRecovery() {
-		flags |= debugcommon.DEBUG_ERROR_RECOVERY
-	}
-
-	if flags != 0 {
-		var logWriter *os.File
-		var err error
-		if runOpts.logFile != "" {
-			logWriter, err = os.Create(runOpts.logFile)
-			if err != nil {
-				// A bad --log-file path, not a run-usage mistake, so no USAGE block.
-				return fmt.Errorf("error creating log file %s: %w", runOpts.logFile, err)
-			}
-			defer func() { _ = logWriter.Close() }()
-			debugcommon.InitDebug(flags, logWriter)
-		} else {
-			debugcommon.InitDebug(flags, os.Stderr)
-		}
-	}
-
 	// Default to current directory if no path provided (bal run == bal run .)
 	path := "."
 	if len(args) > 0 {
@@ -168,19 +137,20 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 		path = "."
 	}
 
-	// Detect if path is inside a workspace - if so, load the workspace instead
 	absBaseDir, err := filepath.Abs(baseDir)
 	if err != nil {
 		return runError("%w", err)
 	}
 	workspaceRoot := findWorkspaceRoot(absBaseDir)
-
-	fsys := os.DirFS(baseDir)
-	loadPath := path
+	packageDirName := filepath.Base(absBaseDir)
+	fsys := fs.FS(os.DirFS(baseDir))
 	if workspaceRoot != "" {
-		// When inside a workspace, load from the workspace root
+		relative, relErr := filepath.Rel(workspaceRoot, absBaseDir)
+		if relErr != nil {
+			return runError("%w", relErr)
+		}
+		path = filepath.ToSlash(relative)
 		fsys = os.DirFS(workspaceRoot)
-		loadPath = "."
 	}
 
 	ballerinaEnvPath, err := getBallerinaEnvPath()
@@ -189,109 +159,46 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	}
 	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
 
-	result, err := projects.Load(fsys, loadPath, projects.ProjectLoadConfig{
-		BallerinaEnvFs: ballerinaEnvFs,
-		BuildOptions:   &buildOpts,
-	})
+	parserDebug := parser.DebugOptions{DumpTokens: buildOpts.DumpTokens(), DumpSyntaxTree: buildOpts.DumpST(), TraceRecovery: buildOpts.TraceRecovery()}
+	parserWriter := os.Stderr
+	var logWriter *os.File
+	if runOpts.logFile != "" && (parserDebug.DumpTokens || parserDebug.DumpSyntaxTree || parserDebug.TraceRecovery) {
+		logWriter, err = os.Create(runOpts.logFile)
+		if err != nil {
+			return fmt.Errorf("error creating log file %s: %w", runOpts.logFile, err)
+		}
+		defer func() { _ = logWriter.Close() }()
+		parserWriter = logWriter
+	}
+	platform, cleanupSignals := palnative.NewPlatform()
+	defer cleanupSignals()
+	compilation, err := compileRunInput(cmd.Context(), fsys, path, packageDirName, ballerinaEnvFs,
+		buildOpts, parserDebug, parserWriter, absBaseDir, workspaceRoot, platform)
 	if err != nil {
 		return runError("%w", err)
 	}
-
-	// Check for loading errors
-	diagResult := result.Diagnostics()
-	if diagResult.HasErrors() {
-		// Given we don't have sources at this point it is okay to pass an empty diagnostic env
-		printDiagnostics(fsys, os.Stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
-		// Not a run-usage mistake, so no USAGE block, but cobra should still
-		// print "ballerina: project loading contains errors" as a summary.
-		return fmt.Errorf("project loading contains errors")
-	}
-
-	project := result.Project()
-
-	// If it's a workspace project, resolve to the specific sub-package
-	if project.Kind() == projects.ProjectKindWorkspace {
-		workspace, ok := project.(*projects.WorkspaceProject)
-		if !ok {
-			return runError("internal error: expected WorkspaceProject")
-		}
-
-		// If user specified the workspace root itself, they can't run the workspace directly
-		if workspaceRoot == "" || absBaseDir == workspaceRoot {
-			return runError("cannot run a workspace project directly. Use 'bal run <package-path>' to run a specific package within the workspace")
-		}
-
-		// Find the BuildProject matching the user's path
-		buildProject := findBuildProjectByPath(workspace, workspaceRoot, absBaseDir)
-		if buildProject == nil {
-			return runError("no package found at path %s within workspace %s", absBaseDir, workspaceRoot)
-		}
-		project = buildProject
-	}
-
-	pkg := project.CurrentPackage()
-
-	// Skipped when already running as a native interpreter (BAL_NATIVE=1).
-	if !nativeexec.InNativeMode() {
-		if err := execWithNativeRunner(pkg, project, absBaseDir); err != nil {
-			return runError("%w", err)
-		}
-	}
-
-	// Get package compilation (triggers parsing, type checking, semantic analysis, CFG analysis)
-	compilation := pkg.Compilation()
-
-	// Print all diagnostics; only errors abort the run.
-	compilationDiags := compilation.DiagnosticResult()
+	compilationDiags := projects.NewDiagnosticResult(compilation.context.Diagnostics())
 	if compilationDiags.DiagnosticCount() > 0 {
-		printDiagnostics(fsys, os.Stderr, compilationDiags, !isTerminal(), compilation.DiagnosticEnv())
+		printDiagnostics(fsys, os.Stderr, compilationDiags, !isTerminal(), compilation.context.DiagnosticEnv())
 	}
 	if compilationDiags.HasErrors() {
-		// Not a run-usage mistake, so no USAGE block, but cobra should still
-		// print "ballerina: compilation contains errors" as a summary.
+		if compilation.loadFailed {
+			return fmt.Errorf("project loading contains errors")
+		}
 		return fmt.Errorf("compilation contains errors")
 	}
-
-	// Create backend and generate BIR
-	backend := projects.NewBallerinaBackend(compilation)
-	backendDiags := backend.DiagnosticResult()
-	if backendDiags.HasErrors() {
-		printDiagnostics(fsys, os.Stderr, backendDiags, !isTerminal(), compilation.DiagnosticEnv())
-		return fmt.Errorf("BIR generation failed")
-	}
-	birPkgs := backend.BIRPackages()
-
+	birPkgs := compilation.birPackages
 	if len(birPkgs) == 0 {
 		return fmt.Errorf("BIR generation failed: no BIR package produced")
 	}
 
 	if runOpts.statsOneline {
-		fmt.Fprint(os.Stderr, compilation.StatsReportOneline())
+		fmt.Fprint(os.Stderr, projects.FormatStatsReportOneline(compilation.context.ModuleStats()))
 	} else if buildOpts.Stats() {
-		fmt.Fprint(os.Stderr, compilation.StatsReport())
+		fmt.Fprint(os.Stderr, projects.FormatStatsReport(compilation.context.ModuleStats()))
 	}
 
-	// Only dump BIR for packages belonging to the root package (same org+name).
-	tyEnv := project.Environment().TypeEnv()
-	if buildOpts.DumpBIR() {
-		prettyPrinter := bir.PrettyPrinter{}
-		tyCtx := semtypes.ContextFrom(tyEnv)
-		rootOrgName := pkg.PackageOrg().Value()
-		rootPkgName := pkg.PackageName().Value()
-		for _, birPkg := range birPkgs {
-			if birPkg.PackageID.OrgName.Value() != rootOrgName || birPkg.PackageID.PkgName.Value() != rootPkgName {
-				continue
-			}
-			fmt.Fprintln(os.Stderr)
-			fmt.Fprintln(os.Stderr, "==================BEGIN BIR==================")
-			fmt.Fprintln(os.Stderr, strings.TrimSpace(prettyPrinter.Print(tyCtx, *birPkg)))
-			fmt.Fprintln(os.Stderr, "===================END BIR===================")
-		}
-	}
-
-	pal, cleanupSignals := palnative.NewPlatform()
-	defer cleanupSignals()
-	rt := runtime.NewRuntime(pal, tyEnv)
+	rt := compilation.runtime
 	var initErr error
 	for _, birPkg := range birPkgs {
 		if err := rt.Init(*birPkg); err != nil {
@@ -335,24 +242,15 @@ func getBallerinaEnvPath() (string, error) {
 	return filepath.Join(userHome, projects.UserHomeDirName), nil
 }
 
-// findBuildProjectByPath finds the workspace member whose absolute source
-// root matches absPath.
-func findBuildProjectByPath(workspace *projects.WorkspaceProject, workspaceAbsRoot, absPath string) *projects.BuildProject {
-	for _, bp := range workspace.Projects() {
-		// SourceRoot() is relative to the workspace fs.FS root.
-		bpAbs := filepath.Join(workspaceAbsRoot, bp.SourceRoot())
-		if bpAbs == absPath {
-			return bp
-		}
-	}
-	return nil
-}
-
 // execWithNativeRunner builds a custom interpreter embedding any native Go
 // dependencies and re-execs into it. On success it never returns (os.Exit).
-func execWithNativeRunner(pkg *projects.Package, project projects.Project, absBaseDir string) error {
-	resolution := pkg.Resolution()
-	nativeBalaProjects := findNativeGoBalaProjects(resolution, project.Environment())
+func execWithNativeProjects(candidates []*projects.BalaProject, absBaseDir string) error {
+	nativeBalaProjects := make([]*projects.BalaProject, 0, len(candidates))
+	for _, candidate := range candidates {
+		if strings.HasPrefix(candidate.Platform(), "go") && !isEmbeddedPackage(candidate) {
+			nativeBalaProjects = append(nativeBalaProjects, candidate)
+		}
+	}
 	if len(nativeBalaProjects) == 0 {
 		return nil
 	}

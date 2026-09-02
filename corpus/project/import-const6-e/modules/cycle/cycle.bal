@@ -16,4 +16,4 @@
 
 import root; // @error
 
-const Y = root:X; // @error
+const Y = root:X;
