@@ -1,0 +1,8 @@
+-- stdout --
+-- stderr --
+error: invalid version 'invalid'
+  --> Ballerina.toml
+
+ballerina: project loading contains errors
+-- exitcode --
+1

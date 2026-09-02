@@ -24,6 +24,7 @@ import (
 	_ "github.com/ballerina-nutcracker/ballerina/lib/rt" // register stdlib runtime functions (io.println etc.)
 	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
 	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
 )
 
 // TestMixedBalaFormat verifies that a user project depending on both a v4 bala
@@ -36,9 +37,10 @@ func TestMixedBalaFormat(t *testing.T) {
 
 	repo := projects.NewFileSystemRepository(os.DirFS(repoPath), ".")
 
-	result, err := projects.Load(
+	compiled, err := testharness.CompileWithDriver(
 		os.DirFS(userProjectPath),
 		".",
+		"userProject",
 		projects.ProjectLoadConfig{
 			Repositories: []projects.Repository{
 				repo,
@@ -49,21 +51,16 @@ func TestMixedBalaFormat(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if result.Diagnostics().HasErrors() {
-		t.Fatalf("load diagnostics: %v", result.Diagnostics().Diagnostics())
+	if compiled.Context.HasErrors() {
+		t.Fatalf("compilation diagnostics: %v", compiled.Context.Diagnostics())
 	}
 
-	compilation := result.Project().CurrentPackage().Compilation()
-	if compilation.DiagnosticResult().HasErrors() {
-		t.Fatalf("compilation diagnostics: %v", compilation.DiagnosticResult().Diagnostics())
-	}
-
-	birPkgs := projects.NewBallerinaBackend(compilation).BIRPackages()
+	birPkgs := compiled.BIRPackages
 	if len(birPkgs) == 0 {
 		t.Fatal("backend produced no BIR packages")
 	}
 
-	got := interpretBIRPackagesStdout(t, result.Project().Environment().TypeEnv(), birPkgs)
+	got := interpretBIRPackagesStdout(t, compiled.Resolver.CompilerEnvironment().GetTypeEnv(), birPkgs)
 	want := "v4\nlegacy"
 	if got != want {
 		t.Errorf("stdout = %q, want %q", got, want)

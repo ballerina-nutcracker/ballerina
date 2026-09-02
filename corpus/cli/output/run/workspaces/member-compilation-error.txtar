@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> main.bal:17:5
+   |
+17 |     int value = "not an int";
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ballerina: compilation contains errors
+-- exitcode --
+1
