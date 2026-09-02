@@ -19,6 +19,7 @@ package parser
 
 import (
 	"errors"
+	"io"
 	"slices"
 	"strings"
 
@@ -604,13 +605,13 @@ func isDigit(c byte) bool {
 
 func (b *ballerinaParser) Parse() st.STNode {
 	ast := b.parseCompUnit()
-	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return generateJSON(ast) })
+	b.tokenReader.debug.write(b.tokenReader.debug.options.DumpSyntaxTree, func() string { return generateJSON(ast) })
 	return ast
 }
 
 func (b *ballerinaParser) ParseImports() st.STNode {
 	ast := b.parseCompUnitImports()
-	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return generateJSON(ast) })
+	b.tokenReader.debug.write(b.tokenReader.debug.options.DumpSyntaxTree, func() string { return generateJSON(ast) })
 	return ast
 }
 
@@ -8446,8 +8447,8 @@ func (b *ballerinaParser) parseTemplateContentAsXML() st.STNode {
 		nextToken = b.peek()
 	}
 	charReader := text.CharReaderFromText(xmlStringBuilder.String())
-	xl := newXMLLexer(b.tokenReader.ctx, b.tokenReader.fileName, charReader)
-	tr := createTokenReader(b.tokenReader.ctx, b.tokenReader.fileName, xl)
+	xl := newXMLLexer(b.tokenReader.ctx, b.tokenReader.fileName, charReader, b.tokenReader.debug)
+	tr := createTokenReader(b.tokenReader.ctx, b.tokenReader.fileName, xl, b.tokenReader.debug)
 	xp := newXMLParser(tr, expressions)
 	return xp.Parse()
 }
@@ -11450,8 +11451,8 @@ func (b *ballerinaParser) parseDocumentationString(documentationStringToken st.S
 	diagnostics := documentationStringToken.Diagnostics()
 
 	charReader := text.CharReaderFromText(documentationStringToken.Text())
-	documentationLexer := newDocumentationLexer(b.tokenReader.ctx, b.tokenReader.fileName, charReader, leadingTriviaList, diagnostics)
-	tokenReader := createTokenReader(b.tokenReader.ctx, b.tokenReader.fileName, documentationLexer)
+	documentationLexer := newDocumentationLexer(b.tokenReader.ctx, b.tokenReader.fileName, charReader, leadingTriviaList, diagnostics, b.tokenReader.debug)
+	tokenReader := createTokenReader(b.tokenReader.ctx, b.tokenReader.fileName, documentationLexer, b.tokenReader.debug)
 	documentationParser := newDocumentationParser(tokenReader)
 
 	return documentationParser.Parse()
@@ -14771,20 +14772,57 @@ func (b *ballerinaParser) isSpecialMethodName(token st.STToken) bool {
 // GetSyntaxTree parses content into a syntax tree, attributing it to fileName
 // (used for diagnostics and the syntax tree's text document).
 func GetSyntaxTree(ctx *context.CompilerContext, fileName string, content string) (*st.SyntaxTree, error) {
+	options := DebugOptions{
+		DumpTokens:     debugcommon.DebugEnabled(debugcommon.DUMP_TOKENS),
+		DumpSyntaxTree: debugcommon.DebugEnabled(debugcommon.DUMP_ST),
+		TraceRecovery:  debugcommon.DebugEnabled(debugcommon.DEBUG_ERROR_RECOVERY),
+	}
+	return getSyntaxTree(ctx, fileName, fileName, content, options, debugcommon.DebugWriter(), false)
+}
+
+func GetSyntaxTreeWithIdentity(
+	ctx *context.CompilerContext,
+	sourcePath string,
+	diagnosticIdentity string,
+	content string,
+	debug DebugOptions,
+	debugWriter io.Writer,
+) (*st.SyntaxTree, error) {
+	return getSyntaxTree(ctx, sourcePath, diagnosticIdentity, content, debug, debugWriter, true)
+}
+
+func getSyntaxTree(
+	ctx *context.CompilerContext,
+	sourcePath string,
+	diagnosticIdentity string,
+	content string,
+	options DebugOptions,
+	debugWriter io.Writer,
+	reportDiagnostics bool,
+) (*st.SyntaxTree, error) {
 	textDocument := text.TextDocumentFromText(content)
-	ctx.DiagnosticEnv().RegisterFile(fileName, textDocument)
+	ctx.DiagnosticEnv().RegisterFileIdentity(diagnosticIdentity, sourcePath, textDocument)
+	debug := newDebugOutput(options, debugWriter)
 	reader := text.CharReaderFromText(content)
-	lexer := newLexer(ctx, fileName, reader)
-	tokenReader := createTokenReader(ctx, fileName, lexer)
+	lexer := newLexer(ctx, diagnosticIdentity, reader, debug)
+	tokenReader := createTokenReader(ctx, diagnosticIdentity, lexer, debug)
 	ballerinaParser := newBallerinaParserFromTokenReader(tokenReader)
 	root := ballerinaParser.Parse()
 	rootNode, ok := root.(*st.STModulePart)
 	if !ok {
 		const message = "parser root is not an STModulePart"
-		ctx.InternalError(message, diagnostics.NewLocation(ctx.DiagnosticEnv(), fileName, 0, 0))
+		ctx.InternalError(message, diagnostics.NewLocationForIdentity(ctx.DiagnosticEnv(), diagnosticIdentity, 0, 0))
 		return nil, errors.New(message)
 	}
 	moduleNode := st.CreateUnlinkedFacade[*st.STModulePart, *st.ModulePart](rootNode)
-	syntaxTree := st.NewSyntaxTreeFromNodeTextDocument(moduleNode, textDocument, fileName, false)
+	syntaxTree := st.NewSyntaxTreeFromNodeTextDocument(moduleNode, textDocument, diagnosticIdentity, false)
+	if reportDiagnostics {
+		for diagnostic := range syntaxTree.Diagnostics() {
+			textRange := diagnostic.Location().TextRange()
+			location := diagnostics.NewLocationForIdentity(ctx.DiagnosticEnv(), diagnosticIdentity,
+				textRange.StartOffset, textRange.EndOffset)
+			ctx.SyntaxError(diagnostic.Message(), location)
+		}
+	}
 	return &syntaxTree, nil
 }
