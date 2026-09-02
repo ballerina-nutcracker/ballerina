@@ -97,6 +97,7 @@ func (t *distinctTypeTracker) symbolRef(id int) (model.SymbolRef, bool) {
 type CompilerEnvironment struct {
 	anonTypeCount              map[*model.PackageID]int
 	anonFuncCount              map[*model.PackageID]int
+	anonCountMu                sync.Mutex
 	packageInterner            *model.PackageIDInterner
 	symbolSpaces               []*model.SymbolSpace
 	symbolSpacesMu             sync.RWMutex // we need this because desugaring add new init functions concurrently we shouldn't need this if the spaces are scoped to the module, may be we should do that?
@@ -374,12 +375,16 @@ const (
 )
 
 func (c *CompilerEnvironment) GetNextAnonymousFunctionKey(packageID *model.PackageID) string {
+	c.anonCountMu.Lock()
+	defer c.anonCountMu.Unlock()
 	nextValue := c.anonFuncCount[packageID]
 	c.anonFuncCount[packageID] = nextValue + 1
 	return anonPrefix + "Func$_" + strconv.Itoa(nextValue)
 }
 
 func (c *CompilerEnvironment) GetNextAnonymousTypeKey(packageID *model.PackageID) string {
+	c.anonCountMu.Lock()
+	defer c.anonCountMu.Unlock()
 	nextValue := c.anonTypeCount[packageID]
 	c.anonTypeCount[packageID] = nextValue + 1
 	if packageID != nil && model.ANNOTATIONS_PKG != packageID {

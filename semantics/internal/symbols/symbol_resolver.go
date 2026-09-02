@@ -588,7 +588,7 @@ func Resolve(
 	implicitImports map[string]model.ExportedSymbolSpace,
 	publicSymbols map[PackageIdentifier]model.ExportedSymbolSpace,
 	defaultOrg string,
-) (model.Scope, model.ExportedSymbolSpace, map[string]model.ExportedSymbolSpace) {
+) (model.Scope, model.ExportedSymbolSpace, model.ImportedSymbolSpaces) {
 	cuImportsList := bindImports(cx, compilationUnits, implicitImports, publicSymbols, defaultOrg)
 	moduleResolver := newModuleSymbolResolver(cx, pkgID)
 	injectOpaqueSymbols(pkgID, moduleResolver)
@@ -603,7 +603,12 @@ func Resolve(
 		resolver.allocateTopLevelSymbols(cuImportsList[i].compilationUnit)
 	}
 
-	importedSymbols := make(map[string]model.ExportedSymbolSpace)
+	importedSymbols := model.NewImportedSymbolSpaces()
+	for _, imported := range implicitImports {
+		if len(imported.MainSpaces) > 0 {
+			importedSymbols[imported.MainSpaces[0].Pkg] = imported
+		}
+	}
 	for i, cuImports := range cuImportsList {
 		cu := cuImports.compilationUnit
 		resolver := cuResolvers[i]
@@ -611,7 +616,11 @@ func Resolve(
 		ast.Walk(resolver, cu)
 		reportUnusedImports(resolver, compilationUnitImports(cu))
 		reportUnusedVariables(cx, resolver.getUnused())
-		maps.Copy(importedSymbols, cuImports.imports)
+		for _, imported := range cuImports.imports {
+			if len(imported.MainSpaces) > 0 {
+				importedSymbols[imported.MainSpaces[0].Pkg] = imported
+			}
+		}
 	}
 
 	mainSpaces := make([]*model.SymbolSpace, 0, len(cuResolvers)+1)
@@ -1137,7 +1146,14 @@ func bindImports(
 	result := make([]compilationUnitImportsWithSymbols, len(compilationUnits))
 	for i, cu := range compilationUnits {
 		imports := make(map[string]model.ExportedSymbolSpace)
+		aliases := make(map[string]bool)
 		for _, imp := range compilationUnitImports(cu) {
+			alias := imp.Alias.GetValue()
+			if aliases[alias] {
+				ctx.SemanticError(fmt.Sprintf("import alias '%s' already defined", alias), imp.GetPosition())
+				continue
+			}
+			aliases[alias] = true
 			resolveExternalImport(ctx, &imp, defaultOrg, publicSymbols, imports)
 		}
 		maps.Copy(imports, implicitImports)
