@@ -1,0 +1,4 @@
+[package]
+org = "example"
+name = "pkgerror"
+version = "0.1.0"

@@ -1,2 +1,2 @@
 [workspace]
-packages = ["pkgmain", "pkglib"]
+packages = ["pkgmain", "pkglib", "pkgerror"]
