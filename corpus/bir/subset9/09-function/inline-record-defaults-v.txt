@@ -82,7 +82,7 @@ main() -> nil{
     %9 = println(%8) -> bb4;
   }
   bb4 {
-    %10 = newMap {| a: int, b: int, anydata... |}{} defaults{a=$anon/.:$desugar$4, b=$anon/.:$desugar$5}
+    %10 = newMap {| a: int, b: int, anydata... |}{} defaults{a=$anon/.:$desugar$5, b=$anon/.:$desugar$6}
     %11 = foo(%10) -> bb5;
   }
   bb5 {
@@ -92,7 +92,7 @@ main() -> nil{
   bb6 {
     %14 = ConstantLoad a
     %15 = ConstantLoad 6
-    %16 = newMap {| a: int, b: int, anydata... |}{%14=%15} defaults{a=$anon/.:$desugar$4, b=$anon/.:$desugar$5}
+    %16 = newMap {| a: int, b: int, anydata... |}{%14=%15} defaults{a=$anon/.:$desugar$5, b=$anon/.:$desugar$6}
     %17 = foo(%16) -> bb7;
   }
   bb7 {
@@ -134,7 +134,7 @@ $desugar$2() -> int{
     return;
   }
 }
-$desugar$6() -> int{
+$desugar$3() -> int{
   bb0 {
     %1 = ConstantLoad 42
     %0 = %1;
@@ -143,26 +143,26 @@ $desugar$6() -> int{
 }
 $default$0() -> {| value: int, never... |}{
   bb0 {
-    %1 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$desugar$3}
-    %0 = %1;
-    return;
-  }
-}
-$desugar$3() -> int{
-  bb0 {
-    %1 = ConstantLoad 43
+    %1 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$desugar$4}
     %0 = %1;
     return;
   }
 }
 $desugar$4() -> int{
   bb0 {
-    %1 = ConstantLoad 5
+    %1 = ConstantLoad 43
     %0 = %1;
     return;
   }
 }
 $desugar$5() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$desugar$6() -> int{
   bb0 {
     %1 = ConstantLoad 10
     %0 = %1;

@@ -1,0 +1,130 @@
+module $anon.. v 0.0.0;
+$xmlStep$36$784(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$36$808(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a-b"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$36$866(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a-b"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$36$928(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "u005C"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$36$1072(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "\\"}])
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad hyphen
+    %2 = newXMLText(%1)
+    %3 = newXMLElement("a-b", %2)
+    %4 = ConstantLoad weird
+    %5 = newXMLText(%4)
+    %6 = newXMLElement("u005C", %5)
+    %7 = newXMLSequence{%3, %6}
+    %8 = newXMLElement("root", %7)
+    root = %8;
+    %10 = ConstantLoad <nil>
+    %11 = %10;
+    %12 = elements(root,%11) -> bb1;
+  }
+  bb1 {
+    %13 = fp $anon/.:$xmlStep$36$784
+    %14 = map(%12,%13) -> bb2;
+  }
+  bb2 {
+    children = %14;
+    %16 = ConstantLoad <nil>
+    %17 = %16;
+    %18 = elements(root,%17) -> bb3;
+  }
+  bb3 {
+    %19 = fp $anon/.:$xmlStep$36$808
+    %20 = map(%18,%19) -> bb4;
+  }
+  bb4 {
+    %21 = println(%20) -> bb5;
+  }
+  bb5 {
+    %22 = ConstantLoad <nil>
+    %23 = %22;
+    %24 = elements(root,%23) -> bb6;
+  }
+  bb6 {
+    %25 = fp $anon/.:$xmlStep$36$866
+    %26 = map(%24,%25) -> bb7;
+  }
+  bb7 {
+    %27 = println(%26) -> bb8;
+  }
+  bb8 {
+    %28 = ConstantLoad <nil>
+    %29 = %28;
+    %30 = elements(root,%29) -> bb9;
+  }
+  bb9 {
+    %31 = fp $anon/.:$xmlStep$36$928
+    %32 = map(%30,%31) -> bb10;
+  }
+  bb10 {
+    %33 = println(%32) -> bb11;
+  }
+  bb11 {
+    %34 = ConstantLoad <nil>
+    %35 = %34;
+    %36 = elements(root,%35) -> bb12;
+  }
+  bb12 {
+    %37 = fp $anon/.:$xmlStep$36$1072
+    %38 = map(%36,%37) -> bb13;
+  }
+  bb13 {
+    %39 = println(%38) -> bb14;
+  }
+  bb14 {
+    %40 = xmlFilter(children, [{"", "\\"}])
+    %41 = println(%40) -> bb15;
+  }
+  bb15 {
+    %42 = xmlFilter(children, [{"", "u005C"} | {"", "\\"}])
+    %43 = println(%42) -> bb16;
+  }
+  bb16 {
+    return;
+  }
+}

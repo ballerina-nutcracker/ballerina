@@ -38,6 +38,42 @@ func unescapeBallerinaString(s string) string {
 	return unescapeBackslashEscapes(unescapeUnicodeCodepoints(s))
 }
 
+func unescapeIdentifier(s string) string {
+	s = unescapeUnicodeCodepoints(s)
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\\' && i+1 < len(s) {
+			// `unescapeUnicodeCodepoints` emits `\uXXXX` (no braces) for a decoded
+			// backslash codepoint so that it survives the generic backslash
+			// stripping below. Decode that marker here, mirroring the second pass
+			// of `unescapeBallerinaString`.
+			if r, width, ok := decodeUnicodeMarker(s, i); ok {
+				b.WriteRune(r)
+				i += width - 1
+				continue
+			}
+			i++
+		}
+		b.WriteByte(s[i])
+	}
+	return b.String()
+}
+
+// decodeUnicodeMarker decodes the brace-less `\uXXXX` marker at s[i:] that
+// unescapeUnicodeCodepoints emits, returning the rune and the marker width.
+func decodeUnicodeMarker(s string, i int) (rune, int, bool) {
+	const markerWidth = len("\\uXXXX")
+	if i+markerWidth > len(s) || s[i] != '\\' || s[i+1] != 'u' || s[i+2] == '{' {
+		return 0, 0, false
+	}
+	cp, err := strconv.ParseInt(s[i+2:i+markerWidth], 16, 32)
+	if err != nil {
+		return 0, 0, false
+	}
+	return rune(cp), markerWidth, true
+}
+
 func unescapeUnicodeCodepoints(s string) string {
 	return unicodeCodepointPattern.ReplaceAllStringFunc(s, func(match string) string {
 		submatch := unicodeCodepointPattern.FindStringSubmatch(match)
@@ -77,12 +113,10 @@ func unescapeBackslashEscapes(s string) string {
 			i++
 			continue
 		}
-		if next == 'u' && i+6 <= len(s) && s[i+2] != '{' {
-			if cp, err := strconv.ParseInt(s[i+2:i+6], 16, 32); err == nil {
-				b.WriteRune(rune(cp))
-				i += 5
-				continue
-			}
+		if r, width, ok := decodeUnicodeMarker(s, i); ok {
+			b.WriteRune(r)
+			i += width - 1
+			continue
 		}
 		b.WriteByte(s[i])
 	}

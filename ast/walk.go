@@ -551,6 +551,32 @@ func Walk(v Visitor, node BLangNode) {
 			Walk(v, node.Expression)
 		}
 
+	case *BLangXMLStepExpression:
+		if node.Expression != nil {
+			Walk(v, node.Expression)
+		}
+		if node.Start != nil {
+			Walk(v, node.Start)
+		}
+		for _, extension := range node.Extensions {
+			Walk(v, extension)
+		}
+
+	case *BLangXMLStepStart, *BLangXMLStepFilterExtend:
+		// Leaf nodes
+
+	case *BLangXMLStepIndexExtend:
+		if node.Expression != nil {
+			Walk(v, node.Expression)
+		}
+
+	case *BLangXMLStepMethodCallExtend:
+		if node.Invocation != nil {
+			for _, arg := range node.Invocation.ArgExprs {
+				Walk(v, arg)
+			}
+		}
+
 	// Section 7: Expressions - Worker
 	case *BLangWorkerReceive:
 		if node.WorkerIdentifier != nil {

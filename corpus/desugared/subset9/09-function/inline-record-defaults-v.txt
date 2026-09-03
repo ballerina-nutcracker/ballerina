@@ -159,7 +159,7 @@
     (block-function-body
       (return
         (literal 9))))
-  (function $desugar$6 () ()
+  (function $desugar$3 () ()
     (block-function-body
       (return
         (literal 42))))
@@ -167,15 +167,15 @@
     (block-function-body
       (return
         (mapping-constructor-expr))))
-  (function $desugar$3 () ()
-    (block-function-body
-      (return
-        (literal 43))))
   (function $desugar$4 () ()
     (block-function-body
       (return
-        (literal 5))))
+        (literal 43))))
   (function $desugar$5 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $desugar$6 () ()
     (block-function-body
       (return
         (literal 10)))))

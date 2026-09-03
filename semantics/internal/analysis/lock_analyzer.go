@@ -818,6 +818,11 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	case *ast.BLangLambdaFunction:
 		visitor.walkLambda(node)
 		return nil
+	case *ast.BLangXMLStepExpression:
+		if lowered := node.LoweredExpression; lowered != nil {
+			ast.Walk(visitor, lowered)
+		}
+		return nil
 	case *ast.BLangLock:
 		visitor.walkLock(node)
 		return nil

@@ -50,6 +50,14 @@ const (
 	NamePatternKindPrefix
 )
 
+type XMLStepStartKind uint8
+
+const (
+	XMLStepStartKindAllChildren XMLStepStartKind = iota
+	XMLStepStartKindElementChildren
+	XMLStepStartKindElementDescendants
+)
+
 type BLangActionOrExpression interface {
 	BLangNode
 	actionOrExpression()
@@ -619,7 +627,46 @@ type (
 		Expression  BLangExpression
 		NamePattern []BLangAtomicNamePattern
 	}
+
+	BLangXMLStepExpression struct {
+		bLangExpressionBase
+		Expression BLangExpression
+		Start      *BLangXMLStepStart
+		Extensions []XMLStepExtend
+
+		// XML steps are lowered during type resolution because each extension must be
+		// resolved against the result type of the preceding extension. Desugaring is
+		// too late to type-check and monomorphize those generated calls. Since type
+		// resolution cannot replace this node in its parent, desugaring uses this
+		// fully typed lowering.
+		LoweredExpression BLangExpression
+	}
+
+	BLangXMLStepStart struct {
+		bLangNodeBase
+		Kind        XMLStepStartKind
+		NamePattern []BLangAtomicNamePattern
+	}
+
+	BLangXMLStepFilterExtend struct {
+		bLangNodeBase
+		NamePattern []BLangAtomicNamePattern
+	}
+
+	BLangXMLStepIndexExtend struct {
+		bLangNodeBase
+		Expression BLangExpression
+	}
+
+	BLangXMLStepMethodCallExtend struct {
+		bLangNodeBase
+		Invocation *BLangInvocation
+	}
 )
+
+func (*BLangXMLStepFilterExtend) xmlStepExtend()     {}
+func (*BLangXMLStepIndexExtend) xmlStepExtend()      {}
+func (*BLangXMLStepMethodCallExtend) xmlStepExtend() {}
 
 var (
 	_ SimpleVariableReferenceNode = &BLangVarRef{}
@@ -652,6 +699,11 @@ var (
 	_ BLangExpression             = &BLangNewExpression{}
 	_ BLangExpression             = &BLangXMLFilterExpression{}
 	_ BLangNode                   = &BLangXMLFilterExpression{}
+	_ BLangExpression             = &BLangXMLStepExpression{}
+	_ BLangNode                   = &BLangXMLStepStart{}
+	_ XMLStepExtend               = &BLangXMLStepFilterExtend{}
+	_ XMLStepExtend               = &BLangXMLStepIndexExtend{}
+	_ XMLStepExtend               = &BLangXMLStepMethodCallExtend{}
 )
 
 var (

@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid whitespace in slash lt token
+  --> xml-step-syntax-e.bal:37:18
+   |
+37 |     _ = value / <item>; // @error
+   |
+
+error[SYNTAX_ERROR]: missing asterisk token
+  --> xml-step-syntax-e.bal:25:21
+   |
+25 |     _ = value/<item|>; // @error
+   |
+
+error[SYNTAX_ERROR]: missing close bracket token
+  --> xml-step-syntax-e.bal:29:18
+   |
+29 |     _ = value/*[0; // @error
+   |
+
+error[SYNTAX_ERROR]: missing close paren token
+  --> xml-step-syntax-e.bal:33:23
+   |
+33 |     _ = value/*.slice(; // @error
+   |
+
+error[SYNTAX_ERROR]: missing gt token
+  --> xml-step-syntax-e.bal:21:20
+   |
+21 |     _ = value/<item; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> xml-step-syntax-e.bal:21:20
+   |
+21 |     _ = value/<item; // @error
+   |
+
+error[SYNTAX_ERROR]: missing xml atomic name pattern
+  --> xml-step-syntax-e.bal:17:14
+   |
+17 |     _ = value/<>; // @error
+   |              ^^
