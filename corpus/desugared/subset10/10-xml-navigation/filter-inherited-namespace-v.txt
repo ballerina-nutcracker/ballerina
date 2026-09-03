@@ -1,0 +1,33 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (xmlns
+        (literal urn:items) as p)
+      (xmlns
+        (literal urn:items) as q)
+      (var-def
+        (variable root (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-element-literal p:item)))))
+      (var-def
+        (variable children (type
+          (value-type xml)) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref root)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$826 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml getChildren (
+                    (simple-var-ref $xmlStepItem)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref children)
+            (xml-name-pattern-qualified-identifier q item))))))))

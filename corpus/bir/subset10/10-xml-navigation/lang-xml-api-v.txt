@@ -353,7 +353,7 @@ main() -> nil|error{
     %129 = iterator(exactSource) -> bb48;
   }
   bb48 {
-    %130 = next(%129) -> bb49;
+    %130 = %129.next() -> bb49;
   }
   bb49 {
     elementNext = %130;
@@ -362,7 +362,7 @@ main() -> nil|error{
     %134 = iterator(%133) -> bb50;
   }
   bb50 {
-    %135 = next(%134) -> bb51;
+    %135 = %134.next() -> bb51;
   }
   bb51 {
     commentNext = %135;
@@ -372,7 +372,7 @@ main() -> nil|error{
     %140 = iterator(%139) -> bb52;
   }
   bb52 {
-    %141 = next(%140) -> bb53;
+    %141 = %140.next() -> bb53;
   }
   bb53 {
     piNext = %141;
@@ -381,7 +381,7 @@ main() -> nil|error{
     %145 = iterator(%144) -> bb54;
   }
   bb54 {
-    %146 = next(%145) -> bb55;
+    %146 = %145.next() -> bb55;
   }
   bb55 {
     textNext = %146;
@@ -409,11 +409,11 @@ main() -> nil|error{
   }
   bb60 {
     exhausted = %160;
-    %162 = next(exhausted) -> bb61;
+    %162 = exhausted.next() -> bb61;
   }
   bb61 {
     %163 = %162;
-    %164 = next(exhausted) -> bb62;
+    %164 = exhausted.next() -> bb62;
   }
   bb62 {
     %165 = %164 is nil
@@ -453,7 +453,7 @@ main() -> nil|error{
   }
   bb69 {
     moduleFilter = %186;
-    %188 = next(moduleIterator) -> bb70;
+    %188 = moduleIterator.next() -> bb70;
   }
   bb70 {
     %189 = %188 is {| value: xml:Element, never... |}

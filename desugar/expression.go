@@ -165,6 +165,12 @@ func walkExpression(cx *functionContext, node ast.BLangActionOrExpression) desug
 		return walkXMLTemplateExpr(cx, expr)
 	case *ast.BLangXMLFilterExpression:
 		return walkXMLFilterExpression(cx, expr)
+	case *ast.BLangXMLStepExpression:
+		if expr.LoweredExpression == nil {
+			cx.internalError("XML step expression has no lowering", expr.GetPosition())
+			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
+		}
+		return walkExpression(cx, expr.LoweredExpression)
 	default:
 		cx.internalError(fmt.Sprintf("unexpected expression type: %T", node), node.GetPosition())
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: node}

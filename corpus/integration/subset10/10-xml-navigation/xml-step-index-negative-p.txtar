@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: XML index out of range
+        at $xmlStep$1$725(xml-step-index-negative-p.bal:18)
+           main(xml-step-index-negative-p.bal:18)

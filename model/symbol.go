@@ -891,6 +891,22 @@ func (space *ExportedSymbolSpace) GetSymbol(name string) (SymbolRef, bool) {
 	return SymbolRef{}, false
 }
 
+// GetOpaqueSymbol returns a package-scoped opaque symbol by its serialization
+// handle without applying source visibility. Compiler-generated operations such
+// as XML step indexing need this because GetSymbol intentionally hides their
+// private implementation symbols from source programs.
+func (space *ExportedSymbolSpace) GetOpaqueSymbol(id int) (SymbolRef, bool) {
+	for _, main := range space.MainSpaces {
+		for ref := range main.Symbols() {
+			symbol, ok := main.SymbolAt(ref.Index).(OpaqueSymbol)
+			if ok && symbol.OpaqueID() == id {
+				return ref, true
+			}
+		}
+	}
+	return SymbolRef{}, false
+}
+
 func (space *ExportedSymbolSpace) GetAnnotationSymbol(name string) (SymbolRef, bool) {
 	for _, annotationSpace := range space.AnnotationSpaces {
 		ref, ok := annotationSpace.GetSymbol(name)

@@ -1,0 +1,26 @@
+(package
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-element-literal item
+              (xml-text-literal A))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation lang.xml map (
+          (invocation lang.xml elements (
+            (simple-var-ref value)
+            (literal <nil>)))
+          (lambda
+            (function $xmlStep$24$725 (
+              (variable $xmlStepItem)) ()
+              (expr-function-body
+                (invocation lang.xml $stepIndex (
+                  (invocation lang.xml getChildren (
+                    (simple-var-ref $xmlStepItem)))
+                  (unary-expr -
+                    (literal 1)))))))))))))

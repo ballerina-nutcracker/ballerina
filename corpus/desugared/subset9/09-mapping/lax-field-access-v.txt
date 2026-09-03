@@ -1,7 +1,6 @@
 (package
   (import-package ballerina io (as io))
   (import-package ballerina lang map (as lang.map))
-  (import-package ballerina lang map (as lang.map))
   (import-package ballerina lang map (as map))
   (variable evaluations (type
     (value-type int)))

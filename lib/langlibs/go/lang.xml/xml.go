@@ -45,6 +45,7 @@ func initXMLModule(rt *runtime.Runtime) {
 		"strip": strip, "elements": elements, "children": children,
 		"elementChildren": elementChildren, "text": text, "map": xmlMap,
 		"forEach": forEach, "filter": filter, "fromString": fromString,
+		"$stepIndex":   stepIndex,
 		nextMethodName: xmlIteratorNext,
 	}
 	for name, function := range functions {
@@ -103,6 +104,22 @@ func get(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		panic(values.NewErrorWithMessage("XML index out of range"))
 	}
 	return items[index], nil
+}
+
+// stepIndex implements the compiler-generated indexed XML step operation. An
+// XML step must remain an XML sequence: an in-range index produces a singleton
+// sequence and a nonnegative out-of-range index produces the empty sequence.
+// The source-visible get method instead returns one XML item and panics for any
+// out-of-range index, so it cannot implement XML step indexing.
+func stepIndex(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	items, index := asXML(args[0]).IterItems(), args[1].(int64)
+	if index < 0 {
+		panic(values.NewErrorWithMessage("XML index out of range"))
+	}
+	if index >= int64(len(items)) {
+		return values.NewNormalizedXMLSequence(nil), nil
+	}
+	return values.NewNormalizedXMLSequence([]values.XMLValue{items[index]}), nil
 }
 
 func concat(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {

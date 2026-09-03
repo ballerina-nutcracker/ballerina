@@ -1,0 +1,340 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (import-package ballerina lang xml (as lang.xml))
+  (variable moduleSource (type
+    (value-type xml)))
+  (variable moduleResult (type
+    (value-type xml)))
+  (variable inferredModuleResult)
+  (variable publicModuleResult (type
+    (value-type xml)))
+  (type-definition Result
+    (record-type
+      (field items
+        (value-type xml)
+        (invocation lang.xml map (
+          (invocation lang.xml elements (
+            (xml-element-literal root
+              (xml-element-literal item
+                (xml-text-literal A)))
+            (literal <nil>)))
+          (lambda
+            (function $xmlStep$24$937 (
+              (variable $xmlStepItem)) ()
+              (expr-function-body
+                (invocation lang.xml getChildren (
+                  (simple-var-ref $xmlStepItem)))))))))))
+  (class-definition Holder
+    (variable items (type
+      (value-type xml)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal items))
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref moduleSource)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$880 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml getChildren (
+                    (simple-var-ref $xmlStepItem))))))))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref moduleSource)
+        (xml-element-literal root
+          (xml-element-literal item
+            (xml-text-literal A))))
+      (assignment
+        (simple-var-ref moduleResult)
+        (invocation lang.xml map (
+          (invocation lang.xml elements (
+            (simple-var-ref moduleSource)
+            (literal <nil>)))
+          (lambda
+            (function $xmlStep$24$736 (
+              (variable $xmlStepItem)) ()
+              (expr-function-body
+                (xml-filter-expression
+                  (invocation lang.xml getChildren (
+                    (simple-var-ref $xmlStepItem)))
+                  (xml-name-pattern-identifier item))))))))
+      (assignment
+        (simple-var-ref inferredModuleResult)
+        (invocation lang.xml map (
+          (invocation lang.xml elements (
+            (simple-var-ref moduleSource)
+            (literal <nil>)))
+          (lambda
+            (function $xmlStep$24$784 (
+              (variable $xmlStepItem)) ()
+              (expr-function-body
+                (invocation lang.xml getChildren (
+                  (simple-var-ref $xmlStepItem)))))))))
+      (assignment
+        (simple-var-ref publicModuleResult)
+        (invocation lang.xml map (
+          (invocation lang.xml elements (
+            (simple-var-ref moduleSource)
+            (literal <nil>)))
+          (lambda
+            (function $xmlStep$24$832 (
+              (variable $xmlStepItem)) ()
+              (expr-function-body
+                (invocation lang.xml getChildren (
+                  (simple-var-ref $xmlStepItem)))))))))))
+  (function withDefault (
+    (variable value (type
+      (value-type xml)) (expr
+      (xml-step-expression
+        (simple-var-ref moduleSource)
+        (xml-step-all-children))))) (
+    (value-type xml))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function checkedReceiver () (
+    (union-type
+      (value-type xml)
+      (error-type)))
+    (block-function-body
+      (return
+        (invocation lang.xml map (
+          (invocation lang.xml elements (
+            (group-expr
+              (checked-expr
+                (invocation xmlProducer ())))
+            (literal <nil>)))
+          (lambda
+            (function $xmlStep$24$1109 (
+              (variable $xmlStepItem)) ()
+              (expr-function-body
+                (invocation lang.xml getChildren (
+                  (simple-var-ref $xmlStepItem)))))))))))
+  (function xmlProducer () (
+    (union-type
+      (value-type xml)
+      (error-type)))
+    (expr-function-body
+      (xml-element-literal root
+        (xml-element-literal item
+          (xml-text-literal C)))))
+  (function directReturn () (
+    (value-type xml))
+    (expr-function-body
+      (invocation lang.xml map (
+        (invocation lang.xml elements (
+          (simple-var-ref moduleSource)
+          (literal <nil>)))
+        (lambda
+          (function $xmlStep$24$1256 (
+            (variable $xmlStepItem)) ()
+            (expr-function-body
+              (invocation lang.xml getChildren (
+                (simple-var-ref $xmlStepItem))))))))))
+  (function identity (
+    (variable value (type
+      (value-type xml)))) (
+    (value-type xml))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function assert (
+    (variable actual (type
+      (value-type anydata)))
+    (variable expected (type
+      (value-type anydata)))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (binary-expr !=
+          (simple-var-ref actual)
+          (simple-var-ref expected))
+        (block-stmt
+          (panic
+            (error-constructor-expr (
+              (literal values are not equal))))) ())
+      (block-stmt)))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable result (type
+          (user-defined-type Result)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable local (type
+          (value-type xml)) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (group-expr
+                (ternary-expr
+                  (literal true)
+                  (simple-var-ref moduleSource)
+                  (xml-element-literal root)))
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$1539 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml getChildren (
+                    (simple-var-ref $xmlStepItem)))))))))))
+      (var-def
+        (variable cast (type
+          (value-type xml)) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (group-expr
+                (type-conversion-expr
+                  (simple-var-ref moduleSource)
+                  (value-type xml)))
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$1595 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml getChildren (
+                    (simple-var-ref $xmlStepItem)))))))))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref moduleResult)
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref inferredModuleResult)
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref publicModuleResult)
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation io println (
+          (literal xml-step-module-contexts ok))))
+      (expression-stmt
+        (invocation assert (
+          (index-based-access
+            (simple-var-ref result)
+            (literal items))
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$0 ()))))
+      (expression-stmt
+        (invocation assert (
+          (invocation withDefault (
+            (simple-var-ref $desugar$0)))
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (checked-expr
+            (invocation checkedReceiver ()))
+          (xml-element-literal item
+            (xml-text-literal C)))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref local)
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref cast)
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (invocation directReturn ())
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (invocation identity (
+            (invocation lang.xml map (
+              (invocation lang.xml elements (
+                (simple-var-ref moduleSource)
+                (literal <nil>)))
+              (lambda
+                (function $xmlStep$24$2169 (
+                  (variable $xmlStepItem)) ()
+                  (expr-function-body
+                    (invocation lang.xml getChildren (
+                      (simple-var-ref $xmlStepItem))))))))))
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation io println (
+          (literal xml-step-expression-contexts ok))))
+      (var-def
+        (variable trapped (type
+          (union-type
+            (value-type any)
+            (error-type))) (expr
+          (trap-expr
+            (invocation lang.xml map (
+              (invocation lang.xml elements (
+                (simple-var-ref moduleSource)
+                (literal <nil>)))
+              (lambda
+                (function $xmlStep$24$2332 (
+                  (variable $xmlStepItem)) ()
+                  (expr-function-body
+                    (invocation lang.xml $stepIndex (
+                      (invocation lang.xml getChildren (
+                        (simple-var-ref $xmlStepItem)))
+                      (unary-expr -
+                        (literal 1)))))))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref trapped)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation assert (
+              (invocation lang.error message (
+                (simple-var-ref trapped)))
+              (literal XML index out of range))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (literal xml-step-check-contexts ok))))
+        (expression-stmt
+          (invocation io println (
+            (literal xml-step-contexts ok)))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (invocation lang.xml map (
+          (invocation lang.xml elements (
+            (xml-element-literal root
+              (xml-element-literal item
+                (xml-text-literal A)))
+            (literal <nil>)))
+          (lambda
+            (function $xmlStep$24$937 (
+              (variable $xmlStepItem)) ()
+              (expr-function-body
+                (invocation lang.xml getChildren (
+                  (simple-var-ref $xmlStepItem)))))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (invocation lang.xml map (
+          (invocation lang.xml elements (
+            (simple-var-ref moduleSource)
+            (literal <nil>)))
+          (lambda
+            (function $xmlStep$24$1012 (
+              (variable $xmlStepItem)) ()
+              (expr-function-body
+                (invocation lang.xml getChildren (
+                  (simple-var-ref $xmlStepItem))))))))))))

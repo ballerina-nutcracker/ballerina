@@ -1,0 +1,165 @@
+(assert
+  (bb0 () (bb1 bb2)
+    (binary-expr !=
+      (simple-var-ref actual)
+      (simple-var-ref expected))
+  )
+  (bb1 (bb0) ()
+    (panic
+      (error-constructor-expr (
+        (literal values are not equal))))
+  )
+  (bb2 (bb0) ())
+)
+(checkedReceiver
+  (bb0 () ()
+    (return
+      (xml-step-expression
+        (group-expr
+          (checked-expr
+            (invocation xmlProducer ())))
+        (xml-step-all-children)))
+  )
+)
+(directReturn
+  (bb0 () ()
+    (xml-step-expression
+      (simple-var-ref moduleSource)
+      (xml-step-all-children))
+  )
+)
+(identity
+  (bb0 () ()
+    (simple-var-ref value)
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable result (type
+        (user-defined-type Result)) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable local (type
+        (value-type xml)) (expr
+        (xml-step-expression
+          (group-expr
+            (ternary-expr
+              (literal true)
+              (simple-var-ref moduleSource)
+              (xml-element-literal root)))
+          (xml-step-all-children)))))
+    (var-def
+      (variable cast (type
+        (value-type xml)) (expr
+        (xml-step-expression
+          (group-expr
+            (type-conversion-expr
+              (simple-var-ref moduleSource)
+              (value-type xml)))
+          (xml-step-all-children)))))
+    (expression-stmt
+      (invocation assert (
+        (simple-var-ref moduleResult)
+        (xml-element-literal item
+          (xml-text-literal A)))))
+    (expression-stmt
+      (invocation assert (
+        (simple-var-ref inferredModuleResult)
+        (xml-element-literal item
+          (xml-text-literal A)))))
+    (expression-stmt
+      (invocation assert (
+        (simple-var-ref publicModuleResult)
+        (xml-element-literal item
+          (xml-text-literal A)))))
+    (expression-stmt
+      (invocation io println (
+        (literal xml-step-module-contexts ok))))
+    (expression-stmt
+      (invocation assert (
+        (field-based-access items
+          (simple-var-ref result))
+        (xml-element-literal item
+          (xml-text-literal A)))))
+    (expression-stmt
+      (invocation assert (
+        (invocation withDefault ( <default>))
+        (xml-element-literal item
+          (xml-text-literal A)))))
+    (expression-stmt
+      (invocation assert (
+        (checked-expr
+          (invocation checkedReceiver ()))
+        (xml-element-literal item
+          (xml-text-literal C)))))
+    (expression-stmt
+      (invocation assert (
+        (simple-var-ref local)
+        (xml-element-literal item
+          (xml-text-literal A)))))
+    (expression-stmt
+      (invocation assert (
+        (simple-var-ref cast)
+        (xml-element-literal item
+          (xml-text-literal A)))))
+    (expression-stmt
+      (invocation assert (
+        (invocation directReturn ())
+        (xml-element-literal item
+          (xml-text-literal A)))))
+    (expression-stmt
+      (invocation assert (
+        (invocation identity (
+          (xml-step-expression
+            (simple-var-ref moduleSource)
+            (xml-step-all-children))))
+        (xml-element-literal item
+          (xml-text-literal A)))))
+    (expression-stmt
+      (invocation io println (
+        (literal xml-step-expression-contexts ok))))
+    (var-def
+      (variable trapped (type
+        (union-type
+          (value-type any)
+          (error-type))) (expr
+        (trap-expr
+          (xml-step-expression
+            (simple-var-ref moduleSource)
+            (xml-step-all-children)
+            (xml-step-index-extend
+              (unary-expr -
+                (literal 1))))))))
+    (type-test-expr is
+      (simple-var-ref trapped)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation assert (
+        (invocation lang.error message (
+          (simple-var-ref trapped)))
+        (literal XML index out of range))))
+  )
+  (bb2 (bb1 bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal xml-step-check-contexts ok))))
+    (expression-stmt
+      (invocation io println (
+        (literal xml-step-contexts ok))))
+  )
+)
+(withDefault
+  (bb0 () ()
+    (simple-var-ref value)
+  )
+)
+(xmlProducer
+  (bb0 () ()
+    (xml-element-literal root
+      (xml-element-literal item
+        (xml-text-literal C)))
+  )
+)

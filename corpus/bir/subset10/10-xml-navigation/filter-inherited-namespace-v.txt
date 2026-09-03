@@ -1,0 +1,35 @@
+module $anon.. v 0.0.0;
+$xmlStep$24$826(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newXMLElement("p:item", namespace="urn:items", ())
+    %2 = ConstantLoad xmlns:p
+    %3 = ConstantLoad urn:items
+    %4 = newMap {| string... |}{%2=%3}
+    %5 = newXMLElement("root", %1, (), %4)
+    root = %5;
+    %7 = ConstantLoad <nil>
+    %8 = %7;
+    %9 = elements(root,%8) -> bb1;
+  }
+  bb1 {
+    %10 = fp $anon/.:$xmlStep$24$826
+    %11 = map(%9,%10) -> bb2;
+  }
+  bb2 {
+    children = %11;
+    %13 = xmlFilter(children, [{"urn:items", "item"}])
+    %14 = println(%13) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

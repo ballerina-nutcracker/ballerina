@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> xml-step-contexts-e.bal:24:20
+   |
+24 |     return value/*[nextIndex()]; // @error
+   |                    ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> xml-step-contexts-e.bal:28:29
+   |
+28 |     return value/*.slice(0, nextIndex()); // @error
+   |                             ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function inside lock statement
+  --> xml-step-contexts-e.bal:33:30
+   |
+33 |         _ = value/*.slice(0, nextIndex()); // @error
+   |                              ^^^^^^^^^^^
