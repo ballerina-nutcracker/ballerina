@@ -1,6 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (import-package ballerina lang map (as lang.map))
   (import-package ballerina lang map (as map))
   (function main () (
     (value-type null))

@@ -1,5 +1,6 @@
 (package
   (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
   (import-package ballerina lang string (as lang.string))
   (variable name (type
     (value-type string)))

@@ -465,6 +465,34 @@ func buildFunctionDefinitions() map[packageKey][]*FunctionDefinition {
 					return semtypes.XML
 				}),
 			},
+			// $stepIndex backs an indexed XML step. It is not visible to Ballerina
+			// source, so the compiler is its only caller.
+			model.OpaqueFnXMLStepIndex: {
+				name:   "$stepIndex",
+				params: []model.Param{{Name: "x"}, {Name: "i"}},
+				monomorphize: func(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
+					semanticError SemanticError, _ bool, args []ast.BLangExpression,
+					_ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
+					containerTy, itemTy, ok := resolveXMLContainer(ctx, resolve, semanticError, args, pos)
+					if !ok {
+						return model.SymbolRef{}, false
+					}
+					if ref, found := ctx.lookupMono(owner, containerTy); found {
+						return ref, true
+					}
+					ref, ok := materialize(model.TypedFunctionSignature{
+						ParamTypes:    []semtypes.SemType{containerTy, semtypes.Int},
+						RestParamType: semtypes.Never,
+						ReturnType:    semtypes.XMLSequence(itemTy),
+						Flags:         model.FuncSymbolFlagIsolated,
+					})
+					if !ok {
+						return model.SymbolRef{}, false
+					}
+					ctx.storeMono(owner, ref, containerTy)
+					return ref, true
+				},
+			},
 		},
 	}
 }

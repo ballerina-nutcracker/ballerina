@@ -71,12 +71,16 @@ func (ctx *packageContext) typeCtx() semtypes.Context {
 	return ctx.typeContext
 }
 
+func (ctx *packageContext) packageContext() *packageContext {
+	return ctx
+}
+
 func (ctx *packageContext) addImplicitImport(pkgName string, imp ast.BLangImportPackage) {
 	ctx.importMu.Lock()
 	defer ctx.importMu.Unlock()
 	if !ctx.addedImplicitImports[pkgName] {
 		ctx.addedImplicitImports[pkgName] = true
-		ctx.pkg.Imports = append(ctx.pkg.Imports, &imp)
+		ctx.pkg.AddImportIfAbsent(&imp)
 	}
 }
 
@@ -210,6 +214,10 @@ func (ctx *functionContext) typeCtx() semtypes.Context {
 	return ctx.typeContext
 }
 
+func (ctx *functionContext) packageContext() *packageContext {
+	return ctx.pkgCtx
+}
+
 var _ desugarContext = &functionContext{}
 
 func (ctx *functionContext) internalError(msg string, pos diagnostics.Location) {
@@ -310,6 +318,7 @@ func (ctx *functionContext) typeEnv() semtypes.Env {
 }
 
 type desugarContext interface {
+	packageContext() *packageContext
 	nextDesugarSymbolName() string
 	addSymbolToSameSpace(ref model.SymbolRef, name string, symbol model.Symbol) model.SymbolRef
 	newFunctionScope(parent model.Scope) *model.FunctionScope
@@ -1353,11 +1362,26 @@ func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, par
 			continue
 		}
 		symRef := field.DefaultFnRef
-		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.DefaultExpr, nil)
 		fnScope := ctx.newFunctionScope(parentScope)
+		fnCtx := &functionContext{pkgCtx: ctx.packageContext()}
+		fnCtx.pushScope(fnScope)
+		// Use the inner walk so setup statements are hoisted into the default
+		// value function body instead of being wrapped in a thunk: the body
+		// runs them unconditionally before returning, which is the same
+		// evaluation order with a simpler shape.
+		defaultExpr := walkExpressionInner(fnCtx, field.DefaultExpr)
+		fnCtx.popScope()
+		field.DefaultExpr = defaultExpr.replacementNode.(ast.BLangExpression)
+
+		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.DefaultExpr, nil)
+		if len(defaultExpr.initStmts) > 0 {
+			body := fn.Body.(*ast.BLangBlockFunctionBody)
+			body.Stmts = append(defaultExpr.initStmts, body.Stmts...)
+		}
 		fn.SetSymbol(symRef)
 		fn.SetScope(fnScope)
 
+		result.functions = append(result.functions, fnCtx.generatedFunctions...)
 		result.recordFields = append(result.recordFields, desugaredRecordFieldResult{fn: fn, symRef: symRef})
 
 	}
