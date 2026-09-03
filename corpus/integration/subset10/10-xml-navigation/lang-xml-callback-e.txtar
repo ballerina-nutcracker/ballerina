@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: XML callback has incompatible return type
+  --> lang-xml-callback-e.bal:30:25
+   |
+30 |     xml _ = element.map(function(xml:Element item) returns int { // @error
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 |         _ = item;
+   |         ^^^^^^^^^
+32 |         return 1;
+   |         ^^^^^^^^^
+33 |     });
+   |     ^
+
+error[SEMANTIC_ERROR]: XML callback has incompatible return type
+  --> lang-xml-callback-e.bal:34:28
+   |
+34 |     xml _ = element.filter(function(xml:Element item) returns string { // @error
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+35 |         _ = item;
+   |         ^^^^^^^^^
+36 |         return "yes";
+   |         ^^^^^^^^^^^^^
+37 |     });
+   |     ^
+
+error[SEMANTIC_ERROR]: XML callback has incompatible return type
+  --> lang-xml-callback-e.bal:38:21
+   |
+38 |     element.forEach(function(xml:Element item) returns int { // @error
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+39 |         _ = item;
+   |         ^^^^^^^^^
+40 |         return 1;
+   |         ^^^^^^^^^
+41 |     });
+   |     ^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> lang-xml-callback-e.bal:25:12
+   |
+25 |     return element.map(nonIsolated); // @error
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^

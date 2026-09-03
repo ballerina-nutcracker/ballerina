@@ -1,0 +1,15 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable parent (type
+        (user-defined-type xml Element)) (expr
+        (invocation xml createElement (
+          (literal parent)
+          (mapping-constructor-expr)
+          (xml-sequence-literal))))))
+    (expression-stmt
+      (invocation lang.xml setChildren (
+        (simple-var-ref parent)
+        (simple-var-ref parent))))
+  )
+)

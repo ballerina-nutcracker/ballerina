@@ -1,0 +1,9 @@
+(main
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation xml createProcessingInstruction (
+        (literal target)
+        (literal bad?>content))))
+  )
+)

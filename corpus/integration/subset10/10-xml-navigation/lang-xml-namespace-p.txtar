@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: invalid XML namespace declaration
+        at main(lang-xml-namespace-p.bal:18)

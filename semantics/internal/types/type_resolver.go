@@ -8208,6 +8208,11 @@ func init() {
 	}
 	xmlOpaqueMonomorphizers = []opaqueFnMonomorphizer{
 		model.OpaqueFnXMLIterator: monomorphizeXMLIterator,
+		model.OpaqueFnXMLGet:      monomorphizeXMLGet,
+		model.OpaqueFnXMLSlice:    monomorphizeXMLSlice,
+		model.OpaqueFnXMLMap:      monomorphizeXMLMap,
+		model.OpaqueFnXMLForEach:  monomorphizeXMLForEach,
+		model.OpaqueFnXMLFilter:   monomorphizeXMLFilter,
 	}
 }
 
@@ -8298,6 +8303,12 @@ func opaqueFunctionParams(name string, sig model.TypedFunctionSignature) []model
 		return []model.Param{{Name: "arr"}, {Name: "vals", Flag: model.ParamFlagRestParam}}
 	case "map":
 		return []model.Param{{Name: "arr"}, {Name: "func"}}
+	case "iterator":
+		return []model.Param{{Name: "x"}}
+	case "slice":
+		return []model.Param{{Name: "x"}, {Name: "startIndex"}, {Name: "endIndex"}}
+	case "forEach", "filter":
+		return []model.Param{{Name: "x"}, {Name: "func"}}
 	case "remove", "get":
 		return []model.Param{{Name: "m"}, {Name: "k"}}
 	default:
@@ -8475,6 +8486,112 @@ func createXMLIteratorType(t typeResolver, itemTy semtypes.SemType) semtypes.Sem
 			Immutable:  true,
 		}})
 	})
+}
+
+func resolveXMLOpaqueContainer(t typeResolver, chain *binding, args []ast.BLangExpression, pos diagnostics.Location) (semtypes.SemType, semtypes.SemType, *binding, bool) {
+	containerExpr, ok := opaqueArgExpr(args, []string{"x"}, 0)
+	if !ok {
+		t.semanticError("missing XML argument", pos)
+		return semtypes.SemType{}, semtypes.SemType{}, chain, false
+	}
+	result, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.XML)
+	if !ok {
+		return semtypes.SemType{}, semtypes.SemType{}, chain, false
+	}
+	chain = result.effect.ifTrue
+	if !semtypes.IsSubtype(t.typeContext(), result.ty, semtypes.XML) {
+		t.semanticError("expect first argument to be a subtype of xml", containerExpr.GetPosition())
+		return semtypes.SemType{}, semtypes.SemType{}, chain, false
+	}
+	return result.ty, semtypes.XMLItemType(result.ty), chain, true
+}
+
+func monomorphizeXMLGet(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
+	containerTy, itemTy, chain, ok := resolveXMLOpaqueContainer(t, chain, args, pos)
+	if !ok {
+		return model.SymbolRef{}, chain, false
+	}
+	if sym.Lookup != nil {
+		if ref, found := sym.Lookup(containerTy); found {
+			return ref, chain, true
+		}
+	}
+	sig := model.TypedFunctionSignature{ParamTypes: []semtypes.SemType{containerTy, semtypes.Int}, RestParamType: semtypes.Never, ReturnType: itemTy, Flags: model.FuncSymbolFlagIsolated}
+	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
+	return ref, chain, ok
+}
+
+func monomorphizeXMLSlice(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
+	containerTy, itemTy, chain, ok := resolveXMLOpaqueContainer(t, chain, args, pos)
+	if !ok {
+		return model.SymbolRef{}, chain, false
+	}
+	if sym.Lookup != nil {
+		if ref, found := sym.Lookup(containerTy); found {
+			return ref, chain, true
+		}
+	}
+	sig := model.TypedFunctionSignature{ParamTypes: []semtypes.SemType{containerTy, semtypes.Int, semtypes.Int}, RestParamType: semtypes.Never, ReturnType: semtypes.XMLSequence(itemTy), Flags: model.FuncSymbolFlagIsolated}
+	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
+	return ref, chain, ok
+}
+
+func monomorphizeXMLCallback(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, returnConstraint semtypes.SemType, mapResult bool, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
+	containerTy, itemTy, chain, ok := resolveXMLOpaqueContainer(t, chain, args, pos)
+	if !ok {
+		return model.SymbolRef{}, chain, false
+	}
+	callbackExpr, ok := opaqueArgExpr(args, []string{"x", "func"}, 1)
+	if !ok {
+		t.semanticError("missing XML callback argument", pos)
+		return model.SymbolRef{}, chain, false
+	}
+	callbackFlags := model.FuncSymbolFlags(0)
+	if isolatedContext(t) {
+		callbackFlags = model.FuncSymbolFlagIsolated
+	}
+	callbackTopSig := model.TypedFunctionSignature{ParamTypes: []semtypes.SemType{itemTy}, RestParamType: semtypes.Never, ReturnType: returnConstraint, Flags: callbackFlags}
+	callbackTopTy := typeFromFunctionSignature(t, callbackTopSig)
+	callbackResult, ok := resolveActionOrExpression(t, chain, callbackExpr, callbackTopTy)
+	if !ok {
+		return model.SymbolRef{}, chain, false
+	}
+	chain = callbackResult.effect.ifTrue
+	argsDef := semtypes.NewListDefinition()
+	argsTy := argsDef.Define(t.typeEnv(), []semtypes.SemType{itemTy}, semtypes.ListMutability(semtypes.CellMutabilityNone))
+	callbackReturnTy := semtypes.FunctionReturnType(t.typeContext(), callbackResult.ty, argsTy)
+	if semtypes.IsZero(callbackReturnTy) || !semtypes.IsSubtype(t.typeContext(), callbackReturnTy, returnConstraint) {
+		t.semanticError("XML callback has incompatible return type", callbackExpr.GetPosition())
+		return model.SymbolRef{}, chain, false
+	}
+	callbackSig := model.TypedFunctionSignature{ParamTypes: []semtypes.SemType{itemTy}, RestParamType: semtypes.Never, ReturnType: callbackReturnTy, Flags: callbackFlags}
+	callbackTy := typeFromFunctionSignature(t, callbackSig)
+	if sym.Lookup != nil {
+		if ref, found := sym.Lookup(containerTy, callbackReturnTy, callbackTy); found {
+			return ref, chain, true
+		}
+	}
+	resultTy := semtypes.Nil
+	if mapResult {
+		resultTy = semtypes.XMLSequence(semtypes.XMLItemType(callbackReturnTy))
+	} else if sym.OpaqueID() == model.OpaqueFnXMLFilter {
+		resultTy = semtypes.XML
+	}
+	sig := model.TypedFunctionSignature{ParamTypes: []semtypes.SemType{containerTy, callbackTy}, RestParamType: semtypes.Never, ReturnType: resultTy, Flags: model.FuncSymbolFlagIsolated}
+	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy, callbackReturnTy, callbackTy)
+	return ref, chain, ok
+}
+
+func monomorphizeXMLMap(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
+	return monomorphizeXMLCallback(t, sym, polymorphicRef, chain, args, semtypes.XML, true, pos)
+}
+
+func monomorphizeXMLForEach(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
+	return monomorphizeXMLCallback(t, sym, polymorphicRef, chain, args, semtypes.Nil, false, pos)
+}
+
+func monomorphizeXMLFilter(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
+	return monomorphizeXMLCallback(t, sym, polymorphicRef, chain, args, semtypes.Boolean, false, pos)
 }
 
 func monomorphizeMapGet(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {

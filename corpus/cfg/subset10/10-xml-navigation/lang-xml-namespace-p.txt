@@ -1,0 +1,19 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable attributes (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type string))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal {http://www.w3.org/2000/xmlns/}p)
+            (literal ))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation xml createElement (
+        (literal root)
+        (simple-var-ref attributes)
+        (xml-sequence-literal))))
+  )
+)

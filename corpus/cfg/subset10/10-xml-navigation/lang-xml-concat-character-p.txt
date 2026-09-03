@@ -1,0 +1,8 @@
+(main
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation xml concat (
+        (literal ))))
+  )
+)

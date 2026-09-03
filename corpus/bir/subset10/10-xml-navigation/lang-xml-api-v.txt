@@ -1,0 +1,1244 @@
+module $anon.. v 0.0.0;
+visitNumber  int;
+duplicate(xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>) -> xml{
+  bb0 {
+    %2 = + item item;
+    %0 = %2;
+    return;
+  }
+}
+isElement(xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>) -> boolean{
+  bb0 {
+    %2 = item is xml:Element
+    %0 = %2;
+    return;
+  }
+}
+ignore(xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>) -> nil{
+  bb0 {
+    %2 = item;
+    return;
+  }
+}
+elementIdentity(xml:Element) -> xml:Element{
+  bb0 {
+    %0 = item;
+    return;
+  }
+}
+commentIdentity(xml:Comment) -> xml:Comment{
+  bb0 {
+    %0 = item;
+    return;
+  }
+}
+piIdentity(xml:ProcessingInstruction) -> xml:ProcessingInstruction{
+  bb0 {
+    %0 = item;
+    return;
+  }
+}
+textIdentity(xml:Text) -> xml:Text{
+  bb0 {
+    %0 = item;
+    return;
+  }
+}
+keepComment(xml:Comment) -> boolean{
+  bb0 {
+    %3 = getContent(item) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad narrow-comment
+    %2 = == %3 %4;
+    %0 = %2;
+    return;
+  }
+}
+keepPI(xml:ProcessingInstruction) -> boolean{
+  bb0 {
+    %3 = getTarget(item) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad narrow-pi
+    %2 = == %3 %4;
+    %0 = %2;
+    return;
+  }
+}
+keepText(xml:Text) -> boolean{
+  bb0 {
+    %3 = data(item) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad narrow-text
+    %2 = == %3 %4;
+    %0 = %2;
+    return;
+  }
+}
+visitComment(xml:Comment) -> nil{
+  bb0 {
+    %2 = ConstantLoad comment:
+    %3 = getContent(item) -> bb1;
+  }
+  bb1 {
+    %4 = println(%2,%3) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+visitPI(xml:ProcessingInstruction) -> nil{
+  bb0 {
+    %2 = ConstantLoad pi:
+    %3 = getTarget(item) -> bb1;
+  }
+  bb1 {
+    %4 = println(%2,%3) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+visitText(xml:Text) -> nil{
+  bb0 {
+    %2 = ConstantLoad text:
+    %3 = data(item) -> bb1;
+  }
+  bb1 {
+    %4 = println(%2,%3) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+recordVisit(xml<xml:Text|xml:Element>) -> nil{
+  bb0 {
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %2 = + visitNumber %4;
+    visitNumber = %2;
+    %5 = ConstantLoad :
+    %6 = println(visitNumber,%5,item) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad http://www.w3.org/XML/1998/namespace
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad http://www.w3.org/2000/xmlns/
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad {http://www.w3.org/XML/1998/namespace}space
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad {http://www.w3.org/XML/1998/namespace}lang
+    %8 = println(%7) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad {http://www.w3.org/XML/1998/namespace}base
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
+    %11 = ConstantLoad one
+    %12 = newXMLText(%11)
+    %13 = ConstantLoad two
+    %14 = newXMLText(%13)
+    %15 = newXMLElement("b", %14)
+    %16 = ConstantLoad c
+    %17 = newXMLComment(%16)
+    %18 = ConstantLoad p
+    %19 = ConstantLoad d
+    %20 = newXMLPI(%18, %19)
+    %21 = newXMLSequence{%12, %15, %17, %20}
+    %22 = newXMLElement("a", %21)
+    %23 = ConstantLoad tail
+    %24 = newXMLText(%23)
+    %25 = newXMLSequence{%22, %24}
+    mixed = %25;
+    %27 = length(mixed) -> bb6;
+  }
+  bb6 {
+    %28 = %27;
+    %29 = println(%28) -> bb7;
+  }
+  bb7 {
+    %30 = length(mixed) -> bb8;
+  }
+  bb8 {
+    %31 = %30;
+    %32 = println(%31) -> bb9;
+  }
+  bb9 {
+    %33 = ConstantLoad 0
+    %34 = %33;
+    %35 = get(mixed,%34) -> bb10;
+  }
+  bb10 {
+    %36 = println(%35) -> bb11;
+  }
+  bb11 {
+    %37 = ConstantLoad 1
+    %38 = %37;
+    %39 = get(mixed,%38) -> bb12;
+  }
+  bb12 {
+    %40 = println(%39) -> bb13;
+  }
+  bb13 {
+    %41 = ConstantLoad 0
+    %42 = %41;
+    %43 = ConstantLoad 1
+    %44 = %43;
+    %45 = slice(mixed,%42,%44) -> bb14;
+  }
+  bb14 {
+    %46 = println(%45) -> bb15;
+  }
+  bb15 {
+    %47 = ConstantLoad 1
+    %48 = %47;
+    %49 = ConstantLoad 2
+    %50 = %49;
+    %51 = slice(mixed,%48,%50) -> bb16;
+  }
+  bb16 {
+    %52 = println(%51) -> bb17;
+  }
+  bb17 {
+    %53 = ConstantLoad x
+    %54 = newXMLElement("c", ())
+    %55 = ConstantLoad y
+    %56 = concat(%53,%54,%55) -> bb18;
+  }
+  bb18 {
+    %57 = println(%56) -> bb19;
+  }
+  bb19 {
+    %58 = concat() -> bb20;
+  }
+  bb20 {
+    %59 = length(%58) -> bb21;
+  }
+  bb21 {
+    %60 = %59;
+    %61 = println(%60) -> bb22;
+  }
+  bb22 {
+    %62 = ConstantLoad 
+    %63 = ConstantLoad 
+    %64 = concat(%62,%63) -> bb23;
+  }
+  bb23 {
+    %65 = length(%64) -> bb24;
+  }
+  bb24 {
+    %66 = %65;
+    %67 = println(%66) -> bb25;
+  }
+  bb25 {
+    %68 = ConstantLoad 1
+    %69 = %68;
+    %70 = ConstantLoad 1
+    %71 = %70;
+    %72 = slice(mixed,%69,%71) -> bb26;
+  }
+  bb26 {
+    %73 = length(%72) -> bb27;
+  }
+  bb27 {
+    %74 = %73;
+    %75 = println(%74) -> bb28;
+  }
+  bb28 {
+    %76 = ConstantLoad 0
+    %77 = %76;
+    %78 = ConstantLoad 0
+    %79 = %78;
+    %80 = slice(mixed,%77,%79) -> bb29;
+  }
+  bb29 {
+    %81 = length(%80) -> bb30;
+  }
+  bb30 {
+    %82 = %81;
+    %83 = println(%82) -> bb31;
+  }
+  bb31 {
+    %84 = length(mixed) -> bb32;
+  }
+  bb32 {
+    %85 = %84;
+    %86 = length(mixed) -> bb33;
+  }
+  bb33 {
+    %87 = %86;
+    %88 = slice(mixed,%85,%87) -> bb34;
+  }
+  bb34 {
+    %89 = length(%88) -> bb35;
+  }
+  bb35 {
+    %90 = %89;
+    %91 = println(%90) -> bb36;
+  }
+  bb36 {
+    %92 = ConstantLoad 0
+    %93 = %92;
+    %94 = length(mixed) -> bb37;
+  }
+  bb37 {
+    %95 = %94;
+    %96 = slice(mixed,%93,%95) -> bb38;
+  }
+  bb38 {
+    %97 = println(%96) -> bb39;
+  }
+  bb39 {
+    %98 = newXMLElement("first", ())
+    %99 = newXMLElement("middle", ())
+    %100 = newXMLElement("last", ())
+    %101 = newXMLSequence{%98, %99, %100}
+    threeItems = %101;
+    %103 = ConstantLoad 1
+    %104 = %103;
+    %105 = ConstantLoad 2
+    %106 = %105;
+    %107 = slice(threeItems,%104,%106) -> bb40;
+  }
+  bb40 {
+    %108 = println(%107) -> bb41;
+  }
+  bb41 {
+    %109 = newXMLElement("exact", ())
+    exactSource = %109;
+    %111 = ConstantLoad 0
+    %112 = %111;
+    %113 = get(exactSource,%112) -> bb42;
+  }
+  bb42 {
+    exactGet = %113;
+    %115 = ConstantLoad 0
+    %116 = %115;
+    %117 = ConstantLoad 1
+    %118 = %117;
+    %119 = slice(exactSource,%116,%118) -> bb43;
+  }
+  bb43 {
+    exactSlice = %119;
+    %121 = fp $anon/.:elementIdentity
+    %122 = map(exactSource,%121) -> bb44;
+  }
+  bb44 {
+    exactMap = %122;
+    %124 = println(exactGet,exactSlice,exactMap) -> bb45;
+  }
+  bb45 {
+    %126 = concat(exactSource) -> bb46;
+  }
+  bb46 {
+    %125 = unknown %126 exactSource;
+    %127 = %125;
+    %128 = println(%127) -> bb47;
+  }
+  bb47 {
+    %129 = iterator(exactSource) -> bb48;
+  }
+  bb48 {
+    %130 = next(%129) -> bb49;
+  }
+  bb49 {
+    elementNext = %130;
+    %132 = ConstantLoad i
+    %133 = newXMLComment(%132)
+    %134 = iterator(%133) -> bb50;
+  }
+  bb50 {
+    %135 = next(%134) -> bb51;
+  }
+  bb51 {
+    commentNext = %135;
+    %137 = ConstantLoad i
+    %138 = ConstantLoad data
+    %139 = newXMLPI(%137, %138)
+    %140 = iterator(%139) -> bb52;
+  }
+  bb52 {
+    %141 = next(%140) -> bb53;
+  }
+  bb53 {
+    piNext = %141;
+    %143 = ConstantLoad text
+    %144 = newXMLText(%143)
+    %145 = iterator(%144) -> bb54;
+  }
+  bb54 {
+    %146 = next(%145) -> bb55;
+  }
+  bb55 {
+    textNext = %146;
+    %148 = elementNext is {| value: xml:Element, never... |}
+    %149 = %148;
+    %150 = println(%149) -> bb56;
+  }
+  bb56 {
+    %151 = commentNext is {| value: xml:Comment, never... |}
+    %152 = %151;
+    %153 = println(%152) -> bb57;
+  }
+  bb57 {
+    %154 = piNext is {| value: xml:ProcessingInstruction, never... |}
+    %155 = %154;
+    %156 = println(%155) -> bb58;
+  }
+  bb58 {
+    %157 = textNext is {| value: xml:Text, never... |}
+    %158 = %157;
+    %159 = println(%158) -> bb59;
+  }
+  bb59 {
+    %160 = iterator(exactSource) -> bb60;
+  }
+  bb60 {
+    exhausted = %160;
+    %162 = next(exhausted) -> bb61;
+  }
+  bb61 {
+    %163 = %162;
+    %164 = next(exhausted) -> bb62;
+  }
+  bb62 {
+    %165 = %164 is nil
+    %166 = %165;
+    %167 = println(%166) -> bb63;
+  }
+  bb63 {
+    %168 = iterator(exactSource) -> bb64;
+  }
+  bb64 {
+    moduleIterator = %168;
+    %170 = ConstantLoad 0
+    %171 = %170;
+    %172 = get(exactSource,%171) -> bb65;
+  }
+  bb65 {
+    moduleGet = %172;
+    %174 = ConstantLoad 0
+    %175 = %174;
+    %176 = ConstantLoad 1
+    %177 = %176;
+    %178 = slice(exactSource,%175,%177) -> bb66;
+  }
+  bb66 {
+    moduleSlice = %178;
+    %180 = fp $anon/.:elementIdentity
+    %181 = map(exactSource,%180) -> bb67;
+  }
+  bb67 {
+    moduleMap = %181;
+    %183 = fp $anon/.:ignore
+    %184 = forEach(exactSource,%183) -> bb68;
+  }
+  bb68 {
+    %185 = fp $anon/.:isElement
+    %186 = filter(exactSource,%185) -> bb69;
+  }
+  bb69 {
+    moduleFilter = %186;
+    %188 = next(moduleIterator) -> bb70;
+  }
+  bb70 {
+    %189 = %188 is {| value: xml:Element, never... |}
+    %190 = %189;
+    %191 = println(%190,moduleGet,moduleSlice,moduleMap,moduleFilter) -> bb71;
+  }
+  bb71 {
+    %192 = ConstantLoad narrow-comment
+    %193 = newXMLComment(%192)
+    narrowComment = %193;
+    %195 = ConstantLoad 0
+    %196 = %195;
+    %197 = get(narrowComment,%196) -> bb72;
+  }
+  bb72 {
+    commentGet = %197;
+    %199 = ConstantLoad 0
+    %200 = %199;
+    %201 = ConstantLoad 1
+    %202 = %201;
+    %203 = slice(narrowComment,%200,%202) -> bb73;
+  }
+  bb73 {
+    commentSlice = %203;
+    %205 = fp $anon/.:commentIdentity
+    %206 = map(narrowComment,%205) -> bb74;
+  }
+  bb74 {
+    commentMap = %206;
+    %208 = fp $anon/.:visitComment
+    %209 = forEach(narrowComment,%208) -> bb75;
+  }
+  bb75 {
+    %210 = fp $anon/.:keepComment
+    %211 = filter(narrowComment,%210) -> bb76;
+  }
+  bb76 {
+    commentFilter = %211;
+    %213 = unknown commentGet narrowComment;
+    %214 = %213;
+    %215 = println(%214,commentSlice,commentMap,commentFilter) -> bb77;
+  }
+  bb77 {
+    %216 = ConstantLoad narrow-pi
+    %217 = ConstantLoad value
+    %218 = newXMLPI(%216, %217)
+    narrowPI = %218;
+    %220 = ConstantLoad 0
+    %221 = %220;
+    %222 = get(narrowPI,%221) -> bb78;
+  }
+  bb78 {
+    piGet = %222;
+    %224 = ConstantLoad 0
+    %225 = %224;
+    %226 = ConstantLoad 1
+    %227 = %226;
+    %228 = slice(narrowPI,%225,%227) -> bb79;
+  }
+  bb79 {
+    piSlice = %228;
+    %230 = fp $anon/.:piIdentity
+    %231 = map(narrowPI,%230) -> bb80;
+  }
+  bb80 {
+    piMap = %231;
+    %233 = fp $anon/.:visitPI
+    %234 = forEach(narrowPI,%233) -> bb81;
+  }
+  bb81 {
+    %235 = fp $anon/.:keepPI
+    %236 = filter(narrowPI,%235) -> bb82;
+  }
+  bb82 {
+    piFilter = %236;
+    %238 = unknown piGet narrowPI;
+    %239 = %238;
+    %240 = println(%239,piSlice,piMap,piFilter) -> bb83;
+  }
+  bb83 {
+    %241 = ConstantLoad narrow-text
+    %242 = newXMLText(%241)
+    narrowText = %242;
+    %244 = ConstantLoad 0
+    %245 = %244;
+    %246 = get(narrowText,%245) -> bb84;
+  }
+  bb84 {
+    textGet = %246;
+    %248 = ConstantLoad 0
+    %249 = %248;
+    %250 = ConstantLoad 1
+    %251 = %250;
+    %252 = slice(narrowText,%249,%251) -> bb85;
+  }
+  bb85 {
+    textSlice = %252;
+    %254 = fp $anon/.:textIdentity
+    %255 = map(narrowText,%254) -> bb86;
+  }
+  bb86 {
+    textMap = %255;
+    %257 = fp $anon/.:visitText
+    %258 = forEach(narrowText,%257) -> bb87;
+  }
+  bb87 {
+    %259 = fp $anon/.:keepText
+    %260 = filter(narrowText,%259) -> bb88;
+  }
+  bb88 {
+    textFilter = %260;
+    %262 = ConstantLoad |
+    %263 = ConstantLoad |
+    %264 = ConstantLoad |
+    %265 = println(textGet,%262,textSlice,%263,textMap,%264,textFilter) -> bb89;
+  }
+  bb89 {
+    %266 = ConstantLoad 0
+    %267 = %266;
+    %268 = get(mixed,%267) -> bb90;
+  }
+  bb90 {
+    %269 = <xml:Element>(%268)
+    elem = %269;
+    %271 = getName(elem) -> bb91;
+  }
+  bb91 {
+    %272 = println(%271) -> bb92;
+  }
+  bb92 {
+    %273 = ConstantLoad {urn:new}renamed
+    %274 = setName(elem,%273) -> bb93;
+  }
+  bb93 {
+    %275 = println(elem) -> bb94;
+  }
+  bb94 {
+    %276 = ConstantLoad a
+    %277 = setName(elem,%276) -> bb95;
+  }
+  bb95 {
+    %278 = getChildren(elem) -> bb96;
+  }
+  bb96 {
+    %279 = println(%278) -> bb97;
+  }
+  bb97 {
+    %280 = getDescendants(elem) -> bb98;
+  }
+  bb98 {
+    %281 = println(%280) -> bb99;
+  }
+  bb99 {
+    %282 = data(elem) -> bb100;
+  }
+  bb100 {
+    %283 = println(%282) -> bb101;
+  }
+  bb101 {
+    %284 = ConstantLoad module
+    %285 = newMap {| string... |}{}
+    %286 = ConstantLoad value
+    %287 = newXMLText(%286)
+    %288 = newXMLElement("inner", %287)
+    %289 = createElement(%284,%285,%288) -> bb102;
+  }
+  bb102 {
+    moduleElem = %289;
+    %291 = getName(moduleElem) -> bb103;
+  }
+  bb103 {
+    %292 = println(%291) -> bb104;
+  }
+  bb104 {
+    %293 = ConstantLoad module2
+    %294 = setName(moduleElem,%293) -> bb105;
+  }
+  bb105 {
+    %295 = getAttributes(moduleElem) -> bb106;
+  }
+  bb106 {
+    %296 = length(%295) -> bb107;
+  }
+  bb107 {
+    %297 = %296;
+    %298 = println(%297) -> bb108;
+  }
+  bb108 {
+    %299 = getChildren(moduleElem) -> bb109;
+  }
+  bb109 {
+    %300 = println(%299) -> bb110;
+  }
+  bb110 {
+    %301 = ConstantLoad module-data
+    %302 = newXMLText(%301)
+    %303 = newXMLElement("replacement", %302)
+    %304 = setChildren(moduleElem,%303) -> bb111;
+  }
+  bb111 {
+    %305 = getDescendants(moduleElem) -> bb112;
+  }
+  bb112 {
+    %306 = println(%305) -> bb113;
+  }
+  bb113 {
+    %307 = data(moduleElem) -> bb114;
+  }
+  bb114 {
+    %308 = println(%307) -> bb115;
+  }
+  bb115 {
+    %309 = ConstantLoad module-comment
+    %310 = createComment(%309) -> bb116;
+  }
+  bb116 {
+    moduleComment = %310;
+    %312 = ConstantLoad module
+    %313 = ConstantLoad pi
+    %314 = createProcessingInstruction(%312,%313) -> bb117;
+  }
+  bb117 {
+    modulePI = %314;
+    %316 = getContent(moduleComment) -> bb118;
+  }
+  bb118 {
+    %317 = println(%316) -> bb119;
+  }
+  bb119 {
+    %318 = getTarget(modulePI) -> bb120;
+  }
+  bb120 {
+    %319 = ConstantLoad :
+    %320 = getContent(modulePI) -> bb121;
+  }
+  bb121 {
+    %321 = println(%318,%319,%320) -> bb122;
+  }
+  bb122 {
+    %322 = ConstantLoad module-text
+    %323 = createText(%322) -> bb123;
+  }
+  bb123 {
+    %324 = println(%323) -> bb124;
+  }
+  bb124 {
+    %325 = ConstantLoad id
+    %326 = ConstantLoad 1
+    %327 = ConstantLoad {urn:attr}code
+    %328 = ConstantLoad x
+    %329 = ConstantLoad {http://www.w3.org/2000/xmlns/}p
+    %330 = ConstantLoad urn:p
+    %331 = newMap {| string... |}{%325=%326, %327=%328, %329=%330}
+    sourceAttrs = %331;
+    %333 = ConstantLoad {urn:made}root
+    %334 = newXMLElement("child", ())
+    %335 = createElement(%333,sourceAttrs,%334) -> bb125;
+  }
+  bb125 {
+    made = %335;
+    %337 = ConstantLoad changed
+    %338 = ConstantLoad id
+    sourceAttrs[%338] = %337;
+    %339 = println(made) -> bb126;
+  }
+  bb126 {
+    %340 = getAttributes(made) -> bb127;
+  }
+  bb127 {
+    snapshot1 = %340;
+    %342 = getAttributes(made) -> bb128;
+  }
+  bb128 {
+    snapshot2 = %342;
+    %344 = ConstantLoad snapshot
+    %345 = ConstantLoad id
+    snapshot1[%345] = %344;
+    %346 = unknown snapshot1 snapshot2;
+    %347 = %346;
+    %348 = println(%347) -> bb129;
+  }
+  bb129 {
+    %349 = println(snapshot2) -> bb130;
+  }
+  bb130 {
+    %350 = println(made) -> bb131;
+  }
+  bb131 {
+    %351 = ConstantLoad {urn:empty}root
+    %352 = newMap {| string... |}{}
+    %353 = newXMLSequence{}
+    %354 = createElement(%351,%352,%353) -> bb132;
+  }
+  bb132 {
+    namespacedEmpty = %354;
+    %356 = getAttributes(namespacedEmpty) -> bb133;
+  }
+  bb133 {
+    %357 = length(%356) -> bb134;
+  }
+  bb134 {
+    %358 = %357;
+    %359 = println(%358) -> bb135;
+  }
+  bb135 {
+    %360 = println(namespacedEmpty) -> bb136;
+  }
+  bb136 {
+    %361 = ConstantLoad changed
+    %362 = setChildren(made,%361) -> bb137;
+  }
+  bb137 {
+    %363 = getChildren(made) -> bb138;
+  }
+  bb138 {
+    %364 = println(%363) -> bb139;
+  }
+  bb139 {
+    %365 = ConstantLoad 
+    %366 = setChildren(made,%365) -> bb140;
+  }
+  bb140 {
+    %367 = getChildren(made) -> bb141;
+  }
+  bb141 {
+    %368 = length(%367) -> bb142;
+  }
+  bb142 {
+    %369 = %368;
+    %370 = println(%369) -> bb143;
+  }
+  bb143 {
+    %371 = newXMLElement("xmlChild", ())
+    %372 = setChildren(made,%371) -> bb144;
+  }
+  bb144 {
+    %373 = getChildren(made) -> bb145;
+  }
+  bb145 {
+    %374 = println(%373) -> bb146;
+  }
+  bb146 {
+    %375 = ConstantLoad note
+    %376 = createComment(%375) -> bb147;
+  }
+  bb147 {
+    comment = %376;
+    %378 = ConstantLoad target
+    %379 = ConstantLoad content
+    %380 = createProcessingInstruction(%378,%379) -> bb148;
+  }
+  bb148 {
+    pi = %380;
+    %382 = getContent(comment) -> bb149;
+  }
+  bb149 {
+    %383 = println(%382) -> bb150;
+  }
+  bb150 {
+    %384 = getTarget(pi) -> bb151;
+  }
+  bb151 {
+    %385 = println(%384) -> bb152;
+  }
+  bb152 {
+    %386 = getContent(pi) -> bb153;
+  }
+  bb153 {
+    %387 = println(%386) -> bb154;
+  }
+  bb154 {
+    %388 = ConstantLoad 
+    %389 = createText(%388) -> bb155;
+  }
+  bb155 {
+    empty = %389;
+    %391 = length(empty) -> bb156;
+  }
+  bb156 {
+    %392 = %391;
+    %393 = println(%392) -> bb157;
+  }
+  bb157 {
+    %394 = newXMLElement("x", ())
+    %395 = ConstantLoad  t 
+    %396 = newXMLText(%395)
+    %397 = ConstantLoad drop
+    %398 = newXMLComment(%397)
+    %399 = ConstantLoad drop
+    %400 = ConstantLoad p
+    %401 = newXMLPI(%399, %400)
+    %402 = newXMLElement("z", ())
+    %403 = newXMLElement("y", %402)
+    %404 = newXMLSequence{%394, %396, %398, %401, %403}
+    selected = %404;
+    %406 = strip(selected) -> bb158;
+  }
+  bb158 {
+    %407 = println(%406) -> bb159;
+  }
+  bb159 {
+    $desugar$0 = selected;
+    %409 = $default$2($desugar$0) -> bb160;
+  }
+  bb160 {
+    $desugar$1 = %409;
+    %411 = elements($desugar$0,$desugar$1) -> bb161;
+  }
+  bb161 {
+    %412 = println(%411) -> bb162;
+  }
+  bb162 {
+    %413 = ConstantLoad y
+    %414 = elements(selected,%413) -> bb163;
+  }
+  bb163 {
+    %415 = println(%414) -> bb164;
+  }
+  bb164 {
+    %416 = children(selected) -> bb165;
+  }
+  bb165 {
+    %417 = println(%416) -> bb166;
+  }
+  bb166 {
+    $desugar$2 = selected;
+    %419 = $default$3($desugar$2) -> bb167;
+  }
+  bb167 {
+    $desugar$3 = %419;
+    %421 = elementChildren($desugar$2,$desugar$3) -> bb168;
+  }
+  bb168 {
+    %422 = println(%421) -> bb169;
+  }
+  bb169 {
+    %423 = ConstantLoad [
+    %424 = text(selected) -> bb170;
+  }
+  bb170 {
+    %425 = ConstantLoad ]
+    %426 = println(%423,%424,%425) -> bb171;
+  }
+  bb171 {
+    %427 = strip(selected) -> bb172;
+  }
+  bb172 {
+    %428 = println(%427) -> bb173;
+  }
+  bb173 {
+    $desugar$4 = selected;
+    %430 = $default$2($desugar$4) -> bb174;
+  }
+  bb174 {
+    $desugar$5 = %430;
+    %432 = elements($desugar$4,$desugar$5) -> bb175;
+  }
+  bb175 {
+    %433 = println(%432) -> bb176;
+  }
+  bb176 {
+    %434 = children(selected) -> bb177;
+  }
+  bb177 {
+    %435 = println(%434) -> bb178;
+  }
+  bb178 {
+    $desugar$6 = selected;
+    %437 = $default$3($desugar$6) -> bb179;
+  }
+  bb179 {
+    $desugar$7 = %437;
+    %439 = elementChildren($desugar$6,$desugar$7) -> bb180;
+  }
+  bb180 {
+    %440 = println(%439) -> bb181;
+  }
+  bb181 {
+    %441 = ConstantLoad [
+    %442 = text(selected) -> bb182;
+  }
+  bb182 {
+    %443 = ConstantLoad ]
+    %444 = println(%441,%442,%443) -> bb183;
+  }
+  bb183 {
+    %445 = newXMLElement("deep", ())
+    %446 = newXMLElement("nested", %445)
+    %447 = newXMLElement("sibling", ())
+    %448 = newXMLSequence{%446, %447}
+    %449 = newXMLElement("root", %448)
+    nestedOrder = %449;
+    %451 = <xml:Element>(nestedOrder)
+    %452 = getDescendants(%451) -> bb184;
+  }
+  bb184 {
+    %453 = println(%452) -> bb185;
+  }
+  bb185 {
+    %454 = ConstantLoad  
+    %455 = newXMLText(%454)
+    %456 = ConstantLoad  
+    %457 = newXMLText(%456)
+    %458 = newXMLElement("x", %457)
+    %459 = ConstantLoad  
+    %460 = newXMLText(%459)
+    %461 = newXMLSequence{%455, %458, %460}
+    shallowWhitespace = %461;
+    %463 = ConstantLoad [
+    %464 = strip(shallowWhitespace) -> bb186;
+  }
+  bb186 {
+    %465 = ConstantLoad ]
+    %466 = println(%463,%464,%465) -> bb187;
+  }
+  bb187 {
+    %467 = fp $anon/.:duplicate
+    %468 = map(mixed,%467) -> bb188;
+  }
+  bb188 {
+    mapped = %468;
+    %470 = println(mapped) -> bb189;
+  }
+  bb189 {
+    %471 = fp $anon/.:ignore
+    %472 = forEach(mixed,%471) -> bb190;
+  }
+  bb190 {
+    %473 = fp $anon/.:isElement
+    %474 = filter(mixed,%473) -> bb191;
+  }
+  bb191 {
+    filtered = %474;
+    %477 = ConstantLoad 0
+    %478 = %477;
+    %479 = get(mixed,%478) -> bb192;
+  }
+  bb192 {
+    %476 = unknown filtered %479;
+    %480 = %476;
+    %481 = println(%480) -> bb193;
+  }
+  bb193 {
+    %482 = newXMLElement("a", ())
+    %483 = ConstantLoad text
+    %484 = newXMLText(%483)
+    %485 = newXMLElement("b", ())
+    %486 = newXMLSequence{%482, %484, %485}
+    orderedCallbacks = %486;
+    %488 = fp $anon/.:recordVisit
+    %489 = forEach(orderedCallbacks,%488) -> bb194;
+  }
+  bb194 {
+    %490 = ConstantLoad a
+    %491 = newXMLText(%490)
+    %492 = fp $anon/.:duplicate
+    %493 = map(%491,%492) -> bb195;
+  }
+  bb195 {
+    normalizedMap = %493;
+    %495 = length(normalizedMap) -> bb196;
+  }
+  bb196 {
+    %496 = %495;
+    %497 = ConstantLoad :
+    %498 = println(%496,%497,normalizedMap) -> bb197;
+  }
+  bb197 {
+    %499 = newXMLElement("first", ())
+    %500 = ConstantLoad a
+    %501 = newXMLText(%500)
+    %502 = newXMLSequence{%499, %501}
+    firstSource = %502;
+    %504 = ConstantLoad b
+    %505 = newXMLText(%504)
+    %506 = newXMLElement("second", ())
+    %507 = newXMLSequence{%505, %506}
+    secondSource = %507;
+    %509 = concat(firstSource,secondSource) -> bb198;
+  }
+  bb198 {
+    combined = %509;
+    %511 = println(combined) -> bb199;
+  }
+  bb199 {
+    %512 = ConstantLoad |
+    %513 = println(firstSource,%512,secondSource) -> bb200;
+  }
+  bb200 {
+    %514 = ConstantLoad identity
+    %515 = newXMLComment(%514)
+    commentItem = %515;
+    %517 = ConstantLoad identity
+    %518 = ConstantLoad value
+    %519 = newXMLPI(%517, %518)
+    piItem = %519;
+    %522 = ConstantLoad 0
+    %523 = %522;
+    %524 = get(commentItem,%523) -> bb201;
+  }
+  bb201 {
+    %521 = unknown %524 commentItem;
+    %525 = %521;
+    %526 = println(%525) -> bb202;
+  }
+  bb202 {
+    %528 = ConstantLoad 0
+    %529 = %528;
+    %530 = get(piItem,%529) -> bb203;
+  }
+  bb203 {
+    %527 = unknown %530 piItem;
+    %531 = %527;
+    %532 = println(%531) -> bb204;
+  }
+  bb204 {
+    %534 = ConstantLoad  before <!--c--><p:r xmlns:p="urn:p">&amp;<![CDATA[x]]></p:r><?q d?> after 
+    %535 = fromString(%534) -> bb205;
+  }
+  bb205 {
+    %536 = %535 is error
+    %536 ? bb206 : bb207;
+  }
+  bb206 {
+    %0 = %535;
+    return;
+  }
+  bb207 {
+    %533 = %535;
+    GOTO bb208;
+  }
+  bb208 {
+    parsed = %533;
+    %538 = ConstantLoad [
+    %539 = ConstantLoad ]
+    %540 = println(%538,parsed,%539) -> bb209;
+  }
+  bb209 {
+    %541 = length(parsed) -> bb210;
+  }
+  bb210 {
+    %542 = %541;
+    %543 = println(%542) -> bb211;
+  }
+  bb211 {
+    %544 = newXMLElement("n", ())
+    %545 = ConstantLoad t
+    %546 = newXMLText(%545)
+    %547 = newXMLElement("n", ())
+    %548 = ConstantLoad t
+    %549 = newXMLText(%548)
+    %550 = newXMLElement("n", ())
+    %551 = ConstantLoad t
+    %552 = newXMLText(%551)
+    %553 = newXMLElement("n", ())
+    %554 = ConstantLoad t
+    %555 = newXMLText(%554)
+    %556 = newXMLElement("n", ())
+    %557 = ConstantLoad t
+    %558 = newXMLText(%557)
+    %559 = newXMLElement("n", ())
+    %560 = ConstantLoad t
+    %561 = newXMLText(%560)
+    %562 = newXMLElement("n", ())
+    %563 = ConstantLoad t
+    %564 = newXMLText(%563)
+    %565 = newXMLElement("n", ())
+    %566 = ConstantLoad t
+    %567 = newXMLText(%566)
+    %568 = newXMLElement("n", ())
+    %569 = ConstantLoad t
+    %570 = newXMLText(%569)
+    %571 = newXMLElement("n", ())
+    %572 = ConstantLoad t
+    %573 = newXMLText(%572)
+    %574 = newXMLElement("n", ())
+    %575 = ConstantLoad t
+    %576 = newXMLText(%575)
+    %577 = newXMLElement("n", ())
+    %578 = ConstantLoad t
+    %579 = newXMLText(%578)
+    %580 = newXMLElement("n", ())
+    %581 = ConstantLoad t
+    %582 = newXMLText(%581)
+    %583 = newXMLElement("n", ())
+    %584 = ConstantLoad t
+    %585 = newXMLText(%584)
+    %586 = newXMLElement("n", ())
+    %587 = ConstantLoad t
+    %588 = newXMLText(%587)
+    %589 = newXMLElement("n", ())
+    %590 = ConstantLoad t
+    %591 = newXMLText(%590)
+    %592 = newXMLElement("n", ())
+    %593 = ConstantLoad t
+    %594 = newXMLText(%593)
+    %595 = newXMLElement("n", ())
+    %596 = ConstantLoad t
+    %597 = newXMLText(%596)
+    %598 = newXMLElement("n", ())
+    %599 = ConstantLoad t
+    %600 = newXMLText(%599)
+    %601 = newXMLElement("n", ())
+    %602 = ConstantLoad t
+    %603 = newXMLText(%602)
+    %604 = newXMLElement("n", ())
+    %605 = ConstantLoad t
+    %606 = newXMLText(%605)
+    %607 = newXMLElement("n", ())
+    %608 = ConstantLoad t
+    %609 = newXMLText(%608)
+    %610 = newXMLElement("n", ())
+    %611 = ConstantLoad t
+    %612 = newXMLText(%611)
+    %613 = newXMLElement("n", ())
+    %614 = ConstantLoad t
+    %615 = newXMLText(%614)
+    %616 = newXMLSequence{%544, %546, %547, %549, %550, %552, %553, %555, %556, %558, %559, %561, %562, %564, %565, %567, %568, %570, %571, %573, %574, %576, %577, %579, %580, %582, %583, %585, %586, %588, %589, %591, %592, %594, %595, %597, %598, %600, %601, %603, %604, %606, %607, %609, %610, %612, %613, %615}
+    longMixed = %616;
+    %618 = length(longMixed) -> bb212;
+  }
+  bb212 {
+    %619 = %618;
+    %620 = println(%619) -> bb213;
+  }
+  bb213 {
+    %621 = newXMLSequence{}
+    repeatedConcat = %621;
+    %623 = ConstantLoad 0
+    $desugar$8 = %623;
+    %625 = ConstantLoad 1000
+    $desugar$9 = %625;
+    GOTO bb214;
+  }
+  bb214 {
+    %628 = $desugar$8;
+    %629 = $desugar$9;
+    %627 = < %628 %629;
+    %627 ? bb215 : bb216;
+  }
+  bb215 {
+    PushScopeFrame 10
+    _ = (1, $desugar$8);
+    %2 = newXMLElement("n", ())
+    %1 = + (1, repeatedConcat) %2;
+    (1, repeatedConcat) = %1;
+    %4 = ConstantLoad t
+    %5 = newXMLText(%4)
+    %3 = + (1, repeatedConcat) %5;
+    (1, repeatedConcat) = %3;
+    %7 = (1, $desugar$8);
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    (1, $desugar$8) = %6;
+    PopScopeFrame
+    GOTO bb214;
+  }
+  bb216 {
+    %630 = length(repeatedConcat) -> bb217;
+  }
+  bb217 {
+    %631 = %630;
+    %632 = println(%631) -> bb218;
+  }
+  bb218 {
+    %633 = newXMLElement("base1", ())
+    %634 = newXMLElement("base2", ())
+    %635 = newXMLSequence{%633, %634}
+    branchBase = %635;
+    %638 = newXMLElement("left", ())
+    %637 = + branchBase %638;
+    leftBranch = %637;
+    %641 = newXMLElement("right", ())
+    %640 = + branchBase %641;
+    rightBranch = %640;
+    %643 = println(branchBase) -> bb219;
+  }
+  bb219 {
+    %644 = println(leftBranch) -> bb220;
+  }
+  bb220 {
+    %645 = println(rightBranch) -> bb221;
+  }
+  bb221 {
+    return;
+  }
+}

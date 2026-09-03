@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: XML child cycle
+        at main(lang-xml-cycle-p.bal:18)

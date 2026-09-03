@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: XML processing-instruction content must not contain '?>'
+        at main(lang-xml-constructor-p.bal:18)

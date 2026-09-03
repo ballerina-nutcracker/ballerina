@@ -1,0 +1,16 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {http://www.w3.org/2000/xmlns/}p
+    %2 = ConstantLoad 
+    %3 = newMap {| string... |}{%1=%2}
+    attributes = %3;
+    %5 = ConstantLoad root
+    %6 = newXMLSequence{}
+    %7 = createElement(%5,attributes,%6) -> bb1;
+  }
+  bb1 {
+    %8 = %7;
+    return;
+  }
+}

@@ -1,0 +1,12 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad target
+    %2 = ConstantLoad bad?>content
+    %3 = createProcessingInstruction(%1,%2) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    return;
+  }
+}

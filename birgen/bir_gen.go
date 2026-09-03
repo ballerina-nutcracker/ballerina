@@ -1343,7 +1343,17 @@ func xmlElementLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXML
 	if len(expr.Attrs) > 0 {
 		fields := make([]mappingField, 0, len(expr.Attrs))
 		for _, attr := range expr.Attrs {
-			fields = append(fields, mappingField{key: attr.Name, value: attr.Value})
+			name := attr.Name
+			if !attr.NamespaceSymbol.IsEmpty() {
+				uri, err := model.XMLNamespaceURI(ctx.getSymbol(attr.NamespaceSymbol))
+				if err != nil {
+					ctx.internalError(err.Error(), attr.GetPosition())
+					return expressionEffect{}, false
+				}
+				_, localName := splitXMLQualifiedName(name)
+				name = values.ExpandedXMLName(uri, localName)
+			}
+			fields = append(fields, mappingField{key: name, value: attr.Value})
 		}
 		attrMapEff, ok := mappingConstructorExpressionInner(ctx, curBB, ctx.function().pkgCtx.stringMapType(), fields, nil, pos)
 		if !ok {
@@ -1372,6 +1382,15 @@ func xmlElementLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXML
 	resultOp := ctx.addTempVar(expr.GetDeterminedType())
 	curBB.Instructions = append(curBB.Instructions, bir.NewXMLElementInstr(resultOp, expr.Prefix, expr.LocalName, namespaceURI, contentOp, attrsOp, namespacesOp, pos))
 	return expressionEffect{result: resultOp, block: curBB}, true
+}
+
+func splitXMLQualifiedName(name string) (string, string) {
+	for i := range len(name) {
+		if name[i] == ':' {
+			return name[:i], name[i+1:]
+		}
+	}
+	return "", name
 }
 
 type xmlNamespaceDecl struct {
