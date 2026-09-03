@@ -981,6 +981,15 @@ func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression
 		return analyzeXMLTemplateExpr(a, expr, expectedType)
 	case *ast.BLangXMLFilterExpression:
 		return analyzeXMLFilterExpr(a, expr, expectedType)
+	case *ast.BLangXMLStepExpression:
+		if expr.LoweredExpression == nil {
+			a.internalErr("XML step expression has no lowering", expr.GetPosition())
+			return false
+		}
+		if !analyzeActionOrExpression(a, expr.LoweredExpression, expr.GetDeterminedType()) {
+			return false
+		}
+		return validateResolvedType(a, expr, expectedType)
 	case *ast.BLangXMLAttribute:
 		// XML attributes are metadata on elements and should not be analyzed as standalone expressions
 		// Their values are already analyzed as part of XMLElement processing
@@ -1816,6 +1825,9 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		// to avoid re-initializing/re-walking the same lambda body.
 		_ = n
 		return nil
+	case *ast.BLangXMLStepExpression:
+		analyzeActionOrExpression(a, n, semtypes.SemType{})
+		return nil
 	case *ast.BLangFunction:
 		if _, isDep := a.ctx().GetSymbol(n.Symbol()).(model.DependentlyTypedFunctionSymbol); isDep {
 			initializeFunctionAnalyzer(a, n)
@@ -2248,6 +2260,12 @@ func (v *everyNodeVisitor[A]) Visit(node ast.BLangNode) ast.Visitor {
 	}
 	if !v.predicate(v.analyzer, node) {
 		v.result = false
+		return nil
+	}
+	if step, ok := node.(*ast.BLangXMLStepExpression); ok {
+		if lowered := step.LoweredExpression; lowered != nil {
+			ast.Walk(v, lowered)
+		}
 		return nil
 	}
 	return v

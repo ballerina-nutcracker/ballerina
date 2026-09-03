@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingArgument
+  --> xml-step-unresolved-e.bal:21:17
+   |
+21 |     _ = x/*.get(missingArgument); // @error
+   |                 ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingIndex
+  --> xml-step-unresolved-e.bal:18:13
+   |
+18 |     _ = x/*[missingIndex]; // @error
+   |             ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingOperand
+  --> xml-step-unresolved-e.bal:19:9
+   |
+19 |     _ = missingOperand/*; // @error
+   |         ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: undefined XML namespace prefix 'missing'
+  --> xml-step-unresolved-e.bal:20:14
+   |
+20 |     _ = x/*.<missing:item>; // @error
+   |              ^^^^^^^

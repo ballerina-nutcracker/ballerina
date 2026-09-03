@@ -1,5 +1,6 @@
 (package
   (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
   (function foo (
     (variable vals (type
       (array-type

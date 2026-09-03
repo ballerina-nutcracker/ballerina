@@ -1,7 +1,6 @@
 (package
   (import-package ballerina io (as io))
   (import-package ballerina lang xml (as lang.xml))
-  (import-package ballerina lang xml (as lang.xml))
   (function main () (
     (value-type null))
     (block-function-body

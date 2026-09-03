@@ -50,7 +50,11 @@ func (l *loopTypeResolver) parent() typeResolver { return l.parentResolver }
 func (l *loopTypeResolver) nextMonoFnName(origName string) string {
 	return l.parentResolver.nextMonoFnName(origName)
 }
-func (l *loopTypeResolver) typeEnv() semtypes.Env { return l.parentResolver.typeEnv() }
+func (l *loopTypeResolver) nextXMLStepFnName(pos diagnostics.Location) string {
+	return l.parentResolver.nextXMLStepFnName(pos)
+}
+func (l *loopTypeResolver) packageID() *model.PackageID { return l.parentResolver.packageID() }
+func (l *loopTypeResolver) typeEnv() semtypes.Env       { return l.parentResolver.typeEnv() }
 func (l *loopTypeResolver) xmlIteratorTypeCache() *semtypes.SemTypeCache {
 	return l.parentResolver.xmlIteratorTypeCache()
 }
