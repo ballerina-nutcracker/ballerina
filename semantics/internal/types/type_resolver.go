@@ -3749,6 +3749,8 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return resolved(resolveXMLCommentLiteral(t, chain, e))
 	case *ast.BLangXMLTextLiteral:
 		return resolved(resolveXMLTextLiteral(t, chain, e))
+	case *ast.BLangXMLFilterExpression:
+		return resolved(resolveXMLFilterExpr(t, chain, e, expectedType))
 	default:
 		t.internalError(fmt.Sprintf("unsupported expression type: %T", expr), expr.GetPosition())
 		return expressionResult{}, false
@@ -8514,4 +8516,26 @@ func monomorphizeMapMemberFunction(t typeResolver, sym *model.OpaqueFunctionSymb
 	}
 	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
 	return ref, chain, ok
+}
+
+func resolveXMLFilterExpr(t typeResolver, chain *binding, expr *ast.BLangXMLFilterExpression, _ semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	receiver, ok := resolveActionOrExpression(t, chain, expr.Expression, semtypes.XML)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	for _, pattern := range expr.NamePattern {
+		resolveAtomicNamePattern(pattern)
+	}
+	resultType := semtypes.XMLSequence(semtypes.XMLElement)
+	setExpectedType(expr, resultType)
+	return resultType, receiver.effect, true
+}
+
+func resolveAtomicNamePattern(pattern ast.BLangAtomicNamePattern) {
+	if pattern.Identifier != nil {
+		pattern.Identifier.SetDeterminedType(semtypes.Never)
+	}
+	if pattern.NamespacePrefix != nil {
+		pattern.NamespacePrefix.SetDeterminedType(semtypes.Never)
+	}
 }

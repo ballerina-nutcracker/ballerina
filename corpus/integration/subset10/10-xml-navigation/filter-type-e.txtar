@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected xml, got any
+  --> filter-type-e.bal:19:19
+   |
+19 |     xml fromAny = value.<root>; // @error
+   |                   ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected xml, got int
+  --> filter-type-e.bal:22:19
+   |
+22 |     xml fromInt = number.<root>; // @error
+   |                   ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected xml<xml:Comment>, got xml<xml:Element>
+  --> filter-type-e.bal:25:32
+   |
+25 |     xml<xml:Comment> comment = x.<root>; // @error
+   |                                ^^^^^^^^

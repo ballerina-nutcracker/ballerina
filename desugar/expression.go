@@ -163,6 +163,8 @@ func walkExpression(cx *functionContext, node ast.BLangActionOrExpression) desug
 		return walkTemplateExpr(cx, expr)
 	case *ast.BLangXMLTemplateExpr:
 		return walkXMLTemplateExpr(cx, expr)
+	case *ast.BLangXMLFilterExpression:
+		return walkXMLFilterExpression(cx, expr)
 	default:
 		cx.internalError(fmt.Sprintf("unexpected expression type: %T", node), node.GetPosition())
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: node}
@@ -771,6 +773,15 @@ func walkClientResourceAccessAction(cx *functionContext, expr *ast.BLangClientRe
 	initStmts = append(initStmts, walkInvocationArgs(cx, expr)...)
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
+		replacementNode: expr,
+	}
+}
+
+func walkXMLFilterExpression(cx *functionContext, expr *ast.BLangXMLFilterExpression) desugaredNode[ast.BLangActionOrExpression] {
+	result := walkExpression(cx, expr.Expression)
+	expr.Expression = result.replacementNode.(ast.BLangExpression)
+	return desugaredNode[ast.BLangActionOrExpression]{
+		initStmts:       result.initStmts,
 		replacementNode: expr,
 	}
 }

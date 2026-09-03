@@ -779,7 +779,9 @@ func (br *birReader) readInstruction(varMap map[int32]*bir.BIRLocalVariableDcl) 
 			},
 		}
 	case bir.InstructionKindNewXMLElement:
-		nameOp := br.readOperand(varMap)
+		prefix := string(br.readStringCPEntry())
+		localName := string(br.readStringCPEntry())
+		namespaceURI := string(br.readStringCPEntry())
 		var hasChildren bool
 		br.read(&hasChildren)
 		var childrenOp *bir.BIROperand
@@ -799,7 +801,22 @@ func (br *birReader) readInstruction(varMap map[int32]*bir.BIRLocalVariableDcl) 
 			namespacesOp = br.readOperand(varMap)
 		}
 		lhsOp := br.readOperand(varMap)
-		return bir.NewXMLElementInstr(lhsOp, nameOp, childrenOp, attrsOp, namespacesOp, pos)
+		return bir.NewXMLElementInstr(lhsOp, prefix, localName, namespaceURI, childrenOp, attrsOp, namespacesOp, pos)
+	case bir.InstructionKindXMLFilter:
+		source := br.readOperand(varMap)
+		count := br.readLength()
+		patterns := make([]bir.XMLNamePattern, int(count))
+		for i := range patterns {
+			var kind uint8
+			br.read(&kind)
+			patterns[i] = bir.XMLNamePattern{
+				Kind:         bir.XMLNamePatternKind(kind),
+				NamespaceURI: string(br.readStringCPEntry()),
+				Identifier:   string(br.readStringCPEntry()),
+			}
+		}
+		lhsOp := br.readOperand(varMap)
+		return bir.NewXMLFilterInstr(lhsOp, source, patterns, pos)
 	case bir.InstructionKindNewXMLPI:
 		targetOp := br.readOperand(varMap)
 		dataOp := br.readOperand(varMap)

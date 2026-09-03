@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[INTERNAL_ERROR]: syntax node *st.XMLStepExpressionNode transformed to non-action-or-expression node <nil>
+  --> filter-inherited-namespace-fv.bal:22:18
+   |
+22 |     xml children = root/*; // @error future: XML child navigation
+   |                  ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: transformXMLStepExpression unimplemented
+  --> filter-inherited-namespace-fv.bal:22:18
+   |
+22 |     xml children = root/*; // @error future: XML child navigation
+   |                  ^^^^^^

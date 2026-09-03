@@ -197,7 +197,11 @@ func resolveXMLElementLiteralNamespaces[T symbolResolver](resolver T, scope mode
 	childScope := newXMLNSChildScope(scope)
 	e.Attrs = stripInlineXMLNSAttrs(resolver, childScope, e)
 
-	resolveXMLNameRef(resolver, childScope, e.Name, e.GetPosition(), rootNeeds, true)
+	name := e.LocalName
+	if e.Prefix != "" {
+		name = e.Prefix + ":" + e.LocalName
+	}
+	e.NamespaceSymbol = resolveXMLNameRef(resolver, childScope, name, e.GetPosition(), rootNeeds, true)
 	for i := range e.Attrs {
 		attr := &e.Attrs[i]
 		resolveXMLNameRef(resolver, childScope, attr.Name, attr.GetPosition(), rootNeeds, false)
@@ -383,4 +387,23 @@ func resolveXMLTemplateNamespaces[T symbolResolver](resolver T, scope model.Scop
 			}
 		}
 	}
+}
+
+func resolveAtomicNamePattern[T symbolResolver](resolver T, scope model.Scope, pattern ast.BLangAtomicNamePattern) ast.BLangAtomicNamePattern {
+	switch pattern.Kind {
+	case ast.NamePatternKindQualifiedIdentifier, ast.NamePatternKindPrefix:
+		prefix := pattern.NamespacePrefix.GetValue()
+		ref, _, ok := lookupXMLNS(scope, prefix)
+		if !ok {
+			semanticError(resolver, "undefined XML namespace prefix '"+prefix+"'", pattern.NamespacePrefix.GetPosition())
+			return pattern
+		}
+		pattern.NamespaceSymbol = ref
+	case ast.NamePatternKindIdentifier:
+		if ref, _, ok := lookupXMLNS(scope, model.DefaultXMLNSSymbolName); ok {
+			pattern.Kind = ast.NamePatternKindQualifiedIdentifier
+			pattern.NamespaceSymbol = ref
+		}
+	}
+	return pattern
 }

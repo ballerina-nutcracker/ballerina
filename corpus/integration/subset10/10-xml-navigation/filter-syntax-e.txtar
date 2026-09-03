@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> filter-syntax-e.bal:43:30
+   |
+43 |     xml filtered = x.<public *>; // @error
+   |                              ^
+
+error[SYNTAX_ERROR]: missing asterisk token
+  --> filter-syntax-e.bal:37:24
+   |
+37 |     xml filtered = x.< | >; // @error
+   |
+
+error[SYNTAX_ERROR]: missing asterisk token
+  --> filter-syntax-e.bal:37:26
+   |
+37 |     xml filtered = x.< | >; // @error
+   |
+
+error[SYNTAX_ERROR]: missing gt token
+  --> filter-syntax-e.bal:25:24
+   |
+25 |     xml filtered = x.<*; // @error
+   |
+
+error[SYNTAX_ERROR]: missing pipe token
+  --> filter-syntax-e.bal:31:25
+   |
+31 |     xml filtered = x.<* *>; // @error
+   |
+
+error[SYNTAX_ERROR]: missing xml atomic name pattern
+  --> filter-syntax-e.bal:19:21
+   |
+19 |     xml filtered = x.<>; // @error
+   |                     ^^
