@@ -1345,6 +1345,14 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 		for i, pattern := range n.NamePattern {
 			n.NamePattern[i] = resolveAtomicNamePattern(resolver, resolver.GetScope(), pattern)
 		}
+	case *ast.BLangXMLStepStart:
+		for i, pattern := range n.NamePattern {
+			n.NamePattern[i] = resolveAtomicNamePattern(resolver, resolver.GetScope(), pattern)
+		}
+	case *ast.BLangXMLStepFilterExtend:
+		for i, pattern := range n.NamePattern {
+			n.NamePattern[i] = resolveAtomicNamePattern(resolver, resolver.GetScope(), pattern)
+		}
 	case *ast.BLangFieldBaseAccess:
 		if common.IsSelfFieldAccess(n) {
 			if classScope, ok := getEnclosingClassBodyScope(resolver); ok {

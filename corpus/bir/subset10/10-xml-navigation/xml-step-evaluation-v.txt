@@ -1,0 +1,593 @@
+module $anon.. v 0.0.0;
+abruptCalls  int;
+extensionCalls  int;
+methodArgumentCalls  int;
+receiverCalls  int;
+receiver() -> xml{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + receiverCalls %3;
+    receiverCalls = %1;
+    %4 = ConstantLoad A
+    %5 = newXMLText(%4)
+    %6 = newXMLElement("name", %5)
+    %7 = newXMLElement("item", %6)
+    %8 = ConstantLoad B
+    %9 = newXMLText(%8)
+    %10 = newXMLElement("name", %9)
+    %11 = newXMLElement("item", %10)
+    %12 = newXMLSequence{%7, %11}
+    %0 = %12;
+    return;
+  }
+}
+index() -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + extensionCalls %3;
+    extensionCalls = %1;
+    %4 = ConstantLoad 0
+    %0 = %4;
+    return;
+  }
+}
+methodEnd() -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + methodArgumentCalls %3;
+    methodArgumentCalls = %1;
+    %4 = ConstantLoad 1
+    %0 = %4;
+    return;
+  }
+}
+abruptIndex() -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + abruptCalls %3;
+    abruptCalls = %1;
+    %5 = ConstantLoad 2
+    %6 = %5;
+    %4 = == abruptCalls %6;
+    %4 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad stop iteration
+    %1 = newError error(%0)
+    (1, %7) = %1;
+    PopScopeFrame
+    panic %7;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 0
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}
+assert(anydata,anydata) -> nil{
+  bb0 {
+    %3 = != actual expected;
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad values are not equal
+    %1 = newError error(%0)
+    (1, %4) = %1;
+    PopScopeFrame
+    panic %4;
+  }
+  bb2 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$xmlStep$24$1375(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = index() -> bb2;
+  }
+  bb2 {
+    %4 = %3;
+    %5 = $stepIndex(%2,%4) -> bb3;
+  }
+  bb3 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$24$1559(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = index() -> bb2;
+  }
+  bb2 {
+    %4 = %3;
+    %5 = $stepIndex(%2,%4) -> bb3;
+  }
+  bb3 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$24$1630(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = get(%2,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$24$1759(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = methodEnd() -> bb2;
+  }
+  bb2 {
+    %6 = %5;
+    %7 = slice(%2,%4,%6) -> bb3;
+  }
+  bb3 {
+    %0 = %7;
+    return;
+  }
+}
+$xmlStep$24$1962(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = methodEnd() -> bb2;
+  }
+  bb2 {
+    %6 = %5;
+    %7 = slice(%2,%4,%6) -> bb3;
+  }
+  bb3 {
+    %0 = %7;
+    return;
+  }
+}
+$xmlStep$24$2064(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = abruptIndex() -> bb2;
+  }
+  bb2 {
+    %4 = %3;
+    %5 = $stepIndex(%2,%4) -> bb3;
+  }
+  bb3 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$24$2254(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = $stepIndex(%2,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$24$2269(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = get(%2,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$24$2323(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$24$2311(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %4 = newXMLElement("child", ())
+    %5 = newXMLElement("root", %4)
+    %6 = ConstantLoad <nil>
+    %7 = %6;
+    %8 = elements(%5,%7) -> bb2;
+  }
+  bb2 {
+    %9 = fp $anon/.:$xmlStep$24$2323
+    %10 = map(%8,%9) -> bb3;
+  }
+  bb3 {
+    %11 = length(%10) -> bb4;
+  }
+  bb4 {
+    %12 = %11;
+    %13 = ConstantLoad 1
+    %14 = %13;
+    %3 = - %12 %14;
+    %15 = %3;
+    %16 = $stepIndex(%2,%15) -> bb5;
+  }
+  bb5 {
+    %0 = %16;
+    return;
+  }
+}
+$xmlStep$24$2482(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$24$2461(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = newXMLElement("child", ())
+    %6 = newXMLElement("root", %5)
+    %7 = ConstantLoad <nil>
+    %8 = %7;
+    %9 = elements(%6,%8) -> bb2;
+  }
+  bb2 {
+    %10 = fp $anon/.:$xmlStep$24$2482
+    %11 = map(%9,%10) -> bb3;
+  }
+  bb3 {
+    %12 = length(%11) -> bb4;
+  }
+  bb4 {
+    %13 = %12;
+    %14 = slice(%2,%4,%13) -> bb5;
+  }
+  bb5 {
+    %0 = %14;
+    return;
+  }
+}
+$xmlStep$24$2642(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_0(xml) -> xml{
+  bb0 {
+    %2 = ConstantLoad <nil>
+    %3 = %2;
+    %4 = elements(item,%3) -> bb1;
+  }
+  bb1 {
+    %5 = fp $anon/.:$xmlStep$24$2642
+    %6 = map(%4,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+$xmlStep$24$2619(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = fp $anon/.:$anonFunc$_0
+    %4 = map(%2,%3) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = receiver() -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad <nil>
+    %3 = %2;
+    %4 = elements(%1,%3) -> bb2;
+  }
+  bb2 {
+    %5 = fp $anon/.:$xmlStep$24$1375
+    %6 = map(%4,%5) -> bb3;
+  }
+  bb3 {
+    selected = %6;
+    %8 = ConstantLoad A
+    %9 = newXMLText(%8)
+    %10 = newXMLElement("name", %9)
+    %11 = ConstantLoad B
+    %12 = newXMLText(%11)
+    %13 = newXMLElement("name", %12)
+    %14 = newXMLSequence{%10, %13}
+    %15 = assert(selected,%14) -> bb4;
+  }
+  bb4 {
+    %16 = ConstantLoad 1
+    %17 = %16;
+    %18 = assert(receiverCalls,%17) -> bb5;
+  }
+  bb5 {
+    %19 = ConstantLoad 2
+    %20 = %19;
+    %21 = assert(extensionCalls,%20) -> bb6;
+  }
+  bb6 {
+    %22 = ConstantLoad text
+    %23 = newXMLText(%22)
+    empty = %23;
+    %25 = ConstantLoad <nil>
+    %26 = %25;
+    %27 = elements(empty,%26) -> bb7;
+  }
+  bb7 {
+    %28 = fp $anon/.:$xmlStep$24$1559
+    %29 = map(%27,%28) -> bb8;
+  }
+  bb8 {
+    %30 = %29;
+    %31 = ConstantLoad 2
+    %32 = %31;
+    %33 = assert(extensionCalls,%32) -> bb9;
+  }
+  bb9 {
+    %34 = receiver() -> bb10;
+  }
+  bb10 {
+    %35 = ConstantLoad <nil>
+    %36 = %35;
+    %37 = elements(%34,%36) -> bb11;
+  }
+  bb11 {
+    %38 = fp $anon/.:$xmlStep$24$1630
+    %39 = map(%37,%38) -> bb12;
+  }
+  bb12 {
+    perElement = %39;
+    %41 = ConstantLoad A
+    %42 = newXMLText(%41)
+    %43 = newXMLElement("name", %42)
+    %44 = ConstantLoad B
+    %45 = newXMLText(%44)
+    %46 = newXMLElement("name", %45)
+    %47 = newXMLSequence{%43, %46}
+    %48 = assert(perElement,%47) -> bb13;
+  }
+  bb13 {
+    %49 = ConstantLoad 2
+    %50 = %49;
+    %51 = assert(receiverCalls,%50) -> bb14;
+  }
+  bb14 {
+    %52 = receiver() -> bb15;
+  }
+  bb15 {
+    %53 = ConstantLoad <nil>
+    %54 = %53;
+    %55 = elements(%52,%54) -> bb16;
+  }
+  bb16 {
+    %56 = fp $anon/.:$xmlStep$24$1759
+    %57 = map(%55,%56) -> bb17;
+  }
+  bb17 {
+    sliced = %57;
+    %59 = ConstantLoad A
+    %60 = newXMLText(%59)
+    %61 = newXMLElement("name", %60)
+    %62 = ConstantLoad B
+    %63 = newXMLText(%62)
+    %64 = newXMLElement("name", %63)
+    %65 = newXMLSequence{%61, %64}
+    %66 = assert(sliced,%65) -> bb18;
+  }
+  bb18 {
+    %67 = ConstantLoad 3
+    %68 = %67;
+    %69 = assert(receiverCalls,%68) -> bb19;
+  }
+  bb19 {
+    %70 = ConstantLoad 2
+    %71 = %70;
+    %72 = assert(methodArgumentCalls,%71) -> bb20;
+  }
+  bb20 {
+    %73 = newXMLSequence{}
+    noElements = %73;
+    %75 = ConstantLoad <nil>
+    %76 = %75;
+    %77 = elements(noElements,%76) -> bb21;
+  }
+  bb21 {
+    %78 = fp $anon/.:$xmlStep$24$1962
+    %79 = map(%77,%78) -> bb22;
+  }
+  bb22 {
+    %80 = %79;
+    %81 = ConstantLoad 2
+    %82 = %81;
+    %83 = assert(methodArgumentCalls,%82) -> bb23;
+  }
+  bb23 {
+    GOTO bb24;
+  }
+  bb24 {
+    %85 = receiver() -> bb25;
+  }
+  bb25 {
+    %86 = ConstantLoad <nil>
+    %87 = %86;
+    %88 = elements(%85,%87) -> bb26;
+  }
+  bb26 {
+    %89 = fp $anon/.:$xmlStep$24$2064
+    %90 = map(%88,%89) -> bb27;
+  }
+  bb27 {
+    %84 = %90;
+    GOTO bb28;
+  }
+  bb28 {
+    stopped = %84;
+    %92 = stopped is error
+    %93 = %92;
+    %94 = ConstantLoad true
+    %95 = %94;
+    %96 = assert(%93,%95) -> bb29;
+  }
+  bb29 {
+    %97 = ConstantLoad 2
+    %98 = %97;
+    %99 = assert(abruptCalls,%98) -> bb30;
+  }
+  bb30 {
+    %100 = ConstantLoad A
+    %101 = newXMLText(%100)
+    %102 = newXMLElement("value", %101)
+    %103 = newXMLElement("item", %102)
+    %104 = ConstantLoad B
+    %105 = newXMLText(%104)
+    %106 = newXMLElement("value", %105)
+    %107 = newXMLElement("item", %106)
+    %108 = newXMLSequence{%103, %107}
+    document = %108;
+    %110 = ConstantLoad <nil>
+    %111 = %110;
+    %112 = elements(document,%111) -> bb31;
+  }
+  bb31 {
+    %113 = fp $anon/.:$xmlStep$24$2254
+    %114 = map(%112,%113) -> bb32;
+  }
+  bb32 {
+    %115 = ConstantLoad <nil>
+    %116 = %115;
+    %117 = elements(document,%116) -> bb33;
+  }
+  bb33 {
+    %118 = fp $anon/.:$xmlStep$24$2269
+    %119 = map(%117,%118) -> bb34;
+  }
+  bb34 {
+    %120 = assert(%114,%119) -> bb35;
+  }
+  bb35 {
+    %121 = ConstantLoad <nil>
+    %122 = %121;
+    %123 = elements(document,%122) -> bb36;
+  }
+  bb36 {
+    %124 = fp $anon/.:$xmlStep$24$2311
+    %125 = map(%123,%124) -> bb37;
+  }
+  bb37 {
+    nestedIndex = %125;
+    %127 = ConstantLoad A
+    %128 = newXMLText(%127)
+    %129 = newXMLElement("value", %128)
+    %130 = ConstantLoad B
+    %131 = newXMLText(%130)
+    %132 = newXMLElement("value", %131)
+    %133 = newXMLSequence{%129, %132}
+    %134 = assert(nestedIndex,%133) -> bb38;
+  }
+  bb38 {
+    %135 = ConstantLoad <nil>
+    %136 = %135;
+    %137 = elements(document,%136) -> bb39;
+  }
+  bb39 {
+    %138 = fp $anon/.:$xmlStep$24$2461
+    %139 = map(%137,%138) -> bb40;
+  }
+  bb40 {
+    nestedArgument = %139;
+    %141 = ConstantLoad A
+    %142 = newXMLText(%141)
+    %143 = newXMLElement("value", %142)
+    %144 = ConstantLoad B
+    %145 = newXMLText(%144)
+    %146 = newXMLElement("value", %145)
+    %147 = newXMLSequence{%143, %146}
+    %148 = assert(nestedArgument,%147) -> bb41;
+  }
+  bb41 {
+    %149 = ConstantLoad <nil>
+    %150 = %149;
+    %151 = elements(document,%150) -> bb42;
+  }
+  bb42 {
+    %152 = fp $anon/.:$xmlStep$24$2619
+    %153 = map(%151,%152) -> bb43;
+  }
+  bb43 {
+    nestedCallback = %153;
+    %155 = ConstantLoad AB
+    %156 = newXMLText(%155)
+    %157 = assert(nestedCallback,%156) -> bb44;
+  }
+  bb44 {
+    %158 = ConstantLoad xml-step-evaluation ok
+    %159 = println(%158) -> bb45;
+  }
+  bb45 {
+    return;
+  }
+  
+  error-table {
+    [bb24, bb27] -> bb28, %84
+  }
+}

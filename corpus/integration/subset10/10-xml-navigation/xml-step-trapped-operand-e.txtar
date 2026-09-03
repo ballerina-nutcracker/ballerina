@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-trapped-operand-e.bal:18:12
+   |
+18 |     return trapped/*; // @error
+   |            ^^^^^^^^^

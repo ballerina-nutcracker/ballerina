@@ -38,6 +38,19 @@ func unescapeBallerinaString(s string) string {
 	return unescapeBackslashEscapes(unescapeUnicodeCodepoints(s))
 }
 
+func unescapeIdentifier(s string) string {
+	s = unescapeUnicodeCodepoints(s)
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\\' && i+1 < len(s) {
+			i++
+		}
+		b.WriteByte(s[i])
+	}
+	return b.String()
+}
+
 func unescapeUnicodeCodepoints(s string) string {
 	return unicodeCodepointPattern.ReplaceAllStringFunc(s, func(match string) string {
 		submatch := unicodeCodepointPattern.FindStringSubmatch(match)

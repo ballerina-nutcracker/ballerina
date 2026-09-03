@@ -112,12 +112,28 @@ type typeResolver interface {
 	currentScope() model.Scope
 	setCurrentScope(scope model.Scope)
 	nextDefaultFnName() string
+	nextXMLStepFnName(pos diagnostics.Location) string
 	nextMonoFnName(origName string) string
+	packageID() *model.PackageID
 
 	lookupClassMethodSymbol(receiverTy semtypes.SemType, methodName string) (model.SymbolRef, bool)
 
 	ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool
 	xmlIteratorTypeCache() *semtypes.SemTypeCache
+}
+
+type resolverContext uint8
+
+const (
+	resolverContextIsolated resolverContext = 1 << iota
+	resolverContextIsolatedXMLStep
+)
+
+func resolverContextForFunction(isolated bool) resolverContext {
+	if isolated {
+		return resolverContextIsolated
+	}
+	return 0
 }
 
 // deferredEmptinessCheck is an emptiness check that was registered while the
@@ -165,7 +181,7 @@ type packageTypeResolver struct {
 	monoCounters          map[string]int
 	annotationGlobalCount int
 	scope                 model.Scope
-	isolatedContext       bool
+	context               resolverContext
 	mappingAtomToSymRef   map[*semtypes.MappingAtomicType]model.SymbolRef
 	classAtomSymbols      map[*semtypes.MappingAtomicType]model.SymbolRef
 	classSymbolByType     map[semtypes.InternHandle]model.SymbolRef
@@ -324,6 +340,12 @@ func (t *packageTypeResolver) nextDefaultFnName() string {
 	return name
 }
 
+func (t *packageTypeResolver) nextXMLStepFnName(pos diagnostics.Location) string {
+	return fmt.Sprintf("$xmlStep$%d$%d", pos.FileIndex(), pos.StartOffset())
+}
+
+func (t *packageTypeResolver) packageID() *model.PackageID { return t.pkg.PackageID }
+
 func (t *packageTypeResolver) nextMonoFnName(origName string) string {
 	idx := t.monoCounters[origName]
 	t.monoCounters[origName] = idx + 1
@@ -384,7 +406,7 @@ type functionTypeResolver struct {
 	monoCounters         map[string]int
 	defaultFnSymbolCount int
 	scope                model.Scope
-	isolatedContext      bool
+	context              resolverContext
 	mappingAtomToSymRef  map[*semtypes.MappingAtomicType]model.SymbolRef
 }
 
@@ -545,28 +567,50 @@ func (f *functionTypeResolver) currentScope() model.Scope     { return f.scope }
 func (f *functionTypeResolver) setCurrentScope(s model.Scope) { f.scope = s }
 
 func isolatedContext(t typeResolver) bool {
+	return hasResolverContext(t, resolverContextIsolated)
+}
+
+func setIsolatedContext(t typeResolver, isolated bool) func() {
+	return setResolverContext(t, resolverContextIsolated, isolated)
+}
+
+func setIsolatedXMLStepContext(t typeResolver, isolated bool) func() {
+	return setResolverContext(t, resolverContextIsolatedXMLStep, isolated)
+}
+
+func isolatedXMLStepContext(t typeResolver) bool {
+	return hasResolverContext(t, resolverContextIsolatedXMLStep)
+}
+
+func hasResolverContext(t typeResolver, flag resolverContext) bool {
 	for current := t; current != nil; current = current.parent() {
 		switch resolver := current.(type) {
 		case *functionTypeResolver:
-			return resolver.isolatedContext
+			return resolver.context&flag != 0
 		case *packageTypeResolver:
-			return resolver.isolatedContext
+			return resolver.context&flag != 0
 		}
 	}
 	return false
 }
 
-func setIsolatedContext(t typeResolver, isolated bool) func() {
+func setResolverContext(t typeResolver, flag resolverContext, enabled bool) func() {
 	for current := t; current != nil; current = current.parent() {
+		var contextFlags *resolverContext
 		switch resolver := current.(type) {
 		case *functionTypeResolver:
-			previous := resolver.isolatedContext
-			resolver.isolatedContext = isolated
-			return func() { resolver.isolatedContext = previous }
+			contextFlags = &resolver.context
 		case *packageTypeResolver:
-			previous := resolver.isolatedContext
-			resolver.isolatedContext = isolated
-			return func() { resolver.isolatedContext = previous }
+			contextFlags = &resolver.context
+		}
+		if contextFlags != nil {
+			previous := *contextFlags
+			if enabled {
+				*contextFlags |= flag
+			} else {
+				*contextFlags &^= flag
+			}
+			return func() { *contextFlags = previous }
 		}
 	}
 	return func() {}
@@ -577,6 +621,12 @@ func (f *functionTypeResolver) nextDefaultFnName() string {
 	f.defaultFnSymbolCount++
 	return name
 }
+
+func (f *functionTypeResolver) nextXMLStepFnName(pos diagnostics.Location) string {
+	return f.parentResolver.nextXMLStepFnName(pos)
+}
+
+func (f *functionTypeResolver) packageID() *model.PackageID { return f.parentResolver.packageID() }
 
 func (f *functionTypeResolver) nextMonoFnName(origName string) string {
 	idx := f.monoCounters[origName]
@@ -696,6 +746,19 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 func ResolvePublicNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
 	t := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
 	t.resolveTopLevelTypes(pkg)
+	mergeImplicitImports(pkg, t.implicitImports)
+}
+
+func mergeImplicitImports(pkg *ast.BLangPackage, imports map[string]ast.BLangImportPackage) {
+	importNames := make([]string, 0, len(imports))
+	for name := range imports {
+		importNames = append(importNames, name)
+	}
+	sort.Strings(importNames)
+	for _, name := range importNames {
+		imp := imports[name]
+		pkg.AddImportIfAbsent(&imp)
+	}
 }
 
 func populateMappingAtomMaps(t typeResolver, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
@@ -798,15 +861,7 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 	for _, t := range resolvers {
 		maps.Copy(allImports, t.implicitImports)
 	}
-	importNames := make([]string, 0, len(allImports))
-	for name := range allImports {
-		importNames = append(importNames, name)
-	}
-	sort.Strings(importNames)
-	for _, name := range importNames {
-		imp := allImports[name]
-		pkg.Imports = append(pkg.Imports, &imp)
-	}
+	mergeImplicitImports(pkg, allImports)
 }
 
 func isPolymorphicFnSymbol(sym model.FunctionSymbol) bool {
@@ -1006,7 +1061,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 		mappingAtomToBType:  make(map[*semtypes.MappingAtomicType]ast.BType),
 		monoCounters:        make(map[string]int),
 		scope:               fn.Scope(),
-		isolatedContext:     fn.IsIsolated(),
+		context:             resolverContextForFunction(fn.IsIsolated()),
 		mappingAtomToSymRef: make(map[*semtypes.MappingAtomicType]model.SymbolRef),
 	}
 	if !isPolymorphicFnSymbol(fnSym) {
@@ -1067,6 +1122,9 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 	}
 	populateClassSymbolByType(t, pkg)
 	populateMappingAtomMaps(t, pkg, t.importedSymbols)
+	for i := range pkg.GlobalVars {
+		resolveGlobalVarType(t, pkg.GlobalVars[i])
+	}
 	for i := range pkg.Functions {
 		fn := pkg.Functions[i]
 		if _, ok := resolveFunctionSignature(t, fn, 0); !ok {
@@ -1077,9 +1135,6 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 		if _, ok := resolveFunctionSignature(t, pkg.InitFunction, 0); !ok {
 			return
 		}
-	}
-	for i := range pkg.GlobalVars {
-		resolveGlobalVarType(t, pkg.GlobalVars[i])
 	}
 	for i := range pkg.XmlnsList {
 		if !resolveXMLNS(t, nil, pkg.XmlnsList[i]) {
@@ -2155,7 +2210,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 		mappingAtomToBType:  make(map[*semtypes.MappingAtomicType]ast.BType),
 		monoCounters:        make(map[string]int),
 		scope:               e.Function.Scope(),
-		isolatedContext:     fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0,
+		context:             resolverContextForFunction(fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0),
 		mappingAtomToSymRef: make(map[*semtypes.MappingAtomicType]model.SymbolRef),
 	}
 
@@ -2262,7 +2317,7 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		mappingAtomToBType:  make(map[*semtypes.MappingAtomicType]ast.BType),
 		monoCounters:        make(map[string]int),
 		scope:               e.Function.Scope(),
-		isolatedContext:     flags&model.FuncSymbolFlagIsolated != 0,
+		context:             resolverContextForFunction(flags&model.FuncSymbolFlagIsolated != 0),
 		mappingAtomToSymRef: make(map[*semtypes.MappingAtomicType]model.SymbolRef),
 	}
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
@@ -3751,6 +3806,8 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return resolved(resolveXMLTextLiteral(t, chain, e))
 	case *ast.BLangXMLFilterExpression:
 		return resolved(resolveXMLFilterExpr(t, chain, e, expectedType))
+	case *ast.BLangXMLStepExpression:
+		return resolved(resolveXMLStepExpr(t, chain, e, expectedType))
 	default:
 		t.internalError(fmt.Sprintf("unsupported expression type: %T", expr), expr.GetPosition())
 		return expressionResult{}, false
@@ -6733,20 +6790,32 @@ func resolveRemoteMethodCallAction(t typeResolver, chain *binding, expr *ast.BLa
 }
 
 func resolveLangLibImport(t typeResolver, pkgName string, methodName string, expr *ast.BLangInvocation) (model.SymbolRef, ast.BLangIdentifier, bool) {
-	symbolSpace, ok := t.lookupImportedSymbols(pkgName)
+	symbolSpace, pkgAlias, ok := ensureLangLibImport(t, pkgName, expr.GetPosition())
 	if !ok {
-		t.internalError(fmt.Sprintf("%s symbol space not found", pkgName), expr.GetPosition())
 		return model.SymbolRef{}, ast.BLangIdentifier{}, false
 	}
-	basePos := expr.GetPosition()
+	symbolRef, ok := symbolSpace.GetSymbol(methodName)
+	if !ok {
+		t.semanticError("method not found: "+methodName, expr.GetPosition())
+		return model.SymbolRef{}, ast.BLangIdentifier{}, false
+	}
+	return symbolRef, pkgAlias, true
+}
+
+func ensureLangLibImport(t typeResolver, pkgName string, pos diagnostics.Location) (model.ExportedSymbolSpace, ast.BLangIdentifier, bool) {
+	symbolSpace, ok := t.lookupImportedSymbols(pkgName)
+	if !ok {
+		t.internalError(fmt.Sprintf("%s symbol space not found", pkgName), pos)
+		return model.ExportedSymbolSpace{}, ast.BLangIdentifier{}, false
+	}
 	pkgAlias := ast.BLangIdentifier{Value: pkgName}
-	pkgAlias.SetPosition(basePos)
+	pkgAlias.SetPosition(pos)
 	if !t.hasImplicitImport(pkgName) {
 		moduleName := strings.TrimPrefix(pkgName, "lang.")
 		orgIdent := &ast.BLangIdentifier{Value: "ballerina"}
 		langIdent := ast.BLangIdentifier{Value: "lang"}
 		moduleIdent := ast.BLangIdentifier{Value: moduleName}
-		setPositions(basePos, orgIdent, &langIdent, &moduleIdent)
+		setPositions(pos, orgIdent, &langIdent, &moduleIdent)
 		importNode := ast.BLangImportPackage{
 			OrgName:      orgIdent,
 			PkgNameComps: []ast.BLangIdentifier{langIdent, moduleIdent},
@@ -6755,12 +6824,7 @@ func resolveLangLibImport(t typeResolver, pkgName string, methodName string, exp
 		setOtherNodesAsNever(&importNode)
 		t.addImplicitImport(pkgName, importNode)
 	}
-	symbolRef, ok := symbolSpace.GetSymbol(methodName)
-	if !ok {
-		t.semanticError("method not found: "+methodName, expr.GetPosition())
-		return model.SymbolRef{}, ast.BLangIdentifier{}, false
-	}
-	return symbolRef, pkgAlias, true
+	return symbolSpace, pkgAlias, true
 }
 
 func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSymbol model.SymbolRef, expectedType semtypes.SemType) ([]semtypes.SemType, model.SymbolRef, *binding, bool) {
@@ -7553,7 +7617,10 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 				delete(result.includedFields, name)
 			}
 			if field.DefaultExpr != nil {
-				if _, ok := resolveActionOrExpression(t, nil, field.DefaultExpr, fieldTy); !ok {
+				restoreContext := setIsolatedXMLStepContext(t, true)
+				_, ok := resolveActionOrExpression(t, nil, field.DefaultExpr, fieldTy)
+				restoreContext()
+				if !ok {
 					return semtypes.SemType{}, false
 				}
 				field.DefaultFnRef = allocateDefaultFnSymbol(t, fieldTy, field.GetPosition())
@@ -8207,12 +8274,13 @@ func init() {
 		model.OpaqueFnMapGet:    monomorphizeMapGet,
 	}
 	xmlOpaqueMonomorphizers = []opaqueFnMonomorphizer{
-		model.OpaqueFnXMLIterator: monomorphizeXMLIterator,
-		model.OpaqueFnXMLGet:      monomorphizeXMLGet,
-		model.OpaqueFnXMLSlice:    monomorphizeXMLSlice,
-		model.OpaqueFnXMLMap:      monomorphizeXMLMap,
-		model.OpaqueFnXMLForEach:  monomorphizeXMLForEach,
-		model.OpaqueFnXMLFilter:   monomorphizeXMLFilter,
+		model.OpaqueFnXMLIterator:  monomorphizeXMLIterator,
+		model.OpaqueFnXMLGet:       monomorphizeXMLGet,
+		model.OpaqueFnXMLSlice:     monomorphizeXMLSlice,
+		model.OpaqueFnXMLMap:       monomorphizeXMLMap,
+		model.OpaqueFnXMLForEach:   monomorphizeXMLForEach,
+		model.OpaqueFnXMLFilter:    monomorphizeXMLFilter,
+		model.OpaqueFnXMLStepIndex: monomorphizeXMLStepIndex,
 	}
 }
 
@@ -8432,6 +8500,11 @@ func monomorphizeArrayMap(t typeResolver, sym *model.OpaqueFunctionSymbol, polym
 	return ref, chain, ok
 }
 
+func isGeneratedXMLStepLambda(expr ast.BLangExpression) bool {
+	lambda, ok := expr.(*ast.BLangLambdaFunction)
+	return ok && lambda.Function.Name != nil && strings.HasPrefix(lambda.Function.Name.GetValue(), "$xmlStep$")
+}
+
 func monomorphizeXMLIterator(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
 	containerExpr, ok := containerArgExpr(args, "x")
 	if !ok {
@@ -8521,6 +8594,21 @@ func monomorphizeXMLGet(t typeResolver, sym *model.OpaqueFunctionSymbol, polymor
 	return ref, chain, ok
 }
 
+func monomorphizeXMLStepIndex(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
+	containerTy, itemTy, chain, ok := resolveXMLOpaqueContainer(t, chain, args, pos)
+	if !ok {
+		return model.SymbolRef{}, chain, false
+	}
+	if sym.Lookup != nil {
+		if ref, found := sym.Lookup(containerTy); found {
+			return ref, chain, true
+		}
+	}
+	sig := model.TypedFunctionSignature{ParamTypes: []semtypes.SemType{containerTy, semtypes.Int}, RestParamType: semtypes.Never, ReturnType: semtypes.XMLSequence(itemTy), Flags: model.FuncSymbolFlagIsolated}
+	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
+	return ref, chain, ok
+}
+
 func monomorphizeXMLSlice(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
 	containerTy, itemTy, chain, ok := resolveXMLOpaqueContainer(t, chain, args, pos)
 	if !ok {
@@ -8547,7 +8635,7 @@ func monomorphizeXMLCallback(t typeResolver, sym *model.OpaqueFunctionSymbol, po
 		return model.SymbolRef{}, chain, false
 	}
 	callbackFlags := model.FuncSymbolFlags(0)
-	if isolatedContext(t) {
+	if isolatedContext(t) || isolatedXMLStepContext(t) && isGeneratedXMLStepLambda(callbackExpr) {
 		callbackFlags = model.FuncSymbolFlagIsolated
 	}
 	callbackTopSig := model.TypedFunctionSignature{ParamTypes: []semtypes.SemType{itemTy}, RestParamType: semtypes.Never, ReturnType: returnConstraint, Flags: callbackFlags}
@@ -8646,6 +8734,172 @@ func resolveXMLFilterExpr(t typeResolver, chain *binding, expr *ast.BLangXMLFilt
 	resultType := semtypes.XMLSequence(semtypes.XMLElement)
 	setExpectedType(expr, resultType)
 	return resultType, receiver.effect, true
+}
+
+func resolveXMLStepExpr(t typeResolver, chain *binding, expr *ast.BLangXMLStepExpression, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	lowered, ok := lowerXMLStepExpr(t, expr)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	result, ok := resolveActionOrExpression(t, chain, lowered, expectedType)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	expr.LoweredExpression = lowered
+	setExpectedType(expr, result.ty)
+	return result.ty, result.effect, true
+}
+
+func lowerXMLStepExpr(t typeResolver, expr *ast.BLangXMLStepExpression) (ast.BLangExpression, bool) {
+	pos := expr.GetPosition()
+	fnName := t.nextXMLStepFnName(pos)
+	fnIdent := xmlStepIdentifier(fnName, pos)
+	paramName := "$xmlStepItem"
+	paramIdent := xmlStepIdentifier(paramName, pos)
+	param := ast.BLangVariable{}
+	param.SetName(paramIdent)
+	param.SetPosition(pos)
+	param.SetRequiredParam()
+
+	fnScope := t.compilerContext().NewFunctionScope(t.currentScope(), *t.packageID())
+	paramSymbol := model.NewVariableSymbol(paramName, false, false, true, pos)
+	fnScope.AddSymbol(paramName, &paramSymbol)
+	paramRef, _ := fnScope.GetSymbol(paramName)
+	param.SetSymbol(paramRef)
+	itemRef := &ast.BLangVarRef{VariableName: xmlStepIdentifier(paramName, pos)}
+	itemRef.SetSymbol(paramRef)
+	itemRef.SetPosition(pos)
+
+	var current ast.BLangExpression
+	var ok bool
+	switch expr.Start.Kind {
+	case ast.XMLStepStartKindAllChildren:
+		current, ok = newDirectLangXMLInvocation(t, "getChildren", []ast.BLangExpression{itemRef}, pos)
+	case ast.XMLStepStartKindElementChildren:
+		current, ok = newDirectLangXMLInvocation(t, "getChildren", []ast.BLangExpression{itemRef}, pos)
+		if ok {
+			current = newXMLStepFilter(current, expr.Start.NamePattern, expr.Start.GetPosition())
+		}
+	case ast.XMLStepStartKindElementDescendants:
+		current, ok = newDirectLangXMLInvocation(t, "getDescendants", []ast.BLangExpression{itemRef}, pos)
+		if ok {
+			current = newXMLStepFilter(current, expr.Start.NamePattern, expr.Start.GetPosition())
+		}
+	default:
+		t.internalError("unsupported XML step start kind", expr.Start.GetPosition())
+		return nil, false
+	}
+	if !ok {
+		return nil, false
+	}
+
+	for _, extension := range expr.Extensions {
+		switch extension := extension.(type) {
+		case *ast.BLangXMLStepFilterExtend:
+			current = newXMLStepFilter(current, extension.NamePattern, extension.GetPosition())
+		case *ast.BLangXMLStepIndexExtend:
+			current, ok = newDirectLangXMLOpaqueInvocation(t, model.OpaqueFnXMLStepIndex, "$stepIndex", []ast.BLangExpression{current, extension.Expression}, extension.GetPosition())
+		case *ast.BLangXMLStepMethodCallExtend:
+			invocation := &ast.BLangInvocation{}
+			invocation.Expr = current
+			invocation.PkgAlias = cloneXMLStepIdentifier(extension.Invocation.PkgAlias)
+			invocation.Name = cloneXMLStepIdentifier(extension.Invocation.Name)
+			invocation.ArgExprs = append([]ast.BLangExpression(nil), extension.Invocation.ArgExprs...)
+			invocation.SetPosition(extension.Invocation.GetPosition())
+			invocation.SetRawSymbol(common.NewDeferredMethodSymbol(invocation.Name.GetValue(), fnScope.MainSpace()))
+			current = invocation
+		default:
+			t.internalError(fmt.Sprintf("unsupported XML step extension type: %T", extension), extension.GetPosition())
+			return nil, false
+		}
+		if !ok {
+			return nil, false
+		}
+	}
+
+	body := &ast.BLangExprFunctionBody{Expr: current}
+	body.SetPosition(pos)
+	fn := ast.NewBLangFunction(ast.InvokableData{
+		Position:       pos,
+		Name:           fnIdent,
+		RequiredParams: []ast.BLangVariable{param},
+		Body:           body,
+		Flags:          model.FlagLambda | model.FlagAnonymous,
+	})
+	fn.SetScope(fnScope)
+	ownerSpace := t.currentScope().(model.SymbolSpaceProvider).MainSpace()
+	fnRef := t.createFunctionSymbol(ownerSpace, fnName, model.TypedFunctionSignature{}, semtypes.SemType{})
+	fn.SetSymbol(fnRef)
+	signatureRef := t.allocateFunctionSignature([]model.Param{{Name: paramName}}, false)
+	if !t.associateFunctionSignature(fnRef, signatureRef) {
+		t.internalError("function signature already set", pos)
+		return nil, false
+	}
+	lambda := &ast.BLangLambdaFunction{Function: fn}
+	lambda.SetInferredParams()
+	lambda.SetPosition(pos)
+
+	nilName := ast.NewBLangLiteral(pos, ast.LiteralKindNil, nil, "()", true)
+	elements, ok := newDirectLangXMLInvocation(t, "elements", []ast.BLangExpression{expr.Expression, nilName}, pos)
+	if !ok {
+		return nil, false
+	}
+	return newDirectLangXMLOpaqueInvocation(t, model.OpaqueFnXMLMap, "map", []ast.BLangExpression{elements, lambda}, pos)
+}
+
+func xmlStepIdentifier(value string, pos diagnostics.Location) *ast.BLangIdentifier {
+	ident := &ast.BLangIdentifier{Value: value, OriginalValue: value}
+	ident.SetPosition(pos)
+	return ident
+}
+
+func cloneXMLStepIdentifier(ident ast.IdentifierNode) ast.IdentifierNode {
+	if ident == nil {
+		return nil
+	}
+	return xmlStepIdentifier(ident.GetValue(), ident.GetPosition())
+}
+
+func newXMLStepFilter(expression ast.BLangExpression, patterns []ast.BLangAtomicNamePattern, pos diagnostics.Location) *ast.BLangXMLFilterExpression {
+	filter := &ast.BLangXMLFilterExpression{Expression: expression, NamePattern: patterns}
+	filter.SetPosition(pos)
+	return filter
+}
+
+func newDirectLangXMLInvocation(t typeResolver, name string, args []ast.BLangExpression, pos diagnostics.Location) (*ast.BLangInvocation, bool) {
+	space, pkgAlias, ok := ensureLangLibImport(t, "lang.xml", pos)
+	if !ok {
+		return nil, false
+	}
+	ref, ok := space.GetSymbol(name)
+	if !ok {
+		t.internalError("lang.xml symbol not found: "+name, pos)
+		return nil, false
+	}
+	return newResolvedXMLInvocation(ref, &pkgAlias, name, args, pos), true
+}
+
+func newDirectLangXMLOpaqueInvocation(t typeResolver, id int, name string, args []ast.BLangExpression, pos diagnostics.Location) (*ast.BLangInvocation, bool) {
+	space, pkgAlias, ok := ensureLangLibImport(t, "lang.xml", pos)
+	if !ok {
+		return nil, false
+	}
+	ref, ok := space.GetOpaqueSymbol(id)
+	if !ok {
+		t.internalError("lang.xml opaque symbol not found: "+name, pos)
+		return nil, false
+	}
+	return newResolvedXMLInvocation(ref, &pkgAlias, name, args, pos), true
+}
+
+func newResolvedXMLInvocation(ref model.SymbolRef, pkgAlias ast.IdentifierNode, name string, args []ast.BLangExpression, pos diagnostics.Location) *ast.BLangInvocation {
+	invocation := &ast.BLangInvocation{}
+	invocation.PkgAlias = pkgAlias
+	invocation.Name = xmlStepIdentifier(name, pos)
+	invocation.ArgExprs = args
+	invocation.SetSymbol(ref)
+	invocation.SetPosition(pos)
+	return invocation
 }
 
 func resolveAtomicNamePattern(pattern ast.BLangAtomicNamePattern) {

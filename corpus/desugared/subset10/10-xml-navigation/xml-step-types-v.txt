@@ -1,0 +1,288 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang xml (as lang.xml))
+  (type-definition XMLAlias
+    (value-type xml))
+  (function checkStepTypes (
+    (variable value (type
+      (value-type xml)))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable allChildren (type
+          (value-type xml)) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref value)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$751 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml getChildren (
+                    (simple-var-ref $xmlStepItem)))))))))))
+      (var-def
+        (variable filtered (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref value)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$792 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (xml-filter-expression
+                    (invocation lang.xml getChildren (
+                      (simple-var-ref $xmlStepItem)))
+                    (xml-name-pattern-identifier item))))))))))
+      (var-def
+        (variable indexed (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref value)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$839 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml $stepIndex (
+                    (xml-filter-expression
+                      (invocation lang.xml getChildren (
+                        (simple-var-ref $xmlStepItem)))
+                      (xml-name-pattern-identifier item))
+                    (literal 0)))))))))))
+      (var-def
+        (variable elementChildren (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref value)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$895 (
+                (variable $xmlStepItem)) ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (invocation lang.xml getChildren (
+                        (simple-var-ref $xmlStepItem))))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$3 (
+                        (simple-var-ref $desugar$0))))))
+                  (return
+                    (invocation lang.xml elementChildren (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))))))))
+      (var-def
+        (variable got (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref value)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$949 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml get (
+                    (xml-filter-expression
+                      (invocation lang.xml getChildren (
+                        (simple-var-ref $xmlStepItem)))
+                      (xml-name-pattern-identifier item))
+                    (literal 0)))))))))))
+      (var-def
+        (variable mapped (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref value)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$1000 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml map (
+                    (xml-filter-expression
+                      (invocation lang.xml getChildren (
+                        (simple-var-ref $xmlStepItem)))
+                      (xml-name-pattern-identifier item))
+                    (lambda
+                      (function $anonFunc$_0 (
+                        (variable item)) ()
+                        (expr-function-body
+                          (simple-var-ref item))))))))))))))
+      (var-def
+        (variable text (type
+          (user-defined-type xml Text)) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref value)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$1052 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml text (
+                    (invocation lang.xml getChildren (
+                      (simple-var-ref $xmlStepItem)))))))))))))
+      (var-def
+        (variable comments (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Comment))) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref value)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$1100 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml map (
+                    (xml-filter-expression
+                      (invocation lang.xml getChildren (
+                        (simple-var-ref $xmlStepItem)))
+                      (xml-name-pattern-identifier item))
+                    (lambda
+                      (function $anonFunc$_1 (
+                        (variable item)) ()
+                        (expr-function-body
+                          (invocation xml createComment (
+                            (invocation lang.xml data (
+                              (simple-var-ref item))))))))))))))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (list-constructor-expr
+          (simple-var-ref allChildren)
+          (simple-var-ref filtered)
+          (simple-var-ref indexed)
+          (simple-var-ref elementChildren)
+          (simple-var-ref got)
+          (simple-var-ref mapped)
+          (simple-var-ref text)
+          (simple-var-ref comments)))))
+  (function checkSpecialOperandTypes (
+    (variable value (type
+      (union-type
+        (value-type xml)
+        (value-type string))))
+    (variable alias (type
+      (user-defined-type XMLAlias)))
+    (variable empty (type
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type never))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type xml))
+        (block-stmt
+          (var-def
+            (variable narrowed (type
+              (value-type xml)) (expr
+              (invocation lang.xml map (
+                (invocation lang.xml elements (
+                  (simple-var-ref value)
+                  (literal <nil>)))
+                (lambda
+                  (function $xmlStep$24$1382 (
+                    (variable $xmlStepItem)) ()
+                    (expr-function-body
+                      (invocation lang.xml getChildren (
+                        (simple-var-ref $xmlStepItem)))))))))))
+          (assignment
+            (wildcard-binding-pattern)
+            (simple-var-ref narrowed))) ())
+      (block-stmt
+        (var-def
+          (variable aliased (type
+            (value-type xml)) (expr
+            (invocation lang.xml map (
+              (invocation lang.xml elements (
+                (simple-var-ref alias)
+                (literal <nil>)))
+              (lambda
+                (function $xmlStep$24$1437 (
+                  (variable $xmlStepItem)) ()
+                  (expr-function-body
+                    (invocation lang.xml getChildren (
+                      (simple-var-ref $xmlStepItem)))))))))))
+        (var-def
+          (variable emptyResult (type
+            (value-type xml)) (expr
+            (invocation lang.xml map (
+              (invocation lang.xml elements (
+                (simple-var-ref empty)
+                (literal <nil>)))
+              (lambda
+                (function $xmlStep$24$1468 (
+                  (variable $xmlStepItem)) ()
+                  (expr-function-body
+                    (invocation lang.xml getChildren (
+                      (simple-var-ref $xmlStepItem)))))))))))
+        (assignment
+          (wildcard-binding-pattern)
+          (list-constructor-expr
+            (simple-var-ref aliased)
+            (simple-var-ref emptyResult))))))
+  (function checkReadonlyOperandType (
+    (variable readonlyValue (type
+      (intersection-type
+        (value-type xml)
+        (value-type readonly))))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable readonlyResult (type
+          (value-type xml)) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref readonlyValue)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$24$1603 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml getChildren (
+                    (simple-var-ref $xmlStepItem)))))))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref readonlyResult))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation checkStepTypes (
+          (xml-element-literal root
+            (xml-sequence-literal
+              (xml-element-literal item
+                (xml-text-literal A))
+              (xml-element-literal item
+                (xml-text-literal B)))))))
+      (expression-stmt
+        (invocation checkSpecialOperandTypes (
+          (xml-element-literal root
+            (xml-element-literal item
+              (xml-text-literal A)))
+          (xml-element-literal root
+            (xml-element-literal item
+              (xml-text-literal B)))
+          (xml-sequence-literal))))
+      (expression-stmt
+        (invocation io println (
+          (literal xml-step-types ok)))))))

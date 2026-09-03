@@ -4790,6 +4790,11 @@ func (n *nodeBuilder) createXMLNamePatterns(chain *st.XMLNamePatternChainingNode
 }
 
 func (n *nodeBuilder) createXMLAtomicNamePattern(node st.Node) ast.BLangAtomicNamePattern {
+	xmlIdentifier := func(token st.Token) ast.IdentifierNode {
+		ident := n.createIdentifierNodeFromToken(n.getPosition(token), token)
+		setIdentifierValue(ident, unescapeIdentifier(ident.GetValue()))
+		return ident
+	}
 	switch node := node.(type) {
 	case st.Token:
 		if node.Kind() != st.ASTERISK_TOKEN {
@@ -4799,7 +4804,7 @@ func (n *nodeBuilder) createXMLAtomicNamePattern(node st.Node) ast.BLangAtomicNa
 	case *st.SimpleNameReferenceNode:
 		return ast.BLangAtomicNamePattern{
 			Kind:       ast.NamePatternKindIdentifier,
-			Identifier: n.createIdentifierNodeFromToken(n.getPosition(node.Name()), node.Name()),
+			Identifier: xmlIdentifier(node.Name()),
 		}
 	case *st.XMLAtomicNamePatternNode:
 		kind := ast.NamePatternKindQualifiedIdentifier
@@ -4807,12 +4812,12 @@ func (n *nodeBuilder) createXMLAtomicNamePattern(node st.Node) ast.BLangAtomicNa
 		if node.Name().Kind() == st.ASTERISK_TOKEN {
 			kind = ast.NamePatternKindPrefix
 		} else {
-			identifier = n.createIdentifierNodeFromToken(n.getPosition(node.Name()), node.Name())
+			identifier = xmlIdentifier(node.Name())
 		}
 		return ast.BLangAtomicNamePattern{
 			Kind:            kind,
 			Identifier:      identifier,
-			NamespacePrefix: n.createIdentifierNodeFromToken(n.getPosition(node.Prefix()), node.Prefix()),
+			NamespacePrefix: xmlIdentifier(node.Prefix()),
 		}
 	default:
 		n.internalError(fmt.Sprintf("unexpected XML name pattern node %T", node), node)
@@ -4820,9 +4825,52 @@ func (n *nodeBuilder) createXMLAtomicNamePattern(node st.Node) ast.BLangAtomicNa
 	}
 }
 
-func (n *nodeBuilder) transformXMLStepExpression(xMLStepBLangExpression *st.XMLStepExpressionNode) ast.BLangNode {
-	n.unimplemented("transformXMLStepExpression unimplemented", xMLStepBLangExpression)
-	return nil
+func (n *nodeBuilder) transformXMLStepExpression(node *st.XMLStepExpressionNode) ast.BLangNode {
+	expr := &ast.BLangXMLStepExpression{
+		Expression: n.createExpression(node.Expression()),
+		Extensions: make([]ast.XMLStepExtend, 0),
+	}
+	expr.SetPosition(n.getPosition(node))
+
+	switch start := node.XmlStepStart().(type) {
+	case st.Token:
+		if start.Kind() != st.SLASH_ASTERISK_TOKEN {
+			n.internalError("unexpected XML step start token", start)
+			return expr
+		}
+		expr.Start = &ast.BLangXMLStepStart{Kind: ast.XMLStepStartKindAllChildren}
+		expr.Start.SetPosition(n.getPosition(start))
+	case *st.XMLNamePatternChainingNode:
+		kind := ast.XMLStepStartKindElementChildren
+		if start.StartToken().Kind() == st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN {
+			kind = ast.XMLStepStartKindElementDescendants
+		}
+		expr.Start = &ast.BLangXMLStepStart{
+			Kind:        kind,
+			NamePattern: n.createXMLNamePatterns(start),
+		}
+		expr.Start.SetPosition(n.getPosition(start))
+	default:
+		n.internalError(fmt.Sprintf("unexpected XML step start node %T", start), node.XmlStepStart())
+		return expr
+	}
+
+	extensions := node.XmlStepExtend()
+	for extension := range extensions.Iterator() {
+		var transformed ast.BLangNode
+		switch extension := extension.(type) {
+		case *st.XMLNamePatternChainingNode:
+			filter := &ast.BLangXMLStepFilterExtend{NamePattern: n.createXMLNamePatterns(extension)}
+			filter.SetPosition(n.getPosition(extension))
+			transformed = filter
+		default:
+			transformed = n.transformSyntaxNode(extension)
+		}
+		if transformed != nil {
+			expr.Extensions = append(expr.Extensions, transformed.(ast.XMLStepExtend))
+		}
+	}
+	return expr
 }
 
 func (n *nodeBuilder) transformXMLNamePatternChaining(xMLNamePatternChainingNode *st.XMLNamePatternChainingNode) ast.BLangNode {
@@ -4830,14 +4878,21 @@ func (n *nodeBuilder) transformXMLNamePatternChaining(xMLNamePatternChainingNode
 	return nil
 }
 
-func (n *nodeBuilder) transformXMLStepIndexedExtend(xMLStepIndexedExtendNode *st.XMLStepIndexedExtendNode) ast.BLangNode {
-	n.unimplemented("transformXMLStepIndexedExtend unimplemented", xMLStepIndexedExtendNode)
-	return nil
+func (n *nodeBuilder) transformXMLStepIndexedExtend(node *st.XMLStepIndexedExtendNode) ast.BLangNode {
+	extension := &ast.BLangXMLStepIndexExtend{Expression: n.createExpression(node.Expression())}
+	extension.SetPosition(n.getPosition(node))
+	return extension
 }
 
-func (n *nodeBuilder) transformXMLStepMethodCallExtend(xMLStepMethodCallExtendNode *st.XMLStepMethodCallExtendNode) ast.BLangNode {
-	n.unimplemented("transformXMLStepMethodCallExtend unimplemented", xMLStepMethodCallExtendNode)
-	return nil
+func (n *nodeBuilder) transformXMLStepMethodCallExtend(node *st.XMLStepMethodCallExtendNode) ast.BLangNode {
+	invocation := n.createBLangInvocation(
+		node.MethodName(),
+		node.ParenthesizedArgList().Arguments(),
+		n.getPosition(node),
+	)
+	extension := &ast.BLangXMLStepMethodCallExtend{Invocation: invocation}
+	extension.SetPosition(n.getPosition(node))
+	return extension
 }
 
 func (n *nodeBuilder) transformXMLAtomicNamePattern(xMLAtomicNamePatternNode *st.XMLAtomicNamePatternNode) ast.BLangNode {

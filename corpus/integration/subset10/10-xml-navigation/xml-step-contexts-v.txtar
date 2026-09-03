@@ -1,0 +1,6 @@
+-- stdout --
+xml-step-module-contexts ok
+xml-step-expression-contexts ok
+xml-step-check-contexts ok
+xml-step-contexts ok
+-- stderr --

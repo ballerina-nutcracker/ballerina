@@ -1128,6 +1128,35 @@ func (b *BLangPackage) AddImport(importPkg *BLangImportPackage) {
 	b.Imports = append(b.Imports, importPkg)
 }
 
+// AddImportIfAbsent adds an import unless the package already imports the same
+// organization and module, possibly under a different alias.
+func (b *BLangPackage) AddImportIfAbsent(importPkg *BLangImportPackage) {
+	for _, existing := range b.Imports {
+		if sameImportPackage(existing, importPkg) {
+			return
+		}
+	}
+	b.AddImport(importPkg)
+}
+
+func sameImportPackage(left, right *BLangImportPackage) bool {
+	identifierValue := func(identifier *BLangIdentifier) string {
+		if identifier == nil {
+			return ""
+		}
+		return identifier.GetValue()
+	}
+	if identifierValue(left.OrgName) != identifierValue(right.OrgName) || len(left.PkgNameComps) != len(right.PkgNameComps) {
+		return false
+	}
+	for i := range left.PkgNameComps {
+		if left.PkgNameComps[i].GetValue() != right.PkgNameComps[i].GetValue() {
+			return false
+		}
+	}
+	return true
+}
+
 func (b *BLangPackage) GetNamespaceDeclarations() []*BLangXMLNS {
 	return b.XmlnsList
 }
