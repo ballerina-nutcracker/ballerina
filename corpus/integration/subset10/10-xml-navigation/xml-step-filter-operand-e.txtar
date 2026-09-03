@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-filter-operand-e.bal:18:13
+   |
+18 |     any _ = item/*.<root>; // @error
+   |             ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-filter-operand-e.bal:20:13
+   |
+20 |     xml _ = k/*.<root>; // @error
+   |             ^^^^^^^^^^
