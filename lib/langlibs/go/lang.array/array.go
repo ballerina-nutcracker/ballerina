@@ -147,6 +147,46 @@ func arrayRemoveAll(_ *extern.Context, args []values.BalValue) (values.BalValue,
 	return nil, nil
 }
 
+func arrayToStream(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	source := args[0].(*values.List)
+	memberTy := semtypes.ListProj(ctx.TypeCtx(), source.Type, semtypes.Int)
+	streamDef := semtypes.NewStreamDefinition()
+	streamTy := streamDef.Define(ctx.TypeEnv(), memberTy, semtypes.Nil)
+	nextRecordDef := semtypes.NewMappingDefinition()
+	nextRecordTy := nextRecordDef.Define(ctx.TypeEnv(),
+		[]semtypes.Field{semtypes.FieldFrom("value", memberTy, false, false)}, semtypes.Never)
+	nextRecordAtomic := semtypes.ToMappingAtomicType(ctx.TypeCtx(), nextRecordTy)
+
+	cursor := 0
+	limit := 0
+	limitSet := false
+	terminal := false
+	next := func() values.BalValue {
+		if terminal {
+			return nil
+		}
+		if !limitSet {
+			limit = source.Len()
+			limitSet = true
+		}
+		if cursor >= limit {
+			terminal = true
+			return nil
+		}
+		value := source.Get(cursor)
+		cursor++
+		return values.NewMap(nextRecordTy, nextRecordAtomic, false, []values.MapEntry{{
+			Key:   "value",
+			Value: value,
+		}})
+	}
+	close := func() values.BalValue {
+		terminal = true
+		return nil
+	}
+	return values.NewStream(streamTy, next, close), nil
+}
+
 func initArrayModule(rt *runtime.Runtime) {
 	env := rt.GetTypeEnv()
 	ld := semtypes.NewListDefinition()
@@ -162,6 +202,7 @@ func initArrayModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "indexOf", arrayIndexOf)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "remove", arrayRemove)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "removeAll", arrayRemoveAll)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toStream", arrayToStream)
 }
 
 func init() {
