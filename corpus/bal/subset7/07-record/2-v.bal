@@ -14,8 +14,17 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semtypes
+import ballerina/io;
 
-type AtomicType interface {
-	atomKind() kind
+type Foo record {|
+    int value = 5;
+|};
+
+type Bar record {|
+    int value;
+|};
+
+public function main() {
+    Foo|Bar f = {};
+    io:println(f is Foo); // @output true
 }

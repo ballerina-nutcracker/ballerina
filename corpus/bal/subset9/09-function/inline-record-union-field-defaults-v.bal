@@ -14,8 +14,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semtypes
+import ballerina/io;
 
-type AtomicType interface {
-	atomKind() kind
+type Outer record {|
+    record {
+        boolean nilAsOptionalField = false;
+        boolean absentAsNilableType = false;
+    }|false allowDataProjection = {};
+|};
+
+public function main() {
+    Outer options = {allowDataProjection: {nilAsOptionalField: true}};
+    io:println(options.allowDataProjection); // @output {"nilAsOptionalField":true,"absentAsNilableType":false}
 }

@@ -29,7 +29,7 @@ import (
 
 const (
 	symMagic   = "\x53\x59\x4d\x42"
-	symVersion = 9
+	symVersion = 10
 )
 
 const (
@@ -101,11 +101,20 @@ func (sw *symbolWriter) symbolAnnotations(ref model.SymbolRef) values.Annotation
 }
 
 func (sw *symbolWriter) serialize(exported model.ExportedSymbolSpace) ([]byte, error) {
-	body := &bytes.Buffer{}
-	if err := sw.writeSymbolSpaces(body, exported.MainSpaces); err != nil {
+	mainBody := &bytes.Buffer{}
+	if err := sw.writeSymbolSpaces(mainBody, exported.MainSpaces); err != nil {
 		return nil, err
 	}
-	if err := sw.writeSymbolSpaces(body, exported.AnnotationSpaces); err != nil {
+	mainRefMap := sw.refMap
+
+	annotationBody := &bytes.Buffer{}
+	if err := sw.writeSymbolSpaces(annotationBody, exported.AnnotationSpaces); err != nil {
+		return nil, err
+	}
+
+	tpEncoding := semtypes.MarshalTypePool(sw.tp, sw.compilerEnv.GetTypeEnv())
+	sw.refMap = mainRefMap
+	if err := sw.writeMappingDefaults(mainBody, tpEncoding); err != nil {
 		return nil, err
 	}
 
@@ -116,8 +125,7 @@ func (sw *symbolWriter) serialize(exported model.ExportedSymbolSpace) ([]byte, e
 	if err := write(buf, int32(symVersion)); err != nil {
 		return nil, err
 	}
-
-	tpBytes := semtypes.MarshalTypePool(sw.tp, sw.compilerEnv.GetTypeEnv())
+	tpBytes := tpEncoding.Bytes()
 	if err := write(buf, int64(len(tpBytes))); err != nil {
 		return nil, err
 	}
@@ -136,12 +144,56 @@ func (sw *symbolWriter) serialize(exported model.ExportedSymbolSpace) ([]byte, e
 	if err := sw.writeExternalSymbolRefPool(buf); err != nil {
 		return nil, err
 	}
-
-	if _, err := buf.Write(body.Bytes()); err != nil {
-		return nil, fmt.Errorf("writing body: %v", err)
+	if _, err := buf.Write(mainBody.Bytes()); err != nil {
+		return nil, fmt.Errorf("writing main symbol space: %v", err)
+	}
+	if _, err := buf.Write(annotationBody.Bytes()); err != nil {
+		return nil, fmt.Errorf("writing annotation symbol space: %v", err)
 	}
 
 	return buf.Bytes(), nil
+}
+
+type serializedMappingDefaults struct {
+	atomIndex int32
+	defaults  []model.FieldDefault
+}
+
+func (sw *symbolWriter) writeMappingDefaults(buf *bytes.Buffer, tpEncoding semtypes.TypePoolEncoding) error {
+	var entries []serializedMappingDefaults
+	for atom, defaults := range sw.compilerEnv.MappingDefaultsSnapshot() {
+		if len(defaults) == 0 {
+			continue
+		}
+		index, ok := tpEncoding.MappingAtomicTypeIndex(atom)
+		if !ok {
+			continue
+		}
+		entries = append(entries, serializedMappingDefaults{atomIndex: index, defaults: defaults})
+	}
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].atomIndex < entries[j].atomIndex
+	})
+	if err := write(buf, int64(len(entries))); err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if err := write(buf, entry.atomIndex); err != nil {
+			return err
+		}
+		if err := write(buf, int64(len(entry.defaults))); err != nil {
+			return err
+		}
+		for _, fieldDefault := range entry.defaults {
+			if err := sw.writeStringCP(buf, fieldDefault.FieldName); err != nil {
+				return err
+			}
+			if err := sw.writeSymbolRef(buf, fieldDefault.FnRef); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (sw *symbolWriter) writePackageIdentifier(buf *bytes.Buffer, pkg model.PackageIdentifier) error {

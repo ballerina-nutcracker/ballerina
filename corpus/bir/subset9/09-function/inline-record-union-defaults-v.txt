@@ -1,0 +1,84 @@
+module $anon.. v 0.0.0;
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 11
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 12
+    %0 = %1;
+    return;
+  }
+}
+$desugar$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 11
+    %0 = %1;
+    return;
+  }
+}
+$desugar$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 12
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = fp $anon/.:$desugar$0
+    $desugar$0 = %1;
+    %3 = fp $anon/.:$desugar$1
+    $desugar$1 = %3;
+    %5 = ConstantLoad kind
+    %6 = ConstantLoad one
+    %7 = newMap {| first: int, kind: string, never... |}{%5=%6} defaults{first=$anon/.:$desugar$0}
+    first = %7;
+    %9 = first is {| first: int, kind: string, never... |}
+    %9 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 4
+    %1 = ConstantLoad first
+    %0 = (1, first)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 9
+    %0 = fp $anon/.:$desugar$2
+    $desugar$2 = %0;
+    %2 = fp $anon/.:$desugar$3
+    $desugar$3 = %2;
+    %4 = ConstantLoad code
+    %5 = ConstantLoad 2
+    %6 = newMap {| code: int, second: int, never... |}{%4=%5} defaults{second=$anon/.:$desugar$3}
+    second = %6;
+    %8 = second is {| code: int, second: int, never... |}
+    %8 ? bb4 : bb6;
+  }
+  bb4 {
+    PushScopeFrame 4
+    %1 = ConstantLoad second
+    %0 = (1, second)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

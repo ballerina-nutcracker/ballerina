@@ -102,11 +102,8 @@ type typeResolver interface {
 
 	ensureResolved(ref model.SymbolRef, depth int) bool
 
-	setMappingAtomBType(mat *semtypes.MappingAtomicType, bType ast.BType)
-	getMappingAtomBType(mat *semtypes.MappingAtomicType) (ast.BType, bool)
-
-	setMappingAtomSymRef(mat *semtypes.MappingAtomicType, ref model.SymbolRef)
-	getMappingAtomSymRef(mat *semtypes.MappingAtomicType) (model.SymbolRef, bool)
+	setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault)
+	mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool)
 	setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef)
 	getClassAtomSymbol(mat *semtypes.MappingAtomicType) (model.SymbolRef, bool)
 	currentScope() model.Scope
@@ -136,6 +133,32 @@ const (
 	resolutionDone
 )
 
+type mappingDefaultsResolverBase struct {
+	atomicTypeInterner      *semtypes.AtomicTypeInterner
+	mappingDefaultsByHandle map[semtypes.InternHandle][]model.FieldDefault
+}
+
+func newMappingDefaultsResolverBase() *mappingDefaultsResolverBase {
+	return &mappingDefaultsResolverBase{
+		atomicTypeInterner:      semtypes.NewAtomicTypeInterner(),
+		mappingDefaultsByHandle: make(map[semtypes.InternHandle][]model.FieldDefault),
+	}
+}
+
+func (r *mappingDefaultsResolverBase) setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+	handle := r.atomicTypeInterner.Intern(atom)
+	r.mappingDefaultsByHandle[handle] = defaults
+}
+
+func (r *mappingDefaultsResolverBase) mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
+	handle, ok := r.atomicTypeInterner.Lookup(atom)
+	if !ok {
+		return nil, false
+	}
+	defaults, ok := r.mappingDefaultsByHandle[handle]
+	return defaults, ok
+}
+
 type packageTypeResolver struct {
 	ctx             *context.CompilerContext
 	tyCtx           semtypes.Context
@@ -158,7 +181,6 @@ type packageTypeResolver struct {
 	// Absence means resolution has not started.
 	lazyResolutionStatus  map[model.SymbolRef]resolutionStatus
 	functionNodes         map[model.SymbolRef]*ast.BLangFunction
-	mappingAtomToBType    map[*semtypes.MappingAtomicType]ast.BType
 	typeDefnNodes         map[model.SymbolRef]*ast.BLangTypeDefinition
 	classDefnNodes        map[model.SymbolRef]*ast.BLangClassDefinition
 	defaultFnSymbolCount  int
@@ -166,7 +188,6 @@ type packageTypeResolver struct {
 	annotationGlobalCount int
 	scope                 model.Scope
 	isolatedContext       bool
-	mappingAtomToSymRef   map[*semtypes.MappingAtomicType]model.SymbolRef
 	classAtomSymbols      map[*semtypes.MappingAtomicType]model.SymbolRef
 	classSymbolByType     map[semtypes.InternHandle]model.SymbolRef
 	semtypeInterner       *semtypes.SemTypeInterner
@@ -288,22 +309,12 @@ func (t *packageTypeResolver) compilerContext() *context.CompilerContext {
 	return t.ctx
 }
 
-func (t *packageTypeResolver) setMappingAtomBType(mat *semtypes.MappingAtomicType, bType ast.BType) {
-	t.mappingAtomToBType[mat] = bType
+func (t *packageTypeResolver) setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+	t.ctx.SetMappingDefaults(atom, defaults)
 }
 
-func (t *packageTypeResolver) getMappingAtomBType(mat *semtypes.MappingAtomicType) (ast.BType, bool) {
-	bType, ok := t.mappingAtomToBType[mat]
-	return bType, ok
-}
-
-func (t *packageTypeResolver) setMappingAtomSymRef(mat *semtypes.MappingAtomicType, ref model.SymbolRef) {
-	t.mappingAtomToSymRef[mat] = ref
-}
-
-func (t *packageTypeResolver) getMappingAtomSymRef(mat *semtypes.MappingAtomicType) (model.SymbolRef, bool) {
-	ref, ok := t.mappingAtomToSymRef[mat]
-	return ref, ok
+func (t *packageTypeResolver) mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
+	return t.ctx.MappingDefaults(atom)
 }
 
 func (t *packageTypeResolver) setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef) {
@@ -375,17 +386,16 @@ func (t *packageTypeResolver) setCapturedVars(vars map[model.SymbolRef]bool) {
 }
 
 type functionTypeResolver struct {
+	*mappingDefaultsResolverBase
 	parentResolver       typeResolver
 	tyCtx                semtypes.Context
 	retTy                semtypes.SemType
 	implicitImports      map[string]ast.BLangImportPackage
 	capturedNarrowedVars map[model.SymbolRef]bool
-	mappingAtomToBType   map[*semtypes.MappingAtomicType]ast.BType
 	monoCounters         map[string]int
 	defaultFnSymbolCount int
 	scope                model.Scope
 	isolatedContext      bool
-	mappingAtomToSymRef  map[*semtypes.MappingAtomicType]model.SymbolRef
 }
 
 func (f *functionTypeResolver) typeContext() semtypes.Context        { return f.tyCtx }
@@ -511,26 +521,11 @@ func (f *functionTypeResolver) ensureResolved(ref model.SymbolRef, depth int) bo
 	return f.parentResolver.ensureResolved(ref, depth)
 }
 
-func (f *functionTypeResolver) setMappingAtomBType(mat *semtypes.MappingAtomicType, bType ast.BType) {
-	f.mappingAtomToBType[mat] = bType
-}
-
-func (f *functionTypeResolver) getMappingAtomBType(mat *semtypes.MappingAtomicType) (ast.BType, bool) {
-	if bType, ok := f.mappingAtomToBType[mat]; ok {
-		return bType, true
+func (f *functionTypeResolver) mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
+	if _, ok := f.atomicTypeInterner.Lookup(atom); ok {
+		return f.mappingDefaultsResolverBase.mappingDefaults(atom)
 	}
-	return f.parentResolver.getMappingAtomBType(mat)
-}
-
-func (f *functionTypeResolver) setMappingAtomSymRef(mat *semtypes.MappingAtomicType, ref model.SymbolRef) {
-	f.mappingAtomToSymRef[mat] = ref
-}
-
-func (f *functionTypeResolver) getMappingAtomSymRef(mat *semtypes.MappingAtomicType) (model.SymbolRef, bool) {
-	if ref, ok := f.mappingAtomToSymRef[mat]; ok {
-		return ref, ok
-	}
-	return f.parentResolver.getMappingAtomSymRef(mat)
+	return f.parentResolver.mappingDefaults(atom)
 }
 
 func (f *functionTypeResolver) setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef) {
@@ -597,15 +592,12 @@ func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage,
 		functionNodes:          make(map[model.SymbolRef]*ast.BLangFunction),
 		typeDefnNodes:          make(map[model.SymbolRef]*ast.BLangTypeDefinition),
 		classDefnNodes:         make(map[model.SymbolRef]*ast.BLangClassDefinition),
-		// FIXME: these lookup maps needs to be removed #628
-		mappingAtomToBType:  make(map[*semtypes.MappingAtomicType]ast.BType),
-		mappingAtomToSymRef: make(map[*semtypes.MappingAtomicType]model.SymbolRef),
-		classAtomSymbols:    make(map[*semtypes.MappingAtomicType]model.SymbolRef),
-		classSymbolByType:   make(map[semtypes.InternHandle]model.SymbolRef),
-		semtypeInterner:     semtypes.NewSemtypeInterner(),
-		xmlIteratorTypes:    semtypes.NewSemTypeCache(),
-		monoCounters:        make(map[string]int),
-		scope:               moduleScope,
+		classAtomSymbols:       make(map[*semtypes.MappingAtomicType]model.SymbolRef),
+		classSymbolByType:      make(map[semtypes.InternHandle]model.SymbolRef),
+		semtypeInterner:        semtypes.NewSemtypeInterner(),
+		xmlIteratorTypes:       semtypes.NewSemTypeCache(),
+		monoCounters:           make(map[string]int),
+		scope:                  moduleScope,
 	}
 }
 
@@ -698,52 +690,19 @@ func ResolvePublicNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, imp
 	t.resolveTopLevelTypes(pkg)
 }
 
-func populateMappingAtomMaps(t typeResolver, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
-	for i := range pkg.TypeDefinitions {
-		defn := pkg.TypeDefinitions[i]
-		semType := t.symbolType(defn.Symbol())
-		switch defn.GetTypeData().TypeDescriptor.(type) {
-		case *ast.BLangRecordType:
-			mat := semtypes.ToMappingAtomicType(t.typeContext(), semType)
-			if mat == nil {
-				t.internalError("failed to extract mapping atomic type for record type", defn.GetPosition())
-				continue
-			}
-			t.setMappingAtomSymRef(mat, defn.Symbol())
-		case *ast.BLangObjectType:
-			if mat := semtypes.ToObjectAtomicType(t.typeContext(), semType); mat != nil {
-				t.setMappingAtomSymRef(mat, defn.Symbol())
-			}
-		}
-	}
+func populateClassAtomSymbols(t typeResolver, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
 	for i := range pkg.ClassDefinitions {
 		classDef := pkg.ClassDefinitions[i]
-		semType := t.symbolType(classDef.Symbol())
-		mat := semtypes.ToObjectAtomicType(t.typeContext(), semType)
+		mat := semtypes.ToObjectAtomicType(t.typeContext(), t.symbolType(classDef.Symbol()))
 		t.setClassAtomSymbol(mat, classDef.Symbol())
 	}
-
 	for _, symbolSpace := range importedSymbols {
 		for ref := range symbolSpace.PublicMainSymbols() {
-			if t.compilerContext().SymbolKind(ref) != model.SymbolKindType {
+			if !t.compilerContext().SymbolIsClass(ref) {
 				continue
 			}
-			semType := t.symbolType(ref)
-			if semtypes.IsZero(semType) {
-				continue
-			}
-			mat := semtypes.ToMappingAtomicType(t.typeContext(), semType)
-			if mat != nil {
-				t.setMappingAtomSymRef(mat, ref)
-			}
-			// Only real class symbols may back a `new` expression. Mapping any
-			// type alias whose semtype merely contains an object atom (e.g. a
-			// union like `RequestMessage = json|Request`) would clobber the
-			// genuine class's atom mapping, so restrict this to ClassSymbols.
-			if t.compilerContext().SymbolIsClass(ref) {
-				if oat := semtypes.ToObjectAtomicType(t.typeContext(), semType); oat != nil {
-					t.setClassAtomSymbol(oat, ref)
-				}
+			if mat := semtypes.ToObjectAtomicType(t.typeContext(), t.symbolType(ref)); mat != nil {
+				t.setClassAtomSymbol(mat, ref)
 			}
 		}
 	}
@@ -753,19 +712,18 @@ func populateMappingAtomMaps(t typeResolver, pkg *ast.BLangPackage, importedSymb
 func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
 	p := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
 	populateClassSymbolByType(p, pkg)
-	populateMappingAtomMaps(p, pkg, importedSymbols)
+	populateClassAtomSymbols(p, pkg, importedSymbols)
 	fns := common.PackageFunctionDecls(pkg)
 
 	allImports := make(map[string]ast.BLangImportPackage)
 	resolveFieldInitsInScope := func(scope model.Scope, fields []*ast.BLangVariable) {
 		ft := &functionTypeResolver{
-			parentResolver:      p,
-			tyCtx:               semtypes.ContextFrom(p.typeEnv()),
-			implicitImports:     make(map[string]ast.BLangImportPackage),
-			mappingAtomToBType:  make(map[*semtypes.MappingAtomicType]ast.BType),
-			monoCounters:        make(map[string]int),
-			scope:               scope,
-			mappingAtomToSymRef: make(map[*semtypes.MappingAtomicType]model.SymbolRef),
+			mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
+			parentResolver:              p,
+			tyCtx:                       semtypes.ContextFrom(p.typeEnv()),
+			implicitImports:             make(map[string]ast.BLangImportPackage),
+			monoCounters:                make(map[string]int),
+			scope:                       scope,
 		}
 		for _, fieldNode := range fields {
 			field := fieldNode
@@ -1000,14 +958,13 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 		return nil
 	}
 	ft := &functionTypeResolver{
-		parentResolver:      p,
-		tyCtx:               semtypes.ContextFrom(p.typeEnv()),
-		implicitImports:     make(map[string]ast.BLangImportPackage),
-		mappingAtomToBType:  make(map[*semtypes.MappingAtomicType]ast.BType),
-		monoCounters:        make(map[string]int),
-		scope:               fn.Scope(),
-		isolatedContext:     fn.IsIsolated(),
-		mappingAtomToSymRef: make(map[*semtypes.MappingAtomicType]model.SymbolRef),
+		mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
+		parentResolver:              p,
+		tyCtx:                       semtypes.ContextFrom(p.typeEnv()),
+		implicitImports:             make(map[string]ast.BLangImportPackage),
+		monoCounters:                make(map[string]int),
+		scope:                       fn.Scope(),
+		isolatedContext:             fn.IsIsolated(),
 	}
 	if !isPolymorphicFnSymbol(fnSym) {
 		ft.retTy = fnSym.TypedSignature().ReturnType
@@ -1066,7 +1023,7 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 		}
 	}
 	populateClassSymbolByType(t, pkg)
-	populateMappingAtomMaps(t, pkg, t.importedSymbols)
+	populateClassAtomSymbols(t, pkg, t.importedSymbols)
 	for i := range pkg.Functions {
 		fn := pkg.Functions[i]
 		if _, ok := resolveFunctionSignature(t, fn, 0); !ok {
@@ -2147,15 +2104,14 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 	// Create a function type resolver for the lambda so expectedReturnType() is correct
 	fnSym := t.getSymbol(e.Function.Symbol()).(model.FunctionSymbol)
 	ft := &functionTypeResolver{
-		parentResolver:      t,
-		tyCtx:               semtypes.ContextFrom(t.typeEnv()),
-		retTy:               fnSym.TypedSignature().ReturnType,
-		implicitImports:     make(map[string]ast.BLangImportPackage),
-		mappingAtomToBType:  make(map[*semtypes.MappingAtomicType]ast.BType),
-		monoCounters:        make(map[string]int),
-		scope:               e.Function.Scope(),
-		isolatedContext:     fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0,
-		mappingAtomToSymRef: make(map[*semtypes.MappingAtomicType]model.SymbolRef),
+		mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
+		parentResolver:              t,
+		tyCtx:                       semtypes.ContextFrom(t.typeEnv()),
+		retTy:                       fnSym.TypedSignature().ReturnType,
+		implicitImports:             make(map[string]ast.BLangImportPackage),
+		monoCounters:                make(map[string]int),
+		scope:                       e.Function.Scope(),
+		isolatedContext:             fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0,
 	}
 
 	// Push function boundary marker onto the chain
@@ -2254,15 +2210,14 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		Flags:         flags,
 	})
 	ft := &functionTypeResolver{
-		parentResolver:      t,
-		tyCtx:               semtypes.ContextFrom(t.typeEnv()),
-		retTy:               expectedReturnTy,
-		implicitImports:     make(map[string]ast.BLangImportPackage),
-		mappingAtomToBType:  make(map[*semtypes.MappingAtomicType]ast.BType),
-		monoCounters:        make(map[string]int),
-		scope:               e.Function.Scope(),
-		isolatedContext:     flags&model.FuncSymbolFlagIsolated != 0,
-		mappingAtomToSymRef: make(map[*semtypes.MappingAtomicType]model.SymbolRef),
+		mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
+		parentResolver:              t,
+		tyCtx:                       semtypes.ContextFrom(t.typeEnv()),
+		retTy:                       expectedReturnTy,
+		implicitImports:             make(map[string]ast.BLangImportPackage),
+		monoCounters:                make(map[string]int),
+		scope:                       e.Function.Scope(),
+		isolatedContext:             flags&model.FuncSymbolFlagIsolated != 0,
 	}
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
 	prevCaptured := t.getCapturedVars()
@@ -4359,20 +4314,8 @@ func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e
 	}
 
 	e.AtomicType = *mat
-	if ref, ok := t.getMappingAtomSymRef(mat); ok {
-		if carrier, ok := t.getSymbol(ref).(model.MemberCarrier); ok {
-			e.FieldDefaults = carrier.FieldDefaults()
-		}
-	} else if bType, ok := t.getMappingAtomBType(mat); ok {
-		// This happens for inline record type definitions given they don't have type symbol. Need to think of a way
-		// to properly handle this
-		if recTy, ok := bType.(*ast.BLangRecordType); ok {
-			for name, field := range recTy.Fields() {
-				if field.DefaultExpr != nil {
-					e.FieldDefaults = append(e.FieldDefaults, model.FieldDefault{FieldName: name, FnRef: field.DefaultFnRef})
-				}
-			}
-		}
+	if defaults, found := t.mappingDefaults(mat); found {
+		e.FieldDefaults = append([]model.FieldDefault(nil), defaults...)
 	}
 	setExpectedType(e, resultType)
 	return resultType, defaultExpressionEffect(chain), true
@@ -4396,6 +4339,15 @@ func resolveMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField) {
 	kv.SetDeterminedType(semtypes.Never)
 }
 
+func defaultableMappingFields(t typeResolver, atom *semtypes.MappingAtomicType) []string {
+	defaults, _ := t.mappingDefaults(atom)
+	fields := make([]string, len(defaults))
+	for i, field := range defaults {
+		fields[i] = field.FieldName
+	}
+	return fields
+}
+
 func selectMappingInherentType(t typeResolver, expr *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, *semtypes.MappingAtomicType, bool) {
 	expectedMappingType := semtypes.Intersect(expectedType, semtypes.Mapping)
 	tc := t.typeContext()
@@ -4417,8 +4369,11 @@ func selectMappingInherentType(t typeResolver, expr *ast.BLangMappingConstructor
 	}
 	sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
 
+	defaultableFields := func(atom *semtypes.MappingAtomicType) []string {
+		return defaultableMappingFields(t, atom)
+	}
 	for _, alt := range alts {
-		if semtypes.MappingAlternativeAllowsFields(tc, alt, fields) {
+		if semtypes.MappingAlternativeAllowsFields(tc, alt, fields, defaultableFields) {
 			validAlts = append(validAlts, alt)
 		}
 	}
@@ -6488,9 +6443,6 @@ func classMethodSymbolForReceiver(t typeResolver, receiverTy semtypes.SemType, m
 		return model.SymbolRef{}, false
 	}
 	classRef, ok := t.getClassAtomSymbol(atomicType)
-	if !ok {
-		classRef, ok = t.getMappingAtomSymRef(atomicType)
-	}
 	if ok {
 		if classSymbol, isClass := t.getSymbol(classRef).(model.ClassSymbol); isClass {
 			if methodRef, found := classSymbol.MethodSymbol(methodName); found {
@@ -7389,8 +7341,6 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 					return semtypes.SemType{}, false
 				}
 				semType := d.Define(t.typeEnv(), nil, rest)
-				mat := semtypes.ToMappingAtomicType(t.typeContext(), semType)
-				t.setMappingAtomBType(mat, ty)
 				return semType, true
 			case ast.TypeKindTypeDesc:
 				constraint, ok := resolveTypeDataPair(t, &ty.Constraint, depth+1)
@@ -7574,7 +7524,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		}
 		semType := d.Define(t.typeEnv(), fields, rest)
 		mat := semtypes.ToMappingAtomicType(t.typeContext(), semType)
-		t.setMappingAtomBType(mat, ty)
+		t.setMappingDefaults(mat, recordFieldDefaults(t, ty))
 		return semType, true
 	case *ast.BLangFunctionType:
 		if ty.IsAnyFunction() {
@@ -7764,6 +7714,33 @@ func validateOverridesAndMerge(t typeResolver, directMembers []directMember, inc
 	}
 
 	return members, true
+}
+
+func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType) []model.FieldDefault {
+	directFields := make(map[string]bool)
+	var defaults []model.FieldDefault
+	for name, field := range recordTy.FieldPtrs() {
+		directFields[name] = true
+		if field.DefaultExpr != nil {
+			defaults = append(defaults, model.FieldDefault{FieldName: name, FnRef: field.DefaultFnRef})
+		}
+	}
+
+	inherited := make(map[string]bool)
+	for _, ref := range recordTy.Inclusions {
+		carrier, ok := t.getSymbol(ref).(model.MemberCarrier)
+		if !ok {
+			continue
+		}
+		for _, fieldDefault := range carrier.FieldDefaults() {
+			if directFields[fieldDefault.FieldName] || inherited[fieldDefault.FieldName] {
+				continue
+			}
+			inherited[fieldDefault.FieldName] = true
+			defaults = append(defaults, fieldDefault)
+		}
+	}
+	return defaults
 }
 
 type recordInclusionResolutionResult struct {

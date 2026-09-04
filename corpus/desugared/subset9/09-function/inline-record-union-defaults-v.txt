@@ -1,0 +1,101 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (lambda
+            (function $desugar$0 () ()
+              (block-function-body
+                (return
+                  (literal 11))))))))
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $desugar$1 () ()
+              (block-function-body
+                (return
+                  (literal 12))))))))
+      (var-def
+        (variable first (type
+          (union-type
+            (record-type
+              (field kind
+                (value-type string))
+              (field first
+                (value-type int)
+                (literal 11)))
+            (record-type
+              (field code
+                (value-type int))
+              (field second
+                (value-type int)
+                (literal 12))))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal kind)
+              (literal one))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref first)
+          (record-type
+            (field kind
+              (value-type string))
+            (field first
+              (value-type int))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref first)
+                (literal first)))))) ())
+      (block-stmt
+        (var-def
+          (variable $desugar$2 (expr
+            (lambda
+              (function $desugar$2 () ()
+                (block-function-body
+                  (return
+                    (literal 11))))))))
+        (var-def
+          (variable $desugar$3 (expr
+            (lambda
+              (function $desugar$3 () ()
+                (block-function-body
+                  (return
+                    (literal 12))))))))
+        (var-def
+          (variable second (type
+            (union-type
+              (record-type
+                (field kind
+                  (value-type string))
+                (field first
+                  (value-type int)
+                  (literal 11)))
+              (record-type
+                (field code
+                  (value-type int))
+                (field second
+                  (value-type int)
+                  (literal 12))))) (expr
+            (mapping-constructor-expr
+              (key-value
+                (literal code)
+                (literal 2))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref second)
+            (record-type
+              (field code
+                (value-type int))
+              (field second
+                (value-type int))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (index-based-access
+                  (simple-var-ref second)
+                  (literal second)))))) ())
+        (block-stmt)))))

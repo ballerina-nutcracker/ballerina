@@ -14,18 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
+public const int BASE = 40;
 
-type Foo record {|
-    int value = 5;
-|};
-
-type Bar record {|
-    int value;
-|};
-
-public function main() {
-    // JBallerina allows this but according to the spec applicable contexually expected type determination is independent of default values
-    Foo|Bar f = {}; // @error
-    io:println(f is Foo);
+public isolated function value(int offset) returns int {
+    return BASE + offset;
 }
