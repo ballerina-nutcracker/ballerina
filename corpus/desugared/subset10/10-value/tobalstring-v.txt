@@ -1,0 +1,315 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang value (as lang.value))
+  (type-definition Address
+    (record-type
+      (field city
+        (value-type string))
+      (field country
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 12))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref i))))))
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (literal Anne))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref s))))))
+      (var-def
+        (variable quoted (type
+          (value-type string)) (expr
+          (literal she said "hi" \ ok))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref quoted))))))
+      (var-def
+        (variable whitespace (type
+          (value-type string)) (expr
+          (literal a	b
+cd))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref whitespace))))))
+      (var-def
+        (variable ctrl (type
+          (value-type string)) (expr
+          (literal abcd))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref ctrl))))))
+      (var-def
+        (variable ctrlKey (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type anydata))) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (simple-var-ref ctrlKey)
+          (literal ab))
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref ctrlKey))))))
+      (var-def
+        (variable b (type
+          (value-type boolean)) (expr
+          (literal true))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref b))))))
+      (var-def
+        (variable f1 (type
+          (value-type float)) (expr
+          (literal 12.342))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref f1))))))
+      (var-def
+        (variable nanVal (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 0)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref nanVal))))))
+      (var-def
+        (variable infVal (type
+          (value-type float)) (expr
+          (binary-expr /
+            (literal 1)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref infVal))))))
+      (var-def
+        (variable d1 (type
+          (value-type decimal)) (expr
+          (literal 345.2425341))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref d1))))))
+      (var-def
+        (variable d2 (type
+          (value-type decimal)) (expr
+          (literal 1))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref d2))))))
+      (var-def
+        (variable nilVal (type
+          (value-type null)) (expr
+          (literal <nil>))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref nilVal))))))
+      (var-def
+        (variable data (type
+          (array-type
+            (value-type anydata) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal Sam)
+            (literal 12.3)
+            (literal 12.12)
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal 12)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref data))))))
+      (var-def
+        (variable key (type
+          (record-type)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal id)
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref key))))))
+      (var-def
+        (variable addr (type
+          (user-defined-type Address)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal city)
+              (literal Colombo))
+            (key-value
+              (literal country)
+              (literal Sri Lanka))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref addr))))))
+      (var-def
+        (variable nested (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type anydata))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))
+            (key-value
+              (literal b)
+              (mapping-constructor-expr
+                (key-value
+                  (literal c)
+                  (literal 2))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref nested))))))
+      (var-def
+        (variable nums (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref nums))))))
+      (var-def
+        (variable e1 (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal boom)) (
+            (named-arg code
+              (literal 42))
+            (named-arg ratio
+              (literal 1.5))
+            (named-arg note
+              (literal <nil>)))))))
+      (var-def
+        (variable errWrapper (type
+          (array-type
+            (union-type
+              (value-type any)
+              (error-type)) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (simple-var-ref e1)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref errWrapper))))))
+      (var-def
+        (variable cause (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal failure1))))))
+      (var-def
+        (variable e2 (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal failure2)
+            (simple-var-ref cause)) (
+            (named-arg extra
+              (literal 3.14)))))))
+      (var-def
+        (variable causeWrapper (type
+          (array-type
+            (union-type
+              (value-type any)
+              (error-type)) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (simple-var-ref e2)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref causeWrapper))))))
+      (var-def
+        (variable e3 (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal boom)) (
+            (named-arg a\-b
+              (literal 5)))))))
+      (var-def
+        (variable keyWrapper (type
+          (array-type
+            (union-type
+              (value-type any)
+              (error-type)) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (simple-var-ref e3)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref keyWrapper))))))
+      (var-def
+        (variable jsonVal (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal STRING))
+            (key-value
+              (literal b)
+              (literal 12))
+            (key-value
+              (literal c)
+              (literal 12.4))
+            (key-value
+              (literal d)
+              (literal true))
+            (key-value
+              (literal e)
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal x))
+                (key-value
+                  (literal y)
+                  (literal <nil>))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref jsonVal))))))
+      (var-def
+        (variable tupleVal (type
+          (tuple-type
+            (value-type string)
+            (value-type int)
+            (value-type decimal)
+            (value-type float))) (expr
+          (list-constructor-expr
+            (literal TOM)
+            (literal 10)
+            (literal 90.12)
+            (binary-expr /
+              (literal 0)
+              (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref tupleVal)))))))))

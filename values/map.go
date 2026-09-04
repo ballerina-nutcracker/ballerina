@@ -17,7 +17,7 @@
 package values
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
 	"unsafe"
 
@@ -191,6 +191,20 @@ func (m *Map) Keys() []string {
 }
 
 func (m *Map) String(visited map[uintptr]bool) string {
+	return m.stringify(visited, strconv.Quote, func(v BalValue, visited map[uintptr]bool) string {
+		return toString(v, visited, false)
+	})
+}
+
+func (m *Map) BalString(visited map[uintptr]bool) string {
+	return m.stringify(visited, balStringLiteral, BalString)
+}
+
+// stringify is the shared cycle-detecting traversal behind String and
+// BalString. keyFormat and valueFormat must use the same escaping
+// convention (strconv.Quote for String, balStringLiteral for BalString),
+// or a key and a nested string value would end up escaped inconsistently.
+func (m *Map) stringify(visited map[uintptr]bool, keyFormat func(string) string, valueFormat func(BalValue, map[uintptr]bool) string) string {
 	ptr := uintptr(unsafe.Pointer(m))
 	if visited[ptr] {
 		return "{...}"
@@ -205,9 +219,9 @@ func (m *Map) String(visited map[uintptr]bool) string {
 		if i > 0 {
 			b.WriteByte(',')
 		}
-		fmt.Fprintf(&b, "%q", e.key)
+		b.WriteString(keyFormat(e.key))
 		b.WriteByte(':')
-		b.WriteString(toString(e.value, visited, false))
+		b.WriteString(valueFormat(e.value, visited))
 		i++
 	}
 	b.WriteByte('}')
