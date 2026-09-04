@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missing
+  --> shorthand-undefined-e.bal:19:14
+   |
+19 |     var x = {missing}; // @error
+   |              ^^^^^^^

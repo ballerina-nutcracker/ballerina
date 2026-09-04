@@ -1,0 +1,44 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Foo
+    (value-type int))
+  (function helper () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal helper))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable fn (type
+          (function-type () (
+            (value-type null)))) (expr
+          (simple-var-ref helper))))
+      (var-def
+        (variable f (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal fn)
+              (simple-var-ref fn))))))
+      (var-def
+        (variable g (expr
+          (index-based-access
+            (simple-var-ref f)
+            (literal fn)))))
+      (expression-stmt
+        (invocation g ()))
+      (var-def
+        (variable t (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal Foo)
+              (simple-var-ref Foo))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref t)
+              (literal Foo))
+            (value-type typedesc))))))))

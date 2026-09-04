@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got string
+  --> shorthand-contextual-mismatch-e.bal:20:19
+   |
+20 |     map<int> m = {name}; // @error
+   |                   ^^^^

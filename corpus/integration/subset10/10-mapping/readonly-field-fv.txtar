@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: readonly mapping constructor field not implemented
+  --> readonly-field-fv.bal:21:14
+   |
+21 |     var x = {readonly age: 36}; // @error future: readonly mapping constructor field
+   |              ^^^^^^^^
