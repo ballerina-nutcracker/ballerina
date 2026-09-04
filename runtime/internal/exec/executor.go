@@ -355,7 +355,7 @@ func panicValueToErrorValue(r any) values.BalValue {
 func setRecoveredError(ctx *extern.Context, op *bir.BIROperand, currentFrame *Frame, errVal values.BalValue) *Frame {
 	if gv, ok := op.VariableDcl.(*bir.BIRGlobalVariableDcl); ok {
 		module := getModule(ctx, gv.PkgID)
-		module.Globals[gv.GlobalVarLookupKey] = errVal
+		module.SetGlobal(gv.GlobalVarLookupKey, errVal)
 		return currentFrame
 	}
 	targetFrame := resolveFrame(currentFrame, op.Address)

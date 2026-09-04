@@ -1,0 +1,100 @@
+module $anon.. v 0.0.0;
+counterA  int;
+counterB  int;
+incrementA() -> int{
+  bb0 {
+    lock-start "$anon/.:counterA" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 3
+    GOTO bb2;
+  }
+  bb2 {
+    %1 = ConstantLoad 10000
+    %2 = %1;
+    %0 = < counterA %2;
+    %0 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 3
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = + counterA %2;
+    counterA = %0;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb4 {
+    (1, %0) = counterA;
+    PopScopeFrame
+    lock-end "$anon/.:counterA" GOTO bb5;
+  }
+  bb5 {
+    return;
+  }
+  bb6 {
+    return;
+  }
+}
+incrementB() -> int{
+  bb0 {
+    lock-start "$anon/.:counterB" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 3
+    GOTO bb2;
+  }
+  bb2 {
+    %1 = ConstantLoad 10000
+    %2 = %1;
+    %0 = < counterB %2;
+    %0 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 3
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = + counterB %2;
+    counterB = %0;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb4 {
+    (1, %0) = counterB;
+    PopScopeFrame
+    lock-end "$anon/.:counterB" GOTO bb5;
+  }
+  bb5 {
+    return;
+  }
+  bb6 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = start incrementA() isolated=true -> bb1;
+  }
+  bb1 {
+    a = %1;
+    %3 = start incrementB() isolated=true -> bb2;
+  }
+  bb2 {
+    b = %3;
+    %5 = wait a -> bb3;
+  }
+  bb3 {
+    aResult = %5;
+    %7 = wait b -> bb4;
+  }
+  bb4 {
+    bResult = %7;
+    %9 = println(aResult) -> bb5;
+  }
+  bb5 {
+    %10 = println(bResult) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
