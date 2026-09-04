@@ -1,0 +1,25 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 19
+    %2 = ConstantLoad 20
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    values = %4;
+    %6 = toStream(values) -> bb1;
+  }
+  bb1 {
+    valuesStream = %6;
+    %8 = streamNext valuesStream
+    %9 = %8;
+    %10 = ConstantLoad 0
+    %11 = %10;
+    %12 = remove(values,%11) -> bb2;
+  }
+  bb2 {
+    %13 = %12;
+    %14 = streamNext valuesStream
+    %15 = %14;
+    return;
+  }
+}
