@@ -2017,10 +2017,10 @@ func validateIncludedRecordParamMetadata(t typeResolver, ref model.FunctionSigna
 	return true
 }
 
-func resolveDependentlyTypedFunctionSignature(t typeResolver, fn *ast.BLangFunction, sym model.DependentlyTypedFunctionSymbol, depth int) (semtypes.SemType, bool) {
-	paramTypes := make([]semtypes.SemType, len(fn.RequiredParams))
-	paramsByName := make(map[string]param, len(fn.RequiredParams))
+func resolveDependentlyTypedFunctionSignature(t typeResolver, fn common.FunctionDecl, sym model.DependentlyTypedFunctionSymbol, depth int) (semtypes.SemType, bool) {
 	params := fn.GetParameters()
+	paramTypes := make([]semtypes.SemType, len(params))
+	paramsByName := make(map[string]param, len(params))
 	for i := range params {
 		p := &params[i]
 		resolveSimpleVariableInner(t, nil, p, depth+1)
@@ -6557,7 +6557,7 @@ func resolveResourceMethodSignature(t typeResolver, isClient bool, isService boo
 		t.semanticError("resource methods are only allowed in client or service classes", method.GetPosition())
 		return false
 	}
-	sym, ok := t.getSymbol(method.Symbol()).(*model.ResourceMethodSymbol)
+	sym, ok := t.getSymbol(method.Symbol()).(model.ResourceMethodSymbol)
 	if !ok {
 		t.internalError("expected resource method symbol", method.GetPosition())
 		return false
@@ -6569,6 +6569,10 @@ func resolveResourceMethodSignature(t typeResolver, isClient bool, isService boo
 	sym.SetPathListType(pathTy)
 	sym.SetPathParams(pathParamRefs)
 
+	if depSym, dependent := sym.(model.DependentlyTypedFunctionSymbol); dependent {
+		_, ok = resolveDependentlyTypedFunctionSignature(t, method, depSym, depth)
+		return ok
+	}
 	_, ok = resolveInvokableSignature(t, method, sym, method.GetParameters(), depth)
 	if !ok {
 		return false
@@ -6663,7 +6667,7 @@ func resolveClientResourceAccessAction(t typeResolver, chain *binding, expr *ast
 	methodName := expr.MethodName
 	var matches []model.SymbolRef
 	for _, rmRef := range networkSym.ResourceMethods() {
-		rmSym, ok := t.getSymbol(rmRef).(*model.ResourceMethodSymbol)
+		rmSym, ok := t.getSymbol(rmRef).(model.ResourceMethodSymbol)
 		if !ok {
 			t.internalError("expected resource method symbol", expr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false

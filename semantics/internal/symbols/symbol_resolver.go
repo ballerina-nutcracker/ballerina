@@ -519,13 +519,13 @@ func (ms *compilationUnitSymbolResolver) allocateFunctionSymbolInner(fn *ast.BLa
 
 // isDependentlyTyped reports whether a function's return type references one of its typedesc
 // parameters by name.
-func (ms *compilationUnitSymbolResolver) isDependentlyTyped(fn *ast.BLangFunction) bool {
+func (ms *compilationUnitSymbolResolver) isDependentlyTyped(fn ast.InvokableNode) bool {
 	retTd := fn.GetReturnTypeDescriptor()
 	if retTd == nil {
 		return false
 	}
 	typedescParams := make(map[string]struct{})
-	for _, param := range fn.RequiredParams {
+	for _, param := range fn.GetParameters() {
 		if param.Name == nil {
 			continue
 		}
@@ -1879,7 +1879,7 @@ func resolveServiceDefinition(ms *compilationUnitSymbolResolver, svc *ast.BLangS
 	svcResolver := newBlockSymbolResolverWithBlockScope(ms, svc)
 	svc.SetScope(svcResolver.scope)
 
-	allocateServiceResourceMethodSymbols(svcResolver, svc.ResourceMethods)
+	allocateServiceResourceMethodSymbols(ms, svcResolver, svc.ResourceMethods)
 
 	finishResolveClassDefinition(ms, svcResolver, svc.Fields, svc.Methods, svc.ResourceMethods, svc.InitFunction, nil, svcResolver.scope, serviceMethodSymbolName, resourceMethodsAreNetworkClass)
 
@@ -2005,20 +2005,31 @@ func allocateObjectResourceMethodSymbols(ms *compilationUnitSymbolResolver, bloc
 			continue
 		}
 		mangledName := className + "." + mangledResourceMethodName(rm.Name.GetValue(), idx)
-		symRef := allocateResourceMethodSymbol(ms.scope, rm, mangledName, classDef.IsPublic() && rm.IsPublic())
+		symRef := ms.allocateResourceMethodSymbol(ms.scope, rm, mangledName, classDef.IsPublic() && rm.IsPublic())
 		networkClassSym.AddResourceMethod(symRef)
 	}
 }
 
-func allocateServiceResourceMethodSymbols(blockRes *blockSymbolResolver, resourceMethods []*ast.BLangResourceMethod) {
+func allocateServiceResourceMethodSymbols(ms *compilationUnitSymbolResolver, blockRes *blockSymbolResolver, resourceMethods []*ast.BLangResourceMethod) {
 	for idx, rm := range resourceMethods {
 		key := mangledResourceMethodName(rm.Name.GetValue(), idx)
-		allocateResourceMethodSymbol(blockRes.scope, rm, key, rm.IsPublic())
+		ms.allocateResourceMethodSymbol(blockRes.scope, rm, key, rm.IsPublic())
 	}
 }
 
-func allocateResourceMethodSymbol(targetScope methodSymbolTargetScope, rm *ast.BLangResourceMethod, symbolName string, isPublic bool) model.SymbolRef {
-	symbol := model.NewResourceMethodSymbol(symbolName, rm.Name.GetValue(), isPublic, symbolLocationForNode(rm))
+func (ms *compilationUnitSymbolResolver) allocateResourceMethodSymbol(targetScope methodSymbolTargetScope, rm *ast.BLangResourceMethod, symbolName string, isPublic bool) model.SymbolRef {
+	var symbol model.ResourceMethodSymbol
+	if ms.isDependentlyTyped(rm) {
+		if rm.GetRestParam() != nil {
+			ms.moduleResolver.ctx.Unimplemented("rest parameters are not supported on dependently-typed functions", rm.GetPosition())
+		}
+		if _, isExtern := rm.GetBody().(*ast.BLangExternFunctionBody); !isExtern {
+			ms.moduleResolver.ctx.SemanticError("dependently typed function must be external", rm.GetPosition())
+		}
+		symbol = model.NewDependentlyTypedResourceMethodSymbol(symbolName, rm.Name.GetValue(), rm.FuncSymbolFlags(), isPublic, symbolLocationForNode(rm))
+	} else {
+		symbol = model.NewResourceMethodSymbol(symbolName, rm.Name.GetValue(), isPublic, symbolLocationForNode(rm))
+	}
 	targetScope.AddSymbol(symbolName, symbol)
 	symRef, _ := targetScope.MainSpace().GetSymbol(symbolName)
 	rm.SetSymbol(symRef)

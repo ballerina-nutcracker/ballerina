@@ -109,6 +109,17 @@ type FunctionSymbol interface {
 	SetTypedSignature(TypedFunctionSignature)
 }
 
+// ResourceMethodSymbol represents a resource method and the path metadata used
+// to select it during resource-access dispatch.
+type ResourceMethodSymbol interface {
+	FunctionSymbol
+	MethodName() string
+	PathListType() semtypes.SemType
+	SetPathListType(semtypes.SemType)
+	PathParams() []SymbolRef
+	SetPathParams([]SymbolRef)
+}
+
 // DependentlyTypedFunctionSymbol represents a [dependently typed function]. Actual function signature
 // is determined at each call site by calling Monomorphize.
 // TODO: this is very similar to [GenericFunctionSymbol]; merge both. #389
@@ -120,6 +131,13 @@ type DependentlyTypedFunctionSymbol interface {
 	FuncFlags() FuncSymbolFlags
 	SetParamTypes(types []semtypes.SemType)
 	SetReturnType(op TypeOp)
+}
+
+// DependentlyTypedResourceMethodSymbol represents a resource method whose
+// return type is determined from typedesc arguments at each call site.
+type DependentlyTypedResourceMethodSymbol interface {
+	ResourceMethodSymbol
+	DependentlyTypedFunctionSymbol
 }
 
 // MonomorphicFunctionSymbol represent a polymorphic function after monomrophizisation.
@@ -384,11 +402,15 @@ type (
 		polymorhpicFn SymbolRef
 	}
 
-	ResourceMethodSymbol struct {
-		functionSymbol
+	resourceMethodBase struct {
 		methodName   string
 		pathListType semtypes.SemType
 		pathParams   []SymbolRef
+	}
+
+	resourceMethodSymbol struct {
+		functionSymbol
+		resourceMethodBase
 	}
 
 	dependentlyTypedFunctionSymbol struct {
@@ -398,6 +420,11 @@ type (
 		// Populated by type resolver at stage 4.
 		paramTypes []semtypes.SemType
 		retType    TypeOp
+	}
+
+	dependentlyTypedResourceMethodSymbol struct {
+		dependentlyTypedFunctionSymbol
+		resourceMethodBase
 	}
 
 	ParamFlag uint8
@@ -647,38 +674,39 @@ var (
 )
 
 var (
-	_ Scope                          = &ModuleScope{}
-	_ Scope                          = &PackageScope{}
-	_ Scope                          = &FunctionScope{}
-	_ Scope                          = &BlockScope{}
-	_ Symbol                         = &TypeSymbol{}
-	_ Symbol                         = &AnnotationSymbol{}
-	_ Symbol                         = &classSymbol{}
-	_ Symbol                         = &NetworkClassSymbol{}
-	_ ClassSymbol                    = &classSymbol{}
-	_ ClassSymbol                    = &NetworkClassSymbol{}
-	_ Symbol                         = &RecordSymbol{}
-	_ Symbol                         = &ObjectTypeSymbol{}
-	_ MemberCarrier                  = &classSymbol{}
-	_ MemberCarrier                  = &NetworkClassSymbol{}
-	_ MemberCarrier                  = &RecordSymbol{}
-	_ MemberCarrier                  = &ObjectTypeSymbol{}
-	_ ObjectType                     = &classSymbol{}
-	_ ObjectType                     = &NetworkClassSymbol{}
-	_ ObjectType                     = &ObjectTypeSymbol{}
-	_ Symbol                         = &VariableSymbol{}
-	_ Symbol                         = &ConstantValueSymbol{}
-	_ ValueSymbol                    = &VariableSymbol{}
-	_ ValueSymbol                    = &ConstantValueSymbol{}
-	_ Symbol                         = &XMLNSSymbol{}
-	_ Symbol                         = &functionSymbol{}
-	_ FunctionSymbol                 = &functionSymbol{}
-	_ DependentlyTypedFunctionSymbol = &dependentlyTypedFunctionSymbol{}
-	_ MonomorphicFunctionSymbol      = &monomorphicFunctionSymbol{}
-	_ FunctionSymbol                 = &ResourceMethodSymbol{}
-	_ Symbol                         = &SymbolRef{}
-	_ SymbolSpaceProvider            = &ModuleScope{}
-	_ SymbolSpaceProvider            = &PackageScope{}
+	_ Scope                                = &ModuleScope{}
+	_ Scope                                = &PackageScope{}
+	_ Scope                                = &FunctionScope{}
+	_ Scope                                = &BlockScope{}
+	_ Symbol                               = &TypeSymbol{}
+	_ Symbol                               = &AnnotationSymbol{}
+	_ Symbol                               = &classSymbol{}
+	_ Symbol                               = &NetworkClassSymbol{}
+	_ ClassSymbol                          = &classSymbol{}
+	_ ClassSymbol                          = &NetworkClassSymbol{}
+	_ Symbol                               = &RecordSymbol{}
+	_ Symbol                               = &ObjectTypeSymbol{}
+	_ MemberCarrier                        = &classSymbol{}
+	_ MemberCarrier                        = &NetworkClassSymbol{}
+	_ MemberCarrier                        = &RecordSymbol{}
+	_ MemberCarrier                        = &ObjectTypeSymbol{}
+	_ ObjectType                           = &classSymbol{}
+	_ ObjectType                           = &NetworkClassSymbol{}
+	_ ObjectType                           = &ObjectTypeSymbol{}
+	_ Symbol                               = &VariableSymbol{}
+	_ Symbol                               = &ConstantValueSymbol{}
+	_ ValueSymbol                          = &VariableSymbol{}
+	_ ValueSymbol                          = &ConstantValueSymbol{}
+	_ Symbol                               = &XMLNSSymbol{}
+	_ Symbol                               = &functionSymbol{}
+	_ FunctionSymbol                       = &functionSymbol{}
+	_ DependentlyTypedFunctionSymbol       = &dependentlyTypedFunctionSymbol{}
+	_ MonomorphicFunctionSymbol            = &monomorphicFunctionSymbol{}
+	_ ResourceMethodSymbol                 = &resourceMethodSymbol{}
+	_ DependentlyTypedResourceMethodSymbol = &dependentlyTypedResourceMethodSymbol{}
+	_ Symbol                               = &SymbolRef{}
+	_ SymbolSpaceProvider                  = &ModuleScope{}
+	_ SymbolSpaceProvider                  = &PackageScope{}
 )
 
 func (space *SymbolSpace) AddSymbol(name string, symbol Symbol) {
@@ -1461,36 +1489,51 @@ func (c *classSymbolBase) AddResourceMethod(ref SymbolRef) {
 	c.resourceMethods = append(c.resourceMethods, ref)
 }
 
-func NewResourceMethodSymbol(name, methodName string, isPublic bool, location diagnostics.Location) *ResourceMethodSymbol {
-	return &ResourceMethodSymbol{
+func NewResourceMethodSymbol(name, methodName string, isPublic bool, location diagnostics.Location) ResourceMethodSymbol {
+	return &resourceMethodSymbol{
 		functionSymbol: functionSymbol{
 			symbolBase: symbolBase{name: name, isPublic: isPublic, location: location},
 		},
-		methodName: methodName,
+		resourceMethodBase: resourceMethodBase{methodName: methodName},
 	}
 }
 
-func (r *ResourceMethodSymbol) MethodName() string {
+func NewDependentlyTypedResourceMethodSymbol(name, methodName string, flags FuncSymbolFlags, isPublic bool, location diagnostics.Location) DependentlyTypedResourceMethodSymbol {
+	return &dependentlyTypedResourceMethodSymbol{
+		dependentlyTypedFunctionSymbol: dependentlyTypedFunctionSymbol{
+			symbolBase: symbolBase{name: name, isPublic: isPublic, location: location},
+			Flags:      flags,
+		},
+		resourceMethodBase: resourceMethodBase{methodName: methodName},
+	}
+}
+
+func (r *resourceMethodBase) MethodName() string {
 	return r.methodName
 }
 
-func (r *ResourceMethodSymbol) PathListType() semtypes.SemType {
+func (r *resourceMethodBase) PathListType() semtypes.SemType {
 	return r.pathListType
 }
 
-func (r *ResourceMethodSymbol) SetPathListType(ty semtypes.SemType) {
+func (r *resourceMethodBase) SetPathListType(ty semtypes.SemType) {
 	r.pathListType = ty
 }
 
-func (r *ResourceMethodSymbol) PathParams() []SymbolRef {
+func (r *resourceMethodBase) PathParams() []SymbolRef {
 	return r.pathParams
 }
 
-func (r *ResourceMethodSymbol) SetPathParams(params []SymbolRef) {
+func (r *resourceMethodBase) SetPathParams(params []SymbolRef) {
 	r.pathParams = params
 }
 
-func (r *ResourceMethodSymbol) Copy() Symbol {
+func (r *resourceMethodSymbol) Copy() Symbol {
+	cp := *r
+	return &cp
+}
+
+func (r *dependentlyTypedResourceMethodSymbol) Copy() Symbol {
 	cp := *r
 	return &cp
 }

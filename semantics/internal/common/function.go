@@ -23,6 +23,7 @@ import (
 
 type FunctionDecl interface {
 	ast.InvokableNode
+	ast.FunctionSignature
 	ast.BNodeWithSymbol
 	Scope() model.Scope
 	IsIsolated() bool
