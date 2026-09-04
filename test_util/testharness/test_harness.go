@@ -39,6 +39,9 @@ import (
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
+	compilercontext "github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/driver"
+	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/projects"
@@ -177,6 +180,7 @@ type ResolvedDiag struct {
 	File      string
 	StartLine int
 	EndLine   int
+	Global    bool
 }
 
 // TestPal is the in-memory PAL handed to Run. It captures stdout/stderr and
@@ -448,42 +452,43 @@ func Run(t testing.TB, tc test_util.TestCase, pal TestPal, externs []ExternRegis
 		return
 	}
 
-	result, err := projects.Load(fsys, entry, projects.ProjectLoadConfig{BallerinaEnvFs: ballerinaEnvFs})
-	if err != nil {
-		pal.WriteStdout(err.Error() + "\n")
+	packageDirName := ""
+	if tc.IsProject {
+		packageDirName = filepath.Base(tc.InputPath)
+	}
+	resolver := projects.NewDriverDependencyResolver(fsys, projects.ProjectLoadConfig{BallerinaEnvFs: ballerinaEnvFs})
+	hooks := driver.LifecycleHooks{OnRuntime: func(rt *runtime.Runtime) {
+		for _, e := range externs {
+			runtime.RegisterExternFunction(rt, e.Org, e.Module, e.FuncName, e.Impl)
+		}
+	}}
+	pipeline := driver.NewPipeline(context.Background(), fsys, entry, packageDirName,
+		driver.NewEnv(resolver.CompilerEnvironment()), resolver, pal.Platform(), parser.DebugOptions{}, hooks)
+	rt, ok := pipeline.Run()
+	if pipeline.Err() != nil {
+		pal.WriteStdout(pipeline.Err().Error() + "\n")
 		return
 	}
-	tyEnv := result.Project().Environment().TypeEnv()
-	currentPkg := result.Project().CurrentPackage()
-	compilation := currentPkg.Compilation()
 
 	var stderr bytes.Buffer
-	if tc.IsProject {
-		PrintDiagnostics(fsys, &stderr, result.Diagnostics(), compilation.DiagnosticEnv())
-	}
-	PrintDiagnostics(fsys, &stderr, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
+	diagnosticResult := projects.NewDiagnosticResult(pipeline.Context().Diagnostics())
+	PrintDiagnostics(fsys, &stderr, diagnosticResult, pipeline.Context().DiagnosticEnv())
 	pal.WriteStderr(stderr.String())
-	pal.SetDiagnostics(resolveErrorDiagnostics(compilation.DiagnosticResult(), compilation.DiagnosticEnv()))
+	pal.SetDiagnostics(resolveErrorDiagnostics(diagnosticResult, pipeline.Context().DiagnosticEnv()))
 
-	loaderHasErrors := tc.IsProject && result.Diagnostics().HasErrors()
-	if loaderHasErrors || compilation.DiagnosticResult().HasErrors() {
+	if !ok {
 		return
 	}
 
-	backend := projects.NewBallerinaBackend(compilation)
-	birPkgs := backend.BIRPackages()
+	birPkgs := pipeline.BIRPackages()
 	if len(birPkgs) == 0 {
 		t.Fatalf("compilation succeeded but produced no BIR packages for %s", tc.Name)
 	}
-	rt := runtime.NewRuntime(pal.Platform(), tyEnv)
-	for _, e := range externs {
-		runtime.RegisterExternFunction(rt, e.Org, e.Module, e.FuncName, e.Impl)
-	}
-	for _, birPkg := range birPkgs {
-		if err := rt.Init(*birPkg); err != nil {
-			pal.WriteStderr(err.Error() + "\n")
-			return
-		}
+	if err := initializeDriverPackages(birPkgs, func(birPkg *bir.BIRPackage) error {
+		return rt.Init(*birPkg)
+	}); err != nil {
+		pal.WriteStderr(err.Error() + "\n")
+		return
 	}
 	rt.Listen()
 	invokeTestMain(t, rt, birPkgs, pal)
@@ -506,6 +511,225 @@ func Run(t testing.TB, tc test_util.TestCase, pal TestPal, externs []ExternRegis
 			t.Errorf("%s: expected non-zero exit code, got 0", tc.Name)
 		}
 	}
+}
+
+type DriverCompilation struct {
+	Context     *driver.Context
+	Resolver    *projects.DriverDependencyResolver
+	Parsed      *driver.ParsedPackage
+	BIRPackages []*bir.BIRPackage
+}
+
+func CompileWithDriver(fsys fs.FS, input, packageDirName string, cfg projects.ProjectLoadConfig) (*DriverCompilation, error) {
+	resolver := projects.NewDriverDependencyResolver(fsys, cfg)
+	pipeline := driver.NewPipeline(context.Background(), fsys, input, packageDirName,
+		driver.NewEnv(resolver.CompilerEnvironment()), resolver, pal.Platform{}, parser.DebugOptions{}, driver.LifecycleHooks{})
+	_, ok := pipeline.Run()
+	compiled := &DriverCompilation{
+		Context: pipeline.Context(), Resolver: resolver, Parsed: pipeline.ParsedPackage(),
+		BIRPackages: pipeline.BIRPackages(),
+	}
+	if !ok {
+		return compiled, pipeline.Err()
+	}
+	return compiled, nil
+}
+
+type driverStageHook func(compilercontext.CompilationStage, driver.ModuleDescriptor) error
+
+func compileWithDriver(standardContext context.Context, fsys fs.FS, input, packageDirName string,
+	cfg projects.ProjectLoadConfig, hook driverStageHook,
+) (*DriverCompilation, error) {
+	resolver := projects.NewDriverDependencyResolver(fsys, cfg)
+	driverContext := driver.NewContext(standardContext, driver.NewEnv(resolver.CompilerEnvironment()))
+	root := input
+	dependencyResolver := driver.DependencyResolver(resolver)
+	var workspace *driver.WorkspaceSources
+	var err error
+	if packageDirName != "" {
+		workspace, err = driver.FindWorkspaceSources(driverContext, fsys, input)
+		if err != nil {
+			return nil, err
+		}
+	}
+	var sources *driver.PackageSources
+	if workspace != nil {
+		if len(workspace.Members) > 0 {
+			member := workspace.Members[0]
+			sources = member.Sources
+			root = member.Root
+			dependencyResolver = driver.NewWorkspaceDependencyResolver(fsys, workspace, resolver, workspace.Resolution)
+		}
+	} else {
+		sources, err = driver.FindSources(driverContext, fsys, input, packageDirName)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if err := driverContext.Err(); err != nil {
+		return &DriverCompilation{Context: driverContext, Resolver: resolver}, err
+	}
+	if driverContext.HasErrors() {
+		return &DriverCompilation{Context: driverContext, Resolver: resolver}, nil
+	}
+	if sources == nil {
+		return nil, fmt.Errorf("workspace contains no loadable packages")
+	}
+	if workspace == nil && packageDirName == "" {
+		root = filepath.ToSlash(filepath.Dir(input))
+		if root == "" {
+			root = "."
+		}
+	}
+	parsed, err := driver.Parse(driverContext, fsys, root, sources, parser.DebugOptions{})
+	if err != nil || driverContext.HasErrors() {
+		return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed}, err
+	}
+	if err := driverContext.Err(); err != nil {
+		return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed}, err
+	}
+	parsed, err = driver.ResolveDependencies(driverContext, parsed, dependencyResolver)
+	if err != nil || driverContext.HasErrors() {
+		return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed}, err
+	}
+	if err := driverContext.Err(); err != nil {
+		return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed}, err
+	}
+	astModules := make([]*driver.ASTModule, len(parsed.Modules))
+	astErrors := make([]error, len(parsed.Modules))
+	var astWG sync.WaitGroup
+	for index, module := range parsed.Modules {
+		astWG.Add(1)
+		go func() {
+			defer astWG.Done()
+			if err := invokeDriverStageHook(hook, compilercontext.StageASTBuild, module.ID); err != nil {
+				astErrors[index] = err
+				return
+			}
+			astModules[index] = driver.ToAST(driverContext, module)
+		}()
+	}
+	astWG.Wait()
+	if err := driverContext.Err(); err != nil {
+		return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed}, err
+	}
+	for _, astErr := range astErrors {
+		if astErr != nil {
+			return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed}, astErr
+		}
+	}
+	if driverContext.HasErrors() {
+		return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed}, nil
+	}
+	publicModules := make([]*driver.PartiallyResolvedModule, len(astModules))
+	for index, module := range astModules {
+		if module == nil {
+			return nil, fmt.Errorf("AST conversion produced no module at index %d", index)
+		}
+		if err := invokeDriverStageHook(hook, compilercontext.StageSymbolResolution, module.ID); err != nil {
+			return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed}, err
+		}
+		publicModules[index] = driver.ResolvePublicNodes(driverContext, module)
+		if publicModules[index] == nil {
+			if err := driverContext.Err(); err != nil {
+				return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed}, err
+			}
+			return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed}, nil
+		}
+	}
+	if err := driverContext.Err(); err != nil {
+		return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed}, err
+	}
+	birPackages := make([]*bir.BIRPackage, len(publicModules))
+	stageErrors := make([]error, len(publicModules))
+	var stageWG sync.WaitGroup
+	for index, module := range publicModules {
+		stageWG.Add(1)
+		go func() {
+			defer stageWG.Done()
+			if err := invokeDriverStageHook(hook, compilercontext.StageLocalNodeResolution, module.ID); err != nil {
+				stageErrors[index] = err
+				return
+			}
+			resolved := driver.ResolvePrivateNodes(driverContext, module)
+			if resolved == nil {
+				return
+			}
+			if err := invokeDriverStageHook(hook, compilercontext.StageSemanticAnalysis, module.ID); err != nil {
+				stageErrors[index] = err
+				return
+			}
+			analyzed := driver.AnalyzeSemantics(driverContext, resolved)
+			if analyzed == nil {
+				return
+			}
+			if err := invokeDriverStageHook(hook, compilercontext.StageCFGCreation, module.ID); err != nil {
+				stageErrors[index] = err
+				return
+			}
+			controlFlow := driver.CreateControlFlowGraph(driverContext, analyzed)
+			if controlFlow == nil {
+				return
+			}
+			if err := invokeDriverStageHook(hook, compilercontext.StageCFGAnalysis, module.ID); err != nil {
+				stageErrors[index] = err
+				return
+			}
+			cfgAnalyzed := driver.AnalyzeControlFlowGraph(driverContext, controlFlow)
+			if cfgAnalyzed == nil {
+				return
+			}
+			if err := invokeDriverStageHook(hook, compilercontext.StageDesugaring, module.ID); err != nil {
+				stageErrors[index] = err
+				return
+			}
+			desugared := driver.Desugar(driverContext, cfgAnalyzed)
+			if desugared == nil {
+				return
+			}
+			if err := invokeDriverStageHook(hook, compilercontext.StageBIRGeneration, module.ID); err != nil {
+				stageErrors[index] = err
+				return
+			}
+			birPackages[index] = driver.GenerateBIR(driverContext, desugared)
+		}()
+	}
+	stageWG.Wait()
+	if err := driverContext.Err(); err != nil {
+		return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed, BIRPackages: birPackages}, err
+	}
+	for _, stageErr := range stageErrors {
+		if stageErr != nil {
+			return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed, BIRPackages: birPackages}, stageErr
+		}
+	}
+	if !driverContext.HasErrors() {
+		for index, pkg := range birPackages {
+			if pkg == nil {
+				return nil, fmt.Errorf("compilation produced no BIR package at index %d", index)
+			}
+		}
+	}
+	return &DriverCompilation{Context: driverContext, Resolver: resolver, Parsed: parsed, BIRPackages: birPackages}, nil
+}
+
+func invokeDriverStageHook(hook driverStageHook, stage compilercontext.CompilationStage, module driver.ModuleDescriptor) error {
+	if hook == nil {
+		return nil
+	}
+	return hook(stage, module)
+}
+
+func initializeDriverPackages(packages []*bir.BIRPackage, initialize func(*bir.BIRPackage) error) error {
+	for index, pkg := range packages {
+		if pkg == nil {
+			return fmt.Errorf("compilation produced no BIR package at index %d", index)
+		}
+		if err := initialize(pkg); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // gracefulStopExitCode mirrors runtime/lifecycle.go's graceful stop code
@@ -574,6 +798,7 @@ func resolveErrorDiagnostics(result projects.DiagnosticResult, de *diagnostics.D
 	for _, d := range errs {
 		loc := d.Location()
 		if !diagnostics.LocationHasSource(loc) {
+			out = append(out, ResolvedDiag{Global: true})
 			continue
 		}
 		out = append(out, ResolvedDiag{
@@ -654,10 +879,10 @@ func checkExpectedOutputInvariants(t *testing.T, tc test_util.TestCase, stdout, 
 		if !strings.HasPrefix(strings.TrimSpace(stderr), "error[") {
 			t.Fatalf("-e test %q expected stderr is not a compile diagnostic (`error[...]: ...`):\n%s", tc.Name, stderr)
 		}
-		numErr := strings.Count(stderr, "\nerror[") + boolToInt(strings.HasPrefix(stderr, "error["))
-		numLoc := strings.Count(stderr, "--> ")
-		if numLoc < numErr {
-			t.Fatalf("-e test %q expected stderr has a diagnostic with no source location (%d errors, %d `-->` lines):\n%s", tc.Name, numErr, numLoc, stderr)
+		for _, diagnostic := range splitStderrDiagnostics(stderr) {
+			if !strings.Contains(diagnostic, "--> ") && !strings.HasPrefix(diagnostic, "error[DEPENDENCY_RESOLUTION]:") {
+				t.Fatalf("-e test %q expected stderr has a diagnostic with no source location:\n%s", tc.Name, diagnostic)
+			}
 		}
 	case test_util.SuffixFutureValid, test_util.SuffixFutureError, test_util.SuffixFuturePanic:
 		if !stderrNonEmpty {
@@ -674,13 +899,6 @@ func checkExpectedOutputInvariants(t *testing.T, tc test_util.TestCase, stdout, 
 			t.Fatalf("-p test %q expected stderr begins with a compile diagnostic; -p tests must produce a runtime panic:\n%s", tc.Name, stderr)
 		}
 	}
-}
-
-func boolToInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
 }
 
 func splitStderrDiagnostics(stderr string) []string {
@@ -901,17 +1119,27 @@ func assertErrorAnnotations(t *testing.T, anns annotations, diags []ResolvedDiag
 		return
 	}
 	covered := make(map[string]map[int]bool)
+	globalCount := 0
 	for _, d := range diags {
+		if d.Global {
+			globalCount++
+			continue
+		}
 		if !diagnosticCoversAnnotatedLine(d, anns, covered) {
 			t.Errorf("diagnostic at %s:%d-%d not covered by any @error annotation", d.File, d.StartLine, d.EndLine)
 		}
 	}
+	uncovered := make([]string, 0)
 	for file, fa := range anns {
 		for _, e := range fa.errors {
 			if !covered[file][e.line] {
-				t.Errorf("@error annotation at %s:%d is not covered by any diagnostic", file, e.line)
+				uncovered = append(uncovered, fmt.Sprintf("%s:%d", file, e.line))
 			}
 		}
+	}
+	if len(uncovered) != globalCount {
+		t.Errorf("source-less errors = %d, uncovered @error annotations = %d (%s)",
+			globalCount, len(uncovered), strings.Join(uncovered, ", "))
 	}
 }
 
@@ -1030,13 +1258,13 @@ func buildDiagnosticLocation(filePath string, startLine, startCol, endLine, endC
 
 // PrintDiagnostics renders every diagnostic in diagResult to w, in the same
 // "error[CODE]: message" + source-snippet format used by the compiler CLI.
-func PrintDiagnostics(fsys fs.FS, w io.Writer, diagResult projects.DiagnosticResult, de *diagnostics.DiagnosticEnv) {
+func PrintDiagnostics(_ fs.FS, w io.Writer, diagResult projects.DiagnosticResult, de *diagnostics.DiagnosticEnv) {
 	for _, d := range diagResult.Diagnostics() {
-		printDiagnostic(fsys, w, d, de)
+		printDiagnostic(w, d, de)
 	}
 }
 
-func printDiagnostic(fsys fs.FS, w io.Writer, d diagnostics.Diagnostic, de *diagnostics.DiagnosticEnv) {
+func printDiagnostic(w io.Writer, d diagnostics.Diagnostic, de *diagnostics.DiagnosticEnv) {
 	printDiagnosticHeader(w, d)
 	location := d.Location()
 	if diagnostics.IsLocationEmpty(location) {
@@ -1053,7 +1281,7 @@ func printDiagnostic(fsys fs.FS, w io.Writer, d diagnostics.Diagnostic, de *diag
 		de.EndLine(location), de.EndColumn(location),
 	)
 	printDiagnosticLocation(w, loc)
-	printSourceSnippet(w, loc, fsys)
+	printSourceSnippet(w, loc, de.TextDocument(location).String())
 	_, _ = fmt.Fprintln(w)
 }
 
@@ -1077,12 +1305,8 @@ func printDiagnosticLocation(w io.Writer, loc diagnosticLocation) {
 	}
 }
 
-func printSourceSnippet(w io.Writer, loc diagnosticLocation, fsys fs.FS) {
-	content, err := fs.ReadFile(fsys, loc.filePath)
-	if err != nil {
-		return
-	}
-	lines := strings.Split(string(content), "\n")
+func printSourceSnippet(w io.Writer, loc diagnosticLocation, content string) {
+	lines := strings.Split(content, "\n")
 	if loc.startLine >= len(lines) {
 		return
 	}

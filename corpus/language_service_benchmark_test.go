@@ -18,11 +18,13 @@ package corpus
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
 	"github.com/ballerina-nutcracker/ballerina/test_util/testphases"
 )
 
@@ -71,14 +73,13 @@ func benchmarkLanguageServiceProject(b *testing.B, name, inputPath string) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for b.Loop() {
-			result, err := projects.Load(os.DirFS(inputPath), ".", projects.ProjectLoadConfig{
+			compiled, err := testharness.CompileWithDriver(os.DirFS(inputPath), ".", filepath.Base(inputPath), projects.ProjectLoadConfig{
 				BallerinaEnvFs: ballerinaEnvFs,
 			})
 			if err != nil {
 				b.Fatalf("language service benchmark failed to load %s: %v", inputPath, err)
 			}
-			compilation := result.Project().CurrentPackage().Compilation()
-			if diagnostics := compilation.DiagnosticResult(); diagnostics.DiagnosticCount() > 0 {
+			if compiled.Context.HasDiagnostics() {
 				b.Fatalf("language service benchmark produced diagnostics for %s", inputPath)
 			}
 		}
