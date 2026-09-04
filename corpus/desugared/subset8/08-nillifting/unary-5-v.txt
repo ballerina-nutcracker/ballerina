@@ -24,42 +24,14 @@
       (assignment
         (simple-var-ref x)
         (simple-var-ref base2))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref base2))))
-      (var-def
-        (variable $desugar$1 (expr
-          (literal <nil>))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$1)
-            (unary-expr -
-              (simple-var-ref $desugar$0))))))
       (assignment
         (simple-var-ref y)
-        (simple-var-ref $desugar$1))
-      (var-def
-        (variable $desugar$2 (expr
-          (simple-var-ref base2))))
-      (var-def
-        (variable $desugar$3 (expr
-          (literal <nil>))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$3)
-            (unary-expr ~
-              (simple-var-ref $desugar$2))))))
+        (unary-expr -
+          (simple-var-ref base2)))
       (assignment
         (simple-var-ref z)
-        (simple-var-ref $desugar$3))))
+        (unary-expr ~
+          (simple-var-ref base2)))))
   (function main () (
     (value-type null))
     (block-function-body

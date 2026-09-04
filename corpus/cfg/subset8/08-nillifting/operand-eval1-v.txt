@@ -1,0 +1,32 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable nilValue (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable result (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (binary-expr +
+          (invocation sideEffect ())
+          (simple-var-ref nilValue)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref result)
+          (value-type null)))))
+  )
+)
+(sideEffect
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal side-effect))))
+    (return
+      (literal 1))
+  )
+)

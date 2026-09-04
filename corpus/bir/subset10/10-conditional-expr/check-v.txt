@@ -264,7 +264,7 @@ main() -> nil{
   
   error-table {
     [bb13, bb20] -> bb21, %20
-    [bb22, bb25] -> bb30, %30
-    [bb31, bb34] -> bb39, %38
+    [bb22, bb29] -> bb30, %30
+    [bb31, bb38] -> bb39, %38
   }
 }

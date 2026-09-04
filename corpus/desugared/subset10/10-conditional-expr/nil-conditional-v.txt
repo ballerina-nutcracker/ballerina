@@ -161,45 +161,17 @@
               (literal 10)))
             (invocation rhs ())))))
       (var-def
-        (variable $desugar$2 (expr
-          (invocation lhs (
-            (literal 30))))))
-      (var-def
-        (variable $desugar$3))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (var-def
-            (variable $desugar$0 (expr
-              (invocation lhs (
-                (literal 40))))))
-          (var-def
-            (variable $desugar$1 (expr
-              (literal <nil>))))
-          (if
-            (type-test-expr is
-              (simple-var-ref $desugar$0))
-            (block-stmt) (
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$1)
-                (binary-expr +
-                  (simple-var-ref $desugar$0)
-                  (literal 1))))))
-          (assignment
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$1))) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$2)))))
-      (var-def
         (variable nonNilComposite (type
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (simple-var-ref $desugar$3))))
+          (nil-conditional-expr
+            (invocation lhs (
+              (literal 30)))
+            (binary-expr +
+              (invocation lhs (
+                (literal 40)))
+              (literal 1))))))
       (var-def
         (variable fallback (type
           (value-type int)) (expr

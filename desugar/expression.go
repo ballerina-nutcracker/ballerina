@@ -204,117 +204,9 @@ func walkBinaryExpr(cx *functionContext, expr *ast.BLangBinaryExpr) desugaredNod
 		expr.RhsExpr = result.replacementNode.(ast.BLangExpression)
 	}
 
-	if !isNilLiftableBinaryOp(expr.OpKind) {
-		return desugaredNode[ast.BLangActionOrExpression]{
-			initStmts:       initStmts,
-			replacementNode: expr,
-		}
-	}
-
-	lhsTy := expr.LhsExpr.GetDeterminedType()
-	rhsTy := expr.RhsExpr.GetDeterminedType()
-	if semtypes.IsZero(lhsTy) || semtypes.IsZero(rhsTy) {
-		return desugaredNode[ast.BLangActionOrExpression]{
-			initStmts:       initStmts,
-			replacementNode: expr,
-		}
-	}
-	lhsHasNil := semtypes.ContainsBasicType(lhsTy, semtypes.Nil)
-	rhsHasNil := semtypes.ContainsBasicType(rhsTy, semtypes.Nil)
-
-	if !lhsHasNil && !rhsHasNil {
-		return desugaredNode[ast.BLangActionOrExpression]{
-			initStmts:       initStmts,
-			replacementNode: expr,
-		}
-	}
-
-	basePos := expr.GetPosition()
-	resultTy := expr.GetDeterminedType()
-
-	// Create temp vars for nullable operands
-	var lhsVarName *ast.BLangIdentifier
-	var lhsSymbol model.SymbolRef
-	if lhsHasNil {
-		lhsVarName, lhsSymbol, initStmts = createOperandTempVar(cx, lhsTy, expr.LhsExpr, basePos, initStmts)
-	}
-
-	var rhsVarName *ast.BLangIdentifier
-	var rhsSymbol model.SymbolRef
-	if rhsHasNil {
-		rhsVarName, rhsSymbol, initStmts = createOperandTempVar(cx, rhsTy, expr.RhsExpr, basePos, initStmts)
-	}
-
-	// Create result temp var initialized to nil
-	resultVarName, resultSymbol, initStmts := createNilResultVar(cx, resultTy, basePos, initStmts)
-
-	// Build the nil check condition
-	var nilCheckCond ast.BLangExpression
-	if lhsHasNil {
-		nilCheckCond = createNilTypeTest(lhsVarName, lhsSymbol, lhsTy, basePos)
-	}
-	if rhsHasNil {
-		rhsNilCheck := createNilTypeTest(rhsVarName, rhsSymbol, rhsTy, basePos)
-		if nilCheckCond == nil {
-			nilCheckCond = rhsNilCheck
-		} else {
-			orExpr := &ast.BLangBinaryExpr{
-				LhsExpr: nilCheckCond,
-				RhsExpr: rhsNilCheck,
-				OpKind:  model.OperatorKind_OR,
-			}
-			orExpr.SetDeterminedType(semtypes.Boolean)
-			orExpr.SetPosition(basePos)
-			nilCheckCond = orExpr
-		}
-	}
-
-	// Build the operation in the else branch
-	var lhsRef ast.BLangExpression
-	if lhsHasNil {
-		lhsRef = createVarRef(lhsVarName, lhsSymbol, semtypes.Diff(lhsTy, semtypes.Nil))
-	} else {
-		lhsRef = expr.LhsExpr
-	}
-
-	var rhsRef ast.BLangExpression
-	if rhsHasNil {
-		rhsRef = createVarRef(rhsVarName, rhsSymbol, semtypes.Diff(rhsTy, semtypes.Nil))
-	} else {
-		rhsRef = expr.RhsExpr
-	}
-
-	newBinaryExpr := &ast.BLangBinaryExpr{
-		LhsExpr: lhsRef,
-		RhsExpr: rhsRef,
-		OpKind:  expr.OpKind,
-	}
-	newBinaryExpr.SetDeterminedType(semtypes.Diff(resultTy, semtypes.Nil))
-	newBinaryExpr.SetPosition(basePos)
-
-	resultAssign := createResultAssignment(resultVarName, resultSymbol, resultTy, newBinaryExpr, basePos)
-
-	elseBody := &ast.BLangBlockStmt{
-		Stmts: []ast.StatementNode{resultAssign},
-	}
-	elseBody.SetDeterminedType(semtypes.Never)
-	ifStmt := &ast.BLangIf{
-		Expr:     nilCheckCond,
-		Body:     ast.BLangBlockStmt{},
-		ElseStmt: elseBody,
-	}
-	ifStmt.Body.SetDeterminedType(semtypes.Never)
-	ifStmt.SetDeterminedType(semtypes.Never)
-	ifStmt.SetScope(cx.currentScope())
-	setPositionIfMissing(ifStmt, basePos)
-	initStmts = append(initStmts, ifStmt)
-
-	replacementRef := createVarRef(resultVarName, resultSymbol, resultTy)
-	setPositionIfMissing(replacementRef, basePos)
-
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
-		replacementNode: replacementRef,
+		replacementNode: expr,
 	}
 }
 
@@ -335,69 +227,9 @@ func walkUnaryExpr(cx *functionContext, expr *ast.BLangUnaryExpr) desugaredNode[
 		}
 	}
 
-	if !isNilLiftableUnaryOp(expr.Operator) {
-		return desugaredNode[ast.BLangActionOrExpression]{
-			initStmts:       initStmts,
-			replacementNode: expr,
-		}
-	}
-
-	operandTy := expr.Expr.GetDeterminedType()
-	if !semtypes.ContainsBasicType(operandTy, semtypes.Nil) {
-		return desugaredNode[ast.BLangActionOrExpression]{
-			initStmts:       initStmts,
-			replacementNode: expr,
-		}
-	}
-
-	basePos := expr.GetPosition()
-	resultTy := expr.GetDeterminedType()
-
-	// Create operand temp var
-	operandVarName, operandSymbol, initStmts := createOperandTempVar(cx, operandTy, expr.Expr, basePos, initStmts)
-
-	// Create result temp var initialized to nil
-	resultVarName, resultSymbol, initStmts := createNilResultVar(cx, resultTy, basePos, initStmts)
-
-	// Build nil check: if ($operand is ()) { } else { ... }
-	nilCheck := createNilTypeTest(operandVarName, operandSymbol, operandTy, basePos)
-
-	// Build the operation for the if-body (operand is not nil)
-	nonNilTy := semtypes.Diff(operandTy, semtypes.Nil)
-	operandRef := createVarRef(operandVarName, operandSymbol, nonNilTy)
-
-	newUnary := &ast.BLangUnaryExpr{
-		Expr:     operandRef,
-		Operator: expr.Operator,
-	}
-	newUnary.SetDeterminedType(semtypes.Diff(resultTy, semtypes.Nil))
-	newUnary.SetPosition(basePos)
-	var opExpr ast.BLangExpression = newUnary
-
-	resultAssign := createResultAssignment(resultVarName, resultSymbol, resultTy, opExpr, basePos)
-
-	// if ($operand is ()) { } else { $result = op $operand }
-	elseBody := &ast.BLangBlockStmt{
-		Stmts: []ast.StatementNode{resultAssign},
-	}
-	elseBody.SetDeterminedType(semtypes.Never)
-	ifStmt := &ast.BLangIf{
-		Expr:     nilCheck,
-		Body:     ast.BLangBlockStmt{},
-		ElseStmt: elseBody,
-	}
-	ifStmt.Body.SetDeterminedType(semtypes.Never)
-	ifStmt.SetDeterminedType(semtypes.Never)
-	ifStmt.SetScope(cx.currentScope())
-	setPositionIfMissing(ifStmt, basePos)
-	initStmts = append(initStmts, ifStmt)
-
-	replacementRef := createVarRef(resultVarName, resultSymbol, resultTy)
-	setPositionIfMissing(replacementRef, basePos)
-
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
-		replacementNode: replacementRef,
+		replacementNode: expr,
 	}
 }
 
@@ -1331,28 +1163,6 @@ func walkMappingConstructorExpr(cx *functionContext, expr *ast.BLangMappingConst
 	return desugaredNode[ast.BLangActionOrExpression]{
 		initStmts:       initStmts,
 		replacementNode: expr,
-	}
-}
-
-func isNilLiftableBinaryOp(op model.OperatorKind) bool {
-	switch op {
-	case model.OperatorKind_ADD, model.OperatorKind_SUB,
-		model.OperatorKind_MUL, model.OperatorKind_DIV, model.OperatorKind_MOD,
-		model.OperatorKind_BITWISE_LEFT_SHIFT, model.OperatorKind_BITWISE_RIGHT_SHIFT,
-		model.OperatorKind_BITWISE_UNSIGNED_RIGHT_SHIFT,
-		model.OperatorKind_BITWISE_AND, model.OperatorKind_BITWISE_OR, model.OperatorKind_BITWISE_XOR:
-		return true
-	default:
-		return false
-	}
-}
-
-func isNilLiftableUnaryOp(op model.OperatorKind) bool {
-	switch op {
-	case model.OperatorKind_ADD, model.OperatorKind_SUB, model.OperatorKind_BITWISE_COMPLEMENT:
-		return true
-	default:
-		return false
 	}
 }
 
