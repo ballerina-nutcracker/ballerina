@@ -16,30 +16,40 @@
   (function main () (
     (value-type null))
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation $default$0 ()))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$0))))))
       (expression-stmt
         (invocation io println (
-          (invocation foo (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (var-def
-        (variable $desugar$2 (expr
-          (literal 1))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$2))))))
+          (expression-thunk
+          (lambda
+            (function main$506$1$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (invocation $default$0 ()))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$0))))))
+                (return
+                  (invocation foo (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)))))))))))
       (expression-stmt
         (invocation io println (
-          (invocation foo (
-            (simple-var-ref $desugar$2)
-            (simple-var-ref $desugar$3))))))
+          (expression-thunk
+          (lambda
+            (function main$506$1$thunk$1 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$2 (expr
+                    (literal 1))))
+                (var-def
+                  (variable $desugar$3 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$2))))))
+                (return
+                  (invocation foo (
+                    (simple-var-ref $desugar$2)
+                    (simple-var-ref $desugar$3)))))))))))
       (expression-stmt
         (invocation io println (
           (invocation foo (

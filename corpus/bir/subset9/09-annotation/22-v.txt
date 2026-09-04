@@ -153,3 +153,48 @@ main() -> nil{
     return;
   }
 }
+init$534$0$thunk$0() -> [int...]{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int...][%1]{}
+    $desugar$0 = %2;
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %6 = push($desugar$0,%5) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = runtimeList;
+    %8 = length($desugar$1) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %8;
+    %10 = ConstantLoad 0
+    $desugar$3 = %10;
+    GOTO bb3;
+  }
+  bb3 {
+    %13 = $desugar$3;
+    %14 = $desugar$2;
+    %12 = < %13 %14;
+    %12 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    %1 = %0;
+    %2 = push((1, $desugar$0),%1) -> bb6;
+  }
+  bb5 {
+    %0 = $desugar$0;
+    return;
+  }
+  bb6 {
+    %4 = (1, $desugar$3);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$3) = %3;
+    PopScopeFrame
+    GOTO bb3;
+  }
+}

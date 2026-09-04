@@ -42,46 +42,58 @@
   (function main () (
     (value-type null))
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (literal 1))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$0 (
-            (simple-var-ref $desugar$0))))))
       (expression-stmt
         (invocation io println (
-          (invocation classify (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (var-def
-        (variable $desugar$2 (expr
-          (literal one))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation $default$0 (
-            (simple-var-ref $desugar$2))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation classify (
-            (simple-var-ref $desugar$2)
-            (simple-var-ref $desugar$3))))))
-      (var-def
-        (variable $desugar$4 (expr
+          (expression-thunk
           (lambda
-            (function $default$1 (
-              (variable value (type
-                (value-type )))) ()
+            (function main$506$3$thunk$0 () ()
               (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (literal 1))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (invocation $default$0 (
+                      (simple-var-ref $desugar$0))))))
                 (return
-                  (ternary-expr
-                    (type-test-expr is
-                      (simple-var-ref value)
-                      (value-type int))
-                    (invocation acceptInt (
-                      (simple-var-ref value)))
-                    (invocation acceptString (
-                      (simple-var-ref value)))))))))))
+                  (invocation classify (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (lambda
+            (function main$506$3$thunk$1 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$2 (expr
+                    (literal one))))
+                (var-def
+                  (variable $desugar$3 (expr
+                    (invocation $default$0 (
+                      (simple-var-ref $desugar$2))))))
+                (return
+                  (invocation classify (
+                    (simple-var-ref $desugar$2)
+                    (simple-var-ref $desugar$3)))))))))))
+      (var-def
+        (variable $desugar$4))
+      (assignment
+        (simple-var-ref $desugar$4)
+        (lambda
+          (function $default$1 (
+            (variable value (type
+              (value-type )))) ()
+            (block-function-body
+              (return
+                (ternary-expr
+                  (type-test-expr is
+                    (simple-var-ref value)
+                    (value-type int))
+                  (invocation acceptInt (
+                    (simple-var-ref value)))
+                  (invocation acceptString (
+                    (simple-var-ref value)))))))))
       (var-def
         (variable fn (type
           (function-type (
@@ -106,30 +118,40 @@
                   (simple-var-ref actual))
                 (return
                   (simple-var-ref supplied))))))))
-      (var-def
-        (variable $desugar$5 (expr
-          (literal 2))))
-      (var-def
-        (variable $desugar$6 (expr
-          (invocation $desugar$4 (
-            (simple-var-ref $desugar$5))))))
       (expression-stmt
         (invocation io println (
-          (invocation fn (
-            (simple-var-ref $desugar$5)
-            (simple-var-ref $desugar$6))))))
-      (var-def
-        (variable $desugar$7 (expr
-          (literal two))))
-      (var-def
-        (variable $desugar$8 (expr
-          (invocation $desugar$4 (
-            (simple-var-ref $desugar$7))))))
+          (expression-thunk
+          (lambda
+            (function main$506$3$thunk$2 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$5 (expr
+                    (literal 2))))
+                (var-def
+                  (variable $desugar$6 (expr
+                    (invocation $desugar$4 (
+                      (simple-var-ref $desugar$5))))))
+                (return
+                  (invocation fn (
+                    (simple-var-ref $desugar$5)
+                    (simple-var-ref $desugar$6)))))))))))
       (expression-stmt
         (invocation io println (
-          (invocation fn (
-            (simple-var-ref $desugar$7)
-            (simple-var-ref $desugar$8))))))))
+          (expression-thunk
+          (lambda
+            (function main$506$3$thunk$3 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$7 (expr
+                    (literal two))))
+                (var-def
+                  (variable $desugar$8 (expr
+                    (invocation $desugar$4 (
+                      (simple-var-ref $desugar$7))))))
+                (return
+                  (invocation fn (
+                    (simple-var-ref $desugar$7)
+                    (simple-var-ref $desugar$8)))))))))))))
   (function $default$0 (
     (variable value (type
       (value-type )))) ()

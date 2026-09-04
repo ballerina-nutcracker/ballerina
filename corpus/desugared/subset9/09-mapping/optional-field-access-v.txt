@@ -63,54 +63,18 @@
               (literal x)
               (literal 1))))))
       (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref r))))
-      (var-def
-        (variable $desugar$1 (expr
-          (literal <nil>))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$0))) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$1)
-            (index-based-access
-              (simple-var-ref $desugar$0)
-              (literal x))))))
-      (var-def
         (variable rX (type
           (value-type int)) (expr
-          (simple-var-ref $desugar$1))))
+          (optional-field-based-access x
+            (simple-var-ref r)))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref rX))))
       (var-def
-        (variable $desugar$2 (expr
-          (simple-var-ref r))))
-      (var-def
-        (variable $desugar$3 (expr
-          (literal <nil>))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$2))) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$3)
-            (index-based-access
-              (simple-var-ref $desugar$2)
-              (literal x))))))
-      (var-def
         (variable bracedRX (type
           (value-type int)) (expr
-          (simple-var-ref $desugar$3))))
+          (optional-field-based-access x
+            (simple-var-ref r)))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref bracedRX))))
@@ -122,30 +86,12 @@
               (literal x)
               (literal 11))))))
       (var-def
-        (variable $desugar$4 (expr
-          (simple-var-ref o))))
-      (var-def
-        (variable $desugar$5 (expr
-          (literal <nil>))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$4))
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$5)
-            (simple-var-ref $desugar$4))) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$5)
-            (index-based-access
-              (simple-var-ref $desugar$4)
-              (literal x))))))
-      (var-def
         (variable oXWithValue (type
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (simple-var-ref $desugar$5))))
+          (optional-field-based-access x
+            (simple-var-ref o)))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref oXWithValue))))
@@ -155,30 +101,12 @@
           (literal x))
         (literal <nil>))
       (var-def
-        (variable $desugar$6 (expr
-          (simple-var-ref o))))
-      (var-def
-        (variable $desugar$7 (expr
-          (literal <nil>))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$6))
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$7)
-            (simple-var-ref $desugar$6))) (
-        (block-stmt
-          (assignment
-            (simple-var-ref $desugar$7)
-            (index-based-access
-              (simple-var-ref $desugar$6)
-              (literal x))))))
-      (var-def
         (variable oX (type
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (simple-var-ref $desugar$7))))
+          (optional-field-based-access x
+            (simple-var-ref o)))))
       (if
         (type-test-expr is
           (simple-var-ref oX)
@@ -198,30 +126,12 @@
                 (literal y)
                 (literal 2))))))
         (var-def
-          (variable $desugar$8 (expr
-            (simple-var-ref oneRequired))))
-        (var-def
-          (variable $desugar$9 (expr
-            (literal <nil>))))
-        (if
-          (type-test-expr is
-            (simple-var-ref $desugar$8))
-          (block-stmt
-            (assignment
-              (simple-var-ref $desugar$9)
-              (simple-var-ref $desugar$8))) (
-          (block-stmt
-            (assignment
-              (simple-var-ref $desugar$9)
-              (index-based-access
-                (simple-var-ref $desugar$8)
-                (literal x))))))
-        (var-def
           (variable oneRequiredX (type
             (union-type
               (value-type int)
               (value-type null))) (expr
-            (simple-var-ref $desugar$9))))
+            (optional-field-based-access x
+              (simple-var-ref oneRequired)))))
         (if
           (type-test-expr is
             (simple-var-ref oneRequiredX)
@@ -241,30 +151,12 @@
                   (literal x)
                   (literal 3))))))
           (var-def
-            (variable $desugar$10 (expr
-              (simple-var-ref oneOptional))))
-          (var-def
-            (variable $desugar$11 (expr
-              (literal <nil>))))
-          (if
-            (type-test-expr is
-              (simple-var-ref $desugar$10))
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$11)
-                (simple-var-ref $desugar$10))) (
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$11)
-                (index-based-access
-                  (simple-var-ref $desugar$10)
-                  (literal x))))))
-          (var-def
             (variable oneOptionalX (type
               (union-type
                 (value-type int)
                 (value-type null))) (expr
-              (simple-var-ref $desugar$11))))
+              (optional-field-based-access x
+                (simple-var-ref oneOptional)))))
           (expression-stmt
             (invocation io println (
               (simple-var-ref oneOptionalX))))
@@ -285,28 +177,10 @@
                 (user-defined-type RequiredX2))) (expr
               (simple-var-ref allRequiredValue))))
           (var-def
-            (variable $desugar$12 (expr
-              (simple-var-ref allRequired))))
-          (var-def
-            (variable $desugar$13 (expr
-              (literal <nil>))))
-          (if
-            (type-test-expr is
-              (simple-var-ref $desugar$12))
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$13)
-                (simple-var-ref $desugar$12))) (
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$13)
-                (index-based-access
-                  (simple-var-ref $desugar$12)
-                  (literal x))))))
-          (var-def
             (variable allRequiredX (type
               (value-type int)) (expr
-              (simple-var-ref $desugar$13))))
+              (optional-field-based-access x
+                (simple-var-ref allRequired)))))
           (expression-stmt
             (invocation io println (
               (simple-var-ref allRequiredX))))
@@ -317,30 +191,12 @@
                 (user-defined-type OptionalX))) (expr
               (mapping-constructor-expr))))
           (var-def
-            (variable $desugar$14 (expr
-              (simple-var-ref allOptional))))
-          (var-def
-            (variable $desugar$15 (expr
-              (literal <nil>))))
-          (if
-            (type-test-expr is
-              (simple-var-ref $desugar$14))
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$15)
-                (simple-var-ref $desugar$14))) (
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$15)
-                (index-based-access
-                  (simple-var-ref $desugar$14)
-                  (literal x))))))
-          (var-def
             (variable allOptionalX (type
               (union-type
                 (value-type int)
                 (value-type null))) (expr
-              (simple-var-ref $desugar$15))))
+              (optional-field-based-access x
+                (simple-var-ref allOptional)))))
           (if
             (type-test-expr is
               (simple-var-ref allOptionalX)
@@ -364,30 +220,12 @@
                   (user-defined-type OptionalX2))) (expr
                 (simple-var-ref allOptionalValue))))
             (var-def
-              (variable $desugar$16 (expr
-                (simple-var-ref allOptionalFields))))
-            (var-def
-              (variable $desugar$17 (expr
-                (literal <nil>))))
-            (if
-              (type-test-expr is
-                (simple-var-ref $desugar$16))
-              (block-stmt
-                (assignment
-                  (simple-var-ref $desugar$17)
-                  (simple-var-ref $desugar$16))) (
-              (block-stmt
-                (assignment
-                  (simple-var-ref $desugar$17)
-                  (index-based-access
-                    (simple-var-ref $desugar$16)
-                    (literal x))))))
-            (var-def
               (variable allOptionalFieldsX (type
                 (union-type
                   (value-type int)
                   (value-type null))) (expr
-                (simple-var-ref $desugar$17))))
+                (optional-field-based-access x
+                  (simple-var-ref allOptionalFields)))))
             (if
               (type-test-expr is
                 (simple-var-ref allOptionalFieldsX)
@@ -405,28 +243,10 @@
                       (literal x)
                       (literal 6))))))
               (var-def
-                (variable $desugar$18 (expr
-                  (simple-var-ref ro))))
-              (var-def
-                (variable $desugar$19 (expr
-                  (literal <nil>))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$18))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$19)
-                    (simple-var-ref $desugar$18))) (
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$19)
-                    (index-based-access
-                      (simple-var-ref $desugar$18)
-                      (literal x))))))
-              (var-def
                 (variable roX (type
                   (value-type int)) (expr
-                  (simple-var-ref $desugar$19))))
+                  (optional-field-based-access x
+                    (simple-var-ref ro)))))
               (expression-stmt
                 (invocation io println (
                   (simple-var-ref roX))))
@@ -438,28 +258,10 @@
                       (literal x)
                       (literal 7))))))
               (var-def
-                (variable $desugar$20 (expr
-                  (simple-var-ref ix))))
-              (var-def
-                (variable $desugar$21 (expr
-                  (literal <nil>))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$20))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$21)
-                    (simple-var-ref $desugar$20))) (
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$21)
-                    (index-based-access
-                      (simple-var-ref $desugar$20)
-                      (literal x))))))
-              (var-def
                 (variable ixX (type
                   (value-type int)) (expr
-                  (simple-var-ref $desugar$21))))
+                  (optional-field-based-access x
+                    (simple-var-ref ix)))))
               (expression-stmt
                 (invocation io println (
                   (simple-var-ref ixX))))
@@ -474,75 +276,21 @@
                           (literal x)
                           (literal 9))))))))
               (var-def
-                (variable $desugar$22 (expr
-                  (index-based-access
-                    (simple-var-ref nested)
-                    (literal inner)))))
-              (var-def
-                (variable $desugar$23 (expr
-                  (literal <nil>))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$22))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$23)
-                    (simple-var-ref $desugar$22))) (
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$23)
-                    (index-based-access
-                      (simple-var-ref $desugar$22)
-                      (literal x))))))
-              (var-def
                 (variable nestedX (type
                   (value-type int)) (expr
-                  (simple-var-ref $desugar$23))))
+                  (optional-field-based-access x
+                    (index-based-access
+                      (simple-var-ref nested)
+                      (literal inner))))))
               (expression-stmt
                 (invocation io println (
                   (simple-var-ref nestedX))))
               (var-def
-                (variable $desugar$24 (expr
-                  (simple-var-ref nested))))
-              (var-def
-                (variable $desugar$25 (expr
-                  (literal <nil>))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$24))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$25)
-                    (simple-var-ref $desugar$24))) (
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$25)
-                    (index-based-access
-                      (simple-var-ref $desugar$24)
-                      (literal inner))))))
-              (var-def
-                (variable $desugar$26 (expr
-                  (simple-var-ref $desugar$25))))
-              (var-def
-                (variable $desugar$27 (expr
-                  (literal <nil>))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$26))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$27)
-                    (simple-var-ref $desugar$26))) (
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$27)
-                    (index-based-access
-                      (simple-var-ref $desugar$26)
-                      (literal x))))))
-              (var-def
                 (variable nestedOptionalX (type
                   (value-type int)) (expr
-                  (simple-var-ref $desugar$27))))
+                  (optional-field-based-access x
+                    (optional-field-based-access inner
+                      (simple-var-ref nested))))))
               (expression-stmt
                 (invocation io println (
                   (simple-var-ref nestedOptionalX))))
@@ -553,49 +301,13 @@
                     (value-type null))) (expr
                   (simple-var-ref nested))))
               (var-def
-                (variable $desugar$28 (expr
-                  (simple-var-ref maybeNested))))
-              (var-def
-                (variable $desugar$29 (expr
-                  (literal <nil>))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$28))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$29)
-                    (simple-var-ref $desugar$28))) (
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$29)
-                    (index-based-access
-                      (simple-var-ref $desugar$28)
-                      (literal inner))))))
-              (var-def
-                (variable $desugar$30 (expr
-                  (simple-var-ref $desugar$29))))
-              (var-def
-                (variable $desugar$31 (expr
-                  (literal <nil>))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$30))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$31)
-                    (simple-var-ref $desugar$30))) (
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$31)
-                    (index-based-access
-                      (simple-var-ref $desugar$30)
-                      (literal x))))))
-              (var-def
                 (variable maybeNestedX (type
                   (union-type
                     (value-type int)
                     (value-type null))) (expr
-                  (simple-var-ref $desugar$31))))
+                  (optional-field-based-access x
+                    (optional-field-based-access inner
+                      (simple-var-ref maybeNested))))))
               (expression-stmt
                 (invocation io println (
                   (simple-var-ref maybeNestedX))))
@@ -608,30 +320,12 @@
                       (error-constructor-expr (
                         (literal boom))))))))
               (var-def
-                (variable $desugar$32 (expr
-                  (simple-var-ref errorField))))
-              (var-def
-                (variable $desugar$33 (expr
-                  (literal <nil>))))
-              (if
-                (type-test-expr is
-                  (simple-var-ref $desugar$32))
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$33)
-                    (simple-var-ref $desugar$32))) (
-                (block-stmt
-                  (assignment
-                    (simple-var-ref $desugar$33)
-                    (index-based-access
-                      (simple-var-ref $desugar$32)
-                      (literal e))))))
-              (var-def
                 (variable maybeError (type
                   (union-type
                     (error-type)
                     (value-type null))) (expr
-                  (simple-var-ref $desugar$33))))
+                  (optional-field-based-access e
+                    (simple-var-ref errorField)))))
               (if
                 (type-test-expr is
                   (simple-var-ref maybeError)
@@ -655,112 +349,112 @@
                         (literal nilValue)
                         (literal <nil>))))))
                 (var-def
-                  (variable $desugar$34 (expr
+                  (variable $desugar$0 (expr
                     (simple-var-ref laxMap))))
                 (var-def
-                  (variable $desugar$35 (expr
+                  (variable $desugar$1 (expr
                     (literal <nil>))))
                 (if
                   (type-test-expr is
-                    (simple-var-ref $desugar$34))
+                    (simple-var-ref $desugar$0))
                   (block-stmt) (
                   (if
                     (type-test-expr is
-                      (simple-var-ref $desugar$34))
+                      (simple-var-ref $desugar$0))
                     (block-stmt
                       (assignment
-                        (simple-var-ref $desugar$35)
-                        (simple-var-ref $desugar$34))) (
+                        (simple-var-ref $desugar$1)
+                        (simple-var-ref $desugar$0))) (
                     (if
                       (type-test-expr !is
-                        (simple-var-ref $desugar$34))
+                        (simple-var-ref $desugar$0))
                       (block-stmt
                         (assignment
-                          (simple-var-ref $desugar$35)
+                          (simple-var-ref $desugar$1)
                           (error-constructor-expr (
                             (literal lax field access receiver is not a mapping))))) (
                       (block-stmt
                         (var-def
-                          (variable $desugar$36 (expr
+                          (variable $desugar$2 (expr
                             (trap-expr
                               (invocation lang.map get (
-                                (simple-var-ref $desugar$34)
+                                (simple-var-ref $desugar$0)
                                 (literal x)))))))
                         (if
                           (type-test-expr is
-                            (simple-var-ref $desugar$36))
+                            (simple-var-ref $desugar$2))
                           (block-stmt) (
                           (if
                             (type-test-expr is
-                              (simple-var-ref $desugar$36))
+                              (simple-var-ref $desugar$2))
                             (block-stmt
                               (assignment
-                                (simple-var-ref $desugar$35)
-                                (simple-var-ref $desugar$36))) (
+                                (simple-var-ref $desugar$1)
+                                (simple-var-ref $desugar$2))) (
                             (block-stmt
                               (assignment
-                                (simple-var-ref $desugar$35)
+                                (simple-var-ref $desugar$1)
                                 (error-constructor-expr (
                                   (literal invalid lax field member))))))))))))))))
                 (var-def
                   (variable laxMapX (type
                     (builtin-ref-type json)) (expr
-                    (simple-var-ref $desugar$35))))
+                    (simple-var-ref $desugar$1))))
                 (expression-stmt
                   (invocation io println (
                     (simple-var-ref laxMapX))))
                 (var-def
-                  (variable $desugar$37 (expr
+                  (variable $desugar$3 (expr
                     (simple-var-ref laxMap))))
                 (var-def
-                  (variable $desugar$38 (expr
+                  (variable $desugar$4 (expr
                     (literal <nil>))))
                 (if
                   (type-test-expr is
-                    (simple-var-ref $desugar$37))
+                    (simple-var-ref $desugar$3))
                   (block-stmt) (
                   (if
                     (type-test-expr is
-                      (simple-var-ref $desugar$37))
+                      (simple-var-ref $desugar$3))
                     (block-stmt
                       (assignment
-                        (simple-var-ref $desugar$38)
-                        (simple-var-ref $desugar$37))) (
+                        (simple-var-ref $desugar$4)
+                        (simple-var-ref $desugar$3))) (
                     (if
                       (type-test-expr !is
-                        (simple-var-ref $desugar$37))
+                        (simple-var-ref $desugar$3))
                       (block-stmt
                         (assignment
-                          (simple-var-ref $desugar$38)
+                          (simple-var-ref $desugar$4)
                           (error-constructor-expr (
                             (literal lax field access receiver is not a mapping))))) (
                       (block-stmt
                         (var-def
-                          (variable $desugar$39 (expr
+                          (variable $desugar$5 (expr
                             (trap-expr
                               (invocation lang.map get (
-                                (simple-var-ref $desugar$37)
+                                (simple-var-ref $desugar$3)
                                 (literal missing)))))))
                         (if
                           (type-test-expr is
-                            (simple-var-ref $desugar$39))
+                            (simple-var-ref $desugar$5))
                           (block-stmt) (
                           (if
                             (type-test-expr is
-                              (simple-var-ref $desugar$39))
+                              (simple-var-ref $desugar$5))
                             (block-stmt
                               (assignment
-                                (simple-var-ref $desugar$38)
-                                (simple-var-ref $desugar$39))) (
+                                (simple-var-ref $desugar$4)
+                                (simple-var-ref $desugar$5))) (
                             (block-stmt
                               (assignment
-                                (simple-var-ref $desugar$38)
+                                (simple-var-ref $desugar$4)
                                 (error-constructor-expr (
                                   (literal invalid lax field member))))))))))))))))
                 (var-def
                   (variable laxMapMissing (type
                     (builtin-ref-type json)) (expr
-                    (simple-var-ref $desugar$38))))
+                    (simple-var-ref $desugar$4))))
                 (if
                   (type-test-expr is
                     (simple-var-ref laxMapMissing)
@@ -771,57 +465,57 @@
                         (literal lax map missing))))) ())
                 (block-stmt
                   (var-def
-                    (variable $desugar$40 (expr
+                    (variable $desugar$6 (expr
                       (simple-var-ref laxMap))))
                   (var-def
-                    (variable $desugar$41 (expr
+                    (variable $desugar$7 (expr
                       (literal <nil>))))
                   (if
                     (type-test-expr is
-                      (simple-var-ref $desugar$40))
+                      (simple-var-ref $desugar$6))
                     (block-stmt) (
                     (if
                       (type-test-expr is
-                        (simple-var-ref $desugar$40))
+                        (simple-var-ref $desugar$6))
                       (block-stmt
                         (assignment
-                          (simple-var-ref $desugar$41)
-                          (simple-var-ref $desugar$40))) (
+                          (simple-var-ref $desugar$7)
+                          (simple-var-ref $desugar$6))) (
                       (if
                         (type-test-expr !is
-                          (simple-var-ref $desugar$40))
+                          (simple-var-ref $desugar$6))
                         (block-stmt
                           (assignment
-                            (simple-var-ref $desugar$41)
+                            (simple-var-ref $desugar$7)
                             (error-constructor-expr (
                               (literal lax field access receiver is not a mapping))))) (
                         (block-stmt
                           (var-def
-                            (variable $desugar$42 (expr
+                            (variable $desugar$8 (expr
                               (trap-expr
                                 (invocation lang.map get (
-                                  (simple-var-ref $desugar$40)
+                                  (simple-var-ref $desugar$6)
                                   (literal nilValue)))))))
                           (if
                             (type-test-expr is
-                              (simple-var-ref $desugar$42))
+                              (simple-var-ref $desugar$8))
                             (block-stmt) (
                             (if
                               (type-test-expr is
-                                (simple-var-ref $desugar$42))
+                                (simple-var-ref $desugar$8))
                               (block-stmt
                                 (assignment
-                                  (simple-var-ref $desugar$41)
-                                  (simple-var-ref $desugar$42))) (
+                                  (simple-var-ref $desugar$7)
+                                  (simple-var-ref $desugar$8))) (
                               (block-stmt
                                 (assignment
-                                  (simple-var-ref $desugar$41)
+                                  (simple-var-ref $desugar$7)
                                   (error-constructor-expr (
                                     (literal invalid lax field member))))))))))))))))
                   (var-def
                     (variable laxMapNil (type
                       (builtin-ref-type json)) (expr
-                      (simple-var-ref $desugar$41))))
+                      (simple-var-ref $desugar$7))))
                   (if
                     (type-test-expr is
                       (simple-var-ref laxMapNil)

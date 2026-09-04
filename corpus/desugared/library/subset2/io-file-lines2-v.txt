@@ -1,0 +1,59 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable path (type
+          (value-type string)) (expr
+          (literal /tmp/bal_io_lines2.txt))))
+      (expression-stmt
+        (checked-expr
+          (expression-thunk
+          (lambda
+            (function main$502$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref path))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (list-constructor-expr
+                      (literal Line1)
+                      (literal Line2)))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$2 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteLines (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
+      (expression-stmt
+        (checked-expr
+          (invocation io fileWriteLines (
+            (simple-var-ref path)
+            (list-constructor-expr
+              (literal Line3))
+            (literal APPEND)))))
+      (var-def
+        (variable lines (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation io fileReadLines (
+              (simple-var-ref path)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref lines))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref lines)
+            (literal 2))))))))

@@ -1,0 +1,259 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_xml_ns.xml
+    nsPath = %1;
+    %4 = ConstantLoad <root xmlns="http://default" xmlns:a="http://a.com">
+    %5 = ConstantLoad <a:item a:key="v">text</a:item><child/></root>
+    %3 = + %4 %5;
+    nsContent = %3;
+    %8 = closure_fp $anon/.:main$502$0$thunk$0
+    %9 = main$502$0$thunk$0() -> bb1;
+  }
+  bb1 {
+    %10 = %9 is error
+    %10 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %9;
+    return;
+  }
+  bb3 {
+    %7 = %9;
+    GOTO bb4;
+  }
+  bb4 {
+    %12 = fileReadXml(nsPath) -> bb5;
+  }
+  bb5 {
+    %13 = %12 is error
+    %13 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %12;
+    return;
+  }
+  bb7 {
+    %11 = %12;
+    GOTO bb8;
+  }
+  bb8 {
+    nsResult = %11;
+    %15 = println(nsResult) -> bb9;
+  }
+  bb9 {
+    %16 = ConstantLoad /tmp/bal_io_xml_multi.xml
+    multiPath = %16;
+    %18 = ConstantLoad <!DOCTYPE note><!-- a comment --><?target data?><a/><b/>
+    multiContent = %18;
+    %21 = closure_fp $anon/.:main$502$0$thunk$1
+    %22 = main$502$0$thunk$1() -> bb10;
+  }
+  bb10 {
+    %23 = %22 is error
+    %23 ? bb11 : bb12;
+  }
+  bb11 {
+    %0 = %22;
+    return;
+  }
+  bb12 {
+    %20 = %22;
+    GOTO bb13;
+  }
+  bb13 {
+    %25 = fileReadXml(multiPath) -> bb14;
+  }
+  bb14 {
+    %26 = %25 is error
+    %26 ? bb15 : bb16;
+  }
+  bb15 {
+    %0 = %25;
+    return;
+  }
+  bb16 {
+    %24 = %25;
+    GOTO bb17;
+  }
+  bb17 {
+    multiResult = %24;
+    %28 = println(multiResult) -> bb18;
+  }
+  bb18 {
+    %29 = ConstantLoad /tmp/bal_io_xml_empty.xml
+    emptyPath = %29;
+    %32 = closure_fp $anon/.:main$502$0$thunk$2
+    %33 = main$502$0$thunk$2() -> bb19;
+  }
+  bb19 {
+    %34 = %33 is error
+    %34 ? bb20 : bb21;
+  }
+  bb20 {
+    %0 = %33;
+    return;
+  }
+  bb21 {
+    %31 = %33;
+    GOTO bb22;
+  }
+  bb22 {
+    %36 = fileReadXml(emptyPath) -> bb23;
+  }
+  bb23 {
+    %37 = %36 is error
+    %37 ? bb24 : bb25;
+  }
+  bb24 {
+    %0 = %36;
+    return;
+  }
+  bb25 {
+    %35 = %36;
+    GOTO bb26;
+  }
+  bb26 {
+    emptyResult = %35;
+    %40 = newXMLSequence{}
+    %39 = unknown emptyResult %40;
+    %41 = %39;
+    %42 = println(%41) -> bb27;
+  }
+  bb27 {
+    %43 = ConstantLoad /tmp/bal_io_xml_bad.xml
+    badPath = %43;
+    %46 = closure_fp $anon/.:main$502$0$thunk$3
+    %47 = main$502$0$thunk$3() -> bb28;
+  }
+  bb28 {
+    %48 = %47 is error
+    %48 ? bb29 : bb30;
+  }
+  bb29 {
+    %0 = %47;
+    return;
+  }
+  bb30 {
+    %45 = %47;
+    GOTO bb31;
+  }
+  bb31 {
+    %49 = fileReadXml(badPath) -> bb32;
+  }
+  bb32 {
+    badResult = %49;
+    %51 = badResult is error
+    %52 = %51;
+    %53 = println(%52) -> bb33;
+  }
+  bb33 {
+    %54 = ConstantLoad /tmp/bal_io_xml_stray.xml
+    strayPath = %54;
+    %57 = closure_fp $anon/.:main$502$0$thunk$4
+    %58 = main$502$0$thunk$4() -> bb34;
+  }
+  bb34 {
+    %59 = %58 is error
+    %59 ? bb35 : bb36;
+  }
+  bb35 {
+    %0 = %58;
+    return;
+  }
+  bb36 {
+    %56 = %58;
+    GOTO bb37;
+  }
+  bb37 {
+    %60 = fileReadXml(strayPath) -> bb38;
+  }
+  bb38 {
+    strayResult = %60;
+    %62 = strayResult is error
+    %63 = %62;
+    %64 = println(%63) -> bb39;
+  }
+  bb39 {
+    return;
+  }
+}
+main$502$0$thunk$0() -> nil|error{
+  bb0 {
+    $desugar$0 = (1, nsPath);
+    $desugar$1 = (1, nsContent);
+    %3 = $default$1($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %3;
+    %5 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+main$502$0$thunk$1() -> nil|error{
+  bb0 {
+    $desugar$3 = (1, multiPath);
+    $desugar$4 = (1, multiContent);
+    %3 = $default$1($desugar$3,$desugar$4) -> bb1;
+  }
+  bb1 {
+    $desugar$5 = %3;
+    %5 = fileWriteString($desugar$3,$desugar$4,$desugar$5) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+main$502$0$thunk$2() -> nil|error{
+  bb0 {
+    $desugar$6 = (1, emptyPath);
+    %2 = ConstantLoad    
+  
+    $desugar$7 = %2;
+    %4 = $default$1($desugar$6,$desugar$7) -> bb1;
+  }
+  bb1 {
+    $desugar$8 = %4;
+    %6 = fileWriteString($desugar$6,$desugar$7,$desugar$8) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+main$502$0$thunk$3() -> nil|error{
+  bb0 {
+    $desugar$9 = (1, badPath);
+    %2 = ConstantLoad <root><unclosed></root>
+    $desugar$10 = %2;
+    %4 = $default$1($desugar$9,$desugar$10) -> bb1;
+  }
+  bb1 {
+    $desugar$11 = %4;
+    %6 = fileWriteString($desugar$9,$desugar$10,$desugar$11) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+main$502$0$thunk$4() -> nil|error{
+  bb0 {
+    $desugar$12 = (1, strayPath);
+    %2 = ConstantLoad </root>
+    $desugar$13 = %2;
+    %4 = $default$1($desugar$12,$desugar$13) -> bb1;
+  }
+  bb1 {
+    $desugar$14 = %4;
+    %6 = fileWriteString($desugar$12,$desugar$13,$desugar$14) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}

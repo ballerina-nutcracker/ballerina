@@ -1,0 +1,132 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_missing_xyz.dat
+    missing = %1;
+    %3 = fileReadString(missing) -> bb1;
+  }
+  bb1 {
+    %4 = %3 is error
+    %5 = %4;
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = fileReadLines(missing) -> bb3;
+  }
+  bb3 {
+    %8 = %7 is error
+    %9 = %8;
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    %11 = fileReadBytes(missing) -> bb5;
+  }
+  bb5 {
+    %12 = %11 is error
+    %13 = %12;
+    %14 = println(%13) -> bb6;
+  }
+  bb6 {
+    %15 = fileReadJson(missing) -> bb7;
+  }
+  bb7 {
+    %16 = %15 is error
+    %17 = %16;
+    %18 = println(%17) -> bb8;
+  }
+  bb8 {
+    %19 = fileReadXml(missing) -> bb9;
+  }
+  bb9 {
+    %20 = %19 is error
+    %21 = %20;
+    %22 = println(%21) -> bb10;
+  }
+  bb10 {
+    %23 = ConstantLoad /tmp/bal_io_bad_json.json
+    badJson = %23;
+    %26 = closure_fp $anon/.:main$502$0$thunk$0
+    %27 = main$502$0$thunk$0() -> bb11;
+  }
+  bb11 {
+    %28 = %27 is error
+    %28 ? bb12 : bb13;
+  }
+  bb12 {
+    %0 = %27;
+    return;
+  }
+  bb13 {
+    %25 = %27;
+    GOTO bb14;
+  }
+  bb14 {
+    %29 = fileReadJson(badJson) -> bb15;
+  }
+  bb15 {
+    %30 = %29 is error
+    %31 = %30;
+    %32 = println(%31) -> bb16;
+  }
+  bb16 {
+    %33 = ConstantLoad /tmp/bal_io_trailing_json.json
+    trailingJson = %33;
+    %36 = closure_fp $anon/.:main$502$0$thunk$1
+    %37 = main$502$0$thunk$1() -> bb17;
+  }
+  bb17 {
+    %38 = %37 is error
+    %38 ? bb18 : bb19;
+  }
+  bb18 {
+    %0 = %37;
+    return;
+  }
+  bb19 {
+    %35 = %37;
+    GOTO bb20;
+  }
+  bb20 {
+    %39 = fileReadJson(trailingJson) -> bb21;
+  }
+  bb21 {
+    %40 = %39 is error
+    %41 = %40;
+    %42 = println(%41) -> bb22;
+  }
+  bb22 {
+    return;
+  }
+}
+main$502$0$thunk$0() -> nil|error{
+  bb0 {
+    $desugar$0 = (1, badJson);
+    %2 = ConstantLoad {not valid json}
+    $desugar$1 = %2;
+    %4 = $default$1($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %4;
+    %6 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+main$502$0$thunk$1() -> nil|error{
+  bb0 {
+    $desugar$3 = (1, trailingJson);
+    %2 = ConstantLoad {"k": 1} extra
+    $desugar$4 = %2;
+    %4 = $default$1($desugar$3,$desugar$4) -> bb1;
+  }
+  bb1 {
+    $desugar$5 = %4;
+    %6 = fileWriteString($desugar$3,$desugar$4,$desugar$5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}

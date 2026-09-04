@@ -163,1945 +163,816 @@ main() -> nil{
     GOTO bb18;
   }
   bb18 {
-    PushScopeFrame 64
-    $desugar$3 = (1, j);
-    %1 = ConstantLoad lax field access failed
-    %2 = newError error(%1)
-    $desugar$4 = %2;
-    %4 = $desugar$3 is error
-    %4 ? bb19 : bb20;
+    PushScopeFrame 52
+    %0 = closure_fp $anon/.:main$506$7$thunk$0
+    %1 = %0() -> bb19;
   }
   bb19 {
-    PushScopeFrame 0
-    (1, $desugar$4) = (1, $desugar$3);
-    PopScopeFrame
-    GOTO bb33;
+    $desugar$6 = %1;
+    %3 = ConstantLoad lax field access failed
+    %4 = newError error(%3)
+    $desugar$7 = %4;
+    %6 = $desugar$6 is error
+    %6 ? bb20 : bb21;
   }
   bb20 {
-    %5 = $desugar$3 !is mapping
-    %5 ? bb21 : bb22;
-  }
-  bb21 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$4) = %1;
-    PopScopeFrame
-    GOTO bb32;
-  }
-  bb22 {
-    PushScopeFrame 6
-    GOTO bb23;
-  }
-  bb23 {
-    %1 = ConstantLoad a
-    %2 = get((1, $desugar$3),%1) -> bb24;
-  }
-  bb24 {
-    %0 = %2;
-    GOTO bb25;
-  }
-  bb25 {
-    $desugar$5 = %0;
-    %4 = $desugar$5 is error
-    %4 ? bb26 : bb27;
-  }
-  bb26 {
-    PushScopeFrame 0
-    (2, $desugar$4) = (1, $desugar$5);
-    PopScopeFrame
-    GOTO bb31;
-  }
-  bb27 {
-    %5 = $desugar$5 is json
-    %5 ? bb28 : bb29;
-  }
-  bb28 {
-    PushScopeFrame 0
-    (2, $desugar$4) = (1, $desugar$5);
-    PopScopeFrame
-    GOTO bb30;
-  }
-  bb29 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$4) = %1;
-    PopScopeFrame
-    GOTO bb30;
-  }
-  bb30 {
-    GOTO bb31;
-  }
-  bb31 {
-    PopScopeFrame
-    GOTO bb32;
-  }
-  bb32 {
-    GOTO bb33;
-  }
-  bb33 {
-    $desugar$6 = $desugar$4;
-    %7 = ConstantLoad lax field access failed
-    %8 = newError error(%7)
-    $desugar$7 = %8;
-    %10 = $desugar$6 is error
-    %10 ? bb34 : bb35;
-  }
-  bb34 {
     PushScopeFrame 0
     (1, $desugar$7) = (1, $desugar$6);
     PopScopeFrame
-    GOTO bb48;
+    GOTO bb34;
   }
-  bb35 {
-    %11 = $desugar$6 !is mapping
-    %11 ? bb36 : bb37;
+  bb21 {
+    %7 = $desugar$6 !is mapping
+    %7 ? bb22 : bb23;
   }
-  bb36 {
+  bb22 {
     PushScopeFrame 2
     %0 = ConstantLoad lax field access receiver is not a mapping
     %1 = newError error(%0)
     (1, $desugar$7) = %1;
     PopScopeFrame
-    GOTO bb47;
+    GOTO bb33;
   }
-  bb37 {
+  bb23 {
     PushScopeFrame 6
-    GOTO bb38;
+    GOTO bb24;
   }
-  bb38 {
+  bb24 {
     %1 = ConstantLoad b
-    %2 = get((1, $desugar$6),%1) -> bb39;
+    %2 = get((1, $desugar$6),%1) -> bb25;
   }
-  bb39 {
+  bb25 {
     %0 = %2;
-    GOTO bb40;
+    GOTO bb26;
   }
-  bb40 {
+  bb26 {
     $desugar$8 = %0;
     %4 = $desugar$8 is error
-    %4 ? bb41 : bb42;
+    %4 ? bb27 : bb28;
   }
-  bb41 {
+  bb27 {
     PushScopeFrame 0
     (2, $desugar$7) = (1, $desugar$8);
     PopScopeFrame
-    GOTO bb46;
+    GOTO bb32;
   }
-  bb42 {
+  bb28 {
     %5 = $desugar$8 is json
-    %5 ? bb43 : bb44;
+    %5 ? bb29 : bb30;
   }
-  bb43 {
+  bb29 {
     PushScopeFrame 0
     (2, $desugar$7) = (1, $desugar$8);
     PopScopeFrame
-    GOTO bb45;
+    GOTO bb31;
   }
-  bb44 {
+  bb30 {
     PushScopeFrame 2
     %0 = ConstantLoad invalid lax field member
     %1 = newError error(%0)
     (2, $desugar$7) = %1;
     PopScopeFrame
-    GOTO bb45;
+    GOTO bb31;
   }
-  bb45 {
-    GOTO bb46;
+  bb31 {
+    GOTO bb32;
   }
-  bb46 {
+  bb32 {
     PopScopeFrame
-    GOTO bb47;
+    GOTO bb33;
   }
-  bb47 {
-    GOTO bb48;
+  bb33 {
+    GOTO bb34;
   }
-  bb48 {
+  bb34 {
     nested = $desugar$7;
-    %13 = println(nested) -> bb49;
+    %9 = println(nested) -> bb35;
   }
-  bb49 {
-    $desugar$9 = (1, j);
-    %15 = ConstantLoad lax field access failed
-    %16 = newError error(%15)
-    $desugar$10 = %16;
-    %18 = $desugar$9 is error
-    %18 ? bb50 : bb51;
+  bb35 {
+    %10 = closure_fp $anon/.:main$506$7$thunk$1
+    %11 = %10() -> bb36;
   }
-  bb50 {
-    PushScopeFrame 0
-    (1, $desugar$10) = (1, $desugar$9);
-    PopScopeFrame
-    GOTO bb64;
+  bb36 {
+    $desugar$12 = %11;
+    %13 = ConstantLoad lax field access failed
+    %14 = newError error(%13)
+    $desugar$13 = %14;
+    %16 = $desugar$12 is error
+    %16 ? bb37 : bb38;
   }
-  bb51 {
-    %19 = $desugar$9 !is mapping
-    %19 ? bb52 : bb53;
-  }
-  bb52 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$10) = %1;
-    PopScopeFrame
-    GOTO bb63;
-  }
-  bb53 {
-    PushScopeFrame 6
-    GOTO bb54;
-  }
-  bb54 {
-    %1 = ConstantLoad a
-    %2 = get((1, $desugar$9),%1) -> bb55;
-  }
-  bb55 {
-    %0 = %2;
-    GOTO bb56;
-  }
-  bb56 {
-    $desugar$11 = %0;
-    %4 = $desugar$11 is error
-    %4 ? bb57 : bb58;
-  }
-  bb57 {
-    PushScopeFrame 0
-    (2, $desugar$10) = (1, $desugar$11);
-    PopScopeFrame
-    GOTO bb62;
-  }
-  bb58 {
-    %5 = $desugar$11 is json
-    %5 ? bb59 : bb60;
-  }
-  bb59 {
-    PushScopeFrame 0
-    (2, $desugar$10) = (1, $desugar$11);
-    PopScopeFrame
-    GOTO bb61;
-  }
-  bb60 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$10) = %1;
-    PopScopeFrame
-    GOTO bb61;
-  }
-  bb61 {
-    GOTO bb62;
-  }
-  bb62 {
-    PopScopeFrame
-    GOTO bb63;
-  }
-  bb63 {
-    GOTO bb64;
-  }
-  bb64 {
-    $desugar$12 = $desugar$10;
-    %21 = ConstantLoad lax field access failed
-    %22 = newError error(%21)
-    $desugar$13 = %22;
-    %24 = $desugar$12 is error
-    %24 ? bb65 : bb66;
-  }
-  bb65 {
+  bb37 {
     PushScopeFrame 0
     (1, $desugar$13) = (1, $desugar$12);
     PopScopeFrame
-    GOTO bb79;
+    GOTO bb51;
   }
-  bb66 {
-    %25 = $desugar$12 !is mapping
-    %25 ? bb67 : bb68;
+  bb38 {
+    %17 = $desugar$12 !is mapping
+    %17 ? bb39 : bb40;
   }
-  bb67 {
+  bb39 {
     PushScopeFrame 2
     %0 = ConstantLoad lax field access receiver is not a mapping
     %1 = newError error(%0)
     (1, $desugar$13) = %1;
     PopScopeFrame
-    GOTO bb78;
+    GOTO bb50;
   }
-  bb68 {
+  bb40 {
     PushScopeFrame 6
-    GOTO bb69;
+    GOTO bb41;
   }
-  bb69 {
+  bb41 {
     %1 = ConstantLoad b
-    %2 = get((1, $desugar$12),%1) -> bb70;
+    %2 = get((1, $desugar$12),%1) -> bb42;
   }
-  bb70 {
+  bb42 {
     %0 = %2;
-    GOTO bb71;
+    GOTO bb43;
   }
-  bb71 {
+  bb43 {
     $desugar$14 = %0;
     %4 = $desugar$14 is error
-    %4 ? bb72 : bb73;
+    %4 ? bb44 : bb45;
   }
-  bb72 {
+  bb44 {
     PushScopeFrame 0
     (2, $desugar$13) = (1, $desugar$14);
     PopScopeFrame
-    GOTO bb77;
+    GOTO bb49;
   }
-  bb73 {
+  bb45 {
     %5 = $desugar$14 is json
-    %5 ? bb74 : bb75;
+    %5 ? bb46 : bb47;
   }
-  bb74 {
+  bb46 {
     PushScopeFrame 0
     (2, $desugar$13) = (1, $desugar$14);
     PopScopeFrame
-    GOTO bb76;
+    GOTO bb48;
   }
-  bb75 {
+  bb47 {
     PushScopeFrame 2
     %0 = ConstantLoad invalid lax field member
     %1 = newError error(%0)
     (2, $desugar$13) = %1;
     PopScopeFrame
-    GOTO bb76;
+    GOTO bb48;
   }
-  bb76 {
-    GOTO bb77;
+  bb48 {
+    GOTO bb49;
   }
-  bb77 {
+  bb49 {
     PopScopeFrame
-    GOTO bb78;
+    GOTO bb50;
   }
-  bb78 {
-    GOTO bb79;
+  bb50 {
+    GOTO bb51;
   }
-  bb79 {
+  bb51 {
     parenthesized = $desugar$13;
-    %27 = println(parenthesized) -> bb80;
+    %19 = println(parenthesized) -> bb52;
   }
-  bb80 {
-    %28 = ConstantLoad a
-    %29 = ConstantLoad b
-    %30 = ConstantLoad 4
-    %31 = newMap {| json... |}{%29=%30}
-    %32 = newMap {| json... |}{%28=%31}
-    outerMap = %32;
-    $desugar$15 = outerMap;
-    %35 = ConstantLoad lax field access failed
-    %36 = newError error(%35)
-    $desugar$16 = %36;
-    %38 = $desugar$15 is error
-    %38 ? bb81 : bb82;
+  bb52 {
+    %20 = ConstantLoad a
+    %21 = ConstantLoad b
+    %22 = ConstantLoad 4
+    %23 = newMap {| json... |}{%21=%22}
+    %24 = newMap {| json... |}{%20=%23}
+    outerMap = %24;
+    %26 = closure_fp $anon/.:main$506$7$thunk$2
+    %27 = %26() -> bb53;
   }
-  bb81 {
-    PushScopeFrame 0
-    (1, $desugar$16) = (1, $desugar$15);
-    PopScopeFrame
-    GOTO bb95;
+  bb53 {
+    $desugar$18 = %27;
+    %29 = ConstantLoad lax field access failed
+    %30 = newError error(%29)
+    $desugar$19 = %30;
+    %32 = $desugar$18 is error
+    %32 ? bb54 : bb55;
   }
-  bb82 {
-    %39 = $desugar$15 !is mapping
-    %39 ? bb83 : bb84;
-  }
-  bb83 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$16) = %1;
-    PopScopeFrame
-    GOTO bb94;
-  }
-  bb84 {
-    PushScopeFrame 6
-    GOTO bb85;
-  }
-  bb85 {
-    %1 = ConstantLoad a
-    %2 = get((1, $desugar$15),%1) -> bb86;
-  }
-  bb86 {
-    %0 = %2;
-    GOTO bb87;
-  }
-  bb87 {
-    $desugar$17 = %0;
-    %4 = $desugar$17 is error
-    %4 ? bb88 : bb89;
-  }
-  bb88 {
-    PushScopeFrame 0
-    (2, $desugar$16) = (1, $desugar$17);
-    PopScopeFrame
-    GOTO bb93;
-  }
-  bb89 {
-    %5 = $desugar$17 is json
-    %5 ? bb90 : bb91;
-  }
-  bb90 {
-    PushScopeFrame 0
-    (2, $desugar$16) = (1, $desugar$17);
-    PopScopeFrame
-    GOTO bb92;
-  }
-  bb91 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$16) = %1;
-    PopScopeFrame
-    GOTO bb92;
-  }
-  bb92 {
-    GOTO bb93;
-  }
-  bb93 {
-    PopScopeFrame
-    GOTO bb94;
-  }
-  bb94 {
-    GOTO bb95;
-  }
-  bb95 {
-    $desugar$18 = $desugar$16;
-    %41 = ConstantLoad lax field access failed
-    %42 = newError error(%41)
-    $desugar$19 = %42;
-    %44 = $desugar$18 is error
-    %44 ? bb96 : bb97;
-  }
-  bb96 {
+  bb54 {
     PushScopeFrame 0
     (1, $desugar$19) = (1, $desugar$18);
     PopScopeFrame
-    GOTO bb110;
+    GOTO bb68;
   }
-  bb97 {
-    %45 = $desugar$18 !is mapping
-    %45 ? bb98 : bb99;
+  bb55 {
+    %33 = $desugar$18 !is mapping
+    %33 ? bb56 : bb57;
   }
-  bb98 {
+  bb56 {
     PushScopeFrame 2
     %0 = ConstantLoad lax field access receiver is not a mapping
     %1 = newError error(%0)
     (1, $desugar$19) = %1;
     PopScopeFrame
-    GOTO bb109;
+    GOTO bb67;
   }
-  bb99 {
+  bb57 {
     PushScopeFrame 6
-    GOTO bb100;
+    GOTO bb58;
   }
-  bb100 {
+  bb58 {
     %1 = ConstantLoad b
-    %2 = get((1, $desugar$18),%1) -> bb101;
+    %2 = get((1, $desugar$18),%1) -> bb59;
   }
-  bb101 {
+  bb59 {
     %0 = %2;
-    GOTO bb102;
+    GOTO bb60;
   }
-  bb102 {
+  bb60 {
     $desugar$20 = %0;
     %4 = $desugar$20 is error
-    %4 ? bb103 : bb104;
+    %4 ? bb61 : bb62;
   }
-  bb103 {
+  bb61 {
     PushScopeFrame 0
     (2, $desugar$19) = (1, $desugar$20);
     PopScopeFrame
-    GOTO bb108;
+    GOTO bb66;
   }
-  bb104 {
+  bb62 {
     %5 = $desugar$20 is json
-    %5 ? bb105 : bb106;
+    %5 ? bb63 : bb64;
   }
-  bb105 {
+  bb63 {
     PushScopeFrame 0
     (2, $desugar$19) = (1, $desugar$20);
     PopScopeFrame
-    GOTO bb107;
+    GOTO bb65;
   }
-  bb106 {
+  bb64 {
     PushScopeFrame 2
     %0 = ConstantLoad invalid lax field member
     %1 = newError error(%0)
     (2, $desugar$19) = %1;
     PopScopeFrame
-    GOTO bb107;
+    GOTO bb65;
   }
-  bb107 {
-    GOTO bb108;
+  bb65 {
+    GOTO bb66;
   }
-  bb108 {
+  bb66 {
     PopScopeFrame
-    GOTO bb109;
+    GOTO bb67;
   }
-  bb109 {
-    GOTO bb110;
+  bb67 {
+    GOTO bb68;
   }
-  bb110 {
+  bb68 {
     nestedMap = $desugar$19;
-    %47 = println(nestedMap) -> bb111;
+    %35 = println(nestedMap) -> bb69;
   }
-  bb111 {
-    %48 = ConstantLoad present
-    %49 = ConstantLoad 7
-    %50 = ConstantLoad nilValue
-    %51 = ConstantLoad <nil>
-    %52 = newMap {| nil|int... |}{%48=%49, %50=%51}
-    getMap = %52;
-    %54 = ConstantLoad present
-    %55 = get(getMap,%54) -> bb112;
+  bb69 {
+    %36 = ConstantLoad present
+    %37 = ConstantLoad 7
+    %38 = ConstantLoad nilValue
+    %39 = ConstantLoad <nil>
+    %40 = newMap {| nil|int... |}{%36=%37, %38=%39}
+    getMap = %40;
+    %42 = ConstantLoad present
+    %43 = get(getMap,%42) -> bb70;
   }
-  bb112 {
-    getPresent = %55;
-    %57 = getPresent;
-    %58 = println(%57) -> bb113;
+  bb70 {
+    getPresent = %43;
+    %45 = getPresent;
+    %46 = println(%45) -> bb71;
   }
-  bb113 {
-    GOTO bb114;
+  bb71 {
+    GOTO bb72;
   }
-  bb114 {
-    %60 = ConstantLoad nilValue
-    %61 = get(getMap,%60) -> bb115;
+  bb72 {
+    %48 = ConstantLoad nilValue
+    %49 = get(getMap,%48) -> bb73;
   }
-  bb115 {
-    %59 = %61;
-    GOTO bb116;
+  bb73 {
+    %47 = %49;
+    GOTO bb74;
   }
-  bb116 {
-    getNil = %59;
-    %63 = getNil is nil
-    %63 ? bb117 : bb119;
+  bb74 {
+    getNil = %47;
+    %51 = getNil is nil
+    %51 ? bb75 : bb77;
   }
-  bb117 {
+  bb75 {
     PushScopeFrame 2
     %0 = ConstantLoad map get present nil
-    %1 = println(%0) -> bb118;
+    %1 = println(%0) -> bb76;
   }
-  bb118 {
+  bb76 {
     PopScopeFrame
-    GOTO bb119;
+    GOTO bb77;
   }
-  bb119 {
+  bb77 {
     PushScopeFrame 5
-    GOTO bb120;
+    GOTO bb78;
   }
-  bb120 {
+  bb78 {
     %1 = ConstantLoad missing
-    %2 = get((1, getMap),%1) -> bb121;
+    %2 = get((1, getMap),%1) -> bb79;
   }
-  bb121 {
+  bb79 {
     %0 = %2;
-    GOTO bb122;
+    GOTO bb80;
   }
-  bb122 {
+  bb80 {
     getMissing = %0;
     %4 = getMissing is error
-    %4 ? bb123 : bb125;
+    %4 ? bb81 : bb83;
   }
-  bb123 {
+  bb81 {
     PushScopeFrame 2
     %0 = ConstantLoad map get missing error
-    %1 = println(%0) -> bb124;
+    %1 = println(%0) -> bb82;
   }
-  bb124 {
+  bb82 {
     PopScopeFrame
-    GOTO bb125;
+    GOTO bb83;
   }
-  bb125 {
+  bb83 {
     PushScopeFrame 8
     $desugar$21 = (3, j);
     %1 = ConstantLoad <nil>
     $desugar$22 = %1;
     %3 = $desugar$21 is nil
-    %3 ? bb126 : bb127;
+    %3 ? bb84 : bb85;
   }
-  bb126 {
+  bb84 {
     PushScopeFrame 0
     PopScopeFrame
-    GOTO bb143;
+    GOTO bb101;
   }
-  bb127 {
+  bb85 {
     %4 = $desugar$21 is error
-    %4 ? bb128 : bb129;
+    %4 ? bb86 : bb87;
   }
-  bb128 {
+  bb86 {
     PushScopeFrame 0
     (1, $desugar$22) = (1, $desugar$21);
     PopScopeFrame
-    GOTO bb142;
+    GOTO bb100;
   }
-  bb129 {
+  bb87 {
     %5 = $desugar$21 !is mapping
-    %5 ? bb130 : bb131;
+    %5 ? bb88 : bb89;
   }
-  bb130 {
+  bb88 {
     PushScopeFrame 2
     %0 = ConstantLoad lax field access receiver is not a mapping
     %1 = newError error(%0)
     (1, $desugar$22) = %1;
     PopScopeFrame
-    GOTO bb141;
+    GOTO bb99;
   }
-  bb131 {
+  bb89 {
     PushScopeFrame 6
-    GOTO bb132;
+    GOTO bb90;
   }
-  bb132 {
+  bb90 {
     %1 = ConstantLoad a
-    %2 = get((1, $desugar$21),%1) -> bb133;
+    %2 = get((1, $desugar$21),%1) -> bb91;
   }
-  bb133 {
+  bb91 {
     %0 = %2;
-    GOTO bb134;
+    GOTO bb92;
   }
-  bb134 {
+  bb92 {
     $desugar$23 = %0;
     %4 = $desugar$23 is error
-    %4 ? bb135 : bb136;
+    %4 ? bb93 : bb94;
   }
-  bb135 {
+  bb93 {
     PushScopeFrame 0
     PopScopeFrame
-    GOTO bb140;
+    GOTO bb98;
   }
-  bb136 {
+  bb94 {
     %5 = $desugar$23 is json
-    %5 ? bb137 : bb138;
+    %5 ? bb95 : bb96;
   }
-  bb137 {
+  bb95 {
     PushScopeFrame 0
     (2, $desugar$22) = (1, $desugar$23);
     PopScopeFrame
-    GOTO bb139;
+    GOTO bb97;
   }
-  bb138 {
+  bb96 {
     PushScopeFrame 2
     %0 = ConstantLoad invalid lax field member
     %1 = newError error(%0)
     (2, $desugar$22) = %1;
     PopScopeFrame
-    GOTO bb139;
+    GOTO bb97;
   }
-  bb139 {
-    GOTO bb140;
+  bb97 {
+    GOTO bb98;
   }
-  bb140 {
+  bb98 {
     PopScopeFrame
-    GOTO bb141;
+    GOTO bb99;
   }
-  bb141 {
-    GOTO bb142;
+  bb99 {
+    GOTO bb100;
   }
-  bb142 {
-    GOTO bb143;
+  bb100 {
+    GOTO bb101;
   }
-  bb143 {
+  bb101 {
     optionalPresent = $desugar$22;
     %7 = optionalPresent is json
-    %7 ? bb144 : bb146;
+    %7 ? bb102 : bb104;
   }
-  bb144 {
+  bb102 {
     PushScopeFrame 1
-    %0 = println((1, optionalPresent)) -> bb145;
+    %0 = println((1, optionalPresent)) -> bb103;
   }
-  bb145 {
+  bb103 {
     PopScopeFrame
-    GOTO bb146;
+    GOTO bb104;
   }
-  bb146 {
-    PushScopeFrame 24
-    $desugar$24 = (4, j);
-    %1 = ConstantLoad lax field access failed
-    %2 = newError error(%1)
-    $desugar$25 = %2;
-    %4 = $desugar$24 is error
-    %4 ? bb147 : bb148;
+  bb104 {
+    PushScopeFrame 16
+    %0 = ConstantLoad required missing
+    %1 = closure_fp $anon/.:main$506$7$thunk$3
+    %2 = %1() -> bb105;
   }
-  bb147 {
-    PushScopeFrame 0
-    (1, $desugar$25) = (1, $desugar$24);
-    PopScopeFrame
-    GOTO bb161;
+  bb105 {
+    %3 = printError(%0,%2) -> bb106;
   }
-  bb148 {
-    %5 = $desugar$24 !is mapping
-    %5 ? bb149 : bb150;
+  bb106 {
+    %4 = ConstantLoad optional missing
+    %5 = closure_fp $anon/.:main$506$7$thunk$4
+    %6 = %5() -> bb107;
   }
-  bb149 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$25) = %1;
-    PopScopeFrame
-    GOTO bb160;
+  bb107 {
+    %7 = printNil(%4,%6) -> bb108;
   }
-  bb150 {
-    PushScopeFrame 6
-    GOTO bb151;
-  }
-  bb151 {
-    %1 = ConstantLoad missing
-    %2 = get((1, $desugar$24),%1) -> bb152;
-  }
-  bb152 {
-    %0 = %2;
-    GOTO bb153;
-  }
-  bb153 {
-    $desugar$26 = %0;
-    %4 = $desugar$26 is error
-    %4 ? bb154 : bb155;
-  }
-  bb154 {
-    PushScopeFrame 0
-    (2, $desugar$25) = (1, $desugar$26);
-    PopScopeFrame
-    GOTO bb159;
-  }
-  bb155 {
-    %5 = $desugar$26 is json
-    %5 ? bb156 : bb157;
-  }
-  bb156 {
-    PushScopeFrame 0
-    (2, $desugar$25) = (1, $desugar$26);
-    PopScopeFrame
-    GOTO bb158;
-  }
-  bb157 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$25) = %1;
-    PopScopeFrame
-    GOTO bb158;
-  }
-  bb158 {
-    GOTO bb159;
-  }
-  bb159 {
-    PopScopeFrame
-    GOTO bb160;
-  }
-  bb160 {
-    GOTO bb161;
-  }
-  bb161 {
-    %6 = ConstantLoad required missing
-    %7 = printError(%6,$desugar$25) -> bb162;
-  }
-  bb162 {
-    $desugar$27 = (4, j);
-    %9 = ConstantLoad <nil>
-    $desugar$28 = %9;
-    %11 = $desugar$27 is nil
-    %11 ? bb163 : bb164;
-  }
-  bb163 {
-    PushScopeFrame 0
-    PopScopeFrame
-    GOTO bb180;
-  }
-  bb164 {
-    %12 = $desugar$27 is error
-    %12 ? bb165 : bb166;
-  }
-  bb165 {
-    PushScopeFrame 0
-    (1, $desugar$28) = (1, $desugar$27);
-    PopScopeFrame
-    GOTO bb179;
-  }
-  bb166 {
-    %13 = $desugar$27 !is mapping
-    %13 ? bb167 : bb168;
-  }
-  bb167 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$28) = %1;
-    PopScopeFrame
-    GOTO bb178;
-  }
-  bb168 {
-    PushScopeFrame 6
-    GOTO bb169;
-  }
-  bb169 {
-    %1 = ConstantLoad missing
-    %2 = get((1, $desugar$27),%1) -> bb170;
-  }
-  bb170 {
-    %0 = %2;
-    GOTO bb171;
-  }
-  bb171 {
-    $desugar$29 = %0;
-    %4 = $desugar$29 is error
-    %4 ? bb172 : bb173;
-  }
-  bb172 {
-    PushScopeFrame 0
-    PopScopeFrame
-    GOTO bb177;
-  }
-  bb173 {
-    %5 = $desugar$29 is json
-    %5 ? bb174 : bb175;
-  }
-  bb174 {
-    PushScopeFrame 0
-    (2, $desugar$28) = (1, $desugar$29);
-    PopScopeFrame
-    GOTO bb176;
-  }
-  bb175 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$28) = %1;
-    PopScopeFrame
-    GOTO bb176;
-  }
-  bb176 {
-    GOTO bb177;
-  }
-  bb177 {
-    PopScopeFrame
-    GOTO bb178;
-  }
-  bb178 {
-    GOTO bb179;
-  }
-  bb179 {
-    GOTO bb180;
-  }
-  bb180 {
-    %14 = ConstantLoad optional missing
-    %15 = printNil(%14,$desugar$28) -> bb181;
-  }
-  bb181 {
+  bb108 {
     $desugar$30 = (4, j);
-    %17 = ConstantLoad lax field access failed
-    %18 = newError error(%17)
-    $desugar$31 = %18;
-    %20 = $desugar$30 is error
-    %20 ? bb182 : bb183;
+    %9 = ConstantLoad lax field access failed
+    %10 = newError error(%9)
+    $desugar$31 = %10;
+    %12 = $desugar$30 is error
+    %12 ? bb109 : bb110;
   }
-  bb182 {
+  bb109 {
     PushScopeFrame 0
     (1, $desugar$31) = (1, $desugar$30);
     PopScopeFrame
-    GOTO bb196;
+    GOTO bb123;
   }
-  bb183 {
-    %21 = $desugar$30 !is mapping
-    %21 ? bb184 : bb185;
+  bb110 {
+    %13 = $desugar$30 !is mapping
+    %13 ? bb111 : bb112;
   }
-  bb184 {
+  bb111 {
     PushScopeFrame 2
     %0 = ConstantLoad lax field access receiver is not a mapping
     %1 = newError error(%0)
     (1, $desugar$31) = %1;
     PopScopeFrame
-    GOTO bb195;
+    GOTO bb122;
   }
-  bb185 {
+  bb112 {
     PushScopeFrame 6
-    GOTO bb186;
+    GOTO bb113;
   }
-  bb186 {
+  bb113 {
     %1 = ConstantLoad presentNil
-    %2 = get((1, $desugar$30),%1) -> bb187;
+    %2 = get((1, $desugar$30),%1) -> bb114;
   }
-  bb187 {
+  bb114 {
     %0 = %2;
-    GOTO bb188;
+    GOTO bb115;
   }
-  bb188 {
+  bb115 {
     $desugar$32 = %0;
     %4 = $desugar$32 is error
-    %4 ? bb189 : bb190;
+    %4 ? bb116 : bb117;
   }
-  bb189 {
+  bb116 {
     PushScopeFrame 0
     (2, $desugar$31) = (1, $desugar$32);
     PopScopeFrame
-    GOTO bb194;
+    GOTO bb121;
   }
-  bb190 {
+  bb117 {
     %5 = $desugar$32 is json
-    %5 ? bb191 : bb192;
+    %5 ? bb118 : bb119;
   }
-  bb191 {
+  bb118 {
     PushScopeFrame 0
     (2, $desugar$31) = (1, $desugar$32);
     PopScopeFrame
-    GOTO bb193;
+    GOTO bb120;
   }
-  bb192 {
+  bb119 {
     PushScopeFrame 2
     %0 = ConstantLoad invalid lax field member
     %1 = newError error(%0)
     (2, $desugar$31) = %1;
     PopScopeFrame
-    GOTO bb193;
+    GOTO bb120;
   }
-  bb193 {
-    GOTO bb194;
+  bb120 {
+    GOTO bb121;
   }
-  bb194 {
+  bb121 {
     PopScopeFrame
-    GOTO bb195;
+    GOTO bb122;
   }
-  bb195 {
-    GOTO bb196;
+  bb122 {
+    GOTO bb123;
   }
-  bb196 {
+  bb123 {
     presentNil = $desugar$31;
-    %23 = presentNil is nil
-    %23 ? bb197 : bb199;
+    %15 = presentNil is nil
+    %15 ? bb124 : bb126;
   }
-  bb197 {
+  bb124 {
     PushScopeFrame 2
     %0 = ConstantLoad required present nil
-    %1 = println(%0) -> bb198;
+    %1 = println(%0) -> bb125;
   }
-  bb198 {
+  bb125 {
     PopScopeFrame
-    GOTO bb199;
+    GOTO bb126;
   }
-  bb199 {
-    PushScopeFrame 7
-    $desugar$33 = (5, j);
-    %1 = ConstantLoad lax field access failed
-    %2 = newError error(%1)
-    $desugar$34 = %2;
-    %4 = $desugar$33 is error
-    %4 ? bb200 : bb201;
+  bb126 {
+    PushScopeFrame 3
+    %0 = closure_fp $anon/.:main$506$7$thunk$5
+    %1 = %0() -> bb127;
   }
-  bb200 {
-    PushScopeFrame 0
-    (1, $desugar$34) = (1, $desugar$33);
-    PopScopeFrame
-    GOTO bb214;
+  bb127 {
+    %2 = %1 is error
+    %2 ? bb128 : bb130;
   }
-  bb201 {
-    %5 = $desugar$33 !is mapping
-    %5 ? bb202 : bb203;
-  }
-  bb202 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$34) = %1;
-    PopScopeFrame
-    GOTO bb213;
-  }
-  bb203 {
-    PushScopeFrame 6
-    GOTO bb204;
-  }
-  bb204 {
-    %1 = ConstantLoad absent
-    %2 = get((1, $desugar$33),%1) -> bb205;
-  }
-  bb205 {
-    %0 = %2;
-    GOTO bb206;
-  }
-  bb206 {
-    $desugar$35 = %0;
-    %4 = $desugar$35 is error
-    %4 ? bb207 : bb208;
-  }
-  bb207 {
-    PushScopeFrame 0
-    (2, $desugar$34) = (1, $desugar$35);
-    PopScopeFrame
-    GOTO bb212;
-  }
-  bb208 {
-    %5 = $desugar$35 is json
-    %5 ? bb209 : bb210;
-  }
-  bb209 {
-    PushScopeFrame 0
-    (2, $desugar$34) = (1, $desugar$35);
-    PopScopeFrame
-    GOTO bb211;
-  }
-  bb210 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$34) = %1;
-    PopScopeFrame
-    GOTO bb211;
-  }
-  bb211 {
-    GOTO bb212;
-  }
-  bb212 {
-    PopScopeFrame
-    GOTO bb213;
-  }
-  bb213 {
-    GOTO bb214;
-  }
-  bb214 {
-    %6 = $desugar$34 is error
-    %6 ? bb215 : bb217;
-  }
-  bb215 {
+  bb128 {
     PushScopeFrame 2
     %0 = ConstantLoad required absent differs
-    %1 = println(%0) -> bb216;
+    %1 = println(%0) -> bb129;
   }
-  bb216 {
+  bb129 {
     PopScopeFrame
-    GOTO bb217;
+    GOTO bb130;
   }
-  bb217 {
-    PushScopeFrame 108
+  bb130 {
+    PushScopeFrame 70
     %0 = ConstantLoad <nil>
     nilReceiver = %0;
-    $desugar$36 = nilReceiver;
-    %3 = ConstantLoad lax field access failed
-    %4 = newError error(%3)
-    $desugar$37 = %4;
-    %6 = $desugar$36 is error
-    %6 ? bb218 : bb219;
-  }
-  bb218 {
-    PushScopeFrame 0
-    (1, $desugar$37) = (1, $desugar$36);
-    PopScopeFrame
-    GOTO bb232;
-  }
-  bb219 {
-    %7 = $desugar$36 !is mapping
-    %7 ? bb220 : bb221;
-  }
-  bb220 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$37) = %1;
-    PopScopeFrame
-    GOTO bb231;
-  }
-  bb221 {
-    PushScopeFrame 6
-    GOTO bb222;
-  }
-  bb222 {
-    %1 = ConstantLoad value
-    %2 = get((1, $desugar$36),%1) -> bb223;
-  }
-  bb223 {
-    %0 = %2;
-    GOTO bb224;
-  }
-  bb224 {
-    $desugar$38 = %0;
-    %4 = $desugar$38 is error
-    %4 ? bb225 : bb226;
-  }
-  bb225 {
-    PushScopeFrame 0
-    (2, $desugar$37) = (1, $desugar$38);
-    PopScopeFrame
-    GOTO bb230;
-  }
-  bb226 {
-    %5 = $desugar$38 is json
-    %5 ? bb227 : bb228;
-  }
-  bb227 {
-    PushScopeFrame 0
-    (2, $desugar$37) = (1, $desugar$38);
-    PopScopeFrame
-    GOTO bb229;
-  }
-  bb228 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$37) = %1;
-    PopScopeFrame
-    GOTO bb229;
-  }
-  bb229 {
-    GOTO bb230;
-  }
-  bb230 {
-    PopScopeFrame
-    GOTO bb231;
-  }
-  bb231 {
-    GOTO bb232;
-  }
-  bb232 {
-    %8 = ConstantLoad required nil receiver
-    %9 = printError(%8,$desugar$37) -> bb233;
-  }
-  bb233 {
-    $desugar$39 = nilReceiver;
-    %11 = ConstantLoad <nil>
-    $desugar$40 = %11;
-    %13 = $desugar$39 is nil
-    %13 ? bb234 : bb235;
-  }
-  bb234 {
-    PushScopeFrame 0
-    PopScopeFrame
-    GOTO bb251;
-  }
-  bb235 {
-    %14 = $desugar$39 is error
-    %14 ? bb236 : bb237;
-  }
-  bb236 {
-    PushScopeFrame 0
-    (1, $desugar$40) = (1, $desugar$39);
-    PopScopeFrame
-    GOTO bb250;
-  }
-  bb237 {
-    %15 = $desugar$39 !is mapping
-    %15 ? bb238 : bb239;
-  }
-  bb238 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$40) = %1;
-    PopScopeFrame
-    GOTO bb249;
-  }
-  bb239 {
-    PushScopeFrame 6
-    GOTO bb240;
-  }
-  bb240 {
-    %1 = ConstantLoad value
-    %2 = get((1, $desugar$39),%1) -> bb241;
-  }
-  bb241 {
-    %0 = %2;
-    GOTO bb242;
-  }
-  bb242 {
-    $desugar$41 = %0;
-    %4 = $desugar$41 is error
-    %4 ? bb243 : bb244;
-  }
-  bb243 {
-    PushScopeFrame 0
-    PopScopeFrame
-    GOTO bb248;
-  }
-  bb244 {
-    %5 = $desugar$41 is json
-    %5 ? bb245 : bb246;
-  }
-  bb245 {
-    PushScopeFrame 0
-    (2, $desugar$40) = (1, $desugar$41);
-    PopScopeFrame
-    GOTO bb247;
-  }
-  bb246 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$40) = %1;
-    PopScopeFrame
-    GOTO bb247;
-  }
-  bb247 {
-    GOTO bb248;
-  }
-  bb248 {
-    PopScopeFrame
-    GOTO bb249;
-  }
-  bb249 {
-    GOTO bb250;
-  }
-  bb250 {
-    GOTO bb251;
-  }
-  bb251 {
-    %16 = ConstantLoad optional nil receiver
-    %17 = printNil(%16,$desugar$40) -> bb252;
-  }
-  bb252 {
-    %18 = ConstantLoad 1
-    scalarReceiver = %18;
-    $desugar$42 = scalarReceiver;
-    %21 = ConstantLoad lax field access failed
-    %22 = newError error(%21)
-    $desugar$43 = %22;
-    %24 = $desugar$42 is error
-    %24 ? bb253 : bb254;
-  }
-  bb253 {
-    PushScopeFrame 0
-    (1, $desugar$43) = (1, $desugar$42);
-    PopScopeFrame
-    GOTO bb267;
-  }
-  bb254 {
-    %25 = $desugar$42 !is mapping
-    %25 ? bb255 : bb256;
-  }
-  bb255 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$43) = %1;
-    PopScopeFrame
-    GOTO bb266;
-  }
-  bb256 {
-    PushScopeFrame 6
-    GOTO bb257;
-  }
-  bb257 {
-    %1 = ConstantLoad value
-    %2 = get((1, $desugar$42),%1) -> bb258;
-  }
-  bb258 {
-    %0 = %2;
-    GOTO bb259;
-  }
-  bb259 {
-    $desugar$44 = %0;
-    %4 = $desugar$44 is error
-    %4 ? bb260 : bb261;
-  }
-  bb260 {
-    PushScopeFrame 0
-    (2, $desugar$43) = (1, $desugar$44);
-    PopScopeFrame
-    GOTO bb265;
-  }
-  bb261 {
-    %5 = $desugar$44 is json
-    %5 ? bb262 : bb263;
-  }
-  bb262 {
-    PushScopeFrame 0
-    (2, $desugar$43) = (1, $desugar$44);
-    PopScopeFrame
-    GOTO bb264;
-  }
-  bb263 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$43) = %1;
-    PopScopeFrame
-    GOTO bb264;
-  }
-  bb264 {
-    GOTO bb265;
-  }
-  bb265 {
-    PopScopeFrame
-    GOTO bb266;
-  }
-  bb266 {
-    GOTO bb267;
-  }
-  bb267 {
-    %26 = ConstantLoad required non-mapping receiver
-    %27 = printError(%26,$desugar$43) -> bb268;
-  }
-  bb268 {
-    $desugar$45 = scalarReceiver;
-    %29 = ConstantLoad <nil>
-    $desugar$46 = %29;
-    %31 = $desugar$45 is nil
-    %31 ? bb269 : bb270;
-  }
-  bb269 {
-    PushScopeFrame 0
-    PopScopeFrame
-    GOTO bb286;
-  }
-  bb270 {
-    %32 = $desugar$45 is error
-    %32 ? bb271 : bb272;
-  }
-  bb271 {
-    PushScopeFrame 0
-    (1, $desugar$46) = (1, $desugar$45);
-    PopScopeFrame
-    GOTO bb285;
-  }
-  bb272 {
-    %33 = $desugar$45 !is mapping
-    %33 ? bb273 : bb274;
-  }
-  bb273 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$46) = %1;
-    PopScopeFrame
-    GOTO bb284;
-  }
-  bb274 {
-    PushScopeFrame 6
-    GOTO bb275;
-  }
-  bb275 {
-    %1 = ConstantLoad value
-    %2 = get((1, $desugar$45),%1) -> bb276;
-  }
-  bb276 {
-    %0 = %2;
-    GOTO bb277;
-  }
-  bb277 {
-    $desugar$47 = %0;
-    %4 = $desugar$47 is error
-    %4 ? bb278 : bb279;
-  }
-  bb278 {
-    PushScopeFrame 0
-    PopScopeFrame
-    GOTO bb283;
-  }
-  bb279 {
-    %5 = $desugar$47 is json
-    %5 ? bb280 : bb281;
-  }
-  bb280 {
-    PushScopeFrame 0
-    (2, $desugar$46) = (1, $desugar$47);
-    PopScopeFrame
-    GOTO bb282;
-  }
-  bb281 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$46) = %1;
-    PopScopeFrame
-    GOTO bb282;
-  }
-  bb282 {
-    GOTO bb283;
-  }
-  bb283 {
-    PopScopeFrame
-    GOTO bb284;
-  }
-  bb284 {
-    GOTO bb285;
-  }
-  bb285 {
-    GOTO bb286;
-  }
-  bb286 {
-    %34 = ConstantLoad optional non-mapping receiver
-    %35 = printError(%34,$desugar$46) -> bb287;
-  }
-  bb287 {
-    $desugar$48 = (6, j);
-    %37 = ConstantLoad lax field access failed
-    %38 = newError error(%37)
-    $desugar$49 = %38;
-    %40 = $desugar$48 is error
-    %40 ? bb288 : bb289;
-  }
-  bb288 {
-    PushScopeFrame 0
-    (1, $desugar$49) = (1, $desugar$48);
-    PopScopeFrame
-    GOTO bb302;
-  }
-  bb289 {
-    %41 = $desugar$48 !is mapping
-    %41 ? bb290 : bb291;
-  }
-  bb290 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$49) = %1;
-    PopScopeFrame
-    GOTO bb301;
-  }
-  bb291 {
-    PushScopeFrame 6
-    GOTO bb292;
-  }
-  bb292 {
-    %1 = ConstantLoad missing
-    %2 = get((1, $desugar$48),%1) -> bb293;
-  }
-  bb293 {
-    %0 = %2;
-    GOTO bb294;
-  }
-  bb294 {
-    $desugar$50 = %0;
-    %4 = $desugar$50 is error
-    %4 ? bb295 : bb296;
-  }
-  bb295 {
-    PushScopeFrame 0
-    (2, $desugar$49) = (1, $desugar$50);
-    PopScopeFrame
-    GOTO bb300;
-  }
-  bb296 {
-    %5 = $desugar$50 is json
-    %5 ? bb297 : bb298;
-  }
-  bb297 {
-    PushScopeFrame 0
-    (2, $desugar$49) = (1, $desugar$50);
-    PopScopeFrame
-    GOTO bb299;
-  }
-  bb298 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$49) = %1;
-    PopScopeFrame
-    GOTO bb299;
-  }
-  bb299 {
-    GOTO bb300;
-  }
-  bb300 {
-    PopScopeFrame
-    GOTO bb301;
-  }
-  bb301 {
-    GOTO bb302;
-  }
-  bb302 {
-    $desugar$51 = $desugar$49;
-    %43 = ConstantLoad lax field access failed
-    %44 = newError error(%43)
-    $desugar$52 = %44;
-    %46 = $desugar$51 is error
-    %46 ? bb303 : bb304;
-  }
-  bb303 {
-    PushScopeFrame 0
-    (1, $desugar$52) = (1, $desugar$51);
-    PopScopeFrame
-    GOTO bb317;
-  }
-  bb304 {
-    %47 = $desugar$51 !is mapping
-    %47 ? bb305 : bb306;
-  }
-  bb305 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$52) = %1;
-    PopScopeFrame
-    GOTO bb316;
-  }
-  bb306 {
-    PushScopeFrame 6
-    GOTO bb307;
-  }
-  bb307 {
-    %1 = ConstantLoad next
-    %2 = get((1, $desugar$51),%1) -> bb308;
-  }
-  bb308 {
-    %0 = %2;
-    GOTO bb309;
-  }
-  bb309 {
-    $desugar$53 = %0;
-    %4 = $desugar$53 is error
-    %4 ? bb310 : bb311;
-  }
-  bb310 {
-    PushScopeFrame 0
-    (2, $desugar$52) = (1, $desugar$53);
-    PopScopeFrame
-    GOTO bb315;
-  }
-  bb311 {
-    %5 = $desugar$53 is json
-    %5 ? bb312 : bb313;
-  }
-  bb312 {
-    PushScopeFrame 0
-    (2, $desugar$52) = (1, $desugar$53);
-    PopScopeFrame
-    GOTO bb314;
-  }
-  bb313 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$52) = %1;
-    PopScopeFrame
-    GOTO bb314;
-  }
-  bb314 {
-    GOTO bb315;
-  }
-  bb315 {
-    PopScopeFrame
-    GOTO bb316;
-  }
-  bb316 {
-    GOTO bb317;
-  }
-  bb317 {
-    %48 = ConstantLoad propagated earlier error
-    %49 = printError(%48,$desugar$52) -> bb318;
-  }
-  bb318 {
-    %50 = ConstantLoad required
-    %51 = ConstantLoad 1
-    %52 = ConstantLoad nested
-    %53 = ConstantLoad value
-    %54 = ConstantLoad 12
-    %55 = newMap {| json... |}{%53=%54}
-    %56 = newMap {| required: json, json... |}{%50=%51, %52=%55}
-    openJSON = %56;
-    %59 = ConstantLoad required
-    %58 = openJSON[%59];
-    openJSONRequired = %58;
-    %61 = println(openJSONRequired) -> bb319;
-  }
-  bb319 {
+    %2 = ConstantLoad required nil receiver
+    %3 = closure_fp $anon/.:main$506$7$thunk$6
+    %4 = %3() -> bb131;
+  }
+  bb131 {
+    %5 = printError(%2,%4) -> bb132;
+  }
+  bb132 {
+    %6 = ConstantLoad optional nil receiver
+    %7 = closure_fp $anon/.:main$506$7$thunk$7
+    %8 = %7() -> bb133;
+  }
+  bb133 {
+    %9 = printNil(%6,%8) -> bb134;
+  }
+  bb134 {
+    %10 = ConstantLoad 1
+    scalarReceiver = %10;
+    %12 = ConstantLoad required non-mapping receiver
+    %13 = closure_fp $anon/.:main$506$7$thunk$8
+    %14 = %13() -> bb135;
+  }
+  bb135 {
+    %15 = printError(%12,%14) -> bb136;
+  }
+  bb136 {
+    %16 = ConstantLoad optional non-mapping receiver
+    %17 = closure_fp $anon/.:main$506$7$thunk$9
+    %18 = %17() -> bb137;
+  }
+  bb137 {
+    %19 = printError(%16,%18) -> bb138;
+  }
+  bb138 {
+    %20 = ConstantLoad propagated earlier error
+    %21 = closure_fp $anon/.:main$506$7$thunk$11
+    %22 = %21() -> bb139;
+  }
+  bb139 {
+    %23 = printError(%20,%22) -> bb140;
+  }
+  bb140 {
+    %24 = ConstantLoad required
+    %25 = ConstantLoad 1
+    %26 = ConstantLoad nested
+    %27 = ConstantLoad value
+    %28 = ConstantLoad 12
+    %29 = newMap {| json... |}{%27=%28}
+    %30 = newMap {| required: json, json... |}{%24=%25, %26=%29}
+    openJSON = %30;
+    %33 = ConstantLoad required
+    %32 = openJSON[%33];
+    openJSONRequired = %32;
+    %35 = println(openJSONRequired) -> bb141;
+  }
+  bb141 {
     openJSONMap = openJSON;
-    $desugar$54 = openJSONMap;
-    %64 = ConstantLoad lax field access failed
-    %65 = newError error(%64)
-    $desugar$55 = %65;
-    %67 = $desugar$54 is error
-    %67 ? bb320 : bb321;
+    %37 = closure_fp $anon/.:main$506$7$thunk$12
+    %38 = %37() -> bb142;
   }
-  bb320 {
-    PushScopeFrame 0
-    (1, $desugar$55) = (1, $desugar$54);
-    PopScopeFrame
-    GOTO bb334;
+  bb142 {
+    $desugar$57 = %38;
+    %40 = ConstantLoad lax field access failed
+    %41 = newError error(%40)
+    $desugar$58 = %41;
+    %43 = $desugar$57 is error
+    %43 ? bb143 : bb144;
   }
-  bb321 {
-    %68 = $desugar$54 !is mapping
-    %68 ? bb322 : bb323;
-  }
-  bb322 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$55) = %1;
-    PopScopeFrame
-    GOTO bb333;
-  }
-  bb323 {
-    PushScopeFrame 6
-    GOTO bb324;
-  }
-  bb324 {
-    %1 = ConstantLoad nested
-    %2 = get((1, $desugar$54),%1) -> bb325;
-  }
-  bb325 {
-    %0 = %2;
-    GOTO bb326;
-  }
-  bb326 {
-    $desugar$56 = %0;
-    %4 = $desugar$56 is error
-    %4 ? bb327 : bb328;
-  }
-  bb327 {
-    PushScopeFrame 0
-    (2, $desugar$55) = (1, $desugar$56);
-    PopScopeFrame
-    GOTO bb332;
-  }
-  bb328 {
-    %5 = $desugar$56 is json
-    %5 ? bb329 : bb330;
-  }
-  bb329 {
-    PushScopeFrame 0
-    (2, $desugar$55) = (1, $desugar$56);
-    PopScopeFrame
-    GOTO bb331;
-  }
-  bb330 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$55) = %1;
-    PopScopeFrame
-    GOTO bb331;
-  }
-  bb331 {
-    GOTO bb332;
-  }
-  bb332 {
-    PopScopeFrame
-    GOTO bb333;
-  }
-  bb333 {
-    GOTO bb334;
-  }
-  bb334 {
-    $desugar$57 = $desugar$55;
-    %70 = ConstantLoad lax field access failed
-    %71 = newError error(%70)
-    $desugar$58 = %71;
-    %73 = $desugar$57 is error
-    %73 ? bb335 : bb336;
-  }
-  bb335 {
+  bb143 {
     PushScopeFrame 0
     (1, $desugar$58) = (1, $desugar$57);
     PopScopeFrame
-    GOTO bb349;
+    GOTO bb157;
   }
-  bb336 {
-    %74 = $desugar$57 !is mapping
-    %74 ? bb337 : bb338;
+  bb144 {
+    %44 = $desugar$57 !is mapping
+    %44 ? bb145 : bb146;
   }
-  bb337 {
+  bb145 {
     PushScopeFrame 2
     %0 = ConstantLoad lax field access receiver is not a mapping
     %1 = newError error(%0)
     (1, $desugar$58) = %1;
     PopScopeFrame
-    GOTO bb348;
+    GOTO bb156;
   }
-  bb338 {
+  bb146 {
     PushScopeFrame 6
-    GOTO bb339;
+    GOTO bb147;
   }
-  bb339 {
+  bb147 {
     %1 = ConstantLoad value
-    %2 = get((1, $desugar$57),%1) -> bb340;
+    %2 = get((1, $desugar$57),%1) -> bb148;
   }
-  bb340 {
+  bb148 {
     %0 = %2;
-    GOTO bb341;
+    GOTO bb149;
   }
-  bb341 {
+  bb149 {
     $desugar$59 = %0;
     %4 = $desugar$59 is error
-    %4 ? bb342 : bb343;
+    %4 ? bb150 : bb151;
   }
-  bb342 {
+  bb150 {
     PushScopeFrame 0
     (2, $desugar$58) = (1, $desugar$59);
     PopScopeFrame
-    GOTO bb347;
+    GOTO bb155;
   }
-  bb343 {
+  bb151 {
     %5 = $desugar$59 is json
-    %5 ? bb344 : bb345;
+    %5 ? bb152 : bb153;
   }
-  bb344 {
+  bb152 {
     PushScopeFrame 0
     (2, $desugar$58) = (1, $desugar$59);
     PopScopeFrame
-    GOTO bb346;
+    GOTO bb154;
   }
-  bb345 {
+  bb153 {
     PushScopeFrame 2
     %0 = ConstantLoad invalid lax field member
     %1 = newError error(%0)
     (2, $desugar$58) = %1;
     PopScopeFrame
-    GOTO bb346;
+    GOTO bb154;
   }
-  bb346 {
-    GOTO bb347;
+  bb154 {
+    GOTO bb155;
   }
-  bb347 {
+  bb155 {
     PopScopeFrame
-    GOTO bb348;
+    GOTO bb156;
   }
-  bb348 {
-    GOTO bb349;
+  bb156 {
+    GOTO bb157;
   }
-  bb349 {
+  bb157 {
     openJSONValue = $desugar$58;
-    %76 = println(openJSONValue) -> bb350;
+    %46 = println(openJSONValue) -> bb158;
   }
-  bb350 {
-    %77 = receiver() -> bb351;
+  bb158 {
+    %47 = receiver() -> bb159;
   }
-  bb351 {
-    $desugar$60 = %77;
-    %79 = ConstantLoad lax field access failed
-    %80 = newError error(%79)
-    $desugar$61 = %80;
-    %82 = $desugar$60 is error
-    %82 ? bb352 : bb353;
+  bb159 {
+    $desugar$60 = %47;
+    %49 = ConstantLoad lax field access failed
+    %50 = newError error(%49)
+    $desugar$61 = %50;
+    %52 = $desugar$60 is error
+    %52 ? bb160 : bb161;
   }
-  bb352 {
+  bb160 {
     PushScopeFrame 0
     (1, $desugar$61) = (1, $desugar$60);
     PopScopeFrame
-    GOTO bb366;
+    GOTO bb174;
   }
-  bb353 {
-    %83 = $desugar$60 !is mapping
-    %83 ? bb354 : bb355;
+  bb161 {
+    %53 = $desugar$60 !is mapping
+    %53 ? bb162 : bb163;
   }
-  bb354 {
+  bb162 {
     PushScopeFrame 2
     %0 = ConstantLoad lax field access receiver is not a mapping
     %1 = newError error(%0)
     (1, $desugar$61) = %1;
     PopScopeFrame
-    GOTO bb365;
+    GOTO bb173;
   }
-  bb355 {
+  bb163 {
     PushScopeFrame 6
-    GOTO bb356;
+    GOTO bb164;
   }
-  bb356 {
+  bb164 {
     %1 = ConstantLoad value
-    %2 = get((1, $desugar$60),%1) -> bb357;
+    %2 = get((1, $desugar$60),%1) -> bb165;
   }
-  bb357 {
+  bb165 {
     %0 = %2;
-    GOTO bb358;
+    GOTO bb166;
   }
-  bb358 {
+  bb166 {
     $desugar$62 = %0;
     %4 = $desugar$62 is error
-    %4 ? bb359 : bb360;
+    %4 ? bb167 : bb168;
   }
-  bb359 {
+  bb167 {
     PushScopeFrame 0
     (2, $desugar$61) = (1, $desugar$62);
     PopScopeFrame
-    GOTO bb364;
+    GOTO bb172;
   }
-  bb360 {
+  bb168 {
     %5 = $desugar$62 is json
-    %5 ? bb361 : bb362;
+    %5 ? bb169 : bb170;
   }
-  bb361 {
+  bb169 {
     PushScopeFrame 0
     (2, $desugar$61) = (1, $desugar$62);
     PopScopeFrame
-    GOTO bb363;
+    GOTO bb171;
   }
-  bb362 {
+  bb170 {
     PushScopeFrame 2
     %0 = ConstantLoad invalid lax field member
     %1 = newError error(%0)
     (2, $desugar$61) = %1;
     PopScopeFrame
-    GOTO bb363;
+    GOTO bb171;
   }
-  bb363 {
-    GOTO bb364;
+  bb171 {
+    GOTO bb172;
   }
-  bb364 {
+  bb172 {
     PopScopeFrame
-    GOTO bb365;
+    GOTO bb173;
   }
-  bb365 {
-    GOTO bb366;
+  bb173 {
+    GOTO bb174;
   }
-  bb366 {
+  bb174 {
     evaluatedOnce = $desugar$61;
-    %85 = println(evaluatedOnce) -> bb367;
+    %55 = println(evaluatedOnce) -> bb175;
   }
-  bb367 {
-    %86 = println(evaluations) -> bb368;
+  bb175 {
+    %56 = println(evaluations) -> bb176;
   }
-  bb368 {
-    %87 = ConstantLoad name
-    %88 = ConstantLoad Tharmigan
-    %89 = ConstantLoad age
-    %90 = ConstantLoad 30
-    %91 = newMap {| json... |}{%87=%88, %89=%90}
-    user = %91;
-    $desugar$63 = user;
-    %94 = ConstantLoad lax field access failed
-    %95 = newError error(%94)
-    $desugar$64 = %95;
-    %97 = $desugar$63 is error
-    %97 ? bb369 : bb370;
+  bb176 {
+    %57 = ConstantLoad name
+    %58 = ConstantLoad Tharmigan
+    %59 = ConstantLoad age
+    %60 = ConstantLoad 30
+    %61 = newMap {| json... |}{%57=%58, %59=%60}
+    user = %61;
+    %63 = closure_fp $anon/.:main$506$7$thunk$13
+    %64 = %63() -> bb177;
   }
-  bb369 {
-    PushScopeFrame 0
-    (1, $desugar$64) = (1, $desugar$63);
-    PopScopeFrame
-    GOTO bb383;
+  bb177 {
+    %65 = println(%64) -> bb178;
   }
-  bb370 {
-    %98 = $desugar$63 !is mapping
-    %98 ? bb371 : bb372;
+  bb178 {
+    %66 = closure_fp $anon/.:main$506$7$thunk$14
+    %67 = %66() -> bb179;
   }
-  bb371 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$64) = %1;
-    PopScopeFrame
-    GOTO bb382;
+  bb179 {
+    %68 = println(%67) -> bb180;
   }
-  bb372 {
-    PushScopeFrame 6
-    GOTO bb373;
+  bb180 {
+    %69 = strictAccesses() -> bb181;
   }
-  bb373 {
-    %1 = ConstantLoad name
-    %2 = get((1, $desugar$63),%1) -> bb374;
-  }
-  bb374 {
-    %0 = %2;
-    GOTO bb375;
-  }
-  bb375 {
-    $desugar$65 = %0;
-    %4 = $desugar$65 is error
-    %4 ? bb376 : bb377;
-  }
-  bb376 {
-    PushScopeFrame 0
-    (2, $desugar$64) = (1, $desugar$65);
-    PopScopeFrame
-    GOTO bb381;
-  }
-  bb377 {
-    %5 = $desugar$65 is json
-    %5 ? bb378 : bb379;
-  }
-  bb378 {
-    PushScopeFrame 0
-    (2, $desugar$64) = (1, $desugar$65);
-    PopScopeFrame
-    GOTO bb380;
-  }
-  bb379 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$64) = %1;
-    PopScopeFrame
-    GOTO bb380;
-  }
-  bb380 {
-    GOTO bb381;
-  }
-  bb381 {
-    PopScopeFrame
-    GOTO bb382;
-  }
-  bb382 {
-    GOTO bb383;
-  }
-  bb383 {
-    %99 = println($desugar$64) -> bb384;
-  }
-  bb384 {
-    $desugar$66 = user;
-    %101 = ConstantLoad lax field access failed
-    %102 = newError error(%101)
-    $desugar$67 = %102;
-    %104 = $desugar$66 is error
-    %104 ? bb385 : bb386;
-  }
-  bb385 {
-    PushScopeFrame 0
-    (1, $desugar$67) = (1, $desugar$66);
-    PopScopeFrame
-    GOTO bb399;
-  }
-  bb386 {
-    %105 = $desugar$66 !is mapping
-    %105 ? bb387 : bb388;
-  }
-  bb387 {
-    PushScopeFrame 2
-    %0 = ConstantLoad lax field access receiver is not a mapping
-    %1 = newError error(%0)
-    (1, $desugar$67) = %1;
-    PopScopeFrame
-    GOTO bb398;
-  }
-  bb388 {
-    PushScopeFrame 6
-    GOTO bb389;
-  }
-  bb389 {
-    %1 = ConstantLoad age
-    %2 = get((1, $desugar$66),%1) -> bb390;
-  }
-  bb390 {
-    %0 = %2;
-    GOTO bb391;
-  }
-  bb391 {
-    $desugar$68 = %0;
-    %4 = $desugar$68 is error
-    %4 ? bb392 : bb393;
-  }
-  bb392 {
-    PushScopeFrame 0
-    (2, $desugar$67) = (1, $desugar$68);
-    PopScopeFrame
-    GOTO bb397;
-  }
-  bb393 {
-    %5 = $desugar$68 is json
-    %5 ? bb394 : bb395;
-  }
-  bb394 {
-    PushScopeFrame 0
-    (2, $desugar$67) = (1, $desugar$68);
-    PopScopeFrame
-    GOTO bb396;
-  }
-  bb395 {
-    PushScopeFrame 2
-    %0 = ConstantLoad invalid lax field member
-    %1 = newError error(%0)
-    (2, $desugar$67) = %1;
-    PopScopeFrame
-    GOTO bb396;
-  }
-  bb396 {
-    GOTO bb397;
-  }
-  bb397 {
-    PopScopeFrame
-    GOTO bb398;
-  }
-  bb398 {
-    GOTO bb399;
-  }
-  bb399 {
-    %106 = println($desugar$67) -> bb400;
-  }
-  bb400 {
-    %107 = strictAccesses() -> bb401;
-  }
-  bb401 {
+  bb181 {
     PopScopeFrame
     PopScopeFrame
     PopScopeFrame
@@ -2113,30 +984,15 @@ main() -> nil{
   
   error-table {
     [bb5, bb6] -> bb7, %0
-    [bb23, bb24] -> bb25, %0
-    [bb38, bb39] -> bb40, %0
-    [bb54, bb55] -> bb56, %0
-    [bb69, bb70] -> bb71, %0
-    [bb85, bb86] -> bb87, %0
-    [bb100, bb101] -> bb102, %0
-    [bb114, bb115] -> bb116, %59
-    [bb120, bb121] -> bb122, %0
-    [bb132, bb133] -> bb134, %0
-    [bb151, bb152] -> bb153, %0
-    [bb169, bb170] -> bb171, %0
-    [bb186, bb187] -> bb188, %0
-    [bb204, bb205] -> bb206, %0
-    [bb222, bb223] -> bb224, %0
-    [bb240, bb241] -> bb242, %0
-    [bb257, bb258] -> bb259, %0
-    [bb275, bb276] -> bb277, %0
-    [bb292, bb293] -> bb294, %0
-    [bb307, bb308] -> bb309, %0
-    [bb324, bb325] -> bb326, %0
-    [bb339, bb340] -> bb341, %0
-    [bb356, bb357] -> bb358, %0
-    [bb373, bb374] -> bb375, %0
-    [bb389, bb390] -> bb391, %0
+    [bb24, bb25] -> bb26, %0
+    [bb41, bb42] -> bb43, %0
+    [bb58, bb59] -> bb60, %0
+    [bb72, bb73] -> bb74, %47
+    [bb78, bb79] -> bb80, %0
+    [bb90, bb91] -> bb92, %0
+    [bb113, bb114] -> bb115, %0
+    [bb147, bb148] -> bb149, %0
+    [bb164, bb165] -> bb166, %0
   }
 }
 strictAccesses() -> nil{
@@ -2189,5 +1045,1344 @@ strictAccesses() -> nil{
   }
   bb7 {
     return;
+  }
+}
+main$506$7$thunk$0() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$3 = (2, j);
+    %2 = ConstantLoad lax field access failed
+    %3 = newError error(%2)
+    $desugar$4 = %3;
+    %5 = $desugar$3 is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$4) = (1, $desugar$3);
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb2 {
+    %6 = $desugar$3 !is mapping
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$4) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb4 {
+    PushScopeFrame 6
+    GOTO bb5;
+  }
+  bb5 {
+    %1 = ConstantLoad a
+    %2 = get((1, $desugar$3),%1) -> bb6;
+  }
+  bb6 {
+    %0 = %2;
+    GOTO bb7;
+  }
+  bb7 {
+    $desugar$5 = %0;
+    %4 = $desugar$5 is error
+    %4 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, $desugar$4) = (1, $desugar$5);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb9 {
+    %5 = $desugar$5 is json
+    %5 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, $desugar$4) = (1, $desugar$5);
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$4) = %1;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %0 = $desugar$4;
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %0
+  }
+}
+main$506$7$thunk$1() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$9 = (2, j);
+    %2 = ConstantLoad lax field access failed
+    %3 = newError error(%2)
+    $desugar$10 = %3;
+    %5 = $desugar$9 is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$10) = (1, $desugar$9);
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb2 {
+    %6 = $desugar$9 !is mapping
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$10) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb4 {
+    PushScopeFrame 6
+    GOTO bb5;
+  }
+  bb5 {
+    %1 = ConstantLoad a
+    %2 = get((1, $desugar$9),%1) -> bb6;
+  }
+  bb6 {
+    %0 = %2;
+    GOTO bb7;
+  }
+  bb7 {
+    $desugar$11 = %0;
+    %4 = $desugar$11 is error
+    %4 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, $desugar$10) = (1, $desugar$11);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb9 {
+    %5 = $desugar$11 is json
+    %5 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, $desugar$10) = (1, $desugar$11);
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$10) = %1;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %0 = $desugar$10;
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %0
+  }
+}
+main$506$7$thunk$10() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$48 = (8, j);
+    %2 = ConstantLoad lax field access failed
+    %3 = newError error(%2)
+    $desugar$49 = %3;
+    %5 = $desugar$48 is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$49) = (1, $desugar$48);
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb2 {
+    %6 = $desugar$48 !is mapping
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$49) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb4 {
+    PushScopeFrame 6
+    GOTO bb5;
+  }
+  bb5 {
+    %1 = ConstantLoad missing
+    %2 = get((1, $desugar$48),%1) -> bb6;
+  }
+  bb6 {
+    %0 = %2;
+    GOTO bb7;
+  }
+  bb7 {
+    $desugar$50 = %0;
+    %4 = $desugar$50 is error
+    %4 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, $desugar$49) = (1, $desugar$50);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb9 {
+    %5 = $desugar$50 is json
+    %5 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, $desugar$49) = (1, $desugar$50);
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$49) = %1;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %0 = $desugar$49;
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %0
+  }
+}
+main$506$7$thunk$11() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    %1 = closure_fp $anon/.:main$506$7$thunk$10
+    %2 = %1() -> bb1;
+  }
+  bb1 {
+    $desugar$51 = %2;
+    %4 = ConstantLoad lax field access failed
+    %5 = newError error(%4)
+    $desugar$52 = %5;
+    %7 = $desugar$51 is error
+    %7 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 0
+    (1, $desugar$52) = (1, $desugar$51);
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb3 {
+    %8 = $desugar$51 !is mapping
+    %8 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$52) = %1;
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb5 {
+    PushScopeFrame 6
+    GOTO bb6;
+  }
+  bb6 {
+    %1 = ConstantLoad next
+    %2 = get((1, $desugar$51),%1) -> bb7;
+  }
+  bb7 {
+    %0 = %2;
+    GOTO bb8;
+  }
+  bb8 {
+    $desugar$53 = %0;
+    %4 = $desugar$53 is error
+    %4 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (2, $desugar$52) = (1, $desugar$53);
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb10 {
+    %5 = $desugar$53 is json
+    %5 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 0
+    (2, $desugar$52) = (1, $desugar$53);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb12 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$52) = %1;
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb13 {
+    GOTO bb14;
+  }
+  bb14 {
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb15 {
+    GOTO bb16;
+  }
+  bb16 {
+    %0 = $desugar$52;
+    return;
+  }
+  
+  error-table {
+    [bb6, bb7] -> bb8, %0
+  }
+}
+main$506$7$thunk$12() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$54 = (1, openJSONMap);
+    %2 = ConstantLoad lax field access failed
+    %3 = newError error(%2)
+    $desugar$55 = %3;
+    %5 = $desugar$54 is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$55) = (1, $desugar$54);
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb2 {
+    %6 = $desugar$54 !is mapping
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$55) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb4 {
+    PushScopeFrame 6
+    GOTO bb5;
+  }
+  bb5 {
+    %1 = ConstantLoad nested
+    %2 = get((1, $desugar$54),%1) -> bb6;
+  }
+  bb6 {
+    %0 = %2;
+    GOTO bb7;
+  }
+  bb7 {
+    $desugar$56 = %0;
+    %4 = $desugar$56 is error
+    %4 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, $desugar$55) = (1, $desugar$56);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb9 {
+    %5 = $desugar$56 is json
+    %5 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, $desugar$55) = (1, $desugar$56);
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$55) = %1;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %0 = $desugar$55;
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %0
+  }
+}
+main$506$7$thunk$13() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$63 = (1, user);
+    %2 = ConstantLoad lax field access failed
+    %3 = newError error(%2)
+    $desugar$64 = %3;
+    %5 = $desugar$63 is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$64) = (1, $desugar$63);
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb2 {
+    %6 = $desugar$63 !is mapping
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$64) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb4 {
+    PushScopeFrame 6
+    GOTO bb5;
+  }
+  bb5 {
+    %1 = ConstantLoad name
+    %2 = get((1, $desugar$63),%1) -> bb6;
+  }
+  bb6 {
+    %0 = %2;
+    GOTO bb7;
+  }
+  bb7 {
+    $desugar$65 = %0;
+    %4 = $desugar$65 is error
+    %4 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, $desugar$64) = (1, $desugar$65);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb9 {
+    %5 = $desugar$65 is json
+    %5 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, $desugar$64) = (1, $desugar$65);
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$64) = %1;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %0 = $desugar$64;
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %0
+  }
+}
+main$506$7$thunk$14() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$66 = (1, user);
+    %2 = ConstantLoad lax field access failed
+    %3 = newError error(%2)
+    $desugar$67 = %3;
+    %5 = $desugar$66 is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$67) = (1, $desugar$66);
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb2 {
+    %6 = $desugar$66 !is mapping
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$67) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb4 {
+    PushScopeFrame 6
+    GOTO bb5;
+  }
+  bb5 {
+    %1 = ConstantLoad age
+    %2 = get((1, $desugar$66),%1) -> bb6;
+  }
+  bb6 {
+    %0 = %2;
+    GOTO bb7;
+  }
+  bb7 {
+    $desugar$68 = %0;
+    %4 = $desugar$68 is error
+    %4 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, $desugar$67) = (1, $desugar$68);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb9 {
+    %5 = $desugar$68 is json
+    %5 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, $desugar$67) = (1, $desugar$68);
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$67) = %1;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %0 = $desugar$67;
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %0
+  }
+}
+main$506$7$thunk$2() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$15 = (1, outerMap);
+    %2 = ConstantLoad lax field access failed
+    %3 = newError error(%2)
+    $desugar$16 = %3;
+    %5 = $desugar$15 is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$16) = (1, $desugar$15);
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb2 {
+    %6 = $desugar$15 !is mapping
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$16) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb4 {
+    PushScopeFrame 6
+    GOTO bb5;
+  }
+  bb5 {
+    %1 = ConstantLoad a
+    %2 = get((1, $desugar$15),%1) -> bb6;
+  }
+  bb6 {
+    %0 = %2;
+    GOTO bb7;
+  }
+  bb7 {
+    $desugar$17 = %0;
+    %4 = $desugar$17 is error
+    %4 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, $desugar$16) = (1, $desugar$17);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb9 {
+    %5 = $desugar$17 is json
+    %5 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, $desugar$16) = (1, $desugar$17);
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$16) = %1;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %0 = $desugar$16;
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %0
+  }
+}
+main$506$7$thunk$3() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$24 = (5, j);
+    %2 = ConstantLoad lax field access failed
+    %3 = newError error(%2)
+    $desugar$25 = %3;
+    %5 = $desugar$24 is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$25) = (1, $desugar$24);
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb2 {
+    %6 = $desugar$24 !is mapping
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$25) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb4 {
+    PushScopeFrame 6
+    GOTO bb5;
+  }
+  bb5 {
+    %1 = ConstantLoad missing
+    %2 = get((1, $desugar$24),%1) -> bb6;
+  }
+  bb6 {
+    %0 = %2;
+    GOTO bb7;
+  }
+  bb7 {
+    $desugar$26 = %0;
+    %4 = $desugar$26 is error
+    %4 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, $desugar$25) = (1, $desugar$26);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb9 {
+    %5 = $desugar$26 is json
+    %5 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, $desugar$25) = (1, $desugar$26);
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$25) = %1;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %0 = $desugar$25;
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %0
+  }
+}
+main$506$7$thunk$4() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$27 = (5, j);
+    %2 = ConstantLoad <nil>
+    $desugar$28 = %2;
+    %4 = $desugar$27 is nil
+    %4 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb2 {
+    %5 = $desugar$27 is error
+    %5 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, $desugar$28) = (1, $desugar$27);
+    PopScopeFrame
+    GOTO bb17;
+  }
+  bb4 {
+    %6 = $desugar$27 !is mapping
+    %6 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$28) = %1;
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb6 {
+    PushScopeFrame 6
+    GOTO bb7;
+  }
+  bb7 {
+    %1 = ConstantLoad missing
+    %2 = get((1, $desugar$27),%1) -> bb8;
+  }
+  bb8 {
+    %0 = %2;
+    GOTO bb9;
+  }
+  bb9 {
+    $desugar$29 = %0;
+    %4 = $desugar$29 is error
+    %4 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb11 {
+    %5 = $desugar$29 is json
+    %5 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 0
+    (2, $desugar$28) = (1, $desugar$29);
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb13 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$28) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    GOTO bb17;
+  }
+  bb17 {
+    GOTO bb18;
+  }
+  bb18 {
+    %0 = $desugar$28;
+    return;
+  }
+  
+  error-table {
+    [bb7, bb8] -> bb9, %0
+  }
+}
+main$506$7$thunk$5() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$33 = (6, j);
+    %2 = ConstantLoad lax field access failed
+    %3 = newError error(%2)
+    $desugar$34 = %3;
+    %5 = $desugar$33 is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$34) = (1, $desugar$33);
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb2 {
+    %6 = $desugar$33 !is mapping
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$34) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb4 {
+    PushScopeFrame 6
+    GOTO bb5;
+  }
+  bb5 {
+    %1 = ConstantLoad absent
+    %2 = get((1, $desugar$33),%1) -> bb6;
+  }
+  bb6 {
+    %0 = %2;
+    GOTO bb7;
+  }
+  bb7 {
+    $desugar$35 = %0;
+    %4 = $desugar$35 is error
+    %4 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, $desugar$34) = (1, $desugar$35);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb9 {
+    %5 = $desugar$35 is json
+    %5 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, $desugar$34) = (1, $desugar$35);
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$34) = %1;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %0 = $desugar$34;
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %0
+  }
+}
+main$506$7$thunk$6() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$36 = (1, nilReceiver);
+    %2 = ConstantLoad lax field access failed
+    %3 = newError error(%2)
+    $desugar$37 = %3;
+    %5 = $desugar$36 is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$37) = (1, $desugar$36);
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb2 {
+    %6 = $desugar$36 !is mapping
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$37) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb4 {
+    PushScopeFrame 6
+    GOTO bb5;
+  }
+  bb5 {
+    %1 = ConstantLoad value
+    %2 = get((1, $desugar$36),%1) -> bb6;
+  }
+  bb6 {
+    %0 = %2;
+    GOTO bb7;
+  }
+  bb7 {
+    $desugar$38 = %0;
+    %4 = $desugar$38 is error
+    %4 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, $desugar$37) = (1, $desugar$38);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb9 {
+    %5 = $desugar$38 is json
+    %5 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, $desugar$37) = (1, $desugar$38);
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$37) = %1;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %0 = $desugar$37;
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %0
+  }
+}
+main$506$7$thunk$7() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$39 = (1, nilReceiver);
+    %2 = ConstantLoad <nil>
+    $desugar$40 = %2;
+    %4 = $desugar$39 is nil
+    %4 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb2 {
+    %5 = $desugar$39 is error
+    %5 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, $desugar$40) = (1, $desugar$39);
+    PopScopeFrame
+    GOTO bb17;
+  }
+  bb4 {
+    %6 = $desugar$39 !is mapping
+    %6 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$40) = %1;
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb6 {
+    PushScopeFrame 6
+    GOTO bb7;
+  }
+  bb7 {
+    %1 = ConstantLoad value
+    %2 = get((1, $desugar$39),%1) -> bb8;
+  }
+  bb8 {
+    %0 = %2;
+    GOTO bb9;
+  }
+  bb9 {
+    $desugar$41 = %0;
+    %4 = $desugar$41 is error
+    %4 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb11 {
+    %5 = $desugar$41 is json
+    %5 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 0
+    (2, $desugar$40) = (1, $desugar$41);
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb13 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$40) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    GOTO bb17;
+  }
+  bb17 {
+    GOTO bb18;
+  }
+  bb18 {
+    %0 = $desugar$40;
+    return;
+  }
+  
+  error-table {
+    [bb7, bb8] -> bb9, %0
+  }
+}
+main$506$7$thunk$8() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$42 = (1, scalarReceiver);
+    %2 = ConstantLoad lax field access failed
+    %3 = newError error(%2)
+    $desugar$43 = %3;
+    %5 = $desugar$42 is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$43) = (1, $desugar$42);
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb2 {
+    %6 = $desugar$42 !is mapping
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$43) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb4 {
+    PushScopeFrame 6
+    GOTO bb5;
+  }
+  bb5 {
+    %1 = ConstantLoad value
+    %2 = get((1, $desugar$42),%1) -> bb6;
+  }
+  bb6 {
+    %0 = %2;
+    GOTO bb7;
+  }
+  bb7 {
+    $desugar$44 = %0;
+    %4 = $desugar$44 is error
+    %4 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (2, $desugar$43) = (1, $desugar$44);
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb9 {
+    %5 = $desugar$44 is json
+    %5 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    (2, $desugar$43) = (1, $desugar$44);
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb11 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$43) = %1;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %0 = $desugar$43;
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %0
+  }
+}
+main$506$7$thunk$9() -> nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}{
+  bb0 {
+    $desugar$45 = (1, scalarReceiver);
+    %2 = ConstantLoad <nil>
+    $desugar$46 = %2;
+    %4 = $desugar$45 is nil
+    %4 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb2 {
+    %5 = $desugar$45 is error
+    %5 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 0
+    (1, $desugar$46) = (1, $desugar$45);
+    PopScopeFrame
+    GOTO bb17;
+  }
+  bb4 {
+    %6 = $desugar$45 !is mapping
+    %6 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$46) = %1;
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb6 {
+    PushScopeFrame 6
+    GOTO bb7;
+  }
+  bb7 {
+    %1 = ConstantLoad value
+    %2 = get((1, $desugar$45),%1) -> bb8;
+  }
+  bb8 {
+    %0 = %2;
+    GOTO bb9;
+  }
+  bb9 {
+    $desugar$47 = %0;
+    %4 = $desugar$47 is error
+    %4 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb11 {
+    %5 = $desugar$47 is json
+    %5 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 0
+    (2, $desugar$46) = (1, $desugar$47);
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb13 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$46) = %1;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    GOTO bb17;
+  }
+  bb17 {
+    GOTO bb18;
+  }
+  bb18 {
+    %0 = $desugar$46;
+    return;
+  }
+  
+  error-table {
+    [bb7, bb8] -> bb9, %0
   }
 }

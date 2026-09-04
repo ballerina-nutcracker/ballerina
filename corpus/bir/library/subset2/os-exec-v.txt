@@ -1,0 +1,329 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %2 = ConstantLoad value
+    %3 = ConstantLoad echo
+    %4 = ConstantLoad arguments
+    %5 = ConstantLoad hello
+    %6 = ConstantLoad 1
+    %7 = newArray [string...][%6]{%5}
+    %8 = newMap {| arguments: [string...], value: string, never... |}{%2=%3, %4=%7} defaults{arguments=ballerina/os:$desugar$0}
+    %9 = newMap {| command: never, anydata... |}{}
+    %10 = exec(%8,%9) -> bb1;
+  }
+  bb1 {
+    %11 = %10 is error
+    %11 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %10;
+    return;
+  }
+  bb3 {
+    %1 = %10;
+    GOTO bb4;
+  }
+  bb4 {
+    p = %1;
+    %14 = waitForExit(p) -> bb5;
+  }
+  bb5 {
+    %15 = %14 is error
+    %15 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %14;
+    return;
+  }
+  bb7 {
+    %13 = %14;
+    GOTO bb8;
+  }
+  bb8 {
+    code = %13;
+    %17 = code;
+    %18 = println(%17) -> bb9;
+  }
+  bb9 {
+    %20 = closure_fp $anon/.:main$502$0$thunk$0
+    %21 = main$502$0$thunk$0() -> bb10;
+  }
+  bb10 {
+    %22 = %21 is error
+    %22 ? bb11 : bb12;
+  }
+  bb11 {
+    %0 = %21;
+    return;
+  }
+  bb12 {
+    %19 = %21;
+    GOTO bb13;
+  }
+  bb13 {
+    out = %19;
+    %25 = length(out) -> bb14;
+  }
+  bb14 {
+    %26 = %25;
+    %27 = ConstantLoad 0
+    %28 = %27;
+    %24 = > %26 %28;
+    %29 = %24;
+    %30 = println(%29) -> bb15;
+  }
+  bb15 {
+    %32 = ConstantLoad value
+    %33 = ConstantLoad echo
+    %34 = ConstantLoad arguments
+    %35 = ConstantLoad world
+    %36 = ConstantLoad 1
+    %37 = newArray [string...][%36]{%35}
+    %38 = newMap {| arguments: [string...], value: string, never... |}{%32=%33, %34=%37} defaults{arguments=ballerina/os:$desugar$0}
+    %39 = newMap {| command: never, anydata... |}{}
+    %40 = exec(%38,%39) -> bb16;
+  }
+  bb16 {
+    %41 = %40 is error
+    %41 ? bb17 : bb18;
+  }
+  bb17 {
+    %0 = %40;
+    return;
+  }
+  bb18 {
+    %31 = %40;
+    GOTO bb19;
+  }
+  bb19 {
+    p2 = %31;
+    %44 = waitForExit(p2) -> bb20;
+  }
+  bb20 {
+    %45 = %44 is error
+    %45 ? bb21 : bb22;
+  }
+  bb21 {
+    %0 = %44;
+    return;
+  }
+  bb22 {
+    %43 = %44;
+    GOTO bb23;
+  }
+  bb23 {
+    _ = %43;
+    %48 = ConstantLoad 2
+    %49 = %48;
+    %50 = output(p2,%49) -> bb24;
+  }
+  bb24 {
+    %51 = %50 is error
+    %51 ? bb25 : bb26;
+  }
+  bb25 {
+    %0 = %50;
+    return;
+  }
+  bb26 {
+    %47 = %50;
+    GOTO bb27;
+  }
+  bb27 {
+    err = %47;
+    %53 = length(err) -> bb28;
+  }
+  bb28 {
+    %54 = %53;
+    %55 = println(%54) -> bb29;
+  }
+  bb29 {
+    %56 = ConstantLoad /tmp/bal_exec_space_test/foo bar
+    dirWithSpace = %56;
+    %59 = ConstantLoad value
+    %60 = ConstantLoad mkdir
+    %61 = ConstantLoad arguments
+    %62 = ConstantLoad -p
+    %63 = ConstantLoad 2
+    %64 = newArray [string...][%63]{%62, dirWithSpace}
+    %65 = newMap {| arguments: [string...], value: string, never... |}{%59=%60, %61=%64} defaults{arguments=ballerina/os:$desugar$0}
+    %66 = newMap {| command: never, anydata... |}{}
+    %67 = exec(%65,%66) -> bb30;
+  }
+  bb30 {
+    %68 = %67 is error
+    %68 ? bb31 : bb32;
+  }
+  bb31 {
+    %0 = %67;
+    return;
+  }
+  bb32 {
+    %58 = %67;
+    GOTO bb33;
+  }
+  bb33 {
+    mk = %58;
+    %71 = waitForExit(mk) -> bb34;
+  }
+  bb34 {
+    %72 = %71 is error
+    %72 ? bb35 : bb36;
+  }
+  bb35 {
+    %0 = %71;
+    return;
+  }
+  bb36 {
+    %70 = %71;
+    GOTO bb37;
+  }
+  bb37 {
+    %73 = %70;
+    %74 = println(%73) -> bb38;
+  }
+  bb38 {
+    %76 = ConstantLoad value
+    %77 = ConstantLoad ls
+    %78 = ConstantLoad arguments
+    %79 = ConstantLoad 1
+    %80 = newArray [string...][%79]{dirWithSpace}
+    %81 = newMap {| arguments: [string...], value: string, never... |}{%76=%77, %78=%80} defaults{arguments=ballerina/os:$desugar$0}
+    %82 = newMap {| command: never, anydata... |}{}
+    %83 = exec(%81,%82) -> bb39;
+  }
+  bb39 {
+    %84 = %83 is error
+    %84 ? bb40 : bb41;
+  }
+  bb40 {
+    %0 = %83;
+    return;
+  }
+  bb41 {
+    %75 = %83;
+    GOTO bb42;
+  }
+  bb42 {
+    lsProc = %75;
+    %87 = waitForExit(lsProc) -> bb43;
+  }
+  bb43 {
+    %88 = %87 is error
+    %88 ? bb44 : bb45;
+  }
+  bb44 {
+    %0 = %87;
+    return;
+  }
+  bb45 {
+    %86 = %87;
+    GOTO bb46;
+  }
+  bb46 {
+    %89 = %86;
+    %90 = println(%89) -> bb47;
+  }
+  bb47 {
+    %92 = ConstantLoad value
+    %93 = ConstantLoad rm
+    %94 = ConstantLoad arguments
+    %95 = ConstantLoad -rf
+    %96 = ConstantLoad /tmp/bal_exec_space_test
+    %97 = ConstantLoad 2
+    %98 = newArray [string...][%97]{%95, %96}
+    %99 = newMap {| arguments: [string...], value: string, never... |}{%92=%93, %94=%98} defaults{arguments=ballerina/os:$desugar$0}
+    %100 = newMap {| command: never, anydata... |}{}
+    %101 = exec(%99,%100) -> bb48;
+  }
+  bb48 {
+    %102 = %101 is error
+    %102 ? bb49 : bb50;
+  }
+  bb49 {
+    %0 = %101;
+    return;
+  }
+  bb50 {
+    %91 = %101;
+    GOTO bb51;
+  }
+  bb51 {
+    rm = %91;
+    %105 = waitForExit(rm) -> bb52;
+  }
+  bb52 {
+    %106 = %105 is error
+    %106 ? bb53 : bb54;
+  }
+  bb53 {
+    %0 = %105;
+    return;
+  }
+  bb54 {
+    %104 = %105;
+    GOTO bb55;
+  }
+  bb55 {
+    _ = %104;
+    %108 = ConstantLoad value
+    %109 = ConstantLoad no_such_command_xyz_123
+    %110 = newMap {| arguments: [string...], value: string, never... |}{%108=%109} defaults{arguments=ballerina/os:$desugar$0}
+    %111 = newMap {| command: never, anydata... |}{}
+    %112 = exec(%110,%111) -> bb56;
+  }
+  bb56 {
+    bad = %112;
+    %114 = bad is error
+    %115 = %114;
+    %116 = println(%115) -> bb57;
+  }
+  bb57 {
+    %118 = ConstantLoad value
+    %119 = ConstantLoad echo
+    %120 = ConstantLoad arguments
+    %121 = ConstantLoad bye
+    %122 = ConstantLoad 1
+    %123 = newArray [string...][%122]{%121}
+    %124 = newMap {| arguments: [string...], value: string, never... |}{%118=%119, %120=%123} defaults{arguments=ballerina/os:$desugar$0}
+    %125 = newMap {| command: never, anydata... |}{}
+    %126 = exec(%124,%125) -> bb58;
+  }
+  bb58 {
+    %127 = %126 is error
+    %127 ? bb59 : bb60;
+  }
+  bb59 {
+    %0 = %126;
+    return;
+  }
+  bb60 {
+    %117 = %126;
+    GOTO bb61;
+  }
+  bb61 {
+    p3 = %117;
+    %129 = exit(p3) -> bb62;
+  }
+  bb62 {
+    %130 = ConstantLoad exited
+    %131 = println(%130) -> bb63;
+  }
+  bb63 {
+    return;
+  }
+}
+main$502$0$thunk$0() -> error|[int:Unsigned8...]{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = $desugar$0;
+    %4 = output((1, p),%3) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+}

@@ -39,30 +39,40 @@
           (user-defined-type Store)) (expr
           (new ()))))
       (var-def
-        (variable $desugar$0 (expr
-          (invocation $default$0 ()))))
-      (var-def
         (variable defaultPrice (type
           (value-type int)) (expr
           (checked-expr
-            (client-resource-access get expr:
-              (simple-var-ref store) name:price
-              (simple-var-ref $desugar$0))))))
-      (var-def
-        (variable $desugar$1 (expr
-          (literal 40))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$1))))))
+            (expression-thunk
+            (lambda
+              (function main$506$1$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (invocation $default$0 ()))))
+                  (return
+                    (client-resource-access get expr:
+                      (simple-var-ref store) name:price
+                      (simple-var-ref $desugar$0)))))))))))
       (var-def
         (variable defaultTax (type
           (value-type int)) (expr
           (checked-expr
-            (client-resource-access get expr:
-              (simple-var-ref store) name:total
-              (simple-var-ref $desugar$1)
-              (simple-var-ref $desugar$2))))))
+            (expression-thunk
+            (lambda
+              (function main$506$1$thunk$1 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (literal 40))))
+                  (var-def
+                    (variable $desugar$2 (expr
+                      (invocation $default$1 (
+                        (simple-var-ref $desugar$1))))))
+                  (return
+                    (client-resource-access get expr:
+                      (simple-var-ref store) name:total
+                      (simple-var-ref $desugar$1)
+                      (simple-var-ref $desugar$2)))))))))))
       (var-def
         (variable explicitTax (type
           (value-type int)) (expr

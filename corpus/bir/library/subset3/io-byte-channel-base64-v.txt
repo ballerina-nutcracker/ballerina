@@ -1,0 +1,450 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %2 = ConstantLoad 72
+    %3 = ConstantLoad 105
+    %4 = ConstantLoad 33
+    %5 = ConstantLoad 3
+    %6 = newArray [int:Unsigned8...][%5]{%2, %3, %4}
+    %7 = createReadableChannel(%6) -> bb1;
+  }
+  bb1 {
+    %8 = %7 is error
+    %8 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %7;
+    return;
+  }
+  bb3 {
+    %1 = %7;
+    GOTO bb4;
+  }
+  bb4 {
+    src = %1;
+    %11 = base64Encode(src) -> bb5;
+  }
+  bb5 {
+    %12 = %11 is error
+    %12 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %11;
+    return;
+  }
+  bb7 {
+    %10 = %11;
+    GOTO bb8;
+  }
+  bb8 {
+    enc = %10;
+    %15 = readAll(enc) -> bb9;
+  }
+  bb9 {
+    %16 = %15 is error
+    %16 ? bb10 : bb11;
+  }
+  bb10 {
+    %0 = %15;
+    return;
+  }
+  bb11 {
+    %14 = %15;
+    GOTO bb12;
+  }
+  bb12 {
+    encBytes = %14;
+    %19 = fromBytes(encBytes) -> bb13;
+  }
+  bb13 {
+    %20 = %19 is error
+    %20 ? bb14 : bb15;
+  }
+  bb14 {
+    %0 = %19;
+    return;
+  }
+  bb15 {
+    %18 = %19;
+    GOTO bb16;
+  }
+  bb16 {
+    %21 = println(%18) -> bb17;
+  }
+  bb17 {
+    %23 = createReadableChannel(encBytes) -> bb18;
+  }
+  bb18 {
+    %24 = %23 is error
+    %24 ? bb19 : bb20;
+  }
+  bb19 {
+    %0 = %23;
+    return;
+  }
+  bb20 {
+    %22 = %23;
+    GOTO bb21;
+  }
+  bb21 {
+    back = %22;
+    %27 = base64Decode(back) -> bb22;
+  }
+  bb22 {
+    %28 = %27 is error
+    %28 ? bb23 : bb24;
+  }
+  bb23 {
+    %0 = %27;
+    return;
+  }
+  bb24 {
+    %26 = %27;
+    GOTO bb25;
+  }
+  bb25 {
+    dec = %26;
+    %31 = readAll(dec) -> bb26;
+  }
+  bb26 {
+    %32 = %31 is error
+    %32 ? bb27 : bb28;
+  }
+  bb27 {
+    %0 = %31;
+    return;
+  }
+  bb28 {
+    %30 = %31;
+    GOTO bb29;
+  }
+  bb29 {
+    decBytes = %30;
+    %35 = fromBytes(decBytes) -> bb30;
+  }
+  bb30 {
+    %36 = %35 is error
+    %36 ? bb31 : bb32;
+  }
+  bb31 {
+    %0 = %35;
+    return;
+  }
+  bb32 {
+    %34 = %35;
+    GOTO bb33;
+  }
+  bb33 {
+    %37 = println(%34) -> bb34;
+  }
+  bb34 {
+    %39 = base64Encode(src) -> bb35;
+  }
+  bb35 {
+    %40 = %39 is error
+    %40 ? bb36 : bb37;
+  }
+  bb36 {
+    %0 = %39;
+    return;
+  }
+  bb37 {
+    %38 = %39;
+    GOTO bb38;
+  }
+  bb38 {
+    drainedEnc = %38;
+    %43 = readAll(drainedEnc) -> bb39;
+  }
+  bb39 {
+    %44 = %43 is error
+    %44 ? bb40 : bb41;
+  }
+  bb40 {
+    %0 = %43;
+    return;
+  }
+  bb41 {
+    %42 = %43;
+    GOTO bb42;
+  }
+  bb42 {
+    emptyBytes = %42;
+    %46 = length(emptyBytes) -> bb43;
+  }
+  bb43 {
+    %47 = %46;
+    %48 = println(%47) -> bb44;
+  }
+  bb44 {
+    %50 = ConstantLoad 83
+    %51 = ConstantLoad 71
+    %52 = ConstantLoad 107
+    %53 = ConstantLoad 3
+    %54 = newArray [int:Unsigned8...][%53]{%50, %51, %52}
+    %55 = createReadableChannel(%54) -> bb45;
+  }
+  bb45 {
+    %56 = %55 is error
+    %56 ? bb46 : bb47;
+  }
+  bb46 {
+    %0 = %55;
+    return;
+  }
+  bb47 {
+    %49 = %55;
+    GOTO bb48;
+  }
+  bb48 {
+    unpadded = %49;
+    %59 = base64Decode(unpadded) -> bb49;
+  }
+  bb49 {
+    %60 = %59 is error
+    %60 ? bb50 : bb51;
+  }
+  bb50 {
+    %0 = %59;
+    return;
+  }
+  bb51 {
+    %58 = %59;
+    GOTO bb52;
+  }
+  bb52 {
+    dec2 = %58;
+    %63 = readAll(dec2) -> bb53;
+  }
+  bb53 {
+    %64 = %63 is error
+    %64 ? bb54 : bb55;
+  }
+  bb54 {
+    %0 = %63;
+    return;
+  }
+  bb55 {
+    %62 = %63;
+    GOTO bb56;
+  }
+  bb56 {
+    unpaddedBytes = %62;
+    %67 = fromBytes(unpaddedBytes) -> bb57;
+  }
+  bb57 {
+    %68 = %67 is error
+    %68 ? bb58 : bb59;
+  }
+  bb58 {
+    %0 = %67;
+    return;
+  }
+  bb59 {
+    %66 = %67;
+    GOTO bb60;
+  }
+  bb60 {
+    %69 = println(%66) -> bb61;
+  }
+  bb61 {
+    %70 = ConstantLoad /tmp/bal_io_byte_channel_base64.bin
+    path = %70;
+    %73 = closure_fp $anon/.:main$502$0$thunk$0
+    %74 = main$502$0$thunk$0() -> bb62;
+  }
+  bb62 {
+    %75 = %74 is error
+    %75 ? bb63 : bb64;
+  }
+  bb63 {
+    %0 = %74;
+    return;
+  }
+  bb64 {
+    %72 = %74;
+    GOTO bb65;
+  }
+  bb65 {
+    %77 = openReadableFile(path) -> bb66;
+  }
+  bb66 {
+    %78 = %77 is error
+    %78 ? bb67 : bb68;
+  }
+  bb67 {
+    %0 = %77;
+    return;
+  }
+  bb68 {
+    %76 = %77;
+    GOTO bb69;
+  }
+  bb69 {
+    fileCh = %76;
+    %81 = base64Encode(fileCh) -> bb70;
+  }
+  bb70 {
+    %82 = %81 is error
+    %82 ? bb71 : bb72;
+  }
+  bb71 {
+    %0 = %81;
+    return;
+  }
+  bb72 {
+    %80 = %81;
+    GOTO bb73;
+  }
+  bb73 {
+    fileEnc = %80;
+    %85 = readAll(fileEnc) -> bb74;
+  }
+  bb74 {
+    %86 = %85 is error
+    %86 ? bb75 : bb76;
+  }
+  bb75 {
+    %0 = %85;
+    return;
+  }
+  bb76 {
+    %84 = %85;
+    GOTO bb77;
+  }
+  bb77 {
+    fileEncBytes = %84;
+    %89 = fromBytes(fileEncBytes) -> bb78;
+  }
+  bb78 {
+    %90 = %89 is error
+    %90 ? bb79 : bb80;
+  }
+  bb79 {
+    %0 = %89;
+    return;
+  }
+  bb80 {
+    %88 = %89;
+    GOTO bb81;
+  }
+  bb81 {
+    %91 = println(%88) -> bb82;
+  }
+  bb82 {
+    %93 = close(fileCh) -> bb83;
+  }
+  bb83 {
+    %94 = %93 is error
+    %94 ? bb84 : bb85;
+  }
+  bb84 {
+    %0 = %93;
+    return;
+  }
+  bb85 {
+    %92 = %93;
+    GOTO bb86;
+  }
+  bb86 {
+    %96 = ConstantLoad 1
+    %97 = ConstantLoad 2
+    %98 = ConstantLoad 3
+    %99 = ConstantLoad 3
+    %100 = newArray [int:Unsigned8...][%99]{%96, %97, %98}
+    %101 = createReadableChannel(%100) -> bb87;
+  }
+  bb87 {
+    %102 = %101 is error
+    %102 ? bb88 : bb89;
+  }
+  bb88 {
+    %0 = %101;
+    return;
+  }
+  bb89 {
+    %95 = %101;
+    GOTO bb90;
+  }
+  bb90 {
+    closedCh = %95;
+    %105 = close(closedCh) -> bb91;
+  }
+  bb91 {
+    %106 = %105 is error
+    %106 ? bb92 : bb93;
+  }
+  bb92 {
+    %0 = %105;
+    return;
+  }
+  bb93 {
+    %104 = %105;
+    GOTO bb94;
+  }
+  bb94 {
+    %107 = base64Encode(closedCh) -> bb95;
+  }
+  bb95 {
+    encClosed = %107;
+    %109 = encClosed is error
+    %109 ? bb96 : bb99;
+  }
+  bb96 {
+    PushScopeFrame 2
+    %0 = message((1, encClosed)) -> bb97;
+  }
+  bb97 {
+    %1 = println(%0) -> bb98;
+  }
+  bb98 {
+    PopScopeFrame
+    GOTO bb99;
+  }
+  bb99 {
+    PushScopeFrame 3
+    %0 = base64Decode((1, closedCh)) -> bb100;
+  }
+  bb100 {
+    decClosed = %0;
+    %2 = decClosed is error
+    %2 ? bb101 : bb104;
+  }
+  bb101 {
+    PushScopeFrame 2
+    %0 = message((1, decClosed)) -> bb102;
+  }
+  bb102 {
+    %1 = println(%0) -> bb103;
+  }
+  bb103 {
+    PopScopeFrame
+    GOTO bb104;
+  }
+  bb104 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+main$502$0$thunk$0() -> nil|error{
+  bb0 {
+    $desugar$0 = (1, path);
+    %2 = ConstantLoad 72
+    %3 = ConstantLoad 105
+    %4 = ConstantLoad 33
+    %5 = ConstantLoad 3
+    %6 = newArray [int:Unsigned8...][%5]{%2, %3, %4}
+    $desugar$1 = %6;
+    %8 = $default$4($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %8;
+    %10 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %10;
+    return;
+  }
+}

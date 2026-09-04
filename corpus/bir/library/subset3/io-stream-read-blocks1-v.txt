@@ -1,0 +1,266 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_stream_read_blocks1.bin
+    blockPath = %1;
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad 2
+    %5 = ConstantLoad 3
+    %6 = ConstantLoad 4
+    %7 = ConstantLoad 5
+    %8 = ConstantLoad 6
+    %9 = ConstantLoad 7
+    %10 = ConstantLoad 7
+    %11 = newArray [int:Unsigned8...][%10]{%3, %4, %5, %6, %7, %8, %9}
+    content = %11;
+    %14 = closure_fp $anon/.:main$502$0$thunk$0
+    %15 = main$502$0$thunk$0() -> bb1;
+  }
+  bb1 {
+    %16 = %15 is error
+    %16 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %15;
+    return;
+  }
+  bb3 {
+    %13 = %15;
+    GOTO bb4;
+  }
+  bb4 {
+    %18 = ConstantLoad 3
+    %19 = %18;
+    %20 = fileReadBlocksAsStream(blockPath,%19) -> bb5;
+  }
+  bb5 {
+    %21 = %20 is error
+    %21 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %20;
+    return;
+  }
+  bb7 {
+    %17 = %20;
+    GOTO bb8;
+  }
+  bb8 {
+    s = %17;
+    %23 = streamNext s
+    r1 = %23;
+    %25 = r1 is {| value: readonly&[int:Unsigned8...], never... |}
+    %25 ? bb9 : bb13;
+  }
+  bb9 {
+    PushScopeFrame 11
+    %1 = ConstantLoad value
+    %0 = (1, r1)[%1];
+    %2 = length(%0) -> bb10;
+  }
+  bb10 {
+    %3 = %2;
+    %4 = println(%3) -> bb11;
+  }
+  bb11 {
+    %6 = ConstantLoad 0
+    %8 = ConstantLoad value
+    %7 = (1, r1)[%8];
+    %5 = %7[%6];
+    %9 = %5;
+    %10 = println(%9) -> bb12;
+  }
+  bb12 {
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb13 {
+    PushScopeFrame 3
+    %0 = streamNext (1, s)
+    r2 = %0;
+    %2 = r2 is {| value: readonly&[int:Unsigned8...], never... |}
+    %2 ? bb14 : bb17;
+  }
+  bb14 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, r2)[%1];
+    %2 = length(%0) -> bb15;
+  }
+  bb15 {
+    %3 = %2;
+    %4 = println(%3) -> bb16;
+  }
+  bb16 {
+    PopScopeFrame
+    GOTO bb17;
+  }
+  bb17 {
+    PushScopeFrame 3
+    %0 = streamNext (2, s)
+    r3 = %0;
+    %2 = r3 is {| value: readonly&[int:Unsigned8...], never... |}
+    %2 ? bb18 : bb22;
+  }
+  bb18 {
+    PushScopeFrame 11
+    %1 = ConstantLoad value
+    %0 = (1, r3)[%1];
+    %2 = length(%0) -> bb19;
+  }
+  bb19 {
+    %3 = %2;
+    %4 = println(%3) -> bb20;
+  }
+  bb20 {
+    %6 = ConstantLoad 0
+    %8 = ConstantLoad value
+    %7 = (1, r3)[%8];
+    %5 = %7[%6];
+    %9 = %5;
+    %10 = println(%9) -> bb21;
+  }
+  bb21 {
+    PopScopeFrame
+    GOTO bb22;
+  }
+  bb22 {
+    PushScopeFrame 3
+    %0 = streamNext (3, s)
+    r4 = %0;
+    %2 = r4 is nil
+    %2 ? bb23 : bb25;
+  }
+  bb23 {
+    PushScopeFrame 2
+    %0 = ConstantLoad done
+    %1 = println(%0) -> bb24;
+  }
+  bb24 {
+    PopScopeFrame
+    GOTO bb25;
+  }
+  bb25 {
+    PushScopeFrame 14
+    %0 = ConstantLoad /tmp/bal_io_stream_read_blocks_default.bin
+    defaultPath = %0;
+    %3 = closure_fp $anon/.:main$502$0$thunk$1
+    %4 = main$502$0$thunk$1() -> bb26;
+  }
+  bb26 {
+    %5 = %4 is error
+    %5 ? bb27 : bb28;
+  }
+  bb27 {
+    (4, %0) = %4;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb28 {
+    %2 = %4;
+    GOTO bb29;
+  }
+  bb29 {
+    %7 = closure_fp $anon/.:main$502$0$thunk$2
+    %8 = main$502$0$thunk$2() -> bb30;
+  }
+  bb30 {
+    %9 = %8 is error
+    %9 ? bb31 : bb32;
+  }
+  bb31 {
+    (4, %0) = %8;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb32 {
+    %6 = %8;
+    GOTO bb33;
+  }
+  bb33 {
+    defaultStream = %6;
+    %11 = streamNext defaultStream
+    d1 = %11;
+    %13 = d1 is {| value: readonly&[int:Unsigned8...], never... |}
+    %13 ? bb34 : bb37;
+  }
+  bb34 {
+    PushScopeFrame 5
+    %1 = ConstantLoad value
+    %0 = (1, d1)[%1];
+    %2 = length(%0) -> bb35;
+  }
+  bb35 {
+    %3 = %2;
+    %4 = println(%3) -> bb36;
+  }
+  bb36 {
+    PopScopeFrame
+    GOTO bb37;
+  }
+  bb37 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+main$502$0$thunk$0() -> nil|error{
+  bb0 {
+    $desugar$0 = (1, blockPath);
+    $desugar$1 = (1, content);
+    %3 = $default$4($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %3;
+    %5 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+main$502$0$thunk$1() -> nil|error{
+  bb0 {
+    $desugar$3 = (1, defaultPath);
+    %2 = ConstantLoad 9
+    %3 = ConstantLoad 8
+    %4 = ConstantLoad 7
+    %5 = ConstantLoad 3
+    %6 = newArray [int:Unsigned8...][%5]{%2, %3, %4}
+    $desugar$4 = %6;
+    %8 = $default$4($desugar$3,$desugar$4) -> bb1;
+  }
+  bb1 {
+    $desugar$5 = %8;
+    %10 = fileWriteBytes($desugar$3,$desugar$4,$desugar$5) -> bb2;
+  }
+  bb2 {
+    %0 = %10;
+    return;
+  }
+}
+main$502$0$thunk$2() -> error|stream{
+  bb0 {
+    $desugar$6 = (1, defaultPath);
+    %2 = $default$0($desugar$6) -> bb1;
+  }
+  bb1 {
+    $desugar$7 = %2;
+    %4 = $desugar$7;
+    %5 = fileReadBlocksAsStream($desugar$6,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}

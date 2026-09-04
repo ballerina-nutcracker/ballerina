@@ -1,0 +1,119 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad /tmp/bal_io_xml2.xml
+    path = %1;
+    %3 = ConstantLoad root
+    %4 = ConstantLoad child
+    %5 = newXMLElement(%4, ())
+    %6 = ConstantLoad attr
+    %7 = ConstantLoad val
+    %8 = newMap {| string... |}{%6=%7}
+    %9 = newXMLElement(%3, %5, %8)
+    data = %9;
+    %12 = closure_fp $anon/.:main$502$0$thunk$0
+    %13 = main$502$0$thunk$0() -> bb1;
+  }
+  bb1 {
+    %14 = %13 is error
+    %14 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %13;
+    return;
+  }
+  bb3 {
+    %11 = %13;
+    GOTO bb4;
+  }
+  bb4 {
+    %16 = fileReadXml(path) -> bb5;
+  }
+  bb5 {
+    %17 = %16 is error
+    %17 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %16;
+    return;
+  }
+  bb7 {
+    %15 = %16;
+    GOTO bb8;
+  }
+  bb8 {
+    result = %15;
+    %19 = println(result) -> bb9;
+  }
+  bb9 {
+    %20 = ConstantLoad updated
+    %21 = newXMLElement(%20, ())
+    data2 = %21;
+    %24 = closure_fp $anon/.:main$502$0$thunk$1
+    %25 = main$502$0$thunk$1() -> bb10;
+  }
+  bb10 {
+    %26 = %25 is error
+    %26 ? bb11 : bb12;
+  }
+  bb11 {
+    %0 = %25;
+    return;
+  }
+  bb12 {
+    %23 = %25;
+    GOTO bb13;
+  }
+  bb13 {
+    %28 = fileReadXml(path) -> bb14;
+  }
+  bb14 {
+    %29 = %28 is error
+    %29 ? bb15 : bb16;
+  }
+  bb15 {
+    %0 = %28;
+    return;
+  }
+  bb16 {
+    %27 = %28;
+    GOTO bb17;
+  }
+  bb17 {
+    result2 = %27;
+    %31 = println(result2) -> bb18;
+  }
+  bb18 {
+    return;
+  }
+}
+main$502$0$thunk$0() -> nil|error{
+  bb0 {
+    $desugar$0 = (1, path);
+    $desugar$1 = (1, data);
+    %3 = $default$6($desugar$0,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %3;
+    %5 = fileWriteXml($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+main$502$0$thunk$1() -> nil|error{
+  bb0 {
+    $desugar$3 = (1, path);
+    $desugar$4 = (1, data2);
+    %3 = $default$6($desugar$3,$desugar$4) -> bb1;
+  }
+  bb1 {
+    $desugar$5 = %3;
+    %5 = fileWriteXml($desugar$3,$desugar$4,$desugar$5) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}

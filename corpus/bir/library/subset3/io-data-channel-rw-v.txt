@@ -1,0 +1,822 @@
+module $anon.. v 0.0.0;
+roundtrip("BE"|"LE",string) -> nil|error{
+  bb0 {
+    %4 = closure_fp $anon/.:roundtrip$502$0$thunk$0
+    %5 = roundtrip$502$0$thunk$0() -> bb1;
+  }
+  bb1 {
+    %6 = %5 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+  bb3 {
+    %3 = %5;
+    GOTO bb4;
+  }
+  bb4 {
+    wb = %3;
+    %8 = newObject ballerina/io:WritableDataChannel
+    %9 = init(%8,wb,ord) -> bb5;
+  }
+  bb5 {
+    %11 = %9 is nil
+    %11 ? bb6 : bb7;
+  }
+  bb6 {
+    %10 = %8;
+    GOTO bb8;
+  }
+  bb7 {
+    %10 = %9;
+    GOTO bb8;
+  }
+  bb8 {
+    wd = %10;
+    %14 = ConstantLoad 4660
+    %15 = %14;
+    %16 = writeInt16(wd,%15) -> bb9;
+  }
+  bb9 {
+    %17 = %16 is error
+    %17 ? bb10 : bb11;
+  }
+  bb10 {
+    %0 = %16;
+    return;
+  }
+  bb11 {
+    %13 = %16;
+    GOTO bb12;
+  }
+  bb12 {
+    %19 = ConstantLoad 2
+    %20 = unknown %19;
+    %21 = %20;
+    %22 = writeInt16(wd,%21) -> bb13;
+  }
+  bb13 {
+    %23 = %22 is error
+    %23 ? bb14 : bb15;
+  }
+  bb14 {
+    %0 = %22;
+    return;
+  }
+  bb15 {
+    %18 = %22;
+    GOTO bb16;
+  }
+  bb16 {
+    %25 = ConstantLoad 305419896
+    %26 = %25;
+    %27 = writeInt32(wd,%26) -> bb17;
+  }
+  bb17 {
+    %28 = %27 is error
+    %28 ? bb18 : bb19;
+  }
+  bb18 {
+    %0 = %27;
+    return;
+  }
+  bb19 {
+    %24 = %27;
+    GOTO bb20;
+  }
+  bb20 {
+    %30 = ConstantLoad 40000
+    %31 = unknown %30;
+    %32 = %31;
+    %33 = writeInt32(wd,%32) -> bb21;
+  }
+  bb21 {
+    %34 = %33 is error
+    %34 ? bb22 : bb23;
+  }
+  bb22 {
+    %0 = %33;
+    return;
+  }
+  bb23 {
+    %29 = %33;
+    GOTO bb24;
+  }
+  bb24 {
+    %36 = ConstantLoad 81985529216486895
+    %37 = %36;
+    %38 = writeInt64(wd,%37) -> bb25;
+  }
+  bb25 {
+    %39 = %38 is error
+    %39 ? bb26 : bb27;
+  }
+  bb26 {
+    %0 = %38;
+    return;
+  }
+  bb27 {
+    %35 = %38;
+    GOTO bb28;
+  }
+  bb28 {
+    %41 = ConstantLoad 5
+    %42 = unknown %41;
+    %43 = %42;
+    %44 = writeInt64(wd,%43) -> bb29;
+  }
+  bb29 {
+    %45 = %44 is error
+    %45 ? bb30 : bb31;
+  }
+  bb30 {
+    %0 = %44;
+    return;
+  }
+  bb31 {
+    %40 = %44;
+    GOTO bb32;
+  }
+  bb32 {
+    %47 = ConstantLoad 3.5
+    %48 = %47;
+    %49 = writeFloat32(wd,%48) -> bb33;
+  }
+  bb33 {
+    %50 = %49 is error
+    %50 ? bb34 : bb35;
+  }
+  bb34 {
+    %0 = %49;
+    return;
+  }
+  bb35 {
+    %46 = %49;
+    GOTO bb36;
+  }
+  bb36 {
+    %52 = ConstantLoad 2.718281828459045
+    %53 = %52;
+    %54 = writeFloat64(wd,%53) -> bb37;
+  }
+  bb37 {
+    %55 = %54 is error
+    %55 ? bb38 : bb39;
+  }
+  bb38 {
+    %0 = %54;
+    return;
+  }
+  bb39 {
+    %51 = %54;
+    GOTO bb40;
+  }
+  bb40 {
+    %57 = ConstantLoad true
+    %58 = %57;
+    %59 = writeBool(wd,%58) -> bb41;
+  }
+  bb41 {
+    %60 = %59 is error
+    %60 ? bb42 : bb43;
+  }
+  bb42 {
+    %0 = %59;
+    return;
+  }
+  bb43 {
+    %56 = %59;
+    GOTO bb44;
+  }
+  bb44 {
+    %62 = ConstantLoad false
+    %63 = %62;
+    %64 = writeBool(wd,%63) -> bb45;
+  }
+  bb45 {
+    %65 = %64 is error
+    %65 ? bb46 : bb47;
+  }
+  bb46 {
+    %0 = %64;
+    return;
+  }
+  bb47 {
+    %61 = %64;
+    GOTO bb48;
+  }
+  bb48 {
+    %67 = ConstantLoad héllo
+    %68 = ConstantLoad UTF-8
+    %69 = writeString(wd,%67,%68) -> bb49;
+  }
+  bb49 {
+    %70 = %69 is error
+    %70 ? bb50 : bb51;
+  }
+  bb50 {
+    %0 = %69;
+    return;
+  }
+  bb51 {
+    %66 = %69;
+    GOTO bb52;
+  }
+  bb52 {
+    %72 = ConstantLoad 0
+    %73 = %72;
+    %74 = writeVarInt(wd,%73) -> bb53;
+  }
+  bb53 {
+    %75 = %74 is error
+    %75 ? bb54 : bb55;
+  }
+  bb54 {
+    %0 = %74;
+    return;
+  }
+  bb55 {
+    %71 = %74;
+    GOTO bb56;
+  }
+  bb56 {
+    %77 = ConstantLoad 300
+    %78 = %77;
+    %79 = writeVarInt(wd,%78) -> bb57;
+  }
+  bb57 {
+    %80 = %79 is error
+    %80 ? bb58 : bb59;
+  }
+  bb58 {
+    %0 = %79;
+    return;
+  }
+  bb59 {
+    %76 = %79;
+    GOTO bb60;
+  }
+  bb60 {
+    %82 = ConstantLoad 300
+    %83 = unknown %82;
+    %84 = %83;
+    %85 = writeVarInt(wd,%84) -> bb61;
+  }
+  bb61 {
+    %86 = %85 is error
+    %86 ? bb62 : bb63;
+  }
+  bb62 {
+    %0 = %85;
+    return;
+  }
+  bb63 {
+    %81 = %85;
+    GOTO bb64;
+  }
+  bb64 {
+    %88 = close(wd) -> bb65;
+  }
+  bb65 {
+    %89 = %88 is error
+    %89 ? bb66 : bb67;
+  }
+  bb66 {
+    %0 = %88;
+    return;
+  }
+  bb67 {
+    %87 = %88;
+    GOTO bb68;
+  }
+  bb68 {
+    %91 = openReadableFile(path) -> bb69;
+  }
+  bb69 {
+    %92 = %91 is error
+    %92 ? bb70 : bb71;
+  }
+  bb70 {
+    %0 = %91;
+    return;
+  }
+  bb71 {
+    %90 = %91;
+    GOTO bb72;
+  }
+  bb72 {
+    rb = %90;
+    %94 = newObject ballerina/io:ReadableDataChannel
+    %95 = init(%94,rb,ord) -> bb73;
+  }
+  bb73 {
+    %97 = %95 is nil
+    %97 ? bb74 : bb75;
+  }
+  bb74 {
+    %96 = %94;
+    GOTO bb76;
+  }
+  bb75 {
+    %96 = %95;
+    GOTO bb76;
+  }
+  bb76 {
+    rd = %96;
+    %100 = readInt16(rd) -> bb77;
+  }
+  bb77 {
+    %101 = %100 is error
+    %101 ? bb78 : bb79;
+  }
+  bb78 {
+    %0 = %100;
+    return;
+  }
+  bb79 {
+    %99 = %100;
+    GOTO bb80;
+  }
+  bb80 {
+    %102 = %99;
+    %103 = println(%102) -> bb81;
+  }
+  bb81 {
+    %105 = readInt16(rd) -> bb82;
+  }
+  bb82 {
+    %106 = %105 is error
+    %106 ? bb83 : bb84;
+  }
+  bb83 {
+    %0 = %105;
+    return;
+  }
+  bb84 {
+    %104 = %105;
+    GOTO bb85;
+  }
+  bb85 {
+    %107 = %104;
+    %108 = println(%107) -> bb86;
+  }
+  bb86 {
+    %110 = readInt32(rd) -> bb87;
+  }
+  bb87 {
+    %111 = %110 is error
+    %111 ? bb88 : bb89;
+  }
+  bb88 {
+    %0 = %110;
+    return;
+  }
+  bb89 {
+    %109 = %110;
+    GOTO bb90;
+  }
+  bb90 {
+    %112 = %109;
+    %113 = println(%112) -> bb91;
+  }
+  bb91 {
+    %115 = readInt32(rd) -> bb92;
+  }
+  bb92 {
+    %116 = %115 is error
+    %116 ? bb93 : bb94;
+  }
+  bb93 {
+    %0 = %115;
+    return;
+  }
+  bb94 {
+    %114 = %115;
+    GOTO bb95;
+  }
+  bb95 {
+    %117 = %114;
+    %118 = println(%117) -> bb96;
+  }
+  bb96 {
+    %120 = readInt64(rd) -> bb97;
+  }
+  bb97 {
+    %121 = %120 is error
+    %121 ? bb98 : bb99;
+  }
+  bb98 {
+    %0 = %120;
+    return;
+  }
+  bb99 {
+    %119 = %120;
+    GOTO bb100;
+  }
+  bb100 {
+    %122 = %119;
+    %123 = println(%122) -> bb101;
+  }
+  bb101 {
+    %125 = readInt64(rd) -> bb102;
+  }
+  bb102 {
+    %126 = %125 is error
+    %126 ? bb103 : bb104;
+  }
+  bb103 {
+    %0 = %125;
+    return;
+  }
+  bb104 {
+    %124 = %125;
+    GOTO bb105;
+  }
+  bb105 {
+    %127 = %124;
+    %128 = println(%127) -> bb106;
+  }
+  bb106 {
+    %130 = readFloat32(rd) -> bb107;
+  }
+  bb107 {
+    %131 = %130 is error
+    %131 ? bb108 : bb109;
+  }
+  bb108 {
+    %0 = %130;
+    return;
+  }
+  bb109 {
+    %129 = %130;
+    GOTO bb110;
+  }
+  bb110 {
+    %132 = %129;
+    %133 = println(%132) -> bb111;
+  }
+  bb111 {
+    %135 = readFloat64(rd) -> bb112;
+  }
+  bb112 {
+    %136 = %135 is error
+    %136 ? bb113 : bb114;
+  }
+  bb113 {
+    %0 = %135;
+    return;
+  }
+  bb114 {
+    %134 = %135;
+    GOTO bb115;
+  }
+  bb115 {
+    %137 = %134;
+    %138 = println(%137) -> bb116;
+  }
+  bb116 {
+    %140 = readBool(rd) -> bb117;
+  }
+  bb117 {
+    %141 = %140 is error
+    %141 ? bb118 : bb119;
+  }
+  bb118 {
+    %0 = %140;
+    return;
+  }
+  bb119 {
+    %139 = %140;
+    GOTO bb120;
+  }
+  bb120 {
+    %142 = %139;
+    %143 = println(%142) -> bb121;
+  }
+  bb121 {
+    %145 = readBool(rd) -> bb122;
+  }
+  bb122 {
+    %146 = %145 is error
+    %146 ? bb123 : bb124;
+  }
+  bb123 {
+    %0 = %145;
+    return;
+  }
+  bb124 {
+    %144 = %145;
+    GOTO bb125;
+  }
+  bb125 {
+    %147 = %144;
+    %148 = println(%147) -> bb126;
+  }
+  bb126 {
+    %150 = ConstantLoad 6
+    %151 = %150;
+    %152 = ConstantLoad UTF-8
+    %153 = readString(rd,%151,%152) -> bb127;
+  }
+  bb127 {
+    %154 = %153 is error
+    %154 ? bb128 : bb129;
+  }
+  bb128 {
+    %0 = %153;
+    return;
+  }
+  bb129 {
+    %149 = %153;
+    GOTO bb130;
+  }
+  bb130 {
+    %155 = println(%149) -> bb131;
+  }
+  bb131 {
+    %157 = readVarInt(rd) -> bb132;
+  }
+  bb132 {
+    %158 = %157 is error
+    %158 ? bb133 : bb134;
+  }
+  bb133 {
+    %0 = %157;
+    return;
+  }
+  bb134 {
+    %156 = %157;
+    GOTO bb135;
+  }
+  bb135 {
+    %159 = %156;
+    %160 = println(%159) -> bb136;
+  }
+  bb136 {
+    %162 = readVarInt(rd) -> bb137;
+  }
+  bb137 {
+    %163 = %162 is error
+    %163 ? bb138 : bb139;
+  }
+  bb138 {
+    %0 = %162;
+    return;
+  }
+  bb139 {
+    %161 = %162;
+    GOTO bb140;
+  }
+  bb140 {
+    %164 = %161;
+    %165 = println(%164) -> bb141;
+  }
+  bb141 {
+    %167 = readVarInt(rd) -> bb142;
+  }
+  bb142 {
+    %168 = %167 is error
+    %168 ? bb143 : bb144;
+  }
+  bb143 {
+    %0 = %167;
+    return;
+  }
+  bb144 {
+    %166 = %167;
+    GOTO bb145;
+  }
+  bb145 {
+    %169 = %166;
+    %170 = println(%169) -> bb146;
+  }
+  bb146 {
+    %172 = close(rd) -> bb147;
+  }
+  bb147 {
+    %173 = %172 is error
+    %173 ? bb148 : bb149;
+  }
+  bb148 {
+    %0 = %172;
+    return;
+  }
+  bb149 {
+    %171 = %172;
+    GOTO bb150;
+  }
+  bb150 {
+    return;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %2 = ConstantLoad BE
+    %3 = ConstantLoad /tmp/bal_io_dc_be.bin
+    %4 = roundtrip(%2,%3) -> bb1;
+  }
+  bb1 {
+    %5 = %4 is error
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+  bb3 {
+    %1 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    %7 = ConstantLoad LE
+    %8 = ConstantLoad /tmp/bal_io_dc_le.bin
+    %9 = roundtrip(%7,%8) -> bb5;
+  }
+  bb5 {
+    %10 = %9 is error
+    %10 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %9;
+    return;
+  }
+  bb7 {
+    %6 = %9;
+    GOTO bb8;
+  }
+  bb8 {
+    %12 = ConstantLoad /tmp/bal_io_dc_be.bin
+    %13 = fileReadBytes(%12) -> bb9;
+  }
+  bb9 {
+    %14 = %13 is error
+    %14 ? bb10 : bb11;
+  }
+  bb10 {
+    %0 = %13;
+    return;
+  }
+  bb11 {
+    %11 = %13;
+    GOTO bb12;
+  }
+  bb12 {
+    beBytes = %11;
+    %16 = ConstantLoad 18
+    %17 = ConstantLoad 52
+    %18 = ConstantLoad 255
+    %19 = ConstantLoad 254
+    %20 = ConstantLoad 18
+    %21 = ConstantLoad 52
+    %22 = ConstantLoad 86
+    %23 = ConstantLoad 120
+    %24 = ConstantLoad 255
+    %25 = ConstantLoad 255
+    %26 = ConstantLoad 99
+    %27 = ConstantLoad 192
+    %28 = ConstantLoad 1
+    %29 = ConstantLoad 35
+    %30 = ConstantLoad 69
+    %31 = ConstantLoad 103
+    %32 = ConstantLoad 137
+    %33 = ConstantLoad 171
+    %34 = ConstantLoad 205
+    %35 = ConstantLoad 239
+    %36 = ConstantLoad 255
+    %37 = ConstantLoad 255
+    %38 = ConstantLoad 255
+    %39 = ConstantLoad 255
+    %40 = ConstantLoad 255
+    %41 = ConstantLoad 255
+    %42 = ConstantLoad 255
+    %43 = ConstantLoad 251
+    %44 = ConstantLoad 64
+    %45 = ConstantLoad 96
+    %46 = ConstantLoad 0
+    %47 = ConstantLoad 0
+    %48 = ConstantLoad 64
+    %49 = ConstantLoad 5
+    %50 = ConstantLoad 191
+    %51 = ConstantLoad 10
+    %52 = ConstantLoad 139
+    %53 = ConstantLoad 20
+    %54 = ConstantLoad 87
+    %55 = ConstantLoad 105
+    %56 = ConstantLoad 1
+    %57 = ConstantLoad 0
+    %58 = ConstantLoad 104
+    %59 = ConstantLoad 195
+    %60 = ConstantLoad 169
+    %61 = ConstantLoad 108
+    %62 = ConstantLoad 108
+    %63 = ConstantLoad 111
+    %64 = ConstantLoad 0
+    %65 = ConstantLoad 130
+    %66 = ConstantLoad 44
+    %67 = ConstantLoad 253
+    %68 = ConstantLoad 84
+    %69 = ConstantLoad 53
+    %70 = newArray [int:Unsigned8...][%69]{%16, %17, %18, %19, %20, %21, %22, %23, %24, %25, %26, %27, %28, %29, %30, %31, %32, %33, %34, %35, %36, %37, %38, %39, %40, %41, %42, %43, %44, %45, %46, %47, %48, %49, %50, %51, %52, %53, %54, %55, %56, %57, %58, %59, %60, %61, %62, %63, %64, %65, %66, %67, %68}
+    beExpected = %70;
+    %72 = == beBytes beExpected;
+    %73 = %72;
+    %74 = println(%73) -> bb13;
+  }
+  bb13 {
+    %76 = ConstantLoad /tmp/bal_io_dc_le.bin
+    %77 = fileReadBytes(%76) -> bb14;
+  }
+  bb14 {
+    %78 = %77 is error
+    %78 ? bb15 : bb16;
+  }
+  bb15 {
+    %0 = %77;
+    return;
+  }
+  bb16 {
+    %75 = %77;
+    GOTO bb17;
+  }
+  bb17 {
+    leBytes = %75;
+    %80 = ConstantLoad 52
+    %81 = ConstantLoad 18
+    %82 = ConstantLoad 254
+    %83 = ConstantLoad 255
+    %84 = ConstantLoad 120
+    %85 = ConstantLoad 86
+    %86 = ConstantLoad 52
+    %87 = ConstantLoad 18
+    %88 = ConstantLoad 192
+    %89 = ConstantLoad 99
+    %90 = ConstantLoad 255
+    %91 = ConstantLoad 255
+    %92 = ConstantLoad 239
+    %93 = ConstantLoad 205
+    %94 = ConstantLoad 171
+    %95 = ConstantLoad 137
+    %96 = ConstantLoad 103
+    %97 = ConstantLoad 69
+    %98 = ConstantLoad 35
+    %99 = ConstantLoad 1
+    %100 = ConstantLoad 251
+    %101 = ConstantLoad 255
+    %102 = ConstantLoad 255
+    %103 = ConstantLoad 255
+    %104 = ConstantLoad 255
+    %105 = ConstantLoad 255
+    %106 = ConstantLoad 255
+    %107 = ConstantLoad 255
+    %108 = ConstantLoad 0
+    %109 = ConstantLoad 0
+    %110 = ConstantLoad 96
+    %111 = ConstantLoad 64
+    %112 = ConstantLoad 105
+    %113 = ConstantLoad 87
+    %114 = ConstantLoad 20
+    %115 = ConstantLoad 139
+    %116 = ConstantLoad 10
+    %117 = ConstantLoad 191
+    %118 = ConstantLoad 5
+    %119 = ConstantLoad 64
+    %120 = ConstantLoad 1
+    %121 = ConstantLoad 0
+    %122 = ConstantLoad 104
+    %123 = ConstantLoad 195
+    %124 = ConstantLoad 169
+    %125 = ConstantLoad 108
+    %126 = ConstantLoad 108
+    %127 = ConstantLoad 111
+    %128 = ConstantLoad 0
+    %129 = ConstantLoad 172
+    %130 = ConstantLoad 2
+    %131 = ConstantLoad 212
+    %132 = ConstantLoad 125
+    %133 = ConstantLoad 53
+    %134 = newArray [int:Unsigned8...][%133]{%80, %81, %82, %83, %84, %85, %86, %87, %88, %89, %90, %91, %92, %93, %94, %95, %96, %97, %98, %99, %100, %101, %102, %103, %104, %105, %106, %107, %108, %109, %110, %111, %112, %113, %114, %115, %116, %117, %118, %119, %120, %121, %122, %123, %124, %125, %126, %127, %128, %129, %130, %131, %132}
+    leExpected = %134;
+    %136 = == leBytes leExpected;
+    %137 = %136;
+    %138 = println(%137) -> bb18;
+  }
+  bb18 {
+    return;
+  }
+}
+roundtrip$502$0$thunk$0() -> error|object { private function attachFile(string, "APPEND"|"OVERWRITE") returns nil|error; public function close() returns nil|error; public function init() returns nil; public function write([int:Unsigned8...], int) returns int|error }{
+  bb0 {
+    $desugar$0 = (1, path);
+    %2 = $default$11($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %2;
+    %4 = openWritableFile($desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+}
