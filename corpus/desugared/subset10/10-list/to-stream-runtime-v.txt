@@ -1,0 +1,274 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function printNext (
+    (variable values (type
+      (stream-type
+        (value-type int)
+        (value-type null))))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable next (type
+          (union-type
+            (record-type
+              (field value
+                (value-type int)))
+            (value-type null))) (expr
+          (invocation next expr:
+            (simple-var-ref values) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref next)
+          (record-type
+            (field value
+              (value-type int))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref next)
+                (literal value)))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal done)))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable replaced (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 10)
+            (literal 20)))))
+      (var-def
+        (variable replacedStream (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation lang.array toStream (
+            (simple-var-ref replaced))))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref replacedStream))))
+      (assignment
+        (index-based-access
+          (simple-var-ref replaced)
+          (literal 0))
+        (literal 11))
+      (assignment
+        (index-based-access
+          (simple-var-ref replaced)
+          (literal 1))
+        (literal 21))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref replaced)
+          (literal 30))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref replacedStream))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref replacedStream))))
+      (var-def
+        (variable beforeAppend (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)))))
+      (var-def
+        (variable beforeAppendStream (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation lang.array toStream (
+            (simple-var-ref beforeAppend))))))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref beforeAppend)
+          (literal 2))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref beforeAppendStream))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref beforeAppendStream))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref beforeAppendStream))))
+      (var-def
+        (variable afterAppend (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 3)))))
+      (var-def
+        (variable afterAppendStream (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation lang.array toStream (
+            (simple-var-ref afterAppend))))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref afterAppendStream))))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref afterAppend)
+          (literal 4))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref afterAppendStream))))
+      (var-def
+        (variable beforeGrowth (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 5)))))
+      (var-def
+        (variable beforeGrowthStream (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation lang.array toStream (
+            (simple-var-ref beforeGrowth))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref beforeGrowth)
+          (literal 3))
+        (literal 8))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref beforeGrowthStream))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref beforeGrowthStream))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref beforeGrowthStream))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref beforeGrowthStream))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref beforeGrowthStream))))
+      (var-def
+        (variable afterGrowth (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 9)))))
+      (var-def
+        (variable afterGrowthStream (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation lang.array toStream (
+            (simple-var-ref afterGrowth))))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref afterGrowthStream))))
+      (assignment
+        (index-based-access
+          (simple-var-ref afterGrowth)
+          (literal 3))
+        (literal 12))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref afterGrowthStream))))
+      (var-def
+        (variable empty (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable emptyStream (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation lang.array toStream (
+            (simple-var-ref empty))))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref emptyStream))))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref empty)
+          (literal 13))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref emptyStream))))
+      (var-def
+        (variable exhausted (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 14)))))
+      (var-def
+        (variable exhaustedStream (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation lang.array toStream (
+            (simple-var-ref exhausted))))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref exhaustedStream))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref exhaustedStream))))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref exhausted)
+          (literal 15))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref exhaustedStream))))
+      (var-def
+        (variable closed (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 16)
+            (literal 17)))))
+      (var-def
+        (variable closedStream (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation lang.array toStream (
+            (simple-var-ref closed))))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref closedStream))))
+      (var-def
+        (variable firstClose (type
+          (value-type null)) (expr
+          (invocation close expr:
+            (simple-var-ref closedStream) ()))))
+      (var-def
+        (variable secondClose (type
+          (value-type null)) (expr
+          (invocation close expr:
+            (simple-var-ref closedStream) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref firstClose)
+            (value-type null))
+          (type-test-expr is
+            (simple-var-ref secondClose)
+            (value-type null)))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref closedStream))))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref closed)
+          (literal 18))))
+      (expression-stmt
+        (invocation printNext (
+          (simple-var-ref closedStream)))))))

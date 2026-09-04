@@ -52,6 +52,7 @@ const (
 	OpaqueFnArrayIndexOf   = 2
 	OpaqueFnArrayRemove    = 3
 	OpaqueFnArrayRemoveAll = 4
+	OpaqueFnArrayToStream  = 5
 	// lang.map
 	OpaqueFnMapRemove = 0
 	OpaqueFnMapGet    = 1
@@ -133,6 +134,7 @@ func OpaqueSymbols(pkg PackageIdentifier) []Symbol {
 			newOpaqueFunctionSymbol("indexOf", OpaqueFnArrayIndexOf, noIsolatedParams),
 			newOpaqueFunctionSymbol("remove", OpaqueFnArrayRemove, noIsolatedParams),
 			newOpaqueFunctionSymbol("removeAll", OpaqueFnArrayRemoveAll, noIsolatedParams),
+			newOpaqueFunctionSymbol("toStream", OpaqueFnArrayToStream, noIsolatedParams),
 		}
 	case "lang.map":
 		return []Symbol{
