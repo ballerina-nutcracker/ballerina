@@ -10,6 +10,7 @@ linters:
     - iotamixing
     - reassign
     - unparam
+    - wastedassign
     - forbidigo
   settings:
     reassign:

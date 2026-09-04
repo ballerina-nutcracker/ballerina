@@ -19,10 +19,11 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [log](log/0.0.1/go1.26/README.md)                 | 7 | 2 | 15 | 29% |
 | [math.vector](math.vector/0.0.1/go1.26/README.md) | 5 | 0 | 0 | 100% |
 | [os](os/0.0.1/go1.26/README.md)                   | 11 | 1 | 0 | 92% |
+| [protobuf](protobuf/0.0.1/go1.26/README.md)       | 11 | 2 | 0 | 85% |
 | [random](random/0.0.1/go1.26/README.md)           | 3 | 1 | 1 | 60% |
 | [time](time/0.0.1/go1.26/README.md)               | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.26/README.md)                 | 3 | 0 | 1 | 75% |
-| **Total**                                         | **150** | **16** | **64** | **65%** |
+| **Total**                                         | **161** | **18** | **64** | **66%** |
 
 ## Notable Behavioural Changes
 
@@ -72,6 +73,10 @@ tables instead.
 ### os
 
 - **Environment mutations are process-wide.** jBallerina uses per-strand env maps for isolation; the Go-native version calls `os.Setenv` / `os.Unsetenv` directly, mutating the process-wide environment. This is safe for single-threaded Ballerina programs but not for concurrent strand execution.
+
+### protobuf
+
+- **`map<anydata>` keys from an unpacked Struct are sorted alphabetically.** jBallerina's field order for a deserialized `Struct` reflects Java's map implementation; the Go-native version sorts keys alphabetically instead, since Go's map type does not preserve insertion or wire order.
 
 ### random
 

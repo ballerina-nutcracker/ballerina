@@ -136,6 +136,8 @@ lib/stdlibs/ballerina/<name>/0.0.1/go1.26/
 
 Multi-file `.bal` and multi-file `native/` are both supported — see exemplars below. For dotted names like `math.vector`, the single `.bal` file is named `math.vector.bal`.
 
+**Real Ballerina submodules** (a package with a root module plus genuine sub-modules, matching jBallerina's own multi-module packages) use a `modules/<localSubmoduleName>/` directory per sub-module, each with its own `.bal` file(s) — module discovery is purely filesystem-based (no `[[modules]]` declaration needed in `Ballerina.toml`). See `lib/stdlibs/ballerina/protobuf/0.0.1/go1.26/` for the exemplar: root `protobuf.bal` plus `modules/types.any/`, `modules/types.duration/`, etc. Prefer this over registering each sub-module as an independent flat top-level package — a package with real sub-modules is one thing with one `Ballerina.toml`/`Bala.toml`/`Dependencies.toml`/version, not several.
+
 Templates:
 
 - **Manifests** (`Ballerina.toml`, `Bala.toml`, `Dependencies.toml` with/without cross-stdlib deps) — `templates/manifests.md`.
@@ -155,15 +157,14 @@ Shared patterns — read the relevant file only when the situation applies:
    ```
    Without this, all `= external` functions produce "function not found" at runtime even though the binary compiles cleanly. Skip this line if your stdlib has no `native/` directory.
 
-2. **`test_util/testphases/phases.go`** — append an entry to `builtinStdlibs`:
-   ```go
-   {"ballerina", "<name>", "0.0.1"},
-   ```
-   Without this, corpus tests cannot resolve `import ballerina/<name>` even if everything else compiles. If the new stdlib imports other stdlibs, place this entry **after** those dependencies in the list so the loader compiles them in order.
+2. **`test_util/testphases/phases.go`** — append an entry to `builtinStdlibs`. This list is consumed only by the hand-rolled per-stage corpus drivers (ast/bir/desugar/cfg/etc. `corpus_*_test.go`, which discover tests under `corpus/bal/`) — `cli/cmd run` and the real project pipeline (including `corpus/lib/`'s `TestLibIntegration`) resolve `ballerina/*` imports via `lib/stdlibs/ballerina/` on disk regardless of this list. Without an entry here, those specific corpus drivers cannot resolve `import ballerina/<name>` even though `go run ./cli/cmd run` works fine.
+   - **Single-module package** (the common case): `flatEntry("<name>", "0.0.1", "go1.26")`.
+   - **Package with real sub-modules** (see File layout above): one `flatEntry` for the root module, then one `subModuleEntry("<pkg>", "<localSubmoduleDir>", "0.0.1", "go1.26")` per sub-module — root **before** its sub-modules, since each entry's `ResolveSymbols` call sees only previously-listed entries' exported symbols.
+   - Either way, place the new entry/entries **after** any stdlib this one imports, so the loader compiles them in order.
 
 3. **`Dependencies.toml`** — if the `.bal` source imports any other stdlib (`import ballerina/<dep>;`), declare it per `templates/manifests.md`. Without this, the full project resolver will not discover the dependency and every user `.bal` file importing this stdlib will fail with `Unknown import: ballerina/<dep>`.
 
-4. **`projects/module_resolver.go`** — usually no change. The existing `packageNameCandidates` handles dotted names (`math.vector` → tries `math.vector` then `math`). Read it once to confirm the import in question is covered.
+4. **`projects/module_resolver.go`** — usually no change, even for a dotted 2-level sub-module name (`math.vector`-style dotted names, `<pkg>.<submodule>` sub-module names): the existing `packageNameCandidates` already reduces either shape to the right package name. Read it once to confirm the import in question is covered — and if you're tempted to generalize it further, verify the change is actually load-bearing by reverting it and re-testing before keeping it; it's easy to "fix" a case that was already handled.
 
 ### Coding rules
 
@@ -174,10 +175,11 @@ Follow `AGENTS.md` (root) — Coding style, Symbols, and PAL sections. Do not re
 | Exemplar | Use when |
 |---|---|
 | `lib/stdlibs/ballerina/url/0.0.1/go1.26/` | Smallest viable stdlib — 2 extern functions, 1 native file. |
-| `lib/stdlibs/ballerina/io/0.0.1/go1.26/` | Multi-file `.bal` (constants/types/print/file) + multi-file `native/` (`io.go` + `file_io.go`). |
+| `lib/stdlibs/ballerina/io/0.0.1/go1.26/` | Single `.bal` file, multi-file `native/` (`io.go` + `file_io.go` + more). |
 | `lib/stdlibs/ballerina/time/0.0.1/go1.26/` | Heavy native implementation with PAL usage and documented behavioural divergences. |
 | `lib/stdlibs/ballerina/http/0.0.1/go1.26/` | Class-based stdlib (Client init wrapper). |
 | `lib/stdlibs/ballerina/math.vector/0.0.1/go1.26/` | Pure Ballerina — no `native/` directory at all. |
+| `lib/stdlibs/ballerina/protobuf/0.0.1/go1.26/` | Package with real sub-modules (`modules/types.any/`, etc.) — one root + six sub-module `builtinStdlibs` entries, native code in one sub-module only. |
 
 ## 8. Tests
 
@@ -258,7 +260,7 @@ Before declaring done, check every box:
 
 ### Wire-up
 - [ ] `lib/rt/libs.go` blank import added (skip only if pure Ballerina).
-- [ ] `test_util/testphases/phases.go` `builtinStdlibs` entry added; placed after any stdlib dependencies in the list.
+- [ ] `test_util/testphases/phases.go` `builtinStdlibs` entry/entries added (one `flatEntry`, or one `flatEntry` + one `subModuleEntry` per sub-module); placed after any stdlib dependencies in the list.
 - [ ] `Dependencies.toml` declares every `import ballerina/<dep>` that appears in the `.bal` source (only needed when cross-stdlib imports exist; omit otherwise).
 - [ ] PAL fields (if any added) implemented in `palnative/` and wired into `TestPal`.
 

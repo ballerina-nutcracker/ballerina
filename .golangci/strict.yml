@@ -10,6 +10,7 @@ linters:
     - iotamixing
     - reassign
     - unparam
+    - wastedassign
   settings:
     reassign:
       patterns:

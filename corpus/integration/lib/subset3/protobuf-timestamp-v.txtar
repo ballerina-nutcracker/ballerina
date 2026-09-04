@@ -1,0 +1,7 @@
+-- stdout --
+1704067200
+type.googleapis.com/google.protobuf.Timestamp
+1704067200
+0.5
+0
+-- stderr --

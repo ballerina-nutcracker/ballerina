@@ -1,0 +1,14 @@
+-- stdout --
+type.googleapis.com/google.protobuf.Int64Value
+42
+-7
+type.googleapis.com/google.protobuf.FloatValue
+1.5
+type.googleapis.com/google.protobuf.StringValue
+hello world
+type.googleapis.com/google.protobuf.BoolValue
+false
+type.googleapis.com/google.protobuf.BytesValue
+[10,20,30,255]
+0
+-- stderr --

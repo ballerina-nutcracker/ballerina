@@ -14,6 +14,7 @@ require (
 	github.com/ballerina-nutcracker/ballerina/values v0.7.0
 	golang.org/x/crypto v0.52.0
 	golang.org/x/text v0.37.0
+	google.golang.org/protobuf v1.36.12
 )
 
 require (

@@ -22,6 +22,9 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
+	"sort"
+	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -71,32 +74,81 @@ type PipelineResult struct {
 	BIRPackage      *bir.BIRPackage
 }
 
-// stdlibEntry describes one embedded standard-library package to pre-compile.
+// stdlibEntry describes one embedded standard-library module to pre-compile.
+// pkg is the Ballerina.toml package directory under lib/stdlibs/ballerina/
+// (e.g. "protobuf"); module is the full dotted module name as used in import
+// statements (e.g. "protobuf.types.any"); dir is the path, relative to the
+// package's platform directory, holding that module's .bal files ("" for the
+// package's root module, "modules/types.any" for a sub-module). For a
+// single-module package, pkg == module and dir == "".
 type stdlibEntry struct {
 	org      string
-	name     string
+	pkg      string
+	module   string
+	dir      string
 	version  string
 	platform string
 }
 
-// builtinStdlibs is the ordered list of standard-library packages baked into the
-// binary that are still seeded manually for hand-rolled compile drivers.
-// Order matters: a package must appear after all packages it imports
-// (e.g. io before os, time before crypto).
-var builtinStdlibs = []stdlibEntry{
-	{"ballerina", "io", "0.0.1", "go1.26"},
-	{"ballerina", "http", "0.0.1", "go1.26"},
-	{"ballerina", "log", "0.0.1", "go1.26"},
-	{"ballerina", "math.vector", "0.0.1", "go1.26"},
-	{"ballerina", "os", "0.0.1", "go1.26"},
-	{"ballerina", "random", "0.0.1", "go1.26"},
-	{"ballerina", "time", "0.0.1", "go1.26"},
-	{"ballerina", "url", "0.0.1", "go1.26"},
-	{"ballerina", "crypto", "0.0.1", "go1.26"},
-	{"ballerina", "avro", "0.0.1", "go1.26"},
+func flatEntry(pkg, version, platform string) stdlibEntry {
+	return stdlibEntry{org: "ballerina", pkg: pkg, module: pkg, version: version, platform: platform}
 }
 
-// loadBuiltinPublicSymbols compiles the embedded standard-library packages into
+func subModuleEntry(pkg, subModuleDir, version, platform string) stdlibEntry {
+	return stdlibEntry{
+		org: "ballerina", pkg: pkg, module: pkg + "." + subModuleDir,
+		dir: "modules/" + subModuleDir, version: version, platform: platform,
+	}
+}
+
+// builtinStdlibs is the ordered list of standard-library modules baked into the
+// binary that are still seeded manually for hand-rolled compile drivers.
+// Order matters: a module must appear after all modules it imports
+// (e.g. io before os, time before crypto; a package's root module before its
+// sub-modules).
+var builtinStdlibs = []stdlibEntry{
+	flatEntry("io", "0.0.1", "go1.26"),
+	flatEntry("http", "0.0.1", "go1.26"),
+	flatEntry("log", "0.0.1", "go1.26"),
+	flatEntry("math.vector", "0.0.1", "go1.26"),
+	flatEntry("os", "0.0.1", "go1.26"),
+	flatEntry("random", "0.0.1", "go1.26"),
+	flatEntry("time", "0.0.1", "go1.26"),
+	flatEntry("url", "0.0.1", "go1.26"),
+	flatEntry("crypto", "0.0.1", "go1.26"),
+	flatEntry("avro", "0.0.1", "go1.26"),
+	flatEntry("protobuf", "0.0.1", "go1.26"),
+	subModuleEntry("protobuf", "types.any", "0.0.1", "go1.26"),
+	subModuleEntry("protobuf", "types.duration", "0.0.1", "go1.26"),
+	subModuleEntry("protobuf", "types.empty", "0.0.1", "go1.26"),
+	subModuleEntry("protobuf", "types.struct", "0.0.1", "go1.26"),
+	subModuleEntry("protobuf", "types.timestamp", "0.0.1", "go1.26"),
+	subModuleEntry("protobuf", "types.wrappers", "0.0.1", "go1.26"),
+}
+
+// moduleBalFiles returns the sorted list of .bal file paths (embed-FS relative)
+// making up the given module's source, under the package's platform directory.
+func moduleBalFiles(entry stdlibEntry) ([]string, error) {
+	moduleDir := fmt.Sprintf("ballerina/%s/%s/%s", entry.pkg, entry.version, entry.platform)
+	if entry.dir != "" {
+		moduleDir = moduleDir + "/" + entry.dir
+	}
+	dirEntries, err := fs.ReadDir(stdlibs.FS, moduleDir)
+	if err != nil {
+		return nil, err
+	}
+	var files []string
+	for _, de := range dirEntries {
+		if de.IsDir() || !strings.HasSuffix(de.Name(), ".bal") {
+			continue
+		}
+		files = append(files, path.Join(moduleDir, de.Name()))
+	}
+	sort.Strings(files)
+	return files, nil
+}
+
+// loadBuiltinPublicSymbols compiles the embedded standard-library modules into
 // sibling CompilerContexts that share env (and thus the same type-env and
 // symbol table). The returned map can be merged directly into the publicSymbols
 // passed to semantics.ResolveImports.
@@ -104,34 +156,53 @@ func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.Pa
 	result := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
 
 	for _, entry := range builtinStdlibs {
-		balPath := fmt.Sprintf("ballerina/%s/%s/%s/%s.bal", entry.name, entry.version, entry.platform, entry.name)
-		contentBytes, err := fs.ReadFile(stdlibs.FS, balPath)
-		if err != nil {
+		balFiles, err := moduleBalFiles(entry)
+		if err != nil || len(balFiles) == 0 {
 			continue
 		}
-		content := string(contentBytes)
 
 		cx := context.NewCompilerContext(env)
-		virtualPath := fmt.Sprintf("$stdlib/ballerina/%s.bal", entry.name)
-		cx.DiagnosticEnv().RegisterFile(virtualPath, text.NewStringTextDocument(content))
+		compilationUnits := make([]*ast.BLangCompilationUnit, 0, len(balFiles))
+		ok := true
+		for _, balPath := range balFiles {
+			contentBytes, err := fs.ReadFile(stdlibs.FS, balPath)
+			if err != nil {
+				ok = false
+				break
+			}
+			content := string(contentBytes)
 
-		st, err := parser.GetSyntaxTree(cx, virtualPath, content)
-		if err != nil || cx.HasDiagnostics() {
+			virtualPath := "$stdlib/" + balPath
+			cx.DiagnosticEnv().RegisterFile(virtualPath, text.NewStringTextDocument(content))
+
+			st, err := parser.GetSyntaxTree(cx, virtualPath, content)
+			if err != nil || cx.HasDiagnostics() {
+				ok = false
+				break
+			}
+
+			cu := nodebuilder.GetCompilationUnit(cx, st)
+			if cu == nil || cx.HasDiagnostics() {
+				ok = false
+				break
+			}
+			compilationUnits = append(compilationUnits, cu)
+		}
+		if !ok {
 			continue
 		}
 
-		cu := nodebuilder.GetCompilationUnit(cx, st)
-		if cu == nil || cx.HasDiagnostics() {
-			continue
-		}
 		pkgID := cx.NewPackageID(
 			model.Name(entry.org),
-			[]model.Name{model.Name(entry.name)},
+			model.CreateNameComps(model.Name(entry.module)),
 			model.DEFAULT_VERSION,
 		)
-		cu.SetPackageID(pkgID)
-		compilationUnits := []*ast.BLangCompilationUnit{cu}
+		for _, cu := range compilationUnits {
+			cu.SetPackageID(pkgID)
+		}
 
+		// Pass accumulated stdlib symbols so modules that import other stdlib
+		// modules (e.g. os→io, crypto→time, protobuf.types.any→protobuf) resolve correctly.
 		pkgScope, exported, importedSymbols := semantics.ResolveSymbols(
 			cx,
 			*pkgID,
@@ -156,7 +227,7 @@ func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.Pa
 			continue
 		}
 
-		result[semantics.PackageIdentifier{OrgName: entry.org, ModuleName: entry.name}] = exported
+		result[semantics.PackageIdentifier{OrgName: entry.org, ModuleName: entry.module}] = exported
 	}
 
 	return result
