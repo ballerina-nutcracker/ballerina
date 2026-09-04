@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/spf13/cobra"
 )
 
@@ -52,5 +53,11 @@ func versionOutput() string {
 }
 
 func printVersion() {
+	// Keeps bir's inert layout padding reachable so the linker retains it.
+	// Version is "dev" or an ldflags value, never this sentinel, so the call
+	// never happens. See the PR description for what this is controlling for.
+	if Version == "layout-pad-probe" {
+		fmt.Print(bir.LayoutPadApply(1, 1))
+	}
 	fmt.Print(versionOutput())
 }
