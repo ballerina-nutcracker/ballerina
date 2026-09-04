@@ -1898,7 +1898,6 @@ func resolveClassDefinition(ms *compilationUnitSymbolResolver, classDef *ast.BLa
 	classMethodSymbolName := func(methodName string) string {
 		return className + "." + methodName
 	}
-	classSym := ms.moduleResolver.ctx.GetSymbol(classDef.Symbol()).(model.ClassSymbol)
 	networkClassSym, isNetworkClass := ms.moduleResolver.ctx.GetSymbol(classDef.Symbol()).(*model.NetworkClassSymbol)
 
 	classResolver := newBlockSymbolResolverWithBlockScope(ms, classDef)
@@ -1912,8 +1911,6 @@ func resolveClassDefinition(ms *compilationUnitSymbolResolver, classDef *ast.BLa
 	allocateObjectResourceMethodSymbols(ms, classResolver, classDef, networkClassSym, isNetworkClass)
 
 	finishResolveClassDefinition(ms, classResolver, classDef.Fields, classDef.Methods, classDef.ResourceMethods, classDef.InitFunction, includedFields, ms.scope, classMethodSymbolName, isNetworkClass)
-
-	publishObjectMethodTable(classSym, classDef)
 }
 
 func finishResolveClassDefinition(ms *compilationUnitSymbolResolver, blockRes *blockSymbolResolver, fields []*ast.BLangVariable, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, initFn *ast.BLangFunction, includedFields []inclusionMemberForSymbolResolution, methodTargetScope methodSymbolTargetScope, methodSymbolName func(string) string, resourceMethodsAreNetworkClass bool) {
@@ -2023,17 +2020,6 @@ func allocateResourceMethodSymbol(targetScope methodSymbolTargetScope, rm *ast.B
 	symRef, _ := targetScope.MainSpace().GetSymbol(symbolName)
 	rm.SetSymbol(symRef)
 	return symRef
-}
-
-func publishObjectMethodTable(classSym model.ClassSymbol, classDef *ast.BLangClassDefinition) {
-	methodTable := make(map[string]model.SymbolRef, len(classDef.Methods))
-	for _, m := range common.MethodsInResolutionOrder(classDef.Methods) {
-		methodTable[m.Name] = m.Method.Symbol()
-	}
-	if classDef.InitFunction != nil {
-		methodTable["init"] = classDef.InitFunction.Symbol()
-	}
-	classSym.SetMethods(methodTable)
 }
 
 func mangledResourceMethodName(methodName string, idx int) string {

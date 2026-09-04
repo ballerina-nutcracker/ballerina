@@ -21,7 +21,7 @@ type ListAtomicType struct {
 	rest    SemType
 }
 
-var _ atomicType = &ListAtomicType{}
+var _ AtomicType = &ListAtomicType{}
 
 func newListAtomicTypeFromMembersRest(members fixedLengthArray, rest SemType) ListAtomicType {
 	this := ListAtomicType{}

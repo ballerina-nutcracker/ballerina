@@ -5,6 +5,27 @@
       (field value
         (value-type int)
         (literal 42)))))
+  (type-definition OuterFn
+    (function-type (
+      (record-type
+        (field a
+          (value-type int)
+          (literal 7)))) (
+      (value-type int))))
+  (type-definition InnerFn
+    (function-type (
+      (record-type
+        (field b
+          (value-type int)
+          (literal 8)))) (
+      (value-type int))))
+  (type-definition NestedFn
+    (function-type (
+      (record-type
+        (field c
+          (value-type int)
+          (literal 9)))) (
+      (value-type int))))
   (function init () ()
     (block-function-body
       (assignment
@@ -23,6 +44,25 @@
         (index-based-access
           (simple-var-ref input)
           (literal value)))))
+  (function foo (
+    (variable m (type
+      (record-type
+        (field a
+          (value-type int)
+          (literal 5))
+        (field b
+          (value-type int)
+          (literal 10)))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (index-based-access
+            (simple-var-ref m)
+            (literal a))
+          (index-based-access
+            (simple-var-ref m)
+            (literal b))))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -37,8 +77,89 @@
       (expression-stmt
         (invocation io println (
           (invocation parameterValue (
-            (simple-var-ref $desugar$0))))))))
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (mapping-constructor-expr))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation foo (
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (literal 6))))))))
+      (var-def
+        (variable outerFn (type
+          (user-defined-type OuterFn)) (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable x (type
+                (record-type
+                  (field a
+                    (value-type int)
+                    (literal 7)))))) (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable innerFn (type
+                    (user-defined-type InnerFn)) (expr
+                    (lambda
+                      (function $anonFunc$_1 (
+                        (variable y (type
+                          (record-type
+                            (field b
+                              (value-type int)
+                              (literal 8)))))) (
+                        (value-type int))
+                        (block-function-body
+                          (var-def
+                            (variable nestedFn (type
+                              (user-defined-type NestedFn)) (expr
+                              (lambda
+                                (function $anonFunc$_2 (
+                                  (variable z (type
+                                    (record-type
+                                      (field c
+                                        (value-type int)
+                                        (literal 9)))))) (
+                                  (value-type int))
+                                  (block-function-body
+                                    (return
+                                      (binary-expr +
+                                        (binary-expr +
+                                          (index-based-access
+                                            (simple-var-ref x)
+                                            (literal a))
+                                          (index-based-access
+                                            (simple-var-ref y)
+                                            (literal b)))
+                                        (index-based-access
+                                          (simple-var-ref z)
+                                          (literal c))))))))))
+                          (return
+                            (invocation nestedFn (
+                              (mapping-constructor-expr))))))))))
+                (return
+                  (invocation innerFn (
+                    (mapping-constructor-expr))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation outerFn (
+            (mapping-constructor-expr))))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal 7))))
   (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (literal 8))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (literal 9))))
+  (function $desugar$6 () ()
     (block-function-body
       (return
         (literal 42))))
@@ -46,7 +167,15 @@
     (block-function-body
       (return
         (mapping-constructor-expr))))
-  (function $desugar$0 () ()
+  (function $desugar$3 () ()
     (block-function-body
       (return
-        (literal 43)))))
+        (literal 43))))
+  (function $desugar$4 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $desugar$5 () ()
+    (block-function-body
+      (return
+        (literal 10)))))

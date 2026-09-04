@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> assign19-e.bal:21:16
+error[SEMANTIC_ERROR]: too many arguments
+  --> assign19-e.bal:21:24
    |
 21 |     io:println(f(1, 2, 3)); // @error
-   |                ^^^^^^^^^^
+   |                        ^

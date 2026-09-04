@@ -1,0 +1,271 @@
+(package
+  (import-package ballerina io (as io))
+  (variable moduleCalculator (type
+    (object-type
+      (method-decl add public (
+        (param x
+          (value-type int))
+        (param y
+          (value-type int))) (
+        (value-type int))))))
+  (type-definition Config
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (literal 2))))
+  (type-definition Calculator
+    (object-type
+      (method-decl add public (
+        (param x
+          (value-type int))
+        (param y
+          (value-type int))) (
+        (value-type int)))
+      (method-decl configured public (
+        (param config
+          (user-defined-type Config))) (
+        (value-type int)))))
+  (type-definition Node
+    (object-type
+      (method-decl next public () (
+        (union-type
+          (user-defined-type Node)
+          (value-type null))))
+      (method-decl value public (
+        (param fallback
+          (value-type int))) (
+        (value-type int)))))
+  (class-definition CalculatorImpl
+    (function init () ()
+      (block-function-body))
+    (function add (
+      (variable x (type
+        (value-type int)))
+      (variable y (type
+        (value-type int)) (expr
+        (literal 2)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref x)
+            (simple-var-ref y)))))
+    (function configured (
+      (variable config (type
+        (user-defined-type Config)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (index-based-access
+              (simple-var-ref config)
+              (literal x))
+            (index-based-access
+              (simple-var-ref config)
+              (literal y)))))))
+  (class-definition NodeImpl
+    (function init () ()
+      (block-function-body))
+    (function next () (
+      (union-type
+        (user-defined-type Node)
+        (value-type null)))
+      (block-function-body
+        (return
+          (literal <nil>))))
+    (function value (
+      (variable fallback (type
+        (value-type int)) (expr
+        (literal 4)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref fallback)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref moduleCalculator)
+        (new
+          (user-defined-type CalculatorImpl) ()))))
+  (function useInline (
+    (variable value (type
+      (object-type
+        (method-decl add public (
+          (param x
+            (value-type int))
+          (param y
+            (value-type int))) (
+          (value-type int))))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 8))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$5 (
+            (simple-var-ref $desugar$0))))))
+      (return
+        (invocation add expr:
+          (simple-var-ref value) (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))))))
+  (function returnInline () (
+    (object-type
+      (method-decl add public (
+        (param x
+          (value-type int))
+        (param y
+          (value-type int))) (
+        (value-type int)))))
+    (block-function-body
+      (return
+        (new
+          (user-defined-type CalculatorImpl) ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable calculator (type
+          (user-defined-type Calculator)) (expr
+          (new
+            (user-defined-type CalculatorImpl) ()))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 3))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add expr:
+            (simple-var-ref calculator) (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add expr:
+            (simple-var-ref calculator) (
+            (literal 4)
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation configured expr:
+            (simple-var-ref calculator) (
+            (mapping-constructor-expr
+              (key-value
+                (literal x)
+                (literal 6))))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $default$7 (
+              (variable x (type
+                (value-type )))) ()
+              (block-function-body
+                (return
+                  (literal 2))))))))
+      (var-def
+        (variable localCalculator (type
+          (object-type
+            (method-decl add public (
+              (param x
+                (value-type int))
+              (param y
+                (value-type int))) (
+              (value-type int))))) (expr
+          (simple-var-ref calculator))))
+      (var-def
+        (variable $desugar$3 (expr
+          (literal 5))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation $desugar$2 (
+            (simple-var-ref $desugar$3))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add expr:
+            (simple-var-ref localCalculator) (
+            (simple-var-ref $desugar$3)
+            (simple-var-ref $desugar$4))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (literal 6))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation $default$4 (
+            (simple-var-ref $desugar$5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add expr:
+            (simple-var-ref moduleCalculator) (
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation useInline (
+            (simple-var-ref calculator))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add expr:
+            (invocation returnInline ()) (
+            (literal 7)
+            (literal 4))))))
+      (var-def
+        (variable node (type
+          (user-defined-type Node)) (expr
+          (new
+            (user-defined-type NodeImpl) ()))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation $default$2 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation value expr:
+            (simple-var-ref node) (
+            (simple-var-ref $desugar$7))))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal 2))))
+  (function $default$0 (
+    (variable x (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (literal 2))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (literal 4))))
+  (function $default$4 (
+    (variable x (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (literal 2))))
+  (function $default$5 (
+    (variable x (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (literal 2))))
+  (function $default$6 (
+    (variable x (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (literal 2))))
+  (function $default$1 (
+    (variable x (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (literal 2))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (literal 4)))))

@@ -153,6 +153,22 @@ func (c *CompilerContext) SymbolType(symbol model.SymbolRef) semtypes.SemType {
 	return c.env.GetSymbol(symbol).Type()
 }
 
+func (c *CompilerContext) FunctionTypedSignature(symbol model.SymbolRef) (model.TypedFunctionSignature, bool) {
+	return c.env.FunctionTypedSignature(symbol)
+}
+
+func (c *CompilerContext) SetFunctionTypedSignature(symbol model.SymbolRef, signature model.TypedFunctionSignature) bool {
+	return c.env.SetFunctionTypedSignature(symbol, signature)
+}
+
+func (c *CompilerContext) DependentlyTypedFunctionType(symbol model.SymbolRef) ([]semtypes.SemType, model.TypeOp, bool) {
+	return c.env.DependentlyTypedFunctionType(symbol)
+}
+
+func (c *CompilerContext) SetDependentlyTypedFunctionType(symbol model.SymbolRef, paramTypes []semtypes.SemType, returnType model.TypeOp) bool {
+	return c.env.SetDependentlyTypedFunctionType(symbol, paramTypes, returnType)
+}
+
 func (c *CompilerContext) SymbolLocation(symbol model.SymbolRef) diagnostics.Location {
 	return c.env.SymbolLocation(symbol)
 }
@@ -187,6 +203,22 @@ func (c *CompilerContext) SetSymbolAnnotationValue(symbol model.SymbolRef, key s
 
 func (c *CompilerContext) SymbolAnnotationValues(symbol model.SymbolRef) values.AnnotationValues {
 	return c.env.SymbolAnnotationValues(symbol)
+}
+
+func (c *CompilerContext) SetMappingDefaults(mat *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+	c.env.SetMappingDefaults(mat, defaults)
+}
+
+func (c *CompilerContext) MappingDefaults(mat *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
+	return c.env.MappingDefaults(mat)
+}
+
+func (c *CompilerContext) SetObjectMethodTable(mat *semtypes.MappingAtomicType, table model.MethodTable) {
+	c.env.SetObjectMethodTable(mat, table)
+}
+
+func (c *CompilerContext) ObjectMethodTable(mat *semtypes.MappingAtomicType) (model.MethodTable, bool) {
+	return c.env.ObjectMethodTable(mat)
 }
 
 func (c *CompilerContext) DistinctTypeID(symbol model.SymbolRef) int {

@@ -26,7 +26,7 @@ type MappingAtomicType struct {
 	rest  SemType
 }
 
-var _ atomicType = &MappingAtomicType{}
+var _ AtomicType = &MappingAtomicType{}
 
 func mappingAtomicTypeFrom(names []string, types []SemType, rest SemType) MappingAtomicType {
 	return MappingAtomicType{

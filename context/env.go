@@ -105,6 +105,8 @@ type CompilerEnvironment struct {
 	functionSignatures         functionsignatures.Store
 	distinctTypes              distinctTypeTracker
 	langLibDistinctTypeSymbols langLibDistinctTypeRegistry
+	mappingDefaults            sync.Map // *semtypes.MappingAtomicType -> []model.FieldDefault
+	objectMethodTables         sync.Map // *semtypes.MappingAtomicType -> model.MethodTable
 	// symbolAnnotations holds annotation values keyed by symbol ref, instead of
 	// a field on each symbol — most symbols carry no annotations, so this avoids
 	// a per-symbol word and keeps lookup keyed by reference. Values are written
@@ -128,6 +130,58 @@ func (c *CompilerEnvironment) SymbolAnnotationValues(symbol model.SymbolRef) val
 		return av.(values.AnnotationValues)
 	}
 	return values.NewAnnotationValues()
+}
+
+// SetMappingDefaults associates a package-level mapping atom with its field defaults.
+// Callers must not mutate defaults after storing them.
+func (c *CompilerEnvironment) SetMappingDefaults(mat *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+	c.mappingDefaults.Store(mat, defaults)
+}
+
+// MappingDefaults returns the field defaults associated with a package-level mapping atom.
+// Callers must treat the returned slice as read-only.
+func (c *CompilerEnvironment) MappingDefaults(mat *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
+	defaults, ok := c.mappingDefaults.Load(mat)
+	if !ok {
+		return nil, false
+	}
+	return defaults.([]model.FieldDefault), true
+}
+
+// MappingDefaultsSnapshot returns a read-only snapshot for symbol-table serialization.
+func (c *CompilerEnvironment) MappingDefaultsSnapshot() map[*semtypes.MappingAtomicType][]model.FieldDefault {
+	snapshot := make(map[*semtypes.MappingAtomicType][]model.FieldDefault)
+	c.mappingDefaults.Range(func(key, value any) bool {
+		snapshot[key.(*semtypes.MappingAtomicType)] = value.([]model.FieldDefault)
+		return true
+	})
+	return snapshot
+}
+
+// SetObjectMethodTable associates an object atom with its method table.
+// Callers must not mutate the table after storing it.
+func (c *CompilerEnvironment) SetObjectMethodTable(mat *semtypes.MappingAtomicType, table model.MethodTable) {
+	c.objectMethodTables.Store(mat, table)
+}
+
+// ObjectMethodTable returns the method table associated with an object atom.
+// Callers must treat the result as read-only.
+func (c *CompilerEnvironment) ObjectMethodTable(mat *semtypes.MappingAtomicType) (model.MethodTable, bool) {
+	table, ok := c.objectMethodTables.Load(mat)
+	if !ok {
+		return model.MethodTable{}, false
+	}
+	return table.(model.MethodTable), true
+}
+
+// ObjectMethodTableSnapshot returns a read-only snapshot for serialization.
+func (c *CompilerEnvironment) ObjectMethodTableSnapshot() map[*semtypes.MappingAtomicType]model.MethodTable {
+	snapshot := make(map[*semtypes.MappingAtomicType]model.MethodTable)
+	c.objectMethodTables.Range(func(key, value any) bool {
+		snapshot[key.(*semtypes.MappingAtomicType)] = value.(model.MethodTable)
+		return true
+	})
+	return snapshot
 }
 
 func (c *CompilerEnvironment) DiagnosticEnv() *diagnostics.DiagnosticEnv {
@@ -279,6 +333,47 @@ func (c *CompilerEnvironment) SymbolName(symbol model.SymbolRef) string {
 
 func (c *CompilerEnvironment) SymbolType(symbol model.SymbolRef) semtypes.SemType {
 	return c.GetSymbol(symbol).Type()
+}
+
+func (c *CompilerEnvironment) FunctionTypedSignature(symbol model.SymbolRef) (model.TypedFunctionSignature, bool) {
+	function, ok := c.GetSymbol(symbol).(model.FunctionSymbol)
+	if !ok {
+		return model.TypedFunctionSignature{}, false
+	}
+	if _, dependent := function.(model.DependentlyTypedFunctionSymbol); dependent {
+		return model.TypedFunctionSignature{}, false
+	}
+	return function.TypedSignature(), true
+}
+
+func (c *CompilerEnvironment) SetFunctionTypedSignature(symbol model.SymbolRef, signature model.TypedFunctionSignature) bool {
+	function, ok := c.GetSymbol(symbol).(model.FunctionSymbol)
+	if !ok {
+		return false
+	}
+	if _, dependent := function.(model.DependentlyTypedFunctionSymbol); dependent {
+		return false
+	}
+	function.SetTypedSignature(signature)
+	return true
+}
+
+func (c *CompilerEnvironment) DependentlyTypedFunctionType(symbol model.SymbolRef) ([]semtypes.SemType, model.TypeOp, bool) {
+	function, ok := c.GetSymbol(symbol).(model.DependentlyTypedFunctionSymbol)
+	if !ok {
+		return nil, nil, false
+	}
+	return function.ParamTypes(), function.ReturnType(), true
+}
+
+func (c *CompilerEnvironment) SetDependentlyTypedFunctionType(symbol model.SymbolRef, paramTypes []semtypes.SemType, returnType model.TypeOp) bool {
+	function, ok := c.GetSymbol(symbol).(model.DependentlyTypedFunctionSymbol)
+	if !ok {
+		return false
+	}
+	function.SetParamTypes(paramTypes)
+	function.SetReturnType(returnType)
+	return true
 }
 
 func (c *CompilerEnvironment) SymbolLocation(symbol model.SymbolRef) diagnostics.Location {

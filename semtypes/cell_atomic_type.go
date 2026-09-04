@@ -29,7 +29,7 @@ const (
 	cellMutabilityUnlimited
 )
 
-var _ atomicType = &cellAtomicType{}
+var _ AtomicType = &cellAtomicType{}
 
 func newCellAtomicTypeFromTyMut(ty SemType, mut CellMutability) cellAtomicType {
 	this := cellAtomicType{}

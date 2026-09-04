@@ -12,7 +12,7 @@ class Client {
       _ = callbacks;
       %4 = ConstantLoad value
       %5 = ConstantLoad 14
-      %6 = newMap {| value: int, never... |}{%4=%5}
+      %6 = newMap {| value: int, never... |}{%4=%5} defaults{value=$anon/.:$desugar$0}
       %0 = %6;
       return;
     }

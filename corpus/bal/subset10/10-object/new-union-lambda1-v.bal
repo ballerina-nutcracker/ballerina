@@ -16,16 +16,23 @@
 
 import ballerina/io;
 
-type Foo record {|
-    int value = 5;
-|};
+class DecFn {
+    function init(function () returns decimal callback, int marker) {
+        var _ = callback;
+        var _ = marker;
+    }
+}
 
-type Bar record {|
-    int value;
-|};
+class FloatFn {
+    function init(function () returns float callback, string marker) {
+        var _ = callback;
+        var _ = marker;
+    }
+}
 
 public function main() {
-    // JBallerina allows this but according to the spec applicable contexually expected type determination is independent of default values
-    Foo|Bar f = {}; // @error
-    io:println(f is Foo);
+    DecFn|FloatFn inferredInt = new (() => 1, "x");
+    DecFn|FloatFn inferredFloat = new (() => 1.0, "y");
+    io:println(inferredInt is FloatFn); // @output true
+    io:println(inferredFloat is FloatFn); // @output true
 }

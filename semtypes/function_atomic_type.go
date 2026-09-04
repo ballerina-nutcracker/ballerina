@@ -23,7 +23,7 @@ type functionAtomicType struct {
 	IsGeneric  bool
 }
 
-var _ atomicType = &functionAtomicType{}
+var _ AtomicType = &functionAtomicType{}
 
 func functionAtomicTypeFrom(paramType SemType, rest SemType, qualifiers SemType) functionAtomicType {
 

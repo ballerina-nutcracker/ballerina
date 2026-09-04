@@ -1,0 +1,304 @@
+module $anon.. v 0.0.0;
+moduleCalculator  object { public function add(int, int) returns int };
+class CalculatorImpl {
+
+  add(int,int) -> int{
+    bb0 {
+      %5 = x;
+      %6 = y;
+      %4 = + %5 %6;
+      %0 = %4;
+      return;
+    }
+  }
+
+  configured({| x: int, y: int, never... |}) -> int{
+    bb0 {
+      %5 = ConstantLoad x
+      %4 = config[%5];
+      %6 = %4;
+      %8 = ConstantLoad y
+      %7 = config[%8];
+      %9 = %7;
+      %3 = + %6 %9;
+      %0 = %3;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class NodeImpl {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  next() -> nil|object { public function next() returns nil|...; public function value(int) returns int }{
+    bb0 {
+      %2 = ConstantLoad <nil>
+      %0 = %2;
+      return;
+    }
+  }
+
+  value(int) -> int{
+    bb0 {
+      %0 = fallback;
+      return;
+    }
+  }
+}
+useInline(object { public function add(int, int) returns int }) -> int{
+  bb0 {
+    %2 = ConstantLoad 8
+    $desugar$0 = %2;
+    %4 = $desugar$0;
+    %5 = $default$5(%4) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %5;
+    %7 = $desugar$0;
+    %8 = $desugar$1;
+    %9 = add(value,%7,%8) -> bb2;
+  }
+  bb2 {
+    %0 = %9;
+    return;
+  }
+}
+returnInline() -> object { public function add(int, int) returns int }{
+  bb0 {
+    %1 = newObject $anon/.:CalculatorImpl
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %0 = %3;
+    return;
+  }
+}
+$default$7(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:CalculatorImpl
+    %2 = init(%1) -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    calculator = %3;
+    %6 = ConstantLoad 3
+    $desugar$0 = %6;
+    %8 = $desugar$0;
+    %9 = $default$0(%8) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %9;
+    %11 = $desugar$0;
+    %12 = $desugar$1;
+    %13 = add(calculator,%11,%12) -> bb6;
+  }
+  bb6 {
+    %14 = %13;
+    %15 = println(%14) -> bb7;
+  }
+  bb7 {
+    %16 = ConstantLoad 4
+    %17 = %16;
+    %18 = ConstantLoad 5
+    %19 = %18;
+    %20 = add(calculator,%17,%19) -> bb8;
+  }
+  bb8 {
+    %21 = %20;
+    %22 = println(%21) -> bb9;
+  }
+  bb9 {
+    %23 = ConstantLoad x
+    %24 = ConstantLoad 6
+    %25 = newMap {| x: int, y: int, never... |}{%23=%24} defaults{y=$anon/.:$desugar$0}
+    %26 = configured(calculator,%25) -> bb10;
+  }
+  bb10 {
+    %27 = %26;
+    %28 = println(%27) -> bb11;
+  }
+  bb11 {
+    %29 = fp $anon/.:$default$7
+    $desugar$2 = %29;
+    localCalculator = calculator;
+    %32 = ConstantLoad 5
+    $desugar$3 = %32;
+    %34 = $desugar$3;
+    %35 = $desugar$2(%34) -> bb12;
+  }
+  bb12 {
+    $desugar$4 = %35;
+    %37 = $desugar$3;
+    %38 = $desugar$4;
+    %39 = add(localCalculator,%37,%38) -> bb13;
+  }
+  bb13 {
+    %40 = %39;
+    %41 = println(%40) -> bb14;
+  }
+  bb14 {
+    %42 = ConstantLoad 6
+    $desugar$5 = %42;
+    %44 = $desugar$5;
+    %45 = $default$4(%44) -> bb15;
+  }
+  bb15 {
+    $desugar$6 = %45;
+    %47 = $desugar$5;
+    %48 = $desugar$6;
+    %49 = add(moduleCalculator,%47,%48) -> bb16;
+  }
+  bb16 {
+    %50 = %49;
+    %51 = println(%50) -> bb17;
+  }
+  bb17 {
+    %52 = useInline(calculator) -> bb18;
+  }
+  bb18 {
+    %53 = %52;
+    %54 = println(%53) -> bb19;
+  }
+  bb19 {
+    %55 = returnInline() -> bb20;
+  }
+  bb20 {
+    %56 = ConstantLoad 7
+    %57 = %56;
+    %58 = ConstantLoad 4
+    %59 = %58;
+    %60 = add(%55,%57,%59) -> bb21;
+  }
+  bb21 {
+    %61 = %60;
+    %62 = println(%61) -> bb22;
+  }
+  bb22 {
+    %63 = newObject $anon/.:NodeImpl
+    %64 = init(%63) -> bb23;
+  }
+  bb23 {
+    %66 = %64 is nil
+    %66 ? bb24 : bb25;
+  }
+  bb24 {
+    %65 = %63;
+    GOTO bb26;
+  }
+  bb25 {
+    %65 = %64;
+    GOTO bb26;
+  }
+  bb26 {
+    node = %65;
+    %68 = $default$2() -> bb27;
+  }
+  bb27 {
+    $desugar$7 = %68;
+    %70 = $desugar$7;
+    %71 = value(node,%70) -> bb28;
+  }
+  bb28 {
+    %72 = %71;
+    %73 = println(%72) -> bb29;
+  }
+  bb29 {
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}
+$default$0(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 4
+    %0 = %1;
+    return;
+  }
+}
+$default$4(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+$default$5(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+$default$6(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+$default$1(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 4
+    %0 = %1;
+    return;
+  }
+}

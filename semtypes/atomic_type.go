@@ -16,6 +16,6 @@
 
 package semtypes
 
-type atomicType interface {
+type AtomicType interface {
 	atomKind() kind
 }

@@ -533,7 +533,6 @@ type (
 
 	BLangNewExpression struct {
 		bLangExpressionBase
-		AtomicType     *semtypes.MappingAtomicType
 		ClassSymbol    model.SymbolRef
 		TypeDescriptor BType
 		ArgsExprs      []BLangExpression
