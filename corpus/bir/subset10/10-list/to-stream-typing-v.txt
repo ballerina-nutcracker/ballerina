@@ -1,0 +1,165 @@
+module $anon.. v 0.0.0;
+allListUnion([int...]|[string...]) -> stream{
+  bb0 {
+    %2 = toStream(values) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    values = %4;
+    %6 = toStream(values) -> bb1;
+  }
+  bb1 {
+    positional = %6;
+    %8 = toStream(values) -> bb2;
+  }
+  bb2 {
+    named = %8;
+    %10 = toStream(values) -> bb3;
+  }
+  bb3 {
+    method = %10;
+    %12 = toStream(values) -> bb4;
+  }
+  bb4 {
+    repeated = %12;
+    %14 = ConstantLoad 3
+    %15 = ConstantLoad 4
+    %16 = ConstantLoad 2
+    %17 = newArray [int, int, never...][%16]{%14, %15}
+    fixed = %17;
+    %19 = toStream(fixed) -> bb5;
+  }
+  bb5 {
+    fixedStream = %19;
+    %21 = ConstantLoad 5
+    %22 = ConstantLoad five
+    %23 = ConstantLoad 2
+    %24 = newArray [int, string, never...][%23]{%21, %22}
+    tuple = %24;
+    %26 = toStream(tuple) -> bb6;
+  }
+  bb6 {
+    tupleStream = %26;
+    %28 = ConstantLoad 6
+    %29 = ConstantLoad 7
+    %30 = ConstantLoad 2
+    %31 = newArray [int...][%30]{%28, %29}
+    readonlyArray = %31;
+    %33 = toStream(readonlyArray) -> bb7;
+  }
+  bb7 {
+    readonlyArrayStream = %33;
+    %35 = ConstantLoad 8
+    %36 = ConstantLoad eight
+    %37 = ConstantLoad 2
+    %38 = newArray [int, string, never...][%37]{%35, %36}
+    readonlyTuple = %38;
+    %40 = toStream(readonlyTuple) -> bb8;
+  }
+  bb8 {
+    readonlyTupleStream = %40;
+    %42 = ConstantLoad 9
+    %43 = ConstantLoad 10
+    %44 = ConstantLoad 2
+    %45 = newArray [int...][%44]{%42, %43}
+    %46 = allListUnion(%45) -> bb9;
+  }
+  bb9 {
+    unionStream = %46;
+    %48 = ConstantLoad id
+    %49 = ConstantLoad 11
+    %50 = newMap {| id: int, never... |}{%48=%49}
+    %51 = ConstantLoad 1
+    %52 = newArray [{| id: int, never... |}...][%51]{%50}
+    records = %52;
+    %54 = toStream(records) -> bb10;
+  }
+  bb10 {
+    recordStream = %54;
+    %56 = ConstantLoad 12
+    %57 = ConstantLoad twelve
+    %58 = ConstantLoad 2
+    %59 = newArray [int|string...][%58]{%56, %57}
+    unionMembers = %59;
+    %61 = toStream(unionMembers) -> bb11;
+  }
+  bb11 {
+    unionMemberStream = %61;
+    %63 = streamNext positional
+    %64 = %63 is {| value: int, never... |}
+    %65 = %64;
+    %66 = println(%65) -> bb12;
+  }
+  bb12 {
+    %67 = streamNext named
+    %68 = %67 is {| value: int, never... |}
+    %69 = %68;
+    %70 = println(%69) -> bb13;
+  }
+  bb13 {
+    %71 = streamNext method
+    %72 = %71 is {| value: int, never... |}
+    %73 = %72;
+    %74 = println(%73) -> bb14;
+  }
+  bb14 {
+    %75 = streamNext repeated
+    %76 = %75 is {| value: int, never... |}
+    %77 = %76;
+    %78 = println(%77) -> bb15;
+  }
+  bb15 {
+    %79 = streamNext fixedStream
+    %80 = %79 is {| value: int, never... |}
+    %81 = %80;
+    %82 = println(%81) -> bb16;
+  }
+  bb16 {
+    %83 = streamNext tupleStream
+    %84 = %83 is {| value: int|string, never... |}
+    %85 = %84;
+    %86 = println(%85) -> bb17;
+  }
+  bb17 {
+    %87 = streamNext readonlyArrayStream
+    %88 = %87 is {| value: int, never... |}
+    %89 = %88;
+    %90 = println(%89) -> bb18;
+  }
+  bb18 {
+    %91 = streamNext readonlyTupleStream
+    %92 = %91 is {| value: int|string, never... |}
+    %93 = %92;
+    %94 = println(%93) -> bb19;
+  }
+  bb19 {
+    %95 = streamNext unionStream
+    %96 = %95 is {| value: int|string, never... |}
+    %97 = %96;
+    %98 = println(%97) -> bb20;
+  }
+  bb20 {
+    %99 = streamNext recordStream
+    %100 = %99 is {| value: {| id: int, never... |}, never... |}
+    %101 = %100;
+    %102 = println(%101) -> bb21;
+  }
+  bb21 {
+    %103 = streamNext unionMemberStream
+    %104 = %103 is {| value: int|string, never... |}
+    %105 = %104;
+    %106 = println(%105) -> bb22;
+  }
+  bb22 {
+    return;
+  }
+}
