@@ -51,6 +51,7 @@ var runOpts struct {
 	statsOneline     bool
 	logFile          string
 	format           string // Output format (dot, etc.)
+	targetDir        string
 }
 
 var runCmd = &cobra.Command{
@@ -97,10 +98,22 @@ func init() {
 	runCmd.Flags().BoolVar(&runOpts.statsOneline, "stats-oneline", false, "Print per-stage compilation timing totals only")
 	runCmd.Flags().StringVar(&runOpts.logFile, "log-file", "", "Write debug output to specified file")
 	runCmd.Flags().StringVar(&runOpts.format, "format", "", "Output format for dump operations (dot)")
+	runCmd.Flags().StringVar(&runOpts.targetDir, "target-dir", "", "target directory path")
 	profiler.RegisterFlags(runCmd)
 }
 
 func runBallerina(cmd *cobra.Command, args []string) error {
+	// --target-dir is resolved relative to the process cwd (matching
+	// clean.go's own --target-dir), independent of the package path arg.
+	var targetDirOverride string
+	if runOpts.targetDir != "" {
+		abs, err := filepath.Abs(runOpts.targetDir)
+		if err != nil {
+			return runError("resolve target directory: %w", err)
+		}
+		targetDirOverride = abs
+	}
+
 	// Build options from CLI flags. Constructed before debug setup so
 	// buildOpts can be the single source of truth for all flag reads.
 	buildOpts := projects.NewBuildOptionsBuilder().
@@ -113,6 +126,7 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 		WithDumpST(runOpts.dumpST).
 		WithTraceRecovery(runOpts.traceRecovery).
 		WithStats(runOpts.stats || runOpts.statsOneline).
+		WithTargetDir(targetDirOverride).
 		Build()
 
 	if err := profiler.Start(); err != nil {
@@ -233,7 +247,11 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 
 	// Skipped when already running as a native interpreter (BAL_NATIVE=1).
 	if !nativeexec.InNativeMode() {
-		if err := execWithNativeRunner(pkg, project, absBaseDir); err != nil {
+		targetDir := targetDirOverride
+		if targetDir == "" {
+			targetDir = filepath.Join(absBaseDir, projects.TargetDir)
+		}
+		if err := execWithNativeRunner(pkg, project, targetDir); err != nil {
 			return runError("%w", err)
 		}
 	}
@@ -350,14 +368,14 @@ func findBuildProjectByPath(workspace *projects.WorkspaceProject, workspaceAbsRo
 
 // execWithNativeRunner builds a custom interpreter embedding any native Go
 // dependencies and re-execs into it. On success it never returns (os.Exit).
-func execWithNativeRunner(pkg *projects.Package, project projects.Project, absBaseDir string) error {
+func execWithNativeRunner(pkg *projects.Package, project projects.Project, targetDir string) error {
 	resolution := pkg.Resolution()
 	nativeBalaProjects := findNativeGoBalaProjects(resolution, project.Environment())
 	if len(nativeBalaProjects) == 0 {
 		return nil
 	}
 
-	outBin := filepath.Join(absBaseDir, "target", "bin", "bal")
+	outBin := filepath.Join(targetDir, "bin", "bal")
 	if goruntime.GOOS == "windows" {
 		outBin += ".exe"
 	}

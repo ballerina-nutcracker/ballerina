@@ -35,6 +35,12 @@ const (
 
 	// Gitignore is the .gitignore template file name.
 	Gitignore = "gitignore"
+
+	// LibTest is the test file template for the lib module template.
+	LibTest = "lib_test.bal"
+
+	// ServiceTest is the test file template for the service module template.
+	ServiceTest = "service_test.bal"
 )
 
 // Template placeholder constants for string replacement.
@@ -46,7 +52,7 @@ const (
 	PkgNamePlaceholder = "PKG_NAME"
 )
 
-//go:embed main.bal lib.bal service.bal manifest-app.toml gitignore
+//go:embed main.bal lib.bal service.bal manifest-app.toml gitignore lib_test.bal service_test.bal
 var FS embed.FS
 
 // ReadTemplate reads a template file and returns its content as a string.

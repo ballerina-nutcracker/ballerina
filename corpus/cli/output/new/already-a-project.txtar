@@ -1,5 +1,5 @@
 -- stdout --
 -- stderr --
-compilation contains errors
+directory is already a Ballerina project
 -- exitcode --
 1

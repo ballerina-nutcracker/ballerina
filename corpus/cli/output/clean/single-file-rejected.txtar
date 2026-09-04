@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+clean command is not supported for single file projects
+-- exitcode --
+1

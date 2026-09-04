@@ -95,7 +95,7 @@ func createNewCmd() *cobra.Command {
 
 	cmd.Flags().BoolVar(&workspace, "workspace", false, "")
 	cmd.Flags().StringVarP(&template, "template", "t", string(templateDefault),
-		fmt.Sprintf("Acceptable values: %v default: %s", validTemplates, templateDefault))
+		"Acceptable values: [main, service, lib] default: default")
 
 	return cmd
 }

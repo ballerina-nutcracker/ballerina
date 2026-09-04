@@ -31,6 +31,7 @@ import (
 	goruntime "runtime" // aliased: this file also imports ballerina/runtime as runtime
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"testing/fstest"
 
@@ -276,6 +277,37 @@ func TestDriverSource(t *testing.T) {
 	dir2, err := cli.ExtractDriverSource(cacheRoot, version)
 	require.NoError(err)
 	assert.Equal(dir1, dir2, "second call must reuse the cached extraction")
+}
+
+// TestDriverSourceConcurrent hammers ExtractDriverSource from many
+// goroutines targeting the same fresh version cache to catch the
+// install-in-place race its content-addressed + atomic-rename design is
+// meant to eliminate: a concurrent reader must never observe a partially
+// written or briefly absent target directory.
+func TestDriverSourceConcurrent(t *testing.T) {
+	t.Parallel()
+	cacheRoot := t.TempDir()
+	const n = 32
+	var wg sync.WaitGroup
+	dirs := make([]string, n)
+	errs := make([]error, n)
+	for i := range n {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			dirs[i], errs[i] = cli.ExtractDriverSource(cacheRoot, "test-race-v0.0.1")
+		}()
+	}
+	wg.Wait()
+
+	for i, err := range errs {
+		if err != nil {
+			t.Fatalf("goroutine %d: ExtractDriverSource: %v", i, err)
+		}
+		if _, err := os.Stat(filepath.Join(dirs[i], "cli", "go.mod")); err != nil {
+			t.Errorf("goroutine %d: cli/go.mod missing from %s: %v", i, dirs[i], err)
+		}
+	}
 }
 
 // TestNativeRunner_EmbeddedOnlyProjectNoRebuild checks a project depending

@@ -22,6 +22,7 @@ import (
 )
 
 func TestValidatePackageName(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		input    string
@@ -66,6 +67,7 @@ func TestValidatePackageName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := validatePackageName(tt.input)
 			if result != tt.expected {
 				t.Errorf("validatePackageName(%q) = %v, want %v", tt.input, result, tt.expected)
@@ -75,6 +77,7 @@ func TestValidatePackageName(t *testing.T) {
 }
 
 func TestValidateOrgName(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		input    string
@@ -103,6 +106,7 @@ func TestValidateOrgName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := validateOrgName(tt.input)
 			if result != tt.expected {
 				t.Errorf("validateOrgName(%q) = %v, want %v", tt.input, result, tt.expected)
@@ -112,6 +116,7 @@ func TestValidateOrgName(t *testing.T) {
 }
 
 func TestGuessPkgName(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		input    string
@@ -148,6 +153,7 @@ func TestGuessPkgName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := guessPkgName(tt.input)
 			if result != tt.expected {
 				t.Errorf("guessPkgName(%q) = %q, want %q", tt.input, result, tt.expected)
@@ -157,6 +163,7 @@ func TestGuessPkgName(t *testing.T) {
 }
 
 func TestGuessOrgName(t *testing.T) {
+	t.Parallel()
 	// guessOrgName depends on the current user, so we just verify it returns
 	// a valid org name and is lowercase
 	result := guessOrgName()
@@ -171,5 +178,33 @@ func TestGuessOrgName(t *testing.T) {
 
 	if result != strings.ToLower(result) {
 		t.Errorf("guessOrgName() should return lowercase, got: %q", result)
+	}
+}
+
+func TestDeriveOrgNameFromUsername(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		username string
+		expected string
+	}{
+		{"already valid", "myorg", "myorg"},
+		{"uppercase gets lowercased", "MyOrg", "myorg"},
+		{"windows domain prefix stripped", `DOMAIN\myuser`, "myuser"},
+		{"invalid chars sanitized", "my-org", "my_org"},
+		{"consecutive underscores collapsed after sanitizing", "my--org", "my_org"},
+		{"leading/trailing underscores trimmed after sanitizing", "-org-", "org"},
+		{"empty after sanitizing falls back", "---", "my_org"},
+		{"empty username falls back", "", "my_org"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			result := deriveOrgNameFromUsername(tt.username)
+			if result != tt.expected {
+				t.Errorf("deriveOrgNameFromUsername(%q) = %q, want %q", tt.username, result, tt.expected)
+			}
+		})
 	}
 }

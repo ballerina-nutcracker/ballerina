@@ -45,19 +45,21 @@ const nativeStubName = "balrt-native"
 var RuntimeStubPath = ""
 
 type buildOptions struct {
-	dumpTokens    bool
-	dumpST        bool
-	dumpAST       bool
-	dumpCFG       bool
-	dumpBIR       bool
-	traceRecovery bool
-	stats         bool
-	statsOneline  bool
-	logFile       string
-	format        string
-	output        string // -o: explicit output path
-	targetOS      string // cross-compile target OS; "" defaults to the host OS
-	targetArch    string // cross-compile target architecture; "" defaults to the host arch
+	dumpTokens       bool
+	dumpST           bool
+	dumpAST          bool
+	dumpRecoveredAST bool
+	dumpCFG          bool
+	dumpBIR          bool
+	traceRecovery    bool
+	stats            bool
+	statsOneline     bool
+	logFile          string
+	format           string
+	output           string // -o: explicit output path
+	targetOS         string // cross-compile target OS; "" defaults to the host OS
+	targetArch       string // cross-compile target architecture; "" defaults to the host arch
+	targetDir        string
 }
 
 var buildCmd = createBuildCmd()
@@ -86,6 +88,7 @@ func createBuildCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.dumpTokens, "dump-tokens", false, "Dump lexer tokens")
 	cmd.Flags().BoolVar(&opts.dumpST, "dump-st", false, "Dump syntax tree")
 	cmd.Flags().BoolVar(&opts.dumpAST, "dump-ast", false, "Dump abstract syntax tree")
+	cmd.Flags().BoolVar(&opts.dumpRecoveredAST, "dump-recovered-ast", false, "Dump recovered abstract syntax tree")
 	cmd.Flags().BoolVar(&opts.dumpCFG, "dump-cfg", false, "Dump control flow graph")
 	cmd.Flags().BoolVar(&opts.dumpBIR, "dump-bir", false, "Dump Ballerina Intermediate Representation")
 	cmd.Flags().BoolVar(&opts.traceRecovery, "trace-recovery", false, "Enable error recovery tracing")
@@ -96,6 +99,10 @@ func createBuildCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&opts.output, "output", "o", "", "Output path (default: target/bin/<package-name>)")
 	cmd.Flags().StringVar(&opts.targetOS, "target-os", "", "Cross-compile target OS (default: host OS)")
 	cmd.Flags().StringVar(&opts.targetArch, "target-arch", "", "Cross-compile target architecture (default: host arch)")
+	cmd.Flags().StringVar(&opts.targetDir, "target-dir", "", "target directory path")
+	// Profiler flags are registered onto the global buildCmd from prof_*.go's init().
+	// They are intentionally NOT registered inside createBuildCmd, so test-instantiated
+	// commands skip profiler flags (the tests don't exercise profiling).
 	return cmd
 }
 
@@ -106,8 +113,20 @@ func buildError(format string, args ...any) error {
 func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 	stderr := cmd.ErrOrStderr()
 
+	// --target-dir is resolved relative to the process cwd (matching
+	// pack.go/run.go's own --target-dir), independent of the package-dir arg.
+	var targetDirOverride string
+	if opts.targetDir != "" {
+		abs, err := filepath.Abs(opts.targetDir)
+		if err != nil {
+			return buildError("resolve target directory: %w", err)
+		}
+		targetDirOverride = abs
+	}
+
 	buildOpts := projects.NewBuildOptionsBuilder().
 		WithDumpAST(opts.dumpAST).
+		WithDumpRecoveredAST(opts.dumpRecoveredAST).
 		WithDumpBIR(opts.dumpBIR).
 		WithDumpCFG(opts.dumpCFG).
 		WithDumpCFGFormat(projects.ParseCFGFormat(opts.format)).
@@ -115,7 +134,19 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 		WithDumpST(opts.dumpST).
 		WithTraceRecovery(opts.traceRecovery).
 		WithStats(opts.stats || opts.statsOneline).
+		WithTargetDir(targetDirOverride).
 		Build()
+
+	// Profiler flags are bound only when prof_*.go's init() registers them
+	// on this cmd. In release builds RegisterFlags is a no-op; in debug
+	// builds it runs against the global buildCmd. Test-instantiated cmds
+	// never carry the flag, so they skip Start.
+	if cmd.Flag("prof") != nil {
+		if err := profiler.Start(); err != nil {
+			return buildError("failed to start profiler: %w", err)
+		}
+		defer func() { _ = profiler.Stop() }()
+	}
 
 	debugFlags := uint16(0)
 	if buildOpts.DumpTokens() {
@@ -199,7 +230,10 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 	if diagResult := result.Diagnostics(); diagResult.HasErrors() || diagResult.HasWarnings() {
 		printDiagnostics(fsys, stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
 		if diagResult.HasErrors() {
-			return buildError("package loading reported errors")
+			// Diagnostics carry the full failure detail, and this isn't a
+			// build-usage mistake, so no USAGE block — but cobra should still
+			// print "ballerina: project loading contains errors" as a summary.
+			return fmt.Errorf("project loading contains errors")
 		}
 	}
 
@@ -210,18 +244,24 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 		if workspaceRoot != "" && workspaceRoot != absBaseDir {
 			// absBaseDir names one specific member (we walked up to
 			// workspaceRoot to load it) — build just that member, matching
-			// bal run's disambiguation. -o is fine here: exactly one output.
+			// bal run's disambiguation. -o/--target-dir are fine here: exactly
+			// one output.
 			memberProject := findBuildProjectByPath(workspace, workspaceRoot, absBaseDir)
 			if memberProject == nil {
 				return buildError("no package found at path %s within workspace %s", absBaseDir, workspaceRoot)
 			}
-			return buildOneProject(cmd, opts, stderr, fsys, memberProject, absBaseDir)
+			return buildOneProject(cmd, opts, stderr, fsys, memberProject, absBaseDir, targetDirOverride)
 		}
 
-		// -o names a single explicit output path, which doesn't make sense
-		// when building every member of a workspace to its own executable.
+		// -o names a single explicit output path, and --target-dir a single
+		// output directory — neither makes sense when building every member
+		// of a workspace to its own executable (all members would collide
+		// on the same path).
 		if opts.output != "" {
 			return buildError("-o cannot be used when building a workspace; run bal build <package-path> to build a single package with a custom output path")
+		}
+		if opts.targetDir != "" {
+			return buildError("--target-dir cannot be used when building a workspace; run bal build <package-path> to build a single package with a custom target directory")
 		}
 
 		for _, bp := range workspace.Projects() {
@@ -257,28 +297,33 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 
 			// Stop at the first member that fails, matching jballerina
 			// (which aborts the whole process on a compile error) instead
-			// of continuing to later members.
-			if err := buildOneProject(cmd, opts, stderr, fsys, memberProject, memberDir); err != nil {
+			// of continuing to later members. targetDirOverride is always ""
+			// here since it was rejected above for the all-members case.
+			if err := buildOneProject(cmd, opts, stderr, fsys, memberProject, memberDir, targetDirOverride); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
 
-	return buildOneProject(cmd, opts, stderr, fsys, project, absBaseDir)
+	return buildOneProject(cmd, opts, stderr, fsys, project, absBaseDir, targetDirOverride)
 }
 
 // buildOneProject compiles a single package (a plain build, or one workspace
 // member) and packs it into a standalone executable. For a workspace
 // member, projectDir is that member's own directory, so output and any
-// native-stub cache land under its own target/.
-func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, fsys fs.FS, project projects.Project, projectDir string) error {
+// native-stub cache land under its own target/ unless targetDirOverride is
+// set.
+func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, fsys fs.FS, project projects.Project, projectDir, targetDirOverride string) error {
 	pkg := project.CurrentPackage()
 	compilation := pkg.Compilation()
 	if cd := compilation.DiagnosticResult(); cd.HasErrors() || cd.HasWarnings() {
 		printDiagnostics(fsys, stderr, cd, !isTerminal(), compilation.DiagnosticEnv())
 		if cd.HasErrors() {
-			return buildError("compilation failed; executable not produced")
+			// Not a build-usage mistake, so no USAGE block, but cobra should
+			// still print "ballerina: compilation contains errors" as a
+			// summary.
+			return fmt.Errorf("compilation contains errors")
 		}
 	}
 
@@ -304,6 +349,11 @@ func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, f
 	// Unset --target-os/--target-arch default to the host, like Go's GOOS/GOARCH.
 	targetPlatform := executable.ResolveTargetPlatform(opts.targetOS, opts.targetArch)
 
+	targetDir := targetDirOverride
+	if targetDir == "" {
+		targetDir = filepath.Join(projectDir, projects.TargetDir)
+	}
+
 	// Suffix follows the target platform, not the host running bal build.
 	outPath := opts.output
 	if outPath == "" {
@@ -311,7 +361,7 @@ func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, f
 		if targetPlatform.OS == "windows" {
 			pkgName += ".exe"
 		}
-		outPath = filepath.Join(projectDir, projects.TargetDir, binSubdir, pkgName)
+		outPath = filepath.Join(targetDir, binSubdir, pkgName)
 	}
 
 	// Packages with no native Go deps use the bundled stub for targetPlatform;
@@ -339,7 +389,7 @@ func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, f
 		}
 		stubPath = sp
 	} else {
-		sp, bErr := buildNativeStub(stderr, projectDir, nativeBalaProjects, targetPlatform)
+		sp, bErr := buildNativeStub(stderr, targetDir, nativeBalaProjects, targetPlatform)
 		if bErr != nil {
 			return buildError("building native interpreter stub: %w", bErr)
 		}
@@ -363,7 +413,7 @@ func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, f
 // Cross-compiling works the same way (LocalExecutor.Build sets GOOS/GOARCH);
 // the cache path is segmented by target platform so two targets don't
 // clobber each other's cached stub.
-func buildNativeStub(stderr io.Writer, absBaseDir string, nativeBalaProjects []*projects.BalaProject, targetPlatform executable.Platform) (string, error) {
+func buildNativeStub(stderr io.Writer, targetDir string, nativeBalaProjects []*projects.BalaProject, targetPlatform executable.Platform) (string, error) {
 	if err := executable.ValidatePlatform(targetPlatform); err != nil {
 		return "", err
 	}
@@ -373,7 +423,7 @@ func buildNativeStub(stderr io.Writer, absBaseDir string, nativeBalaProjects []*
 		stubName += ".exe"
 	}
 	platformDir := targetPlatform.OS + "-" + targetPlatform.Arch
-	outBin := filepath.Join(absBaseDir, projects.TargetDir, binSubdir, "native", platformDir, stubName)
+	outBin := filepath.Join(targetDir, binSubdir, "native", platformDir, stubName)
 
 	executor, err := chooseNativeExecutor(outBin, "cli/internal/balrt")
 	if err != nil {

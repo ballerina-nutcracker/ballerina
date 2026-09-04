@@ -46,6 +46,7 @@ type packOptions struct {
 	statsOneline     bool
 	logFile          string
 	format           string
+	targetDir        string
 }
 
 var packCmd = createPackCmd()
@@ -84,6 +85,7 @@ func createPackCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.statsOneline, "stats-oneline", false, "Print per-stage compilation timing totals only")
 	cmd.Flags().StringVar(&opts.logFile, "log-file", "", "Write debug output to specified file")
 	cmd.Flags().StringVar(&opts.format, "format", "", "Output format for dump operations (dot)")
+	cmd.Flags().StringVar(&opts.targetDir, "target-dir", "", "target directory path")
 	// Profiler flags are registered onto the global packCmd from prof_*.go's init().
 	// They are intentionally NOT registered inside createPackCmd, so test-instantiated
 	// commands skip profiler flags (the tests don't exercise profiling).
@@ -97,6 +99,17 @@ func packError(format string, args ...any) error {
 func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 	stderr := cmd.ErrOrStderr()
 
+	// --target-dir is resolved relative to the process cwd (matching
+	// clean.go's own --target-dir), independent of the package-dir arg.
+	var targetDirOverride string
+	if opts.targetDir != "" {
+		abs, err := filepath.Abs(opts.targetDir)
+		if err != nil {
+			return packError("resolve target directory: %w", err)
+		}
+		targetDirOverride = abs
+	}
+
 	// Build options from CLI flags. Constructed before debug setup so
 	// buildOpts is the single source of truth for all flag reads.
 	buildOpts := projects.NewBuildOptionsBuilder().
@@ -109,6 +122,7 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 		WithDumpST(opts.dumpST).
 		WithTraceRecovery(opts.traceRecovery).
 		WithStats(opts.stats || opts.statsOneline).
+		WithTargetDir(targetDirOverride).
 		Build()
 
 	// Profiler flags are bound only when prof_*.go's init() registers them
@@ -194,7 +208,10 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 
 	if diagResult := result.Diagnostics(); diagResult.HasErrors() {
 		printDiagnostics(fsys, stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
-		return packError("package loading reported errors")
+		// Diagnostics carry the full failure detail, and this isn't a
+		// pack-usage mistake, so no USAGE block — but cobra should still
+		// print "ballerina: project loading contains errors" as a summary.
+		return fmt.Errorf("project loading contains errors")
 	}
 
 	project := result.Project()
@@ -216,10 +233,16 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 	compilation := pkg.Compilation()
 	if cd := compilation.DiagnosticResult(); cd.HasErrors() {
 		printDiagnostics(fsys, stderr, cd, !isTerminal(), compilation.DiagnosticEnv())
-		return packError("compilation failed; .bala not produced")
+		// Not a pack-usage mistake, so no USAGE block, but cobra should still
+		// print "ballerina: compilation contains errors" as a summary.
+		return fmt.Errorf("compilation contains errors")
 	}
 
-	balaDir := filepath.Join(absPath, projects.TargetDir, balaSubdir)
+	targetDir := targetDirOverride
+	if targetDir == "" {
+		targetDir = filepath.Join(absPath, projects.TargetDir)
+	}
+	balaDir := filepath.Join(targetDir, balaSubdir)
 	backend := projects.NewBallerinaBackend(compilation)
 	backendDiags := backend.DiagnosticResult()
 	if backendDiags.HasErrors() {

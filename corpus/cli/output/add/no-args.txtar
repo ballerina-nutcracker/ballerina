@@ -1,5 +1,5 @@
 -- stdout --
 -- stderr --
-compilation contains errors
+module name is not provided
 -- exitcode --
 1

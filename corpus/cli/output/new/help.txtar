@@ -1,5 +1,5 @@
 -- stdout --
+Create a new Ballerina package
 -- stderr --
-compilation contains errors
 -- exitcode --
-1
+0

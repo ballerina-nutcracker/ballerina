@@ -9,7 +9,7 @@ service / on new http:Listener(9090) {
     # + return - string name with hello message or error
     resource function get greeting(string? name) returns string|error {
         // Send a response back to the caller.
-        if name is () || name.trim().length() == 0 {
+        if name is () {
             return error("name should not be empty!");
         }
         return string `Hello, ${name}`;

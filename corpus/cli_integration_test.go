@@ -141,18 +141,21 @@ func TestBalRunWorkspaceCorpus(t *testing.T) {
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "run", "workspaces")
 
 	t.Run("workspace_root_rejected", func(t *testing.T) {
+		t.Parallel()
 		assertBalCommandMatchesTxtarFragmentsForBinary(t, balBin, repoRoot, coverDir,
 			[]string{"run", wsRoot},
 			"run", "workspaces", "workspace-root-rejected.txtar")
 	})
 
 	t.Run("member_resolves", func(t *testing.T) {
+		t.Parallel()
 		assertBalCommandMatchesTxtarFragmentsForBinary(t, balBin, repoRoot, coverDir,
 			[]string{"run", filepath.Join(wsRoot, "pkgmain")},
 			"run", "workspaces", "member-resolves.txtar")
 	})
 
 	t.Run("missing_member", func(t *testing.T) {
+		t.Parallel()
 		// "notamember" is a real directory inside the workspace root but is NOT listed
 		// in the workspace Ballerina.toml packages array, so the CLI must reject it.
 		assertBalCommandMatchesTxtarFragmentsLoose(t, balBin, repoRoot, coverDir,
@@ -256,6 +259,16 @@ func TestBalPackCorpus(t *testing.T) {
 		{
 			name:           "pack-with-prof",
 			args:           []string{"pack", basicProject, "--prof"},
+			txtar:          "basic.txtar",
+			useDebugBinary: true,
+		},
+		{
+			// --cpuprofile/--memprofile work independently of --prof (which
+			// only gates the pprof HTTP server) — tested without --prof here
+			// to avoid two parallel subtests both binding the server's
+			// default :6060 address.
+			name:           "pack-with-cpu-mem-profile",
+			args:           []string{"pack", basicProject, "--cpuprofile={{TMPDIR}}/cpu.prof", "--memprofile={{TMPDIR}}/mem.prof"},
 			txtar:          "basic.txtar",
 			useDebugBinary: true,
 		},
@@ -422,6 +435,1364 @@ func TestBalBuildCorpus(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestBalCleanCorpus exercises `bal clean` end-to-end through the
+// coverage-aware CLI harness. It deliberately adds no new checked-in project
+// fixtures of its own: "basic"/"noop-absent-target"/"workspace" copy
+// existing pack/run fixtures into a temp dir (via copyDir) and inject the
+// target/ marker directories clean needs to delete, and
+// "single-file-rejected"/"not-ballerina-project" point straight at existing
+// pack fixtures through the sandboxCLICommandArgs path-rewrite (so the
+// destructive delete never touches a checked-in tree either way). Only
+// "non-bal-file-rejected" needs genuinely new content — no other fixture in
+// the repo is a bare non-.bal, non-project file — so that one small fixture
+// stays under testdata/clean. The --target-dir scenarios build their own ad
+// hoc temp directory, since that flag operates on an arbitrary directory
+// rather than a loaded package.
+//
+// Java equivalent: N/A — clean is Go-only CLI integration coverage.
+func TestBalCleanCorpus(t *testing.T) {
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	testdataRoot := filepath.Join("corpus", "cli", "testdata", "clean")
+	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "clean")
+	packBasicFixture := filepath.Join(repoRoot, "corpus", "cli", "testdata", "pack", "basic", "project")
+	runWorkspaceFixture := filepath.Join(repoRoot, "corpus", "cli", "testdata", "run", "workspaces", "run-workspace-corpus")
+
+	// runCleanInCopy copies src into a fresh temp dir, optionally injecting
+	// target/ marker directories (paths relative to the copy root), then runs
+	// `bal clean` against that copy.
+	runCleanInCopy := func(t *testing.T, src string, targetDirsToCreate []string) (stdout, stderr string, exitCode int) {
+		t.Helper()
+		workDir := t.TempDir()
+		copyDir(t, src, workDir)
+		for _, rel := range targetDirsToCreate {
+			if err := os.MkdirAll(filepath.Join(workDir, rel), 0o755); err != nil {
+				t.Fatalf("failed to create %s: %v", rel, err)
+			}
+		}
+		return runCLICommand(t, balBin, repoRoot, coverDir, "clean", workDir)
+	}
+
+	t.Run("basic", func(t *testing.T) {
+		t.Parallel()
+		stdout, stderr, exitCode := runCleanInCopy(t, packBasicFixture, []string{filepath.Join("target", "cache")})
+		if exitCode != 0 {
+			t.Fatalf("expected exit code 0, got %d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		if !strings.Contains(stdout, "Successfully deleted") {
+			t.Errorf("stdout = %q, want to contain 'Successfully deleted'", stdout)
+		}
+	})
+
+	t.Run("noop-absent-target", func(t *testing.T) {
+		t.Parallel()
+		stdout, stderr, exitCode := runCleanInCopy(t, packBasicFixture, nil)
+		if exitCode != 0 {
+			t.Fatalf("expected exit code 0, got %d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		if stdout != "" {
+			t.Errorf("stdout = %q, want empty (silent no-op when target/ is already absent)", stdout)
+		}
+	})
+
+	t.Run("workspace", func(t *testing.T) {
+		t.Parallel()
+		stdout, stderr, exitCode := runCleanInCopy(t, runWorkspaceFixture, []string{
+			filepath.Join("pkgmain", "target", "cache"),
+			filepath.Join("pkglib", "target", "cache"),
+		})
+		if exitCode != 0 {
+			t.Fatalf("expected exit code 0, got %d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		if !strings.Contains(stdout, "Successfully deleted") {
+			t.Errorf("stdout = %q, want to contain 'Successfully deleted'", stdout)
+		}
+	})
+
+	tests := []struct {
+		name  string
+		args  []string
+		txtar string
+	}{
+		{
+			// Reuses pack's fixture rather than adding a near-identical
+			// "empty directory" fixture under testdata/clean.
+			name:  "not-ballerina-project",
+			args:  []string{"clean", filepath.Join("corpus", "cli", "testdata", "pack", "not-ballerina-project", "empty")},
+			txtar: "not-ballerina-project.txtar",
+		},
+		{
+			// Reuses pack's single-.bal-file fixture rather than adding a
+			// near-identical one under testdata/clean.
+			name:  "single-file-rejected",
+			args:  []string{"clean", filepath.Join("corpus", "cli", "testdata", "pack", "rejects-single-file", "main.bal")},
+			txtar: "single-file-rejected.txtar",
+		},
+		{
+			name:  "non-bal-file-rejected",
+			args:  []string{"clean", filepath.Join(testdataRoot, "non-bal-file", "notes.txt")},
+			txtar: "non-bal-file-rejected.txtar",
+		},
+		{
+			name:  "too-many-args",
+			args:  []string{"clean", "a", "b"},
+			txtar: "too-many-args.txtar",
+		},
+		{
+			name:  "help",
+			args:  []string{"clean", "--help"},
+			txtar: "help.txtar",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assertBalCommandMatchesTxtarFragmentsLoose(t, balBin, repoRoot, coverDir,
+				tt.args, filepath.Join(outputsRoot, tt.txtar))
+		})
+	}
+
+	// --target-dir scenarios build their own temp directory rather than a
+	// checked-in fixture, since the flag operates directly on an arbitrary
+	// directory (identified by marker subdirs) instead of a loaded package.
+	// The exhaustive per-branch validation (missing/not-a-directory/every
+	// marker combination) already lives in cli/cmd/clean_test.go; these two
+	// cases only need to prove the flag works end-to-end through the real
+	// binary.
+	t.Run("target-dir-valid", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(dir, "cache"), 0o755); err != nil {
+			t.Fatalf("failed to create cache dir: %v", err)
+		}
+		if err := os.MkdirAll(filepath.Join(dir, "bala"), 0o755); err != nil {
+			t.Fatalf("failed to create bala dir: %v", err)
+		}
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "clean", "--target-dir", dir)
+		if exitCode != 0 {
+			t.Fatalf("expected exit code 0, got %d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		if !strings.Contains(stdout, "Successfully deleted") {
+			t.Errorf("stdout = %q, want to contain 'Successfully deleted'", stdout)
+		}
+	})
+
+	t.Run("target-dir-invalid", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(dir, "unrelated"), 0o755); err != nil {
+			t.Fatalf("failed to create unrelated dir: %v", err)
+		}
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "clean", "--target-dir", dir)
+		if exitCode == 0 {
+			t.Fatalf("expected a non-zero exit code\nstdout: %s\nstderr: %s", stdout, stderr)
+		}
+		if !strings.Contains(stderr, "is not a valid target directory") {
+			t.Errorf("stderr = %q, want to contain 'is not a valid target directory'", stderr)
+		}
+	})
+
+	// bal pack never creates a cache/ dir, only bala/ — a target-dir made up
+	// of just that one recognized marker must still be accepted.
+	t.Run("target-dir-bala-only", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(dir, "bala"), 0o755); err != nil {
+			t.Fatalf("failed to create bala dir: %v", err)
+		}
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "clean", "--target-dir", dir)
+		if exitCode != 0 {
+			t.Fatalf("expected exit code 0, got %d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		if !strings.Contains(stdout, "Successfully deleted") {
+			t.Errorf("stdout = %q, want to contain 'Successfully deleted'", stdout)
+		}
+	})
+
+	t.Run("target-dir-does-not-exist", func(t *testing.T) {
+		t.Parallel()
+		missing := filepath.Join(t.TempDir(), "nope")
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "clean", "--target-dir", missing)
+		if exitCode == 0 {
+			t.Fatalf("expected a non-zero exit code\nstdout: %s\nstderr: %s", stdout, stderr)
+		}
+		if !strings.Contains(stderr, "does not exist") {
+			t.Errorf("stderr = %q, want to contain 'does not exist'", stderr)
+		}
+	})
+
+	t.Run("target-dir-not-a-directory", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+		file := filepath.Join(dir, "afile")
+		if err := os.WriteFile(file, []byte("x"), 0o644); err != nil {
+			t.Fatalf("failed to write file: %v", err)
+		}
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "clean", "--target-dir", file)
+		if exitCode == 0 {
+			t.Fatalf("expected a non-zero exit code\nstdout: %s\nstderr: %s", stdout, stderr)
+		}
+		if !strings.Contains(stderr, "is not a directory") {
+			t.Errorf("stderr = %q, want to contain 'is not a directory'", stderr)
+		}
+	})
+
+	// target-dir-stat-permission-error covers cleanCustomTargetDir's
+	// non-"does not exist" os.Stat error branch: removing the parent
+	// directory's read/execute bits makes any lookup underneath it fail
+	// with a permission error rather than "does not exist".
+	t.Run("target-dir-stat-permission-error", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("permission-based stat-failure injection is unix-only")
+		}
+		t.Parallel()
+		parent := t.TempDir()
+		target := filepath.Join(parent, "targetdir")
+		if err := os.MkdirAll(target, 0o755); err != nil {
+			t.Fatalf("failed to create target dir: %v", err)
+		}
+		if err := os.Chmod(parent, 0); err != nil {
+			t.Fatalf("failed to chmod parent unreadable: %v", err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(parent, 0o755) })
+
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "clean", "--target-dir", target)
+		if exitCode == 0 {
+			t.Fatalf("expected a non-zero exit code\nstdout: %s\nstderr: %s", stdout, stderr)
+		}
+		if strings.Contains(stderr, "does not exist") {
+			t.Errorf("stderr = %q, want a raw stat error, not 'does not exist'", stderr)
+		}
+		if !strings.Contains(stderr, "failed to stat") {
+			t.Errorf("stderr = %q, want to contain 'failed to stat'", stderr)
+		}
+	})
+
+	// target-dir-delete-failure covers cleanCustomTargetDir's os.RemoveAll
+	// error branch, the --target-dir counterpart of the delete-failure
+	// subtest below for the project-based clean path.
+	t.Run("target-dir-delete-failure", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("permission-based delete-failure injection is unix-only")
+		}
+		t.Parallel()
+		parent := t.TempDir()
+		target := filepath.Join(parent, "targetdir")
+		if err := os.MkdirAll(filepath.Join(target, "cache"), 0o755); err != nil {
+			t.Fatalf("failed to create target dir: %v", err)
+		}
+		if err := os.Chmod(parent, 0o555); err != nil {
+			t.Fatalf("failed to chmod parent read-only: %v", err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(parent, 0o755) })
+
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "clean", "--target-dir", target)
+		if exitCode == 0 {
+			t.Fatalf("expected a non-zero exit code\nstdout: %s\nstderr: %s", stdout, stderr)
+		}
+		if !strings.Contains(stderr, "failed to delete") {
+			t.Errorf("stderr = %q, want to contain 'failed to delete'", stderr)
+		}
+	})
+
+	// TestCleanDir_DeleteFailure (formerly a white-box cli/cmd test calling
+	// cleanDir directly) covers cleanDir's error branch through the real
+	// binary: removing a directory requires write permission on its
+	// *parent*, not on the directory itself, so this makes the parent
+	// read-only rather than the target/ dir being deleted — the only
+	// reliable way to force os.RemoveAll to fail on an otherwise normal,
+	// non-empty directory.
+	t.Run("delete-failure", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("permission-based delete-failure injection is unix-only")
+		}
+		t.Parallel()
+		workDir := t.TempDir()
+		copyDir(t, packBasicFixture, workDir)
+		if err := os.MkdirAll(filepath.Join(workDir, "target", "cache"), 0o755); err != nil {
+			t.Fatalf("failed to create target/cache: %v", err)
+		}
+		if err := os.Chmod(workDir, 0o555); err != nil {
+			t.Fatalf("failed to chmod workDir read-only: %v", err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(workDir, 0o755) })
+
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "clean", workDir)
+		if exitCode == 0 {
+			t.Fatalf("expected a non-zero exit code\nstdout: %s\nstderr: %s", stdout, stderr)
+		}
+		if !strings.Contains(stderr, "failed to delete") {
+			t.Errorf("stderr = %q, want to contain 'failed to delete'", stderr)
+		}
+	})
+}
+
+// TestBalAddCorpus exercises `bal add` end-to-end through the coverage-aware
+// CLI harness. Unlike pack/clean, `bal add` takes no package-path argument —
+// it always operates on the process cwd — so each scenario needing a real
+// package copies its checked-in fixture (under corpus/cli/testdata/add) into
+// a fresh t.TempDir() via copyDir and runs the binary with that copy as its
+// working directory, rather than relying on sandboxCLICommandArgs (which
+// only rewrites path arguments, not cwd). This keeps the checked-in
+// fixtures — which `bal add` would otherwise write new files into —
+// untouched. There's no dedicated testdata/add fixture at all: every
+// scenario needing a real package reuses pack's existing basic/project
+// fixture (a plain valid package with no modules/ yet, which is all `add`
+// needs); "duplicate-module" pre-creates modules/util/util.bal in its own
+// copy rather than checking in a near-identical second project fixture.
+//
+// Java equivalent: N/A — add is Go-only CLI integration coverage.
+func TestBalAddCorpus(t *testing.T) {
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	basicFixture := filepath.Join(repoRoot, "corpus", "cli", "testdata", "pack", "basic", "project")
+	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "add")
+
+	// runInFixtureCopy copies src into a fresh temp dir and runs `bal add`
+	// with that copy as the working directory. It also returns workDir so
+	// callers can inspect generated files, not just stdout/stderr.
+	runInFixtureCopy := func(t *testing.T, src string, addArgs ...string) (stdout, stderr string, exitCode int, workDir string) {
+		t.Helper()
+		workDir = t.TempDir()
+		copyDir(t, src, workDir)
+		env := os.Environ()
+		if coverDir != "" {
+			env = append(env, "GOCOVERDIR="+coverDir)
+		}
+		args := append([]string{"add"}, addArgs...)
+		stdout, stderr, exitCode = runNativeCLICommandWithEnv(t, balBin, workDir, args, env)
+		return stdout, stderr, exitCode, workDir
+	}
+
+	assertMatches := func(t *testing.T, stdout, stderr string, exitCode int, txtar string) {
+		t.Helper()
+		stdout = test_util.NormalizeNewlines(stdout)
+		stderr = test_util.NormalizeNewlines(stderr)
+		expectedStdout, expectedStderr, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(filepath.Join(outputsRoot, txtar))
+		if err != nil {
+			t.Fatalf("failed to parse txtar file %s: %v", txtar, err)
+		}
+		if strconv.Itoa(exitCode) != expectedExitCode {
+			t.Fatalf("unexpected exit code, want %s got %d\nstdout:\n%s\nstderr:\n%s", expectedExitCode, exitCode, stdout, stderr)
+		}
+		combined := stdout + "\n" + stderr
+		for _, fragment := range strings.Split(expectedStdout, "\n") {
+			if strings.TrimSpace(fragment) == "" {
+				continue
+			}
+			if !strings.Contains(combined, fragment) {
+				t.Errorf("output missing expected fragment %q\nstdout:\n%s\nstderr:\n%s", fragment, stdout, stderr)
+			}
+		}
+		for _, fragment := range strings.Split(expectedStderr, "\n") {
+			if strings.TrimSpace(fragment) == "" {
+				continue
+			}
+			if !strings.Contains(stderr, fragment) {
+				t.Errorf("stderr missing expected fragment %q\nstderr:\n%s", fragment, stderr)
+			}
+		}
+	}
+
+	t.Run("basic-lib", func(t *testing.T) {
+		t.Parallel()
+		stdout, stderr, code, workDir := runInFixtureCopy(t, basicFixture, "util")
+		assertMatches(t, stdout, stderr, code, "basic-lib.txtar")
+
+		content, err := os.ReadFile(filepath.Join(workDir, "modules", "util", "util.bal"))
+		if err != nil {
+			t.Fatalf("expected modules/util/util.bal to exist: %v", err)
+		}
+		if !strings.Contains(string(content), "public function hello") {
+			t.Errorf("modules/util/util.bal missing expected lib template content:\n%s", content)
+		}
+	})
+
+	t.Run("basic-service", func(t *testing.T) {
+		t.Parallel()
+		stdout, stderr, code, workDir := runInFixtureCopy(t, basicFixture, "svc", "-t", "service")
+		assertMatches(t, stdout, stderr, code, "basic-service.txtar")
+
+		content, err := os.ReadFile(filepath.Join(workDir, "modules", "svc", "svc.bal"))
+		if err != nil {
+			t.Fatalf("expected modules/svc/svc.bal to exist: %v", err)
+		}
+		if !strings.Contains(string(content), "service / on new http:Listener") {
+			t.Errorf("modules/svc/svc.bal missing expected service template content:\n%s", content)
+		}
+	})
+
+	t.Run("duplicate-module", func(t *testing.T) {
+		t.Parallel()
+		workDir := t.TempDir()
+		copyDir(t, basicFixture, workDir)
+		existingModule := filepath.Join(workDir, "modules", "util")
+		if err := os.MkdirAll(existingModule, 0o755); err != nil {
+			t.Fatalf("failed to pre-create modules/util: %v", err)
+		}
+		const original = "public function hello() returns string {\n}\n"
+		existingBal := filepath.Join(existingModule, "util.bal")
+		if err := os.WriteFile(existingBal, []byte(original), 0o644); err != nil {
+			t.Fatalf("failed to write modules/util/util.bal: %v", err)
+		}
+		env := os.Environ()
+		if coverDir != "" {
+			env = append(env, "GOCOVERDIR="+coverDir)
+		}
+		stdout, stderr, code := runNativeCLICommandWithEnv(t, balBin, workDir, []string{"add", "util"}, env)
+		assertMatches(t, stdout, stderr, code, "duplicate-module.txtar")
+
+		// The rejected add must leave the existing module untouched —
+		// createModule's atomic os.Mkdir claim fails before ever writing or
+		// removing anything under modulePath.
+		after, err := os.ReadFile(existingBal)
+		if err != nil {
+			t.Fatalf("expected the existing module to remain intact: %v", err)
+		}
+		if string(after) != original {
+			t.Errorf("existing module content changed:\nbefore:\n%s\nafter:\n%s", original, after)
+		}
+	})
+
+	invalidNames := []struct {
+		name   string
+		module string
+		txtar  string
+	}{
+		{"bad-characters", "bad-name!", "invalid-name.txtar"},
+		{"initial-underscore", "_bad", "invalid-name-initial-underscore.txtar"},
+		{"trailing-underscore", "bad_", "invalid-name-trailing-underscore.txtar"},
+		{"consecutive-underscore", "ba__d", "invalid-name-consecutive-underscore.txtar"},
+		{"initial-digit", "1bad", "invalid-name-initial-digit.txtar"},
+	}
+	for _, tc := range invalidNames {
+		t.Run("invalid-name/"+tc.name, func(t *testing.T) {
+			t.Parallel()
+			stdout, stderr, code, _ := runInFixtureCopy(t, basicFixture, tc.module)
+			assertMatches(t, stdout, stderr, code, tc.txtar)
+		})
+	}
+
+	t.Run("invalid-template", func(t *testing.T) {
+		t.Parallel()
+		stdout, stderr, code, _ := runInFixtureCopy(t, basicFixture, "util", "-t", "bogus")
+		assertMatches(t, stdout, stderr, code, "invalid-template.txtar")
+	})
+
+	t.Run("not-a-package", func(t *testing.T) {
+		t.Parallel()
+		workDir := t.TempDir()
+		env := os.Environ()
+		if coverDir != "" {
+			env = append(env, "GOCOVERDIR="+coverDir)
+		}
+		stdout, stderr, code := runNativeCLICommandWithEnv(t, balBin, workDir, []string{"add", "util"}, env)
+		assertMatches(t, stdout, stderr, code, "not-a-package.txtar")
+	})
+
+	t.Run("no-args", func(t *testing.T) {
+		t.Parallel()
+		stdout, stderr, code, _ := runInFixtureCopy(t, basicFixture)
+		assertMatches(t, stdout, stderr, code, "no-args.txtar")
+	})
+
+	t.Run("too-many-args", func(t *testing.T) {
+		t.Parallel()
+		stdout, stderr, code, _ := runInFixtureCopy(t, basicFixture, "a", "b")
+		assertMatches(t, stdout, stderr, code, "too-many-args.txtar")
+	})
+
+	t.Run("help", func(t *testing.T) {
+		t.Parallel()
+		stdout, stderr, code, _ := runInFixtureCopy(t, basicFixture, "--help")
+		assertMatches(t, stdout, stderr, code, "help.txtar")
+	})
+}
+
+// TestBalNewCorpus exercises `bal new` end-to-end through the coverage-aware
+// CLI harness. `new.go` already has extensive branch-level unit coverage
+// (cli/cmd/new_test.go), so this is a representative sample proving the
+// command works through the real binary + cobra wiring + filesystem, not an
+// exhaustive re-verification of every validation branch. Scenarios targeting
+// a not-yet-existing path (basic, template-*, invalid-package-name,
+// workspace-new) don't need a checked-in fixture — sandboxCLICommandArgs
+// copies the whole testdata/new tree into a temp sandbox and `bal new`
+// creates the target directory fresh inside it. Of the two
+// pre-existing-directory scenarios, "already-a-project" reuses pack's
+// basic/project fixture (any directory with a Ballerina.toml triggers the
+// same rejection) rather than checking in a near-identical one; only
+// "conflicting-files" needs its own minimal fixture, since no existing
+// fixture is a bare directory containing just a conflicting marker file.
+//
+// Java equivalent: N/A — this is CLI-level integration coverage for the Go
+// implementation of `bal new`.
+func TestBalNewCorpus(t *testing.T) {
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	testdataRoot := filepath.Join("corpus", "cli", "testdata", "new")
+	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "new")
+
+	tests := []struct {
+		name  string
+		args  []string
+		txtar string
+	}{
+		{
+			name:  "basic",
+			args:  []string{"new", filepath.Join(testdataRoot, "basic", "newpkg")},
+			txtar: "basic.txtar",
+		},
+		{
+			name:  "template-service",
+			args:  []string{"new", filepath.Join(testdataRoot, "template-service", "newpkg"), "-t", "service"},
+			txtar: "template-service.txtar",
+		},
+		{
+			name:  "template-lib",
+			args:  []string{"new", filepath.Join(testdataRoot, "template-lib", "newpkg"), "-t", "lib"},
+			txtar: "template-lib.txtar",
+		},
+		{
+			name:  "already-a-project",
+			args:  []string{"new", filepath.Join("corpus", "cli", "testdata", "pack", "basic", "project")},
+			txtar: "already-a-project.txtar",
+		},
+		{
+			name:  "conflicting-files",
+			args:  []string{"new", filepath.Join(testdataRoot, "conflicting-files", "project")},
+			txtar: "conflicting-files.txtar",
+		},
+		{
+			name:  "invalid-package-name",
+			args:  []string{"new", filepath.Join(testdataRoot, "invalid-package-name", "Bad-Name!")},
+			txtar: "invalid-package-name.txtar",
+		},
+		{
+			name:  "workspace-new",
+			args:  []string{"new", "--workspace", filepath.Join(testdataRoot, "workspace-new", "newws")},
+			txtar: "workspace-new.txtar",
+		},
+		{
+			name:  "no-args",
+			args:  []string{"new"},
+			txtar: "no-args.txtar",
+		},
+		{
+			name:  "too-many-args",
+			args:  []string{"new", "a", "b"},
+			txtar: "too-many-args.txtar",
+		},
+		{
+			name:  "help",
+			args:  []string{"new", "--help"},
+			txtar: "help.txtar",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assertBalCommandMatchesTxtarFragmentsLoose(t, balBin, repoRoot, coverDir,
+				tt.args, filepath.Join(outputsRoot, tt.txtar))
+		})
+	}
+
+	// The subtests below (formerly cli/cmd/new_test.go's white-box unit
+	// tests, which called createNewCmd() in-process) exercise the same
+	// behavior through the real binary, since bal new's CLI surface fully
+	// reaches every branch they cover — content assertions the txtar-table
+	// scenarios above don't attempt.
+
+	t.Run("nested-paths", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			rel  string
+		}{
+			{"single-level", "projectA"},
+			{"two-levels", filepath.Join("dir1", "projectA")},
+			{"three-levels", filepath.Join("dir2", "dir1", "projectA")},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+				projectPath := filepath.Join(t.TempDir(), tc.rel)
+				stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", projectPath)
+				if exitCode != 0 {
+					t.Fatalf("command failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+				}
+				if !strings.Contains(stdout, "Created new package") {
+					t.Errorf("expected success message, got stdout: %s", stdout)
+				}
+				assertNewPackageStructure(t, projectPath)
+			})
+		}
+	})
+
+	t.Run("existing-empty-directory", func(t *testing.T) {
+		t.Parallel()
+		projectPath := filepath.Join(t.TempDir(), "existing_project")
+		if err := os.MkdirAll(projectPath, 0o755); err != nil {
+			t.Fatalf("failed to create directory: %v", err)
+		}
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", projectPath)
+		if exitCode != 0 {
+			t.Fatalf("command failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		if !strings.Contains(stdout, "Created new package") {
+			t.Errorf("expected success message, got stdout: %s", stdout)
+		}
+		assertNewPackageStructure(t, projectPath)
+	})
+
+	t.Run("generated-file-content", func(t *testing.T) {
+		t.Parallel()
+		projectPath := filepath.Join(t.TempDir(), "myproject")
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", projectPath)
+		if exitCode != 0 {
+			t.Fatalf("command failed: exit=%d\nstderr: %s", exitCode, stderr)
+		}
+
+		tomlContent := readFileT(t, filepath.Join(projectPath, "Ballerina.toml"))
+		for _, pattern := range []string{
+			"[package]", "org = ", `name = "myproject"`, `version = "0.1.0"`,
+			"[build-options]", "observabilityIncluded = true",
+		} {
+			if !strings.Contains(tomlContent, pattern) {
+				t.Errorf("Ballerina.toml missing %q\nContent:\n%s", pattern, tomlContent)
+			}
+		}
+
+		gitignoreContent := readFileT(t, filepath.Join(projectPath, ".gitignore"))
+		for _, pattern := range []string{"target/", "generated/", "Config.toml"} {
+			if !strings.Contains(gitignoreContent, pattern) {
+				t.Errorf(".gitignore missing %q\nContent:\n%s", pattern, gitignoreContent)
+			}
+		}
+
+		mainBalContent := readFileT(t, filepath.Join(projectPath, "main.bal"))
+		for _, pattern := range []string{
+			"import ballerina/io;", "public function main()", "io:println", "Hello, World!",
+		} {
+			if !strings.Contains(mainBalContent, pattern) {
+				t.Errorf("main.bal missing %q\nContent:\n%s", pattern, mainBalContent)
+			}
+		}
+	})
+
+	t.Run("invalid-name-derivation", func(t *testing.T) {
+		for _, tc := range []struct {
+			name        string
+			dirName     string
+			derivedName string
+		}{
+			{"hyphen", "hello-app", "hello_app"},
+			{"dollar", "my$project", "my_project"},
+			{"at-sign", "my@project", "my_project"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+				projectPath := filepath.Join(t.TempDir(), tc.dirName)
+				stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", projectPath)
+				if exitCode != 0 {
+					t.Fatalf("command failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+				}
+				if !strings.Contains(stderr, "package name is derived as") {
+					t.Errorf("expected name derivation warning in stderr, got: %s", stderr)
+				}
+				if !strings.Contains(stdout, "Created new package") {
+					t.Errorf("expected success message, got stdout: %s", stdout)
+				}
+				tomlContent := readFileT(t, filepath.Join(projectPath, "Ballerina.toml"))
+				if !strings.Contains(tomlContent, `name = "`+tc.derivedName+`"`) {
+					t.Errorf("expected derived name %q in Ballerina.toml, got:\n%s", tc.derivedName, tomlContent)
+				}
+			})
+		}
+	})
+
+	t.Run("digit-prefix-derivation", func(t *testing.T) {
+		t.Parallel()
+		projectPath := filepath.Join(t.TempDir(), "9project")
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", projectPath)
+		if exitCode != 0 {
+			t.Fatalf("command failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		if !strings.Contains(stderr, "package name is derived as") {
+			t.Errorf("expected name derivation warning, got stderr: %s", stderr)
+		}
+		tomlContent := readFileT(t, filepath.Join(projectPath, "Ballerina.toml"))
+		if !strings.Contains(tomlContent, `name = "app9project"`) {
+			t.Errorf("expected name 'app9project' in Ballerina.toml, got:\n%s", tomlContent)
+		}
+	})
+
+	t.Run("only-non-alphanumeric-derivation", func(t *testing.T) {
+		dirNames := []string{"#", "_"}
+		if runtime.GOOS != "windows" {
+			dirNames = append(dirNames, "...")
+		}
+		for _, dirName := range dirNames {
+			t.Run(dirName, func(t *testing.T) {
+				t.Parallel()
+				projectPath := filepath.Join(t.TempDir(), dirName)
+				stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", projectPath)
+				if exitCode != 0 {
+					t.Fatalf("command failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+				}
+				if !strings.Contains(stderr, "package name is derived as") {
+					t.Errorf("expected name derivation warning, got stderr: %s", stderr)
+				}
+				tomlContent := readFileT(t, filepath.Join(projectPath, "Ballerina.toml"))
+				if !strings.Contains(tomlContent, `name = "my_package"`) {
+					t.Errorf("expected name 'my_package' in Ballerina.toml, got:\n%s", tomlContent)
+				}
+			})
+		}
+	})
+
+	t.Run("invalid-template-flag", func(t *testing.T) {
+		t.Parallel()
+		projectPath := filepath.Join(t.TempDir(), "project")
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", projectPath, "--template", "bogus")
+		if exitCode == 0 {
+			t.Fatal("expected an error for an unsupported template")
+		}
+		if !strings.Contains(stderr, "invalid template 'bogus'") {
+			t.Errorf("expected invalid template error, got: %s", stderr)
+		}
+	})
+
+	// too-many-args (above) covers newErrorFor's non-workspace branch; this
+	// covers its --workspace branch, which picks the workspace-specific
+	// USAGE line instead.
+	t.Run("too-many-args-workspace-flag", func(t *testing.T) {
+		t.Parallel()
+		tmpDir := t.TempDir()
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir,
+			"new", "--workspace", filepath.Join(tmpDir, "a"), filepath.Join(tmpDir, "b"))
+		if exitCode == 0 {
+			t.Fatal("expected an error, got success")
+		}
+		if !strings.Contains(stderr, "too many arguments") {
+			t.Errorf("expected 'too many arguments' error, got: %s", stderr)
+		}
+		if !strings.Contains(stderr, "new --workspace <path>") {
+			t.Errorf("expected the workspace-specific USAGE line, got: %s", stderr)
+		}
+	})
+
+	t.Run("path-is-existing-file", func(t *testing.T) {
+		t.Parallel()
+		filePath := filepath.Join(t.TempDir(), "not-a-dir")
+		if err := os.WriteFile(filePath, []byte("x"), 0o644); err != nil {
+			t.Fatalf("failed to create file: %v", err)
+		}
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", filePath)
+		if exitCode == 0 {
+			t.Fatal("expected an error for a path that already exists as a file")
+		}
+		if !strings.Contains(stderr, "path exists and is not a directory") {
+			t.Errorf("expected 'path exists and is not a directory' error, got: %s", stderr)
+		}
+	})
+
+	t.Run("existing-bal-files-suppress-main", func(t *testing.T) {
+		t.Parallel()
+		projectPath := filepath.Join(t.TempDir(), "dir_with_bal")
+		if err := os.MkdirAll(projectPath, 0o755); err != nil {
+			t.Fatalf("failed to create directory: %v", err)
+		}
+		balFile := filepath.Join(projectPath, "existing.bal")
+		if err := os.WriteFile(balFile, []byte("// existing file"), 0o644); err != nil {
+			t.Fatalf("failed to create .bal file: %v", err)
+		}
+
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", projectPath)
+		if exitCode != 0 {
+			t.Fatalf("command should succeed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		if !strings.Contains(stdout, "Created new package") {
+			t.Errorf("expected success message, got stdout: %s", stdout)
+		}
+		if _, err := os.Stat(filepath.Join(projectPath, "Ballerina.toml")); err != nil {
+			t.Errorf("Ballerina.toml should be created: %v", err)
+		}
+		if _, err := os.Stat(filepath.Join(projectPath, ".gitignore")); err != nil {
+			t.Errorf(".gitignore should be created: %v", err)
+		}
+		if _, err := os.Stat(filepath.Join(projectPath, "main.bal")); err == nil {
+			t.Error("main.bal should NOT be created when .bal files already exist")
+		}
+		if content := readFileT(t, balFile); content != "// existing file" {
+			t.Errorf("existing .bal file was modified: %q", content)
+		}
+	})
+
+	t.Run("conflicting-files-more", func(t *testing.T) {
+		for _, item := range []struct {
+			name  string
+			isDir bool
+		}{
+			{"Dependencies.toml", false},
+			{"Module.md", false},
+			{"BalTool.toml", false},
+			{"modules", true},
+			{"tests", true},
+		} {
+			t.Run(item.name, func(t *testing.T) {
+				t.Parallel()
+				projectPath := filepath.Join(t.TempDir(), "project")
+				if err := os.MkdirAll(projectPath, 0o755); err != nil {
+					t.Fatalf("failed to create directory: %v", err)
+				}
+				conflictPath := filepath.Join(projectPath, item.name)
+				if item.isDir {
+					if err := os.MkdirAll(conflictPath, 0o755); err != nil {
+						t.Fatalf("failed to create directory: %v", err)
+					}
+				} else if err := os.WriteFile(conflictPath, nil, 0o644); err != nil {
+					t.Fatalf("failed to create file: %v", err)
+				}
+
+				_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", projectPath)
+				if exitCode == 0 {
+					t.Fatalf("expected an error for conflicting %q", item.name)
+				}
+				if !strings.Contains(stderr, "file/directory(s) were found") {
+					t.Errorf("expected conflict error for %q, got: %s", item.name, stderr)
+				}
+			})
+		}
+	})
+
+	// TestInitPackage_CleansUpOnWriteFailure/OnReadmeWriteFailure (formerly
+	// white-box tests calling initPackage directly) are reachable through
+	// the real CLI: checkExistingDirectory doesn't flag .gitignore or
+	// README.md as conflicting paths, so pre-creating either as a directory
+	// forces the identical WriteFile failure/cleanup branch during a real
+	// `bal new` run.
+	t.Run("cleans-up-on-gitignore-write-failure", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("directory-as-file write-failure injection is unix-only")
+		}
+		t.Parallel()
+		projectPath := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(projectPath, ".gitignore"), 0o755); err != nil {
+			t.Fatalf("failed to pre-create .gitignore as a directory: %v", err)
+		}
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", projectPath)
+		if exitCode == 0 {
+			t.Fatal("expected an error writing .gitignore over an existing directory")
+		}
+		if !strings.Contains(stderr, "failed to create .gitignore") {
+			t.Errorf("stderr = %q, want 'failed to create .gitignore'", stderr)
+		}
+		if _, err := os.Stat(filepath.Join(projectPath, "Ballerina.toml")); !os.IsNotExist(err) {
+			t.Errorf("expected Ballerina.toml to be cleaned up, stat err = %v", err)
+		}
+		if _, err := os.Stat(filepath.Join(projectPath, "main.bal")); !os.IsNotExist(err) {
+			t.Errorf("expected main.bal to be cleaned up, stat err = %v", err)
+		}
+	})
+
+	t.Run("workspace-empty-dir-content", func(t *testing.T) {
+		t.Parallel()
+		workspacePath := filepath.Join(t.TempDir(), "my-workspace")
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", workspacePath, "--workspace")
+		if exitCode != 0 {
+			t.Fatalf("command failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		for _, msg := range []string{"Created new workspace", "Created new package 'hello-app'", "Workspace created successfully"} {
+			if !strings.Contains(stdout, msg) {
+				t.Errorf("expected %q in stdout, got: %s", msg, stdout)
+			}
+		}
+		tomlContent := readFileT(t, filepath.Join(workspacePath, "Ballerina.toml"))
+		if !strings.Contains(tomlContent, "[workspace]") || !strings.Contains(tomlContent, `"hello-app"`) {
+			t.Errorf("workspace Ballerina.toml missing [workspace]/hello-app:\n%s", tomlContent)
+		}
+		assertNewPackageStructure(t, filepath.Join(workspacePath, "hello-app"))
+	})
+
+	t.Run("workspace-with-template", func(t *testing.T) {
+		for _, tc := range []struct {
+			template, packageName, sourceFile, sourceContains string
+		}{
+			{"default", "hello-app", "main.bal", "public function main()"},
+			{"main", "hello-app", "main.bal", "public function main()"},
+			{"service", "hello-service", "service.bal", "service / on new http:Listener"},
+			{"lib", "hello-lib", "lib.bal", "public function hello(string? name) returns string"},
+		} {
+			t.Run(tc.template, func(t *testing.T) {
+				t.Parallel()
+				workspacePath := filepath.Join(t.TempDir(), "my-workspace")
+				stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir,
+					"new", workspacePath, "--workspace", "-t", tc.template)
+				if exitCode != 0 {
+					t.Fatalf("command failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+				}
+				if !strings.Contains(stdout, "Created new package '"+tc.packageName+"'") {
+					t.Errorf("expected package name %q in stdout, got: %s", tc.packageName, stdout)
+				}
+				pkgPath := filepath.Join(workspacePath, tc.packageName)
+				sourceContent := readFileT(t, filepath.Join(pkgPath, tc.sourceFile))
+				if !strings.Contains(sourceContent, tc.sourceContains) {
+					t.Errorf("%s missing %q:\n%s", tc.sourceFile, tc.sourceContains, sourceContent)
+				}
+				assertOnlyTemplateSourceExists(t, pkgPath, tc.sourceFile)
+				tomlContent := readFileT(t, filepath.Join(workspacePath, "Ballerina.toml"))
+				if !strings.Contains(tomlContent, `"`+tc.packageName+`"`) {
+					t.Errorf("workspace Ballerina.toml missing %s:\n%s", tc.packageName, tomlContent)
+				}
+			})
+		}
+	})
+
+	t.Run("package-with-template", func(t *testing.T) {
+		for _, tc := range []struct {
+			template, sourceFile, sourceContains string
+		}{
+			{"default", "main.bal", "public function main()"},
+			{"main", "main.bal", "public function main()"},
+			{"service", "service.bal", "service / on new http:Listener"},
+			{"lib", "lib.bal", "public function hello(string? name) returns string"},
+		} {
+			t.Run(tc.template, func(t *testing.T) {
+				t.Parallel()
+				pkgPath := filepath.Join(t.TempDir(), "mypackage")
+				_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", pkgPath, "-t", tc.template)
+				if exitCode != 0 {
+					t.Fatalf("command failed: exit=%d\nstderr: %s", exitCode, stderr)
+				}
+				sourceContent := readFileT(t, filepath.Join(pkgPath, tc.sourceFile))
+				if !strings.Contains(sourceContent, tc.sourceContains) {
+					t.Errorf("%s missing %q:\n%s", tc.sourceFile, tc.sourceContains, sourceContent)
+				}
+				assertOnlyTemplateSourceExists(t, pkgPath, tc.sourceFile)
+			})
+		}
+	})
+
+	t.Run("package-inside-workspace-with-template", func(t *testing.T) {
+		t.Parallel()
+		workspacePath := filepath.Join(t.TempDir(), "my-workspace")
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", workspacePath, "--workspace")
+		if exitCode != 0 {
+			t.Fatalf("failed to create workspace: exit=%d\nstderr: %s", exitCode, stderr)
+		}
+
+		libPkgPath := filepath.Join(workspacePath, "mylib")
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", libPkgPath, "-t", "lib")
+		if exitCode != 0 {
+			t.Fatalf("failed to create lib package: exit=%d\nstderr: %s", exitCode, stderr)
+		}
+		if _, err := os.Stat(filepath.Join(libPkgPath, "lib.bal")); err != nil {
+			t.Errorf("expected lib.bal to be created: %v", err)
+		}
+		if _, err := os.Stat(filepath.Join(libPkgPath, "main.bal")); err == nil {
+			t.Error("main.bal should NOT be created for lib template")
+		}
+		if !strings.Contains(stdout, "Added package to workspace") {
+			t.Errorf("expected 'Added package to workspace' message, got stdout: %s", stdout)
+		}
+		tomlContent := readFileT(t, filepath.Join(workspacePath, "Ballerina.toml"))
+		if !strings.Contains(tomlContent, `"mylib"`) {
+			t.Errorf("workspace Ballerina.toml missing mylib:\n%s", tomlContent)
+		}
+	})
+
+	t.Run("workspace-convert-existing", func(t *testing.T) {
+		t.Parallel()
+		workspacePath := filepath.Join(t.TempDir(), "my-project")
+		for _, name := range []string{"pkg-a", "pkg-b"} {
+			pkgPath := filepath.Join(workspacePath, name)
+			if err := os.MkdirAll(pkgPath, 0o755); err != nil {
+				t.Fatalf("failed to create %s: %v", name, err)
+			}
+			content := "[package]\norg = \"testorg\"\nname = \"" + strings.ReplaceAll(name, "-", "") + "\"\nversion = \"1.0.0\"\n"
+			if err := os.WriteFile(filepath.Join(pkgPath, "Ballerina.toml"), []byte(content), 0o644); err != nil {
+				t.Fatalf("failed to create %s/Ballerina.toml: %v", name, err)
+			}
+		}
+
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", workspacePath, "--workspace")
+		if exitCode != 0 {
+			t.Fatalf("command failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		if !strings.Contains(stdout, "Converting directory to workspace") {
+			t.Errorf("expected conversion message, got stdout: %s", stdout)
+		}
+		if !strings.Contains(stdout, "Discovered 2 package(s)") {
+			t.Errorf("expected 'Discovered 2 package(s)', got stdout: %s", stdout)
+		}
+		if !strings.Contains(stdout, "pkg-a") || !strings.Contains(stdout, "pkg-b") {
+			t.Errorf("expected discovered packages listed, got stdout: %s", stdout)
+		}
+		if _, err := os.Stat(filepath.Join(workspacePath, "hello-app")); err == nil {
+			t.Error("hello-app should NOT be created when existing packages are found")
+		}
+		tomlContent := readFileT(t, filepath.Join(workspacePath, "Ballerina.toml"))
+		for _, want := range []string{"[workspace]", `"pkg-a"`, `"pkg-b"`} {
+			if !strings.Contains(tomlContent, want) {
+				t.Errorf("workspace Ballerina.toml missing %q:\n%s", want, tomlContent)
+			}
+		}
+	})
+
+	t.Run("workspace-convert-existing-nested-member", func(t *testing.T) {
+		t.Parallel()
+		workspacePath := filepath.Join(t.TempDir(), "my-project")
+		// "packages" itself has no Ballerina.toml — only its child does.
+		nestedPkgPath := filepath.Join(workspacePath, "packages", "pkg-a")
+		if err := os.MkdirAll(nestedPkgPath, 0o755); err != nil {
+			t.Fatalf("failed to create nested pkg-a: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(nestedPkgPath, "Ballerina.toml"),
+			[]byte("[package]\norg = \"testorg\"\nname = \"pkga\"\nversion = \"1.0.0\"\n"), 0o644); err != nil {
+			t.Fatalf("failed to create pkg-a/Ballerina.toml: %v", err)
+		}
+
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", workspacePath, "--workspace")
+		if exitCode != 0 {
+			t.Fatalf("command failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		if !strings.Contains(stdout, "Discovered 1 package(s)") {
+			t.Errorf("expected 'Discovered 1 package(s)', got stdout: %s", stdout)
+		}
+		if !strings.Contains(stdout, filepath.ToSlash(filepath.Join("packages", "pkg-a"))) {
+			t.Errorf("expected discovered path 'packages/pkg-a', got stdout: %s", stdout)
+		}
+		tomlContent := readFileT(t, filepath.Join(workspacePath, "Ballerina.toml"))
+		if !strings.Contains(tomlContent, `"packages/pkg-a"`) {
+			t.Errorf("workspace Ballerina.toml missing 'packages/pkg-a':\n%s", tomlContent)
+		}
+	})
+
+	t.Run("workspace-already-workspace", func(t *testing.T) {
+		t.Parallel()
+		workspacePath := filepath.Join(t.TempDir(), "existing-workspace")
+		if err := os.MkdirAll(workspacePath, 0o755); err != nil {
+			t.Fatalf("failed to create directory: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(workspacePath, "Ballerina.toml"),
+			[]byte("[workspace]\npackages = [\"pkg1\"]\n"), 0o644); err != nil {
+			t.Fatalf("failed to create Ballerina.toml: %v", err)
+		}
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", workspacePath, "--workspace")
+		if exitCode == 0 {
+			t.Fatal("expected an error, got success")
+		}
+		if !strings.Contains(stderr, "directory is already a workspace") {
+			t.Errorf("expected 'already a workspace' error, got: %s", stderr)
+		}
+	})
+
+	t.Run("workspace-already-package", func(t *testing.T) {
+		t.Parallel()
+		pkgPath := filepath.Join(t.TempDir(), "existing-package")
+		if err := os.MkdirAll(pkgPath, 0o755); err != nil {
+			t.Fatalf("failed to create directory: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(pkgPath, "Ballerina.toml"),
+			[]byte("[package]\norg = \"testorg\"\nname = \"test\"\nversion = \"1.0.0\"\n"), 0o644); err != nil {
+			t.Fatalf("failed to create Ballerina.toml: %v", err)
+		}
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", pkgPath, "--workspace")
+		if exitCode == 0 {
+			t.Fatal("expected an error, got success")
+		}
+		if !strings.Contains(stderr, "directory is already a Ballerina package") {
+			t.Errorf("expected 'already a Ballerina package' error, got: %s", stderr)
+		}
+	})
+
+	// workspace-validate-path-stat-error/workspace-mkdir-failure (formerly
+	// white-box tests calling validateWorkspacePath directly / relying on
+	// executeNewCommandWithArgs) cover runNewWorkspace's early error
+	// branches, both reachable through the real CLI via the same chmod
+	// tricks used elsewhere in this file (e.g. TestBalCleanCorpus's
+	// delete-failure subtest).
+	t.Run("workspace-validate-path-stat-error", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("permission-based stat-failure injection is unix-only")
+		}
+		t.Parallel()
+		parent := t.TempDir()
+		target := filepath.Join(parent, "wsdir")
+		if err := os.Chmod(parent, 0); err != nil {
+			t.Fatalf("failed to chmod parent unreadable: %v", err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(parent, 0o755) })
+
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", target, "--workspace")
+		if exitCode == 0 {
+			t.Fatal("expected an error for a path under an inaccessible parent")
+		}
+		if strings.Contains(stderr, "already a workspace") || strings.Contains(stderr, "already a Ballerina package") {
+			t.Errorf("stderr = %q, want a raw stat error, not a workspace/package classification", stderr)
+		}
+	})
+
+	t.Run("workspace-mkdir-failure", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("permission-based mkdir-failure injection is unix-only")
+		}
+		t.Parallel()
+		parent := t.TempDir()
+		target := filepath.Join(parent, "newws")
+		if err := os.Chmod(parent, 0o555); err != nil {
+			t.Fatalf("failed to chmod parent read-only: %v", err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(parent, 0o755) })
+
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", target, "--workspace")
+		if exitCode == 0 {
+			t.Fatal("expected an error creating a workspace under a read-only parent")
+		}
+		if stderr == "" {
+			t.Error("expected a non-empty stderr message")
+		}
+	})
+
+	t.Run("package-inside-workspace", func(t *testing.T) {
+		t.Parallel()
+		workspacePath := filepath.Join(t.TempDir(), "my-workspace")
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", workspacePath, "--workspace")
+		if exitCode != 0 {
+			t.Fatalf("failed to create workspace: exit=%d\nstderr: %s", exitCode, stderr)
+		}
+
+		newPkgPath := filepath.Join(workspacePath, "new-pkg")
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", newPkgPath)
+		if exitCode != 0 {
+			t.Fatalf("failed to create package inside workspace: exit=%d\nstderr: %s", exitCode, stderr)
+		}
+		if !strings.Contains(stdout, "Created new package") || !strings.Contains(stdout, "Added package to workspace") {
+			t.Errorf("expected creation + workspace-add messages, got stdout: %s", stdout)
+		}
+		assertNewPackageStructure(t, newPkgPath)
+
+		tomlContent := readFileT(t, filepath.Join(workspacePath, "Ballerina.toml"))
+		if !strings.Contains(tomlContent, `"hello-app"`) || !strings.Contains(tomlContent, `"new-pkg"`) {
+			t.Errorf("workspace Ballerina.toml missing hello-app/new-pkg:\n%s", tomlContent)
+		}
+
+		helloAppOrg := extractTomlOrg(t, filepath.Join(workspacePath, "hello-app", "Ballerina.toml"))
+		newPkgOrg := extractTomlOrg(t, filepath.Join(newPkgPath, "Ballerina.toml"))
+		if helloAppOrg != newPkgOrg {
+			t.Errorf("org names should match: hello-app=%q, new-pkg=%q", helloAppOrg, newPkgOrg)
+		}
+	})
+
+	t.Run("package-inside-workspace-no-packages-line-yet", func(t *testing.T) {
+		t.Parallel()
+		workspacePath := filepath.Join(t.TempDir(), "my-workspace")
+		if err := os.MkdirAll(workspacePath, 0o755); err != nil {
+			t.Fatalf("failed to create workspace dir: %v", err)
+		}
+		tomlPath := filepath.Join(workspacePath, "Ballerina.toml")
+		if err := os.WriteFile(tomlPath, []byte("[workspace]\n"), 0o644); err != nil {
+			t.Fatalf("failed to create workspace Ballerina.toml: %v", err)
+		}
+
+		newPkgPath := filepath.Join(workspacePath, "new-pkg")
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", newPkgPath)
+		if exitCode != 0 {
+			t.Fatalf("failed to create package inside workspace: exit=%d\nstderr: %s", exitCode, stderr)
+		}
+		if !strings.Contains(stdout, "Added package to workspace") {
+			t.Errorf("expected 'Added package to workspace', got stdout: %s", stdout)
+		}
+		assertNewPackageStructure(t, newPkgPath)
+
+		tomlContent := readFileT(t, tomlPath)
+		if !strings.Contains(tomlContent, `packages = ["new-pkg"]`) {
+			t.Errorf("workspace Ballerina.toml should have a fresh packages line with new-pkg:\n%s", tomlContent)
+		}
+	})
+
+	t.Run("package-inside-workspace-first-member-has-no-org", func(t *testing.T) {
+		t.Parallel()
+		workspacePath := filepath.Join(t.TempDir(), "my-workspace")
+		pkgAPath := filepath.Join(workspacePath, "pkg-a")
+		if err := os.MkdirAll(pkgAPath, 0o755); err != nil {
+			t.Fatalf("failed to create pkg-a: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(workspacePath, "Ballerina.toml"),
+			[]byte("[workspace]\npackages = [\"pkg-a\"]\n"), 0o644); err != nil {
+			t.Fatalf("failed to create workspace Ballerina.toml: %v", err)
+		}
+		// Deliberately no "org" line.
+		if err := os.WriteFile(filepath.Join(pkgAPath, "Ballerina.toml"),
+			[]byte("[package]\nname = \"pkga\"\nversion = \"1.0.0\"\n"), 0o644); err != nil {
+			t.Fatalf("failed to create pkg-a/Ballerina.toml: %v", err)
+		}
+
+		newPkgPath := filepath.Join(workspacePath, "new-pkg")
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", newPkgPath)
+		if exitCode != 0 {
+			t.Fatalf("failed to create package inside workspace: exit=%d\nstderr: %s", exitCode, stderr)
+		}
+		if !strings.Contains(stdout, "Created new package") {
+			t.Errorf("expected 'Created new package', got stdout: %s", stdout)
+		}
+		assertNewPackageStructure(t, newPkgPath)
+	})
+
+	t.Run("package-inside-workspace-already-registered", func(t *testing.T) {
+		t.Parallel()
+		workspacePath := filepath.Join(t.TempDir(), "my-workspace")
+		if err := os.MkdirAll(workspacePath, 0o755); err != nil {
+			t.Fatalf("failed to create workspace dir: %v", err)
+		}
+		tomlPath := filepath.Join(workspacePath, "Ballerina.toml")
+		// "future-pkg" is already listed even though the directory doesn't exist yet.
+		if err := os.WriteFile(tomlPath, []byte("[workspace]\npackages = [\"future-pkg\"]\n"), 0o644); err != nil {
+			t.Fatalf("failed to create workspace Ballerina.toml: %v", err)
+		}
+
+		newPkgPath := filepath.Join(workspacePath, "future-pkg")
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", newPkgPath)
+		if exitCode != 0 {
+			t.Fatalf("failed to create pre-declared package: exit=%d\nstderr: %s", exitCode, stderr)
+		}
+		if !strings.Contains(stdout, "Added package to workspace") {
+			t.Errorf("expected 'Added package to workspace', got stdout: %s", stdout)
+		}
+		tomlContent := readFileT(t, tomlPath)
+		if got := strings.Count(tomlContent, `"future-pkg"`); got != 1 {
+			t.Errorf("expected exactly one \"future-pkg\" entry, got %d in:\n%s", got, tomlContent)
+		}
+	})
+
+	t.Run("package-inside-workspace-nested-dir", func(t *testing.T) {
+		t.Parallel()
+		workspacePath := filepath.Join(t.TempDir(), "my-workspace")
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", workspacePath, "--workspace")
+		if exitCode != 0 {
+			t.Fatalf("failed to create workspace: exit=%d\nstderr: %s", exitCode, stderr)
+		}
+
+		nestedPkgPath := filepath.Join(workspacePath, "packages", "nested-pkg")
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", nestedPkgPath)
+		if exitCode != 0 {
+			t.Fatalf("failed to create nested package: exit=%d\nstderr: %s", exitCode, stderr)
+		}
+		if !strings.Contains(stdout, "Created new package") || !strings.Contains(stdout, "Added package to workspace") {
+			t.Errorf("expected creation + workspace-add messages, got stdout: %s", stdout)
+		}
+		tomlContent := readFileT(t, filepath.Join(workspacePath, "Ballerina.toml"))
+		if !strings.Contains(tomlContent, "packages/nested-pkg") {
+			t.Errorf("workspace Ballerina.toml should contain 'packages/nested-pkg':\n%s", tomlContent)
+		}
+	})
+
+	t.Run("workspace-skips-hidden-dirs", func(t *testing.T) {
+		t.Parallel()
+		workspacePath := filepath.Join(t.TempDir(), "my-project")
+		pkgPath := filepath.Join(workspacePath, "pkg-a")
+		if err := os.MkdirAll(pkgPath, 0o755); err != nil {
+			t.Fatalf("failed to create pkg-a: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(pkgPath, "Ballerina.toml"),
+			[]byte("[package]\norg = \"testorg\"\nname = \"pkga\"\nversion = \"1.0.0\"\n"), 0o644); err != nil {
+			t.Fatalf("failed to create Ballerina.toml: %v", err)
+		}
+		hiddenPath := filepath.Join(workspacePath, ".hidden-pkg")
+		if err := os.MkdirAll(hiddenPath, 0o755); err != nil {
+			t.Fatalf("failed to create .hidden-pkg: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(hiddenPath, "Ballerina.toml"),
+			[]byte("[package]\norg = \"testorg\"\nname = \"hidden\"\nversion = \"1.0.0\"\n"), 0o644); err != nil {
+			t.Fatalf("failed to create Ballerina.toml: %v", err)
+		}
+
+		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "new", workspacePath, "--workspace")
+		if exitCode != 0 {
+			t.Fatalf("command failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+		}
+		if !strings.Contains(stdout, "Discovered 1 package(s)") {
+			t.Errorf("expected 'Discovered 1 package(s)', got stdout: %s", stdout)
+		}
+		if strings.Contains(stdout, ".hidden-pkg") {
+			t.Errorf("hidden directory should not be discovered, got stdout: %s", stdout)
+		}
+		tomlContent := readFileT(t, filepath.Join(workspacePath, "Ballerina.toml"))
+		if strings.Contains(tomlContent, ".hidden-pkg") {
+			t.Errorf("workspace Ballerina.toml should not contain hidden directory:\n%s", tomlContent)
+		}
+	})
+}
+
+// assertNewPackageStructure verifies the expected package structure exists,
+// mirroring bal new's default-template output (formerly
+// cli/cmd/new_test.go's assertPackageStructure).
+func assertNewPackageStructure(t *testing.T, projectPath string) {
+	t.Helper()
+	if _, err := os.Stat(projectPath); os.IsNotExist(err) {
+		t.Errorf("project directory does not exist: %s", projectPath)
+		return
+	}
+	if _, err := os.Stat(filepath.Join(projectPath, "Ballerina.toml")); os.IsNotExist(err) {
+		t.Errorf("Ballerina.toml does not exist: %s", projectPath)
+	}
+	if _, err := os.Stat(filepath.Join(projectPath, "main.bal")); os.IsNotExist(err) {
+		t.Errorf("main.bal does not exist: %s", projectPath)
+	}
+	if _, err := os.Stat(filepath.Join(projectPath, ".gitignore")); os.IsNotExist(err) {
+		t.Errorf(".gitignore does not exist: %s", projectPath)
+	}
+	if _, err := os.Stat(filepath.Join(projectPath, "Package.md")); err == nil {
+		t.Errorf("Package.md should not exist for default template: %s", projectPath)
+	}
+}
+
+// assertOnlyTemplateSourceExists verifies that of main.bal/lib.bal/service.bal,
+// only wantFile exists in dir.
+func assertOnlyTemplateSourceExists(t *testing.T, dir, wantFile string) {
+	t.Helper()
+	for _, other := range []string{"main.bal", "lib.bal", "service.bal"} {
+		if other == wantFile {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(dir, other)); err == nil {
+			t.Errorf("unexpected source file %s exists alongside %s", other, wantFile)
+		}
+	}
+}
+
+// extractTomlOrg returns the value of the first "org = ..." line in the
+// Ballerina.toml at path, or "" if none is found.
+func extractTomlOrg(t *testing.T, path string) string {
+	t.Helper()
+	content := readFileT(t, path)
+	for _, line := range strings.Split(content, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "org") {
+			if _, value, ok := strings.Cut(line, "="); ok {
+				return strings.Trim(strings.TrimSpace(value), "\"")
+			}
+		}
+	}
+	return ""
+}
+
+// readFileT reads path and fails the test if it can't, returning the
+// content as a string for substring assertions.
+func readFileT(t *testing.T, path string) string {
+	t.Helper()
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("failed to read %s: %v", path, err)
+	}
+	return string(content)
 }
 
 // substituteScenarioPlaceholders replaces the token "{{TMPDIR}}" in each arg
@@ -1893,7 +3264,7 @@ func TestBalBuildWorkspacePartialFailure(t *testing.T) {
 	if exitCode == 0 {
 		t.Fatalf("expected a non-zero exit code when one workspace member fails to compile, got 0\nstdout:\n%s\nstderr:\n%s", stdout, stderr)
 	}
-	if !strings.Contains(stderr, "compilation failed; executable not produced") {
+	if !strings.Contains(stderr, "compilation contains errors") {
 		t.Errorf("expected pkga's compile failure to be reported, got stderr:\n%s", stderr)
 	}
 	if strings.Contains(stdout, "Created ") {
@@ -1924,7 +3295,7 @@ func TestBalBuildWorkspaceMemberManifestError(t *testing.T) {
 	if !strings.Contains(stderr, "invalid version") {
 		t.Errorf("expected pkga's manifest error to be reported, got stderr:\n%s", stderr)
 	}
-	if !strings.Contains(stderr, "package loading reported errors") {
+	if !strings.Contains(stderr, "project loading contains errors") {
 		t.Errorf("expected the load-phase error message, got stderr:\n%s", stderr)
 	}
 	if strings.Contains(stdout, "Created ") {
@@ -1937,6 +3308,7 @@ func TestBalBuildWorkspaceMemberManifestError(t *testing.T) {
 // CI/deployment workflows targeting a specific output location rather than
 // the default target/bin/<package-name>.
 func TestBalBuildCustomOutputPath(t *testing.T) {
+	t.Parallel()
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
 		t.Skip("skipping CLI integration test on WASM (js/wasm)")
 	}
@@ -2460,6 +3832,7 @@ func TestBalBuildUnsupportedTargetPlatform(t *testing.T) {
 // native-multi-org-v fixture + golden output as TestNativeMultiOrgPackages
 // (native_runner_test.go).
 func TestBalBuildNativeDependency(t *testing.T) {
+	t.Parallel()
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
 		t.Skip("skipping CLI integration test on WASM")
 	}

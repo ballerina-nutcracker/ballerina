@@ -27,50 +27,70 @@ import (
 
 const devDriverDirName = "ballerina-driver-src-dev"
 
-// ExtractDriverSource extracts the embedded CLI driver module into the build cache.
+// ExtractDriverSource extracts the embedded CLI driver module into the build
+// cache. The extracted directory is immutable once complete — for a given
+// version (or, in dev builds, a given content hash) the embedded source is
+// always byte-identical, so concurrent `bal` processes never need to delete
+// or rewrite an existing, complete directory. Each writer instead extracts
+// into its own private staging directory and atomically renames it into
+// place, so a concurrent reader of the target directory only ever sees it
+// fully absent or fully populated, never partially written or mid-delete.
 func ExtractDriverSource(cacheRoot, version string) (string, error) {
 	source := DriverSource()
 	if source == nil {
 		return "", errors.New("CLI driver source is not embedded in native interpreter builds")
 	}
 	if version == "dev" {
-		return extractDevDriverSource(source)
+		hash, err := driverSourceHash(source)
+		if err != nil {
+			return "", fmt.Errorf("hashing embedded CLI driver source: %w", err)
+		}
+		dir := filepath.Join(os.TempDir(), devDriverDirName+"-"+hash)
+		return installDriverSource(dir, os.TempDir(), source)
 	}
 
 	dir := filepath.Join(cacheRoot, "interpreter-src", version)
+	return installDriverSource(dir, filepath.Dir(dir), source)
+}
+
+// installDriverSource returns dir unchanged if it's already a complete
+// extraction; otherwise it extracts source into a fresh staging directory
+// under stagingParent and atomically renames it to dir. If another process
+// wins the race and installs dir first, the rename fails harmlessly — since
+// dir is content-addressed (by version or content hash), that directory is
+// guaranteed byte-identical to what this call would have installed, so it
+// reuses it instead of erroring.
+func installDriverSource(dir, stagingParent string, source fs.FS) (string, error) {
 	if extractedDriverSourceComplete(dir) {
 		return dir, nil
 	}
-	if err := os.RemoveAll(dir); err != nil {
-		return "", fmt.Errorf("clearing incomplete CLI driver source cache: %w", err)
-	}
-	if err := extractDriverSource(dir, source); err != nil {
-		_ = os.RemoveAll(dir)
-		return "", fmt.Errorf("extracting CLI driver source: %w", err)
-	}
-	return dir, nil
-}
 
-func extractDevDriverSource(source fs.FS) (string, error) {
-	hash, err := driverSourceHash(source)
+	if err := os.MkdirAll(stagingParent, 0o755); err != nil {
+		return "", fmt.Errorf("creating CLI driver source cache dir: %w", err)
+	}
+	staging, err := os.MkdirTemp(stagingParent, filepath.Base(dir)+"-staging-*")
 	if err != nil {
-		return "", fmt.Errorf("hashing embedded CLI driver source: %w", err)
+		return "", fmt.Errorf("creating staging dir for CLI driver source: %w", err)
 	}
+	defer func() { _ = os.RemoveAll(staging) }()
 
-	dir := filepath.Join(os.TempDir(), devDriverDirName)
-	hashFile := dir + ".hash"
-	if existing, err := os.ReadFile(hashFile); err == nil && string(existing) == hash && extractedDriverSourceComplete(dir) {
-		return dir, nil
-	}
-	if err := os.RemoveAll(dir); err != nil {
-		return "", fmt.Errorf("clearing stale CLI driver source cache: %w", err)
-	}
-	if err := extractDriverSource(dir, source); err != nil {
-		_ = os.RemoveAll(dir)
+	if err := extractDriverSource(staging, source); err != nil {
 		return "", fmt.Errorf("extracting CLI driver source: %w", err)
 	}
-	if err := os.WriteFile(hashFile, []byte(hash), 0o644); err != nil {
-		return "", fmt.Errorf("writing CLI driver source cache hash: %w", err)
+	if err := os.Rename(staging, dir); err != nil {
+		if extractedDriverSourceComplete(dir) {
+			return dir, nil
+		}
+		// dir exists but is incomplete — not something a concurrent reader
+		// could be relying on (this function never leaves dir in that state
+		// itself; it only ever installs a complete extraction via the
+		// rename above), so it's stale/corrupted and safe to replace.
+		if err := os.RemoveAll(dir); err != nil {
+			return "", fmt.Errorf("clearing incomplete CLI driver source cache: %w", err)
+		}
+		if err := os.Rename(staging, dir); err != nil {
+			return "", fmt.Errorf("installing CLI driver source cache: %w", err)
+		}
 	}
 	return dir, nil
 }
