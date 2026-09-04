@@ -47,8 +47,9 @@ type OpaqueFunctionSymbol struct {
 
 const (
 	// lang.array
-	OpaqueFnArrayPush = 0
-	OpaqueFnArrayMap  = 1
+	OpaqueFnArrayPush     = 0
+	OpaqueFnArrayMap      = 1
+	OpaqueFnArrayToStream = 2
 	// lang.map
 	OpaqueFnMapRemove = 0
 	OpaqueFnMapGet    = 1
@@ -127,6 +128,7 @@ func OpaqueSymbols(pkg PackageIdentifier) []Symbol {
 		return []Symbol{
 			newOpaqueFunctionSymbol("push", OpaqueFnArrayPush, noIsolatedParams),
 			newOpaqueFunctionSymbol("map", OpaqueFnArrayMap, func(index int) bool { return index == 1 }),
+			newOpaqueFunctionSymbol("toStream", OpaqueFnArrayToStream, noIsolatedParams),
 		}
 	case "lang.map":
 		return []Symbol{

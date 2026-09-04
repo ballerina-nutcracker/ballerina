@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect first argument to be a list subtype
+  --> to-stream-non-list-e.bal:20:40
+   |
+20 |     stream<int, ()> _ = array:toStream(value); // @error complete static type includes a non-list member
+   |                                        ^^^^^
