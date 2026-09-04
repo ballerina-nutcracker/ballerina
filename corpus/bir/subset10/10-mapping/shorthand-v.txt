@@ -1,0 +1,32 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad Ada
+    name = %1;
+    %3 = ConstantLoad 36
+    age = %3;
+    %5 = ConstantLoad d
+    default = %5;
+    %7 = ConstantLoad name
+    %8 = ConstantLoad age
+    %9 = newMap {| age: int, name: string, never... |}{%7=name, %8=age}
+    person = %9;
+    %11 = println(person) -> bb1;
+  }
+  bb1 {
+    %12 = ConstantLoad GREETING
+    %13 = ConstantLoad hi
+    %14 = newMap {| GREETING: string, never... |}{%12=%13}
+    c = %14;
+    %16 = println(c) -> bb2;
+  }
+  bb2 {
+    %17 = ConstantLoad default
+    %18 = newMap {| default: string, never... |}{%17=default}
+    q = %18;
+    %20 = println(q) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

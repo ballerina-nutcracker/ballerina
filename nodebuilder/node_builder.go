@@ -2279,9 +2279,17 @@ func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorBL
 			mappingConstructor.Fields = append(mappingConstructor.Fields, keyValueField)
 		case st.SPECIFIC_FIELD:
 			specificField := field.(*st.SpecificFieldNode)
-			if specificField.ValueExpr() == nil {
-				n.unimplemented("mapping constructor var-name field not implemented", specificField)
+			if specificField.ReadonlyKeyword() != nil {
+				n.unimplemented("readonly mapping constructor field not implemented",
+					specificField.ReadonlyKeyword())
 				return n.badExprOrAction(mappingConstructorBLangExpression)
+			}
+			valueExpr := specificField.ValueExpr()
+			var value ast.BLangExpression
+			if valueExpr == nil {
+				value = n.createExpression(specificField.FieldName())
+			} else {
+				value = n.createExpression(valueExpr)
 			}
 			_, isStringLit := specificField.FieldName().(*st.BasicLiteralNode)
 			keyKind := ast.MappingKeyIdentifier
@@ -2295,8 +2303,7 @@ func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorBL
 			key.SetPosition(n.getPosition(specificField.FieldName()))
 			keyValueField := &ast.BLangMappingKeyValueField{
 				Key:       key,
-				ValueExpr: n.createExpression(specificField.ValueExpr()),
-				Readonly:  specificField.ReadonlyKeyword() != nil,
+				ValueExpr: value,
 			}
 			keyValueField.SetPosition(n.getPosition(specificField))
 			mappingConstructor.Fields = append(mappingConstructor.Fields, keyValueField)
