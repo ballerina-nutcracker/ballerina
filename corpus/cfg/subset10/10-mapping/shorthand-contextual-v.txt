@@ -1,0 +1,52 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable name (type
+        (value-type string)) (expr
+        (literal Ada))))
+    (var-def
+      (variable age (type
+        (value-type int)) (expr
+        (literal 36))))
+    (var-def
+      (variable p (type
+        (user-defined-type Person)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (simple-var-ref name))
+          (key-value
+            (literal age)
+            (simple-var-ref age))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref p))))
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal age)
+            (simple-var-ref age))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+    (assignment
+      (simple-var-ref m)
+      (mapping-constructor-expr
+        (key-value
+          (literal age)
+          (simple-var-ref age))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+    (assignment
+      (simple-var-ref name)
+      (literal Bob))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref p))))
+  )
+)
