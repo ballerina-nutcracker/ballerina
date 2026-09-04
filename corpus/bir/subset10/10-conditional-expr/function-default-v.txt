@@ -54,38 +54,62 @@ $anonFunc$_0(int|string,string) -> string{
 }
 main() -> nil{
   bb0 {
-    %1 = fp $anon/.:main$506$3$thunk$0
-    %2 = %1() -> bb1;
+    %1 = ConstantLoad 1
+    $desugar$0 = %1;
+    %3 = $desugar$0;
+    %4 = $default$0(%3) -> bb1;
   }
   bb1 {
-    %3 = println(%2) -> bb2;
+    $desugar$1 = %4;
+    %6 = $desugar$0;
+    %7 = classify(%6,$desugar$1) -> bb2;
   }
   bb2 {
-    %4 = fp $anon/.:main$506$3$thunk$1
-    %5 = %4() -> bb3;
+    %8 = println(%7) -> bb3;
   }
   bb3 {
-    %6 = println(%5) -> bb4;
+    %9 = ConstantLoad one
+    $desugar$2 = %9;
+    %11 = $default$0($desugar$2) -> bb4;
   }
   bb4 {
-    %8 = fp $anon/.:$default$1
-    $desugar$4 = %8;
-    %9 = fp $anon/.:$anonFunc$_0
-    fn = %9;
-    %11 = closure_fp $anon/.:main$506$3$thunk$2
-    %12 = %11() -> bb5;
+    $desugar$3 = %11;
+    %13 = classify($desugar$2,$desugar$3) -> bb5;
   }
   bb5 {
-    %13 = println(%12) -> bb6;
+    %14 = println(%13) -> bb6;
   }
   bb6 {
-    %14 = closure_fp $anon/.:main$506$3$thunk$3
-    %15 = %14() -> bb7;
+    %16 = fp $anon/.:$default$1
+    $desugar$4 = %16;
+    %17 = fp $anon/.:$anonFunc$_0
+    fn = %17;
+    %19 = ConstantLoad 2
+    $desugar$5 = %19;
+    %21 = $desugar$5;
+    %22 = $desugar$4(%21) -> bb7;
   }
   bb7 {
-    %16 = println(%15) -> bb8;
+    $desugar$6 = %22;
+    %24 = $desugar$5;
+    %25 = fn(%24,$desugar$6) -> bb8;
   }
   bb8 {
+    %26 = println(%25) -> bb9;
+  }
+  bb9 {
+    %27 = ConstantLoad two
+    $desugar$7 = %27;
+    %29 = $desugar$4($desugar$7) -> bb10;
+  }
+  bb10 {
+    $desugar$8 = %29;
+    %31 = fn($desugar$7,$desugar$8) -> bb11;
+  }
+  bb11 {
+    %32 = println(%31) -> bb12;
+  }
+  bb12 {
     return;
   }
 }
@@ -111,69 +135,5 @@ $default$0(int|string) -> string{
   bb5 {
     %2 = %5;
     GOTO bb3;
-  }
-}
-main$506$3$thunk$0() -> string{
-  bb0 {
-    %1 = ConstantLoad 1
-    $desugar$0 = %1;
-    %3 = $desugar$0;
-    %4 = $default$0(%3) -> bb1;
-  }
-  bb1 {
-    $desugar$1 = %4;
-    %6 = $desugar$0;
-    %7 = classify(%6,$desugar$1) -> bb2;
-  }
-  bb2 {
-    %0 = %7;
-    return;
-  }
-}
-main$506$3$thunk$1() -> string{
-  bb0 {
-    %1 = ConstantLoad one
-    $desugar$2 = %1;
-    %3 = $default$0($desugar$2) -> bb1;
-  }
-  bb1 {
-    $desugar$3 = %3;
-    %5 = classify($desugar$2,$desugar$3) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-main$506$3$thunk$2() -> string{
-  bb0 {
-    %1 = ConstantLoad 2
-    $desugar$5 = %1;
-    %3 = $desugar$5;
-    %4 = (1, $desugar$4)(%3) -> bb1;
-  }
-  bb1 {
-    $desugar$6 = %4;
-    %6 = $desugar$5;
-    %7 = (1, fn)(%6,$desugar$6) -> bb2;
-  }
-  bb2 {
-    %0 = %7;
-    return;
-  }
-}
-main$506$3$thunk$3() -> string{
-  bb0 {
-    %1 = ConstantLoad two
-    $desugar$7 = %1;
-    %3 = (1, $desugar$4)($desugar$7) -> bb1;
-  }
-  bb1 {
-    $desugar$8 = %3;
-    %5 = (1, fn)($desugar$7,$desugar$8) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
   }
 }

@@ -3,74 +3,64 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad /tmp/bal_io_string2.txt
     path = %1;
-    %4 = closure_fp $anon/.:main$502$0$thunk$0
-    %5 = main$502$0$thunk$0() -> bb1;
+    $desugar$0 = path;
+    %5 = ConstantLoad First
+    $desugar$1 = %5;
+    %7 = $default$1($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    %6 = %5 is error
-    %6 ? bb2 : bb3;
+    $desugar$2 = %7;
+    %9 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %0 = %5;
-    return;
+    %10 = %9 is error
+    %10 ? bb3 : bb4;
   }
   bb3 {
-    %3 = %5;
-    GOTO bb4;
+    %0 = %9;
+    return;
   }
   bb4 {
-    %8 = ConstantLoad Second
-    %9 = ConstantLoad APPEND
-    %10 = fileWriteString(path,%8,%9) -> bb5;
+    %3 = %9;
+    GOTO bb5;
   }
   bb5 {
-    %11 = %10 is error
-    %11 ? bb6 : bb7;
+    %12 = ConstantLoad Second
+    %13 = ConstantLoad APPEND
+    %14 = fileWriteString(path,%12,%13) -> bb6;
   }
   bb6 {
-    %0 = %10;
-    return;
+    %15 = %14 is error
+    %15 ? bb7 : bb8;
   }
   bb7 {
-    %7 = %10;
-    GOTO bb8;
+    %0 = %14;
+    return;
   }
   bb8 {
-    %13 = fileReadString(path) -> bb9;
+    %11 = %14;
+    GOTO bb9;
   }
   bb9 {
-    %14 = %13 is error
-    %14 ? bb10 : bb11;
+    %17 = fileReadString(path) -> bb10;
   }
   bb10 {
-    %0 = %13;
-    return;
+    %18 = %17 is error
+    %18 ? bb11 : bb12;
   }
   bb11 {
-    %12 = %13;
-    GOTO bb12;
-  }
-  bb12 {
-    content = %12;
-    %16 = println(content) -> bb13;
-  }
-  bb13 {
+    %0 = %17;
     return;
   }
-}
-main$502$0$thunk$0() -> nil|error{
-  bb0 {
-    $desugar$0 = (1, path);
-    %2 = ConstantLoad First
-    $desugar$1 = %2;
-    %4 = $default$1($desugar$0,$desugar$1) -> bb1;
+  bb12 {
+    %16 = %17;
+    GOTO bb13;
   }
-  bb1 {
-    $desugar$2 = %4;
-    %6 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  bb13 {
+    content = %16;
+    %20 = println(content) -> bb14;
   }
-  bb2 {
-    %0 = %6;
+  bb14 {
     return;
   }
 }

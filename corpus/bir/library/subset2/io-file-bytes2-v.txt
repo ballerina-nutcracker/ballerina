@@ -3,85 +3,75 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad /tmp/bal_io_bytes2.bin
     path = %1;
-    %4 = closure_fp $anon/.:main$502$0$thunk$0
-    %5 = main$502$0$thunk$0() -> bb1;
+    $desugar$0 = path;
+    %5 = ConstantLoad 1
+    %6 = ConstantLoad 2
+    %7 = ConstantLoad 3
+    %8 = ConstantLoad 3
+    %9 = newArray [int:Unsigned8...][%8]{%5, %6, %7}
+    $desugar$1 = %9;
+    %11 = $default$4($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    %6 = %5 is error
-    %6 ? bb2 : bb3;
+    $desugar$2 = %11;
+    %13 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %0 = %5;
-    return;
+    %14 = %13 is error
+    %14 ? bb3 : bb4;
   }
   bb3 {
-    %3 = %5;
-    GOTO bb4;
-  }
-  bb4 {
-    %8 = ConstantLoad 4
-    %9 = ConstantLoad 5
-    %10 = ConstantLoad 2
-    %11 = newArray [int:Unsigned8...][%10]{%8, %9}
-    %12 = ConstantLoad APPEND
-    %13 = fileWriteBytes(path,%11,%12) -> bb5;
-  }
-  bb5 {
-    %14 = %13 is error
-    %14 ? bb6 : bb7;
-  }
-  bb6 {
     %0 = %13;
     return;
   }
+  bb4 {
+    %3 = %13;
+    GOTO bb5;
+  }
+  bb5 {
+    %16 = ConstantLoad 4
+    %17 = ConstantLoad 5
+    %18 = ConstantLoad 2
+    %19 = newArray [int:Unsigned8...][%18]{%16, %17}
+    %20 = ConstantLoad APPEND
+    %21 = fileWriteBytes(path,%19,%20) -> bb6;
+  }
+  bb6 {
+    %22 = %21 is error
+    %22 ? bb7 : bb8;
+  }
   bb7 {
-    %7 = %13;
-    GOTO bb8;
+    %0 = %21;
+    return;
   }
   bb8 {
-    %16 = fileReadBytes(path) -> bb9;
+    %15 = %21;
+    GOTO bb9;
   }
   bb9 {
-    %17 = %16 is error
-    %17 ? bb10 : bb11;
+    %24 = fileReadBytes(path) -> bb10;
   }
   bb10 {
-    %0 = %16;
-    return;
+    %25 = %24 is error
+    %25 ? bb11 : bb12;
   }
   bb11 {
-    %15 = %16;
-    GOTO bb12;
-  }
-  bb12 {
-    readBack = %15;
-    %19 = length(readBack) -> bb13;
-  }
-  bb13 {
-    %20 = %19;
-    %21 = println(%20) -> bb14;
-  }
-  bb14 {
+    %0 = %24;
     return;
   }
-}
-main$502$0$thunk$0() -> nil|error{
-  bb0 {
-    $desugar$0 = (1, path);
-    %2 = ConstantLoad 1
-    %3 = ConstantLoad 2
-    %4 = ConstantLoad 3
-    %5 = ConstantLoad 3
-    %6 = newArray [int:Unsigned8...][%5]{%2, %3, %4}
-    $desugar$1 = %6;
-    %8 = $default$4($desugar$0,$desugar$1) -> bb1;
+  bb12 {
+    %23 = %24;
+    GOTO bb13;
   }
-  bb1 {
-    $desugar$2 = %8;
-    %10 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  bb13 {
+    readBack = %23;
+    %27 = length(readBack) -> bb14;
   }
-  bb2 {
-    %0 = %10;
+  bb14 {
+    %28 = %27;
+    %29 = println(%28) -> bb15;
+  }
+  bb15 {
     return;
   }
 }

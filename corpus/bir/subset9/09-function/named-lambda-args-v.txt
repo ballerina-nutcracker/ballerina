@@ -89,100 +89,116 @@ main() -> nil{
     $desugar$0 = %2;
     %3 = fp $anon/.:$anonFunc$_0
     base = %3;
-    %5 = closure_fp $anon/.:main$506$3$thunk$0
-    %6 = %5() -> bb1;
+    %5 = $desugar$0() -> bb1;
   }
   bb1 {
-    %7 = %6;
-    %8 = println(%7) -> bb2;
+    $desugar$1 = %5;
+    %7 = $desugar$1;
+    %8 = base(%7) -> bb2;
   }
   bb2 {
-    %9 = ConstantLoad 6
-    %10 = %9;
-    %11 = base(%10) -> bb3;
+    %9 = %8;
+    %10 = println(%9) -> bb3;
   }
   bb3 {
+    %11 = ConstantLoad 6
     %12 = %11;
-    %13 = println(%12) -> bb4;
+    %13 = base(%12) -> bb4;
   }
   bb4 {
-    %15 = fp $anon/.:$default$3
-    $desugar$2 = %15;
-    %16 = fp $anon/.:$anonFunc$_1
-    localFn = %16;
-    %18 = closure_fp $anon/.:main$506$3$thunk$1
-    %19 = %18() -> bb5;
+    %14 = %13;
+    %15 = println(%14) -> bb5;
   }
   bb5 {
-    %20 = %19;
-    %21 = println(%20) -> bb6;
+    %17 = fp $anon/.:$default$3
+    $desugar$2 = %17;
+    %18 = fp $anon/.:$anonFunc$_1
+    localFn = %18;
+    %20 = ConstantLoad 4
+    $desugar$3 = %20;
+    %22 = $desugar$3;
+    %23 = $desugar$2(%22) -> bb6;
   }
   bb6 {
-    %22 = ConstantLoad 4
-    %23 = %22;
-    %24 = ConstantLoad 5
-    %25 = %24;
-    %26 = localFn(%23,%25) -> bb7;
+    $desugar$4 = %23;
+    %25 = $desugar$3;
+    %26 = $desugar$4;
+    %27 = localFn(%25,%26) -> bb7;
   }
   bb7 {
-    %27 = %26;
-    %28 = println(%27) -> bb8;
+    %28 = %27;
+    %29 = println(%28) -> bb8;
   }
   bb8 {
-    %30 = fp $anon/.:$default$5
-    $desugar$5 = %30;
-    copied = base;
-    %32 = closure_fp $anon/.:main$506$3$thunk$2
-    %33 = %32() -> bb9;
+    %30 = ConstantLoad 4
+    %31 = %30;
+    %32 = ConstantLoad 5
+    %33 = %32;
+    %34 = localFn(%31,%33) -> bb9;
   }
   bb9 {
-    %34 = %33;
-    %35 = println(%34) -> bb10;
+    %35 = %34;
+    %36 = println(%35) -> bb10;
   }
   bb10 {
-    %36 = takesFn(base) -> bb11;
+    %38 = fp $anon/.:$default$5
+    $desugar$5 = %38;
+    copied = base;
+    %40 = $desugar$5() -> bb11;
   }
   bb11 {
-    %37 = %36;
-    %38 = println(%37) -> bb12;
+    $desugar$6 = %40;
+    %42 = $desugar$6;
+    %43 = copied(%42) -> bb12;
   }
   bb12 {
-    %39 = fp $anon/.:$anonFunc$_2
-    recordFn = %39;
-    %41 = ConstantLoad left
-    %42 = ConstantLoad 8
-    %43 = ConstantLoad right
-    %44 = ConstantLoad 9
-    %45 = newMap {| left: int, right: int, never... |}{%41=%42, %43=%44}
-    %46 = recordFn(%45) -> bb13;
+    %44 = %43;
+    %45 = println(%44) -> bb13;
   }
   bb13 {
-    %47 = %46;
-    %48 = println(%47) -> bb14;
+    %46 = takesFn(base) -> bb14;
   }
   bb14 {
-    %49 = ConstantLoad 10
-    %50 = %49;
-    %51 = fp $anon/.:$anonFunc$_3
-    %52 = fp $anon/.:$anonFunc$_4
-    %53 = applyFns(%50,%51,%52) -> bb15;
+    %47 = %46;
+    %48 = println(%47) -> bb15;
   }
   bb15 {
-    %54 = %53;
-    %55 = println(%54) -> bb16;
+    %49 = fp $anon/.:$anonFunc$_2
+    recordFn = %49;
+    %51 = ConstantLoad left
+    %52 = ConstantLoad 8
+    %53 = ConstantLoad right
+    %54 = ConstantLoad 9
+    %55 = newMap {| left: int, right: int, never... |}{%51=%52, %53=%54}
+    %56 = recordFn(%55) -> bb16;
   }
   bb16 {
-    %56 = ConstantLoad 10
     %57 = %56;
-    %58 = fp $anon/.:$anonFunc$_5
-    %59 = fp $anon/.:$anonFunc$_6
-    %60 = applyInlineFns(%57,%58,%59) -> bb17;
+    %58 = println(%57) -> bb17;
   }
   bb17 {
-    %61 = %60;
-    %62 = println(%61) -> bb18;
+    %59 = ConstantLoad 10
+    %60 = %59;
+    %61 = fp $anon/.:$anonFunc$_3
+    %62 = fp $anon/.:$anonFunc$_4
+    %63 = applyFns(%60,%61,%62) -> bb18;
   }
   bb18 {
+    %64 = %63;
+    %65 = println(%64) -> bb19;
+  }
+  bb19 {
+    %66 = ConstantLoad 10
+    %67 = %66;
+    %68 = fp $anon/.:$anonFunc$_5
+    %69 = fp $anon/.:$anonFunc$_6
+    %70 = applyInlineFns(%67,%68,%69) -> bb20;
+  }
+  bb20 {
+    %71 = %70;
+    %72 = println(%71) -> bb21;
+  }
+  bb21 {
     return;
   }
 }
@@ -343,52 +359,6 @@ $default$11() -> int{
   bb0 {
     %1 = ConstantLoad 5
     %0 = %1;
-    return;
-  }
-}
-main$506$3$thunk$0() -> int{
-  bb0 {
-    %1 = (1, $desugar$0)() -> bb1;
-  }
-  bb1 {
-    $desugar$1 = %1;
-    %3 = $desugar$1;
-    %4 = (1, base)(%3) -> bb2;
-  }
-  bb2 {
-    %0 = %4;
-    return;
-  }
-}
-main$506$3$thunk$1() -> int{
-  bb0 {
-    %1 = ConstantLoad 4
-    $desugar$3 = %1;
-    %3 = $desugar$3;
-    %4 = (1, $desugar$2)(%3) -> bb1;
-  }
-  bb1 {
-    $desugar$4 = %4;
-    %6 = $desugar$3;
-    %7 = $desugar$4;
-    %8 = (1, localFn)(%6,%7) -> bb2;
-  }
-  bb2 {
-    %0 = %8;
-    return;
-  }
-}
-main$506$3$thunk$2() -> int{
-  bb0 {
-    %1 = (1, $desugar$5)() -> bb1;
-  }
-  bb1 {
-    $desugar$6 = %1;
-    %3 = $desugar$6;
-    %4 = (1, copied)(%3) -> bb2;
-  }
-  bb2 {
-    %0 = %4;
     return;
   }
 }

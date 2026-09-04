@@ -86,18 +86,7 @@ func (p *PrettyPrinter) Print(tyCtx semtypes.Context, node BIRPackage) string {
 		p.PrintClassDef(classDef)
 		p.write("\n")
 	}
-	functions := append([]BIRFunction(nil), node.Functions...)
-	sort.SliceStable(functions, func(i, j int) bool {
-		leftName := functions[i].Name.Value()
-		rightName := functions[j].Name.Value()
-		leftThunk := strings.Contains(leftName, "$thunk$")
-		rightThunk := strings.Contains(rightName, "$thunk$")
-		if leftThunk != rightThunk {
-			return !leftThunk
-		}
-		return leftThunk && leftName < rightName
-	})
-	for _, function := range functions {
+	for _, function := range node.Functions {
 		p.PrintFunction(function)
 		p.write("\n")
 	}

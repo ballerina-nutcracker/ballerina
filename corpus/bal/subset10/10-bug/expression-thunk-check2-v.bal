@@ -14,7 +14,10 @@
 
 import ballerina/io;
 
-function checkedInt() returns int|error {
+function checkedInt(boolean shouldFail) returns int|error {
+    if shouldFail {
+        return error("checked int failed");
+    }
     return 10;
 }
 
@@ -22,7 +25,15 @@ function fallibleDefaulted(int value, int increment = 1) returns int|error {
     return value + increment;
 }
 
-public function main() returns error? {
-    (int|error)[] values = [fallibleDefaulted(check checkedInt())]; // @error future: preserve check return semantics across expression thunks
-    io:println(values); // @output [11]
+function checkedValues(boolean shouldFail) returns (int|error)[]|error {
+    return [fallibleDefaulted(check checkedInt(shouldFail))];
+}
+
+public function main() {
+    io:println(checkedValues(false)); // @output [11]
+
+    (int|error)[]|error failed = checkedValues(true);
+    if failed is error {
+        io:println(failed.message()); // @output checked int failed
+    }
 }

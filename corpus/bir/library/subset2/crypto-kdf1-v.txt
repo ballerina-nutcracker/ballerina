@@ -23,161 +23,151 @@ main() -> nil|error{
     %20 = ConstantLoad 4
     %21 = newArray [int:Unsigned8...][%20]{%16, %17, %18, %19}
     info = %21;
-    %24 = closure_fp $anon/.:main$502$0$thunk$0
-    %25 = main$502$0$thunk$0() -> bb1;
+    $desugar$0 = input;
+    %25 = ConstantLoad 32
+    $desugar$1 = %25;
+    %27 = $desugar$1;
+    %28 = $default$15($desugar$0,%27) -> bb1;
   }
   bb1 {
-    %26 = %25 is error
-    %26 ? bb2 : bb3;
+    $desugar$2 = %28;
+    %30 = $desugar$1;
+    %31 = $default$16($desugar$0,%30,$desugar$2) -> bb2;
   }
   bb2 {
-    %0 = %25;
-    return;
+    $desugar$3 = %31;
+    %33 = $desugar$1;
+    %34 = hkdfSha256($desugar$0,%33,$desugar$2,$desugar$3) -> bb3;
   }
   bb3 {
-    %23 = %25;
-    GOTO bb4;
+    %35 = %34 is error
+    %35 ? bb4 : bb5;
   }
   bb4 {
-    %27 = length(%23) -> bb5;
-  }
-  bb5 {
-    %28 = %27;
-    %29 = println(%28) -> bb6;
-  }
-  bb6 {
-    %31 = ConstantLoad 64
-    %32 = %31;
-    %33 = hkdfSha256(input,%32,salt,info) -> bb7;
-  }
-  bb7 {
-    %34 = %33 is error
-    %34 ? bb8 : bb9;
-  }
-  bb8 {
-    %0 = %33;
+    %0 = %34;
     return;
   }
-  bb9 {
-    %30 = %33;
-    GOTO bb10;
+  bb5 {
+    %23 = %34;
+    GOTO bb6;
   }
-  bb10 {
-    d1 = %30;
-    %36 = length(d1) -> bb11;
+  bb6 {
+    %36 = length(%23) -> bb7;
   }
-  bb11 {
+  bb7 {
     %37 = %36;
-    %38 = println(%37) -> bb12;
+    %38 = println(%37) -> bb8;
   }
-  bb12 {
+  bb8 {
     %40 = ConstantLoad 64
     %41 = %40;
-    %42 = hkdfSha256(input,%41,salt,info) -> bb13;
+    %42 = hkdfSha256(input,%41,salt,info) -> bb9;
   }
-  bb13 {
+  bb9 {
     %43 = %42 is error
-    %43 ? bb14 : bb15;
+    %43 ? bb10 : bb11;
   }
-  bb14 {
+  bb10 {
     %0 = %42;
     return;
   }
-  bb15 {
+  bb11 {
     %39 = %42;
-    GOTO bb16;
+    GOTO bb12;
+  }
+  bb12 {
+    d1 = %39;
+    %45 = length(d1) -> bb13;
+  }
+  bb13 {
+    %46 = %45;
+    %47 = println(%46) -> bb14;
+  }
+  bb14 {
+    %49 = ConstantLoad 64
+    %50 = %49;
+    %51 = hkdfSha256(input,%50,salt,info) -> bb15;
+  }
+  bb15 {
+    %52 = %51 is error
+    %52 ? bb16 : bb17;
   }
   bb16 {
-    d2 = %39;
-    %45 = == d1 d2;
-    %46 = %45;
-    %47 = println(%46) -> bb17;
+    %0 = %51;
+    return;
   }
   bb17 {
-    %48 = equalConstantTime(d1,d2) -> bb18;
+    %48 = %51;
+    GOTO bb18;
   }
   bb18 {
-    %49 = %48;
-    %50 = println(%49) -> bb19;
+    d2 = %48;
+    %54 = == d1 d2;
+    %55 = %54;
+    %56 = println(%55) -> bb19;
   }
   bb19 {
-    %52 = ConstantLoad 64
-    %53 = %52;
-    %54 = hkdfSha256(input,%53,info,salt) -> bb20;
+    %57 = equalConstantTime(d1,d2) -> bb20;
   }
   bb20 {
-    %55 = %54 is error
-    %55 ? bb21 : bb22;
+    %58 = %57;
+    %59 = println(%58) -> bb21;
   }
   bb21 {
-    %0 = %54;
-    return;
+    %61 = ConstantLoad 64
+    %62 = %61;
+    %63 = hkdfSha256(input,%62,info,salt) -> bb22;
   }
   bb22 {
-    %51 = %54;
-    GOTO bb23;
+    %64 = %63 is error
+    %64 ? bb23 : bb24;
   }
   bb23 {
-    other = %51;
-    %57 = equalConstantTime(d1,other) -> bb24;
-  }
-  bb24 {
-    %58 = %57;
-    %59 = println(%58) -> bb25;
-  }
-  bb25 {
-    %60 = ConstantLoad abc123
-    %61 = ConstantLoad abc123
-    %62 = equalConstantTime(%60,%61) -> bb26;
-  }
-  bb26 {
-    %63 = %62;
-    %64 = println(%63) -> bb27;
-  }
-  bb27 {
-    %65 = ConstantLoad abc123
-    %66 = ConstantLoad def456
-    %67 = equalConstantTime(%65,%66) -> bb28;
-  }
-  bb28 {
-    %68 = %67;
-    %69 = println(%68) -> bb29;
-  }
-  bb29 {
-    %70 = ConstantLoad 0
-    %71 = %70;
-    %72 = hkdfSha256(input,%71,salt,info) -> bb30;
-  }
-  bb30 {
-    badLen = %72;
-    %74 = badLen is error
-    %75 = %74;
-    %76 = println(%75) -> bb31;
-  }
-  bb31 {
+    %0 = %63;
     return;
   }
-}
-main$502$0$thunk$0() -> error|[int:Unsigned8...]{
-  bb0 {
-    $desugar$0 = (1, input);
-    %2 = ConstantLoad 32
-    $desugar$1 = %2;
-    %4 = $desugar$1;
-    %5 = $default$15($desugar$0,%4) -> bb1;
+  bb24 {
+    %60 = %63;
+    GOTO bb25;
   }
-  bb1 {
-    $desugar$2 = %5;
-    %7 = $desugar$1;
-    %8 = $default$16($desugar$0,%7,$desugar$2) -> bb2;
+  bb25 {
+    other = %60;
+    %66 = equalConstantTime(d1,other) -> bb26;
   }
-  bb2 {
-    $desugar$3 = %8;
-    %10 = $desugar$1;
-    %11 = hkdfSha256($desugar$0,%10,$desugar$2,$desugar$3) -> bb3;
+  bb26 {
+    %67 = %66;
+    %68 = println(%67) -> bb27;
   }
-  bb3 {
-    %0 = %11;
+  bb27 {
+    %69 = ConstantLoad abc123
+    %70 = ConstantLoad abc123
+    %71 = equalConstantTime(%69,%70) -> bb28;
+  }
+  bb28 {
+    %72 = %71;
+    %73 = println(%72) -> bb29;
+  }
+  bb29 {
+    %74 = ConstantLoad abc123
+    %75 = ConstantLoad def456
+    %76 = equalConstantTime(%74,%75) -> bb30;
+  }
+  bb30 {
+    %77 = %76;
+    %78 = println(%77) -> bb31;
+  }
+  bb31 {
+    %79 = ConstantLoad 0
+    %80 = %79;
+    %81 = hkdfSha256(input,%80,salt,info) -> bb32;
+  }
+  bb32 {
+    badLen = %81;
+    %83 = badLen is error
+    %84 = %83;
+    %85 = println(%84) -> bb33;
+  }
+  bb33 {
     return;
   }
 }

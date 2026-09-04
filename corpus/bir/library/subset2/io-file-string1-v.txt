@@ -3,58 +3,48 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad /tmp/bal_io_string1.txt
     path = %1;
-    %4 = closure_fp $anon/.:main$502$0$thunk$0
-    %5 = main$502$0$thunk$0() -> bb1;
+    $desugar$0 = path;
+    %5 = ConstantLoad Hello
+World
+    $desugar$1 = %5;
+    %7 = $default$1($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    %6 = %5 is error
-    %6 ? bb2 : bb3;
+    $desugar$2 = %7;
+    %9 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    %0 = %5;
-    return;
+    %10 = %9 is error
+    %10 ? bb3 : bb4;
   }
   bb3 {
-    %3 = %5;
-    GOTO bb4;
+    %0 = %9;
+    return;
   }
   bb4 {
-    %8 = fileReadString(path) -> bb5;
+    %3 = %9;
+    GOTO bb5;
   }
   bb5 {
-    %9 = %8 is error
-    %9 ? bb6 : bb7;
+    %12 = fileReadString(path) -> bb6;
   }
   bb6 {
-    %0 = %8;
-    return;
+    %13 = %12 is error
+    %13 ? bb7 : bb8;
   }
   bb7 {
-    %7 = %8;
-    GOTO bb8;
-  }
-  bb8 {
-    content = %7;
-    %11 = println(content) -> bb9;
-  }
-  bb9 {
+    %0 = %12;
     return;
   }
-}
-main$502$0$thunk$0() -> nil|error{
-  bb0 {
-    $desugar$0 = (1, path);
-    %2 = ConstantLoad Hello
-World
-    $desugar$1 = %2;
-    %4 = $default$1($desugar$0,$desugar$1) -> bb1;
+  bb8 {
+    %11 = %12;
+    GOTO bb9;
   }
-  bb1 {
-    $desugar$2 = %4;
-    %6 = fileWriteString($desugar$0,$desugar$1,$desugar$2) -> bb2;
+  bb9 {
+    content = %11;
+    %15 = println(content) -> bb10;
   }
-  bb2 {
-    %0 = %6;
+  bb10 {
     return;
   }
 }

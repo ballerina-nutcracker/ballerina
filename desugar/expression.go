@@ -165,35 +165,8 @@ func walkExpressionInner(cx *functionContext, node ast.BLangActionOrExpression) 
 	}
 }
 
-// FIXME: Remove this guard when check lowering can preserve the enclosing
-// function's return semantics across generated thunk boundaries.
-type checkedExpressionVisitor struct {
-	cx *functionContext
-}
-
-func (v *checkedExpressionVisitor) Visit(node ast.BLangNode) ast.Visitor {
-	switch node.(type) {
-	case *ast.BLangCheckedExpr:
-		v.cx.internalError("check expression cannot be lowered inside a generated expression thunk")
-		return nil
-	case *ast.BLangFunction, *ast.BLangLambdaFunction, *ast.BLangArrowFunction, *BLangExpressionThunk:
-		return nil
-	default:
-		return v
-	}
-}
-
-func (v *checkedExpressionVisitor) VisitTypeData(_ *ast.TypeData) ast.Visitor {
-	return v
-}
-
 func createExpressionThunk(cx *functionContext, lowered desugaredNode[ast.BLangActionOrExpression]) *BLangExpressionThunk {
 	pos := lowered.replacementNode.GetPosition()
-	visitor := &checkedExpressionVisitor{cx: cx}
-	for _, stmt := range lowered.initStmts {
-		ast.Walk(visitor, stmt.(ast.BLangNode))
-	}
-	ast.Walk(visitor, lowered.replacementNode)
 
 	ownerName := cx.getSymbol(cx.owner).Name()
 	name := fmt.Sprintf("%s$%d$%d$thunk$%d", ownerName, cx.owner.SpaceIndex, cx.owner.Index, cx.thunkCounter)
