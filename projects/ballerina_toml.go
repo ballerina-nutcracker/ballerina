@@ -33,37 +33,47 @@ func newTomlDocumentContext(docConfig DocumentConfig) *tomlDocumentContext {
 	}
 }
 
-// BallerinaToml represents the 'Ballerina.toml' file in a package.
-type BallerinaToml struct {
+type packageToml struct {
 	context         *tomlDocumentContext
 	packageInstance *Package
 }
 
-// newBallerinaToml creates a BallerinaToml from a tomlDocumentContext and Package.
-func newBallerinaToml(ctx *tomlDocumentContext, pkg *Package) *BallerinaToml {
+func newPackageToml(ctx *tomlDocumentContext, pkg *Package) *packageToml {
 	if ctx == nil {
 		return nil
 	}
-	return &BallerinaToml{
-		context:         ctx,
-		packageInstance: pkg,
+	return &packageToml{context: ctx, packageInstance: pkg}
+}
+
+func (t *packageToml) Content() string {
+	if t == nil || t.context == nil {
+		return ""
 	}
+	return t.context.content
+}
+
+func (t *packageToml) PackageInstance() *Package {
+	if t == nil {
+		return nil
+	}
+	return t.packageInstance
+}
+
+// BallerinaToml represents the 'Ballerina.toml' file in a package.
+type BallerinaToml struct {
+	*packageToml
+}
+
+// newBallerinaToml creates a BallerinaToml from a tomlDocumentContext and Package.
+func newBallerinaToml(ctx *tomlDocumentContext, pkg *Package) *BallerinaToml {
+	toml := newPackageToml(ctx, pkg)
+	if toml == nil {
+		return nil
+	}
+	return &BallerinaToml{packageToml: toml}
 }
 
 // Name returns the name of the TOML file.
 func (b *BallerinaToml) Name() string {
 	return BallerinaTomlFile
-}
-
-// Content returns the content of the Ballerina.toml file.
-func (b *BallerinaToml) Content() string {
-	if b.context == nil {
-		return ""
-	}
-	return b.context.content
-}
-
-// PackageInstance returns the package that this Ballerina.toml belongs to.
-func (b *BallerinaToml) PackageInstance() *Package {
-	return b.packageInstance
 }

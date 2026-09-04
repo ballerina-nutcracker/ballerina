@@ -116,12 +116,12 @@ func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.Pa
 		cx.DiagnosticEnv().RegisterFile(virtualPath, text.NewStringTextDocument(content))
 
 		st, err := parser.GetSyntaxTree(cx, virtualPath, content)
-		if err != nil || cx.HasDiagnostics() {
+		if err != nil || cx.HasErrors() {
 			continue
 		}
 
 		cu := nodebuilder.GetCompilationUnit(cx, st)
-		if cu == nil || cx.HasDiagnostics() {
+		if cu == nil || cx.HasErrors() {
 			continue
 		}
 		pkgID := cx.NewPackageID(
@@ -203,7 +203,7 @@ func RunPipelineWithContent(env *context.CompilerEnvironment, cx *context.Compil
 
 	// Phase 2: AST
 	result.CompilationUnit = nodebuilder.GetCompilationUnit(cx, syntaxTree)
-	if result.CompilationUnit == nil || cx.HasDiagnostics() {
+	if result.CompilationUnit == nil || cx.HasErrors() {
 		return nil, fmt.Errorf("AST generation failed: compilation unit is nil")
 	}
 	if phase == PhaseAST {
@@ -233,43 +233,43 @@ func RunPipelineWithContent(env *context.CompilerEnvironment, cx *context.Compil
 	result.Package = nodebuilder.ToPackageFromCompilationUnits(cx, compilationUnits)
 	result.Package.PackageID = pkgID
 	result.Package.Scope = pkgScope
-	if phase == PhaseSymbolResolution || cx.HasDiagnostics() {
+	if phase == PhaseSymbolResolution || cx.HasErrors() {
 		return result, nil
 	}
 
 	// Phase 4: Type Resolution (top level nodes)
 	semantics.ResolvePublicNodeTypes(cx, result.Package, importedSymbols)
-	if phase == PhaseTypeResolution || cx.HasDiagnostics() {
+	if phase == PhaseTypeResolution || cx.HasErrors() {
 		return result, nil
 	}
 
 	// Phase 5: Type Resolution (inner nodes)
 	semantics.ResolvePrivateNodesTypes(cx, result.Package, importedSymbols)
-	if phase == PhaseTypeNarrowing || cx.HasDiagnostics() {
+	if phase == PhaseTypeNarrowing || cx.HasErrors() {
 		return result, nil
 	}
 
 	// Phase 6: Semantic Analysis
 	semantics.AnalyzeSemantics(cx, result.Package, importedSymbols)
-	if phase == PhaseSemanticAnalysis || cx.HasDiagnostics() {
+	if phase == PhaseSemanticAnalysis || cx.HasErrors() {
 		return result, nil
 	}
 
 	// Phase 7: CFG Generation
 	result.CFG = semantics.CreateControlFlowGraph(cx, result.Package)
-	if phase == PhaseCFG || cx.HasDiagnostics() {
+	if phase == PhaseCFG || cx.HasErrors() {
 		return result, nil
 	}
 
 	// Phase 8: CFG Analysis
 	semantics.AnalyzeCFG(cx, result.Package, result.CFG)
-	if phase == PhaseCFGAnalysis || cx.HasDiagnostics() {
+	if phase == PhaseCFGAnalysis || cx.HasErrors() {
 		return result, nil
 	}
 
 	// Phase 9: Desugar
 	result.Package = desugar.DesugarPackage(cx, result.Package, importedSymbols)
-	if phase == PhaseDesugar || cx.HasDiagnostics() {
+	if phase == PhaseDesugar || cx.HasErrors() {
 		return result, nil
 	}
 

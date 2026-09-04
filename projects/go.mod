@@ -9,6 +9,8 @@ require (
 	github.com/ballerina-nutcracker/ballerina/bir v0.7.0
 	github.com/ballerina-nutcracker/ballerina/birgen v0.7.0
 	github.com/ballerina-nutcracker/ballerina/common v0.7.0
+	github.com/ballerina-nutcracker/ballerina/compilerplugin v0.7.0
+	github.com/ballerina-nutcracker/ballerina/compilerpluginregistry v0.7.0
 	github.com/ballerina-nutcracker/ballerina/context v0.7.0
 	github.com/ballerina-nutcracker/ballerina/desugar v0.7.0
 	github.com/ballerina-nutcracker/ballerina/lib v0.7.0
