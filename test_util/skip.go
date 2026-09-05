@@ -179,6 +179,12 @@ var UnsupportedTests = []string{
 
 	// rest param not supported in dependently typed functions
 	"subset8/08-function/dependent-fn-5-e.bal",
+
+	// Named arguments on langlib functions backed by opaque symbols. Opaque
+	// symbols carry no function signature of their own, so the parameter names
+	// jBallerina exposes cannot be resolved for them. Attaching untyped
+	// signatures to opaque symbols is the proper fix.
+	"subset10/10-langlibs/langlib-opaque-named-args-v.bal",
 }
 
 // IsUnsupported reports whether the given corpus test path is in

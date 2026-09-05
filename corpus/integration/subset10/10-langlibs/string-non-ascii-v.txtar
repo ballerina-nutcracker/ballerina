@@ -1,0 +1,16 @@
+-- stdout --
+hÉllo
+HéLLO
+ß
+ΣΟΦΟΣ
+日本語
+AÉB
+false
+true
+5
+5
+abc
+3
+😀
+10
+-- stderr --

@@ -17,3 +17,8 @@
 public type StopHandler function() returns error?;
 
 public isolated function onGracefulStop(StopHandler handler) = external;
+
+# Halts the current strand for a predetermined amount of time.
+#
+# + seconds - An amount of time to sleep in seconds
+public isolated function sleep(decimal seconds) = external;

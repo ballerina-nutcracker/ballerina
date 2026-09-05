@@ -25,6 +25,7 @@ import (
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.float"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.int"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.map"
+	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.runtime"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.string"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.value"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.xml"
