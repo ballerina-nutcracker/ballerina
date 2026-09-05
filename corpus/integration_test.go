@@ -666,7 +666,9 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 		syntaxTrees,
 		langlibs.ImplicitImports,
 		langlibs.PublicSymbols,
+		nil,
 		defaultOrg,
+		"",
 	)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("symbol resolution failed")

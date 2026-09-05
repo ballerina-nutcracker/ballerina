@@ -1,0 +1,6 @@
+[package]
+org = "testorg"
+name = "missingfilesproject"
+version = "0.1.0"
+icon = "missing.png"
+readme = "MISSING.md"

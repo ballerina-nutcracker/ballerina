@@ -296,6 +296,59 @@ func TestBalPackCorpus(t *testing.T) {
 	}
 }
 
+// TestBalPackCorpus_IncludeField exercises the package manifest's `include`
+// glob patterns end-to-end through the real `bal pack` binary: it packs
+// corpus/cli/testdata/pack/includes/project (include = ["docs/**",
+// "assets/*.txt", "!assets/secret.txt"]) and asserts the produced .bala
+// contains the matched files and excludes the negated one.
+// Java equivalent: TestBalaWriter#testBuildProjectWithIncludes.
+func TestBalPackCorpus_IncludeField(t *testing.T) {
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	t.Parallel()
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+
+	workDir := t.TempDir()
+	copyDir(t, filepath.Join(repoRoot, "corpus", "cli", "testdata", "pack", "includes", "project"), workDir)
+
+	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "pack", workDir)
+	if exitCode != 0 {
+		t.Fatalf("bal pack failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+	}
+
+	balaPath := filepath.Join(workDir, "target", "bala", "testorg-includespkg-any-0.1.0.bala")
+	zr, err := zip.OpenReader(balaPath)
+	if err != nil {
+		t.Fatalf("open bala %s: %v", balaPath, err)
+	}
+	defer func() { _ = zr.Close() }()
+
+	entries := make(map[string]bool, len(zr.File))
+	for _, f := range zr.File {
+		entries[f.Name] = true
+	}
+
+	for _, want := range []string{"docs/guide.md", "assets/data.txt"} {
+		if !entries[want] {
+			t.Errorf("bala missing included entry %q, got entries: %v", want, entryNames(entries))
+		}
+	}
+	if entries["assets/secret.txt"] {
+		t.Error("bala contains assets/secret.txt, which the !assets/secret.txt pattern should have excluded")
+	}
+}
+
+// entryNames returns the keys of a zip-entry presence map, for error messages.
+func entryNames(entries map[string]bool) []string {
+	names := make([]string, 0, len(entries))
+	for name := range entries {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
 // TestBalBuildCorpus exercises `bal build` end-to-end: it runs `bal build` on
 // a fixture project, then executes the *produced binary* directly (not the
 // bal CLI) and checks its stdout/stderr/exitcode. This is the Phase 1

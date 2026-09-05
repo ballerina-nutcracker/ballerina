@@ -651,6 +651,80 @@ func TestNewPackage_WithTemplate(t *testing.T) {
 	}
 }
 
+// TestNewPackage_LibTemplateGeneratesReadme verifies `bal new -t lib` creates
+// a README.md with the package name substituted into the import example,
+// and that other templates don't generate a README.md at all.
+func TestNewPackage_LibTemplateGeneratesReadme(t *testing.T) {
+	t.Parallel()
+
+	tmpDir := t.TempDir()
+	libPkgPath := filepath.Join(tmpDir, "mylib")
+	_, stderr, err := executeNewCommandWithArgs(t, libPkgPath, "-t", "lib")
+	if err != nil {
+		t.Fatalf("command failed: %v\nstderr: %s", err, stderr)
+	}
+
+	readmePath := filepath.Join(libPkgPath, projects.ReadmeMdFile)
+	content, err := os.ReadFile(readmePath)
+	if err != nil {
+		t.Fatalf("expected README.md to exist for lib template: %v", err)
+	}
+	contentStr := string(content)
+
+	if strings.Contains(contentStr, "PKG_NAME") || strings.Contains(contentStr, "ORG_NAME") {
+		t.Errorf("README.md still has unsubstituted placeholders:\n%s", contentStr)
+	}
+	if !strings.Contains(contentStr, "/mylib") {
+		t.Errorf("README.md import example missing package name 'mylib':\n%s", contentStr)
+	}
+
+	for _, tc := range []string{"default", "main", "service"} {
+		t.Run(tc, func(t *testing.T) {
+			t.Parallel()
+			pkgPath := filepath.Join(t.TempDir(), "mypackage")
+			_, stderr, err := executeNewCommandWithArgs(t, pkgPath, "-t", tc)
+			if err != nil {
+				t.Fatalf("command failed: %v\nstderr: %s", err, stderr)
+			}
+			if _, err := os.Stat(filepath.Join(pkgPath, projects.ReadmeMdFile)); err == nil {
+				t.Errorf("unexpected README.md generated for template %q", tc)
+			}
+		})
+	}
+}
+
+// TestInitPackage_CleansUpOnReadmeWriteFailure covers the lib-template-only
+// README.md write branch: pre-creating README.md as a directory lets
+// Ballerina.toml and lib.bal write successfully first, so cleanup() has
+// more than one entry to unwind.
+func TestInitPackage_CleansUpOnReadmeWriteFailure(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("permission-based write-failure injection is unix-only")
+	}
+	projectPath := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(projectPath, projects.ReadmeMdFile), 0755); err != nil {
+		t.Fatalf("failed to pre-create README.md as a directory: %v", err)
+	}
+
+	err := initPackage(projectPath, "mypkg", "myorg", templateLib)
+	if err == nil {
+		t.Fatal("expected an error writing README.md over an existing directory")
+	}
+	if !strings.Contains(err.Error(), "failed to create README.md") {
+		t.Errorf("err = %q, want 'failed to create README.md' message", err)
+	}
+
+	if _, statErr := os.Stat(filepath.Join(projectPath, projects.BallerinaTomlFile)); !os.IsNotExist(statErr) {
+		t.Errorf("expected Ballerina.toml to be cleaned up, stat err = %v", statErr)
+	}
+	if _, statErr := os.Stat(filepath.Join(projectPath, "lib.bal")); !os.IsNotExist(statErr) {
+		t.Errorf("expected lib.bal to be cleaned up, stat err = %v", statErr)
+	}
+	if _, statErr := os.Stat(filepath.Join(projectPath, ".gitignore")); !os.IsNotExist(statErr) {
+		t.Errorf("expected .gitignore to be cleaned up, stat err = %v", statErr)
+	}
+}
+
 // TestNewPackage_InsideWorkspace_WithTemplate tests creating a package with template inside workspace.
 func TestNewPackage_InsideWorkspace_WithTemplate(t *testing.T) {
 	t.Parallel()

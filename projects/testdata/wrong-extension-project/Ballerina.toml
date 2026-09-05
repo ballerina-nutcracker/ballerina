@@ -1,0 +1,6 @@
+[package]
+org = "testorg"
+name = "wrongextensionproject"
+version = "0.1.0"
+icon = "logo.txt"
+readme = "NOTES.txt"

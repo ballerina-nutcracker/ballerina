@@ -193,12 +193,15 @@ func (p *Package) BalToolToml() any {
 	return nil
 }
 
-// ReadmeMd returns the README.md document for this package, or nil if absent.
-// TODO(P2.x): Implement when PackageReadmeMd type is available.
-func (p *Package) ReadmeMd() any {
-	// TODO(P2.x): Return *PackageReadmeMd once the type is implemented.
-	// Java lazy-loads from packageContext.readmeMdContext()
-	return nil
+// ReadmeMd returns the readme document for this package (the file named by
+// Manifest().Readme()), or nil if absent.
+// Java source: io.ballerina.projects.Package#readmeMd
+func (p *Package) ReadmeMd() *PackageReadmeMd {
+	ctx := p.packageCtx.getReadmeMdContext()
+	if ctx == nil {
+		return nil
+	}
+	return newPackageReadmeMd(ctx, p)
 }
 
 // ResourceIDs returns the IDs of all resources in this package's default module.
@@ -289,6 +292,7 @@ type PackageModifier struct {
 	project              Project
 	compilationOptions   CompilationOptions
 	ballerinaTomlContext *tomlDocumentContext
+	readmeMdContext      *mdDocumentContext
 }
 
 // newPackageModifier creates a PackageModifier from an existing package.
@@ -300,6 +304,7 @@ func newPackageModifier(oldPackage *Package) *PackageModifier {
 		project:              oldPackage.project,
 		compilationOptions:   oldPackage.packageCtx.getCompilationOptions(),
 		ballerinaTomlContext: oldPackage.packageCtx.getBallerinaTomlContext(),
+		readmeMdContext:      oldPackage.packageCtx.getReadmeMdContext(),
 	}
 }
 
@@ -345,6 +350,7 @@ func (pm *PackageModifier) Apply() *Package {
 		pm.compilationOptions,
 		pm.moduleContextMap,
 		pm.ballerinaTomlContext,
+		pm.readmeMdContext,
 	)
 
 	// Create new Package with the new context

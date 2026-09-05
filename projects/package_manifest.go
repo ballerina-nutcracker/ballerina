@@ -35,12 +35,55 @@ type PackageManifest struct {
 	authors          []string
 	keywords         []string
 	exportedModules  []string
+	modules          []ManifestModule
+	include          []string
 	repository       string
 	ballerinaVersion string
 	visibility       string
 	icon             string
 	readme           string
 	description      string
+}
+
+// ManifestModule represents a `[[package.modules]]` entry in Ballerina.toml:
+// per-module metadata declaring whether a module is exported, plus an
+// optional description and readme path.
+// Java source: io.ballerina.projects.PackageManifest.Module
+type ManifestModule struct {
+	name        string
+	export      bool
+	description string
+	readme      string
+}
+
+// NewManifestModule creates a ManifestModule with the given fields.
+func NewManifestModule(name string, export bool, description, readme string) ManifestModule {
+	return ManifestModule{
+		name:        name,
+		export:      export,
+		description: description,
+		readme:      readme,
+	}
+}
+
+// Name returns the module's fully-qualified name (e.g. "mypkg.utils").
+func (m ManifestModule) Name() string {
+	return m.name
+}
+
+// Export returns whether this module is exported.
+func (m ManifestModule) Export() bool {
+	return m.export
+}
+
+// Description returns the module's description.
+func (m ManifestModule) Description() string {
+	return m.description
+}
+
+// Readme returns the module's readme path.
+func (m ManifestModule) Readme() string {
+	return m.readme
 }
 
 // Dependency represents a package dependency declared in Ballerina.toml.
@@ -160,6 +203,16 @@ func (m PackageManifest) ExportedModules() []string {
 	return slices.Clone(m.exportedModules)
 }
 
+// Modules returns a copy of the declared `[[package.modules]]` entries.
+func (m PackageManifest) Modules() []ManifestModule {
+	return slices.Clone(m.modules)
+}
+
+// Include returns a copy of the declared include glob patterns.
+func (m PackageManifest) Include() []string {
+	return slices.Clone(m.include)
+}
+
 // Repository returns the package repository URL.
 func (m PackageManifest) Repository() string {
 	return m.repository
@@ -202,6 +255,8 @@ type PackageManifestParams struct {
 	Authors          []string
 	Keywords         []string
 	ExportedModules  []string
+	Modules          []ManifestModule
+	Include          []string
 	Repository       string
 	BallerinaVersion string
 	Visibility       string
@@ -215,10 +270,18 @@ type PackageManifestParams struct {
 // This function is intended for use by internal packages that need to construct
 // PackageManifest instances with full control over all fields.
 func NewPackageManifestFromParams(params PackageManifestParams) PackageManifest {
-	// Default exported modules to package name if not specified.
+	// Default module is always exported; per-module `export = true` entries
+	// under `[[package.modules]]` add to that. ExportedModules, when
+	// explicitly supplied (e.g. from a legacy bala's package.json), overrides
+	// this derivation entirely.
 	exportedModules := slices.Clone(params.ExportedModules)
 	if len(exportedModules) == 0 {
 		exportedModules = []string{params.PackageDesc.Name().Value()}
+		for _, mod := range params.Modules {
+			if mod.Export() && !slices.Contains(exportedModules, mod.Name()) {
+				exportedModules = append(exportedModules, mod.Name())
+			}
+		}
 	}
 
 	return PackageManifest{
@@ -230,6 +293,8 @@ func NewPackageManifestFromParams(params PackageManifestParams) PackageManifest 
 		authors:          slices.Clone(params.Authors),
 		keywords:         slices.Clone(params.Keywords),
 		exportedModules:  exportedModules,
+		modules:          slices.Clone(params.Modules),
+		include:          slices.Clone(params.Include),
 		repository:       params.Repository,
 		ballerinaVersion: params.BallerinaVersion,
 		visibility:       params.Visibility,

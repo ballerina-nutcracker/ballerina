@@ -37,6 +37,7 @@ type balaPackageJSON struct {
 	BallerinaVersion string   `json:"ballerina_version"`
 	Platform         string   `json:"platform"`
 	Export           []string `json:"export"`
+	Readme           string   `json:"readme"`
 }
 
 // balaDependencyGraph represents the dependency-graph.json structure in a .bala package.
@@ -90,7 +91,7 @@ func createBalaProjectConfig(fsys fs.FS, balaPath string) (balaProjectConfigResu
 			Message: "failed to read " + BallerinaTomlFile + " from bala: " + err.Error(),
 		}
 	}
-	manifest := newManifestBuilder(toml, balaPath).Build()
+	manifest := newManifestBuilder(toml, balaPath, fsys).Build()
 
 	deps, err := readDependenciesTomlDeps(fsys, balaPath, manifest.PackageDescriptor())
 	if err != nil {
@@ -105,6 +106,8 @@ func createBalaProjectConfig(fsys fs.FS, balaPath string) (balaProjectConfigResu
 		Authors:          manifest.Authors(),
 		Keywords:         manifest.Keywords(),
 		ExportedModules:  manifest.ExportedModules(),
+		Modules:          manifest.Modules(),
+		Include:          manifest.Include(),
 		Repository:       manifest.Repository(),
 		BallerinaVersion: manifest.BallerinaVersion(),
 		Visibility:       manifest.Visibility(),
@@ -140,6 +143,20 @@ func createBalaProjectConfig(fsys fs.FS, balaPath string) (balaProjectConfigResu
 		string(ballerinaTomlContent),
 	)
 
+	// manifest.Readme(), if set, is already bala-relative (e.g. "docs/README.md")
+	// — copyBallerinaToml rewrites it to that location when packing.
+	var readmeMdDoc DocumentConfig
+	if manifest.Readme() != "" {
+		if readmeMdContent, err := fs.ReadFile(fsys, path.Join(balaPath, manifest.Readme())); err == nil {
+			readmeMdName := path.Base(manifest.Readme())
+			readmeMdDoc = NewDocumentConfig(
+				NewDocumentID(readmeMdName, defaultModuleConfig.ModuleID()),
+				readmeMdName,
+				string(readmeMdContent),
+			)
+		}
+	}
+
 	config := NewPackageConfig(PackageConfigParams{
 		PackageID:       packageID,
 		PackageManifest: manifest,
@@ -147,7 +164,7 @@ func createBalaProjectConfig(fsys fs.FS, balaPath string) (balaProjectConfigResu
 		DefaultModule:   defaultModuleConfig,
 		OtherModules:    otherModules,
 		BallerinaToml:   ballerinaTomlDoc,
-		ReadmeMd:        nil, // TODO: read from docs/
+		ReadmeMd:        readmeMdDoc,
 	})
 
 	return balaProjectConfigResult{
@@ -189,6 +206,7 @@ func createBalaProjectConfigLegacy(fsys fs.FS, balaPath string) (balaProjectConf
 		PackageDesc:     packageDesc,
 		ExportedModules: pkgJSON.Export,
 		Dependencies:    dependencies,
+		Readme:          pkgJSON.Readme,
 	})
 
 	packageID := NewPackageID(pkgJSON.Name)
@@ -199,6 +217,20 @@ func createBalaProjectConfigLegacy(fsys fs.FS, balaPath string) (balaProjectConf
 		return balaProjectConfigResult{}, err
 	}
 
+	// pkgJSON.Readme, if set, is bala-relative (Java's BalaWriter writes it
+	// as "docs/<filename>").
+	var readmeMdDoc DocumentConfig
+	if pkgJSON.Readme != "" {
+		if readmeMdContent, err := fs.ReadFile(fsys, path.Join(balaPath, pkgJSON.Readme)); err == nil {
+			readmeMdName := path.Base(pkgJSON.Readme)
+			readmeMdDoc = NewDocumentConfig(
+				NewDocumentID(readmeMdName, defaultModuleConfig.ModuleID()),
+				readmeMdName,
+				string(readmeMdContent),
+			)
+		}
+	}
+
 	config := NewPackageConfig(PackageConfigParams{
 		PackageID:       packageID,
 		PackageManifest: manifest,
@@ -206,7 +238,7 @@ func createBalaProjectConfigLegacy(fsys fs.FS, balaPath string) (balaProjectConf
 		DefaultModule:   defaultModuleConfig,
 		OtherModules:    moduleConfigs,
 		BallerinaToml:   nil,
-		ReadmeMd:        nil, // TODO: read from docs/
+		ReadmeMd:        readmeMdDoc,
 	})
 
 	return balaProjectConfigResult{
@@ -559,7 +591,7 @@ func createBuildProjectConfig(fsys fs.FS, projectDirPath string) (PackageConfig,
 	}
 
 	// Build manifest from TOML
-	manifestBuilder := newManifestBuilder(toml, projectDirPath)
+	manifestBuilder := newManifestBuilder(toml, projectDirPath, fsys)
 	manifest := manifestBuilder.Build()
 
 	// Create package ID with package name from manifest
@@ -591,14 +623,15 @@ func createBuildProjectConfig(fsys fs.FS, projectDirPath string) (PackageConfig,
 	ballerinaTomlDocID := NewDocumentID(BallerinaTomlFile, defaultModuleID)
 	ballerinaTomlDoc := NewDocumentConfig(ballerinaTomlDocID, BallerinaTomlFile, string(ballerinaTomlContent))
 
-	// Check for README.md
+	// Load the readme named by the manifest (default "README.md", or an
+	// explicit/custom path declared via `readme = "..."` in Ballerina.toml).
 	var readmeMdDoc DocumentConfig
-	readmeMdPath := path.Join(projectDirPath, ReadmeMdFile)
-	if _, err := fs.Stat(fsys, readmeMdPath); err == nil {
-		readmeMdContent, err := fs.ReadFile(fsys, readmeMdPath)
-		if err == nil {
-			readmeMdDocID := NewDocumentID(ReadmeMdFile, defaultModuleID)
-			readmeMdDoc = NewDocumentConfig(readmeMdDocID, ReadmeMdFile, string(readmeMdContent))
+	if manifest.Readme() != "" {
+		readmeMdPath := path.Join(projectDirPath, manifest.Readme())
+		if readmeMdContent, err := fs.ReadFile(fsys, readmeMdPath); err == nil {
+			readmeMdName := path.Base(manifest.Readme())
+			readmeMdDocID := NewDocumentID(readmeMdName, defaultModuleID)
+			readmeMdDoc = NewDocumentConfig(readmeMdDocID, readmeMdName, string(readmeMdContent))
 		}
 	}
 

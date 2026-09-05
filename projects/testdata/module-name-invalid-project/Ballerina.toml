@@ -1,0 +1,16 @@
+[package]
+org = "testorg"
+name = "moduleinvalidproject"
+version = "0.1.0"
+
+[[package.modules]]
+name = "moduleinvalidproject"
+export = true
+
+[[package.modules]]
+name = "moduleinvalidproject.missing"
+export = true
+
+[[package.modules]]
+name = "totallywrongname"
+export = true
