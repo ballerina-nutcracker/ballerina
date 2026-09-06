@@ -28,10 +28,10 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/model/symbolpool"
 	"github.com/ballerina-nutcracker/ballerina/projects"
-	"github.com/ballerina-nutcracker/ballerina/semantics"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
 	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 type serializationFixture struct {
@@ -57,24 +57,30 @@ func compileForSerializationBench(b *testing.B, tc test_util.TestCase) *serializ
 	}
 	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
 
-	result, err := projects.Load(fsys, entry, projects.ProjectLoadConfig{
+	packageDirName := ""
+	if tc.IsProject {
+		packageDirName = filepath.Base(tc.InputPath)
+	}
+	compiled, err := testharness.CompileWithDriver(fsys, entry, packageDirName, projects.ProjectLoadConfig{
 		BallerinaEnvFs: ballerinaEnvFs,
 	})
 	if err != nil {
-		b.Fatalf("projects.Load(%s): %v", tc.InputPath, err)
+		b.Fatalf("driver compilation (%s): %v", tc.InputPath, err)
 	}
-	compilerEnv := result.Project().Environment().CompilerEnvironment()
-	tyEnv := result.Project().Environment().TypeEnv()
-	compilation := result.Project().CurrentPackage().Compilation()
+	compilerEnv := compiled.Resolver.CompilerEnvironment()
+	tyEnv := compilerEnv.GetTypeEnv()
 
 	var stderrBuf bytes.Buffer
-	testharness.PrintDiagnostics(fsys, &stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
-	if compilation.DiagnosticResult().HasErrors() {
+	diagnosticResult := projects.NewDiagnosticResult(compiled.Context.Diagnostics())
+	testharness.PrintDiagnostics(fsys, &stderrBuf, diagnosticResult, compiled.Context.DiagnosticEnv())
+	if diagnosticResult.HasErrors() {
 		b.Fatalf("compile errors for %s:\n%s", tc.InputPath, stderrBuf.String())
 	}
 
-	backend := projects.NewBallerinaBackend(compilation)
-	birPkg := backend.BIR()
+	if len(compiled.BIRPackages) == 0 {
+		b.Fatalf("nil BIR for %s", tc.InputPath)
+	}
+	birPkg := compiled.BIRPackages[len(compiled.BIRPackages)-1]
 	if birPkg == nil {
 		b.Fatalf("nil BIR for %s", tc.InputPath)
 		return nil
@@ -85,16 +91,18 @@ func compileForSerializationBench(b *testing.B, tc test_util.TestCase) *serializ
 		return nil
 	}
 
-	pkgIdent := semantics.PackageIdentifier{
-		OrgName:    pkgID.OrgName.Value(),
-		ModuleName: pkgID.PkgName.Value(),
-	}
-	exported, ok := backend.ExportedSymbols()[pkgIdent]
-	if !ok {
-		b.Fatalf("exported symbols not found for %s/%s", pkgIdent.OrgName, pkgIdent.ModuleName)
-	}
-
+	exported := nonEmptySerializationSymbols(compilerEnv)
 	return &serializationFixture{birPkg: birPkg, exportedSymbols: exported, compilerEnv: compilerEnv, tyEnv: tyEnv}
+}
+
+func nonEmptySerializationSymbols(env *context.CompilerEnvironment) model.ExportedSymbolSpace {
+	cx := context.NewCompilerContext(env)
+	pkgID := cx.NewPackageID("benchmark", []model.Name{"symbols"}, "1.0.0")
+	space := cx.NewSymbolSpace(*pkgID)
+	symbol := model.NewVariableSymbol("value", true, false, false, diagnostics.NewBuiltinLocation())
+	symbol.SetType(semtypes.Int)
+	space.AddSymbol("value", &symbol)
+	return model.NewExportedSymbolSpaces([]*model.SymbolSpace{space}, nil)
 }
 
 func benchTestPairs(b *testing.B) []test_util.TestCase {

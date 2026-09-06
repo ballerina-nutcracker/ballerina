@@ -43,6 +43,7 @@ func (cs *callStack) len() int {
 	return len(cs.elements)
 }
 
+//go:noinline
 func (cs *callStack) SetCurrentLocation(location bir.Location) {
 	if len(cs.elements) == 0 {
 		return

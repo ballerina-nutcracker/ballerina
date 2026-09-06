@@ -53,7 +53,7 @@ Execution of these stages is defined in `projects/package_compilation.go` and `p
 
 Stages 1–4 run across modules in dependency order (stages 3–4 need each dependency’s symbols and types). Stages 1–2 run per module: parse files in parallel, then build ASTs. If any module reports an error in stages 1–4 (via an `*Error` method on the compiler context, e.g. `SemanticError`, `SyntaxError`), the pipeline must stop before stage 5 — no module may proceed to local-node resolution or beyond.
 
-Stages 5–9 then run concurrently across modules. After each of those stages, a module checks diagnostics and must not continue that module on error. Stage 10 (BIR) runs only after every module has finished 1–9 with no errors (`cli/cmd/run.go` / `projects/ballerina_backend.go`). If compilation still has errors, stage 11 (interpretation) must not run.
+After every module succeeds through stage 4, stages 5–10 run as one independent concurrent chain per module. After each stage, a module checks diagnostics and must not continue that module on error. There is no all-modules barrier before BIR generation: a module may generate BIR as soon as its own stage 9 succeeds. Stage 11 (interpretation) begins only after every module worker has joined, every BIR slot is present in dependency order, and compilation has no errors.
 
 ## Tests
 

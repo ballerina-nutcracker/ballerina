@@ -966,6 +966,10 @@ func (s STNodeDiagnostic) DiagnosticCode() diagnostics.DiagnosticCode {
 	return s.code
 }
 
+func (s STNodeDiagnostic) Args() []any {
+	return append([]any(nil), s.args...)
+}
+
 // Modification methods
 func Replace(current STNode, target STNode, replacement STNode) STNode {
 	// TODO: this is doing value comparison which is super expensive, need to think of a better way to do this

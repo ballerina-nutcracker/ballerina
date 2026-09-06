@@ -31,8 +31,8 @@ type documentationLexer struct {
 	previousBacktickMode parserMode
 }
 
-func newDocumentationLexer(ctx *compilercontext.CompilerContext, fileName string, charReader text.CharReader, leadingTriviaList []st.STNode, diagnostics []st.STNodeDiagnostic) *documentationLexer {
-	lexer := newLexer(ctx, fileName, charReader)
+func newDocumentationLexer(ctx *compilercontext.CompilerContext, fileName string, charReader text.CharReader, leadingTriviaList []st.STNode, diagnostics []st.STNodeDiagnostic, debug *debugOutput) *documentationLexer {
+	lexer := newLexer(ctx, fileName, charReader, debug)
 	lexer.context.leadingTriviaList = leadingTriviaList
 	lexer.context.diagnostics = diagnostics
 	lexer.StartMode(parserModeDocLineStartHash)

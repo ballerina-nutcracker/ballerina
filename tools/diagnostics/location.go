@@ -31,8 +31,13 @@ type Location struct {
 // to an integer index for compact storage. The file must already be
 // registered via DiagnosticEnv.RegisterFile.
 func NewLocation(de *DiagnosticEnv, fileName string, startOffset, endOffset int) Location {
+	return NewLocationForIdentity(de, fileName, startOffset, endOffset)
+}
+
+// NewLocationForIdentity creates a location using a registered internal file identity.
+func NewLocationForIdentity(de *DiagnosticEnv, identity string, startOffset, endOffset int) Location {
 	return Location{
-		fileIndex:   de.FileIndex(fileName),
+		fileIndex:   de.FileIndex(identity),
 		startOffset: startOffset,
 		endOffset:   endOffset,
 	}

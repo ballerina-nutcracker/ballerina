@@ -62,8 +62,37 @@ func (s *SyntaxTree) ReplaceNode(target Node, replacement Node) SyntaxTree {
 }
 
 func (s *SyntaxTree) Diagnostics() iter.Seq[Diagnostic] {
-	// migrated from SyntaxTree.java:105:5
-	return s.RootNode.Diagnostics()
+	return func(yield func(Diagnostic) bool) {
+		for _, node := range innermostDiagnosticNodes(s.RootNode) {
+			deepest := FindDeepestDiagnosticSTNode(node.InternalNode())
+			if deepest == nil {
+				continue
+			}
+			for _, diagnostic := range deepest.Diagnostics() {
+				if !yield(createSyntaxDiagnostic(diagnostic, node)) {
+					return
+				}
+			}
+		}
+	}
+}
+
+func innermostDiagnosticNodes(node Node) []Node {
+	if node == nil || !node.HasDiagnostics() {
+		return nil
+	}
+	var result []Node
+	if nonTerminal, ok := node.(NonTerminalNode); ok {
+		for child := range nonTerminal.ChildNodes() {
+			if child != nil && child.HasDiagnostics() {
+				result = append(result, innermostDiagnosticNodes(child)...)
+			}
+		}
+	}
+	if len(result) > 0 {
+		return result
+	}
+	return []Node{node}
 }
 
 func (s *SyntaxTree) HasDiagnostics() bool {

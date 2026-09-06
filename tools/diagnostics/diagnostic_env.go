@@ -48,34 +48,41 @@ const (
 // It maps file names to integer indices for compact storage in Location.
 // Thread-safe via RWMutex since it is shared across compilation phases.
 type DiagnosticEnv struct {
-	mu          sync.RWMutex
-	fileNames   []string
-	nameToIndex map[string]int
-	docs        []text.TextDocument
+	mu              sync.RWMutex
+	fileNames       []string
+	identityToIndex map[string]int
+	docs            []text.TextDocument
 }
 
 // NewDiagnosticEnv creates an empty DiagnosticEnv.
 func NewDiagnosticEnv() *DiagnosticEnv {
 	return &DiagnosticEnv{
-		nameToIndex: make(map[string]int),
+		identityToIndex: make(map[string]int),
 	}
 }
 
 // RegisterFile adds or updates a file in the environment.
 // Assigns 1-based indices so zero-value Location (fileIndex=0) is unknown.
 func (de *DiagnosticEnv) RegisterFile(fileName string, doc text.TextDocument) {
+	de.RegisterFileIdentity(fileName, fileName, doc)
+}
+
+// RegisterFileIdentity adds or updates a file using an internal lookup identity
+// that may differ from the file name shown to users.
+func (de *DiagnosticEnv) RegisterFileIdentity(identity string, displayName string, doc text.TextDocument) {
 	de.mu.Lock()
 	defer de.mu.Unlock()
-	if idx, ok := de.nameToIndex[fileName]; ok {
+	if idx, ok := de.identityToIndex[identity]; ok {
 		// Keep the stable index used by existing locations while replacing the
 		// document after an incremental source update.
+		de.fileNames[idx-1] = displayName
 		de.docs[idx-1] = doc
 		return
 	}
-	de.fileNames = append(de.fileNames, fileName)
+	de.fileNames = append(de.fileNames, displayName)
 	de.docs = append(de.docs, doc)
 	idx := len(de.fileNames)
-	de.nameToIndex[fileName] = idx
+	de.identityToIndex[identity] = idx
 }
 
 // FileIndex returns the index for a previously registered file name.
@@ -84,11 +91,16 @@ func (de *DiagnosticEnv) RegisterFile(fileName string, doc text.TextDocument) {
 func (de *DiagnosticEnv) FileIndex(fileName string) int {
 	de.mu.RLock()
 	defer de.mu.RUnlock()
-	idx, ok := de.nameToIndex[fileName]
+	idx, ok := de.identityToIndex[fileName]
 	if !ok {
 		panic(fmt.Sprintf("diagnostics: file not registered: %q", fileName))
 	}
 	return idx
+}
+
+// TextDocument returns the registered source document for loc.
+func (de *DiagnosticEnv) TextDocument(loc Location) text.TextDocument {
+	return de.requireDoc(loc, "TextDocument")
 }
 
 // FileName returns the file name for a Location.
