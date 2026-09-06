@@ -86,6 +86,12 @@ func formatStatsReport(allStats []*context.ModuleStats) string {
 	return b.String()
 }
 
+// FormatStatsReport formats driver-owned compilation statistics using the
+// same presentation as project compilation.
+func FormatStatsReport(allStats []*context.ModuleStats) string {
+	return formatStatsReport(allStats)
+}
+
 func formatStatsReportOneline(allStats []*context.ModuleStats) string {
 	if len(allStats) == 0 {
 		return ""
@@ -132,6 +138,12 @@ func formatStatsReportOneline(allStats []*context.ModuleStats) string {
 	fmt.Fprintf(&b, "  %-40s %s\n", "Total", formatDuration(grandTotal))
 
 	return b.String()
+}
+
+// FormatStatsReportOneline formats driver-owned compilation statistics as
+// stage totals.
+func FormatStatsReportOneline(allStats []*context.ModuleStats) string {
+	return formatStatsReportOneline(allStats)
 }
 
 func writeGroupedStageStats(b *strings.Builder, allStats []*context.ModuleStats, name string, stages []context.CompilationStage) time.Duration {

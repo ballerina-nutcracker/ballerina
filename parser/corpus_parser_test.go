@@ -19,6 +19,7 @@ package parser
 import (
 	"encoding/json"
 	"flag"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -174,9 +175,10 @@ func parseFile(t *testing.T, testCase test_util.TestCase) {
 	ctx := context.NewCompilerContext(env)
 	ctx.DiagnosticEnv().RegisterFile(testCase.InputPath, text.TextDocumentFromText(source))
 
-	lexer := newLexer(ctx, testCase.InputPath, reader)
+	debug := newDebugOutput(DebugOptions{}, io.Discard)
+	lexer := newLexer(ctx, testCase.InputPath, reader, debug)
 
-	tokenReader := createTokenReader(ctx, testCase.InputPath, lexer)
+	tokenReader := createTokenReader(ctx, testCase.InputPath, lexer, debug)
 
 	ballerinaParser := newBallerinaParserFromTokenReader(tokenReader)
 

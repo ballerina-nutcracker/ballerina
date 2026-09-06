@@ -759,7 +759,7 @@ func TestResolveQueryExprMapConstructTypeOnConflictError(t *testing.T) {
 func newTestQueryResolver() (*packageTypeResolver, *context.CompilerContext) {
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	cx := context.NewCompilerContext(env)
-	return newPackageTypeResolver(cx, &ast.BLangPackage{}, nil, nil), cx
+	return newPackageTypeResolver(cx, &ast.BLangPackage{}, model.NewImportedSymbolSpaces(), nil), cx
 }
 
 func assertDiagnosticContains(t *testing.T, cx *context.CompilerContext, substr string) {

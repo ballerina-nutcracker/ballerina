@@ -35,8 +35,10 @@ import (
 
 type nodeBuilderMode uint8
 
+const nodeBuilderModeStrict nodeBuilderMode = 0
+
 const (
-	nodeBuilderModeStrict nodeBuilderMode = iota
+	nodeBuilderModeLegacy nodeBuilderMode = 1 << iota
 	nodeBuilderModeRecover
 )
 
@@ -68,11 +70,11 @@ func (n *nodeBuilder) unimplemented(message string, node st.Node) {
 }
 
 func newNodeBuilder(cx *context.CompilerContext) *nodeBuilder {
-	return newNodeBuilderWithMode(cx, nodeBuilderModeStrict)
+	return newNodeBuilderWithMode(cx, nodeBuilderModeLegacy)
 }
 
 func newRecoveringNodeBuilder(cx *context.CompilerContext) *nodeBuilder {
-	return newNodeBuilderWithMode(cx, nodeBuilderModeRecover)
+	return newNodeBuilderWithMode(cx, nodeBuilderModeLegacy|nodeBuilderModeRecover)
 }
 
 func newNodeBuilderWithMode(cx *context.CompilerContext, mode nodeBuilderMode) *nodeBuilder {
@@ -83,6 +85,10 @@ func newNodeBuilderWithMode(cx *context.CompilerContext, mode nodeBuilderMode) *
 	}
 	return nodeBuilder
 }
+
+func (n *nodeBuilder) recovering() bool { return n.mode&nodeBuilderModeRecover != 0 }
+
+func (n *nodeBuilder) legacy() bool { return n.mode&nodeBuilderModeLegacy != 0 }
 
 func (n *nodeBuilder) transformSyntaxNode(node st.Node) ast.BLangNode {
 	switch t := node.(type) {
@@ -576,7 +582,7 @@ func diagnosticMessage(diagnostic st.STNodeDiagnostic) string {
 
 func (n *nodeBuilder) getPosition(node st.Node) diagnostics.Location {
 	textRange := node.TextRange()
-	if n.mode == nodeBuilderModeRecover {
+	if n.recovering() {
 		textRange = node.TextRangeWithMinutiae()
 	}
 	return n.location(node, textRange)
@@ -827,7 +833,7 @@ func (n *nodeBuilder) createTypeNode(typeNode st.Node) ast.TypeDescriptor {
 	if err == nil {
 		return result
 	}
-	if n.mode != nodeBuilderModeRecover {
+	if !n.recovering() {
 		n.internalError(err.Error(), typeNode)
 	}
 	return n.badTypeNode(typeNode)
@@ -960,13 +966,13 @@ func setIdentifierValue(identifier ast.IdentifierNode, value string) {
 
 func (n *nodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, token st.Token) ast.IdentifierNode {
 	if token == nil {
-		if n.mode != nodeBuilderModeRecover {
+		if !n.recovering() {
 			n.cx.InternalError("missing identifier token", pos)
 		}
 		return n.badIdentifier(token)
 	}
 	if token.IsMissing() || isUnsupportedIdentifierToken(token) {
-		if n.mode != nodeBuilderModeRecover {
+		if !n.recovering() {
 			n.cx.InternalError("invalid identifier", pos)
 		}
 		return n.badIdentifier(token)
@@ -1293,7 +1299,7 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLa
 	compilationUnit.SetPackageID(n.PackageID)
 	pos := n.getPosition(modulePartNode)
 
-	if modulePartNode.HasDiagnostics() {
+	if n.legacy() && modulePartNode.HasDiagnostics() {
 		n.syntaxError(modulePartNode)
 	}
 
@@ -1301,14 +1307,14 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLa
 	imports := modulePartNode.Imports()
 	for importDecl := range imports.Iterator() {
 		if importDecl.HasDiagnostics() {
-			if n.mode == nodeBuilderModeRecover {
+			if n.recovering() {
 				compilationUnit.AddTopLevelNode(n.badTopLevel(importDecl))
 			}
 			continue
 		}
 		node, err := n.transformImportTopLevel(importDecl)
 		if err != nil {
-			if n.mode != nodeBuilderModeRecover {
+			if !n.recovering() {
 				n.internalError(err.Error(), importDecl)
 			}
 			node = n.badTopLevel(importDecl)
@@ -1322,7 +1328,7 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLa
 		// Dispatch to transformSyntaxNode which handles all node types
 		var memberNode st.Node = member
 		if memberNode.HasDiagnostics() {
-			if n.mode != nodeBuilderModeRecover {
+			if !n.recovering() {
 				continue
 			}
 			if memberNode.Kind() != st.FUNCTION_DEFINITION {
@@ -1339,12 +1345,10 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLa
 	}
 
 	// Create diagnostic location
-	fileName := ""
+	var newLocation diagnostics.Location
 	if !diagnostics.IsLocationEmpty(pos) {
-		fileName = n.de().FileName(pos)
+		newLocation = diagnostics.NewLocation(n.de(), getFileName(modulePartNode), 0, 0)
 	}
-
-	newLocation := diagnostics.NewLocation(n.de(), fileName, 0, 0)
 	compilationUnit.SetPosition(newLocation)
 	compilationUnit.SetPackageID(n.PackageID)
 
@@ -1464,7 +1468,7 @@ func (n *nodeBuilder) transformTopLevel(node st.Node) (ast.TopLevelNode, error) 
 	if err == nil {
 		return result, nil
 	}
-	if n.mode == nodeBuilderModeRecover {
+	if n.recovering() {
 		return n.badTopLevel(node), nil
 	}
 	return nil, err
@@ -1884,7 +1888,7 @@ func (n *nodeBuilder) transformStatement(statement st.StatementNode) ast.Stateme
 	if err == nil {
 		return result
 	}
-	if n.mode != nodeBuilderModeRecover {
+	if !n.recovering() {
 		n.internalError(err.Error(), statement)
 	}
 	return n.badStmt(statement)
@@ -1911,7 +1915,7 @@ func (n *nodeBuilder) generateAndAddBLangStatements(statementNodes st.NodeList[s
 		if currentStatement == nil {
 			continue
 		}
-		if currentStatement.HasDiagnostics() && n.mode != nodeBuilderModeRecover {
+		if currentStatement.HasDiagnostics() && !n.recovering() {
 			continue
 		}
 		if currentStatement.Kind() == st.FORK_STATEMENT {
@@ -1981,7 +1985,7 @@ func (n *nodeBuilder) createExpression(expressionNode st.Node) ast.BLangExpressi
 	if err == nil {
 		return result
 	}
-	if n.mode != nodeBuilderModeRecover {
+	if !n.recovering() {
 		n.internalError(err.Error(), expressionNode)
 	}
 	return n.badExprOrAction(expressionNode)
@@ -2005,7 +2009,7 @@ func (n *nodeBuilder) createActionOrExpression(actionOrExpression st.Node) ast.B
 	if err == nil {
 		return result
 	}
-	if n.mode != nodeBuilderModeRecover {
+	if !n.recovering() {
 		n.internalError(err.Error(), actionOrExpression)
 	}
 	return n.badExprOrAction(actionOrExpression)
@@ -5808,7 +5812,7 @@ func createUserDefinedType(pos diagnostics.Location, pkgAlias ast.BLangIdentifie
 }
 
 func (n *nodeBuilder) getNextMissingNodeName(pkgID *model.PackageID, node st.Node) string {
-	if n.mode != nodeBuilderModeRecover {
+	if !n.recovering() {
 		n.internalError("missing type-name token", node)
 	}
 	return n.cx.GetNextAnonymousTypeKey(pkgID)

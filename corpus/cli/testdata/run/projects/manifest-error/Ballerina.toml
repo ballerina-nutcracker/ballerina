@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "manifest_error"
+version = "invalid"

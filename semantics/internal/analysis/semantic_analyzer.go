@@ -55,7 +55,7 @@ type (
 		// TODO: move the constant resolution to type resolver as well so that we can run semantic analyzer in parallel as well
 		pkg              *ast.BLangPackage
 		importedPkgs     map[string]*ast.BLangImportPackage
-		importedSymbols  map[string]model.ExportedSymbolSpace
+		importedSymbols  model.ImportedSymbolSpaces
 		moduleVarMetaMap map[model.SymbolRef]varDeclMetadata
 	}
 	constantAnalyzer struct {
@@ -338,21 +338,18 @@ func newSemanticAnalyzer(ctx *context.CompilerContext) *semanticAnalyzer {
 		compilerCtx:      ctx,
 		typeCtx:          semtypes.ContextFrom(ctx.GetTypeEnv()),
 		importedPkgs:     make(map[string]*ast.BLangImportPackage),
-		importedSymbols:  make(map[string]model.ExportedSymbolSpace),
+		importedSymbols:  model.NewImportedSymbolSpaces(),
 		moduleVarMetaMap: make(map[model.SymbolRef]varDeclMetadata),
 	}
 }
 
-func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
+func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols model.ImportedSymbolSpaces) {
 	analyzer := newSemanticAnalyzer(ctx)
 	analyzer.analyze(pkg, importedSymbols)
 }
 
-func (sa *semanticAnalyzer) analyze(pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
+func (sa *semanticAnalyzer) analyze(pkg *ast.BLangPackage, importedSymbols model.ImportedSymbolSpaces) {
 	sa.pkg = pkg
-	if importedSymbols == nil {
-		importedSymbols = make(map[string]model.ExportedSymbolSpace)
-	}
 	sa.importedSymbols = importedSymbols
 	sa.moduleVarMetaMap = sa.buildModuleVarMetadata()
 	sa.validateModuleLevelIsolatedDecls(pkg)
@@ -1915,7 +1912,7 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		}
 		validateServiceListenerTypes(a, n)
 		analyzeClassLikeDefn(a, n.Fields, n.InitFunction, n.Methods, n.ResourceMethods, n.Inclusions,
-			n.InclusionPositions, n.IsIsolated(), enclosingFromService(n))
+			n.InclusionPositions, n.IsIsolated(), enclosingFromService(a.ctx(), n))
 		return nil
 	default:
 		return a

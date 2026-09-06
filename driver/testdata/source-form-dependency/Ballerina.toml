@@ -1,0 +1,15 @@
+[package]
+org = "acme"
+name = "dep"
+version = "1.0.0"
+
+[[dependency]]
+org = "acme"
+name = "util"
+version = "2.0.0"
+repository = "dep-util"
+
+[[dependency]]
+org = "acme"
+name = "leaf"
+version = "3.0.0"

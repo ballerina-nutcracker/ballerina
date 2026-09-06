@@ -124,11 +124,7 @@ func TestBalRunCorpus(t *testing.T) {
 	}
 }
 
-// TestBalRunWorkspaceCorpus tests the workspace branch in runBallerina (cli/cmd/run.go:206-229).
-// It covers three behaviours:
-//  1. workspace_root_rejected  — running the workspace root directly is rejected.
-//  2. member_resolves          — running a member package path succeeds.
-//  3. missing_member           — running a non-existent sub-path is rejected.
+// TestBalRunWorkspaceCorpus verifies workspace member selection and execution.
 //
 // Java equivalent: N/A — this is CLI-level integration coverage for the Go workspace branch.
 func TestBalRunWorkspaceCorpus(t *testing.T) {
@@ -152,9 +148,14 @@ func TestBalRunWorkspaceCorpus(t *testing.T) {
 			"run", "workspaces", "member-resolves.txtar")
 	})
 
+	t.Run("member_compilation_error", func(t *testing.T) {
+		assertBalCommandMatchesTxtarFragmentsForBinary(t, balBin, repoRoot, coverDir,
+			[]string{"run", filepath.Join(wsRoot, "pkgerror")},
+			"run", "workspaces", "member-compilation-error.txtar")
+	})
+
 	t.Run("missing_member", func(t *testing.T) {
-		// "notamember" is a real directory inside the workspace root but is NOT listed
-		// in the workspace Ballerina.toml packages array, so the CLI must reject it.
+		// "notamember" is a real directory but is not declared by the workspace.
 		assertBalCommandMatchesTxtarFragmentsLoose(t, balBin, repoRoot, coverDir,
 			[]string{"run", filepath.Join(wsRoot, "notamember")},
 			filepath.Join(outputsRoot, "missing-member.txtar"))
