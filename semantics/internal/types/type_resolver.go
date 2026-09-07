@@ -7861,8 +7861,15 @@ func resolveConstant(t typeResolver, constant *ast.BLangVariable) bool {
 		sym.SetConstantValue(value)
 	}
 
-	// TODO: I am not sure if this is strictly correct given expression type would have changed based on the contextually expected type in things like structure constructor expressions.
+	// The type of a constant is the intersection of readonly and the singleton
+	// type containing just the shape of its value (spec §8.8). The evaluated
+	// value carries that type, so taking it from there keeps the symbol type and
+	// the value in agreement. exprTy is the fallback for a constant whose value
+	// could not be evaluated; that is always a reported error.
 	expectedType := exprTy
+	if err == nil {
+		expectedType = values.SemTypeForValue(value)
+	}
 	setExpectedType(constant, expectedType)
 	symbol := constant.Symbol()
 	t.setSymbolType(symbol, expectedType)

@@ -132,12 +132,48 @@ func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLang
 		entries = append(entries, values.MapEntry{Key: key, Value: value})
 	}
 
-	ty := expr.GetDeterminedType()
-	atomic := semtypes.ToMappingAtomicType(e.resolver.typeContext(), ty)
-	if atomic == nil {
-		return nil, fmt.Errorf("constant mapping type is not atomic")
+	ty, atomic, err := readonlyMappingShapeType(e.resolver, entries)
+	if err != nil {
+		return nil, err
 	}
 	return values.NewMap(ty, atomic, true, entries), nil
+}
+
+// The type of a constant is the intersection of readonly and the singleton type
+// containing just the shape of its value (spec §8.8). readonlyListShapeType and
+// readonlyMappingShapeType build that type from the evaluated members, so it is
+// a single list or mapping atom rather than an intersection: both the BIR
+// deserializer and the inherent type checks on the value require an atomic type.
+func readonlyListShapeType(t typeResolver, members []values.BalValue) (semtypes.SemType,
+	*semtypes.ListAtomicType, error,
+) {
+	memberTypes := make([]semtypes.SemType, len(members))
+	for i, member := range members {
+		memberTypes[i] = values.SemTypeForValue(member)
+	}
+	ld := semtypes.NewListDefinition()
+	ty := ld.Define(t.typeEnv(), memberTypes, semtypes.ListMutability(semtypes.CellMutabilityNone))
+	atomic := semtypes.ToListAtomicType(t.typeEnv(), ty)
+	if atomic == nil {
+		return semtypes.SemType{}, nil, fmt.Errorf("constant list type is not atomic")
+	}
+	return ty, atomic, nil
+}
+
+func readonlyMappingShapeType(t typeResolver, entries []values.MapEntry) (semtypes.SemType,
+	*semtypes.MappingAtomicType, error,
+) {
+	fields := make([]semtypes.Field, 0, len(entries))
+	for _, entry := range entries {
+		fields = append(fields, semtypes.FieldFrom(entry.Key, values.SemTypeForValue(entry.Value), true, false))
+	}
+	md := semtypes.NewMappingDefinition()
+	ty := md.Define(t.typeEnv(), fields, semtypes.Never, semtypes.MappingMutability(semtypes.CellMutabilityNone))
+	atomic := semtypes.ToMappingAtomicType(t.typeContext(), ty)
+	if atomic == nil {
+		return semtypes.SemType{}, nil, fmt.Errorf("constant mapping type is not atomic")
+	}
+	return ty, atomic, nil
 }
 
 func constantMappingKey(key *ast.BLangMappingKey) (string, bool) {
@@ -181,8 +217,11 @@ func (e *constantExpressionEvaluator) evaluateListConstructor(expr *ast.BLangLis
 		}
 		initial = append(initial, filler())
 	}
-	restFiller, _ := values.FillerFactoryFor(e.resolver.typeContext(), expr.AtomicType.Rest())
-	return values.NewList(expr.GetDeterminedType(), &expr.AtomicType, true, restFiller, len(initial), initial), nil
+	ty, atomic, err := readonlyListShapeType(e.resolver, initial)
+	if err != nil {
+		return nil, err
+	}
+	return values.NewList(ty, atomic, true, nil, len(initial), initial), nil
 }
 
 func (e *constantExpressionEvaluator) evaluateUnaryExpression(expr *ast.BLangUnaryExpr) (values.BalValue, error) {
