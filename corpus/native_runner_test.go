@@ -43,8 +43,8 @@ import (
 
 	// Blank-import native packages so their init() registers extern
 	// functions before tests run; testdata isn't in ./... builds otherwise.
-	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/acmeorg/calcpkg/1.0.0/go1.26/native"
-	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/mockorg/nativepkg/1.0.0/go1.26/native"
+	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/acmeorg/calcpkg/1.0.0/go1.27/native"
+	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/mockorg/nativepkg/1.0.0/go1.27/native"
 )
 
 const nativeTestDataDir = "extern/testdata"
@@ -397,21 +397,21 @@ func TestNativeGoSourceFS_MissingNativeDirDespiteGoPlatform(t *testing.T) {
 	assert := test_util.New(t)
 
 	balaFS := fstest.MapFS{
-		"mockorg/nonativepkg/1.0.0/go1.26/Bala.toml": &fstest.MapFile{Data: []byte(`[bala]
+		"mockorg/nonativepkg/1.0.0/go1.27/Bala.toml": &fstest.MapFile{Data: []byte(`[bala]
 schema_version = "4"
 
 [build]
 ballerina_version      = ""
 implementation_vendor  = "WSO2"
 language_spec_version  = "2024R1"
-platform               = "go1.26"
+platform               = "go1.27"
 `)},
-		"mockorg/nonativepkg/1.0.0/go1.26/Ballerina.toml": &fstest.MapFile{Data: []byte(`[package]
+		"mockorg/nonativepkg/1.0.0/go1.27/Ballerina.toml": &fstest.MapFile{Data: []byte(`[package]
 org     = "mockorg"
 name    = "nonativepkg"
 version = "1.0.0"
 `)},
-		"mockorg/nonativepkg/1.0.0/go1.26/Dependencies.toml": &fstest.MapFile{Data: []byte(`[ballerina]
+		"mockorg/nonativepkg/1.0.0/go1.27/Dependencies.toml": &fstest.MapFile{Data: []byte(`[ballerina]
 dependencies-toml-version = "2"
 
 [[package]]
@@ -419,7 +419,7 @@ org     = "mockorg"
 name    = "nonativepkg"
 version = "1.0.0"
 `)},
-		"mockorg/nonativepkg/1.0.0/go1.26/nonativepkg.bal": &fstest.MapFile{Data: []byte(
+		"mockorg/nonativepkg/1.0.0/go1.27/nonativepkg.bal": &fstest.MapFile{Data: []byte(
 			"public function hello() returns string = external;\n")},
 	}
 
@@ -764,7 +764,7 @@ func TestNativeRunner_FingerprintInvalidatesOnSourceChange(t *testing.T) {
 
 	// Modify the cached native source — must invalidate the fingerprint.
 	const wantOriginal, wantModified = "hello from native Go", "hello from MODIFIED native Go"
-	nativeGoFile := filepath.Join(centralCache, "mockorg", "nativepkg", "1.0.0", "go1.26", "native", "nativepkg.go")
+	nativeGoFile := filepath.Join(centralCache, "mockorg", "nativepkg", "1.0.0", "go1.27", "native", "nativepkg.go")
 	original := mustReadFileBytes(t, nativeGoFile)
 	modified := bytes.Replace(original, []byte(wantOriginal), []byte(wantModified), 1)
 	if bytes.Equal(original, modified) {

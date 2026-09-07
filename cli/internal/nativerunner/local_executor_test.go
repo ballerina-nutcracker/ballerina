@@ -162,9 +162,9 @@ func TestWriteNativeFiles_CopiesGoFiles(t *testing.T) {
 func TestWriteNativeWorkspace(t *testing.T) {
 	t.Parallel()
 	interpRoot := t.TempDir()
-	mustWriteFile(t, filepath.Join(interpRoot, "cli", "go.mod"), "module example.com/cli\n\ngo 1.26\n")
-	mustWriteFile(t, filepath.Join(interpRoot, "ast", "go.mod"), "module example.com/ast\n\ngo 1.26\n")
-	mustWriteFile(t, filepath.Join(interpRoot, "go.work"), `go 1.26
+	mustWriteFile(t, filepath.Join(interpRoot, "cli", "go.mod"), "module example.com/cli\n\ngo 1.27\n")
+	mustWriteFile(t, filepath.Join(interpRoot, "ast", "go.mod"), "module example.com/ast\n\ngo 1.27\n")
+	mustWriteFile(t, filepath.Join(interpRoot, "go.work"), `go 1.27
 
 use (
 	./cli
@@ -181,7 +181,7 @@ replace example.com/ast v1.0.0 => ./ast
 	}
 	for _, payload := range payloads {
 		mustWriteFile(t, filepath.Join(tmpDir, moduleDirName(payload.GoModuleName()), "go.mod"),
-			"module "+payload.GoModuleName()+"\n\ngo 1.26\n")
+			"module "+payload.GoModuleName()+"\n\ngo 1.27\n")
 	}
 
 	workspaceFile, err := writeNativeWorkspace(tmpDir, interpRoot, payloads)
@@ -211,8 +211,8 @@ replace example.com/ast v1.0.0 => ./ast
 func TestWriteNativeWorkspaceDriverOnly(t *testing.T) {
 	t.Parallel()
 	interpRoot := t.TempDir()
-	mustWriteFile(t, filepath.Join(interpRoot, "cli", "go.mod"), "module example.com/cli\n\ngo 1.26\n\nrequire example.com/dependency v1.0.0\n")
-	mustWriteFile(t, filepath.Join(interpRoot, "go.work"), "go 1.26\n\nuse ./cli\n")
+	mustWriteFile(t, filepath.Join(interpRoot, "cli", "go.mod"), "module example.com/cli\n\ngo 1.27\n\nrequire example.com/dependency v1.0.0\n")
+	mustWriteFile(t, filepath.Join(interpRoot, "go.work"), "go 1.27\n\nuse ./cli\n")
 
 	workspaceFile, err := writeNativeWorkspace(t.TempDir(), interpRoot, nil)
 	if err != nil {
@@ -230,7 +230,7 @@ func TestWriteNativeWorkspaceDriverOnly(t *testing.T) {
 func TestWriteNativeWorkspace_MissingModule(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	mustWriteFile(t, filepath.Join(root, "go.work"), "go 1.26\n\nuse ./cli\n")
+	mustWriteFile(t, filepath.Join(root, "go.work"), "go 1.27\n\nuse ./cli\n")
 	_, err := writeNativeWorkspace(t.TempDir(), root, nil)
 	if err == nil {
 		t.Error("expected error when the CLI driver module is missing")
@@ -262,8 +262,8 @@ func TestNewForTarget_SetsTargetPackage(t *testing.T) {
 func newFakeInterpreterRoot(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	mustWriteFile(t, filepath.Join(root, "go.work"), "go 1.26\n\nuse ./cli\n")
-	mustWriteFile(t, filepath.Join(root, "cli", "go.mod"), "module example.com/cli\n\ngo 1.26\n")
+	mustWriteFile(t, filepath.Join(root, "go.work"), "go 1.27\n\nuse ./cli\n")
+	mustWriteFile(t, filepath.Join(root, "cli", "go.mod"), "module example.com/cli\n\ngo 1.27\n")
 	mustWriteFile(t, filepath.Join(root, "cli", "go.sum"), "")
 	return root
 }

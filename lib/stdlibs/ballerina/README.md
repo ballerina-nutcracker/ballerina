@@ -2,7 +2,7 @@
 
 This directory contains the Go-native implementations of the `ballerina/*` standard library
 packages baked into the interpreter binary. Each package is compiled into embedded `.sym`/`.bir`
-artefacts and laid out as `<name>/0.0.1/go1.26/`. See each package's own README (linked below)
+artefacts and laid out as `<name>/0.0.1/go1.27/`. See each package's own README (linked below)
 for the full feature-by-feature support table and behavioural notes.
 
 ## Packages
@@ -12,17 +12,17 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 
 | Package                                           | Supported | Partially Supported | Not Yet Supported | Support % |
 |---------------------------------------------------|---|---|---|---|
-| [avro](avro/0.0.1/go1.26/README.md)               | 15 | 1 | 0 | 94% |
-| [crypto](crypto/0.0.1/go1.26/README.md)           | 26 | 1 | 5 | 81% |
-| [http](http/0.0.1/go1.26/README.md)               | 28 | 7 | 38 | 38% |
-| [io](io/0.0.1/go1.26/README.md)                   | 21 | 2 | 4 | 78% |
-| [log](log/0.0.1/go1.26/README.md)                 | 7 | 2 | 15 | 29% |
-| [math.vector](math.vector/0.0.1/go1.26/README.md) | 5 | 0 | 0 | 100% |
-| [os](os/0.0.1/go1.26/README.md)                   | 11 | 1 | 0 | 92% |
-| [protobuf](protobuf/0.0.1/go1.26/README.md)       | 11 | 2 | 0 | 85% |
-| [random](random/0.0.1/go1.26/README.md)           | 3 | 1 | 1 | 60% |
-| [time](time/0.0.1/go1.26/README.md)               | 31 | 1 | 0 | 97% |
-| [url](url/0.0.1/go1.26/README.md)                 | 3 | 0 | 1 | 75% |
+| [avro](avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
+| [crypto](crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
+| [http](http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
+| [io](io/0.0.1/go1.27/README.md)                   | 21 | 2 | 4 | 78% |
+| [log](log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
+| [math.vector](math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
+| [os](os/0.0.1/go1.27/README.md)                   | 11 | 1 | 0 | 92% |
+| [protobuf](protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
+| [random](random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
+| [time](time/0.0.1/go1.27/README.md)               | 31 | 1 | 0 | 97% |
+| [url](url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | **Total**                                         | **161** | **18** | **64** | **66%** |
 
 ## Notable Behavioural Changes
