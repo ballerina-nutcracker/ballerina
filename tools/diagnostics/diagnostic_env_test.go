@@ -75,3 +75,21 @@ func TestRegisterFile_DifferentContentUpdatesDocument(t *testing.T) {
 		t.Errorf("StartLine after update = %d, want 1", got)
 	}
 }
+
+func TestRegisterFileIdentitySeparatesLookupAndDisplayName(t *testing.T) {
+	de := NewDiagnosticEnv()
+	de.RegisterFileIdentity("opaque", "first.bal", text.TextDocumentFromText("first"))
+	index := de.FileIndex("opaque")
+	location := NewLocationForIdentity(de, "opaque", 0, 6)
+	de.RegisterFileIdentity("opaque", "second.bal", text.TextDocumentFromText("second"))
+
+	if got := de.FileIndex("opaque"); got != index {
+		t.Fatalf("FileIndex after replacement = %d, want %d", got, index)
+	}
+	if got := de.FileName(location); got != "second.bal" {
+		t.Errorf("FileName after replacement = %q, want second.bal", got)
+	}
+	if got := de.TextDocument(location).String(); got != "second" {
+		t.Errorf("TextDocument after replacement = %q, want second", got)
+	}
+}
