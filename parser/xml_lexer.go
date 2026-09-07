@@ -30,8 +30,10 @@ type xmlLexer struct {
 	*lexer
 }
 
-func newXMLLexer(ctx *compilercontext.CompilerContext, fileName string, reader text.CharReader) *xmlLexer {
-	inner := newLexer(ctx, fileName, reader)
+// newXMLLexer creates a lexer that starts in XML content mode, for lexing the body of an
+// XML template expression.
+func newXMLLexer(ctx *compilercontext.CompilerContext, fileName string, reader text.CharReader, debug *debugOutput) *xmlLexer {
+	inner := newLexer(ctx, fileName, reader, debug)
 	inner.StartMode(parserModeXmlContent)
 	return &xmlLexer{lexer: inner}
 }

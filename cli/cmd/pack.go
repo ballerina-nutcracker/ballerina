@@ -193,7 +193,7 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 	}
 
 	if diagResult := result.Diagnostics(); diagResult.HasErrors() {
-		printDiagnostics(fsys, stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
+		printDiagnostics(stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
 		return packError("package loading reported errors")
 	}
 
@@ -215,7 +215,7 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 	pkg := project.CurrentPackage()
 	compilation := pkg.Compilation()
 	if cd := compilation.DiagnosticResult(); cd.HasErrors() {
-		printDiagnostics(fsys, stderr, cd, !isTerminal(), compilation.DiagnosticEnv())
+		printDiagnostics(stderr, cd, !isTerminal(), compilation.DiagnosticEnv())
 		return packError("compilation failed; .bala not produced")
 	}
 
@@ -223,7 +223,7 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 	backend := projects.NewBallerinaBackend(compilation)
 	backendDiags := backend.DiagnosticResult()
 	if backendDiags.HasErrors() {
-		printDiagnostics(fsys, stderr, backendDiags, !isTerminal(), compilation.DiagnosticEnv())
+		printDiagnostics(stderr, backendDiags, !isTerminal(), compilation.DiagnosticEnv())
 		return packError("BIR generation failed; .bala not produced")
 	}
 	balaPath, err := backend.EmitBala(balaDir)

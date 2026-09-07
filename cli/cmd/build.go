@@ -197,7 +197,7 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 	}
 
 	if diagResult := result.Diagnostics(); diagResult.HasErrors() || diagResult.HasWarnings() {
-		printDiagnostics(fsys, stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
+		printDiagnostics(stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
 		if diagResult.HasErrors() {
 			return buildError("package loading reported errors")
 		}
@@ -276,7 +276,7 @@ func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, f
 	pkg := project.CurrentPackage()
 	compilation := pkg.Compilation()
 	if cd := compilation.DiagnosticResult(); cd.HasErrors() || cd.HasWarnings() {
-		printDiagnostics(fsys, stderr, cd, !isTerminal(), compilation.DiagnosticEnv())
+		printDiagnostics(stderr, cd, !isTerminal(), compilation.DiagnosticEnv())
 		if cd.HasErrors() {
 			return buildError("compilation failed; executable not produced")
 		}
@@ -291,7 +291,7 @@ func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, f
 	backend := projects.NewBallerinaBackend(compilation)
 	backendDiags := backend.DiagnosticResult()
 	if backendDiags.HasErrors() {
-		printDiagnostics(fsys, stderr, backendDiags, !isTerminal(), compilation.DiagnosticEnv())
+		printDiagnostics(stderr, backendDiags, !isTerminal(), compilation.DiagnosticEnv())
 		return buildError("BIR generation failed; executable not produced")
 	}
 	birPkgs := backend.BIRPackages()
