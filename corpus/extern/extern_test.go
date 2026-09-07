@@ -610,11 +610,9 @@ func getBallerinaEnvPath(t *testing.T) string {
 	return filepath.Join(userHome, projects.UserHomeDirName)
 }
 
-// TestDependentlyTypedCrossModuleRoundtrip loads a project containing a
-// dependently-typed extern in a helper module, serializes dependency exported
-// symbols and BIR, then recompiles the main module against the deserialized
-// symbols. This validates that dependent-return and inferred-typedesc-default
-// metadata survive serialization across a dependency boundary.
+// TestDependentlyTypedCrossModuleRoundtrip validates that dependent-return and
+// inferred-typedesc-default metadata survive BIR serialization across a
+// dependency boundary.
 func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 	projectDir := filepath.Join(testDataDir, "cross-module-dependent-fn-v")
 	mainBalPath := filepath.Join(projectDir, "main.bal")
@@ -630,31 +628,20 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 	)
 
 	ballerinaEnvFs := os.DirFS(getBallerinaEnvPath(t))
-	result, err := projects.Load(os.DirFS(absProjectDir), ".", projects.ProjectLoadConfig{
+	compiled, err := testharness.CompileWithDriver(os.DirFS(absProjectDir), ".", filepath.Base(absProjectDir), projects.ProjectLoadConfig{
 		BallerinaEnvFs: ballerinaEnvFs,
 	})
 	if err != nil {
 		t.Fatalf("failed to load project: %v", err)
 	}
-	if result.Diagnostics().HasErrors() {
-		for _, d := range result.Diagnostics().Diagnostics() {
-			t.Logf("project diagnostic: %v", d)
-		}
-		t.Fatal("project load had errors")
-	}
-
-	project := result.Project()
-	currentPkg := project.CurrentPackage()
-	compilation := currentPkg.Compilation()
-	if compilation.DiagnosticResult().HasErrors() {
-		for _, d := range compilation.DiagnosticResult().Diagnostics() {
+	if compiled.Context.HasErrors() {
+		for _, d := range compiled.Context.Diagnostics() {
 			t.Logf("diagnostic: %v", d)
 		}
 		t.Fatal("compilation had errors")
 	}
 
-	backend := projects.NewBallerinaBackend(compilation)
-	birPkgs := backend.BIRPackages()
+	birPkgs := compiled.BIRPackages
 	if len(birPkgs) == 0 {
 		t.Fatal("compilation succeeded but produced no BIR packages")
 	}
@@ -662,25 +649,24 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	publicSymbols := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
 	deserializedPkgs := make([]*bir.BIRPackage, 0, len(birPkgs))
-	mainPkg := backend.BIR()
-	exportedSymbols := backend.ExportedSymbols()
-	typeEnv := project.Environment().TypeEnv()
+	typeEnv := compiled.Resolver.CompilerEnvironment().GetTypeEnv()
+	exportedSymbols := compiled.Context.ExportedSymbols()
 
 	for _, pkg := range birPkgs {
-		if pkg == mainPkg {
+		if pkg.PackageID.OrgName.Value() == org && pkg.PackageID.PkgName.Value() == packageRoot {
 			continue
 		}
-
 		pkgIdent := semantics.PackageIdentifier{
-			OrgName:    pkg.PackageID.OrgName.Value(),
-			ModuleName: pkg.PackageID.PkgName.Value(),
+			OrgName: pkg.PackageID.OrgName.Value(), ModuleName: pkg.PackageID.PkgName.Value(),
 		}
-		exported, ok := exportedSymbols[pkgIdent]
+		modelIdent := model.PackageIdentifier{
+			Organization: pkgIdent.OrgName, Package: pkgIdent.ModuleName, Version: pkg.PackageID.Version.Value(),
+		}
+		exported, ok := exportedSymbols[modelIdent]
 		if !ok {
 			t.Fatalf("exported symbols not found for %s/%s", pkgIdent.OrgName, pkgIdent.ModuleName)
 		}
-
-		symBytes, err := symbolpool.Marshal(exported, project.Environment().CompilerEnvironment())
+		symBytes, err := symbolpool.Marshal(exported, compiled.Resolver.CompilerEnvironment())
 		if err != nil {
 			t.Fatalf("symbol Marshal for %s/%s: %v", pkgIdent.OrgName, pkgIdent.ModuleName, err)
 		}
@@ -692,25 +678,17 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 
 		birBytes, err := bircodec.Marshal(typeEnv, pkg)
 		if err != nil {
-			t.Fatalf("BIR Marshal for %s/%s: %v", pkgIdent.OrgName, pkgIdent.ModuleName, err)
+			t.Fatalf("BIR Marshal for %v: %v", pkg.PackageID, err)
 		}
 		deserializedPkg, err := bircodec.Unmarshal(context.NewCompilerContext(freshEnv), birBytes)
 		if err != nil {
-			t.Fatalf("BIR Unmarshal for %s/%s: %v", pkgIdent.OrgName, pkgIdent.ModuleName, err)
+			t.Fatalf("BIR Unmarshal for %v: %v", pkg.PackageID, err)
 		}
 		deserializedPkgs = append(deserializedPkgs, deserializedPkg)
 	}
-
-	_, mainBIR := compileSingleFileModule(t, freshEnv, mainBalPath,
-		model.Name(org),
-		[]model.Name{model.Name(packageRoot)},
-		publicSymbols,
-		org,
-	)
+	_, mainBIR := compileSingleFileModule(t, freshEnv, mainBalPath, model.Name(org),
+		[]model.Name{model.Name(packageRoot)}, publicSymbols, org)
 	deserializedPkgs = append(deserializedPkgs, mainBIR)
-
-	// Stage 5: interpret [deserialized dependency BIR, freshly compiled main BIR]
-	// with helper's native registered. Validate stdout.
 	pal := testharness.NewTestPal()
 	defer pal.Close()
 	rt := runtime.NewRuntime(pal.Platform(), freshEnv.GetTypeEnv())
@@ -742,10 +720,6 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 	}
 }
 
-// compileSingleFileModule parses a .bal file and runs the full compilation
-// pipeline for it as its own module with the given package identity. The
-// publicSymbols map is consulted for any imports. Returns the module's
-// exported symbol space and BIR package.
 func compileSingleFileModule(
 	t *testing.T,
 	env *context.CompilerEnvironment,
@@ -766,28 +740,22 @@ func compileSingleFileModule(
 		t.Fatalf("reading %s: %v", balPath, err)
 	}
 	cx.DiagnosticEnv().RegisterFile(absPath, text.NewStringTextDocument(string(content)))
-	st, err := parser.GetSyntaxTree(cx, absPath, string(content))
+	syntaxTree, err := parser.GetSyntaxTree(cx, absPath, string(content))
 	if err != nil {
 		t.Fatalf("parsing %s: %v", balPath, err)
 	}
 	assertNoDiagnostics(t, cx, "Parse")
-	cu := nodebuilder.GetCompilationUnit(cx, st)
+	compilationUnit := nodebuilder.GetCompilationUnit(cx, syntaxTree)
 	pkgID := cx.NewPackageID(orgName, nameComps, model.DEFAULT_VERSION)
-	cu.SetPackageID(pkgID)
-	compilationUnits := []*ast.BLangCompilationUnit{cu}
+	compilationUnit.SetPackageID(pkgID)
+	compilationUnits := []*ast.BLangCompilationUnit{compilationUnit}
 
 	langlibs, err := langlib.Build(cx, publicSymbols)
 	if err != nil {
 		t.Fatalf("loading lang libraries failed: %v", err)
 	}
-	pkgScope, exported, importedSymbols := semantics.ResolveSymbols(
-		cx,
-		*pkgID,
-		compilationUnits,
-		langlibs.ImplicitImports,
-		langlibs.PublicSymbols,
-		defaultOrg,
-	)
+	pkgScope, exported, importedSymbols := semantics.ResolveSymbols(cx, *pkgID, compilationUnits,
+		langlibs.ImplicitImports, langlibs.PublicSymbols, defaultOrg)
 	assertNoDiagnostics(t, cx, "ResolveSymbols")
 	pkg := nodebuilder.ToPackageFromCompilationUnits(cx, compilationUnits)
 	assertNoDiagnostics(t, cx, "ToPackageFromCompilationUnits")
@@ -819,8 +787,8 @@ func assertNoDiagnostics(t *testing.T, cx *context.CompilerContext, stage string
 	if !cx.HasDiagnostics() {
 		return
 	}
-	for _, d := range cx.Diagnostics() {
-		t.Logf("%s diagnostic: %s", stage, d)
+	for _, diagnostic := range cx.Diagnostics() {
+		t.Logf("%s diagnostic: %s", stage, diagnostic)
 	}
 	t.Fatalf("%s produced diagnostics", stage)
 }

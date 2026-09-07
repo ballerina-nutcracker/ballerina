@@ -142,7 +142,7 @@ func TestBundledRepository_ResolverChainServesEmbedded(t *testing.T) {
 func TestBundledRepository_ConsumerProjectRuns(t *testing.T) {
 	projectFs := os.DirFS(filepath.Join(packageResolutionTestDataDir, "userProject"))
 
-	result, err := projects.Load(projectFs, ".", projects.ProjectLoadConfig{
+	compiled, err := testharness.CompileWithDriver(projectFs, ".", "userProject", projects.ProjectLoadConfig{
 		Repositories: []projects.Repository{
 			bundledEmbedRepo(t),
 			projects.NewFileSystemRepository(stdlibs.FS, "."),
@@ -151,21 +151,16 @@ func TestBundledRepository_ConsumerProjectRuns(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if diag := result.Diagnostics(); diag.HasErrors() {
-		t.Fatalf("load diagnostics: %v", diag.Diagnostics())
+	if compiled.Context.HasErrors() {
+		t.Fatalf("compilation diagnostics: %v", compiled.Context.Diagnostics())
 	}
 
-	compilation := result.Project().CurrentPackage().Compilation()
-	if diag := compilation.DiagnosticResult(); diag.HasErrors() {
-		t.Fatalf("compilation diagnostics: %v", diag.Diagnostics())
-	}
-
-	birPkgs := projects.NewBallerinaBackend(compilation).BIRPackages()
+	birPkgs := compiled.BIRPackages
 	if len(birPkgs) == 0 {
 		t.Fatal("backend produced no BIR packages")
 	}
 
-	got := interpretBIRPackagesStdout(t, result.Project().Environment().TypeEnv(), birPkgs)
+	got := interpretBIRPackagesStdout(t, compiled.Resolver.CompilerEnvironment().GetTypeEnv(), birPkgs)
 	want := "7\n1"
 	if got != want {
 		t.Errorf("stdout = %q, want %q", got, want)
