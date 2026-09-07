@@ -201,7 +201,7 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	diagResult := result.Diagnostics()
 	if diagResult.HasErrors() {
 		// Given we don't have sources at this point it is okay to pass an empty diagnostic env
-		printDiagnostics(fsys, os.Stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
+		printDiagnostics(os.Stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
 		// Not a run-usage mistake, so no USAGE block, but cobra should still
 		// print "ballerina: project loading contains errors" as a summary.
 		return fmt.Errorf("project loading contains errors")
@@ -244,7 +244,7 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	// Print all diagnostics; only errors abort the run.
 	compilationDiags := compilation.DiagnosticResult()
 	if compilationDiags.DiagnosticCount() > 0 {
-		printDiagnostics(fsys, os.Stderr, compilationDiags, !isTerminal(), compilation.DiagnosticEnv())
+		printDiagnostics(os.Stderr, compilationDiags, !isTerminal(), compilation.DiagnosticEnv())
 	}
 	if compilationDiags.HasErrors() {
 		// Not a run-usage mistake, so no USAGE block, but cobra should still
@@ -256,7 +256,7 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	backend := projects.NewBallerinaBackend(compilation)
 	backendDiags := backend.DiagnosticResult()
 	if backendDiags.HasErrors() {
-		printDiagnostics(fsys, os.Stderr, backendDiags, !isTerminal(), compilation.DiagnosticEnv())
+		printDiagnostics(os.Stderr, backendDiags, !isTerminal(), compilation.DiagnosticEnv())
 		return fmt.Errorf("BIR generation failed")
 	}
 	birPkgs := backend.BIRPackages()

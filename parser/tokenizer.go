@@ -34,17 +34,19 @@ type tokenReader struct {
 	ctx               *compilercontext.CompilerContext
 	fileName          string
 	location          diagnostics.Location
+	debug             *debugOutput
 }
 
-func createTokenReader(ctx *compilercontext.CompilerContext, fileName string, lexer tokenLexer) *tokenReader {
-	location := diagnostics.NewLocation(ctx.DiagnosticEnv(), fileName, 0, 0)
+func createTokenReader(ctx *compilercontext.CompilerContext, diagnosticIdentity string, lexer tokenLexer, debug *debugOutput) *tokenReader {
+	location := diagnostics.NewLocationForIdentity(ctx.DiagnosticEnv(), diagnosticIdentity, 0, 0)
 	return &tokenReader{
 		lexer:             lexer,
 		currentToken:      nil,
 		currentTokenIndex: 0,
 		ctx:               ctx,
-		fileName:          fileName,
+		fileName:          diagnosticIdentity,
 		location:          location,
+		debug:             debug,
 		tokenBuffer: tokenBuffer{
 			capacity:   20,
 			tokens:     make([]st.STToken, bufferSize),

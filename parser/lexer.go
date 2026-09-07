@@ -19,7 +19,6 @@ package parser
 import (
 	"unicode"
 
-	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
 	compilercontext "github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/parser/common"
 	"github.com/ballerina-nutcracker/ballerina/st"
@@ -48,6 +47,7 @@ type lexer struct {
 	context  lexerContext
 	ctx      *compilercontext.CompilerContext
 	location diagnostics.Location
+	debug    *debugOutput
 }
 
 type lexerContext struct {
@@ -57,12 +57,13 @@ type lexerContext struct {
 	diagnostics       []st.STNodeDiagnostic
 }
 
-func newLexer(ctx *compilercontext.CompilerContext, fileName string, reader text.CharReader) *lexer {
+func newLexer(ctx *compilercontext.CompilerContext, diagnosticIdentity string, reader text.CharReader, debug *debugOutput) *lexer {
 	return &lexer{
 		reader:   reader,
 		context:  lexerContext{},
 		ctx:      ctx,
-		location: diagnostics.NewLocation(ctx.DiagnosticEnv(), fileName, 0, 0),
+		location: diagnostics.NewLocationForIdentity(ctx.DiagnosticEnv(), diagnosticIdentity, 0, 0),
+		debug:    debug,
 	}
 }
 
@@ -121,7 +122,7 @@ func (l *lexer) NextToken() st.STToken {
 		token = st.AddSyntaxDiagnostics(token, l.context.diagnostics)
 		l.context.diagnostics = nil
 	}
-	debugcommon.DebugWriteLazy(debugcommon.DUMP_TOKENS, func() string { return st.ToSexpr(token) })
+	l.debug.write(l.debug.options.DumpTokens, func() string { return st.ToSexpr(token) })
 	return token
 }
 

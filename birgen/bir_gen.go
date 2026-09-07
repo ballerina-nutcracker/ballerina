@@ -41,6 +41,7 @@ func birLoc(de *diagnostics.DiagnosticEnv, pos diagnostics.Location) bir.Locatio
 type packageContext struct {
 	CompilerContext *compilerctx.CompilerContext
 	packageID       *model.PackageID // Current package ID
+	sourcePrefix    string
 	birPkg          *bir.BIRPackage
 	typeCtx         semtypes.Context
 	// PR-TODO: extract them to memoized types struc
@@ -75,7 +76,16 @@ func (fn *functionContext) addBB() *bir.BIRBasicBlock {
 }
 
 func (fn *functionContext) loc(pos diagnostics.Location) bir.Location {
-	return birLoc(fn.pkgCtx.CompilerContext.DiagnosticEnv(), pos)
+	return fn.pkgCtx.loc(pos)
+}
+
+func (c *packageContext) loc(pos diagnostics.Location) bir.Location {
+	location := birLoc(c.CompilerContext.DiagnosticEnv(), pos)
+	if c.sourcePrefix == "" || bir.IsLocationEmpty(location) {
+		return location
+	}
+	return bir.NewLocation(c.sourcePrefix+location.FilePath(), location.StartLine(), location.EndLine(),
+		location.StartColumn(), location.EndColumn())
 }
 
 // context is one node of the lexical block tree. The whole tree (across
@@ -383,9 +393,14 @@ func newContext(compilerCtx *compilerctx.CompilerContext, packageID *model.Packa
 }
 
 func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *bir.BIRPackage {
+	return GenBirWithSourcePrefix(ctx, ast, "")
+}
+
+func GenBirWithSourcePrefix(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage, sourcePrefix string) *bir.BIRPackage {
 	birPkg := &bir.BIRPackage{}
 	birPkg.PackageID = ast.PackageID
 	genCtx := newContext(ctx, ast.PackageID, birPkg)
+	genCtx.sourcePrefix = sourcePrefix
 	birPkg.GlobalVars = make(map[string]bir.BIRGlobalVariableDcl)
 	for _, globalVar := range ast.GlobalVars {
 		addGlobalVar(birPkg, transformGlobalVariableDcl(genCtx, globalVar))
@@ -450,7 +465,7 @@ func addGlobalVar(birPkg *bir.BIRPackage, dcl bir.BIRGlobalVariableDcl) {
 func transformGlobalVariableDcl(ctx *packageContext, ast *ast.BLangVariable) bir.BIRGlobalVariableDcl {
 	name := model.Name(ast.GetName().GetValue())
 	dcl := bir.BIRGlobalVariableDcl{}
-	dcl.Pos = birLoc(ctx.CompilerContext.DiagnosticEnv(), ast.GetPosition())
+	dcl.Pos = ctx.loc(ast.GetPosition())
 	dcl.Name = name
 	dcl.PkgID = ctx.packageID
 	dcl.Type = ctx.CompilerContext.SymbolType(ast.Symbol())

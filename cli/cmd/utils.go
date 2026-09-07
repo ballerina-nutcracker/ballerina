@@ -19,7 +19,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -120,13 +119,13 @@ func buildDiagnosticLocation(filePath string, startLine, startCol, endLine, endC
 	}
 }
 
-func printDiagnostics(fsys fs.FS, w io.Writer, diagResult projects.DiagnosticResult, noColors bool, de *diagnostics.DiagnosticEnv) {
+func printDiagnostics(w io.Writer, diagResult projects.DiagnosticResult, noColors bool, de *diagnostics.DiagnosticEnv) {
 	for _, d := range diagResult.Diagnostics() {
-		printDiagnostic(fsys, w, d, noColors, de)
+		printDiagnostic(w, d, noColors, de)
 	}
 }
 
-func printDiagnostic(fsys fs.FS, w io.Writer, d diagnostics.Diagnostic, noColors bool, de *diagnostics.DiagnosticEnv) {
+func printDiagnostic(w io.Writer, d diagnostics.Diagnostic, noColors bool, de *diagnostics.DiagnosticEnv) {
 	s := outputStyleFor(noColors)
 	printDiagnosticHeader(w, s, d)
 
@@ -146,7 +145,7 @@ func printDiagnostic(fsys fs.FS, w io.Writer, d diagnostics.Diagnostic, noColors
 		de.EndLine(location), de.EndColumn(location),
 	)
 	printDiagnosticLocation(w, s, loc)
-	printSourceSnippet(w, s, loc, fsys, s.severityColor(d.DiagnosticInfo().Severity()))
+	printSourceSnippetContent(w, s, loc, de.TextDocument(location).String(), s.severityColor(d.DiagnosticInfo().Severity()))
 	_, _ = fmt.Fprintln(w)
 }
 
@@ -171,12 +170,8 @@ func printDiagnosticLocation(w io.Writer, s outputStyle, loc diagnosticLocation)
 	}
 }
 
-func printSourceSnippet(w io.Writer, s outputStyle, loc diagnosticLocation, fsys fs.FS, severityColor string) {
-	content, err := fs.ReadFile(fsys, loc.filePath)
-	if err != nil {
-		return
-	}
-	lines := strings.Split(string(content), "\n")
+func printSourceSnippetContent(w io.Writer, s outputStyle, loc diagnosticLocation, content, severityColor string) {
+	lines := strings.Split(content, "\n")
 	if loc.startLine >= len(lines) {
 		return
 	}

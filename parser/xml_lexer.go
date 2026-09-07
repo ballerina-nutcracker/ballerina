@@ -30,8 +30,8 @@ type xmlLexer struct {
 	*lexer
 }
 
-func newXMLLexer(ctx *compilercontext.CompilerContext, fileName string, reader text.CharReader) *xmlLexer {
-	inner := newLexer(ctx, fileName, reader)
+func newXMLLexer(ctx *compilercontext.CompilerContext, fileName string, reader text.CharReader, debug *debugOutput) *xmlLexer {
+	inner := newLexer(ctx, fileName, reader, debug)
 	inner.StartMode(parserModeXmlContent)
 	return &xmlLexer{lexer: inner}
 }

@@ -267,6 +267,8 @@ type (
 		AnnotationSpaces []*SymbolSpace
 	}
 
+	ImportedSymbolSpaces map[PackageIdentifier]ExportedSymbolSpace
+
 	BlockScopeBase struct {
 		Parent Scope
 		Main   *SymbolSpace
@@ -445,6 +447,19 @@ type (
 		fieldNames [][]string
 	}
 )
+
+func NewImportedSymbolSpaces() ImportedSymbolSpaces {
+	return make(ImportedSymbolSpaces)
+}
+
+func (spaces ImportedSymbolSpaces) ByModule(org, name string) (ExportedSymbolSpace, bool) {
+	for identifier, symbols := range spaces {
+		if identifier.Organization == org && identifier.Package == name {
+			return symbols, true
+		}
+	}
+	return ExportedSymbolSpace{}, false
+}
 
 func (ref SymbolRef) IsEmpty() bool {
 	return ref == SymbolRef{}
