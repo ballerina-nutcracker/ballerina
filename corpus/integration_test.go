@@ -27,24 +27,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	bircodec "github.com/ballerina-nutcracker/ballerina/bir/codec"
-	"github.com/ballerina-nutcracker/ballerina/birgen"
 	"github.com/ballerina-nutcracker/ballerina/context"
-	"github.com/ballerina-nutcracker/ballerina/desugar"
-	"github.com/ballerina-nutcracker/ballerina/model"
-	"github.com/ballerina-nutcracker/ballerina/model/symbolpool"
-	"github.com/ballerina-nutcracker/ballerina/nodebuilder"
-	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
-	"github.com/ballerina-nutcracker/ballerina/semantics"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
-	"github.com/ballerina-nutcracker/ballerina/test_util/langlib"
 	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
-	"github.com/ballerina-nutcracker/ballerina/tools/text"
 
 	_ "github.com/ballerina-nutcracker/ballerina/lib/rt"
 )
@@ -166,10 +156,6 @@ func TestProjectIntegration(t *testing.T) {
 // TestWorkspaceIntegration runs the same compile + interpret pipeline against
 // each fixture under corpus/workspace/<name>/, comparing stdout/stderr to
 // corpus/integration/workspace/<name>.txtar.
-//
-// Convention: the first package in `[workspace].packages` is the entrypoint.
-// projects.Load auto-detects the workspace and WorkspaceProject.CurrentPackage
-// returns that first member, so the existing project pipeline works as-is.
 func TestWorkspaceIntegration(t *testing.T) {
 	cases, err := testharness.GetProjectTestCases("../corpus/workspace", test_util.Integration, test_util.SuffixAny)
 	if err != nil {
@@ -302,24 +288,21 @@ func runCompilePhase(balFile string, stdoutBuf, stderrBuf *bytes.Buffer) (pkgs [
 	}
 	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
 
-	result, err := projects.Load(fsys, filepath.Base(balFile), projects.ProjectLoadConfig{
+	compiled, err := testharness.CompileWithDriver(fsys, filepath.Base(balFile), "", projects.ProjectLoadConfig{
 		BallerinaEnvFs: ballerinaEnvFs,
 	})
 	if err != nil {
 		fmt.Fprintf(stdoutBuf, "%s\n", err.Error())
 		return nil, nil, err
 	}
-	tyEnv = result.Project().Environment().TypeEnv()
-	currentPkg := result.Project().CurrentPackage()
-	compilation := currentPkg.Compilation()
+	tyEnv = compiled.Resolver.CompilerEnvironment().GetTypeEnv()
 
-	testharness.PrintDiagnostics(fsys, stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
-	if compilation.DiagnosticResult().HasErrors() {
+	diagnosticResult := projects.NewDiagnosticResult(compiled.Context.Diagnostics())
+	testharness.PrintDiagnostics(fsys, stderrBuf, diagnosticResult, compiled.Context.DiagnosticEnv())
+	if diagnosticResult.HasErrors() {
 		return nil, tyEnv, nil
 	}
-
-	backend := projects.NewBallerinaBackend(compilation)
-	return backend.BIRPackages(), tyEnv, nil
+	return compiled.BIRPackages, tyEnv, nil
 }
 
 // runInterpretPhase takes already-compiled birPkgs (rather than compiling
@@ -491,12 +474,6 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 	var stdoutBuf bytes.Buffer
 	var stderrBuf bytes.Buffer
 
-	absProjectDir, err := filepath.Abs(projectDir)
-	if err != nil {
-		fmt.Fprintf(&stdoutBuf, "%s\n", err.Error())
-		return stdoutBuf.String(), stderrBuf.String()
-	}
-
 	fsys := os.DirFS(projectDir)
 	ballerinaEnvPath, err := getBallerinaEnvPath()
 	if err != nil {
@@ -504,215 +481,49 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 		return stdoutBuf.String(), stderrBuf.String()
 	}
 	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
-	result, err := projects.Load(fsys, ".", projects.ProjectLoadConfig{
+	compiled, err := testharness.CompileWithDriver(fsys, ".", filepath.Base(projectDir), projects.ProjectLoadConfig{
 		BallerinaEnvFs: ballerinaEnvFs,
 	})
 	if err != nil {
 		fmt.Fprintf(&stdoutBuf, "%s\n", err.Error())
 		return stdoutBuf.String(), stderrBuf.String()
 	}
-	project := result.Project()
-	compilerEnv := project.Environment().CompilerEnvironment()
-	tyEnv := project.Environment().TypeEnv()
-	currentPkg := project.CurrentPackage()
-	compilation := currentPkg.Compilation()
+	tyEnv := compiled.Resolver.CompilerEnvironment().GetTypeEnv()
 
-	testharness.PrintDiagnostics(fsys, &stderrBuf, compilation.DiagnosticResult(), compilation.DiagnosticEnv())
-	if compilation.DiagnosticResult().HasErrors() {
+	diagnosticResult := projects.NewDiagnosticResult(compiled.Context.Diagnostics())
+	testharness.PrintDiagnostics(fsys, &stderrBuf, diagnosticResult, compiled.Context.DiagnosticEnv())
+	if diagnosticResult.HasErrors() {
 		return stdoutBuf.String(), stderrBuf.String()
 	}
 
-	backend := projects.NewBallerinaBackend(compilation)
-	birPkgs := backend.BIRPackages()
-	exportedSymbols := backend.ExportedSymbols()
-
+	birPkgs := compiled.BIRPackages
 	if len(birPkgs) == 0 {
 		return stdoutBuf.String(), stderrBuf.String()
 	}
-
-	deps := birPkgs[:len(birPkgs)-1]
-
-	// Step 1: Serialize dep symbols and BIR to byte arrays
-	type serializedModule struct {
-		symBytes []byte
-		birBytes []byte
-	}
-	serializedDeps := make([]serializedModule, 0, len(deps))
-
-	for _, dep := range deps {
-		pkgIdent := semantics.PackageIdentifier{
-			OrgName:    dep.PackageID.OrgName.Value(),
-			ModuleName: dep.PackageID.PkgName.Value(),
-		}
-		exported, ok := exportedSymbols[pkgIdent]
-		if !ok {
-			fmt.Fprintf(&stdoutBuf, "exported symbols not found for %s/%s\n", pkgIdent.OrgName, pkgIdent.ModuleName)
-			return stdoutBuf.String(), stderrBuf.String()
-		}
-
-		symBytes, err := symbolpool.Marshal(exported, compilerEnv)
-		if err != nil {
-			fmt.Fprintf(&stdoutBuf, "symbol serialization failed: %v\n", err)
-			return stdoutBuf.String(), stderrBuf.String()
-		}
-
-		birBytes, err := bircodec.Marshal(tyEnv, dep)
+	serialized := make([][]byte, 0, len(birPkgs))
+	for _, pkg := range birPkgs {
+		birBytes, err := bircodec.Marshal(tyEnv, pkg)
 		if err != nil {
 			fmt.Fprintf(&stdoutBuf, "BIR serialization failed: %v\n", err)
 			return stdoutBuf.String(), stderrBuf.String()
 		}
-
-		serializedDeps = append(serializedDeps, serializedModule{symBytes: symBytes, birBytes: birBytes})
+		serialized = append(serialized, birBytes)
 	}
 
-	// Step 2: Create fresh compiler and deserialize dep symbols + BIR
 	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
-	publicSymbols := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
 	deserialized := make([]*bir.BIRPackage, 0, len(birPkgs))
-
-	for i, sd := range serializedDeps {
-		exported, err := symbolpool.Unmarshal(freshEnv, sd.symBytes)
-		if err != nil {
-			fmt.Fprintf(&stdoutBuf, "symbol deserialization failed: %v\n", err)
-			return stdoutBuf.String(), stderrBuf.String()
-		}
-
-		dep := deps[i]
-		pkgIdent := semantics.PackageIdentifier{
-			OrgName:    dep.PackageID.OrgName.Value(),
-			ModuleName: dep.PackageID.PkgName.Value(),
-		}
-		publicSymbols[pkgIdent] = exported
-
+	for _, birBytes := range serialized {
 		freshCtx := context.NewCompilerContext(freshEnv)
-		deserializedPkg, err := bircodec.Unmarshal(freshCtx, sd.birBytes)
+		deserializedPkg, err := bircodec.Unmarshal(freshCtx, birBytes)
 		if err != nil {
 			fmt.Fprintf(&stdoutBuf, "BIR deserialization failed: %v\n", err)
 			return stdoutBuf.String(), stderrBuf.String()
 		}
-
 		deserialized = append(deserialized, deserializedPkg)
 	}
 
-	// Step 3: Recompile the main (default) module from source using deserialized dep symbols
-	defaultModule := currentPkg.DefaultModule()
-	defaultDesc := defaultModule.Descriptor()
-	defaultOrg := defaultDesc.Org().Value()
-
-	mainBirPkg, err := compileModuleFromSource(freshEnv, project, defaultModule, absProjectDir, publicSymbols, defaultOrg)
-	if err != nil {
-		fmt.Fprintf(&stdoutBuf, "main module recompilation failed: %v\n", err)
-		return stdoutBuf.String(), stderrBuf.String()
-	}
-
-	deserialized = append(deserialized, mainBirPkg)
-
 	runProjectInterpretPhase(deserialized, freshEnv.GetTypeEnv(), &stdoutBuf, &stderrBuf)
 	return stdoutBuf.String(), stderrBuf.String()
-}
-
-func compileModuleFromSource(env *context.CompilerEnvironment, project projects.Project, module *projects.Module,
-	absProjectDir string, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace, defaultOrg string,
-) (*bir.BIRPackage, error) {
-	cx := context.NewCompilerContext(env)
-
-	// Register source files with DiagnosticEnv and parse them.
-	de := cx.DiagnosticEnv()
-	var syntaxTrees []*ast.BLangCompilationUnit
-	for _, docID := range module.DocumentIDs() {
-		relPath := project.DocumentPath(docID)
-		absPath := filepath.Join(absProjectDir, relPath)
-		content, err := os.ReadFile(absPath)
-		if err != nil {
-			return nil, fmt.Errorf("reading %s: %v", relPath, err)
-		}
-		de.RegisterFile(absPath, text.NewStringTextDocument(string(content)))
-		st, err := parser.GetSyntaxTree(cx, absPath, string(content))
-		if err != nil {
-			return nil, fmt.Errorf("parsing %s: %v", relPath, err)
-		}
-		if cx.HasDiagnostics() {
-			return nil, fmt.Errorf("parsing %s produced diagnostics", relPath)
-		}
-		cu := nodebuilder.GetCompilationUnit(cx, st)
-		syntaxTrees = append(syntaxTrees, cu)
-	}
-
-	// Set the package ID to match the module descriptor
-	desc := module.Descriptor()
-	orgName := model.Name(desc.Org().Value())
-	moduleName := desc.Name().String()
-	nameComps := make([]model.Name, 0)
-	for _, part := range strings.Split(moduleName, ".") {
-		nameComps = append(nameComps, model.Name(part))
-	}
-	version := model.Name(desc.Version().String())
-	if version == "" {
-		version = model.DEFAULT_VERSION
-	}
-	pkgID := cx.NewPackageID(orgName, nameComps, version)
-	for _, cu := range syntaxTrees {
-		cu.SetPackageID(pkgID)
-	}
-
-	// Run compilation pipeline
-	langlibs, err := langlib.Build(cx, publicSymbols)
-	if err != nil {
-		return nil, fmt.Errorf("loading lang libraries failed: %w", err)
-	}
-	pkgScope, _, importedSymbols := semantics.ResolveSymbols(
-		cx,
-		*pkgID,
-		syntaxTrees,
-		langlibs.ImplicitImports,
-		langlibs.PublicSymbols,
-		defaultOrg,
-	)
-	if cx.HasDiagnostics() {
-		return nil, fmt.Errorf("symbol resolution failed")
-	}
-	pkg := nodebuilder.ToPackageFromCompilationUnits(cx, syntaxTrees)
-	if cx.HasDiagnostics() {
-		return nil, fmt.Errorf("package assembly failed")
-	}
-	pkg.Imports = nil
-	pkg.PackageID = pkgID
-	pkg.Scope = pkgScope
-	semantics.ResolvePublicNodeTypes(cx, pkg, importedSymbols)
-	if cx.HasDiagnostics() {
-		return nil, fmt.Errorf("top-level type resolution failed")
-	}
-
-	semantics.ResolvePrivateNodesTypes(cx, pkg, importedSymbols)
-	if cx.HasDiagnostics() {
-		return nil, fmt.Errorf("local type resolution failed")
-	}
-
-	semantics.AnalyzeSemantics(cx, pkg, importedSymbols)
-	if cx.HasDiagnostics() {
-		return nil, fmt.Errorf("semantic analysis failed")
-	}
-
-	cfg := semantics.CreateControlFlowGraph(cx, pkg)
-	if cx.HasDiagnostics() {
-		return nil, fmt.Errorf("CFG creation failed")
-	}
-
-	semantics.AnalyzeCFG(cx, pkg, cfg)
-	if cx.HasDiagnostics() {
-		return nil, fmt.Errorf("CFG analysis failed")
-	}
-
-	pkg = desugar.DesugarPackage(cx, pkg, importedSymbols)
-	if cx.HasDiagnostics() {
-		return nil, fmt.Errorf("desugaring failed")
-	}
-
-	birPkg := birgen.GenBir(cx, pkg)
-	if birPkg == nil {
-		return nil, fmt.Errorf("BIR generation failed")
-	}
-	return birPkg, nil
 }
 
 func BenchmarkIntegration(b *testing.B) {

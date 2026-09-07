@@ -53,6 +53,17 @@ func findWorkspaceRoot(startPath string) string {
 	}
 }
 
+// findBuildProjectByPath returns the workspace member whose source root
+// resolves to absPath, or nil when absPath is not a member of the workspace.
+func findBuildProjectByPath(workspace *projects.WorkspaceProject, workspaceAbsRoot, absPath string) *projects.BuildProject {
+	for _, buildProject := range workspace.Projects() {
+		if filepath.Join(workspaceAbsRoot, buildProject.SourceRoot()) == absPath {
+			return buildProject
+		}
+	}
+	return nil
+}
+
 // usageError wraps an error with a USAGE block; cobra prefixes the result
 // with "ballerina:" when printing.
 func usageError(usage, format string, args ...any) error {
