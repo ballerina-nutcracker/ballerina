@@ -29,6 +29,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
 )
 
 // compileMinimalPackage compiles a tiny package and returns its BIR
@@ -46,28 +47,21 @@ func compileMinimalPackage(t *testing.T) ([]*bir.BIRPackage, semtypes.Env) {
 		t.Fatalf("writing main.bal: %v", err)
 	}
 
-	result, err := projects.Load(os.DirFS(projectDir), ".", projects.ProjectLoadConfig{
+	compiled, err := testharness.CompileWithDriver(os.DirFS(projectDir), ".", "stubtest", projects.ProjectLoadConfig{
 		BallerinaEnvFs: os.DirFS(t.TempDir()),
 	})
 	if err != nil {
 		t.Fatalf("loading project: %v", err)
 	}
-	if diag := result.Diagnostics(); diag.HasErrors() {
-		t.Fatalf("project loading reported errors: %v", diag)
+	if compiled.Context.HasErrors() {
+		t.Fatalf("compilation reported errors: %v", compiled.Context.Diagnostics())
 	}
 
-	pkg := result.Project().CurrentPackage()
-	compilation := pkg.Compilation()
-	if diag := compilation.DiagnosticResult(); diag.HasErrors() {
-		t.Fatalf("compilation reported errors: %v", diag)
-	}
-
-	backend := projects.NewBallerinaBackend(compilation)
-	birPkgs := backend.BIRPackages()
+	birPkgs := compiled.BIRPackages
 	if len(birPkgs) == 0 {
 		t.Fatalf("expected at least one BIR package")
 	}
-	return birPkgs, result.Project().Environment().TypeEnv()
+	return birPkgs, compiled.Resolver.CompilerEnvironment().GetTypeEnv()
 }
 
 // writeStub writes arbitrary content as a "stub" for Pack — tests only
