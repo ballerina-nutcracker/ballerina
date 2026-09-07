@@ -75,7 +75,7 @@ func TestFingerprintPayloads_SeedInfluence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fpWithSeed, err := FingerprintPayloads([]NativePayload{p}, []byte("go1.26.0 linux/amd64"))
+	fpWithSeed, err := FingerprintPayloads([]NativePayload{p}, []byte("go1.27.1 linux/amd64"))
 	if err != nil {
 		t.Fatal(err)
 	}

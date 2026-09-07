@@ -84,16 +84,16 @@ type stdlibEntry struct {
 // Order matters: a package must appear after all packages it imports
 // (e.g. io before os, time before crypto).
 var builtinStdlibs = []stdlibEntry{
-	{"ballerina", "io", "0.0.1", "go1.26"},
-	{"ballerina", "http", "0.0.1", "go1.26"},
-	{"ballerina", "log", "0.0.1", "go1.26"},
-	{"ballerina", "math.vector", "0.0.1", "go1.26"},
-	{"ballerina", "os", "0.0.1", "go1.26"},
-	{"ballerina", "random", "0.0.1", "go1.26"},
-	{"ballerina", "time", "0.0.1", "go1.26"},
-	{"ballerina", "url", "0.0.1", "go1.26"},
-	{"ballerina", "crypto", "0.0.1", "go1.26"},
-	{"ballerina", "avro", "0.0.1", "go1.26"},
+	{"ballerina", "io", "0.0.1", "go1.27"},
+	{"ballerina", "http", "0.0.1", "go1.27"},
+	{"ballerina", "log", "0.0.1", "go1.27"},
+	{"ballerina", "math.vector", "0.0.1", "go1.27"},
+	{"ballerina", "os", "0.0.1", "go1.27"},
+	{"ballerina", "random", "0.0.1", "go1.27"},
+	{"ballerina", "time", "0.0.1", "go1.27"},
+	{"ballerina", "url", "0.0.1", "go1.27"},
+	{"ballerina", "crypto", "0.0.1", "go1.27"},
+	{"ballerina", "avro", "0.0.1", "go1.27"},
 }
 
 // loadBuiltinPublicSymbols compiles the embedded standard-library packages into

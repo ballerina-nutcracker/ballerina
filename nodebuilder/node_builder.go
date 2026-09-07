@@ -816,7 +816,7 @@ func (n *nodeBuilder) createIgnoreIdentifier(node st.Node) ast.BLangIdentifier {
 
 // getNextAnonymousTypeKey generates the next anonymous type key
 // Placeholder function - to be implemented
-func (n *nodeBuilder) getNextAnonymousTypeKey(packageID *model.PackageID, suffixes []string) string {
+func (n *nodeBuilder) getNextAnonymousTypeKey(packageID *model.PackageID) string {
 	return n.cx.GetNextAnonymousTypeKey(packageID)
 }
 

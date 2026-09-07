@@ -1,6 +1,8 @@
 module github.com/ballerina-nutcracker/ballerina/projects
 
-go 1.26
+go 1.27
+
+toolchain go1.27.1
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0

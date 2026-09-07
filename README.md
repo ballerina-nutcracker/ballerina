@@ -40,7 +40,7 @@ Almost everything that ships in the `bal` binary is a Go package. The central ca
 
 ## Getting started
 
-Download a binary from the [latest release](https://github.com/ballerina-nutcracker/ballerina/releases), or build from source with [Go 1.26 or later](https://go.dev/dl/):
+Download a binary from the [latest release](https://github.com/ballerina-nutcracker/ballerina/releases), or build from source with [Go 1.27 or later](https://go.dev/dl/):
 
 ```bash
 git clone https://github.com/ballerina-nutcracker/ballerina.git

@@ -36,7 +36,7 @@ import (
 
 const (
 	// MinGoVersion is the minimum Go toolchain version required to build a native interpreter.
-	MinGoVersion = "1.26"
+	MinGoVersion = "1.27"
 )
 
 // defaultTargetPackage is the full bal CLI, matching bal run's re-exec use case.
@@ -89,13 +89,13 @@ func (e *LocalExecutor) Available() bool {
 }
 
 // goVersionAtLeast reports whether the Go binary at goExe is at least minVersion.
-// minVersion is a dot-separated string such as "1.26" or "1.26.0".
+// minVersion is a dot-separated string such as "1.27" or "1.27.0".
 func goVersionAtLeast(goExe, minVersion string) bool {
 	out, err := exec.Command(goExe, "version").Output()
 	if err != nil {
 		return false
 	}
-	// "go version go1.26.1 linux/amd64" → field[2] = "go1.26.1"
+	// "go version go1.27.1 linux/amd64" → field[2] = "go1.27.1"
 	fields := strings.Fields(string(out))
 	if len(fields) < 3 {
 		return false
@@ -105,7 +105,7 @@ func goVersionAtLeast(goExe, minVersion string) bool {
 }
 
 // versionAtLeast reports whether dot-separated version a is >= b.
-// Missing trailing components are treated as zero: "1.26" == "1.26.0".
+// Missing trailing components are treated as zero: "1.27" == "1.27.0".
 // Non-numeric components (e.g. "rc1", "beta2") are treated as incompatible.
 func versionAtLeast(a, b string) bool {
 	aParts := strings.Split(a, ".")
