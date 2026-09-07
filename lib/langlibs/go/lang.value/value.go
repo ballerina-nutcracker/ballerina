@@ -35,6 +35,7 @@ func initValueModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "cloneWithType", cloneWithType)
 	// fromJsonWithType is cloneWithType restricted to a json source value; same conversion logic.
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromJsonWithType", cloneWithType)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBalString", toBalString)
 }
 
 func cloneWithType(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -44,4 +45,8 @@ func cloneWithType(ctx *extern.Context, args []values.BalValue) (values.BalValue
 		return convErr, nil
 	}
 	return result, nil
+}
+
+func toBalString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return values.BalString(args[0], make(map[uintptr]bool)), nil
 }

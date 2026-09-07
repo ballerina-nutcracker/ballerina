@@ -1,0 +1,25 @@
+-- stdout --
+12
+"Anne"
+"she said \"hi\" \\ ok"
+"a\tb\nc\rd"
+"a\u{7}b\u{8}c\u{7f}d"
+{"a\u{8}b":1}
+true
+12.342
+float:NaN
+float:Infinity
+345.2425341d
+1d
+()
+[1,"Sam",12.3,12.12d,{"value":12}]
+{"id":5}
+{"city":"Colombo","country":"Sri Lanka"}
+{"a":1,"b":{"c":2}}
+[1,2,3]
+[error("boom",code=42,ratio=1.5d,note=())]
+[error("failure2",error("failure1"),extra=3.14d)]
+[error("boom",'a\\\-b=5)]
+{"a":"STRING","b":12,"c":12.4,"d":true,"e":{"x":"x","y":()}}
+["TOM",10,90.12d,float:NaN]
+-- stderr --
