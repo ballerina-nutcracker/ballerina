@@ -29,7 +29,7 @@ import (
 	// foo has native code; bar is pure Ballerina. foo's native must be registered
 	// so the interpreter can dispatch foo:add() at runtime.
 	"github.com/ballerina-nutcracker/ballerina/bir"
-	_ "github.com/ballerina-nutcracker/ballerina/corpus/package-resolution/testdata/bundled-embed/ballerina/foo/0.1.0/go1.26/native"
+	_ "github.com/ballerina-nutcracker/ballerina/corpus/package-resolution/testdata/bundled-embed/ballerina/foo/0.1.0/go1.27/native"
 	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/runtime"

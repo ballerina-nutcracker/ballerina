@@ -135,4 +135,4 @@ func extractedDriverSourceComplete(dir string) bool {
 	return true
 }
 
-const driverWorkspace = "go 1.26\n\nuse ./cli\n"
+const driverWorkspace = "go 1.27\n\nuse ./cli\n"
