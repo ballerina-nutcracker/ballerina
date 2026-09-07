@@ -59,7 +59,7 @@ type moduleContext struct {
 	bLangPkg        *ast.BLangPackage
 	bPackageSymbol  any // TODO(S3): BPackageSymbol once compiler symbol types are migrated
 	compilerCtx     *context.CompilerContext
-	importedSymbols map[string]model.ExportedSymbolSpace
+	importedSymbols model.ImportedSymbolSpaces
 	birPkg          *bir.BIRPackage
 }
 
