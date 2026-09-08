@@ -1515,6 +1515,9 @@ func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstr
 		}
 		hasValue[keyName] = true
 		fieldExpectedType := mat.FieldInnerVal(keyName)
+		if expr.IsReadonly(keyName) {
+			fieldExpectedType = semtypes.Intersect(fieldExpectedType, semtypes.ValReadonly)
+		}
 		if !analyzeActionOrExpression(a, kv.ValueExpr, fieldExpectedType) {
 			return false
 		}
