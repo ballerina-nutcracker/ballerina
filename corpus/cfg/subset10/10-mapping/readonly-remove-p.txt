@@ -1,0 +1,32 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (readonly-fields a)
+          (key-value
+            (literal a)
+            (literal 1))
+          (key-value
+            (literal b)
+            (literal 2))))))
+    (var-def
+      (variable removed (type
+        (value-type int)) (expr
+        (invocation lang.map remove (
+          (simple-var-ref m)
+          (literal b))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref removed))))
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (invocation lang.map remove (
+          (simple-var-ref m)
+          (literal a))))))
+  )
+)

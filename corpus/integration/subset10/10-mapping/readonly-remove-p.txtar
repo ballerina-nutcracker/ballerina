@@ -1,0 +1,5 @@
+-- stdout --
+2
+-- stderr --
+error: inherent type violation: cannot mutate readonly field 'a'
+        at main(readonly-remove-p.bal:25)

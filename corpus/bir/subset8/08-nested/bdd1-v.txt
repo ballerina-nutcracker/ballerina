@@ -65,7 +65,7 @@ bddAtom(int) -> {| atom: int, left: boolean|..., middle: boolean|..., right: boo
     %6 = ConstantLoad false
     %7 = ConstantLoad right
     %8 = ConstantLoad false
-    %9 = newMap {| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{%2=atom, %3=%4, %5=%6, %7=%8}
+    %9 = newMap {| atom: int, left: boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, middle: boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, right: boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}{%2=atom, %3=%4, %5=%6, %7=%8}
     %0 = %9;
     return;
   }
@@ -890,7 +890,7 @@ bddCreate(int,boolean|{| atom: int, left: boolean|..., middle: boolean|..., righ
     %1 = ConstantLoad left
     %2 = ConstantLoad middle
     %3 = ConstantLoad right
-    %4 = newMap {| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{%0=(2, atom), %1=(2, left), %2=(2, middle), %3=(2, right)}
+    %4 = newMap {| atom: int, left: boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, middle: boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, right: boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}, never... |}{%0=(2, atom), %1=(2, left), %2=(2, middle), %3=(2, right)}
     (2, %0) = %4;
     PopScopeFrame
     PopScopeFrame

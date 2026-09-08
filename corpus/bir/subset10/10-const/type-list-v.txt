@@ -1,0 +1,41 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [1, 2, never...][%3]{%1, %2}
+    f = %4;
+    %6 = println(f) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad 1
+    %8 = ConstantLoad 1
+    %9 = newArray [1, never...][%8]{%7}
+    %10 = ConstantLoad 2
+    %11 = ConstantLoad 3
+    %12 = ConstantLoad 2
+    %13 = newArray [2, 3, never...][%12]{%10, %11}
+    %14 = ConstantLoad 2
+    %15 = newArray [readonly&[1, never...], readonly&[2, 3, never...], never...][%14]{%9, %13}
+    n = %15;
+    %17 = println(n) -> bb2;
+  }
+  bb2 {
+    %18 = n is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %19 = %18;
+    %20 = println(%19) -> bb3;
+  }
+  bb3 {
+    %21 = ConstantLoad a
+    %22 = ConstantLoad 1
+    %23 = newMap {| a: 1, never... |}{%21=%22}
+    %24 = ConstantLoad 1
+    %25 = newArray [readonly&{| a: 1, never... |}, never...][%24]{%23}
+    m = %25;
+    %27 = println(m) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

@@ -1,0 +1,9 @@
+-- stdout --
+{"child":{"x":1}}
+true
+true
+{"child":{"x":1.0}}
+true
+{"child":{"x":1}}
+true
+-- stderr --

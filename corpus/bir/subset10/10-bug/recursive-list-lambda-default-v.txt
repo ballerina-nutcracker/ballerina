@@ -1,7 +1,7 @@
 module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = newMap {| make: function() returns [......], never... |}{} defaults{make=$anon/.:$default$0}
+    %1 = newMap {| make: function() returns [{| make: ..., never... |}...], never... |}{} defaults{make=$anon/.:$default$0}
     node = %1;
     %3 = node is {| make: function() returns [......], never... |}
     %4 = %3;

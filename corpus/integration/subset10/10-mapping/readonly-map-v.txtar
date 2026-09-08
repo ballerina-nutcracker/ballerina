@@ -1,0 +1,6 @@
+-- stdout --
+{"frozen":1,"mutable":20,"added":3}
+1
+{"a":1}
+{"a":2}
+-- stderr --

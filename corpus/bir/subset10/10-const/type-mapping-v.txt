@@ -1,0 +1,46 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad 1
+    %3 = newMap {| a: 1, never... |}{%1=%2}
+    f = %3;
+    %5 = println(f) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad a
+    %7 = ConstantLoad b
+    %8 = ConstantLoad 1
+    %9 = newMap {| b: 1, never... |}{%7=%8}
+    %10 = newMap {| a: readonly&{| b: 1, never... |}, never... |}{%6=%9}
+    n = %10;
+    %12 = println(n) -> bb2;
+  }
+  bb2 {
+    %13 = n is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %14 = %13;
+    %15 = println(%14) -> bb3;
+  }
+  bb3 {
+    %16 = ConstantLoad a
+    %17 = ConstantLoad 1
+    %18 = ConstantLoad 1
+    %19 = newArray [1, never...][%18]{%17}
+    %20 = newMap {| a: readonly&[1, never...], never... |}{%16=%19}
+    l = %20;
+    %22 = println(l) -> bb4;
+  }
+  bb4 {
+    %23 = ConstantLoad x
+    %24 = ConstantLoad 0
+    %25 = ConstantLoad 0
+    %26 = ConstantLoad 2
+    %27 = newArray [0, 0, never...][%26]{%24, %25}
+    %28 = newMap {| x: readonly&[0, 0, never...], never... |}{%23=%27}
+    r = %28;
+    %30 = println(r) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

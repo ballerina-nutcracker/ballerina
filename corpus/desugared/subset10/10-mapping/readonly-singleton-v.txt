@@ -1,0 +1,43 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Tag
+    (finite-type
+      (literal ok)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable m (expr
+          (mapping-constructor-expr
+            (readonly-fields tag)
+            (key-value
+              (literal tag)
+              (literal ok))
+            (key-value
+              (literal n)
+              (literal 1))))))
+      (var-def
+        (variable t (type
+          (user-defined-type Tag)) (expr
+          (index-based-access
+            (simple-var-ref m)
+            (literal tag)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t))))
+      (var-def
+        (variable f (expr
+          (mapping-constructor-expr
+            (readonly-fields tag)
+            (key-value
+              (literal tag)
+              (literal ok))))))
+      (var-def
+        (variable u (type
+          (user-defined-type Tag)) (expr
+          (index-based-access
+            (simple-var-ref f)
+            (literal tag)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref u)))))))

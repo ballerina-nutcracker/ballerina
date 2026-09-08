@@ -5,11 +5,11 @@ main() -> nil{
     %2 = ConstantLoad 2
     %3 = ConstantLoad 3
     %4 = ConstantLoad 1
-    %5 = newArray [int, ......][%4]{%3}
+    %5 = newArray [int, [int, ......]...][%4]{%3}
     %6 = ConstantLoad 2
-    %7 = newArray [int, ......][%6]{%2, %5}
+    %7 = newArray [int, [int, ......]...][%6]{%2, %5}
     %8 = ConstantLoad 2
-    %9 = newArray [int, ......][%8]{%1, %7}
+    %9 = newArray [int, [int, ......]...][%8]{%1, %7}
     t = %9;
     %11 = println(t) -> bb1;
   }

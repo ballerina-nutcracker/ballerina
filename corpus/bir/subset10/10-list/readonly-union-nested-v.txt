@@ -1,0 +1,24 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 1
+    %3 = newArray [int...][%2]{%1}
+    %4 = ConstantLoad 1
+    %5 = newArray [readonly&[int...]...][%4]{%3}
+    lists = %5;
+    %7 = println(lists) -> bb1;
+  }
+  bb1 {
+    %8 = ConstantLoad a
+    %9 = ConstantLoad 1
+    %10 = newMap {| int... |}{%8=%9}
+    %11 = ConstantLoad 1
+    %12 = newArray [readonly&{| int... |}...][%11]{%10}
+    maps = %12;
+    %14 = println(maps) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

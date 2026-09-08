@@ -6,8 +6,8 @@ main() -> nil{
     %3 = ConstantLoad y
     %4 = ConstantLoad x
     %5 = ConstantLoad 2
-    %6 = newMap {| x: int, ...... |}{%4=%5}
-    %7 = newMap {| x: int, ...... |}{%1=%2, %3=%6}
+    %6 = newMap {| x: int, {| x: int, ...... |}... |}{%4=%5}
+    %7 = newMap {| x: int, {| x: int, ...... |}... |}{%1=%2, %3=%6}
     r = %7;
     %9 = println(r) -> bb1;
   }
