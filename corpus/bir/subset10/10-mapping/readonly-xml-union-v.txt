@@ -1,0 +1,68 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newXMLElement("a", ())
+    element = %1;
+    %3 = println(element) -> bb1;
+  }
+  bb1 {
+    %4 = isReadonly(element) -> bb2;
+  }
+  bb2 {
+    %5 = %4;
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = newXMLElement("a", ())
+    %8 = ConstantLoad c
+    %9 = newXMLComment(%8)
+    %10 = newXMLSequence{%7, %9}
+    sequence = %10;
+    %12 = println(sequence) -> bb4;
+  }
+  bb4 {
+    %13 = isReadonly(sequence) -> bb5;
+  }
+  bb5 {
+    %14 = %13;
+    %15 = println(%14) -> bb6;
+  }
+  bb6 {
+    %16 = ConstantLoad text
+    %17 = escapeXMLContent(%16) -> bb7;
+  }
+  bb7 {
+    %18 = evalTemplate[xml]("<a>", %17, "</a>")
+    interpolated = %18;
+    %20 = println(interpolated) -> bb8;
+  }
+  bb8 {
+    %21 = isReadonly(interpolated) -> bb9;
+  }
+  bb9 {
+    %22 = %21;
+    %23 = println(%22) -> bb10;
+  }
+  bb10 {
+    %24 = newXMLElement("a", ())
+    %25 = ConstantLoad c
+    %26 = newXMLComment(%25)
+    %27 = newXMLSequence{%24, %26}
+    mutable = %27;
+    %29 = isReadonly(mutable) -> bb11;
+  }
+  bb11 {
+    %30 = %29;
+    %31 = println(%30) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}
+isReadonly(any) -> boolean{
+  bb0 {
+    %2 = v is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %0 = %2;
+    return;
+  }
+}
