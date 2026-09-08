@@ -29,31 +29,131 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-var errNotConstantExpression = errors.New("not a constant expression")
+const notConstantExpressionMessage = "expression is not a constant expression"
+
+// isConstantExpression answers whether expr is structurally a constant
+// expression (spec §6.4), returning the first subexpression that is not. It
+// emits no diagnostic: a non-constant value on a non-const annotation is legal,
+// so that caller needs the answer without one.
+func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangExpression, bool) {
+	switch e := expr.(type) {
+	case *ast.BLangLiteral, *ast.BLangNumericLiteral, *ast.BLangConstRef:
+		return nil, true
+	case *ast.BLangVarRef:
+		if vs, ok := t.getSymbol(e.Symbol()).(model.ValueSymbol); ok && vs.IsConst() {
+			return nil, true
+		}
+		return expr, false
+	case *ast.BLangUnaryExpr:
+		return isConstantExpression(t, e.Expr)
+	case *ast.BLangTypeConversionExpr:
+		return isConstantExpression(t, e.Expression)
+	case *ast.BLangGroupExpr:
+		return isConstantExpression(t, e.Expression)
+	case *ast.BLangBinaryExpr:
+		if offender, ok := isConstantExpression(t, e.LhsExpr); !ok {
+			return offender, false
+		}
+		return isConstantExpression(t, e.RhsExpr)
+	case *ast.BLangTernaryExpr:
+		if offender, ok := isConstantExpression(t, e.Condition); !ok {
+			return offender, false
+		}
+		if offender, ok := isConstantExpression(t, e.ThenExpr); !ok {
+			return offender, false
+		}
+		return isConstantExpression(t, e.ElseExpr)
+	case *ast.BLangNilConditionalExpr:
+		if offender, ok := isConstantExpression(t, e.LhsExpr); !ok {
+			return offender, false
+		}
+		return isConstantExpression(t, e.RhsExpr)
+	case *ast.BLangListConstructorExpr:
+		for _, member := range e.Exprs {
+			if offender, ok := isConstantExpression(t, member); !ok {
+				return offender, false
+			}
+		}
+		return nil, true
+	case *ast.BLangMappingConstructorExpr:
+		for _, field := range e.Fields {
+			kv, isKeyValue := field.(*ast.BLangMappingKeyValueField)
+			if !isKeyValue {
+				continue
+			}
+			if offender, ok := isConstantExpression(t, kv.ValueExpr); !ok {
+				return offender, false
+			}
+		}
+		return nil, true
+	case *ast.BLangTemplateExpr:
+		for _, insertion := range e.Insertions {
+			if offender, ok := isConstantExpression(t, insertion); !ok {
+				return offender, false
+			}
+		}
+		return nil, true
+	case *ast.BLangAnnotAccessExpr:
+		return isConstantExpression(t, e.Expr)
+	case *ast.BLangXMLTemplateExpr:
+		for _, insertion := range e.Insertions {
+			if offender, ok := isConstantExpression(t, insertion); !ok {
+				return offender, false
+			}
+		}
+		return nil, true
+	default:
+		return expr, false
+	}
+}
 
 type constantExpressionEvaluator struct {
 	resolver typeResolver
 }
 
-func evaluateConstantExpression(t typeResolver, expr ast.BLangExpression) (values.BalValue, error) {
-	evaluator := constantExpressionEvaluator{
-		resolver: t,
-	}
+// foldConstant evaluates a constant expression at compile time (spec §6.4). It
+// is called only on an expression isConstantExpression has accepted, so a
+// failure is never structural: it reports its own diagnostic at the failing
+// subexpression and returns false. A nil value with ok is a successful fold of
+// (), which is why failure is signalled by the bool alone.
+func foldConstant(t typeResolver, expr ast.BLangExpression) (value values.BalValue, ok bool) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			t.internalError(fmt.Sprintf("constant expression evaluation panicked: %v", recovered), expr.GetPosition())
+			value, ok = nil, false
+		}
+	}()
+	evaluator := constantExpressionEvaluator{resolver: t}
 	return evaluator.evaluate(expr)
 }
 
-func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values.BalValue, error) {
+func (e *constantExpressionEvaluator) semanticFailure(message string, loc ast.Location) (values.BalValue, bool) {
+	e.resolver.semanticError(message, loc)
+	return nil, false
+}
+
+func (e *constantExpressionEvaluator) unimplementedFailure(message string, loc ast.Location) (values.BalValue, bool) {
+	e.resolver.unimplemented(message, loc)
+	return nil, false
+}
+
+func (e *constantExpressionEvaluator) internalFailure(message string, loc ast.Location) (values.BalValue, bool) {
+	e.resolver.internalError(message, loc)
+	return nil, false
+}
+
+func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values.BalValue, bool) {
 	switch expr := expr.(type) {
 	case *ast.BLangLiteral:
-		return expr.Value, nil
+		return expr.Value, true
 	case *ast.BLangNumericLiteral:
-		return expr.Value, nil
+		return expr.Value, true
 	case *ast.BLangGroupExpr:
 		return e.evaluate(expr.Expression)
 	case *ast.BLangVarRef:
-		return e.evaluateConstantReference(expr.Symbol(), expr.GetDeterminedType())
+		return e.evaluateConstantReference(expr.Symbol(), expr.GetPosition())
 	case *ast.BLangConstRef:
-		return e.evaluateConstantReference(expr.Symbol(), expr.GetDeterminedType())
+		return e.evaluateConstantReference(expr.Symbol(), expr.GetPosition())
 	case *ast.BLangMappingConstructorExpr:
 		return e.evaluateMappingConstructor(expr)
 	case *ast.BLangListConstructorExpr:
@@ -65,78 +165,50 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 	case *ast.BLangNilConditionalExpr:
 		return e.evaluateNilConditionalExpression(expr)
 	case *ast.BLangBinaryExpr:
-		ty := expr.GetDeterminedType()
-		if expr.OpKind == model.OperatorKind_ADD && !semtypes.IsZero(ty) && semtypes.IsSubtypeSimple(ty, semtypes.String) {
-			if value, ok := constantSingleShapeValue(ty); ok {
-				return value, nil
-			}
-		}
 		return e.evaluateBinaryExpression(expr)
 	case *ast.BLangTypeConversionExpr:
 		return e.evaluateTypeConversion(expr)
 	case *ast.BLangTemplateExpr:
-		if value, ok := constantSingleShapeValue(expr.GetDeterminedType()); ok {
-			return value, nil
-		}
 		return e.evaluateStringTemplate(expr)
+	case *ast.BLangXMLTemplateExpr:
+		return e.unimplementedFailure("constant xml template not implemented", expr.GetPosition())
 	default:
-		return nil, fmt.Errorf("%w: %T", errNotConstantExpression, expr)
+		return e.internalFailure(fmt.Sprintf("unexpected constant expression %T", expr), expr.GetPosition())
 	}
 }
 
-func constantSingleShapeValue(ty semtypes.SemType) (values.BalValue, bool) {
-	if semtypes.IsZero(ty) {
-		return nil, false
-	}
-	shape := semtypes.SingleShape(ty)
-	if shape.IsEmpty() {
-		return nil, false
-	}
-	value := shape.Get().Value
-	switch value.(type) {
-	case nil, bool, int64, float64, string, *decimal.Decimal:
-		return value, true
-	default:
-		return nil, false
-	}
-}
-
-func (e *constantExpressionEvaluator) evaluateConstantReference(ref model.SymbolRef, ty semtypes.SemType) (values.BalValue, error) {
+func (e *constantExpressionEvaluator) evaluateConstantReference(ref model.SymbolRef, loc ast.Location) (values.BalValue, bool) {
 	ref = e.resolver.unnarrowedSymbol(ref)
-	if sym, ok := e.resolver.getSymbol(ref).(*model.ConstantValueSymbol); ok {
-		return sym.ConstantValue(), nil
-	}
-
-	value, ok := constantSingleShapeValue(ty)
+	sym, ok := e.resolver.getSymbol(ref).(*model.ConstantValueSymbol)
 	if !ok {
-		return nil, errNotConstantExpression
+		return e.semanticFailure(notConstantExpressionMessage, loc)
 	}
-	return value, nil
+	return sym.ConstantValue(), true
 }
 
-func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLangMappingConstructorExpr) (values.BalValue, error) {
+func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLangMappingConstructorExpr) (values.BalValue, bool) {
 	entries := make([]values.MapEntry, 0, len(expr.Fields))
 	for _, field := range expr.Fields {
 		kv, ok := field.(*ast.BLangMappingKeyValueField)
 		if !ok {
-			return nil, errNotConstantExpression
+			return e.unimplementedFailure("constant mapping spread field not implemented", field.GetPosition())
 		}
-		key, ok := constantMappingKey(kv.Key)
+		key, ok := e.constantMappingKey(kv.Key)
 		if !ok {
-			return nil, errNotConstantExpression
+			return nil, false
 		}
-		value, err := e.evaluate(kv.ValueExpr)
-		if err != nil {
-			return nil, err
+		value, ok := e.evaluate(kv.ValueExpr)
+		if !ok {
+			return nil, false
 		}
 		entries = append(entries, values.MapEntry{Key: key, Value: value})
 	}
 
 	ty, atomic, err := readonlyMappingShapeType(e.resolver, entries)
 	if err != nil {
-		return nil, err
+		return e.internalFailure(err.Error(), expr.GetPosition())
 	}
-	return values.NewMap(ty, atomic, true, entries), nil
+	return values.NewMap(ty, atomic, true, entries), true
 }
 
 // The type of a constant is the intersection of readonly and the singleton type
@@ -176,32 +248,38 @@ func readonlyMappingShapeType(t typeResolver, entries []values.MapEntry) (semtyp
 	return ty, atomic, nil
 }
 
-func constantMappingKey(key *ast.BLangMappingKey) (string, bool) {
+func (e *constantExpressionEvaluator) constantMappingKey(key *ast.BLangMappingKey) (string, bool) {
 	if key == nil || key.Expr == nil {
+		e.resolver.internalError("constant mapping field has no key", ast.Location{})
+		return "", false
+	}
+	if key.Kind == ast.MappingKeyComputed {
+		e.resolver.unimplemented("constant computed mapping key not implemented", key.GetPosition())
 		return "", false
 	}
 	switch expr := key.Expr.(type) {
 	case *ast.BLangLiteral:
-		value, ok := expr.Value.(string)
-		return value, ok
+		if value, ok := expr.Value.(string); ok {
+			return value, true
+		}
 	case *ast.BLangVarRef:
 		return expr.VariableName.GetValue(), true
-	default:
-		return "", false
 	}
+	e.resolver.internalError(fmt.Sprintf("unexpected constant mapping key expression %T", key.Expr), key.GetPosition())
+	return "", false
 }
 
-func (e *constantExpressionEvaluator) evaluateListConstructor(expr *ast.BLangListConstructorExpr) (values.BalValue, error) {
+func (e *constantExpressionEvaluator) evaluateListConstructor(expr *ast.BLangListConstructorExpr) (values.BalValue, bool) {
 	initial := make([]values.BalValue, 0, max(len(expr.Exprs), expr.AtomicType.FixedLength()))
 	for i, member := range expr.Exprs {
-		value, err := e.evaluate(member)
-		if err != nil {
-			return nil, err
+		value, ok := e.evaluate(member)
+		if !ok {
+			return nil, false
 		}
 		if expr.IsSpreadMember(i) {
 			list, ok := value.(*values.List)
 			if !ok {
-				return nil, fmt.Errorf("constant list spread member has type %T", value)
+				return e.semanticFailure(fmt.Sprintf("constant list spread member has type %T", value), member.GetPosition())
 			}
 			for j := 0; j < list.Len(); j++ {
 				initial = append(initial, list.Get(j))
@@ -213,64 +291,65 @@ func (e *constantExpressionEvaluator) evaluateListConstructor(expr *ast.BLangLis
 	for i := len(initial); i < expr.AtomicType.FixedLength(); i++ {
 		filler, ok := values.FillerFactoryFor(e.resolver.typeContext(), expr.AtomicType.MemberAtInnerVal(i))
 		if !ok {
-			return nil, fmt.Errorf("constant list member %d has no filler value", i)
+			return e.semanticFailure(fmt.Sprintf("constant list member %d has no filler value", i), expr.GetPosition())
 		}
 		initial = append(initial, filler())
 	}
 	ty, atomic, err := readonlyListShapeType(e.resolver, initial)
 	if err != nil {
-		return nil, err
+		return e.internalFailure(err.Error(), expr.GetPosition())
 	}
-	return values.NewList(ty, atomic, true, nil, len(initial), initial), nil
+	return values.NewList(ty, atomic, true, nil, len(initial), initial), true
 }
 
-func (e *constantExpressionEvaluator) evaluateUnaryExpression(expr *ast.BLangUnaryExpr) (values.BalValue, error) {
-	value, err := e.evaluate(expr.Expr)
-	if err != nil {
-		return nil, err
+func (e *constantExpressionEvaluator) evaluateUnaryExpression(expr *ast.BLangUnaryExpr) (values.BalValue, bool) {
+	value, ok := e.evaluate(expr.Expr)
+	if !ok {
+		return nil, false
 	}
 	if value == nil && expr.Operator != model.OperatorKind_NOT {
-		return nil, nil
+		return nil, true
 	}
 
 	switch expr.Operator {
 	case model.OperatorKind_ADD:
-		return value, nil
+		return value, true
 	case model.OperatorKind_SUB:
 		switch value := value.(type) {
 		case int64:
 			if value == math.MinInt64 {
-				return nil, fmt.Errorf("integer overflow")
+				return e.semanticFailure("integer overflow", expr.GetPosition())
 			}
-			return -value, nil
+			return -value, true
 		case float64:
-			return -value, nil
+			return -value, true
 		case *decimal.Decimal:
-			return value.Neg(), nil
+			return value.Neg(), true
 		}
 	case model.OperatorKind_BITWISE_COMPLEMENT:
 		if value, ok := value.(int64); ok {
-			return ^value, nil
+			return ^value, true
 		}
 	case model.OperatorKind_NOT:
 		if value, ok := value.(bool); ok {
-			return !value, nil
+			return !value, true
 		}
 	default:
-		e.resolver.internalError(fmt.Sprintf("unexpected constant unary operator %s", expr.Operator), expr.GetPosition())
-		return nil, fmt.Errorf("unsupported constant unary operation %s on %T", expr.Operator, value)
+		// Not a unary operator; falls through to the internal error below.
 	}
-	return nil, fmt.Errorf("unsupported constant unary operation %s on %T", expr.Operator, value)
+	return e.internalFailure(fmt.Sprintf("unsupported constant unary operation %s on %T", expr.Operator, value),
+		expr.GetPosition())
 }
 
-func (e *constantExpressionEvaluator) evaluateTernaryExpression(expr *ast.BLangTernaryExpr) (values.BalValue, error) {
-	condition, err := e.evaluate(expr.Condition)
-	if err != nil {
-		return nil, err
-	}
-	conditionValue, ok := condition.(bool)
+func (e *constantExpressionEvaluator) evaluateTernaryExpression(expr *ast.BLangTernaryExpr) (values.BalValue, bool) {
+	condition, ok := e.evaluate(expr.Condition)
 	if !ok {
-		return nil, fmt.Errorf("constant conditional operand has type %T", condition)
+		return nil, false
+	}
+	conditionValue, isBoolean := condition.(bool)
+	if !isBoolean {
+		return e.internalFailure(fmt.Sprintf("constant conditional operand has type %T", condition),
+			expr.Condition.GetPosition())
 	}
 	if conditionValue {
 		return e.evaluate(expr.ThenExpr)
@@ -278,54 +357,102 @@ func (e *constantExpressionEvaluator) evaluateTernaryExpression(expr *ast.BLangT
 	return e.evaluate(expr.ElseExpr)
 }
 
-func (e *constantExpressionEvaluator) evaluateNilConditionalExpression(expr *ast.BLangNilConditionalExpr) (values.BalValue, error) {
-	lhs, err := e.evaluate(expr.LhsExpr)
-	if err != nil {
-		return nil, err
+func (e *constantExpressionEvaluator) evaluateNilConditionalExpression(expr *ast.BLangNilConditionalExpr) (values.BalValue, bool) {
+	lhs, ok := e.evaluate(expr.LhsExpr)
+	if !ok {
+		return nil, false
 	}
 	if lhs != nil {
-		return lhs, nil
+		return lhs, true
 	}
 	return e.evaluate(expr.RhsExpr)
 }
 
-func (e *constantExpressionEvaluator) evaluateBinaryExpression(expr *ast.BLangBinaryExpr) (values.BalValue, error) {
-	lhs, err := e.evaluate(expr.LhsExpr)
-	if err != nil {
-		return nil, err
+func (e *constantExpressionEvaluator) evaluateBinaryExpression(expr *ast.BLangBinaryExpr) (values.BalValue, bool) {
+	lhs, ok := e.evaluate(expr.LhsExpr)
+	if !ok {
+		return nil, false
 	}
 	switch expr.OpKind {
 	case model.OperatorKind_AND:
-		value, ok := lhs.(bool)
-		if !ok {
-			return nil, fmt.Errorf("constant logical operand has type %T", lhs)
+		value, isBoolean := lhs.(bool)
+		if !isBoolean {
+			return e.internalFailure(fmt.Sprintf("constant logical operand has type %T", lhs), expr.LhsExpr.GetPosition())
 		}
 		if !value {
-			return false, nil
+			return false, true
 		}
 	case model.OperatorKind_OR:
-		value, ok := lhs.(bool)
-		if !ok {
-			return nil, fmt.Errorf("constant logical operand has type %T", lhs)
+		value, isBoolean := lhs.(bool)
+		if !isBoolean {
+			return e.internalFailure(fmt.Sprintf("constant logical operand has type %T", lhs), expr.LhsExpr.GetPosition())
 		}
 		if value {
-			return true, nil
+			return true, true
 		}
 	default:
 		// Other operators require both operands.
 	}
 
-	rhs, err := e.evaluate(expr.RhsExpr)
-	if err != nil {
-		return nil, err
+	rhs, ok := e.evaluate(expr.RhsExpr)
+	if !ok {
+		return nil, false
 	}
 	if lhs == nil || rhs == nil {
 		if isNilLiftedConstantOperator(expr.OpKind) {
-			return nil, nil
+			return nil, true
 		}
 	}
 
 	switch expr.OpKind {
+	case model.OperatorKind_ADD, model.OperatorKind_SUB, model.OperatorKind_MUL,
+		model.OperatorKind_DIV, model.OperatorKind_MOD:
+		value, err := constantArithmetic(expr.OpKind, lhs, rhs)
+		if err != nil {
+			return e.semanticFailure(err.Error(), expr.GetPosition())
+		}
+		return value, true
+	case model.OperatorKind_AND:
+		return lhs.(bool) && rhs.(bool), true
+	case model.OperatorKind_OR:
+		return lhs.(bool) || rhs.(bool), true
+	case model.OperatorKind_EQUAL, model.OperatorKind_EQUALS:
+		return values.DeepEquals(lhs, rhs), true
+	case model.OperatorKind_NOT_EQUAL:
+		return !values.DeepEquals(lhs, rhs), true
+	case model.OperatorKind_REF_EQUAL:
+		return constantExactEqual(lhs, rhs), true
+	case model.OperatorKind_REF_NOT_EQUAL:
+		return !constantExactEqual(lhs, rhs), true
+	case model.OperatorKind_GREATER_THAN:
+		return values.Compare(lhs, rhs) == values.CmpGT, true
+	case model.OperatorKind_GREATER_EQUAL:
+		result := values.Compare(lhs, rhs)
+		return result == values.CmpGT || result == values.CmpEQ, true
+	case model.OperatorKind_LESS_THAN:
+		return values.Compare(lhs, rhs) == values.CmpLT, true
+	case model.OperatorKind_LESS_EQUAL:
+		result := values.Compare(lhs, rhs)
+		return result == values.CmpLT || result == values.CmpEQ, true
+	case model.OperatorKind_BITWISE_AND:
+		return lhs.(int64) & rhs.(int64), true
+	case model.OperatorKind_BITWISE_OR:
+		return lhs.(int64) | rhs.(int64), true
+	case model.OperatorKind_BITWISE_XOR:
+		return lhs.(int64) ^ rhs.(int64), true
+	case model.OperatorKind_BITWISE_LEFT_SHIFT:
+		return lhs.(int64) << uint(rhs.(int64)&0x3F), true
+	case model.OperatorKind_BITWISE_RIGHT_SHIFT:
+		return lhs.(int64) >> uint(rhs.(int64)&0x3F), true
+	case model.OperatorKind_BITWISE_UNSIGNED_RIGHT_SHIFT:
+		return int64(uint64(lhs.(int64)) >> uint(rhs.(int64)&0x3F)), true
+	default:
+		return e.internalFailure(fmt.Sprintf("unsupported constant binary operator %s", expr.OpKind), expr.GetPosition())
+	}
+}
+
+func constantArithmetic(op model.OperatorKind, lhs, rhs values.BalValue) (values.BalValue, error) {
+	switch op {
 	case model.OperatorKind_ADD:
 		return constantAdd(lhs, rhs)
 	case model.OperatorKind_SUB:
@@ -336,42 +463,8 @@ func (e *constantExpressionEvaluator) evaluateBinaryExpression(expr *ast.BLangBi
 		return constantDiv(lhs, rhs)
 	case model.OperatorKind_MOD:
 		return constantMod(lhs, rhs)
-	case model.OperatorKind_AND:
-		return lhs.(bool) && rhs.(bool), nil
-	case model.OperatorKind_OR:
-		return lhs.(bool) || rhs.(bool), nil
-	case model.OperatorKind_EQUAL, model.OperatorKind_EQUALS:
-		return values.DeepEquals(lhs, rhs), nil
-	case model.OperatorKind_NOT_EQUAL:
-		return !values.DeepEquals(lhs, rhs), nil
-	case model.OperatorKind_REF_EQUAL:
-		return constantExactEqual(lhs, rhs), nil
-	case model.OperatorKind_REF_NOT_EQUAL:
-		return !constantExactEqual(lhs, rhs), nil
-	case model.OperatorKind_GREATER_THAN:
-		return values.Compare(lhs, rhs) == values.CmpGT, nil
-	case model.OperatorKind_GREATER_EQUAL:
-		result := values.Compare(lhs, rhs)
-		return result == values.CmpGT || result == values.CmpEQ, nil
-	case model.OperatorKind_LESS_THAN:
-		return values.Compare(lhs, rhs) == values.CmpLT, nil
-	case model.OperatorKind_LESS_EQUAL:
-		result := values.Compare(lhs, rhs)
-		return result == values.CmpLT || result == values.CmpEQ, nil
-	case model.OperatorKind_BITWISE_AND:
-		return lhs.(int64) & rhs.(int64), nil
-	case model.OperatorKind_BITWISE_OR:
-		return lhs.(int64) | rhs.(int64), nil
-	case model.OperatorKind_BITWISE_XOR:
-		return lhs.(int64) ^ rhs.(int64), nil
-	case model.OperatorKind_BITWISE_LEFT_SHIFT:
-		return lhs.(int64) << uint(rhs.(int64)&0x3F), nil
-	case model.OperatorKind_BITWISE_RIGHT_SHIFT:
-		return lhs.(int64) >> uint(rhs.(int64)&0x3F), nil
-	case model.OperatorKind_BITWISE_UNSIGNED_RIGHT_SHIFT:
-		return int64(uint64(lhs.(int64)) >> uint(rhs.(int64)&0x3F)), nil
 	default:
-		return nil, fmt.Errorf("%w: binary operator %s", errNotConstantExpression, expr.OpKind)
+		return nil, fmt.Errorf("unsupported constant arithmetic operator %s", op)
 	}
 }
 
@@ -555,17 +648,17 @@ func constantExactEqual(lhs, rhs values.BalValue) bool {
 	}
 }
 
-func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangTypeConversionExpr) (values.BalValue, error) {
-	value, err := e.evaluate(expr.Expression)
-	if err != nil {
-		return nil, err
+func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangTypeConversionExpr) (values.BalValue, bool) {
+	value, ok := e.evaluate(expr.Expression)
+	if !ok {
+		return nil, false
 	}
 	targetType := expr.TypeDescriptor.GetDeterminedType()
 	converted, err := values.CastValue(e.resolver.typeContext(), value, targetType)
 	if err != nil {
-		return nil, constantCastDiagnostic(value, targetType, err)
+		return e.semanticFailure(constantCastDiagnostic(value, targetType, err).Error(), expr.GetPosition())
 	}
-	return converted, nil
+	return converted, true
 }
 
 func constantCastDiagnostic(value values.BalValue, targetType semtypes.SemType, err error) error {
@@ -589,11 +682,11 @@ func constantConversionError(value values.BalValue, targetType semtypes.SemType)
 	case semtypes.IsSubtypeSimple(targetType, semtypes.Decimal):
 		target = "decimal"
 	}
-	switch value.(type) {
+	switch v := value.(type) {
 	case bool:
 		return fmt.Errorf("bool cannot be converted to %s", target)
 	case float64:
-		return fmt.Errorf("float value cannot be converted to %s", target)
+		return fmt.Errorf("float value %s cannot be converted to %s", values.FormatFloat(v), target)
 	case *decimal.Decimal:
 		return fmt.Errorf("decimal value cannot be converted to %s", target)
 	default:
@@ -601,19 +694,20 @@ func constantConversionError(value values.BalValue, targetType semtypes.SemType)
 	}
 }
 
-func (e *constantExpressionEvaluator) evaluateStringTemplate(expr *ast.BLangTemplateExpr) (values.BalValue, error) {
+func (e *constantExpressionEvaluator) evaluateStringTemplate(expr *ast.BLangTemplateExpr) (values.BalValue, bool) {
 	if expr.Kind != ast.TemplateExprKindString || len(expr.Strings) != len(expr.Insertions)+1 {
-		return nil, errNotConstantExpression
+		return e.internalFailure(fmt.Sprintf("unexpected constant template expression kind %v", expr.Kind),
+			expr.GetPosition())
 	}
 	var result strings.Builder
 	for i, insertion := range expr.Insertions {
 		result.WriteString(expr.Strings[i])
-		value, err := e.evaluate(insertion)
-		if err != nil {
-			return nil, err
+		value, ok := e.evaluate(insertion)
+		if !ok {
+			return nil, false
 		}
 		result.WriteString(values.String(value, nil))
 	}
 	result.WriteString(expr.Strings[len(expr.Strings)-1])
-	return result.String(), nil
+	return result.String(), true
 }

@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: expression is not a constant expression
+error[SEMANTIC_ERROR]: float value 9.223372036854776e18 cannot be converted to int
   --> 22-e.bal:20:11
    |
 20 | const N = <int>9223372036854776000f; // @error

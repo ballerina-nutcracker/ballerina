@@ -7,6 +7,11 @@
           (simple-var-ref b)))))
     (expression-stmt
       (invocation io println (
+        (binary-expr ==
+          (simple-var-ref c)
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
         (type-test-expr is
           (simple-var-ref a)
           (value-type null)))))
@@ -27,5 +32,10 @@
           (simple-var-ref b)
           (finite-type
             (literal <nil>))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref c)
+          (value-type null)))))
   )
 )
