@@ -14,25 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
+boolean runtimeCondition = true;
 
-// Exercises the runtime annotation value path: a reference to a non-const
-// module variable is not a constant expression, so the annotation falls back
-// to a runtime annotation global.
-type Code record {|
-    int value;
-|};
-
-annotation Code codeAnnot on type;
-
-int runtimeCode = 77;
-
-@codeAnnot {value: runtimeCode}
-type RuntimeAnnotTarget int;
+const A = runtimeCondition ? 1 : 2; // @error
 
 public function main() {
-    Code? c = RuntimeAnnotTarget.@codeAnnot;
-    if c is Code {
-        io:println(c.value); // @output 77
-    }
+    _ = A;
 }

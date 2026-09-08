@@ -1,109 +1,109 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: arithmetic overflow
-  --> 14-e.bal:54:14
+error[SEMANTIC_ERROR]: arithmetic overflow
+  --> 14-e.bal:54:22
    |
 54 | @decimalInfo {value: 9.999999999999999999999999999999999E6144d * 2d} // @error
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: arithmetic overflow
-  --> 14-e.bal:75:14
+error[SEMANTIC_ERROR]: arithmetic overflow
+  --> 14-e.bal:75:22
    |
 75 | @decimalInfo {value: <decimal>(1.0 / 0.0)} // @error
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |                      ^^^^^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: bool cannot be converted to decimal
-  --> 14-e.bal:84:14
+error[SEMANTIC_ERROR]: bool cannot be converted to decimal
+  --> 14-e.bal:84:22
    |
 84 | @decimalInfo {value: <decimal>true} // @error
-   |              ^^^^^^^^^^^^^^^^^^^^^^
+   |                      ^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: bool cannot be converted to float
-  --> 14-e.bal:81:12
+error[SEMANTIC_ERROR]: bool cannot be converted to float
+  --> 14-e.bal:81:20
    |
 81 | @floatInfo {value: <float>true} // @error
-   |            ^^^^^^^^^^^^^^^^^^^^
+   |                    ^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: bool cannot be converted to int
-  --> 14-e.bal:78:10
+error[SEMANTIC_ERROR]: bool cannot be converted to int
+  --> 14-e.bal:78:18
    |
 78 | @intInfo {value: <int>true} // @error
-   |          ^^^^^^^^^^^^^^^^^^
+   |                  ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: converted constant does not belong to target type
-  --> 14-e.bal:63:10
+error[SEMANTIC_ERROR]: converted constant does not belong to target type
+  --> 14-e.bal:63:18
    |
 63 | @intInfo {value: <byte>300} // @error
-   |          ^^^^^^^^^^^^^^^^^^
+   |                  ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: converted constant does not belong to target type
-  --> 14-e.bal:66:10
+error[SEMANTIC_ERROR]: converted constant does not belong to target type
+  --> 14-e.bal:66:18
    |
 66 | @intInfo {value: <1>2} // @error
-   |          ^^^^^^^^^^^^^
+   |                  ^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: converted constant does not belong to target type
-  --> 14-e.bal:69:12
+error[SEMANTIC_ERROR]: converted constant does not belong to target type
+  --> 14-e.bal:69:20
    |
 69 | @floatInfo {value: <1.0f>2.0f} // @error
-   |            ^^^^^^^^^^^^^^^^^^^
+   |                    ^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: converted constant does not belong to target type
-  --> 14-e.bal:72:14
+error[SEMANTIC_ERROR]: converted constant does not belong to target type
+  --> 14-e.bal:72:22
    |
 72 | @decimalInfo {value: <1.0d>2.0d} // @error
-   |              ^^^^^^^^^^^^^^^^^^^
+   |                      ^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: decimal value cannot be converted to int
-  --> 14-e.bal:60:10
+error[SEMANTIC_ERROR]: decimal value cannot be converted to int
+  --> 14-e.bal:60:18
    |
 60 | @intInfo {value: <int>1E100d} // @error
-   |          ^^^^^^^^^^^^^^^^^^^^
+   |                  ^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: division by zero
-  --> 14-e.bal:45:10
+error[SEMANTIC_ERROR]: division by zero
+  --> 14-e.bal:45:18
    |
 45 | @intInfo {value: 10 / 0} // @error
-   |          ^^^^^^^^^^^^^^^
+   |                  ^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: division by zero
-  --> 14-e.bal:51:10
+error[SEMANTIC_ERROR]: division by zero
+  --> 14-e.bal:51:18
    |
 51 | @intInfo {value: 10 % 0} // @error
-   |          ^^^^^^^^^^^^^^^
+   |                  ^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: float value cannot be converted to int
-  --> 14-e.bal:57:10
+error[SEMANTIC_ERROR]: float value Infinity cannot be converted to int
+  --> 14-e.bal:57:18
    |
 57 | @intInfo {value: <int>(1.0 / 0.0)} // @error
-   |          ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |                  ^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: integer overflow
-  --> 14-e.bal:33:10
+error[SEMANTIC_ERROR]: integer overflow
+  --> 14-e.bal:33:18
    |
 33 | @intInfo {value: -(-9223372036854775807 - 1)} // @error
-   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: integer overflow
-  --> 14-e.bal:36:10
+error[SEMANTIC_ERROR]: integer overflow
+  --> 14-e.bal:36:18
    |
 36 | @intInfo {value: 9223372036854775807 + 1} // @error
-   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: integer overflow
-  --> 14-e.bal:39:10
+error[SEMANTIC_ERROR]: integer overflow
+  --> 14-e.bal:39:18
    |
 39 | @intInfo {value: -9223372036854775807 - 2} // @error
-   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: integer overflow
-  --> 14-e.bal:42:10
+error[SEMANTIC_ERROR]: integer overflow
+  --> 14-e.bal:42:18
    |
 42 | @intInfo {value: 9223372036854775807 * 2} // @error
-   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: cannot evaluate annotation constant expression: integer overflow
-  --> 14-e.bal:48:10
+error[SEMANTIC_ERROR]: integer overflow
+  --> 14-e.bal:48:18
    |
 48 | @intInfo {value: (-9223372036854775807 - 1) / -1} // @error
-   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
