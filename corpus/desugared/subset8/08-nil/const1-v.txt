@@ -10,6 +10,11 @@
             (literal <nil>)))))
       (expression-stmt
         (invocation io println (
+          (binary-expr ==
+            (literal <nil>)
+            (literal <nil>)))))
+      (expression-stmt
+        (invocation io println (
           (type-test-expr is
             (literal <nil>)
             (value-type null)))))
@@ -29,4 +34,9 @@
           (type-test-expr is
             (literal <nil>)
             (finite-type
-              (literal <nil>)))))))))
+              (literal <nil>))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal <nil>)
+            (value-type null))))))))
