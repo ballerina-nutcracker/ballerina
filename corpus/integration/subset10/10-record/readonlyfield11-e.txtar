@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot mutate readonly field 'value'
+  --> readonlyfield11-e.bal:42:5
+   |
+42 |     o.value = 3; // @error readonly optional field
+   |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot mutate readonly field 'value'
+  --> readonlyfield11-e.bal:45:5
+   |
+45 |     d.value = 5; // @error readonly field through type inclusion
+   |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot mutate readonly field 'value'
+  --> readonlyfield11-e.bal:48:5
+   |
+48 |     op.value = 2; // @error readonly field in an open record
+   |     ^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot mutate readonly field 'value'
+  --> readonlyfield11-e.bal:52:9
+   |
+52 |         x.value = 1; // @error readonly field through a narrowed type
+   |         ^^^^^^^

@@ -1,0 +1,74 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition MR
+    (record-type
+      (field value readonly
+        (value-type int))
+      (field otherValue
+        (value-type int))))
+  (type-definition M
+    (record-type
+      (field value
+        (value-type int))
+      (field otherValue
+        (value-type int))))
+  (type-definition Open
+    (record-type
+      (field value readonly
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable mr (type
+          (user-defined-type MR)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 5))
+            (key-value
+              (literal otherValue)
+              (literal 5))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref mr)
+          (literal otherValue))
+        (literal 10))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref mr)
+            (literal otherValue)))))
+      (var-def
+        (variable u (type
+          (union-type
+            (user-defined-type MR)
+            (user-defined-type M))) (expr
+          (simple-var-ref mr))))
+      (assignment
+        (index-based-access
+          (simple-var-ref u)
+          (literal otherValue))
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref u)
+            (literal otherValue)))))
+      (var-def
+        (variable op (type
+          (user-defined-type Open)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 1))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref op)
+          (literal extra))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref op)
+            (literal extra))))))))

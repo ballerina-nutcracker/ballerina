@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot mutate readonly field 'value'
+  --> readonlyfield6-e.bal:24:5
+   |
+24 |     m.value = 10; // @error cannot mutate readonly field
+   |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot mutate readonly field 'value'
+  --> readonlyfield6-e.bal:25:5
+   |
+25 |     m["value"] = 11; // @error cannot mutate readonly field
+   |     ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot mutate readonly field 'value'
+  --> readonlyfield6-e.bal:26:5
+   |
+26 |     m.value += 1; // @error cannot mutate readonly field
+   |     ^^^^^^^
