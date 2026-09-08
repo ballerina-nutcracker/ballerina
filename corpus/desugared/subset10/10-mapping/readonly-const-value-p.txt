@@ -1,0 +1,19 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable alias (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (literal {"a":1,"b":2}))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref alias))))
+      (assignment
+        (index-based-access
+          (simple-var-ref alias)
+          (literal b))
+        (literal 3)))))

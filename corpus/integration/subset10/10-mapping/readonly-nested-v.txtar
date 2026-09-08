@@ -1,0 +1,6 @@
+-- stdout --
+{"inner":{"x":1},"other":{"y":2}}
+{"y":20}
+{"inner":[1,2]}
+{"inner":[3,4]}
+-- stderr --

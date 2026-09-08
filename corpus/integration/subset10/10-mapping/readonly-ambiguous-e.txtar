@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> readonly-ambiguous-e.bal:32:13
+   |
+32 |     A|B u = {a: 1}; // @error ambiguous inherent type
+   |             ^^^^^^
+
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> readonly-ambiguous-e.bal:33:13
+   |
+33 |     A|B v = {readonly a: 1}; // @error readonly prefix does not disambiguate
+   |             ^^^^^^^^^^^^^^^

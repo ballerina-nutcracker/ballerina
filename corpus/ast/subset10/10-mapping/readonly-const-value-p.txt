@@ -1,0 +1,32 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const C (
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int))) (
+    (mapping-constructor-expr
+      (readonly-fields a)
+      (key-value
+        (literal a)
+        (literal 1))
+      (key-value
+        (literal b)
+        (literal 2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable alias (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (simple-var-ref C))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref alias))))
+      (assignment
+        (index-based-access
+          (simple-var-ref alias)
+          (literal b))
+        (literal 3)))))

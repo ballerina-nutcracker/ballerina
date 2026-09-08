@@ -1,0 +1,42 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad required
+    %2 = ConstantLoad 1
+    %3 = newMap {| defaulted: int, optional: int, required: int, string... |}{%1=%2} defaults{defaulted=$anon/.:$desugar$0}
+    withDefault = %3;
+    %5 = println(withDefault) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad required
+    %7 = ConstantLoad 1
+    %8 = ConstantLoad defaulted
+    %9 = ConstantLoad 2
+    %10 = ConstantLoad optional
+    %11 = ConstantLoad 3
+    %12 = ConstantLoad rest
+    %13 = ConstantLoad r
+    %14 = newMap {| defaulted: int, optional: int, required: int, string... |}{%6=%7, %8=%9, %10=%11, %12=%13} defaults{defaulted=$anon/.:$desugar$0}
+    full = %14;
+    %16 = println(full) -> bb2;
+  }
+  bb2 {
+    %17 = ConstantLoad 20
+    %18 = ConstantLoad defaulted
+    full[%18] = %17;
+    %20 = ConstantLoad defaulted
+    %19 = full[%20];
+    %21 = %19;
+    %22 = println(%21) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}

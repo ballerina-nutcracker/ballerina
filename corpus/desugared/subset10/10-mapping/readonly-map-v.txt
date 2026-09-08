@@ -1,0 +1,66 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (readonly-fields frozen)
+            (key-value
+              (literal frozen)
+              (literal 1))
+            (key-value
+              (literal mutable)
+              (literal 2))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref m)
+          (literal mutable))
+        (literal 20))
+      (assignment
+        (index-based-access
+          (simple-var-ref m)
+          (literal added))
+        (literal 3))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref m))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref m)
+            (literal frozen)))))
+      (var-def
+        (variable marked (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (readonly-fields a)
+            (key-value
+              (literal a)
+              (literal 1))))))
+      (var-def
+        (variable unmarked (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref unmarked)
+          (literal a))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref marked))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref unmarked)))))))

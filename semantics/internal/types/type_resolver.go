@@ -3695,13 +3695,13 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 	case *ast.BLangTemplateExpr:
 		return resolved(resolveTemplateExpr(t, chain, e))
 	case *ast.BLangXMLTemplateExpr:
-		return resolved(resolveXMLTemplateExpr(t, chain, e))
+		return resolved(resolveXMLTemplateExpr(t, chain, e, expectedType))
 	case *ast.BLangXMLElementLiteral:
-		return resolved(resolveXMLElementLiteral(t, chain, e))
+		return resolved(resolveXMLElementLiteral(t, chain, e, expectedType))
 	case *ast.BLangXMLPILiteral:
-		return resolved(resolveXMLPILiteral(t, chain, e))
+		return resolved(resolveXMLPILiteral(t, chain, e, expectedType))
 	case *ast.BLangXMLCommentLiteral:
-		return resolved(resolveXMLCommentLiteral(t, chain, e))
+		return resolved(resolveXMLCommentLiteral(t, chain, e, expectedType))
 	case *ast.BLangXMLTextLiteral:
 		return resolved(resolveXMLTextLiteral(t, chain, e))
 	default:
@@ -3788,19 +3788,57 @@ func resolveXMLTextLiteral(_ typeResolver, chain *binding, e *ast.BLangXMLTextLi
 	return ty, defaultExpressionEffect(chain), true
 }
 
-func resolveXMLCommentLiteral(_ typeResolver, chain *binding, e *ast.BLangXMLCommentLiteral) (semtypes.SemType, expressionEffect, bool) {
-	ty := semtypes.XMLComment
+// xmlLiteralType narrows the type an xml literal of the given shape constructs to the
+// contextually expected type. Runtime construction derives the readonly flag from the type of the
+// operand the literal is assigned to, so narrowing the shape here is what makes the constructed
+// value immutable. Since the shape is exactly what the literal builds, the only thing the
+// intersection can take away is mutability. An expectation that shares no value with the shape is
+// left alone for the caller's assignability check to report.
+func xmlLiteralType(t typeResolver, shape semtypes.SemType, expectedType semtypes.SemType) semtypes.SemType {
+	if semtypes.IsZero(expectedType) {
+		return shape
+	}
+	narrowed := semtypes.Intersect(shape, expectedType)
+	if semtypes.IsEmpty(t.typeContext(), narrowed) {
+		return shape
+	}
+	return narrowed
+}
+
+// xmlMutabilityExpectation reduces a contextual expectation to what it says about mutability
+// alone. A template or sequence literal builds a shape that is not statically known, so narrowing
+// it against the whole expectation would accept `xml<xml:Element> x = xml `text`;`; narrowing
+// against this can only ever take mutability away.
+func xmlMutabilityExpectation(t typeResolver, expectedType semtypes.SemType) semtypes.SemType {
+	if !semtypes.IsZero(expectedType) && semtypes.IsSubtype(t.typeContext(), expectedType, semtypes.ValReadonly) {
+		return semtypes.ValReadonly
+	}
+	return semtypes.SemType{}
+}
+
+// xmlChildExpectedType is the expectation to pass to the children of an xml literal of type ty. A
+// readonly xml value is deeply immutable, so its children must be constructed readonly as well.
+func xmlChildExpectedType(t typeResolver, ty semtypes.SemType) semtypes.SemType {
+	if semtypes.IsSubtype(t.typeContext(), ty, semtypes.ValReadonly) {
+		return semtypes.Intersect(semtypes.XML, semtypes.ValReadonly)
+	}
+	return semtypes.XML
+}
+
+func resolveXMLCommentLiteral(t typeResolver, chain *binding, e *ast.BLangXMLCommentLiteral, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	ty := xmlLiteralType(t, semtypes.XMLComment, expectedType)
 	setExpectedType(e, ty)
 	return ty, defaultExpressionEffect(chain), true
 }
 
-func resolveXMLPILiteral(_ typeResolver, chain *binding, e *ast.BLangXMLPILiteral) (semtypes.SemType, expressionEffect, bool) {
-	ty := semtypes.XMLProcessingInstruction
+func resolveXMLPILiteral(t typeResolver, chain *binding, e *ast.BLangXMLPILiteral, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	ty := xmlLiteralType(t, semtypes.XMLProcessingInstruction, expectedType)
 	setExpectedType(e, ty)
 	return ty, defaultExpressionEffect(chain), true
 }
 
-func resolveXMLElementLiteral(t typeResolver, chain *binding, e *ast.BLangXMLElementLiteral) (semtypes.SemType, expressionEffect, bool) {
+func resolveXMLElementLiteral(t typeResolver, chain *binding, e *ast.BLangXMLElementLiteral, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	ty := xmlLiteralType(t, semtypes.XMLElement, expectedType)
 	for i := range e.Attrs {
 		attr := &e.Attrs[i]
 		if attr.Value != nil {
@@ -3811,11 +3849,10 @@ func resolveXMLElementLiteral(t typeResolver, chain *binding, e *ast.BLangXMLEle
 		attr.SetDeterminedType(semtypes.Never)
 	}
 	if e.Content != nil {
-		if _, ok := resolveActionOrExpression(t, chain, e.Content, semtypes.XML); !ok {
+		if _, ok := resolveActionOrExpression(t, chain, e.Content, xmlChildExpectedType(t, ty)); !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 	}
-	ty := semtypes.XMLElement
 	setExpectedType(e, ty)
 	return ty, defaultExpressionEffect(chain), true
 }
@@ -3860,7 +3897,7 @@ func resolveStringTemplateType(t typeResolver, chain *binding, e *ast.BLangTempl
 	return semtypes.String, true
 }
 
-func resolveXMLTemplateExpr(t typeResolver, chain *binding, e *ast.BLangXMLTemplateExpr) (semtypes.SemType, expressionEffect, bool) {
+func resolveXMLTemplateExpr(t typeResolver, chain *binding, e *ast.BLangXMLTemplateExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	if len(e.InsertionKinds) != len(e.Insertions) {
 		t.internalError(fmt.Sprintf("xml template insertion kind count mismatch: got %d kinds for %d insertions", len(e.InsertionKinds), len(e.Insertions)), e.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -3871,14 +3908,17 @@ func resolveXMLTemplateExpr(t typeResolver, chain *binding, e *ast.BLangXMLTempl
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 	}
-	setExpectedType(e, semtypes.XML)
-	return semtypes.XML, defaultExpressionEffect(chain), true
+	ty := xmlLiteralType(t, semtypes.XML, xmlMutabilityExpectation(t, expectedType))
+	setExpectedType(e, ty)
+	return ty, defaultExpressionEffect(chain), true
 }
 
-func resolveXMLSequenceLiteral(t typeResolver, chain *binding, e *ast.BLangXMLSequenceLiteral, _ semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+func resolveXMLSequenceLiteral(t typeResolver, chain *binding, e *ast.BLangXMLSequenceLiteral, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	ty := xmlLiteralType(t, semtypes.XML, xmlMutabilityExpectation(t, expectedType))
+	childExpectedType := xmlChildExpectedType(t, ty)
 	childUnion := semtypes.Never
 	for _, child := range e.Children {
-		childResult, ok := resolveActionOrExpression(t, chain, child, semtypes.XML)
+		childResult, ok := resolveActionOrExpression(t, chain, child, childExpectedType)
 		if !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
@@ -3889,7 +3929,7 @@ func resolveXMLSequenceLiteral(t typeResolver, chain *binding, e *ast.BLangXMLSe
 		}
 		childUnion = semtypes.Union(childUnion, childTy)
 	}
-	ty := semtypes.XMLSequence(childUnion)
+	ty = semtypes.XMLSequence(childUnion)
 	setExpectedType(e, ty)
 	return ty, defaultExpressionEffect(chain), true
 }
@@ -4258,7 +4298,16 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 	fields := make([]semtypes.Field, len(e.Fields))
 	for i, f := range e.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
-		valueResult, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, semtypes.SemType{})
+		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
+		if !ok {
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		readonly := e.IsReadonly(keyName)
+		var valueExpectedType semtypes.SemType
+		if readonly {
+			valueExpectedType = semtypes.ValReadonly
+		}
+		valueResult, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, valueExpectedType)
 		if !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
@@ -4269,14 +4318,11 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 		} else {
 			broadTy = semtypes.WidenToBasicTypes(valueTy)
 		}
-		var keyName string
 		switch keyExpr := kv.Key.Expr.(type) {
 		case *ast.BLangLiteral:
-			keyName = keyExpr.Value.(string)
 			resolveLiteral(t, keyExpr, semtypes.SemType{})
 		case ast.BNodeWithSymbol:
 			t.setSymbolType(keyExpr.Symbol(), valueTy)
-			keyName = t.symbolName(keyExpr.Symbol())
 			if e, ok := keyExpr.(ast.BLangExpression); ok {
 				setExpectedType(e, valueTy)
 			}
@@ -4286,13 +4332,13 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 		}
 		kv.Key.SetDeterminedType(semtypes.Never)
 		kv.SetDeterminedType(semtypes.Never)
-		fields[i] = semtypes.FieldFrom(keyName, broadTy, false, false)
+		fields[i] = semtypes.FieldFrom(keyName, broadTy, readonly, false)
 	}
 	md := semtypes.NewMappingDefinition()
 	mapTy := md.Define(t.typeEnv(), fields, semtypes.Never)
-	setExpectedType(e, mapTy)
 	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
 	e.SelectedAtomicType = *mat
+	setExpectedType(e, mapTy)
 	return mapTy, defaultExpressionEffect(chain), true
 }
 
@@ -4317,6 +4363,14 @@ func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 		requiredType := mat.FieldInnerVal(keyName)
+		if e.IsReadonly(keyName) {
+			requiredType = semtypes.Intersect(requiredType, semtypes.ValReadonly)
+			if semtypes.IsEmpty(t.typeContext(), requiredType) {
+				t.semanticError(fmt.Sprintf("field '%s' cannot be readonly: its type in the inherent type has no readonly values", keyName),
+					kv.GetPosition())
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+		}
 		kv.ValueExpr.SetDeterminedType(semtypes.SemType{})
 		if _, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, requiredType); !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
@@ -4327,8 +4381,14 @@ func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e
 	if defaults, found := t.mappingDefaults(mat); found {
 		e.FieldDefaults = append([]model.FieldDefault(nil), defaults...)
 	}
-	setExpectedType(e, resultType)
-	return resultType, defaultExpressionEffect(chain), true
+	inherentTy := resultType
+	if len(e.ReadonlyFields) != 0 {
+		// The inherent type the value is constructed with narrows the explicitly readonly
+		// fields to immutable cells; the shape validated against remains SelectedAtomicType.
+		inherentTy = semtypes.MappingWithReadonlyFields(t.typeEnv(), mat, e.ReadonlyFields)
+	}
+	setExpectedType(e, inherentTy)
+	return inherentTy, defaultExpressionEffect(chain), true
 }
 
 func resolveMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField) {
@@ -7921,7 +7981,11 @@ func resolveConstant(t typeResolver, constant *ast.BLangVariable) bool {
 	expectedType := exprTy
 	setExpectedType(constant, expectedType)
 	symbol := constant.Symbol()
-	t.setSymbolType(symbol, expectedType)
+	// A constant's value is deeply immutable, so a reference to it has the readonly
+	// intersection of its initializer type. Without this a reference to a structured
+	// constant looks mutable to contextual readonly checking even though mutating it
+	// panics at runtime.
+	t.setSymbolType(symbol, semtypes.Intersect(expectedType, semtypes.ValReadonly))
 
 	return true
 }

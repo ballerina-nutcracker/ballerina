@@ -1,0 +1,50 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad inner
+    %2 = ConstantLoad x
+    %3 = ConstantLoad 1
+    %4 = newMap {| int... |}{%2=%3}
+    %5 = ConstantLoad other
+    %6 = ConstantLoad y
+    %7 = ConstantLoad 2
+    %8 = newMap {| int... |}{%6=%7}
+    %9 = newMap {| inner: readonly&{| int... |}, {| int... |}... |}{%1=%4, %5=%8}
+    nestedMapping = %9;
+    %11 = println(nestedMapping) -> bb1;
+  }
+  bb1 {
+    %12 = ConstantLoad y
+    %13 = ConstantLoad 20
+    %14 = newMap {| int... |}{%12=%13}
+    %15 = ConstantLoad other
+    nestedMapping[%15] = %14;
+    %17 = ConstantLoad other
+    %16 = nestedMapping[%17];
+    %18 = println(%16) -> bb2;
+  }
+  bb2 {
+    %19 = ConstantLoad inner
+    %20 = ConstantLoad 1
+    %21 = ConstantLoad 2
+    %22 = ConstantLoad 2
+    %23 = newArray [int...][%22]{%20, %21}
+    %24 = newMap {| inner: readonly&[int...], [int...]... |}{%19=%23}
+    nestedList = %24;
+    %26 = println(nestedList) -> bb3;
+  }
+  bb3 {
+    %27 = ConstantLoad 3
+    %28 = ConstantLoad 4
+    %29 = ConstantLoad 2
+    %30 = newArray [int...][%29]{%27, %28}
+    frozen = %30;
+    %32 = ConstantLoad inner
+    %33 = newMap {| inner: readonly&[int...], [int...]... |}{%32=frozen}
+    referenced = %33;
+    %35 = println(referenced) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

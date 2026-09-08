@@ -1,0 +1,5 @@
+-- stdout --
+{"required":1,"defaulted":5}
+{"required":1,"defaulted":2,"optional":3,"rest":"r"}
+20
+-- stderr --
