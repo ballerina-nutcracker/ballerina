@@ -146,7 +146,7 @@ make -j4 lint
 
 Linting uses a module's `.golangci.yml` when present and otherwise falls back to the shared [root configuration](../../.golangci.yml). Individual module configurations opt into stricter checks as appropriate.
 
-CI runs `golangci-lint` v2.10, and the Native CI workflow fails on any file not formatted with `gofmt -s`.
+CI runs `golangci-lint` v2.13, and the Native CI workflow fails on any file not formatted with `gofmt -s`.
 
 ## Git hooks
 
@@ -165,7 +165,7 @@ SKIP_COMMIT_HOOKS=1 git commit
 The hook requires `golangci-lint`. Install the version used by CI if it is not already available:
 
 ```bash
-go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.10.1
+go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2
 ```
 
 ## Code generation
