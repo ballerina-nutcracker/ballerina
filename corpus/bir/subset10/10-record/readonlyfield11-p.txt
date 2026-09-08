@@ -1,0 +1,43 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad value
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad otherValue
+    %4 = ConstantLoad 2
+    %5 = newMap {| otherValue: int, value: int, never... |}{%1=%2, %3=%4}
+    o = %5;
+    $desugar$0 = o;
+    %8 = ConstantLoad <nil>
+    $desugar$1 = %8;
+    %10 = $desugar$0 is error
+    %10 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 0
+    (1, $desugar$1) = (1, $desugar$0);
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$0)[%1];
+    (1, $desugar$1) = %0;
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    %11 = $desugar$1;
+    %12 = println(%11) -> bb4;
+  }
+  bb4 {
+    m = o;
+    %14 = ConstantLoad value
+    %15 = remove(m,%14) -> bb5;
+  }
+  bb5 {
+    %16 = %15;
+    return;
+  }
+}

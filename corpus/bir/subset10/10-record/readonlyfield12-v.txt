@@ -1,0 +1,128 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad value
+    %2 = ConstantLoad 5
+    %3 = ConstantLoad otherValue
+    %4 = ConstantLoad 6
+    %5 = newMap {| otherValue: int, value: int, never... |}{%1=%2, %3=%4}
+    mr = %5;
+    %7 = ConstantLoad value
+    %8 = ConstantLoad 7
+    %9 = ConstantLoad otherValue
+    %10 = ConstantLoad 8
+    %11 = newMap {| otherValue: int, value: int, never... |}{%7=%8, %9=%10}
+    ro = %11;
+    m = mr;
+    mp = mr;
+    u = mr;
+    %16 = ConstantLoad value
+    %17 = ConstantLoad 11
+    %18 = ConstantLoad otherValue
+    %19 = ConstantLoad 12
+    %20 = newMap {| otherValue: int, value: int, never... |}{%16=%17, %18=%19}
+    opt = %20;
+    %22 = ConstantLoad a
+    %23 = ConstantLoad 9
+    %24 = newMap {| int... |}{%22=%23}
+    rm = %24;
+    %27 = ConstantLoad value
+    %26 = mr[%27];
+    %28 = %26;
+    %29 = println(%28) -> bb1;
+  }
+  bb1 {
+    %31 = ConstantLoad value
+    %30 = mr[%31];
+    %32 = %30;
+    %33 = println(%32) -> bb2;
+  }
+  bb2 {
+    %35 = ConstantLoad value
+    %34 = ro[%35];
+    %36 = %34;
+    %37 = println(%36) -> bb3;
+  }
+  bb3 {
+    %39 = ConstantLoad value
+    %38 = ro[%39];
+    %40 = %38;
+    %41 = println(%40) -> bb4;
+  }
+  bb4 {
+    %43 = ConstantLoad value
+    %42 = m[%43];
+    %44 = %42;
+    %45 = println(%44) -> bb5;
+  }
+  bb5 {
+    %47 = ConstantLoad value
+    %46 = mp[%47];
+    %48 = %46;
+    %49 = println(%48) -> bb6;
+  }
+  bb6 {
+    %51 = ConstantLoad value
+    %50 = u[%51];
+    %52 = %50;
+    %53 = println(%52) -> bb7;
+  }
+  bb7 {
+    $desugar$0 = opt;
+    %55 = ConstantLoad <nil>
+    $desugar$1 = %55;
+    %57 = $desugar$0 is error
+    %57 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 0
+    (1, $desugar$1) = (1, $desugar$0);
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb9 {
+    PushScopeFrame 2
+    %1 = ConstantLoad value
+    %0 = (1, $desugar$0)[%1];
+    (1, $desugar$1) = %0;
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    %58 = $desugar$1;
+    %59 = println(%58) -> bb11;
+  }
+  bb11 {
+    %62 = ConstantLoad value
+    %61 = mr[%62];
+    %63 = %61;
+    %64 = ConstantLoad 1
+    %65 = %64;
+    %60 = + %63 %65;
+    %66 = %60;
+    %67 = println(%66) -> bb12;
+  }
+  bb12 {
+    %69 = ConstantLoad a
+    %68 = rm[%69];
+    %70 = %68;
+    %71 = println(%70) -> bb13;
+  }
+  bb13 {
+    %72 = ConstantLoad otherValue
+    %73 = mr[%72];
+    %74 = %73;
+    %76 = ConstantLoad value
+    %75 = mr[%76];
+    %77 = %75;
+    %78 = + %74 %77;
+    mr[%72] = %78;
+    %80 = ConstantLoad otherValue
+    %79 = mr[%80];
+    %81 = %79;
+    %82 = println(%81) -> bb14;
+  }
+  bb14 {
+    return;
+  }
+}

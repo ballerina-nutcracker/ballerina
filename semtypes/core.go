@@ -456,7 +456,7 @@ func listAtomicTypeAllMemberTypesInnerVal(atomicType *ListAtomicType) ListMember
 
 	initial := make([]SemType, 0, initialLength)
 	for i := range cellInitial {
-		initial = append(initial, cellInnerVal(cellInitial[i]))
+		initial = append(initial, CellInnerVal(cellInitial[i]))
 	}
 
 	fixedLength := int64(atomicType.members.FixedLength)
@@ -470,7 +470,7 @@ func listAtomicTypeAllMemberTypesInnerVal(atomicType *ListAtomicType) ListMember
 		}
 	}
 
-	rest := cellInnerVal(atomicType.rest)
+	rest := CellInnerVal(atomicType.rest)
 	if !IsNever(rest) {
 		types = append(types, rest)
 		ranges = append(ranges, rangeFrom(fixedLength, maxValue))
@@ -573,7 +573,9 @@ func bddListAtomicType(env Env, bdd bdd, top ListAtomicType) *ListAtomicType {
 	return nil
 }
 
-func cellInnerVal(t SemType) SemType {
+// CellInnerVal returns the value type held by a cell, with Undef removed.
+// The argument must be a cell semtype with a single atomic representation.
+func CellInnerVal(t SemType) SemType {
 	return Diff(cellInner(t), Undef)
 }
 

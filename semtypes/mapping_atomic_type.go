@@ -44,13 +44,21 @@ func (m *MappingAtomicType) FieldNames() []string {
 	return slices.Clone(m.names)
 }
 
-func (m *MappingAtomicType) FieldInnerVal(name string) SemType {
+// FieldCell returns the cell semtype of the named field, falling back to the rest cell for a
+// name that is not a declared field. A closed record's rest cell is CellMutabilityNone over
+// Never, so a caller reading mutability off the result must first check that the cell can
+// actually hold a value, that is, that CellInnerVal of it is not Never.
+func (m *MappingAtomicType) FieldCell(name string) SemType {
 	for i, n := range m.names {
 		if n == name {
-			return cellInnerVal(m.types[i])
+			return m.types[i]
 		}
 	}
-	return cellInnerVal(m.rest)
+	return m.rest
+}
+
+func (m *MappingAtomicType) FieldInnerVal(name string) SemType {
+	return CellInnerVal(m.FieldCell(name))
 }
 
 func (m *MappingAtomicType) IsOptional(cx Context, name string) bool {
@@ -72,12 +80,12 @@ const (
 func AllMapConstraintTypesMatch(cx Context, ty SemType, predicate func(SemType) bool) bool {
 	return mappingAtomsMatch(cx, ty, matchAll, func(cx Context, atom *MappingAtomicType) bool {
 		for i, name := range atom.names {
-			if atom.IsOptional(cx, name) && IsNever(cellInnerVal(atom.types[i])) {
+			if atom.IsOptional(cx, name) && IsNever(CellInnerVal(atom.types[i])) {
 				continue
 			}
 			return false
 		}
-		return predicate(cellInnerVal(atom.rest))
+		return predicate(CellInnerVal(atom.rest))
 	})
 }
 

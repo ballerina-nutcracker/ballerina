@@ -6077,6 +6077,20 @@ func resolveIndexBasedAccess(t typeResolver, chain *binding, expr *ast.BLangInde
 		if maybeMissing {
 			memberTy = semtypes.Union(semtypes.Diff(memberTy, semtypes.Undef), semtypes.Nil)
 		}
+		if expr.IsLexpr() {
+			singletonStringKey := func(keyTy semtypes.SemType) (string, bool) {
+				shape := semtypes.SingleShape(keyTy)
+				if shape.IsEmpty() {
+					return "", false
+				}
+				key, ok := shape.Get().Value.(string)
+				return key, ok
+			}
+			if key, ok := singletonStringKey(keyExprTy); ok && mappingFieldIsReadonly(tyCtx, mappingTy, key) {
+				reportReadonlyMutation(t, tyCtx, mappingTy, key, expr.GetPosition())
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+		}
 		resultTy = memberTy
 	} else if semtypes.IsSubtype(tyCtx, containerExprTy, semtypes.String) {
 		resultTy = semtypes.String
@@ -6195,6 +6209,10 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 				return semtypes.SemType{}, expressionEffect{}, false
 			}
 		}
+		if expr.IsLexpr() && mappingFieldIsReadonly(tyCtx, mappingTy, key) {
+			reportReadonlyMutation(t, tyCtx, mappingTy, key, expr.GetPosition())
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
 		if containerNilable {
 			memberTy = semtypes.Union(memberTy, semtypes.Nil)
 		}
@@ -6257,6 +6275,45 @@ func resolveOptionalFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BL
 		t.semanticError("optional field access must be subtype of xml|map|()", expr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
+}
+
+// mappingFieldIsReadonly reports whether a store to key can never succeed, that is whether the
+// cell selected by key is CellMutabilityNone in every mapping alternative. A key whose cell
+// cannot hold a value is not a readonly field, it is a key the mapping does not have, so it
+// keeps whatever diagnostic it has otherwise.
+//
+// MappingAlternative negatives are not consulted. MappingAlternatives emits an alternative
+// whenever the positive atoms intersect, without testing whether the negatives leave it
+// inhabited, so the alternative set may be an over approximation. That is the safe direction
+// here: a spurious alternative can only make "every alternative is CellMutabilityNone" harder
+// to satisfy, so ignoring negatives can only miss an error, never invent one.
+func mappingFieldIsReadonly(tyCtx semtypes.Context, mappingTy semtypes.SemType, key string) bool {
+	alts := semtypes.MappingAlternatives(tyCtx, mappingTy)
+	if len(alts) == 0 {
+		return false
+	}
+	for _, alt := range alts {
+		atomic := alt.Atomic()
+		if atomic == nil {
+			return false
+		}
+		cell := atomic.FieldCell(key)
+		if semtypes.IsNever(semtypes.CellInnerVal(cell)) {
+			return false
+		}
+		if semtypes.CellMut(cell) != semtypes.CellMutabilityNone {
+			return false
+		}
+	}
+	return true
+}
+
+func reportReadonlyMutation(t typeResolver, tyCtx semtypes.Context, containerTy semtypes.SemType, key string, loc diagnostics.Location) {
+	if semtypes.IsSubtype(tyCtx, containerTy, semtypes.ValReadonly) {
+		t.semanticError(fmt.Sprintf("cannot mutate readonly value of type '%s'", semtypes.ToString(tyCtx, containerTy)), loc)
+		return
+	}
+	t.semanticError(fmt.Sprintf("cannot mutate readonly field '%s'", key), loc)
 }
 
 func fieldBaseAccessMappingType(tyCtx semtypes.Context, containerExprTy semtypes.SemType, key string, isLexpr bool) (semtypes.SemType, bool) {

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot mutate readonly value of type 'readonly&{| otherValue: int, value: int, never... |}'
+  --> readonlyfield7-e.bal:24:5
+   |
+24 |     m.otherValue = 6; // @error cannot mutate readonly value
+   |     ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot mutate readonly value of type 'readonly&{| otherValue: int, value: int, never... |}'
+  --> readonlyfield7-e.bal:25:5
+   |
+25 |     m["otherValue"] = 7; // @error cannot mutate readonly value
+   |     ^^^^^^^^^^^^^^^

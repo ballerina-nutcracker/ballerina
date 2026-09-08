@@ -1,0 +1,5 @@
+-- stdout --
+7
+-- stderr --
+error: inherent type violation: cannot remove required field 'otherValue'
+        at main(readonlyfield6-p.bal:29)

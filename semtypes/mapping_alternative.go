@@ -33,6 +33,12 @@ func (a MappingAlternative) Type() SemType {
 	return a.semType
 }
 
+// Atomic returns the intersected positive mapping atom of this alternative. It is nil for the
+// alternative produced for the Mapping top, so callers must handle a nil result.
+func (a MappingAlternative) Atomic() *MappingAtomicType {
+	return a.pos
+}
+
 func MappingAlternatives(cx Context, t SemType) []MappingAlternative {
 	if t.some() == 0 {
 		if (t.all() & Mapping.all()) == 0 {
@@ -92,7 +98,7 @@ func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields [
 	if pos != nil {
 		if len(pos.names) == 0 {
 			// map<T>
-			expectedTy := cellInnerVal(pos.rest)
+			expectedTy := CellInnerVal(pos.rest)
 			for _, each := range fields {
 				fieldTy := each.Type
 				if !mappingAlternativeFieldTypeAllowed(cx, fieldTy, expectedTy) {
@@ -114,7 +120,7 @@ func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields [
 						continue
 					}
 					matchedWithNamed[j] = true
-					expectedType := cellInnerVal(pos.types[i])
+					expectedType := CellInnerVal(pos.types[i])
 					if !mappingAlternativeFieldTypeAllowed(cx, f.Type, expectedType) {
 						return false
 					}
@@ -128,7 +134,7 @@ func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields [
 					return false
 				}
 			}
-			expectedTy := cellInnerVal(pos.rest)
+			expectedTy := CellInnerVal(pos.rest)
 			for i, matched := range matchedWithNamed {
 				if matched {
 					continue

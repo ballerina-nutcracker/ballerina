@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot mutate readonly value of type 'readonly&{| int... |}'
+  --> readonly2-e.bal:21:5
+   |
+21 |     rm["x"] = 1; // @error cannot mutate readonly value
+   |     ^^^^^^^

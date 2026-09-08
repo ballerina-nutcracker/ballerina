@@ -1,0 +1,24 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad value
+    %2 = ConstantLoad 5
+    %3 = ConstantLoad otherValue
+    %4 = ConstantLoad 5
+    %5 = newMap {| otherValue: int, value: int, never... |}{%1=%2, %3=%4}
+    mr = %5;
+    %7 = ConstantLoad 10
+    %8 = readonlyKey() -> bb1;
+  }
+  bb1 {
+    mr[%8] = %7;
+    return;
+  }
+}
+readonlyKey() -> string{
+  bb0 {
+    %1 = ConstantLoad value
+    %0 = %1;
+    return;
+  }
+}

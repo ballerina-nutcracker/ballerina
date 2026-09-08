@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got 22
+  --> memberlvalue1-e.bal:24:14
+   |
+24 |     p["z"] = 22; // @error undeclared key: member type is nil, not a readonly violation
+   |              ^^

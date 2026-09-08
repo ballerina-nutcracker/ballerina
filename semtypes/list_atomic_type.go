@@ -43,7 +43,7 @@ func (atomic *ListAtomicType) FixedLength() int {
 }
 
 func (atomic *ListAtomicType) MemberAtInnerVal(index int) SemType {
-	return cellInnerVal(atomic.MemberAt(index))
+	return CellInnerVal(atomic.MemberAt(index))
 }
 
 func (atomic *ListAtomicType) MemberAt(index int) SemType {
@@ -51,5 +51,5 @@ func (atomic *ListAtomicType) MemberAt(index int) SemType {
 }
 
 func (atomic *ListAtomicType) Rest() SemType {
-	return cellInnerVal(atomic.rest)
+	return CellInnerVal(atomic.rest)
 }
