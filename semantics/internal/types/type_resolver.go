@@ -4292,7 +4292,7 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 	mapTy := md.Define(t.typeEnv(), fields, semtypes.Never)
 	setExpectedType(e, mapTy)
 	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
-	e.AtomicType = *mat
+	e.SelectedAtomicType = *mat
 	return mapTy, defaultExpressionEffect(chain), true
 }
 
@@ -4323,7 +4323,7 @@ func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e
 		}
 	}
 
-	e.AtomicType = *mat
+	e.SelectedAtomicType = *mat
 	if defaults, found := t.mappingDefaults(mat); found {
 		e.FieldDefaults = append([]model.FieldDefault(nil), defaults...)
 	}

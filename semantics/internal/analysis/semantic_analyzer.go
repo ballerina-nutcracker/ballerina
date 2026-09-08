@@ -1480,7 +1480,7 @@ func listOfMemberType(env semtypes.Env, memberTy semtypes.SemType) semtypes.SemT
 func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) bool {
 	// The type resolver has already selected the inherent type and re-resolved field values
 	// with per-field expected types. We only need to validate fields here.
-	mat := expr.AtomicType
+	mat := expr.SelectedAtomicType
 	hasValue := make(map[string]bool, len(expr.Fields)+len(expr.FieldDefaults))
 	for _, fd := range expr.FieldDefaults {
 		hasValue[fd.FieldName] = true
