@@ -1,0 +1,31 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable o (type
+        (user-defined-type Opt)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 1))
+          (key-value
+            (literal otherValue)
+            (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (optional-field-based-access value
+          (simple-var-ref o)))))
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (union-type
+            (value-type int)
+            (value-type null)))) (expr
+        (simple-var-ref o))))
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation lang.map remove (
+        (simple-var-ref m)
+        (literal value))))
+  )
+)
