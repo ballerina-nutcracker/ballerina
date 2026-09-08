@@ -17,7 +17,6 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 	"maps"
 	"sort"
@@ -1339,19 +1338,18 @@ func resolveAnnotationAttachments(
 		if ann.AnnotationName != nil {
 			setOtherNodesAsNever(ann.AnnotationName)
 		}
-		value, err := evaluateAnnotationValue(t, ann.Expr)
+		// A non-constant value on a non-const annotation is legal and becomes a
+		// runtime annotation global; a constant expression we cannot fold is not.
+		var value values.AnnotationValue
 		runtimeValue := false
-		if err != nil {
-			if errors.Is(err, errNotConstantExpression) {
-				if sym.IsConst() {
-					t.semanticError("const annotation value must be a constant expression", ann.Expr.GetPosition())
-					continue
-				}
-				runtimeValue = true
-			} else {
-				t.semanticError("cannot evaluate annotation constant expression: "+err.Error(), ann.Expr.GetPosition())
+		if _, ok := isConstantExpression(t, ann.Expr); !ok {
+			if sym.IsConst() {
+				t.semanticError("const annotation value must be a constant expression", ann.Expr.GetPosition())
 				continue
 			}
+			runtimeValue = true
+		} else if value, ok = foldConstant(t, ann.Expr); !ok {
+			continue
 		}
 		if !runtimeValue {
 			ann.AnnotationValue = value
@@ -1447,15 +1445,6 @@ type repeatedAnnotationValue struct {
 	values      []values.BalValue
 	expressions []ast.BLangExpression
 	runtime     bool
-}
-
-func evaluateAnnotationValue(t typeResolver, expr ast.BLangExpression) (value values.AnnotationValue, err error) {
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("constant expression evaluation panicked: %v", recovered)
-		}
-	}()
-	return evaluateConstantExpression(t, expr)
 }
 
 func createRuntimeAnnotationGlobal(t typeResolver, expr ast.BLangExpression) *values.RuntimeAnnotationValueRef {
@@ -1783,24 +1772,16 @@ func resolveXMLNS(t typeResolver, chain *binding, decl *ast.BLangXMLNS) bool {
 		t.semanticError("xmlns URI must be a string", uriExpr.GetPosition())
 		return false
 	}
-	isConstant := true
-	common.ValidateConstantExpr(t.compilerContext(), uriExpr, func(expr ast.BLangExpression) {
-		// Report only the first non-constant subexpression to avoid duplicate diagnostics.
-		if isConstant {
-			t.semanticError("expression is not a constant expression", expr.GetPosition())
-		}
-		isConstant = false
-	})
-	if !isConstant {
+	if offender, ok := isConstantExpression(t, uriExpr); !ok {
+		t.semanticError(notConstantExpressionMessage, offender.GetPosition())
 		return false
 	}
-	value, err := evaluateConstantExpression(t, uriExpr)
-	if err != nil {
-		t.semanticError("expression is not a constant expression", uriExpr.GetPosition())
-		return false
-	}
-	uri, ok := value.(string)
+	value, ok := foldConstant(t, uriExpr)
 	if !ok {
+		return false
+	}
+	uri, isString := value.(string)
+	if !isString {
 		t.semanticError("xmlns URI must be a string", uriExpr.GetPosition())
 		return false
 	}
@@ -7841,34 +7822,28 @@ func resolveConstant(t typeResolver, constant *ast.BLangVariable) bool {
 		t.internalError("constant expression is not an expression", constant.GetPosition())
 		return false
 	}
-	exprResult, ok := resolveActionOrExpression(t, nil, expr, annotationType)
+	if _, ok := resolveActionOrExpression(t, nil, expr, annotationType); !ok {
+		return false
+	}
+	// Type resolution has to stay ahead of folding: the folder reads determined
+	// types for casts, constant references and list constructors.
+	if offender, ok := isConstantExpression(t, expr); !ok {
+		t.semanticError(notConstantExpressionMessage, offender.GetPosition())
+		return false
+	}
+	value, ok := foldConstant(t, expr)
 	if !ok {
 		return false
 	}
-	exprTy := exprResult.ty
-	value, err := evaluateConstantExpression(t, expr)
-	if err != nil {
-		// A const-expr is evaluated at compile time (spec §6.4). A genuine
-		// evaluation failure — e.g. a cast that cannot be performed such as
-		// <int>(1.0/0.0) — is therefore a compile-time error, not a deferred
-		// runtime panic. Structural non-constness surfaces as
-		// errNotConstantExpression and is reported by validateConstantExpr.
-		if !errors.Is(err, errNotConstantExpression) {
-			t.semanticError("expression is not a constant expression", expr.GetPosition())
-		}
-	} else if sym, ok := t.getSymbol(constant.Symbol()).(*model.ConstantValueSymbol); ok {
+	if sym, ok := t.getSymbol(constant.Symbol()).(*model.ConstantValueSymbol); ok {
 		sym.SetConstantValue(value)
 	}
 
 	// The type of a constant is the intersection of readonly and the singleton
 	// type containing just the shape of its value (spec §8.8). The evaluated
 	// value carries that type, so taking it from there keeps the symbol type and
-	// the value in agreement. exprTy is the fallback for a constant whose value
-	// could not be evaluated; that is always a reported error.
-	expectedType := exprTy
-	if err == nil {
-		expectedType = values.SemTypeForValue(value)
-	}
+	// the value in agreement.
+	expectedType := values.SemTypeForValue(value)
 	setExpectedType(constant, expectedType)
 	symbol := constant.Symbol()
 	t.setSymbolType(symbol, expectedType)

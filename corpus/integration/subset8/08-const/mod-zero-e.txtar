@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: division by zero
+  --> mod-zero-e.bal:17:11
+   |
+17 | const A = 1 % 0; // @error
+   |           ^^^^^
