@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: inherent type violation: cannot mutate readonly field 'value'
+        at main(readonlyfield3-p.bal:25)

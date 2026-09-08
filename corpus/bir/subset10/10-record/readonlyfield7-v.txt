@@ -1,0 +1,22 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad value
+    %2 = ConstantLoad 5
+    %3 = ConstantLoad otherValue
+    %4 = ConstantLoad 5
+    %5 = newMap {| otherValue: int, value: int, never... |}{%1=%2, %3=%4}
+    m = %5;
+    u = m;
+    %8 = ConstantLoad 3
+    %9 = ConstantLoad value
+    u[%9] = %8;
+    %11 = ConstantLoad value
+    %10 = u[%11];
+    %12 = %10;
+    %13 = println(%12) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

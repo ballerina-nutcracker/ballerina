@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> readonlyfield8-e.bal:30:14
+   |
+30 |     MR|M u = {value: 5, otherValue: 5}; // @error ambiguous inherent type for mapping constructor
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^

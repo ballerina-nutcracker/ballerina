@@ -1,0 +1,30 @@
+(package
+  (type-definition MR
+    (record-type
+      (field value readonly
+        (value-type int))
+      (field otherValue
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable mr (type
+          (user-defined-type MR)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 5))
+            (key-value
+              (literal otherValue)
+              (literal 5))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref mr)
+          (invocation readonlyKey ()))
+        (literal 10))))
+  (function readonlyKey () (
+    (value-type string))
+    (block-function-body
+      (return
+        (literal value)))))

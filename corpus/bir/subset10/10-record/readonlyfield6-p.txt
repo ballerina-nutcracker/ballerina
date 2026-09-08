@@ -1,0 +1,28 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad value
+    %2 = ConstantLoad 5
+    %3 = ConstantLoad otherValue
+    %4 = ConstantLoad 5
+    %5 = ConstantLoad extra
+    %6 = ConstantLoad 7
+    %7 = newMap {| extra: int, otherValue: int, value: int, never... |}{%1=%2, %3=%4, %5=%6}
+    mr = %7;
+    m = mr;
+    %10 = ConstantLoad extra
+    %11 = remove(m,%10) -> bb1;
+  }
+  bb1 {
+    %12 = %11;
+    %13 = println(%12) -> bb2;
+  }
+  bb2 {
+    %14 = ConstantLoad otherValue
+    %15 = remove(m,%14) -> bb3;
+  }
+  bb3 {
+    %16 = %15;
+    return;
+  }
+}
