@@ -1,0 +1,114 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable mr (type
+        (user-defined-type MR)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 5))
+          (key-value
+            (literal otherValue)
+            (literal 6))))))
+    (var-def
+      (variable ro (type
+        (intersection-type
+          (user-defined-type MR)
+          (value-type readonly))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 7))
+          (key-value
+            (literal otherValue)
+            (literal 8))))))
+    (var-def
+      (variable m (type
+        (user-defined-type M)) (expr
+        (simple-var-ref mr))))
+    (var-def
+      (variable mp (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (simple-var-ref mr))))
+    (var-def
+      (variable u (type
+        (union-type
+          (user-defined-type MR)
+          (user-defined-type M))) (expr
+        (simple-var-ref mr))))
+    (var-def
+      (variable opt (type
+        (user-defined-type Opt)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 11))
+          (key-value
+            (literal otherValue)
+            (literal 12))))))
+    (var-def
+      (variable rm (type
+        (user-defined-type RoMap)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 9))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref mr)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref mr)
+          (literal value)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref ro)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref ro)
+          (literal value)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref m)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref mp)
+          (literal value)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref u)))))
+    (expression-stmt
+      (invocation io println (
+        (optional-field-based-access value
+          (simple-var-ref opt)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (field-based-access value
+            (simple-var-ref mr))
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref rm)
+          (literal a)))))
+    (compound-assignment +
+      (field-based-access otherValue
+        (simple-var-ref mr))
+      (field-based-access value
+        (simple-var-ref mr)))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access otherValue
+          (simple-var-ref mr)))))
+  )
+)
