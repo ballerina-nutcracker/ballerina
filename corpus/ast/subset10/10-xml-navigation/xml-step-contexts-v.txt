@@ -1,0 +1,212 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable moduleSource (type
+    (value-type xml)) (expr
+    (xml-element-literal root
+      (xml-element-literal item
+        (xml-text-literal A)))))
+  (variable moduleResult (type
+    (value-type xml)) (expr
+    (xml-step-expression
+      (simple-var-ref moduleSource)
+      (xml-step-element-children
+        (xml-name-pattern-identifier item)))))
+  (variable inferredModuleResult (expr
+    (xml-step-expression
+      (simple-var-ref moduleSource)
+      (xml-step-all-children))))
+  (variable publicModuleResult (type
+    (value-type xml)) (expr
+    (xml-step-expression
+      (simple-var-ref moduleSource)
+      (xml-step-all-children))))
+  (class-definition Holder
+    (variable items (type
+      (value-type xml)) (expr
+      (xml-step-expression
+        (simple-var-ref moduleSource)
+        (xml-step-all-children)))))
+  (type-definition Result
+    (record-type
+      (field items
+        (value-type xml)
+        (xml-step-expression
+          (xml-element-literal root
+            (xml-element-literal item
+              (xml-text-literal A)))
+          (xml-step-all-children)))))
+  (function withDefault (
+    (variable value (type
+      (value-type xml)) (expr
+      (xml-step-expression
+        (simple-var-ref moduleSource)
+        (xml-step-all-children))))) (
+    (value-type xml))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function checkedReceiver () (
+    (union-type
+      (value-type xml)
+      (error-type)))
+    (block-function-body
+      (return
+        (xml-step-expression
+          (group-expr
+            (checked-expr
+              (invocation xmlProducer ())))
+          (xml-step-all-children)))))
+  (function xmlProducer () (
+    (union-type
+      (value-type xml)
+      (error-type)))
+    (expr-function-body
+      (xml-element-literal root
+        (xml-element-literal item
+          (xml-text-literal C)))))
+  (function directReturn () (
+    (value-type xml))
+    (expr-function-body
+      (xml-step-expression
+        (simple-var-ref moduleSource)
+        (xml-step-all-children))))
+  (function identity (
+    (variable value (type
+      (value-type xml)))) (
+    (value-type xml))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function assert (
+    (variable actual (type
+      (value-type anydata)))
+    (variable expected (type
+      (value-type anydata)))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (binary-expr !=
+          (simple-var-ref actual)
+          (simple-var-ref expected))
+        (block-stmt
+          (panic
+            (error-constructor-expr (
+              (literal values are not equal))))) ())
+      (block-stmt)))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable result (type
+          (user-defined-type Result)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable local (type
+          (value-type xml)) (expr
+          (xml-step-expression
+            (group-expr
+              (ternary-expr
+                (literal true)
+                (simple-var-ref moduleSource)
+                (xml-element-literal root)))
+            (xml-step-all-children)))))
+      (var-def
+        (variable cast (type
+          (value-type xml)) (expr
+          (xml-step-expression
+            (group-expr
+              (type-conversion-expr
+                (simple-var-ref moduleSource)
+                (value-type xml)))
+            (xml-step-all-children)))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref moduleResult)
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref inferredModuleResult)
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref publicModuleResult)
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation io println (
+          (literal xml-step-module-contexts ok))))
+      (expression-stmt
+        (invocation assert (
+          (field-based-access items
+            (simple-var-ref result))
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (invocation withDefault ())
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (checked-expr
+            (invocation checkedReceiver ()))
+          (xml-element-literal item
+            (xml-text-literal C)))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref local)
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref cast)
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (invocation directReturn ())
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation assert (
+          (invocation identity (
+            (xml-step-expression
+              (simple-var-ref moduleSource)
+              (xml-step-all-children))))
+          (xml-element-literal item
+            (xml-text-literal A)))))
+      (expression-stmt
+        (invocation io println (
+          (literal xml-step-expression-contexts ok))))
+      (var-def
+        (variable trapped (type
+          (union-type
+            (value-type any)
+            (error-type))) (expr
+          (trap-expr
+            (xml-step-expression
+              (simple-var-ref moduleSource)
+              (xml-step-all-children)
+              (xml-step-index-extend
+                (unary-expr -
+                  (literal 1))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref trapped)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation assert (
+              (invocation message expr:
+                (simple-var-ref trapped) ())
+              (literal XML index out of range))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (literal xml-step-check-contexts ok))))
+        (expression-stmt
+          (invocation io println (
+            (literal xml-step-contexts ok))))))))

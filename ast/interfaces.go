@@ -166,6 +166,12 @@ type Invocable interface {
 	CallArgs() []BLangExpression
 }
 
+//sumtype:decl
+type XMLStepExtend interface {
+	BLangNode
+	xmlStepExtend()
+}
+
 type GroupExpressionNode interface {
 	BLangExpression
 	GetExpression() BLangExpression

@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected xml<xml:Comment>, got xml<xml:Element>
+  --> xml-step-result-type-e.bal:18:24
+   |
+18 |     xml<xml:Comment> _ = x1/<child>; // @error
+   |                        ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected xml<xml:Comment>, got xml<xml:Element>
+  --> xml-step-result-type-e.bal:19:24
+   |
+19 |     xml<xml:Comment> _ = x1/**/<child>; // @error
+   |                        ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected xml<xml:Comment>, got xml<xml:Element>
+  --> xml-step-result-type-e.bal:20:24
+   |
+20 |     xml<xml:Comment> _ = x1/*.<child>; // @error
+   |                        ^^^^^^^^^^^^

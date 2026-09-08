@@ -1,0 +1,191 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition XMLAlias
+    (value-type xml))
+  (function checkStepTypes (
+    (variable value (type
+      (value-type xml)))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable allChildren (type
+          (value-type xml)) (expr
+          (xml-step-expression
+            (simple-var-ref value)
+            (xml-step-all-children)))))
+      (var-def
+        (variable filtered (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (xml-step-expression
+            (simple-var-ref value)
+            (xml-step-all-children)
+            (xml-step-filter-extend
+              (xml-name-pattern-identifier item))))))
+      (var-def
+        (variable indexed (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (xml-step-expression
+            (simple-var-ref value)
+            (xml-step-element-children
+              (xml-name-pattern-identifier item))
+            (xml-step-index-extend
+              (literal 0))))))
+      (var-def
+        (variable elementChildren (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (xml-step-expression
+            (simple-var-ref value)
+            (xml-step-all-children)
+            (xml-step-method-call-extend elementChildren)))))
+      (var-def
+        (variable got (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (xml-step-expression
+            (simple-var-ref value)
+            (xml-step-element-children
+              (xml-name-pattern-identifier item))
+            (xml-step-method-call-extend get
+              (literal 0))))))
+      (var-def
+        (variable mapped (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (xml-step-expression
+            (simple-var-ref value)
+            (xml-step-element-children
+              (xml-name-pattern-identifier item))
+            (xml-step-method-call-extend map
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable item)) ()
+                  (expr-function-body
+                    (simple-var-ref item)))))))))
+      (var-def
+        (variable text (type
+          (user-defined-type xml Text)) (expr
+          (xml-step-expression
+            (simple-var-ref value)
+            (xml-step-all-children)
+            (xml-step-method-call-extend text)))))
+      (var-def
+        (variable comments (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Comment))) (expr
+          (xml-step-expression
+            (simple-var-ref value)
+            (xml-step-element-children
+              (xml-name-pattern-identifier item))
+            (xml-step-method-call-extend map
+              (lambda
+                (function $anonFunc$_1 (
+                  (variable item)) ()
+                  (expr-function-body
+                    (invocation xml createComment (
+                      (invocation data expr:
+                        (simple-var-ref item) ())))))))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (list-constructor-expr
+          (simple-var-ref allChildren)
+          (simple-var-ref filtered)
+          (simple-var-ref indexed)
+          (simple-var-ref elementChildren)
+          (simple-var-ref got)
+          (simple-var-ref mapped)
+          (simple-var-ref text)
+          (simple-var-ref comments)))))
+  (function checkSpecialOperandTypes (
+    (variable value (type
+      (union-type
+        (value-type xml)
+        (value-type string))))
+    (variable alias (type
+      (user-defined-type XMLAlias)))
+    (variable empty (type
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type never))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type xml))
+        (block-stmt
+          (var-def
+            (variable narrowed (type
+              (value-type xml)) (expr
+              (xml-step-expression
+                (simple-var-ref value)
+                (xml-step-all-children)))))
+          (assignment
+            (wildcard-binding-pattern)
+            (simple-var-ref narrowed))) ())
+      (block-stmt
+        (var-def
+          (variable aliased (type
+            (value-type xml)) (expr
+            (xml-step-expression
+              (simple-var-ref alias)
+              (xml-step-all-children)))))
+        (var-def
+          (variable emptyResult (type
+            (value-type xml)) (expr
+            (xml-step-expression
+              (simple-var-ref empty)
+              (xml-step-all-children)))))
+        (assignment
+          (wildcard-binding-pattern)
+          (list-constructor-expr
+            (simple-var-ref aliased)
+            (simple-var-ref emptyResult))))))
+  (function checkReadonlyOperandType (
+    (variable readonlyValue (type
+      (intersection-type
+        (value-type xml)
+        (value-type readonly))))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable readonlyResult (type
+          (value-type xml)) (expr
+          (xml-step-expression
+            (simple-var-ref readonlyValue)
+            (xml-step-all-children)))))
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref readonlyResult))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation checkStepTypes (
+          (xml-element-literal root
+            (xml-sequence-literal
+              (xml-element-literal item
+                (xml-text-literal A))
+              (xml-element-literal item
+                (xml-text-literal B)))))))
+      (expression-stmt
+        (invocation checkSpecialOperandTypes (
+          (xml-element-literal root
+            (xml-element-literal item
+              (xml-text-literal A)))
+          (xml-element-literal root
+            (xml-element-literal item
+              (xml-text-literal B)))
+          (xml-sequence-literal))))
+      (expression-stmt
+        (invocation io println (
+          (literal xml-step-types ok)))))))

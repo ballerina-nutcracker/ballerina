@@ -19,6 +19,6 @@ public function main() {
     xmlns "urn:items" as p;
     xmlns "urn:items" as q;
     xml root = xml `<root xmlns:p="urn:items"><p:item/></root>`;
-    xml children = root/*; // @error future: XML child navigation
-    io:println(children.<q:item>); // @output <p:item xmlns:p="urn:items"/>
+    xml children = root/*;
+    io:println(children.<q:item>); // @output <item xmlns="urn:items"/>
 }

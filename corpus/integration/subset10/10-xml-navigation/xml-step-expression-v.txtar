@@ -1,0 +1,21 @@
+-- stdout --
+single-element ok
+namespaced-single ok
+default-namespace ok
+default-namespace-prefix ok
+sequence ok
+namespaced-sequence ok
+multiple-filters ok
+composition ok
+quoted-identifiers ok
+subtype-lhs ok
+descendant-subtype-lhs ok
+escape-character ok
+xml-union ok
+namespace-after ok
+indexed-extension ok
+filter-extension ok
+mixed-index-filter ok
+method-extension ok
+mixed-method-extension ok
+-- stderr --

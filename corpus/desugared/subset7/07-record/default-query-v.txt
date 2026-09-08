@@ -6,17 +6,7 @@
       (field values
         (array-type
           (value-type int) dimensions: 1 ([]))
-        (query-expr
-          (from-clause
-            (var-def
-              (variable _ (type
-                (value-type int))))
-            (list-constructor-expr
-              (literal 1)
-              (literal 2)
-              (literal 3)))
-          (select-clause
-            (literal 5))))))
+        (simple-var-ref $desugar$2))))
   (function main () (
     (value-type null))
     (block-function-body

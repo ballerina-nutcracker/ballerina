@@ -72,12 +72,16 @@ func (ctx *packageContext) typeCtx() semtypes.Context {
 	return ctx.typeContext
 }
 
+func (ctx *packageContext) rootContext() *packageContext {
+	return ctx
+}
+
 func (ctx *packageContext) addImplicitImport(pkgName string, imp ast.BLangImportPackage) {
 	ctx.importMu.Lock()
 	defer ctx.importMu.Unlock()
 	if !ctx.addedImplicitImports[pkgName] {
 		ctx.addedImplicitImports[pkgName] = true
-		ctx.pkg.Imports = append(ctx.pkg.Imports, &imp)
+		ctx.pkg.AddImportIfAbsent(&imp)
 	}
 }
 
@@ -224,6 +228,10 @@ func (ctx *functionContext) typeCtx() semtypes.Context {
 	return ctx.typeContext
 }
 
+func (ctx *functionContext) rootContext() *packageContext {
+	return ctx.pkgCtx
+}
+
 var _ desugarContext = &functionContext{}
 
 func (ctx *functionContext) internalError(msg string, pos diagnostics.Location) {
@@ -324,6 +332,7 @@ func (ctx *functionContext) typeEnv() semtypes.Env {
 }
 
 type desugarContext interface {
+	rootContext() *packageContext
 	nextDesugarSymbolName() string
 	addSymbolToSameSpace(ref model.SymbolRef, name string, symbol model.Symbol) model.SymbolRef
 	newFunctionScope(parent model.Scope) *model.FunctionScope
@@ -1352,11 +1361,22 @@ func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, par
 			continue
 		}
 		symRef := field.DefaultFnRef
-		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.DefaultExpr, nil)
 		fnScope := ctx.newFunctionScope(parentScope)
+		fnCtx := &functionContext{pkgCtx: ctx.rootContext()}
+		fnCtx.pushScope(fnScope)
+		defaultExpr := walkExpression(fnCtx, field.DefaultExpr)
+		fnCtx.popScope()
+		field.DefaultExpr = defaultExpr.replacementNode.(ast.BLangExpression)
+
+		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.DefaultExpr, nil)
+		if len(defaultExpr.initStmts) > 0 {
+			body := fn.Body.(*ast.BLangBlockFunctionBody)
+			body.Stmts = append(defaultExpr.initStmts, body.Stmts...)
+		}
 		fn.SetSymbol(symRef)
 		fn.SetScope(fnScope)
 
+		result.functions = append(result.functions, fnCtx.generatedFunctions...)
 		result.recordFields = append(result.recordFields, desugaredRecordFieldResult{fn: fn, symRef: symRef})
 
 	}
@@ -1854,19 +1874,23 @@ func desugarFunctionWithContext(cx *functionContext, fn *ast.BLangFunction) *ast
 func convertExprBodyToBlockBody(
 	result desugaredNode[ast.BLangActionOrExpression],
 ) *ast.BLangBlockFunctionBody {
+	pos := result.replacementNode.GetPosition()
 	// Create return statement with the desugared expression
 	returnStmt := &ast.BLangReturn{
 		Expr: result.replacementNode,
 	}
+	returnStmt.SetPosition(pos)
 
 	// Build block with init statements + return
 	stmts := make([]ast.StatementNode, 0, len(result.initStmts)+1)
 	stmts = append(stmts, result.initStmts...)
 	stmts = append(stmts, returnStmt)
 
-	return &ast.BLangBlockFunctionBody{
+	body := &ast.BLangBlockFunctionBody{
 		Stmts: stmts,
 	}
+	body.SetPosition(pos)
+	return body
 }
 
 // BLangServiceInit is a desugar-only expression that constructs an
