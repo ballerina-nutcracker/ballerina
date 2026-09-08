@@ -1,0 +1,5 @@
+-- stdout --
+[0,0]
+-- stderr --
+error: inherent type violation: cannot mutate readonly value
+        at main(filler-list-mutate-p.bal:26)

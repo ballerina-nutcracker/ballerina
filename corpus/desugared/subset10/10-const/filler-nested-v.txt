@@ -1,0 +1,80 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition L2
+    (array-type
+      (value-type int) dimensions: 2 ([
+      (literal 2)][
+      (literal 2)])))
+  (type-definition L3
+    (array-type
+      (value-type int) dimensions: 3 ([
+      (literal 2)][
+      (literal 2)][
+      (literal 2)])))
+  (type-definition Row
+    (array-type
+      (value-type int) dimensions: 1 ([
+      (literal 2)])))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal [[0,0],[0,0]]))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal [[0,0],[0,0]])
+            (value-type readonly)))))
+      (var-def
+        (variable rows (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (literal [[0,0],[0,0]]))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref rows)
+              (literal 0))
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref rows)
+              (literal 1))
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (literal [[[0,0],[0,0]],[[0,0],[0,0]]]))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal [[[0,0],[0,0]],[[0,0],[0,0]]])
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (literal [[7,8],[0,0]]))))
+      (expression-stmt
+        (invocation io println (
+          (literal [[7,0],[0,0]]))))
+      (var-def
+        (variable mixed (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (literal [[7,0],[0,0]]))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref mixed)
+              (literal 0))
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref mixed)
+              (literal 1))
+            (value-type readonly))))))))
