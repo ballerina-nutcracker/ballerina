@@ -1458,6 +1458,7 @@ func (p *PrettyPrinter) printMappingConstructor(node *BLangMappingConstructorExp
 	p.StartNode()
 	p.PrintString("mapping-constructor-expr")
 	p.indentLevel++
+	p.printReadonlyFields(node.ReadonlyFields)
 	for _, f := range node.Fields {
 		if kv, ok := f.(*BLangMappingKeyValueField); ok {
 			p.PrintInner(kv)
@@ -1525,6 +1526,18 @@ func (p *PrettyPrinter) printAnnotationAttachment(node *BLangAnnotationAttachmen
 		p.PrintInner(node.Expr.(BLangNode))
 	}
 	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printReadonlyFields(names []string) {
+	if len(names) == 0 {
+		return
+	}
+	p.StartNode()
+	p.PrintString("readonly-fields")
+	for _, name := range names {
+		p.PrintString(name)
+	}
 	p.EndNode()
 }
 

@@ -1967,9 +1967,9 @@ func (n *nodeBuilder) transformExpressionStatement(expressionStatement *st.Expre
 // non-computed mapping-constructor key. The field name is a static identifier
 // or string literal, not a runtime expression, so it must not be represented
 // as a var-ref.
-func (n *nodeBuilder) createSpecificFieldNameLiteral(fieldName st.Node) ast.BLangExpression {
+func (n *nodeBuilder) createSpecificFieldNameLiteral(fieldName st.Node) ast.LiteralNode {
 	if basicLit, ok := fieldName.(*st.BasicLiteralNode); ok {
-		return n.createSimpleLiteral(basicLit).(ast.BLangExpression)
+		return n.createSimpleLiteral(basicLit)
 	}
 	nameRef := n.createBLangNameReference(fieldName)
 	name := nameRef[1].GetValue()
@@ -2273,11 +2273,6 @@ func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorBL
 			mappingConstructor.Fields = append(mappingConstructor.Fields, keyValueField)
 		case st.SPECIFIC_FIELD:
 			specificField := field.(*st.SpecificFieldNode)
-			if specificField.ReadonlyKeyword() != nil {
-				n.unimplemented("readonly mapping constructor field not implemented",
-					specificField.ReadonlyKeyword())
-				return n.badExprOrAction(mappingConstructorBLangExpression)
-			}
 			valueExpr := specificField.ValueExpr()
 			var value ast.BLangExpression
 			if valueExpr == nil {
@@ -2290,8 +2285,9 @@ func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorBL
 			if isStringLit {
 				keyKind = ast.MappingKeyStringLiteral
 			}
+			keyLiteral := n.createSpecificFieldNameLiteral(specificField.FieldName())
 			key := &ast.BLangMappingKey{
-				Expr: n.createSpecificFieldNameLiteral(specificField.FieldName()),
+				Expr: keyLiteral,
 				Kind: keyKind,
 			}
 			key.SetPosition(n.getPosition(specificField.FieldName()))
@@ -2301,6 +2297,14 @@ func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorBL
 			}
 			keyValueField.SetPosition(n.getPosition(specificField))
 			mappingConstructor.Fields = append(mappingConstructor.Fields, keyValueField)
+			if specificField.ReadonlyKeyword() != nil {
+				keyName, ok := keyLiteral.GetValue().(string)
+				if !ok {
+					n.internalError("mapping constructor field name is not a string", specificField.FieldName())
+					return n.badExprOrAction(mappingConstructorBLangExpression)
+				}
+				mappingConstructor.ReadonlyFields = append(mappingConstructor.ReadonlyFields, keyName)
+			}
 		default:
 			n.internalError(fmt.Sprintf("unexpected mapping field kind: %v", field.Kind()), field)
 			return n.badExprOrAction(mappingConstructorBLangExpression)
