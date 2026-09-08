@@ -31,6 +31,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/opaque"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"github.com/ballerina-nutcracker/ballerina/values"
@@ -114,7 +115,7 @@ type typeResolver interface {
 	lookupClassMethodSymbol(receiverTy semtypes.SemType, methodName string) (model.SymbolRef, bool)
 
 	ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool
-	xmlIteratorTypeCache() *semtypes.SemTypeCache
+	opaqueContext() *opaque.Context
 }
 
 // deferredEmptinessCheck is an emptiness check that was registered while the
@@ -191,7 +192,8 @@ type packageTypeResolver struct {
 	classAtomSymbols      map[*semtypes.MappingAtomicType]model.SymbolRef
 	classSymbolByType     map[semtypes.InternHandle]model.SymbolRef
 	semtypeInterner       *semtypes.SemTypeInterner
-	xmlIteratorTypes      *semtypes.SemTypeCache
+	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
+	opaqueCtx *opaque.Context
 
 	deferredEmptinessChecks []deferredEmptinessCheck
 }
@@ -229,8 +231,11 @@ func (t *packageTypeResolver) typeContext() semtypes.Context        { return t.t
 func (t *packageTypeResolver) expectedReturnType() semtypes.SemType { return semtypes.SemType{} }
 func (t *packageTypeResolver) parent() typeResolver                 { return nil }
 func (t *packageTypeResolver) typeEnv() semtypes.Env                { return t.ctx.GetTypeEnv() }
-func (t *packageTypeResolver) xmlIteratorTypeCache() *semtypes.SemTypeCache {
-	return t.xmlIteratorTypes
+func (t *packageTypeResolver) opaqueContext() *opaque.Context {
+	if t.opaqueCtx == nil {
+		t.opaqueCtx = opaque.NewContext(t.tyCtx)
+	}
+	return t.opaqueCtx
 }
 
 func (t *packageTypeResolver) semanticError(msg string, loc diagnostics.Location) {
@@ -396,14 +401,19 @@ type functionTypeResolver struct {
 	defaultFnSymbolCount int
 	scope                model.Scope
 	isolatedContext      bool
+	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
+	opaqueCtx *opaque.Context
 }
 
 func (f *functionTypeResolver) typeContext() semtypes.Context        { return f.tyCtx }
 func (f *functionTypeResolver) expectedReturnType() semtypes.SemType { return f.retTy }
 func (f *functionTypeResolver) parent() typeResolver                 { return f.parentResolver }
 func (f *functionTypeResolver) typeEnv() semtypes.Env                { return f.parentResolver.typeEnv() }
-func (f *functionTypeResolver) xmlIteratorTypeCache() *semtypes.SemTypeCache {
-	return f.parentResolver.xmlIteratorTypeCache()
+func (f *functionTypeResolver) opaqueContext() *opaque.Context {
+	if f.opaqueCtx == nil {
+		f.opaqueCtx = opaque.NewContext(f.tyCtx)
+	}
+	return f.opaqueCtx
 }
 
 func (f *functionTypeResolver) semanticError(msg string, loc diagnostics.Location) {
@@ -595,7 +605,6 @@ func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage,
 		classAtomSymbols:       make(map[*semtypes.MappingAtomicType]model.SymbolRef),
 		classSymbolByType:      make(map[semtypes.InternHandle]model.SymbolRef),
 		semtypeInterner:        semtypes.NewSemtypeInterner(),
-		xmlIteratorTypes:       semtypes.NewSemTypeCache(),
 		monoCounters:           make(map[string]int),
 		scope:                  moduleScope,
 	}
@@ -6881,29 +6890,45 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 		return argTys, monoRef, chain, true
 	case *model.OpaqueFunctionSymbol:
 		inv.SetResolvedSymbol(fnSymbol)
+		pkg := t.compilerContext().SymbolPackage(fnSymbol)
+		defn, found := opaque.LookupFunction(pkg.Organization, pkg.Package, sym.OpaqueID())
+		if !found {
+			t.internalError("no definition for opaque function", inv.GetPosition())
+			return nil, fnSymbol, chain, false
+		}
+
 		args, ok := lowerInvocationArgs(t, inv.CallArgs(), fnSymbol, expectedType, inv.GetPosition())
 		if !ok {
 			return nil, fnSymbol, chain, false
 		}
 		inv.SetCallArgs(args)
-		pkg := t.compilerContext().SymbolPackage(fnSymbol)
-		mono, ok := opaqueFunctionMonomorphizerFor(
-			pkg.Organization,
-			pkg.Package,
-			sym.OpaqueID(),
-		)
+
+		// An expression is resolved once: resolveExpressionInner returns early for a
+		// node that already has a determined type, so the effects of an inference-time
+		// resolution are the only ones there will ever be. The closure therefore keeps
+		// the chain each resolution produces, and resolveArgs continues from it.
+		resolveChain := chain
+		resolve := func(expr ast.BLangExpression, expected semtypes.SemType) (semtypes.SemType, bool) {
+			result, ok := resolveActionOrExpression(t, resolveChain, expr, expected)
+			if !ok {
+				return semtypes.SemType{}, false
+			}
+			resolveChain = result.effect.ifTrue
+			return result.ty, true
+		}
+		materialize := func(sig model.TypedFunctionSignature) (model.SymbolRef, bool) {
+			return materializeOpaqueFn(t, sym, fnSymbol, sig, inv.GetPosition())
+		}
+
+		monoRef, ok := defn.Monomorphize(t.opaqueContext(), resolve, materialize, t.semanticError,
+			isolatedContext(t), inv.CallArgs(), expectedType, inv.GetPosition())
 		if !ok {
-			t.internalError("no monomorphizer for opaque function", inv.GetPosition())
 			return nil, fnSymbol, chain, false
 		}
-		symbolRef, chain, ok := mono(t, sym, fnSymbol, chain, inv.CallArgs(), expectedType, inv.GetPosition())
-		if !ok {
-			return nil, fnSymbol, chain, false
-		}
-		fnSym := t.getSymbol(symbolRef).(model.FunctionSymbol)
-		sig := fnSym.TypedSignature()
-		inv.SetResolvedSymbol(symbolRef)
-		argTys, chain, ok := resolveArgs(t, inv.CallArgs(), chain, func(i int) semtypes.SemType {
+		inv.SetResolvedSymbol(monoRef)
+
+		sig := t.getSymbol(monoRef).(model.FunctionSymbol).TypedSignature()
+		argTys, chain, ok := resolveArgs(t, inv.CallArgs(), resolveChain, func(i int) semtypes.SemType {
 			if i < len(sig.ParamTypes) {
 				return sig.ParamTypes[i]
 			}
@@ -6912,8 +6937,7 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, fnSy
 		if !ok {
 			return nil, fnSymbol, chain, false
 		}
-		inv.SetResolvedSymbol(symbolRef)
-		return argTys, symbolRef, chain, true
+		return argTys, monoRef, chain, true
 	case model.FunctionSymbol:
 		if !t.ensureResolved(fnSymbol, 0) {
 			return nil, fnSymbol, chain, false
@@ -6994,12 +7018,7 @@ type lowerArgSlot struct {
 func lowerInvocationArgs(t typeResolver, args []ast.BLangExpression, fnRef model.SymbolRef, expectedType semtypes.SemType, pos diagnostics.Location) ([]ast.BLangExpression, bool) {
 	sig, ok := t.functionSignature(fnRef)
 	if !ok {
-		opaque, ok := t.getSymbol(fnRef).(*model.OpaqueFunctionSymbol)
-		if !ok {
-			return args, true
-		}
-		pkg := t.compilerContext().SymbolPackage(fnRef).Package
-		sig = model.NewUntypedFunctionSignature(opaqueFunctionParams(pkg, opaque.Name(), model.TypedFunctionSignature{}), opaque.Name() == "push")
+		return args, true
 	}
 	return lowerInvocationArgsInner(t, args, sig, fnRef, expectedType, pos)
 }
@@ -7230,15 +7249,6 @@ func reportParamIndexError(t typeResolver, result model.ParamIndexResult, hasInc
 	}
 }
 
-func paramIndexOf(paramNames []string, name string) int {
-	for i, paramName := range paramNames {
-		if paramName == name {
-			return i
-		}
-	}
-	return -1
-}
-
 func resolveFunctionCall(t typeResolver, chain *binding, inv invocable, symbolRef model.SymbolRef, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	argTys, symbolRef, chain, ok := resolveFunctionCallArgs(t, chain, inv, symbolRef, expectedType)
 	if !ok {
@@ -7283,12 +7293,7 @@ func methodMemberType(t typeResolver, methodRef model.SymbolRef) semtypes.SemTyp
 }
 
 func typeFromFunctionSignature(t typeResolver, sig model.TypedFunctionSignature) semtypes.SemType {
-	paramListDefn := semtypes.NewListDefinition()
-	paramListTy := paramListDefn.Define(t.typeEnv(), sig.ParamTypes, semtypes.ListRest(sig.RestParamType),
-		semtypes.ListMutability(semtypes.CellMutabilityNone))
-	fnDefn := semtypes.NewFunctionDefinition()
-	return fnDefn.Define(t.typeEnv(), paramListTy, sig.ReturnType,
-		semtypes.FunctionQualifiersFrom(t.typeEnv(), sig.IsIsolated(), sig.IsTransactional()))
+	return opaque.FunctionSemType(t.typeEnv(), sig)
 }
 
 func resolveFixedArraySize(t typeResolver, lenExp ast.BLangExpression) (int, bool) {
@@ -8285,62 +8290,6 @@ func setPositions(pos diagnostics.Location, nodes ...ast.BLangNode) {
 	}
 }
 
-// opaqueFnMonomorphizer monomorphizes a generic lang-lib function at a call
-// site. It resolves the arguments needed for type inference, builds the concrete
-// monomorphized symbol, and returns its ref and the resulting binding chain.
-// Results are cached on the opaque symbol.
-type opaqueFnMonomorphizer func(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, expectedType semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool)
-
-// Per-package opaque-function monomorphizer tables, indexed by opaque id.
-// Assigned in init (not via var initializers) to avoid an initialization cycle:
-// the monomorphizers' bodies reach back into the resolver call graph, which
-// references these tables.
-var (
-	arrayOpaqueMonomorphizers []opaqueFnMonomorphizer
-	mapOpaqueMonomorphizers   []opaqueFnMonomorphizer
-	xmlOpaqueMonomorphizers   []opaqueFnMonomorphizer
-)
-
-func init() {
-	arrayOpaqueMonomorphizers = []opaqueFnMonomorphizer{
-		model.OpaqueFnArrayPush:      monomorphizeArrayPush,
-		model.OpaqueFnArrayMap:       monomorphizeArrayMap,
-		model.OpaqueFnArrayIndexOf:   monomorphizeArrayIndexOf,
-		model.OpaqueFnArrayRemove:    monomorphizeArrayRemove,
-		model.OpaqueFnArrayRemoveAll: monomorphizeArrayRemoveAll,
-	}
-	mapOpaqueMonomorphizers = []opaqueFnMonomorphizer{
-		model.OpaqueFnMapRemove: monomorphizeMapRemove,
-		model.OpaqueFnMapGet:    monomorphizeMapGet,
-	}
-	xmlOpaqueMonomorphizers = []opaqueFnMonomorphizer{
-		model.OpaqueFnXMLIterator: monomorphizeXMLIterator,
-	}
-}
-
-// opaqueFunctionMonomorphizerFor selects the monomorphizer for a generic
-// lang-lib function, indexed by its opaque id within the owning package.
-func opaqueFunctionMonomorphizerFor(org, pkg string, id int) (opaqueFnMonomorphizer, bool) {
-	if org != "ballerina" {
-		return nil, false
-	}
-	var monomorphizers []opaqueFnMonomorphizer
-	switch pkg {
-	case "lang.array":
-		monomorphizers = arrayOpaqueMonomorphizers
-	case "lang.map":
-		monomorphizers = mapOpaqueMonomorphizers
-	case "lang.xml":
-		monomorphizers = xmlOpaqueMonomorphizers
-	default:
-		return nil, false
-	}
-	if id < 0 || id >= len(monomorphizers) {
-		return nil, false
-	}
-	return monomorphizers[id], true
-}
-
 // monomorphicOpaqueFn satisfies model.MonomorphicFunctionSymbol: a concrete
 // function symbol that carries a backref to its polymorphic opaque origin so
 // BIR dispatches to the lang-lib extern.
@@ -8356,406 +8305,30 @@ func (m *monomorphicOpaqueFn) PolymorphicSymbol() model.SymbolRef { return m.pol
 
 var _ model.MonomorphicFunctionSymbol = &monomorphicOpaqueFn{}
 
-// opaqueArgExpr returns the expression bound to a parameter of an opaque
-// lang-lib function, supporting positional and named arguments.
-func opaqueArgExpr(args []ast.BLangExpression, paramNames []string, index int) (ast.BLangExpression, bool) {
-	positionalIndex := 0
-	for _, arg := range args {
-		if named, ok := arg.(*ast.BLangNamedArgsExpression); ok {
-			if paramIndexOf(paramNames, named.Name.GetValue()) == index {
-				return named.Expr, true
-			}
-			continue
-		}
-		if positionalIndex == index {
-			return arg, true
-		}
-		positionalIndex++
+// materializeOpaqueFn builds the monomorphic symbol for sig, adds it to the opaque
+// symbol's space, sets its type, and gives it the opaque function's shared untyped
+// signature. Caching the result is the opaque package's job, so the cache key stays
+// private to the function that chose it.
+func materializeOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol,
+	polymorphicRef model.SymbolRef, sig model.TypedFunctionSignature,
+	loc diagnostics.Location) (model.SymbolRef, bool) {
+	mono := &monomorphicOpaqueFn{
+		FunctionSymbol: model.NewFunctionSymbol(sym.Name(), sig, true, loc),
+		poly:           polymorphicRef,
 	}
-	return nil, false
-}
-
-func containerArgExpr(args []ast.BLangExpression, paramName string) (ast.BLangExpression, bool) {
-	return opaqueArgExpr(args, []string{paramName}, 0)
-}
-
-// storeMonomorphizedOpaqueFn builds the monomorphic symbol for sig, adds it to
-// the opaque symbol's space, sets its type, and caches it under the cache keys.
-func storeMonomorphizedOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, sig model.TypedFunctionSignature, loc diagnostics.Location, cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType) (model.SymbolRef, bool) {
-	mono := &monomorphicOpaqueFn{FunctionSymbol: model.NewFunctionSymbol(sym.Name(), sig, true, loc), poly: polymorphicRef}
 	mono.SetType(typeFromFunctionSignature(t, sig))
 	space := sym.SymbolSpace
 	idx := space.AppendSymbol(mono)
 	mono.name = fmt.Sprintf("%s$mono$%d", sym.Name(), idx)
 	ref := space.RefAt(idx)
-	pkg := t.compilerContext().SymbolPackage(polymorphicRef).Package
-	handle := t.allocateFunctionSignature(opaqueFunctionParams(pkg, sym.Name(), sig), sym.Name() == "push")
-	if !t.associateFunctionSignature(ref, handle) {
+	sigRef, ok := t.functionSignatureRef(polymorphicRef)
+	if !ok {
+		t.internalError("opaque function has no untyped signature", loc)
+		return model.SymbolRef{}, false
+	}
+	if !t.associateFunctionSignature(ref, sigRef) {
 		t.internalError("function signature already set", loc)
 		return model.SymbolRef{}, false
 	}
-	if sym.Store != nil {
-		sym.Store(ref, cacheKey, cacheKeyRest...)
-	}
 	return ref, true
-}
-
-// opaqueFunctionParams returns parameter names for an opaque function. Opaque
-// symbols carry no function signature of their own, so named arguments and
-// defaultable parameters are not supported for them; the names here exist only
-// for the ones that already had them. Attaching real (untyped) signatures to
-// opaque symbols is the proper fix and is tracked separately.
-func opaqueFunctionParams(pkg, name string, sig model.TypedFunctionSignature) []model.Param {
-	switch pkg {
-	case "lang.array":
-		switch name {
-		case "push":
-			return []model.Param{{Name: "arr"}, {Name: "vals", Flag: model.ParamFlagRestParam}}
-		case "map":
-			return []model.Param{{Name: "arr"}, {Name: "func"}}
-		}
-	case "lang.map":
-		switch name {
-		case "remove", "get":
-			return []model.Param{{Name: "m"}, {Name: "k"}}
-		}
-	}
-	// Opaque symbols carry no signature of their own, so named arguments cannot
-	// resolve against them; leaving the names unset keeps the diagnostic honest
-	// instead of reporting another function's parameter names.
-	return make([]model.Param, len(sig.ParamTypes))
-}
-
-func monomorphizeArrayPush(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
-	containerExpr, ok := containerArgExpr(args, "arr")
-	if !ok {
-		t.semanticError("missing container argument", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	containerResult, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
-	if !ok {
-		return model.SymbolRef{}, chain, false
-	}
-	containerTy, effect := containerResult.ty, containerResult.effect
-	chain = effect.ifTrue
-	if sym.Lookup != nil {
-		if ref, found := sym.Lookup(containerTy); found {
-			return ref, chain, true
-		}
-	}
-	cx := t.typeContext()
-	if !semtypes.IsSubtype(cx, containerTy, semtypes.List) {
-		t.semanticError("expect first argument to be a subtype of (any|error)[]", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	valType := semtypes.ListProj(cx, containerTy, semtypes.Int)
-	sig := model.TypedFunctionSignature{
-		ParamTypes:    []semtypes.SemType{containerTy},
-		RestParamType: valType,
-		ReturnType:    semtypes.Nil,
-		Flags:         model.FuncSymbolFlagIsolated,
-	}
-	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
-	return ref, chain, ok
-}
-
-func monomorphizeArrayIndexOf(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
-	containerExpr, ok := containerArgExpr(args, "arr")
-	if !ok {
-		t.semanticError("missing container argument", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	containerResult, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
-	if !ok {
-		return model.SymbolRef{}, chain, false
-	}
-	containerTy := containerResult.ty
-	chain = containerResult.effect.ifTrue
-	// startIndex defaults to 0 per spec (`indexOf(arr, val, int startIndex = 0)`).
-	// Opaque functions don't go through the general defaultable-param desugaring
-	// path (see padArgTypesForDefaults), so instead we monomorphize a 2- or
-	// 3-param signature to match what the call site actually provided; the Go
-	// extern already defaults startIndex to 0 when it isn't passed. The cache
-	// key must include the arity marker too, since two call sites can share
-	// the same containerTy but resolve to different arities.
-	hasStartIndex := len(args) > 2
-	arityKey := semtypes.Nil
-	if hasStartIndex {
-		arityKey = semtypes.Int
-	}
-	if sym.Lookup != nil {
-		if ref, ok := sym.Lookup(containerTy, arityKey); ok {
-			return ref, chain, true
-		}
-	}
-	cx := t.typeContext()
-	anydataArrDef := semtypes.NewListDefinition()
-	anydataArrTy := anydataArrDef.Define(t.typeEnv(), nil, semtypes.ListRest(semtypes.CreateAnydata(cx)))
-	if !semtypes.IsSubtype(cx, containerTy, anydataArrTy) {
-		t.semanticError("expect first argument to be a subtype of anydata[]", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	valType := semtypes.ListProj(cx, containerTy, semtypes.Int)
-	paramTypes := []semtypes.SemType{containerTy, valType}
-	if hasStartIndex {
-		paramTypes = append(paramTypes, semtypes.Int)
-	}
-	sig := model.TypedFunctionSignature{
-		ParamTypes: paramTypes,
-		ReturnType: semtypes.Union(semtypes.Int, semtypes.Nil),
-		Flags:      model.FuncSymbolFlagIsolated,
-	}
-	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy, arityKey)
-	return ref, chain, ok
-}
-
-func monomorphizeArrayRemove(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
-	containerExpr, ok := containerArgExpr(args, "arr")
-	if !ok {
-		t.semanticError("missing container argument", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	containerResult, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
-	if !ok {
-		return model.SymbolRef{}, chain, false
-	}
-	containerTy := containerResult.ty
-	chain = containerResult.effect.ifTrue
-	if sym.Lookup != nil {
-		if ref, ok := sym.Lookup(containerTy); ok {
-			return ref, chain, true
-		}
-	}
-	cx := t.typeContext()
-	if !semtypes.IsSubtype(cx, containerTy, semtypes.List) {
-		t.semanticError("expect first argument to be a subtype of (any|error)[]", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	if semtypes.IsSubtype(cx, containerTy, semtypes.ValReadonly) {
-		t.semanticError("cannot update 'readonly' value of type '"+semtypes.ToString(cx, containerTy)+"'", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	elementType := semtypes.ListProj(cx, containerTy, semtypes.Int)
-	sig := model.TypedFunctionSignature{
-		ParamTypes: []semtypes.SemType{containerTy, semtypes.Int},
-		ReturnType: elementType,
-		Flags:      model.FuncSymbolFlagIsolated,
-	}
-	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
-	return ref, chain, ok
-}
-
-func monomorphizeArrayRemoveAll(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
-	containerExpr, ok := containerArgExpr(args, "arr")
-	if !ok {
-		t.semanticError("missing container argument", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	containerResult, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
-	if !ok {
-		return model.SymbolRef{}, chain, false
-	}
-	containerTy := containerResult.ty
-	chain = containerResult.effect.ifTrue
-	if sym.Lookup != nil {
-		if ref, ok := sym.Lookup(containerTy); ok {
-			return ref, chain, true
-		}
-	}
-	cx := t.typeContext()
-	if !semtypes.IsSubtype(cx, containerTy, semtypes.List) {
-		t.semanticError("expect first argument to be a subtype of (any|error)[]", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	if semtypes.IsSubtype(cx, containerTy, semtypes.ValReadonly) {
-		t.semanticError("cannot update 'readonly' value of type '"+semtypes.ToString(cx, containerTy)+"'", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	sig := model.TypedFunctionSignature{
-		ParamTypes: []semtypes.SemType{containerTy},
-		ReturnType: semtypes.Nil,
-		Flags:      model.FuncSymbolFlagIsolated,
-	}
-	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
-	return ref, chain, ok
-}
-
-func monomorphizeArrayMap(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, expectedType semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
-	paramNames := []string{"arr", "func"}
-	containerExpr, ok := opaqueArgExpr(args, paramNames, 0)
-	if !ok {
-		t.semanticError("missing container argument", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	containerResult, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
-	if !ok {
-		return model.SymbolRef{}, chain, false
-	}
-	containerTy, effect := containerResult.ty, containerResult.effect
-	chain = effect.ifTrue
-	cx := t.typeContext()
-	if !semtypes.IsSubtype(cx, containerTy, semtypes.List) {
-		t.semanticError("expect first argument to be a list subtype", containerExpr.GetPosition())
-		return model.SymbolRef{}, chain, false
-	}
-	memberTy := semtypes.ListProj(cx, containerTy, semtypes.Int)
-
-	callbackExpr, ok := opaqueArgExpr(args, paramNames, 1)
-	if !ok {
-		t.semanticError("missing callback argument", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	callbackReturnTy := semtypes.Val
-	if !semtypes.IsZero(expectedType) && !semtypes.IsNever(expectedType) && semtypes.IsSubtype(cx, expectedType, semtypes.List) {
-		callbackReturnTy = semtypes.ListProj(cx, expectedType, semtypes.Int)
-	}
-	callbackFlags := model.FuncSymbolFlags(0)
-	if isolatedContext(t) {
-		callbackFlags = model.FuncSymbolFlagIsolated
-	}
-	callbackTopSig := model.TypedFunctionSignature{
-		ParamTypes:    []semtypes.SemType{memberTy},
-		ReturnType:    callbackReturnTy,
-		RestParamType: semtypes.Never,
-		Flags:         callbackFlags,
-	}
-	callbackTopTy := typeFromFunctionSignature(t, callbackTopSig)
-	callbackResult, ok := resolveActionOrExpression(t, chain, callbackExpr, callbackTopTy)
-	if !ok {
-		return model.SymbolRef{}, chain, false
-	}
-	callbackTy, effect := callbackResult.ty, callbackResult.effect
-	chain = effect.ifTrue
-	callbackArgsDef := semtypes.NewListDefinition()
-	callbackArgsTy := callbackArgsDef.Define(t.typeEnv(), []semtypes.SemType{memberTy},
-		semtypes.ListMutability(semtypes.CellMutabilityNone))
-	var resultMemberTy semtypes.SemType
-	if semtypes.IsNever(memberTy) {
-		resultMemberTy = semtypes.FunctionReturnType(cx, callbackTy, semtypes.FunctionParamListType(cx, callbackTy))
-	} else {
-		resultMemberTy = semtypes.FunctionReturnType(cx, callbackTy, callbackArgsTy)
-	}
-	if semtypes.IsZero(resultMemberTy) {
-		t.semanticError("callback is not callable with the array member type", callbackExpr.GetPosition())
-		return model.SymbolRef{}, chain, false
-	}
-	callbackSig := model.TypedFunctionSignature{
-		ParamTypes:    []semtypes.SemType{memberTy},
-		ReturnType:    resultMemberTy,
-		RestParamType: semtypes.Never,
-		Flags:         callbackFlags,
-	}
-	callbackParamTy := typeFromFunctionSignature(t, callbackSig)
-	if sym.Lookup != nil {
-		if ref, found := sym.Lookup(containerTy, resultMemberTy, callbackParamTy); found {
-			return ref, chain, true
-		}
-	}
-	resultDef := semtypes.NewListDefinition()
-	resultTy := resultDef.Define(t.typeEnv(), nil, semtypes.ListRest(resultMemberTy))
-	sig := model.TypedFunctionSignature{
-		ParamTypes:    []semtypes.SemType{containerTy, callbackParamTy},
-		ReturnType:    resultTy,
-		RestParamType: semtypes.Never,
-		Flags:         model.FuncSymbolFlagIsolated,
-	}
-	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy, resultMemberTy, callbackParamTy)
-	return ref, chain, ok
-}
-
-func monomorphizeXMLIterator(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
-	containerExpr, ok := containerArgExpr(args, "x")
-	if !ok {
-		t.semanticError("missing container argument", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	containerResult, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
-	if !ok {
-		return model.SymbolRef{}, chain, false
-	}
-	containerTy, effect := containerResult.ty, containerResult.effect
-	chain = effect.ifTrue
-	if sym.Lookup != nil {
-		if ref, found := sym.Lookup(containerTy); found {
-			return ref, chain, true
-		}
-	}
-	cx := t.typeContext()
-	if !semtypes.IsSubtype(cx, containerTy, semtypes.XML) {
-		t.semanticError("expect first argument to be a subtype of xml", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	itemTy := semtypes.XMLItemType(containerTy)
-	sig := model.TypedFunctionSignature{
-		ParamTypes:    []semtypes.SemType{containerTy},
-		RestParamType: semtypes.Never,
-		ReturnType:    createXMLIteratorType(t, itemTy),
-		Flags:         model.FuncSymbolFlagIsolated,
-	}
-	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
-	return ref, chain, ok
-}
-
-func createXMLIteratorType(t typeResolver, itemTy semtypes.SemType) semtypes.SemType {
-	env := t.typeEnv()
-	return t.xmlIteratorTypeCache().GetOrBuild(itemTy, func() semtypes.SemType {
-		recordDef := semtypes.NewMappingDefinition()
-		recordTy := recordDef.Define(env,
-			[]semtypes.Field{semtypes.FieldFrom("value", itemTy, false, false)},
-			semtypes.Never)
-		nextReturnTy := semtypes.Union(recordTy, semtypes.Nil)
-		ld := semtypes.NewListDefinition()
-		emptyParams := ld.Define(env, nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
-		fd := semtypes.NewFunctionDefinition()
-		nextFnTy := fd.Define(env, emptyParams, nextReturnTy, semtypes.FunctionQualifiersFrom(env, true, false))
-		iterOd := semtypes.NewObjectDefinition()
-		return iterOd.Define(env, semtypes.ObjectQualifiersDefault, []semtypes.Member{{
-			Name:       "next",
-			ValueType:  nextFnTy,
-			Kind:       semtypes.MemberKindMethod,
-			Visibility: semtypes.VisibilityPublic,
-			Immutable:  true,
-		}})
-	})
-}
-
-func monomorphizeMapGet(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
-	return monomorphizeMapMemberFunction(t, sym, polymorphicRef, chain, args, pos)
-}
-
-func monomorphizeMapRemove(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
-	return monomorphizeMapMemberFunction(t, sym, polymorphicRef, chain, args, pos)
-}
-
-func monomorphizeMapMemberFunction(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
-	containerExpr, ok := containerArgExpr(args, "m")
-	if !ok {
-		t.semanticError("missing container argument", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	containerResult, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
-	if !ok {
-		return model.SymbolRef{}, chain, false
-	}
-	containerTy, effect := containerResult.ty, containerResult.effect
-	chain = effect.ifTrue
-	if sym.Lookup != nil {
-		if ref, found := sym.Lookup(containerTy); found {
-			return ref, chain, true
-		}
-	}
-	cx := t.typeContext()
-	if !semtypes.IsSubtype(cx, containerTy, semtypes.Mapping) {
-		t.semanticError("expect first argument to be a subtype of map<any|error>", pos)
-		return model.SymbolRef{}, chain, false
-	}
-	memberType := semtypes.MappingMemberTypeInnerValProj(cx, containerTy, semtypes.String)
-	sig := model.TypedFunctionSignature{
-		ParamTypes:    []semtypes.SemType{containerTy, semtypes.String},
-		RestParamType: semtypes.Never,
-		ReturnType:    memberType,
-		Flags:         model.FuncSymbolFlagIsolated,
-	}
-	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
-	return ref, chain, ok
 }

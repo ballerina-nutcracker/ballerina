@@ -180,10 +180,13 @@ var UnsupportedTests = []string{
 	// rest param not supported in dependently typed functions
 	"subset8/08-function/dependent-fn-5-e.bal",
 
-	// Named arguments on langlib functions backed by opaque symbols. Opaque
-	// symbols carry no function signature of their own, so the parameter names
-	// jBallerina exposes cannot be resolved for them. Attaching untyped
-	// signatures to opaque symbols is the proper fix.
+	// Default parameters on langlib functions backed by opaque symbols. A
+	// default parameter is evaluated by a default closure generated from the
+	// defining module's AST; an opaque function is defined in Go and has no
+	// such module, so its parameters are all required and omitting one is a
+	// "missing required parameter" error. array:indexOf declares
+	// `int startIndex = 0`, so both of these omit it.
+	"subset10/10-langlibs/array-indexof-default-start-v.bal",
 	"subset10/10-langlibs/langlib-opaque-named-args-v.bal",
 }
 

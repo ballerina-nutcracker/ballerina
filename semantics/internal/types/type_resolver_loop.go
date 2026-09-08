@@ -20,6 +20,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/opaque"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -51,8 +52,8 @@ func (l *loopTypeResolver) nextMonoFnName(origName string) string {
 	return l.parentResolver.nextMonoFnName(origName)
 }
 func (l *loopTypeResolver) typeEnv() semtypes.Env { return l.parentResolver.typeEnv() }
-func (l *loopTypeResolver) xmlIteratorTypeCache() *semtypes.SemTypeCache {
-	return l.parentResolver.xmlIteratorTypeCache()
+func (l *loopTypeResolver) opaqueContext() *opaque.Context {
+	return l.parentResolver.opaqueContext()
 }
 
 func (l *loopTypeResolver) semanticError(msg string, loc diagnostics.Location) {

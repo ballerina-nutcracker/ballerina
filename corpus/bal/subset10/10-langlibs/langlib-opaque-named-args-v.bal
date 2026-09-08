@@ -17,11 +17,11 @@
 import ballerina/io;
 
 // Parameter names are part of the public interface, so jBallerina accepts all
-// of these. They are skiplisted here (see test_util/skip.go): these langlib
-// functions are opaque symbols, which carry no function signature of their
-// own, so named arguments cannot be resolved for them yet. The fix is to
-// attach untyped signatures to opaque symbols so they behave like any other
-// function; this test documents the target behaviour until then.
+// of these. Named arguments now resolve against opaque symbols, but this test
+// stays skiplisted (see test_util/skip.go) for the two `indexOf` calls that
+// omit `startIndex`: it is declared `int startIndex = 0`, and an opaque
+// function cannot carry a default, so the parameter is required. This test
+// documents the target behaviour until opaque defaults are supported.
 public function main() {
     int[] a = [1, 2, 3, 2];
     io:println(a.indexOf(val = 2)); // @output 1

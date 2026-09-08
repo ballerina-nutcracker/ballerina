@@ -3,11 +3,11 @@
 error[SEMANTIC_ERROR]: expect first argument to be a subtype of anydata[]
   --> array-indexof-non-anydata-e.bal:22:9
    |
-22 |     _ = errs.indexOf(error("a")); // @error indexOf requires anydata[], error[] is not anydata
-   |         ^^^^^^^^^^^^^^^^^^^^^^^^
+22 |     _ = errs.indexOf(error("a"), 0); // @error indexOf requires anydata[], error[] is not anydata
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: expect first argument to be a subtype of anydata[]
   --> array-indexof-non-anydata-e.bal:25:9
    |
-25 |     _ = [p].indexOf(p); // @error indexOf requires anydata[], Person[] is not anydata
-   |         ^^^^^^^^^^^^^^
+25 |     _ = [p].indexOf(p, 0); // @error indexOf requires anydata[], Person[] is not anydata
+   |         ^^^^^^^^^^^^^^^^^

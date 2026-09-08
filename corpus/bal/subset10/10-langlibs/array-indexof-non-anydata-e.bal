@@ -19,8 +19,8 @@ class Person {
 
 public function main() {
     error[] errs = [error("a")];
-    _ = errs.indexOf(error("a")); // @error indexOf requires anydata[], error[] is not anydata
+    _ = errs.indexOf(error("a"), 0); // @error indexOf requires anydata[], error[] is not anydata
 
     Person p = new;
-    _ = [p].indexOf(p); // @error indexOf requires anydata[], Person[] is not anydata
+    _ = [p].indexOf(p, 0); // @error indexOf requires anydata[], Person[] is not anydata
 }

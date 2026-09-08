@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no such parameter array
+  --> push-named1-e.bal:19:16
+   |
+19 |     array:push(array = ints); // @error no such parameter array
+   |                ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: no such parameter vals
+  --> push-named1-e.bal:20:22
+   |
+20 |     array:push(ints, vals = 1); // @error rest parameter cannot be addressed by name
+   |                      ^^^^^^^^
