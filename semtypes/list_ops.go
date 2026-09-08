@@ -278,17 +278,17 @@ func listInhabited(cx Context, indices []int, memberTypes []SemType, nRequired i
 }
 
 func listMemberAtInnerVal(fixedArray fixedLengthArray, rest SemType, index int) SemType {
-	return cellInnerVal(listMemberAt(fixedArray, rest, index))
+	return CellInnerVal(listMemberAt(fixedArray, rest, index))
 }
 
 func listLengthsDisjoint(members1 fixedLengthArray, rest1 SemType, members2 fixedLengthArray, rest2 SemType) bool {
 	len1 := members1.FixedLength
 	len2 := members2.FixedLength
 	if len1 < len2 {
-		return IsNever(cellInnerVal(rest1))
+		return IsNever(CellInnerVal(rest1))
 	}
 	if len2 < len1 {
-		return IsNever(cellInnerVal(rest2))
+		return IsNever(CellInnerVal(rest2))
 	}
 	return false
 }

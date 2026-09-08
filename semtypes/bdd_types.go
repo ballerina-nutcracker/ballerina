@@ -205,11 +205,11 @@ func (sc *bddSerializationContext) serializeListAtom(atom atom) int32 {
 	for i := range at.members.initial {
 		cell := at.members.initial[i]
 		initial[i] = sc.pool.Put(cellInner(cell))
-		mut = uint8(cellMut(cell))
+		mut = uint8(CellMut(cell))
 	}
 	rest := sc.pool.Put(cellInner(at.rest))
 	if len(at.members.initial) == 0 {
-		mut = uint8(cellMut(at.rest))
+		mut = uint8(CellMut(at.rest))
 	}
 
 	sc.bp.listAtomicTypes[idx] = listAtomicTypeEntry{
@@ -237,10 +237,10 @@ func (sc *bddSerializationContext) serializeMappingAtom(atom atom) int32 {
 		names[i] = enumerableStringDataEntry{len: int32(len(b)), values: b}
 		atomTy := at.types[i]
 		types[i] = sc.pool.Put(cellInner(atomTy))
-		muts[i] = uint8(cellMut(atomTy))
+		muts[i] = uint8(CellMut(atomTy))
 	}
 	rest := sc.pool.Put(cellInner(at.rest))
-	restMut := uint8(cellMut(at.rest))
+	restMut := uint8(CellMut(at.rest))
 
 	sc.bp.mappingAtomicTypes[idx] = mappingAtomicTypeEntry{
 		nFields: int32(len(names)),
@@ -279,7 +279,18 @@ func (sc *bddSerializationContext) serializeXMLAtom(atom atom) int32 {
 	return idx
 }
 
-func cellMut(cell SemType) CellMutability {
+// CellMut returns the mutability of a cell.
+//
+// The argument must be a cell semtype with a single atomic representation: the body indexes
+// the first subtype data entry and type asserts it, so a cell with no atomic representation
+// panics with an index out of range rather than returning a value. This is the same
+// precondition CellInnerVal relies on through cellInner.
+//
+// Every cell reachable through MappingAtomicType.FieldCell satisfies it: mapping atomics build
+// their cells either through cellContainingWithEnvSemTypeCellMutability (MappingDefinition.Define,
+// bdd_types deserialization, intersectMapping) or from a predefined cell atom
+// (MappingAtomicInner, whose rest is cellSemtypeInner).
+func CellMut(cell SemType) CellMutability {
 	bdd := cell.subtypeDataList()[0].(bddNode)
 	cat := bdd.atom().(*typeAtom).AtomicType.(*cellAtomicType)
 	return cat.Mut

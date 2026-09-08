@@ -287,7 +287,7 @@ func (t *Toml) To(target any) {
 // json.Unmarshal can resolve it.
 func remapForTarget(m map[string]any, targetType reflect.Type) map[string]any {
 	// Dereference pointer types (target is typically a *Struct).
-	for targetType != nil && targetType.Kind() == reflect.Ptr {
+	for targetType != nil && targetType.Kind() == reflect.Pointer {
 		targetType = targetType.Elem()
 	}
 	if targetType == nil || targetType.Kind() != reflect.Struct {
@@ -371,7 +371,7 @@ func remapForTarget(m map[string]any, targetType reflect.Type) map[string]any {
 // sliceElemType returns the element type of a slice/array type, or the type
 // itself if it is not a slice/array.
 func sliceElemType(t reflect.Type) reflect.Type {
-	for t != nil && (t.Kind() == reflect.Slice || t.Kind() == reflect.Array || t.Kind() == reflect.Ptr) {
+	for t != nil && (t.Kind() == reflect.Slice || t.Kind() == reflect.Array || t.Kind() == reflect.Pointer) {
 		t = t.Elem()
 	}
 	return t
