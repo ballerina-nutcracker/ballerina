@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: constant list spread member must be a list
+  --> list-spread-non-list-e.bal:18:21
+   |
+18 | const int[] A = [...X]; // @error
+   |                     ^

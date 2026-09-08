@@ -21,4 +21,4 @@ public const int? y = ();
 // There is no underlying form that works with () (only works with NUMBER; so nillifted form is NUMBER|())
 
 public const int? a = x + y; // @error
-public const int? b = x - y;
+public const int? b = x - y; // @error

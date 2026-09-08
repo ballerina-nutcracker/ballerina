@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: division by zero
+  --> multi-fold-e.bal:17:11
+   |
+17 | const A = 1 / 0; // @error
+   |           ^^^^^
+
+error[SEMANTIC_ERROR]: division by zero
+  --> multi-fold-e.bal:18:11
+   |
+18 | const B = 2 % 0; // @error
+   |           ^^^^^

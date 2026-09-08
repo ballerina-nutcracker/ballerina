@@ -5,3 +5,15 @@ error[SEMANTIC_ERROR]: expect numeric type for +
    |
 19 | public const int? x = +base2; // @error
    |                       ^^^^^^
+
+error[SEMANTIC_ERROR]: expect numeric type for -
+  --> unary-4-e.bal:20:23
+   |
+20 | public const int? y = -base2; // @error
+   |                       ^^^^^^
+
+error[SEMANTIC_ERROR]: expect numeric type for ~
+  --> unary-4-e.bal:21:23
+   |
+21 | public const int? z = ~base2; // @error
+   |                       ^^^^^^

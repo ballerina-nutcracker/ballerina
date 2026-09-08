@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: constant xml template not implemented
+  --> const-xml-template-value-fv.bal:29:15
+   |
+29 | @info {value: xml `<a>${I}</a>`} // @error
+   |               ^^^^^^^^^^^^^^^^^

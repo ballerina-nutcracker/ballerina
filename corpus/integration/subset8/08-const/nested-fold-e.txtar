@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: division by zero
+  --> nested-fold-e.bal:17:36
+   |
+17 | const A = [string `x${1 + <int>(-((1 / 0) ?: 2))}`]; // @error
+   |                                    ^^^^^

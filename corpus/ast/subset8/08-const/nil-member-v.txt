@@ -1,0 +1,29 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const T (
+    (tuple-type
+      (value-type null)
+      (value-type int))) (
+    (list-constructor-expr
+      (literal <nil>)
+      (literal 1))))
+  (const M (
+    (constrained-type
+      (builtin-ref-type map)
+      (union-type
+        (value-type int)
+        (value-type null)))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (literal <nil>)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref T))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref M)))))))

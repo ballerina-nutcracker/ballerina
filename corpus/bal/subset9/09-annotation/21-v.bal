@@ -16,9 +16,9 @@
 
 import ballerina/io;
 
-// Exercises the evaluateConstantReference !ok path: a non-const module
-// variable has no singleton type, so constantSingleShapeValue returns false
-// and the annotation falls back to a runtime annotation global.
+// Exercises the runtime annotation value path: a reference to a non-const
+// module variable is not a constant expression, so the annotation falls back
+// to a runtime annotation global.
 type Code record {|
     int value;
 |};

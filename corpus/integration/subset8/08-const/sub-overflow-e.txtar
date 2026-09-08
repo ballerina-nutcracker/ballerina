@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: integer overflow
+  --> sub-overflow-e.bal:17:11
+   |
+17 | const A = -9223372036854775807 - 2; // @error
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^

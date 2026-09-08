@@ -5,3 +5,9 @@ error[SEMANTIC_ERROR]: union types not supported for +
    |
 23 | public const int? a = x + y; // @error
    |                       ^^^^^
+
+error[SEMANTIC_ERROR]: union types not supported for -
+  --> additive-3-e.bal:24:23
+   |
+24 | public const int? b = x - y; // @error
+   |                       ^^^^^

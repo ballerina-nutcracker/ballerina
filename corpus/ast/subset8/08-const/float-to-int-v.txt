@@ -1,0 +1,52 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const A () (
+    (type-conversion-expr
+      (literal 1.0)
+      (value-type int))))
+  (const B () (
+    (type-conversion-expr
+      (unary-expr -
+        (literal 2.0))
+      (value-type int))))
+  (const C () (
+    (type-conversion-expr
+      (group-expr
+        (binary-expr /
+          (literal 9.0)
+          (literal 3.0)))
+      (value-type int))))
+  (const D () (
+    (type-conversion-expr
+      (literal 2.5)
+      (value-type int))))
+  (const E () (
+    (type-conversion-expr
+      (literal 3.5)
+      (value-type int))))
+  (const F () (
+    (type-conversion-expr
+      (literal 9007199254740992.0)
+      (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref D))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref E))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref F)))))))

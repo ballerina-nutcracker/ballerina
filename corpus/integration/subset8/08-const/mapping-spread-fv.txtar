@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: mapping constructor spread field not implemented
+  --> mapping-spread-fv.bal:20:12
+   |
+20 | const Z = {...Y}; // @error
+   |            ^^^^

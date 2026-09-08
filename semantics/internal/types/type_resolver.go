@@ -17,7 +17,6 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -137,12 +136,15 @@ type deferredEmptinessCheck struct {
 }
 
 // resolutionStatus tracks lazy resolution progress for cycle detection.
+// resolutionFailed marks a constant whose resolution already reported a
+// diagnostic, so a constant that refers to it fails without reporting another.
 type resolutionStatus int
 
 const (
 	resolutionPending resolutionStatus = iota
 	resolutionInProgress
 	resolutionDone
+	resolutionFailed
 )
 
 type atomSideTableBase struct {
@@ -729,6 +731,8 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 		switch t.lazyResolutionStatus[ref] {
 		case resolutionDone:
 			return true
+		case resolutionFailed:
+			return false
 		case resolutionInProgress:
 			var pos diagnostics.Location
 			if c.Name != nil {
@@ -737,10 +741,7 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 			t.semanticError(fmt.Sprintf("invalid cycle detected for %s", t.symbolName(ref)), pos)
 			return false
 		default:
-			t.lazyResolutionStatus[ref] = resolutionInProgress
-			ok := resolveConstant(t, c)
-			t.lazyResolutionStatus[ref] = resolutionDone
-			return ok
+			return t.resolveLazyConstant(c)
 		}
 	}
 	if gv, inMap := t.globalVarNodes[ref]; inMap {
@@ -895,20 +896,35 @@ func resolvePackageConstants(t *packageTypeResolver, pkg *ast.BLangPackage) bool
 	if !ok {
 		return false
 	}
+	// Every constant is resolved even after one fails, so each failing constant
+	// reports its own diagnostic; one that depends on a failed constant fails
+	// through ensureResolved without reporting another.
+	allResolved := true
 	for _, idx := range order {
 		constant := pkg.Constants[idx]
-		ref := constant.Symbol()
-		if t.lazyResolutionStatus[ref] == resolutionDone {
-			continue
-		}
-		t.lazyResolutionStatus[ref] = resolutionInProgress
-		ok := resolveConstant(t, constant)
-		t.lazyResolutionStatus[ref] = resolutionDone
-		if !ok {
-			return false
+		switch t.lazyResolutionStatus[constant.Symbol()] {
+		case resolutionDone:
+		case resolutionFailed:
+			allResolved = false
+		case resolutionPending, resolutionInProgress:
+			if !t.resolveLazyConstant(constant) {
+				allResolved = false
+			}
 		}
 	}
-	return true
+	return allResolved
+}
+
+func (t *packageTypeResolver) resolveLazyConstant(constant *ast.BLangVariable) bool {
+	ref := constant.Symbol()
+	t.lazyResolutionStatus[ref] = resolutionInProgress
+	ok := resolveConstant(t, constant)
+	if ok {
+		t.lazyResolutionStatus[ref] = resolutionDone
+	} else {
+		t.lazyResolutionStatus[ref] = resolutionFailed
+	}
+	return ok
 }
 
 func topologicallySortConstants(t typeResolver, constants []*ast.BLangVariable) ([]int, bool) {
@@ -1571,19 +1587,9 @@ func resolveAnnotationAttachments(
 		if ann.AnnotationName != nil {
 			setOtherNodesAsNever(ann.AnnotationName)
 		}
-		value, err := evaluateAnnotationValue(t, ann.Expr)
-		runtimeValue := false
-		if err != nil {
-			if errors.Is(err, errNotConstantExpression) {
-				if sym.IsConst() {
-					t.semanticError("const annotation value must be a constant expression", ann.Expr.GetPosition())
-					continue
-				}
-				runtimeValue = true
-			} else {
-				t.semanticError("cannot evaluate annotation constant expression: "+err.Error(), ann.Expr.GetPosition())
-				continue
-			}
+		value, runtimeValue, ok := annotationAttachmentValue(t, sym.IsConst(), ann.Expr)
+		if !ok {
+			continue
 		}
 		if !runtimeValue {
 			ann.AnnotationValue = value
@@ -1681,13 +1687,30 @@ type repeatedAnnotationValue struct {
 	runtime     bool
 }
 
-func evaluateAnnotationValue(t typeResolver, expr ast.BLangExpression) (value values.AnnotationValue, err error) {
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("constant expression evaluation panicked: %v", recovered)
+// annotationAttachmentValue folds the value of an annotation attachment. A
+// non-const annotation need not have a constant value, so a value that is not a
+// constant expression, or one we cannot fold yet, is evaluated at runtime
+// instead (runtimeValue). A const annotation reports both.
+func annotationAttachmentValue(t typeResolver, isConst bool, expr ast.BLangExpression) (value values.AnnotationValue,
+	runtimeValue bool, ok bool,
+) {
+	if _, isConstant := isConstantExpression(t, expr); !isConstant {
+		if isConst {
+			t.semanticError("const annotation value must be a constant expression", expr.GetPosition())
+			return nil, false, false
 		}
-	}()
-	return evaluateConstantExpression(t, expr)
+		return nil, true, true
+	}
+	value, unsupported, folded := tryFoldConstant(t, expr)
+	switch {
+	case folded:
+		return value, false, true
+	case unsupported != nil && !isConst:
+		return nil, true, true
+	case unsupported != nil:
+		unsupported.report(t)
+	}
+	return nil, false, false
 }
 
 func createRuntimeAnnotationGlobal(t typeResolver, expr ast.BLangExpression) *values.RuntimeAnnotationValueRef {
@@ -2010,24 +2033,16 @@ func resolveXMLNS(t typeResolver, chain *binding, decl *ast.BLangXMLNS) bool {
 		t.semanticError("xmlns URI must be a string", uriExpr.GetPosition())
 		return false
 	}
-	isConstant := true
-	common.ValidateConstantExpr(t.compilerContext(), uriExpr, func(expr ast.BLangExpression) {
-		// Report only the first non-constant subexpression to avoid duplicate diagnostics.
-		if isConstant {
-			t.semanticError("expression is not a constant expression", expr.GetPosition())
-		}
-		isConstant = false
-	})
-	if !isConstant {
+	if offender, ok := isConstantExpression(t, uriExpr); !ok {
+		t.semanticError(notConstantExpressionMessage, offender.GetPosition())
 		return false
 	}
-	value, err := evaluateConstantExpression(t, uriExpr)
-	if err != nil {
-		t.semanticError("expression is not a constant expression", uriExpr.GetPosition())
-		return false
-	}
-	uri, ok := value.(string)
+	value, ok := foldConstant(t, uriExpr)
 	if !ok {
+		return false
+	}
+	uri, isString := value.(string)
+	if !isString {
 		t.semanticError("xmlns URI must be a string", uriExpr.GetPosition())
 		return false
 	}
@@ -8471,34 +8486,28 @@ func resolveConstant(t typeResolver, constant *ast.BLangVariable) bool {
 		t.internalError("constant expression is not an expression", constant.GetPosition())
 		return false
 	}
-	exprResult, ok := resolveActionOrExpression(t, nil, expr, annotationType)
+	if _, ok := resolveActionOrExpression(t, nil, expr, annotationType); !ok {
+		return false
+	}
+	// Type resolution has to stay ahead of folding: the folder reads determined
+	// types for casts and list constructors.
+	if offender, ok := isConstantExpression(t, expr); !ok {
+		t.semanticError(notConstantExpressionMessage, offender.GetPosition())
+		return false
+	}
+	value, ok := foldConstant(t, expr)
 	if !ok {
 		return false
 	}
-	exprTy := exprResult.ty
-	value, err := evaluateConstantExpression(t, expr)
-	if err != nil {
-		// A const-expr is evaluated at compile time (spec §6.4). A genuine
-		// evaluation failure — e.g. a cast that cannot be performed such as
-		// <int>(1.0/0.0) — is therefore a compile-time error, not a deferred
-		// runtime panic. Structural non-constness surfaces as
-		// errNotConstantExpression and is reported by validateConstantExpr.
-		if !errors.Is(err, errNotConstantExpression) {
-			t.semanticError("expression is not a constant expression", expr.GetPosition())
-		}
-	} else if sym, ok := t.getSymbol(constant.Symbol()).(*model.ConstantValueSymbol); ok {
+	if sym, ok := t.getSymbol(constant.Symbol()).(*model.ConstantValueSymbol); ok {
 		sym.SetConstantValue(value)
 	}
 
 	// The type of a constant is the intersection of readonly and the singleton
 	// type containing just the shape of its value (spec §8.8). The evaluated
 	// value carries that type, so taking it from there keeps the symbol type and
-	// the value in agreement. exprTy is the fallback for a constant whose value
-	// could not be evaluated; that is always a reported error.
-	expectedType := exprTy
-	if err == nil {
-		expectedType = values.SemTypeForValue(value)
-	}
+	// the value in agreement.
+	expectedType := values.SemTypeForValue(value)
 	constant.SetDeterminedType(expectedType)
 	symbol := constant.Symbol()
 	t.setSymbolType(symbol, expectedType)

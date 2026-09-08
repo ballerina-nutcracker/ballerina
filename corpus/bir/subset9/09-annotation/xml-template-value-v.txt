@@ -1,0 +1,27 @@
+module $anon.. v 0.0.0;
+$annotation$0  any;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad typedesc
+    %2 = ConstantLoad $anon/.:0.0.0:info
+    %3 = .@ %1 %2;
+    v = %3;
+    %5 = v is {| value: xml, never... |}
+    %5 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, v)[%1];
+    %2 = println(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

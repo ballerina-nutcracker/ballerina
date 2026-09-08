@@ -1,0 +1,4 @@
+-- stdout --
+[null,1]
+{"a":null}
+-- stderr --

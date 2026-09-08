@@ -1,0 +1,55 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (variable $annotation$0)
+  (annotation info
+    (user-defined-type Info)
+    (attach-point type))
+  (type-definition Info
+    (record-type
+      (field value
+        (value-type xml))))
+  (type-definition T
+    (annotation-attachment info
+      (mapping-constructor-expr
+        (key-value
+          (literal value)
+          (xml-template-literal
+            (template-string "<a>")
+            (invocation lang.__internal escapeXMLContent (
+              (numeric-literal 1)))
+            (template-string "</a>")))))
+    (value-type int))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref $annotation$0)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (xml-template-literal
+              (template-string "<a>")
+              (invocation lang.__internal escapeXMLContent (
+                (numeric-literal 1)))
+              (template-string "</a>")))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (union-type
+            (user-defined-type Info)
+            (value-type null))) (expr
+          (annot-access-expr info
+            (simple-var-ref T)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type Info))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref v)
+                (literal value)))))) ())
+      (block-stmt))))

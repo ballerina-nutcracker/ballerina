@@ -17,5 +17,5 @@
 
 public const int? base2 = ();
 public const int? x = +base2; // @error
-public const int? y = -base2;
-public const int? z = ~base2;
+public const int? y = -base2; // @error
+public const int? z = ~base2; // @error
