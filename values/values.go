@@ -107,7 +107,7 @@ func fillerFactoryFromDesc(cx semtypes.Context, f semtypes.Filler) (FillerFactor
 	case semtypes.ListFiller:
 		return listFillerFactory(cx, f)
 	case semtypes.XMLFiller:
-		return func() BalValue { return &XMLText{} }, true
+		return func() BalValue { return NewXMLText("") }, true
 	case semtypes.ObjectFiller, semtypes.StreamFiller, semtypes.TableFiller:
 		return nil, false
 	default:

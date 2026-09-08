@@ -1,0 +1,77 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition L2
+    (array-type
+      (value-type int) dimensions: 2 ([
+      (literal 2)][
+      (literal 2)])))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable exact (type
+          (intersection-type
+            (value-type readonly)
+            (tuple-type
+              (tuple-type
+                (finite-type
+                  (literal 0))
+                (finite-type
+                  (literal 0)))
+              (tuple-type
+                (finite-type
+                  (literal 0))
+                (finite-type
+                  (literal 0)))))) (expr
+          (literal [[0,0],[0,0]]))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref exact))))
+      (var-def
+        (variable rows (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (literal [[0,0],[0,0]]))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref rows)
+              (literal 0))
+            (intersection-type
+              (value-type readonly)
+              (tuple-type
+                (finite-type
+                  (literal 0))
+                (finite-type
+                  (literal 0))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref rows)
+              (literal 0))
+            (intersection-type
+              (value-type readonly)
+              (tuple-type
+                (finite-type
+                  (literal 1))
+                (finite-type
+                  (literal 0))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal [[0,0],[0,0]])
+            (intersection-type
+              (value-type readonly)
+              (tuple-type
+                (tuple-type
+                  (finite-type
+                    (literal 0))
+                  (finite-type
+                    (literal 0)))
+                (tuple-type
+                  (finite-type
+                    (literal 0))
+                  (finite-type
+                    (literal 0))))))))))))

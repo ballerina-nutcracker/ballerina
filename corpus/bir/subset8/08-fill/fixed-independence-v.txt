@@ -1,0 +1,57 @@
+module $anon.. v 0.0.0;
+make() -> [[int, int, never...], [int, int, never...], never...]{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = ConstantLoad 0
+    %3 = ConstantLoad 2
+    %4 = newArray [int, int, never...][%3]{%1, %2}
+    %5 = ConstantLoad 0
+    %6 = ConstantLoad 0
+    %7 = ConstantLoad 2
+    %8 = newArray [int, int, never...][%7]{%5, %6}
+    %9 = ConstantLoad 2
+    %10 = newArray [[int, int, never...], [int, int, never...], never...][%9]{%4, %8}
+    v = %10;
+    %0 = v;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = make() -> bb1;
+  }
+  bb1 {
+    a = %1;
+    %4 = ConstantLoad 0
+    %3 = a[%4];
+    %5 = %3 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad 9
+    %10 = ConstantLoad 0
+    %9 = a[%10] (fill);
+    %11 = ConstantLoad 0
+    %9[%11] = %8;
+    %12 = println(a) -> bb3;
+  }
+  bb3 {
+    %13 = make() -> bb4;
+  }
+  bb4 {
+    %14 = println(%13) -> bb5;
+  }
+  bb5 {
+    %15 = ConstantLoad 0
+    %16 = newArray [int...][%15]{}
+    grow = %16;
+    %18 = ConstantLoad 5
+    %19 = ConstantLoad 2
+    grow[%19] = %18;
+    %20 = println(grow) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
