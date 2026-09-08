@@ -64,9 +64,10 @@ func TestNativeMultiOrgPackages(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result, err := projects.Load(
+	compiled, err := testharness.CompileWithDriver(
 		os.DirFS(absProjectDir),
 		".",
+		filepath.Base(absProjectDir),
 		projects.ProjectLoadConfig{
 			Repositories: []projects.Repository{
 				// Bundled stdlib must come first (same order as defaultRepositories).
@@ -79,20 +80,17 @@ func TestNativeMultiOrgPackages(t *testing.T) {
 		t.Fatalf("load: %v", err)
 	}
 
-	pkg := result.Project().CurrentPackage()
-	compilation := pkg.Compilation()
-	if compilation.DiagnosticResult().HasErrors() {
-		for _, d := range compilation.DiagnosticResult().Diagnostics() {
+	if compiled.Context.HasErrors() {
+		for _, d := range compiled.Context.Diagnostics() {
 			t.Logf("diagnostic: %v", d)
 		}
 		t.Fatal("compilation had errors")
 	}
 
-	backend := projects.NewBallerinaBackend(compilation)
-	birPkgs := backend.BIRPackages()
+	birPkgs := compiled.BIRPackages
 
 	pal := testharness.NewTestPal()
-	rt := runtime.NewRuntime(pal.Platform(), result.Project().Environment().TypeEnv())
+	rt := runtime.NewRuntime(pal.Platform(), compiled.Resolver.CompilerEnvironment().GetTypeEnv())
 
 	for _, birPkg := range birPkgs {
 		if err := rt.Init(*birPkg); err != nil {

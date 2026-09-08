@@ -17,4 +17,4 @@
 import testorg/import_const3_e.selfref; // @error
 
 public const A = 1;
-const B = selfref:A; // @error
+const B = selfref:A;
