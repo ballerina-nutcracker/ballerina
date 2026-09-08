@@ -152,7 +152,9 @@ type (
 
 	NewXMLElement struct {
 		BIRInstructionBase
-		NameOp       *BIROperand
+		Prefix       string
+		LocalName    string
+		NamespaceURI string
 		ChildrenOp   *BIROperand
 		AttrsOp      *BIROperand
 		NamespacesOp *BIROperand
@@ -186,6 +188,27 @@ type (
 		LiteralsTotalLen int
 		Insertions       []*BIROperand
 	}
+
+	XMLFilter struct {
+		BIRInstructionBase
+		Source  *BIROperand
+		Filters []XMLNamePattern
+	}
+
+	XMLNamePattern struct {
+		Kind         XMLNamePatternKind
+		NamespaceURI string
+		Identifier   string
+	}
+)
+
+type XMLNamePatternKind uint8
+
+const (
+	XMLNamePatternKindWildCard XMLNamePatternKind = iota
+	XMLNamePatternKindIdentifier
+	XMLNamePatternKindQualifiedIdentifier
+	XMLNamePatternKindPrefix
 )
 
 type TemplateKind uint8
@@ -227,6 +250,7 @@ var (
 	_ BIRAssignInstruction    = &NewXMLText{}
 	_ BIRAssignInstruction    = &NewXMLSequence{}
 	_ BIRAssignInstruction    = &EvalTemplateExpr{}
+	_ BIRAssignInstruction    = &XMLFilter{}
 	_ MappingConstructorEntry = &MappingConstructorKeyValueEntry{}
 )
 
@@ -582,16 +606,32 @@ func (m *MappingConstructorKeyValueEntry) KeyOp() *BIROperand {
 func (n *NewXMLElement) GetLhsOperand() *BIROperand { return n.LhsOp }
 func (n *NewXMLElement) GetKind() InstructionKind   { return InstructionKindNewXMLElement }
 
-func NewXMLElementInstr(lhsOp, nameOp, childrenOp, attrsOp, namespacesOp *BIROperand, pos Location) *NewXMLElement {
+func NewXMLElementInstr(lhsOp *BIROperand, prefix, localName, namespaceURI string, childrenOp, attrsOp, namespacesOp *BIROperand, pos Location) *NewXMLElement {
 	return &NewXMLElement{
 		BIRInstructionBase: BIRInstructionBase{
 			BIRNodeBase: BIRNodeBase{Pos: pos},
 			LhsOp:       lhsOp,
 		},
-		NameOp:       nameOp,
+		Prefix:       prefix,
+		LocalName:    localName,
+		NamespaceURI: namespaceURI,
 		ChildrenOp:   childrenOp,
 		AttrsOp:      attrsOp,
 		NamespacesOp: namespacesOp,
+	}
+}
+
+func (x *XMLFilter) GetLhsOperand() *BIROperand { return x.LhsOp }
+func (x *XMLFilter) GetKind() InstructionKind   { return InstructionKindXMLFilter }
+
+func NewXMLFilterInstr(lhsOp, source *BIROperand, filters []XMLNamePattern, pos Location) *XMLFilter {
+	return &XMLFilter{
+		BIRInstructionBase: BIRInstructionBase{
+			BIRNodeBase: BIRNodeBase{Pos: pos},
+			LhsOp:       lhsOp,
+		},
+		Source:  source,
+		Filters: filters,
 	}
 }
 
