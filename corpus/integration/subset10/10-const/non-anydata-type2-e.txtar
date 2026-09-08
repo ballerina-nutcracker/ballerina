@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot declare a constant with type '[stream...]', expected a subtype of 'anydata' that is not 'never'
+  --> non-anydata-type2-e.bal:19:10
+   |
+19 | const SA B = []; // @error constant type must be a subtype of anydata
+   |          ^

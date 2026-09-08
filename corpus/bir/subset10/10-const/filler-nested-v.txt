@@ -1,0 +1,66 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad [[0,0],[0,0]]
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad [[0,0],[0,0]]
+    %4 = %3 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %5 = %4;
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad [[0,0],[0,0]]
+    rows = %7;
+    %10 = ConstantLoad 0
+    %9 = rows[%10];
+    %11 = %9 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %12 = %11;
+    %13 = println(%12) -> bb3;
+  }
+  bb3 {
+    %15 = ConstantLoad 1
+    %14 = rows[%15];
+    %16 = %14 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %17 = %16;
+    %18 = println(%17) -> bb4;
+  }
+  bb4 {
+    %19 = ConstantLoad [[[0,0],[0,0]],[[0,0],[0,0]]]
+    %20 = println(%19) -> bb5;
+  }
+  bb5 {
+    %21 = ConstantLoad [[[0,0],[0,0]],[[0,0],[0,0]]]
+    %22 = %21 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %23 = %22;
+    %24 = println(%23) -> bb6;
+  }
+  bb6 {
+    %25 = ConstantLoad [[7,8],[0,0]]
+    %26 = println(%25) -> bb7;
+  }
+  bb7 {
+    %27 = ConstantLoad [[7,0],[0,0]]
+    %28 = println(%27) -> bb8;
+  }
+  bb8 {
+    %29 = ConstantLoad [[7,0],[0,0]]
+    mixed = %29;
+    %32 = ConstantLoad 0
+    %31 = mixed[%32];
+    %33 = %31 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %34 = %33;
+    %35 = println(%34) -> bb9;
+  }
+  bb9 {
+    %37 = ConstantLoad 1
+    %36 = mixed[%37];
+    %38 = %36 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %39 = %38;
+    %40 = println(%39) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}

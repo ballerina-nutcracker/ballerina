@@ -1,0 +1,20 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad [{},{}]
+    entries = %1;
+    %4 = ConstantLoad 0
+    %3 = entries[%4];
+    first = %3;
+    %6 = println(first) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad 1
+    %8 = ConstantLoad a
+    first[%8] = %7;
+    %9 = println(first) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

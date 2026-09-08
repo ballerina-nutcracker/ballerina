@@ -1,0 +1,51 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref M))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref M)
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref N))))
+    (var-def
+      (variable rows (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (simple-var-ref N))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (index-based-access
+            (simple-var-ref rows)
+            (literal 1))
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref A)
+          (list-constructor-expr
+            (list-constructor-expr
+              (literal 0)
+              (literal 0))
+            (list-constructor-expr
+              (literal 0)
+              (literal 0)))))))
+    (var-def
+      (variable v (type
+        (user-defined-type A)) (expr
+        (list-constructor-expr
+          (list-constructor-expr
+            (literal 0)
+            (literal 0))
+          (list-constructor-expr
+            (literal 0)
+            (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v))))
+  )
+)

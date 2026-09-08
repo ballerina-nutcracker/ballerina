@@ -1,0 +1,100 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition L2
+    (array-type
+      (value-type int) dimensions: 2 ([
+      (literal 2)][
+      (literal 2)])))
+  (type-definition L3
+    (array-type
+      (value-type int) dimensions: 3 ([
+      (literal 2)][
+      (literal 2)][
+      (literal 2)])))
+  (type-definition Row
+    (array-type
+      (value-type int) dimensions: 1 ([
+      (literal 2)])))
+  (const A (
+    (user-defined-type L2)) (
+    (list-constructor-expr)))
+  (const B (
+    (user-defined-type L3)) (
+    (list-constructor-expr)))
+  (const C (
+    (user-defined-type L2)) (
+    (list-constructor-expr
+      (list-constructor-expr
+        (literal 7)
+        (literal 8)))))
+  (const D (
+    (tuple-type
+      (user-defined-type Row)
+      (user-defined-type Row))) (
+    (list-constructor-expr
+      (list-constructor-expr
+        (literal 7)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref A)
+            (value-type readonly)))))
+      (var-def
+        (variable rows (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref rows)
+              (literal 0))
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref rows)
+              (literal 1))
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref B)
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref D))))
+      (var-def
+        (variable mixed (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (simple-var-ref D))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref mixed)
+              (literal 0))
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref mixed)
+              (literal 1))
+            (value-type readonly))))))))

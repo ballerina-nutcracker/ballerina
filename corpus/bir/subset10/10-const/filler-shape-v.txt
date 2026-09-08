@@ -1,0 +1,33 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad [[0,0],[0,0]]
+    exact = %1;
+    %3 = println(exact) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad [[0,0],[0,0]]
+    rows = %4;
+    %7 = ConstantLoad 0
+    %6 = rows[%7];
+    %8 = %6 is readonly&[0, 0, never...]
+    %9 = %8;
+    %10 = println(%9) -> bb2;
+  }
+  bb2 {
+    %12 = ConstantLoad 0
+    %11 = rows[%12];
+    %13 = %11 is readonly&[1, 0, never...]
+    %14 = %13;
+    %15 = println(%14) -> bb3;
+  }
+  bb3 {
+    %16 = ConstantLoad [[0,0],[0,0]]
+    %17 = %16 is readonly&[[0, 0, never...], [0, 0, never...], never...]
+    %18 = %17;
+    %19 = println(%18) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

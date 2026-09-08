@@ -1,0 +1,51 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (user-defined-type L2)) (expr
+        (invocation make ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (index-based-access
+            (simple-var-ref a)
+            (literal 0))
+          (value-type readonly)))))
+    (assignment
+      (index-based-access
+        (index-based-access
+          (simple-var-ref a)
+          (literal 0))
+        (literal 0))
+      (literal 9))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+    (expression-stmt
+      (invocation io println (
+        (invocation make ()))))
+    (var-def
+      (variable grow (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (assignment
+      (index-based-access
+        (simple-var-ref grow)
+        (literal 2))
+      (literal 5))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref grow))))
+  )
+)
+(make
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (user-defined-type L2)) (expr
+        (list-constructor-expr))))
+    (return
+      (simple-var-ref v))
+  )
+)

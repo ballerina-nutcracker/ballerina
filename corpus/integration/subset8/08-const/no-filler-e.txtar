@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: constant list member 0 has no filler value
+error[SEMANTIC_ERROR]: missing required member at index 0: type '{| x: int, never... |}' has no filler value
   --> no-filler-e.bal:21:18
    |
 21 | const [R, R] A = []; // @error

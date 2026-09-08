@@ -128,6 +128,10 @@ func FormatIncompatibleTypeMessage(ctx semtypes.Context, expectedType, actualTyp
 	return fmt.Sprintf("incompatible type: expected %s, got %s", semtypes.ToString(ctx, expectedType), semtypes.ToString(ctx, actualType))
 }
 
+func FormatMissingFillerMessage(ctx semtypes.Context, index int, memberType semtypes.SemType) string {
+	return fmt.Sprintf("missing required member at index %d: type '%s' has no filler value", index, semtypes.ToString(ctx, memberType))
+}
+
 var TemplateInsertionAllowedTypes = semtypes.Diff(semtypes.SimpleOrString, semtypes.Nil)
 
 func XMLTemplateInsertionAllowedTypes(kind ast.XMLTemplateInsertionKind) semtypes.SemType {

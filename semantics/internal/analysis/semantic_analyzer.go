@@ -1473,7 +1473,7 @@ func analyzeListConstructorExpr[A analyzer](a A, expr *ast.BLangListConstructorE
 	for i := memberIndex; i < lat.FixedLength(); i++ {
 		memberTy := lat.MemberAtInnerVal(i)
 		if _, ok := semtypes.FillerValue(a.tyCtx(), memberTy); !ok {
-			a.semanticErr(fmt.Sprintf("missing required member at index %d: type '%s' has no filler value", i, semtypes.ToString(a.tyCtx(), memberTy)), expr.GetPosition())
+			a.semanticErr(common.FormatMissingFillerMessage(a.tyCtx(), i, memberTy), expr.GetPosition())
 			return false
 		}
 	}

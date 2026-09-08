@@ -1,0 +1,39 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (type-definition Row
+    (tuple-type
+      (value-type int) (rest
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal [[0],[0]]))))
+      (var-def
+        (variable rows (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (literal [[0],[0]]))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref rows)
+              (literal 0))
+            (intersection-type
+              (value-type readonly)
+              (tuple-type
+                (finite-type
+                  (literal 0))))))))
+      (var-def
+        (variable first (type
+          (user-defined-type Row)) (expr
+          (index-based-access
+            (literal [[0],[0]])
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (simple-var-ref first)))))))))

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: constant xml filler value not implemented
+  --> filler-xml-fv.bal:20:14
+   |
+20 | const XA A = []; // @error
+   |              ^^

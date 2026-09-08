@@ -1,0 +1,43 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad [{},{}]
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad [{},{}]
+    %4 = %3 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %5 = %4;
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad [{},{}]
+    entries = %7;
+    %10 = ConstantLoad 0
+    %9 = entries[%10];
+    %11 = %9 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %12 = %11;
+    %13 = println(%12) -> bb3;
+  }
+  bb3 {
+    %15 = ConstantLoad 0
+    %14 = entries[%15];
+    %16 = %14 is readonly&{| never... |}
+    %17 = %16;
+    %18 = println(%17) -> bb4;
+  }
+  bb4 {
+    %20 = ConstantLoad 0
+    %21 = ConstantLoad [{},{}]
+    %19 = %21[%20];
+    first = %19;
+    %23 = length(first) -> bb5;
+  }
+  bb5 {
+    %24 = %23;
+    %25 = println(%24) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

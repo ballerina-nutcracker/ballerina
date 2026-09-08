@@ -8479,6 +8479,11 @@ func resolveConstant(t typeResolver, constant *ast.BLangVariable) bool {
 		if !ok {
 			return false
 		}
+		if !validConstantType(t, annotationType) {
+			t.semanticError(fmt.Sprintf("cannot declare a constant with type '%s', expected a subtype of 'anydata' that is not 'never'",
+				semtypes.ToString(t.typeContext(), annotationType)), constant.Name.GetPosition())
+			return false
+		}
 	}
 
 	expr, ok := constant.Expr.(ast.BLangExpression)
@@ -8513,6 +8518,11 @@ func resolveConstant(t typeResolver, constant *ast.BLangVariable) bool {
 	t.setSymbolType(symbol, expectedType)
 
 	return true
+}
+
+func validConstantType(t typeResolver, ty semtypes.SemType) bool {
+	cx := t.typeContext()
+	return !semtypes.IsEmpty(cx, ty) && semtypes.IsSubtype(cx, ty, semtypes.CreateAnydata(cx))
 }
 
 func resolveMatchStatement(t typeResolver, chain *binding, stmt *ast.BLangMatchStatement) (statementEffect, bool) {

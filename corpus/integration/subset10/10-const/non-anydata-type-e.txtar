@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot declare a constant with type '[object { public function init() returns nil }, object { public function init() returns nil }, never...]', expected a subtype of 'anydata' that is not 'never'
+  --> non-anydata-type-e.bal:24:10
+   |
+24 | const CA A = []; // @error constant type must be a subtype of anydata
+   |          ^

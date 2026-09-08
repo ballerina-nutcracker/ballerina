@@ -25,6 +25,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
@@ -234,11 +235,7 @@ func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLang
 		entries = append(entries, values.MapEntry{Key: key, Value: value})
 	}
 
-	ty, atomic, err := readonlyMappingShapeType(e.resolver, entries)
-	if err != nil {
-		return e.internalFailure(err.Error(), expr.GetPosition())
-	}
-	return values.NewMap(ty, atomic, true, entries), true
+	return e.readonlyMappingValue(entries, expr.GetPosition())
 }
 
 // The type of a constant is the intersection of readonly and the singleton type
@@ -320,17 +317,92 @@ func (e *constantExpressionEvaluator) evaluateListConstructor(expr *ast.BLangLis
 		initial = append(initial, value)
 	}
 	for i := len(initial); i < expr.AtomicType.FixedLength(); i++ {
-		filler, ok := values.FillerFactoryFor(e.resolver.typeContext(), expr.AtomicType.MemberAtInnerVal(i))
+		filler, ok := e.constantFillerValue(expr.AtomicType.MemberAtInnerVal(i), i, expr.GetPosition())
 		if !ok {
-			return e.semanticFailure(fmt.Sprintf("constant list member %d has no filler value", i), expr.GetPosition())
+			return nil, false
 		}
-		initial = append(initial, filler())
+		initial = append(initial, filler)
 	}
-	ty, atomic, err := readonlyListShapeType(e.resolver, initial)
+	return e.readonlyListValue(initial, expr.GetPosition())
+}
+
+// constantFillerValue builds the constant form of the filler value for the
+// omitted member at index i.
+func (e *constantExpressionEvaluator) constantFillerValue(memberTy semtypes.SemType, i int,
+	loc ast.Location,
+) (values.BalValue, bool) {
+	cx := e.resolver.typeContext()
+	filler, ok := semtypes.FillerValue(cx, memberTy)
+	if !ok {
+		return e.semanticFailure(common.FormatMissingFillerMessage(cx, i, memberTy), loc)
+	}
+	return e.readonlyFillerValue(filler, loc)
+}
+
+// readonlyFillerValue builds the constant value described by filler:
+// recursively readonly, with the singleton shape type of its contents.
+func (e *constantExpressionEvaluator) readonlyFillerValue(filler semtypes.Filler,
+	loc ast.Location,
+) (values.BalValue, bool) {
+	switch filler := filler.(type) {
+	case semtypes.SingleValueFiller:
+		return filler.Value, true
+	case semtypes.MappingFiller:
+		return e.readonlyMappingValue(nil, loc)
+	case semtypes.ListFiller:
+		members := make([]values.BalValue, len(filler.Members))
+		for i, memberFiller := range filler.Members {
+			member, ok := e.readonlyFillerValue(memberFiller, loc)
+			if !ok {
+				return nil, false
+			}
+			members[i] = member
+		}
+		return e.readonlyListValue(members, loc)
+	case semtypes.XMLFiller:
+		// birgen.materializeFiller does not construct xml fillers either, and
+		// BIR has no constant encoding for an xml value.
+		return e.unsupportedFailure("constant xml filler value not implemented", loc)
+	case semtypes.TableFiller:
+		return e.unimplementedFillerFailure(filler.Type, loc)
+	case semtypes.ObjectFiller:
+		return e.unimplementedFillerFailure(filler.Type, loc)
+	case semtypes.StreamFiller:
+		return e.unimplementedFillerFailure(filler.Type, loc)
+	default:
+		return e.internalFailure(fmt.Sprintf("unexpected filler kind %T", filler), loc)
+	}
+}
+
+func (e *constantExpressionEvaluator) unimplementedFillerFailure(ty semtypes.SemType,
+	loc ast.Location,
+) (values.BalValue, bool) {
+	return e.unsupportedFailure(fmt.Sprintf("constant filler value for type '%s' not implemented",
+		semtypes.ToString(e.resolver.typeContext(), ty)), loc)
+}
+
+// readonlyListValue builds the constant list holding members, which must
+// already be constant values.
+func (e *constantExpressionEvaluator) readonlyListValue(members []values.BalValue,
+	loc ast.Location,
+) (values.BalValue, bool) {
+	ty, atomic, err := readonlyListShapeType(e.resolver, members)
 	if err != nil {
-		return e.internalFailure(err.Error(), expr.GetPosition())
+		return e.internalFailure(err.Error(), loc)
 	}
-	return values.NewList(ty, atomic, true, nil, len(initial), initial), true
+	return values.NewList(ty, atomic, true, nil, len(members), members), true
+}
+
+// readonlyMappingValue builds the constant mapping holding entries, whose
+// values must already be constant values.
+func (e *constantExpressionEvaluator) readonlyMappingValue(entries []values.MapEntry,
+	loc ast.Location,
+) (values.BalValue, bool) {
+	ty, atomic, err := readonlyMappingShapeType(e.resolver, entries)
+	if err != nil {
+		return e.internalFailure(err.Error(), loc)
+	}
+	return values.NewMap(ty, atomic, true, entries), true
 }
 
 func (e *constantExpressionEvaluator) evaluateUnaryExpression(expr *ast.BLangUnaryExpr) (values.BalValue, bool) {
