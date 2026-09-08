@@ -533,9 +533,9 @@ type (
 
 	BLangMappingConstructorExpr struct {
 		bLangExpressionBase
-		Fields        []MappingField
-		AtomicType    semtypes.MappingAtomicType
-		FieldDefaults []model.FieldDefault
+		Fields             []MappingField
+		SelectedAtomicType semtypes.MappingAtomicType
+		FieldDefaults      []model.FieldDefault
 	}
 
 	BLangNamedArgsExpression struct {
