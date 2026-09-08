@@ -92,13 +92,15 @@ func (m *Map) Get(key string) (BalValue, bool) {
 // FillingGet returns the value at key, inserting a fresh filler value when
 // the key is absent. Used to support nested member lvalue assignments like
 // `m[k1][k2] = v`, where intermediate containers must be auto-created.
-// Panics if insertion is required and the map is readonly. Filler values are
-// not type-checked against the inherent type.
+// Panics if insertion is required and the map is readonly or key names a
+// readonly field. Filler values are not type-checked against the inherent
+// type.
 func (m *Map) FillingGet(tc semtypes.Context, key string, filler FillerFactory) BalValue {
 	if e, ok := m.data[key]; ok {
 		return e.value
 	}
 	m.checkMutable()
+	m.checkFieldMutable(key)
 	if filler == nil {
 		panic(NewErrorWithMessage("no filler value"))
 	}
@@ -107,11 +109,11 @@ func (m *Map) FillingGet(tc semtypes.Context, key string, filler FillerFactory) 
 	return v
 }
 
-// Put stores value at key. Panics if the map is readonly or value does not
-// belong to the inherent member type at key.
+// Put stores value at key. Panics if the map is readonly, key names a readonly field, or
+// value does not belong to the inherent member type at key.
 func (m *Map) Put(tc semtypes.Context, key string, value BalValue) {
 	m.checkMutable()
-	m.checkMemberType(tc, key, value)
+	m.checkMemberStore(tc, key, value)
 	m.putUnchecked(key, value)
 }
 
@@ -125,13 +127,15 @@ func (m *Map) putUnchecked(key string, value BalValue) {
 	m.appendEntry(e)
 }
 
-// Delete removes the entry for key. Panics if the map is readonly.
+// Delete removes the entry for key. Panics if the map is readonly, key names a readonly
+// field, or key names a required field. Deleting an absent key is a no-op.
 func (m *Map) Delete(tc semtypes.Context, key string) {
 	m.checkMutable()
 	e, ok := m.data[key]
 	if !ok {
 		return
 	}
+	m.checkFieldRemovable(tc, key)
 	m.unlinkEntry(e)
 	delete(m.data, key)
 }
@@ -142,11 +146,42 @@ func (m *Map) checkMutable() {
 	}
 }
 
-func (m *Map) checkMemberType(tc semtypes.Context, key string, value BalValue) {
-	memberTy := m.atomic.FieldInnerVal(key)
+func (m *Map) checkMemberStore(tc semtypes.Context, key string, value BalValue) {
+	cell := m.atomic.FieldCell(key)
+	memberTy := semtypes.CellInnerVal(cell)
 	valueTy := SemTypeForValue(value)
 	if !semtypes.IsSubtype(tc, valueTy, memberTy) {
 		panic(NewErrorWithMessage("inherent type violation"))
+	}
+	m.checkCellMutable(cell, memberTy, key)
+}
+
+func (m *Map) checkFieldMutable(key string) {
+	cell := m.atomic.FieldCell(key)
+	m.checkCellMutable(cell, semtypes.CellInnerVal(cell), key)
+}
+
+// checkFieldRemovable panics when the entry at key cannot be removed. Removing needs the
+// field to be writable and to be one the mapping is allowed not to have, so a required field
+// is rejected even though its cell is mutable.
+func (m *Map) checkFieldRemovable(tc semtypes.Context, key string) {
+	m.checkFieldMutable(key)
+	if !m.atomic.IsOptional(tc, key) {
+		panic(NewErrorWithMessage(fmt.Sprintf("inherent type violation: cannot remove required field '%s'", key)))
+	}
+}
+
+// checkCellMutable panics when the cell backing key cannot be written. memberTy must be the
+// caller's already computed inner value type of cell. A cell that cannot hold a value is not a
+// readonly field, it is a key the mapping does not have. FieldCell falls back to the rest cell
+// for an undeclared name, so this is what a closed record's `never` rest cell lands on, and
+// such a key keeps whatever behavior it has otherwise.
+func (m *Map) checkCellMutable(cell semtypes.SemType, memberTy semtypes.SemType, key string) {
+	if semtypes.IsNever(memberTy) {
+		return
+	}
+	if semtypes.CellMut(cell) == semtypes.CellMutabilityNone {
+		panic(NewErrorWithMessage(fmt.Sprintf("inherent type violation: cannot mutate readonly field '%s'", key)))
 	}
 }
 
