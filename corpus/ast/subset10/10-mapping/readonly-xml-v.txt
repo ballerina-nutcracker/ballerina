@@ -1,0 +1,56 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable element (expr
+          (mapping-constructor-expr
+            (readonly-fields document)
+            (key-value
+              (literal document)
+              (xml-element-literal a))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref element))))
+      (var-def
+        (variable sequence (expr
+          (mapping-constructor-expr
+            (readonly-fields document)
+            (key-value
+              (literal document)
+              (xml-sequence-literal
+                (xml-element-literal a)
+                (xml-comment-literal c)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref sequence))))
+      (var-def
+        (variable interpolated (expr
+          (mapping-constructor-expr
+            (readonly-fields document)
+            (key-value
+              (literal document)
+              (xml-template-literal
+                (template-string "<a>")
+                (xml-template-content-insertion
+                  (literal text))
+                (template-string "</a>")))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref interpolated))))
+      (var-def
+        (variable contextual (type
+          (constrained-type
+            (builtin-ref-type map)
+            (user-defined-type xml Element))) (expr
+          (mapping-constructor-expr
+            (readonly-fields document)
+            (key-value
+              (literal document)
+              (xml-element-literal a
+                (xml-element-literal b)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref contextual)))))))

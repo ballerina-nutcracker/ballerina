@@ -1,0 +1,6 @@
+-- stdout --
+{"document":<a/>}
+{"document":<a/><!--c-->}
+{"document":<a>text</a>}
+{"document":<a><b/></a>}
+-- stderr --

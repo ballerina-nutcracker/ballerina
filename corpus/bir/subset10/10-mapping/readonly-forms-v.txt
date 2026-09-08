@@ -1,0 +1,48 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 36
+    age = %1;
+    %3 = ConstantLoad age
+    %4 = ConstantLoad 36
+    %5 = newMap {| age: int, never... |}{%3=%4}
+    explicitField = %5;
+    %7 = println(explicitField) -> bb1;
+  }
+  bb1 {
+    %8 = ConstantLoad age
+    %9 = newMap {| age: int, never... |}{%8=age}
+    shorthand = %9;
+    %11 = println(shorthand) -> bb2;
+  }
+  bb2 {
+    %12 = ConstantLoad age
+    %13 = ConstantLoad 36
+    %14 = newMap {| age: int, never... |}{%12=%13}
+    stringKey = %14;
+    %16 = println(stringKey) -> bb3;
+  }
+  bb3 {
+    %17 = ConstantLoad age
+    %18 = ConstantLoad 36
+    %19 = newMap {| age: int, int... |}{%17=%18}
+    contextualExplicit = %19;
+    %21 = println(contextualExplicit) -> bb4;
+  }
+  bb4 {
+    %22 = ConstantLoad age
+    %23 = newMap {| age: int, int... |}{%22=age}
+    contextualShorthand = %23;
+    %25 = println(contextualShorthand) -> bb5;
+  }
+  bb5 {
+    %26 = ConstantLoad age
+    %27 = ConstantLoad 36
+    %28 = newMap {| age: int, int... |}{%26=%27}
+    contextualStringKey = %28;
+    %30 = println(contextualStringKey) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

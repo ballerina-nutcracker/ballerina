@@ -1,0 +1,42 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad document
+    %2 = newXMLElement("a", ())
+    %3 = newMap {| document: xml<xml:Element>, never... |}{%1=%2}
+    element = %3;
+    %5 = println(element) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad document
+    %7 = newXMLElement("a", ())
+    %8 = ConstantLoad c
+    %9 = newXMLComment(%8)
+    %10 = newXMLSequence{%7, %9}
+    %11 = newMap {| document: xml<xml:Element|xml:Comment>, never... |}{%6=%10}
+    sequence = %11;
+    %13 = println(sequence) -> bb2;
+  }
+  bb2 {
+    %14 = ConstantLoad document
+    %15 = ConstantLoad text
+    %16 = escapeXMLContent(%15) -> bb3;
+  }
+  bb3 {
+    %17 = evalTemplate[xml]("<a>", %16, "</a>")
+    %18 = newMap {| document: xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>, never... |}{%14=%17}
+    interpolated = %18;
+    %20 = println(interpolated) -> bb4;
+  }
+  bb4 {
+    %21 = ConstantLoad document
+    %22 = newXMLElement("b", ())
+    %23 = newXMLElement("a", %22)
+    %24 = newMap {| document: xml<xml:Element>, xml:Element... |}{%21=%23}
+    contextual = %24;
+    %26 = println(contextual) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
