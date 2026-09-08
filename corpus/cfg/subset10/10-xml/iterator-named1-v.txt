@@ -1,0 +1,61 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable xs (type
+        (value-type xml)) (expr
+        (xml-sequence-literal
+          (xml-element-literal a)
+          (xml-text-literal hello)))))
+    (var-def
+      (variable next (type
+        (union-type
+          (record-type
+            (field value
+              (union-type
+                (union-type
+                  (union-type
+                    (user-defined-type xml Element)
+                    (user-defined-type xml Comment))
+                  (user-defined-type xml ProcessingInstruction))
+                (user-defined-type xml Text))))
+          (value-type null))) (expr
+        (invocation next expr:
+          (invocation xml iterator (
+            (simple-var-ref xs))) ()))))
+    (binary-expr !=
+      (simple-var-ref next)
+      (literal <nil>))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref next)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable element (type
+        (user-defined-type xml Element)) (expr
+        (xml-element-literal e))))
+    (var-def
+      (variable elementNext (type
+        (union-type
+          (record-type
+            (field value
+              (user-defined-type xml Element)))
+          (value-type null))) (expr
+        (invocation next expr:
+          (invocation xml iterator (
+            (simple-var-ref element))) ()))))
+    (binary-expr !=
+      (simple-var-ref elementNext)
+      (literal <nil>))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref elementNext)))))
+  )
+  (bb4 (bb3 bb2) ())
+)

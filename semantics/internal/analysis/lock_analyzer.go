@@ -213,16 +213,7 @@ func isolatedInvocationViolation(a analyzer, n *ast.BLangInvocation) (diagnostic
 }
 
 func isolatedParamLambdas(ctx *context.CompilerContext, n *ast.BLangInvocation) []*ast.BLangLambdaFunction {
-	resolvedFn, ok := ctx.GetSymbol(n.Symbol()).(model.FunctionSymbol)
-	if !ok {
-		return nil
-	}
-	originalRef := n.Symbol()
-	if mono, ok := resolvedFn.(model.MonomorphicFunctionSymbol); ok {
-		originalRef = mono.PolymorphicSymbol()
-	}
-	opaque, ok := ctx.GetSymbol(originalRef).(*model.OpaqueFunctionSymbol)
-	if !ok {
+	if _, ok := ctx.GetSymbol(n.Symbol()).(model.FunctionSymbol); !ok {
 		return nil
 	}
 	sig, ok := ctx.GetFunctionSignature(n.Symbol())
@@ -230,32 +221,16 @@ func isolatedParamLambdas(ctx *context.CompilerContext, n *ast.BLangInvocation) 
 		ctx.InternalError("function signature not found", n.GetPosition())
 		return nil
 	}
-	paramNames := sig.ParamNames
 	lambdas := make([]*ast.BLangLambdaFunction, 0)
 	for i, arg := range n.CallArgs() {
-		paramIndex := i
-		argExpr := arg
-		if named, ok := arg.(*ast.BLangNamedArgsExpression); ok {
-			paramIndex = paramIndexOf(paramNames, named.Name.GetValue())
-			argExpr = named.Expr
-		}
-		if paramIndex < 0 || !opaque.IsIsolatedParam(paramIndex) {
+		if !sig.IsIsolatedParam(i) {
 			continue
 		}
-		if lambda, ok := argExpr.(*ast.BLangLambdaFunction); ok && lambda.HasInferredParams() {
+		if lambda, ok := arg.(*ast.BLangLambdaFunction); ok && lambda.HasInferredParams() {
 			lambdas = append(lambdas, lambda)
 		}
 	}
 	return lambdas
-}
-
-func paramIndexOf(paramNames []string, name string) int {
-	for i, each := range paramNames {
-		if each == name {
-			return i
-		}
-	}
-	return -1
 }
 
 func isolatedInvocationViolationInner(ctx *context.CompilerContext, tyCtx semtypes.Context, n *ast.BLangInvocation) (diagnostics.Location, bool) {
@@ -269,7 +244,7 @@ func isolatedInvocationViolationInner(ctx *context.CompilerContext, tyCtx semtyp
 	}
 
 	resolvedSymbol := ctx.GetSymbol(fnRef)
-	resolvedFn, ok := resolvedSymbol.(model.FunctionSymbol)
+	_, ok := resolvedSymbol.(model.FunctionSymbol)
 	if !ok {
 		if _, isFunctionValue := resolvedSymbol.(model.ValueSymbol); isFunctionValue {
 			return diagnostics.Location{}, false
@@ -277,32 +252,16 @@ func isolatedInvocationViolationInner(ctx *context.CompilerContext, tyCtx semtyp
 		ctx.InternalError(fmt.Sprintf("unexpected symbol kind in invocation: %T", resolvedSymbol), n.GetPosition())
 		return diagnostics.Location{}, false
 	}
-	originalRef := fnRef
-	if mono, ok := resolvedFn.(model.MonomorphicFunctionSymbol); ok {
-		originalRef = mono.PolymorphicSymbol()
-	}
-	opaque, ok := ctx.GetSymbol(originalRef).(*model.OpaqueFunctionSymbol)
-	if !ok {
-		return diagnostics.Location{}, false
-	}
-
 	sig, ok := ctx.GetFunctionSignature(fnRef)
 	if !ok {
 		ctx.InternalError("function signature not found", n.GetPosition())
 		return diagnostics.Location{}, false
 	}
-	paramNames := sig.ParamNames
 	for i, arg := range n.CallArgs() {
-		paramIndex := i
-		argExpr := arg
-		if named, ok := arg.(*ast.BLangNamedArgsExpression); ok {
-			paramIndex = paramIndexOf(paramNames, named.Name.GetValue())
-			argExpr = named.Expr
-		}
-		if paramIndex < 0 || !opaque.IsIsolatedParam(paramIndex) {
+		if !sig.IsIsolatedParam(i) {
 			continue
 		}
-		if !semtypes.IsSubtype(tyCtx, argExpr.GetDeterminedType(), isolatedFn) {
+		if !semtypes.IsSubtype(tyCtx, arg.GetDeterminedType(), isolatedFn) {
 			return arg.GetPosition(), true
 		}
 	}

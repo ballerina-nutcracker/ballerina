@@ -61,7 +61,6 @@ const (
 	FlagQueryLambda                  Flag = 1 << 40
 	FlagDeprecated                   Flag = 1 << 41
 	FlagParameterized                Flag = 1 << 42
-	FlagIsolatedParam                Flag = 1 << 43
 	FlagInfer                        Flag = 1 << 44
 	FlagEffectiveTypeDef             Flag = 1 << 45
 	FlagSourceAnnotation             Flag = 1 << 46

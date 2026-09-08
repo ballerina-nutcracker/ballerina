@@ -1,0 +1,63 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-text-literal hello)))))
+      (var-def
+        (variable next (type
+          (union-type
+            (record-type
+              (field value
+                (union-type
+                  (union-type
+                    (union-type
+                      (user-defined-type xml Element)
+                      (user-defined-type xml Comment))
+                    (user-defined-type xml ProcessingInstruction))
+                  (user-defined-type xml Text))))
+            (value-type null))) (expr
+          (invocation next expr:
+            (invocation xml iterator (
+              (simple-var-ref xs))) ()))))
+      (if
+        (binary-expr !=
+          (simple-var-ref next)
+          (literal <nil>))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref next)
+                (literal value)))))) ())
+      (block-stmt
+        (var-def
+          (variable element (type
+            (user-defined-type xml Element)) (expr
+            (xml-element-literal e))))
+        (var-def
+          (variable elementNext (type
+            (union-type
+              (record-type
+                (field value
+                  (user-defined-type xml Element)))
+              (value-type null))) (expr
+            (invocation next expr:
+              (invocation xml iterator (
+                (simple-var-ref element))) ()))))
+        (if
+          (binary-expr !=
+            (simple-var-ref elementNext)
+            (literal <nil>))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (index-based-access
+                  (simple-var-ref elementNext)
+                  (literal value)))))) ())
+        (block-stmt)))))

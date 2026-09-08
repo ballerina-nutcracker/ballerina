@@ -1,0 +1,63 @@
+module $anon.. v 0.0.0;
+pushTwice() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int...][%1]{}
+    first = %2;
+    %4 = ConstantLoad 0
+    %5 = newArray [int...][%4]{}
+    second = %5;
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %9 = push(first,%8) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad 2
+    %11 = %10;
+    %12 = push(second,%11) -> bb2;
+  }
+  bb2 {
+    %13 = push(first) -> bb3;
+  }
+  bb3 {
+    %14 = ConstantLoad 3
+    %15 = %14;
+    %16 = push(first,%15) -> bb4;
+  }
+  bb4 {
+    %17 = println(first) -> bb5;
+  }
+  bb5 {
+    %18 = println(second) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+pushAgain() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int...][%1]{}
+    third = %2;
+    %4 = ConstantLoad 4
+    %5 = %4;
+    %6 = push(third,%5) -> bb1;
+  }
+  bb1 {
+    %7 = println(third) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = pushTwice() -> bb1;
+  }
+  bb1 {
+    %2 = pushAgain() -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

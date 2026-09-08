@@ -1,0 +1,64 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-text-literal hello)))))
+      (var-def
+        (variable next (type
+          (union-type
+            (record-type
+              (field value
+                (union-type
+                  (union-type
+                    (union-type
+                      (user-defined-type xml Element)
+                      (user-defined-type xml Comment))
+                    (user-defined-type xml ProcessingInstruction))
+                  (user-defined-type xml Text))))
+            (value-type null))) (expr
+          (invocation next expr:
+            (invocation xml iterator (
+              (named-arg x
+                (simple-var-ref xs)))) ()))))
+      (if
+        (binary-expr !=
+          (simple-var-ref next)
+          (literal <nil>))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access value
+                (simple-var-ref next)))))) ())
+      (block-stmt
+        (var-def
+          (variable element (type
+            (user-defined-type xml Element)) (expr
+            (xml-element-literal e))))
+        (var-def
+          (variable elementNext (type
+            (union-type
+              (record-type
+                (field value
+                  (user-defined-type xml Element)))
+              (value-type null))) (expr
+            (invocation next expr:
+              (invocation xml iterator (
+                (named-arg x
+                  (simple-var-ref element)))) ()))))
+        (if
+          (binary-expr !=
+            (simple-var-ref elementNext)
+            (literal <nil>))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (field-based-access value
+                  (simple-var-ref elementNext)))))) ())
+        (block-stmt)))))

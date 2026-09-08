@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"maps"
 	"strings"
-	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/opaque"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -891,68 +891,35 @@ func injectOpaqueSymbols(pkgID model.PackageID, r *moduleSymbolResolver) {
 	}
 	space := r.packageScope.MainSpace()
 	for _, sym := range model.OpaqueSymbols(pkg) {
-		fillinOpaqueSymbol(sym, space)
 		r.packageScope.AddSymbol(sym.Name(), sym)
+		ref, _ := r.packageScope.GetSymbol(sym.Name())
+		fillinOpaqueSymbol(r.ctx, sym, space, pkg, ref)
 	}
 }
 
 // fillinOpaqueSymbol fills in any information that needs to be stored in the opaque symbol
-// that is used within semantic package.
-func fillinOpaqueSymbol(sym model.Symbol, space *model.SymbolSpace) {
+// that is used within semantic package. An opaque function symbol gets the symbol space its
+// monomorphizations are added to and the single untyped signature every monomorphization of
+// it shares.
+func fillinOpaqueSymbol(ctx *context.CompilerContext, sym model.Symbol, space *model.SymbolSpace,
+	pkg model.PackageIdentifier, ref model.SymbolRef) {
 	fn, ok := sym.(*model.OpaqueFunctionSymbol)
 	if !ok {
 		return
 	}
 	fn.SymbolSpace = space
-	fn.Lookup, fn.Store = newMonomorphizationCache()
-}
-
-func newMonomorphizationCache() (func(semtypes.SemType, ...semtypes.SemType) (model.SymbolRef, bool), func(model.SymbolRef, semtypes.SemType, ...semtypes.SemType)) {
-	type cacheNode struct {
-		children map[semtypes.InternHandle]*cacheNode
-		ref      model.SymbolRef
-		stored   bool
+	location := diagnostics.NewBuiltinLocation()
+	definition, found := opaque.LookupFunction(pkg.Organization, pkg.Package, fn.OpaqueID())
+	if !found {
+		ctx.InternalError("no definition for opaque function", location)
+		return
 	}
-
-	var mu sync.Mutex
-	interner := semtypes.NewSemtypeInterner()
-	root := cacheNode{children: make(map[semtypes.InternHandle]*cacheNode)}
-	nextNode := func(node *cacheNode, key semtypes.SemType, create bool) *cacheNode {
-		handle := interner.Intern(key)
-		next := node.children[handle]
-		if next == nil && create {
-			next = &cacheNode{children: make(map[semtypes.InternHandle]*cacheNode)}
-			node.children[handle] = next
-		}
-		return next
+	if definition.Name() != fn.Name() {
+		ctx.InternalError("opaque function definition name mismatch", location)
+		return
 	}
-	nodeFor := func(cacheKey semtypes.SemType, cacheKeyRest []semtypes.SemType, create bool) *cacheNode {
-		node := nextNode(&root, cacheKey, create)
-		for _, key := range cacheKeyRest {
-			if node == nil {
-				return nil
-			}
-			node = nextNode(node, key, create)
-		}
-		return node
-	}
-	lookup := func(cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType) (model.SymbolRef, bool) {
-		mu.Lock()
-		defer mu.Unlock()
-		node := nodeFor(cacheKey, cacheKeyRest, false)
-		if node == nil || !node.stored {
-			return model.SymbolRef{}, false
-		}
-		return node.ref, true
-	}
-	store := func(ref model.SymbolRef, cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType) {
-		mu.Lock()
-		defer mu.Unlock()
-		node := nodeFor(cacheKey, cacheKeyRest, true)
-		node.ref = ref
-		node.stored = true
-	}
-	return lookup, store
+	sigRef := ctx.AllocateFunctionSignature(definition.Params(), definition.HasRest())
+	associateFunctionSignatureRef(ctx, ref, sigRef, location)
 }
 
 func resolveFunction(functionResolver *blockSymbolResolver, function *ast.BLangFunction) {
