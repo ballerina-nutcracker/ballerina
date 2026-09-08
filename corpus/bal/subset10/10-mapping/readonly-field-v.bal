@@ -18,7 +18,6 @@
 import ballerina/io;
 
 public function main() {
-    int age = 36;
-    var x = {readonly age}; // @error future: readonly mapping constructor field
+    var x = {readonly age: 36};
     io:println(x); // @output {"age":36}
 }
