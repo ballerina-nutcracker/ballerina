@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected xml<xml:Element>, got xml
+  --> constraint-template-e.bal:20:26
+   |
+20 |     xml<xml:Element> _ = xml `text${1}`; // @error
+   |                          ^^^^^^^^^^^^^^
