@@ -1,0 +1,88 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad d
+    %2 = newXMLElement("a", ())
+    %3 = newMap {| d: xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>, xml... |}{%1=%2}
+    element = %3;
+    %5 = println(element) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad d
+    %6 = element[%7];
+    %8 = isReadonly(%6) -> bb2;
+  }
+  bb2 {
+    %9 = %8;
+    %10 = println(%9) -> bb3;
+  }
+  bb3 {
+    %11 = ConstantLoad d
+    %12 = newXMLElement("a", ())
+    %13 = newXMLElement("b", ())
+    %14 = newXMLSequence{%12, %13}
+    %15 = newMap {| d: xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>, xml... |}{%11=%14}
+    sequence = %15;
+    %17 = println(sequence) -> bb4;
+  }
+  bb4 {
+    %19 = ConstantLoad d
+    %18 = sequence[%19];
+    %20 = isReadonly(%18) -> bb5;
+  }
+  bb5 {
+    %21 = %20;
+    %22 = println(%21) -> bb6;
+  }
+  bb6 {
+    %23 = ConstantLoad d
+    %24 = newXMLElement("b", ())
+    %25 = newXMLElement("a", %24)
+    %26 = newMap {| d: xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>, xml... |}{%23=%25}
+    nested = %26;
+    %29 = ConstantLoad d
+    %28 = nested[%29];
+    %30 = <xml:Element>(%28)
+    parent = %30;
+    %32 = isReadonly(parent) -> bb7;
+  }
+  bb7 {
+    %33 = %32;
+    %34 = println(%33) -> bb8;
+  }
+  bb8 {
+    %35 = getChildren(parent) -> bb9;
+  }
+  bb9 {
+    %36 = isReadonly(%35) -> bb10;
+  }
+  bb10 {
+    %37 = %36;
+    %38 = println(%37) -> bb11;
+  }
+  bb11 {
+    %39 = newXMLElement("b", ())
+    %40 = newXMLElement("a", %39)
+    topLevel = %40;
+    %42 = <xml:Element>(topLevel)
+    topParent = %42;
+    %44 = getChildren(topParent) -> bb12;
+  }
+  bb12 {
+    %45 = isReadonly(%44) -> bb13;
+  }
+  bb13 {
+    %46 = %45;
+    %47 = println(%46) -> bb14;
+  }
+  bb14 {
+    return;
+  }
+}
+isReadonly(any) -> boolean{
+  bb0 {
+    %2 = v is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %0 = %2;
+    return;
+  }
+}

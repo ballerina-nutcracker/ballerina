@@ -1,0 +1,42 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (user-defined-type FLAT)) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref f))))
+      (var-def
+        (variable n (type
+          (user-defined-type NESTED)) (expr
+          (list-constructor-expr
+            (list-constructor-expr
+              (literal 1))
+            (list-constructor-expr
+              (literal 2)
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref n))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref n)
+            (value-type readonly)))))
+      (var-def
+        (variable m (type
+          (user-defined-type MAP_MEMBER)) (expr
+          (list-constructor-expr
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (literal 1)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref m)))))))

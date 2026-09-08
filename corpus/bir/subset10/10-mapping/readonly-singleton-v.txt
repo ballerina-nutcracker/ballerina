@@ -1,0 +1,28 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad tag
+    %2 = ConstantLoad ok
+    %3 = ConstantLoad n
+    %4 = ConstantLoad 1
+    %5 = newMap {| n: int, tag: "ok", never... |}{%1=%2, %3=%4}
+    m = %5;
+    %8 = ConstantLoad tag
+    %7 = m[%8];
+    t = %7;
+    %10 = println(t) -> bb1;
+  }
+  bb1 {
+    %11 = ConstantLoad tag
+    %12 = ConstantLoad ok
+    %13 = newMap {| tag: "ok", never... |}{%11=%12}
+    f = %13;
+    %16 = ConstantLoad tag
+    %15 = f[%16];
+    u = %15;
+    %18 = println(u) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

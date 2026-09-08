@@ -1,0 +1,133 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable grouped (type
+          (constrained-type
+            (builtin-ref-type map)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (readonly-fields child)
+            (key-value
+              (literal child)
+              (group-expr
+                (mapping-constructor-expr
+                  (key-value
+                    (literal x)
+                    (literal 1)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref grouped))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref grouped)
+              (literal child)))))))
+      (var-def
+        (variable direct (type
+          (constrained-type
+            (builtin-ref-type map)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (readonly-fields child)
+            (key-value
+              (literal child)
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 1))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref direct)
+              (literal child)))))))
+      (var-def
+        (variable widened (type
+          (constrained-type
+            (builtin-ref-type map)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type float)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal child)
+              (group-expr
+                (mapping-constructor-expr
+                  (key-value
+                    (literal x)
+                    (literal 1)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref widened))))
+      (var-def
+        (variable alternative (type
+          (union-type
+            (constrained-type
+              (builtin-ref-type map)
+              (constrained-type
+                (builtin-ref-type map)
+                (value-type int)))
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type string)))) (expr
+          (mapping-constructor-expr
+            (readonly-fields child)
+            (key-value
+              (literal child)
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 1))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref alternative)
+              (literal child)))))))
+      (var-def
+        (variable groupedAlternative (type
+          (union-type
+            (constrained-type
+              (builtin-ref-type map)
+              (constrained-type
+                (builtin-ref-type map)
+                (value-type int)))
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type string)))) (expr
+          (mapping-constructor-expr
+            (readonly-fields child)
+            (key-value
+              (literal child)
+              (group-expr
+                (mapping-constructor-expr
+                  (key-value
+                    (literal x)
+                    (literal 1)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref groupedAlternative))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref groupedAlternative)
+              (literal child)))))))))
+  (function isReadonly (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type readonly))))))

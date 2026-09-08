@@ -1,0 +1,44 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable lists (type
+        (union-type
+          (intersection-type
+            (value-type readonly)
+            (array-type
+              (value-type int) dimensions: 2 ([][])))
+          (intersection-type
+            (value-type readonly)
+            (array-type
+              (value-type string) dimensions: 2 ([][]))))) (expr
+        (list-constructor-expr
+          (list-constructor-expr
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref lists))))
+    (var-def
+      (variable maps (type
+        (union-type
+          (intersection-type
+            (value-type readonly)
+            (array-type
+              (constrained-type
+                (builtin-ref-type map)
+                (value-type int)) dimensions: 1 ([])))
+          (intersection-type
+            (value-type readonly)
+            (array-type
+              (constrained-type
+                (builtin-ref-type map)
+                (value-type string)) dimensions: 1 ([]))))) (expr
+        (list-constructor-expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref maps))))
+  )
+)

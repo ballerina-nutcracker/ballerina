@@ -4008,13 +4008,13 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 	case *ast.BLangTemplateExpr:
 		return resolved(resolveTemplateExpr(t, chain, e))
 	case *ast.BLangXMLTemplateExpr:
-		return resolved(resolveXMLTemplateExpr(t, chain, e))
+		return resolved(resolveXMLTemplateExpr(t, chain, e, expectedType))
 	case *ast.BLangXMLElementLiteral:
-		return resolved(resolveXMLElementLiteral(t, chain, e))
+		return resolved(resolveXMLElementLiteral(t, chain, e, expectedType))
 	case *ast.BLangXMLPILiteral:
-		return resolved(resolveXMLPILiteral(chain, e))
+		return resolved(resolveXMLPILiteral(t, chain, e, expectedType))
 	case *ast.BLangXMLCommentLiteral:
-		return resolved(resolveXMLCommentLiteral(chain, e))
+		return resolved(resolveXMLCommentLiteral(t, chain, e, expectedType))
 	case *ast.BLangXMLTextLiteral:
 		return resolved(resolveXMLTextLiteral(chain, e))
 	case *ast.BLangXMLFilterExpression:
@@ -4096,19 +4096,58 @@ func resolveXMLTextLiteral(chain *binding, e *ast.BLangXMLTextLiteral) (semtypes
 	return ty, defaultExpressionEffect(chain), true
 }
 
-func resolveXMLCommentLiteral(chain *binding, e *ast.BLangXMLCommentLiteral) (semtypes.SemType, expressionEffect, bool) {
-	ty := semtypes.XMLComment
+// xmlLiteralType narrows shape to expectedType, so a readonly expectation makes the literal
+// immutable. A disjoint expectation is left for the caller's assignability check.
+func xmlLiteralType(t typeResolver, shape semtypes.SemType, expectedType semtypes.SemType) semtypes.SemType {
+	if semtypes.IsZero(expectedType) {
+		return shape
+	}
+	narrowed := semtypes.Intersect(shape, expectedType)
+	if semtypes.IsEmpty(t.typeContext(), narrowed) {
+		return shape
+	}
+	return narrowed
+}
+
+// xmlMutabilityExpectation reduces the applicable contextual expectation, the expectation narrowed
+// to xml, to what it says about mutability alone. A template or sequence literal builds a shape
+// that is not statically known, so narrowing it against the whole expectation would accept
+// `xml<xml:Element> x = xml `text`;`; narrowing against this can only ever take mutability away.
+func xmlMutabilityExpectation(t typeResolver, expectedType semtypes.SemType) semtypes.SemType {
+	if semtypes.IsZero(expectedType) {
+		return semtypes.SemType{}
+	}
+	applicableType := semtypes.Intersect(expectedType, semtypes.XML)
+	tc := t.typeContext()
+	if !semtypes.IsEmpty(tc, applicableType) && semtypes.IsSubtype(tc, applicableType, semtypes.ValReadonly) {
+		return semtypes.ValReadonly
+	}
+	return semtypes.SemType{}
+}
+
+// xmlChildExpectedType is the expectation to pass to the children of an xml literal of type ty. A
+// readonly xml value is deeply immutable, so its children must be constructed readonly as well.
+func xmlChildExpectedType(t typeResolver, ty semtypes.SemType) semtypes.SemType {
+	if semtypes.IsSubtype(t.typeContext(), ty, semtypes.ValReadonly) {
+		return semtypes.Intersect(semtypes.XML, semtypes.ValReadonly)
+	}
+	return semtypes.XML
+}
+
+func resolveXMLCommentLiteral(t typeResolver, chain *binding, e *ast.BLangXMLCommentLiteral, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	ty := xmlLiteralType(t, semtypes.XMLComment, expectedType)
 	e.SetDeterminedType(ty)
 	return ty, defaultExpressionEffect(chain), true
 }
 
-func resolveXMLPILiteral(chain *binding, e *ast.BLangXMLPILiteral) (semtypes.SemType, expressionEffect, bool) {
-	ty := semtypes.XMLProcessingInstruction
+func resolveXMLPILiteral(t typeResolver, chain *binding, e *ast.BLangXMLPILiteral, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	ty := xmlLiteralType(t, semtypes.XMLProcessingInstruction, expectedType)
 	e.SetDeterminedType(ty)
 	return ty, defaultExpressionEffect(chain), true
 }
 
-func resolveXMLElementLiteral(t typeResolver, chain *binding, e *ast.BLangXMLElementLiteral) (semtypes.SemType, expressionEffect, bool) {
+func resolveXMLElementLiteral(t typeResolver, chain *binding, e *ast.BLangXMLElementLiteral, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	ty := xmlLiteralType(t, semtypes.XMLElement, expectedType)
 	for i := range e.Attrs {
 		attr := &e.Attrs[i]
 		if attr.Value != nil {
@@ -4119,11 +4158,10 @@ func resolveXMLElementLiteral(t typeResolver, chain *binding, e *ast.BLangXMLEle
 		attr.SetDeterminedType(semtypes.Never)
 	}
 	if e.Content != nil {
-		if _, ok := resolveActionOrExpression(t, chain, e.Content, semtypes.XML); !ok {
+		if _, ok := resolveActionOrExpression(t, chain, e.Content, xmlChildExpectedType(t, ty)); !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 	}
-	ty := semtypes.XMLElement
 	e.SetDeterminedType(ty)
 	return ty, defaultExpressionEffect(chain), true
 }
@@ -4168,7 +4206,7 @@ func resolveStringTemplateType(t typeResolver, chain *binding, e *ast.BLangTempl
 	return semtypes.String, true
 }
 
-func resolveXMLTemplateExpr(t typeResolver, chain *binding, e *ast.BLangXMLTemplateExpr) (semtypes.SemType, expressionEffect, bool) {
+func resolveXMLTemplateExpr(t typeResolver, chain *binding, e *ast.BLangXMLTemplateExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	if len(e.InsertionKinds) != len(e.Insertions) {
 		t.internalError(fmt.Sprintf("xml template insertion kind count mismatch: got %d kinds for %d insertions", len(e.InsertionKinds), len(e.Insertions)), e.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -4179,14 +4217,17 @@ func resolveXMLTemplateExpr(t typeResolver, chain *binding, e *ast.BLangXMLTempl
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 	}
-	e.SetDeterminedType(semtypes.XML)
-	return semtypes.XML, defaultExpressionEffect(chain), true
+	ty := xmlLiteralType(t, semtypes.XML, xmlMutabilityExpectation(t, expectedType))
+	e.SetDeterminedType(ty)
+	return ty, defaultExpressionEffect(chain), true
 }
 
-func resolveXMLSequenceLiteral(t typeResolver, chain *binding, e *ast.BLangXMLSequenceLiteral, _ semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+func resolveXMLSequenceLiteral(t typeResolver, chain *binding, e *ast.BLangXMLSequenceLiteral, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	ty := xmlLiteralType(t, semtypes.XML, xmlMutabilityExpectation(t, expectedType))
+	childExpectedType := xmlChildExpectedType(t, ty)
 	childUnion := semtypes.Never
 	for _, child := range e.Children {
-		childResult, ok := resolveActionOrExpression(t, chain, child, semtypes.XML)
+		childResult, ok := resolveActionOrExpression(t, chain, child, childExpectedType)
 		if !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
@@ -4197,7 +4238,7 @@ func resolveXMLSequenceLiteral(t typeResolver, chain *binding, e *ast.BLangXMLSe
 		}
 		childUnion = semtypes.Union(childUnion, childTy)
 	}
-	ty := semtypes.XMLSequence(childUnion)
+	ty = semtypes.XMLSequence(childUnion)
 	e.SetDeterminedType(ty)
 	return ty, defaultExpressionEffect(chain), true
 }
@@ -4651,32 +4692,75 @@ func resolveMappingConstructorExpr(t typeResolver, chain *binding, e *ast.BLangM
 	if !semtypes.IsZero(expectedType) {
 		return resolveMappingConstructorWithExpectedType(t, chain, e, expectedType)
 	}
-	return resolveMappingConstructorBottomUp(t, chain, e)
+	return resolveMappingConstructorBottomUp(t, chain, e, false)
 }
 
-func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr) (semtypes.SemType, expressionEffect, bool) {
+// resolveMemberValue resolves a constructor member that has no contextually expected type.
+func resolveMemberValue(t typeResolver, chain *binding, expr ast.BLangExpression, readonly bool) (semtypes.SemType, bool) {
+	if readonly {
+		return resolveReadonlyMember(t, chain, expr)
+	}
+	result, ok := resolveActionOrExpression(t, chain, expr, semtypes.SemType{})
+	return result.ty, ok
+}
+
+// resolveReadonlyMember resolves the value of a readonly member of a constructor that has no
+// contextually expected type. Such a value has no expectation either, but it must be constructed
+// readonly: a constructor infers its shape and makes it readonly, and anything else is resolved
+// against readonly. Resolving a constructor against readonly instead would give it the whole
+// readonly mapping or list as its inherent type, losing the shape the member's type must keep.
+func resolveReadonlyMember(t typeResolver, chain *binding, expr ast.BLangExpression) (semtypes.SemType, bool) {
+	switch e := expr.(type) {
+	case *ast.BLangMappingConstructorExpr:
+		ty, _, ok := resolveMappingConstructorBottomUp(t, chain, e, true)
+		return ty, ok
+	case *ast.BLangListConstructorExpr:
+		ty, _, ok := resolveListConstructorInner(t, chain, e, true)
+		return ty, ok
+	case *ast.BLangGroupExpr:
+		ty, ok := resolveReadonlyMember(t, chain, e.Expression)
+		if ok {
+			e.SetDeterminedType(ty)
+		}
+		return ty, ok
+	default:
+		result, ok := resolveActionOrExpression(t, chain, expr, semtypes.ValReadonly)
+		return result.ty, ok
+	}
+}
+
+// inferredMemberType is the type a member of type ty gets in the inherent type a constructor
+// infers without a contextual expectation. A readonly structured member keeps its shape, since
+// widening its single shape would leave only its basic type.
+func inferredMemberType(ty semtypes.SemType, readonly bool) semtypes.SemType {
+	if readonly && semtypes.IsSubtypeSimple(ty, semtypes.Union(semtypes.List, semtypes.Mapping)) {
+		return ty
+	}
+	return widenedListMemberType(ty)
+}
+
+func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, readonlyValue bool) (semtypes.SemType, expressionEffect, bool) {
 	fields := make([]semtypes.Field, len(e.Fields))
 	for i, f := range e.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
-		valueResult, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, semtypes.SemType{})
+		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
 		if !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		valueTy := valueResult.ty
-		var broadTy semtypes.SemType
-		if semtypes.SingleShape(valueTy).IsEmpty() {
-			broadTy = valueTy
-		} else {
-			broadTy = semtypes.WidenToBasicTypes(valueTy)
+		readonly := readonlyValue || e.IsReadonly(keyName)
+		valueTy, ok := resolveMemberValue(t, chain, kv.ValueExpr, readonly)
+		if !ok {
+			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		var keyName string
+		fieldTy := valueTy
+		if !e.IsReadonly(keyName) {
+			fieldTy = inferredMemberType(valueTy, readonly)
+		}
 		switch keyExpr := kv.Key.Expr.(type) {
 		case *ast.BLangLiteral:
-			keyName = keyExpr.Value.(string)
 			resolveLiteral(t, keyExpr, semtypes.SemType{})
 		case ast.BNodeWithSymbol:
 			t.setSymbolType(keyExpr.Symbol(), valueTy)
-			keyName = t.symbolName(keyExpr.Symbol())
 			if e, ok := keyExpr.(ast.BLangExpression); ok {
 				e.SetDeterminedType(valueTy)
 			}
@@ -4686,26 +4770,18 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 		}
 		kv.Key.SetDeterminedType(semtypes.Never)
 		kv.SetDeterminedType(semtypes.Never)
-		fields[i] = semtypes.FieldFrom(keyName, broadTy, false, false)
+		fields[i] = semtypes.FieldFrom(keyName, fieldTy, readonly, false)
 	}
 	md := semtypes.NewMappingDefinition()
 	mapTy := md.Define(t.typeEnv(), fields, semtypes.Never)
-	e.SetDeterminedType(mapTy)
 	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
 	e.SelectedAtomicType = *mat
+	e.SetDeterminedType(mapTy)
 	return mapTy, defaultExpressionEffect(chain), true
 }
 
 func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
-	for _, f := range e.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
-		if _, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, semtypes.SemType{}); !ok {
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-		resolveMappingKey(t, kv)
-	}
-
-	resultType, mat, ok := selectMappingInherentType(t, e, expectedType)
+	resultType, mat, ok := selectMappingInherentType(t, chain, e, expectedType)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -4717,18 +4793,33 @@ func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 		requiredType := mat.FieldInnerVal(keyName)
+		if e.IsReadonly(keyName) {
+			requiredType = semtypes.Intersect(requiredType, semtypes.ValReadonly)
+			if semtypes.IsEmpty(t.typeContext(), requiredType) {
+				t.semanticError(fmt.Sprintf("field '%s' cannot be readonly: its type in the inherent type has no readonly values", keyName),
+					kv.GetPosition())
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+		}
 		kv.ValueExpr.SetDeterminedType(semtypes.SemType{})
 		if _, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, requiredType); !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
+		resolveMappingKey(t, kv)
 	}
 
 	e.SelectedAtomicType = *mat
 	if defaults, found := t.mappingDefaults(mat); found {
 		e.FieldDefaults = append([]model.FieldDefault(nil), defaults...)
 	}
-	e.SetDeterminedType(resultType)
-	return resultType, defaultExpressionEffect(chain), true
+	inherentTy := resultType
+	if len(e.ReadonlyFields) != 0 {
+		// The inherent type the value is constructed with narrows the explicitly readonly
+		// fields to immutable cells; the shape validated against remains SelectedAtomicType.
+		inherentTy = semtypes.MappingWithReadonlyFields(t.typeEnv(), mat, e.ReadonlyFields)
+	}
+	e.SetDeterminedType(inherentTy)
+	return inherentTy, defaultExpressionEffect(chain), true
 }
 
 func resolveMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField) {
@@ -4758,39 +4849,27 @@ func defaultableMappingFields(t typeResolver, atom *semtypes.MappingAtomicType) 
 	return fields
 }
 
-func selectMappingInherentType(t typeResolver, expr *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, *semtypes.MappingAtomicType, bool) {
+// selectMappingInherentType resolves the field values only when the expected type has more than one
+// mapping alternative, since only then does the choice depend on them. Each value is resolved
+// again against its selected field type, but its nested expressions keep the types they get here,
+// so an explicitly readonly field's value is resolved against readonly from the start.
+func selectMappingInherentType(t typeResolver, chain *binding, expr *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, *semtypes.MappingAtomicType, bool) {
 	expectedMappingType := semtypes.Intersect(expectedType, semtypes.Mapping)
 	tc := t.typeContext()
 	if semtypes.IsEmpty(tc, expectedMappingType) {
 		t.semanticError("mapping type not found in expected type", expr.GetPosition())
 		return semtypes.SemType{}, nil, false
 	}
-	mat := semtypes.ToMappingAtomicType(tc, expectedMappingType)
-	if mat != nil {
-		return expectedMappingType, mat, true
-	}
 	alts := semtypes.MappingAlternatives(tc, expectedType)
-	var validAlts []semtypes.MappingAlternative
-
-	fields := make([]semtypes.MappingFieldInfo, len(expr.Fields))
-	for i, f := range expr.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
-		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
+	validAlts := alts
+	if len(alts) > 1 {
+		var ok bool
+		validAlts, ok = applicableMappingAlternatives(t, chain, expr, alts)
 		if !ok {
 			return semtypes.SemType{}, nil, false
 		}
-		fields[i] = semtypes.MappingFieldInfo{Name: keyName, Type: kv.ValueExpr.GetDeterminedType()}
 	}
-	sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
 
-	defaultableFields := func(atom *semtypes.MappingAtomicType) []string {
-		return defaultableMappingFields(t, atom)
-	}
-	for _, alt := range alts {
-		if semtypes.MappingAlternativeAllowsFields(tc, alt, fields, defaultableFields) {
-			validAlts = append(validAlts, alt)
-		}
-	}
 	if len(validAlts) == 0 {
 		t.semanticError("no applicable inherent type for mapping constructor", expr.GetPosition())
 		return semtypes.SemType{}, nil, false
@@ -4801,13 +4880,41 @@ func selectMappingInherentType(t typeResolver, expr *ast.BLangMappingConstructor
 	}
 
 	selectedSemType := validAlts[0].Type()
-	mat = semtypes.ToMappingAtomicType(tc, selectedSemType)
+	mat := semtypes.ToMappingAtomicType(tc, selectedSemType)
 	if mat == nil {
 		t.semanticError("applicable type for mapping constructor is not atomic", expr.GetPosition())
 		return semtypes.SemType{}, nil, false
 	}
 
 	return selectedSemType, mat, true
+}
+
+func applicableMappingAlternatives(t typeResolver, chain *binding, expr *ast.BLangMappingConstructorExpr, alts []semtypes.MappingAlternative) ([]semtypes.MappingAlternative, bool) {
+	fields := make([]semtypes.MappingFieldInfo, len(expr.Fields))
+	for i, f := range expr.Fields {
+		kv := f.(*ast.BLangMappingKeyValueField)
+		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
+		if !ok {
+			return nil, false
+		}
+		valueTy, ok := resolveMemberValue(t, chain, kv.ValueExpr, expr.IsReadonly(keyName))
+		if !ok {
+			return nil, false
+		}
+		fields[i] = semtypes.MappingFieldInfo{Name: keyName, Type: valueTy}
+	}
+	sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
+
+	defaultableFields := func(atom *semtypes.MappingAtomicType) []string {
+		return defaultableMappingFields(t, atom)
+	}
+	var validAlts []semtypes.MappingAlternative
+	for _, alt := range alts {
+		if semtypes.MappingAlternativeAllowsFields(t.typeContext(), alt, fields, defaultableFields) {
+			validAlts = append(validAlts, alt)
+		}
+	}
+	return validAlts, true
 }
 
 func resolveTypeConversionExpr(t typeResolver, chain *binding, e *ast.BLangTypeConversionExpr) (semtypes.SemType, expressionEffect, bool) {
@@ -5459,39 +5566,42 @@ func resolveListConstructorExpr(t typeResolver, chain *binding, expr *ast.BLangL
 	if !semtypes.IsZero(expectedType) {
 		return resolveListConstructorWithExpectedType(t, chain, expr, expectedType)
 	}
-	return resolveListConstructorInner(t, chain, expr)
+	return resolveListConstructorInner(t, chain, expr, false)
 }
 
-func resolveListConstructorInner(t typeResolver, chain *binding, expr *ast.BLangListConstructorExpr) (semtypes.SemType, expressionEffect, bool) {
+func resolveListConstructorInner(t typeResolver, chain *binding, expr *ast.BLangListConstructorExpr, readonlyValue bool) (semtypes.SemType, expressionEffect, bool) {
 	memberTypes := make([]semtypes.SemType, 0, len(expr.Exprs))
 	restTy := semtypes.Never
 	spreadMembers := make([]bool, len(expr.Exprs))
 	hasSpread := false
+	mutability := semtypes.CellMutabilityLimited
+	if readonlyValue {
+		mutability = semtypes.CellMutabilityNone
+	}
 	for i, memberExpr := range expr.Exprs {
 		isSpread := expr.IsSpreadMember(i) || isQueryAggregatedVariableReference(chain, memberExpr)
-		memberResult, ok := resolveActionOrExpression(t, chain, memberExpr, semtypes.SemType{})
+		memberTy, ok := resolveMemberValue(t, chain, memberExpr, readonlyValue && !isSpread)
 		if !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		memberTy := memberResult.ty
 		if isSpread {
 			spreadMembers[i] = true
 			spreadMemberTy := semtypes.ListProj(t.typeContext(), memberTy, semtypes.Int)
-			restTy = semtypes.Union(restTy, widenedListMemberType(spreadMemberTy))
+			restTy = semtypes.Union(restTy, inferredMemberType(spreadMemberTy, readonlyValue))
 			hasSpread = true
 			continue
 		}
-		broadTy := widenedListMemberType(memberTy)
+		inferredTy := inferredMemberType(memberTy, readonlyValue)
 		if hasSpread {
-			restTy = semtypes.Union(restTy, broadTy)
+			restTy = semtypes.Union(restTy, inferredTy)
 			continue
 		}
-		memberTypes = append(memberTypes, broadTy)
+		memberTypes = append(memberTypes, inferredTy)
 	}
 	setListConstructorSpreadMembers(expr, spreadMembers)
 
 	ld := semtypes.NewListDefinition()
-	listTy := ld.Define(t.typeEnv(), memberTypes, semtypes.ListRest(restTy))
+	listTy := ld.Define(t.typeEnv(), memberTypes, semtypes.ListRest(restTy), semtypes.ListMutability(mutability))
 
 	expr.SetDeterminedType(listTy)
 	lat := semtypes.ToListAtomicType(t.typeEnv(), listTy)
@@ -5502,9 +5612,10 @@ func resolveListConstructorInner(t typeResolver, chain *binding, expr *ast.BLang
 
 func resolveListConstructorWithExpectedType(t typeResolver, chain *binding, expr *ast.BLangListConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	spreadMembers := make([]bool, len(expr.Exprs))
+	readonlyValue := isReadonlyListExpectation(t, expectedType)
 	for i, memberExpr := range expr.Exprs {
 		spreadMembers[i] = expr.IsSpreadMember(i) || isQueryAggregatedVariableReference(chain, memberExpr)
-		if _, ok := resolveActionOrExpression(t, chain, memberExpr, semtypes.SemType{}); !ok {
+		if _, ok := resolveMemberValue(t, chain, memberExpr, readonlyValue && !spreadMembers[i]); !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 	}
@@ -5554,6 +5665,18 @@ func resolveListConstructorWithExpectedType(t typeResolver, chain *binding, expr
 	return resultType, defaultExpressionEffect(chain), true
 }
 
+// isReadonlyListExpectation reports whether every list the expected type allows is readonly, so
+// the members must be resolved readonly before an inherent type can be selected. Emptiness cannot
+// be decided until every recursive type is defined; until then the members are resolved as mutable.
+func isReadonlyListExpectation(t typeResolver, expectedType semtypes.SemType) bool {
+	if !t.typeEnv().IsReady() {
+		return false
+	}
+	tc := t.typeContext()
+	expectedListType := semtypes.Intersect(expectedType, semtypes.List)
+	return !semtypes.IsEmpty(tc, expectedListType) && semtypes.IsSubtype(tc, expectedListType, semtypes.ValReadonly)
+}
+
 func setListConstructorSpreadMembers(expr *ast.BLangListConstructorExpr, spreadMembers []bool) {
 	for _, isSpread := range spreadMembers {
 		if isSpread {
@@ -5588,23 +5711,10 @@ func selectListInherentType(t typeResolver, expr *ast.BLangListConstructorExpr, 
 	}) {
 		return semtypes.SemType{}, semtypes.ListAtomicType{}, false
 	}
-	lat := semtypes.ToListAtomicType(tc.Env(), expectedListType)
-	if lat != nil {
-		return expectedListType, *lat, true
-	}
-
 	alts := semtypes.ListAlternatives(tc, expectedListType)
-
-	members := make([]semtypes.ListMemberInfo, len(expr.Exprs))
-	for i, expr := range expr.Exprs {
-		members[i] = semtypes.ListMemberInfo{Index: i, ValueType: expr.GetDeterminedType()}
-	}
-
-	var validAlts []semtypes.ListAlternative
-	for _, alt := range alts {
-		if semtypes.ListAlternativeAllowsMembers(tc, alt, members) {
-			validAlts = append(validAlts, alt)
-		}
+	validAlts := alts
+	if len(alts) > 1 {
+		validAlts = applicableListAlternatives(tc, expr, alts)
 	}
 
 	if len(validAlts) == 0 {
@@ -5617,13 +5727,27 @@ func selectListInherentType(t typeResolver, expr *ast.BLangListConstructorExpr, 
 	}
 
 	selectedSemType := validAlts[0].Type()
-	lat = semtypes.ToListAtomicType(tc.Env(), selectedSemType)
+	lat := semtypes.ToListAtomicType(tc.Env(), selectedSemType)
 	if lat == nil {
 		t.semanticError("applicable type for list constructor is not atomic", expr.GetPosition())
 		return semtypes.SemType{}, semtypes.ListAtomicType{}, false
 	}
 
 	return selectedSemType, *lat, true
+}
+
+func applicableListAlternatives(tc semtypes.Context, expr *ast.BLangListConstructorExpr, alts []semtypes.ListAlternative) []semtypes.ListAlternative {
+	members := make([]semtypes.ListMemberInfo, len(expr.Exprs))
+	for i, expr := range expr.Exprs {
+		members[i] = semtypes.ListMemberInfo{Index: i, ValueType: expr.GetDeterminedType()}
+	}
+	var validAlts []semtypes.ListAlternative
+	for _, alt := range alts {
+		if semtypes.ListAlternativeAllowsMembers(tc, alt, members) {
+			validAlts = append(validAlts, alt)
+		}
+	}
+	return validAlts
 }
 
 func resolveErrorConstructorExpr(t typeResolver, chain *binding, expr *ast.BLangErrorConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
@@ -8542,7 +8666,11 @@ func resolveConstant(t typeResolver, constant *ast.BLangVariable) bool {
 	expectedType := values.SemTypeForValue(value)
 	constant.SetDeterminedType(expectedType)
 	symbol := constant.Symbol()
-	t.setSymbolType(symbol, expectedType)
+	// A constant's value is deeply immutable, so a reference to it has the readonly
+	// intersection of its initializer type. Without this a reference to a structured
+	// constant looks mutable to contextual readonly checking even though mutating it
+	// panics at runtime.
+	t.setSymbolType(symbol, semtypes.Intersect(expectedType, semtypes.ValReadonly))
 
 	return true
 }

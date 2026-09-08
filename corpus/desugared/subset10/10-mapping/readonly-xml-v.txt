@@ -1,0 +1,124 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable element (expr
+          (mapping-constructor-expr
+            (readonly-fields document)
+            (key-value
+              (literal document)
+              (xml-element-literal a))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref element))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref element)
+              (literal document)))))))
+      (var-def
+        (variable sequence (expr
+          (mapping-constructor-expr
+            (readonly-fields document)
+            (key-value
+              (literal document)
+              (xml-sequence-literal
+                (xml-element-literal a)
+                (xml-comment-literal c)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref sequence))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref sequence)
+              (literal document)))))))
+      (var-def
+        (variable interpolated (expr
+          (mapping-constructor-expr
+            (readonly-fields document)
+            (key-value
+              (literal document)
+              (xml-template-literal
+                (template-string "<a>")
+                (invocation lang.__internal escapeXMLContent (
+                  (literal text)))
+                (template-string "</a>")))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref interpolated))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref interpolated)
+              (literal document)))))))
+      (var-def
+        (variable contextual (type
+          (constrained-type
+            (builtin-ref-type map)
+            (user-defined-type xml Element))) (expr
+          (mapping-constructor-expr
+            (readonly-fields document)
+            (key-value
+              (literal document)
+              (xml-element-literal a
+                (xml-element-literal b)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref contextual))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref contextual)
+              (literal document)))))))
+      (var-def
+        (variable mutable (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal document)
+              (xml-element-literal a))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref mutable)
+              (literal document)))))))
+      (var-def
+        (variable readonlyElement (type
+          (intersection-type
+            (user-defined-type xml Element)
+            (value-type readonly))) (expr
+          (xml-element-literal a
+            (xml-element-literal b)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (simple-var-ref readonlyElement))))))
+      (var-def
+        (variable readonlySequence (type
+          (intersection-type
+            (value-type xml)
+            (value-type readonly))) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-comment-literal c)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (simple-var-ref readonlySequence))))))))
+  (function isReadonly (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type readonly))))))

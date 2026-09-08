@@ -37,9 +37,9 @@ main() -> nil{
     %25 = ConstantLoad loop
     %26 = ConstantLoad loop
     %27 = ConstantLoad loop
-    %28 = newMap {| nil|boolean|int|float|string|...|...... |}{%27=j3}
-    %29 = newMap {| nil|boolean|int|float|string|...|...... |}{%26=%28}
-    %30 = newMap {| nil|boolean|int|float|string|...|...... |}{%25=%29}
+    %28 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}{%27=j3}
+    %29 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}{%26=%28}
+    %30 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}{%25=%29}
     %31 = ConstantLoad loop
     j3[%31] = %30;
     %32 = == j1 j3;

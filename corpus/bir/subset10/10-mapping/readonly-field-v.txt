@@ -3,7 +3,7 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad age
     %2 = ConstantLoad 36
-    %3 = newMap {| age: int, never... |}{%1=%2}
+    %3 = newMap {| age: 36, never... |}{%1=%2}
     x = %3;
     %5 = println(x) -> bb1;
   }

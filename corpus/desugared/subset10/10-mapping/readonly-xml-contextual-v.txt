@@ -1,0 +1,101 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable element (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type xml))) (expr
+          (mapping-constructor-expr
+            (readonly-fields d)
+            (key-value
+              (literal d)
+              (xml-element-literal a))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref element))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref element)
+              (literal d)))))))
+      (var-def
+        (variable sequence (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type xml))) (expr
+          (mapping-constructor-expr
+            (readonly-fields d)
+            (key-value
+              (literal d)
+              (xml-sequence-literal
+                (xml-element-literal a)
+                (xml-element-literal b)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref sequence))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref sequence)
+              (literal d)))))))
+      (var-def
+        (variable nested (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type xml))) (expr
+          (mapping-constructor-expr
+            (readonly-fields d)
+            (key-value
+              (literal d)
+              (xml-element-literal a
+                (xml-element-literal b)))))))
+      (var-def
+        (variable parent (type
+          (user-defined-type xml Element)) (expr
+          (type-conversion-expr
+            (index-based-access
+              (simple-var-ref nested)
+              (literal d))
+            (user-defined-type xml Element)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (simple-var-ref parent))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (invocation lang.xml getChildren (
+              (simple-var-ref parent))))))))
+      (var-def
+        (variable topLevel (type
+          (intersection-type
+            (value-type xml)
+            (value-type readonly))) (expr
+          (xml-element-literal a
+            (xml-element-literal b)))))
+      (var-def
+        (variable topParent (type
+          (user-defined-type xml Element)) (expr
+          (type-conversion-expr
+            (simple-var-ref topLevel)
+            (user-defined-type xml Element)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (invocation lang.xml getChildren (
+              (simple-var-ref topParent))))))))))
+  (function isReadonly (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type readonly))))))

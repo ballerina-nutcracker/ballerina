@@ -1,0 +1,37 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable m (expr
+        (mapping-constructor-expr
+          (readonly-fields tag)
+          (key-value
+            (literal tag)
+            (literal ok))
+          (key-value
+            (literal n)
+            (literal 1))))))
+    (var-def
+      (variable t (type
+        (user-defined-type Tag)) (expr
+        (field-based-access tag
+          (simple-var-ref m)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref t))))
+    (var-def
+      (variable f (expr
+        (mapping-constructor-expr
+          (readonly-fields tag)
+          (key-value
+            (literal tag)
+            (literal ok))))))
+    (var-def
+      (variable u (type
+        (user-defined-type Tag)) (expr
+        (field-based-access tag
+          (simple-var-ref f)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref u))))
+  )
+)
