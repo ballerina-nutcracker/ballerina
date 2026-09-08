@@ -534,6 +534,7 @@ type (
 	BLangMappingConstructorExpr struct {
 		bLangExpressionBase
 		Fields             []MappingField
+		ReadonlyFields     []string
 		SelectedAtomicType semtypes.MappingAtomicType
 		FieldDefaults      []model.FieldDefault
 	}
