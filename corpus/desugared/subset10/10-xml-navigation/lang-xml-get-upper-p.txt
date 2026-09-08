@@ -1,0 +1,10 @@
+(package
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation lang.xml get (
+          (xml-element-literal a)
+          (literal 1)))))))

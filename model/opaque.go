@@ -57,6 +57,11 @@ const (
 	OpaqueFnMapGet    = 1
 	// lang.xml
 	OpaqueFnXMLIterator = 4
+	OpaqueFnXMLGet      = 5
+	OpaqueFnXMLSlice    = 6
+	OpaqueFnXMLMap      = 7
+	OpaqueFnXMLForEach  = 8
+	OpaqueFnXMLFilter   = 9
 )
 
 func newOpaqueFunctionSymbol(name string, id int, isIsolatedParam func(int) bool) *OpaqueFunctionSymbol {
@@ -177,10 +182,15 @@ func langXMLOpaqueSymbols() []Symbol {
 		{"Text", semtypes.XMLText},
 		{"ProcessingInstruction", semtypes.XMLProcessingInstruction},
 	}
-	syms := make([]Symbol, len(defs)+1)
+	syms := make([]Symbol, 10)
 	for i, def := range defs {
 		syms[i] = newOpaqueTypeSymbol(def.name, def.ty, i)
 	}
 	syms[OpaqueFnXMLIterator] = newOpaqueFunctionSymbol("iterator", OpaqueFnXMLIterator, noIsolatedParams)
+	syms[OpaqueFnXMLGet] = newOpaqueFunctionSymbol("get", OpaqueFnXMLGet, noIsolatedParams)
+	syms[OpaqueFnXMLSlice] = newOpaqueFunctionSymbol("slice", OpaqueFnXMLSlice, noIsolatedParams)
+	syms[OpaqueFnXMLMap] = newOpaqueFunctionSymbol("map", OpaqueFnXMLMap, func(index int) bool { return index == 1 })
+	syms[OpaqueFnXMLForEach] = newOpaqueFunctionSymbol("forEach", OpaqueFnXMLForEach, func(index int) bool { return index == 1 })
+	syms[OpaqueFnXMLFilter] = newOpaqueFunctionSymbol("filter", OpaqueFnXMLFilter, func(index int) bool { return index == 1 })
 	return syms
 }
