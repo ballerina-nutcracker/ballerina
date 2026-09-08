@@ -1,0 +1,58 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Empty
+    (record-type))
+  (type-definition MA
+    (array-type
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type int)) dimensions: 1 ([
+      (literal 2)])))
+  (const A (
+    (user-defined-type MA)) (
+    (list-constructor-expr)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref A)
+            (value-type readonly)))))
+      (var-def
+        (variable entries (type
+          (array-type
+            (value-type any) dimensions: 1 ([]))) (expr
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref entries)
+              (literal 0))
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref entries)
+              (literal 0))
+            (intersection-type
+              (value-type readonly)
+              (user-defined-type Empty))))))
+      (var-def
+        (variable first (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (index-based-access
+            (simple-var-ref A)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref first) ())))))))
