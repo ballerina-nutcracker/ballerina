@@ -1,0 +1,22 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable inner (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (field-based-access m
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref inner))))
+    (assignment
+      (index-based-access
+        (simple-var-ref inner)
+        (literal a))
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref inner))))
+  )
+)

@@ -1,0 +1,11 @@
+-- stdout --
+1
+2
+{"n":1,"s":"leaf"}
+{}
+true
+true
+true
+true
+true
+-- stderr --

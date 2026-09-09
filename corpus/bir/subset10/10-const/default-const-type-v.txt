@@ -1,0 +1,28 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad s
+    %2 = newMap {| a: int, never... |}{} defaults{a=$anon/.:$default$0}
+    %3 = ConstantLoad k
+    %4 = ConstantLoad a
+    %5 = ConstantLoad 1
+    %6 = newMap {| a: 1, never... |}{%4=%5}
+    %7 = newMap {| k: readonly&{| a: 1, never... |}, s: {| a: int, never... |}, never... |}{%1=%2, %3=%6}
+    h = %7;
+    %9 = println(h) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad {"a":1}
+    %11 = println(%10) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}

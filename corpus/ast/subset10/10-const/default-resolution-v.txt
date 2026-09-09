@@ -1,0 +1,54 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const A (
+    (user-defined-type Later)) (
+    (mapping-constructor-expr)))
+  (const B (
+    (user-defined-type Alias)) (
+    (mapping-constructor-expr)))
+  (const C (
+    (user-defined-type Inline)) (
+    (mapping-constructor-expr)))
+  (type-definition Later
+    (record-type
+      (field x
+        (value-type int)
+        (simple-var-ref STEP2))))
+  (type-definition Alias
+    (user-defined-type Later))
+  (type-definition Inline
+    (record-type
+      (field nested
+        (record-type
+          (field y
+            (value-type int)
+            (simple-var-ref STEP1)))
+        (mapping-constructor-expr))))
+  (const STEP1 (
+    (value-type int)) (
+    (literal 3)))
+  (const STEP2 (
+    (value-type int)) (
+    (binary-expr *
+      (simple-var-ref STEP1)
+      (literal 2))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access y
+            (field-based-access nested
+              (simple-var-ref C))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref A)
+            (simple-var-ref B))))))))

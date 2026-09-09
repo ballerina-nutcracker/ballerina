@@ -1,0 +1,58 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"x":3,"y":2}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad {"x":3,"y":2}
+    %4 = %3 is {| x: int, y: int, never... |}
+    %5 = %4;
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad {"y":4,"x":1}
+    %8 = println(%7) -> bb3;
+  }
+  bb3 {
+    %9 = ConstantLoad {"s":"z","f":true}
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    %11 = ConstantLoad {"s":"z","f":true}
+    %12 = %11 is {| f: boolean, s: string, never... |}
+    %13 = %12;
+    %14 = println(%13) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> string{
+  bb0 {
+    %1 = ConstantLoad q
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> boolean{
+  bb0 {
+    %1 = ConstantLoad true
+    %0 = %1;
+    return;
+  }
+}

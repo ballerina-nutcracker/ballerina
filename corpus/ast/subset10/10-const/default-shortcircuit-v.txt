@@ -1,0 +1,60 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const N (
+    (value-type int)) (
+    (literal 10)))
+  (type-definition Guarded
+    (record-type
+      (field andGuard
+        (value-type boolean)
+        (binary-expr &&
+          (binary-expr <
+            (simple-var-ref N)
+            (literal 5))
+          (binary-expr >
+            (group-expr
+              (binary-expr /
+                (literal 1)
+                (literal 0)))
+            (literal 0))))
+      (field orGuard
+        (value-type boolean)
+        (binary-expr ||
+          (binary-expr >
+            (simple-var-ref N)
+            (literal 5))
+          (binary-expr >
+            (group-expr
+              (binary-expr /
+                (literal 1)
+                (literal 0)))
+            (literal 0))))
+      (field ternary
+        (value-type int)
+        (ternary-expr
+          (binary-expr >
+            (simple-var-ref N)
+            (literal 5))
+          (literal 1)
+          (binary-expr /
+            (literal 1)
+            (literal 0))))))
+  (const A (
+    (user-defined-type Guarded)) (
+    (mapping-constructor-expr)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (field-based-access andGuard
+            (simple-var-ref A)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access orGuard
+            (simple-var-ref A)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access ternary
+            (simple-var-ref A))))))))
