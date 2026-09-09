@@ -180,14 +180,11 @@ var UnsupportedTests = []string{
 	// rest param not supported in dependently typed functions
 	"subset8/08-function/dependent-fn-5-e.bal",
 
-	// Default parameters on langlib functions backed by opaque symbols. A
-	// default parameter is evaluated by a default closure generated from the
-	// defining module's AST; an opaque function is defined in Go and has no
-	// such module, so its parameters are all required and omitting one is a
-	// "missing required parameter" error. array:indexOf declares
-	// `int startIndex = 0`, so both of these omit it.
-	"subset10/10-langlibs/array-indexof-default-start-v.bal",
-	"subset10/10-langlibs/langlib-opaque-named-args-v.bal",
+	// https://github.com/ballerina-nutcracker/ballerina/issues/915
+	"subset7/07-function/default-module-var-ref-arg-v.bal",
+	"subset9/09-object/init-default-module-var-ref-v.bal",
+	"subset10/10-langlibs/langlib-method-default-module-var-ref-v.bal",
+	"subset7/07-record/field-default-module-var-ref-v.bal",
 }
 
 // IsUnsupported reports whether the given corpus test path is in

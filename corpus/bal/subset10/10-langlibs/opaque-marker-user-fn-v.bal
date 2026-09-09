@@ -16,10 +16,24 @@
 
 import ballerina/io;
 
+// The opaque marker is honoured only in a ballerina/lang.* package. Here it is
+// just a documentation line, so add is an ordinary function: it keeps its own
+// signature, its default and its named arguments.
+
+# Adds two numbers.
+# @opaque
+#
+# + a - the first number
+# + b - the second number
+# + return - the sum
+function add(int a, int b = 2) returns int {
+    return a + b;
+}
+
+# @opaque
 public function main() {
-    int[] arr = [10, 20, 30, 40, 30];
-    int? firstDefault = arr.indexOf(30);
-    if firstDefault is int {
-        io:println(firstDefault); // @output 2
-    }
+    io:println(add(1)); // @output 3
+    io:println(add(1, 5)); // @output 6
+    io:println(add(a = 1, b = 5)); // @output 6
+    io:println(add(1, b = 10)); // @output 11
 }

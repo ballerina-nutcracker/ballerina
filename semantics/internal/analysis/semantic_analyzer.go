@@ -1815,6 +1815,12 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		_ = n
 		return nil
 	case *ast.BLangFunction:
+		if _, isOpaque := a.ctx().GetSymbol(n.Symbol()).(*model.OpaqueFunctionSymbol); isOpaque {
+			// The lang library declaration of an opaque function. It has no body and no
+			// signature of its own to check: a call to it is monomorphized into a
+			// function of the call's own types, which is what gets analyzed.
+			return nil
+		}
 		if _, isDep := a.ctx().GetSymbol(n.Symbol()).(model.DependentlyTypedFunctionSymbol); isDep {
 			initializeFunctionAnalyzer(a, n)
 			return nil

@@ -1,0 +1,75 @@
+(Holder
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access pos
+          (simple-var-ref self))
+        (simple-var-ref pos))
+    )
+  )
+)
+(firstOf
+  (bb0 () ()
+    (simple-var-ref pos)
+  )
+)
+(lengthOf
+  (bb0 () ()
+    (simple-var-ref n)
+  )
+)
+(letters
+  (bb0 () ()
+    (list-constructor-expr
+      (literal 10)
+      (literal 20)
+      (literal 30)
+      (literal 20))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation lengthOf (
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lengthOf (
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3))
+          (literal 99))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation firstOf ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation firstOf (
+          (literal 7))))))
+    (var-def
+      (variable h (type
+        (user-defined-type Holder)) (expr
+        (new ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access pos
+          (simple-var-ref h)))))
+    (var-def
+      (variable p (type
+        (user-defined-type Positions)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access found
+          (simple-var-ref p)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (invocation letters ()))))))
+  )
+)

@@ -14,12 +14,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
+import ballerina/lang.array;
 
-public function main() {
-    int[] arr = [10, 20, 30, 40, 30];
-    int? firstDefault = arr.indexOf(30);
-    if firstDefault is int {
-        io:println(firstDefault); // @output 2
-    }
-}
+// The record type and its field defaults live in this module, so the
+// `$default$N` providers for the fields are compiled here while the
+// `array:indexOf` provider they call belongs to `lang.array`. The importing
+// module only ever sees the resulting record type.
+isolated function letters() returns int[] => [10, 20, 30, 20];
+
+public type Positions record {|
+    int? first = array:indexOf(letters(), 20);
+    int? fromThird = array:indexOf(letters(), 20, 2);
+    int? named = array:indexOf(letters(), val = 30);
+|};

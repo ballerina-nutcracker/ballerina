@@ -421,6 +421,12 @@ func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *bir.BIRPac
 		birPkg.InitFunction = initFunc
 	}
 	for _, function := range ast.Functions {
+		if _, isOpaque := ctx.GetSymbol(function.Symbol()).(*model.OpaqueFunctionSymbol); isOpaque {
+			// The lang library declaration of an opaque function is a signature only:
+			// it fixes parameter names and defaults for the compiler. Calls to it are
+			// monomorphized, and those functions are what reach BIR.
+			continue
+		}
 		var birFunc *bir.BIRFunction
 		if function.IsNative() {
 			birFunc = transformNativeFunction(newFunctionRoot(genCtx, nil), function, nil)

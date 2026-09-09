@@ -16,10 +16,27 @@
 
 import ballerina/io;
 
-public function main() {
-    int[] arr = [10, 20, 30, 40, 30];
-    int? firstDefault = arr.indexOf(30);
-    if firstDefault is int {
-        io:println(firstDefault); // @output 2
+// Skipped: https://github.com/ballerina-nutcracker/ballerina/issues/915
+//
+// `base` is typed `never` inside the `init` default value expression, so this
+// fails with "incompatible type: expected int, got never" pointing at `base`.
+// A default that reads a preceding parameter instead is fine.
+final int base = 5;
+
+isolated function twice(int x) returns int => x * 2;
+
+class Holder {
+    int n;
+
+    function init(int n = twice(base)) {
+        self.n = n;
     }
+}
+
+public function main() {
+    Holder h = new;
+    io:println(h.n); // @output 10
+
+    Holder j = new (3);
+    io:println(j.n); // @output 3
 }

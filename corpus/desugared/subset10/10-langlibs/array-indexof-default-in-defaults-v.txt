@@ -1,0 +1,337 @@
+(package
+  (import-package ballerina lang array (as array))
+  (import-package ballerina io (as io))
+  (type-definition Positions
+    (record-type
+      (field first
+        (union-type
+          (value-type int)
+          (value-type null))
+        (invocation array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))
+      (field fromThird
+        (union-type
+          (value-type int)
+          (value-type null))
+        (invocation array indexOf (
+          (invocation letters ())
+          (literal 20)
+          (literal 2))))
+      (field named
+        (union-type
+          (value-type int)
+          (value-type null))
+        (invocation array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))
+  (function letters () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (expr-function-body
+      (list-constructor-expr
+        (literal 10)
+        (literal 20)
+        (literal 30)
+        (literal 20))))
+  (function firstOf (
+    (variable arr (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable val (type
+      (value-type int)))
+    (variable pos (type
+      (union-type
+        (value-type int)
+        (value-type null))) (expr
+      (invocation lang.array indexOf (
+        (simple-var-ref $desugar$0)
+        (simple-var-ref $desugar$1)
+        (simple-var-ref $desugar$2)))))) (
+    (union-type
+      (value-type int)
+      (value-type null)))
+    (expr-function-body
+      (simple-var-ref pos)))
+  (function firstNamed (
+    (variable arr (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable pos (type
+      (union-type
+        (value-type int)
+        (value-type null))) (expr
+      (invocation lang.array indexOf (
+        (simple-var-ref $desugar$0)
+        (simple-var-ref $desugar$1)
+        (simple-var-ref $desugar$2)))))) (
+    (union-type
+      (value-type int)
+      (value-type null)))
+    (expr-function-body
+      (simple-var-ref pos)))
+  (function firstQualified (
+    (variable arr (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable pos (type
+      (union-type
+        (value-type int)
+        (value-type null))) (expr
+      (invocation array indexOf (
+        (simple-var-ref $desugar$0)
+        (simple-var-ref $desugar$1)
+        (simple-var-ref $desugar$2)))))) (
+    (union-type
+      (value-type int)
+      (value-type null)))
+    (expr-function-body
+      (simple-var-ref pos)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Positions)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref p)
+            (literal first)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref p)
+            (literal fromThird)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref p)
+            (literal named)))))
+      (var-def
+        (variable q (type
+          (user-defined-type Positions)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal first)
+              (literal 7))
+            (key-value
+              (literal fromThird)
+              (literal 8))
+            (key-value
+              (literal named)
+              (literal 9))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref q)
+            (literal first)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref q)
+            (literal fromThird)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref q)
+            (literal named)))))
+      (var-def
+        (variable values (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (invocation letters ()))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (simple-var-ref values))))
+          (var-def
+            (variable $desugar$1 (expr
+              (literal 20))))
+          (var-def
+            (variable $desugar$2 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1))))))
+          (invocation firstOf (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$3 (expr
+              (simple-var-ref values))))
+          (var-def
+            (variable $desugar$4 (expr
+              (literal 30))))
+          (var-def
+            (variable $desugar$5 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$3)
+                (simple-var-ref $desugar$4))))))
+          (invocation firstOf (
+            (simple-var-ref $desugar$3)
+            (simple-var-ref $desugar$4)
+            (simple-var-ref $desugar$5)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation firstOf (
+            (simple-var-ref values)
+            (literal 20)
+            (literal 99))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$6 (expr
+              (simple-var-ref values))))
+          (var-def
+            (variable $desugar$7 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$6))))))
+          (invocation firstNamed (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$8 (expr
+              (simple-var-ref values))))
+          (var-def
+            (variable $desugar$9 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$8))))))
+          (invocation firstQualified (
+            (simple-var-ref $desugar$8)
+            (simple-var-ref $desugar$9)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$10 (expr
+              (simple-var-ref values))))
+          (var-def
+            (variable $desugar$11 (expr
+              (literal 20))))
+          (var-def
+            (variable $desugar$12 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$10)
+                (simple-var-ref $desugar$11))))))
+          (invocation firstOf (
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11)
+            (simple-var-ref $desugar$12)))))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation letters ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 20))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (return
+        (invocation array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (invocation array indexOf (
+          (invocation letters ())
+          (literal 20)
+          (literal 2))))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation letters ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 30))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (return
+        (invocation array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))
+  (function $default$0 (
+    (variable arr (type
+      (value-type )))
+    (variable val (type
+      (value-type )))) ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref arr))))
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref val))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (return
+        (invocation lang.array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))
+  (function $default$1 (
+    (variable arr (type
+      (value-type )))) ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref arr))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 20))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (return
+        (invocation lang.array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))
+  (function $default$2 (
+    (variable arr (type
+      (value-type )))) ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref arr))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 30))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (return
+        (invocation array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2)))))))

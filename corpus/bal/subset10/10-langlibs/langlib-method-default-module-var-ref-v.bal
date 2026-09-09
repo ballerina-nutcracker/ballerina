@@ -16,10 +16,19 @@
 
 import ballerina/io;
 
+// Skipped: https://github.com/ballerina-nutcracker/ballerina/issues/915
+//
+// The receiver `letters` has no resolved type inside a default value
+// expression, so the langlib method lookup fails with "method not found:
+// length" / "method not found: indexOf". The same calls work with a parameter
+// or call-result receiver; see langlib-method-default-param-receiver-v.bal.
+final readonly & int[] letters = [10, 20, 30, 20];
+
+function lengthOf(int n = letters.length()) returns int => n;
+
+function firstOf(int? pos = letters.indexOf(30)) returns int? => pos;
+
 public function main() {
-    int[] arr = [10, 20, 30, 40, 30];
-    int? firstDefault = arr.indexOf(30);
-    if firstDefault is int {
-        io:println(firstDefault); // @output 2
-    }
+    io:println(lengthOf()); // @output 4
+    io:println(firstOf()); // @output 2
 }
