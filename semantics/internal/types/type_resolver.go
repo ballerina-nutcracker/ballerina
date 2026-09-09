@@ -8313,7 +8313,11 @@ func resolveScheduledRecordDefaults(t typeResolver, entry *recordDefaults) bool 
 	if !resolveRecordFieldDefaults(t, entry.recordTy) {
 		return false
 	}
-	t.setMappingDefaults(entry.atom, recordFieldDefaults(t, entry.recordTy))
+	defaults, ok := recordFieldDefaults(t, entry.recordTy)
+	if !ok {
+		return false
+	}
+	t.setMappingDefaults(entry.atom, defaults)
 	return true
 }
 
@@ -8610,23 +8614,28 @@ func validateOverridesAndMerge(t typeResolver, directMembers []directMember, inc
 	return members, true
 }
 
-func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType) []model.FieldDefault {
+func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType) ([]model.FieldDefault, bool) {
 	directFields := make(map[string]bool)
 	var defaults []model.FieldDefault
 	for name, field := range recordTy.FieldPtrs() {
 		directFields[name] = true
 		if field.Default != nil {
-			defaults = append(defaults, model.FieldDefault{FieldName: name, FnRef: field.Default.FnRef})
+			defaults = append(defaults, model.FieldDefault{
+				FieldName: name,
+				FnRef:     field.Default.FnRef,
+				Value:     field.Default.Value,
+				IsConst:   field.Default.IsConst,
+			})
 		}
 	}
 
 	inherited := make(map[string]bool)
 	for _, ref := range recordTy.Inclusions {
-		carrier, ok := t.getSymbol(ref).(model.MemberCarrier)
+		includedDefaults, ok := includedRecordDefaults(t, ref, recordTy.GetPosition())
 		if !ok {
-			continue
+			return nil, false
 		}
-		for _, fieldDefault := range carrier.FieldDefaults() {
+		for _, fieldDefault := range includedDefaults {
 			if directFields[fieldDefault.FieldName] || inherited[fieldDefault.FieldName] {
 				continue
 			}
@@ -8634,7 +8643,26 @@ func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType) []model.
 			defaults = append(defaults, fieldDefault)
 		}
 	}
-	return defaults
+	return defaults, true
+}
+
+// includedRecordDefaults returns the defaults of the record type included by
+// ref, resolving them first when they are still scheduled.
+func includedRecordDefaults(t typeResolver, ref model.SymbolRef, pos diagnostics.Location) ([]model.FieldDefault, bool) {
+	atom := semtypes.ToMappingAtomicType(t.typeContext(), t.symbolType(ref))
+	if atom == nil {
+		return nil, true
+	}
+	reference, ok := t.recordDefaultsReference(atom)
+	if !ok {
+		return nil, false
+	}
+	if reference != partialRecordNone {
+		t.semanticError("cyclic dependency in record field default", pos)
+		return nil, false
+	}
+	defaults, _ := t.mappingDefaults(atom)
+	return defaults, true
 }
 
 type recordInclusionResolutionResult struct {

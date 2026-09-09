@@ -401,9 +401,15 @@ type (
 		distinctTypeBase
 	}
 
+	// FieldDefault is a record field's default. FnRef is the closure that
+	// computes it and is always set. When the default is a constant expression,
+	// IsConst is set and Value holds its folded value, which compile-time
+	// evaluation uses instead of the closure; a nil Value is a folded ().
 	FieldDefault struct {
 		FieldName string
 		FnRef     SymbolRef
+		Value     values.BalValue
+		IsConst   bool
 	}
 
 	// MethodTable associates an object mapping atom with the symbols that
@@ -1209,7 +1215,6 @@ func annotationAttachPointBit(point string) (annotationAttachPointSet, bool) {
 type MemberCarrier interface {
 	Members() []InclusionMember
 	AddMember(InclusionMember)
-	FieldDefaults() []FieldDefault
 }
 
 type ObjectType interface {
@@ -1228,16 +1233,6 @@ type ClassSymbol interface {
 func (m *memberHolderBase) Members() []InclusionMember { return m.members }
 func (m *memberHolderBase) AddMember(im InclusionMember) {
 	m.members = append(m.members, im)
-}
-
-func (m *memberHolderBase) FieldDefaults() []FieldDefault {
-	var defaults []FieldDefault
-	for _, im := range m.members {
-		if fd, ok := im.(*FieldDescriptor); ok && !fd.DefaultFnRef.IsEmpty() {
-			defaults = append(defaults, FieldDefault{FieldName: fd.name, FnRef: fd.DefaultFnRef})
-		}
-	}
-	return defaults
 }
 
 func (d *distinctTypeBase) DistinctTypeIDs() []int {
