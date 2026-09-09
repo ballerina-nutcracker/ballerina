@@ -1,0 +1,104 @@
+module $anon.. v 0.0.0;
+next() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"runtime":3,"b":true,"s":"m","x":1,"n":null}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad {"runtime":7,"x":1,"n":null}
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad {"x":5,"runtime":7,"n":null}
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad {"x":5,"runtime":7,"n":null}
+    %8 = println(%7) -> bb4;
+  }
+  bb4 {
+    %9 = newMap {| b: boolean, n: nil|int, runtime: int, s: string, x: int, never... |}{} defaults{b=$anon/.:$default$4, s=$anon/.:$default$3, x=$anon/.:$default$0, n=$anon/.:$default$1, runtime=$anon/.:$default$2}
+    runtimeValue = %9;
+    %12 = ConstantLoad runtime
+    %11 = runtimeValue[%12];
+    %13 = %11;
+    %14 = println(%13) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> nil|int{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = next() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> string{
+  bb0 {
+    %1 = ConstantLoad m
+    %0 = %1;
+    return;
+  }
+}
+$default$4() -> boolean{
+  bb0 {
+    %1 = ConstantLoad true
+    %0 = %1;
+    return;
+  }
+}
+$default$5() -> int{
+  bb0 {
+    %1 = ConstantLoad 7
+    %0 = %1;
+    return;
+  }
+}
+$default$6() -> int{
+  bb0 {
+    %1 = next() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$default$7() -> int{
+  bb0 {
+    %1 = ConstantLoad 7
+    %0 = %1;
+    return;
+  }
+}
+$default$8() -> int{
+  bb0 {
+    %1 = ConstantLoad 7
+    %0 = %1;
+    return;
+  }
+}
