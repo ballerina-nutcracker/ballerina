@@ -1,0 +1,36 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| xs: [{| b: nil|..., x: int, never... |}...]|[{| s: string, never... |}...], never... |}{} defaults{xs=$anon/.:$default$2}
+    b = %1;
+    %4 = ConstantLoad xs
+    %3 = b[%4];
+    %5 = println(%3) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$default$0() -> nil|{| xs: [{| b: nil|..., x: int, never... |}...]|[{| s: string, never... |}...], never... |}{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> [{| b: nil|{| xs: ...|[{| s: string, never... |}...], never... |}, x: int, never... |}...]|[{| s: string, never... |}...]{
+  bb0 {
+    %1 = newMap {| b: nil|{| xs: [{| b: nil|..., x: int, never... |}...]|[{| s: string, never... |}...], never... |}, x: int, never... |}{} defaults{b=$anon/.:$default$0, x=$anon/.:$default$1}
+    %2 = ConstantLoad 1
+    %3 = newArray [{| b: nil|{| xs: ...|[{| s: string, never... |}...], never... |}, x: int, never... |}...][%2]{%1}
+    %0 = %3;
+    return;
+  }
+}
