@@ -41,7 +41,10 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 	case *ast.BLangLiteral, *ast.BLangNumericLiteral, *ast.BLangConstRef:
 		return nil, true
 	case *ast.BLangVarRef:
-		if vs, ok := t.getSymbol(e.Symbol()).(model.ValueSymbol); ok && vs.IsConst() {
+		// model.ValueSymbol.IsConst also covers final variables and parameters,
+		// which are immutable bindings without a compile-time value. Only a
+		// constant symbol can be folded, and evaluateConstantReference agrees.
+		if _, ok := t.getSymbol(t.unnarrowedSymbol(e.Symbol())).(*model.ConstantValueSymbol); ok {
 			return nil, true
 		}
 		return expr, false
@@ -111,6 +114,18 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 	default:
 		return expr, false
 	}
+}
+
+// classifyFieldDefault folds a record field's default expression when it is a
+// constant expression. It returns false after reporting the failure when a
+// supported constant expression fails to fold; the caller then drops that
+// field's default.
+func classifyFieldDefault(t typeResolver, field *ast.BField) bool {
+	if _, ok := isConstantExpression(t, field.Default.Expr); !ok {
+		return true
+	}
+	_, ok := foldConstant(t, field.Default.Expr)
+	return ok
 }
 
 type constantExpressionEvaluator struct {

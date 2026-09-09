@@ -1,0 +1,50 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| b: nil|{| f: {| a: {| b: nil|..., xs: [int...], never... |}, never... |}|{| a: {| b: nil|..., xs: [int...], never... |}, s: string, never... |}, never... |}, xs: [int...], never... |}{} defaults{b=$anon/.:$default$0, xs=$anon/.:$default$1}
+    a = %1;
+    %4 = ConstantLoad xs
+    %3 = a[%4];
+    %5 = println(%3) -> bb1;
+  }
+  bb1 {
+    %6 = newMap {| f: {| a: {| b: nil|..., xs: [int...], never... |}, never... |}|{| a: {| b: nil|..., xs: [int...], never... |}, s: string, never... |}, never... |}{} defaults{f=$anon/.:$default$2}
+    b = %6;
+    %9 = ConstantLoad xs
+    %11 = ConstantLoad a
+    %13 = ConstantLoad f
+    %12 = b[%13];
+    %10 = %12[%11];
+    %8 = %10[%9];
+    %14 = println(%8) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$default$0() -> nil|{| f: {| a: {| b: nil|..., xs: [int...], never... |}, never... |}|{| a: {| b: nil|..., xs: [int...], never... |}, s: string, never... |}, never... |}{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> [int...]{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    %0 = %4;
+    return;
+  }
+}
+$default$2() -> {| a: {| b: nil|{| f: ...|{| a: ..., s: string, never... |}, never... |}, xs: [int...], never... |}, never... |}|{| a: {| b: nil|{| f: {| a: ..., never... |}|..., never... |}, xs: [int...], never... |}, s: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = newMap {| b: nil|{| f: {| a: {| b: nil|..., xs: [int...], never... |}, never... |}|{| a: {| b: nil|..., xs: [int...], never... |}, s: string, never... |}, never... |}, xs: [int...], never... |}{} defaults{b=$anon/.:$default$0, xs=$anon/.:$default$1}
+    %3 = newMap {| a: {| b: nil|{| f: ...|{| a: ..., s: string, never... |}, never... |}, xs: [int...], never... |}, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}

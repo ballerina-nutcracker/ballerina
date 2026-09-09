@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: division by zero
+  --> default-trial-waiting-eval-fail-e.bal:22:13
+   |
+22 |     int c = 1 / 0; // @error division by zero in W's default, reached when X's default selects W
+   |             ^^^^^

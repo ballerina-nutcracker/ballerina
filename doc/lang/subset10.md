@@ -74,6 +74,10 @@
 - [Mapping constructor](https://ballerina.io/spec/lang/master/#mapping-constructor-expr)
   - When selecting among multiple candidate inherent types, resolving the field values has the same restrictions as resolving the arguments of a new expression that selects among candidate object types (see New expression above).
   - Currently [spread-field](https://ballerina.io/spec/lang/master/#spread-field) not supported
+  - A function nested in a record field default, such as a lambda body, cannot construct a record whose defaults depend on the record that declares that default
+  - Computed keys are not supported in a mapping constructor that is a constant expression, including one used as a record field default
+  - A record field default that is a constant expression but fails to evaluate, such as `int x = 1 / 0`, is a compile error even if every use supplies the field
+  - A record field default that is a constant expression and constructs a record whose defaults lead back to it without supplying the field, such as `R? next = {}` in `R`, is a compile error even if every construction supplies the field
 - [XML template expression](https://ballerina.io/spec/lang/master/#xml-template-expr)
   - Supports interpolation in XML content and attributes
   - XML sequence interpolation from a query result is not supported

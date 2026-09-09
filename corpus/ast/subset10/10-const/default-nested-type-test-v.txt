@@ -1,0 +1,33 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Outer
+    (record-type
+      (field inner
+        (user-defined-type Inner)
+        (mapping-constructor-expr))))
+  (variable seed (type
+    (intersection-type
+      (value-type readonly)
+      (value-type anydata))) (expr
+    (literal 1)))
+  (type-definition Inner
+    (record-type
+      (field ok
+        (value-type boolean)
+        (type-test-expr is
+          (simple-var-ref seed)
+          (record-type
+            (field b
+              (value-type int)
+              (literal 1)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (user-defined-type Outer)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref o)))))))
