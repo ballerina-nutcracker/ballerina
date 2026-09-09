@@ -140,7 +140,7 @@ func (e *env) recFunctionAtom() recAtom {
 	defer e.recFunctionAtomsMutex.Unlock()
 	result := len(e.recFunctionAtoms)
 	e.recFunctionAtoms = append(e.recFunctionAtoms, nil)
-	return createRecAtom(result)
+	return createRecAtom(result, recAtomKindFunction)
 }
 
 func (e *env) setRecFunctionAtomType(rec recAtom, atomicType *functionAtomicType) {
@@ -256,7 +256,7 @@ func (e *env) recListAtom() recAtom {
 	defer e.recListAtomsMutex.Unlock()
 	result := len(e.recListAtoms)
 	e.recListAtoms = append(e.recListAtoms, nil)
-	return createRecAtom(result)
+	return createRecAtom(result, recAtomKindList)
 }
 
 func (e *env) recMappingAtom() recAtom {
@@ -265,7 +265,7 @@ func (e *env) recMappingAtom() recAtom {
 	defer e.recMappingAtomsMutex.Unlock()
 	result := len(e.recMappingAtoms)
 	e.recMappingAtoms = append(e.recMappingAtoms, nil)
-	return createRecAtom(result)
+	return createRecAtom(result, recAtomKindMapping)
 }
 
 func (e *env) setRecListAtomType(rec recAtom, atomicType *ListAtomicType) {

@@ -86,7 +86,7 @@ var (
 	ReadonlyXMLProcessingInstruction  = XMLSingleton(xmlPrimitiveProcessingInstructionReadonly)
 	XMLProcessingInstruction          = XMLSingleton((xmlPrimitiveProcessingInstructionReadonly | xmlPrimitivePiRw))
 	bddRecAtomReadonly                = 0
-	bddSubtypeRo                      = bddAtom(new(createRecAtom(bddRecAtomReadonly)))
+	bddSubtypeRo                      = bddAtom(new(createRecAtom(bddRecAtomReadonly, recAtomKindList)))
 	mappingRo                         = getBasicSubtype(btMapping, bddSubtypeRo)
 	cellAtomicVal                     = predefTypeEnv.cellAtomicVal()
 	atomCellVal                       = predefTypeEnv.atomCellVal()
@@ -125,7 +125,7 @@ var (
 	atomMappingObject                 = predefTypeEnv.atomMappingObject()
 	mappingSubtypeObject              = bddAtom(atomMappingObject)
 	bddRecAtomObjectReadonly          = 1
-	objectRoRecAtom                   = new(createRecAtom(bddRecAtomObjectReadonly))
+	objectRoRecAtom                   = new(createRecAtom(bddRecAtomObjectReadonly, recAtomKindMapping))
 	mappingSubtypeObjectRo            = bddAtom(objectRoRecAtom)
 	mappingArrayRo                    = getBasicSubtype(btList, listSubtypeMappingRo)
 	atomCellMappingArrayRo            = predefTypeEnv.atomCellMappingArrayRO()

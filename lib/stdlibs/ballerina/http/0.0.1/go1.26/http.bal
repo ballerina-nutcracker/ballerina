@@ -14,6 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/mime;
+import ballerina/url;
+
 // Supported subset of ballerina/http for the Go runtime.
 // See lib/http/client-support.md for the full feature support matrix.
 
@@ -382,6 +385,35 @@ public class Response {
     #              but all lookups operate on transport headers
     # + return - An array of all header names present in the response
     public isolated function getHeaderNames(HeaderPosition position = LEADING) returns string[] = external;
+
+    # Sets the response body as a set of multipart body parts.
+    #
+    # + bodyParts - The body parts to be set
+    # + contentType - Optional MIME type; if absent, the response's existing `Content-Type` is kept
+    #                 if already set, otherwise `multipart/form-data` is used
+    public isolated function setBodyParts(mime:Entity[] bodyParts, string? contentType = ()) = external;
+
+    # Extracts the response body as multipart body parts.
+    #
+    # + return - The body parts, or an `error` if the response body is not a composite
+    #            (`multipart/*` or `message/*`) media type, or the body cannot be decoded
+    public isolated function getBodyParts() returns mime:Entity[]|error = external;
+
+    # Sets the response body, dispatching to the specific setter based on the runtime type of `payload`.
+    #
+    # + payload - A `string`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the response body
+    # + contentType - Optional MIME type overriding the type-inferred default
+    public isolated function setPayload(json|byte[]|mime:Entity[] payload, string? contentType = ()) {
+        if payload is string {
+            self.setTextPayload(payload, contentType);
+        } else if payload is byte[] {
+            self.setBinaryPayload(payload, contentType);
+        } else if payload is mime:Entity[] {
+            self.setBodyParts(payload, contentType);
+        } else {
+            self.setJsonPayload(payload, contentType);
+        }
+    }
 }
 
 // ── Request ───────────────────────────────────────────────────────────────────
@@ -530,12 +562,132 @@ public class Request {
     # + key - The query parameter name
     # + return - A `string[]` of all values, or `()` if the parameter is not present
     public isolated function getQueryParamValues(string key) returns string[]? = external;
+
+    # Sets the request body as a set of multipart body parts.
+    #
+    # + bodyParts - The body parts to be set
+    # + contentType - Optional MIME type; if absent, the request's existing `Content-Type` is kept
+    #                 if already set, otherwise `multipart/form-data` is used
+    public isolated function setBodyParts(mime:Entity[] bodyParts, string? contentType = ()) = external;
+
+    # Extracts the request body as multipart body parts.
+    #
+    # + return - The body parts, or an `error` if the request body is not a composite
+    #            (`multipart/*` or `message/*`) media type, or the body cannot be decoded
+    public isolated function getBodyParts() returns mime:Entity[]|error = external;
+
+    # Sets the request body, dispatching to the specific setter based on the runtime type of `payload`.
+    #
+    # + payload - A `string`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the request body
+    # + contentType - Optional MIME type overriding the type-inferred default
+    public isolated function setPayload(json|byte[]|mime:Entity[] payload, string? contentType = ()) {
+        if payload is string {
+            self.setTextPayload(payload, contentType);
+        } else if payload is byte[] {
+            self.setBinaryPayload(payload, contentType);
+        } else if payload is mime:Entity[] {
+            self.setBodyParts(payload, contentType);
+        } else {
+            self.setJsonPayload(payload, contentType);
+        }
+    }
+
+    # Extracts and decodes the form parameters from a request body of
+    # `Content-Type: application/x-www-form-urlencoded`.
+    #
+    # + return - A `map<string>` of decoded form parameter names to values, or an `error` if the
+    #            `Content-Type` header is missing, invalid, not `application/x-www-form-urlencoded`,
+    #            or the body cannot be decoded
+    public isolated function getFormParams() returns map<string>|error {
+        string message = "Error occurred while retrieving form parameters from the request";
+        string|error contentTypeValue = self.getHeader(mime:CONTENT_TYPE);
+        if contentTypeValue is error {
+            return error(message, error("Content-Type header is not available"));
+        }
+        mime:MediaType|mime:InvalidContentTypeError mediaType = mime:getMediaType(contentTypeValue);
+        if mediaType is mime:InvalidContentTypeError {
+            return error(message, mediaType);
+        }
+        string baseType = mediaType.primaryType + "/" + mediaType.subType;
+        if !baseType.equalsIgnoreCaseAscii(mime:APPLICATION_FORM_URLENCODED) {
+            return error(message, error("Invalid content type: expected 'application/x-www-form-urlencoded'"));
+        }
+        string|error formData = self.getTextPayload();
+        if formData is error {
+            return error(message, formData);
+        }
+        return parseFormData(formData);
+    }
 }
 
-// Represents an HTTP outbound request entity. Accepts any `anydata` value (including `xml`)
-// or an existing `Request` object. The `mime:Entity[]` and `stream` subtypes of jBallerina's
-// `RequestMessage` are not supported in this implementation.
-public type RequestMessage anydata|Request;
+// Splits `formData` (already percent-decoded) on `&` into name/value pairs delimited by the
+// first `=` in each pair, mirroring jBallerina's `getFormDataMap`. Byte-level scanning is used
+// because this port's `lang.string` has no `indexOf`/`split`; splitting only on the single-byte
+// ASCII delimiters `&` (38) and `=` (61) is safe over decoded UTF-8 text since those byte values
+// never occur inside a multi-byte codepoint. Byte offsets are converted to codepoint offsets
+// before calling `substring` so multi-byte UTF-8 content decodes correctly.
+isolated function parseFormData(string formData) returns map<string>|error {
+    map<string> parameters = {};
+    if formData.length() == 0 {
+        return parameters;
+    }
+    string decodedValue = check url:decode(formData, "UTF-8");
+    byte[] allBytes = decodedValue.toBytes();
+    int totalLength = allBytes.length();
+    if indexOfByte(allBytes, 61, 0) == -1 {
+        return error("Datasource does not contain form data");
+    }
+    int entryStart = 0;
+    while entryStart <= totalLength {
+        int ampIndex = indexOfByte(allBytes, 38, entryStart);
+        int entryEnd = totalLength;
+        if ampIndex != -1 {
+            entryEnd = ampIndex;
+        }
+        int equalsIndex = indexOfByte(allBytes, 61, entryStart);
+        if equalsIndex != -1 && equalsIndex < entryEnd {
+            string name = decodedValue.substring(byteOffsetToCharOffset(allBytes, entryStart),
+                    byteOffsetToCharOffset(allBytes, equalsIndex));
+            string value = decodedValue.substring(byteOffsetToCharOffset(allBytes, equalsIndex + 1),
+                    byteOffsetToCharOffset(allBytes, entryEnd));
+            parameters[name.trim()] = value.trim();
+        }
+        entryStart = entryEnd + 1;
+    }
+    return parameters;
+}
+
+isolated function indexOfByte(byte[] data, int target, int startIndex) returns int {
+    int i = startIndex;
+    int len = data.length();
+    while i < len {
+        if data[i] == target {
+            return i;
+        }
+        i += 1;
+    }
+    return -1;
+}
+
+// Counts UTF-8 lead bytes (values outside the 0x80-0xBF continuation-byte range) up to
+// `byteOffset`, converting a byte-array index into the codepoint index `substring` expects.
+isolated function byteOffsetToCharOffset(byte[] data, int byteOffset) returns int {
+    int charOffset = 0;
+    int i = 0;
+    while i < byteOffset {
+        byte b = data[i];
+        if b < 128 || b >= 192 {
+            charOffset += 1;
+        }
+        i += 1;
+    }
+    return charOffset;
+}
+
+// Represents an HTTP outbound request entity. Accepts any `anydata` value (including `xml`),
+// an existing `Request` object, or a multipart body (`mime:Entity[]`). The `stream` subtype
+// of jBallerina's `RequestMessage` is not supported in this implementation.
+public type RequestMessage anydata|Request|mime:Entity[];
 
 # Represents the types of the `targetType` parameter of the client remote methods.
 # The `stream<SseEvent, error?>` member of jBallerina's `TargetType` is not supported

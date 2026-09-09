@@ -37,6 +37,14 @@ func outboundPayload(tc semtypes.Context, types *httpTypes, v values.BalValue) (
 		if !semtypes.IsZero(p.Type) && semtypes.IsSubtype(tc, p.Type, types.byteArrTy) {
 			return p.ToByteSlice(), "application/octet-stream", nil
 		}
+		if p.Len() > 0 {
+			if parts, ok := entityListToParts(p); ok {
+				data, contentType, err := encodeMultipartBody(parts, "multipart/form-data")
+				if err == nil {
+					return data, contentType, nil
+				}
+			}
+		}
 	}
 	b, err := toJSONBytes(v)
 	if err != nil {
