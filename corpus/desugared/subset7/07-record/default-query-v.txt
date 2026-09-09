@@ -44,7 +44,7 @@
           (index-based-access
             (simple-var-ref f2)
             (literal values)))))))
-  (function $desugar$0 () ()
+  (function $default$0 () ()
     (block-function-body
       (var-def
         (variable $desugar$0 (expr

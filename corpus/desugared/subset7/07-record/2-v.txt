@@ -23,7 +23,7 @@
           (type-test-expr is
             (simple-var-ref f)
             (user-defined-type Foo)))))))
-  (function $desugar$0 () ()
+  (function $default$0 () ()
     (block-function-body
       (return
         (literal 5)))))

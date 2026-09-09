@@ -6,7 +6,7 @@
       (var-def
         (variable $desugar$0 (expr
           (lambda
-            (function $desugar$0 () ()
+            (function $default$0 () ()
               (block-function-body
                 (return
                   (numeric-literal 10))))))))

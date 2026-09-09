@@ -68,7 +68,7 @@
         (invocation io println (
           (invocation describe expr:
             (simple-var-ref instance) ()))))))
-  (function $desugar$0 () ()
+  (function $default$0 () ()
     (block-function-body
       (return
         (literal false)))))

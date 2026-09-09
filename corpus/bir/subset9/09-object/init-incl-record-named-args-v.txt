@@ -36,7 +36,7 @@ main() -> nil|error{
     %4 = ConstantLoad /tmp
     %5 = ConstantLoad recursive
     %6 = ConstantLoad true
-    %7 = newMap {| path: string, recursive: boolean, never... |}{%3=%4, %5=%6} defaults{recursive=$anon/.:$desugar$0}
+    %7 = newMap {| path: string, recursive: boolean, never... |}{%3=%4, %5=%6} defaults{recursive=$anon/.:$default$0}
     %8 = %2.init(%7) -> bb1;
   }
   bb1 {
@@ -74,7 +74,7 @@ main() -> nil|error{
     return;
   }
 }
-$desugar$0() -> boolean{
+$default$0() -> boolean{
   bb0 {
     %1 = ConstantLoad false
     %0 = %1;

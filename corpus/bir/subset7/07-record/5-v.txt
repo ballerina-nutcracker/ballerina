@@ -1,59 +1,59 @@
 module $anon.. v 0.0.0;
-$desugar$0() -> int{
+$default$0() -> int{
   bb0 {
     %0 = (1, c);
     return;
   }
 }
-$desugar$1() -> int{
+$default$1() -> int{
   bb0 {
     %0 = (1, c);
     return;
   }
 }
-$desugar$2() -> string{
+$default$2() -> string{
   bb0 {
     %0 = (1, s);
     return;
   }
 }
-$desugar$3() -> int{
+$default$3() -> int{
   bb0 {
     %0 = (1, c);
     return;
   }
 }
-$desugar$4() -> string{
+$default$4() -> string{
   bb0 {
     %0 = (1, s);
     return;
   }
 }
-$desugar$5() -> int{
+$default$5() -> int{
   bb0 {
     %0 = (1, c);
     return;
   }
 }
-$desugar$6() -> int{
+$default$6() -> int{
   bb0 {
     %0 = (1, c);
     return;
   }
 }
-$desugar$7() -> string{
+$default$7() -> string{
   bb0 {
     %0 = (1, s);
     return;
   }
 }
-$desugar$8() -> int{
+$default$8() -> int{
   bb0 {
     %0 = (1, c);
     return;
   }
 }
-$desugar$9() -> string{
+$default$9() -> string{
   bb0 {
     %0 = (1, s);
     return;
@@ -63,9 +63,9 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad 10
     c = %1;
-    %3 = closure_fp $anon/.:$desugar$0
+    %3 = closure_fp $anon/.:$default$0
     $desugar$0 = %3;
-    %5 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$desugar$0}
+    %5 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$default$0}
     f = %5;
     %8 = ConstantLoad value
     %7 = f[%8];
@@ -75,11 +75,11 @@ main() -> nil{
   bb1 {
     %11 = ConstantLoad hello
     s = %11;
-    %13 = closure_fp $anon/.:$desugar$1
+    %13 = closure_fp $anon/.:$default$1
     $desugar$1 = %13;
-    %15 = closure_fp $anon/.:$desugar$2
+    %15 = closure_fp $anon/.:$default$2
     $desugar$2 = %15;
-    %17 = newMap {| name: string, value: int, never... |}{} defaults{value=$anon/.:$desugar$1, name=$anon/.:$desugar$2}
+    %17 = newMap {| name: string, value: int, never... |}{} defaults{value=$anon/.:$default$1, name=$anon/.:$default$2}
     f2 = %17;
     %20 = ConstantLoad value
     %19 = f2[%20];
@@ -92,13 +92,13 @@ main() -> nil{
     %25 = println(%23) -> bb3;
   }
   bb3 {
-    %26 = closure_fp $anon/.:$desugar$3
+    %26 = closure_fp $anon/.:$default$3
     $desugar$3 = %26;
-    %28 = closure_fp $anon/.:$desugar$4
+    %28 = closure_fp $anon/.:$default$4
     $desugar$4 = %28;
     %30 = ConstantLoad value
     %31 = ConstantLoad 20
-    %32 = newMap {| name: string, value: int, never... |}{%30=%31} defaults{value=$anon/.:$desugar$3, name=$anon/.:$desugar$4}
+    %32 = newMap {| name: string, value: int, never... |}{%30=%31} defaults{value=$anon/.:$default$3, name=$anon/.:$default$4}
     f3 = %32;
     %35 = ConstantLoad value
     %34 = f3[%35];
@@ -111,11 +111,11 @@ main() -> nil{
     %40 = println(%38) -> bb5;
   }
   bb5 {
-    %41 = closure_fp $anon/.:$desugar$5
+    %41 = closure_fp $anon/.:$default$5
     $desugar$5 = %41;
     %43 = ConstantLoad x
     %44 = ConstantLoad 1
-    %45 = newMap {| x: int, y: int, never... |}{%43=%44} defaults{y=$anon/.:$desugar$5}
+    %45 = newMap {| x: int, y: int, never... |}{%43=%44} defaults{y=$anon/.:$default$5}
     f4 = %45;
     %48 = ConstantLoad x
     %47 = f4[%48];
@@ -129,13 +129,13 @@ main() -> nil{
     %54 = println(%53) -> bb7;
   }
   bb7 {
-    %55 = closure_fp $anon/.:$desugar$6
+    %55 = closure_fp $anon/.:$default$6
     $desugar$6 = %55;
-    %57 = closure_fp $anon/.:$desugar$7
+    %57 = closure_fp $anon/.:$default$7
     $desugar$7 = %57;
     %59 = ConstantLoad x
     %60 = ConstantLoad 5
-    %61 = newMap {| name: string, x: int, y: int, never... |}{%59=%60} defaults{y=$anon/.:$desugar$6, name=$anon/.:$desugar$7}
+    %61 = newMap {| name: string, x: int, y: int, never... |}{%59=%60} defaults{y=$anon/.:$default$6, name=$anon/.:$default$7}
     f5 = %61;
     %64 = ConstantLoad x
     %63 = f5[%64];
@@ -154,9 +154,9 @@ main() -> nil{
     %73 = println(%71) -> bb10;
   }
   bb10 {
-    %74 = closure_fp $anon/.:$desugar$8
+    %74 = closure_fp $anon/.:$default$8
     $desugar$8 = %74;
-    %76 = closure_fp $anon/.:$desugar$9
+    %76 = closure_fp $anon/.:$default$9
     $desugar$9 = %76;
     %78 = ConstantLoad x
     %79 = ConstantLoad 5
@@ -164,7 +164,7 @@ main() -> nil{
     %81 = ConstantLoad 20
     %82 = ConstantLoad name
     %83 = ConstantLoad world
-    %84 = newMap {| name: string, x: int, y: int, never... |}{%78=%79, %80=%81, %82=%83} defaults{y=$anon/.:$desugar$8, name=$anon/.:$desugar$9}
+    %84 = newMap {| name: string, x: int, y: int, never... |}{%78=%79, %80=%81, %82=%83} defaults{y=$anon/.:$default$8, name=$anon/.:$default$9}
     f6 = %84;
     %87 = ConstantLoad x
     %86 = f6[%87];

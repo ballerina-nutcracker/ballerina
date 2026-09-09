@@ -1,0 +1,52 @@
+(SimpleListener
+  (init
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal listener initialized))))
+      (return
+        (literal <nil>))
+    )
+  )
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+      (expression-stmt
+        (invocation io println (
+          (literal attached))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ())
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (user-defined-type WithDefault)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref r)))))
+  )
+)

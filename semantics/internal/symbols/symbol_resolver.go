@@ -69,6 +69,9 @@ type symbolResolver interface {
 	GetTypeDefns() map[model.SymbolRef]*ast.BLangTypeDefinition
 	GetClassDefns() map[model.SymbolRef]*ast.BLangClassDefinition
 	nextDefaultSymbolName() string
+	// recordDefaultScope is the module level scope owning generated record field default functions. These
+	// have to live in a module level scope since they are part of the module's exported symbols.
+	recordDefaultScope() model.Scope
 }
 
 type (
@@ -341,6 +344,10 @@ func (ms *compilationUnitSymbolResolver) nextDefaultSymbolName() string {
 	return ms.moduleResolver.nextDefaultSymbolName()
 }
 
+func (ms *compilationUnitSymbolResolver) recordDefaultScope() model.Scope {
+	return ms.scope
+}
+
 func (ms *compilationUnitSymbolResolver) GetTypeDefns() map[model.SymbolRef]*ast.BLangTypeDefinition {
 	return ms.moduleResolver.typeDefns
 }
@@ -383,6 +390,10 @@ func (bs *blockSymbolResolver) GetCtx() *context.CompilerContext {
 
 func (bs *blockSymbolResolver) nextDefaultSymbolName() string {
 	return bs.parent.nextDefaultSymbolName()
+}
+
+func (bs *blockSymbolResolver) recordDefaultScope() model.Scope {
+	return bs.parent.recordDefaultScope()
 }
 
 func (bs *blockSymbolResolver) TypeContext() semtypes.Context {
@@ -1375,6 +1386,7 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 		n.Inclusions, n.InclusionPositions, _ = resolveObjectInclusions(resolver, n.PopUnresolvedInclusions())
 	case *ast.BLangRecordType:
 		n.Inclusions = resolveRecordTypeInclusions(resolver, n.TypeInclusions)
+		allocateRecordDefaultSymbols(resolver, n)
 	}
 	return resolver
 }
@@ -1757,6 +1769,23 @@ func resolveObjectInclusions[T symbolResolver](resolver T, unresolvedInclusions 
 		positions = append(positions, inc.GetPosition())
 	}
 	return inclusions, positions, includedFields
+}
+
+// allocateRecordDefaultSymbols allocates a module unique function symbol for each record field with a
+// default expression. Since the field type is not known at symbol resolution the typed signature is left
+// empty and populated during type resolution.
+func allocateRecordDefaultSymbols(resolver symbolResolver, recordType *ast.BLangRecordType) {
+	scope := resolver.recordDefaultScope()
+	for _, field := range recordType.FieldPtrs() {
+		if field.DefaultExpr == nil {
+			continue
+		}
+		name := resolver.nextDefaultSymbolName()
+		symbol := model.NewFunctionSymbol(name, model.TypedFunctionSignature{}, false, field.GetPosition())
+		scope.AddSymbol(name, symbol)
+		symRef, _ := scope.GetSymbol(name)
+		field.DefaultFnRef = symRef
+	}
 }
 
 func resolveRecordTypeInclusions[T symbolResolver](resolver T, typeInclusions []ast.BType) []model.SymbolRef {

@@ -3,7 +3,7 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad id
     %2 = ConstantLoad 1
-    %3 = newMap {| id: int, name: string, value: int, never... |}{%1=%2} defaults{value=$anon/.:$desugar$0, name=$anon/.:$desugar$1}
+    %3 = newMap {| id: int, name: string, value: int, never... |}{%1=%2} defaults{value=$anon/.:$default$0, name=$anon/.:$default$1}
     f = %3;
     %6 = ConstantLoad id
     %5 = f[%6];
@@ -26,7 +26,7 @@ main() -> nil{
     %17 = ConstantLoad 2
     %18 = ConstantLoad value
     %19 = ConstantLoad 20
-    %20 = newMap {| id: int, name: string, value: int, never... |}{%16=%17, %18=%19} defaults{value=$anon/.:$desugar$0, name=$anon/.:$desugar$1}
+    %20 = newMap {| id: int, name: string, value: int, never... |}{%16=%17, %18=%19} defaults{value=$anon/.:$default$0, name=$anon/.:$default$1}
     f2 = %20;
     %23 = ConstantLoad id
     %22 = f2[%23];
@@ -49,7 +49,7 @@ main() -> nil{
     %34 = ConstantLoad 3
     %35 = ConstantLoad name
     %36 = ConstantLoad custom
-    %37 = newMap {| id: int, name: string, value: int, never... |}{%33=%34, %35=%36} defaults{value=$anon/.:$desugar$0, name=$anon/.:$desugar$1}
+    %37 = newMap {| id: int, name: string, value: int, never... |}{%33=%34, %35=%36} defaults{value=$anon/.:$default$0, name=$anon/.:$default$1}
     f3 = %37;
     %40 = ConstantLoad id
     %39 = f3[%40];
@@ -74,7 +74,7 @@ main() -> nil{
     %53 = ConstantLoad 30
     %54 = ConstantLoad name
     %55 = ConstantLoad both
-    %56 = newMap {| id: int, name: string, value: int, never... |}{%50=%51, %52=%53, %54=%55} defaults{value=$anon/.:$desugar$0, name=$anon/.:$desugar$1}
+    %56 = newMap {| id: int, name: string, value: int, never... |}{%50=%51, %52=%53, %54=%55} defaults{value=$anon/.:$default$0, name=$anon/.:$default$1}
     f4 = %56;
     %59 = ConstantLoad id
     %58 = f4[%59];
@@ -96,14 +96,14 @@ main() -> nil{
     return;
   }
 }
-$desugar$0() -> int{
+$default$0() -> int{
   bb0 {
     %1 = ConstantLoad 10
     %0 = %1;
     return;
   }
 }
-$desugar$1() -> string{
+$default$1() -> string{
   bb0 {
     %1 = ConstantLoad default
     %0 = %1;

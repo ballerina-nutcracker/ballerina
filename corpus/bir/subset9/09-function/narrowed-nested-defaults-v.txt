@@ -47,12 +47,12 @@ $anonFunc$_2({| value: int, never... |}) -> int{
 }
 $default$2() -> {| value: int, never... |}{
   bb0 {
-    %1 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$desugar$0}
+    %1 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$default$3}
     %0 = %1;
     return;
   }
 }
-$desugar$0() -> int{
+$default$3() -> int{
   bb0 {
     %1 = ConstantLoad 12
     %0 = %1;
@@ -95,7 +95,7 @@ main() -> nil{
     narrowedWithInlineRecord = %0;
     %3 = fp $anon/.:$default$2
     $desugar$4 = %3;
-    %4 = fp $anon/.:$desugar$0
+    %4 = fp $anon/.:$default$3
     $desugar$5 = %4;
     %6 = narrowedWithInlineRecord is function({| value: int, never... |}) returns int
     %6 ? bb6 : bb10;

@@ -76,7 +76,7 @@
           (expression-thunk
           (var-def
             (variable $desugar$0 (expr
-              (invocation $default$0 ()))))
+              (invocation $default$5 ()))))
           (invocation parameterValue (
             (simple-var-ref $desugar$0)))))))
       (expression-stmt
@@ -148,35 +148,35 @@
         (invocation io println (
           (invocation outerFn (
             (mapping-constructor-expr))))))))
-  (function $desugar$0 () ()
+  (function $default$1 () ()
     (block-function-body
       (return
         (literal 7))))
-  (function $desugar$1 () ()
+  (function $default$2 () ()
     (block-function-body
       (return
         (literal 8))))
-  (function $desugar$2 () ()
+  (function $default$3 () ()
     (block-function-body
       (return
         (literal 9))))
-  (function $desugar$6 () ()
-    (block-function-body
-      (return
-        (literal 42))))
   (function $default$0 () ()
     (block-function-body
       (return
+        (literal 42))))
+  (function $default$5 () ()
+    (block-function-body
+      (return
         (mapping-constructor-expr))))
-  (function $desugar$3 () ()
+  (function $default$4 () ()
     (block-function-body
       (return
         (literal 43))))
-  (function $desugar$4 () ()
+  (function $default$6 () ()
     (block-function-body
       (return
         (literal 5))))
-  (function $desugar$5 () ()
+  (function $default$7 () ()
     (block-function-body
       (return
         (literal 10)))))

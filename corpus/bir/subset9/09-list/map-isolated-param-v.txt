@@ -370,14 +370,14 @@ main() -> nil{
     %32 = println(%31) -> bb17;
   }
   bb17 {
-    %33 = newMap {| values: [int...], never... |}{} defaults{values=$anon/.:$desugar$0}
+    %33 = newMap {| values: [int...], never... |}{} defaults{values=$anon/.:$default$0}
     recordValue = %33;
     %36 = ConstantLoad values
     %35 = recordValue[%36];
     %37 = println(%35) -> bb18;
   }
   bb18 {
-    %38 = $default$0() -> bb19;
+    %38 = $default$1() -> bb19;
   }
   bb19 {
     $desugar$0 = %38;
@@ -478,7 +478,7 @@ main() -> nil{
     return;
   }
 }
-$desugar$0() -> [int...]{
+$default$0() -> [int...]{
   bb0 {
     %1 = ConstantLoad 1
     %2 = ConstantLoad 2
@@ -502,7 +502,7 @@ $anonFunc$_5(int) -> int{
     return;
   }
 }
-$default$0() -> [int...]{
+$default$1() -> [int...]{
   bb0 {
     %1 = ConstantLoad 2
     %2 = ConstantLoad 1

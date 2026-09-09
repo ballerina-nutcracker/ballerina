@@ -118,7 +118,7 @@
         (var-def
           (variable $desugar$5 (expr
             (lambda
-              (function $desugar$0 () ()
+              (function $default$3 () ()
                 (block-function-body
                   (return
                     (literal 12))))))))
