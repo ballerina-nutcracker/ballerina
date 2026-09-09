@@ -1,0 +1,1156 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang map (as lang.map))
+  (import-package ballerina lang xml (as lang.xml))
+  (variable visitNumber (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref visitNumber)
+        (literal 0))))
+  (function duplicate (
+    (variable item (type
+      (union-type
+        (union-type
+          (union-type
+            (user-defined-type xml Element)
+            (user-defined-type xml Text))
+          (user-defined-type xml Comment))
+        (user-defined-type xml ProcessingInstruction))))) (
+    (value-type xml))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref item)
+          (simple-var-ref item)))))
+  (function isElement (
+    (variable item (type
+      (union-type
+        (union-type
+          (union-type
+            (user-defined-type xml Element)
+            (user-defined-type xml Text))
+          (user-defined-type xml Comment))
+        (user-defined-type xml ProcessingInstruction))))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref item)
+          (user-defined-type xml Element)))))
+  (function ignore (
+    (variable item (type
+      (union-type
+        (union-type
+          (union-type
+            (user-defined-type xml Element)
+            (user-defined-type xml Text))
+          (user-defined-type xml Comment))
+        (user-defined-type xml ProcessingInstruction))))) (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref item))))
+  (function elementIdentity (
+    (variable item (type
+      (user-defined-type xml Element)))) (
+    (user-defined-type xml Element))
+    (block-function-body
+      (return
+        (simple-var-ref item))))
+  (function commentIdentity (
+    (variable item (type
+      (user-defined-type xml Comment)))) (
+    (user-defined-type xml Comment))
+    (block-function-body
+      (return
+        (simple-var-ref item))))
+  (function piIdentity (
+    (variable item (type
+      (user-defined-type xml ProcessingInstruction)))) (
+    (user-defined-type xml ProcessingInstruction))
+    (block-function-body
+      (return
+        (simple-var-ref item))))
+  (function textIdentity (
+    (variable item (type
+      (user-defined-type xml Text)))) (
+    (user-defined-type xml Text))
+    (block-function-body
+      (return
+        (simple-var-ref item))))
+  (function keepComment (
+    (variable item (type
+      (user-defined-type xml Comment)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (binary-expr ==
+          (invocation lang.xml getContent (
+            (simple-var-ref item)))
+          (literal narrow-comment)))))
+  (function keepPI (
+    (variable item (type
+      (user-defined-type xml ProcessingInstruction)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (binary-expr ==
+          (invocation lang.xml getTarget (
+            (simple-var-ref item)))
+          (literal narrow-pi)))))
+  (function keepText (
+    (variable item (type
+      (user-defined-type xml Text)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (binary-expr ==
+          (invocation lang.xml data (
+            (simple-var-ref item)))
+          (literal narrow-text)))))
+  (function visitComment (
+    (variable item (type
+      (user-defined-type xml Comment)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal comment:)
+          (invocation lang.xml getContent (
+            (simple-var-ref item))))))))
+  (function visitPI (
+    (variable item (type
+      (user-defined-type xml ProcessingInstruction)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal pi:)
+          (invocation lang.xml getTarget (
+            (simple-var-ref item))))))))
+  (function visitText (
+    (variable item (type
+      (user-defined-type xml Text)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal text:)
+          (invocation lang.xml data (
+            (simple-var-ref item))))))))
+  (function recordVisit (
+    (variable item (type
+      (union-type
+        (user-defined-type xml Element)
+        (user-defined-type xml Text))))) (
+    (value-type null))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref visitNumber)
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref visitNumber)
+          (literal :)
+          (simple-var-ref item))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal http://www.w3.org/XML/1998/namespace))))
+      (expression-stmt
+        (invocation io println (
+          (literal http://www.w3.org/2000/xmlns/))))
+      (expression-stmt
+        (invocation io println (
+          (literal {http://www.w3.org/XML/1998/namespace}space))))
+      (expression-stmt
+        (invocation io println (
+          (literal {http://www.w3.org/XML/1998/namespace}lang))))
+      (expression-stmt
+        (invocation io println (
+          (literal {http://www.w3.org/XML/1998/namespace}base))))
+      (var-def
+        (variable mixed (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal a
+              (xml-sequence-literal
+                (xml-text-literal one)
+                (xml-element-literal b
+                  (xml-text-literal two))
+                (xml-comment-literal c)
+                (xml-pi-literal p d)))
+            (xml-text-literal tail)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (simple-var-ref mixed))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml length (
+            (simple-var-ref mixed))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml get (
+            (simple-var-ref mixed)
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml get (
+            (simple-var-ref mixed)
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml slice (
+            (simple-var-ref mixed)
+            (literal 0)
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml slice (
+            (simple-var-ref mixed)
+            (literal 1)
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml concat (
+            (literal x)
+            (xml-element-literal c)
+            (literal y))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (invocation xml concat ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (invocation xml concat (
+              (literal )
+              (literal ))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (invocation lang.xml slice (
+              (simple-var-ref mixed)
+              (literal 1)
+              (literal 1))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (invocation lang.xml slice (
+              (simple-var-ref mixed)
+              (literal 0)
+              (literal 0))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (invocation lang.xml slice (
+              (simple-var-ref mixed)
+              (invocation lang.xml length (
+                (simple-var-ref mixed)))
+              (invocation lang.xml length (
+                (simple-var-ref mixed))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml slice (
+            (simple-var-ref mixed)
+            (literal 0)
+            (invocation lang.xml length (
+              (simple-var-ref mixed))))))))
+      (var-def
+        (variable threeItems (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal first)
+            (xml-element-literal middle)
+            (xml-element-literal last)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml slice (
+            (simple-var-ref threeItems)
+            (literal 1)
+            (literal 2))))))
+      (var-def
+        (variable exactSource (type
+          (user-defined-type xml Element)) (expr
+          (xml-element-literal exact))))
+      (var-def
+        (variable exactGet (type
+          (user-defined-type xml Element)) (expr
+          (invocation lang.xml get (
+            (simple-var-ref exactSource)
+            (literal 0))))))
+      (var-def
+        (variable exactSlice (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (invocation lang.xml slice (
+            (simple-var-ref exactSource)
+            (literal 0)
+            (literal 1))))))
+      (var-def
+        (variable exactMap (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (invocation lang.xml map (
+            (simple-var-ref exactSource)
+            (simple-var-ref elementIdentity))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref exactGet)
+          (simple-var-ref exactSlice)
+          (simple-var-ref exactMap))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation xml concat (
+              (simple-var-ref exactSource)))
+            (simple-var-ref exactSource)))))
+      (var-def
+        (variable elementNext (expr
+          (invocation next expr:
+            (invocation lang.xml iterator (
+              (simple-var-ref exactSource))) ()))))
+      (var-def
+        (variable commentNext (expr
+          (invocation next expr:
+            (invocation lang.xml iterator (
+              (group-expr
+                (xml-comment-literal i)))) ()))))
+      (var-def
+        (variable piNext (expr
+          (invocation next expr:
+            (invocation lang.xml iterator (
+              (group-expr
+                (xml-pi-literal i data)))) ()))))
+      (var-def
+        (variable textNext (expr
+          (invocation next expr:
+            (invocation lang.xml iterator (
+              (group-expr
+                (xml-text-literal text)))) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref elementNext)
+            (record-type
+              (field value
+                (user-defined-type xml Element)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref commentNext)
+            (record-type
+              (field value
+                (user-defined-type xml Comment)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref piNext)
+            (record-type
+              (field value
+                (user-defined-type xml ProcessingInstruction)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref textNext)
+            (record-type
+              (field value
+                (user-defined-type xml Text)))))))
+      (var-def
+        (variable exhausted (expr
+          (invocation lang.xml iterator (
+            (simple-var-ref exactSource))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation next expr:
+          (simple-var-ref exhausted) ()))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref exhausted) ())
+            (value-type null)))))
+      (var-def
+        (variable moduleIterator (expr
+          (invocation xml iterator (
+            (simple-var-ref exactSource))))))
+      (var-def
+        (variable moduleGet (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml get (
+            (simple-var-ref exactSource)
+            (literal 0))))))
+      (var-def
+        (variable moduleSlice (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (invocation xml slice (
+            (simple-var-ref exactSource)
+            (literal 0)
+            (literal 1))))))
+      (var-def
+        (variable moduleMap (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (invocation xml map (
+            (simple-var-ref exactSource)
+            (simple-var-ref elementIdentity))))))
+      (expression-stmt
+        (invocation xml forEach (
+          (simple-var-ref exactSource)
+          (simple-var-ref ignore))))
+      (var-def
+        (variable moduleFilter (type
+          (value-type xml)) (expr
+          (invocation xml filter (
+            (simple-var-ref exactSource)
+            (simple-var-ref isElement))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref moduleIterator) ())
+            (record-type
+              (field value
+                (user-defined-type xml Element))))
+          (simple-var-ref moduleGet)
+          (simple-var-ref moduleSlice)
+          (simple-var-ref moduleMap)
+          (simple-var-ref moduleFilter))))
+      (var-def
+        (variable narrowComment (type
+          (user-defined-type xml Comment)) (expr
+          (xml-comment-literal narrow-comment))))
+      (var-def
+        (variable commentGet (type
+          (user-defined-type xml Comment)) (expr
+          (invocation lang.xml get (
+            (simple-var-ref narrowComment)
+            (literal 0))))))
+      (var-def
+        (variable commentSlice (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Comment))) (expr
+          (invocation lang.xml slice (
+            (simple-var-ref narrowComment)
+            (literal 0)
+            (literal 1))))))
+      (var-def
+        (variable commentMap (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Comment))) (expr
+          (invocation lang.xml map (
+            (simple-var-ref narrowComment)
+            (simple-var-ref commentIdentity))))))
+      (expression-stmt
+        (invocation lang.xml forEach (
+          (simple-var-ref narrowComment)
+          (simple-var-ref visitComment))))
+      (var-def
+        (variable commentFilter (type
+          (value-type xml)) (expr
+          (invocation lang.xml filter (
+            (simple-var-ref narrowComment)
+            (simple-var-ref keepComment))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref commentGet)
+            (simple-var-ref narrowComment))
+          (simple-var-ref commentSlice)
+          (simple-var-ref commentMap)
+          (simple-var-ref commentFilter))))
+      (var-def
+        (variable narrowPI (type
+          (user-defined-type xml ProcessingInstruction)) (expr
+          (xml-pi-literal narrow-pi value))))
+      (var-def
+        (variable piGet (type
+          (user-defined-type xml ProcessingInstruction)) (expr
+          (invocation lang.xml get (
+            (simple-var-ref narrowPI)
+            (literal 0))))))
+      (var-def
+        (variable piSlice (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml ProcessingInstruction))) (expr
+          (invocation lang.xml slice (
+            (simple-var-ref narrowPI)
+            (literal 0)
+            (literal 1))))))
+      (var-def
+        (variable piMap (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml ProcessingInstruction))) (expr
+          (invocation lang.xml map (
+            (simple-var-ref narrowPI)
+            (simple-var-ref piIdentity))))))
+      (expression-stmt
+        (invocation lang.xml forEach (
+          (simple-var-ref narrowPI)
+          (simple-var-ref visitPI))))
+      (var-def
+        (variable piFilter (type
+          (value-type xml)) (expr
+          (invocation lang.xml filter (
+            (simple-var-ref narrowPI)
+            (simple-var-ref keepPI))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref piGet)
+            (simple-var-ref narrowPI))
+          (simple-var-ref piSlice)
+          (simple-var-ref piMap)
+          (simple-var-ref piFilter))))
+      (var-def
+        (variable narrowText (type
+          (user-defined-type xml Text)) (expr
+          (xml-text-literal narrow-text))))
+      (var-def
+        (variable textGet (type
+          (user-defined-type xml Text)) (expr
+          (invocation lang.xml get (
+            (simple-var-ref narrowText)
+            (literal 0))))))
+      (var-def
+        (variable textSlice (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Text))) (expr
+          (invocation lang.xml slice (
+            (simple-var-ref narrowText)
+            (literal 0)
+            (literal 1))))))
+      (var-def
+        (variable textMap (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Text))) (expr
+          (invocation lang.xml map (
+            (simple-var-ref narrowText)
+            (simple-var-ref textIdentity))))))
+      (expression-stmt
+        (invocation lang.xml forEach (
+          (simple-var-ref narrowText)
+          (simple-var-ref visitText))))
+      (var-def
+        (variable textFilter (type
+          (value-type xml)) (expr
+          (invocation lang.xml filter (
+            (simple-var-ref narrowText)
+            (simple-var-ref keepText))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref textGet)
+          (literal |)
+          (simple-var-ref textSlice)
+          (literal |)
+          (simple-var-ref textMap)
+          (literal |)
+          (simple-var-ref textFilter))))
+      (var-def
+        (variable elem (type
+          (user-defined-type xml Element)) (expr
+          (type-conversion-expr
+            (invocation lang.xml get (
+              (simple-var-ref mixed)
+              (literal 0)))
+            (user-defined-type xml Element)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml getName (
+            (simple-var-ref elem))))))
+      (expression-stmt
+        (invocation lang.xml setName (
+          (simple-var-ref elem)
+          (literal {urn:new}renamed))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref elem))))
+      (expression-stmt
+        (invocation lang.xml setName (
+          (simple-var-ref elem)
+          (literal a))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml getChildren (
+            (simple-var-ref elem))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml getDescendants (
+            (simple-var-ref elem))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml data (
+            (simple-var-ref elem))))))
+      (var-def
+        (variable moduleElem (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal module)
+            (mapping-constructor-expr)
+            (xml-element-literal inner
+              (xml-text-literal value)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml getName (
+            (simple-var-ref moduleElem))))))
+      (expression-stmt
+        (invocation xml setName (
+          (simple-var-ref moduleElem)
+          (literal module2))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map length (
+            (invocation xml getAttributes (
+              (simple-var-ref moduleElem))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml getChildren (
+            (simple-var-ref moduleElem))))))
+      (expression-stmt
+        (invocation xml setChildren (
+          (simple-var-ref moduleElem)
+          (xml-element-literal replacement
+            (xml-text-literal module-data)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml getDescendants (
+            (simple-var-ref moduleElem))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml data (
+            (simple-var-ref moduleElem))))))
+      (var-def
+        (variable moduleComment (type
+          (user-defined-type xml Comment)) (expr
+          (invocation xml createComment (
+            (literal module-comment))))))
+      (var-def
+        (variable modulePI (type
+          (user-defined-type xml ProcessingInstruction)) (expr
+          (invocation xml createProcessingInstruction (
+            (literal module)
+            (literal pi))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml getContent (
+            (simple-var-ref moduleComment))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml getTarget (
+            (simple-var-ref modulePI)))
+          (literal :)
+          (invocation xml getContent (
+            (simple-var-ref modulePI))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml createText (
+            (literal module-text))))))
+      (var-def
+        (variable sourceAttrs (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal id)
+              (literal 1))
+            (key-value
+              (literal {urn:attr}code)
+              (literal x))
+            (key-value
+              (literal {http://www.w3.org/2000/xmlns/}p)
+              (literal urn:p))))))
+      (var-def
+        (variable made (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal {urn:made}root)
+            (simple-var-ref sourceAttrs)
+            (xml-element-literal child))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref sourceAttrs)
+          (literal id))
+        (literal changed))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref made))))
+      (var-def
+        (variable snapshot1 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (invocation lang.xml getAttributes (
+            (simple-var-ref made))))))
+      (var-def
+        (variable snapshot2 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (invocation lang.xml getAttributes (
+            (simple-var-ref made))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref snapshot1)
+          (literal id))
+        (literal snapshot))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref snapshot1)
+            (simple-var-ref snapshot2)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref snapshot2))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref made))))
+      (var-def
+        (variable namespacedEmpty (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal {urn:empty}root)
+            (mapping-constructor-expr)
+            (xml-sequence-literal))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map length (
+            (invocation lang.xml getAttributes (
+              (simple-var-ref namespacedEmpty))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref namespacedEmpty))))
+      (expression-stmt
+        (invocation lang.xml setChildren (
+          (simple-var-ref made)
+          (literal changed))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml getChildren (
+            (simple-var-ref made))))))
+      (expression-stmt
+        (invocation lang.xml setChildren (
+          (simple-var-ref made)
+          (literal ))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (invocation lang.xml getChildren (
+              (simple-var-ref made))))))))
+      (expression-stmt
+        (invocation lang.xml setChildren (
+          (simple-var-ref made)
+          (xml-element-literal xmlChild))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml getChildren (
+            (simple-var-ref made))))))
+      (var-def
+        (variable comment (type
+          (user-defined-type xml Comment)) (expr
+          (invocation xml createComment (
+            (literal note))))))
+      (var-def
+        (variable pi (type
+          (user-defined-type xml ProcessingInstruction)) (expr
+          (invocation xml createProcessingInstruction (
+            (literal target)
+            (literal content))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml getContent (
+            (simple-var-ref comment))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml getTarget (
+            (simple-var-ref pi))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml getContent (
+            (simple-var-ref pi))))))
+      (var-def
+        (variable empty (type
+          (user-defined-type xml Text)) (expr
+          (invocation xml createText (
+            (literal ))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (simple-var-ref empty))))))
+      (var-def
+        (variable selected (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal x)
+            (xml-text-literal  t )
+            (xml-comment-literal drop)
+            (xml-pi-literal drop p)
+            (xml-element-literal y
+              (xml-element-literal z))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml strip (
+            (simple-var-ref selected))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref selected))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml elements (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml elements (
+            (simple-var-ref selected)
+            (literal y))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml children (
+            (simple-var-ref selected))))))
+      (var-def
+        (variable $desugar$2 (expr
+          (simple-var-ref selected))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$3 (
+            (simple-var-ref $desugar$2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml elementChildren (
+            (simple-var-ref $desugar$2)
+            (simple-var-ref $desugar$3))))))
+      (expression-stmt
+        (invocation io println (
+          (literal [)
+          (invocation lang.xml text (
+            (simple-var-ref selected)))
+          (literal ]))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml strip (
+            (simple-var-ref selected))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (simple-var-ref selected))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$4))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml elements (
+            (simple-var-ref $desugar$4)
+            (simple-var-ref $desugar$5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml children (
+            (simple-var-ref selected))))))
+      (var-def
+        (variable $desugar$6 (expr
+          (simple-var-ref selected))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation $default$3 (
+            (simple-var-ref $desugar$6))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml elementChildren (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7))))))
+      (expression-stmt
+        (invocation io println (
+          (literal [)
+          (invocation xml text (
+            (simple-var-ref selected)))
+          (literal ]))))
+      (var-def
+        (variable nestedOrder (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-sequence-literal
+              (xml-element-literal nested
+                (xml-element-literal deep))
+              (xml-element-literal sibling))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml getDescendants (
+            (group-expr
+              (type-conversion-expr
+                (simple-var-ref nestedOrder)
+                (user-defined-type xml Element))))))))
+      (var-def
+        (variable shallowWhitespace (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-text-literal  )
+            (xml-element-literal x
+              (xml-text-literal  ))
+            (xml-text-literal  )))))
+      (expression-stmt
+        (invocation io println (
+          (literal [)
+          (invocation lang.xml strip (
+            (simple-var-ref shallowWhitespace)))
+          (literal ]))))
+      (var-def
+        (variable mapped (type
+          (value-type xml)) (expr
+          (invocation lang.xml map (
+            (simple-var-ref mixed)
+            (simple-var-ref duplicate))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref mapped))))
+      (expression-stmt
+        (invocation lang.xml forEach (
+          (simple-var-ref mixed)
+          (simple-var-ref ignore))))
+      (var-def
+        (variable filtered (type
+          (value-type xml)) (expr
+          (invocation lang.xml filter (
+            (simple-var-ref mixed)
+            (simple-var-ref isElement))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref filtered)
+            (invocation lang.xml get (
+              (simple-var-ref mixed)
+              (literal 0)))))))
+      (var-def
+        (variable orderedCallbacks (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (union-type
+              (user-defined-type xml Element)
+              (user-defined-type xml Text)))) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-text-literal text)
+            (xml-element-literal b)))))
+      (expression-stmt
+        (invocation lang.xml forEach (
+          (simple-var-ref orderedCallbacks)
+          (simple-var-ref recordVisit))))
+      (var-def
+        (variable normalizedMap (type
+          (value-type xml)) (expr
+          (invocation lang.xml map (
+            (group-expr
+              (xml-text-literal a))
+            (simple-var-ref duplicate))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (simple-var-ref normalizedMap)))
+          (literal :)
+          (simple-var-ref normalizedMap))))
+      (var-def
+        (variable firstSource (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal first)
+            (xml-text-literal a)))))
+      (var-def
+        (variable secondSource (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-text-literal b)
+            (xml-element-literal second)))))
+      (var-def
+        (variable combined (type
+          (value-type xml)) (expr
+          (invocation xml concat (
+            (simple-var-ref firstSource)
+            (simple-var-ref secondSource))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref combined))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref firstSource)
+          (literal |)
+          (simple-var-ref secondSource))))
+      (var-def
+        (variable commentItem (type
+          (value-type xml)) (expr
+          (xml-comment-literal identity))))
+      (var-def
+        (variable piItem (type
+          (value-type xml)) (expr
+          (xml-pi-literal identity value))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation lang.xml get (
+              (simple-var-ref commentItem)
+              (literal 0)))
+            (simple-var-ref commentItem)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation lang.xml get (
+              (simple-var-ref piItem)
+              (literal 0)))
+            (simple-var-ref piItem)))))
+      (var-def
+        (variable parsed (type
+          (value-type xml)) (expr
+          (checked-expr
+            (invocation xml fromString (
+              (literal  before <!--c--><p:r xmlns:p="urn:p">&amp;<![CDATA[x]]></p:r><?q d?> after )))))))
+      (expression-stmt
+        (invocation io println (
+          (literal [)
+          (simple-var-ref parsed)
+          (literal ]))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (simple-var-ref parsed))))))
+      (var-def
+        (variable longMixed (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)
+            (xml-element-literal n)
+            (xml-text-literal t)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (simple-var-ref longMixed))))))
+      (var-def
+        (variable repeatedConcat (type
+          (value-type xml)) (expr
+          (xml-sequence-literal))))
+      (var-def
+        (variable $desugar$8 (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$9 (expr
+          (literal 1000))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$8)
+          (simple-var-ref $desugar$9))
+        (block-stmt
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$8))))
+          (assignment
+            (simple-var-ref repeatedConcat)
+            (binary-expr +
+              (simple-var-ref repeatedConcat)
+              (xml-element-literal n)))
+          (assignment
+            (simple-var-ref repeatedConcat)
+            (binary-expr +
+              (simple-var-ref repeatedConcat)
+              (xml-text-literal t)))
+          (assignment
+            (simple-var-ref $desugar$8)
+            (binary-expr +
+              (simple-var-ref $desugar$8)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (simple-var-ref repeatedConcat))))))
+      (var-def
+        (variable branchBase (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal base1)
+            (xml-element-literal base2)))))
+      (var-def
+        (variable leftBranch (type
+          (value-type xml)) (expr
+          (binary-expr +
+            (simple-var-ref branchBase)
+            (xml-element-literal left)))))
+      (var-def
+        (variable rightBranch (type
+          (value-type xml)) (expr
+          (binary-expr +
+            (simple-var-ref branchBase)
+            (xml-element-literal right)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref branchBase))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref leftBranch))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref rightBranch)))))))

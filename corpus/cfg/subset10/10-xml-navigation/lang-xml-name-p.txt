@@ -1,0 +1,10 @@
+(main
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation xml createElement (
+        (literal {urn:{bad}name)
+        (mapping-constructor-expr)
+        (xml-sequence-literal))))
+  )
+)

@@ -1,0 +1,91 @@
+-- stdout --
+http://www.w3.org/XML/1998/namespace
+http://www.w3.org/2000/xmlns/
+{http://www.w3.org/XML/1998/namespace}space
+{http://www.w3.org/XML/1998/namespace}lang
+{http://www.w3.org/XML/1998/namespace}base
+2
+2
+<a>one<b>two</b><!--c--><?p d?></a>
+tail
+<a>one<b>two</b><!--c--><?p d?></a>
+tail
+x<c/>y
+0
+0
+0
+0
+0
+<a>one<b>two</b><!--c--><?p d?></a>tail
+<middle/>
+<exact/><exact/><exact/>
+true
+true
+true
+true
+true
+true
+true<exact/><exact/><exact/><exact/>
+comment:narrow-comment
+true<!--narrow-comment--><!--narrow-comment--><!--narrow-comment-->
+pi:narrow-pi
+true<?narrow-pi value?><?narrow-pi value?><?narrow-pi value?>
+text:narrow-text
+narrow-text|narrow-text|narrow-text|narrow-text
+a
+<renamed xmlns="urn:new">one<b xmlns="">two</b><!--c--><?p d?></renamed>
+one<b>two</b><!--c--><?p d?>
+one<b>two</b>two<!--c--><?p d?>
+onetwo
+module
+0
+<inner>value</inner>
+<replacement>module-data</replacement>module-data
+module-data
+module-comment
+module:pi
+module-text
+<root id="1" ns0:code="x" xmlns:p="urn:p" xmlns:ns0="urn:attr" xmlns="urn:made"><child xmlns=""/></root>
+false
+{"id":"1","{urn:attr}code":"x","{http://www.w3.org/2000/xmlns/}p":"urn:p"}
+<root id="1" ns0:code="x" xmlns:p="urn:p" xmlns:ns0="urn:attr" xmlns="urn:made"><child xmlns=""/></root>
+0
+<root xmlns="urn:empty"/>
+changed
+0
+<xmlChild/>
+note
+target
+content
+0
+<x/> t <y><z/></y>
+<x/><y><z/></y>
+<y><z/></y>
+<z/>
+<z/>
+[ t ]
+<x/> t <y><z/></y>
+<x/><y><z/></y>
+<z/>
+<z/>
+[ t ]
+<nested><deep/></nested><deep/><sibling/>
+[<x> </x>]
+<a>one<b>two</b><!--c--><?p d?></a><a>one<b>two</b><!--c--><?p d?></a>tailtail
+true
+1:<a/>
+2:text
+3:<b/>
+1:aa
+<first/>ab<second/>
+<first/>a|b<second/>
+true
+true
+[ before <!--c--><p:r xmlns:p="urn:p">&amp;x</p:r><?q d?> after ]
+5
+48
+2000
+<base1/><base2/>
+<base1/><base2/><left/>
+<base1/><base2/><right/>
+-- stderr --
