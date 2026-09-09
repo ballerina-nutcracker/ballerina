@@ -1,0 +1,131 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Inner
+    (record-type
+      (field x
+        (value-type int)
+        (invocation next ()))
+      (field y
+        (value-type int)
+        (literal 1))))
+  (type-definition Supplied
+    (record-type
+      (field inner
+        (user-defined-type Inner)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 5))))
+      (field k
+        (value-type int)
+        (literal 0))))
+  (type-definition Omitted
+    (record-type
+      (field inner
+        (user-defined-type Inner)
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal 2))))
+      (field k
+        (value-type int)
+        (literal 0))))
+  (type-definition Node
+    (record-type
+      (field value
+        (value-type int)
+        (literal 1))
+      (field next
+        (union-type
+          (user-defined-type Node)
+          (value-type null))
+        (literal <nil>))))
+  (type-definition Holder
+    (record-type
+      (field node
+        (user-defined-type Node)
+        (mapping-constructor-expr))
+      (field other
+        (user-defined-type Node)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 3))))))
+  (function next () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"inner":{"x":5,"y":1},"k":0}))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"inner":{"x":5,"y":1},"k":0})
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"inner":{"x":7,"y":1},"k":0}))))
+      (var-def
+        (variable o (type
+          (user-defined-type Omitted)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref o))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"node":{"value":1,"next":null},"other":{"value":3,"next":null}}))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (invocation next ()))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 5))))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (literal 0))))
+  (function $default$4 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal 2))))))
+  (function $default$5 () ()
+    (block-function-body
+      (return
+        (literal 0))))
+  (function $default$6 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $default$7 () ()
+    (block-function-body
+      (return
+        (literal <nil>))))
+  (function $default$8 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr))))
+  (function $default$9 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 3)))))))
