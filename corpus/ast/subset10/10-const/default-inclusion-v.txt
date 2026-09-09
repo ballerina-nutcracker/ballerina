@@ -1,0 +1,95 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function next () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (type-definition Base
+    (record-type
+      (field x
+        (value-type int)
+        (literal 1))
+      (field n
+        (union-type
+          (value-type int)
+          (value-type null))
+        (literal <nil>))
+      (field runtime
+        (value-type int)
+        (invocation next ()))))
+  (type-definition Middle
+    (record-type
+      (field s
+        (value-type string)
+        (literal m))))
+  (type-definition Leafy
+    (record-type
+      (field b
+        (value-type boolean)
+        (literal true))))
+  (type-definition OverrideToConstant
+    (record-type
+      (field runtime
+        (value-type int)
+        (literal 7))))
+  (type-definition OverrideToRuntime
+    (record-type
+      (field x
+        (value-type int)
+        (invocation next ()))
+      (field runtime
+        (value-type int)
+        (literal 7))))
+  (type-definition DropDefault
+    (record-type
+      (field x
+        (value-type int))
+      (field runtime
+        (value-type int)
+        (literal 7))))
+  (const A (
+    (user-defined-type Leafy)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal runtime)
+        (literal 3)))))
+  (const B (
+    (user-defined-type OverrideToConstant)) (
+    (mapping-constructor-expr)))
+  (const C (
+    (user-defined-type OverrideToRuntime)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 5)))))
+  (const D (
+    (user-defined-type DropDefault)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 5)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref D))))
+      (var-def
+        (variable runtimeValue (type
+          (user-defined-type Leafy)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access runtime
+            (simple-var-ref runtimeValue))))))))

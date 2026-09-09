@@ -1,0 +1,94 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function trace (
+    (variable name (type
+      (value-type string)))) (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal default )
+          (simple-var-ref name))))
+      (return
+        (literal 1))))
+  (type-definition Traced
+    (record-type
+      (field a
+        (value-type int)
+        (invocation trace (
+          (literal a))))
+      (field b
+        (value-type int)
+        (invocation trace (
+          (literal b))))))
+  (type-definition Containers
+    (record-type
+      (field m
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))
+        (mapping-constructor-expr))
+      (field l
+        (array-type
+          (value-type int) dimensions: 1 ([]))
+        (list-constructor-expr))
+      (field x
+        (value-type int)
+        (literal 1))))
+  (const C (
+    (user-defined-type Containers)) (
+    (mapping-constructor-expr)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable first (type
+          (user-defined-type Traced)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref first))))
+      (var-def
+        (variable second (type
+          (user-defined-type Traced)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref second))))
+      (var-def
+        (variable one (type
+          (user-defined-type Containers)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable two (type
+          (user-defined-type Containers)) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (field-based-access m
+            (simple-var-ref one))
+          (literal k))
+        (literal 1))
+      (expression-stmt
+        (invocation push expr:
+          (field-based-access l
+            (simple-var-ref one)) (
+          (literal 9))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref one))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref two))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref C)
+            (value-type readonly))))))))
