@@ -1,0 +1,9 @@
+-- stdout --
+{"f":2.0,"d":1.5,"b":255,"flag":false,"mode":"off","hidden":7,"extra":{"h":3}}
+true
+true
+true
+true
+{"flag":true,"f":2.0,"d":1.5,"b":255,"mode":"off","hidden":7,"extra":{"h":3}}
+true
+-- stderr --
