@@ -400,7 +400,7 @@ func xmlDoctypeString(rootName string, doctype *values.Map) string {
 func rootElementName(content values.XMLValue) (string, error) {
 	switch x := content.(type) {
 	case *values.XMLElement:
-		return x.Name, nil
+		return x.QualifiedName(), nil
 	case *values.XMLSequence:
 		if len(x.Children) == 1 {
 			return rootElementName(x.Children[0])

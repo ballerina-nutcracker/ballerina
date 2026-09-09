@@ -1,0 +1,157 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (xmlns
+        (literal foo) as ns)
+      (xmlns
+        (literal bar) as k)
+      (var-def
+        (variable single (type
+          (value-type xml)) (expr
+          (xml-element-literal ns:root))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref single)
+            (xml-name-pattern-wildcard)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref single)
+            (xml-name-pattern-prefix-wildcard ns)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref single)
+            (xml-name-pattern-qualified-identifier ns root)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref single)
+            (xml-name-pattern-qualified-identifier ns other)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref single)
+            (xml-name-pattern-identifier other)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref single)
+            (xml-name-pattern-prefix-wildcard k)))))
+      (var-def
+        (variable sequence (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal ns:root)
+            (xml-element-literal k:root)
+            (xml-element-literal k:item)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref sequence)
+            (xml-name-pattern-wildcard)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref sequence)
+            (xml-name-pattern-prefix-wildcard ns)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref sequence)
+            (xml-name-pattern-prefix-wildcard k)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref sequence)
+            (xml-name-pattern-prefix-wildcard ns)
+            (xml-name-pattern-prefix-wildcard k)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref sequence)
+            (xml-name-pattern-qualified-identifier ns root)
+            (xml-name-pattern-qualified-identifier k root)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref sequence)
+            (xml-name-pattern-qualified-identifier ns other)
+            (xml-name-pattern-qualified-identifier k item)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (xml-filter-expression
+              (simple-var-ref sequence)
+              (xml-name-pattern-prefix-wildcard ns)
+              (xml-name-pattern-prefix-wildcard k))
+            (xml-name-pattern-qualified-identifier ns root)
+            (xml-name-pattern-qualified-identifier k item)))))
+      (var-def
+        (variable mixed (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-text-literal text)
+            (xml-comment-literal comment)
+            (xml-pi-literal target data)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref mixed)
+            (xml-name-pattern-wildcard)))))
+      (xmlns
+        (literal urn:shared) as p)
+      (xmlns
+        (literal urn:shared) as q)
+      (var-def
+        (variable aliasItem (type
+          (value-type xml)) (expr
+          (xml-element-literal p:item))))
+      (var-def
+        (variable noNamespaceItem (type
+          (value-type xml)) (expr
+          (xml-element-literal item))))
+      (xmlns
+        (literal urn:default))
+      (var-def
+        (variable defaultItem (type
+          (value-type xml)) (expr
+          (xml-element-literal item))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref defaultItem)
+            (xml-name-pattern-identifier item)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref noNamespaceItem)
+            (xml-name-pattern-identifier item)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref aliasItem)
+            (xml-name-pattern-qualified-identifier q item)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref aliasItem)
+            (xml-name-pattern-qualified-identifier q item)
+            (xml-name-pattern-prefix-wildcard p)))))
+      (var-def
+        (variable immediate (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal parent
+              (xml-element-literal target))
+            (xml-element-literal target)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref immediate)
+            (xml-name-pattern-identifier target))))))))

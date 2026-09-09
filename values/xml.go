@@ -32,8 +32,10 @@ type (
 	}
 
 	XMLElement struct {
-		Name       string
-		Attributes *Map
+		Prefix       string
+		LocalName    string
+		NamespaceURI string
+		Attributes   *Map
 		// Namespaces holds XML namespace declarations to print on this element.
 		// Keys are stored in already-printable form ("xmlns" or "xmlns:<prefix>");
 		// values are URIs.
@@ -82,10 +84,18 @@ func (e *XMLElement) Readonly() bool { return e.isReadonly }
 
 func (e *XMLElement) IterItems() []XMLValue { return []XMLValue{e} }
 
+func (e *XMLElement) QualifiedName() string {
+	if e.Prefix == "" {
+		return e.LocalName
+	}
+	return e.Prefix + ":" + e.LocalName
+}
+
 func (e *XMLElement) XMLString() string {
 	var b strings.Builder
+	name := e.QualifiedName()
 	b.WriteByte('<')
-	b.WriteString(e.Name)
+	b.WriteString(name)
 	writeXMLStringMap(&b, e.Attributes, "attribute")
 	writeXMLStringMap(&b, e.Namespaces, "namespace")
 	body := ""
@@ -99,7 +109,7 @@ func (e *XMLElement) XMLString() string {
 	b.WriteByte('>')
 	b.WriteString(body)
 	b.WriteString("</")
-	b.WriteString(e.Name)
+	b.WriteString(name)
 	b.WriteByte('>')
 	return b.String()
 }
@@ -194,12 +204,12 @@ func (c *XMLComment) XMLString() string {
 	return "<!--" + c.Body + "-->"
 }
 
-func NewXMLElement(name string, attrs, namespaces *Map, children XMLValue, isReadonly bool) *XMLElement {
+func NewXMLElement(prefix, localName, namespaceURI string, attrs, namespaces *Map, children XMLValue, isReadonly bool) *XMLElement {
 	ty := semtypes.XMLElement
 	if isReadonly {
 		ty = semtypes.ReadonlyXMLElement
 	}
-	return &XMLElement{Name: name, Attributes: attrs, Namespaces: namespaces, Children: children, semType: ty, isReadonly: isReadonly}
+	return &XMLElement{Prefix: prefix, LocalName: localName, NamespaceURI: namespaceURI, Attributes: attrs, Namespaces: namespaces, Children: children, semType: ty, isReadonly: isReadonly}
 }
 
 func NewXMLProcessingInstruction(target, data string, isReadonly bool) *XMLProcessingInstruction {
