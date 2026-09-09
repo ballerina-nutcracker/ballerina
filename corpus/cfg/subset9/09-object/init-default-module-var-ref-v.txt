@@ -1,0 +1,64 @@
+(Counter
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access value
+          (simple-var-ref self))
+        (simple-var-ref initial))
+    )
+  )
+  (bump
+    (bb0 () ()
+      (compound-assignment +
+        (field-based-access value
+          (simple-var-ref self))
+        (simple-var-ref amount))
+      (return
+        (field-based-access value
+          (simple-var-ref self)))
+    )
+  )
+  (scale
+    (bb0 () ()
+      (return
+        (binary-expr *
+          (field-based-access value
+            (simple-var-ref self))
+          (simple-var-ref factor)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (new ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation bump expr:
+          (simple-var-ref c) ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation bump expr:
+          (simple-var-ref c) (
+          (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation scale expr:
+          (simple-var-ref c) ( <default>)))))
+    (var-def
+      (variable d (type
+        (user-defined-type Counter)) (expr
+        (new (
+          (literal 100))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref d)))))
+  )
+)

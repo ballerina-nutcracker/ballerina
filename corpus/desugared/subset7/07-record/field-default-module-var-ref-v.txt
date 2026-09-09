@@ -1,0 +1,81 @@
+(package
+  (import-package ballerina io (as io))
+  (variable defaultPort (type
+    (value-type int)))
+  (variable defaultHost (type
+    (value-type string)))
+  (variable config (type
+    (user-defined-type Config)))
+  (type-definition Config
+    (record-type
+      (field port
+        (value-type int)
+        (simple-var-ref defaultPort))
+      (field host
+        (value-type string)
+        (simple-var-ref defaultHost))
+      (field timeout
+        (value-type int)
+        (binary-expr +
+          (simple-var-ref defaultPort)
+          (literal 1)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref defaultPort)
+        (literal 8080))
+      (assignment
+        (simple-var-ref defaultHost)
+        (literal localhost))
+      (assignment
+        (simple-var-ref config)
+        (mapping-constructor-expr
+          (key-value
+            (literal host)
+            (literal example.com))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type Config)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal port)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal host)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal timeout)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref config)
+            (literal host)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref config)
+            (literal port)))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (simple-var-ref defaultPort))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (simple-var-ref defaultHost))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref defaultPort)
+          (literal 1))))))

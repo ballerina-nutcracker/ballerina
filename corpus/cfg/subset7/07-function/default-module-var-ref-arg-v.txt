@@ -1,0 +1,47 @@
+(bare
+  (bb0 () ()
+    (return
+      (simple-var-ref n))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation tag (
+          (literal a) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation tag (
+          (literal a)
+          (literal x-))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation shift (
+          (literal 1) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation shift (
+          (literal 1)
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation bare ( <default>)))))
+  )
+)
+(shift
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref n)
+        (simple-var-ref amount)))
+  )
+)
+(tag
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref p)
+        (simple-var-ref s)))
+  )
+)

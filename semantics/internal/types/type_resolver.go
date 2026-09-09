@@ -171,13 +171,14 @@ type packageTypeResolver struct {
 
 	// packageConstants maps a constant's symbol ref to its AST node.
 	packageConstants map[model.SymbolRef]*ast.BLangVariable
-	// inferredGlobalVarNodes holds module-level vars **without** a type
-	// annotation. Their type comes from their initializer expression, so they
-	// must be resolved lazily (driven by ensureResolved) the same way
-	// constants are.
-	inferredGlobalVarNodes map[model.SymbolRef]*ast.BLangVariable
+	// globalVarNodes holds every module-level var. Default expressions are
+	// type-checked while type definitions, classes and function signatures are
+	// resolved, so a reference to a module-level var can be reached before the
+	// global-var pass runs. Both declared and inferred types are therefore
+	// resolved lazily (driven by ensureResolved) the same way constants are.
+	globalVarNodes map[model.SymbolRef]*ast.BLangVariable
 	// lazyResolutionStatus tracks per-symbol resolution progress (for both
-	// constants and inferred-typed module-level vars) for cycle detection.
+	// constants and module-level vars) for cycle detection.
 	// Absence means resolution has not started.
 	lazyResolutionStatus  map[model.SymbolRef]resolutionStatus
 	functionNodes         map[model.SymbolRef]*ast.BLangFunction
@@ -581,23 +582,23 @@ func (f *functionTypeResolver) nextMonoFnName(origName string) string {
 
 func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace, moduleScope model.Scope) *packageTypeResolver {
 	return &packageTypeResolver{
-		ctx:                    ctx,
-		tyCtx:                  semtypes.ContextFrom(ctx.GetTypeEnv()),
-		importedSymbols:        importedSymbols,
-		pkg:                    pkg,
-		implicitImports:        make(map[string]ast.BLangImportPackage),
-		packageConstants:       make(map[model.SymbolRef]*ast.BLangVariable),
-		inferredGlobalVarNodes: make(map[model.SymbolRef]*ast.BLangVariable),
-		lazyResolutionStatus:   make(map[model.SymbolRef]resolutionStatus),
-		functionNodes:          make(map[model.SymbolRef]*ast.BLangFunction),
-		typeDefnNodes:          make(map[model.SymbolRef]*ast.BLangTypeDefinition),
-		classDefnNodes:         make(map[model.SymbolRef]*ast.BLangClassDefinition),
-		classAtomSymbols:       make(map[*semtypes.MappingAtomicType]model.SymbolRef),
-		classSymbolByType:      make(map[semtypes.InternHandle]model.SymbolRef),
-		semtypeInterner:        semtypes.NewSemtypeInterner(),
-		xmlIteratorTypes:       semtypes.NewSemTypeCache(),
-		monoCounters:           make(map[string]int),
-		scope:                  moduleScope,
+		ctx:                  ctx,
+		tyCtx:                semtypes.ContextFrom(ctx.GetTypeEnv()),
+		importedSymbols:      importedSymbols,
+		pkg:                  pkg,
+		implicitImports:      make(map[string]ast.BLangImportPackage),
+		packageConstants:     make(map[model.SymbolRef]*ast.BLangVariable),
+		globalVarNodes:       make(map[model.SymbolRef]*ast.BLangVariable),
+		lazyResolutionStatus: make(map[model.SymbolRef]resolutionStatus),
+		functionNodes:        make(map[model.SymbolRef]*ast.BLangFunction),
+		typeDefnNodes:        make(map[model.SymbolRef]*ast.BLangTypeDefinition),
+		classDefnNodes:       make(map[model.SymbolRef]*ast.BLangClassDefinition),
+		classAtomSymbols:     make(map[*semtypes.MappingAtomicType]model.SymbolRef),
+		classSymbolByType:    make(map[semtypes.InternHandle]model.SymbolRef),
+		semtypeInterner:      semtypes.NewSemtypeInterner(),
+		xmlIteratorTypes:     semtypes.NewSemTypeCache(),
+		monoCounters:         make(map[string]int),
+		scope:                moduleScope,
 	}
 }
 
@@ -659,7 +660,7 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 			return ok
 		}
 	}
-	if gv, inMap := t.inferredGlobalVarNodes[ref]; inMap {
+	if gv, inMap := t.globalVarNodes[ref]; inMap {
 		switch t.lazyResolutionStatus[ref] {
 		case resolutionDone:
 			return true
@@ -672,7 +673,12 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 			return false
 		default:
 			t.lazyResolutionStatus[ref] = resolutionInProgress
-			ok := resolveSimpleVariable(t, nil, gv)
+			var ok bool
+			if gv.TypeNode() != nil {
+				ok = resolveGlobalVarType(t, gv)
+			} else {
+				ok = resolveSimpleVariable(t, nil, gv)
+			}
 			t.lazyResolutionStatus[ref] = resolutionDone
 			return ok
 		}
@@ -1004,6 +1010,9 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 	for i := range pkg.Functions {
 		t.functionNodes[pkg.Functions[i].Symbol()] = pkg.Functions[i]
 	}
+	for i := range pkg.GlobalVars {
+		t.globalVarNodes[pkg.GlobalVars[i].Symbol()] = pkg.GlobalVars[i]
+	}
 
 	for i := range pkg.TypeDefinitions {
 		defn := pkg.TypeDefinitions[i]
@@ -1036,7 +1045,14 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 		}
 	}
 	for i := range pkg.GlobalVars {
-		resolveGlobalVarType(t, pkg.GlobalVars[i])
+		gv := pkg.GlobalVars[i]
+		if gv.TypeNode() == nil {
+			// An inferred global's type comes from its initializer, resolved
+			// lazily via ensureResolved; this only stamps the name node.
+			resolveGlobalVarType(t, gv)
+			continue
+		}
+		t.ensureResolved(gv.Symbol(), 0)
 	}
 	for i := range pkg.XmlnsList {
 		if !resolveXMLNS(t, nil, pkg.XmlnsList[i]) {
@@ -3477,9 +3493,6 @@ func resolveGlobalVarType(t typeResolver, node *ast.BLangVariable) bool {
 	node.Name.SetDeterminedType(semtypes.Never)
 	typeNode := node.TypeNode()
 	if typeNode == nil {
-		if pt, ok := t.(*packageTypeResolver); ok {
-			pt.inferredGlobalVarNodes[node.Symbol()] = node
-		}
 		return true
 	}
 	semType, ok := resolveBType(t, typeNode, 0)
