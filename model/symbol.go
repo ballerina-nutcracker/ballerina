@@ -354,6 +354,11 @@ type (
 	FieldDefault struct {
 		FieldName string
 		FnRef     SymbolRef
+		// IsConstant reports that the default expression folded to a
+		// compile-time constant; ConstantValue is only meaningful then, where
+		// a nil value is a successful fold of ().
+		IsConstant    bool
+		ConstantValue values.BalValue
 	}
 
 	VariableSymbol struct {
@@ -586,11 +591,13 @@ const (
 )
 
 type FieldDescriptor struct {
-	name         string
-	ty           semtypes.SemType
-	flags        FieldDescriptorFlag
-	DefaultFnRef SymbolRef
-	isPublic     bool
+	name          string
+	ty            semtypes.SemType
+	flags         FieldDescriptorFlag
+	DefaultFnRef  SymbolRef
+	IsConstant    bool
+	ConstantValue values.BalValue
+	isPublic      bool
 }
 
 func NewFieldDescriptor(name string, flags FieldDescriptorFlag, isPublic bool) FieldDescriptor {
@@ -1134,7 +1141,12 @@ func (m *memberHolderBase) FieldDefaults() []FieldDefault {
 	var defaults []FieldDefault
 	for _, im := range m.members {
 		if fd, ok := im.(*FieldDescriptor); ok && !fd.DefaultFnRef.IsEmpty() {
-			defaults = append(defaults, FieldDefault{FieldName: fd.name, FnRef: fd.DefaultFnRef})
+			defaults = append(defaults, FieldDefault{
+				FieldName:     fd.name,
+				FnRef:         fd.DefaultFnRef,
+				IsConstant:    fd.IsConstant,
+				ConstantValue: fd.ConstantValue,
+			})
 		}
 	}
 	return defaults

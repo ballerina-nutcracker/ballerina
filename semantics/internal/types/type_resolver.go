@@ -2762,6 +2762,8 @@ func createFieldDescriptor(name string, field ast.BField) model.FieldDescriptor 
 	fd := model.NewFieldDescriptor(name, flags, true)
 	fd.SetMemberType(field.Type.(ast.BLangNode).GetDeterminedType())
 	fd.DefaultFnRef = field.DefaultFnRef
+	fd.IsConstant = field.IsConstant
+	fd.ConstantValue = field.ConstantValue
 	return fd
 }
 
@@ -7858,7 +7860,12 @@ func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType) []model.
 	for name, field := range recordTy.FieldPtrs() {
 		directFields[name] = true
 		if field.DefaultExpr != nil {
-			defaults = append(defaults, model.FieldDefault{FieldName: name, FnRef: field.DefaultFnRef})
+			defaults = append(defaults, model.FieldDefault{
+				FieldName:     name,
+				FnRef:         field.DefaultFnRef,
+				IsConstant:    field.IsConstant,
+				ConstantValue: field.ConstantValue,
+			})
 		}
 	}
 
