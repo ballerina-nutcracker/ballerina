@@ -754,6 +754,11 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 	resolvers := make([]*functionTypeResolver, len(fns))
 	var wg sync.WaitGroup
 	for i, fn := range fns {
+		if isOpaqueFunctionDecl(p, fn) {
+			// The declaration of an opaque function has no body of its own to resolve;
+			// a call to it is monomorphized into a function of the call's own types.
+			continue
+		}
 		wg.Add(1)
 		go func(idx int, f common.FunctionDecl) {
 			defer wg.Done()
@@ -763,6 +768,9 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 	wg.Wait()
 
 	for _, t := range resolvers {
+		if t == nil {
+			continue
+		}
 		maps.Copy(allImports, t.implicitImports)
 	}
 	importNames := make([]string, 0, len(allImports))
@@ -774,6 +782,13 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 		imp := allImports[name]
 		pkg.Imports = append(pkg.Imports, &imp)
 	}
+}
+
+// isOpaqueFunctionDecl reports whether fn is the lang library source declaration of an
+// opaque function, whose symbol is monomorphized per call site instead of typed here.
+func isOpaqueFunctionDecl(p *packageTypeResolver, fn common.FunctionDecl) bool {
+	_, ok := p.getSymbol(fn.Symbol()).(*model.OpaqueFunctionSymbol)
+	return ok
 }
 
 func isPolymorphicFnSymbol(sym model.FunctionSymbol) bool {
@@ -1976,6 +1991,9 @@ func resolveFunctionSignature(t typeResolver, fn *ast.BLangFunction, depth int) 
 	if depSym, ok := fnSym.(model.DependentlyTypedFunctionSymbol); ok {
 		return resolveDependentlyTypedFunctionSignature(t, fn, depSym, depth)
 	}
+	if _, ok := fnSym.(*model.OpaqueFunctionSymbol); ok {
+		return resolveOpaqueFunctionSignature(t, fn, depth)
+	}
 	if ty := t.symbolType(fn.Symbol()); !semtypes.IsZero(ty) {
 		return ty, true
 	}
@@ -2110,6 +2128,34 @@ func validateIncludedRecordParamMetadata(t typeResolver, ref model.FunctionSigna
 		t.updateFunctionSignatureIncludedRecords(ref, includedRecords)
 	}
 	return true
+}
+
+// resolveOpaqueFunctionSignature types the lang library source declaration of an opaque
+// function. The declaration fixes the parameter names, their declared types and their
+// defaults; it does not fix the type of a call, which the function's monomorphizer
+// decides per call site, so the symbol itself is never given a type. The parameters are
+// still resolved: their declared types are what a default expression is checked against
+// and what the $default$N provider generated for it takes and returns.
+func resolveOpaqueFunctionSignature(t typeResolver, fn *ast.BLangFunction, depth int) (semtypes.SemType, bool) {
+	restoreContext := setIsolatedContext(t, fn.IsIsolated())
+	defer restoreContext()
+	params := fn.GetParameters()
+	for i := range params {
+		resolveSimpleVariableInner(t, nil, &params[i], depth+1)
+	}
+	if restParam := fn.GetRestParam(); restParam != nil {
+		resolveSimpleVariableInner(t, nil, restParam, depth+1)
+	}
+	if retTd := fn.GetReturnTypeDescriptor(); retTd != nil {
+		if _, ok := resolveBType(t, retTd, depth+1); !ok {
+			return semtypes.SemType{}, false
+		}
+	}
+	if !finalizeResolvedFunctionSignature(t, fn) {
+		return semtypes.SemType{}, false
+	}
+	setOtherNodesAsNever(fn)
+	return semtypes.Never, true
 }
 
 func resolveDependentlyTypedFunctionSignature(t typeResolver, fn common.FunctionDecl, sym model.DependentlyTypedFunctionSymbol, depth int) (semtypes.SemType, bool) {

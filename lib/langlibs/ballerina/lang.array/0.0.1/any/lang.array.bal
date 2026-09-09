@@ -20,6 +20,21 @@
 # + return - number of members in `arr`
 public isolated function length((any|error)[] arr) returns int = external;
 
+# Returns the index of the first occurrence of a value in an array.
+#
+# The signature is declared here so that the compiler can take the parameter
+# names and the default value of `startIndex` from source. Calls are still
+# monomorphized: `@opaque` marks the declaration as the source form of an
+# opaque function, whose types are decided per call site in the compiler.
+#
+# @opaque
+#
+# + arr - the array
+# + val - the value to search for
+# + startIndex - the index to start searching from
+# + return - index of the first occurrence of `val` in `arr`, or `()` if there is none
+public isolated function indexOf(anydata[] arr, anydata val, int startIndex = 0) returns int? = external;
+
 # Returns the lowercase hexadecimal encoding of an array of bytes.
 #
 # + arr - the array to be encoded

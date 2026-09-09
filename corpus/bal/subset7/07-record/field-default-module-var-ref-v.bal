@@ -16,10 +16,23 @@
 
 import ballerina/io;
 
+// Skipped: https://github.com/ballerina-nutcracker/ballerina/issues/915
+//
+// This one runs and prints the right answer, but the reference to `base`
+// never gets a determined type, so TestTypeResolver and TestSemanticAnalysis
+// report "does not have determined type set" for it.
+final int base = 5;
+
+isolated function twice(int x) returns int => x * 2;
+
+type Doubled record {|
+    int n = twice(base);
+|};
+
 public function main() {
-    int[] arr = [10, 20, 30, 40, 30];
-    int? firstDefault = arr.indexOf(30);
-    if firstDefault is int {
-        io:println(firstDefault); // @output 2
-    }
+    Doubled d = {};
+    io:println(d.n); // @output 10
+
+    Doubled e = {n: 3};
+    io:println(e.n); // @output 3
 }

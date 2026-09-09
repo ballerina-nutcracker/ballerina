@@ -16,10 +16,25 @@
 
 import ballerina/io;
 
+// An argument expression is evaluated exactly once even when the compiler
+// supplies the omitted `startIndex` from the declared default, and the default
+// itself is evaluated per invocation only when the argument is omitted.
+int counter = 0;
+
+function next() returns int {
+    counter += 1;
+    io:println("eval");
+    return 2;
+}
+
 public function main() {
-    int[] arr = [10, 20, 30, 40, 30];
-    int? firstDefault = arr.indexOf(30);
-    if firstDefault is int {
-        io:println(firstDefault); // @output 2
-    }
+    int[] arr = [1, 2, 3, 2];
+
+    // @output eval
+    io:println(arr.indexOf(next())); // @output 1
+    io:println(counter); // @output 1
+
+    // @output eval
+    io:println(arr.indexOf(next(), 2)); // @output 3
+    io:println(counter); // @output 2
 }

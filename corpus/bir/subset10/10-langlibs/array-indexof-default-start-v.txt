@@ -1,0 +1,43 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 10
+    %2 = ConstantLoad 20
+    %3 = ConstantLoad 30
+    %4 = ConstantLoad 40
+    %5 = ConstantLoad 30
+    %6 = ConstantLoad 5
+    %7 = newArray [int...][%6]{%1, %2, %3, %4, %5}
+    arr = %7;
+    $desugar$0 = arr;
+    %10 = ConstantLoad 30
+    $desugar$1 = %10;
+    %12 = $desugar$1;
+    %13 = $default$0($desugar$0,%12) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %13;
+    %15 = $desugar$1;
+    %16 = $desugar$2;
+    %17 = indexOf($desugar$0,%15,%16) -> bb2;
+  }
+  bb2 {
+    firstDefault = %17;
+    %19 = firstDefault is int
+    %19 ? bb3 : bb5;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = (1, firstDefault);
+    %1 = println(%0) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb5 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

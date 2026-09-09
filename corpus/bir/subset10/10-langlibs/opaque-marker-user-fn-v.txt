@@ -1,0 +1,71 @@
+module $anon.. v 0.0.0;
+add(int,int) -> int{
+  bb0 {
+    %4 = a;
+    %5 = b;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    $desugar$0 = %1;
+    %3 = $desugar$0;
+    %4 = $default$0(%3) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %4;
+    %6 = $desugar$0;
+    %7 = $desugar$1;
+    %8 = add(%6,%7) -> bb2;
+  }
+  bb2 {
+    %9 = %8;
+    %10 = println(%9) -> bb3;
+  }
+  bb3 {
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %13 = ConstantLoad 5
+    %14 = %13;
+    %15 = add(%12,%14) -> bb4;
+  }
+  bb4 {
+    %16 = %15;
+    %17 = println(%16) -> bb5;
+  }
+  bb5 {
+    %18 = ConstantLoad 1
+    %19 = %18;
+    %20 = ConstantLoad 5
+    %21 = %20;
+    %22 = add(%19,%21) -> bb6;
+  }
+  bb6 {
+    %23 = %22;
+    %24 = println(%23) -> bb7;
+  }
+  bb7 {
+    %25 = ConstantLoad 1
+    %26 = %25;
+    %27 = ConstantLoad 10
+    %28 = %27;
+    %29 = add(%26,%28) -> bb8;
+  }
+  bb8 {
+    %30 = %29;
+    %31 = println(%30) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}
+$default$0(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}

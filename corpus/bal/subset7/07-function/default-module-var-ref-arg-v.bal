@@ -16,10 +16,19 @@
 
 import ballerina/io;
 
+// Skipped: https://github.com/ballerina-nutcracker/ballerina/issues/915
+//
+// `base` is typed `never` inside the default value expression, so this fails
+// with "incompatible type: expected int, got never" pointing at `base`. The
+// same call as a module-level initializer works; see
+// default-module-var-ref-v.bal.
+final int base = 5;
+
+isolated function twice(int x) returns int => x * 2;
+
+function viaCall(int n = twice(base)) returns int => n;
+
 public function main() {
-    int[] arr = [10, 20, 30, 40, 30];
-    int? firstDefault = arr.indexOf(30);
-    if firstDefault is int {
-        io:println(firstDefault); // @output 2
-    }
+    io:println(viaCall()); // @output 10
+    io:println(viaCall(3)); // @output 3
 }

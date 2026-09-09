@@ -14,12 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
+import ballerina/lang.array;
 
-public function main() {
-    int[] arr = [10, 20, 30, 40, 30];
-    int? firstDefault = arr.indexOf(30);
-    if firstDefault is int {
-        io:println(firstDefault); // @output 2
-    }
-}
+// Public functions whose default parameters omit `array:indexOf`'s own
+// `startIndex`. The provider for `pos` is compiled in this module and invoked
+// from the caller's module, so the omitted-default lowering has to survive the
+// cross-module call.
+public function firstOf(int[] arr, int val, int? pos = arr.indexOf(val)) returns int? => pos;
+
+public function firstNamed(int[] arr, int? pos = arr.indexOf(val = 20)) returns int? => pos;
+
+public function firstQualified(int[] arr, int? pos = array:indexOf(arr, 30)) returns int? => pos;

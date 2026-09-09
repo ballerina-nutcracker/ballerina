@@ -16,10 +16,17 @@
 
 import ballerina/io;
 
+// Every monomorphic form of `array:indexOf` shares the one untyped signature
+// declared in Go, so every omitted `startIndex` here calls the same
+// `$default$N` provider in `lang.array` regardless of the container type. The
+// BIR golden shows it: all four call sites name `$default$0`, where a provider
+// per specialization would have produced `$default$0` through `$default$3`.
 public function main() {
-    int[] arr = [10, 20, 30, 40, 30];
-    int? firstDefault = arr.indexOf(30);
-    if firstDefault is int {
-        io:println(firstDefault); // @output 2
-    }
+    int[] ints = [1, 2, 3, 2];
+    string[] strings = ["a", "b", "c", "b"];
+
+    io:println(ints.indexOf(2)); // @output 1
+    io:println(ints.indexOf(3)); // @output 2
+    io:println(strings.indexOf("b")); // @output 1
+    io:println(strings.indexOf("c")); // @output 2
 }

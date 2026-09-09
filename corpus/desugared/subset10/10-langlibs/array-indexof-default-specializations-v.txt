@@ -1,0 +1,96 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable ints (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 2)))))
+      (var-def
+        (variable strings (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal a)
+            (literal b)
+            (literal c)
+            (literal b)))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (simple-var-ref ints))))
+          (var-def
+            (variable $desugar$1 (expr
+              (literal 2))))
+          (var-def
+            (variable $desugar$2 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1))))))
+          (invocation lang.array indexOf (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$3 (expr
+              (simple-var-ref ints))))
+          (var-def
+            (variable $desugar$4 (expr
+              (literal 3))))
+          (var-def
+            (variable $desugar$5 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$3)
+                (simple-var-ref $desugar$4))))))
+          (invocation lang.array indexOf (
+            (simple-var-ref $desugar$3)
+            (simple-var-ref $desugar$4)
+            (simple-var-ref $desugar$5)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$6 (expr
+              (simple-var-ref strings))))
+          (var-def
+            (variable $desugar$7 (expr
+              (literal b))))
+          (var-def
+            (variable $desugar$8 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$6)
+                (simple-var-ref $desugar$7))))))
+          (invocation lang.array indexOf (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7)
+            (simple-var-ref $desugar$8)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$9 (expr
+              (simple-var-ref strings))))
+          (var-def
+            (variable $desugar$10 (expr
+              (literal c))))
+          (var-def
+            (variable $desugar$11 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$9)
+                (simple-var-ref $desugar$10))))))
+          (invocation lang.array indexOf (
+            (simple-var-ref $desugar$9)
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11))))))))))

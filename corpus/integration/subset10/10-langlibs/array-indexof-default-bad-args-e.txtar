@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> array-indexof-default-bad-args-e.bal:27:9
+   |
+27 |     _ = arr.indexOf(2, "x"); // @error startIndex is an int
+   |         ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> array-indexof-default-bad-args-e.bal:28:9
+   |
+28 |     _ = arr.indexOf(2, startIndex = "x"); // @error startIndex is an int
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: missing required parameter 'val'
+  --> array-indexof-default-bad-args-e.bal:23:9
+   |
+23 |     _ = arr.indexOf(); // @error val is required
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: no such parameter begin
+  --> array-indexof-default-bad-args-e.bal:24:24
+   |
+24 |     _ = arr.indexOf(2, begin = 2); // @error no parameter named begin
+   |                        ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: repeated values for parameter startIndex
+  --> array-indexof-default-bad-args-e.bal:26:27
+   |
+26 |     _ = arr.indexOf(2, 2, startIndex = 2); // @error startIndex given twice
+   |                           ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: repeated values for parameter val
+  --> array-indexof-default-bad-args-e.bal:25:24
+   |
+25 |     _ = arr.indexOf(2, val = 2); // @error val given twice
+   |                        ^^^^^^^

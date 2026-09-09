@@ -63,9 +63,15 @@ type monomorphizer func(
 // is immutable; the package-scoped opaque id is the definition's position in its
 // package's table rather than a field.
 type FunctionDefinition struct {
-	name         string
-	params       []model.Param
-	monomorphize monomorphizer
+	name   string
+	params []model.Param
+	// sourceDeclared marks a function whose signature is declared in the lang
+	// library's own source, in a declaration marked @opaque, instead of by params
+	// here. That is how a definition gets parameter defaults: the declared default is
+	// parsed, resolved and desugared into a $default$N provider like any other
+	// function's, which cannot be done from Go.
+	sourceDeclared bool
+	monomorphize   monomorphizer
 	// owner is the definition's table slot, filled in by LookupFunction. It
 	// partitions the monomorphization cache; see cacheOwner.
 	owner cacheOwner
@@ -82,6 +88,10 @@ func (d FunctionDefinition) Params() []model.Param {
 	copy(params, d.params)
 	return params
 }
+
+// IsSourceDeclared reports whether the function's signature comes from a
+// declaration in the lang library's source rather than from Params.
+func (d FunctionDefinition) IsSourceDeclared() bool { return d.sourceDeclared }
 
 // HasRest reports whether the last parameter is a rest parameter.
 func (d FunctionDefinition) HasRest() bool {

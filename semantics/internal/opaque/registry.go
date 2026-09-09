@@ -201,10 +201,8 @@ func buildFunctionDefinitions() map[packageKey][]*FunctionDefinition {
 			},
 			model.OpaqueFnArrayIndexOf: {
 				name: "indexOf",
-				// The spec gives startIndex a default of 0. Opaque functions have no
-				// source module, so there is no default closure to evaluate, and the
-				// parameter is required here; omitting it is unsupported.
-				params: []model.Param{{Name: "arr"}, {Name: "val"}, {Name: "startIndex"}},
+				// Declared in lang.array's source, with `startIndex`'s default.
+				sourceDeclared: true,
 				monomorphize: func(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
 					semanticError SemanticError, _ bool, args []ast.BLangExpression,
 					_ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
