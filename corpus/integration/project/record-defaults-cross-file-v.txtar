@@ -1,0 +1,5 @@
+-- stdout --
+{"retries":4,"mode":"fast"}
+{"mode":"slow","retries":4}
+true
+-- stderr --

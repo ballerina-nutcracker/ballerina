@@ -118,13 +118,16 @@ func (sw *symbolWriter) serialize(exported model.ExportedSymbolSpace) ([]byte, e
 		return nil, err
 	}
 
-	tpEncoding := semtypes.MarshalTypePool(sw.tp, sw.compilerEnv.GetTypeEnv())
 	// writeSymbolSpaces rebuilds sw.refMap per call. Mapping defaults and object
 	// method tables belong to the main space, and writeObjectMethodTables resolves
 	// owners against sw.refMap to decide whether a table owner is local, so the
 	// main ref map must be active again before writing them.
 	sw.refMap = mainRefMap
-	if err := sw.writeMappingDefaults(mainBody, tpEncoding); err != nil {
+	tpEncoding, mappingDefaults, err := sw.encodeMappingDefaults()
+	if err != nil {
+		return nil, err
+	}
+	if err := writeMappingDefaults(mainBody, mappingDefaults); err != nil {
 		return nil, err
 	}
 	if err := sw.writeObjectMethodTables(mainBody, tpEncoding); err != nil {
@@ -166,24 +169,78 @@ func (sw *symbolWriter) serialize(exported model.ExportedSymbolSpace) ([]byte, e
 
 type serializedMappingDefaults struct {
 	atomIndex int32
-	defaults  []model.FieldDefault
+	encoded   []byte
 }
 
-func (sw *symbolWriter) writeMappingDefaults(buf *bytes.Buffer, tpEncoding semtypes.TypePoolEncoding) error {
-	var entries []serializedMappingDefaults
-	for atom, defaults := range sw.compilerEnv.MappingDefaultsSnapshot() {
+// encodeMappingDefaults encodes the defaults of every mapping atom the type pool
+// reaches and marshals the pool. A constant default puts the types of its value
+// into the pool, which can reach further atoms, so encoding repeats until a
+// marshalled pool reaches no atom left to encode.
+func (sw *symbolWriter) encodeMappingDefaults() (semtypes.TypePoolEncoding, []serializedMappingDefaults, error) {
+	snapshot := sw.compilerEnv.MappingDefaultsSnapshot()
+	encoded := make(map[*semtypes.MappingAtomicType][]byte)
+	for {
+		tpEncoding := semtypes.MarshalTypePool(sw.tp, sw.compilerEnv.GetTypeEnv())
+		pending := pendingMappingDefaults(tpEncoding, snapshot, encoded)
+		if len(pending) == 0 {
+			return tpEncoding, reachedMappingDefaults(tpEncoding, encoded), nil
+		}
+		for _, entry := range pending {
+			buf := &bytes.Buffer{}
+			if err := sw.writeFieldDefaults(buf, snapshot[entry.atom]); err != nil {
+				return semtypes.TypePoolEncoding{}, nil, err
+			}
+			encoded[entry.atom] = buf.Bytes()
+		}
+	}
+}
+
+type pendingMappingDefault struct {
+	atomIndex int32
+	atom      *semtypes.MappingAtomicType
+}
+
+// pendingMappingDefaults returns the atoms reached by tpEncoding whose defaults
+// are not encoded yet, ordered by atom index so the pool grows deterministically.
+func pendingMappingDefaults(tpEncoding semtypes.TypePoolEncoding,
+	snapshot map[*semtypes.MappingAtomicType][]model.FieldDefault,
+	encoded map[*semtypes.MappingAtomicType][]byte,
+) []pendingMappingDefault {
+	var pending []pendingMappingDefault
+	for atom, defaults := range snapshot {
 		if len(defaults) == 0 {
+			continue
+		}
+		if _, done := encoded[atom]; done {
 			continue
 		}
 		index, ok := tpEncoding.MappingAtomicTypeIndex(atom)
 		if !ok {
 			continue
 		}
-		entries = append(entries, serializedMappingDefaults{atomIndex: index, defaults: defaults})
+		pending = append(pending, pendingMappingDefault{atomIndex: index, atom: atom})
+	}
+	sort.Slice(pending, func(i, j int) bool {
+		return pending[i].atomIndex < pending[j].atomIndex
+	})
+	return pending
+}
+
+func reachedMappingDefaults(tpEncoding semtypes.TypePoolEncoding,
+	encoded map[*semtypes.MappingAtomicType][]byte,
+) []serializedMappingDefaults {
+	entries := make([]serializedMappingDefaults, 0, len(encoded))
+	for atom, body := range encoded {
+		index, _ := tpEncoding.MappingAtomicTypeIndex(atom)
+		entries = append(entries, serializedMappingDefaults{atomIndex: index, encoded: body})
 	}
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].atomIndex < entries[j].atomIndex
 	})
+	return entries
+}
+
+func writeMappingDefaults(buf *bytes.Buffer, entries []serializedMappingDefaults) error {
 	if err := write(buf, int64(len(entries))); err != nil {
 		return err
 	}
@@ -191,16 +248,33 @@ func (sw *symbolWriter) writeMappingDefaults(buf *bytes.Buffer, tpEncoding semty
 		if err := write(buf, entry.atomIndex); err != nil {
 			return err
 		}
-		if err := write(buf, int64(len(entry.defaults))); err != nil {
+		if _, err := buf.Write(entry.encoded); err != nil {
+			return fmt.Errorf("writing mapping defaults: %v", err)
+		}
+	}
+	return nil
+}
+
+func (sw *symbolWriter) writeFieldDefaults(buf *bytes.Buffer, defaults []model.FieldDefault) error {
+	if err := write(buf, int64(len(defaults))); err != nil {
+		return err
+	}
+	for _, fieldDefault := range defaults {
+		if err := sw.writeStringCP(buf, fieldDefault.FieldName); err != nil {
 			return err
 		}
-		for _, fieldDefault := range entry.defaults {
-			if err := sw.writeStringCP(buf, fieldDefault.FieldName); err != nil {
-				return err
-			}
-			if err := sw.writeSymbolRef(buf, fieldDefault.FnRef); err != nil {
-				return err
-			}
+		if err := sw.writeSymbolRef(buf, fieldDefault.FnRef); err != nil {
+			return err
+		}
+		if err := write(buf, fieldDefault.IsConst); err != nil {
+			return err
+		}
+		if !fieldDefault.IsConst {
+			continue
+		}
+		// The constant codec keeps the shape of nil, scalars and readonly containers.
+		if err := sw.writeAnnotationValue(buf, fieldDefault.Value); err != nil {
+			return err
 		}
 	}
 	return nil
