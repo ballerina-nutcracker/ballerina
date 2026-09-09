@@ -2156,14 +2156,18 @@ func setExpectedType[E ast.BLangNode](e E, expectedType semtypes.SemType) {
 	e.SetDeterminedType(expectedType)
 }
 
-// validateRecordFieldDefaults checks that all record field default expressions
-// satisfy the isolated-function rules. Field defaults are turned into closures
-// at record construction time, so they must not call non-isolated functions or
-// access mutable module state.
+// validateRecordFieldDefaults checks that each record field default expression
+// belongs to its field type and satisfies the isolated-function rules. Field
+// defaults are turned into closures at record construction time, so they must
+// not call non-isolated functions or access mutable module state.
 func validateRecordFieldDefaults[A analyzer](a A, node *ast.BLangRecordType) {
 	parent := enclosingFunctionLocals(a)
 	for _, field := range node.Fields() {
 		if field.Default == nil {
+			continue
+		}
+		fieldTy := field.Type.(ast.BLangNode).GetDeterminedType()
+		if !analyzeActionOrExpression(a, field.Default.Expr, fieldTy) {
 			continue
 		}
 		expr := field.Default.Expr.(ast.BLangNode)

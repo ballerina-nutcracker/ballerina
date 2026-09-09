@@ -1,0 +1,34 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field b
+        (union-type
+          (user-defined-type B)
+          (value-type null))
+        (literal <nil>))
+      (field x
+        (value-type int)
+        (literal 1))))
+  (type-definition B
+    (record-type
+      (field a
+        (user-defined-type A)
+        (mapping-constructor-expr))))
+  (const C (
+    (user-defined-type B)) (
+    (mapping-constructor-expr)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (user-defined-type B)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C)))))))

@@ -1,0 +1,20 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref B))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access y
+          (field-based-access nested
+            (simple-var-ref C))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref A)
+          (simple-var-ref B)))))
+  )
+)

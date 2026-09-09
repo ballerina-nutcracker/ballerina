@@ -1,0 +1,4 @@
+-- stdout --
+{"a":{"b":null,"x":1}}
+{"a":{"b":null,"x":1}}
+-- stderr --

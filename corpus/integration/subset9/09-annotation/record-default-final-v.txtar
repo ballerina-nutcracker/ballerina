@@ -1,0 +1,4 @@
+-- stdout --
+{"value":9,"label":"none"}
+{"label":"x","value":5}
+-- stderr --
