@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: record constructor reached from a function nested in a record field default not implemented
+  --> default-lambda-inclusion-fv.bal:20:8
+   |
+20 | type B record {| // @error future: B's inherited defaults are reached from a lambda in A's default
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |     *A;
+   |     ^^^
+22 |     int y = 2;
+   |     ^^^^^^^^^^
+23 | |};
+   | ^^
