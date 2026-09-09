@@ -1,0 +1,7 @@
+-- stdout --
+{"x":5,"s":"a","leaf":{"n":1}}
+5
+true
+true
+true
+-- stderr --
