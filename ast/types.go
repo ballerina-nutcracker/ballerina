@@ -22,6 +22,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 type ObjectNetworkQuals uint8
@@ -106,6 +107,11 @@ type (
 		flags        model.Flag
 		DefaultExpr  BLangExpression
 		DefaultFnRef model.SymbolRef
+		// IsConstant reports that DefaultExpr was folded to a compile-time
+		// constant; ConstantValue is only meaningful when it is true, where a
+		// nil value is a successful fold of ().
+		IsConstant    bool
+		ConstantValue values.BalValue
 	}
 
 	bObjectFieldBase struct {
