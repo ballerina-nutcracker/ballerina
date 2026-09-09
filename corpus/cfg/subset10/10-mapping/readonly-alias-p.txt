@@ -1,0 +1,33 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (expr
+        (mapping-constructor-expr
+          (readonly-fields a)
+          (key-value
+            (literal a)
+            (literal 1))
+          (key-value
+            (literal b)
+            (literal 2))))))
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (simple-var-ref x))))
+    (assignment
+      (index-based-access
+        (simple-var-ref m)
+        (literal b))
+      (literal 20))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+    (assignment
+      (index-based-access
+        (simple-var-ref m)
+        (literal a))
+      (literal 10))
+  )
+)

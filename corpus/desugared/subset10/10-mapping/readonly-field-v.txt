@@ -1,0 +1,15 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (expr
+          (mapping-constructor-expr
+            (readonly-fields age)
+            (key-value
+              (literal age)
+              (literal 36))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x)))))))

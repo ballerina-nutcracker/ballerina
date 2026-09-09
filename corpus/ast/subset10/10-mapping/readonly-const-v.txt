@@ -1,0 +1,93 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const AGE (
+    (value-type int)) (
+    (literal 36)))
+  (const NUMBERS (
+    (array-type
+      (value-type int) dimensions: 1 ([]))) (
+    (list-constructor-expr
+      (literal 1)
+      (literal 2))))
+  (const ANNOTATED (
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int))) (
+    (mapping-constructor-expr
+      (readonly-fields a)
+      (key-value
+        (literal a)
+        (literal 1))
+      (key-value
+        (literal b)
+        (literal 2)))))
+  (const INFERRED () (
+    (mapping-constructor-expr
+      (readonly-fields age)
+      (key-value
+        (literal age)
+        (simple-var-ref AGE))
+      (key-value
+        (literal name)
+        (literal 1)))))
+  (const ALL_READONLY () (
+    (mapping-constructor-expr
+      (readonly-fields a)
+      (key-value
+        (literal a)
+        (literal 1)))))
+  (const NESTED () (
+    (mapping-constructor-expr
+      (readonly-fields inner)
+      (key-value
+        (literal inner)
+        (simple-var-ref ALL_READONLY))
+      (key-value
+        (literal other)
+        (literal 2)))))
+  (const SHORTHAND () (
+    (mapping-constructor-expr
+      (readonly-fields AGE)
+      (key-value
+        (literal AGE)
+        (simple-var-ref AGE)))))
+  (const STRING_KEY () (
+    (mapping-constructor-expr
+      (readonly-fields age)
+      (key-value
+        (literal age)
+        (simple-var-ref AGE)))))
+  (const CONST_REFS () (
+    (mapping-constructor-expr
+      (readonly-fields numbers values)
+      (key-value
+        (literal numbers)
+        (simple-var-ref NUMBERS))
+      (key-value
+        (literal values)
+        (simple-var-ref ANNOTATED)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref ANNOTATED))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref INFERRED))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref ALL_READONLY))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref NESTED))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref SHORTHAND))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref STRING_KEY))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref CONST_REFS)))))))

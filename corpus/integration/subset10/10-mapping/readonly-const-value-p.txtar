@@ -1,0 +1,5 @@
+-- stdout --
+{"a":1,"b":2}
+-- stderr --
+error: inherent type violation: cannot mutate readonly value
+        at main(readonly-const-value-p.bal:26)

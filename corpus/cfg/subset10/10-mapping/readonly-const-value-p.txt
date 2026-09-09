@@ -1,0 +1,18 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable alias (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (simple-var-ref C))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref alias))))
+    (assignment
+      (index-based-access
+        (simple-var-ref alias)
+        (literal b))
+      (literal 3))
+  )
+)

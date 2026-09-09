@@ -1,0 +1,77 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable age (type
+        (value-type int)) (expr
+        (literal 36))))
+    (var-def
+      (variable explicitField (expr
+        (mapping-constructor-expr
+          (readonly-fields age)
+          (key-value
+            (literal age)
+            (literal 36))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref explicitField))))
+    (var-def
+      (variable shorthand (expr
+        (mapping-constructor-expr
+          (readonly-fields age)
+          (key-value
+            (literal age)
+            (simple-var-ref age))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref shorthand))))
+    (var-def
+      (variable stringKey (expr
+        (mapping-constructor-expr
+          (readonly-fields age)
+          (key-value
+            (literal age)
+            (literal 36))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref stringKey))))
+    (var-def
+      (variable contextualExplicit (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (readonly-fields age)
+          (key-value
+            (literal age)
+            (literal 36))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref contextualExplicit))))
+    (var-def
+      (variable contextualShorthand (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (readonly-fields age)
+          (key-value
+            (literal age)
+            (simple-var-ref age))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref contextualShorthand))))
+    (var-def
+      (variable contextualStringKey (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (readonly-fields age)
+          (key-value
+            (literal age)
+            (literal 36))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref contextualStringKey))))
+  )
+)

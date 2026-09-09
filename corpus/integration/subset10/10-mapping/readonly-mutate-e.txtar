@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot mutate readonly field 'a'
+  --> readonly-mutate-e.bal:25:5
+   |
+25 |     x.a = 10; // @error cannot mutate readonly field
+   |     ^^^
+
+error[SEMANTIC_ERROR]: cannot mutate readonly field 'a'
+  --> readonly-mutate-e.bal:26:5
+   |
+26 |     x["a"] = 11; // @error cannot mutate readonly field
+   |     ^^^^^^

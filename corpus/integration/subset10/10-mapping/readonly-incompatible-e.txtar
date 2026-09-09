@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: field 'fu' cannot be readonly: its type in the inherent type has no readonly values
+  --> readonly-incompatible-e.bal:33:12
+   |
+33 |     S x = {readonly fu: f}; // @error future is never readonly
+   |            ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: field 'fu' cannot be readonly: its type in the inherent type has no readonly values
+  --> readonly-incompatible-e.bal:35:12
+   |
+35 |     S y = {readonly fu: die()}; // @error never value does not make the field readonly
+   |            ^^^^^^^^^^^^^^^^^^

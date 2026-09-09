@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected readonly&[int...], got [int...]
+  --> readonly-mutable-value-e.bal:24:33
+   |
+24 |     map<int[]> m = {readonly a: list}; // @error mutable value for a readonly field
+   |                                 ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected readonly&{| int... |}, got {| int... |}
+  --> readonly-mutable-value-e.bal:25:36
+   |
+25 |     map<map<int>> n = {readonly a: inner}; // @error mutable value for a readonly field
+   |                                    ^^^^^
