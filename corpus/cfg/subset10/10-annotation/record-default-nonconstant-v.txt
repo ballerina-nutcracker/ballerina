@@ -1,0 +1,26 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable c (type
+        (union-type
+          (user-defined-type Code)
+          (value-type null))) (expr
+        (annot-access-expr codeAnnot
+          (simple-var-ref RuntimeDefaultTarget)))))
+    (type-test-expr is
+      (simple-var-ref c)
+      (user-defined-type Code))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+  )
+  (bb2 (bb1 bb0) ())
+)
+(seed
+  (bb0 () ()
+    (return
+      (literal 11))
+  )
+)

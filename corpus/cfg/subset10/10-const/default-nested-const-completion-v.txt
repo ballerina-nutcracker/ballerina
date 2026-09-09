@@ -1,0 +1,26 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable o (type
+        (user-defined-type Outer)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref o))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access port
+          (simple-var-ref CONFIG)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref CONFIG)
+          (mapping-constructor-expr
+            (key-value
+              (literal host)
+              (literal h))
+            (key-value
+              (literal port)
+              (literal 8080)))))))
+  )
+)

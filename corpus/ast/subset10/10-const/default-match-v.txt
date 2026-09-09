@@ -1,0 +1,92 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Leaf
+    (record-type
+      (field n
+        (value-type int)
+        (literal 1))))
+  (type-definition R
+    (record-type
+      (field x
+        (value-type int)
+        (literal 5))
+      (field leaf
+        (user-defined-type Leaf)
+        (mapping-constructor-expr))))
+  (const A (
+    (user-defined-type R)) (
+    (mapping-constructor-expr)))
+  (const B (
+    (user-defined-type R)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 6)))))
+  (type-definition DefaultR
+    (user-defined-type A))
+  (function describe (
+    (variable r (type
+      (user-defined-type R)))) (
+    (value-type string))
+    (block-function-body
+      (match
+        (simple-var-ref r)
+        (match-clause
+          (const-pattern
+            (simple-var-ref A))
+          (block-stmt
+            (return
+              (literal default))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (return
+              (literal other)))))))
+  (function isDefault (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type DefaultR)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation describe (
+            (mapping-constructor-expr))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe (
+            (mapping-constructor-expr
+              (key-value
+                (literal x)
+                (literal 5))
+              (key-value
+                (literal leaf)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal n)
+                    (literal 1))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe (
+            (mapping-constructor-expr
+              (key-value
+                (literal leaf)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal n)
+                    (literal 2))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isDefault (
+            (simple-var-ref A))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isDefault (
+            (simple-var-ref B)))))))))

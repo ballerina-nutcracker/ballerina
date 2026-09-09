@@ -1,0 +1,65 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition P
+    (record-type
+      (field x
+        (value-type int)
+        (literal 1))
+      (field y
+        (value-type int)
+        (literal 2))))
+  (type-definition Q
+    (record-type
+      (field s
+        (value-type string)
+        (literal q))
+      (field f
+        (value-type boolean)
+        (literal true))))
+  (const A (
+    (union-type
+      (user-defined-type P)
+      (user-defined-type Q))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 3)))))
+  (const B (
+    (union-type
+      (user-defined-type P)
+      (user-defined-type Q))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal y)
+        (literal 4)))))
+  (const C (
+    (union-type
+      (user-defined-type P)
+      (user-defined-type Q))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal s)
+        (literal z)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref A)
+            (user-defined-type P)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref C)
+            (user-defined-type Q))))))))

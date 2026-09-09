@@ -1,0 +1,120 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable SEED (type
+    (value-type int)) (expr
+    (literal 4)))
+  (type-definition FromFinal
+    (record-type
+      (field x
+        (value-type int)
+        (simple-var-ref SEED))
+      (field y
+        (value-type int)
+        (literal 1))))
+  (const A (
+    (user-defined-type FromFinal)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 2)))))
+  (function build (
+    (variable p (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (record-type
+            (field z
+              (value-type int)
+              (simple-var-ref p))
+            (field w
+              (value-type int)
+              (literal 3)))) (expr
+          (mapping-constructor-expr))))
+      (return
+        (binary-expr +
+          (field-based-access z
+            (simple-var-ref r))
+          (field-based-access w
+            (simple-var-ref r))))))
+  (function sumInLoop () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (literal 2))
+        (block-stmt
+          (var-def
+            (variable r (type
+              (record-type
+                (field z
+                  (value-type int)
+                  (literal 2))
+                (field w
+                  (value-type int)
+                  (literal 1)))) (expr
+              (mapping-constructor-expr))))
+          (compound-assignment +
+            (simple-var-ref total)
+            (binary-expr +
+              (field-based-access z
+                (simple-var-ref r))
+              (field-based-access w
+                (simple-var-ref r))))
+          (compound-assignment +
+            (simple-var-ref i)
+            (literal 1))))
+      (foreach
+        (var-def
+          (variable j (type
+            (value-type int))))
+        (binary-expr ..<
+          (literal 0)
+          (literal 2))
+        (block-stmt
+          (var-def
+            (variable r (type
+              (record-type
+                (field z
+                  (value-type int)
+                  (literal 10)))) (expr
+              (mapping-constructor-expr))))
+          (compound-assignment +
+            (simple-var-ref total)
+            (binary-expr +
+              (field-based-access z
+                (simple-var-ref r))
+              (simple-var-ref j)))))
+      (return
+        (simple-var-ref total))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation sumInLoop ()))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (var-def
+        (variable r (type
+          (user-defined-type FromFinal)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (expression-stmt
+        (invocation io println (
+          (invocation build (
+            (literal 5)))))))))

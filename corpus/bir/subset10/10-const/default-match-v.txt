@@ -1,0 +1,108 @@
+module $anon.. v 0.0.0;
+describe({| leaf: {| n: int, never... |}, x: int, never... |}) -> string{
+  bb0 {
+    %2 = ConstantLoad {"x":5,"leaf":{"n":1}}
+    %3 = == r %2;
+    %3 ? bb2 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad default
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    GOTO bb4;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = ConstantLoad other
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}
+isDefault(any) -> boolean{
+  bb0 {
+    %2 = v is readonly&{| leaf: {| n: 1, never... |}, x: 5, never... |}
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newMap {| leaf: {| n: int, never... |}, x: int, never... |}{} defaults{x=$anon/.:$default$1, leaf=$anon/.:$default$2}
+    %2 = describe(%1) -> bb1;
+  }
+  bb1 {
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    %4 = ConstantLoad x
+    %5 = ConstantLoad 5
+    %6 = ConstantLoad leaf
+    %7 = ConstantLoad n
+    %8 = ConstantLoad 1
+    %9 = newMap {| n: int, never... |}{%7=%8} defaults{n=$anon/.:$default$0}
+    %10 = newMap {| leaf: {| n: int, never... |}, x: int, never... |}{%4=%5, %6=%9} defaults{x=$anon/.:$default$1, leaf=$anon/.:$default$2}
+    %11 = describe(%10) -> bb3;
+  }
+  bb3 {
+    %12 = println(%11) -> bb4;
+  }
+  bb4 {
+    %13 = ConstantLoad leaf
+    %14 = ConstantLoad n
+    %15 = ConstantLoad 2
+    %16 = newMap {| n: int, never... |}{%14=%15} defaults{n=$anon/.:$default$0}
+    %17 = newMap {| leaf: {| n: int, never... |}, x: int, never... |}{%13=%16} defaults{x=$anon/.:$default$1, leaf=$anon/.:$default$2}
+    %18 = describe(%17) -> bb5;
+  }
+  bb5 {
+    %19 = println(%18) -> bb6;
+  }
+  bb6 {
+    %20 = ConstantLoad {"x":5,"leaf":{"n":1}}
+    %21 = isDefault(%20) -> bb7;
+  }
+  bb7 {
+    %22 = %21;
+    %23 = println(%22) -> bb8;
+  }
+  bb8 {
+    %24 = ConstantLoad {"x":6,"leaf":{"n":1}}
+    %25 = isDefault(%24) -> bb9;
+  }
+  bb9 {
+    %26 = %25;
+    %27 = println(%26) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> {| n: int, never... |}{
+  bb0 {
+    %1 = newMap {| n: int, never... |}{} defaults{n=$anon/.:$default$0}
+    %0 = %1;
+    return;
+  }
+}

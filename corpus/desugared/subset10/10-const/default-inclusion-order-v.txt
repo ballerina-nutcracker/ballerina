@@ -1,0 +1,39 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Derived
+    (record-type
+      (field y
+        (value-type int)
+        (binary-expr +
+          (numeric-literal 1)
+          (literal 1)))))
+  (type-definition Base
+    (record-type
+      (field x
+        (value-type int)
+        (simple-var-ref Z))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"y":2,"x":1}))))
+      (var-def
+        (variable d (type
+          (user-defined-type Derived)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref d)
+            (literal {"y":2,"x":1})))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (binary-expr +
+          (numeric-literal 1)
+          (literal 1)))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (numeric-literal 1)))))

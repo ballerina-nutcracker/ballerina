@@ -1,0 +1,36 @@
+(package
+  (import-package ballerina lang float (as float))
+  (import-package ballerina io (as io))
+  (type-definition Color enum
+    (union-type
+      (user-defined-type RED)
+      (user-defined-type GREEN)))
+  (type-definition R
+    (record-type
+      (field c
+        (user-defined-type Color)
+        (simple-var-ref GREEN))
+      (field pi
+        (value-type float)
+        (simple-var-ref float PI))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"c":"GREEN","pi":3.141592653589793}))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (literal {"c":"GREEN","pi":3.141592653589793})
+              (literal c))
+            (literal GREEN)))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal GREEN))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (numeric-literal 3.141592653589793)))))
