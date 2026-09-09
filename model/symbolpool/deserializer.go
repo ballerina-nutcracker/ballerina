@@ -184,6 +184,7 @@ func (sr *symbolReader) readMappingDefaults(space *model.SymbolSpace) {
 				FieldName: sr.readStringCP(),
 				FnRef:     sr.readSymbolRef(space),
 			}
+			defaults[j].IsConstant, defaults[j].ConstantValue = sr.readFieldDefaultConstant()
 		}
 		sr.env.SetMappingDefaults(atom, defaults)
 	}
@@ -361,6 +362,7 @@ func (sr *symbolReader) readInclusionMembers(space *model.SymbolSpace) []model.I
 			fd := model.NewFieldDescriptor(name, fdFlags, isPublic)
 			fd.SetMemberType(ty)
 			fd.DefaultFnRef = sr.readSymbolRef(space)
+			fd.IsConstant, fd.ConstantValue = sr.readFieldDefaultConstant()
 			members = append(members, &fd)
 		case inclusionMemberTagMethod:
 			name := sr.readStringCP()
@@ -381,6 +383,15 @@ func (sr *symbolReader) readInclusionMembers(space *model.SymbolSpace) []model.I
 		}
 	}
 	return members
+}
+
+func (sr *symbolReader) readFieldDefaultConstant() (bool, values.BalValue) {
+	var isConstant bool
+	read(sr.r, &isConstant)
+	if !isConstant {
+		return false, nil
+	}
+	return true, sr.readAnnotationValue()
 }
 
 func (sr *symbolReader) readSymbolRef(space *model.SymbolSpace) model.SymbolRef {

@@ -29,7 +29,7 @@ import (
 
 const (
 	symMagic   = "\x53\x59\x4d\x42"
-	symVersion = 10
+	symVersion = 11
 )
 
 const (
@@ -191,9 +191,24 @@ func (sw *symbolWriter) writeMappingDefaults(buf *bytes.Buffer, tpEncoding semty
 			if err := sw.writeSymbolRef(buf, fieldDefault.FnRef); err != nil {
 				return err
 			}
+			if err := sw.writeFieldDefaultConstant(buf, fieldDefault.IsConstant, fieldDefault.ConstantValue); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
+}
+
+// writeFieldDefaultConstant persists a record field default's folded value with
+// the constant codec, so nil, scalars and readonly containers keep their shape.
+func (sw *symbolWriter) writeFieldDefaultConstant(buf *bytes.Buffer, isConstant bool, value values.BalValue) error {
+	if err := write(buf, isConstant); err != nil {
+		return err
+	}
+	if !isConstant {
+		return nil
+	}
+	return sw.writeAnnotationValue(buf, value)
 }
 
 func (sw *symbolWriter) writePackageIdentifier(buf *bytes.Buffer, pkg model.PackageIdentifier) error {
@@ -482,6 +497,9 @@ func (sw *symbolWriter) writeInclusionMembers(buf *bytes.Buffer, members []model
 				return err
 			}
 			if err := sw.writeSymbolRef(buf, member.DefaultFnRef); err != nil {
+				return err
+			}
+			if err := sw.writeFieldDefaultConstant(buf, member.IsConstant, member.ConstantValue); err != nil {
 				return err
 			}
 		case *model.MethodDescriptor:
