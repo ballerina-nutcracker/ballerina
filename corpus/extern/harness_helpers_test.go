@@ -74,12 +74,12 @@ func runExtern(t *testing.T, tc test_util.TestCase, pal testharness.TestPal, ext
 // to os.ReadFile (used by tests that need to load cert files from disk).
 type httpPal struct {
 	testharness.TestPal
-	newClient func(cfg pal.ClientConfig) pal.HTTPClient
+	newClient func(cfg pal.ClientConfig) (pal.HTTPClient, error)
 	realFS    bool
 }
 
 // newHTTPPal returns a TestPal whose Platform()'s HTTP.NewClient is overridden.
-func newHTTPPal(newClient func(cfg pal.ClientConfig) pal.HTTPClient) *httpPal {
+func newHTTPPal(newClient func(cfg pal.ClientConfig) (pal.HTTPClient, error)) *httpPal {
 	return &httpPal{TestPal: testharness.NewTestPal(), newClient: newClient}
 }
 

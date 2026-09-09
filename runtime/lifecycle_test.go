@@ -506,7 +506,7 @@ func (p *lifecycleTestPal) Platform() pal.Platform {
 			},
 		},
 		HTTP: pal.HTTP{
-			NewClient: func(_ pal.ClientConfig) pal.HTTPClient { return nil },
+			NewClient: func(_ pal.ClientConfig) (pal.HTTPClient, error) { return nil, nil },
 		},
 		Signals: pal.SignalSource{Signals: p.signals},
 	}

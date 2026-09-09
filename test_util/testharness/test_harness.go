@@ -341,8 +341,8 @@ func (p *testPal) Platform() pal.Platform {
 			MonotonicNow: func() time.Duration { return time.Since(testProcessStart) },
 		},
 		HTTP: pal.HTTP{
-			NewClient: func(_ pal.ClientConfig) pal.HTTPClient {
-				return &stubHTTP{}
+			NewClient: func(_ pal.ClientConfig) (pal.HTTPClient, error) {
+				return &stubHTTP{}, nil
 			},
 		},
 		Signals: p.signalSrc,

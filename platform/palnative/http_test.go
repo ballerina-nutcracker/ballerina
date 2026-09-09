@@ -81,10 +81,13 @@ func TestNewHTTPClient_HTTP2_TLS(t *testing.T) {
 	server.StartTLS()
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		HTTPVersion: "2.0",
 		TLS:         pal.TLSConfig{InsecureSkipVerify: true},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -112,10 +115,13 @@ func TestNewHTTPClient_HTTP1_TLS(t *testing.T) {
 	server.StartTLS()
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		HTTPVersion: "1.1",
 		TLS:         pal.TLSConfig{InsecureSkipVerify: true},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -196,9 +202,12 @@ func TestNewHTTPClient_InsecureSkipVerify(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		TLS: pal.TLSConfig{InsecureSkipVerify: true},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if err != nil {
 		t.Fatalf("expected successful connection with InsecureSkipVerify=true, got: %v", err)
@@ -219,9 +228,12 @@ func TestNewHTTPClient_TLSVerificationFails(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		TLS: pal.TLSConfig{InsecureSkipVerify: false},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	_, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -239,9 +251,12 @@ func TestNewHTTPClient_Timeout(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		Timeout: 100 * time.Millisecond,
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	_, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -263,10 +278,13 @@ func TestNewHTTPClient_RedirectsDisabled(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		FollowRedirects: pal.FollowRedirects{Enabled: false},
 		ResponseLimits:  pal.ResponseLimitConfig{MaxEntityBodySize: -1},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/redirect", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -291,9 +309,12 @@ func TestNewHTTPClient_RedirectsEnabled(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		FollowRedirects: pal.FollowRedirects{Enabled: true, MaxCount: 3},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/redirect", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -314,13 +335,16 @@ func TestNewHTTPClient_TLSVersionRange(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		TLS: pal.TLSConfig{
 			MinVersion:         tls.VersionTLS12,
 			MaxVersion:         tls.VersionTLS13,
 			InsecureSkipVerify: true,
 		},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -350,12 +374,15 @@ func TestNewHTTPClient_ValidCipherSuites(t *testing.T) {
 	for i, s := range suites {
 		names[i] = s.Name
 	}
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		TLS: pal.TLSConfig{
 			CipherSuiteNames:   names,
 			InsecureSkipVerify: true,
 		},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()

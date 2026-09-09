@@ -757,7 +757,7 @@ func initHttpModule(rt *runtime.Runtime) {
 					}
 				}
 			}
-			httpClient := rt.Platform().HTTP.NewClient(pal.ClientConfig{
+			httpClient, err := rt.Platform().HTTP.NewClient(pal.ClientConfig{
 				Timeout:         decimalToDuration(timeout),
 				FollowRedirects: followRedirects,
 				HTTPVersion:     httpVersion,
@@ -766,6 +766,9 @@ func initHttpModule(rt *runtime.Runtime) {
 				ResponseLimits:  responseLimits,
 				Proxy:           proxyCfg,
 			})
+			if err != nil {
+				return values.NewErrorWithMessage("secureSocket: " + err.Error()), nil
+			}
 			self.Put("url", url)
 			self.Put("timeout", timeout)
 			self.Put("followRedirects", nil)

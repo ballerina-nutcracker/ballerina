@@ -79,12 +79,12 @@ func (c *rewritingHTTPClient) Execute(ctx context.Context, method, url string, b
 
 // rewriteClient returns a NewClient factory that forwards every request to
 // serverURL via rewritingHTTPClient.
-func rewriteClient(serverURL string) func(pal.ClientConfig) pal.HTTPClient {
-	return func(cfg pal.ClientConfig) pal.HTTPClient {
+func rewriteClient(serverURL string) func(pal.ClientConfig) (pal.HTTPClient, error) {
+	return func(cfg pal.ClientConfig) (pal.HTTPClient, error) {
 		return &rewritingHTTPClient{
 			serverURL: serverURL,
 			client:    &http.Client{Timeout: cfg.Timeout},
-		}
+		}, nil
 	}
 }
 
@@ -224,11 +224,11 @@ func TestHttpClientCompressionLocal(t *testing.T) {
 	}))
 	defer server.Close()
 
-	noAutoDecompress := func(cfg pal.ClientConfig) pal.HTTPClient {
+	noAutoDecompress := func(cfg pal.ClientConfig) (pal.HTTPClient, error) {
 		return &rewritingHTTPClient{
 			serverURL: server.URL,
 			client:    &http.Client{Timeout: cfg.Timeout, Transport: &http.Transport{DisableCompression: true}},
-		}
+		}, nil
 	}
 	runExtern(t, fileCase("http-client-compression-local-v"), newHTTPPal(noAutoDecompress), nil)
 }
@@ -264,7 +264,7 @@ func TestHttpClientTLSInsecure(t *testing.T) {
 	}))
 	defer server.Close()
 
-	clientFactory := func(cfg pal.ClientConfig) pal.HTTPClient {
+	clientFactory := func(cfg pal.ClientConfig) (pal.HTTPClient, error) {
 		serverTLSConfig := server.Client().Transport.(*http.Transport).TLSClientConfig.Clone()
 		if cfg.TLS.InsecureSkipVerify {
 			serverTLSConfig.InsecureSkipVerify = true //nolint:gosec
@@ -273,7 +273,7 @@ func TestHttpClientTLSInsecure(t *testing.T) {
 		return &rewritingHTTPClient{
 			serverURL: server.URL,
 			client:    &http.Client{Timeout: cfg.Timeout, Transport: &http.Transport{TLSClientConfig: serverTLSConfig}},
-		}
+		}, nil
 	}
 	runExtern(t, fileCase("http-client-tls-v"), newHTTPPal(clientFactory), nil)
 }
@@ -387,6 +387,44 @@ public function main() returns error? {
 		Name:         "http-client-mtls-v",
 		InputPath:    tmpBalFile,
 		ExpectedPath: filepath.Join(expectedDir, "http-client-mtls-v.txtar"),
+	}
+	runExtern(t, tc, newHTTPPal(palnative.NewHTTPClient).withRealFS(), nil)
+}
+
+// TestHttpClientMalformedCACert verifies that a secureSocket.cert file whose
+// content isn't a valid PEM-encoded certificate fails Client.init with an
+// error, rather than silently falling back to the system trust store (which
+// would defeat the custom-CA pinning the config asked for).
+func TestHttpClientMalformedCACert(t *testing.T) {
+	tmpDir := t.TempDir()
+	certFile := filepath.Join(tmpDir, "ca.pem")
+	if err := os.WriteFile(certFile, []byte("not a valid PEM certificate"), 0600); err != nil {
+		t.Fatalf("writing malformed cert file: %v", err)
+	}
+
+	certFileSlash := filepath.ToSlash(certFile)
+	balContent := fmt.Sprintf(`
+import ballerina/http;
+import ballerina/io;
+
+public function main() returns error? {
+    http:Client|error c = new ("http://testserver", {
+        secureSocket: {cert: "%s"}
+    });
+    io:println(c is error); // @output true
+    return;
+}
+`, certFileSlash)
+
+	tmpBalFile := filepath.Join(tmpDir, "http-client-malformed-ca-cert-v.bal")
+	if err := os.WriteFile(tmpBalFile, []byte(balContent), 0644); err != nil {
+		t.Fatalf("writing bal file: %v", err)
+	}
+
+	tc := test_util.TestCase{
+		Name:         "http-client-malformed-ca-cert-v",
+		InputPath:    tmpBalFile,
+		ExpectedPath: filepath.Join(expectedDir, "http-client-malformed-ca-cert-v.txtar"),
 	}
 	runExtern(t, tc, newHTTPPal(palnative.NewHTTPClient).withRealFS(), nil)
 }
