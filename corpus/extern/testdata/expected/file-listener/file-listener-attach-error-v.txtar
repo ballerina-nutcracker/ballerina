@@ -1,0 +1,3 @@
+-- stdout --
+At least a single resource required from following: onCreate ,onDelete ,onModify. Parameter should be of type - file:FileEvent
+-- stderr --

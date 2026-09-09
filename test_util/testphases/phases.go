@@ -117,6 +117,7 @@ var builtinStdlibs = []stdlibEntry{
 	flatEntry("url", "0.0.1", "go1.26"),
 	flatEntry("crypto", "0.0.1", "go1.26"),
 	flatEntry("avro", "0.0.1", "go1.26"),
+	flatEntry("file", "0.0.1", "go1.26"),
 	flatEntry("protobuf", "0.0.1", "go1.26"),
 	subModuleEntry("protobuf", "types.any", "0.0.1", "go1.26"),
 	subModuleEntry("protobuf", "types.duration", "0.0.1", "go1.26"),

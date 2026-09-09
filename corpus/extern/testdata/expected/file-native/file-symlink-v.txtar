@@ -1,0 +1,6 @@
+-- stdout --
+true
+target-file.txt
+true
+true
+-- stderr --
