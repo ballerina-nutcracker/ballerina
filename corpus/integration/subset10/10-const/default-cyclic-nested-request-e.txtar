@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cyclic dependency in record field default
+  --> default-cyclic-nested-request-e.bal:32:15
+   |
+32 |     Y? next = {v: 3}; // @error Y constructs itself while X's lambda waits for Y
+   |               ^^^^^^

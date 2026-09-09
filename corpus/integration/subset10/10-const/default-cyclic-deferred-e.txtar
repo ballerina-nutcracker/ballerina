@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cyclic dependency in record field default
+  --> default-cyclic-deferred-e.bal:19:12
+   |
+19 |     B? b = {}; // @error B selects X, which defers A, whose default builds B
+   |            ^^

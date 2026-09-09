@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cyclic dependency in record field default
+  --> default-cyclic-mutual-e.bal:20:11
+   |
+20 |     B b = {}; // @error A's default builds B, whose default builds A
+   |           ^^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: record constructor reached from a function nested in a record field default not implemented
+  --> default-lambda-indirect-order-fv.bal:20:16
+   |
+20 |         return {r: {f: isolated function () returns S? => ()}, k: 5}; // @error future: S's default constructs R
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
