@@ -221,6 +221,10 @@ func (sr *symbolReader) readMappingDefaults(space *model.SymbolSpace) {
 				FieldName: sr.readStringCP(),
 				FnRef:     sr.readSymbolRef(space),
 			}
+			read(sr.r, &defaults[j].IsConst)
+			if defaults[j].IsConst {
+				defaults[j].Value = sr.readAnnotationValue()
+			}
 		}
 		sr.env.SetMappingDefaults(atom, defaults)
 	}
