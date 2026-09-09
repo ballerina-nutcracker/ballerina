@@ -177,6 +177,14 @@ func (l *loopTypeResolver) setObjectMethodTable(atom *semtypes.MappingAtomicType
 	l.parentResolver.setObjectMethodTable(atom, table)
 }
 
+func (l *loopTypeResolver) recordDefaultsSchedule() *recordDefaultsInProgressBase {
+	return l.parentResolver.recordDefaultsSchedule()
+}
+
+func (l *loopTypeResolver) recordDefaultsReference(atom *semtypes.MappingAtomicType) (partialRecordReference, bool) {
+	return l.parentResolver.recordDefaultsReference(atom)
+}
+
 func (l *loopTypeResolver) objectMethodTable(atom *semtypes.MappingAtomicType) (model.MethodTable, bool) {
 	return l.parentResolver.objectMethodTable(atom)
 }

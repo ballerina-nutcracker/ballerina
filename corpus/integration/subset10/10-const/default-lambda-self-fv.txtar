@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: record constructor in a function nested in a default of the same record not implemented
+  --> default-lambda-self-fv.bal:21:16
+   |
+21 |         return {x: 2}; // @error future: record constructor of the same record in a lambda in its default
+   |                ^^^^^^

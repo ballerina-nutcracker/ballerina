@@ -64,6 +64,7 @@
 - [List constructor](https://ballerina.io/spec/lang/master/#list-constructor-expr)
 - [Mapping constructor](https://ballerina.io/spec/lang/master/#mapping-constructor-expr)
   - Currently [spread-field](https://ballerina.io/spec/lang/master/#spread-field) not supported
+  - A record field default cannot construct the same record in a function nested in that default, such as a lambda body
 - [XML template expression](https://ballerina.io/spec/lang/master/#xml-template-expr)
   - Supports interpolation in XML content and attributes
   - XML sequence interpolation from a query result is not supported
