@@ -1,0 +1,16 @@
+-- stdout --
+Hello World
+5
+dispatched text
+4
+parser error
+trailing data rejected
+trailing whitespace accepted
+application/octet-stream
+content from a file
+text/custom
+19
+overwritten content
+overwritten content
+19
+-- stderr --

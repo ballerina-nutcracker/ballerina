@@ -1,0 +1,11 @@
+-- stdout --
+application/xml
+<hello>world</hello>
+<hello>world</hello>
+application/xml
+true
+<x>y</x>
+true
+true
+application/xhtml+xml
+-- stderr --

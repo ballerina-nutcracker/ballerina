@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: error while opening file '/tmp/definitely_does_not_exist_bal_mime_test.xyz': open /tmp/definitely_does_not_exist_bal_mime_test.xyz: no such file or directory
+        at ballerina/mime:Entity.setFileAsEntityBody(0.0.1::mime.bal:363)
+           main(mime-entity-file-missing-p.bal:23)
