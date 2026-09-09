@@ -3194,9 +3194,6 @@ func createFieldDescriptor(name string, field ast.BField) model.FieldDescriptor 
 	}
 	fd := model.NewFieldDescriptor(name, flags, true)
 	fd.SetMemberType(field.Type.Type())
-	if field.Default != nil {
-		fd.DefaultFnRef = field.Default.FnRef
-	}
 	return fd
 }
 
@@ -5571,12 +5568,15 @@ func prepareRecordDefaults(t typeResolver, e *ast.BLangMappingConstructorExpr, a
 		t.semanticError("cyclic dependency in record field default", e.GetPosition())
 		return false
 	case partialRecordEnclosingFunction:
-		t.unimplemented("record constructor reached from a function nested in a record field default not implemented",
-			e.GetPosition())
+		reportNestedFunctionRecordConstructor(t, e.GetPosition())
 		return false
 	case partialRecordNone:
 	}
 	return true
+}
+
+func reportNestedFunctionRecordConstructor(t typeResolver, pos diagnostics.Location) {
+	t.unimplemented("record constructor reached from a function nested in a record field default not implemented", pos)
 }
 
 // readonlyFieldRequiredType narrows the type an explicitly readonly field's value must have to its
@@ -9192,12 +9192,16 @@ func resolveScheduledRecordDefaults(t typeResolver, entry *recordDefaults) bool 
 	for name := range entry.fieldTypes {
 		resolvedFields[name] = true
 	}
-	t.setMappingDefaults(entry.atom, recordFieldDefaults(t, entry.recordTy, resolvedFields, resolvedDefaults))
+	defaults, defaultsOk := recordFieldDefaults(t, entry.recordTy, resolvedFields, resolvedDefaults)
+	if !defaultsOk {
+		return false
+	}
+	t.setMappingDefaults(entry.atom, defaults)
 	return ok
 }
 
-func resolveRecordFieldDefaults(t typeResolver, entry *recordDefaults) (map[string]bool, bool) {
-	resolvedDefaults := make(map[string]bool)
+func resolveRecordFieldDefaults(t typeResolver, entry *recordDefaults) (map[string]model.FieldDefault, bool) {
+	resolvedDefaults := make(map[string]model.FieldDefault)
 	ok := true
 	chain := entry.chain
 	for name, field := range entry.recordTy.FieldPtrs() {
@@ -9208,12 +9212,17 @@ func resolveRecordFieldDefaults(t typeResolver, entry *recordDefaults) (map[stri
 		restoreContext := setIsolatedXMLStepContext(t, true)
 		defaultResult, defaultOk := resolveDefaultExpression(t, chain, field, field.Default.Expr, fieldTy)
 		restoreContext()
-		if !defaultOk || !classifyFieldDefault(t, field) {
+		if !defaultOk {
+			ok = false
+			continue
+		}
+		fieldDefault, classified := classifyFieldDefault(t, name, field)
+		if !classified {
 			ok = false
 			continue
 		}
 		chain = sequentialChain(t, defaultResult.effect)
-		resolvedDefaults[name] = true
+		resolvedDefaults[name] = fieldDefault
 	}
 	return resolvedDefaults, ok
 }
@@ -9510,24 +9519,24 @@ func validateOverridesAndMerge(t typeResolver, directMembers []directMember, inc
 	return members, true
 }
 
-func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType, resolvedFields, resolvedDefaults map[string]bool) []model.FieldDefault {
+func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType, resolvedFields map[string]bool, resolvedDefaults map[string]model.FieldDefault) ([]model.FieldDefault, bool) {
 	var defaults []model.FieldDefault
-	for name, field := range recordTy.FieldPtrs() {
+	for name := range recordTy.FieldPtrs() {
 		if !resolvedFields[name] {
 			continue
 		}
-		if field.Default != nil && resolvedDefaults[name] {
-			defaults = append(defaults, model.FieldDefault{FieldName: name, FnRef: field.Default.FnRef})
+		if fieldDefault, resolved := resolvedDefaults[name]; resolved {
+			defaults = append(defaults, fieldDefault)
 		}
 	}
 
 	inherited := make(map[string]bool)
 	for _, ref := range recordTy.Inclusions {
-		carrier, ok := t.getSymbol(ref).(model.MemberCarrier)
+		includedDefaults, ok := includedRecordDefaults(t, ref, recordTy.GetPosition())
 		if !ok {
-			continue
+			return nil, false
 		}
-		for _, fieldDefault := range carrier.FieldDefaults() {
+		for _, fieldDefault := range includedDefaults {
 			if resolvedFields[fieldDefault.FieldName] || inherited[fieldDefault.FieldName] {
 				continue
 			}
@@ -9535,7 +9544,31 @@ func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType, resolved
 			defaults = append(defaults, fieldDefault)
 		}
 	}
-	return defaults
+	return defaults, true
+}
+
+// includedRecordDefaults returns the defaults of the record type included by
+// ref, resolving them first when they are still scheduled.
+func includedRecordDefaults(t typeResolver, ref model.SymbolRef, pos diagnostics.Location) ([]model.FieldDefault, bool) {
+	atom := semtypes.ToMappingAtomicType(t.typeContext(), t.symbolType(ref))
+	if atom == nil {
+		return nil, true
+	}
+	reference, ok := t.recordDefaultsReference(atom)
+	if !ok {
+		return nil, false
+	}
+	switch reference {
+	case partialRecordSameFunction:
+		t.semanticError("cyclic dependency in record field default", pos)
+		return nil, false
+	case partialRecordEnclosingFunction:
+		reportNestedFunctionRecordConstructor(t, pos)
+		return nil, false
+	case partialRecordNone:
+	}
+	defaults, _ := t.mappingDefaults(atom)
+	return defaults, true
 }
 
 type recordInclusionResolutionResult struct {

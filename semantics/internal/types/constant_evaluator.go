@@ -122,16 +122,23 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 	}
 }
 
-// classifyFieldDefault folds a record field's default expression when it is a
-// constant expression. It returns false after reporting the failure when a
-// supported constant expression fails to fold; the caller then drops that
-// field's default.
-func classifyFieldDefault(t typeResolver, field *ast.BField) bool {
+// classifyFieldDefault returns the mapping default of a record field. When the
+// default expression is a constant expression that folds, IsConst is set and
+// Value holds the folded value. It returns false after reporting the failure
+// when a supported constant expression fails to fold; the caller then drops
+// that field's default.
+func classifyFieldDefault(t typeResolver, name string, field *ast.BField) (model.FieldDefault, bool) {
+	fieldDefault := model.FieldDefault{FieldName: name, FnRef: field.Default.FnRef}
 	if _, ok := isConstantExpression(t, field.Default.Expr); !ok {
-		return true
+		return fieldDefault, true
 	}
-	_, ok := foldConstant(t, field.Default.Expr)
-	return ok
+	value, ok := foldConstant(t, field.Default.Expr)
+	if !ok {
+		return model.FieldDefault{}, false
+	}
+	fieldDefault.Value = value
+	fieldDefault.IsConst = true
+	return fieldDefault, true
 }
 
 type constantExpressionEvaluator struct {
