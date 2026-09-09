@@ -1,0 +1,110 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Base
+    (record-type
+      (field x
+        (value-type int)
+        (literal 1))
+      (field n
+        (union-type
+          (value-type int)
+          (value-type null))
+        (literal <nil>))
+      (field runtime
+        (value-type int)
+        (invocation next ()))))
+  (type-definition Middle
+    (record-type
+      (field s
+        (value-type string)
+        (literal m))))
+  (type-definition Leafy
+    (record-type
+      (field b
+        (value-type boolean)
+        (literal true))))
+  (type-definition OverrideToConstant
+    (record-type
+      (field runtime
+        (value-type int)
+        (literal 7))))
+  (type-definition OverrideToRuntime
+    (record-type
+      (field x
+        (value-type int)
+        (invocation next ()))
+      (field runtime
+        (value-type int)
+        (literal 7))))
+  (type-definition DropDefault
+    (record-type
+      (field x
+        (value-type int))
+      (field runtime
+        (value-type int)
+        (literal 7))))
+  (function next () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"runtime":3,"b":true,"s":"m","x":1,"n":null}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"runtime":7,"x":1,"n":null}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":5,"runtime":7,"n":null}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":5,"runtime":7,"n":null}))))
+      (var-def
+        (variable runtimeValue (type
+          (user-defined-type Leafy)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref runtimeValue)
+            (literal runtime)))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (literal <nil>))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (invocation next ()))))
+  (function $desugar$3 () ()
+    (block-function-body
+      (return
+        (literal m))))
+  (function $desugar$4 () ()
+    (block-function-body
+      (return
+        (literal true))))
+  (function $desugar$5 () ()
+    (block-function-body
+      (return
+        (literal 7))))
+  (function $desugar$6 () ()
+    (block-function-body
+      (return
+        (invocation next ()))))
+  (function $desugar$7 () ()
+    (block-function-body
+      (return
+        (literal 7))))
+  (function $desugar$8 () ()
+    (block-function-body
+      (return
+        (literal 7)))))

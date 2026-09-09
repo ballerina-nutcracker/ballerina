@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: constant computed mapping key not implemented
+  --> default-computed-key-fe.bal:25:15
+   |
+25 | const R A = {[K]: 9}; // @error constant computed mapping key not implemented
+   |               ^

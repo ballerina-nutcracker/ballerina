@@ -1,0 +1,50 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Later
+    (record-type
+      (field x
+        (value-type int)
+        (simple-var-ref STEP2))))
+  (type-definition Alias
+    (user-defined-type Later))
+  (type-definition Inline
+    (record-type
+      (field nested
+        (record-type
+          (field y
+            (value-type int)
+            (simple-var-ref STEP1)))
+        (mapping-constructor-expr))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":6}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":6}))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (literal {"nested":{"y":3}})
+              (literal nested))
+            (literal y)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (literal {"x":6})
+            (literal {"x":6})))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (numeric-literal 6))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (numeric-literal 3))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr)))))

@@ -1,0 +1,118 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang map (as lang.map))
+  (type-definition Nils
+    (record-type
+      (field a
+        (union-type
+          (value-type int)
+          (value-type null))
+        (literal <nil>))
+      (field b
+        (union-type
+          (value-type int)
+          (value-type null))
+        (literal 1))))
+  (type-definition Falsy
+    (record-type
+      (field b
+        (value-type boolean)
+        (literal false))
+      (field i
+        (value-type int)
+        (literal 0))
+      (field f
+        (value-type float)
+        (literal 0))
+      (field s
+        (value-type string)
+        (literal ))
+      (field l
+        (array-type
+          (value-type int) dimensions: 1 ([]))
+        (list-constructor-expr))
+      (field m
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))
+        (mapping-constructor-expr))))
+  (type-definition Optional
+    (record-type
+      (field x
+        (value-type int)
+        (literal 1))
+      (field s optional
+        (value-type string))))
+  (type-definition Open
+    (record-type
+      (field x
+        (value-type int)
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"a":null,"b":1}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"b":null,"a":null}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"b":false,"i":0,"f":0.0,"s":"","l":[],"m":{}}))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"b":false,"i":0,"f":0.0,"s":"","l":[],"m":{}})
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":1}))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map hasKey (
+            (literal {"x":1})
+            (literal s))))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"y":"extra","x":1}))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal <nil>))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (literal false))))
+  (function $desugar$3 () ()
+    (block-function-body
+      (return
+        (literal 0))))
+  (function $desugar$4 () ()
+    (block-function-body
+      (return
+        (literal 0))))
+  (function $desugar$5 () ()
+    (block-function-body
+      (return
+        (literal ))))
+  (function $desugar$6 () ()
+    (block-function-body
+      (return
+        (list-constructor-expr))))
+  (function $desugar$7 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr))))
+  (function $desugar$8 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $desugar$9 () ()
+    (block-function-body
+      (return
+        (literal 1)))))

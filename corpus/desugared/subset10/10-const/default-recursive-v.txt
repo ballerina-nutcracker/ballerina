@@ -1,0 +1,34 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Node
+    (record-type
+      (field value
+        (value-type int)
+        (literal 1))
+      (field next
+        (union-type
+          (user-defined-type Node)
+          (value-type null))
+        (literal <nil>))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"value":1,"next":null}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"next":{"value":2,"next":null},"value":1}))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"value":1,"next":null})
+            (user-defined-type Node)))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (literal <nil>)))))

@@ -1,0 +1,66 @@
+module $anon.. v 0.0.0;
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 3
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> int{
+  bb0 {
+    %0 = (1, captured);
+    return;
+  }
+}
+$desugar$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 3
+    %0 = %1;
+    return;
+  }
+}
+$desugar$3() -> string{
+  bb0 {
+    %1 = ConstantLoad a
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = fp $anon/.:$desugar$0
+    $desugar$0 = %1;
+    %3 = newMap {| z: int, never... |}{} defaults{z=$anon/.:$desugar$0}
+    folded = %3;
+    %6 = ConstantLoad z
+    %5 = folded[%6];
+    %7 = %5;
+    %8 = println(%7) -> bb1;
+  }
+  bb1 {
+    %9 = ConstantLoad 9
+    captured = %9;
+    %11 = closure_fp $anon/.:$desugar$1
+    $desugar$1 = %11;
+    %13 = newMap {| z: int, never... |}{} defaults{z=$anon/.:$desugar$1}
+    capturing = %13;
+    %16 = ConstantLoad z
+    %15 = capturing[%16];
+    %17 = %15;
+    %18 = println(%17) -> bb2;
+  }
+  bb2 {
+    %19 = fp $anon/.:$desugar$2
+    $desugar$2 = %19;
+    %21 = fp $anon/.:$desugar$3
+    $desugar$3 = %21;
+    %23 = ConstantLoad z
+    %24 = ConstantLoad 1
+    %25 = newMap {| s: string, z: int, never... |}{%23=%24} defaults{z=$anon/.:$desugar$2, s=$anon/.:$desugar$3}
+    partial = %25;
+    %27 = println(partial) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

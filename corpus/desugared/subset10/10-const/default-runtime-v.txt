@@ -1,0 +1,115 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (type-definition Traced
+    (record-type
+      (field a
+        (value-type int)
+        (invocation trace (
+          (literal a))))
+      (field b
+        (value-type int)
+        (invocation trace (
+          (literal b))))))
+  (type-definition Containers
+    (record-type
+      (field m
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))
+        (mapping-constructor-expr))
+      (field l
+        (array-type
+          (value-type int) dimensions: 1 ([]))
+        (list-constructor-expr))
+      (field x
+        (value-type int)
+        (literal 1))))
+  (function trace (
+    (variable name (type
+      (value-type string)))) (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal default )
+          (simple-var-ref name))))
+      (return
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable first (type
+          (user-defined-type Traced)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref first))))
+      (var-def
+        (variable second (type
+          (user-defined-type Traced)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref second))))
+      (var-def
+        (variable one (type
+          (user-defined-type Containers)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable two (type
+          (user-defined-type Containers)) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref one)
+            (literal m))
+          (literal k))
+        (literal 1))
+      (expression-stmt
+        (invocation lang.array push (
+          (index-based-access
+            (simple-var-ref one)
+            (literal l))
+          (literal 9))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref one))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref two))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"m":{},"l":[],"x":1}))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"m":{},"l":[],"x":1})
+            (value-type readonly)))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (invocation trace (
+          (literal a))))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (invocation trace (
+          (literal b))))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr))))
+  (function $desugar$3 () ()
+    (block-function-body
+      (return
+        (list-constructor-expr))))
+  (function $desugar$4 () ()
+    (block-function-body
+      (return
+        (literal 1)))))

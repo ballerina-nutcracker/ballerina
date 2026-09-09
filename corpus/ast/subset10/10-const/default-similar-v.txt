@@ -1,0 +1,46 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition First
+    (record-type
+      (field z
+        (value-type int)
+        (literal 1))))
+  (type-definition Second
+    (record-type
+      (field z
+        (value-type int)
+        (literal 2))))
+  (type-definition Left
+    (record-type
+      (field a
+        (value-type int)
+        (literal 1))))
+  (type-definition Right
+    (record-type
+      (field b
+        (value-type string)
+        (literal x))))
+  (type-definition Both
+    (record-type))
+  (const A (
+    (user-defined-type First)) (
+    (mapping-constructor-expr)))
+  (const B (
+    (user-defined-type Second)) (
+    (mapping-constructor-expr)))
+  (const C (
+    (user-defined-type Both)) (
+    (mapping-constructor-expr)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C)))))))

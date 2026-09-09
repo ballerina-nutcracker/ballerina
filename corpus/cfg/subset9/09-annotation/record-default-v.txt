@@ -1,0 +1,37 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable folded (type
+        (union-type
+          (user-defined-type Code)
+          (value-type null))) (expr
+        (annot-access-expr codeAnnot
+          (simple-var-ref FoldedTarget)))))
+    (type-test-expr is
+      (simple-var-ref folded)
+      (user-defined-type Code))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref folded))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable runtimeValue (type
+        (union-type
+          (user-defined-type Code)
+          (value-type null))) (expr
+        (annot-access-expr codeAnnot
+          (simple-var-ref RuntimeTarget)))))
+    (type-test-expr is
+      (simple-var-ref runtimeValue)
+      (user-defined-type Code))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref runtimeValue))))
+  )
+  (bb4 (bb3 bb2) ())
+)

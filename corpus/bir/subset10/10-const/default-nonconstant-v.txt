@@ -1,0 +1,70 @@
+module $anon.. v 0.0.0;
+next() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"x":7,"y":1}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad {"inner":{"x":1},"y":2}
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = newMap {| x: int, y: int, never... |}{} defaults{x=$anon/.:$desugar$0, y=$anon/.:$desugar$1}
+    r = %5;
+    %7 = println(r) -> bb3;
+  }
+  bb3 {
+    %8 = newMap {| inner: {| x: int, never... |}, y: int, never... |}{} defaults{inner=$anon/.:$desugar$3, y=$anon/.:$desugar$4}
+    o = %8;
+    %10 = println(o) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = next() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$desugar$2() -> int{
+  bb0 {
+    %1 = next() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$desugar$3() -> {| x: int, never... |}{
+  bb0 {
+    %1 = newMap {| x: int, never... |}{} defaults{x=$anon/.:$desugar$2}
+    %0 = %1;
+    return;
+  }
+}
+$desugar$4() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}

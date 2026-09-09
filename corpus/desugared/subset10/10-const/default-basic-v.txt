@@ -1,0 +1,93 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition One
+    (record-type
+      (field x
+        (value-type int)
+        (literal 5))))
+  (type-definition Many
+    (record-type
+      (field x
+        (value-type int)
+        (literal 5))
+      (field s
+        (value-type string)
+        (literal a))
+      (field b
+        (value-type boolean)
+        (literal true))))
+  (type-definition Mixed
+    (record-type
+      (field x
+        (value-type int))
+      (field s
+        (value-type string)
+        (literal a))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":5}))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"x":5})
+            (literal x)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"x":5})
+            (user-defined-type One)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"x":5})
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":5,"s":"a","b":true}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"s":"z","x":5,"b":true}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":1,"s":"z","b":false}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":7,"s":"a"}))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"x":7,"s":"a"})
+            (user-defined-type Mixed)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"x":5})
+            (intersection-type
+              (value-type readonly)
+              (record-type
+                (field x
+                  (finite-type
+                    (literal 5)))))))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (literal a))))
+  (function $desugar$3 () ()
+    (block-function-body
+      (return
+        (literal true))))
+  (function $desugar$4 () ()
+    (block-function-body
+      (return
+        (literal a)))))
