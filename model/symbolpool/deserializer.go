@@ -443,7 +443,6 @@ func (sr *symbolReader) readInclusionMembers(space *model.SymbolSpace) []model.I
 			}
 			fd := model.NewFieldDescriptor(name, fdFlags, isPublic)
 			fd.SetMemberType(ty)
-			fd.DefaultFnRef = sr.readSymbolRef(space)
 			members = append(members, &fd)
 		case inclusionMemberTagMethod:
 			name := sr.readStringCP()
