@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'x'
+  --> spread-target-e.bal:40:16
+   |
+40 |     Target c = {...optional, y: "hi"}; // @error an optional member does not establish presence
+   |                ^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'x'
+  --> spread-target-e.bal:44:16
+   |
+44 |     Target d = {...excluded, y: "hi"}; // @error an excluded member does not satisfy a required field
+   |                ^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: spread field may supply keys the inherent type of the mapping constructor does not allow
+  --> spread-target-e.bal:36:17
+   |
+36 |     Closed a = {...anyKey}; // @error inhabited source rest rejected by a closed target
+   |                 ^^^^^^^^^

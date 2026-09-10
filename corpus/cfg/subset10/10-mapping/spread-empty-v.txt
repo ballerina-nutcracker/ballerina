@@ -1,0 +1,87 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable empty (type
+        (user-defined-type EmptyClosed)) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable a (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (mapping-spread-field
+            (simple-var-ref empty))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+    (var-def
+      (variable excluded (type
+        (user-defined-type NeverX)) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable b (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 2))
+          (mapping-spread-field
+            (simple-var-ref excluded))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+    (var-def
+      (variable open (type
+        (user-defined-type NeverXOpen)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal 3))))))
+    (var-def
+      (variable c (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 4))
+          (mapping-spread-field
+            (simple-var-ref open))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+    (var-def
+      (variable nothing (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type never))) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable d (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 5))
+          (mapping-spread-field
+            (simple-var-ref nothing))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d))))
+    (var-def
+      (variable one (type
+        (user-defined-type NeverX)) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable two (type
+        (user-defined-type NeverX)) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable e (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref one))
+          (mapping-spread-field
+            (simple-var-ref two))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e))))
+  )
+)

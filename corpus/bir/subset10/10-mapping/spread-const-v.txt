@@ -1,0 +1,40 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"a":1,"b":2}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad {"x":0}
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %6 = ConstantLoad a
+    %7 = ConstantLoad {"a":1,"b":2}
+    %5 = %7[%6];
+    %8 = %5;
+    %9 = println(%8) -> bb3;
+  }
+  bb3 {
+    %11 = ConstantLoad b
+    %12 = ConstantLoad {"a":1,"b":2}
+    %10 = %12[%11];
+    %13 = %10;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    %15 = ConstantLoad {"a":1,"b":2}
+    %16 = %15 is {| a: 1, b: 2, never... |}
+    %17 = %16;
+    %18 = println(%17) -> bb5;
+  }
+  bb5 {
+    %19 = ConstantLoad {"a":1,"b":2}
+    %20 = %19 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %21 = %20;
+    %22 = println(%21) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

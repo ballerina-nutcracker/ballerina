@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: spread field may duplicate key 'x'
+  --> spread-duplicate-e.bal:27:14
+   |
+27 |     var a = {...p, x: 3}; // @error spread before specific field
+   |              ^^^^
+
+error[SEMANTIC_ERROR]: spread field may duplicate key 'x'
+  --> spread-duplicate-e.bal:30:20
+   |
+30 |     var b = {x: 3, ...p}; // @error specific field before spread
+   |                    ^^^^
+
+error[SEMANTIC_ERROR]: spread field may duplicate key 'x'
+  --> spread-duplicate-e.bal:34:20
+   |
+34 |     var c = {x: 1, ...o}; // @error optional member can still collide
+   |                    ^^^^
+
+error[SEMANTIC_ERROR]: spread fields may duplicate key 'x'
+  --> spread-duplicate-e.bal:37:20
+   |
+37 |     var d = {...p, ...p}; // @error two spreads share names
+   |                    ^^^^
+
+error[SEMANTIC_ERROR]: spread fields may supply overlapping keys
+  --> spread-duplicate-e.bal:41:20
+   |
+41 |     var e = {...m, ...m}; // @error two rest descriptors overlap
+   |                    ^^^^

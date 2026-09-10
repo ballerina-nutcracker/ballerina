@@ -1,0 +1,47 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Point)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (key-value
+              (literal y)
+              (literal 2))))))
+      (var-def
+        (variable inferred (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref p))
+            (key-value
+              (literal z)
+              (literal 3))))))
+      (var-def
+        (variable widened (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (simple-var-ref inferred))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref widened))))
+      (assignment
+        (index-based-access
+          (simple-var-ref widened)
+          (literal w))
+        (literal 4))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref widened)))))))

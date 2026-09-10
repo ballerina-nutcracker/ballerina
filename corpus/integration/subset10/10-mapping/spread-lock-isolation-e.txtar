@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> spread-lock-isolation-e.bal:22:17
+   |
+22 |         store = {...m}; // @error m is not an isolated expression
+   |                 ^^^^^^

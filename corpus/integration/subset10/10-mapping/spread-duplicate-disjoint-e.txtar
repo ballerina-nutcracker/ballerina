@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: spread fields may duplicate key 'x'
+  --> spread-duplicate-disjoint-e.bal:31:20
+   |
+31 |     var a = {...i, ...s}; // @error names duplicate even with disjoint value types
+   |                    ^^^^
+
+error[SEMANTIC_ERROR]: spread fields may duplicate key 'x'
+  --> spread-duplicate-disjoint-e.bal:35:26
+   |
+35 |     var b = {...i, ...y, ...s}; // @error nonadjacent spreads still collide
+   |                          ^^^^
