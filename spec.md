@@ -66,7 +66,9 @@ Specify:
        `compilerCtx.SymbolName(ref)`. Visibility is already enforced by the type checker; the plugin adds
        nothing. Any other expression shape is a semantic error.
      - The annotated function must have no required, defaultable or rest parameters and must not be named
-       `main` or `init`; otherwise a semantic error is reported at the function position.
+       `main` or `init`; otherwise a semantic error is reported at the function position. Defaultable
+       parameters live inside `RequiredParams` (flagged by `IsDefaultableParam()`), so the check is
+       `len(fn.RequiredParams) == 0 && fn.RestParam == nil`.
    - Stores `ModuleTests` for the module under the collector's mutex, keyed by `ModuleKey{Org, Module}`.
    - Returns the package unchanged.
 4. Diagnostics are printed as in `run`; any error aborts. BIR is generated with `NewBallerinaBackend`.
@@ -236,10 +238,11 @@ with the message; returns `values.NewErrorWithMessage(msg), nil`.
 ## projects/env.go
 
 - Current: `Environment{fsys, compilerEnv, packageCache, packageResolver, resolutionOptions, publicSymbols}`.
-- Proposed: add private field `injectedCompilerPlugins []compilerplugin.InjectedPlugin` and accessor
+- Proposed: add private field `injectedPlugins []compilerplugin.InjectedPlugin` and accessor
   ```go
   func (e *Environment) injectedCompilerPlugins() []compilerplugin.InjectedPlugin
   ```
+  The field cannot share the accessor's name.
 
 ## projects/compiler_plugin_registry.go
 
@@ -252,11 +255,13 @@ with the message; returns `values.NewErrorWithMessage(msg), nil`.
   ```go
   func newCompilerPluginResolver(
       modules []*moduleContext,
-      rootPackage *PackageDescriptor,
+      rootPackage PackageDescriptor,
       injected []compilerplugin.InjectedPlugin,
   ) *compilerPluginResolver
   ```
-  `compilerPluginResolver` gains `rootPackage *PackageDescriptor` and `injected []compilerplugin.InjectedPlugin`.
+  `compilerPluginResolver` gains `rootPackage PackageDescriptor` and `injected []compilerplugin.InjectedPlugin`.
+  `PackageDescriptor` is passed by value: `packageContext.getDescriptor()` returns a value and
+  `PackageDescriptor.Equals` takes one.
   `resolvedCompilerPlugin` gains `injected bool` (for error messages only).
 - Behavior of `pluginsFor`: unchanged for manifest plugins. Afterwards, for each injected plugin in order:
   skip unless the module's package descriptor equals `rootPackage` and `module.explicitImports` contains an
