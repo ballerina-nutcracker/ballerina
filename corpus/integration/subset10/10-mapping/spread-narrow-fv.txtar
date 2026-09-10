@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: spread field operand of a non-atomic mapping type is not supported
+  --> spread-narrow-fv.bal:38:34
+   |
+38 |         var narrowed = {x: 1, ...value}; // @error future: spread of a narrowed mapping type
+   |                                  ^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: spread field operand of a non-atomic mapping type is not supported
+  --> spread-narrow-fv.bal:45:51
+   |
+45 |         record {|string m;|} narrowedMember = {...mixed}; // @error future: spread of a narrowed mapping type
+   |                                                   ^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: spread field operand of a non-atomic mapping type is not supported
+  --> spread-narrow-fv.bal:50:28
+   |
+50 |         var narrowed = {...other, y: "b"}; // @error future: spread of a narrowed mapping type
+   |                            ^^^^^

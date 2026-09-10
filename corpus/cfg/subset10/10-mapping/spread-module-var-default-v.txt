@@ -1,0 +1,72 @@
+(Box
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access value
+          (simple-var-ref self))
+        (simple-var-ref p))
+    )
+  )
+)
+(defaulted
+  (bb0 () ()
+    (simple-var-ref p)
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation defaulted ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation defaulted (
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 5))
+            (key-value
+              (literal y)
+              (literal 6))
+            (key-value
+              (literal z)
+              (literal 7))))))))
+    (var-def
+      (variable box (type
+        (user-defined-type Box)) (expr
+        (new ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access initial
+          (simple-var-ref box)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref box)))))
+    (var-def
+      (variable supplied (type
+        (user-defined-type Box)) (expr
+        (new (
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 8))
+            (key-value
+              (literal y)
+              (literal 9))
+            (key-value
+              (literal z)
+              (literal 10))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref supplied)))))
+    (var-def
+      (variable fields (type
+        (user-defined-type Defaulted)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fields))))
+  )
+)

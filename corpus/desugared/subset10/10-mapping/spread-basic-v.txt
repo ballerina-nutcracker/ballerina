@@ -1,0 +1,140 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang map (as lang.map))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition Named
+    (record-type
+      (field name
+        (value-type string))))
+  (function makePoint () (
+    (user-defined-type Point))
+    (expr-function-body
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal 1))
+        (key-value
+          (literal y)
+          (literal 2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable first (type
+          (user-defined-type Point)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (key-value
+              (literal y)
+              (literal 2))))))
+      (var-def
+        (variable result (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref first))
+            (key-value
+              (literal z)
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref result))))
+      (var-def
+        (variable plain (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))
+            (key-value
+              (literal b)
+              (literal 2))))))
+      (var-def
+        (variable copied (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref plain))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref copied))))
+      (var-def
+        (variable named (type
+          (user-defined-type Named)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal ada))))))
+      (var-def
+        (variable both (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref first))
+            (mapping-spread-field
+              (simple-var-ref named))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref both))))
+      (var-def
+        (variable fromCall (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (invocation makePoint ()))
+            (key-value
+              (literal z)
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fromCall))))
+      (var-def
+        (variable nested (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (mapping-constructor-expr
+                (mapping-spread-field
+                  (simple-var-ref first))))
+            (key-value
+              (literal z)
+              (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nested))))
+      (var-def
+        (variable withError (type
+          (constrained-type
+            (builtin-ref-type map)
+            (union-type
+              (value-type any)
+              (error-type)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal e)
+              (error-constructor-expr (
+                (literal boom))))))))
+      (var-def
+        (variable spreadError (type
+          (constrained-type
+            (builtin-ref-type map)
+            (union-type
+              (value-type any)
+              (error-type)))) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref withError))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map length (
+            (simple-var-ref spreadError)))))))))

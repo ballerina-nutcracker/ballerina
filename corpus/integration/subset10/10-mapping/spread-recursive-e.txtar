@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: spread field may duplicate key 'value'
+  --> spread-recursive-e.bal:24:14
+   |
+24 |     var a = {...head, value: 2}; // @error recursive member types still collide by name
+   |              ^^^^^^^

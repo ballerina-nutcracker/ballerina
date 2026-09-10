@@ -69,7 +69,8 @@
   - When selecting among multiple candidate inherent types, resolving the members has the same restrictions as resolving the arguments of a new expression that selects among candidate object types (see New expression above).
 - [Mapping constructor](https://ballerina.io/spec/lang/master/#mapping-constructor-expr)
   - When selecting among multiple candidate inherent types, resolving the field values has the same restrictions as resolving the arguments of a new expression that selects among candidate object types (see New expression above).
-  - Currently [spread-field](https://ballerina.io/spec/lang/master/#spread-field) not supported
+  - [spread-field](https://ballerina.io/spec/lang/master/#spread-field) is supported
+  - Currently a spread-field operand whose static type is not a single mapping type (e.g. a union of mapping types such as `A|B`, or a type narrowed by a negative type test such as `!is`) is not supported
 - [XML template expression](https://ballerina.io/spec/lang/master/#xml-template-expr)
   - Supports interpolation in XML content and attributes
   - XML sequence interpolation from a query result is not supported

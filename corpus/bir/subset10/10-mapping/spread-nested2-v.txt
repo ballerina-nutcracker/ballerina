@@ -1,0 +1,49 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad middle
+    %2 = ConstantLoad leaf
+    %3 = ConstantLoad value
+    %4 = ConstantLoad 1
+    %5 = newMap {| value: float, never... |}{%3=%4}
+    %6 = ConstantLoad weight
+    %7 = ConstantLoad 2
+    %8 = newMap {| leaf: {| value: float, never... |}, weight: decimal, never... |}{%2=%5, %6=%7}
+    %9 = newMap {| middle: {| leaf: {| value: float, never... |}, weight: decimal, never... |}, never... |}{%1=%8}
+    nested = %9;
+    %11 = println(nested) -> bb1;
+  }
+  bb1 {
+    %13 = ConstantLoad value
+    %15 = ConstantLoad leaf
+    %17 = ConstantLoad middle
+    %16 = nested[%17];
+    %14 = %16[%15];
+    %12 = %14[%13];
+    %18 = %12 is float
+    %19 = %18;
+    %20 = println(%19) -> bb2;
+  }
+  bb2 {
+    %22 = ConstantLoad weight
+    %24 = ConstantLoad middle
+    %23 = nested[%24];
+    %21 = %23[%22];
+    %25 = %21 is decimal
+    %26 = %25;
+    %27 = println(%26) -> bb3;
+  }
+  bb3 {
+    %28 = ConstantLoad a
+    %29 = ConstantLoad 1
+    %30 = ConstantLoad b
+    %31 = ConstantLoad 2
+    %32 = newMap {| a: int, b: int, never... |}{%28=%29, %30=%31}
+    %33 = newMap {| a: int, b: int, never... |}{...%32}
+    p = %33;
+    %35 = println(p) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

@@ -4627,13 +4627,19 @@ func constructorCandidates[A constructorAlternative, C any](t typeResolver, kind
 }
 
 func finishMappingConstructor(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, candidate mappingCandidate) (expressionResult, bool) {
-	fields, chain, ok := resolveMappingConstructorFields(t, chain, e, candidate)
+	members, chain, ok := resolveMappingConstructorFields(t, chain, e, candidate)
 	if !ok {
 		return expressionResult{}, false
 	}
-	// Inside a trial the constructor must fit the candidate, so that an outer trial can tell candidates apart by an
-	// inner constructor. Outside a trial a misfit is reported by semantic analysis at the field.
-	if t.isEphemeral() && !semtypes.MappingAlternativeAllowsFields(t.typeContext(), candidate.alt, fields, func(atom *semtypes.MappingAtomicType) []string {
+	if hasMappingSpreadMember(members) {
+		// What a spread can supply is known only here, so the constructor is checked against the candidate both
+		// inside and outside a trial.
+		if !checkMappingConstructorSpreads(t, e, members, candidate.atom) {
+			return expressionResult{}, false
+		}
+	} else if t.isEphemeral() && !semtypes.MappingAlternativeAllowsFields(t.typeContext(), candidate.alt, mappingMemberFieldInfos(members), func(atom *semtypes.MappingAtomicType) []string {
+		// Inside a trial the constructor must fit the candidate, so that an outer trial can tell candidates apart by an
+		// inner constructor. Outside a trial a misfit is reported by semantic analysis at the field.
 		return defaultableMappingFields(t, atom)
 	}) {
 		return expressionResult{}, false
@@ -4653,12 +4659,27 @@ func finishMappingConstructor(t typeResolver, chain *binding, e *ast.BLangMappin
 	return expressionResult{ty: inherentTy, effect: defaultExpressionEffect(chain)}, true
 }
 
-// resolveMappingConstructorFields resolves each field value against the candidate's field type for its key. A
-// computed key takes the member type for the key's type and is not part of the returned fields.
-func resolveMappingConstructorFields(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, candidate mappingCandidate) ([]semtypes.MappingFieldInfo, *binding, bool) {
-	fields := make([]semtypes.MappingFieldInfo, 0, len(e.Fields))
+// resolveMappingConstructorFields resolves each field value against the candidate's field type for its key and
+// each spread operand against the mapping type the candidate gives it. A computed key takes the member type for
+// the key's type and is not part of the returned members.
+func resolveMappingConstructorFields(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, candidate mappingCandidate) ([]mappingConstructorMember, *binding, bool) {
+	members := make([]mappingConstructorMember, 0, len(e.Fields))
 	for _, f := range e.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
+		if spread, ok := f.(*ast.BLangMappingSpreadField); ok {
+			contextualType := common.MappingSpreadContextualType(t.compilerContext(), t.typeEnv(), candidate.atom, spread.Expr)
+			member, spreadChain, ok := resolveMappingSpreadMember(t, chain, spread, contextualType)
+			if !ok {
+				return nil, chain, false
+			}
+			chain = spreadChain
+			members = append(members, member)
+			continue
+		}
+		kv, ok := f.(*ast.BLangMappingKeyValueField)
+		if !ok {
+			t.internalError(fmt.Sprintf("unexpected mapping field kind %T", f), f.GetPosition())
+			return nil, chain, false
+		}
 		computed := kv.Key.Kind == ast.MappingKeyComputed
 		var keyName string
 		var required semtypes.SemType
@@ -4690,9 +4711,9 @@ func resolveMappingConstructorFields(t typeResolver, chain *binding, e *ast.BLan
 			continue
 		}
 		resolveMappingKey(t, kv, result.ty)
-		fields = append(fields, semtypes.MappingFieldInfo{Name: keyName, Type: result.ty})
+		members = append(members, mappingConstructorMember{pos: kv.GetPosition(), name: keyName, ty: result.ty})
 	}
-	return fields, chain, true
+	return members, chain, true
 }
 
 // resolveMemberValue resolves a constructor member that has no contextually expected type.
@@ -4736,12 +4757,24 @@ func inferredMemberType(ty semtypes.SemType, readonly bool) semtypes.SemType {
 }
 
 func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, readonlyValue bool) (expressionResult, bool) {
-	var fields []semtypes.Field
-	restTy := semtypes.Never
+	members := make([]mappingConstructorMember, 0, len(e.Fields))
+	computedRestTy := semtypes.Never
 	for _, f := range e.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
+		if spread, ok := f.(*ast.BLangMappingSpreadField); ok {
+			member, spreadChain, ok := resolveMappingSpreadMember(t, chain, spread, semtypes.SemType{})
+			if !ok {
+				return expressionResult{}, false
+			}
+			chain = spreadChain
+			members = append(members, member)
+			continue
+		}
+		kv, ok := f.(*ast.BLangMappingKeyValueField)
+		if !ok {
+			t.internalError(fmt.Sprintf("unexpected mapping field kind %T", f), f.GetPosition())
+			return expressionResult{}, false
+		}
 		if kv.Key.Kind == ast.MappingKeyComputed {
-			var ok bool
 			_, chain, ok = resolveComputedMappingKey(t, chain, kv)
 			if !ok {
 				return expressionResult{}, false
@@ -4751,36 +4784,433 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 				return expressionResult{}, false
 			}
 			chain = sequentialChain(t, valueResult.effect)
-			restTy = semtypes.Union(restTy, inferredMemberType(valueResult.ty, readonlyValue))
+			computedRestTy = semtypes.Union(computedRestTy, inferredMemberType(valueResult.ty, readonlyValue))
 			continue
 		}
 		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
 		if !ok {
 			return expressionResult{}, false
 		}
-		readonly := readonlyValue || e.IsReadonly(keyName)
-		valueResult, ok := resolveMemberValue(t, chain, kv.ValueExpr, readonly)
+		valueResult, ok := resolveMemberValue(t, chain, kv.ValueExpr, readonlyValue || e.IsReadonly(keyName))
 		if !ok {
 			return expressionResult{}, false
 		}
 		chain = sequentialChain(t, valueResult.effect)
-		fieldTy := valueResult.ty
-		if !e.IsReadonly(keyName) {
-			fieldTy = inferredMemberType(valueResult.ty, readonly)
-		}
 		resolveMappingKey(t, kv, valueResult.ty)
-		fields = append(fields, semtypes.FieldFrom(keyName, fieldTy, readonly, false))
+		members = append(members, mappingConstructorMember{pos: kv.GetPosition(), name: keyName, ty: valueResult.ty})
+	}
+	if !checkMappingConstructorCollisions(t, members) {
+		return expressionResult{}, false
+	}
+	shape := combineMappingConstructorShape(t, e, members)
+	mapTy, ok := inferMappingConstructorType(t, e, shape, computedRestTy, readonlyValue)
+	if !ok {
+		return expressionResult{}, false
+	}
+	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
+	if mat == nil {
+		t.internalError("inferred mapping constructor type is not a single mapping atom", e.GetPosition())
+		return expressionResult{}, false
+	}
+	setNodeType(t, e, mapTy)
+	setMappingConstructorInherentType(t, e, *mat, nil)
+	return expressionResult{ty: mapTy, effect: defaultExpressionEffect(chain)}, true
+}
+
+// possibleMappingConstructorShape is every key a mapping constructor can supply together with the
+// values possible at each of them. A name in fieldTypes is described independently of restType,
+// which covers every other key. A distinguished name whose type is empty is an exclusion: it
+// supplies nothing, and the rest type does not apply to it either.
+type possibleMappingConstructorShape struct {
+	fieldTypes     map[string]semtypes.SemType
+	optionalFields []string
+	readonlyFields []string
+	restType       semtypes.SemType
+}
+
+func newPossibleMappingConstructorShape() possibleMappingConstructorShape {
+	return possibleMappingConstructorShape{fieldTypes: map[string]semtypes.SemType{}, restType: semtypes.Never}
+}
+
+// names are the distinguished names in a deterministic order, so constructed types and
+// diagnostics do not depend on map iteration order.
+func (s possibleMappingConstructorShape) names() []string {
+	names := slices.Collect(maps.Keys(s.fieldTypes))
+	sort.Strings(names)
+	return names
+}
+
+func (s possibleMappingConstructorShape) isOptional(name string) bool {
+	return slices.Contains(s.optionalFields, name)
+}
+
+func (s possibleMappingConstructorShape) isReadonly(name string) bool {
+	return slices.Contains(s.readonlyFields, name)
+}
+
+func (s possibleMappingConstructorShape) distinguishes(name string) bool {
+	_, ok := s.fieldTypes[name]
+	return ok
+}
+
+// mappingConstructorMember is one resolved field of a mapping constructor with a statically known key. A specific
+// field contributes at its own key alone; a spread contributes the names its operand distinguishes and a rest type
+// covering every other key.
+type mappingConstructorMember struct {
+	spread bool
+	pos    diagnostics.Location
+	name   string
+	ty     semtypes.SemType
+	fields []semtypes.MappingField
+	rest   semtypes.SemType
+}
+
+// contribution is the value this member can supply at name and whether it guarantees one.
+func (m mappingConstructorMember) contribution(name string) (semtypes.SemType, bool) {
+	if !m.spread {
+		if m.name == name {
+			return m.ty, true
+		}
+		return semtypes.Never, false
+	}
+	for _, field := range m.fields {
+		if field.Name == name {
+			return field.Type, !field.IsOptional
+		}
+	}
+	return m.rest, false
+}
+
+func hasMappingSpreadMember(members []mappingConstructorMember) bool {
+	return slices.ContainsFunc(members, func(m mappingConstructorMember) bool { return m.spread })
+}
+
+// mappingMemberFieldInfos describes members that are all specific fields.
+func mappingMemberFieldInfos(members []mappingConstructorMember) []semtypes.MappingFieldInfo {
+	fields := make([]semtypes.MappingFieldInfo, len(members))
+	for i, member := range members {
+		fields[i] = semtypes.MappingFieldInfo{Name: member.name, Type: member.ty}
+	}
+	return fields
+}
+
+// mappingConstructorSpecificField is where a diagnostic about a name written as a specific field
+// belongs.
+type mappingConstructorSpecificField struct {
+	valuePos diagnostics.Location
+}
+
+// mappingConstructorSources locates the field a diagnostic about a name should point at. A name
+// written as a specific field has its own position; any other name can only have come from a
+// spread.
+type mappingConstructorSources struct {
+	specificFields map[string]mappingConstructorSpecificField
+	firstSpreadPos diagnostics.Location
+	hasSpread      bool
+}
+
+func mappingConstructorSourcesOf(t typeResolver, expr *ast.BLangMappingConstructorExpr) (mappingConstructorSources, bool) {
+	sources := mappingConstructorSources{specificFields: map[string]mappingConstructorSpecificField{}}
+	for _, f := range expr.Fields {
+		switch field := f.(type) {
+		case *ast.BLangMappingKeyValueField:
+			if field.Key.Kind == ast.MappingKeyComputed {
+				continue
+			}
+			name, ok := common.MappingKeyName(t.compilerContext(), field.Key)
+			if !ok {
+				return mappingConstructorSources{}, false
+			}
+			if _, seen := sources.specificFields[name]; seen {
+				continue
+			}
+			sources.specificFields[name] = mappingConstructorSpecificField{valuePos: field.ValueExpr.GetPosition()}
+		case *ast.BLangMappingSpreadField:
+			if sources.hasSpread {
+				continue
+			}
+			sources.hasSpread = true
+			sources.firstSpreadPos = field.GetPosition()
+		}
+	}
+	return sources, true
+}
+
+func (s mappingConstructorSources) isSpecific(name string) bool {
+	_, ok := s.specificFields[name]
+	return ok
+}
+
+// reportFieldMismatch reports a value the target does not admit against the field that supplied it. A
+// specific field is reported against its own value expression, the way an ordinary incompatible
+// expression is; a value that came through a spread has no expression of its own.
+func (s mappingConstructorSources) reportFieldMismatch(t typeResolver, expr *ast.BLangMappingConstructorExpr,
+	name string, expected, actual semtypes.SemType) {
+	if field, ok := s.specificFields[name]; ok {
+		t.semanticError(common.FormatIncompatibleTypeMessage(t.typeContext(), expected, actual), field.valuePos)
+		return
+	}
+	pos := expr.GetPosition()
+	if s.hasSpread {
+		pos = s.firstSpreadPos
+	}
+	t.semanticError(fmt.Sprintf("spread field member '%s' is not allowed by the inherent type of the mapping constructor", name), pos)
+}
+
+// inferMappingConstructorType is the inherent type of a constructor resolved without a
+// contextually expected type. Only a value written as a specific field that is not explicitly
+// readonly is widened; an explicitly readonly field keeps the precise type of its value, and a
+// value that came through a spread keeps the type its source mapping holds. A computed key adds
+// its value's type to the rest. A readonly value makes every field, and the rest, readonly.
+func inferMappingConstructorType(t typeResolver, e *ast.BLangMappingConstructorExpr,
+	shape possibleMappingConstructorShape, computedRestTy semtypes.SemType, readonlyValue bool) (semtypes.SemType, bool) {
+	sources, ok := mappingConstructorSourcesOf(t, e)
+	if !ok {
+		return semtypes.SemType{}, false
+	}
+	restTy := semtypes.Union(shape.restType, computedRestTy)
+	fields := make([]semtypes.Field, 0, len(shape.fieldTypes))
+	for _, name := range shape.names() {
+		ty := shape.fieldTypes[name]
+		readonly := readonlyValue || shape.isReadonly(name)
+		if sources.isSpecific(name) && !shape.isReadonly(name) {
+			ty = inferredMemberType(ty, readonly)
+		}
+		optional := shape.isOptional(name)
+		if optional && semtypes.IsNever(ty) && semtypes.IsNever(restTy) {
+			// The name is impossible and no rest could reintroduce it, so recording the
+			// exclusion would not constrain the inferred type.
+			continue
+		}
+		fields = append(fields, semtypes.FieldFrom(name, ty, readonly, optional))
 	}
 	mutability := semtypes.CellMutabilityLimited
 	if readonlyValue {
 		mutability = semtypes.CellMutabilityNone
 	}
 	md := semtypes.NewMappingDefinition()
-	mapTy := md.Define(t.typeEnv(), fields, restTy, semtypes.MappingMutability(mutability))
-	setNodeType(t, e, mapTy)
-	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
-	setMappingConstructorInherentType(t, e, *mat, nil)
-	return expressionResult{ty: mapTy, effect: defaultExpressionEffect(chain)}, true
+	return md.Define(t.typeEnv(), fields, restTy, semtypes.MappingMutability(mutability)), true
+}
+
+// combineMappingConstructorShape folds the members into one shape. At each distinguished name a
+// member contributes its own field type if it distinguishes the name and its rest type otherwise,
+// and the name is guaranteed when some contribution guarantees it. A contribution that can never
+// hold a value is an exclusion: it is left out of the combined type, so the name stays excluded
+// only while no member supplies it.
+func combineMappingConstructorShape(t typeResolver, expr *ast.BLangMappingConstructorExpr,
+	members []mappingConstructorMember) possibleMappingConstructorShape {
+	shape := newPossibleMappingConstructorShape()
+	for _, name := range mappingMemberNames(members...) {
+		ty := semtypes.Never
+		guaranteed := false
+		for _, member := range members {
+			contribution, supplies := member.contribution(name)
+			guaranteed = guaranteed || supplies
+			if !mappingTypeInhabited(t, contribution) {
+				continue
+			}
+			ty = semtypes.Union(ty, contribution)
+		}
+		shape.fieldTypes[name] = ty
+		if !guaranteed {
+			shape.optionalFields = append(shape.optionalFields, name)
+		}
+	}
+	for _, member := range members {
+		if member.spread {
+			shape.restType = semtypes.Union(shape.restType, member.rest)
+		}
+	}
+	for _, name := range expr.ReadonlyFields {
+		if shape.distinguishes(name) && !shape.isReadonly(name) {
+			shape.readonlyFields = append(shape.readonlyFields, name)
+		}
+	}
+	return shape
+}
+
+func mappingMemberNames(members ...mappingConstructorMember) []string {
+	seen := map[string]bool{}
+	var names []string
+	add := func(name string) {
+		if seen[name] {
+			return
+		}
+		seen[name] = true
+		names = append(names, name)
+	}
+	for _, member := range members {
+		if !member.spread {
+			add(member.name)
+			continue
+		}
+		for _, field := range member.fields {
+			add(field.Name)
+		}
+	}
+	sort.Strings(names)
+	return names
+}
+
+// checkMappingConstructorCollisions rejects members that can supply the same key. Two
+// contributions collide only when both are inhabited, so an excluded or uninhabited member
+// conflicts with nothing. Textual order does not matter: a key a spread can supply conflicts with
+// a specific field written either before or after it. A computed key is not a member: its
+// duplicates are detected at runtime.
+func checkMappingConstructorCollisions(t typeResolver, members []mappingConstructorMember) bool {
+	for i, member := range members {
+		if !member.spread {
+			continue
+		}
+		for j, other := range members {
+			if i == j {
+				continue
+			}
+			if !other.spread {
+				if !mappingMembersCollideAt(t, member, other, other.name) {
+					continue
+				}
+				t.semanticError(fmt.Sprintf("spread field may duplicate key '%s'", other.name), member.pos)
+				return false
+			}
+			if j < i {
+				continue
+			}
+			if !checkMappingSpreadPairCollision(t, member, other) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func checkMappingSpreadPairCollision(t typeResolver, left, right mappingConstructorMember) bool {
+	for _, name := range mappingMemberNames(left, right) {
+		if !mappingMembersCollideAt(t, left, right, name) {
+			continue
+		}
+		t.semanticError(fmt.Sprintf("spread fields may duplicate key '%s'", name), right.pos)
+		return false
+	}
+	// Outside the names either operand distinguishes both are governed only by their rest
+	// descriptors, so permitting any such key at all means permitting the same ones.
+	if mappingTypeInhabited(t, left.rest) && mappingTypeInhabited(t, right.rest) {
+		t.semanticError("spread fields may supply overlapping keys", right.pos)
+		return false
+	}
+	return true
+}
+
+func mappingMembersCollideAt(t typeResolver, left, right mappingConstructorMember, name string) bool {
+	leftTy, _ := left.contribution(name)
+	rightTy, _ := right.contribution(name)
+	return mappingTypeInhabited(t, leftTy) && mappingTypeInhabited(t, rightTy)
+}
+
+func mappingTypeInhabited(t typeResolver, ty semtypes.SemType) bool {
+	return !semtypes.IsEmpty(t.typeContext(), ty)
+}
+
+// resolveMappingSpreadMember resolves a spread operand, enforces that it is a mapping and
+// describes it once for every consumer as the names it distinguishes and the type of every other
+// key.
+func resolveMappingSpreadMember(t typeResolver, chain *binding, field *ast.BLangMappingSpreadField,
+	expectedType semtypes.SemType) (mappingConstructorMember, *binding, bool) {
+	result, ok := resolveActionOrExpression(t, chain, field.Expr, expectedType)
+	if !ok {
+		return mappingConstructorMember{}, chain, false
+	}
+	chain = sequentialChain(t, result.effect)
+	if !semtypes.IsSubtype(t.typeContext(), result.ty, semtypes.Mapping) {
+		t.semanticError("spread field operand must be a subtype of map<any|error>", field.Expr.GetPosition())
+		return mappingConstructorMember{}, chain, false
+	}
+	fields, rest, ok := semtypes.AllPossibleMappingFields(t.typeContext(), result.ty)
+	if !ok {
+		t.unimplemented("spread field operand of a non-atomic mapping type is not supported", field.Expr.GetPosition())
+		return mappingConstructorMember{}, chain, false
+	}
+	return mappingConstructorMember{spread: true, pos: field.GetPosition(), fields: fields, rest: rest}, chain, true
+}
+
+// checkMappingConstructorSpreads validates a constructor with spread fields against one inherent
+// type: no two members may supply the same key, every possible member must be admitted by the
+// corresponding declared field or by the target rest, and every required target field must be
+// guaranteed a value.
+func checkMappingConstructorSpreads(t typeResolver, expr *ast.BLangMappingConstructorExpr,
+	members []mappingConstructorMember, target *semtypes.MappingAtomicType) bool {
+	if !checkMappingConstructorCollisions(t, members) {
+		return false
+	}
+	sources, ok := mappingConstructorSourcesOf(t, expr)
+	if !ok {
+		return false
+	}
+	shape := combineMappingConstructorShape(t, expr, members)
+	return checkMappingConstructorFields(t, sources, expr, shape, target) &&
+		checkMappingConstructorRest(t, sources, shape, target) &&
+		checkMappingConstructorRequiredFields(t, expr, shape, target, defaultableMappingFields(t, target))
+}
+
+func checkMappingConstructorFields(t typeResolver, sources mappingConstructorSources,
+	expr *ast.BLangMappingConstructorExpr, shape possibleMappingConstructorShape,
+	target *semtypes.MappingAtomicType) bool {
+	tc := t.typeContext()
+	for _, name := range shape.names() {
+		ty := shape.fieldTypes[name]
+		if !mappingTypeInhabited(t, ty) {
+			// An excluded name never holds a value, so the target need not admit one.
+			continue
+		}
+		expected := target.FieldInnerVal(name)
+		if shape.isReadonly(name) {
+			expected = semtypes.Intersect(expected, semtypes.ValReadonly)
+		}
+		if mappingTypeInhabited(t, expected) && semtypes.IsSubtype(tc, ty, expected) {
+			continue
+		}
+		sources.reportFieldMismatch(t, expr, name, expected, ty)
+		return false
+	}
+	return true
+}
+
+func checkMappingConstructorRequiredFields(t typeResolver, expr *ast.BLangMappingConstructorExpr,
+	shape possibleMappingConstructorShape, target *semtypes.MappingAtomicType, defaults []string) bool {
+	tc := t.typeContext()
+	for _, name := range target.FieldNames() {
+		if target.IsOptional(tc, name) || slices.Contains(defaults, name) {
+			continue
+		}
+		if shape.distinguishes(name) && !shape.isOptional(name) {
+			continue
+		}
+		t.semanticError(fmt.Sprintf("missing non-defaultable required record field '%s'", name), expr.GetPosition())
+		return false
+	}
+	return true
+}
+
+func checkMappingConstructorRest(t typeResolver, sources mappingConstructorSources,
+	shape possibleMappingConstructorShape, target *semtypes.MappingAtomicType) bool {
+	if !mappingTypeInhabited(t, shape.restType) {
+		return true
+	}
+	tc := t.typeContext()
+	if !semtypes.IsSubtype(tc, shape.restType, target.Rest()) {
+		t.semanticError("spread field may supply keys the inherent type of the mapping constructor does not allow", sources.firstSpreadPos)
+		return false
+	}
+	// The rest can also land on a target field the shape does not distinguish, so that
+	// contribution has to satisfy the declared field type as well.
+	for _, name := range target.FieldNames() {
+		if shape.distinguishes(name) || semtypes.IsSubtype(tc, shape.restType, target.FieldInnerVal(name)) {
+			continue
+		}
+		t.semanticError(fmt.Sprintf("spread field may supply a value for '%s' that the inherent type does not allow", name), sources.firstSpreadPos)
+		return false
+	}
+	return true
 }
 
 // resolveComputedMappingKey resolves a computed key as an ordinary expression,

@@ -91,6 +91,13 @@ func validateMappingConstructor(cx scope.Context, e *ast.BLangMappingConstructor
 		switch field := field.(type) {
 		case *ast.BLangMappingKeyValueField:
 			kv = field
+		case *ast.BLangMappingSpreadField:
+			operandFacts, ok := validateMappingSpreadField(cx, field, present)
+			if !ok {
+				return scope.NoFacts, false
+			}
+			values = scope.Meet(values, operandFacts)
+			continue
 		default:
 			cx.InternalErr("unexpected mapping field", field.GetPosition())
 			return scope.NoFacts, false
@@ -140,6 +147,27 @@ func validateMappingConstructor(cx scope.Context, e *ast.BLangMappingConstructor
 		return f, false
 	}
 	return f, true
+}
+
+// validateMappingSpreadField validates a spread operand and records the keys it is guaranteed to
+// supply in present. Type resolution has already checked what the operand can supply against the
+// inherent type.
+func validateMappingSpreadField(cx scope.Context, field *ast.BLangMappingSpreadField, present map[string]struct{}) (scope.Facts, bool) {
+	operandFacts, ok := validateActionOrExpr(cx, field.Expr, field.Expr.Type())
+	if !ok {
+		return scope.NoFacts, false
+	}
+	fields, _, ok := semtypes.AllPossibleMappingFields(cx.TyCtx(), field.Expr.Type())
+	if !ok {
+		cx.InternalErr("spread field operand is not a single mapping atom", field.Expr.GetPosition())
+		return scope.NoFacts, false
+	}
+	for _, f := range fields {
+		if !f.IsOptional {
+			present[f.Name] = struct{}{}
+		}
+	}
+	return operandFacts, true
 }
 
 // validateErrorConstructor validates the positional and named arguments of

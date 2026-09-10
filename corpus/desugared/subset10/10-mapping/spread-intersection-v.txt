@@ -1,0 +1,95 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition IntOptX
+    (record-type
+      (field x optional
+        (value-type int))))
+  (type-definition StringOptX
+    (record-type
+      (field x optional
+        (value-type string))))
+  (type-definition OpenInt
+    (record-type
+      (rest
+        (value-type int))))
+  (type-definition HasY
+    (record-type
+      (field y
+        (value-type int))
+      (rest
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable noX (type
+          (intersection-type
+            (user-defined-type IntOptX)
+            (user-defined-type StringOptX))) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable a (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (mapping-spread-field
+              (simple-var-ref noX))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref a)
+            (record-type
+              (field x
+                (value-type int)))))))
+      (var-def
+        (variable restProvided (type
+          (intersection-type
+            (user-defined-type OpenInt)
+            (user-defined-type HasY))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal y)
+              (literal 2))))))
+      (var-def
+        (variable b (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref restProvided))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref b)
+            (record-type
+              (field y
+                (value-type int))
+              (rest
+                (value-type int)))))))
+      (var-def
+        (variable intOnly (type
+          (user-defined-type IntOptX)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 3))))))
+      (var-def
+        (variable c (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref intOnly))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref c)
+            (record-type
+              (field x optional
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c)))))))

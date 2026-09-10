@@ -2757,14 +2757,15 @@ func resolveMappingConstructorExpr(r symbolResolver, n *ast.BLangMappingConstruc
 	resolver := newBlockSymbolResolverWithBlockScope(r, n)
 	ok := true
 	for _, field := range n.Fields {
-		kv, isKeyValue := field.(*ast.BLangMappingKeyValueField)
-		if !isKeyValue {
-			continue
+		switch f := field.(type) {
+		case *ast.BLangMappingKeyValueField:
+			if f.Key != nil && f.Key.Expr != nil {
+				ok = resolveExpr(resolver, f.Key.Expr) && ok
+			}
+			ok = resolveOptionalExpr(resolver, f.ValueExpr) && ok
+		case *ast.BLangMappingSpreadField:
+			ok = resolveExpr(resolver, f.Expr) && ok
 		}
-		if kv.Key != nil && kv.Key.Expr != nil {
-			ok = resolveExpr(resolver, kv.Key.Expr) && ok
-		}
-		ok = resolveOptionalExpr(resolver, kv.ValueExpr) && ok
 	}
 	return ok
 }
