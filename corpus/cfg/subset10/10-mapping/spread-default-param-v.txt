@@ -1,0 +1,173 @@
+(Box
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access value
+          (simple-var-ref self))
+        (simple-var-ref q))
+    )
+  )
+)
+(basePoint
+  (bb0 () ()
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 1))
+      (key-value
+        (literal y)
+        (literal 2)))
+  )
+)
+(chained
+  (bb0 () ()
+    (simple-var-ref r)
+  )
+)
+(fresh
+  (bb0 () ()
+    (assignment
+      (index-based-access
+        (simple-var-ref m)
+        (literal size))
+      (invocation lang.map length (
+        (simple-var-ref m))))
+    (return
+      (simple-var-ref m))
+  )
+)
+(fromCall
+  (bb0 () ()
+    (simple-var-ref p)
+  )
+)
+(fromPrevious
+  (bb0 () ()
+    (simple-var-ref q)
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (user-defined-type Point)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (key-value
+            (literal y)
+            (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fromPrevious (
+          (simple-var-ref p) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fromPrevious (
+          (simple-var-ref p)
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 3))
+            (key-value
+              (literal y)
+              (literal 4))
+            (key-value
+              (literal z)
+              (literal 5))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation chained (
+          (simple-var-ref p) <default> <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation chained (
+          (simple-var-ref p)
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 6))
+            (key-value
+              (literal y)
+              (literal 7))
+            (key-value
+              (literal z)
+              (literal 8))) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation chained (
+          (simple-var-ref p) <default>
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 9))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fromCall ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fromCall ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fromCall (
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 0))
+            (key-value
+              (literal y)
+              (literal 0))
+            (key-value
+              (literal z)
+              (literal 0))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref defaultEvaluations))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fresh (
+          (simple-var-ref p) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fresh (
+          (simple-var-ref p) <default>)))))
+    (var-def
+      (variable defaulted (type
+        (user-defined-type Box)) (expr
+        (new (
+          (simple-var-ref p) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref defaulted)))))
+    (var-def
+      (variable supplied (type
+        (user-defined-type Box)) (expr
+        (new (
+          (simple-var-ref p)
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 11))
+            (key-value
+              (literal y)
+              (literal 12))
+            (key-value
+              (literal z)
+              (literal 13))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref supplied)))))
+  )
+)
+(nextTag
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref defaultEvaluations)
+      (literal 1))
+    (return
+      (simple-var-ref defaultEvaluations))
+  )
+)

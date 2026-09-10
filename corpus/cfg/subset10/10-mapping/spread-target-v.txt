@@ -1,0 +1,84 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable src (type
+        (user-defined-type SourceX)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))))))
+    (var-def
+      (variable target (type
+        (user-defined-type Target)) (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref src))
+          (key-value
+            (literal y)
+            (literal hi))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref target))))
+    (var-def
+      (variable ints (type
+        (user-defined-type IntRest)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))))))
+    (var-def
+      (variable wide (type
+        (user-defined-type WideRest)) (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref ints))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref wide))))
+    (var-def
+      (variable closed (type
+        (user-defined-type ClosedWithRest)) (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref src))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref closed))))
+    (var-def
+      (variable nothing (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type never))) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable fromNever (type
+        (user-defined-type Target)) (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref nothing))
+          (key-value
+            (literal x)
+            (literal 2))
+          (key-value
+            (literal y)
+            (literal z))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromNever))))
+    (var-def
+      (variable withContext (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref src))
+          (key-value
+            (literal nested)
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (literal 1))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access nested
+          (simple-var-ref withContext)))))
+  )
+)

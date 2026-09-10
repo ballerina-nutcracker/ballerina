@@ -174,6 +174,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printMappingConstructor(t)
 	case *BLangMappingKeyValueField:
 		p.printMappingKeyValueField(t)
+	case *BLangMappingSpreadField:
+		p.printMappingSpreadField(t)
 	case *BLangAnnotation:
 		p.printAnnotation(t)
 	case *BLangAnnotationAttachment:
@@ -1497,9 +1499,18 @@ func (p *PrettyPrinter) printMappingConstructor(node *BLangMappingConstructorExp
 	p.indentLevel++
 	p.printReadonlyFields(node.ReadonlyFields)
 	for _, f := range node.Fields {
-		if kv, ok := f.(*BLangMappingKeyValueField); ok {
-			p.PrintInner(kv)
-		}
+		p.PrintInner(f.(BLangNode))
+	}
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printMappingSpreadField(node *BLangMappingSpreadField) {
+	p.StartNode()
+	p.PrintString("mapping-spread-field")
+	p.indentLevel++
+	if node.Expr != nil {
+		p.PrintInner(node.Expr.(BLangNode))
 	}
 	p.indentLevel--
 	p.EndNode()

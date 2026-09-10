@@ -252,6 +252,47 @@ Each instruction is prefixed with its instruction kind (1 byte):
 +------------------+
 ```
 
+### New Structure Instruction
+
+```
++------------------+
+| Instruction Kind | uint8 (NEW_STRUCTURE)
++------------------+
+| Type CP          | int32
++------------------+
+| LHS Operand      | See Operand
++------------------+
+| Is Readonly      | bool
++------------------+
+| Entry Count      | int64
++------------------+
+| Entries          | Entry Count x Mapping Constructor Entry
++------------------+
+| Default Count    | int64
++------------------+
+| Defaults         | Default Count x (Field Name CP int32, Function Lookup Key CP int32)
++------------------+
+```
+
+Each mapping constructor entry starts with a bool discriminator:
+
+```
++------------------+
+| Is Key Value     | bool
++------------------+
+| [If true:]        |
+|   Key Operand    | See Operand
+|   Value Operand  | See Operand
++------------------+
+| [If false:]       |
+|   Value Operand  | See Operand
++------------------+
+```
+
+A `false` discriminator is a spread entry. Its single operand holds the already evaluated source
+mapping, which is expanded into the constructed mapping in the source mapping's iteration order
+at the position the entry occupies.
+
 ### Operand Format
 
 ```

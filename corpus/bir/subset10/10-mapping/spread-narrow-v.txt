@@ -1,0 +1,77 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad y
+    %2 = ConstantLoad a
+    %3 = newMap {| y: string, never... |}{%1=%2}
+    value = %3;
+    %5 = value is {| y: string, never... |}
+    %5 ? bb1 : bb4;
+  }
+  bb1 {
+    PushScopeFrame 8
+    %0 = ConstantLoad x
+    %1 = ConstantLoad 1
+    %2 = newMap {| x: int, y: string, never... |}{%0=%1, ...(1, value)}
+    narrowed = %2;
+    %4 = println(narrowed) -> bb2;
+  }
+  bb2 {
+    %5 = narrowed is {| x: int, y: string, never... |}
+    %6 = %5;
+    %7 = println(%6) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb4 {
+    PushScopeFrame 6
+    %0 = ConstantLoad m
+    %1 = ConstantLoad a
+    %2 = newMap {| m: int|string, never... |}{%0=%1}
+    mixed = %2;
+    %4 = mixed is readonly&{| m: int, never... |}
+    %5 = ! %4;
+    %5 ? bb5 : bb7;
+  }
+  bb5 {
+    PushScopeFrame 3
+    %0 = newMap {| m: string, never... |}{...(1, mixed)}
+    narrowedMember = %0;
+    %2 = println(narrowedMember) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb7 {
+    PushScopeFrame 6
+    %0 = ConstantLoad x
+    %1 = ConstantLoad 2
+    %2 = newMap {| x: int, never... |}{%0=%1}
+    other = %2;
+    %4 = other is {| y: string, never... |}
+    %5 = ! %4;
+    %5 ? bb8 : bb10;
+  }
+  bb8 {
+    PushScopeFrame 5
+    %0 = ConstantLoad y
+    %1 = ConstantLoad b
+    %2 = newMap {| x: int, y: string, never... |}{...(1, other), %0=%1}
+    narrowed = %2;
+    %4 = println(narrowed) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

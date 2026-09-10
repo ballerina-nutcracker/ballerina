@@ -1,0 +1,131 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad y
+    %4 = ConstantLoad 2
+    %5 = newMap {| x: int, y: int, never... |}{%1=%2, %3=%4}
+    p = %5;
+    %7 = newMap {| x: int, y: int, never... |}{...p}
+    required = %7;
+    %11 = ConstantLoad x
+    %10 = required[%11];
+    %12 = %10;
+    %14 = ConstantLoad y
+    %13 = required[%14];
+    %15 = %13;
+    %9 = + %12 %15;
+    %16 = %9;
+    %17 = println(%16) -> bb1;
+  }
+  bb1 {
+    %18 = required is {| x: int, y: int, never... |}
+    %19 = %18;
+    %20 = println(%19) -> bb2;
+  }
+  bb2 {
+    %21 = ConstantLoad x
+    %22 = ConstantLoad 1
+    %23 = newMap {| x: int, y: int, never... |}{%21=%22}
+    optional = %23;
+    %25 = newMap {| x: int, y: int, never... |}{...optional}
+    inferred = %25;
+    %27 = inferred is {| x: int, y: int, never... |}
+    %28 = %27;
+    %29 = println(%28) -> bb3;
+  }
+  bb3 {
+    %30 = inferred is {| x: int, y: int, never... |}
+    %31 = %30;
+    %32 = println(%31) -> bb4;
+  }
+  bb4 {
+    %33 = length(inferred) -> bb5;
+  }
+  bb5 {
+    %34 = %33;
+    %35 = println(%34) -> bb6;
+  }
+  bb6 {
+    %36 = ConstantLoad x
+    %37 = ConstantLoad 1
+    %38 = ConstantLoad tag
+    %39 = ConstantLoad t
+    %40 = newMap {| x: int, string... |}{%36=%37, %38=%39}
+    openSrc = %40;
+    %42 = newMap {| x: int, string... |}{...openSrc}
+    openInferred = %42;
+    %44 = openInferred is {| x: int, string... |}
+    %45 = %44;
+    %46 = println(%45) -> bb7;
+  }
+  bb7 {
+    %47 = openInferred is {| int... |}
+    %48 = %47;
+    %49 = println(%48) -> bb8;
+  }
+  bb8 {
+    %50 = println(openInferred) -> bb9;
+  }
+  bb9 {
+    united = optional;
+    %52 = newMap {| x: int, y: int, never... |}{...united}
+    unionInferred = %52;
+    %54 = unionInferred is {| x: int, y: int, never... |}
+    %55 = %54;
+    %56 = println(%55) -> bb10;
+  }
+  bb10 {
+    %57 = ConstantLoad v
+    %58 = ConstantLoad 1
+    %59 = newMap {| v: int, never... |}{%57=%58}
+    shared = %59;
+    %61 = ConstantLoad inner
+    %62 = newMap {| inner: {| v: int, never... |}, x: int, y: int, never... |}{%61=shared, ...p}
+    withNested = %62;
+    %65 = ConstantLoad v
+    %67 = ConstantLoad inner
+    %66 = withNested[%67];
+    %64 = %66[%65];
+    %68 = %64;
+    %69 = println(%68) -> bb11;
+  }
+  bb11 {
+    %70 = withNested is {| inner: {| v: int, never... |}, x: int, y: int, never... |}
+    %71 = %70;
+    %72 = println(%71) -> bb12;
+  }
+  bb12 {
+    %73 = ConstantLoad z
+    %74 = ConstantLoad 3
+    %75 = newMap {| x: int, y: int, z: int, never... |}{...p, %73=%74}
+    extended = %75;
+    %77 = extended is {| x: int, y: int, z: int, never... |}
+    %78 = %77;
+    %79 = println(%78) -> bb13;
+  }
+  bb13 {
+    widened = extended;
+    %81 = ConstantLoad 10
+    %82 = ConstantLoad x
+    widened[%82] = %81;
+    %83 = println(widened) -> bb14;
+  }
+  bb14 {
+    %84 = ConstantLoad x
+    %85 = ConstantLoad 1
+    %86 = newMap {| x: int, string... |}{%84=%85}
+    restSrc = %86;
+    %88 = newMap {| x: int, string... |}{...restSrc}
+    restInferred = %88;
+    restWidened = restInferred;
+    %91 = ConstantLoad t
+    %92 = ConstantLoad tag
+    restWidened[%92] = %91;
+    %93 = println(restWidened) -> bb15;
+  }
+  bb15 {
+    return;
+  }
+}

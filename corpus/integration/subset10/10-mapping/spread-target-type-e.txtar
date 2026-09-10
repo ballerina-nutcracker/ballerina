@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected {| int... |}, got {| int|string... |}
+  --> spread-target-type-e.bal:39:28
+   |
+39 |     IntRest narrowed = {...wide}; // @error source rest incompatible with the target rest
+   |                            ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected {| int... |}, got {| x: string, never... |}
+  --> spread-target-type-e.bal:35:20
+   |
+35 |     Closed b = {...wrong}; // @error member type incompatible with the target field
+   |                    ^^^^^
