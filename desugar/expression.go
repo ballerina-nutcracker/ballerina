@@ -960,23 +960,27 @@ func initFunctionSymbol(cx *functionContext, expr *ast.BLangNewExpression) (mode
 
 func walkMappingConstructorExpr(cx *functionContext, expr *ast.BLangMappingConstructorExpr) desugaredNode[ast.BLangActionOrExpression] {
 	for _, field := range expr.Fields {
-		kv := field.(*ast.BLangMappingKeyValueField)
-
-		if kv.Key.Kind != ast.MappingKeyComputed {
-			if varRef, ok := kv.Key.Expr.(*ast.BLangVarRef); ok {
-				name := varRef.VariableName.GetValue()
-				lit := &ast.BLangLiteral{
-					Value:         name,
-					OriginalValue: name,
+		switch f := field.(type) {
+		case *ast.BLangMappingKeyValueField:
+			if f.Key.Kind != ast.MappingKeyComputed {
+				if varRef, ok := f.Key.Expr.(*ast.BLangVarRef); ok {
+					name := varRef.VariableName.GetValue()
+					lit := &ast.BLangLiteral{
+						Value:         name,
+						OriginalValue: name,
+					}
+					lit.SetPosition(varRef.GetPosition())
+					lit.SetDeterminedType(semtypes.String)
+					f.Key.Expr = lit
 				}
-				lit.SetPosition(varRef.GetPosition())
-				lit.SetDeterminedType(semtypes.String)
-				kv.Key.Expr = lit
 			}
-		}
 
-		result := walkExpression(cx, kv.ValueExpr)
-		kv.ValueExpr = result.(ast.BLangExpression)
+			result := walkExpression(cx, f.ValueExpr)
+			f.ValueExpr = result.(ast.BLangExpression)
+		case *ast.BLangMappingSpreadField:
+			result := walkExpression(cx, f.Expr)
+			f.Expr = result.(ast.BLangExpression)
+		}
 	}
 
 	return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}

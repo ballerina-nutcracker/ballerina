@@ -1,0 +1,243 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang map (as lang.map))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition OptionalY
+    (record-type
+      (field x
+        (value-type int))
+      (field y optional
+        (value-type int))))
+  (type-definition OpenPoint
+    (record-type
+      (field x
+        (value-type int))
+      (rest
+        (value-type string))))
+  (type-definition Inner
+    (record-type
+      (field v
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Point)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (key-value
+              (literal y)
+              (literal 2))))))
+      (var-def
+        (variable required (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref p))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (index-based-access
+              (simple-var-ref required)
+              (literal x))
+            (index-based-access
+              (simple-var-ref required)
+              (literal y))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref required)
+            (record-type
+              (field x
+                (value-type int))
+              (field y
+                (value-type int)))))))
+      (var-def
+        (variable optional (type
+          (user-defined-type OptionalY)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))))))
+      (var-def
+        (variable inferred (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref optional))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref inferred)
+            (record-type
+              (field x
+                (value-type int))
+              (field y optional
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref inferred)
+            (record-type
+              (field x
+                (value-type int))
+              (field y
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map length (
+            (simple-var-ref inferred))))))
+      (var-def
+        (variable openSrc (type
+          (user-defined-type OpenPoint)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (key-value
+              (literal tag)
+              (literal t))))))
+      (var-def
+        (variable openInferred (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref openSrc))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref openInferred)
+            (record-type
+              (field x
+                (value-type int))
+              (rest
+                (value-type string)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref openInferred)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref openInferred))))
+      (var-def
+        (variable united (type
+          (union-type
+            (user-defined-type Point)
+            (user-defined-type OptionalY))) (expr
+          (simple-var-ref optional))))
+      (var-def
+        (variable unionInferred (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref united))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref unionInferred)
+            (record-type
+              (field x
+                (value-type int))
+              (field y optional
+                (value-type int)))))))
+      (var-def
+        (variable shared (type
+          (user-defined-type Inner)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal v)
+              (literal 1))))))
+      (var-def
+        (variable withNested (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal inner)
+              (simple-var-ref shared))
+            (mapping-spread-field
+              (simple-var-ref p))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (simple-var-ref withNested)
+              (literal inner))
+            (literal v)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref withNested)
+            (record-type
+              (field inner
+                (user-defined-type Inner))
+              (field x
+                (value-type int))
+              (field y
+                (value-type int)))))))
+      (var-def
+        (variable extended (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref p))
+            (key-value
+              (literal z)
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref extended)
+            (record-type
+              (field x
+                (value-type int))
+              (field y
+                (value-type int))
+              (field z
+                (value-type int)))))))
+      (var-def
+        (variable widened (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (simple-var-ref extended))))
+      (assignment
+        (index-based-access
+          (simple-var-ref widened)
+          (literal x))
+        (literal 10))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref widened))))
+      (var-def
+        (variable restSrc (type
+          (user-defined-type OpenPoint)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))))))
+      (var-def
+        (variable restInferred (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref restSrc))))))
+      (var-def
+        (variable restWidened (type
+          (constrained-type
+            (builtin-ref-type map)
+            (union-type
+              (value-type int)
+              (value-type string)))) (expr
+          (simple-var-ref restInferred))))
+      (assignment
+        (index-based-access
+          (simple-var-ref restWidened)
+          (literal tag))
+        (literal t))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref restWidened)))))))

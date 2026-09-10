@@ -1,0 +1,44 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Quoted
+    (record-type
+      (field default
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable q (type
+          (user-defined-type Quoted)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal default)
+              (literal d))))))
+      (var-def
+        (variable a (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref q))
+            (key-value
+              (literal other)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal )
+              (literal 1))))))
+      (var-def
+        (variable b (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref m))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b)))))))

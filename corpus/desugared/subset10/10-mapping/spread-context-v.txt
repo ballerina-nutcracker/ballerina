@@ -1,0 +1,293 @@
+(package
+  (import-package ballerina io (as io))
+  (variable modulePoint (type
+    (intersection-type
+      (user-defined-type Point)
+      (value-type readonly))))
+  (variable moduleSpread (type
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int))))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition P3
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))
+      (field z
+        (value-type int))))
+  (type-definition Defaulted
+    (record-type
+      (field base
+        (user-defined-type Point)
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (invocation defaultPoint ()))))
+      (field full
+        (user-defined-type P3)
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (invocation defaultPoint ()))
+          (key-value
+            (literal z)
+            (literal 4))))))
+  (class-definition Holder
+    (variable initial (type
+      (user-defined-type P3)))
+    (variable assigned (type
+      (user-defined-type P3)))
+    (function init (
+      (variable assigned (type
+        (user-defined-type P3)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal initial))
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (invocation defaultPoint ()))
+            (key-value
+              (literal z)
+              (literal 5))))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal assigned))
+          (simple-var-ref assigned)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref modulePoint)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (key-value
+            (literal y)
+            (literal 2))))
+      (assignment
+        (simple-var-ref moduleSpread)
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref modulePoint))
+          (key-value
+            (literal z)
+            (literal 3))))))
+  (function defaultPoint () (
+    (user-defined-type Point))
+    (expr-function-body
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal 6))
+        (key-value
+          (literal y)
+          (literal 7)))))
+  (function total (
+    (variable p (type
+      (user-defined-type P3)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (binary-expr +
+          (index-based-access
+            (simple-var-ref p)
+            (literal x))
+          (index-based-access
+            (simple-var-ref p)
+            (literal y)))
+        (index-based-access
+          (simple-var-ref p)
+          (literal z)))))
+  (function named (
+    (variable factor (type
+      (value-type int)))
+    (variable p (type
+      (user-defined-type P3)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr *
+        (simple-var-ref factor)
+        (index-based-access
+          (simple-var-ref p)
+          (literal z)))))
+  (function returnsSpread (
+    (variable p (type
+      (user-defined-type Point)))) (
+    (user-defined-type P3))
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref p))
+          (key-value
+            (literal z)
+            (literal 8))))))
+  (function returnsSpreadExpr (
+    (variable p (type
+      (user-defined-type Point)))) (
+    (user-defined-type P3))
+    (expr-function-body
+      (mapping-constructor-expr
+        (mapping-spread-field
+          (simple-var-ref p))
+        (key-value
+          (literal z)
+          (literal 9)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Point)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (key-value
+              (literal y)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref moduleSpread))))
+      (expression-stmt
+        (invocation io println (
+          (invocation total (
+            (mapping-constructor-expr
+              (mapping-spread-field
+                (simple-var-ref p))
+              (key-value
+                (literal z)
+                (literal 10))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation named (
+            (literal 2)
+            (mapping-constructor-expr
+              (mapping-spread-field
+                (simple-var-ref p))
+              (key-value
+                (literal z)
+                (literal 11))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation named (
+            (literal 3)
+            (mapping-constructor-expr
+              (mapping-spread-field
+                (simple-var-ref p))
+              (key-value
+                (literal z)
+                (literal 12))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation returnsSpread (
+            (simple-var-ref p))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation returnsSpreadExpr (
+            (simple-var-ref p))))))
+      (var-def
+        (variable defaulted (type
+          (user-defined-type Defaulted)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref defaulted))))
+      (var-def
+        (variable holder (type
+          (user-defined-type Holder)) (expr
+          (new (
+            (mapping-constructor-expr
+              (mapping-spread-field
+                (simple-var-ref p))
+              (key-value
+                (literal z)
+                (literal 13))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref holder)
+            (literal initial)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref holder)
+            (literal assigned)))))
+      (var-def
+        (variable list (type
+          (array-type
+            (user-defined-type P3) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (mapping-constructor-expr
+              (mapping-spread-field
+                (simple-var-ref p))
+              (key-value
+                (literal z)
+                (literal 14)))
+            (mapping-constructor-expr
+              (mapping-spread-field
+                (simple-var-ref p))
+              (key-value
+                (literal z)
+                (literal 15)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref list))))
+      (var-def
+        (variable nested (type
+          (constrained-type
+            (builtin-ref-type map)
+            (user-defined-type P3))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (mapping-constructor-expr
+                (mapping-spread-field
+                  (simple-var-ref p))
+                (key-value
+                  (literal z)
+                  (literal 16))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nested))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (invocation total (
+              (mapping-constructor-expr
+                (mapping-spread-field
+                  (simple-var-ref p))
+                (key-value
+                  (literal z)
+                  (literal 17)))))
+            (invocation total (
+              (mapping-constructor-expr
+                (mapping-spread-field
+                  (simple-var-ref p))
+                (key-value
+                  (literal z)
+                  (literal 18)))))))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (invocation defaultPoint ()))))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (invocation defaultPoint ()))
+          (key-value
+            (literal z)
+            (literal 4)))))))

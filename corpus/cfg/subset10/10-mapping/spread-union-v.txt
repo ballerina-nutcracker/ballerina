@@ -1,0 +1,92 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable both (type
+        (user-defined-type Both)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (key-value
+            (literal y)
+            (literal 2))))))
+    (var-def
+      (variable either (type
+        (union-type
+          (user-defined-type Both)
+          (user-defined-type OnlyX))) (expr
+        (simple-var-ref both))))
+    (var-def
+      (variable inferred (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref either))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref inferred)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref inferred)
+          (record-type
+            (field x
+              (value-type int))
+            (field y optional
+              (value-type int)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref inferred)
+          (record-type
+            (field x
+              (value-type int))
+            (field y
+              (value-type int)))))))
+    (var-def
+      (variable onlyX (type
+        (user-defined-type OnlyX)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 3))))))
+    (var-def
+      (variable widened (type
+        (union-type
+          (user-defined-type OnlyX)
+          (user-defined-type StringX))) (expr
+        (simple-var-ref onlyX))))
+    (var-def
+      (variable unionValues (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref widened))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref unionValues)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref unionValues)
+          (record-type
+            (field x
+              (union-type
+                (value-type int)
+                (value-type string))))))))
+    (var-def
+      (variable target (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref onlyX))
+          (key-value
+            (literal y)
+            (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref target))))
+  )
+)

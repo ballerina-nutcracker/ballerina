@@ -1,0 +1,95 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable value (type
+        (union-type
+          (user-defined-type WithX)
+          (user-defined-type WithY))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal a))))))
+    (type-test-expr is
+      (simple-var-ref value)
+      (user-defined-type WithY))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable narrowed (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (mapping-spread-field
+            (simple-var-ref value))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref narrowed))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref narrowed)
+          (record-type
+            (field x
+              (value-type int))
+            (field y
+              (value-type string)))))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable mixed (type
+        (user-defined-type ReadonlyMixed)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal m)
+            (literal a))))))
+    (unary-expr !
+      (group-expr
+        (type-test-expr is
+          (simple-var-ref mixed)
+          (user-defined-type ReadonlyInt))))
+  )
+  (bb3 (bb2) (bb4)
+    (var-def
+      (variable narrowedMember (type
+        (record-type
+          (field m
+            (value-type string)))) (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref mixed))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref narrowedMember))))
+  )
+  (bb4 (bb3 bb2) (bb5 bb6)
+    (var-def
+      (variable other (type
+        (union-type
+          (user-defined-type WithX)
+          (user-defined-type WithY))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 2))))))
+    (unary-expr !
+      (group-expr
+        (type-test-expr is
+          (simple-var-ref other)
+          (user-defined-type WithY))))
+  )
+  (bb5 (bb4) (bb6)
+    (var-def
+      (variable narrowed (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref other))
+          (key-value
+            (literal y)
+            (literal b))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref narrowed))))
+  )
+  (bb6 (bb5 bb4) ())
+)
