@@ -1,0 +1,44 @@
+module $anon.. v 0.0.0;
+bump({| p: int, never... |}) -> int{
+  bb0 {
+    %2 = ConstantLoad 9
+    %3 = ConstantLoad p
+    c[%3] = %2;
+    %4 = ConstantLoad 0
+    %0 = %4;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad p
+    %2 = ConstantLoad 1
+    %3 = newMap {| p: int, never... |}{%1=%2}
+    c = %3;
+    %5 = ConstantLoad q
+    %6 = bump(c) -> bb1;
+  }
+  bb1 {
+    %7 = newMap {| p: int, q: int, never... |}{...c, %5=%6}
+    built = %7;
+    %10 = ConstantLoad p
+    %9 = built[%10];
+    %11 = %9;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %14 = ConstantLoad q
+    %13 = built[%14];
+    %15 = %13;
+    %16 = println(%15) -> bb3;
+  }
+  bb3 {
+    %18 = ConstantLoad p
+    %17 = c[%18];
+    %19 = %17;
+    %20 = println(%19) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

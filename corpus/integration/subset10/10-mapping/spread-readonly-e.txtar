@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: spread field member 'inner' is not allowed by the inherent type of the mapping constructor
+  --> spread-readonly-e.bal:28:34
+   |
+28 |     readonly & Wrapper frozen = {...src}; // @error a mutable nested member cannot be readonly
+   |                                  ^^^^^^

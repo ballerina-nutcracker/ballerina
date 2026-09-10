@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: spread field operand must be a subtype of map<any|error>
+  --> spread-operand-e.bal:22:17
+   |
+22 |     var a = {...notMapping}; // @error scalar operand
+   |                 ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: spread field operand must be a subtype of map<any|error>
+  --> spread-operand-e.bal:26:17
+   |
+26 |     var b = {...list}; // @error list operand
+   |                 ^^^^
+
+error[SEMANTIC_ERROR]: spread field operand must be a subtype of map<any|error>
+  --> spread-operand-e.bal:30:17
+   |
+30 |     var c = {...maybe}; // @error union with a nonmapping branch
+   |                 ^^^^^

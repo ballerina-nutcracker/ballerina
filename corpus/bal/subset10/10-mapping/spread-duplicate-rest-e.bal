@@ -14,11 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
-const map<int> Y = {a: 1};
-const Z = {...Y}; // @error
+type Target record {|
+    int x;
+    string y;
+|};
 
 public function main() {
-    io:println(Z);
+    map<int> anyKey = {};
+    Target d = {...anyKey, y: "hi"}; // @error a map spread can supply the explicit key
+    _ = d;
 }

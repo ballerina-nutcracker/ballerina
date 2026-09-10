@@ -325,6 +325,8 @@ func (bw *birWriter) writeInstruction(buf *bytes.Buffer, instr bir.BIRInstructio
 				write(buf, kvEntry.IsComputed())
 				bw.writeOperand(buf, kvEntry.KeyOp())
 				bw.writeOperand(buf, kvEntry.ValueOp())
+			} else {
+				bw.writeOperand(buf, entry.ValueOp())
 			}
 		}
 		bw.writeLength(buf, len(instr.Defaults))

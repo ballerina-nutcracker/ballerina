@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: spread field operand of a non-atomic mapping type is not supported
+  --> spread-operand-elvis-fv.bal:29:25
+   |
+29 |     var fromElvis = {...holder["missing"] ?: {x: 0, y: 0}, z: 5}; // @error future: spread of a non-atomic mapping type
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

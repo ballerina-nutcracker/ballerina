@@ -65,6 +65,15 @@ func (m *MappingAtomicType) Rest() SemType {
 	return CellInnerVal(m.rest)
 }
 
+// AllMemberInnerVal returns every value the mapping can hold at any key.
+func (m *MappingAtomicType) AllMemberInnerVal() SemType {
+	ty := m.Rest()
+	for _, cell := range m.types {
+		ty = Union(ty, CellInnerVal(cell))
+	}
+	return ty
+}
+
 func (m *MappingAtomicType) IsOptional(cx Context, name string) bool {
 	for i, n := range m.names {
 		if n == name {

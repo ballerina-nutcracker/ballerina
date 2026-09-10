@@ -1545,21 +1545,34 @@ type mappingField struct {
 }
 
 func mappingConstructorExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangMappingConstructorExpr) (expressionEffect, bool) {
-	var fields []mappingField
+	pos := ctx.function().loc(expr.GetPosition())
+	var entries []bir.MappingConstructorEntry
 	for _, field := range expr.Fields {
 		switch f := field.(type) {
 		case *ast.BLangMappingKeyValueField:
-			if f.Key.Kind == ast.MappingKeyComputed {
-				fields = append(fields, mappingField{keyExpr: f.Key.Expr, value: f.ValueExpr})
-				continue
+			field := mappingField{keyExpr: f.Key.Expr, value: f.ValueExpr}
+			if f.Key.Kind != ast.MappingKeyComputed {
+				keyName, ok := mappingKeyName(ctx, f.Key)
+				if !ok {
+					return expressionEffect{}, false
+				}
+				field = mappingField{key: keyName, value: f.ValueExpr}
 			}
-			keyName, ok := mappingKeyName(ctx, f.Key)
+			entry, nextBB, ok := mappingKeyValueEntry(ctx, curBB, field, pos)
 			if !ok {
-				return expressionEffect{}, false
+				return expressionEffect{block: nextBB}, false
 			}
-			fields = append(fields, mappingField{key: keyName, value: f.ValueExpr})
+			curBB = nextBB
+			entries = append(entries, entry)
+		case *ast.BLangMappingSpreadField:
+			operandEffect, ok := handleActionOrExpression(ctx, curBB, f.Expr)
+			if !ok {
+				return operandEffect, false
+			}
+			curBB = operandEffect.block
+			entries = append(entries, bir.NewMappingConstructorSpreadEntry(operandEffect.result))
 		default:
-			ctx.unimplemented("non-key-value record field not implemented", field.GetPosition())
+			ctx.internalError(fmt.Sprintf("unexpected mapping field kind %T", field), field.GetPosition())
 			return expressionEffect{}, false
 		}
 	}
@@ -1570,7 +1583,7 @@ func mappingConstructorExpression(ctx context, curBB *bir.BIRBasicBlock, expr *a
 			FunctionLookupKey: buildFunctionLookupKeyFromSymbol(ctx.function().pkgCtx, fd.FnRef),
 		})
 	}
-	return mappingConstructorExpressionInner(ctx, curBB, expr.Type(), fields, defaults, ctx.function().loc(expr.GetPosition()))
+	return newMapInstruction(ctx, curBB, expr.Type(), entries, defaults, pos), true
 }
 
 func mappingKeyName(ctx context, key *ast.BLangMappingKey) (string, bool) {
@@ -1609,27 +1622,36 @@ func mappingFieldKey(ctx context, curBB *bir.BIRBasicBlock, field mappingField, 
 func mappingConstructorExpressionInner(ctx context, curBB *bir.BIRBasicBlock, mapType semtypes.SemType, fields []mappingField, defaults []bir.MappingConstructorDefaultEntry, pos bir.Location) (expressionEffect, bool) {
 	var entries []bir.MappingConstructorEntry
 	for _, field := range fields {
-		keyEffect, ok := mappingFieldKey(ctx, curBB, field, pos)
+		entry, nextBB, ok := mappingKeyValueEntry(ctx, curBB, field, pos)
 		if !ok {
-			return keyEffect, false
+			return expressionEffect{block: nextBB}, false
 		}
-		curBB = keyEffect.block
-		keyOperand := keyEffect.result
-
-		valueEffect, ok := handleActionOrExpression(ctx, curBB, field.value)
-		if !ok {
-			return valueEffect, false
-		}
-		curBB = valueEffect.block
-		entries = append(entries, newMappingConstructorEntry(field, keyOperand, valueEffect.result))
+		curBB = nextBB
+		entries = append(entries, entry)
 	}
+	return newMapInstruction(ctx, curBB, mapType, entries, defaults, pos), true
+}
+
+func mappingKeyValueEntry(ctx context, curBB *bir.BIRBasicBlock, field mappingField,
+	pos bir.Location) (bir.MappingConstructorEntry, *bir.BIRBasicBlock, bool) {
+	keyEffect, ok := mappingFieldKey(ctx, curBB, field, pos)
+	if !ok {
+		return nil, keyEffect.block, false
+	}
+	valueEffect, ok := handleActionOrExpression(ctx, keyEffect.block, field.value)
+	if !ok {
+		return nil, valueEffect.block, false
+	}
+	return newMappingConstructorEntry(field, keyEffect.result, valueEffect.result), valueEffect.block, true
+}
+
+func newMapInstruction(ctx context, curBB *bir.BIRBasicBlock, mapType semtypes.SemType,
+	entries []bir.MappingConstructorEntry, defaults []bir.MappingConstructorDefaultEntry, pos bir.Location) expressionEffect {
 	resultOperand := ctx.addTempVar(mapType)
 	isReadonly := semtypes.IsSubtype(ctx.function().pkgCtx.typeCtx, mapType, semtypes.ValReadonly)
 	newMap := bir.NewMapConstructor(mapType, resultOperand, entries, defaults, isReadonly, pos)
 	curBB.Instructions = append(curBB.Instructions, newMap)
-	return expressionEffect{result: resultOperand,
-		block: curBB,
-	}, true
+	return expressionEffect{result: resultOperand, block: curBB}
 }
 
 func errorConstructorExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangErrorConstructorExpr) (expressionEffect, bool) {

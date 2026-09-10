@@ -3644,11 +3644,13 @@ func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorEx
 func (n *nodeBuilder) addMappingField(mappingConstructor *ast.BLangMappingConstructorExpr, field st.Node) bool {
 	switch field := field.(type) {
 	case *st.SpreadFieldNode:
-		if !n.expectNode(field) {
+		if !n.expectNode(field) || !n.expectToken(field.Ellipsis()) {
 			return false
 		}
-		n.unimplemented("mapping constructor spread field not implemented", field)
-		return false
+		spreadField := &ast.BLangMappingSpreadField{Expr: n.transformExpr(field.ValueExpr())}
+		spreadField.SetPosition(n.getPosition(field))
+		mappingConstructor.Fields = append(mappingConstructor.Fields, spreadField)
+		return true
 	case *st.ComputedNameFieldNode:
 		keyValueField, ok := n.transformComputedNameField(field)
 		if !ok {

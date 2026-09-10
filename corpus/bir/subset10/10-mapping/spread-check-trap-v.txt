@@ -1,0 +1,303 @@
+module $anon.. v 0.0.0;
+produce(string,boolean) -> error|{| x: int, y: int, never... |}{
+  bb0 {
+    %4 = ConstantLoad eval 
+    %3 = + %4 tag;
+    %5 = println(%3) -> bb1;
+  }
+  bb1 {
+    bad ? bb2 : bb3;
+  }
+  bb2 {
+    %8 = ConstantLoad bad 
+    %7 = + %8 tag;
+    %9 = newError error(%7)
+    %6 = %9;
+    GOTO bb4;
+  }
+  bb3 {
+    %10 = ConstantLoad x
+    %11 = ConstantLoad 1
+    %12 = ConstantLoad y
+    %13 = ConstantLoad 2
+    %14 = newMap {| x: int, y: int, never... |}{%10=%11, %12=%13}
+    %6 = %14;
+    GOTO bb4;
+  }
+  bb4 {
+    %0 = %6;
+    return;
+  }
+}
+panicking() -> {| x: int, y: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad panicking operand
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+checkedSpread(boolean) -> error|{| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %3 = ConstantLoad check
+    %4 = bad;
+    %5 = produce(%3,%4) -> bb1;
+  }
+  bb1 {
+    %6 = %5 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+  bb3 {
+    %2 = %5;
+    GOTO bb4;
+  }
+  bb4 {
+    %7 = ConstantLoad z
+    %8 = ConstantLoad 1
+    %9 = newMap {| x: int, y: int, z: int, never... |}{...%2, %7=%8}
+    %0 = %9;
+    return;
+  }
+}
+sink({| x: int, y: int, z: int, never... |},{| x: int, y: int, z: int, never... |}) -> int{
+  bb0 {
+    %5 = ConstantLoad z
+    %4 = first[%5];
+    %6 = %4;
+    %8 = ConstantLoad z
+    %7 = second[%8];
+    %9 = %7;
+    %3 = + %6 %9;
+    %0 = %3;
+    return;
+  }
+}
+checkedArgs(boolean) -> int|error{
+  bb0 {
+    %3 = ConstantLoad A
+    %4 = bad;
+    %5 = produce(%3,%4) -> bb1;
+  }
+  bb1 {
+    %6 = %5 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+  bb3 {
+    %2 = %5;
+    GOTO bb4;
+  }
+  bb4 {
+    %7 = ConstantLoad z
+    %8 = ConstantLoad 2
+    %9 = newMap {| x: int, y: int, z: int, never... |}{...%2, %7=%8}
+    %11 = ConstantLoad B
+    %12 = ConstantLoad false
+    %13 = %12;
+    %14 = produce(%11,%13) -> bb5;
+  }
+  bb5 {
+    %15 = %14 is error
+    %15 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %14;
+    return;
+  }
+  bb7 {
+    %10 = %14;
+    GOTO bb8;
+  }
+  bb8 {
+    %16 = ConstantLoad z
+    %17 = ConstantLoad 3
+    %18 = newMap {| x: int, y: int, z: int, never... |}{...%10, %16=%17}
+    %19 = sink(%9,%18) -> bb9;
+  }
+  bb9 {
+    %0 = %19;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad false
+    %2 = %1;
+    %3 = checkedSpread(%2) -> bb1;
+  }
+  bb1 {
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad true
+    %6 = %5;
+    %7 = checkedSpread(%6) -> bb3;
+  }
+  bb3 {
+    failed = %7;
+    %9 = failed is error
+    %10 = %9;
+    %11 = println(%10) -> bb4;
+  }
+  bb4 {
+    %12 = ConstantLoad false
+    %13 = %12;
+    %14 = checkedArgs(%13) -> bb5;
+  }
+  bb5 {
+    %15 = println(%14) -> bb6;
+  }
+  bb6 {
+    %16 = ConstantLoad true
+    %17 = %16;
+    %18 = checkedArgs(%17) -> bb7;
+  }
+  bb7 {
+    failedArgs = %18;
+    %20 = failedArgs is error
+    %21 = %20;
+    %22 = println(%21) -> bb8;
+  }
+  bb8 {
+    GOTO bb9;
+  }
+  bb9 {
+    %25 = ConstantLoad trap
+    %26 = ConstantLoad true
+    %27 = %26;
+    %28 = produce(%25,%27) -> bb10;
+  }
+  bb10 {
+    %29 = %28 is error
+    %29 ? bb11 : bb12;
+  }
+  bb11 {
+    panic %28;
+  }
+  bb12 {
+    %24 = %28;
+    GOTO bb13;
+  }
+  bb13 {
+    %30 = ConstantLoad z
+    %31 = ConstantLoad 4
+    %32 = newMap {| x: int, y: int, z: int, never... |}{...%24, %30=%31}
+    %23 = %32;
+    GOTO bb14;
+  }
+  bb14 {
+    trapped = %23;
+    %34 = trapped is error
+    %35 = %34;
+    %36 = println(%35) -> bb15;
+  }
+  bb15 {
+    GOTO bb16;
+  }
+  bb16 {
+    %38 = panicking() -> bb17;
+  }
+  bb17 {
+    %39 = ConstantLoad z
+    %40 = ConstantLoad 5
+    %41 = newMap {| x: int, y: int, z: int, never... |}{...%38, %39=%40}
+    %37 = %41;
+    GOTO bb18;
+  }
+  bb18 {
+    trappedPanic = %37;
+    %43 = trappedPanic is error
+    %44 = %43;
+    %45 = println(%44) -> bb19;
+  }
+  bb19 {
+    GOTO bb20;
+  }
+  bb20 {
+    %48 = ConstantLoad ok
+    %49 = ConstantLoad false
+    %50 = %49;
+    %51 = produce(%48,%50) -> bb21;
+  }
+  bb21 {
+    %52 = %51 is error
+    %52 ? bb22 : bb23;
+  }
+  bb22 {
+    panic %51;
+  }
+  bb23 {
+    %47 = %51;
+    GOTO bb24;
+  }
+  bb24 {
+    %53 = ConstantLoad z
+    %54 = ConstantLoad 6
+    %55 = newMap {| x: int, y: int, z: int, never... |}{...%47, %53=%54}
+    %46 = %55;
+    GOTO bb25;
+  }
+  bb25 {
+    trappedOk = %46;
+    %57 = println(trappedOk) -> bb26;
+  }
+  bb26 {
+    GOTO bb27;
+  }
+  bb27 {
+    %60 = ConstantLoad arg
+    %61 = ConstantLoad true
+    %62 = %61;
+    %63 = produce(%60,%62) -> bb28;
+  }
+  bb28 {
+    %64 = %63 is error
+    %64 ? bb29 : bb30;
+  }
+  bb29 {
+    panic %63;
+  }
+  bb30 {
+    %59 = %63;
+    GOTO bb31;
+  }
+  bb31 {
+    %65 = ConstantLoad z
+    %66 = ConstantLoad 7
+    %67 = newMap {| x: int, y: int, z: int, never... |}{...%59, %65=%66}
+    %68 = ConstantLoad x
+    %69 = ConstantLoad 0
+    %70 = ConstantLoad y
+    %71 = ConstantLoad 0
+    %72 = ConstantLoad z
+    %73 = ConstantLoad 0
+    %74 = newMap {| x: int, y: int, z: int, never... |}{%68=%69, %70=%71, %72=%73}
+    %75 = sink(%67,%74) -> bb32;
+  }
+  bb32 {
+    %58 = %75;
+    GOTO bb33;
+  }
+  bb33 {
+    trappedArg = %58;
+    %77 = trappedArg is error
+    %78 = %77;
+    %79 = println(%78) -> bb34;
+  }
+  bb34 {
+    return;
+  }
+  
+  error-table {
+    [bb9, bb13] -> bb14, %23
+    [bb16, bb17] -> bb18, %37
+    [bb20, bb24] -> bb25, %46
+    [bb27, bb32] -> bb33, %58
+  }
+}

@@ -70,6 +70,22 @@ func execNewMap(ctx *extern.Context, newMap *bir.NewMap, frame *Frame) {
 	seen := make(map[string]struct{}, len(newMap.Values))
 	entries := make([]values.MapEntry, 0, len(newMap.Values)+len(newMap.Defaults))
 	for _, entry := range newMap.Values {
+		if !entry.IsKeyValuePair() {
+			// The assertion is unchecked because semantic analysis has already
+			// rejected any spread operand whose static type is not a mapping,
+			// so the operand always evaluates to a *values.Map here.
+			source := getOperandValue(ctx, entry.ValueOp(), frame).(*values.Map)
+			for _, key := range source.Keys() {
+				value, _ := source.Get(key)
+				// Type checking rules out every duplicate except one with an earlier computed key.
+				if _, exists := seen[key]; exists {
+					panic(values.NewErrorWithMessage(fmt.Sprintf("duplicate key '%s' in mapping constructor", key)))
+				}
+				seen[key] = struct{}{}
+				entries = append(entries, values.MapEntry{Key: key, Value: value})
+			}
+			continue
+		}
 		kv := entry.(*bir.MappingConstructorKeyValueEntry)
 		keyStr := getOperandValue(ctx, kv.KeyOp(), frame).(string)
 		valueVal := getOperandValue(ctx, kv.ValueOp(), frame)

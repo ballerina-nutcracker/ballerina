@@ -1,0 +1,82 @@
+module $anon.. v 0.0.0;
+makePoint() -> {| x: int, y: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad y
+    %4 = ConstantLoad 2
+    %5 = newMap {| x: int, y: int, never... |}{%1=%2, %3=%4}
+    %0 = %5;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad y
+    %4 = ConstantLoad 2
+    %5 = newMap {| x: int, y: int, never... |}{%1=%2, %3=%4}
+    first = %5;
+    %7 = ConstantLoad z
+    %8 = ConstantLoad 3
+    %9 = newMap {| int... |}{...first, %7=%8}
+    result = %9;
+    %11 = println(result) -> bb1;
+  }
+  bb1 {
+    %12 = ConstantLoad a
+    %13 = ConstantLoad 1
+    %14 = ConstantLoad b
+    %15 = ConstantLoad 2
+    %16 = newMap {| int... |}{%12=%13, %14=%15}
+    plain = %16;
+    %18 = newMap {| int... |}{...plain}
+    copied = %18;
+    %20 = println(copied) -> bb2;
+  }
+  bb2 {
+    %21 = ConstantLoad name
+    %22 = ConstantLoad ada
+    %23 = newMap {| name: string, never... |}{%21=%22}
+    named = %23;
+    %25 = newMap {| name: string, x: int, y: int, never... |}{...first, ...named}
+    both = %25;
+    %27 = println(both) -> bb3;
+  }
+  bb3 {
+    %28 = makePoint() -> bb4;
+  }
+  bb4 {
+    %29 = ConstantLoad z
+    %30 = ConstantLoad 3
+    %31 = newMap {| x: int, y: int, z: int, never... |}{...%28, %29=%30}
+    fromCall = %31;
+    %33 = println(fromCall) -> bb5;
+  }
+  bb5 {
+    %34 = newMap {| x: int, y: int, never... |}{...first}
+    %35 = ConstantLoad z
+    %36 = ConstantLoad 4
+    %37 = newMap {| x: int, y: int, z: int, never... |}{...%34, %35=%36}
+    nested = %37;
+    %39 = println(nested) -> bb6;
+  }
+  bb6 {
+    %40 = ConstantLoad e
+    %41 = ConstantLoad boom
+    %42 = newError error(%41)
+    %43 = newMap {| nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}{%40=%42}
+    withError = %43;
+    %45 = newMap {| nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... |}{...withError}
+    spreadError = %45;
+    %47 = length(spreadError) -> bb7;
+  }
+  bb7 {
+    %48 = %47;
+    %49 = println(%48) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

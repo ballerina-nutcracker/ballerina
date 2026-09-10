@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> spread-target2-e.bal:59:33
+   |
+59 |     Ambiguous|AlsoAmbiguous d = {x: 1}; // @error both alternatives apply
+   |                                 ^^^^^^
+
+error[SEMANTIC_ERROR]: mapping type not found in expected type
+  --> spread-target2-e.bal:62:20
+   |
+62 |     int|string e = {x: 1}; // @error no mapping type in the expected type
+   |                    ^^^^^^
+
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'x'
+  --> spread-target2-e.bal:52:20
+   |
+52 |     OpenNeedsX f = {...onlyZ}; // @error 'x' is not guaranteed by the source
+   |                    ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: spread field may supply a value for 'y' that the inherent type does not allow
+  --> spread-target2-e.bal:47:25
+   |
+47 |     IntRestStringY b = {...ints}; // @error the source rest may supply an int at 'y'
+   |                         ^^^^^^^
+
+error[SEMANTIC_ERROR]: spread field may supply keys the inherent type of the mapping constructor does not allow
+  --> spread-target2-e.bal:56:17
+   |
+56 |     Closed c = {...ints}; // @error the map rest is not allowed by the closed target
+   |                 ^^^^^^^
+
+error[SEMANTIC_ERROR]: spread field member 'z' is not allowed by the inherent type of the mapping constructor
+  --> spread-target2-e.bal:42:17
+   |
+42 |     Closed a = {...extra}; // @error 'z' is not a field of the closed target
+   |                 ^^^^^^^^

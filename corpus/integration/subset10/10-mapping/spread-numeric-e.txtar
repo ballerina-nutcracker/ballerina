@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected 1, got 2
+  --> spread-numeric-e.bal:44:23
+   |
+44 |     Singleton d = {n: 2}; // @error the literal is not the expected singleton
+   |                       ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected float, got int
+  --> spread-numeric-e.bal:35:20
+   |
+35 |     Floats a = {f: i}; // @error an int variable is not a float
+   |                    ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected float, got int
+  --> spread-numeric-e.bal:38:20
+   |
+38 |     Floats b = {f: makeInt()}; // @error an int call result is not a float
+   |                    ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got 300
+  --> spread-numeric-e.bal:41:19
+   |
+41 |     Bytes c = {b: 300}; // @error the literal overflows byte
+   |                   ^^^

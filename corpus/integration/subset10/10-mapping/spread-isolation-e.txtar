@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> spread-isolation-e.bal:23:16
+   |
+23 |     return {...mutableGlobal}; // @error mutable global in isolated function
+   |                ^^^^^^^^^^^^^
