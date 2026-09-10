@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: privateSetUp
+  --> main.bal:20:23
+   |
+20 | @test:Config {before: util:privateSetUp}
+   |                       ^^^^^^^^^^^^^^^^^
+
+ballerina: compilation contains errors
+-- exitcode --
+1

@@ -1,0 +1,6 @@
+-- stdout --
+PASS sub:testSubOne
+1 passing, 0 failing, 0 errored, 0 skipped
+-- stderr --
+-- exitcode --
+0

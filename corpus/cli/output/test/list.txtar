@@ -1,0 +1,8 @@
+-- stdout --
+sub:testSubOne
+filters:testDefaultOne
+filters:testDefaultTwo
+filters:testDefaultDisabled (disabled)
+-- stderr --
+-- exitcode --
+0

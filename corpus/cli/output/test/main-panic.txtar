@@ -1,0 +1,6 @@
+-- stdout --
+-- stderr --
+error: main exploded
+        at testorg/mainpanic:main(main.bal:20)
+-- exitcode --
+1

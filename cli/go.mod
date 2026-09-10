@@ -5,27 +5,28 @@ go 1.27
 toolchain go1.27.1
 
 require (
+	github.com/ballerina-nutcracker/ballerina/ast v0.7.0
 	github.com/ballerina-nutcracker/ballerina/bir v0.7.0
 	github.com/ballerina-nutcracker/ballerina/common v0.7.0
+	github.com/ballerina-nutcracker/ballerina/compilerplugin v0.7.0
 	github.com/ballerina-nutcracker/ballerina/context v0.7.0
 	github.com/ballerina-nutcracker/ballerina/lib v0.7.0
+	github.com/ballerina-nutcracker/ballerina/model v0.7.0
 	github.com/ballerina-nutcracker/ballerina/platform v0.7.0
 	github.com/ballerina-nutcracker/ballerina/projects v0.7.0
 	github.com/ballerina-nutcracker/ballerina/runtime v0.7.0
 	github.com/ballerina-nutcracker/ballerina/semtypes v0.7.0
 	github.com/ballerina-nutcracker/ballerina/tools v0.7.0
+	github.com/ballerina-nutcracker/ballerina/values v0.7.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.43.0
 )
 
 require (
-	github.com/ballerina-nutcracker/ballerina/ast v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/decimal v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/desugar v0.7.0 // indirect
-	github.com/ballerina-nutcracker/ballerina/model v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/parser v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/semantics v0.7.0 // indirect
-	github.com/ballerina-nutcracker/ballerina/values v0.7.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect

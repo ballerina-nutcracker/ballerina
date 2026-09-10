@@ -1,0 +1,15 @@
+-- stdout --
+calc:testAdd
+calc:testFactorial
+calc:testDivideByZero
+calc:testDivide
+store:testPutAndGet
+store:testGetOutOfRange
+store:testSizeExpectations
+store:testNotReadyYet (disabled)
+demo:testCalcAndStoreTogether
+demo:testWithABrokenSetUp
+demo:testMissingConfiguration
+-- stderr --
+-- exitcode --
+0

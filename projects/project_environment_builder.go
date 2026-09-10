@@ -19,15 +19,17 @@ package projects
 import (
 	"io/fs"
 
+	"github.com/ballerina-nutcracker/ballerina/compilerplugin"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/lib/langlibs"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 type ProjectEnvironmentBuilder struct {
-	fsys         fs.FS
-	repositories []Repository
-	buildOptions BuildOptions
+	fsys            fs.FS
+	repositories    []Repository
+	buildOptions    BuildOptions
+	compilerPlugins []compilerplugin.InjectedPlugin
 }
 
 func NewProjectEnvironmentBuilder(fsys fs.FS) *ProjectEnvironmentBuilder {
@@ -47,9 +49,17 @@ func (b *ProjectEnvironmentBuilder) WithBuildOptions(options BuildOptions) *Proj
 	return b
 }
 
+// WithCompilerPlugins sets the host-injected compiler plugins applied to the
+// root package during compilation.
+func (b *ProjectEnvironmentBuilder) WithCompilerPlugins(plugins []compilerplugin.InjectedPlugin) *ProjectEnvironmentBuilder {
+	b.compilerPlugins = plugins
+	return b
+}
+
 func (b *ProjectEnvironmentBuilder) Build() *Environment {
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), b.buildOptions.Stats())
 	projEnv := NewEnvironment(b.fsys, env)
+	projEnv.injectedPlugins = b.compilerPlugins
 
 	// ResolutionOptions are a runtime-facing subset of BuildOptions; derive
 	// them so callers configure a single source of truth (BuildOptions) and

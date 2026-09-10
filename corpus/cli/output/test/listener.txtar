@@ -1,0 +1,16 @@
+-- stdout --
+PASS listenertest:testCallsTheService
+FAIL listenertest:testResourceAssertFail
+FAIL listenertest:testStrandAssertFail
+listenertest:testResourceAssertFail
+    failed inside a resource
+listenertest:testStrandAssertFail
+    failed inside a strand
+    true
+<run>
+    failure during graceful stop
+1 passing, 2 failing, 0 errored, 0 skipped
+-- stderr --
+error [ballerina/http]: panic while handling GET /svc/boom: failed inside a resource
+-- exitcode --
+1

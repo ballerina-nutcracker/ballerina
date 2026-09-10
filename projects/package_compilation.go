@@ -152,7 +152,11 @@ func (c *PackageCompilation) compileModulesInternal() {
 		}
 
 		// Phase 3: compiler plugins. This is a package-wide barrier before desugaring.
-		c.compilerPluginManager = newCompilerPluginResolver(modules)
+		c.compilerPluginManager = newCompilerPluginResolver(
+			modules,
+			c.rootPackageContext.getDescriptor(),
+			c.rootPackageContext.project.Environment().injectedCompilerPlugins(),
+		)
 		runModulePhase(modules, func(module *moduleContext) {
 			c.runCompilerPlugins(module)
 		})

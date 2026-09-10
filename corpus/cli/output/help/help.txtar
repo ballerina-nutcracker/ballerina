@@ -5,10 +5,14 @@ Usage:
   bal [command]
 
 Available Commands:
+  build       Compile the current package into a standalone executable
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
   new         Create a new Ballerina package
+  pack        Create the distribution format (.bala) of the current package
+  push        Push a Ballerina Archive (BALA) of the current package to the local repository
   run         Build and run the current package or a Ballerina source file
+  test        Compile the current package and run its tests
   version     Print the Ballerina version
 
 Flags:
