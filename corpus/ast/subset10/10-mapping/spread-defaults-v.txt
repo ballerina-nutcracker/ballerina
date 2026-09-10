@@ -1,0 +1,107 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function tracedDefault () (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal default evaluated))))
+      (return
+        (literal 7))))
+  (type-definition WithDefault
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (invocation tracedDefault ()))))
+  (type-definition OptionalMember
+    (record-type
+      (field x
+        (value-type int))
+      (field y optional
+        (value-type int))))
+  (type-definition SourceX
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition SourceXY
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable only (type
+          (user-defined-type SourceX)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))))))
+      (var-def
+        (variable filled (type
+          (user-defined-type WithDefault)) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref only))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref filled))))
+      (var-def
+        (variable complete (type
+          (user-defined-type SourceXY)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 2))
+            (key-value
+              (literal y)
+              (literal 9))))))
+      (var-def
+        (variable supplied (type
+          (user-defined-type WithDefault)) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref complete))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref supplied))))
+      (var-def
+        (variable present (type
+          (user-defined-type OptionalMember)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 3))
+            (key-value
+              (literal y)
+              (literal 4))))))
+      (var-def
+        (variable fromOptional (type
+          (user-defined-type WithDefault)) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref present))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fromOptional))))
+      (var-def
+        (variable absent (type
+          (user-defined-type OptionalMember)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 5))))))
+      (var-def
+        (variable defaulted (type
+          (user-defined-type WithDefault)) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref absent))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref defaulted)))))))

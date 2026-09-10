@@ -1,0 +1,66 @@
+module $anon.. v 0.0.0;
+tracedDefault() -> int{
+  bb0 {
+    %1 = ConstantLoad default evaluated
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 7
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = newMap {| x: int, never... |}{%1=%2}
+    only = %3;
+    %5 = newMap {| x: int, y: int, never... |}{...only} defaults{y=$anon/.:$default$0}
+    filled = %5;
+    %7 = println(filled) -> bb1;
+  }
+  bb1 {
+    %8 = ConstantLoad x
+    %9 = ConstantLoad 2
+    %10 = ConstantLoad y
+    %11 = ConstantLoad 9
+    %12 = newMap {| x: int, y: int, never... |}{%8=%9, %10=%11}
+    complete = %12;
+    %14 = newMap {| x: int, y: int, never... |}{...complete} defaults{y=$anon/.:$default$0}
+    supplied = %14;
+    %16 = println(supplied) -> bb2;
+  }
+  bb2 {
+    %17 = ConstantLoad x
+    %18 = ConstantLoad 3
+    %19 = ConstantLoad y
+    %20 = ConstantLoad 4
+    %21 = newMap {| x: int, y: int, never... |}{%17=%18, %19=%20}
+    present = %21;
+    %23 = newMap {| x: int, y: int, never... |}{...present} defaults{y=$anon/.:$default$0}
+    fromOptional = %23;
+    %25 = println(fromOptional) -> bb3;
+  }
+  bb3 {
+    %26 = ConstantLoad x
+    %27 = ConstantLoad 5
+    %28 = newMap {| x: int, y: int, never... |}{%26=%27}
+    absent = %28;
+    %30 = newMap {| x: int, y: int, never... |}{...absent} defaults{y=$anon/.:$default$0}
+    defaulted = %30;
+    %32 = println(defaulted) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = tracedDefault() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}

@@ -332,6 +332,7 @@ func (p *PrettyPrinter) PrintNewMap(m *NewMap) string {
 			values.WriteString("=")
 			values.WriteString(p.PrintOperand(*kv.ValueOp()))
 		} else {
+			values.WriteString("...")
 			values.WriteString(p.PrintOperand(*entry.ValueOp()))
 		}
 	}

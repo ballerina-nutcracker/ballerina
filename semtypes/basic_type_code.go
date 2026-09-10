@@ -86,6 +86,10 @@ const (
 const (
 	valueTypeCount = int(btObject) + 1
 	valueTypeMask  = (1 << valueTypeCount) - 1
+	// allMask is every basic type there is, the value types together with the non-val cell
+	// and undef. valueTypeMask is not a top: intersecting with it drops cell and undef, and
+	// subtracting it leaves them behind.
+	allMask = valueTypeMask | (1 << int(btCell)) | (1 << int(btUndef))
 )
 
 const (

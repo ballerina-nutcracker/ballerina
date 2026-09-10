@@ -1,0 +1,51 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = newMap {| x: int, never... |}{%1=%2}
+    %4 = newMap {| x: int, never... |}{...%3}
+    closed = %4;
+    %6 = println(closed) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad x
+    %8 = ConstantLoad 1
+    %9 = newMap {| x: float, never... |}{%7=%8}
+    %10 = newMap {| x: float, never... |}{...%9}
+    contextual = %10;
+    %12 = println(contextual) -> bb2;
+  }
+  bb2 {
+    %13 = ConstantLoad x
+    %14 = ConstantLoad 1
+    %15 = newMap {| x: int, never... |}{%13=%14}
+    %16 = ConstantLoad y
+    %17 = ConstantLoad 2
+    %18 = newMap {| x: int, y: int, never... |}{...%15, %16=%17}
+    combined = %18;
+    %20 = println(combined) -> bb3;
+  }
+  bb3 {
+    %21 = ConstantLoad x
+    %22 = ConstantLoad 1
+    %23 = newMap {| x: int, never... |}{%21=%22}
+    %24 = ConstantLoad y
+    %25 = ConstantLoad a
+    %26 = newMap {| y: string, never... |}{%24=%25}
+    %27 = newMap {| x: int, y: string, never... |}{...%23, ...%26}
+    both = %27;
+    %29 = println(both) -> bb4;
+  }
+  bb4 {
+    %30 = newMap {| never... |}{}
+    %31 = ConstantLoad x
+    %32 = ConstantLoad 3
+    %33 = newMap {| x: int, never... |}{...%30, %31=%32}
+    empty = %33;
+    %35 = println(empty) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

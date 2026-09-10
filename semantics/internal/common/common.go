@@ -168,8 +168,13 @@ func ValidateConstantExpr(ctx *context.CompilerContext, expr ast.BLangExpression
 		}
 	case *ast.BLangMappingConstructorExpr:
 		for _, field := range e.Fields {
-			if kv, ok := field.(*ast.BLangMappingKeyValueField); ok {
-				ValidateConstantExpr(ctx, kv.ValueExpr, onNonConst)
+			switch f := field.(type) {
+			case *ast.BLangMappingKeyValueField:
+				ValidateConstantExpr(ctx, f.ValueExpr, onNonConst)
+			case *ast.BLangMappingSpreadField:
+				// A spread operand is never a constant expression, so a constructor
+				// containing one is not constant either.
+				onNonConst(expr)
 			}
 		}
 	case *ast.BLangTemplateExpr:

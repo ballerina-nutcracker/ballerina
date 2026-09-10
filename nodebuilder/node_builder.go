@@ -2249,8 +2249,8 @@ func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorBL
 		field := fields.Get(i)
 		switch field.Kind() {
 		case st.SPREAD_FIELD:
-			n.unimplemented("mapping constructor spread field not implemented", field)
-			return n.badExprOrAction(mappingConstructorBLangExpression)
+			spreadField := n.transformSpreadField(field.(*st.SpreadFieldNode)).(*ast.BLangMappingSpreadField)
+			mappingConstructor.Fields = append(mappingConstructor.Fields, spreadField)
 		case st.COMPUTED_NAME_FIELD:
 			computedNameField := field.(*st.ComputedNameFieldNode)
 			keyExpr := n.createExpression(computedNameField.FieldNameExpr())
@@ -2517,8 +2517,11 @@ func (n *nodeBuilder) transformSpecificField(specificFieldNode *st.SpecificField
 }
 
 func (n *nodeBuilder) transformSpreadField(spreadFieldNode *st.SpreadFieldNode) ast.BLangNode {
-	n.unimplemented("transformSpreadField unimplemented", spreadFieldNode)
-	return nil
+	spreadField := &ast.BLangMappingSpreadField{
+		Expr: n.createExpression(spreadFieldNode.ValueExpr()),
+	}
+	spreadField.SetPosition(n.getPosition(spreadFieldNode))
+	return spreadField
 }
 
 func (n *nodeBuilder) transformNamedArgument(namedArgumentNode *st.NamedArgumentNode) ast.BLangNode {

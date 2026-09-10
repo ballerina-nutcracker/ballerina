@@ -1,0 +1,42 @@
+(bump
+  (bb0 () ()
+    (assignment
+      (field-based-access p
+        (simple-var-ref c))
+      (literal 9))
+    (return
+      (literal 0))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal p)
+            (literal 1))))))
+    (var-def
+      (variable built (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref c))
+          (key-value
+            (literal q)
+            (invocation bump (
+              (simple-var-ref c))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access p
+          (simple-var-ref built)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access q
+          (simple-var-ref built)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access p
+          (simple-var-ref c)))))
+  )
+)
