@@ -1,0 +1,139 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition Tagged
+    (record-type
+      (field kind
+        (finite-type
+          (literal a)))))
+  (type-definition ReadonlyId
+    (record-type
+      (field id readonly
+        (value-type int))
+      (field name
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable empty (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref empty))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref empty)
+            (record-type)))))
+      (var-def
+        (variable nothing (type
+          (record-type)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable emptySpread (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref nothing))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref emptySpread))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref emptySpread)
+            (record-type)))))
+      (var-def
+        (variable literal (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal kind)
+              (literal a))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref literal)
+            (record-type
+              (field kind
+                (value-type string)))))))
+      (var-def
+        (variable tagged (type
+          (user-defined-type Tagged)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal kind)
+              (literal a))))))
+      (var-def
+        (variable spreadSingleton (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref tagged))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref spreadSingleton)
+            (record-type
+              (field kind
+                (finite-type
+                  (literal a))))))))
+      (var-def
+        (variable p (type
+          (user-defined-type Point)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (key-value
+              (literal y)
+              (literal 2))))))
+      (var-def
+        (variable withReadonly (expr
+          (mapping-constructor-expr
+            (readonly-fields tag)
+            (key-value
+              (literal tag)
+              (literal t))
+            (mapping-spread-field
+              (simple-var-ref p))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref withReadonly))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref withReadonly)
+            (record-type
+              (field tag readonly
+                (value-type string))
+              (field x
+                (value-type int))
+              (field y
+                (value-type int)))))))
+      (var-def
+        (variable src (type
+          (user-defined-type ReadonlyId)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal id)
+              (literal 7))
+            (key-value
+              (literal name)
+              (literal a))))))
+      (var-def
+        (variable copied (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref src))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref copied)
+          (literal id))
+        (literal 8))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref copied)))))))

@@ -61,6 +61,21 @@ func (m *MappingAtomicType) FieldInnerVal(name string) SemType {
 	return CellInnerVal(m.FieldCell(name))
 }
 
+// RestInnerVal returns the value part of the rest cell, that is the member type of every name
+// the atom does not declare. It is Never for a mapping that admits no further names.
+func (m *MappingAtomicType) RestInnerVal() SemType {
+	return CellInnerVal(m.rest)
+}
+
+// AllMemberInnerVal returns every value the mapping can hold at any key.
+func (m *MappingAtomicType) AllMemberInnerVal() SemType {
+	ty := m.RestInnerVal()
+	for _, cell := range m.types {
+		ty = Union(ty, CellInnerVal(cell))
+	}
+	return ty
+}
+
 func (m *MappingAtomicType) IsOptional(cx Context, name string) bool {
 	for i, n := range m.names {
 		if n == name {

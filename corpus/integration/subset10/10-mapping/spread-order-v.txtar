@@ -1,0 +1,14 @@
+-- stdout --
+q
+operand
+p
+s
+{"q":2,"p":1,"s":3}
+{"p":7}
+{"p":5}
+operand
+p
+r
+{"p":1,"r":5}
+2
+-- stderr --

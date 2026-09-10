@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: spread field may duplicate key 'y'
+  --> spread-duplicate-rest-e.bal:24:17
+   |
+24 |     Target d = {...anyKey, y: "hi"}; // @error a map spread can supply the explicit key
+   |                 ^^^^^^^^^

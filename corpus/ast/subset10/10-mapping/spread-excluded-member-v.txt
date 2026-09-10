@@ -1,0 +1,90 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Src
+    (record-type
+      (field e optional
+        (record-type
+          (field n
+            (value-type never))))
+      (field y
+        (value-type int))))
+  (type-definition Tgt
+    (record-type
+      (field e
+        (value-type string))
+      (field y
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (user-defined-type Src)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal y)
+              (literal 1))))))
+      (var-def
+        (variable a (type
+          (user-defined-type Tgt)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal e)
+              (literal hi))
+            (mapping-spread-field
+              (simple-var-ref s))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (var-def
+        (variable b (type
+          (user-defined-type Tgt)) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref s))
+            (key-value
+              (literal e)
+              (literal bye))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (var-def
+        (variable litEmpty (type
+          (record-type
+            (field x optional
+              (value-type never)))) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable c (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (mapping-spread-field
+              (simple-var-ref litEmpty))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (var-def
+        (variable litOpen (type
+          (record-type
+            (field x optional
+              (value-type never))
+            (rest
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal y)
+              (literal 2))))))
+      (var-def
+        (variable d (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (mapping-spread-field
+              (simple-var-ref litOpen))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref d)))))))

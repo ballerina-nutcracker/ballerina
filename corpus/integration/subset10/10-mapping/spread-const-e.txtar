@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> spread-const-e.bal:23:25
+   |
+23 | const map<int> SPREAD = {...ORIGIN}; // @error a spread operand is not a constant expression
+   |                         ^^^^^^^^^^^

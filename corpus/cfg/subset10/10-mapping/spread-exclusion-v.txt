@@ -1,0 +1,114 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable src (type
+        (user-defined-type Excluded)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal 1))))))
+    (var-def
+      (variable kept (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref src))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref kept)
+          (record-type
+            (field x optional
+              (value-type never))
+            (rest
+              (value-type int)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref kept)
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref kept))))
+    (var-def
+      (variable before (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal hello))
+          (mapping-spread-field
+            (simple-var-ref src))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref before))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref before)
+          (record-type
+            (field x
+              (value-type string))
+            (rest
+              (value-type int)))))))
+    (var-def
+      (variable after (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref src))
+          (key-value
+            (literal x)
+            (literal hello))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref after))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref after)
+          (record-type
+            (field x
+              (value-type string))
+            (rest
+              (value-type int)))))))
+    (var-def
+      (variable onlyExcludes (type
+        (record-type
+          (field y optional
+            (value-type never)))) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable other (type
+        (user-defined-type OtherRest)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal a))))))
+    (var-def
+      (variable combined (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref onlyExcludes))
+          (mapping-spread-field
+            (simple-var-ref other))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref combined)
+          (record-type
+            (field y optional
+              (value-type never))
+            (rest
+              (value-type string)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref combined)
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref combined))))
+  )
+)

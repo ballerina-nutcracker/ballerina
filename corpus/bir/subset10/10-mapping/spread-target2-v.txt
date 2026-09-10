@@ -1,0 +1,40 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad z
+    %4 = ConstantLoad 2
+    %5 = newMap {| x: int, z: int, never... |}{%1=%2, %3=%4}
+    extra = %5;
+    %7 = newMap {| x: int, int... |}{...extra}
+    open = %7;
+    %9 = println(open) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad y
+    %11 = ConstantLoad hi
+    %12 = newMap {| x: int, y: string, anydata... |}{%10=%11} defaults{x=$anon/.:$default$0}
+    d = %12;
+    %14 = println(d) -> bb2;
+  }
+  bb2 {
+    %15 = ConstantLoad x
+    %16 = ConstantLoad 1
+    %17 = newMap {| x: int, y: never, never... |}{%15=%16}
+    src = %17;
+    %19 = newMap {| x: int, y: string, never... |}{...src}
+    target = %19;
+    %21 = println(target) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
