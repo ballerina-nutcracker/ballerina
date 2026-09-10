@@ -1,0 +1,50 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad value
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad next
+    %4 = ConstantLoad <nil>
+    %5 = newMap {| next: nil|..., value: int, never... |}{%1=%2, %3=%4}
+    leaf = %5;
+    %7 = ConstantLoad value
+    %8 = ConstantLoad 1
+    %9 = ConstantLoad next
+    %10 = newMap {| next: nil|..., value: int, never... |}{%7=%8, %9=leaf}
+    head = %10;
+    %12 = newMap {| next: nil|{| next: nil|..., value: int, never... |}, value: int, never... |}{...head}
+    copied = %12;
+    %15 = ConstantLoad value
+    %14 = copied[%15];
+    %16 = %14;
+    %17 = println(%16) -> bb1;
+  }
+  bb1 {
+    %19 = ConstantLoad next
+    %18 = copied[%19];
+    next = %18;
+    %21 = next is {| next: nil|..., value: int, never... |}
+    %21 ? bb2 : bb4;
+  }
+  bb2 {
+    PushScopeFrame 4
+    %1 = ConstantLoad value
+    %0 = (1, next)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb4 {
+    PushScopeFrame 3
+    %0 = (1, copied) is {| next: nil|{| next: nil|..., value: int, never... |}, value: int, never... |}
+    %1 = %0;
+    %2 = println(%1) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    return;
+  }
+}

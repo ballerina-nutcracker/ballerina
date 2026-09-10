@@ -1,0 +1,6 @@
+-- stdout --
+{"middle":{"leaf":{"value":1.0},"weight":2}}
+true
+true
+{"a":1,"b":2}
+-- stderr --

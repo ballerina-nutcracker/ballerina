@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: spread fields may duplicate key 'y'
+  --> spread-duplicate-rest2-e.bal:35:23
+   |
+35 |     var c = {...ints, ...named}; // @error the map rest may supply 'y'
+   |                       ^^^^^^^^
+
+error[SEMANTIC_ERROR]: spread fields may supply overlapping keys
+  --> spread-duplicate-rest2-e.bal:24:23
+   |
+24 |     var a = {...ints, ...strings}; // @error both rests are inhabited over the same key space
+   |                       ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: spread fields may supply overlapping keys
+  --> spread-duplicate-rest2-e.bal:30:23
+   |
+30 |     var b = {...left, ...right}; // @error empty maps still share a key space
+   |                       ^^^^^^^^

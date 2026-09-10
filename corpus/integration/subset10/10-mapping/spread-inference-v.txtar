@@ -1,0 +1,15 @@
+-- stdout --
+3
+true
+true
+false
+1
+true
+false
+{"x":1,"tag":"t"}
+1
+true
+true
+{"x":10,"y":2,"z":3}
+{"x":1,"tag":"t"}
+-- stderr --

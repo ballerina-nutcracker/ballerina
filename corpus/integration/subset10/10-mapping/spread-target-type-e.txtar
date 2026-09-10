@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: spread field may supply keys the inherent type of the mapping constructor does not allow
+  --> spread-target-type-e.bal:39:25
+   |
+39 |     IntRest narrowed = {...wide}; // @error source rest incompatible with the target rest
+   |                         ^^^^^^^
+
+error[SEMANTIC_ERROR]: spread field member 'x' is not allowed by the inherent type of the mapping constructor
+  --> spread-target-type-e.bal:35:17
+   |
+35 |     Closed b = {...wrong}; // @error member type incompatible with the target field
+   |                 ^^^^^^^^

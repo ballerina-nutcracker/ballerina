@@ -1484,53 +1484,22 @@ func listOfMemberType(env semtypes.Env, memberTy semtypes.SemType) semtypes.SemT
 }
 
 func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) bool {
-	// The type resolver has already selected the inherent type and re-resolved field values
-	// with per-field expected types. We only need to validate fields here.
-	mat := expr.SelectedAtomicType
-	hasValue := make(map[string]bool, len(expr.Fields)+len(expr.FieldDefaults))
-	for _, fd := range expr.FieldDefaults {
-		hasValue[fd.FieldName] = true
-	}
-	seen := make(map[string]bool, len(expr.Fields))
-	namedFields := make(map[string]bool, len(mat.FieldNames()))
-	for _, n := range mat.FieldNames() {
-		namedFields[n] = true
-	}
+	// Type resolution has already selected the inherent type and validated every member of the
+	// constructor against it, so only the child expressions still need their own analysis.
 	for _, f := range expr.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
-		keyName, ok := common.MappingKeyName(a.ctx(), kv.Key)
-		if !ok {
+		switch field := f.(type) {
+		case *ast.BLangMappingKeyValueField:
+			if !analyzeActionOrExpression(a, field.ValueExpr, field.ValueExpr.GetDeterminedType()) {
+				return false
+			}
+		case *ast.BLangMappingSpreadField:
+			if !analyzeActionOrExpression(a, field.Expr, field.Expr.GetDeterminedType()) {
+				return false
+			}
+		default:
+			a.ctx().InternalError(fmt.Sprintf("unexpected mapping field kind %T", f), f.GetPosition())
 			return false
 		}
-		if seen[keyName] {
-			a.semanticErr(fmt.Sprintf("duplicate key '%s' in mapping constructor", keyName), kv.Key.GetPosition())
-			return false
-		}
-		seen[keyName] = true
-		// For record type desc (ie len(mat.FieldNames()) > 0) if the key is not a string literal it must be
-		// nameed field
-		if kv.Key.Kind == ast.MappingKeyIdentifier && len(mat.FieldNames()) > 0 && !namedFields[keyName] {
-			a.semanticErr(fmt.Sprintf("identifier '%s' cannot be used as a key for a rest field; use a string literal instead", keyName), kv.Key.GetPosition())
-			return false
-		}
-		hasValue[keyName] = true
-		fieldExpectedType := mat.FieldInnerVal(keyName)
-		if expr.IsReadonly(keyName) {
-			fieldExpectedType = semtypes.Intersect(fieldExpectedType, semtypes.ValReadonly)
-		}
-		if !analyzeActionOrExpression(a, kv.ValueExpr, fieldExpectedType) {
-			return false
-		}
-	}
-	for _, name := range mat.FieldNames() {
-		if hasValue[name] {
-			continue
-		}
-		if mat.IsOptional(a.tyCtx(), name) {
-			continue
-		}
-		a.semanticErr(fmt.Sprintf("missing non-defaultable required record field '%s'", name), expr.GetPosition())
-		return false
 	}
 	return validateResolvedType(a, expr, expectedType)
 }

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: spread field operand of a non-atomic mapping type is not supported
+  --> spread-union-fv.bal:37:24
+   |
+37 |     var inferred = {...either}; // @error future: spread of a non-atomic mapping type
+   |                        ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: spread field operand of a non-atomic mapping type is not supported
+  --> spread-union-fv.bal:44:27
+   |
+44 |     var unionValues = {...widened}; // @error future: spread of a non-atomic mapping type
+   |                           ^^^^^^^

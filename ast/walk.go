@@ -403,12 +403,17 @@ func Walk(v Visitor, node BLangNode) {
 		}
 	case *BLangMappingConstructorExpr:
 		for _, f := range node.Fields {
-			if kv, ok := f.(*BLangMappingKeyValueField); ok {
-				if kv.Key != nil && kv.Key.Expr != nil {
-					Walk(v, kv.Key.Expr.(BLangNode))
+			switch field := f.(type) {
+			case *BLangMappingKeyValueField:
+				if field.Key != nil && field.Key.Expr != nil {
+					Walk(v, field.Key.Expr.(BLangNode))
 				}
-				if kv.ValueExpr != nil {
-					Walk(v, kv.ValueExpr.(BLangNode))
+				if field.ValueExpr != nil {
+					Walk(v, field.ValueExpr.(BLangNode))
+				}
+			case *BLangMappingSpreadField:
+				if field.Expr != nil {
+					Walk(v, field.Expr.(BLangNode))
 				}
 			}
 		}

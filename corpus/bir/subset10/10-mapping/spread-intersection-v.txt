@@ -1,0 +1,48 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| x: never, never... |}{}
+    noX = %1;
+    %3 = ConstantLoad x
+    %4 = ConstantLoad 1
+    %5 = newMap {| x: int, never... |}{%3=%4, ...noX}
+    a = %5;
+    %7 = println(a) -> bb1;
+  }
+  bb1 {
+    %8 = a is {| x: int, never... |}
+    %9 = %8;
+    %10 = println(%9) -> bb2;
+  }
+  bb2 {
+    %11 = ConstantLoad y
+    %12 = ConstantLoad 2
+    %13 = newMap {| y: int, int... |}{%11=%12}
+    restProvided = %13;
+    %15 = newMap {| y: int, int... |}{...restProvided}
+    b = %15;
+    %17 = println(b) -> bb3;
+  }
+  bb3 {
+    %18 = b is {| y: int, int... |}
+    %19 = %18;
+    %20 = println(%19) -> bb4;
+  }
+  bb4 {
+    %21 = ConstantLoad x
+    %22 = ConstantLoad 3
+    %23 = newMap {| x: int, never... |}{%21=%22}
+    intOnly = %23;
+    %25 = newMap {| x: int, never... |}{...intOnly}
+    c = %25;
+    %27 = c is {| x: int, never... |}
+    %28 = %27;
+    %29 = println(%28) -> bb5;
+  }
+  bb5 {
+    %30 = println(c) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

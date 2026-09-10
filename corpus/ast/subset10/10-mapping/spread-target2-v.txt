@@ -1,0 +1,78 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition OpenTarget
+    (record-type
+      (field x
+        (value-type int))
+      (rest
+        (value-type int))))
+  (type-definition Defaulted
+    (record-type
+      (field x
+        (value-type int)
+        (literal 5))
+      (field y
+        (value-type string))))
+  (type-definition Excluded
+    (record-type
+      (field y optional
+        (value-type never))
+      (field x
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable extra (type
+          (record-type
+            (field x
+              (value-type int))
+            (field z
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (key-value
+              (literal z)
+              (literal 2))))))
+      (var-def
+        (variable open (type
+          (user-defined-type OpenTarget)) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref extra))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref open))))
+      (var-def
+        (variable d (type
+          (user-defined-type Defaulted)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal y)
+              (literal hi))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref d))))
+      (var-def
+        (variable src (type
+          (user-defined-type Excluded)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))))))
+      (var-def
+        (variable target (type
+          (record-type
+            (field x
+              (value-type int))
+            (field y optional
+              (value-type string)))) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref src))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref target)))))))
