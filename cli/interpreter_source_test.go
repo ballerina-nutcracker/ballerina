@@ -21,6 +21,8 @@ package cli
 import (
 	"os"
 	"path/filepath"
+	"sync"
+	"sync/atomic"
 	"testing"
 )
 
@@ -69,6 +71,25 @@ func TestExtractDriverSourceReusesCompleteReleaseCache(t *testing.T) {
 	}
 }
 
+// TestExtractDriverSourceDevUsesCacheRoot verifies the "dev" version's cache
+// lives under the given (private) cacheRoot, not the shared os.TempDir() —
+// a predictable path in a world-writable shared temp dir could be
+// pre-created by another local user/process with arbitrary content.
+func TestExtractDriverSourceDevUsesCacheRoot(t *testing.T) {
+	cacheRoot := t.TempDir()
+	dir, err := ExtractDriverSource(cacheRoot, "dev")
+	if err != nil {
+		t.Fatalf("ExtractDriverSource: %v", err)
+	}
+	rel, err := filepath.Rel(cacheRoot, dir)
+	if err != nil || rel == ".." || (len(rel) >= 2 && rel[:2] == "..") {
+		t.Errorf("dev driver source dir %q is not under cacheRoot %q", dir, cacheRoot)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "cli", "go.mod")); err != nil {
+		t.Errorf("driver source must contain cli/go.mod: %v", err)
+	}
+}
+
 func TestExtractDriverSourceRepairsIncompleteReleaseCache(t *testing.T) {
 	cacheRoot := t.TempDir()
 	dir, err := ExtractDriverSource(cacheRoot, "test-v0.0.1")
@@ -84,5 +105,92 @@ func TestExtractDriverSourceRepairsIncompleteReleaseCache(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(dir, "cli", "go.mod")); err != nil {
 		t.Errorf("cli/go.mod was not restored: %v", err)
+	}
+}
+
+// TestInstallDriverSourceNeverUninstallsCompletedCache stresses concurrent
+// installDriverSource calls against an initially-incomplete dir, with a
+// watcher goroutine polling completeness throughout. Before the recheck/
+// remove/rename replacement sequence was lock-protected, a caller that
+// observed dir as incomplete could still delete it after a different
+// concurrent caller had already installed a complete copy in the meantime,
+// so the watcher could observe a spurious complete -> incomplete
+// transition. This asserts that never happens.
+func TestInstallDriverSourceNeverUninstallsCompletedCache(t *testing.T) {
+	source := DriverSource()
+	if source == nil {
+		t.Skip("CLI driver source is not embedded in this build")
+	}
+
+	// Run many rounds of many simultaneously-released installers: the
+	// vulnerable window (between a losing installer's failed-rename
+	// recheck and its subsequent remove+rename) is narrow, so a single
+	// round with only a handful of installers rarely lands another
+	// installer's whole extraction inside it. Repeating with a shared
+	// start gate (all installers released at once via closing startGate)
+	// maximizes contention per round and across rounds.
+	const rounds = 10
+	const installers = 32
+	for round := range rounds {
+		stagingParent := t.TempDir()
+		dir := filepath.Join(t.TempDir(), "driver-src")
+
+		// Pre-populate dir as incomplete: only go.work exists, so every
+		// installer below starts out needing to replace it.
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatalf("round %d: pre-creating incomplete dir: %v", round, err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "go.work"), []byte(driverWorkspace), 0o644); err != nil {
+			t.Fatalf("round %d: writing partial go.work: %v", round, err)
+		}
+
+		stopWatching := make(chan struct{})
+		var sawUninstall atomic.Bool
+		var watchWG sync.WaitGroup
+		watchWG.Add(1)
+		go func() {
+			defer watchWG.Done()
+			wasComplete := false
+			for {
+				select {
+				case <-stopWatching:
+					return
+				default:
+				}
+				complete := extractedDriverSourceComplete(dir)
+				if wasComplete && !complete {
+					sawUninstall.Store(true)
+				}
+				wasComplete = complete
+			}
+		}()
+
+		startGate := make(chan struct{})
+		var installWG sync.WaitGroup
+		errs := make([]error, installers)
+		installWG.Add(installers)
+		for i := range installers {
+			go func(i int) {
+				defer installWG.Done()
+				<-startGate
+				_, errs[i] = installDriverSource(dir, stagingParent, source)
+			}(i)
+		}
+		close(startGate)
+		installWG.Wait()
+		close(stopWatching)
+		watchWG.Wait()
+
+		for i, err := range errs {
+			if err != nil {
+				t.Errorf("round %d installer %d: %v", round, i, err)
+			}
+		}
+		if !extractedDriverSourceComplete(dir) {
+			t.Errorf("round %d: dir must be complete after all installers finish", round)
+		}
+		if sawUninstall.Load() {
+			t.Fatalf("round %d: watcher observed dir go from complete to incomplete — a concurrent installer deleted another's completed install", round)
+		}
 	}
 }

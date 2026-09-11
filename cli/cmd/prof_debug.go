@@ -42,9 +42,11 @@ type enabledProfiler struct {
 
 func init() {
 	profiler = &enabledProfiler{}
-	// Register profiler flags on the global packCmd; the createPackCmd factory
-	// intentionally omits them so test-instantiated commands stay flag-free.
+	// Register profiler flags on the global packCmd/buildCmd; the
+	// createPackCmd/createBuildCmd factories intentionally omit them so
+	// test-instantiated commands stay flag-free.
 	profiler.RegisterFlags(packCmd)
+	profiler.RegisterFlags(buildCmd)
 }
 
 func (p *enabledProfiler) RegisterFlags(cmd *cobra.Command) {

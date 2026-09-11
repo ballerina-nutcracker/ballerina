@@ -95,7 +95,7 @@ func createNewCmd() *cobra.Command {
 
 	cmd.Flags().BoolVar(&workspace, "workspace", false, "")
 	cmd.Flags().StringVarP(&template, "template", "t", string(templateDefault),
-		fmt.Sprintf("Acceptable values: %v default: %s", validTemplates, templateDefault))
+		"Acceptable values: [default, main, service, lib] default: default")
 
 	return cmd
 }
@@ -114,10 +114,13 @@ const (
 var validTemplates = []templateName{templateDefault, templateMain, templateService, templateLib}
 
 // validateTemplate ensures the raw --template flag value is one of the
-// accepted templates and returns the typed equivalent.
+// accepted templates (case-insensitive, matching bal add -t) and returns the
+// typed equivalent. Java's own NewCommand matches case-sensitively, unlike
+// its AddCommand — this port deliberately diverges to make both consistent.
 func validateTemplate(raw string) (templateName, error) {
+	lower := templateName(strings.ToLower(raw))
 	for _, t := range validTemplates {
-		if string(t) == raw {
+		if t == lower {
 			return t, nil
 		}
 	}

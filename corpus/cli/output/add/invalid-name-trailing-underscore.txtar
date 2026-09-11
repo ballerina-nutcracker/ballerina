@@ -1,5 +1,5 @@
 -- stdout --
 -- stderr --
-compilation contains errors
+cannot have trailing underscore
 -- exitcode --
 1

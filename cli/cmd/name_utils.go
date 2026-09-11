@@ -147,14 +147,17 @@ func guessPkgName(packageName string) string {
 // guessOrgName attempts to derive a valid organization name from the system user.
 // Falls back to "my_org" if the username cannot be determined or sanitized.
 func guessOrgName() string {
-	// Try to get current user
 	currentUser, err := user.Current()
 	if err != nil || currentUser.Username == "" {
 		return "my_org"
 	}
+	return deriveOrgNameFromUsername(currentUser.Username)
+}
 
-	username := currentUser.Username
-
+// deriveOrgNameFromUsername sanitizes an OS username into a valid org name,
+// split out from guessOrgName so this logic can be tested directly against
+// arbitrary input rather than only the real, environment-dependent OS user.
+func deriveOrgNameFromUsername(username string) string {
 	// On some systems, username may include domain (e.g., "DOMAIN\user")
 	if idx := strings.LastIndex(username, "\\"); idx >= 0 {
 		username = username[idx+1:]

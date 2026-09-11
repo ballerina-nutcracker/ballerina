@@ -54,11 +54,37 @@ func findWorkspaceRoot(startPath string) string {
 	}
 }
 
-// usageError wraps an error with a USAGE block; cobra prefixes the result
-// with "ballerina:" when printing.
+// usageError wraps an error with a USAGE block and a pointer to the
+// relevant command's --help, adapting Java's
+// CommandUtil#printError(stream, error, usage, help=true) format — Java's
+// own hint is the generic "For more information try --help", but ours names
+// the specific command (derived from usage's own leading token, e.g. "build"
+// out of "build [<package-dir>]") since a bare --help outside any subcommand
+// context would print the root command's help, not the failing command's.
+// Cobra prefixes the result with "ballerina:" when printing:
+//
+//	ballerina: <error>
+//
+//	USAGE:
+//	    <usage>
+//
+//	For more information try 'bal <command> --help'
 func usageError(usage, format string, args ...any) error {
 	inner := fmt.Errorf(format, args...)
-	return fmt.Errorf("%w\n\nUSAGE:\n    %s", inner, usage)
+	cmdName, _, _ := strings.Cut(usage, " ")
+	return fmt.Errorf("%w\n\nUSAGE:\n    %s\n\nFor more information try 'bal %s --help'", inner, usage, cmdName)
+}
+
+// requireAtMostOneArg reports a "too many arguments" error via errFn when
+// more than one positional argument is given. Shared by commands whose own
+// <cmd>Error wrapper already matches this signature (add, clean); new's
+// newErrorFor doesn't (it also takes a workspace bool), so it keeps its own
+// inline check instead of wrapping this in a closure.
+func requireAtMostOneArg(errFn func(format string, args ...any) error, args []string) error {
+	if len(args) > 1 {
+		return errFn("too many arguments")
+	}
+	return nil
 }
 
 // validateSourceFile validates the source file argument for the 'run' command.

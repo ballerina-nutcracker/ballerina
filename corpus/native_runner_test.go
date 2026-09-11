@@ -31,6 +31,7 @@ import (
 	goruntime "runtime" // aliased: this file also imports ballerina/runtime as runtime
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"testing/fstest"
 
@@ -276,6 +277,37 @@ func TestDriverSource(t *testing.T) {
 	dir2, err := cli.ExtractDriverSource(cacheRoot, version)
 	require.NoError(err)
 	assert.Equal(dir1, dir2, "second call must reuse the cached extraction")
+}
+
+// TestDriverSourceConcurrent hammers ExtractDriverSource from many
+// goroutines targeting the same fresh version cache to catch the
+// install-in-place race its content-addressed + atomic-rename design is
+// meant to eliminate: a concurrent reader must never observe a partially
+// written or briefly absent target directory.
+func TestDriverSourceConcurrent(t *testing.T) {
+	t.Parallel()
+	cacheRoot := t.TempDir()
+	const n = 32
+	var wg sync.WaitGroup
+	dirs := make([]string, n)
+	errs := make([]error, n)
+	for i := range n {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			dirs[i], errs[i] = cli.ExtractDriverSource(cacheRoot, "test-race-v0.0.1")
+		}()
+	}
+	wg.Wait()
+
+	for i, err := range errs {
+		if err != nil {
+			t.Fatalf("goroutine %d: ExtractDriverSource: %v", i, err)
+		}
+		if _, err := os.Stat(filepath.Join(dirs[i], "cli", "go.mod")); err != nil {
+			t.Errorf("goroutine %d: cli/go.mod missing from %s: %v", i, dirs[i], err)
+		}
+	}
 }
 
 // TestNativeRunner_EmbeddedOnlyProjectNoRebuild checks a project depending
@@ -669,9 +701,11 @@ func TestBalBuildNativeDependencyGoToolchainUnavailable(t *testing.T) {
 
 // TestNativeRunner_DriverSourceUnresolvable covers a native-dependency
 // project when the embedded driver cache extraction can't succeed. The
-// dev-build extraction path ignores BAL_ENV and uses os.TempDir(), so this
-// redirects TMPDIR/TMP/TEMP (in the child process only) to a path blocked by
-// a regular file, without touching the real shared temp dir.
+// dev-build extraction path caches under BAL_ENV/interpreter-src (a private
+// dir, not the shared os.TempDir() — see driver_source.go), so this blocks
+// that specific subpath with a regular file, leaving the rest of the
+// BAL_ENV fixture (the central bala cache setupNativeTestFixtures also
+// populates there) untouched.
 func TestNativeRunner_DriverSourceUnresolvable(t *testing.T) {
 	t.Parallel()
 	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
@@ -680,16 +714,12 @@ func TestNativeRunner_DriverSourceUnresolvable(t *testing.T) {
 	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 
-	blockingFile := filepath.Join(t.TempDir(), "not-a-directory")
-	if err := os.WriteFile(blockingFile, []byte("not a directory"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(tempHome, "interpreter-src"), []byte("not a directory"), 0o644); err != nil {
 		t.Fatalf("writing blocking file: %v", err)
 	}
 
-	env := append(envWithoutVars(os.Environ(), "BALLERINA_SRC", "TMPDIR", "TMP", "TEMP"),
+	env := append(envWithoutVars(os.Environ(), "BALLERINA_SRC"),
 		"BAL_ENV="+tempHome,
-		"TMPDIR="+blockingFile,
-		"TMP="+blockingFile,
-		"TEMP="+blockingFile,
 	)
 	if coverDir != "" {
 		env = append(env, "GOCOVERDIR="+coverDir)

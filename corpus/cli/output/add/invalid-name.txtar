@@ -1,5 +1,5 @@
 -- stdout --
 -- stderr --
-compilation contains errors
+can only contain alphanumerics
 -- exitcode --
 1

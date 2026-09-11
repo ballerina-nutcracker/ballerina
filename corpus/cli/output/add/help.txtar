@@ -1,0 +1,5 @@
+-- stdout --
+Add a new module to the current package
+-- stderr --
+-- exitcode --
+0

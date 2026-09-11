@@ -1,5 +1,5 @@
 -- stdout --
 -- stderr --
-compilation contains errors
+cannot add a module at a workspace root
 -- exitcode --
 1
