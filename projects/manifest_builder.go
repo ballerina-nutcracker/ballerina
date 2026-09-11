@@ -37,6 +37,7 @@ const (
 	keyRepository  = "repository"
 	keyDescription = "description"
 	keyVisibility  = "visibility"
+	keyInclude     = "include"
 
 	keyDependency = "dependency"
 
@@ -69,6 +70,7 @@ type manifestBuilder struct {
 	icon             string
 	readme           string
 	description      string
+	include          []string
 	otherEntries     map[string]any
 }
 
@@ -95,6 +97,7 @@ func (b *manifestBuilder) Build() PackageManifest {
 		License:          b.license,
 		Authors:          b.authors,
 		Keywords:         b.keywords,
+		Include:          b.include,
 		Repository:       b.repository,
 		BallerinaVersion: b.ballerinaVersion,
 		Visibility:       b.visibility,
@@ -117,6 +120,7 @@ func (b *manifestBuilder) parseFromTOML() {
 	b.repository = b.parseString(keyPackage + "." + keyRepository)
 	b.description = b.parseString(keyPackage + "." + keyDescription)
 	b.visibility = b.parseString(keyPackage + "." + keyVisibility)
+	b.include = b.parseStringArray(keyPackage + "." + keyInclude)
 }
 
 func (b *manifestBuilder) Diagnostics() []diagnostics.Diagnostic {
