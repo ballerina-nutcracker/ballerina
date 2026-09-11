@@ -17,6 +17,8 @@
 package modules
 
 import (
+	"sync"
+
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -25,7 +27,7 @@ import (
 
 type BIRModule struct {
 	Pkg     *bir.BIRPackage
-	Globals map[string]values.BalValue
+	globals sync.Map // string -> values.BalValue
 }
 
 type ExternFunction struct {
@@ -33,16 +35,40 @@ type ExternFunction struct {
 	Impl extern.NativeFunc
 }
 
-func NewBIRModule(typeCtx semtypes.Context, pkg *bir.BIRPackage) *BIRModule {
-	globals := make(map[string]values.BalValue, len(pkg.GlobalVars))
-	for key, gv := range pkg.GlobalVars {
-		v, ok := values.FillerValue(typeCtx, gv.GetType())
-		if ok {
-			globals[key] = v
+// NewBIRModule creates a module whose globals start out at the filler value of
+// their declared type, then overlays globals. pkg may be nil for a module that
+// only ever carries externally registered globals.
+func NewBIRModule(typeCtx semtypes.Context, pkg *bir.BIRPackage, globals map[string]values.BalValue) *BIRModule {
+	module := &BIRModule{Pkg: pkg}
+	if pkg != nil {
+		for key, gv := range pkg.GlobalVars {
+			v, ok := values.FillerValue(typeCtx, gv.GetType())
+			if ok {
+				module.SetGlobal(key, v)
+			}
 		}
 	}
-	return &BIRModule{
-		Pkg:     pkg,
-		Globals: globals,
+	module.SetGlobals(globals)
+	return module
+}
+
+// GetGlobal returns the value of the module-level variable stored under key.
+// Safe for concurrent use; it does not imply the logical atomicity that a
+// lock statement over the variable provides.
+func (m *BIRModule) GetGlobal(key string) (values.BalValue, bool) {
+	return m.globals.Load(key)
+}
+
+// SetGlobal stores value as the module-level variable under key. Safe for
+// concurrent use; see GetGlobal on what it does not guarantee.
+func (m *BIRModule) SetGlobal(key string, value values.BalValue) {
+	m.globals.Store(key, value)
+}
+
+// SetGlobals stores every entry of globals, leaving keys absent from it
+// untouched.
+func (m *BIRModule) SetGlobals(globals map[string]values.BalValue) {
+	for key, value := range globals {
+		m.SetGlobal(key, value)
 	}
 }

@@ -1,0 +1,22 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Node
+    (record-type
+      (field children
+        (array-type
+          (user-defined-type Node) dimensions: 1 ([]))
+        (list-constructor-expr))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable node (type
+          (user-defined-type Node)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref node))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (list-constructor-expr)))))

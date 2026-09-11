@@ -5358,8 +5358,9 @@ func widenedListMemberType(ty semtypes.SemType) semtypes.SemType {
 func selectListInherentType(t typeResolver, expr *ast.BLangListConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, semtypes.ListAtomicType, bool) {
 	expectedListType := semtypes.Intersect(expectedType, semtypes.List)
 	tc := t.typeContext()
-	if semtypes.IsEmpty(tc, expectedListType) {
+	if !t.ensureNotEmpty(expectedListType, func() {
 		t.semanticError("list type not found in expected type", expr.GetPosition())
+	}) {
 		return semtypes.SemType{}, semtypes.ListAtomicType{}, false
 	}
 	lat := semtypes.ToListAtomicType(tc.Env(), expectedListType)

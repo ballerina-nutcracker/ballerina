@@ -32,7 +32,7 @@ func dereferenceAnnotationValue(ctx *extern.Context, value values.AnnotationValu
 	if module == nil {
 		return nil, false
 	}
-	value, ok = module.Globals[ref.GlobalLookupKey()]
+	value, ok = module.GetGlobal(ref.GlobalLookupKey())
 	return value, ok
 }
 

@@ -19,7 +19,7 @@ jobs:
     permissions:
       contents: read
     env:
-      PLATFORMS: 'linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64'
+      PLATFORMS: 'linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64'
 
     steps:
       - name: Checkout
@@ -134,4 +134,11 @@ jobs:
         with:
           name: ballerina-nutcracker-windows-amd64
           path: artifacts/ballerina-nutcracker-windows-amd64
+          if-no-files-found: error
+
+      - name: Upload windows-arm64
+        uses: actions/upload-artifact@v7
+        with:
+          name: ballerina-nutcracker-windows-arm64
+          path: artifacts/ballerina-nutcracker-windows-arm64
           if-no-files-found: error
