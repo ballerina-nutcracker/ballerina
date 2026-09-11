@@ -184,6 +184,11 @@ type CompilationService struct {
 	genStatesMu sync.Mutex
 	genStates   map[string]*packageGenState
 
+	// failedGens records, per source root, the generation whose cycle panicked
+	// (CE-E2) so SealedModuleFor's wait can short-circuit instead of reschedul-
+	// ing a deterministically re-panicking cycle. Guarded by cycleMu.
+	failedGens map[string]uint64
+
 	shutdownOnce sync.Once
 	closed       bool
 }
@@ -261,18 +266,22 @@ func (s *CompilationService) handleLifecycle(e event.Event) {
 	case event.ProjectRegistered:
 		s.knownRoots[e.SourceRoot()] = struct{}{}
 		s.evictGenState(e.SourceRoot())
+		s.clearFailedGen(e.SourceRoot())
 	case event.ProjectEvicted:
 		delete(s.knownRoots, e.SourceRoot())
 		s.store.evictRoot(e.SourceRoot())
 		s.evictGenState(e.SourceRoot())
+		s.clearFailedGen(e.SourceRoot())
 	case event.ProjectKindTransitioned:
 		if te, ok := e.(event.ProjectKindTransitionedEvent); ok {
 			delete(s.knownRoots, te.OldRoot())
 			s.store.evictRoot(te.OldRoot())
 			s.evictGenState(te.OldRoot())
+			s.clearFailedGen(te.OldRoot())
 		}
 		s.knownRoots[e.SourceRoot()] = struct{}{}
 		s.evictGenState(e.SourceRoot())
+		s.clearFailedGen(e.SourceRoot())
 	}
 }
 

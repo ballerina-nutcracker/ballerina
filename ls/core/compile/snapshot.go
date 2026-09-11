@@ -89,6 +89,32 @@ type SnapshotStore struct {
 	order      []string // LRU order of stable roots (front = oldest)
 	maxStable  int
 	genFn      func(string) (uint64, bool)
+
+	changedMu sync.Mutex
+	changed   chan struct{} // closed and replaced on every mutation (notifyChange)
+}
+
+// notifyChange wakes every store waiter: each mutation closes the current
+// channel and lazily mints a fresh one on next demand. Sealed-generation
+// readers (SealedModuleFor) use this to observe a cycle's setInProgress/
+// storeStable/clearInProgress transitions without polling.
+func (s *SnapshotStore) notifyChange() {
+	s.changedMu.Lock()
+	if s.changed != nil {
+		close(s.changed)
+		s.changed = nil
+	}
+	s.changedMu.Unlock()
+}
+
+// changeCh returns the channel the next notifyChange call closes.
+func (s *SnapshotStore) changeCh() <-chan struct{} {
+	s.changedMu.Lock()
+	defer s.changedMu.Unlock()
+	if s.changed == nil {
+		s.changed = make(chan struct{})
+	}
+	return s.changed
 }
 
 func newSnapshotStore(maxStable int, genFn func(string) (uint64, bool)) *SnapshotStore {
@@ -143,6 +169,7 @@ func (s *SnapshotStore) setInProgress(root string, ip InProgressSnapshot) {
 	s.mu.Lock()
 	s.inProgress[root] = ip
 	s.mu.Unlock()
+	s.notifyChange()
 }
 
 // clearInProgress removes the in-progress slot for root.
@@ -150,6 +177,7 @@ func (s *SnapshotStore) clearInProgress(root string) {
 	s.mu.Lock()
 	delete(s.inProgress, root)
 	s.mu.Unlock()
+	s.notifyChange()
 }
 
 // publishStable runs on the compile goroutine: (1) stale gate, (2) store the
@@ -179,7 +207,6 @@ func (s *SnapshotStore) publishStable(snap StableSnapshot, bus *event.Bus) {
 // is exceeded (never evicting the just-stored root).
 func (s *SnapshotStore) storeStable(snap StableSnapshot) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	root := snap.key.SourceRoot
 	if _, exists := s.stable[root]; !exists {
 		s.order = append(s.order, root)
@@ -190,12 +217,13 @@ func (s *SnapshotStore) storeStable(snap StableSnapshot) {
 		}
 	}
 	s.stable[root] = snap
+	s.mu.Unlock()
+	s.notifyChange()
 }
 
 // evictRoot drops the stable and in-progress state for root.
 func (s *SnapshotStore) evictRoot(root string) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	delete(s.stable, root)
 	delete(s.inProgress, root)
 	for i, r := range s.order {
@@ -204,15 +232,18 @@ func (s *SnapshotStore) evictRoot(root string) {
 			break
 		}
 	}
+	s.mu.Unlock()
+	s.notifyChange()
 }
 
 // evictAll drops every stable and in-progress snapshot (shutdown).
 func (s *SnapshotStore) evictAll() {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.stable = make(map[string]StableSnapshot)
 	s.inProgress = make(map[string]InProgressSnapshot)
 	s.order = nil
+	s.mu.Unlock()
+	s.notifyChange()
 }
 
 // diagsForFile returns the all-diagnostics slice for a fileName within the
