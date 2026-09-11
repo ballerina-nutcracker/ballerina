@@ -1,0 +1,515 @@
+module $anon.. v 0.0.0;
+calls  int;
+class Client {
+
+  $remote$value(int) -> int{
+    bb0 {
+      %4 = ConstantLoad 1
+      %5 = %4;
+      %3 = + calls %5;
+      calls = %3;
+      %0 = value;
+      return;
+    }
+  }
+
+  $remote$values([int...]) -> int{
+    bb0 {
+      %4 = ConstantLoad 1
+      %5 = %4;
+      %3 = + calls %5;
+      calls = %3;
+      %6 = length(values) -> bb1;
+    }
+    bb1 {
+      %0 = %6;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get item/[int] Client.$resource$get$0(int,int) -> int{
+    bb0 {
+      %5 = ConstantLoad 1
+      %6 = %5;
+      %4 = + calls %6;
+      calls = %4;
+      %8 = id;
+      %9 = value;
+      %7 = + %8 %9;
+      %0 = %7;
+      return;
+    }
+  }
+
+  resource get values Client.$resource$get$1([int...]) -> int{
+    bb0 {
+      %4 = ConstantLoad 1
+      %5 = %4;
+      %3 = + calls %5;
+      calls = %3;
+      %6 = length(values) -> bb1;
+    }
+    bb1 {
+      %0 = %6;
+      return;
+    }
+  }
+}
+failInt(string) -> int{
+  bb0 {
+    %2 = newError error(message)
+    panic %2;
+  }
+}
+failValues() -> [int...]{
+  bb0 {
+    %1 = ConstantLoad spread panic
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+failClient() -> client object { private remote function $remote$value(int) returns int; private remote function $remote$values([int...]) returns int; public function init() returns nil }{
+  bb0 {
+    %1 = ConstantLoad receiver panic
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+message(int|error) -> string{
+  bb0 {
+    %3 = result is error
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %4 = message(result) -> bb4;
+  }
+  bb2 {
+    %5 = ConstantLoad not trapped
+    %2 = %5;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+  bb4 {
+    %2 = %4;
+    GOTO bb3;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Client
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %3;
+    GOTO bb5;
+  }
+  bb5 {
+    %7 = failClient() -> bb6;
+  }
+  bb6 {
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %10 = %7.$remote$value(%9) -> bb7;
+  }
+  bb7 {
+    %6 = %10;
+    GOTO bb8;
+  }
+  bb8 {
+    remoteReceiver = %6;
+    %12 = message(remoteReceiver) -> bb9;
+  }
+  bb9 {
+    %13 = println(%12) -> bb10;
+  }
+  bb10 {
+    GOTO bb11;
+  }
+  bb11 {
+    %15 = failClient() -> bb12;
+  }
+  bb12 {
+    %16 = ConstantLoad item
+    %17 = ConstantLoad 1
+    %18 = %17;
+    %19 = ConstantLoad 1
+    %20 = %19;
+    %21 = %15->[%16,%18].get(%20) -> bb13;
+  }
+  bb13 {
+    %14 = %21;
+    GOTO bb14;
+  }
+  bb14 {
+    resourceReceiver = %14;
+    %23 = message(resourceReceiver) -> bb15;
+  }
+  bb15 {
+    %24 = println(%23) -> bb16;
+  }
+  bb16 {
+    GOTO bb17;
+  }
+  bb17 {
+    %26 = ConstantLoad item
+    %27 = ConstantLoad path panic
+    %28 = failInt(%27) -> bb18;
+  }
+  bb18 {
+    %29 = %28;
+    %30 = ConstantLoad 1
+    %31 = %30;
+    %32 = c->[%26,%29].get(%31) -> bb19;
+  }
+  bb19 {
+    %25 = %32;
+    GOTO bb20;
+  }
+  bb20 {
+    path = %25;
+    %34 = message(path) -> bb21;
+  }
+  bb21 {
+    %35 = println(%34) -> bb22;
+  }
+  bb22 {
+    GOTO bb23;
+  }
+  bb23 {
+    %37 = ConstantLoad remote argument panic
+    %38 = failInt(%37) -> bb24;
+  }
+  bb24 {
+    %39 = %38;
+    %40 = c.$remote$value(%39) -> bb25;
+  }
+  bb25 {
+    %36 = %40;
+    GOTO bb26;
+  }
+  bb26 {
+    remoteArgument = %36;
+    %42 = message(remoteArgument) -> bb27;
+  }
+  bb27 {
+    %43 = println(%42) -> bb28;
+  }
+  bb28 {
+    GOTO bb29;
+  }
+  bb29 {
+    %45 = ConstantLoad item
+    %46 = ConstantLoad 1
+    %47 = %46;
+    %48 = ConstantLoad resource argument panic
+    %49 = failInt(%48) -> bb30;
+  }
+  bb30 {
+    %50 = %49;
+    %51 = c->[%45,%47].get(%50) -> bb31;
+  }
+  bb31 {
+    %44 = %51;
+    GOTO bb32;
+  }
+  bb32 {
+    resourceArgument = %44;
+    %53 = message(resourceArgument) -> bb33;
+  }
+  bb33 {
+    %54 = println(%53) -> bb34;
+  }
+  bb34 {
+    GOTO bb35;
+  }
+  bb35 {
+    %56 = $default$0() -> bb36;
+  }
+  bb36 {
+    $desugar$0 = %56;
+    %58 = $desugar$0;
+    %59 = c.$remote$value(%58) -> bb37;
+  }
+  bb37 {
+    %55 = %59;
+    GOTO bb38;
+  }
+  bb38 {
+    remoteDefault = %55;
+    %61 = message(remoteDefault) -> bb39;
+  }
+  bb39 {
+    %62 = println(%61) -> bb40;
+  }
+  bb40 {
+    GOTO bb41;
+  }
+  bb41 {
+    %64 = $default$1() -> bb42;
+  }
+  bb42 {
+    $desugar$1 = %64;
+    %66 = ConstantLoad item
+    %67 = ConstantLoad 1
+    %68 = %67;
+    %69 = $desugar$1;
+    %70 = c->[%66,%68].get(%69) -> bb43;
+  }
+  bb43 {
+    %63 = %70;
+    GOTO bb44;
+  }
+  bb44 {
+    resourceDefault = %63;
+    %72 = message(resourceDefault) -> bb45;
+  }
+  bb45 {
+    %73 = println(%72) -> bb46;
+  }
+  bb46 {
+    %74 = ConstantLoad true
+    useSpread = %74;
+    GOTO bb47;
+  }
+  bb47 {
+    useSpread ? bb48 : bb49;
+  }
+  bb48 {
+    %78 = ConstantLoad 0
+    %79 = newArray [int...][%78]{}
+    $desugar$2 = %79;
+    %81 = ConstantLoad 0
+    %82 = %81;
+    %83 = push($desugar$2,%82) -> bb51;
+  }
+  bb49 {
+    %93 = ConstantLoad 0
+    %94 = newArray [int...][%93]{}
+    %77 = %94;
+    GOTO bb50;
+  }
+  bb50 {
+    %95 = c.$remote$values(%77) -> bb58;
+  }
+  bb51 {
+    %84 = failValues() -> bb52;
+  }
+  bb52 {
+    $desugar$3 = %84;
+    %86 = length($desugar$3) -> bb53;
+  }
+  bb53 {
+    $desugar$4 = %86;
+    %88 = ConstantLoad 0
+    $desugar$5 = %88;
+    GOTO bb54;
+  }
+  bb54 {
+    %91 = $desugar$5;
+    %92 = $desugar$4;
+    %90 = < %91 %92;
+    %90 ? bb55 : bb56;
+  }
+  bb55 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$3)[(1, $desugar$5)];
+    %1 = %0;
+    %2 = push((1, $desugar$2),%1) -> bb57;
+  }
+  bb56 {
+    %77 = $desugar$2;
+    GOTO bb50;
+  }
+  bb57 {
+    %4 = (1, $desugar$5);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$5) = %3;
+    PopScopeFrame
+    GOTO bb54;
+  }
+  bb58 {
+    %76 = %95;
+    GOTO bb59;
+  }
+  bb59 {
+    remoteSpread = %76;
+    %97 = message(remoteSpread) -> bb60;
+  }
+  bb60 {
+    %98 = println(%97) -> bb61;
+  }
+  bb61 {
+    GOTO bb62;
+  }
+  bb62 {
+    %100 = ConstantLoad values
+    useSpread ? bb63 : bb64;
+  }
+  bb63 {
+    %102 = ConstantLoad 0
+    %103 = newArray [int...][%102]{}
+    $desugar$6 = %103;
+    %105 = ConstantLoad 0
+    %106 = %105;
+    %107 = push($desugar$6,%106) -> bb66;
+  }
+  bb64 {
+    %117 = ConstantLoad 0
+    %118 = newArray [int...][%117]{}
+    %101 = %118;
+    GOTO bb65;
+  }
+  bb65 {
+    %119 = c->[%100].get(%101) -> bb73;
+  }
+  bb66 {
+    %108 = failValues() -> bb67;
+  }
+  bb67 {
+    $desugar$7 = %108;
+    %110 = length($desugar$7) -> bb68;
+  }
+  bb68 {
+    $desugar$8 = %110;
+    %112 = ConstantLoad 0
+    $desugar$9 = %112;
+    GOTO bb69;
+  }
+  bb69 {
+    %115 = $desugar$9;
+    %116 = $desugar$8;
+    %114 = < %115 %116;
+    %114 ? bb70 : bb71;
+  }
+  bb70 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$7)[(1, $desugar$9)];
+    %1 = %0;
+    %2 = push((1, $desugar$6),%1) -> bb72;
+  }
+  bb71 {
+    %101 = $desugar$6;
+    GOTO bb65;
+  }
+  bb72 {
+    %4 = (1, $desugar$9);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$9) = %3;
+    PopScopeFrame
+    GOTO bb69;
+  }
+  bb73 {
+    %99 = %119;
+    GOTO bb74;
+  }
+  bb74 {
+    resourceSpread = %99;
+    %121 = message(resourceSpread) -> bb75;
+  }
+  bb75 {
+    %122 = println(%121) -> bb76;
+  }
+  bb76 {
+    %123 = println(calls) -> bb77;
+  }
+  bb77 {
+    GOTO bb78;
+  }
+  bb78 {
+    %125 = ConstantLoad 5
+    %126 = %125;
+    %127 = c.$remote$value(%126) -> bb79;
+  }
+  bb79 {
+    %124 = %127;
+    GOTO bb80;
+  }
+  bb80 {
+    remoteValue = %124;
+    %129 = println(remoteValue) -> bb81;
+  }
+  bb81 {
+    GOTO bb82;
+  }
+  bb82 {
+    %131 = ConstantLoad item
+    %132 = ConstantLoad 2
+    %133 = %132;
+    %134 = ConstantLoad 3
+    %135 = %134;
+    %136 = c->[%131,%133].get(%135) -> bb83;
+  }
+  bb83 {
+    %130 = %136;
+    GOTO bb84;
+  }
+  bb84 {
+    resourceValue = %130;
+    %138 = println(resourceValue) -> bb85;
+  }
+  bb85 {
+    %139 = println(calls) -> bb86;
+  }
+  bb86 {
+    return;
+  }
+  
+  error-table {
+    [bb5, bb7] -> bb8, %6
+    [bb11, bb13] -> bb14, %14
+    [bb17, bb19] -> bb20, %25
+    [bb23, bb25] -> bb26, %36
+    [bb29, bb31] -> bb32, %44
+    [bb35, bb37] -> bb38, %55
+    [bb41, bb43] -> bb44, %63
+    [bb47, bb58] -> bb59, %76
+    [bb62, bb73] -> bb74, %99
+    [bb78, bb79] -> bb80, %124
+    [bb82, bb83] -> bb84, %130
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad remote default panic
+    %2 = failInt(%1) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad resource default panic
+    %2 = failInt(%1) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
