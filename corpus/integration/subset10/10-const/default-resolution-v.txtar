@@ -1,0 +1,6 @@
+-- stdout --
+{"x":6}
+{"x":6}
+3
+true
+-- stderr --

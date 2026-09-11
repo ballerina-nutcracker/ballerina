@@ -1,0 +1,55 @@
+(package
+  (import-package ballerina io (as io))
+  (variable $annotation$0)
+  (annotation codeAnnot
+    (user-defined-type Code)
+    (attach-point type))
+  (type-definition Code
+    (record-type
+      (field value
+        (value-type int)
+        (invocation seed ()))
+      (field label
+        (value-type string)
+        (literal none))))
+  (type-definition RuntimeDefaultTarget
+    (annotation-attachment codeAnnot
+      (mapping-constructor-expr))
+    (value-type int))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref $annotation$0)
+        (mapping-constructor-expr))))
+  (function seed () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 11))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (union-type
+            (user-defined-type Code)
+            (value-type null))) (expr
+          (annot-access-expr codeAnnot
+            (simple-var-ref RuntimeDefaultTarget)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref c)
+          (user-defined-type Code))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref c))))) ())
+      (block-stmt)))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (invocation seed ()))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (literal none)))))

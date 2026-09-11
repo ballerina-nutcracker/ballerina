@@ -1,0 +1,93 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Guarded
+    (record-type
+      (field andGuard
+        (value-type boolean)
+        (binary-expr &&
+          (binary-expr <
+            (numeric-literal 10)
+            (literal 5))
+          (binary-expr >
+            (group-expr
+              (binary-expr /
+                (literal 1)
+                (literal 0)))
+            (literal 0))))
+      (field orGuard
+        (value-type boolean)
+        (binary-expr ||
+          (binary-expr >
+            (numeric-literal 10)
+            (literal 5))
+          (binary-expr >
+            (group-expr
+              (binary-expr /
+                (literal 1)
+                (literal 0)))
+            (literal 0))))
+      (field ternary
+        (value-type int)
+        (ternary-expr
+          (binary-expr >
+            (numeric-literal 10)
+            (literal 5))
+          (literal 1)
+          (binary-expr /
+            (literal 1)
+            (literal 0))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"andGuard":false,"orGuard":true,"ternary":1})
+            (literal andGuard)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"andGuard":false,"orGuard":true,"ternary":1})
+            (literal orGuard)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"andGuard":false,"orGuard":true,"ternary":1})
+            (literal ternary)))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (binary-expr &&
+          (binary-expr <
+            (numeric-literal 10)
+            (literal 5))
+          (binary-expr >
+            (group-expr
+              (binary-expr /
+                (literal 1)
+                (literal 0)))
+            (literal 0))))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (binary-expr ||
+          (binary-expr >
+            (numeric-literal 10)
+            (literal 5))
+          (binary-expr >
+            (group-expr
+              (binary-expr /
+                (literal 1)
+                (literal 0)))
+            (literal 0))))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (binary-expr >
+            (numeric-literal 10)
+            (literal 5))
+          (literal 1)
+          (binary-expr /
+            (literal 1)
+            (literal 0)))))))

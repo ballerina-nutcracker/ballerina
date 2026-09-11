@@ -1,0 +1,188 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Exprs
+    (record-type
+      (field sum
+        (value-type int)
+        (binary-expr +
+          (numeric-literal 10)
+          (literal 5)))
+      (field neg
+        (value-type int)
+        (unary-expr -
+          (numeric-literal 10)))
+      (field conv
+        (value-type float)
+        (type-conversion-expr
+          (numeric-literal 10)
+          (value-type float)))
+      (field tmpl
+        (value-type string)
+        (string-template-literal
+          (template-string "hi ")
+          (literal bal)
+          (template-string "")))
+      (field cond
+        (value-type int)
+        (ternary-expr
+          (binary-expr >
+            (numeric-literal 10)
+            (literal 5))
+          (literal 1)
+          (literal 2)))
+      (field guard
+        (value-type int)
+        (ternary-expr
+          (binary-expr >
+            (numeric-literal 10)
+            (literal 5))
+          (literal 1)
+          (binary-expr /
+            (literal 1)
+            (literal 0))))
+      (field list
+        (array-type
+          (value-type int) dimensions: 1 ([]))
+        (list-constructor-expr
+          (numeric-literal 10)
+          (literal 2)))
+      (field mapping
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type string))
+        (mapping-constructor-expr
+          (key-value
+            (literal k)
+            (literal bal))))
+      (field inner
+        (user-defined-type Inner)
+        (mapping-constructor-expr))))
+  (type-definition Inner
+    (record-type
+      (field n
+        (value-type int)
+        (binary-expr *
+          (numeric-literal 10)
+          (literal 2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"sum":15,"neg":-10,"conv":10.0,"tmpl":"hi bal","cond":1,"guard":1,"list":[10,2],"mapping":{"k":"bal"},"inner":{"n":20}})
+            (literal sum)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"sum":15,"neg":-10,"conv":10.0,"tmpl":"hi bal","cond":1,"guard":1,"list":[10,2],"mapping":{"k":"bal"},"inner":{"n":20}})
+            (literal neg)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"sum":15,"neg":-10,"conv":10.0,"tmpl":"hi bal","cond":1,"guard":1,"list":[10,2],"mapping":{"k":"bal"},"inner":{"n":20}})
+            (literal conv)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"sum":15,"neg":-10,"conv":10.0,"tmpl":"hi bal","cond":1,"guard":1,"list":[10,2],"mapping":{"k":"bal"},"inner":{"n":20}})
+            (literal tmpl)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"sum":15,"neg":-10,"conv":10.0,"tmpl":"hi bal","cond":1,"guard":1,"list":[10,2],"mapping":{"k":"bal"},"inner":{"n":20}})
+            (literal cond)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"sum":15,"neg":-10,"conv":10.0,"tmpl":"hi bal","cond":1,"guard":1,"list":[10,2],"mapping":{"k":"bal"},"inner":{"n":20}})
+            (literal guard)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"sum":15,"neg":-10,"conv":10.0,"tmpl":"hi bal","cond":1,"guard":1,"list":[10,2],"mapping":{"k":"bal"},"inner":{"n":20}})
+            (literal list)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"sum":15,"neg":-10,"conv":10.0,"tmpl":"hi bal","cond":1,"guard":1,"list":[10,2],"mapping":{"k":"bal"},"inner":{"n":20}})
+            (literal mapping)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (literal {"sum":15,"neg":-10,"conv":10.0,"tmpl":"hi bal","cond":1,"guard":1,"list":[10,2],"mapping":{"k":"bal"},"inner":{"n":20}})
+              (literal inner))
+            (literal n)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"sum":15,"neg":-10,"conv":10.0,"tmpl":"hi bal","cond":1,"guard":1,"list":[10,2],"mapping":{"k":"bal"},"inner":{"n":20}})
+            (value-type readonly)))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (binary-expr +
+          (numeric-literal 10)
+          (literal 5)))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (unary-expr -
+          (numeric-literal 10)))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (type-conversion-expr
+          (numeric-literal 10)
+          (value-type float)))))
+  (function $desugar$3 () ()
+    (block-function-body
+      (return
+        (string-template-literal
+          (template-string "hi ")
+          (literal bal)
+          (template-string "")))))
+  (function $desugar$4 () ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (binary-expr >
+            (numeric-literal 10)
+            (literal 5))
+          (literal 1)
+          (literal 2)))))
+  (function $desugar$5 () ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (binary-expr >
+            (numeric-literal 10)
+            (literal 5))
+          (literal 1)
+          (binary-expr /
+            (literal 1)
+            (literal 0))))))
+  (function $desugar$6 () ()
+    (block-function-body
+      (return
+        (list-constructor-expr
+          (numeric-literal 10)
+          (literal 2)))))
+  (function $desugar$7 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal k)
+            (literal bal))))))
+  (function $desugar$9 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr))))
+  (function $desugar$8 () ()
+    (block-function-body
+      (return
+        (binary-expr *
+          (numeric-literal 10)
+          (literal 2))))))

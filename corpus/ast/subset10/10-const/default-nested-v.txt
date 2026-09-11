@@ -1,0 +1,114 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Leaf
+    (record-type
+      (field n
+        (value-type int)
+        (literal 1))
+      (field s
+        (value-type string)
+        (literal leaf))))
+  (type-definition Branch
+    (record-type
+      (field leaf
+        (user-defined-type Leaf)
+        (mapping-constructor-expr))
+      (field leaves
+        (array-type
+          (user-defined-type Leaf) dimensions: 1 ([]))
+        (list-constructor-expr
+          (mapping-constructor-expr)
+          (mapping-constructor-expr
+            (key-value
+              (literal n)
+              (literal 2)))))
+      (field byName
+        (constrained-type
+          (builtin-ref-type map)
+          (user-defined-type Leaf))
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (mapping-constructor-expr))))))
+  (type-definition Root
+    (record-type
+      (field branch
+        (user-defined-type Branch)
+        (mapping-constructor-expr))
+      (field pairs
+        (array-type
+          (constrained-type
+            (builtin-ref-type map)
+            (user-defined-type Leaf)) dimensions: 1 ([
+          (literal 2)]))
+        (list-constructor-expr))))
+  (const A (
+    (user-defined-type Root)) (
+    (mapping-constructor-expr)))
+  (const B (
+    (user-defined-type Root)) (
+    (mapping-constructor-expr)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (field-based-access n
+            (field-based-access leaf
+              (field-based-access branch
+                (simple-var-ref A)))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access n
+            (index-based-access
+              (field-based-access leaves
+                (field-based-access branch
+                  (simple-var-ref A)))
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (field-based-access byName
+              (field-based-access branch
+                (simple-var-ref A)))
+            (literal a)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (field-based-access pairs
+              (simple-var-ref A))
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (field-based-access leaf
+              (field-based-access branch
+                (simple-var-ref A)))
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (field-based-access leaf
+              (field-based-access branch
+                (simple-var-ref A)))
+            (user-defined-type Leaf)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref A)
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref A)
+            (simple-var-ref B)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (field-based-access leaf
+              (field-based-access branch
+                (simple-var-ref A)))
+            (field-based-access leaf
+              (field-based-access branch
+                (simple-var-ref B))))))))))

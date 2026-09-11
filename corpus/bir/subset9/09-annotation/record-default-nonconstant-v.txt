@@ -1,0 +1,48 @@
+module $anon.. v 0.0.0;
+$annotation$0  any;
+seed() -> int{
+  bb0 {
+    %1 = ConstantLoad 11
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad typedesc
+    %2 = ConstantLoad $anon/.:0.0.0:codeAnnot
+    %3 = .@ %1 %2;
+    c = %3;
+    %5 = c is {| label: string, value: int, never... |}
+    %5 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = println((1, c)) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = seed() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> string{
+  bb0 {
+    %1 = ConstantLoad none
+    %0 = %1;
+    return;
+  }
+}

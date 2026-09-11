@@ -103,6 +103,10 @@ type typeResolver interface {
 
 	setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault)
 	mappingDefaults(atom *semtypes.MappingAtomicType) ([]model.FieldDefault, bool)
+	pushRecordDefaultResolution(recordTy *ast.BLangRecordType)
+	popRecordDefaultResolution()
+	notePartialRecordType(recordTy *ast.BLangRecordType, partial semtypes.SemType) bool
+	isPartialRecordType(ty semtypes.SemType) bool
 	setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef)
 	getClassAtomSymbol(mat *semtypes.MappingAtomicType) (model.SymbolRef, bool)
 	currentScope() model.Scope
@@ -158,7 +162,89 @@ func (r *mappingDefaultsResolverBase) mappingDefaults(atom *semtypes.MappingAtom
 	return defaults, ok
 }
 
+// recordDefaultsInProgressBase tracks the records whose field default
+// expressions are currently being resolved. Their mapping definition is not
+// defined yet, so a mapping constructor that selects such a partial type would
+// need the very defaults being resolved: a cyclic dependency.
+//
+// Each resolver owns its own base and pushes only the records it resolves, so
+// the package resolver's base is written only by resolveTopLevelTypes, which
+// runs single threaded in ResolvePublicNodes. Function bodies resolve
+// concurrently against a shared parent, but ResolvePrivateNodes never
+// populates typeDefnNodes, so no goroutine reaches the record branch through
+// the parent; they only read the parent stack, through its empty fast path.
+type recordDefaultsInProgressBase struct {
+	interner   *semtypes.SemTypeInterner
+	inProgress []partialRecordType
+}
+
+type partialRecordType struct {
+	recordTy  *ast.BLangRecordType
+	handle    semtypes.InternHandle
+	hasHandle bool
+}
+
+func newRecordDefaultsInProgressBase() *recordDefaultsInProgressBase {
+	return &recordDefaultsInProgressBase{interner: semtypes.NewSemtypeInterner()}
+}
+
+func (r *recordDefaultsInProgressBase) pushRecordDefaultResolution(recordTy *ast.BLangRecordType) {
+	r.inProgress = append(r.inProgress, partialRecordType{recordTy: recordTy})
+}
+
+func (r *recordDefaultsInProgressBase) popRecordDefaultResolution() {
+	r.inProgress = r.inProgress[:len(r.inProgress)-1]
+}
+
+// notePartialRecordType records the recursive semtype handed out for a record
+// that is still resolving its defaults. Only such a self-reference can make the
+// partial type reachable from an expected type, and the recursive atom behind
+// it does not exist until the first self-reference asks for it, so the handle
+// is interned here rather than when the record is pushed. It reports whether
+// the record belongs to this resolver, so nested resolvers can pass it up the
+// chain.
+func (r *recordDefaultsInProgressBase) notePartialRecordType(recordTy *ast.BLangRecordType,
+	partial semtypes.SemType,
+) bool {
+	for i := range r.inProgress {
+		entry := &r.inProgress[i]
+		if entry.recordTy != recordTy {
+			continue
+		}
+		if !entry.hasHandle {
+			entry.handle = r.interner.Intern(partial)
+			entry.hasHandle = true
+		}
+		return true
+	}
+	return false
+}
+
+// isPartialRecordType reports whether ty selects a record whose defaults are
+// still being resolved. The mapping part is compared as well as ty itself, so a
+// nilable or union self reference such as `R? next = {}` is caught too.
+func (r *recordDefaultsInProgressBase) isPartialRecordType(ty semtypes.SemType) bool {
+	if len(r.inProgress) == 0 {
+		return false
+	}
+	return r.matchesPartial(ty) || r.matchesPartial(semtypes.Intersect(ty, semtypes.Mapping))
+}
+
+func (r *recordDefaultsInProgressBase) matchesPartial(ty semtypes.SemType) bool {
+	handle, ok := r.interner.Lookup(ty)
+	if !ok {
+		return false
+	}
+	for _, entry := range r.inProgress {
+		if entry.hasHandle && entry.handle == handle {
+			return true
+		}
+	}
+	return false
+}
+
 type packageTypeResolver struct {
+	*recordDefaultsInProgressBase
 	ctx             *context.CompilerContext
 	tyCtx           semtypes.Context
 	importedSymbols map[string]model.ExportedSymbolSpace
@@ -386,6 +472,7 @@ func (t *packageTypeResolver) setCapturedVars(vars map[model.SymbolRef]bool) {
 
 type functionTypeResolver struct {
 	*mappingDefaultsResolverBase
+	*recordDefaultsInProgressBase
 	parentResolver       typeResolver
 	tyCtx                semtypes.Context
 	retTy                semtypes.SemType
@@ -527,6 +614,17 @@ func (f *functionTypeResolver) mappingDefaults(atom *semtypes.MappingAtomicType)
 	return f.parentResolver.mappingDefaults(atom)
 }
 
+func (f *functionTypeResolver) notePartialRecordType(recordTy *ast.BLangRecordType, partial semtypes.SemType) bool {
+	if f.recordDefaultsInProgressBase.notePartialRecordType(recordTy, partial) {
+		return true
+	}
+	return f.parentResolver.notePartialRecordType(recordTy, partial)
+}
+
+func (f *functionTypeResolver) isPartialRecordType(ty semtypes.SemType) bool {
+	return f.recordDefaultsInProgressBase.isPartialRecordType(ty) || f.parentResolver.isPartialRecordType(ty)
+}
+
 func (f *functionTypeResolver) setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef) {
 	f.parentResolver.setClassAtomSymbol(mat, symbol)
 }
@@ -580,23 +678,24 @@ func (f *functionTypeResolver) nextMonoFnName(origName string) string {
 
 func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace, moduleScope model.Scope) *packageTypeResolver {
 	return &packageTypeResolver{
-		ctx:                    ctx,
-		tyCtx:                  semtypes.ContextFrom(ctx.GetTypeEnv()),
-		importedSymbols:        importedSymbols,
-		pkg:                    pkg,
-		implicitImports:        make(map[string]ast.BLangImportPackage),
-		packageConstants:       make(map[model.SymbolRef]*ast.BLangVariable),
-		inferredGlobalVarNodes: make(map[model.SymbolRef]*ast.BLangVariable),
-		lazyResolutionStatus:   make(map[model.SymbolRef]resolutionStatus),
-		functionNodes:          make(map[model.SymbolRef]*ast.BLangFunction),
-		typeDefnNodes:          make(map[model.SymbolRef]*ast.BLangTypeDefinition),
-		classDefnNodes:         make(map[model.SymbolRef]*ast.BLangClassDefinition),
-		classAtomSymbols:       make(map[*semtypes.MappingAtomicType]model.SymbolRef),
-		classSymbolByType:      make(map[semtypes.InternHandle]model.SymbolRef),
-		semtypeInterner:        semtypes.NewSemtypeInterner(),
-		xmlIteratorTypes:       semtypes.NewSemTypeCache(),
-		monoCounters:           make(map[string]int),
-		scope:                  moduleScope,
+		ctx:                          ctx,
+		tyCtx:                        semtypes.ContextFrom(ctx.GetTypeEnv()),
+		importedSymbols:              importedSymbols,
+		pkg:                          pkg,
+		implicitImports:              make(map[string]ast.BLangImportPackage),
+		packageConstants:             make(map[model.SymbolRef]*ast.BLangVariable),
+		inferredGlobalVarNodes:       make(map[model.SymbolRef]*ast.BLangVariable),
+		lazyResolutionStatus:         make(map[model.SymbolRef]resolutionStatus),
+		functionNodes:                make(map[model.SymbolRef]*ast.BLangFunction),
+		typeDefnNodes:                make(map[model.SymbolRef]*ast.BLangTypeDefinition),
+		classDefnNodes:               make(map[model.SymbolRef]*ast.BLangClassDefinition),
+		classAtomSymbols:             make(map[*semtypes.MappingAtomicType]model.SymbolRef),
+		classSymbolByType:            make(map[semtypes.InternHandle]model.SymbolRef),
+		semtypeInterner:              semtypes.NewSemtypeInterner(),
+		recordDefaultsInProgressBase: newRecordDefaultsInProgressBase(),
+		xmlIteratorTypes:             semtypes.NewSemTypeCache(),
+		monoCounters:                 make(map[string]int),
+		scope:                        moduleScope,
 	}
 }
 
@@ -717,12 +816,13 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 	allImports := make(map[string]ast.BLangImportPackage)
 	resolveFieldInitsInScope := func(scope model.Scope, fields []*ast.BLangVariable) {
 		ft := &functionTypeResolver{
-			mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
-			parentResolver:              p,
-			tyCtx:                       semtypes.ContextFrom(p.typeEnv()),
-			implicitImports:             make(map[string]ast.BLangImportPackage),
-			monoCounters:                make(map[string]int),
-			scope:                       scope,
+			mappingDefaultsResolverBase:  newMappingDefaultsResolverBase(),
+			recordDefaultsInProgressBase: newRecordDefaultsInProgressBase(),
+			parentResolver:               p,
+			tyCtx:                        semtypes.ContextFrom(p.typeEnv()),
+			implicitImports:              make(map[string]ast.BLangImportPackage),
+			monoCounters:                 make(map[string]int),
+			scope:                        scope,
 		}
 		for _, fieldNode := range fields {
 			field := fieldNode
@@ -957,13 +1057,14 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 		return nil
 	}
 	ft := &functionTypeResolver{
-		mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
-		parentResolver:              p,
-		tyCtx:                       semtypes.ContextFrom(p.typeEnv()),
-		implicitImports:             make(map[string]ast.BLangImportPackage),
-		monoCounters:                make(map[string]int),
-		scope:                       fn.Scope(),
-		isolatedContext:             fn.IsIsolated(),
+		mappingDefaultsResolverBase:  newMappingDefaultsResolverBase(),
+		recordDefaultsInProgressBase: newRecordDefaultsInProgressBase(),
+		parentResolver:               p,
+		tyCtx:                        semtypes.ContextFrom(p.typeEnv()),
+		implicitImports:              make(map[string]ast.BLangImportPackage),
+		monoCounters:                 make(map[string]int),
+		scope:                        fn.Scope(),
+		isolatedContext:              fn.IsIsolated(),
 	}
 	if !isPolymorphicFnSymbol(fnSym) {
 		ft.retTy = fnSym.TypedSignature().ReturnType
@@ -2086,14 +2187,15 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 	// Create a function type resolver for the lambda so expectedReturnType() is correct
 	fnSym := t.getSymbol(e.Function.Symbol()).(model.FunctionSymbol)
 	ft := &functionTypeResolver{
-		mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
-		parentResolver:              t,
-		tyCtx:                       semtypes.ContextFrom(t.typeEnv()),
-		retTy:                       fnSym.TypedSignature().ReturnType,
-		implicitImports:             make(map[string]ast.BLangImportPackage),
-		monoCounters:                make(map[string]int),
-		scope:                       e.Function.Scope(),
-		isolatedContext:             fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0,
+		mappingDefaultsResolverBase:  newMappingDefaultsResolverBase(),
+		recordDefaultsInProgressBase: newRecordDefaultsInProgressBase(),
+		parentResolver:               t,
+		tyCtx:                        semtypes.ContextFrom(t.typeEnv()),
+		retTy:                        fnSym.TypedSignature().ReturnType,
+		implicitImports:              make(map[string]ast.BLangImportPackage),
+		monoCounters:                 make(map[string]int),
+		scope:                        e.Function.Scope(),
+		isolatedContext:              fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0,
 	}
 
 	// Push function boundary marker onto the chain
@@ -2192,14 +2294,15 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		Flags:         flags,
 	})
 	ft := &functionTypeResolver{
-		mappingDefaultsResolverBase: newMappingDefaultsResolverBase(),
-		parentResolver:              t,
-		tyCtx:                       semtypes.ContextFrom(t.typeEnv()),
-		retTy:                       expectedReturnTy,
-		implicitImports:             make(map[string]ast.BLangImportPackage),
-		monoCounters:                make(map[string]int),
-		scope:                       e.Function.Scope(),
-		isolatedContext:             flags&model.FuncSymbolFlagIsolated != 0,
+		mappingDefaultsResolverBase:  newMappingDefaultsResolverBase(),
+		recordDefaultsInProgressBase: newRecordDefaultsInProgressBase(),
+		parentResolver:               t,
+		tyCtx:                        semtypes.ContextFrom(t.typeEnv()),
+		retTy:                        expectedReturnTy,
+		implicitImports:              make(map[string]ast.BLangImportPackage),
+		monoCounters:                 make(map[string]int),
+		scope:                        e.Function.Scope(),
+		isolatedContext:              flags&model.FuncSymbolFlagIsolated != 0,
 	}
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
 	prevCaptured := t.getCapturedVars()
@@ -2659,6 +2762,8 @@ func createFieldDescriptor(name string, field ast.BField) model.FieldDescriptor 
 	fd := model.NewFieldDescriptor(name, flags, true)
 	fd.SetMemberType(field.Type.(ast.BLangNode).GetDeterminedType())
 	fd.DefaultFnRef = field.DefaultFnRef
+	fd.IsConstant = field.IsConstant
+	fd.ConstantValue = field.ConstantValue
 	return fd
 }
 
@@ -4278,6 +4383,16 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 }
 
 func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	// A constructor whose expected type is a record still resolving its own
+	// defaults needs the very defaults being resolved. This must be diagnosed
+	// before selectMappingInherentType, not from a missing mappingDefaults
+	// entry: the record's recursive mapping atom has no atomic type until
+	// d.Define runs, so the emptiness check in selection dereferences an unset
+	// recursive atom and panics.
+	if t.isPartialRecordType(expectedType) {
+		t.semanticError("cyclic dependency in record field default", e.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
 	for _, f := range e.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
 		if _, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, semtypes.SemType{}); !ok {
@@ -4305,9 +4420,8 @@ func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e
 	}
 
 	e.AtomicType = *mat
-	if defaults, found := t.mappingDefaults(mat); found {
-		e.FieldDefaults = append([]model.FieldDefault(nil), defaults...)
-	}
+	defaults, _ := t.mappingDefaults(mat)
+	e.FieldDefaults = append([]model.FieldDefault(nil), defaults...)
 	setExpectedType(e, resultType)
 	return resultType, defaultExpressionEffect(chain), true
 }
@@ -7451,7 +7565,9 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 	case *ast.BLangRecordType:
 		defn := ty.Definition
 		if defn != nil {
-			return defn.GetSemType(t.typeEnv()), true
+			partial := defn.GetSemType(t.typeEnv())
+			t.notePartialRecordType(ty, partial)
+			return partial, true
 		}
 		d := semtypes.NewMappingDefinition()
 		ty.Definition = &d
@@ -7464,6 +7580,8 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 
 		seen := make(map[string]bool)
 		var fields []semtypes.Field
+		t.pushRecordDefaultResolution(ty)
+		defer t.popRecordDefaultResolution()
 		// TODO: need to think of a way to unify this with objects
 		for name, field := range ty.FieldPtrs() {
 			if seen[name] {
@@ -7491,6 +7609,9 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 					return semtypes.SemType{}, false
 				}
 				field.DefaultFnRef = allocateDefaultFnSymbol(t, fieldTy, field.GetPosition())
+				if !classifyFieldDefault(t, field) {
+					return semtypes.SemType{}, false
+				}
 			}
 			ro := field.IsReadonly()
 			opt := field.IsOptional()
@@ -7739,7 +7860,12 @@ func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType) []model.
 	for name, field := range recordTy.FieldPtrs() {
 		directFields[name] = true
 		if field.DefaultExpr != nil {
-			defaults = append(defaults, model.FieldDefault{FieldName: name, FnRef: field.DefaultFnRef})
+			defaults = append(defaults, model.FieldDefault{
+				FieldName:     name,
+				FnRef:         field.DefaultFnRef,
+				IsConstant:    field.IsConstant,
+				ConstantValue: field.ConstantValue,
+			})
 		}
 	}
 

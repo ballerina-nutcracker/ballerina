@@ -1,0 +1,26 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad m
+    %3 = ConstantLoad {"m":{}}
+    %1 = %3[%2];
+    inner = %1;
+    %5 = println(inner) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad 1
+    %7 = ConstantLoad a
+    inner[%7] = %6;
+    %8 = println(inner) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$desugar$0() -> {| int... |}{
+  bb0 {
+    %1 = newMap {| int... |}{}
+    %0 = %1;
+    return;
+  }
+}

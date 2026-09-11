@@ -1,0 +1,7 @@
+-- stdout --
+{"x":1}
+-- stderr --
+error: default blew up
+        at boom(default-panic-p.bal:19)
+           $desugar$0(default-panic-p.bal:23)
+           main(default-panic-p.bal:29)

@@ -1,0 +1,160 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Leaf
+    (record-type
+      (field n
+        (value-type int)
+        (literal 1))
+      (field s
+        (value-type string)
+        (literal leaf))))
+  (type-definition Branch
+    (record-type
+      (field leaf
+        (user-defined-type Leaf)
+        (mapping-constructor-expr))
+      (field leaves
+        (array-type
+          (user-defined-type Leaf) dimensions: 1 ([]))
+        (list-constructor-expr
+          (mapping-constructor-expr)
+          (mapping-constructor-expr
+            (key-value
+              (literal n)
+              (literal 2)))))
+      (field byName
+        (constrained-type
+          (builtin-ref-type map)
+          (user-defined-type Leaf))
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (mapping-constructor-expr))))))
+  (type-definition Root
+    (record-type
+      (field branch
+        (user-defined-type Branch)
+        (mapping-constructor-expr))
+      (field pairs
+        (array-type
+          (constrained-type
+            (builtin-ref-type map)
+            (user-defined-type Leaf)) dimensions: 1 ([
+          (literal 2)]))
+        (list-constructor-expr))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (index-based-access
+                (literal {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]})
+                (literal branch))
+              (literal leaf))
+            (literal n)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (index-based-access
+                (index-based-access
+                  (literal {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]})
+                  (literal branch))
+                (literal leaves))
+              (literal 1))
+            (literal n)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (index-based-access
+                (literal {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]})
+                (literal branch))
+              (literal byName))
+            (literal a)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (literal {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]})
+              (literal pairs))
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (index-based-access
+                (literal {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]})
+                (literal branch))
+              (literal leaf))
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (index-based-access
+                (literal {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]})
+                (literal branch))
+              (literal leaf))
+            (user-defined-type Leaf)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]})
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (literal {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]})
+            (literal {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]})))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (index-based-access
+                (literal {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]})
+                (literal branch))
+              (literal leaf))
+            (index-based-access
+              (index-based-access
+                (literal {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]})
+                (literal branch))
+              (literal leaf))))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (literal leaf))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr))))
+  (function $desugar$3 () ()
+    (block-function-body
+      (return
+        (list-constructor-expr
+          (mapping-constructor-expr)
+          (mapping-constructor-expr
+            (key-value
+              (literal n)
+              (literal 2)))))))
+  (function $desugar$4 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (mapping-constructor-expr))))))
+  (function $desugar$5 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr))))
+  (function $desugar$6 () ()
+    (block-function-body
+      (return
+        (list-constructor-expr)))))

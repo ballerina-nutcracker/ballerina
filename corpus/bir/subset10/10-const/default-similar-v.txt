@@ -1,0 +1,46 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"z":1}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad {"z":2}
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad {"a":1,"b":"x"}
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}
+$desugar$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$desugar$3() -> string{
+  bb0 {
+    %1 = ConstantLoad x
+    %0 = %1;
+    return;
+  }
+}

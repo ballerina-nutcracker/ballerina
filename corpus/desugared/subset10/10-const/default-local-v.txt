@@ -1,0 +1,77 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (lambda
+            (function $desugar$0 () ()
+              (block-function-body
+                (return
+                  (numeric-literal 3))))))))
+      (var-def
+        (variable folded (type
+          (record-type
+            (field z
+              (value-type int)
+              (simple-var-ref STEP1)))) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref folded)
+            (literal z)))))
+      (var-def
+        (variable captured (type
+          (value-type int)) (expr
+          (literal 9))))
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $desugar$1 () ()
+              (block-function-body
+                (return
+                  (simple-var-ref captured))))))))
+      (var-def
+        (variable capturing (type
+          (record-type
+            (field z
+              (value-type int)
+              (simple-var-ref captured)))) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref capturing)
+            (literal z)))))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $desugar$2 () ()
+              (block-function-body
+                (return
+                  (numeric-literal 3))))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $desugar$3 () ()
+              (block-function-body
+                (return
+                  (literal a))))))))
+      (var-def
+        (variable partial (type
+          (record-type
+            (field z
+              (value-type int)
+              (simple-var-ref STEP1))
+            (field s
+              (value-type string)
+              (literal a)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal z)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref partial)))))))

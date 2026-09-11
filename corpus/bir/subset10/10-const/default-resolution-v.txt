@@ -1,0 +1,51 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"x":6}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad {"x":6}
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %6 = ConstantLoad y
+    %8 = ConstantLoad nested
+    %9 = ConstantLoad {"nested":{"y":3}}
+    %7 = %9[%8];
+    %5 = %7[%6];
+    %10 = %5;
+    %11 = println(%10) -> bb3;
+  }
+  bb3 {
+    %13 = ConstantLoad {"x":6}
+    %14 = ConstantLoad {"x":6}
+    %12 = == %13 %14;
+    %15 = %12;
+    %16 = println(%15) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 6
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 3
+    %0 = %1;
+    return;
+  }
+}
+$desugar$2() -> {| y: int, never... |}{
+  bb0 {
+    %1 = newMap {| y: int, never... |}{} defaults{y=$anon/.:$desugar$1}
+    %0 = %1;
+    return;
+  }
+}

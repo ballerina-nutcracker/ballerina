@@ -167,6 +167,22 @@ func (l *loopTypeResolver) mappingDefaults(atom *semtypes.MappingAtomicType) ([]
 	return l.parentResolver.mappingDefaults(atom)
 }
 
+func (l *loopTypeResolver) pushRecordDefaultResolution(recordTy *ast.BLangRecordType) {
+	l.parentResolver.pushRecordDefaultResolution(recordTy)
+}
+
+func (l *loopTypeResolver) popRecordDefaultResolution() {
+	l.parentResolver.popRecordDefaultResolution()
+}
+
+func (l *loopTypeResolver) notePartialRecordType(recordTy *ast.BLangRecordType, partial semtypes.SemType) bool {
+	return l.parentResolver.notePartialRecordType(recordTy, partial)
+}
+
+func (l *loopTypeResolver) isPartialRecordType(ty semtypes.SemType) bool {
+	return l.parentResolver.isPartialRecordType(ty)
+}
+
 func (l *loopTypeResolver) setClassAtomSymbol(mat *semtypes.MappingAtomicType, symbol model.SymbolRef) {
 	l.parentResolver.setClassAtomSymbol(mat, symbol)
 }

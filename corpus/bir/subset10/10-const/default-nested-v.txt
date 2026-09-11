@@ -1,0 +1,155 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad n
+    %4 = ConstantLoad leaf
+    %6 = ConstantLoad branch
+    %7 = ConstantLoad {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]}
+    %5 = %7[%6];
+    %3 = %5[%4];
+    %1 = %3[%2];
+    %8 = %1;
+    %9 = println(%8) -> bb1;
+  }
+  bb1 {
+    %11 = ConstantLoad n
+    %13 = ConstantLoad 1
+    %15 = ConstantLoad leaves
+    %17 = ConstantLoad branch
+    %18 = ConstantLoad {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]}
+    %16 = %18[%17];
+    %14 = %16[%15];
+    %12 = %14[%13];
+    %10 = %12[%11];
+    %19 = %10;
+    %20 = println(%19) -> bb2;
+  }
+  bb2 {
+    %22 = ConstantLoad a
+    %24 = ConstantLoad byName
+    %26 = ConstantLoad branch
+    %27 = ConstantLoad {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]}
+    %25 = %27[%26];
+    %23 = %25[%24];
+    %21 = %23[%22];
+    %28 = println(%21) -> bb3;
+  }
+  bb3 {
+    %30 = ConstantLoad 0
+    %32 = ConstantLoad pairs
+    %33 = ConstantLoad {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]}
+    %31 = %33[%32];
+    %29 = %31[%30];
+    %34 = println(%29) -> bb4;
+  }
+  bb4 {
+    %36 = ConstantLoad leaf
+    %38 = ConstantLoad branch
+    %39 = ConstantLoad {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]}
+    %37 = %39[%38];
+    %35 = %37[%36];
+    %40 = %35 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %41 = %40;
+    %42 = println(%41) -> bb5;
+  }
+  bb5 {
+    %44 = ConstantLoad leaf
+    %46 = ConstantLoad branch
+    %47 = ConstantLoad {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]}
+    %45 = %47[%46];
+    %43 = %45[%44];
+    %48 = %43 is {| n: int, s: string, never... |}
+    %49 = %48;
+    %50 = println(%49) -> bb6;
+  }
+  bb6 {
+    %51 = ConstantLoad {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]}
+    %52 = %51 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %53 = %52;
+    %54 = println(%53) -> bb7;
+  }
+  bb7 {
+    %56 = ConstantLoad {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]}
+    %57 = ConstantLoad {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]}
+    %55 = == %56 %57;
+    %58 = %55;
+    %59 = println(%58) -> bb8;
+  }
+  bb8 {
+    %62 = ConstantLoad leaf
+    %64 = ConstantLoad branch
+    %65 = ConstantLoad {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]}
+    %63 = %65[%64];
+    %61 = %63[%62];
+    %67 = ConstantLoad leaf
+    %69 = ConstantLoad branch
+    %70 = ConstantLoad {"branch":{"leaf":{"n":1,"s":"leaf"},"leaves":[{"n":1,"s":"leaf"},{"n":2,"s":"leaf"}],"byName":{"a":{"n":1,"s":"leaf"}}},"pairs":[{},{}]}
+    %68 = %70[%69];
+    %66 = %68[%67];
+    %60 = == %61 %66;
+    %71 = %60;
+    %72 = println(%71) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> string{
+  bb0 {
+    %1 = ConstantLoad leaf
+    %0 = %1;
+    return;
+  }
+}
+$desugar$2() -> {| n: int, s: string, never... |}{
+  bb0 {
+    %1 = newMap {| n: int, s: string, never... |}{} defaults{n=$anon/.:$desugar$0, s=$anon/.:$desugar$1}
+    %0 = %1;
+    return;
+  }
+}
+$desugar$3() -> [{| n: int, s: string, never... |}...]{
+  bb0 {
+    %1 = newMap {| n: int, s: string, never... |}{} defaults{n=$anon/.:$desugar$0, s=$anon/.:$desugar$1}
+    %2 = ConstantLoad n
+    %3 = ConstantLoad 2
+    %4 = newMap {| n: int, s: string, never... |}{%2=%3} defaults{n=$anon/.:$desugar$0, s=$anon/.:$desugar$1}
+    %5 = ConstantLoad 2
+    %6 = newArray [{| n: int, s: string, never... |}...][%5]{%1, %4}
+    %0 = %6;
+    return;
+  }
+}
+$desugar$4() -> {| {| n: int, s: string, never... |}... |}{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = newMap {| n: int, s: string, never... |}{} defaults{n=$anon/.:$desugar$0, s=$anon/.:$desugar$1}
+    %3 = newMap {| {| n: int, s: string, never... |}... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}
+$desugar$5() -> {| byName: {| {| n: int, s: string, never... |}... |}, leaf: {| n: int, s: string, never... |}, leaves: [{| n: int, s: string, never... |}...], never... |}{
+  bb0 {
+    %1 = newMap {| byName: {| {| n: int, s: string, never... |}... |}, leaf: {| n: int, s: string, never... |}, leaves: [{| n: int, s: string, never... |}...], never... |}{} defaults{leaf=$anon/.:$desugar$2, leaves=$anon/.:$desugar$3, byName=$anon/.:$desugar$4}
+    %0 = %1;
+    return;
+  }
+}
+$desugar$6() -> [{| {| n: int, s: string, never... |}... |}, {| {| n: int, s: string, never... |}... |}, never...]{
+  bb0 {
+    %1 = newMap {| {| n: int, s: string, never... |}... |}{}
+    %2 = newMap {| {| n: int, s: string, never... |}... |}{}
+    %3 = ConstantLoad 2
+    %4 = newArray [{| {| n: int, s: string, never... |}... |}, {| {| n: int, s: string, never... |}... |}, never...][%3]{%1, %2}
+    %0 = %4;
+    return;
+  }
+}

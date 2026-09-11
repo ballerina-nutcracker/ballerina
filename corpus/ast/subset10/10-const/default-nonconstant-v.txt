@@ -1,0 +1,67 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function next () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (type-definition Runtime
+    (record-type
+      (field x
+        (value-type int)
+        (invocation next ()))
+      (field y
+        (value-type int)
+        (literal 1))))
+  (type-definition Inner
+    (record-type
+      (field x
+        (value-type int)
+        (invocation next ()))))
+  (type-definition Outer
+    (record-type
+      (field inner
+        (user-defined-type Inner)
+        (mapping-constructor-expr))
+      (field y
+        (value-type int)
+        (literal 2))))
+  (const A (
+    (user-defined-type Runtime)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 7)))))
+  (const B (
+    (user-defined-type Outer)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal inner)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (var-def
+        (variable r (type
+          (user-defined-type Runtime)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (var-def
+        (variable o (type
+          (user-defined-type Outer)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref o)))))))

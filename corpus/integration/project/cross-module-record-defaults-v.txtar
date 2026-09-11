@@ -1,0 +1,8 @@
+-- stdout --
+{"runtime":3,"flag":true,"x":1,"n":null,"s":"b","list":[1,2],"mapping":{"k":3},"nested":{"depth":1}}
+true
+true
+1
+3
+42
+-- stderr --

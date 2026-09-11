@@ -1,0 +1,52 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition First
+    (record-type
+      (field z
+        (value-type int)
+        (literal 1))))
+  (type-definition Second
+    (record-type
+      (field z
+        (value-type int)
+        (literal 2))))
+  (type-definition Left
+    (record-type
+      (field a
+        (value-type int)
+        (literal 1))))
+  (type-definition Right
+    (record-type
+      (field b
+        (value-type string)
+        (literal x))))
+  (type-definition Both
+    (record-type))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"z":1}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"z":2}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"a":1,"b":"x"}))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $desugar$1 () ()
+    (block-function-body
+      (return
+        (literal 2))))
+  (function $desugar$2 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $desugar$3 () ()
+    (block-function-body
+      (return
+        (literal x)))))

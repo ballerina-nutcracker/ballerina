@@ -1,0 +1,46 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable folded (type
+        (record-type
+          (field z
+            (value-type int)
+            (simple-var-ref STEP1)))) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access z
+          (simple-var-ref folded)))))
+    (var-def
+      (variable captured (type
+        (value-type int)) (expr
+        (literal 9))))
+    (var-def
+      (variable capturing (type
+        (record-type
+          (field z
+            (value-type int)
+            (simple-var-ref captured)))) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access z
+          (simple-var-ref capturing)))))
+    (var-def
+      (variable partial (type
+        (record-type
+          (field z
+            (value-type int)
+            (simple-var-ref STEP1))
+          (field s
+            (value-type string)
+            (literal a)))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal z)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref partial))))
+  )
+)

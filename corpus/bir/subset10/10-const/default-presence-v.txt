@@ -1,0 +1,112 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"a":null,"b":1}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad {"b":null,"a":null}
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad {"b":false,"i":0,"f":0.0,"s":"","l":[],"m":{}}
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad {"b":false,"i":0,"f":0.0,"s":"","l":[],"m":{}}
+    %8 = %7 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %9 = %8;
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    %11 = ConstantLoad {"x":1}
+    %12 = println(%11) -> bb5;
+  }
+  bb5 {
+    %13 = ConstantLoad {"x":1}
+    %14 = ConstantLoad s
+    %15 = hasKey(%13,%14) -> bb6;
+  }
+  bb6 {
+    %16 = %15;
+    %17 = println(%16) -> bb7;
+  }
+  bb7 {
+    %18 = ConstantLoad {"y":"extra","x":1}
+    %19 = println(%18) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+$desugar$0() -> nil|int{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> nil|int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$desugar$2() -> boolean{
+  bb0 {
+    %1 = ConstantLoad false
+    %0 = %1;
+    return;
+  }
+}
+$desugar$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}
+$desugar$4() -> float{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}
+$desugar$5() -> string{
+  bb0 {
+    %1 = ConstantLoad 
+    %0 = %1;
+    return;
+  }
+}
+$desugar$6() -> [int...]{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int...][%1]{}
+    %0 = %2;
+    return;
+  }
+}
+$desugar$7() -> {| int... |}{
+  bb0 {
+    %1 = newMap {| int... |}{}
+    %0 = %1;
+    return;
+  }
+}
+$desugar$8() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$desugar$9() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}

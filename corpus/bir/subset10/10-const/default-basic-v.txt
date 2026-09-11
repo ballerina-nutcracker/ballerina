@@ -1,0 +1,92 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"x":5}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad x
+    %5 = ConstantLoad {"x":5}
+    %3 = %5[%4];
+    %6 = %3;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad {"x":5}
+    %9 = %8 is {| x: int, never... |}
+    %10 = %9;
+    %11 = println(%10) -> bb3;
+  }
+  bb3 {
+    %12 = ConstantLoad {"x":5}
+    %13 = %12 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %14 = %13;
+    %15 = println(%14) -> bb4;
+  }
+  bb4 {
+    %16 = ConstantLoad {"x":5,"s":"a","b":true}
+    %17 = println(%16) -> bb5;
+  }
+  bb5 {
+    %18 = ConstantLoad {"s":"z","x":5,"b":true}
+    %19 = println(%18) -> bb6;
+  }
+  bb6 {
+    %20 = ConstantLoad {"x":1,"s":"z","b":false}
+    %21 = println(%20) -> bb7;
+  }
+  bb7 {
+    %22 = ConstantLoad {"x":7,"s":"a"}
+    %23 = println(%22) -> bb8;
+  }
+  bb8 {
+    %24 = ConstantLoad {"x":7,"s":"a"}
+    %25 = %24 is {| s: string, x: int, never... |}
+    %26 = %25;
+    %27 = println(%26) -> bb9;
+  }
+  bb9 {
+    %28 = ConstantLoad {"x":5}
+    %29 = %28 is readonly&{| x: 5, never... |}
+    %30 = %29;
+    %31 = println(%30) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$desugar$2() -> string{
+  bb0 {
+    %1 = ConstantLoad a
+    %0 = %1;
+    return;
+  }
+}
+$desugar$3() -> boolean{
+  bb0 {
+    %1 = ConstantLoad true
+    %0 = %1;
+    return;
+  }
+}
+$desugar$4() -> string{
+  bb0 {
+    %1 = ConstantLoad a
+    %0 = %1;
+    return;
+  }
+}

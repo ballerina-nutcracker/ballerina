@@ -1,0 +1,34 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"value":1,"next":null}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad {"next":{"value":2,"next":null},"value":1}
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad {"value":1,"next":null}
+    %6 = %5 is {| next: nil|..., value: int, never... |}
+    %7 = %6;
+    %8 = println(%7) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> nil|{| next: nil|..., value: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}

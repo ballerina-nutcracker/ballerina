@@ -1,0 +1,58 @@
+module $anon.. v 0.0.0;
+$annotation$0  any;
+runtimeCode  int;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad typedesc
+    %2 = ConstantLoad $anon/.:0.0.0:codeAnnot
+    %3 = .@ %1 %2;
+    folded = %3;
+    %5 = folded is {| label: string, value: int, never... |}
+    %5 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = println((1, folded)) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 5
+    %0 = ConstantLoad typedesc
+    %1 = ConstantLoad $anon/.:0.0.0:codeAnnot
+    %2 = .@ %0 %1;
+    runtimeValue = %2;
+    %4 = runtimeValue is {| label: string, value: int, never... |}
+    %4 ? bb4 : bb6;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = println((1, runtimeValue)) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+$desugar$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> string{
+  bb0 {
+    %1 = ConstantLoad none
+    %0 = %1;
+    return;
+  }
+}
