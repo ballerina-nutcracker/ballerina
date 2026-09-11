@@ -114,10 +114,7 @@ func arrayMap(ctx *extern.Context, args []values.BalValue) (values.BalValue, err
 func arrayIndexOf(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	list := args[0].(*values.List)
 	val := args[1]
-	startIndex := int64(0)
-	if len(args) > 2 && args[2] != nil {
-		startIndex = args[2].(int64)
-	}
+	startIndex := args[2].(int64)
 	if startIndex < 0 {
 		panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", startIndex)))
 	}

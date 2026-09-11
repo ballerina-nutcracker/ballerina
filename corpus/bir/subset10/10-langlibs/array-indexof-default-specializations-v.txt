@@ -1,0 +1,84 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 2
+    %5 = ConstantLoad 4
+    %6 = newArray [int...][%5]{%1, %2, %3, %4}
+    ints = %6;
+    %8 = ConstantLoad a
+    %9 = ConstantLoad b
+    %10 = ConstantLoad c
+    %11 = ConstantLoad b
+    %12 = ConstantLoad 4
+    %13 = newArray [string...][%12]{%8, %9, %10, %11}
+    strings = %13;
+    $desugar$0 = ints;
+    %16 = ConstantLoad 2
+    $desugar$1 = %16;
+    %18 = $desugar$1;
+    %19 = $default$0($desugar$0,%18) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %19;
+    %21 = $desugar$1;
+    %22 = $desugar$2;
+    %23 = indexOf($desugar$0,%21,%22) -> bb2;
+  }
+  bb2 {
+    %24 = %23;
+    %25 = println(%24) -> bb3;
+  }
+  bb3 {
+    $desugar$3 = ints;
+    %27 = ConstantLoad 3
+    $desugar$4 = %27;
+    %29 = $desugar$4;
+    %30 = $default$0($desugar$3,%29) -> bb4;
+  }
+  bb4 {
+    $desugar$5 = %30;
+    %32 = $desugar$4;
+    %33 = $desugar$5;
+    %34 = indexOf($desugar$3,%32,%33) -> bb5;
+  }
+  bb5 {
+    %35 = %34;
+    %36 = println(%35) -> bb6;
+  }
+  bb6 {
+    $desugar$6 = strings;
+    %38 = ConstantLoad b
+    $desugar$7 = %38;
+    %40 = $default$0($desugar$6,$desugar$7) -> bb7;
+  }
+  bb7 {
+    $desugar$8 = %40;
+    %42 = $desugar$8;
+    %43 = indexOf($desugar$6,$desugar$7,%42) -> bb8;
+  }
+  bb8 {
+    %44 = %43;
+    %45 = println(%44) -> bb9;
+  }
+  bb9 {
+    $desugar$9 = strings;
+    %47 = ConstantLoad c
+    $desugar$10 = %47;
+    %49 = $default$0($desugar$9,$desugar$10) -> bb10;
+  }
+  bb10 {
+    $desugar$11 = %49;
+    %51 = $desugar$11;
+    %52 = indexOf($desugar$9,$desugar$10,%51) -> bb11;
+  }
+  bb11 {
+    %53 = %52;
+    %54 = println(%53) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}

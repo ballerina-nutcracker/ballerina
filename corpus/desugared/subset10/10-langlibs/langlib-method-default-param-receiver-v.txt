@@ -1,0 +1,194 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (type-definition Positions
+    (record-type
+      (field found
+        (union-type
+          (value-type int)
+          (value-type null))
+        (invocation lang.array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))
+  (class-definition Holder
+    (variable pos (type
+      (union-type
+        (value-type int)
+        (value-type null))))
+    (function init (
+      (variable pos (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (invocation lang.array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2)))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal pos))
+          (simple-var-ref pos)))))
+  (function letters () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (expr-function-body
+      (list-constructor-expr
+        (literal 10)
+        (literal 20)
+        (literal 30)
+        (literal 20))))
+  (function lengthOf (
+    (variable arr (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable n (type
+      (value-type int)) (expr
+      (invocation lang.array length (
+        (simple-var-ref arr)))))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref n)))
+  (function firstOf (
+    (variable pos (type
+      (union-type
+        (value-type int)
+        (value-type null))) (expr
+      (invocation lang.array indexOf (
+        (simple-var-ref $desugar$0)
+        (simple-var-ref $desugar$1)
+        (simple-var-ref $desugar$2)))))) (
+    (union-type
+      (value-type int)
+      (value-type null)))
+    (expr-function-body
+      (simple-var-ref pos)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)
+                (literal 3)))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$0))))))
+          (invocation lengthOf (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lengthOf (
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3))
+            (literal 99))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$2 (expr
+              (invocation $default$1 ()))))
+          (invocation firstOf (
+            (simple-var-ref $desugar$2)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation firstOf (
+            (literal 7))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation $default$2 ()))))
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (new (
+            (simple-var-ref $desugar$3))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref h)
+            (literal pos)))))
+      (var-def
+        (variable p (type
+          (user-defined-type Positions)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref p)
+            (literal found)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (invocation letters ()))))))))
+  (function $desugar$0 () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation letters ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 30))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (return
+        (invocation lang.array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))
+  (function $default$0 (
+    (variable arr (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (invocation lang.array length (
+          (simple-var-ref arr))))))
+  (function $default$1 () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation letters ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 30))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (return
+        (invocation lang.array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))
+  (function $default$2 () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation letters ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 20))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (return
+        (invocation lang.array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2)))))))

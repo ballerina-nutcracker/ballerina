@@ -1,0 +1,31 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable arr (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 10)
+          (literal 20)
+          (literal 30)
+          (literal 40)
+          (literal 30)))))
+    (var-def
+      (variable firstDefault (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (invocation lang.array indexOf (
+          (simple-var-ref arr)
+          (literal 30) <default>)))))
+    (type-test-expr is
+      (simple-var-ref firstDefault)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref firstDefault))))
+  )
+  (bb2 (bb1 bb0) ())
+)

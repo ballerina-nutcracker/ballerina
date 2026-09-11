@@ -1,0 +1,42 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable arr (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array indexOf (
+          (simple-var-ref arr)
+          (invocation next ()) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref counter))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array indexOf (
+          (simple-var-ref arr)
+          (invocation next ())
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref counter))))
+  )
+)
+(next
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref counter)
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (literal eval))))
+    (return
+      (literal 2))
+  )
+)

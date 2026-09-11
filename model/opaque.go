@@ -39,10 +39,6 @@ type OpaqueFunctionSymbol struct {
 	name        string
 	ID          int          // per-package opaque id; serialization handle and (with the package) selects the monomorphizer
 	SymbolSpace *SymbolSpace // space the monomorphized function is added to
-	// Monomorphization cache functions, if function it self don't support caching then function pointers are nil
-	Lookup          func(cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType) (SymbolRef, bool)
-	Store           func(ref SymbolRef, cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType)
-	IsIsolatedParam func(index int) bool
 }
 
 const (
@@ -59,11 +55,9 @@ const (
 	OpaqueFnXMLIterator = 4
 )
 
-func newOpaqueFunctionSymbol(name string, id int, isIsolatedParam func(int) bool) *OpaqueFunctionSymbol {
-	return &OpaqueFunctionSymbol{name: name, ID: id, IsIsolatedParam: isIsolatedParam}
+func newOpaqueFunctionSymbol(name string, id int) *OpaqueFunctionSymbol {
+	return &OpaqueFunctionSymbol{name: name, ID: id}
 }
-
-func noIsolatedParams(int) bool { return false }
 
 func (s *OpaqueFunctionSymbol) Name() string     { return s.name }
 func (s *OpaqueFunctionSymbol) OpaqueID() int    { return s.ID }
@@ -128,16 +122,16 @@ func OpaqueSymbols(pkg PackageIdentifier) []Symbol {
 		return langXMLOpaqueSymbols()
 	case "lang.array":
 		return []Symbol{
-			newOpaqueFunctionSymbol("push", OpaqueFnArrayPush, noIsolatedParams),
-			newOpaqueFunctionSymbol("map", OpaqueFnArrayMap, func(index int) bool { return index == 1 }),
-			newOpaqueFunctionSymbol("indexOf", OpaqueFnArrayIndexOf, noIsolatedParams),
-			newOpaqueFunctionSymbol("remove", OpaqueFnArrayRemove, noIsolatedParams),
-			newOpaqueFunctionSymbol("removeAll", OpaqueFnArrayRemoveAll, noIsolatedParams),
+			newOpaqueFunctionSymbol("push", OpaqueFnArrayPush),
+			newOpaqueFunctionSymbol("map", OpaqueFnArrayMap),
+			newOpaqueFunctionSymbol("indexOf", OpaqueFnArrayIndexOf),
+			newOpaqueFunctionSymbol("remove", OpaqueFnArrayRemove),
+			newOpaqueFunctionSymbol("removeAll", OpaqueFnArrayRemoveAll),
 		}
 	case "lang.map":
 		return []Symbol{
-			newOpaqueFunctionSymbol("remove", OpaqueFnMapRemove, noIsolatedParams),
-			newOpaqueFunctionSymbol("get", OpaqueFnMapGet, noIsolatedParams),
+			newOpaqueFunctionSymbol("remove", OpaqueFnMapRemove),
+			newOpaqueFunctionSymbol("get", OpaqueFnMapGet),
 		}
 	default:
 		return nil
@@ -181,6 +175,6 @@ func langXMLOpaqueSymbols() []Symbol {
 	for i, def := range defs {
 		syms[i] = newOpaqueTypeSymbol(def.name, def.ty, i)
 	}
-	syms[OpaqueFnXMLIterator] = newOpaqueFunctionSymbol("iterator", OpaqueFnXMLIterator, noIsolatedParams)
+	syms[OpaqueFnXMLIterator] = newOpaqueFunctionSymbol("iterator", OpaqueFnXMLIterator)
 	return syms
 }

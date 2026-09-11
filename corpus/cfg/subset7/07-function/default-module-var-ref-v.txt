@@ -1,0 +1,42 @@
+(bare
+  (bb0 () ()
+    (simple-var-ref n)
+  )
+)
+(fromPreceding
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref x)
+      (simple-var-ref y))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation bare ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation bare (
+          (literal 9))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref doubled))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fromPreceding (
+          (literal 1) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fromPreceding (
+          (literal 1)
+          (literal 5))))))
+  )
+)
+(twice
+  (bb0 () ()
+    (binary-expr *
+      (simple-var-ref x)
+      (literal 2))
+  )
+)

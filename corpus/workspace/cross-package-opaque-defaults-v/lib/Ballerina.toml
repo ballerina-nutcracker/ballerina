@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "opaquedefaultslib"
+version = "1.0.0"

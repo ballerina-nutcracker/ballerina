@@ -1,0 +1,60 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function add
+    (md-doc
+      (doc-lines
+        (md-doc-line "Adds two numbers.")
+        (md-doc-line "@opaque")
+        (md-doc-line ""))
+      (params
+        (md-param-doc (param-name a)
+          (doc-lines
+            "the first number"))
+        (md-param-doc (param-name b)
+          (doc-lines
+            "the second number")))
+      (return-param
+        (md-return-param-doc
+          (doc-lines
+            "the sum"))
+      )) (
+    (variable a (type
+      (value-type int)))
+    (variable b (type
+      (value-type int)) (expr
+      (literal 2)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref a)
+          (simple-var-ref b)))))
+  (function main
+    (md-doc
+      (doc-lines
+        (md-doc-line "@opaque"))) () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation add (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add (
+            (literal 1)
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add (
+            (named-arg a
+              (literal 1))
+            (named-arg b
+              (literal 5)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add (
+            (literal 1)
+            (named-arg b
+              (literal 10))))))))))
