@@ -125,10 +125,32 @@ func TestUnchangedRecompileSkipCorpus(t *testing.T) {
 	runTranscript(t, platform, "sync/testdata/unchanged-recompile-skip.json")
 }
 
+// TestModifierChainIdenticalOutputCorpus predates ticket 28 (the fixture
+// name/file are kept as-is to avoid unrelated churn) but the behavior it
+// checks is implementation-neutral, not modifier-chain-specific: editing an
+// already-open document must publish the same diagnostics an equivalent
+// freshly-opened document would. It still holds under ticket 28's in-place
+// publication model (workspace.go's publish/OpenText) exactly as it did under
+// the dropped Document.Modify() cascade.
 func TestModifierChainIdenticalOutputCorpus(t *testing.T) {
 	platform, cleanup := palnative.NewPlatform()
 	defer cleanup()
 	runTranscript(t, platform, "sync/testdata/modifier-chain-identical-output.json")
+}
+
+// TestIncrementalCarryForwardPreservesDiagnosticsCorpus is ticket 28's
+// end-to-end regression check for design item 1's carry-forward: editing one
+// module (foo, introducing its own new diagnostic) in a multi-module build
+// project must not silently drop the unrelated, unedited module's (main)
+// already-standing diagnostic from the next publishDiagnostics cycle — the
+// trap an incremental packageDriver that omits an unreset module from its
+// drivers map (instead of carrying its prior moduleDriver forward by
+// reference) would fall into invisibly, since no single-file fixture can
+// exercise a second module at all.
+func TestIncrementalCarryForwardPreservesDiagnosticsCorpus(t *testing.T) {
+	platform, cleanup := palnative.NewPlatform()
+	defer cleanup()
+	runTranscript(t, platform, "sync/testdata/incremental-carry-forward-preserves-diagnostics.json")
 }
 
 func runTranscript(t *testing.T, platform pal.Platform, fixturePath string) {

@@ -101,8 +101,10 @@ func newModuleResolutionInput(defaultOrg string, implicitImports map[string]mode
 // (ls-ref/lsp/diagnostics.go:262-279, which checks module.Package == nil
 // instead of the stage field like its sibling stage functions).
 type moduleDriver struct {
-	ctx   *context.CompilerContext
-	stage moduleStage
+	ctx      *context.CompilerContext
+	stage    moduleStage
+	openText textProvider
+	stale    func() bool
 
 	pkgID    *model.PackageID
 	units    []*ast.BLangCompilationUnit
@@ -113,9 +115,13 @@ type moduleDriver struct {
 }
 
 // newModuleDriver constructs a driver for one generation-advance of a single
-// module, over the shared compiler environment env.
-func newModuleDriver(env *context.CompilerEnvironment) *moduleDriver {
-	return &moduleDriver{ctx: context.NewCompilerContext(env)}
+// module, over the shared compiler environment env. openText (ticket 28) is
+// consulted for a document's live content before falling back to the
+// document's own (possibly stale) TextDocument(); stale (design item 5) is
+// checked at the top of advanceTo so a superseded generation aborts between
+// stage advances instead of finishing wasted work. Both may be nil.
+func newModuleDriver(env *context.CompilerEnvironment, openText textProvider, stale func() bool) *moduleDriver {
+	return &moduleDriver{ctx: context.NewCompilerContext(env), openText: openText, stale: stale}
 }
 
 // currentStage returns the stage this driver's module has reached.
@@ -135,6 +141,9 @@ func (d *moduleDriver) diagnosticContext() *context.CompilerContext {
 // gates). Requesting a stage the module has already reached, or passed, is a
 // no-op.
 func (d *moduleDriver) advanceTo(target moduleStage, module *projects.Module, input moduleResolutionInput) {
+	if d.stale != nil && d.stale() {
+		return
+	}
 	switch target {
 	case stageParsed:
 		d.ensureParsed(module)
@@ -194,7 +203,7 @@ func (d *moduleDriver) ensureParsed(module *projects.Module) {
 			continue
 		}
 		name := moduleFileRegistrationKey(module, doc.Name())
-		content := doc.TextDocument().String()
+		content := documentText(module, doc, d.openText)
 		if !alreadyRegistered(env, name) {
 			env.RegisterFile(name, doc.TextDocument())
 			markRegistered(env, name)

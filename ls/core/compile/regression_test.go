@@ -25,6 +25,35 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
+// applyModifierChainDirect bakes content into filePath's document via
+// projects' own Document.Modify().WithContent().Apply() (the ADR-042
+// modifier chain ticket 28 stopped calling from ls/core/workspace), directly
+// against project, bypassing the workspace entirely. The old-path oracle
+// below needs pkg.Compilation() to see edited content the way it always
+// did pre-ticket-28; since ls/core/workspace's Apply no longer pushes edits
+// into the immutable Package graph (see workspace.go's publish), the oracle
+// reaches for the modifier chain itself instead, exactly reproducing the
+// pre-ticket-28 mechanism it is meant to be a regression check against. It
+// returns the new current package the modifier chain cascades onto project.
+func applyModifierChainDirect(t *testing.T, project projects.Project, filePath, content string) *projects.Package {
+	t.Helper()
+	pkg := project.CurrentPackage()
+	docID, ok := project.DocumentID(filePath)
+	if !ok {
+		t.Fatalf("DocumentID(%s): not found", filePath)
+	}
+	module := pkg.Module(docID.ModuleID())
+	if module == nil {
+		t.Fatalf("Module for %s: not found", filePath)
+	}
+	doc := module.Document(docID)
+	if doc == nil {
+		t.Fatalf("Document for %s: not found", filePath)
+	}
+	doc.Modify().WithContent(content).Apply()
+	return project.CurrentPackage()
+}
+
 // oldPathExtract replicates the pre-ticket-37 extraction logic (pkg.Compilation()
 // + Document.SyntaxTree().FilePath()-keyed resolution) verbatim, as a
 // regression oracle: realCompilePackage/extractForURI must produce
@@ -174,15 +203,13 @@ func TestRealCompilePackage_MatchesOldPackageCompilationPath(t *testing.T) {
 
 	oldSvc := newProjectOnlyService(t)
 	_, oldMainURI := openMultimoduleFixture(t, oldSvc)
-	oldGreetURI := fileURI(t, "file://"+greetPath)
-	applyOpen(t, oldSvc, oldGreetURI, editedGreet)
 	oldProj, err := oldSvc.Project(oldMainURI)
 	if err != nil || oldProj == nil {
 		t.Fatalf("old-path Project: %v", err)
 	}
-	oldPkg := oldProj.CurrentPackage()
+	oldPkg := applyModifierChainDirect(t, oldProj, greetPath, editedGreet)
 
-	newResult := realCompilePackage(newPkg)
+	newResult := realCompilePackage(newPkg, compileCycle{openText: newSvc.OpenText})
 	wantByFile, wantResByFile, wantResErr := oldPathExtract(oldPkg)
 
 	assertSameShape(t, "byFile", newResult.byFile, wantByFile)
@@ -221,17 +248,15 @@ func TestExtractForURI_MatchesOldPackageCompilationPath(t *testing.T) {
 		t.Fatalf("new-path Project: %v", err)
 	}
 	newPkg := newProj.CurrentPackage()
-	newDiags := extractForURI(newProj, newPkg, greetPath)
+	newDiags := extractForURI(newProj, newPkg, greetPath, newSvc.OpenText)
 
 	oldSvc := newProjectOnlyService(t)
 	_, oldMainURI := openMultimoduleFixture(t, oldSvc)
-	oldGreetURI := fileURI(t, "file://"+greetPath)
-	applyOpen(t, oldSvc, oldGreetURI, editedGreet)
 	oldProj, err := oldSvc.Project(oldMainURI)
 	if err != nil || oldProj == nil {
 		t.Fatalf("old-path Project: %v", err)
 	}
-	oldPkg := oldProj.CurrentPackage()
+	oldPkg := applyModifierChainDirect(t, oldProj, greetPath, editedGreet)
 	wantDiags := oldExtractForURI(oldProj, oldPkg, greetPath)
 
 	if len(newDiags) != 1 {

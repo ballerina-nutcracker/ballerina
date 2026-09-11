@@ -203,7 +203,7 @@ func TestEnginePanicRecovery(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	failed := collectGen(t, bus, event.CompilationFailed)
 
-	svc.compileFn = func(pkg *proj.Package) cycleResult { panic("boom") }
+	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult { panic("boom") }
 	openDoc(t, projects, "file:///workspace/panic.bal", "public function main() {}\n", 1)
 	svc.Flush()
 
@@ -235,7 +235,7 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	e5b := collectGen(t, bus, event.CompilationDiagnosticsReady)
 
 	// Resolution-error cycle: CE-E5a only.
-	svc.compileFn = func(pkg *proj.Package) cycleResult {
+	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult {
 		return cycleResult{resolutionErrored: true, byFile: map[string][]CompilerDiagnostic{}, resByFile: map[string][]CompilerDiagnostic{}}
 	}
 	openDoc(t, projects, "file:///workspace/reserr.bal", "public function main() {}\n", 1)
@@ -248,7 +248,7 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	}
 
 	// Clean cycle: CE-E5a + CE-E5b.
-	svc.compileFn = func(pkg *proj.Package) cycleResult {
+	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult {
 		return cycleResult{byFile: map[string][]CompilerDiagnostic{}, resByFile: map[string][]CompilerDiagnostic{}}
 	}
 	openDoc(t, projects, "file:///workspace/clean.bal", "public function main() {}\n", 1)
@@ -330,7 +330,7 @@ func TestEngineCancelSupersedesInFlight(t *testing.T) {
 	var releaseOnce sync.Once
 	releaseNow := func() { releaseOnce.Do(func() { close(release) }) }
 	defer releaseNow() // always unblock the in-flight compile so Shutdown can drain
-	svc.compileFn = func(pkg *proj.Package) cycleResult {
+	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult {
 		close(started)
 		<-release
 		return cycleResult{byFile: map[string][]CompilerDiagnostic{}, resByFile: map[string][]CompilerDiagnostic{}}

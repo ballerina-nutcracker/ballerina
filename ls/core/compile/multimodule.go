@@ -157,6 +157,17 @@ func packageIdentifierFor(module *projects.Module) semantics.PackageIdentifier {
 // dependencies); it owns one moduleDriver per module reached and one
 // publicSymbols map local to this run (never projects.Environment's private
 // field — see the ADR).
+//
+// priorState (design item 1) is the previous committed generation's
+// carry-forward state, or nil for a run that never participates in carry-
+// forward (extractForURI's single-module path — see gen_state.go's doc
+// comment). When non-nil, a module outside the computed resetScope is adopted
+// from priorState instead of rebuilt (adoptCarriedForward) — its moduleDriver
+// (and thus its diagnostics, still reachable via allDiagnostics) carries
+// forward by reference, untouched. stale (design item 5) is checked between
+// modules in runPhase1/advanceAll/advanceModule's loops so a superseded
+// generation aborts early instead of finishing wasted work; nil means never
+// stale (extractForURI has no generation to compare against).
 type packageDriver struct {
 	pkg *projects.Package
 	env *context.CompilerEnvironment
@@ -165,21 +176,45 @@ type packageDriver struct {
 	publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace
 	phase1Errored map[projects.ModuleID]bool
 
+	openText   textProvider
+	priorState *packageGenState
+	stale      func() bool
+
+	resetScopeReady bool
+	resetScope      map[projects.ModuleID]bool
+	directlyDirty   map[projects.ModuleID]bool
+	textHashes      map[projects.ModuleID]string
+	fingerprints    map[projects.ModuleID]fingerprint
+	reverseDeps     map[projects.ModuleID][]projects.ModuleID
+
 	order []*projects.Module
 }
 
 // newPackageDriver constructs a packageDriver for one generation-advance over
 // pkg, sharing pkg's project's CompilerEnvironment (reused across
 // generations, per the ADR's re-entrancy rule) but owning fresh per-module
-// CompilerContexts and its own local publicSymbols map.
-func newPackageDriver(pkg *projects.Package) *packageDriver {
+// CompilerContexts and its own local publicSymbols map. openText, priorState
+// and stale are ticket 28's additions (see the type doc comment); any/all may
+// be nil.
+func newPackageDriver(pkg *projects.Package, openText textProvider, priorState *packageGenState, stale func() bool) *packageDriver {
 	return &packageDriver{
 		pkg:           pkg,
 		env:           pkg.Project().Environment().CompilerEnvironment(),
 		drivers:       make(map[projects.ModuleID]*moduleDriver),
 		publicSymbols: make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace),
 		phase1Errored: make(map[projects.ModuleID]bool),
+		openText:      openText,
+		priorState:    priorState,
+		stale:         stale,
 	}
+}
+
+// aborted reports whether a newer generation has already superseded this run
+// (design item 5). Callers check this between modules/stages and abort
+// cleanly (no cleanup needed — a packageDriver's state is local to this run
+// and is never published unless the caller commits it).
+func (pd *packageDriver) aborted() bool {
+	return pd.stale != nil && pd.stale()
 }
 
 // topoModules returns pkg's own modules in dependency order, using
@@ -211,7 +246,7 @@ func (pd *packageDriver) driverFor(module *projects.Module) *moduleDriver {
 	if d, ok := pd.drivers[id]; ok {
 		return d
 	}
-	d := newModuleDriver(pd.env)
+	d := newModuleDriver(pd.env, pd.openText, pd.stale)
 	pd.drivers[id] = d
 	return d
 }
@@ -243,6 +278,113 @@ func (pd *packageDriver) dependencyErrored(module *projects.Module, depGraph *pr
 	return false
 }
 
+// ensureResetScope computes design item 1's reset scope, memoized for this
+// packageDriver instance. Every module gets a textHash regardless of whether
+// it turns out dirty (needed to build the next generation's carry-forward
+// state either way). With no priorState (extractForURI's single-module
+// path — see the type doc comment), the whole scope is "reset everything",
+// matching pre-ticket-28 behavior exactly (every module always rebuilt fresh).
+func (pd *packageDriver) ensureResetScope(modules []*projects.Module, depGraph *projects.DependencyGraph[projects.ModuleDescriptor]) {
+	if pd.resetScopeReady {
+		return
+	}
+	pd.resetScopeReady = true
+
+	pd.textHashes = make(map[projects.ModuleID]string, len(modules))
+	for _, m := range modules {
+		pd.textHashes[m.ModuleID()] = moduleTextHash(m, pd.openText)
+	}
+
+	if pd.priorState == nil {
+		pd.resetScope = allModuleIDs(modules)
+		pd.directlyDirty = pd.resetScope
+		return
+	}
+
+	dirty := make(map[projects.ModuleID]bool)
+	for _, m := range modules {
+		id := m.ModuleID()
+		prev, ok := pd.priorState.modules[id]
+		if !ok || prev.textHash != pd.textHashes[id] {
+			dirty[id] = true
+		}
+	}
+	pd.directlyDirty = dirty
+
+	if len(dirty) == 0 {
+		pd.resetScope = make(map[projects.ModuleID]bool)
+		return
+	}
+	if len(modules) == len(pd.pkg.ModuleIDs()) {
+		pd.resetScope = topoTailScope(modules, dirty)
+	} else {
+		pd.reverseDeps = reverseDependents(pd.pkg, depGraph)
+		pd.resetScope = dependentClosure(dirty, pd.reverseDeps)
+	}
+	if pd.reverseDeps == nil {
+		pd.reverseDeps = reverseDependents(pd.pkg, depGraph)
+	}
+}
+
+// adoptCarriedForward carries module's prior-generation moduleDriver forward
+// by reference instead of rebuilding it, populating this generation's
+// drivers/publicSymbols/phase1Errored exactly as a fresh Phase 1 run would
+// have, so allDiagnostics and dependency resolution both see it as if it had
+// just run. Returns false (nothing adopted) if priorState has no snapshot for
+// module — the caller then falls through to a full reset instead of silently
+// dropping the module.
+func (pd *packageDriver) adoptCarriedForward(module *projects.Module) bool {
+	if pd.priorState == nil {
+		return false
+	}
+	id := module.ModuleID()
+	snap, ok := pd.priorState.modules[id]
+	if !ok {
+		return false
+	}
+	pd.drivers[id] = snap.driver
+	if snap.errored {
+		pd.phase1Errored[id] = true
+		return true
+	}
+	pd.publicSymbols[packageIdentifierFor(module)] = snap.exported
+	return true
+}
+
+// recordFingerprintAndPrune computes module's public-API fingerprint (design
+// item 4) after its Phase 1 succeeds and records it for this generation's
+// carry-forward commit. If the fingerprint is unchanged from the prior
+// committed generation's, module's direct dependents are pruned back out of
+// the reset scope (unless independently dirty from their own edit) — they
+// keep referencing the prior generation's state untouched instead of being
+// rebuilt just because they transitively followed a reset module in topo
+// order.
+func (pd *packageDriver) recordFingerprintAndPrune(module *projects.Module, d *moduleDriver) {
+	id := module.ModuleID()
+	fp := computeFingerprint(d.diagnosticContext(), d.exported)
+	if pd.fingerprints == nil {
+		pd.fingerprints = make(map[projects.ModuleID]fingerprint)
+	}
+	pd.fingerprints[id] = fp
+
+	if pd.priorState == nil {
+		return
+	}
+	prev, ok := pd.priorState.modules[id]
+	if !ok || !fp.equal(prev.fingerprint) {
+		return
+	}
+	if pd.reverseDeps == nil {
+		return
+	}
+	for _, dependent := range pd.reverseDeps[id] {
+		if pd.directlyDirty[dependent] {
+			continue
+		}
+		delete(pd.resetScope, dependent)
+	}
+}
+
 // runPhase1Module advances module through Phase 1 (parse -> symbol
 // resolution -> top-level type resolution), mirroring
 // projects/module_context.go's resolveTypesAndSymbols publish-then-continue
@@ -256,8 +398,16 @@ func (pd *packageDriver) dependencyErrored(module *projects.Module, depGraph *pr
 // dependency already errored in this generation, module is skipped entirely
 // (never reaches driverFor/ensureParsed), matching
 // package_compilation.go:124-127.
+//
+// A module outside the reset scope is adopted from the prior generation
+// (adoptCarriedForward) instead of run through any of this — design item 1.
+// On success, its fingerprint is recorded and may prune its own dependents
+// out of the reset scope — design item 4.
 func (pd *packageDriver) runPhase1Module(module *projects.Module, depGraph *projects.DependencyGraph[projects.ModuleDescriptor]) {
 	id := module.ModuleID()
+	if !pd.resetScope[id] && pd.adoptCarriedForward(module) {
+		return
+	}
 	if pd.dependencyErrored(module, depGraph) {
 		pd.phase1Errored[id] = true
 		return
@@ -276,15 +426,22 @@ func (pd *packageDriver) runPhase1Module(module *projects.Module, depGraph *proj
 	d.advanceTo(stageTopLevelTypeResolved, module, input)
 	if d.diagnosticContext().HasErrors() {
 		pd.phase1Errored[id] = true
+		return
 	}
+	pd.recordFingerprintAndPrune(module, d)
 }
 
 // runPhase1 advances every module in modules through Phase 1, in topological
 // order (sequential — symbol/top-level-type resolution of a module needs its
-// dependencies' published symbol spaces).
+// dependencies' published symbol spaces). Checks aborted() between modules
+// (design item 5).
 func (pd *packageDriver) runPhase1(modules []*projects.Module) {
 	depGraph := pd.pkg.Resolution().ModuleDependencyGraph()
+	pd.ensureResetScope(modules, depGraph)
 	for _, module := range modules {
+		if pd.aborted() {
+			return
+		}
 		pd.runPhase1Module(module, depGraph)
 	}
 }
@@ -309,14 +466,23 @@ func (pd *packageDriver) phase2Eligible(module *projects.Module) (*moduleDriver,
 // advanceAll drives every module of pkg to target: Phase 1 across the whole
 // package, then — only if no module failed Phase 1
 // (package_compilation.go:139-143's "stop the compilation pipeline here" gate)
-// — Phase 2 for every Phase-1-eligible module, sequentially.
+// — Phase 2 for every Phase-1-eligible module, sequentially. Checks
+// aborted() between modules (design item 5): a superseded generation stops
+// early rather than finishing wasted work. The caller must check aborted()
+// itself before relying on or committing this run's results.
 func (pd *packageDriver) advanceAll(target moduleStage) {
 	modules := pd.topoModules()
 	pd.runPhase1(modules)
+	if pd.aborted() {
+		return
+	}
 	if len(pd.phase1Errored) > 0 {
 		return
 	}
 	for _, module := range modules {
+		if pd.aborted() {
+			return
+		}
 		d, ok := pd.phase2Eligible(module)
 		if !ok {
 			continue
@@ -332,11 +498,17 @@ func (pd *packageDriver) advanceAll(target moduleStage) {
 // then drives targetModule alone through Phase 2 up to target. It is the
 // single-module path Compile's inline fallback (extractForURI) uses instead
 // of driving the whole package, so a single-file diagnostic read does not pay
-// for every other module's Phase 2.
+// for every other module's Phase 2. This path never participates in
+// carry-forward (see gen_state.go): the caller always constructs pd with a
+// nil priorState, so every module here is always rebuilt fresh, matching
+// pre-ticket-28 behavior exactly.
 func (pd *packageDriver) advanceModule(target moduleStage, targetModule *projects.Module) {
 	depGraph := pd.pkg.Resolution().ModuleDependencyGraph()
 	targetID := targetModule.ModuleID()
 	for _, module := range pd.topoModules() {
+		if pd.aborted() {
+			return
+		}
 		pd.runPhase1Module(module, depGraph)
 		if module.ModuleID() == targetID {
 			break
@@ -350,10 +522,13 @@ func (pd *packageDriver) advanceModule(target moduleStage, targetModule *project
 }
 
 // allDiagnostics collects every reached module's diagnostics in topological
-// order. Each module's diagnostics live on that module's own fresh
-// CompilerContext (one moduleDriver per module per generation), so this never
-// double-counts within a generation and never carries diagnostics from a
-// prior generation's packageDriver instance.
+// order. Each module's diagnostics live on that module's own CompilerContext:
+// a fresh one for a module reset this generation, or the prior generation's
+// carried-forward one for a module adoptCarriedForward adopted untouched
+// (design item 1) — either way pd.drivers holds exactly one moduleDriver per
+// module reached, so this never double-counts within a generation, and an
+// unedited module's diagnostics keep surfacing instead of silently vanishing
+// once it's no longer reset every generation.
 func (pd *packageDriver) allDiagnostics() []diagnostics.Diagnostic {
 	var all []diagnostics.Diagnostic
 	for _, module := range pd.topoModules() {
@@ -364,4 +539,40 @@ func (pd *packageDriver) allDiagnostics() []diagnostics.Diagnostic {
 		all = append(all, d.diagnosticContext().Diagnostics()...)
 	}
 	return all
+}
+
+// snapshotForCommit builds this generation's carry-forward state (design
+// item 1) for every module this run actually reached (a module skipped
+// entirely via dependencyErrored cascade has no driver and is omitted, same
+// as allDiagnostics/moduleDiagCount). A carried-forward module's fingerprint
+// is copied from the prior generation unchanged (it was never recomputed this
+// generation — recordFingerprintAndPrune only runs for a module actually
+// reset). The caller (realCompilePackage) must not call this if aborted()
+// is true — a superseded run's partial state must never be committed.
+func (pd *packageDriver) snapshotForCommit() map[projects.ModuleID]moduleGenSnapshot {
+	out := make(map[projects.ModuleID]moduleGenSnapshot, len(pd.drivers))
+	for _, module := range pd.topoModules() {
+		id := module.ModuleID()
+		d, ok := pd.drivers[id]
+		if !ok {
+			continue
+		}
+		snap := moduleGenSnapshot{
+			driver:   d,
+			errored:  pd.phase1Errored[id],
+			textHash: pd.textHashes[id],
+		}
+		if !snap.errored {
+			snap.exported = pd.publicSymbols[packageIdentifierFor(module)]
+		}
+		if pd.resetScope[id] {
+			snap.fingerprint = pd.fingerprints[id]
+		} else if pd.priorState != nil {
+			if prev, ok := pd.priorState.modules[id]; ok {
+				snap.fingerprint = prev.fingerprint
+			}
+		}
+		out[id] = snap
+	}
+	return out
 }

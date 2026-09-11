@@ -130,7 +130,7 @@ func TestPackageDriver_CrossModuleImport_PublishesExportedSymbols(t *testing.T) 
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 
-	pd := newPackageDriver(pkg)
+	pd := newPackageDriver(pkg, projSvc.OpenText, nil, nil)
 	pd.advanceAll(stageCFGAnalyzed)
 
 	if len(pd.phase1Errored) != 0 {
@@ -181,7 +181,7 @@ func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing
 	}
 	pkg = proj.CurrentPackage()
 
-	pd := newPackageDriver(pkg)
+	pd := newPackageDriver(pkg, projSvc.OpenText, nil, nil)
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -238,7 +238,7 @@ func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration
 	projSvc := newProjectOnlyService(t)
 	pkg1, _ := openMultimoduleFixture(t, projSvc)
 
-	gen1 := newPackageDriver(pkg1)
+	gen1 := newPackageDriver(pkg1, projSvc.OpenText, nil, nil)
 	gen1.advanceAll(stageCFGAnalyzed)
 	if len(gen1.phase1Errored) != 0 {
 		t.Fatalf("gen1 phase1Errored = %v, want empty", gen1.phase1Errored)
@@ -265,7 +265,7 @@ func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration
 	}
 	pkg2 := proj.CurrentPackage()
 
-	gen2 := newPackageDriver(pkg2)
+	gen2 := newPackageDriver(pkg2, projSvc.OpenText, nil, nil)
 	gen2.advanceAll(stageCFGAnalyzed)
 	if len(gen2.phase1Errored) != 0 {
 		t.Fatalf("gen2 phase1Errored = %v, want empty (signature unchanged)", gen2.phase1Errored)

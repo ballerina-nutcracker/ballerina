@@ -59,7 +59,7 @@ func TestModuleDriver_AdvancesOnlyToRequestedStage(t *testing.T) {
 	}
 	module, env := defaultModuleFor(t, proj)
 
-	d := newModuleDriver(env)
+	d := newModuleDriver(env, projSvc.OpenText, nil)
 	d.advanceTo(stageTopLevelTypeResolved, module, newModuleResolutionInput("", nil, nil))
 
 	if got := d.currentStage(); got != stageTopLevelTypeResolved {
@@ -87,7 +87,7 @@ func TestModuleDriver_IdempotentOnAlreadyCompletedStage(t *testing.T) {
 	}
 	module, env := defaultModuleFor(t, proj)
 
-	d := newModuleDriver(env)
+	d := newModuleDriver(env, projSvc.OpenText, nil)
 	input := newModuleResolutionInput("", nil, nil)
 	d.advanceTo(stageSemanticAnalyzed, module, input)
 
@@ -131,7 +131,7 @@ func TestModuleDriver_SecondGenerationOverSameModuleDoesNotPanic(t *testing.T) {
 	}
 	module1, env1 := defaultModuleFor(t, proj1)
 
-	gen1 := newModuleDriver(env1)
+	gen1 := newModuleDriver(env1, projSvc.OpenText, nil)
 	input := newModuleResolutionInput("", nil, nil)
 	gen1.advanceTo(stageSemanticAnalyzed, module1, input)
 	if got := gen1.currentStage(); got != stageSemanticAnalyzed {
@@ -161,7 +161,7 @@ func TestModuleDriver_SecondGenerationOverSameModuleDoesNotPanic(t *testing.T) {
 				t.Fatalf("gen2.advanceTo panicked (ticket 39 regression): %v", r)
 			}
 		}()
-		gen2 = newModuleDriver(env2)
+		gen2 = newModuleDriver(env2, projSvc.OpenText, nil)
 		gen2.advanceTo(stageSemanticAnalyzed, module2, input)
 	}()
 

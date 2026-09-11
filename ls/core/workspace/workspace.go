@@ -22,10 +22,12 @@
 //
 // Ticket 08 replaces the Phase-A single-file synthetic overlayFS (owned by
 // compile) with a PAL-backed, overlay-augmented io/fs.FS owned here: the
-// project index resolves file: URIs to source roots (ADR-048 three-step),
-// projects.Load reads through palFS, and Apply publishes atomically through
-// the compiler's immutable modifier chain. A synchronous event bus carries
-// project-lifecycle events.
+// project index resolves file: URIs to source roots (ADR-048 three-step) and
+// projects.Load reads through palFS. Ticket 28 drops the former ADR-042
+// modifier chain: Apply publishes in place, updating the documents map only
+// (see publish/OpenText) instead of cascading a new immutable
+// Package/Module/Document graph on every edit. A synchronous event bus
+// carries project-lifecycle events.
 package workspace
 
 import (
@@ -118,8 +120,8 @@ type WatchedFileChange struct {
 // ProjectService owns document lifecycle state and the source-root-keyed
 // project index. It absorbs the former server.documentStore, replacing the
 // string-keyed map with a DocumentURI-keyed map, and replaces the compile-owned
-// synthetic overlayFS with PAL-backed project loading and modifier-chain
-// publication.
+// synthetic overlayFS with PAL-backed project loading and in-place
+// publication (ticket 28).
 type ProjectService struct {
 	platform  pal.Platform
 	bus       *event.Bus
@@ -201,9 +203,10 @@ func (s *ProjectService) applyDocumentMap(change DocumentChange) (Snapshot, erro
 // that panics on re-registration of a changed file (a documented latent
 // limitation — see the skipped TestProjectDuplicate). The index still provides
 // source-root memoization (the expensive ADR-048 walk) and count-bounding.
-// The ADR-042 modifier chain (Document.Modify().WithContent().Apply() →
-// setCurrentPackage) is the deferred publication model, restored by a later
-// ticket that lifts DiagnosticEnv to per-instance file identity.
+// Ticket 28 drops the former ADR-042 modifier chain (Document.Modify()
+// .WithContent().Apply() → setCurrentPackage): edits publish in place (see
+// publish/documentInCurrentPackage) and the compile package's incremental
+// moduleDriver reset picks up the new content via OpenText instead.
 func (s *ProjectService) Apply(ctx context.Context, change DocumentChange) (Snapshot, error) {
 	if change.Kind == ChangeClose {
 		// Resolve first (the document is still open) to find the index entry,
@@ -253,15 +256,21 @@ func (s *ProjectService) Apply(ctx context.Context, change DocumentChange) (Snap
 	return snap, nil
 }
 
-// publish is the ADR-042 modifier-chain publication model (ticket 09 branch 1).
-// The first publish for a source root does one projects.Load to seed the
-// persistent per-source-root CompilerEnvironment and initial package, and
-// publishes ProjectRegistered (08 behavior) + ProjectUpdated. Subsequent
-// content publishes reuse the SAME project via Document.Modify().WithContent()
-// .Apply() so the shared CompilerEnvironment/DiagnosticEnv persists across
-// generations (symbol-Location stability), bumping the generation and
-// publishing ProjectUpdated. If the document is not yet in the package (a new
-// file opened after the seed load), it falls back to a fresh Load.
+// publish is ticket 28's incremental publication model: the first publish for
+// a source root does one projects.Load to seed the persistent per-source-root
+// CompilerEnvironment and initial package, and publishes ProjectRegistered (08
+// behavior) + ProjectUpdated. Subsequent content publishes reuse the SAME
+// project and the SAME immutable *projects.Package — the document's new text
+// already landed in the documents map (applyDocumentMap, before publish is
+// called), which OpenText exposes as the live-buffer override the compile
+// package's driver reads instead of the frozen Document.TextDocument(). This
+// drops the ADR-042 modifier chain (Document.Modify().WithContent().Apply(),
+// which used to cascade a brand-new Package/Module/Document graph on every
+// edit): the compiler's Package graph now only changes on a genuine
+// structural reload (a new/removed file), triggering the incremental
+// moduleDriver reset (ls/core/compile) for the affected module(s) instead of
+// a full from-scratch rebuild. If the document is not yet in the package (a
+// new file opened after the seed load), it falls back to a fresh Load.
 func (s *ProjectService) publish(change DocumentChange, sourceRoot string) (uint64, error) {
 	s.mu.Lock()
 	entry, ok := s.index.get(sourceRoot)
@@ -271,7 +280,7 @@ func (s *ProjectService) publish(change DocumentChange, sourceRoot string) (uint
 		s.publishLifecycle(sourceRoot, 1)
 		return 1, nil
 	}
-	if s.applyModifierChain(entry.project, change) {
+	if s.documentInCurrentPackage(entry.project, change) {
 		entry.generation++
 		gen := entry.generation
 		s.mu.Unlock()
@@ -287,12 +296,12 @@ func (s *ProjectService) publish(change DocumentChange, sourceRoot string) (uint
 	return oldGen + 1, nil
 }
 
-// applyModifierChain updates the document content through the immutable
-// modifier chain on the persistent project, which sets a new current package
-// on the same project (and thus the same CompilerEnvironment). It returns false
-// if the document is not present in the current package (caller falls back to
-// a fresh Load).
-func (s *ProjectService) applyModifierChain(project projects.Project, change DocumentChange) bool {
+// documentInCurrentPackage reports whether change's document is already part
+// of project's current package. It performs no mutation — content updates
+// live only in the documents map (see OpenText) — this is purely the
+// new-file-detection gate that decides whether publish can bump the
+// generation in place or must fall back to a fresh Load.
+func (s *ProjectService) documentInCurrentPackage(project projects.Project, change DocumentChange) bool {
 	pkg := project.CurrentPackage()
 	if pkg == nil {
 		return false
@@ -305,12 +314,7 @@ func (s *ProjectService) applyModifierChain(project projects.Project, change Doc
 	if module == nil {
 		return false
 	}
-	doc := module.Document(docID)
-	if doc == nil {
-		return false
-	}
-	doc.Modify().WithContent(change.Text).Apply()
-	return true
+	return module.Document(docID) != nil
 }
 
 // publishLifecycle publishes ProjectRegistered (first load / kind transition,
@@ -380,7 +384,7 @@ func (s *ProjectService) Supersede(root string) {
 // CurrentProject returns the published project for a source root plus its
 // generation. Used by the compile engine to capture the package to compile.
 // The project's current package is read under the state lock so it cannot
-// race with a concurrent Apply's modifier-chain swap.
+// race with a concurrent Apply's index-entry swap (a structural reload).
 func (s *ProjectService) CurrentProject(root string) (projects.Project, uint64, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -524,6 +528,56 @@ func (s *ProjectService) Snapshot(u uri.DocumentURI) (Snapshot, bool) {
 	defer s.mu.RUnlock()
 	snap, ok := s.documents[u]
 	return snap, ok
+}
+
+// DocumentText returns u's current text: the live open-buffer content if the
+// document is open, otherwise the loaded project's frozen document text (the
+// same content the compile engine's documentText fallback reads for a
+// document that was never opened through the workspace). A document whose
+// root is unknown or not yet loaded reports ok=false.
+func (s *ProjectService) DocumentText(u uri.DocumentURI) (string, bool) {
+	if snap, ok := s.Snapshot(u); ok {
+		return snap.Text, true
+	}
+	project, err := s.Project(u)
+	if err != nil || project == nil {
+		return "", false
+	}
+	docID, ok := project.DocumentID(u.Path())
+	if !ok {
+		return "", false
+	}
+	pkg := project.CurrentPackage()
+	if pkg == nil {
+		return "", false
+	}
+	module := pkg.Module(docID.ModuleID())
+	if module == nil {
+		return "", false
+	}
+	doc := module.Document(docID)
+	if doc == nil {
+		return "", false
+	}
+	return doc.TextDocument().String(), true
+}
+
+// OpenText returns the current open-buffer text for filePath, if a document
+// at that path is open. This is ticket 28's replacement for the ADR-042
+// modifier chain's role of feeding edited content to the compiler: since
+// publish no longer pushes edits into the immutable projects.Package graph,
+// the compile package's driver reads a document's live content from here
+// (falling back to the frozen Document.TextDocument() for a document that
+// isn't open) instead.
+func (s *ProjectService) OpenText(filePath string) (string, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for u, snap := range s.documents {
+		if u.IsFile() && u.Path() == filePath {
+			return snap.Text, true
+		}
+	}
+	return "", false
 }
 
 // ApplyWatchedFile routes a didChangeWatchedFiles event. Ballerina.toml
