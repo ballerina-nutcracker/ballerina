@@ -1,0 +1,28 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Config)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access port
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access host
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access timeout
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access host
+          (simple-var-ref config)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access port
+          (simple-var-ref config)))))
+  )
+)

@@ -1,0 +1,110 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (variable name (type
+    (value-type string)))
+  (variable items (type
+    (array-type
+      (value-type int) dimensions: 1 ([]))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref name)
+        (literal ballerina))
+      (assignment
+        (simple-var-ref items)
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)
+          (literal 4)))))
+  (function padded (
+    (variable s (type
+      (value-type string)) (expr
+      (invocation lang.string substring (
+        (simple-var-ref name)
+        (literal 0)
+        (literal 3)))))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (simple-var-ref s))))
+  (function sized (
+    (variable n (type
+      (value-type int)) (expr
+      (invocation lang.array length (
+        (simple-var-ref items)))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (simple-var-ref n))))
+  (function head (
+    (variable text (type
+      (value-type string)))
+    (variable n (type
+      (value-type int)) (expr
+      (invocation lang.string length (
+        (simple-var-ref text)))))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (invocation lang.string substring (
+          (simple-var-ref text)
+          (literal 0)
+          (simple-var-ref n))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (invocation $default$0 ()))))
+          (invocation padded (
+            (simple-var-ref $desugar$0)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$1 ()))))
+          (invocation sized (
+            (simple-var-ref $desugar$1)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$2 (expr
+              (literal abc))))
+          (var-def
+            (variable $desugar$3 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$2))))))
+          (invocation head (
+            (simple-var-ref $desugar$2)
+            (simple-var-ref $desugar$3)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation head (
+            (literal abcdef)
+            (literal 2))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (invocation lang.string substring (
+          (simple-var-ref name)
+          (literal 0)
+          (literal 3))))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (invocation lang.array length (
+          (simple-var-ref items))))))
+  (function $default$2 (
+    (variable text (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (invocation lang.string length (
+          (simple-var-ref text)))))))

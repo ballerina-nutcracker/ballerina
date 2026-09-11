@@ -1,0 +1,67 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function tag (
+    (variable s (type
+      (value-type string)))
+    (variable p (type
+      (value-type string)) (expr
+      (simple-var-ref prefix)))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref p)
+          (simple-var-ref s)))))
+  (function shift (
+    (variable n (type
+      (value-type int)))
+    (variable amount (type
+      (value-type int)) (expr
+      (binary-expr +
+        (simple-var-ref offset)
+        (literal 1))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref n)
+          (simple-var-ref amount)))))
+  (function bare (
+    (variable n (type
+      (value-type int)) (expr
+      (simple-var-ref offset)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (simple-var-ref n))))
+  (variable prefix (type
+    (value-type string)) (expr
+    (literal id-)))
+  (variable offset (type
+    (value-type int)) (expr
+    (literal 10)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation tag (
+            (literal a))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation tag (
+            (literal a)
+            (literal x-))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation shift (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation shift (
+            (literal 1)
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation bare ())))))))

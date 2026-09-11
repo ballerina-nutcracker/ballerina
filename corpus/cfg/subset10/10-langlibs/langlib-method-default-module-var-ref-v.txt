@@ -1,0 +1,40 @@
+(head
+  (bb0 () ()
+    (return
+      (invocation lang.string substring (
+        (simple-var-ref text)
+        (literal 0)
+        (simple-var-ref n))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation padded ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sized ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation head (
+          (literal abc) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation head (
+          (literal abcdef)
+          (literal 2))))))
+  )
+)
+(padded
+  (bb0 () ()
+    (return
+      (simple-var-ref s))
+  )
+)
+(sized
+  (bb0 () ()
+    (return
+      (simple-var-ref n))
+  )
+)
