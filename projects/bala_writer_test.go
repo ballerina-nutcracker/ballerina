@@ -108,6 +108,52 @@ func TestPack_ReadBala(t *testing.T) {
 	}
 }
 
+func TestPackPreservesCompilerPluginToml(t *testing.T) {
+	projectDir := t.TempDir()
+	ballerinaToml := "[package]\norg = \"acme\"\nname = \"pluginprovider\"\nversion = \"1.0.0\"\n"
+	pluginToml := "[[plugin]]\nstage = \"after-semantics\"\nfunction = \"Validate\"\n"
+	if err := os.WriteFile(filepath.Join(projectDir, "Ballerina.toml"), []byte(ballerinaToml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(projectDir, "CompilerPlugin.toml"), []byte(pluginToml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(projectDir, "main.bal"), []byte("public function main() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := projects.Load(os.DirFS(projectDir), ".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkg := result.Project().CurrentPackage()
+	if pkg.CompilerPluginToml() == nil {
+		t.Fatal("source package did not expose CompilerPlugin.toml")
+	}
+	balaPath, err := projects.NewBallerinaBackend(pkg.Compilation()).EmitBala(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	content, err := readZipEntry(balaPath, "CompilerPlugin.toml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if content != pluginToml {
+		t.Fatalf("CompilerPlugin.toml content mismatch:\n%s", content)
+	}
+	extracted := t.TempDir()
+	if err := unzipTo(balaPath, extracted); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := projects.Load(os.DirFS(extracted), ".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Project().CurrentPackage().CompilerPluginToml() == nil {
+		t.Fatal("bala package did not expose CompilerPlugin.toml")
+	}
+}
+
 // TestPack_MultiModuleLayout guards the bala v4 layout split: default-module
 // .bal files at the archive root, sub-modules under modules/<sub>/ (never
 // under modules/<pkgName>/ and never with dotted full names as directories).
