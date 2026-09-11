@@ -19,6 +19,7 @@ package projects
 import (
 	"io/fs"
 
+	"github.com/ballerina-nutcracker/ballerina/compilerplugin"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semantics"
@@ -35,6 +36,14 @@ type Environment struct {
 	resolutionOptions ResolutionOptions
 	// TODO: find better place to put this
 	publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace
+	// injectedPlugins are compiler plugins supplied by the host for this
+	// compilation rather than declared by a package manifest.
+	injectedPlugins []compilerplugin.InjectedPlugin
+}
+
+// injectedCompilerPlugins returns the host-supplied compiler plugins.
+func (e *Environment) injectedCompilerPlugins() []compilerplugin.InjectedPlugin {
+	return e.injectedPlugins
 }
 
 // NewEnvironment creates a new Environment.

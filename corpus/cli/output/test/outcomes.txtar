@@ -1,0 +1,22 @@
+-- stdout --
+FAIL outcomes:testAssertFail
+FAIL outcomes:testTrappedAssertFail
+ERROR outcomes:testPanics
+ERROR outcomes:testReturnsError
+SKIP outcomes:testDisabled
+SKIP outcomes:testDisabledByAConstant
+outcomes:testAssertFail
+    boom
+    printed before failing
+outcomes:testTrappedAssertFail
+    first failure
+    second failure
+    true
+outcomes:testPanics
+    x
+outcomes:testReturnsError
+    returned error
+0 passing, 2 failing, 2 errored, 2 skipped
+-- stderr --
+-- exitcode --
+1

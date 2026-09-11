@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: @test:Config 'enable' must be a boolean literal
+  --> main.bal:21:23
+   |
+21 | @test:Config {enable: enabled}
+   |                       ^^^^^^^
+
+ballerina: compilation contains errors
+-- exitcode --
+1

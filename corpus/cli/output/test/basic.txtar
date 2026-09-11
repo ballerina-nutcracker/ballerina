@@ -1,0 +1,8 @@
+-- stdout --
+main ran
+PASS basic:testOne
+PASS basic:testTwo
+2 passing, 0 failing, 0 errored, 0 skipped
+-- stderr --
+-- exitcode --
+0

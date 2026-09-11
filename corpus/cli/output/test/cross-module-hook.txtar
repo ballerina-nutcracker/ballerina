@@ -1,0 +1,8 @@
+-- stdout --
+FAIL crossmodule:testUsesAnotherModulesHook
+crossmodule:testUsesAnotherModulesHook
+    util setUp ran
+0 passing, 1 failing, 0 errored, 0 skipped
+-- stderr --
+-- exitcode --
+1

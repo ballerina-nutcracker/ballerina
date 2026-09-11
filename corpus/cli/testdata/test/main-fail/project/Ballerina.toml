@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "mainfail"
+version = "0.1.0"

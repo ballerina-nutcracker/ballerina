@@ -1,0 +1,8 @@
+-- stdout --
+PASS filters:testDefaultOne
+PASS filters:testDefaultTwo
+SKIP filters:testDefaultDisabled
+2 passing, 0 failing, 0 errored, 1 skipped
+-- stderr --
+-- exitcode --
+0

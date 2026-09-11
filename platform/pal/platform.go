@@ -55,6 +55,12 @@ type (
 		Time    Time
 		HTTP    HTTP
 		Signals SignalSource
+		Testing Testing
+	}
+	// Testing lets library code signal test outcomes to the host. All fields may
+	// be nil; callers must nil-check before invoking them.
+	Testing struct {
+		Fail func(message string)
 	}
 	IO struct {
 		Stdout func(p []byte) (n int, err error)
