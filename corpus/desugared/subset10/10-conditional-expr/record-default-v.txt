@@ -20,7 +20,7 @@
           (index-based-access
             (simple-var-ref named)
             (literal value)))))))
-  (function $desugar$0 () ()
+  (function $default$0 () ()
     (block-function-body
       (return
         (ternary-expr

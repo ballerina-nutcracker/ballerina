@@ -1,0 +1,342 @@
+module $anon.. v 0.0.0;
+class Counter {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  localDefault() -> int{
+    bb0 {
+      %2 = fp $anon/.:$default$2
+      $desugar$0 = %2;
+      %4 = newMap {| m: int, never... |}{} defaults{m=$anon/.:$default$2}
+      local = %4;
+      %7 = ConstantLoad m
+      %6 = local[%7];
+      %0 = %6;
+      return;
+    }
+  }
+
+  paramDefault({| k: int, never... |}) -> int{
+    bb0 {
+      %4 = ConstantLoad k
+      %3 = rec[%4];
+      %0 = %3;
+      return;
+    }
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 7
+    %0 = %1;
+    return;
+  }
+}
+requiredRecordParam({| v: string, never... |}) -> string{
+  bb0 {
+    %3 = ConstantLoad v
+    %2 = rec[%3];
+    %0 = %2;
+    return;
+  }
+}
+defaultableRecordParam({| w: int, never... |}) -> int{
+  bb0 {
+    %3 = ConstantLoad w
+    %2 = rec[%3];
+    %0 = %2;
+    return;
+  }
+}
+multipleRecordParams({| x: string, never... |},{| y: string, never... |}) -> string{
+  bb0 {
+    %6 = ConstantLoad x
+    %5 = a[%6];
+    %7 = ConstantLoad -
+    %4 = + %5 %7;
+    %9 = ConstantLoad y
+    %8 = b[%9];
+    %3 = + %4 %8;
+    %0 = %3;
+    return;
+  }
+}
+$default$9() -> string{
+  bb0 {
+    %1 = ConstantLoad local
+    %0 = %1;
+    return;
+  }
+}
+firstLocal() -> string{
+  bb0 {
+    %1 = fp $anon/.:$default$9
+    $desugar$0 = %1;
+    %3 = newMap {| t: string, never... |}{} defaults{t=$anon/.:$default$9}
+    local = %3;
+    %6 = ConstantLoad t
+    %5 = local[%6];
+    %0 = %5;
+    return;
+  }
+}
+$default$10() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
+secondLocal() -> int{
+  bb0 {
+    %1 = fp $anon/.:$default$10
+    $desugar$0 = %1;
+    %3 = newMap {| u: int, never... |}{} defaults{u=$anon/.:$default$10}
+    local = %3;
+    %6 = ConstantLoad u
+    %5 = local[%6];
+    %0 = %5;
+    return;
+  }
+}
+$default$11() -> string{
+  bb0 {
+    %1 = ConstantLoad parent
+    %0 = %1;
+    return;
+  }
+}
+$default$12() -> string{
+  bb0 {
+    %1 = ConstantLoad nested
+    %0 = %1;
+    return;
+  }
+}
+$anonFunc$_1() -> string{
+  bb0 {
+    %1 = fp $anon/.:$default$12
+    $desugar$0 = %1;
+    %3 = newMap {| q: string, never... |}{} defaults{q=$anon/.:$default$12}
+    nestedRecord = %3;
+    %6 = ConstantLoad q
+    %5 = nestedRecord[%6];
+    %0 = %5;
+    return;
+  }
+}
+$default$13() -> string{
+  bb0 {
+    %1 = ConstantLoad sibling
+    %0 = %1;
+    return;
+  }
+}
+$anonFunc$_2() -> string{
+  bb0 {
+    %1 = fp $anon/.:$default$13
+    $desugar$0 = %1;
+    %3 = newMap {| r: string, never... |}{} defaults{r=$anon/.:$default$13}
+    siblingRecord = %3;
+    %6 = ConstantLoad r
+    %5 = siblingRecord[%6];
+    %0 = %5;
+    return;
+  }
+}
+$anonFunc$_0() -> string{
+  bb0 {
+    %1 = fp $anon/.:$default$11
+    $desugar$0 = %1;
+    %3 = newMap {| p: string, never... |}{} defaults{p=$anon/.:$default$11}
+    parentRecord = %3;
+    %5 = fp $anon/.:$anonFunc$_1
+    nested = %5;
+    %7 = fp $anon/.:$anonFunc$_2
+    sibling = %7;
+    %14 = ConstantLoad p
+    %13 = parentRecord[%14];
+    %15 = ConstantLoad -
+    %12 = + %13 %15;
+    %16 = nested() -> bb1;
+  }
+  bb1 {
+    %11 = + %12 %16;
+    %17 = ConstantLoad -
+    %10 = + %11 %17;
+    %18 = sibling() -> bb2;
+  }
+  bb2 {
+    %9 = + %10 %18;
+    %0 = %9;
+    return;
+  }
+}
+lambdaDefaults() -> string{
+  bb0 {
+    %1 = fp $anon/.:$anonFunc$_0
+    parent = %1;
+    %3 = parent() -> bb1;
+  }
+  bb1 {
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newMap {| s: string, never... |}{} defaults{s=$anon/.:$default$0}
+    o = %1;
+    %4 = ConstantLoad s
+    %3 = o[%4];
+    %5 = println(%3) -> bb1;
+  }
+  bb1 {
+    %6 = firstLocal() -> bb2;
+  }
+  bb2 {
+    %7 = println(%6) -> bb3;
+  }
+  bb3 {
+    %8 = newMap {| n: int, never... |}{} defaults{n=$anon/.:$default$1}
+    so = %8;
+    %11 = ConstantLoad n
+    %10 = so[%11];
+    %12 = %10;
+    %13 = println(%12) -> bb4;
+  }
+  bb4 {
+    %14 = secondLocal() -> bb5;
+  }
+  bb5 {
+    %15 = %14;
+    %16 = println(%15) -> bb6;
+  }
+  bb6 {
+    %17 = lambdaDefaults() -> bb7;
+  }
+  bb7 {
+    %18 = println(%17) -> bb8;
+  }
+  bb8 {
+    %19 = newObject $anon/.:Counter
+    %20 = %19.init() -> bb9;
+  }
+  bb9 {
+    %22 = %20 is nil
+    %22 ? bb10 : bb11;
+  }
+  bb10 {
+    %21 = %19;
+    GOTO bb12;
+  }
+  bb11 {
+    %21 = %20;
+    GOTO bb12;
+  }
+  bb12 {
+    c = %21;
+    %24 = c.localDefault() -> bb13;
+  }
+  bb13 {
+    %25 = %24;
+    %26 = println(%25) -> bb14;
+  }
+  bb14 {
+    %27 = newMap {| k: int, never... |}{} defaults{k=$anon/.:$default$3}
+    %28 = c.paramDefault(%27) -> bb15;
+  }
+  bb15 {
+    %29 = %28;
+    %30 = println(%29) -> bb16;
+  }
+  bb16 {
+    %31 = newMap {| v: string, never... |}{} defaults{v=$anon/.:$default$4}
+    %32 = requiredRecordParam(%31) -> bb17;
+  }
+  bb17 {
+    %33 = println(%32) -> bb18;
+  }
+  bb18 {
+    %34 = $default$6() -> bb19;
+  }
+  bb19 {
+    $desugar$0 = %34;
+    %36 = defaultableRecordParam($desugar$0) -> bb20;
+  }
+  bb20 {
+    %37 = %36;
+    %38 = println(%37) -> bb21;
+  }
+  bb21 {
+    %39 = newMap {| x: string, never... |}{} defaults{x=$anon/.:$default$7}
+    %40 = newMap {| y: string, never... |}{} defaults{y=$anon/.:$default$8}
+    %41 = multipleRecordParams(%39,%40) -> bb22;
+  }
+  bb22 {
+    %42 = println(%41) -> bb23;
+  }
+  bb23 {
+    return;
+  }
+}
+$default$0() -> string{
+  bb0 {
+    %1 = ConstantLoad outer
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$4() -> string{
+  bb0 {
+    %1 = ConstantLoad required
+    %0 = %1;
+    return;
+  }
+}
+$default$6() -> {| w: int, never... |}{
+  bb0 {
+    %1 = newMap {| w: int, never... |}{} defaults{w=$anon/.:$default$5}
+    %0 = %1;
+    return;
+  }
+}
+$default$5() -> int{
+  bb0 {
+    %1 = ConstantLoad 11
+    %0 = %1;
+    return;
+  }
+}
+$default$7() -> string{
+  bb0 {
+    %1 = ConstantLoad first
+    %0 = %1;
+    return;
+  }
+}
+$default$8() -> string{
+  bb0 {
+    %1 = ConstantLoad second
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 3
+    %0 = %1;
+    return;
+  }
+}

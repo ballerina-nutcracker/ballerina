@@ -116,15 +116,15 @@
           (index-based-access
             (simple-var-ref r4)
             (literal z)))))))
-  (function $desugar$0 () ()
+  (function $default$0 () ()
     (block-function-body
       (return
         (literal 10))))
-  (function $desugar$1 () ()
+  (function $default$1 () ()
     (block-function-body
       (return
         (literal hello))))
-  (function $desugar$2 () ()
+  (function $default$2 () ()
     (block-function-body
       (return
         (literal 42)))))

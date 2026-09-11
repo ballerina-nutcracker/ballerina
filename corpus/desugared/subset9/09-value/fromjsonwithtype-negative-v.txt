@@ -323,7 +323,7 @@
               (error-type)))))
         (return
           (literal <nil>)))))
-  (function $desugar$0 () ()
+  (function $default$0 () ()
     (block-function-body
       (return
         (literal 99)))))

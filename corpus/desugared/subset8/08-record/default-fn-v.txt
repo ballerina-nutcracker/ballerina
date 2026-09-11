@@ -37,7 +37,7 @@
           (index-based-access
             (simple-var-ref r2)
             (literal f)))))))
-  (function $desugar$0 () ()
+  (function $default$0 () ()
     (block-function-body
       (return
         (invocation foo ())))))

@@ -32,7 +32,7 @@
           (var-def
             (variable $desugar$2 (expr
               (lambda
-                (function $desugar$0 () ()
+                (function $default$0 () ()
                   (block-function-body
                     (return
                       (simple-var-ref i))))))))

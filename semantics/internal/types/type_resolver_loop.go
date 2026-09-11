@@ -178,10 +178,6 @@ func (l *loopTypeResolver) getClassAtomSymbol(mat *semtypes.MappingAtomicType) (
 func (l *loopTypeResolver) currentScope() model.Scope     { return l.parentResolver.currentScope() }
 func (l *loopTypeResolver) setCurrentScope(s model.Scope) { l.parentResolver.setCurrentScope(s) }
 
-func (l *loopTypeResolver) nextDefaultFnName() string {
-	return l.parentResolver.nextDefaultFnName()
-}
-
 func (l *loopTypeResolver) lookupClassMethodSymbol(receiverTy semtypes.SemType, methodName string) (model.SymbolRef, bool) {
 	return l.parentResolver.lookupClassMethodSymbol(receiverTy, methodName)
 }

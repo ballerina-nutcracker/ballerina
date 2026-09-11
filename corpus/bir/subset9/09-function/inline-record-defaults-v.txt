@@ -43,7 +43,7 @@ $anonFunc$_1({| b: int, never... |}) -> int{
   bb0 {
     %2 = closure_fp $anon/.:$anonFunc$_2
     nestedFn = %2;
-    %4 = newMap {| c: int, never... |}{} defaults{c=$anon/.:$desugar$2}
+    %4 = newMap {| c: int, never... |}{} defaults{c=$anon/.:$default$3}
     %5 = nestedFn(%4) -> bb1;
   }
   bb1 {
@@ -55,7 +55,7 @@ $anonFunc$_0({| a: int, never... |}) -> int{
   bb0 {
     %2 = closure_fp $anon/.:$anonFunc$_1
     innerFn = %2;
-    %4 = newMap {| b: int, never... |}{} defaults{b=$anon/.:$desugar$1}
+    %4 = newMap {| b: int, never... |}{} defaults{b=$anon/.:$default$2}
     %5 = innerFn(%4) -> bb1;
   }
   bb1 {
@@ -71,7 +71,7 @@ main() -> nil{
     %4 = println(%3) -> bb1;
   }
   bb1 {
-    %5 = $default$0() -> bb2;
+    %5 = $default$5() -> bb2;
   }
   bb2 {
     $desugar$0 = %5;
@@ -82,7 +82,7 @@ main() -> nil{
     %9 = println(%8) -> bb4;
   }
   bb4 {
-    %10 = newMap {| a: int, b: int, anydata... |}{} defaults{a=$anon/.:$desugar$4, b=$anon/.:$desugar$5}
+    %10 = newMap {| a: int, b: int, anydata... |}{} defaults{a=$anon/.:$default$6, b=$anon/.:$default$7}
     %11 = foo(%10) -> bb5;
   }
   bb5 {
@@ -92,7 +92,7 @@ main() -> nil{
   bb6 {
     %14 = ConstantLoad a
     %15 = ConstantLoad 6
-    %16 = newMap {| a: int, b: int, anydata... |}{%14=%15} defaults{a=$anon/.:$desugar$4, b=$anon/.:$desugar$5}
+    %16 = newMap {| a: int, b: int, anydata... |}{%14=%15} defaults{a=$anon/.:$default$6, b=$anon/.:$default$7}
     %17 = foo(%16) -> bb7;
   }
   bb7 {
@@ -102,7 +102,7 @@ main() -> nil{
   bb8 {
     %20 = closure_fp $anon/.:$anonFunc$_0
     outerFn = %20;
-    %22 = newMap {| a: int, never... |}{} defaults{a=$anon/.:$desugar$0}
+    %22 = newMap {| a: int, never... |}{} defaults{a=$anon/.:$default$1}
     %23 = outerFn(%22) -> bb9;
   }
   bb9 {
@@ -113,56 +113,56 @@ main() -> nil{
     return;
   }
 }
-$desugar$0() -> int{
+$default$1() -> int{
   bb0 {
     %1 = ConstantLoad 7
     %0 = %1;
     return;
   }
 }
-$desugar$1() -> int{
+$default$2() -> int{
   bb0 {
     %1 = ConstantLoad 8
     %0 = %1;
     return;
   }
 }
-$desugar$2() -> int{
+$default$3() -> int{
   bb0 {
     %1 = ConstantLoad 9
     %0 = %1;
     return;
   }
 }
-$desugar$6() -> int{
+$default$0() -> int{
   bb0 {
     %1 = ConstantLoad 42
     %0 = %1;
     return;
   }
 }
-$default$0() -> {| value: int, never... |}{
+$default$5() -> {| value: int, never... |}{
   bb0 {
-    %1 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$desugar$3}
+    %1 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$default$4}
     %0 = %1;
     return;
   }
 }
-$desugar$3() -> int{
+$default$4() -> int{
   bb0 {
     %1 = ConstantLoad 43
     %0 = %1;
     return;
   }
 }
-$desugar$4() -> int{
+$default$6() -> int{
   bb0 {
     %1 = ConstantLoad 5
     %0 = %1;
     return;
   }
 }
-$desugar$5() -> int{
+$default$7() -> int{
   bb0 {
     %1 = ConstantLoad 10
     %0 = %1;

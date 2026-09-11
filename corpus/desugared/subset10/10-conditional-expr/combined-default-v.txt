@@ -30,7 +30,7 @@
           (expression-thunk
           (var-def
             (variable $desugar$0 (expr
-              (invocation $default$0 ()))))
+              (invocation $default$1 ()))))
           (invocation combined (
             (simple-var-ref $desugar$0)))))))
       (expression-stmt
@@ -40,7 +40,7 @@
               (key-value
                 (literal value)
                 (literal 80))))))))))
-  (function $default$0 () ()
+  (function $default$1 () ()
     (block-function-body
       (return
         (ternary-expr
@@ -50,7 +50,7 @@
             (key-value
               (literal value)
               (literal 70)))))))
-  (function $desugar$0 () ()
+  (function $default$0 () ()
     (block-function-body
       (return
         (ternary-expr

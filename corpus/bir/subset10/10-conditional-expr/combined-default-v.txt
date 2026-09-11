@@ -9,7 +9,7 @@ combined({| value: int, never... |}) -> int{
 }
 main() -> nil{
   bb0 {
-    %1 = $default$0() -> bb1;
+    %1 = $default$1() -> bb1;
   }
   bb1 {
     $desugar$0 = %1;
@@ -22,7 +22,7 @@ main() -> nil{
   bb3 {
     %6 = ConstantLoad value
     %7 = ConstantLoad 80
-    %8 = newMap {| value: int, never... |}{%6=%7} defaults{value=$anon/.:$desugar$0}
+    %8 = newMap {| value: int, never... |}{%6=%7} defaults{value=$anon/.:$default$0}
     %9 = combined(%8) -> bb4;
   }
   bb4 {
@@ -33,13 +33,13 @@ main() -> nil{
     return;
   }
 }
-$default$0() -> {| value: int, never... |}{
+$default$1() -> {| value: int, never... |}{
   bb0 {
     %2 = ConstantLoad true
     %2 ? bb1 : bb2;
   }
   bb1 {
-    %3 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$desugar$0}
+    %3 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$default$0}
     %1 = %3;
     GOTO bb3;
   }
@@ -55,7 +55,7 @@ $default$0() -> {| value: int, never... |}{
     return;
   }
 }
-$desugar$0() -> int{
+$default$0() -> int{
   bb0 {
     %2 = ConstantLoad true
     %2 ? bb1 : bb2;

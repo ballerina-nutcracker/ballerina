@@ -10,7 +10,7 @@
       (var-def
         (variable $desugar$0 (expr
           (lambda
-            (function $desugar$0 () ()
+            (function $default$0 () ()
               (block-function-body
                 (return
                   (simple-var-ref c))))))))
@@ -33,14 +33,14 @@
       (var-def
         (variable $desugar$1 (expr
           (lambda
-            (function $desugar$1 () ()
+            (function $default$1 () ()
               (block-function-body
                 (return
                   (simple-var-ref c))))))))
       (var-def
         (variable $desugar$2 (expr
           (lambda
-            (function $desugar$2 () ()
+            (function $default$2 () ()
               (block-function-body
                 (return
                   (simple-var-ref s))))))))
@@ -67,14 +67,14 @@
       (var-def
         (variable $desugar$3 (expr
           (lambda
-            (function $desugar$3 () ()
+            (function $default$3 () ()
               (block-function-body
                 (return
                   (simple-var-ref c))))))))
       (var-def
         (variable $desugar$4 (expr
           (lambda
-            (function $desugar$4 () ()
+            (function $default$4 () ()
               (block-function-body
                 (return
                   (simple-var-ref s))))))))
@@ -104,7 +104,7 @@
       (var-def
         (variable $desugar$5 (expr
           (lambda
-            (function $desugar$5 () ()
+            (function $default$5 () ()
               (block-function-body
                 (return
                   (simple-var-ref c))))))))
@@ -133,14 +133,14 @@
       (var-def
         (variable $desugar$6 (expr
           (lambda
-            (function $desugar$6 () ()
+            (function $default$6 () ()
               (block-function-body
                 (return
                   (simple-var-ref c))))))))
       (var-def
         (variable $desugar$7 (expr
           (lambda
-            (function $desugar$7 () ()
+            (function $default$7 () ()
               (block-function-body
                 (return
                   (simple-var-ref s))))))))
@@ -177,14 +177,14 @@
       (var-def
         (variable $desugar$8 (expr
           (lambda
-            (function $desugar$8 () ()
+            (function $default$8 () ()
               (block-function-body
                 (return
                   (simple-var-ref c))))))))
       (var-def
         (variable $desugar$9 (expr
           (lambda
-            (function $desugar$9 () ()
+            (function $default$9 () ()
               (block-function-body
                 (return
                   (simple-var-ref s))))))))
