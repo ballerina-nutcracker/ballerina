@@ -1,0 +1,68 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (value-type any)) (expr
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref a)
+          (value-type readonly)))))
+    (var-def
+      (variable r (type
+        (intersection-type
+          (value-type readonly)
+          (array-type
+            (value-type byte) dimensions: 1 ([])))) (expr
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref a)
+          (array-type
+            (value-type byte) dimensions: 1 ([
+            (literal 2)]))))))
+    (var-def
+      (variable b (type
+        (value-type any)) (expr
+        (simple-var-ref B))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref b)
+          (intersection-type
+            (value-type readonly)
+            (array-type
+              (value-type int) dimensions: 1 ([])))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref b)
+          (tuple-type
+            (finite-type
+              (literal 3))
+            (finite-type
+              (literal 4)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref C)
+          (value-type readonly)))))
+    (var-def
+      (variable nested (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (simple-var-ref C))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (index-based-access
+            (simple-var-ref nested)
+            (literal 0))
+          (value-type readonly)))))
+  )
+)

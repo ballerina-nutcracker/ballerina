@@ -1,0 +1,50 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type any)) (expr
+          (literal {"a":1}))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref a)
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref a)
+            (record-type
+              (field a
+                (value-type int)))))))
+      (var-def
+        (variable r (type
+          (intersection-type
+            (value-type readonly)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (literal {"a":1}))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"x":{"y":2}})
+            (value-type readonly)))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type any))) (expr
+          (literal {"x":{"y":2}}))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref m)
+              (literal x))
+            (value-type readonly))))))))
