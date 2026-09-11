@@ -1,0 +1,120 @@
+{
+  "source": "no-resolve-or-edits.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/no-resolve-or-edits.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/no-resolve-or-edits.bal"
+        },
+        "position": {
+          "line": 1,
+          "character": 0
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "completionItem/resolve",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {}
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///workspace/no-resolve-or-edits.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": [
+        {
+          "label": "const",
+          "kind": 14,
+          "insertText": "const"
+        },
+        {
+          "label": "function",
+          "kind": 14,
+          "insertText": "function"
+        },
+        {
+          "label": "import",
+          "kind": 14,
+          "insertText": "import"
+        },
+        {
+          "label": "plain",
+          "kind": 3,
+          "detail": "function() returns nil",
+          "insertText": "plain"
+        },
+        {
+          "label": "type",
+          "kind": 14,
+          "insertText": "type"
+        }
+      ]
+    }
+  ]
+}

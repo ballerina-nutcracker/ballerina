@@ -136,7 +136,8 @@
             "openClose": true,
             "change": 2,
             "save": true
-          }
+          },
+          "completionProvider": {}
         }
       }
     },

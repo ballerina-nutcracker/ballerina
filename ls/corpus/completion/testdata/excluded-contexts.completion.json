@@ -1,0 +1,139 @@
+{
+  "source": "excluded-contexts.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/excluded-contexts.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/excluded-contexts.bal"
+        },
+        "position": {
+          "line": 4,
+          "character": 19
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/excluded-contexts.bal"
+        },
+        "position": {
+          "line": 5,
+          "character": 12
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {}
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///workspace/excluded-contexts.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 17
+              },
+              "end": {
+                "line": 1,
+                "character": 26
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'value'"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 4,
+                "character": 4
+              },
+              "end": {
+                "line": 4,
+                "character": 28
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'result'"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": []
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": []
+    }
+  ]
+}

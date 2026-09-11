@@ -1,0 +1,161 @@
+{
+  "source": "block-lexical.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/block-lexical.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/block-lexical.bal"
+        },
+        "position": {
+          "line": 4,
+          "character": 0
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {}
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///workspace/block-lexical.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 3,
+                "character": 4
+              },
+              "end": {
+                "line": 3,
+                "character": 19
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'number'"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 0
+              },
+              "end": {
+                "line": 0,
+                "character": 20
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'total'"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": [
+        {
+          "label": "check",
+          "kind": 14,
+          "insertText": "check"
+        },
+        {
+          "label": "helper",
+          "kind": 3,
+          "insertText": "helper"
+        },
+        {
+          "label": "if",
+          "kind": 14,
+          "insertText": "if"
+        },
+        {
+          "label": "main",
+          "kind": 3,
+          "insertText": "main"
+        },
+        {
+          "label": "number",
+          "kind": 6,
+          "insertText": "number"
+        },
+        {
+          "label": "panic",
+          "kind": 14,
+          "insertText": "panic"
+        },
+        {
+          "label": "return",
+          "kind": 14,
+          "insertText": "return"
+        },
+        {
+          "label": "total",
+          "kind": 21,
+          "insertText": "total"
+        },
+        {
+          "label": "while",
+          "kind": 14,
+          "insertText": "while"
+        }
+      ]
+    }
+  ]
+}

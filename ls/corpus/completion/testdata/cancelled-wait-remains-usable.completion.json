@@ -1,0 +1,143 @@
+{
+  "source": "cancelled-wait-remains-usable.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/cancelled-wait-remains-usable.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/cancelled-wait-remains-usable.bal"
+        },
+        "position": {
+          "line": 1,
+          "character": 0
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$/cancelRequest",
+      "params": {
+        "id": 2
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/cancelled-wait-remains-usable.bal"
+        },
+        "position": {
+          "line": 1,
+          "character": 0
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {}
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "error": {
+        "code": -32800,
+        "message": "request cancelled"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///workspace/cancelled-wait-remains-usable.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": [
+        {
+          "label": "const",
+          "kind": 14,
+          "insertText": "const"
+        },
+        {
+          "label": "function",
+          "kind": 14,
+          "insertText": "function"
+        },
+        {
+          "label": "import",
+          "kind": 14,
+          "insertText": "import"
+        },
+        {
+          "label": "type",
+          "kind": 14,
+          "insertText": "type"
+        },
+        {
+          "label": "usable",
+          "kind": 3,
+          "detail": "function() returns nil",
+          "insertText": "usable"
+        }
+      ]
+    }
+  ]
+}

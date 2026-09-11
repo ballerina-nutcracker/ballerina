@@ -27,6 +27,7 @@ import (
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/completion"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
@@ -58,6 +59,7 @@ const (
 	rpcMethodNotFound       = -32601
 	rpcInvalidParams        = -32602
 	rpcParseError           = -32700
+	rpcInternalError        = -32603
 )
 
 type requestEntry struct {
@@ -117,6 +119,7 @@ type Server struct {
 	transport      protocol.Transport
 	projects       *workspace.ProjectService
 	compiler       *compile.CompilationService
+	completion     *completion.Service
 	bus            *event.Bus
 	versionSupport bool
 	initialized    bool
@@ -155,6 +158,7 @@ func New(transport protocol.Transport, projects *workspace.ProjectService, compi
 		transport:     transport,
 		projects:      projects,
 		compiler:      compiler,
+		completion:    completion.New(compiler),
 		bus:           bus,
 		lastPublished: make(map[string]uint64),
 		registry:      newRequestRegistry(),
@@ -313,6 +317,8 @@ func (s *Server) dispatchTracked(ctx context.Context, message protocol.Message) 
 	switch message.Method {
 	case testBlockMethod:
 		return s.handleTestBlockRequest(ctx, message)
+	case "textDocument/completion":
+		return s.handleCompletion(ctx, message)
 	}
 	return trackedResult{err: &protocol.RPCError{Code: rpcMethodNotFound, Message: "method not found"}, handled: true}
 }
@@ -357,7 +363,8 @@ func (s *Server) handleInitialize(_ context.Context, params json.RawMessage) (an
 		Save:      protocol.NewOptional(protocol.NewOrTextDocumentSyncOptionsSaveBoolean(true)),
 	}
 	return protocol.InitializeResult{Capabilities: protocol.ServerCapabilities{
-		TextDocumentSync: protocol.NewOptional(protocol.NewOrServerCapabilitiesTextDocumentSyncTextDocumentSyncOptions(opts)),
+		TextDocumentSync:   protocol.NewOptional(protocol.NewOrServerCapabilitiesTextDocumentSyncTextDocumentSyncOptions(opts)),
+		CompletionProvider: protocol.NewOptional(protocol.CompletionOptions{}),
 	}}, true
 }
 

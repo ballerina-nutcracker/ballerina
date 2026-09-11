@@ -1,0 +1,130 @@
+{
+  "source": "module-lexical.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/module-lexical.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/module-lexical.bal"
+        },
+        "position": {
+          "line": 4,
+          "character": 0
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {}
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///workspace/module-lexical.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 0
+              },
+              "end": {
+                "line": 1,
+                "character": 20
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'COUNT'"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": [
+        {
+          "label": "COUNT",
+          "kind": 21,
+          "insertText": "COUNT"
+        },
+        {
+          "label": "Point",
+          "kind": 7,
+          "insertText": "Point"
+        },
+        {
+          "label": "const",
+          "kind": 14,
+          "insertText": "const"
+        },
+        {
+          "label": "function",
+          "kind": 14,
+          "insertText": "function"
+        },
+        {
+          "label": "helper",
+          "kind": 3,
+          "insertText": "helper"
+        },
+        {
+          "label": "import",
+          "kind": 14,
+          "insertText": "import"
+        },
+        {
+          "label": "type",
+          "kind": 14,
+          "insertText": "type"
+        }
+      ]
+    }
+  ]
+}
