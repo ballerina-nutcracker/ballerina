@@ -1,0 +1,64 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref A)
+          (value-type readonly)))))
+    (var-def
+      (variable rows (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (index-based-access
+            (simple-var-ref rows)
+            (literal 0))
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (index-based-access
+            (simple-var-ref rows)
+            (literal 1))
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref B))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref B)
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref C))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref D))))
+    (var-def
+      (variable mixed (type
+        (array-type
+          (value-type any) dimensions: 1 ([]))) (expr
+        (simple-var-ref D))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (index-based-access
+            (simple-var-ref mixed)
+            (literal 0))
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (index-based-access
+            (simple-var-ref mixed)
+            (literal 1))
+          (value-type readonly)))))
+  )
+)
