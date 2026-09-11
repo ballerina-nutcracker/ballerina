@@ -8309,6 +8309,7 @@ func init() {
 		model.OpaqueFnArrayIndexOf:   monomorphizeArrayIndexOf,
 		model.OpaqueFnArrayRemove:    monomorphizeArrayRemove,
 		model.OpaqueFnArrayRemoveAll: monomorphizeArrayRemoveAll,
+		model.OpaqueFnArrayToStream:  monomorphizeArrayToStream,
 	}
 	mapOpaqueMonomorphizers = []opaqueFnMonomorphizer{
 		model.OpaqueFnMapRemove: monomorphizeMapRemove,
@@ -8414,6 +8415,8 @@ func opaqueFunctionParams(pkg, name string, sig model.TypedFunctionSignature) []
 			return []model.Param{{Name: "arr"}, {Name: "vals", Flag: model.ParamFlagRestParam}}
 		case "map":
 			return []model.Param{{Name: "arr"}, {Name: "func"}}
+		case "toStream":
+			return []model.Param{{Name: "arr"}}
 		}
 	case "lang.map":
 		switch name {
@@ -8425,6 +8428,41 @@ func opaqueFunctionParams(pkg, name string, sig model.TypedFunctionSignature) []
 	// resolve against them; leaving the names unset keeps the diagnostic honest
 	// instead of reporting another function's parameter names.
 	return make([]model.Param, len(sig.ParamTypes))
+}
+
+func monomorphizeArrayToStream(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
+	containerExpr, ok := containerArgExpr(args, "arr")
+	if !ok {
+		t.semanticError("missing container argument", pos)
+		return model.SymbolRef{}, chain, false
+	}
+	containerResult, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
+	if !ok {
+		return model.SymbolRef{}, chain, false
+	}
+	containerTy, effect := containerResult.ty, containerResult.effect
+	chain = effect.ifTrue
+	if sym.Lookup != nil {
+		if ref, found := sym.Lookup(containerTy); found {
+			return ref, chain, true
+		}
+	}
+	cx := t.typeContext()
+	if !semtypes.IsSubtype(cx, containerTy, semtypes.List) {
+		t.semanticError("expect first argument to be a list subtype", containerExpr.GetPosition())
+		return model.SymbolRef{}, chain, false
+	}
+	memberTy := semtypes.ListProj(cx, containerTy, semtypes.Int)
+	streamDef := semtypes.NewStreamDefinition()
+	returnTy := streamDef.Define(t.typeEnv(), memberTy, semtypes.Nil)
+	sig := model.TypedFunctionSignature{
+		ParamTypes:    []semtypes.SemType{containerTy},
+		RestParamType: semtypes.Never,
+		ReturnType:    returnTy,
+		Flags:         model.FuncSymbolFlagIsolated,
+	}
+	ref, ok := storeMonomorphizedOpaqueFn(t, sym, polymorphicRef, sig, pos, containerTy)
+	return ref, chain, ok
 }
 
 func monomorphizeArrayPush(t typeResolver, sym *model.OpaqueFunctionSymbol, polymorphicRef model.SymbolRef, chain *binding, args []ast.BLangExpression, _ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, *binding, bool) {
