@@ -599,7 +599,9 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 	defaultDesc := defaultModule.Descriptor()
 	defaultOrg := defaultDesc.Org().Value()
 
-	mainBirPkg, err := compileModuleFromSource(freshEnv, project, defaultModule, absProjectDir, publicSymbols, defaultOrg)
+	moduleVisibility := moduleVisibilityFor(currentPkg, deps)
+
+	mainBirPkg, err := compileModuleFromSource(freshEnv, project, defaultModule, absProjectDir, publicSymbols, moduleVisibility, defaultOrg)
 	if err != nil {
 		fmt.Fprintf(&stdoutBuf, "main module recompilation failed: %v\n", err)
 		return stdoutBuf.String(), stderrBuf.String()
@@ -611,9 +613,43 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 	return stdoutBuf.String(), stderrBuf.String()
 }
 
+// moduleVisibilityFor builds the same-shaped visibility map ResolveSymbols
+// expects, for the dependency modules (deps) of currentPkg — mirroring how
+// module_context.go's resolveTypesAndSymbols accumulates it during a normal
+// compilation, so that a non-exported module found among publicSymbols is
+// still rejected here instead of silently binding.
+func moduleVisibilityFor(currentPkg *projects.Package, deps []*bir.BIRPackage) map[semantics.PackageIdentifier]semantics.ModuleVisibility {
+	byQualifiedName := make(map[string]*projects.Module)
+	for _, m := range currentPkg.Modules() {
+		byQualifiedName[m.Descriptor().Name().String()] = m
+	}
+
+	manifest := currentPkg.Manifest()
+	moduleVisibility := make(map[semantics.PackageIdentifier]semantics.ModuleVisibility, len(deps))
+	for _, dep := range deps {
+		pkgIdent := semantics.PackageIdentifier{
+			OrgName:    dep.PackageID.OrgName.Value(),
+			ModuleName: dep.PackageID.PkgName.Value(),
+		}
+		module, ok := byQualifiedName[dep.PackageID.PkgName.Value()]
+		if !ok {
+			continue
+		}
+		desc := module.Descriptor()
+		moduleVisibility[pkgIdent] = semantics.ModuleVisibility{
+			PackageOrg:  desc.Org().Value(),
+			PackageName: desc.PackageName().Value(),
+			Exported:    slices.Contains(manifest.ExportedModules(), module.ModuleName().ModuleNamePart()),
+		}
+	}
+	return moduleVisibility
+}
+
 func compileModuleFromSource(env *context.CompilerEnvironment, project projects.Project, module *projects.Module,
-	absProjectDir string, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace, defaultOrg string,
+	absProjectDir string, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace,
+	moduleVisibility map[semantics.PackageIdentifier]semantics.ModuleVisibility, defaultOrg string,
 ) (*bir.BIRPackage, error) {
+	currentPackageName := module.Descriptor().PackageName().Value()
 	cx := context.NewCompilerContext(env)
 
 	// Register source files with DiagnosticEnv and parse them.
@@ -666,7 +702,9 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 		syntaxTrees,
 		langlibs.ImplicitImports,
 		langlibs.PublicSymbols,
+		moduleVisibility,
 		defaultOrg,
+		currentPackageName,
 	)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("symbol resolution failed")

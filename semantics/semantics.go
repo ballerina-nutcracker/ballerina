@@ -39,6 +39,15 @@ type PackageIdentifier struct {
 	ModuleName string
 }
 
+// ModuleVisibility records whether a module is exported, so cross-package
+// imports of non-exported modules can be rejected while same-package
+// imports are exempt.
+type ModuleVisibility struct {
+	PackageOrg  string
+	PackageName string
+	Exported    bool
+}
+
 // ResolveSymbols binds imports, resolves package symbols, and returns its scope,
 // exported symbols, and the merged imported symbol spaces.
 func ResolveSymbols(
@@ -47,13 +56,22 @@ func ResolveSymbols(
 	compilationUnits []*ast.BLangCompilationUnit,
 	implicitImports map[string]model.ExportedSymbolSpace,
 	publicSymbols map[PackageIdentifier]model.ExportedSymbolSpace,
-	defaultOrg string,
+	moduleVisibility map[PackageIdentifier]ModuleVisibility,
+	defaultOrg, currentPackageName string,
 ) (model.Scope, model.ExportedSymbolSpace, map[string]model.ExportedSymbolSpace) {
 	internalPublicSymbols := make(map[symbols.PackageIdentifier]model.ExportedSymbolSpace, len(publicSymbols))
 	for id, symbolSpace := range publicSymbols {
 		internalPublicSymbols[symbols.PackageIdentifier{OrgName: id.OrgName, ModuleName: id.ModuleName}] = symbolSpace
 	}
-	return symbols.Resolve(ctx, pkgID, compilationUnits, implicitImports, internalPublicSymbols, defaultOrg)
+	internalModuleVisibility := make(map[symbols.PackageIdentifier]symbols.ModuleVisibility, len(moduleVisibility))
+	for id, visibility := range moduleVisibility {
+		internalModuleVisibility[symbols.PackageIdentifier{OrgName: id.OrgName, ModuleName: id.ModuleName}] = symbols.ModuleVisibility{
+			PackageOrg:  visibility.PackageOrg,
+			PackageName: visibility.PackageName,
+			Exported:    visibility.Exported,
+		}
+	}
+	return symbols.Resolve(ctx, pkgID, compilationUnits, implicitImports, internalPublicSymbols, internalModuleVisibility, defaultOrg, currentPackageName)
 }
 
 // ResolvePublicNodeTypes resolves the types exposed by a package.
