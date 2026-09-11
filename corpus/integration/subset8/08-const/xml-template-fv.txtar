@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: constant xml template not implemented
+  --> xml-template-fv.bal:20:15
+   |
+20 | const xml X = xml `<root>${I}</root>`; // @error
+   |               ^^^^^^^^^^^^^^^^^^^^^^^

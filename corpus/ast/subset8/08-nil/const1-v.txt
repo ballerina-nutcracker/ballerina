@@ -5,6 +5,9 @@
     (literal <nil>)))
   (const b () (
     (literal <nil>)))
+  (const c (
+    (value-type null)) (
+    (literal <nil>)))
   (function main () (
     (value-type null))
     (block-function-body
@@ -13,6 +16,11 @@
           (binary-expr ==
             (simple-var-ref a)
             (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref c)
+            (simple-var-ref a)))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
@@ -34,4 +42,9 @@
           (type-test-expr is
             (simple-var-ref b)
             (finite-type
-              (literal <nil>)))))))))
+              (literal <nil>))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref c)
+            (value-type null))))))))
