@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|error
+  --> trap-action3-e.bal:31:23
+   |
+31 |     int remoteValue = trap c->value(); // @error trap result includes error
+   |                       ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|error
+  --> trap-action3-e.bal:32:25
+   |
+32 |     int resourceValue = trap c->/albums; // @error trap result includes error
+   |                         ^^^^^^^^^^^^^^^

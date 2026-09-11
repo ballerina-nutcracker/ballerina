@@ -1,0 +1,157 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (class-definition Client
+    (function init () ()
+      (block-function-body))
+    (function $remote$broken () (
+      (value-type int))
+      (block-function-body
+        (panic
+          (error-constructor-expr (
+            (literal remote panic))))))
+    (function $remote$returnError (
+      (variable failure (type
+        (error-type)))) (
+      (union-type
+        (value-type int)
+        (error-type)))
+      (block-function-body
+        (return
+          (simple-var-ref failure))))
+    (function $remote$value () (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (resource-function get name:albums
+      (value-type int)
+      (block-function-body
+        (return
+          (literal 1))))
+    (resource-function get name:broken
+      (value-type int)
+      (block-function-body
+        (panic
+          (error-constructor-expr (
+            (literal resource panic))))))
+    (resource-function get name:failure
+      (variable failure (type
+        (error-type)))
+      (union-type
+        (value-type int)
+        (error-type))
+      (block-function-body
+        (return
+          (simple-var-ref failure)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type Client)) (expr
+          (new ()))))
+      (var-def
+        (variable remoteValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (remote-method-call value expr:
+              (simple-var-ref c) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref remoteValue))))
+      (var-def
+        (variable resourceValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (client-resource-access get expr:
+              (simple-var-ref c) name:albums)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref resourceValue))))
+      (var-def
+        (variable remotePanic (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (remote-method-call broken expr:
+              (simple-var-ref c) ())))))
+      (if
+        (type-test-expr is
+          (simple-var-ref remotePanic)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation lang.error message (
+                (simple-var-ref remotePanic))))))) ())
+      (block-stmt
+        (var-def
+          (variable resourcePanic (type
+            (union-type
+              (value-type int)
+              (error-type))) (expr
+            (trap-expr
+              (client-resource-access get expr:
+                (simple-var-ref c) name:broken)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref resourcePanic)
+            (error-type))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation lang.error message (
+                  (simple-var-ref resourcePanic))))))) ())
+        (block-stmt
+          (var-def
+            (variable failure (type
+              (error-type)) (expr
+              (error-constructor-expr (
+                (literal returned error))))))
+          (var-def
+            (variable remoteError (expr
+              (trap-expr
+                (remote-method-call returnError expr:
+                  (simple-var-ref c) (
+                  (simple-var-ref failure)))))))
+          (expression-stmt
+            (invocation io println (
+              (binary-expr ===
+                (simple-var-ref remoteError)
+                (simple-var-ref failure)))))
+          (var-def
+            (variable resourceError (expr
+              (trap-expr
+                (client-resource-access get expr:
+                  (simple-var-ref c) name:failure
+                  (simple-var-ref failure))))))
+          (expression-stmt
+            (invocation io println (
+              (binary-expr ===
+                (simple-var-ref resourceError)
+                (simple-var-ref failure)))))
+          (var-def
+            (variable nested (expr
+              (trap-expr
+                (trap-expr
+                  (remote-method-call broken expr:
+                    (simple-var-ref c) ()))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref nested)
+              (error-type))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (invocation lang.error message (
+                    (simple-var-ref nested))))))) ())
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal continued))))))))))
