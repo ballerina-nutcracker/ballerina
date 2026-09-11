@@ -8,8 +8,6 @@ The BIR binary file has the following structure:
 +------------------+
 | Magic (4 bytes)  | 0xBA 0x10 0xC0 0xDE
 +------------------+
-| Version (4 bytes)| int32 (currently 82)
-+------------------+
 | Constant Pool    | See Constant Pool Format
 +------------------+
 | Package Data     | See Package Structure

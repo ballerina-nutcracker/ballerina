@@ -27,10 +27,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-const (
-	symMagic   = "\x53\x59\x4d\x42"
-	symVersion = 10
-)
+const symMagic = "\x53\x59\x4d\x42"
 
 const (
 	symTagType uint8 = iota
@@ -128,9 +125,6 @@ func (sw *symbolWriter) serialize(exported model.ExportedSymbolSpace) ([]byte, e
 	buf := &bytes.Buffer{}
 	if _, err := buf.Write([]byte(symMagic)); err != nil {
 		return nil, fmt.Errorf("writing magic: %v", err)
-	}
-	if err := write(buf, int32(symVersion)); err != nil {
-		return nil, err
 	}
 	tpBytes := tpEncoding.Bytes()
 	if err := write(buf, int64(len(tpBytes))); err != nil {

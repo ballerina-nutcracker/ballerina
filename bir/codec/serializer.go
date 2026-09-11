@@ -29,10 +29,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-const (
-	BIR_MAGIC   = "\xba\x10\xc0\xde"
-	BIR_VERSION = 84
-)
+const BIR_MAGIC = "\xba\x10\xc0\xde"
 
 type birWriter struct {
 	cp           *ConstantPool
@@ -70,8 +67,6 @@ func (bw *birWriter) serialize(pkg *bir.BIRPackage) (result []byte, err error) {
 	if err != nil {
 		panic(fmt.Sprintf("writing BIR magic: %v", err))
 	}
-
-	write(buf, int32(BIR_VERSION))
 
 	tpBytes := semtypes.MarshalTypePool(bw.tp, bw.env).Bytes()
 	write(buf, int64(len(tpBytes)))
