@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: named arguments not supported in this context
+  --> service-method-args1-fv.bal:38:28
+   |
+38 |         return self.helper(value = 7); // @error named args on multi-atom service receiver
+   |                            ^^^^^^^^^
