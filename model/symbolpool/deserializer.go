@@ -62,12 +62,6 @@ func (sr *symbolReader) deserialize() (result model.ExportedSymbolSpace, err err
 		panic(fmt.Sprintf("invalid symbol magic: %x", magic))
 	}
 
-	var version int32
-	read(sr.r, &version)
-	if version != symVersion {
-		panic(fmt.Sprintf("unsupported symbol version: %d", version))
-	}
-
 	var tpSize int64
 	read(sr.r, &tpSize)
 	tpBytes := make([]byte, tpSize)

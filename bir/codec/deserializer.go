@@ -58,13 +58,6 @@ func (br *birReader) readPackage() (pkg *bir.BIRPackage, err error) {
 		panic(fmt.Sprintf("invalid BIR magic: %x", magic))
 	}
 
-	var version int32
-	br.read(&version)
-
-	if version != BIR_VERSION {
-		panic(fmt.Sprintf("unsupported BIR version: %d", version))
-	}
-
 	br.readTypePool()
 	br.readConstantPool()
 
