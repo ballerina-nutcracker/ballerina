@@ -41,14 +41,33 @@ func (s *itemSet) add(item protocol.CompletionItem) {
 }
 
 func (s *itemSet) items() []protocol.CompletionItem {
+	return s.itemsRanked(nil)
+}
+
+func (s *itemSet) itemsRanked(compatible func(protocol.CompletionItem) bool) []protocol.CompletionItem {
 	labels := make([]string, 0, len(s.byLabel))
 	for label := range s.byLabel {
 		labels = append(labels, label)
 	}
 	sort.Strings(labels)
 	items := make([]protocol.CompletionItem, 0, len(labels))
+	if compatible == nil {
+		for _, label := range labels {
+			items = append(items, s.byLabel[label])
+		}
+		return items
+	}
 	for _, label := range labels {
-		items = append(items, s.byLabel[label])
+		item := s.byLabel[label]
+		if compatible(item) {
+			items = append(items, item)
+		}
+	}
+	for _, label := range labels {
+		item := s.byLabel[label]
+		if !compatible(item) {
+			items = append(items, item)
+		}
 	}
 	return items
 }

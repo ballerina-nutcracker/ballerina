@@ -1,0 +1,107 @@
+{
+  "source": "typed-initializer-valid.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/typed-initializer-valid.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "file:///workspace/typed-initializer-valid.bal"
+        },
+        "position": {
+          "line": 3,
+          "character": 17
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {}
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///workspace/typed-initializer-valid.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": [
+        {
+          "label": "target",
+          "kind": 6,
+          "detail": "int",
+          "insertText": "target"
+        },
+        {
+          "label": "zInt",
+          "kind": 6,
+          "detail": "int",
+          "insertText": "zInt"
+        },
+        {
+          "label": "aString",
+          "kind": 6,
+          "detail": "string",
+          "insertText": "aString"
+        },
+        {
+          "label": "main",
+          "kind": 3,
+          "detail": "function() returns nil",
+          "insertText": "main"
+        }
+      ]
+    }
+  ]
+}

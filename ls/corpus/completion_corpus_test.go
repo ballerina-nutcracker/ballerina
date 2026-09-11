@@ -62,3 +62,27 @@ func TestBlockLexicalCompletionCorpus(t *testing.T) {
 	defer cleanup()
 	runTranscript(t, platform, "completion/testdata/block-lexical.completion.json")
 }
+
+func TestTypedInitializerValidCompletionCorpus(t *testing.T) {
+	platform, cleanup := palnative.NewPlatform()
+	defer cleanup()
+	runTranscript(t, platform, "completion/testdata/typed-initializer-valid.completion.json")
+}
+
+func TestTypedInitializerPartialCompletionCorpus(t *testing.T) {
+	platform, cleanup := palnative.NewPlatform()
+	defer cleanup()
+	runTranscript(t, platform, "completion/testdata/typed-initializer-partial.completion.json")
+}
+
+func TestUntypedInitializerUnknownCompletionCorpus(t *testing.T) {
+	platform, cleanup := palnative.NewPlatform()
+	defer cleanup()
+	runTranscript(t, platform, "completion/testdata/untyped-initializer-unknown.completion.json")
+}
+
+func TestTypedInitializerEmptyCompletionCorpus(t *testing.T) {
+	platform, cleanup := palnative.NewPlatform()
+	defer cleanup()
+	runTranscript(t, platform, "completion/testdata/typed-initializer-empty.completion.json")
+}
