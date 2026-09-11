@@ -285,6 +285,10 @@ type (
 		AnnotationSpaces []*SymbolSpace
 	}
 
+	// ImportedSymbolSpaces holds the exported symbol spaces of every imported package,
+	// keyed by package identifier.
+	ImportedSymbolSpaces map[PackageIdentifier]ExportedSymbolSpace
+
 	BlockScopeBase struct {
 		Parent Scope
 		Main   *SymbolSpace
@@ -472,6 +476,22 @@ type (
 		fieldNames [][]string
 	}
 )
+
+// NewImportedSymbolSpaces creates an empty set of imported symbol spaces.
+func NewImportedSymbolSpaces() ImportedSymbolSpaces {
+	return make(ImportedSymbolSpaces)
+}
+
+// ByModule looks up the symbol space of the imported module with the given organization
+// and package name, ignoring the version in the package identifier.
+func (spaces ImportedSymbolSpaces) ByModule(org, name string) (ExportedSymbolSpace, bool) {
+	for identifier, symbols := range spaces {
+		if identifier.Organization == org && identifier.Package == name {
+			return symbols, true
+		}
+	}
+	return ExportedSymbolSpace{}, false
+}
 
 func (ref SymbolRef) IsEmpty() bool {
 	return ref == SymbolRef{}

@@ -162,7 +162,7 @@ func (r *mappingDefaultsResolverBase) mappingDefaults(atom *semtypes.MappingAtom
 type packageTypeResolver struct {
 	ctx             *context.CompilerContext
 	tyCtx           semtypes.Context
-	importedSymbols map[string]model.ExportedSymbolSpace
+	importedSymbols model.ImportedSymbolSpaces
 	pkg             *ast.BLangPackage
 	implicitImports map[string]ast.BLangImportPackage
 	// capturedNarrowedVars tracks base symbols of narrowed variables captured across
@@ -358,8 +358,7 @@ func (t *packageTypeResolver) lookupClassMethodSymbol(receiverTy semtypes.SemTyp
 }
 
 func (t *packageTypeResolver) lookupImportedSymbols(name string) (model.ExportedSymbolSpace, bool) {
-	s, ok := t.importedSymbols[name]
-	return s, ok
+	return t.importedSymbols.ByModule("ballerina", name)
 }
 
 func (t *packageTypeResolver) addImplicitImport(name string, imp ast.BLangImportPackage) {
@@ -579,7 +578,9 @@ func (f *functionTypeResolver) nextMonoFnName(origName string) string {
 	return fmt.Sprintf("$mono$%s$%d", origName, idx)
 }
 
-func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace, moduleScope model.Scope) *packageTypeResolver {
+// newPackageTypeResolver creates a type resolver for pkg, resolving imported references
+// through importedSymbols and module-level names through moduleScope.
+func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols model.ImportedSymbolSpaces, moduleScope model.Scope) *packageTypeResolver {
 	return &packageTypeResolver{
 		ctx:                    ctx,
 		tyCtx:                  semtypes.ContextFrom(ctx.GetTypeEnv()),
@@ -685,12 +686,15 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 }
 
 // ResolvePublicNodeTypes resolves types of public symbols. After this dependencies can use the ExportedSymbolSpace for this package.
-func ResolvePublicNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
+func ResolvePublicNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols model.ImportedSymbolSpaces) {
 	t := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
 	t.resolveTopLevelTypes(pkg)
 }
 
-func populateClassAtomSymbols(t typeResolver, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
+// populateClassAtomSymbols records the object atomic types of the package's own class
+// definitions and of the imported class symbols, so that an atom can be mapped back to
+// the class that declared it.
+func populateClassAtomSymbols(t typeResolver, pkg *ast.BLangPackage, importedSymbols model.ImportedSymbolSpaces) {
 	for i := range pkg.ClassDefinitions {
 		classDef := pkg.ClassDefinitions[i]
 		mat := semtypes.ToObjectAtomicType(t.typeContext(), t.symbolType(classDef.Symbol()))
@@ -709,7 +713,7 @@ func populateClassAtomSymbols(t typeResolver, pkg *ast.BLangPackage, importedSym
 }
 
 // ResolvePrivateNodesTypes resolves the types private nodes within the package. Then can be executed concurrently
-func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
+func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols model.ImportedSymbolSpaces) {
 	p := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
 	populateClassSymbolByType(p, pkg)
 	populateClassAtomSymbols(p, pkg, importedSymbols)

@@ -43,7 +43,7 @@ type desugaredNode[E ast.Node] struct {
 type packageContext struct {
 	compilerCtx            *context.CompilerContext
 	pkg                    *ast.BLangPackage
-	importedSymbols        map[string]model.ExportedSymbolSpace
+	importedSymbols        model.ImportedSymbolSpaces
 	importMu               sync.Mutex
 	addedImplicitImports   map[string]bool
 	defaultClosureOwnersMu sync.Mutex
@@ -55,7 +55,9 @@ type packageContext struct {
 
 var _ desugarContext = &packageContext{}
 
-func newPackageContext(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) *packageContext {
+// newPackageContext creates the desugar context for a single package, seeded with the
+// symbol spaces of its imports.
+func newPackageContext(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols model.ImportedSymbolSpaces) *packageContext {
 	return &packageContext{
 		compilerCtx:          compilerCtx,
 		pkg:                  pkg,
@@ -116,8 +118,7 @@ func inferredLambda(expr ast.BLangActionOrExpression) *ast.BLangLambdaFunction {
 }
 
 func (ctx *packageContext) getImportedSymbolSpace(pkgName string) (model.ExportedSymbolSpace, bool) {
-	space, ok := ctx.importedSymbols[pkgName]
-	return space, ok
+	return ctx.importedSymbols.ByModule("ballerina", pkgName)
 }
 
 func (ctx *packageContext) symbolType(symbol model.SymbolRef) semtypes.SemType {
@@ -1593,10 +1594,7 @@ func remapSymbolRefs(node ast.BLangNode, mapping map[model.SymbolRef]model.Symbo
 }
 
 // DesugarPackage returns a desugared package (may be new or same instance)
-func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) *ast.BLangPackage {
-	if importedSymbols == nil {
-		importedSymbols = make(map[string]model.ExportedSymbolSpace)
-	}
+func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols model.ImportedSymbolSpaces) *ast.BLangPackage {
 	pkgCtx := newPackageContext(compilerCtx, pkg, importedSymbols)
 
 	var wg sync.WaitGroup
