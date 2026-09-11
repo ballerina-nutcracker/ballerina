@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> inline-type-default-mutable-e.bal:20:25
+   |
+20 | const record {| int x = counter; |} A = {x: 1}; // @error default reads a mutable module variable
+   |                         ^^^^^^^

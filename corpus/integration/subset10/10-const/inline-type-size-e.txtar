@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: fixed-length array size must be a singleton int
+  --> inline-type-size-e.bal:20:11
+   |
+20 | const int[S] A = [1]; // @error array length is not an int
+   |           ^
