@@ -824,6 +824,12 @@ func (ca *constantAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		ca.semanticErr("continue statement not allowed in constant expression", n.GetPosition())
 		return nil
 	case ast.TypeDescriptor:
+		// The type descriptor of a constant declaration is not part of its
+		// constant expression. Expressions nested in it - fixed array lengths
+		// and record field defaults - belong to the type, so hand them to the
+		// enclosing analyzer instead of checking them against the constant's
+		// own type.
+		return ca.parentAnalyzer().Visit(node)
 	case *ast.BLangTypeDefinition:
 		// We have set the type at constructor
 		return nil
