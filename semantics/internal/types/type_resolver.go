@@ -486,8 +486,18 @@ func (f *functionTypeResolver) lookupClassMethodSymbol(receiverTy semtypes.SemTy
 	return f.parentResolver.lookupClassMethodSymbol(receiverTy, methodName)
 }
 
+// ensureNotEmpty checks emptiness with this resolver's own type context. Function
+// bodies are resolved concurrently, so the shared package resolver context (and its
+// deferred check list) must not be touched once the type env is ready.
 func (f *functionTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool {
-	return f.parentResolver.ensureNotEmpty(ty, onEmpty)
+	if !f.typeEnv().IsReady() {
+		return f.parentResolver.ensureNotEmpty(ty, onEmpty)
+	}
+	if semtypes.IsEmpty(f.typeContext(), ty) {
+		onEmpty()
+		return false
+	}
+	return true
 }
 
 func (f *functionTypeResolver) lookupImportedSymbols(name string) (model.ExportedSymbolSpace, bool) {
