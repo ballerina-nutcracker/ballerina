@@ -3,10 +3,6 @@ org = "mockorg"
 name = "localpkg"
 version = "1.0.0"
 
-[[modules]]
-name   = "localpkg"
-export = true
-
-[[modules]]
+[[package.modules]]
 name   = "localpkg.utils"
 export = true

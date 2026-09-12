@@ -1,0 +1,5 @@
+[package]
+org = "testorg"
+name = "iconinvalidcontentproject"
+version = "0.1.0"
+icon = "fake.png"

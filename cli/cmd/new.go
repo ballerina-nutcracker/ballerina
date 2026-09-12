@@ -629,6 +629,24 @@ func initPackage(projectPath, packageName, orgName string, template templateName
 	}
 	createdFiles = append(createdFiles, gitignore)
 
+	// Create README.md for the lib template.
+	if template == templateLib {
+		readmeContent, err := templates.ReadTemplate(templates.LibReadme)
+		if err != nil {
+			cleanup()
+			return fmt.Errorf("failed to read README template: %w", err)
+		}
+		readmeContent = strings.ReplaceAll(readmeContent, templates.OrgNamePlaceholder, orgName)
+		readmeContent = strings.ReplaceAll(readmeContent, templates.PkgNamePlaceholder, packageName)
+
+		readme := filepath.Join(projectPath, projects.ReadmeMdFile)
+		if err := os.WriteFile(readme, []byte(readmeContent), 0644); err != nil {
+			cleanup()
+			return fmt.Errorf("failed to create %s: %w", projects.ReadmeMdFile, err)
+		}
+		createdFiles = append(createdFiles, readme)
+	}
+
 	return nil
 }
 

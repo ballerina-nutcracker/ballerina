@@ -35,6 +35,9 @@ const (
 
 	// Gitignore is the .gitignore template file name.
 	Gitignore = "gitignore"
+
+	// LibReadme is the README.md template file name for library packages.
+	LibReadme = "lib-readme.md"
 )
 
 // Template placeholder constants for string replacement.
@@ -46,7 +49,7 @@ const (
 	PkgNamePlaceholder = "PKG_NAME"
 )
 
-//go:embed main.bal lib.bal service.bal manifest-app.toml gitignore
+//go:embed main.bal lib.bal service.bal manifest-app.toml gitignore lib-readme.md
 var FS embed.FS
 
 // ReadTemplate reads a template file and returns its content as a string.

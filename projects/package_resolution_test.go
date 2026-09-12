@@ -20,6 +20,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/projects"
@@ -529,6 +530,47 @@ func TestPackageResolution_MultiModuleDependencies(t *testing.T) {
 		t.Logf("Diagnostic: %s", diag.Message())
 	}
 	assert.Equal(0, diagnosticResult.DiagnosticCount(), "expected no compilation errors")
+}
+
+// TestPackageResolution_NonExportedModuleImportFails verifies that importing
+// a dependency's sub-module which isn't listed in that package's exported
+// modules is a compile error — mirroring Java's SymbolEnter check that
+// blocks importing a package's non-exported modules from outside that
+// package. Reuses the existing testdata/repo/bala/mockorg/multiA package
+// (already exports "multiA"/"multiA.util"); its "multiA.hidden" sub-module
+// is deliberately not in that list.
+func TestPackageResolution_NonExportedModuleImportFails(t *testing.T) {
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	testRepoPath, err := filepath.Abs("testdata/repo/bala")
+	require.NoError(err)
+
+	projectPath := filepath.Join("testdata", "project-with-nonexported-dep")
+	absPath, err := filepath.Abs(projectPath)
+	require.NoError(err)
+
+	result, err := loadProject(absPath, projects.ProjectLoadConfig{
+		Repositories: []projects.Repository{
+			projects.NewFileSystemRepository(os.DirFS(testRepoPath), "."),
+		},
+	})
+	require.NoError(err)
+	require.NotNil(result)
+
+	pkg := result.Project().CurrentPackage()
+	compilation := pkg.Compilation()
+	require.NotNil(compilation)
+
+	diagnosticResult := compilation.DiagnosticResult()
+	found := false
+	for _, diag := range diagnosticResult.Diagnostics() {
+		t.Logf("Diagnostic: %s", diag.Message())
+		if strings.Contains(diag.Message(), "multiA.hidden") && strings.Contains(diag.Message(), "is not exported") {
+			found = true
+		}
+	}
+	assert.True(found, "expected a diagnostic reporting multiA.hidden is not exported")
 }
 
 // TestPackageResolution_ProjectLevelCache verifies the build-project default:

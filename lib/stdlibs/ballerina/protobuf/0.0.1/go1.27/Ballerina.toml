@@ -2,3 +2,27 @@
 org     = "ballerina"
 name    = "protobuf"
 version = "0.0.1"
+
+[[package.modules]]
+name = "protobuf.types.any"
+export = true
+
+[[package.modules]]
+name = "protobuf.types.duration"
+export = true
+
+[[package.modules]]
+name = "protobuf.types.empty"
+export = true
+
+[[package.modules]]
+name = "protobuf.types.struct"
+export = true
+
+[[package.modules]]
+name = "protobuf.types.timestamp"
+export = true
+
+[[package.modules]]
+name = "protobuf.types.wrappers"
+export = true

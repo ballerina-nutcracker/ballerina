@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "readmeautodiscoveryproject"
+version = "0.1.0"

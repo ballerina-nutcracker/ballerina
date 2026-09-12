@@ -34,6 +34,7 @@ type packageContext struct {
 	moduleIDs            []ModuleID
 	defaultModuleContext *moduleContext       // cached default module
 	ballerinaTomlContext *tomlDocumentContext // Ballerina.toml context (nil if not present)
+	readmeMdContext      *mdDocumentContext   // readme context (nil if not present)
 
 	// Lazy-initialized fields (thread-safe via sync.Once, matching documentContext pattern).
 	packageCompilation     *PackageCompilation
@@ -72,6 +73,12 @@ func newPackageContext(project Project, packageConfig PackageConfig, compilation
 		ballerinaTomlCtx = newTomlDocumentContext(packageConfig.BallerinaToml())
 	}
 
+	// Create mdDocumentContext for the readme if present
+	var readmeMdCtx *mdDocumentContext
+	if packageConfig.HasReadmeMd() {
+		readmeMdCtx = newMdDocumentContext(packageConfig.ReadmeMd())
+	}
+
 	return &packageContext{
 		project:              project,
 		packageID:            packageConfig.PackageID(),
@@ -81,6 +88,7 @@ func newPackageContext(project Project, packageConfig PackageConfig, compilation
 		moduleIDs:            moduleIDs,
 		defaultModuleContext: defaultModuleCtx,
 		ballerinaTomlContext: ballerinaTomlCtx,
+		readmeMdContext:      readmeMdCtx,
 	}
 }
 
@@ -93,6 +101,7 @@ func newPackageContextFromMaps(
 	compilationOptions CompilationOptions,
 	moduleContextMap map[ModuleID]*moduleContext,
 	ballerinaTomlContext *tomlDocumentContext,
+	readmeMdContext *mdDocumentContext,
 ) *packageContext {
 	// Ensure moduleContextMap is initialized to prevent nil map panics
 	if moduleContextMap == nil {
@@ -118,6 +127,7 @@ func newPackageContextFromMaps(
 		moduleIDs:            moduleIDs,
 		defaultModuleContext: defaultModuleContext,
 		ballerinaTomlContext: ballerinaTomlContext,
+		readmeMdContext:      readmeMdContext,
 	}
 }
 
@@ -227,6 +237,11 @@ func (p *packageContext) getBallerinaTomlContext() *tomlDocumentContext {
 	return p.ballerinaTomlContext
 }
 
+// getReadmeMdContext returns the readme context, or nil if not present.
+func (p *packageContext) getReadmeMdContext() *mdDocumentContext {
+	return p.readmeMdContext
+}
+
 // moduleDependencyGraph returns the module dependency graph for this package.
 // The graph contains only modules within this package (not external dependencies).
 // For source packages, it analyzes imports. For bala packages, it returns a simple
@@ -305,5 +320,6 @@ func (p *packageContext) duplicate(project Project) *packageContext {
 		p.compilationOptions,
 		moduleContextMap,
 		p.ballerinaTomlContext, // Ballerina.toml is immutable, can share reference
+		p.readmeMdContext,     // readme is immutable, can share reference
 	)
 }

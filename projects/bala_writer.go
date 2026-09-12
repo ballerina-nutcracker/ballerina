@@ -19,8 +19,10 @@ package projects
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -37,6 +39,7 @@ const (
 	balaImplementationVendor = "WSO2"
 	balaLanguageSpecVersion  = "2024R1"
 	dependenciesTomlVersion  = "2"
+	balaDocsDir              = "docs"
 )
 
 // writeBala builds the bala zip at outputDir/<org>-<name>-any-<ver>.bala.
@@ -90,6 +93,9 @@ func populateBalaArchive(zw *zip.Writer, pkg *Package, resolution *PackageResolu
 	if err := writeModuleSources(zw, pkg); err != nil {
 		return err
 	}
+	if err := addBalaDocs(zw, pkg); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -115,7 +121,13 @@ func copyBallerinaToml(zw *zip.Writer, pkg *Package) error {
 		return fmt.Errorf("writeBala: package has no Ballerina.toml")
 	}
 
-	return writeZipEntry(zw, BallerinaTomlFile, []byte(bt.Content()))
+	content := bt.Content()
+	manifest := pkg.Manifest()
+	if manifest.Readme() != "" {
+		content = rewriteBallerinaTomlForBala(content, manifest)
+	}
+
+	return writeZipEntry(zw, BallerinaTomlFile, []byte(content))
 }
 
 // writeDependenciesToml emits Dependencies.toml into zw: a lock file with one
@@ -202,4 +214,79 @@ func writeZipEntry(zw *zip.Writer, zipPath string, content []byte) error {
 		return fmt.Errorf("writeBala: write entry %s: %w", zipPath, err)
 	}
 	return nil
+}
+
+// addBalaDocs bundles the package readme, icon, and per-module readmes into
+// a docs/ directory inside the bala archive: docs/<readme>, docs/<icon>,
+// docs/modules/<module-name>/<readme>. Mirrors a quirk in Java's
+// implementation: if the package has no readme, nothing is bundled at all
+// — not even a lone icon.
+// Java source: io.ballerina.projects.BalaWriter#addPackageDoc
+func addBalaDocs(zw *zip.Writer, pkg *Package) error {
+	manifest := pkg.Manifest()
+	if manifest.Readme() == "" {
+		return nil
+	}
+
+	fsys := pkg.Project().Environment().fs()
+	root := pkg.Project().SourceRoot()
+
+	if err := addBalaDoc(zw, fsys, root, manifest.Readme(), balaDocPath(manifest.Readme())); err != nil {
+		return balaDocError(fmt.Sprintf("could not locate the readme file '%s'", manifest.Readme()), err)
+	}
+	if manifest.Icon() != "" {
+		if err := addBalaDoc(zw, fsys, root, manifest.Icon(), balaDocPath(manifest.Icon())); err != nil {
+			return balaDocError(fmt.Sprintf("could not locate icon path '%s'", manifest.Icon()), err)
+		}
+	}
+	for _, mod := range manifest.Modules() {
+		if mod.Readme() == "" {
+			continue
+		}
+		zipPath := balaModuleDocPath(mod.Name(), mod.Readme())
+		if err := addBalaDoc(zw, fsys, root, mod.Readme(), zipPath); err != nil {
+			return balaDocError(fmt.Sprintf("could not locate the readme file '%s' for module '%s'", mod.Readme(), mod.Name()), err)
+		}
+	}
+	return nil
+}
+
+// addBalaDoc reads the file at relPath (relative to root within fsys) and
+// writes it into zw at zipPath.
+//
+// fs.FS rejects paths escaping the project (absolute, or ".."), failing
+// the pack instead of reading them — intentional, not a bug.
+func addBalaDoc(zw *zip.Writer, fsys fs.FS, root, relPath, zipPath string) error {
+	content, err := fs.ReadFile(fsys, joinRoot(root, relPath))
+	if err != nil {
+		return err
+	}
+	return writeZipEntry(zw, zipPath, content)
+}
+
+// balaDocError formats a doc-file read failure. For the common case (the
+// file doesn't exist), it matches the wording Java's ManifestBuilder uses
+// ("could not locate the readme file '<path>'", "could not locate icon
+// path '<path>'") without the raw OS error attached, same as Java's clean
+// diagnostic message. Anything else (e.g. a permission error) keeps the
+// underlying error, since that wording doesn't otherwise explain it.
+func balaDocError(message string, err error) error {
+	if errors.Is(err, fs.ErrNotExist) {
+		return errors.New(message)
+	}
+	return fmt.Errorf("%s: %w", message, err)
+}
+
+// balaDocPath returns where a package-level doc (readme/icon) lands inside
+// the bala archive. Used both to write the file (addBalaDocs) and to
+// rewrite the copied Ballerina.toml to match (rewriteBallerinaTomlForBala).
+func balaDocPath(relPath string) string {
+	return path.Join(balaDocsDir, path.Base(relPath))
+}
+
+// balaModuleDocPath returns where a module-level readme lands inside the
+// bala archive. Used both to write the file (addBalaDocs) and to rewrite
+// the copied Ballerina.toml to match (rewriteBallerinaTomlForBala).
+func balaModuleDocPath(moduleName, relPath string) string {
+	return path.Join(balaDocsDir, ModulesDir, moduleName, path.Base(relPath))
 }
