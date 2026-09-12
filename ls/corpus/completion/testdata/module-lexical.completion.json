@@ -27,6 +27,11 @@
     },
     {
       "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
       "id": 2,
       "method": "textDocument/completion",
       "params": {

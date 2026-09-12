@@ -33,6 +33,12 @@ func TestCurrentGenerationAfterEditCompletionCorpus(t *testing.T) {
 	runTranscript(t, platform, "completion/testdata/current-generation-after-edit.completion.json")
 }
 
+func TestMalformedTopLevelSiblingCompletionCorpus(t *testing.T) {
+	platform, cleanup := palnative.NewPlatform()
+	defer cleanup()
+	runTranscript(t, platform, "completion/testdata/malformed-top-level-sibling.completion.json")
+}
+
 func TestExcludedContextsCompletionCorpus(t *testing.T) {
 	platform, cleanup := palnative.NewPlatform()
 	defer cleanup()
