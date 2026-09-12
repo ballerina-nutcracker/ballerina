@@ -237,7 +237,7 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidTopLevelSiblings(t *testing.T) 
 			}
 		}
 	}
-	assembled := nodebuilder.ToPackageFromCompilationUnits(filteredUnits)
+	assembled := nodebuilder.ToPackageFromCompilationUnits(d.ctx, filteredUnits)
 	if assembled.PackageID != d.pkgID {
 		t.Errorf("compiler assembly package ID = %p, want %p", assembled.PackageID, d.pkgID)
 	}

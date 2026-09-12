@@ -299,7 +299,7 @@ func (d *moduleDriver) ensureSymbolResolved(module *projects.Module, input modul
 		input.publicSymbols,
 		input.defaultOrg,
 	)
-	pkgNode := nodebuilder.ToPackageFromCompilationUnits(compilationUnitsWithoutBadTopLevelNodes(d.units))
+	pkgNode := nodebuilder.ToPackageFromCompilationUnits(d.ctx, compilationUnitsWithoutBadTopLevelNodes(d.units))
 	pkgNode.Imports = nil
 	pkgNode.PackageID = d.pkgID
 	pkgNode.Scope = pkgScope
