@@ -24,55 +24,58 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/model"
 )
 
-type cursorKind uint8
-
-const (
-	kindNone cursorKind = iota
-	kindModule
-	kindBlock
-	kindLexical
-)
-
 type cursor struct {
-	kind  cursorKind
 	req   Request
 	sm    compile.SealedModule
 	chain []ast.BLangNode
+
+	winnerNode    ast.BLangNode
+	winnerMatched bool
 }
 
 func newCursor(req Request, sm compile.SealedModule) *cursor {
 	fileIndex := sm.Context().DiagnosticEnv().FileIndex(req.URI.Path())
 	c := &cursor{req: req, sm: sm, chain: nodeChainAtOffset(sm.PackageNode(), req.Offset, fileIndex)}
-	c.classify()
+	c.winnerNode, c.winnerMatched = nearestChainMatch(c)
 	return c
 }
 
-func (c *cursor) classify() {
+// winner returns the nearest (tail-to-head) chain node claimed by one of the
+// dispatch seam's migrated node-shape checks: field-access/invocation/
+// import/module-qualified-reference (the excluded-context family), block, or
+// module. Handlers for those families check this instead of independently
+// rescanning the whole chain themselves, which preserves classify()'s
+// original "nearest node wins" semantics: e.g. a block passed as a lambda
+// argument to a call must still win over the enclosing BLangInvocation, even
+// though both are present in the chain.
+func (c *cursor) winner() (ast.BLangNode, bool) {
+	return c.winnerNode, c.winnerMatched
+}
+
+// nearestChainMatch is classify()'s original single-pass walk, unchanged,
+// now returning the winning node instead of setting a cursorKind field.
+func nearestChainMatch(c *cursor) (ast.BLangNode, bool) {
 	for i := len(c.chain) - 1; i >= 0; i-- {
 		switch node := c.chain[i].(type) {
 		case *ast.BLangFieldBaseAccess, *ast.BLangInvocation, *ast.BLangImportPackage:
 			if locationContains(node.GetPosition(), c.req.Offset) {
-				return
+				return c.chain[i], true
 			}
 		case *ast.BLangVarRef:
 			if node.PkgAlias != nil && node.PkgAlias.GetValue() != "" && locationContains(node.GetPosition(), c.req.Offset) {
-				return
+				return c.chain[i], true
 			}
 		case *ast.BLangBlockStmt, *ast.BLangBlockFunctionBody:
 			if i+1 == len(c.chain) || isBadStatement(c.chain[i+1]) {
-				c.kind = kindBlock
-				return
+				return c.chain[i], true
 			}
 		case *ast.BLangPackage:
 			if i+1 == len(c.chain) || isBadTopLevel(c.chain[i+1]) {
-				c.kind = kindModule
-				return
+				return c.chain[i], true
 			}
 		}
 	}
-	if nearestScope(c.chain) != nil {
-		c.kind = kindLexical
-	}
+	return nil, false
 }
 
 func isBadStatement(node ast.BLangNode) bool {

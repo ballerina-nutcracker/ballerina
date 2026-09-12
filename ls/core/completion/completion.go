@@ -68,17 +68,7 @@ func completeAt(req Request, sm compile.SealedModule) (items []protocol.Completi
 	if sm.PackageNode() == nil || sm.Context() == nil || sm.Stage() < compile.StageSymbolResolved {
 		return emptyItems
 	}
-	cursor := newCursor(req, sm)
-	switch cursor.kind {
-	case kindModule:
-		return lexicalItems(cursor, moduleKeywords)
-	case kindBlock:
-		return lexicalItems(cursor, blockKeywords)
-	case kindLexical:
-		return lexicalItems(cursor, nil)
-	default:
-		return emptyItems
-	}
+	return dispatch(newCursor(req, sm))
 }
 
 var emptyItems = []protocol.CompletionItem{}

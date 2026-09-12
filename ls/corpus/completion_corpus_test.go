@@ -92,3 +92,9 @@ func TestTypedInitializerEmptyCompletionCorpus(t *testing.T) {
 	defer cleanup()
 	runTranscript(t, platform, "completion/testdata/typed-initializer-empty.completion.json")
 }
+
+func TestLambdaArgumentBlockCompletionCorpus(t *testing.T) {
+	platform, cleanup := palnative.NewPlatform()
+	defer cleanup()
+	runTranscript(t, platform, "completion/testdata/lambda-argument-block.completion.json")
+}
