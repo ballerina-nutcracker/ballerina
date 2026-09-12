@@ -101,6 +101,12 @@ func TestBuildProjectCorpus(t *testing.T) {
 	runTranscript(t, platform, "sync/testdata/build-project.initialize.json")
 }
 
+func TestMalformedProviderBuildProjectCorpus(t *testing.T) {
+	platform, cleanup := palnative.NewPlatform()
+	defer cleanup()
+	runTranscript(t, platform, "sync/testdata/malformed-provider-build-project.json")
+}
+
 func TestOverlayOverDiskCorpus(t *testing.T) {
 	platform, cleanup := palnative.NewPlatform()
 	defer cleanup()

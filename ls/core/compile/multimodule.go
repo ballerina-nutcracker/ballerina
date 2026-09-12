@@ -388,13 +388,12 @@ func (pd *packageDriver) recordFingerprintAndPrune(module *projects.Module, d *m
 // runPhase1Module advances module through Phase 1 (parse -> symbol
 // resolution -> top-level type resolution), mirroring
 // projects/module_context.go's resolveTypesAndSymbols publish-then-continue
-// ordering exactly: a module is marked errored and skips further Phase 1
-// work as soon as HasErrors() is true right after symbol resolution
-// (module_context.go:290-294) — before publishing, so a half-built symbol
-// space is never published — and publicSymbols is published immediately
-// after that check succeeds (module_context.go:296-299), before top-level
-// type resolution runs, so a later top-level-type error does not retroactively
-// un-publish an already-valid symbol space. If module's own direct
+// ordering: a module is marked errored when a Phase 1 stage did not execute
+// or did not produce a usable result. Parser diagnostics from recovered units
+// do not prevent a stage from executing. publicSymbols is published only after
+// usable symbol resolution, before top-level type resolution runs, so a later
+// top-level-type error does not retroactively un-publish an already-valid
+// symbol space. If module's own direct
 // dependency already errored in this generation, module is skipped entirely
 // (never reaches driverFor/ensureParsed), matching
 // package_compilation.go:124-127.
@@ -417,14 +416,14 @@ func (pd *packageDriver) runPhase1Module(module *projects.Module, depGraph *proj
 	input := pd.resolutionInputFor(module)
 
 	d.advanceTo(stageSymbolResolved, module, input)
-	if d.diagnosticContext().HasErrors() {
+	if d.currentStage() < stageSymbolResolved || !d.symbolResolutionUsable {
 		pd.phase1Errored[id] = true
 		return
 	}
 	pd.publicSymbols[packageIdentifierFor(module)] = d.exported
 
 	d.advanceTo(stageTopLevelTypeResolved, module, input)
-	if d.diagnosticContext().HasErrors() {
+	if d.currentStage() < stageTopLevelTypeResolved || !d.topLevelTypeResolutionUsable {
 		pd.phase1Errored[id] = true
 		return
 	}

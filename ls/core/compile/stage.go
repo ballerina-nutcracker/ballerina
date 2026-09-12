@@ -17,7 +17,7 @@
 // stage.go implements the LS-owned per-module staged compilation driver
 // (ticket 37). It bypasses projects.PackageCompilation and calls the
 // compiler's public per-stage API directly: parser.GetSyntaxTree,
-// nodebuilder.GetCompilationUnit, then semantics.ResolveSymbols,
+// nodebuilder compilation-unit builders, then semantics.ResolveSymbols,
 // ResolvePublicNodeTypes, ResolvePrivateNodesTypes, AnalyzeSemantics,
 // CreateControlFlowGraph, AnalyzeCFG in that order (semantics/semantics.go's
 // doc comment documents this order). moduleDriver drives one module through
@@ -37,6 +37,8 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/st"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // moduleStage is the LS-owned stage ladder for a single module's staged
@@ -106,12 +108,15 @@ type moduleDriver struct {
 	openText textProvider
 	stale    func() bool
 
-	pkgID    *model.PackageID
-	units    []*ast.BLangCompilationUnit
-	pkgNode  *ast.BLangPackage
-	imported map[string]model.ExportedSymbolSpace
-	exported model.ExportedSymbolSpace
-	cfg      *semantics.PackageCFG
+	pkgID                        *model.PackageID
+	units                        []*ast.BLangCompilationUnit
+	hasRecoveredTopLevel         bool
+	symbolResolutionUsable       bool
+	topLevelTypeResolutionUsable bool
+	pkgNode                      *ast.BLangPackage
+	imported                     map[string]model.ExportedSymbolSpace
+	exported                     model.ExportedSymbolSpace
+	cfg                          *semantics.PackageCFG
 }
 
 // newModuleDriver constructs a driver for one generation-advance of a single
@@ -196,6 +201,7 @@ func (d *moduleDriver) ensureParsed(module *projects.Module) {
 	env := d.ctx.DiagnosticEnv()
 	docIDs := module.DocumentIDs()
 	units := make([]*ast.BLangCompilationUnit, 0, len(docIDs))
+	hasRecoveredTopLevel := false
 
 	for _, docID := range docIDs {
 		doc := module.Document(docID)
@@ -212,7 +218,12 @@ func (d *moduleDriver) ensureParsed(module *projects.Module) {
 		if syntaxTree == nil {
 			continue
 		}
-		units = append(units, nodebuilder.GetCompilationUnit(d.ctx, syntaxTree))
+		if syntaxTree.RootNode.HasDiagnostics() && needsRecoveredCompilationUnit(syntaxTree) {
+			units = append(units, nodebuilder.GetRecoveredCompilationUnit(d.ctx, syntaxTree))
+			hasRecoveredTopLevel = true
+		} else {
+			units = append(units, nodebuilder.GetCompilationUnit(d.ctx, syntaxTree))
+		}
 	}
 
 	if len(units) == 0 {
@@ -225,7 +236,45 @@ func (d *moduleDriver) ensureParsed(module *projects.Module) {
 	}
 	d.pkgID = pkgID
 	d.units = units
+	d.hasRecoveredTopLevel = hasRecoveredTopLevel
 	d.stage = stageParsed
+}
+
+func needsRecoveredCompilationUnit(syntaxTree *st.SyntaxTree) bool {
+	modulePart, ok := syntaxTree.RootNode.(*st.ModulePart)
+	if !ok {
+		return false
+	}
+	imports := modulePart.Imports()
+	for importDecl := range imports.Iterator() {
+		if importDecl.HasDiagnostics() {
+			return true
+		}
+	}
+	members := modulePart.Members()
+	for member := range members.Iterator() {
+		if !member.HasDiagnostics() {
+			continue
+		}
+		function, ok := member.(*st.FunctionDefinition)
+		if !ok || functionHasTopLevelDiagnostics(function) {
+			return true
+		}
+	}
+	return false
+}
+
+func functionHasTopLevelDiagnostics(function *st.FunctionDefinition) bool {
+	body := function.FunctionBody()
+	if body == nil || !body.HasDiagnostics() {
+		return true
+	}
+	name := function.FunctionName()
+	if name == nil || name.HasDiagnostics() {
+		return true
+	}
+	signature := function.FunctionSignature()
+	return signature != nil && signature.HasDiagnostics()
 }
 
 // ensureSymbolResolved binds imports and resolves the module's own symbols
@@ -238,10 +287,10 @@ func (d *moduleDriver) ensureSymbolResolved(module *projects.Module, input modul
 	if d.stage < stageParsed {
 		return
 	}
-	if d.ctx.HasDiagnostics() {
+	if !d.hasRecoveredTopLevel && d.ctx.HasDiagnostics() {
 		return
 	}
-
+	diagnosticCount := len(d.ctx.Diagnostics())
 	pkgScope, exported, imported := semantics.ResolveSymbols(
 		d.ctx,
 		*d.pkgID,
@@ -250,14 +299,14 @@ func (d *moduleDriver) ensureSymbolResolved(module *projects.Module, input modul
 		input.publicSymbols,
 		input.defaultOrg,
 	)
-	d.imported = imported
-	d.exported = exported
-
-	pkgNode := nodebuilder.ToPackageFromCompilationUnits(d.units)
+	pkgNode := nodebuilder.ToPackageFromCompilationUnits(compilationUnitsWithoutBadTopLevelNodes(d.units))
 	pkgNode.Imports = nil
 	pkgNode.PackageID = d.pkgID
 	pkgNode.Scope = pkgScope
+	d.imported = imported
+	d.exported = exported
 	d.pkgNode = pkgNode
+	d.symbolResolutionUsable = !d.hasNewErrorsSince(diagnosticCount)
 	d.stage = stageSymbolResolved
 }
 
@@ -268,15 +317,26 @@ func (d *moduleDriver) ensureTopLevelTypeResolved(module *projects.Module, input
 		return
 	}
 	d.ensureSymbolResolved(module, input)
-	if d.stage < stageSymbolResolved {
+	if d.stage < stageSymbolResolved || !d.symbolResolutionUsable {
 		return
 	}
-	if d.ctx.HasErrors() {
-		return
-	}
-
+	diagnosticCount := len(d.ctx.Diagnostics())
 	semantics.ResolvePublicNodeTypes(d.ctx, d.pkgNode, d.imported)
+	d.topLevelTypeResolutionUsable = !d.hasNewErrorsSince(diagnosticCount)
 	d.stage = stageTopLevelTypeResolved
+}
+
+// hasNewErrorsSince reports whether a stage added an error or fatal diagnostic
+// after diagnosticCount. Parser diagnostics recorded before the stage do not
+// prevent the recovered Phase 1 path from advancing.
+func (d *moduleDriver) hasNewErrorsSince(diagnosticCount int) bool {
+	for _, diagnostic := range d.ctx.Diagnostics()[diagnosticCount:] {
+		switch diagnostic.DiagnosticInfo().Severity() {
+		case diagnostics.Error, diagnostics.Fatal:
+			return true
+		}
+	}
+	return false
 }
 
 // ensureLocalTypeResolved resolves types of function bodies and other inner

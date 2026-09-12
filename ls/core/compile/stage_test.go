@@ -26,6 +26,12 @@ import (
 // validSource has no diagnostics through any stage.
 const validSource = "public function main() {}\n"
 
+const duplicateTopLevelSource = "public function duplicate() {}\npublic function duplicate() {}\n"
+const recursivePublicTypeSource = "public type Invalid Invalid;\n"
+const unusedTopLevelSource = "const int UNUSED = 1;\n"
+const malformedBodySource = "function broken() {\n    int value = ;\n}\n"
+const malformedSignatureAndBodySource = "function broken(int {\n    int value = ;\n}\n"
+
 // oneSemanticErrorSource produces exactly one SEMANTIC_ERROR diagnostic
 // ("incompatible type"), surfacing only during AnalyzeSemantics (stage 6) —
 // confirmed empirically: parsing, symbol resolution, top-level and local type
@@ -73,6 +79,137 @@ func TestModuleDriver_AdvancesOnlyToRequestedStage(t *testing.T) {
 	}
 	if d.diagnosticContext().HasDiagnostics() {
 		t.Errorf("unexpected diagnostics: %v", d.diagnosticContext().Diagnostics())
+	}
+}
+
+func TestModuleDriver_ResolverErrorDoesNotAdvancePhase1(t *testing.T) {
+	projSvc, _ := newTestServices(t)
+	u := fileURI(t, "file:///workspace/main.bal")
+	applyOpen(t, projSvc, u, duplicateTopLevelSource)
+
+	proj, err := projSvc.Project(u)
+	if err != nil || proj == nil {
+		t.Fatalf("Project: %v", err)
+	}
+	module, env := defaultModuleFor(t, proj)
+
+	d := newModuleDriver(env, projSvc.OpenText, nil)
+	d.advanceTo(stageTopLevelTypeResolved, module, newModuleResolutionInput("", nil, nil))
+
+	if d.currentStage() != stageSymbolResolved {
+		t.Fatalf("currentStage() = %v, want stageSymbolResolved after resolver error", d.currentStage())
+	}
+	if d.pkgNode == nil {
+		t.Error("pkgNode = nil, want an executed partial package")
+	}
+	if d.symbolResolutionUsable {
+		t.Error("resolver error must make symbol resolution unusable")
+	}
+	if !d.diagnosticContext().HasErrors() {
+		t.Error("duplicate top-level declaration must report a resolver error")
+	}
+}
+
+func TestModuleDriver_UnusedSymbolDoesNotBlockSymbolResolution(t *testing.T) {
+	projSvc, _ := newTestServices(t)
+	u := fileURI(t, "file:///workspace/main.bal")
+	applyOpen(t, projSvc, u, unusedTopLevelSource)
+
+	proj, err := projSvc.Project(u)
+	if err != nil || proj == nil {
+		t.Fatalf("Project: %v", err)
+	}
+	module, env := defaultModuleFor(t, proj)
+
+	d := newModuleDriver(env, projSvc.OpenText, nil)
+	d.advanceTo(stageTopLevelTypeResolved, module, newModuleResolutionInput("", nil, nil))
+
+	if d.currentStage() != stageSymbolResolved {
+		t.Fatalf("currentStage() = %v, want stageSymbolResolved despite unused-symbol diagnostic", d.currentStage())
+	}
+	if d.pkgNode == nil {
+		t.Error("pkgNode = nil, want the symbol-resolved package")
+	}
+	if d.symbolResolutionUsable {
+		t.Error("unused-symbol diagnostic must make symbol resolution unusable for Phase 1")
+	}
+	if !d.diagnosticContext().HasErrors() {
+		t.Error("unused top-level symbol must retain its diagnostic")
+	}
+}
+
+func TestModuleDriver_PublicTypeErrorDoesNotAdvancePhase1(t *testing.T) {
+	projSvc, _ := newTestServices(t)
+	u := fileURI(t, "file:///workspace/main.bal")
+	applyOpen(t, projSvc, u, recursivePublicTypeSource)
+
+	proj, err := projSvc.Project(u)
+	if err != nil || proj == nil {
+		t.Fatalf("Project: %v", err)
+	}
+	module, env := defaultModuleFor(t, proj)
+
+	d := newModuleDriver(env, projSvc.OpenText, nil)
+	d.advanceTo(stageTopLevelTypeResolved, module, newModuleResolutionInput("", nil, nil))
+
+	if d.currentStage() != stageTopLevelTypeResolved {
+		t.Fatalf("currentStage() = %v, want stageTopLevelTypeResolved after public-type error", d.currentStage())
+	}
+	if d.pkgNode == nil {
+		t.Error("pkgNode = nil, want the successfully symbol-resolved package")
+	}
+	if !d.symbolResolutionUsable {
+		t.Error("public-type error must not retroactively make symbol resolution unusable")
+	}
+	if d.topLevelTypeResolutionUsable {
+		t.Error("public-type error must make top-level type resolution unusable")
+	}
+	if !d.diagnosticContext().HasErrors() {
+		t.Error("recursive public type must report a public-type error")
+	}
+}
+
+func TestModuleDriver_MalformedFunctionSignatureEntersTopLevelRecovery(t *testing.T) {
+	projSvc, _ := newTestServices(t)
+	u := fileURI(t, "file:///workspace/main.bal")
+	applyOpen(t, projSvc, u, malformedSignatureAndBodySource)
+
+	proj, err := projSvc.Project(u)
+	if err != nil || proj == nil {
+		t.Fatalf("Project: %v", err)
+	}
+	module, env := defaultModuleFor(t, proj)
+
+	d := newModuleDriver(env, projSvc.OpenText, nil)
+	d.advanceTo(stageParsed, module, newModuleResolutionInput("", nil, nil))
+
+	if !d.hasRecoveredTopLevel {
+		t.Error("malformed function signature must use top-level recovery even when its body is malformed")
+	}
+}
+
+func TestModuleDriver_MalformedFunctionBodyDoesNotEnterTopLevelRecovery(t *testing.T) {
+	projSvc, _ := newTestServices(t)
+	u := fileURI(t, "file:///workspace/main.bal")
+	applyOpen(t, projSvc, u, malformedBodySource)
+
+	proj, err := projSvc.Project(u)
+	if err != nil || proj == nil {
+		t.Fatalf("Project: %v", err)
+	}
+	module, env := defaultModuleFor(t, proj)
+
+	d := newModuleDriver(env, projSvc.OpenText, nil)
+	d.advanceTo(stageTopLevelTypeResolved, module, newModuleResolutionInput("", nil, nil))
+
+	if d.hasRecoveredTopLevel {
+		t.Error("malformed function body must not use top-level recovery")
+	}
+	if d.currentStage() != stageParsed {
+		t.Fatalf("currentStage() = %v, want stageParsed for unsupported body recovery", d.currentStage())
+	}
+	if d.pkgNode != nil {
+		t.Error("pkgNode must remain nil for unsupported body recovery")
 	}
 }
 
