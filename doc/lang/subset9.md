@@ -112,6 +112,10 @@
     - `toBase16`
     - `fromBase64`
     - `fromBase16`
+    - `indexOf`
+    - `map`
+    - `remove`
+    - `removeAll`
   - `ballerina/lang.boolean`
     - `fromString`
   - `ballerina/lang.decimal`
@@ -171,20 +175,30 @@
     - `Unsigned16`
     - `Unsigned32`
     - `toHexString`
+    - `fromString`
+    - `fromHexString`
   - `ballerina/lang.map`
     - `length`
     - `keys`
     - `remove`
+    - `hasKey`
+    - `get`
   - `ballerina/lang.string`
     - `Char`
     - `length`
     - `toBytes`
     - `fromBytes`
+    - `substring`
+    - `trim`
+    - `toLowerAscii`
+    - `toUpperAscii`
+    - `equalsIgnoreCaseASCII`
   - `ballerina/lang.error`
     - `message`
   - `ballerina/lang.value`
     - `cloneWithType`
     - `fromJsonWithType`
+    - `toString`
   - `ballerina/lang.object`
     - `Iterable`
     - `RawTemplate`
@@ -193,6 +207,9 @@
     - `Text`
     - `Comment`
     - `ProcessingInstruction`
+    - `iterator`
+  - `ballerina/lang.runtime`
+    - `sleep`
 
 ## Function/Method call
 
