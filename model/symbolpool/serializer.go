@@ -322,7 +322,10 @@ func (sw *symbolWriter) writeSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym 
 		if err := write(buf, symTagOpaque); err != nil {
 			return err
 		}
-		return write(buf, int32(op.OpaqueID()))
+		if err := write(buf, int32(op.OpaqueID())); err != nil {
+			return err
+		}
+		return sw.writeFunctionSignatureIndex(buf, ref)
 	}
 	switch s := sym.(type) {
 	case *model.NetworkClassSymbol:

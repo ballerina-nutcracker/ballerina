@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "crossmoduleopaquedefaults"
+version = "0.1.0"

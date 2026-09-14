@@ -1,0 +1,58 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang map (as lang.map))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable m1 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))
+            (key-value
+              (literal b)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation map get (
+            (simple-var-ref m1)
+            (literal a))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation map get (
+            (simple-var-ref m1)
+            (literal b))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map get (
+            (simple-var-ref m1)
+            (literal b))))))
+      (var-def
+        (variable m2 (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal x))
+            (key-value
+              (literal b)
+              (literal y))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation map remove (
+            (simple-var-ref m2)
+            (literal a))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.map remove (
+            (simple-var-ref m2)
+            (literal b))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref m2)))))))

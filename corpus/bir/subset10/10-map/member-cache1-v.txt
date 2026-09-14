@@ -1,0 +1,72 @@
+module $anon.. v 0.0.0;
+getThenRemove() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad b
+    %4 = ConstantLoad 2
+    %5 = newMap {| int... |}{%1=%2, %3=%4}
+    m = %5;
+    %7 = ConstantLoad a
+    %8 = get(m,%7) -> bb1;
+  }
+  bb1 {
+    %9 = %8;
+    %10 = println(%9) -> bb2;
+  }
+  bb2 {
+    %11 = ConstantLoad b
+    %12 = remove(m,%11) -> bb3;
+  }
+  bb3 {
+    %13 = %12;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    %15 = println(m) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+removeThenGet() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad b
+    %4 = ConstantLoad 2
+    %5 = newMap {| int... |}{%1=%2, %3=%4}
+    m = %5;
+    %7 = ConstantLoad b
+    %8 = remove(m,%7) -> bb1;
+  }
+  bb1 {
+    %9 = %8;
+    %10 = println(%9) -> bb2;
+  }
+  bb2 {
+    %11 = ConstantLoad a
+    %12 = get(m,%11) -> bb3;
+  }
+  bb3 {
+    %13 = %12;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    %15 = println(m) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = getThenRemove() -> bb1;
+  }
+  bb1 {
+    %2 = removeThenGet() -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

@@ -1,0 +1,59 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function pushTwice () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable first (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable second (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (invocation array push (
+          (simple-var-ref first)
+          (literal 1))))
+      (expression-stmt
+        (invocation array push (
+          (simple-var-ref second)
+          (literal 2))))
+      (expression-stmt
+        (invocation array push (
+          (simple-var-ref first))))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref first)
+          (literal 3))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref first))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref second))))))
+  (function pushAgain () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable third (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (invocation array push (
+          (simple-var-ref third)
+          (literal 4))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref third))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation pushTwice ()))
+      (expression-stmt
+        (invocation pushAgain ())))))

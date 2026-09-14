@@ -1,0 +1,100 @@
+module $anon.. v 0.0.0;
+base  int;
+doubled  int;
+twice(int) -> int{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+bare(int) -> int{
+  bb0 {
+    %0 = n;
+    return;
+  }
+}
+fromPreceding(int,int) -> int{
+  bb0 {
+    %4 = x;
+    %5 = y;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = $desugar$0;
+    %4 = bare(%3) -> bb2;
+  }
+  bb2 {
+    %5 = %4;
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad 9
+    %8 = %7;
+    %9 = bare(%8) -> bb4;
+  }
+  bb4 {
+    %10 = %9;
+    %11 = println(%10) -> bb5;
+  }
+  bb5 {
+    %12 = println(doubled) -> bb6;
+  }
+  bb6 {
+    %13 = ConstantLoad 1
+    $desugar$1 = %13;
+    %15 = $desugar$1;
+    %16 = $default$1(%15) -> bb7;
+  }
+  bb7 {
+    $desugar$2 = %16;
+    %18 = $desugar$1;
+    %19 = $desugar$2;
+    %20 = fromPreceding(%18,%19) -> bb8;
+  }
+  bb8 {
+    %21 = %20;
+    %22 = println(%21) -> bb9;
+  }
+  bb9 {
+    %23 = ConstantLoad 1
+    %24 = %23;
+    %25 = ConstantLoad 5
+    %26 = %25;
+    %27 = fromPreceding(%24,%26) -> bb10;
+  }
+  bb10 {
+    %28 = %27;
+    %29 = println(%28) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %0 = base;
+    return;
+  }
+}
+$default$1(int) -> int{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}

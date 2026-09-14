@@ -1,0 +1,66 @@
+(getThenRemove
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))
+          (key-value
+            (literal b)
+            (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.map get (
+          (simple-var-ref m)
+          (literal a))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.map remove (
+          (simple-var-ref m)
+          (literal b))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation getThenRemove ()))
+    (expression-stmt
+      (invocation removeThenGet ()))
+  )
+)
+(removeThenGet
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))
+          (key-value
+            (literal b)
+            (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation map remove (
+          (simple-var-ref m)
+          (literal b))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation map get (
+          (simple-var-ref m)
+          (literal a))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+  )
+)

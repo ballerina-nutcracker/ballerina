@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"maps"
 	"strings"
-	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/opaque"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -591,6 +591,9 @@ func Resolve(
 ) (model.Scope, model.ExportedSymbolSpace, map[string]model.ExportedSymbolSpace) {
 	cuImportsList := bindImports(cx, compilationUnits, implicitImports, publicSymbols, defaultOrg)
 	moduleResolver := newModuleSymbolResolver(cx, pkgID)
+	// Opaque symbols go into the module scope before source top-level symbols are
+	// allocated, so a declaration marked @opaque finds its symbol already there and
+	// binds to it instead of declaring a second one.
 	injectOpaqueSymbols(pkgID, moduleResolver)
 	cuResolvers := make([]*compilationUnitSymbolResolver, len(cuImportsList))
 	for i, cuImports := range cuImportsList {
@@ -752,11 +755,55 @@ func (ms *compilationUnitSymbolResolver) ensureTypeAllocated(ref *ast.BLangUserD
 
 func (ms *compilationUnitSymbolResolver) allocateFunctionSymbol(fn *ast.BLangFunction) {
 	name := fn.Name.GetValue()
+	if isLangLibPackage(ms) && isOpaqueDeclaration(fn) {
+		ms.bindOpaqueDeclaration(fn, name)
+		return
+	}
 	symbol := ms.allocateFunctionSymbolInner(fn, name, fn.IsPublic())
 	if !addTopLevelSymbol(ms, name, symbol, fn.Name.GetPosition()) {
 		return
 	}
 	ref, _, _ := ms.GetSymbolFromCurrentScope(name)
+	fn.SetSymbol(ref)
+}
+
+// opaqueMarker marks a lang library declaration as the source form of an opaque
+// function: the compiler takes the parameter names, defaults and documentation from
+// the declaration, but the types of a call are decided by the function's
+// monomorphizer rather than by the declared signature. It is meaningful only in a
+// ballerina/lang.* package; anywhere else it is an ordinary documentation line.
+const opaqueMarker = "@opaque"
+
+// isOpaqueDeclaration reports whether fn carries the opaque marker in its
+// documentation.
+func isOpaqueDeclaration(fn *ast.BLangFunction) bool {
+	doc := fn.GetMarkdownDocumentationAttachment()
+	if doc == nil {
+		return false
+	}
+	for _, line := range doc.DocumentationLines {
+		if strings.TrimSpace(line.Text) == opaqueMarker {
+			return true
+		}
+	}
+	return false
+}
+
+// bindOpaqueDeclaration points a declaration marked @opaque at the opaque symbol
+// injected for it, rather than declaring a function symbol of its own. Everything
+// after this treats the declaration as an ordinary function: its untyped signature,
+// including a $default$N provider per defaulted parameter, is allocated from the AST
+// by allocateSymbols, and its defaults are desugared like any other function's.
+func (ms *compilationUnitSymbolResolver) bindOpaqueDeclaration(fn *ast.BLangFunction, name string) {
+	ref, ok := ms.moduleResolver.packageScope.GetSymbol(name)
+	if !ok {
+		semanticError(ms, "no opaque function '"+name+"' in this module", fn.Name.GetPosition())
+		return
+	}
+	if _, ok := ms.GetCtx().GetSymbol(ref).(*model.OpaqueFunctionSymbol); !ok {
+		semanticError(ms, "'"+name+"' is not an opaque function", fn.Name.GetPosition())
+		return
+	}
 	fn.SetSymbol(ref)
 }
 
@@ -829,9 +876,17 @@ func (ms *compilationUnitSymbolResolver) allocateClassSymbol(classDef *ast.BLang
 	ms.moduleResolver.classDefns[symRef] = classDef
 }
 
+// isLangLibPackage reports whether the module being resolved belongs to a
+// ballerina/lang.* package, the only place lang library specific declarations such
+// as distinct type symbols and opaque function declarations are honoured.
+func isLangLibPackage(ms *compilationUnitSymbolResolver) bool {
+	pkgID := ms.moduleResolver.pkgID
+	return pkgID.OrgName != nil && pkgID.PkgName != nil &&
+		pkgID.OrgName.Value() == "ballerina" && strings.HasPrefix(pkgID.PkgName.Value(), "lang.")
+}
+
 func registerLangLibDistinctTypeSymbol(ms *compilationUnitSymbolResolver, typeName string, ref model.SymbolRef, pos diagnostics.Location) {
-	if ms.moduleResolver.pkgID.OrgName == nil || ms.moduleResolver.pkgID.PkgName == nil ||
-		ms.moduleResolver.pkgID.OrgName.Value() != "ballerina" || !strings.HasPrefix(ms.moduleResolver.pkgID.PkgName.Value(), "lang.") {
+	if !isLangLibPackage(ms) {
 		return
 	}
 	if !ms.moduleResolver.ctx.RegisterLangLibDistinctTypeSymbol(ms.moduleResolver.pkgID.PkgName.Value(), typeName, ref) {
@@ -891,68 +946,41 @@ func injectOpaqueSymbols(pkgID model.PackageID, r *moduleSymbolResolver) {
 	}
 	space := r.packageScope.MainSpace()
 	for _, sym := range model.OpaqueSymbols(pkg) {
-		fillinOpaqueSymbol(sym, space)
 		r.packageScope.AddSymbol(sym.Name(), sym)
+		ref, _ := r.packageScope.GetSymbol(sym.Name())
+		fillinOpaqueSymbol(r.ctx, sym, space, pkg, ref)
 	}
 }
 
 // fillinOpaqueSymbol fills in any information that needs to be stored in the opaque symbol
-// that is used within semantic package.
-func fillinOpaqueSymbol(sym model.Symbol, space *model.SymbolSpace) {
+// that is used within semantic package. An opaque function symbol gets the symbol space its
+// monomorphizations are added to and the single untyped signature every monomorphization of
+// it shares.
+//
+// A definition declared in the lang library's own source gets no signature here: the
+// declaration marked @opaque allocates it from the AST, like any other function.
+func fillinOpaqueSymbol(ctx *context.CompilerContext, sym model.Symbol, space *model.SymbolSpace,
+	pkg model.PackageIdentifier, ref model.SymbolRef) {
 	fn, ok := sym.(*model.OpaqueFunctionSymbol)
 	if !ok {
 		return
 	}
 	fn.SymbolSpace = space
-	fn.Lookup, fn.Store = newMonomorphizationCache()
-}
-
-func newMonomorphizationCache() (func(semtypes.SemType, ...semtypes.SemType) (model.SymbolRef, bool), func(model.SymbolRef, semtypes.SemType, ...semtypes.SemType)) {
-	type cacheNode struct {
-		children map[semtypes.InternHandle]*cacheNode
-		ref      model.SymbolRef
-		stored   bool
+	location := diagnostics.NewBuiltinLocation()
+	definition, found := opaque.LookupFunction(pkg.Organization, pkg.Package, fn.OpaqueID())
+	if !found {
+		ctx.InternalError("no definition for opaque function", location)
+		return
 	}
-
-	var mu sync.Mutex
-	interner := semtypes.NewSemtypeInterner()
-	root := cacheNode{children: make(map[semtypes.InternHandle]*cacheNode)}
-	nextNode := func(node *cacheNode, key semtypes.SemType, create bool) *cacheNode {
-		handle := interner.Intern(key)
-		next := node.children[handle]
-		if next == nil && create {
-			next = &cacheNode{children: make(map[semtypes.InternHandle]*cacheNode)}
-			node.children[handle] = next
-		}
-		return next
+	if definition.Name() != fn.Name() {
+		ctx.InternalError("opaque function definition name mismatch", location)
+		return
 	}
-	nodeFor := func(cacheKey semtypes.SemType, cacheKeyRest []semtypes.SemType, create bool) *cacheNode {
-		node := nextNode(&root, cacheKey, create)
-		for _, key := range cacheKeyRest {
-			if node == nil {
-				return nil
-			}
-			node = nextNode(node, key, create)
-		}
-		return node
+	if definition.IsSourceDeclared() {
+		return
 	}
-	lookup := func(cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType) (model.SymbolRef, bool) {
-		mu.Lock()
-		defer mu.Unlock()
-		node := nodeFor(cacheKey, cacheKeyRest, false)
-		if node == nil || !node.stored {
-			return model.SymbolRef{}, false
-		}
-		return node.ref, true
-	}
-	store := func(ref model.SymbolRef, cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType) {
-		mu.Lock()
-		defer mu.Unlock()
-		node := nodeFor(cacheKey, cacheKeyRest, true)
-		node.ref = ref
-		node.stored = true
-	}
-	return lookup, store
+	sigRef := ctx.AllocateFunctionSignature(definition.Params(), definition.HasRest())
+	associateFunctionSignatureRef(ctx, ref, sigRef, location)
 }
 
 func resolveFunction(functionResolver *blockSymbolResolver, function *ast.BLangFunction) {

@@ -481,6 +481,7 @@ const (
 	ParamFlagDefaultable ParamFlag = 1 << iota
 	ParamFlagIncludedRecordParam
 	ParamFlagRestParam
+	ParamFlagIsolated
 )
 
 const (
@@ -578,6 +579,13 @@ func (sig UntypedFunctionSignature) FixedParamCount() int {
 		return len(sig.ParamNames) - 1
 	}
 	return len(sig.ParamNames)
+}
+
+func (sig UntypedFunctionSignature) IsIsolatedParam(index int) bool {
+	if index < 0 || index >= len(sig.ParamFlags) {
+		return false
+	}
+	return sig.ParamFlags[index]&ParamFlagIsolated != 0
 }
 
 func (sig UntypedFunctionSignature) DefaultableParam(index int) (*DefaultableParam, bool) {

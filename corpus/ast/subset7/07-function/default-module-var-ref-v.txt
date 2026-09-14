@@ -1,0 +1,60 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable base (type
+    (value-type int)) (expr
+    (literal 5)))
+  (function twice (
+    (variable x (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr *
+        (simple-var-ref x)
+        (literal 2))))
+  (function bare (
+    (variable n (type
+      (value-type int)) (expr
+      (simple-var-ref base)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref n)))
+  (variable doubled (type
+    (value-type int)) (expr
+    (invocation twice (
+      (simple-var-ref base)))))
+  (function fromPreceding (
+    (variable x (type
+      (value-type int)))
+    (variable y (type
+      (value-type int)) (expr
+      (binary-expr +
+        (simple-var-ref x)
+        (literal 1))))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref y))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation bare ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation bare (
+            (literal 9))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref doubled))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromPreceding (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromPreceding (
+            (literal 1)
+            (literal 5)))))))))

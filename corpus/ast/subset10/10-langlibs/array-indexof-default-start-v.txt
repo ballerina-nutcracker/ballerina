@@ -1,0 +1,33 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 10)
+            (literal 20)
+            (literal 30)
+            (literal 40)
+            (literal 30)))))
+      (var-def
+        (variable firstDefault (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation indexOf expr:
+            (simple-var-ref arr) (
+            (literal 30))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref firstDefault)
+          (value-type int))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref firstDefault))))) ())
+      (block-stmt))))
