@@ -192,7 +192,7 @@
     - `trim`
     - `toLowerAscii`
     - `toUpperAscii`
-    - `equalsIgnoreCaseASCII`
+    - `equalsIgnoreCaseAscii`
   - `ballerina/lang.error`
     - `message`
   - `ballerina/lang.value`
