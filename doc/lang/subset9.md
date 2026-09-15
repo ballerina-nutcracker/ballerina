@@ -112,6 +112,7 @@
     - `toBase16`
     - `fromBase64`
     - `fromBase16`
+    - `map`
   - `ballerina/lang.boolean`
     - `fromString`
   - `ballerina/lang.decimal`
@@ -175,6 +176,7 @@
     - `length`
     - `keys`
     - `remove`
+    - `get`
   - `ballerina/lang.string`
     - `Char`
     - `length`
@@ -193,7 +195,10 @@
     - `Text`
     - `Comment`
     - `ProcessingInstruction`
-
+    - `iterator`
+  - `ballerina/lang.runtime`
+    - `onGracefulStop`
+    - `StopHandler`
 ## Function/Method call
 
 - `named-args` and `defaultable-params` expect the target type to be atomic.
@@ -203,6 +208,7 @@
   - `array:push`
   - `array:toBase64`
   - `array:toBase16`
+  - `array:map`
   - `decimal:sum`, `decimal:max`, `decimal:min`, `decimal:abs`, `decimal:round`, `decimal:quantize`, `decimal:floor` and `decimal:ceiling`
   - `float:isFinite`, `float:isInfinite`, `float:isNaN`, `float:sum`, `float:max`, `float:min` and `float:avg`
   - `float:abs`, `float:round`, `float:floor`, `float:ceiling`, `float:sqrt`, `float:cbrt`, `float:pow`, `float:log`, `float:log10` and `float:exp`
@@ -212,11 +218,13 @@
   - `map:length`
   - `map:keys`
   - `map:remove`
+  - `map:get`
   - `error:message`
   - `string:length`
   - `string:toBytes`
   - `value:cloneWithType`
   - `value:fromJsonWithType`
+  - `xml:iterator`
 
 ## Object/class definitions
 
