@@ -17,7 +17,7 @@
 package values
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
 	"unsafe"
 
@@ -191,6 +191,16 @@ func (m *Map) Keys() []string {
 }
 
 func (m *Map) String(visited map[uintptr]bool) string {
+	return m.stringify(visited, strconv.Quote, toStringNested)
+}
+
+func (m *Map) BalString(visited map[uintptr]bool) string {
+	return m.stringify(visited, balStringLiteral, BalString)
+}
+
+// stringify: keyFormat and valueFormat must use matching escaping
+// conventions (strconv.Quote/toStringNested, or balStringLiteral/BalString).
+func (m *Map) stringify(visited map[uintptr]bool, keyFormat func(string) string, valueFormat func(BalValue, map[uintptr]bool) string) string {
 	ptr := uintptr(unsafe.Pointer(m))
 	if visited[ptr] {
 		return "{...}"
@@ -205,9 +215,9 @@ func (m *Map) String(visited map[uintptr]bool) string {
 		if i > 0 {
 			b.WriteByte(',')
 		}
-		fmt.Fprintf(&b, "%q", e.key)
+		b.WriteString(keyFormat(e.key))
 		b.WriteByte(':')
-		b.WriteString(toString(e.value, visited, false))
+		b.WriteString(valueFormat(e.value, visited))
 		i++
 	}
 	b.WriteByte('}')
