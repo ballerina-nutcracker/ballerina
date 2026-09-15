@@ -24,10 +24,9 @@ type mdDocumentContext struct {
 }
 
 // newMdDocumentContext creates an mdDocumentContext from a DocumentConfig.
+// docConfig's only caller already checks PackageConfig.HasReadmeMd() first,
+// so it's never nil here.
 func newMdDocumentContext(docConfig DocumentConfig) *mdDocumentContext {
-	if docConfig == nil {
-		return nil
-	}
 	return &mdDocumentContext{
 		name:    docConfig.Name(),
 		content: docConfig.Content(),
@@ -43,11 +42,10 @@ type PackageReadmeMd struct {
 	packageInstance *Package
 }
 
-// newPackageReadmeMd creates a PackageReadmeMd from an mdDocumentContext and Package.
+// newPackageReadmeMd creates a PackageReadmeMd from an mdDocumentContext and
+// Package. ctx's only caller (Package.ReadmeMd) already checks it for nil
+// first, so it's never nil here.
 func newPackageReadmeMd(ctx *mdDocumentContext, pkg *Package) *PackageReadmeMd {
-	if ctx == nil {
-		return nil
-	}
 	return &PackageReadmeMd{
 		context:         ctx,
 		packageInstance: pkg,
@@ -56,17 +54,11 @@ func newPackageReadmeMd(ctx *mdDocumentContext, pkg *Package) *PackageReadmeMd {
 
 // Name returns the readme document's file name.
 func (r *PackageReadmeMd) Name() string {
-	if r.context == nil {
-		return ""
-	}
 	return r.context.name
 }
 
 // Content returns the readme document's content.
 func (r *PackageReadmeMd) Content() string {
-	if r.context == nil {
-		return ""
-	}
 	return r.context.content
 }
 

@@ -83,8 +83,10 @@ type manifestBuilder struct {
 }
 
 // newManifestBuilder creates a builder from a parsed TOML document. fsys is
-// used to auto-discover a default readme and undeclared sub-modules; it may
-// be nil, in which case both auto-discovery steps are skipped.
+// used to auto-discover a default readme and undeclared sub-modules — every
+// caller reaches this via the exported Load(projectFs fs.FS, ...), which
+// already fails immediately (fs.Stat on a nil fs.FS panics) if the caller
+// passed a nil filesystem, so fsys is never nil here.
 func newManifestBuilder(toml *tomlparser.Toml, projectPath string, fsys fs.FS) *manifestBuilder {
 	return &manifestBuilder{
 		toml:         toml,
@@ -157,9 +159,6 @@ func (b *manifestBuilder) validateIcon() {
 		b.addDiagnostic(diagnostics.Error, "invalid 'icon' under [package]: 'icon' can only have 'png' images")
 		return
 	}
-	if b.fsys == nil {
-		return
-	}
 
 	f, err := b.fsys.Open(joinRoot(b.projectPath, b.icon))
 	if err != nil {
@@ -180,10 +179,8 @@ func (b *manifestBuilder) validateIcon() {
 // trivially valid by construction, so it skips this entirely.
 // Java source: io.ballerina.projects.internal.ManifestBuilder#validateAndGetReadmePath
 func (b *manifestBuilder) validateReadme(readme string) {
-	if b.fsys != nil {
-		if _, err := fs.Stat(b.fsys, joinRoot(b.projectPath, readme)); err != nil {
-			b.addDiagnostic(diagnostics.Error, fmt.Sprintf("could not locate the readme file '%s'", readme))
-		}
+	if _, err := fs.Stat(b.fsys, joinRoot(b.projectPath, readme)); err != nil {
+		b.addDiagnostic(diagnostics.Error, fmt.Sprintf("could not locate the readme file '%s'", readme))
 	}
 	if !strings.HasSuffix(readme, ".md") {
 		b.addDiagnostic(diagnostics.Error, "invalid 'readme' under [package]: 'readme' can only have '.md' files")
@@ -191,20 +188,17 @@ func (b *manifestBuilder) validateReadme(readme string) {
 }
 
 // defaultReadme returns storeRelDir/ReadmeMdFile if ReadmeMdFile exists
-// directly under checkDir, or "" if fsys is unset or the file isn't there.
-// checkDir and storeRelDir are deliberately separate: checkDir is resolved
-// against the fs.FS root (so it needs the full b.projectPath prefix to find
-// the file), while storeRelDir is resolved against the *package's own* root
-// at every later read (addBalaDoc, etc. all join manifest.Readme() with the
-// package root again) — so the stored value must never itself carry
-// b.projectPath, or non-"." projects (workspace members) end up with it
-// doubled. Mirrors the non-legacy half of Java's readme default (the
-// deprecated Package.md fallback is not ported).
+// directly under checkDir, or "" if the file isn't there. checkDir and
+// storeRelDir are deliberately separate: checkDir is resolved against the
+// fs.FS root (so it needs the full b.projectPath prefix to find the file),
+// while storeRelDir is resolved against the *package's own* root at every
+// later read (addBalaDoc, etc. all join manifest.Readme() with the package
+// root again) — so the stored value must never itself carry b.projectPath,
+// or non-"." projects (workspace members) end up with it doubled. Mirrors
+// the non-legacy half of Java's readme default (the deprecated Package.md
+// fallback is not ported).
 // Java source: io.ballerina.projects.internal.ManifestBuilder#validateAndGetReadmePath
 func (b *manifestBuilder) defaultReadme(checkDir, storeRelDir string) string {
-	if b.fsys == nil {
-		return ""
-	}
 	candidate := path.Join(checkDir, ReadmeMdFile)
 	if info, err := fs.Stat(b.fsys, candidate); err == nil && !info.IsDir() {
 		return path.Join(storeRelDir, ReadmeMdFile)
@@ -261,9 +255,6 @@ func (b *manifestBuilder) validateModuleName(name, packageName string) {
 		b.addDiagnostic(diagnostics.Error, fmt.Sprintf("module '%s' not found", name))
 		return
 	}
-	if b.fsys == nil {
-		return
-	}
 	modDir := path.Join(b.projectPath, ModulesDir, shortName)
 	if info, err := fs.Stat(b.fsys, modDir); err != nil || !info.IsDir() {
 		b.addDiagnostic(diagnostics.Error, fmt.Sprintf("module '%s' not found", name))
@@ -272,8 +263,7 @@ func (b *manifestBuilder) validateModuleName(name, packageName string) {
 
 // defaultModuleReadme returns the default README.md path for a
 // fully-qualified module name (e.g. "pkg.util" -> modules/util/README.md),
-// stored relative to the package's own root, or "" if it doesn't exist /
-// fsys is unset.
+// stored relative to the package's own root, or "" if it doesn't exist.
 func (b *manifestBuilder) defaultModuleReadme(packageName, qualifiedName string) string {
 	shortName := strings.TrimPrefix(qualifiedName, packageName+".")
 	moduleRelDir := path.Join(ModulesDir, shortName)
@@ -285,9 +275,6 @@ func (b *manifestBuilder) defaultModuleReadme(packageName, qualifiedName string)
 // (with an auto-detected readme) for each.
 // Java source: io.ballerina.projects.internal.ManifestBuilder#getModuleEntries
 func (b *manifestBuilder) discoverUndeclaredModules(packageName string, declared map[string]bool) []ManifestModule {
-	if b.fsys == nil {
-		return nil
-	}
 	entries, err := fs.ReadDir(b.fsys, path.Join(b.projectPath, ModulesDir))
 	if err != nil {
 		return nil

@@ -93,3 +93,60 @@ func TestRewriteBallerinaTomlForBala_SingleQuotedModuleName(t *testing.T) {
 		t.Errorf("rewriteBallerinaTomlForBala() =\n%s\nwant:\n%s", got, want)
 	}
 }
+
+func TestRewriteBallerinaTomlForBala_AutoDiscoveredReadmeInserted(t *testing.T) {
+	t.Parallel()
+	// No readme line under [package] at all — mirrors a project whose
+	// README.md was found by auto-discovery rather than declared via an
+	// explicit `readme = "..."` line in Ballerina.toml.
+	content := "[package]\n" +
+		"org = \"testorg\"\n" +
+		"name = \"testpkg\"\n" +
+		"version = \"0.1.0\"\n"
+
+	manifest := NewPackageManifestFromParams(PackageManifestParams{Readme: "README.md"})
+	got := rewriteBallerinaTomlForBala(content, manifest)
+
+	want := "[package]\n" +
+		"readme = \"docs/README.md\"\n" +
+		"org = \"testorg\"\n" +
+		"name = \"testpkg\"\n" +
+		"version = \"0.1.0\"\n"
+	if got != want {
+		t.Errorf("rewriteBallerinaTomlForBala() =\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestRewriteBallerinaTomlForBala_ModuleReadmeRewrittenInPlace(t *testing.T) {
+	t.Parallel()
+	// An existing module readme line points at its original project-relative
+	// path; the packed bala only bundles docs under docs/modules/<name>/, so
+	// the line must be rewritten in place rather than a second key inserted.
+	content := "[package]\n" +
+		"org = \"testorg\"\n" +
+		"name = \"testpkg\"\n" +
+		"version = \"0.1.0\"\n" +
+		"\n" +
+		"[[package.modules]]\n" +
+		"name = \"testpkg.extra\"\n" +
+		"readme = \"modules/extra/OLD.md\"\n"
+
+	manifest := NewPackageManifestFromParams(PackageManifestParams{
+		Modules: []ManifestModule{
+			NewManifestModule("testpkg.extra", false, "", "modules/extra/README.md"),
+		},
+	})
+	got := rewriteBallerinaTomlForBala(content, manifest)
+
+	want := "[package]\n" +
+		"org = \"testorg\"\n" +
+		"name = \"testpkg\"\n" +
+		"version = \"0.1.0\"\n" +
+		"\n" +
+		"[[package.modules]]\n" +
+		"name = \"testpkg.extra\"\n" +
+		"readme = \"docs/modules/testpkg.extra/README.md\"\n"
+	if got != want {
+		t.Errorf("rewriteBallerinaTomlForBala() =\n%s\nwant:\n%s", got, want)
+	}
+}
