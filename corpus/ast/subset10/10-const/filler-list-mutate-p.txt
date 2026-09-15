@@ -1,0 +1,37 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition L2
+    (array-type
+      (value-type int) dimensions: 2 ([
+      (literal 2)][
+      (literal 2)])))
+  (const A (
+    (user-defined-type L2)) (
+    (list-constructor-expr)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable rows (type
+          (array-type
+            (value-type int) dimensions: 2 ([][]))) (expr
+          (simple-var-ref A))))
+      (var-def
+        (variable row (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (index-based-access
+            (simple-var-ref rows)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref row))))
+      (assignment
+        (index-based-access
+          (simple-var-ref row)
+          (literal 0))
+        (literal 0))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref row)))))))
