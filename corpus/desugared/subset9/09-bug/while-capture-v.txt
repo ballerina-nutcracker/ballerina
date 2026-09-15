@@ -1,7 +1,6 @@
 (package
   (import-package ballerina io (as io))
   (import-package ballerina lang array (as lang.array))
-  (import-package ballerina lang array (as lang.array))
   (type-definition f
     (function-type () (
       (value-type int))))

@@ -1,0 +1,95 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable root (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-sequence-literal
+              (xml-element-literal a-b
+                (xml-text-literal hyphen))
+              (xml-element-literal u005C
+                (xml-text-literal weird)))))))
+      (var-def
+        (variable children (type
+          (value-type xml)) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref root)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$36$784 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (invocation lang.xml getChildren (
+                    (simple-var-ref $xmlStepItem)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref root)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$36$808 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (xml-filter-expression
+                    (invocation lang.xml getChildren (
+                      (simple-var-ref $xmlStepItem)))
+                    (xml-name-pattern-identifier a-b))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref root)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$36$866 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (xml-filter-expression
+                    (invocation lang.xml getChildren (
+                      (simple-var-ref $xmlStepItem)))
+                    (xml-name-pattern-identifier a-b))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref root)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$36$928 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (xml-filter-expression
+                    (invocation lang.xml getChildren (
+                      (simple-var-ref $xmlStepItem)))
+                    (xml-name-pattern-identifier u005C))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref root)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$36$1072 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (xml-filter-expression
+                    (invocation lang.xml getChildren (
+                      (simple-var-ref $xmlStepItem)))
+                    (xml-name-pattern-identifier \))))))))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref children)
+            (xml-name-pattern-identifier \)))))
+      (expression-stmt
+        (invocation io println (
+          (xml-filter-expression
+            (simple-var-ref children)
+            (xml-name-pattern-identifier u005C)
+            (xml-name-pattern-identifier \))))))))
