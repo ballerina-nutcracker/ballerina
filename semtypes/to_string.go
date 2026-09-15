@@ -194,9 +194,9 @@ func (s *toStringState) listAtomicTypeToString(atom atom) string {
 	var parts []string
 	for i := 0; i < atomic.members.FixedLength; i++ {
 		member := listMemberAt(atomic.members, atomic.rest, i)
-		parts = append(parts, s.semTypeToString(cellInnerVal(member)))
+		parts = append(parts, s.semTypeToString(CellInnerVal(member)))
 	}
-	restStr := s.semTypeToString(cellInnerVal(atomic.rest))
+	restStr := s.semTypeToString(CellInnerVal(atomic.rest))
 	parts = append(parts, restStr+"...")
 	return "[" + strings.Join(parts, ", ") + "]"
 }
@@ -255,9 +255,9 @@ func (s *toStringState) functionParamsToString(paramType SemType) string {
 		var parts []string
 		for i := 0; i < listAtomic.members.FixedLength; i++ {
 			member := listMemberAt(listAtomic.members, listAtomic.rest, i)
-			parts = append(parts, s.semTypeToString(cellInnerVal(member)))
+			parts = append(parts, s.semTypeToString(CellInnerVal(member)))
 		}
-		restInner := cellInnerVal(listAtomic.rest)
+		restInner := CellInnerVal(listAtomic.rest)
 		if !IsNever(restInner) {
 			parts = append(parts, s.semTypeToString(restInner)+"...")
 		}
@@ -305,9 +305,9 @@ func (s *toStringState) mappingAtomicTypeToString(atom atom) string {
 	atomic := s.cx.MappingAtomType(atom)
 	var parts []string
 	for i, name := range atomic.names {
-		parts = append(parts, name+": "+s.semTypeToString(cellInnerVal(atomic.types[i])))
+		parts = append(parts, name+": "+s.semTypeToString(CellInnerVal(atomic.types[i])))
 	}
-	restStr := s.semTypeToString(cellInnerVal(atomic.rest))
+	restStr := s.semTypeToString(CellInnerVal(atomic.rest))
 	parts = append(parts, restStr+"...")
 	return "{| " + strings.Join(parts, ", ") + " |}"
 }
@@ -340,7 +340,7 @@ func (s *toStringState) objectAtomicTypeToString(atom atom) string {
 	var members []string
 	for i, name := range atomic.names {
 		if name == "$qualifiers" {
-			qualTy := cellInnerVal(atomic.types[i])
+			qualTy := CellInnerVal(atomic.types[i])
 			qualAtomic := ToMappingAtomicType(s.cx, qualTy)
 			if qualAtomic != nil {
 				isolatedTy := qualAtomic.FieldInnerVal("isolated")
@@ -356,7 +356,7 @@ func (s *toStringState) objectAtomicTypeToString(atom atom) string {
 			}
 			continue
 		}
-		memberTy := cellInnerVal(atomic.types[i])
+		memberTy := CellInnerVal(atomic.types[i])
 		memberAtomic := ToMappingAtomicType(s.cx, memberTy)
 		if memberAtomic == nil {
 			members = append(members, name+": "+s.semTypeToString(memberTy))

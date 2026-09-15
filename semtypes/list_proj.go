@@ -88,7 +88,7 @@ func listProjPathInnerVal(cx Context, k subtypeData, pos conjunctionHandle, neg 
 			return Never
 		}
 		// Ensure that we can use isNever on rest in listInhabited
-		if !IsNever(cellInnerVal(rest)) && IsEmpty(cx, rest) {
+		if !IsNever(CellInnerVal(rest)) && IsEmpty(cx, rest) {
 			rest = roCellContaining(cx.Env(), Never)
 		}
 	}
@@ -147,7 +147,7 @@ func listProjExcludeInnerVal(cx Context, indices []int, keyIndices []int, member
 		length := len(memberTypes)
 		for _, k := range keyIndices {
 			if k < length {
-				p = Union(p, cellInnerVal(memberTypes[k]))
+				p = Union(p, CellInnerVal(memberTypes[k]))
 			}
 		}
 	} else {
@@ -171,7 +171,7 @@ func listProjExcludeInnerVal(cx Context, indices []int, keyIndices []int, member
 			}
 		}
 		for i := range memberTypes {
-			d := Diff(cellInnerVal(memberTypes[i]), listMemberAtInnerVal(nt.members, nt.rest, indices[i]))
+			d := Diff(CellInnerVal(memberTypes[i]), listMemberAtInnerVal(nt.members, nt.rest, indices[i]))
 			if !IsEmpty(cx, d) {
 				t := append([]SemType(nil), memberTypes...)
 				t[i] = cellContaining(cx.Env(), d)

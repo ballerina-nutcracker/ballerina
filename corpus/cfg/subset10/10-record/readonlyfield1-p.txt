@@ -1,0 +1,30 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable mr (type
+        (user-defined-type MR)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 5))
+          (key-value
+            (literal otherValue)
+            (literal 5))))))
+    (var-def
+      (variable m (type
+        (user-defined-type M)) (expr
+        (simple-var-ref mr))))
+    (assignment
+      (field-based-access otherValue
+        (simple-var-ref m))
+      (literal 10))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access otherValue
+          (simple-var-ref m)))))
+    (assignment
+      (field-based-access value
+        (simple-var-ref m))
+      (literal 10))
+  )
+)

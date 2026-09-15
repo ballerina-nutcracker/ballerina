@@ -1,0 +1,32 @@
+(package
+  (import-package ballerina lang map (as lang.map))
+  (type-definition MR
+    (record-type
+      (field value readonly
+        (value-type int))
+      (field otherValue
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable mr (type
+          (user-defined-type MR)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 5))
+            (key-value
+              (literal otherValue)
+              (literal 5))))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (simple-var-ref mr))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation lang.map remove (
+          (simple-var-ref m)
+          (literal value)))))))

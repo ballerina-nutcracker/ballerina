@@ -107,7 +107,7 @@ func ListAlternativeAllowsMembers(cx Context, alt ListAlternative, members []Lis
 
 	if pos != nil {
 		minLength := pos.members.FixedLength
-		restInner := cellInnerVal(pos.rest)
+		restInner := CellInnerVal(pos.rest)
 
 		if IsNever(restInner) {
 			// Fixed length - must match exactly

@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got 2
+  --> readonlyfield13-e.bal:29:11
+   |
+29 |     n.y = 2; // @error field can never be present, not a readonly violation
+   |           ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got 3
+  --> readonlyfield13-e.bal:30:14
+   |
+30 |     n["y"] = 3; // @error field can never be present, not a readonly violation
+   |              ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got 4
+  --> readonlyfield13-e.bal:32:11
+   |
+32 |     r.y = 4; // @error field can never be present, not a readonly violation
+   |           ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got 5
+  --> readonlyfield13-e.bal:33:14
+   |
+33 |     r["y"] = 5; // @error field can never be present, not a readonly violation
+   |              ^
