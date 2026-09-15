@@ -37,6 +37,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
+	"golang.org/x/tools/txtar"
 )
 
 const (
@@ -4017,4 +4018,132 @@ func runBalRunCorpusCase(t *testing.T, balBin, repoRoot, coverDir, outputsRoot, 
 			)
 		}
 	})
+}
+
+// assertBalCommandMatchesTxtarExact compares stdout, stderr and the exit code
+// against the txtar fixture verbatim. `bal test`'s assertions are mostly
+// negative — a filtered-out test must be absent, a passing test's io:println
+// must not be printed, a panicking `before` must leave the body unrun — and the
+// substring matching the other helpers use cannot express any of those.
+func assertBalCommandMatchesTxtarExact(
+	t *testing.T, balBin, repoRoot, coverDir string, extraEnv, args []string, txtarPath string,
+) {
+	t.Helper()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir, extraEnv, args...)
+	stdout = normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
+	stderr = normalizePaths(test_util.NormalizeNewlines(stderr), repoRoot)
+
+	if *update {
+		test_util.UpdateTxtarArchiveIfNeeded(t, txtarPath, []txtar.File{
+			{Name: "stdout", Data: []byte(stdout)},
+			{Name: "stderr", Data: []byte(stderr)},
+			{Name: "exitcode", Data: []byte(strconv.Itoa(exitCode) + "\n")},
+		})
+		return
+	}
+
+	expectedStdout, expectedStderr, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(txtarPath)
+	if err != nil {
+		t.Fatalf("failed to parse txtar file %s: %v", txtarPath, err)
+	}
+	if stdout != expectedStdout {
+		t.Fatalf("unexpected stdout for command %q with expected file %s\n%s",
+			strings.Join(args, " "), txtarPath, test_util.FormatExpectedGot(expectedStdout, stdout))
+	}
+	if stderr != expectedStderr {
+		t.Fatalf("unexpected stderr for command %q with expected file %s\n%s",
+			strings.Join(args, " "), txtarPath, test_util.FormatExpectedGot(expectedStderr, stderr))
+	}
+	if strconv.Itoa(exitCode) != expectedExitCode {
+		t.Fatalf("unexpected exit code for command %q with expected file %s\n%s",
+			strings.Join(args, " "), txtarPath,
+			test_util.FormatExpectedGot(expectedExitCode, strconv.Itoa(exitCode)))
+	}
+}
+
+// TestBalTestScenarios drives `bal test` over the fixtures in
+// corpus/cli/testdata/test, asserting stdout (the non-TTY plain reporter),
+// stderr and the exit code exactly.
+func TestBalTestScenarios(t *testing.T) {
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	testdataRoot := filepath.Join("corpus", "cli", "testdata", "test")
+	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "test")
+
+	project := func(name string) string { return filepath.Join(testdataRoot, name, "project") }
+
+	tests := []struct {
+		name string
+		args []string
+		// serial marks scenarios that bind a real port, so they must not run
+		// alongside the rest of the table.
+		serial bool
+	}{
+		{name: "basic", args: []string{"test", project("basic")}},
+		{name: "outcomes", args: []string{"test", project("outcomes")}},
+		{name: "hooks", args: []string{"test", project("hooks")}},
+		{name: "multi-module", args: []string{"test", project("filters")}},
+		// A realistic package: three modules, tests calling across them over
+		// shared module state, and every outcome kind in one run.
+		{name: "demo", args: []string{"test", project("demo")}},
+		{name: "demo-filtered", args: []string{"test", project("demo"), "--tests", "calc:test*,store:testPut*"}},
+		{name: "demo-list", args: []string{"test", project("demo"), "--list"}},
+		{name: "filter-by-name", args: []string{"test", project("filters"), "--tests", "testDefaultOne"}},
+		{name: "filter-by-module-and-name", args: []string{"test", project("filters"), "--tests", "sub:testSubOne"}},
+		{name: "filter-by-wildcard", args: []string{"test", project("filters"), "--tests", "testDefault*"}},
+		{name: "filter-matches-disabled", args: []string{"test", project("filters"), "--tests", "*Disabled"}},
+		{name: "list", args: []string{"test", project("filters"), "--list"}},
+		{name: "cross-module-hook", args: []string{"test", project("cross-module")}},
+		{name: "cross-module-private-hook", args: []string{"test", project("cross-module-private")}},
+		{name: "bad-enable", args: []string{"test", project("bad-enable")}},
+		{name: "bad-param", args: []string{"test", project("bad-param")}},
+		{name: "bad-main", args: []string{"test", project("bad-main")}},
+		{name: "main-fail", args: []string{"test", project("main-fail")}},
+		{name: "main-panic", args: []string{"test", project("main-panic")}},
+		{name: "lock", args: []string{"test", project("lock")}},
+		{name: "no-test-import", args: []string{"test", project("no-test-import")}},
+		{name: "run-does-not-invoke-tests", args: []string{"run", project("basic")}},
+		{name: "listener", args: []string{"test", project("listener")}, serial: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !tt.serial {
+				t.Parallel()
+			}
+			assertBalCommandMatchesTxtarExact(t, balBin, repoRoot, coverDir,
+				[]string{"BAL_ENV=" + cliIntegrationBalEnv}, tt.args,
+				filepath.Join(outputsRoot, tt.name+".txtar"))
+		})
+	}
+}
+
+// TestBalTestBuiltBinaryDoesNotRunTests builds the basic fixture and runs the
+// produced executable: `@test:Config` must be a no-op there, exactly as under
+// `bal run`.
+func TestBalTestBuiltBinaryDoesNotRunTests(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	projectDir := filepath.Join("corpus", "cli", "testdata", "test", "basic", "project")
+	targetDir := filepath.Join(repoRoot, projectDir, "target")
+	t.Cleanup(func() { _ = os.RemoveAll(targetDir) })
+
+	outBin := filepath.Join(t.TempDir(), hostExeSuffix("basic"))
+	_, buildErr, buildExit := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+	if buildExit != 0 {
+		t.Fatalf("bal build failed: exit=%d\nstderr:\n%s", buildExit, buildErr)
+	}
+
+	assertBalCommandMatchesTxtarExact(t, outBin, repoRoot, coverDir, nil, nil,
+		filepath.Join(repoRoot, "corpus", "cli", "output", "test", "run-does-not-invoke-tests.txtar"))
 }

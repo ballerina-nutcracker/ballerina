@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: uncaught failure
+        at ballerina/test:assertFail(0.0.1::test.bal:40)
+           main(test-assert-fail-p.bal:20)

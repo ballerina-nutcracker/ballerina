@@ -1,0 +1,15 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: @test:Config function 'testWithAParameter' must not have parameters
+  --> main.bal:21:1
+   |
+21 | function testWithAParameter(int value) {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |     io:println(value);
+   |     ^^^^^^^^^^^^^^^^^^
+23 | }
+   | ^
+
+ballerina: compilation contains errors
+-- exitcode --
+1

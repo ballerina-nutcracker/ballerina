@@ -39,6 +39,14 @@ func LookupFunction(rt *Runtime, org, module, name string) (any, bool) {
 
 func InvokeFunction(rt *Runtime, fn any, args []values.BalValue) (values.BalValue, error) {
 	cx := exec.CreateContext(rt.env)
+	// A panic escaping the invoked function would otherwise leave every lock it
+	// entered held forever, deadlocking later invocations on the same lock.
+	defer func() {
+		if r := recover(); r != nil {
+			cx.ReleaseAllHeldLocks()
+			panic(r)
+		}
+	}()
 	return exec.Invoke(cx, fn, args)
 }
 

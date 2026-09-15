@@ -1,0 +1,5 @@
+-- stdout --
+true
+boom
+Test Failed!
+-- stderr --

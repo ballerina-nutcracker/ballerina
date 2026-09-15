@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "crossmodule"
+version = "0.1.0"

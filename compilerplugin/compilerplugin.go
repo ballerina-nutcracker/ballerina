@@ -43,3 +43,17 @@ type CompilerPlugin struct {
 	After              Stage
 	PackageTransformer PackageTransformer
 }
+
+// Provider identifies the package whose exported symbol space a plugin receives
+// and whose import activates it.
+type Provider struct {
+	Org     string
+	Package string
+}
+
+// InjectedPlugin is a compiler plugin supplied by the host for one compilation
+// rather than declared by a package manifest.
+type InjectedPlugin struct {
+	Provider Provider
+	Plugin   CompilerPlugin
+}

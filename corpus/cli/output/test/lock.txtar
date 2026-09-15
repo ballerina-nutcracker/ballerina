@@ -1,0 +1,9 @@
+-- stdout --
+ERROR locktest:testPanicsInsideLock
+PASS locktest:testEntersTheSameLock
+locktest:testPanicsInsideLock
+    invalid array index: 1
+1 passing, 0 failing, 1 errored, 0 skipped
+-- stderr --
+-- exitcode --
+1
