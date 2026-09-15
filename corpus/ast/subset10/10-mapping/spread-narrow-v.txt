@@ -1,0 +1,117 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition WithX
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition WithY
+    (record-type
+      (field y
+        (value-type string))))
+  (type-definition ReadonlyMixed
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field m
+          (union-type
+            (value-type int)
+            (value-type string))))))
+  (type-definition ReadonlyInt
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field m
+          (value-type int)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (union-type
+            (user-defined-type WithX)
+            (user-defined-type WithY))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal y)
+              (literal a))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref value)
+          (user-defined-type WithY))
+        (block-stmt
+          (var-def
+            (variable narrowed (expr
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 1))
+                (mapping-spread-field
+                  (simple-var-ref value))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref narrowed))))
+          (expression-stmt
+            (invocation io println (
+              (type-test-expr is
+                (simple-var-ref narrowed)
+                (record-type
+                  (field x
+                    (value-type int))
+                  (field y
+                    (value-type string)))))))) ())
+      (block-stmt
+        (var-def
+          (variable mixed (type
+            (user-defined-type ReadonlyMixed)) (expr
+            (mapping-constructor-expr
+              (key-value
+                (literal m)
+                (literal a))))))
+        (if
+          (unary-expr !
+            (group-expr
+              (type-test-expr is
+                (simple-var-ref mixed)
+                (user-defined-type ReadonlyInt))))
+          (block-stmt
+            (var-def
+              (variable narrowedMember (type
+                (record-type
+                  (field m
+                    (value-type string)))) (expr
+                (mapping-constructor-expr
+                  (mapping-spread-field
+                    (simple-var-ref mixed))))))
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref narrowedMember))))) ())
+        (block-stmt
+          (var-def
+            (variable other (type
+              (union-type
+                (user-defined-type WithX)
+                (user-defined-type WithY))) (expr
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 2))))))
+          (if
+            (unary-expr !
+              (group-expr
+                (type-test-expr is
+                  (simple-var-ref other)
+                  (user-defined-type WithY))))
+            (block-stmt
+              (var-def
+                (variable narrowed (expr
+                  (mapping-constructor-expr
+                    (mapping-spread-field
+                      (simple-var-ref other))
+                    (key-value
+                      (literal y)
+                      (literal b))))))
+              (expression-stmt
+                (invocation io println (
+                  (simple-var-ref narrowed))))) ())
+          (block-stmt))))))

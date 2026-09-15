@@ -176,8 +176,14 @@ type packageTypeResolver struct {
 	// must be resolved lazily (driven by ensureResolved) the same way
 	// constants are.
 	inferredGlobalVarNodes map[model.SymbolRef]*ast.BLangVariable
-	// lazyResolutionStatus tracks per-symbol resolution progress (for both
-	// constants and inferred-typed module-level vars) for cycle detection.
+	// typedGlobalVarNodes holds module-level vars **with** a type annotation,
+	// keyed by symbol ref. Their types are resolved eagerly, but signatures
+	// (including parameter default values) are resolved before that pass, so
+	// references from a default value have to be able to pull the type in
+	// lazily via ensureResolved.
+	typedGlobalVarNodes map[model.SymbolRef]*ast.BLangVariable
+	// lazyResolutionStatus tracks per-symbol resolution progress (for
+	// constants and module-level vars) for cycle detection.
 	// Absence means resolution has not started.
 	lazyResolutionStatus  map[model.SymbolRef]resolutionStatus
 	functionNodes         map[model.SymbolRef]*ast.BLangFunction
@@ -588,6 +594,7 @@ func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage,
 		implicitImports:        make(map[string]ast.BLangImportPackage),
 		packageConstants:       make(map[model.SymbolRef]*ast.BLangVariable),
 		inferredGlobalVarNodes: make(map[model.SymbolRef]*ast.BLangVariable),
+		typedGlobalVarNodes:    make(map[model.SymbolRef]*ast.BLangVariable),
 		lazyResolutionStatus:   make(map[model.SymbolRef]resolutionStatus),
 		functionNodes:          make(map[model.SymbolRef]*ast.BLangFunction),
 		typeDefnNodes:          make(map[model.SymbolRef]*ast.BLangTypeDefinition),
@@ -655,6 +662,24 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 		default:
 			t.lazyResolutionStatus[ref] = resolutionInProgress
 			ok := resolveConstant(t, c)
+			t.lazyResolutionStatus[ref] = resolutionDone
+			return ok
+		}
+	}
+	if gv, inMap := t.typedGlobalVarNodes[ref]; inMap {
+		switch t.lazyResolutionStatus[ref] {
+		case resolutionDone:
+			return true
+		case resolutionInProgress:
+			var pos diagnostics.Location
+			if gv.Name != nil {
+				pos = gv.Name.GetPosition()
+			}
+			t.semanticError(fmt.Sprintf("invalid cycle detected for %s", t.symbolName(ref)), pos)
+			return false
+		default:
+			t.lazyResolutionStatus[ref] = resolutionInProgress
+			ok := resolveGlobalVarType(t, gv)
 			t.lazyResolutionStatus[ref] = resolutionDone
 			return ok
 		}
@@ -1003,6 +1028,14 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 	}
 	for i := range pkg.Functions {
 		t.functionNodes[pkg.Functions[i].Symbol()] = pkg.Functions[i]
+	}
+	for i := range pkg.GlobalVars {
+		gv := pkg.GlobalVars[i]
+		if gv.TypeNode() == nil {
+			t.inferredGlobalVarNodes[gv.Symbol()] = gv
+			continue
+		}
+		t.typedGlobalVarNodes[gv.Symbol()] = gv
 	}
 
 	for i := range pkg.TypeDefinitions {
@@ -4415,60 +4448,150 @@ func resolveMappingConstructorExpr(t typeResolver, chain *binding, e *ast.BLangM
 }
 
 func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr) (semtypes.SemType, expressionEffect, bool) {
-	fields := make([]semtypes.Field, len(e.Fields))
-	for i, f := range e.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
-		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
-		if !ok {
+	inferred := newInferredMappingShape()
+	for _, f := range e.Fields {
+		switch field := f.(type) {
+		case *ast.BLangMappingKeyValueField:
+			keyName, ok := common.MappingKeyName(t.compilerContext(), field.Key)
+			if !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+			readonly := e.IsReadonly(keyName)
+			var valueExpectedType semtypes.SemType
+			if readonly {
+				valueExpectedType = semtypes.ValReadonly
+			}
+			valueResult, ok := resolveActionOrExpression(t, chain, field.ValueExpr, valueExpectedType)
+			if !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+			valueTy := valueResult.ty
+			var broadTy semtypes.SemType
+			if semtypes.SingleShape(valueTy).IsEmpty() {
+				broadTy = valueTy
+			} else {
+				broadTy = semtypes.WidenToBasicTypes(valueTy)
+			}
+			resolveMappingKeyWithValueType(t, field, valueTy)
+			inferred.add(keyName, broadTy, readonly, false)
+		case *ast.BLangMappingSpreadField:
+			operandTy, ok := resolveMappingSpreadOperand(t, chain, field, semtypes.SemType{})
+			if !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+			inferred.addSpread(semtypes.MappingShapeForSpread(t.typeContext(), operandTy))
+		default:
+			t.compilerContext().InternalError(fmt.Sprintf("unexpected mapping field kind %T", f), f.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		readonly := e.IsReadonly(keyName)
-		var valueExpectedType semtypes.SemType
-		if readonly {
-			valueExpectedType = semtypes.ValReadonly
-		}
-		valueResult, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, valueExpectedType)
-		if !ok {
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-		valueTy := valueResult.ty
-		var broadTy semtypes.SemType
-		if semtypes.SingleShape(valueTy).IsEmpty() {
-			broadTy = valueTy
-		} else {
-			broadTy = semtypes.WidenToBasicTypes(valueTy)
-		}
-		switch keyExpr := kv.Key.Expr.(type) {
-		case *ast.BLangLiteral:
-			resolveLiteral(t, keyExpr, semtypes.SemType{})
-		case ast.BNodeWithSymbol:
-			t.setSymbolType(keyExpr.Symbol(), valueTy)
-			if e, ok := keyExpr.(ast.BLangExpression); ok {
-				setExpectedType(e, valueTy)
-			}
-			if ref, ok := keyExpr.(*ast.BLangVarRef); ok {
-				setVarRefIdentifierTypes(ref)
-			}
-		}
-		kv.Key.SetDeterminedType(semtypes.Never)
-		kv.SetDeterminedType(semtypes.Never)
-		fields[i] = semtypes.FieldFrom(keyName, broadTy, readonly, false)
+	}
+	if !checkMappingConstructorKeys(t, e) {
+		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	md := semtypes.NewMappingDefinition()
-	mapTy := md.Define(t.typeEnv(), fields, semtypes.Never)
+	mapTy := md.Define(t.typeEnv(), inferred.fields(), inferred.rest)
 	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
 	e.SelectedAtomicType = *mat
 	setExpectedType(e, mapTy)
 	return mapTy, defaultExpressionEffect(chain), true
 }
 
+// inferredMappingShape accumulates the bottom-up inherent shape of a mapping constructor. Fields
+// contributed more than once are merged rather than repeated, since a duplicated name is reported
+// separately and must not produce a mapping atom with a repeated name.
+type inferredMappingShape struct {
+	order  []string
+	byName map[string]semtypes.Field
+	rest   semtypes.SemType
+}
+
+func newInferredMappingShape() *inferredMappingShape {
+	return &inferredMappingShape{byName: map[string]semtypes.Field{}, rest: semtypes.Never}
+}
+
+func (i *inferredMappingShape) add(name string, ty semtypes.SemType, readonly, optional bool) {
+	existing, seen := i.byName[name]
+	if !seen {
+		i.order = append(i.order, name)
+		i.byName[name] = semtypes.FieldFrom(name, ty, readonly, optional)
+		return
+	}
+	i.byName[name] = semtypes.FieldFrom(name, semtypes.Union(existing.Type(), ty),
+		readonly || existing.Readonly(), optional && existing.Optional())
+}
+
+func (i *inferredMappingShape) addSpread(shape semtypes.MappingSpreadShape) {
+	for _, field := range shape.Fields {
+		i.add(field.Name(), field.Type(), false, field.Optional())
+	}
+	i.rest = semtypes.Union(i.rest, shape.Rest)
+}
+
+func (i *inferredMappingShape) fields() []semtypes.Field {
+	fields := make([]semtypes.Field, 0, len(i.order))
+	for _, name := range i.order {
+		field := i.byName[name]
+		if semtypes.IsNever(field.Type()) && field.Optional() && semtypes.IsNever(i.rest) {
+			// The name is impossible and no rest could reintroduce it, so recording the
+			// exclusion would not constrain the inferred type.
+			continue
+		}
+		fields = append(fields, field)
+	}
+	return fields
+}
+
+// resolveMappingSpreadOperand resolves a spread operand and enforces that it is a mapping. The
+// spread field itself produces no value, so its own type is never.
+func resolveMappingSpreadOperand(t typeResolver, chain *binding, field *ast.BLangMappingSpreadField,
+	expectedType semtypes.SemType) (semtypes.SemType, bool) {
+	result, ok := resolveActionOrExpression(t, chain, field.Expr, expectedType)
+	if !ok {
+		return semtypes.SemType{}, false
+	}
+	if !semtypes.IsSubtype(t.typeContext(), result.ty, semtypes.Mapping) {
+		t.semanticError("spread field operand must be a subtype of map<any|error>", field.Expr.GetPosition())
+		return semtypes.SemType{}, false
+	}
+	field.SetDeterminedType(semtypes.Never)
+	return result.ty, true
+}
+
+func checkMappingConstructorKeys(t typeResolver, e *ast.BLangMappingConstructorExpr) bool {
+	if !common.HasSpreadField(e) {
+		return true
+	}
+	entries, ok := common.MappingConstructorEntries(t.compilerContext(), t.typeContext(), e)
+	if !ok {
+		return false
+	}
+	if diag, ok := common.CheckMappingConstructorKeys(t.typeContext(), entries); !ok {
+		t.semanticError(diag.Message, diag.Pos)
+		return false
+	}
+	return true
+}
+
 func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	for _, f := range e.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
-		if _, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, semtypes.SemType{}); !ok {
+		switch field := f.(type) {
+		case *ast.BLangMappingKeyValueField:
+			if _, ok := resolveActionOrExpression(t, chain, field.ValueExpr, semtypes.SemType{}); !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+			resolveMappingKey(t, field)
+		case *ast.BLangMappingSpreadField:
+			if _, ok := resolveMappingSpreadOperand(t, chain, field, semtypes.SemType{}); !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+		default:
+			t.compilerContext().InternalError(fmt.Sprintf("unexpected mapping field kind %T", f), f.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		resolveMappingKey(t, kv)
+	}
+
+	if !checkMappingConstructorKeys(t, e) {
+		return semtypes.SemType{}, expressionEffect{}, false
 	}
 
 	resultType, mat, ok := selectMappingInherentType(t, e, expectedType)
@@ -4477,23 +4600,31 @@ func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e
 	}
 
 	for _, f := range e.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
-		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
-		if !ok {
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-		requiredType := mat.FieldInnerVal(keyName)
-		if e.IsReadonly(keyName) {
-			requiredType = semtypes.Intersect(requiredType, semtypes.ValReadonly)
-			if semtypes.IsEmpty(t.typeContext(), requiredType) {
-				t.semanticError(fmt.Sprintf("field '%s' cannot be readonly: its type in the inherent type has no readonly values", keyName),
-					kv.GetPosition())
+		switch field := f.(type) {
+		case *ast.BLangMappingKeyValueField:
+			keyName, ok := common.MappingKeyName(t.compilerContext(), field.Key)
+			if !ok {
 				return semtypes.SemType{}, expressionEffect{}, false
 			}
-		}
-		kv.ValueExpr.SetDeterminedType(semtypes.SemType{})
-		if _, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, requiredType); !ok {
-			return semtypes.SemType{}, expressionEffect{}, false
+			requiredType := mat.FieldInnerVal(keyName)
+			if e.IsReadonly(keyName) {
+				requiredType = semtypes.Intersect(requiredType, semtypes.ValReadonly)
+				if semtypes.IsEmpty(t.typeContext(), requiredType) {
+					t.semanticError(fmt.Sprintf("field '%s' cannot be readonly: its type in the inherent type has no readonly values", keyName),
+						field.GetPosition())
+					return semtypes.SemType{}, expressionEffect{}, false
+				}
+			}
+			field.ValueExpr.SetDeterminedType(semtypes.SemType{})
+			if _, ok := resolveActionOrExpression(t, chain, field.ValueExpr, requiredType); !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+		case *ast.BLangMappingSpreadField:
+			field.Expr.SetDeterminedType(semtypes.SemType{})
+			contextualType := common.MappingSpreadContextualType(t.compilerContext(), t.typeEnv(), mat, field.Expr)
+			if _, ok := resolveMappingSpreadOperand(t, chain, field, contextualType); !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
 		}
 	}
 
@@ -4512,11 +4643,14 @@ func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e
 }
 
 func resolveMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField) {
+	resolveMappingKeyWithValueType(t, kv, kv.ValueExpr.GetDeterminedType())
+}
+
+func resolveMappingKeyWithValueType(t typeResolver, kv *ast.BLangMappingKeyValueField, valueTy semtypes.SemType) {
 	switch keyExpr := kv.Key.Expr.(type) {
 	case *ast.BLangLiteral:
 		resolveLiteral(t, keyExpr, semtypes.SemType{})
 	case ast.BNodeWithSymbol:
-		valueTy := kv.ValueExpr.GetDeterminedType()
 		t.setSymbolType(keyExpr.Symbol(), valueTy)
 		if e, ok := keyExpr.(ast.BLangExpression); ok {
 			setExpectedType(e, valueTy)
@@ -4552,23 +4686,41 @@ func selectMappingInherentType(t typeResolver, expr *ast.BLangMappingConstructor
 	alts := semtypes.MappingAlternatives(tc, expectedType)
 	var validAlts []semtypes.MappingAlternative
 
-	fields := make([]semtypes.MappingFieldInfo, len(expr.Fields))
-	for i, f := range expr.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
-		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
+	if common.HasSpreadField(expr) {
+		entries, ok := common.MappingConstructorEntries(t.compilerContext(), tc, expr)
 		if !ok {
 			return semtypes.SemType{}, nil, false
 		}
-		fields[i] = semtypes.MappingFieldInfo{Name: keyName, Type: kv.ValueExpr.GetDeterminedType()}
-	}
-	sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
+		for _, alt := range alts {
+			atom := alt.Atomic()
+			if atom == nil {
+				validAlts = append(validAlts, alt)
+				continue
+			}
+			if _, fits := common.CheckMappingConstructorAgainstTarget(tc, entries, atom,
+				defaultableMappingFields(t, atom), expr.GetPosition()); fits {
+				validAlts = append(validAlts, alt)
+			}
+		}
+	} else {
+		fields := make([]semtypes.MappingFieldInfo, len(expr.Fields))
+		for i, f := range expr.Fields {
+			kv := f.(*ast.BLangMappingKeyValueField)
+			keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
+			if !ok {
+				return semtypes.SemType{}, nil, false
+			}
+			fields[i] = semtypes.MappingFieldInfo{Name: keyName, Type: kv.ValueExpr.GetDeterminedType()}
+		}
+		sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
 
-	defaultableFields := func(atom *semtypes.MappingAtomicType) []string {
-		return defaultableMappingFields(t, atom)
-	}
-	for _, alt := range alts {
-		if semtypes.MappingAlternativeAllowsFields(tc, alt, fields, defaultableFields) {
-			validAlts = append(validAlts, alt)
+		defaultableFields := func(atom *semtypes.MappingAtomicType) []string {
+			return defaultableMappingFields(t, atom)
+		}
+		for _, alt := range alts {
+			if semtypes.MappingAlternativeAllowsFields(tc, alt, fields, defaultableFields) {
+				validAlts = append(validAlts, alt)
+			}
 		}
 	}
 	if len(validAlts) == 0 {

@@ -1,0 +1,238 @@
+module $anon.. v 0.0.0;
+modulePoint  readonly&{| x: int, y: int, never... |};
+moduleSpread  {| int... |};
+class Holder {
+  initial {| x: int, y: int, z: int, never... |}
+  assigned {| x: int, y: int, z: int, never... |}
+
+  init({| x: int, y: int, z: int, never... |}) -> nil{
+    bb0 {
+      %3 = defaultPoint() -> bb1;
+    }
+    bb1 {
+      %4 = ConstantLoad z
+      %5 = ConstantLoad 5
+      %6 = newMap {| x: int, y: int, z: int, never... |}{...%3, %4=%5}
+      %7 = ConstantLoad initial
+      self[%7] = %6;
+      %8 = ConstantLoad assigned
+      self[%8] = assigned;
+      return;
+    }
+  }
+}
+defaultPoint() -> {| x: int, y: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 6
+    %3 = ConstantLoad y
+    %4 = ConstantLoad 7
+    %5 = newMap {| x: int, y: int, never... |}{%1=%2, %3=%4}
+    %0 = %5;
+    return;
+  }
+}
+total({| x: int, y: int, z: int, never... |}) -> int{
+  bb0 {
+    %5 = ConstantLoad x
+    %4 = p[%5];
+    %6 = %4;
+    %8 = ConstantLoad y
+    %7 = p[%8];
+    %9 = %7;
+    %3 = + %6 %9;
+    %10 = %3;
+    %12 = ConstantLoad z
+    %11 = p[%12];
+    %13 = %11;
+    %2 = + %10 %13;
+    %0 = %2;
+    return;
+  }
+}
+named(int,{| x: int, y: int, z: int, never... |}) -> int{
+  bb0 {
+    %4 = factor;
+    %6 = ConstantLoad z
+    %5 = p[%6];
+    %7 = %5;
+    %3 = * %4 %7;
+    %0 = %3;
+    return;
+  }
+}
+returnsSpread({| x: int, y: int, never... |}) -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %2 = ConstantLoad z
+    %3 = ConstantLoad 8
+    %4 = newMap {| x: int, y: int, z: int, never... |}{...p, %2=%3}
+    %0 = %4;
+    return;
+  }
+}
+returnsSpreadExpr({| x: int, y: int, never... |}) -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %2 = ConstantLoad z
+    %3 = ConstantLoad 9
+    %4 = newMap {| x: int, y: int, z: int, never... |}{...p, %2=%3}
+    %0 = %4;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad y
+    %4 = ConstantLoad 2
+    %5 = newMap {| x: int, y: int, never... |}{%1=%2, %3=%4}
+    p = %5;
+    %7 = println(moduleSpread) -> bb1;
+  }
+  bb1 {
+    %8 = ConstantLoad z
+    %9 = ConstantLoad 10
+    %10 = newMap {| x: int, y: int, z: int, never... |}{...p, %8=%9}
+    %11 = total(%10) -> bb2;
+  }
+  bb2 {
+    %12 = %11;
+    %13 = println(%12) -> bb3;
+  }
+  bb3 {
+    %14 = ConstantLoad 2
+    %15 = %14;
+    %16 = ConstantLoad z
+    %17 = ConstantLoad 11
+    %18 = newMap {| x: int, y: int, z: int, never... |}{...p, %16=%17}
+    %19 = named(%15,%18) -> bb4;
+  }
+  bb4 {
+    %20 = %19;
+    %21 = println(%20) -> bb5;
+  }
+  bb5 {
+    %22 = ConstantLoad 3
+    %23 = %22;
+    %24 = ConstantLoad z
+    %25 = ConstantLoad 12
+    %26 = newMap {| x: int, y: int, z: int, never... |}{...p, %24=%25}
+    %27 = named(%23,%26) -> bb6;
+  }
+  bb6 {
+    %28 = %27;
+    %29 = println(%28) -> bb7;
+  }
+  bb7 {
+    %30 = returnsSpread(p) -> bb8;
+  }
+  bb8 {
+    %31 = println(%30) -> bb9;
+  }
+  bb9 {
+    %32 = returnsSpreadExpr(p) -> bb10;
+  }
+  bb10 {
+    %33 = println(%32) -> bb11;
+  }
+  bb11 {
+    %34 = newMap {| base: {| x: int, y: int, never... |}, full: {| x: int, y: int, z: int, never... |}, never... |}{} defaults{base=$anon/.:$desugar$0, full=$anon/.:$desugar$1}
+    defaulted = %34;
+    %36 = println(defaulted) -> bb12;
+  }
+  bb12 {
+    %37 = newObject $anon/.:Holder
+    %38 = ConstantLoad z
+    %39 = ConstantLoad 13
+    %40 = newMap {| x: int, y: int, z: int, never... |}{...p, %38=%39}
+    %41 = %37.init(%40) -> bb13;
+  }
+  bb13 {
+    %43 = %41 is nil
+    %43 ? bb14 : bb15;
+  }
+  bb14 {
+    %42 = %37;
+    GOTO bb16;
+  }
+  bb15 {
+    %42 = %41;
+    GOTO bb16;
+  }
+  bb16 {
+    holder = %42;
+    %46 = ConstantLoad initial
+    %45 = holder[%46];
+    %47 = println(%45) -> bb17;
+  }
+  bb17 {
+    %49 = ConstantLoad assigned
+    %48 = holder[%49];
+    %50 = println(%48) -> bb18;
+  }
+  bb18 {
+    %51 = ConstantLoad z
+    %52 = ConstantLoad 14
+    %53 = newMap {| x: int, y: int, z: int, never... |}{...p, %51=%52}
+    %54 = ConstantLoad z
+    %55 = ConstantLoad 15
+    %56 = newMap {| x: int, y: int, z: int, never... |}{...p, %54=%55}
+    %57 = ConstantLoad 2
+    %58 = newArray [{| x: int, y: int, z: int, never... |}...][%57]{%53, %56}
+    list = %58;
+    %60 = println(list) -> bb19;
+  }
+  bb19 {
+    %61 = ConstantLoad a
+    %62 = ConstantLoad z
+    %63 = ConstantLoad 16
+    %64 = newMap {| x: int, y: int, z: int, never... |}{...p, %62=%63}
+    %65 = newMap {| {| x: int, y: int, z: int, never... |}... |}{%61=%64}
+    nested = %65;
+    %67 = println(nested) -> bb20;
+  }
+  bb20 {
+    %69 = ConstantLoad z
+    %70 = ConstantLoad 17
+    %71 = newMap {| x: int, y: int, z: int, never... |}{...p, %69=%70}
+    %72 = total(%71) -> bb21;
+  }
+  bb21 {
+    %73 = %72;
+    %74 = ConstantLoad z
+    %75 = ConstantLoad 18
+    %76 = newMap {| x: int, y: int, z: int, never... |}{...p, %74=%75}
+    %77 = total(%76) -> bb22;
+  }
+  bb22 {
+    %78 = %77;
+    %68 = + %73 %78;
+    %79 = %68;
+    %80 = println(%79) -> bb23;
+  }
+  bb23 {
+    return;
+  }
+}
+$desugar$0() -> {| x: int, y: int, never... |}{
+  bb0 {
+    %1 = defaultPoint() -> bb1;
+  }
+  bb1 {
+    %2 = newMap {| x: int, y: int, never... |}{...%1}
+    %0 = %2;
+    return;
+  }
+}
+$desugar$1() -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %1 = defaultPoint() -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad z
+    %3 = ConstantLoad 4
+    %4 = newMap {| x: int, y: int, z: int, never... |}{...%1, %2=%3}
+    %0 = %4;
+    return;
+  }
+}

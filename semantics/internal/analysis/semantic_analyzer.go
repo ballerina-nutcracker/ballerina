@@ -1491,30 +1491,46 @@ func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstr
 		namedFields[n] = true
 	}
 	for _, f := range expr.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
-		keyName, ok := common.MappingKeyName(a.ctx(), kv.Key)
-		if !ok {
+		switch field := f.(type) {
+		case *ast.BLangMappingKeyValueField:
+			keyName, ok := common.MappingKeyName(a.ctx(), field.Key)
+			if !ok {
+				return false
+			}
+			if seen[keyName] {
+				a.semanticErr(fmt.Sprintf("duplicate key '%s' in mapping constructor", keyName), field.Key.GetPosition())
+				return false
+			}
+			seen[keyName] = true
+			// For record type desc (ie len(mat.FieldNames()) > 0) if the key is not a string literal it must be
+			// nameed field
+			if field.Key.Kind == ast.MappingKeyIdentifier && len(mat.FieldNames()) > 0 && !namedFields[keyName] {
+				a.semanticErr(fmt.Sprintf("identifier '%s' cannot be used as a key for a rest field; use a string literal instead", keyName), field.Key.GetPosition())
+				return false
+			}
+			hasValue[keyName] = true
+			fieldExpectedType := mat.FieldInnerVal(keyName)
+			if expr.IsReadonly(keyName) {
+				fieldExpectedType = semtypes.Intersect(fieldExpectedType, semtypes.ValReadonly)
+			}
+			if !analyzeActionOrExpression(a, field.ValueExpr, fieldExpectedType) {
+				return false
+			}
+		case *ast.BLangMappingSpreadField:
+			contextualType := common.MappingSpreadContextualType(a.ctx(), a.tyCtx().Env(), &mat, field.Expr)
+			if !analyzeActionOrExpression(a, field.Expr, contextualType) {
+				return false
+			}
+		default:
+			a.ctx().InternalError(fmt.Sprintf("unexpected mapping field kind %T", f), f.GetPosition())
 			return false
 		}
-		if seen[keyName] {
-			a.semanticErr(fmt.Sprintf("duplicate key '%s' in mapping constructor", keyName), kv.Key.GetPosition())
+	}
+	if common.HasSpreadField(expr) {
+		if !analyzeMappingSpreadFields(a, expr, &mat) {
 			return false
 		}
-		seen[keyName] = true
-		// For record type desc (ie len(mat.FieldNames()) > 0) if the key is not a string literal it must be
-		// nameed field
-		if kv.Key.Kind == ast.MappingKeyIdentifier && len(mat.FieldNames()) > 0 && !namedFields[keyName] {
-			a.semanticErr(fmt.Sprintf("identifier '%s' cannot be used as a key for a rest field; use a string literal instead", keyName), kv.Key.GetPosition())
-			return false
-		}
-		hasValue[keyName] = true
-		fieldExpectedType := mat.FieldInnerVal(keyName)
-		if expr.IsReadonly(keyName) {
-			fieldExpectedType = semtypes.Intersect(fieldExpectedType, semtypes.ValReadonly)
-		}
-		if !analyzeActionOrExpression(a, kv.ValueExpr, fieldExpectedType) {
-			return false
-		}
+		return validateResolvedType(a, expr, expectedType)
 	}
 	for _, name := range mat.FieldNames() {
 		if hasValue[name] {
@@ -1527,6 +1543,29 @@ func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstr
 		return false
 	}
 	return validateResolvedType(a, expr, expectedType)
+}
+
+// analyzeMappingSpreadFields checks a constructor with spreads against its selected inherent
+// type. Possible duplicate keys, target field/rest compatibility and required-field presence are
+// all decided from the operands' semantic types rather than the inferred summary.
+func analyzeMappingSpreadFields[A analyzer](a A, expr *ast.BLangMappingConstructorExpr, mat *semtypes.MappingAtomicType) bool {
+	entries, ok := common.MappingConstructorEntries(a.ctx(), a.tyCtx(), expr)
+	if !ok {
+		return false
+	}
+	if diag, ok := common.CheckMappingConstructorKeys(a.tyCtx(), entries); !ok {
+		a.semanticErr(diag.Message, diag.Pos)
+		return false
+	}
+	defaults := make([]string, len(expr.FieldDefaults))
+	for i, fd := range expr.FieldDefaults {
+		defaults[i] = fd.FieldName
+	}
+	if diag, ok := common.CheckMappingConstructorAgainstTarget(a.tyCtx(), entries, mat, defaults, expr.GetPosition()); !ok {
+		a.semanticErr(diag.Message, diag.Pos)
+		return false
+	}
+	return true
 }
 
 func analyzeErrorConstructorExpr[A analyzer](a A, expr *ast.BLangErrorConstructorExpr, expectedType semtypes.SemType) bool {

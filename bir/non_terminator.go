@@ -201,6 +201,12 @@ type (
 		keyOp   *BIROperand
 		valueOp *BIROperand
 	}
+
+	// MappingConstructorSpreadEntry expands an already evaluated source mapping into the
+	// mapping under construction, in the source mapping's own iteration order.
+	MappingConstructorSpreadEntry struct {
+		valueOp *BIROperand
+	}
 )
 
 var (
@@ -228,6 +234,7 @@ var (
 	_ BIRAssignInstruction    = &NewXMLSequence{}
 	_ BIRAssignInstruction    = &EvalTemplateExpr{}
 	_ MappingConstructorEntry = &MappingConstructorKeyValueEntry{}
+	_ MappingConstructorEntry = &MappingConstructorSpreadEntry{}
 )
 
 func (m *Move) GetLhsOperand() *BIROperand {
@@ -577,6 +584,20 @@ func (m *MappingConstructorKeyValueEntry) ValueOp() *BIROperand {
 
 func (m *MappingConstructorKeyValueEntry) KeyOp() *BIROperand {
 	return m.keyOp
+}
+
+func NewMappingConstructorSpreadEntry(valueOp *BIROperand) *MappingConstructorSpreadEntry {
+	return &MappingConstructorSpreadEntry{
+		valueOp: valueOp,
+	}
+}
+
+func (m *MappingConstructorSpreadEntry) IsKeyValuePair() bool {
+	return false
+}
+
+func (m *MappingConstructorSpreadEntry) ValueOp() *BIROperand {
+	return m.valueOp
 }
 
 func (n *NewXMLElement) GetLhsOperand() *BIROperand { return n.LhsOp }

@@ -1,0 +1,250 @@
+(Box
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access p
+          (simple-var-ref self))
+        (simple-var-ref p))
+    )
+  )
+  (get
+    (bb0 () ()
+      (field-based-access p
+        (simple-var-ref self))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable fromCall (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (invocation makePoint ()))
+          (key-value
+            (literal z)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromCall))))
+    (var-def
+      (variable box (type
+        (user-defined-type Box)) (expr
+        (new (
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 7))
+            (key-value
+              (literal y)
+              (literal 8))))))))
+    (var-def
+      (variable fromMethod (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (invocation get expr:
+              (simple-var-ref box) ()))
+          (key-value
+            (literal z)
+            (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromMethod))))
+    (var-def
+      (variable fromField (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (field-based-access p
+              (simple-var-ref box)))
+          (key-value
+            (literal z)
+            (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromField))))
+    (var-def
+      (variable holder (type
+        (constrained-type
+          (builtin-ref-type map)
+          (user-defined-type Point))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (mapping-constructor-expr
+              (key-value
+                (literal x)
+                (literal 9))
+              (key-value
+                (literal y)
+                (literal 10))))))))
+    (var-def
+      (variable fromMember (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (invocation lang.map get (
+              (simple-var-ref holder)
+              (literal a))))
+          (key-value
+            (literal z)
+            (literal 4))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromMember))))
+    (var-def
+      (variable fromElvis (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (nil-conditional-expr
+              (index-based-access
+                (simple-var-ref holder)
+                (literal missing))
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 0))
+                (key-value
+                  (literal y)
+                  (literal 0)))))
+          (key-value
+            (literal z)
+            (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromElvis))))
+    (var-def
+      (variable fromCast (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (type-conversion-expr
+              (invocation optional (
+                (literal true)))
+              (user-defined-type Point)))
+          (key-value
+            (literal z)
+            (literal 6))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromCast))))
+    (var-def
+      (variable fromConditional (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (group-expr
+              (ternary-expr
+                (literal true)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal x)
+                    (literal 11))
+                  (key-value
+                    (literal y)
+                    (literal 12)))
+                (mapping-constructor-expr
+                  (key-value
+                    (literal x)
+                    (literal 13))
+                  (key-value
+                    (literal y)
+                    (literal 14))))))
+          (key-value
+            (literal z)
+            (literal 7))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromConditional))))
+    (var-def
+      (variable narrowed (type
+        (union-type
+          (user-defined-type Point)
+          (value-type null))) (expr
+        (invocation optional (
+          (literal true))))))
+    (type-test-expr is
+      (simple-var-ref narrowed)
+      (user-defined-type Point))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable fromNarrowed (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref narrowed))
+          (key-value
+            (literal z)
+            (literal 8))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromNarrowed))))
+  )
+  (bb2 (bb1 bb0) ()
+    (var-def
+      (variable fromCheckpanic (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (check-panicked-expr
+              (invocation mayFail (
+                (literal false)))))
+          (key-value
+            (literal z)
+            (literal 9))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromCheckpanic))))
+    (var-def
+      (variable fromNested (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (mapping-constructor-expr
+              (mapping-spread-field
+                (invocation makePoint ()))
+              (key-value
+                (literal z)
+                (literal 10))))
+          (key-value
+            (literal w)
+            (literal 11))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromNested))))
+  )
+)
+(makePoint
+  (bb0 () ()
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 1))
+      (key-value
+        (literal y)
+        (literal 2)))
+  )
+)
+(mayFail
+  (bb0 () ()
+    (ternary-expr
+      (simple-var-ref bad)
+      (error-constructor-expr (
+        (literal bad operand)))
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal 3))
+        (key-value
+          (literal y)
+          (literal 4))))
+  )
+)
+(optional
+  (bb0 () ()
+    (ternary-expr
+      (simple-var-ref present)
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal 5))
+        (key-value
+          (literal y)
+          (literal 6)))
+      (literal <nil>))
+  )
+)

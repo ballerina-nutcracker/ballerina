@@ -1,0 +1,152 @@
+module $anon.. v 0.0.0;
+modulePoint  readonly&{| x: int, y: int, never... |};
+class Box {
+  initial {| x: int, y: int, z: int, never... |}
+  value {| x: int, y: int, z: int, never... |}
+
+  init({| x: int, y: int, z: int, never... |}) -> nil{
+    bb0 {
+      %3 = ConstantLoad z
+      %4 = ConstantLoad 2
+      %5 = newMap {| x: int, y: int, z: int, never... |}{...modulePoint, %3=%4}
+      %6 = ConstantLoad initial
+      self[%6] = %5;
+      %7 = ConstantLoad value
+      self[%7] = p;
+      return;
+    }
+  }
+}
+defaulted({| x: int, y: int, z: int, never... |}) -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %0 = p;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = defaulted($desugar$0) -> bb2;
+  }
+  bb2 {
+    %4 = println(%3) -> bb3;
+  }
+  bb3 {
+    %5 = ConstantLoad x
+    %6 = ConstantLoad 5
+    %7 = ConstantLoad y
+    %8 = ConstantLoad 6
+    %9 = ConstantLoad z
+    %10 = ConstantLoad 7
+    %11 = newMap {| x: int, y: int, z: int, never... |}{%5=%6, %7=%8, %9=%10}
+    %12 = defaulted(%11) -> bb4;
+  }
+  bb4 {
+    %13 = println(%12) -> bb5;
+  }
+  bb5 {
+    %14 = $default$1() -> bb6;
+  }
+  bb6 {
+    $desugar$1 = %14;
+    %16 = newObject $anon/.:Box
+    %17 = %16.init($desugar$1) -> bb7;
+  }
+  bb7 {
+    %19 = %17 is nil
+    %19 ? bb8 : bb9;
+  }
+  bb8 {
+    %18 = %16;
+    GOTO bb10;
+  }
+  bb9 {
+    %18 = %17;
+    GOTO bb10;
+  }
+  bb10 {
+    box = %18;
+    %22 = ConstantLoad initial
+    %21 = box[%22];
+    %23 = println(%21) -> bb11;
+  }
+  bb11 {
+    %25 = ConstantLoad value
+    %24 = box[%25];
+    %26 = println(%24) -> bb12;
+  }
+  bb12 {
+    %27 = newObject $anon/.:Box
+    %28 = ConstantLoad x
+    %29 = ConstantLoad 8
+    %30 = ConstantLoad y
+    %31 = ConstantLoad 9
+    %32 = ConstantLoad z
+    %33 = ConstantLoad 10
+    %34 = newMap {| x: int, y: int, z: int, never... |}{%28=%29, %30=%31, %32=%33}
+    %35 = %27.init(%34) -> bb13;
+  }
+  bb13 {
+    %37 = %35 is nil
+    %37 ? bb14 : bb15;
+  }
+  bb14 {
+    %36 = %27;
+    GOTO bb16;
+  }
+  bb15 {
+    %36 = %35;
+    GOTO bb16;
+  }
+  bb16 {
+    supplied = %36;
+    %40 = ConstantLoad value
+    %39 = supplied[%40];
+    %41 = println(%39) -> bb17;
+  }
+  bb17 {
+    %42 = newMap {| base: {| x: int, y: int, never... |}, full: {| x: int, y: int, z: int, never... |}, never... |}{} defaults{base=$anon/.:$desugar$0, full=$anon/.:$desugar$1}
+    fields = %42;
+    %44 = println(fields) -> bb18;
+  }
+  bb18 {
+    return;
+  }
+}
+$desugar$0() -> {| x: int, y: int, never... |}{
+  bb0 {
+    %1 = newMap {| x: int, y: int, never... |}{...modulePoint}
+    %0 = %1;
+    return;
+  }
+}
+$desugar$1() -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad z
+    %2 = ConstantLoad 4
+    %3 = newMap {| x: int, y: int, z: int, never... |}{...modulePoint, %1=%2}
+    %0 = %3;
+    return;
+  }
+}
+$default$0() -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad z
+    %2 = ConstantLoad 1
+    %3 = newMap {| x: int, y: int, z: int, never... |}{...modulePoint, %1=%2}
+    %0 = %3;
+    return;
+  }
+}
+$default$1() -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad z
+    %2 = ConstantLoad 3
+    %3 = newMap {| x: int, y: int, z: int, never... |}{...modulePoint, %1=%2}
+    %0 = %3;
+    return;
+  }
+}
