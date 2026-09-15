@@ -17,6 +17,9 @@
 package projects
 
 import (
+	"os"
+	"path/filepath"
+	"runtime"
 	"slices"
 	"sort"
 	"testing"
@@ -53,6 +56,7 @@ func includeMatcherFixture() fstest.MapFS {
 		"waldo/xyzzy/inner":          {},
 		"babble/mid/bar":             {},
 		"babble/bar":                 {},
+		"babble/notbar":              {},
 		"readme.rs":                  {},
 		"corge.rs":                   {},
 		"include-resources/thud":     {},
@@ -94,6 +98,9 @@ func TestMatchIncludePattern(t *testing.T) {
 		// babble/bar directly (no intervening directory) per Java's own
 		// glob spec ("** matches zero or more characters crossing
 		// directory boundaries").
+		// babble/notbar is a deliberate near-miss fixture entry: "**/" must
+		// preserve the path-segment boundary, so it must not match even
+		// though "notbar" ends in "bar".
 		{"mid doublestar", "babble/**/bar", []string{"babble/mid/bar", "babble/bar"}},
 		{"exact nested path", "include-resources/thud", []string{"include-resources/thud"}},
 		{"brace alternation", "config.{bal,toml}", []string{"config.bal", "config.toml"}},
@@ -219,6 +226,67 @@ func TestResolveIncludePaths_NonExistentPatternIsNoOp(t *testing.T) {
 	if len(got) != 0 {
 		t.Errorf("expected no matches for non-existent patterns, got %v", got)
 	}
+}
+
+// TestMatchIncludePattern_SkipsSymlinks uses a real filesystem (fstest.MapFS
+// has no symlink concept) to verify a symlink is never collected — as both a
+// direct file match and inside an expanded directory match — since
+// addIncludeFile's later fs.ReadFile would transparently follow it,
+// letting an include pattern archive a file from outside the project root.
+func TestMatchIncludePattern_SkipsSymlinks(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("creating symlinks requires elevated privileges on windows")
+	}
+	t.Parallel()
+
+	outsideDir := t.TempDir()
+	secretPath := filepath.Join(outsideDir, "secret.txt")
+	if err := os.WriteFile(secretPath, []byte("outside the project root"), 0o644); err != nil {
+		t.Fatalf("writing secret file: %v", err)
+	}
+
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "assets"), 0o755); err != nil {
+		t.Fatalf("creating assets dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "assets", "data.txt"), []byte("inside"), 0o644); err != nil {
+		t.Fatalf("writing assets/data.txt: %v", err)
+	}
+	// A symlink matched directly by a glob ("*.txt" at root).
+	if err := os.Symlink(secretPath, filepath.Join(root, "escape.txt")); err != nil {
+		t.Fatalf("creating root symlink: %v", err)
+	}
+	// A symlink matched only via directory expansion ("assets/").
+	if err := os.Symlink(secretPath, filepath.Join(root, "assets", "escape.txt")); err != nil {
+		t.Fatalf("creating nested symlink: %v", err)
+	}
+
+	fsys := os.DirFS(root)
+
+	t.Run("direct glob match", func(t *testing.T) {
+		t.Parallel()
+		got, err := matchIncludePattern(fsys, "*.txt", ".")
+		if err != nil {
+			t.Fatalf("matchIncludePattern: %v", err)
+		}
+		if slices.Contains(got, "escape.txt") {
+			t.Errorf("expected the symlink to be skipped, got %v", got)
+		}
+	})
+
+	t.Run("directory expansion", func(t *testing.T) {
+		t.Parallel()
+		got, err := matchIncludePattern(fsys, "assets/", ".")
+		if err != nil {
+			t.Fatalf("matchIncludePattern: %v", err)
+		}
+		if slices.Contains(got, "assets/escape.txt") {
+			t.Errorf("expected the nested symlink to be skipped, got %v", got)
+		}
+		if !slices.Contains(got, "assets/data.txt") {
+			t.Errorf("expected assets/data.txt to remain included, got %v", got)
+		}
+	})
 }
 
 func TestGlobToRegexp_InvalidPatterns(t *testing.T) {

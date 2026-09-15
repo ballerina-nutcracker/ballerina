@@ -77,6 +77,14 @@ func matchIncludePattern(fsys fs.FS, pattern, root string) ([]string, error) {
 			}
 			return nil
 		}
+		// A symlink is never matched or descended into: WalkDir reports it
+		// as a non-directory entry without following it, but addIncludeFile
+		// reads matched paths with fs.ReadFile, which does follow symlinks
+		// — collecting one here would let an include pattern archive a
+		// file from outside the project root.
+		if d.Type()&fs.ModeSymlink != 0 {
+			return nil
+		}
 		if re.MatchString(rel) && isCorrectIncludeMatch(rel, d.IsDir(), pattern) {
 			if d.IsDir() {
 				// Expand to the directory's individual files rather than
@@ -119,6 +127,11 @@ func expandDirToFiles(fsys fs.FS, root, dirRel string) ([]string, error) {
 			if d.IsDir() {
 				return fs.SkipDir
 			}
+			return nil
+		}
+		// See the matching check in matchIncludePattern: a symlink must
+		// never be archived, since fs.ReadFile follows it at read time.
+		if d.Type()&fs.ModeSymlink != 0 {
 			return nil
 		}
 		if !d.IsDir() {
@@ -186,9 +199,16 @@ func writeGlobBody(sb *strings.Builder, runes []rune) error {
 		switch c := runes[i]; c {
 		case '*':
 			if i+1 < len(runes) && runes[i+1] == '*' {
-				sb.WriteString(".*")
-				i++
-				if i+1 < len(runes) && runes[i+1] == '/' {
+				if i+2 < len(runes) && runes[i+2] == '/' {
+					// "**/" matches zero or more complete path segments,
+					// each ending in "/" — a bare ".*" here would let "**"
+					// match a partial segment too, so "a/**/b" would
+					// wrongly match "a/notb" (".*" swallowing "not" with
+					// no "/" in between).
+					sb.WriteString("(?:.*/)?")
+					i += 2
+				} else {
+					sb.WriteString(".*")
 					i++
 				}
 			} else {
