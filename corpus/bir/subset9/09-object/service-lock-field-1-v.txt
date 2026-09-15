@@ -1,10 +1,10 @@
 module $anon.. v 0.0.0;
 $moduleListeners  [object { public function attach(never, [string...]) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, string) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, nil) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }...];
-l  object { public function attach(isolated service object { private function get() returns int; private function inc() returns nil }, nil) returns nil; public function detach(isolated service object { private function get() returns int; private function inc() returns nil }) returns nil|error; private function get() returns int; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; private function inc() returns nil; public function init() returns nil; private nil|isolated service object { private function get() returns int; private function inc() returns nil } s; public function start() returns nil|error };
+l  object { public function attach(isolated service object { private isolated function get() returns int; private isolated function inc() returns nil }, nil) returns nil; public function detach(isolated service object { private isolated function get() returns int; private isolated function inc() returns nil }) returns nil|error; private function get() returns int; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; private function inc() returns nil; public function init() returns nil; private nil|isolated service object { private isolated function get() returns int; private isolated function inc() returns nil } s; public function start() returns nil|error };
 class SimpleListener {
-  s nil|isolated service object { private function get() returns int; private function inc() returns nil }
+  s nil|isolated service object { private isolated function get() returns int; private isolated function inc() returns nil }
 
-  attach(isolated service object { private function get() returns int; private function inc() returns nil },nil) -> nil{
+  attach(isolated service object { private isolated function get() returns int; private isolated function inc() returns nil },nil) -> nil{
     bb0 {
       _ = svc;
       _ = attachPoint;
@@ -14,7 +14,7 @@ class SimpleListener {
     }
   }
 
-  detach(isolated service object { private function get() returns int; private function inc() returns nil }) -> nil|error{
+  detach(isolated service object { private isolated function get() returns int; private isolated function inc() returns nil }) -> nil|error{
     bb0 {
       _ = svc;
       %4 = ConstantLoad <nil>
@@ -183,7 +183,7 @@ main() -> nil{
     return;
   }
 }
-$default$0(isolated service object { private function get() returns int; private function inc() returns nil }) -> nil{
+$default$0(isolated service object { private isolated function get() returns int; private isolated function inc() returns nil }) -> nil{
   bb0 {
     %2 = ConstantLoad <nil>
     %0 = %2;

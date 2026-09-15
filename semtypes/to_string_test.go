@@ -370,6 +370,42 @@ func TestFunctionTypeNoParams(t *testing.T) {
 	}
 }
 
+func TestFunctionTypeIsolated(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	def := NewFunctionDefinition()
+	ty := def.Define(env, createTupleType(env), Nil, FunctionQualifiersFrom(env, true, false))
+	actual := ToString(cx, ty)
+	expected := "isolated function() returns nil"
+	if actual != expected {
+		t.Errorf("got %s expected %s", actual, expected)
+	}
+}
+
+func TestFunctionTypeTransactional(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	def := NewFunctionDefinition()
+	ty := def.Define(env, createTupleType(env, Int), Nil, FunctionQualifiersFrom(env, false, true))
+	actual := ToString(cx, ty)
+	expected := "transactional function(int) returns nil"
+	if actual != expected {
+		t.Errorf("got %s expected %s", actual, expected)
+	}
+}
+
+func TestFunctionTypeIsolatedTransactional(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	def := NewFunctionDefinition()
+	ty := def.Define(env, createTupleType(env), Nil, FunctionQualifiersFrom(env, true, true))
+	actual := ToString(cx, ty)
+	expected := "isolated transactional function() returns nil"
+	if actual != expected {
+		t.Errorf("got %s expected %s", actual, expected)
+	}
+}
+
 func TestFunctionTypeUnion(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
@@ -543,6 +579,22 @@ func TestObjectResourceMethod(t *testing.T) {
 	})
 	actual := ToString(cx, ty)
 	expected := "service object { public resource function get() returns nil }"
+	if actual != expected {
+		t.Errorf("got %q expected %q", actual, expected)
+	}
+}
+
+func TestObjectIsolatedMethod(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	od := NewObjectDefinition()
+	def := NewFunctionDefinition()
+	methodTy := def.Define(env, createTupleType(env), Nil, FunctionQualifiersFrom(env, true, false))
+	ty := od.Define(env, ObjectQualifiersDefault, []Member{
+		{Name: "f", ValueType: methodTy, Kind: MemberKindMethod, Visibility: VisibilityPublic, Immutable: true},
+	})
+	actual := ToString(cx, ty)
+	expected := "object { public isolated function f() returns nil }"
 	if actual != expected {
 		t.Errorf("got %q expected %q", actual, expected)
 	}

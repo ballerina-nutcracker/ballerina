@@ -230,7 +230,30 @@ func (s *toStringState) functionAtomicTypeToString(atom atom) string {
 	atomic := s.cx.FunctionAtomType(atom)
 	paramsStr := s.functionParamsToString(atomic.ParamType)
 	retStr := s.semTypeToString(atomic.RetType)
-	return "function(" + paramsStr + ") returns " + retStr
+	return s.functionQualifiersToString(atomic.Qualifiers) + "function(" + paramsStr + ") returns " + retStr
+}
+
+// functionQualifiersToString renders the function-quals prefix of a function
+// type descriptor, including the trailing space, or "" when there are none.
+// The qualifiers of a function atom are a list of [isolated, transactional]:
+// an isolated function has the singleton `true` as its isolated member, and a
+// transactional function has all of `boolean` as its transactional member.
+func (s *toStringState) functionQualifiersToString(qualifiers SemType) string {
+	atomic := ToListAtomicType(s.cx.Env(), qualifiers)
+	if atomic == nil || atomic.FixedLength() < 2 {
+		return ""
+	}
+	var quals []string
+	if IsSameType(s.cx, atomic.MemberAtInnerVal(0), BooleanConst(true)) {
+		quals = append(quals, "isolated")
+	}
+	if !IsSameType(s.cx, atomic.MemberAtInnerVal(1), BooleanConst(false)) {
+		quals = append(quals, "transactional")
+	}
+	if len(quals) == 0 {
+		return ""
+	}
+	return strings.Join(quals, " ") + " "
 }
 
 func (s *toStringState) functionParamsToString(paramType SemType) string {
@@ -415,7 +438,8 @@ func (s *toStringState) objectMethodToString(name string, kindTy SemType, fnTy S
 			atomic := s.cx.FunctionAtomType(node.atom())
 			paramsStr := s.functionParamsToString(atomic.ParamType)
 			retStr := s.semTypeToString(atomic.RetType)
-			return methodPrefix + name + "(" + paramsStr + ") returns " + retStr
+			quals := s.functionQualifiersToString(atomic.Qualifiers)
+			return quals + methodPrefix + name + "(" + paramsStr + ") returns " + retStr
 		}
 	}
 	return methodPrefix + name + "()"

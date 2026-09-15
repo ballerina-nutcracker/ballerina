@@ -1,5 +1,5 @@
 module $anon.. v 0.0.0;
-foo(int,function(int) returns int) -> int{
+foo(int,isolated function(int) returns int) -> int{
   bb0 {
     %4 = base;
     %5 = base;
@@ -42,7 +42,7 @@ $anonFunc$_0(int) -> int{
     return;
   }
 }
-$default$1(int) -> function(int) returns int{
+$default$1(int) -> isolated function(int) returns int{
   bb0 {
     %2 = fp $anon/.:$anonFunc$_0
     %0 = %2;

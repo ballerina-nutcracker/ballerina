@@ -1,5 +1,5 @@
 module $anon.. v 0.0.0;
-c  isolated client object { private remote function $remote$value() returns {| int... |}; public function init() returns nil };
+c  isolated client object { private isolated remote function $remote$value() returns {| int... |}; public function init() returns nil };
 class Client {
 
   $remote$value() -> {| int... |}{

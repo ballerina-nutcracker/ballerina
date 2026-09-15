@@ -46,7 +46,7 @@ class Counter {
   }
 }
 class Doubler {
-  c object { public function init() returns nil; private int n; public function next() returns nil|{| value: int, never... |} }
+  c object { public function init() returns nil; private int n; public isolated function next() returns nil|{| value: int, never... |} }
 
   init() -> nil{
     bb0 {
