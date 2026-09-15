@@ -318,8 +318,49 @@ func normalizeDesugaredAST(s string) string {
 		return s
 	}
 	canonicalisePackageImports(root)
+	canonicaliseGeneratedFns(root)
 	canonicaliseInitFnBodies(root)
 	return printSExp(root)
+}
+
+// canonicaliseGeneratedFns sorts the compiler-generated top level functions
+// ($default$N, $desugar$N and friends) among themselves. They are appended to
+// the package while ranging over maps keyed by symbol, so their relative order
+// varies between runs even though each function body is identical. Only the
+// slots already holding a generated function are rewritten, leaving the
+// user written functions where the frontend put them so a genuine reordering
+// of those still fails the comparison.
+func canonicaliseGeneratedFns(e *sexp) {
+	if e.isAtom || !isPackageSExp(e) {
+		return
+	}
+
+	generated := make([]*sexp, 0)
+	slots := make([]int, 0)
+	for i := 1; i < len(e.list); i++ {
+		if isGeneratedFnSExp(e.list[i]) {
+			generated = append(generated, e.list[i])
+			slots = append(slots, i)
+		}
+	}
+	sort.Slice(generated, func(i, j int) bool {
+		return printSExp(generated[i]) < printSExp(generated[j])
+	})
+	for i, slot := range slots {
+		e.list[slot] = generated[i]
+	}
+}
+
+// isGeneratedFnSExp reports whether e is a function whose name is in the "$"
+// prefixed namespace the compiler reserves for the names it synthesises.
+func isGeneratedFnSExp(e *sexp) bool {
+	if e.isAtom || len(e.list) < 2 {
+		return false
+	}
+	if !e.list[0].isAtom || e.list[0].atom != "function" {
+		return false
+	}
+	return e.list[1].isAtom && strings.HasPrefix(e.list[1].atom, "$")
 }
 
 // prettyPrintFallback handles desugar-introduced AST nodes when serializing a
