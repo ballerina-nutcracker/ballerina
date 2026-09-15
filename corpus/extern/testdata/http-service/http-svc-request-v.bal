@@ -17,8 +17,10 @@
 import ballerina/http;
 import ballerina/io;
 
+type CustomRequest http:Request;
+
 service /echo on new http:Listener(19192) {
-    resource function post msg(http:Request req) returns http:Response|error {
+    resource function post msg(CustomRequest req) returns http:Response|error {
         json payload = check req.getJsonPayload();
         http:Response resp = new;
         resp.setJsonPayload(payload);
