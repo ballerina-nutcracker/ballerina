@@ -48,7 +48,7 @@ func ResolveSymbols(
 	implicitImports map[string]model.ExportedSymbolSpace,
 	publicSymbols map[PackageIdentifier]model.ExportedSymbolSpace,
 	defaultOrg string,
-) (model.Scope, model.ExportedSymbolSpace, map[string]model.ExportedSymbolSpace) {
+) (model.Scope, model.ExportedSymbolSpace, model.ImportedSymbolSpaces) {
 	internalPublicSymbols := make(map[symbols.PackageIdentifier]model.ExportedSymbolSpace, len(publicSymbols))
 	for id, symbolSpace := range publicSymbols {
 		internalPublicSymbols[symbols.PackageIdentifier{OrgName: id.OrgName, ModuleName: id.ModuleName}] = symbolSpace
@@ -60,7 +60,7 @@ func ResolveSymbols(
 func ResolvePublicNodeTypes(
 	ctx *context.CompilerContext,
 	pkg *ast.BLangPackage,
-	importedSymbols map[string]model.ExportedSymbolSpace,
+	importedSymbols model.ImportedSymbolSpaces,
 ) {
 	semantictypes.ResolvePublicNodes(ctx, pkg, importedSymbols)
 }
@@ -69,7 +69,7 @@ func ResolvePublicNodeTypes(
 func ResolvePrivateNodesTypes(
 	ctx *context.CompilerContext,
 	pkg *ast.BLangPackage,
-	importedSymbols map[string]model.ExportedSymbolSpace,
+	importedSymbols model.ImportedSymbolSpaces,
 ) {
 	semantictypes.ResolvePrivateNodes(ctx, pkg, importedSymbols)
 }
@@ -78,7 +78,7 @@ func ResolvePrivateNodesTypes(
 func AnalyzeSemantics(
 	ctx *context.CompilerContext,
 	pkg *ast.BLangPackage,
-	importedSymbols map[string]model.ExportedSymbolSpace,
+	importedSymbols model.ImportedSymbolSpaces,
 ) {
 	analysis.Analyze(ctx, pkg, importedSymbols)
 }

@@ -21,6 +21,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -31,9 +32,32 @@ func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) 
 	return compilationUnit.(*ast.BLangCompilationUnit)
 }
 
+// GetCompilationUnitForSource builds an AST from a standalone source file's syntax tree,
+// attributing the compilation unit to packageID and rejecting malformed syntax.
+func GetCompilationUnitForSource(cx *context.CompilerContext, syntaxTree *st.SyntaxTree,
+	packageID *model.PackageID,
+) *ast.BLangCompilationUnit {
+	builder := newNodeBuilderWithMode(cx, nodeBuilderModeStrict)
+	builder.PackageID = packageID
+	compilationUnit := builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
+	return compilationUnit.(*ast.BLangCompilationUnit)
+}
+
 // GetRecoveredCompilationUnit builds an AST while preserving malformed syntax as bad nodes.
 func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
 	builder := newRecoveringNodeBuilder(cx)
+	compilationUnit := builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
+	return compilationUnit.(*ast.BLangCompilationUnit)
+}
+
+// GetRecoveredCompilationUnitForSource builds an AST from a standalone source file's syntax
+// tree, attributing the compilation unit to packageID and preserving malformed syntax as
+// bad nodes.
+func GetRecoveredCompilationUnitForSource(cx *context.CompilerContext, syntaxTree *st.SyntaxTree,
+	packageID *model.PackageID,
+) *ast.BLangCompilationUnit {
+	builder := newNodeBuilderWithMode(cx, nodeBuilderModeRecover)
+	builder.PackageID = packageID
 	compilationUnit := builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 	return compilationUnit.(*ast.BLangCompilationUnit)
 }
@@ -80,6 +104,8 @@ func addCompilationUnitNodesToPackage(cx *context.CompilerContext, pkg *ast.BLan
 			pkg.XmlnsList = append(pkg.XmlnsList, node)
 		case *ast.BLangClassDefinition:
 			pkg.ClassDefinitions = append(pkg.ClassDefinitions, node)
+		case *ast.BLangBadTopLevelNode:
+			continue
 		default:
 			pos := compilationUnit.GetPosition()
 			if node != nil {

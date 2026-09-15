@@ -20,6 +20,8 @@ package st
 
 import (
 	"iter"
+	"reflect"
+	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -128,11 +130,68 @@ func (sd *SyntaxDiagnostic) DiagnosticInfo() DiagnosticInfo {
 	return *sd.diagnosticInfo
 }
 
+// Message renders the diagnostic's message key as a human-readable sentence by dropping the
+// "error." prefix and replacing dots with spaces.
+func (sd *SyntaxDiagnostic) Message() string {
+	return strings.ReplaceAll(strings.TrimPrefix(sd.nodeDiagnostic.DiagnosticCode().MessageKey(), "error."), ".", " ")
+}
+
+// Properties exposes the underlying node diagnostic's arguments as diagnostic properties,
+// each tagged with the kind inferred from its Go value.
+func (sd *SyntaxDiagnostic) Properties() []DiagnosticProperty[any] {
+	args := sd.nodeDiagnostic.Args()
+	properties := make([]DiagnosticProperty[any], len(args))
+	for index, value := range args {
+		properties[index] = syntaxDiagnosticProperty{kind: diagnosticPropertyKind(value), value: value}
+	}
+	return properties
+}
+
+type syntaxDiagnosticProperty struct {
+	kind  diagnostics.DiagnosticPropertyKind
+	value any
+}
+
+// Kind returns the property's value kind.
+func (p syntaxDiagnosticProperty) Kind() diagnostics.DiagnosticPropertyKind { return p.kind }
+
+// Value returns the property's value.
+func (p syntaxDiagnosticProperty) Value() any { return p.value }
+
+// diagnosticPropertyKind classifies a diagnostic argument as a string, numeric, collection
+// or other property kind.
+func diagnosticPropertyKind(value any) diagnostics.DiagnosticPropertyKind {
+	switch value.(type) {
+	case string:
+		return diagnostics.String
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+		return diagnostics.Numeric
+	}
+	if value != nil {
+		switch reflect.TypeOf(value).Kind() {
+		case reflect.Array, reflect.Slice, reflect.Map:
+			return diagnostics.Collection
+		default:
+			return diagnostics.Other
+		}
+	}
+	return diagnostics.Other
+}
+
 type DiagnosticInfo struct {
 	code          string
 	messageFormat string
 	severity      DiagnosticSeverity
 }
+
+// Code returns the diagnostic code.
+func (di DiagnosticInfo) Code() string { return di.code }
+
+// MessageFormat returns the diagnostic's message format string.
+func (di DiagnosticInfo) MessageFormat() string { return di.messageFormat }
+
+// Severity returns the diagnostic's severity.
+func (di DiagnosticInfo) Severity() DiagnosticSeverity { return di.severity }
 
 type DiagnosticSeverity uint8
 
@@ -242,7 +301,13 @@ func (n *NodeBase) Location() NodeLocation {
 }
 
 func (n *NodeBase) Diagnostics() iter.Seq[Diagnostic] {
-	panic("Diagnostics() should be implemented by child types")
+	return func(yield func(Diagnostic) bool) {
+		for _, diagnostic := range n.internalNode.Diagnostics() {
+			if !yield(createSyntaxDiagnostic(diagnostic, n)) {
+				return
+			}
+		}
+	}
 }
 
 func (n *NonTerminalNodeBase) Diagnostics() iter.Seq[Diagnostic] {
@@ -250,7 +315,10 @@ func (n *NonTerminalNodeBase) Diagnostics() iter.Seq[Diagnostic] {
 		if !n.internalNode.HasDiagnostics() {
 			return
 		}
-		for _, ch := range n.Children() {
+		for ch := range n.ChildNodes() {
+			if ch == nil {
+				continue
+			}
 			for diagnostic := range ch.Diagnostics() {
 				if !yield(diagnostic) {
 					return
@@ -258,19 +326,20 @@ func (n *NonTerminalNodeBase) Diagnostics() iter.Seq[Diagnostic] {
 			}
 		}
 		for _, diagnostic := range n.internalNode.Diagnostics() {
-			if !yield(createSyntaxDiagnostic(diagnostic)) {
+			if !yield(createSyntaxDiagnostic(diagnostic, n)) {
 				return
 			}
 		}
 	}
 }
 
-func createSyntaxDiagnostic(diagnostic STNodeDiagnostic) Diagnostic {
-	panic("not implemented")
-}
-
-func (n *NonTerminalNodeBase) Children() []Node {
-	panic("Children() should be implemented by child types")
+// createSyntaxDiagnostic wraps an internal node diagnostic as a public diagnostic located at
+// the external node that carries it.
+func createSyntaxDiagnostic(diagnostic STNodeDiagnostic, node Node) Diagnostic {
+	return &SyntaxDiagnostic{
+		nodeDiagnostic: diagnostic,
+		location:       NodeLocation{node: node},
+	}
 }
 
 func (n *NodeBase) HasDiagnostics() bool {

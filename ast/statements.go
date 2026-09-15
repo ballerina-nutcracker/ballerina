@@ -127,8 +127,9 @@ type (
 		// LockKey is the content-addressed identifier of the restricted
 		// variable, set by the lock analyzer. For a module-level isolated
 		// variable it has the form "org/pkg:varName"; for a non-immutable
-		// field of an isolated class accessed via self it has the form
-		// "org/pkg:ClassName.fieldName". Empty when the lock body has no
+		// field of an isolated class or service accessed via self it has the
+		// form "org/pkg:ClassName.fieldName" or
+		// "org/pkg:$service$N.fieldName". Empty when the lock body has no
 		// restricted variable (we treat this as a semantic error though
 		// spec doesn't).
 		LockKey string
