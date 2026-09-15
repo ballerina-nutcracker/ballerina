@@ -1,0 +1,46 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad document
+    %2 = ConstantLoad a
+    %3 = newXMLElement(%2, ())
+    %4 = newMap {| document: xml<xml:Element>, never... |}{%1=%3}
+    element = %4;
+    %6 = println(element) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad document
+    %8 = ConstantLoad a
+    %9 = newXMLElement(%8, ())
+    %10 = ConstantLoad c
+    %11 = newXMLComment(%10)
+    %12 = newXMLSequence{%9, %11}
+    %13 = newMap {| document: xml<xml:Element|xml:Comment>, never... |}{%7=%12}
+    sequence = %13;
+    %15 = println(sequence) -> bb2;
+  }
+  bb2 {
+    %16 = ConstantLoad document
+    %17 = ConstantLoad text
+    %18 = escapeXMLContent(%17) -> bb3;
+  }
+  bb3 {
+    %19 = evalTemplate[xml]("<a>", %18, "</a>")
+    %20 = newMap {| document: xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>, never... |}{%16=%19}
+    interpolated = %20;
+    %22 = println(interpolated) -> bb4;
+  }
+  bb4 {
+    %23 = ConstantLoad document
+    %24 = ConstantLoad a
+    %25 = ConstantLoad b
+    %26 = newXMLElement(%25, ())
+    %27 = newXMLElement(%24, %26)
+    %28 = newMap {| document: xml<xml:Element>, xml:Element... |}{%23=%27}
+    contextual = %28;
+    %30 = println(contextual) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
