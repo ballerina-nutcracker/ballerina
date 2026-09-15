@@ -5,13 +5,12 @@ main() -> nil{
     %1 = println(elem) -> bb1;
   }
   bb1 {
-    %2 = ConstantLoad local:f
-    %3 = ConstantLoad xmlns:local
-    %4 = ConstantLoad https:foo/bar
-    %5 = newMap {| string... |}{%3=%4}
-    %6 = newXMLElement(%2, (), (), %5)
-    localElem = %6;
-    %8 = println(localElem) -> bb2;
+    %2 = ConstantLoad xmlns:local
+    %3 = ConstantLoad https:foo/bar
+    %4 = newMap {| string... |}{%2=%3}
+    %5 = newXMLElement("local:f", namespace="https:foo/bar", (), (), %4)
+    localElem = %5;
+    %7 = println(localElem) -> bb2;
   }
   bb2 {
     return;

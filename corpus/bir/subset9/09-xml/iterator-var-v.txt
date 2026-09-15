@@ -1,33 +1,31 @@
 module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = ConstantLoad e
-    %2 = newXMLElement(%1, ())
-    element = %2;
+    %1 = newXMLElement("e", ())
+    element = %1;
     $desugar$0 = element;
-    %5 = iterator($desugar$0) -> bb1;
+    %4 = iterator($desugar$0) -> bb1;
   }
   bb1 {
-    $desugar$1 = %5;
+    $desugar$1 = %4;
     GOTO bb2;
   }
   bb2 {
-    %7 = ConstantLoad true
-    %7 ? bb3 : bb4;
+    %6 = ConstantLoad true
+    %6 ? bb3 : bb4;
   }
   bb3 {
     PushScopeFrame 8
     %0 = (1, $desugar$1).next() -> bb5;
   }
   bb4 {
-    %8 = ConstantLoad e
-    %9 = newXMLElement(%8, ())
-    %10 = ConstantLoad text
-    %11 = newXMLText(%10)
-    %12 = newXMLSequence{%9, %11}
-    elementOrText = %12;
+    %7 = newXMLElement("e", ())
+    %8 = ConstantLoad text
+    %9 = newXMLText(%8)
+    %10 = newXMLSequence{%7, %9}
+    elementOrText = %10;
     $desugar$4 = elementOrText;
-    %15 = iterator($desugar$4) -> bb9;
+    %13 = iterator($desugar$4) -> bb9;
   }
   bb5 {
     $desugar$3 = %0;
@@ -52,12 +50,12 @@ main() -> nil{
     GOTO bb2;
   }
   bb9 {
-    $desugar$5 = %15;
+    $desugar$5 = %13;
     GOTO bb10;
   }
   bb10 {
-    %17 = ConstantLoad true
-    %17 ? bb11 : bb12;
+    %15 = ConstantLoad true
+    %15 ? bb11 : bb12;
   }
   bb11 {
     PushScopeFrame 8

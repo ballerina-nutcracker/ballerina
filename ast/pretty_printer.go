@@ -286,6 +286,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printXMLCommentLiteral(t)
 	case *BLangXMLTextLiteral:
 		p.printXMLTextLiteral(t)
+	case *BLangXMLFilterExpression:
+		p.printXMLFilterExpression(t)
 	case *BLangXMLNS:
 		p.printXMLNS(t)
 	case *BLangBadTopLevelNode:
@@ -566,6 +568,37 @@ func (p *PrettyPrinter) printXMLTemplateExpr(node *BLangXMLTemplateExpr) {
 	p.EndNode()
 }
 
+func (p *PrettyPrinter) printXMLFilterExpression(node *BLangXMLFilterExpression) {
+	p.StartNode()
+	p.PrintString("xml-filter-expression")
+	p.indentLevel++
+	p.PrintInner(node.Expression)
+	for _, pattern := range node.NamePattern {
+		p.StartNode()
+		switch pattern.Kind {
+		case NamePatternKindWildCard:
+			p.PrintString("xml-name-pattern-wildcard")
+		case NamePatternKindIdentifier:
+			p.PrintString("xml-name-pattern-identifier")
+			p.PrintString(pattern.Identifier.GetValue())
+		case NamePatternKindQualifiedIdentifier:
+			p.PrintString("xml-name-pattern-qualified-identifier")
+			if pattern.NamespacePrefix != nil {
+				p.PrintString(pattern.NamespacePrefix.GetValue())
+			}
+			p.PrintString(pattern.Identifier.GetValue())
+		case NamePatternKindPrefix:
+			p.PrintString("xml-name-pattern-prefix-wildcard")
+			p.PrintString(pattern.NamespacePrefix.GetValue())
+		default:
+			panic("unsupported XML name pattern kind")
+		}
+		p.EndNode()
+	}
+	p.indentLevel--
+	p.EndNode()
+}
+
 func (p *PrettyPrinter) printXMLSequenceLiteral(node *BLangXMLSequenceLiteral) {
 	p.StartNode()
 	p.PrintString("xml-sequence-literal")
@@ -580,7 +613,11 @@ func (p *PrettyPrinter) printXMLSequenceLiteral(node *BLangXMLSequenceLiteral) {
 func (p *PrettyPrinter) printXMLElementLiteral(node *BLangXMLElementLiteral) {
 	p.StartNode()
 	p.PrintString("xml-element-literal")
-	p.PrintString(node.Name)
+	if node.Prefix != "" {
+		p.PrintString(node.Prefix + ":" + node.LocalName)
+	} else {
+		p.PrintString(node.LocalName)
+	}
 	p.indentLevel++
 	for i := range node.Attrs {
 		p.PrintInner(&node.Attrs[i])

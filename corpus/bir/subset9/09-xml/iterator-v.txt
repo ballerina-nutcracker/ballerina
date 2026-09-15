@@ -1,25 +1,24 @@
 module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = ConstantLoad a
-    %2 = newXMLElement(%1, ())
-    %3 = ConstantLoad hello
-    %4 = newXMLText(%3)
-    %5 = ConstantLoad c
-    %6 = newXMLComment(%5)
-    %7 = newXMLSequence{%2, %4, %6}
-    x = %7;
-    %9 = iterator(x) -> bb1;
+    %1 = newXMLElement("a", ())
+    %2 = ConstantLoad hello
+    %3 = newXMLText(%2)
+    %4 = ConstantLoad c
+    %5 = newXMLComment(%4)
+    %6 = newXMLSequence{%1, %3, %5}
+    x = %6;
+    %8 = iterator(x) -> bb1;
   }
   bb1 {
-    %10 = %9.next() -> bb2;
+    %9 = %8.next() -> bb2;
   }
   bb2 {
-    methodNext = %10;
-    %13 = ConstantLoad <nil>
-    %14 = %13;
-    %12 = != methodNext %14;
-    %12 ? bb3 : bb5;
+    methodNext = %9;
+    %12 = ConstantLoad <nil>
+    %13 = %12;
+    %11 = != methodNext %13;
+    %11 ? bb3 : bb5;
   }
   bb3 {
     PushScopeFrame 3
@@ -56,7 +55,7 @@ main() -> nil{
     GOTO bb10;
   }
   bb10 {
-    PushScopeFrame 13
+    PushScopeFrame 12
     $desugar$0 = (2, x);
     %1 = iterator($desugar$0) -> bb11;
   }
@@ -73,10 +72,9 @@ main() -> nil{
     %0 = (1, $desugar$1).next() -> bb15;
   }
   bb14 {
-    %4 = ConstantLoad e
-    %5 = newXMLElement(%4, ())
-    element = %5;
-    %7 = iterator(element) -> bb19;
+    %4 = newXMLElement("e", ())
+    element = %4;
+    %6 = iterator(element) -> bb19;
   }
   bb15 {
     $desugar$3 = %0;
@@ -100,14 +98,14 @@ main() -> nil{
     GOTO bb12;
   }
   bb19 {
-    %8 = %7.next() -> bb20;
+    %7 = %6.next() -> bb20;
   }
   bb20 {
-    elementNext = %8;
-    %11 = ConstantLoad <nil>
-    %12 = %11;
-    %10 = != elementNext %12;
-    %10 ? bb21 : bb23;
+    elementNext = %7;
+    %10 = ConstantLoad <nil>
+    %11 = %10;
+    %9 = != elementNext %11;
+    %9 ? bb21 : bb23;
   }
   bb21 {
     PushScopeFrame 3
