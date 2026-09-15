@@ -20,6 +20,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/projects"
@@ -28,6 +29,7 @@ import (
 
 // TestModuleResolver_ExternalPackage tests that the module resolver can identify external imports.
 func TestModuleResolver_ExternalPackage(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -55,6 +57,7 @@ func TestModuleResolver_ExternalPackage(t *testing.T) {
 // response without surfacing an error. With Offline=true and no remote
 // source wired in, the resolver simply runs out of repositories to ask.
 func TestPackageResolution_PackageNotFound(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -89,6 +92,7 @@ func TestPackageResolution_PackageNotFound(t *testing.T) {
 
 // TestBalaProject_ModuleStructure tests that bala project modules are correctly loaded.
 func TestBalaProject_ModuleStructure(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -118,6 +122,7 @@ func TestBalaProject_ModuleStructure(t *testing.T) {
 
 // TestBalaProject_MultiModule tests multi-module bala package loading.
 func TestBalaProject_MultiModule(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -149,6 +154,7 @@ func TestBalaProject_MultiModule(t *testing.T) {
 
 // TestRepository_Integration tests the repository with real cache structure.
 func TestRepository_Integration(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -189,6 +195,7 @@ func TestRepository_Integration(t *testing.T) {
 // TestPackageResolution_ExternalDependencyCompilation tests package resolution with external dependencies
 // and verifies that compilation completes successfully.
 func TestPackageResolution_ExternalDependencyCompilation(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -258,6 +265,7 @@ func TestPackageResolution_ExternalDependencyCompilation(t *testing.T) {
 // testdata/repo/bala/mockorg/versionedpkg has both 1.0.0 and 2.0.0 — only
 // 2.0.0 should be loaded into the resolver's cache.
 func TestPackageResolution_PicksLatestVersion(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -300,6 +308,7 @@ func TestPackageResolution_PicksLatestVersion(t *testing.T) {
 // This test verifies that when compiling a project, the compilation process internally
 // resolves and compiles dependencies in the correct order, including transitive dependencies.
 func TestPackageResolution_TransitiveDependency(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -415,6 +424,7 @@ func TestPackageResolution_TransitiveDependency(t *testing.T) {
 //	root → leafpkg   (direct)
 //	middlepkg → leafpkg (transitive, but already visited)
 func TestPackageResolution_SharedDependencyEdge(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -491,6 +501,7 @@ func TestPackageResolution_SharedDependencyEdge(t *testing.T) {
 //  2. Importing different modules from the same package doesn't create duplicate entries
 //  3. Transitive multi-module dependencies are correctly resolved
 func TestPackageResolution_MultiModuleDependencies(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -531,11 +542,89 @@ func TestPackageResolution_MultiModuleDependencies(t *testing.T) {
 	assert.Equal(0, diagnosticResult.DiagnosticCount(), "expected no compilation errors")
 }
 
+// TestPackageResolution_NonExportedModuleImportFails verifies that importing
+// a dependency's sub-module which isn't listed in that package's exported
+// modules is a compile error — mirroring Java's SymbolEnter check that
+// blocks importing a package's non-exported modules from outside that
+// package. Reuses the existing testdata/repo/bala/mockorg/multiA package
+// (already exports "multiA"/"multiA.util"); its "multiA.hidden" sub-module
+// is deliberately not in that list.
+func TestPackageResolution_NonExportedModuleImportFails(t *testing.T) {
+	t.Parallel()
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	testRepoPath, err := filepath.Abs("testdata/repo/bala")
+	require.NoError(err)
+
+	projectPath := filepath.Join("testdata", "project-with-nonexported-dep")
+	absPath, err := filepath.Abs(projectPath)
+	require.NoError(err)
+
+	result, err := loadProject(absPath, projects.ProjectLoadConfig{
+		Repositories: []projects.Repository{
+			projects.NewFileSystemRepository(os.DirFS(testRepoPath), "."),
+		},
+	})
+	require.NoError(err)
+	require.NotNil(result)
+
+	pkg := result.Project().CurrentPackage()
+	compilation := pkg.Compilation()
+	require.NotNil(compilation)
+
+	diagnosticResult := compilation.DiagnosticResult()
+	found := false
+	for _, diag := range diagnosticResult.Diagnostics() {
+		t.Logf("Diagnostic: %s", diag.Message())
+		if strings.Contains(diag.Message(), "multiA.hidden") && strings.Contains(diag.Message(), "is not exported") {
+			found = true
+		}
+	}
+	assert.True(found, "expected a diagnostic reporting multiA.hidden is not exported")
+}
+
+// TestPackageResolution_SamePackageNonExportedModuleImportSucceeds mirrors
+// TestPackageResolution_NonExportedModuleImportFails from the other
+// direction: resolveExternalImport's samePackage exemption must let a
+// package import its own non-exported sub-modules — the ordinary case for
+// a package's default module using internal helper modules it never
+// intends to export. Reuses testdata/multi-module-project, whose
+// Ballerina.toml declares no [[package.modules]] export entries at all, so
+// both "services" and "storage" are non-exported by default; main.bal
+// imports both directly.
+func TestPackageResolution_SamePackageNonExportedModuleImportSucceeds(t *testing.T) {
+	t.Parallel()
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	projectPath := filepath.Join("testdata", "multi-module-project")
+	absPath, err := filepath.Abs(projectPath)
+	require.NoError(err)
+
+	result, err := loadProject(absPath)
+	require.NoError(err)
+	require.NotNil(result)
+
+	pkg := result.Project().CurrentPackage()
+	compilation := pkg.Compilation()
+	require.NotNil(compilation)
+
+	diagnosticResult := compilation.DiagnosticResult()
+	for _, diag := range diagnosticResult.Diagnostics() {
+		t.Logf("Diagnostic: %s", diag.Message())
+		assert.False(strings.Contains(diag.Message(), "is not exported"),
+			"same-package import of a non-exported module must not be rejected: %s", diag.Message())
+	}
+	assert.Equal(0, diagnosticResult.DiagnosticCount(), "expected no compilation errors")
+}
+
 // TestPackageResolution_ProjectLevelCache verifies the build-project default:
 // when BallerinaEnvFs is not set, the loader falls back to
 // fs.Sub(projectFs, ".ballerina"), which resolves to <project-path>/.ballerina/.
 // External packages staged there must be picked up without any caller config.
 func TestPackageResolution_ProjectLevelCache(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 
@@ -579,6 +668,7 @@ func TestPackageResolution_ProjectLevelCache(t *testing.T) {
 // for a single .bal file. External packages staged there must be picked up
 // without any caller config.
 func TestPackageResolution_SingleFileProjectLevelCache(t *testing.T) {
+	t.Parallel()
 	require := test_util.NewRequire(t)
 	assert := test_util.New(t)
 

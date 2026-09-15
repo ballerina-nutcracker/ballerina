@@ -1,0 +1,11 @@
+[package]
+org = "testorg"
+name = "manifestfieldsproject"
+version = "0.1.0"
+icon = "icon.png"
+readme = "README.md"
+
+[[package.modules]]
+name = "manifestfieldsproject.extra"
+export = true
+description = "Extra utilities"
