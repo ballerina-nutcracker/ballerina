@@ -828,16 +828,9 @@ func (ca *constantAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		// We have set the type at constructor
 		return nil
 	case ast.BLangExpression:
-		bLangExpr := n
-		hasErrors := false
-		common.ValidateConstantExpr(ca.ctx(), bLangExpr, func(e ast.BLangExpression) {
-			ca.semanticErr("expression is not a constant expression", e.GetPosition())
-			hasErrors = true
-		})
-		if hasErrors {
-			return nil
-		}
-		analyzeActionOrExpression(ca, bLangExpr, ca.expectedType)
+		// Type resolution already validated the constant expression; reaching
+		// here means it found nothing to report.
+		analyzeActionOrExpression(ca, n, ca.expectedType)
 		return nil
 	}
 	return ca

@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: expression is not a constant expression
+error[SEMANTIC_ERROR]: float value NaN cannot be converted to int
   --> 21-e.bal:20:11
    |
 20 | const N = <int>(0.0 / 0.0); // @error

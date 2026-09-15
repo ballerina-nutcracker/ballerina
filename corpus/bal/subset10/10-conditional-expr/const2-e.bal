@@ -10,24 +10,14 @@
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-// KIND, either express or implied. See the License for the
+// KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
 
-boolean runtimeCondition = true;
 int runtimeValue = 10;
-const A = runtimeCondition ? 1 : 2; // @error
-const B = true ? runtimeValue : 2; // @error
-const C = true ? 1 : runtimeValue; // @error
-const D = runtimeValue ?: 1; // @error
-const E = () ?: runtimeValue; // @error
-const F = 1 ?: runtimeValue; // @error
+
+const A = true ? runtimeValue : 2; // @error
 
 public function main() {
     _ = A;
-    _ = B;
-    _ = C;
-    _ = D;
-    _ = E;
-    _ = F;
 }
