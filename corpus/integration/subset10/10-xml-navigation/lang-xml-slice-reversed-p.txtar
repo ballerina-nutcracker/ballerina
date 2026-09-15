@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: invalid XML slice bounds
+        at main(lang-xml-slice-reversed-p.bal:17)

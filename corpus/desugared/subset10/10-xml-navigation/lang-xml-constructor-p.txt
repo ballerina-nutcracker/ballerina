@@ -1,0 +1,9 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation xml createProcessingInstruction (
+          (literal target)
+          (literal bad?>content)))))))
