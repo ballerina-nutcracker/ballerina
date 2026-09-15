@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> to-stream-non-list-e.bal:34:40
+   |
+34 |     stream<int, ()> _ = array:toStream(1 + "x"); // @error container expression resolution fails
+   |                                        ^^^^^^^
+
+error[SEMANTIC_ERROR]: expect first argument to be a list subtype
+  --> to-stream-non-list-e.bal:20:40
+   |
+20 |     stream<int, ()> _ = array:toStream(value); // @error complete static type includes a non-list member
+   |                                        ^^^^^
+
+error[SEMANTIC_ERROR]: missing required parameter 'arr'
+  --> to-stream-non-list-e.bal:30:25
+   |
+30 |     stream<int, ()> _ = array:toStream(); // @error missing container argument
+   |                         ^^^^^^^^^^^^^^^^

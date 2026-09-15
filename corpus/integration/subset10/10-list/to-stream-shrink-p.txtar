@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: array index out of range: index: 1, size: 1
+        at main(to-stream-shrink-p.bal:22)
