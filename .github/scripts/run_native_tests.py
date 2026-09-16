@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 MAX_PARALLEL = 3
+DEBUG_TAG = "debug"
 SKIP_PATTERN = "TestParseCorpusFiles|TestJBalUnitTests|TestJBalUnitBIRTests"
 TIMEOUT = "2h"
 PROFILE_LINE_PATTERN = re.compile(
@@ -183,6 +184,40 @@ def run_tests_for_module(
             )
 
 
+def packages_with_tag_specific_tests(info: ModuleInfo, tag: str) -> list[str]:
+    list_format = "{{.ImportPath}} {{join .TestGoFiles \",\"}} {{join .XTestGoFiles \",\"}}"
+    untagged = run_cmd(["go", "list", "-f", list_format, "./..."], cwd=info.cwd).splitlines()
+    tagged = run_cmd(
+        ["go", "list", "-tags", tag, "-f", list_format, "./..."], cwd=info.cwd
+    ).splitlines()
+    return sorted(set(tagged) - set(untagged))
+
+
+def run_debug_tagged_tests(modules: list[ModuleInfo], go_parallel: str, race: bool) -> bool:
+    # Tests behind the debug build tag are skipped by the untagged run above.
+    # Coverage stays with that run.
+    failed = False
+    for info in modules:
+        try:
+            tag_specific = packages_with_tag_specific_tests(info, DEBUG_TAG)
+        except subprocess.CalledProcessError as err:
+            print(f"Failed: {info.module} ({DEBUG_TAG} tag package discovery): {err}\n{err.stderr}")
+            failed = True
+            continue
+        packages = [line.split(" ", 1)[0] for line in tag_specific]
+        if not packages:
+            continue
+        cmd = ["go", "test", "-count=1", "-timeout", TIMEOUT, "-p", go_parallel, "-tags", DEBUG_TAG]
+        if race:
+            cmd.insert(2, "-race")
+        try:
+            subprocess.run(cmd + packages, cwd=info.cwd, check=True)
+        except subprocess.CalledProcessError as err:
+            print(f"Failed: {info.module} ({DEBUG_TAG} tag): {err}")
+            failed = True
+    return failed
+
+
 def run_modules_in_parallel(
     repo_root: Path,
     modules: list[ModuleInfo],
@@ -249,6 +284,8 @@ def main() -> int:
     if run_modules_in_parallel(
         repo_root, modules, args.with_coverage, go_parallel, args.race, workspace_packages
     ):
+        return 1
+    if run_debug_tagged_tests(modules, go_parallel, args.race):
         return 1
 
     if args.with_coverage:

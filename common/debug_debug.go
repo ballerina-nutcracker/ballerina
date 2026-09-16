@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 )
 
 const (
@@ -32,30 +33,59 @@ const (
 
 var debugFlags uint16
 var debugWriter io.Writer = os.Stderr
+var debugMu sync.RWMutex
+var debugWriteMu sync.Mutex
+var debugSuppressionDepth int
 
 func InitDebug(flags uint16, w io.Writer) {
+	debugMu.Lock()
+	defer debugMu.Unlock()
 	debugFlags = flags
 	if w != nil {
 		debugWriter = w
 	}
 }
 
-func DebugFlags() uint16     { return debugFlags }
-func DebugWriter() io.Writer { return debugWriter }
+func DebugFlags() uint16 {
+	debugMu.RLock()
+	defer debugMu.RUnlock()
+	if debugSuppressionDepth != 0 {
+		return 0
+	}
+	return debugFlags
+}
+
+func DebugWriter() io.Writer {
+	debugMu.RLock()
+	defer debugMu.RUnlock()
+	return debugWriter
+}
 
 func DebugEnabled(flag uint16) bool {
-	return debugFlags&flag != 0
+	return DebugFlags()&flag != 0
 }
 
 func DebugWriteLazy(flag uint16, msgFn func() string) {
-	if debugFlags&flag != 0 {
-		fmt.Fprintf(debugWriter, "%s\n", msgFn())
+	debugMu.RLock()
+	enabled := debugSuppressionDepth == 0 && debugFlags&flag != 0
+	writer := debugWriter
+	debugMu.RUnlock()
+	if enabled {
+		message := msgFn()
+		debugWriteMu.Lock()
+		defer debugWriteMu.Unlock()
+		_, _ = fmt.Fprintf(writer, "%s\n", message)
 	}
 }
 
 func WithSuppressedDebug(fn func()) {
-	saved := debugFlags
-	debugFlags = 0
-	defer func() { debugFlags = saved }()
+	debugMu.Lock()
+	debugSuppressionDepth++
+	debugMu.Unlock()
+	defer func() {
+		debugMu.Lock()
+		debugSuppressionDepth--
+		debugMu.Unlock()
+	}()
 	fn()
 }
