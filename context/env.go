@@ -116,7 +116,7 @@ type CompilerEnvironment struct {
 	// record fields, keyed by the enclosing type definition's symbol ref. Record
 	// types are structural, so a field has no symbol of its own to key on.
 	recordFieldAnnotations sync.Map // model.SymbolRef -> values.FieldAnnotationValues
-	statsEnabled           bool
+	traceState             traceState
 	diagnosticContext      *diagnostics.DiagnosticEnv
 }
 
@@ -473,7 +473,7 @@ func (c *CompilerEnvironment) NewPackageID(orgName model.Name, nameComps []model
 	return model.NewPackageID(c.packageInterner, orgName, nameComps, version)
 }
 
-func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEnvironment {
+func NewCompilerEnvironment(typeEnv semtypes.Env, traceEnabled bool) *CompilerEnvironment {
 	return &CompilerEnvironment{
 		anonTypeCount:              make(map[*model.PackageID]int),
 		anonFuncCount:              make(map[*model.PackageID]int),
@@ -482,7 +482,7 @@ func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEn
 		distinctTypes:              newDistinctTypeTracker(),
 		langLibDistinctTypeSymbols: newLangLibDistinctTypeRegistry(),
 		typeEnv:                    typeEnv,
-		statsEnabled:               statsEnabled,
+		traceState:                 newTraceState(traceEnabled),
 		diagnosticContext:          diagnostics.NewDiagnosticEnv(),
 	}
 }

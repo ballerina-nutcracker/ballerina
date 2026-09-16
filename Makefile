@@ -21,6 +21,8 @@ WORKSPACE_MODULE_DIRS := $(subst \,/,$(shell $(LIST_WORKSPACE_MODULES)))
 WORKSPACE_MODULES := . $(patsubst $(WORKSPACE_ROOT)/%,%,$(filter-out $(WORKSPACE_ROOT),$(WORKSPACE_MODULE_DIRS)))
 BUILD_MODULES := $(filter-out compiler-tools/%,$(WORKSPACE_MODULES))
 LINT_MODULES := $(filter-out compiler-tools/%,$(WORKSPACE_MODULES))
+# Build tag sets each module is linted under; "default" means no extra tags.
+LINT_TAG_SETS ?= default debug
 BUILD_MODULE_TARGETS := $(addprefix build-module/,$(BUILD_MODULES))
 VET_MODULE_TARGETS := $(addprefix vet-module/,$(WORKSPACE_MODULES))
 LINT_MODULE_TARGETS := $(addprefix lint-module/,$(LINT_MODULES))
@@ -66,8 +68,12 @@ lint-module/%: force
 	if [[ -f "$(CURDIR)/$*/.golangci.yml" ]]; then \
 		config="$(CURDIR)/$*/.golangci.yml"; \
 	fi; \
-	echo "Linting $* ($$config)"; \
-	(cd "$*" && golangci-lint run --allow-parallel-runners --concurrency 1 --config "$$config" ./...)
+	for tags in $(LINT_TAG_SETS); do \
+		tags="$${tags#default}"; \
+		echo "Linting $* ($$config$${tags:+ tags=$$tags})"; \
+		(cd "$*" && golangci-lint run --allow-parallel-runners --concurrency 1 \
+			$${tags:+--build-tags "$$tags"} --config "$$config" ./...) || exit 1; \
+	done
 
 check: build vet lint test
 
