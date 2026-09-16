@@ -388,6 +388,8 @@ func newContext(compilerCtx *compilerctx.CompilerContext, packageID *model.Packa
 }
 
 func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *bir.BIRPackage {
+	span := ctx.StartPackageSpan("BIR Generation", ast.PackageID)
+	defer span.End()
 	birPkg := &bir.BIRPackage{}
 	birPkg.PackageID = ast.PackageID
 	genCtx := newContext(ctx, ast.PackageID, birPkg)
