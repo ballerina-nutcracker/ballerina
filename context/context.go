@@ -19,7 +19,6 @@ package context
 
 import (
 	"sync"
-	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -27,44 +26,11 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-type CompilationStage string
-
-const (
-	StageParse                  CompilationStage = "Parse"
-	StageASTBuild               CompilationStage = "AST Build"
-	StageImportResolution       CompilationStage = "Import Resolution"
-	StageSymbolResolution       CompilationStage = "Symbol Resolution"
-	StageTopLevelTypeResolution CompilationStage = "Top-Level Type Resolution"
-	StageLocalNodeResolution    CompilationStage = "Local Type Resolution"
-	StageSemanticAnalysis       CompilationStage = "Semantic Analysis"
-	StageCFGCreation            CompilationStage = "CFG Creation"
-	StageCFGAnalysis            CompilationStage = "CFG Analysis"
-	StageDesugaring             CompilationStage = "Desugaring"
-	StageBIRGeneration          CompilationStage = "BIR Generation"
-)
-
-type StageTiming struct {
-	Name     CompilationStage
-	Duration time.Duration
-}
-
-type ModuleStats struct {
-	ModuleName string
-	Stages     []StageTiming
-}
-
-type activeStage struct {
-	name  CompilationStage
-	start time.Time
-}
-
 // CompilerContext maintains frontend stage state for a package.
 type CompilerContext struct {
 	env         *CompilerEnvironment
 	mu          sync.Mutex
 	diagnostics []diagnostics.Diagnostic
-	moduleStats *ModuleStats
-	stage       activeStage
 }
 
 func (c *CompilerContext) DiagnosticEnv() *diagnostics.DiagnosticEnv {
@@ -316,48 +282,4 @@ func (c *CompilerContext) GetNextAnonymousFunctionKey(packageID *model.PackageID
 
 func (c *CompilerContext) GetNextAnonymousTypeKey(packageID *model.PackageID) string {
 	return c.env.GetNextAnonymousTypeKey(packageID)
-}
-
-func (c *CompilerContext) InitModuleStats(moduleName string) {
-	if !c.env.statsEnabled {
-		return
-	}
-	if c.moduleStats != nil {
-		return
-	}
-	c.moduleStats = &ModuleStats{ModuleName: moduleName}
-}
-
-func (c *CompilerContext) StartStage(name CompilationStage) {
-	if !c.env.statsEnabled {
-		return
-	}
-	c.stage = activeStage{name: name, start: time.Now()}
-}
-
-func (c *CompilerContext) EndStage() {
-	if !c.env.statsEnabled {
-		return
-	}
-	c.RecordStageDuration(c.stage.name, time.Since(c.stage.start))
-}
-
-func (c *CompilerContext) RecordStageDuration(name CompilationStage, duration time.Duration) {
-	if !c.CanRecordStageDuration() {
-		return
-	}
-	c.mu.Lock()
-	c.moduleStats.Stages = append(c.moduleStats.Stages, StageTiming{
-		Name:     name,
-		Duration: duration,
-	})
-	c.mu.Unlock()
-}
-
-func (c *CompilerContext) CanRecordStageDuration() bool {
-	return c != nil && c.env.statsEnabled && c.moduleStats != nil
-}
-
-func (c *CompilerContext) GetModuleStats() *ModuleStats {
-	return c.moduleStats
 }

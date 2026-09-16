@@ -49,7 +49,7 @@ func DebugEnabled(flag uint16) bool {
 
 func DebugWriteLazy(flag uint16, msgFn func() string) {
 	if debugFlags&flag != 0 {
-		fmt.Fprintf(debugWriter, "%s\n", msgFn())
+		_, _ = fmt.Fprintf(debugWriter, "%s\n", msgFn())
 	}
 }
 
