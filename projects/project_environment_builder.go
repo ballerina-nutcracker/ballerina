@@ -28,6 +28,7 @@ type ProjectEnvironmentBuilder struct {
 	fsys         fs.FS
 	repositories []Repository
 	buildOptions BuildOptions
+	compilerEnv  *context.CompilerEnvironment
 }
 
 func NewProjectEnvironmentBuilder(fsys fs.FS) *ProjectEnvironmentBuilder {
@@ -47,8 +48,19 @@ func (b *ProjectEnvironmentBuilder) WithBuildOptions(options BuildOptions) *Proj
 	return b
 }
 
+// WithCompilerEnvironment sets the compiler environment shared by the root
+// package, workspace members, and dependencies. Build() creates one only when
+// no environment is supplied.
+func (b *ProjectEnvironmentBuilder) WithCompilerEnvironment(env *context.CompilerEnvironment) *ProjectEnvironmentBuilder {
+	b.compilerEnv = env
+	return b
+}
+
 func (b *ProjectEnvironmentBuilder) Build() *Environment {
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), b.buildOptions.Stats())
+	env := b.compilerEnv
+	if env == nil {
+		env = context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	}
 	projEnv := NewEnvironment(b.fsys, env)
 
 	// ResolutionOptions are a runtime-facing subset of BuildOptions; derive

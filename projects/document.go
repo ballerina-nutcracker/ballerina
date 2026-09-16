@@ -57,7 +57,7 @@ func (d *Document) Module() *Module {
 // SyntaxTree returns the parsed syntax tree for this document.
 // The syntax tree is lazily parsed and cached.
 func (d *Document) SyntaxTree() *st.SyntaxTree {
-	return d.documentCtx.parseWithStats(d.module.moduleCtx.compilerCtx)
+	return d.documentCtx.parse(d.module.moduleCtx.compilerCtx)
 }
 
 // TextDocument returns the text document representation.

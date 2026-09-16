@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "cli_trace_read_trace"
+version = "0.1.0"
