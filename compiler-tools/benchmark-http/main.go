@@ -94,13 +94,13 @@ func run(cfg config) error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(workRoot)
+	defer func() { _ = os.RemoveAll(workRoot) }()
 
 	helloDir, err := os.MkdirTemp("", "httpbench-hello-*")
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(helloDir)
+	defer func() { _ = os.RemoveAll(helloDir) }()
 	helloFile := filepath.Join(helloDir, "hello.bal")
 	if err := os.WriteFile(helloFile, helloSource, 0o644); err != nil {
 		return err
