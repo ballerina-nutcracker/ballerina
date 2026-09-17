@@ -87,6 +87,10 @@ func analyzeExplicitReturn(ctx *context.CompilerContext, pkg *ast.BLangPackage, 
 		s := pkg.Services[i]
 		spawnObjectMembers(s.Methods, s.ResourceMethods)
 	}
+	for i := range cfg.lambdaCfgs {
+		lambda := &cfg.lambdaCfgs[i]
+		wg.Go(func() { analyzeExplicitReturnWithCfg(ctx, lambda.fn, lambda.cfg) })
+	}
 	wg.Wait()
 }
 
@@ -98,6 +102,14 @@ type invokableNode interface {
 }
 
 func analyzeInvokableExplicitReturn(ctx *context.CompilerContext, fn invokableNode, cfg *PackageCFG) {
+	fnCfg, ok := cfg.lookupFunctionCfg(fn.Symbol())
+	if !ok {
+		return
+	}
+	analyzeExplicitReturnWithCfg(ctx, fn, fnCfg)
+}
+
+func analyzeExplicitReturnWithCfg(ctx *context.CompilerContext, fn invokableNode, fnCfg functionCFG) {
 	if fn.IsNative() {
 		return
 	}
@@ -107,11 +119,6 @@ func analyzeInvokableExplicitReturn(ctx *context.CompilerContext, fn invokableNo
 	sym := ctx.GetSymbol(fn.Symbol()).(model.FunctionSymbol)
 	retType := sym.TypedSignature().ReturnType
 	if semtypes.ContainsBasicType(retType, semtypes.Nil) {
-		return
-	}
-
-	fnCfg, ok := cfg.lookupFunctionCfg(fn.Symbol())
-	if !ok {
 		return
 	}
 	if semtypes.IsNever(retType) {

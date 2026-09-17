@@ -66,3 +66,20 @@
             (literal 0)) <default>)))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable arr (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 5)
+          (literal 6)
+          (literal 7)
+          (literal 6)))))
+    (return
+      (invocation lang.array indexOf (
+        (simple-var-ref arr)
+        (literal 6) <default>)))
+  )
+)

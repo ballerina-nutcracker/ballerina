@@ -547,3 +547,10 @@
           (value-type int)))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref x)
+      (literal 1))
+  )
+)

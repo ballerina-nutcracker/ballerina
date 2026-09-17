@@ -280,3 +280,10 @@
             (xml-text-literal B)))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (xml-step-expression
+      (simple-var-ref item)
+      (xml-step-all-children))
+  )
+)

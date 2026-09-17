@@ -66,3 +66,12 @@
           (literal two) <default>)))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref actual))
+    (return
+      (simple-var-ref supplied))
+  )
+)

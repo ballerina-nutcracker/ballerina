@@ -123,3 +123,23 @@
         (invocation captureInLambda ()))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable inner (type
+        (value-type int)) (expr
+        (literal 5))))
+    (var-def
+      (variable rec (type
+        (record-type
+          (field value
+            (value-type int)
+            (binary-expr +
+              (simple-var-ref outerVal)
+              (simple-var-ref inner))))) (expr
+        (mapping-constructor-expr))))
+    (return
+      (field-based-access value
+        (simple-var-ref rec)))
+  )
+)

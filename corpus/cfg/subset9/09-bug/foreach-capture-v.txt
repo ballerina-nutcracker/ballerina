@@ -262,3 +262,33 @@
   )
   (bb20 (bb18) ())
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+($anonFunc$_3
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+($anonFunc$_4
+  (bb0 () ()
+    (return
+      (simple-var-ref item))
+  )
+)

@@ -45,3 +45,50 @@
         (invocation f0 ()))))
   )
 )
+($anonFunc$_0
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref a)
+      (value-type byte))
+  )
+  (bb1 (bb0) ()
+    (return
+      (lambda
+        (function $anonFunc$_1 () (
+          (value-type int))
+          (block-function-body
+            (return
+              (binary-expr *
+                (simple-var-ref a)
+                (unary-expr -
+                  (literal 1))))))))
+  )
+  (bb2 (bb0) ()
+    (return
+      (lambda
+        (function $anonFunc$_2 () (
+          (value-type int))
+          (block-function-body
+            (return
+              (binary-expr *
+                (simple-var-ref a)
+                (literal 10)))))))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref a)
+        (unary-expr -
+          (literal 1))))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref a)
+        (literal 10)))
+  )
+)

@@ -41,3 +41,31 @@
         (simple-var-ref a))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (user-defined-type F)) (expr
+        (lambda
+          (function $anonFunc$_1 (
+            (variable y (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (binary-expr /
+                  (literal 10)
+                  (simple-var-ref y)))))))))
+    (return
+      (invocation f (
+        (simple-var-ref x))))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (binary-expr /
+        (literal 10)
+        (simple-var-ref y)))
+  )
+)

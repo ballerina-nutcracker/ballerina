@@ -1,0 +1,15 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing return statement
+  --> xml-step-anon-missing-return-e.bal:18:52
+   |
+18 |     function (xml) returns xml f = v => v/*.filter(function(xml i) returns boolean { // @error missing return
+   |                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |         if i is xml:Element {
+   |         ^^^^^^^^^^^^^^^^^^^^^
+20 |             return true;
+   |             ^^^^^^^^^^^^
+21 |         }
+   |         ^
+22 |     });
+   |     ^

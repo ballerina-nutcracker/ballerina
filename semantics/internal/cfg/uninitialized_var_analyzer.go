@@ -318,6 +318,10 @@ func analyzeUninitializedVars(ctx *context.CompilerContext, pkg *ast.BLangPackag
 			analyzeFunctionUninitializedVars(ctx, fn, cfg)
 		}(fn)
 	}
+	for i := range cfg.lambdaCfgs {
+		lambda := &cfg.lambdaCfgs[i]
+		wg.Go(func() { newUninitVarAnalyzer(ctx, lambda.fn, &lambda.cfg).analyze() })
+	}
 	wg.Wait()
 }
 

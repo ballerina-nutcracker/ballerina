@@ -73,3 +73,38 @@
         (simple-var-ref val))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (compound-assignment *
+      (simple-var-ref val)
+      (literal 2))
+    (return
+      (binary-expr +
+        (simple-var-ref val)
+        (simple-var-ref p)))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (assignment
+      (simple-var-ref val)
+      (binary-expr +
+        (simple-var-ref val)
+        (invocation a (
+          (simple-var-ref p)))))
+    (return
+      (simple-var-ref val))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (assignment
+      (simple-var-ref val)
+      (binary-expr +
+        (invocation a (
+          (simple-var-ref p)))
+        (simple-var-ref val)))
+    (return
+      (simple-var-ref val))
+  )
+)

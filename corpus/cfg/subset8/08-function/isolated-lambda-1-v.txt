@@ -92,3 +92,69 @@
       (invocation f1 ()))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (simple-var-ref n))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (var-def
+      (variable f2 (type
+        (function-type () (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_2 () (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable f3 (type
+                  (function-type () (
+                    (value-type int)))) (expr
+                  (lambda
+                    (function $anonFunc$_3 () (
+                      (value-type int))
+                      (block-function-body
+                        (return
+                          (simple-var-ref n))))))))
+              (return
+                (invocation f3 ()))))))))
+    (return
+      (invocation f2 ()))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (var-def
+      (variable f3 (type
+        (function-type () (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_3 () (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref n))))))))
+    (return
+      (invocation f3 ()))
+  )
+)
+($anonFunc$_3
+  (bb0 () ()
+    (return
+      (simple-var-ref n))
+  )
+)
+($anonFunc$_4
+  (bb0 () ()
+    (return
+      (literal 10))
+  )
+)
+($anonFunc$_5
+  (bb0 () ()
+    (return
+      (simple-var-ref x))
+  )
+)

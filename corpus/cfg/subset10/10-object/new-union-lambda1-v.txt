@@ -58,3 +58,13 @@
           (user-defined-type FloatFn)))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (literal 1)
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (literal 1)
+  )
+)

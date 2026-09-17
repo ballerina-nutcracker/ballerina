@@ -31,3 +31,18 @@
           (simple-var-ref f))))))
   )
 )
+($anonFunc$_0
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref next)
+      (value-type null))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal 1))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 2))
+  )
+)

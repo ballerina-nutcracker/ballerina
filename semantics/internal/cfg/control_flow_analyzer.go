@@ -65,9 +65,17 @@ type functionCFG struct {
 	topoOrder []int // block IDs in topological order (non-backedge DAG); computed by markBackedges
 }
 
+// lambdaCFG holds the graph of an anonymous function, which is collected by
+// walking the AST rather than a package level declaration list.
+type lambdaCFG struct {
+	fn  *ast.BLangFunction
+	cfg functionCFG
+}
+
 type PackageCFG struct {
 	funcCfgs   map[model.SymbolRef]functionCFG
 	methodCfgs map[model.SymbolRef]map[model.SymbolRef]functionCFG
+	lambdaCfgs []lambdaCFG
 }
 
 func (cfg *PackageCFG) lookupFunctionCfg(ref model.SymbolRef) (functionCFG, bool) {
@@ -93,6 +101,12 @@ func (cfg *PackageCFG) allFunctionCfgs(yield func(model.SymbolRef, *functionCFG)
 			if !yield(ref, &fcfg) {
 				return
 			}
+		}
+	}
+	for i := range cfg.lambdaCfgs {
+		lambda := &cfg.lambdaCfgs[i]
+		if !yield(lambda.fn.Symbol(), &lambda.cfg) {
+			return
 		}
 	}
 }
@@ -155,9 +169,41 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 		s := pkg.Services[i]
 		analyzeClassBody(cfg.funcCfgs, s.InitFunction, s.Methods, s.ResourceMethods)
 	}
+	for _, fn := range collectLambdaFunctions(pkg) {
+		wg.Go(func() {
+			fnCfg := analyzeFunction(ctx, fn)
+			mu.Lock()
+			cfg.lambdaCfgs = append(cfg.lambdaCfgs, lambdaCFG{fn: fn, cfg: fnCfg})
+			mu.Unlock()
+		})
+	}
 	wg.Wait()
 	return cfg
 }
+
+// collectLambdaFunctions returns the underlying function of every anonymous
+// function expression in the package, including nested ones.
+func collectLambdaFunctions(pkg *ast.BLangPackage) []*ast.BLangFunction {
+	collector := &lambdaCollector{}
+	ast.Walk(collector, pkg)
+	return collector.fns
+}
+
+type lambdaCollector struct {
+	fns []*ast.BLangFunction
+}
+
+func (c *lambdaCollector) Visit(node ast.BLangNode) ast.Visitor {
+	if node == nil {
+		return nil
+	}
+	if lambda, ok := node.(*ast.BLangLambdaFunction); ok && lambda.Function != nil {
+		c.fns = append(c.fns, lambda.Function)
+	}
+	return c
+}
+
+func (c *lambdaCollector) VisitTypeData(*ast.TypeData) ast.Visitor { return c }
 
 func analyzeFunction(ctx *context.CompilerContext, fn *ast.BLangFunction) functionCFG {
 	return analyzeFunctionBody(ctx, fn.Body)

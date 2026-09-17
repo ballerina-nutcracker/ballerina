@@ -61,3 +61,11 @@
           (literal 3))))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (literal 1)))
+  )
+)

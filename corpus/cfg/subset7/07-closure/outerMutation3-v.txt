@@ -66,3 +66,25 @@
         (simple-var-ref val))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref v1)
+      (simple-var-ref a))
+    (return
+      (literal 5))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref b))))
+    (compound-assignment +
+      (simple-var-ref v2)
+      (simple-var-ref v1))
+    (return
+      (literal 0))
+  )
+)

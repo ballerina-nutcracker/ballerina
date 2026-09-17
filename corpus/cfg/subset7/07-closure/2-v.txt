@@ -45,3 +45,45 @@
           (literal 5))))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable b (type
+        (value-type int)) (expr
+        (binary-expr *
+          (simple-var-ref a)
+          (literal 2)))))
+    (var-def
+      (variable g (type
+        (user-defined-type F)) (expr
+        (lambda
+          (function $anonFunc$_1 (
+            (variable y (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (binary-expr +
+                  (binary-expr +
+                    (binary-expr +
+                      (simple-var-ref x)
+                      (simple-var-ref y))
+                    (simple-var-ref a))
+                  (simple-var-ref b)))))))))
+    (return
+      (invocation g (
+        (simple-var-ref x))))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (binary-expr +
+          (binary-expr +
+            (simple-var-ref x)
+            (simple-var-ref y))
+          (simple-var-ref a))
+        (simple-var-ref b)))
+  )
+)

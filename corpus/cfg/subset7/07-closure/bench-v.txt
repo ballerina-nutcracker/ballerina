@@ -113,3 +113,13 @@
           (simple-var-ref funcs))))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (binary-expr +
+          (simple-var-ref v)
+          (simple-var-ref x))
+        (simple-var-ref base)))
+  )
+)

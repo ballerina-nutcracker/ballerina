@@ -173,3 +173,15 @@
         (literal xml-step-types ok))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (simple-var-ref item)
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (invocation xml createComment (
+      (invocation lang.xml data (
+        (simple-var-ref item)))))
+  )
+)

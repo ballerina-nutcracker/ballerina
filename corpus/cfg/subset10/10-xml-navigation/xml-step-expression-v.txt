@@ -5624,3 +5624,270 @@
           (xml-element-literal n)))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (type-test-expr is
+      (simple-var-ref y)
+      (user-defined-type xml Element))
+  )
+)
+($anonFunc$_10
+  (bb0 () ()
+    (type-test-expr is
+      (simple-var-ref y)
+      (user-defined-type xml Element))
+  )
+)
+($anonFunc$_11
+  (bb0 () ()
+    (ternary-expr
+      (type-test-expr is
+        (simple-var-ref y)
+        (user-defined-type xml Text))
+      (xml-element-literal a)
+      (simple-var-ref y))
+  )
+)
+($anonFunc$_12
+  (bb0 () ()
+    (type-test-expr is
+      (simple-var-ref y)
+      (user-defined-type xml Element))
+  )
+)
+($anonFunc$_13
+  (bb0 () ()
+    (invocation xml createElement (
+      (literal price)
+      (mapping-constructor-expr)
+      (xml-template-literal
+        (template-string "")
+        (xml-template-content-insertion
+          (invocation lang.xml data (
+            (simple-var-ref y))))
+        (template-string ".0"))))
+  )
+)
+($anonFunc$_14
+  (bb0 () ()
+    (binary-expr ==
+      (invocation lang.xml getName (
+        (group-expr
+          (type-conversion-expr
+            (simple-var-ref y)
+            (user-defined-type xml Element)))))
+      (literal local))
+  )
+)
+($anonFunc$_15
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_16
+  (bb0 () ()
+    (type-test-expr is
+      (simple-var-ref y)
+      (user-defined-type xml Element))
+  )
+)
+($anonFunc$_17
+  (bb0 () ()
+    (binary-expr &&
+      (type-test-expr is
+        (simple-var-ref y)
+        (user-defined-type xml Element))
+      (binary-expr ==
+        (invocation lang.xml getName (
+          (simple-var-ref y)))
+        (literal local)))
+  )
+)
+($anonFunc$_18
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_19
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_20
+  (bb0 () ()
+    (binary-expr ||
+      (type-test-expr is
+        (simple-var-ref x)
+        (user-defined-type xml Comment))
+      (type-test-expr is
+        (simple-var-ref x)
+        (user-defined-type xml ProcessingInstruction)))
+  )
+)
+($anonFunc$_21
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_22
+  (bb0 () ()
+    (binary-expr ==
+      (invocation lang.xml data (
+        (group-expr
+          (type-conversion-expr
+            (simple-var-ref y)
+            (value-type xml)))))
+      (literal yes))
+  )
+)
+($anonFunc$_23
+  (bb0 () ()
+    (type-test-expr is
+      (simple-var-ref y)
+      (user-defined-type xml Element))
+  )
+)
+($anonFunc$_24
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_25
+  (bb0 () ()
+    (return
+      (binary-expr ==
+        (invocation lang.xml data (
+          (group-expr
+            (type-conversion-expr
+              (simple-var-ref y)
+              (user-defined-type xml Element)))))
+        (literal 40)))
+  )
+)
+($anonFunc$_26
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_27
+  (bb0 () ()
+    (return
+      (binary-expr ==
+        (invocation lang.xml data (
+          (group-expr
+            (type-conversion-expr
+              (simple-var-ref y)
+              (user-defined-type xml Element)))))
+        (literal 30)))
+  )
+)
+($anonFunc$_28
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_29
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_3
+  (bb0 () ()
+    (binary-expr ==
+      (invocation lang.xml getName (
+        (group-expr
+          (type-conversion-expr
+            (simple-var-ref y)
+            (user-defined-type xml Element)))))
+      (literal local))
+  )
+)
+($anonFunc$_4
+  (bb0 () ()
+    (invocation lang.xml get (
+      (invocation lang.xml elementChildren (
+        (simple-var-ref y) <default>))
+      (literal 0)))
+  )
+)
+($anonFunc$_5
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_6
+  (bb0 () ()
+    (binary-expr ==
+      (invocation lang.xml data (
+        (group-expr
+          (type-conversion-expr
+            (simple-var-ref y)
+            (value-type xml)))))
+      (literal yes))
+  )
+)
+($anonFunc$_7
+  (bb0 () ()
+    (type-test-expr is
+      (simple-var-ref y)
+      (user-defined-type xml Element))
+  )
+)
+($anonFunc$_8
+  (bb0 () ()
+    (binary-expr &&
+      (type-test-expr is
+        (simple-var-ref y)
+        (user-defined-type xml Element))
+      (binary-expr ==
+        (invocation lang.xml getName (
+          (simple-var-ref y)))
+        (simple-var-ref local)))
+  )
+)
+($anonFunc$_9
+  (bb0 () ()
+    (var-def
+      (variable jf (type
+        (value-type xml)) (expr
+        (xml-step-expression
+          (simple-var-ref x1)
+          (xml-step-element-descendants
+            (xml-name-pattern-identifier name))
+          (xml-step-method-call-extend get
+            (literal 1))))))
+    (var-def
+      (variable kf (type
+        (value-type xml)) (expr
+        (xml-step-expression
+          (simple-var-ref x1)
+          (xml-step-element-descendants
+            (xml-name-pattern-identifier brand))
+          (xml-step-filter-extend
+            (xml-name-pattern-identifier brand))))))
+    (var-def
+      (variable lf (type
+        (value-type xml)) (expr
+        (xml-step-expression
+          (simple-var-ref x1)
+          (xml-step-element-children
+            (xml-name-pattern-identifier count))
+          (xml-step-index-extend
+            (literal 0))))))
+    (return
+      (list-constructor-expr
+        (simple-var-ref jf)
+        (simple-var-ref kf)
+        (simple-var-ref lf)))
+  )
+)

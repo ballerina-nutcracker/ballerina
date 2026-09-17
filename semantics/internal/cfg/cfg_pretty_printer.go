@@ -85,6 +85,17 @@ func (p *CFGPrettyPrinter) Print(cfg *PackageCFG) string {
 		return compareFunctionPrintOrder(a.name, b.name)
 	})
 
+	// Build fills lambdaCfgs concurrently, so sort for a stable rendering.
+	var lambdas []fnEntry
+	for i := range cfg.lambdaCfgs {
+		lambda := &cfg.lambdaCfgs[i]
+		lambdas = append(lambdas, fnEntry{name: p.ctx.SymbolName(lambda.fn.Symbol()), cfg: lambda.cfg})
+	}
+	sort.Slice(lambdas, func(i, j int) bool {
+		return lambdas[i].name < lambdas[j].name
+	})
+	topLevel = append(topLevel, lambdas...)
+
 	printed := 0
 	for _, ce := range classes {
 		if ce.initCfg == nil && len(ce.methods) == 0 {

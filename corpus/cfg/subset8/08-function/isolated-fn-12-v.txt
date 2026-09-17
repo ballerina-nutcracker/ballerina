@@ -15,3 +15,11 @@
           (literal 10) <default>)))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref b)
+        (literal 10)))
+  )
+)

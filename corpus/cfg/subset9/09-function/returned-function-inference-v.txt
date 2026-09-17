@@ -197,3 +197,21 @@
           (literal 17))))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (simple-var-ref implementationArg))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (simple-var-ref implementationArg))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (return
+      (simple-var-ref implementationArg))
+  )
+)
