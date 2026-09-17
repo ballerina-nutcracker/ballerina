@@ -71,3 +71,23 @@
           (literal 2))))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref a)
+        (simple-var-ref b)))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (index-based-access
+          (simple-var-ref vals)
+          (literal 0))
+        (index-based-access
+          (simple-var-ref vals)
+          (literal 1))))
+  )
+)

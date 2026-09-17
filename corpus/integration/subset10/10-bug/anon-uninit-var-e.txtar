@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> anon-uninit-var-e.bal:22:16
+   |
+22 |         return x; // @error variable may not be initialized
+   |                ^

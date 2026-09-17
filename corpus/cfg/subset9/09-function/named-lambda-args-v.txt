@@ -215,3 +215,55 @@
       (invocation f ( <default>)))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (simple-var-ref x))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref y)))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (field-based-access left
+          (simple-var-ref q))
+        (field-based-access right
+          (simple-var-ref q))))
+  )
+)
+($anonFunc$_3
+  (bb0 () ()
+    (return
+      (simple-var-ref b))
+  )
+)
+($anonFunc$_4
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref c)
+        (literal 1)))
+  )
+)
+($anonFunc$_5
+  (bb0 () ()
+    (return
+      (simple-var-ref b))
+  )
+)
+($anonFunc$_6
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref c)
+        (literal 1)))
+  )
+)

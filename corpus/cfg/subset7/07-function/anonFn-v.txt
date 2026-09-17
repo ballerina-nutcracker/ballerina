@@ -57,3 +57,42 @@
           (literal 2))))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref a)
+        (simple-var-ref b)))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (var-def
+      (variable mul (type
+        (user-defined-type F)) (expr
+        (lambda
+          (function $anonFunc$_2 (
+            (variable x (type
+              (value-type int)))
+            (variable y (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (binary-expr *
+                  (simple-var-ref x)
+                  (simple-var-ref y)))))))))
+    (return
+      (invocation mul (
+        (simple-var-ref a)
+        (simple-var-ref b))))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref x)
+        (simple-var-ref y)))
+  )
+)

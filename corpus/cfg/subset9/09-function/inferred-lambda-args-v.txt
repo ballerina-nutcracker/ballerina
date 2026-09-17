@@ -113,3 +113,31 @@
           (literal 10))))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (field-based-access left
+          (simple-var-ref pair))
+        (field-based-access right
+          (simple-var-ref pair))))
+  )
+)
+($anonFunc$_3
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)

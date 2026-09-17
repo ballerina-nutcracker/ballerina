@@ -104,3 +104,16 @@
         (literal 2)))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (checked-expr
+        (invocation number ())))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (literal 0))
+  )
+)

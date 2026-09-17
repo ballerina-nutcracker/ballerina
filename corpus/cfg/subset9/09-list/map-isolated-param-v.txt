@@ -365,3 +365,92 @@
         (literal 0)))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref value)
+      (literal 1))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref value)
+      (literal 1))
+  )
+)
+($anonFunc$_10
+  (bb0 () ()
+    (mapping-constructor-expr
+      (key-value
+        (literal value)
+        (simple-var-ref value)))
+  )
+)
+($anonFunc$_11
+  (bb0 () ()
+    (type-test-expr is
+      (simple-var-ref value)
+      (value-type int))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (field-based-access value
+      (simple-var-ref value))
+  )
+)
+($anonFunc$_3
+  (bb0 () ()
+    (index-based-access
+      (invocation lang.array map (
+        (list-constructor-expr
+          (simple-var-ref value))
+        (simple-var-ref isolatedIncrement)))
+      (literal 0))
+  )
+)
+($anonFunc$_4
+  (bb0 () ()
+    (new ())
+  )
+)
+($anonFunc$_5
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref value)
+      (literal 1))
+  )
+)
+($anonFunc$_6
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref value)
+        (simple-var-ref offset)))
+  )
+)
+($anonFunc$_7
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref value)
+      (index-based-access
+        (simple-var-ref state)
+        (literal 0)))
+  )
+)
+($anonFunc$_8
+  (bb0 () ()
+    (return
+      (binary-expr >
+        (simple-var-ref value)
+        (literal 1)))
+  )
+)
+($anonFunc$_9
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref value)
+      (literal 2))
+  )
+)

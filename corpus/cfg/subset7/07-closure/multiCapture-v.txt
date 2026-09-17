@@ -55,3 +55,39 @@
         (simple-var-ref a))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable b (type
+        (value-type int)) (expr
+        (simple-var-ref a))))
+    (compound-assignment +
+      (simple-var-ref a)
+      (simple-var-ref y))
+    (return
+      (lambda
+        (function $anonFunc$_1 (
+          (variable x (type
+            (value-type int)))) (
+          (value-type int))
+          (block-function-body
+            (compound-assignment +
+              (simple-var-ref a)
+              (simple-var-ref x))
+            (return
+              (binary-expr +
+                (simple-var-ref a)
+                (simple-var-ref b)))))))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref a)
+      (simple-var-ref x))
+    (return
+      (binary-expr +
+        (simple-var-ref a)
+        (simple-var-ref b)))
+  )
+)

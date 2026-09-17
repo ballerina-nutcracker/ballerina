@@ -23,3 +23,12 @@
         (simple-var-ref a))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (assignment
+      (simple-var-ref a)
+      (binary-expr +
+        (simple-var-ref a)
+        (literal 1)))
+  )
+)

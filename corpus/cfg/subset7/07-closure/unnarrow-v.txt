@@ -34,3 +34,12 @@
         (simple-var-ref res))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref val)
+      (simple-var-ref a))
+    (return
+      (literal 5))
+  )
+)

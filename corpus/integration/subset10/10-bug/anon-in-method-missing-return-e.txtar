@@ -1,0 +1,15 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing return statement
+  --> anon-in-method-missing-return-e.bal:21:17
+   |
+21 |         var f = function(int n) returns int { // @error missing return statement
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |             if n > 1 {
+   |             ^^^^^^^^^^
+23 |                 return n;
+   |                 ^^^^^^^^^
+24 |             }
+   |             ^
+25 |         };
+   |         ^
