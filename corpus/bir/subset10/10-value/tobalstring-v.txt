@@ -98,188 +98,253 @@ cd
     %55 = println(%54) -> bb20;
   }
   bb20 {
-    %56 = ConstantLoad 345.2425341
-    d1 = %56;
-    %58 = d1;
-    %59 = toBalString(%58) -> bb21;
+    %57 = ConstantLoad 1
+    %58 = unknown %57;
+    %59 = %58;
+    %60 = ConstantLoad 0
+    %61 = %60;
+    %56 = / %59 %61;
+    negInfVal = %56;
+    %63 = negInfVal;
+    %64 = toBalString(%63) -> bb21;
   }
   bb21 {
-    %60 = println(%59) -> bb22;
+    %65 = println(%64) -> bb22;
   }
   bb22 {
-    %61 = ConstantLoad 1
-    d2 = %61;
-    %63 = d2;
-    %64 = toBalString(%63) -> bb23;
+    %66 = ConstantLoad 345.2425341
+    d1 = %66;
+    %68 = d1;
+    %69 = toBalString(%68) -> bb23;
   }
   bb23 {
-    %65 = println(%64) -> bb24;
+    %70 = println(%69) -> bb24;
   }
   bb24 {
-    %66 = ConstantLoad <nil>
-    nilVal = %66;
-    %68 = nilVal;
-    %69 = toBalString(%68) -> bb25;
+    %71 = ConstantLoad 1
+    d2 = %71;
+    %73 = d2;
+    %74 = toBalString(%73) -> bb25;
   }
   bb25 {
-    %70 = println(%69) -> bb26;
+    %75 = println(%74) -> bb26;
   }
   bb26 {
-    %71 = ConstantLoad 1
-    %72 = ConstantLoad Sam
-    %73 = ConstantLoad 12.3
-    %74 = ConstantLoad 12.12
-    %75 = ConstantLoad value
-    %76 = ConstantLoad 12
-    %77 = newMap {| anydata... |}{%75=%76}
-    %78 = ConstantLoad 5
-    %79 = newArray [anydata...][%78]{%71, %72, %73, %74, %77}
-    data = %79;
-    %81 = toBalString(data) -> bb27;
+    %76 = ConstantLoad <nil>
+    nilVal = %76;
+    %78 = nilVal;
+    %79 = toBalString(%78) -> bb27;
   }
   bb27 {
-    %82 = println(%81) -> bb28;
+    %80 = println(%79) -> bb28;
   }
   bb28 {
-    %83 = ConstantLoad id
-    %84 = ConstantLoad 5
-    %85 = newMap {| anydata... |}{%83=%84}
-    key = %85;
-    %87 = toBalString(key) -> bb29;
+    %81 = ConstantLoad 1
+    %82 = ConstantLoad Sam
+    %83 = ConstantLoad 12.3
+    %84 = ConstantLoad 12.12
+    %85 = ConstantLoad value
+    %86 = ConstantLoad 12
+    %87 = newMap {| anydata... |}{%85=%86}
+    %88 = ConstantLoad 5
+    %89 = newArray [anydata...][%88]{%81, %82, %83, %84, %87}
+    data = %89;
+    %91 = toBalString(data) -> bb29;
   }
   bb29 {
-    %88 = println(%87) -> bb30;
+    %92 = println(%91) -> bb30;
   }
   bb30 {
-    %89 = ConstantLoad city
-    %90 = ConstantLoad Colombo
-    %91 = ConstantLoad country
-    %92 = ConstantLoad Sri Lanka
-    %93 = newMap {| city: string, country: string, never... |}{%89=%90, %91=%92}
-    addr = %93;
-    %95 = toBalString(addr) -> bb31;
+    %93 = ConstantLoad id
+    %94 = ConstantLoad 5
+    %95 = newMap {| anydata... |}{%93=%94}
+    key = %95;
+    %97 = toBalString(key) -> bb31;
   }
   bb31 {
-    %96 = println(%95) -> bb32;
+    %98 = println(%97) -> bb32;
   }
   bb32 {
-    %97 = ConstantLoad a
-    %98 = ConstantLoad 1
-    %99 = ConstantLoad b
-    %100 = ConstantLoad c
-    %101 = ConstantLoad 2
-    %102 = newMap {| anydata... |}{%100=%101}
-    %103 = newMap {| anydata... |}{%97=%98, %99=%102}
-    nested = %103;
-    %105 = toBalString(nested) -> bb33;
+    %99 = ConstantLoad city
+    %100 = ConstantLoad Colombo
+    %101 = ConstantLoad country
+    %102 = ConstantLoad Sri Lanka
+    %103 = newMap {| city: string, country: string, never... |}{%99=%100, %101=%102}
+    addr = %103;
+    %105 = toBalString(addr) -> bb33;
   }
   bb33 {
     %106 = println(%105) -> bb34;
   }
   bb34 {
-    %107 = ConstantLoad 1
-    %108 = ConstantLoad 2
-    %109 = ConstantLoad 3
-    %110 = ConstantLoad 3
-    %111 = newArray [int...][%110]{%107, %108, %109}
-    nums = %111;
-    %113 = toBalString(nums) -> bb35;
+    %107 = ConstantLoad a
+    %108 = ConstantLoad 1
+    %109 = ConstantLoad b
+    %110 = ConstantLoad c
+    %111 = ConstantLoad 2
+    %112 = newMap {| anydata... |}{%110=%111}
+    %113 = newMap {| anydata... |}{%107=%108, %109=%112}
+    nested = %113;
+    %115 = toBalString(nested) -> bb35;
   }
   bb35 {
-    %114 = println(%113) -> bb36;
+    %116 = println(%115) -> bb36;
   }
   bb36 {
-    %115 = ConstantLoad boom
-    %116 = ConstantLoad code
-    %117 = ConstantLoad 42
-    %118 = ConstantLoad ratio
-    %119 = ConstantLoad 1.5
-    %120 = ConstantLoad note
-    %121 = ConstantLoad <nil>
-    %122 = newMap mapping{%116=%117, %118=%119, %120=%121}
-    %123 = newError error(%115, %122)
-    e1 = %123;
-    %125 = ConstantLoad 1
-    %126 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%125]{e1}
-    errWrapper = %126;
-    %128 = toBalString(errWrapper) -> bb37;
+    %117 = ConstantLoad 1
+    %118 = ConstantLoad 2
+    %119 = ConstantLoad 3
+    %120 = ConstantLoad 3
+    %121 = newArray [int...][%120]{%117, %118, %119}
+    nums = %121;
+    %123 = toBalString(nums) -> bb37;
   }
   bb37 {
-    %129 = println(%128) -> bb38;
+    %124 = println(%123) -> bb38;
   }
   bb38 {
-    %130 = ConstantLoad failure1
-    %131 = newError error(%130)
-    cause = %131;
-    %133 = ConstantLoad failure2
-    %134 = ConstantLoad extra
-    %135 = ConstantLoad 3.14
-    %136 = newMap mapping{%134=%135}
-    %137 = newError error(%133, cause, %136)
-    e2 = %137;
-    %139 = ConstantLoad 1
-    %140 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%139]{e2}
-    causeWrapper = %140;
-    %142 = toBalString(causeWrapper) -> bb39;
+    %125 = ConstantLoad boom
+    %126 = ConstantLoad code
+    %127 = ConstantLoad 42
+    %128 = ConstantLoad ratio
+    %129 = ConstantLoad 1.5
+    %130 = ConstantLoad note
+    %131 = ConstantLoad <nil>
+    %132 = newMap mapping{%126=%127, %128=%129, %130=%131}
+    %133 = newError error(%125, %132)
+    e1 = %133;
+    %135 = ConstantLoad 1
+    %136 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%135]{e1}
+    errWrapper = %136;
+    %138 = toBalString(errWrapper) -> bb39;
   }
   bb39 {
-    %143 = println(%142) -> bb40;
+    %139 = println(%138) -> bb40;
   }
   bb40 {
-    %144 = ConstantLoad boom
-    %145 = ConstantLoad a\-b
-    %146 = ConstantLoad 5
-    %147 = newMap mapping{%145=%146}
-    %148 = newError error(%144, %147)
-    e3 = %148;
-    %150 = ConstantLoad 1
-    %151 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%150]{e3}
-    keyWrapper = %151;
-    %153 = toBalString(keyWrapper) -> bb41;
+    %140 = ConstantLoad failure1
+    %141 = newError error(%140)
+    cause = %141;
+    %143 = ConstantLoad failure2
+    %144 = ConstantLoad extra
+    %145 = ConstantLoad 3.14
+    %146 = newMap mapping{%144=%145}
+    %147 = newError error(%143, cause, %146)
+    e2 = %147;
+    %149 = ConstantLoad 1
+    %150 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%149]{e2}
+    causeWrapper = %150;
+    %152 = toBalString(causeWrapper) -> bb41;
   }
   bb41 {
-    %154 = println(%153) -> bb42;
+    %153 = println(%152) -> bb42;
   }
   bb42 {
-    %155 = ConstantLoad a
-    %156 = ConstantLoad STRING
-    %157 = ConstantLoad b
-    %158 = ConstantLoad 12
-    %159 = ConstantLoad c
-    %160 = ConstantLoad 12.4
-    %161 = ConstantLoad d
-    %162 = ConstantLoad true
-    %163 = ConstantLoad e
-    %164 = ConstantLoad x
-    %165 = ConstantLoad x
-    %166 = ConstantLoad y
-    %167 = ConstantLoad <nil>
-    %168 = newMap {| json... |}{%164=%165, %166=%167}
-    %169 = newMap {| json... |}{%155=%156, %157=%158, %159=%160, %161=%162, %163=%168}
-    jsonVal = %169;
-    %171 = toBalString(jsonVal) -> bb43;
+    %154 = ConstantLoad boom
+    %155 = ConstantLoad a\-b
+    %156 = ConstantLoad 5
+    %157 = newMap mapping{%155=%156}
+    %158 = newError error(%154, %157)
+    e3 = %158;
+    %160 = ConstantLoad 1
+    %161 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%160]{e3}
+    keyWrapper = %161;
+    %163 = toBalString(keyWrapper) -> bb43;
   }
   bb43 {
-    %172 = println(%171) -> bb44;
+    %164 = println(%163) -> bb44;
   }
   bb44 {
-    %173 = ConstantLoad TOM
-    %174 = ConstantLoad 10
-    %175 = ConstantLoad 90.12
-    %177 = ConstantLoad 0
-    %178 = %177;
-    %179 = ConstantLoad 0
-    %180 = %179;
-    %176 = / %178 %180;
-    %181 = ConstantLoad 4
-    %182 = newArray [string, int, decimal, float, never...][%181]{%173, %174, %175, %176}
-    tupleVal = %182;
-    %184 = toBalString(tupleVal) -> bb45;
+    %165 = ConstantLoad abc
+    badVal = %165;
+    %167 = ConstantLoad typedesc
+    %168 = cloneWithType(badVal,%167) -> bb45;
   }
   bb45 {
-    %185 = println(%184) -> bb46;
+    convErr = %168;
+    %170 = ConstantLoad 1
+    %171 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%170]{convErr}
+    convErrWrapper = %171;
+    %173 = toBalString(convErrWrapper) -> bb46;
   }
   bb46 {
+    %174 = println(%173) -> bb47;
+  }
+  bb47 {
+    %175 = ConstantLoad a
+    %176 = ConstantLoad STRING
+    %177 = ConstantLoad b
+    %178 = ConstantLoad 12
+    %179 = ConstantLoad c
+    %180 = ConstantLoad 12.4
+    %181 = ConstantLoad d
+    %182 = ConstantLoad true
+    %183 = ConstantLoad e
+    %184 = ConstantLoad x
+    %185 = ConstantLoad x
+    %186 = ConstantLoad y
+    %187 = ConstantLoad <nil>
+    %188 = newMap {| json... |}{%184=%185, %186=%187}
+    %189 = newMap {| json... |}{%175=%176, %177=%178, %179=%180, %181=%182, %183=%188}
+    jsonVal = %189;
+    %191 = toBalString(jsonVal) -> bb48;
+  }
+  bb48 {
+    %192 = println(%191) -> bb49;
+  }
+  bb49 {
+    %193 = ConstantLoad TOM
+    %194 = ConstantLoad 10
+    %195 = ConstantLoad 90.12
+    %197 = ConstantLoad 0
+    %198 = %197;
+    %199 = ConstantLoad 0
+    %200 = %199;
+    %196 = / %198 %200;
+    %201 = ConstantLoad 4
+    %202 = newArray [string, int, decimal, float, never...][%201]{%193, %194, %195, %196}
+    tupleVal = %202;
+    %204 = toBalString(tupleVal) -> bb50;
+  }
+  bb50 {
+    %205 = println(%204) -> bb51;
+  }
+  bb51 {
+    %206 = ConstantLoad 1
+    %207 = ConstantLoad 2
+    %208 = ConstantLoad 2
+    %209 = newArray [anydata...][%208]{%206, %207}
+    selfRef = %209;
+    %211 = ConstantLoad 2
+    selfRef[%211] = selfRef;
+    %212 = toBalString(selfRef) -> bb52;
+  }
+  bb52 {
+    %213 = println(%212) -> bb53;
+  }
+  bb53 {
+    %214 = ConstantLoad 0
+    %215 = newArray [anydata...][%214]{}
+    selfFirst = %215;
+    %217 = push(selfFirst,selfFirst) -> bb54;
+  }
+  bb54 {
+    %218 = toBalString(selfFirst) -> bb55;
+  }
+  bb55 {
+    %219 = println(%218) -> bb56;
+  }
+  bb56 {
+    %220 = newMap {| anydata... |}{}
+    selfMap = %220;
+    %222 = ConstantLoad self
+    selfMap[%222] = selfMap;
+    %223 = toBalString(selfMap) -> bb57;
+  }
+  bb57 {
+    %224 = println(%223) -> bb58;
+  }
+  bb58 {
     return;
   }
 }

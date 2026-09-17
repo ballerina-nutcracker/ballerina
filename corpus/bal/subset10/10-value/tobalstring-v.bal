@@ -55,6 +55,9 @@ public function main() {
     float infVal = 1.0 / 0.0;
     io:println(infVal.toBalString()); // @output float:Infinity
 
+    float negInfVal = -1.0 / 0.0;
+    io:println(negInfVal.toBalString()); // @output float:-Infinity
+
     decimal d1 = 345.2425341;
     io:println(d1.toBalString()); // @output 345.2425341d
 
@@ -98,9 +101,31 @@ public function main() {
     (any|error)[] keyWrapper = [e3];
     io:println(keyWrapper.toBalString()); // @output [error("boom",'a\\\-b=5)]
 
+    // cloneWithType failures carry a distinct error type name, which renders
+    // as "error TypeName (...)" rather than the bare "error(...)".
+    anydata badVal = "abc";
+    int|error convErr = badVal.cloneWithType(int);
+    (any|error)[] convErrWrapper = [convErr];
+    io:println(convErrWrapper.toBalString());
+    // @output [error {ballerina/lang.value}ConversionError ("'\"abc\"' value cannot be converted to 'int'",message="'\"abc\"' value cannot be converted to 'int'")]
+
     json jsonVal = {a: "STRING", b: 12, c: 12.4, d: true, e: {x: "x", y: ()}};
     io:println(jsonVal.toBalString()); // @output {"a":"STRING","b":12,"c":12.4,"d":true,"e":{"x":"x","y":()}}
 
     [string, int, decimal, float] tupleVal = ["TOM", 10, 90.12, 0.0 / 0.0];
     io:println(tupleVal.toBalString()); // @output ["TOM",10,90.12d,float:NaN]
+
+    anydata[] selfRef = [1, 2];
+    selfRef[2] = selfRef;
+    io:println(selfRef.toBalString()); // @output [1,2,[...]]
+
+    // a list that is its own first element is a distinct special case from
+    // the general cycle above.
+    anydata[] selfFirst = [];
+    selfFirst.push(selfFirst);
+    io:println(selfFirst.toBalString()); // @output [...]
+
+    map<anydata> selfMap = {};
+    selfMap["self"] = selfMap;
+    io:println(selfMap.toBalString()); // @output {"self":{...}}
 }
