@@ -1,0 +1,15 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing return statement
+  --> anonNestedMissingReturn-e.bal:21:21
+   |
+21 |         var inner = function(int m) returns int { // @error missing return statement in nested lambda
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |             if m > 1 {
+   |             ^^^^^^^^^^
+23 |                 return m;
+   |                 ^^^^^^^^^
+24 |             }
+   |             ^
+25 |         };
+   |         ^

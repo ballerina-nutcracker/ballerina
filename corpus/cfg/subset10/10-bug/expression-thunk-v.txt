@@ -230,3 +230,50 @@
       (simple-var-ref values))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable inner (type
+        (user-defined-type IntFn)) (expr
+        (lambda
+          (function $anonFunc$_1 () (
+            (value-type int))
+            (block-function-body
+              (compound-assignment +
+                (simple-var-ref local)
+                (literal 1))
+              (compound-assignment +
+                (field-based-access value
+                  (simple-var-ref self))
+                (simple-var-ref local))
+              (return
+                (field-based-access value
+                  (simple-var-ref self)))))))))
+    (var-def
+      (variable values (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (invocation inner ())
+          (list-constructor-expr
+            (invocation inner ()))))))
+    (return
+      (index-based-access
+        (simple-var-ref values)
+        (literal 1)))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref local)
+      (literal 1))
+    (compound-assignment +
+      (field-based-access value
+        (simple-var-ref self))
+      (simple-var-ref local))
+    (return
+      (field-based-access value
+        (simple-var-ref self)))
+  )
+)

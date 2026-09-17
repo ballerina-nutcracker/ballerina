@@ -105,3 +105,211 @@
         (simple-var-ref val))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (lambda
+        (function $anonFunc$_1 (
+          (variable p2 (type
+            (value-type int)))) (
+          (user-defined-type F1))
+          (block-function-body
+            (return
+              (lambda
+                (function $anonFunc$_2 (
+                  (variable p3 (type
+                    (value-type int)))) (
+                  (user-defined-type F))
+                  (block-function-body
+                    (var-def
+                      (variable a (type
+                        (user-defined-type F)) (expr
+                        (lambda
+                          (function $anonFunc$_3 (
+                            (variable p4 (type
+                              (value-type int)))) (
+                            (value-type int))
+                            (block-function-body
+                              (compound-assignment *
+                                (simple-var-ref val)
+                                (literal 2))
+                              (return
+                                (binary-expr +
+                                  (binary-expr +
+                                    (binary-expr +
+                                      (binary-expr +
+                                        (simple-var-ref val)
+                                        (simple-var-ref p1))
+                                      (simple-var-ref p2))
+                                    (simple-var-ref p3))
+                                  (simple-var-ref p4)))))))))
+                    (var-def
+                      (variable b (type
+                        (value-type int)) (expr
+                        (invocation a (
+                          (simple-var-ref p3))))))
+                    (return
+                      (lambda
+                        (function $anonFunc$_4 (
+                          (variable p4 (type
+                            (value-type int)))) (
+                          (value-type int))
+                          (block-function-body
+                            (compound-assignment +
+                              (simple-var-ref val)
+                              (simple-var-ref b))
+                            (return
+                              (binary-expr +
+                                (binary-expr +
+                                  (binary-expr +
+                                    (binary-expr +
+                                      (simple-var-ref val)
+                                      (simple-var-ref p1))
+                                    (simple-var-ref p2))
+                                  (simple-var-ref p3))
+                                (simple-var-ref p4)))))))))))))))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (lambda
+        (function $anonFunc$_2 (
+          (variable p3 (type
+            (value-type int)))) (
+          (user-defined-type F))
+          (block-function-body
+            (var-def
+              (variable a (type
+                (user-defined-type F)) (expr
+                (lambda
+                  (function $anonFunc$_3 (
+                    (variable p4 (type
+                      (value-type int)))) (
+                    (value-type int))
+                    (block-function-body
+                      (compound-assignment *
+                        (simple-var-ref val)
+                        (literal 2))
+                      (return
+                        (binary-expr +
+                          (binary-expr +
+                            (binary-expr +
+                              (binary-expr +
+                                (simple-var-ref val)
+                                (simple-var-ref p1))
+                              (simple-var-ref p2))
+                            (simple-var-ref p3))
+                          (simple-var-ref p4)))))))))
+            (var-def
+              (variable b (type
+                (value-type int)) (expr
+                (invocation a (
+                  (simple-var-ref p3))))))
+            (return
+              (lambda
+                (function $anonFunc$_4 (
+                  (variable p4 (type
+                    (value-type int)))) (
+                  (value-type int))
+                  (block-function-body
+                    (compound-assignment +
+                      (simple-var-ref val)
+                      (simple-var-ref b))
+                    (return
+                      (binary-expr +
+                        (binary-expr +
+                          (binary-expr +
+                            (binary-expr +
+                              (simple-var-ref val)
+                              (simple-var-ref p1))
+                            (simple-var-ref p2))
+                          (simple-var-ref p3))
+                        (simple-var-ref p4)))))))))))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (user-defined-type F)) (expr
+        (lambda
+          (function $anonFunc$_3 (
+            (variable p4 (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (compound-assignment *
+                (simple-var-ref val)
+                (literal 2))
+              (return
+                (binary-expr +
+                  (binary-expr +
+                    (binary-expr +
+                      (binary-expr +
+                        (simple-var-ref val)
+                        (simple-var-ref p1))
+                      (simple-var-ref p2))
+                    (simple-var-ref p3))
+                  (simple-var-ref p4)))))))))
+    (var-def
+      (variable b (type
+        (value-type int)) (expr
+        (invocation a (
+          (simple-var-ref p3))))))
+    (return
+      (lambda
+        (function $anonFunc$_4 (
+          (variable p4 (type
+            (value-type int)))) (
+          (value-type int))
+          (block-function-body
+            (compound-assignment +
+              (simple-var-ref val)
+              (simple-var-ref b))
+            (return
+              (binary-expr +
+                (binary-expr +
+                  (binary-expr +
+                    (binary-expr +
+                      (simple-var-ref val)
+                      (simple-var-ref p1))
+                    (simple-var-ref p2))
+                  (simple-var-ref p3))
+                (simple-var-ref p4)))))))
+  )
+)
+($anonFunc$_3
+  (bb0 () ()
+    (compound-assignment *
+      (simple-var-ref val)
+      (literal 2))
+    (return
+      (binary-expr +
+        (binary-expr +
+          (binary-expr +
+            (binary-expr +
+              (simple-var-ref val)
+              (simple-var-ref p1))
+            (simple-var-ref p2))
+          (simple-var-ref p3))
+        (simple-var-ref p4)))
+  )
+)
+($anonFunc$_4
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref val)
+      (simple-var-ref b))
+    (return
+      (binary-expr +
+        (binary-expr +
+          (binary-expr +
+            (binary-expr +
+              (simple-var-ref val)
+              (simple-var-ref p1))
+            (simple-var-ref p2))
+          (simple-var-ref p3))
+        (simple-var-ref p4)))
+  )
+)

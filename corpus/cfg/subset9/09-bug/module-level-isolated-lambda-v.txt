@@ -7,3 +7,9 @@
         (simple-var-ref moduleLevelLambda))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (literal 50))
+  )
+)

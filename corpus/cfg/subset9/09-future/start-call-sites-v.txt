@@ -435,3 +435,9 @@
       (literal 2))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (simple-var-ref captured))
+  )
+)
