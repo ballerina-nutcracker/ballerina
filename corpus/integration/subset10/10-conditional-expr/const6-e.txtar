@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> const6-e.bal:19:16
+   |
+19 | const A = 1 ?: runtimeValue; // @error
+   |                ^^^^^^^^^^^^
