@@ -11,3 +11,9 @@
           (user-defined-type Node)))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (list-constructor-expr))
+  )
+)

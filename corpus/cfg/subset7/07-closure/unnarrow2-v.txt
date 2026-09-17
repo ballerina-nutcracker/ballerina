@@ -45,3 +45,21 @@
           (literal 5))))))
   )
 )
+($anonFunc$_0
+  (bb0 () (bb1 bb2)
+    (group-expr
+      (simple-var-ref flag))
+  )
+  (bb1 (bb0) ()
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref offset)))
+  )
+  (bb2 (bb0) ()
+    (return
+      (binary-expr -
+        (simple-var-ref x)
+        (simple-var-ref offset)))
+  )
+)

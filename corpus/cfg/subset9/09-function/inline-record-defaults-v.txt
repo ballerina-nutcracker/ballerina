@@ -92,3 +92,87 @@
         (simple-var-ref input)))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable innerFn (type
+        (user-defined-type InnerFn)) (expr
+        (lambda
+          (function $anonFunc$_1 (
+            (variable y (type
+              (record-type
+                (field b
+                  (value-type int)
+                  (literal 8)))))) (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable nestedFn (type
+                  (user-defined-type NestedFn)) (expr
+                  (lambda
+                    (function $anonFunc$_2 (
+                      (variable z (type
+                        (record-type
+                          (field c
+                            (value-type int)
+                            (literal 9)))))) (
+                      (value-type int))
+                      (block-function-body
+                        (return
+                          (binary-expr +
+                            (binary-expr +
+                              (field-based-access a
+                                (simple-var-ref x))
+                              (field-based-access b
+                                (simple-var-ref y)))
+                            (field-based-access c
+                              (simple-var-ref z))))))))))
+              (return
+                (invocation nestedFn (
+                  (mapping-constructor-expr))))))))))
+    (return
+      (invocation innerFn (
+        (mapping-constructor-expr))))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (var-def
+      (variable nestedFn (type
+        (user-defined-type NestedFn)) (expr
+        (lambda
+          (function $anonFunc$_2 (
+            (variable z (type
+              (record-type
+                (field c
+                  (value-type int)
+                  (literal 9)))))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (binary-expr +
+                  (binary-expr +
+                    (field-based-access a
+                      (simple-var-ref x))
+                    (field-based-access b
+                      (simple-var-ref y)))
+                  (field-based-access c
+                    (simple-var-ref z))))))))))
+    (return
+      (invocation nestedFn (
+        (mapping-constructor-expr))))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (binary-expr +
+          (field-based-access a
+            (simple-var-ref x))
+          (field-based-access b
+            (simple-var-ref y)))
+        (field-based-access c
+          (simple-var-ref z))))
+  )
+)

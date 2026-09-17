@@ -44,3 +44,14 @@
         (simple-var-ref a))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref a)
+      (literal 1))
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref a)))
+  )
+)
