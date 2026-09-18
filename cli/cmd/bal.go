@@ -53,6 +53,7 @@ func main() {
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(packCmd)
 	rootCmd.AddCommand(buildCmd)
+	rootCmd.AddCommand(testCmd)
 	rootCmd.AddCommand(pushCmd)
 	rootCmd.AddCommand(cleanCmd)
 	rootCmd.AddCommand(versionCmd)

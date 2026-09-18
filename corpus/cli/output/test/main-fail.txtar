@@ -1,0 +1,10 @@
+-- stdout --
+true
+PASS mainfail:testStillRuns
+<run>
+    first failure from main
+    second failure from main
+1 passing, 0 failing, 0 errored, 0 skipped
+-- stderr --
+-- exitcode --
+1

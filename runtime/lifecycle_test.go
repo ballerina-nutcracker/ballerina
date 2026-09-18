@@ -523,3 +523,56 @@ func (p *lifecycleTestPal) Stdout() string {
 func (p *lifecycleTestPal) String() string {
 	return fmt.Sprintf("stdout=%q stderr=%q", p.stdout.String(), p.stderr.String())
 }
+
+// InvokeFunction must not leak locks held by a panicking callee; otherwise the
+// next invocation entering the same lock deadlocks.
+func TestInvokeFunctionReleasesHeldLocksOnPanic(t *testing.T) {
+	platform := newLifecycleTestPal(t)
+	rt := newLifecycleTestRuntime(t, `
+isolated int counter = 0;
+
+public function panicInLock() {
+    int[] empty = [];
+    lock {
+        counter += empty[1];
+    }
+}
+
+public function enterLock() returns int {
+    lock {
+        counter += 1;
+        return counter;
+    }
+}
+`, platform)
+
+	panicking, ok := runtime.LookupFunction(rt, "testorg", "lifecycletest", "panicInLock")
+	if !ok {
+		t.Fatal("panicInLock not found")
+	}
+	if recovered := invokeAndRecover(rt, panicking); recovered == nil {
+		t.Fatal("expected panicInLock to panic")
+	}
+
+	entering, ok := runtime.LookupFunction(rt, "testorg", "lifecycletest", "enterLock")
+	if !ok {
+		t.Fatal("enterLock not found")
+	}
+	done := make(chan values.BalValue, 1)
+	go func() {
+		result, err := runtime.InvokeFunction(rt, entering, nil)
+		if err != nil {
+			t.Errorf("enterLock returned an error: %v", err)
+		}
+		done <- result
+	}()
+
+	select {
+	case result := <-done:
+		if got, want := result, values.BalValue(int64(1)); got != want {
+			t.Fatalf("enterLock returned %v, want %v", got, want)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("enterLock deadlocked on a lock held by the panicking invocation")
+	}
+}

@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/common/tomlparser"
+	"github.com/ballerina-nutcracker/ballerina/compilerplugin"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
@@ -39,6 +40,9 @@ type ProjectLoadConfig struct {
 	// <project-path>/.ballerina for build projects and <file-path-parent>/.ballerina
 	// for single-file projects.
 	BallerinaEnvFs fs.FS
+	// CompilerPlugins are host-injected compiler plugins applied to root-package
+	// modules that explicitly import the plugin's provider package.
+	CompilerPlugins []compilerplugin.InjectedPlugin
 }
 
 // ProjectLoader loads Ballerina projects from the filesystem.
@@ -146,6 +150,7 @@ func (l *ProjectLoader) createWorkspaceEnvironment(cfg ProjectLoadConfig, worksp
 	env := NewProjectEnvironmentBuilder(l.projectFs).
 		WithRepositories(repos).
 		WithBuildOptions(buildOpts).
+		WithCompilerPlugins(cfg.CompilerPlugins).
 		Build()
 	env.setCustomRepos(customRepos)
 	return env
@@ -200,6 +205,7 @@ func (l *ProjectLoader) createEnvironmentWithRepositories(cfg ProjectLoadConfig,
 	env := NewProjectEnvironmentBuilder(l.projectFs).
 		WithRepositories(repos).
 		WithBuildOptions(buildOpts).
+		WithCompilerPlugins(cfg.CompilerPlugins).
 		Build()
 	env.setCustomRepos(customRepos)
 	return env

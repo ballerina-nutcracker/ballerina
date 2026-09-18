@@ -1,0 +1,17 @@
+-- stdout --
+main: starting up
+calc module loaded
+PASS calc:testAdd
+FAIL calc:testFactorial
+ERROR calc:testDivideByZero
+PASS calc:testDivide
+PASS store:testPutAndGet
+calc:testFactorial
+    factorial(4) should be 24 but was 8
+    factorial(4) = 8
+calc:testDivideByZero
+    divide by zero
+3 passing, 1 failing, 1 errored, 0 skipped
+-- stderr --
+-- exitcode --
+1

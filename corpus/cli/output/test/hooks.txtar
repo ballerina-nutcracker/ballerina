@@ -1,0 +1,19 @@
+-- stdout --
+FAIL hooks:testWithHooks
+ERROR hooks:testBeforePanics
+FAIL hooks:testAfterRunsAfterAPassingBody
+ERROR hooks:testAfterPanics
+hooks:testWithHooks
+    body failed so the captured hook output is shown
+    setUp ran
+    tearDown ran
+hooks:testBeforePanics
+    hook exploded
+hooks:testAfterRunsAfterAPassingBody
+    after ran
+hooks:testAfterPanics
+    hook exploded
+0 passing, 2 failing, 2 errored, 0 skipped
+-- stderr --
+-- exitcode --
+1

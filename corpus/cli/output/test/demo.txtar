@@ -1,0 +1,33 @@
+-- stdout --
+main: starting up
+calc module loaded
+PASS calc:testAdd
+FAIL calc:testFactorial
+ERROR calc:testDivideByZero
+PASS calc:testDivide
+PASS store:testPutAndGet
+ERROR store:testGetOutOfRange
+FAIL store:testSizeExpectations
+SKIP store:testNotReadyYet
+PASS demo:testCalcAndStoreTogether
+FAIL demo:testWithABrokenSetUp
+ERROR demo:testMissingConfiguration
+calc:testFactorial
+    factorial(4) should be 24 but was 8
+    factorial(4) = 8
+calc:testDivideByZero
+    divide by zero
+store:testGetOutOfRange
+    invalid array index: 9999
+store:testSizeExpectations
+    size should start at 0
+    size should never shrink
+    both assertions trapped: true
+demo:testWithABrokenSetUp
+    set up could not prepare the fixture
+demo:testMissingConfiguration
+    bad type cast
+4 passing, 3 failing, 3 errored, 1 skipped
+-- stderr --
+-- exitcode --
+1

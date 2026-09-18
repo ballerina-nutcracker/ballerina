@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "notestimport"
+version = "0.1.0"
