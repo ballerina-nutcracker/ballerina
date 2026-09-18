@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: arithmetic overflow
+  --> decimal-overflow-e.bal:17:11
+   |
+17 | const A = 9.999999999999999999999999999999999E6144d * 2d; // @error
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
