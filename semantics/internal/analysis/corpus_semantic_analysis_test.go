@@ -52,7 +52,7 @@ func testSemanticAnalysis(t *testing.T, testCase test_util.TestCase) {
 		}
 	}()
 
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	cx := context.NewCompilerContext(env)
 	langlibs, err := testphases.LoadLanglibs(env, cx)
 	if err != nil {
@@ -154,7 +154,7 @@ func testSemanticAnalysisError(t *testing.T, testCase test_util.TestCase) {
 		return
 	}
 
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	cx := context.NewCompilerContext(env)
 
 	defer func() {

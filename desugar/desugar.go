@@ -198,6 +198,9 @@ type functionContext struct {
 	// typeContext is the non-shared type context for this function. It is owned
 	// by the goroutine desugaring this function and must not be shared.
 	typeContext semtypes.Context
+	// span is this function's trace span. Nested functions desugared from this
+	// context attach beneath it. Like typeContext it is goroutine-confined.
+	span context.TraceSpan
 }
 
 // typeCtx returns the function-local type context, lazily creating it on first
@@ -588,7 +591,14 @@ func serviceInitResultType(pkgCtx *packageContext, svc *ast.BLangService, svcTy 
 	return semtypes.Union(errComponent, svcTy)
 }
 
-func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext, pkg *ast.BLangPackage) []*ast.BLangFunction {
+func desugarInitFn(
+	pkgCtx *packageContext,
+	compilerCtx *context.CompilerContext,
+	pkg *ast.BLangPackage,
+	parent context.TraceSpan,
+) []*ast.BLangFunction {
+	span := parent.StartChild("Module Init", "")
+	defer span.End()
 	nodes := collectModuleInitNodes(pkg)
 	order, ok := toplogicallySortInits(compilerCtx, nodes)
 	if !ok {
@@ -654,7 +664,7 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 		body.Stmts = append(initStmts, body.Stmts...)
 	}
 
-	initFn, generatedFunctions := desugarFunction(pkgCtx, pkg.InitFunction)
+	initFn, generatedFunctions := desugarFunction(pkgCtx, pkg.InitFunction, span)
 	*pkg.InitFunction = *initFn
 
 	if hasListeners {
@@ -1592,8 +1602,25 @@ func remapSymbolRefs(node ast.BLangNode, mapping map[model.SymbolRef]model.Symbo
 	ast.Walk(symbolRemapper{mapping: mapping}, node)
 }
 
+// runPreludeStep brackets one sequential desugaring step with its own span.
+func runPreludeStep(parent context.TraceSpan, operation string, step func()) {
+	span := parent.StartChild(operation, "")
+	defer span.End()
+	step()
+}
+
+// traceIdentity renders a node's name for a span label.
+func traceIdentity(name ast.IdentifierNode) string {
+	if name == nil {
+		return ""
+	}
+	return name.GetValue()
+}
+
 // DesugarPackage returns a desugared package (may be new or same instance)
 func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) *ast.BLangPackage {
+	span := compilerCtx.StartPackageSpan("Desugaring", pkg.PackageID)
+	defer span.End()
 	if importedSymbols == nil {
 		importedSymbols = make(map[string]model.ExportedSymbolSpace)
 	}
@@ -1608,48 +1635,53 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	}
 
 	// Desugar type definition default expressions into standalone functions
-	desugarTopLevelTypeDescs(pkgCtx, pkg)
-
-	desugarGlobalVars(pkgCtx, pkg)
-	desugarTopLevelFunctionDefaults(pkgCtx, pkg)
-	desugarClassMethodDefaults(pkgCtx, pkg)
+	runPreludeStep(span, "Type Descriptors", func() { desugarTopLevelTypeDescs(pkgCtx, pkg) })
+	runPreludeStep(span, "Global Variables", func() { desugarGlobalVars(pkgCtx, pkg) })
+	runPreludeStep(span, "Function Defaults", func() { desugarTopLevelFunctionDefaults(pkgCtx, pkg) })
+	runPreludeStep(span, "Class Method Defaults", func() { desugarClassMethodDefaults(pkgCtx, pkg) })
 
 	desugarObject := func(class *ast.BLangClassDefinition) []*ast.BLangFunction {
-		desugarClassDefinition(pkgCtx, class)
+		classSpan := span.StartChild("Class", traceIdentity(class.Name))
+		defer classSpan.End()
+		desugarClassDefinition(pkgCtx, class, classSpan)
 		var generatedFunctions []*ast.BLangFunction
 		for name, method := range class.Methods {
-			fn, generated := desugarFunction(pkgCtx, method)
+			fn, generated := desugarFunction(pkgCtx, method, classSpan)
 			class.Methods[name] = fn
 			generatedFunctions = append(generatedFunctions, generated...)
 		}
 		for _, rm := range class.ResourceMethods {
-			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm)...)
+			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm, classSpan)...)
 		}
-		fn, generated := desugarFunction(pkgCtx, class.InitFunction)
+		fn, generated := desugarFunction(pkgCtx, class.InitFunction, classSpan)
 		*class.InitFunction = *fn
 		return append(generatedFunctions, generated...)
 	}
 	desugarService := func(svc *ast.BLangService) []*ast.BLangFunction {
-		desugarServiceDefinition(pkgCtx, svc)
+		svcSpan := span.StartChild("Service", compilerCtx.SymbolName(svc.Symbol()))
+		defer svcSpan.End()
+		desugarServiceDefinition(pkgCtx, svc, svcSpan)
 		var generatedFunctions []*ast.BLangFunction
 		for name, method := range svc.Methods {
-			fn, generated := desugarFunction(pkgCtx, method)
+			fn, generated := desugarFunction(pkgCtx, method, svcSpan)
 			svc.Methods[name] = fn
 			generatedFunctions = append(generatedFunctions, generated...)
 		}
 		for _, rm := range svc.ResourceMethods {
-			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm)...)
+			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm, svcSpan)...)
 		}
-		fn, generated := desugarFunction(pkgCtx, svc.InitFunction)
+		fn, generated := desugarFunction(pkgCtx, svc.InitFunction, svcSpan)
 		*svc.InitFunction = *fn
 		return append(generatedFunctions, generated...)
 	}
-	for i := range pkg.Services {
-		ensureServiceDefaultInitFunction(pkgCtx, pkg.Services[i])
-	}
+	runPreludeStep(span, "Service Init Synthesis", func() {
+		for i := range pkg.Services {
+			ensureServiceDefaultInitFunction(pkgCtx, pkg.Services[i])
+		}
+	})
 
-	hoistInlineServiceListeners(pkgCtx, pkg)
-	generatedFunctions := desugarInitFn(pkgCtx, compilerCtx, pkg)
+	runPreludeStep(span, "Inline Listener Hoisting", func() { hoistInlineServiceListeners(pkgCtx, pkg) })
+	generatedFunctions := desugarInitFn(pkgCtx, compilerCtx, pkg, span)
 
 	// Each worker writes generated functions to its own result slot. The slots
 	// are merged only after all workers finish, so generation never blocks on
@@ -1661,7 +1693,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 			defer recoverPanic(&pos)
 			function := pkg.Functions[i]
 			pos = function.GetPosition()
-			fn, generated := desugarFunction(pkgCtx, function)
+			fn, generated := desugarFunction(pkgCtx, function, span)
 			pkg.Functions[i] = fn
 			functionResults[i] = generated
 		})
@@ -1704,14 +1736,19 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	return pkg
 }
 
-func desugarClassDefinition(pkgCtx *packageContext, class *ast.BLangClassDefinition) {
+func desugarClassDefinition(
+	pkgCtx *packageContext, class *ast.BLangClassDefinition, parent context.TraceSpan) {
+	span := parent.StartChild("Class Body Init", "")
+	defer span.End()
 	if class.InitFunction == nil {
 		class.InitFunction = synthesizeDefaultInitFunction(pkgCtx, class.Scope(), class.GetPosition())
 	}
 	desugarClassBodyInit(pkgCtx, class.Scope(), class.Fields, class.InitFunction)
 }
 
-func desugarServiceDefinition(pkgCtx *packageContext, svc *ast.BLangService) {
+func desugarServiceDefinition(pkgCtx *packageContext, svc *ast.BLangService, parent context.TraceSpan) {
+	span := parent.StartChild("Class Body Init", "")
+	defer span.End()
 	// svc.InitFunction is guaranteed non-nil by the ensureServiceDefaultInitFunction pre-pass.
 	desugarClassBodyInit(pkgCtx, svc.Scope(), svc.Fields, svc.InitFunction)
 }
@@ -1788,11 +1825,14 @@ func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields
 	}
 }
 
-func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) []*ast.BLangFunction {
+func desugarResourceMethod(
+	pkgCtx *packageContext, rm *ast.BLangResourceMethod, parent context.TraceSpan) []*ast.BLangFunction {
 	if rm.Body == nil {
 		return nil
 	}
-	cx := &functionContext{pkgCtx: pkgCtx, owner: rm.Symbol()}
+	span := parent.StartChild("Resource Method", traceIdentity(rm.Name))
+	defer span.End()
+	cx := &functionContext{pkgCtx: pkgCtx, owner: rm.Symbol(), span: span}
 	cx.pushScope(rm.Scope())
 	defer cx.popScope()
 	switch body := rm.Body.(type) {
@@ -1806,13 +1846,17 @@ func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) 
 
 // desugarFunction returns a desugared function and functions generated while
 // desugaring it.
-func desugarFunction(pkgCtx *packageContext, fn *ast.BLangFunction) (*ast.BLangFunction, []*ast.BLangFunction) {
-	cx := &functionContext{pkgCtx: pkgCtx, owner: fn.Symbol()}
+func desugarFunction(
+	pkgCtx *packageContext, fn *ast.BLangFunction, parent context.TraceSpan,
+) (*ast.BLangFunction, []*ast.BLangFunction) {
+	span := parent.StartChild("Function", traceIdentity(fn.Name))
+	defer span.End()
+	cx := &functionContext{pkgCtx: pkgCtx, owner: fn.Symbol(), span: span}
 	return desugarFunctionWithContext(cx, fn), cx.generatedFunctions
 }
 
 func desugarNestedFunction(cx *functionContext, fn *ast.BLangFunction) *ast.BLangFunction {
-	fn, generated := desugarFunction(cx.pkgCtx, fn)
+	fn, generated := desugarFunction(cx.pkgCtx, fn, cx.span)
 	cx.generatedFunctions = append(cx.generatedFunctions, generated...)
 	return fn
 }

@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/common/tomlparser"
+	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
@@ -33,6 +34,10 @@ type ProjectLoadConfig struct {
 	// Repositories specifies custom repositories for package resolution.
 	// If nil, default repositories will be created from BallerinaEnvFs.
 	Repositories []Repository
+	// CompilerEnvironment is the compiler environment shared by the root
+	// package, workspace members, and every dependency compiled during this
+	// load. If nil, a tracing-disabled environment is created.
+	CompilerEnvironment *context.CompilerEnvironment
 	// BallerinaEnvFs is the filesystem containing the Ballerina home directory.
 	// Used to locate default repositories (central cache) when Repositories is nil.
 	// If nil, defaults to fs.Sub(projectFs, ".ballerina") — which resolves to
@@ -146,6 +151,7 @@ func (l *ProjectLoader) createWorkspaceEnvironment(cfg ProjectLoadConfig, worksp
 	env := NewProjectEnvironmentBuilder(l.projectFs).
 		WithRepositories(repos).
 		WithBuildOptions(buildOpts).
+		WithCompilerEnvironment(cfg.CompilerEnvironment).
 		Build()
 	env.setCustomRepos(customRepos)
 	return env
@@ -200,6 +206,7 @@ func (l *ProjectLoader) createEnvironmentWithRepositories(cfg ProjectLoadConfig,
 	env := NewProjectEnvironmentBuilder(l.projectFs).
 		WithRepositories(repos).
 		WithBuildOptions(buildOpts).
+		WithCompilerEnvironment(cfg.CompilerEnvironment).
 		Build()
 	env.setCustomRepos(customRepos)
 	return env

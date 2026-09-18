@@ -28,6 +28,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/cli/internal/nativeexec"
 	"github.com/ballerina-nutcracker/ballerina/cli/internal/nativerunner"
 	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
+	balcontext "github.com/ballerina-nutcracker/ballerina/context"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/rt"
 	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
@@ -47,8 +48,6 @@ var runOpts struct {
 	dumpCFG          bool
 	dumpBIR          bool
 	traceRecovery    bool
-	stats            bool
-	statsOneline     bool
 	logFile          string
 	format           string // Output format (dot, etc.)
 	targetDir        string
@@ -94,15 +93,48 @@ func init() {
 	runCmd.Flags().BoolVar(&runOpts.dumpCFG, "dump-cfg", false, "Dump control flow graph")
 	runCmd.Flags().BoolVar(&runOpts.dumpBIR, "dump-bir", false, "Dump Ballerina Intermediate Representation")
 	runCmd.Flags().BoolVar(&runOpts.traceRecovery, "trace-recovery", false, "Enable error recovery tracing")
-	runCmd.Flags().BoolVar(&runOpts.stats, "stats", false, "Print per-stage compilation timing statistics")
-	runCmd.Flags().BoolVar(&runOpts.statsOneline, "stats-oneline", false, "Print per-stage compilation timing totals only")
 	runCmd.Flags().StringVar(&runOpts.logFile, "log-file", "", "Write debug output to specified file")
 	runCmd.Flags().StringVar(&runOpts.format, "format", "", "Output format for dump operations (dot)")
 	runCmd.Flags().StringVar(&runOpts.targetDir, "target-dir", "", "target directory path")
+	registerTraceFlag(runCmd)
 	profiler.RegisterFlags(runCmd)
 }
 
+// runBallerina owns the single compiler environment and the trace output
+// lifecycle; compileAndRun does the work against them.
 func runBallerina(cmd *cobra.Command, args []string) error {
+	// The compiler environment owns tracing, so it is created from the parsed
+	// flags before any other setup and shared by loading, dependency
+	// resolution, and compilation.
+	traceOptions, tracePath, err := runTraceOptions(cmd)
+	if err != nil {
+		return runError("%w", err)
+	}
+	compilerEnv := balcontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), traceOptions)
+	traceOutput := newRunTraceOutput(tracePath)
+	defer traceOutput.reportFailureDuringPanic(compilerEnv)
+
+	runErr := compileAndRun(cmd, args, compilerEnv, traceOutput, traceOptions.Enabled)
+
+	// compileAndRun finalizes the trace once it gets as far as BIR generation,
+	// so a write still pending here means it returned before that point.
+	if traceErr := traceOutput.finalize(compilerEnv); traceErr != nil {
+		if runErr == nil {
+			return traceErr
+		}
+		// Keep the original failure and additionally report this one.
+		fmt.Fprintln(os.Stderr, traceErr)
+	}
+	return runErr
+}
+
+func compileAndRun(
+	cmd *cobra.Command,
+	args []string,
+	compilerEnv *balcontext.CompilerEnvironment,
+	traceOutput *runTraceOutput,
+	traceEnabled bool,
+) error {
 	// --target-dir is resolved relative to the process cwd (matching
 	// clean.go's own --target-dir), independent of the package path arg.
 	var targetDirOverride string
@@ -125,7 +157,6 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 		WithDumpTokens(runOpts.dumpTokens).
 		WithDumpST(runOpts.dumpST).
 		WithTraceRecovery(runOpts.traceRecovery).
-		WithStats(runOpts.stats || runOpts.statsOneline).
 		WithTargetDir(targetDirOverride).
 		Build()
 
@@ -204,8 +235,9 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
 
 	result, err := projects.Load(fsys, loadPath, projects.ProjectLoadConfig{
-		BallerinaEnvFs: ballerinaEnvFs,
-		BuildOptions:   &buildOpts,
+		BallerinaEnvFs:      ballerinaEnvFs,
+		BuildOptions:        &buildOpts,
+		CompilerEnvironment: compilerEnv,
 	})
 	if err != nil {
 		return runError("%w", err)
@@ -251,7 +283,7 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 		if targetDir == "" {
 			targetDir = filepath.Join(absBaseDir, projects.TargetDir)
 		}
-		if err := execWithNativeRunner(pkg, project, targetDir); err != nil {
+		if err := execWithNativeRunner(pkg, project, targetDir, traceEnabled); err != nil {
 			return runError("%w", err)
 		}
 	}
@@ -283,10 +315,10 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("BIR generation failed: no BIR package produced")
 	}
 
-	if runOpts.statsOneline {
-		fmt.Fprint(os.Stderr, compilation.StatsReportOneline())
-	} else if buildOpts.Stats() {
-		fmt.Fprint(os.Stderr, compilation.StatsReport())
+	// Frontend work is complete: write the trace before the runtime exists so a
+	// write failure keeps the program from running.
+	if traceErr := traceOutput.finalize(compilerEnv); traceErr != nil {
+		return traceErr
 	}
 
 	// Only dump BIR for packages belonging to the root package (same org+name).
@@ -368,11 +400,17 @@ func findBuildProjectByPath(workspace *projects.WorkspaceProject, workspaceAbsRo
 
 // execWithNativeRunner builds a custom interpreter embedding any native Go
 // dependencies and re-execs into it. On success it never returns (os.Exit).
-func execWithNativeRunner(pkg *projects.Package, project projects.Project, targetDir string) error {
+func execWithNativeRunner(pkg *projects.Package, project projects.Project, targetDir string, traceEnabled bool) error {
 	resolution := pkg.Resolution()
 	nativeBalaProjects := findNativeGoBalaProjects(resolution, project.Environment())
 	if len(nativeBalaProjects) == 0 {
 		return nil
+	}
+
+	// The re-executed interpreter is a separate process with its own compiler
+	// environment, so its spans could never reach this recording.
+	if traceEnabled {
+		return runError("--trace is not supported for packages with non-embedded native dependencies")
 	}
 
 	outBin := filepath.Join(targetDir, "bin", "bal")

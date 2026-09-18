@@ -14,25 +14,17 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package projects
+import ballerina/io;
 
-import (
-	"testing"
-
-	compilercontext "github.com/ballerina-nutcracker/ballerina/context"
-	"github.com/ballerina-nutcracker/ballerina/semtypes"
-)
-
-func TestNewModuleCompilerContextInitializesStats(t *testing.T) {
-	env := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
-	name := NewDefaultModuleName(NewPackageName("module"))
-
-	compilerCtx := newModuleCompilerContext(env, name)
-	stats := compilerCtx.GetModuleStats()
-	if stats == nil {
-		t.Fatal("expected module stats")
-	}
-	if stats.ModuleName != name.String() {
-		t.Fatalf("module name = %q, want %q", stats.ModuleName, name.String())
-	}
+// Reads the trace the CLI wrote before the runtime was created, then fails.
+// The reported size proves the recording was complete and observable during
+// module initialization, and that the runtime failure did not change it.
+public function main() {
+    string|io:Error content = io:fileReadString("traces.json");
+    if content is io:Error {
+        io:println("trace unreadable");
+        return;
+    }
+    io:println("trace bytes: ", content.length());
+    panic error("runtime failure after the trace was written");
 }
