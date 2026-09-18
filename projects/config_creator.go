@@ -139,15 +139,20 @@ func createBalaProjectConfig(fsys fs.FS, balaPath string) (balaProjectConfigResu
 		BallerinaTomlFile,
 		string(ballerinaTomlContent),
 	)
+	compilerPluginTomlDoc, err := readOptionalPackageDocument(fsys, balaPath, CompilerPluginTomlFile, defaultModuleConfig.ModuleID())
+	if err != nil {
+		return balaProjectConfigResult{}, err
+	}
 
 	config := NewPackageConfig(PackageConfigParams{
-		PackageID:       packageID,
-		PackageManifest: manifest,
-		PackagePath:     balaPath,
-		DefaultModule:   defaultModuleConfig,
-		OtherModules:    otherModules,
-		BallerinaToml:   ballerinaTomlDoc,
-		ReadmeMd:        nil, // TODO: read from docs/
+		PackageID:          packageID,
+		PackageManifest:    manifest,
+		PackagePath:        balaPath,
+		DefaultModule:      defaultModuleConfig,
+		OtherModules:       otherModules,
+		BallerinaToml:      ballerinaTomlDoc,
+		CompilerPluginToml: compilerPluginTomlDoc,
+		ReadmeMd:           nil, // TODO: read from docs/
 	})
 
 	return balaProjectConfigResult{
@@ -198,15 +203,20 @@ func createBalaProjectConfigLegacy(fsys fs.FS, balaPath string) (balaProjectConf
 	if err != nil {
 		return balaProjectConfigResult{}, err
 	}
+	compilerPluginTomlDoc, err := readOptionalPackageDocument(fsys, balaPath, CompilerPluginTomlFile, defaultModuleConfig.ModuleID())
+	if err != nil {
+		return balaProjectConfigResult{}, err
+	}
 
 	config := NewPackageConfig(PackageConfigParams{
-		PackageID:       packageID,
-		PackageManifest: manifest,
-		PackagePath:     balaPath,
-		DefaultModule:   defaultModuleConfig,
-		OtherModules:    moduleConfigs,
-		BallerinaToml:   nil,
-		ReadmeMd:        nil, // TODO: read from docs/
+		PackageID:          packageID,
+		PackageManifest:    manifest,
+		PackagePath:        balaPath,
+		DefaultModule:      defaultModuleConfig,
+		OtherModules:       moduleConfigs,
+		BallerinaToml:      nil,
+		CompilerPluginToml: compilerPluginTomlDoc,
+		ReadmeMd:           nil, // TODO: read from docs/
 	})
 
 	return balaProjectConfigResult{
@@ -590,6 +600,10 @@ func createBuildProjectConfig(fsys fs.FS, projectDirPath string) (PackageConfig,
 	}
 	ballerinaTomlDocID := NewDocumentID(BallerinaTomlFile, defaultModuleID)
 	ballerinaTomlDoc := NewDocumentConfig(ballerinaTomlDocID, BallerinaTomlFile, string(ballerinaTomlContent))
+	compilerPluginTomlDoc, err := readOptionalPackageDocument(fsys, projectDirPath, CompilerPluginTomlFile, defaultModuleID)
+	if err != nil {
+		return PackageConfig{}, err
+	}
 
 	// Check for README.md
 	var readmeMdDoc DocumentConfig
@@ -604,14 +618,26 @@ func createBuildProjectConfig(fsys fs.FS, projectDirPath string) (PackageConfig,
 
 	// Build PackageConfig
 	return NewPackageConfig(PackageConfigParams{
-		PackageID:       packageID,
-		PackageManifest: manifest,
-		PackagePath:     projectDirPath,
-		DefaultModule:   defaultModuleConfig,
-		OtherModules:    otherModules,
-		BallerinaToml:   ballerinaTomlDoc,
-		ReadmeMd:        readmeMdDoc,
+		PackageID:          packageID,
+		PackageManifest:    manifest,
+		PackagePath:        projectDirPath,
+		DefaultModule:      defaultModuleConfig,
+		OtherModules:       otherModules,
+		BallerinaToml:      ballerinaTomlDoc,
+		CompilerPluginToml: compilerPluginTomlDoc,
+		ReadmeMd:           readmeMdDoc,
 	}), nil
+}
+
+func readOptionalPackageDocument(fsys fs.FS, packagePath, name string, moduleID ModuleID) (DocumentConfig, error) {
+	content, err := fs.ReadFile(fsys, path.Join(packagePath, name))
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return NewDocumentConfig(NewDocumentID(name, moduleID), name, string(content)), nil
 }
 
 // createDefaultModuleConfig creates a ModuleConfig for the default module.

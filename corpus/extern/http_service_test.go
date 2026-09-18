@@ -69,6 +69,11 @@ func TestHttpServiceRequest(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-request-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+func TestHttpServiceResourceSignatureErrors(t *testing.T) {
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-signature-e"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceRouting exercises 200 / 404 (unknown path) / 405 (wrong
 // method) dispatch outcomes.
 func TestHttpServiceRouting(t *testing.T) {

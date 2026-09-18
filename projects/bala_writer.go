@@ -84,6 +84,9 @@ func populateBalaArchive(zw *zip.Writer, pkg *Package, resolution *PackageResolu
 	if err := copyBallerinaToml(zw, pkg); err != nil {
 		return err
 	}
+	if err := copyCompilerPluginToml(zw, pkg); err != nil {
+		return err
+	}
 	if err := writeDependenciesToml(zw, pkg, resolution); err != nil {
 		return err
 	}
@@ -91,6 +94,14 @@ func populateBalaArchive(zw *zip.Writer, pkg *Package, resolution *PackageResolu
 		return err
 	}
 	return nil
+}
+
+func copyCompilerPluginToml(zw *zip.Writer, pkg *Package) error {
+	manifest := pkg.CompilerPluginToml()
+	if manifest == nil {
+		return nil
+	}
+	return writeZipEntry(zw, CompilerPluginTomlFile, []byte(manifest.Content()))
 }
 
 func writeBalaToml(zw *zip.Writer, pkg *Package) error {
