@@ -1,0 +1,82 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable nestedMapping (type
+          (constrained-type
+            (builtin-ref-type map)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (readonly-fields inner)
+            (key-value
+              (literal inner)
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 1))))
+            (key-value
+              (literal other)
+              (mapping-constructor-expr
+                (key-value
+                  (literal y)
+                  (literal 2))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nestedMapping))))
+      (assignment
+        (index-based-access
+          (simple-var-ref nestedMapping)
+          (literal other))
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal 20))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref nestedMapping)
+            (literal other)))))
+      (var-def
+        (variable nestedList (type
+          (constrained-type
+            (builtin-ref-type map)
+            (array-type
+              (value-type int) dimensions: 1 ([])))) (expr
+          (mapping-constructor-expr
+            (readonly-fields inner)
+            (key-value
+              (literal inner)
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nestedList))))
+      (var-def
+        (variable frozen (type
+          (intersection-type
+            (array-type
+              (value-type int) dimensions: 1 ([]))
+            (value-type readonly))) (expr
+          (list-constructor-expr
+            (literal 3)
+            (literal 4)))))
+      (var-def
+        (variable referenced (type
+          (constrained-type
+            (builtin-ref-type map)
+            (array-type
+              (value-type int) dimensions: 1 ([])))) (expr
+          (mapping-constructor-expr
+            (readonly-fields inner)
+            (key-value
+              (literal inner)
+              (simple-var-ref frozen))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref referenced)))))))

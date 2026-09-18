@@ -164,3 +164,33 @@ func mappingAtomHasOptionalFieldByName(_ Context, atom *MappingAtomicType, key s
 	}
 	return false
 }
+
+// MappingWithReadonlyFields returns the mapping type of atom with the named fields narrowed to
+// immutable cells over their readonly values. A name atom does not declare is added as a
+// required field over the value part of the rest cell, which is how an explicitly readonly field
+// gets a cell of its own in a map<T>.
+//
+// The result is built as a single mapping atom rather than as an intersection with a readonly
+// constraint, because callers take ToMappingAtomicType of it and that only answers for a mapping
+// bdd that is a single positive atom.
+func MappingWithReadonlyFields(env Env, atom *MappingAtomicType, names []string) SemType {
+	readonlyCell := func(inner SemType) SemType {
+		return cellContainingWithEnvSemTypeCellMutability(env, Intersect(inner, ReadonlyInner), CellMutabilityNone)
+	}
+	fields := make([]cellField, 0, len(atom.names)+len(names))
+	for i, name := range atom.names {
+		ty := atom.types[i]
+		if slices.Contains(names, name) {
+			ty = readonlyCell(cellInner(ty))
+		}
+		fields = append(fields, cellFieldFrom(name, ty))
+	}
+	for _, name := range names {
+		if slices.ContainsFunc(fields, func(f cellField) bool { return f.Name == name }) {
+			continue
+		}
+		fields = append(fields, cellFieldFrom(name, readonlyCell(CellInnerVal(atom.rest))))
+	}
+	md := NewMappingDefinition()
+	return md.defineFromCells(env, fields, atom.rest)
+}

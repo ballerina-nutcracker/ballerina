@@ -1,0 +1,44 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad frozen
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad mutable
+    %4 = ConstantLoad 2
+    %5 = newMap {| frozen: int, int... |}{%1=%2, %3=%4}
+    m = %5;
+    %7 = ConstantLoad 20
+    %8 = ConstantLoad mutable
+    m[%8] = %7;
+    %9 = ConstantLoad 3
+    %10 = ConstantLoad added
+    m[%10] = %9;
+    %11 = println(m) -> bb1;
+  }
+  bb1 {
+    %13 = ConstantLoad frozen
+    %12 = m[%13];
+    %14 = %12;
+    %15 = println(%14) -> bb2;
+  }
+  bb2 {
+    %16 = ConstantLoad a
+    %17 = ConstantLoad 1
+    %18 = newMap {| a: int, int... |}{%16=%17}
+    marked = %18;
+    %20 = ConstantLoad a
+    %21 = ConstantLoad 1
+    %22 = newMap {| int... |}{%20=%21}
+    unmarked = %22;
+    %24 = ConstantLoad 2
+    %25 = ConstantLoad a
+    unmarked[%25] = %24;
+    %26 = println(marked) -> bb3;
+  }
+  bb3 {
+    %27 = println(unmarked) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
