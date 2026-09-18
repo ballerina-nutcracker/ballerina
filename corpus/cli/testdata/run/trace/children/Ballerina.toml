@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "cli_trace_children"
+version = "0.1.0"

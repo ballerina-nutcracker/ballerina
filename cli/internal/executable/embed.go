@@ -220,7 +220,7 @@ func unmarshalPayload(payload []byte) ([]*bir.BIRPackage, semtypes.Env, error) {
 	}
 
 	tyEnv := semtypes.CreateTypeEnv()
-	env := balctx.NewCompilerEnvironment(tyEnv, false)
+	env := balctx.NewCompilerEnvironment(tyEnv, balctx.TraceOptions{})
 	ctx := balctx.NewCompilerContext(env)
 
 	count := int(binary.BigEndian.Uint32(payload[:4]))

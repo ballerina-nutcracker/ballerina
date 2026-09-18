@@ -394,29 +394,31 @@ func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *bir.BIRPac
 	birPkg.PackageID = ast.PackageID
 	genCtx := newContext(ctx, ast.PackageID, birPkg)
 	birPkg.GlobalVars = make(map[string]bir.BIRGlobalVariableDcl)
+	globalVarSpan := span.StartChild("Global Variables", "")
 	for _, globalVar := range ast.GlobalVars {
 		addGlobalVar(birPkg, transformGlobalVariableDcl(genCtx, globalVar))
 	}
+	globalVarSpan.End()
 	// Constants are never added to the BIR package: a const-expr is evaluated at
 	// compile time, so a foldable constant is inlined at its use sites during
 	// desugar, and a constant that cannot be folded is a compile-time error
 	// (see resolveConstant). Either way no constant survives to BIR generation.
 	for i := range ast.ClassDefinitions {
-		classDef := transformClassDefinition(genCtx, ast.ClassDefinitions[i])
+		classDef := transformClassDefinition(genCtx, ast.ClassDefinitions[i], span)
 		if classDef == nil {
 			return nil
 		}
 		birPkg.ClassDefs = append(birPkg.ClassDefs, *classDef)
 	}
 	for i := range ast.Services {
-		classDef := transformService(genCtx, ast.Services[i], i)
+		classDef := transformService(genCtx, ast.Services[i], i, span)
 		if classDef == nil {
 			return nil
 		}
 		birPkg.ClassDefs = append(birPkg.ClassDefs, *classDef)
 	}
 	if ast.InitFunction != nil {
-		initFunc := transformFunction(genCtx, ast.InitFunction)
+		initFunc := transformFunction(genCtx, ast.InitFunction, span)
 		if initFunc == nil {
 			return nil
 		}
@@ -431,9 +433,11 @@ func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *bir.BIRPac
 		}
 		var birFunc *bir.BIRFunction
 		if function.IsNative() {
+			nativeSpan := span.StartChild("Native Function", function.GetName().GetValue())
 			birFunc = transformNativeFunction(newFunctionRoot(genCtx, nil), function, nil)
+			nativeSpan.End()
 		} else {
-			birFunc = transformFunction(genCtx, function)
+			birFunc = transformFunction(genCtx, function, span)
 			if birFunc == nil {
 				return nil
 			}
@@ -472,7 +476,10 @@ func transformGlobalVariableDcl(ctx *packageContext, ast *ast.BLangVariable) bir
 	return dcl
 }
 
-func transformFunction(ctx *packageContext, astFunc *ast.BLangFunction) *bir.BIRFunction {
+func transformFunction(
+	ctx *packageContext, astFunc *ast.BLangFunction, parent compilerctx.TraceSpan) *bir.BIRFunction {
+	span := parent.StartChild("Function", astFunc.GetName().GetValue())
+	defer span.End()
 	return transformFunctionInner(newFunctionRoot(ctx, nil), astFunc, nil)
 }
 
@@ -2485,8 +2492,11 @@ func trapExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangTrapEx
 	}, true
 }
 
-func transformClassDefinition(ctx *packageContext, class *ast.BLangClassDefinition) *bir.BIRClassDef {
+func transformClassDefinition(
+	ctx *packageContext, class *ast.BLangClassDefinition, parent compilerctx.TraceSpan) *bir.BIRClassDef {
 	className := class.GetName().GetValue()
+	span := parent.StartChild("Class", className)
+	defer span.End()
 	classLookupKey := buildLookupKey(ctx.CompilerContext.SymbolPackage(class.Symbol()), ctx.CompilerContext.SymbolName(class.Symbol()))
 	methodLookupKey := func(methodName string, symRef model.SymbolRef) string {
 		return buildMethodLookupKeyFromSymbol(ctx, className, symRef)
@@ -2494,7 +2504,7 @@ func transformClassDefinition(ctx *packageContext, class *ast.BLangClassDefiniti
 	resourceLookupKey := func(rm *ast.BLangResourceMethod) string {
 		return buildFunctionLookupKeyFromSymbol(ctx, rm.Symbol())
 	}
-	birClassDef := transformClassBody(ctx, class.Scope(), classLookupKey, model.Name(className), class.Fields, class.InitFunction, class.Methods, class.ResourceMethods, methodLookupKey, resourceLookupKey, class.GetPosition())
+	birClassDef := transformClassBody(ctx, class.Scope(), classLookupKey, model.Name(className), class.Fields, class.InitFunction, class.Methods, class.ResourceMethods, methodLookupKey, resourceLookupKey, class.GetPosition(), span)
 	if birClassDef == nil {
 		return nil
 	}
@@ -2502,8 +2512,11 @@ func transformClassDefinition(ctx *packageContext, class *ast.BLangClassDefiniti
 	return birClassDef
 }
 
-func transformService(ctx *packageContext, svc *ast.BLangService, idx int) *bir.BIRClassDef {
+func transformService(
+	ctx *packageContext, svc *ast.BLangService, idx int, parent compilerctx.TraceSpan) *bir.BIRClassDef {
 	className := fmt.Sprintf("$service$%d", idx)
+	span := parent.StartChild("Service", className)
+	defer span.End()
 	pkg := model.PackageIdentifierFromID(ctx.packageID)
 	classLookupKey := buildLookupKey(pkg, className)
 	ctx.serviceClassKeys[svc] = classLookupKey
@@ -2514,7 +2527,7 @@ func transformService(ctx *packageContext, svc *ast.BLangService, idx int) *bir.
 		sym := ctx.CompilerContext.GetSymbol(rm.Symbol())
 		return buildLookupKey(pkg, className+"."+sym.Name())
 	}
-	birClassDef := transformClassBody(ctx, svc.Scope(), classLookupKey, model.Name(className), svc.Fields, svc.InitFunction, svc.Methods, svc.ResourceMethods, methodLookupKey, resourceLookupKey, svc.GetPosition())
+	birClassDef := transformClassBody(ctx, svc.Scope(), classLookupKey, model.Name(className), svc.Fields, svc.InitFunction, svc.Methods, svc.ResourceMethods, methodLookupKey, resourceLookupKey, svc.GetPosition(), span)
 	if birClassDef == nil {
 		return nil
 	}
@@ -2534,6 +2547,7 @@ func transformClassBody(
 	methodLookupKey func(string, model.SymbolRef) string,
 	resourceLookupKey func(*ast.BLangResourceMethod) string,
 	pos diagnostics.Location,
+	parent compilerctx.TraceSpan,
 ) *bir.BIRClassDef {
 	selfRef, ok := classScope.GetSymbol("self")
 	if !ok {
@@ -2556,7 +2570,9 @@ func transformClassBody(
 		})
 	}
 
+	initSpan := parent.StartChild("Init Function", "init")
 	initFunc := transformFunctionInner(newFunctionRoot(ctx, nil), initFn, &selfRef)
+	initSpan.End()
 	if initFunc == nil {
 		return nil
 	}
@@ -2564,38 +2580,55 @@ func transformClassBody(
 	birClassDef.VTable["init"] = initFunc
 
 	for methodName, method := range methods {
-		lookupKey := methodLookupKey(methodName, method.Symbol())
-		var fn *bir.BIRFunction
-		if method.IsNative() {
-			fn = transformNativeFunction(newFunctionRoot(ctx, nil), method, &selfRef)
-		} else {
-			fn = transformFunctionInner(newFunctionRoot(ctx, nil), method, &selfRef)
-			if fn == nil {
-				return nil
-			}
+		fn := transformMethod(ctx, method, methodName, &selfRef, parent)
+		if fn == nil {
+			return nil
 		}
-		fn.FunctionLookupKey = lookupKey
+		fn.FunctionLookupKey = methodLookupKey(methodName, method.Symbol())
 		birClassDef.VTable[methodName] = fn
 	}
 
 	for _, rm := range resourceMethods {
-		lookupKey := resourceLookupKey(rm)
-		var fn *bir.BIRFunction
-		if rm.IsNative() {
-			fn = transformNativeResourceMethod(newFunctionRoot(ctx, nil), rm, &selfRef)
-		} else {
-			fn = transformResourceMethodInner(newFunctionRoot(ctx, nil), rm, &selfRef)
-			if fn == nil {
-				return nil
-			}
+		fn := transformResourceMethod(ctx, rm, &selfRef, parent)
+		if fn == nil {
+			return nil
 		}
-		fn.FunctionLookupKey = lookupKey
+		fn.FunctionLookupKey = resourceLookupKey(rm)
 		methodName := rm.GetName().GetValue()
 		entry := buildResourceMethodEntry(rm, fn)
 		birClassDef.RTable[methodName] = append(birClassDef.RTable[methodName], entry)
 	}
 
 	return birClassDef
+}
+
+func transformMethod(
+	ctx *packageContext,
+	method *ast.BLangFunction,
+	methodName string,
+	selfSymbolRef *model.SymbolRef,
+	parent compilerctx.TraceSpan,
+) *bir.BIRFunction {
+	span := parent.StartChild("Method", methodName)
+	defer span.End()
+	if method.IsNative() {
+		return transformNativeFunction(newFunctionRoot(ctx, nil), method, selfSymbolRef)
+	}
+	return transformFunctionInner(newFunctionRoot(ctx, nil), method, selfSymbolRef)
+}
+
+func transformResourceMethod(
+	ctx *packageContext,
+	rm *ast.BLangResourceMethod,
+	selfSymbolRef *model.SymbolRef,
+	parent compilerctx.TraceSpan,
+) *bir.BIRFunction {
+	span := parent.StartChild("Resource Method", rm.GetName().GetValue())
+	defer span.End()
+	if rm.IsNative() {
+		return transformNativeResourceMethod(newFunctionRoot(ctx, nil), rm, selfSymbolRef)
+	}
+	return transformResourceMethodInner(newFunctionRoot(ctx, nil), rm, selfSymbolRef)
 }
 
 func buildResourceMethodEntry(rm *ast.BLangResourceMethod, fn *bir.BIRFunction) bir.BIRResourceMethod {

@@ -53,7 +53,7 @@ func testTypeResolution(t *testing.T, testCase test_util.TestCase) {
 		}
 	}()
 
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	cx := context.NewCompilerContext(env)
 	langlibs, err := testphases.LoadLanglibs(env, cx)
 	if err != nil {

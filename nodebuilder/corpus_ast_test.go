@@ -60,7 +60,7 @@ func testASTGeneration(t *testing.T, testCase test_util.TestCase) {
 		}
 	}()
 
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	cx := context.NewCompilerContext(env)
 	result, err := testphases.RunPipeline(env, cx, nil, testphases.PhaseAST, testCase.InputPath)
 	if err != nil {
@@ -154,7 +154,7 @@ func testWalkTraversal(t *testing.T, testCase test_util.TestCase) {
 		}
 	}()
 
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	cx := context.NewCompilerContext(env)
 	result, err := testphases.RunPipeline(env, cx, nil, testphases.PhaseAST, testCase.InputPath)
 	if err != nil {

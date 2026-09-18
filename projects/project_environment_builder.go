@@ -59,7 +59,7 @@ func (b *ProjectEnvironmentBuilder) WithCompilerEnvironment(env *context.Compile
 func (b *ProjectEnvironmentBuilder) Build() *Environment {
 	env := b.compilerEnv
 	if env == nil {
-		env = context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+		env = context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	}
 	projEnv := NewEnvironment(b.fsys, env)
 

@@ -31,7 +31,7 @@ import (
 // TestFinalizeWritesExactlyOnce covers the driver-owned output guard: a second
 // finalization returns the first result without rewriting.
 func TestFinalizeWritesExactlyOnce(t *testing.T) {
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{Enabled: true})
 	tracePath := filepath.Join(t.TempDir(), "traces.json")
 	output := newRunTraceOutput(tracePath)
 
@@ -61,7 +61,7 @@ func TestFinalizeWritesExactlyOnce(t *testing.T) {
 // finalization after a failure: the attempt is not retried, and only the caller
 // that made it is told it failed.
 func TestFinalizeReportsAFailureOnlyToTheAttemptingCaller(t *testing.T) {
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{Enabled: true})
 	blocked := filepath.Join(t.TempDir(), "traces.json")
 	if err := os.Mkdir(blocked, 0o755); err != nil {
 		t.Fatal(err)
@@ -85,7 +85,7 @@ func TestFinalizeReportsAFailureOnlyToTheAttemptingCaller(t *testing.T) {
 
 // TestFinalizeWithoutTracePathDoesNothing covers a debug run with no --trace.
 func TestFinalizeWithoutTracePathDoesNothing(t *testing.T) {
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	workDir := t.TempDir()
 	t.Chdir(workDir)
 
@@ -106,7 +106,7 @@ func TestFinalizeWithoutTracePathDoesNothing(t *testing.T) {
 // panicking frames are reported before they are lost, and the original panic
 // continues.
 func TestReportFailureDuringPanicPreservesThePanicAndTheStack(t *testing.T) {
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{Enabled: true})
 	tracePath := filepath.Join(t.TempDir(), "traces.json")
 	output := newRunTraceOutput(tracePath)
 
@@ -126,7 +126,7 @@ func TestReportFailureDuringPanicPreservesThePanicAndTheStack(t *testing.T) {
 // TestReportFailureDuringPanicReportsAWriteFailure covers a write failure while
 // a panic unwinds: it is reported without suppressing the panic.
 func TestReportFailureDuringPanicReportsAWriteFailure(t *testing.T) {
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{Enabled: true})
 	blocked := filepath.Join(t.TempDir(), "traces.json")
 	if err := os.Mkdir(blocked, 0o755); err != nil {
 		t.Fatal(err)

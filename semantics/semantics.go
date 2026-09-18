@@ -73,7 +73,7 @@ func ResolveSymbols(
 			Exported:    visibility.Exported,
 		}
 	}
-	return symbols.Resolve(ctx, pkgID, compilationUnits, implicitImports, internalPublicSymbols, internalModuleVisibility, defaultOrg, currentPackageName)
+	return symbols.Resolve(ctx, pkgID, compilationUnits, implicitImports, internalPublicSymbols, internalModuleVisibility, defaultOrg, currentPackageName, span)
 }
 
 // ResolvePublicNodeTypes resolves the types exposed by a package.
@@ -84,7 +84,7 @@ func ResolvePublicNodeTypes(
 ) {
 	span := ctx.StartPackageSpan("Top-Level Type Resolution", pkg.PackageID)
 	defer span.End()
-	semantictypes.ResolvePublicNodes(ctx, pkg, importedSymbols)
+	semantictypes.ResolvePublicNodes(ctx, pkg, importedSymbols, span)
 }
 
 // ResolvePrivateNodesTypes resolves package-local nodes and function bodies.
@@ -95,7 +95,7 @@ func ResolvePrivateNodesTypes(
 ) {
 	span := ctx.StartPackageSpan("Local Type Resolution", pkg.PackageID)
 	defer span.End()
-	semantictypes.ResolvePrivateNodes(ctx, pkg, importedSymbols)
+	semantictypes.ResolvePrivateNodes(ctx, pkg, importedSymbols, span)
 }
 
 // AnalyzeSemantics performs semantic analysis on a resolved package.
@@ -106,7 +106,7 @@ func AnalyzeSemantics(
 ) {
 	span := ctx.StartPackageSpan("Semantic Analysis", pkg.PackageID)
 	defer span.End()
-	analysis.Analyze(ctx, pkg, importedSymbols)
+	analysis.Analyze(ctx, pkg, importedSymbols, span)
 }
 
 // PackageCFG is the public handle for a package control-flow graph.
@@ -118,14 +118,14 @@ type PackageCFG struct {
 func CreateControlFlowGraph(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	span := ctx.StartPackageSpan("CFG Creation", pkg.PackageID)
 	defer span.End()
-	return &PackageCFG{graph: cfg.Build(ctx, pkg)}
+	return &PackageCFG{graph: cfg.Build(ctx, pkg, span)}
 }
 
 // AnalyzeCFG performs reachability, return, and initialization analyses.
 func AnalyzeCFG(ctx *context.CompilerContext, pkg *ast.BLangPackage, graph *PackageCFG) {
 	span := ctx.StartPackageSpan("CFG Analysis", pkg.PackageID)
 	defer span.End()
-	cfg.Analyze(ctx, pkg, graph.graph)
+	cfg.Analyze(ctx, pkg, graph.graph, span)
 }
 
 // PrintCFGDot renders graph in Graphviz DOT format.

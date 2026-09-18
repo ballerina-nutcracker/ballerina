@@ -404,7 +404,7 @@ func TestDependentlyTypedResourceMethod(t *testing.T) {
 	if err != nil {
 		t.Fatalf("symbol Marshal: %v", err)
 	}
-	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	deserialized, err := symbolpool.Unmarshal(freshEnv, symBytes)
 	if err != nil {
 		t.Fatalf("symbol Unmarshal: %v", err)
@@ -1062,7 +1062,7 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 		t.Fatal("compilation succeeded but produced no BIR packages")
 	}
 
-	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	publicSymbols := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
 	moduleVisibility := make(map[semantics.PackageIdentifier]semantics.ModuleVisibility)
 	deserializedPkgs := make([]*bir.BIRPackage, 0, len(birPkgs))
@@ -1233,7 +1233,7 @@ func TestRecordFieldAnnotationsSymbolPoolRoundtrip(t *testing.T) {
 	}
 	manifest := currentPkg.Manifest()
 
-	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	publicSymbols := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
 	moduleVisibility := make(map[semantics.PackageIdentifier]semantics.ModuleVisibility)
 	deserializedPkgs := make([]*bir.BIRPackage, 0, len(birPkgs))
