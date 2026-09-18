@@ -2029,8 +2029,8 @@ func (p *PrettyPrinter) printRecordType(node *BLangRecordType) {
 		p.indentLevel++
 		p.printAnnotationAttachments(field)
 		p.PrintInner(field.Type.(BLangNode))
-		if field.DefaultExpr != nil {
-			p.PrintInner(field.DefaultExpr.(BLangNode))
+		if field.Default != nil {
+			p.PrintInner(field.Default.Expr.(BLangNode))
 		}
 		p.indentLevel--
 		p.EndNode()
