@@ -1,0 +1,170 @@
+(package
+  (import-package ballerina io (as io))
+  (variable offset (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref offset)
+        (literal 1))))
+  (function captureLocal () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable offset (type
+          (value-type int)) (expr
+          (literal 20))))
+      (var-def
+        (variable $desugar$0 (expr
+          (lambda
+            (function $default$0 () ()
+              (block-function-body
+                (return
+                  (simple-var-ref offset))))))))
+      (var-def
+        (variable person (type
+          (record-type
+            (field name
+              (value-type string))
+            (field age
+              (value-type int)
+              (simple-var-ref offset)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Pubudu))))))
+      (return
+        (index-based-access
+          (simple-var-ref person)
+          (literal age)))))
+  (function captureParam (
+    (variable base (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable offset (type
+          (value-type int)) (expr
+          (literal 20))))
+      (var-def
+        (variable $desugar$0 (expr
+          (lambda
+            (function $default$1 () ()
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (simple-var-ref base)
+                    (simple-var-ref offset)))))))))
+      (var-def
+        (variable sum (type
+          (record-type
+            (field total
+              (value-type int)
+              (binary-expr +
+                (simple-var-ref base)
+                (simple-var-ref offset))))) (expr
+          (mapping-constructor-expr))))
+      (return
+        (index-based-access
+          (simple-var-ref sum)
+          (literal total)))))
+  (function captureFromNestedBlock (
+    (variable base (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (if
+        (binary-expr >
+          (simple-var-ref base)
+          (literal 0))
+        (block-stmt
+          (var-def
+            (variable inner (type
+              (value-type int)) (expr
+              (literal 100))))
+          (var-def
+            (variable $desugar$0 (expr
+              (lambda
+                (function $default$2 () ()
+                  (block-function-body
+                    (return
+                      (binary-expr +
+                        (simple-var-ref inner)
+                        (simple-var-ref base)))))))))
+          (var-def
+            (variable rec (type
+              (record-type
+                (field value
+                  (value-type int)
+                  (binary-expr +
+                    (simple-var-ref inner)
+                    (simple-var-ref base))))) (expr
+              (mapping-constructor-expr))))
+          (return
+            (index-based-access
+              (simple-var-ref rec)
+              (literal value)))) ())
+      (block-stmt
+        (return
+          (literal 0)))))
+  (function captureInLambda () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable outerVal (type
+          (value-type int)) (expr
+          (literal 7))))
+      (var-def
+        (variable fn (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable inner (type
+                    (value-type int)) (expr
+                    (literal 5))))
+                (var-def
+                  (variable $desugar$0 (expr
+                    (lambda
+                      (function $default$3 () ()
+                        (block-function-body
+                          (return
+                            (binary-expr +
+                              (simple-var-ref outerVal)
+                              (simple-var-ref inner)))))))))
+                (var-def
+                  (variable rec (type
+                    (record-type
+                      (field value
+                        (value-type int)
+                        (binary-expr +
+                          (simple-var-ref outerVal)
+                          (simple-var-ref inner))))) (expr
+                    (mapping-constructor-expr))))
+                (return
+                  (index-based-access
+                    (simple-var-ref rec)
+                    (literal value)))))))))
+      (return
+        (invocation fn ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref offset))))
+      (expression-stmt
+        (invocation io println (
+          (invocation captureLocal ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation captureParam (
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation captureFromNestedBlock (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation captureInLambda ())))))))

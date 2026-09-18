@@ -1342,7 +1342,7 @@ func desugarTypeDesc(ctx desugarContext, typeDesc ast.BType, parentScope model.S
 }
 
 func desugarFunctionTypeDesc(ctx desugarContext, fnType *ast.BLangFunctionType, parentScope model.Scope) desugaredTypeDescResult {
-	result := desugaredTypeDescResult{functions: desugarFunctionTypeParamDefaults(ctx, fnType, parentScope)}
+	result := desugaredTypeDescResult{functions: desugarFunctionTypeParamDefaults(ctx, fnType)}
 	for i := range fnType.RequiredParams {
 		result.append(desugarTypeDesc(ctx, fnType.RequiredParams[i].TypeDesc, parentScope))
 	}
@@ -1358,28 +1358,27 @@ func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, par
 	var result desugaredTypeDescResult
 	for _, field := range recType.FieldPtrs() {
 		result.append(desugarTypeDesc(ctx, field.Type, parentScope))
-		if field.DefaultExpr == nil {
+		if field.Default == nil {
 			continue
 		}
-		symRef := field.DefaultFnRef
-		fnScope := ctx.newFunctionScope(parentScope)
+		symRef := field.Default.FnRef
 		fnCtx := &functionContext{pkgCtx: ctx.packageContext()}
-		fnCtx.pushScope(fnScope)
+		fnCtx.pushScope(field.Default.FnScope)
 		// Use the inner walk so setup statements are hoisted into the default
 		// value function body instead of being wrapped in a thunk: the body
 		// runs them unconditionally before returning, which is the same
 		// evaluation order with a simpler shape.
-		defaultExpr := walkExpressionInner(fnCtx, field.DefaultExpr)
+		defaultExpr := walkExpressionInner(fnCtx, field.Default.Expr)
 		fnCtx.popScope()
-		field.DefaultExpr = defaultExpr.replacementNode.(ast.BLangExpression)
+		field.Default.Expr = defaultExpr.replacementNode.(ast.BLangExpression)
 
-		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.DefaultExpr, nil)
+		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.Default.Expr, nil)
 		if len(defaultExpr.initStmts) > 0 {
 			body := fn.Body.(*ast.BLangBlockFunctionBody)
 			body.Stmts = append(defaultExpr.initStmts, body.Stmts...)
 		}
 		fn.SetSymbol(symRef)
-		fn.SetScope(fnScope)
+		fn.SetScope(field.Default.FnScope)
 
 		result.functions = append(result.functions, fnCtx.generatedFunctions...)
 		result.recordFields = append(result.recordFields, desugaredRecordFieldResult{fn: fn, symRef: symRef})
@@ -1422,7 +1421,6 @@ func desugarTopLevelTypeDescs(cx *packageContext, pkg *ast.BLangPackage) {
 
 func createDefaultClosures(ctx desugarContext, sig model.UntypedFunctionSignature,
 	paramTypeSupplier func(int) semtypes.SemType, paramExprSupplier func(int) ast.BLangExpression, paramSymbolSupplier func(int) model.SymbolRef,
-	scope model.Scope,
 ) []*ast.BLangFunction {
 	var prevParamNames []string
 	var prevParamTypes []semtypes.SemType
@@ -1436,7 +1434,7 @@ func createDefaultClosures(ctx desugarContext, sig model.UntypedFunctionSignatur
 				ctx.internalError("missing expression for defaultable param", ctx.getSymbol(def.Symbol).Location())
 				return nil
 			}
-			defaultClosure := createDefaultClosure(ctx, def.Symbol, expr, scope, prevParamNames, prevParamTypes, prevParamSymbol)
+			defaultClosure := createDefaultClosure(ctx, def, expr, prevParamNames, prevParamTypes, prevParamSymbol)
 			defaultClosures = append(defaultClosures, defaultClosure)
 		}
 		prevParamNames = append(prevParamNames, sig.ParamNames[i])
@@ -1446,11 +1444,16 @@ func createDefaultClosures(ctx desugarContext, sig model.UntypedFunctionSignatur
 	return defaultClosures
 }
 
-func createDefaultClosure(ctx desugarContext, symRef model.SymbolRef, expr ast.BLangExpression, scope model.Scope,
+func createDefaultClosure(ctx desugarContext, def *model.DefaultableParam, expr ast.BLangExpression,
 	prevParamNames []string, prevParamTypes []semtypes.SemType, prevParamSymbol []model.SymbolRef,
 ) *ast.BLangFunction {
+	symRef := def.Symbol
 	fnName := ctx.getSymbol(symRef).Name()
-	fnScope := ctx.newFunctionScope(scope)
+	fnScope := def.Scope
+	if fnScope == nil {
+		ctx.internalError("default value closure scope not allocated", ctx.getSymbol(symRef).Location())
+		return nil
+	}
 	symbolMapping := make(map[model.SymbolRef]model.SymbolRef)
 	requiredParams := make([]ast.BLangVariable, 0, len(prevParamNames))
 	for j := range len(prevParamNames) {
@@ -1493,7 +1496,6 @@ func desugarFunctionParamDefaults(ctx desugarContext, fn ast.FunctionSignature, 
 		func(i int) model.SymbolRef {
 			return params[i].Symbol()
 		},
-		scope,
 	)
 	appendTypeDefaults := func(typeDesc ast.BType) {
 		if typeDesc == nil {
@@ -1524,7 +1526,7 @@ func desugarFunctionParamDefaults(ctx desugarContext, fn ast.FunctionSignature, 
 	return functions
 }
 
-func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunctionType, scope model.Scope) []*ast.BLangFunction {
+func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunctionType) []*ast.BLangFunction {
 	if fnType.IsAnyFunction() {
 		return nil
 	}
@@ -1539,7 +1541,6 @@ func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunct
 		func(i int) model.SymbolRef {
 			return fnType.RequiredParams[i].SymbolRef
 		},
-		scope,
 	)
 }
 

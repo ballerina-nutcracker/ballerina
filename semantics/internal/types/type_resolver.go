@@ -2960,12 +2960,14 @@ func createFieldDescriptor(name string, field ast.BField) model.FieldDescriptor 
 	if field.IsOptional() {
 		flags |= model.FieldDescriptorOptional
 	}
-	if field.DefaultExpr != nil {
+	if field.Default != nil {
 		flags |= model.FieldDescriptorHasDefault
 	}
 	fd := model.NewFieldDescriptor(name, flags, true)
 	fd.SetMemberType(field.Type.(ast.BLangNode).GetDeterminedType())
-	fd.DefaultFnRef = field.DefaultFnRef
+	if field.Default != nil {
+		fd.DefaultFnRef = field.Default.FnRef
+	}
 	return fd
 }
 
@@ -8066,14 +8068,14 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 				}
 				delete(result.includedFields, name)
 			}
-			if field.DefaultExpr != nil {
+			if field.Default != nil {
 				restoreContext := setIsolatedXMLStepContext(t, true)
-				_, ok := resolveActionOrExpression(t, nil, field.DefaultExpr, fieldTy)
+				_, ok := resolveActionOrExpression(t, nil, field.Default.Expr, fieldTy)
 				restoreContext()
 				if !ok {
 					return semtypes.SemType{}, false
 				}
-				setRecordDefaultFnSignature(t, field.DefaultFnRef, fieldTy, field.GetPosition())
+				setRecordDefaultFnSignature(t, field.Default.FnRef, fieldTy, field.GetPosition())
 			}
 			ro := field.IsReadonly()
 			opt := field.IsOptional()
@@ -8380,8 +8382,8 @@ func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType) []model.
 	var defaults []model.FieldDefault
 	for name, field := range recordTy.FieldPtrs() {
 		directFields[name] = true
-		if field.DefaultExpr != nil {
-			defaults = append(defaults, model.FieldDefault{FieldName: name, FnRef: field.DefaultFnRef})
+		if field.Default != nil {
+			defaults = append(defaults, model.FieldDefault{FieldName: name, FnRef: field.Default.FnRef})
 		}
 	}
 

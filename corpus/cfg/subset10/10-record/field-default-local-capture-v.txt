@@ -1,0 +1,125 @@
+(captureFromNestedBlock
+  (bb0 () (bb1 bb2)
+    (binary-expr >
+      (simple-var-ref base)
+      (literal 0))
+  )
+  (bb1 (bb0) ()
+    (var-def
+      (variable inner (type
+        (value-type int)) (expr
+        (literal 100))))
+    (var-def
+      (variable rec (type
+        (record-type
+          (field value
+            (value-type int)
+            (binary-expr +
+              (simple-var-ref inner)
+              (simple-var-ref base))))) (expr
+        (mapping-constructor-expr))))
+    (return
+      (field-based-access value
+        (simple-var-ref rec)))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 0))
+  )
+)
+(captureInLambda
+  (bb0 () ()
+    (var-def
+      (variable outerVal (type
+        (value-type int)) (expr
+        (literal 7))))
+    (var-def
+      (variable fn (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable inner (type
+                  (value-type int)) (expr
+                  (literal 5))))
+              (var-def
+                (variable rec (type
+                  (record-type
+                    (field value
+                      (value-type int)
+                      (binary-expr +
+                        (simple-var-ref outerVal)
+                        (simple-var-ref inner))))) (expr
+                  (mapping-constructor-expr))))
+              (return
+                (field-based-access value
+                  (simple-var-ref rec)))))))))
+    (return
+      (invocation fn ()))
+  )
+)
+(captureLocal
+  (bb0 () ()
+    (var-def
+      (variable offset (type
+        (value-type int)) (expr
+        (literal 20))))
+    (var-def
+      (variable person (type
+        (record-type
+          (field name
+            (value-type string))
+          (field age
+            (value-type int)
+            (simple-var-ref offset)))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Pubudu))))))
+    (return
+      (field-based-access age
+        (simple-var-ref person)))
+  )
+)
+(captureParam
+  (bb0 () ()
+    (var-def
+      (variable offset (type
+        (value-type int)) (expr
+        (literal 20))))
+    (var-def
+      (variable sum (type
+        (record-type
+          (field total
+            (value-type int)
+            (binary-expr +
+              (simple-var-ref base)
+              (simple-var-ref offset))))) (expr
+        (mapping-constructor-expr))))
+    (return
+      (field-based-access total
+        (simple-var-ref sum)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref offset))))
+    (expression-stmt
+      (invocation io println (
+        (invocation captureLocal ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation captureParam (
+          (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation captureFromNestedBlock (
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation captureInLambda ()))))
+  )
+)
