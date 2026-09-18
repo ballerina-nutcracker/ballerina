@@ -1,0 +1,102 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable mutable (type
+        (user-defined-type Point)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (key-value
+            (literal y)
+            (literal 2))))))
+    (var-def
+      (variable frozen (type
+        (user-defined-type ReadonlyPoint)) (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref mutable))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref frozen))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref frozen)
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref mutable)
+          (value-type readonly)))))
+    (assignment
+      (field-based-access x
+        (simple-var-ref mutable))
+      (literal 5))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref mutable)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref frozen)))))
+    (var-def
+      (variable src (type
+        (user-defined-type ReadonlyPoint)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 3))
+          (key-value
+            (literal y)
+            (literal 4))))))
+    (var-def
+      (variable copied (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref src))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref copied)
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref copied))))
+    (var-def
+      (variable roInner (type
+        (intersection-type
+          (value-type readonly)
+          (user-defined-type Inner))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (literal 1))))))
+    (var-def
+      (variable roWrapper (type
+        (intersection-type
+          (value-type readonly)
+          (user-defined-type Wrapper))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal inner)
+            (simple-var-ref roInner))))))
+    (var-def
+      (variable rebuilt (type
+        (intersection-type
+          (value-type readonly)
+          (user-defined-type Wrapper))) (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (simple-var-ref roWrapper))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref rebuilt))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref rebuilt)
+          (value-type readonly)))))
+  )
+)

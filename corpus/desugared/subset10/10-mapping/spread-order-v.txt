@@ -1,0 +1,154 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Tagged
+    (record-type
+      (field p
+        (value-type int))))
+  (type-definition Inner
+    (record-type
+      (field v
+        (value-type int))))
+  (type-definition Wrapper
+    (record-type
+      (field inner
+        (user-defined-type Inner))))
+  (function trace (
+    (variable tag (type
+      (value-type string)))
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref tag))))
+      (return
+        (simple-var-ref value))))
+  (function makeTagged () (
+    (user-defined-type Tagged))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal operand))))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal p)
+            (invocation trace (
+              (literal p)
+              (literal 1))))))))
+  (function optional (
+    (variable tag (type
+      (value-type string)))
+    (variable value (type
+      (value-type int)))) (
+    (union-type
+      (value-type int)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref tag))))
+      (return
+        (simple-var-ref value))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable ordered (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal q)
+              (invocation trace (
+                (literal q)
+                (literal 2))))
+            (mapping-spread-field
+              (invocation makeTagged ()))
+            (key-value
+              (literal s)
+              (invocation trace (
+                (literal s)
+                (literal 3))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref ordered))))
+      (var-def
+        (variable src (type
+          (user-defined-type Tagged)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal p)
+              (literal 7))))))
+      (var-def
+        (variable destination (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref src))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref destination)
+          (literal p))
+        (literal 5))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref src))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref destination))))
+      (var-def
+        (variable lifted (type
+          (constrained-type
+            (builtin-ref-type map)
+            (union-type
+              (value-type int)
+              (value-type null)))) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (invocation makeTagged ()))
+            (key-value
+              (literal r)
+              (binary-expr +
+                (invocation optional (
+                  (literal r)
+                  (literal 4)))
+                (literal 1)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref lifted))))
+      (var-def
+        (variable shared (type
+          (user-defined-type Inner)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal v)
+              (literal 1))))))
+      (var-def
+        (variable wrapper (type
+          (user-defined-type Wrapper)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal inner)
+              (simple-var-ref shared))))))
+      (var-def
+        (variable copied (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref wrapper))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref shared)
+          (literal v))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (simple-var-ref copied)
+              (literal inner))
+            (literal v))))))))

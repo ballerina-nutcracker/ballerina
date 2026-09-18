@@ -549,12 +549,17 @@ func isIsolatedExpressionInner(a analyzer, expr ast.BLangExpression, checkInvoca
 		return true
 	case *ast.BLangMappingConstructorExpr:
 		for _, f := range e.Fields {
-			kv, ok := f.(*ast.BLangMappingKeyValueField)
-			if !ok {
+			var operand ast.BLangExpression
+			switch field := f.(type) {
+			case *ast.BLangMappingKeyValueField:
+				operand = field.ValueExpr
+			case *ast.BLangMappingSpreadField:
+				operand = field.Expr
+			default:
 				a.ctx().InternalError(fmt.Sprintf("unexpected mapping field kind %T", f), f.GetPosition())
 				return false
 			}
-			if !isIsolatedExpressionInner(a, kv.ValueExpr, checkInvocableOperands) {
+			if !isIsolatedExpressionInner(a, operand, checkInvocableOperands) {
 				return false
 			}
 		}

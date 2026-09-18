@@ -84,6 +84,13 @@ func intersectMappingAtoms(env Env, atoms []*MappingAtomicType) (SemType, *Mappi
 	return ty, atom, true
 }
 
+// MappingFieldTypeAllowed reports whether a constructor field of type actual may be used where
+// the inherent type expects expected. Numeric operands are accepted across numeric types because
+// the field expression is re-resolved against the expected type.
+func MappingFieldTypeAllowed(cx Context, actual, expected SemType) bool {
+	return mappingAlternativeFieldTypeAllowed(cx, actual, expected)
+}
+
 func mappingAlternativeFieldTypeAllowed(cx Context, actual, expected SemType) bool {
 	if IsSubtype(cx, expected, Number) && IsSubtype(cx, actual, Number) {
 		return true

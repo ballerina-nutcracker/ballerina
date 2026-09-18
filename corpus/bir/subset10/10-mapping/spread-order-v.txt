@@ -1,0 +1,128 @@
+module $anon.. v 0.0.0;
+trace(string,int) -> int{
+  bb0 {
+    %3 = println(tag) -> bb1;
+  }
+  bb1 {
+    %0 = value;
+    return;
+  }
+}
+makeTagged() -> {| p: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad operand
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad p
+    %4 = ConstantLoad p
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %7 = trace(%4,%6) -> bb2;
+  }
+  bb2 {
+    %8 = newMap {| p: int, never... |}{%3=%7}
+    %0 = %8;
+    return;
+  }
+}
+optional(string,int) -> nil|int{
+  bb0 {
+    %3 = println(tag) -> bb1;
+  }
+  bb1 {
+    %0 = value;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad q
+    %2 = ConstantLoad q
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %5 = trace(%2,%4) -> bb1;
+  }
+  bb1 {
+    %6 = makeTagged() -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad s
+    %8 = ConstantLoad s
+    %9 = ConstantLoad 3
+    %10 = %9;
+    %11 = trace(%8,%10) -> bb3;
+  }
+  bb3 {
+    %12 = newMap {| int... |}{%1=%5, ...%6, %7=%11}
+    ordered = %12;
+    %14 = println(ordered) -> bb4;
+  }
+  bb4 {
+    %15 = ConstantLoad p
+    %16 = ConstantLoad 7
+    %17 = newMap {| p: int, never... |}{%15=%16}
+    src = %17;
+    %19 = newMap {| int... |}{...src}
+    destination = %19;
+    %21 = ConstantLoad 5
+    %22 = ConstantLoad p
+    destination[%22] = %21;
+    %23 = println(src) -> bb5;
+  }
+  bb5 {
+    %24 = println(destination) -> bb6;
+  }
+  bb6 {
+    %25 = makeTagged() -> bb7;
+  }
+  bb7 {
+    %26 = ConstantLoad r
+    %27 = ConstantLoad r
+    %28 = ConstantLoad 4
+    %29 = %28;
+    %30 = optional(%27,%29) -> bb8;
+  }
+  bb8 {
+    %31 = %30;
+    %32 = ConstantLoad 1
+    %33 = %31 is nil
+    %33 ? bb9 : bb10;
+  }
+  bb9 {
+    %34 = ConstantLoad <nil>
+    GOTO bb11;
+  }
+  bb10 {
+    %34 = + %31 %32;
+    GOTO bb11;
+  }
+  bb11 {
+    %35 = newMap {| nil|int... |}{...%25, %26=%34}
+    lifted = %35;
+    %37 = println(lifted) -> bb12;
+  }
+  bb12 {
+    %38 = ConstantLoad v
+    %39 = ConstantLoad 1
+    %40 = newMap {| v: int, never... |}{%38=%39}
+    shared = %40;
+    %42 = ConstantLoad inner
+    %43 = newMap {| inner: {| v: int, never... |}, never... |}{%42=shared}
+    wrapper = %43;
+    %45 = newMap {| inner: {| v: int, never... |}, never... |}{...wrapper}
+    copied = %45;
+    %47 = ConstantLoad 2
+    %48 = ConstantLoad v
+    shared[%48] = %47;
+    %50 = ConstantLoad v
+    %52 = ConstantLoad inner
+    %51 = copied[%52];
+    %49 = %51[%50];
+    %53 = %49;
+    %54 = println(%53) -> bb13;
+  }
+  bb13 {
+    return;
+  }
+}
