@@ -55,7 +55,7 @@ public function main() returns error? {
 // compiler-context types of the declarations under it (the query's from and let variables).
 func TestEphemeralTrialLeavesASTUnchanged(t *testing.T) {
 	t.Parallel()
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOff)
 	cx := context.NewCompilerContext(env)
 	langlibs, err := testphases.LoadLanglibs(env, cx)
 	if err != nil {

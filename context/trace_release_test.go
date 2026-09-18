@@ -20,16 +20,20 @@ package context
 
 import (
 	"testing"
+	"unsafe"
 
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
+// A normal build writes no trace, so a corpus run cannot observe whether its
+// tracing handles are zero-sized, allocation-free and inert.
+
 // TestReleaseTracingIsANoOp asserts normal builds neither collect spans nor
 // produce a recording, even when tracing is requested.
 func TestReleaseTracingIsANoOp(t *testing.T) {
 	t.Parallel()
-	env := NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := NewCompilerEnvironment(semtypes.CreateTypeEnv(), TracePhases)
 	cx := NewCompilerContext(env)
 
 	cx.StartNamedSpan("Parse", "main.bal").End()
@@ -49,7 +53,7 @@ func TestReleaseTracingIsANoOp(t *testing.T) {
 func TestReleaseTracingDoesNotAllocate(t *testing.T) {
 	// Not parallel: testing.AllocsPerRun reads process-wide malloc stats, so
 	// allocations from concurrent tests would be counted.
-	env := NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := NewCompilerEnvironment(semtypes.CreateTypeEnv(), TraceOff)
 	cx := NewCompilerContext(env)
 
 	pkgID := releaseTestPackageID()
@@ -62,7 +66,85 @@ func TestReleaseTracingDoesNotAllocate(t *testing.T) {
 	}
 }
 
+// TestReleaseChildIdentityIsNeverComputed asserts a lazily named child neither
+// computes its identity nor allocates for the closure that would compute it.
+func TestReleaseChildIdentityIsNeverComputed(t *testing.T) {
+	// Not parallel: testing.AllocsPerRun reads process-wide malloc stats.
+	env := NewCompilerEnvironment(semtypes.CreateTypeEnv(), TraceNested)
+	cx := NewCompilerContext(env)
+	root := cx.StartNamedSpan("Desugaring", "main.bal")
+
+	calls := 0
+	allocs := testing.AllocsPerRun(100, func() {
+		root.StartChildFunc("Service", func() string {
+			calls++
+			return "svc"
+		}).End()
+	})
+	if calls != 0 {
+		t.Fatalf("identity computed %d times, want 0", calls)
+	}
+	if allocs != 0 {
+		t.Fatalf("allocations per lazily named child = %v, want 0", allocs)
+	}
+}
+
+// TestReleaseChildSpansAreNoOps asserts a child of any handle - zero or
+// obtained from the context - records nothing and is safe to end.
+func TestReleaseChildSpansAreNoOps(t *testing.T) {
+	t.Parallel()
+	env := NewCompilerEnvironment(semtypes.CreateTypeEnv(), TracePhases)
+	cx := NewCompilerContext(env)
+
+	child := TraceSpan{}.StartChild("Function", "main")
+	if child != (TraceSpan{}) {
+		t.Fatalf("child of the zero handle = %+v, want the zero handle", child)
+	}
+	child.End()
+
+	cx.StartNamedSpan("Desugaring", "main.bal").StartChild("Function", "main").End()
+	cx.StartPackageSpan("BIR Generation", releaseTestPackageID()).
+		StartChild("Class", "Counter").
+		StartChild("Method", "get").
+		End()
+
+	data, err := env.TraceJSON()
+	if err != nil {
+		t.Fatalf("TraceJSON: %v", err)
+	}
+	if data != nil {
+		t.Fatalf("TraceJSON = %s, want nil in a normal build", data)
+	}
+}
+
+// TestReleaseTraceSpanIsZeroSized keeps the handle free for the compiler to
+// eliminate at every call site.
+func TestReleaseTraceSpanIsZeroSized(t *testing.T) {
+	t.Parallel()
+	if size := unsafe.Sizeof(TraceSpan{}); size != 0 {
+		t.Fatalf("sizeof(TraceSpan) = %d, want 0", size)
+	}
+}
+
 func releaseTestPackageID() *model.PackageID {
 	return model.NewPackageID(
 		model.DefaultPackageIDInterner, "myorg", []model.Name{"mymod"}, "1.0.0")
+}
+
+// TestReleaseNestedTracingIsANoOp asserts asking for a nested recording in a
+// normal build still records nothing.
+func TestReleaseNestedTracingIsANoOp(t *testing.T) {
+	t.Parallel()
+	env := NewCompilerEnvironment(semtypes.CreateTypeEnv(), TraceNested)
+	cx := NewCompilerContext(env)
+
+	cx.StartNamedSpan("Desugaring", "main.bal").StartChild("Class", "Counter").End()
+
+	data, err := env.TraceJSON()
+	if err != nil {
+		t.Fatalf("TraceJSON: %v", err)
+	}
+	if data != nil {
+		t.Fatalf("TraceJSON = %s, want nil in a normal build", data)
+	}
 }

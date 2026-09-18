@@ -32,7 +32,7 @@ import (
 // narrowable, which can surface only as a missing diagnostic.
 func TestValueSymbolFlagsRoundtrip(t *testing.T) {
 	t.Parallel()
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOff)
 	pkgID := env.NewPackageID(model.Name("testorg"), []model.Name{model.Name("flags")}, model.Name("0.1.0"))
 	space := env.NewSymbolSpace(*pkgID)
 	location := diagnostics.NewBuiltinLocation()
@@ -58,7 +58,7 @@ func TestValueSymbolFlagsRoundtrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal failed: %v", err)
 	}
-	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOff)
 	exported, err := symbolpool.Unmarshal(freshEnv, data)
 	if err != nil {
 		t.Fatalf("unmarshal failed: %v", err)

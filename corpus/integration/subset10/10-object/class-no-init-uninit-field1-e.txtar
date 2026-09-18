@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: field 'count' is not initialized
+  --> class-no-init-uninit-field1-e.bal:17:5
+   |
+17 |     int count; // @error field is not initialized and the class has no init method
+   |     ^^^^^^^^^^

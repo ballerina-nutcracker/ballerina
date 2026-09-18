@@ -490,7 +490,20 @@ func (c *CompilerEnvironment) NewPackageID(orgName model.Name, nameComps []model
 	return model.NewPackageID(c.packageInterner, orgName, nameComps, version)
 }
 
-func NewCompilerEnvironment(typeEnv semtypes.Env, traceEnabled bool) *CompilerEnvironment {
+// TraceMode selects what the frontend trace recorder records.
+type TraceMode uint8
+
+const (
+	// TraceOff records nothing.
+	TraceOff TraceMode = iota
+	// TracePhases records a span for every frontend invocation.
+	TracePhases
+	// TraceNested records the TracePhases spans and the children each phase
+	// starts, giving a span tree instead of one span per phase.
+	TraceNested
+)
+
+func NewCompilerEnvironment(typeEnv semtypes.Env, traceMode TraceMode) *CompilerEnvironment {
 	return &CompilerEnvironment{
 		anonTypeCount:              make(map[*model.PackageID]int),
 		anonFuncCount:              make(map[*model.PackageID]int),
@@ -500,7 +513,7 @@ func NewCompilerEnvironment(typeEnv semtypes.Env, traceEnabled bool) *CompilerEn
 		distinctTypes:              newDistinctTypeTracker(),
 		langLibDistinctTypeSymbols: newLangLibDistinctTypeRegistry(),
 		typeEnv:                    typeEnv,
-		traceState:                 newTraceState(traceEnabled),
+		traceState:                 newTraceState(traceMode),
 		diagnosticContext:          diagnostics.NewDiagnosticEnv(),
 	}
 }

@@ -25,37 +25,14 @@ go build -tags debug -o bal-debug ./cli/cmd
 | `--dump-st` | Dump the syntax tree | yes |
 | `--trace-recovery` | Trace parser error recovery | yes |
 | `--log-file <path>` | Write debug output to a file instead of stdout | yes |
-| `--trace[=<path>]` | Write frontend compilation traces (`bal run` only) | yes |
+
+A debug build's `bal run` also accepts `--trace[=<path>]`, which writes frontend compilation traces, and `--nested`, which adds the child spans within each traced phase. Release builds reject both flags. See [trace-frontend](../../.agents/skills/trace-frontend/SKILL.md) for usage.
 
 E.g., visualize a CFG:
 
 ```bash
 ./bal run --dump-cfg --format dot corpus/bal/subset1/01-boolean/equal1-v.bal | dot -Tpng -o cfg.png
 ```
-
-## Frontend tracing
-
-A debug build's `bal run` can record every frontend invocation (parsing, AST
-building, symbol and type resolution, semantic and CFG analysis, desugaring, and
-BIR generation) as [Chrome Trace Event](https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU) JSON:
-
-```bash
-# writes traces.json in the current directory
-./bal-debug run --trace corpus/bal/subset1/01-boolean/equal1-v.bal
-
-# custom path, relative to the process working directory or absolute
-./bal-debug run --trace=out/run.json myproject
-```
-
-The trace is written after BIR generation and before the program runs, so a
-failed write stops the run. Open the file directly in
-[Perfetto](https://ui.perfetto.dev) or `chrome://tracing`. Concurrent
-compilation work is laid out on separate tracks, so overlapping spans never
-appear falsely nested; each span carries its own identity in `args.span_id`.
-
-Packages with non-embedded native Go dependencies re-exec into a custom
-interpreter, whose spans could never reach this recording, so `--trace` is
-rejected for them.
 
 ## Profiling
 

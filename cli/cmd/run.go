@@ -106,15 +106,15 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 	// The compiler environment owns tracing, so it is created from the parsed
 	// flags before any other setup and shared by loading, dependency
 	// resolution, and compilation.
-	traceEnabled, tracePath, err := runTraceOptions(cmd)
+	traceMode, tracePath, err := runTraceMode(cmd)
 	if err != nil {
 		return runError("%w", err)
 	}
-	compilerEnv := balcontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), traceEnabled)
+	compilerEnv := balcontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), traceMode)
 	traceOutput := newRunTraceOutput(tracePath)
 	defer traceOutput.reportFailureDuringPanic(compilerEnv)
 
-	runErr := compileAndRun(cmd, args, compilerEnv, traceOutput, traceEnabled)
+	runErr := compileAndRun(cmd, args, compilerEnv, traceOutput, traceMode != balcontext.TraceOff)
 
 	// compileAndRun finalizes the trace once it gets as far as BIR generation,
 	// so a write still pending here means it returned before that point.

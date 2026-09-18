@@ -28,11 +28,14 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
+// These tests call the trace output owner directly because a corpus run cannot
+// finalize it twice or unwind a panic through it.
+
 // TestFinalizeWritesExactlyOnce covers the driver-owned output guard: a second
 // finalization returns the first result without rewriting.
 func TestFinalizeWritesExactlyOnce(t *testing.T) {
 	t.Parallel()
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TracePhases)
 	tracePath := filepath.Join(t.TempDir(), "traces.json")
 	output := newRunTraceOutput(tracePath)
 
@@ -63,7 +66,7 @@ func TestFinalizeWritesExactlyOnce(t *testing.T) {
 // that made it is told it failed.
 func TestFinalizeReportsAFailureOnlyToTheAttemptingCaller(t *testing.T) {
 	t.Parallel()
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TracePhases)
 	blocked := filepath.Join(t.TempDir(), "traces.json")
 	if err := os.Mkdir(blocked, 0o755); err != nil {
 		t.Fatal(err)
@@ -85,32 +88,13 @@ func TestFinalizeReportsAFailureOnlyToTheAttemptingCaller(t *testing.T) {
 	}
 }
 
-// TestFinalizeWithoutTracePathDoesNothing covers a debug run with no --trace.
-func TestFinalizeWithoutTracePathDoesNothing(t *testing.T) {
-	// Not parallel: t.Chdir changes the process-wide working directory.
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
-	workDir := t.TempDir()
-	t.Chdir(workDir)
-
-	if err := newRunTraceOutput("").finalize(env); err != nil {
-		t.Fatalf("finalize: %v", err)
-	}
-	entries, err := os.ReadDir(workDir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(entries) != 0 {
-		t.Fatalf("finalize wrote %d files without a trace path", len(entries))
-	}
-}
-
 // TestReportFailureDuringPanicPreservesThePanicAndTheStack covers a panic
 // unwinding through a traced run: the partial recording is written, the
 // panicking frames are reported before they are lost, and the original panic
 // continues.
 func TestReportFailureDuringPanicPreservesThePanicAndTheStack(t *testing.T) {
 	// Not parallel: panicThroughTraceOutput swaps the process-wide os.Stderr.
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TracePhases)
 	tracePath := filepath.Join(t.TempDir(), "traces.json")
 	output := newRunTraceOutput(tracePath)
 
@@ -131,7 +115,7 @@ func TestReportFailureDuringPanicPreservesThePanicAndTheStack(t *testing.T) {
 // a panic unwinds: it is reported without suppressing the panic.
 func TestReportFailureDuringPanicReportsAWriteFailure(t *testing.T) {
 	// Not parallel: panicThroughTraceOutput swaps the process-wide os.Stderr.
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TracePhases)
 	blocked := filepath.Join(t.TempDir(), "traces.json")
 	if err := os.Mkdir(blocked, 0o755); err != nil {
 		t.Fatal(err)

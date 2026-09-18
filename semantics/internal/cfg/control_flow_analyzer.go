@@ -128,7 +128,7 @@ func (cfg *PackageCFG) allFunctionCfgs(yield func(model.SymbolRef, *functionCFG)
 }
 
 // Build creates the control flow graph for the given pkg
-func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
+func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage, parent context.TraceSpan) *PackageCFG {
 	cfg := &PackageCFG{
 		funcCfgs:   make(map[model.SymbolRef]functionCFG),
 		methodCfgs: make(map[model.SymbolRef]map[model.SymbolRef]functionCFG),
@@ -143,7 +143,9 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	}
 	for _, fn := range pkg.Functions {
 		wg.Go(func() {
+			span := parent.StartChild("Function", fn.Name.GetValue())
 			fnCfg, workers := analyzeFunction(ctx, fn)
+			span.End()
 			mu.Lock()
 			cfg.funcCfgs[fn.Symbol()] = fnCfg
 			addWorkers(workers)
@@ -153,7 +155,9 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	if pkg.InitFunction != nil {
 		initFn := pkg.InitFunction
 		wg.Go(func() {
+			span := parent.StartChild("Init Function", initFn.Name.GetValue())
 			fnCfg, workers := analyzeFunction(ctx, initFn)
+			span.End()
 			mu.Lock()
 			cfg.funcCfgs[initFn.Symbol()] = fnCfg
 			addWorkers(workers)
@@ -163,7 +167,9 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	analyzeClassBody := func(dest map[model.SymbolRef]functionCFG, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
 		analyzeMethod := func(sym model.SymbolRef, body ast.FunctionBodyNode) {
 			wg.Go(func() {
+				span := parent.StartChildFunc("Method", func() string { return ctx.SymbolName(sym) })
 				fnCfg, workers := analyzeFunctionBody(ctx, body)
+				span.End()
 				mu.Lock()
 				dest[sym] = fnCfg
 				addWorkers(workers)

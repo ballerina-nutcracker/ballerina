@@ -32,6 +32,7 @@ import (
 
 const (
 	traceFlagName        = "trace"
+	nestedFlagName       = "nested"
 	defaultTraceFileName = "traces.json"
 )
 
@@ -39,28 +40,40 @@ const (
 // defaultTraceFileName, "--trace=<path>" supplies its own.
 var traceFlagValue string
 
+// nestedFlagValue holds the --nested value, which records the children each
+// phase starts instead of the phase spans alone.
+var nestedFlagValue bool
+
 func registerTraceFlag(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&traceFlagValue, traceFlagName, "",
 		"Write frontend compilation traces as Chrome Trace Event JSON (default "+defaultTraceFileName+")")
 	cmd.Flags().Lookup(traceFlagName).NoOptDefVal = defaultTraceFileName
+	cmd.Flags().BoolVar(&nestedFlagValue, nestedFlagName, false,
+		"Record the child spans within each traced phase (requires --trace)")
 }
 
-// runTraceOptions reports whether tracing was requested and where its output
+// runTraceMode reports what the recorder records and where its output
 // goes. Relative paths are resolved against the process working directory.
-func runTraceOptions(cmd *cobra.Command) (enabled bool, path string, err error) {
+func runTraceMode(cmd *cobra.Command) (mode context.TraceMode, path string, err error) {
 	flag := cmd.Flags().Lookup(traceFlagName)
 	if !flag.Changed {
-		return false, "", nil
+		if nestedFlagValue {
+			return context.TraceOff, "", errors.New("--nested requires --trace")
+		}
+		return context.TraceOff, "", nil
 	}
 	value := flag.Value.String()
 	if value == "" {
-		return false, "", errors.New("--trace requires a path; use --trace or --trace=<path>")
+		return context.TraceOff, "", errors.New("--trace requires a path; use --trace or --trace=<path>")
 	}
 	absPath, err := filepath.Abs(value)
 	if err != nil {
-		return false, "", fmt.Errorf("resolve trace path %s: %w", value, err)
+		return context.TraceOff, "", fmt.Errorf("resolve trace path %s: %w", value, err)
 	}
-	return true, absPath, nil
+	if nestedFlagValue {
+		return context.TraceNested, absPath, nil
+	}
+	return context.TracePhases, absPath, nil
 }
 
 // runTraceOutput owns trace output for one run: the destination path and
