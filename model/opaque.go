@@ -28,7 +28,9 @@ type OpaqueSymbol interface {
 	Symbol
 	// OpaqueID is the symbol's index into OpaqueSymbols(pkg PackageIdentifier) for its
 	// package. Together with the owning package it uniquely identifies the
-	// symbol and is the serialization handle.
+	// symbol. It exists purely so the symbol can be serialized and rebuilt (and,
+	// for functions, so the type resolver can pick the monomorphizer); it is not
+	// a lookup key, so resolve these symbols by name.
 	OpaqueID() int
 }
 
@@ -39,6 +41,7 @@ type OpaqueFunctionSymbol struct {
 	name        string
 	ID          int          // per-package opaque id; serialization handle and (with the package) selects the monomorphizer
 	SymbolSpace *SymbolSpace // space the monomorphized function is added to
+	public      bool
 	// Monomorphization cache functions, if function it self don't support caching then function pointers are nil
 	Lookup          func(cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType) (SymbolRef, bool)
 	Store           func(ref SymbolRef, cacheKey semtypes.SemType, cacheKeyRest ...semtypes.SemType)
@@ -57,16 +60,25 @@ const (
 	OpaqueFnMapRemove = 0
 	OpaqueFnMapGet    = 1
 	// lang.xml
-	OpaqueFnXMLIterator = 4
-	OpaqueFnXMLGet      = 5
-	OpaqueFnXMLSlice    = 6
-	OpaqueFnXMLMap      = 7
-	OpaqueFnXMLForEach  = 8
-	OpaqueFnXMLFilter   = 9
+	OpaqueFnXMLIterator  = 4
+	OpaqueFnXMLGet       = 5
+	OpaqueFnXMLSlice     = 6
+	OpaqueFnXMLMap       = 7
+	OpaqueFnXMLForEach   = 8
+	OpaqueFnXMLFilter    = 9
+	OpaqueFnXMLStepIndex = 10
 )
 
 func newOpaqueFunctionSymbol(name string, id int, isIsolatedParam func(int) bool) *OpaqueFunctionSymbol {
-	return &OpaqueFunctionSymbol{name: name, ID: id, IsIsolatedParam: isIsolatedParam}
+	return newOpaqueFunctionSymbolWithVisibility(name, id, isIsolatedParam, true)
+}
+
+func newPrivateOpaqueFunctionSymbol(name string, id int, isIsolatedParam func(int) bool) *OpaqueFunctionSymbol {
+	return newOpaqueFunctionSymbolWithVisibility(name, id, isIsolatedParam, false)
+}
+
+func newOpaqueFunctionSymbolWithVisibility(name string, id int, isIsolatedParam func(int) bool, public bool) *OpaqueFunctionSymbol {
+	return &OpaqueFunctionSymbol{name: name, ID: id, IsIsolatedParam: isIsolatedParam, public: public}
 }
 
 func noIsolatedParams(int) bool { return false }
@@ -77,7 +89,7 @@ func (s *OpaqueFunctionSymbol) Kind() SymbolKind { return SymbolKindFunction }
 func (s *OpaqueFunctionSymbol) Location() diagnostics.Location {
 	return diagnostics.NewBuiltinLocation()
 }
-func (s *OpaqueFunctionSymbol) IsPublic() bool { return true }
+func (s *OpaqueFunctionSymbol) IsPublic() bool { return s.public }
 func (s *OpaqueFunctionSymbol) Type() semtypes.SemType {
 	panic("opaque function must be monomorphized")
 }
@@ -184,7 +196,7 @@ func langXMLOpaqueSymbols() []Symbol {
 		{"Text", semtypes.XMLText},
 		{"ProcessingInstruction", semtypes.XMLProcessingInstruction},
 	}
-	syms := make([]Symbol, 10)
+	syms := make([]Symbol, 11)
 	for i, def := range defs {
 		syms[i] = newOpaqueTypeSymbol(def.name, def.ty, i)
 	}
@@ -194,5 +206,6 @@ func langXMLOpaqueSymbols() []Symbol {
 	syms[OpaqueFnXMLMap] = newOpaqueFunctionSymbol("map", OpaqueFnXMLMap, func(index int) bool { return index == 1 })
 	syms[OpaqueFnXMLForEach] = newOpaqueFunctionSymbol("forEach", OpaqueFnXMLForEach, func(index int) bool { return index == 1 })
 	syms[OpaqueFnXMLFilter] = newOpaqueFunctionSymbol("filter", OpaqueFnXMLFilter, func(index int) bool { return index == 1 })
+	syms[OpaqueFnXMLStepIndex] = newPrivateOpaqueFunctionSymbol("$stepIndex", OpaqueFnXMLStepIndex, noIsolatedParams)
 	return syms
 }

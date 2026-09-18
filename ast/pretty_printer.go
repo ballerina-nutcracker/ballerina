@@ -288,6 +288,16 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printXMLTextLiteral(t)
 	case *BLangXMLFilterExpression:
 		p.printXMLFilterExpression(t)
+	case *BLangXMLStepExpression:
+		p.printXMLStepExpression(t)
+	case *BLangXMLStepStart:
+		p.printXMLStepStart(t)
+	case *BLangXMLStepFilterExtend:
+		p.printXMLStepFilterExtend(t)
+	case *BLangXMLStepIndexExtend:
+		p.printXMLStepIndexExtend(t)
+	case *BLangXMLStepMethodCallExtend:
+		p.printXMLStepMethodCallExtend(t)
 	case *BLangXMLNS:
 		p.printXMLNS(t)
 	case *BLangBadTopLevelNode:
@@ -573,7 +583,76 @@ func (p *PrettyPrinter) printXMLFilterExpression(node *BLangXMLFilterExpression)
 	p.PrintString("xml-filter-expression")
 	p.indentLevel++
 	p.PrintInner(node.Expression)
-	for _, pattern := range node.NamePattern {
+	p.printXMLNamePatterns(node.NamePattern)
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printXMLStepExpression(node *BLangXMLStepExpression) {
+	p.StartNode()
+	p.PrintString("xml-step-expression")
+	p.indentLevel++
+	p.PrintInner(node.Expression)
+	p.PrintInner(node.Start)
+	for _, extension := range node.Extensions {
+		p.PrintInner(extension)
+	}
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printXMLStepStart(node *BLangXMLStepStart) {
+	p.StartNode()
+	switch node.Kind {
+	case XMLStepStartKindAllChildren:
+		p.PrintString("xml-step-all-children")
+	case XMLStepStartKindElementChildren:
+		p.PrintString("xml-step-element-children")
+	case XMLStepStartKindElementDescendants:
+		p.PrintString("xml-step-element-descendants")
+	default:
+		panic("unsupported XML step start kind")
+	}
+	p.indentLevel++
+	p.printXMLNamePatterns(node.NamePattern)
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printXMLStepFilterExtend(node *BLangXMLStepFilterExtend) {
+	p.StartNode()
+	p.PrintString("xml-step-filter-extend")
+	p.indentLevel++
+	p.printXMLNamePatterns(node.NamePattern)
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printXMLStepIndexExtend(node *BLangXMLStepIndexExtend) {
+	p.StartNode()
+	p.PrintString("xml-step-index-extend")
+	p.indentLevel++
+	p.PrintInner(node.Expression)
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printXMLStepMethodCallExtend(node *BLangXMLStepMethodCallExtend) {
+	p.StartNode()
+	p.PrintString("xml-step-method-call-extend")
+	p.indentLevel++
+	if node.Invocation != nil {
+		p.PrintString(node.Invocation.Name.GetValue())
+		for _, arg := range node.Invocation.ArgExprs {
+			p.PrintInner(arg)
+		}
+	}
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printXMLNamePatterns(patterns []BLangAtomicNamePattern) {
+	for _, pattern := range patterns {
 		p.StartNode()
 		switch pattern.Kind {
 		case NamePatternKindWildCard:
@@ -595,8 +674,6 @@ func (p *PrettyPrinter) printXMLFilterExpression(node *BLangXMLFilterExpression)
 		}
 		p.EndNode()
 	}
-	p.indentLevel--
-	p.EndNode()
 }
 
 func (p *PrettyPrinter) printXMLSequenceLiteral(node *BLangXMLSequenceLiteral) {

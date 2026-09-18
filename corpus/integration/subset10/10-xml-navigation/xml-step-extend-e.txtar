@@ -1,0 +1,79 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: XML callback has incompatible return type
+  --> xml-step-extend-e.bal:62:29
+   |
+62 |     _ = x1/**/<item>.filter(function (xml y) {_ = y; k = k + 1;}); // @error
+   |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-extend-e.bal:23:13
+   |
+23 |     _ = x1/*[s].<name>; // @error
+   |             ^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-extend-e.bal:40:13
+   |
+40 |     _ = x1/*.get("0"); // @error
+   |             ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-extend-e.bal:41:13
+   |
+41 |     _ = x1/*.get(0, 2); // @error
+   |             ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-extend-e.bal:42:13
+   |
+42 |     _ = x1/*.get(s); // @error
+   |             ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-extend-e.bal:46:13
+   |
+46 |     _ = x1/*.slice(1, "5"); // @error
+   |             ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-extend-e.bal:56:60
+   |
+56 |     _ = x1/<item>.map(y => xml:createProcessingInstruction(y.getTarget(), "sort")); // @error
+   |                                                            ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected function(xml:Element) returns boolean, got function(xml:Element) returns xml:Element
+  --> xml-step-extend-e.bal:54:26
+   |
+54 |     _ = x1/<item>.filter(x => x); // @error
+   |                          ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected function(xml:Element) returns boolean, got function(xml:Element) returns xml:Element
+  --> xml-step-extend-e.bal:61:29
+   |
+61 |     _ = x1/**/<item>.filter(x => x); // @error
+   |                             ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected function(xml:Element) returns xml, got function(xml:Element) returns int
+  --> xml-step-extend-e.bal:45:9
+   |
+45 |     _ = x1/*.length(); // @error
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected function(xml:Element) returns xml, got function(xml:Element) returns nil
+  --> xml-step-extend-e.bal:57:9
+   |
+57 |     _ = x1/<item>.forEach(function (xml y) {_ = y; k = k + 1;}); // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: method not found: foo
+  --> xml-step-extend-e.bal:44:13
+   |
+44 |     _ = x1/*.foo(); // @error
+   |             ^^^^^^
+
+error[SEMANTIC_ERROR]: missing required parameter 'endIndex'
+  --> xml-step-extend-e.bal:48:13
+   |
+48 |     _ = x1/*.slice(0).length(); // @error
+   |             ^^^^^^^^^
