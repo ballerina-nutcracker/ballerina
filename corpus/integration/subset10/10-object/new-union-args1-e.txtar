@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous object type
+  --> new-union-args1-e.bal:28:30
+   |
+28 |     First|Second ambiguous = new (); // @error ambiguous object type
+   |                              ^^^^^^
+
+error[SEMANTIC_ERROR]: failed to find a suitable object type
+  --> new-union-args1-e.bal:29:31
+   |
+29 |     First|Second unsuitable = new (name = "x"); // @error failed to find a suitable object type
+   |                               ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: object type cannot be instantiated without a class
+  --> new-union-args1-e.bal:31:27
+   |
+31 |     object {} anonymous = new (); // @error object type cannot be instantiated without a class
+   |                           ^^^^^^
+
+error[SEMANTIC_ERROR]: too many arguments
+  --> new-union-args1-e.bal:30:25
+   |
+30 |     NoInit extra = new (1); // @error too many arguments
+   |                         ^

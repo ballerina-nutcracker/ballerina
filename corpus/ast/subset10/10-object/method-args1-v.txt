@@ -1,0 +1,179 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Config
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (literal 2))))
+  (type-definition Calculator
+    (object-type
+      (method-decl add public (
+        (param x
+          (value-type int))
+        (param y
+          (value-type int))) (
+        (value-type int)))
+      (method-decl configured public (
+        (param config
+          (user-defined-type Config))) (
+        (value-type int)))))
+  (class-definition CalculatorImpl
+    (function add (
+      (variable x (type
+        (value-type int)))
+      (variable y (type
+        (value-type int)) (expr
+        (literal 2)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref x)
+            (simple-var-ref y)))))
+    (function configured (
+      (variable config (type
+        (user-defined-type Config)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (field-based-access x
+              (simple-var-ref config))
+            (field-based-access y
+              (simple-var-ref config)))))))
+  (type-definition Node
+    (object-type
+      (method-decl next public () (
+        (union-type
+          (user-defined-type Node)
+          (value-type null))))
+      (method-decl value public (
+        (param fallback
+          (value-type int))) (
+        (value-type int)))))
+  (class-definition NodeImpl
+    (function next () (
+      (union-type
+        (user-defined-type Node)
+        (value-type null)))
+      (block-function-body
+        (return
+          (literal <nil>))))
+    (function value (
+      (variable fallback (type
+        (value-type int)) (expr
+        (literal 4)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref fallback)))))
+  (variable moduleCalculator (type
+    (object-type
+      (method-decl add public (
+        (param x
+          (value-type int))
+        (param y
+          (value-type int))) (
+        (value-type int))))) (expr
+    (new
+      (user-defined-type CalculatorImpl) ())))
+  (function useInline (
+    (variable value (type
+      (object-type
+        (method-decl add public (
+          (param x
+            (value-type int))
+          (param y
+            (value-type int))) (
+          (value-type int))))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation add expr:
+          (simple-var-ref value) (
+          (named-arg x
+            (literal 8)))))))
+  (function returnInline () (
+    (object-type
+      (method-decl add public (
+        (param x
+          (value-type int))
+        (param y
+          (value-type int))) (
+        (value-type int)))))
+    (block-function-body
+      (return
+        (new
+          (user-defined-type CalculatorImpl) ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable calculator (type
+          (user-defined-type Calculator)) (expr
+          (new
+            (user-defined-type CalculatorImpl) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add expr:
+            (simple-var-ref calculator) (
+            (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add expr:
+            (simple-var-ref calculator) (
+            (named-arg y
+              (literal 5))
+            (named-arg x
+              (literal 4)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation configured expr:
+            (simple-var-ref calculator) (
+            (named-arg x
+              (literal 6)))))))
+      (var-def
+        (variable localCalculator (type
+          (object-type
+            (method-decl add public (
+              (param x
+                (value-type int))
+              (param y
+                (value-type int))) (
+              (value-type int))))) (expr
+          (simple-var-ref calculator))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add expr:
+            (simple-var-ref localCalculator) (
+            (named-arg x
+              (literal 5)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add expr:
+            (simple-var-ref moduleCalculator) (
+            (literal 6))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation useInline (
+            (simple-var-ref calculator))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add expr:
+            (invocation returnInline ()) (
+            (named-arg y
+              (literal 4))
+            (named-arg x
+              (literal 7)))))))
+      (var-def
+        (variable node (type
+          (user-defined-type Node)) (expr
+          (new
+            (user-defined-type NodeImpl) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation value expr:
+            (simple-var-ref node) ())))))))
