@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -76,24 +77,31 @@ func writeBala(pkg *Package, resolution *PackageResolution, outputDir string) (s
 }
 
 // populateBalaArchive writes every entry of the bala layout into zw. The
-// caller is responsible for closing zw.
+// caller is responsible for closing zw. written tracks every zip path
+// written so far across all stages, so a later stage (in practice, only
+// addIncludes) can silently skip a path some earlier stage already wrote,
+// mirroring Java's BalaWriter behavior.
 func populateBalaArchive(zw *zip.Writer, pkg *Package, resolution *PackageResolution) error {
-	if err := writeBalaToml(zw, pkg); err != nil {
+	written := make(map[string]bool)
+	if err := writeBalaToml(zw, pkg, written); err != nil {
 		return err
 	}
-	if err := copyBallerinaToml(zw, pkg); err != nil {
+	if err := copyBallerinaToml(zw, pkg, written); err != nil {
 		return err
 	}
-	if err := writeDependenciesToml(zw, pkg, resolution); err != nil {
+	if err := writeDependenciesToml(zw, pkg, resolution, written); err != nil {
 		return err
 	}
-	if err := writeModuleSources(zw, pkg); err != nil {
+	if err := writeModuleSources(zw, pkg, written); err != nil {
+		return err
+	}
+	if err := addIncludes(zw, pkg, written); err != nil {
 		return err
 	}
 	return nil
 }
 
-func writeBalaToml(zw *zip.Writer, pkg *Package) error {
+func writeBalaToml(zw *zip.Writer, pkg *Package, written map[string]bool) error {
 	manifest := pkg.Manifest()
 
 	var b strings.Builder
@@ -106,22 +114,22 @@ func writeBalaToml(zw *zip.Writer, pkg *Package) error {
 	fmt.Fprintf(&b, "language_spec_version  = %q\n", balaLanguageSpecVersion)
 	fmt.Fprintf(&b, "platform               = %q\n", BalaPlatformAny)
 
-	return writeZipEntry(zw, BalaTomlFile, []byte(b.String()))
+	return writeZipEntry(zw, BalaTomlFile, []byte(b.String()), written)
 }
 
-func copyBallerinaToml(zw *zip.Writer, pkg *Package) error {
+func copyBallerinaToml(zw *zip.Writer, pkg *Package, written map[string]bool) error {
 	bt := pkg.BallerinaToml()
 	if bt == nil {
 		return fmt.Errorf("writeBala: package has no Ballerina.toml")
 	}
 
-	return writeZipEntry(zw, BallerinaTomlFile, []byte(bt.Content()))
+	return writeZipEntry(zw, BallerinaTomlFile, []byte(bt.Content()), written)
 }
 
 // writeDependenciesToml emits Dependencies.toml into zw: a lock file with one
 // [[package]] entry per node in the resolved dependency graph, in topological
 // order. Each entry lists its direct dependencies as an inline-table array.
-func writeDependenciesToml(zw *zip.Writer, pkg *Package, resolution *PackageResolution) error {
+func writeDependenciesToml(zw *zip.Writer, pkg *Package, resolution *PackageResolution, written map[string]bool) error {
 	var b strings.Builder
 	b.WriteString("# AUTO-GENERATED FILE. DO NOT MODIFY.\n")
 	b.WriteString("#\n")
@@ -139,7 +147,7 @@ func writeDependenciesToml(zw *zip.Writer, pkg *Package, resolution *PackageReso
 			node.Org().String(), node.Name().String(), node.Version().String(),
 			directs)
 	}
-	return writeZipEntry(zw, DependenciesTomlFile, []byte(b.String()))
+	return writeZipEntry(zw, DependenciesTomlFile, []byte(b.String()), written)
 }
 
 // writeDependenciesPackageEntry emits one [[package]] block. When directs is
@@ -167,7 +175,7 @@ func writeDependenciesPackageEntry(b *strings.Builder, org, name, version string
 // writeModuleSources adds each module's .bal files: default-module sources
 // at the bala root, sub-module sources under modules/<sub>/. Tests are
 // excluded — downstream packages don't consume them.
-func writeModuleSources(zw *zip.Writer, pkg *Package) error {
+func writeModuleSources(zw *zip.Writer, pkg *Package, written map[string]bool) error {
 	for _, mod := range pkg.Modules() {
 		var dir string
 		if !mod.IsDefaultModule() {
@@ -185,7 +193,7 @@ func writeModuleSources(zw *zip.Writer, pkg *Package) error {
 				zipPath = dir + "/" + fileName
 			}
 			content := []byte(doc.TextDocument().String())
-			if err := writeZipEntry(zw, zipPath, content); err != nil {
+			if err := writeZipEntry(zw, zipPath, content, written); err != nil {
 				return err
 			}
 		}
@@ -193,7 +201,50 @@ func writeModuleSources(zw *zip.Writer, pkg *Package) error {
 	return nil
 }
 
-func writeZipEntry(zw *zip.Writer, zipPath string, content []byte) error {
+// addIncludes copies files matching the package manifest's `include` glob
+// patterns into zw, at the same path they occupy relative to the project
+// root, skipping any path already recorded in written.
+// Java source: io.ballerina.projects.BalaWriter#addIncludes
+func addIncludes(zw *zip.Writer, pkg *Package, written map[string]bool) error {
+	patterns := pkg.Manifest().Include()
+	if len(patterns) == 0 {
+		return nil
+	}
+
+	fsys := pkg.Project().Environment().fs()
+	root := pkg.Project().SourceRoot()
+	relPaths, err := resolveIncludePaths(fsys, patterns, root)
+	if err != nil {
+		return err
+	}
+
+	for _, relPath := range relPaths {
+		if err := addIncludeFile(zw, fsys, joinRoot(root, relPath), relPath, written); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// addIncludeFile writes a single include file into zw at relPath, skipping
+// paths already written — an include pattern may match the same path
+// twice, or match a path some earlier archive stage already wrote.
+func addIncludeFile(zw *zip.Writer, fsys fs.FS, fsPath, relPath string, written map[string]bool) error {
+	if written[relPath] {
+		return nil
+	}
+	content, err := fs.ReadFile(fsys, fsPath)
+	if err != nil {
+		return fmt.Errorf("writeBala: read include file %s: %w", relPath, err)
+	}
+	return writeZipEntry(zw, relPath, content, written)
+}
+
+// writeZipEntry writes content into zw at zipPath and records zipPath in
+// written. Callers other than addIncludeFile don't consult written
+// themselves — see populateBalaArchive's doc comment for why only
+// addIncludes needs to check it before writing.
+func writeZipEntry(zw *zip.Writer, zipPath string, content []byte, written map[string]bool) error {
 	w, err := zw.Create(zipPath)
 	if err != nil {
 		return fmt.Errorf("writeBala: create entry %s: %w", zipPath, err)
@@ -201,5 +252,6 @@ func writeZipEntry(zw *zip.Writer, zipPath string, content []byte) error {
 	if _, err := io.Copy(w, bytes.NewReader(content)); err != nil {
 		return fmt.Errorf("writeBala: write entry %s: %w", zipPath, err)
 	}
+	written[zipPath] = true
 	return nil
 }
