@@ -1018,7 +1018,7 @@ func ensureFunctionTypeSignature(resolver symbolResolver, targetScope model.Scop
 		// Already set
 		return ref, true
 	}
-	params := signatureParams(resolver, targetScope, fnType)
+	params := signatureParams(resolver, targetScope, targetScope, fnType)
 	ref := resolver.GetCtx().AllocateFunctionSignature(params, fnType.RestParameter() != nil)
 	fnType.SetSignatureRef(ref)
 	return ref, true
@@ -1063,7 +1063,10 @@ type symbolFunctionSignature interface {
 	Symbol() model.SymbolRef
 }
 
-func allocateSymbols(alloc symbolResolver, targetScope model.Scope, sig symbolFunctionSignature, pos diagnostics.Location) {
+// allocateSymbols allocates the function signature of sig. targetScope owns the generated
+// default value function symbols, while ownerScope is the scope enclosing sig, which parents
+// the closure scopes allocated for its default expressions.
+func allocateSymbols(alloc symbolResolver, targetScope, ownerScope model.Scope, sig symbolFunctionSignature, pos diagnostics.Location) {
 	cx := alloc.GetCtx()
 	owner := sig.Symbol()
 	if owner.IsEmpty() {
@@ -1073,13 +1076,13 @@ func allocateSymbols(alloc symbolResolver, targetScope model.Scope, sig symbolFu
 		associateReturnFunctionSignature(alloc, ref, sig.ReturnType(), pos)
 		return
 	}
-	params := signatureParams(alloc, targetScope, sig)
+	params := signatureParams(alloc, targetScope, ownerScope, sig)
 	ref := cx.AllocateFunctionSignature(params, sig.RestParameter() != nil)
 	associateFunctionSignatureRef(cx, owner, ref, pos)
 	associateReturnFunctionSignature(alloc, ref, sig.ReturnType(), pos)
 }
 
-func signatureParams(alloc symbolResolver, targetScope model.Scope, sig ast.FunctionSignature) []model.Param {
+func signatureParams(alloc symbolResolver, targetScope, ownerScope model.Scope, sig ast.FunctionSignature) []model.Param {
 	requiredParams := sig.Parameters()
 	params := make([]model.Param, 0, len(requiredParams)+1)
 	for _, param := range requiredParams {
@@ -1100,7 +1103,11 @@ func signatureParams(alloc symbolResolver, targetScope model.Scope, sig ast.Func
 				defaultFnSym := model.NewFunctionSymbol(name, model.TypedFunctionSignature{}, false, param.GetPosition())
 				targetScope.AddSymbol(name, defaultFnSym)
 				symRef, _ := targetScope.GetSymbol(name)
-				defaultParam = &model.DefaultableParam{Symbol: symRef, Kind: model.DefaultableParamKindExpr}
+				defaultParam = &model.DefaultableParam{
+					Symbol: symRef,
+					Kind:   model.DefaultableParamKindExpr,
+					Scope:  alloc.GetCtx().NewFunctionScope(ownerScope, alloc.GetPkgID()),
+				}
 			}
 		}
 		params = append(params, model.Param{Name: param.ParamName(), Flag: flag, Default: defaultParam, IncludedRecord: includedRecord})
@@ -1253,7 +1260,7 @@ func (bs *blockSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		functionResolver := newFunctionResolver(bs, fn)
 		fn.SetScope(functionResolver.scope)
 		resolveLambdaFunction(functionResolver, bs, fn)
-		allocateSymbols(bs, bs.scope, fn, fn.GetPosition())
+		allocateSymbols(bs, bs.scope, functionResolver.scope, fn, fn.GetPosition())
 		return nil
 	default:
 		return visitInnerSymbolResolver(bs, n)
@@ -1615,7 +1622,7 @@ func (ms *compilationUnitSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		functionResolver := newFunctionResolver(ms, n)
 		n.SetScope(functionResolver.scope)
 		resolveFunction(functionResolver, n)
-		allocateSymbols(ms, ms.scope, n, n.GetPosition())
+		allocateSymbols(ms, ms.scope, functionResolver.scope, n, n.GetPosition())
 		return nil
 	case *ast.BLangVariable:
 		if !n.IsConstant() && n.Symbol().IsEmpty() {
@@ -1677,7 +1684,7 @@ func (ms *compilationUnitSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		functionResolver := newFunctionResolver(ms, fn)
 		fn.SetScope(functionResolver.scope)
 		resolveLambdaFunction(functionResolver, functionResolver, fn)
-		allocateSymbols(ms, ms.scope, fn, fn.GetPosition())
+		allocateSymbols(ms, ms.scope, functionResolver.scope, fn, fn.GetPosition())
 		return nil
 	default:
 		return visitInnerSymbolResolver(ms, n)
@@ -1777,20 +1784,22 @@ func resolveObjectInclusions[T symbolResolver](resolver T, unresolvedInclusions 
 	return inclusions, positions, includedFields
 }
 
-// allocateRecordDefaultSymbols allocates a module unique function symbol for each record field with a
-// default expression. Since the field type is not known at symbol resolution the typed signature is left
-// empty and populated during type resolution.
+// allocateRecordDefaultSymbols allocates a module unique function symbol and the scope owning the
+// closure desugar generates for each record field with a default expression. Since the field type is
+// not known at symbol resolution the typed signature is left empty and populated during type
+// resolution.
 func allocateRecordDefaultSymbols(resolver symbolResolver, recordType *ast.BLangRecordType) {
 	scope := resolver.recordDefaultScope()
 	for _, field := range recordType.FieldPtrs() {
-		if field.DefaultExpr == nil {
+		if field.Default == nil {
 			continue
 		}
 		name := resolver.nextDefaultSymbolName()
 		symbol := model.NewFunctionSymbol(name, model.TypedFunctionSignature{}, false, field.GetPosition())
 		scope.AddSymbol(name, symbol)
 		symRef, _ := scope.GetSymbol(name)
-		field.DefaultFnRef = symRef
+		field.Default.FnRef = symRef
+		field.Default.FnScope = resolver.GetCtx().NewFunctionScope(scope, resolver.GetPkgID())
 	}
 }
 
@@ -2006,14 +2015,14 @@ func finishResolveClassDefinition(ms *compilationUnitSymbolResolver, blockRes *b
 		initResolver := newFunctionResolver(blockRes, initFn)
 		initFn.SetScope(initResolver.scope)
 		resolveFunction(initResolver, initFn)
-		allocateSymbols(ms, ms.scope, initFn, initFn.GetPosition())
+		allocateSymbols(ms, ms.scope, initResolver.scope, initFn, initFn.GetPosition())
 	}
 
 	for _, m := range orderedMethods {
 		methodResolver := newFunctionResolver(blockRes, m.Method)
 		m.Method.SetScope(methodResolver.scope)
 		resolveFunction(methodResolver, m.Method)
-		allocateSymbols(ms, ms.scope, m.Method, m.Method.GetPosition())
+		allocateSymbols(ms, ms.scope, methodResolver.scope, m.Method, m.Method.GetPosition())
 	}
 
 	for _, rm := range resourceMethods {
@@ -2023,7 +2032,7 @@ func finishResolveClassDefinition(ms *compilationUnitSymbolResolver, blockRes *b
 		methodResolver := newFunctionResolver(blockRes, rm)
 		rm.SetScope(methodResolver.scope)
 		resolveResourceMethod(methodResolver, rm)
-		allocateSymbols(ms, ms.scope, rm, rm.GetPosition())
+		allocateSymbols(ms, ms.scope, methodResolver.scope, rm, rm.GetPosition())
 	}
 }
 

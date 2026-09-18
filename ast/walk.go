@@ -625,8 +625,8 @@ func Walk(v Visitor, node BLangNode) {
 				Walk(v, &attachments[j])
 			}
 			Walk(v, field.Type.(BLangNode))
-			if field.DefaultExpr != nil {
-				Walk(v, field.DefaultExpr.(BLangNode))
+			if field.Default != nil {
+				Walk(v, field.Default.Expr.(BLangNode))
 			}
 		}
 		if node.RestType != nil {
