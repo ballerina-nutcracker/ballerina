@@ -31,8 +31,8 @@ func newRunTraceOutput(_ string) *runTraceOutput { return &runTraceOutput{} }
 
 func registerTraceFlag(_ *cobra.Command) {}
 
-func runTraceOptions(_ *cobra.Command) (enabled bool, path string, err error) {
-	return false, "", nil
+func runTraceOptions(_ *cobra.Command) (options context.TraceOptions, path string, err error) {
+	return context.TraceOptions{}, "", nil
 }
 
 func (o *runTraceOutput) finalize(_ *context.CompilerEnvironment) error { return nil }

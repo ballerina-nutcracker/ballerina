@@ -31,7 +31,7 @@ import (
 const traceTestSource = "public function main() {}"
 
 func TestCachedParsesRecordOneParseSpan(t *testing.T) {
-	env := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), compilercontext.TraceOptions{Enabled: true})
 	cx := compilercontext.NewCompilerContext(env)
 	docContext := newTraceTestDocumentContext(false)
 
@@ -43,7 +43,7 @@ func TestCachedParsesRecordOneParseSpan(t *testing.T) {
 }
 
 func TestCacheDisabledParsesRecordDistinctSpans(t *testing.T) {
-	env := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), compilercontext.TraceOptions{Enabled: true})
 	cx := compilercontext.NewCompilerContext(env)
 	docContext := newTraceTestDocumentContext(true)
 

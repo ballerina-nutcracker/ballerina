@@ -38,35 +38,42 @@ const traceCategory = "frontend"
 const tracePid = 1
 
 // TraceSpan is a handle to an in-flight frontend invocation span. The zero
-// value is a disabled handle: it is safe to use and to end.
+// value is a disabled handle: it is safe to use, to start children from, and to
+// end.
 type TraceSpan struct {
-	state *traceState
-	label string
-	start time.Duration
-	id    uint64
+	state  *traceState
+	label  string
+	start  time.Duration
+	id     uint64
+	parent uint64
 }
 
-// traceSpan is a completed span held by the recorder.
+// traceSpan is a completed span held by the recorder. A parent of 0 denotes a
+// root span.
 type traceSpan struct {
-	label string
-	start time.Duration
-	end   time.Duration
-	id    uint64
+	label  string
+	start  time.Duration
+	end    time.Duration
+	id     uint64
+	parent uint64
 }
 
 // traceState is the environment-owned recorder.
 type traceState struct {
 	enabled bool
+	nested  bool
 	origin  time.Time
 	nextID  atomic.Uint64
 	mu      sync.Mutex
 	spans   []traceSpan
 }
 
-// traceEventArgs carries the span's identity. The ID is a decimal string so
-// JSON readers that parse numbers as float64 cannot lose precision.
+// traceEventArgs carries the span's identity and its parentage. Both IDs are
+// decimal strings so JSON readers that parse numbers as float64 cannot lose
+// precision. Root spans emit no parent_id key.
 type traceEventArgs struct {
-	SpanID string `json:"span_id"`
+	SpanID   string `json:"span_id"`
+	ParentID string `json:"parent_id,omitempty"`
 }
 
 // traceEvent is a Chrome Trace Event complete-duration event.
@@ -86,19 +93,20 @@ type traceDocument struct {
 	TraceEvents []traceEvent `json:"traceEvents"`
 }
 
-func newTraceState(traceEnabled bool) traceState {
-	if !traceEnabled {
+func newTraceState(traceOptions TraceOptions) traceState {
+	if !traceOptions.Enabled {
 		return traceState{}
 	}
-	return traceState{enabled: true, origin: time.Now()}
+	return traceState{enabled: true, nested: traceOptions.Nested, origin: time.Now()}
 }
 
-func (s *traceState) startSpan(label string) TraceSpan {
+func (s *traceState) startSpan(label string, parent uint64) TraceSpan {
 	return TraceSpan{
-		state: s,
-		label: label,
-		start: time.Since(s.origin),
-		id:    s.nextID.Add(1),
+		state:  s,
+		label:  label,
+		start:  time.Since(s.origin),
+		id:     s.nextID.Add(1),
+		parent: parent,
 	}
 }
 
@@ -107,10 +115,11 @@ func (s *traceState) endSpan(span TraceSpan) {
 	// charged to the measured invocation.
 	end := time.Since(s.origin)
 	completed := traceSpan{
-		label: span.label,
-		start: span.start,
-		end:   end,
-		id:    span.id,
+		label:  span.label,
+		start:  span.start,
+		end:    end,
+		id:     span.id,
+		parent: span.parent,
 	}
 	s.mu.Lock()
 	s.spans = append(s.spans, completed)
@@ -129,10 +138,15 @@ func (s *traceState) marshalTrace() ([]byte, error) {
 
 	slices.SortFunc(spans, compareTraceSpans)
 
-	events := make([]traceEvent, 0, len(spans))
-	var laneEnds []time.Duration
+	parents := make(map[uint64]uint64, len(spans))
 	for _, span := range spans {
-		events = append(events, newTraceEvent(span, assignTraceLane(&laneEnds, span)))
+		parents[span.id] = span.parent
+	}
+
+	events := make([]traceEvent, 0, len(spans))
+	var lanes []laneStack
+	for _, span := range spans {
+		events = append(events, newTraceEvent(span, assignTraceLane(&lanes, span, parents)))
 	}
 	return json.Marshal(traceDocument{TraceEvents: events})
 }
@@ -141,24 +155,85 @@ func compareTraceSpans(a, b traceSpan) int {
 	if c := cmp.Compare(a.start, b.start); c != 0 {
 		return c
 	}
-	if c := cmp.Compare(a.end, b.end); c != 0 {
+	// Longest first, so a parent sorts before a child that starts with it and
+	// the lane allocator sees the parent already open.
+	if c := cmp.Compare(b.end, a.end); c != 0 {
 		return c
 	}
 	return cmp.Compare(a.id, b.id)
 }
 
-// assignTraceLane returns the lowest lane whose preceding span ends at or
-// before this span's start, allocating a new lane when none is free. Overlapping
-// spans therefore land on distinct lanes instead of implying false nesting.
-func assignTraceLane(laneEnds *[]time.Duration, span traceSpan) int {
-	for lane, end := range *laneEnds {
-		if end <= span.start {
-			(*laneEnds)[lane] = span.end
+// laneStack is one viewer lane's stack of the spans still open at the current
+// position of the ordered scan, innermost last.
+type laneStack struct {
+	open []traceSpan
+}
+
+// closeEndedAt drops the spans that no longer contain a span starting at start.
+func (l *laneStack) closeEndedAt(start time.Duration) {
+	for len(l.open) > 0 && l.open[len(l.open)-1].end <= start {
+		l.open = l.open[:len(l.open)-1]
+	}
+}
+
+// accepts reports whether span can be drawn on this lane: either nothing is
+// open on it, or the innermost open span is an ancestor that contains it. The
+// ancestor test is what forbids false nesting.
+func (l *laneStack) accepts(span traceSpan, parents map[uint64]uint64) bool {
+	if len(l.open) == 0 {
+		return true
+	}
+	top := l.open[len(l.open)-1]
+	return span.end <= top.end && isTraceAncestor(top.id, span, parents)
+}
+
+func (l *laneStack) push(span traceSpan) {
+	l.open = append(l.open, span)
+}
+
+// topID reports the innermost open span's id, or 0 when the lane is free.
+func (l *laneStack) topID() uint64 {
+	if len(l.open) == 0 {
+		return 0
+	}
+	return l.open[len(l.open)-1].id
+}
+
+// isTraceAncestor walks span's recorded parentage looking for candidate. Ids
+// are allocated by a single increment, so a parent id is always smaller than
+// its child's and the walk always terminates.
+func isTraceAncestor(candidate uint64, span traceSpan, parents map[uint64]uint64) bool {
+	for id := span.parent; id != 0; id = parents[id] {
+		if id == candidate {
+			return true
+		}
+	}
+	return false
+}
+
+// assignTraceLane places span on a lane that renders it correctly: its parent's
+// lane when that lane still has the parent innermost, otherwise the lowest lane
+// that accepts it, otherwise a fresh lane. Serial children therefore share
+// their parent's lane and draw inside it, while concurrent siblings spread onto
+// their own lanes.
+func assignTraceLane(lanes *[]laneStack, span traceSpan, parents map[uint64]uint64) int {
+	for lane := range *lanes {
+		(*lanes)[lane].closeEndedAt(span.start)
+	}
+	for lane := range *lanes {
+		if (*lanes)[lane].topID() == span.parent && (*lanes)[lane].accepts(span, parents) {
+			(*lanes)[lane].push(span)
 			return lane
 		}
 	}
-	*laneEnds = append(*laneEnds, span.end)
-	return len(*laneEnds) - 1
+	for lane := range *lanes {
+		if (*lanes)[lane].accepts(span, parents) {
+			(*lanes)[lane].push(span)
+			return lane
+		}
+	}
+	*lanes = append(*lanes, laneStack{open: []traceSpan{span}})
+	return len(*lanes) - 1
 }
 
 func newTraceEvent(span traceSpan, lane int) traceEvent {
@@ -170,8 +245,20 @@ func newTraceEvent(span traceSpan, lane int) traceEvent {
 		Tid:  lane,
 		Ts:   microseconds(span.start),
 		Dur:  microseconds(span.end - span.start),
-		Args: traceEventArgs{SpanID: strconv.FormatUint(span.id, 10)},
+		Args: traceEventArgs{
+			SpanID:   strconv.FormatUint(span.id, 10),
+			ParentID: traceSpanID(span.parent),
+		},
 	}
+}
+
+// traceSpanID renders a span id as a decimal string, and the root sentinel 0 as
+// no id at all.
+func traceSpanID(id uint64) string {
+	if id == 0 {
+		return ""
+	}
+	return strconv.FormatUint(id, 10)
 }
 
 // microseconds keeps fractional microseconds rather than rounding to whole ones.
@@ -186,7 +273,7 @@ func (c *CompilerContext) StartNamedSpan(operation, identity string) TraceSpan {
 	if !c.env.traceState.enabled {
 		return TraceSpan{}
 	}
-	return c.env.traceState.startSpan(spanLabel(operation, identity))
+	return c.env.traceState.startSpan(spanLabel(operation, identity), 0)
 }
 
 // StartPackageSpan starts a root span for a frontend invocation over one
@@ -198,7 +285,7 @@ func (c *CompilerContext) StartPackageSpan(operation string, pkgID *model.Packag
 	if !c.env.traceState.enabled {
 		return TraceSpan{}
 	}
-	return c.env.traceState.startSpan(spanLabel(operation, packageIdentity(pkgID)))
+	return c.env.traceState.startSpan(spanLabel(operation, packageIdentity(pkgID)), 0)
 }
 
 // packageIdentity renders a package's identity as org/name:version. Every
@@ -216,6 +303,17 @@ func spanLabel(operation, identity string) string {
 		return operation
 	}
 	return operation + " " + identity
+}
+
+// StartChild starts a span nested under s, labeled with the operation and a
+// free-form identity such as a definition name. It returns the disabled handle
+// when s is disabled or the recording is not nested, so call sites need no
+// enablement check and an unnested recording allocates nothing per definition.
+func (s TraceSpan) StartChild(operation, identity string) TraceSpan {
+	if s.state == nil || !s.state.nested {
+		return TraceSpan{}
+	}
+	return s.state.startSpan(spanLabel(operation, identity), s.id)
 }
 
 // End completes the span. Each active handle is ended exactly once by its owner.
