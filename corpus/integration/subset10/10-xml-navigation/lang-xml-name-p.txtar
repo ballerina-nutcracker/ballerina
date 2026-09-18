@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: invalid XML element name
+        at main(lang-xml-name-p.bal:18)
