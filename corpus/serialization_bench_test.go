@@ -123,7 +123,7 @@ func BenchmarkBIRUnmarshal(b *testing.B) {
 		}
 		b.Run(tc.Name, func(b *testing.B) {
 			for b.Loop() {
-				freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+				freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 				freshCtx := context.NewCompilerContext(freshEnv)
 				if _, err := bircodec.Unmarshal(freshCtx, data); err != nil {
 					b.Fatalf("BIR Unmarshal: %v", err)
@@ -155,7 +155,7 @@ func BenchmarkSymbolUnmarshal(b *testing.B) {
 		}
 		b.Run(tc.Name, func(b *testing.B) {
 			for b.Loop() {
-				freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+				freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 				if _, err := symbolpool.Unmarshal(freshEnv, data); err != nil {
 					b.Fatalf("Symbol Unmarshal: %v", err)
 				}

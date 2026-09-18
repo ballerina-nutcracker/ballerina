@@ -39,6 +39,7 @@ var (
 	singleFileFixture   = filepath.Join("corpus", "cli", "testdata", "run", "single-bal-files")
 	workspaceFixture    = filepath.Join("corpus", "cli", "testdata", "run", "workspaces", "run-workspace-corpus")
 	readTraceFixture    = filepath.Join("corpus", "cli", "testdata", "run", "trace", "read-trace")
+	childSpanFixture    = filepath.Join("corpus", "cli", "testdata", "run", "trace", "children")
 )
 
 const runAndPrintOutput = "project says hi"
@@ -52,7 +53,8 @@ type traceEvent struct {
 	Ts   float64 `json:"ts"`
 	Dur  float64 `json:"dur"`
 	Args struct {
-		SpanID string `json:"span_id"`
+		SpanID   string `json:"span_id"`
+		ParentID string `json:"parent_id"`
 	} `json:"args"`
 }
 
@@ -656,4 +658,333 @@ func TestBalRunTraceRejectsNativeDependencyHandoff(t *testing.T) {
 		t.Errorf("the guard panicked instead of reporting an error:\n%s", stderr)
 	}
 	readTrace(t, filepath.Join(workDir, traceFileName))
+}
+
+// traceEpsilon absorbs the float rounding of recomputing an end offset as
+// ts + dur; it is far below the one-nanosecond resolution of the recording.
+const traceEpsilon = 1e-6
+
+const childSpanPackage = "testorg/cli_trace_children:0.1.0"
+
+// TestBalRunTraceChildSpans covers the span tree: every phase decomposes into
+// children, the recorded parentage is well formed, and the lanes render the
+// tree without false nesting.
+func TestBalRunTraceChildSpans(t *testing.T) {
+	t.Parallel()
+	skipTraceTestOnWasm(t)
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, true)
+	workDir := copyTraceFixture(t, repoRoot, childSpanFixture)
+
+	// The fixture panics once it has exercised every definition, because its
+	// listener would otherwise keep the run alive. The trace is written before
+	// the program starts, so the recording is complete either way.
+	stdout, stderr, _ := runBalInDir(t, balBin, workDir, coverDir, "run", ".", "--trace", "--nested")
+	if !strings.Contains(stdout, "traced") {
+		t.Fatalf("fixture did not compile and run:\nstdout:\n%s\nstderr:\n%s", stdout, stderr)
+	}
+	events := readTrace(t, filepath.Join(workDir, traceFileName))
+	assertTraceHasSpans(t, filepath.Join(workDir, traceFileName))
+	assertTraceTreeInvariants(t, events)
+
+	t.Run("each phase decomposes into children", func(t *testing.T) {
+		for phase, children := range map[string][]string{
+			"Symbol Resolution": {"Import Binding", "Top-Level Symbols main.bal", "Symbol Resolution main.bal"},
+			"Top-Level Type Resolution": {
+				"Type Definition Entry", "Class Type Counter", "Function Signature main",
+				"Global Variable total", "Package Constants", "Service $service$0",
+			},
+			"Local Type Resolution": {"Class Field Inits Counter", "Function Body accumulate"},
+			"Semantic Analysis": {
+				"Module Variable Metadata", "Module Isolation Validation",
+				"Constant LIMIT", "Type Definition Amount", "Class Definition Counter", "Function main",
+			},
+			"CFG Creation": {"Function main", "Method add"},
+			"CFG Analysis": {
+				"Reachability Analysis", "Reachability add", "Explicit Return Analysis",
+				"Uninitialized Variable Analysis", "Uninitialized Field Analysis",
+				"Uninitialized Global Variable Analysis",
+			},
+			"Desugaring":     {"Class Counter", "Function add", "Service $service$0", "Resource Method get"},
+			"BIR Generation": {"Global Variables", "Class Counter", "Method add", "Function main"},
+		} {
+			recorded := phaseSpanNames(t, events, phase, childSpanPackage)
+			for _, child := range children {
+				if !slices.Contains(recorded, child) {
+					t.Errorf("%s is missing child span %q; recorded:\n%s",
+						phase, child, strings.Join(recorded, "\n"))
+				}
+			}
+		}
+	})
+
+	t.Run("a desugared method nests under its class", func(t *testing.T) {
+		assertSpanParent(t, events, "Desugaring", "Function add", "Class Counter")
+	})
+
+	t.Run("a local type resolution body is a sibling of top-level functions", func(t *testing.T) {
+		assertSpanParent(t, events, "Local Type Resolution", "Function Body add",
+			"Local Type Resolution "+childSpanPackage)
+	})
+
+	t.Run("a per-function reachability span nests under its analysis", func(t *testing.T) {
+		assertSpanParent(t, events, "CFG Analysis", "Reachability add", "Reachability Analysis")
+	})
+
+	t.Run("a generated BIR method nests under its class", func(t *testing.T) {
+		assertSpanParent(t, events, "BIR Generation", "Method add", "Class Counter")
+	})
+
+	t.Run("the sequential BIR subtree occupies one lane", func(t *testing.T) {
+		lanes := map[int]bool{}
+		for _, event := range phaseSubtree(t, events, "BIR Generation", childSpanPackage) {
+			lanes[event.Tid] = true
+		}
+		if len(lanes) != 1 {
+			t.Errorf("BIR generation spans occupy %d lanes, want 1", len(lanes))
+		}
+	})
+}
+
+// TestBalRunTraceChildSpansOnCompilationFailure covers a partial recording:
+// children recorded before the failure are present, every span that names a
+// parent finds it, and the tree invariants still hold.
+func TestBalRunTraceChildSpansOnCompilationFailure(t *testing.T) {
+	t.Parallel()
+	skipTraceTestOnWasm(t)
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, true)
+	workDir := copyTraceFixture(t, repoRoot, compileErrorFixture)
+
+	_, _, exitCode := runBalInDir(t, balBin, workDir, coverDir, "run", ".", "--trace", "--nested")
+	if exitCode == 0 {
+		t.Fatal("expected a non-zero exit code for an undefined symbol")
+	}
+
+	events := readTrace(t, filepath.Join(workDir, traceFileName))
+	assertTraceTreeInvariants(t, events)
+	recorded := phaseSpanNames(t, events, "Symbol Resolution", "testorg/broken:0.1.0")
+	if !slices.Contains(recorded, "Import Binding") {
+		t.Errorf("no symbol resolution children survived the failure; recorded:\n%s",
+			strings.Join(recorded, "\n"))
+	}
+}
+
+func traceEventsByID(events []traceEvent) map[string]traceEvent {
+	byID := make(map[string]traceEvent, len(events))
+	for _, event := range events {
+		byID[event.Args.SpanID] = event
+	}
+	return byID
+}
+
+// phaseRootName returns the name of the root span the event descends from.
+func phaseRootName(t *testing.T, byID map[string]traceEvent, event traceEvent) string {
+	t.Helper()
+	for range len(byID) + 1 {
+		if event.Args.ParentID == "" {
+			return event.Name
+		}
+		parent, ok := byID[event.Args.ParentID]
+		if !ok {
+			t.Fatalf("span %q names parent %s which is not in the document", event.Name, event.Args.ParentID)
+		}
+		event = parent
+	}
+	t.Fatalf("parentage of span %q does not reach a root", event.Name)
+	return ""
+}
+
+// phaseSubtree returns every span recorded under the named phase of one
+// package, including the phase root itself.
+func phaseSubtree(t *testing.T, events []traceEvent, phase, pkg string) []traceEvent {
+	t.Helper()
+	byID := traceEventsByID(events)
+	root := phase + " " + pkg
+	var subtree []traceEvent
+	for _, event := range events {
+		if phaseRootName(t, byID, event) == root {
+			subtree = append(subtree, event)
+		}
+	}
+	if len(subtree) == 0 {
+		t.Fatalf("no spans recorded under %q", root)
+	}
+	return subtree
+}
+
+func phaseSpanNames(t *testing.T, events []traceEvent, phase, pkg string) []string {
+	t.Helper()
+	var names []string
+	for _, event := range phaseSubtree(t, events, phase, pkg) {
+		names = append(names, event.Name)
+	}
+	slices.Sort(names)
+	return slices.Compact(names)
+}
+
+func assertSpanParent(t *testing.T, events []traceEvent, phase, child, wantParent string) {
+	t.Helper()
+	byID := traceEventsByID(events)
+	found := false
+	for _, event := range phaseSubtree(t, events, phase, childSpanPackage) {
+		if event.Name != child {
+			continue
+		}
+		found = true
+		if got := byID[event.Args.ParentID].Name; got != wantParent {
+			t.Errorf("%s: parent of %q = %q, want %q", phase, child, got, wantParent)
+		}
+	}
+	if !found {
+		t.Errorf("%s recorded no span named %q", phase, child)
+	}
+}
+
+// assertTraceTreeInvariants checks the document-wide guarantees: parentage
+// resolves and is acyclic, children are time-contained in their parents, and on
+// every lane two slices are disjoint or nested inside a genuine ancestor.
+func assertTraceTreeInvariants(t *testing.T, events []traceEvent) {
+	t.Helper()
+	byID := traceEventsByID(events)
+	for _, event := range events {
+		if event.Args.ParentID == "" {
+			continue
+		}
+		parent, ok := byID[event.Args.ParentID]
+		if !ok {
+			t.Fatalf("span %q names parent %s which is not in the document", event.Name, event.Args.ParentID)
+		}
+		// Reaching a root proves this span's ancestry is finite, so the parent
+		// relation contains no cycle through it.
+		phaseRootName(t, byID, event)
+		if event.Ts+traceEpsilon < parent.Ts ||
+			event.Ts+event.Dur > parent.Ts+parent.Dur+traceEpsilon {
+			t.Fatalf("span %q is not contained in parent %q", event.Name, parent.Name)
+		}
+	}
+	assertTraceLaneInvariants(t, byID, events)
+}
+
+func assertTraceLaneInvariants(t *testing.T, byID map[string]traceEvent, events []traceEvent) {
+	t.Helper()
+	type lane struct {
+		pid, tid int
+	}
+	byLane := map[lane][]traceEvent{}
+	for _, event := range events {
+		key := lane{pid: event.Pid, tid: event.Tid}
+		byLane[key] = append(byLane[key], event)
+	}
+	for key, laneEvents := range byLane {
+		for i, a := range laneEvents {
+			for _, b := range laneEvents[i+1:] {
+				aEnd, bEnd := a.Ts+a.Dur, b.Ts+b.Dur
+				switch {
+				case aEnd <= b.Ts+traceEpsilon || bEnd <= a.Ts+traceEpsilon:
+				case a.Ts <= b.Ts+traceEpsilon && bEnd <= aEnd+traceEpsilon:
+					assertTraceAncestor(t, byID, key.tid, a, b)
+				case b.Ts <= a.Ts+traceEpsilon && aEnd <= bEnd+traceEpsilon:
+					assertTraceAncestor(t, byID, key.tid, b, a)
+				default:
+					t.Fatalf("lane %d overlaps %q and %q partially", key.tid, a.Name, b.Name)
+				}
+			}
+		}
+	}
+}
+
+func assertTraceAncestor(t *testing.T, byID map[string]traceEvent, tid int, outer, inner traceEvent) {
+	t.Helper()
+	for id := inner.Args.ParentID; id != ""; id = byID[id].Args.ParentID {
+		if id == outer.Args.SpanID {
+			return
+		}
+	}
+	t.Fatalf("lane %d draws %q inside unrelated %q", tid, inner.Name, outer.Name)
+}
+
+// TestBalRunTraceIsFlatWithoutNested covers the default recording: --trace
+// alone records the phase spans and none of the children within them.
+func TestBalRunTraceIsFlatWithoutNested(t *testing.T) {
+	t.Parallel()
+	skipTraceTestOnWasm(t)
+	balBin, repoRoot, coverDir := integrationTestBalCLI(t, true)
+	workDir := copyTraceFixture(t, repoRoot, childSpanFixture)
+
+	stdout, stderr, _ := runBalInDir(t, balBin, workDir, coverDir, "run", ".", "--trace")
+	if !strings.Contains(stdout, "traced") {
+		t.Fatalf("fixture did not compile and run:\nstdout:\n%s\nstderr:\n%s", stdout, stderr)
+	}
+
+	events := readTrace(t, filepath.Join(workDir, traceFileName))
+	for _, event := range events {
+		if event.Args.ParentID != "" {
+			t.Fatalf("span %q carries parent_id %q without --nested",
+				event.Name, event.Args.ParentID)
+		}
+	}
+	// The phase roots are still there; only what they contain is gone.
+	names := map[string]bool{}
+	for _, event := range events {
+		names[event.Name] = true
+	}
+	if !names["Desugaring "+childSpanPackage] {
+		t.Errorf("phase spans missing from an unnested recording:\n%s",
+			strings.Join(sortedNames(countNames(events)), "\n"))
+	}
+	for _, child := range []string{"Class Counter", "Import Binding", "Reachability Analysis"} {
+		if names[child] {
+			t.Errorf("child span %q recorded without --nested", child)
+		}
+	}
+}
+
+// TestBalNestedFlagIsDebugRunOnly covers --nested's visibility and its
+// dependence on --trace.
+func TestBalNestedFlagIsDebugRunOnly(t *testing.T) {
+	t.Parallel()
+	skipTraceTestOnWasm(t)
+	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
+
+	t.Run("release run rejects --nested", func(t *testing.T) {
+		t.Parallel()
+		balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+		_, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
+			[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "run", projectDir, "--nested")
+		if exitCode == 0 || !strings.Contains(stderr, "unknown flag") {
+			t.Errorf("release bal run --nested: exit=%d stderr:\n%s", exitCode, stderr)
+		}
+	})
+
+	t.Run("debug run advertises --nested", func(t *testing.T) {
+		t.Parallel()
+		balBin, repoRoot, coverDir := integrationTestBalCLI(t, true)
+		helpOut, _, _ := runCLICommand(t, balBin, repoRoot, coverDir, "run", "--help")
+		if !strings.Contains(helpOut, "--nested") {
+			t.Errorf("debug bal run --help does not advertise --nested:\n%s", helpOut)
+		}
+	})
+
+	t.Run("--nested without --trace is rejected", func(t *testing.T) {
+		t.Parallel()
+		balBin, repoRoot, coverDir := integrationTestBalCLI(t, true)
+		workDir := copyTraceFixture(t, repoRoot, runAndPrintFixture)
+		stdout, stderr, exitCode := runBalInDir(t, balBin, workDir, coverDir, "run", ".", "--nested")
+		if exitCode == 0 {
+			t.Fatalf("bal run --nested succeeded without --trace\nstdout:\n%s", stdout)
+		}
+		if !strings.Contains(stderr, "--nested requires --trace") {
+			t.Errorf("expected a --nested usage error, got stderr:\n%s", stderr)
+		}
+		if strings.Contains(stdout, runAndPrintOutput) {
+			t.Errorf("program ran despite the rejected flag:\n%s", stdout)
+		}
+	})
+}
+
+func countNames(events []traceEvent) map[string]int {
+	names := map[string]int{}
+	for _, event := range events {
+		names[event.Name]++
+	}
+	return names
 }

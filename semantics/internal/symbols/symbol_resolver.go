@@ -599,8 +599,11 @@ func Resolve(
 	implicitImports map[string]model.ExportedSymbolSpace,
 	publicSymbols map[PackageIdentifier]model.ExportedSymbolSpace,
 	defaultOrg string,
+	parent context.TraceSpan,
 ) (model.Scope, model.ExportedSymbolSpace, map[string]model.ExportedSymbolSpace) {
+	importSpan := parent.StartChild("Import Binding", "")
 	cuImportsList := bindImports(cx, compilationUnits, implicitImports, publicSymbols, defaultOrg)
+	importSpan.End()
 	moduleResolver := newModuleSymbolResolver(cx, pkgID)
 	injectOpaqueSymbols(pkgID, moduleResolver)
 	cuResolvers := make([]*compilationUnitSymbolResolver, len(cuImportsList))
@@ -611,17 +614,21 @@ func Resolve(
 		moduleResolver.moduleNodes.add(cuImports.compilationUnit, cuResolvers[i])
 	}
 	for i, resolver := range cuResolvers {
+		span := parent.StartChild("Top-Level Symbols", compilationUnitFile(cx, cuImportsList[i].compilationUnit))
 		resolver.allocateTopLevelSymbols(cuImportsList[i].compilationUnit)
+		span.End()
 	}
 
 	importedSymbols := make(map[string]model.ExportedSymbolSpace)
 	for i, cuImports := range cuImportsList {
 		cu := cuImports.compilationUnit
 		resolver := cuResolvers[i]
+		span := parent.StartChild("Symbol Resolution", compilationUnitFile(cx, cu))
 		processCompilationUnitXMLNS(resolver, cu)
 		ast.Walk(resolver, cu)
 		reportUnusedImports(resolver, compilationUnitImports(cu))
 		reportUnusedVariables(cx, resolver.getUnused())
+		span.End()
 		maps.Copy(importedSymbols, cuImports.imports)
 	}
 
@@ -635,6 +642,12 @@ func Resolve(
 	annotationSpaces = append(annotationSpaces, moduleResolver.packageScope.Annotation)
 	pkgScope := &model.PackageScope{Virtual: moduleResolver.packageScope, MainSpaces: mainSpaces}
 	return pkgScope, model.NewExportedSymbolSpaces(mainSpaces, annotationSpaces), importedSymbols
+}
+
+// compilationUnitFile names a compilation unit by its source file, the same
+// identity the parse and AST build spans carry.
+func compilationUnitFile(cx *context.CompilerContext, cu *ast.BLangCompilationUnit) string {
+	return cx.DiagnosticEnv().FileName(cu.GetPosition())
 }
 
 func (ms *compilationUnitSymbolResolver) allocateTopLevelSymbols(cu *ast.BLangCompilationUnit) {

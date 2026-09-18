@@ -47,6 +47,14 @@ func (l *loopTypeResolver) expectedReturnType() semtypes.SemType {
 	return l.parentResolver.expectedReturnType()
 }
 func (l *loopTypeResolver) parent() typeResolver { return l.parentResolver }
+func (l *loopTypeResolver) traceSpan() context.TraceSpan {
+	return l.parentResolver.traceSpan()
+}
+
+func (l *loopTypeResolver) setTraceSpan(span context.TraceSpan) {
+	l.parentResolver.setTraceSpan(span)
+}
+
 func (l *loopTypeResolver) nextMonoFnName(origName string) string {
 	return l.parentResolver.nextMonoFnName(origName)
 }
