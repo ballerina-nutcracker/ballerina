@@ -78,7 +78,7 @@ func TestRecovery(t *testing.T) {
 			}
 			content := string(archive.Files[0].Data)
 			sourcePath := sourceName
-			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOff)
 			cx := context.NewCompilerContext(env)
 			astOnly := strings.HasPrefix(filepath.ToSlash(inputPath), "recovery/ast/")
 			finalPhase := testphases.PhaseSemanticAnalysis

@@ -30,24 +30,13 @@ import (
 
 const traceTestSource = "public function main() {}"
 
-func TestCachedParsesRecordOneParseSpan(t *testing.T) {
-	t.Parallel()
-	env := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
-	cx := compilercontext.NewCompilerContext(env)
-	docContext := newTraceTestDocumentContext(false)
-
-	parseConcurrently(t, docContext, cx, 16)
-
-	if count := parseSpanCount(t, env); count != 1 {
-		t.Fatalf("parse spans = %d, want 1 (cache hits must not record spans)", count)
-	}
-}
-
+// TestCacheDisabledParsesRecordDistinctSpans is a unit test because no CLI flag
+// disables syntax-tree caching, so a corpus run cannot reach this path.
 func TestCacheDisabledParsesRecordDistinctSpans(t *testing.T) {
 	t.Parallel()
-	env := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
+	env := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), compilercontext.TracePhases)
 	cx := compilercontext.NewCompilerContext(env)
-	docContext := newTraceTestDocumentContext(true)
+	docContext := newTraceTestDocumentContext()
 
 	parseConcurrently(t, docContext, cx, 8)
 
@@ -56,10 +45,10 @@ func TestCacheDisabledParsesRecordDistinctSpans(t *testing.T) {
 	}
 }
 
-func newTraceTestDocumentContext(disableSyntaxTree bool) *documentContext {
+func newTraceTestDocumentContext() *documentContext {
 	docID := newDocumentIDFromString("doc", "main.bal", ModuleID{})
 	docConfig := NewDocumentConfig(docID, "main.bal", traceTestSource)
-	return newDocumentContext(docConfig, disableSyntaxTree, "")
+	return newDocumentContext(docConfig, true, "")
 }
 
 func parseConcurrently(t *testing.T, docContext *documentContext, cx *compilercontext.CompilerContext, count int) {

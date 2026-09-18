@@ -120,7 +120,7 @@ func TestRecoveryPointsProduceBadNodes(t *testing.T) {
 
 func parseTestSourceWithContext(t *testing.T, source string) (*context.CompilerContext, *st.SyntaxTree) {
 	t.Helper()
-	cx := context.NewCompilerContext(context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false))
+	cx := context.NewCompilerContext(context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOff))
 	syntaxTree, err := parser.GetSyntaxTree(cx, "test.bal", source)
 	if err != nil {
 		t.Fatal(err)

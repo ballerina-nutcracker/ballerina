@@ -27,7 +27,7 @@ type TraceSpan struct{}
 // traceState is empty in normal builds: no clocks, locks, or span storage.
 type traceState struct{}
 
-func newTraceState(_ bool) traceState {
+func newTraceState(_ TraceMode) traceState {
 	return traceState{}
 }
 
@@ -38,6 +38,16 @@ func (c *CompilerContext) StartNamedSpan(_, _ string) TraceSpan {
 
 // StartPackageSpan records nothing in normal builds.
 func (c *CompilerContext) StartPackageSpan(_ string, _ *model.PackageID) TraceSpan {
+	return TraceSpan{}
+}
+
+// StartChild records nothing in normal builds.
+func (s TraceSpan) StartChild(_, _ string) TraceSpan {
+	return TraceSpan{}
+}
+
+// StartChildFunc records nothing and never calls identity in normal builds.
+func (s TraceSpan) StartChildFunc(_ string, _ func() string) TraceSpan {
 	return TraceSpan{}
 }
 

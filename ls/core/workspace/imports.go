@@ -30,7 +30,7 @@ type importKey struct {
 }
 
 func parseImportSet(content string) (map[importKey]struct{}, bool) {
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOff)
 	tree, err := parser.GetSyntaxTree(context.NewCompilerContext(env), "import-set", content)
 	if err != nil || tree == nil {
 		return nil, false
