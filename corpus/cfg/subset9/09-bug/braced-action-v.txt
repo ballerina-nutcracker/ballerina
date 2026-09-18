@@ -1,0 +1,141 @@
+(Client
+  ($remote$broken
+    (bb0 () ()
+      (panic
+        (error-constructor-expr (
+          (literal remote panic))))
+    )
+  )
+  ($remote$value
+    (bb0 () ()
+      (return
+        (literal 7))
+    )
+  )
+)
+(helper
+  (bb0 () ()
+    (return
+      (literal 5))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable c (type
+        (user-defined-type Client)) (expr
+        (new ()))))
+    (var-def
+      (variable first (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation helper ())))))
+    (var-def
+      (variable trapped (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (single-wait-action
+            (simple-var-ref first))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref trapped))))
+    (var-def
+      (variable second (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation helper ())))))
+    (var-def
+      (variable waited (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref second)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref waited))))
+    (var-def
+      (variable started (expr
+        (start-action
+          (invocation helper ())))))
+    (var-def
+      (variable startedValue (type
+        (value-type int)) (expr
+        (checked-expr
+          (single-wait-action
+            (simple-var-ref started))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref startedValue))))
+    (var-def
+      (variable remoteValue (type
+        (value-type int)) (expr
+        (remote-method-call value expr:
+          (simple-var-ref c) ()))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref remoteValue))))
+    (var-def
+      (variable third (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation helper ())))))
+    (var-def
+      (variable nested (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (trap-expr
+            (single-wait-action
+              (simple-var-ref third)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nested))))
+    (var-def
+      (variable panicked (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (remote-method-call broken expr:
+            (simple-var-ref c) ())))))
+    (type-test-expr is
+      (simple-var-ref panicked)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref panicked))))))
+  )
+  (bb2 (bb1 bb0) ()
+    (var-def
+      (variable checked (type
+        (value-type int)) (expr
+        (checked-expr
+          (trap-expr
+            (remote-method-call value expr:
+              (simple-var-ref c) ()))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref checked))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr *
+          (group-expr
+            (binary-expr +
+              (literal 1)
+              (literal 2)))
+          (literal 3)))))
+  )
+)

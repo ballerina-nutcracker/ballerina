@@ -1,0 +1,140 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Client
+    (function $remote$broken () (
+      (value-type int))
+      (block-function-body
+        (panic
+          (error-constructor-expr (
+            (literal remote panic))))))
+    (function $remote$value () (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 7)))))
+  (function helper () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 5))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type Client)) (expr
+          (new ()))))
+      (var-def
+        (variable first (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation helper ())))))
+      (var-def
+        (variable trapped (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (single-wait-action
+              (simple-var-ref first))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref trapped))))
+      (var-def
+        (variable second (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation helper ())))))
+      (var-def
+        (variable waited (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref second)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref waited))))
+      (var-def
+        (variable started (expr
+          (start-action
+            (invocation helper ())))))
+      (var-def
+        (variable startedValue (type
+          (value-type int)) (expr
+          (checked-expr
+            (single-wait-action
+              (simple-var-ref started))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref startedValue))))
+      (var-def
+        (variable remoteValue (type
+          (value-type int)) (expr
+          (remote-method-call value expr:
+            (simple-var-ref c) ()))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref remoteValue))))
+      (var-def
+        (variable third (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation helper ())))))
+      (var-def
+        (variable nested (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (trap-expr
+              (single-wait-action
+                (simple-var-ref third)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nested))))
+      (var-def
+        (variable panicked (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (remote-method-call broken expr:
+              (simple-var-ref c) ())))))
+      (if
+        (type-test-expr is
+          (simple-var-ref panicked)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation message expr:
+                (simple-var-ref panicked) ()))))) ())
+      (block-stmt
+        (var-def
+          (variable checked (type
+            (value-type int)) (expr
+            (checked-expr
+              (trap-expr
+                (remote-method-call value expr:
+                  (simple-var-ref c) ()))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref checked))))
+        (expression-stmt
+          (invocation io println (
+            (binary-expr *
+              (group-expr
+                (binary-expr +
+                  (literal 1)
+                  (literal 2)))
+              (literal 3)))))))))

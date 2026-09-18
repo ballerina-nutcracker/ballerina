@@ -1,0 +1,10 @@
+-- stdout --
+5
+5
+5
+7
+5
+remote panic
+7
+9
+-- stderr --

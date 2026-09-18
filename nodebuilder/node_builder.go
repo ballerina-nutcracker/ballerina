@@ -2181,8 +2181,11 @@ func (n *nodeBuilder) transformBinaryExpression(binaryBLangExpression *st.Binary
 	return &bLBinaryExpr
 }
 
+// transformBracedExpression handles both BRACED_EXPRESSION and BRACED_ACTION. For the latter the operand is an action,
+// so we must build an action-or-expression here. Parentheses are not meaningful around an action, hence they are simply
+// dropped (BRACED_EXPRESSION is wrapped in a BLangGroupExpr by createActionOrExpressionInner before reaching here).
 func (n *nodeBuilder) transformBracedExpression(bracedBLangExpression *st.BracedExpressionNode) ast.BLangNode {
-	return n.createExpression(bracedBLangExpression.Expression())
+	return n.createActionOrExpression(bracedBLangExpression.Expression())
 }
 
 func (n *nodeBuilder) transformCheckExpression(checkBLangExpression *st.CheckExpressionNode) ast.BLangNode {
