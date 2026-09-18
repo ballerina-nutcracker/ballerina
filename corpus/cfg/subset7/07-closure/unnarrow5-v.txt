@@ -46,3 +46,16 @@
         (simple-var-ref val))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (simple-var-ref a))))
+    (assignment
+      (simple-var-ref v1)
+      (literal true))
+    (return
+      (literal 5))
+  )
+)

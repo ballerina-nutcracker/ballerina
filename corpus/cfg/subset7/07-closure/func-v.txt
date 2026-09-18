@@ -33,3 +33,20 @@
           (literal 5))))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref a)
+        (literal 2)))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (invocation foo (
+          (simple-var-ref a)))
+        (literal 2)))
+  )
+)

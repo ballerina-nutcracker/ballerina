@@ -59,3 +59,9 @@
         (simple-var-ref result))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (simple-var-ref r))
+  )
+)

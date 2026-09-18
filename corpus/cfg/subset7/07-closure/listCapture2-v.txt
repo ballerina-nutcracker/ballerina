@@ -63,3 +63,52 @@
         (simple-var-ref arr))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable b (type
+        (value-type int)) (expr
+        (binary-expr *
+          (simple-var-ref y)
+          (literal 2)))))
+    (return
+      (lambda
+        (function $anonFunc$_1 (
+          (variable x (type
+            (value-type int)))) (
+          (value-type int))
+          (block-function-body
+            (expression-stmt
+              (invocation lang.array push (
+                (simple-var-ref arr)
+                (binary-expr +
+                  (simple-var-ref x)
+                  (simple-var-ref b)))))
+            (return
+              (binary-expr +
+                (index-based-access
+                  (simple-var-ref arr)
+                  (literal 0))
+                (index-based-access
+                  (simple-var-ref arr)
+                  (literal 1))))))))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref arr)
+        (binary-expr +
+          (simple-var-ref x)
+          (simple-var-ref b)))))
+    (return
+      (binary-expr +
+        (index-based-access
+          (simple-var-ref arr)
+          (literal 0))
+        (index-based-access
+          (simple-var-ref arr)
+          (literal 1))))
+  )
+)
