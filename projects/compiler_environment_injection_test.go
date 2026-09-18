@@ -37,7 +37,7 @@ import (
 func TestInjectedCompilerEnvironmentIsShared(t *testing.T) {
 	t.Parallel()
 	require := test_util.NewRequire(t)
-	injected := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	injected := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), compilercontext.TraceOptions{})
 
 	absPath, err := filepath.Abs(filepath.Join("testdata", "workspace-simple"))
 	require.NoError(err)

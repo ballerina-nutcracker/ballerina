@@ -58,7 +58,7 @@ func testCFGGeneration(t *testing.T, testPair test_util.TestCase) {
 		}
 	}()
 
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	cx := context.NewCompilerContext(env)
 	langlibs, err := testphases.LoadLanglibs(env, cx)
 	if err != nil {
@@ -71,7 +71,7 @@ func testCFGGeneration(t *testing.T, testPair test_util.TestCase) {
 		return
 	}
 
-	graph := cfg.Build(cx, result.Package)
+	graph := cfg.Build(cx, result.Package, context.TraceSpan{})
 
 	// Validate backedgeParents is a subset of parents for every block
 	for _, err := range cfg.ValidateInvariants(graph) {

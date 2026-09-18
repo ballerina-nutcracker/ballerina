@@ -139,7 +139,7 @@ func TestRecoveringNodeBuilderPreservesBadAnnotationAccessIdentifier(t *testing.
 
 func TestRecoveringNodeBuilderReportsNestedSyntaxDiagnosticOnce(t *testing.T) {
 	source := "function foo() { int x = ; }"
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	cx := context.NewCompilerContext(env)
 	cx.DiagnosticEnv().RegisterFile("test.bal", text.TextDocumentFromText(source))
 	syntaxTree, err := parser.GetSyntaxTree(cx, "test.bal", source)
@@ -186,7 +186,7 @@ func TestRecoveringNodeBuilderBadNodesCoverMinutiae(t *testing.T) {
 	members := modulePart.Members()
 	member := members.Get(0)
 
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	cx := context.NewCompilerContext(env)
 	cx.DiagnosticEnv().RegisterFile("test.bal", text.TextDocumentFromText(source))
 	builder := newRecoveringNodeBuilder(cx)
@@ -197,7 +197,7 @@ func TestRecoveringNodeBuilderBadNodesCoverMinutiae(t *testing.T) {
 
 func buildNodeBuilderCompilationUnit(t *testing.T, source string, recovering bool) (*ast.BLangCompilationUnit, *st.SyntaxTree) {
 	t.Helper()
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	cx := context.NewCompilerContext(env)
 	cx.DiagnosticEnv().RegisterFile("test.bal", text.TextDocumentFromText(source))
 	syntaxTree, err := parser.GetSyntaxTree(cx, "test.bal", source)
