@@ -536,6 +536,7 @@ type valueSymbolFields struct {
 	isFinal        bool
 	isConfigurable bool
 	isIsolated     bool
+	isTopLevel     bool
 	sigHandle      int64
 }
 
@@ -547,6 +548,7 @@ func (sr *symbolReader) readValueSymbolFields() valueSymbolFields {
 	read(sr.r, &f.isFinal)
 	read(sr.r, &f.isConfigurable)
 	read(sr.r, &f.isIsolated)
+	read(sr.r, &f.isTopLevel)
 	read(sr.r, &f.sigHandle)
 	return f
 }
@@ -561,6 +563,9 @@ func applyValueSymbolFields(sym *model.VariableSymbol, f valueSymbolFields) {
 	}
 	if f.isIsolated {
 		sym.SetIsolated()
+	}
+	if f.isTopLevel {
+		sym.SetTopLevel()
 	}
 }
 

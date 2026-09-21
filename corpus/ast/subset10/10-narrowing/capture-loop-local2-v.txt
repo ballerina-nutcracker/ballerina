@@ -1,0 +1,56 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (literal 2))
+        (block-stmt
+          (var-def
+            (variable v (type
+              (union-type
+                (value-type int)
+                (value-type string))) (expr
+              (simple-var-ref i))))
+          (if
+            (type-test-expr is
+              (simple-var-ref v)
+              (value-type int))
+            (block-stmt
+              (compound-assignment +
+                (simple-var-ref total)
+                (simple-var-ref v))) ())
+          (block-stmt
+            (var-def
+              (variable setter (type
+                (function-type () (
+                  (value-type null)))) (expr
+                (lambda
+                  (function $anonFunc$_0 () (
+                    (value-type null))
+                    (block-function-body
+                      (assignment
+                        (simple-var-ref v)
+                        (literal changed))))))))
+            (expression-stmt
+              (invocation setter ()))
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref v))))
+            (compound-assignment +
+              (simple-var-ref i)
+              (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref total)))))))

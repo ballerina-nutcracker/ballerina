@@ -1,0 +1,55 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 5
+    base = %1;
+    %3 = base is int
+    %3 ? bb1 : bb4;
+  }
+  bb1 {
+    PushScopeFrame 20
+    %0 = closure_fp $anon/.:$default$0
+    $desugar$0 = %0;
+    %2 = closure_fp $anon/.:$default$1
+    $desugar$1 = %2;
+    %4 = newMap {| v: int, w: int, never... |}{} defaults{v=$anon/.:$default$0, w=$anon/.:$default$1}
+    holder = %4;
+    %8 = ConstantLoad v
+    %7 = holder[%8];
+    %9 = %7;
+    %11 = ConstantLoad w
+    %10 = holder[%11];
+    %12 = %10;
+    %6 = + %9 %12;
+    %13 = %6;
+    %14 = println(%13) -> bb2;
+  }
+  bb2 {
+    %16 = ConstantLoad 1
+    %17 = %16;
+    %15 = + (1, base) %17;
+    %18 = %15;
+    %19 = println(%18) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb4 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %0 = (2, base);
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %0 = (2, base);
+    return;
+  }
+}

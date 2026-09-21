@@ -1,0 +1,75 @@
+(main
+  (bb0 () (bb1 bb4)
+    (var-def
+      (variable a (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (literal 1))))
+    (var-def
+      (variable b (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (literal 2))))
+    (var-def
+      (variable c (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (literal three))))
+    (binary-expr &&
+      (type-test-expr is
+        (simple-var-ref a)
+        (value-type int))
+      (group-expr
+        (binary-expr ||
+          (type-test-expr is
+            (simple-var-ref b)
+            (value-type int))
+          (type-test-expr is
+            (simple-var-ref c)
+            (value-type int)))))
+  )
+  (bb1 (bb0) (bb2 bb3)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref a)
+          (literal 1)))))
+    (type-test-expr is
+      (simple-var-ref b)
+      (value-type int))
+  )
+  (bb2 (bb1) (bb3)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref b)
+          (literal 1)))))
+  )
+  (bb3 (bb2 bb1) (bb4))
+  (bb4 (bb3 bb0) (bb5 bb6)
+    (binary-expr ||
+      (unary-expr !
+        (group-expr
+          (type-test-expr is
+            (simple-var-ref a)
+            (value-type int))))
+      (unary-expr !
+        (group-expr
+          (binary-expr &&
+            (type-test-expr is
+              (simple-var-ref b)
+              (value-type int))
+            (type-test-expr is
+              (simple-var-ref c)
+              (value-type int))))))
+  )
+  (bb5 (bb4) (bb6)
+    (expression-stmt
+      (invocation io println (
+        (literal dual))))
+  )
+  (bb6 (bb5 bb4) ())
+)

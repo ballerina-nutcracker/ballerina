@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-multi-e.bal:29:21
+   |
+29 |             int y = a; // @error a is captured by the first closure
+   |                     ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-multi-e.bal:33:21
+   |
+33 |             int y = b; // @error b is captured by the second closure
+   |                     ^

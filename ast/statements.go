@@ -83,6 +83,7 @@ type (
 
 	BLangWhile struct {
 		bLangStatementBase
+		captureOwnerBase
 		scope        model.Scope
 		Expr         BLangExpression
 		Body         BLangBlockStmt
@@ -91,6 +92,7 @@ type (
 
 	BLangForeach struct {
 		bLangStatementBase
+		captureOwnerBase
 		scope             model.Scope
 		VariableDef       *BLangVariableDef
 		Collection        BLangActionOrExpression
