@@ -327,6 +327,7 @@ type (
 
 	BLangQueryExpr struct {
 		bLangExpressionBase
+		captureOwnerBase
 		QueryClauseList    []BLangNode
 		QueryConstructType TypeKind
 	}

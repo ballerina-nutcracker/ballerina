@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-after-e.bal:32:17
+   |
+32 |         int y = x; // @error x is captured in the while body
+   |                 ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-after-e.bal:46:17
+   |
+46 |         int y = x; // @error x is captured in the foreach body
+   |                 ^

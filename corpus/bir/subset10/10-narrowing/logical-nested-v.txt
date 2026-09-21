@@ -1,0 +1,101 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    a = %1;
+    %3 = ConstantLoad 2
+    b = %3;
+    %5 = ConstantLoad three
+    c = %5;
+    %8 = a is int
+    %7 = %8;
+    %8 ? bb1 : bb2;
+  }
+  bb1 {
+    %10 = b is int
+    %9 = %10;
+    %10 ? bb4 : bb3;
+  }
+  bb2 {
+    %7 ? bb5 : bb10;
+  }
+  bb3 {
+    %11 = c is int
+    %9 = %11;
+    GOTO bb4;
+  }
+  bb4 {
+    %7 = %9;
+    GOTO bb2;
+  }
+  bb5 {
+    PushScopeFrame 6
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = + (1, a) %2;
+    %3 = %0;
+    %4 = println(%3) -> bb6;
+  }
+  bb6 {
+    %5 = (1, b) is int
+    %5 ? bb7 : bb9;
+  }
+  bb7 {
+    PushScopeFrame 5
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = + (2, b) %2;
+    %3 = %0;
+    %4 = println(%3) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb9;
+  }
+  bb9 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 7
+    %1 = (1, a) is int
+    %2 = ! %1;
+    %0 = %2;
+    %2 ? bb12 : bb11;
+  }
+  bb11 {
+    %4 = (1, b) is int
+    %3 = %4;
+    %4 ? bb13 : bb14;
+  }
+  bb12 {
+    %0 ? bb15 : bb17;
+  }
+  bb13 {
+    %5 = (1, c) is int
+    %3 = %5;
+    GOTO bb14;
+  }
+  bb14 {
+    %6 = ! %3;
+    %0 = %6;
+    GOTO bb12;
+  }
+  bb15 {
+    PushScopeFrame 2
+    %0 = ConstantLoad dual
+    %1 = println(%0) -> bb16;
+  }
+  bb16 {
+    PopScopeFrame
+    GOTO bb17;
+  }
+  bb17 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

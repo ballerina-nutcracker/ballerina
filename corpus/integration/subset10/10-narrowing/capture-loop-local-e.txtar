@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-local-e.bal:30:21
+   |
+30 |             int y = v; // @error v is captured earlier in this iteration
+   |                     ^

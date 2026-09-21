@@ -1,0 +1,50 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable outerFn (type
+          (function-type () (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable own (type
+                    (union-type
+                      (value-type int)
+                      (value-type string))) (expr
+                    (literal 1))))
+                (var-def
+                  (variable before (type
+                    (value-type int)) (expr
+                    (literal 0))))
+                (if
+                  (type-test-expr is
+                    (simple-var-ref own)
+                    (value-type int))
+                  (block-stmt
+                    (assignment
+                      (simple-var-ref before)
+                      (simple-var-ref own))) ())
+                (block-stmt
+                  (var-def
+                    (variable inner (type
+                      (function-type () (
+                        (value-type null)))) (expr
+                      (lambda
+                        (function $anonFunc$_1 () (
+                          (value-type null))
+                          (block-function-body
+                            (assignment
+                              (simple-var-ref own)
+                              (literal changed))))))))
+                  (expression-stmt
+                    (invocation inner ()))
+                  (return
+                    (simple-var-ref before)))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation outerFn ())))))))

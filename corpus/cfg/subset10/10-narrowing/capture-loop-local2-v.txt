@@ -1,0 +1,66 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable total (type
+        (value-type int)) (expr
+        (literal 0))))
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb5) (bb2 bb3)
+    (binary-expr <
+      (simple-var-ref i)
+      (literal 2))
+  )
+  (bb2 (bb1) (bb4 bb5)
+    (var-def
+      (variable v (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (simple-var-ref i))))
+    (type-test-expr is
+      (simple-var-ref v)
+      (value-type int))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref total))))
+  )
+  (bb4 (bb2) (bb5)
+    (compound-assignment +
+      (simple-var-ref total)
+      (simple-var-ref v))
+  )
+  (bb5 (bb4 bb2) (bb1)
+    (var-def
+      (variable setter (type
+        (function-type () (
+          (value-type null)))) (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type null))
+            (block-function-body
+              (assignment
+                (simple-var-ref v)
+                (literal changed))))))))
+    (expression-stmt
+      (invocation setter ()))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v))))
+    (compound-assignment +
+      (simple-var-ref i)
+      (literal 1))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (assignment
+      (simple-var-ref v)
+      (literal changed))
+  )
+)
