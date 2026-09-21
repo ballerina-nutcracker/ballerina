@@ -1,0 +1,42 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [xml...][%1]{}
+    a = %2;
+    %4 = newXMLElement("r", ())
+    %5 = ConstantLoad 2
+    a[%5] = %4;
+    %6 = length(a) -> bb1;
+  }
+  bb1 {
+    %7 = %6;
+    %8 = println(%7) -> bb2;
+  }
+  bb2 {
+    %10 = ConstantLoad 0
+    %9 = a[%10];
+    v = %9;
+    %12 = v is xml
+    %13 = %12;
+    %14 = println(%13) -> bb3;
+  }
+  bb3 {
+    %15 = v is xml:Text
+    %16 = %15;
+    %17 = println(%16) -> bb4;
+  }
+  bb4 {
+    %18 = v is xml:Element
+    %19 = %18;
+    %20 = println(%19) -> bb5;
+  }
+  bb5 {
+    %21 = v is int
+    %22 = %21;
+    %23 = println(%22) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
