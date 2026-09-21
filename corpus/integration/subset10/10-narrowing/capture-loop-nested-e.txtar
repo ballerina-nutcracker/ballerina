@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-nested-e.bal:27:21
+   |
+27 |             int y = x; // @error x is captured in the inner loop
+   |                     ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-nested-e.bal:32:25
+   |
+32 |                 int y = x; // @error x is captured later in this loop
+   |                         ^

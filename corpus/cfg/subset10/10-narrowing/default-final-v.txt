@@ -1,0 +1,38 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable base (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (literal 5))))
+    (type-test-expr is
+      (simple-var-ref base)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable holder (type
+        (record-type
+          (field v
+            (value-type int)
+            (simple-var-ref base))
+          (field w
+            (value-type int)
+            (simple-var-ref base)))) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (field-based-access v
+            (simple-var-ref holder))
+          (field-based-access w
+            (simple-var-ref holder))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref base)
+          (literal 1)))))
+  )
+  (bb2 (bb1 bb0) ())
+)

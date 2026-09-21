@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-while-e.bal:27:21
+   |
+27 |             int y = x; // @error a later capture in the loop reaches this use
+   |                     ^

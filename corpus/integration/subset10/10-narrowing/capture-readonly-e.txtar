@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-readonly-e.bal:28:17
+   |
+28 |         int y = x; // @error a read-only capture counts too
+   |                 ^

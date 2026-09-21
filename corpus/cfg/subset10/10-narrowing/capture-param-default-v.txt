@@ -1,0 +1,32 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable base (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (literal 5))))
+    (type-test-expr is
+      (simple-var-ref base)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable withDefault (type
+        (user-defined-type Getter)) (expr
+        (lambda
+          (function $anonFunc$_0 (
+            (variable a (type
+              (value-type int)) (expr
+              (simple-var-ref base)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref a))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation withDefault (
+          (literal 1))))))
+  )
+  (bb2 (bb1 bb0) ())
+)

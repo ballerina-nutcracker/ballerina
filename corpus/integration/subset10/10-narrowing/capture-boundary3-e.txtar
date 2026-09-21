@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-boundary3-e.bal:32:20
+   |
+32 |             return x; // @error x is not narrowed inside the capturing closure
+   |                    ^

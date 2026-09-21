@@ -149,18 +149,6 @@ func (l *loopTypeResolver) hasImplicitImport(name string) bool {
 	return l.parentResolver.hasImplicitImport(name)
 }
 
-func (l *loopTypeResolver) trackCapturedVar(ref model.SymbolRef) {
-	l.parentResolver.trackCapturedVar(ref)
-}
-
-func (l *loopTypeResolver) getCapturedVars() map[model.SymbolRef]bool {
-	return l.parentResolver.getCapturedVars()
-}
-
-func (l *loopTypeResolver) setCapturedVars(vars map[model.SymbolRef]bool) {
-	l.parentResolver.setCapturedVars(vars)
-}
-
 func (l *loopTypeResolver) ensureResolved(ref model.SymbolRef, depth int) bool {
 	return l.parentResolver.ensureResolved(ref, depth)
 }
