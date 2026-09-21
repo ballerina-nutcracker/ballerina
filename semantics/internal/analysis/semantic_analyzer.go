@@ -77,6 +77,9 @@ type (
 		// closure expressions (record-field defaults, default-param exprs,
 		// nested isolated function bodies).
 		locals *localScope
+		// isModuleInit marks the module `init` function, whose body may assign
+		// module variables declared without an initializer.
+		isModuleInit bool
 	}
 
 	loopAnalyzer struct {
@@ -464,6 +467,7 @@ func initializeFunctionAnalyzer(parent analyzer, function *ast.BLangFunction) *f
 	if function.Name.GetValue() == "init" {
 		// this is to seperate class init from module init
 		if _, isTopLevel := parent.(*semanticAnalyzer); isTopLevel {
+			fa.isModuleInit = true
 			fnSymbol := parent.ctx().GetSymbol(function.Symbol()).(model.FunctionSymbol)
 			validateInitFunction(parent, function, fnSymbol, function.GetPosition())
 		}
@@ -2031,6 +2035,20 @@ type assignmentNode interface {
 	GetExpression() ast.BLangActionOrExpression
 }
 
+// isDeferredInitAssignment reports whether the module `init` function body is
+// assigning a module-level variable declared without an initializer. Such a
+// declaration gets its one value from `init`, and analyzeUninitializedGlobalVars
+// checks that it always does. A lambda written inside `init` is a separate
+// closure and does not qualify.
+func isDeferredInitAssignment(a analyzer, symbol model.SymbolRef) bool {
+	fa := enclosingFunctionAnalyzer(a)
+	if fa == nil || !fa.isModuleInit {
+		return false
+	}
+	md, ok := a.moduleVarMetadata(symbol)
+	return ok && md.NoInitializer
+}
+
 func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 	variable := assignment.GetVariable()
 	if symbolNode, ok := variable.(ast.BNodeWithSymbol); ok {
@@ -2040,6 +2058,10 @@ func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 			return false
 		}
 		ctx := a.ctx()
+		if meta, ok := ctx.ValueSymbolMetadata(symbol); ok && meta.Final && !isDeferredInitAssignment(a, symbol) {
+			a.semanticErr("cannot assign a value to final variable '"+ctx.SymbolName(symbol)+"'", variable.GetPosition())
+			return false
+		}
 		switch ctx.SymbolKind(symbol) {
 		case model.SymbolKindConstant:
 			a.semanticErr("cannot assign to constant", variable.GetPosition())
