@@ -446,6 +446,8 @@ type varDeclMetadata struct {
 	Final        bool
 	Configurable bool
 	Isolated     bool
+	// NoInitializer marks a module-level variable declared without an initializer.
+	NoInitializer bool
 }
 
 func (sa *semanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDeclMetadata {
@@ -453,10 +455,11 @@ func (sa *semanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDecl
 	for i := range sa.pkg.GlobalVars {
 		v := sa.pkg.GlobalVars[i]
 		out[v.Symbol()] = varDeclMetadata{
-			Type:         v.GetDeterminedType(),
-			Final:        v.IsFinal(),
-			Configurable: v.IsConfigurable(),
-			Isolated:     v.Flags().Has(model.FlagIsolated),
+			Type:          v.GetDeterminedType(),
+			Final:         v.IsFinal(),
+			Configurable:  v.IsConfigurable(),
+			Isolated:      v.Flags().Has(model.FlagIsolated),
+			NoInitializer: v.Expr == nil,
 		}
 	}
 	for i := range sa.pkg.Constants {

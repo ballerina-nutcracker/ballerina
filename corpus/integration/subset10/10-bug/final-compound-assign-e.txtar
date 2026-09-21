@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to final variable 'value'
+  --> final-compound-assign-e.bal:22:5
+   |
+22 |     value += 2; // @error compound assignment is an assignment too
+   |     ^^^^^

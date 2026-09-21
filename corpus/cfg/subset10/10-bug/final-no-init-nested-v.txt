@@ -1,0 +1,27 @@
+(init
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable early (type
+        (value-type boolean)) (expr
+        (literal true))))
+    (simple-var-ref early)
+  )
+  (bb1 (bb0) (bb2)
+    (assignment
+      (simple-var-ref value)
+      (literal 5))
+  )
+  (bb2 (bb1 bb3) ())
+  (bb3 (bb0) (bb2)
+    (assignment
+      (simple-var-ref value)
+      (literal 6))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref value))))
+  )
+)
