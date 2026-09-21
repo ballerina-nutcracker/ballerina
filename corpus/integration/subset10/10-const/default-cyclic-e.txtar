@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cyclic dependency in record field default
+  --> default-cyclic-e.bal:19:20
+   |
+19 |     Cyclic inner = {}; // @error cyclic dependency in record field default
+   |                    ^^

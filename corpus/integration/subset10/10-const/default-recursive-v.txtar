@@ -1,0 +1,5 @@
+-- stdout --
+{"value":1,"next":null}
+{"next":{"value":2,"next":null},"value":1}
+true
+-- stderr --

@@ -1,0 +1,28 @@
+(boom
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal default blew up))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable supplied (type
+        (user-defined-type Boom)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref supplied))))
+    (var-def
+      (variable missing (type
+        (user-defined-type Boom)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref missing))))
+  )
+)
