@@ -1,0 +1,249 @@
+module $anon.. v 0.0.0;
+class Client {
+
+  $remote$broken() -> int{
+    bb0 {
+      %2 = ConstantLoad remote panic
+      %3 = newError error(%2)
+      panic %3;
+    }
+  }
+
+  $remote$returnError(error) -> int|error{
+    bb0 {
+      %0 = failure;
+      return;
+    }
+  }
+
+  $remote$value() -> int{
+    bb0 {
+      %2 = ConstantLoad 1
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get albums Client.$resource$get$0() -> int{
+    bb0 {
+      %2 = ConstantLoad 1
+      %0 = %2;
+      return;
+    }
+  }
+
+  resource get broken Client.$resource$get$1() -> int{
+    bb0 {
+      %2 = ConstantLoad resource panic
+      %3 = newError error(%2)
+      panic %3;
+    }
+  }
+
+  resource get failure Client.$resource$get$2(error) -> int|error{
+    bb0 {
+      %0 = failure;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Client
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %3;
+    GOTO bb5;
+  }
+  bb5 {
+    %7 = c.$remote$value() -> bb6;
+  }
+  bb6 {
+    %6 = %7;
+    GOTO bb7;
+  }
+  bb7 {
+    remoteValue = %6;
+    %9 = println(remoteValue) -> bb8;
+  }
+  bb8 {
+    GOTO bb9;
+  }
+  bb9 {
+    %11 = ConstantLoad albums
+    %12 = c->[%11].get() -> bb10;
+  }
+  bb10 {
+    %10 = %12;
+    GOTO bb11;
+  }
+  bb11 {
+    resourceValue = %10;
+    %14 = println(resourceValue) -> bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    %16 = c.$remote$broken() -> bb14;
+  }
+  bb14 {
+    %15 = %16;
+    GOTO bb15;
+  }
+  bb15 {
+    remotePanic = %15;
+    %18 = remotePanic is error
+    %18 ? bb16 : bb19;
+  }
+  bb16 {
+    PushScopeFrame 2
+    %0 = message((1, remotePanic)) -> bb17;
+  }
+  bb17 {
+    %1 = println(%0) -> bb18;
+  }
+  bb18 {
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb19 {
+    PushScopeFrame 5
+    GOTO bb20;
+  }
+  bb20 {
+    %1 = ConstantLoad broken
+    %2 = (1, c)->[%1].get() -> bb21;
+  }
+  bb21 {
+    %0 = %2;
+    GOTO bb22;
+  }
+  bb22 {
+    resourcePanic = %0;
+    %4 = resourcePanic is error
+    %4 ? bb23 : bb26;
+  }
+  bb23 {
+    PushScopeFrame 2
+    %0 = message((1, resourcePanic)) -> bb24;
+  }
+  bb24 {
+    %1 = println(%0) -> bb25;
+  }
+  bb25 {
+    PopScopeFrame
+    GOTO bb26;
+  }
+  bb26 {
+    PushScopeFrame 21
+    %0 = ConstantLoad returned error
+    %1 = newError error(%0)
+    failure = %1;
+    GOTO bb27;
+  }
+  bb27 {
+    %4 = (2, c).$remote$returnError(failure) -> bb28;
+  }
+  bb28 {
+    %3 = %4;
+    GOTO bb29;
+  }
+  bb29 {
+    remoteError = %3;
+    %6 = unknown remoteError failure;
+    %7 = %6;
+    %8 = println(%7) -> bb30;
+  }
+  bb30 {
+    GOTO bb31;
+  }
+  bb31 {
+    %10 = ConstantLoad failure
+    %11 = (2, c)->[%10].get(failure) -> bb32;
+  }
+  bb32 {
+    %9 = %11;
+    GOTO bb33;
+  }
+  bb33 {
+    resourceError = %9;
+    %13 = unknown resourceError failure;
+    %14 = %13;
+    %15 = println(%14) -> bb34;
+  }
+  bb34 {
+    GOTO bb35;
+  }
+  bb35 {
+    GOTO bb36;
+  }
+  bb36 {
+    %18 = (2, c).$remote$broken() -> bb37;
+  }
+  bb37 {
+    %17 = %18;
+    GOTO bb38;
+  }
+  bb38 {
+    %16 = %17;
+    GOTO bb39;
+  }
+  bb39 {
+    nested = %16;
+    %20 = nested is error
+    %20 ? bb40 : bb43;
+  }
+  bb40 {
+    PushScopeFrame 2
+    %0 = message((1, nested)) -> bb41;
+  }
+  bb41 {
+    %1 = println(%0) -> bb42;
+  }
+  bb42 {
+    PopScopeFrame
+    GOTO bb43;
+  }
+  bb43 {
+    PushScopeFrame 2
+    %0 = ConstantLoad continued
+    %1 = println(%0) -> bb44;
+  }
+  bb44 {
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %6
+    [bb9, bb10] -> bb11, %10
+    [bb13, bb14] -> bb15, %15
+    [bb20, bb21] -> bb22, %0
+    [bb27, bb28] -> bb29, %3
+    [bb31, bb32] -> bb33, %9
+    [bb36, bb37] -> bb38, %17
+    [bb35, bb38] -> bb39, %16
+  }
+}

@@ -1,0 +1,108 @@
+module $anon.. v 0.0.0;
+checkedInt(boolean) -> int|error{
+  bb0 {
+    shouldFail ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad checked int failed
+    %1 = newError error(%0)
+    (1, %0) = %1;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 10
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}
+fallibleDefaulted(int,int) -> int|error{
+  bb0 {
+    %4 = value;
+    %5 = increment;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+checkedValues(boolean) -> error|[int|error...]{
+  bb0 {
+    %3 = shouldFail;
+    %4 = checkedInt(%3) -> bb1;
+  }
+  bb1 {
+    %5 = %4 is error
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+  bb3 {
+    %2 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    $desugar$0 = %2;
+    %7 = $desugar$0;
+    %8 = $default$0(%7) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %8;
+    %10 = $desugar$0;
+    %11 = $desugar$1;
+    %12 = fallibleDefaulted(%10,%11) -> bb6;
+  }
+  bb6 {
+    %13 = ConstantLoad 1
+    %14 = newArray [int|error...][%13]{%12}
+    %0 = %14;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad false
+    %2 = %1;
+    %3 = checkedValues(%2) -> bb1;
+  }
+  bb1 {
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad true
+    %6 = %5;
+    %7 = checkedValues(%6) -> bb3;
+  }
+  bb3 {
+    failed = %7;
+    %9 = failed is error
+    %9 ? bb4 : bb7;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = message((1, failed)) -> bb5;
+  }
+  bb5 {
+    %1 = println(%0) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb7 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$default$0(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}

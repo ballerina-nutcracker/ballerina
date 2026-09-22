@@ -45,71 +45,49 @@
       (value-type null)))
     (block-function-body
       (var-def
-        (variable $desugar$0 (expr
-          (new (
-            (literal /tmp)
-            (literal true))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
-      (var-def
         (variable named (type
           (user-defined-type Listener)) (expr
-          (simple-var-ref $desugar$0))))
+          (checked-expr
+            (new (
+              (literal /tmp)
+              (literal true)))))))
       (expression-stmt
         (invocation io println (
           (invocation describe expr:
             (simple-var-ref named) ()))))
       (var-def
-        (variable $desugar$1 (expr
-          (new (
-            (literal /var)
-            (literal true))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$1))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$1))) ())
-      (var-def
         (variable mixed (type
           (user-defined-type Listener)) (expr
-          (simple-var-ref $desugar$1))))
+          (checked-expr
+            (new (
+              (literal /var)
+              (literal true)))))))
       (expression-stmt
         (invocation io println (
           (invocation describe expr:
             (simple-var-ref mixed) ()))))
       (var-def
-        (variable $desugar$2 (expr
-          (literal /etc))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation $default$0 (
-            (simple-var-ref $desugar$2))))))
-      (var-def
-        (variable $desugar$4 (expr
-          (new (
-            (simple-var-ref $desugar$2)
-            (simple-var-ref $desugar$3))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$4))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$4))) ())
-      (var-def
         (variable defaulted (type
           (user-defined-type Listener)) (expr
-          (simple-var-ref $desugar$4))))
+          (checked-expr
+            (expression-thunk
+            (var-def
+              (variable $desugar$0 (expr
+                (literal /etc))))
+            (var-def
+              (variable $desugar$1 (expr
+                (invocation $default$0 (
+                  (simple-var-ref $desugar$0))))))
+            (new (
+              (simple-var-ref $desugar$0)
+              (simple-var-ref $desugar$1))))))))
       (expression-stmt
         (invocation io println (
           (invocation describe expr:
             (simple-var-ref defaulted) ()))))))
   (function $default$0 (
-    (variable path)) ()
+    (variable path (type
+      (value-type )))) ()
     (block-function-body
       (return
         (literal false)))))

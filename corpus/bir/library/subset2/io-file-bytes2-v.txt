@@ -4,71 +4,74 @@ main() -> nil|error{
     %1 = ConstantLoad /tmp/bal_io_bytes2.bin
     path = %1;
     $desugar$0 = path;
-    %4 = ConstantLoad 1
-    %5 = ConstantLoad 2
-    %6 = ConstantLoad 3
+    %5 = ConstantLoad 1
+    %6 = ConstantLoad 2
     %7 = ConstantLoad 3
-    %8 = newArray [int:Unsigned8...][%7]{%4, %5, %6}
-    $desugar$1 = %8;
-    %10 = $default$4($desugar$0,$desugar$1) -> bb1;
+    %8 = ConstantLoad 3
+    %9 = newArray [int:Unsigned8...][%8]{%5, %6, %7}
+    $desugar$1 = %9;
+    %11 = $default$4($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    $desugar$2 = %10;
-    %12 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+    $desugar$2 = %11;
+    %13 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    $desugar$3 = %12;
-    %14 = $desugar$3 is error
+    %14 = %13 is error
     %14 ? bb3 : bb4;
   }
   bb3 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$3);
-    PopScopeFrame
+    %0 = %13;
     return;
   }
   bb4 {
-    %15 = ConstantLoad 4
-    %16 = ConstantLoad 5
-    %17 = ConstantLoad 2
-    %18 = newArray [int:Unsigned8...][%17]{%15, %16}
-    %19 = ConstantLoad APPEND
-    %20 = fileWriteBytes(path,%18,%19) -> bb5;
+    %3 = %13;
+    GOTO bb5;
   }
   bb5 {
-    $desugar$4 = %20;
-    %22 = $desugar$4 is error
-    %22 ? bb6 : bb7;
+    %16 = ConstantLoad 4
+    %17 = ConstantLoad 5
+    %18 = ConstantLoad 2
+    %19 = newArray [int:Unsigned8...][%18]{%16, %17}
+    %20 = ConstantLoad APPEND
+    %21 = fileWriteBytes(path,%19,%20) -> bb6;
   }
   bb6 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$4);
-    PopScopeFrame
-    return;
+    %22 = %21 is error
+    %22 ? bb7 : bb8;
   }
   bb7 {
-    %23 = fileReadBytes(path) -> bb8;
-  }
-  bb8 {
-    $desugar$5 = %23;
-    %25 = $desugar$5 is error
-    %25 ? bb9 : bb10;
-  }
-  bb9 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$5);
-    PopScopeFrame
+    %0 = %21;
     return;
   }
+  bb8 {
+    %15 = %21;
+    GOTO bb9;
+  }
+  bb9 {
+    %24 = fileReadBytes(path) -> bb10;
+  }
   bb10 {
-    readBack = $desugar$5;
-    %27 = length(readBack) -> bb11;
+    %25 = %24 is error
+    %25 ? bb11 : bb12;
   }
   bb11 {
-    %28 = %27;
-    %29 = println(%28) -> bb12;
+    %0 = %24;
+    return;
   }
   bb12 {
+    %23 = %24;
+    GOTO bb13;
+  }
+  bb13 {
+    readBack = %23;
+    %27 = length(readBack) -> bb14;
+  }
+  bb14 {
+    %28 = %27;
+    %29 = println(%28) -> bb15;
+  }
+  bb15 {
     return;
   }
 }

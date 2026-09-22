@@ -1,0 +1,12 @@
+-- stdout --
+true
+true
+true
+true
+Type type.googleapis.com/google.protobuf.BoolValue cannot unpack to string
+true
+true
+false
+true
+true
+-- stderr --

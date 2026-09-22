@@ -14,4 +14,7 @@ union all optional nil
 9
 9
 boom
+10
+lax map missing
+lax map nil
 -- stderr --

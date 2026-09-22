@@ -21,7 +21,7 @@ import (
 )
 
 type bddPath struct {
-	bdd Bdd
+	bdd bdd
 	pos []atom
 	neg []atom
 }
@@ -42,7 +42,7 @@ func newBddPath() bddPath {
 	return this
 }
 
-func bddPaths(b Bdd, paths *[]bddPath, accum bddPath) {
+func bddPaths(b bdd, paths *[]bddPath, accum bddPath) {
 	allOrNothing, ok := b.(*bddAllOrNothing)
 	if ok {
 		if allOrNothing.IsAll() {
@@ -65,7 +65,7 @@ func bddPaths(b Bdd, paths *[]bddPath, accum bddPath) {
 	}
 }
 
-func bddPathsPositive(b Bdd, paths *[]bddPath, accum bddPath) {
+func bddPathsPositive(b bdd, paths *[]bddPath, accum bddPath) {
 	allOrNothing, ok := b.(*bddAllOrNothing)
 	if ok {
 		if allOrNothing.IsAll() {

@@ -14,7 +14,7 @@ main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Qux
     %2 = ConstantLoad 7
-    %3 = init(%1,%2) -> bb1;
+    %3 = %1.init(%2) -> bb1;
   }
   bb1 {
     %5 = %3 is nil

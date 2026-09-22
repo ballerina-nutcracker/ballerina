@@ -1,0 +1,23 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation viaCall ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation viaCall (
+          (literal 3))))))
+  )
+)
+(twice
+  (bb0 () ()
+    (binary-expr *
+      (simple-var-ref x)
+      (literal 2))
+  )
+)
+(viaCall
+  (bb0 () ()
+    (simple-var-ref n)
+  )
+)

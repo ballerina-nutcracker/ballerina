@@ -1,0 +1,22 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 10
+    %2 = ConstantLoad 20
+    %3 = ConstantLoad 30
+    %4 = ConstantLoad 40
+    %5 = ConstantLoad 4
+    %6 = newArray [int...][%5]{%1, %2, %3, %4}
+    arr = %6;
+    %8 = ConstantLoad 20
+    %9 = %8;
+    %10 = ConstantLoad 1
+    %11 = unknown %10;
+    %12 = %11;
+    %13 = indexOf(arr,%9,%12) -> bb1;
+  }
+  bb1 {
+    %14 = %13;
+    return;
+  }
+}

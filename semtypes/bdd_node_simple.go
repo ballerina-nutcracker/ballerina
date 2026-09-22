@@ -23,15 +23,15 @@ type bddNodeSimple struct {
 
 var _ bddNode = &bddNodeSimple{}
 
-func (b *bddNodeSimple) left() Bdd {
+func (b *bddNodeSimple) left() bdd {
 	return bddAll()
 }
 
-func (b *bddNodeSimple) middle() Bdd {
+func (b *bddNodeSimple) middle() bdd {
 	return bddNothing()
 }
 
-func (b *bddNodeSimple) right() Bdd {
+func (b *bddNodeSimple) right() bdd {
 	return bddNothing()
 }
 

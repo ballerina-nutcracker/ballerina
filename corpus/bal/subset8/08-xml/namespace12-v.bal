@@ -16,11 +16,17 @@
 
 import ballerina/io;
 
-const string URI = "https:foo/bar";
+const string SCHEME = "https:";
+const string URI = SCHEME + "foo/" + "bar";
 
 xmlns URI as bar;
 
+xml elem = xml `<bar:f><bar:x></bar:x></bar:f>`;
+
 public function main() {
-    xml elem = xml `<bar:f><bar:x></bar:x></bar:f>`;
     io:println(elem); // @output <bar:f xmlns:bar="https:foo/bar"><bar:x/></bar:f>
+
+    xmlns URI as local;
+    xml localElem = xml `<local:f/>`;
+    io:println(localElem); // @output <local:f xmlns:local="https:foo/bar"/>
 }

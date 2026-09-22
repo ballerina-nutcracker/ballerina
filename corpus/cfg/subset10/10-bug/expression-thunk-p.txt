@@ -1,0 +1,18 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 0)
+          (invocation panicValues ())))))
+  )
+)
+(panicValues
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal panic across thunk))))
+  )
+)

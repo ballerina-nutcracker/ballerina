@@ -1,0 +1,6 @@
+[package]
+org = "testorg"
+name = "customreadmeproject"
+version = "0.1.0"
+readme="Package.md"
+icon="logo.png"

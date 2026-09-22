@@ -1,0 +1,12 @@
+-- stdout --
+outer
+local
+1
+42
+parent-nested-sibling
+7
+3
+required
+11
+first-second
+-- stderr --

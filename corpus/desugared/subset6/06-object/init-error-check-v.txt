@@ -44,20 +44,12 @@
       (error-type)))
     (block-function-body
       (var-def
-        (variable $desugar$0 (expr
-          (new
-            (user-defined-type Foo) (
-            (simple-var-ref v))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
-      (var-def
         (variable f (type
           (user-defined-type Foo)) (expr
-          (simple-var-ref $desugar$0))))
+          (checked-expr
+            (new
+              (user-defined-type Foo) (
+              (simple-var-ref v)))))))
       (return
         (invocation getVal expr:
           (simple-var-ref f) ()))))

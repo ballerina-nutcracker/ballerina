@@ -21,6 +21,6 @@ public function main() returns error? {
     http:Client c = check new http:Client("http://testserver", {});
     http:Response r = check c->get("/hello", {"X-Test": "test-header-value"});
     io:println(r.statusCode);                                  // @output 200
-    io:println(r.getTextPayload());                             // @output hello with test-header-value
+    io:println(check r.getTextPayload());                             // @output hello with test-header-value
     return;
 }

@@ -1,0 +1,22 @@
+-- stdout --
+<a><b>1</b></a>
+application/xml
+<?xml version="1.0"?><a/>
+false
+true
+<a><b>1</b></a>
+<a>1</a>
+<feed/>
+true
+true
+<a/><b/>
+false
+true
+true
+No content
+Error occurred while retrieving the xml payload from the response
+incompatible 'string' found for 'application/xml' mime type
+<p>hi</p>
+application/xml
+<a><b>1</b></a>
+-- stderr --

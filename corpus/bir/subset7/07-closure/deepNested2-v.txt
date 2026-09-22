@@ -1,4 +1,32 @@
 module $anon.. v 0.0.0;
+$anonFunc$_0(int) -> function(int) returns ...|function(int) returns int{
+  bb0 {
+    %2 = closure_fp $anon/.:$anonFunc$_1
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_1(int) -> function(int) returns ...|function(int) returns int{
+  bb0 {
+    %2 = closure_fp $anon/.:$anonFunc$_2
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_2(int) -> function(int) returns int{
+  bb0 {
+    %2 = closure_fp $anon/.:$anonFunc$_3
+    a = %2;
+    %4 = p3;
+    %5 = a(%4) -> bb1;
+  }
+  bb1 {
+    b = %5;
+    %7 = closure_fp $anon/.:$anonFunc$_4
+    %0 = %7;
+    return;
+  }
+}
 $anonFunc$_3(int) -> int{
   bb0 {
     %3 = (4, val);
@@ -44,34 +72,6 @@ $anonFunc$_4(int) -> int{
     return;
   }
 }
-$anonFunc$_2(int) -> function(int) returns int{
-  bb0 {
-    %2 = closure_fp $anon/.:$anonFunc$_3
-    a = %2;
-    %4 = p3;
-    %5 = a(%4) -> bb1;
-  }
-  bb1 {
-    b = %5;
-    %7 = closure_fp $anon/.:$anonFunc$_4
-    %0 = %7;
-    return;
-  }
-}
-$anonFunc$_1(int) -> function(int) returns ...|function(int) returns int{
-  bb0 {
-    %2 = closure_fp $anon/.:$anonFunc$_2
-    %0 = %2;
-    return;
-  }
-}
-$anonFunc$_0(int) -> function(int) returns ...|function(int) returns int{
-  bb0 {
-    %2 = closure_fp $anon/.:$anonFunc$_1
-    %0 = %2;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 10
@@ -89,7 +89,7 @@ main() -> nil{
   bb2 {
     PushScopeFrame 6
     %0 = (1, p);
-    %1 = f(%0) -> bb4;
+    %1 = (1, f)(%0) -> bb4;
   }
   bb3 {
     %8 = p;

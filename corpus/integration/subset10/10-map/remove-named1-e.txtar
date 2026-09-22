@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no such parameter mp
+  --> remove-named1-e.bal:19:24
+   |
+19 |     int _ = map:remove(mp = m1, k = "a"); // @error no such parameter mp
+   |                        ^^^^^^^

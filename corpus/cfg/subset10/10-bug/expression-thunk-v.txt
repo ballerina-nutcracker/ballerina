@@ -1,0 +1,232 @@
+(CaptureCounter
+  (run
+    (bb0 () ()
+      (var-def
+        (variable local (type
+          (value-type int)) (expr
+          (literal 1))))
+      (var-def
+        (variable outerFn (type
+          (user-defined-type IntFn)) (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable inner (type
+                    (user-defined-type IntFn)) (expr
+                    (lambda
+                      (function $anonFunc$_1 () (
+                        (value-type int))
+                        (block-function-body
+                          (compound-assignment +
+                            (simple-var-ref local)
+                            (literal 1))
+                          (compound-assignment +
+                            (field-based-access value
+                              (simple-var-ref self))
+                            (simple-var-ref local))
+                          (return
+                            (field-based-access value
+                              (simple-var-ref self)))))))))
+                (var-def
+                  (variable values (type
+                    (array-type
+                      (value-type int) dimensions: 1 ([]))) (expr
+                    (list-constructor-expr
+                      (invocation inner ())
+                      (list-constructor-expr
+                        (invocation inner ()))))))
+                (return
+                  (index-based-access
+                    (simple-var-ref values)
+                    (literal 1)))))))))
+      (return
+        (invocation outerFn ()))
+    )
+  )
+)
+(conditionValues
+  (bb0 () (bb1 bb2)
+    (compound-assignment +
+      (simple-var-ref conditionCalls)
+      (literal 1))
+    (binary-expr <
+      (simple-var-ref conditionCalls)
+      (literal 4))
+  )
+  (bb1 (bb0) ()
+    (return
+      (list-constructor-expr
+        (simple-var-ref conditionCalls)))
+  )
+  (bb2 (bb0) ()
+    (return
+      (list-constructor-expr))
+  )
+)
+(defaulted
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable trapped (type
+        (union-type
+          (error-type)
+          (array-type
+            (value-type int) dimensions: 1 ([])))) (expr
+        (trap-expr
+          (list-constructor-expr
+            (literal 0)
+            (invocation panicValues ()))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref trapped)
+          (error-type)))))
+    (var-def
+      (variable andResult (type
+        (value-type boolean)) (expr
+        (binary-expr &&
+          (literal false)
+          (binary-expr >
+            (invocation lang.array length (
+              (list-constructor-expr
+                (literal 0)
+                (invocation panicValues ()))))
+            (literal 0))))))
+    (var-def
+      (variable orResult (type
+        (value-type boolean)) (expr
+        (binary-expr ||
+          (literal true)
+          (binary-expr >
+            (invocation lang.array length (
+              (list-constructor-expr
+                (literal 0)
+                (invocation panicValues ()))))
+            (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref andResult)
+        (literal :)
+        (simple-var-ref orResult))))
+    (var-def
+      (variable loopCount (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr >
+      (invocation lang.array length (
+        (list-constructor-expr
+          (literal 0)
+          (invocation conditionValues ()))))
+      (literal 1))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref loopCount)
+      (literal 1))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref loopCount)
+        (literal :)
+        (simple-var-ref conditionCalls))))
+    (expression-stmt
+      (invocation io println (
+        (invocation defaulted ( <default>))
+        (literal :)
+        (invocation defaulted ( <default>))
+        (literal :)
+        (simple-var-ref defaultCalls))))
+    (expression-stmt
+      (invocation io println (
+        (invocation queryDefault ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation spreadDefault ( <default>)))))
+    (var-def
+      (variable optionalValue (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (optional-field-based-access x
+          (invocation optionalBase ())))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref optionalValue)
+        (literal :)
+        (simple-var-ref optionalBaseCalls))))
+    (var-def
+      (variable checkpanicTrapped (type
+        (union-type
+          (error-type)
+          (array-type
+            (value-type int) dimensions: 1 ([])))) (expr
+        (trap-expr
+          (list-constructor-expr
+            (literal 0)
+            (check-panicked-expr
+              (invocation panicValues ())))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref checkpanicTrapped)
+          (error-type)))))
+    (var-def
+      (variable counter (type
+        (user-defined-type CaptureCounter)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation run expr:
+          (simple-var-ref counter) ()))))
+  )
+)
+(nextDefault
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref defaultCalls)
+      (literal 1))
+    (return
+      (simple-var-ref defaultCalls))
+  )
+)
+(optionalBase
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref optionalBaseCalls)
+      (literal 1))
+    (return
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal 42))))
+  )
+)
+(panicValues
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal inside thunk))))
+  )
+)
+(queryDefault
+  (bb0 () ()
+    (return
+      (simple-var-ref values))
+  )
+)
+(spreadDefault
+  (bb0 () ()
+    (return
+      (simple-var-ref values))
+  )
+)

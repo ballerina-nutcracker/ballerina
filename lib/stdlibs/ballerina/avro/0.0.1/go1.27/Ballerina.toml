@@ -1,0 +1,4 @@
+[package]
+org     = "ballerina"
+name    = "avro"
+version = "0.0.1"

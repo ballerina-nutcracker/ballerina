@@ -8,15 +8,6 @@ $anonFunc$_0(int,int) -> int{
     return;
   }
 }
-$anonFunc$_2(int,int) -> int{
-  bb0 {
-    %4 = x;
-    %5 = y;
-    %3 = * %4 %5;
-    %0 = %3;
-    return;
-  }
-}
 $anonFunc$_1(int,int) -> int{
   bb0 {
     %3 = fp $anon/.:$anonFunc$_2
@@ -27,6 +18,15 @@ $anonFunc$_1(int,int) -> int{
   }
   bb1 {
     %0 = %7;
+    return;
+  }
+}
+$anonFunc$_2(int,int) -> int{
+  bb0 {
+    %4 = x;
+    %5 = y;
+    %3 = * %4 %5;
+    %0 = %3;
     return;
   }
 }

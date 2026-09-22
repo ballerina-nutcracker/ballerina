@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "returned_function_cross_module"
+version = "0.1.0"

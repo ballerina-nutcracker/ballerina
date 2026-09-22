@@ -18,6 +18,7 @@ package exec
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -35,7 +36,7 @@ func StartMethod(parent *extern.Context, h any, args []values.BalValue) (<-chan 
 	ch := make(chan values.BalValue, 1)
 	impl := h.(*InvokableHandle)
 	seed := snapshotSpawnFrames(parent.CallStack.(*callStack))
-	go runStrand(parent.Env, seed, impl, args, ch)
+	go runStrand(parent, seed, impl, args, ch)
 	return ch, nil
 }
 
@@ -55,13 +56,64 @@ func snapshotSpawnFrames(cs *callStack) []callStackEntry {
 	return out
 }
 
-func runStrand(env *extern.Env, seed []callStackEntry, h *InvokableHandle,
-	args []values.BalValue, ch chan<- values.BalValue,
-) {
-	ctx := CreateContext(env)
+type bootstrappedCall struct {
+	handle *InvokableHandle
+	args   []values.BalValue
+}
+
+func invokeBootstrappedCall(ctx *extern.Context, call *bootstrappedCall) values.BalValue {
+	result, err := call.handle.invoke(ctx, call.args)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+func startFuture(parent *extern.Context, call *bootstrappedCall, spawnFrames []callStackEntry, isolated bool, ty semtypes.SemType) *values.Future {
+	future := values.NewFuture(ty)
+	ctx := contextForStartedStrand(parent, spawnFrames, isolated)
+	run := func() {
+		var result values.BalValue
+		defer func() {
+			panicValue := recover()
+			if panicValue != nil {
+				panicValue = capturePanicStack(panicValue, formatCallStack(ctx.CallStack.(*callStack)))
+				ctx.ReleaseAllHeldLocks()
+			}
+			future.Complete(result, panicValue)
+		}()
+		result = invokeBootstrappedCall(ctx, call)
+	}
+	if isolated {
+		go run()
+	} else {
+		continuation := ctx.Schedule()
+		go func() {
+			<-continuation
+			run()
+			ctx.Complete()
+		}()
+	}
+	return future
+}
+
+func contextForStartedStrand(parent *extern.Context, seed []callStackEntry, isolated bool) *extern.Context {
+	var ctx *extern.Context
+	if isolated {
+		ctx = extern.CreateContext(parent.Env)
+	} else {
+		ctx = extern.CreateContextInSameThread(parent)
+	}
 	elems := make([]callStackEntry, len(seed), len(seed)+32)
 	copy(elems, seed)
 	ctx.CallStack = &callStack{elements: elems}
+	return ctx
+}
+
+func runStrand(parent *extern.Context, seed []callStackEntry, h *InvokableHandle,
+	args []values.BalValue, ch chan<- values.BalValue,
+) {
+	ctx := contextForStartedStrand(parent, seed, true)
 
 	defer close(ch)
 	v, err := h.invoke(ctx, args)

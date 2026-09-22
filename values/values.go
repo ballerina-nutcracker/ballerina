@@ -34,21 +34,39 @@ type Function struct {
 	ParentFrame any // *exec.Frame at runtime, nil for non-closures
 }
 
-// TypeDesc is the runtime representation of a typedesc value — a thin wrapper
-// around a semtype.
+// TypeDesc is the runtime representation of a typedesc value: the semtype it
+// denotes together with the runtime-visible annotations of that type.
 type TypeDesc struct {
 	Type        semtypes.SemType
 	Annotations AnnotationValues
+	// FieldAnnotations holds the runtime-visible annotations attached to the
+	// individual fields of a record type, keyed by field name. Fields without
+	// annotations have no entry.
+	FieldAnnotations FieldAnnotationValues
 }
 
 // NewTypeDesc returns a fully initialized TypeDesc.
 func NewTypeDesc(ty semtypes.SemType, annotations AnnotationValues) *TypeDesc {
+	return NewTypeDescWithFieldAnnotations(ty, annotations, nil)
+}
+
+// NewTypeDescWithFieldAnnotations returns a fully initialized TypeDesc carrying
+// per-record-field annotations.
+func NewTypeDescWithFieldAnnotations(
+	ty semtypes.SemType,
+	annotations AnnotationValues,
+	fieldAnnotations FieldAnnotationValues,
+) *TypeDesc {
 	if annotations == nil {
 		annotations = NewAnnotationValues()
 	}
+	if fieldAnnotations == nil {
+		fieldAnnotations = NewFieldAnnotationValues()
+	}
 	return &TypeDesc{
-		Type:        ty,
-		Annotations: annotations,
+		Type:             ty,
+		Annotations:      annotations,
+		FieldAnnotations: fieldAnnotations,
 	}
 }
 
@@ -84,7 +102,7 @@ func fillerFactoryFromDesc(cx semtypes.Context, f semtypes.Filler) (FillerFactor
 	case semtypes.MappingFiller:
 		ty := f.Type
 		atomic := f.Atomic
-		readonly := semtypes.IsSubtype(cx, ty, semtypes.VAL_READONLY)
+		readonly := semtypes.IsSubtype(cx, ty, semtypes.ValReadonly)
 		return func() BalValue { return NewMap(ty, atomic, readonly, nil) }, true
 	case semtypes.ListFiller:
 		return listFillerFactory(cx, f)
@@ -108,7 +126,7 @@ func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) (FillerFactor
 	}
 	ty := f.Type
 	atomic := f.Atomic
-	readonly := semtypes.IsSubtype(cx, ty, semtypes.VAL_READONLY)
+	readonly := semtypes.IsSubtype(cx, ty, semtypes.ValReadonly)
 	restType := f.Atomic.Rest()
 	// Resolve the rest filler factory lazily so that recursive types (e.g.
 	// `type A A[]`) do not blow the stack while building the factory graph.
@@ -133,7 +151,7 @@ func listFillerFactory(cx semtypes.Context, f semtypes.ListFiller) (FillerFactor
 func SemTypeForValue(v BalValue) semtypes.SemType {
 	switch v := v.(type) {
 	case nil:
-		return semtypes.NIL
+		return semtypes.Nil
 	case bool:
 		return semtypes.BooleanConst(v)
 	case int64:
@@ -156,12 +174,14 @@ func SemTypeForValue(v BalValue) semtypes.SemType {
 		return v.Type
 	case *Stream:
 		return v.Type
+	case *Future:
+		return v.Type
 	case XMLValue:
 		return v.Type()
 	case *TypeDesc:
-		return semtypes.TYPEDESC
+		return semtypes.Typedesc
 	default:
-		return semtypes.ANY
+		return semtypes.Any
 	}
 }
 
@@ -201,6 +221,8 @@ func toString(v BalValue, visited map[uintptr]bool, isDirect bool) string {
 		return "object"
 	case *Stream:
 		return "stream"
+	case *Future:
+		return "future"
 	case *TypeDesc:
 		return "typedesc"
 	case XMLValue:

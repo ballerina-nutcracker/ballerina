@@ -55,7 +55,7 @@ executeOp({| fn: function(int, int) returns int|function(int) returns int, lhs: 
     %4 = ConstantLoad rhs
     %3 = (1, op)[%4];
     %5 = %3;
-    %6 = fn(%2,%5) -> bb2;
+    %6 = (1, fn)(%2,%5) -> bb2;
   }
   bb2 {
     (1, %0) = %6;

@@ -17,8 +17,7 @@
 package codec
 
 // typeTag is the constant-value type discriminator persisted on the wire as int8.
-// Values must match ast.TypeTags on the producing side; kept private here to
-// avoid depending on the ast package from the codec.
+// Values are defined by the BIR wire format.
 type typeTag int8
 
 const (

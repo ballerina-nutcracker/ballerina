@@ -99,52 +99,54 @@
             (invocation io fileReadLinesAsStream (
               (simple-var-ref missing)))
             (user-defined-type io Error)))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref missing))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$0 (
-            (simple-var-ref $desugar$0))))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
-            (invocation io fileReadBlocksAsStream (
-              (simple-var-ref $desugar$0)
-              (simple-var-ref $desugar$1)))
+            (expression-thunk
+            (lambda
+              (function main$502$2$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (simple-var-ref missing))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$0 (
+                        (simple-var-ref $desugar$0))))))
+                  (return
+                    (invocation io fileReadBlocksAsStream (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))))
             (user-defined-type io Error)))))
       (var-def
         (variable existing (type
           (value-type string)) (expr
           (literal /tmp/bal_io_stream_blocksize_check.bin))))
-      (var-def
-        (variable $desugar$2 (expr
-          (simple-var-ref existing))))
-      (var-def
-        (variable $desugar$3 (expr
-          (list-constructor-expr
-            (literal 1)
-            (literal 2)
-            (literal 3)))))
-      (var-def
-        (variable $desugar$4 (expr
-          (invocation $default$4 (
-            (simple-var-ref $desugar$2)
-            (simple-var-ref $desugar$3))))))
-      (var-def
-        (variable $desugar$5 (expr
-          (invocation io fileWriteBytes (
-            (simple-var-ref $desugar$2)
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$4))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$5))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$5))) ())
       (expression-stmt
-        (simple-var-ref $desugar$5))
+        (checked-expr
+          (expression-thunk
+          (lambda
+            (function main$502$2$thunk$1 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$2 (expr
+                    (simple-var-ref existing))))
+                (var-def
+                  (variable $desugar$3 (expr
+                    (list-constructor-expr
+                      (literal 1)
+                      (literal 2)
+                      (literal 3)))))
+                (var-def
+                  (variable $desugar$4 (expr
+                    (invocation $default$4 (
+                      (simple-var-ref $desugar$2)
+                      (simple-var-ref $desugar$3))))))
+                (return
+                  (invocation io fileWriteBytes (
+                    (simple-var-ref $desugar$2)
+                    (simple-var-ref $desugar$3)
+                    (simple-var-ref $desugar$4))))))))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
@@ -167,25 +169,25 @@
             (new
               (user-defined-type FailingLineProvider) ()))))))
       (var-def
-        (variable $desugar$6 (expr
+        (variable $desugar$5 (expr
           (simple-var-ref linesPath))))
       (var-def
-        (variable $desugar$7 (expr
+        (variable $desugar$6 (expr
           (simple-var-ref lineStream))))
       (var-def
-        (variable $desugar$8 (expr
+        (variable $desugar$7 (expr
           (invocation $default$3 (
-            (simple-var-ref $desugar$6)
-            (simple-var-ref $desugar$7))))))
+            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6))))))
       (var-def
         (variable lineResult (type
           (union-type
             (user-defined-type io Error)
             (value-type null))) (expr
           (invocation io fileWriteLinesFromStream (
+            (simple-var-ref $desugar$5)
             (simple-var-ref $desugar$6)
-            (simple-var-ref $desugar$7)
-            (simple-var-ref $desugar$8))))))
+            (simple-var-ref $desugar$7))))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
@@ -217,25 +219,25 @@
               (new
                 (user-defined-type FailingBlockProvider) ()))))))
         (var-def
-          (variable $desugar$9 (expr
+          (variable $desugar$8 (expr
             (simple-var-ref blocksPath))))
         (var-def
-          (variable $desugar$10 (expr
+          (variable $desugar$9 (expr
             (simple-var-ref blockStream))))
         (var-def
-          (variable $desugar$11 (expr
+          (variable $desugar$10 (expr
             (invocation $default$5 (
-              (simple-var-ref $desugar$9)
-              (simple-var-ref $desugar$10))))))
+              (simple-var-ref $desugar$8)
+              (simple-var-ref $desugar$9))))))
         (var-def
           (variable blockResult (type
             (union-type
               (user-defined-type io Error)
               (value-type null))) (expr
             (invocation io fileWriteBlocksFromStream (
+              (simple-var-ref $desugar$8)
               (simple-var-ref $desugar$9)
-              (simple-var-ref $desugar$10)
-              (simple-var-ref $desugar$11))))))
+              (simple-var-ref $desugar$10))))))
         (expression-stmt
           (invocation io println (
             (type-test-expr is

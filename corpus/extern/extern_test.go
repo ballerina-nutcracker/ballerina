@@ -20,16 +20,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
+	"sort"
 	"strings"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	bircodec "github.com/ballerina-nutcracker/ballerina/bir/codec"
+	"github.com/ballerina-nutcracker/ballerina/birgen"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/desugar"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/model/symbolpool"
+	"github.com/ballerina-nutcracker/ballerina/nodebuilder"
 	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
@@ -46,14 +50,18 @@ import (
 
 func TestExternValid(t *testing.T) {
 	externs := []testharness.ExternRegistration{
-		{Org: "$anon", Module: "1-v", FuncName: "foo",
+		{
+			Org: "$anon", Module: "1-v", FuncName: "foo",
 			Impl: func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
 				return "$foo", nil
-			}},
-		{Org: "$anon", Module: "1-v", FuncName: "bar",
+			},
+		},
+		{
+			Org: "$anon", Module: "1-v", FuncName: "bar",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				return values.String(args[0], nil) + ", " + values.String(args[1], nil), nil
-			}},
+			},
+		},
 	}
 	runExtern(t, fileCase("1-v"), testharness.NewTestPal(), externs)
 }
@@ -67,6 +75,16 @@ func TestInvokeNilFunctionValue(t *testing.T) {
 		},
 	}}
 	runExtern(t, fileCase("invoke-nil-function-v"), testharness.NewTestPal(), externs)
+}
+
+func TestStartWaitUsesFreshStrandsAndCooperativeScheduling(t *testing.T) {
+	externs := []testharness.ExternRegistration{
+		{Org: "$anon", Module: "start-wait-v", FuncName: "strandId",
+			Impl: func(ctx *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+				return int64(ctx.StrandID), nil
+			}},
+	}
+	runExtern(t, fileCase("start-wait-v"), testharness.NewTestPal(), externs)
 }
 
 func TestExternTypeMismatchArg(t *testing.T) {
@@ -88,13 +106,13 @@ func TestDependentlyTyped(t *testing.T) {
 			if got := values.String(td, nil); got != "typedesc" {
 				return nil, fmt.Errorf("expected typedesc string, got %q", got)
 			}
-			if !semtypes.IsSubtype(ctx.TypeCtx(), values.SemTypeForValue(td), semtypes.TYPEDESC) {
+			if !semtypes.IsSubtype(ctx.TypeCtx(), values.SemTypeForValue(td), semtypes.Typedesc) {
 				return nil, fmt.Errorf("expected typedesc semtype")
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.INT):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int):
 				return int64(1), nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.STRING):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.String):
 				return "foo", nil
 			}
 			panic(values.NewErrorWithMessage("unsupported inferred typedesc constraint"))
@@ -104,7 +122,7 @@ func TestDependentlyTyped(t *testing.T) {
 			if !ok {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
-			if !semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.INT) {
+			if !semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int) {
 				panic(values.NewErrorWithMessage("inferredSubType requires typedesc<int>"))
 			}
 			return int64(1), nil
@@ -115,9 +133,9 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.INT, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Int, td.Type):
 				return int64(0), nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.STRING, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Type):
 				return "bar", nil
 			}
 			panic(values.NewErrorWithMessage("unsupported inferredPartially typedesc constraint"))
@@ -151,9 +169,9 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.INT):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int):
 				return val, nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.STRING):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.String):
 				return fmt.Sprintf("%d", val), nil
 			}
 			panic(values.NewErrorWithMessage("unsupported inferredWithDefault typedesc constraint"))
@@ -164,23 +182,106 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[0])
 			}
 			// return an error to verify the inferred typedesc was widened to include error
-			if semtypes.IsSubtype(ctx.TypeCtx(), semtypes.ERROR, td.Type) {
+			if semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Error, td.Type) {
 				return values.NewErrorWithMessage("error"), nil
 			}
 			panic(values.NewErrorWithMessage("inferredMaybeError: expected error to be in typedesc"))
 		}},
+		{Org: org, Module: mod, FuncName: "inferredOpenArray", Impl: dependentArrayExtern(arrayReturnOpen)},
+		{Org: org, Module: mod, FuncName: "inferredFixedArray", Impl: dependentArrayExtern(arrayReturnFixed)},
+		{Org: org, Module: mod, FuncName: "inferredZeroArray", Impl: dependentArrayExtern(arrayReturnZero)},
+		{Org: org, Module: mod, FuncName: "inferredNestedArray", Impl: dependentArrayExtern(arrayReturnNested)},
+		{Org: org, Module: mod, FuncName: "inferredArrayOutsideUnion", Impl: dependentArrayExtern(arrayReturnOutsideUnion)},
+		{Org: org, Module: mod, FuncName: "inferredArrayInsideUnion", Impl: dependentArrayExtern(arrayReturnInsideUnion)},
+		{Org: org, Module: mod, FuncName: "inferredArrayInsideIntersection", Impl: dependentArrayExtern(arrayReturnInsideIntersection)},
 		{Org: org, Module: mod, FuncName: "Getter." + model.RemoteMethodName("get"), Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			td, ok := args[1].(*values.TypeDesc)
 			if !ok {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
-			if !semtypes.IsSubtype(ctx.TypeCtx(), semtypes.STRING, td.Type) {
+			if !semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Type) {
 				panic(values.NewErrorWithMessage("Getter.get: expected string-compatible typedesc"))
 			}
 			return "immutable", nil
 		}},
 	}
 	runExtern(t, fileCase("dependently-typed-v"), testharness.NewTestPal(), externs)
+}
+
+type arrayReturnKind uint8
+
+const (
+	arrayReturnOpen arrayReturnKind = iota
+	arrayReturnFixed
+	arrayReturnZero
+	arrayReturnNested
+	arrayReturnOutsideUnion
+	arrayReturnInsideUnion
+	arrayReturnInsideIntersection
+)
+
+func dependentArrayExtern(kind arrayReturnKind) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		td, ok := args[0].(*values.TypeDesc)
+		if !ok {
+			return nil, fmt.Errorf("expected typedesc argument, got %T", args[0])
+		}
+		if kind == arrayReturnZero {
+			if !semtypes.IsSameType(ctx.TypeCtx(), td.Type, semtypes.Val) && !semtypes.IsSameType(ctx.TypeCtx(), td.Type, semtypes.String) {
+				return nil, fmt.Errorf("expected maximal or explicit string typedesc constraint for zero-length array, got %s", semtypes.ToString(ctx.TypeCtx(), td.Type))
+			}
+		} else if !semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.List) && !semtypes.IsSameType(ctx.TypeCtx(), td.Type, semtypes.String) {
+			return nil, fmt.Errorf("expected string or explicit array typedesc constraint, got %s", semtypes.ToString(ctx.TypeCtx(), td.Type))
+		}
+		element := td.Type
+		label := "open"
+		size := 1
+		switch kind {
+		case arrayReturnFixed:
+			label = "fixed"
+			size = 2
+		case arrayReturnZero:
+			return newExternList(ctx, externArrayType(ctx, element, 0, false), nil), nil
+		case arrayReturnNested:
+			inner := newExternList(ctx, externArrayType(ctx, element, 0, true), []values.BalValue{"nested"})
+			return newExternList(ctx, externArrayType(ctx, inner.Type, 0, true), []values.BalValue{inner}), nil
+		case arrayReturnOutsideUnion:
+			label = "outside"
+		case arrayReturnInsideUnion:
+			element = semtypes.Union(element, semtypes.Error)
+			label = "inside"
+		case arrayReturnInsideIntersection:
+			element = semtypes.Intersect(element, semtypes.ValReadonly)
+			label = "readonly"
+		}
+		if semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.List) {
+			inner := newExternList(ctx, td.Type, []values.BalValue{"explicit"})
+			return newExternList(ctx, externArrayType(ctx, td.Type, 0, true), []values.BalValue{inner}), nil
+		}
+		items := make([]values.BalValue, size)
+		for i := range items {
+			items[i] = label
+		}
+		length := 0
+		isOpen := true
+		if kind == arrayReturnFixed {
+			length = 2
+			isOpen = false
+		}
+		return newExternList(ctx, externArrayType(ctx, element, length, isOpen), items), nil
+	}
+}
+
+func externArrayType(ctx *extern.Context, element semtypes.SemType, length int, isOpen bool) semtypes.SemType {
+	definition := semtypes.NewListDefinition()
+	if isOpen {
+		return definition.Define(ctx.TypeEnv(), nil, semtypes.ListRest(element))
+	}
+	return definition.Define(ctx.TypeEnv(), []semtypes.SemType{element}, semtypes.ListFixedLength(length))
+}
+
+func newExternList(ctx *extern.Context, ty semtypes.SemType, items []values.BalValue) *values.List {
+	return values.NewList(ty, semtypes.ToListAtomicType(ctx.TypeEnv(), ty), false, nil, len(items), items)
 }
 
 func TestDependentlyTypedAlias(t *testing.T) {
@@ -244,9 +345,9 @@ func TestDependentlyTypedMethod(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[3])
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.STRING, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Type):
 				return "string response", nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.INT, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Int, td.Type):
 				return int64(2), nil
 			}
 			panic(values.NewErrorWithMessage("unsupported targetType"))
@@ -257,16 +358,121 @@ func TestDependentlyTypedMethod(t *testing.T) {
 
 func TestExternResourceMethod(t *testing.T) {
 	externs := []testharness.ExternRegistration{
-		{Org: "testorg", Module: "externresourcemethod.api", FuncName: "Client.$resource$get$0",
+		{
+			Org: "testorg", Module: "externresourcemethod.api", FuncName: "Client.$resource$get$0",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				return "items/" + values.String(args[1], nil), nil
-			}},
-		{Org: "testorg", Module: "externresourcemethod.api", FuncName: "Client.$resource$get$1",
+			},
+		},
+		{
+			Org: "testorg", Module: "externresourcemethod.api", FuncName: "Client.$resource$get$1",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				return args[2].(int64) * 2, nil
-			}},
+			},
+		},
 	}
 	runExtern(t, projectCase("resource-method-v"), testharness.NewTestPal(), externs)
+}
+
+func TestDependentlyTypedResourceMethod(t *testing.T) {
+	t.Parallel()
+	projectDir := filepath.Join(testDataDir, "dependently-typed-resource-method-v")
+	absProjectDir, err := filepath.Abs(projectDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := projects.Load(os.DirFS(absProjectDir), ".", projects.ProjectLoadConfig{
+		BallerinaEnvFs: os.DirFS(getBallerinaEnvPath(t)),
+	})
+	if err != nil {
+		t.Fatalf("failed to load project: %v", err)
+	}
+	compilation := result.Project().CurrentPackage().Compilation()
+	if compilation.DiagnosticResult().HasErrors() {
+		for _, d := range compilation.DiagnosticResult().Diagnostics() {
+			t.Logf("diagnostic: %v", d)
+		}
+		t.Fatal("compilation had errors")
+	}
+	backend := projects.NewBallerinaBackend(compilation)
+	apiID := semantics.PackageIdentifier{OrgName: "testorg", ModuleName: "dependentresourcemethod.api"}
+	exported, ok := backend.ExportedSymbols()[apiID]
+	if !ok {
+		t.Fatal("exported symbols not found for dependentresourcemethod.api")
+	}
+	symBytes, err := symbolpool.Marshal(exported, result.Project().Environment().CompilerEnvironment())
+	if err != nil {
+		t.Fatalf("symbol Marshal: %v", err)
+	}
+	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	deserialized, err := symbolpool.Unmarshal(freshEnv, symBytes)
+	if err != nil {
+		t.Fatalf("symbol Unmarshal: %v", err)
+	}
+	var clientRef model.SymbolRef
+	for _, space := range deserialized.MainSpaces {
+		if ref, found := space.GetSymbol("Client"); found {
+			clientRef = ref
+			break
+		}
+	}
+	if clientRef.IsEmpty() {
+		t.Fatal("deserialized Client symbol not found")
+	}
+	clientSym, ok := freshEnv.GetSymbol(clientRef).(*model.NetworkClassSymbol)
+	if !ok {
+		t.Fatalf("expected network class symbol, got %T", freshEnv.GetSymbol(clientRef))
+	}
+	resourceRefs := clientSym.ResourceMethods()
+	if len(resourceRefs) != 1 {
+		t.Fatalf("expected one resource method, got %d", len(resourceRefs))
+	}
+	resourceRef := resourceRefs[0]
+	resourceSym, ok := freshEnv.GetSymbol(resourceRef).(model.DependentlyTypedResourceMethodSymbol)
+	if !ok {
+		t.Fatalf("expected dependent resource method symbol, got %T", freshEnv.GetSymbol(resourceRef))
+	}
+	if resourceSym.MethodName() != "get" || semtypes.IsZero(resourceSym.PathListType()) {
+		t.Fatal("resource accessor or path-list type was not preserved")
+	}
+	if len(resourceSym.PathParams()) != 0 {
+		t.Fatal("declaration-local path parameters must not be serialized")
+	}
+	if len(resourceSym.ParamTypes()) != 1 {
+		t.Fatal("dependent parameter types or return TypeOp were not preserved")
+	}
+	retOp, ok := resourceSym.ReturnType().(*model.BinaryTypeOp)
+	if !ok || retOp.Kind != model.TypeOpUnion {
+		t.Fatalf("expected union return TypeOp, got %T", resourceSym.ReturnType())
+	}
+	dependentRef, ok := retOp.Lhs.(*model.RefTypeOp)
+	if !ok {
+		t.Fatalf("expected dependent return reference, got %T", retOp.Lhs)
+	}
+	if dependentRef.Index != 0 {
+		t.Fatalf("expected dependent return reference to targetType (index 0), got index %d", dependentRef.Index)
+	}
+	if _, ok := freshEnv.FunctionSignatureRef(resourceRef); !ok {
+		t.Fatal("resource function signature association was not preserved")
+	}
+
+	externs := []testharness.ExternRegistration{{
+		Org: "testorg", Module: "dependentresourcemethod.api", FuncName: "Client.$resource$get$0",
+		Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			td, ok := args[len(args)-1].(*values.TypeDesc)
+			if !ok {
+				return nil, fmt.Errorf("expected typedesc argument, got %T", args[len(args)-1])
+			}
+			switch {
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.String):
+				return "explicit", nil
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int):
+				return int64(42), nil
+			}
+			panic(values.NewErrorWithMessage("unsupported targetType"))
+		},
+	}}
+	runExtern(t, projectCase("dependently-typed-resource-method-v"), testharness.NewTestPal(), externs)
 }
 
 func TestListenerDispatch(t *testing.T) {
@@ -274,12 +480,15 @@ func TestListenerDispatch(t *testing.T) {
 	// io:println does at runtime, without requiring a closure over the
 	// *runtime.Runtime (which is built inside testharness.Run).
 	externs := []testharness.ExternRegistration{
-		{Org: "testorg", Module: "externlistener.lst", FuncName: "Listener.attach",
+		{
+			Org: "testorg", Module: "externlistener.lst", FuncName: "Listener.attach",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				args[0].(*values.Object).Put("svc", args[1].(*values.Object))
 				return nil, nil
-			}},
-		{Org: "testorg", Module: "externlistener.lst", FuncName: "Listener.trigger",
+			},
+		},
+		{
+			Org: "testorg", Module: "externlistener.lst", FuncName: "Listener.trigger",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				receiver := args[0].(*values.Object)
 				svcVal, ok := receiver.Get("svc")
@@ -308,19 +517,375 @@ func TestListenerDispatch(t *testing.T) {
 				}
 				_, _ = ctx.Env.Platform.IO.Stdout([]byte(values.String(out, nil) + "\n"))
 				return nil, nil
-			}},
+			},
+		},
 	}
 	runExtern(t, projectCase("listener-dispatch-v"), testharness.NewTestPal(), externs)
 }
 
+func TestAnnotationRuntimeMetadata(t *testing.T) {
+	const org, module = "testorg", "annotationruntime"
+	serviceKey := model.AnnotationKey(model.PackageIdentifier{
+		Organization: org,
+		Package:      module + ".meta",
+		Version:      "0.1.0",
+	}, "serviceMeta")
+	parameterKey := model.AnnotationKey(model.PackageIdentifier{
+		Organization: org,
+		Package:      module + ".meta",
+		Version:      "0.1.0",
+	}, "parameterMeta")
+	markerKey := model.AnnotationKey(model.PackageIdentifier{
+		Organization: org,
+		Package:      module + ".meta",
+		Version:      "0.1.0",
+	}, "marker")
+
+	attachedService := func(receiver *values.Object) (*values.Object, error) {
+		svc, ok := receiver.Get("svc")
+		if !ok {
+			return nil, fmt.Errorf("listener has no attached service")
+		}
+		return svc.(*values.Object), nil
+	}
+	annotationName := func(value values.AnnotationValue) (string, error) {
+		mapping, ok := value.(*values.Map)
+		if !ok {
+			return "", fmt.Errorf("annotation value has type %T", value)
+		}
+		name, ok := mapping.Get("name")
+		if !ok {
+			return "", fmt.Errorf("annotation value has no name")
+		}
+		return name.(string), nil
+	}
+
+	externs := []testharness.ExternRegistration{
+		{Org: org, Module: module + ".lst", FuncName: "Listener.inspect",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				listener := args[0].(*values.Object)
+				methodHandle, ok := ctx.LookupObjectMethod(listener, "inspect")
+				if !ok {
+					return nil, fmt.Errorf("method 'inspect' not found")
+				}
+				methodSignature, ok := ctx.MethodSignature(methodHandle)
+				if !ok || len(methodSignature.Params) != 0 {
+					return nil, fmt.Errorf("unexpected native method signature: %#v", methodSignature)
+				}
+				methodMetadata, ok := ctx.MethodMetadata(methodHandle)
+				if !ok || len(methodMetadata.Params) != 0 {
+					return nil, fmt.Errorf("unexpected native method metadata: %#v", methodMetadata)
+				}
+
+				functionHandle, ok := ctx.LookupFunction(org, module, "parameterName")
+				if !ok {
+					return nil, fmt.Errorf("function 'parameterName' not found")
+				}
+				functionSignature, ok := ctx.FunctionSignature(functionHandle)
+				if !ok || len(functionSignature.Params) != 0 ||
+					!semtypes.IsSubtype(ctx.TypeCtx(), functionSignature.ReturnType, semtypes.String) {
+					return nil, fmt.Errorf("unexpected function signature: %#v", functionSignature)
+				}
+				functionMetadata, ok := ctx.FunctionMetadata(functionHandle)
+				if !ok || len(functionMetadata.Params) != 0 {
+					return nil, fmt.Errorf("unexpected function metadata: %#v", functionMetadata)
+				}
+
+				svc, err := attachedService(listener)
+				if err != nil {
+					return nil, err
+				}
+				annotations, ok := ctx.ObjectAnnotations(svc)
+				if !ok {
+					return nil, fmt.Errorf("service annotations are unavailable")
+				}
+				serviceName, err := annotationName(annotations[serviceKey])
+				if err != nil {
+					return nil, err
+				}
+
+				handle, ok := ctx.LookupResourceMethod(svc, "get", []values.BalValue{"items"})
+				if !ok {
+					return nil, fmt.Errorf("resource method 'get items' not found")
+				}
+				signature, ok := ctx.MethodSignature(handle)
+				if !ok || len(signature.Params) != 2 || signature.RestParam == nil {
+					return nil, fmt.Errorf("unexpected resource signature: %#v", signature)
+				}
+				metadata, ok := ctx.MethodMetadata(handle)
+				if !ok || len(metadata.Params) != 2 || metadata.RestParam == nil {
+					return nil, fmt.Errorf("unexpected resource metadata: %#v", metadata)
+				}
+				countName, err := annotationName(metadata.Params[0].Annotations[parameterKey])
+				if err != nil {
+					return nil, err
+				}
+				headerName, err := annotationName(metadata.Params[1].Annotations[parameterKey])
+				if err != nil {
+					return nil, err
+				}
+				if signature.Params[0].Name != "count" || !semtypes.IsSubtype(ctx.TypeCtx(), signature.Params[0].Type, semtypes.Int) {
+					return nil, fmt.Errorf("unexpected count descriptor")
+				}
+				if signature.Params[1].Name != "header" || !semtypes.IsSubtype(ctx.TypeCtx(), signature.Params[1].Type, semtypes.String) {
+					return nil, fmt.Errorf("unexpected header descriptor")
+				}
+				if !semtypes.IsSubtype(ctx.TypeCtx(), signature.ReturnType, semtypes.Int) {
+					return nil, fmt.Errorf("unexpected return type")
+				}
+				if signature.RestParam.Name != "extras" || metadata.RestParam.Annotations[markerKey] != true {
+					return nil, fmt.Errorf("unexpected rest descriptor")
+				}
+
+				for _, line := range []string{serviceName, countName, headerName, "rest-marker"} {
+					_, _ = ctx.Env.Platform.IO.Stdout([]byte(line + "\n"))
+				}
+				return nil, nil
+			}},
+		{Org: org, Module: module + ".lst", FuncName: "Listener.invokeWithoutArgs",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				svc, err := attachedService(args[0].(*values.Object))
+				if err != nil {
+					return nil, err
+				}
+				handle, ok := ctx.LookupResourceMethod(svc, "get", []values.BalValue{"items"})
+				if !ok {
+					return nil, fmt.Errorf("resource method 'get items' not found")
+				}
+				return ctx.InvokeMethod(handle, nil)
+			}},
+	}
+	runExtern(t, projectCase("annotation-runtime-v"), testharness.NewTestPal(), externs)
+}
+
+func TestRecordFieldAnnotations(t *testing.T) {
+	const org, module = "$anon", "record-field-annotations-v"
+	annotationKey := func(name string) string {
+		return model.AnnotationKey(model.PackageIdentifier{
+			Organization: org,
+			Package:      module,
+			Version:      "0.0.0",
+		}, name)
+	}
+	fieldMetaKey := annotationKey("fieldMeta")
+	extraMetaKey := annotationKey("extraMeta")
+	markerKey := annotationKey("marker")
+
+	typedescArg := func(args []values.BalValue) (*values.TypeDesc, error) {
+		td, ok := args[0].(*values.TypeDesc)
+		if !ok {
+			return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+		}
+		return td, nil
+	}
+	// metaName reports the "name" field of a Meta annotation value, or
+	// "<absent>" when the field carries no such annotation.
+	metaName := func(ctx *extern.Context, args []values.BalValue, key string) (values.BalValue, error) {
+		td, err := typedescArg(args)
+		if err != nil {
+			return nil, err
+		}
+		field, ok := args[1].(string)
+		if !ok {
+			return nil, fmt.Errorf("expected string field name, got %T", args[1])
+		}
+		typeAnnotations, ok := ctx.TypeAnnotations(td)
+		if !ok {
+			return "<absent>", nil
+		}
+		value, ok := typeAnnotations.Fields[field][key]
+		if !ok {
+			return "<absent>", nil
+		}
+		mapping, ok := value.(*values.Map)
+		if !ok {
+			return nil, fmt.Errorf("annotation value has type %T", value)
+		}
+		name, ok := mapping.Get("name")
+		if !ok {
+			return nil, fmt.Errorf("annotation value has no 'name' field")
+		}
+		return name, nil
+	}
+
+	externs := []testharness.ExternRegistration{
+		{Org: org, Module: module, FuncName: "annotatedFields",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				td, err := typedescArg(args)
+				if err != nil {
+					return nil, err
+				}
+				return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
+			}},
+		{Org: org, Module: module, FuncName: "fieldMetaName",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				return metaName(ctx, args, fieldMetaKey)
+			}},
+		{Org: org, Module: module, FuncName: "extraMetaName",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				return metaName(ctx, args, extraMetaKey)
+			}},
+		{Org: org, Module: module, FuncName: "hasMarker",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				td, err := typedescArg(args)
+				if err != nil {
+					return nil, err
+				}
+				field, ok := args[1].(string)
+				if !ok {
+					return nil, fmt.Errorf("expected string field name, got %T", args[1])
+				}
+				typeAnnotations, ok := ctx.TypeAnnotations(td)
+				if !ok {
+					return false, nil
+				}
+				return typeAnnotations.Fields[field][markerKey] == true, nil
+			}},
+	}
+	runExtern(t, fileCase("record-field-annotations-v"), testharness.NewTestPal(), externs)
+}
+
+func TestRecordFieldAnnotationsStructural(t *testing.T) {
+	const org, module = "$anon", "record-field-annotations-2-v"
+	annotationKey := func(name string) string {
+		return model.AnnotationKey(model.PackageIdentifier{
+			Organization: org,
+			Package:      module,
+			Version:      "0.0.0",
+		}, name)
+	}
+	fieldMetaKey := annotationKey("fieldMeta")
+	repeatableKey := annotationKey("repeatable")
+
+	fieldAnnotations := func(ctx *extern.Context, args []values.BalValue) (values.AnnotationValues, bool, error) {
+		td, ok := args[0].(*values.TypeDesc)
+		if !ok {
+			return nil, false, fmt.Errorf("expected typedesc, got %T", args[0])
+		}
+		field, ok := args[1].(string)
+		if !ok {
+			return nil, false, fmt.Errorf("expected string field name, got %T", args[1])
+		}
+		typeAnnotations, ok := ctx.TypeAnnotations(td)
+		if !ok {
+			return nil, false, nil
+		}
+		annotations, found := typeAnnotations.Fields[field]
+		return annotations, found, nil
+	}
+	metaName := func(value values.AnnotationValue) (string, error) {
+		mapping, ok := value.(*values.Map)
+		if !ok {
+			return "", fmt.Errorf("annotation value has type %T", value)
+		}
+		name, ok := mapping.Get("name")
+		if !ok {
+			return "", fmt.Errorf("annotation value has no 'name' field")
+		}
+		return values.String(name, nil), nil
+	}
+
+	externs := []testharness.ExternRegistration{
+		{Org: org, Module: module, FuncName: "annotatedFields",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				td, ok := args[0].(*values.TypeDesc)
+				if !ok {
+					return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+				}
+				return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
+			}},
+		{Org: org, Module: module, FuncName: "fieldMetaName",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				annotations, found, err := fieldAnnotations(ctx, args)
+				if err != nil || !found {
+					return "<absent>", err
+				}
+				value, ok := annotations[fieldMetaKey]
+				if !ok {
+					return "<absent>", nil
+				}
+				return metaName(value)
+			}},
+		{Org: org, Module: module, FuncName: "repeatableNames",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				annotations, found, err := fieldAnnotations(ctx, args)
+				if err != nil || !found {
+					return "<absent>", err
+				}
+				list, ok := annotations[repeatableKey].(*values.List)
+				if !ok {
+					return nil, fmt.Errorf("repeated annotation has type %T", annotations[repeatableKey])
+				}
+				names := make([]string, 0, list.Len())
+				for i := 0; i < list.Len(); i++ {
+					name, err := metaName(list.Get(i))
+					if err != nil {
+						return nil, err
+					}
+					names = append(names, name)
+				}
+				return strings.Join(names, "|"), nil
+			}},
+	}
+	runExtern(t, fileCase("record-field-annotations-2-v"), testharness.NewTestPal(), externs)
+}
+
+func TestRecordFieldAnnotationsCrossModule(t *testing.T) {
+	const org, module = "testorg", "recordfieldannotations"
+	fieldMetaKey := model.AnnotationKey(model.PackageIdentifier{
+		Organization: org,
+		Package:      module + ".types",
+		Version:      "0.1.0",
+	}, "fieldMeta")
+
+	externs := []testharness.ExternRegistration{
+		{Org: org, Module: module, FuncName: "annotatedFields",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				td, ok := args[0].(*values.TypeDesc)
+				if !ok {
+					return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+				}
+				return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
+			}},
+		{Org: org, Module: module, FuncName: "fieldMetaName",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				td, ok := args[0].(*values.TypeDesc)
+				if !ok {
+					return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+				}
+				field, ok := args[1].(string)
+				if !ok {
+					return nil, fmt.Errorf("expected string field name, got %T", args[1])
+				}
+				typeAnnotations, ok := ctx.TypeAnnotations(td)
+				if !ok {
+					return "<absent>", nil
+				}
+				mapping, ok := typeAnnotations.Fields[field][fieldMetaKey].(*values.Map)
+				if !ok {
+					return "<absent>", nil
+				}
+				name, ok := mapping.Get("name")
+				if !ok {
+					return nil, fmt.Errorf("annotation value has no 'name' field")
+				}
+				return name, nil
+			}},
+	}
+	runExtern(t, projectCase("record-field-annotations-project-v"), testharness.NewTestPal(), externs)
+}
+
 func TestStartMethod(t *testing.T) {
 	externs := []testharness.ExternRegistration{
-		{Org: "testorg", Module: "startmethod.lst", FuncName: "Listener.attach",
+		{
+			Org: "testorg", Module: "startmethod.lst", FuncName: "Listener.attach",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				args[0].(*values.Object).Put("svc", args[1].(*values.Object))
 				return nil, nil
-			}},
-		{Org: "testorg", Module: "startmethod.lst", FuncName: "Listener.trigger",
+			},
+		},
+		{
+			Org: "testorg", Module: "startmethod.lst", FuncName: "Listener.trigger",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				receiver := args[0].(*values.Object)
 				svcVal, ok := receiver.Get("svc")
@@ -350,23 +915,29 @@ func TestStartMethod(t *testing.T) {
 				_, _ = ctx.Env.Platform.IO.Stdout([]byte(values.String(<-resCh, nil) + "\n"))
 				_, _ = ctx.Env.Platform.IO.Stdout([]byte(values.String(<-remCh, nil) + "\n"))
 				return nil, nil
-			}},
+			},
+		},
 	}
 	runExtern(t, projectCase("start-method-v"), testharness.NewTestPal(), externs)
 }
 
 func TestStartMethodError(t *testing.T) {
 	externs := []testharness.ExternRegistration{
-		{Org: "testorg", Module: "startmethoderror.lst", FuncName: "Listener.attach",
+		{
+			Org: "testorg", Module: "startmethoderror.lst", FuncName: "Listener.attach",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				args[0].(*values.Object).Put("svc", args[1].(*values.Object))
 				return nil, nil
-			}},
-		{Org: "testorg", Module: "startmethoderror", FuncName: "$service$0." + model.RemoteMethodName("boom"),
+			},
+		},
+		{
+			Org: "testorg", Module: "startmethoderror", FuncName: "$service$0." + model.RemoteMethodName("boom"),
 			Impl: func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
 				return nil, fmt.Errorf("boom")
-			}},
-		{Org: "testorg", Module: "startmethoderror.lst", FuncName: "Listener.trigger",
+			},
+		},
+		{
+			Org: "testorg", Module: "startmethoderror.lst", FuncName: "Listener.trigger",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				receiver := args[0].(*values.Object)
 				svcVal, ok := receiver.Get("svc")
@@ -404,7 +975,8 @@ func TestStartMethodError(t *testing.T) {
 				}
 				_, _ = ctx.Env.Platform.IO.Stdout([]byte(values.String(<-okCh, nil) + "\n"))
 				return nil, nil
-			}},
+			},
+		},
 	}
 	runExtern(t, projectCase("start-method-error-v"), testharness.NewTestPal(), externs)
 }
@@ -414,14 +986,18 @@ func TestExternHandle(t *testing.T) {
 		data string
 	}
 	externs := []testharness.ExternRegistration{
-		{Org: "$anon", Module: "4-v", FuncName: "createHandle",
+		{
+			Org: "$anon", Module: "4-v", FuncName: "createHandle",
 			Impl: func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
 				return &myHandle{data: "handle_value"}, nil
-			}},
-		{Org: "$anon", Module: "4-v", FuncName: "useHandle",
+			},
+		},
+		{
+			Org: "$anon", Module: "4-v", FuncName: "useHandle",
 			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				return args[0].(*myHandle).data, nil
-			}},
+			},
+		},
 	}
 	runExtern(t, fileCase("4-v"), testharness.NewTestPal(), externs)
 }
@@ -488,10 +1064,17 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 
 	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	publicSymbols := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
+	moduleVisibility := make(map[semantics.PackageIdentifier]semantics.ModuleVisibility)
 	deserializedPkgs := make([]*bir.BIRPackage, 0, len(birPkgs))
 	mainPkg := backend.BIR()
 	exportedSymbols := backend.ExportedSymbols()
 	typeEnv := project.Environment().TypeEnv()
+
+	modulesByQualifiedName := make(map[string]*projects.Module)
+	for _, m := range currentPkg.Modules() {
+		modulesByQualifiedName[m.Descriptor().Name().String()] = m
+	}
+	manifest := currentPkg.Manifest()
 
 	for _, pkg := range birPkgs {
 		if pkg == mainPkg {
@@ -505,6 +1088,19 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 		exported, ok := exportedSymbols[pkgIdent]
 		if !ok {
 			t.Fatalf("exported symbols not found for %s/%s", pkgIdent.OrgName, pkgIdent.ModuleName)
+		}
+
+		// Thread the dependency module's real visibility through, mirroring
+		// module_context.go's resolveTypesAndSymbols, so a non-exported
+		// module found in publicSymbols is still rejected below instead of
+		// silently binding.
+		if module, ok := modulesByQualifiedName[pkgIdent.ModuleName]; ok {
+			desc := module.Descriptor()
+			moduleVisibility[pkgIdent] = semantics.ModuleVisibility{
+				PackageOrg:  desc.Org().Value(),
+				PackageName: desc.PackageName().Value(),
+				Exported:    slices.Contains(manifest.ExportedModules(), module.ModuleName().ModuleNamePart()),
+			}
 		}
 
 		symBytes, err := symbolpool.Marshal(exported, project.Environment().CompilerEnvironment())
@@ -532,7 +1128,9 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 		model.Name(org),
 		[]model.Name{model.Name(packageRoot)},
 		publicSymbols,
+		moduleVisibility,
 		org,
+		packageRoot,
 	)
 	deserializedPkgs = append(deserializedPkgs, mainBIR)
 
@@ -548,12 +1146,23 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 			return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 		}
 		switch {
-		case semtypes.IsSubtype(tyCtx, td.Type, semtypes.INT):
+		case semtypes.IsSubtype(tyCtx, td.Type, semtypes.Int):
 			return int64(1), nil
-		case semtypes.IsSubtype(tyCtx, td.Type, semtypes.STRING):
+		case semtypes.IsSubtype(tyCtx, td.Type, semtypes.String):
 			return "foo", nil
 		}
 		panic(values.NewErrorWithMessage("unsupported inferred typedesc constraint"))
+	})
+	runtime.RegisterExternFunction(rt, org, helperMod, "inferredNestedFixedArray", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		td, ok := args[0].(*values.TypeDesc)
+		if !ok {
+			return nil, fmt.Errorf("expected typedesc argument, got %T", args[0])
+		}
+		innerTy := externArrayType(ctx, td.Type, 0, true)
+		first := newExternList(ctx, innerTy, []values.BalValue{"first"})
+		second := newExternList(ctx, innerTy, []values.BalValue{"serialized"})
+		outerTy := externArrayType(ctx, innerTy, 2, false)
+		return newExternList(ctx, outerTy, []values.BalValue{first, second}), nil
 	})
 	for _, pkg := range deserializedPkgs {
 		if err := rt.Init(*pkg); err != nil {
@@ -563,10 +1172,198 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 	rt.Listen()
 	<-rt.ExitStatus
 
-	const expected = "1\nfoo\n"
+	const expected = "1\nfoo\nserialized\n"
 	if got := pal.Stdout(); got != expected {
 		t.Errorf("expected %q, got %q", expected, got)
 	}
+}
+
+// TestRecordFieldAnnotationsSymbolPoolRoundtrip compiles a dependency module,
+// pushes its symbols through the symbol pool codec into a fresh environment,
+// then recompiles the consumer against the deserialized symbols. This is the
+// path a prebuilt .bala dependency takes, and it is the only way per-field
+// annotations reach a consumer compiled in a separate process.
+func TestRecordFieldAnnotationsSymbolPoolRoundtrip(t *testing.T) {
+	projectDir := filepath.Join(testDataDir, "record-field-annotations-project-v")
+	mainBalPath := filepath.Join(projectDir, "main.bal")
+	absProjectDir, err := filepath.Abs(projectDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const (
+		org         = "testorg"
+		packageRoot = "recordfieldannotations"
+		typesMod    = "recordfieldannotations.types"
+	)
+	fieldMetaKey := model.AnnotationKey(model.PackageIdentifier{
+		Organization: org,
+		Package:      typesMod,
+		Version:      "0.1.0",
+	}, "fieldMeta")
+
+	ballerinaEnvFs := os.DirFS(getBallerinaEnvPath(t))
+	result, err := projects.Load(os.DirFS(absProjectDir), ".", projects.ProjectLoadConfig{
+		BallerinaEnvFs: ballerinaEnvFs,
+	})
+	if err != nil {
+		t.Fatalf("failed to load project: %v", err)
+	}
+	if result.Diagnostics().HasErrors() {
+		t.Fatal("project load had errors")
+	}
+	compilation := result.Project().CurrentPackage().Compilation()
+	if compilation.DiagnosticResult().HasErrors() {
+		for _, d := range compilation.DiagnosticResult().Diagnostics() {
+			t.Logf("diagnostic: %v", d)
+		}
+		t.Fatal("compilation had errors")
+	}
+
+	backend := projects.NewBallerinaBackend(compilation)
+	birPkgs := backend.BIRPackages()
+	mainPkg := backend.BIR()
+	exportedSymbols := backend.ExportedSymbols()
+	typeEnv := result.Project().Environment().TypeEnv()
+
+	currentPkg := result.Project().CurrentPackage()
+	modulesByQualifiedName := make(map[string]*projects.Module)
+	for _, m := range currentPkg.Modules() {
+		modulesByQualifiedName[m.Descriptor().Name().String()] = m
+	}
+	manifest := currentPkg.Manifest()
+
+	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	publicSymbols := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
+	moduleVisibility := make(map[semantics.PackageIdentifier]semantics.ModuleVisibility)
+	deserializedPkgs := make([]*bir.BIRPackage, 0, len(birPkgs))
+	for _, pkg := range birPkgs {
+		if pkg == mainPkg {
+			continue
+		}
+		pkgIdent := semantics.PackageIdentifier{
+			OrgName:    pkg.PackageID.OrgName.Value(),
+			ModuleName: pkg.PackageID.PkgName.Value(),
+		}
+		exported, ok := exportedSymbols[pkgIdent]
+		if !ok {
+			t.Fatalf("exported symbols not found for %s", pkgIdent.ModuleName)
+		}
+
+		// Thread the dependency module's real visibility through, mirroring
+		// module_context.go's resolveTypesAndSymbols, so a non-exported
+		// module found in publicSymbols is still rejected below instead of
+		// silently binding.
+		if module, ok := modulesByQualifiedName[pkgIdent.ModuleName]; ok {
+			desc := module.Descriptor()
+			moduleVisibility[pkgIdent] = semantics.ModuleVisibility{
+				PackageOrg:  desc.Org().Value(),
+				PackageName: desc.PackageName().Value(),
+				Exported:    slices.Contains(manifest.ExportedModules(), module.ModuleName().ModuleNamePart()),
+			}
+		}
+
+		symBytes, err := symbolpool.Marshal(exported, result.Project().Environment().CompilerEnvironment())
+		if err != nil {
+			t.Fatalf("symbol Marshal for %s: %v", pkgIdent.ModuleName, err)
+		}
+		deserializedExported, err := symbolpool.Unmarshal(freshEnv, symBytes)
+		if err != nil {
+			t.Fatalf("symbol Unmarshal for %s: %v", pkgIdent.ModuleName, err)
+		}
+		publicSymbols[pkgIdent] = deserializedExported
+
+		birBytes, err := bircodec.Marshal(typeEnv, pkg)
+		if err != nil {
+			t.Fatalf("BIR Marshal for %s: %v", pkgIdent.ModuleName, err)
+		}
+		deserializedPkg, err := bircodec.Unmarshal(context.NewCompilerContext(freshEnv), birBytes)
+		if err != nil {
+			t.Fatalf("BIR Unmarshal for %s: %v", pkgIdent.ModuleName, err)
+		}
+		deserializedPkgs = append(deserializedPkgs, deserializedPkg)
+	}
+
+	_, mainBIR := compileSingleFileModule(t, freshEnv, mainBalPath,
+		model.Name(org),
+		[]model.Name{model.Name(packageRoot)},
+		publicSymbols,
+		moduleVisibility,
+		org,
+		packageRoot,
+	)
+	deserializedPkgs = append(deserializedPkgs, mainBIR)
+
+	pal := testharness.NewTestPal()
+	defer pal.Close()
+	rt := runtime.NewRuntime(pal.Platform(), freshEnv.GetTypeEnv())
+	registerFieldAnnotationExterns(rt, org, packageRoot, fieldMetaKey)
+	for _, pkg := range deserializedPkgs {
+		if err := rt.Init(*pkg); err != nil {
+			t.Fatalf("runtime error: %v", err)
+		}
+	}
+	rt.Listen()
+	<-rt.ExitStatus
+
+	const expected = "name\nimported-name\n<absent>\ncreatedAt,note\nimported-createdAt\n" +
+		"imported-name\nname\nimported-name\n"
+	if got := pal.Stdout(); got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
+// registerFieldAnnotationExterns registers the natives used by the
+// record-field-annotations project fixture.
+func registerFieldAnnotationExterns(rt *runtime.Runtime, org, module, fieldMetaKey string) {
+	runtime.RegisterExternFunction(rt, org, module, "annotatedFields",
+		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			td, ok := args[0].(*values.TypeDesc)
+			if !ok {
+				return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+			}
+			return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
+		})
+	runtime.RegisterExternFunction(rt, org, module, "fieldMetaName",
+		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			td, ok := args[0].(*values.TypeDesc)
+			if !ok {
+				return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+			}
+			field, ok := args[1].(string)
+			if !ok {
+				return nil, fmt.Errorf("expected string field name, got %T", args[1])
+			}
+			typeAnnotations, ok := ctx.TypeAnnotations(td)
+			if !ok {
+				return "<absent>", nil
+			}
+			mapping, ok := typeAnnotations.Fields[field][fieldMetaKey].(*values.Map)
+			if !ok {
+				return "<absent>", nil
+			}
+			name, ok := mapping.Get("name")
+			if !ok {
+				return nil, fmt.Errorf("annotation value has no 'name' field")
+			}
+			return name, nil
+		})
+}
+
+// sortedAnnotatedFields lists the annotated field names of td in a stable order.
+// TypeAnnotations returns an unordered map because record fields are unordered;
+// the tests sort so that their expected output is deterministic.
+func sortedAnnotatedFields(ctx *extern.Context, td *values.TypeDesc) []string {
+	typeAnnotations, ok := ctx.TypeAnnotations(td)
+	if !ok {
+		return nil
+	}
+	fields := make([]string, 0, len(typeAnnotations.Fields))
+	for field := range typeAnnotations.Fields {
+		fields = append(fields, field)
+	}
+	sort.Strings(fields)
+	return fields
 }
 
 // compileSingleFileModule parses a .bal file and runs the full compilation
@@ -580,7 +1377,8 @@ func compileSingleFileModule(
 	orgName model.Name,
 	nameComps []model.Name,
 	publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace,
-	defaultOrg string,
+	moduleVisibility map[semantics.PackageIdentifier]semantics.ModuleVisibility,
+	defaultOrg, currentPackageName string,
 ) (model.ExportedSymbolSpace, *bir.BIRPackage) {
 	t.Helper()
 	absPath, err := filepath.Abs(balPath)
@@ -597,7 +1395,8 @@ func compileSingleFileModule(
 	if err != nil {
 		t.Fatalf("parsing %s: %v", balPath, err)
 	}
-	cu := ast.GetCompilationUnit(cx, st)
+	assertNoDiagnostics(t, cx, "Parse")
+	cu := nodebuilder.GetCompilationUnit(cx, st)
 	pkgID := cx.NewPackageID(orgName, nameComps, model.DEFAULT_VERSION)
 	cu.SetPackageID(pkgID)
 	compilationUnits := []*ast.BLangCompilationUnit{cu}
@@ -606,27 +1405,40 @@ func compileSingleFileModule(
 	if err != nil {
 		t.Fatalf("loading lang libraries failed: %v", err)
 	}
-	importedByCU := semantics.ResolveCompilationUnitImports(cx, compilationUnits, langlibs.ImplicitImports, langlibs.PublicSymbols, defaultOrg)
-	pkgScope, exported := semantics.ResolveSymbols(cx, *pkgID, importedByCU)
+	pkgScope, exported, importedSymbols := semantics.ResolveSymbols(
+		cx,
+		*pkgID,
+		compilationUnits,
+		langlibs.ImplicitImports,
+		langlibs.PublicSymbols,
+		moduleVisibility,
+		defaultOrg,
+		currentPackageName,
+	)
 	assertNoDiagnostics(t, cx, "ResolveSymbols")
-	pkg := ast.ToPackageFromCompilationUnits(compilationUnits)
+	pkg := nodebuilder.ToPackageFromCompilationUnits(cx, compilationUnits)
+	assertNoDiagnostics(t, cx, "ToPackageFromCompilationUnits")
 	pkg.PackageID = pkgID
 	pkg.Scope = pkgScope
 	pkg.Imports = nil
-	importedSymbols := importedByCU[0].Imports
-	semantics.ResolveTopLevelNodes(cx, pkg, importedSymbols)
-	assertNoDiagnostics(t, cx, "ResolveTopLevelNodes")
-	semantics.ResolveLocalNodes(cx, pkg, importedSymbols)
-	assertNoDiagnostics(t, cx, "ResolveLocalNodes")
-	analyzer := semantics.NewSemanticAnalyzer(cx)
-	analyzer.Analyze(pkg, importedSymbols)
-	assertNoDiagnostics(t, cx, "SemanticAnalyzer")
+	semantics.ResolvePublicNodeTypes(cx, pkg, importedSymbols)
+	assertNoDiagnostics(t, cx, "ResolvePublicNodeTypes")
+	semantics.ResolvePrivateNodesTypes(cx, pkg, importedSymbols)
+	assertNoDiagnostics(t, cx, "ResolvePrivateNodesTypes")
+	semantics.AnalyzeSemantics(cx, pkg, importedSymbols)
+	assertNoDiagnostics(t, cx, "AnalyzeSemantics")
 	cfg := semantics.CreateControlFlowGraph(cx, pkg)
 	assertNoDiagnostics(t, cx, "CreateControlFlowGraph")
 	semantics.AnalyzeCFG(cx, pkg, cfg)
 	assertNoDiagnostics(t, cx, "AnalyzeCFG")
 	pkg = desugar.DesugarPackage(cx, pkg, importedSymbols)
-	return exported, bir.GenBir(cx, pkg)
+	assertNoDiagnostics(t, cx, "DesugarPackage")
+	birPkg := birgen.GenBir(cx, pkg)
+	if birPkg == nil {
+		assertNoDiagnostics(t, cx, "GenBir")
+		t.Fatal("BIR generation failed without a diagnostic")
+	}
+	return exported, birPkg
 }
 
 func assertNoDiagnostics(t *testing.T, cx *context.CompilerContext, stage string) {

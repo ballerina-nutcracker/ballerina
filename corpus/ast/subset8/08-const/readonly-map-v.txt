@@ -1,0 +1,72 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const A (
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (literal 1)))))
+  (const B (
+    (constrained-type
+      (builtin-ref-type map)
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type int)))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal 2)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type any)) (expr
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref a)
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref a)
+            (record-type
+              (field a
+                (value-type int)))))))
+      (var-def
+        (variable r (type
+          (intersection-type
+            (value-type readonly)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref B)
+            (value-type readonly)))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type any))) (expr
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref m)
+              (literal x))
+            (value-type readonly))))))))

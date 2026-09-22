@@ -29,5 +29,5 @@ public function testMain() returns error? {
     http:Client c = check new http:Client("http://localhost:19198", {});
     http:Response r = check c->get("/files/a/b/c");
     io:println(r.statusCode); // @output 200
-    io:println(r.getTextPayload()); // @output rest path matched
+    io:println(check r.getTextPayload()); // @output rest path matched
 }

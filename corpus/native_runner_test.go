@@ -31,6 +31,7 @@ import (
 	goruntime "runtime" // aliased: this file also imports ballerina/runtime as runtime
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"testing/fstest"
 
@@ -43,8 +44,8 @@ import (
 
 	// Blank-import native packages so their init() registers extern
 	// functions before tests run; testdata isn't in ./... builds otherwise.
-	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/acmeorg/calcpkg/1.0.0/go1.26/native"
-	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/mockorg/nativepkg/1.0.0/go1.26/native"
+	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/acmeorg/calcpkg/1.0.0/go1.27/native"
+	_ "github.com/ballerina-nutcracker/ballerina/projects/testdata/repo/bala/mockorg/nativepkg/1.0.0/go1.27/native"
 )
 
 const nativeTestDataDir = "extern/testdata"
@@ -278,6 +279,37 @@ func TestDriverSource(t *testing.T) {
 	assert.Equal(dir1, dir2, "second call must reuse the cached extraction")
 }
 
+// TestDriverSourceConcurrent hammers ExtractDriverSource from many
+// goroutines targeting the same fresh version cache to catch the
+// install-in-place race its content-addressed + atomic-rename design is
+// meant to eliminate: a concurrent reader must never observe a partially
+// written or briefly absent target directory.
+func TestDriverSourceConcurrent(t *testing.T) {
+	t.Parallel()
+	cacheRoot := t.TempDir()
+	const n = 32
+	var wg sync.WaitGroup
+	dirs := make([]string, n)
+	errs := make([]error, n)
+	for i := range n {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			dirs[i], errs[i] = cli.ExtractDriverSource(cacheRoot, "test-race-v0.0.1")
+		}()
+	}
+	wg.Wait()
+
+	for i, err := range errs {
+		if err != nil {
+			t.Fatalf("goroutine %d: ExtractDriverSource: %v", i, err)
+		}
+		if _, err := os.Stat(filepath.Join(dirs[i], "cli", "go.mod")); err != nil {
+			t.Errorf("goroutine %d: cli/go.mod missing from %s: %v", i, dirs[i], err)
+		}
+	}
+}
+
 // TestNativeRunner_EmbeddedOnlyProjectNoRebuild checks a project depending
 // only on embedded ballerina/io never triggers a native interpreter rebuild.
 func TestNativeRunner_EmbeddedOnlyProjectNoRebuild(t *testing.T) {
@@ -397,21 +429,21 @@ func TestNativeGoSourceFS_MissingNativeDirDespiteGoPlatform(t *testing.T) {
 	assert := test_util.New(t)
 
 	balaFS := fstest.MapFS{
-		"mockorg/nonativepkg/1.0.0/go1.26/Bala.toml": &fstest.MapFile{Data: []byte(`[bala]
+		"mockorg/nonativepkg/1.0.0/go1.27/Bala.toml": &fstest.MapFile{Data: []byte(`[bala]
 schema_version = "4"
 
 [build]
 ballerina_version      = ""
 implementation_vendor  = "WSO2"
 language_spec_version  = "2024R1"
-platform               = "go1.26"
+platform               = "go1.27"
 `)},
-		"mockorg/nonativepkg/1.0.0/go1.26/Ballerina.toml": &fstest.MapFile{Data: []byte(`[package]
+		"mockorg/nonativepkg/1.0.0/go1.27/Ballerina.toml": &fstest.MapFile{Data: []byte(`[package]
 org     = "mockorg"
 name    = "nonativepkg"
 version = "1.0.0"
 `)},
-		"mockorg/nonativepkg/1.0.0/go1.26/Dependencies.toml": &fstest.MapFile{Data: []byte(`[ballerina]
+		"mockorg/nonativepkg/1.0.0/go1.27/Dependencies.toml": &fstest.MapFile{Data: []byte(`[ballerina]
 dependencies-toml-version = "2"
 
 [[package]]
@@ -419,7 +451,7 @@ org     = "mockorg"
 name    = "nonativepkg"
 version = "1.0.0"
 `)},
-		"mockorg/nonativepkg/1.0.0/go1.26/nonativepkg.bal": &fstest.MapFile{Data: []byte(
+		"mockorg/nonativepkg/1.0.0/go1.27/nonativepkg.bal": &fstest.MapFile{Data: []byte(
 			"public function hello() returns string = external;\n")},
 	}
 
@@ -669,9 +701,11 @@ func TestBalBuildNativeDependencyGoToolchainUnavailable(t *testing.T) {
 
 // TestNativeRunner_DriverSourceUnresolvable covers a native-dependency
 // project when the embedded driver cache extraction can't succeed. The
-// dev-build extraction path ignores BAL_ENV and uses os.TempDir(), so this
-// redirects TMPDIR/TMP/TEMP (in the child process only) to a path blocked by
-// a regular file, without touching the real shared temp dir.
+// dev-build extraction path caches under BAL_ENV/interpreter-src (a private
+// dir, not the shared os.TempDir() — see driver_source.go), so this blocks
+// that specific subpath with a regular file, leaving the rest of the
+// BAL_ENV fixture (the central bala cache setupNativeTestFixtures also
+// populates there) untouched.
 func TestNativeRunner_DriverSourceUnresolvable(t *testing.T) {
 	t.Parallel()
 	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
@@ -680,16 +714,12 @@ func TestNativeRunner_DriverSourceUnresolvable(t *testing.T) {
 	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 
-	blockingFile := filepath.Join(t.TempDir(), "not-a-directory")
-	if err := os.WriteFile(blockingFile, []byte("not a directory"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(tempHome, "interpreter-src"), []byte("not a directory"), 0o644); err != nil {
 		t.Fatalf("writing blocking file: %v", err)
 	}
 
-	env := append(envWithoutVars(os.Environ(), "BALLERINA_SRC", "TMPDIR", "TMP", "TEMP"),
+	env := append(envWithoutVars(os.Environ(), "BALLERINA_SRC"),
 		"BAL_ENV="+tempHome,
-		"TMPDIR="+blockingFile,
-		"TMP="+blockingFile,
-		"TEMP="+blockingFile,
 	)
 	if coverDir != "" {
 		env = append(env, "GOCOVERDIR="+coverDir)
@@ -764,7 +794,7 @@ func TestNativeRunner_FingerprintInvalidatesOnSourceChange(t *testing.T) {
 
 	// Modify the cached native source — must invalidate the fingerprint.
 	const wantOriginal, wantModified = "hello from native Go", "hello from MODIFIED native Go"
-	nativeGoFile := filepath.Join(centralCache, "mockorg", "nativepkg", "1.0.0", "go1.26", "native", "nativepkg.go")
+	nativeGoFile := filepath.Join(centralCache, "mockorg", "nativepkg", "1.0.0", "go1.27", "native", "nativepkg.go")
 	original := mustReadFileBytes(t, nativeGoFile)
 	modified := bytes.Replace(original, []byte(wantOriginal), []byte(wantModified), 1)
 	if bytes.Equal(original, modified) {

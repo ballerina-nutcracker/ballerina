@@ -1,0 +1,21 @@
+module $anon.. v 0.0.0;
+crash() -> nil{
+  bb0 {
+    %1 = ConstantLoad started
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = start crash() isolated=true -> bb1;
+  }
+  bb1 {
+    f = %1;
+    %3 = wait f -> bb2;
+  }
+  bb2 {
+    %0 = %3;
+    return;
+  }
+}

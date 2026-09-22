@@ -14,18 +14,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package executable packs/detects embedded BIR in bal build output: an
-// unmodified bal binary with a payload and 16-byte trailer appended:
-//
-//	[bal binary bytes] [BIR payload] [8-byte payload offset] [8-byte magic]
-//
-// Finding the magic at startup means: deserialize and run instead of the CLI.
+// Package executable packs/detects embedded BIR in bal build output.
+// Each target platform's payload is embedded as a genuinely declared
+// section in that platform's own binary format — see
+// cli/internal/splice (the packer, called from bal build) and
+// embed_darwin.go/embed_linux.go/embed_windows.go (the readers, one per
+// platform, build-tag-gated so each balrt binary only links the parser
+// its own target format needs).
 package executable
 
 import (
 	"encoding/binary"
 	"fmt"
-	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -38,11 +38,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
-)
-
-const (
-	magic       = "BALEXE\x00\x01"
-	trailerSize = 16 // 8-byte payload offset + 8-byte magic
 )
 
 // runtimeStubDirName and balrtStubName locate the runner stub at
@@ -80,16 +75,14 @@ var supportedPlatforms = []Platform{
 	{OS: "linux", Arch: "amd64"},
 	{OS: "linux", Arch: "arm64"},
 	{OS: "windows", Arch: "amd64"},
+	{OS: "windows", Arch: "arm64"},
 	{OS: "darwin", Arch: "amd64"},
 	{OS: "darwin", Arch: "arm64"},
 }
 
 // ValidatePlatform returns an error unless platform is in supportedPlatforms.
-// Shared by ResolveStub and bal build's native-dependency path
-// (buildNativeStub), so a target unsupported for the pre-built stub is
-// rejected the same way regardless of which path a package's dependencies
-// route it through — native builds don't get to target anything extra just
-// because they compile from source instead of looking up a prebuilt binary.
+// Shared by ResolveStub and buildNativeStub, so a target unsupported for
+// the pre-built stub is rejected the same way regardless of path.
 func ValidatePlatform(platform Platform) error {
 	for _, sp := range supportedPlatforms {
 		if sp == platform {
@@ -118,11 +111,10 @@ func DistributionDir() (string, error) {
 	return filepath.Dir(real), nil
 }
 
-// ResolveStub locates the runner stub for packages with no native Go deps
-// (bal build uses buildNativeStub for those). overridePath
-// (cli/cmd.RuntimeStubPath), if set, must exist and is used as-is.
-// Otherwise: flat <distDir>/balrt (local dev builds) for the host
-// platform, else <distDir>/rt/<GOOS>-<GOARCH>/balrt[.exe].
+// ResolveStub locates the runner stub for packages with no native Go
+// deps. overridePath, if set, must exist and is used as-is. Otherwise:
+// flat <distDir>/balrt for the host platform, else
+// <distDir>/rt/<GOOS>-<GOARCH>/balrt[.exe].
 func ResolveStub(platform Platform, distDir, overridePath string) (string, error) {
 	if overridePath != "" {
 		if info, err := os.Stat(overridePath); err == nil && !info.IsDir() {
@@ -158,125 +150,15 @@ func ResolveStub(platform Platform, distDir, overridePath string) (string, error
 		platform.OS, platform.Arch, stubPath)
 }
 
-// Pack writes [stub bytes][BIR payload][16-byte trailer] to outPath,
-// creating parent dirs and making it executable. Writes to a sibling temp
-// file and renames on success, so a partial failure can't corrupt outPath.
-func Pack(stubPath string, birPkgs []*bir.BIRPackage, tyEnv semtypes.Env, outPath string) error {
-	stub, err := os.Open(stubPath)
-	if err != nil {
-		return fmt.Errorf("opening runner stub: %w", err)
-	}
-	defer func() { _ = stub.Close() }()
-
-	stubInfo, err := stub.Stat()
-	if err != nil {
-		return fmt.Errorf("stat runner stub: %w", err)
-	}
-
-	payload, err := marshalPayload(birPkgs, tyEnv)
-	if err != nil {
-		return err
-	}
-
-	outDir := filepath.Dir(outPath)
-	if err := os.MkdirAll(outDir, 0o755); err != nil {
-		return fmt.Errorf("creating output directory: %w", err)
-	}
-
-	tmp, err := os.CreateTemp(outDir, ".bal-pack-*")
-	if err != nil {
-		return fmt.Errorf("creating temp output file: %w", err)
-	}
-	tmpPath := tmp.Name()
-	defer func() { _ = os.Remove(tmpPath) }() // no-op once renamed over outPath
-
-	if err := writePackedFile(tmp, stub, stubInfo.Size(), payload); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return fmt.Errorf("closing temp output file: %w", err)
-	}
-	if err := os.Chmod(tmpPath, 0o755); err != nil {
-		return fmt.Errorf("setting output file permissions: %w", err)
-	}
-	if err := os.Rename(tmpPath, outPath); err != nil {
-		return fmt.Errorf("renaming output file into place: %w", err)
-	}
-	return nil
-}
-
-// writePackedFile writes stub bytes, then payload, then the trailer to out.
-func writePackedFile(out io.Writer, stub io.Reader, stubSize int64, payload []byte) error {
-	if _, err := io.Copy(out, stub); err != nil {
-		return fmt.Errorf("copying stub: %w", err)
-	}
-	if _, err := out.Write(payload); err != nil {
-		return fmt.Errorf("writing BIR payload: %w", err)
-	}
-
-	trailer := make([]byte, trailerSize)
-	binary.LittleEndian.PutUint64(trailer[:8], uint64(stubSize))
-	copy(trailer[8:], magic)
-	if _, err := out.Write(trailer); err != nil {
-		return fmt.Errorf("writing trailer: %w", err)
-	}
-	return nil
-}
-
-// TryLoad checks whether the running binary has embedded BIR: (pkgs, tyEnv,
-// nil) if found, (nil, nil, nil) if plain, (nil, nil, err) if corrupt.
+// TryLoad checks whether the running binary has embedded BIR: (pkgs,
+// tyEnv, nil) if found, (nil, nil, nil) if plain, (nil, nil, err) if
+// corrupt. tryLoadFrom is platform-specific — see embed_{darwin,linux,windows}.go.
 func TryLoad() ([]*bir.BIRPackage, semtypes.Env, error) {
 	exe, err := os.Executable()
 	if err != nil {
 		return nil, nil, nil
 	}
 	return tryLoadFrom(exe)
-}
-
-// tryLoadFrom implements TryLoad against an explicit path, so tests can
-// use a constructed file instead of the test binary itself.
-func tryLoadFrom(exe string) ([]*bir.BIRPackage, semtypes.Env, error) {
-	f, err := os.Open(exe)
-	if err != nil {
-		return nil, nil, nil
-	}
-	defer func() { _ = f.Close() }()
-
-	info, err := f.Stat()
-	if err != nil || info.Size() < int64(trailerSize) {
-		return nil, nil, nil
-	}
-
-	trailer := make([]byte, trailerSize)
-	if _, err := f.ReadAt(trailer, info.Size()-int64(trailerSize)); err != nil {
-		return nil, nil, nil
-	}
-	if string(trailer[8:]) != magic {
-		return nil, nil, nil
-	}
-
-	rawOffset := binary.LittleEndian.Uint64(trailer[:8])
-	// Rejects an offset that would wrap negative as int64 and blow up payloadSize.
-	if rawOffset > uint64(info.Size()-int64(trailerSize)) {
-		return nil, nil, fmt.Errorf("invalid embedded payload offset %d", rawOffset)
-	}
-	payloadOffset := int64(rawOffset)
-	payloadSize := info.Size() - payloadOffset - int64(trailerSize)
-	if payloadSize <= 0 {
-		return nil, nil, fmt.Errorf("invalid embedded payload size %d", payloadSize)
-	}
-
-	payload := make([]byte, payloadSize)
-	if _, err := f.ReadAt(payload, payloadOffset); err != nil {
-		return nil, nil, fmt.Errorf("reading embedded payload: %w", err)
-	}
-
-	pkgs, tyEnv, err := unmarshalPayload(payload)
-	if err != nil {
-		return nil, nil, fmt.Errorf("corrupt embedded program: %w", err)
-	}
-	return pkgs, tyEnv, nil
 }
 
 // Run initializes and executes birPkgs, blocking until listening ends, and
@@ -301,7 +183,10 @@ func Run(birPkgs []*bir.BIRPackage, tyEnv semtypes.Env) int {
 	return int(<-rt.ExitStatus)
 }
 
-func marshalPayload(birPkgs []*bir.BIRPackage, tyEnv semtypes.Env) ([]byte, error) {
+// MarshalPayload serializes birPkgs into the payload format
+// cli/internal/splice's EmbedELF/EmbedPE/EmbedMachO all embed as-is:
+// [uint32 BE count]([uint32 BE len][BIR bytes])*.
+func MarshalPayload(birPkgs []*bir.BIRPackage, tyEnv semtypes.Env) ([]byte, error) {
 	if len(birPkgs) == 0 {
 		return nil, fmt.Errorf("no BIR packages to embed")
 	}

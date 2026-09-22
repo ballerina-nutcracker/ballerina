@@ -11,27 +11,24 @@
           (value-type string)) (expr
           (literal /tmp/bal_io_byte_channel_write.bin))))
       (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$11 (
-            (simple-var-ref $desugar$0))))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation io openWritableFile (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$2))) ())
-      (var-def
         (variable writer (type
           (user-defined-type io WritableByteChannel)) (expr
-          (simple-var-ref $desugar$2))))
+          (checked-expr
+            (expression-thunk
+            (lambda
+              (function main$502$0$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (simple-var-ref path))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$11 (
+                        (simple-var-ref $desugar$0))))))
+                  (return
+                    (invocation io openWritableFile (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))))))))
       (var-def
         (variable n1 (type
           (union-type
@@ -55,33 +52,17 @@
             (invocation io println (
               (simple-var-ref n1))))) ())
       (block-stmt
-        (var-def
-          (variable $desugar$3 (expr
-            (invocation close expr:
-              (simple-var-ref writer) ()))))
-        (if
-          (type-test-expr is
-            (simple-var-ref $desugar$3))
-          (block-stmt
-            (return
-              (simple-var-ref $desugar$3))) ())
         (expression-stmt
-          (simple-var-ref $desugar$3))
-        (var-def
-          (variable $desugar$4 (expr
-            (invocation io fileReadBytes (
-              (simple-var-ref path))))))
-        (if
-          (type-test-expr is
-            (simple-var-ref $desugar$4))
-          (block-stmt
-            (return
-              (simple-var-ref $desugar$4))) ())
+          (checked-expr
+            (invocation close expr:
+              (simple-var-ref writer) ())))
         (var-def
           (variable written (type
             (array-type
               (value-type byte) dimensions: 1 ([]))) (expr
-            (simple-var-ref $desugar$4))))
+            (checked-expr
+              (invocation io fileReadBytes (
+                (simple-var-ref path)))))))
         (expression-stmt
           (invocation io println (
             (invocation lang.array length (
@@ -97,64 +78,32 @@
               (simple-var-ref written)
               (literal 2)))))
         (var-def
-          (variable $desugar$5 (expr
-            (invocation io openWritableFile (
-              (simple-var-ref path)
-              (literal APPEND))))))
-        (if
-          (type-test-expr is
-            (simple-var-ref $desugar$5))
-          (block-stmt
-            (return
-              (simple-var-ref $desugar$5))) ())
-        (var-def
           (variable appender (type
             (user-defined-type io WritableByteChannel)) (expr
-            (simple-var-ref $desugar$5))))
-        (var-def
-          (variable $desugar$6 (expr
+            (checked-expr
+              (invocation io openWritableFile (
+                (simple-var-ref path)
+                (literal APPEND)))))))
+        (assignment
+          (wildcard-binding-pattern)
+          (checked-expr
             (invocation write expr:
               (simple-var-ref appender) (
               (list-constructor-expr
                 (literal 9)
                 (literal 8))
-              (literal 0))))))
-        (if
-          (type-test-expr is
-            (simple-var-ref $desugar$6))
-          (block-stmt
-            (return
-              (simple-var-ref $desugar$6))) ())
-        (assignment
-          (wildcard-binding-pattern)
-          (simple-var-ref $desugar$6))
-        (var-def
-          (variable $desugar$7 (expr
-            (invocation close expr:
-              (simple-var-ref appender) ()))))
-        (if
-          (type-test-expr is
-            (simple-var-ref $desugar$7))
-          (block-stmt
-            (return
-              (simple-var-ref $desugar$7))) ())
+              (literal 0)))))
         (expression-stmt
-          (simple-var-ref $desugar$7))
-        (var-def
-          (variable $desugar$8 (expr
-            (invocation io fileReadBytes (
-              (simple-var-ref path))))))
-        (if
-          (type-test-expr is
-            (simple-var-ref $desugar$8))
-          (block-stmt
-            (return
-              (simple-var-ref $desugar$8))) ())
+          (checked-expr
+            (invocation close expr:
+              (simple-var-ref appender) ())))
         (var-def
           (variable appended (type
             (array-type
               (value-type byte) dimensions: 1 ([]))) (expr
-            (simple-var-ref $desugar$8))))
+            (checked-expr
+              (invocation io fileReadBytes (
+                (simple-var-ref path)))))))
         (expression-stmt
           (invocation io println (
             (invocation lang.array length (

@@ -1,0 +1,72 @@
+(incrementA
+  (bb0 () (bb1))
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr <
+      (simple-var-ref counterA)
+      (literal 10000))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref counterA)
+      (literal 1))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref counterA))
+  )
+)
+(incrementB
+  (bb0 () (bb1))
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr <
+      (simple-var-ref counterB)
+      (literal 10000))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref counterB)
+      (literal 1))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref counterB))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action isolated
+          (invocation incrementA ())))))
+    (var-def
+      (variable b (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action isolated
+          (invocation incrementB ())))))
+    (var-def
+      (variable aResult (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (var-def
+      (variable bResult (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref aResult))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref bResult))))
+  )
+)

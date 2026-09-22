@@ -1,0 +1,11 @@
+-- stdout --
+42
+done
+failed
+42
+error("multiple waits on the same future is not allowed")
+42
+done
+2
+3
+-- stderr --

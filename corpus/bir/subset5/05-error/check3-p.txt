@@ -17,24 +17,25 @@ main() -> nil{
 }
 div(int,int) -> int{
   bb0 {
-    %3 = y;
-    %4 = nonZero(%3) -> bb1;
+    %4 = x;
+    %6 = y;
+    %7 = nonZero(%6) -> bb1;
   }
   bb1 {
-    $desugar$0 = %4;
-    %6 = $desugar$0 is error
-    %6 ? bb2 : bb3;
+    %8 = %7 is error
+    %8 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 0
-    (1, %7) = (1, $desugar$0);
-    PopScopeFrame
     panic %7;
   }
   bb3 {
-    %9 = x;
-    %8 = / %9 $desugar$0;
-    %0 = %8;
+    %5 = %7;
+    GOTO bb4;
+  }
+  bb4 {
+    %9 = %5;
+    %3 = / %4 %9;
+    %0 = %3;
     return;
   }
 }

@@ -1,0 +1,53 @@
+module $anon.. v 0.0.0;
+base  int;
+twice(int) -> int{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+viaCall(int) -> int{
+  bb0 {
+    %0 = n;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = $desugar$0;
+    %4 = viaCall(%3) -> bb2;
+  }
+  bb2 {
+    %5 = %4;
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad 3
+    %8 = %7;
+    %9 = viaCall(%8) -> bb4;
+  }
+  bb4 {
+    %10 = %9;
+    %11 = println(%10) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = twice(base) -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}

@@ -1,9 +1,54 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with stream-based file
-read/write additions and byte channels in the `io` module, building on the
-language's new `stream` type.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module —
+Avro binary serialization and deserialization driven by an Avro schema string —
+plus stream-based file read/write additions and byte channels in the `io`
+module, building on the language's new `stream` type, with client-side
+response data binding, XML payloads, and `anydata` resource returns for the
+`http` module, and the new `ballerina/protobuf` package, providing the protobuf
+well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the
+scalar wrapper types) used by generated gRPC client/service code.
 
+## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
+
+Types: `avro:Schema` (class), `avro:Error`.
+
+| Method | Notes |
+|---|---|
+| `new avro:Schema(schema)` | Parse an Avro schema definition string; returns `avro:Error?`. Named types, namespaces, name references and recursive schemas are supported. An unparseable schema returns an error rather than panicking |
+| `Schema.toAvro(data)` | Serialize `anydata` into the Avro binary encoding; returns `byte[]\|avro:Error` |
+| `Schema.fromAvro(data, targetType?)` | Deserialize `byte[]` into the type inferred from the call site, or the explicitly named `targetType`; returns `targetType\|avro:Error` |
+
+### Avro-to-Ballerina type mapping
+
+Every mapping the module specification defines is supported in both directions.
+
+| Avro type | Ballerina type | Notes |
+|---|---|---|
+| `null` | `()` | Encodes to zero bytes |
+| `boolean` | `boolean` | |
+| `int`, `long` | `int` | Writing to an `int` schema narrows the Ballerina `int` value to 32 bits with wrapping, matching jBallerina; a `float` is rejected rather than truncated |
+| `float`, `double` | `float` | Both also accept an `int`; `double` also accepts a `decimal` |
+| `bytes`, `fixed` | `byte[]` | A `fixed` value must carry exactly the declared size |
+| `string` | `string` | A value of any other type is stringified, matching jBallerina |
+| `record` | `record` | Field order follows the schema; fields the schema does not declare are ignored |
+| `enum` | `enum` | Also decodes to a plain `string` |
+| `array` | array | Including arrays of records and nested arrays |
+| `map` | `map` | Including maps of records, arrays, and nested maps |
+| `union` | the corresponding union | The first branch matching the value's natural Avro type wins; a widening pass follows if none does |
+
+### Target-type binding
+
+`fromAvro` infers `targetType` from the contextually expected type, so
+`Person p = check schema.fromAvro(data);` binds the decoded payload to `Person`.
+Without a contextually expected type the compiler reports `cannot infer typedesc
+argument for parameter 'targetType'` — pass `targetType = Person` explicitly in
+that case.
+
+Records, enums, tuples, singletons, `map<T>`, `T[]`, `json`, `map<json>`,
+`anydata` and nilable forms of all of these are accepted as targets, along with
+numeric widening from `int` to `float` and `decimal`. A `readonly &`
+intersection of any of these is accepted too and binds to a frozen value.
 ## [io](https://github.com/ballerina-platform/module-ballerina-io/blob/master/docs/spec/spec.md)
 
 Subset 2 covered console printing and whole-file I/O (string, lines, bytes,
@@ -74,3 +119,105 @@ CSV/record channels are out of scope for this subset and remain
 
 The `LineStream` and `BlockStream` public helper classes are not declared;
 `lineStream()` and `blockStream()` return plain stream values instead.
+
+## [http](https://github.com/ballerina-platform/module-ballerina-http/blob/master/docs/spec/spec.md)
+
+The client remote methods now bind the response payload directly to the contextually expected type instead of only returning an `http:Response`.
+
+### Client — response data binding
+
+Every remote method except `head` takes a trailing `targetType` parameter with an inferred typedesc default:
+
+```ballerina
+remote isolated function get(string path, map<string|string[]>? headers = (),
+        TargetType targetType = <>) returns targetType|error;
+```
+
+`TargetType` is `typedesc<http:Response|anydata>`. The target is normally inferred from the contextually expected type, so a plain assignment is enough:
+
+```ballerina
+http:Client c = check new ("https://example.com");
+
+Person p = check c->get("/person");        // binds the JSON body to a record
+string text = check c->get("/greeting");   // binds a text/plain body
+http:Response r = check c->get("/raw");    // no binding — the raw response
+```
+
+`var` provides no contextually expected type, so the target must be passed explicitly in that position:
+
+```ballerina
+var p = check c->get("/person", targetType = Person);
+```
+
+| Feature | Notes |
+|---|---|
+| `http:Response` target | Returned untouched, including for 4xx and 5xx responses. Any union containing `http:Response` behaves the same way |
+| Status code mapping | With any other target, a 4xx or 5xx response returns an `error` whose message is the status code's reason phrase, or `status code <code>` when the code has no registered phrase; 1xx, 2xx, and 3xx responses are bound normally |
+| `()` target | The payload is read and discarded |
+| Nilable targets | An absent (empty) payload binds to `()` |
+
+The builder is selected from the response `Content-Type`, matching jBallerina's media-type patterns. When the header is absent or unrecognised, the target type alone selects the builder.
+
+| Content-Type | Supported target types |
+|---|---|
+| `application/json`, `text/json`, and `+json` / `.json` / `-json` suffixes | `json`, `map<json>`, records, record arrays, arrays, maps, and scalars (`int`, `float`, `decimal`, `boolean`, `string`), plus their nilable forms |
+| `text/plain` | `string`, `byte[]`, and their nilable forms |
+| `application/octet-stream` | `byte[]` and `byte[]?` |
+| `application/x-www-form-urlencoded` | `map<string>`, `string`, and their nilable forms; repeated keys keep the last value |
+| `application/xml`, `text/xml`, and `+xml` / `.xml` / `-xml` suffixes | `xml` and `xml?`, any union admitting `xml`, and narrower subtypes such as `xml:Element` when the parsed value inhabits them |
+| absent or unrecognised | `string`, `xml`, `byte[]`, and their nilable forms are read directly (in that order); every other target is parsed as JSON |
+
+A target that does not fit the response media type returns an `error` — for example a record target for a `text/plain` response. JSON conversion uses the same routine as `lang.value:fromJsonWithType`.
+
+A target may also be strictly narrower than the type its builder produces — an enum or a singleton where the builder yields `string`, a closed all-string record where it yields `map<string>`, a tuple or a fixed-length array where it yields `byte[]`. The built payload is converted to that target with the same routine, so a body outside the narrower type returns an `error` rather than a value outside its declared type:
+
+```ballerina
+enum Colour { RED = "red", GREEN = "green" }
+
+Colour c1 = check c->get("/colour");   // text/plain "red" — binds
+Colour|error c2 = c->get("/text");     // text/plain "hello" — error
+Colour? c3 = check c->get("/empty");   // text/plain "" — ()
+```
+
+The nilable form of such a target binds the same way: an absent body gives `()`, and a body that is present but does not fit the target is an `error`. Only the nilable form turns an absent body into `()` — a narrow target that is not nilable is handed the builder's empty value (`""`, `[]`, or `{}`), and rejects it unless the narrow type happens to admit it.
+
+An `xml` target is the one builder that rejects an empty body outright: there is no empty `xml` value to bind, so a non-nilable `xml` target returns an error named `NoContentError` with the message `No content`. The nilable form `xml?` still gives `()`.
+
+Not covered in this subset: `stream<http:SseEvent, error?>` targets, status code response records (`http:StatusCodeClient`, `getStatusCodeRecord()`), and the `validation` / `laxDataBinding` client configuration flags.
+
+### Response
+
+| Feature | Notes |
+|---|---|
+| `getTextPayload` | Now returns `string\|error`, matching jBallerina's signature; extraction failures (for example exceeding `responseLimits.maxEntityBodySize`) surface as an `error` instead of being returned through a `string` signature |
+| `setXmlPayload` / `getXmlPayload` | Available on both `http:Request` and `http:Response`. `setXmlPayload` defaults the Content-Type to `application/xml`, keeping an already-set Content-Type when no override is passed |
+
+### Outbound XML
+
+`RequestMessage` is now `anydata|http:Request`, so an `xml` value can be sent directly and is inferred as `application/xml`:
+
+```ballerina
+xml echoed = check c->post("/echo", xml `<p>hi</p>`);
+```
+
+Resource functions may now return any `anydata` value in addition to `http:Response`, `error`, and `()`. The Content-Type is inferred from the returned value's type — `xml` gives `application/xml`, `string` gives `text/plain`, `byte[]` gives `application/octet-stream`, and everything else is serialised as `application/json`. A non-nil return is answered with 201 for a `post` accessor and 200 otherwise; `()` stays 202 and an `error` stays a 500 envelope.
+
+```ballerina
+resource function get album() returns xml {
+    return xml `<album><title>Kind of Blue</title></album>`;
+}
+```
+
+## [protobuf](https://github.com/ballerina-platform/module-ballerina-protobuf/blob/master/docs/spec/spec.md)
+
+`ballerina/protobuf` provides the type declarations for the protobuf well-known types used by generated gRPC client/service code, plus packing and unpacking values into `protobuf.types.any:Any` for the well-known types. The separate `.proto`-to-Ballerina code generator that produces gRPC client/service stubs and `@protobuf:Descriptor`-annotated message records is not part of this package and is out of scope.
+
+| Feature | Notes |
+|---|---|
+| `protobuf:Error`, `protobuf:MessageDescriptor`, `protobuf:Descriptor` annotation | Declared and attachable, but not yet used to resolve a message record. `pack` cannot reach the annotation — it receives only the value, and `typeof` is not implemented yet; `unpack` does receive the annotated typedesc and is not blocked by that. An arbitrary `record {}` value passed to `pack`/`unpack` is still handled, via the `google.protobuf.Struct` fallback described below, rather than resolved through its own descriptor |
+| `protobuf.types.any:pack(message)` | Supported for `int`, `float`, `string`, `boolean`, `byte[]`, `()`, `time:Utc`, `time:Seconds`, and `map<anydata>`. The closed empty record `record {\|\|}` packs as `google.protobuf.Empty`; any other `record {}` value is packed as `google.protobuf.Struct` rather than resolved via its own descriptor — see the package README |
+| `protobuf.types.any:unpack(anyValue, targetTypeOfAny = <>)` | Supported for the same well-known types, using the interpreter's inferred-typedesc-parameter support; a mismatched target raises `protobuf.types.any:TypeMismatchError` |
+| `protobuf.types.any:Any`, `ContextAny`, `ContextAnyStream` | Supported |
+| `protobuf.types.duration`, `protobuf.types.empty`, `protobuf.types.struct`, `protobuf.types.timestamp`, `protobuf.types.wrappers` context record types | Supported |
+
+Not covered in this subset: arbitrary user-defined message record (de)serialization via the `@protobuf:Descriptor` annotation — blocked on `typeof` support rather than on the library — and the `.proto`-to-Ballerina code generator (`ballerina/grpc` and its tooling are not ported).

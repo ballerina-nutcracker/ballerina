@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid expression in start action
+  --> start10-e.bal:17:9
+   |
+17 |     _ = start 1; // @error invalid start operand
+   |         ^^^^^

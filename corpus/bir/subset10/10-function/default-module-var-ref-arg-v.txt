@@ -1,0 +1,110 @@
+module $anon.. v 0.0.0;
+offset  int;
+prefix  string;
+tag(string,string) -> string{
+  bb0 {
+    %3 = + p s;
+    %0 = %3;
+    return;
+  }
+}
+shift(int,int) -> int{
+  bb0 {
+    %4 = n;
+    %5 = amount;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+bare(int) -> int{
+  bb0 {
+    %0 = n;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    $desugar$0 = %1;
+    %3 = $default$0($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %3;
+    %5 = tag($desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad a
+    %8 = ConstantLoad x-
+    %9 = tag(%7,%8) -> bb4;
+  }
+  bb4 {
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
+    %11 = ConstantLoad 1
+    $desugar$2 = %11;
+    %13 = $desugar$2;
+    %14 = $default$1(%13) -> bb6;
+  }
+  bb6 {
+    $desugar$3 = %14;
+    %16 = $desugar$2;
+    %17 = $desugar$3;
+    %18 = shift(%16,%17) -> bb7;
+  }
+  bb7 {
+    %19 = %18;
+    %20 = println(%19) -> bb8;
+  }
+  bb8 {
+    %21 = ConstantLoad 1
+    %22 = %21;
+    %23 = ConstantLoad 0
+    %24 = %23;
+    %25 = shift(%22,%24) -> bb9;
+  }
+  bb9 {
+    %26 = %25;
+    %27 = println(%26) -> bb10;
+  }
+  bb10 {
+    %28 = $default$2() -> bb11;
+  }
+  bb11 {
+    $desugar$4 = %28;
+    %30 = $desugar$4;
+    %31 = bare(%30) -> bb12;
+  }
+  bb12 {
+    %32 = %31;
+    %33 = println(%32) -> bb13;
+  }
+  bb13 {
+    return;
+  }
+}
+$default$0(string) -> string{
+  bb0 {
+    %0 = prefix;
+    return;
+  }
+}
+$default$1(int) -> int{
+  bb0 {
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %2 = + offset %4;
+    %0 = %2;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %0 = offset;
+    return;
+  }
+}

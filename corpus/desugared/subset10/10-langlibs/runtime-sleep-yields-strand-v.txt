@@ -1,0 +1,59 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang runtime (as runtime))
+  (function helper () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal helper-done))))))
+  (function sleeper () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation runtime sleep (
+          (literal 0.05))))
+      (expression-stmt
+        (invocation io println (
+          (literal sleeper-done))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f1 (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type null))) (expr
+          (start-action
+            (invocation sleeper ())))))
+      (var-def
+        (variable f2 (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type null))) (expr
+          (start-action
+            (invocation helper ())))))
+      (var-def
+        (variable r1 (type
+          (union-type
+            (value-type null)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref f1)))))
+      (var-def
+        (variable r2 (type
+          (union-type
+            (value-type null)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref f2)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r1)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r2)
+            (error-type))))))))

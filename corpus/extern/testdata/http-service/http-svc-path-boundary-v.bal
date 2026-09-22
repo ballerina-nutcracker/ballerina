@@ -30,7 +30,7 @@ public function testMain() returns error? {
 
     http:Response ok = check c->get("/foo/bar");
     io:println(ok.statusCode); // @output 200
-    io:println(ok.getTextPayload()); // @output matched foo/bar
+    io:println(check ok.getTextPayload()); // @output matched foo/bar
 
     // These are not under the /foo attach point; matching must stop at a
     // path boundary rather than matching on a plain string prefix.

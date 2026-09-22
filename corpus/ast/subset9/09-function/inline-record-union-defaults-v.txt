@@ -1,0 +1,72 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable first (type
+          (union-type
+            (record-type
+              (field kind
+                (value-type string))
+              (field first
+                (value-type int)
+                (literal 11)))
+            (record-type
+              (field code
+                (value-type int))
+              (field second
+                (value-type int)
+                (literal 12))))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal kind)
+              (literal one))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref first)
+          (record-type
+            (field kind
+              (value-type string))
+            (field first
+              (value-type int))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access first
+                (simple-var-ref first)))))) ())
+      (block-stmt
+        (var-def
+          (variable second (type
+            (union-type
+              (record-type
+                (field kind
+                  (value-type string))
+                (field first
+                  (value-type int)
+                  (literal 11)))
+              (record-type
+                (field code
+                  (value-type int))
+                (field second
+                  (value-type int)
+                  (literal 12))))) (expr
+            (mapping-constructor-expr
+              (key-value
+                (literal code)
+                (literal 2))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref second)
+            (record-type
+              (field code
+                (value-type int))
+              (field second
+                (value-type int))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (field-based-access second
+                  (simple-var-ref second)))))) ())
+        (block-stmt)))))

@@ -58,4 +58,13 @@ public function main() {
         return f2();
     };
     _ = f1;
+
+    int[] nestedXs = [1];
+    isolated function () returns int nested1 = isolated function () returns int {
+        isolated function () returns int nested2 = isolated function () returns int {
+            return nestedXs.length(); // @error
+        };
+        return nested2();
+    };
+    _ = nested1;
 }

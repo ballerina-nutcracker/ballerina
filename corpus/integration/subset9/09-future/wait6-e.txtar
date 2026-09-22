@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate field name 'value'
+  --> wait6-e.bal:23:36
+   |
+23 |     _ = wait {value: first, value: second}; // @error
+   |                                    ^^^^^^
+
+error[SEMANTIC_ERROR]: wait action requires a future expression
+  --> wait6-e.bal:28:29
+   |
+28 |     _ = wait {first, value: 2}; // @error
+   |                             ^

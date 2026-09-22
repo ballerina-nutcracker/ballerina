@@ -2,17 +2,9 @@
   (function main () (
     (value-type null))
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation newError ()))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$0))) ())
       (expression-stmt
-        (simple-var-ref $desugar$0))))
+        (check-panicked-expr
+          (invocation newError ())))))
   (function newError () (
     (error-type))
     (block-function-body

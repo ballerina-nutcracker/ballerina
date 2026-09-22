@@ -18,9 +18,9 @@ package semtypes
 
 type booleanOps struct{}
 
-var _ BasicTypeOps = &booleanOps{}
+var _ basicTypeOps = &booleanOps{}
 
-func (b *booleanOps) Union(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (b *booleanOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
 	v1 := d1.(booleanSubtype)
 	v2 := d2.(booleanSubtype)
 	if v1.Value == v2.Value {
@@ -30,7 +30,7 @@ func (b *booleanOps) Union(d1 SubtypeData, d2 SubtypeData) SubtypeData {
 	}
 }
 
-func (b *booleanOps) Intersect(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (b *booleanOps) Intersect(d1 subtypeData, d2 subtypeData) subtypeData {
 	v1 := d1.(booleanSubtype)
 	v2 := d2.(booleanSubtype)
 	if v1.Value == v2.Value {
@@ -40,7 +40,7 @@ func (b *booleanOps) Intersect(d1 SubtypeData, d2 SubtypeData) SubtypeData {
 	}
 }
 
-func (b *booleanOps) Diff(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (b *booleanOps) Diff(d1 subtypeData, d2 subtypeData) subtypeData {
 	v1 := d1.(booleanSubtype)
 	v2 := d2.(booleanSubtype)
 	if v1.Value == v2.Value {
@@ -50,12 +50,12 @@ func (b *booleanOps) Diff(d1 SubtypeData, d2 SubtypeData) SubtypeData {
 	}
 }
 
-func (b *booleanOps) complement(d SubtypeData) SubtypeData {
+func (b *booleanOps) complement(d subtypeData) subtypeData {
 	v := d.(booleanSubtype)
 	t := booleanSubtypeFrom(!v.Value)
 	return t
 }
 
-func (b *booleanOps) IsEmpty(cx Context, t SubtypeData) bool {
+func (b *booleanOps) IsEmpty(cx Context, t subtypeData) bool {
 	return notIsEmpty(cx, t)
 }

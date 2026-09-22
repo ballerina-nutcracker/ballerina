@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot infer typedesc argument for parameter 'targetType': no contextually expected type
+  --> avro-infer-e.bal:22:19
+   |
+22 |     var decoded = schema.fromAvro(encoded); // @error cannot infer typedesc argument
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^

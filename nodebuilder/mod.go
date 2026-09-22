@@ -1,0 +1,96 @@
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+package nodebuilder
+
+import (
+	"fmt"
+
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/st"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+)
+
+func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
+	builder := newNodeBuilder(cx)
+	compilationUnit := builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
+	return compilationUnit.(*ast.BLangCompilationUnit)
+}
+
+// GetRecoveredCompilationUnit builds an AST while preserving malformed syntax as bad nodes.
+func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
+	builder := newRecoveringNodeBuilder(cx)
+	compilationUnit := builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
+	return compilationUnit.(*ast.BLangCompilationUnit)
+}
+
+func ToPackageFromCompilationUnits(cx *context.CompilerContext, compilationUnits []*ast.BLangCompilationUnit) *ast.BLangPackage {
+	pkg := ast.NewBLangPackage()
+	for _, compilationUnit := range compilationUnits {
+		packageID := compilationUnit.GetPackageID()
+		if pkg.PackageID == nil {
+			pkg.PackageID = packageID
+		} else if packageID != nil && pkg.PackageID != packageID {
+			reportPackageAssemblyError(cx, "compilation units have different package IDs", compilationUnit.GetPosition())
+			return pkg
+		}
+		addCompilationUnitNodesToPackage(cx, pkg, compilationUnit)
+	}
+	return pkg
+}
+
+func addCompilationUnitNodesToPackage(cx *context.CompilerContext, pkg *ast.BLangPackage, compilationUnit *ast.BLangCompilationUnit) {
+	for _, node := range compilationUnit.GetTopLevelNodes() {
+		switch node := node.(type) {
+		case *ast.BLangImportPackage:
+			pkg.Imports = append(pkg.Imports, node)
+		case *ast.BLangVariable:
+			if node.IsConstant() {
+				pkg.Constants = append(pkg.Constants, node)
+			} else {
+				pkg.GlobalVars = append(pkg.GlobalVars, node)
+			}
+		case *ast.BLangService:
+			pkg.Services = append(pkg.Services, node)
+		case *ast.BLangFunction:
+			if node.Name.GetValue() == "init" {
+				pkg.InitFunction = node
+			} else {
+				pkg.Functions = append(pkg.Functions, node)
+			}
+		case *ast.BLangTypeDefinition:
+			pkg.TypeDefinitions = append(pkg.TypeDefinitions, node)
+		case *ast.BLangAnnotation:
+			pkg.Annotations = append(pkg.Annotations, node)
+		case *ast.BLangXMLNS:
+			pkg.XmlnsList = append(pkg.XmlnsList, node)
+		case *ast.BLangClassDefinition:
+			pkg.ClassDefinitions = append(pkg.ClassDefinitions, node)
+		default:
+			pos := compilationUnit.GetPosition()
+			if node != nil {
+				pos = node.GetPosition()
+			}
+			reportPackageAssemblyError(cx, fmt.Sprintf("unexpected top-level node type: %T", node), pos)
+			return
+		}
+	}
+}
+
+func reportPackageAssemblyError(cx *context.CompilerContext, message string, pos diagnostics.Location) {
+	cx.InternalError(message, pos)
+}

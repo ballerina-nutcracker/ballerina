@@ -1,0 +1,59 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable t (type
+        (tuple-type
+          (value-type int)
+          (value-type string) (rest
+            (value-type int)))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal a)
+          (literal 2)
+          (literal 3)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array remove (
+          (simple-var-ref t)
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref t))))
+    (var-def
+      (variable u (type
+        (tuple-type
+          (value-type int) (rest
+            (value-type int)))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array remove (
+          (simple-var-ref u)
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref u))))
+    (var-def
+      (variable open (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 10)
+          (literal 20)
+          (literal 30)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array remove (
+          (simple-var-ref open)
+          (literal 1))))))
+    (expression-stmt
+      (invocation lang.array removeAll (
+        (simple-var-ref open))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref open))))))
+  )
+)

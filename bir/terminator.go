@@ -17,12 +17,21 @@
 package bir
 
 import (
-	"github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 type BIRTerminator = BIRInstruction
+
+type CallKind uint8
+
+const (
+	CallKindFunction CallKind = iota
+	CallKindFunctionPointer
+	CallKindMethod
+	CallKindResource
+)
 
 type (
 	BIRTerminatorBase struct {
@@ -34,21 +43,26 @@ type (
 		BIRTerminatorBase
 	}
 
-	Call struct {
-		BIRTerminatorBase
-		Kind              InstructionKind
-		IsMethodCall      bool
+	CallSite struct {
+		Kind              CallKind
 		Args              []BIROperand
 		Name              model.Name
 		CalleePkg         *model.PackageID
-		CalleeFlags       common.Set[model.Flag]
 		FunctionLookupKey string
-		CachedBIRFunc     *BIRFunction
+		FpOperand         *BIROperand
+		Receiver          *BIROperand
+		MethodName        string
+		PathSegments      []BIROperand
+	}
+
+	Call struct {
+		BIRTerminatorBase
+		CallSite
+		CachedBIRFunc *BIRFunction
 		// CachedMethodLookupKey is used only for method calls. It ensures CachedBIRFunc
 		// matches the receiver object's resolved method lookup key for this call site.
 		CachedMethodLookupKey string
 		CachedNativeFunc      extern.NativeFunc
-		FpOperand             *BIROperand // For FP_CALL: the operand holding the function value
 	}
 
 	Return struct {
@@ -79,10 +93,30 @@ type (
 
 	ResourceFunctionCall struct {
 		BIRTerminatorBase
-		Receiver     BIROperand
-		MethodName   string
-		PathSegments []BIROperand
-		Args         []BIROperand
+		CallSite
+	}
+
+	StartAction struct {
+		BIRTerminatorBase
+		Call       CallSite
+		IsIsolated bool
+	}
+
+	SingleWaitAction struct {
+		BIRTerminatorBase
+		Future BIROperand
+	}
+
+	AlternateWaitAction struct {
+		BIRTerminatorBase
+		Futures []BIROperand
+	}
+
+	MultipleWaitAction struct {
+		BIRTerminatorBase
+		Futures    []BIROperand
+		FieldNames []string
+		Type       semtypes.SemType
 	}
 )
 
@@ -95,10 +129,14 @@ var (
 	_ BIRTerminator        = &LockStart{}
 	_ BIRTerminator        = &LockEnd{}
 	_ BIRAssignInstruction = &ResourceFunctionCall{}
+	_ BIRAssignInstruction = &StartAction{}
+	_ BIRAssignInstruction = &SingleWaitAction{}
+	_ BIRAssignInstruction = &AlternateWaitAction{}
+	_ BIRAssignInstruction = &MultipleWaitAction{}
 )
 
 func (g *Goto) GetKind() InstructionKind {
-	return INSTRUCTION_KIND_GOTO
+	return InstructionKindGoto
 }
 
 func NewReturn(pos Location) *Return {
@@ -127,14 +165,17 @@ func NewGoto(thenBB *BIRBasicBlock, pos Location) *Goto {
 }
 
 func (c *Call) GetKind() InstructionKind {
-	return c.Kind
+	if c.Kind == CallKindFunctionPointer {
+		return InstructionKindFPCall
+	}
+	return InstructionKindCall
 }
 
 func (c *Call) GetLhsOperand() *BIROperand {
 	return c.LhsOp
 }
 
-func NewCall(kind InstructionKind, args []BIROperand, name model.Name, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *Call {
+func NewCall(call CallSite, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *Call {
 	return &Call{
 		BIRTerminatorBase: BIRTerminatorBase{
 			BIRInstructionBase: BIRInstructionBase{
@@ -145,30 +186,28 @@ func NewCall(kind InstructionKind, args []BIROperand, name model.Name, thenBB *B
 			},
 			ThenBB: thenBB,
 		},
-		Kind: kind,
-		Args: args,
-		Name: name,
+		CallSite: call,
 	}
 }
 
 func (r *Return) GetKind() InstructionKind {
-	return INSTRUCTION_KIND_RETURN
+	return InstructionKindReturn
 }
 
 func (b *Branch) GetKind() InstructionKind {
-	return INSTRUCTION_KIND_BRANCH
+	return InstructionKindBranch
 }
 
 func (p *Panic) GetKind() InstructionKind {
-	return INSTRUCTION_KIND_PANIC
+	return InstructionKindPanic
 }
 
 func (l *LockStart) GetKind() InstructionKind {
-	return INSTRUCTION_KIND_LOCK
+	return InstructionKindLock
 }
 
 func (l *LockEnd) GetKind() InstructionKind {
-	return INSTRUCTION_KIND_UNLOCK
+	return InstructionKindUnlock
 }
 
 func NewLockStart(key string, thenBB *BIRBasicBlock, pos Location) *LockStart {
@@ -209,14 +248,14 @@ func NewPanic(errorOp *BIROperand, pos Location) *Panic {
 }
 
 func (r *ResourceFunctionCall) GetKind() InstructionKind {
-	return INSTRUCTION_KIND_RESOURCE_CALL
+	return InstructionKindResourceCall
 }
 
 func (r *ResourceFunctionCall) GetLhsOperand() *BIROperand {
 	return r.LhsOp
 }
 
-func NewResourceFunctionCall(receiver BIROperand, methodName string, pathSegments, args []BIROperand, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *ResourceFunctionCall {
+func NewResourceFunctionCall(call CallSite, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *ResourceFunctionCall {
 	return &ResourceFunctionCall{
 		BIRTerminatorBase: BIRTerminatorBase{
 			BIRInstructionBase: BIRInstructionBase{
@@ -225,10 +264,62 @@ func NewResourceFunctionCall(receiver BIROperand, methodName string, pathSegment
 			},
 			ThenBB: thenBB,
 		},
-		Receiver:     receiver,
-		MethodName:   methodName,
-		PathSegments: pathSegments,
-		Args:         args,
+		CallSite: call,
+	}
+}
+
+func (s *StartAction) GetKind() InstructionKind   { return InstructionKindAsyncCall }
+func (s *StartAction) GetLhsOperand() *BIROperand { return s.LhsOp }
+
+func NewStartAction(call CallSite, isolated bool, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *StartAction {
+	return &StartAction{
+		BIRTerminatorBase: BIRTerminatorBase{
+			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
+			ThenBB:             thenBB,
+		},
+		Call:       call,
+		IsIsolated: isolated,
+	}
+}
+
+func (s *SingleWaitAction) GetKind() InstructionKind   { return InstructionKindWait }
+func (s *SingleWaitAction) GetLhsOperand() *BIROperand { return s.LhsOp }
+
+func NewSingleWaitAction(future BIROperand, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *SingleWaitAction {
+	return &SingleWaitAction{
+		BIRTerminatorBase: BIRTerminatorBase{
+			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
+			ThenBB:             thenBB,
+		},
+		Future: future,
+	}
+}
+
+func (a *AlternateWaitAction) GetKind() InstructionKind   { return InstructionKindAlternateWait }
+func (a *AlternateWaitAction) GetLhsOperand() *BIROperand { return a.LhsOp }
+
+func NewAlternateWaitAction(futures []BIROperand, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *AlternateWaitAction {
+	return &AlternateWaitAction{
+		BIRTerminatorBase: BIRTerminatorBase{
+			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
+			ThenBB:             thenBB,
+		},
+		Futures: futures,
+	}
+}
+
+func (m *MultipleWaitAction) GetKind() InstructionKind   { return InstructionKindWaitAll }
+func (m *MultipleWaitAction) GetLhsOperand() *BIROperand { return m.LhsOp }
+
+func NewMultipleWaitAction(futures []BIROperand, fieldNames []string, ty semtypes.SemType, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *MultipleWaitAction {
+	return &MultipleWaitAction{
+		BIRTerminatorBase: BIRTerminatorBase{
+			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
+			ThenBB:             thenBB,
+		},
+		Futures:    futures,
+		FieldNames: fieldNames,
+		Type:       ty,
 	}
 }
 

@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: started
+        at crash(start2-p.bal:17)
+           main(start2-p.bal:21)

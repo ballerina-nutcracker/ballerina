@@ -49,8 +49,6 @@ type (
 )
 
 var (
-	_ ConstPatternNode  = &BLangConstPattern{}
-	_ MatchClause       = &BLangMatchClause{}
 	_ BLangMatchPattern = &BLangConstPattern{}
 	_ BLangMatchPattern = &BLangWildCardMatchPattern{}
 )
@@ -65,15 +63,11 @@ func (b *BLangConstPattern) GetExpression() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangConstPattern) SetExpression(expression BLangExpression) {
-	b.Expr = expression
-}
-
 func (b *BLangMatchClause) GetMatchGuard() BLangExpression {
 	return b.Guard
 }
 
-func (b *BLangMatchClause) GetBlockStatementNode() BlockStatementNode {
+func (b *BLangMatchClause) GetBlockStatementNode() *BLangBlockStmt {
 	return &b.Body
 }
 
@@ -83,18 +77,6 @@ func (b *BLangMatchClause) GetMatchPatterns() []MatchPatternNode {
 		result[i] = p
 	}
 	return result
-}
-
-func (b *BLangMatchClause) SetMatchClause(node BLangExpression) {
-	b.Guard = node
-}
-
-func (b *BLangMatchClause) SetBlockStatementNode(node BLangBlockStmt) {
-	b.Body = node
-}
-
-func (b *BLangMatchClause) SetMatchPatterns(nodes []BLangMatchPattern) {
-	b.Patterns = nodes
 }
 
 func (b *BLangMatchClause) GetAcceptedType() semtypes.SemType {

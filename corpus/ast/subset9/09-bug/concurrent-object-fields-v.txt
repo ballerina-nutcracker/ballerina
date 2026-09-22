@@ -1,0 +1,89 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Counters
+    (variable counterA (type
+      (value-type int)) (expr
+      (literal 0)))
+    (variable counterB (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function incrementA () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (while
+              (binary-expr <
+                (field-based-access counterA
+                  (simple-var-ref self))
+                (literal 10000))
+              (block-stmt
+                (compound-assignment +
+                  (field-based-access counterA
+                    (simple-var-ref self))
+                  (literal 1))))
+            (return
+              (field-based-access counterA
+                (simple-var-ref self)))))))
+    (function incrementB () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (while
+              (binary-expr <
+                (field-based-access counterB
+                  (simple-var-ref self))
+                (literal 10000))
+              (block-stmt
+                (compound-assignment +
+                  (field-based-access counterB
+                    (simple-var-ref self))
+                  (literal 1))))
+            (return
+              (field-based-access counterB
+                (simple-var-ref self))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable counters (type
+          (user-defined-type Counters)) (expr
+          (new ()))))
+      (var-def
+        (variable a (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation incrementA expr:
+              (simple-var-ref counters) ())))))
+      (var-def
+        (variable b (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation incrementB expr:
+              (simple-var-ref counters) ())))))
+      (var-def
+        (variable aResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref a)))))
+      (var-def
+        (variable bResult (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref aResult))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref bResult)))))))

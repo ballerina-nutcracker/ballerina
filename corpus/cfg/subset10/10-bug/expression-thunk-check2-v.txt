@@ -1,0 +1,60 @@
+(checkedInt
+  (bb0 () (bb1 bb2)
+    (simple-var-ref shouldFail)
+  )
+  (bb1 (bb0) ()
+    (return
+      (error-constructor-expr (
+        (literal checked int failed))))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 10))
+  )
+)
+(checkedValues
+  (bb0 () ()
+    (return
+      (list-constructor-expr
+        (invocation fallibleDefaulted (
+          (checked-expr
+            (invocation checkedInt (
+              (simple-var-ref shouldFail)))) <default>))))
+  )
+)
+(fallibleDefaulted
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref value)
+        (simple-var-ref increment)))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation checkedValues (
+          (literal false))))))
+    (var-def
+      (variable failed (type
+        (union-type
+          (array-type
+            (union-type
+              (value-type int)
+              (error-type)) dimensions: 1 ([]))
+          (error-type))) (expr
+        (invocation checkedValues (
+          (literal true))))))
+    (type-test-expr is
+      (simple-var-ref failed)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref failed))))))
+  )
+  (bb2 (bb1 bb0) ())
+)

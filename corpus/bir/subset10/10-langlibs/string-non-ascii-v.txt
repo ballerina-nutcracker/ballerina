@@ -1,0 +1,123 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad HÉLLO
+    %2 = toLowerAscii(%1) -> bb1;
+  }
+  bb1 {
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    %4 = ConstantLoad héllo
+    %5 = toUpperAscii(%4) -> bb3;
+  }
+  bb3 {
+    %6 = println(%5) -> bb4;
+  }
+  bb4 {
+    %7 = ConstantLoad ß
+    %8 = toUpperAscii(%7) -> bb5;
+  }
+  bb5 {
+    %9 = println(%8) -> bb6;
+  }
+  bb6 {
+    %10 = ConstantLoad ΣΟΦΟΣ
+    %11 = toLowerAscii(%10) -> bb7;
+  }
+  bb7 {
+    %12 = println(%11) -> bb8;
+  }
+  bb8 {
+    %13 = ConstantLoad 日本語
+    %14 = toUpperAscii(%13) -> bb9;
+  }
+  bb9 {
+    %15 = println(%14) -> bb10;
+  }
+  bb10 {
+    %16 = ConstantLoad aÉb
+    %17 = toUpperAscii(%16) -> bb11;
+  }
+  bb11 {
+    %18 = println(%17) -> bb12;
+  }
+  bb12 {
+    %19 = ConstantLoad HÉLLO
+    %20 = ConstantLoad héllo
+    %21 = equalsIgnoreCaseAscii(%19,%20) -> bb13;
+  }
+  bb13 {
+    %22 = %21;
+    %23 = println(%22) -> bb14;
+  }
+  bb14 {
+    %24 = ConstantLoad HELLO
+    %25 = ConstantLoad hello
+    %26 = equalsIgnoreCaseAscii(%24,%25) -> bb15;
+  }
+  bb15 {
+    %27 = %26;
+    %28 = println(%27) -> bb16;
+  }
+  bb16 {
+    %29 = ConstantLoad abc
+    ctl = %29;
+    %31 = length(ctl) -> bb17;
+  }
+  bb17 {
+    %32 = %31;
+    %33 = println(%32) -> bb18;
+  }
+  bb18 {
+    %34 = trim(ctl) -> bb19;
+  }
+  bb19 {
+    %35 = length(%34) -> bb20;
+  }
+  bb20 {
+    %36 = %35;
+    %37 = println(%36) -> bb21;
+  }
+  bb21 {
+    %38 = ConstantLoad 	
+ abc 
+    %39 = trim(%38) -> bb22;
+  }
+  bb22 {
+    %40 = println(%39) -> bb23;
+  }
+  bb23 {
+    %41 = ConstantLoad a😀b
+    %42 = length(%41) -> bb24;
+  }
+  bb24 {
+    %43 = %42;
+    %44 = println(%43) -> bb25;
+  }
+  bb25 {
+    %45 = ConstantLoad a😀b
+    %46 = ConstantLoad 1
+    %47 = %46;
+    %48 = ConstantLoad 2
+    %49 = %48;
+    %50 = substring(%45,%47,%49) -> bb26;
+  }
+  bb26 {
+    %51 = println(%50) -> bb27;
+  }
+  bb27 {
+    %52 = ConstantLoad héllo😀
+    %53 = toBytes(%52) -> bb28;
+  }
+  bb28 {
+    %54 = length(%53) -> bb29;
+  }
+  bb29 {
+    %55 = %54;
+    %56 = println(%55) -> bb30;
+  }
+  bb30 {
+    return;
+  }
+}

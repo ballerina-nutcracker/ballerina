@@ -1,5 +1,7 @@
 (package
   (import-package ballerina io (as io))
+  (xmlns
+    (literal https:foo/bar) as bar)
   (function main () (
     (value-type null))
     (block-function-body

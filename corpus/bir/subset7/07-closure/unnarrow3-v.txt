@@ -1,4 +1,24 @@
 module $anon.. v 0.0.0;
+$anonFunc$_0() -> function() returns int{
+  bb0 {
+    %1 = (1, a) is int:Unsigned8
+    %1 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = closure_fp $anon/.:$anonFunc$_1
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = closure_fp $anon/.:$anonFunc$_2
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}
 $anonFunc$_1() -> int{
   bb0 {
     %2 = (3, a);
@@ -17,26 +37,6 @@ $anonFunc$_2() -> int{
     %4 = %3;
     %1 = * %2 %4;
     %0 = %1;
-    return;
-  }
-}
-$anonFunc$_0() -> function() returns int{
-  bb0 {
-    %1 = (1, a) is int:Unsigned8
-    %1 ? bb1 : bb2;
-  }
-  bb1 {
-    PushScopeFrame 1
-    %0 = closure_fp $anon/.:$anonFunc$_1
-    (1, %0) = %0;
-    PopScopeFrame
-    return;
-  }
-  bb2 {
-    PushScopeFrame 1
-    %0 = closure_fp $anon/.:$anonFunc$_2
-    (1, %0) = %0;
-    PopScopeFrame
     return;
   }
 }

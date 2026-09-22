@@ -1,0 +1,44 @@
+module $anon.. v 0.0.0;
+lockGuard  int;
+isolatedWorker() -> nil{
+  bb0 {
+    return;
+  }
+}
+startIndirectly() -> nil{
+  bb0 {
+    %1 = start isolatedWorker() isolated=true -> bb1;
+  }
+  bb1 {
+    %2 = %1;
+    return;
+  }
+}
+caller() -> nil{
+  bb0 {
+    lock-start "$anon/.:lockGuard" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 4
+    %1 = ConstantLoad 0
+    %2 = %1;
+    %0 = + lockGuard %2;
+    lockGuard = %0;
+    %3 = startIndirectly() -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    lock-end "$anon/.:lockGuard" GOTO bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = caller() -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

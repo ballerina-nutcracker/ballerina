@@ -1,0 +1,20 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (numeric-literal 10))))
+      (expression-stmt
+        (invocation io println (
+          (numeric-literal 10))))
+      (expression-stmt
+        (invocation io println (
+          (numeric-literal 30))))
+      (expression-stmt
+        (invocation io println (
+          (literal value))))
+      (expression-stmt
+        (invocation io println (
+          (numeric-literal 10)))))))

@@ -18,7 +18,7 @@ class Counter {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Counter
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -37,7 +37,7 @@ main() -> nil{
     %6 = ConstantLoad 10
     x = %6;
     %9 = x;
-    %10 = $remote$next(c) -> bb5;
+    %10 = c.$remote$next() -> bb5;
   }
   bb5 {
     %11 = %10;
@@ -48,7 +48,7 @@ main() -> nil{
   }
   bb6 {
     %15 = x;
-    %16 = $remote$next(c) -> bb7;
+    %16 = c.$remote$next() -> bb7;
   }
   bb7 {
     %17 = %16;

@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "array_to_stream_roundtrip"
+version = "0.1.0"

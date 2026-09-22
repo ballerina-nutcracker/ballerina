@@ -145,7 +145,7 @@ bar(function("a"|"b") returns boolean,["a"|"b"|"c"...]...) -> [boolean...]{
   }
   bb6 {
     PushScopeFrame 3
-    %0 = func((1, val)) -> bb7;
+    %0 = (2, func)((1, val)) -> bb7;
   }
   bb7 {
     %1 = %0;

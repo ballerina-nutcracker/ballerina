@@ -43,31 +43,28 @@
         (variable badJson (type
           (value-type string)) (expr
           (literal /tmp/bal_io_bad_json.json))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref badJson))))
-      (var-def
-        (variable $desugar$1 (expr
-          (literal {not valid json}))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$3))) ())
       (expression-stmt
-        (simple-var-ref $desugar$3))
+        (checked-expr
+          (expression-thunk
+          (lambda
+            (function main$502$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref badJson))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (literal {not valid json}))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
@@ -78,31 +75,28 @@
         (variable trailingJson (type
           (value-type string)) (expr
           (literal /tmp/bal_io_trailing_json.json))))
-      (var-def
-        (variable $desugar$4 (expr
-          (simple-var-ref trailingJson))))
-      (var-def
-        (variable $desugar$5 (expr
-          (literal {"k": 1} extra))))
-      (var-def
-        (variable $desugar$6 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$4)
-            (simple-var-ref $desugar$5))))))
-      (var-def
-        (variable $desugar$7 (expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$4)
-            (simple-var-ref $desugar$5)
-            (simple-var-ref $desugar$6))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$7))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$7))) ())
       (expression-stmt
-        (simple-var-ref $desugar$7))
+        (checked-expr
+          (expression-thunk
+          (lambda
+            (function main$502$0$thunk$1 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$3 (expr
+                    (simple-var-ref trailingJson))))
+                (var-def
+                  (variable $desugar$4 (expr
+                    (literal {"k": 1} extra))))
+                (var-def
+                  (variable $desugar$5 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$4))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$3)
+                    (simple-var-ref $desugar$4)
+                    (simple-var-ref $desugar$5))))))))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is

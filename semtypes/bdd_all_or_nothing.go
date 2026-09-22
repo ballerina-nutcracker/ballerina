@@ -23,7 +23,7 @@ type bddAllOrNothing struct {
 var (
 	all         = newBddAllOrNothingFromBool(true)
 	nothing     = newBddAllOrNothingFromBool(false)
-	_       Bdd = &bddAllOrNothing{}
+	_       bdd = &bddAllOrNothing{}
 )
 
 func newBddAllOrNothingFromBool(isAll bool) bddAllOrNothing {

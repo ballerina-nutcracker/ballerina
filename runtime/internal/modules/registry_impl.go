@@ -29,31 +29,34 @@ import (
 // reference across all instances, so object creation only allocates the
 // per-instance field map. FieldCount pre-sizes that map.
 type ClassTemplate struct {
-	MethodKeys map[string]string
-	RTable     map[string][]values.ResourceEntry
-	FieldCount int
+	MethodKeys  map[string]string
+	RTable      map[string][]values.ResourceEntry
+	Annotations values.AnnotationValues
+	FieldCount  int
 }
 
 type Registry struct {
-	birFunctions    map[string]*bir.BIRFunction
-	classTemplates  map[string]*ClassTemplate
-	nativeFunctions map[string]*ExternFunction
-	runtimeBuiltins map[string]extern.NativeFunc
-	modules         map[string]*BIRModule
+	birFunctions        map[string]*bir.BIRFunction
+	functionDescriptors map[string]*bir.BIRFunction
+	classTemplates      map[string]*ClassTemplate
+	nativeFunctions     map[string]*ExternFunction
+	runtimeBuiltins     map[string]extern.NativeFunc
+	modules             map[string]*BIRModule
 }
 
 func NewRegistry(builtins map[string]extern.NativeFunc) *Registry {
 	return &Registry{
-		birFunctions:    make(map[string]*bir.BIRFunction),
-		classTemplates:  make(map[string]*ClassTemplate),
-		nativeFunctions: make(map[string]*ExternFunction),
-		runtimeBuiltins: builtins,
-		modules:         make(map[string]*BIRModule),
+		birFunctions:        make(map[string]*bir.BIRFunction),
+		functionDescriptors: make(map[string]*bir.BIRFunction),
+		classTemplates:      make(map[string]*ClassTemplate),
+		nativeFunctions:     make(map[string]*ExternFunction),
+		runtimeBuiltins:     builtins,
+		modules:             make(map[string]*BIRModule),
 	}
 }
 
-// buildClassTemplate converts a class definition's method and resource tables
-// into the shared, read-only form used by every instance of the class.
+// buildClassTemplate converts a class definition's methods, resources, and
+// annotations into the shared, read-only form used by every instance.
 func buildClassTemplate(def *bir.BIRClassDef) *ClassTemplate {
 	methodKeys := make(map[string]string, len(def.VTable))
 	for methodName, method := range def.VTable {
@@ -75,10 +78,15 @@ func buildClassTemplate(def *bir.BIRClassDef) *ClassTemplate {
 		}
 		rtable[methodName] = copied
 	}
+	annotations := def.Annotations
+	if annotations == nil {
+		annotations = values.NewAnnotationValues()
+	}
 	return &ClassTemplate{
-		MethodKeys: methodKeys,
-		RTable:     rtable,
-		FieldCount: len(def.Fields),
+		MethodKeys:  methodKeys,
+		RTable:      rtable,
+		Annotations: annotations,
+		FieldCount:  len(def.Fields),
 	}
 }
 
@@ -90,24 +98,17 @@ func (r *Registry) RegisterModule(id *model.PackageID, m *BIRModule) *BIRModule 
 	if m.Pkg != nil {
 		for i := range m.Pkg.Functions {
 			fn := &m.Pkg.Functions[i]
-			r.birFunctions[fn.FunctionLookupKey] = fn
+			r.registerFunctionDescriptor(fn)
 		}
 		for i := range m.Pkg.ClassDefs {
 			classDef := &m.Pkg.ClassDefs[i]
 			r.classTemplates[classDef.LookupKey] = buildClassTemplate(classDef)
 			for _, fn := range classDef.VTable {
-				if fn.Flags.Has(model.FlagNative) {
-					continue
-				}
-				r.birFunctions[fn.FunctionLookupKey] = fn
+				r.registerFunctionDescriptor(fn)
 			}
 			for _, entries := range classDef.RTable {
 				for i := range entries {
-					fn := entries[i].Fn
-					if fn.Flags.Has(model.FlagNative) {
-						continue
-					}
-					r.birFunctions[fn.FunctionLookupKey] = fn
+					r.registerFunctionDescriptor(entries[i].Fn)
 				}
 			}
 		}
@@ -116,6 +117,13 @@ func (r *Registry) RegisterModule(id *model.PackageID, m *BIRModule) *BIRModule 
 		r.modules[moduleKey(id)] = m
 	}
 	return m
+}
+
+func (r *Registry) registerFunctionDescriptor(fn *bir.BIRFunction) {
+	r.functionDescriptors[fn.FunctionLookupKey] = fn
+	if !fn.Flags.Has(model.FlagNative) {
+		r.birFunctions[fn.FunctionLookupKey] = fn
+	}
 }
 
 func (r *Registry) GetModule(pkgId *model.PackageID) *BIRModule {
@@ -148,10 +156,23 @@ func (r *Registry) GetClassTemplate(lookupKey string) *ClassTemplate {
 // NOT added to birFunctions so that exec falls through to nativeFunctions for dispatch.
 func (r *Registry) RegisterExternClassDef(def *bir.BIRClassDef) {
 	r.classTemplates[def.LookupKey] = buildClassTemplate(def)
+	for _, fn := range def.VTable {
+		r.functionDescriptors[fn.FunctionLookupKey] = fn
+	}
+	for _, entries := range def.RTable {
+		for i := range entries {
+			fn := entries[i].Fn
+			r.functionDescriptors[fn.FunctionLookupKey] = fn
+		}
+	}
 }
 
 func (r *Registry) GetBIRFunction(funcName string) *bir.BIRFunction {
 	return r.birFunctions[funcName]
+}
+
+func (r *Registry) GetFunctionDescriptor(funcName string) *bir.BIRFunction {
+	return r.functionDescriptors[funcName]
 }
 
 func (r *Registry) GetNativeFunction(funcName string) *ExternFunction {

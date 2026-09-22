@@ -16,6 +16,6 @@
 
 package semtypes
 
-type ProperSubtypeData interface {
-	SubtypeData
+type properSubtypeData interface {
+	subtypeData
 }

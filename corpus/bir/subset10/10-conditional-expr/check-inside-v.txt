@@ -1,0 +1,264 @@
+module $anon.. v 0.0.0;
+number() -> int|error{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+boolValue() -> boolean|error{
+  bb0 {
+    %1 = ConstantLoad true
+    %0 = %1;
+    return;
+  }
+}
+failure() -> int|error{
+  bb0 {
+    %1 = ConstantLoad failure
+    %2 = newError error(%1)
+    %0 = %2;
+    return;
+  }
+}
+checkedOperands() -> int|error{
+  bb0 {
+    %3 = boolValue() -> bb1;
+  }
+  bb1 {
+    %4 = %3 is error
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %3;
+    return;
+  }
+  bb3 {
+    %2 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    %2 ? bb5 : bb6;
+  }
+  bb5 {
+    %5 = ConstantLoad 1
+    %1 = %5;
+    GOTO bb7;
+  }
+  bb6 {
+    %6 = ConstantLoad 2
+    %1 = %6;
+    GOTO bb7;
+  }
+  bb7 {
+    a = %1;
+    %9 = ConstantLoad true
+    %9 ? bb8 : bb9;
+  }
+  bb8 {
+    %11 = number() -> bb11;
+  }
+  bb9 {
+    %13 = ConstantLoad 2
+    %8 = %13;
+    GOTO bb10;
+  }
+  bb10 {
+    b = %8;
+    %16 = ConstantLoad false
+    %16 ? bb15 : bb16;
+  }
+  bb11 {
+    %12 = %11 is error
+    %12 ? bb12 : bb13;
+  }
+  bb12 {
+    %0 = %11;
+    return;
+  }
+  bb13 {
+    %10 = %11;
+    GOTO bb14;
+  }
+  bb14 {
+    %8 = %10;
+    GOTO bb10;
+  }
+  bb15 {
+    %18 = failure() -> bb18;
+  }
+  bb16 {
+    %21 = number() -> bb22;
+  }
+  bb17 {
+    c = %15;
+    %26 = a;
+    %27 = b;
+    %25 = + %26 %27;
+    %28 = %25;
+    %29 = c;
+    %24 = + %28 %29;
+    %0 = %24;
+    return;
+  }
+  bb18 {
+    %19 = %18 is error
+    %19 ? bb19 : bb20;
+  }
+  bb19 {
+    %0 = %18;
+    return;
+  }
+  bb20 {
+    %17 = %18;
+    GOTO bb21;
+  }
+  bb21 {
+    %15 = %17;
+    GOTO bb17;
+  }
+  bb22 {
+    %22 = %21 is error
+    %22 ? bb23 : bb24;
+  }
+  bb23 {
+    %0 = %21;
+    return;
+  }
+  bb24 {
+    %20 = %21;
+    GOTO bb25;
+  }
+  bb25 {
+    %15 = %20;
+    GOTO bb17;
+  }
+}
+selectedFailure() -> int|error{
+  bb0 {
+    %2 = ConstantLoad true
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    %4 = failure() -> bb4;
+  }
+  bb2 {
+    %6 = ConstantLoad 2
+    %1 = %6;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %1;
+    return;
+  }
+  bb4 {
+    %5 = %4 is error
+    %5 ? bb5 : bb6;
+  }
+  bb5 {
+    %0 = %4;
+    return;
+  }
+  bb6 {
+    %3 = %4;
+    GOTO bb7;
+  }
+  bb7 {
+    %1 = %3;
+    GOTO bb3;
+  }
+}
+$anonFunc$_0() -> int|error{
+  bb0 {
+    %2 = number() -> bb1;
+  }
+  bb1 {
+    %3 = %2 is error
+    %3 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %2;
+    return;
+  }
+  bb3 {
+    %1 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %0 = %1;
+    return;
+  }
+}
+$anonFunc$_1() -> int|error{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %2 = ConstantLoad true
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    %3 = fp $anon/.:$anonFunc$_0
+    %1 = %3;
+    GOTO bb3;
+  }
+  bb2 {
+    %4 = fp $anon/.:$anonFunc$_1
+    %1 = %4;
+    GOTO bb3;
+  }
+  bb3 {
+    fn = %1;
+    %7 = checkedOperands() -> bb4;
+  }
+  bb4 {
+    %8 = %7 is error
+    %8 ? bb5 : bb6;
+  }
+  bb5 {
+    %0 = %7;
+    return;
+  }
+  bb6 {
+    %6 = %7;
+    GOTO bb7;
+  }
+  bb7 {
+    %9 = %6;
+    %10 = println(%9) -> bb8;
+  }
+  bb8 {
+    %11 = selectedFailure() -> bb9;
+  }
+  bb9 {
+    %12 = %11 is error
+    %13 = %12;
+    %14 = println(%13) -> bb10;
+  }
+  bb10 {
+    %16 = fn() -> bb11;
+  }
+  bb11 {
+    %17 = %16 is error
+    %17 ? bb12 : bb13;
+  }
+  bb12 {
+    %0 = %16;
+    return;
+  }
+  bb13 {
+    %15 = %16;
+    GOTO bb14;
+  }
+  bb14 {
+    %18 = %15;
+    %19 = println(%18) -> bb15;
+  }
+  bb15 {
+    return;
+  }
+}

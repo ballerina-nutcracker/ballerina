@@ -16,7 +16,10 @@
 
 package extern
 
-import "github.com/ballerina-nutcracker/ballerina/values"
+import (
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/values"
+)
 
 // MethodHandle is an opaque reference to a resolved method on a Ballerina
 // object. Obtain one from Context.LookupObjectMethod,
@@ -29,7 +32,41 @@ type MethodHandle struct {
 // FunctionHandle is an opaque reference to a function,
 // returned by Runtime.LookupFunction or Context.LookupFunction
 type FunctionHandle struct {
-	Fn any
+	impl any
+}
+
+// Parameter describes a callable parameter.
+type Parameter struct {
+	Name string
+	Type semtypes.SemType
+}
+
+// FunctionSignature describes the parameters and return type of a callable.
+type FunctionSignature struct {
+	Params     []Parameter
+	RestParam  *Parameter
+	ReturnType semtypes.SemType
+}
+
+// ParameterMetadata contains the runtime-visible annotations on a parameter.
+type ParameterMetadata struct {
+	Annotations values.AnnotationValues
+}
+
+// FunctionMetadata contains runtime metadata corresponding to a callable's
+// parameters.
+type FunctionMetadata struct {
+	Params    []ParameterMetadata
+	RestParam *ParameterMetadata
+}
+
+// TypeAnnotations contains the runtime-visible annotations of a type: those
+// attached to the type itself, and those attached to each field of a record
+// type. Fields holds an entry only for a field that carries annotations; record
+// fields are unordered, so callers that need an order impose their own.
+type TypeAnnotations struct {
+	Annotations values.AnnotationValues
+	Fields      map[string]values.AnnotationValues
 }
 
 // DispatchHandles carry the runtime's method-resolution and invocation
@@ -44,6 +81,17 @@ type DispatchHandles struct {
 	LookupFunction       func(*Context, string, string, string) (any, bool)                    // org, module, name
 	Invoke               func(*Context, any, []values.BalValue) (values.BalValue, error)
 	Start                func(*Context, any, []values.BalValue) (<-chan values.BalValue, error)
+}
+
+// MetadataHandles carry runtime introspection implementations independently
+// from method dispatch.
+type MetadataHandles struct {
+	Signature         func(*Context, any) (FunctionSignature, bool)
+	Metadata          func(*Context, any) (FunctionMetadata, bool)
+	ObjectAnnotations func(*Context, *values.Object) (values.AnnotationValues, bool)
+	// TypeAnnotations resolves the annotations of a type descriptor, including
+	// those attached to the fields of a record type.
+	TypeAnnotations func(*Context, *values.TypeDesc) (TypeAnnotations, bool)
 }
 
 // LookupObjectMethod resolves a regular method on obj. The second return is
@@ -83,6 +131,30 @@ func (c *Context) LookupResourceMethodByPath(obj *values.Object, accessor string
 	return MethodHandle{impl: impl}, extraArgs, ok
 }
 
+// MethodSignature returns the callable signature associated with h.
+func (c *Context) MethodSignature(h MethodHandle) (FunctionSignature, bool) {
+	return c.Env.metadata.Signature(c, h.impl)
+}
+
+// MethodMetadata returns the runtime metadata associated with h.
+func (c *Context) MethodMetadata(h MethodHandle) (FunctionMetadata, bool) {
+	return c.Env.metadata.Metadata(c, h.impl)
+}
+
+// ObjectAnnotations returns the runtime-visible annotations associated with
+// the object's class or service declaration.
+func (c *Context) ObjectAnnotations(obj *values.Object) (values.AnnotationValues, bool) {
+	return c.Env.metadata.ObjectAnnotations(c, obj)
+}
+
+// TypeAnnotations returns the runtime-visible annotations of the type td
+// denotes, including the annotations on each field of a record type. The bool
+// is false if some annotation value could not be loaded; the result still holds
+// every value that could.
+func (c *Context) TypeAnnotations(td *values.TypeDesc) (TypeAnnotations, bool) {
+	return c.Env.metadata.TypeAnnotations(c, td)
+}
+
 // InvokeMethod calls the method captured by h. For object and remote
 // handles args is the full argument list including the receiver at
 // index 0. For resource handles the receiver and path are already baked
@@ -95,12 +167,22 @@ func (c *Context) InvokeMethod(h MethodHandle, args []values.BalValue) (values.B
 // The second return is false if no such function is registered.
 func (c *Context) LookupFunction(org, module, name string) (FunctionHandle, bool) {
 	impl, ok := c.Env.dispatch.LookupFunction(c, org, module, name)
-	return FunctionHandle{Fn: impl}, ok
+	return FunctionHandle{impl: impl}, ok
 }
 
 // InvokeFunction calls the function captured by h.
 func (c *Context) InvokeFunction(h FunctionHandle, args []values.BalValue) (values.BalValue, error) {
-	return c.Env.dispatch.Invoke(c, h.Fn, args)
+	return c.Env.dispatch.Invoke(c, h.impl, args)
+}
+
+// FunctionSignature returns the callable signature associated with h.
+func (c *Context) FunctionSignature(h FunctionHandle) (FunctionSignature, bool) {
+	return c.Env.metadata.Signature(c, h.impl)
+}
+
+// FunctionMetadata returns the runtime metadata associated with h.
+func (c *Context) FunctionMetadata(h FunctionHandle) (FunctionMetadata, bool) {
+	return c.Env.metadata.Metadata(c, h.impl)
 }
 
 // InvokeFunctionValue invokes a Ballerina function value on the current strand.

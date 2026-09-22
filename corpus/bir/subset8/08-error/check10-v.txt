@@ -12,31 +12,32 @@ main() -> nil{
 }
 passAlong() -> nil|error{
   bb0 {
-    %1 = alwaysErr() -> bb1;
+    %3 = alwaysErr() -> bb1;
   }
   bb1 {
-    $desugar$0 = %1;
-    %3 = $desugar$0 is error
-    %3 ? bb2 : bb3;
+    %4 = %3 is error
+    %4 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$0);
-    PopScopeFrame
+    %0 = %3;
     return;
   }
   bb3 {
-    $desugar$1 = $desugar$0;
-    %5 = $desugar$1 is error
-    %5 ? bb4 : bb5;
+    %2 = %3;
+    GOTO bb4;
   }
   bb4 {
-    PushScopeFrame 0
-    (1, %6) = (1, $desugar$1);
-    PopScopeFrame
-    panic %6;
+    %5 = %2 is error
+    %5 ? bb5 : bb6;
   }
   bb5 {
+    panic %2;
+  }
+  bb6 {
+    %1 = %2;
+    GOTO bb7;
+  }
+  bb7 {
     return;
   }
 }

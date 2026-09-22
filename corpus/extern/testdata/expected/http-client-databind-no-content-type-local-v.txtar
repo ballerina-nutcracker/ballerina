@@ -1,0 +1,10 @@
+-- stdout --
+untyped body
+12
+red true
+red true
+failed to parse JSON payload: invalid character 'u' looking for beginning of value
+true
+true
+true
+-- stderr --

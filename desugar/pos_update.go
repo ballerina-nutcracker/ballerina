@@ -32,6 +32,13 @@ func (v *posUpdateVisitor) Visit(node ast.BLangNode) ast.Visitor {
 	if diagnostics.IsLocationEmpty(node.GetPosition()) {
 		node.SetPosition(v.pos)
 	}
+	if thunk, ok := node.(*BLangExpressionThunk); ok {
+		for _, stmt := range thunk.InitStmts {
+			ast.Walk(v, stmt.(ast.BLangNode))
+		}
+		ast.Walk(v, thunk.Expr)
+		return nil
+	}
 	return v
 }
 

@@ -41,42 +41,43 @@ class Counter {
 }
 main() -> nil|error{
   bb0 {
-    %1 = newObject $anon/.:Counter
-    %2 = ConstantLoad 5
-    %3 = init(%1,%2) -> bb1;
+    %2 = newObject $anon/.:Counter
+    %3 = ConstantLoad 5
+    %4 = %2.init(%3) -> bb1;
   }
   bb1 {
-    %5 = %3 is nil
-    %5 ? bb2 : bb3;
+    %6 = %4 is nil
+    %6 ? bb2 : bb3;
   }
   bb2 {
-    %4 = %1;
+    %5 = %2;
     GOTO bb4;
   }
   bb3 {
-    %4 = %3;
+    %5 = %4;
     GOTO bb4;
   }
   bb4 {
-    $desugar$0 = %4;
-    %7 = $desugar$0 is error
+    %7 = %5 is error
     %7 ? bb5 : bb6;
   }
   bb5 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$0);
-    PopScopeFrame
+    %0 = %5;
     return;
   }
   bb6 {
-    c = $desugar$0;
-    %9 = get(c) -> bb7;
+    %1 = %5;
+    GOTO bb7;
   }
   bb7 {
-    %10 = %9;
-    %11 = println(%10) -> bb8;
+    c = %1;
+    %9 = c.get() -> bb8;
   }
   bb8 {
+    %10 = %9;
+    %11 = println(%10) -> bb9;
+  }
+  bb9 {
     %12 = ConstantLoad <nil>
     %0 = %12;
     return;

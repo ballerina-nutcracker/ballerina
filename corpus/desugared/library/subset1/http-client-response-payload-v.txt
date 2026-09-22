@@ -8,63 +8,53 @@
       (value-type null)))
     (block-function-body
       (var-def
-        (variable $desugar$0 (expr
-          (literal https://example.com))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$15 (
-            (simple-var-ref $desugar$0))))))
-      (var-def
-        (variable $desugar$2 (expr
-          (new (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$2))) ())
-      (var-def
         (variable c (type
           (user-defined-type http Client)) (expr
-          (simple-var-ref $desugar$2))))
-      (var-def
-        (variable $desugar$3 (expr
-          (literal /path))))
-      (var-def
-        (variable $desugar$4 (expr
-          (invocation $default$21 (
-            (simple-var-ref $desugar$3))))))
-      (var-def
-        (variable $desugar$5 (expr
-          (remote-method-call get expr:
-            (simple-var-ref c) (
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$4))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$5))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$5))) ())
+          (checked-expr
+            (expression-thunk
+            (lambda
+              (function main$502$0$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (literal https://example.com))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$15 (
+                        (simple-var-ref $desugar$0))))))
+                  (return
+                    (new (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))))))))
       (var-def
         (variable r (type
           (user-defined-type http Response)) (expr
-          (simple-var-ref $desugar$5))))
-      (var-def
-        (variable $desugar$6 (expr
-          (invocation getBinaryPayload expr:
-            (simple-var-ref r) ()))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$6))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$6))) ())
+          (checked-expr
+            (expression-thunk
+            (lambda
+              (function main$502$0$thunk$1 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$2 (expr
+                      (literal /path))))
+                  (var-def
+                    (variable $desugar$3 (expr
+                      (invocation $default$21 (
+                        (simple-var-ref $desugar$2))))))
+                  (var-def
+                    (variable $desugar$4 (expr
+                      (typedesc-expr))))
+                  (return
+                    (remote-method-call get expr:
+                      (simple-var-ref c) (
+                      (simple-var-ref $desugar$2)
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$4))))))))))))
       (var-def
         (variable b (expr
-          (simple-var-ref $desugar$6))))
+          (checked-expr
+            (invocation getBinaryPayload expr:
+              (simple-var-ref r) ())))))
       (expression-stmt
         (invocation io println (
           (invocation lang.array length (

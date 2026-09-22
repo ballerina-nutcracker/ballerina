@@ -34,5 +34,5 @@ public function testMain() returns error? {
     http:Client c = check new http:Client("http://127.0.0.1:19205", {});
     http:Response r = check c->get("/cfg/ping");
     io:println(r.statusCode); // @output 200
-    io:println(r.getTextPayload()); // @output pong
+    io:println(check r.getTextPayload()); // @output pong
 }

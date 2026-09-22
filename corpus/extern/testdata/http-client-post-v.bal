@@ -23,11 +23,23 @@ public function main() returns error? {
     // String body
     http:Response r = check c->post("/echo", "hello post");
     io:println(r.statusCode);            // @output 200
-    io:println(r.getTextPayload());      // @output body: hello post, ct: text/plain
+    io:println(check r.getTextPayload());      // @output body: hello post, ct: text/plain
 
     // Map body — should be serialized to JSON
     http:Response r2 = check c->post("/echo", {"msg": "hello"});
     io:println(r2.statusCode);           // @output 200
-    io:println(r2.getTextPayload());     // @output body: {"msg":"hello"}, ct: application/json
+    io:println(check r2.getTextPayload());     // @output body: {"msg":"hello"}, ct: application/json
+
+    // A pre-built http:Request carries its own body and content-type as-is.
+    http:Request req = new;
+    req.setJsonPayload({"msg": "from request"});
+    http:Response r3 = check c->post("/echo", req);
+    io:println(r3.statusCode);           // @output 200
+    io:println(check r3.getTextPayload());     // @output body: {"msg":"from request"}, ct: application/json
+
+    // A value that fails to serialize as JSON is reported before any request is sent.
+    http:Response|error r4 = c->post("/echo", float:NaN);
+    io:println(r4 is error); // @output true
+
     return;
 }

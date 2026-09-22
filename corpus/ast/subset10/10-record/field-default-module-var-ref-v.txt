@@ -1,0 +1,55 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Config
+    (record-type
+      (field port
+        (value-type int)
+        (simple-var-ref defaultPort))
+      (field host
+        (value-type string)
+        (simple-var-ref defaultHost))
+      (field timeout
+        (value-type int)
+        (binary-expr +
+          (simple-var-ref defaultPort)
+          (literal 1)))))
+  (variable defaultPort (type
+    (value-type int)) (expr
+    (literal 8080)))
+  (variable defaultHost (type
+    (value-type string)) (expr
+    (literal localhost)))
+  (variable config (type
+    (user-defined-type Config)) (expr
+    (mapping-constructor-expr
+      (key-value
+        (literal host)
+        (literal example.com)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type Config)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access port
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access host
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access timeout
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access host
+            (simple-var-ref config)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access port
+            (simple-var-ref config))))))))

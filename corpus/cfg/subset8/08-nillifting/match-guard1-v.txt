@@ -1,0 +1,35 @@
+(guardValue
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal guard))))
+    (return
+      (literal 1))
+  )
+)
+(main
+  (bb0 () (bb2 bb3)
+    (var-def
+      (variable value (type
+        (value-type int)) (expr
+        (literal 1))))
+    (var-def
+      (variable n (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal 0))))
+    (simple-var-ref value)
+  )
+  (bb1 (bb2 bb3) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal first))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal guarded))))
+  )
+)

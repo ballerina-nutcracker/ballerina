@@ -97,46 +97,35 @@
                   (literal 5))
                 (list-constructor-expr
                   (literal 6))))))))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (simple-var-ref byteStream))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$5 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation io fileWriteBlocksFromStream (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$3))) ())
       (expression-stmt
-        (simple-var-ref $desugar$3))
-      (var-def
-        (variable $desugar$4 (expr
-          (invocation io fileReadBytes (
-            (simple-var-ref path))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$4))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$4))) ())
+        (checked-expr
+          (expression-thunk
+          (lambda
+            (function main$502$1$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref path))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (simple-var-ref byteStream))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$5 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteBlocksFromStream (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable readBack (type
           (array-type
             (value-type byte) dimensions: 1 ([]))) (expr
-          (simple-var-ref $desugar$4))))
+          (checked-expr
+            (invocation io fileReadBytes (
+              (simple-var-ref path)))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.array length (
@@ -166,35 +155,19 @@
                 (list-constructor-expr
                   (literal 7)
                   (literal 8))))))))))
-      (var-def
-        (variable $desugar$5 (expr
+      (expression-stmt
+        (checked-expr
           (invocation io fileWriteBlocksFromStream (
             (simple-var-ref path)
             (simple-var-ref appendStream)
-            (literal APPEND))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$5))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$5))) ())
-      (expression-stmt
-        (simple-var-ref $desugar$5))
-      (var-def
-        (variable $desugar$6 (expr
-          (invocation io fileReadBytes (
-            (simple-var-ref path))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$6))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$6))) ())
+            (literal APPEND)))))
       (var-def
         (variable combined (type
           (array-type
             (value-type byte) dimensions: 1 ([]))) (expr
-          (simple-var-ref $desugar$6))))
+          (checked-expr
+            (invocation io fileReadBytes (
+              (simple-var-ref path)))))))
       (expression-stmt
         (invocation io println (
           (invocation lang.array length (

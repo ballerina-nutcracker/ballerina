@@ -1,4 +1,21 @@
 module $anon.. v 0.0.0;
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = (1, a);
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    c = %2;
+    %7 = closure_fp $anon/.:$anonFunc$_1
+    g = %7;
+    %9 = x;
+    %10 = g(%9) -> bb1;
+  }
+  bb1 {
+    %0 = %10;
+    return;
+  }
+}
 $anonFunc$_1(int) -> int{
   bb0 {
     %6 = (1, x);
@@ -14,23 +31,6 @@ $anonFunc$_1(int) -> int{
     %13 = (1, c);
     %2 = + %12 %13;
     %0 = %2;
-    return;
-  }
-}
-$anonFunc$_0(int) -> int{
-  bb0 {
-    %3 = (1, a);
-    %4 = ConstantLoad 2
-    %5 = %4;
-    %2 = * %3 %5;
-    c = %2;
-    %7 = closure_fp $anon/.:$anonFunc$_1
-    g = %7;
-    %9 = x;
-    %10 = g(%9) -> bb1;
-  }
-  bb1 {
-    %0 = %10;
     return;
   }
 }

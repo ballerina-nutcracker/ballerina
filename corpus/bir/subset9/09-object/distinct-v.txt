@@ -47,7 +47,7 @@ main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Person
     %2 = ConstantLoad John Smith
-    %3 = init(%1,%2) -> bb1;
+    %3 = %1.init(%2) -> bb1;
   }
   bb1 {
     %5 = %3 is nil
@@ -70,7 +70,7 @@ main() -> nil{
   bb5 {
     %10 = newObject $anon/.:DistinctPerson
     %11 = ConstantLoad Alice Johnson
-    %12 = init(%10,%11) -> bb6;
+    %12 = %10.init(%11) -> bb6;
   }
   bb6 {
     %14 = %12 is nil
@@ -93,7 +93,7 @@ main() -> nil{
   bb10 {
     %19 = newObject $anon/.:SomeWhatDistinctPerson
     %20 = ConstantLoad Michael Brown
-    %21 = init(%19,%20) -> bb11;
+    %21 = %19.init(%20) -> bb11;
   }
   bb11 {
     %23 = %21 is nil
@@ -121,7 +121,7 @@ main() -> nil{
   bb16 {
     %31 = newObject $anon/.:EvenMoreDistinctPerson
     %32 = ConstantLoad Sarah Wilson
-    %33 = init(%31,%32) -> bb17;
+    %33 = %31.init(%32) -> bb17;
   }
   bb17 {
     %35 = %33 is nil

@@ -1,0 +1,35 @@
+module $anon.. v 0.0.0;
+number() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
+identity(future) -> future{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = start number() isolated=false -> bb1;
+  }
+  bb1 {
+    started = %1;
+    widened = started;
+    %4 = identity(widened) -> bb2;
+  }
+  bb2 {
+    same = %4;
+    %6 = wait same -> bb3;
+  }
+  bb3 {
+    result = %6;
+    %8 = println(result) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

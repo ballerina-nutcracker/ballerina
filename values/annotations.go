@@ -39,3 +39,22 @@ func (r *RuntimeAnnotationValueRef) GlobalLookupKey() string {
 func NewAnnotationValues() AnnotationValues {
 	return make(AnnotationValues)
 }
+
+// FieldAnnotationValues maps a record field name to the annotation values
+// attached to that field.
+type FieldAnnotationValues map[string]AnnotationValues
+
+// NewFieldAnnotationValues returns an initialized per-field annotation map.
+func NewFieldAnnotationValues() FieldAnnotationValues {
+	return make(FieldAnnotationValues)
+}
+
+// Set records value under key as an annotation of field.
+func (f FieldAnnotationValues) Set(field string, key string, value AnnotationValue) {
+	annotations, ok := f[field]
+	if !ok {
+		annotations = NewAnnotationValues()
+		f[field] = annotations
+	}
+	annotations[key] = value
+}

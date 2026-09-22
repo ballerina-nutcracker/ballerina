@@ -1,0 +1,21 @@
+(crash
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal started))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type null))) (expr
+        (start-action isolated
+          (invocation crash ())))))
+    (return
+      (single-wait-action
+        (simple-var-ref f)))
+  )
+)

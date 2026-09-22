@@ -1,6 +1,8 @@
 (package
   (import-package ballerina io (as io))
   (import-package ballerina lang __internal (as lang.__internal))
+  (xmlns
+    (literal https://example.com/a&b"c) as p)
   (function main () (
     (value-type null))
     (block-function-body

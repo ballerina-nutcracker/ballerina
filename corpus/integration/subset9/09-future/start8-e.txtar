@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot start strand inside a lock statement
+  --> start8-e.bal:22:30
+   |
+22 |         future<int> result = start compute(); // @error start action inside lock
+   |                              ^^^^^^^^^^^^^^^

@@ -45,19 +45,19 @@ func CastValue(typeCtx semtypes.Context, value BalValue, targetType semtypes.Sem
 // fromJsonWithType. Any conversion failure is reported as a bad-type-cast error.
 func ConvertNumericValue(value BalValue, targetType semtypes.SemType) (BalValue, error) {
 	switch {
-	case semtypes.IsSubtypeSimple(targetType, semtypes.INT):
+	case semtypes.IsSubtypeSimple(targetType, semtypes.Int):
 		n, err := NumericConvertToInt(value)
 		if err != nil {
 			return nil, fmt.Errorf("bad type cast: %w", err)
 		}
 		return n, nil
-	case semtypes.IsSubtypeSimple(targetType, semtypes.FLOAT):
+	case semtypes.IsSubtypeSimple(targetType, semtypes.Float):
 		f, err := NumericConvertToFloat(value)
 		if err != nil {
 			return nil, fmt.Errorf("bad type cast: %w", err)
 		}
 		return f, nil
-	case semtypes.IsSubtypeSimple(targetType, semtypes.DECIMAL):
+	case semtypes.IsSubtypeSimple(targetType, semtypes.Decimal):
 		d, err := NumericConvertToDecimal(value)
 		if err != nil {
 			return nil, fmt.Errorf("bad type cast: %w", err)

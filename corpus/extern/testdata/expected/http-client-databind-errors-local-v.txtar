@@ -1,0 +1,36 @@
+-- stdout --
+4xx: Not Found
+5xx: Internal Server Error
+4xx-xml: Not Found
+404
+moved body
+Payload binding failed: '7' value cannot be converted to '{| age: int, name: string, never... |}'
+failed to parse JSON payload: invalid character 'o' in literal null (expecting 'u')
+failed to parse JSON payload: invalid character 'a' in literal true (expecting 'u')
+failed to parse JSON payload: invalid character 'a' in literal true (expecting 'u')
+incompatible '{| age: int, name: string, never... |}' found for 'text/plain' mime type
+incompatible 'string' found for 'application/xml' mime type
+Payload binding failed: '"plain text body"' value cannot be converted to '"green"|"red"'
+Payload binding failed: '[int:Unsigned8...]' value cannot be converted to '[int:Unsigned8, int:Unsigned8, never...]'
+Payload binding failed: '"plain text body"' value cannot be converted to 'nil|"green"|"red"'
+Payload binding failed: '[int:Unsigned8...]' value cannot be converted to 'nil|[int:Unsigned8, int:Unsigned8, never...]'
+incompatible 'string' found for 'application/octet-stream' mime type
+incompatible 'int' found for 'application/x-www-form-urlencoded' mime type
+Payload binding failed: invalid URL escape "%zz"
+Gone
+status code 499
+Unauthorized
+http:ApplicationResponseError creation failed: 404 response payload extraction failed
+true
+true
+true
+false
+true
+true
+incompatible 'int' found for 'text/plain' mime type
+failed to parse JSON payload: EOF
+true
+Payload binding failed: '""' value cannot be converted to '"green"|"red"'
+Payload binding failed: '[int:Unsigned8...]' value cannot be converted to '[int:Unsigned8, int:Unsigned8, never...]'
+Payload binding failed: '{| string... |}' value cannot be converted to '{| a: string, b: string, never... |}': field 'a' not present in value
+-- stderr --

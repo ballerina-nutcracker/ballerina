@@ -6,27 +6,24 @@
       (value-type null)))
     (block-function-body
       (var-def
-        (variable $desugar$0 (expr
-          (literal /tmp/bal_io_char_xml_nonelement.xml))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$11 (
-            (simple-var-ref $desugar$0))))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation io openWritableFile (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$2))) ())
-      (var-def
         (variable wb (type
           (user-defined-type io WritableByteChannel)) (expr
-          (simple-var-ref $desugar$2))))
+          (checked-expr
+            (expression-thunk
+            (lambda
+              (function main$502$0$thunk$0 () ()
+                (block-function-body
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (literal /tmp/bal_io_char_xml_nonelement.xml))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $default$11 (
+                        (simple-var-ref $desugar$0))))))
+                  (return
+                    (invocation io openWritableFile (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))))))))
       (var-def
         (variable wc (type
           (user-defined-type io WritableCharacterChannel)) (expr
@@ -39,23 +36,15 @@
           (xml-sequence-literal
             (xml-comment-literal c)
             (xml-element-literal note)))))
-      (var-def
-        (variable $desugar$3 (expr
+      (expression-stmt
+        (checked-expr
           (invocation writeXml expr:
             (simple-var-ref wc) (
             (simple-var-ref seq)
             (mapping-constructor-expr
               (key-value
                 (literal system)
-                (literal note.dtd))))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$3))) ())
-      (expression-stmt
-        (simple-var-ref $desugar$3))
+                (literal note.dtd)))))))
       (expression-stmt
         (invocation io println (
           (literal unreached)))))))

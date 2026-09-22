@@ -3,84 +3,36 @@
   (function main () (
     (value-type null))
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation boolean fromString (
-            (literal true))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$0))) ())
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$0))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation boolean fromString (
-            (literal false))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$1))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$1))) ())
+          (check-panicked-expr
+            (invocation boolean fromString (
+              (literal true)))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$1))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation boolean fromString (
-            (literal TRUE))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$2))) ())
+          (check-panicked-expr
+            (invocation boolean fromString (
+              (literal false)))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$2))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation boolean fromString (
-            (literal False))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$3))) ())
+          (check-panicked-expr
+            (invocation boolean fromString (
+              (literal TRUE)))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$3))))
-      (var-def
-        (variable $desugar$4 (expr
-          (invocation boolean fromString (
-            (literal 1))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$4))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$4))) ())
+          (check-panicked-expr
+            (invocation boolean fromString (
+              (literal False)))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$4))))
-      (var-def
-        (variable $desugar$5 (expr
-          (invocation boolean fromString (
-            (literal 0))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$5))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$5))) ())
+          (check-panicked-expr
+            (invocation boolean fromString (
+              (literal 1)))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$5))))
+          (check-panicked-expr
+            (invocation boolean fromString (
+              (literal 0)))))))
       (var-def
         (variable invalidWord (type
           (union-type

@@ -1,6 +1,6 @@
 # Adding a PAL method
 
-**PAL constraint**: every platform interaction (io, http, fs, env, time) must go through the Platform Adaptation Layer, never the underlying Go stdlib directly. If the relevant PAL method doesn't exist, add it across three files:
+**PAL constraint**: every platform interaction (io, http, fs, env, time) must go through the Platform Abstraction Layer, never the underlying Go stdlib directly. If the relevant PAL method doesn't exist, add it across three files:
 
 1. **`platform/pal/platform.go`** — add new fields to the relevant struct (`IO`, `Time`, `FS`, `HTTP`, `OS`) or define a new struct if no existing category fits.
 

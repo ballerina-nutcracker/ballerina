@@ -40,7 +40,7 @@ main() -> nil{
     %1 = newObject $anon/.:Foo
     %2 = newObject $anon/.:Bar
     %3 = ConstantLoad 5
-    %4 = init(%2,%3) -> bb1;
+    %4 = %2.init(%3) -> bb1;
   }
   bb1 {
     %6 = %4 is nil
@@ -55,7 +55,7 @@ main() -> nil{
     GOTO bb4;
   }
   bb4 {
-    %7 = init(%1,%5) -> bb5;
+    %7 = %1.init(%5) -> bb5;
   }
   bb5 {
     %9 = %7 is nil
@@ -73,7 +73,7 @@ main() -> nil{
     f = %8;
     %11 = ConstantLoad 10
     %12 = %11;
-    %13 = foo(f,%12) -> bb9;
+    %13 = f.foo(%12) -> bb9;
   }
   bb9 {
     %14 = %13;
@@ -83,7 +83,7 @@ main() -> nil{
     %16 = newObject $anon/.:Foo
     %17 = newObject $anon/.:Bar
     %18 = ConstantLoad 10
-    %19 = init(%17,%18) -> bb11;
+    %19 = %17.init(%18) -> bb11;
   }
   bb11 {
     %21 = %19 is nil
@@ -98,7 +98,7 @@ main() -> nil{
     GOTO bb14;
   }
   bb14 {
-    %22 = init(%16,%20) -> bb15;
+    %22 = %16.init(%20) -> bb15;
   }
   bb15 {
     %24 = %22 is nil
@@ -116,7 +116,7 @@ main() -> nil{
     f2 = %23;
     %26 = ConstantLoad 6
     %27 = %26;
-    %28 = foo(f2,%27) -> bb19;
+    %28 = f2.foo(%27) -> bb19;
   }
   bb19 {
     %29 = %28;

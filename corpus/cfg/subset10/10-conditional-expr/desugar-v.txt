@@ -1,0 +1,70 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable absent (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable liftedLhs (type
+        (value-type int)) (expr
+        (nil-conditional-expr
+          (group-expr
+            (binary-expr +
+              (simple-var-ref absent)
+              (literal 1)))
+          (literal 10)))))
+    (var-def
+      (variable liftedRhs (type
+        (value-type int)) (expr
+        (nil-conditional-expr
+          (literal <nil>)
+          (group-expr
+            (nil-conditional-expr
+              (group-expr
+                (binary-expr +
+                  (simple-var-ref absent)
+                  (literal 1)))
+              (literal 20)))))))
+    (var-def
+      (variable present (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal 30))))
+    (var-def
+      (variable lazyRhs (type
+        (value-type int)) (expr
+        (nil-conditional-expr
+          (simple-var-ref present)
+          (group-expr
+            (nil-conditional-expr
+              (group-expr
+                (binary-expr +
+                  (invocation nullable ())
+                  (literal 1)))
+              (literal 40)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref liftedLhs))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref liftedRhs))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref lazyRhs))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref calls))))
+  )
+)
+(nullable
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref calls)
+      (literal 1))
+    (return
+      (literal <nil>))
+  )
+)

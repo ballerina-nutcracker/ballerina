@@ -54,7 +54,7 @@ main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Joiner
     %2 = ConstantLoad -
-    %3 = init(%1,%2) -> bb1;
+    %3 = %1.init(%2) -> bb1;
   }
   bb1 {
     %5 = %3 is nil
@@ -71,7 +71,7 @@ main() -> nil{
   bb4 {
     j = %4;
     %7 = ConstantLoad a
-    %8 = glue(j,%7) -> bb5;
+    %8 = j.glue(%7) -> bb5;
   }
   bb5 {
     %9 = println(%8) -> bb6;
@@ -79,7 +79,7 @@ main() -> nil{
   bb6 {
     %10 = ConstantLoad a
     %11 = ConstantLoad b
-    %12 = glue(j,%10,%11) -> bb7;
+    %12 = j.glue(%10,%11) -> bb7;
   }
   bb7 {
     %13 = println(%12) -> bb8;
@@ -89,7 +89,7 @@ main() -> nil{
     %15 = ConstantLoad b
     %16 = ConstantLoad c
     %17 = ConstantLoad d
-    %18 = glue(j,%14,%15,%16,%17) -> bb9;
+    %18 = j.glue(%14,%15,%16,%17) -> bb9;
   }
   bb9 {
     %19 = println(%18) -> bb10;

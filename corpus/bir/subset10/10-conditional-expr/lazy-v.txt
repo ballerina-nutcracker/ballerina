@@ -1,0 +1,190 @@
+module $anon.. v 0.0.0;
+calls  int;
+mark(boolean) -> boolean{
+  bb0 {
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %2 = + calls %4;
+    calls = %2;
+    %0 = value;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %3 = ConstantLoad true
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %4 = ConstantLoad true
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb2 {
+    %5 = ConstantLoad false
+    %6 = %5;
+    %7 = mark(%6) -> bb4;
+  }
+  bb3 {
+    %1 = %2;
+    %2 ? bb5 : bb6;
+  }
+  bb4 {
+    %2 = %7;
+    GOTO bb3;
+  }
+  bb5 {
+    %8 = ConstantLoad true
+    %9 = %8;
+    %10 = mark(%9) -> bb7;
+  }
+  bb6 {
+    a = %1;
+    %14 = ConstantLoad false
+    %14 ? bb8 : bb9;
+  }
+  bb7 {
+    %1 = %10;
+    GOTO bb6;
+  }
+  bb8 {
+    %15 = ConstantLoad true
+    %13 = %15;
+    GOTO bb10;
+  }
+  bb9 {
+    %16 = ConstantLoad false
+    %13 = %16;
+    GOTO bb10;
+  }
+  bb10 {
+    %12 = %13;
+    %13 ? bb11 : bb12;
+  }
+  bb11 {
+    %18 = ConstantLoad true
+    %18 ? bb13 : bb14;
+  }
+  bb12 {
+    b = %12;
+    %28 = ConstantLoad true
+    %28 ? bb18 : bb19;
+  }
+  bb13 {
+    %19 = ConstantLoad true
+    %20 = %19;
+    %21 = mark(%20) -> bb16;
+  }
+  bb14 {
+    %22 = ConstantLoad false
+    %23 = %22;
+    %24 = mark(%23) -> bb17;
+  }
+  bb15 {
+    %12 = %17;
+    GOTO bb12;
+  }
+  bb16 {
+    %17 = %21;
+    GOTO bb15;
+  }
+  bb17 {
+    %17 = %24;
+    GOTO bb15;
+  }
+  bb18 {
+    %29 = ConstantLoad false
+    %27 = %29;
+    GOTO bb20;
+  }
+  bb19 {
+    %30 = ConstantLoad true
+    %27 = %30;
+    GOTO bb20;
+  }
+  bb20 {
+    %26 = %27;
+    %27 ? bb22 : bb21;
+  }
+  bb21 {
+    %32 = ConstantLoad false
+    %32 ? bb23 : bb24;
+  }
+  bb22 {
+    c = %26;
+    %41 = ConstantLoad true
+    %40 = %41;
+    %41 ? bb29 : bb28;
+  }
+  bb23 {
+    %33 = ConstantLoad false
+    %34 = %33;
+    %35 = mark(%34) -> bb26;
+  }
+  bb24 {
+    %36 = ConstantLoad true
+    %37 = %36;
+    %38 = mark(%37) -> bb27;
+  }
+  bb25 {
+    %26 = %31;
+    GOTO bb22;
+  }
+  bb26 {
+    %31 = %35;
+    GOTO bb25;
+  }
+  bb27 {
+    %31 = %38;
+    GOTO bb25;
+  }
+  bb28 {
+    %43 = ConstantLoad true
+    %43 ? bb30 : bb31;
+  }
+  bb29 {
+    d = %40;
+    %51 = a;
+    %52 = println(%51) -> bb35;
+  }
+  bb30 {
+    %44 = ConstantLoad false
+    %45 = %44;
+    %46 = mark(%45) -> bb33;
+  }
+  bb31 {
+    %47 = ConstantLoad false
+    %48 = %47;
+    %49 = mark(%48) -> bb34;
+  }
+  bb32 {
+    %40 = %42;
+    GOTO bb29;
+  }
+  bb33 {
+    %42 = %46;
+    GOTO bb32;
+  }
+  bb34 {
+    %42 = %49;
+    GOTO bb32;
+  }
+  bb35 {
+    %53 = b;
+    %54 = println(%53) -> bb36;
+  }
+  bb36 {
+    %55 = c;
+    %56 = println(%55) -> bb37;
+  }
+  bb37 {
+    %57 = d;
+    %58 = println(%57) -> bb38;
+  }
+  bb38 {
+    %59 = println(calls) -> bb39;
+  }
+  bb39 {
+    return;
+  }
+}

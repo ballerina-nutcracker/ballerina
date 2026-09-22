@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot infer typedesc argument for parameter 'targetType': no contextually expected type
+  --> http-client-databind-e.bal:25:27
+   |
+25 |     var noContext = check c->get("/path"); // @error cannot infer typedesc argument
+   |                           ^^^^^^^^^^^^^^^

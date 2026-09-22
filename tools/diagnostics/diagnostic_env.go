@@ -67,14 +67,10 @@ func (de *DiagnosticEnv) RegisterFile(fileName string, doc text.TextDocument) {
 	de.mu.Lock()
 	defer de.mu.Unlock()
 	if idx, ok := de.nameToIndex[fileName]; ok {
-		// idx is 1-based, de.docs is 0-based.
-		existing := de.docs[idx-1]
-		// A dependency re-parsed for a second compile sharing this env may
-		// produce a distinct TextDocument instance, so compare by content too.
-		if existing == doc || existing.String() == doc.String() {
-			return
-		}
-		panic(fmt.Sprintf("diagnostics: duplicte file declarations with same name: %q", fileName))
+		// Keep the stable index used by existing locations while replacing the
+		// document after an incremental source update.
+		de.docs[idx-1] = doc
+		return
 	}
 	de.fileNames = append(de.fileNames, fileName)
 	de.docs = append(de.docs, doc)

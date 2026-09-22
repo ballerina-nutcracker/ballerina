@@ -18,10 +18,10 @@ package semtypes
 
 type (
 	bddPredicate        func(cx Context, posList conjunctionHandle, negList conjunctionHandle) bool
-	bddIsEmptyPredicate func(cx Context, b Bdd) bool
+	bddIsEmptyPredicate func(cx Context, b bdd) bool
 )
 
-func bddEvery(cx Context, b Bdd, pos conjunctionHandle, neg conjunctionHandle, predicate bddPredicate) bool {
+func bddEvery(cx Context, b bdd, pos conjunctionHandle, neg conjunctionHandle, predicate bddPredicate) bool {
 	saved := cx.conjunctionStackDepth()
 	defer cx.resetConjunctionStack(saved)
 	if allOrNothing, ok := b.(*bddAllOrNothing); ok {
@@ -35,7 +35,7 @@ func bddEvery(cx Context, b Bdd, pos conjunctionHandle, neg conjunctionHandle, p
 	}
 }
 
-func bddEveryPositive(cx Context, b Bdd, pos conjunctionHandle, neg conjunctionHandle, predicate bddPredicate) bool {
+func bddEveryPositive(cx Context, b bdd, pos conjunctionHandle, neg conjunctionHandle, predicate bddPredicate) bool {
 	if allOrNothing, ok := b.(*bddAllOrNothing); ok {
 		return !allOrNothing.IsAll() || predicate(cx, pos, neg)
 	} else {
@@ -56,7 +56,7 @@ func andIfPositive(cx Context, atom atom, next conjunctionHandle) conjunctionHan
 	return cx.pushConjunction(atom, next)
 }
 
-func bddPosMaybeEmpty(b Bdd) bool {
+func bddPosMaybeEmpty(b bdd) bool {
 	if allOrNothing, ok := b.(*bddAllOrNothing); ok {
 		return allOrNothing.IsAll()
 	} else {
@@ -65,23 +65,23 @@ func bddPosMaybeEmpty(b Bdd) bool {
 	}
 }
 
-func bddSubtypeUnion(t1 SubtypeData, t2 SubtypeData) SubtypeData {
-	return bddUnion(t1.(Bdd), t2.(Bdd))
+func bddSubtypeUnion(t1 subtypeData, t2 subtypeData) subtypeData {
+	return bddUnion(t1.(bdd), t2.(bdd))
 }
 
-func bddSubtypeIntersect(t1 SubtypeData, t2 SubtypeData) SubtypeData {
-	return bddIntersect(t1.(Bdd), t2.(Bdd))
+func bddSubtypeIntersect(t1 subtypeData, t2 subtypeData) subtypeData {
+	return bddIntersect(t1.(bdd), t2.(bdd))
 }
 
-func bddSubtypeDiff(t1 SubtypeData, t2 SubtypeData) SubtypeData {
-	return bddDiff(t1.(Bdd), t2.(Bdd))
+func bddSubtypeDiff(t1 subtypeData, t2 subtypeData) subtypeData {
+	return bddDiff(t1.(bdd), t2.(bdd))
 }
 
-func bddSubtypeComplement(t SubtypeData) SubtypeData {
-	return bddComplement(t.(Bdd))
+func bddSubtypeComplement(t subtypeData) subtypeData {
+	return bddComplement(t.(bdd))
 }
 
-func notIsEmpty(cx Context, t SubtypeData) bool {
+func notIsEmpty(cx Context, t subtypeData) bool {
 	return false
 }
 
@@ -106,28 +106,28 @@ func codePointCompare(s1 string, s2 string) bool {
 	return false
 }
 
-func isNothingSubtype(t SubtypeData) bool {
+func isNothingSubtype(t subtypeData) bool {
 	if allOrNothing, ok := t.(allOrNothingSubtype); ok {
 		return allOrNothing.IsNothingSubtype()
 	}
 	return false
 }
 
-func memoSubtypeIsEmpty(cx Context, memoTable map[bddKey]*bddMemo, isEmptyPredicate bddIsEmptyPredicate, b Bdd) bool {
+func memoSubtypeIsEmpty(cx Context, memoTable map[bddKey]*bddMemo, isEmptyPredicate bddIsEmptyPredicate, b bdd) bool {
 	key := b.canonicalKey()
 	mm := memoTable[key]
 	var m *bddMemo
 	if mm != nil {
 		res := mm.isEmpty
 		switch res {
-		case MemoStatus_CYCLIC:
+		case memostatusCyclic:
 			return true
-		case MemoStatus_TRUE, MemoStatus_FALSE:
-			return res == MemoStatus_TRUE
-		case MemoStatus_NULL:
+		case memostatusTrue, memostatusFalse:
+			return res == memostatusTrue
+		case memostatusNull:
 			m = mm
-		case MemoStatus_LOOP, MemoStatus_PROVISIONAL:
-			mm.isEmpty = MemoStatus_LOOP
+		case memostatusLoop, memostatusProvisional:
+			mm.isEmpty = memostatusLoop
 			return true
 		default:
 			panic("Unexpected memo status")
@@ -137,19 +137,19 @@ func memoSubtypeIsEmpty(cx Context, memoTable map[bddKey]*bddMemo, isEmptyPredic
 		m = &tmp
 		memoTable[key] = m
 	}
-	m.isEmpty = MemoStatus_PROVISIONAL
+	m.isEmpty = memostatusProvisional
 	initStackDepth := cx.getMemoStackDepth()
 	cx.pushToMemoStack(m)
 	isEmpty := isEmptyPredicate(cx, b)
-	isLoop := m.isEmpty == MemoStatus_LOOP
+	isLoop := m.isEmpty == memostatusLoop
 	if !isEmpty || initStackDepth == 0 {
 		for i := initStackDepth + 1; i < cx.getMemoStackDepth(); i++ {
 			m := cx.getMemoStack(i).isEmpty
-			if m == MemoStatus_PROVISIONAL || m == MemoStatus_LOOP || m == MemoStatus_CYCLIC {
+			if m == memostatusProvisional || m == memostatusLoop || m == memostatusCyclic {
 				if isEmpty {
-					cx.getMemoStack(i).isEmpty = MemoStatus_TRUE
+					cx.getMemoStack(i).isEmpty = memostatusTrue
 				} else {
-					cx.getMemoStack(i).isEmpty = MemoStatus_NULL
+					cx.getMemoStack(i).isEmpty = memostatusNull
 				}
 			}
 		}
@@ -157,19 +157,19 @@ func memoSubtypeIsEmpty(cx Context, memoTable map[bddKey]*bddMemo, isEmptyPredic
 			cx.popFromMemoStack()
 		}
 		if isLoop && isEmpty {
-			m.isEmpty = MemoStatus_CYCLIC
+			m.isEmpty = memostatusCyclic
 		} else {
 			if isEmpty {
-				m.isEmpty = MemoStatus_TRUE
+				m.isEmpty = memostatusTrue
 			} else {
-				m.isEmpty = MemoStatus_FALSE
+				m.isEmpty = memostatusFalse
 			}
 		}
 	}
 	return isEmpty
 }
 
-func isAllSubtype(t SubtypeData) bool {
+func isAllSubtype(t subtypeData) bool {
 	if allOrNothing, ok := t.(allOrNothingSubtype); ok {
 		return allOrNothing.IsAllSubtype()
 	}

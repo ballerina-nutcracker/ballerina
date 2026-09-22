@@ -17,24 +17,6 @@ concurrency:
   group: lint-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-env:
-  COMMIT_TYPES: |
-    feat
-    fix
-    build
-    chore
-    ci
-    docs
-    style
-    refactor
-    perf
-    test
-    revert
-  MAX_SUBJECT_LENGTH: 72
-  ALLOWED_SCOPES: ""
-  SUBJECT_CASE: lower
-  ALLOW_BREAKING_CHANGE_MARKER: "true"
-
 jobs:
   validate-pr-title:
     name: Validate PR Title
@@ -46,11 +28,13 @@ jobs:
       # Checks out the base branch (the default ref for pull_request_target), not the PR head,
       # so the validation script itself can't be altered by the PR under review.
       - uses: actions/checkout@v7
-      - uses: actions/github-script@v9
-        with:
-          script: |
-            const { validatePrTitle } = require('./.github/scripts/validate-commits.js');
-            await validatePrTitle({ github, context, core });
+      - name: Validate current PR title
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          title=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '.title')
+          python3 .github/scripts/validate_commits.py "$title"
 
   validate-commit-messages:
     name: Validate Commit Messages
@@ -62,8 +46,22 @@ jobs:
       # Checks out the base branch (the default ref for pull_request_target), not the PR head,
       # so the validation script itself can't be altered by the PR under review.
       - uses: actions/checkout@v7
-      - uses: actions/github-script@v9
-        with:
-          script: |
-            const { validateCommitMessages } = require('./.github/scripts/validate-commits.js');
-            await validateCommitMessages({ github, context, core });
+      - name: Validate non-merge commit subjects
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          commits=$(gh api --paginate \
+            "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/commits?per_page=100" \
+            --jq '.[] | select((.parents | length) <= 1) | [.sha[0:7], (.commit.message | split("\n")[0] | rtrimstr("\r") | @base64)] | @tsv')
+
+          failed=0
+          while IFS=$'\t' read -r sha encoded_subject; do
+            [[ -n "$sha" ]] || continue
+            subject=$(printf '%s' "$encoded_subject" | base64 --decode)
+            if ! python3 .github/scripts/validate_commits.py "$subject"; then
+              printf 'Commit: %s\n\n' "$sha" >&2
+              failed=1
+            fi
+          done <<< "$commits"
+          exit "$failed"

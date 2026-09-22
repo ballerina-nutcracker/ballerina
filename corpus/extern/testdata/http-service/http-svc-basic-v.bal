@@ -31,5 +31,5 @@ public function testMain() returns error? {
     http:Client c = check new http:Client("http://localhost:19190", {});
     http:Response r = check c->get("/hello/greeting");
     io:println(r.statusCode); // @output 200
-    io:println(r.getTextPayload()); // @output Hello, World!
+    io:println(check r.getTextPayload()); // @output Hello, World!
 }

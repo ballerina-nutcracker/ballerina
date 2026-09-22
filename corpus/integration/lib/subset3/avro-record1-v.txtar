@@ -1,0 +1,16 @@
+-- stdout --
+7
+deep
+3
+true
+4
+true
+1
+2
+true
+second
+first
+true
+2
+1
+-- stderr --

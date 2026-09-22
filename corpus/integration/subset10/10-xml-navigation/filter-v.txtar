@@ -1,0 +1,21 @@
+-- stdout --
+<ns:root xmlns:ns="foo"/>
+<ns:root xmlns:ns="foo"/>
+<ns:root xmlns:ns="foo"/>
+
+
+
+<ns:root xmlns:ns="foo"/><k:root xmlns:k="bar"/><k:item xmlns:k="bar"/>
+<ns:root xmlns:ns="foo"/>
+<k:root xmlns:k="bar"/><k:item xmlns:k="bar"/>
+<ns:root xmlns:ns="foo"/><k:root xmlns:k="bar"/><k:item xmlns:k="bar"/>
+<ns:root xmlns:ns="foo"/><k:root xmlns:k="bar"/>
+<k:item xmlns:k="bar"/>
+<ns:root xmlns:ns="foo"/><k:item xmlns:k="bar"/>
+<a/>
+<item xmlns="urn:default"/>
+
+<p:item xmlns:p="urn:shared"/>
+<p:item xmlns:p="urn:shared"/>
+<target xmlns="urn:default"/>
+-- stderr --

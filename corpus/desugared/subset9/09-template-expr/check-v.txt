@@ -18,20 +18,12 @@
       (value-type string)
       (error-type)))
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation validate (
-            (simple-var-ref s))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
       (return
         (string-template-literal
           (template-string "hello ")
-          (simple-var-ref $desugar$0)
+          (checked-expr
+            (invocation validate (
+              (simple-var-ref s))))
           (template-string "")))))
   (function validate (
     (variable s (type

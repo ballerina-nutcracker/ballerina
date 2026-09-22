@@ -1,0 +1,21 @@
+(combined
+  (bb0 () ()
+    (return
+      (field-based-access value
+        (simple-var-ref input)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation combined ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation combined (
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 80))))))))
+  )
+)

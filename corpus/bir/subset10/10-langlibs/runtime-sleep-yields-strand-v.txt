@@ -1,0 +1,55 @@
+module $anon.. v 0.0.0;
+helper() -> nil{
+  bb0 {
+    %1 = ConstantLoad helper-done
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+sleeper() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0.05
+    %2 = %1;
+    %3 = sleep(%2) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad sleeper-done
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = start sleeper() isolated=false -> bb1;
+  }
+  bb1 {
+    f1 = %1;
+    %3 = start helper() isolated=false -> bb2;
+  }
+  bb2 {
+    f2 = %3;
+    %5 = wait f1 -> bb3;
+  }
+  bb3 {
+    r1 = %5;
+    %7 = wait f2 -> bb4;
+  }
+  bb4 {
+    r2 = %7;
+    %9 = r1 is error
+    %10 = %9;
+    %11 = println(%10) -> bb5;
+  }
+  bb5 {
+    %12 = r2 is error
+    %13 = %12;
+    %14 = println(%13) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

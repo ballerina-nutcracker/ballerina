@@ -1,0 +1,48 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable base (type
+    (value-type int)) (expr
+    (literal 5)))
+  (function twice (
+    (variable x (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr *
+        (simple-var-ref x)
+        (literal 2))))
+  (class-definition Holder
+    (variable n (type
+      (value-type int)))
+    (function init (
+      (variable n (type
+        (value-type int)) (expr
+        (invocation twice (
+          (simple-var-ref base)))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access n
+            (simple-var-ref self))
+          (simple-var-ref n)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access n
+            (simple-var-ref h)))))
+      (var-def
+        (variable j (type
+          (user-defined-type Holder)) (expr
+          (new (
+            (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access n
+            (simple-var-ref j))))))))

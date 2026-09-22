@@ -19,29 +19,29 @@ package semtypes
 type basicTypeOpsPanicImpl struct {
 }
 
-var _ BasicTypeOps = &basicTypeOpsPanicImpl{}
+var _ basicTypeOps = &basicTypeOpsPanicImpl{}
 
 func newBasicTypeOpsPanicImpl() basicTypeOpsPanicImpl {
 	this := basicTypeOpsPanicImpl{}
 	return this
 }
 
-func (b *basicTypeOpsPanicImpl) Union(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (b *basicTypeOpsPanicImpl) Union(t1 subtypeData, t2 subtypeData) subtypeData {
 	panic("Binary operation should not be called")
 }
 
-func (b *basicTypeOpsPanicImpl) Intersect(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (b *basicTypeOpsPanicImpl) Intersect(t1 subtypeData, t2 subtypeData) subtypeData {
 	panic("Binary operation should not be called")
 }
 
-func (b *basicTypeOpsPanicImpl) Diff(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (b *basicTypeOpsPanicImpl) Diff(t1 subtypeData, t2 subtypeData) subtypeData {
 	panic("Binary operation should not be called")
 }
 
-func (b *basicTypeOpsPanicImpl) complement(t SubtypeData) SubtypeData {
+func (b *basicTypeOpsPanicImpl) complement(t subtypeData) subtypeData {
 	panic("Unary operation should not be called")
 }
 
-func (b *basicTypeOpsPanicImpl) IsEmpty(cx Context, t SubtypeData) bool {
+func (b *basicTypeOpsPanicImpl) IsEmpty(cx Context, t subtypeData) bool {
 	panic("Unary boolean operation should not be called")
 }

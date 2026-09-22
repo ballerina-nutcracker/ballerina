@@ -33,20 +33,28 @@ import (
 
 func TestVersionAtLeast(t *testing.T) {
 	t.Parallel()
+	// Deliberately synthetic versions. versionAtLeast is a general
+	// dot-separated comparator, so pinning this table to the current
+	// toolchain would read as a MinGoVersion assertion without being one --
+	// TestAvailable_GoAtMinVersion is the test that actually tracks the
+	// constant.
 	cases := []struct {
 		a, b string
 		want bool
 	}{
-		{"1.26", "1.26", true},
-		{"1.26.1", "1.26", true},
-		{"1.25", "1.26", false},
-		{"2.0", "1.26", true},
-		{"1.26", "1.26.0", true},
-		{"1.26.0", "1.26", true},
+		{"1.8", "1.8", true},
+		{"1.8.1", "1.8", true},
+		{"1.7", "1.8", false},
+		{"2.0", "1.8", true},
+		{"1.8", "1.8.0", true},
+		{"1.8.0", "1.8", true},
 		{"1.0", "2.0", false},
-		{"1.26rc1", "1.26", false},
-		{"1.26beta2", "1.26", false},
-		{"1.26", "1.26rc1", false},
+		// Multi-digit components must compare numerically, not lexically.
+		{"1.10", "1.9", true},
+		{"1.9", "1.10", false},
+		{"1.8rc1", "1.8", false},
+		{"1.8beta2", "1.8", false},
+		{"1.8", "1.8rc1", false},
 	}
 	for _, tc := range cases {
 		got := versionAtLeast(tc.a, tc.b)
@@ -60,7 +68,7 @@ func TestVersionAtLeast(t *testing.T) {
 // (e.g. a stale cached path to a binary that's since been removed).
 func TestGoVersionAtLeast_ExecFails(t *testing.T) {
 	t.Parallel()
-	if goVersionAtLeast(filepath.Join(t.TempDir(), "no-such-go-binary"), "1.26") {
+	if goVersionAtLeast(filepath.Join(t.TempDir(), "no-such-go-binary"), MinGoVersion) {
 		t.Error("expected false when the go binary can't be executed")
 	}
 }
@@ -89,7 +97,7 @@ func writeFakeGoStub(t *testing.T, dir, output string) string {
 func TestGoVersionAtLeast_MalformedOutput(t *testing.T) {
 	t.Parallel()
 	fakeGo := writeFakeGoStub(t, t.TempDir(), "garbage")
-	if goVersionAtLeast(fakeGo, "1.26") {
+	if goVersionAtLeast(fakeGo, MinGoVersion) {
 		t.Error("expected false for malformed `go version` output")
 	}
 }
@@ -115,6 +123,56 @@ func TestAvailable_GoTooOld(t *testing.T) {
 	e := New("/interp/root", "/out/bal")
 	if e.Available() {
 		t.Error("expected Available() to be false when go is older than MinGoVersion")
+	}
+}
+
+// minorBelow returns version with its last component decremented -- e.g.
+// "1.27" -> "1.26". The boundary tests derive their stubs from MinGoVersion
+// through this instead of hardcoding a version, so they keep testing the
+// gate's edge across toolchain bumps rather than drifting into a no-op the
+// way a literal threshold does.
+func minorBelow(t *testing.T, version string) string {
+	t.Helper()
+	parts := strings.Split(version, ".")
+	last := len(parts) - 1
+	n, err := strconv.Atoi(parts[last])
+	if err != nil {
+		t.Fatalf("parsing last component of %q: %v", version, err)
+	}
+	if n == 0 {
+		t.Fatalf("cannot derive a lower version from %q", version)
+	}
+	parts[last] = strconv.Itoa(n - 1)
+	return strings.Join(parts, ".")
+}
+
+// TestAvailable_GoAtMinVersion pins the lower edge of the MinGoVersion gate:
+// a toolchain at exactly MinGoVersion must be accepted. Paired with
+// TestAvailable_GoJustBelowMinVersion, this is what fails when the constant
+// moves, unlike TestAvailable_GoTooOld whose go1.20 stub sits far enough
+// below any plausible minimum to survive a stale MinGoVersion.
+func TestAvailable_GoAtMinVersion(t *testing.T) {
+	dir := t.TempDir()
+	writeFakeGoStub(t, dir, "go version go"+MinGoVersion+".0 linux/amd64")
+	t.Setenv("PATH", dir)
+
+	e := New(newFakeInterpreterRoot(t), "/out/bal")
+	if !e.Available() {
+		t.Errorf("expected Available() to be true for go %s.0 at MinGoVersion %s", MinGoVersion, MinGoVersion)
+	}
+}
+
+// TestAvailable_GoJustBelowMinVersion pins the other side of the same edge:
+// the highest patch of the minor just below MinGoVersion must be rejected.
+func TestAvailable_GoJustBelowMinVersion(t *testing.T) {
+	tooOld := minorBelow(t, MinGoVersion)
+	dir := t.TempDir()
+	writeFakeGoStub(t, dir, "go version go"+tooOld+".9 linux/amd64")
+	t.Setenv("PATH", dir)
+
+	e := New(newFakeInterpreterRoot(t), "/out/bal")
+	if e.Available() {
+		t.Errorf("expected Available() to be false for go %s.9 below MinGoVersion %s", tooOld, MinGoVersion)
 	}
 }
 
@@ -162,9 +220,9 @@ func TestWriteNativeFiles_CopiesGoFiles(t *testing.T) {
 func TestWriteNativeWorkspace(t *testing.T) {
 	t.Parallel()
 	interpRoot := t.TempDir()
-	mustWriteFile(t, filepath.Join(interpRoot, "cli", "go.mod"), "module example.com/cli\n\ngo 1.26\n")
-	mustWriteFile(t, filepath.Join(interpRoot, "ast", "go.mod"), "module example.com/ast\n\ngo 1.26\n")
-	mustWriteFile(t, filepath.Join(interpRoot, "go.work"), `go 1.26
+	mustWriteFile(t, filepath.Join(interpRoot, "cli", "go.mod"), "module example.com/cli\n\ngo 1.27\n")
+	mustWriteFile(t, filepath.Join(interpRoot, "ast", "go.mod"), "module example.com/ast\n\ngo 1.27\n")
+	mustWriteFile(t, filepath.Join(interpRoot, "go.work"), `go 1.27
 
 use (
 	./cli
@@ -181,7 +239,7 @@ replace example.com/ast v1.0.0 => ./ast
 	}
 	for _, payload := range payloads {
 		mustWriteFile(t, filepath.Join(tmpDir, moduleDirName(payload.GoModuleName()), "go.mod"),
-			"module "+payload.GoModuleName()+"\n\ngo 1.26\n")
+			"module "+payload.GoModuleName()+"\n\ngo 1.27\n")
 	}
 
 	workspaceFile, err := writeNativeWorkspace(tmpDir, interpRoot, payloads)
@@ -189,6 +247,12 @@ replace example.com/ast v1.0.0 => ./ast
 		t.Fatalf("writeNativeWorkspace: %v", err)
 	}
 	content := mustReadFile(t, workspaceFile)
+	// The generated workspace must carry the source workspace's language
+	// version, not a version of its own -- otherwise a toolchain bump to
+	// go.work silently leaves native builds compiling against the old one.
+	if !strings.HasPrefix(content, "go 1.27\n") {
+		t.Errorf("workspace did not preserve the source go directive %q:\n%s", "go 1.27", content)
+	}
 	for _, dir := range []string{"cli", "ast"} {
 		if !strings.Contains(content, strconv.Quote(filepath.Join(interpRoot, dir))) {
 			t.Errorf("workspace did not preserve local module %q:\n%s", dir, content)
@@ -211,8 +275,8 @@ replace example.com/ast v1.0.0 => ./ast
 func TestWriteNativeWorkspaceDriverOnly(t *testing.T) {
 	t.Parallel()
 	interpRoot := t.TempDir()
-	mustWriteFile(t, filepath.Join(interpRoot, "cli", "go.mod"), "module example.com/cli\n\ngo 1.26\n\nrequire example.com/dependency v1.0.0\n")
-	mustWriteFile(t, filepath.Join(interpRoot, "go.work"), "go 1.26\n\nuse ./cli\n")
+	mustWriteFile(t, filepath.Join(interpRoot, "cli", "go.mod"), "module example.com/cli\n\ngo 1.27\n\nrequire example.com/dependency v1.0.0\n")
+	mustWriteFile(t, filepath.Join(interpRoot, "go.work"), "go 1.27\n\nuse ./cli\n")
 
 	workspaceFile, err := writeNativeWorkspace(t.TempDir(), interpRoot, nil)
 	if err != nil {
@@ -230,10 +294,44 @@ func TestWriteNativeWorkspaceDriverOnly(t *testing.T) {
 func TestWriteNativeWorkspace_MissingModule(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	mustWriteFile(t, filepath.Join(root, "go.work"), "go 1.26\n\nuse ./cli\n")
+	mustWriteFile(t, filepath.Join(root, "go.work"), "go 1.27\n\nuse ./cli\n")
 	_, err := writeNativeWorkspace(t.TempDir(), root, nil)
 	if err == nil {
 		t.Error("expected error when the CLI driver module is missing")
+	}
+}
+
+// TestNativeModuleGoMod covers the manifest staged alongside each native
+// payload. buildOrReuse writes it before invoking go build, so nothing but
+// this asserts its go directive -- and a directive above what the
+// interpreter tree targets fails the build with a "go.mod requires go >= X"
+// error attributed to generated code the user never wrote.
+func TestNativeModuleGoMod(t *testing.T) {
+	t.Parallel()
+	got := nativeModuleGoMod("example.com/pkg")
+	want := "module example.com/pkg\n\ngo " + MinGoVersion + "\n"
+	if got != want {
+		t.Errorf("nativeModuleGoMod = %q, want %q", got, want)
+	}
+}
+
+// TestWriteNativeWorkspace_NoSourceGoDirective covers a driver workspace
+// with no go directive at all, where writeNativeWorkspace falls back to
+// MinGoVersion. Untested, the fallback could emit an empty "go " line and
+// produce a workspace go build rejects.
+func TestWriteNativeWorkspace_NoSourceGoDirective(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	mustWriteFile(t, filepath.Join(root, "cli", "go.mod"), "module example.com/cli\n\ngo "+MinGoVersion+"\n")
+	mustWriteFile(t, filepath.Join(root, "go.work"), "use ./cli\n")
+
+	workspaceFile, err := writeNativeWorkspace(t.TempDir(), root, nil)
+	if err != nil {
+		t.Fatalf("writeNativeWorkspace: %v", err)
+	}
+	content := mustReadFile(t, workspaceFile)
+	if !strings.HasPrefix(content, "go "+MinGoVersion+"\n") {
+		t.Errorf("workspace did not fall back to MinGoVersion %q:\n%s", MinGoVersion, content)
 	}
 }
 
@@ -262,8 +360,8 @@ func TestNewForTarget_SetsTargetPackage(t *testing.T) {
 func newFakeInterpreterRoot(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	mustWriteFile(t, filepath.Join(root, "go.work"), "go 1.26\n\nuse ./cli\n")
-	mustWriteFile(t, filepath.Join(root, "cli", "go.mod"), "module example.com/cli\n\ngo 1.26\n")
+	mustWriteFile(t, filepath.Join(root, "go.work"), "go 1.27\n\nuse ./cli\n")
+	mustWriteFile(t, filepath.Join(root, "cli", "go.mod"), "module example.com/cli\n\ngo 1.27\n")
 	mustWriteFile(t, filepath.Join(root, "cli", "go.sum"), "")
 	return root
 }

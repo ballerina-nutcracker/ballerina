@@ -1,0 +1,19 @@
+-- stdout --
+one
+1
+{"k":"one","v":1}
+true
+one
+2
+true
+5
+yes
+3.0
+3
+2
+2
+one
+true
+2
+true
+-- stderr --

@@ -35,17 +35,22 @@ type Environment struct {
 	resolutionOptions ResolutionOptions
 	// TODO: find better place to put this
 	publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace
+	// moduleVisibility tracks which package owns each module and whether
+	// it's exported, so cross-package imports of non-exported modules can
+	// be rejected. Keyed the same way as publicSymbols.
+	moduleVisibility map[semantics.PackageIdentifier]semantics.ModuleVisibility
 }
 
 // NewEnvironment creates a new Environment.
 func NewEnvironment(fsys fs.FS, env *context.CompilerEnvironment) *Environment {
 	cache := newPackageCache()
 	return &Environment{
-		fsys:            fsys,
-		compilerEnv:     env,
-		packageCache:    cache,
-		packageResolver: NewPackageResolver(cache),
-		publicSymbols:   make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace),
+		fsys:             fsys,
+		compilerEnv:      env,
+		packageCache:     cache,
+		packageResolver:  NewPackageResolver(cache),
+		publicSymbols:    make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace),
+		moduleVisibility: make(map[semantics.PackageIdentifier]semantics.ModuleVisibility),
 	}
 }
 

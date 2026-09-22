@@ -21,27 +21,27 @@ main() -> nil{
 }
 bar([int...]...) -> int{
   bb0 {
-    %3 = ConstantLoad 0
-    %2 = vals[%3];
-    %4 = %2;
-    %6 = ConstantLoad 1
-    %5 = vals[%6];
-    %7 = %5;
-    %8 = foo(%4,%7) -> bb1;
+    %4 = ConstantLoad 0
+    %3 = vals[%4];
+    %5 = %3;
+    %7 = ConstantLoad 1
+    %6 = vals[%7];
+    %8 = %6;
+    %9 = foo(%5,%8) -> bb1;
   }
   bb1 {
-    $desugar$0 = %8;
-    %10 = $desugar$0 is error
+    %10 = %9 is error
     %10 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 0
-    (1, %11) = (1, $desugar$0);
-    PopScopeFrame
-    panic %11;
+    panic %9;
   }
   bb3 {
-    %0 = $desugar$0;
+    %2 = %9;
+    GOTO bb4;
+  }
+  bb4 {
+    %0 = %2;
     return;
   }
 }

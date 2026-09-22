@@ -68,3 +68,9 @@ public isolated function cloneWithType(anydata v, typedesc<anydata> t = <>) retu
 # + t - type to convert to
 # + return - value belonging to type parameter `t` or error if this cannot be done
 public isolated function fromJsonWithType(json v, typedesc<anydata> t = <>) returns t|error  = external;
+
+# Returns a string that represents `v`.
+#
+# + v - the value
+# + return - a string representing `v`
+public isolated function toString(any v) returns string = external;

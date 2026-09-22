@@ -121,6 +121,14 @@ func (c *CompilerContext) FunctionSignatureRef(fn model.SymbolRef) (model.Functi
 	return c.env.FunctionSignatureRef(fn)
 }
 
+func (c *CompilerContext) AssociateReturnFunctionSignature(source, target model.FunctionSignatureRef) bool {
+	return c.env.AssociateReturnFunctionSignature(source, target)
+}
+
+func (c *CompilerContext) ReturnFunctionSignatureRef(source model.FunctionSignatureRef) (model.FunctionSignatureRef, bool) {
+	return c.env.ReturnFunctionSignatureRef(source)
+}
+
 func (c *CompilerContext) UpdateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata) {
 	c.env.UpdateFunctionSignatureIncludedRecords(ref, includedRecords)
 }
@@ -169,12 +177,37 @@ func (c *CompilerContext) SetSymbolType(symbol model.SymbolRef, ty semtypes.SemT
 	c.GetSymbol(symbol).SetType(ty)
 }
 
+func (c *CompilerContext) SetXMLNamespaceURI(symbol model.SymbolRef, uri string) error {
+	return model.SetXMLNamespaceURI(c.GetSymbol(symbol), uri)
+}
+
 func (c *CompilerContext) SetSymbolAnnotationValue(symbol model.SymbolRef, key string, value values.AnnotationValue) {
 	c.env.SetSymbolAnnotationValue(symbol, key, value)
 }
 
 func (c *CompilerContext) SymbolAnnotationValues(symbol model.SymbolRef) values.AnnotationValues {
 	return c.env.SymbolAnnotationValues(symbol)
+}
+
+func (c *CompilerContext) SetRecordFieldAnnotationValue(
+	symbol model.SymbolRef,
+	field string,
+	key string,
+	value values.AnnotationValue,
+) {
+	c.env.SetRecordFieldAnnotationValue(symbol, field, key, value)
+}
+
+func (c *CompilerContext) RecordFieldAnnotationValues(symbol model.SymbolRef) values.FieldAnnotationValues {
+	return c.env.RecordFieldAnnotationValues(symbol)
+}
+
+func (c *CompilerContext) SetMappingDefaults(mat *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+	c.env.SetMappingDefaults(mat, defaults)
+}
+
+func (c *CompilerContext) MappingDefaults(mat *semtypes.MappingAtomicType) ([]model.FieldDefault, bool) {
+	return c.env.MappingDefaults(mat)
 }
 
 func (c *CompilerContext) DistinctTypeID(symbol model.SymbolRef) int {

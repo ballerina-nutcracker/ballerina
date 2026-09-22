@@ -1,0 +1,63 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newXMLElement("a", ())
+    %2 = ConstantLoad hello
+    %3 = newXMLText(%2)
+    %4 = newXMLSequence{%1, %3}
+    xs = %4;
+    %6 = iterator(xs) -> bb1;
+  }
+  bb1 {
+    %7 = %6.next() -> bb2;
+  }
+  bb2 {
+    next = %7;
+    %10 = ConstantLoad <nil>
+    %11 = %10;
+    %9 = != next %11;
+    %9 ? bb3 : bb5;
+  }
+  bb3 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, next)[%1];
+    %2 = println(%0) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb5 {
+    PushScopeFrame 8
+    %0 = newXMLElement("e", ())
+    element = %0;
+    %2 = iterator(element) -> bb6;
+  }
+  bb6 {
+    %3 = %2.next() -> bb7;
+  }
+  bb7 {
+    elementNext = %3;
+    %6 = ConstantLoad <nil>
+    %7 = %6;
+    %5 = != elementNext %7;
+    %5 ? bb8 : bb10;
+  }
+  bb8 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = (1, elementNext)[%1];
+    %2 = println(%0) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

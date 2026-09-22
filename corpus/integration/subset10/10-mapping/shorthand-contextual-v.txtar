@@ -1,0 +1,6 @@
+-- stdout --
+{"name":"Ada","age":36}
+{"age":36}
+{"age":36}
+{"name":"Ada","age":36}
+-- stderr --

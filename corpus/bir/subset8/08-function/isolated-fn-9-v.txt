@@ -43,7 +43,7 @@ callMethod() -> int{
   bb0 {
     %1 = newObject $anon/.:Foo
     %2 = ConstantLoad 10
-    %3 = init(%1,%2) -> bb1;
+    %3 = %1.init(%2) -> bb1;
   }
   bb1 {
     %5 = %3 is nil
@@ -59,7 +59,7 @@ callMethod() -> int{
   }
   bb4 {
     f = %4;
-    %7 = getX(f) -> bb5;
+    %7 = f.getX() -> bb5;
   }
   bb5 {
     %0 = %7;
@@ -70,7 +70,7 @@ callRemoteMethod() -> int{
   bb0 {
     %1 = newObject $anon/.:Bar
     %2 = ConstantLoad 20
-    %3 = init(%1,%2) -> bb1;
+    %3 = %1.init(%2) -> bb1;
   }
   bb1 {
     %5 = %3 is nil
@@ -86,7 +86,7 @@ callRemoteMethod() -> int{
   }
   bb4 {
     b = %4;
-    %7 = $remote$getY(b) -> bb5;
+    %7 = b.$remote$getY() -> bb5;
   }
   bb5 {
     %0 = %7;

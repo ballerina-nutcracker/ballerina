@@ -133,10 +133,40 @@ Code coverage is tracked via [Codecov](https://codecov.io/gh/ballerina-nutcracke
 
 ```bash
 gofmt -l -s .
-golangci-lint run
+make -j4 lint
 ```
 
-CI runs `golangci-lint` v2.10 (configuration in [`.golangci.yml`](../../.golangci.yml)), and the Native CI workflow fails on any file not formatted with `gofmt -s`.
+The `build`, `vet`, and `lint` targets run per-module commands and support Make parallelism:
+
+```bash
+make -j4 build
+make -j4 vet
+make -j4 lint
+```
+
+Linting uses a module's `.golangci.yml` when present and otherwise falls back to the shared [root configuration](../../.golangci.yml). Individual module configurations opt into stricter checks as appropriate.
+
+CI runs `golangci-lint` v2.13, and the Native CI workflow fails on any file not formatted with `gofmt -s`.
+
+## Git hooks
+
+Install the repository's commit hook after cloning:
+
+```bash
+make install-hooks
+```
+
+The hook requires Python 3 and validates commit subjects, license headers on new Go and Ballerina files, and Go formatting, then runs `make -j4 build lint`. Merge, `fixup!`, and `squash!` commit subjects are exempt from local message validation, but still run the remaining checks. Set `SKIP_COMMIT_HOOKS` to bypass all checks for a single commit:
+
+```bash
+SKIP_COMMIT_HOOKS=1 git commit
+```
+
+The hook requires `golangci-lint`. Install the version used by CI if it is not already available:
+
+```bash
+go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2
+```
 
 ## Code generation
 
@@ -154,8 +184,8 @@ This builds `tree-gen` into the repository root and runs `go test ./... -update`
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o dist/bal ./cli/cmd
 ```
 
-Releases are produced for `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`, and `windows/amd64`. Set the version string reported by `bal version` with:
+Releases are produced for `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`, `windows/amd64`, and `windows/arm64`. Set the version string reported by `bal version` with:
 
 ```bash
-go build -ldflags="-s -w -X main.Version=0.5.0" -o bal ./cli/cmd
+go build -ldflags="-s -w -X main.Version=0.7.0" -o bal ./cli/cmd
 ```

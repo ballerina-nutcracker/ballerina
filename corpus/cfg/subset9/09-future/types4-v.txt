@@ -1,0 +1,42 @@
+(identity
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable started (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation number ())))))
+    (var-def
+      (variable widened (type
+        (user-defined-type ValueFuture)) (expr
+        (simple-var-ref started))))
+    (var-def
+      (variable same (type
+        (user-defined-type ValueFuture)) (expr
+        (invocation identity (
+          (simple-var-ref widened))))))
+    (var-def
+      (variable result (type
+        (union-type
+          (value-type any)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref same)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)
+(number
+  (bb0 () ()
+    (return
+      (literal 42))
+  )
+)

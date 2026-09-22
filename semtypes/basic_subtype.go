@@ -17,17 +17,17 @@
 package semtypes
 
 type basicSubtype struct {
-	BasicTypeCode BasicTypeCode
-	SubtypeData   ProperSubtypeData
+	basicTypeCode basicTypeCode
+	subtypeData   properSubtypeData
 }
 
-func newBasicSubtypeFromBasicTypeCodeProperSubtypeData(basicTypeCode BasicTypeCode, properSubtypeData ProperSubtypeData) basicSubtype {
+func newBasicSubtypeFromBasicTypeCodeProperSubtypeData(basicTypeCode basicTypeCode, properSubtypeData properSubtypeData) basicSubtype {
 	this := basicSubtype{}
-	this.BasicTypeCode = basicTypeCode
-	this.SubtypeData = properSubtypeData
+	this.basicTypeCode = basicTypeCode
+	this.subtypeData = properSubtypeData
 	return this
 }
 
-func basicSubtypeFrom(typeCode BasicTypeCode, data ProperSubtypeData) basicSubtype {
+func basicSubtypeFrom(typeCode basicTypeCode, data properSubtypeData) basicSubtype {
 	return newBasicSubtypeFromBasicTypeCodeProperSubtypeData(typeCode, data)
 }

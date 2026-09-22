@@ -12,13 +12,14 @@ We appreciate your help!
 ## Get started
 
 - Read the [Code of Conduct](CODE_OF_CONDUCT.md).
+- Install the repository's commit checks with `make install-hooks` after cloning.
 - Join the [Ballerina community](https://ballerina.io/community/).
 - Submitting a bug is just as important as contributing code. [Report an issue](https://github.com/ballerina-nutcracker/ballerina/issues) in this repo.
 - Start with GitHub issues labeled `good first issue`. Use comments on the issue to indicate that you will be working on it and get guidance.
 
 ## Build the source code
 
-- Ensure you have [Go 1.26 or later](https://go.dev/dl/).
+- Ensure you have [Go 1.27 or later](https://go.dev/dl/) and Python 3 (required by the development scripts and commit hook).
 - Release build: `go build -o bal ./cli/cmd`
 - Debug build (enables profiling): `go build -tags debug -o bal-debug ./cli/cmd`
 

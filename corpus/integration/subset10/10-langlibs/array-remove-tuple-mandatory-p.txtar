@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: inherent type violation: cannot reduce the length of a tuple below its 1 mandatory member(s)
+        at main(array-remove-tuple-mandatory-p.bal:19)

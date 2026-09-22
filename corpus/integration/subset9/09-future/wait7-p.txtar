@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: multiple waits on the same future is not allowed
+        at main(wait7-p.bal:30)

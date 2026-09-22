@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: alternate wait panic
+        at crash(wait4-p.bal:17)
+           main(wait4-p.bal:25)

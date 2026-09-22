@@ -1,0 +1,110 @@
+(increment
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (value-type int)) (expr
+        (check-panicked-expr
+          (single-wait-action
+            (simple-var-ref previous))))))
+    (return
+      (binary-expr +
+        (simple-var-ref value)
+        (literal 1)))
+  )
+)
+(isolatedIncrement
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (value-type int)) (expr
+        (check-panicked-expr
+          (single-wait-action
+            (simple-var-ref previous))))))
+    (return
+      (binary-expr +
+        (simple-var-ref value)
+        (literal 1)))
+  )
+)
+(isolatedSeed
+  (bb0 () ()
+    (return
+      (literal 0))
+  )
+)
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable isolatedTail (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action isolated
+          (invocation isolatedSeed ())))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (literal 50))
+    (var-def
+      (variable _ (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (assignment
+      (simple-var-ref isolatedTail)
+      (start-action
+        (invocation isolatedIncrement (
+          (simple-var-ref isolatedTail)))))
+  )
+  (bb3 (bb1) (bb4)
+    (var-def
+      (variable isolatedResult (type
+        (value-type int)) (expr
+        (checked-expr
+          (single-wait-action
+            (simple-var-ref isolatedTail))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref isolatedResult))))
+    (var-def
+      (variable tail (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation seed ())))))
+  )
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (binary-expr ..<
+      (literal 0)
+      (literal 50))
+    (var-def
+      (variable _ (type
+        (value-type int))))
+  )
+  (bb5 (bb4) (bb4)
+    (assignment
+      (simple-var-ref tail)
+      (start-action
+        (invocation increment (
+          (simple-var-ref tail)))))
+  )
+  (bb6 (bb4) ()
+    (var-def
+      (variable result (type
+        (value-type int)) (expr
+        (checked-expr
+          (single-wait-action
+            (simple-var-ref tail))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)
+(seed
+  (bb0 () ()
+    (return
+      (literal 0))
+  )
+)

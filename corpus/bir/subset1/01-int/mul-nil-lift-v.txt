@@ -3,29 +3,21 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad <nil>
     x = %1;
-    $desugar$0 = x;
-    %4 = ConstantLoad <nil>
-    $desugar$1 = %4;
-    %6 = $desugar$0 is nil
-    %6 ? bb1 : bb2;
+    %3 = x;
+    %4 = ConstantLoad 2
+    %5 = %3 is nil
+    %5 ? bb1 : bb2;
   }
   bb1 {
-    PushScopeFrame 0
-    PopScopeFrame
+    %6 = ConstantLoad <nil>
     GOTO bb3;
   }
   bb2 {
-    PushScopeFrame 4
-    %1 = (1, $desugar$0);
-    %2 = ConstantLoad 2
-    %3 = %2;
-    %0 = * %1 %3;
-    (1, $desugar$1) = %0;
-    PopScopeFrame
+    %6 = * %3 %4;
     GOTO bb3;
   }
   bb3 {
-    %7 = $desugar$1;
+    %7 = %6;
     %8 = println(%7) -> bb4;
   }
   bb4 {

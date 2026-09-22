@@ -26,13 +26,32 @@ fi
 
 version="${1:-}"
 remote_or_commit="${2:-}"
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+branch=""
+remote="${remote_or_commit:-origin}"
+if [[ "$mode" == "release" ]]; then
+    if [[ -n "$(git status --porcelain)" ]]; then
+        echo "refusing to release from a dirty worktree" >&2
+        exit 1
+    fi
+    branch="$(git symbolic-ref --quiet --short HEAD || true)"
+    if [[ -z "$branch" ]]; then
+        echo "refusing to release from a detached HEAD" >&2
+        exit 1
+    fi
+
+    if [[ -z "$version" ]]; then
+        version="v$("$(dirname "$0")/resolve_next_version.sh" "$branch")"
+    fi
+fi
+
 if [[ ! "$version" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
     echo "usage: $0 [--check-tags] vMAJOR.MINOR.PATCH[-PRERELEASE] [remote|commit]" >&2
     exit 1
 fi
-
-repo_root="$(git rev-parse --show-toplevel)"
-cd "$repo_root"
 
 workspace_dirs="$(go list -m -f '{{if .Main}}{{.Dir}}{{end}}' all | sed '/^$/d' | sort)"
 if [[ -z "$workspace_dirs" ]]; then
@@ -72,17 +91,6 @@ if [[ "$mode" == "check-tags" ]]; then
     check_tags "$target_commit"
     exit 0
 fi
-
-if [[ -n "$(git status --porcelain)" ]]; then
-    echo "refusing to release from a dirty worktree" >&2
-    exit 1
-fi
-branch="$(git symbolic-ref --quiet --short HEAD || true)"
-if [[ -z "$branch" ]]; then
-    echo "refusing to release from a detached HEAD" >&2
-    exit 1
-fi
-remote="${remote_or_commit:-origin}"
 
 modules_file="$(mktemp)"
 trap 'rm -f "$modules_file"' EXIT
@@ -174,6 +182,26 @@ fi
 target_commit="$(git rev-parse --verify HEAD^{commit})"
 git push "$remote" "HEAD:refs/heads/$branch"
 
+is_final_release=false
+if [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    is_final_release=true
+fi
+release_branch="release-$(echo "${version#v}" | cut -d. -f1,2).x"
+
+if [[ "$is_final_release" == true ]]; then
+    # Anchors this version line for future patches. Only done on a final
+    # release — each prerelease has its own commit, so anchoring on every
+    # rc.N would collide with the first one.
+    existing_release_branch="$(git rev-parse -q --verify "refs/heads/$release_branch^{commit}" || true)"
+    if [[ -n "$existing_release_branch" && "$existing_release_branch" != "$target_commit" ]]; then
+        echo "branch $release_branch already exists and points to $existing_release_branch" >&2
+        exit 1
+    fi
+    if [[ -z "$existing_release_branch" ]]; then
+        git branch "$release_branch" "$target_commit"
+    fi
+fi
+
 tags=()
 while IFS= read -r tag; do
     [[ -n "$tag" ]] && tags+=("$tag")
@@ -188,5 +216,20 @@ for tag in "${tags[@]}"; do
         git tag "$tag" "$target_commit"
     fi
 done
-git push --atomic "$remote" "${tags[@]/#/refs/tags/}"
+module_tags=()
+for tag in "${tags[@]}"; do
+    [[ "$tag" != "$version" ]] && module_tags+=("$tag")
+done
+if [[ "$is_final_release" == true ]]; then
+    if [[ "${#module_tags[@]}" -gt 0 ]]; then
+        git push --atomic "$remote" "refs/heads/$release_branch" "${module_tags[@]/#/refs/tags/}"
+    else
+        git push "$remote" "refs/heads/$release_branch"
+    fi
+elif [[ "${#module_tags[@]}" -gt 0 ]]; then
+    git push --atomic "$remote" "${module_tags[@]/#/refs/tags/}"
+fi
+# Pushed alone: an atomic multi-tag push never fires GitHub's tag webhook,
+# which would silently break release.yml's trigger.
+git push "$remote" "refs/tags/$version"
 check_tags "$target_commit"

@@ -101,7 +101,7 @@ func execNewObject(ctx *extern.Context, newObject *bir.NewObject, frame *Frame) 
 	tmpl := ctx.Env.Registry.(*modules.Registry).GetClassTemplate(newObject.ClassDefRef)
 	fieldValues := make(map[string]values.BalValue, tmpl.FieldCount)
 	objType := newObject.GetLhsOperand().VariableDcl.GetType()
-	obj := values.NewObject(objType, fieldValues, tmpl.MethodKeys, tmpl.RTable)
+	obj := values.NewObject(objType, fieldValues, tmpl.MethodKeys, tmpl.RTable, tmpl.Annotations)
 	setOperandValue(ctx, newObject.GetLhsOperand(), frame, obj)
 }
 
@@ -239,7 +239,6 @@ func execNewXMLPI(ctx *extern.Context, instr *bir.NewXMLPI, frame *Frame) {
 }
 
 func execNewXMLElement(ctx *extern.Context, instr *bir.NewXMLElement, frame *Frame) {
-	name := getOperandValue(ctx, instr.NameOp, frame).(string)
 	var children values.XMLValue
 	if instr.ChildrenOp != nil {
 		raw := getOperandValue(ctx, instr.ChildrenOp, frame)
@@ -257,11 +256,16 @@ func execNewXMLElement(ctx *extern.Context, instr *bir.NewXMLElement, frame *Fra
 	if instr.NamespacesOp != nil {
 		namespaces = getOperandValue(ctx, instr.NamespacesOp, frame).(*values.Map)
 	}
-	setOperandValue(ctx, instr.LhsOp, frame, values.NewXMLElement(name, attrs, namespaces, children, xmlResultReadonly(ctx, instr.LhsOp)))
+	setOperandValue(ctx, instr.LhsOp, frame, values.NewXMLElement(instr.Prefix, instr.LocalName, instr.NamespaceURI, attrs, namespaces, children, xmlResultReadonly(ctx, instr.LhsOp)))
+}
+
+func execXMLFilter(ctx *extern.Context, instr *bir.XMLFilter, frame *Frame) {
+	source := getOperandValue(ctx, instr.Source, frame)
+	setOperandValue(ctx, instr.LhsOp, frame, filterXML(source, instr.Filters))
 }
 
 func xmlResultReadonly(ctx *extern.Context, op *bir.BIROperand) bool {
-	return semtypes.IsSubtype(ctx.TypeCtx(), op.VariableDcl.GetType(), semtypes.VAL_READONLY)
+	return semtypes.IsSubtype(ctx.TypeCtx(), op.VariableDcl.GetType(), semtypes.ValReadonly)
 }
 
 func execEvalTemplateExpr(ctx *extern.Context, instr *bir.EvalTemplateExpr, frame *Frame) {

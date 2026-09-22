@@ -27,9 +27,11 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/birgen"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/desugar"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/nodebuilder"
 	"github.com/ballerina-nutcracker/ballerina/semantics"
 	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -245,7 +247,7 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 		moduleCtx.testDocContextMap,
 	)
 
-	if len(syntaxTrees) == 0 {
+	if compilerCtx.HasDiagnostics() || len(syntaxTrees) == 0 {
 		return
 	}
 
@@ -264,19 +266,25 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	}
 	compilerCtx.EndStage()
 
-	// Resolve symbols (imports) before type resolution
-	compilerCtx.StartStage(context.StageImportResolution)
+	// Resolve symbols and imports before type resolution.
 	publicSymbols := moduleCtx.getProject().Environment().publicSymbols
+	moduleVisibility := moduleCtx.getProject().Environment().moduleVisibility
 	// PR-TODO: remove this after migration all lang libraries
-	implicitImports := semantics.GetImplicitImports(compilerCtx)
+	implicitImports := make(map[string]model.ExportedSymbolSpace)
 	seedMigratedLangLibs(implicitImports, publicSymbols)
-	importedSymbolsByCU := semantics.ResolveCompilationUnitImports(compilerCtx, compilationUnits, implicitImports, publicSymbols, moduleCtx.moduleDescriptor.Org().value)
-	moduleCtx.importedSymbols = mergeCompilationUnitImports(importedSymbolsByCU)
-	compilerCtx.EndStage()
-
 	compilerCtx.StartStage(context.StageSymbolResolution)
-	pkgScope, exported := semantics.ResolveSymbols(compilerCtx, *pkgID, importedSymbolsByCU)
-	pkgNode := ast.ToPackageFromCompilationUnits(compilationUnits)
+	pkgScope, exported, importedSymbols := semantics.ResolveSymbols(
+		compilerCtx,
+		*pkgID,
+		compilationUnits,
+		implicitImports,
+		publicSymbols,
+		moduleVisibility,
+		moduleCtx.moduleDescriptor.Org().value,
+		moduleCtx.moduleDescriptor.PackageName().Value(),
+	)
+	moduleCtx.importedSymbols = importedSymbols
+	pkgNode := nodebuilder.ToPackageFromCompilationUnits(compilerCtx, compilationUnits)
 	pkgNode.Imports = nil
 	pkgNode.PackageID = pkgID
 	pkgNode.Scope = pkgScope
@@ -289,14 +297,21 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 		return
 	}
 
-	publicSymbols[semantics.PackageIdentifier{
+	moduleID := semantics.PackageIdentifier{
 		OrgName:    moduleCtx.moduleDescriptor.Org().value,
 		ModuleName: moduleCtx.moduleID.moduleName,
-	}] = exported
+	}
+	publicSymbols[moduleID] = exported
+	manifest := moduleCtx.getProject().CurrentPackage().Manifest()
+	moduleVisibility[moduleID] = semantics.ModuleVisibility{
+		PackageOrg:  moduleCtx.moduleDescriptor.Org().value,
+		PackageName: moduleCtx.moduleDescriptor.PackageName().Value(),
+		Exported:    slices.Contains(manifest.ExportedModules(), moduleCtx.moduleID.moduleName),
+	}
 
 	// Add type resolution step (this only resolve types of top level nodes)
 	compilerCtx.StartStage(context.StageTopLevelTypeResolution)
-	semantics.ResolveTopLevelNodes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
+	semantics.ResolvePublicNodeTypes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
 }
 
@@ -317,15 +332,14 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 
 	// Resolve types of function bodies and inner nodes
 	compilerCtx.StartStage(context.StageLocalNodeResolution)
-	semantics.ResolveLocalNodes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
+	semantics.ResolvePrivateNodesTypes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
 	if compilerCtx.HasDiagnostics() {
 		return
 	}
 
 	compilerCtx.StartStage(context.StageSemanticAnalysis)
-	semanticAnalyzer := semantics.NewSemanticAnalyzer(moduleCtx.compilerCtx)
-	semanticAnalyzer.Analyze(pkgNode, moduleCtx.importedSymbols)
+	semantics.AnalyzeSemantics(moduleCtx.compilerCtx, pkgNode, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
 	if compilerCtx.HasDiagnostics() {
 		return
@@ -344,11 +358,9 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "==================BEGIN CFG==================")
 		if compilationOptions.DumpCFGFormat() == CFGFormatDot {
-			dotExporter := semantics.NewCFGDotExporter(compilerCtx)
-			fmt.Fprintln(os.Stderr, strings.TrimSpace(dotExporter.Export(cfg)))
+			fmt.Fprintln(os.Stderr, strings.TrimSpace(semantics.PrintCFGDot(compilerCtx, cfg)))
 		} else {
-			prettyPrinter := semantics.NewCFGPrettyPrinter(compilerCtx)
-			fmt.Fprintln(os.Stderr, strings.TrimSpace(prettyPrinter.Print(cfg)))
+			fmt.Fprintln(os.Stderr, strings.TrimSpace(semantics.PrettyPrintCFG(compilerCtx, cfg)))
 		}
 		fmt.Fprintln(os.Stderr, "===================END CFG===================")
 	}
@@ -369,6 +381,9 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 	compilerCtx.StartStage(context.StageDesugaring)
 	moduleCtx.bLangPkg = desugar.DesugarPackage(moduleCtx.compilerCtx, moduleCtx.bLangPkg, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
+	if compilerCtx.HasDiagnostics() {
+		return
+	}
 
 	moduleCtx.compilationState = moduleCompilationStateCompiled
 }
@@ -440,9 +455,9 @@ func buildCompilationUnits(cx *context.CompilerContext, syntaxTrees []*st.Syntax
 	for _, st := range syntaxTrees {
 		var cu *ast.BLangCompilationUnit
 		if dumpRecoveredAST {
-			cu = ast.GetRecoveredCompilationUnit(cx, st)
+			cu = nodebuilder.GetRecoveredCompilationUnit(cx, st)
 		} else {
-			cu = ast.GetCompilationUnit(cx, st)
+			cu = nodebuilder.GetCompilationUnit(cx, st)
 		}
 		if dumpAST {
 			fmt.Fprintln(os.Stderr, prettyPrinter.Print(cu))
@@ -452,20 +467,12 @@ func buildCompilationUnits(cx *context.CompilerContext, syntaxTrees []*st.Syntax
 	return compilationUnits
 }
 
-func mergeCompilationUnitImports(imports []semantics.CompilationUnitImports) map[string]model.ExportedSymbolSpace {
-	result := make(map[string]model.ExportedSymbolSpace)
-	for _, cuImports := range imports {
-		maps.Copy(result, cuImports.Imports)
-	}
-	return result
-}
-
 // seedMigratedLangLibs adds the migrated lang libraries (compiled as real
 // packages and published to publicSymbols) to the implicit-imports map under
 // their langlib key, so they are usable without an import statement. No-op
 // until the lib has been compiled (e.g. while compiling the lib itself).
 func seedMigratedLangLibs(implicitImports map[string]model.ExportedSymbolSpace, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace) {
-	for _, name := range []string{"lang.int", "lang.boolean", "lang.decimal", "lang.error", "lang.string", "lang.value", "lang.xml", "lang.float", "lang.array", "lang.map", "lang.object"} {
+	for _, name := range []string{"lang.__internal", "lang.int", "lang.boolean", "lang.decimal", "lang.error", "lang.string", "lang.value", "lang.xml", "lang.float", "lang.array", "lang.map", "lang.object"} {
 		if space, ok := publicSymbols[semantics.PackageIdentifier{OrgName: "ballerina", ModuleName: name}]; ok {
 			implicitImports[name] = space
 		}
@@ -490,13 +497,14 @@ func createModelPackageID(compilerCtx *context.CompilerContext, desc ModuleDescr
 
 // generateCodeInternal generates BIR for this module from the compiled BLangPackage.
 // -> CompilerPhaseRunner.performBirGenPhases(bLangPackage)
-func generateCodeInternal(moduleCtx *moduleContext) {
+func generateCodeInternal(moduleCtx *moduleContext) bool {
 	if moduleCtx.bLangPkg == nil || moduleCtx.compilerCtx == nil {
-		return
+		return false
 	}
 	moduleCtx.compilerCtx.StartStage(context.StageBIRGeneration)
-	moduleCtx.birPkg = bir.GenBir(moduleCtx.compilerCtx, moduleCtx.bLangPkg)
+	moduleCtx.birPkg = birgen.GenBir(moduleCtx.compilerCtx, moduleCtx.bLangPkg)
 	moduleCtx.compilerCtx.EndStage()
+	return moduleCtx.birPkg != nil
 }
 
 // getBLangPackage returns the compiled BLangPackage.

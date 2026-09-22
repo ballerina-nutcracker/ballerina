@@ -199,6 +199,15 @@ func TestHttpServiceClientRedirect(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-client-redirect-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceAnydataReturn covers resource functions returning anydata: the
+// Content-Type inferred from each payload type, the 201 Created rule for a `post`
+// accessor, and the 202 / 500 paths for () and error returns.
+func TestHttpServiceAnydataReturn(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-anydata-return-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceResponseVariants covers the writeResult return-value cases: a
 // () return mapped to 202, an error value mapped to 500, a multi-value response
 // header, and a hop-by-hop header dropped before reaching the client.

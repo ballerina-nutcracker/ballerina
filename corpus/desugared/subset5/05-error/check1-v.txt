@@ -22,20 +22,12 @@
       (value-type int)
       (error-type)))
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation nonZero (
-            (simple-var-ref y))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
       (return
         (binary-expr /
           (simple-var-ref x)
-          (simple-var-ref $desugar$0)))))
+          (checked-expr
+            (invocation nonZero (
+              (simple-var-ref y))))))))
   (function nonZero (
     (variable n (type
       (value-type int)))) (

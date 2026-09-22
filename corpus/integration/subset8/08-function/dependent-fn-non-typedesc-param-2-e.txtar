@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid parameter reference: expected 'typedesc', found 'int'
+  --> dependent-fn-non-typedesc-param-2-e.bal:17:57
+   |
+17 | function nonTypedescParamArray(int n, string s) returns n[] = external; // @error invalid parameter reference: expected 'typedesc', found 'int'
+   |                                                         ^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: rest parameters are not supported on dependently-typed functions
+  --> dependent-resource-method2-fe.bal:19:5
+   |
+19 |     resource function get path(typedesc<anydata> targetType = <>, int... rest) returns targetType|error = external; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -55,21 +55,13 @@
           (value-type anydata)) (expr
           (literal 42))))
       (var-def
-        (variable $desugar$0 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref n)
-            (typedesc-expr
-              (value-type int)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
-      (var-def
         (variable i (type
           (value-type int)) (expr
-          (simple-var-ref $desugar$0))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref n)
+              (typedesc-expr
+                (value-type int))))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref i))))
@@ -78,21 +70,13 @@
           (value-type anydata)) (expr
           (literal hello))))
       (var-def
-        (variable $desugar$1 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref s)
-            (typedesc-expr
-              (value-type string)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$1))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$1))) ())
-      (var-def
         (variable str (type
           (value-type string)) (expr
-          (simple-var-ref $desugar$1))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref s)
+              (typedesc-expr
+                (value-type string))))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref str))))
@@ -101,21 +85,13 @@
           (value-type anydata)) (expr
           (literal 7))))
       (var-def
-        (variable $desugar$2 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref intVal)
-            (typedesc-expr
-              (value-type float)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$2))) ())
-      (var-def
         (variable f (type
           (value-type float)) (expr
-          (simple-var-ref $desugar$2))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref intVal)
+              (typedesc-expr
+                (value-type float))))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref f))))
@@ -130,20 +106,12 @@
               (literal age)
               (literal 30))))))
       (var-def
-        (variable $desugar$3 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref raw)
-            (simple-var-ref Person))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$3))) ())
-      (var-def
         (variable p (type
           (user-defined-type Person)) (expr
-          (simple-var-ref $desugar$3))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref raw)
+              (simple-var-ref Person)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref p))))
@@ -155,20 +123,12 @@
             (literal 2)
             (literal 3)))))
       (var-def
-        (variable $desugar$4 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref nums)
-            (simple-var-ref IntArray))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$4))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$4))) ())
-      (var-def
         (variable ia (type
           (user-defined-type IntArray)) (expr
-          (simple-var-ref $desugar$4))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref nums)
+              (simple-var-ref IntArray)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref ia))))
@@ -180,20 +140,12 @@
             (literal 20)
             (literal 30)))))
       (var-def
-        (variable $desugar$5 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref ints)
-            (simple-var-ref FloatArray))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$5))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$5))) ())
-      (var-def
         (variable fa (type
           (user-defined-type FloatArray)) (expr
-          (simple-var-ref $desugar$5))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref ints)
+              (simple-var-ref FloatArray)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref fa))))
@@ -208,20 +160,12 @@
               (literal y)
               (literal 4))))))
       (var-def
-        (variable $desugar$6 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref coords)
-            (simple-var-ref Point))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$6))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$6))) ())
-      (var-def
         (variable pt (type
           (user-defined-type Point)) (expr
-          (simple-var-ref $desugar$6))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref coords)
+              (simple-var-ref Point)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref pt))))
@@ -242,20 +186,12 @@
                   (literal y)
                   (literal 0))))))))
       (var-def
-        (variable $desugar$7 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref shapeRaw)
-            (simple-var-ref Shape))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$7))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$7))) ())
-      (var-def
         (variable sh (type
           (user-defined-type Shape)) (expr
-          (simple-var-ref $desugar$7))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref shapeRaw)
+              (simple-var-ref Shape)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref sh))))
@@ -270,20 +206,12 @@
               (literal age)
               (literal 25))))))
       (var-def
-        (variable $desugar$8 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref personMap)
-            (simple-var-ref PersonOrInt))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$8))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$8))) ())
-      (var-def
         (variable poi (type
           (user-defined-type PersonOrInt)) (expr
-          (simple-var-ref $desugar$8))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref personMap)
+              (simple-var-ref PersonOrInt)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref poi))))
@@ -298,20 +226,12 @@
               (literal age)
               (literal <nil>))))))
       (var-def
-        (variable $desugar$9 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref withNull)
-            (simple-var-ref PersonNilAge))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$9))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$9))) ())
-      (var-def
         (variable nilAge (type
           (user-defined-type PersonNilAge)) (expr
-          (simple-var-ref $desugar$9))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref withNull)
+              (simple-var-ref PersonNilAge)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref nilAge))))
@@ -323,20 +243,12 @@
               (literal name)
               (literal Dave))))))
       (var-def
-        (variable $desugar$10 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref partial)
-            (simple-var-ref PersonOptAge))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$10))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$10))) ())
-      (var-def
         (variable optAge (type
           (user-defined-type PersonOptAge)) (expr
-          (simple-var-ref $desugar$10))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref partial)
+              (simple-var-ref PersonOptAge)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref optAge))))

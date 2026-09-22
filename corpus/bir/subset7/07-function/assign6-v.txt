@@ -10,7 +10,7 @@ main() -> nil{
     PushScopeFrame 5
     %0 = ConstantLoad 1
     %1 = %0;
-    %2 = f(%1) -> bb2;
+    %2 = (1, f)(%1) -> bb2;
   }
   bb2 {
     %3 = %2;

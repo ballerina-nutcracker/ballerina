@@ -1,0 +1,10 @@
+-- stdout --
+1
+1
+remote panic
+resource panic
+true
+true
+remote panic
+continued
+-- stderr --

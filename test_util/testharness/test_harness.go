@@ -51,6 +51,11 @@ import (
 // TestCase / TestKind / TestSuffix and the suffix constants live in test_util
 // (no heavy imports needed). The harness consumes them from there directly.
 
+// testProcessStart anchors MonotonicNow below. time.Since(time.Time{}) would
+// saturate at math.MaxInt64 nanoseconds (~292 years overflows int64), freezing
+// MonotonicNow at a constant and hanging anything that loops on it.
+var testProcessStart = time.Now()
+
 // ---------------------------------------------------------------------------
 // TestSuffix: bitset describing the corpus naming convention.
 // ---------------------------------------------------------------------------
@@ -65,7 +70,22 @@ import (
 // source. kind determines the corresponding expected-output directory and
 // extension, resolved relative to filepath.Dir(inputDir).
 func GetSingleFileTestCases(inputDir string, kind test_util.TestKind, mask test_util.TestSuffix) ([]test_util.TestCase, error) {
+	return singleFileTestCases(inputDir, "", kind, mask)
+}
+
+// GetNestedSingleFileTestCases is GetSingleFileTestCases for a corpus root
+// other than bal/, keeping that root's own name as the leading segment of Name
+// and of the expected-output path (as GetProjectTestCases does) so relative
+// paths cannot collide with bal/'s.
+func GetNestedSingleFileTestCases(inputDir string, kind test_util.TestKind, mask test_util.TestSuffix) ([]test_util.TestCase, error) {
+	return singleFileTestCases(inputDir, filepath.Base(inputDir), kind, mask)
+}
+
+func singleFileTestCases(inputDir, namePrefix string, kind test_util.TestKind, mask test_util.TestSuffix) ([]test_util.TestCase, error) {
 	outputDir, outputExt := outputDirAndExt(filepath.Dir(inputDir), kind)
+	if namePrefix != "" {
+		outputDir = filepath.Join(outputDir, namePrefix)
+	}
 	var cases []test_util.TestCase
 	err := filepath.Walk(inputDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -75,8 +95,12 @@ func GetSingleFileTestCases(inputDir string, kind test_util.TestKind, mask test_
 			return nil
 		}
 		rel, _ := filepath.Rel(inputDir, path)
+		name := filepath.ToSlash(rel)
+		if namePrefix != "" {
+			name = namePrefix + "/" + name
+		}
 		tc := test_util.TestCase{
-			Name:         rel,
+			Name:         name,
 			InputPath:    path,
 			ExpectedPath: filepath.Join(outputDir, strings.TrimSuffix(rel, ".bal")+outputExt),
 		}
@@ -314,7 +338,7 @@ func (p *testPal) Platform() pal.Platform {
 		},
 		Time: pal.Time{
 			Now:          time.Now,
-			MonotonicNow: func() time.Duration { return time.Since(time.Time{}) },
+			MonotonicNow: func() time.Duration { return time.Since(testProcessStart) },
 		},
 		HTTP: pal.HTTP{
 			NewClient: func(_ pal.ClientConfig) pal.HTTPClient {
@@ -456,7 +480,6 @@ func Run(t testing.TB, tc test_util.TestCase, pal TestPal, externs []ExternRegis
 	if len(birPkgs) == 0 {
 		t.Fatalf("compilation succeeded but produced no BIR packages for %s", tc.Name)
 	}
-
 	rt := runtime.NewRuntime(pal.Platform(), tyEnv)
 	for _, e := range externs {
 		runtime.RegisterExternFunction(rt, e.Org, e.Module, e.FuncName, e.Impl)

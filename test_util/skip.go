@@ -28,7 +28,7 @@ import (
 // platform they run normally. Entries are corpus-relative path suffixes.
 var WindowsUnsupportedTests = []string{
 	// os:exec runs a real `echo` subprocess, which is not an executable on Windows.
-	"library/subset2/os-exec-v.bal",
+	"lib/subset2/os-exec-v.bal",
 }
 
 // WASMUnsupportedTests lists corpus tests that cannot run under GOOS=js (the
@@ -36,7 +36,7 @@ var WindowsUnsupportedTests = []string{
 // Entries are corpus-relative path suffixes.
 var WASMUnsupportedTests = []string{
 	// os:exec requires spawning a subprocess; no executables exist in the WASM sandbox.
-	"library/subset2/os-exec-v.bal",
+	"lib/subset2/os-exec-v.bal",
 }
 
 // UnsupportedTests is the single authoritative list of corpus tests that pi
@@ -168,8 +168,6 @@ var UnsupportedTests = []string{
 	"subset8/08-future/fieldexpr1-v.bal",
 	// https://github.com/ballerina-nutcracker/ballerina/issues/442
 	"subset8/08-future/main-v.bal",
-	// https://github.com/ballerina-nutcracker/ballerina/issues/288
-	"subset8/08-future/xmlsubtype-v.bal", // xml:Element type unknown
 
 	// Match patterns:
 	//  Unsupported match pattern diagnostics for list/mapping patterns.

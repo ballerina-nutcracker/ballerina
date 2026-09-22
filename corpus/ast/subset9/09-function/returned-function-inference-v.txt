@@ -1,0 +1,233 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition ReturnedFunction
+    (function-type (
+      (value-type int)) (
+      (value-type int))))
+  (type-definition ReturnedAlias
+    (user-defined-type ReturnedFunction))
+  (type-definition DeclaredFunction
+    (function-type (
+      (value-type int)) (
+      (value-type int))))
+  (function getFunction (
+    (variable outerArg (type
+      (value-type int)) (expr
+      (literal 1)))) (
+    (user-defined-type ReturnedAlias))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref outerArg))))
+      (return
+        (lambda
+          (function $anonFunc$_0 (
+            (variable implementationArg (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref implementationArg))))))))
+  (class-definition Factory
+    (function create (
+      (variable methodArg (type
+        (value-type int)) (expr
+        (literal 2)))) (
+      (function-type (
+        (value-type int)) (
+        (value-type int))))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (simple-var-ref methodArg))))
+        (return
+          (lambda
+            (function $anonFunc$_1 (
+              (variable implementationArg (type
+                (value-type int)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref implementationArg)))))))))
+  (class-definition RemoteFactory
+    (function $remote$create (
+      (variable remoteOuterArg (type
+        (value-type int)) (expr
+        (literal 5)))) (
+      (function-type (
+        (value-type int)) (
+        (value-type int))))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (simple-var-ref remoteOuterArg))))
+        (return
+          (lambda
+            (function $anonFunc$_2 (
+              (variable implementationArg (type
+                (value-type int)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref implementationArg)))))))))
+  (variable moduleFunction (expr
+    (invocation getFunction ())))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable inferred (expr
+          (invocation getFunction ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation inferred ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation inferred (
+            (named-arg returnedArg
+              (literal 11)))))))
+      (var-def
+        (variable grouped (expr
+          (group-expr
+            (invocation getFunction ())))))
+      (expression-stmt
+        (invocation io println (
+          (invocation grouped (
+            (named-arg returnedArg
+              (literal 12)))))))
+      (var-def
+        (variable inferredAgain (expr
+          (invocation getFunction (
+            (named-arg outerArg
+              (literal 3)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation inferredAgain (
+            (named-arg returnedArg
+              (literal 13)))))))
+      (var-def
+        (variable inferredDefaultOuter (expr
+          (invocation getFunction ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation inferredDefaultOuter (
+            (named-arg returnedArg
+              (literal 14)))))))
+      (var-def
+        (variable factory (type
+          (user-defined-type Factory)) (expr
+          (new ()))))
+      (var-def
+        (variable fromMethod (expr
+          (invocation create expr:
+            (simple-var-ref factory) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromMethod ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromMethod (
+            (named-arg methodReturnedArg
+              (literal 31)))))))
+      (var-def
+        (variable fromMethodAgain (expr
+          (invocation create expr:
+            (simple-var-ref factory) (
+            (named-arg methodArg
+              (literal 4)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromMethodAgain (
+            (named-arg methodReturnedArg
+              (literal 32)))))))
+      (var-def
+        (variable remoteFactory (type
+          (user-defined-type RemoteFactory)) (expr
+          (new ()))))
+      (var-def
+        (variable fromRemoteMethod (expr
+          (remote-method-call create expr:
+            (simple-var-ref remoteFactory) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromRemoteMethod ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromRemoteMethod (
+            (named-arg remoteReturnedArg
+              (literal 51)))))))
+      (var-def
+        (variable fromRemoteMethodAgain (expr
+          (remote-method-call create expr:
+            (simple-var-ref remoteFactory) (
+            (named-arg remoteOuterArg
+              (literal 6)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromRemoteMethodAgain (
+            (named-arg remoteReturnedArg
+              (literal 52)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation moduleFunction ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation moduleFunction (
+            (named-arg returnedArg
+              (literal 15)))))))
+      (var-def
+        (variable explicitlyTyped (type
+          (user-defined-type DeclaredFunction)) (expr
+          (invocation getFunction ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation explicitlyTyped ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation explicitlyTyped (
+            (named-arg declaredArg
+              (literal 21)))))))
+      (var-def
+        (variable positiveNarrowed (type
+          (union-type
+            (user-defined-type ReturnedAlias)
+            (value-type string))) (expr
+          (invocation getFunction ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref positiveNarrowed)
+          (user-defined-type ReturnedAlias))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation positiveNarrowed (
+                (named-arg returnedArg
+                  (literal 16)))))))) ())
+      (block-stmt
+        (var-def
+          (variable negatedNarrowed (type
+            (union-type
+              (user-defined-type ReturnedAlias)
+              (value-type string))) (expr
+            (invocation getFunction ()))))
+        (if
+          (type-test-expr !is
+            (simple-var-ref negatedNarrowed)
+            (user-defined-type ReturnedAlias))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal unexpected))))) (
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation negatedNarrowed ()))))
+            (expression-stmt
+              (invocation io println (
+                (invocation negatedNarrowed (
+                  (named-arg returnedArg
+                    (literal 17))))))))))))))

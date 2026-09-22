@@ -1,4 +1,16 @@
 module $anon.. v 0.0.0;
+$anonFunc$_0(int) -> function(int) returns int|...{
+  bb0 {
+    %3 = (1, a);
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    b = %2;
+    %7 = closure_fp $anon/.:$anonFunc$_1
+    %0 = %7;
+    return;
+  }
+}
 $anonFunc$_1(int) -> int{
   bb0 {
     %5 = (1, x);
@@ -11,18 +23,6 @@ $anonFunc$_1(int) -> int{
     %10 = (1, b);
     %2 = + %9 %10;
     %0 = %2;
-    return;
-  }
-}
-$anonFunc$_0(int) -> function(int) returns int|...{
-  bb0 {
-    %3 = (1, a);
-    %4 = ConstantLoad 2
-    %5 = %4;
-    %2 = * %3 %5;
-    b = %2;
-    %7 = closure_fp $anon/.:$anonFunc$_1
-    %0 = %7;
     return;
   }
 }
@@ -54,7 +54,7 @@ main() -> nil{
     PushScopeFrame 4
     %0 = ConstantLoad 5
     %1 = %0;
-    %2 = res(%1) -> bb4;
+    %2 = (1, res)(%1) -> bb4;
   }
   bb4 {
     %3 = println(%2) -> bb5;

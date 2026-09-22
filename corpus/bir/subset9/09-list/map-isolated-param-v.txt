@@ -1,4 +1,5 @@
 module $anon.. v 0.0.0;
+lockGuard  int;
 class NonIsolatedInit {
 
   init() -> nil{
@@ -70,32 +71,36 @@ $anonFunc$_1(int) -> int{
 }
 mapInsideLock([int...]) -> int{
   bb0 {
-    lock-start "" GOTO bb1;
+    lock-start "$anon/.:lockGuard" GOTO bb1;
   }
   bb1 {
-    PushScopeFrame 11
-    %0 = fp $anon/.:isolatedIncrement
-    %1 = map((1, values),%0) -> bb2;
+    PushScopeFrame 14
+    %1 = ConstantLoad 0
+    %2 = %1;
+    %0 = + lockGuard %2;
+    lockGuard = %0;
+    %3 = fp $anon/.:isolatedIncrement
+    %4 = map((1, values),%3) -> bb2;
   }
   bb2 {
-    %2 = length(%1) -> bb3;
+    %5 = length(%4) -> bb3;
   }
   bb3 {
-    explicitLength = %2;
-    %4 = fp $anon/.:$anonFunc$_1
-    %5 = map((1, values),%4) -> bb4;
+    explicitLength = %5;
+    %7 = fp $anon/.:$anonFunc$_1
+    %8 = map((1, values),%7) -> bb4;
   }
   bb4 {
-    %6 = length(%5) -> bb5;
+    %9 = length(%8) -> bb5;
   }
   bb5 {
-    inferredLength = %6;
-    %9 = explicitLength;
-    %10 = inferredLength;
-    %8 = + %9 %10;
-    (1, %0) = %8;
+    inferredLength = %9;
+    %12 = explicitLength;
+    %13 = inferredLength;
+    %11 = + %12 %13;
+    (1, %0) = %11;
     PopScopeFrame
-    lock-end "" GOTO bb6;
+    lock-end "$anon/.:lockGuard" GOTO bb6;
   }
   bb6 {
     return;
@@ -104,11 +109,11 @@ mapInsideLock([int...]) -> int{
     return;
   }
 }
-$anonFunc$_2({| value: int, never... |}) -> int{
+$anonFunc$_10(int) -> {| value: int, never... |}{
   bb0 {
-    %3 = ConstantLoad value
-    %2 = value[%3];
-    %0 = %2;
+    %2 = ConstantLoad value
+    %3 = newMap {| value: int, never... |}{%2=value}
+    %0 = %3;
     return;
   }
 }
@@ -122,16 +127,9 @@ mapRecordFields([{| value: int, never... |}...]) -> [int...]{
     return;
   }
 }
-$anonFunc$_3(int) -> int{
+$anonFunc$_11(int|string) -> boolean{
   bb0 {
-    %3 = ConstantLoad 0
-    %4 = ConstantLoad 1
-    %5 = newArray [int, never...][%4]{value}
-    %6 = fp $anon/.:isolatedIncrement
-    %7 = map(%5,%6) -> bb1;
-  }
-  bb1 {
-    %2 = %7[%3];
+    %2 = value is int
     %0 = %2;
     return;
   }
@@ -146,25 +144,11 @@ mapWithFunctionReference([int...]) -> [int...]{
     return;
   }
 }
-$anonFunc$_4() -> object { public function init() returns nil }{
+$anonFunc$_2({| value: int, never... |}) -> int{
   bb0 {
-    %1 = newObject $anon/.:NonIsolatedInit
-    %2 = init(%1) -> bb1;
-  }
-  bb1 {
-    %4 = %2 is nil
-    %4 ? bb2 : bb3;
-  }
-  bb2 {
-    %3 = %1;
-    GOTO bb4;
-  }
-  bb3 {
-    %3 = %2;
-    GOTO bb4;
-  }
-  bb4 {
-    %0 = %3;
+    %3 = ConstantLoad value
+    %2 = value[%3];
+    %0 = %2;
     return;
   }
 }
@@ -184,11 +168,16 @@ withMappedDefault([int...]) -> int{
     return;
   }
 }
-$anonFunc$_6(int) -> int{
+$anonFunc$_3(int) -> int{
   bb0 {
-    %3 = value;
-    %4 = (1, offset);
-    %2 = + %3 %4;
+    %3 = ConstantLoad 0
+    %4 = ConstantLoad 1
+    %5 = newArray [int, never...][%4]{value}
+    %6 = fp $anon/.:isolatedIncrement
+    %7 = map(%5,%6) -> bb1;
+  }
+  bb1 {
+    %2 = %7[%3];
     %0 = %2;
     return;
   }
@@ -203,14 +192,25 @@ mapWithCapture([int...],int) -> [int...]{
     return;
   }
 }
-$anonFunc$_7(int) -> int{
+$anonFunc$_4() -> object { public function init() returns nil }{
   bb0 {
-    %3 = value;
-    %5 = ConstantLoad 0
-    %4 = (1, state)[%5];
-    %6 = %4;
-    %2 = + %3 %6;
-    %0 = %2;
+    %1 = newObject $anon/.:NonIsolatedInit
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %0 = %3;
     return;
   }
 }
@@ -230,24 +230,28 @@ mapWithInferredCapture([int...]) -> [int...]{
 }
 mapAcrossIsolationContexts([int...]) -> [int...]{
   bb0 {
-    lock-start "" GOTO bb1;
+    lock-start "$anon/.:lockGuard" GOTO bb1;
   }
   bb1 {
-    PushScopeFrame 8
-    %0 = ConstantLoad 1
-    %1 = ConstantLoad 1
-    %2 = newArray [int, never...][%1]{%0}
-    %3 = <[int...]>(%2)
-    %4 = fp $anon/.:isolatedIncrement
-    %5 = map(%3,%4) -> bb2;
+    PushScopeFrame 11
+    %1 = ConstantLoad 0
+    %2 = %1;
+    %0 = + lockGuard %2;
+    lockGuard = %0;
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad 1
+    %5 = newArray [int, never...][%4]{%3}
+    %6 = <[int...]>(%5)
+    %7 = fp $anon/.:isolatedIncrement
+    %8 = map(%6,%7) -> bb2;
   }
   bb2 {
-    %6 = length(%5) -> bb3;
+    %9 = length(%8) -> bb3;
   }
   bb3 {
-    _ = %6;
+    _ = %9;
     PopScopeFrame
-    lock-end "" GOTO bb4;
+    lock-end "$anon/.:lockGuard" GOTO bb4;
   }
   bb4 {
     %2 = fp $anon/.:increment
@@ -258,37 +262,42 @@ mapAcrossIsolationContexts([int...]) -> [int...]{
     return;
   }
 }
-$anonFunc$_8(int) -> boolean{
+$anonFunc$_5(int) -> int{
   bb0 {
     %3 = value;
     %4 = ConstantLoad 1
-    %5 = %4;
-    %2 = > %3 %5;
-    %0 = %2;
-    return;
-  }
-}
-$anonFunc$_9(int) -> int{
-  bb0 {
-    %3 = value;
-    %4 = ConstantLoad 2
     %5 = %4;
     %2 = + %3 %5;
     %0 = %2;
     return;
   }
 }
-$anonFunc$_10(int) -> {| value: int, never... |}{
+$anonFunc$_6(int) -> int{
   bb0 {
-    %2 = ConstantLoad value
-    %3 = newMap {| value: int, never... |}{%2=value}
-    %0 = %3;
+    %3 = value;
+    %4 = (1, offset);
+    %2 = + %3 %4;
+    %0 = %2;
     return;
   }
 }
-$anonFunc$_11(int|string) -> boolean{
+$anonFunc$_7(int) -> int{
   bb0 {
-    %2 = value is int
+    %3 = value;
+    %5 = ConstantLoad 0
+    %4 = (1, state)[%5];
+    %6 = %4;
+    %2 = + %3 %6;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_8(int) -> boolean{
+  bb0 {
+    %3 = value;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = > %3 %5;
     %0 = %2;
     return;
   }
@@ -361,14 +370,14 @@ main() -> nil{
     %32 = println(%31) -> bb17;
   }
   bb17 {
-    %33 = newMap {| values: [int...], never... |}{} defaults{values=$anon/.:$desugar$0}
+    %33 = newMap {| values: [int...], never... |}{} defaults{values=$anon/.:$default$0}
     recordValue = %33;
     %36 = ConstantLoad values
     %35 = recordValue[%36];
     %37 = println(%35) -> bb18;
   }
   bb18 {
-    %38 = $default$0() -> bb19;
+    %38 = $default$1() -> bb19;
   }
   bb19 {
     $desugar$0 = %38;
@@ -469,7 +478,17 @@ main() -> nil{
     return;
   }
 }
-$desugar$0() -> [int...]{
+$anonFunc$_9(int) -> int{
+  bb0 {
+    %3 = value;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$default$0() -> [int...]{
   bb0 {
     %1 = ConstantLoad 1
     %2 = ConstantLoad 2
@@ -483,17 +502,7 @@ $desugar$0() -> [int...]{
     return;
   }
 }
-$anonFunc$_5(int) -> int{
-  bb0 {
-    %3 = value;
-    %4 = ConstantLoad 1
-    %5 = %4;
-    %2 = + %3 %5;
-    %0 = %2;
-    return;
-  }
-}
-$default$0() -> [int...]{
+$default$1() -> [int...]{
   bb0 {
     %1 = ConstantLoad 2
     %2 = ConstantLoad 1

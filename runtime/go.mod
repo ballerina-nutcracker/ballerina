@@ -1,6 +1,8 @@
 module github.com/ballerina-nutcracker/ballerina/runtime
 
-go 1.26
+go 1.27
+
+toolchain go1.27.1
 
 require (
 	github.com/ballerina-nutcracker/ballerina/bir v0.7.0
@@ -15,11 +17,14 @@ require (
 
 require (
 	github.com/ballerina-nutcracker/ballerina/ast v0.7.0 // indirect
+	github.com/ballerina-nutcracker/ballerina/birgen v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/common v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/context v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/desugar v0.7.0 // indirect
+	github.com/ballerina-nutcracker/ballerina/nodebuilder v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/parser v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/semantics v0.7.0 // indirect
+	github.com/ballerina-nutcracker/ballerina/st v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/tools v0.7.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect

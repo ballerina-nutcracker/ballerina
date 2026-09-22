@@ -22,8 +22,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Version is set via ldflags at build time
+// Version is set via ldflags at build time (-X main.Version=...). Kept a
+// plain literal so an unflagged build just shows "dev".
 var Version = "dev"
+
+const (
+	// channel names this distribution.
+	channel = "Nutcracker"
+	// languageSpecVersion is the targeted Ballerina language spec.
+	languageSpecVersion = "2024R1"
+)
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
@@ -35,9 +43,14 @@ var versionCmd = &cobra.Command{
 
 func init() {
 	rootCmd.Version = Version
-	rootCmd.SetVersionTemplate("Ballerina Version: {{.Version}}\n")
+	cobra.AddTemplateFunc("versionOutput", versionOutput)
+	rootCmd.SetVersionTemplate("{{ versionOutput }}")
+}
+
+func versionOutput() string {
+	return fmt.Sprintf("Ballerina %s (%s)\nLanguage specification %s\n", Version, channel, languageSpecVersion)
 }
 
 func printVersion() {
-	fmt.Println("Ballerina Version: ", Version)
+	fmt.Print(versionOutput())
 }

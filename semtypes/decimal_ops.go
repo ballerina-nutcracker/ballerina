@@ -21,17 +21,17 @@ import (
 )
 
 type decimalOps struct {
-	CommonOps
+	commonOps
 }
 
-var _ BasicTypeOps = &decimalOps{}
+var _ basicTypeOps = &decimalOps{}
 
 func newDecimalOps() decimalOps {
 	this := decimalOps{}
 	return this
 }
 
-func (d *decimalOps) Union(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (d *decimalOps) Union(t1 subtypeData, t2 subtypeData) subtypeData {
 	var values []enumerableType[decimal.Decimal]
 	var v1 enumerableSubtype[decimal.Decimal] = new(t1.(decimalSubtype))
 	var v2 enumerableSubtype[decimal.Decimal] = new(t2.(decimalSubtype))
@@ -39,7 +39,7 @@ func (d *decimalOps) Union(t1 SubtypeData, t2 SubtypeData) SubtypeData {
 	return createDecimalSubtype(allowed, values)
 }
 
-func (d *decimalOps) Intersect(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (d *decimalOps) Intersect(t1 subtypeData, t2 subtypeData) subtypeData {
 	var values []enumerableType[decimal.Decimal]
 	var v1 enumerableSubtype[decimal.Decimal] = new(t1.(decimalSubtype))
 	var v2 enumerableSubtype[decimal.Decimal] = new(t2.(decimalSubtype))
@@ -47,15 +47,15 @@ func (d *decimalOps) Intersect(t1 SubtypeData, t2 SubtypeData) SubtypeData {
 	return createDecimalSubtype(allowed, values)
 }
 
-func (d *decimalOps) Diff(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (d *decimalOps) Diff(t1 subtypeData, t2 subtypeData) subtypeData {
 	return d.Intersect(t1, d.complement(t2))
 }
 
-func (d *decimalOps) complement(t SubtypeData) SubtypeData {
+func (d *decimalOps) complement(t subtypeData) subtypeData {
 	s := t.(decimalSubtype)
 	return createDecimalSubtype((!s.allowed), s.Values())
 }
 
-func (d *decimalOps) IsEmpty(tc Context, t SubtypeData) bool {
+func (d *decimalOps) IsEmpty(tc Context, t subtypeData) bool {
 	return notIsEmpty(tc, t)
 }

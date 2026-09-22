@@ -89,74 +89,63 @@
                 (literal One)
                 (literal Two)
                 (literal Three)))))))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (simple-var-ref lineStream))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$3 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation io fileWriteLinesFromStream (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$3))) ())
       (expression-stmt
-        (simple-var-ref $desugar$3))
-      (var-def
-        (variable $desugar$4 (expr
-          (invocation io fileReadLines (
-            (simple-var-ref path))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$4))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$4))) ())
+        (checked-expr
+          (expression-thunk
+          (lambda
+            (function main$502$1$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref path))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (simple-var-ref lineStream))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$3 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteLinesFromStream (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable lines (type
           (array-type
             (value-type string) dimensions: 1 ([]))) (expr
-          (simple-var-ref $desugar$4))))
+          (checked-expr
+            (invocation io fileReadLines (
+              (simple-var-ref path)))))))
       (var-def
-        (variable $desugar$5 (expr
+        (variable $desugar$3 (expr
           (simple-var-ref lines))))
       (var-def
-        (variable $desugar$6 (expr
+        (variable $desugar$4 (expr
           (numeric-literal 0))))
       (var-def
-        (variable $desugar$7 (expr
+        (variable $desugar$5 (expr
           (invocation lang.array length (
-            (simple-var-ref $desugar$5))))))
+            (simple-var-ref $desugar$3))))))
       (while
         (binary-expr <
-          (simple-var-ref $desugar$6)
-          (simple-var-ref $desugar$7))
+          (simple-var-ref $desugar$4)
+          (simple-var-ref $desugar$5))
         (block-stmt
           (var-def
             (variable line (type
               (value-type string)) (expr
               (index-based-access
-                (simple-var-ref $desugar$5)
-                (simple-var-ref $desugar$6)))))
+                (simple-var-ref $desugar$3)
+                (simple-var-ref $desugar$4)))))
           (expression-stmt
             (invocation io println (
               (simple-var-ref line))))
           (assignment
-            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$4)
             (binary-expr +
-              (simple-var-ref $desugar$6)
+              (simple-var-ref $desugar$4)
               (numeric-literal 1)))))
       (var-def
         (variable appendStream (type
@@ -170,61 +159,45 @@
               (user-defined-type LineProvider) (
               (list-constructor-expr
                 (literal Four)))))))))
-      (var-def
-        (variable $desugar$8 (expr
+      (expression-stmt
+        (checked-expr
           (invocation io fileWriteLinesFromStream (
             (simple-var-ref path)
             (simple-var-ref appendStream)
-            (literal APPEND))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$8))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$8))) ())
-      (expression-stmt
-        (simple-var-ref $desugar$8))
-      (var-def
-        (variable $desugar$9 (expr
-          (invocation io fileReadLines (
-            (simple-var-ref path))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$9))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$9))) ())
+            (literal APPEND)))))
       (var-def
         (variable allLines (type
           (array-type
             (value-type string) dimensions: 1 ([]))) (expr
-          (simple-var-ref $desugar$9))))
+          (checked-expr
+            (invocation io fileReadLines (
+              (simple-var-ref path)))))))
       (var-def
-        (variable $desugar$10 (expr
+        (variable $desugar$6 (expr
           (simple-var-ref allLines))))
       (var-def
-        (variable $desugar$11 (expr
+        (variable $desugar$7 (expr
           (numeric-literal 0))))
       (var-def
-        (variable $desugar$12 (expr
+        (variable $desugar$8 (expr
           (invocation lang.array length (
-            (simple-var-ref $desugar$10))))))
+            (simple-var-ref $desugar$6))))))
       (while
         (binary-expr <
-          (simple-var-ref $desugar$11)
-          (simple-var-ref $desugar$12))
+          (simple-var-ref $desugar$7)
+          (simple-var-ref $desugar$8))
         (block-stmt
           (var-def
             (variable line (type
               (value-type string)) (expr
               (index-based-access
-                (simple-var-ref $desugar$10)
-                (simple-var-ref $desugar$11)))))
+                (simple-var-ref $desugar$6)
+                (simple-var-ref $desugar$7)))))
           (expression-stmt
             (invocation io println (
               (simple-var-ref line))))
           (assignment
-            (simple-var-ref $desugar$11)
+            (simple-var-ref $desugar$7)
             (binary-expr +
-              (simple-var-ref $desugar$11)
+              (simple-var-ref $desugar$7)
               (numeric-literal 1))))))))

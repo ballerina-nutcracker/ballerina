@@ -44,5 +44,5 @@ public function testMain() returns error? {
     http:Client c = check new http:Client("https://localhost:19207", {secureSocket: {enable: false}});
     http:Response r = check c->get("/secure/hello");
     io:println(r.statusCode); // @output 200
-    io:println(r.getTextPayload()); // @output secure hello
+    io:println(check r.getTextPayload()); // @output secure hello
 }

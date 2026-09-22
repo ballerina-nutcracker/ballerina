@@ -28,7 +28,7 @@ class MyClinet {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:MyClinet
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -45,7 +45,7 @@ main() -> nil{
   bb4 {
     c = %3;
     %6 = ConstantLoad foo
-    %7 = $remote$get(c,%6) -> bb5;
+    %7 = c.$remote$get(%6) -> bb5;
   }
   bb5 {
     res = %7;
@@ -53,7 +53,7 @@ main() -> nil{
   }
   bb6 {
     %10 = ConstantLoad foo
-    %11 = get(c,%10) -> bb7;
+    %11 = c.get(%10) -> bb7;
   }
   bb7 {
     res2 = %11;

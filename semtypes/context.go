@@ -39,10 +39,10 @@ type context struct {
 	_mappingMemo           map[bddKey]*bddMemo
 	_functionMemo          map[bddKey]*bddMemo
 	_comparableMemo        map[comparableMemoKey]*comparableMemo
-	_fillerMemo            map[atomicType]Filler
+	_fillerMemo            map[AtomicType]Filler
 	_streamImplementorMemo map[streamImplementorMemoKey]SemType
 	_listenerMemo          map[listenerMemoKey]SemType
-	_semtypeInterner       *SemtypeInterner
+	_semtypeInterner       *SemTypeInterner
 }
 
 type streamImplementorMemoKey struct {
@@ -217,7 +217,7 @@ func ContextFrom(env Env) Context {
 		_mappingMemo:           make(map[bddKey]*bddMemo),
 		_functionMemo:          make(map[bddKey]*bddMemo),
 		_comparableMemo:        make(map[comparableMemoKey]*comparableMemo),
-		_fillerMemo:            make(map[atomicType]Filler),
+		_fillerMemo:            make(map[AtomicType]Filler),
 		_streamImplementorMemo: make(map[streamImplementorMemoKey]SemType),
 		_listenerMemo:          make(map[listenerMemoKey]SemType),
 		_semtypeInterner:       NewSemtypeInterner(),
@@ -247,14 +247,14 @@ func (c *context) setListenerMemo(t, a, listenerTy SemType) {
 	c._listenerMemo[key] = listenerTy
 }
 
-func (c *context) comparableMemo(b1, b2 Bdd) *comparableMemo {
+func (c *context) comparableMemo(b1, b2 bdd) *comparableMemo {
 	return c._comparableMemo[comparableMemoKeyOf(b1, b2)]
 }
 
-func (c *context) setComparableMemo(b1, b2 Bdd, memo *comparableMemo) {
+func (c *context) setComparableMemo(b1, b2 bdd, memo *comparableMemo) {
 	c._comparableMemo[comparableMemoKeyOf(b1, b2)] = memo
 }
 
-func comparableMemoKeyOf(b1, b2 Bdd) comparableMemoKey {
+func comparableMemoKeyOf(b1, b2 bdd) comparableMemoKey {
 	return comparableMemoKey{key1: b1.canonicalKey(), key2: b2.canonicalKey()}
 }

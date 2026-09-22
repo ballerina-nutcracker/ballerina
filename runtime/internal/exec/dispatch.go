@@ -49,8 +49,8 @@ func LookupFunction(env *extern.Env, org, module, name string) (any, bool) {
 	if fn := reg.GetBIRFunction(key); fn != nil {
 		return NewBIRHandle(fn), true
 	}
-	if ef := reg.GetNativeFunction(key); ef != nil {
-		return NewNativeHandle(ef.Impl), true
+	if handle := nativeHandleFor(reg, key); handle != nil {
+		return handle, true
 	}
 	return nil, false
 }
@@ -69,7 +69,11 @@ func LookupResourceMethod(ctx *extern.Context, obj *values.Object, resourceMetho
 	if len(matches) != 1 {
 		return nil, false
 	}
-	return newResourceHandle(obj, matches[0], path), true
+	handle, err := newResourceHandle(ctx.Env, obj, matches[0], path)
+	if err != nil {
+		panic(err)
+	}
+	return handle, true
 }
 
 // LookupResourceMethodByPath resolves a resource method from a RAW, untyped
@@ -109,7 +113,11 @@ func LookupResourceMethodByPath(ctx *extern.Context, obj *values.Object, accesso
 	if matchEntry == nil {
 		return nil, 0, false
 	}
-	return newResourceHandle(obj, matchEntry, matchPath), resourceExtraArgCount(ctx, matchEntry), true
+	handle, err := newResourceHandle(ctx.Env, obj, matchEntry, matchPath)
+	if err != nil {
+		panic(err)
+	}
+	return handle, resourceExtraArgCount(ctx, matchEntry), true
 }
 
 // resourceExtraArgCount returns how many parameters of the resource function
@@ -120,10 +128,17 @@ func LookupResourceMethodByPath(ctx *extern.Context, obj *values.Object, accesso
 // must be counted as path-bound here too, alongside the non-literal fixed
 // segments.
 func resourceExtraArgCount(ctx *extern.Context, entry *values.ResourceEntry) int {
-	fn := ctx.Env.Registry.(*modules.Registry).GetBIRFunction(entry.FunctionLookupKey)
+	fn := ctx.Env.Registry.(*modules.Registry).GetFunctionDescriptor(entry.FunctionLookupKey)
 	if fn == nil {
 		return 0
 	}
+	if extra := len(fn.RequiredParams) - resourcePathParamCount(entry); extra > 0 {
+		return extra
+	}
+	return 0
+}
+
+func resourcePathParamCount(entry *values.ResourceEntry) int {
 	nonLiteral := 0
 	for i := range entry.PathSegments {
 		if _, isLit := values.LiteralPathSegment(entry.PathSegments[i]); !isLit {
@@ -133,10 +148,13 @@ func resourceExtraArgCount(ctx *extern.Context, entry *values.ResourceEntry) int
 	if !semtypes.IsNever(entry.RestSegmentTy) {
 		nonLiteral++
 	}
-	if extra := len(fn.RequiredParams) - nonLiteral; extra > 0 {
-		return extra
-	}
-	return 0
+	return nonLiteral
+}
+
+// ObjectAnnotations resolves the runtime-visible annotation values attached
+// to an object's class or service declaration.
+func ObjectAnnotations(ctx *extern.Context, obj *values.Object) (values.AnnotationValues, bool) {
+	return resolveAnnotationValues(ctx, obj.AnnotationValues())
 }
 
 // coercePathForEntry coerces the URL string segments to the typed values the
@@ -183,22 +201,22 @@ func coerceSegment(tc semtypes.Context, segTy semtypes.SemType, s string) (value
 			return s, true
 		}
 	}
-	if semtypes.IsSubtype(tc, semtypes.INT, segTy) {
+	if semtypes.IsSubtype(tc, semtypes.Int, segTy) {
 		if n, err := strconv.ParseInt(s, 10, 64); err == nil {
 			return n, true
 		}
 	}
-	if semtypes.IsSubtype(tc, semtypes.FLOAT, segTy) {
+	if semtypes.IsSubtype(tc, semtypes.Float, segTy) {
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
 			return f, true
 		}
 	}
-	if semtypes.IsSubtype(tc, semtypes.DECIMAL, segTy) {
+	if semtypes.IsSubtype(tc, semtypes.Decimal, segTy) {
 		if d, err := decimal.FromString(s); err == nil {
 			return d, true
 		}
 	}
-	if semtypes.IsSubtype(tc, semtypes.BOOLEAN, segTy) {
+	if semtypes.IsSubtype(tc, semtypes.Boolean, segTy) {
 		// Matches lang.boolean:fromString's accepted range for consistency
 		// with the other typed path parameters.
 		switch strings.ToLower(s) {
@@ -208,7 +226,7 @@ func coerceSegment(tc semtypes.Context, segTy semtypes.SemType, s string) (value
 			return false, true
 		}
 	}
-	if semtypes.IsSubtype(tc, semtypes.STRING, segTy) {
+	if semtypes.IsSubtype(tc, semtypes.String, segTy) {
 		return s, true
 	}
 	return nil, false
@@ -283,7 +301,7 @@ func lookupByKey(ctx *extern.Context, lookupKey string) (any, bool) {
 		return NewBIRHandle(fn), true
 	}
 	if externFn := reg.GetNativeFunction(lookupKey); externFn != nil {
-		return NewNativeHandle(externFn.Impl), true
+		return newNativeHandle(externFn.Impl, reg.GetFunctionDescriptor(lookupKey)), true
 	}
 	return nil, false
 }

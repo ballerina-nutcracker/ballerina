@@ -1,0 +1,5 @@
+-- stdout --
+{"name":"Ada","age":36}
+{"GREETING":"hi"}
+{"default":"d"}
+-- stderr --

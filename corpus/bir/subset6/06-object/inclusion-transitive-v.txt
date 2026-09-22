@@ -23,7 +23,7 @@ class C {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:C
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil

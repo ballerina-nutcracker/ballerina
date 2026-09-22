@@ -16,9 +16,9 @@
 
 package semtypes
 
-type CommonBasicTypeOps interface {
-	Union(t1 SubtypeData, t2 SubtypeData) SubtypeData
-	Intersect(t1 SubtypeData, t2 SubtypeData) SubtypeData
-	Diff(t1 SubtypeData, t2 SubtypeData) SubtypeData
-	complement(t SubtypeData) SubtypeData
+type commonBasicTypeOps interface {
+	Union(t1 subtypeData, t2 subtypeData) subtypeData
+	Intersect(t1 subtypeData, t2 subtypeData) subtypeData
+	Diff(t1 subtypeData, t2 subtypeData) subtypeData
+	complement(t subtypeData) subtypeData
 }

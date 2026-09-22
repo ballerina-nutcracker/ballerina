@@ -157,14 +157,14 @@ func (i *mappingPairIterator) toIterator() iter.Seq[fieldPair] {
 
 func newFieldPairs(m1 *MappingAtomicType, m2 *MappingAtomicType) iter.Seq[fieldPair] {
 	i := &mappingPairIterator{
-		names1:          m1.Names,
-		names2:          m2.Names,
-		types1:          m1.Types,
-		types2:          m2.Types,
-		len1:            len(m1.Names),
-		len2:            len(m2.Names),
-		rest1:           m1.Rest,
-		rest2:           m2.Rest,
+		names1:          m1.names,
+		names2:          m2.names,
+		types1:          m1.types,
+		types2:          m2.types,
+		len1:            len(m1.names),
+		len2:            len(m2.names),
+		rest1:           m1.rest,
+		rest2:           m2.rest,
 		shouldCalculate: true,
 	}
 	return i.toIterator()

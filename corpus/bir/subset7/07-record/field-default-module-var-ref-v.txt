@@ -1,0 +1,44 @@
+module $anon.. v 0.0.0;
+base  int;
+twice(int) -> int{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newMap {| n: int, never... |}{} defaults{n=$anon/.:$default$0}
+    d = %1;
+    %4 = ConstantLoad n
+    %3 = d[%4];
+    %5 = %3;
+    %6 = println(%5) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad n
+    %8 = ConstantLoad 3
+    %9 = newMap {| n: int, never... |}{%7=%8} defaults{n=$anon/.:$default$0}
+    e = %9;
+    %12 = ConstantLoad n
+    %11 = e[%12];
+    %13 = %11;
+    %14 = println(%13) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = twice(base) -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}

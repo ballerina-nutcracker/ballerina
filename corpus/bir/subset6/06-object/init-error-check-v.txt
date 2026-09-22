@@ -41,37 +41,38 @@ class Foo {
 }
 createFoo(int) -> int|error{
   bb0 {
-    %2 = newObject $anon/.:Foo
-    %3 = init(%2,v) -> bb1;
+    %3 = newObject $anon/.:Foo
+    %4 = %3.init(v) -> bb1;
   }
   bb1 {
-    %5 = %3 is nil
-    %5 ? bb2 : bb3;
+    %6 = %4 is nil
+    %6 ? bb2 : bb3;
   }
   bb2 {
-    %4 = %2;
+    %5 = %3;
     GOTO bb4;
   }
   bb3 {
-    %4 = %3;
+    %5 = %4;
     GOTO bb4;
   }
   bb4 {
-    $desugar$0 = %4;
-    %7 = $desugar$0 is error
+    %7 = %5 is error
     %7 ? bb5 : bb6;
   }
   bb5 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$0);
-    PopScopeFrame
+    %0 = %5;
     return;
   }
   bb6 {
-    f = $desugar$0;
-    %9 = getVal(f) -> bb7;
+    %2 = %5;
+    GOTO bb7;
   }
   bb7 {
+    f = %2;
+    %9 = f.getVal() -> bb8;
+  }
+  bb8 {
     %0 = %9;
     return;
   }

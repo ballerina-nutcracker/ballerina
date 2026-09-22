@@ -1,0 +1,174 @@
+module $anon.. v 0.0.0;
+isolatedSeed() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}
+isolatedIncrement(future<int>) -> int{
+  bb0 {
+    %3 = wait previous -> bb1;
+  }
+  bb1 {
+    %4 = %3 is error
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    panic %3;
+  }
+  bb3 {
+    %2 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    value = %2;
+    %7 = value;
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    %0 = %6;
+    return;
+  }
+}
+seed() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}
+increment(future<int>) -> int{
+  bb0 {
+    %3 = wait previous -> bb1;
+  }
+  bb1 {
+    %4 = %3 is error
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    panic %3;
+  }
+  bb3 {
+    %2 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    value = %2;
+    %7 = value;
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    %0 = %6;
+    return;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = start isolatedSeed() isolated=true -> bb1;
+  }
+  bb1 {
+    isolatedTail = %1;
+    %3 = ConstantLoad 0
+    $desugar$0 = %3;
+    %5 = ConstantLoad 50
+    $desugar$1 = %5;
+    GOTO bb2;
+  }
+  bb2 {
+    %8 = $desugar$0;
+    %9 = $desugar$1;
+    %7 = < %8 %9;
+    %7 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 6
+    _ = (1, $desugar$0);
+    %1 = start isolatedIncrement((1, isolatedTail)) isolated=false -> bb5;
+  }
+  bb4 {
+    %11 = wait isolatedTail -> bb6;
+  }
+  bb5 {
+    (1, isolatedTail) = %1;
+    %3 = (1, $desugar$0);
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    (1, $desugar$0) = %2;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb6 {
+    %12 = %11 is error
+    %12 ? bb7 : bb8;
+  }
+  bb7 {
+    %0 = %11;
+    return;
+  }
+  bb8 {
+    %10 = %11;
+    GOTO bb9;
+  }
+  bb9 {
+    isolatedResult = %10;
+    %14 = isolatedResult;
+    %15 = println(%14) -> bb10;
+  }
+  bb10 {
+    %16 = start seed() isolated=false -> bb11;
+  }
+  bb11 {
+    tail = %16;
+    %18 = ConstantLoad 0
+    $desugar$2 = %18;
+    %20 = ConstantLoad 50
+    $desugar$3 = %20;
+    GOTO bb12;
+  }
+  bb12 {
+    %23 = $desugar$2;
+    %24 = $desugar$3;
+    %22 = < %23 %24;
+    %22 ? bb13 : bb14;
+  }
+  bb13 {
+    PushScopeFrame 6
+    _ = (1, $desugar$2);
+    %1 = start increment((1, tail)) isolated=false -> bb15;
+  }
+  bb14 {
+    %26 = wait tail -> bb16;
+  }
+  bb15 {
+    (1, tail) = %1;
+    %3 = (1, $desugar$2);
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    (1, $desugar$2) = %2;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb16 {
+    %27 = %26 is error
+    %27 ? bb17 : bb18;
+  }
+  bb17 {
+    %0 = %26;
+    return;
+  }
+  bb18 {
+    %25 = %26;
+    GOTO bb19;
+  }
+  bb19 {
+    result = %25;
+    %29 = result;
+    %30 = println(%29) -> bb20;
+  }
+  bb20 {
+    return;
+  }
+}

@@ -15,19 +15,11 @@
             (literal 108)
             (literal 108)
             (literal 111)))))
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation string fromBytes (
-            (simple-var-ref bytes))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$0))))
+          (checked-expr
+            (invocation string fromBytes (
+              (simple-var-ref bytes)))))))
       (expression-stmt
         (invocation io println (
           (invocation string toBytes (

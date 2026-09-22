@@ -1,0 +1,15 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (union-type
+          (user-defined-type Foo)
+          (user-defined-type Bar))) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref f)
+          (user-defined-type Foo)))))
+  )
+)

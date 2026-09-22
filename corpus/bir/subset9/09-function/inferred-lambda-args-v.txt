@@ -13,13 +13,6 @@ $anonFunc$_1(int) -> int{
     return;
   }
 }
-$default$2() -> int{
-  bb0 {
-    %1 = ConstantLoad 10
-    %0 = %1;
-    return;
-  }
-}
 $anonFunc$_2({| left: int, right: int, never... |}) -> int{
   bb0 {
     %4 = ConstantLoad left
@@ -36,6 +29,13 @@ $anonFunc$_2({| left: int, right: int, never... |}) -> int{
 $anonFunc$_3(int) -> int{
   bb0 {
     %0 = value;
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
     return;
   }
 }
@@ -128,8 +128,8 @@ main() -> nil{
     %47 = println(%46) -> bb20;
   }
   bb20 {
-    %48 = fp $anon/.:$default$2
-    $desugar$4 = %48;
+    %49 = fp $anon/.:$default$2
+    $desugar$4 = %49;
     typedLambda = lambda;
     %51 = $desugar$4() -> bb21;
   }
@@ -205,16 +205,16 @@ main() -> nil{
     return;
   }
 }
-$default$0() -> int{
+$default$1() -> int{
   bb0 {
     %1 = ConstantLoad 5
     %0 = %1;
     return;
   }
 }
-$default$1() -> int{
+$default$2() -> int{
   bb0 {
-    %1 = ConstantLoad 5
+    %1 = ConstantLoad 10
     %0 = %1;
     return;
   }

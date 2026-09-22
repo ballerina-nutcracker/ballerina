@@ -1,0 +1,68 @@
+(acceptInt
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref value))
+    (return
+      (literal int))
+  )
+)
+(acceptString
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref value))
+    (return
+      (literal string))
+  )
+)
+(classify
+  (bb0 () ()
+    (return
+      (simple-var-ref result))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation classify (
+          (literal 1) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation classify (
+          (literal one) <default>)))))
+    (var-def
+      (variable fn (type
+        (function-type (
+          (union-type
+            (value-type int)
+            (value-type string))
+          (value-type string)) (
+          (value-type string)))) (expr
+        (lambda
+          (function $anonFunc$_0 (
+            (variable actual (type
+              (union-type
+                (value-type int)
+                (value-type string))))
+            (variable supplied (type
+              (value-type string)) (expr
+              (literal unused)))) (
+            (value-type string))
+            (block-function-body
+              (assignment
+                (wildcard-binding-pattern)
+                (simple-var-ref actual))
+              (return
+                (simple-var-ref supplied))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fn (
+          (literal 2) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fn (
+          (literal two) <default>)))))
+  )
+)

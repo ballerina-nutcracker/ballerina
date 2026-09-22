@@ -26,23 +26,15 @@
   (function bar () (
     (value-type int))
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
+      (return
+        (check-panicked-expr
           (invocation foo (
             (index-based-access
               (simple-var-ref vals)
               (literal 0))
             (index-based-access
               (simple-var-ref vals)
-              (literal 1)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$0))) ())
-      (return
-        (simple-var-ref $desugar$0))))
+              (literal 1))))))))
   (function foo () (
     (union-type
       (value-type int)

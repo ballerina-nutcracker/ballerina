@@ -1,0 +1,9 @@
+-- stdout --
+true
+1
+type.googleapis.com/google.protobuf.Empty
+
+type.googleapis.com/google.protobuf.Empty
+true
+type.googleapis.com/google.protobuf.Struct
+-- stderr --

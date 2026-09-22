@@ -1,0 +1,130 @@
+(package
+  (import-package ballerina io (as io))
+  (variable seed (type
+    (value-type int)))
+  (variable step (type
+    (value-type int)))
+  (variable labels (type
+    (array-type
+      (value-type string) dimensions: 1 ([]))))
+  (class-definition Counter
+    (variable value (type
+      (value-type int)))
+    (function init (
+      (variable initial (type
+        (value-type int)) (expr
+        (binary-expr +
+          (simple-var-ref seed)
+          (literal 1))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref initial))))
+    (function bump (
+      (variable amount (type
+        (value-type int)) (expr
+        (simple-var-ref step)))) (
+      (value-type int))
+      (block-function-body
+        (compound-assignment +
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref amount))
+        (return
+          (index-based-access
+            (simple-var-ref self)
+            (literal value)))))
+    (function scale (
+      (variable factor (type
+        (value-type int)) (expr
+        (invocation lang.array length (
+          (simple-var-ref labels)))))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (index-based-access
+              (simple-var-ref self)
+              (literal value))
+            (simple-var-ref factor))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref seed)
+        (literal 7))
+      (assignment
+        (simple-var-ref step)
+        (literal 3))
+      (assignment
+        (simple-var-ref labels)
+        (list-constructor-expr
+          (literal a)
+          (literal b)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$0 ()))))
+      (var-def
+        (variable c (type
+          (user-defined-type Counter)) (expr
+          (new (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal value)))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$1 ()))))
+          (invocation bump expr:
+            (simple-var-ref c) (
+            (simple-var-ref $desugar$1)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation bump expr:
+            (simple-var-ref c) (
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$2 (expr
+              (invocation $default$2 ()))))
+          (invocation scale expr:
+            (simple-var-ref c) (
+            (simple-var-ref $desugar$2)))))))
+      (var-def
+        (variable d (type
+          (user-defined-type Counter)) (expr
+          (new (
+            (literal 100))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref d)
+            (literal value)))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref seed)
+          (literal 1)))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (simple-var-ref step))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (invocation lang.array length (
+          (simple-var-ref labels)))))))

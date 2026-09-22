@@ -25,6 +25,6 @@ public function main() returns error? {
     req.setHeader("X-Forwarded-From", "test");
     http:Response r = check c->forward("/echo", req);
     io:println(r.statusCode);         // @output 200
-    io:println(r.getTextPayload());   // @output forwarded ok
+    io:println(check r.getTextPayload());   // @output forwarded ok
     return;
 }

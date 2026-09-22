@@ -87,7 +87,7 @@ func findFreePort(t *testing.T) int {
 	if err != nil {
 		t.Fatalf("listen: %v", err)
 	}
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 	return ln.Addr().(*net.TCPAddr).Port
 }
 
@@ -210,10 +210,10 @@ func TestPortOpenAndWaitForPort(t *testing.T) {
 		t.Fatalf("listen on %d: %v", port, err)
 	}
 	if !waitForPort(port, 2*time.Second) {
-		ln.Close()
+		_ = ln.Close()
 		t.Fatalf("waitForPort should observe the now-open port")
 	}
-	ln.Close()
+	_ = ln.Close()
 
 	waitPortClose(port, 2*time.Second)
 	if portOpen(port) {
@@ -257,7 +257,7 @@ func TestMeasureOnceFailsFastWhenPortBusy(t *testing.T) {
 	if err != nil {
 		t.Skipf("port %d unavailable for occupancy test: %v", servicePort, err)
 	}
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	_, err = measureOnce("irrelevant-binary", "irrelevant.bal", config{warmup: "1s", duration: "1s", conns: 1})
 	if err == nil {

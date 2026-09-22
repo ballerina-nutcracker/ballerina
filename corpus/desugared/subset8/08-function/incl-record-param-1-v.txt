@@ -72,11 +72,11 @@
               (key-value
                 (literal bar)
                 (literal 5))))))))))
-  (function $desugar$0 () ()
+  (function $default$0 () ()
     (block-function-body
       (return
         (literal 5))))
-  (function $desugar$1 () ()
+  (function $default$1 () ()
     (block-function-body
       (return
         (literal 10)))))

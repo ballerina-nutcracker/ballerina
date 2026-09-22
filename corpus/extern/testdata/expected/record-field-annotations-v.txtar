@@ -1,0 +1,14 @@
+-- stdout --
+active,age,dynamic,name
+
+
+person-name
+person-age
+computed
+<absent>
+<absent>
+second
+true
+false
+<absent>
+-- stderr --

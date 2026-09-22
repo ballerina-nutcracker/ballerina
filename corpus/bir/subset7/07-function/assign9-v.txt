@@ -29,7 +29,7 @@ printI(int|function() returns int) -> nil{
   }
   bb3 {
     PushScopeFrame 3
-    %0 = i() -> bb4;
+    %0 = (1, i)() -> bb4;
   }
   bb4 {
     %1 = %0;

@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package pal provides the Platform Adaptation Layer (PAL).
+// Package pal provides the Platform Abstraction Layer (PAL).
 //
 // PAL abstracts away interactions with the underlying platform such that the
 // runtime can be agnostic toward the underlying platform. All library functions

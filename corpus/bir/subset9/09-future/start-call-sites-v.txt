@@ -1,0 +1,477 @@
+module $anon.. v 0.0.0;
+bodyRan  boolean;
+evaluationCount  int;
+class Worker {
+  value int
+
+  init(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad value
+      self[%3] = value;
+      return;
+    }
+  }
+
+  run() -> int{
+    bb0 {
+      %3 = ConstantLoad value
+      %2 = self[%3];
+      %0 = %2;
+      return;
+    }
+  }
+}
+class Client {
+  value int
+
+  $remote$run() -> int{
+    bb0 {
+      %3 = ConstantLoad value
+      %2 = self[%3];
+      %0 = %2;
+      return;
+    }
+  }
+
+  init(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad value
+      self[%3] = value;
+      return;
+    }
+  }
+}
+one() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+two() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}
+identity(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+readFirst([int...]) -> int{
+  bb0 {
+    %3 = ConstantLoad 0
+    %2 = values[%3];
+    %0 = %2;
+    return;
+  }
+}
+delayed() -> int{
+  bb0 {
+    %1 = ConstantLoad true
+    bodyRan = %1;
+    %2 = ConstantLoad 10
+    %0 = %2;
+    return;
+  }
+}
+parallel() -> int{
+  bb0 {
+    %1 = ConstantLoad 20
+    %0 = %1;
+    return;
+  }
+}
+failArgument() -> int{
+  bb0 {
+    %1 = ConstantLoad argument
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+failBody() -> int{
+  bb0 {
+    %1 = ConstantLoad body
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+mark() -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + evaluationCount %3;
+    evaluationCount = %1;
+    %4 = println(evaluationCount) -> bb1;
+  }
+  bb1 {
+    %0 = evaluationCount;
+    return;
+  }
+}
+defaultAndRest(int,int,[int...]...) -> int{
+  bb0 {
+    %6 = first;
+    %7 = second;
+    %5 = + %6 %7;
+    %8 = %5;
+    %9 = length(rest) -> bb1;
+  }
+  bb1 {
+    %10 = %9;
+    %4 = + %8 %10;
+    %0 = %4;
+    return;
+  }
+}
+named(int,int) -> int{
+  bb0 {
+    %5 = first;
+    %6 = ConstantLoad 10
+    %7 = %6;
+    %4 = * %5 %7;
+    %8 = %4;
+    %9 = second;
+    %3 = + %8 %9;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %0 = (1, captured);
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad started println
+    %2 = start println(%1) isolated=true -> bb1;
+  }
+  bb1 {
+    printlnResult = %2;
+    %4 = wait printlnResult -> bb2;
+  }
+  bb2 {
+    printlnError = %4;
+    %6 = printlnError is nil
+    %7 = %6;
+    %8 = println(%7) -> bb3;
+  }
+  bb3 {
+    %9 = ConstantLoad 5
+    scalar = %9;
+    %11 = scalar;
+    %12 = start identity(%11) isolated=false -> bb4;
+  }
+  bb4 {
+    scalarResult = %12;
+    %14 = ConstantLoad 6
+    scalar = %14;
+    %15 = wait scalarResult -> bb5;
+  }
+  bb5 {
+    scalarValue = %15;
+    %17 = println(scalarValue) -> bb6;
+  }
+  bb6 {
+    %18 = fp $anon/.:one
+    selected = %18;
+    %20 = start selected() isolated=false -> bb7;
+  }
+  bb7 {
+    functionResult = %20;
+    %22 = fp $anon/.:two
+    selected = %22;
+    %23 = wait functionResult -> bb8;
+  }
+  bb8 {
+    functionValue = %23;
+    %25 = println(functionValue) -> bb9;
+  }
+  bb9 {
+    %26 = ConstantLoad 7
+    captured = %26;
+    %28 = closure_fp $anon/.:$anonFunc$_0
+    closure = %28;
+    %30 = start closure() isolated=false -> bb10;
+  }
+  bb10 {
+    closureResult = %30;
+    %32 = ConstantLoad 8
+    captured = %32;
+    %33 = wait closureResult -> bb11;
+  }
+  bb11 {
+    closureValue = %33;
+    %35 = println(closureValue) -> bb12;
+  }
+  bb12 {
+    %36 = newObject $anon/.:Worker
+    %37 = ConstantLoad 11
+    %38 = %36.init(%37) -> bb13;
+  }
+  bb13 {
+    %40 = %38 is nil
+    %40 ? bb14 : bb15;
+  }
+  bb14 {
+    %39 = %36;
+    GOTO bb16;
+  }
+  bb15 {
+    %39 = %38;
+    GOTO bb16;
+  }
+  bb16 {
+    target = %39;
+    %42 = start target.run() isolated=false -> bb17;
+  }
+  bb17 {
+    methodResult = %42;
+    %44 = newObject $anon/.:Worker
+    %45 = ConstantLoad 12
+    %46 = %44.init(%45) -> bb18;
+  }
+  bb18 {
+    %48 = %46 is nil
+    %48 ? bb19 : bb20;
+  }
+  bb19 {
+    %47 = %44;
+    GOTO bb21;
+  }
+  bb20 {
+    %47 = %46;
+    GOTO bb21;
+  }
+  bb21 {
+    target = %47;
+    %49 = wait methodResult -> bb22;
+  }
+  bb22 {
+    methodValue = %49;
+    %51 = println(methodValue) -> bb23;
+  }
+  bb23 {
+    %52 = newObject $anon/.:Client
+    %53 = ConstantLoad 13
+    %54 = %52.init(%53) -> bb24;
+  }
+  bb24 {
+    %56 = %54 is nil
+    %56 ? bb25 : bb26;
+  }
+  bb25 {
+    %55 = %52;
+    GOTO bb27;
+  }
+  bb26 {
+    %55 = %54;
+    GOTO bb27;
+  }
+  bb27 {
+    endpoint = %55;
+    %58 = start endpoint.$remote$run() isolated=false -> bb28;
+  }
+  bb28 {
+    remoteResult = %58;
+    %60 = newObject $anon/.:Client
+    %61 = ConstantLoad 14
+    %62 = %60.init(%61) -> bb29;
+  }
+  bb29 {
+    %64 = %62 is nil
+    %64 ? bb30 : bb31;
+  }
+  bb30 {
+    %63 = %60;
+    GOTO bb32;
+  }
+  bb31 {
+    %63 = %62;
+    GOTO bb32;
+  }
+  bb32 {
+    endpoint = %63;
+    %65 = wait remoteResult -> bb33;
+  }
+  bb33 {
+    remoteValue = %65;
+    %67 = println(remoteValue) -> bb34;
+  }
+  bb34 {
+    %68 = ConstantLoad 15
+    %69 = ConstantLoad 1
+    %70 = newArray [int...][%69]{%68}
+    values = %70;
+    %72 = start readFirst(values) isolated=false -> bb35;
+  }
+  bb35 {
+    referenceResult = %72;
+    %74 = ConstantLoad 16
+    %75 = ConstantLoad 0
+    values[%75] = %74;
+    %76 = wait referenceResult -> bb36;
+  }
+  bb36 {
+    referenceValue = %76;
+    %78 = println(referenceValue) -> bb37;
+  }
+  bb37 {
+    %79 = mark() -> bb38;
+  }
+  bb38 {
+    $desugar$0 = %79;
+    %81 = $desugar$0;
+    %82 = $default$0(%81) -> bb39;
+  }
+  bb39 {
+    $desugar$1 = %82;
+    %84 = $desugar$0;
+    %85 = $desugar$1;
+    %86 = start defaultAndRest(%84,%85) isolated=false -> bb40;
+  }
+  bb40 {
+    defaultResult = %86;
+    %88 = wait defaultResult -> bb41;
+  }
+  bb41 {
+    defaultValue = %88;
+    %90 = println(defaultValue) -> bb42;
+  }
+  bb42 {
+    %91 = mark() -> bb43;
+  }
+  bb43 {
+    %92 = %91;
+    %93 = mark() -> bb44;
+  }
+  bb44 {
+    %94 = %93;
+    %95 = mark() -> bb45;
+  }
+  bb45 {
+    %96 = %95;
+    %97 = mark() -> bb46;
+  }
+  bb46 {
+    %98 = %97;
+    %99 = start defaultAndRest(%92,%94,%96,%98) isolated=false -> bb47;
+  }
+  bb47 {
+    restResult = %99;
+    %101 = wait restResult -> bb48;
+  }
+  bb48 {
+    restValue = %101;
+    %103 = println(restValue) -> bb49;
+  }
+  bb49 {
+    %104 = mark() -> bb50;
+  }
+  bb50 {
+    %105 = %104;
+    %106 = mark() -> bb51;
+  }
+  bb51 {
+    %107 = %106;
+    %108 = start named(%105,%107) isolated=false -> bb52;
+  }
+  bb52 {
+    namedResult = %108;
+    %110 = wait namedResult -> bb53;
+  }
+  bb53 {
+    namedValue = %110;
+    %112 = println(namedValue) -> bb54;
+  }
+  bb54 {
+    GOTO bb55;
+  }
+  bb55 {
+    %114 = failArgument() -> bb56;
+  }
+  bb56 {
+    %115 = %114;
+    %116 = start identity(%115) isolated=false -> bb57;
+  }
+  bb57 {
+    %113 = %116;
+    GOTO bb58;
+  }
+  bb58 {
+    argumentPanic = %113;
+    %118 = argumentPanic is error
+    %119 = %118;
+    %120 = println(%119) -> bb59;
+  }
+  bb59 {
+    %121 = start failBody() isolated=false -> bb60;
+  }
+  bb60 {
+    bodyPanic = %121;
+    GOTO bb61;
+  }
+  bb61 {
+    %124 = wait bodyPanic -> bb62;
+  }
+  bb62 {
+    %123 = %124;
+    GOTO bb63;
+  }
+  bb63 {
+    bodyPanicResult = %123;
+    %126 = bodyPanicResult is error
+    %127 = %126;
+    %128 = println(%127) -> bb64;
+  }
+  bb64 {
+    %129 = start delayed() isolated=false -> bb65;
+  }
+  bb65 {
+    delayedResult = %129;
+    %131 = println(bodyRan) -> bb66;
+  }
+  bb66 {
+    %132 = wait delayedResult -> bb67;
+  }
+  bb67 {
+    delayedValue = %132;
+    %134 = println(delayedValue) -> bb68;
+  }
+  bb68 {
+    %135 = println(bodyRan) -> bb69;
+  }
+  bb69 {
+    %136 = start parallel() isolated=true -> bb70;
+  }
+  bb70 {
+    parallelResult = %136;
+    %138 = wait parallelResult -> bb71;
+  }
+  bb71 {
+    parallelValue = %138;
+    %140 = println(parallelValue) -> bb72;
+  }
+  bb72 {
+    return;
+  }
+  
+  error-table {
+    [bb55, bb57] -> bb58, %113
+    [bb61, bb62] -> bb63, %123
+  }
+}
+$default$0(int) -> int{
+  bb0 {
+    %2 = mark() -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}

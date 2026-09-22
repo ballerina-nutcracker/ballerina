@@ -70,25 +70,18 @@
       (var-def
         (variable $desugar$1 (expr
           (service-init))))
-      (var-def
-        (variable $desugar$0 (expr
+      (expression-stmt
+        (checked-expr
           (invocation attach expr:
             (simple-var-ref $desugar$0) (
             (simple-var-ref $desugar$1)
-            (literal <nil>))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
-      (expression-stmt
-        (simple-var-ref $desugar$0))))
+            (literal <nil>)))))))
   (function main () (
     (value-type null))
     (block-function-body))
   (function $default$0 (
-    (variable svc)) ()
+    (variable svc (type
+      (value-type )))) ()
     (block-function-body
       (return
         (literal <nil>))))
@@ -114,18 +107,10 @@
               (index-based-access
                 (simple-var-ref $desugar$0)
                 (simple-var-ref $desugar$1)))))
-          (var-def
-            (variable $desugar$3 (expr
-              (invocation start expr:
-                (simple-var-ref $listener) ()))))
-          (if
-            (type-test-expr is
-              (simple-var-ref $desugar$3))
-            (block-stmt
-              (return
-                (simple-var-ref $desugar$3))) ())
           (expression-stmt
-            (simple-var-ref $desugar$3))
+            (checked-expr
+              (invocation start expr:
+                (simple-var-ref $listener) ())))
           (assignment
             (simple-var-ref $desugar$1)
             (binary-expr +
@@ -153,18 +138,10 @@
               (index-based-access
                 (simple-var-ref $desugar$0)
                 (simple-var-ref $desugar$1)))))
-          (var-def
-            (variable $desugar$3 (expr
-              (invocation gracefulStop expr:
-                (simple-var-ref $listener) ()))))
-          (if
-            (type-test-expr is
-              (simple-var-ref $desugar$3))
-            (block-stmt
-              (return
-                (simple-var-ref $desugar$3))) ())
           (expression-stmt
-            (simple-var-ref $desugar$3))
+            (checked-expr
+              (invocation gracefulStop expr:
+                (simple-var-ref $listener) ())))
           (assignment
             (simple-var-ref $desugar$1)
             (binary-expr +
@@ -192,18 +169,10 @@
               (index-based-access
                 (simple-var-ref $desugar$0)
                 (simple-var-ref $desugar$1)))))
-          (var-def
-            (variable $desugar$3 (expr
-              (invocation immediateStop expr:
-                (simple-var-ref $listener) ()))))
-          (if
-            (type-test-expr is
-              (simple-var-ref $desugar$3))
-            (block-stmt
-              (return
-                (simple-var-ref $desugar$3))) ())
           (expression-stmt
-            (simple-var-ref $desugar$3))
+            (checked-expr
+              (invocation immediateStop expr:
+                (simple-var-ref $listener) ())))
           (assignment
             (simple-var-ref $desugar$1)
             (binary-expr +

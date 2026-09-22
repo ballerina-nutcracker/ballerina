@@ -24,11 +24,11 @@ public function main() returns error? {
     // gzipReadCloser and strips the Content-Encoding header before the payload
     // is read transparently as text.
     http:Response gz = check c->get("/gzip");
-    io:println(gz.getTextPayload()); // @output hello gzipped world
+    io:println(check gz.getTextPayload()); // @output hello gzipped world
 
     // deflate-encoded response -> decompressResponseBody + deflateReadCloser.
     http:Response df = check c->get("/deflate");
-    io:println(df.getTextPayload()); // @output hello deflated world
+    io:println(check df.getTextPayload()); // @output hello deflated world
 
     // A response advertising gzip but carrying a malformed body must surface a
     // read error rather than silently returning the raw compressed bytes.

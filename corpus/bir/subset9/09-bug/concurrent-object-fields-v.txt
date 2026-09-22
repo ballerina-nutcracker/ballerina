@@ -1,0 +1,149 @@
+module $anon.. v 0.0.0;
+class Counters {
+  counterA int
+  counterB int
+
+  incrementA() -> int{
+    bb0 {
+      lock-start "$anon/.:Counters.counterA" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 8
+      GOTO bb2;
+    }
+    bb2 {
+      %2 = ConstantLoad counterA
+      %1 = (1, self)[%2];
+      %3 = %1;
+      %4 = ConstantLoad 10000
+      %5 = %4;
+      %0 = < %3 %5;
+      %0 ? bb3 : bb4;
+    }
+    bb3 {
+      PushScopeFrame 6
+      %0 = ConstantLoad counterA
+      %1 = (2, self)[%0];
+      %2 = %1;
+      %3 = ConstantLoad 1
+      %4 = %3;
+      %5 = + %2 %4;
+      (2, self)[%0] = %5;
+      PopScopeFrame
+      GOTO bb2;
+    }
+    bb4 {
+      %7 = ConstantLoad counterA
+      %6 = (1, self)[%7];
+      (1, %0) = %6;
+      PopScopeFrame
+      lock-end "$anon/.:Counters.counterA" GOTO bb5;
+    }
+    bb5 {
+      return;
+    }
+    bb6 {
+      return;
+    }
+  }
+
+  incrementB() -> int{
+    bb0 {
+      lock-start "$anon/.:Counters.counterB" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 8
+      GOTO bb2;
+    }
+    bb2 {
+      %2 = ConstantLoad counterB
+      %1 = (1, self)[%2];
+      %3 = %1;
+      %4 = ConstantLoad 10000
+      %5 = %4;
+      %0 = < %3 %5;
+      %0 ? bb3 : bb4;
+    }
+    bb3 {
+      PushScopeFrame 6
+      %0 = ConstantLoad counterB
+      %1 = (2, self)[%0];
+      %2 = %1;
+      %3 = ConstantLoad 1
+      %4 = %3;
+      %5 = + %2 %4;
+      (2, self)[%0] = %5;
+      PopScopeFrame
+      GOTO bb2;
+    }
+    bb4 {
+      %7 = ConstantLoad counterB
+      %6 = (1, self)[%7];
+      (1, %0) = %6;
+      PopScopeFrame
+      lock-end "$anon/.:Counters.counterB" GOTO bb5;
+    }
+    bb5 {
+      return;
+    }
+    bb6 {
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad counterA
+      self[%3] = %2;
+      %4 = ConstantLoad 0
+      %5 = ConstantLoad counterB
+      self[%5] = %4;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Counters
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    counters = %3;
+    %6 = start counters.incrementA() isolated=true -> bb5;
+  }
+  bb5 {
+    a = %6;
+    %8 = start counters.incrementB() isolated=true -> bb6;
+  }
+  bb6 {
+    b = %8;
+    %10 = wait a -> bb7;
+  }
+  bb7 {
+    aResult = %10;
+    %12 = wait b -> bb8;
+  }
+  bb8 {
+    bResult = %12;
+    %14 = println(aResult) -> bb9;
+  }
+  bb9 {
+    %15 = println(bResult) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}

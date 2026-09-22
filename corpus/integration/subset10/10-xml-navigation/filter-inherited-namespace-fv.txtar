@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: transformXMLStepExpression unimplemented
+  --> filter-inherited-namespace-fv.bal:23:18
+   |
+23 |     xml children = root/*; // @error future: XML child navigation
+   |                  ^^^^^^

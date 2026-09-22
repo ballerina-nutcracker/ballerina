@@ -39,7 +39,7 @@ const (
 	// platformAny is the platform directory name for platform-independent packages.
 	platformAny = "any"
 	// platformGoPrefix marks platform directories that target a specific Go
-	// toolchain version (e.g. "go1.26"). Used as a fallback when no "any"
+	// toolchain version (e.g. "go1.27"). Used as a fallback when no "any"
 	// directory is present.
 	platformGoPrefix = "go"
 )

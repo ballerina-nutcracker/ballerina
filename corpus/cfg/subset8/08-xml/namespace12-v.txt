@@ -1,0 +1,16 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref elem))))
+    (xmlns
+      (simple-var-ref URI) as local)
+    (var-def
+      (variable localElem (type
+        (value-type xml)) (expr
+        (xml-element-literal local:f))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref localElem))))
+  )
+)

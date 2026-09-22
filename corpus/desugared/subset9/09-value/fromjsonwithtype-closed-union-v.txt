@@ -36,20 +36,12 @@
               (literal age)
               (literal 5))))))
       (var-def
-        (variable $desugar$0 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref ageOnly)
-            (simple-var-ref Pet))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
-      (var-def
         (variable ageOnlyPet (type
           (user-defined-type Pet)) (expr
-          (simple-var-ref $desugar$0))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref ageOnly)
+              (simple-var-ref Pet)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref ageOnlyPet))))
@@ -61,20 +53,12 @@
               (literal pet_type)
               (literal Cat))))))
       (var-def
-        (variable $desugar$1 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref typeOnly)
-            (simple-var-ref Pet))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$1))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$1))) ())
-      (var-def
         (variable typeOnlyPet (type
           (user-defined-type Pet)) (expr
-          (simple-var-ref $desugar$1))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref typeOnly)
+              (simple-var-ref Pet)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref typeOnlyPet))))

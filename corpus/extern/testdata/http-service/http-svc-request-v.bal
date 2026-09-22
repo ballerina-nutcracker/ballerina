@@ -33,5 +33,5 @@ public function testMain() returns error? {
     io:println(r.statusCode); // @output 200
     // Read the echoed JSON back as text (deterministic key order from the
     // server's json.Marshal).
-    io:println(r.getTextPayload()); // @output {"name":"ballerina","version":1}
+    io:println(check r.getTextPayload()); // @output {"name":"ballerina","version":1}
 }

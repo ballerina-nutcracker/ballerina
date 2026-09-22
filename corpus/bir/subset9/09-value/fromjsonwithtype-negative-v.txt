@@ -263,7 +263,7 @@ main() -> nil|error{
     return;
   }
 }
-$desugar$0() -> int{
+$default$0() -> int{
   bb0 {
     %1 = ConstantLoad 99
     %0 = %1;

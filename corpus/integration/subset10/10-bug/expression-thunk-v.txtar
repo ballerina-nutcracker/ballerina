@@ -1,0 +1,11 @@
+-- stdout --
+true
+false:true
+3:4
+1:2:2
+[2,4]
+[0,1,2]
+42:1
+true
+5
+-- stderr --

@@ -70,6 +70,45 @@
       (invocation io println (
         (simple-var-ref s))))
     (var-def
+      (variable plainInt (type
+        (value-type int)) (expr
+        (literal 7))))
+    (var-def
+      (variable viaInt (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref plainInt)
+            (typedesc-expr
+              (value-type int))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref viaInt))))
+    (var-def
+      (variable plainRecord (type
+        (record-type
+          (field name
+            (value-type string))
+          (field age
+            (value-type int)))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal Alice))
+          (key-value
+            (literal age)
+            (literal 30))))))
+    (var-def
+      (variable viaRecord (type
+        (user-defined-type Person)) (expr
+        (checked-expr
+          (invocation lang.value fromJsonWithType (
+            (simple-var-ref plainRecord)
+            (simple-var-ref Person)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref viaRecord))))
+    (var-def
       (variable noAge (type
         (builtin-ref-type json)) (expr
         (mapping-constructor-expr

@@ -53,12 +53,10 @@ var (
 
 func TestBenchmarkBinaryRunExportsHTML(t *testing.T) {
 	skipUnlessBenchmarkIntegration(t)
-	t.Parallel()
 
 	bin := ensureBenchmarkBinary(t)
 	for _, targetPath := range integrationTargets {
 		t.Run(filepath.Base(targetPath), func(t *testing.T) {
-			t.Parallel()
 			tmp := t.TempDir()
 			htmlPath := filepath.Join(tmp, "output.html")
 			htmlReport := assertBenchmarkBinarySuccessAndReadReport(t, bin, htmlPath,
@@ -80,7 +78,6 @@ func TestBenchmarkBinaryRunExportsHTML(t *testing.T) {
 
 func TestBenchmarkBinaryRunExportsHTMLForDirectoryTarget(t *testing.T) {
 	skipUnlessBenchmarkIntegration(t)
-	t.Parallel()
 
 	target, err := resolveTarget(integrationDirPath)
 	if err != nil {
@@ -139,7 +136,6 @@ func TestResolveDirectoryTargetIncludesProjectRootWithoutProjectFiles(t *testing
 
 func TestBenchmarkBinaryRunExportsHTMLForPackageTarget(t *testing.T) {
 	skipUnlessBenchmarkIntegration(t)
-	t.Parallel()
 
 	target, err := resolveTarget(integrationProjectPath)
 	if err != nil {

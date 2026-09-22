@@ -48,15 +48,15 @@ public function testMain() returns error? {
     // Direct assignment: 201 Created.
     http:Response created = check c->post("/sc/item", "");
     io:println(created.statusCode); // @output 201
-    io:println(created.getTextPayload()); // @output created
+    io:println(check created.getTextPayload()); // @output created
 
     // Direct assignment: 404 Not Found.
     http:Response notFound = check c->get("/sc/missing");
     io:println(notFound.statusCode); // @output 404
-    io:println(notFound.getTextPayload()); // @output not found
+    io:println(check notFound.getTextPayload()); // @output not found
 
     // Default statusCode is 200.
     http:Response ok = check c->get("/sc/ping");
     io:println(ok.statusCode); // @output 200
-    io:println(ok.getTextPayload()); // @output pong
+    io:println(check ok.getTextPayload()); // @output pong
 }

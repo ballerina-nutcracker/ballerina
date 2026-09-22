@@ -1,0 +1,146 @@
+module $anon.. v 0.0.0;
+class Store {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get price Store.$resource$get$0(int) -> int|error{
+    bb0 {
+      %0 = id;
+      return;
+    }
+  }
+
+  resource get total Store.$resource$get$1(int,int) -> int|error{
+    bb0 {
+      %5 = price;
+      %6 = tax;
+      %4 = + %5 %6;
+      %0 = %4;
+      return;
+    }
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = newObject $anon/.:Store
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    store = %3;
+    %7 = $default$0() -> bb5;
+  }
+  bb5 {
+    $desugar$0 = %7;
+    %9 = ConstantLoad price
+    %10 = $desugar$0;
+    %11 = store->[%9].get(%10) -> bb6;
+  }
+  bb6 {
+    %12 = %11 is error
+    %12 ? bb7 : bb8;
+  }
+  bb7 {
+    %0 = %11;
+    return;
+  }
+  bb8 {
+    %6 = %11;
+    GOTO bb9;
+  }
+  bb9 {
+    defaultPrice = %6;
+    %15 = ConstantLoad 40
+    $desugar$1 = %15;
+    %17 = $desugar$1;
+    %18 = $default$1(%17) -> bb10;
+  }
+  bb10 {
+    $desugar$2 = %18;
+    %20 = ConstantLoad total
+    %21 = $desugar$1;
+    %22 = $desugar$2;
+    %23 = store->[%20].get(%21,%22) -> bb11;
+  }
+  bb11 {
+    %24 = %23 is error
+    %24 ? bb12 : bb13;
+  }
+  bb12 {
+    %0 = %23;
+    return;
+  }
+  bb13 {
+    %14 = %23;
+    GOTO bb14;
+  }
+  bb14 {
+    defaultTax = %14;
+    %27 = ConstantLoad total
+    %28 = ConstantLoad 40
+    %29 = %28;
+    %30 = ConstantLoad 5
+    %31 = %30;
+    %32 = store->[%27].get(%29,%31) -> bb15;
+  }
+  bb15 {
+    %33 = %32 is error
+    %33 ? bb16 : bb17;
+  }
+  bb16 {
+    %0 = %32;
+    return;
+  }
+  bb17 {
+    %26 = %32;
+    GOTO bb18;
+  }
+  bb18 {
+    explicitTax = %26;
+    %35 = defaultPrice;
+    %36 = println(%35) -> bb19;
+  }
+  bb19 {
+    %37 = defaultTax;
+    %38 = println(%37) -> bb20;
+  }
+  bb20 {
+    %39 = explicitTax;
+    %40 = println(%39) -> bb21;
+  }
+  bb21 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 10
+    %0 = %1;
+    return;
+  }
+}
+$default$1(int) -> int{
+  bb0 {
+    %3 = price;
+    %4 = ConstantLoad 10
+    %5 = %4;
+    %2 = / %3 %5;
+    %0 = %2;
+    return;
+  }
+}

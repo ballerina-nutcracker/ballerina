@@ -1,138 +1,147 @@
 module $anon.. v 0.0.0;
 main() -> nil|error{
   bb0 {
-    %1 = ConstantLoad https://example.com
-    $desugar$0 = %1;
-    %3 = $default$15($desugar$0) -> bb1;
+    %2 = ConstantLoad https://example.com
+    $desugar$0 = %2;
+    %4 = $default$15($desugar$0) -> bb1;
   }
   bb1 {
-    $desugar$1 = %3;
-    %5 = newObject ballerina/http:Client
-    %6 = init(%5,$desugar$0,$desugar$1) -> bb2;
+    $desugar$1 = %4;
+    %6 = newObject ballerina/http:Client
+    %7 = init(%6,$desugar$0,$desugar$1) -> bb2;
   }
   bb2 {
-    %8 = %6 is nil
-    %8 ? bb3 : bb4;
+    %9 = %7 is nil
+    %9 ? bb3 : bb4;
   }
   bb3 {
-    %7 = %5;
+    %8 = %6;
     GOTO bb5;
   }
   bb4 {
-    %7 = %6;
+    %8 = %7;
     GOTO bb5;
   }
   bb5 {
-    $desugar$2 = %7;
-    %10 = $desugar$2 is error
+    %10 = %8 is error
     %10 ? bb6 : bb7;
   }
   bb6 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$2);
-    PopScopeFrame
+    %0 = %8;
     return;
   }
   bb7 {
-    c = $desugar$2;
-    %12 = ConstantLoad /post
-    $desugar$3 = %12;
-    %14 = ConstantLoad hello world
-    $desugar$4 = %14;
-    %16 = $default$26($desugar$3,$desugar$4) -> bb8;
+    %1 = %8;
+    GOTO bb8;
   }
   bb8 {
-    $desugar$5 = %16;
-    %18 = $default$27($desugar$3,$desugar$4,$desugar$5) -> bb9;
+    c = %1;
+    %13 = ConstantLoad /post
+    $desugar$2 = %13;
+    %15 = ConstantLoad hello world
+    $desugar$3 = %15;
+    %17 = $default$26($desugar$2,$desugar$3) -> bb9;
   }
   bb9 {
-    $desugar$6 = %18;
-    %20 = $remote$post(c,$desugar$3,$desugar$4,$desugar$5,$desugar$6) -> bb10;
+    $desugar$4 = %17;
+    %19 = $default$27($desugar$2,$desugar$3,$desugar$4) -> bb10;
   }
   bb10 {
-    $desugar$7 = %20;
-    %22 = $desugar$7 is error
-    %22 ? bb11 : bb12;
+    $desugar$5 = %19;
+    %21 = ConstantLoad typedesc
+    $desugar$6 = %21;
+    %23 = $remote$post(c,$desugar$2,$desugar$3,$desugar$4,$desugar$5,$desugar$6) -> bb11;
   }
   bb11 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$7);
-    PopScopeFrame
-    return;
+    %24 = %23 is error
+    %24 ? bb12 : bb13;
   }
   bb12 {
-    r = $desugar$7;
-    %25 = ConstantLoad statusCode
-    %24 = r[%25];
-    %26 = %24;
-    %27 = println(%26) -> bb13;
+    %0 = %23;
+    return;
   }
   bb13 {
-    %28 = ConstantLoad /post
-    %29 = ConstantLoad {"key":"value"}
-    %30 = ConstantLoad <nil>
-    %31 = %30;
-    %32 = ConstantLoad application/json
-    %33 = $remote$post(c,%28,%29,%31,%32) -> bb14;
+    %12 = %23;
+    GOTO bb14;
   }
   bb14 {
-    $desugar$8 = %33;
-    %35 = $desugar$8 is error
-    %35 ? bb15 : bb16;
+    r = %12;
+    %27 = ConstantLoad statusCode
+    %26 = r[%27];
+    %28 = %26;
+    %29 = println(%28) -> bb15;
   }
   bb15 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$8);
-    PopScopeFrame
-    return;
+    %31 = ConstantLoad /post
+    %32 = ConstantLoad {"key":"value"}
+    %33 = ConstantLoad <nil>
+    %34 = %33;
+    %35 = ConstantLoad application/json
+    %36 = ConstantLoad typedesc
+    %37 = $remote$post(c,%31,%32,%34,%35,%36) -> bb16;
   }
   bb16 {
-    r2 = $desugar$8;
-    %38 = ConstantLoad statusCode
-    %37 = r2[%38];
-    %39 = %37;
-    %40 = println(%39) -> bb17;
+    %38 = %37 is error
+    %38 ? bb17 : bb18;
   }
   bb17 {
-    %41 = ConstantLoad /post
-    $desugar$9 = %41;
-    %43 = ConstantLoad name
-    %44 = ConstantLoad test
-    %45 = ConstantLoad count
-    %46 = ConstantLoad 1
-    %47 = newMap {| json... |}{%43=%44, %45=%46}
-    $desugar$10 = %47;
-    %49 = $default$26($desugar$9,$desugar$10) -> bb18;
-  }
-  bb18 {
-    $desugar$11 = %49;
-    %51 = $default$27($desugar$9,$desugar$10,$desugar$11) -> bb19;
-  }
-  bb19 {
-    $desugar$12 = %51;
-    %53 = $remote$post(c,$desugar$9,$desugar$10,$desugar$11,$desugar$12) -> bb20;
-  }
-  bb20 {
-    $desugar$13 = %53;
-    %55 = $desugar$13 is error
-    %55 ? bb21 : bb22;
-  }
-  bb21 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$13);
-    PopScopeFrame
+    %0 = %37;
     return;
   }
+  bb18 {
+    %30 = %37;
+    GOTO bb19;
+  }
+  bb19 {
+    r2 = %30;
+    %41 = ConstantLoad statusCode
+    %40 = r2[%41];
+    %42 = %40;
+    %43 = println(%42) -> bb20;
+  }
+  bb20 {
+    %45 = ConstantLoad /post
+    $desugar$7 = %45;
+    %47 = ConstantLoad name
+    %48 = ConstantLoad test
+    %49 = ConstantLoad count
+    %50 = ConstantLoad 1
+    %51 = newMap {| json... |}{%47=%48, %49=%50}
+    $desugar$8 = %51;
+    %53 = $default$26($desugar$7,$desugar$8) -> bb21;
+  }
+  bb21 {
+    $desugar$9 = %53;
+    %55 = $default$27($desugar$7,$desugar$8,$desugar$9) -> bb22;
+  }
   bb22 {
-    r3 = $desugar$13;
-    %58 = ConstantLoad statusCode
-    %57 = r3[%58];
-    %59 = %57;
-    %60 = println(%59) -> bb23;
+    $desugar$10 = %55;
+    %57 = ConstantLoad typedesc
+    $desugar$11 = %57;
+    %59 = $remote$post(c,$desugar$7,$desugar$8,$desugar$9,$desugar$10,$desugar$11) -> bb23;
   }
   bb23 {
-    %61 = ConstantLoad <nil>
-    %0 = %61;
+    %60 = %59 is error
+    %60 ? bb24 : bb25;
+  }
+  bb24 {
+    %0 = %59;
+    return;
+  }
+  bb25 {
+    %44 = %59;
+    GOTO bb26;
+  }
+  bb26 {
+    r3 = %44;
+    %63 = ConstantLoad statusCode
+    %62 = r3[%63];
+    %64 = %62;
+    %65 = println(%64) -> bb27;
+  }
+  bb27 {
+    %66 = ConstantLoad <nil>
+    %0 = %66;
     return;
   }
 }

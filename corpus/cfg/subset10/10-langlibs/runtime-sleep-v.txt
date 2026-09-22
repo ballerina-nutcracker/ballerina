@@ -1,0 +1,26 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal before))))
+    (expression-stmt
+      (invocation runtime sleep (
+        (literal 0.01))))
+    (expression-stmt
+      (invocation io println (
+        (literal after))))
+    (expression-stmt
+      (invocation runtime sleep (
+        (literal 0))))
+    (expression-stmt
+      (invocation io println (
+        (literal zero-ok))))
+    (expression-stmt
+      (invocation runtime sleep (
+        (unary-expr -
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (literal negative-ok))))
+  )
+)

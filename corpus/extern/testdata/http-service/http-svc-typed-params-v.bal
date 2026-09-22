@@ -42,9 +42,9 @@ service /api on new http:Listener(19196) {
 public function testMain() returns error? {
     http:Client c = check new http:Client("http://localhost:19196", {});
     http:Response flag = check c->get("/api/flag/true");
-    io:println(flag.getTextPayload()); // @output flag=true
+    io:println(check flag.getTextPayload()); // @output flag=true
     http:Response price = check c->get("/api/price/9.99");
-    io:println(price.getTextPayload()); // @output price=9.99
+    io:println(check price.getTextPayload()); // @output price=9.99
     http:Response echo = check c->get("/api/echo/hello");
-    io:println(echo.getTextPayload()); // @output hello
+    io:println(check echo.getTextPayload()); // @output hello
 }

@@ -5,73 +5,45 @@ main() -> nil{
     a = %1;
     %3 = ConstantLoad b
     b = %3;
-    $desugar$0 = a;
-    $desugar$1 = b;
-    %7 = ConstantLoad <nil>
-    $desugar$2 = %7;
-    %10 = $desugar$0 is nil
-    %9 = %10;
-    %10 ? bb2 : bb1;
+    %5 = a;
+    %6 = %5 is nil
+    %7 = b is nil
+    %8 = || %6 %7;
+    %8 ? bb1 : bb2;
   }
   bb1 {
-    %11 = $desugar$1 is nil
-    %9 = %11;
-    GOTO bb2;
+    %9 = ConstantLoad <nil>
+    GOTO bb3;
   }
   bb2 {
-    %9 ? bb3 : bb4;
+    %9 = + %5 b;
+    GOTO bb3;
   }
   bb3 {
-    PushScopeFrame 0
-    PopScopeFrame
-    GOTO bb5;
+    c = %9;
+    %11 = println(c) -> bb4;
   }
   bb4 {
-    PushScopeFrame 1
-    %0 = + (1, $desugar$0) (1, $desugar$1);
-    (1, $desugar$2) = %0;
-    PopScopeFrame
-    GOTO bb5;
+    %12 = ConstantLoad <nil>
+    d = %12;
+    %14 = c;
+    %15 = %14 is nil
+    %16 = d is nil
+    %17 = || %15 %16;
+    %17 ? bb5 : bb6;
   }
   bb5 {
-    c = $desugar$2;
-    %13 = println(c) -> bb6;
+    %18 = ConstantLoad <nil>
+    GOTO bb7;
   }
   bb6 {
-    %14 = ConstantLoad <nil>
-    d = %14;
-    $desugar$3 = c;
-    $desugar$4 = d;
-    %18 = ConstantLoad <nil>
-    $desugar$5 = %18;
-    %21 = $desugar$3 is nil
-    %20 = %21;
-    %21 ? bb8 : bb7;
+    %18 = + %14 d;
+    GOTO bb7;
   }
   bb7 {
-    %22 = $desugar$4 is nil
-    %20 = %22;
-    GOTO bb8;
+    %19 = println(%18) -> bb8;
   }
   bb8 {
-    %20 ? bb9 : bb10;
-  }
-  bb9 {
-    PushScopeFrame 0
-    PopScopeFrame
-    GOTO bb11;
-  }
-  bb10 {
-    PushScopeFrame 1
-    %0 = + (1, $desugar$3) (1, $desugar$4);
-    (1, $desugar$5) = %0;
-    PopScopeFrame
-    GOTO bb11;
-  }
-  bb11 {
-    %23 = println($desugar$5) -> bb12;
-  }
-  bb12 {
     return;
   }
 }

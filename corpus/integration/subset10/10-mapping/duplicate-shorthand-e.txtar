@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate key 'name' in mapping constructor
+  --> duplicate-shorthand-e.bal:20:20
+   |
+20 |     var x = {name, name}; // @error
+   |                    ^^^^

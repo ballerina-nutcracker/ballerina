@@ -18,28 +18,28 @@ package semtypes
 
 type functionOps struct{}
 
-var _ BasicTypeOps = &functionOps{}
+var _ basicTypeOps = &functionOps{}
 
-func (f *functionOps) IsEmpty(cx Context, t SubtypeData) bool {
-	return memoSubtypeIsEmpty(cx, cx.functionMemo(), func(cx Context, b Bdd) bool {
+func (f *functionOps) IsEmpty(cx Context, t subtypeData) bool {
+	return memoSubtypeIsEmpty(cx, cx.functionMemo(), func(cx Context, b bdd) bool {
 		return bddEvery(cx, b, conjunctionNil, conjunctionNil, functionFormulaIsEmpty)
-	}, t.(Bdd))
+	}, t.(bdd))
 }
 
-func (f *functionOps) complement(t SubtypeData) SubtypeData {
-	return bddComplement(t.(Bdd))
+func (f *functionOps) complement(t subtypeData) subtypeData {
+	return bddComplement(t.(bdd))
 }
 
-func (f *functionOps) Diff(t1 SubtypeData, t2 SubtypeData) SubtypeData {
-	return bddDiff(t1.(Bdd), t2.(Bdd))
+func (f *functionOps) Diff(t1 subtypeData, t2 subtypeData) subtypeData {
+	return bddDiff(t1.(bdd), t2.(bdd))
 }
 
-func (f *functionOps) Intersect(t1 SubtypeData, t2 SubtypeData) SubtypeData {
-	return bddIntersect(t1.(Bdd), t2.(Bdd))
+func (f *functionOps) Intersect(t1 subtypeData, t2 subtypeData) subtypeData {
+	return bddIntersect(t1.(bdd), t2.(bdd))
 }
 
-func (f *functionOps) Union(t1 SubtypeData, t2 SubtypeData) SubtypeData {
-	return bddUnion(t1.(Bdd), t2.(Bdd))
+func (f *functionOps) Union(t1 subtypeData, t2 subtypeData) subtypeData {
+	return bddUnion(t1.(bdd), t2.(bdd))
 }
 
 func functionFormulaIsEmpty(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
@@ -83,21 +83,21 @@ func functionPhiInner(cx Context, t0 SemType, t1 SemType, pos conjunctionHandle)
 
 func functionUnionParams(cx Context, pos conjunctionHandle) SemType {
 	if pos == conjunctionNil {
-		return NEVER
+		return Never
 	}
 	return Union(cx.FunctionAtomType(cx.conjunctionAtom(pos)).ParamType, functionUnionParams(cx, cx.conjunctionNext(pos)))
 }
 
 func functionUnionQualifiers(cx Context, pos conjunctionHandle) SemType {
 	if pos == conjunctionNil {
-		return NEVER
+		return Never
 	}
 	return Union(cx.FunctionAtomType(cx.conjunctionAtom(pos)).Qualifiers, functionUnionQualifiers(cx, cx.conjunctionNext(pos)))
 }
 
 func functionIntersectRet(cx Context, pos conjunctionHandle) SemType {
 	if pos == conjunctionNil {
-		return VAL
+		return Val
 	}
 	return Intersect(cx.FunctionAtomType(cx.conjunctionAtom(pos)).RetType, functionIntersectRet(cx, cx.conjunctionNext(pos)))
 }
@@ -121,22 +121,22 @@ func (f *functionOps) functionTheta(cx Context, t0 SemType, t1 SemType, pos conj
 
 // Corresponds to dom^? in AMK tutorial.
 func FunctionParamListType(cx Context, fnTy SemType) SemType {
-	if !IsSubtypeSimple(fnTy, FUNCTION) {
+	if !IsSubtypeSimple(fnTy, Function) {
 		return SemType{}
 	}
 	if fnTy.some() == 0 {
-		return NEVER
+		return Never
 	}
-	bdd := getComplexSubtypeData(fnTy, BTFunction).(Bdd)
-	return functionParamListTypeInner(cx, NEVER, bdd)
+	bdd := getComplexSubtypeData(fnTy, btFunction).(bdd)
+	return functionParamListTypeInner(cx, Never, bdd)
 }
 
-func functionParamListTypeInner(cx Context, accumTy SemType, bdd Bdd) SemType {
+func functionParamListTypeInner(cx Context, accumTy SemType, bdd bdd) SemType {
 	if allOrNothing, ok := bdd.(*bddAllOrNothing); ok {
 		if allOrNothing.IsAll() {
 			return accumTy
 		}
-		return ANY
+		return Any
 	}
 	bn := bdd.(bddNode)
 	atomArgListTy := cx.FunctionAtomType(bn.atom()).ParamType
@@ -152,22 +152,22 @@ func FunctionReturnType(cx Context, fnTy SemType, argList SemType) SemType {
 		return SemType{}
 	}
 	if fnTy.some() == 0 {
-		return VAL
+		return Val
 	}
-	bdd := getComplexSubtypeData(fnTy, BTFunction).(Bdd)
-	return functionReturnTypeInner(cx, argList, VAL, bdd)
+	bdd := getComplexSubtypeData(fnTy, btFunction).(bdd)
+	return functionReturnTypeInner(cx, argList, Val, bdd)
 }
 
-func functionReturnTypeInner(cx Context, accumArgList SemType, accumReturn SemType, bdd Bdd) SemType {
+func functionReturnTypeInner(cx Context, accumArgList SemType, accumReturn SemType, bdd bdd) SemType {
 	if IsEmpty(cx, accumArgList) || IsEmpty(cx, accumReturn) {
-		return NEVER
+		return Never
 	}
 	switch b := bdd.(type) {
 	case *bddAllOrNothing:
 		if b.IsAll() {
 			return accumReturn
 		}
-		return NEVER
+		return Never
 	case bddNode:
 		fnAtom := cx.FunctionAtomType(b.atom())
 		atomArgListTy := fnAtom.ParamType
@@ -188,7 +188,7 @@ func CreateIsolatedFn(cx Context) SemType {
 	if IsZero(cx._isolatedFnMemo) {
 		fd := NewFunctionDefinition()
 		env := cx.Env()
-		cx._isolatedFnMemo = fd.Define(env, NEVER, VAL, FunctionQualifiersFrom(env, true, false))
+		cx._isolatedFnMemo = fd.Define(env, Never, Val, FunctionQualifiersFrom(env, true, false))
 	}
 
 	return cx._isolatedFnMemo

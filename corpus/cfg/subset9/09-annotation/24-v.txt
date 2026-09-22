@@ -1,0 +1,30 @@
+(annotationName
+  (bb0 () ()
+    (return
+      (literal runtime-value))
+  )
+)
+(identity
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation identity (
+          (literal 42))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation runtimeIdentity (
+          (literal 84))))))
+  )
+)
+(runtimeIdentity
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)

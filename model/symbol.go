@@ -109,6 +109,17 @@ type FunctionSymbol interface {
 	SetTypedSignature(TypedFunctionSignature)
 }
 
+// ResourceMethodSymbol represents a resource method and the path metadata used
+// to select it during resource-access dispatch.
+type ResourceMethodSymbol interface {
+	FunctionSymbol
+	MethodName() string
+	PathListType() semtypes.SemType
+	SetPathListType(semtypes.SemType)
+	PathParams() []SymbolRef
+	SetPathParams([]SymbolRef)
+}
+
 // DependentlyTypedFunctionSymbol represents a [dependently typed function]. Actual function signature
 // is determined at each call site by calling Monomorphize.
 // TODO: this is very similar to [GenericFunctionSymbol]; merge both. #389
@@ -120,6 +131,13 @@ type DependentlyTypedFunctionSymbol interface {
 	FuncFlags() FuncSymbolFlags
 	SetParamTypes(types []semtypes.SemType)
 	SetReturnType(op TypeOp)
+}
+
+// DependentlyTypedResourceMethodSymbol represents a resource method whose
+// return type is determined from typedesc arguments at each call site.
+type DependentlyTypedResourceMethodSymbol interface {
+	ResourceMethodSymbol
+	DependentlyTypedFunctionSymbol
 }
 
 // MonomorphicFunctionSymbol represent a polymorphic function after monomrophizisation.
@@ -142,7 +160,7 @@ const (
 type TypeOp interface {
 	Apply(ctx semtypes.Context, args []semtypes.SemType) semtypes.SemType
 	// FixedPart returns the part of the return type that does not depend on any typedesc parameter.
-	FixedPart() semtypes.SemType
+	FixedPart(ctx semtypes.Context) semtypes.SemType
 }
 
 type BinaryTypeOp struct {
@@ -160,9 +178,9 @@ func (binary *BinaryTypeOp) Apply(ctx semtypes.Context, args []semtypes.SemType)
 	return semtypes.Intersect(lhs, rhs)
 }
 
-func (binary *BinaryTypeOp) FixedPart() semtypes.SemType {
-	lhs := binary.Lhs.FixedPart()
-	rhs := binary.Rhs.FixedPart()
+func (binary *BinaryTypeOp) FixedPart(ctx semtypes.Context) semtypes.SemType {
+	lhs := binary.Lhs.FixedPart(ctx)
+	rhs := binary.Rhs.FixedPart(ctx)
 	if binary.Kind == TypeOpUnion {
 		return semtypes.Union(lhs, rhs)
 	}
@@ -177,7 +195,7 @@ func (identity *IdentityTypeOp) Apply(_ semtypes.Context, _ []semtypes.SemType) 
 	return identity.Type
 }
 
-func (identity *IdentityTypeOp) FixedPart() semtypes.SemType {
+func (identity *IdentityTypeOp) FixedPart(_ semtypes.Context) semtypes.SemType {
 	return identity.Type
 }
 
@@ -190,9 +208,42 @@ func (ref *RefTypeOp) Apply(ctx semtypes.Context, args []semtypes.SemType) semty
 	return semtypes.TypedescConstraint(ctx, args[ref.Index])
 }
 
-func (ref *RefTypeOp) FixedPart() semtypes.SemType {
-	return semtypes.NEVER
+func (ref *RefTypeOp) FixedPart(_ semtypes.Context) semtypes.SemType {
+	return semtypes.Never
 }
+
+// ArrayTypeOp applies one array dimension to the type produced by Element.
+// When IsOpen is true, the operation produces Element[] and Length is ignored.
+// Otherwise, the operation produces Element[Length], including when Length is zero.
+// Multidimensional arrays are represented by nested ArrayTypeOp values.
+type ArrayTypeOp struct {
+	Element TypeOp
+	Length  int
+	IsOpen  bool
+}
+
+func (op *ArrayTypeOp) Apply(ctx semtypes.Context, args []semtypes.SemType) semtypes.SemType {
+	return op.arrayType(ctx, op.Element.Apply(ctx, args))
+}
+
+func (op *ArrayTypeOp) FixedPart(ctx semtypes.Context) semtypes.SemType {
+	return op.arrayType(ctx, op.Element.FixedPart(ctx))
+}
+
+func (op *ArrayTypeOp) arrayType(ctx semtypes.Context, element semtypes.SemType) semtypes.SemType {
+	definition := semtypes.NewListDefinition()
+	if op.IsOpen {
+		return definition.Define(ctx.Env(), nil, semtypes.ListRest(element))
+	}
+	return definition.Define(ctx.Env(), []semtypes.SemType{element}, semtypes.ListFixedLength(op.Length))
+}
+
+var (
+	_ TypeOp = &ArrayTypeOp{}
+	_ TypeOp = &BinaryTypeOp{}
+	_ TypeOp = &IdentityTypeOp{}
+	_ TypeOp = &RefTypeOp{}
+)
 
 type SymbolKind uint
 
@@ -384,11 +435,15 @@ type (
 		polymorhpicFn SymbolRef
 	}
 
-	ResourceMethodSymbol struct {
-		functionSymbol
+	resourceMethodBase struct {
 		methodName   string
 		pathListType semtypes.SemType
 		pathParams   []SymbolRef
+	}
+
+	resourceMethodSymbol struct {
+		functionSymbol
+		resourceMethodBase
 	}
 
 	dependentlyTypedFunctionSymbol struct {
@@ -398,6 +453,11 @@ type (
 		// Populated by type resolver at stage 4.
 		paramTypes []semtypes.SemType
 		retType    TypeOp
+	}
+
+	dependentlyTypedResourceMethodSymbol struct {
+		dependentlyTypedFunctionSymbol
+		resourceMethodBase
 	}
 
 	ParamFlag uint8
@@ -454,6 +514,7 @@ const (
 	ParamFlagDefaultable ParamFlag = 1 << iota
 	ParamFlagIncludedRecordParam
 	ParamFlagRestParam
+	ParamFlagIsolated
 )
 
 const (
@@ -553,6 +614,13 @@ func (sig UntypedFunctionSignature) FixedParamCount() int {
 	return len(sig.ParamNames)
 }
 
+func (sig UntypedFunctionSignature) IsIsolatedParam(index int) bool {
+	if index < 0 || index >= len(sig.ParamFlags) {
+		return false
+	}
+	return sig.ParamFlags[index]&ParamFlagIsolated != 0
+}
+
 func (sig UntypedFunctionSignature) DefaultableParam(index int) (*DefaultableParam, bool) {
 	if sig.Default[index] == nil {
 		return nil, false
@@ -647,38 +715,39 @@ var (
 )
 
 var (
-	_ Scope                          = &ModuleScope{}
-	_ Scope                          = &PackageScope{}
-	_ Scope                          = &FunctionScope{}
-	_ Scope                          = &BlockScope{}
-	_ Symbol                         = &TypeSymbol{}
-	_ Symbol                         = &AnnotationSymbol{}
-	_ Symbol                         = &classSymbol{}
-	_ Symbol                         = &NetworkClassSymbol{}
-	_ ClassSymbol                    = &classSymbol{}
-	_ ClassSymbol                    = &NetworkClassSymbol{}
-	_ Symbol                         = &RecordSymbol{}
-	_ Symbol                         = &ObjectTypeSymbol{}
-	_ MemberCarrier                  = &classSymbol{}
-	_ MemberCarrier                  = &NetworkClassSymbol{}
-	_ MemberCarrier                  = &RecordSymbol{}
-	_ MemberCarrier                  = &ObjectTypeSymbol{}
-	_ ObjectType                     = &classSymbol{}
-	_ ObjectType                     = &NetworkClassSymbol{}
-	_ ObjectType                     = &ObjectTypeSymbol{}
-	_ Symbol                         = &VariableSymbol{}
-	_ Symbol                         = &ConstantValueSymbol{}
-	_ ValueSymbol                    = &VariableSymbol{}
-	_ ValueSymbol                    = &ConstantValueSymbol{}
-	_ Symbol                         = &XMLNSSymbol{}
-	_ Symbol                         = &functionSymbol{}
-	_ FunctionSymbol                 = &functionSymbol{}
-	_ DependentlyTypedFunctionSymbol = &dependentlyTypedFunctionSymbol{}
-	_ MonomorphicFunctionSymbol      = &monomorphicFunctionSymbol{}
-	_ FunctionSymbol                 = &ResourceMethodSymbol{}
-	_ Symbol                         = &SymbolRef{}
-	_ SymbolSpaceProvider            = &ModuleScope{}
-	_ SymbolSpaceProvider            = &PackageScope{}
+	_ Scope                                = &ModuleScope{}
+	_ Scope                                = &PackageScope{}
+	_ Scope                                = &FunctionScope{}
+	_ Scope                                = &BlockScope{}
+	_ Symbol                               = &TypeSymbol{}
+	_ Symbol                               = &AnnotationSymbol{}
+	_ Symbol                               = &classSymbol{}
+	_ Symbol                               = &NetworkClassSymbol{}
+	_ ClassSymbol                          = &classSymbol{}
+	_ ClassSymbol                          = &NetworkClassSymbol{}
+	_ Symbol                               = &RecordSymbol{}
+	_ Symbol                               = &ObjectTypeSymbol{}
+	_ MemberCarrier                        = &classSymbol{}
+	_ MemberCarrier                        = &NetworkClassSymbol{}
+	_ MemberCarrier                        = &RecordSymbol{}
+	_ MemberCarrier                        = &ObjectTypeSymbol{}
+	_ ObjectType                           = &classSymbol{}
+	_ ObjectType                           = &NetworkClassSymbol{}
+	_ ObjectType                           = &ObjectTypeSymbol{}
+	_ Symbol                               = &VariableSymbol{}
+	_ Symbol                               = &ConstantValueSymbol{}
+	_ ValueSymbol                          = &VariableSymbol{}
+	_ ValueSymbol                          = &ConstantValueSymbol{}
+	_ Symbol                               = &XMLNSSymbol{}
+	_ Symbol                               = &functionSymbol{}
+	_ FunctionSymbol                       = &functionSymbol{}
+	_ DependentlyTypedFunctionSymbol       = &dependentlyTypedFunctionSymbol{}
+	_ MonomorphicFunctionSymbol            = &monomorphicFunctionSymbol{}
+	_ ResourceMethodSymbol                 = &resourceMethodSymbol{}
+	_ DependentlyTypedResourceMethodSymbol = &dependentlyTypedResourceMethodSymbol{}
+	_ Symbol                               = &SymbolRef{}
+	_ SymbolSpaceProvider                  = &ModuleScope{}
+	_ SymbolSpaceProvider                  = &PackageScope{}
 )
 
 func (space *SymbolSpace) AddSymbol(name string, symbol Symbol) {
@@ -1260,6 +1329,15 @@ func XMLNamespaceURI(symbol Symbol) (string, error) {
 	return xmlns.URI(), nil
 }
 
+func SetXMLNamespaceURI(symbol Symbol, uri string) error {
+	xmlns, ok := symbol.(*XMLNSSymbol)
+	if !ok {
+		return errors.New("expected XML namespace symbol")
+	}
+	xmlns.uri = uri
+	return nil
+}
+
 func XMLNamespaceDeclKey(symbol Symbol) (string, error) {
 	xmlns, ok := symbol.(*XMLNSSymbol)
 	if !ok {
@@ -1452,36 +1530,51 @@ func (c *classSymbolBase) AddResourceMethod(ref SymbolRef) {
 	c.resourceMethods = append(c.resourceMethods, ref)
 }
 
-func NewResourceMethodSymbol(name, methodName string, isPublic bool, location diagnostics.Location) *ResourceMethodSymbol {
-	return &ResourceMethodSymbol{
+func NewResourceMethodSymbol(name, methodName string, isPublic bool, location diagnostics.Location) ResourceMethodSymbol {
+	return &resourceMethodSymbol{
 		functionSymbol: functionSymbol{
 			symbolBase: symbolBase{name: name, isPublic: isPublic, location: location},
 		},
-		methodName: methodName,
+		resourceMethodBase: resourceMethodBase{methodName: methodName},
 	}
 }
 
-func (r *ResourceMethodSymbol) MethodName() string {
+func NewDependentlyTypedResourceMethodSymbol(name, methodName string, flags FuncSymbolFlags, isPublic bool, location diagnostics.Location) DependentlyTypedResourceMethodSymbol {
+	return &dependentlyTypedResourceMethodSymbol{
+		dependentlyTypedFunctionSymbol: dependentlyTypedFunctionSymbol{
+			symbolBase: symbolBase{name: name, isPublic: isPublic, location: location},
+			Flags:      flags,
+		},
+		resourceMethodBase: resourceMethodBase{methodName: methodName},
+	}
+}
+
+func (r *resourceMethodBase) MethodName() string {
 	return r.methodName
 }
 
-func (r *ResourceMethodSymbol) PathListType() semtypes.SemType {
+func (r *resourceMethodBase) PathListType() semtypes.SemType {
 	return r.pathListType
 }
 
-func (r *ResourceMethodSymbol) SetPathListType(ty semtypes.SemType) {
+func (r *resourceMethodBase) SetPathListType(ty semtypes.SemType) {
 	r.pathListType = ty
 }
 
-func (r *ResourceMethodSymbol) PathParams() []SymbolRef {
+func (r *resourceMethodBase) PathParams() []SymbolRef {
 	return r.pathParams
 }
 
-func (r *ResourceMethodSymbol) SetPathParams(params []SymbolRef) {
+func (r *resourceMethodBase) SetPathParams(params []SymbolRef) {
 	r.pathParams = params
 }
 
-func (r *ResourceMethodSymbol) Copy() Symbol {
+func (r *resourceMethodSymbol) Copy() Symbol {
+	cp := *r
+	return &cp
+}
+
+func (r *dependentlyTypedResourceMethodSymbol) Copy() Symbol {
 	cp := *r
 	return &cp
 }
@@ -1563,7 +1656,7 @@ func (s *dependentlyTypedFunctionSymbol) SetReturnType(op TypeOp) {
 
 func (s *dependentlyTypedFunctionSymbol) Monomorphize(ctx semtypes.Context, name string, origRef SymbolRef, argTys []semtypes.SemType) FunctionSymbol {
 	fixed := argTys
-	rest := semtypes.NEVER
+	rest := semtypes.Never
 	if len(argTys) > len(s.paramTypes) {
 		fixed = argTys[:len(s.paramTypes)]
 		for _, each := range argTys[len(s.paramTypes):] {

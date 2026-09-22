@@ -1,0 +1,30 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable d (type
+        (user-defined-type Doubled)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access n
+          (simple-var-ref d)))))
+    (var-def
+      (variable e (type
+        (user-defined-type Doubled)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal n)
+            (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access n
+          (simple-var-ref e)))))
+  )
+)
+(twice
+  (bb0 () ()
+    (binary-expr *
+      (simple-var-ref x)
+      (literal 2))
+  )
+)

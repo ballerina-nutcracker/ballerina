@@ -1,0 +1,37 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Node
+    (record-type
+      (field make
+        (function-type () (
+          (array-type
+            (user-defined-type Node) dimensions: 1 ([]))))
+        (lambda
+          (function $anonFunc$_0 () (
+            (array-type
+              (user-defined-type Node) dimensions: 1 ([])))
+            (block-function-body
+              (return
+                (list-constructor-expr))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable node (type
+          (user-defined-type Node)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref node)
+            (user-defined-type Node)))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (lambda
+          (function $anonFunc$_0 () (
+            (array-type
+              (user-defined-type Node) dimensions: 1 ([])))
+            (block-function-body
+              (return
+                (list-constructor-expr)))))))))

@@ -1,0 +1,412 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina lang map (as map))
+  (variable evaluations (type
+    (value-type int)) (expr
+    (literal 0)))
+  (function receiver () (
+    (builtin-ref-type json))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref evaluations)
+        (literal 1))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 42))))))
+  (function printError (
+    (variable label (type
+      (value-type string)))
+    (variable value (type
+      (union-type
+        (builtin-ref-type json)
+        (error-type))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref value)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref label))))) ())
+      (block-stmt)))
+  (function printNil (
+    (variable label (type
+      (value-type string)))
+    (variable value (type
+      (union-type
+        (builtin-ref-type json)
+        (error-type))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type null))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref label))))) ())
+      (block-stmt)))
+  (class-definition Counter
+    (variable value (type
+      (value-type int)) (expr
+      (literal 9))))
+  (type-definition OpenRecord
+    (record-type
+      (field fixed
+        (value-type int))
+      (rest
+        (builtin-ref-type json))))
+  (type-definition OpenJSONRecord
+    (record-type
+      (field required
+        (builtin-ref-type json))
+      (rest
+        (builtin-ref-type json))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable j (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (mapping-constructor-expr
+                (key-value
+                  (literal b)
+                  (literal 3))))
+            (key-value
+              (literal presentNil)
+              (literal <nil>))))))
+      (var-def
+        (variable required (type
+          (union-type
+            (builtin-ref-type json)
+            (error-type))) (expr
+          (field-based-access a
+            (simple-var-ref j)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref required)
+          (builtin-ref-type json))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref required))))) ())
+      (block-stmt
+        (var-def
+          (variable nested (type
+            (union-type
+              (builtin-ref-type json)
+              (error-type))) (expr
+            (field-based-access b
+              (field-based-access a
+                (simple-var-ref j))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref nested))))
+        (var-def
+          (variable parenthesized (type
+            (union-type
+              (builtin-ref-type json)
+              (error-type))) (expr
+            (field-based-access b
+              (field-based-access a
+                (simple-var-ref j))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref parenthesized))))
+        (var-def
+          (variable outerMap (type
+            (constrained-type
+              (builtin-ref-type map)
+              (builtin-ref-type json))) (expr
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal b)
+                    (literal 4))))))))
+        (var-def
+          (variable nestedMap (type
+            (union-type
+              (builtin-ref-type json)
+              (error-type))) (expr
+            (field-based-access b
+              (field-based-access a
+                (simple-var-ref outerMap))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref nestedMap))))
+        (var-def
+          (variable getMap (type
+            (constrained-type
+              (builtin-ref-type map)
+              (union-type
+                (value-type int)
+                (value-type null)))) (expr
+            (mapping-constructor-expr
+              (key-value
+                (literal present)
+                (literal 7))
+              (key-value
+                (literal nilValue)
+                (literal <nil>))))))
+        (var-def
+          (variable getPresent (type
+            (union-type
+              (value-type int)
+              (value-type null))) (expr
+            (invocation map get (
+              (simple-var-ref getMap)
+              (literal present))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref getPresent))))
+        (var-def
+          (variable getNil (type
+            (union-type
+              (union-type
+                (value-type int)
+                (value-type null))
+              (error-type))) (expr
+            (trap-expr
+              (invocation get expr:
+                (simple-var-ref getMap) (
+                (literal nilValue)))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref getNil)
+            (value-type null))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal map get present nil))))) ())
+        (block-stmt
+          (var-def
+            (variable getMissing (type
+              (union-type
+                (union-type
+                  (value-type int)
+                  (value-type null))
+                (error-type))) (expr
+              (trap-expr
+                (invocation get expr:
+                  (simple-var-ref getMap) (
+                  (literal missing)))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref getMissing)
+              (error-type))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (literal map get missing error))))) ())
+          (block-stmt
+            (var-def
+              (variable optionalPresent (type
+                (union-type
+                  (builtin-ref-type json)
+                  (error-type))) (expr
+                (optional-field-based-access a
+                  (simple-var-ref j)))))
+            (if
+              (type-test-expr is
+                (simple-var-ref optionalPresent)
+                (builtin-ref-type json))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref optionalPresent))))) ())
+            (block-stmt
+              (expression-stmt
+                (invocation printError (
+                  (literal required missing)
+                  (field-based-access missing
+                    (simple-var-ref j)))))
+              (expression-stmt
+                (invocation printNil (
+                  (literal optional missing)
+                  (optional-field-based-access missing
+                    (simple-var-ref j)))))
+              (var-def
+                (variable presentNil (type
+                  (union-type
+                    (builtin-ref-type json)
+                    (error-type))) (expr
+                  (field-based-access presentNil
+                    (simple-var-ref j)))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref presentNil)
+                  (value-type null))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (literal required present nil))))) ())
+              (block-stmt
+                (if
+                  (type-test-expr is
+                    (field-based-access absent
+                      (simple-var-ref j))
+                    (error-type))
+                  (block-stmt
+                    (expression-stmt
+                      (invocation io println (
+                        (literal required absent differs))))) ())
+                (block-stmt
+                  (var-def
+                    (variable nilReceiver (type
+                      (builtin-ref-type json)) (expr
+                      (literal <nil>))))
+                  (expression-stmt
+                    (invocation printError (
+                      (literal required nil receiver)
+                      (field-based-access value
+                        (simple-var-ref nilReceiver)))))
+                  (expression-stmt
+                    (invocation printNil (
+                      (literal optional nil receiver)
+                      (optional-field-based-access value
+                        (simple-var-ref nilReceiver)))))
+                  (var-def
+                    (variable scalarReceiver (type
+                      (builtin-ref-type json)) (expr
+                      (literal 1))))
+                  (expression-stmt
+                    (invocation printError (
+                      (literal required non-mapping receiver)
+                      (field-based-access value
+                        (simple-var-ref scalarReceiver)))))
+                  (expression-stmt
+                    (invocation printError (
+                      (literal optional non-mapping receiver)
+                      (optional-field-based-access value
+                        (simple-var-ref scalarReceiver)))))
+                  (expression-stmt
+                    (invocation printError (
+                      (literal propagated earlier error)
+                      (field-based-access next
+                        (field-based-access missing
+                          (simple-var-ref j))))))
+                  (var-def
+                    (variable openJSON (type
+                      (user-defined-type OpenJSONRecord)) (expr
+                      (mapping-constructor-expr
+                        (key-value
+                          (literal required)
+                          (literal 1))
+                        (key-value
+                          (literal nested)
+                          (mapping-constructor-expr
+                            (key-value
+                              (literal value)
+                              (literal 12))))))))
+                  (var-def
+                    (variable openJSONRequired (type
+                      (builtin-ref-type json)) (expr
+                      (field-based-access required
+                        (simple-var-ref openJSON)))))
+                  (expression-stmt
+                    (invocation io println (
+                      (simple-var-ref openJSONRequired))))
+                  (var-def
+                    (variable openJSONMap (type
+                      (constrained-type
+                        (builtin-ref-type map)
+                        (builtin-ref-type json))) (expr
+                      (simple-var-ref openJSON))))
+                  (var-def
+                    (variable openJSONValue (type
+                      (union-type
+                        (builtin-ref-type json)
+                        (error-type))) (expr
+                      (field-based-access value
+                        (field-based-access nested
+                          (simple-var-ref openJSONMap))))))
+                  (expression-stmt
+                    (invocation io println (
+                      (simple-var-ref openJSONValue))))
+                  (var-def
+                    (variable evaluatedOnce (type
+                      (union-type
+                        (builtin-ref-type json)
+                        (error-type))) (expr
+                      (field-based-access value
+                        (invocation receiver ())))))
+                  (expression-stmt
+                    (invocation io println (
+                      (simple-var-ref evaluatedOnce))))
+                  (expression-stmt
+                    (invocation io println (
+                      (simple-var-ref evaluations))))
+                  (var-def
+                    (variable user (type
+                      (builtin-ref-type json)) (expr
+                      (mapping-constructor-expr
+                        (key-value
+                          (literal name)
+                          (literal Tharmigan))
+                        (key-value
+                          (literal age)
+                          (literal 30))))))
+                  (expression-stmt
+                    (invocation io println (
+                      (field-based-access name
+                        (simple-var-ref user)))))
+                  (expression-stmt
+                    (invocation io println (
+                      (field-based-access age
+                        (simple-var-ref user)))))
+                  (expression-stmt
+                    (invocation strictAccesses ()))))))))))
+  (function strictAccesses () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable rec (type
+          (record-type
+            (field value
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 8))))))
+      (var-def
+        (variable recordValue (type
+          (value-type int)) (expr
+          (field-based-access value
+            (simple-var-ref rec)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref recordValue))))
+      (var-def
+        (variable counter (type
+          (user-defined-type Counter)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access value
+            (simple-var-ref counter)))))
+      (var-def
+        (variable openRecord (type
+          (user-defined-type OpenRecord)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal fixed)
+              (literal 10))))))
+      (assignment
+        (field-based-access fixed
+          (simple-var-ref openRecord))
+        (literal 11))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access fixed
+            (simple-var-ref openRecord))))))))

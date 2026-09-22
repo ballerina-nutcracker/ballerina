@@ -1,7 +1,7 @@
 module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
-    %1 = newMap {| values: [int...], never... |}{} defaults{values=$anon/.:$desugar$0}
+    %1 = newMap {| values: [int...], never... |}{} defaults{values=$anon/.:$default$0}
     f = %1;
     %4 = ConstantLoad values
     %3 = f[%4];
@@ -11,7 +11,7 @@ main() -> nil{
     return;
   }
 }
-$desugar$0() -> [int...]{
+$default$0() -> [int...]{
   bb0 {
     %1 = ConstantLoad 1
     %2 = ConstantLoad 2

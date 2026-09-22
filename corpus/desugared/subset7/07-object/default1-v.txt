@@ -36,32 +36,34 @@
         (variable f (type
           (user-defined-type foo)) (expr
           (new ()))))
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation $default$0 ()))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$0))))))
       (expression-stmt
         (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (invocation $default$0 ()))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$0))))))
           (invocation bar expr:
             (simple-var-ref f) (
             (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (var-def
-        (variable $desugar$2 (expr
-          (literal 5))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$2))))))
+            (simple-var-ref $desugar$1)))))))
       (expression-stmt
         (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$2 (expr
+              (literal 5))))
+          (var-def
+            (variable $desugar$3 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$2))))))
           (invocation bar expr:
             (simple-var-ref f) (
             (simple-var-ref $desugar$2)
-            (simple-var-ref $desugar$3))))))
+            (simple-var-ref $desugar$3)))))))
       (expression-stmt
         (invocation io println (
           (invocation bar expr:
@@ -73,7 +75,8 @@
       (return
         (literal 1))))
   (function $default$1 (
-    (variable x)) ()
+    (variable x (type
+      (value-type )))) ()
     (block-function-body
       (return
         (binary-expr +

@@ -40,5 +40,5 @@ public function testMain() returns error? {
 
     http:Response r = check c->post("/big/echo", body);
     io:println(r.statusCode); // @output 200
-    io:println(r.getTextPayload().length() == 16384); // @output true
+    io:println((check r.getTextPayload()).length() == 16384); // @output true
 }

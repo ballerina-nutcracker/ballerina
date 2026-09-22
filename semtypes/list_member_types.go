@@ -17,8 +17,8 @@
 package semtypes
 
 type ListMemberTypes struct {
-	Ranges   []intRange
-	SemTypes []SemType
+	ranges []intRange
+	Types  []SemType
 }
 
 func newListMemberTypesFromRangesSemTypes(ranges []intRange, semTypes []SemType) ListMemberTypes {
@@ -27,8 +27,8 @@ func newListMemberTypesFromRangesSemTypes(ranges []intRange, semTypes []SemType)
 	copy(rangesCopy, ranges)
 	semTypesCopy := make([]SemType, len(semTypes))
 	copy(semTypesCopy, semTypes)
-	this.Ranges = rangesCopy
-	this.SemTypes = semTypesCopy
+	this.ranges = rangesCopy
+	this.Types = semTypesCopy
 	return this
 }
 

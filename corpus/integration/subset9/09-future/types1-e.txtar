@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected nil|future<string>, got nil|future<int>
+  --> types1-e.bal:19:36
+   |
+19 |     future<string>? stringFuture = intFuture; // @error
+   |                                    ^^^^^^^^^

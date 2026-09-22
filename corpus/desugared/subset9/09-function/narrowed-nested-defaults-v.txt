@@ -29,24 +29,29 @@
                 (return
                   (simple-var-ref result))))))))
       (var-def
-        (variable $desugar$0 (expr
-          (lambda
-            (function $default$0 (
-              (variable callback)) ()
-              (block-function-body
-                (var-def
-                  (variable $desugar$0 (expr
-                    (invocation $default$1 ()))))
-                (return
-                  (invocation callback (
-                    (simple-var-ref $desugar$0))))))))))
+        (variable $desugar$0))
       (var-def
-        (variable $desugar$1 (expr
-          (lambda
-            (function $default$1 () ()
-              (block-function-body
-                (return
-                  (literal 10))))))))
+        (variable $desugar$1))
+      (assignment
+        (simple-var-ref $desugar$0)
+        (lambda
+          (function $default$0 (
+            (variable callback (type
+              (value-type )))) ()
+            (block-function-body
+              (var-def
+                (variable $desugar$0 (expr
+                  (invocation $default$1 ()))))
+              (return
+                (invocation callback (
+                  (simple-var-ref $desugar$0))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (lambda
+          (function $default$1 () ()
+            (block-function-body
+              (return
+                (literal 10))))))
       (if
         (type-test-expr is
           (simple-var-ref narrowedWithLambdaArg)
@@ -57,27 +62,28 @@
             (value-type int)) (
             (value-type int))))
         (block-stmt
-          (var-def
-            (variable $desugar$2 (expr
-              (lambda
-                (function $anonFunc$_1 (
-                  (variable actual (type
-                    (value-type int)))) (
-                  (value-type int))
-                  (block-function-body
-                    (return
-                      (binary-expr +
-                        (simple-var-ref actual)
-                        (literal 1)))))))))
-          (var-def
-            (variable $desugar$3 (expr
-              (invocation $desugar$0 (
-                (simple-var-ref $desugar$2))))))
           (expression-stmt
             (invocation io println (
+              (expression-thunk
+              (var-def
+                (variable $desugar$2 (expr
+                  (lambda
+                    (function $anonFunc$_1 (
+                      (variable actual (type
+                        (value-type int)))) (
+                      (value-type int))
+                      (block-function-body
+                        (return
+                          (binary-expr +
+                            (simple-var-ref actual)
+                            (literal 1)))))))))
+              (var-def
+                (variable $desugar$3 (expr
+                  (invocation $desugar$0 (
+                    (simple-var-ref $desugar$2))))))
               (invocation narrowedWithLambdaArg (
                 (simple-var-ref $desugar$2)
-                (simple-var-ref $desugar$3))))))) ())
+                (simple-var-ref $desugar$3)))))))) ())
       (block-stmt
         (var-def
           (variable narrowedWithInlineRecord (type
@@ -101,16 +107,18 @@
                       (simple-var-ref input)
                       (literal value)))))))))
         (var-def
-          (variable $desugar$4 (expr
-            (lambda
-              (function $default$2 () ()
-                (block-function-body
-                  (return
-                    (mapping-constructor-expr))))))))
+          (variable $desugar$4))
+        (assignment
+          (simple-var-ref $desugar$4)
+          (lambda
+            (function $default$2 () ()
+              (block-function-body
+                (return
+                  (mapping-constructor-expr))))))
         (var-def
           (variable $desugar$5 (expr
             (lambda
-              (function $desugar$0 () ()
+              (function $default$3 () ()
                 (block-function-body
                   (return
                     (literal 12))))))))
@@ -124,11 +132,12 @@
                   (literal 12)))) (
               (value-type int))))
           (block-stmt
-            (var-def
-              (variable $desugar$6 (expr
-                (invocation $desugar$4 ()))))
             (expression-stmt
               (invocation io println (
+                (expression-thunk
+                (var-def
+                  (variable $desugar$6 (expr
+                    (invocation $desugar$4 ()))))
                 (invocation narrowedWithInlineRecord (
-                  (simple-var-ref $desugar$6))))))) ())
+                  (simple-var-ref $desugar$6)))))))) ())
         (block-stmt)))))

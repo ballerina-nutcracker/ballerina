@@ -18,40 +18,40 @@ package semtypes
 
 type errorOps struct{}
 
-var _ BasicTypeOps = &errorOps{}
+var _ basicTypeOps = &errorOps{}
 
-func errorSubtypeComplement(t SubtypeData) SubtypeData {
-	return bddSubtypeDiff(BDD_SUBTYPE_RO, t)
+func errorSubtypeComplement(t subtypeData) subtypeData {
+	return bddSubtypeDiff(bddSubtypeRo, t)
 }
 
-func errorSubtypeIsEmpty(cx Context, t SubtypeData) bool {
-	b := t.(Bdd)
+func errorSubtypeIsEmpty(cx Context, t subtypeData) bool {
+	b := t.(bdd)
 	if bddPosMaybeEmpty(b) {
-		b = bddIntersect(b, BDD_SUBTYPE_RO)
+		b = bddIntersect(b, bddSubtypeRo)
 	}
 	return memoSubtypeIsEmpty(cx, cx.mappingMemo(), errorBddIsEmpty, b)
 }
 
-func errorBddIsEmpty(cx Context, b Bdd) bool {
+func errorBddIsEmpty(cx Context, b bdd) bool {
 	return bddEveryPositive(cx, b, conjunctionNil, conjunctionNil, mappingFormulaIsEmpty)
 }
 
-func (e *errorOps) complement(d SubtypeData) SubtypeData {
+func (e *errorOps) complement(d subtypeData) subtypeData {
 	return errorSubtypeComplement(d)
 }
 
-func (e *errorOps) IsEmpty(cx Context, t SubtypeData) bool {
+func (e *errorOps) IsEmpty(cx Context, t subtypeData) bool {
 	return errorSubtypeIsEmpty(cx, t)
 }
 
-func (e *errorOps) Union(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (e *errorOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
 	return bddSubtypeUnion(d1, d2)
 }
 
-func (e *errorOps) Intersect(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (e *errorOps) Intersect(d1 subtypeData, d2 subtypeData) subtypeData {
 	return bddSubtypeIntersect(d1, d2)
 }
 
-func (e *errorOps) Diff(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (e *errorOps) Diff(d1 subtypeData, d2 subtypeData) subtypeData {
 	return bddSubtypeDiff(d1, d2)
 }

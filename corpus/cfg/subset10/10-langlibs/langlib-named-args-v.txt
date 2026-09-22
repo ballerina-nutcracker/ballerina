@@ -1,0 +1,14 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation int fromString (
+          (literal 42))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string substring (
+          (literal hello)
+          (literal 1)
+          (literal 3))))))
+  )
+)

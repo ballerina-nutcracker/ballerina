@@ -1,0 +1,269 @@
+module $anon.. v 0.0.0;
+$annotation$0  any;
+$annotation$1  any;
+$annotation$2  any;
+$desugar$0  object { public function attach(service object, nil|string|[string...]) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init() returns nil; public function start() returns nil|error };
+$moduleListeners  [object { public function attach(never, [string...]) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, string) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, nil) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }...];
+class SimpleListener {
+
+  attach(service object,nil|string|[string...]) -> nil{
+    bb0 {
+      _ = svc;
+      _ = attachPoint;
+      return;
+    }
+  }
+
+  detach(service object) -> nil|error{
+    bb0 {
+      _ = svc;
+      return;
+    }
+  }
+
+  gracefulStop() -> nil|error{
+    bb0 {
+      return;
+    }
+  }
+
+  immediateStop() -> nil|error{
+    bb0 {
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  start() -> nil|error{
+    bb0 {
+      return;
+    }
+  }
+}
+@$anon/.:0.0.0:runtimeServiceMeta(runtime-ref($anon/.:$annotation$0)) @$anon/.:0.0.0:serviceMeta({"name":"declaration"}) class $service$0 {
+
+  alpha(@$anon/.:0.0.0:parameterMeta(runtime-ref($anon/.:$annotation$1)) int) -> int{
+    bb0 {
+      %0 = value;
+      return;
+    }
+  }
+
+  beta(@$anon/.:0.0.0:parameterMeta(runtime-ref($anon/.:$annotation$2)) int) -> int{
+    bb0 {
+      %0 = value;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get value $resource$get$0() -> int{
+    bb0 {
+      %2 = ConstantLoad 42
+      %3 = %2;
+      %4 = self.beta(%3) -> bb1;
+    }
+    bb1 {
+      %5 = %4;
+      %6 = self.alpha(%5) -> bb2;
+    }
+    bb2 {
+      %0 = %6;
+      return;
+    }
+  }
+}
+annotationName() -> string{
+  bb0 {
+    %1 = ConstantLoad runtime-service
+    %0 = %1;
+    return;
+  }
+}
+alphaName() -> string{
+  bb0 {
+    %1 = ConstantLoad runtime-alpha
+    %0 = %1;
+    return;
+  }
+}
+betaName() -> string{
+  bb0 {
+    %1 = ConstantLoad runtime-beta
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad service annotations retained
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$default$0(service object) -> nil|string|[string...]{
+  bb0 {
+    %2 = ConstantLoad <nil>
+    %0 = %2;
+    return;
+  }
+}
+$gracefulStop() -> nil|error{
+  bb0 {
+    $desugar$0 = $moduleListeners;
+    %2 = ConstantLoad 0
+    $desugar$1 = %2;
+    %4 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %4;
+    GOTO bb2;
+  }
+  bb2 {
+    %7 = $desugar$1;
+    %8 = $desugar$2;
+    %6 = < %7 %8;
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 9
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    $listener = %0;
+    %3 = $listener.gracefulStop() -> bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    %4 = %3 is error
+    %4 ? bb6 : bb7;
+  }
+  bb6 {
+    (1, %0) = %3;
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %2 = %3;
+    GOTO bb8;
+  }
+  bb8 {
+    %6 = (1, $desugar$1);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$1) = %5;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
+$immediateStop() -> nil|error{
+  bb0 {
+    $desugar$0 = $moduleListeners;
+    %2 = ConstantLoad 0
+    $desugar$1 = %2;
+    %4 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %4;
+    GOTO bb2;
+  }
+  bb2 {
+    %7 = $desugar$1;
+    %8 = $desugar$2;
+    %6 = < %7 %8;
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 9
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    $listener = %0;
+    %3 = $listener.immediateStop() -> bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    %4 = %3 is error
+    %4 ? bb6 : bb7;
+  }
+  bb6 {
+    (1, %0) = %3;
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %2 = %3;
+    GOTO bb8;
+  }
+  bb8 {
+    %6 = (1, $desugar$1);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$1) = %5;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
+$start() -> nil|error{
+  bb0 {
+    $desugar$0 = $moduleListeners;
+    %2 = ConstantLoad 0
+    $desugar$1 = %2;
+    %4 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %4;
+    GOTO bb2;
+  }
+  bb2 {
+    %7 = $desugar$1;
+    %8 = $desugar$2;
+    %6 = < %7 %8;
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 9
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    $listener = %0;
+    %3 = $listener.start() -> bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    %4 = %3 is error
+    %4 ? bb6 : bb7;
+  }
+  bb6 {
+    (1, %0) = %3;
+    PopScopeFrame
+    return;
+  }
+  bb7 {
+    %2 = %3;
+    GOTO bb8;
+  }
+  bb8 {
+    %6 = (1, $desugar$1);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$1) = %5;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}

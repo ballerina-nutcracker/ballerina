@@ -16,34 +16,28 @@
 
 package semtypes
 
-type CommonOps interface {
-	CommonBasicTypeOps
-	Union(t1 SubtypeData, t2 SubtypeData) SubtypeData
-	Intersect(t1 SubtypeData, t2 SubtypeData) SubtypeData
-	Diff(t1 SubtypeData, t2 SubtypeData) SubtypeData
-	complement(t SubtypeData) SubtypeData
-}
+type commonOps = commonBasicTypeOps
 
 type commonOpsBase struct {
 	commonOpsMethods
 }
 
 type commonOpsMethods struct {
-	Self CommonOps
+	Self commonOps
 }
 
-func (m *commonOpsMethods) Union(t1 SubtypeData, t2 SubtypeData) SubtypeData {
-	return bddUnion(t1.(Bdd), t2.(Bdd))
+func (m *commonOpsMethods) Union(t1 subtypeData, t2 subtypeData) subtypeData {
+	return bddUnion(t1.(bdd), t2.(bdd))
 }
 
-func (m *commonOpsMethods) Intersect(t1 SubtypeData, t2 SubtypeData) SubtypeData {
-	return bddIntersect(t1.(Bdd), t2.(Bdd))
+func (m *commonOpsMethods) Intersect(t1 subtypeData, t2 subtypeData) subtypeData {
+	return bddIntersect(t1.(bdd), t2.(bdd))
 }
 
-func (m *commonOpsMethods) Diff(t1 SubtypeData, t2 SubtypeData) SubtypeData {
-	return bddDiff(t1.(Bdd), t2.(Bdd))
+func (m *commonOpsMethods) Diff(t1 subtypeData, t2 subtypeData) subtypeData {
+	return bddDiff(t1.(bdd), t2.(bdd))
 }
 
-func (m *commonOpsMethods) complement(t SubtypeData) SubtypeData {
-	return bddComplement(t.(Bdd))
+func (m *commonOpsMethods) complement(t subtypeData) subtypeData {
+	return bddComplement(t.(bdd))
 }

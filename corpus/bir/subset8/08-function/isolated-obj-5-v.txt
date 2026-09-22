@@ -43,7 +43,7 @@ main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Bar
     %2 = ConstantLoad 10
-    %3 = init(%1,%2) -> bb1;
+    %3 = %1.init(%2) -> bb1;
   }
   bb1 {
     %5 = %3 is nil
@@ -59,7 +59,7 @@ main() -> nil{
   }
   bb4 {
     b = %4;
-    %7 = getX(b) -> bb5;
+    %7 = b.getX() -> bb5;
   }
   bb5 {
     %8 = %7;
@@ -68,7 +68,7 @@ main() -> nil{
   bb6 {
     %10 = newObject $anon/.:Baz
     %11 = ConstantLoad 20
-    %12 = init(%10,%11) -> bb7;
+    %12 = %10.init(%11) -> bb7;
   }
   bb7 {
     %14 = %12 is nil
@@ -84,7 +84,7 @@ main() -> nil{
   }
   bb10 {
     z = %13;
-    %16 = getX(z) -> bb11;
+    %16 = z.getX() -> bb11;
   }
   bb11 {
     %17 = %16;

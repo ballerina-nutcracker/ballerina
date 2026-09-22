@@ -1,0 +1,10 @@
+-- stdout --
+10
+
+10
+int
+string
+boolean
+ternary condition
+10
+-- stderr --

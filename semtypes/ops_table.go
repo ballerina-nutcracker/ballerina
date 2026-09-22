@@ -16,10 +16,10 @@
 
 package semtypes
 
-var PANIC_IMPL = &basicTypeOpsPanicImpl{}
+var panicImpl = &basicTypeOpsPanicImpl{}
 
-var ops = [...]BasicTypeOps{
-	PANIC_IMPL,     // nil
+var ops = [...]basicTypeOps{
+	panicImpl,      // nil
 	&booleanOps{},  // boolean
 	&intOps{},      // int
 	&floatOps{},    // float
@@ -27,9 +27,9 @@ var ops = [...]BasicTypeOps{
 	&stringOps{},   // string
 	&errorOps{},    // error
 	&typedescOps{}, // typedesc
-	PANIC_IMPL,     // handle
+	panicImpl,      // handle
 	&functionOps{}, // function
-	PANIC_IMPL,     // regexp
+	panicImpl,      // regexp
 	&futureOps{},   // future
 	&streamOps{},   // stream
 	&listOps{},     // list

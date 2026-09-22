@@ -1,0 +1,75 @@
+(SimpleListener
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ())
+  )
+)
+($resource$get$0
+  (bb0 () ()
+    (return
+      (invocation alpha expr:
+        (simple-var-ref self) (
+        (invocation beta expr:
+          (simple-var-ref self) (
+          (literal 42))))))
+  )
+)
+(alpha
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+(alphaName
+  (bb0 () ()
+    (return
+      (literal runtime-alpha))
+  )
+)
+(annotationName
+  (bb0 () ()
+    (return
+      (literal runtime-service))
+  )
+)
+(beta
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+(betaName
+  (bb0 () ()
+    (return
+      (literal runtime-beta))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal service annotations retained))))
+  )
+)

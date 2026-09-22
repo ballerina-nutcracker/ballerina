@@ -32,8 +32,8 @@ func NewStreamDefinition() StreamDefinition {
 }
 
 func streamContaining(tupleType SemType) SemType {
-	bdd := subtypeData(tupleType, BTList)
-	return createBasicSemType(BTStream, bdd)
+	bdd := subtypeDataAt(tupleType, btList)
+	return createBasicSemType(btStream, bdd)
 }
 
 func (s *StreamDefinition) GetSemType(env Env) SemType {
@@ -41,9 +41,9 @@ func (s *StreamDefinition) GetSemType(env Env) SemType {
 }
 
 func (s *StreamDefinition) Define(env Env, valueTy SemType, completionTy SemType) SemType {
-	if sameSemType(VAL, completionTy) && sameSemType(VAL, valueTy) {
-		return STREAM
+	if sameSemType(Val, completionTy) && sameSemType(Val, valueTy) {
+		return Stream
 	}
-	tuple := s.listDefinition.TupleTypeWrapped(env, valueTy, completionTy)
+	tuple := s.listDefinition.Define(env, []SemType{valueTy, completionTy})
 	return streamContaining(tuple)
 }

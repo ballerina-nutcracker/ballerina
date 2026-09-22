@@ -16,10 +16,10 @@
 
 package semtypes
 
-// BasicTypeCode represent bit field that indicate which basic type a semType belongs to.
-type BasicTypeCode int
+// basicTypeCode represent bit field that indicate which basic type a semType belongs to.
+type basicTypeCode int
 
-func (bt BasicTypeCode) Code() int {
+func (bt basicTypeCode) Code() int {
 	return int(bt)
 }
 
@@ -48,56 +48,56 @@ const (
 
 // Inherently immutable
 const (
-	BTNil      = BasicTypeCode(typeCodeNil)
-	BTBoolean  = BasicTypeCode(typeCodeBoolean)
-	BTInt      = BasicTypeCode(typeCodeInt)
-	BTFloat    = BasicTypeCode(typeCodeFloat)
-	BTDecimal  = BasicTypeCode(typeCodeDecimal)
-	BTString   = BasicTypeCode(typeCodeString)
-	BTError    = BasicTypeCode(typeCodeError)
-	BTTypeDesc = BasicTypeCode(typeCodeTypedesc)
-	BTHandle   = BasicTypeCode(typeCodeHandle)
-	BTFunction = BasicTypeCode(typeCodeFunction)
-	BTRegexp   = BasicTypeCode(typeCodeRegexp)
+	btNil      = basicTypeCode(typeCodeNil)
+	btBoolean  = basicTypeCode(typeCodeBoolean)
+	btInt      = basicTypeCode(typeCodeInt)
+	btFloat    = basicTypeCode(typeCodeFloat)
+	btDecimal  = basicTypeCode(typeCodeDecimal)
+	btString   = basicTypeCode(typeCodeString)
+	btError    = basicTypeCode(typeCodeError)
+	btTypeDesc = basicTypeCode(typeCodeTypedesc)
+	btHandle   = basicTypeCode(typeCodeHandle)
+	btFunction = basicTypeCode(typeCodeFunction)
+	btRegexp   = basicTypeCode(typeCodeRegexp)
 )
 
 // Inherently mutable
 const (
-	BTFuture = BasicTypeCode(typeCodeFuture)
-	BTStream = BasicTypeCode(typeCodeStream)
+	btFuture = basicTypeCode(typeCodeFuture)
+	btStream = basicTypeCode(typeCodeStream)
 )
 
 // Selectively immutable
 const (
-	BTList    = BasicTypeCode(typeCodeList)
-	BTMapping = BasicTypeCode(typeCodeMapping)
-	BTTable   = BasicTypeCode(typeCodeTable)
-	BTXML     = BasicTypeCode(typeCodeXML)
-	BTObject  = BasicTypeCode(typeCodeObject)
+	btList    = basicTypeCode(typeCodeList)
+	btMapping = basicTypeCode(typeCodeMapping)
+	btTable   = basicTypeCode(typeCodeTable)
+	btXML     = basicTypeCode(typeCodeXML)
+	btObject  = basicTypeCode(typeCodeObject)
 )
 
 // Non-val
 const (
-	BTCell  = BasicTypeCode(typeCodeCell)
-	BTUndef = BasicTypeCode(typeCodeUndef)
+	btCell  = basicTypeCode(typeCodeCell)
+	btUndef = basicTypeCode(typeCodeUndef)
 )
 
 // Helper bit fields (does not represent basic type tag)
 const (
-	ValueTypeCount = int(BTObject) + 1
-	ValueTypeMask  = (1 << ValueTypeCount) - 1
+	valueTypeCount = int(btObject) + 1
+	valueTypeMask  = (1 << valueTypeCount) - 1
 )
 
 const (
-	ValueTypeCountInherentlyImmutable = int(BTFuture)
-	ValueTypeInherentlyImmutable      = (1 << ValueTypeCountInherentlyImmutable) - 1
+	valueTypeCountInherentlyImmutable = int(btFuture)
+	valueTypeInherentlyImmutable      = (1 << valueTypeCountInherentlyImmutable) - 1
 )
 
-func basicTypeCodeFrom(code int) BasicTypeCode {
-	return BasicTypeCode(code)
+func basicTypeCodeFrom(code int) basicTypeCode {
+	return basicTypeCode(code)
 }
 
-func (bt BasicTypeCode) String() string {
+func (bt basicTypeCode) String() string {
 	switch bt {
 	case typeCodeNil:
 		return "BT_NIL"

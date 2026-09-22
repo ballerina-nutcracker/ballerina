@@ -27,20 +27,20 @@
 
 [Ballerina](https://ballerina.io) is an open-source, cloud-native programming language optimized for integration, with built-in support for JSON and XML, first-class constructs for services and concurrency, and structural typing. It is developed and supported by [WSO2](https://wso2.com) and the wider Ballerina community. Try the language in your browser on the [Ballerina Playground](https://play.ballerina.io/).
 
-**Ballerina Nutcracker** compiles Ballerina source to **Ballerina Intermediate Representation (BIR)** and interprets the BIR directly. Written in Go, it ships as one self-contained binary — no separate runtime, nothing to warm up — which keeps startup fast and the footprint small for short-lived cloud-native workloads such as CLIs, functions, and sidecars.
+**Ballerina Nutcracker** compiles Ballerina source to **Ballerina Intermediate Representation (BIR)** and interprets the BIR directly. Written in Go, it ships as one `bal` binary — no separate runtime, nothing to warm up — which keeps startup fast and the footprint small for short-lived cloud-native workloads such as CLIs, functions, and sidecars.
 
 > [!IMPORTANT]
 > Nutcracker is under active development and does not yet support the whole language. For production use today, reach for [Ballerina Swan Lake](https://ballerina.io/downloads/) — the official distribution, which supports the full language.
 
 ## Architecture
 
-![Ballerina Nutcracker architecture, left to right: the bal CLI feeds the compilation pipeline (parse, AST, symbols and types, desugar, emit BIR), whose BIR is executed by the runtime (dispatch loop, strands and frames, values, extern bridge), which reaches the host only through the Platform Adaptation Layer. The library of language and standard modules is resolved both at compile time and at run time. Ballerina Central and the host OS are the only boundaries outside the binary.](doc/img/architecture.svg)
+![Ballerina Nutcracker architecture: the bal CLI (new, run, pack, build, push, version) is the entry point. parser/ produces st/; nodebuilder/ produces ast/. semantics/ resolves types; desugar/ and birgen/ lower to BIR. The runtime interprets BIR. Native stdlib uses extern calls; pure-Ballerina modules run as BIR. PAL is platform/pal; palnative is on the host OS and pal_wasm.go on the browser. The central cache is the on-disk default for dependency resolution; bal push writes the local repository.](doc/img/architecture.png)
 
-Almost everything inside the binary is a Go package; only Ballerina Central and the host OS sit outside it. See [ARCHITECTURE.md](doc/guides/ARCHITECTURE.md) for how the diagram maps onto source directories.
+Almost everything that ships in the `bal` binary is a Go package. The central cache, the local repository, the host OS, and the browser sit outside it. See [ARCHITECTURE.md](doc/guides/ARCHITECTURE.md) for how the diagram maps onto source directories.
 
 ## Getting started
 
-Download a binary from the [latest release](https://github.com/ballerina-nutcracker/ballerina/releases), or build from source with [Go 1.26 or later](https://go.dev/dl/):
+Download a binary from the [latest release](https://github.com/ballerina-nutcracker/ballerina/releases), or build from source with [Go 1.27 or later](https://go.dev/dl/):
 
 ```bash
 git clone https://github.com/ballerina-nutcracker/ballerina.git
@@ -69,6 +69,7 @@ public function main() {
 | `bal run <file.bal> \| <package-dir> \| .` | Compile and execute a source file or package |
 | `bal pack [<package-dir>]` | Build the `.bala` distribution archive of a package |
 | `bal build [<package-dir>]` | Build a standalone executable that bundles the Ballerina runtime |
+| `bal push [<bala-path>] --repository=local` | Push a `.bala` of the current package (or a given archive) to the local repository |
 | `bal version` | Print the version |
 
 `bal build` needs a `balrt` stripped-down runtime alongside `bal` (`go build -o balrt ./cli/internal/balrt`), or pointed at via the `main.RuntimeStubPath` link-time override.

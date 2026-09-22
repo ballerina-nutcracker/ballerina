@@ -1,0 +1,217 @@
+module $anon.. v 0.0.0;
+class Client {
+
+  $remote$broken() -> int{
+    bb0 {
+      %2 = ConstantLoad remote panic
+      %3 = newError error(%2)
+      panic %3;
+    }
+  }
+
+  $remote$value() -> int{
+    bb0 {
+      %2 = ConstantLoad 7
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+helper() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = newObject $anon/.:Client
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %3;
+    %6 = start helper() isolated=false -> bb5;
+  }
+  bb5 {
+    first = %6;
+    GOTO bb6;
+  }
+  bb6 {
+    %9 = wait first -> bb7;
+  }
+  bb7 {
+    %8 = %9;
+    GOTO bb8;
+  }
+  bb8 {
+    trapped = %8;
+    %11 = println(trapped) -> bb9;
+  }
+  bb9 {
+    %12 = start helper() isolated=false -> bb10;
+  }
+  bb10 {
+    second = %12;
+    %14 = wait second -> bb11;
+  }
+  bb11 {
+    waited = %14;
+    %16 = println(waited) -> bb12;
+  }
+  bb12 {
+    %17 = start helper() isolated=false -> bb13;
+  }
+  bb13 {
+    started = %17;
+    %20 = wait started -> bb14;
+  }
+  bb14 {
+    %21 = %20 is error
+    %21 ? bb15 : bb16;
+  }
+  bb15 {
+    %0 = %20;
+    return;
+  }
+  bb16 {
+    %19 = %20;
+    GOTO bb17;
+  }
+  bb17 {
+    startedValue = %19;
+    %23 = startedValue;
+    %24 = println(%23) -> bb18;
+  }
+  bb18 {
+    %25 = c.$remote$value() -> bb19;
+  }
+  bb19 {
+    remoteValue = %25;
+    %27 = remoteValue;
+    %28 = println(%27) -> bb20;
+  }
+  bb20 {
+    %29 = start helper() isolated=false -> bb21;
+  }
+  bb21 {
+    third = %29;
+    GOTO bb22;
+  }
+  bb22 {
+    GOTO bb23;
+  }
+  bb23 {
+    %33 = wait third -> bb24;
+  }
+  bb24 {
+    %32 = %33;
+    GOTO bb25;
+  }
+  bb25 {
+    %31 = %32;
+    GOTO bb26;
+  }
+  bb26 {
+    nested = %31;
+    %35 = println(nested) -> bb27;
+  }
+  bb27 {
+    GOTO bb28;
+  }
+  bb28 {
+    %37 = c.$remote$broken() -> bb29;
+  }
+  bb29 {
+    %36 = %37;
+    GOTO bb30;
+  }
+  bb30 {
+    panicked = %36;
+    %39 = panicked is error
+    %39 ? bb31 : bb34;
+  }
+  bb31 {
+    PushScopeFrame 2
+    %0 = message((1, panicked)) -> bb32;
+  }
+  bb32 {
+    %1 = println(%0) -> bb33;
+  }
+  bb33 {
+    PopScopeFrame
+    GOTO bb34;
+  }
+  bb34 {
+    PushScopeFrame 18
+    GOTO bb35;
+  }
+  bb35 {
+    %2 = (1, c).$remote$value() -> bb36;
+  }
+  bb36 {
+    %1 = %2;
+    GOTO bb37;
+  }
+  bb37 {
+    %3 = %1 is error
+    %3 ? bb38 : bb39;
+  }
+  bb38 {
+    (1, %0) = %1;
+    PopScopeFrame
+    return;
+  }
+  bb39 {
+    %0 = %1;
+    GOTO bb40;
+  }
+  bb40 {
+    checked = %0;
+    %5 = checked;
+    %6 = println(%5) -> bb41;
+  }
+  bb41 {
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %11 = ConstantLoad 2
+    %12 = %11;
+    %8 = + %10 %12;
+    %13 = %8;
+    %14 = ConstantLoad 3
+    %15 = %14;
+    %7 = * %13 %15;
+    %16 = %7;
+    %17 = println(%16) -> bb42;
+  }
+  bb42 {
+    PopScopeFrame
+    return;
+  }
+  
+  error-table {
+    [bb6, bb7] -> bb8, %8
+    [bb23, bb24] -> bb25, %32
+    [bb22, bb25] -> bb26, %31
+    [bb28, bb29] -> bb30, %36
+    [bb35, bb36] -> bb37, %1
+  }
+}

@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int|error, got nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}
+  --> lax-field-access-expected-e.bal:18:19
+   |
+18 |     int|error a = m.a.b.c; // @error
+   |                   ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected json, got nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}
+  --> lax-field-access-expected-e.bal:24:12
+   |
+24 |     return value?.x; // @error
+   |            ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected json, got nil|boolean|int|float|decimal|string|error|[json...]|{| json... |}
+  --> lax-field-access-expected-e.bal:28:27
+   |
+28 |     json assignedAsJson = value.missing?.x; // @error
+   |                           ^^^^^^^^^^^^^^^^

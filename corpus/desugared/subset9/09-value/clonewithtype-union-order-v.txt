@@ -63,38 +63,22 @@
                   (literal f3)
                   (simple-var-ref d))))))))
       (var-def
-        (variable $desugar$0 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref v1)
-            (typedesc-expr))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
-      (var-def
         (variable r1 (type
           (user-defined-type R)) (expr
-          (simple-var-ref $desugar$0))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref v1)
+              (typedesc-expr)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref r1))))
       (var-def
-        (variable $desugar$1 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref v1)
-            (typedesc-expr))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$1))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$1))) ())
-      (var-def
         (variable r1b (type
           (user-defined-type Rb)) (expr
-          (simple-var-ref $desugar$1))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref v1)
+              (typedesc-expr)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref r1b))))
@@ -109,20 +93,12 @@
                   (literal f3)
                   (simple-var-ref d))))))))
       (var-def
-        (variable $desugar$2 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref v2)
-            (typedesc-expr))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$2))) ())
-      (var-def
         (variable r2 (type
           (user-defined-type R)) (expr
-          (simple-var-ref $desugar$2))))
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref v2)
+              (typedesc-expr)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref r2))))

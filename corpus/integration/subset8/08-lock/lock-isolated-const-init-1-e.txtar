@@ -5,3 +5,17 @@ error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock stat
    |
 24 |         var _ = function(int n = seed) returns int { // @error
    |                                  ^^^^
+
+error[SEMANTIC_ERROR]: no restricted variable referenced in lock statement
+  --> lock-isolated-const-init-1-e.bal:23:5
+   |
+23 |     lock {
+   |     ^^^^^^
+24 |         var _ = function(int n = seed) returns int { // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |             return n;
+   |             ^^^^^^^^^
+26 |         };
+   |         ^^
+27 |     }
+   |     ^

@@ -33,13 +33,14 @@
                 (block-stmt
                   (return
                     (literal 2)))))))))
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation $default$0 ()))))
       (expression-stmt
         (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (invocation $default$0 ()))))
           (invocation f (
-            (simple-var-ref $desugar$0))))))
+            (simple-var-ref $desugar$0)))))))
       (expression-stmt
         (invocation io println (
           (invocation f (

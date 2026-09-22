@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: annotation 'typeOnly' is not allowed on objectfield
+  --> 25-e.bal:44:5
+   |
+44 |     @typeOnly {name: "field"} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'typeOnly' is not allowed on objectfunction
+  --> 25-e.bal:47:5
+   |
+47 |     @typeOnly {name: "method"} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'typeOnly' is not allowed on objectfunction
+  --> 25-e.bal:52:5
+   |
+52 |     @typeOnly {name: "resource"} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'typeOnly' is not allowed on parameter
+  --> 25-e.bal:48:21
+   |
+48 |     function helper(@typeOnly {name: "parameter"} int amount) returns int { // @error
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -31,6 +31,12 @@ function readAndBump() returns int {
     }
 }
 
+function noRestrictedVariable() {
+    lock { // @error
+        int _ = 1;
+    }
+}
+
 public function main() {
     io:println(readAndBump());
 }

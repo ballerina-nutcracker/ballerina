@@ -1,0 +1,6 @@
+-- stdout --
+true
+true
+{"x":1,"y":"two"}
+true
+-- stderr --

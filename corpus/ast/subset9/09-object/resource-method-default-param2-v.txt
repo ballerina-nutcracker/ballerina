@@ -1,0 +1,69 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Store
+    (resource-function get name:price
+      (variable id (type
+        (value-type int)) (expr
+        (literal 10)))
+      (union-type
+        (value-type int)
+        (error-type))
+      (block-function-body
+        (return
+          (simple-var-ref id))))
+    (resource-function get name:total
+      (variable price (type
+        (value-type int)))
+      (variable tax (type
+        (value-type int)) (expr
+        (binary-expr /
+          (simple-var-ref price)
+          (literal 10))))
+      (union-type
+        (value-type int)
+        (error-type))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref price)
+            (simple-var-ref tax))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable store (type
+          (user-defined-type Store)) (expr
+          (new ()))))
+      (var-def
+        (variable defaultPrice (type
+          (value-type int)) (expr
+          (checked-expr
+            (client-resource-access get expr:
+              (simple-var-ref store) name:price)))))
+      (var-def
+        (variable defaultTax (type
+          (value-type int)) (expr
+          (checked-expr
+            (client-resource-access get expr:
+              (simple-var-ref store) name:total
+              (literal 40))))))
+      (var-def
+        (variable explicitTax (type
+          (value-type int)) (expr
+          (checked-expr
+            (client-resource-access get expr:
+              (simple-var-ref store) name:total
+              (literal 40)
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref defaultPrice))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref defaultTax))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref explicitTax)))))))

@@ -1,4 +1,16 @@
 module $anon.. v 0.0.0;
+$anonFunc$_0(int) -> function(int) returns int{
+  bb0 {
+    %3 = y;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    b = %2;
+    %7 = closure_fp $anon/.:$anonFunc$_1
+    %0 = %7;
+    return;
+  }
+}
 $anonFunc$_1(int) -> int{
   bb0 {
     %3 = x;
@@ -9,18 +21,6 @@ $anonFunc$_1(int) -> int{
     %7 = ConstantLoad val
     %6 = (2, r)[%7];
     %0 = %6;
-    return;
-  }
-}
-$anonFunc$_0(int) -> function(int) returns int{
-  bb0 {
-    %3 = y;
-    %4 = ConstantLoad 2
-    %5 = %4;
-    %2 = * %3 %5;
-    b = %2;
-    %7 = closure_fp $anon/.:$anonFunc$_1
-    %0 = %7;
     return;
   }
 }

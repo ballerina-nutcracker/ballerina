@@ -16,6 +16,8 @@
 import ballerina/io;
 import ballerina/lang.array;
 
+isolated int lockGuard = 0;
+
 function increment(int value) returns int {
     return value + 1;
 }
@@ -31,6 +33,7 @@ isolated function mapInIsolatedFunction(int[] values) returns int[] {
 
 function mapInsideLock(int[] values) returns int {
     lock {
+        lockGuard += 0;
         int explicitLength = values.map(isolatedIncrement).length();
         int inferredLength = values.map((value) => value + 1).length();
         return explicitLength + inferredLength;
@@ -85,6 +88,7 @@ function mapWithInferredCapture(int[] values) returns int[] {
 
 function mapAcrossIsolationContexts(int[] values) returns int[] {
     lock {
+        lockGuard += 0;
         int _ = (<int[]>[1]).map(isolatedIncrement).length();
     }
     return values.map(increment);

@@ -1,0 +1,52 @@
+(package
+  (import-package ballerina io (as io))
+  (variable base (type
+    (value-type int)))
+  (type-definition Doubled
+    (record-type
+      (field n
+        (value-type int)
+        (invocation twice (
+          (simple-var-ref base))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref base)
+        (literal 5))))
+  (function twice (
+    (variable x (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr *
+        (simple-var-ref x)
+        (literal 2))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d (type
+          (user-defined-type Doubled)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref d)
+            (literal n)))))
+      (var-def
+        (variable e (type
+          (user-defined-type Doubled)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal n)
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref e)
+            (literal n)))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (invocation twice (
+          (simple-var-ref base)))))))

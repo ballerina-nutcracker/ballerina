@@ -15,3 +15,5 @@
 // under the License.
 
 public function inferred(int val, typedesc retTy = <>) returns retTy = external;
+
+public function inferredNestedFixedArray(typedesc retTy = <>) returns retTy[2][] = external;

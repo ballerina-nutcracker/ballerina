@@ -1,0 +1,32 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable values (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 19)
+            (literal 20)))))
+      (var-def
+        (variable valuesStream (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation toStream expr:
+            (simple-var-ref values) ()))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation next expr:
+          (simple-var-ref valuesStream) ()))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation remove expr:
+          (simple-var-ref values) (
+          (literal 0))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation next expr:
+          (simple-var-ref valuesStream) ())))))

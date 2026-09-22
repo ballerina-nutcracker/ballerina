@@ -24,6 +24,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 
@@ -166,11 +168,15 @@ func parseFile(t *testing.T, testCase test_util.TestCase) {
 		t.Fatalf("error reading file: %v", readErr)
 	}
 
-	reader := text.CharReaderFromText(string(content))
+	source := string(content)
+	reader := text.CharReaderFromText(source)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	ctx := context.NewCompilerContext(env)
+	ctx.DiagnosticEnv().RegisterFile(testCase.InputPath, text.TextDocumentFromText(source))
 
-	lexer := newLexer(reader)
+	lexer := newLexer(ctx, testCase.InputPath, reader)
 
-	tokenReader := createTokenReader(lexer)
+	tokenReader := createTokenReader(ctx, testCase.InputPath, lexer)
 
 	ballerinaParser := newBallerinaParserFromTokenReader(tokenReader)
 

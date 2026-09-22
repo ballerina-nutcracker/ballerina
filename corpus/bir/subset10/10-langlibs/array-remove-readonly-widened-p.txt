@@ -1,0 +1,19 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 3
+    %5 = newArray [int...][%4]{%1, %2, %3}
+    ro = %5;
+    widened = ro;
+    %8 = ConstantLoad 0
+    %9 = %8;
+    %10 = remove(widened,%9) -> bb1;
+  }
+  bb1 {
+    %11 = %10;
+    return;
+  }
+}

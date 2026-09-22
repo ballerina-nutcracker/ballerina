@@ -173,7 +173,8 @@ func (p *xmlParserErrorHandler) seekMatchInAlternativePaths(currentCtx common.Pa
 	case common.PARSER_RULE_CONTEXT_XML_OPTIONAL_CDATA_CONTENT:
 		alternatives = xmlOptionalCDATAContentAlternatives
 	default:
-		panic("XMLParserErrorHandler.seekMatchInAlternativePaths: " + currentCtx.String())
+		p.internalError("XMLParserErrorHandler.seekMatchInAlternativePaths: " + currentCtx.String())
+		return nil
 	}
 	return p.seekInAlternativesPaths(lookahead, currentDepth, matchingRulesCount, alternatives, isEntryPoint)
 }
@@ -188,6 +189,8 @@ func (p *xmlParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext,
 	}
 
 	switch currentCtx {
+	case common.PARSER_RULE_CONTEXT_EOF:
+		return common.PARSER_RULE_CONTEXT_EOF
 	case common.PARSER_RULE_CONTEXT_XML_START_OR_EMPTY_TAG,
 		common.PARSER_RULE_CONTEXT_XML_END_TAG:
 		return common.PARSER_RULE_CONTEXT_LT_TOKEN
@@ -199,7 +202,8 @@ func (p *xmlParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext,
 		case common.PARSER_RULE_CONTEXT_XML_END_TAG:
 			return common.PARSER_RULE_CONTEXT_SLASH
 		}
-		panic("< cannot exist in: " + parent.String())
+		p.internalError("< cannot exist in: " + parent.String())
+		return common.PARSER_RULE_CONTEXT_EOF
 	case common.PARSER_RULE_CONTEXT_GT_TOKEN,
 		common.PARSER_RULE_CONTEXT_XML_PI_END:
 		p.EndContext()
@@ -216,7 +220,8 @@ func (p *xmlParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext,
 		case common.PARSER_RULE_CONTEXT_XML_PI:
 			return common.PARSER_RULE_CONTEXT_XML_PI_TARGET_RHS
 		}
-		panic("XML name cannot exist in: " + parent.String())
+		p.internalError("XML name cannot exist in: " + parent.String())
+		return common.PARSER_RULE_CONTEXT_EOF
 	case common.PARSER_RULE_CONTEXT_SLASH:
 		parent := p.GetParentContext()
 		switch parent {
@@ -228,7 +233,8 @@ func (p *xmlParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext,
 		case common.PARSER_RULE_CONTEXT_XML_END_TAG:
 			return common.PARSER_RULE_CONTEXT_XML_NAME
 		}
-		panic("slash cannot exist in: " + parent.String())
+		p.internalError("slash cannot exist in: " + parent.String())
+		return common.PARSER_RULE_CONTEXT_EOF
 	case common.PARSER_RULE_CONTEXT_ASSIGN_OP:
 		return common.PARSER_RULE_CONTEXT_XML_QUOTE_START
 	case common.PARSER_RULE_CONTEXT_XML_ATTRIBUTE:
@@ -258,7 +264,8 @@ func (p *xmlParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext,
 	case common.PARSER_RULE_CONTEXT_XML_CDATA_END:
 		return common.PARSER_RULE_CONTEXT_XML_CONTENT
 	}
-	panic("cannot find the next rule for: " + currentCtx.String())
+	p.internalError("cannot find the next rule for: " + currentCtx.String())
+	return common.PARSER_RULE_CONTEXT_EOF
 }
 
 func (p *xmlParserErrorHandler) GetInsertSolution(ctx common.ParserRuleContext) *solution {
@@ -268,6 +275,8 @@ func (p *xmlParserErrorHandler) GetInsertSolution(ctx common.ParserRuleContext) 
 
 func (p *xmlParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRuleContext) st.SyntaxKind {
 	switch ctx {
+	case common.PARSER_RULE_CONTEXT_EOF:
+		return st.EOF_TOKEN
 	case common.PARSER_RULE_CONTEXT_LT_TOKEN,
 		common.PARSER_RULE_CONTEXT_XML_START_OR_EMPTY_TAG,
 		common.PARSER_RULE_CONTEXT_XML_END_TAG:

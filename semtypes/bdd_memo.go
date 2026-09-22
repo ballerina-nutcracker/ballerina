@@ -16,35 +16,35 @@
 
 package semtypes
 
-type MemoStatus uint
+type memoStatus uint
 
 type bddMemo struct {
-	isEmpty MemoStatus
+	isEmpty memoStatus
 }
 
 const (
-	MemoStatus_LOOP MemoStatus = iota
-	MemoStatus_TRUE
-	MemoStatus_FALSE
-	MemoStatus_CYCLIC
-	MemoStatus_PROVISIONAL
-	MemoStatus_NULL
+	memostatusLoop memoStatus = iota
+	memostatusTrue
+	memostatusFalse
+	memostatusCyclic
+	memostatusProvisional
+	memostatusNull
 )
 
 func newBddMemo() bddMemo {
 	this := bddMemo{}
-	this.isEmpty = MemoStatus_NULL
+	this.isEmpty = memostatusNull
 	return this
 }
 
 func (b *bddMemo) SetIsEmpty(isEmpty bool) {
 	if isEmpty {
-		b.isEmpty = MemoStatus_TRUE
+		b.isEmpty = memostatusTrue
 	} else {
-		b.isEmpty = MemoStatus_FALSE
+		b.isEmpty = memostatusFalse
 	}
 }
 
 func (b *bddMemo) IsEmpty() bool {
-	return (b.isEmpty == MemoStatus_TRUE)
+	return (b.isEmpty == memostatusTrue)
 }

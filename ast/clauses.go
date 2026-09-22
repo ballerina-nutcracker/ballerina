@@ -26,24 +26,24 @@ type TypeParamEntry struct {
 }
 
 type (
-	BLangInputClause struct {
+	bLangInputClauseBase[C BLangActionOrExpression] struct {
 		bLangNodeBase
-		Collection BLangActionOrExpression
-		// PR-TODO: can this be nil?
-		VariableDefinitionNode *BLangSimpleVariableDef
+		Collection             C
+		VariableDefinitionNode *BLangVariableDef
 		IsDeclaredWithVarFlag  bool
 	}
 	BLangFromClause struct {
-		BLangInputClause
+		// Match jBallerina, which accepts actions as from-clause collections.
+		bLangInputClauseBase[BLangActionOrExpression]
 	}
 	BLangJoinClause struct {
-		BLangInputClause
+		bLangInputClauseBase[BLangExpression]
 		OnClause        BLangOnClause
 		IsOuterJoinFlag bool
 	}
 	BLangLetClause struct {
 		bLangNodeBase
-		LetVarDeclarations []BLangSimpleVariableDef
+		LetVarDeclarations []BLangVariableDef
 	}
 	BLangOnClause struct {
 		bLangNodeBase
@@ -56,13 +56,13 @@ type (
 	}
 	BLangGroupByClause struct {
 		bLangNodeBase
-		GroupingKeyList []BLangGroupingKey
+		GroupingKeyList []*BLangGroupingKey
 		NonGroupingKeys common.Set[string]
 	}
 	BLangGroupingKey struct {
 		bLangNodeBase
-		VariableDef *BLangSimpleVariableDef
-		VariableRef *BLangSimpleVarRef
+		VariableDef *BLangVariableDef
+		VariableRef *BLangVarRef
 	}
 	BLangLimitClause struct {
 		bLangNodeBase
@@ -79,6 +79,7 @@ type (
 	}
 	BLangSelectClause struct {
 		bLangNodeBase
+		// Match jBallerina, which also accepts actions in select clauses.
 		Expression BLangActionOrExpression
 	}
 	BLangOnConflictClause struct {
@@ -97,7 +98,7 @@ type (
 	BLangOnFailClause struct {
 		bLangNodeBase
 		Body                   *BLangBlockStmt
-		VariableDefinitionNode *BLangSimpleVariableDef
+		VariableDefinitionNode *BLangVariableDef
 		VarType                BType
 		BodyContainsFail       bool
 		IsInternal             bool
@@ -107,12 +108,8 @@ type (
 
 var (
 	_ FromClauseNode    = &BLangFromClause{}
-	_ JoinClauseNode    = &BLangJoinClause{}
 	_ Node              = &BLangLetClause{}
-	_ OnClauseNode      = &BLangOnClause{}
 	_ Node              = &BLangWhereClause{}
-	_ GroupByClauseNode = &BLangGroupByClause{}
-	_ GroupingKeyNode   = &BLangGroupingKey{}
 	_ Node              = &BLangLimitClause{}
 	_ Node              = &BLangOrderByClause{}
 	_ Node              = &BLangOrderKey{}
@@ -120,8 +117,60 @@ var (
 	_ Node              = &BLangOnConflictClause{}
 	_ CollectClauseNode = &BLangCollectClause{}
 	_ DoClauseNode      = &BLangDoClause{}
-	_ OnFailClauseNode  = &BLangOnFailClause{}
 )
+
+func NewBLangFromClause(pos Location, collection BLangActionOrExpression, variableDefinition *BLangVariableDef, declaredWithVar bool) *BLangFromClause {
+	return &BLangFromClause{bLangInputClauseBase: bLangInputClauseBase[BLangActionOrExpression]{
+		bLangNodeBase:          bLangNodeBase{pos: pos},
+		Collection:             collection,
+		VariableDefinitionNode: variableDefinition,
+		IsDeclaredWithVarFlag:  declaredWithVar,
+	}}
+}
+
+func NewBLangJoinClause(pos Location, collection BLangExpression, variableDefinition *BLangVariableDef, declaredWithVar, outer bool, onClause *BLangOnClause) *BLangJoinClause {
+	clause := &BLangJoinClause{
+		bLangInputClauseBase: bLangInputClauseBase[BLangExpression]{
+			bLangNodeBase:          bLangNodeBase{pos: pos},
+			Collection:             collection,
+			VariableDefinitionNode: variableDefinition,
+			IsDeclaredWithVarFlag:  declaredWithVar,
+		},
+		IsOuterJoinFlag: outer,
+	}
+	if onClause != nil {
+		clause.OnClause = *onClause
+	}
+	return clause
+}
+
+func NewBLangOnClause(pos Location, onExpr, equalsExpr BLangExpression) *BLangOnClause {
+	return &BLangOnClause{bLangNodeBase: bLangNodeBase{pos: pos}, OnExpr: onExpr, EqualsExpr: equalsExpr}
+}
+
+func NewBLangLimitClause(pos Location, expr BLangExpression) *BLangLimitClause {
+	return &BLangLimitClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr}
+}
+
+func NewBLangSelectClause(pos Location, expr BLangActionOrExpression) *BLangSelectClause {
+	return &BLangSelectClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr}
+}
+
+func NewBLangOnConflictClause(pos Location, expr BLangExpression) *BLangOnConflictClause {
+	return &BLangOnConflictClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr}
+}
+
+func NewBLangCollectClause(pos Location, expr BLangExpression, nonGroupingKeys common.Set[string]) *BLangCollectClause {
+	return &BLangCollectClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr, NonGroupingKeys: nonGroupingKeys}
+}
+
+func NewBLangGroupingKeyWithVariableDef(pos Location, variableDef *BLangVariableDef) *BLangGroupingKey {
+	return &BLangGroupingKey{bLangNodeBase: bLangNodeBase{pos: pos}, VariableDef: variableDef}
+}
+
+func NewBLangGroupingKeyWithVariableRef(pos Location, variableRef *BLangVarRef) *BLangGroupingKey {
+	return &BLangGroupingKey{bLangNodeBase: bLangNodeBase{pos: pos}, VariableRef: variableRef}
+}
 
 var (
 	_ BLangNode = &BLangFromClause{}
@@ -141,34 +190,22 @@ var (
 	_ BLangNode = &BLangOnFailClause{}
 )
 
-func (b *BLangJoinClause) GetCollection() BLangActionOrExpression {
+func (b *bLangInputClauseBase[C]) GetCollection() C {
 	return b.Collection
 }
 
-func (b *BLangJoinClause) SetCollection(collection BLangActionOrExpression) {
-	b.Collection = collection
-}
-
-func (b *BLangJoinClause) GetVariableDefinitionNode() VariableDefinitionNode {
+func (b *bLangInputClauseBase[C]) GetVariableDefinitionNode() *BLangVariableDef {
 	if b.VariableDefinitionNode == nil {
 		return nil
 	}
 	return b.VariableDefinitionNode
 }
 
-func (b *BLangJoinClause) SetVariableDefinitionNode(variableDefinitionNode VariableDefinitionNode) {
-	if variableDefinitionNode == nil {
-		b.VariableDefinitionNode = nil
-		return
-	}
-	b.VariableDefinitionNode = variableDefinitionNode.(*BLangSimpleVariableDef)
-}
-
-func (b *BLangJoinClause) IsDeclaredWithVar() bool {
+func (b *bLangInputClauseBase[C]) IsDeclaredWithVar() bool {
 	return b.IsDeclaredWithVarFlag
 }
 
-func (b *BLangJoinClause) GetOnClause() OnClauseNode {
+func (b *BLangJoinClause) GetOnClause() *BLangOnClause {
 	if b.OnClause.OnExpr == nil && b.OnClause.EqualsExpr == nil {
 		return nil
 	}
@@ -183,86 +220,16 @@ func (b *BLangOnClause) GetOnExpression() BLangExpression {
 	return b.OnExpr
 }
 
-func (b *BLangOnClause) SetOnExpression(expression BLangExpression) {
-	b.OnExpr = expression
-}
-
 func (b *BLangOnClause) GetEqualsExpression() BLangExpression {
 	return b.EqualsExpr
 }
 
-func (b *BLangOnClause) SetEqualsExpression(expression BLangExpression) {
-	b.EqualsExpr = expression
+func (b *BLangGroupByClause) AddGroupingKey(groupingKey *BLangGroupingKey) {
+	b.GroupingKeyList = append(b.GroupingKeyList, groupingKey)
 }
 
-func (b *BLangFromClause) GetCollection() BLangActionOrExpression {
-	return b.Collection
-}
-
-func (b *BLangFromClause) SetCollection(collection BLangActionOrExpression) {
-	b.Collection = collection
-}
-
-func (b *BLangFromClause) GetVariableDefinitionNode() VariableDefinitionNode {
-	if b.VariableDefinitionNode == nil {
-		return nil
-	}
-	return b.VariableDefinitionNode
-}
-
-func (b *BLangFromClause) SetVariableDefinitionNode(variableDefinitionNode VariableDefinitionNode) {
-	if variableDefinitionNode == nil {
-		b.VariableDefinitionNode = nil
-		return
-	}
-	b.VariableDefinitionNode = variableDefinitionNode.(*BLangSimpleVariableDef)
-}
-
-func (b *BLangFromClause) IsDeclaredWithVar() bool {
-	return b.IsDeclaredWithVarFlag
-}
-
-func (b *BLangLetClause) GetKind() NodeKind {
-	return NodeKind_LET_CLAUSE
-}
-
-func (b *BLangWhereClause) GetKind() NodeKind {
-	return NodeKind_WHERE
-}
-
-func (b *BLangGroupByClause) GetKind() NodeKind {
-	return NodeKind_GROUP_BY
-}
-
-func (b *BLangGroupByClause) AddGroupingKey(groupingKey GroupingKeyNode) {
-	if key, ok := groupingKey.(*BLangGroupingKey); ok {
-		b.GroupingKeyList = append(b.GroupingKeyList, *key)
-		return
-	}
-	panic("groupingKey is not a BLangGroupingKey")
-}
-
-func (b *BLangGroupByClause) GetGroupingKeyList() []GroupingKeyNode {
-	result := make([]GroupingKeyNode, len(b.GroupingKeyList))
-	for i := range b.GroupingKeyList {
-		result[i] = &b.GroupingKeyList[i]
-	}
-	return result
-}
-
-func (b *BLangGroupingKey) GetKind() NodeKind {
-	return NodeKind_GROUPING_KEY
-}
-
-func (b *BLangGroupingKey) SetGroupingKey(groupingKey Node) {
-	if key, ok := groupingKey.(*BLangSimpleVariableDef); ok {
-		b.VariableDef = key
-		b.VariableRef = nil
-		return
-	}
-	key := groupingKey.(*BLangSimpleVarRef)
-	b.VariableRef = key
-	b.VariableDef = nil
+func (b *BLangGroupByClause) GetGroupingKeyList() []*BLangGroupingKey {
+	return b.GroupingKeyList
 }
 
 func (b *BLangGroupingKey) GetGroupingKey() Node {
@@ -275,85 +242,37 @@ func (b *BLangGroupingKey) GetGroupingKey() Node {
 	return nil
 }
 
-func (b *BLangLimitClause) GetKind() NodeKind {
-	return NodeKind_LIMIT
-}
-
 func (b *BLangLimitClause) GetExpression() BLangExpression {
 	return b.Expression
-}
-
-func (b *BLangLimitClause) SetExpression(expression BLangExpression) {
-	b.Expression = expression
 }
 
 func (b *BLangSelectClause) GetExpression() BLangActionOrExpression {
 	return b.Expression
 }
 
-func (b *BLangSelectClause) SetExpression(expression BLangActionOrExpression) {
-	b.Expression = expression
-}
-
 func (b *BLangOnConflictClause) GetExpression() BLangExpression {
 	return b.Expression
-}
-
-func (b *BLangOnConflictClause) SetExpression(expression BLangExpression) {
-	b.Expression = expression
 }
 
 func (b *BLangCollectClause) GetExpression() BLangExpression {
 	return b.Expression
 }
 
-func (b *BLangCollectClause) SetExpression(expression BLangExpression) {
-	b.Expression = expression
-}
-
-func (b *BLangDoClause) GetBody() BlockStatementNode {
+func (b *BLangDoClause) GetBody() *BLangBlockStmt {
 	return b.Body
-}
-
-func (b *BLangDoClause) SetBody(body BlockStatementNode) {
-	if body, ok := body.(*BLangBlockStmt); ok {
-		b.Body = body
-		return
-	}
-	panic("body is not a BLangBlockStmt")
-}
-
-func (b *BLangOnFailClause) SetDeclaredWithVar() {
-	b.isDeclaredWithVar = true
 }
 
 func (b *BLangOnFailClause) IsDeclaredWithVar() bool {
 	return b.isDeclaredWithVar
 }
 
-func (b *BLangOnFailClause) GetVariableDefinitionNode() VariableDefinitionNode {
+func (b *BLangOnFailClause) GetVariableDefinitionNode() *BLangVariableDef {
 	if b.VariableDefinitionNode == nil {
 		return nil
 	}
 	return b.VariableDefinitionNode
 }
 
-func (b *BLangOnFailClause) SetVariableDefinitionNode(variableDefinitionNode VariableDefinitionNode) {
-	if variableDefinitionNode == nil {
-		b.VariableDefinitionNode = nil
-		return
-	}
-	b.VariableDefinitionNode = variableDefinitionNode.(*BLangSimpleVariableDef)
-}
-
-func (b *BLangOnFailClause) GetBody() BlockStatementNode {
+func (b *BLangOnFailClause) GetBody() *BLangBlockStmt {
 	return b.Body
-}
-
-func (b *BLangOnFailClause) SetBody(body BlockStatementNode) {
-	if body, ok := body.(*BLangBlockStmt); ok {
-		b.Body = body
-		return
-	}
-	panic("body is not a BLangBlockStmt")
 }

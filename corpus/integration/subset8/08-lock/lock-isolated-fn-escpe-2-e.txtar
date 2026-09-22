@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: access of mutable variable
+error[SEMANTIC_ERROR]: not an isolated expression
   --> lock-isolated-fn-escpe-2-e.bal:22:16
    |
 22 |         return a; // @error

@@ -47,7 +47,7 @@ Then:
 Scan the jBallerina source for `import ballerina/<X>` statements.
 
 - For each `<X>` **not** already present under `lib/stdlibs/ballerina/<X>/`: tell the user that dependency must be implemented first. If they ask to continue anyway, narrow the plan to only features that don't depend on `<X>`.
-- For each `<X>` already present: read `lib/stdlibs/ballerina/<X>/0.0.1/go1.26/README.md` and note every row whose status is **Not Yet Supported**, **Partially Supported**, or **Cannot Support**, plus anything under **Notable Behavioural Changes**. If our in-scope features depend on any of those gaps or divergences, surface them in the plan (Step 4) under a **Dependency Limitations** section.
+- For each `<X>` already present: read `lib/stdlibs/ballerina/<X>/0.0.1/go1.27/README.md` and note every row whose status is **Not Yet Supported**, **Partially Supported**, or **Cannot Support**, plus anything under **Notable Behavioural Changes**. If our in-scope features depend on any of those gaps or divergences, surface them in the plan (Step 4) under a **Dependency Limitations** section.
 - **Exception**: `ballerina/jballerina.java.arrays` will not get a Go equivalent. Plan to replace its uses with Go-native equivalents inside the `native/` layer.
 - **Cross-stdlib imports must be declared in `Dependencies.toml`** — see `templates/manifests.md` for the format and why missing entries cause `Unknown import: ballerina/<dep>` at runtime.
 - **Langlib imports need compiler wiring**: if the `.bal` source imports a langlib (`import ballerina/lang.<x>;`), that import only resolves through the `isLangImport` switch in `semantics/symbol_resolver.go` — check the langlib in question is wired there before assuming it works.
@@ -124,7 +124,7 @@ Present as a small table with a recommendation. **Wait for user approval** befor
 ### File layout
 
 ```
-lib/stdlibs/ballerina/<name>/0.0.1/go1.26/
+lib/stdlibs/ballerina/<name>/0.0.1/go1.27/
 ├── Ballerina.toml          # package manifest
 ├── Bala.toml               # build/platform manifest
 ├── Dependencies.toml       # package dependencies
@@ -135,6 +135,8 @@ lib/stdlibs/ballerina/<name>/0.0.1/go1.26/
 ```
 
 Multi-file `.bal` and multi-file `native/` are both supported — see exemplars below. For dotted names like `math.vector`, the single `.bal` file is named `math.vector.bal`.
+
+**Real Ballerina submodules** (a package with a root module plus genuine sub-modules, matching jBallerina's own multi-module packages) use a `modules/<localSubmoduleName>/` directory per sub-module, each with its own `.bal` file(s) — module discovery is purely filesystem-based (no `[[modules]]` declaration needed in `Ballerina.toml`). See `lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/` for the exemplar: root `protobuf.bal` plus `modules/types.any/`, `modules/types.duration/`, etc. Prefer this over registering each sub-module as an independent flat top-level package — a package with real sub-modules is one thing with one `Ballerina.toml`/`Bala.toml`/`Dependencies.toml`/version, not several.
 
 Templates:
 
@@ -151,19 +153,18 @@ Shared patterns — read the relevant file only when the situation applies:
 
 1. **`lib/rt/libs.go`** — add a blank import so the `init()` in the native package runs at binary start:
    ```go
-   _ "ballerina/lib/stdlibs/ballerina/<name>/0.0.1/go1.26/native"
+   _ "ballerina/lib/stdlibs/ballerina/<name>/0.0.1/go1.27/native"
    ```
    Without this, all `= external` functions produce "function not found" at runtime even though the binary compiles cleanly. Skip this line if your stdlib has no `native/` directory.
 
-2. **`test_util/testphases/phases.go`** — append an entry to `builtinStdlibs`:
-   ```go
-   {"ballerina", "<name>", "0.0.1"},
-   ```
-   Without this, corpus tests cannot resolve `import ballerina/<name>` even if everything else compiles. If the new stdlib imports other stdlibs, place this entry **after** those dependencies in the list so the loader compiles them in order.
+2. **`test_util/testphases/phases.go`** — append an entry to `builtinStdlibs`. This list is consumed only by the hand-rolled per-stage corpus drivers (ast/bir/desugar/cfg/etc. `corpus_*_test.go`, which discover tests under `corpus/bal/`) — `cli/cmd run` and the real project pipeline (including `corpus/lib/`'s `TestLibIntegration`) resolve `ballerina/*` imports via `lib/stdlibs/ballerina/` on disk regardless of this list. Without an entry here, those specific corpus drivers cannot resolve `import ballerina/<name>` even though `go run ./cli/cmd run` works fine.
+   - **Single-module package** (the common case): `flatEntry("<name>", "0.0.1", "go1.27")`.
+   - **Package with real sub-modules** (see File layout above): one `flatEntry` for the root module, then one `subModuleEntry("<pkg>", "<localSubmoduleDir>", "0.0.1", "go1.27")` per sub-module — root **before** its sub-modules, since each entry's `ResolveSymbols` call sees only previously-listed entries' exported symbols.
+   - Either way, place the new entry/entries **after** any stdlib this one imports, so the loader compiles them in order.
 
 3. **`Dependencies.toml`** — if the `.bal` source imports any other stdlib (`import ballerina/<dep>;`), declare it per `templates/manifests.md`. Without this, the full project resolver will not discover the dependency and every user `.bal` file importing this stdlib will fail with `Unknown import: ballerina/<dep>`.
 
-4. **`projects/module_resolver.go`** — usually no change. The existing `packageNameCandidates` handles dotted names (`math.vector` → tries `math.vector` then `math`). Read it once to confirm the import in question is covered.
+4. **`projects/module_resolver.go`** — usually no change, even for a dotted 2-level sub-module name (`math.vector`-style dotted names, `<pkg>.<submodule>` sub-module names): the existing `packageNameCandidates` already reduces either shape to the right package name. Read it once to confirm the import in question is covered — and if you're tempted to generalize it further, verify the change is actually load-bearing by reverting it and re-testing before keeping it; it's easy to "fix" a case that was already handled.
 
 ### Coding rules
 
@@ -173,27 +174,26 @@ Follow `AGENTS.md` (root) — Coding style, Symbols, and PAL sections. Do not re
 
 | Exemplar | Use when |
 |---|---|
-| `lib/stdlibs/ballerina/url/0.0.1/go1.26/` | Smallest viable stdlib — 2 extern functions, 1 native file. |
-| `lib/stdlibs/ballerina/io/0.0.1/go1.26/` | Multi-file `.bal` (constants/types/print/file) + multi-file `native/` (`io.go` + `file_io.go`). |
-| `lib/stdlibs/ballerina/time/0.0.1/go1.26/` | Heavy native implementation with PAL usage and documented behavioural divergences. |
-| `lib/stdlibs/ballerina/http/0.0.1/go1.26/` | Class-based stdlib (Client init wrapper). |
-| `lib/stdlibs/ballerina/math.vector/0.0.1/go1.26/` | Pure Ballerina — no `native/` directory at all. |
+| `lib/stdlibs/ballerina/url/0.0.1/go1.27/` | Smallest viable stdlib — 2 extern functions, 1 native file. |
+| `lib/stdlibs/ballerina/io/0.0.1/go1.27/` | Single `.bal` file, multi-file `native/` (`io.go` + `file_io.go` + more). |
+| `lib/stdlibs/ballerina/time/0.0.1/go1.27/` | Heavy native implementation with PAL usage and documented behavioural divergences. |
+| `lib/stdlibs/ballerina/http/0.0.1/go1.27/` | Class-based stdlib (Client init wrapper). |
+| `lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/` | Pure Ballerina — no `native/` directory at all. |
+| `lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/` | Package with real sub-modules (`modules/types.any/`, etc.) — one root + six sub-module `builtinStdlibs` entries, native code in one sub-module only. |
 
 ## 8. Tests
 
 ### Where library corpus tests live
 
-Corpus tests for a stdlib port go under `corpus/bal/library/subset<N>/` — a **flat** directory of `<name>-<suffix>.bal` files, e.g. `corpus/bal/library/subset2/crypto-hash1-v.bal`. This is a different directory family from the generic language-feature subsets (`corpus/bal/subset1/` … `corpus/bal/subset9/`, each internally split into `NN-category/` subfolders like `08-network/`) — do not put library tests there.
+Corpus tests for a stdlib port go under `corpus/lib/subset<N>/` — a **flat** directory of `<name>-<suffix>.bal` files, e.g. `corpus/lib/subset2/crypto-hash1-v.bal`. This is a sibling of `corpus/bal/` (the generic language-feature subsets, `corpus/bal/subset1/` … `corpus/bal/subset9/`, each internally split into `NN-category/` subfolders like `08-network/`) and of `corpus/project/` — do not put library tests under `corpus/bal/`.
 
-Each `library/subset<N>` is a released library-support milestone, documented in `doc/library/subset<N>.md` (the language-feature milestones in `doc/lang/subset<N>.md` are an unrelated numbering track — `library/subset2` and `lang/subset2` are not the same milestone).
+Each `lib/subset<N>` is a released library-support milestone, documented in `doc/library/subset<N>.md` (the language-feature milestones in `doc/lang/subset<N>.md` are an unrelated numbering track — `lib/subset2` and `lang/subset2` are not the same milestone).
 
 **Ask the developer which subset this port's tests belong in before writing any test file** — this is a release-scoping decision, not something to infer:
-- An **existing** subset (e.g. `subset2`) — the new module joins that release milestone, alongside `corpus/bal/library/subset2/`'s existing files.
-- A **new** subset (`subset<N+1>`, one past the highest existing `library/subsetN` directory) — create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern ("Subset N extends the released subset N-1 with …").
+- An **existing** subset (e.g. `subset2`) — the new module joins that release milestone, alongside `corpus/lib/subset2/`'s existing files.
+- A **new** subset (`subset<N+1>`, one past the highest existing `lib/subsetN` directory) — create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern ("Subset N extends the released subset N-1 with …").
 
-Per-stage golden directories (`corpus/ast/library/subset<N>/`, `corpus/bir/...`, etc.) mirror this layout and are regenerated automatically via `-update` — they follow whichever subset directory the `.bal` files live in.
-
-After the tests pass, add (or extend) the `## [<name>](<jBallerina spec URL>)` section in that subset's `doc/library/subset<N>.md`, documenting the surface actually exercised by these corpus tests — follow the existing heading + `Function | Notes` table (or bullet list) style in `subset1.md`/`subset2.md`. This is a separate, lighter-weight doc from the per-package `README.md` (Step 9) — both need updating.
+`corpus/lib/` has its own end-to-end pipeline, `TestLibIntegration` in `corpus/integration_test.go`, validated against `corpus/integration/lib/subset<N>/*.txtar` — mirroring `corpus/project/`'s `TestProjectIntegration`. It carries no per-stage goldens under `corpus/ast/`, `corpus/bir/`, `corpus/cfg/` or `corpus/desugared/`: those goldens hold only the test file's own compilation unit — the library itself stays opaque — so they add nothing for a library. The per-stage drivers do not run library tests at all: discovery for those walks `corpus/bal/` only, so moving library tests out of it left every stage test file unchanged. Their compiler-stage coverage comes from `TestLibIntegration` running the whole pipeline per test -- and the same import/extern paths are already exercised densely by `corpus/bal/`, 1686 of whose tests import a stdlib.
 
 ### Test conventions
 
@@ -225,7 +225,7 @@ If the total is below 80%, find the gaps with `go tool cover -func=/tmp/<name>-c
 
 ## 9. README
 
-Author `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md` using the **`stdlib-readme-format`** skill. Load that skill now and run its validation checklist before saving the file. Copy every unavoidable divergence from the Step 5 parity table into **Notable Behavioural Changes** — these must be present before merge.
+Author `lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md` using the **`stdlib-readme-format`** skill. Load that skill now and run its validation checklist before saving the file. Copy every unavoidable divergence from the Step 5 parity table into **Notable Behavioural Changes** — these must be present before merge.
 
 Then update the top-level aggregator `lib/stdlibs/ballerina/README.md` (same `stdlib-readme-format` skill): add the new package row (alphabetical), recompute the **Total** footer, and mirror this package's behavioural changes into a `### <name>` subsection (only if it has any).
 
@@ -243,7 +243,7 @@ Before declaring done, check every box:
 - [ ] `go test ./corpus/...` — all corpus tests pass.
 - [ ] `go run ./cli/cmd run <showcase>.bal` (or `./bal run <showcase>.bal` if the binary is built) — output matches the `@output` markers exactly.
 - [ ] `git diff corpus/` reviewed; every regenerated golden-file line is intentional.
-- [ ] New corpus test files follow naming (no leading zeros, correct suffix) and live under `corpus/bal/library/subset<N>/` (the subset confirmed with the developer in Step 8), not the generic `corpus/bal/subset1..9/` tree.
+- [ ] New corpus test files follow naming (no leading zeros, correct suffix) and live under `corpus/lib/subset<N>/` (the subset confirmed with the developer in Step 8), not the generic `corpus/bal/subset1..9/` tree.
 - [ ] Local coverage of the new `native/` package is **≥80%** (Step 8's `go tool cover -func=... | grep total` command). This is what Codecov's patch-coverage check in CI (`native-ci.yml` + `codecov.yml`) will otherwise fail the PR on.
 
 ### Parity & contract
@@ -253,14 +253,14 @@ Before declaring done, check every box:
 - [ ] If `docs/spec/spec.md` exists in the jBallerina reference root: every in-scope behavioural claim it makes matches the shipped Go implementation exactly. Any mismatch found during implementation (not just at Step 5's planning stage) has been resolved — implementation fixed, or the divergence explicitly documented — not left unreconciled.
 
 ### Documentation
-- [ ] `lib/stdlibs/ballerina/<name>/0.0.1/go1.26/README.md` support table reflects current implementation (no stale `Not Yet Supported` rows for things just implemented).
+- [ ] `lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md` support table reflects current implementation (no stale `Not Yet Supported` rows for things just implemented).
 - [ ] `lib/stdlibs/ballerina/README.md` aggregator updated (new row, recomputed Total footer, behavioural changes mirrored).
 - [ ] `stdlib-readme-format` validation checklist passes.
 - [ ] `doc/library/subset<N>.md` (the subset agreed with the developer in Step 8) documents this module's newly-supported surface — created fresh if it's a new subset, extended if existing.
 
 ### Wire-up
 - [ ] `lib/rt/libs.go` blank import added (skip only if pure Ballerina).
-- [ ] `test_util/testphases/phases.go` `builtinStdlibs` entry added; placed after any stdlib dependencies in the list.
+- [ ] `test_util/testphases/phases.go` `builtinStdlibs` entry/entries added (one `flatEntry`, or one `flatEntry` + one `subModuleEntry` per sub-module); placed after any stdlib dependencies in the list.
 - [ ] `Dependencies.toml` declares every `import ballerina/<dep>` that appears in the `.bal` source (only needed when cross-stdlib imports exist; omit otherwise).
 - [ ] PAL fields (if any added) implemented in `palnative/` and wired into `TestPal`.
 
@@ -272,5 +272,5 @@ Summarise:
 - The complete parity table from Step 5.
 - The measured `native/` coverage % from Step 8's verify command.
 - The `validate-stdlib-contract` verdict.
-- Which `corpus/bal/library/subset<N>/` the tests were added to (new or existing) and confirmation `doc/library/subset<N>.md` was updated.
+- Which `corpus/lib/subset<N>/` the tests were added to (new or existing) and confirmation `doc/library/subset<N>.md` was updated.
 - Any language-limitation or dependency-bug issue drafted per `references/reporting-limitations.md`, and whether the developer filed it.

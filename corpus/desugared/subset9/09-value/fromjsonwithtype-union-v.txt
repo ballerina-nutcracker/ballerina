@@ -55,20 +55,12 @@
           (builtin-ref-type json)) (expr
           (literal 42))))
       (var-def
-        (variable $desugar$0 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref num)
-            (simple-var-ref IntOrString))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
-      (var-def
         (variable asUnion (type
           (user-defined-type IntOrString)) (expr
-          (simple-var-ref $desugar$0))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref num)
+              (simple-var-ref IntOrString)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref asUnion))))
@@ -77,20 +69,12 @@
           (builtin-ref-type json)) (expr
           (literal hello))))
       (var-def
-        (variable $desugar$1 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref str)
-            (simple-var-ref IntOrString))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$1))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$1))) ())
-      (var-def
         (variable asStr (type
           (user-defined-type IntOrString)) (expr
-          (simple-var-ref $desugar$1))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref str)
+              (simple-var-ref IntOrString)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref asStr))))
@@ -101,20 +85,12 @@
             (literal 1)
             (literal 2)))))
       (var-def
-        (variable $desugar$2 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref arr)
-            (simple-var-ref JsonOrInt))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$2))) ())
-      (var-def
         (variable asJson (type
           (user-defined-type JsonOrInt)) (expr
-          (simple-var-ref $desugar$2))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref arr)
+              (simple-var-ref JsonOrInt)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref asJson))))
@@ -123,20 +99,12 @@
           (builtin-ref-type json)) (expr
           (literal <nil>))))
       (var-def
-        (variable $desugar$3 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref nilVal)
-            (simple-var-ref IntNilable))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$3))) ())
-      (var-def
         (variable asNilable (type
           (user-defined-type IntNilable)) (expr
-          (simple-var-ref $desugar$3))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref nilVal)
+              (simple-var-ref IntNilable)))))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
@@ -150,20 +118,12 @@
               (literal name)
               (literal Bob))))))
       (var-def
-        (variable $desugar$4 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref partial)
-            (simple-var-ref PersonOpt))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$4))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$4))) ())
-      (var-def
         (variable withOptional (type
           (user-defined-type PersonOpt)) (expr
-          (simple-var-ref $desugar$4))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref partial)
+              (simple-var-ref PersonOpt)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref withOptional))))
@@ -192,20 +152,12 @@
               (literal score)
               (literal <nil>))))))
       (var-def
-        (variable $desugar$5 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref explicitNull)
-            (simple-var-ref WithNilable))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$5))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$5))) ())
-      (var-def
         (variable withScore (type
           (user-defined-type WithNilable)) (expr
-          (simple-var-ref $desugar$5))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref explicitNull)
+              (simple-var-ref WithNilable)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref withScore))))
@@ -220,20 +172,12 @@
               (literal age)
               (literal <nil>))))))
       (var-def
-        (variable $desugar$6 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref withNullAge)
-            (simple-var-ref PersonNilAge))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$6))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$6))) ())
-      (var-def
         (variable withAge (type
           (user-defined-type PersonNilAge)) (expr
-          (simple-var-ref $desugar$6))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref withNullAge)
+              (simple-var-ref PersonNilAge)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref withAge))))
@@ -245,20 +189,12 @@
               (literal a)
               (literal 1))))))
       (var-def
-        (variable $desugar$7 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref openMap)
-            (simple-var-ref AnyMap))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$7))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$7))) ())
-      (var-def
         (variable anyMap (type
           (user-defined-type AnyMap)) (expr
-          (simple-var-ref $desugar$7))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref openMap)
+              (simple-var-ref AnyMap)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref anyMap))))

@@ -1,0 +1,54 @@
+(Store
+  (Store.$resource$get$0
+    (bb0 () ()
+      (return
+        (simple-var-ref id))
+    )
+  )
+  (Store.$resource$get$1
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (simple-var-ref price)
+          (simple-var-ref tax)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable store (type
+        (user-defined-type Store)) (expr
+        (new ()))))
+    (var-def
+      (variable defaultPrice (type
+        (value-type int)) (expr
+        (checked-expr
+          (client-resource-access get expr:
+            (simple-var-ref store) name:price <default>)))))
+    (var-def
+      (variable defaultTax (type
+        (value-type int)) (expr
+        (checked-expr
+          (client-resource-access get expr:
+            (simple-var-ref store) name:total
+            (literal 40) <default>)))))
+    (var-def
+      (variable explicitTax (type
+        (value-type int)) (expr
+        (checked-expr
+          (client-resource-access get expr:
+            (simple-var-ref store) name:total
+            (literal 40)
+            (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref defaultPrice))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref defaultTax))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref explicitTax))))
+  )
+)

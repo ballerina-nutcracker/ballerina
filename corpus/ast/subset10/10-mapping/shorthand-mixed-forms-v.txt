@@ -1,0 +1,72 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Person
+    (record-type
+      (field name
+        (value-type string))
+      (field age
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable name (type
+          (value-type string)) (expr
+          (literal Ada))))
+      (var-def
+        (variable age (type
+          (value-type int)) (expr
+          (literal 36))))
+      (var-def
+        (variable a (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (simple-var-ref name))
+            (key-value
+              (literal age)
+              (literal 40))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (var-def
+        (variable b (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal age)
+              (literal 40))
+            (key-value
+              (literal name)
+              (simple-var-ref name))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (var-def
+        (variable c (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal age)
+              (simple-var-ref age))
+            (key-value
+              (literal name)
+              (simple-var-ref name))
+            (key-value
+              (literal extra)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (var-def
+        (variable p (type
+          (user-defined-type Person)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (simple-var-ref name))
+            (key-value
+              (literal age)
+              (literal 40))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref p)))))))

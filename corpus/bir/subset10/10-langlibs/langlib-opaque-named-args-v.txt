@@ -1,0 +1,179 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 2
+    %5 = ConstantLoad 4
+    %6 = newArray [int...][%5]{%1, %2, %3, %4}
+    a = %6;
+    $desugar$0 = a;
+    %9 = ConstantLoad 2
+    $desugar$1 = %9;
+    %11 = $desugar$1;
+    %12 = $default$0($desugar$0,%11) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %12;
+    %14 = $desugar$1;
+    %15 = $desugar$2;
+    %16 = indexOf($desugar$0,%14,%15) -> bb2;
+  }
+  bb2 {
+    %17 = %16;
+    %18 = println(%17) -> bb3;
+  }
+  bb3 {
+    %19 = ConstantLoad 2
+    %20 = %19;
+    %21 = ConstantLoad 2
+    %22 = %21;
+    %23 = indexOf(a,%20,%22) -> bb4;
+  }
+  bb4 {
+    %24 = %23;
+    %25 = println(%24) -> bb5;
+  }
+  bb5 {
+    $desugar$3 = a;
+    %27 = ConstantLoad 2
+    $desugar$4 = %27;
+    %29 = $desugar$4;
+    %30 = $default$0($desugar$3,%29) -> bb6;
+  }
+  bb6 {
+    $desugar$5 = %30;
+    %32 = $desugar$4;
+    %33 = $desugar$5;
+    %34 = indexOf($desugar$3,%32,%33) -> bb7;
+  }
+  bb7 {
+    %35 = %34;
+    %36 = println(%35) -> bb8;
+  }
+  bb8 {
+    %37 = ConstantLoad 2
+    %38 = %37;
+    %39 = ConstantLoad 2
+    %40 = %39;
+    %41 = indexOf(a,%38,%40) -> bb9;
+  }
+  bb9 {
+    %42 = %41;
+    %43 = println(%42) -> bb10;
+  }
+  bb10 {
+    %44 = ConstantLoad 2
+    %45 = %44;
+    %46 = ConstantLoad 2
+    %47 = %46;
+    %48 = indexOf(a,%45,%47) -> bb11;
+  }
+  bb11 {
+    %49 = %48;
+    %50 = println(%49) -> bb12;
+  }
+  bb12 {
+    $desugar$6 = a;
+    %52 = ConstantLoad 2
+    $desugar$7 = %52;
+    %54 = $desugar$7;
+    %55 = $default$0($desugar$6,%54) -> bb13;
+  }
+  bb13 {
+    $desugar$8 = %55;
+    %57 = $desugar$7;
+    %58 = $desugar$8;
+    %59 = indexOf($desugar$6,%57,%58) -> bb14;
+  }
+  bb14 {
+    %60 = %59;
+    %61 = println(%60) -> bb15;
+  }
+  bb15 {
+    %62 = ConstantLoad 2
+    %63 = %62;
+    %64 = ConstantLoad 2
+    %65 = %64;
+    %66 = indexOf(a,%63,%65) -> bb16;
+  }
+  bb16 {
+    %67 = %66;
+    %68 = println(%67) -> bb17;
+  }
+  bb17 {
+    $desugar$9 = a;
+    %70 = ConstantLoad 2
+    $desugar$10 = %70;
+    %72 = $desugar$10;
+    %73 = $default$0($desugar$9,%72) -> bb18;
+  }
+  bb18 {
+    $desugar$11 = %73;
+    %75 = $desugar$10;
+    %76 = $desugar$11;
+    %77 = indexOf($desugar$9,%75,%76) -> bb19;
+  }
+  bb19 {
+    %78 = %77;
+    %79 = println(%78) -> bb20;
+  }
+  bb20 {
+    %80 = ConstantLoad 2
+    %81 = %80;
+    %82 = ConstantLoad 2
+    %83 = %82;
+    %84 = indexOf(a,%81,%83) -> bb21;
+  }
+  bb21 {
+    %85 = %84;
+    %86 = println(%85) -> bb22;
+  }
+  bb22 {
+    %87 = ConstantLoad 2
+    %88 = %87;
+    %89 = ConstantLoad 2
+    %90 = %89;
+    %91 = indexOf(a,%88,%90) -> bb23;
+  }
+  bb23 {
+    %92 = %91;
+    %93 = println(%92) -> bb24;
+  }
+  bb24 {
+    %94 = ConstantLoad 10
+    %95 = ConstantLoad 20
+    %96 = ConstantLoad 30
+    %97 = ConstantLoad 3
+    %98 = newArray [int...][%97]{%94, %95, %96}
+    b = %98;
+    %100 = ConstantLoad 0
+    %101 = %100;
+    %102 = remove(b,%101) -> bb25;
+  }
+  bb25 {
+    %103 = %102;
+    %104 = println(%103) -> bb26;
+  }
+  bb26 {
+    %105 = println(b) -> bb27;
+  }
+  bb27 {
+    %106 = ConstantLoad a
+    %107 = ConstantLoad 1
+    %108 = ConstantLoad b
+    %109 = ConstantLoad 2
+    %110 = newMap {| int... |}{%106=%107, %108=%109}
+    m = %110;
+    %112 = ConstantLoad a
+    %113 = remove(m,%112) -> bb28;
+  }
+  bb28 {
+    %114 = %113;
+    %115 = println(%114) -> bb29;
+  }
+  bb29 {
+    return;
+  }
+}

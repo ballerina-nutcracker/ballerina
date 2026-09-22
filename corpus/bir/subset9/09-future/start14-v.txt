@@ -1,0 +1,78 @@
+module $anon.. v 0.0.0;
+c  isolated client object { private isolated remote function $remote$value() returns {| int... |}; public function init() returns nil };
+class Client {
+
+  $remote$value() -> {| int... |}{
+    bb0 {
+      %2 = ConstantLoad answer
+      %3 = ConstantLoad 42
+      %4 = newMap {| int... |}{%2=%3}
+      %0 = %4;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+valueFromLock() -> error|{| int... |}{
+  bb0 {
+    lock-start "$anon/.:c" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 2
+    GOTO bb2;
+  }
+  bb2 {
+    %1 = c.$remote$value() -> bb3;
+  }
+  bb3 {
+    %0 = %1;
+    GOTO bb4;
+  }
+  bb4 {
+    (1, %0) = %0;
+    PopScopeFrame
+    lock-end "$anon/.:c" GOTO bb5;
+  }
+  bb5 {
+    return;
+  }
+  bb6 {
+    return;
+  }
+  
+  error-table {
+    [bb2, bb3] -> bb4, %0
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %2 = valueFromLock() -> bb1;
+  }
+  bb1 {
+    %3 = %2 is error
+    %3 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %2;
+    return;
+  }
+  bb3 {
+    %1 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    result = %1;
+    %6 = ConstantLoad answer
+    %5 = result[%6];
+    %7 = %5;
+    %8 = println(%7) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

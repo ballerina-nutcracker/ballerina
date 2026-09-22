@@ -1,0 +1,14 @@
+-- stdout --
+application/xml
+<a><b>1</b></a>
+true
+application/atom+xml
+application/soap+xml
+No content
+application/xml
+<p>hi</p>
+Error occurred while retrieving the xml payload from the request
+<?xml version="1.0"?><a/>
+false
+true
+-- stderr --

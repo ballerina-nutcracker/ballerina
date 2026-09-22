@@ -23,5 +23,7 @@ error[SYNTAX_ERROR]: leading zeros in numeric literals
    |
 22 |     int d = 04;
    |             ^^
+
+ballerina: compilation contains errors
 -- exitcode --
 1

@@ -1,0 +1,36 @@
+(alwaysErr
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal original error))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable result (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation nestedScopeCheckpanic ())))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)
+(nestedScopeCheckpanic
+  (bb0 () (bb1)
+    (literal true)
+  )
+  (bb1 (bb0) (bb2)
+    (literal true)
+  )
+  (bb2 (bb1) (bb3)
+    (expression-stmt
+      (check-panicked-expr
+        (invocation alwaysErr ())))
+  )
+  (bb3 (bb2) (bb4))
+  (bb4 (bb3) ())
+)

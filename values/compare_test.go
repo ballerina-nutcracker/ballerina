@@ -72,7 +72,7 @@ func TestCompareK(t *testing.T) {
 }
 
 func newList(values ...BalValue) *List {
-	return NewList(semtypes.LIST, &semtypes.LIST_ATOMIC_INNER, false, nil, 0, values)
+	return NewList(semtypes.List, &semtypes.ListAtomicInner, false, nil, 0, values)
 }
 
 func assertCompareResult(t *testing.T, got CompareResult, want CompareResult, label string) {

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: start action requires a future expected type
+  --> start5-e.bal:21:18
+   |
+21 |     int result = start number(); // @error
+   |                  ^^^^^^^^^^^^^^

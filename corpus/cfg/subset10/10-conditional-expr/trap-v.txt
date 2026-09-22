@@ -1,0 +1,67 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable selected (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (group-expr
+            (ternary-expr
+              (literal true)
+              (invocation panicValue ())
+              (literal 1)))))))
+    (var-def
+      (variable unselected (type
+        (value-type int)) (expr
+        (ternary-expr
+          (literal false)
+          (invocation panicValue ())
+          (literal 2)))))
+    (var-def
+      (variable trueArmTrap (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (ternary-expr
+          (literal true)
+          (trap-expr
+            (invocation panicValue ()))
+          (literal 3)))))
+    (var-def
+      (variable falseArmTrap (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (ternary-expr
+          (literal false)
+          (literal 4)
+          (trap-expr
+            (invocation panicValue ()))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref selected)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref unselected))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref trueArmTrap)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref falseArmTrap)
+          (error-type)))))
+  )
+)
+(panicValue
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal boom))))
+  )
+)

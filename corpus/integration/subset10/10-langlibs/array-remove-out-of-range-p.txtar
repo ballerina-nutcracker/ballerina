@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: invalid array index: 9
+        at main(array-remove-out-of-range-p.bal:19)

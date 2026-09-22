@@ -54,20 +54,12 @@
               (literal age)
               (literal 4))))))
       (var-def
-        (variable $desugar$0 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref petJson)
-            (simple-var-ref Pet))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
-      (var-def
         (variable pet (type
           (user-defined-type Pet)) (expr
-          (simple-var-ref $desugar$0))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref petJson)
+              (simple-var-ref Pet)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref pet))))
@@ -78,20 +70,12 @@
             (literal 1)
             (literal 2)))))
       (var-def
-        (variable $desugar$1 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref arrJson)
-            (simple-var-ref IntStrArr))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$1))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$1))) ())
-      (var-def
         (variable arrVal (type
           (user-defined-type IntStrArr)) (expr
-          (simple-var-ref $desugar$1))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref arrJson)
+              (simple-var-ref IntStrArr)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref arrVal))))
@@ -102,20 +86,12 @@
             (literal a)
             (literal b)))))
       (var-def
-        (variable $desugar$2 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref strArrJson)
-            (simple-var-ref IntStrArr))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$2))) ())
-      (var-def
         (variable strArrVal (type
           (user-defined-type IntStrArr)) (expr
-          (simple-var-ref $desugar$2))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref strArrJson)
+              (simple-var-ref IntStrArr)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref strArrVal))))
@@ -124,20 +100,12 @@
           (builtin-ref-type json)) (expr
           (literal 12))))
       (var-def
-        (variable $desugar$3 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref floatJson)
-            (simple-var-ref IntFloat))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$3))) ())
-      (var-def
         (variable numVal (type
           (user-defined-type IntFloat)) (expr
-          (simple-var-ref $desugar$3))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref floatJson)
+              (simple-var-ref IntFloat)))))))
       (expression-stmt
         (invocation io println (
           (type-test-expr is
@@ -148,20 +116,12 @@
           (builtin-ref-type json)) (expr
           (literal 200))))
       (var-def
-        (variable $desugar$4 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref floatAsByte)
-            (simple-var-ref ByteOrString))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$4))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$4))) ())
-      (var-def
         (variable asByte (type
           (user-defined-type ByteOrString)) (expr
-          (simple-var-ref $desugar$4))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref floatAsByte)
+              (simple-var-ref ByteOrString)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref asByte))))

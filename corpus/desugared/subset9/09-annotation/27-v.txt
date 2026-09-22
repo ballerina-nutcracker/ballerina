@@ -1,0 +1,24 @@
+(package
+  (import-package ballerina io (as io))
+  (annotation Header public const
+    (user-defined-type HttpHeader)
+    (attach-point parameter)
+    (attach-point recordfield))
+  (type-definition HttpHeader
+    (record-type
+      (field name optional
+        (value-type string))))
+  (function greet (
+    (variable key (type
+      (value-type string)))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (simple-var-ref key))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation greet (
+            (literal k)))))))))

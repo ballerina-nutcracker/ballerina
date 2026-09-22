@@ -38,5 +38,5 @@ public function testMain() returns error? {
     http:Client c = check new http:Client("http://localhost:19213", {httpVersion: http:HTTP_1_1});
     http:Response r = check c->get("/http10/ping");
     io:println(r.statusCode); // @output 200
-    io:println(r.getTextPayload()); // @output pong
+    io:println(check r.getTextPayload()); // @output pong
 }

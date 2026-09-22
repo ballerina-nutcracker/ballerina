@@ -1,0 +1,30 @@
+-- stdout --
+set
+true
+5
+true
+3
+true
+2
+2
+5
+9
+5.0
+true
+2.5
+2
+3
+in
+true
+true
+5
+5.0
+5
+5
+6
+6
+2
+2
+6
+6
+-- stderr --

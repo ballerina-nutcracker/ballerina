@@ -1,5 +1,12 @@
 (package
   (import-package ballerina io (as io))
+  (variable lockGuard (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref lockGuard)
+        (literal 0))))
   (function foo () (
     (value-type null))
     (block-function-body
@@ -11,6 +18,9 @@
     (block-function-body
       (lock
         (block-stmt
+          (compound-assignment +
+            (simple-var-ref lockGuard)
+            (literal 0))
           (expression-stmt
             (invocation foo ()))
           (return

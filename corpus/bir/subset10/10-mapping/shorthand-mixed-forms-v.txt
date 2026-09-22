@@ -1,0 +1,43 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad Ada
+    name = %1;
+    %3 = ConstantLoad 36
+    age = %3;
+    %5 = ConstantLoad name
+    %6 = ConstantLoad age
+    %7 = ConstantLoad 40
+    %8 = newMap {| age: int, name: string, never... |}{%5=name, %6=%7}
+    a = %8;
+    %10 = println(a) -> bb1;
+  }
+  bb1 {
+    %11 = ConstantLoad age
+    %12 = ConstantLoad 40
+    %13 = ConstantLoad name
+    %14 = newMap {| age: int, name: string, never... |}{%11=%12, %13=name}
+    b = %14;
+    %16 = println(b) -> bb2;
+  }
+  bb2 {
+    %17 = ConstantLoad age
+    %18 = ConstantLoad name
+    %19 = ConstantLoad extra
+    %20 = ConstantLoad 1
+    %21 = newMap {| age: int, extra: int, name: string, never... |}{%17=age, %18=name, %19=%20}
+    c = %21;
+    %23 = println(c) -> bb3;
+  }
+  bb3 {
+    %24 = ConstantLoad name
+    %25 = ConstantLoad age
+    %26 = ConstantLoad 40
+    %27 = newMap {| age: int, name: string, never... |}{%24=name, %25=%26}
+    p = %27;
+    %29 = println(p) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

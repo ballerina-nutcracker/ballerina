@@ -36,7 +36,7 @@ import (
 
 const (
 	// MinGoVersion is the minimum Go toolchain version required to build a native interpreter.
-	MinGoVersion = "1.26"
+	MinGoVersion = "1.27"
 )
 
 // defaultTargetPackage is the full bal CLI, matching bal run's re-exec use case.
@@ -89,13 +89,13 @@ func (e *LocalExecutor) Available() bool {
 }
 
 // goVersionAtLeast reports whether the Go binary at goExe is at least minVersion.
-// minVersion is a dot-separated string such as "1.26" or "1.26.0".
+// minVersion is a dot-separated string such as "1.27" or "1.27.0".
 func goVersionAtLeast(goExe, minVersion string) bool {
 	out, err := exec.Command(goExe, "version").Output()
 	if err != nil {
 		return false
 	}
-	// "go version go1.26.1 linux/amd64" → field[2] = "go1.26.1"
+	// "go version go1.27.1 linux/amd64" → field[2] = "go1.27.1"
 	fields := strings.Fields(string(out))
 	if len(fields) < 3 {
 		return false
@@ -105,7 +105,7 @@ func goVersionAtLeast(goExe, minVersion string) bool {
 }
 
 // versionAtLeast reports whether dot-separated version a is >= b.
-// Missing trailing components are treated as zero: "1.26" == "1.26.0".
+// Missing trailing components are treated as zero: "1.27" == "1.27.0".
 // Non-numeric components (e.g. "rc1", "beta2") are treated as incompatible.
 func versionAtLeast(a, b string) bool {
 	aParts := strings.Split(a, ".")
@@ -209,7 +209,7 @@ func (e *LocalExecutor) buildOrReuse(ctx context.Context, req nativeexec.NativeR
 		if err := writeNativeFiles(pkgDir, payload); err != nil {
 			return "", "", err
 		}
-		modContent := fmt.Sprintf("module %s\n\ngo %s\n", payload.GoModuleName(), MinGoVersion)
+		modContent := nativeModuleGoMod(payload.GoModuleName())
 		if err := os.WriteFile(filepath.Join(pkgDir, "go.mod"), []byte(modContent), 0o600); err != nil {
 			return "", "", fmt.Errorf("writing go.mod for %s: %w", payload.GoModuleName(), err)
 		}
@@ -417,6 +417,14 @@ func resolveWorkspacePath(interpreterRoot, name string) string {
 		return filepath.Clean(name)
 	}
 	return filepath.Join(interpreterRoot, filepath.FromSlash(name))
+}
+
+// nativeModuleGoMod is the go.mod written for each staged native payload.
+// The go directive tracks MinGoVersion rather than a literal so a staged
+// module never declares a language version the interpreter tree it is built
+// against does not itself target.
+func nativeModuleGoMod(moduleName string) string {
+	return fmt.Sprintf("module %s\n\ngo %s\n", moduleName, MinGoVersion)
 }
 
 // writeNativeWorkspace preserves the driver's standard workspace selection

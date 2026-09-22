@@ -30,20 +30,22 @@
   (function main () (
     (value-type null))
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (literal 10))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$0))))))
       (expression-stmt
         (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (literal 10))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$0))))))
           (invocation foo (
             (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))))
+            (simple-var-ref $desugar$1)))))))))
   (function $default$1 (
-    (variable base)) ()
+    (variable base (type
+      (value-type )))) ()
     (block-function-body
       (return
         (lambda

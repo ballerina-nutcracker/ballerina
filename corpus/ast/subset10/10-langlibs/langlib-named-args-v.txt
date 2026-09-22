@@ -1,0 +1,19 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation int fromString (
+            (named-arg s
+              (literal 42)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation substring expr:
+            (literal hello) (
+            (named-arg startIndex
+              (literal 1))
+            (named-arg endIndex
+              (literal 3))))))))))

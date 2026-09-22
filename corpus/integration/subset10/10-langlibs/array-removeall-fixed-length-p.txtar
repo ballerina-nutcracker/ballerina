@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: inherent type violation: cannot change the length of a fixed-length list
+        at main(array-removeall-fixed-length-p.bal:19)

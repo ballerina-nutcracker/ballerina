@@ -38,7 +38,7 @@ class Bar {
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Bar
-    %2 = init(%1) -> bb1;
+    %2 = %1.init() -> bb1;
   }
   bb1 {
     %4 = %2 is nil
@@ -58,7 +58,7 @@ main() -> nil{
     %7 = %6;
     %8 = ConstantLoad 10
     %9 = %8;
-    %10 = foo(f,%7,%9) -> bb5;
+    %10 = f.foo(%7,%9) -> bb5;
   }
   bb5 {
     %11 = %10;

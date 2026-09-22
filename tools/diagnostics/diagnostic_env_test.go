@@ -58,15 +58,20 @@ func TestRegisterFile_SameContentDifferentInstance(t *testing.T) {
 	}
 }
 
-// TestRegisterFile_DifferentContentPanics covers a genuine name collision
-// with different content — the content-based fallback must not mask it.
-func TestRegisterFile_DifferentContentPanics(t *testing.T) {
-	defer func() {
-		if recover() == nil {
-			t.Fatal("expected RegisterFile to panic on a genuine name collision with different content")
-		}
-	}()
+// TestRegisterFile_DifferentContentUpdatesDocument covers replacing a source
+// document while retaining the file index used by diagnostic locations.
+func TestRegisterFile_DifferentContentUpdatesDocument(t *testing.T) {
 	de := NewDiagnosticEnv()
 	de.RegisterFile("a.bal", text.TextDocumentFromText("original content"))
-	de.RegisterFile("a.bal", text.TextDocumentFromText("different content"))
+	originalIndex := de.FileIndex("a.bal")
+
+	de.RegisterFile("a.bal", text.TextDocumentFromText("first line\nsecond line"))
+
+	if got := de.FileIndex("a.bal"); got != originalIndex {
+		t.Fatalf("FileIndex after update = %d, want %d", got, originalIndex)
+	}
+	loc := NewLocation(de, "a.bal", 11, 17)
+	if got := de.StartLine(loc); got != 1 {
+		t.Errorf("StartLine after update = %d, want 1", got)
+	}
 }

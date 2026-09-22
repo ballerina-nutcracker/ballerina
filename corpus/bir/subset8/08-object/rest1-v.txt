@@ -55,7 +55,7 @@ main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Adder
     %2 = ConstantLoad 10
-    %3 = init(%1,%2) -> bb1;
+    %3 = %1.init(%2) -> bb1;
   }
   bb1 {
     %5 = %3 is nil
@@ -71,7 +71,7 @@ main() -> nil{
   }
   bb4 {
     a = %4;
-    %7 = sum(a) -> bb5;
+    %7 = a.sum() -> bb5;
   }
   bb5 {
     %8 = %7;
@@ -80,7 +80,7 @@ main() -> nil{
   bb6 {
     %10 = ConstantLoad 1
     %11 = %10;
-    %12 = sum(a,%11) -> bb7;
+    %12 = a.sum(%11) -> bb7;
   }
   bb7 {
     %13 = %12;
@@ -93,7 +93,7 @@ main() -> nil{
     %18 = %17;
     %19 = ConstantLoad 3
     %20 = %19;
-    %21 = sum(a,%16,%18,%20) -> bb9;
+    %21 = a.sum(%16,%18,%20) -> bb9;
   }
   bb9 {
     %22 = %21;
@@ -108,7 +108,7 @@ main() -> nil{
     %29 = %28;
     %30 = ConstantLoad 4
     %31 = %30;
-    %32 = sum(a,%25,%27,%29,%31) -> bb11;
+    %32 = a.sum(%25,%27,%29,%31) -> bb11;
   }
   bb11 {
     %33 = %32;

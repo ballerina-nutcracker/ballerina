@@ -27,7 +27,7 @@ type intSubtype struct {
 	Ranges []intRange
 }
 
-var _ ProperSubtypeData = &intSubtype{}
+var _ properSubtypeData = &intSubtype{}
 
 func newIntSubtypeFromRanges(ranges []intRange) intSubtype {
 	this := intSubtype{}
@@ -44,7 +44,7 @@ func createSingleRangeSubtype(min, max int64) intSubtype {
 }
 
 func IntConst(value int64) SemType {
-	return getBasicSubtype(BTInt, createSingleRangeSubtype(value, value))
+	return getBasicSubtype(btInt, createSingleRangeSubtype(value, value))
 }
 
 func validIntWidth(signed bool, bits int64) {
@@ -80,19 +80,19 @@ func validIntWidthUnsigned(bits int) {
 func intWidthSigned(bits int64) SemType {
 	validIntWidth(true, bits)
 	if bits == 64 {
-		return INT
+		return Int
 	}
 	t := createSingleRangeSubtype((-(int64(1) << (bits - int64(1)))), ((int64(1) << (bits - int64(1))) - int64(1)))
-	return getBasicSubtype(BTInt, t)
+	return getBasicSubtype(btInt, t)
 }
 
 func intWidthUnsigned(bits int) SemType {
 	validIntWidth(false, int64(bits))
 	t := createSingleRangeSubtype(int64(0), ((int64(1) << bits) - int64(1)))
-	return getBasicSubtype(BTInt, t)
+	return getBasicSubtype(btInt, t)
 }
 
-func intSubtypeWidenUnsigned(d SubtypeData) SubtypeData {
+func intSubtypeWidenUnsigned(d subtypeData) subtypeData {
 	if _, ok := d.(allOrNothingSubtype); ok {
 		return d
 	}
@@ -112,7 +112,7 @@ func intSubtypeWidenUnsigned(d SubtypeData) SubtypeData {
 	return createAll()
 }
 
-func intSubtypeSingleValue(d SubtypeData) common.Optional[int64] {
+func intSubtypeSingleValue(d subtypeData) common.Optional[int64] {
 	if _, ok := d.(allOrNothingSubtype); ok {
 		return common.OptionalEmpty[int64]()
 	}
@@ -142,7 +142,7 @@ func (i intSubtype) String() string {
 	return builder.String()
 }
 
-func intSubtypeContains(d SubtypeData, n int64) bool {
+func intSubtypeContains(d subtypeData, n int64) bool {
 	if allOrNothingSubtype, ok := d.(allOrNothingSubtype); ok {
 		return allOrNothingSubtype.IsAllSubtype()
 	}

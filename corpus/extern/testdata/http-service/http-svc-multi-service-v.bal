@@ -38,7 +38,7 @@ service /bar on multiListener {
 public function testMain() returns error? {
     http:Client c = check new http:Client("http://localhost:19218", {});
     http:Response r1 = check c->get("/foo/name");
-    io:println(r1.getTextPayload()); // @output foo-service
+    io:println(check r1.getTextPayload()); // @output foo-service
     http:Response r2 = check c->get("/bar/name");
-    io:println(r2.getTextPayload()); // @output bar-service
+    io:println(check r2.getTextPayload()); // @output bar-service
 }

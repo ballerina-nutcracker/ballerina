@@ -13,58 +13,60 @@ main() -> nil|error{
     written = %9;
     $desugar$0 = path;
     $desugar$1 = written;
-    %13 = $default$4($desugar$0,$desugar$1) -> bb1;
+    %14 = $default$4($desugar$0,$desugar$1) -> bb1;
   }
   bb1 {
-    $desugar$2 = %13;
-    %15 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
+    $desugar$2 = %14;
+    %16 = fileWriteBytes($desugar$0,$desugar$1,$desugar$2) -> bb2;
   }
   bb2 {
-    $desugar$3 = %15;
-    %17 = $desugar$3 is error
+    %17 = %16 is error
     %17 ? bb3 : bb4;
   }
   bb3 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$3);
-    PopScopeFrame
+    %0 = %16;
     return;
   }
   bb4 {
-    %18 = fileReadBytes(path) -> bb5;
+    %11 = %16;
+    GOTO bb5;
   }
   bb5 {
-    $desugar$4 = %18;
-    %20 = $desugar$4 is error
-    %20 ? bb6 : bb7;
+    %19 = fileReadBytes(path) -> bb6;
   }
   bb6 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$4);
-    PopScopeFrame
-    return;
+    %20 = %19 is error
+    %20 ? bb7 : bb8;
   }
   bb7 {
-    readBack = $desugar$4;
-    %22 = length(readBack) -> bb8;
+    %0 = %19;
+    return;
   }
   bb8 {
-    %23 = %22;
-    %24 = println(%23) -> bb9;
+    %18 = %19;
+    GOTO bb9;
   }
   bb9 {
+    readBack = %18;
+    %22 = length(readBack) -> bb10;
+  }
+  bb10 {
+    %23 = %22;
+    %24 = println(%23) -> bb11;
+  }
+  bb11 {
     %26 = ConstantLoad 0
     %25 = readBack[%26];
     %27 = %25;
-    %28 = println(%27) -> bb10;
+    %28 = println(%27) -> bb12;
   }
-  bb10 {
+  bb12 {
     %30 = ConstantLoad 4
     %29 = readBack[%30];
     %31 = %29;
-    %32 = println(%31) -> bb11;
+    %32 = println(%31) -> bb13;
   }
-  bb11 {
+  bb13 {
     return;
   }
 }

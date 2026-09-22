@@ -39,8 +39,8 @@ type bddNodeKey struct {
 }
 
 // This is what allows us the flatten the whole BDD tree in not a flat struct
-// We can prove the correctness assuming atomKey is a canonical representation and Bdd's them self
-// are immutable. We give each Bdd node at construction a unique id. That means by definition lowest nodes should
+// We can prove the correctness assuming atomKey is a canonical representation and bdd's them self
+// are immutable. We give each bdd node at construction a unique id. That means by definition lowest nodes should
 // get a key before parents. Then by induction we can prove this is uniquely capturing the tree structure
 // (assuming we don't overflow)
 var bddKeyInterner = struct {

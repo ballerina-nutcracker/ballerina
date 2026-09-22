@@ -1,0 +1,133 @@
+(package
+  (import-package ballerina io (as io))
+  (function isolatedSeed () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 0))))
+  (function isolatedIncrement (
+    (variable previous (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (check-panicked-expr
+            (single-wait-action
+              (simple-var-ref previous))))))
+      (return
+        (binary-expr +
+          (simple-var-ref value)
+          (literal 1)))))
+  (function seed () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 0))))
+  (function increment (
+    (variable previous (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (check-panicked-expr
+            (single-wait-action
+              (simple-var-ref previous))))))
+      (return
+        (binary-expr +
+          (simple-var-ref value)
+          (literal 1)))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable isolatedTail (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action isolated
+            (invocation isolatedSeed ())))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 50))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
+          (assignment
+            (simple-var-ref isolatedTail)
+            (start-action
+              (invocation isolatedIncrement (
+                (simple-var-ref isolatedTail)))))
+          (assignment
+            (simple-var-ref $desugar$0)
+            (binary-expr +
+              (simple-var-ref $desugar$0)
+              (numeric-literal 1)))))
+      (var-def
+        (variable isolatedResult (type
+          (value-type int)) (expr
+          (checked-expr
+            (single-wait-action
+              (simple-var-ref isolatedTail))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref isolatedResult))))
+      (var-def
+        (variable tail (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation seed ())))))
+      (var-def
+        (variable $desugar$2 (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$3 (expr
+          (literal 50))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$2)
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$2))))
+          (assignment
+            (simple-var-ref tail)
+            (start-action
+              (invocation increment (
+                (simple-var-ref tail)))))
+          (assignment
+            (simple-var-ref $desugar$2)
+            (binary-expr +
+              (simple-var-ref $desugar$2)
+              (numeric-literal 1)))))
+      (var-def
+        (variable result (type
+          (value-type int)) (expr
+          (checked-expr
+            (single-wait-action
+              (simple-var-ref tail))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref result)))))))

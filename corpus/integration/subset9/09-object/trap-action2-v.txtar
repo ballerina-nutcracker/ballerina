@@ -1,0 +1,15 @@
+-- stdout --
+receiver panic
+receiver panic
+path panic
+remote argument panic
+resource argument panic
+remote default panic
+resource default panic
+spread panic
+spread panic
+0
+5
+5
+2
+-- stderr --

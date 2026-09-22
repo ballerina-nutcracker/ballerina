@@ -1,0 +1,11 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable node (type
+        (user-defined-type Node)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref node))))
+  )
+)

@@ -12,7 +12,7 @@ foo() -> int{
 }
 main() -> nil{
   bb0 {
-    %1 = newMap {| f: int, never... |}{} defaults{f=$anon/.:$desugar$0}
+    %1 = newMap {| f: int, never... |}{} defaults{f=$anon/.:$default$0}
     r1 = %1;
     %4 = ConstantLoad f
     %3 = r1[%4];
@@ -22,7 +22,7 @@ main() -> nil{
   bb1 {
     %7 = ConstantLoad f
     %8 = ConstantLoad 5
-    %9 = newMap {| f: int, never... |}{%7=%8} defaults{f=$anon/.:$desugar$0}
+    %9 = newMap {| f: int, never... |}{%7=%8} defaults{f=$anon/.:$default$0}
     r2 = %9;
     %12 = ConstantLoad f
     %11 = r2[%12];
@@ -33,7 +33,7 @@ main() -> nil{
     return;
   }
 }
-$desugar$0() -> int{
+$default$0() -> int{
   bb0 {
     %1 = foo() -> bb1;
   }

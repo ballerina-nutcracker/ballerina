@@ -1,0 +1,96 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Store
+    (function init () ()
+      (block-function-body))
+    (resource-function get name:price
+      (variable id (type
+        (value-type int)) (expr
+        (literal 10)))
+      (union-type
+        (value-type int)
+        (error-type))
+      (block-function-body
+        (return
+          (simple-var-ref id))))
+    (resource-function get name:total
+      (variable price (type
+        (value-type int)))
+      (variable tax (type
+        (value-type int)) (expr
+        (binary-expr /
+          (simple-var-ref price)
+          (literal 10))))
+      (union-type
+        (value-type int)
+        (error-type))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref price)
+            (simple-var-ref tax))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable store (type
+          (user-defined-type Store)) (expr
+          (new ()))))
+      (var-def
+        (variable defaultPrice (type
+          (value-type int)) (expr
+          (checked-expr
+            (expression-thunk
+            (var-def
+              (variable $desugar$0 (expr
+                (invocation $default$0 ()))))
+            (client-resource-access get expr:
+              (simple-var-ref store) name:price
+              (simple-var-ref $desugar$0)))))))
+      (var-def
+        (variable defaultTax (type
+          (value-type int)) (expr
+          (checked-expr
+            (expression-thunk
+            (var-def
+              (variable $desugar$1 (expr
+                (literal 40))))
+            (var-def
+              (variable $desugar$2 (expr
+                (invocation $default$1 (
+                  (simple-var-ref $desugar$1))))))
+            (client-resource-access get expr:
+              (simple-var-ref store) name:total
+              (simple-var-ref $desugar$1)
+              (simple-var-ref $desugar$2)))))))
+      (var-def
+        (variable explicitTax (type
+          (value-type int)) (expr
+          (checked-expr
+            (client-resource-access get expr:
+              (simple-var-ref store) name:total
+              (literal 40)
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref defaultPrice))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref defaultTax))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref explicitTax))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 10))))
+  (function $default$1 (
+    (variable price (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (binary-expr /
+          (simple-var-ref price)
+          (literal 10))))))

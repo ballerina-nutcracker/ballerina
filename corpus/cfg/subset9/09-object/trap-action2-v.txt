@@ -1,0 +1,219 @@
+(Client
+  ($remote$value
+    (bb0 () ()
+      (compound-assignment +
+        (simple-var-ref calls)
+        (literal 1))
+      (return
+        (simple-var-ref value))
+    )
+  )
+  ($remote$values
+    (bb0 () ()
+      (compound-assignment +
+        (simple-var-ref calls)
+        (literal 1))
+      (return
+        (invocation lang.array length (
+          (simple-var-ref values))))
+    )
+  )
+  (Client.$resource$get$0
+    (bb0 () ()
+      (compound-assignment +
+        (simple-var-ref calls)
+        (literal 1))
+      (return
+        (binary-expr +
+          (simple-var-ref id)
+          (simple-var-ref value)))
+    )
+  )
+  (Client.$resource$get$1
+    (bb0 () ()
+      (compound-assignment +
+        (simple-var-ref calls)
+        (literal 1))
+      (return
+        (invocation lang.array length (
+          (simple-var-ref values))))
+    )
+  )
+)
+(failClient
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal receiver panic))))
+  )
+)
+(failInt
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (simple-var-ref message))))
+  )
+)
+(failValues
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal spread panic))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Client)) (expr
+        (new ()))))
+    (var-def
+      (variable remoteReceiver (expr
+        (trap-expr
+          (remote-method-call value expr:
+            (group-expr
+              (invocation failClient ())) (
+            (literal 1)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation message (
+          (simple-var-ref remoteReceiver))))))
+    (var-def
+      (variable resourceReceiver (expr
+        (trap-expr
+          (client-resource-access get expr:
+            (group-expr
+              (invocation failClient ())) name:item computed:
+            (literal 1)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation message (
+          (simple-var-ref resourceReceiver))))))
+    (var-def
+      (variable path (expr
+        (trap-expr
+          (client-resource-access get expr:
+            (simple-var-ref c) name:item computed:
+            (invocation failInt (
+              (literal path panic)))
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation message (
+          (simple-var-ref path))))))
+    (var-def
+      (variable remoteArgument (expr
+        (trap-expr
+          (remote-method-call value expr:
+            (simple-var-ref c) (
+            (invocation failInt (
+              (literal remote argument panic)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation message (
+          (simple-var-ref remoteArgument))))))
+    (var-def
+      (variable resourceArgument (expr
+        (trap-expr
+          (client-resource-access get expr:
+            (simple-var-ref c) name:item computed:
+            (literal 1)
+            (invocation failInt (
+              (literal resource argument panic))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation message (
+          (simple-var-ref resourceArgument))))))
+    (var-def
+      (variable remoteDefault (expr
+        (trap-expr
+          (remote-method-call value expr:
+            (simple-var-ref c) ( <default>))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation message (
+          (simple-var-ref remoteDefault))))))
+    (var-def
+      (variable resourceDefault (expr
+        (trap-expr
+          (client-resource-access get expr:
+            (simple-var-ref c) name:item computed:
+            (literal 1) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation message (
+          (simple-var-ref resourceDefault))))))
+    (var-def
+      (variable useSpread (type
+        (value-type boolean)) (expr
+        (literal true))))
+    (var-def
+      (variable remoteSpread (expr
+        (trap-expr
+          (remote-method-call values expr:
+            (simple-var-ref c) (
+            (ternary-expr
+              (simple-var-ref useSpread)
+              (list-constructor-expr
+                (literal 0)
+                (invocation failValues ()))
+              (list-constructor-expr))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation message (
+          (simple-var-ref remoteSpread))))))
+    (var-def
+      (variable resourceSpread (expr
+        (trap-expr
+          (client-resource-access get expr:
+            (simple-var-ref c) name:values
+            (ternary-expr
+              (simple-var-ref useSpread)
+              (list-constructor-expr
+                (literal 0)
+                (invocation failValues ()))
+              (list-constructor-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation message (
+          (simple-var-ref resourceSpread))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref calls))))
+    (var-def
+      (variable remoteValue (expr
+        (trap-expr
+          (remote-method-call value expr:
+            (simple-var-ref c) (
+            (literal 5)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref remoteValue))))
+    (var-def
+      (variable resourceValue (expr
+        (trap-expr
+          (client-resource-access get expr:
+            (simple-var-ref c) name:item computed:
+            (literal 2)
+            (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref resourceValue))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref calls))))
+  )
+)
+(message
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref result)
+          (error-type))
+        (invocation lang.error message (
+          (simple-var-ref result)))
+        (literal not trapped)))
+  )
+)

@@ -1,0 +1,271 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as array))
+  (type-definition Item
+    (record-type
+      (field id
+        (value-type int))))
+  (function allListUnion (
+    (variable values (type
+      (union-type
+        (array-type
+          (value-type int) dimensions: 1 ([]))
+        (array-type
+          (value-type string) dimensions: 1 ([])))))) (
+    (stream-type
+      (union-type
+        (value-type int)
+        (value-type string))
+      (value-type null)))
+    (block-function-body
+      (return
+        (invocation array toStream (
+          (simple-var-ref values))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable values (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable positional (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation array toStream (
+            (simple-var-ref values))))))
+      (var-def
+        (variable named (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation array toStream (
+            (named-arg arr
+              (simple-var-ref values)))))))
+      (var-def
+        (variable method (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation toStream expr:
+            (simple-var-ref values) ()))))
+      (var-def
+        (variable repeated (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation toStream expr:
+            (simple-var-ref values) ()))))
+      (var-def
+        (variable fixed (type
+          (array-type
+            (value-type int) dimensions: 1 ([
+            (literal 2)]))) (expr
+          (list-constructor-expr
+            (literal 3)
+            (literal 4)))))
+      (var-def
+        (variable fixedStream (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation toStream expr:
+            (simple-var-ref fixed) ()))))
+      (var-def
+        (variable tuple (type
+          (tuple-type
+            (value-type int)
+            (value-type string))) (expr
+          (list-constructor-expr
+            (literal 5)
+            (literal five)))))
+      (var-def
+        (variable tupleStream (type
+          (stream-type
+            (union-type
+              (value-type int)
+              (value-type string))
+            (value-type null))) (expr
+          (invocation toStream expr:
+            (simple-var-ref tuple) ()))))
+      (var-def
+        (variable readonlyArray (type
+          (intersection-type
+            (value-type readonly)
+            (array-type
+              (value-type int) dimensions: 1 ([])))) (expr
+          (list-constructor-expr
+            (literal 6)
+            (literal 7)))))
+      (var-def
+        (variable readonlyArrayStream (type
+          (stream-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation toStream expr:
+            (simple-var-ref readonlyArray) ()))))
+      (var-def
+        (variable readonlyTuple (type
+          (intersection-type
+            (value-type readonly)
+            (tuple-type
+              (value-type int)
+              (value-type string)))) (expr
+          (list-constructor-expr
+            (literal 8)
+            (literal eight)))))
+      (var-def
+        (variable readonlyTupleStream (type
+          (stream-type
+            (union-type
+              (value-type int)
+              (value-type string))
+            (value-type null))) (expr
+          (invocation toStream expr:
+            (simple-var-ref readonlyTuple) ()))))
+      (var-def
+        (variable unionStream (type
+          (stream-type
+            (union-type
+              (value-type int)
+              (value-type string))
+            (value-type null))) (expr
+          (invocation allListUnion (
+            (list-constructor-expr
+              (literal 9)
+              (literal 10)))))))
+      (var-def
+        (variable records (type
+          (array-type
+            (user-defined-type Item) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (mapping-constructor-expr
+              (key-value
+                (literal id)
+                (literal 11)))))))
+      (var-def
+        (variable recordStream (type
+          (stream-type
+            (user-defined-type Item)
+            (value-type null))) (expr
+          (invocation toStream expr:
+            (simple-var-ref records) ()))))
+      (var-def
+        (variable unionMembers (type
+          (array-type
+            (union-type
+              (value-type int)
+              (value-type string)) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 12)
+            (literal twelve)))))
+      (var-def
+        (variable unionMemberStream (type
+          (stream-type
+            (union-type
+              (value-type int)
+              (value-type string))
+            (value-type null))) (expr
+          (invocation toStream expr:
+            (simple-var-ref unionMembers) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref positional) ())
+            (record-type
+              (field value
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref named) ())
+            (record-type
+              (field value
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref method) ())
+            (record-type
+              (field value
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref repeated) ())
+            (record-type
+              (field value
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref fixedStream) ())
+            (record-type
+              (field value
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref tupleStream) ())
+            (record-type
+              (field value
+                (union-type
+                  (value-type int)
+                  (value-type string))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref readonlyArrayStream) ())
+            (record-type
+              (field value
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref readonlyTupleStream) ())
+            (record-type
+              (field value
+                (union-type
+                  (value-type int)
+                  (value-type string))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref unionStream) ())
+            (record-type
+              (field value
+                (union-type
+                  (value-type int)
+                  (value-type string))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref recordStream) ())
+            (record-type
+              (field value
+                (user-defined-type Item)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref unionMemberStream) ())
+            (record-type
+              (field value
+                (union-type
+                  (value-type int)
+                  (value-type string)))))))))))

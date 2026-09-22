@@ -6,26 +6,10 @@
       (expression-stmt
         (invocation io println (
           (literal before))))
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation noOp ()))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
-      (var-def
-        (variable $desugar$1 (expr
-          (simple-var-ref $desugar$0))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$1))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$1))) ())
       (expression-stmt
-        (simple-var-ref $desugar$1))
+        (checked-expr
+          (checked-expr
+            (invocation noOp ()))))
       (expression-stmt
         (invocation io println (
           (literal after))))))

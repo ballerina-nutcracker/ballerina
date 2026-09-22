@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+cannot have trailing underscore
+-- exitcode --
+1

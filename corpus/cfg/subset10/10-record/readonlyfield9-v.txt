@@ -1,0 +1,53 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable mr (type
+        (user-defined-type MR)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 5))
+          (key-value
+            (literal otherValue)
+            (literal 5))))))
+    (assignment
+      (field-based-access otherValue
+        (simple-var-ref mr))
+      (literal 10))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access otherValue
+          (simple-var-ref mr)))))
+    (var-def
+      (variable u (type
+        (union-type
+          (user-defined-type MR)
+          (user-defined-type M))) (expr
+        (simple-var-ref mr))))
+    (assignment
+      (field-based-access otherValue
+        (simple-var-ref u))
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access otherValue
+          (simple-var-ref u)))))
+    (var-def
+      (variable op (type
+        (user-defined-type Open)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 1))))))
+    (assignment
+      (index-based-access
+        (simple-var-ref op)
+        (literal extra))
+      (literal 2))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref op)
+          (literal extra)))))
+  )
+)

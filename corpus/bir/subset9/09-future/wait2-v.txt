@@ -1,0 +1,226 @@
+module $anon.. v 0.0.0;
+firstError() -> error{
+  bb0 {
+    %1 = ConstantLoad first
+    %2 = newError error(%1)
+    %0 = %2;
+    return;
+  }
+}
+lastError() -> error{
+  bb0 {
+    %1 = ConstantLoad last
+    %2 = newError error(%1)
+    %0 = %2;
+    return;
+  }
+}
+number() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
+text() -> string{
+  bb0 {
+    %1 = ConstantLoad done
+    %0 = %1;
+    return;
+  }
+}
+optionalError(boolean) -> nil|error{
+  bb0 {
+    shouldFail ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad optional
+    %1 = newError error(%0)
+    (1, %0) = %1;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}
+crash() -> int{
+  bb0 {
+    %1 = ConstantLoad ignored
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+identity(future<int>) -> future<int>{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = start firstError() isolated=false -> bb1;
+  }
+  bb1 {
+    failed = %1;
+    %3 = start number() isolated=false -> bb2;
+  }
+  bb2 {
+    succeeded = %3;
+    %5 = wait failed | succeeded -> bb3;
+  }
+  bb3 {
+    firstSuccess = %5;
+    %7 = println(firstSuccess) -> bb4;
+  }
+  bb4 {
+    %8 = start firstError() isolated=false -> bb5;
+  }
+  bb5 {
+    earlierError = %8;
+    %10 = start lastError() isolated=false -> bb6;
+  }
+  bb6 {
+    laterError = %10;
+    %12 = wait laterError | earlierError -> bb7;
+  }
+  bb7 {
+    allFailed = %12;
+    %14 = message(allFailed) -> bb8;
+  }
+  bb8 {
+    %15 = println(%14) -> bb9;
+  }
+  bb9 {
+    %16 = start number() isolated=false -> bb10;
+  }
+  bb10 {
+    numberFuture = %16;
+    %18 = start text() isolated=false -> bb11;
+  }
+  bb11 {
+    textFuture = %18;
+    %20 = wait numberFuture | textFuture -> bb12;
+  }
+  bb12 {
+    heterogeneous = %20;
+    %22 = println(heterogeneous) -> bb13;
+  }
+  bb13 {
+    %23 = ConstantLoad true
+    %24 = %23;
+    %25 = start optionalError(%24) isolated=false -> bb14;
+  }
+  bb14 {
+    optionalFailure = %25;
+    %27 = ConstantLoad false
+    %28 = %27;
+    %29 = start optionalError(%28) isolated=false -> bb15;
+  }
+  bb15 {
+    optionalSuccess = %29;
+    %31 = wait optionalFailure | optionalSuccess -> bb16;
+  }
+  bb16 {
+    optionalSuccessResult = %31;
+    %33 = optionalSuccessResult is nil
+    %34 = %33;
+    %35 = println(%34) -> bb17;
+  }
+  bb17 {
+    %36 = ConstantLoad true
+    %37 = %36;
+    %38 = start optionalError(%37) isolated=false -> bb18;
+  }
+  bb18 {
+    optionalFailureOne = %38;
+    %40 = ConstantLoad true
+    %41 = %40;
+    %42 = start optionalError(%41) isolated=false -> bb19;
+  }
+  bb19 {
+    optionalFailureTwo = %42;
+    %44 = wait optionalFailureOne | optionalFailureTwo -> bb20;
+  }
+  bb20 {
+    optionalFailureResult = %44;
+    %46 = optionalFailureResult is error
+    %47 = %46;
+    %48 = println(%47) -> bb21;
+  }
+  bb21 {
+    %49 = start number() isolated=false -> bb22;
+  }
+  bb22 {
+    expressionFirst = %49;
+    %51 = start number() isolated=false -> bb23;
+  }
+  bb23 {
+    expressionSecond = %51;
+    %53 = identity(expressionFirst) -> bb24;
+  }
+  bb24 {
+    %54 = identity(expressionSecond) -> bb25;
+  }
+  bb25 {
+    %55 = wait %53 | %54 -> bb26;
+  }
+  bb26 {
+    expressionResult = %55;
+    %57 = println(expressionResult) -> bb27;
+  }
+  bb27 {
+    %58 = start firstError() isolated=false -> bb28;
+  }
+  bb28 {
+    duplicate = %58;
+    %60 = wait duplicate | duplicate -> bb29;
+  }
+  bb29 {
+    duplicateResult = %60;
+    %62 = message(duplicateResult) -> bb30;
+  }
+  bb30 {
+    %63 = println(%62) -> bb31;
+  }
+  bb31 {
+    %64 = start number() isolated=false -> bb32;
+  }
+  bb32 {
+    claimed = %64;
+    %66 = wait claimed -> bb33;
+  }
+  bb33 {
+    claimedFirst = %66;
+    %68 = claimedFirst is int
+    %69 = %68;
+    %70 = wait claimed | claimed -> bb34;
+  }
+  bb34 {
+    claimedResult = %70;
+    %72 = println(claimedResult) -> bb35;
+  }
+  bb35 {
+    %73 = start number() isolated=false -> bb36;
+  }
+  bb36 {
+    completed = %73;
+    %75 = start crash() isolated=false -> bb37;
+  }
+  bb37 {
+    ignoredPanic = %75;
+    %77 = wait completed | ignoredPanic -> bb38;
+  }
+  bb38 {
+    completedResult = %77;
+    %79 = println(completedResult) -> bb39;
+  }
+  bb39 {
+    return;
+  }
+}

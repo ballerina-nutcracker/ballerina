@@ -1,0 +1,66 @@
+(FailingIterator
+  (next
+    (bb0 () (bb1 bb2)
+      (binary-expr ==
+        (field-based-access index
+          (simple-var-ref self))
+        (literal 0))
+    )
+    (bb1 (bb0) ()
+      (assignment
+        (field-based-access index
+          (simple-var-ref self))
+        (literal 1))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 10))))
+    )
+    (bb2 (bb0) ()
+      (return
+        (error-constructor-expr (
+          (literal completion failed))))
+    )
+  )
+)
+(main
+  (bb0 (bb1) (bb1)
+    (var-def
+      (variable values (type
+        (stream-type
+          (value-type int)
+          (union-type
+            (error-type)
+            (value-type null)))) (expr
+        (new (
+          (new
+            (user-defined-type FailingIterator) ()))))))
+    (var-def
+      (variable result (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (query-action
+            (from-clause
+              (var-def
+                (variable value))
+              (simple-var-ref values))
+            (do-clause
+              (block-stmt
+                (assignment
+                  (wildcard-binding-pattern)
+                  (simple-var-ref value)))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref result)
+          (error-type)))))
+  )
+  (bb1 (bb0) (bb0)
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref value))
+  )
+)

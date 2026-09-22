@@ -38,14 +38,15 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref res))))
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation $default$0 ()))))
       (assignment
         (simple-var-ref res)
+        (expression-thunk
+        (var-def
+          (variable $desugar$0 (expr
+            (invocation $default$0 ()))))
         (remote-method-call getT expr:
           (simple-var-ref c) (
-          (simple-var-ref $desugar$0))))
+          (simple-var-ref $desugar$0)))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref res))))))

@@ -11,21 +11,13 @@
           (builtin-ref-type json)) (expr
           (literal 255))))
       (var-def
-        (variable $desugar$0 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref maxByte)
-            (typedesc-expr
-              (value-type byte)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
-      (var-def
         (variable b (type
           (value-type byte)) (expr
-          (simple-var-ref $desugar$0))))
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref maxByte)
+              (typedesc-expr
+                (value-type byte))))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref b))))

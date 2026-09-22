@@ -5,5 +5,7 @@ error[SEMANTIC_ERROR]: incompatible type: expected int, got "not-an-int"
    |
 20 |     int x = "not-an-int";
    |             ^^^^^^^^^^^^
+
+ballerina: compilation contains errors
 -- exitcode --
 1

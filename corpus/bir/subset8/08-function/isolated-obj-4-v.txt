@@ -23,7 +23,7 @@ main() -> nil{
   bb0 {
     %1 = newObject $anon/.:Config
     %2 = ConstantLoad 10
-    %3 = init(%1,%2) -> bb1;
+    %3 = %1.init(%2) -> bb1;
   }
   bb1 {
     %5 = %3 is nil
@@ -39,7 +39,7 @@ main() -> nil{
   }
   bb4 {
     c = %4;
-    %7 = getX(c) -> bb5;
+    %7 = c.getX() -> bb5;
   }
   bb5 {
     %8 = %7;

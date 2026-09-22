@@ -42,19 +42,11 @@
       (value-type null)))
     (block-function-body
       (var-def
-        (variable $desugar$0 (expr
-          (new (
-            (literal 5))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
-      (var-def
         (variable c (type
           (user-defined-type Counter)) (expr
-          (simple-var-ref $desugar$0))))
+          (checked-expr
+            (new (
+              (literal 5)))))))
       (expression-stmt
         (invocation io println (
           (invocation get expr:

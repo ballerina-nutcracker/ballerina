@@ -1,0 +1,45 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (literal 1))))
+      (var-def
+        (variable n (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (literal 0))))
+      (match
+        (simple-var-ref value)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal first))))))
+        (match-clause
+          (wildcard-match-pattern)
+          (match-guard
+            (binary-expr ==
+              (binary-expr +
+                (invocation guardValue ())
+                (simple-var-ref n))
+              (literal 1)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal guarded)))))))))
+  (function guardValue () (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal guard))))
+      (return
+        (literal 1)))))

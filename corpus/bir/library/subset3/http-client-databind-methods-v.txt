@@ -1,0 +1,344 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %2 = ConstantLoad https://example.com
+    $desugar$0 = %2;
+    %4 = $default$15($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %4;
+    %6 = newObject ballerina/http:Client
+    %7 = init(%6,$desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    %9 = %7 is nil
+    %9 ? bb3 : bb4;
+  }
+  bb3 {
+    %8 = %6;
+    GOTO bb5;
+  }
+  bb4 {
+    %8 = %7;
+    GOTO bb5;
+  }
+  bb5 {
+    %10 = %8 is error
+    %10 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %8;
+    return;
+  }
+  bb7 {
+    %1 = %8;
+    GOTO bb8;
+  }
+  bb8 {
+    c = %1;
+    %13 = ConstantLoad /path
+    $desugar$2 = %13;
+    %15 = ConstantLoad req
+    $desugar$3 = %15;
+    %17 = $default$26($desugar$2,$desugar$3) -> bb9;
+  }
+  bb9 {
+    $desugar$4 = %17;
+    %19 = $default$27($desugar$2,$desugar$3,$desugar$4) -> bb10;
+  }
+  bb10 {
+    $desugar$5 = %19;
+    %21 = ConstantLoad typedesc
+    $desugar$6 = %21;
+    %23 = $remote$post(c,$desugar$2,$desugar$3,$desugar$4,$desugar$5,$desugar$6) -> bb11;
+  }
+  bb11 {
+    %24 = %23 is error
+    %24 ? bb12 : bb13;
+  }
+  bb12 {
+    %0 = %23;
+    return;
+  }
+  bb13 {
+    %12 = %23;
+    GOTO bb14;
+  }
+  bb14 {
+    postBody = %12;
+    %26 = println(postBody) -> bb15;
+  }
+  bb15 {
+    %28 = ConstantLoad /path
+    $desugar$7 = %28;
+    %30 = ConstantLoad req
+    $desugar$8 = %30;
+    %32 = $default$28($desugar$7,$desugar$8) -> bb16;
+  }
+  bb16 {
+    $desugar$9 = %32;
+    %34 = $default$29($desugar$7,$desugar$8,$desugar$9) -> bb17;
+  }
+  bb17 {
+    $desugar$10 = %34;
+    %36 = ConstantLoad typedesc
+    $desugar$11 = %36;
+    %38 = $remote$put(c,$desugar$7,$desugar$8,$desugar$9,$desugar$10,$desugar$11) -> bb18;
+  }
+  bb18 {
+    %39 = %38 is error
+    %39 ? bb19 : bb20;
+  }
+  bb19 {
+    %0 = %38;
+    return;
+  }
+  bb20 {
+    %27 = %38;
+    GOTO bb21;
+  }
+  bb21 {
+    putBody = %27;
+    %41 = println(putBody) -> bb22;
+  }
+  bb22 {
+    %43 = ConstantLoad /path
+    $desugar$12 = %43;
+    %45 = ConstantLoad req
+    $desugar$13 = %45;
+    %47 = $default$24($desugar$12,$desugar$13) -> bb23;
+  }
+  bb23 {
+    $desugar$14 = %47;
+    %49 = $default$25($desugar$12,$desugar$13,$desugar$14) -> bb24;
+  }
+  bb24 {
+    $desugar$15 = %49;
+    %51 = ConstantLoad typedesc
+    $desugar$16 = %51;
+    %53 = $remote$patch(c,$desugar$12,$desugar$13,$desugar$14,$desugar$15,$desugar$16) -> bb25;
+  }
+  bb25 {
+    %54 = %53 is error
+    %54 ? bb26 : bb27;
+  }
+  bb26 {
+    %0 = %53;
+    return;
+  }
+  bb27 {
+    %42 = %53;
+    GOTO bb28;
+  }
+  bb28 {
+    patchBody = %42;
+    %56 = println(patchBody) -> bb29;
+  }
+  bb29 {
+    %58 = ConstantLoad /path
+    $desugar$17 = %58;
+    %60 = $default$16($desugar$17) -> bb30;
+  }
+  bb30 {
+    $desugar$18 = %60;
+    %62 = $default$17($desugar$17,$desugar$18) -> bb31;
+  }
+  bb31 {
+    $desugar$19 = %62;
+    %64 = $default$18($desugar$17,$desugar$18,$desugar$19) -> bb32;
+  }
+  bb32 {
+    $desugar$20 = %64;
+    %66 = ConstantLoad typedesc
+    $desugar$21 = %66;
+    %68 = $remote$delete(c,$desugar$17,$desugar$18,$desugar$19,$desugar$20,$desugar$21) -> bb33;
+  }
+  bb33 {
+    %69 = %68 is error
+    %69 ? bb34 : bb35;
+  }
+  bb34 {
+    %0 = %68;
+    return;
+  }
+  bb35 {
+    %57 = %68;
+    GOTO bb36;
+  }
+  bb36 {
+    deleteBody = %57;
+    %71 = println(deleteBody) -> bb37;
+  }
+  bb37 {
+    %73 = ConstantLoad /path
+    $desugar$22 = %73;
+    %75 = $default$23($desugar$22) -> bb38;
+  }
+  bb38 {
+    $desugar$23 = %75;
+    %77 = ConstantLoad typedesc
+    $desugar$24 = %77;
+    %79 = $remote$options(c,$desugar$22,$desugar$23,$desugar$24) -> bb39;
+  }
+  bb39 {
+    %80 = %79 is error
+    %80 ? bb40 : bb41;
+  }
+  bb40 {
+    %0 = %79;
+    return;
+  }
+  bb41 {
+    %72 = %79;
+    GOTO bb42;
+  }
+  bb42 {
+    optionsBody = %72;
+    %82 = println(optionsBody) -> bb43;
+  }
+  bb43 {
+    %84 = ConstantLoad PATCH
+    $desugar$25 = %84;
+    %86 = ConstantLoad /path
+    $desugar$26 = %86;
+    %88 = ConstantLoad req
+    $desugar$27 = %88;
+    %90 = $default$19($desugar$25,$desugar$26,$desugar$27) -> bb44;
+  }
+  bb44 {
+    $desugar$28 = %90;
+    %92 = $default$20($desugar$25,$desugar$26,$desugar$27,$desugar$28) -> bb45;
+  }
+  bb45 {
+    $desugar$29 = %92;
+    %94 = ConstantLoad typedesc
+    $desugar$30 = %94;
+    %96 = $remote$execute(c,$desugar$25,$desugar$26,$desugar$27,$desugar$28,$desugar$29,$desugar$30) -> bb46;
+  }
+  bb46 {
+    %97 = %96 is error
+    %97 ? bb47 : bb48;
+  }
+  bb47 {
+    %0 = %96;
+    return;
+  }
+  bb48 {
+    %83 = %96;
+    GOTO bb49;
+  }
+  bb49 {
+    execBody = %83;
+    %99 = println(execBody) -> bb50;
+  }
+  bb50 {
+    %100 = newObject ballerina/http:Request
+    %101 = init(%100) -> bb51;
+  }
+  bb51 {
+    %103 = %101 is nil
+    %103 ? bb52 : bb53;
+  }
+  bb52 {
+    %102 = %100;
+    GOTO bb54;
+  }
+  bb53 {
+    %102 = %101;
+    GOTO bb54;
+  }
+  bb54 {
+    req = %102;
+    %105 = ConstantLoad fwd
+    $desugar$31 = %105;
+    %107 = $default$12($desugar$31) -> bb55;
+  }
+  bb55 {
+    $desugar$32 = %107;
+    %109 = setTextPayload(req,$desugar$31,$desugar$32) -> bb56;
+  }
+  bb56 {
+    %111 = ConstantLoad /path
+    %112 = ConstantLoad typedesc
+    %113 = $remote$forward(c,%111,req,%112) -> bb57;
+  }
+  bb57 {
+    %114 = %113 is error
+    %114 ? bb58 : bb59;
+  }
+  bb58 {
+    %0 = %113;
+    return;
+  }
+  bb59 {
+    %110 = %113;
+    GOTO bb60;
+  }
+  bb60 {
+    forwardBody = %110;
+    %116 = println(forwardBody) -> bb61;
+  }
+  bb61 {
+    %118 = ConstantLoad /path
+    $desugar$33 = %118;
+    %120 = $default$22($desugar$33) -> bb62;
+  }
+  bb62 {
+    $desugar$34 = %120;
+    %122 = $remote$head(c,$desugar$33,$desugar$34) -> bb63;
+  }
+  bb63 {
+    %123 = %122 is error
+    %123 ? bb64 : bb65;
+  }
+  bb64 {
+    %0 = %122;
+    return;
+  }
+  bb65 {
+    %117 = %122;
+    GOTO bb66;
+  }
+  bb66 {
+    headResp = %117;
+    %126 = ConstantLoad statusCode
+    %125 = headResp[%126];
+    %127 = %125;
+    %128 = println(%127) -> bb67;
+  }
+  bb67 {
+    %130 = ConstantLoad /path
+    %131 = ConstantLoad req
+    %132 = ConstantLoad X-Custom
+    %133 = ConstantLoad value
+    %134 = newMap {| string|[string...]... |}{%132=%133}
+    %135 = ConstantLoad text/plain
+    %136 = ConstantLoad typedesc
+    %137 = $remote$post(c,%130,%131,%134,%135,%136) -> bb68;
+  }
+  bb68 {
+    %138 = %137 is error
+    %138 ? bb69 : bb70;
+  }
+  bb69 {
+    %0 = %137;
+    return;
+  }
+  bb70 {
+    %129 = %137;
+    GOTO bb71;
+  }
+  bb71 {
+    withHeaders = %129;
+    %140 = length(withHeaders) -> bb72;
+  }
+  bb72 {
+    %141 = %140;
+    %142 = println(%141) -> bb73;
+  }
+  bb73 {
+    %143 = ConstantLoad <nil>
+    %0 = %143;
+    return;
+  }
+}

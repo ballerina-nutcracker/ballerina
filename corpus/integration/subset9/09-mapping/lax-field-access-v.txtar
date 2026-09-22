@@ -1,0 +1,28 @@
+-- stdout --
+{"b":3}
+3
+3
+4
+7
+map get present nil
+map get missing error
+{"b":3}
+required missing
+optional missing
+required present nil
+required absent differs
+required nil receiver
+optional nil receiver
+required non-mapping receiver
+optional non-mapping receiver
+propagated earlier error
+1
+12
+42
+1
+Tharmigan
+30
+8
+9
+11
+-- stderr --

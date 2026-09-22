@@ -1,2 +1,8 @@
 * text=auto eol=lf
 corpus/** linguist-generated=true
+
+corpus/ast/** -text
+corpus/bir/** -text
+corpus/cfg/** -text
+corpus/desugared/** -text
+corpus/integration/** -text

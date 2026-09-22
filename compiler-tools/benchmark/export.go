@@ -190,9 +190,9 @@ func computeDelta(base, head *benchResult, baseRef, headRef string) (bool, strin
 
 	// Uses the same uncertainty propagation formula as hyperfine:
 	// https://github.com/sharkdp/hyperfine/blob/327d5f4d9107141929f67f062bf9ef59f98b7399/src/benchmark/relative_speed.rs#L56-L64
-	ratioStddev := ratio * math.Sqrt(
-		math.Pow(result.Stddev/result.Mean, 2)+math.Pow(reference.Stddev/reference.Mean, 2),
-	)
+	resultRelStddev := result.Stddev / result.Mean
+	referenceRelStddev := reference.Stddev / reference.Mean
+	ratioStddev := ratio * math.Sqrt(resultRelStddev*resultRelStddev+referenceRelStddev*referenceRelStddev)
 
 	return true, fmt.Sprintf("%.2f", ratio), fmt.Sprintf("%.2f", math.Abs(ratioStddev)), winnerRef
 }

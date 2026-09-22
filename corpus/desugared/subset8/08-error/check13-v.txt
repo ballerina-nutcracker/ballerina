@@ -4,18 +4,10 @@
     (value-type int)))
   (function init () ()
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation mayFail ()))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
       (assignment
         (simple-var-ref moduleValue)
-        (simple-var-ref $desugar$0))))
+        (checked-expr
+          (invocation mayFail ())))))
   (function mayFail () (
     (union-type
       (value-type int)

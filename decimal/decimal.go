@@ -134,6 +134,8 @@ func FromFloat64(f float64) (*Decimal, *Error) {
 // is canonicalised to Ballerina's representation: -0 is collapsed to +0.
 func validate(d *Decimal, cond apd.Condition) *Error {
 	switch d.v.Form {
+	case apd.Finite:
+		// Continue validating the operation condition.
 	case apd.NaN, apd.NaNSignaling:
 		return &Error{Kind: ErrInvalid}
 	case apd.Infinite:
@@ -316,6 +318,17 @@ func (a *Decimal) ExactEqual(b *Decimal) bool {
 // collapses any zero to "0".
 func (a *Decimal) String() string {
 	return a.v.String()
+}
+
+// NumericString renders numerically equal decimals identically, regardless of
+// their coefficient and exponent representations.
+func (a *Decimal) NumericString() string {
+	if a.v.IsZero() {
+		return "0"
+	}
+	var reduced apd.Decimal
+	reduced.Reduce(&a.v)
+	return reduced.String()
 }
 
 // FormatBallerina renders the value as Ballerina's runtime println output:

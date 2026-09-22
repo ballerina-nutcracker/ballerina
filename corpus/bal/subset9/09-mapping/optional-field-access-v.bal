@@ -129,4 +129,16 @@ public function main() {
     if maybeError is error {
         io:println(maybeError.message()); // @output boom
     }
+
+    map<json> laxMap = {x: 10, nilValue: ()};
+    json laxMapX = laxMap?.x;
+    io:println(laxMapX); // @output 10
+    json laxMapMissing = laxMap?.missing;
+    if laxMapMissing is () {
+        io:println("lax map missing"); // @output lax map missing
+    }
+    json laxMapNil = laxMap?.nilValue;
+    if laxMapNil is () {
+        io:println("lax map nil"); // @output lax map nil
+    }
 }

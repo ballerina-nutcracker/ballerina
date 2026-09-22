@@ -35,7 +35,7 @@ public function main() returns error? {
         "obj": {"k": "v"}
     };
     http:Response r = check c->post("/echo", reqBody);
-    io:println(r.getTextPayload()); // @output {"arr":[1,2,3],"b":true,"d":3.5,"f":2.5,"i":7,"n":null,"obj":{"k":"v"},"s":"hi"}
+    io:println(check r.getTextPayload()); // @output {"arr":[1,2,3],"b":true,"d":3.5,"f":2.5,"i":7,"n":null,"obj":{"k":"v"},"s":"hi"}
 
     // GET a JSON array response with mixed element types -> exercises goToBalValue
     // for integer, float, string, bool, null, nested array, and nested object.

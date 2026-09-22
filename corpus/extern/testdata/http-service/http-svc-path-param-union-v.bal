@@ -46,11 +46,11 @@ public function testMain() returns error? {
 
     // "5" parses as int first.
     http:Response asInt = check c->get("/api/value/5");
-    io:println(asInt.getTextPayload()); // @output value=5
+    io:println(check asInt.getTextPayload()); // @output value=5
 
     // "5.5" fails int parsing and must fall through to float.
     http:Response asFloat = check c->get("/api/value/5.5");
-    io:println(asFloat.getTextPayload()); // @output value=5.5
+    io:println(check asFloat.getTextPayload()); // @output value=5.5
 
     // No URL segment can produce a record value, so this must 404 rather
     // than incorrectly match with the raw string.

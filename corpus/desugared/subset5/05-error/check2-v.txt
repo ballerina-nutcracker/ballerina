@@ -3,15 +3,7 @@
   (function main () (
     (value-type null))
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (literal 1))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$0))) ())
       (expression-stmt
         (invocation io println (
-          (simple-var-ref $desugar$0)))))))
+          (checked-expr
+            (literal 1))))))))

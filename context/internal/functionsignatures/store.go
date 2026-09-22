@@ -28,11 +28,13 @@ type Store struct {
 	mu         sync.RWMutex
 	signatures []model.UntypedFunctionSignature
 	associated map[model.SymbolRef]model.FunctionSignatureRef
+	returns    map[model.FunctionSignatureRef]model.FunctionSignatureRef
 }
 
 func NewStore() Store {
 	return Store{
 		associated: make(map[model.SymbolRef]model.FunctionSignatureRef),
+		returns:    make(map[model.FunctionSignatureRef]model.FunctionSignatureRef),
 	}
 }
 
@@ -60,6 +62,26 @@ func (s *Store) Ref(sym model.SymbolRef) (model.FunctionSignatureRef, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	ref, ok := s.associated[sym]
+	return ref, ok
+}
+
+func (s *Store) AssociateReturn(source, target model.FunctionSignatureRef) bool {
+	signatureIndex(source)
+	signatureIndex(target)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if existing, ok := s.returns[source]; ok {
+		return target == existing
+	}
+	s.returns[source] = target
+	return true
+}
+
+func (s *Store) ReturnRef(source model.FunctionSignatureRef) (model.FunctionSignatureRef, bool) {
+	signatureIndex(source)
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	ref, ok := s.returns[source]
 	return ref, ok
 }
 

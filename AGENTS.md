@@ -15,7 +15,12 @@ This document defines how AI/code agents should work with this repository: codin
 
 - Each bal/go file should have the correct license header
 
-## PAL (Platform Adaptation Layer)
+## Scripts
+
+- Use Python, shell, or a Windows script format (`.ps1`, `.bat`, or `.cmd`) for scripts; do not add JavaScript scripts
+- Prefer Python unless a script is expected to run only on Unix systems
+
+## PAL (Platform Abstraction Layer)
 
 - All platform interactions (e.g. io, http, fs) must go through PAL, not the underlying platform directly.
 
@@ -42,13 +47,13 @@ This document defines how AI/code agents should work with this repository: codin
 
 Stages 1–10 are the compilation pipeline (source → BIR); stage 11 is the interpreter (BIR execution).
 
-Execution of these stages is defined in `module_context.go` (and `testphases/phases.go` for corpus tests)
+Execution of these stages is defined in `projects/package_compilation.go` and `projects/module_context.go` (`test_util/testphases/phases.go` for corpus tests).
 
 ### Error handling
 
-Stages 1–4 run sequentially across modules: stages 3–4 are topologically sorted (a module's symbol/type resolution depends on its dependencies' results), while stages 1–2 are unordered per module. If any module reports an error in stages 1–4 (errors are recorded by calling an `*Error` method on the compiler context, e.g. `SemanticError`, `SyntaxError`), the pipeline must stop before stage 5 — no module may proceed to local-node resolution or beyond.
+Stages 1–4 run across modules in dependency order (stages 3–4 need each dependency’s symbols and types). Stages 1–2 run per module: parse files in parallel, then build ASTs. If any module reports an error in stages 1–4 (via an `*Error` method on the compiler context, e.g. `SemanticError`, `SyntaxError`), the pipeline must stop before stage 5 — no module may proceed to local-node resolution or beyond.
 
-Stages 5–10 then run concurrently per module, with no cross-module dependencies. After stage 10 completes for every module, if any module has errors we must not load any BIR into the runtime: stage 11 (interpretation) is skipped entirely.
+Stages 5–9 then run concurrently across modules. After each of those stages, a module checks diagnostics and must not continue that module on error. Stage 10 (BIR) runs only after every module has finished 1–9 with no errors (`cli/cmd/run.go` / `projects/ballerina_backend.go`). If compilation still has errors, stage 11 (interpretation) must not run.
 
 ## Tests
 
@@ -56,7 +61,8 @@ Stages 5–10 then run concurrently per module, with no cross-module dependencie
 
 ### Corpus layout
 
-- `corpus/bal/` and per-stage golden dirs (`corpus/ast/`, etc.) — compiler pipeline corpus walked by `*/corpus_*_test.go` in each package
+- `corpus/bal/` and per-stage golden dirs (`corpus/ast/`, `corpus/cfg/`, `corpus/desugared/`, `corpus/bir/`) — compiler pipeline corpus walked by `*/corpus_*_test.go` in each package
+- `corpus/lib/` — standard-library corpus, a sibling root of `corpus/bal/` (not nested under it). These exercise native Go the compiler never sees, so they have **no per-stage goldens**; their only goldens are the end-to-end `corpus/integration/lib/**.txtar`, run by `TestLibIntegration`. The stage packages do not see them at all: `corpus/lib/` is outside `corpus/bal/`, so `GetValidAndPanicTests` never picks it up and the per-stage drivers are unchanged. `TestLibIntegration` compiles and runs each test through the whole pipeline and validates its `@output`/`@error`/`@panic` markers, which is the coverage a stage driver would have added
 - `corpus/*_test.go` (`package corpus`) — end-to-end integration drivers (CLI, extern, package resolution, BIR roundtrip, etc.)
 - `corpus/<area>/testdata/` — fixtures for integration drivers (`extern/`, `cli/`, `package-resolution/`, etc.); no Go files in fixture dirs except embedded native modules under test balas
 
@@ -81,6 +87,8 @@ Stages 5–10 then run concurrently per module, with no cross-module dependencie
 
 - Project test cases ends up in `./corpus/project/` and project names fallow the same convention.
 
+- Standard-library test cases end up in `./corpus/lib/subset<N>/` and follow the same naming convention. Add the golden with `go test ./corpus -update`; there is no per-stage golden to add.
+
 #### Test markers
 - `@output`: test cases can write to standard out using `io:println` and use output marker to indicate expected output.
 - `@error`: -e test cases should use error markers to indicate lines where an error is expect. Text after marker is purely for commenting, not validated against actual error.
@@ -88,7 +96,7 @@ Stages 5–10 then run concurrently per module, with no cross-module dependencie
 
 ## Commit messages and PR titles
 
-- Every commit subject and the PR title must follow Conventional Commits: `<type>(<optional scope>): <description>` (`.github/workflows/lint-pr.yml`, enforced by `.github/scripts/validate-commits.js`)
+- Every commit subject and the PR title must follow Conventional Commits: `<type>(<optional scope>): <description>` (`.github/workflows/lint-pr.yml`, enforced by `.github/scripts/validate_commits.py`)
 - Allowed types: `feat`, `fix`, `build`, `chore`, `ci`, `docs`, `style`, `refactor`, `perf`, `test`, `revert`
 - Max subject length is 72 characters
 - The description must start with a lowercase letter

@@ -12,22 +12,14 @@
             (key-value
               (literal x)
               (literal 3))))))
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation nonNil (
-            (index-based-access
-              (simple-var-ref m)
-              (literal x)))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$0))) ())
       (expression-stmt
         (invocation io println (
           (unary-expr -
-            (simple-var-ref $desugar$0)))))))
+            (check-panicked-expr
+              (invocation nonNil (
+                (index-based-access
+                  (simple-var-ref m)
+                  (literal x)))))))))))
   (function nonNil (
     (variable n (type
       (union-type

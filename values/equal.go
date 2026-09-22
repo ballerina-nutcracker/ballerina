@@ -169,7 +169,8 @@ func xmlElementDeepEqual(a, b *XMLElement, visited map[refPair]struct{}) bool {
 	if cycle {
 		return true
 	}
-	return a.Name == b.Name &&
+	return a.Prefix == b.Prefix &&
+		a.LocalName == b.LocalName &&
 		mapDeepEqual(a.Attributes, b.Attributes, visited) &&
 		mapDeepEqual(a.Namespaces, b.Namespaces, visited) &&
 		xmlDeepEqual(a.Children, b.Children, visited)

@@ -54,7 +54,7 @@ public function testMain() returns error? {
     io:println(obj["count"]); // @output 3
 
     http:Response textResp = check c->get("/data/html");
-    string text = textResp.getTextPayload();
+    string text = check textResp.getTextPayload();
     io:println(text); // @output <html><body>hello</body></html>
 
     http:Response binaryResp = check c->get("/data/bytes");

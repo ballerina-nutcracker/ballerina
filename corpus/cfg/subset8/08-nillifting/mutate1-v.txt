@@ -1,0 +1,32 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref number)
+          (invocation mutateNumber ())))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref text)
+          (invocation mutateText ())))))
+  )
+)
+(mutateNumber
+  (bb0 () ()
+    (assignment
+      (simple-var-ref number)
+      (literal 100))
+    (return
+      (literal 1))
+  )
+)
+(mutateText
+  (bb0 () ()
+    (assignment
+      (simple-var-ref text)
+      (literal mutated))
+    (return
+      (literal b))
+  )
+)

@@ -20,8 +20,10 @@ import (
 	"unicode"
 
 	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
+	compilercontext "github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/parser/common"
 	"github.com/ballerina-nutcracker/ballerina/st"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
@@ -42,8 +44,10 @@ type tokenLexer interface {
 
 // TODO: introduce diagnostic context with flags and a channel
 type lexer struct {
-	reader  text.CharReader
-	context lexerContext
+	reader   text.CharReader
+	context  lexerContext
+	ctx      *compilercontext.CompilerContext
+	location diagnostics.Location
 }
 
 type lexerContext struct {
@@ -53,11 +57,17 @@ type lexerContext struct {
 	diagnostics       []st.STNodeDiagnostic
 }
 
-func newLexer(reader text.CharReader) *lexer {
+func newLexer(ctx *compilercontext.CompilerContext, fileName string, reader text.CharReader) *lexer {
 	return &lexer{
-		reader:  reader,
-		context: lexerContext{},
+		reader:   reader,
+		context:  lexerContext{},
+		ctx:      ctx,
+		location: diagnostics.NewLocation(ctx.DiagnosticEnv(), fileName, 0, 0),
 	}
+}
+
+func (l *lexer) internalError(message string) {
+	l.ctx.InternalError(message, l.location)
 }
 
 func (l *lexer) StartMode(mode parserMode) {
@@ -73,7 +83,8 @@ func (l *lexer) SwitchMode(mode parserMode) {
 
 func (l *lexer) EndMode() {
 	if len(l.context.modeStack) == 0 {
-		panic("cannot end mode: mode stack is empty")
+		l.internalError("cannot end mode: mode stack is empty")
+		return
 	}
 	l.context.modeStack = l.context.modeStack[:len(l.context.modeStack)-1]
 	if len(l.context.modeStack) == 0 {
@@ -1263,7 +1274,8 @@ func (l *lexer) processEndOfLine() st.STNode {
 		}
 		return st.CreateMinutiae(st.END_OF_LINE_MINUTIAE, l.getLexeme())
 	default:
-		panic("unreachable")
+		l.internalError("unreachable")
+		return st.CreateEmptyNode()
 	}
 }
 

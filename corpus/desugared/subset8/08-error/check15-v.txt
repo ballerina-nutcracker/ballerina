@@ -1,0 +1,37 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable result (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation nestedScopeCheckpanic ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref result))))))
+  (function nestedScopeCheckpanic () (
+    (value-type null))
+    (block-function-body
+      (if
+        (literal true)
+        (block-stmt
+          (if
+            (literal true)
+            (block-stmt
+              (expression-stmt
+                (check-panicked-expr
+                  (invocation alwaysErr ())))) ())
+          (block-stmt)) ())
+      (block-stmt)))
+  (function alwaysErr () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal original error)))))))

@@ -20,18 +20,32 @@
 # + return - number of members in `arr`
 public isolated function length((any|error)[] arr) returns int = external;
 
-# Returns a base64 representation of a byte array.
+# Returns the index of the first occurrence of a value in an array.
 #
-# + arr - the byte array
-# + return - the base64 encoding of `arr`
-public isolated function toBase64(byte[] arr) returns string = external;
+# The signature is declared here so that the compiler can take the parameter
+# names and the default value of `startIndex` from source. Calls are still
+# monomorphized: `@opaque` marks the declaration as the source form of an
+# opaque function, whose types are decided per call site in the compiler.
+#
+# @opaque
+#
+# + arr - the array
+# + val - the value to search for
+# + startIndex - the index to start searching from
+# + return - index of the first occurrence of `val` in `arr`, or `()` if there is none
+public isolated function indexOf(anydata[] arr, anydata val, int startIndex = 0) returns int? = external;
 
-# Returns a base16 representation of a byte array.
+# Returns the lowercase hexadecimal encoding of an array of bytes.
 #
-# + arr - the byte array
-# + return - the hexadecimal encoding of `arr`
+# + arr - the array to be encoded
+# + return - the lowercase hexadecimal-encoded string
 public isolated function toBase16(byte[] arr) returns string = external;
 
+# Returns the base64 encoding of an array of bytes.
+#
+# + arr - the array to be encoded
+# + return - the base64-encoded string
+public isolated function toBase64(byte[] arr) returns string = external;
 # Returns a byte array decoded from a base64 string.
 #
 # + str - the base64 encoded string

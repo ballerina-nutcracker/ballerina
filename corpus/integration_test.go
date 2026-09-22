@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -31,10 +30,12 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	bircodec "github.com/ballerina-nutcracker/ballerina/bir/codec"
+	"github.com/ballerina-nutcracker/ballerina/birgen"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/desugar"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/model/symbolpool"
+	"github.com/ballerina-nutcracker/ballerina/nodebuilder"
 	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
@@ -49,6 +50,8 @@ import (
 )
 
 const (
+	corpusLibBaseDir = "../corpus/lib"
+
 	corpusProjectBaseDir            = "../corpus/project"
 	corpusProjectIntegrationBaseDir = "../corpus/integration/project"
 
@@ -84,8 +87,6 @@ var (
 		// panic or a compile-time `fatal[...]` bailout, so it does not satisfy
 		// the future-test contract yet. Tracked separately.
 		"subset8/08-future/fieldlvalue1-fp.bal",
-		// https://github.com/ballerina-nutcracker/ballerina/issues/417
-		"subset8/08-xml/namespace12-v.bal",
 		// https://github.com/ballerina-nutcracker/ballerina/issues/533
 		"subset9/09-template-expr/template-query-xml-sequence-fv.bal",
 		// https://github.com/ballerina-nutcracker/ballerina/issues/538
@@ -123,6 +124,21 @@ type testResult struct {
 
 func TestIntegration(t *testing.T) {
 	cases, err := testharness.GetSingleFileTestCases("../corpus/bal", test_util.Integration, test_util.SuffixAny)
+	if err != nil {
+		t.Fatalf("discovery: %v", err)
+	}
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			runHarnessCase(t, tc)
+		})
+	}
+}
+
+// TestLibIntegration runs the standard-library corpus end-to-end. These tests
+// carry no per-stage goldens, so this is the only place their output is pinned.
+func TestLibIntegration(t *testing.T) {
+	cases, err := testharness.GetNestedSingleFileTestCases(corpusLibBaseDir, test_util.Integration, test_util.SuffixAny)
 	if err != nil {
 		t.Fatalf("discovery: %v", err)
 	}
@@ -583,7 +599,9 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 	defaultDesc := defaultModule.Descriptor()
 	defaultOrg := defaultDesc.Org().Value()
 
-	mainBirPkg, err := compileModuleFromSource(freshEnv, project, defaultModule, absProjectDir, publicSymbols, defaultOrg)
+	moduleVisibility := moduleVisibilityFor(currentPkg, deps)
+
+	mainBirPkg, err := compileModuleFromSource(freshEnv, project, defaultModule, absProjectDir, publicSymbols, moduleVisibility, defaultOrg)
 	if err != nil {
 		fmt.Fprintf(&stdoutBuf, "main module recompilation failed: %v\n", err)
 		return stdoutBuf.String(), stderrBuf.String()
@@ -595,9 +613,43 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 	return stdoutBuf.String(), stderrBuf.String()
 }
 
+// moduleVisibilityFor builds the same-shaped visibility map ResolveSymbols
+// expects, for the dependency modules (deps) of currentPkg — mirroring how
+// module_context.go's resolveTypesAndSymbols accumulates it during a normal
+// compilation, so that a non-exported module found among publicSymbols is
+// still rejected here instead of silently binding.
+func moduleVisibilityFor(currentPkg *projects.Package, deps []*bir.BIRPackage) map[semantics.PackageIdentifier]semantics.ModuleVisibility {
+	byQualifiedName := make(map[string]*projects.Module)
+	for _, m := range currentPkg.Modules() {
+		byQualifiedName[m.Descriptor().Name().String()] = m
+	}
+
+	manifest := currentPkg.Manifest()
+	moduleVisibility := make(map[semantics.PackageIdentifier]semantics.ModuleVisibility, len(deps))
+	for _, dep := range deps {
+		pkgIdent := semantics.PackageIdentifier{
+			OrgName:    dep.PackageID.OrgName.Value(),
+			ModuleName: dep.PackageID.PkgName.Value(),
+		}
+		module, ok := byQualifiedName[dep.PackageID.PkgName.Value()]
+		if !ok {
+			continue
+		}
+		desc := module.Descriptor()
+		moduleVisibility[pkgIdent] = semantics.ModuleVisibility{
+			PackageOrg:  desc.Org().Value(),
+			PackageName: desc.PackageName().Value(),
+			Exported:    slices.Contains(manifest.ExportedModules(), module.ModuleName().ModuleNamePart()),
+		}
+	}
+	return moduleVisibility
+}
+
 func compileModuleFromSource(env *context.CompilerEnvironment, project projects.Project, module *projects.Module,
-	absProjectDir string, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace, defaultOrg string,
+	absProjectDir string, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace,
+	moduleVisibility map[semantics.PackageIdentifier]semantics.ModuleVisibility, defaultOrg string,
 ) (*bir.BIRPackage, error) {
+	currentPackageName := module.Descriptor().PackageName().Value()
 	cx := context.NewCompilerContext(env)
 
 	// Register source files with DiagnosticEnv and parse them.
@@ -615,7 +667,10 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 		if err != nil {
 			return nil, fmt.Errorf("parsing %s: %v", relPath, err)
 		}
-		cu := ast.GetCompilationUnit(cx, st)
+		if cx.HasDiagnostics() {
+			return nil, fmt.Errorf("parsing %s produced diagnostics", relPath)
+		}
+		cu := nodebuilder.GetCompilationUnit(cx, st)
 		syntaxTrees = append(syntaxTrees, cu)
 	}
 
@@ -641,32 +696,37 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 	if err != nil {
 		return nil, fmt.Errorf("loading lang libraries failed: %w", err)
 	}
-	importedSymbolsByCU := semantics.ResolveCompilationUnitImports(cx, syntaxTrees, langlibs.ImplicitImports, langlibs.PublicSymbols, defaultOrg)
-	pkgScope, _ := semantics.ResolveSymbols(cx, *pkgID, importedSymbolsByCU)
+	pkgScope, _, importedSymbols := semantics.ResolveSymbols(
+		cx,
+		*pkgID,
+		syntaxTrees,
+		langlibs.ImplicitImports,
+		langlibs.PublicSymbols,
+		moduleVisibility,
+		defaultOrg,
+		currentPackageName,
+	)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("symbol resolution failed")
 	}
-	pkg := ast.ToPackageFromCompilationUnits(syntaxTrees)
+	pkg := nodebuilder.ToPackageFromCompilationUnits(cx, syntaxTrees)
+	if cx.HasDiagnostics() {
+		return nil, fmt.Errorf("package assembly failed")
+	}
 	pkg.Imports = nil
 	pkg.PackageID = pkgID
 	pkg.Scope = pkgScope
-	importedSymbols := make(map[string]model.ExportedSymbolSpace)
-	for _, cuImports := range importedSymbolsByCU {
-		maps.Copy(importedSymbols, cuImports.Imports)
-	}
-
-	semantics.ResolveTopLevelNodes(cx, pkg, importedSymbols)
+	semantics.ResolvePublicNodeTypes(cx, pkg, importedSymbols)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("top-level type resolution failed")
 	}
 
-	semantics.ResolveLocalNodes(cx, pkg, importedSymbols)
+	semantics.ResolvePrivateNodesTypes(cx, pkg, importedSymbols)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("local type resolution failed")
 	}
 
-	analyzer := semantics.NewSemanticAnalyzer(cx)
-	analyzer.Analyze(pkg, importedSymbols)
+	semantics.AnalyzeSemantics(cx, pkg, importedSymbols)
 	if cx.HasDiagnostics() {
 		return nil, fmt.Errorf("semantic analysis failed")
 	}
@@ -682,8 +742,15 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 	}
 
 	pkg = desugar.DesugarPackage(cx, pkg, importedSymbols)
+	if cx.HasDiagnostics() {
+		return nil, fmt.Errorf("desugaring failed")
+	}
 
-	return bir.GenBir(cx, pkg), nil
+	birPkg := birgen.GenBir(cx, pkg)
+	if birPkg == nil {
+		return nil, fmt.Errorf("BIR generation failed")
+	}
+	return birPkg, nil
 }
 
 func BenchmarkIntegration(b *testing.B) {

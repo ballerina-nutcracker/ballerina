@@ -86,38 +86,73 @@ func (p *PrettyPrinter) Print(tyCtx semtypes.Context, node BIRPackage) string {
 		p.PrintClassDef(classDef)
 		p.write("\n")
 	}
-	for _, function := range node.Functions {
+	for _, function := range functionsInPrintOrder(node.Functions) {
 		p.PrintFunction(function)
 		p.write("\n")
 	}
 	return p.sb.String()
 }
 
-func (p *PrettyPrinter) PrintFunction(function BIRFunction) {
-	p.write(function.Name.Value())
-	p.write("(")
-	paramStart := 1
-	if function.Flags.Has(model.FlagAttached) {
-		paramStart = 2
+// functionsInPrintOrder sorts the compiler-generated top level functions
+// ($default$N, $anonFunc$_N and friends) among themselves. They are appended to
+// the package while ranging over maps keyed by method name, so their relative
+// order varies between runs even though each function body is identical. Only
+// the slots already holding a generated function are rewritten, leaving the
+// user written functions where the frontend put them so a genuine reordering of
+// those is still visible.
+func functionsInPrintOrder(functions []BIRFunction) []BIRFunction {
+	ordered := make([]BIRFunction, len(functions))
+	copy(ordered, functions)
+	slots := make([]int, 0, len(ordered))
+	generated := make([]BIRFunction, 0, len(ordered))
+	for i := range ordered {
+		if strings.HasPrefix(ordered[i].Name.Value(), "$") {
+			slots = append(slots, i)
+			generated = append(generated, ordered[i])
+		}
+	}
+	sort.Slice(generated, func(i, j int) bool {
+		return generated[i].FunctionLookupKey < generated[j].FunctionLookupKey
+	})
+	for i, slot := range slots {
+		ordered[slot] = generated[i]
+	}
+	return ordered
+}
+
+// printFunctionParams prints the parameter list of function. Native dependently
+// typed functions carry no local variables because their signature is only known
+// at each call site, so there is nothing to print for them.
+func (p *PrettyPrinter) printFunctionParams(function BIRFunction) {
+	paramStart := function.ParamLocalVarOffset()
+	if len(function.LocalVars) <= paramStart {
+		return
 	}
 	for i, v := range function.LocalVars[paramStart:] {
-		if i < len(function.RequiredParams) {
-			if i > 0 {
-				p.write(",")
-			}
-			p.write(p.PrintSemType(v.Type))
-		} else {
+		if i >= len(function.RequiredParams) {
 			break
 		}
+		if i > 0 {
+			p.write(",")
+		}
+		p.printAnnotations(function.RequiredParams[i].Annotations)
+		p.write(p.PrintSemType(v.Type))
 	}
 	if function.RestParams != nil {
 		variableIndex := paramStart + len(function.RequiredParams)
 		if variableIndex != paramStart {
 			p.write(",")
 		}
+		p.printAnnotations(function.RestParams.Annotations)
 		p.write(p.PrintSemType(function.LocalVars[variableIndex].Type))
 		p.write("...")
 	}
+}
+
+func (p *PrettyPrinter) PrintFunction(function BIRFunction) {
+	p.write(function.Name.Value())
+	p.write("(")
+	p.printFunctionParams(function)
 	p.write(")")
 	if function.ReturnVariable != nil && !semtypes.IsZero(function.ReturnVariable.Type) {
 		p.write(" -> ")
@@ -143,8 +178,23 @@ func (p *PrettyPrinter) PrintFunction(function BIRFunction) {
 	p.write("}")
 }
 
+func (p *PrettyPrinter) printAnnotations(annotations values.AnnotationValues) {
+	keys := make([]string, 0, len(annotations))
+	for key := range annotations {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		p.write("@")
+		p.write(key)
+		p.write("(")
+		p.write(formatConstantValue(annotations[key]))
+		p.write(") ")
+	}
+}
+
 func (p *PrettyPrinter) PrintBasicBlock(basicBlock BIRBasicBlock) {
-	p.writeLine(basicBlock.Id.Value() + " {")
+	p.writeLine(basicBlock.ID.Value() + " {")
 	p.increaseIndent()
 	for _, instruction := range basicBlock.Instructions {
 		p.writeLine(p.PrintInstruction(instruction))
@@ -194,6 +244,14 @@ func (p *PrettyPrinter) PrintInstruction(instruction BIRInstruction) string {
 		return p.PrintLockEnd(instruction)
 	case *ResourceFunctionCall:
 		return p.PrintResourceFunctionCall(instruction)
+	case *StartAction:
+		return p.PrintStartAction(instruction)
+	case *SingleWaitAction:
+		return p.PrintSingleWaitAction(instruction)
+	case *AlternateWaitAction:
+		return p.PrintAlternateWaitAction(instruction)
+	case *MultipleWaitAction:
+		return p.PrintMultipleWaitAction(instruction)
 	case *NewObject:
 		return p.PrintNewObject(instruction)
 	case *NewStream:
@@ -220,6 +278,8 @@ func (p *PrettyPrinter) PrintInstruction(instruction BIRInstruction) string {
 		return p.PrintNewXMLSequence(instruction)
 	case *EvalTemplateExpr:
 		return p.PrintEvalTemplateExpr(instruction)
+	case *XMLFilter:
+		return p.PrintXMLFilter(instruction)
 	default:
 		panic(fmt.Sprintf("unknown instruction type: %T", instruction))
 	}
@@ -303,11 +363,11 @@ func (p *PrettyPrinter) PrintNewError(e *NewError) string {
 
 func (p *PrettyPrinter) PrintFieldAccess(access *FieldAccess) string {
 	switch access.Kind {
-	case INSTRUCTION_KIND_MAP_STORE, INSTRUCTION_KIND_ARRAY_STORE, INSTRUCTION_KIND_OBJECT_STORE:
+	case InstructionKindMapStore, InstructionKindArrayStore, InstructionKindObjectStore:
 		return fmt.Sprintf("%s[%s] = %s;", p.PrintOperand(*access.LhsOp), p.PrintOperand(*access.KeyOp), p.PrintOperand(*access.RhsOp))
-	case INSTRUCTION_KIND_MAP_LOAD, INSTRUCTION_KIND_ARRAY_LOAD, INSTRUCTION_KIND_OBJECT_LOAD:
+	case InstructionKindMapLoad, InstructionKindArrayLoad, InstructionKindObjectLoad:
 		return fmt.Sprintf("%s = %s[%s];", p.PrintOperand(*access.LhsOp), p.PrintOperand(*access.RhsOp), p.PrintOperand(*access.KeyOp))
-	case INSTRUCTION_KIND_ARRAY_FILLING_LOAD, INSTRUCTION_KIND_MAP_FILLING_LOAD:
+	case InstructionKindArrayFillingLoad, InstructionKindMapFillingLoad:
 		return fmt.Sprintf("%s = %s[%s] (fill);", p.PrintOperand(*access.LhsOp), p.PrintOperand(*access.RhsOp), p.PrintOperand(*access.KeyOp))
 	default:
 		panic(fmt.Sprintf("unknown field access kind: %d", access.Kind))
@@ -331,6 +391,7 @@ func (p *PrettyPrinter) PrintStreamClose(n *StreamClose) string {
 }
 
 func (p *PrettyPrinter) PrintClassDef(classDef BIRClassDef) {
+	p.printAnnotations(classDef.Annotations)
 	p.write("class ")
 	p.write(classDef.Name.Value())
 	p.write(" {\n")
@@ -404,48 +465,89 @@ func (p *PrettyPrinter) PrintPanic(pa *Panic) string {
 }
 
 func (p *PrettyPrinter) PrintLockStart(l *LockStart) string {
-	return fmt.Sprintf("lock-start %q GOTO %s;", l.LockKey, l.ThenBB.Id.Value())
+	return fmt.Sprintf("lock-start %q GOTO %s;", l.LockKey, l.ThenBB.ID.Value())
 }
 
 func (p *PrettyPrinter) PrintLockEnd(l *LockEnd) string {
-	return fmt.Sprintf("lock-end %q GOTO %s;", l.LockKey, l.ThenBB.Id.Value())
+	return fmt.Sprintf("lock-end %q GOTO %s;", l.LockKey, l.ThenBB.ID.Value())
 }
 
 func (p *PrettyPrinter) PrintBranch(b *Branch) string {
-	return fmt.Sprintf("%s ? %s : %s;", p.PrintOperand(*b.Op), b.TrueBB.Id.Value(), b.FalseBB.Id.Value())
+	return fmt.Sprintf("%s ? %s : %s;", p.PrintOperand(*b.Op), b.TrueBB.ID.Value(), b.FalseBB.ID.Value())
 }
 
 func (p *PrettyPrinter) PrintGoto(g *Goto) string {
-	return fmt.Sprintf("GOTO %s;", g.ThenBB.Id.Value())
+	return fmt.Sprintf("GOTO %s;", g.ThenBB.ID.Value())
 }
 
 func (p *PrettyPrinter) PrintResourceFunctionCall(call *ResourceFunctionCall) string {
-	segs := strings.Builder{}
-	for i, seg := range call.PathSegments {
+	return fmt.Sprintf("%s = %s -> %s;", p.PrintOperand(*call.LhsOp), p.printCallSite(call.CallSite), call.ThenBB.ID.Value())
+}
+
+func (p *PrettyPrinter) PrintStartAction(action *StartAction) string {
+	return fmt.Sprintf("%s = start %s isolated=%t -> %s;", p.PrintOperand(*action.LhsOp), p.printCallSite(action.Call), action.IsIsolated, action.ThenBB.ID.Value())
+}
+
+func (p *PrettyPrinter) PrintSingleWaitAction(action *SingleWaitAction) string {
+	return fmt.Sprintf("%s = wait %s -> %s;", p.PrintOperand(*action.LhsOp), p.PrintOperand(action.Future), action.ThenBB.ID.Value())
+}
+
+func (p *PrettyPrinter) PrintAlternateWaitAction(action *AlternateWaitAction) string {
+	futures := strings.Builder{}
+	for i, future := range action.Futures {
 		if i > 0 {
-			segs.WriteString(",")
+			futures.WriteString(" | ")
 		}
-		segs.WriteString(p.PrintOperand(seg))
+		futures.WriteString(p.PrintOperand(future))
 	}
-	args := strings.Builder{}
-	for i, arg := range call.Args {
+	return fmt.Sprintf("%s = wait %s -> %s;", p.PrintOperand(*action.LhsOp), futures.String(), action.ThenBB.ID.Value())
+}
+
+func (p *PrettyPrinter) PrintMultipleWaitAction(action *MultipleWaitAction) string {
+	fields := strings.Builder{}
+	for i, future := range action.Futures {
 		if i > 0 {
-			args.WriteString(",")
+			fields.WriteString(", ")
 		}
-		args.WriteString(p.PrintOperand(arg))
+		fields.WriteString(action.FieldNames[i])
+		fields.WriteString(": ")
+		fields.WriteString(p.PrintOperand(future))
 	}
-	return fmt.Sprintf("%s = %s->[%s].%s(%s) -> %s;", p.PrintOperand(*call.LhsOp), p.PrintOperand(call.Receiver), segs.String(), call.MethodName, args.String(), call.ThenBB.Id.Value())
+	return fmt.Sprintf("%s = wait {%s} -> %s;", p.PrintOperand(*action.LhsOp), fields.String(), action.ThenBB.ID.Value())
 }
 
 func (p *PrettyPrinter) PrintCall(call *Call) string {
-	args := strings.Builder{}
-	for i, arg := range call.Args {
-		if i > 0 {
-			args.WriteString(",")
+	return fmt.Sprintf("%s = %s -> %s;", p.PrintOperand(*call.LhsOp), p.printCallSite(call.CallSite), call.ThenBB.ID.Value())
+}
+
+func (p *PrettyPrinter) printCallSite(call CallSite) string {
+	switch call.Kind {
+	case CallKindFunction:
+		return fmt.Sprintf("%s(%s)", call.Name.Value(), p.printOperands(call.Args))
+	case CallKindFunctionPointer:
+		name := call.Name.Value()
+		if call.FpOperand != nil {
+			name = p.PrintOperand(*call.FpOperand)
 		}
-		args.WriteString(p.PrintOperand(arg))
+		return fmt.Sprintf("%s(%s)", name, p.printOperands(call.Args))
+	case CallKindMethod:
+		return fmt.Sprintf("%s.%s(%s)", p.PrintOperand(*call.Receiver), call.Name.Value(), p.printOperands(call.Args[1:]))
+	case CallKindResource:
+		return fmt.Sprintf("%s->[%s].%s(%s)", p.PrintOperand(*call.Receiver), p.printOperands(call.PathSegments), call.MethodName, p.printOperands(call.Args))
+	default:
+		panic(fmt.Sprintf("unexpected call kind: %d", call.Kind))
 	}
-	return fmt.Sprintf("%s = %s(%s) -> %s;", p.PrintOperand(*call.LhsOp), call.Name.Value(), args.String(), call.ThenBB.Id.Value())
+}
+
+func (p *PrettyPrinter) printOperands(operands []BIROperand) string {
+	result := strings.Builder{}
+	for i, operand := range operands {
+		if i > 0 {
+			result.WriteString(",")
+		}
+		result.WriteString(p.PrintOperand(operand))
+	}
+	return result.String()
 }
 
 func (p *PrettyPrinter) PrintOperand(operand BIROperand) string {
@@ -470,6 +572,9 @@ func formatConstantValue(v any) string {
 	case *values.List, *values.Map, *values.Error, *values.Function, *values.Object, *values.TypeDesc:
 		return values.String(v, map[uintptr]bool{})
 	}
+	if ref, ok := v.(*values.RuntimeAnnotationValueRef); ok {
+		return fmt.Sprintf("runtime-ref(%s/%s:%s)", ref.Organization, ref.Module, ref.GlobalName)
+	}
 	return fmt.Sprintf("%v", v)
 }
 
@@ -483,37 +588,37 @@ func (p *PrettyPrinter) PrintBinaryOp(op *BinaryOp) string {
 
 func (p *PrettyPrinter) PrintInstructionKind(kind InstructionKind) string {
 	switch kind {
-	case INSTRUCTION_KIND_ADD:
+	case InstructionKindAdd:
 		return "+"
-	case INSTRUCTION_KIND_SUB:
+	case InstructionKindSub:
 		return "-"
-	case INSTRUCTION_KIND_MUL:
+	case InstructionKindMul:
 		return "*"
-	case INSTRUCTION_KIND_DIV:
+	case InstructionKindDiv:
 		return "/"
-	case INSTRUCTION_KIND_MOD:
+	case InstructionKindMod:
 		return "%"
-	case INSTRUCTION_KIND_AND:
+	case InstructionKindAnd:
 		return "&&"
-	case INSTRUCTION_KIND_OR:
+	case InstructionKindOr:
 		return "||"
-	case INSTRUCTION_KIND_LESS_THAN:
+	case InstructionKindLessThan:
 		return "<"
-	case INSTRUCTION_KIND_LESS_EQUAL:
+	case InstructionKindLessEqual:
 		return "<="
-	case INSTRUCTION_KIND_GREATER_THAN:
+	case InstructionKindGreaterThan:
 		return ">"
-	case INSTRUCTION_KIND_GREATER_EQUAL:
+	case InstructionKindGreaterEqual:
 		return ">="
-	case INSTRUCTION_KIND_EQUAL:
+	case InstructionKindEqual:
 		return "=="
-	case INSTRUCTION_KIND_NOT_EQUAL:
+	case InstructionKindNotEqual:
 		return "!="
-	case INSTRUCTION_KIND_NOT:
+	case InstructionKindNot:
 		return "!"
-	case INSTRUCTION_KIND_BITWISE_COMPLEMENT:
+	case InstructionKindBitwiseComplement:
 		return "~"
-	case INSTRUCTION_KIND_ANNOT_ACCESS:
+	case InstructionKindAnnotAccess:
 		return ".@"
 	}
 	return "unknown"
@@ -548,6 +653,25 @@ func (p *PrettyPrinter) PrintPackageID(packageID *model.PackageID) string {
 	return fmt.Sprintf("%s.%s v %s", orgName, pkgName, version)
 }
 
+func (p *PrettyPrinter) PrintXMLFilter(n *XMLFilter) string {
+	patterns := make([]string, len(n.Filters))
+	for i, pattern := range n.Filters {
+		switch pattern.Kind {
+		case XMLNamePatternKindWildCard:
+			patterns[i] = "*"
+		case XMLNamePatternKindIdentifier:
+			patterns[i] = fmt.Sprintf("{%q, %q}", "", pattern.Identifier)
+		case XMLNamePatternKindQualifiedIdentifier:
+			patterns[i] = fmt.Sprintf("{%q, %q}", pattern.NamespaceURI, pattern.Identifier)
+		case XMLNamePatternKindPrefix:
+			patterns[i] = fmt.Sprintf("{%q, *}", pattern.NamespaceURI)
+		default:
+			panic("unsupported XML name pattern kind")
+		}
+	}
+	return fmt.Sprintf("%s = xmlFilter(%s, [%s])", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.Source), strings.Join(patterns, " | "))
+}
+
 func (p *PrettyPrinter) PrintNewXMLElement(n *NewXMLElement) string {
 	children := "()"
 	if n.ChildrenOp != nil {
@@ -557,13 +681,21 @@ func (p *PrettyPrinter) PrintNewXMLElement(n *NewXMLElement) string {
 	if n.AttrsOp != nil {
 		attrs = p.PrintOperand(*n.AttrsOp)
 	}
+	qualifiedName := n.LocalName
+	if n.Prefix != "" {
+		qualifiedName = n.Prefix + ":" + n.LocalName
+	}
+	name := fmt.Sprintf("%q", qualifiedName)
+	if n.NamespaceURI != "" {
+		name = fmt.Sprintf("%s, namespace=%q", name, n.NamespaceURI)
+	}
 	if n.NamespacesOp != nil {
-		return fmt.Sprintf("%s = newXMLElement(%s, %s, %s, %s)", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.NameOp), children, attrs, p.PrintOperand(*n.NamespacesOp))
+		return fmt.Sprintf("%s = newXMLElement(%s, %s, %s, %s)", p.PrintOperand(*n.LhsOp), name, children, attrs, p.PrintOperand(*n.NamespacesOp))
 	}
 	if n.AttrsOp != nil {
-		return fmt.Sprintf("%s = newXMLElement(%s, %s, %s)", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.NameOp), children, attrs)
+		return fmt.Sprintf("%s = newXMLElement(%s, %s, %s)", p.PrintOperand(*n.LhsOp), name, children, attrs)
 	}
-	return fmt.Sprintf("%s = newXMLElement(%s, %s)", p.PrintOperand(*n.LhsOp), p.PrintOperand(*n.NameOp), children)
+	return fmt.Sprintf("%s = newXMLElement(%s, %s)", p.PrintOperand(*n.LhsOp), name, children)
 }
 
 func (p *PrettyPrinter) PrintNewXMLPI(n *NewXMLPI) string {

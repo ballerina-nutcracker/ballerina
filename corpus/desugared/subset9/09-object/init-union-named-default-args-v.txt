@@ -130,7 +130,8 @@
       (return
         (literal default))))
   (function $default$1 (
-    (variable label)) ()
+    (variable label (type
+      (value-type )))) ()
     (block-function-body
       (return
         (literal 5)))))

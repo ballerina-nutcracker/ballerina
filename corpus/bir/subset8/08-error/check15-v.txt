@@ -1,0 +1,76 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    %2 = nestedScopeCheckpanic() -> bb2;
+  }
+  bb2 {
+    %1 = %2;
+    GOTO bb3;
+  }
+  bb3 {
+    result = %1;
+    %4 = println(result) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %1
+  }
+}
+nestedScopeCheckpanic() -> nil{
+  bb0 {
+    %1 = ConstantLoad true
+    %1 ? bb1 : bb8;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    %0 ? bb2 : bb7;
+  }
+  bb2 {
+    PushScopeFrame 3
+    %1 = alwaysErr() -> bb3;
+  }
+  bb3 {
+    %2 = %1 is error
+    %2 ? bb4 : bb5;
+  }
+  bb4 {
+    (2, %2) = %1;
+    PopScopeFrame
+    PopScopeFrame
+    panic %2;
+  }
+  bb5 {
+    %0 = %1;
+    GOTO bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb7 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb8 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+alwaysErr() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad original error
+    %2 = newError error(%1)
+    %0 = %2;
+    return;
+  }
+}

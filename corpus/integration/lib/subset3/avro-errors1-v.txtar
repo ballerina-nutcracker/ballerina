@@ -1,0 +1,47 @@
+-- stdout --
+true
+Avro schema parsing error
+true
+true
+true
+true
+Avro deserialization error
+true
+true
+Avro serialization error
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+-- stderr --

@@ -1,14 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_1(int) -> int{
-  bb0 {
-    %3 = ConstantLoad 10
-    %4 = %3;
-    %5 = y;
-    %2 = / %4 %5;
-    %0 = %2;
-    return;
-  }
-}
 $anonFunc$_0(int) -> int{
   bb0 {
     %2 = fp $anon/.:$anonFunc$_1
@@ -18,6 +8,16 @@ $anonFunc$_0(int) -> int{
   }
   bb1 {
     %0 = %5;
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %3 = ConstantLoad 10
+    %4 = %3;
+    %5 = y;
+    %2 = / %4 %5;
+    %0 = %2;
     return;
   }
 }

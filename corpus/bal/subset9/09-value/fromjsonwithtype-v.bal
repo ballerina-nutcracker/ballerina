@@ -48,6 +48,17 @@ public function main() returns error? {
     string s = check strVal.fromJsonWithType(string);
     io:println(s); // @output hello
 
+    // fromJsonWithType only lives in lang.value, not in the receiver's own
+    // basic-type module (lang.int, lang.map, ...), so a precisely-typed
+    // receiver (not json/anydata) must fall back to lang.value to resolve.
+    int plainInt = 7;
+    int viaInt = check plainInt.fromJsonWithType(int);
+    io:println(viaInt); // @output 7
+
+    record {|string name; int age;|} plainRecord = {name: "Alice", age: 30};
+    Person viaRecord = check plainRecord.fromJsonWithType(Person);
+    io:println(viaRecord); // @output {"name":"Alice","age":30}
+
     // required nilable field absent → error (field must be present, even if null)
     json noAge = {"name": "Alice"};
     io:println(noAge.fromJsonWithType(PersonNilAge) is error); // @output true

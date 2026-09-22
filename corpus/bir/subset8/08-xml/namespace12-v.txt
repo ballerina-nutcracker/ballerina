@@ -1,0 +1,18 @@
+module $anon.. v 0.0.0;
+elem  xml;
+main() -> nil{
+  bb0 {
+    %1 = println(elem) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad xmlns:local
+    %3 = ConstantLoad https:foo/bar
+    %4 = newMap {| string... |}{%2=%3}
+    %5 = newXMLElement("local:f", namespace="https:foo/bar", (), (), %4)
+    localElem = %5;
+    %7 = println(localElem) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

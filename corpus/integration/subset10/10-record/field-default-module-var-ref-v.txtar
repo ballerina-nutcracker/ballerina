@@ -1,0 +1,7 @@
+-- stdout --
+8080
+localhost
+8081
+example.com
+8080
+-- stderr --

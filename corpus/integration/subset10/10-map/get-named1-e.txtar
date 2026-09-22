@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no such parameter mp
+  --> get-named1-e.bal:19:21
+   |
+19 |     int _ = map:get(mp = m1, k = "a"); // @error no such parameter mp
+   |                     ^^^^^^^

@@ -5,35 +5,37 @@ main() -> nil{
     %2 = println(%1) -> bb1;
   }
   bb1 {
-    %3 = noOp() -> bb2;
+    %5 = noOp() -> bb2;
   }
   bb2 {
-    $desugar$0 = %3;
-    %5 = $desugar$0 is error
-    %5 ? bb3 : bb4;
+    %6 = %5 is error
+    %6 ? bb3 : bb4;
   }
   bb3 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$0);
-    PopScopeFrame
+    %0 = %5;
     return;
   }
   bb4 {
-    $desugar$1 = $desugar$0;
-    %7 = $desugar$1 is error
-    %7 ? bb5 : bb6;
+    %4 = %5;
+    GOTO bb5;
   }
   bb5 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$1);
-    PopScopeFrame
-    return;
+    %7 = %4 is error
+    %7 ? bb6 : bb7;
   }
   bb6 {
-    %8 = ConstantLoad after
-    %9 = println(%8) -> bb7;
+    %0 = %4;
+    return;
   }
   bb7 {
+    %3 = %4;
+    GOTO bb8;
+  }
+  bb8 {
+    %8 = ConstantLoad after
+    %9 = println(%8) -> bb9;
+  }
+  bb9 {
     return;
   }
 }

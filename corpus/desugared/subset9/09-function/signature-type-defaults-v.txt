@@ -52,7 +52,7 @@
     (block-function-body
       (return
         (literal 13))))
-  (function $desugar$0 () ()
+  (function $default$3 () ()
     (block-function-body
       (return
         (literal 14)))))

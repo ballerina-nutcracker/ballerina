@@ -19,7 +19,6 @@ package desugar
 
 import (
 	"fmt"
-	"sort"
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -77,22 +76,15 @@ func (ctx *packageContext) addImplicitImport(pkgName string, imp ast.BLangImport
 	defer ctx.importMu.Unlock()
 	if !ctx.addedImplicitImports[pkgName] {
 		ctx.addedImplicitImports[pkgName] = true
-		ctx.pkg.Imports = append(ctx.pkg.Imports, imp)
+		ctx.pkg.Imports = append(ctx.pkg.Imports, &imp)
 	}
 }
 
-func sortedGeneratedFunctions(generatedFunctions []*ast.BLangFunction) []*ast.BLangFunction {
-	// Ideally this shouldn't be needed (this is used only to keep desguared functions in generated closures in same order)
-	functions := append([]*ast.BLangFunction(nil), generatedFunctions...)
-	sort.Slice(functions, func(i, j int) bool {
-		left := functions[i].Symbol()
-		right := functions[j].Symbol()
-		if left.SpaceIndex != right.SpaceIndex {
-			return left.SpaceIndex < right.SpaceIndex
-		}
-		return left.Index < right.Index
-	})
-	return functions
+func newIdentifier(value string) *ast.BLangIdentifier {
+	identifier := &ast.BLangIdentifier{Value: value}
+	identifier.SetDeterminedType(semtypes.Never)
+	identifier.SetPosition(diagnostics.NewBuiltinLocation())
+	return identifier
 }
 
 func (ctx *packageContext) addDefaultClosureOwner(expr ast.BLangActionOrExpression) {
@@ -154,7 +146,7 @@ func (ctx *packageContext) associateFunctionSignature(source, target model.Symbo
 		return
 	}
 	if !ctx.compilerCtx.AssociateFunctionSignature(target, ref) {
-		ctx.internalError("function signature already set")
+		ctx.internalError("function signature already set", ctx.getSymbol(source).Location())
 	}
 }
 
@@ -186,8 +178,8 @@ func (ctx *packageContext) addModuleSymbol(name string, symbol model.Symbol) mod
 	return ref
 }
 
-func (ctx *packageContext) internalError(msg string) {
-	ctx.compilerCtx.InternalError(msg, diagnostics.Location{})
+func (ctx *packageContext) internalError(msg string, pos diagnostics.Location) {
+	ctx.compilerCtx.InternalError(msg, pos)
 }
 
 func (ctx *packageContext) unimplemented(msg string) {
@@ -196,12 +188,14 @@ func (ctx *packageContext) unimplemented(msg string) {
 
 type functionContext struct {
 	pkgCtx               *packageContext
+	owner                model.SymbolRef
 	scopeStack           []model.Scope
 	desugarSymbolCounter int
 	loopVarStack         []ast.LExpr // Stack to track loop variables (nil for while, varRef for desugared foreach)
-	queryActionControls  []*queryActionControlFlowState
+	queryActionControls  []queryActionControlFlowState
 	defaultClosureVars   map[model.SymbolRef]model.SymbolRef
 	generatedFunctions   []*ast.BLangFunction
+	trapDepth            int
 	// typeContext is the non-shared type context for this function. It is owned
 	// by the goroutine desugaring this function and must not be shared.
 	typeContext semtypes.Context
@@ -219,8 +213,8 @@ func (ctx *functionContext) typeCtx() semtypes.Context {
 
 var _ desugarContext = &functionContext{}
 
-func (ctx *functionContext) internalError(msg string) {
-	ctx.pkgCtx.internalError(msg)
+func (ctx *functionContext) internalError(msg string, pos diagnostics.Location) {
+	ctx.pkgCtx.internalError(msg, pos)
 }
 
 func (ctx *functionContext) unimplemented(msg string) {
@@ -257,14 +251,16 @@ func (ctx *functionContext) pushScope(scope model.Scope) {
 
 func (ctx *functionContext) popScope() {
 	if len(ctx.scopeStack) == 0 {
-		ctx.internalError("cannot pop from empty scope stack")
+		ctx.internalError("cannot pop from empty scope stack", diagnostics.NewBuiltinLocation())
+		return
 	}
 	ctx.scopeStack = ctx.scopeStack[:len(ctx.scopeStack)-1]
 }
 
 func (ctx *functionContext) currentScope() model.Scope {
 	if len(ctx.scopeStack) == 0 {
-		ctx.internalError("scope stack is empty")
+		ctx.internalError("scope stack is empty", diagnostics.NewBuiltinLocation())
+		return nil
 	}
 	return ctx.scopeStack[len(ctx.scopeStack)-1]
 }
@@ -275,7 +271,8 @@ func (ctx *functionContext) pushLoopVar(varRef ast.LExpr) {
 
 func (ctx *functionContext) popLoopVar() {
 	if len(ctx.loopVarStack) == 0 {
-		ctx.internalError("cannot pop from empty loopVar stack")
+		ctx.internalError("cannot pop from empty loopVar stack", diagnostics.NewBuiltinLocation())
+		return
 	}
 	ctx.loopVarStack = ctx.loopVarStack[:len(ctx.loopVarStack)-1]
 }
@@ -287,13 +284,13 @@ func (ctx *functionContext) currentLoopVar() ast.LExpr {
 	return ctx.loopVarStack[len(ctx.loopVarStack)-1]
 }
 
-func (ctx *functionContext) pushQueryActionControl(state *queryActionControlFlowState) {
+func (ctx *functionContext) pushQueryActionControl(state queryActionControlFlowState) {
 	ctx.queryActionControls = append(ctx.queryActionControls, state)
 }
 
 func (ctx *functionContext) popQueryActionControl() {
 	if len(ctx.queryActionControls) == 0 {
-		ctx.internalError("cannot pop from empty query action control stack")
+		ctx.internalError("cannot pop from empty query action control stack", diagnostics.NewBuiltinLocation())
 		return
 	}
 	ctx.queryActionControls = ctx.queryActionControls[:len(ctx.queryActionControls)-1]
@@ -303,7 +300,7 @@ func (ctx *functionContext) currentQueryActionControl() *queryActionControlFlowS
 	if len(ctx.queryActionControls) == 0 {
 		return nil
 	}
-	state := ctx.queryActionControls[len(ctx.queryActionControls)-1]
+	state := &ctx.queryActionControls[len(ctx.queryActionControls)-1]
 	if len(ctx.loopVarStack) != state.loopDepth {
 		return nil
 	}
@@ -347,7 +344,7 @@ type desugarContext interface {
 	functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature
 	associateFunctionSignature(source, target model.SymbolRef)
 	typeEnv() semtypes.Env
-	internalError(msg string)
+	internalError(msg string, pos diagnostics.Location)
 }
 
 type desugaredSymbol struct {
@@ -373,7 +370,7 @@ func (s *desugaredSymbol) Kind() model.SymbolKind {
 }
 
 func (s *desugaredSymbol) SetType(_ semtypes.SemType) {
-	panic("SetType is not supported for desugared symbols")
+	panic("SetType is not supported for desugared symbols") //nolint:forbidigo // This invariant guards immutable synthetic symbol types.
 }
 
 func (s *desugaredSymbol) Location() diagnostics.Location {
@@ -389,9 +386,10 @@ func (s *desugaredSymbol) Copy() model.Symbol {
 	return &cp
 }
 
-func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.SymbolKind, isPublic bool, pos diagnostics.Location) (string, model.SymbolRef) {
+func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.SymbolKind, pos diagnostics.Location) (string, model.SymbolRef) {
 	if len(ctx.scopeStack) == 0 {
-		ctx.internalError("cannot add desugared symbol when scope stack is empty")
+		ctx.internalError("cannot add desugared symbol when scope stack is empty", pos)
+		return "", model.SymbolRef{}
 	}
 	name := ctx.nextDesugarSymbolName()
 	symbol := &desugaredSymbol{
@@ -399,7 +397,7 @@ func (ctx *functionContext) addDesugardSymbol(ty semtypes.SemType, kind model.Sy
 		ty:       ty,
 		kind:     kind,
 		location: pos,
-		isPublic: isPublic,
+		isPublic: false,
 	}
 	ctx.currentScope().AddSymbol(name, symbol)
 	ref, _ := ctx.currentScope().GetSymbol(name)
@@ -422,7 +420,7 @@ type moduleInitNode struct {
 func collectModuleInitNodes(pkg *ast.BLangPackage) []moduleInitNode {
 	nodes := make([]moduleInitNode, 0, len(pkg.GlobalVars))
 	for i := range pkg.GlobalVars {
-		gv := &pkg.GlobalVars[i]
+		gv := pkg.GlobalVars[i]
 		var expr ast.BLangExpression
 		if gv.Expr != nil {
 			expr = gv.Expr.(ast.BLangExpression)
@@ -464,7 +462,7 @@ func (v *dependencyVisitor) Visit(node ast.BLangNode) ast.Visitor {
 	switch n := node.(type) {
 	case *ast.BLangConstRef:
 		v.depends(n.Symbol())
-	case *ast.BLangSimpleVarRef:
+	case *ast.BLangVarRef:
 		v.depends(n.Symbol())
 	case *ast.BLangAnnotAccessExpr:
 		v.dependsOnRuntimeAnnotation(n)
@@ -563,7 +561,7 @@ func toplogicallySortInits(compilerCtx *context.CompilerContext, nodes []moduleI
 func buildInitAssignment(compilerCtx *context.CompilerContext, node moduleInitNode) ast.StatementNode {
 	initExpr := node.expr
 	basePos := initExpr.GetPosition()
-	varRef := &ast.BLangSimpleVarRef{
+	varRef := &ast.BLangVarRef{
 		VariableName: node.name,
 	}
 	varRef.SetSymbol(node.sym)
@@ -572,7 +570,7 @@ func buildInitAssignment(compilerCtx *context.CompilerContext, node moduleInitNo
 		VarRef: varRef,
 		Expr:   initExpr,
 	}
-	assignment.SetDeterminedType(semtypes.NEVER)
+	assignment.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(assignment, basePos)
 	return assignment
 }
@@ -580,10 +578,10 @@ func buildInitAssignment(compilerCtx *context.CompilerContext, node moduleInitNo
 // wrapInCheck wraps an expression with a check (check <expr>).
 func wrapInCheck(expr ast.BLangExpression) ast.BLangExpression {
 	exprTy := expr.GetDeterminedType()
-	if !semtypes.ContainsBasicType(exprTy, semtypes.ERROR) {
+	if !semtypes.ContainsBasicType(exprTy, semtypes.Error) {
 		return expr
 	}
-	narrowed := semtypes.Diff(exprTy, semtypes.ERROR)
+	narrowed := semtypes.Diff(exprTy, semtypes.Error)
 	checked := &ast.BLangCheckedExpr{Expr: expr}
 	checked.SetDeterminedType(narrowed)
 	checked.SetPosition(expr.GetPosition())
@@ -593,7 +591,7 @@ func wrapInCheck(expr ast.BLangExpression) ast.BLangExpression {
 // createExpressionStmt wraps the given expression into a BLangExpressionStmt
 func createExpressionStmt(expr ast.BLangExpression, pos diagnostics.Location) *ast.BLangExpressionStmt {
 	stmt := &ast.BLangExpressionStmt{Expr: expr}
-	stmt.SetDeterminedType(semtypes.NEVER)
+	stmt.SetDeterminedType(semtypes.Never)
 	stmt.SetPosition(pos)
 	return stmt
 }
@@ -606,11 +604,11 @@ func serviceInitResultType(pkgCtx *packageContext, svc *ast.BLangService, svcTy 
 	}
 	fnSym, ok := pkgCtx.getSymbol(svc.InitFunction.Symbol()).(model.FunctionSymbol)
 	if !ok {
-		pkgCtx.internalError("failed to find init function symbol")
-		return semtypes.NEVER
+		pkgCtx.internalError("failed to find init function symbol", svc.InitFunction.GetPosition())
+		return semtypes.Never
 	}
 	retTy := fnSym.TypedSignature().ReturnType
-	errComponent := semtypes.Diff(retTy, semtypes.NIL)
+	errComponent := semtypes.Diff(retTy, semtypes.Nil)
 	return semtypes.Union(errComponent, svcTy)
 }
 
@@ -618,7 +616,7 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 	nodes := collectModuleInitNodes(pkg)
 	order, ok := toplogicallySortInits(compilerCtx, nodes)
 	if !ok {
-		pkgCtx.internalError("module init dependency ordering failed")
+		pkgCtx.internalError("module init dependency ordering failed", pkg.GetPosition())
 		return nil
 	}
 
@@ -649,7 +647,7 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 	widenInitReturnTypeToErrorOptional(compilerCtx, pkg.InitFunction)
 
 	var initStmts []ast.StatementNode
-	var moduleListenersRef *ast.BLangSimpleVarRef
+	var moduleListenersRef *ast.BLangVarRef
 	if hasListeners {
 		mlRef, mlInitStmt := addModuleListenersGlobal(pkgCtx, pkg, initPos)
 		moduleListenersRef = mlRef
@@ -670,7 +668,7 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 	clearModuleInitExprs(pkg)
 
 	for i := range pkg.Services {
-		initStmts = append(initStmts, buildServiceInitStmts(pkgCtx, pkg, &pkg.Services[i])...)
+		initStmts = append(initStmts, buildServiceInitStmts(pkgCtx, pkg, pkg.Services[i])...)
 	}
 	body := pkg.InitFunction.Body.(*ast.BLangBlockFunctionBody)
 	if initFnCreated {
@@ -694,21 +692,21 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 // the `$moduleListeners` array and invokes the listener method that
 // ListenerMethodFor returns for the function name, propagating errors via
 // `check`.
-func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleListenersRef *ast.BLangSimpleVarRef, initPos diagnostics.Location) {
+func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleListenersRef *ast.BLangVarRef, initPos diagnostics.Location) {
 	compilerCtx := pkgCtx.compilerCtx
-	errorOrNil := semtypes.Union(semtypes.NIL, semtypes.ERROR)
+	errorOrNil := semtypes.Union(semtypes.Nil, semtypes.Error)
 	pkgID := pkg.PackageID
 	tyCtx := pkgCtx.typeCtx()
-	elementTy := semtypes.ListMemberTypeInnerVal(tyCtx, moduleListenersRef.GetDeterminedType(), semtypes.INT)
+	elementTy := semtypes.ListMemberTypeInnerVal(tyCtx, moduleListenersRef.GetDeterminedType(), semtypes.Int)
 
 	buildMethodCallStmt := func(scope model.Scope, listenerRef ast.BLangExpression, methodName string) ast.StatementNode {
 		fnTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst(methodName), elementTy)
 		if semtypes.IsZero(fnTy) {
-			pkgCtx.internalError("listener element type does not expose method " + methodName)
+			pkgCtx.internalError("listener element type does not expose method "+methodName, listenerRef.GetPosition())
 			return nil
 		}
 		ld := semtypes.NewListDefinition()
-		paramList := ld.DefineListTypeWrapped(pkgCtx.typeEnv(), nil, 0, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+		paramList := ld.Define(pkgCtx.typeEnv(), nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
 		retTy := semtypes.FunctionReturnType(tyCtx, fnTy, paramList)
 
 		fnSymName := "$" + methodName + "Method"
@@ -717,7 +715,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		fnSymRef, _ := scope.GetSymbol(fnSymName)
 
 		inv := &ast.BLangInvocation{}
-		inv.Name = &ast.BLangIdentifier{Value: methodName}
+		inv.Name = newIdentifier(methodName)
 		inv.Expr = listenerRef
 		inv.SetSymbol(fnSymRef)
 		inv.SetDeterminedType(retTy)
@@ -732,18 +730,17 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		foreachScope.AddSymbol(loopVarName, loopSym)
 		loopSymRef, _ := foreachScope.GetSymbol(loopVarName)
 
-		loopVarIdent := &ast.BLangIdentifier{Value: loopVarName}
-		loopVarIdent.SetDeterminedType(semtypes.NEVER)
+		loopVarIdent := newIdentifier(loopVarName)
 		loopVarIdent.SetPosition(initPos)
-		loopVar := &ast.BLangSimpleVariable{Name: loopVarIdent}
-		loopVar.SetDeterminedType(elementTy)
+		loopVar := &ast.BLangVariable{Name: loopVarIdent}
+		loopVar.SetDeterminedType(semtypes.Never)
 		loopVar.SetSymbol(loopSymRef)
 		loopVar.SetPosition(initPos)
-		loopVarDef := &ast.BLangSimpleVariableDef{Var: loopVar}
-		loopVarDef.SetDeterminedType(semtypes.NEVER)
+		loopVarDef := &ast.BLangVariableDef{Var: loopVar}
+		loopVarDef.SetDeterminedType(semtypes.Never)
 		loopVarDef.SetPosition(initPos)
 
-		loopVarRef := &ast.BLangSimpleVarRef{VariableName: loopVarIdent}
+		loopVarRef := &ast.BLangVarRef{VariableName: loopVarIdent}
 		loopVarRef.SetSymbol(loopSymRef)
 		loopVarRef.SetDeterminedType(elementTy)
 		loopVarRef.SetPosition(initPos)
@@ -757,19 +754,19 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 			Collection:  &collectionRef,
 			Body:        ast.BLangBlockStmt{Stmts: []ast.StatementNode{bodyStmt}},
 		}
-		foreach.Body.SetDeterminedType(semtypes.NEVER)
+		foreach.Body.SetDeterminedType(semtypes.Never)
 		foreach.Body.SetPosition(initPos)
 		foreach.SetScope(foreachScope)
-		foreach.SetDeterminedType(semtypes.NEVER)
+		foreach.SetDeterminedType(semtypes.Never)
 		foreach.SetPosition(initPos)
 		return foreach
 	}
 
 	buildLifecycleFn := func(fnName string) *ast.BLangFunction {
 		fn := &ast.BLangFunction{}
-		fn.Name = &ast.BLangIdentifier{Value: fnName}
-		fn.Name.SetDeterminedType(semtypes.NEVER)
-		fn.SetDeterminedType(semtypes.NEVER)
+		fn.Name = newIdentifier(fnName)
+		fn.Name.SetDeterminedType(semtypes.Never)
+		fn.SetDeterminedType(semtypes.Never)
 		fn.SetPosition(initPos)
 
 		signature := model.TypedFunctionSignature{ReturnType: errorOrNil}
@@ -784,14 +781,14 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		foreachStmt := buildForeach(fnScope, ListenerMethodFor(fnName))
 
 		body := &ast.BLangBlockFunctionBody{Stmts: []ast.StatementNode{foreachStmt}}
-		body.SetDeterminedType(semtypes.NEVER)
+		body.SetDeterminedType(semtypes.Never)
 		body.SetPosition(initPos)
 		fn.Body = body
 		return fn
 	}
 
 	for _, fnName := range []string{StartFunctionName, GracefulStopFunctionName, ImmediateStopFunctionName} {
-		pkg.Functions = append(pkg.Functions, *buildLifecycleFn(fnName))
+		pkg.Functions = append(pkg.Functions, buildLifecycleFn(fnName))
 	}
 }
 
@@ -799,9 +796,9 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 // Each one iterates the module's listener array and invokes the matching
 // listener method (see ListenerMethodFor).
 const (
-	StartFunctionName         = "$start"
-	GracefulStopFunctionName  = "$gracefulStop"
-	ImmediateStopFunctionName = "$immediateStop"
+	StartFunctionName         = model.ModuleStartFunctionName
+	GracefulStopFunctionName  = model.ModuleGracefulStopFunctionName
+	ImmediateStopFunctionName = model.ModuleImmediateStopFunctionName
 )
 
 // ListenerMethodFor returns the listener method name that the given lifecycle
@@ -827,25 +824,25 @@ func hasModuleListenerVar(compilerCtx *context.CompilerContext, nodes []moduleIn
 	return false
 }
 
-func buildModuleInitVarRef(compilerCtx *context.CompilerContext, node moduleInitNode) *ast.BLangSimpleVarRef {
+func buildModuleInitVarRef(compilerCtx *context.CompilerContext, node moduleInitNode) *ast.BLangVarRef {
 	pos := diagnostics.Location{}
 	if node.expr != nil {
 		pos = node.expr.GetPosition()
 	}
-	listenerVarRef := &ast.BLangSimpleVarRef{VariableName: node.name}
+	listenerVarRef := &ast.BLangVarRef{VariableName: node.name}
 	listenerVarRef.SetSymbol(node.sym)
 	listenerVarRef.SetDeterminedType(compilerCtx.SymbolType(node.sym))
 	listenerVarRef.SetPosition(pos)
 	return listenerVarRef
 }
 
-func buildListnerInit(pkgCtx *packageContext, node moduleInitNode, moduleListenersRef *ast.BLangSimpleVarRef) []ast.StatementNode {
+func buildListnerInit(pkgCtx *packageContext, node moduleInitNode, moduleListenersRef *ast.BLangVarRef) []ast.StatementNode {
 	compilerCtx := pkgCtx.compilerCtx
 	pos := node.expr.GetPosition()
 	listenerVarRef := buildModuleInitVarRef(compilerCtx, node)
 
 	assign := &ast.BLangAssignment{VarRef: listenerVarRef, Expr: wrapInCheck(node.expr)}
-	assign.SetDeterminedType(semtypes.NEVER)
+	assign.SetDeterminedType(semtypes.Never)
 	assign.SetPosition(pos)
 
 	stmts := []ast.StatementNode{assign}
@@ -854,7 +851,7 @@ func buildListnerInit(pkgCtx *packageContext, node moduleInitNode, moduleListene
 	pushSrc := *listenerVarRef
 	inv := createArrayPushInvocation(pkgCtx, &mlRef, &pushSrc)
 	if inv == nil {
-		pkgCtx.internalError("failed to create array:push invocation for module listener")
+		pkgCtx.internalError("failed to create array:push invocation for module listener", pos)
 		return stmts
 	}
 	return append(stmts, createExpressionStmt(inv, pos))
@@ -878,7 +875,7 @@ func pickInitFunctionPosition(nodes []moduleInitNode, pkg *ast.BLangPackage) dia
 // widenInitReturnTypeToErrorOptional mutates the module init function so its
 // return type is `error?`
 func widenInitReturnTypeToErrorOptional(compilerCtx *context.CompilerContext, initFn *ast.BLangFunction) {
-	newRet := semtypes.Union(semtypes.NIL, semtypes.ERROR)
+	newRet := semtypes.Union(semtypes.Nil, semtypes.Error)
 	fnSym, ok := compilerCtx.GetSymbol(initFn.Symbol()).(model.FunctionSymbol)
 	if !ok {
 		compilerCtx.InternalError("module init function symbol is not a FunctionSymbol", initFn.GetPosition())
@@ -891,16 +888,16 @@ func widenInitReturnTypeToErrorOptional(compilerCtx *context.CompilerContext, in
 
 func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, initPos diagnostics.Location) {
 	pkg.InitFunction = &ast.BLangFunction{}
-	pkg.InitFunction.Name = &ast.BLangIdentifier{Value: "init"}
-	pkg.InitFunction.Name.SetDeterminedType(semtypes.NEVER)
+	pkg.InitFunction.Name = newIdentifier("init")
+	pkg.InitFunction.Name.SetDeterminedType(semtypes.Never)
 	body := &ast.BLangBlockFunctionBody{}
-	body.SetDeterminedType(semtypes.NEVER)
+	body.SetDeterminedType(semtypes.Never)
 	body.SetPosition(initPos)
 	pkg.InitFunction.Body = body
-	pkg.InitFunction.SetDeterminedType(semtypes.NEVER)
+	pkg.InitFunction.SetDeterminedType(semtypes.Never)
 	pkg.InitFunction.SetPosition(initPos)
 	pkgID := pkg.PackageID
-	signature := model.TypedFunctionSignature{ReturnType: semtypes.NIL}
+	signature := model.TypedFunctionSignature{ReturnType: semtypes.Nil}
 	initSymbol := model.NewFunctionSymbol("init", signature, false, initPos)
 	symbolSpace := compilerCtx.NewSymbolSpace(*pkgID)
 	symbolSpace.AddSymbol("init", initSymbol)
@@ -916,34 +913,33 @@ func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPack
 // https://github.com/ballerina-nutcracker/ballerina/issues/475
 const moduleListenersGlobalName = "$moduleListeners"
 
-func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos diagnostics.Location) (*ast.BLangSimpleVarRef, ast.StatementNode) {
+func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos diagnostics.Location) (*ast.BLangVarRef, ast.StatementNode) {
 	tyCtx := pkgCtx.typeCtx()
 	env := pkgCtx.typeEnv()
 	var listnerTop semtypes.SemType
 	{
 		listDefn := semtypes.NewListDefinition()
-		stringArr := listDefn.DefineListTypeWrapped(env, nil, 0, semtypes.STRING, semtypes.CellMutability_CELL_MUT_LIMITED)
-		listnerTop = semtypes.Union(semtypes.ListenerTy(tyCtx, semtypes.NEVER, stringArr), semtypes.Union(semtypes.ListenerTy(tyCtx, semtypes.NEVER, semtypes.STRING), semtypes.ListenerTy(tyCtx, semtypes.NEVER, semtypes.NIL)))
+		stringArr := listDefn.Define(env, nil, semtypes.ListRest(semtypes.String))
+		listnerTop = semtypes.Union(semtypes.ListenerTy(tyCtx, semtypes.Never, stringArr), semtypes.Union(semtypes.ListenerTy(tyCtx, semtypes.Never, semtypes.String), semtypes.ListenerTy(tyCtx, semtypes.Never, semtypes.Nil)))
 	}
 	var arrTy semtypes.SemType
 	{
 		listDefn := semtypes.NewListDefinition()
-		arrTy = listDefn.DefineListTypeWrapped(env, nil, 0, listnerTop, semtypes.CellMutability_CELL_MUT_LIMITED)
+		arrTy = listDefn.Define(env, nil, semtypes.ListRest(listnerTop))
 	}
 
 	sym := model.NewVariableSymbol(moduleListenersGlobalName, false, false, false, pos)
 	symRef := pkgCtx.addModuleSymbol(moduleListenersGlobalName, &sym)
 	pkgCtx.setSymbolType(symRef, arrTy)
 
-	global := &ast.BLangSimpleVariable{}
-	global.SetName(&ast.BLangIdentifier{Value: moduleListenersGlobalName})
-	global.Name.SetDeterminedType(semtypes.NEVER)
+	global := &ast.BLangVariable{}
+	global.SetName(newIdentifier(moduleListenersGlobalName))
 	global.SetSymbol(symRef)
-	global.SetDeterminedType(arrTy)
+	global.SetDeterminedType(semtypes.Never)
 	global.SetPosition(pos)
 	pkg.AddGlobalVariable(global)
 
-	ref := &ast.BLangSimpleVarRef{VariableName: &ast.BLangIdentifier{Value: moduleListenersGlobalName}}
+	ref := &ast.BLangVarRef{VariableName: newIdentifier(moduleListenersGlobalName)}
 	ref.VariableName.SetPosition(pos)
 	ref.SetSymbol(symRef)
 	ref.SetDeterminedType(arrTy)
@@ -951,12 +947,12 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 
 	emptyList := &ast.BLangListConstructorExpr{Exprs: []ast.BLangExpression{}}
 	emptyList.SetDeterminedType(arrTy)
-	emptyList.AtomicType = semtypes.LIST_ATOMIC_INNER
+	emptyList.AtomicType = semtypes.ListAtomicInner
 	emptyList.SetPosition(pos)
 
 	assignRef := *ref
 	assign := &ast.BLangAssignment{VarRef: &assignRef, Expr: emptyList}
-	assign.SetDeterminedType(semtypes.NEVER)
+	assign.SetDeterminedType(semtypes.Never)
 	assign.SetPosition(pos)
 	return ref, assign
 }
@@ -969,7 +965,7 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *ast.BLangService) []ast.StatementNode {
 	svcTy := svc.GetTypeData().Type
 	if semtypes.IsZero(svcTy) || semtypes.IsZero(svc.ObjectBodyType) {
-		pkgCtx.internalError("service types unresolved at desugar")
+		pkgCtx.internalError("service types unresolved at desugar", svc.GetPosition())
 		return nil
 	}
 	initExpr := &BLangServiceInit{Service: svc}
@@ -995,9 +991,9 @@ func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *a
 // `listener` variable initialized to that expression.
 func hoistInlineServiceListeners(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 	for i := range pkg.Services {
-		svc := &pkg.Services[i]
+		svc := pkg.Services[i]
 		for j, listenerExpr := range svc.AttachedExprs {
-			_, ok := listenerExpr.(*ast.BLangSimpleVarRef)
+			_, ok := listenerExpr.(*ast.BLangVarRef)
 			if ok {
 				continue
 			}
@@ -1005,28 +1001,27 @@ func hoistInlineServiceListeners(pkgCtx *packageContext, pkg *ast.BLangPackage) 
 			pos := listenerExpr.GetPosition()
 			exprTy := listenerExpr.GetDeterminedType()
 			if semtypes.IsZero(exprTy) {
-				pkgCtx.internalError("inline listener expression has no determined type at desugar")
+				pkgCtx.internalError("inline listener expression has no determined type at desugar", pos)
 				return
 			}
-			ty := semtypes.Diff(exprTy, semtypes.ERROR)
+			ty := semtypes.Diff(exprTy, semtypes.Error)
 			name := pkgCtx.nextDesugarSymbolName()
 			sym := model.NewVariableSymbol(name, false, false, false, pos)
 			sym.SetListener()
 			symRef := pkgCtx.addModuleSymbol(name, &sym)
 			pkgCtx.setSymbolType(symRef, ty)
 
-			ident := &ast.BLangIdentifier{Value: name}
-			ident.SetDeterminedType(semtypes.NEVER)
+			ident := newIdentifier(name)
 			ident.SetPosition(pos)
 
-			gv := &ast.BLangSimpleVariable{Name: ident}
-			gv.SetDeterminedType(ty)
+			gv := &ast.BLangVariable{Name: ident}
+			gv.SetDeterminedType(semtypes.Never)
 			gv.SetSymbol(symRef)
 			gv.SetInitialExpression(listenerExpr)
 			gv.SetPosition(pos)
 			pkg.AddGlobalVariable(gv)
 
-			ref := &ast.BLangSimpleVarRef{VariableName: ident}
+			ref := &ast.BLangVarRef{VariableName: ident}
 			ref.SetSymbol(symRef)
 			ref.SetDeterminedType(ty)
 			ref.SetPosition(pos)
@@ -1035,27 +1030,26 @@ func hoistInlineServiceListeners(pkgCtx *packageContext, pkg *ast.BLangPackage) 
 	}
 }
 
-func createDesugaredLocal(pkgCtx *packageContext, scope model.Scope, ty semtypes.SemType, initExpr ast.BLangExpression, pos diagnostics.Location) (*ast.BLangSimpleVariableDef, *ast.BLangSimpleVarRef) {
+func createDesugaredLocal(pkgCtx *packageContext, scope model.Scope, ty semtypes.SemType, initExpr ast.BLangExpression, pos diagnostics.Location) (*ast.BLangVariableDef, *ast.BLangVarRef) {
 	name := pkgCtx.nextDesugarSymbolName()
 	sym := &desugaredSymbol{name: name, ty: ty, kind: model.SymbolKindVariable, location: pos}
 	scope.AddSymbol(name, sym)
 	symRef, _ := scope.GetSymbol(name)
 
-	ident := &ast.BLangIdentifier{Value: name}
-	ident.SetDeterminedType(semtypes.NEVER)
+	ident := newIdentifier(name)
 	ident.SetPosition(pos)
 
-	variable := &ast.BLangSimpleVariable{Name: ident}
-	variable.SetDeterminedType(ty)
+	variable := &ast.BLangVariable{Name: ident}
+	variable.SetDeterminedType(semtypes.Never)
 	variable.SetSymbol(symRef)
 	variable.SetInitialExpression(initExpr)
 	variable.SetPosition(pos)
 
-	varDef := &ast.BLangSimpleVariableDef{Var: variable}
-	varDef.SetDeterminedType(semtypes.NEVER)
+	varDef := &ast.BLangVariableDef{Var: variable}
+	varDef.SetDeterminedType(semtypes.Never)
 	varDef.SetPosition(pos)
 
-	ref := &ast.BLangSimpleVarRef{VariableName: ident}
+	ref := &ast.BLangVarRef{VariableName: ident}
 	ref.SetSymbol(symRef)
 	ref.SetDeterminedType(ty)
 	ref.SetPosition(pos)
@@ -1067,29 +1061,29 @@ func createArrayPushInvocation(pkgCtx *packageContext, listExpr, valueExpr ast.B
 	pkgName := "lang.array"
 	space, ok := pkgCtx.getImportedSymbolSpace(pkgName)
 	if !ok {
-		pkgCtx.internalError(pkgName + " symbol space not found")
+		pkgCtx.internalError(pkgName+" symbol space not found", listExpr.GetPosition())
 		return nil
 	}
 	pushRef, ok := space.GetSymbol("push")
 	if !ok {
-		pkgCtx.internalError(pkgName + ":push symbol not found")
+		pkgCtx.internalError(pkgName+":push symbol not found", listExpr.GetPosition())
 		return nil
 	}
 	pushSym, ok := pkgCtx.getSymbol(pushRef).(*model.OpaqueFunctionSymbol)
 	if !ok {
-		pkgCtx.internalError(pkgName + ":push is not an opaque function symbol")
+		pkgCtx.internalError(pkgName+":push is not an opaque function symbol", listExpr.GetPosition())
 		return nil
 	}
 	pkgCtx.addImplicitImport(pkgName, ast.BLangImportPackage{
-		OrgName:      &ast.BLangIdentifier{Value: "ballerina"},
+		OrgName:      newIdentifier("ballerina"),
 		PkgNameComps: []ast.BLangIdentifier{{Value: "lang"}, {Value: "array"}},
-		Alias:        &ast.BLangIdentifier{Value: pkgName},
+		Alias:        newIdentifier(pkgName),
 	})
-	inv := &ast.BLangInvocation{PkgAlias: &ast.BLangIdentifier{Value: pkgName}}
-	inv.Name = &ast.BLangIdentifier{Value: pushSym.Name()}
+	inv := &ast.BLangInvocation{PkgAlias: newIdentifier(pkgName)}
+	inv.Name = newIdentifier(pushSym.Name())
 	inv.ArgExprs = []ast.BLangExpression{listExpr, valueExpr}
 	inv.SetSymbol(pushRef)
-	inv.SetDeterminedType(semtypes.NIL)
+	inv.SetDeterminedType(semtypes.Nil)
 	inv.SetPosition(valueExpr.GetPosition())
 	return inv
 }
@@ -1097,19 +1091,19 @@ func createArrayPushInvocation(pkgCtx *packageContext, listExpr, valueExpr ast.B
 func buildListenerStartInvocation(pkgCtx *packageContext, listenerExpr ast.BLangExpression) *ast.BLangInvocation {
 	listenerTy := listenerExpr.GetDeterminedType()
 	if semtypes.IsZero(listenerTy) {
-		pkgCtx.internalError("listener expression has no determined type at desugar")
+		pkgCtx.internalError("listener expression has no determined type at desugar", listenerExpr.GetPosition())
 		return nil
 	}
 	startFnTy := semtypes.ObjectMemberType(pkgCtx.typeCtx(), semtypes.StringConst("start"), listenerTy)
 	if semtypes.IsZero(startFnTy) {
-		pkgCtx.internalError("listener type has no start method type at desugar")
+		pkgCtx.internalError("listener type has no start method type at desugar", listenerExpr.GetPosition())
 		return nil
 	}
 	inv := &ast.BLangInvocation{}
-	inv.Name = &ast.BLangIdentifier{Value: "start"}
+	inv.Name = newIdentifier("start")
 	inv.Expr = listenerExpr
 	argListDefn := semtypes.NewListDefinition()
-	argListTy := argListDefn.DefineListTypeWrapped(pkgCtx.typeEnv(), []semtypes.SemType{}, 0, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+	argListTy := argListDefn.Define(pkgCtx.typeEnv(), nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
 	inv.SetDeterminedType(semtypes.FunctionReturnType(pkgCtx.typeCtx(), startFnTy, argListTy))
 	inv.SetPosition(listenerExpr.GetPosition())
 	return inv
@@ -1121,13 +1115,13 @@ func buildListenerStartInvocation(pkgCtx *packageContext, listenerExpr ast.BLang
 func buildListenerAttachInvocation(pkgCtx *packageContext, svc *ast.BLangService, listenerExpr ast.BLangExpression, svcRef ast.BLangExpression) *ast.BLangInvocation {
 	listenerTy := listenerExpr.GetDeterminedType()
 	if semtypes.IsZero(listenerTy) {
-		pkgCtx.internalError("listener expression has no determined type at desugar")
+		pkgCtx.internalError("listener expression has no determined type at desugar", listenerExpr.GetPosition())
 		return nil
 	}
 	tyCtx := pkgCtx.typeCtx()
 	attachFnTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("attach"), listenerTy)
 	if semtypes.IsZero(attachFnTy) {
-		pkgCtx.internalError("listener type has no attach method type at desugar")
+		pkgCtx.internalError("listener type has no attach method type at desugar", listenerExpr.GetPosition())
 		return nil
 	}
 	paramListTy := semtypes.FunctionParamListType(tyCtx, attachFnTy)
@@ -1137,13 +1131,15 @@ func buildListenerAttachInvocation(pkgCtx *packageContext, svc *ast.BLangService
 		return nil
 	}
 	inv := &ast.BLangInvocation{}
-	inv.Name = &ast.BLangIdentifier{Value: "attach"}
+	inv.Name = newIdentifier("attach")
 	inv.Expr = listenerExpr
 	inv.ArgExprs = []ast.BLangExpression{svcRef, attachPointExpr}
 	argListDefn := semtypes.NewListDefinition()
-	argListTy := argListDefn.DefineListTypeWrapped(pkgCtx.typeEnv(), []semtypes.SemType{svcRef.GetDeterminedType(), attachPointExpr.GetDeterminedType()}, 2, semtypes.NEVER, semtypes.CellMutability_CELL_MUT_NONE)
+	argListTy := argListDefn.Define(pkgCtx.typeEnv(),
+		[]semtypes.SemType{svcRef.GetDeterminedType(), attachPointExpr.GetDeterminedType()},
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	if !semtypes.IsSubtype(tyCtx, argListTy, paramListTy) {
-		pkgCtx.internalError("desugared listener attach arguments do not match the listener parameter types")
+		pkgCtx.internalError("desugared listener attach arguments do not match the listener parameter types", svc.GetPosition())
 		return nil
 	}
 	inv.SetDeterminedType(semtypes.FunctionReturnType(tyCtx, attachFnTy, argListTy))
@@ -1157,7 +1153,7 @@ func buildListenerAttachInvocation(pkgCtx *packageContext, svc *ast.BLangService
 func buildAttachPointExpression(pkgCtx *packageContext, svc *ast.BLangService, attachPointParamTy semtypes.SemType) ast.BLangExpression {
 	attachPointTy := svc.AttachPointType
 	if semtypes.IsZero(attachPointTy) {
-		pkgCtx.internalError("service attach-point type unresolved at desugar")
+		pkgCtx.internalError("service attach-point type unresolved at desugar", svc.GetPosition())
 		return nil
 	}
 	if svc.AttachPointLiteral != nil {
@@ -1177,9 +1173,9 @@ func buildAttachPointExpression(pkgCtx *packageContext, svc *ast.BLangService, a
 		lit.SetDeterminedType(semtypes.StringConst(svc.AbsoluteResourcePath[i].Value))
 		lit.SetPosition(svc.AbsoluteResourcePath[i].GetPosition())
 		elements[i] = lit
-		members[i] = semtypes.ListMemberInfo{Index: i, ValType: lit.GetDeterminedType()}
+		members[i] = semtypes.ListMemberInfo{Index: i, ValueType: lit.GetDeterminedType()}
 	}
-	listTy := semtypes.Intersect(attachPointParamTy, semtypes.LIST)
+	listTy := semtypes.Intersect(attachPointParamTy, semtypes.List)
 	var arrayTy semtypes.SemType
 	found := false
 	for _, alt := range semtypes.ListAlternatives(pkgCtx.typeCtx(), listTy) {
@@ -1187,19 +1183,19 @@ func buildAttachPointExpression(pkgCtx *packageContext, svc *ast.BLangService, a
 			continue
 		}
 		if found {
-			pkgCtx.internalError("listener attach-point parameter has multiple applicable list types")
+			pkgCtx.internalError("listener attach-point parameter has multiple applicable list types", svc.GetPosition())
 			return nil
 		}
-		arrayTy = alt.SemType
+		arrayTy = alt.Type()
 		found = true
 	}
 	if !found {
-		pkgCtx.internalError("listener attach-point parameter has no applicable list type")
+		pkgCtx.internalError("listener attach-point parameter has no applicable list type", svc.GetPosition())
 		return nil
 	}
 	lat := semtypes.ToListAtomicType(pkgCtx.typeEnv(), arrayTy)
 	if lat == nil {
-		pkgCtx.internalError("applicable listener attach-point list type is not atomic")
+		pkgCtx.internalError("applicable listener attach-point list type is not atomic", svc.GetPosition())
 		return nil
 	}
 	arr := &ast.BLangListConstructorExpr{Exprs: elements, AtomicType: *lat}
@@ -1208,26 +1204,34 @@ func buildAttachPointExpression(pkgCtx *packageContext, svc *ast.BLangService, a
 	return arr
 }
 
-func newSimpleVariable(name string, ty semtypes.SemType) *ast.BLangSimpleVariable {
-	v := &ast.BLangSimpleVariable{}
-	v.Name = &ast.BLangIdentifier{Value: name}
-	v.Name.SetDeterminedType(semtypes.NEVER)
-	v.SetDeterminedType(ty)
+func newSimpleVariable(name string, ty semtypes.SemType) *ast.BLangVariable {
+	typeNode := &ast.BLangValueType{}
+	typeNode.SetTypeData(ast.TypeData{Type: ty})
+	v := &ast.BLangVariable{Name: newIdentifier(name)}
+	v.SetTypeNode(typeNode)
+	v.SetDeterminedType(semtypes.Never)
 	return v
 }
 
-func createDefaultValueFunction(name string, defaultExpr ast.BLangExpression) *ast.BLangFunction {
+func createDefaultValueFunction(name string, defaultExpr ast.BLangExpression, requiredParams []ast.BLangVariable) *ast.BLangFunction {
+	pos := defaultExpr.GetPosition()
 	retStmt := &ast.BLangReturn{Expr: defaultExpr}
-	retStmt.SetDeterminedType(semtypes.NEVER)
+	retStmt.SetDeterminedType(semtypes.Never)
+	retStmt.SetPosition(pos)
 	body := &ast.BLangBlockFunctionBody{Stmts: []ast.StatementNode{retStmt}}
-	body.SetDeterminedType(semtypes.NEVER)
+	body.SetDeterminedType(semtypes.Never)
+	body.SetPosition(pos)
+	nameNode := newIdentifier(name)
+	nameNode.SetPosition(pos)
 
-	fn := &ast.BLangFunction{}
-	fn.Name = &ast.BLangIdentifier{Value: name}
-	fn.Name.SetDeterminedType(semtypes.NEVER)
-	fn.Body = body
-	fn.SetDeterminedType(semtypes.NEVER)
-	setPositionIfMissing(fn, defaultExpr.GetPosition())
+	fn := ast.NewBLangFunction(ast.InvokableData{
+		Position:       pos,
+		Name:           nameNode,
+		RequiredParams: requiredParams,
+		Body:           body,
+	})
+	fn.Name.SetDeterminedType(semtypes.Never)
+	fn.SetDeterminedType(semtypes.Never)
 	return fn
 }
 
@@ -1241,27 +1245,42 @@ type desugaredTypeDescResult struct {
 	functions    []*ast.BLangFunction
 }
 
-func desugarLocalDefaultClosure(cx *functionContext, fn *ast.BLangFunction) []ast.StatementNode {
+type localDefaultClosure struct {
+	declaration ast.StatementNode
+	assignment  ast.StatementNode
+}
+
+func desugarLocalDefaultClosure(cx *functionContext, fn *ast.BLangFunction) localDefaultClosure {
 	fnType := cx.symbolType(fn.Symbol())
 	lambda := &ast.BLangLambdaFunction{Function: fn}
 	lambda.SetDeterminedType(fnType)
 	setPositionIfMissing(lambda, fn.GetPosition())
 
 	result := walkExpression(cx, lambda)
-	varDef, varRef := assignToLocal(cx, result.replacementNode.(ast.BLangExpression), fn.GetPosition())
+	varDef, varRef := assignToLocal(cx, result.(ast.BLangExpression), fn.GetPosition())
+	declaration := varDef.(*ast.BLangVariableDef)
+	lambdaExpr := declaration.Var.Expr
+	declaration.Var.SetInitialExpression(nil)
+
+	assignment := &ast.BLangAssignment{VarRef: varRef, Expr: lambdaExpr}
+	assignment.SetDeterminedType(semtypes.Never)
+	setPositionIfMissing(assignment, fn.GetPosition())
 	if cx.defaultClosureVars == nil {
 		cx.defaultClosureVars = make(map[model.SymbolRef]model.SymbolRef)
 	}
 	cx.defaultClosureVars[fn.Symbol()] = varRef.Symbol()
-	return append(result.initStmts, varDef)
+	return localDefaultClosure{declaration: declaration, assignment: assignment}
 }
 
 func desugarLocalTypeDescDefaults(cx *functionContext, functions []*ast.BLangFunction) []ast.StatementNode {
-	var initStmts []ast.StatementNode
+	declarations := make([]ast.StatementNode, 0, len(functions))
+	assignments := make([]ast.StatementNode, 0, len(functions))
 	for _, fn := range functions {
-		initStmts = append(initStmts, desugarLocalDefaultClosure(cx, fn)...)
+		closure := desugarLocalDefaultClosure(cx, fn)
+		declarations = append(declarations, closure.declaration)
+		assignments = append(assignments, closure.assignment)
 	}
-	return initStmts
+	return append(declarations, assignments...)
 }
 
 func desugarRecordFieldDefault(cx *functionContext, field desugaredRecordFieldResult) ast.StatementNode {
@@ -1271,15 +1290,14 @@ func desugarRecordFieldDefault(cx *functionContext, field desugaredRecordFieldRe
 	lambda.SetDeterminedType(fnType)
 	setPositionIfMissing(lambda, fn.GetPosition())
 
-	varName, varSymRef := cx.addDesugardSymbol(fnType, model.SymbolKindVariable, false, fn.GetPosition())
-	varIdent := &ast.BLangIdentifier{Value: varName}
-	varIdent.SetDeterminedType(semtypes.NEVER)
-	simpleVar := &ast.BLangSimpleVariable{Name: varIdent}
+	varName, varSymRef := cx.addDesugardSymbol(fnType, model.SymbolKindVariable, fn.GetPosition())
+	varIdent := newIdentifier(varName)
+	simpleVar := &ast.BLangVariable{Name: varIdent}
 	simpleVar.Expr = lambda
-	simpleVar.SetDeterminedType(fnType)
+	simpleVar.SetDeterminedType(semtypes.Never)
 	simpleVar.SetSymbol(varSymRef)
-	varDef := &ast.BLangSimpleVariableDef{Var: simpleVar}
-	varDef.SetDeterminedType(semtypes.NEVER)
+	varDef := &ast.BLangVariableDef{Var: simpleVar}
+	varDef.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(varDef, fn.GetPosition())
 	return varDef
 }
@@ -1359,7 +1377,7 @@ func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, par
 			continue
 		}
 		symRef := field.DefaultFnRef
-		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.DefaultExpr)
+		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.DefaultExpr, nil)
 		fnScope := ctx.newFunctionScope(parentScope)
 		fn.SetSymbol(symRef)
 		fn.SetScope(fnScope)
@@ -1388,18 +1406,16 @@ func desugarObjectTypeDesc(ctx desugarContext, objType *ast.BLangObjectType, par
 
 func desugarTopLevelTypeDescs(cx *packageContext, pkg *ast.BLangPackage) {
 	for i := range pkg.TypeDefinitions {
-		defn := &pkg.TypeDefinitions[i]
+		defn := pkg.TypeDefinitions[i]
 		typeDesc, ok := defn.GetTypeData().TypeDescriptor.(ast.BType)
 		if !ok {
-			cx.internalError("type definition has no BType type descriptor")
+			cx.internalError("type definition has no BType type descriptor", defn.GetPosition())
 			return
 		}
 		result := desugarTypeDesc(cx, typeDesc, nil)
-		for _, fn := range result.functions {
-			pkg.Functions = append(pkg.Functions, *fn)
-		}
+		pkg.Functions = append(pkg.Functions, result.functions...)
 		for _, rf := range result.recordFields {
-			pkg.Functions = append(pkg.Functions, *rf.fn)
+			pkg.Functions = append(pkg.Functions, rf.fn)
 		}
 	}
 }
@@ -1417,7 +1433,7 @@ func createDefaultClosures(ctx desugarContext, sig model.UntypedFunctionSignatur
 		if def != nil && def.Kind != model.DefaultableParamKindInferredTypedesc {
 			expr := paramExprSupplier(i)
 			if expr == nil {
-				ctx.internalError("missing expression for defaultable param")
+				ctx.internalError("missing expression for defaultable param", ctx.getSymbol(def.Symbol).Location())
 				return nil
 			}
 			defaultClosure := createDefaultClosure(ctx, def.Symbol, expr, scope, prevParamNames, prevParamTypes, prevParamSymbol)
@@ -1435,10 +1451,8 @@ func createDefaultClosure(ctx desugarContext, symRef model.SymbolRef, expr ast.B
 ) *ast.BLangFunction {
 	fnName := ctx.getSymbol(symRef).Name()
 	fnScope := ctx.newFunctionScope(scope)
-	defaultClosure := createDefaultValueFunction(fnName, expr)
-	defaultClosure.SetSymbol(symRef)
-	defaultClosure.SetScope(fnScope)
 	symbolMapping := make(map[model.SymbolRef]model.SymbolRef)
+	requiredParams := make([]ast.BLangVariable, 0, len(prevParamNames))
 	for j := range len(prevParamNames) {
 		paramName := prevParamNames[j]
 		paramTy := prevParamTypes[j]
@@ -1448,10 +1462,13 @@ func createDefaultClosure(ctx desugarContext, symRef model.SymbolRef, expr ast.B
 		paramSymRef, _ := fnScope.GetSymbol(paramName)
 		ctx.setSymbolType(paramSymRef, paramTy)
 		param.SetSymbol(paramSymRef)
-		defaultClosure.AddParameter(param)
+		requiredParams = append(requiredParams, *param)
 		ctx.associateFunctionSignature(prevParamSymbol[j], paramSymRef)
 		symbolMapping[prevParamSymbol[j]] = paramSymRef
 	}
+	defaultClosure := createDefaultValueFunction(fnName, expr, requiredParams)
+	defaultClosure.SetSymbol(symRef)
+	defaultClosure.SetScope(fnScope)
 	remapSymbolRefs(defaultClosure.Body.(ast.BLangNode), symbolMapping)
 	return defaultClosure
 }
@@ -1462,7 +1479,7 @@ func desugarFunctionParamDefaults(ctx desugarContext, fn ast.FunctionSignature, 
 	params := fn.Parameters()
 	sig, ok := ctx.functionSignature(symbol)
 	if !ok {
-		ctx.internalError("function signature not found")
+		ctx.internalError("function signature not found", fn.GetPosition())
 		return nil
 	}
 	// Desugar closures for this function
@@ -1528,14 +1545,12 @@ func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunct
 
 func desugarGlobalVars(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 	for i := range pkg.GlobalVars {
-		gv := &pkg.GlobalVars[i]
+		gv := pkg.GlobalVars[i]
 		if typeNode := gv.TypeNode(); typeNode != nil {
 			result := desugarTypeDesc(pkgCtx, typeNode, nil)
-			for _, fn := range result.functions {
-				pkg.Functions = append(pkg.Functions, *fn)
-			}
+			pkg.Functions = append(pkg.Functions, result.functions...)
 			for _, field := range result.recordFields {
-				pkg.Functions = append(pkg.Functions, *field.fn)
+				pkg.Functions = append(pkg.Functions, field.fn)
 			}
 			continue
 		}
@@ -1546,37 +1561,29 @@ func desugarGlobalVars(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 func desugarTopLevelFunctionDefaults(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 	fnCount := len(pkg.Functions)
 	for i := range fnCount {
-		function := &pkg.Functions[i]
-		for _, fn := range desugarFunctionParamDefaults(pkgCtx, function, function.Symbol(), function.Scope()) {
-			pkg.Functions = append(pkg.Functions, *fn)
-		}
+		function := pkg.Functions[i]
+		pkg.Functions = append(pkg.Functions, desugarFunctionParamDefaults(pkgCtx, function, function.Symbol(), function.Scope())...)
 	}
 }
 
 func desugarClassMethodDefaults(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 	desugarObjectMethodDefaults := func(initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
 		if initFn != nil {
-			for _, fn := range desugarFunctionParamDefaults(pkgCtx, initFn, initFn.Symbol(), initFn.Scope()) {
-				pkg.Functions = append(pkg.Functions, *fn)
-			}
+			pkg.Functions = append(pkg.Functions, desugarFunctionParamDefaults(pkgCtx, initFn, initFn.Symbol(), initFn.Scope())...)
 		}
 		for _, method := range methods {
-			for _, fn := range desugarFunctionParamDefaults(pkgCtx, method, method.Symbol(), method.Scope()) {
-				pkg.Functions = append(pkg.Functions, *fn)
-			}
+			pkg.Functions = append(pkg.Functions, desugarFunctionParamDefaults(pkgCtx, method, method.Symbol(), method.Scope())...)
 		}
 		for _, method := range resourceMethods {
-			for _, fn := range desugarFunctionParamDefaults(pkgCtx, method, method.Symbol(), method.Scope()) {
-				pkg.Functions = append(pkg.Functions, *fn)
-			}
+			pkg.Functions = append(pkg.Functions, desugarFunctionParamDefaults(pkgCtx, method, method.Symbol(), method.Scope())...)
 		}
 	}
 	for i := range pkg.ClassDefinitions {
-		classDef := &pkg.ClassDefinitions[i]
+		classDef := pkg.ClassDefinitions[i]
 		desugarObjectMethodDefaults(classDef.InitFunction, classDef.Methods, classDef.ResourceMethods)
 	}
 	for i := range pkg.Services {
-		svc := &pkg.Services[i]
+		svc := pkg.Services[i]
 		desugarObjectMethodDefaults(svc.InitFunction, svc.Methods, svc.ResourceMethods)
 	}
 }
@@ -1604,6 +1611,8 @@ func remapSymbolRefs(node ast.BLangNode, mapping map[model.SymbolRef]model.Symbo
 	if len(mapping) == 0 {
 		return
 	}
+	// This runs on source defaults before desugaring, so the tree cannot yet
+	// contain desugar-only nodes that ast.Walk does not know about.
 	ast.Walk(symbolRemapper{mapping: mapping}, node)
 }
 
@@ -1615,16 +1624,10 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	pkgCtx := newPackageContext(compilerCtx, pkg, importedSymbols)
 
 	var wg sync.WaitGroup
-	var panicErr any
-	var panicMu sync.Mutex
 
-	recoverPanic := func() {
+	recoverPanic := func(pos *diagnostics.Location) {
 		if r := recover(); r != nil {
-			panicMu.Lock()
-			defer panicMu.Unlock()
-			if panicErr == nil {
-				panicErr = r
-			}
+			compilerCtx.InternalError(fmt.Sprintf("panic during desugaring: %v", r), *pos)
 		}
 	}
 
@@ -1666,7 +1669,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 		return append(generatedFunctions, generated...)
 	}
 	for i := range pkg.Services {
-		ensureServiceDefaultInitFunction(pkgCtx, &pkg.Services[i])
+		ensureServiceDefaultInitFunction(pkgCtx, pkg.Services[i])
 	}
 
 	hoistInlineServiceListeners(pkgCtx, pkg)
@@ -1678,9 +1681,12 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	functionResults := make([][]*ast.BLangFunction, len(pkg.Functions))
 	for i := range pkg.Functions {
 		wg.Go(func() {
-			defer recoverPanic()
-			fn, generated := desugarFunction(pkgCtx, &pkg.Functions[i])
-			pkg.Functions[i] = *fn
+			pos := diagnostics.NewBuiltinLocation()
+			defer recoverPanic(&pos)
+			function := pkg.Functions[i]
+			pos = function.GetPosition()
+			fn, generated := desugarFunction(pkgCtx, function)
+			pkg.Functions[i] = fn
 			functionResults[i] = generated
 		})
 	}
@@ -1688,15 +1694,21 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	objectResults := make([][]*ast.BLangFunction, len(pkg.ClassDefinitions))
 	for i := range pkg.ClassDefinitions {
 		wg.Go(func() {
-			defer recoverPanic()
-			objectResults[i] = desugarObject(&pkg.ClassDefinitions[i])
+			pos := diagnostics.NewBuiltinLocation()
+			defer recoverPanic(&pos)
+			class := pkg.ClassDefinitions[i]
+			pos = class.GetPosition()
+			objectResults[i] = desugarObject(class)
 		})
 	}
 	serviceResults := make([][]*ast.BLangFunction, len(pkg.Services))
 	for i := range pkg.Services {
 		wg.Go(func() {
-			defer recoverPanic()
-			serviceResults[i] = desugarService(&pkg.Services[i])
+			pos := diagnostics.NewBuiltinLocation()
+			defer recoverPanic(&pos)
+			service := pkg.Services[i]
+			pos = service.GetPosition()
+			serviceResults[i] = desugarService(service)
 		})
 	}
 
@@ -1710,12 +1722,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 	for _, result := range serviceResults {
 		generatedFunctions = append(generatedFunctions, result...)
 	}
-	for _, fn := range sortedGeneratedFunctions(generatedFunctions) {
-		pkg.Functions = append(pkg.Functions, *fn)
-	}
-	if panicErr != nil {
-		panic(panicErr)
-	}
+	pkg.Functions = append(pkg.Functions, generatedFunctions...)
 
 	pkg.Constants = nil
 	return pkg
@@ -1736,14 +1743,14 @@ func desugarServiceDefinition(pkgCtx *packageContext, svc *ast.BLangService) {
 func synthesizeDefaultInitFunction(pkgCtx *packageContext, classScope model.Scope, pos diagnostics.Location) *ast.BLangFunction {
 	fn := ast.BLangFunction{}
 	fn.SetAttached()
-	fn.Name = &ast.BLangIdentifier{Value: "init"}
+	fn.Name = newIdentifier("init")
 	body := &ast.BLangBlockFunctionBody{}
 	body.SetPosition(pos)
 	fn.Body = body
-	fn.SetDeterminedType(semtypes.NEVER)
+	fn.SetDeterminedType(semtypes.Never)
 	fn.SetScope(pkgCtx.newFunctionScope(classScope))
 	fn.SetPosition(pos)
-	initSymbol := model.NewFunctionSymbol("init", model.TypedFunctionSignature{ReturnType: semtypes.NIL}, false, pos)
+	initSymbol := model.NewFunctionSymbol("init", model.TypedFunctionSignature{ReturnType: semtypes.Nil}, false, pos)
 	classScope.AddSymbol("init", initSymbol)
 	symRef, _ := classScope.GetSymbol("init")
 	fn.SetSymbol(symRef)
@@ -1758,10 +1765,10 @@ func ensureServiceDefaultInitFunction(pkgCtx *packageContext, svc *ast.BLangServ
 	svc.InitFunction = synthesizeDefaultInitFunction(pkgCtx, svc.Scope(), svc.GetPosition())
 }
 
-func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields []ast.SimpleVariableNode, initFn *ast.BLangFunction) {
+func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields []*ast.BLangVariable, initFn *ast.BLangFunction) {
 	selfRef, ok := classScope.GetSymbol("self")
 	if !ok {
-		pkgCtx.internalError("self symbol not found in class scope")
+		pkgCtx.internalError("self symbol not found in class scope", initFn.GetPosition())
 		return
 	}
 	classType := pkgCtx.getSymbol(selfRef).Type()
@@ -1775,16 +1782,16 @@ func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields
 		initExprBal := initExpr.(ast.BLangExpression)
 		basePos := initExprBal.GetPosition()
 
-		selfVarRef := &ast.BLangSimpleVarRef{
-			VariableName: &ast.BLangIdentifier{Value: "self"},
+		selfVarRef := &ast.BLangVarRef{
+			VariableName: newIdentifier("self"),
 		}
 		selfVarRef.SetSymbol(selfRef)
 		selfVarRef.SetDeterminedType(classType)
 
 		fieldAccess := &ast.BLangFieldBaseAccess{
-			Field: &ast.BLangIdentifier{Value: field.GetName().GetValue()},
+			Field: newIdentifier(field.GetName().GetValue()),
 		}
-		fieldAccess.Field.SetDeterminedType(semtypes.NEVER)
+		fieldAccess.Field.SetDeterminedType(semtypes.Never)
 		fieldAccess.Expr = selfVarRef
 		fieldAccess.SetDeterminedType(pkgCtx.getSymbolType(field.Symbol()))
 
@@ -1792,11 +1799,11 @@ func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields
 			VarRef: fieldAccess,
 			Expr:   initExprBal,
 		}
-		assignment.SetDeterminedType(semtypes.NEVER)
+		assignment.SetDeterminedType(semtypes.Never)
 		setPositionIfMissing(assignment, basePos)
 
 		initStmts = append(initStmts, assignment)
-		field.(*ast.BLangSimpleVariable).SetInitialExpression(nil)
+		field.SetInitialExpression(nil)
 	}
 
 	if len(initStmts) > 0 {
@@ -1809,19 +1816,14 @@ func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) 
 	if rm.Body == nil {
 		return nil
 	}
-	cx := &functionContext{pkgCtx: pkgCtx}
+	cx := &functionContext{pkgCtx: pkgCtx, owner: rm.Symbol()}
 	cx.pushScope(rm.Scope())
 	defer cx.popScope()
 	switch body := rm.Body.(type) {
 	case *ast.BLangBlockFunctionBody:
 		walkBlockFunctionBody(cx, body)
 	case *ast.BLangExprFunctionBody:
-		result := walkExpression(cx, body.Expr.(ast.BLangActionOrExpression))
-		if len(result.initStmts) > 0 {
-			rm.Body = convertExprBodyToBlockBody(body, result)
-		} else {
-			body.Expr = result.replacementNode.(ast.BLangExpression)
-		}
+		body.Expr = walkExpression(cx, body.Expr.(ast.BLangActionOrExpression)).(ast.BLangExpression)
 	}
 	return cx.generatedFunctions
 }
@@ -1829,7 +1831,7 @@ func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) 
 // desugarFunction returns a desugared function and functions generated while
 // desugaring it.
 func desugarFunction(pkgCtx *packageContext, fn *ast.BLangFunction) (*ast.BLangFunction, []*ast.BLangFunction) {
-	cx := &functionContext{pkgCtx: pkgCtx}
+	cx := &functionContext{pkgCtx: pkgCtx, owner: fn.Symbol()}
 	return desugarFunctionWithContext(cx, fn), cx.generatedFunctions
 }
 
@@ -1853,14 +1855,7 @@ func desugarFunctionWithContext(cx *functionContext, fn *ast.BLangFunction) *ast
 		walkBlockFunctionBody(cx, body)
 	case *ast.BLangExprFunctionBody:
 		if body.Expr != nil {
-			result := walkExpression(cx, body.Expr.(ast.BLangActionOrExpression))
-			// For expression bodies, init statements need special handling
-			// They should be converted to a block body with statements
-			if len(result.initStmts) > 0 {
-				fn.Body = convertExprBodyToBlockBody(body, result)
-			} else {
-				body.Expr = result.replacementNode.(ast.BLangExpression)
-			}
+			body.Expr = walkExpression(cx, body.Expr.(ast.BLangActionOrExpression)).(ast.BLangExpression)
 		}
 	case *ast.BLangExternFunctionBody:
 		// Nothing to desugar
@@ -1869,26 +1864,16 @@ func desugarFunctionWithContext(cx *functionContext, fn *ast.BLangFunction) *ast
 	return fn
 }
 
-// convertExprBodyToBlockBody converts expression function body to block body
-// when there are init statements from desugaring
-func convertExprBodyToBlockBody(
-	exprBody *ast.BLangExprFunctionBody,
-	result desugaredNode[ast.BLangActionOrExpression],
-) *ast.BLangBlockFunctionBody {
-	// Create return statement with the desugared expression
-	returnStmt := &ast.BLangReturn{
-		Expr: result.replacementNode,
-	}
-
-	// Build block with init statements + return
-	stmts := make([]ast.StatementNode, 0, len(result.initStmts)+1)
-	stmts = append(stmts, result.initStmts...)
-	stmts = append(stmts, returnStmt)
-
-	return &ast.BLangBlockFunctionBody{
-		Stmts: stmts,
-	}
+// BLangExpressionThunk is a desugar-only expression that runs InitStmts and
+// then evaluates Expr, in place of the source expression it replaces. BIR gen
+// lowers it inline, so it never becomes a function of its own.
+type BLangExpressionThunk struct {
+	ast.AbstractExpression
+	InitStmts []ast.StatementNode
+	Expr      ast.BLangActionOrExpression
 }
+
+var _ ast.BLangExpression = &BLangExpressionThunk{}
 
 // BLangServiceInit is a desugar-only expression that constructs an
 // instance of the (anonymous) class body of the referenced service.

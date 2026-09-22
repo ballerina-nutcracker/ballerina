@@ -1,0 +1,121 @@
+(add
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref a)
+        (simple-var-ref b)))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable flag (type
+        (value-type boolean)) (expr
+        (literal false))))
+    (var-def
+      (variable arithmetic (type
+        (value-type int)) (expr
+        (binary-expr +
+          (literal 10)
+          (group-expr
+            (ternary-expr
+              (simple-var-ref flag)
+              (invocation mark (
+                (literal x)
+                (literal 1)))
+              (invocation mark (
+                (literal y)
+                (literal 2)))))))))
+    (var-def
+      (variable values (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (ternary-expr
+            (simple-var-ref flag)
+            (literal 3)
+            (literal 4))
+          (literal 5)))))
+    (var-def
+      (variable indexed (type
+        (value-type int)) (expr
+        (index-based-access
+          (list-constructor-expr
+            (ternary-expr
+              (simple-var-ref flag)
+              (literal 6)
+              (literal 7)))
+          (literal 0)))))
+    (var-def
+      (variable mapped (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (ternary-expr
+              (simple-var-ref flag)
+              (literal 8)
+              (literal 9)))))))
+    (var-def
+      (variable associated (type
+        (value-type int)) (expr
+        (ternary-expr
+          (simple-var-ref flag)
+          (literal 1)
+          (ternary-expr
+            (literal true)
+            (literal 2)
+            (literal 3))))))
+    (var-def
+      (variable called (type
+        (value-type int)) (expr
+        (invocation add (
+          (invocation mark (
+            (literal a)
+            (literal 10)))
+          (ternary-expr
+            (simple-var-ref flag)
+            (invocation mark (
+              (literal b)
+              (literal 20)))
+            (invocation mark (
+              (literal c)
+              (literal 30)))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref arithmetic))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref values)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref indexed))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref mapped)
+          (literal value)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref associated))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref called))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref trace))))
+  )
+)
+(mark
+  (bb0 () ()
+    (compound-assignment +
+      (simple-var-ref trace)
+      (simple-var-ref label))
+    (return
+      (simple-var-ref value))
+  )
+)

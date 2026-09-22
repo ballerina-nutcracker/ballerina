@@ -1,0 +1,32 @@
+-- stdout --
+Alice 30
+Colombo
+2 Bob
+Alice
+true
+7
+true
+Alice
+plain text body
+15
+true
+3 1
+true
+1 two
+true
+a=1&b=two
+a=1&b=two
+opaque payload
+1 two
+true
+red true
+2 true
+red true
+true
+1 true
+true
+true
+true
+Alice
+200
+-- stderr --

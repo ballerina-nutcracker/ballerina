@@ -1,0 +1,48 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 222
+    %2 = ConstantLoad 173
+    %3 = ConstantLoad 190
+    %4 = ConstantLoad 239
+    %5 = ConstantLoad 4
+    %6 = newArray [int:Unsigned8...][%5]{%1, %2, %3, %4}
+    data = %6;
+    %8 = toBase16(data) -> bb1;
+  }
+  bb1 {
+    %9 = println(%8) -> bb2;
+  }
+  bb2 {
+    %10 = toBase64(data) -> bb3;
+  }
+  bb3 {
+    %11 = println(%10) -> bb4;
+  }
+  bb4 {
+    %12 = ConstantLoad 0
+    %13 = newArray [int:Unsigned8...][%12]{}
+    empty = %13;
+    %15 = toBase16(empty) -> bb5;
+  }
+  bb5 {
+    %16 = length(%15) -> bb6;
+  }
+  bb6 {
+    %17 = %16;
+    %18 = println(%17) -> bb7;
+  }
+  bb7 {
+    %19 = toBase64(empty) -> bb8;
+  }
+  bb8 {
+    %20 = length(%19) -> bb9;
+  }
+  bb9 {
+    %21 = %20;
+    %22 = println(%21) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}

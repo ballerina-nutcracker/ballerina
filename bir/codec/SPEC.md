@@ -8,8 +8,6 @@ The BIR binary file has the following structure:
 +------------------+
 | Magic (4 bytes)  | 0xBA 0x10 0xC0 0xDE
 +------------------+
-| Version (4 bytes)| int32 (currently 75)
-+------------------+
 | Constant Pool    | See Constant Pool Format
 +------------------+
 | Package Data     | See Package Structure
@@ -113,7 +111,7 @@ After the constant pool, the package data follows:
 |   Name CP        | int32
 |   Original Name  | int32
 |   Flags           | int64
-|   Origin          | uint8
+|   Function Lookup | int32 (CP index to string)
 |   Required Params | See Required Parameters
 |   Function Body   | See Function Body
 +------------------+
@@ -287,8 +285,32 @@ Terminators end basic blocks:
 
 - `GOTO`: Unconditional branch
 - `BRANCH`: Conditional branch
-- `CALL`: Function call
+- `CALL`: Function call. Payload is a call site followed by an optional result operand and continuation block.
+- `ASYNC_CALL`: Start action. Payload is a call site, an isolated flag, the future result operand, and continuation block.
+- `WAIT`: Single wait action
+- `ALTERNATE_WAIT`: Alternate wait action
+- `WAIT_ALL`: Multiple wait action
 - `RETURN`: Return from function
+
+### Call Data Format
+
+Calls and start actions contain a concrete call-data struct. Its kind enum selects the variant fields. Call data does not contain a result operand or continuation.
+
+```text
++-----------------------+
+| Call Kind             | uint8 (function, function pointer, method, or resource)
++-----------------------+
+| Argument Count        | int32
++-----------------------+
+| Arguments             | Operand[]
++-----------------------+
+| Variant Data          | Variable
++-----------------------+
+```
+
+Function, function-pointer, and method variant data contains the callee package, call name, and function lookup key. Function-pointer calls also contain the function-value operand, while method calls contain the receiver operand. Resource-call variant data contains the receiver operand, method name, and resource path operands.
+
+A synchronous call terminator contains this struct followed by an optional result operand and continuation block. `ASYNC_CALL` contains the same struct followed by the isolated flag, future result operand, and continuation block.
 
 ## Position Format
 

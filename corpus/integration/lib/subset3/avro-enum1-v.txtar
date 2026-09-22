@@ -1,0 +1,11 @@
+-- stdout --
+1
+HEARTS
+CLUBS
+true
+SPADES
+true
+true
+HEARTS
+CLUBS
+-- stderr --

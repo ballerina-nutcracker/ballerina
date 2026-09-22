@@ -6,22 +6,22 @@ main() -> nil{
     cyclic = m;
     %4 = ConstantLoad self
     m[%4] = cyclic;
-    %5 = ConstantLoad typedesc
-    %6 = cloneWithType(cyclic,%5) -> bb1;
+    %6 = ConstantLoad typedesc
+    %7 = cloneWithType(cyclic,%6) -> bb1;
   }
   bb1 {
-    $desugar$0 = %6;
-    %8 = $desugar$0 is error
+    %8 = %7 is error
     %8 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 0
-    (1, %9) = (1, $desugar$0);
-    PopScopeFrame
-    panic %9;
+    panic %7;
   }
   bb3 {
-    _ = $desugar$0;
+    %5 = %7;
+    GOTO bb4;
+  }
+  bb4 {
+    _ = %5;
     return;
   }
 }

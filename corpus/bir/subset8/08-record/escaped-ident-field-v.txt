@@ -7,7 +7,7 @@ main() -> nil{
     %4 = ConstantLoad sys-id
     %5 = ConstantLoad type
     %6 = ConstantLoad 7
-    %7 = newMap {| public: nil|string, system: nil|string, type: int, never... |}{%1=%2, %3=%4, %5=%6} defaults{system=$anon/.:$desugar$0, public=$anon/.:$desugar$1}
+    %7 = newMap {| public: nil|string, system: nil|string, type: int, never... |}{%1=%2, %3=%4, %5=%6} defaults{system=$anon/.:$default$0, public=$anon/.:$default$1}
     d = %7;
     %10 = ConstantLoad public
     %9 = d[%10];
@@ -41,14 +41,14 @@ main() -> nil{
     return;
   }
 }
-$desugar$0() -> nil|string{
+$default$0() -> nil|string{
   bb0 {
     %1 = ConstantLoad <nil>
     %0 = %1;
     return;
   }
 }
-$desugar$1() -> nil|string{
+$default$1() -> nil|string{
   bb0 {
     %1 = ConstantLoad <nil>
     %0 = %1;

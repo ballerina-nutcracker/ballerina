@@ -16,4 +16,4 @@
 
 package semtypes
 
-type SubtypeData any
+type subtypeData any

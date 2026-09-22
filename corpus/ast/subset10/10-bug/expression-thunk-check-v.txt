@@ -1,0 +1,126 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function checkedInt (
+    (variable value (type
+      (value-type int)))) (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (return
+        (simple-var-ref value))))
+  (function checkedValues () (
+    (union-type
+      (array-type
+        (value-type int) dimensions: 1 ([]))
+      (error-type)))
+    (block-function-body
+      (return
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+  (function withDefault (
+    (variable value (type
+      (value-type int)))
+    (variable increment (type
+      (value-type int)) (expr
+      (literal 1)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref value)
+          (simple-var-ref increment)))))
+  (function named (
+    (variable value (type
+      (value-type int)))
+    (variable increment (type
+      (value-type int)) (expr
+      (literal 1)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref value)
+          (simple-var-ref increment)))))
+  (class-definition Counter
+    (function add (
+      (variable value (type
+        (value-type int)))
+      (variable increment (type
+        (value-type int)) (expr
+        (literal 1)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref value)
+            (simple-var-ref increment))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable defaulted (type
+          (value-type int)) (expr
+          (invocation withDefault (
+            (checked-expr
+              (invocation checkedInt (
+                (literal 8)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref defaulted))))
+      (var-def
+        (variable namedResult (type
+          (value-type int)) (expr
+          (invocation named (
+            (named-arg value
+              (checked-expr
+                (invocation checkedInt (
+                  (literal 6))))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref namedResult))))
+      (var-def
+        (variable counter (type
+          (user-defined-type Counter)) (expr
+          (new ()))))
+      (var-def
+        (variable methodResult (type
+          (value-type int)) (expr
+          (invocation add expr:
+            (simple-var-ref counter) (
+            (checked-expr
+              (invocation checkedInt (
+                (literal 5)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref methodResult))))
+      (var-def
+        (variable values (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 0)
+            (checked-expr
+              (invocation checkedValues ()))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref values))))
+      (var-def
+        (variable queried (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable value))
+              (checked-expr
+                (invocation checkedValues ())))
+            (select-clause
+              (simple-var-ref value))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref queried)))))))

@@ -32,23 +32,25 @@
           (invocation foo (
             (literal 100)
             (literal 10))))))
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation $default$0 ()))))
-      (var-def
-        (variable $desugar$1 (expr
-          (literal 5))))
       (expression-stmt
         (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (invocation $default$0 ()))))
+          (var-def
+            (variable $desugar$1 (expr
+              (literal 5))))
           (invocation bar (
             (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))))
+            (simple-var-ref $desugar$1)))))))))
   (function $default$0 () ()
     (block-function-body
       (return
         (literal 5))))
   (function $default$1 (
-    (variable x)) ()
+    (variable x (type
+      (value-type )))) ()
     (block-function-body
       (return
         (literal 10)))))

@@ -1,0 +1,110 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function isolatedSeed () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 0))))
+  (function isolatedIncrement (
+    (variable previous (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (check-panicked-expr
+            (single-wait-action
+              (simple-var-ref previous))))))
+      (return
+        (binary-expr +
+          (simple-var-ref value)
+          (literal 1)))))
+  (function seed () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 0))))
+  (function increment (
+    (variable previous (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (check-panicked-expr
+            (single-wait-action
+              (simple-var-ref previous))))))
+      (return
+        (binary-expr +
+          (simple-var-ref value)
+          (literal 1)))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable isolatedTail (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation isolatedSeed ())))))
+      (foreach
+        (var-def
+          (variable _ (type
+            (value-type int))))
+        (binary-expr ..<
+          (literal 0)
+          (literal 50))
+        (block-stmt
+          (assignment
+            (simple-var-ref isolatedTail)
+            (start-action
+              (invocation isolatedIncrement (
+                (simple-var-ref isolatedTail)))))))
+      (var-def
+        (variable isolatedResult (type
+          (value-type int)) (expr
+          (checked-expr
+            (single-wait-action
+              (simple-var-ref isolatedTail))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref isolatedResult))))
+      (var-def
+        (variable tail (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation seed ())))))
+      (foreach
+        (var-def
+          (variable _ (type
+            (value-type int))))
+        (binary-expr ..<
+          (literal 0)
+          (literal 50))
+        (block-stmt
+          (assignment
+            (simple-var-ref tail)
+            (start-action
+              (invocation increment (
+                (simple-var-ref tail)))))))
+      (var-def
+        (variable result (type
+          (value-type int)) (expr
+          (checked-expr
+            (single-wait-action
+              (simple-var-ref tail))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref result)))))))

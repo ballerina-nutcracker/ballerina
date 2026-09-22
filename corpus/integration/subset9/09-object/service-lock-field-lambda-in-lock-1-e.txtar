@@ -5,3 +5,17 @@ error[SEMANTIC_ERROR]: mutable field access within isolated object must be insid
    |
 49 |                 return self.count; // @error
    |                        ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: no restricted variable referenced in lock statement
+  --> service-lock-field-lambda-in-lock-1-e.bal:47:9
+   |
+47 |         lock {
+   |         ^^^^^^
+48 |             return isolated function() returns int {
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+49 |                 return self.count; // @error
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+50 |             };
+   |             ^^
+51 |         }
+   |         ^

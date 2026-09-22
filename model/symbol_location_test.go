@@ -37,6 +37,7 @@ func TestSymbolConstructorsSetLocation(t *testing.T) {
 		NewClassSymbol("class", false, location),
 		NewNetworkClassSymbol("client", false, location),
 		NewResourceMethodSymbol("resource", "get", false, location),
+		NewDependentlyTypedResourceMethodSymbol("dependent resource", "get", 0, false, location),
 		&record,
 		&object,
 		NewDependentlyTypedFunctionSymbol("dependent", 0, false, location),

@@ -19,6 +19,7 @@
 package parser
 
 import (
+	compilercontext "github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/parser/common"
 	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
@@ -29,8 +30,8 @@ type xmlLexer struct {
 	*lexer
 }
 
-func newXMLLexer(reader text.CharReader) *xmlLexer {
-	inner := newLexer(reader)
+func newXMLLexer(ctx *compilercontext.CompilerContext, fileName string, reader text.CharReader) *xmlLexer {
+	inner := newLexer(ctx, fileName, reader)
 	inner.StartMode(parserModeXmlContent)
 	return &xmlLexer{lexer: inner}
 }
@@ -68,7 +69,8 @@ func (l *xmlLexer) NextToken() st.STToken {
 	case parserModeXmlCdataSection:
 		token = l.readTokenInXMLCommentOrCDATA(true)
 	default:
-		panic("xmlLexer.NextToken: unexpected parser mode")
+		l.internalError("xmlLexer.NextToken: unexpected parser mode")
+		return failedToken()
 	}
 
 	if len(l.context.diagnostics) > 0 {
@@ -141,8 +143,8 @@ func (l *xmlLexer) getXMLLiteralValueToken(kind st.SyntaxKind) st.STToken {
 	return st.CreateLiteralValueToken(kind, lexeme, leadingTrivia, trailingTrivia)
 }
 
-func (l *xmlLexer) getXMLText(kind st.SyntaxKind) st.STToken {
-	return l.getXMLLiteralValueToken(kind)
+func (l *xmlLexer) getXMLText() st.STToken {
+	return l.getXMLLiteralValueToken(st.XML_TEXT_CONTENT)
 }
 
 func (l *xmlLexer) getXMLNameToken(allowLeadingWS bool) st.STToken {
@@ -396,7 +398,7 @@ scan:
 		}
 	}
 
-	return l.getXMLText(st.XML_TEXT_CONTENT)
+	return l.getXMLText()
 }
 
 func (l *xmlLexer) processXMLReferenceInQuotedString(startingQuote rune) {
@@ -490,7 +492,7 @@ scan:
 	}
 
 	l.EndMode()
-	return l.getXMLText(st.XML_TEXT_CONTENT)
+	return l.getXMLText()
 }
 
 // XML_COMMENT and XML_CDATA_SECTION modes
@@ -558,7 +560,7 @@ scan:
 		}
 	}
 
-	return l.getXMLText(st.XML_TEXT_CONTENT)
+	return l.getXMLText()
 }
 
 // XML_PI mode
@@ -635,7 +637,7 @@ scan:
 		}
 	}
 
-	return l.getXMLText(st.XML_TEXT_CONTENT)
+	return l.getXMLText()
 }
 
 // kindStringValue maps a SyntaxKind to its source-text representation for diagnostic messages.

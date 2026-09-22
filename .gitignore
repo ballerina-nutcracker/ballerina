@@ -19,6 +19,11 @@ profile.cov
 # Dependency directories
 # vendor/
 
+# Python caches and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
 # Go workspace checksum
 go.work.sum
 
@@ -63,6 +68,7 @@ parser/testdata/**/*.json
 coverage_report.html
 .claude/
 .pi/
+.codex/
 
 # Ephemeral report produced by the validate-stdlib-contract skill
 CONTRACT_VALIDATION.md

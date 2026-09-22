@@ -28,7 +28,8 @@
           (simple-var-ref $desugar$0)
           (simple-var-ref $desugar$1))))))
   (function $default$0 (
-    (variable x)) ()
+    (variable x (type
+      (value-type )))) ()
     (block-function-body
       (return
         (binary-expr +

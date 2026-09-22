@@ -1,0 +1,44 @@
+(crash
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal alternate wait panic))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable panicked (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation crash ())))))
+    (var-def
+      (variable succeeded (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation number ())))))
+    (var-def
+      (variable result (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (alternate-wait-action
+          (simple-var-ref panicked)
+          (simple-var-ref succeeded)))))
+    (assignment
+      (wildcard-binding-pattern)
+      (type-test-expr is
+        (simple-var-ref result)
+        (value-type int)))
+  )
+)
+(number
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)

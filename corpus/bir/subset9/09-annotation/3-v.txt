@@ -1,6 +1,6 @@
 module $anon.. v 0.0.0;
 offset  int;
-add(int,int) -> int{
+add(@$anon/.:0.0.0:paramInfo(true) int,@$anon/.:0.0.0:paramInfo(true) int) -> int{
   bb0 {
     %4 = left;
     %5 = right;

@@ -1,0 +1,193 @@
+(Counter
+  (localDefault
+    (bb0 () ()
+      (var-def
+        (variable local (type
+          (record-type
+            (field m
+              (value-type int)
+              (literal 7)))) (expr
+          (mapping-constructor-expr))))
+      (return
+        (field-based-access m
+          (simple-var-ref local)))
+    )
+  )
+  (paramDefault
+    (bb0 () ()
+      (return
+        (field-based-access k
+          (simple-var-ref rec)))
+    )
+  )
+)
+(defaultableRecordParam
+  (bb0 () ()
+    (return
+      (field-based-access w
+        (simple-var-ref rec)))
+  )
+)
+(firstLocal
+  (bb0 () ()
+    (var-def
+      (variable local (type
+        (record-type
+          (field t
+            (value-type string)
+            (literal local)))) (expr
+        (mapping-constructor-expr))))
+    (return
+      (field-based-access t
+        (simple-var-ref local)))
+  )
+)
+(lambdaDefaults
+  (bb0 () ()
+    (var-def
+      (variable parent (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type string))
+            (block-function-body
+              (var-def
+                (variable parentRecord (type
+                  (record-type
+                    (field p
+                      (value-type string)
+                      (literal parent)))) (expr
+                  (mapping-constructor-expr))))
+              (var-def
+                (variable nested (expr
+                  (lambda
+                    (function $anonFunc$_1 () (
+                      (value-type string))
+                      (block-function-body
+                        (var-def
+                          (variable nestedRecord (type
+                            (record-type
+                              (field q
+                                (value-type string)
+                                (literal nested)))) (expr
+                            (mapping-constructor-expr))))
+                        (return
+                          (field-based-access q
+                            (simple-var-ref nestedRecord)))))))))
+              (var-def
+                (variable sibling (expr
+                  (lambda
+                    (function $anonFunc$_2 () (
+                      (value-type string))
+                      (block-function-body
+                        (var-def
+                          (variable siblingRecord (type
+                            (record-type
+                              (field r
+                                (value-type string)
+                                (literal sibling)))) (expr
+                            (mapping-constructor-expr))))
+                        (return
+                          (field-based-access r
+                            (simple-var-ref siblingRecord)))))))))
+              (return
+                (binary-expr +
+                  (binary-expr +
+                    (binary-expr +
+                      (binary-expr +
+                        (field-based-access p
+                          (simple-var-ref parentRecord))
+                        (literal -))
+                      (invocation nested ()))
+                    (literal -))
+                  (invocation sibling ())))))))))
+    (return
+      (invocation parent ()))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable o (type
+        (user-defined-type Outer)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access s
+          (simple-var-ref o)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation firstLocal ()))))
+    (var-def
+      (variable so (type
+        (user-defined-type SecondOuter)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access n
+          (simple-var-ref so)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation secondLocal ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lambdaDefaults ()))))
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation localDefault expr:
+          (simple-var-ref c) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation paramDefault expr:
+          (simple-var-ref c) (
+          (mapping-constructor-expr))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation requiredRecordParam (
+          (mapping-constructor-expr))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation defaultableRecordParam ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation multipleRecordParams (
+          (mapping-constructor-expr)
+          (mapping-constructor-expr))))))
+  )
+)
+(multipleRecordParams
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (binary-expr +
+          (field-based-access x
+            (simple-var-ref a))
+          (literal -))
+        (field-based-access y
+          (simple-var-ref b))))
+  )
+)
+(requiredRecordParam
+  (bb0 () ()
+    (return
+      (field-based-access v
+        (simple-var-ref rec)))
+  )
+)
+(secondLocal
+  (bb0 () ()
+    (var-def
+      (variable local (type
+        (record-type
+          (field u
+            (value-type int)
+            (literal 42)))) (expr
+        (mapping-constructor-expr))))
+    (return
+      (field-based-access u
+        (simple-var-ref local)))
+  )
+)

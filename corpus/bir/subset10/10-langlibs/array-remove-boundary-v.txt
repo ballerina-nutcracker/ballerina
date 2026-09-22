@@ -1,0 +1,66 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad a
+    %3 = ConstantLoad 2
+    %4 = ConstantLoad 3
+    %5 = ConstantLoad 4
+    %6 = newArray [int, string, int...][%5]{%1, %2, %3, %4}
+    t = %6;
+    %8 = ConstantLoad 2
+    %9 = %8;
+    %10 = remove(t,%9) -> bb1;
+  }
+  bb1 {
+    %11 = println(%10) -> bb2;
+  }
+  bb2 {
+    %12 = println(t) -> bb3;
+  }
+  bb3 {
+    %13 = ConstantLoad 1
+    %14 = ConstantLoad 2
+    %15 = ConstantLoad 2
+    %16 = newArray [int, int...][%15]{%13, %14}
+    u = %16;
+    %18 = ConstantLoad 1
+    %19 = %18;
+    %20 = remove(u,%19) -> bb4;
+  }
+  bb4 {
+    %21 = %20;
+    %22 = println(%21) -> bb5;
+  }
+  bb5 {
+    %23 = println(u) -> bb6;
+  }
+  bb6 {
+    %24 = ConstantLoad 10
+    %25 = ConstantLoad 20
+    %26 = ConstantLoad 30
+    %27 = ConstantLoad 3
+    %28 = newArray [int...][%27]{%24, %25, %26}
+    open = %28;
+    %30 = ConstantLoad 1
+    %31 = %30;
+    %32 = remove(open,%31) -> bb7;
+  }
+  bb7 {
+    %33 = %32;
+    %34 = println(%33) -> bb8;
+  }
+  bb8 {
+    %35 = removeAll(open) -> bb9;
+  }
+  bb9 {
+    %36 = length(open) -> bb10;
+  }
+  bb10 {
+    %37 = %36;
+    %38 = println(%37) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}

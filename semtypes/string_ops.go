@@ -19,14 +19,14 @@ package semtypes
 type stringOps struct {
 }
 
-var _ BasicTypeOps = &stringOps{}
+var _ basicTypeOps = &stringOps{}
 
 func newStringOps() stringOps {
 	this := stringOps{}
 	return this
 }
 
-func (s *stringOps) Union(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (s *stringOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
 	sd1 := d1.(stringSubtype)
 	sd2 := d2.(stringSubtype)
 	var chars []enumerableType[string]
@@ -36,7 +36,7 @@ func (s *stringOps) Union(d1 SubtypeData, d2 SubtypeData) SubtypeData {
 	return createStringSubtype(charStringSubtypeFrom(charsAllowed, chars), nonCharStringSubtypeFrom(nonCharsAllowed, nonChars))
 }
 
-func (s *stringOps) Intersect(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (s *stringOps) Intersect(d1 subtypeData, d2 subtypeData) subtypeData {
 	if allOrNothing1, ok := d1.(*allOrNothingSubtype); ok {
 		if allOrNothing1.IsAllSubtype() {
 			return d2
@@ -60,11 +60,11 @@ func (s *stringOps) Intersect(d1 SubtypeData, d2 SubtypeData) SubtypeData {
 	return createStringSubtype(charStringSubtypeFrom(charsAllowed, chars), nonCharStringSubtypeFrom(nonCharsAllowed, nonChars))
 }
 
-func (s *stringOps) Diff(d1 SubtypeData, d2 SubtypeData) SubtypeData {
+func (s *stringOps) Diff(d1 subtypeData, d2 subtypeData) subtypeData {
 	return s.Intersect(d1, s.complement(d2))
 }
 
-func (s *stringOps) complement(d SubtypeData) SubtypeData {
+func (s *stringOps) complement(d subtypeData) subtypeData {
 	st := d.(stringSubtype)
 	if len(st.GetChar().Values()) == 0 && len(st.GetNonChar().Values()) == 0 {
 		if st.GetChar().Allowed() && st.GetNonChar().Allowed() {
@@ -76,7 +76,7 @@ func (s *stringOps) complement(d SubtypeData) SubtypeData {
 	return createStringSubtype(charStringSubtypeFrom(!st.GetChar().Allowed(), st.GetChar().Values()), nonCharStringSubtypeFrom(!st.GetNonChar().Allowed(), st.GetNonChar().Values()))
 }
 
-func (s *stringOps) IsEmpty(cx Context, t SubtypeData) bool {
+func (s *stringOps) IsEmpty(cx Context, t subtypeData) bool {
 	return notIsEmpty(cx, t)
 }
 

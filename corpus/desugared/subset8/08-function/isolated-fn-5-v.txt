@@ -36,7 +36,8 @@
       (return
         (numeric-literal 5))))
   (function $default$1 (
-    (variable x)) ()
+    (variable x (type
+      (value-type )))) ()
     (block-function-body
       (return
         (binary-expr +

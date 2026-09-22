@@ -19,17 +19,9 @@
           (literal self))
         (simple-var-ref cyclic))
       (var-def
-        (variable $desugar$0 (expr
-          (invocation lang.value cloneWithType (
-            (simple-var-ref cyclic)
-            (typedesc-expr))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$0))) ())
-      (var-def
         (variable _ (type
           (value-type anydata)) (expr
-          (simple-var-ref $desugar$0)))))))
+          (check-panicked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref cyclic)
+              (typedesc-expr))))))))))

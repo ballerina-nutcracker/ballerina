@@ -19,25 +19,25 @@ package semtypes
 type objectOps struct {
 }
 
-var _ BasicTypeOps = &objectOps{}
+var _ basicTypeOps = &objectOps{}
 
-func (o *objectOps) Diff(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (o *objectOps) Diff(t1 subtypeData, t2 subtypeData) subtypeData {
 	return bddSubtypeDiff(t1, t2)
 }
 
-func (o *objectOps) Intersect(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (o *objectOps) Intersect(t1 subtypeData, t2 subtypeData) subtypeData {
 	return bddSubtypeIntersect(t1, t2)
 }
 
-func (o *objectOps) Union(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (o *objectOps) Union(t1 subtypeData, t2 subtypeData) subtypeData {
 	return bddSubtypeUnion(t1, t2)
 }
 
-func objectSubTypeIsEmpty(cx Context, t SubtypeData) bool {
-	return memoSubtypeIsEmpty(cx, cx.mappingMemo(), objectBddIsEmpty, t.(Bdd))
+func objectSubTypeIsEmpty(cx Context, t subtypeData) bool {
+	return memoSubtypeIsEmpty(cx, cx.mappingMemo(), objectBddIsEmpty, t.(bdd))
 }
 
-func objectBddIsEmpty(cx Context, b Bdd) bool {
+func objectBddIsEmpty(cx Context, b bdd) bool {
 	return bddEveryPositive(cx, b, conjunctionNil, conjunctionNil, mappingFormulaIsEmpty)
 }
 
@@ -46,14 +46,14 @@ func newObjectOps() objectOps {
 	return this
 }
 
-func (o *objectOps) complement(t SubtypeData) SubtypeData {
+func (o *objectOps) complement(t subtypeData) subtypeData {
 	return o.objectSubTypeComplement(t)
 }
 
-func (o *objectOps) IsEmpty(cx Context, t SubtypeData) bool {
+func (o *objectOps) IsEmpty(cx Context, t subtypeData) bool {
 	return objectSubTypeIsEmpty(cx, t)
 }
 
-func (o *objectOps) objectSubTypeComplement(t SubtypeData) SubtypeData {
-	return bddSubtypeDiff(MAPPING_SUBTYPE_OBJECT, t)
+func (o *objectOps) objectSubTypeComplement(t subtypeData) subtypeData {
+	return bddSubtypeDiff(mappingSubtypeObject, t)
 }

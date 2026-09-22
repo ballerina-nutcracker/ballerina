@@ -21,12 +21,12 @@ import "github.com/ballerina-nutcracker/ballerina/common"
 type typeAtom struct {
 	idx        int
 	gen        uint64
-	AtomicType atomicType
+	AtomicType AtomicType
 }
 
 var _ atom = &typeAtom{}
 
-func createTypeAtom(index int, atomicType atomicType) typeAtom {
+func createTypeAtom(index int, atomicType AtomicType) typeAtom {
 	common.Assert(func() bool { return index >= 0 })
 
 	return typeAtom{
@@ -35,7 +35,7 @@ func createTypeAtom(index int, atomicType atomicType) typeAtom {
 	}
 }
 
-func createEphemeralTypeAtom(index int, gen uint64, atomicType atomicType) *typeAtom {
+func createEphemeralTypeAtom(index int, gen uint64, atomicType AtomicType) *typeAtom {
 	common.Assert(func() bool { return index >= 0 })
 	common.Assert(func() bool { return gen > 0 })
 

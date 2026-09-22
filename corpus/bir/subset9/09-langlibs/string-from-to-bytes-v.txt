@@ -9,40 +9,41 @@ main() -> nil|error{
     %6 = ConstantLoad 5
     %7 = newArray [int:Unsigned8...][%6]{%1, %2, %3, %4, %5}
     bytes = %7;
-    %9 = fromBytes(bytes) -> bb1;
+    %10 = fromBytes(bytes) -> bb1;
   }
   bb1 {
-    $desugar$0 = %9;
-    %11 = $desugar$0 is error
+    %11 = %10 is error
     %11 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$0);
-    PopScopeFrame
+    %0 = %10;
     return;
   }
   bb3 {
-    %12 = println($desugar$0) -> bb4;
+    %9 = %10;
+    GOTO bb4;
   }
   bb4 {
-    %13 = ConstantLoad Hello
-    %14 = toBytes(%13) -> bb5;
+    %12 = println(%9) -> bb5;
   }
   bb5 {
-    %15 = println(%14) -> bb6;
+    %13 = ConstantLoad Hello
+    %14 = toBytes(%13) -> bb6;
   }
   bb6 {
+    %15 = println(%14) -> bb7;
+  }
+  bb7 {
     %16 = ConstantLoad 255
     %17 = ConstantLoad 1
     %18 = newArray [int:Unsigned8...][%17]{%16}
     bad = %18;
-    %20 = fromBytes(bad) -> bb7;
-  }
-  bb7 {
-    %21 = println(%20) -> bb8;
+    %20 = fromBytes(bad) -> bb8;
   }
   bb8 {
+    %21 = println(%20) -> bb9;
+  }
+  bb9 {
     return;
   }
 }

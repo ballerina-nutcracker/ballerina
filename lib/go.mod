@@ -1,6 +1,8 @@
 module github.com/ballerina-nutcracker/ballerina/lib
 
-go 1.26
+go 1.27
+
+toolchain go1.27.1
 
 require (
 	github.com/ballerina-nutcracker/ballerina/bir v0.7.0
@@ -14,6 +16,7 @@ require (
 	github.com/ballerina-nutcracker/ballerina/values v0.7.0
 	golang.org/x/crypto v0.52.0
 	golang.org/x/text v0.37.0
+	google.golang.org/protobuf v1.36.12
 )
 
 require (
@@ -22,5 +25,7 @@ require (
 	github.com/ballerina-nutcracker/ballerina/desugar v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/parser v0.7.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect
+	github.com/golang/snappy v0.0.1 // indirect
+	github.com/linkedin/goavro/v2 v2.15.0
 	golang.org/x/sys v0.45.0 // indirect
 )

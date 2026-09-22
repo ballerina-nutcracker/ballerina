@@ -1,0 +1,14 @@
+(greet
+  (bb0 () ()
+    (return
+      (simple-var-ref key))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation greet (
+          (literal k))))))
+  )
+)

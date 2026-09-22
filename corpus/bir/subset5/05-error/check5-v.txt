@@ -5,28 +5,28 @@ main() -> nil{
     %2 = ConstantLoad 3
     %3 = newMap {| int... |}{%1=%2}
     m = %3;
-    %6 = ConstantLoad x
-    %5 = m[%6];
-    %7 = %5;
-    %8 = nonNil(%7) -> bb1;
+    %7 = ConstantLoad x
+    %6 = m[%7];
+    %8 = %6;
+    %9 = nonNil(%8) -> bb1;
   }
   bb1 {
-    $desugar$0 = %8;
-    %10 = $desugar$0 is error
+    %10 = %9 is error
     %10 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 0
-    (1, %11) = (1, $desugar$0);
-    PopScopeFrame
-    panic %11;
+    panic %9;
   }
   bb3 {
-    %12 = unknown $desugar$0;
-    %13 = %12;
-    %14 = println(%13) -> bb4;
+    %5 = %9;
+    GOTO bb4;
   }
   bb4 {
+    %11 = unknown %5;
+    %12 = %11;
+    %13 = println(%12) -> bb5;
+  }
+  bb5 {
     return;
   }
 }

@@ -1,0 +1,19 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (union-type
+          (user-defined-type XE)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (binary-expr ==
+      (simple-var-ref x)
+      (literal <nil>))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal nil))))
+  )
+  (bb2 (bb1 bb0) ())
+)

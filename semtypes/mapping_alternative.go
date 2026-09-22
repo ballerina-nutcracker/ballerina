@@ -16,27 +16,39 @@
 
 package semtypes
 
+import "slices"
+
 type MappingFieldInfo struct {
 	Name string
-	Ty   SemType
+	Type SemType
 }
 
 type MappingAlternative struct {
-	SemType SemType
-	Pos     *MappingAtomicType
+	semType SemType
+	pos     *MappingAtomicType
 	neg     []MappingAtomicType
+}
+
+func (a MappingAlternative) Type() SemType {
+	return a.semType
+}
+
+// Atomic returns the intersected positive mapping atom of this alternative. It is nil for the
+// alternative produced for the Mapping top, so callers must handle a nil result.
+func (a MappingAlternative) Atomic() *MappingAtomicType {
+	return a.pos
 }
 
 func MappingAlternatives(cx Context, t SemType) []MappingAlternative {
 	if t.some() == 0 {
-		if (t.all() & MAPPING.all()) == 0 {
+		if (t.all() & Mapping.all()) == 0 {
 			return nil
 		}
-		return []MappingAlternative{{SemType: MAPPING, Pos: nil, neg: nil}}
+		return []MappingAlternative{{semType: Mapping, pos: nil, neg: nil}}
 	}
 
 	paths := []bddPath{}
-	bddPathsPositive(getComplexSubtypeData(t, BTMapping).(Bdd), &paths, bddPathFrom())
+	bddPathsPositive(getComplexSubtypeData(t, btMapping).(bdd), &paths, bddPathFrom())
 	alts := []MappingAlternative{}
 	for _, bddPath := range paths {
 		posAtoms := make([]*MappingAtomicType, len(bddPath.pos))
@@ -49,7 +61,7 @@ func MappingAlternatives(cx Context, t SemType) []MappingAlternative {
 			for i := 0; i < len(bddPath.neg); i++ {
 				negAtoms[i] = *cx.MappingAtomType(bddPath.neg[i])
 			}
-			alts = append(alts, MappingAlternative{SemType: intersectionSemType, Pos: intersectionAtomType, neg: negAtoms})
+			alts = append(alts, MappingAlternative{semType: intersectionSemType, pos: intersectionAtomType, neg: negAtoms})
 		}
 	}
 	return alts
@@ -68,67 +80,70 @@ func intersectMappingAtoms(env Env, atoms []*MappingAtomicType) (SemType, *Mappi
 		atom = result
 	}
 	typeAtom := env.mappingAtom(atom)
-	ty := createBasicSemType(BTMapping, bddAtom(typeAtom))
+	ty := createBasicSemType(btMapping, bddAtom(typeAtom))
 	return ty, atom, true
 }
 
-// NOTE: selection is not affected by default values according to the spec, it is purely by field names
-// But we are checking the type as well to allow things like map<int>|map<string> given jballerina already allow this
-// and it's (mostly) straightforward to support it. Edge case is when we have numeric types, we can't
-// determine a literal in rhs to be which numeric type without deciding the type in lhs. We currently work around this
-// by widening both to numeric
-func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields []MappingFieldInfo) bool {
-	pos := alt.Pos
+func mappingAlternativeFieldTypeAllowed(cx Context, actual, expected SemType) bool {
+	if IsSubtype(cx, expected, Number) && IsSubtype(cx, actual, Number) {
+		return true
+	}
+	return IsSubtype(cx, actual, expected)
+}
+
+// MappingAlternativeAllowsFields checks if a given mapping alternative can be used to construct a mapping value using given fields and default fields.
+// NOTE: default fields are not part of the semtype so we allow them to be injected from outside.
+func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields []MappingFieldInfo, defaultableFields func(*MappingAtomicType) []string) bool {
+	pos := alt.pos
 	if pos != nil {
-		if len(pos.Names) == 0 {
+		if len(pos.names) == 0 {
 			// map<T>
+			expectedTy := CellInnerVal(pos.rest)
 			for _, each := range fields {
-				fieldTy := each.Ty
-				fieldName := each.Name
-				expectedTy := pos.FieldInnerVal(fieldName)
-				if !IsSubtype(cx, fieldTy, expectedTy) {
+				fieldTy := each.Type
+				if !mappingAlternativeFieldTypeAllowed(cx, fieldTy, expectedTy) {
 					return false
 				}
-
 			}
 		} else {
-			i := 0
-			n := len(fields)
-		names:
-			for _, name := range pos.Names {
-				for {
-					if i >= n {
-						if pos.IsOptional(cx, name) {
-							continue names
-						}
+			// For each named field check if we have a matching field in the fields
+			// 	if so check that given field is a subtype
+			// 		(NOTE: according to spec this is not required but we use this to further narrow the alternatives; jBallerina also do this)
+			// 	else check field is optional or we have a default
+			// For all fields that is not matched against a named field check that it can match the rest
+			matchedWithNamed := make([]bool, len(fields))
+			hasDefaults := defaultableFields(pos)
+			for i, name := range pos.names {
+				matched := false
+				for j, f := range fields {
+					if f.Name != name {
+						continue
+					}
+					matchedWithNamed[j] = true
+					expectedType := CellInnerVal(pos.types[i])
+					if !mappingAlternativeFieldTypeAllowed(cx, f.Type, expectedType) {
 						return false
 					}
-					fieldName := fields[i].Name
-					fieldTy := fields[i].Ty
-					expectedTy := pos.FieldInnerVal(fieldName)
-					if IsSubtype(cx, expectedTy, NUMBER) && IsSubtype(cx, fieldTy, NUMBER) {
-						expectedTy = NUMBER
-					}
-					if IsNever(expectedTy) || !IsSubtype(cx, fieldTy, expectedTy) {
-						return false
-					}
-					if fieldName == name {
-						i += 1
-						continue names
-					}
-					if fieldName > name {
-						if pos.IsOptional(cx, name) {
-							continue names
-						}
-						return false
-					}
-					// in < case only type check is needed and FieldInnerVal give the rest type correctly
-					i += 1
+					matched = true
+					break
+				}
+				if matched {
+					continue
+				}
+				if !slices.Contains(hasDefaults, name) && !pos.IsOptional(cx, name) {
+					return false
 				}
 			}
-			for ; i < n; i++ {
-				expectedTy := pos.FieldInnerVal(fields[i].Name)
-				if IsNever(expectedTy) || !IsSubtype(cx, fields[i].Ty, expectedTy) {
+			expectedTy := CellInnerVal(pos.rest)
+			for i, matched := range matchedWithNamed {
+				if matched {
+					continue
+				}
+				if IsNever(expectedTy) {
+					return false
+				}
+				ty := fields[i].Type
+				if !mappingAlternativeFieldTypeAllowed(cx, ty, expectedTy) {
 					return false
 				}
 			}

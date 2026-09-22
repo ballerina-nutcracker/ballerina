@@ -78,7 +78,6 @@ var DefaultPackageIDInterner = &PackageIDInterner{
 var (
 	DEFAULT         = NewPackageID(DefaultPackageIDInterner, ANON_ORG, []Name{DEFAULT_PACKAGE}, DEFAULT_VERSION)
 	ANNOTATIONS_PKG = NewPackageID(DefaultPackageIDInterner, Name("ballerina"), []Name{Name("lang"), Name("annotations")}, DEFAULT_VERSION)
-	INTERNAL_PKG    = NewPackageID(DefaultPackageIDInterner, Name("ballerina"), []Name{Name("lang"), Name("__internal")}, DEFAULT_VERSION)
 )
 
 func CreateNameComps(name Name) []Name {

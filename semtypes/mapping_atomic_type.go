@@ -21,18 +21,18 @@ import (
 )
 
 type MappingAtomicType struct {
-	Names []string
-	Types []SemType
-	Rest  SemType
+	names []string
+	types []SemType
+	rest  SemType
 }
 
-var _ atomicType = &MappingAtomicType{}
+var _ AtomicType = &MappingAtomicType{}
 
 func mappingAtomicTypeFrom(names []string, types []SemType, rest SemType) MappingAtomicType {
 	return MappingAtomicType{
-		Names: names,
-		Types: types,
-		Rest:  rest,
+		names: names,
+		types: types,
+		rest:  rest,
 	}
 }
 
@@ -40,19 +40,31 @@ func (m *MappingAtomicType) atomKind() kind {
 	return kind_MAPPING_ATOM
 }
 
-func (m *MappingAtomicType) FieldInnerVal(name string) SemType {
-	for i, n := range m.Names {
+func (m *MappingAtomicType) FieldNames() []string {
+	return slices.Clone(m.names)
+}
+
+// FieldCell returns the cell semtype of the named field, falling back to the rest cell for a
+// name that is not a declared field. A closed record's rest cell is CellMutabilityNone over
+// Never, so a caller reading mutability off the result must first check that the cell can
+// actually hold a value, that is, that CellInnerVal of it is not Never.
+func (m *MappingAtomicType) FieldCell(name string) SemType {
+	for i, n := range m.names {
 		if n == name {
-			return cellInnerVal(m.Types[i])
+			return m.types[i]
 		}
 	}
-	return cellInnerVal(m.Rest)
+	return m.rest
+}
+
+func (m *MappingAtomicType) FieldInnerVal(name string) SemType {
+	return CellInnerVal(m.FieldCell(name))
 }
 
 func (m *MappingAtomicType) IsOptional(cx Context, name string) bool {
-	for i, n := range m.Names {
+	for i, n := range m.names {
 		if n == name {
-			return IsSubtype(cx, UNDEF, cellInner(m.Types[i]))
+			return IsSubtype(cx, Undef, cellInner(m.types[i]))
 		}
 	}
 	return true
@@ -64,6 +76,18 @@ const (
 	matchAny matchQuantifier = iota
 	matchAll
 )
+
+func AllMapConstraintTypesMatch(cx Context, ty SemType, predicate func(SemType) bool) bool {
+	return mappingAtomsMatch(cx, ty, matchAll, func(cx Context, atom *MappingAtomicType) bool {
+		for i, name := range atom.names {
+			if atom.IsOptional(cx, name) && IsNever(CellInnerVal(atom.types[i])) {
+				continue
+			}
+			return false
+		}
+		return predicate(CellInnerVal(atom.rest))
+	})
+}
 
 func AnyMappingAtomHasFieldByName(cx Context, ty SemType, key string) bool {
 	return mappingAtomsMatch(cx, ty, matchAny, func(_ Context, atom *MappingAtomicType) bool {
@@ -85,13 +109,13 @@ func AllMappingAtomsHaveOptionalFieldByName(cx Context, ty SemType, key string) 
 }
 
 func mappingAtomsMatch(cx Context, ty SemType, quantifier matchQuantifier, predicate func(Context, *MappingAtomicType) bool) bool {
-	if !IsSubtypeSimple(ty, MAPPING) {
+	if !IsSubtypeSimple(ty, Mapping) {
 		return false
 	}
 	if ty.some() == 0 {
 		return false
 	}
-	bdd := getComplexSubtypeData(ty, BTMapping).(Bdd)
+	bdd := getComplexSubtypeData(ty, btMapping).(bdd)
 	if simple, ok := bdd.(*bddNodeSimple); ok {
 		return predicate(cx, cx.MappingAtomType(simple.atom()))
 	}
@@ -99,7 +123,7 @@ func mappingAtomsMatch(cx Context, ty SemType, quantifier matchQuantifier, predi
 	return bddMappingAtomsMatch(cx, bdd, quantifier, predicate)
 }
 
-func bddMappingAtomsMatch(cx Context, bdd Bdd, quantifier matchQuantifier, predicate func(Context, *MappingAtomicType) bool) bool {
+func bddMappingAtomsMatch(cx Context, bdd bdd, quantifier matchQuantifier, predicate func(Context, *MappingAtomicType) bool) bool {
 	switch quantifier {
 	case matchAny:
 		found := false
@@ -129,13 +153,13 @@ func bddMappingAtomsMatch(cx Context, bdd Bdd, quantifier matchQuantifier, predi
 }
 
 func mappingAtomHasFieldByName(atom *MappingAtomicType, key string) bool {
-	return slices.Contains(atom.Names, key)
+	return slices.Contains(atom.names, key)
 }
 
 func mappingAtomHasOptionalFieldByName(_ Context, atom *MappingAtomicType, key string) bool {
-	for i, n := range atom.Names {
+	for i, n := range atom.names {
 		if n == key {
-			return ContainsUndef(cellInner(atom.Types[i]))
+			return ContainsUndef(cellInner(atom.types[i]))
 		}
 	}
 	return false

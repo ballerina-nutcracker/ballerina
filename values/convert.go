@@ -25,13 +25,13 @@ import (
 
 // numericTypes are the basic types tryConvertBasicType can widen or narrow (e.g. int -> float);
 // candidateTypes orders an exact match among these before one that would need conversion.
-var numericTypes = []semtypes.SemType{semtypes.INT, semtypes.FLOAT, semtypes.DECIMAL}
+var numericTypes = []semtypes.SemType{semtypes.Int, semtypes.Float, semtypes.Decimal}
 
 // nonStructuralTypes are the scalar basic types besides numerics. tryConvertBasicType has no
 // conversion for these, so a candidate either already matches or can never succeed — no need
 // for candidateTypes to order them.
 var nonStructuralTypes = []semtypes.SemType{
-	semtypes.NIL, semtypes.BOOLEAN, semtypes.STRING, semtypes.XML, semtypes.ERROR,
+	semtypes.Nil, semtypes.Boolean, semtypes.String, semtypes.XML, semtypes.Error,
 }
 
 // CloneWithType implements the cloneWithType abstract operation defined in the Ballerina spec
@@ -85,16 +85,16 @@ func candidateTypes(tc semtypes.Context, valueTy semtypes.SemType, ty semtypes.S
 	var members []semtypes.SemType
 	basic := semtypes.WidenToBasicTypes(ty)
 
-	if semtypes.ContainsBasicType(basic, semtypes.MAPPING) {
-		mappingTy := semtypes.Intersect(ty, semtypes.MAPPING)
+	if semtypes.ContainsBasicType(basic, semtypes.Mapping) {
+		mappingTy := semtypes.Intersect(ty, semtypes.Mapping)
 		for _, alt := range semtypes.MappingAlternatives(tc, mappingTy) {
-			members = append(members, alt.SemType)
+			members = append(members, alt.Type())
 		}
 	}
-	if semtypes.ContainsBasicType(basic, semtypes.LIST) {
-		listTy := semtypes.Intersect(ty, semtypes.LIST)
+	if semtypes.ContainsBasicType(basic, semtypes.List) {
+		listTy := semtypes.Intersect(ty, semtypes.List)
 		for _, alt := range semtypes.ListAlternatives(tc, listTy) {
-			members = append(members, alt.SemType)
+			members = append(members, alt.Type())
 		}
 	}
 
@@ -109,7 +109,7 @@ func candidateTypes(tc semtypes.Context, valueTy semtypes.SemType, ty semtypes.S
 
 	// A non-numeric value can't exactly match a numeric candidate, so skip the IsSubtype check
 	// below — every numeric candidate just needs conversion then.
-	isNumericValue := semtypes.IsSubtype(tc, valueTy, semtypes.NUMBER)
+	isNumericValue := semtypes.IsSubtype(tc, valueTy, semtypes.Number)
 
 	// exact holds candidates valueTy already satisfies; needsConversion holds the rest.
 	// Appending exact first gives the preferred try-order.
@@ -137,14 +137,14 @@ func tryConvert(tc semtypes.Context, value BalValue, target semtypes.SemType, vi
 	var convertStructured func(map[BalValue]struct{}) (BalValue, *conversionFailure)
 	switch v := value.(type) {
 	case *Map:
-		if !semtypes.IsSubtype(tc, target, semtypes.MAPPING) {
+		if !semtypes.IsSubtype(tc, target, semtypes.Mapping) {
 			return nil, incompatibleConversion(tc, value, target)
 		}
 		convertStructured = func(visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
 			return tryConvertMap(tc, v, target, visiting)
 		}
 	case *List:
-		if !semtypes.IsSubtype(tc, target, semtypes.LIST) {
+		if !semtypes.IsSubtype(tc, target, semtypes.List) {
 			return nil, incompatibleConversion(tc, value, target)
 		}
 		convertStructured = func(visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
@@ -179,7 +179,7 @@ func tryConvertMap(tc semtypes.Context, source *Map, target semtypes.SemType, vi
 		entries = append(entries, MapEntry{Key: key, Value: converted})
 	}
 
-	for _, name := range atomic.Names {
+	for _, name := range atomic.FieldNames() {
 		if _, ok := seen[name]; ok {
 			continue
 		}
@@ -190,14 +190,14 @@ func tryConvertMap(tc semtypes.Context, source *Map, target semtypes.SemType, vi
 		return nil, missingRequiredField(tc, source, target, name)
 	}
 
-	readonly := semtypes.IsSubtype(tc, target, semtypes.VAL_READONLY)
+	readonly := semtypes.IsSubtype(tc, target, semtypes.ValReadonly)
 	return NewMap(target, atomic, readonly, entries), nil
 }
 
 func tryConvertList(tc semtypes.Context, source *List, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
 	atomic := semtypes.ToListAtomicType(tc.Env(), target)
 
-	fixedLen := atomic.Members.FixedLength
+	fixedLen := atomic.FixedLength()
 	if semtypes.IsNever(atomic.Rest()) {
 		if source.Len() != fixedLen {
 			return nil, incompatibleConversion(tc, source, target)
@@ -217,7 +217,7 @@ func tryConvertList(tc semtypes.Context, source *List, target semtypes.SemType, 
 	}
 
 	restFiller, _ := FillerFactoryFor(tc, atomic.Rest())
-	readonly := semtypes.IsSubtype(tc, target, semtypes.VAL_READONLY)
+	readonly := semtypes.IsSubtype(tc, target, semtypes.ValReadonly)
 	return NewList(target, atomic, readonly, restFiller, len(items), items), nil
 }
 
@@ -241,7 +241,7 @@ func tryConvertBasicType(tc semtypes.Context, value BalValue, target semtypes.Se
 
 func convertNumeric(tc semtypes.Context, value BalValue, target semtypes.SemType) (BalValue, *conversionFailure) {
 	switch {
-	case semtypes.IsSubtype(tc, target, semtypes.BYTE):
+	case semtypes.IsSubtype(tc, target, semtypes.Byte):
 		n, err := NumericConvertToInt(value)
 		if err != nil {
 			return nil, newConversionFailure(err.Error())
@@ -250,13 +250,13 @@ func convertNumeric(tc semtypes.Context, value BalValue, target semtypes.SemType
 			return n, nil
 		}
 		return nil, incompatibleConversion(tc, value, target)
-	case semtypes.IsSubtypeSimple(target, semtypes.INT):
+	case semtypes.IsSubtypeSimple(target, semtypes.Int):
 		n, err := NumericConvertToInt(value)
 		if err != nil {
 			return nil, newConversionFailure(err.Error())
 		}
 		return n, nil
-	case semtypes.IsSubtypeSimple(target, semtypes.FLOAT):
+	case semtypes.IsSubtypeSimple(target, semtypes.Float):
 		// value is guaranteed int64/float64/*decimal.Decimal by tryConvertBasicType's type
 		// switch, so NumericConvertToFloat can't hit its error case (non-numeric input) here.
 		f, _ := NumericConvertToFloat(value)
@@ -285,7 +285,7 @@ func enterCycleCheck(tc semtypes.Context, sourceType semtypes.SemType, source Ba
 }
 
 func mappingFieldType(tc semtypes.Context, target semtypes.SemType, atomic *semtypes.MappingAtomicType, key string) semtypes.SemType {
-	for _, name := range atomic.Names {
+	for _, name := range atomic.FieldNames() {
 		if name == key {
 			return atomic.FieldInnerVal(key)
 		}

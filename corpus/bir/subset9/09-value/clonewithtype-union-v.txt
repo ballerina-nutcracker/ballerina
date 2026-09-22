@@ -3,262 +3,273 @@ main() -> nil|error{
   bb0 {
     %1 = ConstantLoad <nil>
     nilVal = %1;
-    %3 = ConstantLoad typedesc
-    %4 = cloneWithType(nilVal,%3) -> bb1;
+    %4 = ConstantLoad typedesc
+    %5 = cloneWithType(nilVal,%4) -> bb1;
   }
   bb1 {
-    $desugar$0 = %4;
-    %6 = $desugar$0 is error
+    %6 = %5 is error
     %6 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$0);
-    PopScopeFrame
+    %0 = %5;
     return;
   }
   bb3 {
-    n = $desugar$0;
-    %8 = n is nil
-    %9 = %8;
-    %10 = println(%9) -> bb4;
+    %3 = %5;
+    GOTO bb4;
   }
   bb4 {
-    %11 = ConstantLoad typedesc
-    %12 = cloneWithType(nilVal,%11) -> bb5;
+    n = %3;
+    %8 = n is nil
+    %9 = %8;
+    %10 = println(%9) -> bb5;
   }
   bb5 {
-    %13 = %12 is error
-    %14 = %13;
-    %15 = println(%14) -> bb6;
+    %11 = ConstantLoad typedesc
+    %12 = cloneWithType(nilVal,%11) -> bb6;
   }
   bb6 {
-    %16 = ConstantLoad 42
-    num = %16;
-    %18 = ConstantLoad typedesc
-    %19 = cloneWithType(num,%18) -> bb7;
+    %13 = %12 is error
+    %14 = %13;
+    %15 = println(%14) -> bb7;
   }
   bb7 {
-    $desugar$1 = %19;
-    %21 = $desugar$1 is error
-    %21 ? bb8 : bb9;
+    %16 = ConstantLoad 42
+    num = %16;
+    %19 = ConstantLoad typedesc
+    %20 = cloneWithType(num,%19) -> bb8;
   }
   bb8 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$1);
-    PopScopeFrame
-    return;
+    %21 = %20 is error
+    %21 ? bb9 : bb10;
   }
   bb9 {
-    asInt = $desugar$1;
-    %23 = println(asInt) -> bb10;
+    %0 = %20;
+    return;
   }
   bb10 {
-    %24 = ConstantLoad hello
-    str = %24;
-    %26 = ConstantLoad typedesc
-    %27 = cloneWithType(str,%26) -> bb11;
+    %18 = %20;
+    GOTO bb11;
   }
   bb11 {
-    $desugar$2 = %27;
-    %29 = $desugar$2 is error
-    %29 ? bb12 : bb13;
+    asInt = %18;
+    %23 = println(asInt) -> bb12;
   }
   bb12 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$2);
-    PopScopeFrame
-    return;
+    %24 = ConstantLoad hello
+    str = %24;
+    %27 = ConstantLoad typedesc
+    %28 = cloneWithType(str,%27) -> bb13;
   }
   bb13 {
-    asStr = $desugar$2;
-    %31 = println(asStr) -> bb14;
+    %29 = %28 is error
+    %29 ? bb14 : bb15;
   }
   bb14 {
-    %32 = ConstantLoad 2
-    fv = %32;
-    %34 = ConstantLoad typedesc
-    %35 = cloneWithType(fv,%34) -> bb15;
+    %0 = %28;
+    return;
   }
   bb15 {
-    $desugar$3 = %35;
-    %37 = $desugar$3 is error
-    %37 ? bb16 : bb17;
+    %26 = %28;
+    GOTO bb16;
   }
   bb16 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$3);
-    PopScopeFrame
-    return;
+    asStr = %26;
+    %31 = println(asStr) -> bb17;
   }
   bb17 {
-    coerced = $desugar$3;
-    %39 = println(coerced) -> bb18;
+    %32 = ConstantLoad 2
+    fv = %32;
+    %35 = ConstantLoad typedesc
+    %36 = cloneWithType(fv,%35) -> bb18;
   }
   bb18 {
-    %40 = ConstantLoad 3
-    iv = %40;
-    %42 = ConstantLoad typedesc
-    %43 = cloneWithType(iv,%42) -> bb19;
+    %37 = %36 is error
+    %37 ? bb19 : bb20;
   }
   bb19 {
-    $desugar$4 = %43;
-    %45 = $desugar$4 is error
-    %45 ? bb20 : bb21;
-  }
-  bb20 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$4);
-    PopScopeFrame
+    %0 = %36;
     return;
   }
+  bb20 {
+    %34 = %36;
+    GOTO bb21;
+  }
   bb21 {
-    optF = $desugar$4;
-    %47 = optF;
-    %48 = println(%47) -> bb22;
+    coerced = %34;
+    %39 = println(coerced) -> bb22;
   }
   bb22 {
-    %49 = ConstantLoad 10
-    dv = %49;
-    %51 = ConstantLoad typedesc
-    %52 = cloneWithType(dv,%51) -> bb23;
+    %40 = ConstantLoad 3
+    iv = %40;
+    %43 = ConstantLoad typedesc
+    %44 = cloneWithType(iv,%43) -> bb23;
   }
   bb23 {
-    $desugar$5 = %52;
-    %54 = $desugar$5 is error
-    %54 ? bb24 : bb25;
+    %45 = %44 is error
+    %45 ? bb24 : bb25;
   }
   bb24 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$5);
-    PopScopeFrame
+    %0 = %44;
     return;
   }
   bb25 {
-    ds = $desugar$5;
-    %56 = println(ds) -> bb26;
+    %42 = %44;
+    GOTO bb26;
   }
   bb26 {
+    optF = %42;
+    %47 = optF;
+    %48 = println(%47) -> bb27;
+  }
+  bb27 {
+    %49 = ConstantLoad 10
+    dv = %49;
+    %52 = ConstantLoad typedesc
+    %53 = cloneWithType(dv,%52) -> bb28;
+  }
+  bb28 {
+    %54 = %53 is error
+    %54 ? bb29 : bb30;
+  }
+  bb29 {
+    %0 = %53;
+    return;
+  }
+  bb30 {
+    %51 = %53;
+    GOTO bb31;
+  }
+  bb31 {
+    ds = %51;
+    %56 = println(ds) -> bb32;
+  }
+  bb32 {
     %57 = ConstantLoad name
     %58 = ConstantLoad Alice
     %59 = ConstantLoad age
     %60 = ConstantLoad 30
     %61 = newMap {| anydata... |}{%57=%58, %59=%60}
     pMap = %61;
-    %63 = ConstantLoad typedesc
-    %64 = cloneWithType(pMap,%63) -> bb27;
+    %64 = ConstantLoad typedesc
+    %65 = cloneWithType(pMap,%64) -> bb33;
   }
-  bb27 {
-    $desugar$6 = %64;
-    %66 = $desugar$6 is error
-    %66 ? bb28 : bb29;
+  bb33 {
+    %66 = %65 is error
+    %66 ? bb34 : bb35;
   }
-  bb28 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$6);
-    PopScopeFrame
+  bb34 {
+    %0 = %65;
     return;
   }
-  bb29 {
-    pu = $desugar$6;
-    %68 = println(pu) -> bb30;
+  bb35 {
+    %63 = %65;
+    GOTO bb36;
   }
-  bb30 {
+  bb36 {
+    pu = %63;
+    %68 = println(pu) -> bb37;
+  }
+  bb37 {
     %69 = ConstantLoad name
     %70 = ConstantLoad Bob
     %71 = ConstantLoad role
     %72 = ConstantLoad admin
     %73 = newMap {| anydata... |}{%69=%70, %71=%72}
     pMap2 = %73;
-    %75 = ConstantLoad typedesc
-    %76 = cloneWithType(pMap2,%75) -> bb31;
+    %76 = ConstantLoad typedesc
+    %77 = cloneWithType(pMap2,%76) -> bb38;
   }
-  bb31 {
-    $desugar$7 = %76;
-    %78 = $desugar$7 is error
-    %78 ? bb32 : bb33;
+  bb38 {
+    %78 = %77 is error
+    %78 ? bb39 : bb40;
   }
-  bb32 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$7);
-    PopScopeFrame
+  bb39 {
+    %0 = %77;
     return;
   }
-  bb33 {
-    pu2 = $desugar$7;
-    %80 = println(pu2) -> bb34;
+  bb40 {
+    %75 = %77;
+    GOTO bb41;
   }
-  bb34 {
+  bb41 {
+    pu2 = %75;
+    %80 = println(pu2) -> bb42;
+  }
+  bb42 {
     %81 = ConstantLoad 1
     %82 = ConstantLoad 2
     %83 = ConstantLoad 3
     %84 = ConstantLoad 3
     %85 = newArray [anydata...][%84]{%81, %82, %83}
     intArr = %85;
-    %87 = ConstantLoad typedesc
-    %88 = cloneWithType(intArr,%87) -> bb35;
+    %88 = ConstantLoad typedesc
+    %89 = cloneWithType(intArr,%88) -> bb43;
   }
-  bb35 {
-    $desugar$8 = %88;
-    %90 = $desugar$8 is error
-    %90 ? bb36 : bb37;
+  bb43 {
+    %90 = %89 is error
+    %90 ? bb44 : bb45;
   }
-  bb36 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$8);
-    PopScopeFrame
+  bb44 {
+    %0 = %89;
     return;
   }
-  bb37 {
-    arrVal = $desugar$8;
-    %92 = println(arrVal) -> bb38;
+  bb45 {
+    %87 = %89;
+    GOTO bb46;
   }
-  bb38 {
+  bb46 {
+    arrVal = %87;
+    %92 = println(arrVal) -> bb47;
+  }
+  bb47 {
     %93 = ConstantLoad a
     %94 = ConstantLoad b
     %95 = ConstantLoad 2
     %96 = newArray [anydata...][%95]{%93, %94}
     strArr = %96;
-    %98 = ConstantLoad typedesc
-    %99 = cloneWithType(strArr,%98) -> bb39;
+    %99 = ConstantLoad typedesc
+    %100 = cloneWithType(strArr,%99) -> bb48;
   }
-  bb39 {
-    $desugar$9 = %99;
-    %101 = $desugar$9 is error
-    %101 ? bb40 : bb41;
+  bb48 {
+    %101 = %100 is error
+    %101 ? bb49 : bb50;
   }
-  bb40 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$9);
-    PopScopeFrame
+  bb49 {
+    %0 = %100;
     return;
   }
-  bb41 {
-    strArrVal = $desugar$9;
-    %103 = println(strArrVal) -> bb42;
+  bb50 {
+    %98 = %100;
+    GOTO bb51;
   }
-  bb42 {
+  bb51 {
+    strArrVal = %98;
+    %103 = println(strArrVal) -> bb52;
+  }
+  bb52 {
     %104 = ConstantLoad 200
     bv = %104;
-    %106 = ConstantLoad typedesc
-    %107 = cloneWithType(bv,%106) -> bb43;
+    %107 = ConstantLoad typedesc
+    %108 = cloneWithType(bv,%107) -> bb53;
   }
-  bb43 {
-    $desugar$10 = %107;
-    %109 = $desugar$10 is error
-    %109 ? bb44 : bb45;
+  bb53 {
+    %109 = %108 is error
+    %109 ? bb54 : bb55;
   }
-  bb44 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$10);
-    PopScopeFrame
+  bb54 {
+    %0 = %108;
     return;
   }
-  bb45 {
-    asByte = $desugar$10;
-    %111 = println(asByte) -> bb46;
+  bb55 {
+    %106 = %108;
+    GOTO bb56;
   }
-  bb46 {
+  bb56 {
+    asByte = %106;
+    %111 = println(asByte) -> bb57;
+  }
+  bb57 {
     %112 = ConstantLoad <nil>
     %0 = %112;
     return;

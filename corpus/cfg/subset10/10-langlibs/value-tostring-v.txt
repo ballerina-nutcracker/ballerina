@@ -1,0 +1,28 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable n (type
+        (value-type anydata)) (expr
+        (literal 42))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.value toString (
+          (simple-var-ref n))))))
+    (var-def
+      (variable s (type
+        (value-type anydata)) (expr
+        (literal hello))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.value toString (
+          (simple-var-ref s))))))
+    (var-def
+      (variable b (type
+        (value-type anydata)) (expr
+        (literal true))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.value toString (
+          (simple-var-ref b))))))
+  )
+)

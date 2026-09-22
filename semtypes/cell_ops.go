@@ -17,19 +17,19 @@
 package semtypes
 
 type cellOps struct {
-	CommonOps
+	commonOps
 }
 
-var _ BasicTypeOps = &cellOps{}
+var _ basicTypeOps = &cellOps{}
 
-func cellFormulaIsEmpty(cx Context, t SubtypeData) bool {
-	return bddEvery(cx, t.(Bdd), conjunctionNil, conjunctionNil, cellFormulaIsEmptyInner)
+func cellFormulaIsEmpty(cx Context, t subtypeData) bool {
+	return bddEvery(cx, t.(bdd), conjunctionNil, conjunctionNil, cellFormulaIsEmptyInner)
 }
 
 func cellFormulaIsEmptyInner(cx Context, posList conjunctionHandle, negList conjunctionHandle) bool {
 	var combined cellAtomicType
 	if posList == conjunctionNil {
-		combined = cellAtomicTypeFrom(VAL, CellMutability_CELL_MUT_UNLIMITED)
+		combined = cellAtomicTypeFrom(Val, cellMutabilityUnlimited)
 	} else {
 		combined = *cellAtomType(cx.conjunctionAtom(posList))
 		p := cx.conjunctionNext(posList)
@@ -47,9 +47,9 @@ func cellInhabited(cx Context, posCell cellAtomicType, negList conjunctionHandle
 		return false
 	}
 	switch posCell.Mut {
-	case CellMutability_CELL_MUT_NONE:
+	case CellMutabilityNone:
 		return cellMutNoneInhabited(cx, pos, negList)
-	case CellMutability_CELL_MUT_LIMITED:
+	case CellMutabilityLimited:
 		return cellMutLimitedInhabited(cx, pos, negList)
 	default:
 		return cellMutUnlimitedInhabited(cx, pos, negList)
@@ -63,7 +63,7 @@ func cellMutNoneInhabited(cx Context, pos SemType, negList conjunctionHandle) bo
 
 func cellNegListUnion(cx Context, negList conjunctionHandle) SemType {
 	var negUnion SemType
-	negUnion = NEVER
+	negUnion = Never
 	neg := negList
 	for neg != conjunctionNil {
 		negUnion = Union(negUnion, cellAtomType(cx.conjunctionAtom(neg)).Ty)
@@ -77,7 +77,7 @@ func cellMutLimitedInhabited(cx Context, pos SemType, negList conjunctionHandle)
 		return true
 	}
 	negAtomicCell := cellAtomType(cx.conjunctionAtom(negList))
-	if negAtomicCell.Mut >= CellMutability_CELL_MUT_LIMITED && IsEmpty(cx, Diff(pos, negAtomicCell.Ty)) {
+	if negAtomicCell.Mut >= CellMutabilityLimited && IsEmpty(cx, Diff(pos, negAtomicCell.Ty)) {
 		return false
 	}
 	return cellMutLimitedInhabited(cx, pos, cx.conjunctionNext(negList))
@@ -87,7 +87,7 @@ func cellMutUnlimitedInhabited(cx Context, pos SemType, negList conjunctionHandl
 	neg := negList
 	for neg != conjunctionNil {
 		cellAtom := cellAtomType(cx.conjunctionAtom(neg))
-		if cellAtom.Mut == CellMutability_CELL_MUT_LIMITED && IsSameType(cx, VAL, cellAtom.Ty) {
+		if cellAtom.Mut == CellMutabilityLimited && IsSameType(cx, Val, cellAtom.Ty) {
 			return false
 		}
 		neg = cx.conjunctionNext(neg)
@@ -98,11 +98,11 @@ func cellMutUnlimitedInhabited(cx Context, pos SemType, negList conjunctionHandl
 
 func cellNegListUnlimitedUnion(cx Context, negList conjunctionHandle) SemType {
 	var negUnion SemType
-	negUnion = NEVER
+	negUnion = Never
 	neg := negList
 	for neg != conjunctionNil {
 		cellAtom := cellAtomType(cx.conjunctionAtom(neg))
-		if cellAtom.Mut == CellMutability_CELL_MUT_UNLIMITED {
+		if cellAtom.Mut == cellMutabilityUnlimited {
 			negUnion = Union(negUnion, cellAtom.Ty)
 		}
 		neg = cx.conjunctionNext(neg)
@@ -116,33 +116,33 @@ func intersectCellAtomicType(c1 *cellAtomicType, c2 *cellAtomicType) cellAtomicT
 	return cellAtomicTypeFrom(ty, mut)
 }
 
-func cellSubtypeUnion(t1 SubtypeData, t2 SubtypeData) ProperSubtypeData {
+func cellSubtypeUnion(t1 subtypeData, t2 subtypeData) properSubtypeData {
 	return cellSubtypeDataEnsureProper(bddSubtypeUnion(t1, t2))
 }
 
-func cellSubtypeIntersect(t1 SubtypeData, t2 SubtypeData) ProperSubtypeData {
+func cellSubtypeIntersect(t1 subtypeData, t2 subtypeData) properSubtypeData {
 	return cellSubtypeDataEnsureProper(bddSubtypeIntersect(t1, t2))
 }
 
-func cellSubtypeDiff(t1 SubtypeData, t2 SubtypeData) ProperSubtypeData {
+func cellSubtypeDiff(t1 subtypeData, t2 subtypeData) properSubtypeData {
 	return cellSubtypeDataEnsureProper(bddSubtypeDiff(t1, t2))
 }
 
-func cellSubtypeComplement(t SubtypeData) ProperSubtypeData {
+func cellSubtypeComplement(t subtypeData) properSubtypeData {
 	return cellSubtypeDataEnsureProper(bddSubtypeComplement(t))
 }
 
-func cellSubtypeDataEnsureProper(subtypeData SubtypeData) ProperSubtypeData {
+func cellSubtypeDataEnsureProper(subtypeData subtypeData) properSubtypeData {
 	if allOrNothingSubtype, ok := subtypeData.(allOrNothingSubtype); ok {
 		var a atom
 		if allOrNothingSubtype.IsAllSubtype() {
-			a = ATOM_CELL_VAL
+			a = atomCellVal
 		} else {
-			a = ATOM_CELL_NEVER
+			a = atomCellNever
 		}
 		return bddAtom(a)
 	} else {
-		return subtypeData.(ProperSubtypeData)
+		return subtypeData.(properSubtypeData)
 	}
 }
 
@@ -151,23 +151,23 @@ func newCellOps() cellOps {
 	return this
 }
 
-func (c *cellOps) Union(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (c *cellOps) Union(t1 subtypeData, t2 subtypeData) subtypeData {
 	return cellSubtypeUnion(t1, t2)
 }
 
-func (c *cellOps) Intersect(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (c *cellOps) Intersect(t1 subtypeData, t2 subtypeData) subtypeData {
 	return cellSubtypeIntersect(t1, t2)
 }
 
-func (c *cellOps) Diff(t1 SubtypeData, t2 SubtypeData) SubtypeData {
+func (c *cellOps) Diff(t1 subtypeData, t2 subtypeData) subtypeData {
 	return cellSubtypeDiff(t1, t2)
 }
 
-func (c *cellOps) complement(t SubtypeData) SubtypeData {
+func (c *cellOps) complement(t subtypeData) subtypeData {
 	return cellSubtypeComplement(t)
 }
 
-func (c *cellOps) IsEmpty(cx Context, t SubtypeData) bool {
+func (c *cellOps) IsEmpty(cx Context, t subtypeData) bool {
 	return cellFormulaIsEmpty(cx, t)
 }
 

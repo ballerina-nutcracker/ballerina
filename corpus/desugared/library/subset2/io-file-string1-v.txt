@@ -9,46 +9,35 @@
         (variable path (type
           (value-type string)) (expr
           (literal /tmp/bal_io_string1.txt))))
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref path))))
-      (var-def
-        (variable $desugar$1 (expr
-          (literal Hello
-World))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$1 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (var-def
-        (variable $desugar$3 (expr
-          (invocation io fileWriteString (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1)
-            (simple-var-ref $desugar$2))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$3))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$3))) ())
       (expression-stmt
-        (simple-var-ref $desugar$3))
-      (var-def
-        (variable $desugar$4 (expr
-          (invocation io fileReadString (
-            (simple-var-ref path))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$4))
-        (block-stmt
-          (return
-            (simple-var-ref $desugar$4))) ())
+        (checked-expr
+          (expression-thunk
+          (lambda
+            (function main$502$0$thunk$0 () ()
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (simple-var-ref path))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (literal Hello
+World))))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (invocation $default$1 (
+                      (simple-var-ref $desugar$0)
+                      (simple-var-ref $desugar$1))))))
+                (return
+                  (invocation io fileWriteString (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))
       (var-def
         (variable content (type
           (value-type string)) (expr
-          (simple-var-ref $desugar$4))))
+          (checked-expr
+            (invocation io fileReadString (
+              (simple-var-ref path)))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref content)))))))

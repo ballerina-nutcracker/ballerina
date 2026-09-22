@@ -22,12 +22,7 @@ listener http:Listener httpListener = new (9090, {
 
 service /hello on httpListener {
 
-    // Returns an http:Response (rather than a bare string) so the same source
-    // runs on both Nutcracker and jBallerina — Nutcracker's first-cut http
-    // service resources serialize http:Response/error/() only.
-    isolated resource function get .() returns http:Response {
-        http:Response res = new;
-        res.setTextPayload("Hello, World!");
-        return res;
+    isolated resource function get .() returns string {
+        return "Hello, World!";
     }
 }

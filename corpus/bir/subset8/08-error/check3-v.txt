@@ -12,20 +12,21 @@ main() -> nil{
 }
 errorViaCheck() -> error{
   bb0 {
-    %1 = newError() -> bb1;
+    %2 = newError() -> bb1;
   }
   bb1 {
-    $desugar$0 = %1;
-    %3 = $desugar$0 is error
+    %3 = %2 is error
     %3 ? bb2 : bb3;
   }
   bb2 {
-    PushScopeFrame 0
-    (1, %0) = (1, $desugar$0);
-    PopScopeFrame
+    %0 = %2;
     return;
   }
   bb3 {
+    %1 = %2;
+    GOTO bb4;
+  }
+  bb4 {
     return;
   }
 }

@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+// Package bir declares types used to represent Ballerina Intermediate Representation
 package bir
 
 import (
@@ -21,6 +22,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 type ConstValue struct {
@@ -46,7 +48,6 @@ type (
 		Pos Location
 	}
 
-	// BIRAbstractInstruction
 	BIRInstructionBase struct {
 		BIRNodeBase
 		// Kind InstructionKind
@@ -55,7 +56,7 @@ type (
 	}
 
 	BIRScope struct {
-		Id     int
+		ID     int
 		Parent *BIRScope
 	}
 
@@ -78,11 +79,12 @@ type (
 	}
 
 	BIRClassDef struct {
-		Name      model.Name
-		LookupKey string
-		Fields    []ObjectField
-		VTable    map[string]*BIRFunction
-		RTable    map[string][]BIRResourceMethod
+		Name        model.Name
+		LookupKey   string
+		Annotations values.AnnotationValues
+		Fields      []ObjectField
+		VTable      map[string]*BIRFunction
+		RTable      map[string][]BIRResourceMethod
 	}
 
 	BIRResourceMethod struct {
@@ -110,26 +112,24 @@ type (
 	BIRGlobalVariableDcl struct {
 		birVariableDclBase
 		Flags              model.Flag
-		PkgId              *model.PackageID
+		PkgID              *model.PackageID
 		GlobalVarLookupKey string
 	}
 
 	BIRFunction struct {
 		BIRNodeBase
-		Name           model.Name
-		OriginalName   model.Name
-		Flags          model.Flag
-		RequiredParams []BIRParameter
-		RestParams     *BIRParameter
-		ArgsCount      int
-		LocalVars      []BIRLocalVariableDcl
-		ReturnVariable *BIRLocalVariableDcl
-		Parameters     []BIRFunctionParameter
-		BasicBlocks    []BIRBasicBlock
-		ErrorTable     []BIRErrorEntry
-		// FIXME:
-		DependentGlobalVars []BIRGlobalVariableDcl
-		FunctionLookupKey   string
+		Name              model.Name
+		OriginalName      model.Name
+		Flags             model.Flag
+		RequiredParams    []BIRParameter
+		RestParams        *BIRParameter
+		ArgsCount         int
+		LocalVars         []BIRLocalVariableDcl
+		ReturnVariable    *BIRLocalVariableDcl
+		Parameters        []BIRFunctionParameter
+		BasicBlocks       []BIRBasicBlock
+		ErrorTable        []BIRErrorEntry
+		FunctionLookupKey string
 	}
 
 	BIRErrorEntry struct {
@@ -142,15 +142,16 @@ type (
 	BIRBasicBlock struct {
 		BIRNodeBase
 		Number       int
-		Id           model.Name
+		ID           model.Name
 		Instructions []BIRNonTerminator
 		Terminator   BIRTerminator
 	}
 
 	BIRParameter struct {
 		BIRNodeBase
-		Name  model.Name
-		Flags model.Flag
+		Name        model.Name
+		Flags       model.Flag
+		Annotations values.AnnotationValues
 	}
 
 	BIRFunctionParameter struct {
@@ -165,6 +166,16 @@ type (
 		Address     Address
 	}
 )
+
+// ParamLocalVarOffset returns the local-variable index of a function's first
+// declared parameter. Local slot zero is the return value and attached
+// functions additionally reserve slot one for self.
+func (f *BIRFunction) ParamLocalVarOffset() int {
+	if f.Flags.Has(model.FlagAttached) {
+		return 2
+	}
+	return 1
+}
 
 type Address struct {
 	Mode       AddressingMode
@@ -183,7 +194,7 @@ func RelativeAddress(frameIndex int) Address {
 	return Address{Mode: AddressingModeRelative, FrameIndex: frameIndex}
 }
 
-func absoluteAddress(baseIndex, frameIndex int) Address {
+func AbsoluteAddress(baseIndex, frameIndex int) Address {
 	return Address{Mode: AddressingModeAbsolute, BaseIndex: baseIndex, FrameIndex: frameIndex}
 }
 
@@ -208,152 +219,96 @@ func (v *birVariableDclBase) SetPos(pos Location) {
 	v.Pos = pos
 }
 
-// TODO: add interface asserts
-
 type VarKind uint8
 
 const (
-	VAR_KIND_LOCAL VarKind = iota + 1
-	VAR_KIND_ARG
-	VAR_KIND_TEMP
-	VAR_KIND_RETURN
-	VAR_KIND_GLOBAL
-	VAR_KIND_SELF
-	VAR_KIND_CONSTANT
-	VAR_KIND_SYNTHETIC
+	VarKindLocal VarKind = iota + 1
+	VarKindReturn
+	VarKindGlobal
 )
 
 type VarScope uint8
 
 const (
-	VAR_SCOPE_FUNCTION VarScope = iota + 1
-	VAR_SCOPE_GLOBAL
+	VarScopeFunction VarScope = iota + 1
+	VarScopeGlobal
 )
 
 type InstructionKind uint8
 
 const (
-	INSTRUCTION_KIND_GOTO InstructionKind = iota + 1
-	INSTRUCTION_KIND_CALL
-	INSTRUCTION_KIND_BRANCH
-	INSTRUCTION_KIND_RETURN
-	INSTRUCTION_KIND_ASYNC_CALL
-	INSTRUCTION_KIND_WAIT
-	INSTRUCTION_KIND_FP_CALL
-	INSTRUCTION_KIND_WK_RECEIVE
-	INSTRUCTION_KIND_WK_SEND
-	INSTRUCTION_KIND_FLUSH
-	INSTRUCTION_KIND_LOCK
-	INSTRUCTION_KIND_FIELD_LOCK
-	INSTRUCTION_KIND_UNLOCK
-	INSTRUCTION_KIND_WAIT_ALL
-	INSTRUCTION_KIND_WK_ALT_RECEIVE
-	INSTRUCTION_KIND_WK_MULTIPLE_RECEIVE
-	INSTRUCTION_KIND_RESOURCE_CALL
-)
-
-const (
-	INSTRUCTION_KIND_MOVE InstructionKind = iota + 20
-	INSTRUCTION_KIND_CONST_LOAD
-	INSTRUCTION_KIND_NEW_STRUCTURE
-	INSTRUCTION_KIND_MAP_STORE
-	INSTRUCTION_KIND_MAP_LOAD
-	INSTRUCTION_KIND_NEW_ARRAY
-	INSTRUCTION_KIND_ARRAY_STORE
-	INSTRUCTION_KIND_ARRAY_LOAD
-	INSTRUCTION_KIND_NEW_ERROR
-	INSTRUCTION_KIND_TYPE_CAST
-	INSTRUCTION_KIND_IS_LIKE
-	INSTRUCTION_KIND_TYPE_TEST
-	INSTRUCTION_KIND_NEW_INSTANCE
-	INSTRUCTION_KIND_OBJECT_STORE
-	INSTRUCTION_KIND_OBJECT_LOAD
-	INSTRUCTION_KIND_PANIC
-	INSTRUCTION_KIND_FP_LOAD
-	INSTRUCTION_KIND_STRING_LOAD
-	INSTRUCTION_KIND_NEW_XML_ELEMENT
-	INSTRUCTION_KIND_NEW_XML_TEXT
-	INSTRUCTION_KIND_NEW_XML_COMMENT
-	INSTRUCTION_KIND_NEW_XML_PI
-	INSTRUCTION_KIND_NEW_XML_SEQUENCE
-	INSTRUCTION_KIND_NEW_XML_QNAME
-	INSTRUCTION_KIND_NEW_STRING_XML_QNAME
-	INSTRUCTION_KIND_XML_SEQ_STORE
-	INSTRUCTION_KIND_XML_SEQ_LOAD
-	INSTRUCTION_KIND_XML_LOAD
-	INSTRUCTION_KIND_XML_LOAD_ALL
-	INSTRUCTION_KIND_XML_ATTRIBUTE_LOAD
-	INSTRUCTION_KIND_XML_ATTRIBUTE_STORE
-	INSTRUCTION_KIND_NEW_TABLE
-	INSTRUCTION_KIND_NEW_TYPEDESC
-	INSTRUCTION_KIND_NEW_STREAM
-	INSTRUCTION_KIND_STREAM_NEXT
-	INSTRUCTION_KIND_STREAM_CLOSE
-	INSTRUCTION_KIND_TABLE_STORE
-	INSTRUCTION_KIND_TABLE_LOAD
-	INSTRUCTION_KIND_ARRAY_FILLING_LOAD
-	INSTRUCTION_KIND_MAP_FILLING_LOAD
-	INSTRUCTION_KIND_EVAL_TEMPLATE_EXPR
-)
-
-const (
-	INSTRUCTION_KIND_ADD InstructionKind = iota + 61
-	INSTRUCTION_KIND_SUB
-	INSTRUCTION_KIND_MUL
-	INSTRUCTION_KIND_DIV
-	INSTRUCTION_KIND_MOD
-	INSTRUCTION_KIND_EQUAL
-	INSTRUCTION_KIND_NOT_EQUAL
-	INSTRUCTION_KIND_GREATER_THAN
-	INSTRUCTION_KIND_GREATER_EQUAL
-	INSTRUCTION_KIND_LESS_THAN
-	INSTRUCTION_KIND_LESS_EQUAL
-	INSTRUCTION_KIND_AND
-	INSTRUCTION_KIND_OR
-	INSTRUCTION_KIND_REF_EQUAL
-	INSTRUCTION_KIND_REF_NOT_EQUAL
-	INSTRUCTION_KIND_CLOSED_RANGE
-	INSTRUCTION_KIND_HALF_OPEN_RANGE
-	INSTRUCTION_KIND_ANNOT_ACCESS
-)
-
-const (
-	INSTRUCTION_KIND_TYPEOF InstructionKind = iota + 80
-	INSTRUCTION_KIND_NOT
-	INSTRUCTION_KIND_NEGATE
-	INSTRUCTION_KIND_BITWISE_AND
-	INSTRUCTION_KIND_BITWISE_OR
-	INSTRUCTION_KIND_BITWISE_XOR
-	INSTRUCTION_KIND_BITWISE_LEFT_SHIFT
-	INSTRUCTION_KIND_BITWISE_RIGHT_SHIFT
-	INSTRUCTION_KIND_BITWISE_UNSIGNED_RIGHT_SHIFT
-
-	INSTRUCTION_KIND_NEW_REG_EXP
-	INSTRUCTION_KIND_NEW_RE_DISJUNCTION
-	INSTRUCTION_KIND_NEW_RE_SEQUENCE
-	INSTRUCTION_KIND_NEW_RE_ASSERTION
-	INSTRUCTION_KIND_NEW_RE_ATOM_QUANTIFIER
-	INSTRUCTION_KIND_NEW_RE_LITERAL_CHAR_ESCAPE
-	INSTRUCTION_KIND_NEW_RE_CHAR_CLASS
-	INSTRUCTION_KIND_NEW_RE_CHAR_SET
-	INSTRUCTION_KIND_NEW_RE_CHAR_SET_RANGE
-	INSTRUCTION_KIND_NEW_RE_CAPTURING_GROUP
-	INSTRUCTION_KIND_NEW_RE_FLAG_EXPR
-	INSTRUCTION_KIND_NEW_RE_FLAG_ON_OFF
-	INSTRUCTION_KIND_NEW_RE_QUANTIFIER
-	INSTRUCTION_KIND_RECORD_DEFAULT_FP_LOAD
-	INSTRUCTION_KIND_BITWISE_COMPLEMENT
-	INSTRUCTION_KIND_PUSH_SCOPE
-	INSTRUCTION_KIND_POP_SCOPE
-)
-
-const (
-	INSTRUCTION_KIND_PLATFORM InstructionKind = 128
+	InstructionKindGoto InstructionKind = iota + 1
+	InstructionKindCall
+	InstructionKindBranch
+	InstructionKindReturn
+	InstructionKindAsyncCall
+	InstructionKindWait
+	InstructionKindFPCall
+	InstructionKindLock
+	InstructionKindUnlock
+	InstructionKindResourceCall
+	InstructionKindAlternateWait
+	InstructionKindMove
+	InstructionKindConstLoad
+	InstructionKindNewStructure
+	InstructionKindMapStore
+	InstructionKindMapLoad
+	InstructionKindNewArray
+	InstructionKindArrayStore
+	InstructionKindArrayLoad
+	InstructionKindNewError
+	InstructionKindTypeCast
+	InstructionKindTypeTest
+	InstructionKindNewInstance
+	InstructionKindObjectStore
+	InstructionKindObjectLoad
+	InstructionKindPanic
+	InstructionKindFPLoad
+	InstructionKindNewXMLElement
+	InstructionKindNewXMLText
+	InstructionKindNewXMLComment
+	InstructionKindNewXMLPI
+	InstructionKindNewXMLSequence
+	InstructionKindNewStream
+	InstructionKindStreamNext
+	InstructionKindStreamClose
+	InstructionKindArrayFillingLoad
+	InstructionKindMapFillingLoad
+	InstructionKindEvalTemplateExpr
+	InstructionKindAdd
+	InstructionKindSub
+	InstructionKindMul
+	InstructionKindDiv
+	InstructionKindMod
+	InstructionKindEqual
+	InstructionKindNotEqual
+	InstructionKindGreaterThan
+	InstructionKindGreaterEqual
+	InstructionKindLessThan
+	InstructionKindLessEqual
+	InstructionKindAnd
+	InstructionKindOr
+	InstructionKindRefEqual
+	InstructionKindRefNotEqual
+	InstructionKindAnnotAccess
+	InstructionKindNot
+	InstructionKindNegate
+	InstructionKindBitwiseAnd
+	InstructionKindBitwiseOr
+	InstructionKindBitwiseXor
+	InstructionKindBitwiseLeftShift
+	InstructionKindBitwiseRightShift
+	InstructionKindBitwiseUnsignedRightShift
+	InstructionKindBitwiseComplement
+	InstructionKindPushScope
+	InstructionKindPopScope
+	InstructionKindWaitAll
+	InstructionKindXMLFilter
 )
 
 func BB(number int) BIRBasicBlock {
 	return BIRBasicBlock{
 		Number: number,
-		Id:     model.Name(fmt.Sprintf("bb%d", number)),
+		ID:     model.Name(fmt.Sprintf("bb%d", number)),
 	}
 }

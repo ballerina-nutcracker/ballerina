@@ -15,8 +15,9 @@
 // under the License.
 
 import ballerina/io;
+import testorg/xmlnsmodule.constants;
 
-xmlns "https:foo/bar" as bar;
+xmlns constants:URI as bar;
 
 public function main() {
     xml elem = xml `<bar:f><bar:x></bar:x></bar:f>`;

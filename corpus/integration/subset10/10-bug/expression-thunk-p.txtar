@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: panic across thunk
+        at panicValues(expression-thunk-p.bal:16)
+           main(expression-thunk-p.bal:20)

@@ -1,0 +1,113 @@
+(package
+  (import-package ballerina io (as io))
+  (variable prefix (type
+    (value-type string)))
+  (variable offset (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref prefix)
+        (literal id-))
+      (assignment
+        (simple-var-ref offset)
+        (literal 10))))
+  (function tag (
+    (variable s (type
+      (value-type string)))
+    (variable p (type
+      (value-type string)) (expr
+      (simple-var-ref prefix)))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref p)
+          (simple-var-ref s)))))
+  (function shift (
+    (variable n (type
+      (value-type int)))
+    (variable amount (type
+      (value-type int)) (expr
+      (binary-expr +
+        (simple-var-ref offset)
+        (literal 1))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref n)
+          (simple-var-ref amount)))))
+  (function bare (
+    (variable n (type
+      (value-type int)) (expr
+      (simple-var-ref offset)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (simple-var-ref n))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (literal a))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$0))))))
+          (invocation tag (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation tag (
+            (literal a)
+            (literal x-))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$2 (expr
+              (literal 1))))
+          (var-def
+            (variable $desugar$3 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$2))))))
+          (invocation shift (
+            (simple-var-ref $desugar$2)
+            (simple-var-ref $desugar$3)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation shift (
+            (literal 1)
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$4 (expr
+              (invocation $default$2 ()))))
+          (invocation bare (
+            (simple-var-ref $desugar$4)))))))))
+  (function $default$0 (
+    (variable s (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (simple-var-ref prefix))))
+  (function $default$1 (
+    (variable n (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref offset)
+          (literal 1)))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (simple-var-ref offset)))))

@@ -22,13 +22,12 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 )
 
-var SINT8 = intWidthSigned(8)
-var SINT16 = intWidthSigned(16)
-var SINT32 = intWidthSigned(32)
-var UINT8 = BYTE
-var UINT16 = intWidthUnsigned(16)
-var UINT32 = intWidthUnsigned(32)
-var CHAR = STRING_CHAR
+var SignedInt8 = intWidthSigned(8)
+var SignedInt16 = intWidthSigned(16)
+var SignedInt32 = intWidthSigned(32)
+var UnsignedInt8 = Byte
+var UnsignedInt16 = intWidthUnsigned(16)
+var UnsignedInt32 = intWidthUnsigned(32)
 
 func decimalConstFromStringValue(value string) SemType {
 	if strings.Contains(value, "d") || strings.Contains(value, "D") {

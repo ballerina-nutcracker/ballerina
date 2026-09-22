@@ -39,27 +39,26 @@ type OpaqueFunctionSymbol struct {
 	name        string
 	ID          int          // per-package opaque id; serialization handle and (with the package) selects the monomorphizer
 	SymbolSpace *SymbolSpace // space the monomorphized function is added to
-	// Monomorphization cache functions, if function it self don't support caching then function pointers are nil
-	Lookup          func(keys ...semtypes.SemType) (SymbolRef, bool)
-	Store           func(ref SymbolRef, keys ...semtypes.SemType)
-	IsIsolatedParam func(index int) bool
 }
 
 const (
 	// lang.array
-	OpaqueFnArrayPush = 0
-	OpaqueFnArrayMap  = 1
+	OpaqueFnArrayPush      = 0
+	OpaqueFnArrayMap       = 1
+	OpaqueFnArrayIndexOf   = 2
+	OpaqueFnArrayRemove    = 3
+	OpaqueFnArrayRemoveAll = 4
+	OpaqueFnArrayToStream  = 5
 	// lang.map
 	OpaqueFnMapRemove = 0
+	OpaqueFnMapGet    = 1
 	// lang.xml
 	OpaqueFnXMLIterator = 4
 )
 
-func newOpaqueFunctionSymbol(name string, id int, isIsolatedParam func(int) bool) *OpaqueFunctionSymbol {
-	return &OpaqueFunctionSymbol{name: name, ID: id, IsIsolatedParam: isIsolatedParam}
+func newOpaqueFunctionSymbol(name string, id int) *OpaqueFunctionSymbol {
+	return &OpaqueFunctionSymbol{name: name, ID: id}
 }
-
-func noIsolatedParams(int) bool { return false }
 
 func (s *OpaqueFunctionSymbol) Name() string     { return s.name }
 func (s *OpaqueFunctionSymbol) OpaqueID() int    { return s.ID }
@@ -124,11 +123,18 @@ func OpaqueSymbols(pkg PackageIdentifier) []Symbol {
 		return langXMLOpaqueSymbols()
 	case "lang.array":
 		return []Symbol{
-			newOpaqueFunctionSymbol("push", OpaqueFnArrayPush, noIsolatedParams),
-			newOpaqueFunctionSymbol("map", OpaqueFnArrayMap, func(index int) bool { return index == 1 }),
+			newOpaqueFunctionSymbol("push", OpaqueFnArrayPush),
+			newOpaqueFunctionSymbol("map", OpaqueFnArrayMap),
+			newOpaqueFunctionSymbol("indexOf", OpaqueFnArrayIndexOf),
+			newOpaqueFunctionSymbol("remove", OpaqueFnArrayRemove),
+			newOpaqueFunctionSymbol("removeAll", OpaqueFnArrayRemoveAll),
+			newOpaqueFunctionSymbol("toStream", OpaqueFnArrayToStream),
 		}
 	case "lang.map":
-		return []Symbol{newOpaqueFunctionSymbol("remove", OpaqueFnMapRemove, noIsolatedParams)}
+		return []Symbol{
+			newOpaqueFunctionSymbol("remove", OpaqueFnMapRemove),
+			newOpaqueFunctionSymbol("get", OpaqueFnMapGet),
+		}
 	default:
 		return nil
 	}
@@ -139,12 +145,12 @@ func langIntOpaqueSymbols() []Symbol {
 		name string
 		ty   semtypes.SemType
 	}{
-		{"Signed8", semtypes.SINT8},
-		{"Signed16", semtypes.SINT16},
-		{"Signed32", semtypes.SINT32},
-		{"Unsigned8", semtypes.UINT8},
-		{"Unsigned16", semtypes.UINT16},
-		{"Unsigned32", semtypes.UINT32},
+		{"Signed8", semtypes.SignedInt8},
+		{"Signed16", semtypes.SignedInt16},
+		{"Signed32", semtypes.SignedInt32},
+		{"Unsigned8", semtypes.UnsignedInt8},
+		{"Unsigned16", semtypes.UnsignedInt16},
+		{"Unsigned32", semtypes.UnsignedInt32},
 	}
 	syms := make([]Symbol, len(defs))
 	for i, def := range defs {
@@ -154,7 +160,7 @@ func langIntOpaqueSymbols() []Symbol {
 }
 
 func langStringOpaqueSymbols() []Symbol {
-	return []Symbol{newOpaqueTypeSymbol("Char", semtypes.CHAR, 0)}
+	return []Symbol{newOpaqueTypeSymbol("Char", semtypes.Char, 0)}
 }
 
 func langXMLOpaqueSymbols() []Symbol {
@@ -162,15 +168,15 @@ func langXMLOpaqueSymbols() []Symbol {
 		name string
 		ty   semtypes.SemType
 	}{
-		{"Element", semtypes.XML_ELEMENT},
-		{"Comment", semtypes.XML_COMMENT},
-		{"Text", semtypes.XML_TEXT},
-		{"ProcessingInstruction", semtypes.XML_PI},
+		{"Element", semtypes.XMLElement},
+		{"Comment", semtypes.XMLComment},
+		{"Text", semtypes.XMLText},
+		{"ProcessingInstruction", semtypes.XMLProcessingInstruction},
 	}
 	syms := make([]Symbol, len(defs)+1)
 	for i, def := range defs {
 		syms[i] = newOpaqueTypeSymbol(def.name, def.ty, i)
 	}
-	syms[OpaqueFnXMLIterator] = newOpaqueFunctionSymbol("iterator", OpaqueFnXMLIterator, noIsolatedParams)
+	syms[OpaqueFnXMLIterator] = newOpaqueFunctionSymbol("iterator", OpaqueFnXMLIterator)
 	return syms
 }

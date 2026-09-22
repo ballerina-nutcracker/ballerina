@@ -20,6 +20,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semantics"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // BallerinaBackendTarget is the target platform for the Go/BIR backend.
@@ -29,6 +30,7 @@ const BallerinaBackendTarget TargetPlatform = "native"
 type BallerinaBackend struct {
 	packageCompilation *PackageCompilation
 	packageContext     *packageContext
+	diagnosticResult   DiagnosticResult
 }
 
 // NewBallerinaBackend creates a BallerinaBackend from a PackageCompilation
@@ -47,16 +49,38 @@ func NewBallerinaBackend(compilation *PackageCompilation) *BallerinaBackend {
 
 // performCodeGen generates BIR for all modules in topological order.
 func (b *BallerinaBackend) performCodeGen() {
-	for _, moduleCtx := range b.packageCompilation.Resolution().topologicallySortedModuleList {
-		if moduleCtx.getCompilationState() == moduleCompilationStateCompiled {
-			generateCodeInternal(moduleCtx)
+	modules := b.packageCompilation.Resolution().topologicallySortedModuleList
+	for _, moduleCtx := range modules {
+		if moduleCtx.getCompilationState() != moduleCompilationStateCompiled {
+			continue
 		}
+		diagnosticCount := len(moduleCtx.getDiagnostics())
+		if generateCodeInternal(moduleCtx) {
+			continue
+		}
+
+		var codeGenDiagnostics []diagnostics.Diagnostic
+		moduleDiagnostics := moduleCtx.getDiagnostics()
+		for _, diagnostic := range moduleDiagnostics[diagnosticCount:] {
+			codeGenDiagnostics = append(codeGenDiagnostics,
+				newPackageDiagnostic(diagnostic, moduleCtx.getDescriptor(), moduleCtx.getProject(), false))
+		}
+		b.diagnosticResult = NewDiagnosticResult(codeGenDiagnostics)
+		for _, generatedModule := range modules {
+			generatedModule.birPkg = nil
+		}
+		return
 	}
 }
 
 // TargetPlatform returns the target platform for this backend.
 func (b *BallerinaBackend) TargetPlatform() TargetPlatform {
 	return BallerinaBackendTarget
+}
+
+// DiagnosticResult returns diagnostics produced during BIR generation.
+func (b *BallerinaBackend) DiagnosticResult() DiagnosticResult {
+	return b.diagnosticResult
 }
 
 // BIR returns the BIR package for the default module of the root package.

@@ -1,0 +1,31 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable values (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 19)
+          (literal 20)))))
+    (var-def
+      (variable valuesStream (type
+        (stream-type
+          (value-type int)
+          (value-type null))) (expr
+        (invocation lang.array toStream (
+          (simple-var-ref values))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation next expr:
+        (simple-var-ref valuesStream) ()))
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation lang.array remove (
+        (simple-var-ref values)
+        (literal 0))))
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation next expr:
+        (simple-var-ref valuesStream) ()))
+  )
+)

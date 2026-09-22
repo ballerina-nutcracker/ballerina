@@ -1,0 +1,19 @@
+module $anon.. v 0.0.0;
+greet(@$anon/.:0.0.0:Header({"name":"X-Api-Key"}) string) -> string{
+  bb0 {
+    %0 = key;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad k
+    %2 = greet(%1) -> bb1;
+  }
+  bb1 {
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

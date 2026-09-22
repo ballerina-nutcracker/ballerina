@@ -1,6 +1,8 @@
 module github.com/ballerina-nutcracker/ballerina/values
 
-go 1.26
+go 1.27
+
+toolchain go1.27.1
 
 require (
 	github.com/ballerina-nutcracker/ballerina/decimal v0.7.0

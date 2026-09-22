@@ -17,17 +17,9 @@
               (literal name)
               (literal Alice))))))
       (var-def
-        (variable $desugar$0 (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref missing)
-            (simple-var-ref Person))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$0))
-        (block-stmt
-          (panic
-            (simple-var-ref $desugar$0))) ())
-      (var-def
         (variable _ (type
           (user-defined-type Person)) (expr
-          (simple-var-ref $desugar$0)))))))
+          (check-panicked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref missing)
+              (simple-var-ref Person))))))))))
