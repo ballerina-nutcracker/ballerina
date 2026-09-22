@@ -15,6 +15,10 @@ This document defines how AI/code agents should work with this repository: codin
 
 - Each bal/go file should have the correct license header
 
+### Review criteria
+
+- Use one discriminator for dispatch: concrete type or semantic kind/tag. Flag a type-switch fallback that dispatches on kind/tag, and the converse. A concrete type assertion inside an explicit tag case is fine when needed to access that case's data.
+
 ## Scripts
 
 - Use Python, shell, or a Windows script format (`.ps1`, `.bat`, or `.cmd`) for scripts; do not add JavaScript scripts

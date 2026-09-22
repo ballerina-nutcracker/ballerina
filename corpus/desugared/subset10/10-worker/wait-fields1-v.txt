@@ -1,0 +1,66 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $worker:main:w1 () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 1))))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (lambda
+            (function $worker:main:w2 () (
+              (value-type string))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal two))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$3 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$4 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable r (type
+          (record-type
+            (field a
+              (value-type int))
+            (field b
+              (value-type string)))) (expr
+          (multiple-wait-action a
+            (simple-var-ref $desugar$1) b
+            (simple-var-ref $desugar$2)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r)
+            (literal a)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r)
+            (literal b))))))))

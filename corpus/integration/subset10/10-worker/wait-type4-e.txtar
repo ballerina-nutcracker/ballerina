@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: multiple wait result is incompatible with expected type
+  --> wait-type4-e.bal:25:30
+   |
+25 |     record {|string a;|} r = wait {a: w}; // @error field a has eventual type int
+   |                              ^^^^^^^^^^^

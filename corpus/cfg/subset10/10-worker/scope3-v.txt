@@ -1,0 +1,30 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable fromModule (type
+        (value-type int)) (expr
+        (simple-var-ref w))))
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 7))))
+    (var-def
+      (variable fromWorker (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromModule))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromWorker))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 7))
+  )
+)

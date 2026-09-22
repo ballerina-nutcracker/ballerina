@@ -1,0 +1,4 @@
+-- stdout --
+from second
+1
+-- stderr --

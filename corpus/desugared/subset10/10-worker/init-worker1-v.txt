@@ -1,0 +1,65 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (class-definition Holder
+    (variable value (type
+      (value-type int)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (literal 0))
+        (var-def
+          (variable $desugar$0 (expr
+            (invocation lang.__internal createLatch ()))))
+        (var-def
+          (variable $desugar$1))
+        (var-def
+          (variable $desugar$2 (expr
+            (lambda
+              (function $worker:Holder.init:w () (
+                (value-type null))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (lock
+                    (block-stmt
+                      (assignment
+                        (index-based-access
+                          (simple-var-ref self)
+                          (literal value))
+                        (literal 1))))))))))
+        (assignment
+          (simple-var-ref $desugar$1)
+          (start-action
+            (invocation $desugar$2 ())))
+        (expression-stmt
+          (invocation lang.__internal openLatch (
+            (simple-var-ref $desugar$0))))
+        (expression-stmt
+          (single-wait-action
+            (simple-var-ref $desugar$1)))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (index-based-access
+                (simple-var-ref self)
+                (literal value))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref h) ())))))))
