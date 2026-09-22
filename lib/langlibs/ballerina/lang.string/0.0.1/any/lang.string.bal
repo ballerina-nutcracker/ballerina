@@ -38,18 +38,17 @@ isolated class StringIterator {
     }
 
     public isolated function next() returns record {| Char value; |}? {
-        if !iteratorHasNext(self.iteratorHandle) {
+        Char? value = iteratorNext(self.iteratorHandle);
+        if value is () {
             return;
         }
-        return {value: iteratorNext(self.iteratorHandle)};
+        return {value};
     }
 }
 
 isolated function createIteratorHandle(string str) returns handle = external;
 
-isolated function iteratorHasNext(handle iteratorHandle) returns boolean = external;
-
-isolated function iteratorNext(handle iteratorHandle) returns Char = external;
+isolated function iteratorNext(handle iteratorHandle) returns Char? = external;
 
 # Returns a substring of `str`.
 #

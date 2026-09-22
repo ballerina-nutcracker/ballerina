@@ -19,6 +19,7 @@ package stringruntime
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"unicode/utf8"
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
@@ -35,6 +36,7 @@ const (
 type stringIteratorHandle struct {
 	value  string
 	offset int
+	mu     sync.Mutex
 }
 
 func stringLength(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -107,7 +109,6 @@ func initStringModule(rt *runtime.Runtime) {
 	byteArrTy := ld.Define(env, nil, semtypes.ListRest(semtypes.Byte))
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "createIteratorHandle", createStringIteratorHandle)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "iteratorHasNext", stringIteratorHasNext)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "iteratorNext", stringIteratorNext)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", stringLength)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "toBytes", stringToBytes(byteArrTy))
@@ -163,13 +164,13 @@ func createStringIteratorHandle(_ *extern.Context, args []values.BalValue) (valu
 	return &stringIteratorHandle{value: args[0].(string)}, nil
 }
 
-func stringIteratorHasNext(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	iterator := args[0].(*stringIteratorHandle)
-	return iterator.offset < len(iterator.value), nil
-}
-
 func stringIteratorNext(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	iterator := args[0].(*stringIteratorHandle)
+	iterator.mu.Lock()
+	defer iterator.mu.Unlock()
+	if iterator.offset >= len(iterator.value) {
+		return nil, nil
+	}
 	char, size := utf8.DecodeRuneInString(iterator.value[iterator.offset:])
 	iterator.offset += size
 	return string(char), nil

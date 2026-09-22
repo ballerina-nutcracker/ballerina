@@ -1465,15 +1465,26 @@ func resolveQuerySymbols(parent symbolResolver, node ast.BLangNode, clauses []as
 	for _, clause := range clauses {
 		switch clause := clause.(type) {
 		case *ast.BLangJoinClause:
-			ast.Walk(parent, clause.Collection.(ast.BLangNode))
-			ast.Walk(resolver, clause.OnClause.OnExpr.(ast.BLangNode))
-			right := newBlockSymbolResolverWithBlockScope(parent, clause)
-			name := clause.VariableDefinitionNode.Var.Name.GetValue()
-			if isShadowed(resolver, name) {
-				semanticError(resolver, "Variable already defined: "+name, clause.VariableDefinitionNode.GetPosition())
+			if collection, ok := clause.Collection.(ast.BLangNode); ok && collection != nil {
+				ast.Walk(parent, collection)
 			}
-			ast.Walk(right, clause.VariableDefinitionNode)
-			ast.Walk(right, clause.OnClause.EqualsExpr.(ast.BLangNode))
+			if onExpr, ok := clause.OnClause.OnExpr.(ast.BLangNode); ok && onExpr != nil {
+				ast.Walk(resolver, onExpr)
+			}
+			right := newBlockSymbolResolverWithBlockScope(parent, clause)
+			if clause.VariableDefinitionNode != nil {
+				variable := clause.VariableDefinitionNode.Var
+				if variable != nil && variable.Name != nil {
+					name := variable.Name.GetValue()
+					if isShadowed(resolver, name) {
+						semanticError(resolver, "Variable already defined: "+name, clause.VariableDefinitionNode.GetPosition())
+					}
+				}
+				ast.Walk(right, clause.VariableDefinitionNode)
+			}
+			if equalsExpr, ok := clause.OnClause.EqualsExpr.(ast.BLangNode); ok && equalsExpr != nil {
+				ast.Walk(right, equalsExpr)
+			}
 			resolver = &blockSymbolResolver{
 				parent: resolver,
 				scope: &model.BlockScope{BlockScopeBase: model.BlockScopeBase{
