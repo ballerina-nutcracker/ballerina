@@ -17,13 +17,19 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
+	"errors"
+	"fmt"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -34,7 +40,44 @@ var (
 	sharedBalOnce sync.Once
 	sharedBalPath string
 	sharedBalErr  error
+	// Recorded for TestMain: the shared checkout outlives every individual
+	// test, so t.Cleanup cannot tear it down. Guarded because the interrupt
+	// handler reads them while ensureSharedBalBinary may still be writing.
+	sharedBalMu       sync.Mutex
+	sharedBalRoot     string
+	sharedBalWorktree string
 )
+
+// interruptHelperEnv names the marker file the re-executed helper process
+// writes from its cleanup; see TestInterruptRunsCleanupBeforeExit.
+const interruptHelperEnv = "HTTPBENCH_INTERRUPT_HELPER_MARKER"
+
+// TestMain tears down the shared checkout. Without it every invocation of this
+// package's tests leaks a git worktree registration plus ~420MB of checkout.
+func TestMain(m *testing.M) {
+	// The helper process installs its own handler and must not race this one
+	// to os.Exit.
+	stop := func() {}
+	if os.Getenv(interruptHelperEnv) == "" {
+		stop = onInterrupt(cleanupSharedBal)
+	}
+	code := m.Run()
+	stop()
+	cleanupSharedBal() // not deferred: os.Exit below would skip it
+	os.Exit(code)
+}
+
+func cleanupSharedBal() {
+	sharedBalMu.Lock()
+	worktree, root := sharedBalWorktree, sharedBalRoot
+	sharedBalMu.Unlock()
+	if worktree != "" {
+		removeWorktree(worktree)
+	}
+	if root != "" {
+		_ = os.RemoveAll(root)
+	}
+}
 
 func ensureSharedBalBinary(t *testing.T) string {
 	t.Helper()
@@ -45,11 +88,17 @@ func ensureSharedBalBinary(t *testing.T) string {
 			sharedBalErr = err
 			return
 		}
+		sharedBalMu.Lock()
+		sharedBalRoot = root
+		sharedBalMu.Unlock()
 		wt, err := checkoutWorktree(root, "shared", "HEAD")
 		if err != nil {
 			sharedBalErr = err
 			return
 		}
+		sharedBalMu.Lock()
+		sharedBalWorktree = wt
+		sharedBalMu.Unlock()
 		sharedBalPath, sharedBalErr = buildInterpreter(wt)
 	})
 	if sharedBalErr != nil {
@@ -144,6 +193,156 @@ func TestCheckoutAndRemoveWorktree(t *testing.T) {
 	removeWorktree(wt)
 	if _, err := os.Stat(wt); !os.IsNotExist(err) {
 		t.Fatalf("expected worktree directory to be removed, stat err = %v", err)
+	}
+}
+
+// newBareWorktree registers a worktree without materializing the checkout.
+// The removal and prune paths act on the registration, not the files, so the
+// tests that exercise them do not need a 17k-file copy of the repo.
+func newBareWorktree(t *testing.T, name string) string {
+	t.Helper()
+	skipWorktreeIntegrationOnWindows(t)
+	path := filepath.Join(t.TempDir(), name)
+	if err := runCmdSilent(".", "git", "worktree", "add", "--no-checkout", "--detach", path, "HEAD"); err != nil {
+		t.Fatalf("git worktree add: %v", err)
+	}
+	return path
+}
+
+// TestRemoveWorktreeRemovesLockedWorktree covers the interrupted-`worktree
+// add` case: git leaves a "locked" marker behind, which a single --force
+// refuses to remove and `git worktree prune` skips entirely. Not parallel —
+// see TestCheckoutAndRemoveWorktree.
+func TestRemoveWorktreeRemovesLockedWorktree(t *testing.T) {
+	wt := newBareWorktree(t, "locked")
+	// Torn down with raw git so a regression in removeWorktree fails the test
+	// without also leaking the locked registration it is meant to reclaim.
+	defer func() {
+		_ = runCmdSilent(".", "git", "worktree", "unlock", wt)
+		_ = runCmdSilent(".", "git", "worktree", "remove", "--force", "--force", wt)
+	}()
+	if err := runCmdSilent(".", "git", "worktree", "lock", wt); err != nil {
+		t.Fatalf("git worktree lock: %v", err)
+	}
+
+	removeWorktree(wt)
+	if worktreeRegistered(t, wt) {
+		t.Fatalf("expected %q to be unregistered after removeWorktree", wt)
+	}
+}
+
+// TestPruneWorktreesReclaimsReapedCheckouts reproduces the $TMPDIR-reaping
+// case: the directory disappears behind git's back, leaving a registration
+// that `worktree remove` can no longer reach. Not parallel — see
+// TestCheckoutAndRemoveWorktree.
+func TestPruneWorktreesReclaimsReapedCheckouts(t *testing.T) {
+	wt := newBareWorktree(t, "reaped")
+	if err := os.RemoveAll(wt); err != nil {
+		t.Fatalf("removing the checkout behind git's back: %v", err)
+	}
+
+	pruneWorktrees()
+	if worktreeRegistered(t, wt) {
+		removeWorktree(wt)
+		t.Fatalf("expected pruneWorktrees to reclaim the registration for %q", wt)
+	}
+}
+
+func worktreeRegistered(t *testing.T, path string) bool {
+	t.Helper()
+	out, err := exec.Command("git", "worktree", "list", "--porcelain").Output()
+	if err != nil {
+		t.Fatalf("git worktree list: %v", err)
+	}
+	resolved := resolvedWorktreePath(t, path)
+	for _, line := range strings.Split(string(out), "\n") {
+		if p, ok := strings.CutPrefix(line, "worktree "); ok && (p == path || p == resolved) {
+			return true
+		}
+	}
+	return false
+}
+
+// resolvedWorktreePath renders path the way `git worktree list` does, with
+// symlinks expanded. It resolves the parent rather than path itself, because
+// callers ask about checkouts that have already been deleted.
+func resolvedWorktreePath(t *testing.T, path string) string {
+	t.Helper()
+	parent, err := filepath.EvalSymlinks(filepath.Dir(path))
+	if err != nil {
+		return path
+	}
+	return filepath.Join(parent, filepath.Base(path))
+}
+
+// TestInterruptRunsCleanupBeforeExit re-executes this test binary as a child,
+// sends it SIGTERM, and checks that the handler ran cleanup before exiting —
+// the behaviour the whole fix exists for, which no in-process test can reach.
+func TestInterruptRunsCleanupBeforeExit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("sending SIGTERM to a child process is unsupported on windows")
+	}
+	marker := filepath.Join(t.TempDir(), "cleanup-ran")
+	cmd := exec.Command(os.Args[0], "-test.run=TestInterruptHelperProcess")
+	cmd.Env = append(os.Environ(), interruptHelperEnv+"="+marker)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatalf("stdout pipe: %v", err)
+	}
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Start(); err != nil {
+		t.Fatalf("starting helper: %v", err)
+	}
+	// Reaped on every path: the early t.Fatalf returns below would otherwise
+	// orphan a child sleeping out its timeout.
+	defer func() {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+	}()
+	// The helper prints once its handler is installed; signalling earlier would
+	// kill it with the default disposition.
+	if _, err := bufio.NewReader(stdout).ReadString('\n'); err != nil {
+		t.Fatalf("waiting for helper to install its handler: %v\nhelper stderr:\n%s", err, stderr.String())
+	}
+	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		t.Fatalf("signalling helper: %v", err)
+	}
+
+	var exitErr *exec.ExitError
+	if err := cmd.Wait(); !errors.As(err, &exitErr) {
+		t.Fatalf("helper exit = %v, want an ExitError\nhelper stderr:\n%s", err, stderr.String())
+	} else if got := exitErr.ExitCode(); got != interruptExitCode {
+		t.Errorf("helper exit code = %d, want %d", got, interruptExitCode)
+	}
+	if _, err := os.Stat(marker); err != nil {
+		t.Errorf("cleanup did not run before exit: %v", err)
+	}
+}
+
+// TestInterruptHelperProcess is the child half of
+// TestInterruptRunsCleanupBeforeExit; it is inert unless re-executed with the
+// marker path in the environment.
+func TestInterruptHelperProcess(t *testing.T) {
+	marker := os.Getenv(interruptHelperEnv)
+	if marker == "" {
+		t.Skip("helper process for TestInterruptRunsCleanupBeforeExit")
+	}
+	onInterrupt(func() { _ = os.WriteFile(marker, []byte("ran"), 0o600) })
+	fmt.Println("ready")
+	// Bounded so a missed signal fails the parent's assertions promptly rather
+	// than running out the test timeout.
+	time.Sleep(10 * time.Second) // the signal handler exits the process
+}
+
+func TestOnInterruptStopIsIdempotentAndSkipsCleanup(t *testing.T) {
+	t.Parallel()
+	called := false
+	stop := onInterrupt(func() { called = true })
+	stop()
+	stop()
+	if called {
+		t.Error("cleanup ran without a signal")
 	}
 }
 
@@ -259,7 +458,7 @@ func TestMeasureOnceFailsFastWhenPortBusy(t *testing.T) {
 	}
 	defer func() { _ = ln.Close() }()
 
-	_, err = measureOnce("irrelevant-binary", "irrelevant.bal", config{warmup: "1s", duration: "1s", conns: 1})
+	_, err = measureOnce("irrelevant-binary", "irrelevant.bal", config{warmup: "1s", duration: "1s", conns: 1}, &cleanups{})
 	if err == nil {
 		t.Fatal("expected an error when the service port is already in use")
 	}
@@ -278,7 +477,7 @@ func TestMeasureOnceProducesSample(t *testing.T) {
 	}
 
 	cfg := config{warmup: "1s", duration: "1s", conns: 4}
-	s, err := measureOnce(bal, helloFile, cfg)
+	s, err := measureOnce(bal, helloFile, cfg, &cleanups{})
 	if err != nil {
 		t.Fatalf("measureOnce: %v", err)
 	}

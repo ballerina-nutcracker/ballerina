@@ -17,7 +17,9 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -26,7 +28,9 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
+	"time"
 )
 
 const (
@@ -626,5 +630,150 @@ func requireHyperfine(t *testing.T) {
 	t.Helper()
 	if _, err := exec.LookPath("hyperfine"); err != nil {
 		t.Fatalf("hyperfine is required but unavailable: %v", err)
+	}
+}
+
+// newBareWorktree registers a worktree without materializing the checkout.
+func newBareWorktree(t *testing.T, name string) string {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("git worktree integration is exercised on Linux/macOS only")
+	}
+	path := filepath.Join(t.TempDir(), name)
+	if err := runCmdSilent(".", "git", "worktree", "add", "--no-checkout", "--detach", path, "HEAD"); err != nil {
+		t.Fatalf("git worktree add: %v", err)
+	}
+	return path
+}
+
+// TestRemoveWorktreeRemovesLockedWorktree covers the interrupted-`worktree
+// add` case: git leaves a "locked" marker behind, which a single --force
+// refuses to remove and `git worktree prune` skips entirely.
+func TestRemoveWorktreeRemovesLockedWorktree(t *testing.T) {
+	var b benchmark
+	wt := newBareWorktree(t, "locked")
+	// Torn down with raw git so a regression in removeWorktree fails the test
+	// without also leaking the locked registration it is meant to reclaim.
+	defer func() {
+		_ = runCmdSilent(".", "git", "worktree", "unlock", wt)
+		_ = runCmdSilent(".", "git", "worktree", "remove", "--force", "--force", wt)
+	}()
+	if err := runCmdSilent(".", "git", "worktree", "lock", wt); err != nil {
+		t.Fatalf("git worktree lock: %v", err)
+	}
+
+	b.removeWorktree(wt)
+	if worktreeRegistered(t, wt) {
+		t.Fatalf("expected %q to be unregistered after removeWorktree", wt)
+	}
+}
+
+func TestPruneWorktreesReclaimsReapedCheckouts(t *testing.T) {
+	var b benchmark
+	wt := newBareWorktree(t, "reaped")
+	if err := os.RemoveAll(wt); err != nil {
+		t.Fatalf("removing the checkout behind git's back: %v", err)
+	}
+
+	pruneWorktrees()
+	if worktreeRegistered(t, wt) {
+		b.removeWorktree(wt)
+		t.Fatalf("expected pruneWorktrees to reclaim the registration for %q", wt)
+	}
+}
+
+func worktreeRegistered(t *testing.T, path string) bool {
+	t.Helper()
+	out, err := exec.Command("git", "worktree", "list", "--porcelain").Output()
+	if err != nil {
+		t.Fatalf("git worktree list: %v", err)
+	}
+	resolved := resolvedWorktreePath(t, path)
+	for _, line := range strings.Split(string(out), "\n") {
+		if p, ok := strings.CutPrefix(line, "worktree "); ok && (p == path || p == resolved) {
+			return true
+		}
+	}
+	return false
+}
+
+// resolvedWorktreePath renders path the way `git worktree list` does. It
+// resolves the parent, because callers ask about already deleted checkouts.
+func resolvedWorktreePath(t *testing.T, path string) string {
+	t.Helper()
+	parent, err := filepath.EvalSymlinks(filepath.Dir(path))
+	if err != nil {
+		return path
+	}
+	return filepath.Join(parent, filepath.Base(path))
+}
+
+// interruptHelperEnv names the marker file the helper writes from its cleanup.
+const interruptHelperEnv = "BALBENCH_INTERRUPT_HELPER_MARKER"
+
+func TestInterruptRunsCleanupBeforeExit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("sending SIGTERM to a child process is unsupported on windows")
+	}
+	marker := filepath.Join(t.TempDir(), "cleanup-ran")
+	cmd := exec.Command(os.Args[0], "-test.run=TestInterruptHelperProcess")
+	cmd.Env = append(os.Environ(), interruptHelperEnv+"="+marker)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatalf("stdout pipe: %v", err)
+	}
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Start(); err != nil {
+		t.Fatalf("starting helper: %v", err)
+	}
+	// Reaped on every path: the early t.Fatalf returns below would otherwise
+	// orphan a child sleeping out its timeout.
+	defer func() {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+	}()
+	// The helper prints once its handler is installed; signalling earlier would
+	// kill it with the default disposition.
+	if _, err := bufio.NewReader(stdout).ReadString('\n'); err != nil {
+		t.Fatalf("waiting for helper to install its handler: %v\nhelper stderr:\n%s", err, stderr.String())
+	}
+	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		t.Fatalf("signalling helper: %v", err)
+	}
+
+	var exitErr *exec.ExitError
+	if err := cmd.Wait(); !errors.As(err, &exitErr) {
+		t.Fatalf("helper exit = %v, want an ExitError\nhelper stderr:\n%s", err, stderr.String())
+	} else if got := exitErr.ExitCode(); got != interruptExitCode {
+		t.Errorf("helper exit code = %d, want %d", got, interruptExitCode)
+	}
+	if _, err := os.Stat(marker); err != nil {
+		t.Errorf("cleanup did not run before exit: %v", err)
+	}
+}
+
+// TestInterruptHelperProcess is the child half of
+// TestInterruptRunsCleanupBeforeExit; it is inert unless re-executed.
+func TestInterruptHelperProcess(t *testing.T) {
+	marker := os.Getenv(interruptHelperEnv)
+	if marker == "" {
+		t.Skip("helper process for TestInterruptRunsCleanupBeforeExit")
+	}
+	onInterrupt(func() { _ = os.WriteFile(marker, []byte("ran"), 0o600) })
+	fmt.Println("ready")
+	// Bounded so a missed signal fails the parent's assertions promptly rather
+	// than running out the test timeout.
+	time.Sleep(10 * time.Second) // the signal handler exits the process
+}
+
+func TestOnInterruptStopIsIdempotentAndSkipsCleanup(t *testing.T) {
+	t.Parallel()
+	called := false
+	stop := onInterrupt(func() { called = true })
+	stop()
+	stop()
+	if called {
+		t.Error("cleanup ran without a signal")
 	}
 }

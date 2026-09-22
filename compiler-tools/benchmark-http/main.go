@@ -90,17 +90,25 @@ func parseConfig(args []string) (config, error) {
 }
 
 func run(cfg config) error {
+	pruneWorktrees()
+
+	// Each resource registers its teardown as it is created, so an interrupt
+	// tears down exactly what exists at that moment.
+	var c cleanups
+	defer c.run()
+	defer onInterrupt(c.run)()
+
 	workRoot, err := os.MkdirTemp("", "httpbench-work-*")
 	if err != nil {
 		return err
 	}
-	defer func() { _ = os.RemoveAll(workRoot) }()
+	c.add(func() { _ = os.RemoveAll(workRoot) })
 
 	helloDir, err := os.MkdirTemp("", "httpbench-hello-*")
 	if err != nil {
 		return err
 	}
-	defer func() { _ = os.RemoveAll(helloDir) }()
+	c.add(func() { _ = os.RemoveAll(helloDir) })
 	helloFile := filepath.Join(helloDir, "hello.bal")
 	if err := os.WriteFile(helloFile, helloSource, 0o644); err != nil {
 		return err
@@ -110,12 +118,12 @@ func run(cfg config) error {
 	if err != nil {
 		return err
 	}
-	defer removeWorktree(baseWT)
+	c.add(func() { removeWorktree(baseWT) })
 	headWT, err := checkoutWorktree(workRoot, "head", cfg.headRef)
 	if err != nil {
 		return err
 	}
-	defer removeWorktree(headWT)
+	c.add(func() { removeWorktree(headWT) })
 
 	fmt.Fprintf(os.Stderr, "Building bal for %s...\n", cfg.baseRef)
 	baseBal, err := buildInterpreter(baseWT)
@@ -131,14 +139,14 @@ func run(cfg config) error {
 	var baseS, headS []sample
 	for i := 0; i < cfg.repeats; i++ {
 		fmt.Fprintf(os.Stderr, "Repeat %d/%d: %s...\n", i+1, cfg.repeats, cfg.baseRef)
-		s, err := measureOnce(baseBal, helloFile, cfg)
+		s, err := measureOnce(baseBal, helloFile, cfg, &c)
 		if err != nil {
 			return fmt.Errorf("measuring %s: %w", cfg.baseRef, err)
 		}
 		baseS = append(baseS, s)
 
 		fmt.Fprintf(os.Stderr, "Repeat %d/%d: %s...\n", i+1, cfg.repeats, cfg.headRef)
-		s, err = measureOnce(headBal, helloFile, cfg)
+		s, err = measureOnce(headBal, helloFile, cfg, &c)
 		if err != nil {
 			return fmt.Errorf("measuring %s: %w", cfg.headRef, err)
 		}

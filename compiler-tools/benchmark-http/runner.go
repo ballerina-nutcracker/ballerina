@@ -53,8 +53,17 @@ func checkoutWorktree(workRoot, role, ref string) (string, error) {
 	return path, nil
 }
 
+// removeWorktree unregisters the worktree at path. --force is passed twice:
+// git writes a "locked" marker for the duration of `worktree add`, and an
+// interrupted add leaves one behind that a single --force refuses to remove.
 func removeWorktree(path string) {
-	_ = runCmdSilent(".", "git", "worktree", "remove", "--force", path)
+	_ = runCmdSilent(".", "git", "worktree", "remove", "--force", "--force", path)
+}
+
+// pruneWorktrees drops registrations whose directories were removed behind
+// git's back, e.g. by the OS reaping $TMPDIR.
+func pruneWorktrees() {
+	_ = runCmdSilent(".", "git", "worktree", "prune")
 }
 
 // buildInterpreter builds `bal` from the worktree and returns its absolute path.
@@ -63,7 +72,10 @@ func buildInterpreter(worktree string) (string, error) {
 	if runtime.GOOS == "windows" {
 		out = "bal.exe"
 	}
-	if err := runCmd(worktree, "go", "build", "-o", out, "./cli/cmd"); err != nil {
+	// -trimpath keeps the build cache shareable across checkouts: without it the
+	// compiler keys every package by its absolute source path, so each temp
+	// worktree seeds its own unshareable slice of GOCACHE.
+	if err := runCmd(worktree, "go", "build", "-trimpath", "-o", out, "./cli/cmd"); err != nil {
 		return "", fmt.Errorf("failed to build interpreter in %q: %w", worktree, err)
 	}
 	abs, err := filepath.Abs(filepath.Join(worktree, out))
@@ -101,8 +113,11 @@ func runCmdSilent(dir, name string, args ...string) error {
 // --- service lifecycle + load ---
 
 // measureOnce launches `bal run hello.bal`, times startup, drives a warmup and
-// a measured wrk run, captures peak RSS, and tears the service down.
-func measureOnce(balPath, helloFile string, cfg config) (sample, error) {
+// a measured wrk run, captures peak RSS, and tears the service down. The
+// teardown is registered on c so an interrupt reaps the service too: the
+// service runs in its own process group, so a terminal Ctrl-C never reaches it
+// and the handler exits before deferred functions run.
+func measureOnce(balPath, helloFile string, cfg config, c *cleanups) (sample, error) {
 	var s sample
 	// Fail fast if the port is already taken: otherwise waitForPort would latch
 	// onto a stale/foreign listener and we would measure the wrong service.
@@ -117,10 +132,11 @@ func measureOnce(balPath, helloFile string, cfg config) (sample, error) {
 	if err := cmd.Start(); err != nil {
 		return s, fmt.Errorf("failed to start service: %w", err)
 	}
-	defer func() {
+	stopService := c.addScoped(func() {
 		killGroup(cmd)
 		waitPortClose(servicePort, 15*time.Second)
-	}()
+	})
+	defer stopService()
 
 	if !waitForPort(servicePort, 60*time.Second) {
 		return s, fmt.Errorf("service did not open port %d within 60s", servicePort)
