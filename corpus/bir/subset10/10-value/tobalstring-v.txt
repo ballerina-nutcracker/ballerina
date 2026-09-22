@@ -1,0 +1,526 @@
+module $anon.. v 0.0.0;
+class Counter {
+  n int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad n
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  next() -> nil|error|{| value: int, never... |}{
+    bb0 {
+      %3 = ConstantLoad n
+      %2 = self[%3];
+      current = %2;
+      %6 = current;
+      %7 = ConstantLoad 3
+      %8 = %7;
+      %5 = >= %6 %8;
+      %5 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+    bb2 {
+      PushScopeFrame 7
+      %1 = (1, current);
+      %2 = ConstantLoad 1
+      %3 = %2;
+      %0 = + %1 %3;
+      %4 = ConstantLoad n
+      (1, self)[%4] = %0;
+      %5 = ConstantLoad value
+      %6 = newMap {| value: int, never... |}{%5=(1, current)}
+      (1, %0) = %6;
+      PopScopeFrame
+      return;
+    }
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 12
+    i = %1;
+    %3 = i;
+    %4 = toBalString(%3) -> bb1;
+  }
+  bb1 {
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    %6 = ConstantLoad Anne
+    s = %6;
+    %8 = toBalString(s) -> bb3;
+  }
+  bb3 {
+    %9 = println(%8) -> bb4;
+  }
+  bb4 {
+    %10 = ConstantLoad she said "hi" \ ok
+    quoted = %10;
+    %12 = toBalString(quoted) -> bb5;
+  }
+  bb5 {
+    %13 = println(%12) -> bb6;
+  }
+  bb6 {
+    %14 = ConstantLoad a	b
+cd
+    whitespace = %14;
+    %16 = toBalString(whitespace) -> bb7;
+  }
+  bb7 {
+    %17 = println(%16) -> bb8;
+  }
+  bb8 {
+    %18 = ConstantLoad abcd
+    ctrl = %18;
+    %20 = toBalString(ctrl) -> bb9;
+  }
+  bb9 {
+    %21 = println(%20) -> bb10;
+  }
+  bb10 {
+    %22 = newMap {| anydata... |}{}
+    ctrlKey = %22;
+    %24 = ConstantLoad 1
+    %25 = ConstantLoad ab
+    ctrlKey[%25] = %24;
+    %26 = toBalString(ctrlKey) -> bb11;
+  }
+  bb11 {
+    %27 = println(%26) -> bb12;
+  }
+  bb12 {
+    %28 = ConstantLoad true
+    b = %28;
+    %30 = b;
+    %31 = toBalString(%30) -> bb13;
+  }
+  bb13 {
+    %32 = println(%31) -> bb14;
+  }
+  bb14 {
+    %33 = ConstantLoad 12.342
+    f1 = %33;
+    %35 = f1;
+    %36 = toBalString(%35) -> bb15;
+  }
+  bb15 {
+    %37 = println(%36) -> bb16;
+  }
+  bb16 {
+    %39 = ConstantLoad 0
+    %40 = %39;
+    %41 = ConstantLoad 0
+    %42 = %41;
+    %38 = / %40 %42;
+    nanVal = %38;
+    %44 = nanVal;
+    %45 = toBalString(%44) -> bb17;
+  }
+  bb17 {
+    %46 = println(%45) -> bb18;
+  }
+  bb18 {
+    %48 = ConstantLoad 1
+    %49 = %48;
+    %50 = ConstantLoad 0
+    %51 = %50;
+    %47 = / %49 %51;
+    infVal = %47;
+    %53 = infVal;
+    %54 = toBalString(%53) -> bb19;
+  }
+  bb19 {
+    %55 = println(%54) -> bb20;
+  }
+  bb20 {
+    %57 = ConstantLoad 1
+    %58 = unknown %57;
+    %59 = %58;
+    %60 = ConstantLoad 0
+    %61 = %60;
+    %56 = / %59 %61;
+    negInfVal = %56;
+    %63 = negInfVal;
+    %64 = toBalString(%63) -> bb21;
+  }
+  bb21 {
+    %65 = println(%64) -> bb22;
+  }
+  bb22 {
+    %66 = ConstantLoad 345.2425341
+    d1 = %66;
+    %68 = d1;
+    %69 = toBalString(%68) -> bb23;
+  }
+  bb23 {
+    %70 = println(%69) -> bb24;
+  }
+  bb24 {
+    %71 = ConstantLoad 1
+    d2 = %71;
+    %73 = d2;
+    %74 = toBalString(%73) -> bb25;
+  }
+  bb25 {
+    %75 = println(%74) -> bb26;
+  }
+  bb26 {
+    %76 = ConstantLoad <nil>
+    nilVal = %76;
+    %78 = nilVal;
+    %79 = toBalString(%78) -> bb27;
+  }
+  bb27 {
+    %80 = println(%79) -> bb28;
+  }
+  bb28 {
+    %81 = ConstantLoad 1
+    %82 = ConstantLoad Sam
+    %83 = ConstantLoad 12.3
+    %84 = ConstantLoad 12.12
+    %85 = ConstantLoad value
+    %86 = ConstantLoad 12
+    %87 = newMap {| anydata... |}{%85=%86}
+    %88 = ConstantLoad 5
+    %89 = newArray [anydata...][%88]{%81, %82, %83, %84, %87}
+    data = %89;
+    %91 = toBalString(data) -> bb29;
+  }
+  bb29 {
+    %92 = println(%91) -> bb30;
+  }
+  bb30 {
+    %93 = ConstantLoad id
+    %94 = ConstantLoad 5
+    %95 = newMap {| anydata... |}{%93=%94}
+    key = %95;
+    %97 = toBalString(key) -> bb31;
+  }
+  bb31 {
+    %98 = println(%97) -> bb32;
+  }
+  bb32 {
+    %99 = ConstantLoad city
+    %100 = ConstantLoad Colombo
+    %101 = ConstantLoad country
+    %102 = ConstantLoad Sri Lanka
+    %103 = newMap {| city: string, country: string, never... |}{%99=%100, %101=%102}
+    addr = %103;
+    %105 = toBalString(addr) -> bb33;
+  }
+  bb33 {
+    %106 = println(%105) -> bb34;
+  }
+  bb34 {
+    %107 = ConstantLoad a
+    %108 = ConstantLoad 1
+    %109 = ConstantLoad b
+    %110 = ConstantLoad c
+    %111 = ConstantLoad 2
+    %112 = newMap {| anydata... |}{%110=%111}
+    %113 = newMap {| anydata... |}{%107=%108, %109=%112}
+    nested = %113;
+    %115 = toBalString(nested) -> bb35;
+  }
+  bb35 {
+    %116 = println(%115) -> bb36;
+  }
+  bb36 {
+    %117 = ConstantLoad 1
+    %118 = ConstantLoad 2
+    %119 = ConstantLoad 3
+    %120 = ConstantLoad 3
+    %121 = newArray [int...][%120]{%117, %118, %119}
+    nums = %121;
+    %123 = toBalString(nums) -> bb37;
+  }
+  bb37 {
+    %124 = println(%123) -> bb38;
+  }
+  bb38 {
+    %125 = ConstantLoad boom
+    %126 = ConstantLoad code
+    %127 = ConstantLoad 42
+    %128 = ConstantLoad ratio
+    %129 = ConstantLoad 1.5
+    %130 = ConstantLoad note
+    %131 = ConstantLoad <nil>
+    %132 = newMap mapping{%126=%127, %128=%129, %130=%131}
+    %133 = newError error(%125, %132)
+    e1 = %133;
+    %135 = ConstantLoad 1
+    %136 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%135]{e1}
+    errWrapper = %136;
+    %138 = toBalString(errWrapper) -> bb39;
+  }
+  bb39 {
+    %139 = println(%138) -> bb40;
+  }
+  bb40 {
+    %140 = ConstantLoad failure1
+    %141 = newError error(%140)
+    cause = %141;
+    %143 = ConstantLoad failure2
+    %144 = ConstantLoad extra
+    %145 = ConstantLoad 3.14
+    %146 = newMap mapping{%144=%145}
+    %147 = newError error(%143, cause, %146)
+    e2 = %147;
+    %149 = ConstantLoad 1
+    %150 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%149]{e2}
+    causeWrapper = %150;
+    %152 = toBalString(causeWrapper) -> bb41;
+  }
+  bb41 {
+    %153 = println(%152) -> bb42;
+  }
+  bb42 {
+    %154 = ConstantLoad boom
+    %155 = ConstantLoad a\-b
+    %156 = ConstantLoad 5
+    %157 = newMap mapping{%155=%156}
+    %158 = newError error(%154, %157)
+    e3 = %158;
+    %160 = ConstantLoad 1
+    %161 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%160]{e3}
+    keyWrapper = %161;
+    %163 = toBalString(keyWrapper) -> bb43;
+  }
+  bb43 {
+    %164 = println(%163) -> bb44;
+  }
+  bb44 {
+    %165 = ConstantLoad boom
+    %166 = ConstantLoad 1abc
+    %167 = ConstantLoad 5
+    %168 = newMap mapping{%166=%167}
+    %169 = newError error(%165, %168)
+    e4 = %169;
+    %171 = ConstantLoad 1
+    %172 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%171]{e4}
+    digitKeyWrapper = %172;
+    %174 = toBalString(digitKeyWrapper) -> bb45;
+  }
+  bb45 {
+    %175 = println(%174) -> bb46;
+  }
+  bb46 {
+    %176 = ConstantLoad abc
+    badVal = %176;
+    %178 = ConstantLoad typedesc
+    %179 = cloneWithType(badVal,%178) -> bb47;
+  }
+  bb47 {
+    convErr = %179;
+    %181 = ConstantLoad 1
+    %182 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%181]{convErr}
+    convErrWrapper = %182;
+    %184 = toBalString(convErrWrapper) -> bb48;
+  }
+  bb48 {
+    %185 = println(%184) -> bb49;
+  }
+  bb49 {
+    %186 = ConstantLoad a
+    %187 = ConstantLoad STRING
+    %188 = ConstantLoad b
+    %189 = ConstantLoad 12
+    %190 = ConstantLoad c
+    %191 = ConstantLoad 12.4
+    %192 = ConstantLoad d
+    %193 = ConstantLoad true
+    %194 = ConstantLoad e
+    %195 = ConstantLoad x
+    %196 = ConstantLoad x
+    %197 = ConstantLoad y
+    %198 = ConstantLoad <nil>
+    %199 = newMap {| json... |}{%195=%196, %197=%198}
+    %200 = newMap {| json... |}{%186=%187, %188=%189, %190=%191, %192=%193, %194=%199}
+    jsonVal = %200;
+    %202 = toBalString(jsonVal) -> bb50;
+  }
+  bb50 {
+    %203 = println(%202) -> bb51;
+  }
+  bb51 {
+    %204 = ConstantLoad TOM
+    %205 = ConstantLoad 10
+    %206 = ConstantLoad 90.12
+    %208 = ConstantLoad 0
+    %209 = %208;
+    %210 = ConstantLoad 0
+    %211 = %210;
+    %207 = / %209 %211;
+    %212 = ConstantLoad 4
+    %213 = newArray [string, int, decimal, float, never...][%212]{%204, %205, %206, %207}
+    tupleVal = %213;
+    %215 = toBalString(tupleVal) -> bb52;
+  }
+  bb52 {
+    %216 = println(%215) -> bb53;
+  }
+  bb53 {
+    %217 = ConstantLoad 1
+    %218 = ConstantLoad 2
+    %219 = ConstantLoad 2
+    %220 = newArray [anydata...][%219]{%217, %218}
+    selfRef = %220;
+    %222 = ConstantLoad 2
+    selfRef[%222] = selfRef;
+    %223 = toBalString(selfRef) -> bb54;
+  }
+  bb54 {
+    %224 = println(%223) -> bb55;
+  }
+  bb55 {
+    %225 = ConstantLoad 0
+    %226 = newArray [anydata...][%225]{}
+    selfFirst = %226;
+    %228 = push(selfFirst,selfFirst) -> bb56;
+  }
+  bb56 {
+    %229 = toBalString(selfFirst) -> bb57;
+  }
+  bb57 {
+    %230 = println(%229) -> bb58;
+  }
+  bb58 {
+    %231 = newMap {| anydata... |}{}
+    selfMap = %231;
+    %233 = ConstantLoad self
+    selfMap[%233] = selfMap;
+    %234 = toBalString(selfMap) -> bb59;
+  }
+  bb59 {
+    %235 = println(%234) -> bb60;
+  }
+  bb60 {
+    %236 = fp $anon/.:$anonFunc$_0
+    fn = %236;
+    fnVal = fn;
+    %239 = toBalString(fnVal) -> bb61;
+  }
+  bb61 {
+    %240 = println(%239) -> bb62;
+  }
+  bb62 {
+    %241 = newObject $anon/.:Counter
+    %242 = %241.init() -> bb63;
+  }
+  bb63 {
+    %244 = %242 is nil
+    %244 ? bb64 : bb65;
+  }
+  bb64 {
+    %243 = %241;
+    GOTO bb66;
+  }
+  bb65 {
+    %243 = %242;
+    GOTO bb66;
+  }
+  bb66 {
+    counter = %243;
+    objVal = counter;
+    %247 = toBalString(objVal) -> bb67;
+  }
+  bb67 {
+    %248 = println(%247) -> bb68;
+  }
+  bb68 {
+    %249 = newObject $anon/.:Counter
+    %250 = %249.init() -> bb69;
+  }
+  bb69 {
+    %252 = %250 is nil
+    %252 ? bb70 : bb71;
+  }
+  bb70 {
+    %251 = %249;
+    GOTO bb72;
+  }
+  bb71 {
+    %251 = %250;
+    GOTO bb72;
+  }
+  bb72 {
+    %253 = newStream stream %251
+    strm = %253;
+    streamVal = strm;
+    %256 = toBalString(streamVal) -> bb73;
+  }
+  bb73 {
+    %257 = println(%256) -> bb74;
+  }
+  bb74 {
+    %258 = ConstantLoad typedesc
+    td = %258;
+    typedescVal = td;
+    %261 = toBalString(typedescVal) -> bb75;
+  }
+  bb75 {
+    %262 = println(%261) -> bb76;
+  }
+  bb76 {
+    %263 = ConstantLoad hi
+    %264 = newXMLText(%263)
+    %265 = newXMLElement("a", %264)
+    xmlVal = %265;
+    xmlAny = xmlVal;
+    %268 = toBalString(xmlAny) -> bb77;
+  }
+  bb77 {
+    %269 = println(%268) -> bb78;
+  }
+  bb78 {
+    %270 = start compute() isolated=false -> bb79;
+  }
+  bb79 {
+    fut = %270;
+    futVal = fut;
+    %273 = toBalString(futVal) -> bb80;
+  }
+  bb80 {
+    %274 = println(%273) -> bb81;
+  }
+  bb81 {
+    %275 = wait fut -> bb82;
+  }
+  bb82 {
+    result = %275;
+    %277 = result is int
+    %278 = %277;
+    %279 = println(%278) -> bb83;
+  }
+  bb83 {
+    return;
+  }
+}
+compute() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
