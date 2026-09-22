@@ -1,0 +1,45 @@
+(Holder
+  (init
+    (bb0 () ()
+      (named-worker w (
+        (value-type null))
+        (block-function-body
+          (lock
+            (block-stmt
+              (assignment
+                (field-based-access value
+                  (simple-var-ref self))
+                (literal 1))))))
+      (expression-stmt
+        (single-wait-action
+          (simple-var-ref w)))
+    )
+  )
+  (get
+    (bb0 () ()
+      (return
+        (field-based-access value
+          (simple-var-ref self)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable h (type
+        (user-defined-type Holder)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation get expr:
+          (simple-var-ref h) ()))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (assignment
+      (field-based-access value
+        (simple-var-ref self))
+      (literal 1))
+  )
+)

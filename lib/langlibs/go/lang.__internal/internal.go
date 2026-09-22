@@ -108,6 +108,47 @@ func initInternalModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "escapeXMLAttribute", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return values.EscapeXMLTemplateAttribute(values.String(args[0], nil)), nil
 	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "createLatch", createLatch)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "waitOnLatch", waitOnLatch)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "openLatch", openLatch)
+}
+
+// latch is a one-shot barrier: strands that wait on it are held until it is
+// opened.
+type latch struct {
+	opened chan struct{}
+}
+
+func (l *latch) isOpen() bool {
+	select {
+	case <-l.opened:
+		return true
+	default:
+		return false
+	}
+}
+
+func createLatch(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return &latch{opened: make(chan struct{})}, nil
+}
+
+// waitOnLatch returns once the latch is open.
+func waitOnLatch(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	l := args[0].(*latch)
+	// Yield rather than block on the channel so the strand never holds a logical
+	// thread's execution permission: a single-threaded target would deadlock on
+	// a latch another strand has yet to open. A requested yield is always awaited.
+	for !l.isOpen() {
+		<-ctx.Yield()
+	}
+	return nil, nil
+}
+
+// openLatch releases every strand waiting on the latch. Closing the channel
+// also publishes everything the opener wrote beforehand.
+func openLatch(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	close(args[0].(*latch).opened)
+	return nil, nil
 }
 
 type queryGroupState struct {

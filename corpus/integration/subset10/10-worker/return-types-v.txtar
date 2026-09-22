@@ -1,0 +1,8 @@
+-- stdout --
+nil
+
+42
+1
+two
+normal error value
+-- stderr --

@@ -1,0 +1,4 @@
+-- stdout --
+7
+error("multiple waits on the same future is not allowed")
+-- stderr --

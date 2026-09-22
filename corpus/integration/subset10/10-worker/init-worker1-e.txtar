@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: mutable field access within isolated object must be inside a lock statement
+  --> init-worker1-e.bal:34:13
+   |
+34 |             self.arr.push(2); // @error the waiver does not reach a worker body
+   |             ^^^^^^^^

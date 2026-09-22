@@ -31,8 +31,14 @@ func validateQueryExpr(cx scope.Context, e *ast.BLangQueryExpr, expected semtype
 		cx.InternalErr("query expression shape should have been validated during type resolution", e.GetPosition())
 		return scope.NoFacts, false
 	}
-	for _, clause := range e.QueryClauseList {
-		if !dispatchQueryClause(cx, e, clause, expected) {
+	// Only the leading from clause's collection is evaluated once. Every later
+	// clause is a loop body, running once per item.
+	clauseCx := cx
+	for i, clause := range e.QueryClauseList {
+		if i == 1 {
+			clauseCx = scope.NewRepeatedRegion(cx)
+		}
+		if !dispatchQueryClause(clauseCx, e, clause, expected) {
 			return scope.NoFacts, false
 		}
 	}

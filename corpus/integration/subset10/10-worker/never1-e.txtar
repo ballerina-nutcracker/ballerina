@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expected panic
+  --> never1-e.bal:22:9
+   |
+22 |         io:println("falls off the end"); // @error expected panic
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
@@ -143,11 +144,19 @@ type (
 		// every resolver nested inside one.
 		inFunction bool
 	}
+
+	// workerSymbolResolver hides a named worker's own name: a worker is not
+	// visible inside its own body.
+	workerSymbolResolver struct {
+		*blockSymbolResolver
+		workerName string
+	}
 )
 
 var (
 	_ symbolResolver   = &compilationUnitSymbolResolver{}
 	_ symbolResolver   = &blockSymbolResolver{}
+	_ symbolResolver   = &workerSymbolResolver{}
 	_ varStatusTracker = &varTracker{}
 )
 
@@ -322,8 +331,8 @@ func newScopedBlockResolver(parent symbolResolver, node ast.BLangNode, kind capt
 }
 
 func isInFunction(resolver symbolResolver) bool {
-	bs, ok := resolver.(*blockSymbolResolver)
-	return ok && bs.inFunction
+	bs := nearestBlockResolver(resolver)
+	return bs != nil && bs.inFunction
 }
 
 func (ms *compilationUnitSymbolResolver) GetSymbol(name string) (symbolLookup, bool) {
@@ -383,7 +392,7 @@ func (ms *compilationUnitSymbolResolver) TypeContext() semtypes.Context {
 }
 
 func (ms *moduleSymbolResolver) nextDefaultSymbolName() string {
-	name := fmt.Sprintf("$default$%d", ms.defaultCounter)
+	name := fmt.Sprintf("%s%d", constants.DefaultParamFunctionPrefix, ms.defaultCounter)
 	ms.defaultCounter++
 	return name
 }
@@ -425,6 +434,32 @@ func (bs *blockSymbolResolver) GetSymbol(name string) (symbolLookup, bool) {
 		lookup.captured = true
 	}
 	return lookup, ok
+}
+
+// GetSymbol reports the worker's own name as undefined. The language
+// specification scopes a worker name over the whole function body apart from the
+// default worker's initialization statements, which would include the worker's
+// own body. We deliberately narrow that: a worker that waits on itself can never
+// finish, so referring to itself is rejected as an undefined reference instead.
+func (ws *workerSymbolResolver) GetSymbol(name string) (symbolLookup, bool) {
+	if name == ws.workerName {
+		return symbolLookup{ref: model.SymbolRef{}, kind: blockScopeKind, captured: false}, false
+	}
+	return ws.blockSymbolResolver.GetSymbol(name)
+}
+
+// nearestBlockResolver returns the nearest blockSymbolResolver at or above
+// resolver, seeing through decorators such as workerSymbolResolver that wrap a
+// block resolver without contributing a scope of their own.
+func nearestBlockResolver(resolver symbolResolver) *blockSymbolResolver {
+	switch r := resolver.(type) {
+	case *blockSymbolResolver:
+		return r
+	case *workerSymbolResolver:
+		return r.blockSymbolResolver
+	default:
+		return nil
+	}
 }
 
 func (bs *blockSymbolResolver) GetPrefixedSymbol(prefix, name string) (model.SymbolRef, bool) {
@@ -1195,7 +1230,7 @@ func resolveInvokableChildren(functionResolver *blockSymbolResolver, fn ast.Invo
 func resolveFunctionBody(r *blockSymbolResolver, body ast.FunctionBodyNode) bool {
 	switch b := body.(type) {
 	case *ast.BLangBlockFunctionBody:
-		return resolveStmts(r, b.Stmts)
+		return resolveBlockFunctionBody(r, b)
 	case *ast.BLangExprFunctionBody:
 		if b.Expr == nil {
 			return true
@@ -1206,6 +1241,51 @@ func resolveFunctionBody(r *blockSymbolResolver, body ast.FunctionBodyNode) bool
 	default:
 		return reportUnexpectedNode(r, body)
 	}
+}
+
+// resolveBlockFunctionBody resolves the three regions of a block function body
+// in order: the default-worker initialization statements, the named worker
+// declarations, and the remaining default-worker statements. Worker names are
+// unavailable in the initialization region and available everywhere after it.
+func resolveBlockFunctionBody(r *blockSymbolResolver, body *ast.BLangBlockFunctionBody) bool {
+	ok := resolveStmts(r, body.InitStmts)
+	ok = declareNamedWorkers(r, body.Workers) && ok
+	for _, worker := range body.Workers {
+		ok = resolveNamedWorker(r, worker) && ok
+	}
+	return resolveStmts(r, body.Stmts) && ok
+}
+
+// declareNamedWorkers declares every worker symbol before any worker body is
+// resolved, so a worker body can refer to peers declared before or after it.
+func declareNamedWorkers(r *blockSymbolResolver, workers []*ast.BLangNamedWorkerDeclaration) bool {
+	ok := true
+	for _, worker := range workers {
+		name := worker.Name
+		if isShadowed(r, name) {
+			r.GetCtx().SemanticError("Variable already defined: "+name, worker.GetPosition())
+			ok = false
+			continue
+		}
+		symbol := model.NewWorkerSymbol(name, worker.GetPosition())
+		addSymbolAndSetOnNode(r, name, symbol, worker)
+	}
+	return ok
+}
+
+func resolveNamedWorker(r *blockSymbolResolver, worker *ast.BLangNamedWorkerDeclaration) bool {
+	peers := &workerSymbolResolver{blockSymbolResolver: r, workerName: worker.Name}
+	workerResolver := newFunctionResolver(peers, worker)
+	worker.SetScope(workerResolver.scope)
+	ok := true
+	for i := range worker.AnnAttachments {
+		ok = resolveAnnotationAttachment(workerResolver, &worker.AnnAttachments[i]) && ok
+	}
+	if worker.ReturnType != nil {
+		ok = resolveTypeDesc(workerResolver, worker.ReturnType) && ok
+	}
+	ok = resolveBlockFunctionBody(workerResolver, worker.Body) && ok
+	return reportUnusedVariables(workerResolver.GetCtx(), workerResolver.getUnused()) && ok
 }
 
 func isExternalFunctionBody(body ast.FunctionBodyNode) bool {
@@ -1639,11 +1719,11 @@ func isShadowed(resolver *blockSymbolResolver, name string) bool {
 				return true
 			}
 		}
-		if next, ok := current.parent.(*blockSymbolResolver); ok {
-			current = next
-		} else {
+		next := nearestBlockResolver(current.parent)
+		if next == nil {
 			break
 		}
+		current = next
 	}
 	return false
 }
@@ -2121,8 +2201,8 @@ func resolveResourceMethod(functionResolver *blockSymbolResolver, rm *ast.BLangR
 
 func getEnclosingClassBodyScope(resolver symbolResolver) (model.BlockLevelScope, bool) {
 	for {
-		bs, ok := resolver.(*blockSymbolResolver)
-		if !ok {
+		bs := nearestBlockResolver(resolver)
+		if bs == nil {
 			return nil, false
 		}
 		switch bs.node.(type) {

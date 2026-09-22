@@ -1,0 +1,56 @@
+(label
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref f)
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int)))
+        (literal future)
+        (literal other)))
+  )
+)
+(main
+  (bb0 () ()
+    (named-worker failing (
+      (value-type int))
+      (block-function-body
+        (panic
+          (error-constructor-expr (
+            (literal unobserved))))))
+    (named-worker other (
+      (value-type string))
+      (block-function-body
+        (return
+          (literal other done))))
+    (expression-stmt
+      (invocation io println (
+        (invocation label (
+          (simple-var-ref failing))))))
+    (var-def
+      (variable result (type
+        (value-type string)) (expr
+        (single-wait-action
+          (simple-var-ref other)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+    (expression-stmt
+      (invocation io println (
+        (literal main done))))
+  )
+)
+(worker failing
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal unobserved))))
+  )
+)
+(worker other
+  (bb0 () ()
+    (return
+      (literal other done))
+  )
+)

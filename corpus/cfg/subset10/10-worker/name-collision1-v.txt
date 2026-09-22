@@ -1,0 +1,85 @@
+(A
+  (init
+    (bb0 () ()
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (literal 1))))
+      (assignment
+        (field-based-access value
+          (simple-var-ref self))
+        (single-wait-action
+          (simple-var-ref w)))
+    )
+  )
+)
+(B
+  (init
+    (bb0 () ()
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (literal 2))))
+      (assignment
+        (field-based-access value
+          (simple-var-ref self))
+        (single-wait-action
+          (simple-var-ref w)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (user-defined-type A)) (expr
+        (new ()))))
+    (var-def
+      (variable b (type
+        (user-defined-type B)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation shadowed ()))))
+  )
+)
+(shadowed
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 3))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 2))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 3))
+  )
+)

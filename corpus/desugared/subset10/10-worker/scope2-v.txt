@@ -1,0 +1,70 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $worker:main:first () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable shared (type
+                    (value-type int)) (expr
+                    (literal 1))))
+                (return
+                  (simple-var-ref shared))))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (lambda
+            (function $worker:main:second () (
+              (value-type string))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable shared (type
+                    (value-type string)) (expr
+                    (literal two))))
+                (return
+                  (simple-var-ref shared))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$3 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$4 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable firstResult (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$1)))))
+      (var-def
+        (variable secondResult (type
+          (value-type string)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$2)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref firstResult))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref secondResult)))))))
