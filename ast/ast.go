@@ -89,7 +89,19 @@ func (*bLangFunctionBodyBase) isFunctionBody() {}
 type (
 	BLangBlockFunctionBody struct {
 		bLangFunctionBodyBase
-		Stmts []StatementNode
+		InitStmts []StatementNode
+		Workers   []*BLangNamedWorkerDeclaration
+		Stmts     []StatementNode
+	}
+
+	BLangNamedWorkerDeclaration struct {
+		bLangNodeBase
+		Name           string
+		AnnAttachments []BLangAnnotationAttachment
+		ReturnType     *BLangReturnTypeDescriptor
+		Body           *BLangBlockFunctionBody
+		symbol         model.SymbolRef
+		scope          model.Scope
 	}
 
 	BLangExprFunctionBody struct {
@@ -451,9 +463,40 @@ func (n *BLangAnnotationAttachment) SetSymbol(symbolRef model.SymbolRef) {
 	n.symbol = symbolRef
 }
 
+func (n *BLangNamedWorkerDeclaration) Symbol() model.SymbolRef {
+	return n.symbol
+}
+
+func (n *BLangNamedWorkerDeclaration) SetSymbol(symbolRef model.SymbolRef) {
+	n.symbol = symbolRef
+}
+
+func (n *BLangNamedWorkerDeclaration) Scope() model.Scope {
+	return n.scope
+}
+
+func (n *BLangNamedWorkerDeclaration) SetScope(scope model.Scope) {
+	n.scope = scope
+}
+
+// IsPublic satisfies AnnotatableNode. A named worker is never a public symbol.
+func (n *BLangNamedWorkerDeclaration) IsPublic() bool {
+	return false
+}
+
+func (n *BLangNamedWorkerDeclaration) GetAnnotationAttachments() []BLangAnnotationAttachment {
+	return n.AnnAttachments
+}
+
+func (n *BLangNamedWorkerDeclaration) AddAnnotationAttachment(attachment BLangAnnotationAttachment) {
+	n.AnnAttachments = append(n.AnnAttachments, attachment)
+}
+
 var (
 	_ BNodeWithSymbol   = &BLangAnnotation{}
 	_ BNodeWithSymbol   = &BLangAnnotationAttachment{}
+	_ BNodeWithSymbol   = &BLangNamedWorkerDeclaration{}
+	_ NodeWithScope     = &BLangNamedWorkerDeclaration{}
 	_ BNodeWithSymbol   = &BLangXMLNS{}
 	_ NodeWithScope     = &BLangClassDefinition{}
 	_ FunctionBodyNode  = &BLangExternFunctionBody{}

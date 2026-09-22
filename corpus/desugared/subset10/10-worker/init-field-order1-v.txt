@@ -1,0 +1,105 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (class-definition Holder
+    (variable value (type
+      (value-type int)))
+    (variable seen (type
+      (value-type int)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (invocation spin ()))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal seen))
+          (unary-expr -
+            (literal 1)))
+        (var-def
+          (variable $desugar$0 (expr
+            (invocation lang.__internal createLatch ()))))
+        (var-def
+          (variable $desugar$1))
+        (var-def
+          (variable $desugar$2 (expr
+            (lambda
+              (function $worker:Holder.init:reader () (
+                (value-type int))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (return
+                    (index-based-access
+                      (simple-var-ref self)
+                      (literal value)))))))))
+        (assignment
+          (simple-var-ref $desugar$1)
+          (start-action isolated
+            (invocation $desugar$2 ())))
+        (expression-stmt
+          (invocation lang.__internal openLatch (
+            (simple-var-ref $desugar$0))))
+        (var-def
+          (variable observed (type
+            (value-type int)) (expr
+            (single-wait-action
+              (simple-var-ref $desugar$1)))))
+        (lock
+          (block-stmt
+            (assignment
+              (index-based-access
+                (simple-var-ref self)
+                (literal seen))
+              (simple-var-ref observed))))))
+    (function sawInitializedField () (
+      (value-type boolean))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (binary-expr ==
+                (index-based-access
+                  (simple-var-ref self)
+                  (literal seen))
+                (invocation spin ()))))))))
+  (function spin () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable acc (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (literal 5000))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref acc)
+            (simple-var-ref i))
+          (compound-assignment +
+            (simple-var-ref i)
+            (literal 1))))
+      (return
+        (simple-var-ref acc))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sawInitializedField expr:
+            (simple-var-ref h) ())))))))

@@ -1,0 +1,186 @@
+module $anon.. v 0.0.0;
+moduleLevel  function() returns int;
+class Holder {
+  make function() returns int
+
+  call() -> int{
+    bb0 {
+      %3 = ConstantLoad make
+      %2 = self[%3];
+      f = %2;
+      %5 = f() -> bb1;
+    }
+    bb1 {
+      %0 = %5;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = closure_fp $anon/.:$anonFunc$_2
+      %3 = ConstantLoad make
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:init.$anonFunc$_0:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+$anonFunc$_1() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:$default$0.$anonFunc$_1:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+$anonFunc$_2() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:Holder.init.$anonFunc$_2:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+$default$0() -> function() returns int{
+  bb0 {
+    %1 = closure_fp $anon/.:$anonFunc$_1
+    %0 = %1;
+    return;
+  }
+}
+withDefault(function() returns int) -> int{
+  bb0 {
+    %2 = f() -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = moduleLevel() -> bb1;
+  }
+  bb1 {
+    %2 = %1;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    %4 = $default$0() -> bb3;
+  }
+  bb3 {
+    $desugar$0 = %4;
+    %6 = withDefault($desugar$0) -> bb4;
+  }
+  bb4 {
+    %7 = %6;
+    %8 = println(%7) -> bb5;
+  }
+  bb5 {
+    %9 = newObject $anon/.:Holder
+    %10 = %9.init() -> bb6;
+  }
+  bb6 {
+    %12 = %10 is nil
+    %12 ? bb7 : bb8;
+  }
+  bb7 {
+    %11 = %9;
+    GOTO bb9;
+  }
+  bb8 {
+    %11 = %10;
+    GOTO bb9;
+  }
+  bb9 {
+    holder = %11;
+    %14 = holder.call() -> bb10;
+  }
+  bb10 {
+    %15 = %14;
+    %16 = println(%15) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}
+$worker:$default$0.$anonFunc$_1:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 4
+    %0 = %2;
+    return;
+  }
+}
+$worker:Holder.init.$anonFunc$_2:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 9
+    %0 = %2;
+    return;
+  }
+}
+$worker:init.$anonFunc$_0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 6
+    %0 = %2;
+    return;
+  }
+}

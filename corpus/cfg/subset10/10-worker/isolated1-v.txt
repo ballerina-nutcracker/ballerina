@@ -1,0 +1,34 @@
+(compute
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (simple-var-ref n)
+            (literal 2)))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation compute (
+          (literal 21))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation compute (
+          (literal 1))))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref n)
+        (literal 2)))
+  )
+)

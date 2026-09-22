@@ -1,0 +1,56 @@
+module $anon.. v 0.0.0;
+counter  int;
+$worker:spawner:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}
+spawner() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:spawner:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=true -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    lock-start "$anon/.:counter" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = spawner() -> bb2;
+  }
+  bb2 {
+    counter = %0;
+    (1, result) = counter;
+    PopScopeFrame
+    lock-end "$anon/.:counter" GOTO bb3;
+  }
+  bb3 {
+    %2 = result;
+    %3 = println(%2) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

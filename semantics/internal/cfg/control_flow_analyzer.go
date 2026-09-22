@@ -68,11 +68,26 @@ type functionCFG struct {
 type PackageCFG struct {
 	funcCfgs   map[model.SymbolRef]functionCFG
 	methodCfgs map[model.SymbolRef]map[model.SymbolRef]functionCFG
+	// workers holds every named worker body, keyed by the worker's own symbol.
+	// A worker body is an independent graph, so it sits here as a peer of the
+	// module-level functions rather than nested under the function declaring
+	// it, and every whole-package pass sees it without a second level.
+	workers map[model.SymbolRef]workerCFG
+}
+
+// workerCFG is a named worker body's graph together with its declaration,
+// which the explicit-return analysis needs for the worker's return type.
+type workerCFG struct {
+	cfg  functionCFG
+	decl *ast.BLangNamedWorkerDeclaration
 }
 
 func (cfg *PackageCFG) lookupFunctionCfg(ref model.SymbolRef) (functionCFG, bool) {
 	if fcfg, ok := cfg.funcCfgs[ref]; ok {
 		return fcfg, true
+	}
+	if worker, ok := cfg.workers[ref]; ok {
+		return worker.cfg, true
 	}
 	for _, classMethods := range cfg.methodCfgs {
 		if fcfg, ok := classMethods[ref]; ok {
@@ -85,6 +100,11 @@ func (cfg *PackageCFG) lookupFunctionCfg(ref model.SymbolRef) (functionCFG, bool
 func (cfg *PackageCFG) allFunctionCfgs(yield func(model.SymbolRef, *functionCFG) bool) {
 	for ref, fcfg := range cfg.funcCfgs {
 		if !yield(ref, &fcfg) {
+			return
+		}
+	}
+	for ref, worker := range cfg.workers {
+		if !yield(ref, &worker.cfg) {
 			return
 		}
 	}
@@ -102,11 +122,33 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	cfg := &PackageCFG{
 		funcCfgs:   make(map[model.SymbolRef]functionCFG),
 		methodCfgs: make(map[model.SymbolRef]map[model.SymbolRef]functionCFG),
+		workers:    make(map[model.SymbolRef]workerCFG),
 	}
 	var wg sync.WaitGroup
 	var mu sync.Mutex
+	analyzeWorkers := func(body ast.FunctionBodyNode) {
+		if body == nil {
+			return
+		}
+		wg.Go(func() {
+			workers := collectNamedWorkers(body)
+			if len(workers) == 0 {
+				return
+			}
+			cfgs := make([]functionCFG, len(workers))
+			for i, worker := range workers {
+				cfgs[i] = analyzeFunctionBody(ctx, worker.Body)
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			for i, worker := range workers {
+				cfg.workers[worker.Symbol()] = workerCFG{cfg: cfgs[i], decl: worker}
+			}
+		})
+	}
 	for _, fn := range pkg.Functions {
 		wg.Add(1)
+		analyzeWorkers(fn.Body)
 		go func() {
 			defer wg.Done()
 			fnCfg := analyzeFunction(ctx, fn)
@@ -118,6 +160,7 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	if pkg.InitFunction != nil {
 		wg.Add(1)
 		initFn := pkg.InitFunction
+		analyzeWorkers(initFn.Body)
 		go func() {
 			defer wg.Done()
 			fnCfg := analyzeFunction(ctx, initFn)
@@ -128,6 +171,7 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	}
 	analyzeClassBody := func(dest map[model.SymbolRef]functionCFG, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
 		analyzeMethod := func(sym model.SymbolRef, body ast.FunctionBodyNode) {
+			analyzeWorkers(body)
 			wg.Go(func() {
 				fnCfg := analyzeFunctionBody(ctx, body)
 				mu.Lock()
@@ -231,7 +275,51 @@ func (analyzer *functionControlFlowAnalyzer) analyzeExprFunctionBody(fnBody *ast
 func (analyzer *functionControlFlowAnalyzer) analyzeBlockFunctionBody(fnBody *ast.BLangBlockFunctionBody) {
 	rootBB := basicBlock{}
 	analyzer.bbs = append(analyzer.bbs, rootBB)
-	_ = analyzer.analyzeStatements(rootBB.ref(), fnBody.Stmts)
+	curBB := rootBB.ref()
+	if len(fnBody.InitStmts) > 0 {
+		curBB = analyzer.analyzeStatements(curBB, fnBody.InitStmts).nextBB
+	}
+	curBB = analyzer.analyzeNamedWorkers(curBB, fnBody.Workers)
+	_ = analyzer.analyzeStatements(curBB, fnBody.Stmts)
+}
+
+// analyzeNamedWorkers records the worker startup point in the default worker's
+// graph. Worker bodies get their own graphs, so no edge joins them back here.
+func (analyzer *functionControlFlowAnalyzer) analyzeNamedWorkers(
+	curBB bbRef,
+	workers []*ast.BLangNamedWorkerDeclaration,
+) bbRef {
+	for _, worker := range workers {
+		if curBB == terminalBB {
+			analyzer.ctx.SemanticError("Unreachable code", worker.GetPosition())
+			curBB = analyzer.createNewBB()
+		}
+		analyzer.addNode(curBB, worker)
+	}
+	return curBB
+}
+
+// collectNamedWorkers returns every named worker declared anywhere in a
+// function body, including workers declared inside nested anonymous functions.
+func collectNamedWorkers(body ast.FunctionBodyNode) []*ast.BLangNamedWorkerDeclaration {
+	collector := &namedWorkerCollector{}
+	ast.Walk(collector, body.(ast.BLangNode))
+	return collector.workers
+}
+
+type namedWorkerCollector struct {
+	workers []*ast.BLangNamedWorkerDeclaration
+}
+
+func (c *namedWorkerCollector) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
+	return c
+}
+
+func (c *namedWorkerCollector) Visit(node ast.BLangNode) ast.Visitor {
+	if worker, ok := node.(*ast.BLangNamedWorkerDeclaration); ok {
+		c.workers = append(c.workers, worker)
+	}
+	return c
 }
 
 func (analyzer *functionControlFlowAnalyzer) analyzeStatements(curBB bbRef, statements []ast.StatementNode) stmtEffect {

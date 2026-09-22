@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: later
+  --> scope1-e.bal:38:16
+   |
+38 |         return later; // @error later is declared after the worker declarations
+   |                ^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: w
+  --> scope1-e.bal:20:31
+   |
+20 |     future<int> unavailable = w; // @error worker names are unavailable in the initialization region
+   |                               ^
+
+error[SEMANTIC_ERROR]: Unknown symbol: w
+  --> scope1-e.bal:29:24
+   |
+29 |         int own = wait w; // @error a worker is not visible inside its own body
+   |                        ^

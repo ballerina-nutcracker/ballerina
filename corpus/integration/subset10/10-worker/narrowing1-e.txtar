@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: union types not supported for +
+  --> narrowing1-e.bal:32:12
+   |
+32 |     return v + r; // @error v is int|string again because the worker captures it
+   |            ^^^^^

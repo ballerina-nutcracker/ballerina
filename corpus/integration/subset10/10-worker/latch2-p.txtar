@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: latch opened more than once
+        at main(latch2-p.bal:24)

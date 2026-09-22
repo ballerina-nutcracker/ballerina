@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> uninit1-e.bal:24:16
+   |
+24 |         return local; // @error worker local read before assignment
+   |                ^^^^^
+
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> uninit1-e.bal:32:16
+   |
+32 |         return seed * 2; // @error captured variable is not initialized at the startup point
+   |                ^^^^

@@ -81,6 +81,15 @@ func (p *CFGPrettyPrinter) Print(cfg *PackageCFG) string {
 		return topLevel[i].name < topLevel[j].name
 	})
 
+	// Named worker bodies have their own function-like graphs, independent of
+	// the default worker they were declared in. Sibling functions may declare
+	// workers with the same name, so the rendered graph breaks the tie.
+	var workers []string
+	for ref, worker := range cfg.workers {
+		workers = append(workers, p.renderFunctionCFG("worker "+p.ctx.SymbolName(ref), worker.cfg))
+	}
+	sort.Strings(workers)
+
 	printed := 0
 	for _, ce := range classes {
 		if ce.initCfg == nil && len(ce.methods) == 0 {
@@ -112,7 +121,26 @@ func (p *CFGPrettyPrinter) Print(cfg *PackageCFG) string {
 		printed++
 	}
 
+	for _, worker := range workers {
+		if printed > 0 {
+			p.buffer.WriteString("\n")
+		}
+		p.buffer.WriteString(worker)
+		printed++
+	}
+
 	return p.buffer.String()
+}
+
+// renderFunctionCFG returns the printed form of one graph instead of appending
+// it to the output, so callers can order graphs by their content.
+func (p *CFGPrettyPrinter) renderFunctionCFG(funcName string, cfg functionCFG) string {
+	outer := p.buffer
+	p.buffer = strings.Builder{}
+	p.printFunctionCFG(funcName, cfg, 0)
+	rendered := p.buffer.String()
+	p.buffer = outer
+	return rendered
 }
 
 func (p *CFGPrettyPrinter) printFunctionCFG(funcName string, cfg functionCFG, indent int) {

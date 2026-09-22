@@ -589,7 +589,7 @@ func checkIsolatedModuleVarOutsideLock(a analyzer, ref *ast.BLangVarRef) {
 // checkIsolatedModuleVarOutsideLock. It rejects every `self.f`
 // reference where `f` is a non-final field of an isolated class and
 // the reference's enclosing closure has no lock analyzer in scope.
-// Because enclosingLockAnalyzer stops at the nearest functionAnalyzer
+// Because enclosingLockAnalyzer stops at the nearest body-owning analyzer
 // (lambdas push their own), this also rejects captures of `self.f`
 // inside lambdas constructed within a lock body.
 func checkIsolatedFieldOutsideLock(a analyzer, access *ast.BLangFieldBaseAccess) {
@@ -615,11 +615,15 @@ func checkIsolatedFieldOutsideLock(a analyzer, access *ast.BLangFieldBaseAccess)
 // not observable to other strands until init returns.
 func inInitFunction(a analyzer) bool {
 	for cur := a; cur != nil; cur = cur.parentAnalyzer() {
-		fa, ok := cur.(*functionAnalyzer)
-		if !ok {
-			continue
+		switch owner := cur.(type) {
+		case *functionAnalyzer:
+			return owner.enclosingClass != nil && owner.enclosingClass.initFn == owner.function
+		case *workerAnalyzer:
+			// A worker runs on its own strand and can outlive init, so the
+			// waiver stops here, as it does at a lambda. The waiver is also
+			// wider than the spec's positional one; fix with #939.
+			return false
 		}
-		return fa.enclosingClass != nil && fa.enclosingClass.initFn == fa.function
 	}
 	return false
 }
@@ -667,7 +671,7 @@ func validateIsolatedFunction(a analyzer, fn invokableSignatureNode) {
 		}
 		return
 	}
-	isIsolatedFunctionInner(a, fn.GetBody().(ast.BLangNode), enclosingFunctionLocals(a))
+	isIsolatedFunctionInner(a, fn.GetBody().(ast.BLangNode), enclosingBodyLocals(a))
 }
 
 // isIsolatedFunctionInner walks an arbitrary node treating it as the body of

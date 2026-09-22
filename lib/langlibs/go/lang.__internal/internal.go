@@ -17,6 +17,8 @@
 package langinternalruntime
 
 import (
+	"fmt"
+
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -108,6 +110,72 @@ func initInternalModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "escapeXMLAttribute", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		return values.EscapeXMLAttribute(values.String(args[0], nil)), nil
 	})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "createLatch", createLatch)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "waitOnLatch", waitOnLatch)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "openLatch", openLatch)
+}
+
+// latch is a one-shot publication barrier: strands that wait on it are held
+// until it is opened, and closing the channel both releases them and publishes
+// everything the opener wrote beforehand.
+type latch struct {
+	opened chan struct{}
+}
+
+func (l *latch) isOpen() bool {
+	select {
+	case <-l.opened:
+		return true
+	default:
+		return false
+	}
+}
+
+// latchFromHandle recovers the latch from the opaque handle createLatch
+// returned. A handle carries a Go value the Ballerina side never inspects, so
+// the native side is the only place that knows its concrete type.
+func latchFromHandle(arg values.BalValue) (*latch, error) {
+	// Generated worker code and this module's own callers only pass handles
+	// createLatch produced, but createLatch, waitOnLatch and openLatch are
+	// public, so any code that can import lang.__internal can hand over a
+	// handle from elsewhere. Report that instead of trapping.
+	l, ok := arg.(*latch)
+	if !ok {
+		return nil, fmt.Errorf("handle is not a latch")
+	}
+	return l, nil
+}
+
+func createLatch(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return &latch{opened: make(chan struct{})}, nil
+}
+
+// waitOnLatch returns once the latch is open. While it is closed the strand
+// yields cooperatively instead of blocking on the channel, so it never holds a
+// logical thread's execution permission and a single-threaded target cannot
+// deadlock on a latch another strand has yet to open. A yield continuation,
+// once requested, is always awaited.
+func waitOnLatch(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	l, err := latchFromHandle(args[0])
+	if err != nil {
+		return nil, err
+	}
+	for !l.isOpen() {
+		<-ctx.Yield()
+	}
+	return nil, nil
+}
+
+func openLatch(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	l, err := latchFromHandle(args[0])
+	if err != nil {
+		return nil, err
+	}
+	if l.isOpen() {
+		return nil, fmt.Errorf("latch opened more than once")
+	}
+	close(l.opened)
+	return nil, nil
 }
 
 type queryGroupState struct {

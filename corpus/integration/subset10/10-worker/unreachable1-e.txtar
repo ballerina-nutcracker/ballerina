@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unreachable code
+  --> unreachable1-e.bal:24:5
+   |
+24 |     worker w returns int { // @error unreachable worker declaration
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |         return 1;
+   |         ^^^^^^^^^
+26 |     }
+   |     ^

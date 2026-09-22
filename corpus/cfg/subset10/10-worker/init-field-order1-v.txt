@@ -1,0 +1,78 @@
+(Holder
+  (init
+    (bb0 () ()
+      (named-worker reader (
+        (value-type int))
+        (block-function-body
+          (return
+            (field-based-access value
+              (simple-var-ref self)))))
+      (var-def
+        (variable observed (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref reader)))))
+      (assignment
+        (field-based-access seen
+          (simple-var-ref self))
+        (simple-var-ref observed))
+    )
+  )
+  (sawInitializedField
+    (bb0 () ()
+      (return
+        (binary-expr ==
+          (field-based-access seen
+            (simple-var-ref self))
+          (invocation spin ())))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable h (type
+        (user-defined-type Holder)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sawInitializedField expr:
+          (simple-var-ref h) ()))))
+  )
+)
+(spin
+  (bb0 () (bb1)
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 0))))
+    (var-def
+      (variable acc (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr <
+      (simple-var-ref i)
+      (literal 5000))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref acc)
+      (simple-var-ref i))
+    (compound-assignment +
+      (simple-var-ref i)
+      (literal 1))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref acc))
+  )
+)
+(worker reader
+  (bb0 () ()
+    (return
+      (field-based-access value
+        (simple-var-ref self)))
+  )
+)

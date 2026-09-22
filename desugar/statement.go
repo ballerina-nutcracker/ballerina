@@ -80,12 +80,20 @@ func walkBlockStmt(cx *functionContext, stmt *ast.BLangBlockStmt) desugaredNode[
 func walkBlockFunctionBody(cx *functionContext, body *ast.BLangBlockFunctionBody) {
 	var allStmts []ast.StatementNode
 
-	for _, stmt := range body.Stmts {
-		result := walkStatement(cx, stmt)
-		allStmts = append(allStmts, result.initStmts...)
-		allStmts = append(allStmts, result.replacementNode)
+	walkStatements := func(stmts []ast.StatementNode) {
+		for _, stmt := range stmts {
+			result := walkStatement(cx, stmt)
+			allStmts = append(allStmts, result.initStmts...)
+			allStmts = append(allStmts, result.replacementNode)
+		}
 	}
 
+	walkStatements(body.InitStmts)
+	allStmts = append(allStmts, desugarWorkerRegion(cx, body)...)
+	walkStatements(body.Stmts)
+
+	body.InitStmts = nil
+	body.Workers = nil
 	body.Stmts = allStmts
 }
 
