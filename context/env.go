@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context/internal/functionsignatures"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -501,7 +502,7 @@ const (
 func (c *CompilerEnvironment) GetNextAnonymousFunctionKey(packageID *model.PackageID) string {
 	nextValue := c.anonFuncCount[packageID]
 	c.anonFuncCount[packageID] = nextValue + 1
-	return anonPrefix + "Func$_" + strconv.Itoa(nextValue)
+	return constants.AnonFunctionPrefix + "_" + strconv.Itoa(nextValue)
 }
 
 func (c *CompilerEnvironment) GetNextAnonymousTypeKey(packageID *model.PackageID) string {

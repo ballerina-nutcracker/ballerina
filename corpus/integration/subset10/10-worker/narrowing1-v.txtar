@@ -1,0 +1,5 @@
+-- stdout --
+is future<int>
+false
+matched
+-- stderr --

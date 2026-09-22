@@ -309,10 +309,14 @@ func defaultStmtEffect(chain *binding) statementEffect {
 	return statementEffect{binding: chain, nonCompletion: false}
 }
 
-func varRefExp(chain *binding, expr ast.BLangActionOrExpression) (model.SymbolRef, bool) {
+// varRefExp returns the symbol, as currently narrowed in chain, of the
+// variable expr references, and reports whether expr is a reference to a
+// variable whose type can be narrowed. A named worker reference is not such a
+// reference: narrowing applies only to variables (spec §7.12, §7.21.2).
+func varRefExp(t typeResolver, chain *binding, expr ast.BLangActionOrExpression) (model.SymbolRef, bool) {
 	baseSymbol, isVarRef := varRefExpInner(expr)
-	if !isVarRef {
-		return baseSymbol, false
+	if !isVarRef || t.getSymbol(baseSymbol).Kind() == model.SymbolKindWorker {
+		return model.SymbolRef{}, false
 	}
 	narrowedSym, isNarrowed, _ := lookupBinding(chain, baseSymbol)
 	if isNarrowed {

@@ -43,6 +43,8 @@ func AssignmentTargetError(kind model.SymbolKind) (string, bool) {
 		return "cannot assign to function", true
 	case model.SymbolKindType:
 		return "cannot assign to type", true
+	case model.SymbolKindWorker:
+		return "cannot assign to worker", true
 	default:
 		return "", false
 	}

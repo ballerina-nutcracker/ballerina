@@ -29,11 +29,11 @@ const langInternalPackageName = "lang.__internal"
 
 // materializeConstantRef replaces a reference to a folded constant with a
 // literal carrying the folded value.
-func materializeConstantRef(cx *functionContext, ref *ast.BLangVarRef) ast.BLangExpression {
-	constSym, ok := cx.getSymbol(ref.Symbol()).(*model.ConstantValueSymbol)
-	if !ok {
-		return nil
-	}
+func materializeConstantRef(
+	cx *functionContext,
+	constSym *model.ConstantValueSymbol,
+	ref *ast.BLangVarRef,
+) ast.BLangExpression {
 	value := constSym.ConstantValue()
 	ty := ref.GetDeterminedType()
 	if semtypes.IsZero(ty) {

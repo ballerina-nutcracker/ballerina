@@ -21,6 +21,23 @@ const (
 	UserHome   = "user.home"
 )
 
+// Prefixes of the lookup keys the compiler hands to the functions it
+// generates. A source name can never start with '$', so a key carrying one of
+// these prefixes is always a generated function. The runtime matches on them
+// to keep generated frames out of stack traces, so a new kind of generated
+// function belongs here as well as at its generation site.
+const (
+	// DefaultParamFunctionPrefix marks the function that evaluates a
+	// defaultable parameter (`semantics/internal/symbols`).
+	DefaultParamFunctionPrefix = "$default$"
+	// AnonFunctionPrefix marks an anonymous function (`context`).
+	AnonFunctionPrefix = "$anonFunc$"
+	// WorkerClosurePrefix marks a named worker's body closure (`desugar`). The
+	// runtime relies on it to keep generated frames out of stack traces
+	// (`runtime/internal/exec.desugaredFunctionPrefixes`).
+	WorkerClosurePrefix = "$worker:"
+)
+
 type SymbolFlag int64
 
 const (

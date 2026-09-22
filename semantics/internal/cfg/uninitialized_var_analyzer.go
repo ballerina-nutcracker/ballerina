@@ -322,6 +322,14 @@ func analyzeUninitializedVars(ctx *context.CompilerContext, pkg *ast.BLangPackag
 		lambda := &cfg.lambdaCfgs[i]
 		wg.Go(func() { newUninitVarAnalyzer(ctx, lambda.fn, &lambda.cfg).analyze() })
 	}
+	// A named worker body has its own graph, so its locals need their own
+	// definite-assignment pass. Variables it captures from the enclosing
+	// function are untracked here and stay the enclosing function's concern.
+	for _, worker := range cfg.workers {
+		wg.Go(func() {
+			newUninitVarAnalyzer(ctx, worker.decl, &worker.cfg).analyze()
+		})
+	}
 	wg.Wait()
 }
 

@@ -1,0 +1,48 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function label (
+    (variable f (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int))))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref f)
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)))
+          (literal future)
+          (literal other)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (named-worker failing (
+        (value-type int))
+        (block-function-body
+          (panic
+            (error-constructor-expr (
+              (literal unobserved))))))
+      (named-worker other (
+        (value-type string))
+        (block-function-body
+          (return
+            (literal other done))))
+      (expression-stmt
+        (invocation io println (
+          (invocation label (
+            (simple-var-ref failing))))))
+      (var-def
+        (variable result (type
+          (value-type string)) (expr
+          (single-wait-action
+            (simple-var-ref other)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref result))))
+      (expression-stmt
+        (invocation io println (
+          (literal main done)))))))
