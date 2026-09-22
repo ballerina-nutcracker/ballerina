@@ -710,7 +710,7 @@ func prepareQueryActionLimit(
 	zeroLimitIf := &ast.BLangIf{
 		Expr: zeroLimitCond,
 		Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{
-			createQueryBoolAssignment(stopRef, true, clausePos),
+			createQueryTrueAssignment(stopRef, clausePos),
 		}},
 	}
 	zeroLimitIf.SetScope(cx.currentScope())
@@ -955,7 +955,7 @@ func buildQueryActionSegmentStmts(
 		reachedLimitIf := &ast.BLangIf{
 			Expr: reachedLimit,
 			Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{
-				createQueryBoolAssignment(limitState.stopRef, true, clause.GetPosition()),
+				createQueryTrueAssignment(limitState.stopRef, clause.GetPosition()),
 			}},
 		}
 		reachedLimitIf.SetScope(cx.currentScope())
@@ -985,8 +985,8 @@ func buildQueryActionSegmentStmts(
 		if !ok {
 			return nil, nil, nil, false
 		}
-		joinStmts, ok := buildStreamingQueryActionJoin(cx, clause, joinState, nextStmts, stopRefs, pos)
-		return joinStmts, outputBindings, stopRefs, ok
+		joinStmts := buildStreamingQueryActionJoin(cx, clause, joinState, nextStmts, stopRefs, pos)
+		return joinStmts, outputBindings, stopRefs, true
 	default:
 		cx.internalError("query clause shape should have been validated during type resolution", clause.GetPosition())
 		return nil, nil, nil, false
@@ -1040,7 +1040,7 @@ func appendQueryActionIteratorSegment(
 	nilIf := &ast.BLangIf{
 		Expr: createQueryActionTypeTest(nextRef, semtypes.Nil, pos),
 		Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{
-			createQueryBoolAssignment(doneRef, true, pos),
+			createQueryTrueAssignment(doneRef, pos),
 		}},
 	}
 	nilIf.SetScope(cx.currentScope())
@@ -1071,7 +1071,7 @@ func appendQueryActionIteratorSegment(
 			Expr: firstErrorCond,
 			Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{
 				resultAssign,
-				createQueryBoolAssignment(completion.stopRef, true, pos),
+				createQueryTrueAssignment(completion.stopRef, pos),
 			}},
 		}
 		firstErrorIf.SetScope(cx.currentScope())
@@ -1081,7 +1081,7 @@ func appendQueryActionIteratorSegment(
 			Expr: createQueryActionTypeTest(nextRef, semtypes.Error, pos),
 			Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{
 				firstErrorIf,
-				createQueryBoolAssignment(doneRef, true, pos),
+				createQueryTrueAssignment(doneRef, pos),
 			}},
 		}
 		errorIf.SetScope(cx.currentScope())
@@ -1219,7 +1219,7 @@ func buildStreamingQueryActionJoin(
 	nextStmts []ast.StatementNode,
 	stopRefs []*ast.BLangVarRef,
 	pos diagnostics.Location,
-) ([]ast.StatementNode, bool) {
+) []ast.StatementNode {
 	lhsResult := walkExpression(cx, clause.OnClause.OnExpr)
 	lhsVarDef, lhsRef := assignActionOrExpressionToLocal(cx, lhsResult, pos)
 	stmts := []ast.StatementNode{lhsVarDef}
@@ -1260,7 +1260,7 @@ func buildStreamingQueryActionJoin(
 		setPositionIfMissing(matchIf, clause.GetPosition())
 		innerBody = append(innerBody, matchIf, createIncrementStmt(innerCounterRef))
 		appendQueryActionWhile(cx, innerCounterRef, state.rowCountRef, innerBody, stopRefs, &stmts, pos)
-		return stmts, true
+		return stmts
 	}
 
 	emitVarDef, emitRef := assignToLocal(cx, createBoolLiteral(false, pos), pos)
@@ -1275,8 +1275,8 @@ func buildStreamingQueryActionJoin(
 	}
 	matchCond.SetDeterminedType(semtypes.Boolean)
 	markMatch := []ast.StatementNode{
-		createQueryBoolAssignment(matchedRef, true, pos),
-		createQueryBoolAssignment(emitRef, true, pos),
+		createQueryTrueAssignment(matchedRef, pos),
+		createQueryTrueAssignment(emitRef, pos),
 	}
 	matchIf := &ast.BLangIf{Expr: matchCond, Body: ast.BLangBlockStmt{Stmts: markMatch}}
 	matchIf.SetScope(cx.currentScope())
@@ -1291,7 +1291,7 @@ func buildStreamingQueryActionJoin(
 	notMatched.SetDeterminedType(semtypes.Boolean)
 	unmatchedBody := []ast.StatementNode{
 		createQueryBindingAssignment(state.binding, createQueryNilLiteral(pos), pos),
-		createQueryBoolAssignment(emitRef, true, pos),
+		createQueryTrueAssignment(emitRef, pos),
 	}
 	unmatchedIf := &ast.BLangIf{Expr: notMatched, Body: ast.BLangBlockStmt{Stmts: unmatchedBody}}
 	unmatchedIf.SetScope(cx.currentScope())
@@ -1333,7 +1333,7 @@ func buildStreamingQueryActionJoin(
 	innerWhile.SetScope(cx.currentScope())
 	innerWhile.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(innerWhile, pos)
-	return append(stmts, innerWhile), true
+	return append(stmts, innerWhile)
 }
 
 // queryActionLoopCondition extends a loop condition with one !stopped operand per downstream limit.
@@ -1360,15 +1360,14 @@ func queryActionLoopCondition(
 	return cond
 }
 
-// createQueryBoolAssignment creates a typed AST assignment equivalent to ref = value.
-func createQueryBoolAssignment(
+// createQueryTrueAssignment creates a typed AST assignment equivalent to ref = true.
+func createQueryTrueAssignment(
 	ref *ast.BLangVarRef,
-	value bool,
 	pos diagnostics.Location,
 ) *ast.BLangAssignment {
 	assign := &ast.BLangAssignment{
 		VarRef: createQueryVarRefAt(ref, pos),
-		Expr:   createBoolLiteral(value, pos),
+		Expr:   createBoolLiteral(true, pos),
 	}
 	assign.SetDeterminedType(semtypes.Never)
 	setPositionIfMissing(assign, pos)
@@ -1628,8 +1627,8 @@ func walkQueryActionLoopControl(
 	setPositionIfMissing(controlStmt, pos)
 	return desugaredNode[ast.StatementNode]{
 		initStmts: []ast.StatementNode{
-			createQueryBoolAssignment(controlRef, true, pos),
-			createQueryBoolAssignment(state.stopRef, true, pos),
+			createQueryTrueAssignment(controlRef, pos),
+			createQueryTrueAssignment(state.stopRef, pos),
 		},
 		replacementNode: controlStmt,
 	}
