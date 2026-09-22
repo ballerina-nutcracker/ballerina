@@ -1,0 +1,46 @@
+(FloatHolder
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref v))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(IntHolder
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref v))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (literal ab))))
+    (var-def
+      (variable h (type
+        (union-type
+          (user-defined-type IntHolder)
+          (user-defined-type FloatHolder))) (expr
+        (new (
+          (invocation lang.string length (
+            (simple-var-ref s)))
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref h)
+          (user-defined-type IntHolder)))))
+  )
+)

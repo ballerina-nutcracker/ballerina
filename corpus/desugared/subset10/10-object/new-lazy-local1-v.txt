@@ -1,0 +1,53 @@
+(package
+  (import-package ballerina io (as io))
+  (variable laterGlobal)
+  (class-definition IntValue
+    (function init (
+      (variable value (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value)))))))
+  (class-definition StringValue
+    (function init (
+      (variable value (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value)))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref laterGlobal)
+        (literal s))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable fromConst (type
+          (union-type
+            (user-defined-type IntValue)
+            (user-defined-type StringValue))) (expr
+          (new (
+            (numeric-literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref fromConst)
+            (user-defined-type IntValue)))))
+      (var-def
+        (variable fromGlobal (type
+          (union-type
+            (user-defined-type IntValue)
+            (user-defined-type StringValue))) (expr
+          (new (
+            (simple-var-ref laterGlobal))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref fromGlobal)
+            (user-defined-type StringValue))))))))

@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: named arguments not supported in this context
+  --> method-args1-fe.bal:30:27
+   |
+30 |     return receiver.value(input = 3); // @error named args on union receiver
+   |                           ^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: named arguments not supported in this context
+  --> method-args1-fe.bal:34:27
+   |
+34 |     return receiver.value(input = 4); // @error ambiguous declaring atom
+   |                           ^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: named arguments not supported in this context
+  --> method-args1-fe.bal:38:14
+   |
+38 |     receiver(input = 5); // @error named args without an untyped function signature
+   |              ^^^^^^^^^

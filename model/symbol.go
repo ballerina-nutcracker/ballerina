@@ -379,7 +379,6 @@ type (
 		TypeSymbol
 		memberHolderBase
 		distinctTypeBase
-		methods         map[string]SymbolRef
 		resourceMethods []SymbolRef
 	}
 
@@ -405,6 +404,13 @@ type (
 	FieldDefault struct {
 		FieldName string
 		FnRef     SymbolRef
+	}
+
+	// MethodTable associates an object mapping atom with the symbols that
+	// declare its non-resource methods.
+	MethodTable struct {
+		Owner   SymbolRef
+		Methods map[string]SymbolRef
 	}
 
 	VariableSymbol struct {
@@ -505,6 +511,15 @@ type (
 		fieldNames [][]string
 	}
 )
+
+// NewMethodTable returns a method table retaining methods. A nil map is
+// normalized to an empty map.
+func NewMethodTable(owner SymbolRef, methods map[string]SymbolRef) MethodTable {
+	if methods == nil {
+		methods = make(map[string]SymbolRef)
+	}
+	return MethodTable{Owner: owner, Methods: methods}
+}
 
 func (ref SymbolRef) IsEmpty() bool {
 	return ref == SymbolRef{}
@@ -1190,8 +1205,7 @@ type ClassSymbol interface {
 	Symbol
 	MemberCarrier
 	ObjectType
-	SetMethods(map[string]SymbolRef)
-	MethodSymbol(name string) (SymbolRef, bool)
+	ResourceMethods() []SymbolRef
 }
 
 func (m *memberHolderBase) Members() []InclusionMember { return m.members }
@@ -1518,7 +1532,6 @@ func newClassSymbolBase(name string, isPublic bool, location diagnostics.Locatio
 		TypeSymbol: TypeSymbol{
 			symbolBase: symbolBase{name: name, isPublic: isPublic, location: location},
 		},
-		methods: map[string]SymbolRef{},
 	}
 }
 
@@ -1601,15 +1614,6 @@ func NewErrorTypeSymbol(name string, isPublic bool, location diagnostics.Locatio
 			symbolBase: symbolBase{name: name, isPublic: isPublic, location: location},
 		},
 	}
-}
-
-func (c *classSymbolBase) SetMethods(methods map[string]SymbolRef) {
-	c.methods = methods
-}
-
-func (c *classSymbolBase) MethodSymbol(name string) (SymbolRef, bool) {
-	ref, ok := c.methods[name]
-	return ref, ok
 }
 
 func NewDependentlyTypedFunctionSymbol(name string, flags FuncSymbolFlags, isPublic bool, location diagnostics.Location) DependentlyTypedFunctionSymbol {

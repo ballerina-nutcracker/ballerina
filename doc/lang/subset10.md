@@ -199,10 +199,20 @@
     - `Comment`
     - `ProcessingInstruction`
 
-## Function/Method call
+## Invocations
 
-- `named-args` and `defaultable-params` expect the target type to be atomic.
-  - Note type narrowing to a narrowed type may not necessarily result in an atomic type.
+### Named and default arguments
+
+- Named arguments and omitted defaultable arguments are supported for function calls when the callee has an atomic function type with a known parameter signature.
+  - For a variable declared with `var`, the signature is retained only when its initializer exposes a known atomic function signature. Supported initializers include anonymous function expressions, function/method/remote-method calls that return an atomic function type, references to variables whose signatures are already known, and grouped forms of these expressions. An explicit conversion to an atomic function type also supplies the converted type's signature.
+  - Other expressions that merely evaluate to a compatible function value do not retain the parameter names and defaults required for named and default arguments.
+- Named arguments and omitted defaultable arguments are supported for method calls and client remote method call actions only when the receiver type has one positive object atom. The receiver may also be `readonly & T`, where `T` has one positive object atom.
+  - Type narrowing does not necessarily produce such a receiver type; for example, a receiver that still has multiple object alternatives is unsupported for named and default arguments.
+- Object constructor calls support named and default arguments while selecting a unique class from an object union; they do not have the atomic-target restriction above.
+
+### Other invocation restrictions
+
+- Client resource access actions require an atomic client receiver. Dispatch is not supported when more than one resource method matches the access path.
 - Method call syntax can be used for calling the following langlib functions:
   - `array:length`
   - `array:push`
@@ -226,6 +236,6 @@
 
 ## Object/class definitions
 
-- Only `client`, `service` and `isolated` `object-type-quals` are supported
+- Only `client`, `service` and `isolated` `object-type-quals` / `class-type-quals` are supported
 - Supports `object-field-descriptor`, `method-decl`, `remote-method-decl` and `resource-method-decl` members
-- Supports `rest-param` and `defaultable-param` in methods
+- Supports `included-record-param`, `rest-param` and `defaultable-param` in methods

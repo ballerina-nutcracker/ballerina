@@ -1,0 +1,52 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (class-definition IntHolder
+    (function init (
+      (variable v (type
+        (value-type int)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref v))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition FloatHolder
+    (function init (
+      (variable v (type
+        (value-type float)))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref v))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (literal ab))))
+      (var-def
+        (variable h (type
+          (union-type
+            (user-defined-type IntHolder)
+            (user-defined-type FloatHolder))) (expr
+          (new (
+            (invocation lang.string length (
+              (simple-var-ref s)))
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref h)
+            (user-defined-type IntHolder))))))))

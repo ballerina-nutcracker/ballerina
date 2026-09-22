@@ -1,0 +1,42 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition IntValue
+    (function init (
+      (variable value (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value)))))))
+  (class-definition StringValue
+    (function init (
+      (variable value (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value)))))))
+  (function selected (
+    (variable value (type
+      (union-type
+        (user-defined-type IntValue)
+        (user-defined-type StringValue))) (expr
+      (new (
+        (simple-var-ref later)))))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref value)
+          (user-defined-type IntValue)))))
+  (const later () (
+    (literal 1)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation selected ())))))))

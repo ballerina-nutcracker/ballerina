@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: method not found: get
+  --> new-init-error-method1-e.bal:33:13
+   |
+33 |     int _ = (new Counter(-1)).get(); // @error init may return an error, so the result is Counter|error
+   |             ^^^^^^^^^^^^^^^^^^^^^^^

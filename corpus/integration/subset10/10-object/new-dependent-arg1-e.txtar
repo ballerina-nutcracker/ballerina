@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: dependently-typed call cannot be an argument of a new expression with more than one object type
+  --> new-dependent-arg1-e.bal:24:31
+   |
+24 |     IntHolder|FloatHolder h = new (check j.cloneWithType(), 0); // @error dependently-typed call cannot be an argument of a new expression with more than one object type
+   |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

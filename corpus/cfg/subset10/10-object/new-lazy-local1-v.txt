@@ -1,0 +1,46 @@
+(IntValue
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref value))))
+    )
+  )
+)
+(StringValue
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref value))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable fromConst (type
+        (union-type
+          (user-defined-type IntValue)
+          (user-defined-type StringValue))) (expr
+        (new (
+          (simple-var-ref laterConst))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref fromConst)
+          (user-defined-type IntValue)))))
+    (var-def
+      (variable fromGlobal (type
+        (union-type
+          (user-defined-type IntValue)
+          (user-defined-type StringValue))) (expr
+        (new (
+          (simple-var-ref laterGlobal))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref fromGlobal)
+          (user-defined-type StringValue)))))
+  )
+)

@@ -1,0 +1,104 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Value
+    (object-type
+      (method-decl get public (
+        (param value
+          (value-type int))
+        (param increment
+          (value-type int))) (
+        (value-type int)))))
+  (class-definition ReadonlyValue
+    (function get (
+      (variable value (type
+        (value-type int)))
+      (variable increment (type
+        (value-type int)) (expr
+        (literal 2)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref value)
+            (simple-var-ref increment))))))
+  (type-definition Caller
+    (object-type client
+      (method-decl $remote$add (
+        (param value
+          (value-type int))
+        (param increment
+          (value-type int))) (
+        (value-type int)))))
+  (class-definition CallerImpl
+    (function $remote$add (
+      (variable value (type
+        (value-type int)))
+      (variable increment (type
+        (value-type int)) (expr
+        (literal 2)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref value)
+            (simple-var-ref increment))))))
+  (function useReadonly (
+    (variable value (type
+      (intersection-type
+        (value-type readonly)
+        (user-defined-type Value))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation get expr:
+          (simple-var-ref value) (
+          (named-arg value
+            (literal 3)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (user-defined-type Value)) (expr
+          (new
+            (user-defined-type ReadonlyValue) ()))))
+      (var-def
+        (variable narrowed (type
+          (union-type
+            (object-type)
+            (value-type int))) (expr
+          (simple-var-ref value))))
+      (if
+        (type-test-expr is
+          (simple-var-ref narrowed)
+          (object-type
+            (method-decl get public (
+              (param value
+                (value-type int))
+              (param increment
+                (value-type int))) (
+              (value-type int)))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation get expr:
+                (simple-var-ref narrowed) (
+                (literal 5)
+                (literal 4))))))) ())
+      (block-stmt
+        (var-def
+          (variable caller (type
+            (user-defined-type Caller)) (expr
+            (new
+              (user-defined-type CallerImpl) ()))))
+        (var-def
+          (variable result (type
+            (value-type int)) (expr
+            (remote-method-call add expr:
+              (simple-var-ref caller) (
+              (named-arg value
+                (literal 6)))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref result))))))))
