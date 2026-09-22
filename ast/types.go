@@ -101,11 +101,20 @@ type (
 		// TODO: think how to align this with BLangMemberTypeDesc. Ideally this should be an inclusion on that
 		bLangNodeBase
 		bFieldAnnotationBase
-		Name         model.Name
-		Type         BType
-		flags        model.Flag
-		DefaultExpr  BLangExpression
-		DefaultFnRef model.SymbolRef
+		Name    model.Name
+		Type    BType
+		Default *BFieldDefault
+		flags   model.Flag
+	}
+
+	// BFieldDefault holds a record field's default expression together with the function
+	// symbol and scope of the closure desugar generates to evaluate it. FnRef and FnScope are
+	// allocated during symbol resolution so desugar, which runs concurrently, does not have
+	// to allocate symbol spaces. See model.DefaultableParam for the equivalent on parameters.
+	BFieldDefault struct {
+		Expr    BLangExpression
+		FnRef   model.SymbolRef
+		FnScope model.Scope
 	}
 
 	bObjectFieldBase struct {
@@ -426,12 +435,16 @@ func (b *bLangTypeBase) bTypeSetFlags(flags model.Flag) {
 }
 
 func NewBField(pos Location, name model.Name, ty BType, defaultExpr BLangExpression, flags model.Flag) BField {
+	var def *BFieldDefault
+	if defaultExpr != nil {
+		def = &BFieldDefault{Expr: defaultExpr}
+	}
 	return BField{
 		bLangNodeBase: bLangNodeBase{pos: pos},
 		Name:          name,
 		Type:          ty,
 		flags:         flags,
-		DefaultExpr:   defaultExpr,
+		Default:       def,
 	}
 }
 

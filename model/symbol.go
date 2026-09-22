@@ -499,6 +499,11 @@ type (
 	DefaultableParam struct {
 		Symbol SymbolRef
 		Kind   DefaultableParamKind
+		// Scope owns the closure desugar generates for this default expression. It is
+		// allocated during symbol resolution so desugar, which runs concurrently, does
+		// not have to allocate symbol spaces. It is nil for signatures read from a
+		// symbol pool since those closures were desugared in their defining module.
+		Scope Scope
 	}
 
 	DefaultableParamInfo struct {

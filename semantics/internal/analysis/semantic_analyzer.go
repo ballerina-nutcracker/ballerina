@@ -2158,10 +2158,10 @@ func setExpectedType[E ast.BLangNode](e E, expectedType semtypes.SemType) {
 func validateRecordFieldDefaults[A analyzer](a A, node *ast.BLangRecordType) {
 	parent := enclosingFunctionLocals(a)
 	for _, field := range node.Fields() {
-		if field.DefaultExpr == nil {
+		if field.Default == nil {
 			continue
 		}
-		expr := field.DefaultExpr.(ast.BLangNode)
+		expr := field.Default.Expr.(ast.BLangNode)
 		validateIsolatedCapture(a, parent, expr)
 		isIsolatedFunctionInner(a, expr, parent)
 	}

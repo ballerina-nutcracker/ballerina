@@ -1333,7 +1333,7 @@ func desugarTypeDesc(ctx desugarContext, typeDesc ast.BType, parentScope model.S
 }
 
 func desugarFunctionTypeDesc(ctx desugarContext, fnType *ast.BLangFunctionType, parentScope model.Scope) desugaredTypeDescResult {
-	result := desugaredTypeDescResult{functions: desugarFunctionTypeParamDefaults(ctx, fnType, parentScope)}
+	result := desugaredTypeDescResult{functions: desugarFunctionTypeParamDefaults(ctx, fnType)}
 	for i := range fnType.RequiredParams {
 		result.append(desugarTypeDesc(ctx, fnType.RequiredParams[i].TypeDesc, parentScope))
 	}
@@ -1349,14 +1349,13 @@ func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, par
 	var result desugaredTypeDescResult
 	for _, field := range recType.FieldPtrs() {
 		result.append(desugarTypeDesc(ctx, field.Type, parentScope))
-		if field.DefaultExpr == nil {
+		if field.Default == nil {
 			continue
 		}
-		symRef := field.DefaultFnRef
-		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.DefaultExpr, nil)
-		fnScope := ctx.newFunctionScope(parentScope)
+		symRef := field.Default.FnRef
+		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.Default.Expr, nil)
 		fn.SetSymbol(symRef)
-		fn.SetScope(fnScope)
+		fn.SetScope(field.Default.FnScope)
 
 		result.recordFields = append(result.recordFields, desugaredRecordFieldResult{fn: fn, symRef: symRef})
 
@@ -1398,7 +1397,6 @@ func desugarTopLevelTypeDescs(cx *packageContext, pkg *ast.BLangPackage) {
 
 func createDefaultClosures(ctx desugarContext, sig model.UntypedFunctionSignature,
 	paramTypeSupplier func(int) semtypes.SemType, paramExprSupplier func(int) ast.BLangExpression, paramSymbolSupplier func(int) model.SymbolRef,
-	scope model.Scope,
 ) []*ast.BLangFunction {
 	var prevParamNames []string
 	var prevParamTypes []semtypes.SemType
@@ -1412,7 +1410,7 @@ func createDefaultClosures(ctx desugarContext, sig model.UntypedFunctionSignatur
 				ctx.internalError("missing expression for defaultable param", ctx.getSymbol(def.Symbol).Location())
 				return nil
 			}
-			defaultClosure := createDefaultClosure(ctx, def.Symbol, expr, scope, prevParamNames, prevParamTypes, prevParamSymbol)
+			defaultClosure := createDefaultClosure(ctx, def, expr, prevParamNames, prevParamTypes, prevParamSymbol)
 			defaultClosures = append(defaultClosures, defaultClosure)
 		}
 		prevParamNames = append(prevParamNames, sig.ParamNames[i])
@@ -1422,11 +1420,16 @@ func createDefaultClosures(ctx desugarContext, sig model.UntypedFunctionSignatur
 	return defaultClosures
 }
 
-func createDefaultClosure(ctx desugarContext, symRef model.SymbolRef, expr ast.BLangExpression, scope model.Scope,
+func createDefaultClosure(ctx desugarContext, def *model.DefaultableParam, expr ast.BLangExpression,
 	prevParamNames []string, prevParamTypes []semtypes.SemType, prevParamSymbol []model.SymbolRef,
 ) *ast.BLangFunction {
+	symRef := def.Symbol
 	fnName := ctx.getSymbol(symRef).Name()
-	fnScope := ctx.newFunctionScope(scope)
+	fnScope := def.Scope
+	if fnScope == nil {
+		ctx.internalError("default value closure scope not allocated", ctx.getSymbol(symRef).Location())
+		return nil
+	}
 	symbolMapping := make(map[model.SymbolRef]model.SymbolRef)
 	requiredParams := make([]ast.BLangVariable, 0, len(prevParamNames))
 	for j := range len(prevParamNames) {
@@ -1469,7 +1472,6 @@ func desugarFunctionParamDefaults(ctx desugarContext, fn ast.FunctionSignature, 
 		func(i int) model.SymbolRef {
 			return params[i].Symbol()
 		},
-		scope,
 	)
 	appendTypeDefaults := func(typeDesc ast.BType) {
 		if typeDesc == nil {
@@ -1500,7 +1502,7 @@ func desugarFunctionParamDefaults(ctx desugarContext, fn ast.FunctionSignature, 
 	return functions
 }
 
-func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunctionType, scope model.Scope) []*ast.BLangFunction {
+func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunctionType) []*ast.BLangFunction {
 	if fnType.IsAnyFunction() {
 		return nil
 	}
@@ -1515,7 +1517,6 @@ func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunct
 		func(i int) model.SymbolRef {
 			return fnType.RequiredParams[i].SymbolRef
 		},
-		scope,
 	)
 }
 
