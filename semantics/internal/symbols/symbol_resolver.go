@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
@@ -383,7 +384,7 @@ func (ms *compilationUnitSymbolResolver) TypeContext() semtypes.Context {
 }
 
 func (ms *moduleSymbolResolver) nextDefaultSymbolName() string {
-	name := fmt.Sprintf("$default$%d", ms.defaultCounter)
+	name := fmt.Sprintf("%s%d", constants.DefaultParamFunctionPrefix, ms.defaultCounter)
 	ms.defaultCounter++
 	return name
 }
@@ -1195,7 +1196,7 @@ func resolveInvokableChildren(functionResolver *blockSymbolResolver, fn ast.Invo
 func resolveFunctionBody(r *blockSymbolResolver, body ast.FunctionBodyNode) bool {
 	switch b := body.(type) {
 	case *ast.BLangBlockFunctionBody:
-		return resolveStmts(r, b.Stmts)
+		return resolveBlockFunctionBody(r, b)
 	case *ast.BLangExprFunctionBody:
 		if b.Expr == nil {
 			return true
@@ -1206,6 +1207,48 @@ func resolveFunctionBody(r *blockSymbolResolver, body ast.FunctionBodyNode) bool
 	default:
 		return reportUnexpectedNode(r, body)
 	}
+}
+
+// resolveBlockFunctionBody resolves the three regions of a block function body
+// in order: the default-worker initialization statements, the named worker
+// declarations, and the remaining default-worker statements. Worker names are
+// unavailable in the initialization region and available everywhere after it.
+func resolveBlockFunctionBody(r *blockSymbolResolver, body *ast.BLangBlockFunctionBody) bool {
+	ok := resolveStmts(r, body.InitStmts)
+	ok = declareNamedWorkers(r, body.Workers) && ok
+	for _, worker := range body.Workers {
+		ok = resolveNamedWorker(r, worker) && ok
+	}
+	return resolveStmts(r, body.Stmts) && ok
+}
+
+// declareNamedWorkers declares every worker symbol before any worker body is
+// resolved, so a worker body can refer to peers declared before or after it.
+func declareNamedWorkers(r *blockSymbolResolver, workers []*ast.BLangNamedWorkerDeclaration) bool {
+	ok := true
+	for _, worker := range workers {
+		name := worker.Name
+		if isShadowed(r, name) {
+			r.GetCtx().SemanticError("Variable already defined: "+name, worker.GetPosition())
+			ok = false
+			continue
+		}
+		symbol := model.NewWorkerSymbol(name, worker.GetPosition())
+		addSymbolAndSetOnNode(r, name, symbol, worker)
+	}
+	return ok
+}
+
+func resolveNamedWorker(r *blockSymbolResolver, worker *ast.BLangNamedWorkerDeclaration) bool {
+	workerResolver := newFunctionResolver(r, worker)
+	worker.SetScope(workerResolver.scope)
+	ok := true
+	for i := range worker.AnnAttachments {
+		ok = resolveAnnotationAttachment(workerResolver, &worker.AnnAttachments[i]) && ok
+	}
+	ok = resolveTypeDesc(workerResolver, worker.ReturnType) && ok
+	ok = resolveBlockFunctionBody(workerResolver, worker.Body) && ok
+	return reportUnusedVariables(workerResolver.GetCtx(), workerResolver.getUnused()) && ok
 }
 
 func isExternalFunctionBody(body ast.FunctionBodyNode) bool {

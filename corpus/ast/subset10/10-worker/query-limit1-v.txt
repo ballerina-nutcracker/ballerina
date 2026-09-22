@@ -1,0 +1,131 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function observe (
+    (variable f (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref f)
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)))
+          (literal 1)
+          (literal 2)))))
+  (function limitAfterFrom () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (literal 1))))
+      (var-def
+        (variable r (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 10)
+                (literal 20)
+                (literal 30)))
+            (limit-clause
+              (invocation observe (
+                (simple-var-ref w))))
+            (select-clause
+              (simple-var-ref i))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))))
+  (function limitAfterJoin () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (literal 1))))
+      (var-def
+        (variable r (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)
+                (literal 3)))
+            (join-clause
+              (var-def
+                (variable j (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)
+                (literal 3))
+              (on-clause
+                (simple-var-ref i)
+                (simple-var-ref j)))
+            (where-clause
+              (binary-expr >
+                (simple-var-ref i)
+                (literal 1)))
+            (limit-clause
+              (invocation observe (
+                (simple-var-ref w))))
+            (select-clause
+              (simple-var-ref i))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))))
+  (function inCollect () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (literal 1))))
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)
+                (literal 3)))
+            (collect-clause
+              (binary-expr +
+                (invocation length expr:
+                  (list-constructor-expr
+                    (simple-var-ref i)) ())
+                (invocation observe (
+                  (simple-var-ref w)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref total))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation limitAfterFrom ()))
+      (expression-stmt
+        (invocation limitAfterJoin ()))
+      (expression-stmt
+        (invocation inCollect ())))))

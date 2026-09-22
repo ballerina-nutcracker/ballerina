@@ -108,6 +108,15 @@ func analyzeFinalReassignments(ctx *context.CompilerContext, pkg *ast.BLangPacka
 			newPossiblyAssignedAnalyzer(ctx, &fnCfg, tracked, selfFields).analyze()
 		})
 	}
+	for _, worker := range cfg.workers {
+		wg.Go(func() {
+			tracked := deferredFinalLocals(ctx, worker.decl.Body)
+			if len(tracked) == 0 {
+				return
+			}
+			newPossiblyAssignedAnalyzer(ctx, &worker.cfg, tracked, nil).analyze()
+		})
+	}
 	wg.Wait()
 }
 
@@ -180,7 +189,7 @@ type deferredFinalCollector struct {
 
 func (c *deferredFinalCollector) Visit(node ast.BLangNode) ast.Visitor {
 	switch n := node.(type) {
-	case nil, *ast.BLangLambdaFunction:
+	case nil, *ast.BLangLambdaFunction, *ast.BLangNamedWorkerDeclaration:
 		return nil
 	case *ast.BLangVariableDef:
 		if n.Var.Expr != nil {
