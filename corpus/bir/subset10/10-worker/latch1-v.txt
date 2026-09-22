@@ -1,0 +1,64 @@
+module $anon.. v 0.0.0;
+waitForLatch(handle,string) -> string{
+  bb0 {
+    %3 = waitOnLatch(latch) -> bb1;
+  }
+  bb1 {
+    %0 = name;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    opened = %1;
+    %3 = openLatch(opened) -> bb2;
+  }
+  bb2 {
+    %4 = waitOnLatch(opened) -> bb3;
+  }
+  bb3 {
+    %5 = ConstantLoad already open returns immediately
+    %6 = println(%5) -> bb4;
+  }
+  bb4 {
+    %7 = createLatch() -> bb5;
+  }
+  bb5 {
+    closed = %7;
+    %9 = ConstantLoad first
+    %10 = start waitForLatch(closed,%9) isolated=false -> bb6;
+  }
+  bb6 {
+    first = %10;
+    %12 = ConstantLoad second
+    %13 = start waitForLatch(closed,%12) isolated=false -> bb7;
+  }
+  bb7 {
+    second = %13;
+    %15 = ConstantLoad waiters are still blocked
+    %16 = println(%15) -> bb8;
+  }
+  bb8 {
+    %17 = openLatch(closed) -> bb9;
+  }
+  bb9 {
+    %18 = wait first -> bb10;
+  }
+  bb10 {
+    firstResult = %18;
+    %20 = wait second -> bb11;
+  }
+  bb11 {
+    secondResult = %20;
+    %22 = println(firstResult) -> bb12;
+  }
+  bb12 {
+    %23 = println(secondResult) -> bb13;
+  }
+  bb13 {
+    return;
+  }
+}

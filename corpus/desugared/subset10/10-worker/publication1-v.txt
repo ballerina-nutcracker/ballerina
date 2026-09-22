@@ -1,0 +1,132 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function chain (
+    (variable seed (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3))
+      (var-def
+        (variable $desugar$4))
+      (var-def
+        (variable $desugar$5 (expr
+          (lambda
+            (function $worker:chain:a () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable fromB (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$2)))))
+                (return
+                  (binary-expr +
+                    (simple-var-ref fromB)
+                    (literal 1)))))))))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:chain:b () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable fromC (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$3)))))
+                (return
+                  (binary-expr +
+                    (simple-var-ref fromC)
+                    (literal 1)))))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $worker:chain:c () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable fromD (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$4)))))
+                (return
+                  (binary-expr +
+                    (simple-var-ref fromD)
+                    (literal 1)))))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (lambda
+            (function $worker:chain:d () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (simple-var-ref seed))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action isolated
+          (invocation $desugar$5 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action isolated
+          (invocation $desugar$6 ())))
+      (assignment
+        (simple-var-ref $desugar$3)
+        (start-action isolated
+          (invocation $desugar$7 ())))
+      (assignment
+        (simple-var-ref $desugar$4)
+        (start-action isolated
+          (invocation $desugar$8 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (literal 200))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref total)
+            (invocation chain (
+              (simple-var-ref i))))
+          (compound-assignment +
+            (simple-var-ref i)
+            (literal 1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref total)))))))

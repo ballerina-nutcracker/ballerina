@@ -1,0 +1,181 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function one () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 1))))
+  (function multiple () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:multiple:w () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 2))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation one ())))))
+      (var-def
+        (variable both (type
+          (record-type
+            (field w
+              (value-type int))
+            (field f
+              (union-type
+                (value-type int)
+                (error-type))))) (expr
+          (multiple-wait-action w
+            (simple-var-ref $desugar$1) f
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref both)
+            (literal w)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref both)
+            (literal f)))))))
+  (function alternate () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:alternate:w () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 1))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation one ())))))
+      (var-def
+        (variable first (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref $desugar$1)
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref first))))))
+  (function claimed () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:claimed:w () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 2))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation one ())))))
+      (var-def
+        (variable claim (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref claim))))
+      (var-def
+        (variable both (type
+          (record-type
+            (field w
+              (value-type int))
+            (field f
+              (union-type
+                (value-type int)
+                (error-type))))) (expr
+          (multiple-wait-action w
+            (simple-var-ref $desugar$1) f
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref both)
+            (literal w)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref both)
+            (literal f)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation multiple ()))
+      (expression-stmt
+        (invocation alternate ()))
+      (expression-stmt
+        (invocation claimed ())))))

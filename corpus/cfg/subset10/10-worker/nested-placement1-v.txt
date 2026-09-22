@@ -1,0 +1,36 @@
+(Holder
+  (call
+    (bb0 () ()
+      (var-def
+        (variable f (expr
+          (field-based-access make
+            (simple-var-ref self)))))
+      (return
+        (invocation f ()))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation moduleLevel ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation withDefault ( <default>)))))
+    (var-def
+      (variable holder (type
+        (user-defined-type Holder)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation call expr:
+          (simple-var-ref holder) ()))))
+  )
+)
+(withDefault
+  (bb0 () ()
+    (return
+      (invocation f ()))
+  )
+)

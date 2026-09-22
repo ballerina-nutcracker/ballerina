@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: annotation 'config' is not allowed on worker
+  --> annotation1-e.bal:26:5
+   |
+26 |     @config {name: "alpha"} // @error config is not allowed on a worker
+   |     ^^^^^^^^^^^^^^^^^^^^^^^

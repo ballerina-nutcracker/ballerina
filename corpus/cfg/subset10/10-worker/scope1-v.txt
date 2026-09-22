@@ -1,0 +1,34 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable before (type
+        (value-type int)) (expr
+        (literal 10))))
+    (named-worker reader (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref before))))
+    (var-def
+      (variable after (type
+        (value-type int)) (expr
+        (literal 20))))
+    (var-def
+      (variable result (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref reader)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref after))))
+  )
+)
+(worker reader
+  (bb0 () ()
+    (return
+      (simple-var-ref before))
+  )
+)

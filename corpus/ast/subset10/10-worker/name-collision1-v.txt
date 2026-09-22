@@ -1,0 +1,68 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition A
+    (variable value (type
+      (value-type int)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (named-worker w (
+          (value-type int))
+          (block-function-body
+            (return
+              (literal 1))))
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (single-wait-action
+            (simple-var-ref w))))))
+  (class-definition B
+    (variable value (type
+      (value-type int)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (named-worker w (
+          (value-type int))
+          (block-function-body
+            (return
+              (literal 2))))
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (single-wait-action
+            (simple-var-ref w))))))
+  (function shadowed () (
+    (value-type int))
+    (block-function-body
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (literal 3))))
+      (return
+        (single-wait-action
+          (simple-var-ref w)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (user-defined-type A)) (expr
+          (new ()))))
+      (var-def
+        (variable b (type
+          (user-defined-type B)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access value
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access value
+            (simple-var-ref b)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation shadowed ())))))))

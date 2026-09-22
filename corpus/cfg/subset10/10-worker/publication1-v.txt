@@ -1,0 +1,124 @@
+(chain
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable fromB (type
+            (value-type int)) (expr
+            (single-wait-action
+              (simple-var-ref b)))))
+        (return
+          (binary-expr +
+            (simple-var-ref fromB)
+            (literal 1)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable fromC (type
+            (value-type int)) (expr
+            (single-wait-action
+              (simple-var-ref c)))))
+        (return
+          (binary-expr +
+            (simple-var-ref fromC)
+            (literal 1)))))
+    (named-worker c (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable fromD (type
+            (value-type int)) (expr
+            (single-wait-action
+              (simple-var-ref d)))))
+        (return
+          (binary-expr +
+            (simple-var-ref fromD)
+            (literal 1)))))
+    (named-worker d (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref seed))))
+    (return
+      (single-wait-action
+        (simple-var-ref a)))
+  )
+)
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable total (type
+        (value-type int)) (expr
+        (literal 0))))
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr <
+      (simple-var-ref i)
+      (literal 200))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref total)
+      (invocation chain (
+        (simple-var-ref i))))
+    (compound-assignment +
+      (simple-var-ref i)
+      (literal 1))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref total))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable fromB (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref b)))))
+    (return
+      (binary-expr +
+        (simple-var-ref fromB)
+        (literal 1)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable fromC (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref c)))))
+    (return
+      (binary-expr +
+        (simple-var-ref fromC)
+        (literal 1)))
+  )
+)
+(worker c
+  (bb0 () ()
+    (var-def
+      (variable fromD (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref d)))))
+    (return
+      (binary-expr +
+        (simple-var-ref fromD)
+        (literal 1)))
+  )
+)
+(worker d
+  (bb0 () ()
+    (return
+      (simple-var-ref seed))
+  )
+)

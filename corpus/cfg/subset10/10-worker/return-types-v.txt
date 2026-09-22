@@ -1,0 +1,102 @@
+(main
+  (bb0 () ()
+    (named-worker nilWorker (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal nil))))))
+    (named-worker scalarWorker (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 42))))
+    (named-worker structuredWorker (
+      (user-defined-type Pair))
+      (block-function-body
+        (return
+          (mapping-constructor-expr
+            (key-value
+              (literal first)
+              (literal 1))
+            (key-value
+              (literal second)
+              (literal two))))))
+    (named-worker errorWorker (
+      (error-type))
+      (block-function-body
+        (return
+          (error-constructor-expr (
+            (literal normal error value))))))
+    (var-def
+      (variable nilResult (type
+        (value-type null)) (expr
+        (single-wait-action
+          (simple-var-ref nilWorker)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nilResult))))
+    (var-def
+      (variable scalar (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref scalarWorker)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref scalar))))
+    (var-def
+      (variable pair (type
+        (user-defined-type Pair)) (expr
+        (single-wait-action
+          (simple-var-ref structuredWorker)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access first
+          (simple-var-ref pair)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access second
+          (simple-var-ref pair)))))
+    (var-def
+      (variable e (type
+        (error-type)) (expr
+        (single-wait-action
+          (simple-var-ref errorWorker)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref e))))))
+  )
+)
+(worker errorWorker
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal normal error value))))
+  )
+)
+(worker nilWorker
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal nil))))
+  )
+)
+(worker scalarWorker
+  (bb0 () ()
+    (return
+      (literal 42))
+  )
+)
+(worker structuredWorker
+  (bb0 () ()
+    (return
+      (mapping-constructor-expr
+        (key-value
+          (literal first)
+          (literal 1))
+        (key-value
+          (literal second)
+          (literal two))))
+  )
+)
