@@ -1,0 +1,84 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad tag
+    %2 = ConstantLoad root
+    %3 = newMap {| anydata... |}{%1=%2}
+    m = %3;
+    %5 = ConstantLoad self
+    m[%5] = m;
+    %6 = clone(m) -> bb1;
+  }
+  bb1 {
+    mClone = %6;
+    %8 = unknown mClone m;
+    %9 = %8;
+    %10 = println(%9) -> bb2;
+  }
+  bb2 {
+    %13 = ConstantLoad self
+    %12 = mClone[%13];
+    %11 = unknown %12 mClone;
+    %14 = %11;
+    %15 = println(%14) -> bb3;
+  }
+  bb3 {
+    %17 = ConstantLoad tag
+    %16 = mClone[%17];
+    %18 = println(%16) -> bb4;
+  }
+  bb4 {
+    %19 = ConstantLoad 1
+    %20 = ConstantLoad 1
+    %21 = newArray [anydata...][%20]{%19}
+    arr = %21;
+    %23 = push(arr,arr) -> bb5;
+  }
+  bb5 {
+    %24 = clone(arr) -> bb6;
+  }
+  bb6 {
+    arrClone = %24;
+    %26 = unknown arrClone arr;
+    %27 = %26;
+    %28 = println(%27) -> bb7;
+  }
+  bb7 {
+    %31 = ConstantLoad 1
+    %30 = arrClone[%31];
+    %29 = unknown %30 arrClone;
+    %32 = %29;
+    %33 = println(%32) -> bb8;
+  }
+  bb8 {
+    %34 = ConstantLoad 1
+    %35 = ConstantLoad 2
+    %36 = ConstantLoad 2
+    %37 = newArray [int...][%36]{%34, %35}
+    shared = %37;
+    %39 = ConstantLoad 2
+    %40 = newArray [[anydata...]...][%39]{shared, shared}
+    dag = %40;
+    %42 = clone(dag) -> bb9;
+  }
+  bb9 {
+    dagClone = %42;
+    %46 = ConstantLoad 0
+    %45 = dagClone[%46];
+    %48 = ConstantLoad 1
+    %47 = dagClone[%48];
+    %44 = unknown %45 %47;
+    %49 = %44;
+    %50 = println(%49) -> bb10;
+  }
+  bb10 {
+    %53 = ConstantLoad 0
+    %52 = dagClone[%53];
+    %51 = unknown %52 shared;
+    %54 = %51;
+    %55 = println(%54) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}
