@@ -1,0 +1,134 @@
+module $anon.. v 0.0.0;
+add(int,int) -> int{
+  bb0 {
+    %4 = a;
+    %5 = b;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad host
+    %2 = ConstantLoad localhost
+    %3 = ConstantLoad port
+    %4 = ConstantLoad 8080
+    %5 = newMap {| host: string, port: int, never... |}{%1=%2, %3=%4}
+    cfg = %5;
+    %8 = clone(cfg) -> bb1;
+  }
+  bb1 {
+    %7 = unknown %8 cfg;
+    %9 = %7;
+    %10 = println(%9) -> bb2;
+  }
+  bb2 {
+    %11 = ConstantLoad 1
+    %12 = ConstantLoad 2
+    %13 = ConstantLoad 3
+    %14 = ConstantLoad 3
+    %15 = newArray [int...][%14]{%11, %12, %13}
+    ids = %15;
+    %18 = clone(ids) -> bb3;
+  }
+  bb3 {
+    %17 = unknown %18 ids;
+    %19 = %17;
+    %20 = println(%19) -> bb4;
+  }
+  bb4 {
+    %21 = ConstantLoad cfg
+    %22 = ConstantLoad ids
+    %23 = ConstantLoad xs
+    %24 = ConstantLoad 4
+    %25 = ConstantLoad 5
+    %26 = ConstantLoad 2
+    %27 = newArray [anydata...][%26]{%24, %25}
+    %28 = newMap {| anydata... |}{%21=cfg, %22=ids, %23=%27}
+    holder = %28;
+    %30 = clone(holder) -> bb5;
+  }
+  bb5 {
+    holderClone = %30;
+    %32 = unknown holderClone holder;
+    %33 = %32;
+    %34 = println(%33) -> bb6;
+  }
+  bb6 {
+    %37 = ConstantLoad cfg
+    %36 = holderClone[%37];
+    %35 = unknown %36 cfg;
+    %38 = %35;
+    %39 = println(%38) -> bb7;
+  }
+  bb7 {
+    %42 = ConstantLoad ids
+    %41 = holderClone[%42];
+    %40 = unknown %41 ids;
+    %43 = %40;
+    %44 = println(%43) -> bb8;
+  }
+  bb8 {
+    %47 = ConstantLoad xs
+    %46 = holderClone[%47];
+    %49 = ConstantLoad xs
+    %48 = holder[%49];
+    %45 = unknown %46 %48;
+    %50 = %45;
+    %51 = println(%50) -> bb9;
+  }
+  bb9 {
+    widened = ids;
+    %54 = clone(widened) -> bb10;
+  }
+  bb10 {
+    %53 = unknown %54 ids;
+    %55 = %53;
+    %56 = println(%55) -> bb11;
+  }
+  bb11 {
+    %57 = ConstantLoad oops
+    %58 = newError error(%57)
+    e = %58;
+    %61 = clone(e) -> bb12;
+  }
+  bb12 {
+    %60 = unknown %61 e;
+    %62 = %60;
+    %63 = println(%62) -> bb13;
+  }
+  bb13 {
+    %64 = fp $anon/.:add
+    f = %64;
+    %67 = clone(f) -> bb14;
+  }
+  bb14 {
+    %66 = unknown %67 f;
+    %68 = %66;
+    %69 = println(%68) -> bb15;
+  }
+  bb15 {
+    %70 = fp $anon/.:$anonFunc$_0
+    lambda = %70;
+    %73 = clone(lambda) -> bb16;
+  }
+  bb16 {
+    %72 = unknown %73 lambda;
+    %74 = %72;
+    %75 = println(%74) -> bb17;
+  }
+  bb17 {
+    return;
+  }
+}
