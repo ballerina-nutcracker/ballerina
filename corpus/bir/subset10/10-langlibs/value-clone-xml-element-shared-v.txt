@@ -1,0 +1,70 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newXMLElement("a", ())
+    element = %1;
+    %3 = + element element;
+    sequence = %3;
+    %5 = clone(sequence) -> bb1;
+  }
+  bb1 {
+    sequenceClone = %5;
+    %7 = ConstantLoad 0
+    %8 = newArray [xml...][%7]{}
+    items = %8;
+    $desugar$0 = sequenceClone;
+    %11 = iterator($desugar$0) -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %11;
+    GOTO bb3;
+  }
+  bb3 {
+    %13 = ConstantLoad true
+    %13 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1).next() -> bb6;
+  }
+  bb5 {
+    %16 = ConstantLoad 0
+    %15 = items[%16];
+    %18 = ConstantLoad 1
+    %17 = items[%18];
+    %14 = unknown %15 %17;
+    %19 = %14;
+    %20 = println(%19) -> bb10;
+  }
+  bb6 {
+    $desugar$3 = %0;
+    %2 = $desugar$3 is nil
+    %2 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb8 {
+    %4 = ConstantLoad value
+    %3 = $desugar$3[%4];
+    item = %3;
+    %6 = push((1, items),item) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb10 {
+    %23 = ConstantLoad 0
+    %22 = items[%23];
+    %21 = unknown %22 element;
+    %24 = %21;
+    %25 = println(%24) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}

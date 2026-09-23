@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: 'clone' cannot be used as a function value
+  --> opaque-fn-value-fe.bal:22:17
+   |
+22 |     var clone = value:clone; // @error langlib function used as a value; unimplemented for opaque functions
+   |                 ^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: 'remove' cannot be used as a function value
+  --> opaque-fn-value-fe.bal:24:54
+   |
+24 |     function (map<int>, string) returns int remove = map:remove; // @error langlib function used as a value; unimplemented for opaque functions
+   |                                                      ^^^^^^^^^^

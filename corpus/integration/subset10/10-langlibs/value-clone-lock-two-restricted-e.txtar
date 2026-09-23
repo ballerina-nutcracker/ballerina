@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: more than one restricted variable referenced in lock statement
+  --> value-clone-lock-two-restricted-e.bal:22:16
+   |
+22 |         data = other.clone(); // @error a second restricted variable inside a clone call
+   |                ^^^^^

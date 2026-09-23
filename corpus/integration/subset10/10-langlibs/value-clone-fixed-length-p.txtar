@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: inherent type violation
+        at main(value-clone-fixed-length-p.bal:20)

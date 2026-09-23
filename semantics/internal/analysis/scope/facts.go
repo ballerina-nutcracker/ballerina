@@ -49,11 +49,42 @@ func FactsOfType(cx Context, e ast.BLangActionOrExpression) Facts {
 	if !cx.factsNeeded() {
 		return NoFacts
 	}
-	tyCtx := cx.TyCtx()
-	if semtypes.IsSubtype(tyCtx, e.Type(), semtypes.CreateIsolated(tyCtx)) {
+	if isolatedType(cx, e) {
 		return Facts{bits: factIsolated | factIsolatedTransferred}
 	}
 	return NoFacts
+}
+
+// IsolatedWhateverOperands reports whether e is an isolated expression
+// whatever its subexpressions: its type is a subtype of Isolated, or it is a
+// call to lang.value:clone.
+func IsolatedWhateverOperands(cx Context, e ast.BLangActionOrExpression) bool {
+	// Spec §6.15: lang.value:clone calls are always isolated, regardless of their arguments.
+	// https://ballerina.io/spec/lang/master/#function_call
+	if inv, ok := e.(*ast.BLangInvocation); ok && !ast.IsStreamOperation(inv) && isValueCloneCall(cx, inv) {
+		return true
+	}
+	return isolatedType(cx, e)
+}
+
+func isolatedType(cx Context, e ast.BLangActionOrExpression) bool {
+	tyCtx := cx.TyCtx()
+	return semtypes.IsSubtype(tyCtx, e.Type(), semtypes.CreateIsolated(tyCtx))
+}
+
+func isValueCloneCall(cx Context, inv *ast.BLangInvocation) bool {
+	ctx := cx.CompilerCtx()
+	mono, ok := ctx.GetSymbol(inv.ResolvedSymbol()).(model.MonomorphicFunctionSymbol)
+	if !ok {
+		return false
+	}
+	poly := mono.PolymorphicSymbol()
+	fn, ok := ctx.GetSymbol(poly).(*model.OpaqueFunctionSymbol)
+	if !ok || fn.OpaqueID() != model.OpaqueFnValueClone {
+		return false
+	}
+	pkg := ctx.SymbolPackage(poly)
+	return pkg.Organization == "ballerina" && pkg.Package == "lang.value"
 }
 
 // Meet holds the properties both a and b hold.
@@ -83,11 +114,14 @@ func StartFacts(call Facts) Facts {
 	return NoFacts
 }
 
-// invocationFacts is the type rule for inv, plus whether its operands (the
-// fold of its receiver and arguments) are isolated and its callee is an
-// isolated function.
+// invocationFacts holds Isolated and IsolatedTransferred iff inv is isolated
+// whatever its operands, plus whether its operands (the fold of its receiver
+// and arguments) are isolated and its callee is an isolated function.
 func invocationFacts(cx Context, inv *ast.BLangInvocation, operands Facts) Facts {
-	f := FactsOfType(cx, inv)
+	var f Facts
+	if IsolatedWhateverOperands(cx, inv) {
+		f.bits |= factIsolated | factIsolatedTransferred
+	}
 	if operands.Isolated() {
 		f.bits |= factOperandsIsolated
 	}

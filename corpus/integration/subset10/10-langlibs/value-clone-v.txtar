@@ -1,0 +1,33 @@
+-- stdout --
+{"name":"Alice","age":30}
+true
+false
+{"name":"Alice","age":30}
+{"a":1,"b":2}
+[1,2,3]
+[1,"one"]
+{"name":"core","lead":{"name":"Alice","age":30}}
+false
+{"n":1,"xs":[1,2]}
+{"x":[1,2]}
+1
+hi
+1.5
+2.5
+true
+
+true
+{"name":"Alice","age":30}
+{"name":"Alice","age":31}
+[1,2,3]
+[100,2,3]
+[1,200,3]
+[100,2,3]
+[7,8]
+[1,200,3,0,0,9]
+true
+false
+[1,2]
+{"id":1,"extra":2}
+{"id":1,"extra":2,"name":"n","more":3}
+-- stderr --
