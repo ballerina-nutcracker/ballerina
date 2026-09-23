@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> value-clone-outside-lock-e.bal:19:12
+   |
+19 |     return data.clone(); // @error isolated variable accessed outside a lock
+   |            ^^^^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> value-clone-outside-lock-e.bal:19:12
+   |
+19 |     return data.clone(); // @error isolated variable accessed outside a lock
+   |            ^^^^
+
+error[SEMANTIC_ERROR]: mutable field access within isolated object must be inside a lock statement
+  --> value-clone-outside-lock-e.bal:26:16
+   |
+26 |         return self.xs.clone(); // @error isolated object field accessed outside a lock
+   |                ^^^^^^^

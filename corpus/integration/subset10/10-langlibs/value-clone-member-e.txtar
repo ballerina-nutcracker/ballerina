@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect first argument to be a subtype of Cloneable
+  --> value-clone-member-e.bal:27:9
+   |
+27 |     _ = counters.clone(); // @error member type is not Cloneable
+   |         ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expect first argument to be a subtype of Cloneable
+  --> value-clone-member-e.bal:29:9
+   |
+29 |     _ = list.clone(); // @error member type is not Cloneable
+   |         ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expect first argument to be a subtype of Cloneable
+  --> value-clone-member-e.bal:31:9
+   |
+31 |     _ = h.clone(); // @error field type is not Cloneable
+   |         ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expect first argument to be a subtype of Cloneable
+  --> value-clone-member-e.bal:33:9
+   |
+33 |     _ = u.clone(); // @error union with a non-Cloneable member
+   |         ^^^^^^^^^

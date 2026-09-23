@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: inherent type violation: cannot mutate readonly field 'id'
+        at main(value-clone-readonly-field-p.bal:26)

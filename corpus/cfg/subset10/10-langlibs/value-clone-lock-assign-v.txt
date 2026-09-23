@@ -1,0 +1,39 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable xs (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 5)
+          (literal 6)))))
+    (expression-stmt
+      (invocation replace (
+        (simple-var-ref xs))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref xs)
+        (literal 7))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref xs))))
+    (expression-stmt
+      (invocation io println (
+        (invocation snapshot ()))))
+  )
+)
+(replace
+  (bb0 () ()
+    (assignment
+      (simple-var-ref data)
+      (invocation lang.value clone (
+        (simple-var-ref xs))))
+  )
+)
+(snapshot
+  (bb0 () ()
+    (return
+      (invocation lang.value clone (
+        (simple-var-ref data))))
+  )
+)

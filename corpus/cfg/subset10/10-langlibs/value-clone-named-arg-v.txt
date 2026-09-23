@@ -1,0 +1,27 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable xs (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (var-def
+      (variable ys (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (invocation value clone (
+          (simple-var-ref xs))))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref ys)
+        (literal 3))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref xs))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ys))))
+  )
+)

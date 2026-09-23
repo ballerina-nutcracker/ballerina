@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> value-clone-lock-sibling-e.bal:20:29
+   |
+20 |         data = [xs.clone(), xs]; // @error xs outside the clone call transfers into the lock
+   |                             ^^
