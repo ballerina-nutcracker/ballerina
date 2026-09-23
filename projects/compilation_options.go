@@ -145,6 +145,7 @@ type CompilationOptions struct {
 	remoteManagement              optionalBool
 	optimizeDependencyCompilation optionalBool
 	traceRecovery                 optionalBool
+	generateCode                  optionalBool
 	cloud                         *string
 	dumpCFGFormat                 CFGFormat
 	lockingMode                   PackageLockingMode
@@ -286,6 +287,15 @@ func (c CompilationOptions) TraceRecovery() bool {
 	return c.traceRecovery.valueOr(false)
 }
 
+// GenerateCode returns whether BIR generation runs as part of Compilation, pipelined into
+// Phase 2 with no barrier between them. Defaults to true, matching every current production
+// caller's behavior. Callers that only need diagnostics/symbols per compile — e.g. a language
+// server recompiling on every keystroke — should set this false to skip BIR generation
+// entirely; NewBallerinaBackend still works afterward, generating any missing BIR on demand.
+func (c CompilationOptions) GenerateCode() bool {
+	return c.generateCode.valueOr(true)
+}
+
 // LockingMode returns the package locking mode.
 // Returns PackageLockingModeUnknown if not explicitly set.
 func (c CompilationOptions) LockingMode() PackageLockingMode {
@@ -326,6 +336,7 @@ func (c CompilationOptions) AcceptTheirs(theirs CompilationOptions) CompilationO
 		remoteManagement:              acceptOptionalBool(c.remoteManagement, theirs.remoteManagement),
 		optimizeDependencyCompilation: acceptOptionalBool(c.optimizeDependencyCompilation, theirs.optimizeDependencyCompilation),
 		traceRecovery:                 acceptOptionalBool(c.traceRecovery, theirs.traceRecovery),
+		generateCode:                  acceptOptionalBool(c.generateCode, theirs.generateCode),
 	}
 
 	// Cloud (*string)
@@ -515,6 +526,13 @@ func (b *CompilationOptionsBuilder) WithDumpST(value bool) *CompilationOptionsBu
 // WithTraceRecovery sets error recovery tracing flag.
 func (b *CompilationOptionsBuilder) WithTraceRecovery(value bool) *CompilationOptionsBuilder {
 	b.options.traceRecovery = optionalBoolOf(value)
+	return b
+}
+
+// WithGenerateCode sets whether BIR generation is pipelined into Compilation. Set false for
+// diagnostics/symbol-only use (e.g. a language server) to skip BIR generation entirely.
+func (b *CompilationOptionsBuilder) WithGenerateCode(value bool) *CompilationOptionsBuilder {
+	b.options.generateCode = optionalBoolOf(value)
 	return b
 }
 

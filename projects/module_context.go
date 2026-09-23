@@ -62,6 +62,16 @@ type moduleContext struct {
 	importedSymbols map[string]model.ExportedSymbolSpace
 	explicitImports []moduleImport
 	birPkg          *bir.BIRPackage
+	// birGenAttempted distinguishes "BIR generation never ran" from "it ran and
+	// failed" (birPkg stays nil either way) so generateCodeInternal doesn't retry
+	// a failed attempt and duplicate its diagnostics.
+	birGenAttempted bool
+
+	// compilationUnits and pkgID bridge parseModule (Phase 1a, concurrent
+	// across the whole package) to resolveSymbolsAndTypes (Phase 1b,
+	// sequential in topological order).
+	compilationUnits []*ast.BLangCompilationUnit
+	pkgID            *model.PackageID
 }
 
 // newModuleContext creates a moduleContext from ModuleConfig.
@@ -226,9 +236,11 @@ func (m *moduleContext) getModuleDescDependencies() []ModuleDescriptor {
 	return slices.Clone(m.moduleDescDependencies)
 }
 
-// resolveTypesAndSymbols performs parsing, AST building, symbol resolution, and type resolution.
-// This phase must run sequentially respecting module dependencies.
-func resolveTypesAndSymbols(moduleCtx *moduleContext) {
+// parseModule performs parsing and AST building. It has no dependency on any
+// other module's state, so it can run concurrently across the whole package
+// (unlike resolveSymbolsAndTypes, which needs a dependency's published
+// symbols and must run in topological order).
+func parseModule(moduleCtx *moduleContext) {
 	moduleCtx.moduleDiagnostics = nil
 
 	compilerCtx := moduleCtx.compilerCtx
@@ -259,6 +271,22 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	for _, cu := range compilationUnits {
 		cu.SetPackageID(pkgID)
 	}
+
+	moduleCtx.compilationUnits = compilationUnits
+	moduleCtx.pkgID = pkgID
+}
+
+// resolveSymbolsAndTypes performs import resolution, symbol resolution, and
+// top-level type resolution. Must run after parseModule for this module and
+// after every dependency module has published its symbols, so this phase
+// runs sequentially in topological order.
+func resolveSymbolsAndTypes(moduleCtx *moduleContext) {
+	compilerCtx := moduleCtx.compilerCtx
+	if moduleCtx.compilationUnits == nil || compilerCtx.HasDiagnostics() {
+		return
+	}
+	compilationUnits := moduleCtx.compilationUnits
+	pkgID := moduleCtx.pkgID
 
 	// Resolve symbols and imports before type resolution.
 	publicSymbols := moduleCtx.getProject().Environment().publicSymbols
@@ -511,10 +539,19 @@ func createModelPackageID(compilerCtx *context.CompilerContext, desc ModuleDescr
 
 // generateCodeInternal generates BIR for this module from the compiled BLangPackage.
 // -> CompilerPhaseRunner.performBirGenPhases(bLangPackage)
+// Idempotent: a no-op returning the prior outcome if BIR generation was already attempted
+// (e.g. inline during Phase 2 when CompilationOptions.GenerateCode() is set), so
+// BallerinaBackend.performCodeGen can safely call this again as a backfill for any module
+// that opted out — and, just as importantly, never retries a failed attempt (birgen.GenBir
+// can return nil on an internal error; retrying would silently duplicate its diagnostics).
 func generateCodeInternal(moduleCtx *moduleContext) bool {
+	if moduleCtx.birGenAttempted {
+		return moduleCtx.birPkg != nil
+	}
 	if moduleCtx.bLangPkg == nil || moduleCtx.compilerCtx == nil {
 		return false
 	}
+	moduleCtx.birGenAttempted = true
 	moduleCtx.birPkg = birgen.GenBir(moduleCtx.compilerCtx, moduleCtx.bLangPkg)
 	return moduleCtx.birPkg != nil
 }
