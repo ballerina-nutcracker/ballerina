@@ -1,0 +1,67 @@
+module $anon.. v 0.0.0;
+data  [int...];
+get() -> [int...]{
+  bb0 {
+    lock-start "$anon/.:data" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 7
+    %0 = toStream(data) -> bb2;
+  }
+  bb2 {
+    s = %0;
+    %3 = streamNext s
+    %4 = %3 is error
+    %4 ? bb3 : bb4;
+  }
+  bb3 {
+    (1, %1) = %3;
+    PopScopeFrame
+    lock-end "$anon/.:data" GOTO bb6;
+  }
+  bb4 {
+    %2 = %3;
+    GOTO bb5;
+  }
+  bb5 {
+    %5 = %2;
+    %6 = clone(data) -> bb7;
+  }
+  bb6 {
+    panic %1;
+  }
+  bb7 {
+    (1, %0) = %6;
+    PopScopeFrame
+    lock-end "$anon/.:data" GOTO bb8;
+  }
+  bb8 {
+    return;
+  }
+  bb9 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = get() -> bb1;
+  }
+  bb1 {
+    copy = %1;
+    %3 = ConstantLoad 3
+    %4 = %3;
+    %5 = push(copy,%4) -> bb2;
+  }
+  bb2 {
+    %6 = println(copy) -> bb3;
+  }
+  bb3 {
+    %7 = get() -> bb4;
+  }
+  bb4 {
+    %8 = println(%7) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

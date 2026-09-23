@@ -1,0 +1,37 @@
+(get
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (stream-type
+          (value-type int))) (expr
+        (invocation lang.array toStream (
+          (simple-var-ref data))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (check-panicked-expr
+        (invocation next expr:
+          (simple-var-ref s) ())))
+    (return
+      (invocation lang.value clone (
+        (simple-var-ref data))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable copy (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (invocation get ()))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref copy)
+        (literal 3))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref copy))))
+    (expression-stmt
+      (invocation io println (
+        (invocation get ()))))
+  )
+)

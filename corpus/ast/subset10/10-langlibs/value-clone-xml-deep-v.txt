@@ -1,0 +1,71 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina lang xml (as xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable element (type
+          (user-defined-type xml Element)) (expr
+          (xml-element-literal p
+            (xml-attribute id
+              (literal 1))
+            (xml-element-literal q
+              (xml-text-literal inner))))))
+      (var-def
+        (variable elementClone (type
+          (user-defined-type xml Element)) (expr
+          (invocation clone expr:
+            (simple-var-ref element) ()))))
+      (expression-stmt
+        (invocation setName expr:
+          (simple-var-ref elementClone) (
+          (literal r))))
+      (expression-stmt
+        (invocation io println (
+          (invocation getName expr:
+            (simple-var-ref element) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation getName expr:
+            (simple-var-ref elementClone) ()))))
+      (var-def
+        (variable attrs (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (invocation getAttributes expr:
+            (simple-var-ref elementClone) ()))))
+      (assignment
+        (index-based-access
+          (simple-var-ref attrs)
+          (literal id))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref element))))
+      (foreach
+        (var-def
+          (variable child (type
+            (user-defined-type xml Element))))
+        (invocation elementChildren expr:
+          (simple-var-ref elementClone) ())
+        (block-stmt
+          (expression-stmt
+            (invocation setName expr:
+              (simple-var-ref child) (
+              (literal s))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref element))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref elementClone))))
+      (expression-stmt
+        (invocation setChildren expr:
+          (simple-var-ref elementClone) (
+          (xml-element-literal t))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref element)))))))

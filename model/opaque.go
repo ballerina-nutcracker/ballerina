@@ -63,6 +63,8 @@ const (
 	OpaqueFnXMLForEach   = 8
 	OpaqueFnXMLFilter    = 9
 	OpaqueFnXMLStepIndex = 10
+	// lang.value
+	OpaqueFnValueClone = 0
 )
 
 func newOpaqueFunctionSymbol(name string, id int) *OpaqueFunctionSymbol {
@@ -152,6 +154,8 @@ func OpaqueSymbols(pkg PackageIdentifier) []Symbol {
 			newOpaqueFunctionSymbol("remove", OpaqueFnMapRemove),
 			newOpaqueFunctionSymbol("get", OpaqueFnMapGet),
 		}
+	case "lang.value":
+		return []Symbol{newOpaqueFunctionSymbol("clone", OpaqueFnValueClone)}
 	default:
 		return nil
 	}

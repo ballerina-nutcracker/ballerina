@@ -340,14 +340,14 @@ func NewLock(parent Context, lock *ast.BLangLock) Context {
 	}
 }
 
-// NewIsolatedExpr pushes the scope of an expression whose type is a subtype
-// of Isolated inside a lock: a reference to a variable outside the lock is
-// allowed within it, so the transfer rules do not apply.
+// NewIsolatedExpr pushes the scope of an expression that is isolated whatever
+// its operands (IsolatedWhateverOperands) inside a lock: a reference to a
+// variable outside the lock is allowed within it, so the transfer rules do not
+// apply.
 func NewIsolatedExpr(parent Context, expr ast.BLangExpression) Context {
 	common.Assert(func() bool {
 		_, inLock := EnclosingLock(parent)
-		tyCtx := parent.TyCtx()
-		return inLock && semtypes.IsSubtype(tyCtx, expr.Type(), semtypes.CreateIsolated(tyCtx))
+		return inLock && IsolatedWhateverOperands(parent, expr)
 	})
 	return &isolatedExprContext{
 		contextBase: contextBase{outer: parent},

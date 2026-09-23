@@ -1,0 +1,112 @@
+module $anon.. v 0.0.0;
+class Store {
+  xs [int...]
+
+  get() -> [int...]{
+    bb0 {
+      lock-start "$anon/.:Store.xs" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 3
+      %1 = ConstantLoad xs
+      %0 = (1, self)[%1];
+      %2 = clone(%0) -> bb2;
+    }
+    bb2 {
+      (1, %0) = %2;
+      PopScopeFrame
+      lock-end "$anon/.:Store.xs" GOTO bb3;
+    }
+    bb3 {
+      return;
+    }
+    bb4 {
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = newArray [int...][%2]{}
+      %4 = ConstantLoad xs
+      self[%4] = %3;
+      return;
+    }
+  }
+
+  set([int...]) -> nil{
+    bb0 {
+      lock-start "$anon/.:Store.xs" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %0 = clone((1, v)) -> bb2;
+    }
+    bb2 {
+      %1 = ConstantLoad xs
+      (1, self)[%1] = %0;
+      PopScopeFrame
+      lock-end "$anon/.:Store.xs" GOTO bb3;
+    }
+    bb3 {
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Store
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    s = %3;
+    %6 = ConstantLoad 1
+    %7 = ConstantLoad 2
+    %8 = ConstantLoad 2
+    %9 = newArray [int...][%8]{%6, %7}
+    v = %9;
+    %11 = s.set(v) -> bb5;
+  }
+  bb5 {
+    %12 = ConstantLoad 3
+    %13 = %12;
+    %14 = push(v,%13) -> bb6;
+  }
+  bb6 {
+    %15 = s.get() -> bb7;
+  }
+  bb7 {
+    got = %15;
+    %17 = ConstantLoad 4
+    %18 = %17;
+    %19 = push(got,%18) -> bb8;
+  }
+  bb8 {
+    %20 = println(v) -> bb9;
+  }
+  bb9 {
+    %21 = println(got) -> bb10;
+  }
+  bb10 {
+    %22 = s.get() -> bb11;
+  }
+  bb11 {
+    %23 = println(%22) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}

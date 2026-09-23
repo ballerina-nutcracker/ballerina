@@ -1,0 +1,53 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function sum (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (foreach
+        (var-def
+          (variable x (type
+            (value-type int))))
+        (simple-var-ref xs)
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref total)
+            (simple-var-ref x))))
+      (return
+        (simple-var-ref total))))
+  (function startSum (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation sum (
+              (invocation clone expr:
+                (simple-var-ref xs) ())))))))
+      (return
+        (check-panicked-expr
+          (single-wait-action
+            (simple-var-ref f))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation startSum (
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3))))))))))
