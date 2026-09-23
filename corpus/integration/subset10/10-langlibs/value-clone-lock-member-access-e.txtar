@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: not an isolated expression
+  --> value-clone-lock-member-access-e.bal:20:16
+   |
+20 |         return data.clone()[0]; // @error a member access is not an isolated expression
+   |                ^^^^^^^^^^^^^^^

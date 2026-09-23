@@ -1,0 +1,115 @@
+(collectItems
+  (bb0 () (bb1)
+    (var-def
+      (variable items (type
+        (array-type
+          (value-type xml) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref sequence)
+    (var-def
+      (variable item (type
+        (value-type xml))))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref items)
+        (simple-var-ref item))))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref items))
+  )
+)
+(firstItem
+  (bb0 () ()
+    (return
+      (index-based-access
+        (invocation collectItems (
+          (simple-var-ref sequence)))
+        (literal 0)))
+  )
+)
+(itemsIdentical
+  (bb0 () ()
+    (var-def
+      (variable items (type
+        (array-type
+          (value-type xml) dimensions: 1 ([]))) (expr
+        (invocation collectItems (
+          (simple-var-ref sequence))))))
+    (return
+      (binary-expr ===
+        (index-based-access
+          (simple-var-ref items)
+          (literal 0))
+        (index-based-access
+          (simple-var-ref items)
+          (literal 1))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable comment (type
+        (value-type xml)) (expr
+        (xml-comment-literal note))))
+    (var-def
+      (variable commentSequence (type
+        (value-type xml)) (expr
+        (binary-expr +
+          (simple-var-ref comment)
+          (simple-var-ref comment)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation itemsIdentical (
+          (simple-var-ref commentSequence))))))
+    (var-def
+      (variable commentClone (type
+        (value-type xml)) (expr
+        (invocation lang.value clone (
+          (simple-var-ref commentSequence))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref commentClone))))
+    (expression-stmt
+      (invocation io println (
+        (invocation itemsIdentical (
+          (simple-var-ref commentClone))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ===
+          (invocation firstItem (
+            (simple-var-ref commentClone)))
+          (invocation firstItem (
+            (simple-var-ref commentSequence)))))))
+    (var-def
+      (variable instruction (type
+        (value-type xml)) (expr
+        (xml-pi-literal target data))))
+    (var-def
+      (variable instructionSequence (type
+        (value-type xml)) (expr
+        (binary-expr +
+          (simple-var-ref instruction)
+          (simple-var-ref instruction)))))
+    (var-def
+      (variable instructionClone (type
+        (value-type xml)) (expr
+        (invocation lang.value clone (
+          (simple-var-ref instructionSequence))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation itemsIdentical (
+          (simple-var-ref instructionClone))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ===
+          (invocation firstItem (
+            (simple-var-ref instructionClone)))
+          (invocation firstItem (
+            (simple-var-ref instructionSequence)))))))
+  )
+)

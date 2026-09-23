@@ -1,0 +1,143 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad note
+    %2 = newXMLComment(%1)
+    comment = %2;
+    %4 = + comment comment;
+    commentSequence = %4;
+    %6 = itemsIdentical(commentSequence) -> bb1;
+  }
+  bb1 {
+    %7 = %6;
+    %8 = println(%7) -> bb2;
+  }
+  bb2 {
+    %9 = clone(commentSequence) -> bb3;
+  }
+  bb3 {
+    commentClone = %9;
+    %11 = println(commentClone) -> bb4;
+  }
+  bb4 {
+    %12 = itemsIdentical(commentClone) -> bb5;
+  }
+  bb5 {
+    %13 = %12;
+    %14 = println(%13) -> bb6;
+  }
+  bb6 {
+    %16 = firstItem(commentClone) -> bb7;
+  }
+  bb7 {
+    %17 = firstItem(commentSequence) -> bb8;
+  }
+  bb8 {
+    %15 = unknown %16 %17;
+    %18 = %15;
+    %19 = println(%18) -> bb9;
+  }
+  bb9 {
+    %20 = ConstantLoad target
+    %21 = ConstantLoad data
+    %22 = newXMLPI(%20, %21)
+    instruction = %22;
+    %24 = + instruction instruction;
+    instructionSequence = %24;
+    %26 = clone(instructionSequence) -> bb10;
+  }
+  bb10 {
+    instructionClone = %26;
+    %28 = itemsIdentical(instructionClone) -> bb11;
+  }
+  bb11 {
+    %29 = %28;
+    %30 = println(%29) -> bb12;
+  }
+  bb12 {
+    %32 = firstItem(instructionClone) -> bb13;
+  }
+  bb13 {
+    %33 = firstItem(instructionSequence) -> bb14;
+  }
+  bb14 {
+    %31 = unknown %32 %33;
+    %34 = %31;
+    %35 = println(%34) -> bb15;
+  }
+  bb15 {
+    return;
+  }
+}
+itemsIdentical(xml) -> boolean{
+  bb0 {
+    %2 = collectItems(sequence) -> bb1;
+  }
+  bb1 {
+    items = %2;
+    %6 = ConstantLoad 0
+    %5 = items[%6];
+    %8 = ConstantLoad 1
+    %7 = items[%8];
+    %4 = unknown %5 %7;
+    %0 = %4;
+    return;
+  }
+}
+firstItem(xml) -> xml{
+  bb0 {
+    %3 = ConstantLoad 0
+    %4 = collectItems(sequence) -> bb1;
+  }
+  bb1 {
+    %2 = %4[%3];
+    %0 = %2;
+    return;
+  }
+}
+collectItems(xml) -> [xml...]{
+  bb0 {
+    %2 = ConstantLoad 0
+    %3 = newArray [xml...][%2]{}
+    items = %3;
+    $desugar$0 = sequence;
+    %6 = iterator($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %6;
+    GOTO bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad true
+    %8 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1).next() -> bb5;
+  }
+  bb4 {
+    %0 = items;
+    return;
+  }
+  bb5 {
+    $desugar$3 = %0;
+    %2 = $desugar$3 is nil
+    %2 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb7 {
+    %4 = ConstantLoad value
+    %3 = $desugar$3[%4];
+    item = %3;
+    %6 = push((1, items),item) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb2;
+  }
+}

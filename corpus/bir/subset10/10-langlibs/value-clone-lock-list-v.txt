@@ -1,0 +1,52 @@
+module $anon.. v 0.0.0;
+data  [int...];
+wrap() -> [[int...]...]{
+  bb0 {
+    lock-start "$anon/.:data" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 6
+    %0 = clone(data) -> bb2;
+  }
+  bb2 {
+    %1 = ConstantLoad 0
+    %2 = ConstantLoad 1
+    %3 = newArray [int...][%2]{%1}
+    %4 = ConstantLoad 2
+    %5 = newArray [[int...]...][%4]{%0, %3}
+    (1, %0) = %5;
+    PopScopeFrame
+    lock-end "$anon/.:data" GOTO bb3;
+  }
+  bb3 {
+    return;
+  }
+  bb4 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = wrap() -> bb1;
+  }
+  bb1 {
+    wrapped = %1;
+    %4 = ConstantLoad 0
+    %3 = wrapped[%4];
+    %5 = ConstantLoad 3
+    %6 = %5;
+    %7 = push(%3,%6) -> bb2;
+  }
+  bb2 {
+    %8 = println(wrapped) -> bb3;
+  }
+  bb3 {
+    %9 = wrap() -> bb4;
+  }
+  bb4 {
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

@@ -1,0 +1,37 @@
+module $anon.. v 0.0.0;
+same(any,any) -> boolean{
+  bb0 {
+    %3 = unknown a b;
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newXMLElement("b", ())
+    %2 = newXMLElement("a", %1)
+    element = %2;
+    %4 = clone(element) -> bb1;
+  }
+  bb1 {
+    %5 = same(%4,element) -> bb2;
+  }
+  bb2 {
+    %6 = %5;
+    %7 = println(%6) -> bb3;
+  }
+  bb3 {
+    widened = element;
+    %9 = clone(widened) -> bb4;
+  }
+  bb4 {
+    %10 = same(%9,element) -> bb5;
+  }
+  bb5 {
+    %11 = %10;
+    %12 = println(%11) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
