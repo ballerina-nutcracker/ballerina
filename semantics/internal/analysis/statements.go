@@ -287,16 +287,6 @@ func validateLock(cx scope.Context, lock *ast.BLangLock) {
 	if info, _ := scope.EnclosingLock(lockCx); info.Restricted.IsEmpty() {
 		cx.SemanticErr("no restricted variable referenced in lock statement", info.Position)
 	}
-	if lock.LockKey == "" {
-		// No restricted variable referenced — e.g. a lock guarding only calls to
-		// isolated functions (reported above as an error, but compilation
-		// recovers and BIR-gen still needs a non-empty key to bracket the lock).
-		// Different such locks must not collide on the same key (or they'd
-		// serialize against each other for no reason). The lock's own source
-		// position is deterministic across runs (this key is embedded verbatim
-		// in generated BIR) and unique per lock statement.
-		lock.LockKey = "$lock." + lock.GetPosition().String()
-	}
 }
 
 // validateAssignment validates an assignment or compound assignment: the

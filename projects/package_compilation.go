@@ -112,17 +112,13 @@ func (c *PackageCompilation) compileModulesInternal() {
 
 		// Phase 1a: Parse, AST build. No cross-module dependency, so this runs
 		// concurrently across the whole package regardless of topological order.
-		// Each goroutine has panic recovery to convert panics to diagnostics.
 		//
-		// Exception: --dump-tokens/--dump-st/--dump-ast write straight to stderr from
-		// inside parsing, with no ordering between modules. That's fine sequentially
-		// (today's deterministic golden-file order), but concurrent parsing would
-		// interleave dependency modules' dumped output nondeterministically. These
-		// flags are debug-only and not performance sensitive, so just parse
-		// sequentially when any of them is set, to keep dump output deterministic.
+		// Exception: --dump-tokens/--dump-st/--dump-ast/--dump-recovered-ast write straight
+		// to stderr with no ordering between modules, so concurrent parsing would interleave
+		// dumped output nondeterministically. Parse sequentially when any is set instead.
 		opts := c.compilationOptions
 		runPerModule(c.packageResolution.topologicallySortedModuleList,
-			!opts.DumpTokens() && !opts.DumpST() && !opts.DumpAST(),
+			!opts.DumpTokens() && !opts.DumpST() && !opts.DumpAST() && !opts.DumpRecoveredAST(),
 			func(m *moduleContext) {
 				if m.getCompilationState() != moduleCompilationStateLoadedFromSources {
 					// TODO: Handle LOADED_FROM_CACHE state - load symbols from BIR
@@ -131,12 +127,10 @@ func (c *PackageCompilation) compileModulesInternal() {
 				parseModule(m)
 			})
 
-		// Phase 1b: import resolution, symbol resolution, top-level type resolution.
-		// Sequential because symbol/type resolution of a module needs its dependencies
-		// to have published their public symbol spaces. We still run Phase 1b for every
-		// module (even after some errored) so we collect all top-level diagnostics in
-		// one shot, but a dependent of an errored module is skipped to avoid cascading
-		// noise (its imports would not resolve).
+		// Phase 1b: import, symbol, and top-level type resolution. Sequential, since a
+		// module's resolution needs its dependencies' published symbols. Runs for every
+		// module so all top-level diagnostics are collected in one shot, but a dependent
+		// of an errored module is skipped to avoid cascading noise.
 		for _, moduleCtx := range c.packageResolution.topologicallySortedModuleList {
 			if moduleCtx.getCompilationState() != moduleCompilationStateLoadedFromSources {
 				continue
@@ -206,11 +200,8 @@ func (c *PackageCompilation) compileModulesInternal() {
 	c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
 }
 
-// runPerModule runs fn once per module. When concurrent is true, each call runs in its own
-// goroutine (with panic recovery, so one module's panic doesn't take down unrelated modules
-// still running); when false, fn runs sequentially in list order with the same recovery. After
-// every module finishes, the first captured panic (if any) is re-raised, preserving the
-// original behavior where a panic during compilation is fatal.
+// runPerModule runs fn once per module, in parallel when concurrent is true. A panic in
+// one module doesn't stop the others; the first one is re-raised after all finish.
 func runPerModule(modules []*moduleContext, concurrent bool, fn func(*moduleContext)) {
 	var wg sync.WaitGroup
 	var panicsMu sync.Mutex

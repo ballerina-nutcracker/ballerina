@@ -66,9 +66,7 @@ func benchmarkLanguageServiceProject(b *testing.B, name, inputPath string) {
 		b.Fatalf("getBallerinaEnvPath: %v", err)
 	}
 	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
-	// This benchmark models a language-server-style recompile: diagnostics and symbols only,
-	// no BIR. Skip BIR generation so Compilation stops after Phase 2, same as before BIR
-	// generation was pipelined into Compilation by default.
+	// Models a language-server recompile: diagnostics/symbols only, no BIR.
 	buildOpts := projects.NewBuildOptionsBuilder().WithGenerateCode(false).Build()
 
 	b.Run(name, func(b *testing.B) {
