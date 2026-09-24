@@ -45,6 +45,7 @@ const (
 	keyReadme      = "readme"
 	keyModules     = "modules"
 	keyExport      = "export"
+	keyInclude     = "include"
 
 	keyDependency = "dependency"
 
@@ -79,6 +80,7 @@ type manifestBuilder struct {
 	readme           string
 	description      string
 	modules          []ManifestModule
+	include          []string
 	otherEntries     map[string]any
 }
 
@@ -111,6 +113,7 @@ func (b *manifestBuilder) Build() PackageManifest {
 		Authors:          b.authors,
 		Keywords:         b.keywords,
 		Modules:          b.modules,
+		Include:          b.include,
 		Repository:       b.repository,
 		BallerinaVersion: b.ballerinaVersion,
 		Visibility:       b.visibility,
@@ -133,6 +136,7 @@ func (b *manifestBuilder) parseFromTOML() {
 	b.repository = b.parseString(keyPackage + "." + keyRepository)
 	b.description = b.parseString(keyPackage + "." + keyDescription)
 	b.visibility = b.parseString(keyPackage + "." + keyVisibility)
+	b.include = b.parseStringArray(keyPackage + "." + keyInclude)
 	b.icon = b.parseString(keyPackage + "." + keyIcon)
 	b.validateIcon()
 	if explicitReadme, ok := b.toml.GetString(keyPackage + "." + keyReadme); ok {
@@ -434,13 +438,4 @@ func (b *manifestBuilder) addDiagnostic(severity diagnostics.DiagnosticSeverity,
 	loc := diagnostics.NewBallerinaTomlLocation(0, 0)
 	diag := diagnostics.NewDefaultDiagnostic(info, loc, nil)
 	b.diagnostics = append(b.diagnostics, diag)
-}
-
-// joinRoot re-attaches root to a root-relative path to produce an fsys path
-// suitable for fs.Stat/fs.ReadFile.
-func joinRoot(root, rel string) string {
-	if root == "" || root == "." {
-		return rel
-	}
-	return root + "/" + rel
 }
