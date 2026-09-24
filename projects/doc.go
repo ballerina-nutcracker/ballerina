@@ -96,17 +96,15 @@
 //
 //  1. Load: Project loading creates PackageConfig from the filesystem
 //  2. Compile: [PackageCompilation] parses, analyzes, type-checks, and (by default) generates
-//     BIR for all modules. Modules are parsed concurrently across the whole package; symbol
-//     and top-level type resolution then run sequentially in topological order via
-//     [PackageResolution], since each module needs its dependencies' published symbols; local
-//     resolution, semantic analysis, CFG, desugaring, and BIR generation then run per module
-//     with no barrier between them — each module's goroutine runs straight through to BIR
-//     generation rather than waiting for every module to finish desugaring first.
+//     BIR for all modules. Parsing runs concurrently across the whole package; symbol and
+//     top-level type resolution then run sequentially in topological order via
+//     [PackageResolution] (each module needs its dependencies' published symbols first); the
+//     remaining phases, including BIR generation, then run per module with no barrier between
+//     them.
 //
 // BIR generation can be skipped via [CompilationOptionsBuilder.WithGenerateCode] for callers
-// that only need diagnostics/symbols per compile — e.g. a language server recompiling on every
-// keystroke. [BallerinaBackend], obtained via [NewBallerinaBackend], generates BIR for any
-// module that doesn't already have it and exposes it for execution/packaging.
+// that only need diagnostics/symbols per compile (e.g. a language server). [BallerinaBackend],
+// obtained via [NewBallerinaBackend], generates any missing BIR on demand.
 //
 // Complete example:
 //
