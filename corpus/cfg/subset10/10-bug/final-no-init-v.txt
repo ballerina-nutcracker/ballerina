@@ -1,0 +1,14 @@
+(init
+  (bb0 () ()
+    (assignment
+      (simple-var-ref value)
+      (literal 5))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref value))))
+  )
+)
