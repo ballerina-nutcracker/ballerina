@@ -288,10 +288,9 @@ func (c CompilationOptions) TraceRecovery() bool {
 }
 
 // GenerateCode returns whether BIR generation runs as part of Compilation, pipelined into
-// Phase 2 with no barrier between them. Defaults to true, matching every current production
-// caller's behavior. Callers that only need diagnostics/symbols per compile — e.g. a language
-// server recompiling on every keystroke — should set this false to skip BIR generation
-// entirely; NewBallerinaBackend still works afterward, generating any missing BIR on demand.
+// Phase 2 with no barrier. Defaults to true. Callers that only need diagnostics/symbols
+// per compile (e.g. a language server) can set this false; NewBallerinaBackend still
+// generates any missing BIR on demand afterward.
 func (c CompilationOptions) GenerateCode() bool {
 	return c.generateCode.valueOr(true)
 }
