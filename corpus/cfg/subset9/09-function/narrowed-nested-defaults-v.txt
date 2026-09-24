@@ -86,3 +86,27 @@
   )
   (bb4 (bb3 bb2) ())
 )
+($anonFunc$_0
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref callback))
+    (return
+      (simple-var-ref result))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref actual)
+        (literal 1)))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (return
+      (field-based-access value
+        (simple-var-ref input)))
+  )
+)

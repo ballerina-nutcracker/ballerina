@@ -191,3 +191,85 @@
         (simple-var-ref local)))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable parentRecord (type
+        (record-type
+          (field p
+            (value-type string)
+            (literal parent)))) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable nested (expr
+        (lambda
+          (function $anonFunc$_1 () (
+            (value-type string))
+            (block-function-body
+              (var-def
+                (variable nestedRecord (type
+                  (record-type
+                    (field q
+                      (value-type string)
+                      (literal nested)))) (expr
+                  (mapping-constructor-expr))))
+              (return
+                (field-based-access q
+                  (simple-var-ref nestedRecord)))))))))
+    (var-def
+      (variable sibling (expr
+        (lambda
+          (function $anonFunc$_2 () (
+            (value-type string))
+            (block-function-body
+              (var-def
+                (variable siblingRecord (type
+                  (record-type
+                    (field r
+                      (value-type string)
+                      (literal sibling)))) (expr
+                  (mapping-constructor-expr))))
+              (return
+                (field-based-access r
+                  (simple-var-ref siblingRecord)))))))))
+    (return
+      (binary-expr +
+        (binary-expr +
+          (binary-expr +
+            (binary-expr +
+              (field-based-access p
+                (simple-var-ref parentRecord))
+              (literal -))
+            (invocation nested ()))
+          (literal -))
+        (invocation sibling ())))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (var-def
+      (variable nestedRecord (type
+        (record-type
+          (field q
+            (value-type string)
+            (literal nested)))) (expr
+        (mapping-constructor-expr))))
+    (return
+      (field-based-access q
+        (simple-var-ref nestedRecord)))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (var-def
+      (variable siblingRecord (type
+        (record-type
+          (field r
+            (value-type string)
+            (literal sibling)))) (expr
+        (mapping-constructor-expr))))
+    (return
+      (field-based-access r
+        (simple-var-ref siblingRecord)))
+  )
+)

@@ -38,3 +38,11 @@
         (simple-var-ref c))))
   )
 )
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref a)))
+  )
+)
