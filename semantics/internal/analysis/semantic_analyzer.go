@@ -446,7 +446,12 @@ func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		if n.IsConstant() {
 			return createConstantAnalyzer(sa, n)
 		}
-		return sa
+		if n.Expr == nil {
+			return sa
+		}
+		walkGlobalVarDeclaration(sa, n)
+		analyzeGlobalVarInit(sa, n)
+		return nil
 	case *ast.BLangReturn:
 		// Error: return only valid in functions
 		sa.semanticErr("return statement outside function", n.GetPosition())
@@ -462,6 +467,25 @@ func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		// Now delegates function creation to visitInner
 		return visitInner(sa, node)
 	}
+}
+
+// walkGlobalVarDeclaration walks everything of a module-level variable except
+// its initializer, which analyzeGlobalVarInit analyzes.
+func walkGlobalVarDeclaration(sa *semanticAnalyzer, n *ast.BLangVariable) {
+	for i := range n.AnnAttachments {
+		ast.Walk(sa, &n.AnnAttachments[i])
+	}
+	if typeNode := n.TypeNode(); typeNode != nil {
+		ast.Walk(sa, typeNode.(ast.BLangNode))
+	}
+}
+
+func analyzeGlobalVarInit(sa *semanticAnalyzer, n *ast.BLangVariable) {
+	expectedType := sa.ctx().SymbolType(n.Symbol())
+	if n.IsListener() {
+		expectedType = common.ListenerInitExpectedType(expectedType)
+	}
+	analyzeActionOrExpression(sa, n.Expr, expectedType)
 }
 
 func (sa *semanticAnalyzer) processImport(importNode *ast.BLangImportPackage) {

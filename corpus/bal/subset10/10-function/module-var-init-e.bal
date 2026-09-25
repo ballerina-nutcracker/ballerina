@@ -17,9 +17,27 @@
 
 import ballerina/io;
 
-isolated string key = "a"; // @error computed key overwrites the type of key (#987)
+// A module-level variable initializer is checked against the variable's type.
+int a = "s"; // @error a string is not an int
+
+// A lambda nested in an initializer is analyzed once, so its error is reported once.
+(function () returns int)[] fs = [
+    function () returns int {
+        int x = "s"; // @error a string is not an int
+        return x;
+    }
+];
+
+int calls = 0;
+
+function next() returns int {
+    calls += 1;
+    return calls;
+}
+
+// The type descriptor of a module-level variable is analyzed too.
+record {| int v = next(); |} r = {}; // @error a record field default must be isolated
 
 public function main() {
-    map<int> m = {[key]: 1}; // @error
-    io:println(m);
+    io:println(a, fs.length(), r.v);
 }

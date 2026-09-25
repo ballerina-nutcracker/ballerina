@@ -17,9 +17,19 @@
 
 import ballerina/io;
 
-isolated string key = "a"; // @error computed key overwrites the type of key (#987)
+// The body of a lambda in a module-level variable initializer is analyzed like
+// the body of a lambda inside a function.
+function () returns int moduleFn = function () returns int {
+    int x = "s"; // @error a string is not an int
+    return x;
+};
+
+isolated int counter = 0;
+
+function () returns int readsCounter = function () returns int {
+    return counter; // @error an isolated variable is read outside a lock
+};
 
 public function main() {
-    map<int> m = {[key]: 1}; // @error
-    io:println(m);
+    io:println(moduleFn() + readsCounter());
 }
