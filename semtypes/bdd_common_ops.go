@@ -198,7 +198,7 @@ func bddCreate(atom atom, left bdd, middle bdd, right bdd) bdd {
 		return middle
 	}
 	if left == right {
-		return bddUnion(left, right)
+		return bddUnion(left, middle)
 	}
 	return bddNodeCreate(atom, left, middle, right)
 }
