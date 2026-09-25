@@ -1,18 +1,18 @@
 (MyClinet
-  ($remote$get
-    (bb0 () ()
-      (return
-        (binary-expr +
-          (simple-var-ref path)
-          (literal remote get)))
-    )
-  )
   (get
     (bb0 () ()
       (return
         (binary-expr +
           (simple-var-ref path)
           (literal get)))
+    )
+  )
+  ($remote$get
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (simple-var-ref path)
+          (literal remote get)))
     )
   )
 )

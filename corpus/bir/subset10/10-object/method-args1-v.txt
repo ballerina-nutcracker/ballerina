@@ -95,13 +95,6 @@ returnInline() -> object { public function add(int, int) returns int }{
     return;
   }
 }
-$default$0() -> int{
-  bb0 {
-    %1 = ConstantLoad 2
-    %0 = %1;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:CalculatorImpl
@@ -243,6 +236,13 @@ main() -> nil{
     %73 = println(%72) -> bb29;
   }
   bb29 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
     return;
   }
 }

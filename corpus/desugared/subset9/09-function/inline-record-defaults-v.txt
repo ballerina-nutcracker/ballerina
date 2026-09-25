@@ -148,6 +148,10 @@
         (invocation io println (
           (invocation outerFn (
             (mapping-constructor-expr))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 42))))
   (function $default$1 () ()
     (block-function-body
       (return
@@ -160,18 +164,14 @@
     (block-function-body
       (return
         (literal 9))))
-  (function $default$0 () ()
-    (block-function-body
-      (return
-        (literal 42))))
-  (function $default$5 () ()
-    (block-function-body
-      (return
-        (mapping-constructor-expr))))
   (function $default$4 () ()
     (block-function-body
       (return
         (literal 43))))
+  (function $default$5 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr))))
   (function $default$6 () ()
     (block-function-body
       (return

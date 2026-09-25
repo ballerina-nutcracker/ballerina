@@ -1,29 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0(int) -> function(int) returns int{
-  bb0 {
-    b = (1, a);
-    %4 = (1, a);
-    %5 = y;
-    %3 = + %4 %5;
-    (1, a) = %3;
-    %6 = closure_fp $anon/.:$anonFunc$_1
-    %0 = %6;
-    return;
-  }
-}
-$anonFunc$_1(int) -> int{
-  bb0 {
-    %3 = (2, a);
-    %4 = x;
-    %2 = + %3 %4;
-    (2, a) = %2;
-    %6 = (2, a);
-    %7 = (1, b);
-    %5 = + %6 %7;
-    %0 = %5;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 5
@@ -54,6 +29,31 @@ main() -> nil{
     %18 = println(%17) -> bb5;
   }
   bb5 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> function(int) returns int{
+  bb0 {
+    b = (1, a);
+    %4 = (1, a);
+    %5 = y;
+    %3 = + %4 %5;
+    (1, a) = %3;
+    %6 = closure_fp $anon/.:$anonFunc$_1
+    %0 = %6;
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %3 = (2, a);
+    %4 = x;
+    %2 = + %3 %4;
+    (2, a) = %2;
+    %6 = (2, a);
+    %7 = (1, b);
+    %5 = + %6 %7;
+    %0 = %5;
     return;
   }
 }

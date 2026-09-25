@@ -27,32 +27,6 @@ inFunctionBody() -> nil|int{
     return;
   }
 }
-$anonFunc$_0() -> nil|int{
-  bb0 {
-    %1 = ConstantLoad 5
-    %2 = ConstantLoad 6
-    %3 = ConstantLoad 7
-    %4 = ConstantLoad 6
-    %5 = ConstantLoad 4
-    %6 = newArray [int...][%5]{%1, %2, %3, %4}
-    arr = %6;
-    $desugar$0 = arr;
-    %9 = ConstantLoad 6
-    $desugar$1 = %9;
-    %11 = $desugar$1;
-    %12 = $default$0($desugar$0,%11) -> bb1;
-  }
-  bb1 {
-    $desugar$2 = %12;
-    %14 = $desugar$1;
-    %15 = $desugar$2;
-    %16 = indexOf($desugar$0,%14,%15) -> bb2;
-  }
-  bb2 {
-    %0 = %16;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = println(moduleLevel) -> bb1;
@@ -122,6 +96,32 @@ main() -> nil{
     %37 = println(%36) -> bb13;
   }
   bb13 {
+    return;
+  }
+}
+$anonFunc$_0() -> nil|int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %2 = ConstantLoad 6
+    %3 = ConstantLoad 7
+    %4 = ConstantLoad 6
+    %5 = ConstantLoad 4
+    %6 = newArray [int...][%5]{%1, %2, %3, %4}
+    arr = %6;
+    $desugar$0 = arr;
+    %9 = ConstantLoad 6
+    $desugar$1 = %9;
+    %11 = $desugar$1;
+    %12 = $default$0($desugar$0,%11) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %12;
+    %14 = $desugar$1;
+    %15 = $desugar$2;
+    %16 = indexOf($desugar$0,%14,%15) -> bb2;
+  }
+  bb2 {
+    %0 = %16;
     return;
   }
 }

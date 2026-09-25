@@ -1,22 +1,5 @@
 module $anon.. v 0.0.0;
 a  int;
-$anonFunc$_0() -> nil{
-  bb0 {
-    lock-start "$anon/.:a" GOTO bb1;
-  }
-  bb1 {
-    PushScopeFrame 3
-    %1 = ConstantLoad 1
-    %2 = %1;
-    %0 = + a %2;
-    a = %0;
-    PopScopeFrame
-    lock-end "$anon/.:a" GOTO bb2;
-  }
-  bb2 {
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     lock-start "$anon/.:a" GOTO bb1;
@@ -44,6 +27,23 @@ main() -> nil{
     lock-end "$anon/.:a" GOTO bb5;
   }
   bb5 {
+    return;
+  }
+}
+$anonFunc$_0() -> nil{
+  bb0 {
+    lock-start "$anon/.:a" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 3
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = + a %2;
+    a = %0;
+    PopScopeFrame
+    lock-end "$anon/.:a" GOTO bb2;
+  }
+  bb2 {
     return;
   }
 }

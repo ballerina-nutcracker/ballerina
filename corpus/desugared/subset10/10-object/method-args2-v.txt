@@ -125,13 +125,13 @@
     (block-function-body
       (return
         (literal 2))))
-  (function $default$2 (
+  (function $default$1 (
     (variable value (type
       (value-type )))) ()
     (block-function-body
       (return
         (literal 2))))
-  (function $default$1 (
+  (function $default$2 (
     (variable value (type
       (value-type )))) ()
     (block-function-body

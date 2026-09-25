@@ -2,15 +2,6 @@
 (package-id $anon . 0.0.0)
   (import-package ballerina io (as io))
   (class-definition MyClinet
-    (function $remote$get (
-      (variable path (type
-        (value-type string)))) (
-      (value-type string))
-      (block-function-body
-        (return
-          (binary-expr +
-            (simple-var-ref path)
-            (literal remote get)))))
     (function get (
       (variable path (type
         (value-type string)))) (
@@ -19,7 +10,16 @@
         (return
           (binary-expr +
             (simple-var-ref path)
-            (literal get))))))
+            (literal get)))))
+    (function $remote$get (
+      (variable path (type
+        (value-type string)))) (
+      (value-type string))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref path)
+            (literal remote get))))))
   (type-definition Client
     (object-type client
       (method-decl $remote$get (

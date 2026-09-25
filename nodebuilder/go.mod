@@ -19,6 +19,7 @@ require (
 
 require (
 	github.com/ballerina-nutcracker/ballerina/decimal v0.7.0 // indirect
+	github.com/ballerina-nutcracker/ballerina/prettyprint v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/values v0.7.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect
 	golang.org/x/tools v0.44.0 // indirect

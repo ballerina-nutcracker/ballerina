@@ -24,19 +24,19 @@ class Worker {
 class Client {
   value int
 
+  init(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad value
+      self[%3] = value;
+      return;
+    }
+  }
+
   $remote$run() -> int{
     bb0 {
       %3 = ConstantLoad value
       %2 = self[%3];
       %0 = %2;
-      return;
-    }
-  }
-
-  init(int) -> nil{
-    bb0 {
-      %3 = ConstantLoad value
-      self[%3] = value;
       return;
     }
   }
@@ -137,12 +137,6 @@ named(int,int) -> int{
     %9 = second;
     %3 = + %8 %9;
     %0 = %3;
-    return;
-  }
-}
-$anonFunc$_0() -> int{
-  bb0 {
-    %0 = (1, captured);
     return;
   }
 }
@@ -464,6 +458,12 @@ main() -> nil{
   error-table {
     [bb55, bb57] -> bb58, %113
     [bb61, bb62] -> bb63, %123
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %0 = (1, captured);
+    return;
   }
 }
 $default$0(int) -> int{

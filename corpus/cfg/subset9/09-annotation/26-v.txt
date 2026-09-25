@@ -26,16 +26,6 @@
     (bb0 () ())
   )
 )
-($resource$get$0
-  (bb0 () ()
-    (return
-      (invocation alpha expr:
-        (simple-var-ref self) (
-        (invocation beta expr:
-          (simple-var-ref self) (
-          (literal 42))))))
-  )
-)
 (alpha
   (bb0 () ()
     (return
@@ -71,5 +61,15 @@
     (expression-stmt
       (invocation io println (
         (literal service annotations retained))))
+  )
+)
+($resource$get$0
+  (bb0 () ()
+    (return
+      (invocation alpha expr:
+        (simple-var-ref self) (
+        (invocation beta expr:
+          (simple-var-ref self) (
+          (literal 42))))))
   )
 )

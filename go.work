@@ -20,6 +20,7 @@ use (
 	./nodebuilder
 	./parser
 	./platform
+	./prettyprint
 	./projects
 	./runtime
 	./semantics
@@ -56,6 +57,8 @@ replace github.com/ballerina-nutcracker/ballerina/nodebuilder v0.7.0 => ./nodebu
 replace github.com/ballerina-nutcracker/ballerina/parser v0.7.0 => ./parser
 
 replace github.com/ballerina-nutcracker/ballerina/platform v0.7.0 => ./platform
+
+replace github.com/ballerina-nutcracker/ballerina/prettyprint v0.7.0 => ./prettyprint
 
 replace github.com/ballerina-nutcracker/ballerina/projects v0.7.0 => ./projects
 

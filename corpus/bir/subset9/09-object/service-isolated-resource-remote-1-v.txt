@@ -45,6 +45,15 @@ class SimpleListener {
 class $service$0 {
   foo string
 
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad foo
+      %3 = ConstantLoad foo
+      self[%3] = %2;
+      return;
+    }
+  }
+
   $remote$greet() -> string{
     bb0 {
       lock-start "$anon/.:$service.594.1.foo" GOTO bb1;
@@ -61,15 +70,6 @@ class $service$0 {
       return;
     }
     bb3 {
-      return;
-    }
-  }
-
-  init() -> nil{
-    bb0 {
-      %2 = ConstantLoad foo
-      %3 = ConstantLoad foo
-      self[%3] = %2;
       return;
     }
   }

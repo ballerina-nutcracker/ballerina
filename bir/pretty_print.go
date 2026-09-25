@@ -17,11 +17,15 @@
 package bir
 
 import (
+	"cmp"
 	"fmt"
+	"maps"
+	"slices"
 	"sort"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/prettyprint"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
@@ -93,30 +97,14 @@ func (p *PrettyPrinter) Print(tyCtx semtypes.Context, node BIRPackage) string {
 	return p.sb.String()
 }
 
-// functionsInPrintOrder sorts the compiler-generated top level functions
-// ($default$N, $anonFunc$_N and friends) among themselves. They are appended to
-// the package while ranging over maps keyed by method name, so their relative
-// order varies between runs even though each function body is identical. Only
-// the slots already holding a generated function are rewritten, leaving the
-// user written functions where the frontend put them so a genuine reordering of
-// those is still visible.
+// functionsInPrintOrder orders the top level functions for printing. The
+// compiler emits generated functions in no particular order, so the printer
+// fixes one.
 func functionsInPrintOrder(functions []BIRFunction) []BIRFunction {
-	ordered := make([]BIRFunction, len(functions))
-	copy(ordered, functions)
-	slots := make([]int, 0, len(ordered))
-	generated := make([]BIRFunction, 0, len(ordered))
-	for i := range ordered {
-		if strings.HasPrefix(ordered[i].Name.Value(), "$") {
-			slots = append(slots, i)
-			generated = append(generated, ordered[i])
-		}
-	}
-	sort.Slice(generated, func(i, j int) bool {
-		return generated[i].FunctionLookupKey < generated[j].FunctionLookupKey
+	ordered := slices.Clone(functions)
+	slices.SortStableFunc(ordered, func(a, b BIRFunction) int {
+		return prettyprint.CompareFunctionPrintOrder(a.Name.Value(), b.Name.Value())
 	})
-	for i, slot := range slots {
-		ordered[slot] = generated[i]
-	}
 	return ordered
 }
 
@@ -399,11 +387,9 @@ func (p *PrettyPrinter) PrintClassDef(classDef BIRClassDef) {
 	for _, field := range classDef.Fields {
 		p.writeLine(fmt.Sprintf("%s %s", field.Name, p.PrintSemType(field.Ty)))
 	}
-	var methodNames []string
-	for name := range classDef.VTable {
-		methodNames = append(methodNames, name)
-	}
-	sort.Strings(methodNames)
+	methodNames := slices.SortedFunc(maps.Keys(classDef.VTable), func(a, b string) int {
+		return cmp.Or(prettyprint.CompareFunctionPrintOrder(a, b), cmp.Compare(a, b))
+	})
 	for _, name := range methodNames {
 		p.write("\n")
 		p.writeIndent()

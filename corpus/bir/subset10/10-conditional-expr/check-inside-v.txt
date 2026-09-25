@@ -168,34 +168,6 @@ selectedFailure() -> int|error{
     GOTO bb3;
   }
 }
-$anonFunc$_0() -> int|error{
-  bb0 {
-    %2 = number() -> bb1;
-  }
-  bb1 {
-    %3 = %2 is error
-    %3 ? bb2 : bb3;
-  }
-  bb2 {
-    %0 = %2;
-    return;
-  }
-  bb3 {
-    %1 = %2;
-    GOTO bb4;
-  }
-  bb4 {
-    %0 = %1;
-    return;
-  }
-}
-$anonFunc$_1() -> int|error{
-  bb0 {
-    %1 = ConstantLoad 0
-    %0 = %1;
-    return;
-  }
-}
 main() -> nil|error{
   bb0 {
     %2 = ConstantLoad true
@@ -259,6 +231,34 @@ main() -> nil|error{
     %19 = println(%18) -> bb15;
   }
   bb15 {
+    return;
+  }
+}
+$anonFunc$_0() -> int|error{
+  bb0 {
+    %2 = number() -> bb1;
+  }
+  bb1 {
+    %3 = %2 is error
+    %3 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %2;
+    return;
+  }
+  bb3 {
+    %1 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %0 = %1;
+    return;
+  }
+}
+$anonFunc$_1() -> int|error{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
     return;
   }
 }

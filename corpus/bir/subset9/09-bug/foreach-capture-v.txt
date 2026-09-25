@@ -137,36 +137,6 @@ capturedSum([function() returns int...]) -> int{
     GOTO bb2;
   }
 }
-$anonFunc$_0() -> int{
-  bb0 {
-    %0 = (2, value);
-    return;
-  }
-}
-$anonFunc$_1() -> int{
-  bb0 {
-    %0 = (1, value);
-    return;
-  }
-}
-$anonFunc$_2() -> int{
-  bb0 {
-    %0 = (1, value);
-    return;
-  }
-}
-$anonFunc$_3() -> int{
-  bb0 {
-    %0 = (1, value);
-    return;
-  }
-}
-$anonFunc$_4() -> xml{
-  bb0 {
-    %0 = (1, item);
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 0
@@ -477,5 +447,35 @@ main() -> nil{
     (1, $desugar$19) = %4;
     PopScopeFrame
     GOTO bb47;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %0 = (2, value);
+    return;
+  }
+}
+$anonFunc$_1() -> int{
+  bb0 {
+    %0 = (1, value);
+    return;
+  }
+}
+$anonFunc$_2() -> int{
+  bb0 {
+    %0 = (1, value);
+    return;
+  }
+}
+$anonFunc$_3() -> int{
+  bb0 {
+    %0 = (1, value);
+    return;
+  }
+}
+$anonFunc$_4() -> xml{
+  bb0 {
+    %0 = (1, item);
+    return;
   }
 }

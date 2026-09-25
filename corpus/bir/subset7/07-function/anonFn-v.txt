@@ -1,35 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0(int,int) -> int{
-  bb0 {
-    %4 = a;
-    %5 = b;
-    %3 = + %4 %5;
-    %0 = %3;
-    return;
-  }
-}
-$anonFunc$_1(int,int) -> int{
-  bb0 {
-    %3 = fp $anon/.:$anonFunc$_2
-    mul = %3;
-    %5 = a;
-    %6 = b;
-    %7 = mul(%5,%6) -> bb1;
-  }
-  bb1 {
-    %0 = %7;
-    return;
-  }
-}
-$anonFunc$_2(int,int) -> int{
-  bb0 {
-    %4 = x;
-    %5 = y;
-    %3 = * %4 %5;
-    %0 = %3;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:$anonFunc$_0
@@ -58,6 +27,37 @@ main() -> nil{
     %18 = println(%17) -> bb4;
   }
   bb4 {
+    return;
+  }
+}
+$anonFunc$_0(int,int) -> int{
+  bb0 {
+    %4 = a;
+    %5 = b;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_1(int,int) -> int{
+  bb0 {
+    %3 = fp $anon/.:$anonFunc$_2
+    mul = %3;
+    %5 = a;
+    %6 = b;
+    %7 = mul(%5,%6) -> bb1;
+  }
+  bb1 {
+    %0 = %7;
+    return;
+  }
+}
+$anonFunc$_2(int,int) -> int{
+  bb0 {
+    %4 = x;
+    %5 = y;
+    %3 = * %4 %5;
+    %0 = %3;
     return;
   }
 }

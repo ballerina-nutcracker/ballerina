@@ -24,6 +24,7 @@ require (
 	github.com/ballerina-nutcracker/ballerina/common v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/desugar v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/parser v0.7.0 // indirect
+	github.com/ballerina-nutcracker/ballerina/prettyprint v0.7.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/linkedin/goavro/v2 v2.15.0

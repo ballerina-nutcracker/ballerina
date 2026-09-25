@@ -303,19 +303,19 @@
     (block-function-body
       (return
         (literal 1))))
-  (function $default$4 () ()
-    (block-function-body
-      (return
-        (literal 2))))
   (function $default$3 () ()
     (block-function-body
       (return
         (literal 30))))
-  (function $default$6 () ()
+  (function $default$4 () ()
     (block-function-body
       (return
-        (literal 5))))
+        (literal 2))))
   (function $default$5 () ()
     (block-function-body
       (return
-        (literal 50)))))
+        (literal 50))))
+  (function $default$6 () ()
+    (block-function-body
+      (return
+        (literal 5)))))

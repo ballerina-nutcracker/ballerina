@@ -1,4 +1,33 @@
 module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 10
+    base = %1;
+    %3 = closure_fp $anon/.:$anonFunc$_0
+    f1 = %3;
+    f2 = f1;
+    %6 = unknown f1 f2;
+    %7 = %6;
+    %8 = println(%7) -> bb1;
+  }
+  bb1 {
+    %9 = closure_fp $anon/.:$anonFunc$_1
+    f3 = %9;
+    %11 = unknown f1 f3;
+    %12 = %11;
+    %13 = println(%12) -> bb2;
+  }
+  bb2 {
+    %14 = <function(int...) returns int>(f1)
+    f4 = %14;
+    %16 = unknown f1 f4;
+    %17 = %16;
+    %18 = println(%17) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
 $anonFunc$_0([int...]...) -> int{
   bb0 {
     sum = (1, base);
@@ -72,35 +101,6 @@ $anonFunc$_1([int...]...) -> int{
   }
   bb4 {
     %0 = sum;
-    return;
-  }
-}
-main() -> nil{
-  bb0 {
-    %1 = ConstantLoad 10
-    base = %1;
-    %3 = closure_fp $anon/.:$anonFunc$_0
-    f1 = %3;
-    f2 = f1;
-    %6 = unknown f1 f2;
-    %7 = %6;
-    %8 = println(%7) -> bb1;
-  }
-  bb1 {
-    %9 = closure_fp $anon/.:$anonFunc$_1
-    f3 = %9;
-    %11 = unknown f1 f3;
-    %12 = %11;
-    %13 = println(%12) -> bb2;
-  }
-  bb2 {
-    %14 = <function(int...) returns int>(f1)
-    f4 = %14;
-    %16 = unknown f1 f4;
-    %17 = %16;
-    %18 = println(%17) -> bb3;
-  }
-  bb3 {
     return;
   }
 }

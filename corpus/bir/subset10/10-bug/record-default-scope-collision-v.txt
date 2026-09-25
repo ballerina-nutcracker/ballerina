@@ -29,34 +29,6 @@ class Counter {
     }
   }
 }
-$anonFunc$_0() -> string{
-  bb0 {
-    %1 = fp $anon/.:$default$11
-    $desugar$0 = %1;
-    %3 = newMap {| p: string, never... |}{} defaults{p=$anon/.:$default$11}
-    parentRecord = %3;
-    %5 = fp $anon/.:$anonFunc$_1
-    nested = %5;
-    %7 = fp $anon/.:$anonFunc$_2
-    sibling = %7;
-    %14 = ConstantLoad p
-    %13 = parentRecord[%14];
-    %15 = ConstantLoad -
-    %12 = + %13 %15;
-    %16 = nested() -> bb1;
-  }
-  bb1 {
-    %11 = + %12 %16;
-    %17 = ConstantLoad -
-    %10 = + %11 %17;
-    %18 = sibling() -> bb2;
-  }
-  bb2 {
-    %9 = + %10 %18;
-    %0 = %9;
-    return;
-  }
-}
 requiredRecordParam({| v: string, never... |}) -> string{
   bb0 {
     %3 = ConstantLoad v
@@ -86,18 +58,6 @@ multipleRecordParams({| x: string, never... |},{| y: string, never... |}) -> str
     return;
   }
 }
-$anonFunc$_1() -> string{
-  bb0 {
-    %1 = fp $anon/.:$default$12
-    $desugar$0 = %1;
-    %3 = newMap {| q: string, never... |}{} defaults{q=$anon/.:$default$12}
-    nestedRecord = %3;
-    %6 = ConstantLoad q
-    %5 = nestedRecord[%6];
-    %0 = %5;
-    return;
-  }
-}
 firstLocal() -> string{
   bb0 {
     %1 = fp $anon/.:$default$9
@@ -106,18 +66,6 @@ firstLocal() -> string{
     local = %3;
     %6 = ConstantLoad t
     %5 = local[%6];
-    %0 = %5;
-    return;
-  }
-}
-$anonFunc$_2() -> string{
-  bb0 {
-    %1 = fp $anon/.:$default$13
-    $desugar$0 = %1;
-    %3 = newMap {| r: string, never... |}{} defaults{r=$anon/.:$default$13}
-    siblingRecord = %3;
-    %6 = ConstantLoad r
-    %5 = siblingRecord[%6];
     %0 = %5;
     return;
   }
@@ -131,48 +79,6 @@ secondLocal() -> int{
     %6 = ConstantLoad u
     %5 = local[%6];
     %0 = %5;
-    return;
-  }
-}
-$default$0() -> string{
-  bb0 {
-    %1 = ConstantLoad outer
-    %0 = %1;
-    return;
-  }
-}
-$default$1() -> int{
-  bb0 {
-    %1 = ConstantLoad 1
-    %0 = %1;
-    return;
-  }
-}
-$default$10() -> int{
-  bb0 {
-    %1 = ConstantLoad 42
-    %0 = %1;
-    return;
-  }
-}
-$default$11() -> string{
-  bb0 {
-    %1 = ConstantLoad parent
-    %0 = %1;
-    return;
-  }
-}
-$default$12() -> string{
-  bb0 {
-    %1 = ConstantLoad nested
-    %0 = %1;
-    return;
-  }
-}
-$default$13() -> string{
-  bb0 {
-    %1 = ConstantLoad sibling
-    %0 = %1;
     return;
   }
 }
@@ -284,6 +190,72 @@ main() -> nil{
     return;
   }
 }
+$anonFunc$_0() -> string{
+  bb0 {
+    %1 = fp $anon/.:$default$11
+    $desugar$0 = %1;
+    %3 = newMap {| p: string, never... |}{} defaults{p=$anon/.:$default$11}
+    parentRecord = %3;
+    %5 = fp $anon/.:$anonFunc$_1
+    nested = %5;
+    %7 = fp $anon/.:$anonFunc$_2
+    sibling = %7;
+    %14 = ConstantLoad p
+    %13 = parentRecord[%14];
+    %15 = ConstantLoad -
+    %12 = + %13 %15;
+    %16 = nested() -> bb1;
+  }
+  bb1 {
+    %11 = + %12 %16;
+    %17 = ConstantLoad -
+    %10 = + %11 %17;
+    %18 = sibling() -> bb2;
+  }
+  bb2 {
+    %9 = + %10 %18;
+    %0 = %9;
+    return;
+  }
+}
+$anonFunc$_1() -> string{
+  bb0 {
+    %1 = fp $anon/.:$default$12
+    $desugar$0 = %1;
+    %3 = newMap {| q: string, never... |}{} defaults{q=$anon/.:$default$12}
+    nestedRecord = %3;
+    %6 = ConstantLoad q
+    %5 = nestedRecord[%6];
+    %0 = %5;
+    return;
+  }
+}
+$anonFunc$_2() -> string{
+  bb0 {
+    %1 = fp $anon/.:$default$13
+    $desugar$0 = %1;
+    %3 = newMap {| r: string, never... |}{} defaults{r=$anon/.:$default$13}
+    siblingRecord = %3;
+    %6 = ConstantLoad r
+    %5 = siblingRecord[%6];
+    %0 = %5;
+    return;
+  }
+}
+$default$0() -> string{
+  bb0 {
+    %1 = ConstantLoad outer
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
 $default$2() -> int{
   bb0 {
     %1 = ConstantLoad 7
@@ -336,6 +308,34 @@ $default$8() -> string{
 $default$9() -> string{
   bb0 {
     %1 = ConstantLoad local
+    %0 = %1;
+    return;
+  }
+}
+$default$10() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
+$default$11() -> string{
+  bb0 {
+    %1 = ConstantLoad parent
+    %0 = %1;
+    return;
+  }
+}
+$default$12() -> string{
+  bb0 {
+    %1 = ConstantLoad nested
+    %0 = %1;
+    return;
+  }
+}
+$default$13() -> string{
+  bb0 {
+    %1 = ConstantLoad sibling
     %0 = %1;
     return;
   }

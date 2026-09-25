@@ -257,10 +257,6 @@
           (type-test-expr is
             (simple-var-ref positional)
             (user-defined-type ByID)))))))
-  (function $default$3 () ()
-    (block-function-body
-      (return
-        (literal false))))
   (function $default$0 (
     (variable name (type
       (value-type )))) ()
@@ -277,6 +273,10 @@
     (block-function-body
       (return
         (literal default))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (literal false))))
   (function $default$4 (
     (variable value (type
       (value-type )))) ()

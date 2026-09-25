@@ -18,12 +18,6 @@ class Client {
     }
   }
 }
-$anonFunc$_0(int) -> int{
-  bb0 {
-    %0 = value;
-    return;
-  }
-}
 regular([function(int) returns int...]...) -> function(int) returns int{
   bb0 {
     _ = callbacks;
@@ -38,6 +32,12 @@ main() -> nil{
     %2 = println(%1) -> bb1;
   }
   bb1 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %0 = value;
     return;
   }
 }
