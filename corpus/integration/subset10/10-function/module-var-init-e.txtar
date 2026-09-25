@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "s"
+  --> module-var-init-e.bal:21:9
+   |
+21 | int a = "s"; // @error a string is not an int
+   |         ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "s"
+  --> module-var-init-e.bal:26:17
+   |
+26 |         int x = "s"; // @error a string is not an int
+   |                 ^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> module-var-init-e.bal:39:19
+   |
+39 | record {| int v = next(); |} r = {}; // @error a record field default must be isolated
+   |                   ^^^^^^
