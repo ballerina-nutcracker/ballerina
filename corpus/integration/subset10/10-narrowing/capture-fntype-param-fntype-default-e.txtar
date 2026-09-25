@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-fntype-param-fntype-default-e.bal:27:17
+   |
+27 |         int y = x; // @error x is captured by the default, so it is no longer narrowed to int
+   |                 ^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-class-method-lambda-e.bal:29:21
+   |
+29 |             int y = x; // @error x is captured by the lambda, so it is no longer narrowed to int
+   |                     ^

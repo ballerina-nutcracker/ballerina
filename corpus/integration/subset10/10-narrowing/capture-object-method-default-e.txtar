@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-object-method-default-e.bal:26:17
+   |
+26 |         int y = x; // @error x is captured by the default, so it is no longer narrowed to int
+   |                 ^
