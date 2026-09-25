@@ -1,0 +1,54 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable outerFn (type
+          (function-type () (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable x (type
+                    (union-type
+                      (value-type int)
+                      (value-type string))) (expr
+                    (literal 1))))
+                (if
+                  (type-test-expr is
+                    (simple-var-ref x)
+                    (value-type int))
+                  (block-stmt
+                    (var-def
+                      (variable y (type
+                        (value-type int)) (expr
+                        (simple-var-ref x))))
+                    (var-def
+                      (variable nested (type
+                        (function-type () (
+                          (value-type int)))) (expr
+                        (lambda
+                          (function $anonFunc$_1 () (
+                            (value-type int))
+                            (block-function-body
+                              (return
+                                (ternary-expr
+                                  (type-test-expr is
+                                    (simple-var-ref x)
+                                    (value-type int))
+                                  (literal 1)
+                                  (literal 2)))))))))
+                    (return
+                      (binary-expr +
+                        (simple-var-ref y)
+                        (invocation nested ())))) ())
+                (block-stmt
+                  (return
+                    (literal 0)))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation outerFn ())))))))
