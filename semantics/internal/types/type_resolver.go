@@ -7673,6 +7673,14 @@ func resolveTypeDataPair(t typeResolver, typeData *ast.TypeData, depth int) (sem
 	return ty, true
 }
 
+func resolveStreamCompletionType(t typeResolver, typeData *ast.TypeData, depth int) (semtypes.SemType, bool) {
+	if typeData.TypeDescriptor == nil {
+		typeData.Type = semtypes.Nil
+		return semtypes.Nil, true
+	}
+	return resolveTypeDataPair(t, typeData, depth)
+}
+
 func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.SemType, bool) {
 	switch ty := btype.(type) {
 	case *ast.BLangReturnTypeDescriptor:
@@ -7882,7 +7890,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		if !ok {
 			return semtypes.SemType{}, false
 		}
-		completionTy, ok := resolveTypeDataPair(t, &ty.CompletionType, depth+1)
+		completionTy, ok := resolveStreamCompletionType(t, &ty.CompletionType, depth+1)
 		if !ok {
 			return semtypes.SemType{}, false
 		}

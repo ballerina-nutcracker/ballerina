@@ -1,0 +1,102 @@
+module $anon.. v 0.0.0;
+class Counter {
+  n int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad n
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  next() -> nil|{| value: int, never... |}{
+    bb0 {
+      %3 = ConstantLoad n
+      %2 = self[%3];
+      current = %2;
+      %6 = current;
+      %7 = ConstantLoad 1
+      %8 = %7;
+      %5 = + %6 %8;
+      %9 = ConstantLoad n
+      self[%9] = %5;
+      %10 = ConstantLoad value
+      %11 = newMap {| value: int, never... |}{%10=current}
+      %0 = %11;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Counter
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %5 = newStream stream %3
+    a = %5;
+    %7 = streamNext a
+    %8 = println(%7) -> bb5;
+  }
+  bb5 {
+    %9 = newObject $anon/.:Counter
+    %10 = %9.init() -> bb6;
+  }
+  bb6 {
+    %12 = %10 is nil
+    %12 ? bb7 : bb8;
+  }
+  bb7 {
+    %11 = %9;
+    GOTO bb9;
+  }
+  bb8 {
+    %11 = %10;
+    GOTO bb9;
+  }
+  bb9 {
+    %13 = newStream stream %11
+    b = %13;
+    %15 = ConstantLoad s
+    %16 = newMap {| s: stream, never... |}{%15=b}
+    h = %16;
+    %19 = ConstantLoad s
+    %18 = h[%19];
+    %20 = streamNext %18
+    r = %20;
+    %22 = println(r) -> bb10;
+  }
+  bb10 {
+    x = a;
+    %24 = x is stream
+    %25 = %24;
+    %26 = println(%25) -> bb11;
+  }
+  bb11 {
+    %27 = x is stream
+    %28 = %27;
+    %29 = println(%28) -> bb12;
+  }
+  bb12 {
+    %30 = x is stream
+    %31 = %30;
+    %32 = println(%31) -> bb13;
+  }
+  bb13 {
+    return;
+  }
+}
