@@ -45,16 +45,6 @@ class Counter {
     }
   }
 }
-$anonFunc$_0(int) -> int{
-  bb0 {
-    %3 = x;
-    %4 = ConstantLoad 1
-    %5 = %4;
-    %2 = + %3 %5;
-    %0 = %2;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 12
@@ -521,6 +511,16 @@ compute() -> int{
   bb0 {
     %1 = ConstantLoad 42
     %0 = %1;
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
     return;
   }
 }

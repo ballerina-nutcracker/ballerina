@@ -1,32 +1,4 @@
 module $anon.. v 0.0.0;
-$default$0() -> int{
-  bb0 {
-    %1 = ConstantLoad 11
-    %0 = %1;
-    return;
-  }
-}
-$default$1() -> int{
-  bb0 {
-    %1 = ConstantLoad 12
-    %0 = %1;
-    return;
-  }
-}
-$default$2() -> int{
-  bb0 {
-    %1 = ConstantLoad 11
-    %0 = %1;
-    return;
-  }
-}
-$default$3() -> int{
-  bb0 {
-    %1 = ConstantLoad 12
-    %0 = %1;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:$default$0
@@ -79,6 +51,34 @@ main() -> nil{
     PushScopeFrame 0
     PopScopeFrame
     PopScopeFrame
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 11
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 12
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 11
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 12
+    %0 = %1;
     return;
   }
 }

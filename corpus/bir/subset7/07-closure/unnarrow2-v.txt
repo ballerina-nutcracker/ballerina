@@ -1,30 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0(int) -> int{
-  bb0 {
-    (1, flag) ? bb1 : bb2;
-  }
-  bb1 {
-    PushScopeFrame 3
-    %1 = (1, x);
-    %2 = (2, offset);
-    %0 = + %1 %2;
-    (1, %0) = %0;
-    PopScopeFrame
-    return;
-  }
-  bb2 {
-    PushScopeFrame 3
-    %1 = (1, x);
-    %2 = (2, offset);
-    %0 = - %1 %2;
-    (1, %0) = %0;
-    PopScopeFrame
-    return;
-  }
-  bb3 {
-    return;
-  }
-}
 foo(boolean,int) -> function(int) returns int{
   bb0 {
     %3 = closure_fp $anon/.:$anonFunc$_0
@@ -68,6 +42,32 @@ main() -> nil{
     %21 = println(%20) -> bb6;
   }
   bb6 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    (1, flag) ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 3
+    %1 = (1, x);
+    %2 = (2, offset);
+    %0 = + %1 %2;
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 3
+    %1 = (1, x);
+    %2 = (2, offset);
+    %0 = - %1 %2;
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
     return;
   }
 }

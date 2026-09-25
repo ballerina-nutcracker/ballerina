@@ -3,16 +3,16 @@ count  int;
 lockGuard  int;
 class Counter {
 
-  $remote$next() -> int{
+  init() -> nil{
     bb0 {
-      %2 = ConstantLoad 5
-      %0 = %2;
       return;
     }
   }
 
-  init() -> nil{
+  $remote$next() -> int{
     bb0 {
+      %2 = ConstantLoad 5
+      %0 = %2;
       return;
     }
   }

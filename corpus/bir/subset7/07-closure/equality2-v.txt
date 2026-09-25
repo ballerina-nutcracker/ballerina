@@ -1,4 +1,19 @@
 module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 10
+    base = %1;
+    %3 = closure_fp $anon/.:$anonFunc$_0
+    f = %3;
+    f1 = f;
+    %6 = unknown f1 f;
+    %7 = %6;
+    %8 = println(%7) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
 $anonFunc$_0([int...]...) -> int{
   bb0 {
     sum = (1, base);
@@ -34,21 +49,6 @@ $anonFunc$_0([int...]...) -> int{
   }
   bb4 {
     %0 = sum;
-    return;
-  }
-}
-main() -> nil{
-  bb0 {
-    %1 = ConstantLoad 10
-    base = %1;
-    %3 = closure_fp $anon/.:$anonFunc$_0
-    f = %3;
-    f1 = f;
-    %6 = unknown f1 f;
-    %7 = %6;
-    %8 = println(%7) -> bb1;
-  }
-  bb1 {
     return;
   }
 }

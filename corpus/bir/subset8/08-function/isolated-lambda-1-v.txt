@@ -1,10 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0() -> int{
-  bb0 {
-    %0 = (1, n);
-    return;
-  }
-}
 capturedParam(int) -> int{
   bb0 {
     %2 = closure_fp $anon/.:$anonFunc$_0
@@ -16,34 +10,6 @@ capturedParam(int) -> int{
     return;
   }
 }
-$anonFunc$_1() -> int{
-  bb0 {
-    %1 = closure_fp $anon/.:$anonFunc$_2
-    f2 = %1;
-    %3 = f2() -> bb1;
-  }
-  bb1 {
-    %0 = %3;
-    return;
-  }
-}
-$anonFunc$_2() -> int{
-  bb0 {
-    %1 = closure_fp $anon/.:$anonFunc$_3
-    f3 = %1;
-    %3 = f3() -> bb1;
-  }
-  bb1 {
-    %0 = %3;
-    return;
-  }
-}
-$anonFunc$_3() -> int{
-  bb0 {
-    %0 = (3, n);
-    return;
-  }
-}
 nestedLayeredCapture(int) -> int{
   bb0 {
     %2 = closure_fp $anon/.:$anonFunc$_1
@@ -52,19 +18,6 @@ nestedLayeredCapture(int) -> int{
   }
   bb1 {
     %0 = %4;
-    return;
-  }
-}
-$anonFunc$_4() -> int{
-  bb0 {
-    %1 = ConstantLoad 10
-    %0 = %1;
-    return;
-  }
-}
-$anonFunc$_5() -> int{
-  bb0 {
-    %0 = (1, x);
     return;
   }
 }
@@ -108,6 +61,53 @@ main() -> nil{
     %22 = println(%21) -> bb8;
   }
   bb8 {
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %0 = (1, n);
+    return;
+  }
+}
+$anonFunc$_1() -> int{
+  bb0 {
+    %1 = closure_fp $anon/.:$anonFunc$_2
+    f2 = %1;
+    %3 = f2() -> bb1;
+  }
+  bb1 {
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_2() -> int{
+  bb0 {
+    %1 = closure_fp $anon/.:$anonFunc$_3
+    f3 = %1;
+    %3 = f3() -> bb1;
+  }
+  bb1 {
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_3() -> int{
+  bb0 {
+    %0 = (3, n);
+    return;
+  }
+}
+$anonFunc$_4() -> int{
+  bb0 {
+    %1 = ConstantLoad 10
+    %0 = %1;
+    return;
+  }
+}
+$anonFunc$_5() -> int{
+  bb0 {
+    %0 = (1, x);
     return;
   }
 }

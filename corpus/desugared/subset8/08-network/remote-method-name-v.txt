@@ -3,15 +3,6 @@
   (class-definition MyClient
     (function init () ()
       (block-function-body))
-    (function $remote$get (
-      (variable path (type
-        (value-type string)))) (
-      (value-type string))
-      (block-function-body
-        (return
-          (binary-expr +
-            (simple-var-ref path)
-            (literal remote get)))))
     (function get (
       (variable path (type
         (value-type string)))) (
@@ -20,7 +11,16 @@
         (return
           (binary-expr +
             (simple-var-ref path)
-            (literal get))))))
+            (literal get)))))
+    (function $remote$get (
+      (variable path (type
+        (value-type string)))) (
+      (value-type string))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref path)
+            (literal remote get))))))
   (function main () (
     (value-type null))
     (block-function-body

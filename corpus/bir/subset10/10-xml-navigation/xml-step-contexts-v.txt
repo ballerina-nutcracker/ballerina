@@ -23,71 +23,9 @@ class Holder {
     }
   }
 }
-$default$0() -> xml{
-  bb0 {
-    %1 = ConstantLoad A
-    %2 = newXMLText(%1)
-    %3 = newXMLElement("item", %2)
-    %4 = newXMLElement("root", %3)
-    %5 = ConstantLoad <nil>
-    %6 = %5;
-    %7 = elements(%4,%6) -> bb1;
-  }
-  bb1 {
-    %8 = fp $anon/.:$xmlStep$$module$0
-    %9 = map(%7,%8) -> bb2;
-  }
-  bb2 {
-    %0 = %9;
-    return;
-  }
-}
-$default$1() -> xml{
-  bb0 {
-    %1 = ConstantLoad <nil>
-    %2 = %1;
-    %3 = elements(moduleSource,%2) -> bb1;
-  }
-  bb1 {
-    %4 = fp $anon/.:$xmlStep$$module$1
-    %5 = map(%3,%4) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-$xmlStep$$module$0(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %0 = %2;
-    return;
-  }
-}
-$xmlStep$$module$1(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %0 = %2;
-    return;
-  }
-}
 withDefault(xml) -> xml{
   bb0 {
     %0 = value;
-    return;
-  }
-}
-$xmlStep$$module$2(xml:Element) -> xml<xml:Element>{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = xmlFilter(%2, [{"", "item"}])
-    %0 = %3;
     return;
   }
 }
@@ -131,15 +69,6 @@ xmlProducer() -> error|xml{
     return;
   }
 }
-$xmlStep$$module$3(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %0 = %2;
-    return;
-  }
-}
 directReturn() -> xml{
   bb0 {
     %1 = ConstantLoad <nil>
@@ -177,42 +106,6 @@ assert(anydata,anydata) -> nil{
   bb2 {
     PushScopeFrame 0
     PopScopeFrame
-    return;
-  }
-}
-$xmlStep$$module$4(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %0 = %2;
-    return;
-  }
-}
-$xmlStep$Holder$0(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %0 = %2;
-    return;
-  }
-}
-$xmlStep$checkedReceiver$0(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %0 = %2;
-    return;
-  }
-}
-$xmlStep$directReturn$0(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %0 = %2;
     return;
   }
 }
@@ -409,6 +302,113 @@ main() -> nil|error{
   
   error-table {
     [bb30, bb32] -> bb33, %78
+  }
+}
+$default$0() -> xml{
+  bb0 {
+    %1 = ConstantLoad A
+    %2 = newXMLText(%1)
+    %3 = newXMLElement("item", %2)
+    %4 = newXMLElement("root", %3)
+    %5 = ConstantLoad <nil>
+    %6 = %5;
+    %7 = elements(%4,%6) -> bb1;
+  }
+  bb1 {
+    %8 = fp $anon/.:$xmlStep$$module$0
+    %9 = map(%7,%8) -> bb2;
+  }
+  bb2 {
+    %0 = %9;
+    return;
+  }
+}
+$default$1() -> xml{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %2 = %1;
+    %3 = elements(moduleSource,%2) -> bb1;
+  }
+  bb1 {
+    %4 = fp $anon/.:$xmlStep$$module$1
+    %5 = map(%3,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$$module$0(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$$module$1(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$$module$2(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "item"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$$module$3(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$$module$4(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$Holder$0(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$checkedReceiver$0(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$directReturn$0(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
   }
 }
 $xmlStep$main$0(xml:Element) -> xml{

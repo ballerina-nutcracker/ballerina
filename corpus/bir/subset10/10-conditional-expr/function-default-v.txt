@@ -21,37 +21,6 @@ classify(int|string,string) -> string{
     return;
   }
 }
-$anonFunc$_0(int|string,string) -> string{
-  bb0 {
-    %3 = actual;
-    %0 = supplied;
-    return;
-  }
-}
-$default$0(int|string) -> string{
-  bb0 {
-    %3 = value is int
-    %3 ? bb1 : bb2;
-  }
-  bb1 {
-    %4 = acceptInt(value) -> bb4;
-  }
-  bb2 {
-    %5 = acceptString(value) -> bb5;
-  }
-  bb3 {
-    %0 = %2;
-    return;
-  }
-  bb4 {
-    %2 = %4;
-    GOTO bb3;
-  }
-  bb5 {
-    %2 = %5;
-    GOTO bb3;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 1
@@ -111,6 +80,37 @@ main() -> nil{
   }
   bb12 {
     return;
+  }
+}
+$anonFunc$_0(int|string,string) -> string{
+  bb0 {
+    %3 = actual;
+    %0 = supplied;
+    return;
+  }
+}
+$default$0(int|string) -> string{
+  bb0 {
+    %3 = value is int
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %4 = acceptInt(value) -> bb4;
+  }
+  bb2 {
+    %5 = acceptString(value) -> bb5;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+  bb4 {
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb5 {
+    %2 = %5;
+    GOTO bb3;
   }
 }
 $default$1(int|string) -> string{

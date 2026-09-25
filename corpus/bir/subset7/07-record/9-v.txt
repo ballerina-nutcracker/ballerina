@@ -1,10 +1,4 @@
 module $anon.. v 0.0.0;
-$default$0() -> int{
-  bb0 {
-    %0 = (1, i);
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 0
@@ -76,5 +70,11 @@ main() -> nil{
     (1, $desugar$4) = %6;
     PopScopeFrame
     GOTO bb6;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %0 = (1, i);
+    return;
   }
 }

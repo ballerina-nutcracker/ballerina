@@ -1,10 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0() -> int{
-  bb0 {
-    %0 = (2, r);
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 0
@@ -83,6 +77,12 @@ main() -> nil{
     GOTO bb6;
   }
   bb10 {
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %0 = (2, r);
     return;
   }
 }

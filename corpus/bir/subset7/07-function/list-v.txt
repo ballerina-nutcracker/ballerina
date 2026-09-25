@@ -7,28 +7,6 @@ foo([int...]...) -> int{
     return;
   }
 }
-$anonFunc$_0(int,int) -> int{
-  bb0 {
-    %4 = a;
-    %5 = b;
-    %3 = + %4 %5;
-    %0 = %3;
-    return;
-  }
-}
-$anonFunc$_1([int...]...) -> int{
-  bb0 {
-    %4 = ConstantLoad 0
-    %3 = vals[%4];
-    %5 = %3;
-    %7 = ConstantLoad 1
-    %6 = vals[%7];
-    %8 = %6;
-    %2 = * %5 %8;
-    %0 = %2;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:foo
@@ -79,6 +57,28 @@ main() -> nil{
     %34 = println(%33) -> bb6;
   }
   bb6 {
+    return;
+  }
+}
+$anonFunc$_0(int,int) -> int{
+  bb0 {
+    %4 = a;
+    %5 = b;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_1([int...]...) -> int{
+  bb0 {
+    %4 = ConstantLoad 0
+    %3 = vals[%4];
+    %5 = %3;
+    %7 = ConstantLoad 1
+    %6 = vals[%7];
+    %8 = %6;
+    %2 = * %5 %8;
+    %0 = %2;
     return;
   }
 }

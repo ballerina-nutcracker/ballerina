@@ -1,19 +1,4 @@
 module $anon.. v 0.0.0;
-$xmlStep$main$0(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = ConstantLoad 1
-    %4 = unknown %3;
-    %5 = %4;
-    %6 = $stepIndex(%2,%5) -> bb2;
-  }
-  bb2 {
-    %0 = %6;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad A
@@ -31,6 +16,21 @@ main() -> nil{
   }
   bb2 {
     %11 = %10;
+    return;
+  }
+}
+$xmlStep$main$0(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 1
+    %4 = unknown %3;
+    %5 = %4;
+    %6 = $stepIndex(%2,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
     return;
   }
 }

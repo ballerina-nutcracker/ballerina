@@ -2,6 +2,12 @@ module $anon.. v 0.0.0;
 calls  int;
 class Client {
 
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
   $remote$value(int) -> int{
     bb0 {
       %4 = ConstantLoad 1
@@ -23,12 +29,6 @@ class Client {
     }
     bb1 {
       %0 = %6;
-      return;
-    }
-  }
-
-  init() -> nil{
-    bb0 {
       return;
     }
   }

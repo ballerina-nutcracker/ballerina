@@ -35,16 +35,12 @@ func ReadExpectedFile(t *testing.T, expectedPath string) string {
 // UpdateIfNeeded compares the actual content with the expected file content.
 // Returns true if the content differs and an update was made.
 // Returns false if the content matches (no update needed).
-// Optionally accepts a normalization function to apply to existing content before comparison.
-func UpdateIfNeeded(t *testing.T, expectedPath, actual string, normalizeExisting ...func(string) string) bool {
+// Optionally accepts a normalization function applied to both the existing and
+// the actual content before comparison. The actual content is written as is.
+func UpdateIfNeeded(t *testing.T, expectedPath, actual string, normalize ...func(string) string) bool {
 	t.Helper()
 	existingContent, err := os.ReadFile(expectedPath)
-	fileExists := err == nil
-	existing := string(existingContent)
-	if len(normalizeExisting) > 0 && normalizeExisting[0] != nil && fileExists {
-		existing = normalizeExisting[0](existing)
-	}
-	if fileExists && existing == actual {
+	if err == nil && normalizeForComparison(string(existingContent), normalize) == normalizeForComparison(actual, normalize) {
 		return false
 	}
 	dir := filepath.Dir(expectedPath)
@@ -56,4 +52,11 @@ func UpdateIfNeeded(t *testing.T, expectedPath, actual string, normalizeExisting
 	}
 	t.Logf("Updated expected file: %s", expectedPath)
 	return true
+}
+
+func normalizeForComparison(content string, normalize []func(string) string) string {
+	if len(normalize) > 0 && normalize[0] != nil {
+		return normalize[0](content)
+	}
+	return content
 }

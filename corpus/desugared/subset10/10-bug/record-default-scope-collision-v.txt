@@ -289,18 +289,22 @@
     (block-function-body
       (return
         (literal 1))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (literal 3))))
   (function $default$4 () ()
     (block-function-body
       (return
         (literal required))))
-  (function $default$6 () ()
-    (block-function-body
-      (return
-        (mapping-constructor-expr))))
   (function $default$5 () ()
     (block-function-body
       (return
         (literal 11))))
+  (function $default$6 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr))))
   (function $default$7 () ()
     (block-function-body
       (return
@@ -308,8 +312,4 @@
   (function $default$8 () ()
     (block-function-body
       (return
-        (literal second))))
-  (function $default$3 () ()
-    (block-function-body
-      (return
-        (literal 3)))))
+        (literal second)))))

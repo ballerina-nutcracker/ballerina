@@ -1,85 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0(int) -> int{
-  bb0 {
-    %0 = x;
-    return;
-  }
-}
-$anonFunc$_1(int,int) -> int{
-  bb0 {
-    %4 = x;
-    %5 = y;
-    %3 = + %4 %5;
-    %0 = %3;
-    return;
-  }
-}
-$anonFunc$_2({| left: int, right: int, never... |}) -> int{
-  bb0 {
-    %4 = ConstantLoad left
-    %3 = q[%4];
-    %5 = %3;
-    %7 = ConstantLoad right
-    %6 = q[%7];
-    %8 = %6;
-    %2 = + %5 %8;
-    %0 = %2;
-    return;
-  }
-}
-$anonFunc$_3(int) -> int{
-  bb0 {
-    %0 = b;
-    return;
-  }
-}
-$anonFunc$_4(int) -> int{
-  bb0 {
-    %3 = c;
-    %4 = ConstantLoad 1
-    %5 = %4;
-    %2 = + %3 %5;
-    %0 = %2;
-    return;
-  }
-}
-$anonFunc$_5(int) -> int{
-  bb0 {
-    %0 = b;
-    return;
-  }
-}
-$anonFunc$_6(int) -> int{
-  bb0 {
-    %3 = c;
-    %4 = ConstantLoad 1
-    %5 = %4;
-    %2 = + %3 %5;
-    %0 = %2;
-    return;
-  }
-}
-$default$0() -> int{
-  bb0 {
-    %1 = ConstantLoad 5
-    %0 = %1;
-    return;
-  }
-}
-$default$1() -> int{
-  bb0 {
-    %1 = ConstantLoad 5
-    %0 = %1;
-    return;
-  }
-}
-$default$10() -> int{
-  bb0 {
-    %1 = ConstantLoad 20
-    %0 = %1;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %2 = fp $anon/.:$default$1
@@ -271,13 +190,6 @@ applyFns(int,[function(int) returns int...]...) -> int{
     GOTO bb5;
   }
 }
-$default$11() -> int{
-  bb0 {
-    %1 = ConstantLoad 5
-    %0 = %1;
-    return;
-  }
-}
 applyInlineFns(int,[function(int) returns int...]...) -> int{
   bb0 {
     %4 = length(fns) -> bb1;
@@ -338,7 +250,74 @@ applyInlineFns(int,[function(int) returns int...]...) -> int{
     GOTO bb5;
   }
 }
-$default$12() -> int{
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %0 = x;
+    return;
+  }
+}
+$anonFunc$_1(int,int) -> int{
+  bb0 {
+    %4 = x;
+    %5 = y;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_2({| left: int, right: int, never... |}) -> int{
+  bb0 {
+    %4 = ConstantLoad left
+    %3 = q[%4];
+    %5 = %3;
+    %7 = ConstantLoad right
+    %6 = q[%7];
+    %8 = %6;
+    %2 = + %5 %8;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_3(int) -> int{
+  bb0 {
+    %0 = b;
+    return;
+  }
+}
+$anonFunc$_4(int) -> int{
+  bb0 {
+    %3 = c;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_5(int) -> int{
+  bb0 {
+    %0 = b;
+    return;
+  }
+}
+$anonFunc$_6(int) -> int{
+  bb0 {
+    %3 = c;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
   bb0 {
     %1 = ConstantLoad 5
     %0 = %1;
@@ -358,6 +337,27 @@ $default$3(int) -> int{
 $default$5() -> int{
   bb0 {
     %1 = ConstantLoad 7
+    %0 = %1;
+    return;
+  }
+}
+$default$10() -> int{
+  bb0 {
+    %1 = ConstantLoad 20
+    %0 = %1;
+    return;
+  }
+}
+$default$11() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$12() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
     %0 = %1;
     return;
   }

@@ -1,23 +1,4 @@
 (Client
-  ($remote$broken
-    (bb0 () ()
-      (panic
-        (error-constructor-expr (
-          (literal remote panic))))
-    )
-  )
-  ($remote$returnError
-    (bb0 () ()
-      (return
-        (simple-var-ref failure))
-    )
-  )
-  ($remote$value
-    (bb0 () ()
-      (return
-        (literal 1))
-    )
-  )
   (Client.$resource$get$0
     (bb0 () ()
       (return
@@ -35,6 +16,25 @@
     (bb0 () ()
       (return
         (simple-var-ref failure))
+    )
+  )
+  ($remote$broken
+    (bb0 () ()
+      (panic
+        (error-constructor-expr (
+          (literal remote panic))))
+    )
+  )
+  ($remote$returnError
+    (bb0 () ()
+      (return
+        (simple-var-ref failure))
+    )
+  )
+  ($remote$value
+    (bb0 () ()
+      (return
+        (literal 1))
     )
   )
 )

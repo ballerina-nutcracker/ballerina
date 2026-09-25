@@ -2,6 +2,14 @@ module $anon.. v 0.0.0;
 class Client1 {
   base string
 
+  init(string) -> nil{
+    bb0 {
+      %3 = ConstantLoad base
+      self[%3] = base;
+      return;
+    }
+  }
+
   $remote$get(string) -> string{
     bb0 {
       %6 = ConstantLoad base
@@ -13,28 +21,20 @@ class Client1 {
       return;
     }
   }
+}
+class Client {
 
-  init(string) -> nil{
+  init() -> nil{
     bb0 {
-      %3 = ConstantLoad base
-      self[%3] = base;
       return;
     }
   }
-}
-class Client {
 
   $remote$get(string) -> string{
     bb0 {
       %4 = ConstantLoad get
       %3 = + path %4;
       %0 = %3;
-      return;
-    }
-  }
-
-  init() -> nil{
-    bb0 {
       return;
     }
   }

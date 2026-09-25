@@ -17,11 +17,15 @@
 package cfg
 
 import (
+	"cmp"
 	"fmt"
-	"github.com/ballerina-nutcracker/ballerina/ast"
-	"github.com/ballerina-nutcracker/ballerina/context"
+	"slices"
 	"sort"
 	"strings"
+
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/prettyprint"
 )
 
 // CFGPrettyPrinter prints a PackageCFG in a human-readable format
@@ -63,8 +67,8 @@ func (p *CFGPrettyPrinter) Print(cfg *PackageCFG) string {
 			}
 			ce.methods = append(ce.methods, fnEntry{name: name, cfg: fcfg})
 		}
-		sort.Slice(ce.methods, func(i, j int) bool {
-			return ce.methods[i].name < ce.methods[j].name
+		slices.SortFunc(ce.methods, func(a, b fnEntry) int {
+			return compareFunctionPrintOrder(a.name, b.name)
 		})
 		classes = append(classes, ce)
 	}
@@ -77,8 +81,8 @@ func (p *CFGPrettyPrinter) Print(cfg *PackageCFG) string {
 	for ref, fnCfg := range cfg.funcCfgs {
 		topLevel = append(topLevel, fnEntry{name: p.ctx.SymbolName(ref), cfg: fnCfg})
 	}
-	sort.Slice(topLevel, func(i, j int) bool {
-		return topLevel[i].name < topLevel[j].name
+	slices.SortFunc(topLevel, func(a, b fnEntry) int {
+		return compareFunctionPrintOrder(a.name, b.name)
 	})
 
 	printed := 0
@@ -113,6 +117,10 @@ func (p *CFGPrettyPrinter) Print(cfg *PackageCFG) string {
 	}
 
 	return p.buffer.String()
+}
+
+func compareFunctionPrintOrder(a, b string) int {
+	return cmp.Or(prettyprint.CompareFunctionPrintOrder(a, b), cmp.Compare(a, b))
 }
 
 func (p *CFGPrettyPrinter) printFunctionCFG(funcName string, cfg functionCFG, indent int) {

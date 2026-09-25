@@ -1,56 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0(int) -> int{
-  bb0 {
-    %0 = value;
-    return;
-  }
-}
-$anonFunc$_1({| left: int, right: int, never... |}) -> int{
-  bb0 {
-    %4 = ConstantLoad left
-    %3 = value[%4];
-    %5 = %3;
-    %7 = ConstantLoad right
-    %6 = value[%7];
-    %8 = %6;
-    %2 = + %5 %8;
-    %0 = %2;
-    return;
-  }
-}
-$anonFunc$_2(int) -> int{
-  bb0 {
-    %0 = value;
-    return;
-  }
-}
-$anonFunc$_3(int) -> int{
-  bb0 {
-    %0 = value;
-    return;
-  }
-}
-$default$0() -> int{
-  bb0 {
-    %1 = ConstantLoad 5
-    %0 = %1;
-    return;
-  }
-}
-$default$1() -> float{
-  bb0 {
-    %1 = ConstantLoad 30
-    %0 = %1;
-    return;
-  }
-}
-$default$2() -> int{
-  bb0 {
-    %1 = ConstantLoad 20
-    %0 = %1;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:$anonFunc$_0
@@ -214,6 +162,58 @@ main() -> nil{
   bb32 {
     PopScopeFrame
     PopScopeFrame
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$anonFunc$_1({| left: int, right: int, never... |}) -> int{
+  bb0 {
+    %4 = ConstantLoad left
+    %3 = value[%4];
+    %5 = %3;
+    %7 = ConstantLoad right
+    %6 = value[%7];
+    %8 = %6;
+    %2 = + %5 %8;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_2(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$anonFunc$_3(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> float{
+  bb0 {
+    %1 = ConstantLoad 30
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 20
+    %0 = %1;
     return;
   }
 }

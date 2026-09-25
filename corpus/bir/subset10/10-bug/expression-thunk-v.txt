@@ -28,82 +28,6 @@ class CaptureCounter {
     }
   }
 }
-$anonFunc$_0() -> int{
-  bb0 {
-    %1 = closure_fp $anon/.:$anonFunc$_1
-    inner = %1;
-    %3 = ConstantLoad 0
-    %4 = newArray [int...][%3]{}
-    $desugar$0 = %4;
-    %6 = inner() -> bb1;
-  }
-  bb1 {
-    %7 = %6;
-    %8 = push($desugar$0,%7) -> bb2;
-  }
-  bb2 {
-    %9 = inner() -> bb3;
-  }
-  bb3 {
-    %10 = ConstantLoad 1
-    %11 = newArray [int...][%10]{%9}
-    $desugar$1 = %11;
-    %13 = length($desugar$1) -> bb4;
-  }
-  bb4 {
-    $desugar$2 = %13;
-    %15 = ConstantLoad 0
-    $desugar$3 = %15;
-    GOTO bb5;
-  }
-  bb5 {
-    %18 = $desugar$3;
-    %19 = $desugar$2;
-    %17 = < %18 %19;
-    %17 ? bb6 : bb7;
-  }
-  bb6 {
-    PushScopeFrame 7
-    %0 = (1, $desugar$1)[(1, $desugar$3)];
-    %1 = %0;
-    %2 = push((1, $desugar$0),%1) -> bb8;
-  }
-  bb7 {
-    values = $desugar$0;
-    %22 = ConstantLoad 1
-    %21 = values[%22];
-    %0 = %21;
-    return;
-  }
-  bb8 {
-    %4 = (1, $desugar$3);
-    %5 = ConstantLoad 1
-    %6 = %5;
-    %3 = + %4 %6;
-    (1, $desugar$3) = %3;
-    PopScopeFrame
-    GOTO bb5;
-  }
-}
-$anonFunc$_1() -> int{
-  bb0 {
-    %2 = (2, local);
-    %3 = ConstantLoad 1
-    %4 = %3;
-    %1 = + %2 %4;
-    (2, local) = %1;
-    %5 = ConstantLoad value
-    %6 = (2, self)[%5];
-    %7 = %6;
-    %8 = (2, local);
-    %9 = + %7 %8;
-    (2, self)[%5] = %9;
-    %11 = ConstantLoad value
-    %10 = (2, self)[%11];
-    %0 = %10;
-    return;
-  }
-}
 panicValues() -> [int...]{
   bb0 {
     %1 = ConstantLoad inside thunk
@@ -583,6 +507,82 @@ main() -> nil{
   error-table {
     [bb1, bb8] -> bb9, %1
     [bb57, bb67] -> bb68, %124
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %1 = closure_fp $anon/.:$anonFunc$_1
+    inner = %1;
+    %3 = ConstantLoad 0
+    %4 = newArray [int...][%3]{}
+    $desugar$0 = %4;
+    %6 = inner() -> bb1;
+  }
+  bb1 {
+    %7 = %6;
+    %8 = push($desugar$0,%7) -> bb2;
+  }
+  bb2 {
+    %9 = inner() -> bb3;
+  }
+  bb3 {
+    %10 = ConstantLoad 1
+    %11 = newArray [int...][%10]{%9}
+    $desugar$1 = %11;
+    %13 = length($desugar$1) -> bb4;
+  }
+  bb4 {
+    $desugar$2 = %13;
+    %15 = ConstantLoad 0
+    $desugar$3 = %15;
+    GOTO bb5;
+  }
+  bb5 {
+    %18 = $desugar$3;
+    %19 = $desugar$2;
+    %17 = < %18 %19;
+    %17 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    %1 = %0;
+    %2 = push((1, $desugar$0),%1) -> bb8;
+  }
+  bb7 {
+    values = $desugar$0;
+    %22 = ConstantLoad 1
+    %21 = values[%22];
+    %0 = %21;
+    return;
+  }
+  bb8 {
+    %4 = (1, $desugar$3);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$3) = %3;
+    PopScopeFrame
+    GOTO bb5;
+  }
+}
+$anonFunc$_1() -> int{
+  bb0 {
+    %2 = (2, local);
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %1 = + %2 %4;
+    (2, local) = %1;
+    %5 = ConstantLoad value
+    %6 = (2, self)[%5];
+    %7 = %6;
+    %8 = (2, local);
+    %9 = + %7 %8;
+    (2, self)[%5] = %9;
+    %11 = ConstantLoad value
+    %10 = (2, self)[%11];
+    %0 = %10;
+    return;
   }
 }
 $default$0() -> int{

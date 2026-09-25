@@ -1,6 +1,12 @@
 module $anon.. v 0.0.0;
 class Client {
 
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
   $remote$get(string) -> string{
     bb0 {
       %4 = ConstantLoad get
@@ -15,12 +21,6 @@ class Client {
       %4 = ConstantLoad get
       %3 = + path %4;
       %0 = %3;
-      return;
-    }
-  }
-
-  init() -> nil{
-    bb0 {
       return;
     }
   }

@@ -21,48 +21,6 @@ foo({| a: int, b: int, anydata... |}) -> int{
     return;
   }
 }
-$anonFunc$_0({| a: int, never... |}) -> int{
-  bb0 {
-    %2 = closure_fp $anon/.:$anonFunc$_1
-    innerFn = %2;
-    %4 = newMap {| b: int, never... |}{} defaults{b=$anon/.:$default$2}
-    %5 = innerFn(%4) -> bb1;
-  }
-  bb1 {
-    %0 = %5;
-    return;
-  }
-}
-$anonFunc$_1({| b: int, never... |}) -> int{
-  bb0 {
-    %2 = closure_fp $anon/.:$anonFunc$_2
-    nestedFn = %2;
-    %4 = newMap {| c: int, never... |}{} defaults{c=$anon/.:$default$3}
-    %5 = nestedFn(%4) -> bb1;
-  }
-  bb1 {
-    %0 = %5;
-    return;
-  }
-}
-$anonFunc$_2({| c: int, never... |}) -> int{
-  bb0 {
-    %5 = ConstantLoad a
-    %4 = (2, x)[%5];
-    %6 = %4;
-    %8 = ConstantLoad b
-    %7 = (1, y)[%8];
-    %9 = %7;
-    %3 = + %6 %9;
-    %10 = %3;
-    %12 = ConstantLoad c
-    %11 = z[%12];
-    %13 = %11;
-    %2 = + %10 %13;
-    %0 = %2;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %2 = ConstantLoad value
@@ -110,6 +68,48 @@ main() -> nil{
     %25 = println(%24) -> bb10;
   }
   bb10 {
+    return;
+  }
+}
+$anonFunc$_0({| a: int, never... |}) -> int{
+  bb0 {
+    %2 = closure_fp $anon/.:$anonFunc$_1
+    innerFn = %2;
+    %4 = newMap {| b: int, never... |}{} defaults{b=$anon/.:$default$2}
+    %5 = innerFn(%4) -> bb1;
+  }
+  bb1 {
+    %0 = %5;
+    return;
+  }
+}
+$anonFunc$_1({| b: int, never... |}) -> int{
+  bb0 {
+    %2 = closure_fp $anon/.:$anonFunc$_2
+    nestedFn = %2;
+    %4 = newMap {| c: int, never... |}{} defaults{c=$anon/.:$default$3}
+    %5 = nestedFn(%4) -> bb1;
+  }
+  bb1 {
+    %0 = %5;
+    return;
+  }
+}
+$anonFunc$_2({| c: int, never... |}) -> int{
+  bb0 {
+    %5 = ConstantLoad a
+    %4 = (2, x)[%5];
+    %6 = %4;
+    %8 = ConstantLoad b
+    %7 = (1, y)[%8];
+    %9 = %7;
+    %3 = + %6 %9;
+    %10 = %3;
+    %12 = ConstantLoad c
+    %11 = z[%12];
+    %13 = %11;
+    %2 = + %10 %13;
+    %0 = %2;
     return;
   }
 }

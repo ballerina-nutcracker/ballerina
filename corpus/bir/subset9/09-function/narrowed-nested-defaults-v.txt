@@ -1,64 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0(function(int) returns int,int) -> int{
-  bb0 {
-    %3 = callback;
-    %0 = result;
-    return;
-  }
-}
-$anonFunc$_1(int) -> int{
-  bb0 {
-    %3 = actual;
-    %4 = ConstantLoad 1
-    %5 = %4;
-    %2 = + %3 %5;
-    %0 = %2;
-    return;
-  }
-}
-$anonFunc$_2({| value: int, never... |}) -> int{
-  bb0 {
-    %3 = ConstantLoad value
-    %2 = input[%3];
-    %0 = %2;
-    return;
-  }
-}
-$default$0(function(int) returns int) -> int{
-  bb0 {
-    %2 = $default$1() -> bb1;
-  }
-  bb1 {
-    $desugar$0 = %2;
-    %4 = $desugar$0;
-    %5 = callback(%4) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-$default$1() -> int{
-  bb0 {
-    %1 = ConstantLoad 10
-    %0 = %1;
-    return;
-  }
-}
-$default$2() -> {| value: int, never... |}{
-  bb0 {
-    %1 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$default$3}
-    %0 = %1;
-    return;
-  }
-}
-$default$3() -> int{
-  bb0 {
-    %1 = ConstantLoad 12
-    %0 = %1;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:$anonFunc$_0
@@ -120,6 +60,66 @@ main() -> nil{
     PushScopeFrame 0
     PopScopeFrame
     PopScopeFrame
+    return;
+  }
+}
+$anonFunc$_0(function(int) returns int,int) -> int{
+  bb0 {
+    %3 = callback;
+    %0 = result;
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %3 = actual;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_2({| value: int, never... |}) -> int{
+  bb0 {
+    %3 = ConstantLoad value
+    %2 = input[%3];
+    %0 = %2;
+    return;
+  }
+}
+$default$0(function(int) returns int) -> int{
+  bb0 {
+    %2 = $default$1() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %4 = $desugar$0;
+    %5 = callback(%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 10
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> {| value: int, never... |}{
+  bb0 {
+    %1 = newMap {| value: int, never... |}{} defaults{value=$anon/.:$default$3}
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 12
+    %0 = %1;
     return;
   }
 }

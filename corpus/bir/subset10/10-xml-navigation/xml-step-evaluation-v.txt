@@ -90,247 +90,6 @@ assert(anydata,anydata) -> nil{
     return;
   }
 }
-$anonFunc$_0(xml) -> xml{
-  bb0 {
-    %2 = ConstantLoad <nil>
-    %3 = %2;
-    %4 = elements(item,%3) -> bb1;
-  }
-  bb1 {
-    %5 = fp $anon/.:$xmlStep$$anonFunc$_0$0
-    %6 = map(%4,%5) -> bb2;
-  }
-  bb2 {
-    %0 = %6;
-    return;
-  }
-}
-$xmlStep$$anonFunc$_0$0(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %0 = %2;
-    return;
-  }
-}
-$xmlStep$$xmlStep$main$8$0(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %0 = %2;
-    return;
-  }
-}
-$xmlStep$$xmlStep$main$9$0(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %0 = %2;
-    return;
-  }
-}
-$xmlStep$main$0(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = index() -> bb2;
-  }
-  bb2 {
-    %4 = %3;
-    %5 = $stepIndex(%2,%4) -> bb3;
-  }
-  bb3 {
-    %0 = %5;
-    return;
-  }
-}
-$xmlStep$main$1(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = index() -> bb2;
-  }
-  bb2 {
-    %4 = %3;
-    %5 = $stepIndex(%2,%4) -> bb3;
-  }
-  bb3 {
-    %0 = %5;
-    return;
-  }
-}
-$xmlStep$main$10(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = fp $anon/.:$anonFunc$_0
-    %4 = map(%2,%3) -> bb2;
-  }
-  bb2 {
-    %0 = %4;
-    return;
-  }
-}
-$xmlStep$main$2(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = ConstantLoad 0
-    %4 = %3;
-    %5 = get(%2,%4) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-$xmlStep$main$3(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = ConstantLoad 0
-    %4 = %3;
-    %5 = methodEnd() -> bb2;
-  }
-  bb2 {
-    %6 = %5;
-    %7 = slice(%2,%4,%6) -> bb3;
-  }
-  bb3 {
-    %0 = %7;
-    return;
-  }
-}
-$xmlStep$main$4(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = ConstantLoad 0
-    %4 = %3;
-    %5 = methodEnd() -> bb2;
-  }
-  bb2 {
-    %6 = %5;
-    %7 = slice(%2,%4,%6) -> bb3;
-  }
-  bb3 {
-    %0 = %7;
-    return;
-  }
-}
-$xmlStep$main$5(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = abruptIndex() -> bb2;
-  }
-  bb2 {
-    %4 = %3;
-    %5 = $stepIndex(%2,%4) -> bb3;
-  }
-  bb3 {
-    %0 = %5;
-    return;
-  }
-}
-$xmlStep$main$6(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = ConstantLoad 0
-    %4 = %3;
-    %5 = $stepIndex(%2,%4) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-$xmlStep$main$7(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = ConstantLoad 0
-    %4 = %3;
-    %5 = get(%2,%4) -> bb2;
-  }
-  bb2 {
-    %0 = %5;
-    return;
-  }
-}
-$xmlStep$main$8(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %4 = newXMLElement("child", ())
-    %5 = newXMLElement("root", %4)
-    %6 = ConstantLoad <nil>
-    %7 = %6;
-    %8 = elements(%5,%7) -> bb2;
-  }
-  bb2 {
-    %9 = fp $anon/.:$xmlStep$$xmlStep$main$8$0
-    %10 = map(%8,%9) -> bb3;
-  }
-  bb3 {
-    %11 = length(%10) -> bb4;
-  }
-  bb4 {
-    %12 = %11;
-    %13 = ConstantLoad 1
-    %14 = %13;
-    %3 = - %12 %14;
-    %15 = %3;
-    %16 = $stepIndex(%2,%15) -> bb5;
-  }
-  bb5 {
-    %0 = %16;
-    return;
-  }
-}
-$xmlStep$main$9(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %3 = ConstantLoad 0
-    %4 = %3;
-    %5 = newXMLElement("child", ())
-    %6 = newXMLElement("root", %5)
-    %7 = ConstantLoad <nil>
-    %8 = %7;
-    %9 = elements(%6,%8) -> bb2;
-  }
-  bb2 {
-    %10 = fp $anon/.:$xmlStep$$xmlStep$main$9$0
-    %11 = map(%9,%10) -> bb3;
-  }
-  bb3 {
-    %12 = length(%11) -> bb4;
-  }
-  bb4 {
-    %13 = %12;
-    %14 = slice(%2,%4,%13) -> bb5;
-  }
-  bb5 {
-    %0 = %14;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = receiver() -> bb1;
@@ -589,5 +348,246 @@ main() -> nil{
   
   error-table {
     [bb24, bb27] -> bb28, %84
+  }
+}
+$anonFunc$_0(xml) -> xml{
+  bb0 {
+    %2 = ConstantLoad <nil>
+    %3 = %2;
+    %4 = elements(item,%3) -> bb1;
+  }
+  bb1 {
+    %5 = fp $anon/.:$xmlStep$$anonFunc$_0$0
+    %6 = map(%4,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+$xmlStep$$anonFunc$_0$0(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$$xmlStep$main$8$0(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$$xmlStep$main$9$0(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$main$0(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = index() -> bb2;
+  }
+  bb2 {
+    %4 = %3;
+    %5 = $stepIndex(%2,%4) -> bb3;
+  }
+  bb3 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$main$1(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = index() -> bb2;
+  }
+  bb2 {
+    %4 = %3;
+    %5 = $stepIndex(%2,%4) -> bb3;
+  }
+  bb3 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$main$2(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = get(%2,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$main$3(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = methodEnd() -> bb2;
+  }
+  bb2 {
+    %6 = %5;
+    %7 = slice(%2,%4,%6) -> bb3;
+  }
+  bb3 {
+    %0 = %7;
+    return;
+  }
+}
+$xmlStep$main$4(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = methodEnd() -> bb2;
+  }
+  bb2 {
+    %6 = %5;
+    %7 = slice(%2,%4,%6) -> bb3;
+  }
+  bb3 {
+    %0 = %7;
+    return;
+  }
+}
+$xmlStep$main$5(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = abruptIndex() -> bb2;
+  }
+  bb2 {
+    %4 = %3;
+    %5 = $stepIndex(%2,%4) -> bb3;
+  }
+  bb3 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$main$6(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = $stepIndex(%2,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$main$7(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = get(%2,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$main$8(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %4 = newXMLElement("child", ())
+    %5 = newXMLElement("root", %4)
+    %6 = ConstantLoad <nil>
+    %7 = %6;
+    %8 = elements(%5,%7) -> bb2;
+  }
+  bb2 {
+    %9 = fp $anon/.:$xmlStep$$xmlStep$main$8$0
+    %10 = map(%8,%9) -> bb3;
+  }
+  bb3 {
+    %11 = length(%10) -> bb4;
+  }
+  bb4 {
+    %12 = %11;
+    %13 = ConstantLoad 1
+    %14 = %13;
+    %3 = - %12 %14;
+    %15 = %3;
+    %16 = $stepIndex(%2,%15) -> bb5;
+  }
+  bb5 {
+    %0 = %16;
+    return;
+  }
+}
+$xmlStep$main$9(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %5 = newXMLElement("child", ())
+    %6 = newXMLElement("root", %5)
+    %7 = ConstantLoad <nil>
+    %8 = %7;
+    %9 = elements(%6,%8) -> bb2;
+  }
+  bb2 {
+    %10 = fp $anon/.:$xmlStep$$xmlStep$main$9$0
+    %11 = map(%9,%10) -> bb3;
+  }
+  bb3 {
+    %12 = length(%11) -> bb4;
+  }
+  bb4 {
+    %13 = %12;
+    %14 = slice(%2,%4,%13) -> bb5;
+  }
+  bb5 {
+    %0 = %14;
+    return;
+  }
+}
+$xmlStep$main$10(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = fp $anon/.:$anonFunc$_0
+    %4 = map(%2,%3) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
+    return;
   }
 }

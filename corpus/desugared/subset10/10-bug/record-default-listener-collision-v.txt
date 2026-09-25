@@ -100,47 +100,16 @@
           (index-based-access
             (simple-var-ref r)
             (literal a)))))))
-  (function $default$1 () ()
-    (block-function-body
-      (return
-        (literal 5))))
   (function $default$0 (
     (variable svc (type
       (value-type )))) ()
     (block-function-body
       (return
         (literal <nil>))))
-  (function $start () ()
+  (function $default$1 () ()
     (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (simple-var-ref $moduleListeners))))
-      (var-def
-        (variable $desugar$1 (expr
-          (numeric-literal 0))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation lang.array length (
-            (simple-var-ref $desugar$0))))))
-      (while
-        (binary-expr <
-          (simple-var-ref $desugar$1)
-          (simple-var-ref $desugar$2))
-        (block-stmt
-          (var-def
-            (variable $listener (expr
-              (index-based-access
-                (simple-var-ref $desugar$0)
-                (simple-var-ref $desugar$1)))))
-          (expression-stmt
-            (checked-expr
-              (invocation start expr:
-                (simple-var-ref $listener) ())))
-          (assignment
-            (simple-var-ref $desugar$1)
-            (binary-expr +
-              (simple-var-ref $desugar$1)
-              (numeric-literal 1)))))))
+      (return
+        (literal 5))))
   (function $gracefulStop () ()
     (block-function-body
       (var-def
@@ -197,6 +166,37 @@
           (expression-stmt
             (checked-expr
               (invocation immediateStop expr:
+                (simple-var-ref $listener) ())))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$1)
+              (numeric-literal 1)))))))
+  (function $start () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref $moduleListeners))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable $listener (expr
+              (index-based-access
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1)))))
+          (expression-stmt
+            (checked-expr
+              (invocation start expr:
                 (simple-var-ref $listener) ())))
           (assignment
             (simple-var-ref $desugar$1)

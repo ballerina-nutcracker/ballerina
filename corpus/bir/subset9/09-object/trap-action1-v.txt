@@ -1,6 +1,12 @@
 module $anon.. v 0.0.0;
 class Client {
 
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
   $remote$broken() -> int{
     bb0 {
       %2 = ConstantLoad remote panic
@@ -20,12 +26,6 @@ class Client {
     bb0 {
       %2 = ConstantLoad 1
       %0 = %2;
-      return;
-    }
-  }
-
-  init() -> nil{
-    bb0 {
       return;
     }
   }

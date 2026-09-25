@@ -1,44 +1,6 @@
 module $anon.. v 0.0.0;
 moduleLambda  function(int) returns int;
 moduleLambdaAlias  function(int) returns int;
-$anonFunc$_0(int) -> int{
-  bb0 {
-    %0 = value;
-    return;
-  }
-}
-$anonFunc$_1(int) -> int{
-  bb0 {
-    %0 = value;
-    return;
-  }
-}
-$anonFunc$_2({| left: int, right: int, never... |}) -> int{
-  bb0 {
-    %4 = ConstantLoad left
-    %3 = pair[%4];
-    %5 = %3;
-    %7 = ConstantLoad right
-    %6 = pair[%7];
-    %8 = %6;
-    %2 = + %5 %8;
-    %0 = %2;
-    return;
-  }
-}
-$anonFunc$_3(int) -> int{
-  bb0 {
-    %0 = value;
-    return;
-  }
-}
-$default$0() -> int{
-  bb0 {
-    %1 = ConstantLoad 5
-    %0 = %1;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = $default$0() -> bb1;
@@ -202,6 +164,44 @@ main() -> nil{
     %93 = println(%92) -> bb34;
   }
   bb34 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$anonFunc$_2({| left: int, right: int, never... |}) -> int{
+  bb0 {
+    %4 = ConstantLoad left
+    %3 = pair[%4];
+    %5 = %3;
+    %7 = ConstantLoad right
+    %6 = pair[%7];
+    %8 = %6;
+    %2 = + %5 %8;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_3(int) -> int{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
     return;
   }
 }
