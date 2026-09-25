@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected [int|string, never...], got [int|string, never...]|[boolean, never...]
+  --> tuple-union-middle-branch-e.bal:26:11
+   |
+26 |     C y = v; // @error
+   |           ^

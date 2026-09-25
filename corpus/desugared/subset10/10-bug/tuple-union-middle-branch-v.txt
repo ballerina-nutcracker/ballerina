@@ -1,0 +1,100 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition A
+    (tuple-type
+      (value-type int)))
+  (type-definition C
+    (tuple-type
+      (union-type
+        (value-type int)
+        (value-type string))))
+  (function pick (
+    (variable x (type
+      (user-defined-type C)))
+    (variable b (type
+      (tuple-type
+        (value-type boolean))))
+    (variable flag (type
+      (value-type boolean)))) (
+    (value-type string))
+    (block-function-body
+      (var-def
+        (variable v (expr
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref x)
+              (user-defined-type A))
+            (simple-var-ref x)
+            (group-expr
+              (ternary-expr
+                (simple-var-ref flag)
+                (simple-var-ref b)
+                (simple-var-ref x)))))))
+      (assignment
+        (simple-var-ref v)
+        (simple-var-ref b))
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref v)
+            (tuple-type
+              (value-type boolean)))
+          (literal boolean)
+          (literal other)))))
+  (function pick2 (
+    (variable x (type
+      (user-defined-type C)))
+    (variable b (type
+      (tuple-type
+        (value-type boolean))))
+    (variable flag (type
+      (value-type boolean)))) (
+    (value-type string))
+    (block-function-body
+      (var-def
+        (variable v (expr
+          (ternary-expr
+            (simple-var-ref flag)
+            (group-expr
+              (ternary-expr
+                (type-test-expr is
+                  (simple-var-ref x)
+                  (user-defined-type A))
+                (simple-var-ref x)
+                (simple-var-ref b)))
+            (group-expr
+              (ternary-expr
+                (type-test-expr is
+                  (simple-var-ref x)
+                  (user-defined-type A))
+                (simple-var-ref b)
+                (simple-var-ref x)))))))
+      (assignment
+        (simple-var-ref v)
+        (simple-var-ref b))
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref v)
+            (tuple-type
+              (value-type boolean)))
+          (literal boolean)
+          (literal other)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation pick (
+            (list-constructor-expr
+              (literal 1))
+            (list-constructor-expr
+              (literal true))
+            (literal true)))
+          (literal  )
+          (invocation pick2 (
+            (list-constructor-expr
+              (literal s))
+            (list-constructor-expr
+              (literal true))
+            (literal false)))))))))
