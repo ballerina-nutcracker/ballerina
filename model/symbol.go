@@ -975,6 +975,18 @@ func (space *ExportedSymbolSpace) GetSymbol(name string) (SymbolRef, bool) {
 	return SymbolRef{}, false
 }
 
+// GetInternalSymbol is GetSymbol without the source visibility check. It is for
+// desugarings that call a langlib symbol the language spec does not expose to
+// source, such as the "$stepIndex" helper behind an indexed XML step.
+func (space *ExportedSymbolSpace) GetInternalSymbol(name string) (SymbolRef, bool) {
+	for _, main := range space.MainSpaces {
+		if ref, ok := main.GetSymbol(name); ok {
+			return ref, true
+		}
+	}
+	return SymbolRef{}, false
+}
+
 func (space *ExportedSymbolSpace) GetAnnotationSymbol(name string) (SymbolRef, bool) {
 	for _, annotationSpace := range space.AnnotationSpaces {
 		ref, ok := annotationSpace.GetSymbol(name)

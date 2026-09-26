@@ -1,0 +1,73 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:22:9
+   |
+22 |     _ = x1/*; // @error
+   |         ^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:23:9
+   |
+23 |     _ = x1/<d>; // @error
+   |         ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:26:9
+   |
+26 |     _ = x2/*; // @error
+   |         ^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:27:9
+   |
+27 |     _ = x2/*.<a>; // @error
+   |         ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:30:9
+   |
+30 |     _ = x3/*; // @error
+   |         ^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:31:9
+   |
+31 |     _ = x3/*.<b>; // @error
+   |         ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:34:9
+   |
+34 |     _ = x4/*; // @error
+   |         ^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:35:9
+   |
+35 |     _ = x4/*.<d>; // @error
+   |         ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:38:9
+   |
+38 |     _ = x5/*.<bar>; // @error
+   |         ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:39:9
+   |
+39 |     _ = x5/**/<bar>; // @error
+   |         ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:42:9
+   |
+42 |     _ = x6/*; // @error
+   |         ^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> xml-step-union-operand-e.bal:43:9
+   |
+43 |     _ = x6/*.<m>; // @error
+   |         ^^^^^^^^
