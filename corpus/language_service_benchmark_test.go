@@ -66,6 +66,8 @@ func benchmarkLanguageServiceProject(b *testing.B, name, inputPath string) {
 		b.Fatalf("getBallerinaEnvPath: %v", err)
 	}
 	ballerinaEnvFs := os.DirFS(ballerinaEnvPath)
+	// Models a language-server recompile: diagnostics/symbols only, no BIR.
+	buildOpts := projects.NewBuildOptionsBuilder().WithGenerateCode(false).Build()
 
 	b.Run(name, func(b *testing.B) {
 		b.ReportAllocs()
@@ -73,6 +75,7 @@ func benchmarkLanguageServiceProject(b *testing.B, name, inputPath string) {
 		for b.Loop() {
 			result, err := projects.Load(os.DirFS(inputPath), ".", projects.ProjectLoadConfig{
 				BallerinaEnvFs: ballerinaEnvFs,
+				BuildOptions:   &buildOpts,
 			})
 			if err != nil {
 				b.Fatalf("language service benchmark failed to load %s: %v", inputPath, err)

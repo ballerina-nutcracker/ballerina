@@ -95,11 +95,12 @@ func (t *distinctTypeTracker) symbolRef(id int) (model.SymbolRef, bool) {
 
 // CompilerEnvironment maintain the shared state of the frontend.
 type CompilerEnvironment struct {
+	anonCountMu                sync.Mutex // guards anonTypeCount and anonFuncCount only
 	anonTypeCount              map[*model.PackageID]int
 	anonFuncCount              map[*model.PackageID]int
 	packageInterner            *model.PackageIDInterner
-	symbolSpaces               []*model.SymbolSpace
-	symbolSpacesMu             sync.RWMutex // we need this because desugaring add new init functions concurrently we shouldn't need this if the spaces are scoped to the module, may be we should do that?
+	packageSpacesMu            sync.Mutex // guards packageSpaces only
+	packageSpaces              map[model.PackageIdentifier][]*model.SymbolSpace
 	typeEnv                    semtypes.Env
 	underlyingSymbol           sync.Map
 	functionSignatures         functionsignatures.Store
@@ -218,22 +219,31 @@ func (c *CompilerEnvironment) DiagnosticEnv() *diagnostics.DiagnosticEnv {
 	return c.diagnosticContext
 }
 
+// NewSymbolSpace touches no shared state, so concurrent callers (e.g. per-module compilation) need no lock.
 func (c *CompilerEnvironment) NewSymbolSpace(packageID model.PackageID) *model.SymbolSpace {
-	c.symbolSpacesMu.Lock()
-	space := model.NewSymbolSpaceInner(packageID, len(c.symbolSpaces))
-	c.symbolSpaces = append(c.symbolSpaces, space)
-	c.symbolSpacesMu.Unlock()
-	return space
+	return model.NewSymbolSpaceInner(packageID)
+}
+
+// RegisterPackageSpace makes a space discoverable via FindSymbol. Only call for module-level/deserialized
+// spaces — function/block scopes are never FindSymbol targets and should stay off this lock.
+func (c *CompilerEnvironment) RegisterPackageSpace(space *model.SymbolSpace) {
+	c.packageSpacesMu.Lock()
+	c.packageSpaces[space.Pkg] = append(c.packageSpaces[space.Pkg], space)
+	c.packageSpacesMu.Unlock()
 }
 
 func (c *CompilerEnvironment) NewModuleScope(pkg model.PackageID, prefixes map[string]model.ExportedSymbolSpace) *model.ModuleScope {
 	if prefixes == nil {
 		prefixes = make(map[string]model.ExportedSymbolSpace)
 	}
+	main := c.NewSymbolSpace(pkg)
+	annotation := c.NewSymbolSpace(pkg)
+	c.RegisterPackageSpace(main)
+	c.RegisterPackageSpace(annotation)
 	return &model.ModuleScope{
-		Main:       c.NewSymbolSpace(pkg),
+		Main:       main,
 		Prefix:     prefixes,
-		Annotation: c.NewSymbolSpace(pkg),
+		Annotation: annotation,
 	}
 }
 
@@ -256,33 +266,23 @@ func (c *CompilerEnvironment) NewBlockScope(parent model.Scope, pkg model.Packag
 }
 
 func (c *CompilerEnvironment) GetSymbol(symbol model.SymbolRef) model.Symbol {
-	return c.symbolSpace(symbol.SpaceIndex).SymbolAt(symbol.Index)
-}
-
-func (c *CompilerEnvironment) symbolSpace(index int) *model.SymbolSpace {
-	c.symbolSpacesMu.RLock()
-	defer c.symbolSpacesMu.RUnlock()
-	// We treat 0,0 as empty space
-	return c.symbolSpaces[index-1]
+	return symbol.Space.SymbolAt(symbol.Index)
 }
 
 func (c *CompilerEnvironment) SymbolPackage(symbol model.SymbolRef) model.PackageIdentifier {
 	if symbol.IsEmpty() {
 		panic("cannot get package for empty symbol ref")
 	}
-	return c.symbolSpace(symbol.SpaceIndex).Pkg
+	return symbol.Space.Pkg
 }
 
 // FindSymbol is used for symbol serialization, and is not meant to be used by other parts. This lookup is
 // potentially very slow and you should have a symbolRef in the AST for anywhere that you may need a symbol
 func (c *CompilerEnvironment) FindSymbol(pkg model.PackageIdentifier, name string) (model.SymbolRef, bool) {
-	c.symbolSpacesMu.RLock()
-	spaces := append([]*model.SymbolSpace(nil), c.symbolSpaces...)
-	c.symbolSpacesMu.RUnlock()
+	c.packageSpacesMu.Lock()
+	spaces := append([]*model.SymbolSpace(nil), c.packageSpaces[pkg]...)
+	c.packageSpacesMu.Unlock()
 	for _, space := range spaces {
-		if space.Pkg != pkg {
-			continue
-		}
 		if ref, ok := space.GetSymbol(name); ok {
 			return ref, true
 		}
@@ -291,7 +291,7 @@ func (c *CompilerEnvironment) FindSymbol(pkg model.PackageIdentifier, name strin
 }
 
 func (c *CompilerEnvironment) AddSymbolToSameSpace(ref model.SymbolRef, name string, symbol model.Symbol) model.SymbolRef {
-	space := c.symbolSpace(ref.SpaceIndex)
+	space := ref.Space
 	space.AddSymbol(name, symbol)
 	newRef, _ := space.GetSymbol(name)
 	return newRef
@@ -300,12 +300,12 @@ func (c *CompilerEnvironment) AddSymbolToSameSpace(ref model.SymbolRef, name str
 // CreateNarrowedSymbol create a narrowed symbol for the given baseRef symbol. IMPORTANT: baseRef must be the actual symbol
 // not a narrowed symbol.
 func (c *CompilerEnvironment) CreateNarrowedSymbol(baseRef model.SymbolRef) model.SymbolRef {
-	symbolSpace := c.symbolSpace(baseRef.SpaceIndex)
+	symbolSpace := baseRef.Space
 	underlyingSymbolCopy := c.GetSymbol(baseRef).Copy()
 	symbolIndex := symbolSpace.AppendSymbol(underlyingSymbolCopy)
 	narrowedSymbol := model.SymbolRef{
-		SpaceIndex: baseRef.SpaceIndex,
-		Index:      symbolIndex,
+		Space: symbolSpace,
+		Index: symbolIndex,
 	}
 	c.underlyingSymbol.Store(narrowedSymbol, baseRef)
 	return narrowedSymbol
@@ -478,6 +478,7 @@ func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEn
 		anonTypeCount:              make(map[*model.PackageID]int),
 		anonFuncCount:              make(map[*model.PackageID]int),
 		packageInterner:            model.DefaultPackageIDInterner,
+		packageSpaces:              make(map[model.PackageIdentifier][]*model.SymbolSpace),
 		functionSignatures:         functionsignatures.NewStore(),
 		distinctTypes:              newDistinctTypeTracker(),
 		langLibDistinctTypeSymbols: newLangLibDistinctTypeRegistry(),
@@ -499,14 +500,18 @@ const (
 )
 
 func (c *CompilerEnvironment) GetNextAnonymousFunctionKey(packageID *model.PackageID) string {
+	c.anonCountMu.Lock()
 	nextValue := c.anonFuncCount[packageID]
 	c.anonFuncCount[packageID] = nextValue + 1
+	c.anonCountMu.Unlock()
 	return anonPrefix + "Func$_" + strconv.Itoa(nextValue)
 }
 
 func (c *CompilerEnvironment) GetNextAnonymousTypeKey(packageID *model.PackageID) string {
+	c.anonCountMu.Lock()
 	nextValue := c.anonTypeCount[packageID]
 	c.anonTypeCount[packageID] = nextValue + 1
+	c.anonCountMu.Unlock()
 	if packageID != nil && model.ANNOTATIONS_PKG != packageID {
 		return builtinAnonType + "_" + strconv.Itoa(nextValue)
 	}

@@ -119,7 +119,7 @@ func selfFieldLockEntry(a analyzer, access *ast.BLangFieldBaseAccess) (string, m
 			return "", model.SymbolRef{}, false
 		}
 		pkg := a.ctx().SymbolPackage(field.Symbol())
-		return classBodyFieldLockKey(pkg, cls, field.Symbol(), fieldName), field.Symbol(), true
+		return classBodyFieldLockKey(pkg, cls, fieldName), field.Symbol(), true
 	}
 	return "", model.SymbolRef{}, false
 }
@@ -133,14 +133,12 @@ func classFieldLockKey(pkg model.PackageIdentifier, className, fieldName string)
 }
 
 // classBodyFieldLockKey returns a per-field lock key for either a class or a
-// service. For classes it uses the class's module-level name; for services
-// (which have no name) it derives a unique key from the field's SymbolRef,
-// which is already unique within the package.
-func classBodyFieldLockKey(pkg model.PackageIdentifier, cls *enclosingClassBody, fieldRef model.SymbolRef, fieldName string) string {
+// service. Services have no name, so it falls back to the source position.
+func classBodyFieldLockKey(pkg model.PackageIdentifier, cls *enclosingClassBody, fieldName string) string {
 	if cls.name != "" {
 		return classFieldLockKey(pkg, cls.name, fieldName)
 	}
-	return fmt.Sprintf("%s/%s:$service.%d.%d.%s", pkg.Organization, pkg.Package, fieldRef.SpaceIndex, fieldRef.Index, fieldName)
+	return fmt.Sprintf("%s/%s:$service.%s.%s", pkg.Organization, pkg.Package, cls.pos.String(), fieldName)
 }
 
 // validateLockStmt determines the restricted variable and validate semantics of a lock statment.

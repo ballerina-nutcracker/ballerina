@@ -97,70 +97,70 @@ func (cfg *PackageCFG) allFunctionCfgs(yield func(model.SymbolRef, *functionCFG)
 	}
 }
 
+// cfgTask is one function/method whose CFG builds independently of all others.
+// classRef is the zero SymbolRef for functions/service methods (cfg.funcCfgs),
+// or the owning class's symbol for class methods (cfg.methodCfgs[classRef]).
+type cfgTask struct {
+	ref      model.SymbolRef
+	body     ast.FunctionBodyNode
+	classRef model.SymbolRef
+}
+
 // Build creates the control flow graph for the given pkg
 func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	cfg := &PackageCFG{
 		funcCfgs:   make(map[model.SymbolRef]functionCFG),
 		methodCfgs: make(map[model.SymbolRef]map[model.SymbolRef]functionCFG),
 	}
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	for _, fn := range pkg.Functions {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			fnCfg := analyzeFunction(ctx, fn)
-			mu.Lock()
-			cfg.funcCfgs[fn.Symbol()] = fnCfg
-			mu.Unlock()
-		}()
-	}
-	if pkg.InitFunction != nil {
-		wg.Add(1)
-		initFn := pkg.InitFunction
-		go func() {
-			defer wg.Done()
-			fnCfg := analyzeFunction(ctx, initFn)
-			mu.Lock()
-			cfg.funcCfgs[initFn.Symbol()] = fnCfg
-			mu.Unlock()
-		}()
-	}
-	analyzeClassBody := func(dest map[model.SymbolRef]functionCFG, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
-		analyzeMethod := func(sym model.SymbolRef, body ast.FunctionBodyNode) {
-			wg.Go(func() {
-				fnCfg := analyzeFunctionBody(ctx, body)
-				mu.Lock()
-				dest[sym] = fnCfg
-				mu.Unlock()
-			})
-		}
+	var tasks []cfgTask
+	addMethods := func(classRef model.SymbolRef, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
 		if initFn != nil {
-			analyzeMethod(initFn.Symbol(), initFn.Body)
+			tasks = append(tasks, cfgTask{ref: initFn.Symbol(), body: initFn.Body, classRef: classRef})
 		}
 		for _, method := range methods {
-			analyzeMethod(method.Symbol(), method.Body)
+			tasks = append(tasks, cfgTask{ref: method.Symbol(), body: method.Body, classRef: classRef})
 		}
 		for _, rm := range resourceMethods {
-			analyzeMethod(rm.Symbol(), rm.Body)
+			tasks = append(tasks, cfgTask{ref: rm.Symbol(), body: rm.Body, classRef: classRef})
 		}
+	}
+	for _, fn := range pkg.Functions {
+		tasks = append(tasks, cfgTask{ref: fn.Symbol(), body: fn.Body})
+	}
+	if pkg.InitFunction != nil {
+		tasks = append(tasks, cfgTask{ref: pkg.InitFunction.Symbol(), body: pkg.InitFunction.Body})
 	}
 	for i := range pkg.ClassDefinitions {
 		c := pkg.ClassDefinitions[i]
-		methodCfgs := make(map[model.SymbolRef]functionCFG)
-		cfg.methodCfgs[c.Symbol()] = methodCfgs
-		analyzeClassBody(methodCfgs, c.InitFunction, c.Methods, c.ResourceMethods)
+		cfg.methodCfgs[c.Symbol()] = make(map[model.SymbolRef]functionCFG)
+		addMethods(c.Symbol(), c.InitFunction, c.Methods, c.ResourceMethods)
 	}
 	for i := range pkg.Services {
 		s := pkg.Services[i]
-		analyzeClassBody(cfg.funcCfgs, s.InitFunction, s.Methods, s.ResourceMethods)
+		addMethods(model.SymbolRef{}, s.InitFunction, s.Methods, s.ResourceMethods)
+	}
+
+	// Each goroutine writes only to its own slice slot, so no lock is needed
+	// here; results are merged into cfg's maps sequentially below.
+	results := make([]functionCFG, len(tasks))
+	var wg sync.WaitGroup
+	for i, t := range tasks {
+		wg.Add(1)
+		go func(i int, t cfgTask) {
+			defer wg.Done()
+			results[i] = analyzeFunctionBody(ctx, t.body)
+		}(i, t)
 	}
 	wg.Wait()
-	return cfg
-}
 
-func analyzeFunction(ctx *context.CompilerContext, fn *ast.BLangFunction) functionCFG {
-	return analyzeFunctionBody(ctx, fn.Body)
+	for i, t := range tasks {
+		if t.classRef.IsEmpty() {
+			cfg.funcCfgs[t.ref] = results[i]
+		} else {
+			cfg.methodCfgs[t.classRef][t.ref] = results[i]
+		}
+	}
+	return cfg
 }
 
 func analyzeFunctionBody(ctx *context.CompilerContext, body ast.FunctionBodyNode) functionCFG {
