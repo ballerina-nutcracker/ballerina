@@ -1,0 +1,197 @@
+(checkedArgs
+  (bb0 () ()
+    (invocation sink (
+      (mapping-constructor-expr
+        (mapping-spread-field
+          (checked-expr
+            (invocation produce (
+              (literal A)
+              (simple-var-ref bad)))))
+        (key-value
+          (literal z)
+          (literal 2)))
+      (mapping-constructor-expr
+        (mapping-spread-field
+          (checked-expr
+            (invocation produce (
+              (literal B)
+              (literal false)))))
+        (key-value
+          (literal z)
+          (literal 3)))))
+  )
+)
+(checkedSpread
+  (bb0 () ()
+    (mapping-constructor-expr
+      (mapping-spread-field
+        (checked-expr
+          (invocation produce (
+            (literal check)
+            (simple-var-ref bad)))))
+      (key-value
+        (literal z)
+        (literal 1)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation checkedSpread (
+          (literal false))))))
+    (var-def
+      (variable failed (type
+        (union-type
+          (user-defined-type P3)
+          (error-type))) (expr
+        (invocation checkedSpread (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref failed)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation checkedArgs (
+          (literal false))))))
+    (var-def
+      (variable failedArgs (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (invocation checkedArgs (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref failedArgs)
+          (error-type)))))
+    (var-def
+      (variable trapped (type
+        (union-type
+          (user-defined-type P3)
+          (error-type))) (expr
+        (trap-expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (check-panicked-expr
+                (invocation produce (
+                  (literal trap)
+                  (literal true)))))
+            (key-value
+              (literal z)
+              (literal 4)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref trapped)
+          (error-type)))))
+    (var-def
+      (variable trappedPanic (type
+        (union-type
+          (user-defined-type P3)
+          (error-type))) (expr
+        (trap-expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (invocation panicking ()))
+            (key-value
+              (literal z)
+              (literal 5)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref trappedPanic)
+          (error-type)))))
+    (var-def
+      (variable trappedOk (type
+        (union-type
+          (user-defined-type P3)
+          (error-type))) (expr
+        (trap-expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (check-panicked-expr
+                (invocation produce (
+                  (literal ok)
+                  (literal false)))))
+            (key-value
+              (literal z)
+              (literal 6)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref trappedOk))))
+    (var-def
+      (variable trappedArg (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (invocation sink (
+            (mapping-constructor-expr
+              (mapping-spread-field
+                (check-panicked-expr
+                  (invocation produce (
+                    (literal arg)
+                    (literal true)))))
+              (key-value
+                (literal z)
+                (literal 7)))
+            (mapping-constructor-expr
+              (key-value
+                (literal x)
+                (literal 0))
+              (key-value
+                (literal y)
+                (literal 0))
+              (key-value
+                (literal z)
+                (literal 0)))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref trappedArg)
+          (error-type)))))
+  )
+)
+(panicking
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal panicking operand))))
+  )
+)
+(produce
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (literal eval )
+          (simple-var-ref tag)))))
+    (return
+      (ternary-expr
+        (simple-var-ref bad)
+        (error-constructor-expr (
+          (binary-expr +
+            (literal bad )
+            (simple-var-ref tag))))
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))
+          (key-value
+            (literal y)
+            (literal 2)))))
+  )
+)
+(sink
+  (bb0 () ()
+    (binary-expr +
+      (field-based-access z
+        (simple-var-ref first))
+      (field-based-access z
+        (simple-var-ref second)))
+  )
+)

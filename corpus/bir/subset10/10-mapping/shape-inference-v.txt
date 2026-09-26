@@ -1,0 +1,80 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| never... |}{}
+    empty = %1;
+    %3 = println(empty) -> bb1;
+  }
+  bb1 {
+    %4 = empty is {| never... |}
+    %5 = %4;
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = newMap {| never... |}{}
+    nothing = %7;
+    %9 = newMap {| never... |}{...nothing}
+    emptySpread = %9;
+    %11 = println(emptySpread) -> bb3;
+  }
+  bb3 {
+    %12 = emptySpread is {| never... |}
+    %13 = %12;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    %15 = ConstantLoad kind
+    %16 = ConstantLoad a
+    %17 = newMap {| kind: string, never... |}{%15=%16}
+    literal = %17;
+    %19 = literal is {| kind: string, never... |}
+    %20 = %19;
+    %21 = println(%20) -> bb5;
+  }
+  bb5 {
+    %22 = ConstantLoad kind
+    %23 = ConstantLoad a
+    %24 = newMap {| kind: "a", never... |}{%22=%23}
+    tagged = %24;
+    %26 = newMap {| kind: "a", never... |}{...tagged}
+    spreadSingleton = %26;
+    %28 = spreadSingleton is {| kind: "a", never... |}
+    %29 = %28;
+    %30 = println(%29) -> bb6;
+  }
+  bb6 {
+    %31 = ConstantLoad x
+    %32 = ConstantLoad 1
+    %33 = ConstantLoad y
+    %34 = ConstantLoad 2
+    %35 = newMap {| x: int, y: int, never... |}{%31=%32, %33=%34}
+    p = %35;
+    %37 = ConstantLoad tag
+    %38 = ConstantLoad t
+    %39 = newMap {| tag: string, x: int, y: int, never... |}{%37=%38, ...p}
+    withReadonly = %39;
+    %41 = println(withReadonly) -> bb7;
+  }
+  bb7 {
+    %42 = withReadonly is {| tag: string, x: int, y: int, never... |}
+    %43 = %42;
+    %44 = println(%43) -> bb8;
+  }
+  bb8 {
+    %45 = ConstantLoad id
+    %46 = ConstantLoad 7
+    %47 = ConstantLoad name
+    %48 = ConstantLoad a
+    %49 = newMap {| id: int, name: string, never... |}{%45=%46, %47=%48}
+    src = %49;
+    %51 = newMap {| id: int, name: string, never... |}{...src}
+    copied = %51;
+    %53 = ConstantLoad 8
+    %54 = ConstantLoad id
+    copied[%54] = %53;
+    %55 = println(copied) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}

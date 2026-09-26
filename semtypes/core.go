@@ -59,7 +59,7 @@ func Diff(t1, t2 SemType) SemType {
 	if IsNever(t1) {
 		return t1
 	}
-	if some2 == 0 && all2 == valueTypeMask {
+	if some2 == 0 && all2 == allMask {
 		return Never
 	}
 	all := all1 & ^(all2 | some2)
@@ -164,7 +164,7 @@ func Intersect(t1, t2 SemType) SemType {
 		if all1 == 0 {
 			return t1
 		}
-		if all1 == valueTypeMask {
+		if all1 == allMask {
 			return t2
 		}
 	}
@@ -172,7 +172,7 @@ func Intersect(t1, t2 SemType) SemType {
 		if all2 == 0 {
 			return t2
 		}
-		if all2 == valueTypeMask {
+		if all2 == allMask {
 			return t1
 		}
 	}

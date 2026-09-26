@@ -1,0 +1,53 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable nested (type
+        (user-defined-type Outer)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal middle)
+            (mapping-constructor-expr
+              (key-value
+                (literal leaf)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal value)
+                    (literal 1))))
+              (key-value
+                (literal weight)
+                (literal 2))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nested))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access value
+            (field-based-access leaf
+              (field-based-access middle
+                (simple-var-ref nested))))
+          (value-type float)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access weight
+            (field-based-access middle
+              (simple-var-ref nested)))
+          (value-type decimal)))))
+    (var-def
+      (variable p (type
+        (user-defined-type Pair)) (expr
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (literal 1))
+              (key-value
+                (literal b)
+                (literal 2))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref p))))
+  )
+)
