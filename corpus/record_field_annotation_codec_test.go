@@ -56,7 +56,7 @@ func TestRecordFieldAnnotationsSurviveBIRRoundtrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BIR serialization failed: %v", err)
 	}
-	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	deserialized, err := bircodec.Unmarshal(context.NewCompilerContext(freshEnv), serialized)
 	if err != nil {
 		t.Fatalf("BIR deserialization failed: %v", err)

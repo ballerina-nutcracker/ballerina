@@ -187,7 +187,10 @@ func extractFieldAssignment(node ast.Node) string {
 	return ""
 }
 
-func analyzeUninitializedGlobalVars(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func analyzeUninitializedGlobalVars(
+	ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Uninitialized Global Variable Analysis", "")
+	defer span.End()
 	globalSymbols := make(map[model.SymbolRef]bool)
 	var varsNeedingInit []string
 	for i := range pkg.GlobalVars {
@@ -239,42 +242,50 @@ func analyzeUninitializedGlobalVars(ctx *context.CompilerContext, pkg *ast.BLang
 	}
 }
 
-func analyzeUninitializedFields(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func analyzeUninitializedFields(
+	ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Uninitialized Field Analysis", "")
+	defer span.End()
 	for i := range pkg.ClassDefinitions {
 		classDef := pkg.ClassDefinitions[i]
-		var fieldsNeedingInit []string
+		classSpan := span.StartChild("Uninitialized Fields", traceIdentity(classDef.Name))
+		analyzeClassUninitializedFields(ctx, classDef, cfg)
+		classSpan.End()
+	}
+}
+
+func analyzeClassUninitializedFields(
+	ctx *context.CompilerContext, classDef *ast.BLangClassDefinition, cfg *PackageCFG) {
+	var fieldsNeedingInit []string
+	for _, field := range classDef.Fields {
+		if field.GetInitialExpression() == nil {
+			fieldsNeedingInit = append(fieldsNeedingInit, field.GetName().GetValue())
+		}
+	}
+	if len(fieldsNeedingInit) == 0 {
+		return
+	}
+	if classDef.InitFunction == nil {
+		reportUninitializedFields(ctx, classDef, fieldsNeedingInit)
+		return
+	}
+	fnCfg, ok := cfg.lookupFunctionCfg(classDef.InitFunction.Symbol())
+	if !ok {
+		ctx.InternalError("init function CFG not found", classDef.InitFunction.GetPosition())
+		return
+	}
+	analyzer := newUninitAnalyzer(&fnCfg, fieldsNeedingInit, extractFieldAssignment)
+	analyzer.analyze()
+	reportUninitializedFields(ctx, classDef, analyzer.uninitializedNames())
+}
+
+func reportUninitializedFields(
+	ctx *context.CompilerContext, classDef *ast.BLangClassDefinition, names []string) {
+	for _, name := range names {
 		for _, field := range classDef.Fields {
-			if field.GetInitialExpression() == nil {
-				fieldsNeedingInit = append(fieldsNeedingInit, field.GetName().GetValue())
-			}
-		}
-		if len(fieldsNeedingInit) == 0 {
-			continue
-		}
-		if classDef.InitFunction == nil {
-			for _, name := range fieldsNeedingInit {
-				for _, field := range classDef.Fields {
-					if field.GetName().GetValue() == name {
-						ctx.SemanticError("field '"+name+"' is not initialized", field.GetPosition())
-						break
-					}
-				}
-			}
-			continue
-		}
-		fnCfg, ok := cfg.lookupFunctionCfg(classDef.InitFunction.Symbol())
-		if !ok {
-			ctx.InternalError("init function CFG not found", classDef.InitFunction.GetPosition())
-			continue
-		}
-		analyzer := newUninitAnalyzer(&fnCfg, fieldsNeedingInit, extractFieldAssignment)
-		analyzer.analyze()
-		for _, name := range analyzer.uninitializedNames() {
-			for _, field := range classDef.Fields {
-				if field.GetName().GetValue() == name {
-					ctx.SemanticError("field '"+name+"' is not initialized", field.GetPosition())
-					break
-				}
+			if field.GetName().GetValue() == name {
+				ctx.SemanticError("field '"+name+"' is not initialized", field.GetPosition())
+				break
 			}
 		}
 	}

@@ -131,6 +131,7 @@ func (w *WorkspaceProject) Duplicate() Project {
 	newEnv := NewProjectEnvironmentBuilder(origEnv.fs()).
 		WithRepositories(newRepos).
 		WithBuildOptions(duplicateBuildOptions).
+		WithCompilerEnvironment(origEnv.compilerEnvironment()).
 		Build()
 
 	newWorkspace := newWorkspaceProject(w.sourceRoot, duplicateBuildOptions, newEnv)

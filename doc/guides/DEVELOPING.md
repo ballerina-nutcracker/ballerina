@@ -21,17 +21,64 @@ go build -tags debug -o bal-debug ./cli/cmd
 | `--dump-cfg` | Dump the control flow graph | |
 | `--dump-bir` | Dump the generated BIR | |
 | `--format dot` | Render `--dump-cfg` output as Graphviz `.dot` | |
-| `--stats` / `--stats-oneline` | Print per-stage compilation timing | |
 | `--dump-tokens` | Dump lexer tokens | yes |
 | `--dump-st` | Dump the syntax tree | yes |
 | `--trace-recovery` | Trace parser error recovery | yes |
 | `--log-file <path>` | Write debug output to a file instead of stdout | yes |
+| `--trace[=<path>]` | Write frontend compilation traces (`bal run` only) | yes |
+| `--nested` | Record the child spans within each traced phase (requires `--trace`) | yes |
 
 E.g., visualize a CFG:
 
 ```bash
 ./bal run --dump-cfg --format dot corpus/bal/subset1/01-boolean/equal1-v.bal | dot -Tpng -o cfg.png
 ```
+
+## Frontend tracing
+
+A debug build's `bal run` can record every frontend invocation (parsing, AST
+building, symbol and type resolution, semantic and CFG analysis, desugaring, and
+BIR generation) as [Chrome Trace Event](https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU) JSON:
+
+```bash
+# writes traces.json in the current directory
+./bal-debug run --trace corpus/bal/subset1/01-boolean/equal1-v.bal
+
+# custom path, relative to the process working directory or absolute
+./bal-debug run --trace=out/run.json myproject
+
+# one span per traced child operation inside each phase, not just the phases
+./bal-debug run --trace --nested myproject
+```
+
+The trace is written after BIR generation and before the program runs, so a
+failed write stops the run. Open the file directly in
+[Perfetto](https://ui.perfetto.dev) or `chrome://tracing`.
+
+By default the recording holds one span per phase per package. `--nested` adds
+the children each phase starts: a per-file symbol resolution pass, a
+per-definition type resolution, a per-function CFG, a class and its methods
+during desugaring and BIR generation, and so on. Every span carries its own
+identity in `args.span_id`, and every non-root span names its parent in
+`args.parent_id`.
+
+Nesting is off by default because it is not free. A phase's children are
+allocated and recorded only when it is on, and a large build produces orders of
+magnitude more spans: a 21-module package goes from hundreds of spans to about a
+million, producing a 160 MB document that is too large to inspect by eye. Reach
+for `--nested` when a phase is slow and the question is which definitions made it
+slow.
+
+Tracks carry the rendering. A child that runs serially inside its parent is
+placed on the parent's track, so Perfetto draws it nested inside; a fully
+sequential phase renders its whole subtree on one track. Children that run
+concurrently take tracks of their own, and their parentage survives only in
+`args.parent_id`. A slice is never drawn inside a slice that is not a genuine
+ancestor of it, so nesting in the viewer is always real.
+
+Packages with non-embedded native Go dependencies re-exec into a custom
+interpreter, whose spans could never reach this recording, so `--trace` is
+rejected for them.
 
 ## Profiling
 

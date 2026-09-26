@@ -64,7 +64,7 @@ func (p *enabledProfiler) Start() error {
 		}
 		p.cpuFile = f
 		if err := pprof.StartCPUProfile(f); err != nil {
-			f.Close()
+			_ = f.Close()
 			return fmt.Errorf("could not start CPU profile: %w", err)
 		}
 		fmt.Fprintf(os.Stderr, "CPU profiling to %s\n", p.cpuProf)
@@ -99,20 +99,14 @@ func (p *enabledProfiler) Start() error {
 func (p *enabledProfiler) Stop() error {
 	if p.cpuFile != nil {
 		pprof.StopCPUProfile()
-		p.cpuFile.Close()
+		_ = p.cpuFile.Close()
 		fmt.Fprintf(os.Stderr, "CPU profile written to %s\n", p.cpuProf)
 	}
 
 	if p.memProf != "" {
-		f, err := os.Create(p.memProf)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "could not create memory profile: %v\n", err)
+		if err := writeMemProfile(p.memProf); err != nil {
+			fmt.Fprintf(os.Stderr, "could not write memory profile: %v\n", err)
 		} else {
-			runtime.GC()
-			if err := pprof.WriteHeapProfile(f); err != nil {
-				fmt.Fprintf(os.Stderr, "could not write memory profile: %v\n", err)
-			}
-			f.Close()
 			fmt.Fprintf(os.Stderr, "Memory profile written to %s\n", p.memProf)
 		}
 	}
@@ -124,4 +118,17 @@ func (p *enabledProfiler) Stop() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	return p.server.Shutdown(ctx)
+}
+
+func writeMemProfile(path string) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	runtime.GC()
+	if err := pprof.WriteHeapProfile(f); err != nil {
+		_ = f.Close()
+		return err
+	}
+	return f.Close()
 }

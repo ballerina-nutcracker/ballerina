@@ -3676,35 +3676,6 @@ func TestBalBuildNoHomeNoBalEnv(t *testing.T) {
 	}
 }
 
-// TestBalBuildStatsFlags covers --stats and --stats-oneline: both must
-// print a per-stage compilation timing report to stderr without affecting
-// the build's own success or output path.
-func TestBalBuildStatsFlags(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
-	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
-
-	for _, flag := range []string{"--stats", "--stats-oneline"} {
-		t.Run(flag, func(t *testing.T) {
-			t.Parallel()
-			stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-				[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, flag)
-			if exitCode != 0 {
-				t.Fatalf("bal build %s failed: exit=%d\nstdout:\n%s\nstderr:\n%s", flag, exitCode, stdout, stderr)
-			}
-			if !strings.Contains(stderr, "Compilation Stats:") {
-				t.Errorf("expected a compilation stats report in stderr for %s, got:\n%s", flag, stderr)
-			}
-			if !strings.Contains(stdout, "Created ") {
-				t.Errorf("expected %s to still report a successful build, got stdout:\n%s", flag, stdout)
-			}
-		})
-	}
-}
-
 // TestBalBuildRuntimeStubPathOverride covers the RuntimeStubPath link-time
 // override (set via -ldflags -X main.RuntimeStubPath=..., not a bal build
 // flag): when it points at an existing file, that file is used as the

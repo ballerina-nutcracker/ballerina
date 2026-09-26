@@ -14,25 +14,20 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package projects
+import ballerina/io;
 
-import (
-	"testing"
+// The method body fails during BIR generation: an xml filler is not
+// materializable yet, so the method transformation returns without a function.
+class Counter {
+    int n = 0;
 
-	compilercontext "github.com/ballerina-nutcracker/ballerina/context"
-	"github.com/ballerina-nutcracker/ballerina/semtypes"
-)
+    function add() returns int {
+        xml[2] pending = [];
+        return pending.length();
+    }
+}
 
-func TestNewModuleCompilerContextInitializesStats(t *testing.T) {
-	env := compilercontext.NewCompilerEnvironment(semtypes.CreateTypeEnv(), true)
-	name := NewDefaultModuleName(NewPackageName("module"))
-
-	compilerCtx := newModuleCompilerContext(env, name)
-	stats := compilerCtx.GetModuleStats()
-	if stats == nil {
-		t.Fatal("expected module stats")
-	}
-	if stats.ModuleName != name.String() {
-		t.Fatalf("module name = %q, want %q", stats.ModuleName, name.String())
-	}
+public function main() {
+    Counter counter = new;
+    io:println(counter.add());
 }

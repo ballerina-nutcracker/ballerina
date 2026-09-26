@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "cli_trace_birgen_failure"
+version = "0.1.0"
