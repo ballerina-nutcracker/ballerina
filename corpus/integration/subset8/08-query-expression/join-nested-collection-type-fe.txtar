@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-fatal[UNIMPLEMENTED_ERROR]: query from clause currently supports only list or map collections
+fatal[UNIMPLEMENTED_ERROR]: query expression collections currently support only string, xml, list, or map values
   --> join-nested-collection-type-fe.bal:37:13
    |
 37 |             join var owner in person.id

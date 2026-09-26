@@ -1,0 +1,20 @@
+-- stdout --
+30
+true
+iterator completion failed
+30
+true
+0
+true
+0
+true
+9
+true
+[21,11,1,22,12,2,30]
+first join completion failed
+10
+true
+3
+30
+true
+-- stderr --

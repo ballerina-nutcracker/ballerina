@@ -2027,8 +2027,15 @@ func (n *nodeBuilder) createActionOrExpressionInner(actionOrExpression st.Node) 
 		return &bLVarRef, nil
 	}
 	if actionOrExpression.Kind() == st.BRACED_EXPRESSION {
+		inner, err := n.createActionOrExpressionInner(actionOrExpression.(*st.BracedExpressionNode).Expression())
+		if err != nil {
+			return nil, err
+		}
+		if action, ok := inner.(ast.BLangAction); ok {
+			return action, nil
+		}
 		group := ast.BLangGroupExpr{}
-		expr, ok := n.transformSyntaxNode(actionOrExpression).(ast.BLangExpression)
+		expr, ok := inner.(ast.BLangExpression)
 		if !ok {
 			return nil, fmt.Errorf("braced syntax node %T transformed to non-expression node", actionOrExpression)
 		}
@@ -3191,6 +3198,7 @@ func (n *nodeBuilder) transformLetVariableDeclaration(letVariableDeclarationNode
 	if annotations.Size() > 0 {
 		n.unimplemented("let variable annotations are not yet supported", annotations.Get(0))
 	}
+	varDef.Var.SetFinal()
 	return varDef
 }
 
@@ -4193,12 +4201,15 @@ func (n *nodeBuilder) transformQueryConstructType(queryConstructTypeNode *st.Que
 
 func (n *nodeBuilder) transformFromClause(fromClauseNode *st.FromClauseNode) ast.BLangNode {
 	bindingPatternNode := fromClauseNode.TypedBindingPattern()
-	return ast.NewBLangFromClause(
+	clause := ast.NewBLangFromClause(
 		n.getPosition(fromClauseNode),
-		n.createExpression(fromClauseNode.Expression()),
+		n.createActionOrExpression(fromClauseNode.Expression()),
 		n.createBLangVarDef(n.getPosition(bindingPatternNode), bindingPatternNode, nil, nil),
 		isDeclaredWithVar(bindingPatternNode.TypeDescriptor()),
 	)
+
+	clause.VariableDefinitionNode.Var.SetFinal()
+	return clause
 }
 
 func (n *nodeBuilder) transformWhereClause(whereClauseNode *st.WhereClauseNode) ast.BLangNode {
@@ -4226,7 +4237,7 @@ func (n *nodeBuilder) transformJoinClause(joinClauseNode *st.JoinClauseNode) ast
 	if onClauseNode := joinClauseNode.JoinOnCondition(); onClauseNode != nil {
 		onClause = n.transformOnClause(onClauseNode).(*ast.BLangOnClause)
 	}
-	return ast.NewBLangJoinClause(
+	clause := ast.NewBLangJoinClause(
 		n.getPosition(joinClauseNode),
 		n.createExpression(joinClauseNode.Expression()),
 		n.createBLangVarDef(n.getPosition(bindingPatternNode), bindingPatternNode, nil, nil),
@@ -4234,6 +4245,9 @@ func (n *nodeBuilder) transformJoinClause(joinClauseNode *st.JoinClauseNode) ast
 		joinClauseNode.OuterKeyword() != nil,
 		onClause,
 	)
+
+	clause.VariableDefinitionNode.Var.SetFinal()
+	return clause
 }
 
 func (n *nodeBuilder) transformOnClause(onClauseNode *st.OnClauseNode) ast.BLangNode {
@@ -4258,7 +4272,7 @@ func (n *nodeBuilder) transformQueryPipeline(queryPipelineNode *st.QueryPipeline
 }
 
 func (n *nodeBuilder) transformSelectClause(selectClauseNode *st.SelectClauseNode) ast.BLangNode {
-	return ast.NewBLangSelectClause(n.getPosition(selectClauseNode), n.createExpression(selectClauseNode.Expression()))
+	return ast.NewBLangSelectClause(n.getPosition(selectClauseNode), n.createActionOrExpression(selectClauseNode.Expression()))
 }
 
 func (n *nodeBuilder) transformCollectClause(collectClauseNode *st.CollectClauseNode) ast.BLangNode {
@@ -4282,25 +4296,7 @@ func (n *nodeBuilder) transformQueryExpression(queryBLangExpression *st.QueryExp
 		}
 	}
 
-	queryPipeline := queryBLangExpression.QueryPipeline()
-	if queryPipeline == nil || queryPipeline.FromClause() == nil {
-		return queryExpr
-	}
-
-	fromClause := n.transformSyntaxNode(queryPipeline.FromClause())
-	queryExpr.AddQueryClause(fromClause)
-
-	intermediateClauses := queryPipeline.IntermediateClauses()
-	for i := 0; i < intermediateClauses.Size(); i++ {
-		clause := intermediateClauses.Get(i)
-		switch clause.Kind() {
-		case st.FROM_CLAUSE, st.JOIN_CLAUSE, st.LET_CLAUSE, st.WHERE_CLAUSE,
-			st.GROUP_BY_CLAUSE, st.LIMIT_CLAUSE, st.ORDER_BY_CLAUSE:
-			queryExpr.AddQueryClause(n.transformSyntaxNode(clause))
-		default:
-			n.cx.Unimplemented("only from + join + let + where + group by + order by + limit + select/collect query clauses are supported for now", n.getPosition(clause))
-		}
-	}
+	n.addQueryPipelineClauses(queryExpr, queryBLangExpression.QueryPipeline())
 
 	resultClause := queryBLangExpression.ResultClause()
 	if resultClause != nil && (resultClause.Kind() == st.SELECT_CLAUSE || resultClause.Kind() == st.COLLECT_CLAUSE) {
@@ -4317,8 +4313,14 @@ func (n *nodeBuilder) transformQueryExpression(queryBLangExpression *st.QueryExp
 }
 
 func (n *nodeBuilder) transformQueryAction(queryActionNode *st.QueryActionNode) ast.BLangNode {
-	n.unimplemented("transformQueryAction unimplemented", queryActionNode)
-	return nil
+	doClause := &ast.BLangDoClause{}
+	doClause.SetPosition(n.getPosition(queryActionNode))
+	if block := queryActionNode.BlockStatement(); block != nil {
+		doClause.Body = n.transformBlockStatement(block).(*ast.BLangBlockStmt)
+	}
+	query := ast.NewBLangQueryAction(n.getPosition(queryActionNode), doClause)
+	n.addQueryPipelineClauses(query, queryActionNode.QueryPipeline())
+	return query
 }
 
 func (n *nodeBuilder) transformIntersectionTypeDescriptor(intersectionTypeDescriptorNode *st.IntersectionTypeDescriptorNode) ast.BLangNode {
@@ -5281,6 +5283,7 @@ func (n *nodeBuilder) transformGroupingKeyVarDeclaration(groupingKeyVarDeclarati
 	simpleVar := n.getBLangVariableNode(groupingKeyVarDeclarationNode.SimpleBindingPattern(), pos)
 	simpleVar.SetPosition(pos)
 	simpleVar.SetInitialExpression(n.createExpression(groupingKeyVarDeclarationNode.Expression()))
+	simpleVar.SetFinal()
 
 	typeDesc := groupingKeyVarDeclarationNode.TypeDescriptor()
 	declaredWithVar := isDeclaredWithVar(typeDesc)
@@ -5954,6 +5957,26 @@ func (n *nodeBuilder) syntaxError(node st.Node) {
 		}
 		for _, diagnostic := range deep.Diagnostics() {
 			n.cx.SyntaxError(diagnosticMessage(diagnostic), n.getPosition(diagnosticNode))
+		}
+	}
+}
+
+func (n *nodeBuilder) addQueryPipelineClauses(query interface{ AddQueryClause(ast.Node) }, queryPipeline *st.QueryPipelineNode) {
+	if queryPipeline == nil || queryPipeline.FromClause() == nil {
+		return
+	}
+	fromClause := n.transformSyntaxNode(queryPipeline.FromClause())
+	query.AddQueryClause(fromClause)
+
+	intermediateClauses := queryPipeline.IntermediateClauses()
+	for i := 0; i < intermediateClauses.Size(); i++ {
+		clause := intermediateClauses.Get(i)
+		switch clause.Kind() {
+		case st.FROM_CLAUSE, st.JOIN_CLAUSE, st.LET_CLAUSE, st.WHERE_CLAUSE,
+			st.GROUP_BY_CLAUSE, st.LIMIT_CLAUSE, st.ORDER_BY_CLAUSE:
+			query.AddQueryClause(n.transformSyntaxNode(clause))
+		default:
+			n.cx.Unimplemented("only from, join, let, where, group by, order by, and limit query clauses are supported for now", n.getPosition(clause))
 		}
 	}
 }

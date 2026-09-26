@@ -1,0 +1,10 @@
+-- stdout --
+returned from do
+returned from nested do
+4
+true
+["before","after","before"]
+true
+["outer before","inner before","inner after","inner before"]
+4
+-- stderr --

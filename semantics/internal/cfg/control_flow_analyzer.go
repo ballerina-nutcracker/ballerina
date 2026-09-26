@@ -289,6 +289,7 @@ func (analyzer *functionControlFlowAnalyzer) addNode(bb bbRef, node ast.Node) {
 
 // analyzeStatement dispatches to the appropriate handler based on statement type
 func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt ast.StatementNode) stmtEffect {
+	analyzer.analyzeQueryActionsInStatement(curBB, stmt)
 	switch s := stmt.(type) {
 	case *ast.BLangReturn:
 		return analyzer.analyzeReturn(curBB, s)
@@ -336,6 +337,46 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 		analyzer.addNode(curBB, stmt)
 		return continueEffect(curBB)
 	}
+}
+
+func (analyzer *functionControlFlowAnalyzer) analyzeQueryActionsInStatement(curBB bbRef, stmt ast.StatementNode) {
+	collector := &queryActionCollector{root: stmt}
+	ast.Walk(collector, stmt.(ast.BLangNode))
+	for _, action := range collector.actions {
+		bodyBB := analyzer.createNewBB()
+		analyzer.addEdge(curBB, bodyBB)
+		bodyEffect := analyzer.analyzeBlockStmt(bodyBB, action.DoClause.Body)
+		if !bodyEffect.isTerminal() {
+			analyzer.addEdge(bodyEffect.nextBB, curBB)
+		}
+	}
+}
+
+type queryActionCollector struct {
+	actions []*ast.BLangQueryAction
+	root    ast.StatementNode
+}
+
+var _ ast.Visitor = &queryActionCollector{}
+
+func (c *queryActionCollector) Visit(node ast.BLangNode) ast.Visitor {
+	if node == nil {
+		return nil
+	}
+	if stmt, ok := node.(ast.StatementNode); ok && stmt != c.root {
+		return nil
+	}
+	if action, ok := node.(*ast.BLangQueryAction); ok {
+		if action.DoClause != nil && action.DoClause.Body != nil {
+			c.actions = append(c.actions, action)
+		}
+		return nil
+	}
+	return c
+}
+
+func (c *queryActionCollector) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
+	return nil
 }
 
 // Terminal statement handlers - these terminate control flow

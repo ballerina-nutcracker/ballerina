@@ -38,6 +38,36 @@ public isolated function indexOf(string str, string substr, int startIndex = 0) 
 #    or `false` otherwise
 public isolated function includes(string str, string substr, int startIndex = 0) returns boolean = external;
 
+# Returns an iterator over the Unicode characters in the string.
+#
+# + str - the string to iterate over
+# + return - a new character iterator
+public isolated function iterator(string str) returns object {
+    public isolated function next() returns record {| Char value; |}?;
+} {
+    return new StringIterator(str);
+}
+
+isolated class StringIterator {
+    private final handle iteratorHandle;
+
+    isolated function init(string str) {
+        self.iteratorHandle = createIteratorHandle(str);
+    }
+
+    public isolated function next() returns record {| Char value; |}? {
+        Char? value = iteratorNext(self.iteratorHandle);
+        if value is () {
+            return;
+        }
+        return {value};
+    }
+}
+
+isolated function createIteratorHandle(string str) returns handle = external;
+
+isolated function iteratorNext(handle iteratorHandle) returns Char? = external;
+
 # Returns a substring of `str`.
 #
 # + str - source string

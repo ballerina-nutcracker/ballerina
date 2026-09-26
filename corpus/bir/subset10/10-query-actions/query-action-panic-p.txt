@@ -1,0 +1,38 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    $desugar$0 = %1;
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 1
+    %6 = newArray [int, never...][%5]{%4}
+    $desugar$1 = %6;
+    %8 = length($desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %8;
+    %10 = ConstantLoad 0
+    $desugar$3 = %10;
+    GOTO bb2;
+  }
+  bb2 {
+    %13 = $desugar$3;
+    %14 = $desugar$2;
+    %12 = < %13 %14;
+    %12 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 4
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    (1, value) = %0;
+    %1 = (1, value);
+    %2 = ConstantLoad query action panic
+    %3 = newError error(%2)
+    (1, %15) = %3;
+    PopScopeFrame
+    panic %15;
+  }
+  bb4 {
+    return;
+  }
+}

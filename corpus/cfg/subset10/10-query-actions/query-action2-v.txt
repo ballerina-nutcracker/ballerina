@@ -1,0 +1,227 @@
+(main
+  (bb0 (bb1 bb2 bb4) (bb1 bb2 bb4)
+    (var-def
+      (variable people (type
+        (array-type
+          (user-defined-type Person) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (mapping-constructor-expr
+            (key-value
+              (literal firstName)
+              (literal Alex))
+            (key-value
+              (literal lastName)
+              (literal George))
+            (key-value
+              (literal age)
+              (literal 23)))
+          (mapping-constructor-expr
+            (key-value
+              (literal firstName)
+              (literal Ranjan))
+            (key-value
+              (literal lastName)
+              (literal Fonseka))
+            (key-value
+              (literal age)
+              (literal 30)))
+          (mapping-constructor-expr
+            (key-value
+              (literal firstName)
+              (literal Mia))
+            (key-value
+              (literal lastName)
+              (literal Silva))
+            (key-value
+              (literal age)
+              (literal 19)))))))
+    (var-def
+      (variable names (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (var-def
+      (variable totalAge (type
+        (value-type int)) (expr
+        (literal 0))))
+    (var-def
+      (variable result (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (query-action
+          (from-clause
+            (var-def
+              (variable person))
+            (simple-var-ref people))
+          (where-clause
+            (binary-expr <
+              (field-based-access age
+                (simple-var-ref person))
+              (literal 30)))
+          (let-clause
+            (var-def
+              (variable fullName (type
+                (value-type string)) (expr
+                (binary-expr +
+                  (binary-expr +
+                    (field-based-access firstName
+                      (simple-var-ref person))
+                    (literal  ))
+                  (field-based-access lastName
+                    (simple-var-ref person)))))))
+          (do-clause
+            (block-stmt
+              (assignment
+                (index-based-access
+                  (simple-var-ref names)
+                  (invocation lang.array length (
+                    (simple-var-ref names))))
+                (simple-var-ref fullName))
+              (compound-assignment +
+                (simple-var-ref totalAge)
+                (field-based-access age
+                  (simple-var-ref person)))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref result)
+          (value-type null)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref names))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref names)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref names)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref totalAge))))
+    (var-def
+      (variable nestedTotal (type
+        (value-type int)) (expr
+        (literal 0))))
+    (assignment
+      (simple-var-ref result)
+      (query-action
+        (from-clause
+          (var-def
+            (variable n))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))
+        (do-clause
+          (block-stmt
+            (expression-stmt
+              (query-action
+                (from-clause
+                  (var-def
+                    (variable m))
+                  (list-constructor-expr
+                    (simple-var-ref n)
+                    (binary-expr *
+                      (simple-var-ref n)
+                      (literal 10))))
+                (do-clause
+                  (block-stmt
+                    (compound-assignment +
+                      (simple-var-ref nestedTotal)
+                      (simple-var-ref m))))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref result)
+          (value-type null)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nestedTotal))))
+    (var-def
+      (variable flags (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type boolean))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal enabled)
+            (literal true))
+          (key-value
+            (literal archived)
+            (literal false))
+          (key-value
+            (literal visible)
+            (literal true))))))
+    (var-def
+      (variable enabledCount (type
+        (value-type int)) (expr
+        (literal 0))))
+    (assignment
+      (simple-var-ref result)
+      (query-action
+        (from-clause
+          (var-def
+            (variable flag))
+          (simple-var-ref flags))
+        (where-clause
+          (simple-var-ref flag))
+        (do-clause
+          (block-stmt
+            (compound-assignment +
+              (simple-var-ref enabledCount)
+              (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref result)
+          (value-type null)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref enabledCount))))
+  )
+  (bb1 (bb0) (bb0)
+    (assignment
+      (index-based-access
+        (simple-var-ref names)
+        (invocation lang.array length (
+          (simple-var-ref names))))
+      (simple-var-ref fullName))
+    (compound-assignment +
+      (simple-var-ref totalAge)
+      (field-based-access age
+        (simple-var-ref person)))
+  )
+  (bb2 (bb0 bb3) (bb3 bb0)
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable m))
+          (list-constructor-expr
+            (simple-var-ref n)
+            (binary-expr *
+              (simple-var-ref n)
+              (literal 10))))
+        (do-clause
+          (block-stmt
+            (compound-assignment +
+              (simple-var-ref nestedTotal)
+              (simple-var-ref m))))))
+  )
+  (bb3 (bb2) (bb2)
+    (compound-assignment +
+      (simple-var-ref nestedTotal)
+      (simple-var-ref m))
+  )
+  (bb4 (bb0) (bb0)
+    (compound-assignment +
+      (simple-var-ref enabledCount)
+      (literal 1))
+  )
+)

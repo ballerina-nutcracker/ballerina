@@ -321,6 +321,7 @@ func (b *bLangVariableBase) IsIncludedRecordParam() bool {
 	return b.flags.Has(model.FlagIncluded)
 }
 
+func (b *bLangVariableBase) SetFinal()         { b.flags |= model.FlagFinal }
 func (b *bLangVariableBase) SetRequiredParam() { b.flags |= model.FlagRequiredParam }
 func (b *bLangVariableBase) IsReadonly() bool  { return b.flags.Has(model.FlagReadonly) }
 func (b *bLangVariableBase) IsListener() bool  { return b.flags.Has(model.FlagListener) }

@@ -1,0 +1,405 @@
+(expand
+  (bb0 () ()
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref events)
+        (simple-var-ref value))))
+    (return
+      (list-constructor-expr
+        (simple-var-ref value)
+        (binary-expr +
+          (simple-var-ref value)
+          (literal 10))))
+  )
+)
+(main
+  (bb0 (bb1 bb2 bb3 bb4 bb5 bb6 bb7 bb8 bb9 bb10) (bb1 bb2 bb3 bb4 bb5 bb6 bb7 bb8 bb9 bb10)
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable left))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))
+        (from-clause
+          (var-def
+            (variable right))
+          (list-constructor-expr
+            (literal 10)
+            (literal 20)))
+        (do-clause
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal pair:)
+                (simple-var-ref left)
+                (literal :)
+                (simple-var-ref right))))))))
+    (var-def
+      (variable events (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable value))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))
+        (from-clause
+          (var-def
+            (variable expanded))
+          (invocation expand (
+            (simple-var-ref events)
+            (simple-var-ref value))))
+        (do-clause
+          (block-stmt
+            (expression-stmt
+              (invocation lang.array push (
+                (simple-var-ref events)
+                (binary-expr +
+                  (simple-var-ref expanded)
+                  (literal 100)))))))))
+    (expression-stmt
+      (invocation io println (
+        (literal events:)
+        (simple-var-ref events))))
+    (var-def
+      (variable groups (type
+        (constrained-type
+          (builtin-ref-type map)
+          (array-type
+            (value-type int) dimensions: 1 ([])))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal first)
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)))
+          (key-value
+            (literal second)
+            (list-constructor-expr
+              (literal 3)))))))
+    (var-def
+      (variable total (type
+        (value-type int)) (expr
+        (literal 0))))
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable group))
+          (simple-var-ref groups))
+        (from-clause
+          (var-def
+            (variable value))
+          (simple-var-ref group))
+        (do-clause
+          (block-stmt
+            (compound-assignment +
+              (simple-var-ref total)
+              (simple-var-ref value))))))
+    (expression-stmt
+      (invocation io println (
+        (literal map-total:)
+        (simple-var-ref total))))
+    (var-def
+      (variable triples (type
+        (value-type int)) (expr
+        (literal 0))))
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable first))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))
+        (from-clause
+          (var-def
+            (variable second))
+          (list-constructor-expr
+            (literal 10)
+            (literal 20)))
+        (from-clause
+          (var-def
+            (variable third))
+          (list-constructor-expr
+            (literal 100)))
+        (where-clause
+          (binary-expr >
+            (simple-var-ref second)
+            (simple-var-ref first)))
+        (do-clause
+          (block-stmt
+            (compound-assignment +
+              (simple-var-ref triples)
+              (binary-expr +
+                (binary-expr +
+                  (simple-var-ref first)
+                  (simple-var-ref second))
+                (simple-var-ref third)))))))
+    (expression-stmt
+      (invocation io println (
+        (literal triple-total:)
+        (simple-var-ref triples))))
+    (var-def
+      (variable limitedEvents (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable value))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))
+        (from-clause
+          (var-def
+            (variable expanded))
+          (invocation expand (
+            (simple-var-ref limitedEvents)
+            (simple-var-ref value))))
+        (limit-clause
+          (literal 3))
+        (do-clause
+          (block-stmt
+            (expression-stmt
+              (invocation lang.array push (
+                (simple-var-ref limitedEvents)
+                (binary-expr +
+                  (simple-var-ref expanded)
+                  (literal 100)))))))))
+    (expression-stmt
+      (invocation io println (
+        (literal limited-events:)
+        (simple-var-ref limitedEvents))))
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable left))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))
+        (limit-clause
+          (literal 1))
+        (from-clause
+          (var-def
+            (variable right))
+          (list-constructor-expr
+            (literal 10)
+            (literal 20)))
+        (do-clause
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal limit-before:)
+                (simple-var-ref left)
+                (literal :)
+                (simple-var-ref right))))))))
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable left))
+          (list-constructor-expr
+            (literal 2)
+            (literal 1)))
+        (from-clause
+          (var-def
+            (variable right))
+          (list-constructor-expr
+            (literal 2)
+            (literal 1)))
+        (order-by-clause
+          (order-key ascending
+            (simple-var-ref left))
+          (order-key descending
+            (simple-var-ref right)))
+        (do-clause
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal ordered:)
+                (simple-var-ref left)
+                (literal :)
+                (simple-var-ref right))))))))
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable left))
+          (list-constructor-expr
+            (literal 2)
+            (literal 1)))
+        (order-by-clause
+          (order-key ascending
+            (simple-var-ref left)))
+        (from-clause
+          (var-def
+            (variable right))
+          (list-constructor-expr
+            (simple-var-ref left)
+            (binary-expr +
+              (simple-var-ref left)
+              (literal 10))))
+        (do-clause
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal after-order:)
+                (simple-var-ref left)
+                (literal :)
+                (simple-var-ref right))))))))
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable category))
+          (list-constructor-expr
+            (literal 1)
+            (literal 1)
+            (literal 2)))
+        (from-clause
+          (var-def
+            (variable value))
+          (list-constructor-expr
+            (simple-var-ref category)
+            (binary-expr +
+              (simple-var-ref category)
+              (literal 10))))
+        (group-by-clause
+          (grouping-key
+            (simple-var-ref category)))
+        (do-clause
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal grouped:)
+                (simple-var-ref category)
+                (literal :)
+                (invocation lang.array length (
+                  (list-constructor-expr
+                    (simple-var-ref value)))))))))))
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable left))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))
+        (from-clause
+          (var-def
+            (variable expanded))
+          (list-constructor-expr
+            (simple-var-ref left)
+            (binary-expr +
+              (simple-var-ref left)
+              (literal 10))))
+        (join-clause
+          (var-def
+            (variable candidate))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2))
+          (on-clause
+            (simple-var-ref expanded)
+            (simple-var-ref candidate)))
+        (do-clause
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal joined:)
+                (simple-var-ref left)
+                (literal :)
+                (simple-var-ref expanded))))))))
+  )
+  (bb1 (bb0) (bb0)
+    (expression-stmt
+      (invocation io println (
+        (literal pair:)
+        (simple-var-ref left)
+        (literal :)
+        (simple-var-ref right))))
+  )
+  (bb2 (bb0) (bb0)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref events)
+        (binary-expr +
+          (simple-var-ref expanded)
+          (literal 100)))))
+  )
+  (bb3 (bb0) (bb0)
+    (compound-assignment +
+      (simple-var-ref total)
+      (simple-var-ref value))
+  )
+  (bb4 (bb0) (bb0)
+    (compound-assignment +
+      (simple-var-ref triples)
+      (binary-expr +
+        (binary-expr +
+          (simple-var-ref first)
+          (simple-var-ref second))
+        (simple-var-ref third)))
+  )
+  (bb5 (bb0) (bb0)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref limitedEvents)
+        (binary-expr +
+          (simple-var-ref expanded)
+          (literal 100)))))
+  )
+  (bb6 (bb0) (bb0)
+    (expression-stmt
+      (invocation io println (
+        (literal limit-before:)
+        (simple-var-ref left)
+        (literal :)
+        (simple-var-ref right))))
+  )
+  (bb7 (bb0) (bb0)
+    (expression-stmt
+      (invocation io println (
+        (literal ordered:)
+        (simple-var-ref left)
+        (literal :)
+        (simple-var-ref right))))
+  )
+  (bb8 (bb0) (bb0)
+    (expression-stmt
+      (invocation io println (
+        (literal after-order:)
+        (simple-var-ref left)
+        (literal :)
+        (simple-var-ref right))))
+  )
+  (bb9 (bb0) (bb0)
+    (expression-stmt
+      (invocation io println (
+        (literal grouped:)
+        (simple-var-ref category)
+        (literal :)
+        (invocation lang.array length (
+          (list-constructor-expr
+            (simple-var-ref value)))))))
+  )
+  (bb10 (bb0) (bb0)
+    (expression-stmt
+      (invocation io println (
+        (literal joined:)
+        (simple-var-ref left)
+        (literal :)
+        (simple-var-ref expanded))))
+  )
+)

@@ -3832,6 +3832,8 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return result, ok
 	case *ast.BLangQueryExpr:
 		return resolved(resolveQueryExpr(t, chain, e, expectedType))
+	case *ast.BLangQueryAction:
+		return resolved(resolveQueryAction(t, chain, e))
 	case *ast.BLangWildCardBindingPattern:
 		ty := semtypes.Any
 		e.SetDeterminedType(ty)
@@ -4731,8 +4733,6 @@ func resolveQueryExpr(
 		t.semanticError("query expression must start with a from clause", expr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	fromClause.SetDeterminedType(semtypes.Never)
-
 	lastClauseIndex := len(expr.QueryClauseList) - 1
 	var onConflictClause *ast.BLangOnConflictClause
 	if clause, isOnConflict := expr.QueryClauseList[lastClauseIndex].(*ast.BLangOnConflictClause); isOnConflict {
@@ -4759,45 +4759,13 @@ func resolveQueryExpr(
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 
-	collectionResult, ok := resolveActionOrExpression(t, chain, fromClause.Collection, semtypes.SemType{})
-	if !ok {
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
-	collectionTy := collectionResult.ty
-	elementTy, ok := resolveQueryCollectionElementType(t, collectionTy, fromClause.GetPosition())
-	if !ok {
+	if _, ok := resolveQueryFromClause(t, chain, fromClause, false); !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 
-	if fromClause.VariableDefinitionNode != nil {
-		varDef := fromClause.VariableDefinitionNode
-		if varDef.Var == nil {
-			t.unimplemented("only simple variable bindings are supported in from clause", fromClause.GetPosition())
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-		varDef.SetDeterminedType(semtypes.Never)
-
-		variableTy := elementTy
-		if !fromClause.IsDeclaredWithVarFlag && varDef.Var.TypeNode() != nil {
-			variableTy, ok = resolveBType(t, varDef.Var.TypeNode(), 0)
-			if !ok {
-				return semtypes.SemType{}, expressionEffect{}, false
-			}
-			if !semtypes.IsSubtype(t.typeContext(), elementTy, variableTy) {
-				t.semanticError("from clause variable type is incompatible with collection member type",
-					varDef.GetPosition())
-				return semtypes.SemType{}, expressionEffect{}, false
-			}
-		}
-
-		if varDef.Var.Name != nil {
-			varDef.Var.Name.SetDeterminedType(semtypes.Never)
-		}
-		varDef.Var.SetDeterminedType(semtypes.Never)
-		updateSymbolType(t, varDef.Var, variableTy)
-	}
-
-	queryChain, ok := resolveQueryIntermediateClauses(t, chain, expr, lastClauseIndex)
+	queryChain, ok := resolveQueryIntermediateClausesWithCompletion(
+		t, chain, expr.QueryClauseList, lastClauseIndex, false, nil,
+	)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -4841,8 +4809,8 @@ func resolveQueryExpr(
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 		collectChain := queryChain
-		groupAggregatedSymbols := queryGroupAggregatedSymbolsBeforeClause(expr, lastClauseIndex)
-		for _, variable := range queryVariablesBeforeClause(expr, lastClauseIndex) {
+		groupAggregatedSymbols := queryGroupAggregatedSymbolsBeforeClause(expr.QueryClauseList, lastClauseIndex)
+		for _, variable := range queryVariablesBeforeClause(expr.QueryClauseList, lastClauseIndex) {
 			if groupAggregatedSymbols[variable.symbol] {
 				continue
 			}
@@ -4885,25 +4853,153 @@ func resolveQueryExpr(
 	return queryTy, defaultExpressionEffect(chain), true
 }
 
-func resolveQueryCollectionElementType(
+func resolveQueryAction(
+	t typeResolver,
+	chain *binding,
+	action *ast.BLangQueryAction,
+) (semtypes.SemType, expressionEffect, bool) {
+	if len(action.QueryClauseList) < 1 {
+		t.semanticError("query action requires a from clause", action.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+
+	fromClause, ok := action.QueryClauseList[0].(*ast.BLangFromClause)
+	if !ok {
+		t.semanticError("query action must start with a from clause", action.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	fromCompletionErrorTy, ok := resolveQueryFromClause(t, chain, fromClause, true)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+
+	intermediateCompletionErrorTy := semtypes.Never
+	queryChain, ok := resolveQueryIntermediateClausesWithCompletion(
+		t, chain, action.QueryClauseList, len(action.QueryClauseList), true, &intermediateCompletionErrorTy,
+	)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+
+	if action.DoClause == nil || action.DoClause.Body == nil {
+		t.semanticError("query action requires a do clause", action.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	action.DoClause.SetDeterminedType(semtypes.Never)
+	bodyEffect := resolveBlockStatements(t, queryChain, action.DoClause.Body.Stmts)
+	action.DoClause.Body.SetDeterminedType(semtypes.Never)
+	if !bodyEffect.nonCompletion {
+		reportOutsideQueryActionAssignments(t, []*binding{bodyEffect.binding}, queryChain)
+	}
+
+	completionErrorTy := semtypes.Union(fromCompletionErrorTy, intermediateCompletionErrorTy)
+	actionTy := semtypes.Union(semtypes.Nil, completionErrorTy)
+	action.SetDeterminedType(actionTy)
+	return actionTy, defaultExpressionEffect(chain), true
+}
+
+func resolveQueryCollectionTypes(
 	t typeResolver,
 	collectionTy semtypes.SemType,
 	pos diagnostics.Location,
-) (semtypes.SemType, bool) {
+	allowErrorCompletion bool,
+) (semtypes.SemType, semtypes.SemType, bool) {
+	ctx := t.typeContext()
 	switch {
-	case semtypes.IsSubtype(t.typeContext(), collectionTy, semtypes.List):
-		memberTypes := semtypes.ListAllMemberTypesInner(t.typeContext(), collectionTy)
+	case semtypes.IsSubtype(ctx, collectionTy, semtypes.String):
+		return semtypes.Char, semtypes.Never, true
+	case semtypes.IsSubtype(ctx, collectionTy, semtypes.XML):
+		return semtypes.XMLItemType(collectionTy), semtypes.Never, true
+	case semtypes.IsSubtype(ctx, collectionTy, semtypes.List):
+		memberTypes := semtypes.ListAllMemberTypesInner(ctx, collectionTy)
 		result := semtypes.Never
 		for _, each := range memberTypes.Types {
 			result = semtypes.Union(result, each)
 		}
-		return result, true
-	case semtypes.IsSubtype(t.typeContext(), collectionTy, semtypes.Mapping):
-		return semtypes.MappingMemberTypeInnerValProj(t.typeContext(), collectionTy, semtypes.String), true
+		return result, semtypes.Never, true
+	case semtypes.IsSubtype(ctx, collectionTy, semtypes.Mapping):
+		return semtypes.MappingMemberTypeInnerValProj(ctx, collectionTy, semtypes.String), semtypes.Never, true
+	case allowErrorCompletion && semtypes.IsSubtypeSimple(collectionTy, semtypes.Stream):
+		valueTy := semtypes.StreamValueType(ctx, collectionTy)
+		completionTy := semtypes.StreamCompletionType(ctx, collectionTy)
+		if semtypes.IsZero(valueTy) || semtypes.IsZero(completionTy) {
+			t.internalError("failed to extract query stream type parameters", pos)
+			return semtypes.SemType{}, semtypes.SemType{}, false
+		}
+		return valueTy, semtypes.Intersect(completionTy, semtypes.Error), true
+	case allowErrorCompletion && semtypes.IsSubtype(ctx, collectionTy, semtypes.Object):
+		iterableTy, ok := common.IterableType(t.compilerContext(), t.symbolType)
+		if !ok || !semtypes.IsSubtype(ctx, collectionTy, iterableTy) {
+			t.unimplemented("query action collections currently support only string, xml, list, map, stream, or object:Iterable values", pos)
+			return semtypes.SemType{}, semtypes.SemType{}, false
+		}
+		ld := semtypes.NewListDefinition()
+		emptyListTy := ld.Define(t.typeEnv(), nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
+		iteratorFnTy := semtypes.ObjectMemberType(ctx, semtypes.StringConst("iterator"), collectionTy)
+		iteratorTy := semtypes.FunctionReturnType(ctx, iteratorFnTy, emptyListTy)
+		nextFnTy := semtypes.ObjectMemberType(ctx, semtypes.StringConst("next"), iteratorTy)
+		nextReturnTy := semtypes.FunctionReturnType(ctx, nextFnTy, emptyListTy)
+		valueRecordTy := semtypes.Diff(nextReturnTy, semtypes.Union(semtypes.Nil, semtypes.Error))
+		elementTy := semtypes.MappingMemberTypeInnerVal(ctx, valueRecordTy, semtypes.StringConst("value"))
+		completionErrorTy := semtypes.Intersect(nextReturnTy, semtypes.Error)
+		return elementTy, completionErrorTy, true
 	default:
-		t.unimplemented("query from clause currently supports only list or map collections", pos)
+		if allowErrorCompletion {
+			t.unimplemented("query action collections currently support only string, xml, list, map, stream, or object:Iterable values", pos)
+		} else {
+			t.unimplemented("query expression collections currently support only string, xml, list, or map values", pos)
+		}
+		return semtypes.SemType{}, semtypes.SemType{}, false
+	}
+}
+
+func resolveQueryFromClause(
+	t typeResolver,
+	chain *binding,
+	clause *ast.BLangFromClause,
+	allowErrorCompletion bool,
+) (semtypes.SemType, bool) {
+	clause.SetDeterminedType(semtypes.Never)
+	collectionResult, ok := resolveActionOrExpression(t, chain, clause.Collection, semtypes.SemType{})
+	collectionTy := collectionResult.ty
+	if !ok {
 		return semtypes.SemType{}, false
 	}
+	elementTy, completionErrorTy, ok := resolveQueryCollectionTypes(
+		t, collectionTy, clause.GetPosition(), allowErrorCompletion,
+	)
+	if !ok {
+		return semtypes.SemType{}, false
+	}
+
+	varDef := clause.VariableDefinitionNode
+	if varDef == nil {
+		return completionErrorTy, true
+	}
+	if varDef.Var == nil {
+		t.unimplemented("only simple variable bindings are supported in from clause", clause.GetPosition())
+		return semtypes.SemType{}, false
+	}
+	varDef.SetDeterminedType(semtypes.Never)
+
+	variableTy := elementTy
+	if !clause.IsDeclaredWithVarFlag && varDef.Var.TypeNode() != nil {
+		variableTy, ok = resolveBType(t, varDef.Var.TypeNode(), 0)
+		if !ok {
+			return semtypes.SemType{}, false
+		}
+		if !semtypes.IsSubtype(t.typeContext(), elementTy, variableTy) {
+			t.semanticError("from clause variable type is incompatible with collection member type", varDef.GetPosition())
+			return semtypes.SemType{}, false
+		}
+	}
+
+	if varDef.Var.Name != nil {
+		varDef.Var.Name.SetDeterminedType(semtypes.Never)
+	}
+	varDef.Var.SetDeterminedType(semtypes.Never)
+	updateSymbolType(t, varDef.Var, variableTy)
+	return completionErrorTy, true
 }
 
 func resolveForeachVariableType(t typeResolver, collection ast.BLangActionOrExpression, collectionTy semtypes.SemType) (semtypes.SemType, bool) {
@@ -4953,11 +5049,11 @@ type queryVariableInfo struct {
 	symbol model.SymbolRef
 }
 
-func queryVariablesBeforeClause(queryExpr *ast.BLangQueryExpr, endIndex int) []queryVariableInfo {
+func queryVariablesBeforeClause(queryClauses []ast.BLangNode, endIndex int) []queryVariableInfo {
 	var variables []queryVariableInfo
 	seen := make(map[model.SymbolRef]bool)
 	for i := 0; i < endIndex; i++ {
-		switch clause := queryExpr.QueryClauseList[i].(type) {
+		switch clause := queryClauses[i].(type) {
 		case *ast.BLangFromClause:
 			variables = appendQueryVariableInfo(variables, seen, clause.VariableDefinitionNode)
 		case *ast.BLangJoinClause:
@@ -4975,14 +5071,14 @@ func queryVariablesBeforeClause(queryExpr *ast.BLangQueryExpr, endIndex int) []q
 	return variables
 }
 
-func queryGroupAggregatedSymbolsBeforeClause(queryExpr *ast.BLangQueryExpr, endIndex int) map[model.SymbolRef]bool {
+func queryGroupAggregatedSymbolsBeforeClause(queryClauses []ast.BLangNode, endIndex int) map[model.SymbolRef]bool {
 	aggregated := make(map[model.SymbolRef]bool)
 	for i := 0; i < endIndex; i++ {
-		groupByClause, ok := queryExpr.QueryClauseList[i].(*ast.BLangGroupByClause)
+		groupByClause, ok := queryClauses[i].(*ast.BLangGroupByClause)
 		if !ok || groupByClause.NonGroupingKeys == nil {
 			continue
 		}
-		for _, variable := range queryVariablesBeforeClause(queryExpr, i) {
+		for _, variable := range queryVariablesBeforeClause(queryClauses, i) {
 			if variable.name != "" && groupByClause.NonGroupingKeys.Contains(variable.name) {
 				aggregated[variable.symbol] = true
 			}
@@ -5065,7 +5161,7 @@ func resolveQueryGroupingKeyVarDef(t typeResolver, chain *binding, varDef *ast.B
 			return semtypes.SemType{}, false
 		}
 	}
-	initResult, ok := resolveActionOrExpression(t, chain, varDef.Var.Expr.(ast.BLangExpression), variableTy)
+	initResult, ok := resolveActionOrExpression(t, chain, varDef.Var.Expr, variableTy)
 	if !ok {
 		return semtypes.SemType{}, false
 	}
@@ -5087,12 +5183,12 @@ func resolveQueryGroupingKeyVarDef(t typeResolver, chain *binding, varDef *ast.B
 func resolveQueryGroupByClause(
 	t typeResolver,
 	chain *binding,
-	queryExpr *ast.BLangQueryExpr,
+	queryClauses []ast.BLangNode,
 	clause *ast.BLangGroupByClause,
 	clauseIndex int,
 ) (*binding, bool) {
 	clause.SetDeterminedType(semtypes.Never)
-	queryVariables := queryVariablesBeforeClause(queryExpr, clauseIndex)
+	queryVariables := queryVariablesBeforeClause(queryClauses, clauseIndex)
 	nonGroupingKeys := &balCommon.OrderedSet[string]{}
 	for _, variable := range queryVariables {
 		if variable.name != "" && variable.name != "_" {
@@ -5143,10 +5239,34 @@ func resolveQueryGroupByClause(
 	return resultChain, true
 }
 
-func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryExpr *ast.BLangQueryExpr, selectClauseIndex int) (*binding, bool) {
+func resolveQueryIntermediateClauses(
+	t typeResolver,
+	chain *binding,
+	queryClauses []ast.BLangNode,
+	endClauseIndex int,
+) (*binding, bool) {
+	return resolveQueryIntermediateClausesWithCompletion(t, chain, queryClauses, endClauseIndex, false, nil)
+}
+
+func resolveQueryIntermediateClausesWithCompletion(
+	t typeResolver,
+	chain *binding,
+	queryClauses []ast.BLangNode,
+	endClauseIndex int,
+	allowErrorCompletion bool,
+	completionErrorTy *semtypes.SemType,
+) (*binding, bool) {
 	currentChain := chain
-	for i := 1; i < selectClauseIndex; i++ {
-		switch clause := queryExpr.QueryClauseList[i].(type) {
+	for i := 1; i < endClauseIndex; i++ {
+		switch clause := queryClauses[i].(type) {
+		case *ast.BLangFromClause:
+			clauseCompletionErrorTy, ok := resolveQueryFromClause(t, currentChain, clause, allowErrorCompletion)
+			if !ok {
+				return nil, false
+			}
+			if completionErrorTy != nil {
+				*completionErrorTy = semtypes.Union(*completionErrorTy, clauseCompletionErrorTy)
+			}
 		case *ast.BLangJoinClause:
 			clause.SetDeterminedType(semtypes.Never)
 			collectionResult, ok := resolveActionOrExpression(t, currentChain, clause.Collection, semtypes.SemType{})
@@ -5154,9 +5274,14 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryExpr *
 				return nil, false
 			}
 			collectionTy := collectionResult.ty
-			elementTy, ok := resolveQueryCollectionElementType(t, collectionTy, clause.GetPosition())
+			elementTy, clauseCompletionErrorTy, ok := resolveQueryCollectionTypes(
+				t, collectionTy, clause.GetPosition(), allowErrorCompletion,
+			)
 			if !ok {
 				return nil, false
+			}
+			if completionErrorTy != nil {
+				*completionErrorTy = semtypes.Union(*completionErrorTy, clauseCompletionErrorTy)
 			}
 			varDef := clause.VariableDefinitionNode
 			if varDef == nil || varDef.Var == nil {
@@ -5223,7 +5348,7 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryExpr *
 						varDef.GetPosition())
 					return nil, false
 				}
-				initResult, ok := resolveActionOrExpression(t, currentChain, varDef.Var.Expr.(ast.BLangExpression), semtypes.SemType{})
+				initResult, ok := resolveActionOrExpression(t, currentChain, varDef.Var.Expr, semtypes.SemType{})
 				if !ok {
 					return nil, false
 				}
@@ -5260,7 +5385,7 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryExpr *
 			currentChain = effect.ifTrue
 		case *ast.BLangGroupByClause:
 			var ok bool
-			currentChain, ok = resolveQueryGroupByClause(t, currentChain, queryExpr, clause, i)
+			currentChain, ok = resolveQueryGroupByClause(t, currentChain, queryClauses, clause, i)
 			if !ok {
 				return nil, false
 			}
@@ -5293,7 +5418,7 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryExpr *
 				}
 			}
 		default:
-			t.unimplemented("only join + let + where + group by + order by + limit clauses are supported as intermediate query clauses", clause.GetPosition())
+			t.unimplemented("only from + join + let + where + group by + order by + limit clauses are supported as intermediate query clauses", clause.GetPosition())
 			return nil, false
 		}
 	}

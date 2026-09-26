@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: expression expected action found
+  --> query-join-actions-e.bal:26:27
+   |
+26 |         join var right in numbers->values() on left equals right // @error
+   |
+
+error[SYNTAX_ERROR]: expression expected action found
+  --> query-join-actions-e.bal:30:28
+   |
+30 |         join var right in (numbers->values()) on left equals right // @error
+   |

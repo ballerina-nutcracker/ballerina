@@ -1,0 +1,63 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable candidates (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 2)
+          (literal 3)
+          (literal 4)))))
+    (var-def
+      (variable offset (type
+        (value-type int)) (expr
+        (literal 1))))
+    (var-def
+      (variable maxMatches (type
+        (value-type int)) (expr
+        (literal 2))))
+    (var-def
+      (variable result (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable item))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3)))
+          (let-clause
+            (var-def
+              (variable shifted (type
+                (value-type int)) (expr
+                (binary-expr +
+                  (simple-var-ref item)
+                  (simple-var-ref offset)))))
+            (var-def
+              (variable matchKey (type
+                (value-type int)) (expr
+                (simple-var-ref shifted)))))
+          (join-clause
+            (var-def
+              (variable candidate))
+            (simple-var-ref candidates)
+            (on-clause
+              (simple-var-ref matchKey)
+              (binary-expr -
+                (binary-expr +
+                  (simple-var-ref candidate)
+                  (simple-var-ref offset))
+                (simple-var-ref offset))))
+          (limit-clause
+            (simple-var-ref maxMatches))
+          (select-clause
+            (binary-expr +
+              (simple-var-ref item)
+              (simple-var-ref candidate)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)

@@ -26,17 +26,18 @@ type TypeParamEntry struct {
 }
 
 type (
-	BLangInputClause struct {
+	bLangInputClauseBase[C BLangActionOrExpression] struct {
 		bLangNodeBase
-		Collection             BLangExpression
+		Collection             C
 		VariableDefinitionNode *BLangVariableDef
 		IsDeclaredWithVarFlag  bool
 	}
 	BLangFromClause struct {
-		BLangInputClause
+		// Match jBallerina, which accepts actions as from-clause collections.
+		bLangInputClauseBase[BLangActionOrExpression]
 	}
 	BLangJoinClause struct {
-		BLangInputClause
+		bLangInputClauseBase[BLangExpression]
 		OnClause        BLangOnClause
 		IsOuterJoinFlag bool
 	}
@@ -78,7 +79,8 @@ type (
 	}
 	BLangSelectClause struct {
 		bLangNodeBase
-		Expression BLangExpression
+		// Match jBallerina, which also accepts actions in select clauses.
+		Expression BLangActionOrExpression
 	}
 	BLangOnConflictClause struct {
 		bLangNodeBase
@@ -117,8 +119,8 @@ var (
 	_ DoClauseNode      = &BLangDoClause{}
 )
 
-func NewBLangFromClause(pos Location, collection BLangExpression, variableDefinition *BLangVariableDef, declaredWithVar bool) *BLangFromClause {
-	return &BLangFromClause{BLangInputClause: BLangInputClause{
+func NewBLangFromClause(pos Location, collection BLangActionOrExpression, variableDefinition *BLangVariableDef, declaredWithVar bool) *BLangFromClause {
+	return &BLangFromClause{bLangInputClauseBase: bLangInputClauseBase[BLangActionOrExpression]{
 		bLangNodeBase:          bLangNodeBase{pos: pos},
 		Collection:             collection,
 		VariableDefinitionNode: variableDefinition,
@@ -128,7 +130,7 @@ func NewBLangFromClause(pos Location, collection BLangExpression, variableDefini
 
 func NewBLangJoinClause(pos Location, collection BLangExpression, variableDefinition *BLangVariableDef, declaredWithVar, outer bool, onClause *BLangOnClause) *BLangJoinClause {
 	clause := &BLangJoinClause{
-		BLangInputClause: BLangInputClause{
+		bLangInputClauseBase: bLangInputClauseBase[BLangExpression]{
 			bLangNodeBase:          bLangNodeBase{pos: pos},
 			Collection:             collection,
 			VariableDefinitionNode: variableDefinition,
@@ -150,7 +152,7 @@ func NewBLangLimitClause(pos Location, expr BLangExpression) *BLangLimitClause {
 	return &BLangLimitClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr}
 }
 
-func NewBLangSelectClause(pos Location, expr BLangExpression) *BLangSelectClause {
+func NewBLangSelectClause(pos Location, expr BLangActionOrExpression) *BLangSelectClause {
 	return &BLangSelectClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr}
 }
 
@@ -188,18 +190,18 @@ var (
 	_ BLangNode = &BLangOnFailClause{}
 )
 
-func (b *BLangJoinClause) GetCollection() BLangExpression {
+func (b *bLangInputClauseBase[C]) GetCollection() C {
 	return b.Collection
 }
 
-func (b *BLangJoinClause) GetVariableDefinitionNode() *BLangVariableDef {
+func (b *bLangInputClauseBase[C]) GetVariableDefinitionNode() *BLangVariableDef {
 	if b.VariableDefinitionNode == nil {
 		return nil
 	}
 	return b.VariableDefinitionNode
 }
 
-func (b *BLangJoinClause) IsDeclaredWithVar() bool {
+func (b *bLangInputClauseBase[C]) IsDeclaredWithVar() bool {
 	return b.IsDeclaredWithVarFlag
 }
 
@@ -220,21 +222,6 @@ func (b *BLangOnClause) GetOnExpression() BLangExpression {
 
 func (b *BLangOnClause) GetEqualsExpression() BLangExpression {
 	return b.EqualsExpr
-}
-
-func (b *BLangFromClause) GetCollection() BLangExpression {
-	return b.Collection
-}
-
-func (b *BLangFromClause) GetVariableDefinitionNode() *BLangVariableDef {
-	if b.VariableDefinitionNode == nil {
-		return nil
-	}
-	return b.VariableDefinitionNode
-}
-
-func (b *BLangFromClause) IsDeclaredWithVar() bool {
-	return b.IsDeclaredWithVarFlag
 }
 
 func (b *BLangGroupByClause) AddGroupingKey(groupingKey *BLangGroupingKey) {
@@ -259,7 +246,7 @@ func (b *BLangLimitClause) GetExpression() BLangExpression {
 	return b.Expression
 }
 
-func (b *BLangSelectClause) GetExpression() BLangExpression {
+func (b *BLangSelectClause) GetExpression() BLangActionOrExpression {
 	return b.Expression
 }
 

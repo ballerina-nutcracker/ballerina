@@ -87,6 +87,8 @@ func walkExpressionInner(cx *functionContext, node ast.BLangActionOrExpression) 
 		return walkArrowFunction(cx, expr)
 	case *ast.BLangQueryExpr:
 		return walkQueryExpr(cx, expr)
+	case *ast.BLangQueryAction:
+		return walkQueryAction(cx, expr)
 	case *ast.BLangTypedescExpr:
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangLiteral:
@@ -697,6 +699,10 @@ func synthesizeInferredTypedescArg(cx *functionContext, tdTy semtypes.SemType, p
 }
 
 func assignToLocal(cx *functionContext, initExpr ast.BLangExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangVarRef) {
+	return assignActionOrExpressionToLocal(cx, initExpr, pos)
+}
+
+func assignActionOrExpressionToLocal(cx *functionContext, initExpr ast.BLangActionOrExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangVarRef) {
 	ty := initExpr.GetDeterminedType()
 	tempName, tempSymRef := cx.addDesugardSymbol(ty, model.SymbolKindVariable, pos)
 	tempVar := &ast.BLangVariable{Name: newIdentifier(tempName)}

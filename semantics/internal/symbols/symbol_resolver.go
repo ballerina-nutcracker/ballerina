@@ -1428,7 +1428,14 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 	case *ast.BLangAnnotAccessExpr:
 		resolveAnnotationReference(resolver, n.PkgAlias, n.AnnotationName, n.GetPosition(), n)
 	case *ast.BLangQueryExpr:
-		return newBlockSymbolResolverWithBlockScope(resolver, n)
+		resolveQuerySymbols(resolver, n, n.QueryClauseList)
+		return nil
+	case *ast.BLangQueryAction:
+		queryResolver := resolveQuerySymbols(resolver, n, n.QueryClauseList)
+		if n.DoClause != nil {
+			ast.Walk(queryResolver, n.DoClause)
+		}
+		return nil
 	case *ast.BLangInvocation:
 		if n.GetExpression() != nil {
 			createDeferredMethodSymbol(resolver, n)
@@ -1449,6 +1456,49 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 	case *ast.BLangRecordType:
 		n.Inclusions = resolveRecordTypeInclusions(resolver, n.TypeInclusions)
 		allocateRecordDefaultSymbols(resolver, n)
+	}
+	return resolver
+}
+
+func resolveQuerySymbols(parent symbolResolver, node ast.BLangNode, clauses []ast.BLangNode) *blockSymbolResolver {
+	resolver := newBlockSymbolResolverWithBlockScope(parent, node)
+	for _, clause := range clauses {
+		switch clause := clause.(type) {
+		case *ast.BLangJoinClause:
+			if collection, ok := clause.Collection.(ast.BLangNode); ok && collection != nil {
+				ast.Walk(parent, collection)
+			}
+			if onExpr, ok := clause.OnClause.OnExpr.(ast.BLangNode); ok && onExpr != nil {
+				ast.Walk(resolver, onExpr)
+			}
+			right := newBlockSymbolResolverWithBlockScope(parent, clause)
+			if clause.VariableDefinitionNode != nil {
+				variable := clause.VariableDefinitionNode.Var
+				if variable != nil && variable.Name != nil {
+					name := variable.Name.GetValue()
+					if isShadowed(resolver, name) {
+						semanticError(resolver, "Variable already defined: "+name, clause.VariableDefinitionNode.GetPosition())
+					}
+				}
+				ast.Walk(right, clause.VariableDefinitionNode)
+			}
+			if equalsExpr, ok := clause.OnClause.EqualsExpr.(ast.BLangNode); ok && equalsExpr != nil {
+				ast.Walk(right, equalsExpr)
+			}
+			resolver = &blockSymbolResolver{
+				parent: resolver,
+				scope: &model.BlockScope{BlockScopeBase: model.BlockScopeBase{
+					Parent: resolver.scope,
+					Main:   right.scope.MainSpace(),
+					Prefix: make(map[string]model.ExportedSymbolSpace),
+				}},
+				node: clause,
+			}
+		case *ast.BLangLimitClause:
+			ast.Walk(parent, clause.Expression.(ast.BLangNode))
+		default:
+			ast.Walk(resolver, clause)
+		}
 	}
 	return resolver
 }

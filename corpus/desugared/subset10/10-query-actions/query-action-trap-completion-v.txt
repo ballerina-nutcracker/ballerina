@@ -1,0 +1,131 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition FailingIterator
+    (variable index (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal index))
+          (literal 0))))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (union-type
+          (error-type)
+          (value-type null))))
+      (block-function-body
+        (lock
+          (block-stmt
+            (if
+              (binary-expr ==
+                (index-based-access
+                  (simple-var-ref self)
+                  (literal index))
+                (literal 0))
+              (block-stmt
+                (assignment
+                  (index-based-access
+                    (simple-var-ref self)
+                    (literal index))
+                  (literal 1))
+                (return
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal value)
+                      (literal 10))))) ())
+            (block-stmt
+              (return
+                (error-constructor-expr (
+                  (literal completion failed))))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable values (type
+          (stream-type
+            (value-type int)
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (new (
+            (new
+              (user-defined-type FailingIterator) ()))))))
+      (var-def
+        (variable result (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (expression-thunk
+            (var-def
+              (variable $desugar$0 (expr
+                (literal <nil>))))
+            (var-def
+              (variable value))
+            (var-def
+              (variable $desugar$1 (expr
+                (literal false))))
+            (var-def
+              (variable $desugar$2 (expr
+                (simple-var-ref values))))
+            (var-def
+              (variable $desugar$3 (expr
+                (literal false))))
+            (while
+              (binary-expr &&
+                (unary-expr !
+                  (simple-var-ref $desugar$3))
+                (unary-expr !
+                  (simple-var-ref $desugar$1)))
+              (block-stmt
+                (var-def
+                  (variable $desugar$5 (expr
+                    (invocation next expr:
+                      (simple-var-ref $desugar$2) ()))))
+                (if
+                  (type-test-expr is
+                    (simple-var-ref $desugar$5))
+                  (block-stmt
+                    (assignment
+                      (simple-var-ref $desugar$3)
+                      (literal true))) ())
+                (if
+                  (type-test-expr is
+                    (simple-var-ref $desugar$5))
+                  (block-stmt
+                    (if
+                      (unary-expr !
+                        (simple-var-ref $desugar$1))
+                      (block-stmt
+                        (assignment
+                          (simple-var-ref $desugar$0)
+                          (simple-var-ref $desugar$5))
+                        (assignment
+                          (simple-var-ref $desugar$1)
+                          (literal true))) ())
+                    (assignment
+                      (simple-var-ref $desugar$3)
+                      (literal true))) ())
+                (if
+                  (type-test-expr is
+                    (simple-var-ref $desugar$5))
+                  (block-stmt
+                    (assignment
+                      (simple-var-ref value)
+                      (index-based-access
+                        (simple-var-ref $desugar$5)
+                        (literal value)))
+                    (assignment
+                      (wildcard-binding-pattern)
+                      (simple-var-ref value))) ())))
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (error-type))))))))
