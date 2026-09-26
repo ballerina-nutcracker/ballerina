@@ -1,0 +1,59 @@
+module $anon.. v 0.0.0;
+makeStream([int...]) -> stream{
+  bb0 {
+    %2 = toStream(values) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+takeNext(stream) -> nil|{| value: int, never... |}{
+  bb0 {
+    %2 = streamNext s
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    %5 = makeStream(%4) -> bb1;
+  }
+  bb1 {
+    s = %5;
+    %7 = takeNext(s) -> bb2;
+  }
+  bb2 {
+    %8 = println(%7) -> bb3;
+  }
+  bb3 {
+    %9 = streamNext s
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    %11 = streamNext s
+    %12 = %11 is nil
+    %13 = %12;
+    %14 = println(%13) -> bb5;
+  }
+  bb5 {
+    %15 = ConstantLoad 3
+    %16 = ConstantLoad 1
+    %17 = newArray [int, never...][%16]{%15}
+    %18 = toStream(%17) -> bb6;
+  }
+  bb6 {
+    explicit = %18;
+    implicit = explicit;
+    back = implicit;
+    %22 = streamNext back
+    %23 = println(%22) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}

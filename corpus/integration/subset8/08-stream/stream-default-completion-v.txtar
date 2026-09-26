@@ -1,0 +1,7 @@
+-- stdout --
+{"value":0}
+{"value":0}
+true
+true
+false
+-- stderr --

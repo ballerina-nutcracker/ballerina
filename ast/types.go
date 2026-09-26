@@ -169,7 +169,8 @@ type (
 
 	BLangStreamType struct {
 		bLangTypeBase
-		ValueType      TypeData
+		ValueType TypeData
+		// TypeDescriptor is nil when the completion type is omitted, which means ()
 		CompletionType TypeData
 		Definition     semtypes.Definition
 	}
