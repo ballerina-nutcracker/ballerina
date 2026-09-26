@@ -150,37 +150,22 @@ func rangeListIntersect(v1 []intRange, v2 []intRange) []intRange {
 	var result []intRange
 	i1 := 0
 	i2 := 0
-	len1 := len(v1)
-	len2 := len(v2)
-	for {
-		if i1 >= len1 || i2 >= len2 {
-			break
-		} else {
-			r1 := v1[i1]
-			r2 := v2[i2]
-			combined := rangeIntersect(r1, r2)
-			if combined.Status == 0 {
-				result = append(result, *combined.Range)
-				i1 += 1
-				i2 += 1
-			} else if combined.Status < 0 {
-				i1 += 1
-			} else {
-				i2 += 1
-			}
+	for i1 < len(v1) && i2 < len(v2) {
+		r1 := v1[i1]
+		r2 := v2[i2]
+		lo := max(r1.Min, r2.Min)
+		hi := min(r1.Max, r2.Max)
+		if lo <= hi {
+			result = append(result, rangeFrom(lo, hi))
+		}
+		if r1.Max <= r2.Max {
+			i1 += 1
+		}
+		if r2.Max <= r1.Max {
+			i2 += 1
 		}
 	}
 	return result
-}
-
-func rangeIntersect(r1 intRange, r2 intRange) rangeUnion {
-	if r1.Max < r2.Min {
-		return rangeUnionFrom(-1)
-	}
-	if r2.Max < r1.Min {
-		return rangeUnionFrom(1)
-	}
-	return fromWithRange(rangeFrom(max(r1.Min, r2.Min), min(r1.Max, r2.Max)))
 }
 
 func rangeListComplement(v []intRange) []intRange {

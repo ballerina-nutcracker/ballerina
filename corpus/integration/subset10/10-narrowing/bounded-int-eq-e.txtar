@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible types for ==
+  --> bounded-int-eq-e.bal:38:12
+   |
+38 |     return x == 1; // @error
+   |            ^^^^^^
