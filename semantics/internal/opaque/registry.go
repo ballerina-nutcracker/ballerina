@@ -396,7 +396,169 @@ func buildFunctionDefinitions() map[packageKey][]*FunctionDefinition {
 					return ref, true
 				},
 			},
+			model.OpaqueFnXMLGet: {
+				name:   "get",
+				params: []model.Param{{Name: "x"}, {Name: "i"}},
+				monomorphize: func(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
+					semanticError SemanticError, _ bool, args []ast.BLangExpression,
+					_ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
+					containerTy, itemTy, ok := resolveXMLContainer(ctx, resolve, semanticError, args, pos)
+					if !ok {
+						return model.SymbolRef{}, false
+					}
+					if ref, found := ctx.lookupMono(owner, containerTy); found {
+						return ref, true
+					}
+					ref, ok := materialize(model.TypedFunctionSignature{
+						ParamTypes:    []semtypes.SemType{containerTy, semtypes.Int},
+						RestParamType: semtypes.Never,
+						ReturnType:    itemTy,
+						Flags:         model.FuncSymbolFlagIsolated,
+					})
+					if !ok {
+						return model.SymbolRef{}, false
+					}
+					ctx.storeMono(owner, ref, containerTy)
+					return ref, true
+				},
+			},
+			model.OpaqueFnXMLSlice: {
+				name:   "slice",
+				params: []model.Param{{Name: "x"}, {Name: "startIndex"}, {Name: "endIndex"}},
+				monomorphize: func(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
+					semanticError SemanticError, _ bool, args []ast.BLangExpression,
+					_ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
+					containerTy, itemTy, ok := resolveXMLContainer(ctx, resolve, semanticError, args, pos)
+					if !ok {
+						return model.SymbolRef{}, false
+					}
+					if ref, found := ctx.lookupMono(owner, containerTy); found {
+						return ref, true
+					}
+					ref, ok := materialize(model.TypedFunctionSignature{
+						ParamTypes:    []semtypes.SemType{containerTy, semtypes.Int, semtypes.Int},
+						RestParamType: semtypes.Never,
+						ReturnType:    semtypes.XMLSequence(itemTy),
+						Flags:         model.FuncSymbolFlagIsolated,
+					})
+					if !ok {
+						return model.SymbolRef{}, false
+					}
+					ctx.storeMono(owner, ref, containerTy)
+					return ref, true
+				},
+			},
+			model.OpaqueFnXMLMap: {
+				name:   "map",
+				params: xmlCallbackParams(),
+				monomorphize: xmlCallbackMonomorphizer(semtypes.XML, func(callbackReturnTy semtypes.SemType) semtypes.SemType {
+					return semtypes.XMLSequence(semtypes.XMLItemType(callbackReturnTy))
+				}),
+			},
+			model.OpaqueFnXMLForEach: {
+				name:   "forEach",
+				params: xmlCallbackParams(),
+				monomorphize: xmlCallbackMonomorphizer(semtypes.Nil, func(semtypes.SemType) semtypes.SemType {
+					return semtypes.Nil
+				}),
+			},
+			model.OpaqueFnXMLFilter: {
+				name:   "filter",
+				params: xmlCallbackParams(),
+				monomorphize: xmlCallbackMonomorphizer(semtypes.Boolean, func(semtypes.SemType) semtypes.SemType {
+					return semtypes.XML
+				}),
+			},
 		},
+	}
+}
+
+func xmlCallbackParams() []model.Param {
+	return []model.Param{{Name: "x"}, {Name: "func", Flag: model.ParamFlagIsolated}}
+}
+
+// resolveXMLContainer resolves the container argument of an XML function and
+// returns the container type together with the type of the items it holds.
+func resolveXMLContainer(ctx *Context, resolve Resolve, semanticError SemanticError,
+	args []ast.BLangExpression, pos diagnostics.Location) (semtypes.SemType, semtypes.SemType, bool) {
+	if len(args) == 0 {
+		semanticError("missing XML argument", pos)
+		return semtypes.SemType{}, semtypes.SemType{}, false
+	}
+	containerExpr := args[0]
+	containerTy, ok := resolve(containerExpr, semtypes.XML)
+	if !ok {
+		return semtypes.SemType{}, semtypes.SemType{}, false
+	}
+	if !semtypes.IsSubtype(ctx.typeContext(), containerTy, semtypes.XML) {
+		semanticError("expect first argument to be a subtype of xml", containerExpr.GetPosition())
+		return semtypes.SemType{}, semtypes.SemType{}, false
+	}
+	return containerTy, semtypes.XMLItemType(containerTy), true
+}
+
+// xmlCallbackMonomorphizer builds the monomorphizer of an XML function that
+// applies a callback to each item. returnConstraint is the widest return type the
+// callback may have and result gives the function's return type from the
+// callback's own return type.
+func xmlCallbackMonomorphizer(returnConstraint semtypes.SemType,
+	result func(callbackReturnTy semtypes.SemType) semtypes.SemType) monomorphizer {
+	return func(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
+		semanticError SemanticError, isolated bool, args []ast.BLangExpression,
+		_ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
+		containerTy, itemTy, ok := resolveXMLContainer(ctx, resolve, semanticError, args, pos)
+		if !ok {
+			return model.SymbolRef{}, false
+		}
+		if len(args) < 2 {
+			semanticError("missing XML callback argument", pos)
+			return model.SymbolRef{}, false
+		}
+		callbackExpr := args[1]
+		cx := ctx.typeContext()
+		env := ctx.typeEnv()
+		callbackFlags := model.FuncSymbolFlags(0)
+		if isolated {
+			callbackFlags = model.FuncSymbolFlagIsolated
+		}
+		callbackTopTy := FunctionSemType(env, model.TypedFunctionSignature{
+			ParamTypes:    []semtypes.SemType{itemTy},
+			RestParamType: semtypes.Never,
+			ReturnType:    returnConstraint,
+			Flags:         callbackFlags,
+		})
+		callbackTy, ok := resolve(callbackExpr, callbackTopTy)
+		if !ok {
+			return model.SymbolRef{}, false
+		}
+		callbackArgsDef := semtypes.NewListDefinition()
+		callbackArgsTy := callbackArgsDef.Define(env, []semtypes.SemType{itemTy},
+			semtypes.ListMutability(semtypes.CellMutabilityNone))
+		callbackReturnTy := semtypes.FunctionReturnType(cx, callbackTy, callbackArgsTy)
+		if semtypes.IsZero(callbackReturnTy) || !semtypes.IsSubtype(cx, callbackReturnTy, returnConstraint) {
+			semanticError("XML callback has incompatible return type", callbackExpr.GetPosition())
+			return model.SymbolRef{}, false
+		}
+		callbackParamTy := FunctionSemType(env, model.TypedFunctionSignature{
+			ParamTypes:    []semtypes.SemType{itemTy},
+			RestParamType: semtypes.Never,
+			ReturnType:    callbackReturnTy,
+			Flags:         callbackFlags,
+		})
+		if ref, found := ctx.lookupMono(owner, containerTy, callbackReturnTy, callbackParamTy); found {
+			return ref, true
+		}
+		ref, ok := materialize(model.TypedFunctionSignature{
+			ParamTypes:    []semtypes.SemType{containerTy, callbackParamTy},
+			RestParamType: semtypes.Never,
+			ReturnType:    result(callbackReturnTy),
+			Flags:         model.FuncSymbolFlagIsolated,
+		})
+		if !ok {
+			return model.SymbolRef{}, false
+		}
+		ctx.storeMono(owner, ref, containerTy, callbackReturnTy, callbackParamTy)
+		return ref, true
 	}
 }
 

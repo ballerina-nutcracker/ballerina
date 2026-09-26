@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: XML index out of range
+        at main(lang-xml-get-upper-p.bal:17)
