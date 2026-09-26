@@ -1,23 +1,4 @@
 (Client
-  ($remote$value
-    (bb0 () ()
-      (compound-assignment +
-        (simple-var-ref calls)
-        (literal 1))
-      (return
-        (simple-var-ref value))
-    )
-  )
-  ($remote$values
-    (bb0 () ()
-      (compound-assignment +
-        (simple-var-ref calls)
-        (literal 1))
-      (return
-        (invocation lang.array length (
-          (simple-var-ref values))))
-    )
-  )
   (Client.$resource$get$0
     (bb0 () ()
       (compound-assignment +
@@ -30,6 +11,25 @@
     )
   )
   (Client.$resource$get$1
+    (bb0 () ()
+      (compound-assignment +
+        (simple-var-ref calls)
+        (literal 1))
+      (return
+        (invocation lang.array length (
+          (simple-var-ref values))))
+    )
+  )
+  ($remote$value
+    (bb0 () ()
+      (compound-assignment +
+        (simple-var-ref calls)
+        (literal 1))
+      (return
+        (simple-var-ref value))
+    )
+  )
+  ($remote$values
     (bb0 () ()
       (compound-assignment +
         (simple-var-ref calls)

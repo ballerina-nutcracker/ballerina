@@ -19,11 +19,13 @@ package ast
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"reflect"
 	"slices"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/prettyprint"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
@@ -382,9 +384,7 @@ func (p *PrettyPrinter) printPackage(node *BLangPackage) {
 	p.StartNode()
 	p.PrintString("package")
 	p.indentLevel++
-	sortedImports := slices.SortedFunc(slices.Values(node.Imports), func(a, b *BLangImportPackage) int {
-		return cmp.Compare(a.Alias.Value, b.Alias.Value)
-	})
+	sortedImports := slices.SortedFunc(slices.Values(node.Imports), compareImportPrintOrder)
 	for i := range sortedImports {
 		p.PrintInner(sortedImports[i])
 	}
@@ -412,11 +412,38 @@ func (p *PrettyPrinter) printPackage(node *BLangPackage) {
 	if node.InitFunction != nil {
 		p.PrintInner(node.InitFunction)
 	}
-	for i := range node.Functions {
-		p.PrintInner(node.Functions[i])
+	sortedFunctions := slices.SortedStableFunc(slices.Values(node.Functions), func(a, b *BLangFunction) int {
+		return prettyprint.CompareFunctionPrintOrder(a.Name.GetValue(), b.Name.GetValue())
+	})
+	for _, function := range sortedFunctions {
+		p.PrintInner(function)
 	}
 	p.indentLevel--
 	p.EndNode()
+}
+
+func compareImportPrintOrder(a, b *BLangImportPackage) int {
+	return cmp.Or(
+		cmp.Compare(identifierValue(a.Alias), identifierValue(b.Alias)),
+		cmp.Compare(identifierValue(a.OrgName), identifierValue(b.OrgName)),
+		slices.CompareFunc(a.PkgNameComps, b.PkgNameComps, func(x, y BLangIdentifier) int {
+			return cmp.Compare(x.Value, y.Value)
+		}),
+		cmp.Compare(identifierValue(a.Version), identifierValue(b.Version)),
+	)
+}
+
+func identifierValue(identifier *BLangIdentifier) string {
+	if identifier == nil {
+		return ""
+	}
+	return identifier.Value
+}
+
+func sortedMethodNames(methods map[string]*BLangFunction) []string {
+	return slices.SortedFunc(maps.Keys(methods), func(a, b string) int {
+		return cmp.Or(prettyprint.CompareFunctionPrintOrder(a, b), cmp.Compare(a, b))
+	})
 }
 
 func (p *PrettyPrinter) printBLangNodeBase(node *bLangNodeBase) {
@@ -2220,17 +2247,8 @@ func (p *PrettyPrinter) printClassDefinition(node *BLangClassDefinition) {
 	if node.InitFunction != nil {
 		p.PrintInner(node.InitFunction)
 	}
-	// Print methods sorted by name for determinism
-	methodNames := slices.SortedFunc(func(yield func(string) bool) {
-		for name := range node.Methods {
-			if !yield(name) {
-				return
-			}
-		}
-	}, cmp.Compare[string])
-	for _, name := range methodNames {
-		method := node.Methods[name]
-		p.PrintInner(method)
+	for _, name := range sortedMethodNames(node.Methods) {
+		p.PrintInner(node.Methods[name])
 	}
 	for _, rm := range node.ResourceMethods {
 		p.PrintInner(rm)
@@ -2282,14 +2300,7 @@ func (p *PrettyPrinter) printService(node *BLangService) {
 	if node.InitFunction != nil {
 		p.PrintInner(node.InitFunction)
 	}
-	methodNames := slices.SortedFunc(func(yield func(string) bool) {
-		for name := range node.Methods {
-			if !yield(name) {
-				return
-			}
-		}
-	}, cmp.Compare[string])
-	for _, name := range methodNames {
+	for _, name := range sortedMethodNames(node.Methods) {
 		p.PrintInner(node.Methods[name])
 	}
 	for _, rm := range node.ResourceMethods {

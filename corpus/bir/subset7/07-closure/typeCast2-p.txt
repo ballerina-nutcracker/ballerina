@@ -1,11 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0(1|2|3) -> "a"|"b"{
-  bb0 {
-    _ = a;
-    %0 = (1, returnVal);
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad b
@@ -17,6 +10,13 @@ main() -> nil{
     %7 = println(fx) -> bb1;
   }
   bb1 {
+    return;
+  }
+}
+$anonFunc$_0(1|2|3) -> "a"|"b"{
+  bb0 {
+    _ = a;
+    %0 = (1, returnVal);
     return;
   }
 }

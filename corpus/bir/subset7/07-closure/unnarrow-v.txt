@@ -1,15 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0(int) -> int{
-  bb0 {
-    %3 = (1, val);
-    %4 = a;
-    %2 = + %3 %4;
-    (1, val) = %2;
-    %5 = ConstantLoad 5
-    %0 = %5;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 10
@@ -43,5 +32,16 @@ main() -> nil{
   bb5 {
     PopScopeFrame
     GOTO bb1;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = (1, val);
+    %4 = a;
+    %2 = + %3 %4;
+    (1, val) = %2;
+    %5 = ConstantLoad 5
+    %0 = %5;
+    return;
   }
 }

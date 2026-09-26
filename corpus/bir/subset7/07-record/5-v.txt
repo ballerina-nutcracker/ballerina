@@ -1,64 +1,4 @@
 module $anon.. v 0.0.0;
-$default$0() -> int{
-  bb0 {
-    %0 = (1, c);
-    return;
-  }
-}
-$default$1() -> int{
-  bb0 {
-    %0 = (1, c);
-    return;
-  }
-}
-$default$2() -> string{
-  bb0 {
-    %0 = (1, s);
-    return;
-  }
-}
-$default$3() -> int{
-  bb0 {
-    %0 = (1, c);
-    return;
-  }
-}
-$default$4() -> string{
-  bb0 {
-    %0 = (1, s);
-    return;
-  }
-}
-$default$5() -> int{
-  bb0 {
-    %0 = (1, c);
-    return;
-  }
-}
-$default$6() -> int{
-  bb0 {
-    %0 = (1, c);
-    return;
-  }
-}
-$default$7() -> string{
-  bb0 {
-    %0 = (1, s);
-    return;
-  }
-}
-$default$8() -> int{
-  bb0 {
-    %0 = (1, c);
-    return;
-  }
-}
-$default$9() -> string{
-  bb0 {
-    %0 = (1, s);
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 10
@@ -183,6 +123,66 @@ main() -> nil{
     %96 = println(%94) -> bb13;
   }
   bb13 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %0 = (1, c);
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %0 = (1, c);
+    return;
+  }
+}
+$default$2() -> string{
+  bb0 {
+    %0 = (1, s);
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %0 = (1, c);
+    return;
+  }
+}
+$default$4() -> string{
+  bb0 {
+    %0 = (1, s);
+    return;
+  }
+}
+$default$5() -> int{
+  bb0 {
+    %0 = (1, c);
+    return;
+  }
+}
+$default$6() -> int{
+  bb0 {
+    %0 = (1, c);
+    return;
+  }
+}
+$default$7() -> string{
+  bb0 {
+    %0 = (1, s);
+    return;
+  }
+}
+$default$8() -> int{
+  bb0 {
+    %0 = (1, c);
+    return;
+  }
+}
+$default$9() -> string{
+  bb0 {
+    %0 = (1, s);
     return;
   }
 }

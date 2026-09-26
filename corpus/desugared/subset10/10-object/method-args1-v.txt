@@ -243,7 +243,17 @@
     (block-function-body
       (return
         (literal 2))))
+  (function $default$2 (
+    (variable x (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (literal 2))))
   (function $default$3 () ()
+    (block-function-body
+      (return
+        (literal 4))))
+  (function $default$4 () ()
     (block-function-body
       (return
         (literal 4))))
@@ -264,14 +274,4 @@
       (value-type )))) ()
     (block-function-body
       (return
-        (literal 2))))
-  (function $default$2 (
-    (variable x (type
-      (value-type )))) ()
-    (block-function-body
-      (return
-        (literal 2))))
-  (function $default$4 () ()
-    (block-function-body
-      (return
-        (literal 4)))))
+        (literal 2)))))

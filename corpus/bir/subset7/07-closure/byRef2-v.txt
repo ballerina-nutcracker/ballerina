@@ -1,18 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0(int) -> int{
-  bb0 {
-    %3 = (1, a);
-    %4 = ConstantLoad 1
-    %5 = %4;
-    %2 = + %3 %5;
-    (1, a) = %2;
-    %7 = x;
-    %8 = (1, a);
-    %6 = + %7 %8;
-    %0 = %6;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 5
@@ -39,6 +25,20 @@ main() -> nil{
     %17 = println(%16) -> bb3;
   }
   bb3 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = (1, a);
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    (1, a) = %2;
+    %7 = x;
+    %8 = (1, a);
+    %6 = + %7 %8;
+    %0 = %6;
     return;
   }
 }

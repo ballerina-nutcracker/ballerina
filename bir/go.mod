@@ -9,6 +9,7 @@ require (
 	github.com/ballerina-nutcracker/ballerina/context v0.7.0
 	github.com/ballerina-nutcracker/ballerina/decimal v0.7.0
 	github.com/ballerina-nutcracker/ballerina/model v0.7.0
+	github.com/ballerina-nutcracker/ballerina/prettyprint v0.7.0
 	github.com/ballerina-nutcracker/ballerina/runtime v0.7.0
 	github.com/ballerina-nutcracker/ballerina/semtypes v0.7.0
 	github.com/ballerina-nutcracker/ballerina/values v0.7.0

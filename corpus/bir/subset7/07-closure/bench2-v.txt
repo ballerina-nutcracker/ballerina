@@ -13,18 +13,6 @@ foo(int) -> int{
     return;
   }
 }
-$anonFunc$_0(int) -> int{
-  bb0 {
-    %4 = (2, v);
-    %5 = x;
-    %3 = + %4 %5;
-    %6 = %3;
-    %7 = (3, base);
-    %2 = + %6 %7;
-    %0 = %2;
-    return;
-  }
-}
 bench(int) -> int{
   bb0 {
     %2 = fp $anon/.:foo
@@ -104,6 +92,18 @@ main() -> nil{
     %5 = println(%4) -> bb2;
   }
   bb2 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %4 = (2, v);
+    %5 = x;
+    %3 = + %4 %5;
+    %6 = %3;
+    %7 = (3, base);
+    %2 = + %6 %7;
+    %0 = %2;
     return;
   }
 }

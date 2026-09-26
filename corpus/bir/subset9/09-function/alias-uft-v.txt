@@ -1,24 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0(nil|function(nil|...) returns int) -> int{
-  bb0 {
-    %2 = next is nil
-    %2 ? bb1 : bb2;
-  }
-  bb1 {
-    PushScopeFrame 1
-    %0 = ConstantLoad 1
-    (1, %0) = %0;
-    PopScopeFrame
-    return;
-  }
-  bb2 {
-    PushScopeFrame 1
-    %0 = ConstantLoad 2
-    (1, %0) = %0;
-    PopScopeFrame
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:$anonFunc$_0
@@ -41,6 +21,26 @@ main() -> nil{
     %10 = println(%9) -> bb5;
   }
   bb5 {
+    return;
+  }
+}
+$anonFunc$_0(nil|function(nil|...) returns int) -> int{
+  bb0 {
+    %2 = next is nil
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 1
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 2
+    (1, %0) = %0;
+    PopScopeFrame
     return;
   }
 }

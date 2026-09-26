@@ -22,19 +22,19 @@ class Foo {
 class Bar {
   y int
 
+  init(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad y
+      self[%3] = y;
+      return;
+    }
+  }
+
   $remote$getY() -> int{
     bb0 {
       %3 = ConstantLoad y
       %2 = self[%3];
       %0 = %2;
-      return;
-    }
-  }
-
-  init(int) -> nil{
-    bb0 {
-      %3 = ConstantLoad y
-      self[%3] = y;
       return;
     }
   }

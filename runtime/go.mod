@@ -23,6 +23,7 @@ require (
 	github.com/ballerina-nutcracker/ballerina/desugar v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/nodebuilder v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/parser v0.7.0 // indirect
+	github.com/ballerina-nutcracker/ballerina/prettyprint v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/semantics v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/st v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/tools v0.7.0 // indirect

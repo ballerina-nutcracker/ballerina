@@ -1,25 +1,4 @@
 module $anon.. v 0.0.0;
-$anonFunc$_0(string,string) -> string{
-  bb0 {
-    %3 = + x y;
-    %0 = %3;
-    return;
-  }
-}
-$anonFunc$_1(string,string) -> string{
-  bb0 {
-    %3 = + x y;
-    %0 = %3;
-    return;
-  }
-}
-$anonFunc$_2(string,string) -> string{
-  bb0 {
-    %3 = + x y;
-    %0 = %3;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = fp $anon/.:$anonFunc$_0
@@ -40,6 +19,27 @@ main() -> nil{
     %12 = println(%11) -> bb3;
   }
   bb3 {
+    return;
+  }
+}
+$anonFunc$_0(string,string) -> string{
+  bb0 {
+    %3 = + x y;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_1(string,string) -> string{
+  bb0 {
+    %3 = + x y;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_2(string,string) -> string{
+  bb0 {
+    %3 = + x y;
+    %0 = %3;
     return;
   }
 }

@@ -131,24 +131,6 @@
         (invocation io println (
           (invocation lang.array length (
             (invocation letters ()))))))))
-  (function $default$3 () ()
-    (block-function-body
-      (var-def
-        (variable $desugar$0 (expr
-          (invocation letters ()))))
-      (var-def
-        (variable $desugar$1 (expr
-          (literal 30))))
-      (var-def
-        (variable $desugar$2 (expr
-          (invocation $default$0 (
-            (simple-var-ref $desugar$0)
-            (simple-var-ref $desugar$1))))))
-      (return
-        (invocation lang.array indexOf (
-          (simple-var-ref $desugar$0)
-          (simple-var-ref $desugar$1)
-          (simple-var-ref $desugar$2))))))
   (function $default$0 (
     (variable arr (type
       (value-type )))) ()
@@ -182,6 +164,24 @@
       (var-def
         (variable $desugar$1 (expr
           (literal 20))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (return
+        (invocation lang.array indexOf (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))
+  (function $default$3 () ()
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation letters ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 30))))
       (var-def
         (variable $desugar$2 (expr
           (invocation $default$0 (

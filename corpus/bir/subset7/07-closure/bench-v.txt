@@ -9,18 +9,6 @@ foo(int) -> int{
     return;
   }
 }
-$anonFunc$_0(int) -> int{
-  bb0 {
-    %4 = (2, v);
-    %5 = x;
-    %3 = + %4 %5;
-    %6 = %3;
-    %7 = (3, base);
-    %2 = + %6 %7;
-    %0 = %2;
-    return;
-  }
-}
 genFs(int) -> [function(int) returns int...]{
   bb0 {
     %2 = ConstantLoad 0
@@ -144,6 +132,18 @@ main() -> nil{
     %7 = println(%6) -> bb3;
   }
   bb3 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %4 = (2, v);
+    %5 = x;
+    %3 = + %4 %5;
+    %6 = %3;
+    %7 = (3, base);
+    %2 = + %6 %7;
+    %0 = %2;
     return;
   }
 }

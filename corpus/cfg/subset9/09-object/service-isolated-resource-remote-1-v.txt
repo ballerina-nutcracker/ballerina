@@ -26,6 +26,9 @@
     (bb0 () ())
   )
 )
+(main
+  (bb0 () ())
+)
 ($remote$greet
   (bb0 () ()
     (return
@@ -44,7 +47,4 @@
         (field-based-access foo
           (simple-var-ref self))))
   )
-)
-(main
-  (bb0 () ())
 )

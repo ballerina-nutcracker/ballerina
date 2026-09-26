@@ -19,20 +19,6 @@ class FloatFn {
     }
   }
 }
-$anonFunc$_0() -> 1{
-  bb0 {
-    %1 = ConstantLoad 1
-    %0 = %1;
-    return;
-  }
-}
-$anonFunc$_1() -> 1{
-  bb0 {
-    %1 = ConstantLoad 1
-    %0 = %1;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = newObject $anon/.:FloatFn
@@ -83,6 +69,20 @@ main() -> nil{
     %20 = println(%19) -> bb10;
   }
   bb10 {
+    return;
+  }
+}
+$anonFunc$_0() -> 1{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$anonFunc$_1() -> 1{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
     return;
   }
 }

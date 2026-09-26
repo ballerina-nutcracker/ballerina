@@ -40,6 +40,13 @@
               (key-value
                 (literal value)
                 (literal 80))))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (literal true)
+          (literal 50)
+          (literal 60)))))
   (function $default$1 () ()
     (block-function-body
       (return
@@ -49,11 +56,4 @@
           (mapping-constructor-expr
             (key-value
               (literal value)
-              (literal 70)))))))
-  (function $default$0 () ()
-    (block-function-body
-      (return
-        (ternary-expr
-          (literal true)
-          (literal 50)
-          (literal 60))))))
+              (literal 70))))))))

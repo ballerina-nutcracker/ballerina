@@ -19,6 +19,12 @@ class Factory {
 }
 class RemoteFactory {
 
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
   $remote$create(int) -> function(int) returns int{
     bb0 {
       _ = remoteOuterArg;
@@ -26,30 +32,6 @@ class RemoteFactory {
       %0 = %4;
       return;
     }
-  }
-
-  init() -> nil{
-    bb0 {
-      return;
-    }
-  }
-}
-$anonFunc$_0(int) -> int{
-  bb0 {
-    %0 = implementationArg;
-    return;
-  }
-}
-$anonFunc$_1(int) -> int{
-  bb0 {
-    %0 = implementationArg;
-    return;
-  }
-}
-$anonFunc$_2(int) -> int{
-  bb0 {
-    %0 = implementationArg;
-    return;
   }
 }
 getFunction(int) -> function(int) returns int{
@@ -395,6 +377,24 @@ main() -> nil{
   }
   bb75 {
     PopScopeFrame
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %0 = implementationArg;
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %0 = implementationArg;
+    return;
+  }
+}
+$anonFunc$_2(int) -> int{
+  bb0 {
+    %0 = implementationArg;
     return;
   }
 }

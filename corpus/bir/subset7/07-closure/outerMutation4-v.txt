@@ -9,29 +9,6 @@ runner(function(float) returns float,float) -> float{
     return;
   }
 }
-$anonFunc$_0(float) -> float{
-  bb0 {
-    %3 = (1, v1);
-    %4 = a;
-    %2 = + %3 %4;
-    (1, v1) = %2;
-    %5 = ConstantLoad 5
-    %0 = %5;
-    return;
-  }
-}
-$anonFunc$_1(float) -> float{
-  bb0 {
-    _ = b;
-    %4 = (1, v2);
-    %5 = (1, v1);
-    %3 = + %4 %5;
-    (1, v2) = %3;
-    %6 = ConstantLoad 0
-    %0 = %6;
-    return;
-  }
-}
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 10
@@ -75,6 +52,29 @@ main() -> nil{
     %31 = println(%30) -> bb5;
   }
   bb5 {
+    return;
+  }
+}
+$anonFunc$_0(float) -> float{
+  bb0 {
+    %3 = (1, v1);
+    %4 = a;
+    %2 = + %3 %4;
+    (1, v1) = %2;
+    %5 = ConstantLoad 5
+    %0 = %5;
+    return;
+  }
+}
+$anonFunc$_1(float) -> float{
+  bb0 {
+    _ = b;
+    %4 = (1, v2);
+    %5 = (1, v1);
+    %3 = + %4 %5;
+    (1, v2) = %3;
+    %6 = ConstantLoad 0
+    %0 = %6;
     return;
   }
 }
