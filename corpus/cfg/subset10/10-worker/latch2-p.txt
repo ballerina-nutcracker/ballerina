@@ -1,0 +1,14 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable latch (type
+        (value-type handle)) (expr
+        (invocation internal createLatch ()))))
+    (expression-stmt
+      (invocation internal openLatch (
+        (simple-var-ref latch))))
+    (expression-stmt
+      (invocation internal openLatch (
+        (simple-var-ref latch))))
+  )
+)

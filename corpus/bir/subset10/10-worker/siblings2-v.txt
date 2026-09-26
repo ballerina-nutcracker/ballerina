@@ -1,0 +1,60 @@
+module $anon.. v 0.0.0;
+$worker:main:first() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}
+$worker:main:second() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = wait (1, $desugar$1) -> bb2;
+  }
+  bb2 {
+    peer = %2;
+    %5 = peer;
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    %0 = %4;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %5 = closure_fp $anon/.:$worker:main:first
+    $desugar$3 = %5;
+    %7 = closure_fp $anon/.:$worker:main:second
+    $desugar$4 = %7;
+    %9 = start $desugar$3() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %9;
+    %10 = start $desugar$4() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %10;
+    %11 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %12 = wait $desugar$2 -> bb5;
+  }
+  bb5 {
+    result = %12;
+    %14 = result;
+    %15 = println(%14) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

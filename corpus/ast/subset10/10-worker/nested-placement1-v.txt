@@ -1,0 +1,80 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable moduleLevel (type
+    (function-type () (
+      (value-type int)))) (expr
+    (lambda
+      (function $anonFunc$_0 () (
+        (value-type int))
+        (block-function-body
+          (named-worker w (
+            (value-type int))
+            (block-function-body
+              (return
+                (literal 6))))
+          (return
+            (single-wait-action
+              (simple-var-ref w))))))))
+  (function withDefault (
+    (variable f (type
+      (function-type () (
+        (value-type int)))) (expr
+      (lambda
+        (function $anonFunc$_1 () (
+          (value-type int))
+          (block-function-body
+            (named-worker w (
+              (value-type int))
+              (block-function-body
+                (return
+                  (literal 4))))
+            (return
+              (single-wait-action
+                (simple-var-ref w))))))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation f ()))))
+  (class-definition Holder
+    (variable make (type
+      (function-type () (
+        (value-type int)))) (expr
+      (lambda
+        (function $anonFunc$_2 () (
+          (value-type int))
+          (block-function-body
+            (named-worker w (
+              (value-type int))
+              (block-function-body
+                (return
+                  (literal 9))))
+            (return
+              (single-wait-action
+                (simple-var-ref w))))))))
+    (function call () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable f (expr
+            (field-based-access make
+              (simple-var-ref self)))))
+        (return
+          (invocation f ())))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation moduleLevel ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation withDefault ()))))
+      (var-def
+        (variable holder (type
+          (user-defined-type Holder)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation call expr:
+            (simple-var-ref holder) ())))))))

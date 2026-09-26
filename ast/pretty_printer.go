@@ -76,6 +76,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printReturnTypeDescriptor(t)
 	case *BLangBlockFunctionBody:
 		p.printBlockFunctionBody(t)
+	case *BLangNamedWorkerDeclaration:
+		p.printNamedWorkerDeclaration(t)
 	case *BLangExprFunctionBody:
 		p.printExprFunctionBody(t)
 	case *BLangVariable:
@@ -1053,10 +1055,35 @@ func (p *PrettyPrinter) printBlockFunctionBody(node *BLangBlockFunctionBody) {
 	p.StartNode()
 	p.PrintString("block-function-body")
 	p.indentLevel++
+	for _, stmt := range node.InitStmts {
+		p.PrintInner(stmt.(BLangNode))
+	}
+	for _, worker := range node.Workers {
+		p.PrintInner(worker)
+	}
 	for _, stmt := range node.Stmts {
 		p.PrintInner(stmt.(BLangNode))
 	}
 	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printNamedWorkerDeclaration(node *BLangNamedWorkerDeclaration) {
+	p.StartNode()
+	p.PrintString("named-worker")
+	p.PrintString(node.Name)
+
+	p.PrintString("(")
+	p.indentLevel++
+	p.PrintInner(node.ReturnType)
+	p.indentLevel--
+	p.printSticky(")")
+
+	p.indentLevel++
+	p.PrintInner(node.Body)
+	p.printAnnotationAttachments(node)
+	p.indentLevel--
+
 	p.EndNode()
 }
 

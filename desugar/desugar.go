@@ -194,7 +194,14 @@ type functionContext struct {
 	loopVarStack         []ast.LExpr // Stack to track loop variables (nil for while, varRef for desugared foreach)
 	defaultClosureVars   map[model.SymbolRef]model.SymbolRef
 	generatedFunctions   []*ast.BLangFunction
-	trapDepth            int
+	workerFutureSlots    map[model.SymbolRef]*ast.BLangVarRef
+	// uniqueNamePrefix is unique within the module. Append to it to build
+	// unique names for generated functions, prefixing the result with a
+	// `$<kind>` tag (see workerClosurePrefix) so generated names group by
+	// the construct they came from and never collide with source names.
+	uniqueNamePrefix string
+	isIsolated       bool
+	trapDepth        int
 	// typeContext is the non-shared type context for this function. It is owned
 	// by the goroutine desugaring this function and must not be shared.
 	typeContext semtypes.Context
@@ -647,14 +654,13 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 		initStmts = append(initStmts, buildServiceInitStmts(pkgCtx, pkg, pkg.Services[i])...)
 	}
 	body := pkg.InitFunction.Body.(*ast.BLangBlockFunctionBody)
-	if initFnCreated {
-		body.Stmts = initStmts
-	} else {
-		// We prepend desugard statements before users init statments.
-		body.Stmts = append(initStmts, body.Stmts...)
-	}
+	// The generated module initialization runs before anything the user wrote.
+	// It goes in the initialization region rather than ahead of the trailing
+	// statements, because a named worker declared in the user's `init` is
+	// started between the two regions and may read module state.
+	body.InitStmts = append(initStmts, body.InitStmts...)
 
-	initFn, generatedFunctions := desugarFunction(pkgCtx, pkg.InitFunction)
+	initFn, generatedFunctions := desugarFunction(pkgCtx, "", pkg.InitFunction)
 	*pkg.InitFunction = *initFn
 
 	if hasListeners {
@@ -1616,31 +1622,33 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 
 	desugarObject := func(class *ast.BLangClassDefinition) []*ast.BLangFunction {
 		desugarClassDefinition(pkgCtx, class)
+		className := class.Name.GetValue()
 		var generatedFunctions []*ast.BLangFunction
 		for name, method := range class.Methods {
-			fn, generated := desugarFunction(pkgCtx, method)
+			fn, generated := desugarFunction(pkgCtx, className, method)
 			class.Methods[name] = fn
 			generatedFunctions = append(generatedFunctions, generated...)
 		}
 		for _, rm := range class.ResourceMethods {
-			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm)...)
+			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, className, rm)...)
 		}
-		fn, generated := desugarFunction(pkgCtx, class.InitFunction)
+		fn, generated := desugarFunction(pkgCtx, className, class.InitFunction)
 		*class.InitFunction = *fn
 		return append(generatedFunctions, generated...)
 	}
 	desugarService := func(svc *ast.BLangService) []*ast.BLangFunction {
 		desugarServiceDefinition(pkgCtx, svc)
+		serviceName := pkgCtx.compilerCtx.SymbolName(svc.Symbol())
 		var generatedFunctions []*ast.BLangFunction
 		for name, method := range svc.Methods {
-			fn, generated := desugarFunction(pkgCtx, method)
+			fn, generated := desugarFunction(pkgCtx, serviceName, method)
 			svc.Methods[name] = fn
 			generatedFunctions = append(generatedFunctions, generated...)
 		}
 		for _, rm := range svc.ResourceMethods {
-			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm)...)
+			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, serviceName, rm)...)
 		}
-		fn, generated := desugarFunction(pkgCtx, svc.InitFunction)
+		fn, generated := desugarFunction(pkgCtx, serviceName, svc.InitFunction)
 		*svc.InitFunction = *fn
 		return append(generatedFunctions, generated...)
 	}
@@ -1661,7 +1669,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 			defer recoverPanic(&pos)
 			function := pkg.Functions[i]
 			pos = function.GetPosition()
-			fn, generated := desugarFunction(pkgCtx, function)
+			fn, generated := desugarFunction(pkgCtx, "", function)
 			pkg.Functions[i] = fn
 			functionResults[i] = generated
 		})
@@ -1784,15 +1792,23 @@ func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields
 
 	if len(initStmts) > 0 {
 		body := initFn.Body.(*ast.BLangBlockFunctionBody)
-		body.Stmts = append(initStmts, body.Stmts...)
+		// Field initializers belong to the initialization region: the named
+		// workers of `init` are started after that region and a worker body
+		// may read `self.f`.
+		body.InitStmts = append(initStmts, body.InitStmts...)
 	}
 }
 
-func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) []*ast.BLangFunction {
+func desugarResourceMethod(pkgCtx *packageContext, typeName string, rm *ast.BLangResourceMethod) []*ast.BLangFunction {
 	if rm.Body == nil {
 		return nil
 	}
-	cx := &functionContext{pkgCtx: pkgCtx, owner: rm.Symbol()}
+	cx := &functionContext{
+		pkgCtx:           pkgCtx,
+		owner:            rm.Symbol(),
+		uniqueNamePrefix: uniqueName(pkgCtx, typeName, rm.Symbol()),
+		isIsolated:       rm.IsIsolated(),
+	}
 	cx.pushScope(rm.Scope())
 	defer cx.popScope()
 	switch body := rm.Body.(type) {
@@ -1805,15 +1821,36 @@ func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) 
 }
 
 // desugarFunction returns a desugared function and functions generated while
-// desugaring it.
-func desugarFunction(pkgCtx *packageContext, fn *ast.BLangFunction) (*ast.BLangFunction, []*ast.BLangFunction) {
-	cx := &functionContext{pkgCtx: pkgCtx, owner: fn.Symbol()}
+// desugaring it. parentPrefix is the enclosing class or service name, empty for a
+// function that is not a method.
+func desugarFunction(pkgCtx *packageContext, parentPrefix string, fn *ast.BLangFunction) (*ast.BLangFunction, []*ast.BLangFunction) {
+	cx := &functionContext{
+		pkgCtx:           pkgCtx,
+		owner:            fn.Symbol(),
+		uniqueNamePrefix: uniqueName(pkgCtx, parentPrefix, fn.Symbol()),
+		isIsolated:       fn.IsIsolated(),
+	}
 	return desugarFunctionWithContext(cx, fn), cx.generatedFunctions
 }
 
+func uniqueName(pkgCtx *packageContext, parentPrefix string, owner model.SymbolRef) string {
+	name := pkgCtx.compilerCtx.SymbolName(owner)
+	if parentPrefix == "" {
+		return name
+	}
+	return parentPrefix + "." + name
+}
+
 func desugarNestedFunction(cx *functionContext, fn *ast.BLangFunction) *ast.BLangFunction {
-	fn, generated := desugarFunction(cx.pkgCtx, fn)
-	cx.generatedFunctions = append(cx.generatedFunctions, generated...)
+	nested := &functionContext{
+		pkgCtx:            cx.pkgCtx,
+		owner:             fn.Symbol(),
+		uniqueNamePrefix:  uniqueName(cx.pkgCtx, cx.uniqueNamePrefix, fn.Symbol()),
+		workerFutureSlots: cx.workerFutureSlots,
+		isIsolated:        fn.IsIsolated(),
+	}
+	fn = desugarFunctionWithContext(nested, fn)
+	cx.generatedFunctions = append(cx.generatedFunctions, nested.generatedFunctions...)
 	return fn
 }
 

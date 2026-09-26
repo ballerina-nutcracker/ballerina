@@ -1,0 +1,16 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina lang __internal (as internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable latch (type
+          (value-type handle)) (expr
+          (invocation internal createLatch ()))))
+      (expression-stmt
+        (invocation internal openLatch (
+          (simple-var-ref latch))))
+      (expression-stmt
+        (invocation internal openLatch (
+          (simple-var-ref latch)))))))

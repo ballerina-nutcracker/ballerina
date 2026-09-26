@@ -1,0 +1,97 @@
+module $anon.. v 0.0.0;
+class Holder {
+  value int
+
+  get() -> int{
+    bb0 {
+      lock-start "$anon/.:Holder.value" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %1 = ConstantLoad value
+      %0 = (1, self)[%1];
+      (1, %0) = %0;
+      PopScopeFrame
+      lock-end "$anon/.:Holder.value" GOTO bb2;
+    }
+    bb2 {
+      return;
+    }
+    bb3 {
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad value
+      self[%3] = %2;
+      %4 = createLatch() -> bb1;
+    }
+    bb1 {
+      $desugar$0 = %4;
+      %7 = closure_fp $anon/.:$worker:Holder.init:w
+      $desugar$2 = %7;
+      %9 = start $desugar$2() isolated=false -> bb2;
+    }
+    bb2 {
+      $desugar$1 = %9;
+      %10 = openLatch($desugar$0) -> bb3;
+    }
+    bb3 {
+      %11 = wait $desugar$1 -> bb4;
+    }
+    bb4 {
+      return;
+    }
+  }
+}
+$worker:Holder.init:w() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    lock-start "$anon/.:Holder.value" GOTO bb2;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad 1
+    %1 = ConstantLoad value
+    (2, self)[%1] = %0;
+    PopScopeFrame
+    lock-end "$anon/.:Holder.value" GOTO bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Holder
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    h = %3;
+    %6 = h.get() -> bb5;
+  }
+  bb5 {
+    %7 = %6;
+    %8 = println(%7) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

@@ -1,0 +1,6 @@
+-- stdout --
+already open returns immediately
+waiters are still blocked
+first
+second
+-- stderr --

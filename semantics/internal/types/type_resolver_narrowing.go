@@ -120,6 +120,19 @@ func lookupBindingInner(chain *binding, ref model.SymbolRef, crossedBoundary boo
 	return lookupBindingInner(chain.prev, ref, crossedBoundary)
 }
 
+// rejectsWorkerNarrowing reports an error when a narrowing construct is
+// applied to a named worker reference, and says whether it did. A worker name
+// is not a variable: it denotes a single-use future that the declaring function
+// publishes, so there is no second read for a narrowed type to apply to, and a
+// narrowed copy of the symbol would not carry the worker's future slot.
+func rejectsWorkerNarrowing(t typeResolver, ref model.SymbolRef, pos diagnostics.Location) bool {
+	if t.getSymbol(ref).Kind() != model.SymbolKindWorker {
+		return false
+	}
+	t.semanticError("cannot narrow the type of named worker '"+t.symbolName(ref)+"'", pos)
+	return true
+}
+
 func narrowSymbol(t typeResolver, underlying model.SymbolRef, ty semtypes.SemType) model.SymbolRef {
 	narrowedSymbol := t.createNarrowedSymbol(underlying)
 	t.setSymbolType(narrowedSymbol, ty)

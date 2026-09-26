@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Variable already defined: w
+  --> scope2-e.bal:22:5
+   |
+22 |     worker w returns int { // @error Variable already defined: w
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |         return 2;
+   |         ^^^^^^^^^
+24 |     }
+   |     ^
+
+error[SEMANTIC_ERROR]: Variable already defined: w
+  --> scope2-e.bal:33:5
+   |
+33 |     worker w returns int { // @error Variable already defined: w
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+34 |         return 2;
+   |         ^^^^^^^^^
+35 |     }
+   |     ^
+
+error[SEMANTIC_ERROR]: Variable already defined: w
+  --> scope2-e.bal:40:5
+   |
+40 |     worker w returns int { // @error Variable already defined: w
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+41 |         return 1;
+   |         ^^^^^^^^^
+42 |     }
+   |     ^
+
+error[SEMANTIC_ERROR]: Variable already defined: w
+  --> scope2-e.bal:52:5
+   |
+52 |     int w = 2; // @error Variable already defined: w
+   |     ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Variable already defined: x
+  --> scope2-e.bal:61:9
+   |
+61 |         int x = 2; // @error Variable already defined: x
+   |         ^^^^^^^^^^

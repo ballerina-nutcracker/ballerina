@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> dup-ref3-e.bal:27:42
+   |
+27 |     boolean both = observe(w) && observe(w); // @error both short-circuit operands reference w
+   |                                          ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> dup-ref3-e.bal:35:27
+   |
+35 |     int result = wait w | w; // @error repeated within one alternate wait
+   |                           ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> dup-ref3-e.bal:43:19
+   |
+43 |     while observe(w) { // @error reference inside a loop condition
+   |                   ^

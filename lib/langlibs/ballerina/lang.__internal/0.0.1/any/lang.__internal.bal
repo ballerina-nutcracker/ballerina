@@ -23,3 +23,13 @@ public isolated function queryCollect(any[] rows, int slotCount, any[] flattenFl
 public isolated function escapeXMLContent(string|boolean|int|float|decimal value) returns string = external;
 
 public isolated function escapeXMLAttribute(string|boolean|int|float|decimal value) returns string = external;
+
+# Creates a fresh closed one-shot latch. Strands that wait on it are held until
+# it is opened, and it can never be closed again.
+public isolated function createLatch() returns handle = external;
+
+# Returns only after the latch opens, yielding cooperatively while it is closed.
+public isolated function waitOnLatch(handle latch) = external;
+
+# Opens the latch, releasing every waiting strand. A latch may be opened once.
+public isolated function openLatch(handle latch) = external;

@@ -1,0 +1,15 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing return statement
+  --> return1-e.bal:20:5
+   |
+20 |     worker w returns int { // @error falling off the end of a worker body is a nil return
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |         if n > 1 {
+   |         ^^^^^^^^^^
+22 |             return 1;
+   |             ^^^^^^^^^
+23 |         }
+   |         ^
+24 |     }
+   |     ^

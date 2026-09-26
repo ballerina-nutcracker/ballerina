@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot narrow the type of named worker 'w'
+  --> narrowing2-e.bal:26:8
+   |
+26 |     if w is future<int> { // @error cannot narrow a worker reference
+   |        ^
+
+error[SEMANTIC_ERROR]: cannot narrow the type of named worker 'w'
+  --> narrowing2-e.bal:36:11
+   |
+36 |     match w { // @error cannot narrow a worker reference
+   |           ^

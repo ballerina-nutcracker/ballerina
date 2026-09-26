@@ -1,0 +1,26 @@
+(alwaysPanics
+  (bb0 () ()
+    (named-worker w (
+      (value-type never))
+      (block-function-body
+        (panic
+          (error-constructor-expr (
+            (literal always))))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation alwaysPanics ()))
+    (expression-stmt
+      (invocation io println (
+        (literal worker never observed))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal always))))
+  )
+)
