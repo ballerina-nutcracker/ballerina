@@ -188,6 +188,7 @@
   - `ballerina/lang.error`
     - `message`
   - `ballerina/lang.value`
+    - `clone`
     - `cloneWithType`
     - `fromJsonWithType`
   - `ballerina/lang.object`
@@ -231,6 +232,7 @@
   - `error:message`
   - `string:length`
   - `string:toBytes`
+  - `value:clone`
   - `value:cloneWithType`
   - `value:fromJsonWithType`
 

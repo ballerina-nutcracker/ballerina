@@ -1,0 +1,159 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Config
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field host
+          (value-type string))
+        (field port
+          (value-type int)))))
+  (function add (
+    (variable a (type
+      (value-type int)))
+    (variable b (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (simple-var-ref a)
+        (simple-var-ref b))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable cfg (type
+          (user-defined-type Config)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal host)
+              (literal localhost))
+            (key-value
+              (literal port)
+              (literal 8080))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation clone expr:
+              (simple-var-ref cfg) ())
+            (simple-var-ref cfg)))))
+      (var-def
+        (variable ids (type
+          (intersection-type
+            (value-type readonly)
+            (array-type
+              (value-type int) dimensions: 1 ([])))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation clone expr:
+              (simple-var-ref ids) ())
+            (simple-var-ref ids)))))
+      (var-def
+        (variable holder (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type anydata))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal cfg)
+              (simple-var-ref cfg))
+            (key-value
+              (literal ids)
+              (simple-var-ref ids))
+            (key-value
+              (literal xs)
+              (list-constructor-expr
+                (literal 4)
+                (literal 5)))))))
+      (var-def
+        (variable holderClone (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type anydata))) (expr
+          (invocation clone expr:
+            (simple-var-ref holder) ()))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref holderClone)
+            (simple-var-ref holder)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (index-based-access
+              (simple-var-ref holderClone)
+              (literal cfg))
+            (simple-var-ref cfg)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (index-based-access
+              (simple-var-ref holderClone)
+              (literal ids))
+            (simple-var-ref ids)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (index-based-access
+              (simple-var-ref holderClone)
+              (literal xs))
+            (index-based-access
+              (simple-var-ref holder)
+              (literal xs))))))
+      (var-def
+        (variable widened (type
+          (value-type anydata)) (expr
+          (simple-var-ref ids))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation clone expr:
+              (simple-var-ref widened) ())
+            (simple-var-ref ids)))))
+      (var-def
+        (variable e (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal oops))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation clone expr:
+              (simple-var-ref e) ())
+            (simple-var-ref e)))))
+      (var-def
+        (variable f (type
+          (function-type (
+            (value-type int)
+            (value-type int)) (
+            (value-type int)))) (expr
+          (simple-var-ref add))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation clone expr:
+              (simple-var-ref f) ())
+            (simple-var-ref f)))))
+      (var-def
+        (variable lambda (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable x (type
+                (value-type int)))) (
+              (value-type int))
+              (expr-function-body
+                (binary-expr *
+                  (simple-var-ref x)
+                  (literal 2))))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation clone expr:
+              (simple-var-ref lambda) ())
+            (simple-var-ref lambda))))))))

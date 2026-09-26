@@ -1,0 +1,143 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang value (as lang.value))
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable element (type
+          (value-type xml)) (expr
+          (xml-element-literal p
+            (xml-attribute id
+              (literal 1))
+            (xml-sequence-literal
+              (xml-text-literal text)
+              (xml-comment-literal c))))))
+      (var-def
+        (variable elementClone (type
+          (value-type xml)) (expr
+          (invocation lang.value clone (
+            (simple-var-ref element))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref elementClone))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref elementClone)
+            (simple-var-ref element)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref elementClone)
+            (simple-var-ref element)))))
+      (var-def
+        (variable first (type
+          (value-type xml)) (expr
+          (xml-element-literal a))))
+      (var-def
+        (variable second (type
+          (value-type xml)) (expr
+          (xml-element-literal b))))
+      (var-def
+        (variable sequence (type
+          (value-type xml)) (expr
+          (binary-expr +
+            (simple-var-ref first)
+            (simple-var-ref second)))))
+      (var-def
+        (variable sequenceClone (type
+          (value-type xml)) (expr
+          (invocation lang.value clone (
+            (simple-var-ref sequence))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref sequenceClone))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref sequenceClone)
+            (simple-var-ref sequence)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref sequenceClone)
+            (simple-var-ref sequence)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref sequenceClone))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.xml iterator (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$3 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$1) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$3))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable item (type
+              (value-type xml)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$3)
+                (literal value)))))
+          (expression-stmt
+            (invocation io println (
+              (binary-expr ===
+                (simple-var-ref item)
+                (simple-var-ref first)))))
+          (expression-stmt
+            (invocation io println (
+              (binary-expr ===
+                (simple-var-ref item)
+                (simple-var-ref second)))))))
+      (var-def
+        (variable comment (type
+          (value-type xml)) (expr
+          (xml-comment-literal note))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (invocation lang.value clone (
+              (simple-var-ref comment)))
+            (simple-var-ref comment)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation lang.value clone (
+              (simple-var-ref comment)))
+            (simple-var-ref comment)))))
+      (var-def
+        (variable instruction (type
+          (value-type xml)) (expr
+          (xml-pi-literal target data))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (invocation lang.value clone (
+              (simple-var-ref instruction)))
+            (simple-var-ref instruction)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation lang.value clone (
+              (simple-var-ref instruction)))
+            (simple-var-ref instruction)))))
+      (var-def
+        (variable text (type
+          (value-type xml)) (expr
+          (xml-text-literal hello))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (invocation lang.value clone (
+              (simple-var-ref text)))
+            (simple-var-ref text))))))))
