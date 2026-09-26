@@ -1445,9 +1445,17 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 	case *ast.BLangUserDefinedType:
 		referUserDefinedType(resolver, n)
 	case *ast.BLangObjectType:
-		n.Inclusions, n.InclusionPositions, _ = resolveObjectInclusions(resolver, n.PopUnresolvedInclusions())
+		inclusions, positions, _, ok := resolveObjectInclusions(resolver, n.PopUnresolvedInclusions())
+		if !ok {
+			return nil
+		}
+		n.Inclusions, n.InclusionPositions = inclusions, positions
 	case *ast.BLangRecordType:
-		n.Inclusions = resolveRecordTypeInclusions(resolver, n.TypeInclusions)
+		inclusions, ok := resolveRecordTypeInclusions(resolver, n.TypeInclusions)
+		if !ok {
+			return nil
+		}
+		n.Inclusions = inclusions
 		allocateRecordDefaultSymbols(resolver, n)
 	}
 	return resolver
@@ -1470,14 +1478,17 @@ func createDeferredMethodSymbol[T symbolResolver](resolver T, n invocable) {
 	n.SetRawSymbol(common.NewDeferredMethodSymbol(name, scope.MainSpace()))
 }
 
-func referUserDefinedType[T symbolResolver](resolver T, n *ast.BLangUserDefinedType) {
+func referUserDefinedType[T symbolResolver](resolver T, n *ast.BLangUserDefinedType) bool {
 	name := n.GetTypeName().GetValue()
 	var prefix string
 	if n.GetPackageAlias() != nil {
 		prefix = n.GetPackageAlias().GetValue()
 	}
-	resolveSymbolRef(resolver, name, prefix, n.GetPosition(), n, "Unknown type")
+	if !resolveSymbolRef(resolver, name, prefix, n.GetPosition(), n, "Unknown type") {
+		return false
+	}
 	markUnprefixedRefUsed(resolver, name, prefix)
+	return true
 }
 
 func markUnprefixedRefUsed[T symbolResolver](resolver T, name, prefix string) {
@@ -1502,20 +1513,23 @@ func resolveSymbolRef[T symbolResolver](
 	pos diagnostics.Location,
 	target symbolRefNode,
 	unknownMessage string,
-) {
+) bool {
 	if prefix != "" {
 		symRef, ok := resolver.GetPrefixedSymbol(prefix, name)
 		if !ok {
 			semanticError(resolver, "Unknown symbol: "+name, pos)
+			return false
 		}
 		target.SetSymbol(symRef)
 	} else {
 		symRef, _, ok := resolver.GetSymbol(name)
 		if !ok {
 			semanticError(resolver, unknownMessage+": "+name, pos)
+			return false
 		}
 		target.SetSymbol(symRef)
 	}
+	return true
 }
 
 func resolveAnnotationReference[T symbolResolver](resolver T, pkgAlias, name ast.IdentifierNode, pos diagnostics.Location, target symbolRefNode) {
@@ -1779,7 +1793,7 @@ type inclusionMemberForSymbolResolution struct {
 // resolveObjectInclusions update the AST node references with correct symbol references. Will add semantic errors if the type
 // reference is for something that can't be included. This means after this stage we have the gurantee symbol ref always refer
 // to a valid AST node.
-func resolveObjectInclusions[T symbolResolver](resolver T, unresolvedInclusions []*ast.BLangUserDefinedType) ([]model.SymbolRef, []diagnostics.Location, []inclusionMemberForSymbolResolution) {
+func resolveObjectInclusions[T symbolResolver](resolver T, unresolvedInclusions []*ast.BLangUserDefinedType) ([]model.SymbolRef, []diagnostics.Location, []inclusionMemberForSymbolResolution, bool) {
 	ctx := resolver.GetCtx()
 	localTypeDefns := resolver.GetTypeDefns()
 	localClassDefns := resolver.GetClassDefns()
@@ -1787,7 +1801,9 @@ func resolveObjectInclusions[T symbolResolver](resolver T, unresolvedInclusions 
 	positions := make([]diagnostics.Location, 0, len(unresolvedInclusions))
 	var includedFields []inclusionMemberForSymbolResolution
 	for _, inc := range unresolvedInclusions {
-		ast.Walk(resolver, inc)
+		if !referUserDefinedType(resolver, inc) {
+			return nil, nil, nil, false
+		}
 		symRef := inc.Symbol()
 		if tDefn, ok := localTypeDefns[symRef]; ok {
 			if _, ok := tDefn.GetTypeData().TypeDescriptor.(*ast.BLangObjectType); !ok {
@@ -1830,7 +1846,7 @@ func resolveObjectInclusions[T symbolResolver](resolver T, unresolvedInclusions 
 		inclusions = append(inclusions, symRef)
 		positions = append(positions, inc.GetPosition())
 	}
-	return inclusions, positions, includedFields
+	return inclusions, positions, includedFields, true
 }
 
 // allocateRecordDefaultSymbols allocates a module unique function symbol for each record field with a
@@ -1850,7 +1866,7 @@ func allocateRecordDefaultSymbols(resolver symbolResolver, recordType *ast.BLang
 	}
 }
 
-func resolveRecordTypeInclusions[T symbolResolver](resolver T, typeInclusions []ast.BType) []model.SymbolRef {
+func resolveRecordTypeInclusions[T symbolResolver](resolver T, typeInclusions []ast.BType) ([]model.SymbolRef, bool) {
 	ctx := resolver.GetCtx()
 	localTypeDefns := resolver.GetTypeDefns()
 	var inclusions []model.SymbolRef
@@ -1860,7 +1876,9 @@ func resolveRecordTypeInclusions[T symbolResolver](resolver T, typeInclusions []
 			ctx.SemanticError("type inclusion must be a user-defined type", inc.(ast.BLangNode).GetPosition())
 			continue
 		}
-		ast.Walk(resolver, udt)
+		if !referUserDefinedType(resolver, udt) {
+			return nil, false
+		}
 		symRef := udt.Symbol()
 		if tDefn, ok := localTypeDefns[symRef]; ok {
 			if _, ok := tDefn.GetTypeData().TypeDescriptor.(*ast.BLangRecordType); !ok {
@@ -1881,7 +1899,7 @@ func resolveRecordTypeInclusions[T symbolResolver](resolver T, typeInclusions []
 		}
 		inclusions = append(inclusions, symRef)
 	}
-	return inclusions
+	return inclusions, true
 }
 
 func collectTransitiveFields(ctx *context.CompilerContext, inclusions []model.SymbolRef, directFields []inclusionMemberForSymbolResolution, localTypeDefns map[model.SymbolRef]*ast.BLangTypeDefinition, localClassDefns map[model.SymbolRef]*ast.BLangClassDefinition) []inclusionMemberForSymbolResolution {
@@ -1997,8 +2015,11 @@ func resolveClassDefinition(ms *compilationUnitSymbolResolver, classDef *ast.BLa
 		ast.Walk(classResolver, &classDef.AnnAttachments[i])
 	}
 
-	var includedFields []inclusionMemberForSymbolResolution
-	classDef.Inclusions, classDef.InclusionPositions, includedFields = resolveObjectInclusions(ms, classDef.PopUnresolvedInclusions())
+	inclusions, positions, includedFields, ok := resolveObjectInclusions(ms, classDef.PopUnresolvedInclusions())
+	if !ok {
+		return
+	}
+	classDef.Inclusions, classDef.InclusionPositions = inclusions, positions
 	allocateObjectResourceMethodSymbols(ms, classResolver, classDef, networkClassSym, isNetworkClass)
 
 	finishResolveClassDefinition(ms, classResolver, classDef.Fields, classDef.Methods, classDef.ResourceMethods, classDef.InitFunction, includedFields, ms.scope, classMethodSymbolName, isNetworkClass)

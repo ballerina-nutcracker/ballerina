@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: NoSuchType
+  --> inclusion-unknown-e.bal:22:6
+   |
+22 |     *NoSuchType; // @error
+   |      ^^^^^^^^^^
