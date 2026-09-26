@@ -1,0 +1,25 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ANNOTATED))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref INFERRED))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ALL_READONLY))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref NESTED))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref SHORTHAND))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref STRING_KEY))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref CONST_REFS))))
+  )
+)

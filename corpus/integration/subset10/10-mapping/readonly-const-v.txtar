@@ -1,0 +1,9 @@
+-- stdout --
+{"a":1,"b":2}
+{"age":36,"name":1}
+{"a":1}
+{"inner":{"a":1},"other":2}
+{"AGE":36}
+{"age":36}
+{"numbers":[1,2],"values":{"a":1,"b":2}}
+-- stderr --
