@@ -605,7 +605,7 @@ func Validate(t *testing.T, tc test_util.TestCase, pal TestPal) {
 	}
 	checkExpectedOutputInvariants(t, tc, expectedStdout, expectedStderr)
 
-	actualStdout := pal.Stdout()
+	actualStdout := normalizeIntegrationStdout(pal.Stdout())
 	actualStderr := normalizeIntegrationStderr(pal.Stderr())
 
 	stdoutMismatch := expectedStdout != actualStdout
@@ -633,7 +633,7 @@ func Validate(t *testing.T, tc test_util.TestCase, pal TestPal) {
 // Runs invariants against the new content; does NOT fail the test on change.
 func Update(t *testing.T, tc test_util.TestCase, pal TestPal) {
 	t.Helper()
-	stdout := pal.Stdout()
+	stdout := normalizeIntegrationStdout(pal.Stdout())
 	stderr := normalizeIntegrationStderr(pal.Stderr())
 	checkExpectedOutputInvariants(t, tc, stdout, stderr)
 	_ = test_util.UpdateTxtarArchiveIfNeeded(t, tc.ExpectedPath, test_util.TxtarFilesStdoutStderr(stdout, stderr))
@@ -713,6 +713,17 @@ func normalizeIntegrationStderr(stderr string) string {
 	diags := splitStderrDiagnostics(stderr)
 	slices.Sort(diags)
 	return strings.Join(diags, "\n\n") + "\n"
+}
+
+// testExecutionTimePattern matches ballerina/test's startSuite() console
+// report trailer ("Test execution time : 0.003s") so it can be normalized to
+// a stable token — same rationale as logTimestampPattern: this value is
+// necessarily wall-clock-derived, so leaving it raw would make any corpus
+// test exercising ballerina/test:startSuite() flaky by construction.
+var testExecutionTimePattern = regexp.MustCompile(`Test execution time : \S+s`)
+
+func normalizeIntegrationStdout(stdout string) string {
+	return testExecutionTimePattern.ReplaceAllString(stdout, "Test execution time : <DURATION>s")
 }
 
 // ---------------------------------------------------------------------------

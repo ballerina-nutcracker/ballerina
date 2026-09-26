@@ -1,0 +1,15 @@
+-- stdout --
+		[pass] otherBazBeta
+		[pass] testFooAlpha
+
+
+		2 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+exitCode: 0
+testFooRan: 1
+otherBazRan: 1
+unrelatedQuxRan: 0
+-- stderr --

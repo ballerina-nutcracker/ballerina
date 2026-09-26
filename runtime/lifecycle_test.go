@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -125,6 +126,41 @@ func TestLifecycleImmediateStopSignal(t *testing.T) {
 		t.Fatalf("expected immediate stop exit code 131, got %d", code)
 	}
 	if got, want := pal.Stdout(), "start:one\nstart:two\nimmediate:one\nimmediate:two\n"; got != want {
+		t.Fatalf("unexpected stdout: got %q, want %q", got, want)
+	}
+}
+
+// TestRequestGracefulStopConcurrentCallsDoNotEscalate guards against a
+// check-then-transition race in RequestGracefulStop: if the StateListening
+// check and the transition to StateGracefulStopping aren't atomic, two
+// concurrent callers can both observe StateListening, and the second one's
+// transition then lands on the StateGracefulStopping->StateGracefulStopping
+// self-loop, which the lifecycle table maps to immediateStopAction — silently
+// escalating a graceful stop into an immediate one instead of no-op'ing.
+func TestRequestGracefulStopConcurrentCallsDoNotEscalate(t *testing.T) {
+	pal := newLifecycleTestPal(t)
+	rt := newLifecycleTestRuntime(t, lifecycleTestSource, pal)
+
+	rt.Listen()
+
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			rt.RequestGracefulStop()
+		}()
+	}
+	close(start)
+	wg.Wait()
+
+	code := readExitStatus(t, rt)
+	if code != 0 {
+		t.Fatalf("expected successful exit code 0 from concurrent RequestGracefulStop calls, got %d", code)
+	}
+	if got, want := pal.Stdout(), "start:one\nstart:two\ngraceful:one\ngraceful:two\n"; got != want {
 		t.Fatalf("unexpected stdout: got %q, want %q", got, want)
 	}
 }
