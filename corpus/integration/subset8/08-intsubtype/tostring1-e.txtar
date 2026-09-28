@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got -5|int(0..256)
+  --> tostring1-e.bal:27:16
+   |
+27 |     string _ = mixed; // @error
+   |                ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 9223372036854775807
+  --> tostring1-e.bal:23:16
+   |
+23 |     string _ = max; // @error
+   |                ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got int(-128..4294967295)
+  --> tostring1-e.bal:25:16
+   |
+25 |     string _ = wide; // @error
+   |                ^^^^
