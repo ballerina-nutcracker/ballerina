@@ -22,6 +22,8 @@ type preallocatedTypeVals struct {
 	unlimited basicCellTypeVals
 	json      SemType
 	anydata   SemType
+	cloneable SemType
+	ordered   SemType
 }
 
 type basicCellTypeVals struct {
@@ -62,6 +64,8 @@ func newPreallocatedTypeVals(env Env) preallocatedTypeVals {
 	env.preallocatedTypeVals = p
 	p.json = buildJSON(env)
 	p.anydata = buildAnydata(env)
+	p.cloneable = buildCloneable(env)
+	p.ordered = buildOrdered(env)
 	return p
 }
 
@@ -83,6 +87,24 @@ func buildAnydata(env Env) SemType {
 	listDef.Define(env, nil, ListRest(ad))
 	mapDef.Define(env, nil, ad)
 	return ad
+}
+
+func buildCloneable(env Env) SemType {
+	listDef := &ListDefinition{}
+	mapDef := &MappingDefinition{}
+	tableTy := tableContainingDefault(env, mapDef.GetSemType(env))
+	c := Union(ValReadonly, Union(XML, Union(listDef.GetSemType(env), Union(tableTy,
+		mapDef.GetSemType(env)))))
+	listDef.Define(env, nil, ListRest(c))
+	mapDef.Define(env, nil, c)
+	return c
+}
+
+func buildOrdered(env Env) SemType {
+	listDef := &ListDefinition{}
+	ordered := Union(Nil, Union(Boolean, Union(Int, Union(Float, Union(Decimal, Union(String, listDef.GetSemType(env)))))))
+	listDef.Define(env, nil, ListRest(ordered))
+	return ordered
 }
 
 func newBasicCellTypeVals(env Env, mut CellMutability) basicCellTypeVals {

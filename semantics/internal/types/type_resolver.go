@@ -1210,10 +1210,9 @@ func annotationTypeValid(t typeResolver, ty semtypes.SemType) bool {
 }
 
 // annotationMapType is map<Cloneable>. It is recomputed per call rather than
-// cached on the package resolver: the expensive part, CreateCloneable, is
-// already memoized in the semtype context, and caching on the shared resolver
-// would be a data race (local-node resolution runs many type resolvers
-// concurrently off the same package resolver).
+// cached on the package resolver: caching on the shared resolver would be a
+// data race (local-node resolution runs many type resolvers concurrently off
+// the same package resolver).
 func annotationMapType(t typeResolver) semtypes.SemType {
 	return semtypes.Intersect(semtypes.Mapping, semtypes.CreateCloneable(t.typeContext()))
 }

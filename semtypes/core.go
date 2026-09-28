@@ -795,35 +795,11 @@ func CreateAnydata(context Context) SemType {
 }
 
 func CreateCloneable(context Context) SemType {
-	memo := context.cloneableMemo()
-	env := context.Env()
-
-	if !IsZero(memo) {
-		return memo
-	}
-	listDef := &ListDefinition{}
-	mapDef := &MappingDefinition{}
-	tableTy := tableContainingDefault(env, mapDef.GetSemType(env))
-	ad := Union(ValReadonly, Union(XML, Union(listDef.GetSemType(env), Union(tableTy,
-		mapDef.GetSemType(env)))))
-	listDef.Define(env, nil, ListRest(ad))
-	mapDef.Define(env, nil, ad)
-	context.setCloneableMemo(ad)
-	return ad
+	return context.Env().preallocatedTypeVals.cloneable
 }
 
 func CreateOrdered(context Context) SemType {
-	memo := context.orderedMemo()
-	env := context.Env()
-
-	if !IsZero(memo) {
-		return memo
-	}
-	listDef := &ListDefinition{}
-	ordered := Union(Nil, Union(Boolean, Union(Int, Union(Float, Union(Decimal, Union(String, listDef.GetSemType(env)))))))
-	listDef.Define(env, nil, ListRest(ordered))
-	context.setOrderedMemo(ordered)
-	return ordered
+	return context.Env().preallocatedTypeVals.ordered
 }
 
 func createIsolatedObject(context Context) SemType {

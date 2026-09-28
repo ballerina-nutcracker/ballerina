@@ -1,0 +1,450 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function sorted0 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list0 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 0)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function sorted1 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list1 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function sorted2 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list2 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 2)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function sorted3 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list3 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 3)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function sorted4 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list4 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 4)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function sorted5 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list5 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 5)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function sorted6 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list6 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 6)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function sorted7 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list7 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 7)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function sorted8 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list8 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 8)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function sorted9 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list9 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 9)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function sorted10 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list10 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 10)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function sorted11 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (order-by-clause
+            (order-key descending
+              (simple-var-ref x)))
+          (select-clause
+            (simple-var-ref x))))))
+  (function list11 () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 11)
+            (literal 1)
+            (literal 2)))))
+      (return
+        (simple-var-ref xs))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted0 (
+            (invocation list0 ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted1 (
+            (invocation list1 ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted2 (
+            (invocation list2 ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted3 (
+            (invocation list3 ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted4 (
+            (invocation list4 ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted5 (
+            (invocation list5 ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted6 (
+            (invocation list6 ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted7 (
+            (invocation list7 ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted8 (
+            (invocation list8 ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted9 (
+            (invocation list9 ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted10 (
+            (invocation list10 ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sorted11 (
+            (invocation list11 ())))))))))
