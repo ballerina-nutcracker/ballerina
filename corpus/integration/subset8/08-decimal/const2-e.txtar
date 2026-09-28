@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible type: expected int, got 1.2
+error[SEMANTIC_ERROR]: incompatible type: expected int, got 1.2d
   --> const2-e.bal:20:13
    |
 20 |     int i = 1.2d; // @error

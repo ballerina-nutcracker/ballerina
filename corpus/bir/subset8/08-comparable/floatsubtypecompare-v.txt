@@ -5,7 +5,7 @@ main() -> nil{
     %2 = ConstantLoad 2
     %3 = ConstantLoad 3
     %4 = ConstantLoad 3
-    %5 = newArray [1|2|3...][%4]{%1, %2, %3}
+    %5 = newArray [1.0|2.0|3.0...][%4]{%1, %2, %3}
     a = %5;
     %7 = ConstantLoad 4
     %8 = ConstantLoad 5

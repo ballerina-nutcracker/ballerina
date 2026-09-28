@@ -1,0 +1,54 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition F
+    (finite-type
+      (literal 2.0)))
+  (type-definition D
+    (finite-type
+      (literal 2.5d)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type anydata)) (expr
+          (literal 3.0))))
+      (var-def
+        (variable f (type
+          (union-type
+            (user-defined-type F)
+            (error-type))) (expr
+          (invocation cloneWithType expr:
+            (simple-var-ref a) (
+            (simple-var-ref F))))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref f)
+              (error-type))
+            (invocation message expr:
+              (simple-var-ref f) ())
+            (literal ok)))))
+      (var-def
+        (variable b (type
+          (value-type anydata)) (expr
+          (literal 3.5d))))
+      (var-def
+        (variable d (type
+          (union-type
+            (user-defined-type D)
+            (error-type))) (expr
+          (invocation cloneWithType expr:
+            (simple-var-ref b) (
+            (simple-var-ref D))))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref d)
+              (error-type))
+            (invocation message expr:
+              (simple-var-ref d) ())
+            (literal ok))))))))
