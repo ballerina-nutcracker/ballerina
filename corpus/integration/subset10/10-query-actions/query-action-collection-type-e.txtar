@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: '5' is not an iterable collection
+  --> query-action-collection-type-e.bal:24:5
+   |
+24 |     from var value in 5 do { _ = value; }; // @error int is not iterable
+   |     ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: '5' is not an iterable collection
+  --> query-action-collection-type-e.bal:26:26
+   |
+26 |     from var left in [1] join var right in 5 on left equals right do { _ = left + right; }; // @error join int is not iterable
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: '[int...]|{| int... |}' is not an iterable collection
+  --> query-action-collection-type-e.bal:25:5
+   |
+25 |     from var value in either do { _ = value; }; // @error union of collections is not iterable
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: 'object { public function init() returns nil }' is not an iterable collection
+  --> query-action-collection-type-e.bal:23:5
+   |
+23 |     from var value in plain do { _ = value; }; // @error object is not iterable
+   |     ^^^^^^^^^^^^^^^^^^^^^^^

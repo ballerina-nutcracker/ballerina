@@ -14,27 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-type Person record {|
-    int id;
-    string name;
-|};
-
-type Department record {|
-    int ownerId;
-    string name;
-|};
+class Plain {
+}
 
 public function main() {
-    Person[] people = [
-        {id: 1, name: "Alex"}
-    ];
-    Department[] departments = [
-        {ownerId: 1, name: "HR"}
-    ];
-
-    string[][] _ = from var person in people
-        select from var dept in departments
-            join var owner in person.id
-            on dept.ownerId equals owner.id
-            select dept.name;
+    Plain plain = new;
+    int[]|map<int> either = [1];
+    from var value in plain do { _ = value; }; // @error object is not iterable
+    from var value in 5 do { _ = value; }; // @error int is not iterable
+    from var value in either do { _ = value; }; // @error union of collections is not iterable
+    from var left in [1] join var right in 5 on left equals right do { _ = left + right; }; // @error join int is not iterable
 }
