@@ -1,0 +1,58 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 3
+    a = %1;
+    %3 = ConstantLoad typedesc
+    %4 = cloneWithType(a,%3) -> bb1;
+  }
+  bb1 {
+    f = %4;
+    %7 = f is error
+    %7 ? bb2 : bb3;
+  }
+  bb2 {
+    %8 = message(f) -> bb5;
+  }
+  bb3 {
+    %9 = ConstantLoad ok
+    %6 = %9;
+    GOTO bb4;
+  }
+  bb4 {
+    %10 = println(%6) -> bb6;
+  }
+  bb5 {
+    %6 = %8;
+    GOTO bb4;
+  }
+  bb6 {
+    %11 = ConstantLoad 3.5
+    b = %11;
+    %13 = ConstantLoad typedesc
+    %14 = cloneWithType(b,%13) -> bb7;
+  }
+  bb7 {
+    d = %14;
+    %17 = d is error
+    %17 ? bb8 : bb9;
+  }
+  bb8 {
+    %18 = message(d) -> bb11;
+  }
+  bb9 {
+    %19 = ConstantLoad ok
+    %16 = %19;
+    GOTO bb10;
+  }
+  bb10 {
+    %20 = println(%16) -> bb12;
+  }
+  bb11 {
+    %16 = %18;
+    GOTO bb10;
+  }
+  bb12 {
+    return;
+  }
+}

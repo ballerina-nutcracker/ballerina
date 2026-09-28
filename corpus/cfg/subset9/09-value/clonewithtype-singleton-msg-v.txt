@@ -1,0 +1,46 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (value-type anydata)) (expr
+        (literal 3))))
+    (var-def
+      (variable f (type
+        (union-type
+          (user-defined-type F)
+          (error-type))) (expr
+        (invocation lang.value cloneWithType (
+          (simple-var-ref a)
+          (simple-var-ref F))))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref f)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref f)))
+          (literal ok)))))
+    (var-def
+      (variable b (type
+        (value-type anydata)) (expr
+        (literal 3.5))))
+    (var-def
+      (variable d (type
+        (union-type
+          (user-defined-type D)
+          (error-type))) (expr
+        (invocation lang.value cloneWithType (
+          (simple-var-ref b)
+          (simple-var-ref D))))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref d)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref d)))
+          (literal ok)))))
+  )
+)

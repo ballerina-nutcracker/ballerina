@@ -18,6 +18,8 @@ package semtypes
 
 import (
 	"fmt"
+	"math"
+	"strconv"
 	"strings"
 )
 
@@ -506,19 +508,48 @@ func booleanSubtypeToString(st booleanSubtype) string {
 }
 
 func floatSubtypeToString(st floatSubtype) string {
-	var parts []string
+	var values []string
 	for _, v := range st.values {
-		parts = append(parts, fmt.Sprintf("%g", v.value))
+		values = append(values, floatValueToString(v.value))
 	}
-	return strings.Join(parts, "|")
+	return enumerableToString("float", st.allowed, values)
+}
+
+func floatValueToString(v float64) string {
+	switch {
+	case math.IsNaN(v):
+		return "float:NaN"
+	case math.IsInf(v, 1):
+		return "float:Infinity"
+	case math.IsInf(v, -1):
+		return "-float:Infinity"
+	}
+	str := strconv.FormatFloat(v, 'g', -1, 64)
+	if !strings.ContainsAny(str, ".e") {
+		str += ".0"
+	}
+	return str
 }
 
 func decimalSubtypeToString(st decimalSubtype) string {
-	var parts []string
+	var values []string
 	for _, v := range st.values {
-		parts = append(parts, v.value.String())
+		values = append(values, v.value.String()+"d")
 	}
-	return strings.Join(parts, "|")
+	return enumerableToString("decimal", st.allowed, values)
+}
+
+func enumerableToString(universe string, allowed bool, values []string) string {
+	if allowed {
+		return strings.Join(values, "|")
+	}
+	var sb strings.Builder
+	sb.WriteString(universe)
+	for _, v := range values {
+		sb.WriteString("&¬")
+		sb.WriteString(v)
+	}
+	return sb.String()
 }
 
 func (s *toStringState) xmlSubtypeToString(st *xmlSubtype) string {
@@ -555,17 +586,27 @@ func xmlConstituentName(bits int) string {
 }
 
 func stringSubtypeToString(st stringSubtype) string {
-	// Check for Char type: charData.allowed=false, no char values, nonCharData.allowed=true, no nonChar values
-	if !st.charData.allowed && len(st.charData.values) == 0 &&
-		st.nonCharData.allowed && len(st.nonCharData.values) == 0 {
-		return "string:Char"
+	charValues := quotedStrings(st.charData.values)
+	nonCharValues := quotedStrings(st.nonCharData.values)
+	if !st.charData.allowed && !st.nonCharData.allowed {
+		return enumerableToString("string", false, append(charValues, nonCharValues...))
 	}
 	var parts []string
-	for _, v := range st.charData.values {
-		parts = append(parts, fmt.Sprintf("%q", v.Value()))
-	}
-	for _, v := range st.nonCharData.values {
-		parts = append(parts, fmt.Sprintf("%q", v.Value()))
+	for _, part := range []string{
+		enumerableToString("string:Char", st.charData.allowed, charValues),
+		enumerableToString("string&¬string:Char", st.nonCharData.allowed, nonCharValues),
+	} {
+		if part != "" {
+			parts = append(parts, part)
+		}
 	}
 	return strings.Join(parts, "|")
+}
+
+func quotedStrings(values []enumerableType[string]) []string {
+	var quoted []string
+	for _, v := range values {
+		quoted = append(quoted, fmt.Sprintf("%q", v.Value()))
+	}
+	return quoted
 }
