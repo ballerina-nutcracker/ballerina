@@ -1431,10 +1431,7 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 		resolveQuerySymbols(resolver, n, n.QueryClauseList)
 		return nil
 	case *ast.BLangQueryAction:
-		queryResolver := resolveQuerySymbols(resolver, n, n.QueryClauseList)
-		if n.DoClause != nil {
-			ast.Walk(queryResolver, n.DoClause)
-		}
+		ast.Walk(resolveQuerySymbols(resolver, n, n.QueryClauseList), n.DoClause)
 		return nil
 	case *ast.BLangInvocation:
 		if n.GetExpression() != nil {

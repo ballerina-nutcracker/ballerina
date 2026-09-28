@@ -1199,9 +1199,7 @@ func (p *PrettyPrinter) printQueryAction(node *BLangQueryAction) {
 	for i := range node.QueryClauseList {
 		p.PrintInner(node.QueryClauseList[i])
 	}
-	if node.DoClause != nil {
-		p.PrintInner(node.DoClause)
-	}
+	p.PrintInner(node.DoClause)
 	p.indentLevel--
 	p.EndNode()
 }

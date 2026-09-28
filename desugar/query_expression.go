@@ -452,10 +452,6 @@ func walkQueryAction(cx *functionContext, action *ast.BLangQueryAction) desugare
 		cx.internalError("query action must start with a from clause", action.GetPosition())
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
 	}
-	if action.DoClause == nil || action.DoClause.Body == nil {
-		cx.internalError("query action requires a do clause", action.GetPosition())
-		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: action}
-	}
 
 	fromBinding, ok := queryRowBindingFromVarDef(cx, fromClause.VariableDefinitionNode, "from")
 	if !ok {

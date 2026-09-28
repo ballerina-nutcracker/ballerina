@@ -4881,10 +4881,6 @@ func resolveQueryAction(
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 
-	if action.DoClause == nil || action.DoClause.Body == nil {
-		t.semanticError("query action requires a do clause", action.GetPosition())
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
 	action.DoClause.SetDeterminedType(semtypes.Never)
 	bodyEffect := resolveBlockStatements(t, queryChain, action.DoClause.Body.Stmts)
 	action.DoClause.Body.SetDeterminedType(semtypes.Never)

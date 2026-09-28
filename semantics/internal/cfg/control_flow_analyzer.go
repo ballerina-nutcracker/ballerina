@@ -367,9 +367,7 @@ func (c *queryActionCollector) Visit(node ast.BLangNode) ast.Visitor {
 		return nil
 	}
 	if action, ok := node.(*ast.BLangQueryAction); ok {
-		if action.DoClause != nil && action.DoClause.Body != nil {
-			c.actions = append(c.actions, action)
-		}
+		c.actions = append(c.actions, action)
 		return nil
 	}
 	return c
