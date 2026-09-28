@@ -4858,16 +4858,7 @@ func resolveQueryAction(
 	chain *binding,
 	action *ast.BLangQueryAction,
 ) (semtypes.SemType, expressionEffect, bool) {
-	if len(action.QueryClauseList) < 1 {
-		t.semanticError("query action requires a from clause", action.GetPosition())
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
-
-	fromClause, ok := action.QueryClauseList[0].(*ast.BLangFromClause)
-	if !ok {
-		t.semanticError("query action must start with a from clause", action.GetPosition())
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
+	fromClause := action.QueryClauseList[0].(*ast.BLangFromClause)
 	fromCompletionErrorTy, ok := resolveQueryFromClause(t, chain, fromClause, true)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
