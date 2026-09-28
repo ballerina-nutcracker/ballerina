@@ -1470,26 +1470,18 @@ func resolveQuerySymbols(parent symbolResolver, node ast.BLangNode, clauses []as
 	for _, clause := range clauses {
 		switch clause := clause.(type) {
 		case *ast.BLangJoinClause:
-			if collection, ok := clause.Collection.(ast.BLangNode); ok && collection != nil {
-				ast.Walk(parent, collection)
-			}
-			if onExpr, ok := clause.OnClause.OnExpr.(ast.BLangNode); ok && onExpr != nil {
-				ast.Walk(resolver, onExpr)
-			}
+			ast.Walk(parent, clause.Collection.(ast.BLangNode))
+			ast.Walk(resolver, clause.OnClause.OnExpr.(ast.BLangNode))
 			right := newBlockSymbolResolverWithBlockScope(parent, clause)
-			if clause.VariableDefinitionNode != nil {
-				variable := clause.VariableDefinitionNode.Var
-				if variable != nil && variable.Name != nil {
-					name := variable.Name.GetValue()
-					if isShadowed(resolver, name) {
-						semanticError(resolver, "Variable already defined: "+name, clause.VariableDefinitionNode.GetPosition())
-					}
-				}
-				ast.Walk(right, clause.VariableDefinitionNode)
+			// The right scope's parent is the scope outside the query, so a clash with a
+			// variable declared there is reported when the join variable is defined. Only a
+			// clash with an earlier query variable needs a check here.
+			name := clause.VariableDefinitionNode.Var.Name.GetValue()
+			if isShadowedWithin(resolver, parent, name) {
+				semanticError(resolver, "Variable already defined: "+name, clause.VariableDefinitionNode.GetPosition())
 			}
-			if equalsExpr, ok := clause.OnClause.EqualsExpr.(ast.BLangNode); ok && equalsExpr != nil {
-				ast.Walk(right, equalsExpr)
-			}
+			ast.Walk(right, clause.VariableDefinitionNode)
+			ast.Walk(right, clause.OnClause.EqualsExpr.(ast.BLangNode))
 			resolver = &blockSymbolResolver{
 				parent: resolver,
 				scope: &model.BlockScope{BlockScopeBase: model.BlockScopeBase{
@@ -1650,6 +1642,25 @@ func isShadowed(resolver *blockSymbolResolver, name string) bool {
 		} else {
 			break
 		}
+	}
+	return false
+}
+
+// isShadowedWithin reports whether name is defined in a block scope from resolver up to, but
+// not including, the enclosing resolver outer.
+func isShadowedWithin(resolver *blockSymbolResolver, outer symbolResolver, name string) bool {
+	if name == string(model.IGNORE) {
+		return false
+	}
+	for current := resolver; current != nil && symbolResolver(current) != outer; {
+		if _, ok := current.scope.MainSpace().GetSymbol(name); ok {
+			return true
+		}
+		next, ok := current.parent.(*blockSymbolResolver)
+		if !ok {
+			return false
+		}
+		current = next
 	}
 	return false
 }

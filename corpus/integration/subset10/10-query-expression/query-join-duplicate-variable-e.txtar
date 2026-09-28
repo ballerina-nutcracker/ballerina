@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Variable already defined: x
+  --> query-join-duplicate-variable-e.bal:23:27
+   |
+23 |     from var x in xs join var x in ys on x equals x do { _ = x; }; // @error x is already defined by the from clause
+   |                           ^^^^^
+
+error[SEMANTIC_ERROR]: Variable already defined: x
+  --> query-join-duplicate-variable-e.bal:25:37
+   |
+25 |     int[] _ = from var x in xs join var x in ys on x equals x select x; // @error x is already defined by the from clause
+   |                                     ^^^^^
+
+error[SEMANTIC_ERROR]: Variable already defined: y
+  --> query-join-duplicate-variable-e.bal:22:27
+   |
+22 |     from var x in xs join var y in ys on x equals y do { _ = x + y; }; // @error y is already defined outside the query
+   |                           ^^^^^
+
+error[SEMANTIC_ERROR]: Variable already defined: y
+  --> query-join-duplicate-variable-e.bal:24:37
+   |
+24 |     int[] _ = from var x in xs join var y in ys on x equals y select x + y; // @error y is already defined outside the query
+   |                                     ^^^^^
