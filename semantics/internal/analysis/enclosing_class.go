@@ -16,17 +16,21 @@
 
 package analysis
 
-import "github.com/ballerina-nutcracker/ballerina/ast"
+import (
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+)
 
 // enclosingClassBody captures the subset of a class or service body that
 // semantic analysis (in particular lock validation and isolated-field
 // checks) needs when walking method bodies. Classes carry a className
 // derived from the user-supplied name; services have no name and instead
-// carry a per-service tag used to disambiguate field lock keys.
+// carry their source position as a deterministic disambiguator for field lock keys.
 type enclosingClassBody struct {
 	// name is the user-supplied class name for class bodies, empty for
 	// service bodies (services have no name).
 	name     string
+	pos      diagnostics.Location
 	isolated bool
 	fields   []*ast.BLangVariable
 	initFn   *ast.BLangFunction
@@ -35,6 +39,7 @@ type enclosingClassBody struct {
 func enclosingFromClass(c *ast.BLangClassDefinition) *enclosingClassBody {
 	return &enclosingClassBody{
 		name:     c.Name.GetValue(),
+		pos:      c.GetPosition(),
 		isolated: c.IsIsolated(),
 		fields:   c.Fields,
 		initFn:   c.InitFunction,
@@ -43,6 +48,7 @@ func enclosingFromClass(c *ast.BLangClassDefinition) *enclosingClassBody {
 
 func enclosingFromService(s *ast.BLangService) *enclosingClassBody {
 	return &enclosingClassBody{
+		pos:      s.GetPosition(),
 		isolated: s.IsIsolated(),
 		fields:   s.Fields,
 		initFn:   s.InitFunction,

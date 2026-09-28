@@ -291,10 +291,10 @@ type (
 		Version      string
 	}
 
-	// We are using indeces here with the same rational as RefAtoms, instead of pointers
+	// Zero value (Space == nil) means "empty".
 	SymbolRef struct {
-		Index      int
-		SpaceIndex int
+		Index int
+		Space *SymbolSpace
 	}
 
 	// FunctionSignatureRef identifies an untyped function signature in the compiler environment. Zero is unset.
@@ -339,7 +339,6 @@ type (
 		Pkg         PackageIdentifier
 		lookupTable map[string]int
 		symbols     []Symbol
-		index       int
 	}
 
 	symbolBase struct {
@@ -782,7 +781,7 @@ func (space *SymbolSpace) GetSymbol(name string) (SymbolRef, bool) {
 	if !ok {
 		return SymbolRef{}, false
 	}
-	return SymbolRef{Index: index, SpaceIndex: space.SpaceIndex()}, true
+	return SymbolRef{Index: index, Space: space}, true
 }
 
 // AppendSymbol appends a symbol to the space and returns its index. Thread-safe.
@@ -797,12 +796,7 @@ func (space *SymbolSpace) AppendSymbol(symbol Symbol) int {
 
 // RefAt returns a SymbolRef for the symbol at the given index.
 func (space *SymbolSpace) RefAt(index int) SymbolRef {
-	return SymbolRef{Index: index, SpaceIndex: space.SpaceIndex()}
-}
-
-// SpaceIndex returns the non-zero symbol-space index used in SymbolRef.
-func (space *SymbolSpace) SpaceIndex() int {
-	return space.index + 1
+	return SymbolRef{Index: index, Space: space}
 }
 
 func (space *SymbolSpace) SymbolAt(index int) Symbol {
@@ -835,8 +829,8 @@ func (space *SymbolSpace) Symbols() iter.Seq[SymbolRef] {
 	}
 }
 
-func NewSymbolSpaceInner(packageID PackageID, index int) *SymbolSpace {
-	return &SymbolSpace{index: index, Pkg: PackageIdentifierFromID(&packageID), lookupTable: make(map[string]int), symbols: make([]Symbol, 0)}
+func NewSymbolSpaceInner(packageID PackageID) *SymbolSpace {
+	return &SymbolSpace{Pkg: PackageIdentifierFromID(&packageID), lookupTable: make(map[string]int), symbols: make([]Symbol, 0)}
 }
 
 func PackageIdentifierFromID(id *PackageID) PackageIdentifier {

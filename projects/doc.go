@@ -92,12 +92,19 @@
 //
 // # Compilation Pipeline
 //
-// The compilation pipeline follows a three-phase design:
+// The compilation pipeline follows a two-step design:
 //
 //  1. Load: Project loading creates PackageConfig from the filesystem
-//  2. Compile: [PackageCompilation] parses, analyzes, and type-checks all modules
-//     in topological order via [PackageResolution]
-//  3. CodeGen: [BallerinaBackend] generates BIR from compiled modules
+//  2. Compile: [PackageCompilation] parses, analyzes, type-checks, and (by default) generates
+//     BIR for all modules. Parsing runs concurrently across the whole package; symbol and
+//     top-level type resolution then run sequentially in topological order via
+//     [PackageResolution] (each module needs its dependencies' published symbols first); the
+//     remaining phases, including BIR generation, then run per module with no barrier between
+//     them.
+//
+// BIR generation can be skipped via [CompilationOptionsBuilder.WithGenerateCode] for callers
+// that only need diagnostics/symbols per compile (e.g. a language server). [BallerinaBackend],
+// obtained via [NewBallerinaBackend], generates any missing BIR on demand.
 //
 // Complete example:
 //
@@ -118,13 +125,13 @@
 //	project := result.Project()
 //	pkg := project.CurrentPackage()
 //
-//	// Compile (triggers parsing, type checking, semantic analysis)
+//	// Compile (parses, type-checks, analyzes, and generates BIR by default)
 //	compilation := pkg.Compilation()
 //	if compilation.DiagnosticResult().HasErrors() {
 //	    // Handle compilation errors
 //	}
 //
-//	// Generate BIR for execution
+//	// Access the generated BIR for execution
 //	backend := projects.NewBallerinaBackend(compilation)
 //	birPkg := backend.BIR()
 //
