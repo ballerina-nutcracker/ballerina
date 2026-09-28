@@ -1,0 +1,142 @@
+(main
+  (bb0 (bb1 bb2) (bb1 bb2)
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable x))
+          (list-constructor-expr
+            (literal 3)
+            (literal 1)
+            (literal 2)))
+        (where-clause
+          (binary-expr >
+            (invocation t (
+              (binary-expr *
+                (simple-var-ref x)
+                (literal 10))))
+            (literal 0)))
+        (order-by-clause
+          (order-key descending
+            (invocation t (
+              (simple-var-ref x)))))
+        (do-clause
+          (block-stmt
+            (expression-stmt
+              (invocation lang.array push (
+                (simple-var-ref log)
+                (binary-expr +
+                  (simple-var-ref x)
+                  (literal 1000)))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref log))))
+    (assignment
+      (simple-var-ref log)
+      (list-constructor-expr))
+    (var-def
+      (variable sorted (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x))
+            (list-constructor-expr
+              (literal 3)
+              (literal 1)
+              (literal 2)))
+          (from-clause
+            (var-def
+              (variable y))
+            (list-constructor-expr
+              (invocation t (
+                (binary-expr *
+                  (simple-var-ref x)
+                  (literal 100))))))
+          (where-clause
+            (binary-expr >
+              (invocation t (
+                (binary-expr *
+                  (simple-var-ref x)
+                  (literal 10))))
+              (literal 0)))
+          (order-by-clause
+            (order-key descending
+              (invocation t (
+                (simple-var-ref x)))))
+          (select-clause
+            (binary-expr +
+              (simple-var-ref x)
+              (simple-var-ref y)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref log))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref sorted))))
+    (assignment
+      (simple-var-ref log)
+      (list-constructor-expr))
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable x))
+          (list-constructor-expr
+            (literal 2)
+            (literal 1)
+            (literal 3)))
+        (let-clause
+          (var-def
+            (variable key (type
+              (value-type int)) (expr
+              (invocation t (
+                (simple-var-ref x)))))))
+        (order-by-clause
+          (order-key ascending
+            (simple-var-ref key)))
+        (limit-clause
+          (literal 2))
+        (order-by-clause
+          (order-key descending
+            (simple-var-ref key)))
+        (do-clause
+          (block-stmt
+            (expression-stmt
+              (invocation lang.array push (
+                (simple-var-ref log)
+                (binary-expr +
+                  (simple-var-ref x)
+                  (literal 100)))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref log))))
+  )
+  (bb1 (bb0) (bb0)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref log)
+        (binary-expr +
+          (simple-var-ref x)
+          (literal 1000)))))
+  )
+  (bb2 (bb0) (bb0)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref log)
+        (binary-expr +
+          (simple-var-ref x)
+          (literal 100)))))
+  )
+)
+(t
+  (bb0 () ()
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref log)
+        (simple-var-ref v))))
+    (return
+      (simple-var-ref v))
+  )
+)

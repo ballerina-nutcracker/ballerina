@@ -7,76 +7,76 @@ main() -> nil{
     %4 = ConstantLoad 3
     %5 = newArray [int...][%4]{%1, %2, %3}
     xs = %5;
-    $desugar$0 = xs;
-    %8 = length($desugar$0) -> bb1;
+    %7 = ConstantLoad 0
+    %8 = newArray list[%7]{}
+    $desugar$0 = %8;
+    %11 = ConstantLoad 0
+    %12 = newArray list[%11]{}
+    $desugar$1 = %12;
+    $desugar$2 = xs;
+    %16 = length($desugar$2) -> bb1;
   }
   bb1 {
-    $desugar$1 = %8;
-    %10 = ConstantLoad 0
-    %11 = newArray list[%10]{}
-    $desugar$2 = %11;
-    %14 = ConstantLoad 0
-    $desugar$3 = %14;
+    $desugar$3 = %16;
+    %18 = ConstantLoad 0
+    $desugar$4 = %18;
     GOTO bb2;
   }
   bb2 {
-    %17 = $desugar$3;
-    %18 = $desugar$1;
-    %16 = < %17 %18;
-    %16 ? bb3 : bb4;
+    %21 = $desugar$4;
+    %22 = $desugar$3;
+    %20 = < %21 %22;
+    %20 ? bb3 : bb4;
   }
   bb3 {
     PushScopeFrame 11
-    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    %0 = (1, $desugar$2)[(1, $desugar$4)];
     (1, y) = %0;
     %2 = (1, y);
     %3 = ConstantLoad 2
     %4 = %3;
     %1 = * %2 %4;
     %5 = %1;
-    %6 = push((1, $desugar$2),%5) -> bb5;
+    %6 = push((1, $desugar$1),%5) -> bb5;
   }
   bb4 {
-    $desugar$4 = $desugar$2;
-    %20 = length($desugar$4) -> bb6;
+    $desugar$5 = $desugar$1;
+    %24 = length($desugar$5) -> bb6;
   }
   bb5 {
-    %8 = (1, $desugar$3);
+    %8 = (1, $desugar$4);
     %9 = ConstantLoad 1
     %10 = %9;
     %7 = + %8 %10;
-    (1, $desugar$3) = %7;
+    (1, $desugar$4) = %7;
     PopScopeFrame
     GOTO bb2;
   }
   bb6 {
-    $desugar$5 = %20;
-    %22 = ConstantLoad 0
-    %23 = newArray list[%22]{}
-    $desugar$6 = %23;
+    $desugar$6 = %24;
     %26 = ConstantLoad 0
     $desugar$7 = %26;
     GOTO bb7;
   }
   bb7 {
     %29 = $desugar$7;
-    %30 = $desugar$5;
+    %30 = $desugar$6;
     %28 = < %29 %30;
     %28 ? bb8 : bb9;
   }
   bb8 {
     PushScopeFrame 11
-    %0 = (1, $desugar$4)[(1, $desugar$7)];
+    %0 = (1, $desugar$5)[(1, $desugar$7)];
     (1, x) = %0;
     %2 = (1, x);
     %3 = ConstantLoad 2
     %4 = %3;
     %1 = * %2 %4;
     %5 = %1;
-    %6 = push((1, $desugar$6),%5) -> bb10;
+    %6 = push((1, $desugar$0),%5) -> bb10;
   }
   bb9 {
-    out = $desugar$6;
+    out = $desugar$0;
     %33 = ConstantLoad 0
     %32 = out[%33];
     %34 = %32;

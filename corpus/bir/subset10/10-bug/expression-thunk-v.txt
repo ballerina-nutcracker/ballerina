@@ -596,41 +596,41 @@ $default$0() -> int{
 }
 $default$1() -> [int...]{
   bb0 {
-    %1 = ConstantLoad 1
-    %2 = ConstantLoad 2
-    %3 = ConstantLoad 2
-    %4 = newArray [int, int, never...][%3]{%1, %2}
-    $desugar$0 = %4;
-    %6 = length($desugar$0) -> bb1;
+    %1 = ConstantLoad 0
+    %2 = newArray list[%1]{}
+    $desugar$0 = %2;
+    %5 = ConstantLoad 1
+    %6 = ConstantLoad 2
+    %7 = ConstantLoad 2
+    %8 = newArray [int, int, never...][%7]{%5, %6}
+    $desugar$1 = %8;
+    %10 = length($desugar$1) -> bb1;
   }
   bb1 {
-    $desugar$1 = %6;
-    %8 = ConstantLoad 0
-    %9 = newArray list[%8]{}
-    $desugar$2 = %9;
+    $desugar$2 = %10;
     %12 = ConstantLoad 0
     $desugar$3 = %12;
     GOTO bb2;
   }
   bb2 {
     %15 = $desugar$3;
-    %16 = $desugar$1;
+    %16 = $desugar$2;
     %14 = < %15 %16;
     %14 ? bb3 : bb4;
   }
   bb3 {
     PushScopeFrame 11
-    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
     (1, value) = %0;
     %2 = (1, value);
     %3 = ConstantLoad 2
     %4 = %3;
     %1 = * %2 %4;
     %5 = %1;
-    %6 = push((1, $desugar$2),%5) -> bb5;
+    %6 = push((1, $desugar$0),%5) -> bb5;
   }
   bb4 {
-    %0 = $desugar$2;
+    %0 = $desugar$0;
     return;
   }
   bb5 {

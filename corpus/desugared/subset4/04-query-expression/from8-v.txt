@@ -30,52 +30,52 @@
             (literal 4)))))
       (var-def
         (variable $desugar$0 (expr
-          (simple-var-ref xs))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation lang.array length (
-            (simple-var-ref $desugar$0))))))
-      (var-def
-        (variable $desugar$2 (expr
           (mapping-constructor-expr))))
       (var-def
         (variable x))
       (var-def
-        (variable $desugar$3 (expr
+        (variable $desugar$1 (expr
+          (simple-var-ref xs))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$4 (expr
           (numeric-literal 0))))
       (while
         (binary-expr <
-          (simple-var-ref $desugar$3)
-          (simple-var-ref $desugar$1))
+          (simple-var-ref $desugar$4)
+          (simple-var-ref $desugar$2))
         (block-stmt
           (assignment
             (simple-var-ref x)
             (index-based-access
-              (simple-var-ref $desugar$0)
-              (simple-var-ref $desugar$3)))
+              (simple-var-ref $desugar$1)
+              (simple-var-ref $desugar$4)))
           (var-def
-            (variable $desugar$4 (expr
+            (variable $desugar$3 (expr
               (list-constructor-expr
                 (invocation keyFor (
                   (simple-var-ref x)))
                 (simple-var-ref x)))))
           (assignment
             (index-based-access
-              (simple-var-ref $desugar$2)
+              (simple-var-ref $desugar$0)
               (index-based-access
-                (simple-var-ref $desugar$4)
+                (simple-var-ref $desugar$3)
                 (numeric-literal 0)))
             (index-based-access
-              (simple-var-ref $desugar$4)
+              (simple-var-ref $desugar$3)
               (numeric-literal 1)))
           (assignment
-            (simple-var-ref $desugar$3)
+            (simple-var-ref $desugar$4)
             (binary-expr +
-              (simple-var-ref $desugar$3)
+              (simple-var-ref $desugar$4)
               (numeric-literal 1)))))
       (var-def
         (variable out (expr
-          (simple-var-ref $desugar$2))))
+          (simple-var-ref $desugar$0))))
       (expression-stmt
         (invocation io println (
           (index-based-access

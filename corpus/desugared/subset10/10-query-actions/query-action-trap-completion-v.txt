@@ -63,62 +63,64 @@
           (trap-expr
             (expression-thunk
             (var-def
+              (variable $desugar$5 (expr
+                (numeric-literal 0))))
+            (var-def
               (variable $desugar$0 (expr
                 (literal <nil>))))
             (var-def
               (variable value))
             (var-def
               (variable $desugar$1 (expr
-                (literal false))))
-            (var-def
-              (variable $desugar$2 (expr
                 (simple-var-ref values))))
             (var-def
-              (variable $desugar$3 (expr
+              (variable $desugar$2 (expr
                 (literal false))))
             (while
               (binary-expr &&
                 (unary-expr !
-                  (simple-var-ref $desugar$3))
-                (unary-expr !
-                  (simple-var-ref $desugar$1)))
+                  (simple-var-ref $desugar$2))
+                (binary-expr ==
+                  (simple-var-ref $desugar$5)
+                  (numeric-literal 0)))
               (block-stmt
                 (var-def
-                  (variable $desugar$5 (expr
+                  (variable $desugar$4 (expr
                     (invocation next expr:
-                      (simple-var-ref $desugar$2) ()))))
+                      (simple-var-ref $desugar$1) ()))))
                 (if
                   (type-test-expr is
-                    (simple-var-ref $desugar$5))
+                    (simple-var-ref $desugar$4))
                   (block-stmt
                     (assignment
-                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$2)
                       (literal true))) ())
                 (if
                   (type-test-expr is
-                    (simple-var-ref $desugar$5))
+                    (simple-var-ref $desugar$4))
                   (block-stmt
                     (if
-                      (unary-expr !
-                        (simple-var-ref $desugar$1))
+                      (binary-expr ==
+                        (simple-var-ref $desugar$5)
+                        (numeric-literal 0))
                       (block-stmt
                         (assignment
                           (simple-var-ref $desugar$0)
-                          (simple-var-ref $desugar$5))
+                          (simple-var-ref $desugar$4))
                         (assignment
-                          (simple-var-ref $desugar$1)
-                          (literal true))) ())
+                          (simple-var-ref $desugar$5)
+                          (numeric-literal 2))) ())
                     (assignment
-                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$2)
                       (literal true))) ())
                 (if
                   (type-test-expr is
-                    (simple-var-ref $desugar$5))
+                    (simple-var-ref $desugar$4))
                   (block-stmt
                     (assignment
                       (simple-var-ref value)
                       (index-based-access
-                        (simple-var-ref $desugar$5)
+                        (simple-var-ref $desugar$4)
                         (literal value)))
                     (assignment
                       (wildcard-binding-pattern)

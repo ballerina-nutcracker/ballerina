@@ -89,33 +89,33 @@ returnFromNestedQueryAction() -> string{
     %5 = ConstantLoad 2
     %6 = ConstantLoad 2
     %7 = newArray [int, int, never...][%6]{%4, %5}
-    $desugar$1 = %7;
-    %9 = length($desugar$1) -> bb1;
+    $desugar$5 = %7;
+    %9 = length($desugar$5) -> bb1;
   }
   bb1 {
-    $desugar$2 = %9;
+    $desugar$6 = %9;
     %11 = ConstantLoad 0
     $desugar$7 = %11;
     GOTO bb2;
   }
   bb2 {
     %14 = $desugar$7;
-    %15 = $desugar$2;
+    %15 = $desugar$6;
     %13 = < %14 %15;
     %13 ? bb3 : bb4;
   }
   bb3 {
     PushScopeFrame 20
-    %0 = (1, $desugar$1)[(1, $desugar$7)];
+    %0 = (1, $desugar$5)[(1, $desugar$7)];
     (1, outerValue) = %0;
     %1 = ConstantLoad <nil>
-    $desugar$3 = %1;
+    $desugar$1 = %1;
     %4 = ConstantLoad 10
     %5 = ConstantLoad 20
     %6 = ConstantLoad 2
     %7 = newArray [int, int, never...][%6]{%4, %5}
-    $desugar$4 = %7;
-    %9 = length($desugar$4) -> bb5;
+    $desugar$2 = %7;
+    %9 = length($desugar$2) -> bb5;
   }
   bb4 {
     %16 = ConstantLoad queries completed
@@ -123,20 +123,20 @@ returnFromNestedQueryAction() -> string{
     return;
   }
   bb5 {
-    $desugar$5 = %9;
+    $desugar$3 = %9;
     %11 = ConstantLoad 0
-    $desugar$6 = %11;
+    $desugar$4 = %11;
     GOTO bb6;
   }
   bb6 {
-    %14 = $desugar$6;
-    %15 = $desugar$5;
+    %14 = $desugar$4;
+    %15 = $desugar$3;
     %13 = < %14 %15;
     %13 ? bb7 : bb8;
   }
   bb7 {
     PushScopeFrame 14
-    %0 = (1, $desugar$4)[(1, $desugar$6)];
+    %0 = (1, $desugar$2)[(1, $desugar$4)];
     (1, inner) = %0;
     %3 = (2, outerValue);
     %4 = ConstantLoad 1
@@ -177,11 +177,11 @@ returnFromNestedQueryAction() -> string{
   bb12 {
     PushScopeFrame 0
     PopScopeFrame
-    %11 = (1, $desugar$6);
+    %11 = (1, $desugar$4);
     %12 = ConstantLoad 1
     %13 = %12;
     %10 = + %11 %13;
-    (1, $desugar$6) = %10;
+    (1, $desugar$4) = %10;
     PopScopeFrame
     GOTO bb6;
   }
@@ -327,24 +327,24 @@ failingNestedCheck([string...]) -> nil|error{
     %6 = ConstantLoad 2
     %7 = ConstantLoad 2
     %8 = newArray [int, int, never...][%7]{%5, %6}
-    $desugar$1 = %8;
-    %10 = length($desugar$1) -> bb1;
+    $desugar$5 = %8;
+    %10 = length($desugar$5) -> bb1;
   }
   bb1 {
-    $desugar$2 = %10;
+    $desugar$6 = %10;
     %12 = ConstantLoad 0
     $desugar$7 = %12;
     GOTO bb2;
   }
   bb2 {
     %15 = $desugar$7;
-    %16 = $desugar$2;
+    %16 = $desugar$6;
     %14 = < %15 %16;
     %14 ? bb3 : bb4;
   }
   bb3 {
     PushScopeFrame 26
-    %0 = (1, $desugar$1)[(1, $desugar$7)];
+    %0 = (1, $desugar$5)[(1, $desugar$7)];
     (1, outerValue) = %0;
     %1 = (1, outerValue);
     %2 = ConstantLoad outer before
@@ -356,30 +356,30 @@ failingNestedCheck([string...]) -> nil|error{
   }
   bb5 {
     %4 = ConstantLoad <nil>
-    $desugar$3 = %4;
+    $desugar$1 = %4;
     %7 = ConstantLoad 1
     %8 = ConstantLoad 2
     %9 = ConstantLoad 3
     %10 = ConstantLoad 3
     %11 = newArray [int, int, int, never...][%10]{%7, %8, %9}
-    $desugar$4 = %11;
-    %13 = length($desugar$4) -> bb6;
+    $desugar$2 = %11;
+    %13 = length($desugar$2) -> bb6;
   }
   bb6 {
-    $desugar$5 = %13;
+    $desugar$3 = %13;
     %15 = ConstantLoad 0
-    $desugar$6 = %15;
+    $desugar$4 = %15;
     GOTO bb7;
   }
   bb7 {
-    %18 = $desugar$6;
-    %19 = $desugar$5;
+    %18 = $desugar$4;
+    %19 = $desugar$3;
     %17 = < %18 %19;
     %17 ? bb8 : bb9;
   }
   bb8 {
     PushScopeFrame 14
-    %0 = (1, $desugar$4)[(1, $desugar$6)];
+    %0 = (1, $desugar$2)[(1, $desugar$4)];
     (1, innerValue) = %0;
     %1 = ConstantLoad inner before
     %2 = push((2, events),%1) -> bb10;
@@ -412,11 +412,11 @@ failingNestedCheck([string...]) -> nil|error{
     %9 = push((2, events),%8) -> bb15;
   }
   bb15 {
-    %11 = (1, $desugar$6);
+    %11 = (1, $desugar$4);
     %12 = ConstantLoad 1
     %13 = %12;
     %10 = + %11 %13;
-    (1, $desugar$6) = %10;
+    (1, $desugar$4) = %10;
     PopScopeFrame
     GOTO bb7;
   }

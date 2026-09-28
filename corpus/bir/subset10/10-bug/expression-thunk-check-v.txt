@@ -227,48 +227,48 @@ main() -> nil|error{
     GOTO bb32;
   }
   bb36 {
-    %71 = checkedValues() -> bb37;
+    %70 = ConstantLoad 0
+    %71 = newArray list[%70]{}
+    $desugar$10 = %71;
+    %75 = checkedValues() -> bb37;
   }
   bb37 {
-    %72 = %71 is error
-    %72 ? bb38 : bb39;
+    %76 = %75 is error
+    %76 ? bb38 : bb39;
   }
   bb38 {
-    %0 = %71;
+    %0 = %75;
     return;
   }
   bb39 {
-    %70 = %71;
+    %74 = %75;
     GOTO bb40;
   }
   bb40 {
-    $desugar$10 = %70;
-    %74 = length($desugar$10) -> bb41;
+    $desugar$11 = %74;
+    %78 = length($desugar$11) -> bb41;
   }
   bb41 {
-    $desugar$11 = %74;
-    %76 = ConstantLoad 0
-    %77 = newArray list[%76]{}
-    $desugar$12 = %77;
+    $desugar$12 = %78;
     %80 = ConstantLoad 0
     $desugar$13 = %80;
     GOTO bb42;
   }
   bb42 {
     %83 = $desugar$13;
-    %84 = $desugar$11;
+    %84 = $desugar$12;
     %82 = < %83 %84;
     %82 ? bb43 : bb44;
   }
   bb43 {
     PushScopeFrame 7
-    %0 = (1, $desugar$10)[(1, $desugar$13)];
+    %0 = (1, $desugar$11)[(1, $desugar$13)];
     (1, value) = %0;
     %1 = (1, value);
-    %2 = push((1, $desugar$12),%1) -> bb45;
+    %2 = push((1, $desugar$10),%1) -> bb45;
   }
   bb44 {
-    queried = $desugar$12;
+    queried = $desugar$10;
     %86 = println(queried) -> bb46;
   }
   bb45 {

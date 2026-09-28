@@ -7,27 +7,27 @@ main() -> nil{
     %4 = ConstantLoad 3
     %5 = newArray [int...][%4]{%1, %2, %3}
     xs = %5;
-    $desugar$0 = xs;
-    %8 = length($desugar$0) -> bb1;
+    %7 = ConstantLoad 0
+    %8 = newArray list[%7]{}
+    $desugar$0 = %8;
+    $desugar$1 = xs;
+    %12 = length($desugar$1) -> bb1;
   }
   bb1 {
-    $desugar$1 = %8;
-    %10 = ConstantLoad 0
-    %11 = newArray list[%10]{}
-    $desugar$2 = %11;
-    %14 = ConstantLoad 0
-    $desugar$3 = %14;
+    $desugar$2 = %12;
+    %16 = ConstantLoad 0
+    $desugar$3 = %16;
     GOTO bb2;
   }
   bb2 {
     %19 = $desugar$3;
-    %20 = $desugar$1;
+    %20 = $desugar$2;
     %18 = < %19 %20;
     %18 ? bb3 : bb4;
   }
   bb3 {
     PushScopeFrame 19
-    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
     (1, x) = %0;
     %2 = (1, x);
     %3 = ConstantLoad 2
@@ -44,10 +44,10 @@ main() -> nil{
     %12 = %11;
     %9 = * %10 %12;
     %13 = %9;
-    %14 = push((1, $desugar$2),%13) -> bb5;
+    %14 = push((1, $desugar$0),%13) -> bb5;
   }
   bb4 {
-    out = $desugar$2;
+    out = $desugar$0;
     %23 = ConstantLoad 0
     %22 = out[%23];
     %24 = %22;

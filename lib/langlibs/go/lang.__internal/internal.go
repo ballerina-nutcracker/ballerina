@@ -39,10 +39,9 @@ func initInternalModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "querySort", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		sortKeyRows := args[0].(*values.List)
 		sortDirections := args[1].(*values.List)
-		rowIndices := args[2].(*values.List)
-		payloadRows := args[3].(*values.List)
+		rows := args[2].(*values.List)
 
-		rowCount := rowIndices.Len()
+		rowCount := sortKeyRows.Len()
 		keyCount := sortDirections.Len()
 
 		directionFlags := make([]bool, keyCount)
@@ -55,22 +54,14 @@ func initInternalModule(rt *runtime.Runtime) {
 			keyRows[rowIndex] = sortKeyRows.Get(rowIndex).(*values.List)
 		}
 
-		payloadCount := payloadRows.Len()
-		payloadLists := make([]*values.List, payloadCount)
-		for payloadIndex := 0; payloadIndex < payloadCount; payloadIndex++ {
-			payloadLists[payloadIndex] = payloadRows.Get(payloadIndex).(*values.List)
-		}
-
 		order := make([]int, rowCount)
 		for rowIndex := 0; rowIndex < rowCount; rowIndex++ {
 			order[rowIndex] = rowIndex
 		}
 
 		sort.SliceStable(order, func(i, j int) bool {
-			leftRow := order[i]
-			rightRow := order[j]
-			leftKeys := keyRows[leftRow]
-			rightKeys := keyRows[rightRow]
+			leftKeys := keyRows[order[i]]
+			rightKeys := keyRows[order[j]]
 			for keyIndex := 0; keyIndex < keyCount; keyIndex++ {
 				cmp := compareQuerySortValues(leftKeys.Get(keyIndex), rightKeys.Get(keyIndex), directionFlags[keyIndex])
 				switch cmp {
@@ -83,11 +74,8 @@ func initInternalModule(rt *runtime.Runtime) {
 			return false
 		})
 
-		reorderListInPlace(ctx, rowIndices, order)
 		reorderListInPlace(ctx, sortKeyRows, order)
-		for payloadIndex := 0; payloadIndex < payloadCount; payloadIndex++ {
-			reorderListInPlace(ctx, payloadLists[payloadIndex], order)
-		}
+		reorderListInPlace(ctx, rows, order)
 		return nil, nil
 	})
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "queryGroup", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
