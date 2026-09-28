@@ -4992,6 +4992,8 @@ func resolveForeachVariableType(t typeResolver, collection ast.BLangActionOrExpr
 		return semtypes.ListMemberTypeInnerVal(ctx, collectionTy, semtypes.Int), true
 	case semtypes.IsSubtype(ctx, collectionTy, semtypes.Mapping):
 		return semtypes.MappingMemberTypeInnerVal(ctx, collectionTy, semtypes.String), true
+	case semtypes.IsSubtype(ctx, collectionTy, semtypes.String):
+		return semtypes.Char, true
 	case semtypes.IsSubtype(ctx, collectionTy, semtypes.XML):
 		return semtypes.XMLItemType(collectionTy), true
 	default:

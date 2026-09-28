@@ -2148,6 +2148,8 @@ func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
 			expectedValueType = result
 		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.Mapping):
 			expectedValueType = semtypes.MappingMemberTypeInnerVal(a.tyCtx(), collectionType, semtypes.String)
+		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.String):
+			expectedValueType = semtypes.Char
 		case semtypes.IsSubtype(a.tyCtx(), collectionType, semtypes.XML):
 			expectedValueType = semtypes.XMLItemType(collectionType)
 		default:
