@@ -1,0 +1,26 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable max (type
+        (value-type anydata)) (expr
+        (literal 9223372036854775807))))
+    (var-def
+      (variable r (type
+        (union-type
+          (user-defined-type BooleanOrString)
+          (error-type))) (expr
+        (invocation lang.value cloneWithType (
+          (simple-var-ref max)
+          (simple-var-ref BooleanOrString))))))
+    (type-test-expr is
+      (simple-var-ref r)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref r))))))
+  )
+  (bb2 (bb1 bb0) ())
+)
