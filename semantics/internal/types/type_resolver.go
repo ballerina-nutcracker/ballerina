@@ -892,14 +892,11 @@ func (c *constantDepCollector) Visit(node ast.BLangNode) ast.Visitor {
 func (c *constantDepCollector) VisitTypeData(_ *ast.TypeData) ast.Visitor { return c }
 
 func resolvePackageConstants(t *packageTypeResolver, pkg *ast.BLangPackage) bool {
-	order, ok := topologicallySortConstants(t, pkg.Constants)
-	if !ok {
-		return false
-	}
+	order := topologicallySortConstants(t, pkg.Constants)
 	// Every constant is resolved even after one fails, so each failing constant
 	// reports its own diagnostic; one that depends on a failed constant fails
 	// through ensureResolved without reporting another.
-	allResolved := true
+	allResolved := len(order) == len(pkg.Constants)
 	for _, idx := range order {
 		constant := pkg.Constants[idx]
 		switch t.lazyResolutionStatus[constant.Symbol()] {
@@ -927,7 +924,9 @@ func (t *packageTypeResolver) resolveLazyConstant(constant *ast.BLangVariable) b
 	return ok
 }
 
-func topologicallySortConstants(t typeResolver, constants []*ast.BLangVariable) ([]int, bool) {
+// topologicallySortConstants orders constants so that each comes after the constants it depends on.
+// Constants on a cycle, and constants depending on them, are left out after the cycle is reported.
+func topologicallySortConstants(t typeResolver, constants []*ast.BLangVariable) []int {
 	nodeSet := make(map[model.SymbolRef]int, len(constants))
 	for i := range constants {
 		nodeSet[constants[i].Symbol()] = i
@@ -955,6 +954,7 @@ func topologicallySortConstants(t typeResolver, constants []*ast.BLangVariable) 
 		unvisited = 0
 		inStack   = 1
 		done      = 2
+		failed    = 3
 	)
 	state := make([]int, len(constants))
 	order := make([]int, 0, len(constants))
@@ -980,6 +980,8 @@ func topologicallySortConstants(t typeResolver, constants []*ast.BLangVariable) 
 			return false
 		case done:
 			return true
+		case failed:
+			return false
 		}
 		state[i] = inStack
 		stack = append(stack, i)
@@ -988,6 +990,7 @@ func topologicallySortConstants(t typeResolver, constants []*ast.BLangVariable) 
 		}()
 		for _, d := range deps[i] {
 			if !visit(d) {
+				state[i] = failed
 				return false
 			}
 		}
@@ -997,11 +1000,9 @@ func topologicallySortConstants(t typeResolver, constants []*ast.BLangVariable) 
 	}
 
 	for i := range constants {
-		if !visit(i) {
-			return nil, false
-		}
+		visit(i)
 	}
-	return order, true
+	return order
 }
 
 func resolveInvokableSignature(t typeResolver, fn common.FunctionDecl, fnSym model.FunctionSymbol, requiredParams []ast.BLangVariable, depth int) (semtypes.SemType, bool) {
@@ -1117,32 +1118,19 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 	}
 
 	for i := range pkg.TypeDefinitions {
-		defn := pkg.TypeDefinitions[i]
-		if ok := resolveTypeDefinition(t, defn, 0); !ok {
-			return
-		}
+		resolveTypeDefinition(t, pkg.TypeDefinitions[i], 0)
 	}
 	for i := range pkg.ClassDefinitions {
-		classDef := pkg.ClassDefinitions[i]
-		if ok := resolveClassTypeDefinition(t, classDef, 0); !ok {
-			return
-		}
+		resolveClassTypeDefinition(t, pkg.ClassDefinitions[i], 0)
 	}
 	for i := range pkg.Annotations {
-		if !resolveAnnotationDeclaration(t, pkg.Annotations[i]) {
-			return
-		}
+		resolveAnnotationDeclaration(t, pkg.Annotations[i])
 	}
 	for i := range pkg.Functions {
-		fn := pkg.Functions[i]
-		if _, ok := resolveFunctionSignature(t, fn, 0); !ok {
-			return
-		}
+		resolveFunctionSignature(t, pkg.Functions[i], 0)
 	}
 	if pkg.InitFunction != nil {
-		if _, ok := resolveFunctionSignature(t, pkg.InitFunction, 0); !ok {
-			return
-		}
+		resolveFunctionSignature(t, pkg.InitFunction, 0)
 	}
 	for i := range pkg.GlobalVars {
 		gv := pkg.GlobalVars[i]
@@ -1155,13 +1143,9 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 		t.ensureResolved(gv.Symbol(), 0)
 	}
 	for i := range pkg.XmlnsList {
-		if !resolveXMLNS(t, nil, pkg.XmlnsList[i]) {
-			return
-		}
+		resolveXMLNS(t, nil, pkg.XmlnsList[i])
 	}
-	if !resolvePackageConstants(t, pkg) {
-		return
-	}
+	resolvePackageConstants(t, pkg)
 	// Annotation values can depend on constants, so resolve them after constants
 	// have been folded even though the annotated type/function nodes were
 	// resolved earlier in the top-level pass.
@@ -1263,6 +1247,14 @@ func resolveAnnotationDeclaration(t typeResolver, annotation *ast.BLangAnnotatio
 	t.setSymbolType(annotation.Symbol(), ty)
 	annotation.SetDeterminedType(semtypes.Never)
 	return true
+}
+
+// reportUnresolvedAnnotationType reports a use of an annotation whose type is not resolved. A declaration
+// that failed to resolve has already been reported, so only an otherwise unexplained case is a compiler bug.
+func reportUnresolvedAnnotationType(t typeResolver, pos diagnostics.Location) {
+	if !t.compilerContext().HasErrors() {
+		t.internalError("annotation type is not resolved", pos)
+	}
 }
 
 func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage) {
@@ -1430,7 +1422,7 @@ func propagateRecordFieldAnnotations(t typeResolver, pkg *ast.BLangPackage) {
 	sources := make(map[model.SymbolRef]recordFieldAnnotationSource)
 	for i := range pkg.TypeDefinitions {
 		defn := pkg.TypeDefinitions[i]
-		if !ast.SymbolIsSet(defn) {
+		if !ast.SymbolIsSet(defn) || semtypes.IsZero(t.symbolType(defn.Symbol())) {
 			continue
 		}
 		switch typeDesc := defn.GetTypeData().TypeDescriptor.(type) {
@@ -1556,7 +1548,7 @@ func resolveAnnotationAttachments(
 		}
 		expectedType := sym.Type()
 		if semtypes.IsZero(expectedType) {
-			t.internalError("annotation type is not resolved", ann.GetPosition())
+			reportUnresolvedAnnotationType(t, ann.GetPosition())
 			continue
 		}
 		valueType, repeated := annotationAttachmentValueType(t, expectedType)
@@ -2639,6 +2631,7 @@ func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth 
 		semType = resolveDistinctTypeDefinition(t, defn, semType)
 	}
 	if !ok {
+		defn.SetCycleDepth(-1)
 		return false
 	}
 	if semtypes.IsZero(defn.GetDeterminedType()) {
@@ -2672,6 +2665,9 @@ func resolveClassTypeDefinition(t typeResolver, classDef *ast.BLangClassDefiniti
 	}
 	classDef.SetCycleDepth(depth)
 	_, ok := resolveClassDefinitionType(t, classDef, depth)
+	if !ok {
+		classDef.SetCycleDepth(-1)
+	}
 	return ok
 }
 
@@ -3019,6 +3015,7 @@ func resolveClassDefinitionType(t typeResolver, classDef *ast.BLangClassDefiniti
 		classDef.ResourceMethods, classDef.InitFunction, classDef.Inclusions, classDef.InclusionPositions, classDef.GetPosition(),
 		depth, classDef.IsIsolated(), classDef.IsReadonly(), isClient, isService, classDef.Symbol())
 	if !ok {
+		defineFailedObject(t, &od)
 		return semtypes.SemType{}, false
 	}
 
@@ -3599,6 +3596,7 @@ func detectGlobalVarInitCycles(t typeResolver, pkg *ast.BLangPackage) {
 		unvisited = 0
 		inStack   = 1
 		done      = 2
+		failed    = 3
 	)
 	state := make([]int, len(pkg.GlobalVars))
 
@@ -3613,10 +3611,13 @@ func detectGlobalVarInitCycles(t typeResolver, pkg *ast.BLangPackage) {
 			return false
 		case done:
 			return true
+		case failed:
+			return false
 		default:
 			state[i] = inStack
 			for _, d := range deps[i] {
 				if !visit(d) {
+					state[i] = failed
 					return false
 				}
 			}
@@ -3629,9 +3630,7 @@ func detectGlobalVarInitCycles(t typeResolver, pkg *ast.BLangPackage) {
 		if pkg.GlobalVars[i].TypeNode() == nil {
 			continue
 		}
-		if !visit(i) {
-			return
-		}
+		visit(i)
 	}
 }
 
@@ -4076,7 +4075,7 @@ func resolveAnnotAccessExpr(t typeResolver, chain *binding, e *ast.BLangAnnotAcc
 	}
 	annTy := sym.Type()
 	if semtypes.IsZero(annTy) {
-		t.internalError("annotation type is not resolved", e.GetPosition())
+		reportUnresolvedAnnotationType(t, e.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	ty := semtypes.Union(annTy, semtypes.Nil)
@@ -7991,6 +7990,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 			ty.Definition = &d
 			elemTy, ok := resolveTypeDataPair(t, &ty.Elemtype, depth+1)
 			if !ok {
+				defineFailedList(t, &d)
 				return semtypes.SemType{}, false
 			}
 			for i := len(ty.Sizes); i > 0; i-- {
@@ -8000,6 +8000,9 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 				} else {
 					length, ok := resolveFixedArraySize(t, lenExp)
 					if !ok {
+						if i == len(ty.Sizes) {
+							defineFailedList(t, &d)
+						}
 						return semtypes.SemType{}, false
 					}
 					elemTy = d.Define(t.typeEnv(), []semtypes.SemType{elemTy}, semtypes.ListFixedLength(length))
@@ -8085,6 +8088,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 				ty.Definition = &d
 				rest, ok := resolveTypeDataPair(t, &ty.Constraint, depth+1)
 				if !ok {
+					defineFailedMapping(t, &d)
 					return semtypes.SemType{}, false
 				}
 				semType := d.Define(t.typeEnv(), nil, rest)
@@ -8100,7 +8104,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 				ty.Definition = &d
 				constraint, ok := resolveTypeDataPair(t, &ty.Constraint, depth+1)
 				if !ok {
-					ty.Definition = nil
+					defineFailedFuture(t, &d)
 					return semtypes.SemType{}, false
 				}
 				return d.Define(t.typeEnv(), constraint), true
@@ -8175,6 +8179,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 			for i, member := range ty.Members {
 				memberTy, ok := resolveBType(t, member.TypeDesc.(ast.BType), depth+1)
 				if !ok {
+					defineFailedList(t, &d)
 					return semtypes.SemType{}, false
 				}
 				members[i] = memberTy
@@ -8183,6 +8188,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 			if ty.Rest != nil {
 				resolvedRest, ok := resolveBType(t, ty.Rest, depth+1)
 				if !ok {
+					defineFailedList(t, &d)
 					return semtypes.SemType{}, false
 				}
 				rest = resolvedRest
@@ -8201,6 +8207,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		// Resolve and collect included members from symbols
 		result, ok := resolveRecordInclusions(t, ty, depth)
 		if !ok {
+			defineFailedMapping(t, &d)
 			return semtypes.SemType{}, false
 		}
 
@@ -8210,11 +8217,13 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		for name, field := range ty.FieldPtrs() {
 			if seen[name] {
 				t.semanticError(fmt.Sprintf("duplicate field name '%s'", name), field.GetPosition())
+				defineFailedMapping(t, &d)
 				return semtypes.SemType{}, false
 			}
 			seen[name] = true
 			fieldTy, ok := resolveBType(t, field.Type, depth+1)
 			if !ok {
+				defineFailedMapping(t, &d)
 				return semtypes.SemType{}, false
 			}
 			if incMembers, exists := result.includedFields[name]; exists {
@@ -8233,6 +8242,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 				_, ok := resolveActionOrExpression(t, nil, field.Default.Expr, fieldTy)
 				restoreContext()
 				if !ok {
+					defineFailedMapping(t, &d)
 					return semtypes.SemType{}, false
 				}
 				setRecordDefaultFnSignature(t, field.Default.FnRef, fieldTy, field.GetPosition())
@@ -8261,6 +8271,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 			var ok bool
 			rest, ok = resolveBType(t, ty.RestType, depth+1)
 			if !ok {
+				defineFailedMapping(t, &d)
 				return semtypes.SemType{}, false
 			}
 		} else if ty.IsOpen {
@@ -8290,6 +8301,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		for i := range ty.RequiredParams {
 			paramTy, ok := resolveBType(t, ty.RequiredParams[i].TypeDesc, depth+1)
 			if !ok {
+				defineFailedFunction(t, &fd)
 				return semtypes.SemType{}, false
 			}
 			paramTypes[i] = paramTy
@@ -8302,6 +8314,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 			}
 			if ty.RequiredParams[i].InitExpr != nil {
 				if _, ok := resolveActionOrExpression(t, nil, ty.RequiredParams[i].InitExpr, paramTy); !ok {
+					defineFailedFunction(t, &fd)
 					return semtypes.SemType{}, false
 				}
 			}
@@ -8310,6 +8323,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		if ty.RestParam != nil {
 			restParamTy, ok := resolveBType(t, ty.RestParam.TypeDesc, depth+1)
 			if !ok {
+				defineFailedFunction(t, &fd)
 				return semtypes.SemType{}, false
 			}
 			restTy = restParamTy
@@ -8326,6 +8340,7 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 			var ok bool
 			returnTy, ok = resolveBType(t, ty.ReturnTypeDescriptor, depth+1)
 			if !ok {
+				defineFailedFunction(t, &fd)
 				return semtypes.SemType{}, false
 			}
 		} else {
@@ -8347,6 +8362,36 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 	}
 }
 
+// A type descriptor that fails to resolve still defines its definition, as an empty shape, because
+// recursive references taken while it was being resolved point at the atom of that definition.
+
+// defineFailedList defines the definition of a failed list type descriptor as an empty list.
+func defineFailedList(t typeResolver, d *semtypes.ListDefinition) {
+	d.Define(t.typeEnv(), nil, semtypes.ListRest(semtypes.Never))
+}
+
+// defineFailedMapping defines the definition of a failed mapping type descriptor as an empty closed record.
+func defineFailedMapping(t typeResolver, d *semtypes.MappingDefinition) {
+	d.Define(t.typeEnv(), nil, semtypes.Never)
+}
+
+// defineFailedFunction defines the definition of a failed function type descriptor as a function with no parameters.
+func defineFailedFunction(t typeResolver, fd *semtypes.FunctionDefinition) {
+	params := semtypes.NewListDefinition()
+	paramListTy := params.Define(t.typeEnv(), nil, semtypes.ListRest(semtypes.Never))
+	fd.Define(t.typeEnv(), paramListTy, semtypes.Never, semtypes.FunctionQualifiersFrom(t.typeEnv(), false, false))
+}
+
+// defineFailedObject defines the definition of a failed object type descriptor as an empty object.
+func defineFailedObject(t typeResolver, od *semtypes.ObjectDefinition) {
+	od.Define(t.typeEnv(), semtypes.ObjectQualifiersDefault, nil)
+}
+
+// defineFailedFuture defines the definition of a failed future type descriptor as a future of never.
+func defineFailedFuture(t typeResolver, d *semtypes.FutureDefinition) {
+	d.Define(t.typeEnv(), semtypes.Never)
+}
+
 func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int, owner model.SymbolRef) (semtypes.SemType, bool) {
 	defn := ty.Definition
 	if defn != nil {
@@ -8358,15 +8403,18 @@ func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int, owner
 	includedMembers := make(map[string][]semtypes.Member)
 	incMembers, ok := collectIncludedMembers(t, ty.Inclusions, ty.InclusionPositions, ty.GetPosition(), depth)
 	if !ok {
+		defineFailedObject(t, &od)
 		return semtypes.SemType{}, false
 	}
 	for _, m := range incMembers {
 		if m.MemberKind() == model.InclusionMemberKindRestType {
 			t.internalError("unexpected rest inclusion", ty.GetPosition())
+			defineFailedObject(t, &od)
 			return semtypes.SemType{}, false
 		}
 		member, ok := inclusionMemberToSemtypeMember(t, m, ty.GetPosition())
 		if !ok {
+			defineFailedObject(t, &od)
 			return semtypes.SemType{}, false
 		}
 		includedMembers[member.Name] = append(includedMembers[member.Name], member)
@@ -8378,15 +8426,18 @@ func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int, owner
 		if m.MemberKind() == ast.ObjectMemberKindRemoteMethod {
 			if ty.NetworkQuals != ast.ObjectNetworkQualsClient && ty.NetworkQuals != ast.ObjectNetworkQualsService {
 				t.semanticError("remote methods are only allowed in client or service object types", ty.GetPosition())
+				defineFailedObject(t, &od)
 				return semtypes.SemType{}, false
 			}
 		}
 		valueTy, ok := resolveObjectMemberType(t, m, depth)
 		if !ok {
+			defineFailedObject(t, &od)
 			return semtypes.SemType{}, false
 		}
 		kind, ok := semtypeMemberKind(t, m.MemberKind(), ty.GetPosition())
 		if !ok {
+			defineFailedObject(t, &od)
 			return semtypes.SemType{}, false
 		}
 		directMembers = append(directMembers, directMember{
@@ -8401,12 +8452,14 @@ func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int, owner
 
 	members, ok := validateOverridesAndMerge(t, directMembers, includedMembers, ty.GetPosition(), true)
 	if !ok {
+		defineFailedObject(t, &od)
 		return semtypes.SemType{}, false
 	}
 
 	// Step 3: Create semtype
 	networkQual, ok := semtypeNetworkQualifier(t, ty.NetworkQuals, ty.GetPosition())
 	if !ok {
+		defineFailedObject(t, &od)
 		return semtypes.SemType{}, false
 	}
 	qualifiers := semtypes.ObjectQualifiersFrom(ty.Isolated, false, networkQual)

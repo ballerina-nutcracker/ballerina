@@ -14,7 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string FIRST = SECOND; // @error
-const string SECOND = FIRST; // @error
+type A int & string; // @error
+type B string & int; // @error
 
-xmlns FIRST as cyclic;
+public function main() {
+}

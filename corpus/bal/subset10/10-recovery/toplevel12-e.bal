@@ -14,7 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string FIRST = SECOND; // @error
-const string SECOND = FIRST; // @error
+public type F future<G|record {| int x; string x; |}>; // @error
+public type G F?;
 
-xmlns FIRST as cyclic;
+public function f(G g) returns G {
+    return g;
+}
+
+public function main() {
+}

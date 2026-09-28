@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate field name 'x'
+  --> toplevel12-e.bal:17:41
+   |
+17 | public type F future<G|record {| int x; string x; |}>; // @error
+   |                                         ^^^^^^^^^

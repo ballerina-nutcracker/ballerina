@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: annotation type must be a subtype of true|map<Cloneable>|map<Cloneable>[]
+  --> toplevel13-e.bal:17:12
+   |
+17 | annotation int A on type; // @error
+   |            ^^^
+
+error[SEMANTIC_ERROR]: duplicate field name 'x'
+  --> toplevel13-e.bal:19:29
+   |
+19 | annotation record {| int x; string x; |} B on type, function; // @error
+   |                             ^^^^^^^^^

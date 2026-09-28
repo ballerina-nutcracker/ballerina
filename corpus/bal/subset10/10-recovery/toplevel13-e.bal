@@ -14,7 +14,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string FIRST = SECOND; // @error
-const string SECOND = FIRST; // @error
+annotation int A on type; // @error
 
-xmlns FIRST as cyclic;
+annotation record {| int x; string x; |} B on type, function; // @error
+
+@A
+type T int;
+
+public anydata g = T.@B;
+
+@B {x: 1}
+public function main() {
+}

@@ -14,7 +14,26 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string FIRST = SECOND; // @error
-const string SECOND = FIRST; // @error
+type A int & string; // @error
 
-xmlns FIRST as cyclic;
+class C {
+    int & string x = 1; // @error
+}
+
+annotation int & string Annot; // @error
+
+function f() returns string & int { // @error
+    panic error("unreachable");
+}
+
+const int N = 1;
+
+xmlns N as ns; // @error
+
+public const int K = 1 + "k"; // @error
+
+public function main() {
+    C _ = new;
+    f();
+    xml _ = xml `<ns:a/>`;
+}

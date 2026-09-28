@@ -14,7 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string FIRST = SECOND; // @error
-const string SECOND = FIRST; // @error
+public type R record { int & string x; }; // @error
 
-xmlns FIRST as cyclic;
+public function f() returns R {
+    panic error("x");
+}
+
+public R g = {x: 1};
+
+public function main() {
+}
