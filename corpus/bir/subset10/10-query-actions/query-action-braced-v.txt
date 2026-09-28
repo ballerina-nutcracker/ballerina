@@ -1,0 +1,309 @@
+module $anon.. v 0.0.0;
+class NumberClient {
+
+  $remote$failing() -> int|error{
+    bb0 {
+      %2 = ConstantLoad remote failed
+      %3 = newError error(%2)
+      %0 = %3;
+      return;
+    }
+  }
+
+  $remote$value() -> int|error{
+    bb0 {
+      %2 = ConstantLoad 7
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+collectBraced([int...]) -> nil|error{
+  bb0 {
+    %2 = ConstantLoad 0
+    %3 = newArray [int...][%2]{}
+    seen = %3;
+    %5 = ConstantLoad <nil>
+    $desugar$0 = %5;
+    $desugar$1 = xs;
+    %9 = length($desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %9;
+    %11 = ConstantLoad 0
+    $desugar$3 = %11;
+    GOTO bb2;
+  }
+  bb2 {
+    %14 = $desugar$3;
+    %15 = $desugar$2;
+    %13 = < %14 %15;
+    %13 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    (1, x) = %0;
+    %1 = (1, x);
+    %2 = push((1, seen),%1) -> bb5;
+  }
+  bb4 {
+    result = $desugar$0;
+    %17 = result is nil
+    %18 = %17;
+    %19 = println(%18) -> bb6;
+  }
+  bb5 {
+    %4 = (1, $desugar$3);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$3) = %3;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb6 {
+    %20 = println(seen) -> bb7;
+  }
+  bb7 {
+    %21 = ConstantLoad 0
+    %22 = newArray [int...][%21]{}
+    seen = %22;
+    %24 = ConstantLoad <nil>
+    $desugar$4 = %24;
+    $desugar$5 = xs;
+    %28 = length($desugar$5) -> bb8;
+  }
+  bb8 {
+    $desugar$6 = %28;
+    %30 = ConstantLoad 0
+    $desugar$7 = %30;
+    GOTO bb9;
+  }
+  bb9 {
+    %33 = $desugar$7;
+    %34 = $desugar$6;
+    %32 = < %33 %34;
+    %32 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$5)[(1, $desugar$7)];
+    (1, x) = %0;
+    %2 = (1, x);
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %1 = * %2 %4;
+    %5 = %1;
+    %6 = push((1, seen),%5) -> bb12;
+  }
+  bb11 {
+    %35 = $desugar$4 is error
+    %35 ? bb13 : bb14;
+  }
+  bb12 {
+    %8 = (1, $desugar$7);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$7) = %7;
+    PopScopeFrame
+    GOTO bb9;
+  }
+  bb13 {
+    %0 = $desugar$4;
+    return;
+  }
+  bb14 {
+    %23 = $desugar$4;
+    GOTO bb15;
+  }
+  bb15 {
+    checked = %23;
+    %37 = checked is nil
+    %38 = %37;
+    %39 = println(%38) -> bb16;
+  }
+  bb16 {
+    %40 = println(seen) -> bb17;
+  }
+  bb17 {
+    %41 = ConstantLoad 0
+    %42 = newArray [int...][%41]{}
+    seen = %42;
+    %44 = ConstantLoad <nil>
+    $desugar$8 = %44;
+    $desugar$9 = xs;
+    %48 = length($desugar$9) -> bb18;
+  }
+  bb18 {
+    $desugar$10 = %48;
+    %50 = ConstantLoad 0
+    $desugar$11 = %50;
+    GOTO bb19;
+  }
+  bb19 {
+    %53 = $desugar$11;
+    %54 = $desugar$10;
+    %52 = < %53 %54;
+    %52 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$9)[(1, $desugar$11)];
+    (1, x) = %0;
+    %2 = (1, x);
+    %3 = ConstantLoad 3
+    %4 = %3;
+    %1 = * %2 %4;
+    %5 = %1;
+    %6 = push((1, seen),%5) -> bb22;
+  }
+  bb21 {
+    %55 = $desugar$8 is error
+    %55 ? bb23 : bb24;
+  }
+  bb22 {
+    %8 = (1, $desugar$11);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$11) = %7;
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb23 {
+    panic $desugar$8;
+  }
+  bb24 {
+    %43 = $desugar$8;
+    GOTO bb25;
+  }
+  bb25 {
+    panicked = %43;
+    %57 = panicked is nil
+    %58 = %57;
+    %59 = println(%58) -> bb26;
+  }
+  bb26 {
+    %60 = println(seen) -> bb27;
+  }
+  bb27 {
+    return;
+  }
+}
+callBraced(client object { private remote function $remote$failing() returns int|error; private remote function $remote$value() returns int|error; public function init() returns nil }) -> nil|error{
+  bb0 {
+    %3 = numbers.$remote$value() -> bb1;
+  }
+  bb1 {
+    %4 = %3 is error
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %3;
+    return;
+  }
+  bb3 {
+    %2 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    value = %2;
+    %6 = value;
+    %7 = println(%6) -> bb5;
+  }
+  bb5 {
+    GOTO bb6;
+  }
+  bb6 {
+    %9 = numbers.$remote$failing() -> bb7;
+  }
+  bb7 {
+    %8 = %9;
+    GOTO bb8;
+  }
+  bb8 {
+    failed = %8;
+    %11 = failed is error
+    %12 = %11;
+    %13 = println(%12) -> bb9;
+  }
+  bb9 {
+    %15 = numbers.$remote$failing() -> bb10;
+  }
+  bb10 {
+    %16 = %15 is error
+    %16 ? bb11 : bb12;
+  }
+  bb11 {
+    %0 = %15;
+    return;
+  }
+  bb12 {
+    %14 = %15;
+    GOTO bb13;
+  }
+  bb13 {
+    unreachable = %14;
+    %18 = unreachable;
+    %19 = println(%18) -> bb14;
+  }
+  bb14 {
+    return;
+  }
+  
+  error-table {
+    [bb6, bb7] -> bb8, %8
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 3
+    %5 = newArray [int...][%4]{%1, %2, %3}
+    %6 = collectBraced(%5) -> bb1;
+  }
+  bb1 {
+    collected = %6;
+    %8 = newObject $anon/.:NumberClient
+    %9 = %8.init() -> bb2;
+  }
+  bb2 {
+    %11 = %9 is nil
+    %11 ? bb3 : bb4;
+  }
+  bb3 {
+    %10 = %8;
+    GOTO bb5;
+  }
+  bb4 {
+    %10 = %9;
+    GOTO bb5;
+  }
+  bb5 {
+    %12 = callBraced(%10) -> bb6;
+  }
+  bb6 {
+    called = %12;
+    %14 = collected is nil
+    %15 = %14;
+    %16 = println(%15) -> bb7;
+  }
+  bb7 {
+    %17 = called is error
+    %18 = %17;
+    %19 = println(%18) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

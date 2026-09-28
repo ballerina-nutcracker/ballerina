@@ -1,0 +1,12 @@
+-- stdout --
+true
+[1,2,3]
+true
+[2,4,6]
+true
+[3,6,9]
+7
+true
+true
+true
+-- stderr --
