@@ -79,7 +79,7 @@
   )
 )
 (main
-  (bb0 (bb1 bb2 bb3 bb4) (bb1 bb2 bb3 bb4)
+  (bb0 () (bb1)
     (var-def
       (variable numbers (type
         (user-defined-type NumberClient)) (expr
@@ -89,6 +89,36 @@
         (array-type
           (value-type int) dimensions: 1 ([]))) (expr
         (list-constructor-expr))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable value))
+      (remote-method-call values expr:
+        (simple-var-ref numbers) ()))
+    (let-clause
+      (var-def
+        (variable offset (type
+          (value-type int)) (expr
+          (remote-method-call offset expr:
+            (simple-var-ref numbers) ())))))
+  )
+  (bb2 (bb1) (bb1)
+    (var-def
+      (variable scaled (type
+        (value-type int)) (expr
+        (remote-method-call scale expr:
+          (simple-var-ref numbers) (
+          (simple-var-ref value)
+          (literal 2))))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref results)
+        (binary-expr +
+          (simple-var-ref scaled)
+          (simple-var-ref offset)))))
+  )
+  (bb3 (bb1) (bb4)
     (expression-stmt
       (query-action
         (from-clause
@@ -123,6 +153,36 @@
     (assignment
       (simple-var-ref results)
       (list-constructor-expr))
+  )
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (from-clause
+      (var-def
+        (variable value))
+      (remote-method-call values expr:
+        (simple-var-ref numbers) ()))
+    (let-clause
+      (var-def
+        (variable offset (type
+          (value-type int)) (expr
+          (remote-method-call offset expr:
+            (simple-var-ref numbers) ())))))
+  )
+  (bb5 (bb4) (bb4)
+    (var-def
+      (variable scaled (type
+        (value-type int)) (expr
+        (remote-method-call scale expr:
+          (simple-var-ref numbers) (
+          (simple-var-ref value)
+          (literal 3))))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref results)
+        (binary-expr +
+          (simple-var-ref scaled)
+          (simple-var-ref offset)))))
+  )
+  (bb6 (bb4) (bb7)
     (expression-stmt
       (query-action
         (from-clause
@@ -180,6 +240,36 @@
     (assignment
       (simple-var-ref results)
       (list-constructor-expr))
+  )
+  (bb7 (bb6 bb8) (bb8 bb9)
+    (from-clause
+      (var-def
+        (variable value))
+      (client-resource-access get expr:
+        (simple-var-ref resources) name:values))
+    (let-clause
+      (var-def
+        (variable offset (type
+          (value-type int)) (expr
+          (client-resource-access get expr:
+            (simple-var-ref resources) name:offset)))))
+  )
+  (bb8 (bb7) (bb7)
+    (var-def
+      (variable scaled (type
+        (value-type int)) (expr
+        (client-resource-access get expr:
+          (simple-var-ref resources) name:scale computed:
+          (simple-var-ref value) computed:
+          (literal 4)))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref results)
+        (binary-expr +
+          (simple-var-ref scaled)
+          (simple-var-ref offset)))))
+  )
+  (bb9 (bb7) (bb10)
     (expression-stmt
       (query-action
         (from-clause
@@ -215,6 +305,47 @@
       (variable nestedTotal (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb10 (bb9 bb11) (bb11 bb12)
+    (from-clause
+      (var-def
+        (variable value))
+      (list-constructor-expr
+        (literal 1)
+        (literal 2)))
+    (let-clause
+      (var-def
+        (variable nestedResult (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (query-action
+            (from-clause
+              (var-def
+                (variable nestedValue))
+              (list-constructor-expr
+                (simple-var-ref value)
+                (binary-expr +
+                  (simple-var-ref value)
+                  (literal 1))))
+            (do-clause
+              (block-stmt
+                (compound-assignment +
+                  (simple-var-ref nestedTotal)
+                  (simple-var-ref nestedValue)))))))))
+    (where-clause
+      (type-test-expr is
+        (simple-var-ref nestedResult)
+        (value-type null)))
+  )
+  (bb11 (bb10) (bb10)
+    (compound-assignment +
+      (simple-var-ref nestedTotal)
+      (binary-expr *
+        (simple-var-ref value)
+        (literal 10)))
+  )
+  (bb12 (bb10) ()
     (expression-stmt
       (query-action
         (from-clause
@@ -277,61 +408,33 @@
       (invocation io println (
         (simple-var-ref results))))
   )
-  (bb1 (bb0) (bb0)
-    (var-def
-      (variable scaled (type
-        (value-type int)) (expr
-        (remote-method-call scale expr:
-          (simple-var-ref numbers) (
-          (simple-var-ref value)
-          (literal 2))))))
-    (expression-stmt
-      (invocation lang.array push (
-        (simple-var-ref results)
-        (binary-expr +
-          (simple-var-ref scaled)
-          (simple-var-ref offset)))))
-  )
-  (bb2 (bb0) (bb0)
-    (var-def
-      (variable scaled (type
-        (value-type int)) (expr
-        (remote-method-call scale expr:
-          (simple-var-ref numbers) (
-          (simple-var-ref value)
-          (literal 3))))))
-    (expression-stmt
-      (invocation lang.array push (
-        (simple-var-ref results)
-        (binary-expr +
-          (simple-var-ref scaled)
-          (simple-var-ref offset)))))
-  )
-  (bb3 (bb0) (bb0)
-    (var-def
-      (variable scaled (type
-        (value-type int)) (expr
-        (client-resource-access get expr:
-          (simple-var-ref resources) name:scale computed:
-          (simple-var-ref value) computed:
-          (literal 4)))))
-    (expression-stmt
-      (invocation lang.array push (
-        (simple-var-ref results)
-        (binary-expr +
-          (simple-var-ref scaled)
-          (simple-var-ref offset)))))
-  )
-  (bb4 (bb0) (bb0)
-    (compound-assignment +
-      (simple-var-ref nestedTotal)
-      (binary-expr *
-        (simple-var-ref value)
-        (literal 10)))
-  )
 )
 (runCheckedAction
-  (bb0 (bb1) (bb1)
+  (bb0 () (bb1))
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable value))
+      (checked-expr
+        (remote-method-call checkedValues expr:
+          (simple-var-ref numbers) ())))
+    (let-clause
+      (var-def
+        (variable offset (type
+          (value-type int)) (expr
+          (checked-expr
+            (remote-method-call checkedOffset expr:
+              (simple-var-ref numbers) ()))))))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref results)
+        (binary-expr +
+          (simple-var-ref value)
+          (simple-var-ref offset)))))
+  )
+  (bb3 (bb1) ()
     (expression-stmt
       (query-action
         (from-clause
@@ -356,17 +459,30 @@
                   (simple-var-ref value)
                   (simple-var-ref offset)))))))))
   )
-  (bb1 (bb0) (bb0)
+)
+(runFailingAction
+  (bb0 () (bb1))
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable value))
+      (remote-method-call values expr:
+        (simple-var-ref numbers) ()))
+  )
+  (bb2 (bb1) (bb1)
+    (var-def
+      (variable result (type
+        (value-type int)) (expr
+        (checked-expr
+          (remote-method-call fallible expr:
+            (simple-var-ref numbers) (
+            (simple-var-ref value)))))))
     (expression-stmt
       (invocation lang.array push (
         (simple-var-ref results)
-        (binary-expr +
-          (simple-var-ref value)
-          (simple-var-ref offset)))))
+        (simple-var-ref result))))
   )
-)
-(runFailingAction
-  (bb0 (bb1) (bb1)
+  (bb3 (bb1) ()
     (expression-stmt
       (query-action
         (from-clause
@@ -387,18 +503,5 @@
               (invocation lang.array push (
                 (simple-var-ref results)
                 (simple-var-ref result))))))))
-  )
-  (bb1 (bb0) (bb0)
-    (var-def
-      (variable result (type
-        (value-type int)) (expr
-        (checked-expr
-          (remote-method-call fallible expr:
-            (simple-var-ref numbers) (
-            (simple-var-ref value)))))))
-    (expression-stmt
-      (invocation lang.array push (
-        (simple-var-ref results)
-        (simple-var-ref result))))
   )
 )

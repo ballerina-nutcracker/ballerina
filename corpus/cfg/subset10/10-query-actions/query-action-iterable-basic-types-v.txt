@@ -1,9 +1,23 @@
 (main
-  (bb0 (bb1 bb2 bb3 bb4 bb5) (bb1 bb2 bb3 bb4 bb5)
+  (bb0 () (bb1)
     (var-def
       (variable chars (type
         (value-type string)) (expr
         (literal ))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable char (type
+          (value-type string))))
+      (literal A😀අ))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref chars)
+      (simple-var-ref char))
+  )
+  (bb3 (bb1) (bb4)
     (var-def
       (variable result (type
         (union-type
@@ -47,6 +61,19 @@
           (xml-element-literal a)
           (xml-text-literal text)
           (xml-comment-literal note)))))
+  )
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (from-clause
+      (var-def
+        (variable item))
+      (simple-var-ref items))
+  )
+  (bb5 (bb4) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref item))))
+  )
+  (bb6 (bb4) (bb7)
     (assignment
       (simple-var-ref result)
       (query-action
@@ -64,6 +91,28 @@
         (type-test-expr is
           (simple-var-ref result)
           (value-type null)))))
+  )
+  (bb7 (bb6 bb8) (bb8 bb9)
+    (from-clause
+      (var-def
+        (variable char (type
+          (value-type string))))
+      (literal xy))
+    (from-clause
+      (var-def
+        (variable element (type
+          (user-defined-type xml Element))))
+      (xml-sequence-literal
+        (xml-element-literal a)
+        (xml-element-literal b)))
+  )
+  (bb8 (bb7) (bb7)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref char)
+        (simple-var-ref element))))
+  )
+  (bb9 (bb7) (bb10)
     (assignment
       (simple-var-ref result)
       (query-action
@@ -90,6 +139,28 @@
         (type-test-expr is
           (simple-var-ref result)
           (value-type null)))))
+  )
+  (bb10 (bb9 bb11) (bb11 bb12)
+    (from-clause
+      (var-def
+        (variable expected (type
+          (value-type string))))
+      (literal bd))
+    (join-clause
+      (var-def
+        (variable actual (type
+          (value-type string))))
+      (literal abcd)
+      (on-clause
+        (simple-var-ref expected)
+        (simple-var-ref actual)))
+  )
+  (bb11 (bb10) (bb10)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref actual))))
+  )
+  (bb12 (bb10) (bb13)
     (assignment
       (simple-var-ref result)
       (query-action
@@ -122,6 +193,30 @@
           (builtin-ref-type xml)
           (user-defined-type xml Element))) (expr
         (xml-element-literal b))))
+  )
+  (bb13 (bb12 bb14) (bb14 bb15)
+    (from-clause
+      (var-def
+        (variable left (type
+          (user-defined-type xml Element))))
+      (simple-var-ref expectedElements))
+    (join-clause
+      (var-def
+        (variable actual (type
+          (user-defined-type xml Element))))
+      (xml-sequence-literal
+        (xml-element-literal a)
+        (xml-element-literal b))
+      (on-clause
+        (simple-var-ref left)
+        (simple-var-ref actual)))
+  )
+  (bb14 (bb13) (bb13)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref actual))))
+  )
+  (bb15 (bb13) ()
     (assignment
       (simple-var-ref result)
       (query-action
@@ -150,31 +245,5 @@
         (type-test-expr is
           (simple-var-ref result)
           (value-type null)))))
-  )
-  (bb1 (bb0) (bb0)
-    (compound-assignment +
-      (simple-var-ref chars)
-      (simple-var-ref char))
-  )
-  (bb2 (bb0) (bb0)
-    (expression-stmt
-      (invocation io println (
-        (simple-var-ref item))))
-  )
-  (bb3 (bb0) (bb0)
-    (expression-stmt
-      (invocation io println (
-        (simple-var-ref char)
-        (simple-var-ref element))))
-  )
-  (bb4 (bb0) (bb0)
-    (expression-stmt
-      (invocation io println (
-        (simple-var-ref actual))))
-  )
-  (bb5 (bb0) (bb0)
-    (expression-stmt
-      (invocation io println (
-        (simple-var-ref actual))))
   )
 )

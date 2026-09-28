@@ -6,7 +6,24 @@
   )
 )
 (main
-  (bb0 (bb1) (bb1)
+  (bb0 () (bb1))
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable value))
+      (list-constructor-expr
+        (literal 1)))
+  )
+  (bb2 (bb1) (bb1)
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref value))
+    (assignment
+      (wildcard-binding-pattern)
+      (check-panicked-expr
+        (invocation alwaysFails ())))
+  )
+  (bb3 (bb1) ()
     (expression-stmt
       (query-action
         (from-clause
@@ -23,14 +40,5 @@
               (wildcard-binding-pattern)
               (check-panicked-expr
                 (invocation alwaysFails ())))))))
-  )
-  (bb1 (bb0) (bb0)
-    (assignment
-      (wildcard-binding-pattern)
-      (simple-var-ref value))
-    (assignment
-      (wildcard-binding-pattern)
-      (check-panicked-expr
-        (invocation alwaysFails ())))
   )
 )

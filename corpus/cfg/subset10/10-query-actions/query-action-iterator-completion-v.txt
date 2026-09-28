@@ -154,11 +154,25 @@
   )
 )
 (main
-  (bb0 (bb1) (bb1 bb2 bb3)
+  (bb0 () (bb1)
     (var-def
       (variable total (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable value))
+      (new
+        (user-defined-type FailingIterable) ()))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref total)
+      (simple-var-ref value))
+  )
+  (bb3 (bb1) (bb4 bb5)
     (var-def
       (variable result (type
         (union-type
@@ -187,22 +201,39 @@
       (simple-var-ref result)
       (error-type))
   )
-  (bb1 (bb0) (bb0)
-    (compound-assignment +
-      (simple-var-ref total)
-      (simple-var-ref value))
-  )
-  (bb2 (bb0) (bb3)
+  (bb4 (bb3) (bb5)
     (expression-stmt
       (invocation io println (
         (invocation lang.error message (
           (simple-var-ref result))))))
   )
-  (bb3 (bb2 bb0 bb4 bb5 bb6 bb7 bb8) (bb4 bb5 bb6 bb7 bb8 bb9 bb10)
+  (bb5 (bb4 bb3) (bb6)
     (var-def
       (variable nestedTotal (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb6 (bb5 bb7) (bb7 bb8)
+    (from-clause
+      (var-def
+        (variable factor))
+      (list-constructor-expr
+        (literal 1)
+        (literal 2)))
+    (from-clause
+      (var-def
+        (variable value))
+      (new
+        (user-defined-type FailingIterable) ()))
+  )
+  (bb7 (bb6) (bb6)
+    (compound-assignment +
+      (simple-var-ref nestedTotal)
+      (binary-expr *
+        (simple-var-ref factor)
+        (simple-var-ref value)))
+  )
+  (bb8 (bb6) (bb9)
     (assignment
       (simple-var-ref result)
       (query-action
@@ -236,6 +267,23 @@
       (variable orderedTotal (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb9 (bb8 bb10) (bb10 bb11)
+    (from-clause
+      (var-def
+        (variable value))
+      (new
+        (user-defined-type FailingIterable) ()))
+    (order-by-clause
+      (order-key descending
+        (simple-var-ref value)))
+  )
+  (bb10 (bb9) (bb9)
+    (compound-assignment +
+      (simple-var-ref orderedTotal)
+      (simple-var-ref value))
+  )
+  (bb11 (bb9) (bb12)
     (assignment
       (simple-var-ref result)
       (query-action
@@ -264,6 +312,31 @@
       (variable joinedTotal (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb12 (bb11 bb13) (bb13 bb14)
+    (from-clause
+      (var-def
+        (variable left))
+      (list-constructor-expr
+        (literal 10)
+        (literal 20)))
+    (join-clause
+      (var-def
+        (variable right))
+      (new
+        (user-defined-type FailingIterable) ())
+      (on-clause
+        (simple-var-ref left)
+        (simple-var-ref right)))
+  )
+  (bb13 (bb12) (bb12)
+    (compound-assignment +
+      (simple-var-ref joinedTotal)
+      (binary-expr +
+        (simple-var-ref left)
+        (simple-var-ref right)))
+  )
+  (bb14 (bb12) (bb15)
     (assignment
       (simple-var-ref result)
       (query-action
@@ -310,6 +383,40 @@
       (variable multiJoinTotal (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb15 (bb14 bb16) (bb16 bb17)
+    (from-clause
+      (var-def
+        (variable left))
+      (list-constructor-expr
+        (literal 1)
+        (literal 2)))
+    (join-clause
+      (var-def
+        (variable first))
+      (new
+        (user-defined-type CompleteIterable) ())
+      (on-clause
+        (simple-var-ref left)
+        (simple-var-ref first)))
+    (join-clause
+      (var-def
+        (variable second))
+      (simple-var-ref secondJoinValues)
+      (on-clause
+        (simple-var-ref first)
+        (simple-var-ref second)))
+  )
+  (bb16 (bb15) (bb15)
+    (compound-assignment +
+      (simple-var-ref multiJoinTotal)
+      (binary-expr +
+        (binary-expr +
+          (simple-var-ref left)
+          (simple-var-ref first))
+        (simple-var-ref second)))
+  )
+  (bb17 (bb15) (bb18)
     (assignment
       (simple-var-ref result)
       (query-action
@@ -356,6 +463,42 @@
         (array-type
           (value-type int) dimensions: 1 ([]))) (expr
         (list-constructor-expr))))
+  )
+  (bb18 (bb17 bb19) (bb19 bb20)
+    (from-clause
+      (var-def
+        (variable left))
+      (list-constructor-expr
+        (literal 1)))
+    (join-clause
+      (var-def
+        (variable first))
+      (invocation trackedFailingIterable (
+        (simple-var-ref multiJoinEvents)
+        (literal 1)))
+      (on-clause
+        (simple-var-ref left)
+        (simple-var-ref first)))
+    (join-clause
+      (var-def
+        (variable second))
+      (invocation trackedFailingIterable (
+        (simple-var-ref multiJoinEvents)
+        (literal 2)))
+      (on-clause
+        (simple-var-ref first)
+        (simple-var-ref second)))
+    (limit-clause
+      (invocation trackedLimit (
+        (simple-var-ref multiJoinEvents))))
+  )
+  (bb19 (bb18) (bb18)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref multiJoinEvents)
+        (literal 100))))
+  )
+  (bb20 (bb18) (bb21 bb22)
     (assignment
       (simple-var-ref result)
       (query-action
@@ -398,51 +541,33 @@
       (simple-var-ref result)
       (error-type))
   )
-  (bb4 (bb3) (bb3)
-    (compound-assignment +
-      (simple-var-ref nestedTotal)
-      (binary-expr *
-        (simple-var-ref factor)
-        (simple-var-ref value)))
-  )
-  (bb5 (bb3) (bb3)
-    (compound-assignment +
-      (simple-var-ref orderedTotal)
-      (simple-var-ref value))
-  )
-  (bb6 (bb3) (bb3)
-    (compound-assignment +
-      (simple-var-ref joinedTotal)
-      (binary-expr +
-        (simple-var-ref left)
-        (simple-var-ref right)))
-  )
-  (bb7 (bb3) (bb3)
-    (compound-assignment +
-      (simple-var-ref multiJoinTotal)
-      (binary-expr +
-        (binary-expr +
-          (simple-var-ref left)
-          (simple-var-ref first))
-        (simple-var-ref second)))
-  )
-  (bb8 (bb3) (bb3)
-    (expression-stmt
-      (invocation lang.array push (
-        (simple-var-ref multiJoinEvents)
-        (literal 100))))
-  )
-  (bb9 (bb3) (bb10)
+  (bb21 (bb20) (bb22)
     (expression-stmt
       (invocation io println (
         (invocation lang.error message (
           (simple-var-ref result))))))
   )
-  (bb10 (bb9 bb3 bb11 bb12 bb13) (bb11 bb12 bb13)
+  (bb22 (bb21 bb20) (bb23)
     (var-def
       (variable limitedTotal (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb23 (bb22 bb24) (bb24 bb25)
+    (from-clause
+      (var-def
+        (variable value))
+      (new
+        (user-defined-type FailingIterable) ()))
+    (limit-clause
+      (literal 1))
+  )
+  (bb24 (bb23) (bb23)
+    (compound-assignment +
+      (simple-var-ref limitedTotal)
+      (simple-var-ref value))
+  )
+  (bb25 (bb23) (bb26)
     (assignment
       (simple-var-ref result)
       (query-action
@@ -470,6 +595,20 @@
       (variable completedTotal (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb26 (bb25 bb27) (bb27 bb28)
+    (from-clause
+      (var-def
+        (variable value))
+      (new
+        (user-defined-type CompleteIterable) ()))
+  )
+  (bb27 (bb26) (bb26)
+    (compound-assignment +
+      (simple-var-ref completedTotal)
+      (simple-var-ref value))
+  )
+  (bb28 (bb26) (bb29)
     (expression-stmt
       (query-action
         (from-clause
@@ -499,6 +638,19 @@
       (variable streamTotal (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb29 (bb28 bb30) (bb30 bb31)
+    (from-clause
+      (var-def
+        (variable value))
+      (simple-var-ref values))
+  )
+  (bb30 (bb29) (bb29)
+    (compound-assignment +
+      (simple-var-ref streamTotal)
+      (simple-var-ref value))
+  )
+  (bb31 (bb29) ()
     (assignment
       (simple-var-ref result)
       (query-action
@@ -519,21 +671,6 @@
         (type-test-expr is
           (simple-var-ref result)
           (error-type)))))
-  )
-  (bb11 (bb10) (bb10)
-    (compound-assignment +
-      (simple-var-ref limitedTotal)
-      (simple-var-ref value))
-  )
-  (bb12 (bb10) (bb10)
-    (compound-assignment +
-      (simple-var-ref completedTotal)
-      (simple-var-ref value))
-  )
-  (bb13 (bb10) (bb10)
-    (compound-assignment +
-      (simple-var-ref streamTotal)
-      (simple-var-ref value))
   )
 )
 (trackedFailingIterable

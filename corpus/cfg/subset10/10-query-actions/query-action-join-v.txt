@@ -1,5 +1,5 @@
 (main
-  (bb0 (bb1) (bb1)
+  (bb0 () (bb1)
     (var-def
       (variable employees (type
         (array-type
@@ -79,6 +79,60 @@
       (variable ageTotal (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable employee))
+      (simple-var-ref employees))
+    (join-clause
+      (var-def
+        (variable department))
+      (simple-var-ref departments)
+      (on-clause
+        (field-based-access dept
+          (simple-var-ref employee))
+        (field-based-access code
+          (simple-var-ref department))))
+    (where-clause
+      (binary-expr ==
+        (field-based-access title
+          (simple-var-ref department))
+        (literal Engineering)))
+    (let-clause
+      (var-def
+        (variable nextAge (type
+          (value-type int)) (expr
+          (binary-expr +
+            (field-based-access age
+              (simple-var-ref employee))
+            (literal 1))))))
+    (order-by-clause
+      (order-key descending
+        (field-based-access age
+          (simple-var-ref employee))))
+    (limit-clause
+      (literal 2))
+  )
+  (bb2 (bb1) (bb1)
+    (assignment
+      (simple-var-ref labels)
+      (binary-expr +
+        (binary-expr +
+          (binary-expr +
+            (binary-expr +
+              (simple-var-ref labels)
+              (field-based-access name
+                (simple-var-ref employee)))
+            (literal :))
+          (field-based-access title
+            (simple-var-ref department)))
+        (literal ;)))
+    (compound-assignment +
+      (simple-var-ref ageTotal)
+      (simple-var-ref nextAge))
+  )
+  (bb3 (bb1) ()
     (var-def
       (variable result (type
         (union-type
@@ -146,23 +200,5 @@
     (expression-stmt
       (invocation io println (
         (simple-var-ref ageTotal))))
-  )
-  (bb1 (bb0) (bb0)
-    (assignment
-      (simple-var-ref labels)
-      (binary-expr +
-        (binary-expr +
-          (binary-expr +
-            (binary-expr +
-              (simple-var-ref labels)
-              (field-based-access name
-                (simple-var-ref employee)))
-            (literal :))
-          (field-based-access title
-            (simple-var-ref department)))
-        (literal ;)))
-    (compound-assignment +
-      (simple-var-ref ageTotal)
-      (simple-var-ref nextAge))
   )
 )

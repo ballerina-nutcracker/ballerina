@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expected panic
+  --> query-action-missing-return-e.bal:26:5
+   |
+26 |     from var x in [1] do { _ = x; panic error("boom"); }; // @error expected panic
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: missing return statement
+  --> query-action-missing-return-e.bal:18:5
+   |
+18 |     from var x in [1] where x > 5 do { return x; }; // @error missing return statement
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: missing return statement
+  --> query-action-missing-return-e.bal:22:5
+   |
+22 |     from var x in [1] do { _ = x; }; // @error missing return statement
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: missing return statement
+  --> query-action-missing-return-e.bal:30:5
+   |
+30 |     noop(); // @error missing return statement
+   |     ^^^^^^^

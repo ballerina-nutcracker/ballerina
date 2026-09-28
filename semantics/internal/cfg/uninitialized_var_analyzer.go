@@ -296,6 +296,10 @@ func (v *varRefChecker) Visit(node ast.BLangNode) ast.Visitor {
 	if inv, ok := node.(*ast.BLangInvocation); ok && ast.IsStreamOperation(inv) {
 		return nil
 	}
+	// A query action's clauses and do body are their own CFG nodes (see analyzeQueryAction).
+	if _, ok := node.(*ast.BLangQueryAction); ok {
+		return nil
+	}
 	if nodeWithSymbol, ok := node.(ast.NodeWithSymbol); ok {
 		v.analyzer.checkVariableReference(nodeWithSymbol.Symbol(), node, v.state)
 	}

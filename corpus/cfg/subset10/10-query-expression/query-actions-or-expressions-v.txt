@@ -157,7 +157,7 @@
   )
 )
 (main
-  (bb0 (bb1) (bb1)
+  (bb0 () ()
     (var-def
       (variable numbers (type
         (user-defined-type NumberClient)) (expr
@@ -355,10 +355,5 @@
         (type-test-expr is
           (simple-var-ref failedResult)
           (error-type)))))
-  )
-  (bb1 (bb0) (bb0)
-    (compound-assignment +
-      (simple-var-ref nestedTotal)
-      (simple-var-ref nestedValue))
   )
 )

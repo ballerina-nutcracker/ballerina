@@ -1,5 +1,30 @@
 (failingCheck
-  (bb0 (bb1) (bb1)
+  (bb0 () (bb1))
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable value))
+      (list-constructor-expr
+        (literal 1)
+        (literal 2)
+        (literal 3)))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref events)
+        (literal before))))
+    (assignment
+      (wildcard-binding-pattern)
+      (checked-expr
+        (invocation valueOrError (
+          (simple-var-ref value)))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref events)
+        (literal after))))
+  )
+  (bb3 (bb1) ()
     (expression-stmt
       (query-action
         (from-clause
@@ -29,24 +54,27 @@
         (simple-var-ref events)
         (literal query completed))))
   )
-  (bb1 (bb0) (bb0)
-    (expression-stmt
-      (invocation lang.array push (
-        (simple-var-ref events)
-        (literal before))))
-    (assignment
-      (wildcard-binding-pattern)
-      (checked-expr
-        (invocation valueOrError (
-          (simple-var-ref value)))))
-    (expression-stmt
-      (invocation lang.array push (
-        (simple-var-ref events)
-        (literal after))))
-  )
 )
 (failingNestedCheck
-  (bb0 (bb1) (bb1)
+  (bb0 () (bb1))
+  (bb1 (bb0 bb6) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable outerValue))
+      (list-constructor-expr
+        (literal 1)
+        (literal 2)))
+  )
+  (bb2 (bb1) (bb4)
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref outerValue))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref events)
+        (literal outer before))))
+  )
+  (bb3 (bb1) ()
     (expression-stmt
       (query-action
         (from-clause
@@ -97,14 +125,31 @@
         (simple-var-ref events)
         (literal queries completed))))
   )
-  (bb1 (bb0 bb2) (bb2 bb0)
-    (assignment
-      (wildcard-binding-pattern)
-      (simple-var-ref outerValue))
+  (bb4 (bb2 bb5) (bb5 bb6)
+    (from-clause
+      (var-def
+        (variable innerValue))
+      (list-constructor-expr
+        (literal 1)
+        (literal 2)
+        (literal 3)))
+  )
+  (bb5 (bb4) (bb4)
     (expression-stmt
       (invocation lang.array push (
         (simple-var-ref events)
-        (literal outer before))))
+        (literal inner before))))
+    (assignment
+      (wildcard-binding-pattern)
+      (checked-expr
+        (invocation valueOrError (
+          (simple-var-ref innerValue)))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref events)
+        (literal inner after))))
+  )
+  (bb6 (bb4) (bb1)
     (expression-stmt
       (query-action
         (from-clause
@@ -133,21 +178,6 @@
       (invocation lang.array push (
         (simple-var-ref events)
         (literal outer after))))
-  )
-  (bb2 (bb1) (bb1)
-    (expression-stmt
-      (invocation lang.array push (
-        (simple-var-ref events)
-        (literal inner before))))
-    (assignment
-      (wildcard-binding-pattern)
-      (checked-expr
-        (invocation valueOrError (
-          (simple-var-ref innerValue)))))
-    (expression-stmt
-      (invocation lang.array push (
-        (simple-var-ref events)
-        (literal inner after))))
   )
 )
 (main
@@ -202,7 +232,17 @@
   )
 )
 (returnFromNestedQueryAction
-  (bb0 (bb1) (bb1)
+  (bb0 () (bb1))
+  (bb1 (bb0 bb6) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable outerValue))
+      (list-constructor-expr
+        (literal 1)
+        (literal 2)))
+  )
+  (bb2 (bb1) (bb4))
+  (bb3 (bb1) ()
     (expression-stmt
       (query-action
         (from-clause
@@ -238,7 +278,24 @@
     (return
       (literal queries completed))
   )
-  (bb1 (bb0 bb4) (bb2 bb0)
+  (bb4 (bb2 bb8) (bb5 bb6)
+    (from-clause
+      (var-def
+        (variable inner))
+      (list-constructor-expr
+        (literal 10)
+        (literal 20)))
+  )
+  (bb5 (bb4) (bb7 bb8)
+    (binary-expr &&
+      (binary-expr ==
+        (simple-var-ref outerValue)
+        (literal 1))
+      (binary-expr ==
+        (simple-var-ref inner)
+        (literal 20)))
+  )
+  (bb6 (bb4) (bb1)
     (expression-stmt
       (query-action
         (from-clause
@@ -262,23 +319,29 @@
                   (literal returned from nested do))) ())
             (block-stmt)))))
   )
-  (bb2 (bb1) (bb3 bb4)
-    (binary-expr &&
-      (binary-expr ==
-        (simple-var-ref outerValue)
-        (literal 1))
-      (binary-expr ==
-        (simple-var-ref inner)
-        (literal 20)))
-  )
-  (bb3 (bb2) ()
+  (bb7 (bb5) ()
     (return
       (literal returned from nested do))
   )
-  (bb4 (bb2) (bb1))
+  (bb8 (bb5) (bb4))
 )
 (returnFromQueryAction
-  (bb0 (bb3) (bb1)
+  (bb0 () (bb1))
+  (bb1 (bb0 bb5) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable value))
+      (list-constructor-expr
+        (literal 1)
+        (literal 2)
+        (literal 3)))
+  )
+  (bb2 (bb1) (bb4 bb5)
+    (binary-expr ==
+      (simple-var-ref value)
+      (literal 2))
+  )
+  (bb3 (bb1) ()
     (expression-stmt
       (query-action
         (from-clause
@@ -301,23 +364,35 @@
     (return
       (literal query completed))
   )
-  (bb1 (bb0) (bb2 bb3)
-    (binary-expr ==
-      (simple-var-ref value)
-      (literal 2))
-  )
-  (bb2 (bb1) ()
+  (bb4 (bb2) ()
     (return
       (literal returned from do))
   )
-  (bb3 (bb1) (bb0))
+  (bb5 (bb2) (bb1))
 )
 (successfulCheck
-  (bb0 (bb1) (bb1)
+  (bb0 () (bb1)
     (var-def
       (variable total (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable value))
+      (list-constructor-expr
+        (literal 1)
+        (literal 3)))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref total)
+      (checked-expr
+        (invocation valueOrError (
+          (simple-var-ref value)))))
+  )
+  (bb3 (bb1) ()
     (expression-stmt
       (query-action
         (from-clause
@@ -336,20 +411,30 @@
     (return
       (simple-var-ref total))
   )
-  (bb1 (bb0) (bb0)
-    (compound-assignment +
-      (simple-var-ref total)
-      (checked-expr
-        (invocation valueOrError (
-          (simple-var-ref value)))))
-  )
 )
 (successfulCheckpanic
-  (bb0 (bb1) (bb1)
+  (bb0 () (bb1)
     (var-def
       (variable total (type
         (value-type int)) (expr
         (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable value))
+      (list-constructor-expr
+        (literal 1)
+        (literal 3)))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref total)
+      (check-panicked-expr
+        (invocation valueOrError (
+          (simple-var-ref value)))))
+  )
+  (bb3 (bb1) ()
     (expression-stmt
       (query-action
         (from-clause
@@ -367,13 +452,6 @@
                   (simple-var-ref value)))))))))
     (return
       (simple-var-ref total))
-  )
-  (bb1 (bb0) (bb0)
-    (compound-assignment +
-      (simple-var-ref total)
-      (check-panicked-expr
-        (invocation valueOrError (
-          (simple-var-ref value)))))
   )
 )
 (valueOrError
