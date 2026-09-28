@@ -8529,7 +8529,6 @@ func resolveMatchStatement(t typeResolver, chain *binding, stmt *ast.BLangMatchS
 	} else {
 		remainingType = stmt.Expr.GetDeterminedType()
 	}
-	allNonCompletion := true
 	var bodyEffects []statementEffect
 
 	tyCtx := semtypes.ContextFrom(t.typeEnv())
@@ -8579,33 +8578,20 @@ func resolveMatchStatement(t typeResolver, chain *binding, stmt *ast.BLangMatchS
 			return defaultStmtEffect(chain), false
 		}
 		bodyEffects = append(bodyEffects, bodyEffect)
-		if !bodyEffect.nonCompletion {
-			allNonCompletion = false
-		}
 
 		remainingType = semtypes.Diff(remainingType, clause.AcceptedType)
 	}
 
 	stmt.IsExhaustive = semtypes.IsEmpty(tyCtx, remainingType)
 
-	if stmt.IsExhaustive && allNonCompletion {
-		return statementEffect{chain, true}, true
-	}
-
-	var result *binding
-	first := true
+	// When the match is not exhaustive the incoming chain is the "no clause matched" path and
+	// must take part in the merge, otherwise the target keeps a clause's narrowing. An
+	// exhaustive match has no such path, so the seed is marked non-completing and discarded.
+	result := statementEffect{binding: chain, nonCompletion: stmt.IsExhaustive}
 	for _, effect := range bodyEffects {
-		if effect.nonCompletion {
-			continue
-		}
-		if first {
-			result = effect.binding
-			first = false
-		} else {
-			result = mergeChains(t, result, effect.binding, semtypes.Union)
-		}
+		result = mergeStatementEffects(t, result, effect)
 	}
-	return statementEffect{result, false}, true
+	return result, true
 }
 
 func matchClauseAcceptedType(t typeResolver, chain *binding, clause *ast.BLangMatchClause, remainingType semtypes.SemType) (semtypes.SemType, *binding, bool) {

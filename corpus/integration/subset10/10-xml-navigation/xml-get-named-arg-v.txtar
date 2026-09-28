@@ -1,0 +1,5 @@
+-- stdout --
+<b>two</b>
+<a>one</a>
+<b>two</b>
+-- stderr --

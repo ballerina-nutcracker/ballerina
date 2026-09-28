@@ -1,0 +1,94 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = describe(%2) -> bb1;
+  }
+  bb1 {
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad 3
+    %6 = %5;
+    %7 = describe(%6) -> bb3;
+  }
+  bb3 {
+    %8 = println(%7) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad 200
+    %10 = %9;
+    %11 = describe(%10) -> bb5;
+  }
+  bb5 {
+    %12 = println(%11) -> bb6;
+  }
+  bb6 {
+    %13 = ConstantLoad 0
+    %14 = %13;
+    %15 = describe(%14) -> bb7;
+  }
+  bb7 {
+    %16 = println(%15) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+describe(int:Unsigned8) -> string{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = == %3 %5;
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad one
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 4
+    %1 = (1, x);
+    %2 = ConstantLoad 3
+    %3 = %2;
+    %0 = == %1 %3;
+    %0 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = ConstantLoad three
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    PushScopeFrame 7
+    %2 = (2, x);
+    %3 = ConstantLoad 200
+    %4 = %3;
+    %1 = == %2 %4;
+    %1 ? bb5 : bb6;
+  }
+  bb5 {
+    %5 = ConstantLoad 200
+    %0 = %5;
+    GOTO bb7;
+  }
+  bb6 {
+    %6 = ConstantLoad other
+    %0 = %6;
+    GOTO bb7;
+  }
+  bb7 {
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

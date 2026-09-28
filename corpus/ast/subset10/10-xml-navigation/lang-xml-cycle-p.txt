@@ -1,0 +1,16 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable parent (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal parent)
+            (mapping-constructor-expr)
+            (xml-sequence-literal))))))
+      (expression-stmt
+        (invocation setChildren expr:
+          (simple-var-ref parent) (
+          (simple-var-ref parent)))))))

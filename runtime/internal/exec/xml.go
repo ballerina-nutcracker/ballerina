@@ -23,7 +23,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-func filterXML(source any, patterns []bir.XMLNamePattern) *values.XMLSequence {
+func filterXML(source any, patterns []bir.XMLNamePattern) values.XMLValue {
 	xmlValue, ok := source.(values.XMLValue)
 	if !ok {
 		panic(fmt.Sprintf("invariant violation: XMLFilter source is not an XMLValue (got %T)", source))

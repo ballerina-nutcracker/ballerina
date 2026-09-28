@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: XML comment body must not contain '--' or end with '-'
+        at main(lang-xml-comment-p.bal:18)

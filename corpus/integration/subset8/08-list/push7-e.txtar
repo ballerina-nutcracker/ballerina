@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot push to a fixed-length list
+  --> push7-e.bal:21:5
+   |
+21 |     v.push(10); // @error
+   |     ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot push to a fixed-length list
+  --> push7-e.bal:22:5
+   |
+22 |     array:push(v, 10); // @error
+   |     ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot push to a fixed-length list
+  --> push7-e.bal:23:5
+   |
+23 |     v.push(); // @error
+   |     ^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot push to a fixed-length list
+  --> push7-e.bal:25:5
+   |
+25 |     e.push(1); // @error
+   |     ^^^^^^^^^

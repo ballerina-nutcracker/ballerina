@@ -35,12 +35,23 @@ bal-bench [options] <base-ref> <head-ref> <target>
 - `-warmup` — warmup iterations per command (default: `4`)
 - `-runs` — measured runs per command (default: `10`)
 - `-export-html` — path for the generated HTML report (optional)
+- `-export-summary` — path for the generated Markdown summary (optional). Independent of `-export-html`: either, both, or neither may be given
 
 **Target modes**
 
 1. **Single file** — `target` is a `.bal` file; one benchmark row for that file.
 2. **Package** — `target` is a directory with `Ballerina.toml`; one row for the package.
 3. **Directory of sources** — `target` is a directory without `Ballerina.toml` but with `.bal` files; one row per `.bal` file (recursive).
+
+## Summary report
+
+`-export-summary` writes a Markdown digest of the same measurements the HTML report shows, intended to be read before the full table. It lists:
+
+- **Regressions** and **Improvements** — cases whose head-vs-base mean difference is at least 1 combined standard deviation *and* at least 1% in relative terms. Both bars must be cleared, so a near-zero standard deviation alone cannot promote a negligible difference.
+- **Unreliable measurements** — cases whose own run-to-run coefficient of variation reaches the mode's noise threshold: 5% in time mode, 3% in memory mode. A case that is both noisy and significant is listed once, under Regressions or Improvements, with the noise noted inline.
+- **Not measured** — cases with no usable base and head pair.
+
+Each section lists at most 10 entries and says how many more were left for the table.
 
 ## Example
 

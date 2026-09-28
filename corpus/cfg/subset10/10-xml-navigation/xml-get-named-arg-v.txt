@@ -1,0 +1,27 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type xml)) (expr
+        (xml-sequence-literal
+          (xml-element-literal a
+            (xml-text-literal one))
+          (xml-element-literal b
+            (xml-text-literal two))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.xml get (
+          (simple-var-ref x)
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation xml get (
+          (simple-var-ref x)
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation xml get (
+          (simple-var-ref x)
+          (literal 1))))))
+  )
+)

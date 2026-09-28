@@ -1,0 +1,8 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation xml concat (
+          (literal )))))))

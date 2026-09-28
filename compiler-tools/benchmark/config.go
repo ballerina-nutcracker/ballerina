@@ -30,13 +30,14 @@ const (
 )
 
 type config struct {
-	baseRef    string
-	headRef    string
-	target     string
-	mode       benchmarkMode
-	warmup     int
-	runs       int
-	exportPath string
+	baseRef     string
+	headRef     string
+	target      string
+	mode        benchmarkMode
+	warmup      int
+	runs        int
+	exportPath  string
+	summaryPath string
 }
 
 func parseConfig() (*config, error) {
@@ -50,6 +51,7 @@ func parseConfig() (*config, error) {
 	warmup := fs.Int("warmup", 4, "Number of warmup iterations")
 	runs := fs.Int("runs", 10, "Number of benchmark runs")
 	exportPath := fs.String("export-html", "", "Path to export HTML report")
+	summaryPath := fs.String("export-summary", "", "Path to export the Markdown summary report")
 
 	if err := fs.Parse(os.Args[1:]); err != nil {
 		return nil, err
@@ -62,13 +64,14 @@ func parseConfig() (*config, error) {
 	}
 
 	cfg := &config{
-		baseRef:    args[0],
-		headRef:    args[1],
-		target:     args[2],
-		mode:       benchmarkMode(*mode),
-		warmup:     *warmup,
-		runs:       *runs,
-		exportPath: *exportPath,
+		baseRef:     args[0],
+		headRef:     args[1],
+		target:      args[2],
+		mode:        benchmarkMode(*mode),
+		warmup:      *warmup,
+		runs:        *runs,
+		exportPath:  *exportPath,
+		summaryPath: *summaryPath,
 	}
 	return cfg, nil
 }

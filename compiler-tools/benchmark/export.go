@@ -52,6 +52,15 @@ func parseHyperfineExport(path string) (*benchExport, error) {
 }
 
 type (
+	modeInfo struct {
+		title          string
+		meanLabel      string
+		stddevLabel    string
+		unit           string
+		winnerVerb     string
+		scale          float64
+		noiseThreshold float64
+	}
 	report struct {
 		BaseRef   string
 		HeadRef   string
@@ -74,14 +83,18 @@ type (
 	}
 )
 
+func resultPair(run *runResult) (base, head *benchResult) {
+	if len(run.export.Results) < 2 {
+		return nil, nil
+	}
+	return &run.export.Results[0], &run.export.Results[1]
+}
+
 func (r *report) export(outPath string) error {
 	rows := make([]row, 0, len(r.results))
-	for _, run := range r.results {
-		var base, head *benchResult
-		if len(run.export.Results) >= 2 {
-			base = &run.export.Results[0]
-			head = &run.export.Results[1]
-		}
+	for i := range r.results {
+		run := &r.results[i]
+		base, head := resultPair(run)
 		tblRow := row{
 			Label: run.label,
 			Base:  base,
@@ -128,39 +141,51 @@ func (r *report) export(outPath string) error {
 	return nil
 }
 
-func (r *report) formatMetric(value float64) string {
-	if r.Mode == memoryMode {
-		return fmt.Sprintf("%.3f", value)
+func infoForMode(mode benchmarkMode) modeInfo {
+	if mode == memoryMode {
+		return modeInfo{
+			title:          "Ballerina Memory Benchmark",
+			meanLabel:      "PEAK RSS (MiB)",
+			stddevLabel:    "STDDEV (MiB)",
+			unit:           "MiB",
+			winnerVerb:     "uses less memory",
+			scale:          1.0,
+			noiseThreshold: memoryNoiseThreshold,
+		}
 	}
-	return fmt.Sprintf("%.3f", value*1000.0)
+	return modeInfo{
+		title:          "Ballerina Benchmark",
+		meanLabel:      "MEAN (ms)",
+		stddevLabel:    "STDDEV (ms)",
+		unit:           "ms",
+		winnerVerb:     "is faster",
+		scale:          1000.0,
+		noiseThreshold: timeNoiseThreshold,
+	}
+}
+
+func (r *report) info() modeInfo {
+	return infoForMode(r.Mode)
+}
+
+func (r *report) formatMetric(value float64) string {
+	return fmt.Sprintf("%.3f", value*r.info().scale)
 }
 
 func (r *report) title() string {
-	if r.Mode == memoryMode {
-		return "Ballerina Memory Benchmark"
-	}
-	return "Ballerina Benchmark"
+	return r.info().title
 }
 
 func (r *report) meanLabel() string {
-	if r.Mode == memoryMode {
-		return "PEAK RSS (MiB)"
-	}
-	return "MEAN (ms)"
+	return r.info().meanLabel
 }
 
 func (r *report) stddevLabel() string {
-	if r.Mode == memoryMode {
-		return "STDDEV (MiB)"
-	}
-	return "STDDEV (ms)"
+	return r.info().stddevLabel
 }
 
 func (r *report) winnerVerb() string {
-	if r.Mode == memoryMode {
-		return "uses less memory"
-	}
-	return "is faster"
+	return r.info().winnerVerb
 }
 
 func computeDelta(base, head *benchResult, baseRef, headRef string) (bool, string, string, string) {

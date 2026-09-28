@@ -777,3 +777,52 @@ func TestOnInterruptStopIsIdempotentAndSkipsCleanup(t *testing.T) {
 		t.Error("cleanup ran without a signal")
 	}
 }
+
+func TestConfigValidateAllowsEmptySummaryPath(t *testing.T) {
+	target := filepath.Join(t.TempDir(), "test.bal")
+	if err := os.WriteFile(target, []byte(""), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg := &config{
+		baseRef:     baseRef,
+		headRef:     headRef,
+		target:      target,
+		warmup:      0,
+		runs:        1,
+		summaryPath: "",
+	}
+	if err := cfg.validate(); err != nil {
+		t.Fatalf("validate() returned error for empty summary path: %v", err)
+	}
+}
+
+func TestParseConfigSummaryPath(t *testing.T) {
+	target := filepath.Join(t.TempDir(), "test.bal")
+	if err := os.WriteFile(target, []byte(""), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cases := []struct {
+		name  string
+		flags []string
+		want  string
+	}{
+		{name: "defaults_to_empty"},
+		{name: "reads_export_summary_flag", flags: []string{"-export-summary", "summary.md"}, want: "summary.md"},
+	}
+	originalArgs := os.Args
+	t.Cleanup(func() {
+		os.Args = originalArgs
+	})
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			os.Args = append(append([]string{"bal-bench"}, tc.flags...), baseRef, headRef, target)
+			cfg, err := parseConfig()
+			if err != nil {
+				t.Fatalf("parseConfig() returned error: %v", err)
+			}
+			if cfg.summaryPath != tc.want {
+				t.Fatalf("summaryPath = %q, want %q", cfg.summaryPath, tc.want)
+			}
+		})
+	}
+}

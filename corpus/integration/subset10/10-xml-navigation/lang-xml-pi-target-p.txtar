@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: invalid or reserved XML processing-instruction target "XmL"
+        at main(lang-xml-pi-target-p.bal:18)

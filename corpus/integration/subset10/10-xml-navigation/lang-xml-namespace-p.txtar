@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: prefixed namespace declaration cannot have an empty URI
+        at main(lang-xml-namespace-p.bal:18)

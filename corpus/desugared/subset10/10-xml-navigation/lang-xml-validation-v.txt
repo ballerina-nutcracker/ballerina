@@ -1,0 +1,113 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable element (type
+          (user-defined-type xml Element)) (expr
+          (invocation xml createElement (
+            (literal original)
+            (mapping-constructor-expr)
+            (xml-sequence-literal))))))
+      (var-def
+        (variable xmlnsNameFailure (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation lang.xml setName (
+              (simple-var-ref element)
+              (literal {http://www.w3.org/2000/xmlns/}bad)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref xmlnsNameFailure)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation lang.error message (
+                (simple-var-ref xmlnsNameFailure))))))) ())
+      (block-stmt
+        (var-def
+          (variable childrenFailure (type
+            (union-type
+              (error-type)
+              (value-type null))) (expr
+            (trap-expr
+              (invocation lang.xml setChildren (
+                (simple-var-ref element)
+                (literal ￾)))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref childrenFailure)
+              (error-type)))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref element))))
+        (var-def
+          (variable concatenated (type
+            (value-type xml)) (expr
+            (binary-expr +
+              (xml-element-literal a)
+              (xml-sequence-literal)))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref concatenated))))
+        (var-def
+          (variable badName (type
+            (union-type
+              (error-type)
+              (user-defined-type xml Element))) (expr
+            (trap-expr
+              (invocation xml createElement (
+                (literal 1bad)
+                (mapping-constructor-expr)
+                (xml-sequence-literal)))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref badName)
+            (error-type))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation lang.error message (
+                  (simple-var-ref badName))))))) ())
+        (block-stmt
+          (var-def
+            (variable duplicatePrefix (type
+              (union-type
+                (value-type xml)
+                (error-type))) (expr
+              (invocation xml fromString (
+                (literal <a xmlns:p="urn:one" xmlns:p="urn:two"/>))))))
+          (if
+            (type-test-expr is
+              (simple-var-ref duplicatePrefix)
+              (error-type))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (invocation lang.error message (
+                    (simple-var-ref duplicatePrefix))))))) ())
+          (block-stmt
+            (var-def
+              (variable duplicateAttribute (type
+                (union-type
+                  (value-type xml)
+                  (error-type))) (expr
+                (invocation xml fromString (
+                  (literal <a x="1" x="2"/>))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref duplicateAttribute)
+                (error-type))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (invocation lang.error message (
+                      (simple-var-ref duplicateAttribute))))))) ())
+            (block-stmt)))))))

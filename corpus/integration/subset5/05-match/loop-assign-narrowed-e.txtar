@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign to a variable narrowed outside the enclosing loop
+  --> loop-assign-narrowed-e.bal:27:21
+   |
+27 |                     a = "s"; // @error assignment to a variable narrowed outside the loop
+   |                     ^

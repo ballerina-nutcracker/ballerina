@@ -1,0 +1,36 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 1))))
+      (var-def
+        (variable b (type
+          (value-type int)) (expr
+          (literal 2))))
+      (if
+        (type-test-expr is
+          (simple-var-ref a)
+          (value-type int))
+        (block-stmt
+          (match
+            (simple-var-ref b)
+            (match-clause
+              (const-pattern
+                (literal 1))
+              (block-stmt
+                (return
+                  (literal <nil>)))))
+          (var-def
+            (variable c (type
+              (value-type int)) (expr
+              (simple-var-ref a))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref c))))) ())
+      (block-stmt))))

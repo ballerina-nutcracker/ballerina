@@ -1,0 +1,10 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation xml createProcessingInstruction (
+          (literal XmL)
+          (literal content)))))))

@@ -211,6 +211,24 @@ func accumNarrowedTypes(t typeResolver, chain *binding, accum map[model.SymbolRe
 	return accumNarrowedTypes(t, chain.prev, accum, accumDefault)
 }
 
+// accumAssignmentPositions collects, per symbol, the position of the nearest
+// assignment-introduced entry in the chain. Merging flattens the chain, so these
+// have to be carried over explicitly or the loop arms lose the assignments they
+// report on.
+func accumAssignmentPositions(chain *binding, accum map[model.SymbolRef]diagnostics.Location) {
+	for c := chain; c != nil; c = c.prev {
+		if c.hasFlag(bindingFlagFunctionBoundary) {
+			continue
+		}
+		if !c.isAssignment() {
+			continue
+		}
+		if _, seen := accum[c.ref]; !seen {
+			accum[c.ref] = c.assignmentPos
+		}
+	}
+}
+
 func mergeChains(t typeResolver, c1 *binding, c2 *binding, mergeOp func(semtypes.SemType, semtypes.SemType) semtypes.SemType) *binding {
 	m1 := make(map[model.SymbolRef]semtypes.SemType)
 	d1 := accumNarrowedTypes(t, c1, m1, semtypes.SemType{})
@@ -238,6 +256,9 @@ func mergeChains(t typeResolver, c1 *binding, c2 *binding, mergeOp func(semtypes
 			}
 		}
 	}
+	assignments := make(map[model.SymbolRef]diagnostics.Location)
+	accumAssignmentPositions(c1, assignments)
+	accumAssignmentPositions(c2, assignments)
 	var result *binding
 	for s, p := range pairs {
 		ty := mergeOp(p.ty1, p.ty2)
@@ -246,6 +267,7 @@ func mergeChains(t typeResolver, c1 *binding, c2 *binding, mergeOp func(semtypes
 			ref:            s,
 			narrowedSymbol: sym,
 			prev:           result,
+			assignmentPos:  assignments[s],
 		}
 	}
 	return result

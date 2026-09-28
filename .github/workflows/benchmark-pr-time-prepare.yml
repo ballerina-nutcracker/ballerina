@@ -47,6 +47,7 @@ jobs:
             --runs 3 \
             --warmup 1 \
             --export-html benchmark-output/output.html \
+            --export-summary benchmark-output/summary.md \
             origin/main \
             HEAD \
             corpus/bench > benchmark-output/time.log 2>&1
@@ -80,6 +81,7 @@ jobs:
           name: benchmark-time-pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
           path: |
             benchmark-output/output.html
+            benchmark-output/summary.md
             benchmark-output/time-error.txt
             benchmark-output/benchmark-meta.json
           if-no-files-found: error

@@ -1,0 +1,49 @@
+(describe
+  (bb0 () (bb1 bb2)
+    (binary-expr ==
+      (simple-var-ref x)
+      (literal 1))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal one))
+  )
+  (bb2 (bb0) (bb3 bb4)
+    (binary-expr ==
+      (simple-var-ref x)
+      (literal 3))
+  )
+  (bb3 (bb2) ()
+    (return
+      (literal three))
+  )
+  (bb4 (bb2) ()
+    (return
+      (ternary-expr
+        (binary-expr ==
+          (simple-var-ref x)
+          (literal 200))
+        (literal 200)
+        (literal other)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation describe (
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation describe (
+          (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation describe (
+          (literal 200))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation describe (
+          (literal 0))))))
+  )
+)

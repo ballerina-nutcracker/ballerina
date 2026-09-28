@@ -1,0 +1,9 @@
+-- stdout --
+element name cannot use the XMLNS namespace
+true
+<original/>
+<a/>
+invalid XML element name
+lang.xml:fromString: duplicate namespace declaration for prefix "p"
+lang.xml:fromString: duplicate XML attribute "x"
+-- stderr --

@@ -1,0 +1,113 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable element (type
+        (user-defined-type xml Element)) (expr
+        (invocation xml createElement (
+          (literal original)
+          (mapping-constructor-expr)
+          (xml-sequence-literal))))))
+    (var-def
+      (variable xmlnsNameFailure (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation lang.xml setName (
+            (simple-var-ref element)
+            (literal {http://www.w3.org/2000/xmlns/}bad)))))))
+    (type-test-expr is
+      (simple-var-ref xmlnsNameFailure)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref xmlnsNameFailure))))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable childrenFailure (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation lang.xml setChildren (
+            (simple-var-ref element)
+            (literal ￾)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref childrenFailure)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref element))))
+    (var-def
+      (variable concatenated (type
+        (value-type xml)) (expr
+        (binary-expr +
+          (xml-element-literal a)
+          (xml-sequence-literal)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref concatenated))))
+    (var-def
+      (variable badName (type
+        (union-type
+          (error-type)
+          (user-defined-type xml Element))) (expr
+        (trap-expr
+          (invocation xml createElement (
+            (literal 1bad)
+            (mapping-constructor-expr)
+            (xml-sequence-literal)))))))
+    (type-test-expr is
+      (simple-var-ref badName)
+      (error-type))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref badName))))))
+  )
+  (bb4 (bb3 bb2) (bb5 bb6)
+    (var-def
+      (variable duplicatePrefix (type
+        (union-type
+          (value-type xml)
+          (error-type))) (expr
+        (invocation xml fromString (
+          (literal <a xmlns:p="urn:one" xmlns:p="urn:two"/>))))))
+    (type-test-expr is
+      (simple-var-ref duplicatePrefix)
+      (error-type))
+  )
+  (bb5 (bb4) (bb6)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref duplicatePrefix))))))
+  )
+  (bb6 (bb5 bb4) (bb7 bb8)
+    (var-def
+      (variable duplicateAttribute (type
+        (union-type
+          (value-type xml)
+          (error-type))) (expr
+        (invocation xml fromString (
+          (literal <a x="1" x="2"/>))))))
+    (type-test-expr is
+      (simple-var-ref duplicateAttribute)
+      (error-type))
+  )
+  (bb7 (bb6) (bb8)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref duplicateAttribute))))))
+  )
+  (bb8 (bb7 bb6) ())
+)

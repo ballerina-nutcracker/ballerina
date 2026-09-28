@@ -109,11 +109,21 @@ func (b *benchmark) run() error {
 		Generated: time.Now(),
 		results:   results,
 	}
-	if b.exportPath != "" {
-		if err := rep.export(b.exportPath); err != nil {
+	return writeReports(&rep, b.exportPath, b.summaryPath)
+}
+
+func writeReports(rep *report, exportPath, summaryPath string) error {
+	if exportPath != "" {
+		if err := rep.export(exportPath); err != nil {
 			return err
 		}
-		fmt.Printf("Benchmark report exported to %s\n", b.exportPath)
+		fmt.Printf("Benchmark report exported to %s\n", exportPath)
+	}
+	if summaryPath != "" {
+		if err := rep.exportSummary(summaryPath); err != nil {
+			return err
+		}
+		fmt.Printf("Benchmark summary exported to %s\n", summaryPath)
 	}
 	return nil
 }
