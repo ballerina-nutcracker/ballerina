@@ -698,11 +698,7 @@ func synthesizeInferredTypedescArg(cx *functionContext, tdTy semtypes.SemType, p
 	return tdExpr
 }
 
-func assignToLocal(cx *functionContext, initExpr ast.BLangExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangVarRef) {
-	return assignActionOrExpressionToLocal(cx, initExpr, pos)
-}
-
-func assignActionOrExpressionToLocal(cx *functionContext, initExpr ast.BLangActionOrExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangVarRef) {
+func assignToLocal(cx *functionContext, initExpr ast.BLangActionOrExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangVarRef) {
 	ty := initExpr.GetDeterminedType()
 	tempName, tempSymRef := cx.addDesugardSymbol(ty, model.SymbolKindVariable, pos)
 	tempVar := &ast.BLangVariable{Name: newIdentifier(tempName)}

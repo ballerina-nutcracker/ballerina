@@ -202,7 +202,7 @@ func createQueryCollectionSource(
 	collExpr := collResult
 	collTy := collExpr.GetDeterminedType()
 
-	collVarDef, collRef := assignActionOrExpressionToLocal(cx, collExpr, pos)
+	collVarDef, collRef := assignToLocal(cx, collExpr, pos)
 	*initStmts = append(*initStmts, collVarDef)
 
 	lengthSource := ast.BLangExpression(collRef)
@@ -256,7 +256,7 @@ func createQueryPipelineCollectionSource(
 	collectionResult := walkExpression(cx, collectionExpr)
 	collectionValue := collectionResult
 	collectionTy = collectionValue.GetDeterminedType()
-	collectionVarDef, collectionRef := assignActionOrExpressionToLocal(cx, collectionValue, pos)
+	collectionVarDef, collectionRef := assignToLocal(cx, collectionValue, pos)
 	*initStmts = append(*initStmts, collectionVarDef)
 
 	switch {
@@ -910,7 +910,7 @@ func buildQueryActionSegmentStmts(
 		var whereStmts []ast.StatementNode
 		whereExpr, isExpression := whereResult.(ast.BLangExpression)
 		if !isExpression {
-			whereVarDef, whereRef := assignActionOrExpressionToLocal(cx, whereResult, clause.GetPosition())
+			whereVarDef, whereRef := assignToLocal(cx, whereResult, clause.GetPosition())
 			whereStmts = append(whereStmts, whereVarDef)
 			whereExpr = whereRef
 		}
@@ -1221,7 +1221,7 @@ func buildStreamingQueryActionJoin(
 	pos diagnostics.Location,
 ) []ast.StatementNode {
 	lhsResult := walkExpression(cx, clause.OnClause.OnExpr)
-	lhsVarDef, lhsRef := assignActionOrExpressionToLocal(cx, lhsResult, pos)
+	lhsVarDef, lhsRef := assignToLocal(cx, lhsResult, pos)
 	stmts := []ast.StatementNode{lhsVarDef}
 
 	var matchedRef *ast.BLangVarRef
@@ -2830,7 +2830,7 @@ func appendQuerySelectResultStmts(
 	selectResult := walkExpression(cx, selectClause.Expression)
 	selectExpr, isExpression := selectResult.(ast.BLangExpression)
 	if !isExpression {
-		selectVarDef, selectRef := assignActionOrExpressionToLocal(cx, selectResult, basePos)
+		selectVarDef, selectRef := assignToLocal(cx, selectResult, basePos)
 		bodyStmts = append(bodyStmts, selectVarDef)
 		selectExpr = selectRef
 	}
