@@ -1,0 +1,294 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable receiverCalls (type
+    (value-type int)) (expr
+    (literal 0)))
+  (variable extensionCalls (type
+    (value-type int)) (expr
+    (literal 0)))
+  (variable methodArgumentCalls (type
+    (value-type int)) (expr
+    (literal 0)))
+  (variable abruptCalls (type
+    (value-type int)) (expr
+    (literal 0)))
+  (function receiver () (
+    (value-type xml))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref receiverCalls)
+        (literal 1))
+      (return
+        (xml-sequence-literal
+          (xml-element-literal item
+            (xml-element-literal name
+              (xml-text-literal A)))
+          (xml-element-literal item
+            (xml-element-literal name
+              (xml-text-literal B)))))))
+  (function index () (
+    (value-type int))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref extensionCalls)
+        (literal 1))
+      (return
+        (literal 0))))
+  (function methodEnd () (
+    (value-type int))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref methodArgumentCalls)
+        (literal 1))
+      (return
+        (literal 1))))
+  (function abruptIndex () (
+    (value-type int))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref abruptCalls)
+        (literal 1))
+      (if
+        (binary-expr ==
+          (simple-var-ref abruptCalls)
+          (literal 2))
+        (block-stmt
+          (panic
+            (error-constructor-expr (
+              (literal stop iteration))))) ())
+      (block-stmt
+        (return
+          (literal 0)))))
+  (function assert (
+    (variable actual (type
+      (value-type anydata)))
+    (variable expected (type
+      (value-type anydata)))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (binary-expr !=
+          (simple-var-ref actual)
+          (simple-var-ref expected))
+        (block-stmt
+          (panic
+            (error-constructor-expr (
+              (literal values are not equal))))) ())
+      (block-stmt)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable selected (type
+          (value-type xml)) (expr
+          (xml-step-expression
+            (invocation receiver ())
+            (xml-step-all-children)
+            (xml-step-index-extend
+              (invocation index ()))))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref selected)
+          (xml-sequence-literal
+            (xml-element-literal name
+              (xml-text-literal A))
+            (xml-element-literal name
+              (xml-text-literal B))))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref receiverCalls)
+          (literal 1))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref extensionCalls)
+          (literal 2))))
+      (var-def
+        (variable empty (type
+          (user-defined-type xml Text)) (expr
+          (xml-text-literal text))))
+      (assignment
+        (wildcard-binding-pattern)
+        (xml-step-expression
+          (simple-var-ref empty)
+          (xml-step-all-children)
+          (xml-step-index-extend
+            (invocation index ()))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref extensionCalls)
+          (literal 2))))
+      (var-def
+        (variable perElement (type
+          (value-type xml)) (expr
+          (xml-step-expression
+            (invocation receiver ())
+            (xml-step-all-children)
+            (xml-step-method-call-extend get
+              (literal 0))))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref perElement)
+          (xml-sequence-literal
+            (xml-element-literal name
+              (xml-text-literal A))
+            (xml-element-literal name
+              (xml-text-literal B))))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref receiverCalls)
+          (literal 2))))
+      (var-def
+        (variable sliced (type
+          (value-type xml)) (expr
+          (xml-step-expression
+            (invocation receiver ())
+            (xml-step-all-children)
+            (xml-step-method-call-extend slice
+              (literal 0)
+              (invocation methodEnd ()))))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref sliced)
+          (xml-sequence-literal
+            (xml-element-literal name
+              (xml-text-literal A))
+            (xml-element-literal name
+              (xml-text-literal B))))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref receiverCalls)
+          (literal 3))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref methodArgumentCalls)
+          (literal 2))))
+      (var-def
+        (variable noElements (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (value-type never))) (expr
+          (xml-sequence-literal))))
+      (assignment
+        (wildcard-binding-pattern)
+        (xml-step-expression
+          (simple-var-ref noElements)
+          (xml-step-all-children)
+          (xml-step-method-call-extend slice
+            (literal 0)
+            (invocation methodEnd ()))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref methodArgumentCalls)
+          (literal 2))))
+      (var-def
+        (variable stopped (type
+          (union-type
+            (value-type any)
+            (error-type))) (expr
+          (trap-expr
+            (xml-step-expression
+              (invocation receiver ())
+              (xml-step-all-children)
+              (xml-step-index-extend
+                (invocation abruptIndex ())))))))
+      (expression-stmt
+        (invocation assert (
+          (type-test-expr is
+            (simple-var-ref stopped)
+            (error-type))
+          (literal true))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref abruptCalls)
+          (literal 2))))
+      (var-def
+        (variable document (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal item
+              (xml-element-literal value
+                (xml-text-literal A)))
+            (xml-element-literal item
+              (xml-element-literal value
+                (xml-text-literal B)))))))
+      (expression-stmt
+        (invocation assert (
+          (xml-step-expression
+            (simple-var-ref document)
+            (xml-step-all-children)
+            (xml-step-index-extend
+              (literal 0)))
+          (xml-step-expression
+            (simple-var-ref document)
+            (xml-step-all-children)
+            (xml-step-method-call-extend get
+              (literal 0))))))
+      (var-def
+        (variable nestedIndex (type
+          (value-type xml)) (expr
+          (xml-step-expression
+            (simple-var-ref document)
+            (xml-step-all-children)
+            (xml-step-index-extend
+              (binary-expr -
+                (invocation length expr:
+                  (group-expr
+                    (xml-step-expression
+                      (group-expr
+                        (xml-element-literal root
+                          (xml-element-literal child)))
+                      (xml-step-all-children))) ())
+                (literal 1)))))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref nestedIndex)
+          (xml-sequence-literal
+            (xml-element-literal value
+              (xml-text-literal A))
+            (xml-element-literal value
+              (xml-text-literal B))))))
+      (var-def
+        (variable nestedArgument (type
+          (value-type xml)) (expr
+          (xml-step-expression
+            (simple-var-ref document)
+            (xml-step-all-children)
+            (xml-step-method-call-extend slice
+              (literal 0)
+              (invocation length expr:
+                (group-expr
+                  (xml-step-expression
+                    (group-expr
+                      (xml-element-literal root
+                        (xml-element-literal child)))
+                    (xml-step-all-children))) ()))))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref nestedArgument)
+          (xml-sequence-literal
+            (xml-element-literal value
+              (xml-text-literal A))
+            (xml-element-literal value
+              (xml-text-literal B))))))
+      (var-def
+        (variable nestedCallback (type
+          (value-type xml)) (expr
+          (xml-step-expression
+            (simple-var-ref document)
+            (xml-step-all-children)
+            (xml-step-method-call-extend map
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable item)) ()
+                  (expr-function-body
+                    (xml-step-expression
+                      (simple-var-ref item)
+                      (xml-step-all-children))))))))))
+      (expression-stmt
+        (invocation assert (
+          (simple-var-ref nestedCallback)
+          (xml-text-literal AB))))
+      (expression-stmt
+        (invocation io println (
+          (literal xml-step-evaluation ok)))))))

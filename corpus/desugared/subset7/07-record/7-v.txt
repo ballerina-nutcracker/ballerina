@@ -15,7 +15,7 @@
           (record-type
             (field value
               (value-type int)
-              (simple-var-ref c)))) (expr
+              (numeric-literal 10)))) (expr
           (mapping-constructor-expr))))
       (expression-stmt
         (invocation io println (

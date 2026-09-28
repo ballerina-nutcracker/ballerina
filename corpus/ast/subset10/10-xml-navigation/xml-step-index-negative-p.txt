@@ -1,0 +1,19 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-element-literal item
+              (xml-text-literal A))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (xml-step-expression
+          (simple-var-ref value)
+          (xml-step-all-children)
+          (xml-step-index-extend
+            (unary-expr -
+              (literal 1))))))))

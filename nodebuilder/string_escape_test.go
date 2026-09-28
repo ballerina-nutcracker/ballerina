@@ -45,3 +45,29 @@ func TestUnescapeBallerinaString(t *testing.T) {
 		})
 	}
 }
+
+func TestUnescapeIdentifier(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"normal", "normal"},
+		{"a\\-b", "a-b"},
+		{"a\\u{2D}b", "a-b"},
+		{"u005C", "u005C"},
+		{"\\u{005C}", "\\"},
+		{"\\u{5C}", "\\"},
+		{"a\\u{005C}b", "a\\b"},
+		{"\\\\u{005C}", "\\u{005C}"},
+		{"test\\u{1F600}", "test😀"},
+		{"", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got := unescapeIdentifier(tt.input)
+			if got != tt.expected {
+				t.Errorf("unescapeIdentifier(%q) = %q, want %q", tt.input, got, tt.expected)
+			}
+		})
+	}
+}

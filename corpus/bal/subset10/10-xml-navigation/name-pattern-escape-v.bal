@@ -17,9 +17,15 @@
 import ballerina/io;
 
 public function main() {
-    xmlns "urn:items" as p;
-    xmlns "urn:items" as q;
-    xml root = xml `<root xmlns:p="urn:items"><p:item/></root>`;
-    xml children = root/*; // @error future: XML child navigation
-    io:println(children.<q:item>); // @output <p:item xmlns:p="urn:items"/>
+    xml root = xml `<root><a-b>hyphen</a-b><u005C>weird</u005C></root>`;
+    xml children = root/*;
+
+    io:println(root/<a\-b>); // @output <a-b>hyphen</a-b>
+    io:println(root/<a\u{2D}b>); // @output <a-b>hyphen</a-b>
+    io:println(root/<u005C>); // @output <u005C>weird</u005C>
+
+    // `\u{005C}` is a backslash, so it must not match an element named `u005C`.
+    io:println(root/<\u{005C}>); // @output
+    io:println(children.<\u{005C}>); // @output
+    io:println(children.<u005C|\u{005C}>); // @output <u005C>weird</u005C>
 }

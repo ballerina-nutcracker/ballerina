@@ -1,0 +1,54 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable root (type
+        (value-type xml)) (expr
+        (xml-element-literal root
+          (xml-sequence-literal
+            (xml-element-literal a-b
+              (xml-text-literal hyphen))
+            (xml-element-literal u005C
+              (xml-text-literal weird)))))))
+    (var-def
+      (variable children (type
+        (value-type xml)) (expr
+        (xml-step-expression
+          (simple-var-ref root)
+          (xml-step-all-children)))))
+    (expression-stmt
+      (invocation io println (
+        (xml-step-expression
+          (simple-var-ref root)
+          (xml-step-element-children
+            (xml-name-pattern-identifier a-b))))))
+    (expression-stmt
+      (invocation io println (
+        (xml-step-expression
+          (simple-var-ref root)
+          (xml-step-element-children
+            (xml-name-pattern-identifier a-b))))))
+    (expression-stmt
+      (invocation io println (
+        (xml-step-expression
+          (simple-var-ref root)
+          (xml-step-element-children
+            (xml-name-pattern-identifier u005C))))))
+    (expression-stmt
+      (invocation io println (
+        (xml-step-expression
+          (simple-var-ref root)
+          (xml-step-element-children
+            (xml-name-pattern-identifier \))))))
+    (expression-stmt
+      (invocation io println (
+        (xml-filter-expression
+          (simple-var-ref children)
+          (xml-name-pattern-identifier \)))))
+    (expression-stmt
+      (invocation io println (
+        (xml-filter-expression
+          (simple-var-ref children)
+          (xml-name-pattern-identifier u005C)
+          (xml-name-pattern-identifier \)))))
+  )
+)

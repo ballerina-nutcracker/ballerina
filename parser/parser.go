@@ -4777,12 +4777,12 @@ func (b *ballerinaParser) getExpectedNodeKind(lookahead int) st.SyntaxKind {
 		case st.PIPE_TOKEN:
 			return b.getExpectedNodeKind(lookahead + 1)
 		case st.COLON_TOKEN:
-			nextToken = b.peekN(lookahead + 1)
+			nextToken = b.peekN(lookahead + 2)
 			switch nextToken.Kind() {
 			case st.ASTERISK_TOKEN, st.GT_TOKEN:
 				return st.XML_STEP_EXPRESSION
 			case st.IDENTIFIER_TOKEN:
-				nextToken = b.peekN(lookahead + 1)
+				nextToken = b.peekN(lookahead + 3)
 				if nextToken.Kind() == st.PIPE_TOKEN {
 					return b.getExpectedNodeKind(lookahead + 1)
 				}
@@ -10799,6 +10799,7 @@ func (b *ballerinaParser) parseXMLStepStart() st.STNode {
 	case st.DOUBLE_SLASH_DOUBLE_ASTERISK_LT_TOKEN:
 		startToken = b.parseDoubleSlashDoubleAsteriskLTToken()
 	case st.SLASH_LT_TOKEN:
+		startToken = b.consume()
 	default:
 		startToken = b.parseSlashLTToken()
 	}

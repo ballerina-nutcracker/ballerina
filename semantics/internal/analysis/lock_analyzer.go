@@ -777,6 +777,10 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	case *ast.BLangLambdaFunction:
 		visitor.walkLambda(node)
 		return nil
+	case *ast.BLangXMLStepExpression:
+		// Type resolution always lowers step expressions before analysis runs.
+		ast.Walk(visitor, node.LoweredExpression)
+		return nil
 	case *ast.BLangLock:
 		visitor.walkLock(node)
 		return nil

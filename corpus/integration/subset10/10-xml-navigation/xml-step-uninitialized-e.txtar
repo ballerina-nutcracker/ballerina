@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> xml-step-uninitialized-e.bal:18:17
+   |
+18 |     _ = value/*[index]; // @error
+   |                 ^^^^^
+
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> xml-step-uninitialized-e.bal:20:26
+   |
+20 |     _ = value/*.slice(0, end); // @error
+   |                          ^^^

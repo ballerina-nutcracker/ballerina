@@ -1,7 +1,6 @@
 (package
   (import-package ballerina io (as io))
   (import-package ballerina lang array (as lang.array))
-  (import-package ballerina lang array (as lang.array))
   (variable conditionCalls (type
     (value-type int)))
   (variable optionalBaseCalls (type

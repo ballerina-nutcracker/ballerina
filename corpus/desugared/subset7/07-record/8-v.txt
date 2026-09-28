@@ -6,7 +6,7 @@
         (value-type int))
       (field value
         (value-type int)
-        (simple-var-ref c))
+        (numeric-literal 10))
       (field name
         (value-type string)
         (literal default))))

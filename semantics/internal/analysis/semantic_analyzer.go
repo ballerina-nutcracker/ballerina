@@ -988,6 +988,15 @@ func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression
 		return analyzeXMLTemplateExpr(a, expr, expectedType)
 	case *ast.BLangXMLFilterExpression:
 		return analyzeXMLFilterExpr(a, expr, expectedType)
+	case *ast.BLangXMLStepExpression:
+		if expr.LoweredExpression == nil {
+			a.internalErr("XML step expression has no lowering", expr.GetPosition())
+			return false
+		}
+		if !analyzeActionOrExpression(a, expr.LoweredExpression, expr.GetDeterminedType()) {
+			return false
+		}
+		return validateResolvedType(a, expr, expectedType)
 	case *ast.BLangXMLAttribute:
 		// XML attributes are metadata on elements and should not be analyzed as standalone expressions
 		// Their values are already analyzed as part of XMLElement processing
@@ -1854,6 +1863,9 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		// Query actions are analyzed exactly once via analyzeQueryAction
 		// (called from analyzeActionOrExpression), including their do body.
 		return nil
+	case *ast.BLangXMLStepExpression:
+		analyzeActionOrExpression(a, n, semtypes.SemType{})
+		return nil
 	case *ast.BLangFunction:
 		if _, isOpaque := a.ctx().GetSymbol(n.Symbol()).(*model.OpaqueFunctionSymbol); isOpaque {
 			// The lang library declaration of an opaque function. It has no body and no
@@ -2294,6 +2306,11 @@ func (v *everyNodeVisitor[A]) Visit(node ast.BLangNode) ast.Visitor {
 	}
 	if !v.predicate(v.analyzer, node) {
 		v.result = false
+		return nil
+	}
+	if step, ok := node.(*ast.BLangXMLStepExpression); ok {
+		// Type resolution always lowers step expressions before analysis runs.
+		ast.Walk(v, step.LoweredExpression)
 		return nil
 	}
 	return v
