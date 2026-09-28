@@ -14,7 +14,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string FIRST = SECOND; // @error
-const string SECOND = FIRST; // @error
+public class Bad {
+    int & string x = 1; // @error
+}
 
-xmlns FIRST as cyclic;
+public function f(Bad b) {
+    _ = b;
+}
+
+public Bad g = new; // @error cascades from the failed class
+
+public function main() {
+}

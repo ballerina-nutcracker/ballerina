@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
+  --> toplevel1-e.bal:17:8
+   |
+17 | type A int & string; // @error
+   |        ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
+  --> toplevel1-e.bal:18:8
+   |
+18 | type B string & int; // @error
+   |        ^^^^^^^^^^^^

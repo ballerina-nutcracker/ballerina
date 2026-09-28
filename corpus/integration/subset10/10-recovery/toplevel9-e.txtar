@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
+  --> toplevel9-e.bal:17:17
+   |
+17 | public type Bad int & string; // @error
+   |                 ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
+  --> toplevel9-e.bal:17:17
+   |
+17 | public type Bad int & string; // @error
+   |                 ^^^^^^^^^^^^

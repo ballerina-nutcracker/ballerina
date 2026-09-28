@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for a
+  --> toplevel10-e.bal:17:12
+   |
+17 | public int a = b; // @error
+   |            ^
+
+error[SEMANTIC_ERROR]: invalid cycle detected for c
+  --> toplevel10-e.bal:19:12
+   |
+19 | public int c = d; // @error
+   |            ^

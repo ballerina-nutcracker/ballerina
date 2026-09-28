@@ -14,7 +14,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string FIRST = SECOND; // @error
-const string SECOND = FIRST; // @error
+public type A record { B b; string x; string x; }; // @error
 
-xmlns FIRST as cyclic;
+public type B record { A? a; };
+
+public B g = {a: {b: {a: ()}, x: "q"}}; // @error cascades from the failed record
+
+public function main() {
+}

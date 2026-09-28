@@ -14,7 +14,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string FIRST = SECOND; // @error
-const string SECOND = FIRST; // @error
+public type T [T?, record {| int x; string x; |}]; // @error
+public type L (L|record {| int x; string x; |})[]; // @error
+public type F function (F, record {| int x; string x; |}); // @error
+public type M map<M|record {| int x; string x; |}>; // @error
 
-xmlns FIRST as cyclic;
+public function f(T t, L l, F fn, M m) {
+    _ = [t, l, fn, m];
+}
+
+public T gt = [(), {x: 1}]; // @error cascades from the failed tuple
+
+public function main() {
+}
