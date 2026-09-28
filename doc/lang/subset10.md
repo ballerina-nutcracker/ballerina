@@ -68,6 +68,7 @@
   - Supports interpolation in XML content and attributes
   - XML sequence interpolation from a query result is not supported
 - [String template expression](https://ballerina.io/spec/lang/master/#string-template-expr)
+- [XML navigation expression](https://ballerina.io/spec/lang/master/#xml-navigate-expr)
 - [Annotation access expression](https://ballerina.io/spec/lang/master/#annot-access-expr)
 - [Anonymous function expression](https://ballerina.io/spec/lang/master/#anonymous-function-expr)
 - [Variable reference](https://ballerina.io/spec/lang/master/#variable-reference-expr)
@@ -79,6 +80,8 @@
 - [Nil lifted expression](https://ballerina.io/spec/lang/master/#nil-lifted-expr)
 - [Relational expression](https://ballerina.io/spec/lang/master/#relational-expr)
 - [Equality expression](https://ballerina.io/spec/lang/master/#equality-expr)
+- [Logical expression](https://ballerina.io/spec/lang/master/#logical-expr)
+- [Conditional expression](https://ballerina.io/spec/lang/master/#conditional-expr)
 - Nested expressions (`(expression)`)
 - Nested actions (`(action)`)
 - [Shift expression](https://ballerina.io/spec/lang/master/#section_6.25)
@@ -98,6 +101,7 @@
   - Relational ops `<`, `<=`, `>`, `>=`
   - Additive ops `+`, `-`
   - Shift ops `<<`, `>>`, `>>>`
+  - Logical ops `&&`, `||`
 - Unary operators
   - logical `!`
   - numeric ops `+`, `-`
@@ -112,6 +116,10 @@
   - `ballerina/lang.array`
     - `length`
     - `push`
+    - `map`
+    - `indexOf`
+    - `remove`
+    - `removeAll`
     - `toStream`
     - `toBase64`
     - `toBase16`
@@ -176,13 +184,24 @@
     - `Unsigned16`
     - `Unsigned32`
     - `toHexString`
+    - `fromString`
+    - `fromHexString`
   - `ballerina/lang.map`
     - `length`
     - `keys`
+    - `hasKey`
+    - `get`
     - `remove`
   - `ballerina/lang.string`
     - `Char`
     - `length`
+    - `indexOf`
+    - `includes`
+    - `substring`
+    - `equalsIgnoreCaseAscii`
+    - `toLowerAscii`
+    - `toUpperAscii`
+    - `trim`
     - `toBytes`
     - `fromBytes`
   - `ballerina/lang.error`
@@ -190,6 +209,8 @@
   - `ballerina/lang.value`
     - `cloneWithType`
     - `fromJsonWithType`
+    - `toString`
+    - `toBalString`
   - `ballerina/lang.object`
     - `Iterable`
     - `RawTemplate`
@@ -198,6 +219,42 @@
     - `Text`
     - `Comment`
     - `ProcessingInstruction`
+    - `XML_NAMESPACE_URI`
+    - `XMLNS_NAMESPACE_URI`
+    - `space`
+    - `lang`
+    - `base`
+    - `iterator`
+    - `length`
+    - `concat`
+    - `getName`
+    - `setName`
+    - `getAttributes`
+    - `getChildren`
+    - `setChildren`
+    - `getDescendants`
+    - `data`
+    - `getTarget`
+    - `getContent`
+    - `createElement`
+    - `createProcessingInstruction`
+    - `createComment`
+    - `createText`
+    - `strip`
+    - `elements`
+    - `children`
+    - `elementChildren`
+    - `text`
+    - `fromString`
+    - `get`
+    - `slice`
+    - `map`
+    - `forEach`
+    - `filter`
+  - `ballerina/lang.runtime`
+    - `sleep`
+    - `onGracefulStop`
+    - `StopHandler`
 
 ## Invocations
 
@@ -216,6 +273,10 @@
 - Method call syntax can be used for calling the following langlib functions:
   - `array:length`
   - `array:push`
+  - `array:map`
+  - `array:indexOf`
+  - `array:remove`
+  - `array:removeAll`
   - `array:toStream`
   - `array:toBase64`
   - `array:toBase16`
@@ -227,12 +288,18 @@
   - `int:toHexString`
   - `map:length`
   - `map:keys`
+  - `map:hasKey`
+  - `map:get`
   - `map:remove`
   - `error:message`
   - `string:length`
+  - `string:indexOf`, `string:includes`, `string:substring` and `string:equalsIgnoreCaseAscii`
+  - `string:toLowerAscii`, `string:toUpperAscii` and `string:trim`
   - `string:toBytes`
   - `value:cloneWithType`
   - `value:fromJsonWithType`
+  - `value:toString` and `value:toBalString`
+  - `xml:iterator`, `xml:length`, `xml:getName`, `xml:setName`, `xml:getAttributes`, `xml:getChildren`, `xml:setChildren`, `xml:getDescendants`, `xml:data`, `xml:getTarget`, `xml:getContent`, `xml:strip`, `xml:elements`, `xml:children`, `xml:elementChildren`, `xml:text`, `xml:get`, `xml:slice`, `xml:map`, `xml:forEach` and `xml:filter`
 
 ## Object/class definitions
 
