@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to potentially initialized final 'value'
+  --> final-module-init-reassign-e.bal:20:5
+   |
+20 |     value = 6; // @error value is already assigned
+   |     ^^^^^

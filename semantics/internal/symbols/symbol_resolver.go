@@ -1627,7 +1627,7 @@ func defineVariable(resolver *blockSymbolResolver, variable *ast.BLangVariable, 
 	if isShadowed(resolver, name) {
 		semanticError(resolver, "Variable already defined: "+name, variable.GetPosition())
 	}
-	symbol := model.NewVariableSymbol(name, false, isFinal, false, symbolLocationForNode(variable))
+	symbol := model.NewVariableSymbol(name, false, false, false, symbolLocationForNode(variable))
 	if isFinal {
 		symbol.SetFinal()
 	}

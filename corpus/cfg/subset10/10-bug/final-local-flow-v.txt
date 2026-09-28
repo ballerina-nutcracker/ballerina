@@ -1,0 +1,102 @@
+(assignOrReturn
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (value-type int))))
+    (simple-var-ref early)
+  )
+  (bb1 (bb0) ()
+    (assignment
+      (simple-var-ref x)
+      (literal 2))
+    (return
+      (simple-var-ref x))
+  )
+  (bb2 (bb0) ()
+    (assignment
+      (simple-var-ref x)
+      (literal 3))
+    (return
+      (simple-var-ref x))
+  )
+)
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable a (type
+        (value-type int))))
+  )
+  (bb1 (bb0) (bb2)
+    (literal true)
+  )
+  (bb2 (bb1) (bb3)
+    (assignment
+      (simple-var-ref a)
+      (literal 1))
+    (break)
+  )
+  (bb3 (bb2) (bb5 bb6)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+    (expression-stmt
+      (invocation io println (
+        (invocation assignOrReturn (
+          (literal false))))))
+    (var-def
+      (variable n (type
+        (value-type int)) (expr
+        (literal 2))))
+    (var-def
+      (variable b (type
+        (value-type string))))
+    (simple-var-ref n)
+  )
+  (bb4 (bb5 bb6) (bb7)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb5 (bb3) (bb4)
+    (assignment
+      (simple-var-ref b)
+      (literal one))
+  )
+  (bb6 (bb3) (bb4)
+    (assignment
+      (simple-var-ref b)
+      (literal other))
+  )
+  (bb7 (bb4 bb10 bb11) (bb8 bb9)
+    (binary-expr <
+      (simple-var-ref i)
+      (literal 3))
+  )
+  (bb8 (bb7) (bb10 bb11)
+    (compound-assignment +
+      (simple-var-ref i)
+      (literal 1))
+    (var-def
+      (variable c (type
+        (value-type int))))
+    (binary-expr ==
+      (simple-var-ref i)
+      (literal 2))
+  )
+  (bb9 (bb7) ())
+  (bb10 (bb8) (bb7)
+    (continue)
+  )
+  (bb11 (bb8) (bb7)
+    (assignment
+      (simple-var-ref c)
+      (simple-var-ref i))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+  )
+)

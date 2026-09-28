@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: deferred initialization of a final variable in a lambda
+  --> final-local-lambda-fv.bal:21:9
+   |
+21 |         x = 1; // @error future: lambda bodies get no final reassignment analysis
+   |         ^

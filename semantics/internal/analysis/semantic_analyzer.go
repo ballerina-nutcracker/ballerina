@@ -80,6 +80,10 @@ type (
 		// isModuleInit marks the module `init` function, whose body may assign
 		// module variables declared without an initializer.
 		isModuleInit bool
+		// isLambda marks a lambda body. Lambda bodies get no CFG analysis, so
+		// deferred initialization of their final locals is unimplemented
+		// (https://github.com/ballerina-nutcracker/ballerina/issues/952).
+		isLambda bool
 	}
 
 	loopAnalyzer struct {
@@ -1362,6 +1366,7 @@ func enclosingFunctionIsIsolated(a analyzer) bool {
 
 func analyzeLambdaFunction[A analyzer](a A, expr *ast.BLangLambdaFunction) bool {
 	fa := initializeFunctionAnalyzer(a, expr.Function)
+	fa.isLambda = true
 	fn := expr.Function
 	if fn.IsIsolated() && fn.Body != nil && !enclosingFunctionIsIsolated(a) {
 		validateIsolatedCapture(a, enclosingFunctionLocals(a), fn.Body.(ast.BLangNode))
@@ -1880,8 +1885,9 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 				final = true
 			}
 			fa.locals.define(v.Symbol(), varDeclMetadata{
-				Type:  v.GetDeterminedType(),
-				Final: final,
+				Type:          v.GetDeterminedType(),
+				Final:         final,
+				NoInitializer: v.Expr == nil && !isForeachVariableDef(a, n),
 			})
 		}
 		return a
@@ -2042,9 +2048,10 @@ type assignmentNode interface {
 
 // isDeferredInitAssignment reports whether assignment is a plain `=` in the
 // module `init` function body to a module-level variable declared without an
-// initializer. Such a declaration gets its one value from `init`, and
-// analyzeUninitializedGlobalVars checks that it always does. A lambda written
-// inside `init` is a separate closure and does not qualify.
+// initializer. Such a declaration gets its one value from `init`:
+// analyzeUninitializedGlobalVars checks that it always does and
+// analyzeFinalReassignments that it does so once. A lambda written inside
+// `init` is a separate closure and does not qualify.
 func isDeferredInitAssignment(a analyzer, assignment assignmentNode, symbol model.SymbolRef) bool {
 	if _, ok := assignment.(*ast.BLangAssignment); !ok {
 		return false
@@ -2057,6 +2064,35 @@ func isDeferredInitAssignment(a analyzer, assignment assignmentNode, symbol mode
 	return ok && md.NoInitializer
 }
 
+// isForeachVariableDef reports whether def declares the variable of the
+// foreach statement analyzed by a. The loop, not an assignment, initializes it.
+func isForeachVariableDef(a analyzer, def *ast.BLangVariableDef) bool {
+	la, ok := a.(*loopAnalyzer)
+	if !ok {
+		return false
+	}
+	foreach, ok := la.loop.(*ast.BLangForeach)
+	return ok && foreach.VariableDef == def
+}
+
+// deferredLocalInitFunction reports whether assignment is a plain `=` to a
+// final local declared without an initializer in the current function, and
+// returns that function's analyzer. Only the function's own scope is
+// consulted, so a closure assigning a captured final does not qualify.
+// analyzeFinalReassignments checks that the variable is not possibly assigned
+// already.
+func deferredLocalInitFunction(a analyzer, assignment assignmentNode, symbol model.SymbolRef) (*functionAnalyzer, bool) {
+	if _, ok := assignment.(*ast.BLangAssignment); !ok {
+		return nil, false
+	}
+	fa := enclosingFunctionAnalyzer(a)
+	if fa == nil || fa.locals == nil {
+		return nil, false
+	}
+	md, ok := fa.locals.vars[symbol]
+	return fa, ok && md.NoInitializer
+}
+
 func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 	variable := assignment.GetVariable()
 	if symbolNode, ok := variable.(ast.BNodeWithSymbol); ok {
@@ -2067,8 +2103,15 @@ func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 		}
 		ctx := a.ctx()
 		if meta, ok := ctx.ValueSymbolMetadata(symbol); ok && meta.Final && !isDeferredInitAssignment(a, assignment, symbol) {
-			a.semanticErr("cannot assign a value to final variable '"+ctx.SymbolName(symbol)+"'", variable.GetPosition())
-			return false
+			fa, deferred := deferredLocalInitFunction(a, assignment, symbol)
+			if !deferred {
+				a.semanticErr("cannot assign a value to final variable '"+ctx.SymbolName(symbol)+"'", variable.GetPosition())
+				return false
+			}
+			if fa.isLambda {
+				a.unimplementedErr("deferred initialization of a final variable in a lambda", variable.GetPosition())
+				return false
+			}
 		}
 		switch ctx.SymbolKind(symbol) {
 		case model.SymbolKindConstant:

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to potentially initialized final 'value'
+  --> final-module-init-loop-assign-e.bal:20:9
+   |
+20 |         value = i; // @error assigned again on the next iteration
+   |         ^^^^^
+
+error[SEMANTIC_ERROR]: variable 'value' is not initialized
+  --> final-module-init-loop-assign-e.bal:16:11
+   |
+16 | final int value; // @error not initialized when the loop body never runs
+   |           ^^^^^

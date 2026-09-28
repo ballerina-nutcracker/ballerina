@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to potentially initialized final 'x'
+  --> final-local-loop-assign-e.bal:21:9
+   |
+21 |         x = 1; // @error assigned again on the next iteration
+   |         ^
+
+error[SEMANTIC_ERROR]: cannot assign a value to potentially initialized final 'y'
+  --> final-local-loop-assign-e.bal:26:9
+   |
+26 |         y = i; // @error assigned again on the next iteration
+   |         ^

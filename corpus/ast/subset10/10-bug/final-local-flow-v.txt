@@ -1,0 +1,98 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type int))))
+      (while
+        (literal true)
+        (block-stmt
+          (assignment
+            (simple-var-ref a)
+            (literal 1))
+          (break)))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (expression-stmt
+        (invocation io println (
+          (invocation assignOrReturn (
+            (literal false))))))
+      (var-def
+        (variable n (type
+          (value-type int)) (expr
+          (literal 2))))
+      (var-def
+        (variable b (type
+          (value-type string))))
+      (match
+        (simple-var-ref n)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (block-stmt
+            (assignment
+              (simple-var-ref b)
+              (literal one))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (assignment
+              (simple-var-ref b)
+              (literal other)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (literal 3))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref i)
+            (literal 1))
+          (var-def
+            (variable c (type
+              (value-type int))))
+          (if
+            (binary-expr ==
+              (simple-var-ref i)
+              (literal 2))
+            (block-stmt
+              (continue)) ())
+          (block-stmt
+            (assignment
+              (simple-var-ref c)
+              (simple-var-ref i))
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref c)))))))))
+  (function assignOrReturn (
+    (variable early (type
+      (value-type boolean)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type int))))
+      (if
+        (simple-var-ref early)
+        (block-stmt
+          (assignment
+            (simple-var-ref x)
+            (literal 2))
+          (return
+            (simple-var-ref x))) ())
+      (block-stmt
+        (assignment
+          (simple-var-ref x)
+          (literal 3))
+        (return
+          (simple-var-ref x))))))
