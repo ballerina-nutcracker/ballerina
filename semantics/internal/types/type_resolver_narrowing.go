@@ -157,23 +157,9 @@ func unnarrowSymbolAt(t typeResolver, chain *binding, symbol model.SymbolRef, po
 // whose target is narrowed in the loop's entry chain. The walk stops at
 // loopEntry: anything below it belongs to the surrounding scope.
 func reportOutsideLoopAssignments(t typeResolver, chains []*binding, loopEntry *binding) {
-	reportOutsideRepeatedBlockAssignments(
-		t,
-		chains,
-		loopEntry,
-		"cannot assign to a variable narrowed outside the enclosing loop",
-	)
-}
-
-func reportOutsideRepeatedBlockAssignments(
-	t typeResolver,
-	chains []*binding,
-	entry *binding,
-	message string,
-) {
 	for _, chain := range chains {
 		seen := make(map[model.SymbolRef]bool)
-		for c := chain; c != nil && c != entry; c = c.prev {
+		for c := chain; c != nil && c != loopEntry; c = c.prev {
 			if c.hasFlag(bindingFlagFunctionBoundary) {
 				continue
 			}
@@ -184,8 +170,8 @@ func reportOutsideRepeatedBlockAssignments(
 			if !c.isAssignment() {
 				continue
 			}
-			if _, isNarrowed, _ := lookupBinding(entry, c.ref); isNarrowed {
-				t.semanticError(message, c.assignmentPos)
+			if _, isNarrowed, _ := lookupBinding(loopEntry, c.ref); isNarrowed {
+				t.semanticError("cannot assign to a variable narrowed outside the enclosing loop", c.assignmentPos)
 			}
 		}
 	}
@@ -317,6 +303,29 @@ func singletonResultEffect(chain *binding, ty semtypes.SemType) (expressionEffec
 
 func defaultExpressionEffect(chain *binding) expressionEffect {
 	return expressionEffect{ifTrue: chain, ifFalse: chain}
+}
+
+// queryActionEffect returns the effect a statement continues with after evaluating expr. A
+// query action's do body may unnarrow variables, and that applies unconditionally afterwards,
+// also when the action sits under check, checkpanic, trap or braces. Every other expression
+// leaves the chain in scope before it.
+func queryActionEffect(chain *binding, expr ast.BLangActionOrExpression, effect expressionEffect) expressionEffect {
+	for {
+		switch e := expr.(type) {
+		case *ast.BLangQueryAction:
+			return effect
+		case *ast.BLangCheckedExpr:
+			expr = e.Expr
+		case *ast.BLangCheckPanickedExpr:
+			expr = e.Expr
+		case *ast.BLangTrapExpr:
+			expr = e.Expr
+		case *ast.BLangGroupExpr:
+			expr = e.Expression
+		default:
+			return defaultExpressionEffect(chain)
+		}
+	}
 }
 
 func defaultStmtEffect(chain *binding) statementEffect {

@@ -1749,9 +1749,11 @@ func resolveAssignment(t typeResolver, chain *binding, s assignmentNode) (statem
 		}
 		lhsTy = lhsResult.ty
 	}
-	if _, ok := resolveActionOrExpression(t, chain, s.GetExpression(), lhsTy); !ok {
+	rhsResult, ok := resolveActionOrExpression(t, chain, s.GetExpression(), lhsTy)
+	if !ok {
 		return statementEffect{}, false
 	}
+	chain = queryActionEffect(chain, s.GetExpression(), rhsResult.effect).ifTrue
 	if expr, ok := s.GetVariable().(ast.NodeWithSymbol); ok {
 		return unnarrowSymbolAt(t, chain, expr.Symbol(), s.GetVariable().GetPosition()), true
 	}
@@ -1777,10 +1779,11 @@ func resolveStatementInner(t typeResolver, chain *binding, stmt ast.StatementNod
 	case *ast.BLangCompoundAssignment:
 		return resolveCompoundAssignment(t, chain, s)
 	case *ast.BLangExpressionStmt:
-		if _, ok := resolveActionOrExpression(t, chain, s.Expr, semtypes.SemType{}); !ok {
+		result, ok := resolveActionOrExpression(t, chain, s.Expr, semtypes.SemType{})
+		if !ok {
 			return defaultStmtEffect(chain), false
 		}
-		return defaultStmtEffect(chain), true
+		return defaultStmtEffect(queryActionEffect(chain, s.Expr, result.effect).ifTrue), true
 	// PT-TODO: extract if while out
 	case *ast.BLangIf:
 		exprResult, ok := resolveActionOrExpression(t, chain, s.Expr, semtypes.Boolean)
@@ -4511,7 +4514,7 @@ func resolveTrapExpr(t typeResolver, chain *binding, e *ast.BLangTrapExpr) (semt
 	exprTy := exprResult.ty
 	resultTy := semtypes.Union(exprTy, semtypes.Error)
 	e.SetDeterminedType(resultTy)
-	return resultTy, defaultExpressionEffect(chain), true
+	return resultTy, queryActionEffect(chain, e.Expr, exprResult.effect), true
 }
 
 func resolveCheckedExpr(t typeResolver, chain *binding, e *ast.BLangCheckedExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
@@ -4526,7 +4529,7 @@ func resolveCheckedExpr(t typeResolver, chain *binding, e *ast.BLangCheckedExpr,
 	exprTy := exprResult.ty
 	resultTy := semtypes.Diff(exprTy, semtypes.Error)
 	e.SetDeterminedType(resultTy)
-	return resultTy, defaultExpressionEffect(chain), true
+	return resultTy, queryActionEffect(chain, e.Expr, exprResult.effect), true
 }
 
 func resolveMappingConstructorExpr(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
@@ -4864,14 +4867,17 @@ func resolveQueryAction(
 	action.DoClause.SetDeterminedType(semtypes.Never)
 	bodyEffect := resolveBlockStatements(t, queryChain, action.DoClause.Body.Stmts)
 	action.DoClause.Body.SetDeterminedType(semtypes.Never)
+	// The do body runs zero or more times, so the chain after the action merges the entry chain
+	// with the body's completion chain, which unnarrows every variable the body assigns.
+	resultChain := chain
 	if !bodyEffect.nonCompletion {
-		reportOutsideQueryActionAssignments(t, []*binding{bodyEffect.binding}, queryChain)
+		resultChain = mergeChains(t, chain, bodyEffect.binding, semtypes.Union)
 	}
 
 	completionErrorTy := semtypes.Union(fromCompletionErrorTy, intermediateCompletionErrorTy)
 	actionTy := semtypes.Union(semtypes.Nil, completionErrorTy)
 	action.SetDeterminedType(actionTy)
-	return actionTy, defaultExpressionEffect(chain), true
+	return actionTy, expressionEffect{ifTrue: resultChain, ifFalse: resultChain}, true
 }
 
 // resolveQueryCollectionTypes returns the element type of a from or join collection and the
