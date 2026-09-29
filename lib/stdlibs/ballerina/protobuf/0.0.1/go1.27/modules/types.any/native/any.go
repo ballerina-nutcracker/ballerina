@@ -49,7 +49,8 @@ var nanosPerSec = decimal.FromInt64(1_000_000_000)
 // decimalZero is the zero decimal, used for sign tests.
 var decimalZero = decimal.FromInt64(0)
 
-// anyTypes holds the semtypes built once at module init, reused across calls.
+// anyTypes holds the semtypes built in a runtime's type env at module init. Each runtime
+// owns its own instance, since semtypes are only valid within the env that created them.
 type anyTypes struct {
 	byteArrTy         semtypes.SemType
 	utcTy             semtypes.SemType
@@ -60,8 +61,6 @@ type anyTypes struct {
 	anydataListTy     semtypes.SemType
 	anydataListAtomic *semtypes.ListAtomicType
 }
-
-var types anyTypes
 
 func initAnyModule(rt *runtime.Runtime) {
 	env := rt.GetTypeEnv()
@@ -81,7 +80,7 @@ func initAnyModule(rt *runtime.Runtime) {
 	listBld := semtypes.NewListDefinition()
 	anydataListTy := listBld.Define(env, nil, semtypes.ListRest(anydataTy))
 
-	types = anyTypes{
+	types := &anyTypes{
 		byteArrTy:         byteArrTy,
 		utcTy:             utcTy,
 		utcAtomic:         semtypes.ToListAtomicType(env, utcTy),
@@ -93,7 +92,7 @@ func initAnyModule(rt *runtime.Runtime) {
 	}
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "serializeToHex", serializeToHexExtern)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "unpack", unpackExtern)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "unpack", types.unpackExtern)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "registerProtoTypesAnyModule", registerModuleExtern)
 }
 
@@ -193,7 +192,7 @@ func valueToWireMessage(message values.BalValue, suffix string) (proto.Message, 
 // unpackExtern decodes an Any value's hex-encoded wire bytes and, if the decoded
 // well-known type matches the resolved target typedesc, returns the corresponding
 // Ballerina value. Otherwise it returns a TypeMismatchError.
-func unpackExtern(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+func (types *anyTypes) unpackExtern(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	anyMap, _ := args[0].(*values.Map)
 	targetTypeDesc, _ := args[1].(*values.TypeDesc)
 
@@ -208,7 +207,7 @@ func unpackExtern(ctx *extern.Context, args []values.BalValue) (values.BalValue,
 	}
 
 	suffix := strings.TrimPrefix(typeURL, typeURLPrefix)
-	decoded, naturalTy, err := wireMessageToValue(ctx, suffix, raw)
+	decoded, naturalTy, err := types.wireMessageToValue(ctx, suffix, raw)
 	if err != nil {
 		return newAnyError(ctx, "failed to unpack google.protobuf."+suffix+" value: "+err.Error())
 	}
@@ -222,7 +221,7 @@ func unpackExtern(ctx *extern.Context, args []values.BalValue) (values.BalValue,
 // wireMessageToValue decodes raw wire bytes for the given google.protobuf.* suffix into
 // a Ballerina value and its natural (unpacked) semtype. A zero naturalTy (with a nil
 // error) means the suffix is not a well-known type this module supports.
-func wireMessageToValue(ctx *extern.Context, suffix string, raw []byte) (values.BalValue, semtypes.SemType, error) {
+func (types *anyTypes) wireMessageToValue(ctx *extern.Context, suffix string, raw []byte) (values.BalValue, semtypes.SemType, error) {
 	env := ctx.TypeEnv()
 	switch suffix {
 	case "Empty":
@@ -262,7 +261,7 @@ func wireMessageToValue(ctx *extern.Context, suffix string, raw []byte) (values.
 		if err := proto.Unmarshal(raw, msg); err != nil {
 			return nil, semtypes.SemType{}, err
 		}
-		return timestampToUtcList(msg), types.utcTy, nil
+		return types.timestampToUtcList(msg), types.utcTy, nil
 	case "Duration":
 		msg := &durationpb.Duration{}
 		if err := proto.Unmarshal(raw, msg); err != nil {
@@ -274,7 +273,7 @@ func wireMessageToValue(ctx *extern.Context, suffix string, raw []byte) (values.
 		if err := proto.Unmarshal(raw, msg); err != nil {
 			return nil, semtypes.SemType{}, err
 		}
-		return goToBalAnydata(msg.AsMap()), types.anydataMapTy, nil
+		return types.goToBalAnydata(msg.AsMap()), types.anydataMapTy, nil
 	default:
 		return nil, semtypes.SemType{}, nil
 	}
@@ -346,7 +345,7 @@ func utcListToTimestamp(list *values.List) (*timestamppb.Timestamp, error) {
 	return &timestamppb.Timestamp{Seconds: epochSec, Nanos: nanos}, nil
 }
 
-func timestampToUtcList(ts *timestamppb.Timestamp) *values.List {
+func (types *anyTypes) timestampToUtcList(ts *timestamppb.Timestamp) *values.List {
 	frac := secNanoToDecimal(0, ts.GetNanos())
 	items := []values.BalValue{ts.GetSeconds(), frac}
 	return values.NewList(types.utcTy, types.utcAtomic, true, nil, 2, items)
@@ -399,7 +398,7 @@ func balAnydataToGo(v values.BalValue) (any, error) {
 // goToBalAnydata converts a decoded structpb value (as produced by Struct.AsMap()) into
 // a Ballerina anydata value. Map keys are sorted for deterministic output, since Go's
 // map iteration order is randomized and the wire format does not preserve field order.
-func goToBalAnydata(v any) values.BalValue {
+func (types *anyTypes) goToBalAnydata(v any) values.BalValue {
 	switch val := v.(type) {
 	case nil:
 		return nil
@@ -417,13 +416,13 @@ func goToBalAnydata(v any) values.BalValue {
 		sort.Strings(keys)
 		entries := make([]values.MapEntry, 0, len(keys))
 		for _, k := range keys {
-			entries = append(entries, values.MapEntry{Key: k, Value: goToBalAnydata(val[k])})
+			entries = append(entries, values.MapEntry{Key: k, Value: types.goToBalAnydata(val[k])})
 		}
 		return values.NewMap(types.anydataMapTy, types.anydataMapAtomic, false, entries)
 	case []any:
 		items := make([]values.BalValue, len(val))
 		for i, iv := range val {
-			items[i] = goToBalAnydata(iv)
+			items[i] = types.goToBalAnydata(iv)
 		}
 		return values.NewList(types.anydataListTy, types.anydataListAtomic, false, nil, len(items), items)
 	default:
