@@ -27,6 +27,24 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
+// ClassFieldDescriptor returns the descriptor of a field declared in a class
+// or service body, whose type is ty.
+func ClassFieldDescriptor(field *ast.BLangVariable, ty semtypes.SemType) model.FieldDescriptor {
+	var flags model.FieldDescriptorFlag
+	if field.IsReadonly() {
+		flags |= model.FieldDescriptorReadonly
+	}
+	if field.IsFinal() {
+		flags |= model.FieldDescriptorFinal
+	}
+	if field.Expr != nil {
+		flags |= model.FieldDescriptorHasDefault
+	}
+	fd := model.NewFieldDescriptor(field.Name.GetValue(), flags, field.IsPublic())
+	fd.SetMemberType(ty)
+	return fd
+}
+
 func IsSelfFieldAccess(n *ast.BLangFieldBaseAccess) bool {
 	varRef, ok := n.Expr.(*ast.BLangVarRef)
 	return ok && varRef.VariableName.GetValue() == "self"

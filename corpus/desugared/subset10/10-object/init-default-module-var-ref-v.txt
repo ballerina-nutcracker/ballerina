@@ -120,12 +120,12 @@
         (binary-expr +
           (simple-var-ref seed)
           (literal 1)))))
-  (function $default$1 () ()
-    (block-function-body
-      (return
-        (simple-var-ref step))))
   (function $default$2 () ()
     (block-function-body
       (return
         (invocation lang.array length (
-          (simple-var-ref labels)))))))
+          (simple-var-ref labels))))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (simple-var-ref step)))))

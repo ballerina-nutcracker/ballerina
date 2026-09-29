@@ -1934,7 +1934,7 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		return nil
 	case *ast.BLangClassDefinition:
 		analyzeClassLikeDefn(a, n.Fields, n.InitFunction, n.Methods, n.ResourceMethods, n.Inclusions,
-			n.InclusionPositions, n.IsIsolated(), enclosingFromClass(n))
+			n.InclusionPositions, n.IsIsolated(), enclosingFromClass(a.ctx(), n))
 		return nil
 	case *ast.BLangService:
 		for _, expr := range n.AttachedExprs {
@@ -1942,7 +1942,7 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		}
 		validateServiceListenerTypes(a, n)
 		analyzeClassLikeDefn(a, n.Fields, n.InitFunction, n.Methods, n.ResourceMethods, n.Inclusions,
-			n.InclusionPositions, n.IsIsolated(), enclosingFromService(n))
+			n.InclusionPositions, n.IsIsolated(), enclosingFromService(a.ctx(), n))
 		return nil
 	default:
 		return a
@@ -2093,8 +2093,39 @@ func deferredLocalInitFunction(a analyzer, assignment assignmentNode, symbol mod
 	return fa, ok && md.NoInitializer
 }
 
+// finalSelfFieldReassignment returns the final field of the enclosing class
+// that assignment writes as `self.f` outside its one-time initialization: a
+// plain `=` directly in the class init to a field without an initializer. It
+// returns nil if there is no such field.
+func finalSelfFieldReassignment(a analyzer, assignment assignmentNode) *model.FieldDescriptor {
+	access, ok := assignment.GetVariable().(*ast.BLangFieldBaseAccess)
+	if !ok || !common.IsSelfFieldAccess(access) {
+		return nil
+	}
+	cls, ok := enclosingClassOf(a)
+	if !ok {
+		return nil
+	}
+	_, plain := assignment.(*ast.BLangAssignment)
+	name := access.Field.GetValue()
+	for _, field := range cls.fieldDescriptors {
+		if field.MemberName() != name || !field.IsFinal() {
+			continue
+		}
+		if plain && !field.HasDefault() && inInitFunction(a) {
+			return nil
+		}
+		return field
+	}
+	return nil
+}
+
 func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 	variable := assignment.GetVariable()
+	if field := finalSelfFieldReassignment(a, assignment); field != nil {
+		a.semanticErr("cannot assign a value to final field '"+field.MemberName()+"'", variable.GetPosition())
+		return false
+	}
 	if symbolNode, ok := variable.(ast.BNodeWithSymbol); ok {
 		symbol := symbolNode.Symbol()
 		if !ast.SymbolIsSet(symbolNode) {
