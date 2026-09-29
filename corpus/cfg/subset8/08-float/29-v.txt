@@ -37,6 +37,86 @@
           (group-expr
             (unary-expr -
               (literal 0))) <default>)))))
+    (var-def
+      (variable x (type
+        (value-type float)) (expr
+        (unary-expr -
+          (literal 0.5)))))
+    (var-def
+      (variable y (type
+        (value-type float)) (expr
+        (unary-expr -
+          (literal 0.4)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (simple-var-ref x) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (simple-var-ref y) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (literal 1)
+          (invocation lang.float round (
+            (simple-var-ref x) <default>))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (literal 1)
+          (invocation lang.float round (
+            (simple-var-ref y) <default>))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (simple-var-ref x)
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (simple-var-ref y)
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (literal 1)
+          (invocation lang.float round (
+            (simple-var-ref x)
+            (literal 0)))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (literal 1)
+          (invocation lang.float round (
+            (simple-var-ref y)
+            (literal 0)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 0.5)) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 0.4))
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (literal 1)
+          (invocation lang.float round (
+            (group-expr
+              (literal 0.5)) <default>))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr /
+          (literal 1)
+          (invocation lang.float round (
+            (group-expr
+              (literal 0.4))
+            (literal 0)))))))
     (expression-stmt
       (invocation io println (
         (invocation lang.float round (

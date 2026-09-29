@@ -25,6 +25,20 @@ public function main() {
     io:println((2.6).round());    // @output 3.0
     io:println((0.0).round());    // @output 0.0
     io:println((-0.0).round());   // @output -0.0
+    float x = -0.5;
+    float y = -0.4;
+    io:println(x.round());       // @output -0.0
+    io:println(y.round());       // @output -0.0
+    io:println(1.0 / x.round()); // @output -Infinity
+    io:println(1.0 / y.round()); // @output -Infinity
+    io:println(x.round(0));      // @output -0.0
+    io:println(y.round(0));      // @output -0.0
+    io:println(1.0 / x.round(0)); // @output -Infinity
+    io:println(1.0 / y.round(0)); // @output -Infinity
+    io:println((0.5).round());   // @output 0.0
+    io:println((0.4).round(0));  // @output 0.0
+    io:println(1.0 / (0.5).round()); // @output Infinity
+    io:println(1.0 / (0.4).round(0)); // @output Infinity
     io:println((1.0 / 0.0).round());   // @output Infinity
     io:println((-1.0 / 0.0).round());  // @output -Infinity
     io:println((0.0 / 0.0).round());   // @output NaN

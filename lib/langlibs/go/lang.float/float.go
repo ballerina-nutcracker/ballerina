@@ -123,6 +123,9 @@ func floatRound(_ *extern.Context, args []values.BalValue) (values.BalValue, err
 	if x == 0 || math.IsNaN(x) || math.IsInf(x, 0) {
 		return x, nil
 	}
+	if fractionDigits == 0 {
+		return math.RoundToEven(x), nil
+	}
 	scale := math.Pow10(int(fractionDigits))
 	if math.IsInf(scale, 0) {
 		return x, nil

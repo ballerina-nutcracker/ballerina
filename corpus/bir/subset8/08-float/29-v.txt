@@ -115,67 +115,251 @@ main() -> nil{
     %72 = println(%71) -> bb21;
   }
   bb21 {
-    %74 = ConstantLoad 1
-    %75 = %74;
-    %76 = ConstantLoad 0
-    %77 = %76;
-    %73 = / %75 %77;
-    $desugar$14 = %73;
-    %79 = $desugar$14;
-    %80 = $default$0(%79) -> bb22;
+    %73 = ConstantLoad 0.5
+    %74 = unknown %73;
+    x = %74;
+    %76 = ConstantLoad 0.4
+    %77 = unknown %76;
+    y = %77;
+    $desugar$14 = x;
+    %80 = $desugar$14;
+    %81 = $default$0(%80) -> bb22;
   }
   bb22 {
-    $desugar$15 = %80;
-    %82 = $desugar$14;
-    %83 = $desugar$15;
-    %84 = round(%82,%83) -> bb23;
+    $desugar$15 = %81;
+    %83 = $desugar$14;
+    %84 = $desugar$15;
+    %85 = round(%83,%84) -> bb23;
   }
   bb23 {
-    %85 = %84;
-    %86 = println(%85) -> bb24;
+    %86 = %85;
+    %87 = println(%86) -> bb24;
   }
   bb24 {
-    %88 = ConstantLoad 1
-    %89 = unknown %88;
-    %90 = %89;
-    %91 = ConstantLoad 0
-    %92 = %91;
-    %87 = / %90 %92;
-    $desugar$16 = %87;
-    %94 = $desugar$16;
-    %95 = $default$0(%94) -> bb25;
+    $desugar$16 = y;
+    %89 = $desugar$16;
+    %90 = $default$0(%89) -> bb25;
   }
   bb25 {
-    $desugar$17 = %95;
-    %97 = $desugar$16;
-    %98 = $desugar$17;
-    %99 = round(%97,%98) -> bb26;
+    $desugar$17 = %90;
+    %92 = $desugar$16;
+    %93 = $desugar$17;
+    %94 = round(%92,%93) -> bb26;
   }
   bb26 {
-    %100 = %99;
-    %101 = println(%100) -> bb27;
+    %95 = %94;
+    %96 = println(%95) -> bb27;
   }
   bb27 {
-    %103 = ConstantLoad 0
-    %104 = %103;
-    %105 = ConstantLoad 0
-    %106 = %105;
-    %102 = / %104 %106;
-    $desugar$18 = %102;
-    %108 = $desugar$18;
-    %109 = $default$0(%108) -> bb28;
+    %98 = ConstantLoad 1
+    %99 = %98;
+    $desugar$18 = x;
+    %101 = $desugar$18;
+    %102 = $default$0(%101) -> bb28;
   }
   bb28 {
-    $desugar$19 = %109;
-    %111 = $desugar$18;
-    %112 = $desugar$19;
-    %113 = round(%111,%112) -> bb29;
+    $desugar$19 = %102;
+    %104 = $desugar$18;
+    %105 = $desugar$19;
+    %106 = round(%104,%105) -> bb29;
   }
   bb29 {
-    %114 = %113;
-    %115 = println(%114) -> bb30;
+    %107 = %106;
+    %97 = / %99 %107;
+    %108 = %97;
+    %109 = println(%108) -> bb30;
   }
   bb30 {
+    %111 = ConstantLoad 1
+    %112 = %111;
+    $desugar$20 = y;
+    %114 = $desugar$20;
+    %115 = $default$0(%114) -> bb31;
+  }
+  bb31 {
+    $desugar$21 = %115;
+    %117 = $desugar$20;
+    %118 = $desugar$21;
+    %119 = round(%117,%118) -> bb32;
+  }
+  bb32 {
+    %120 = %119;
+    %110 = / %112 %120;
+    %121 = %110;
+    %122 = println(%121) -> bb33;
+  }
+  bb33 {
+    %123 = x;
+    %124 = ConstantLoad 0
+    %125 = %124;
+    %126 = round(%123,%125) -> bb34;
+  }
+  bb34 {
+    %127 = %126;
+    %128 = println(%127) -> bb35;
+  }
+  bb35 {
+    %129 = y;
+    %130 = ConstantLoad 0
+    %131 = %130;
+    %132 = round(%129,%131) -> bb36;
+  }
+  bb36 {
+    %133 = %132;
+    %134 = println(%133) -> bb37;
+  }
+  bb37 {
+    %136 = ConstantLoad 1
+    %137 = %136;
+    %138 = x;
+    %139 = ConstantLoad 0
+    %140 = %139;
+    %141 = round(%138,%140) -> bb38;
+  }
+  bb38 {
+    %142 = %141;
+    %135 = / %137 %142;
+    %143 = %135;
+    %144 = println(%143) -> bb39;
+  }
+  bb39 {
+    %146 = ConstantLoad 1
+    %147 = %146;
+    %148 = y;
+    %149 = ConstantLoad 0
+    %150 = %149;
+    %151 = round(%148,%150) -> bb40;
+  }
+  bb40 {
+    %152 = %151;
+    %145 = / %147 %152;
+    %153 = %145;
+    %154 = println(%153) -> bb41;
+  }
+  bb41 {
+    %155 = ConstantLoad 0.5
+    $desugar$22 = %155;
+    %157 = $desugar$22;
+    %158 = $default$0(%157) -> bb42;
+  }
+  bb42 {
+    $desugar$23 = %158;
+    %160 = $desugar$22;
+    %161 = $desugar$23;
+    %162 = round(%160,%161) -> bb43;
+  }
+  bb43 {
+    %163 = %162;
+    %164 = println(%163) -> bb44;
+  }
+  bb44 {
+    %165 = ConstantLoad 0.4
+    %166 = %165;
+    %167 = ConstantLoad 0
+    %168 = %167;
+    %169 = round(%166,%168) -> bb45;
+  }
+  bb45 {
+    %170 = %169;
+    %171 = println(%170) -> bb46;
+  }
+  bb46 {
+    %173 = ConstantLoad 1
+    %174 = %173;
+    %175 = ConstantLoad 0.5
+    $desugar$24 = %175;
+    %177 = $desugar$24;
+    %178 = $default$0(%177) -> bb47;
+  }
+  bb47 {
+    $desugar$25 = %178;
+    %180 = $desugar$24;
+    %181 = $desugar$25;
+    %182 = round(%180,%181) -> bb48;
+  }
+  bb48 {
+    %183 = %182;
+    %172 = / %174 %183;
+    %184 = %172;
+    %185 = println(%184) -> bb49;
+  }
+  bb49 {
+    %187 = ConstantLoad 1
+    %188 = %187;
+    %189 = ConstantLoad 0.4
+    %190 = %189;
+    %191 = ConstantLoad 0
+    %192 = %191;
+    %193 = round(%190,%192) -> bb50;
+  }
+  bb50 {
+    %194 = %193;
+    %186 = / %188 %194;
+    %195 = %186;
+    %196 = println(%195) -> bb51;
+  }
+  bb51 {
+    %198 = ConstantLoad 1
+    %199 = %198;
+    %200 = ConstantLoad 0
+    %201 = %200;
+    %197 = / %199 %201;
+    $desugar$26 = %197;
+    %203 = $desugar$26;
+    %204 = $default$0(%203) -> bb52;
+  }
+  bb52 {
+    $desugar$27 = %204;
+    %206 = $desugar$26;
+    %207 = $desugar$27;
+    %208 = round(%206,%207) -> bb53;
+  }
+  bb53 {
+    %209 = %208;
+    %210 = println(%209) -> bb54;
+  }
+  bb54 {
+    %212 = ConstantLoad 1
+    %213 = unknown %212;
+    %214 = %213;
+    %215 = ConstantLoad 0
+    %216 = %215;
+    %211 = / %214 %216;
+    $desugar$28 = %211;
+    %218 = $desugar$28;
+    %219 = $default$0(%218) -> bb55;
+  }
+  bb55 {
+    $desugar$29 = %219;
+    %221 = $desugar$28;
+    %222 = $desugar$29;
+    %223 = round(%221,%222) -> bb56;
+  }
+  bb56 {
+    %224 = %223;
+    %225 = println(%224) -> bb57;
+  }
+  bb57 {
+    %227 = ConstantLoad 0
+    %228 = %227;
+    %229 = ConstantLoad 0
+    %230 = %229;
+    %226 = / %228 %230;
+    $desugar$30 = %226;
+    %232 = $desugar$30;
+    %233 = $default$0(%232) -> bb58;
+  }
+  bb58 {
+    $desugar$31 = %233;
+    %235 = $desugar$30;
+    %236 = $desugar$31;
+    %237 = round(%235,%236) -> bb59;
+  }
+  bb59 {
+    %238 = %237;
+    %239 = println(%238) -> bb60;
+  }
+  bb60 {
     return;
   }
 }
