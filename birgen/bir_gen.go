@@ -652,7 +652,7 @@ func compoundAssignment(ctx context, curBB *bir.BIRBasicBlock, stmt *ast.BLangCo
 		return compoundAssignmentToMember(ctx, curBB, stmt, indexRef, pos)
 	}
 	ref := stmt.VarRef
-	valueEffect, ok := binaryExpressionInner(ctx, curBB, stmt.OpKind, ref, stmt.Expr, stmt.Expr.GetDeterminedType(), stmt.GetPosition())
+	valueEffect, ok := binaryExpressionInner(ctx, curBB, stmt.OpKind, ref, stmt.Expr, ref.GetDeterminedType(), stmt.GetPosition())
 	if !ok {
 		return statementEffect{}, false
 	}
