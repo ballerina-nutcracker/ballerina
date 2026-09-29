@@ -191,6 +191,20 @@ func (rt *Runtime) Listen() {
 	rt.transition(StateListening)
 }
 
+// RequestGracefulStop transitions a Listening runtime into graceful shutdown, running every
+// registered stop handler synchronously before returning. No-op if not currently Listening.
+// For callers (e.g. bal test) that don't want to run forever once listening, unlike bal run.
+func (rt *Runtime) RequestGracefulStop() {
+	rt.mu.Lock()
+	if rt.state != StateListening {
+		rt.mu.Unlock()
+		return
+	}
+	rt.state = StateGracefulStopping
+	rt.mu.Unlock()
+	gracefulStopAction(rt)
+}
+
 // RegisterModuleInitializer registers a module initializer that will be invoked
 // for every newly created runtime.
 func RegisterModuleInitializer(init ModuleInitializer) {

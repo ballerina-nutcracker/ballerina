@@ -148,91 +148,99 @@ func moduleBalFiles(entry stdlibEntry) ([]string, error) {
 	return files, nil
 }
 
-// loadBuiltinPublicSymbols compiles the embedded standard-library modules into
-// sibling CompilerContexts that share env (and thus the same type-env and
-// symbol table). The returned map can be merged directly into the publicSymbols
-// passed to semantics.ResolveImports.
+// compileStdlibEntry compiles one stdlib module against implicitImports/publicSymbols;
+// ok=false means it failed to compile for any reason.
+func compileStdlibEntry(env *context.CompilerEnvironment, entry stdlibEntry,
+	implicitImports map[string]model.ExportedSymbolSpace, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace,
+) (semantics.PackageIdentifier, model.ExportedSymbolSpace, bool) {
+	var zeroID semantics.PackageIdentifier
+	var zeroSpace model.ExportedSymbolSpace
+
+	balFiles, err := moduleBalFiles(entry)
+	if err != nil || len(balFiles) == 0 {
+		return zeroID, zeroSpace, false
+	}
+
+	cx := context.NewCompilerContext(env)
+	compilationUnits := make([]*ast.BLangCompilationUnit, 0, len(balFiles))
+	for _, balPath := range balFiles {
+		contentBytes, err := fs.ReadFile(stdlibs.FS, balPath)
+		if err != nil {
+			return zeroID, zeroSpace, false
+		}
+		content := string(contentBytes)
+
+		virtualPath := "$stdlib/" + balPath
+		cx.DiagnosticEnv().RegisterFile(virtualPath, text.NewStringTextDocument(content))
+
+		st, err := parser.GetSyntaxTree(cx, virtualPath, content)
+		if err != nil || cx.HasDiagnostics() {
+			return zeroID, zeroSpace, false
+		}
+
+		cu := nodebuilder.GetCompilationUnit(cx, st)
+		if cu == nil || cx.HasDiagnostics() {
+			return zeroID, zeroSpace, false
+		}
+		compilationUnits = append(compilationUnits, cu)
+	}
+
+	pkgID := cx.NewPackageID(
+		model.Name(entry.org),
+		model.CreateNameComps(model.Name(entry.module)),
+		model.DEFAULT_VERSION,
+	)
+	for _, cu := range compilationUnits {
+		cu.SetPackageID(pkgID)
+	}
+
+	pkgScope, exported, importedSymbols := semantics.ResolveSymbols(
+		cx,
+		*pkgID,
+		compilationUnits,
+		implicitImports,
+		publicSymbols,
+		nil,
+		entry.org,
+		"",
+	)
+	if cx.HasErrors() {
+		return zeroID, zeroSpace, false
+	}
+	pkg := nodebuilder.ToPackageFromCompilationUnits(cx, compilationUnits)
+	if cx.HasErrors() {
+		return zeroID, zeroSpace, false
+	}
+	pkg.PackageID = pkgID
+	pkg.Scope = pkgScope
+	pkg.Imports = nil
+
+	semantics.ResolvePublicNodeTypes(cx, pkg, importedSymbols)
+	if cx.HasErrors() {
+		return zeroID, zeroSpace, false
+	}
+
+	return semantics.PackageIdentifier{OrgName: entry.org, ModuleName: entry.module}, exported, true
+}
+
+// loadBuiltinPublicSymbols compiles builtinStdlibs in order, each against symbols accumulated so far.
+// Runs before langlib symbols exist, so entries here can't use langlib functions — see langlibAwareStdlibs.
 func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.PackageIdentifier]model.ExportedSymbolSpace {
 	result := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
-
 	for _, entry := range builtinStdlibs {
-		balFiles, err := moduleBalFiles(entry)
-		if err != nil || len(balFiles) == 0 {
-			continue
-		}
-
-		cx := context.NewCompilerContext(env)
-		compilationUnits := make([]*ast.BLangCompilationUnit, 0, len(balFiles))
-		ok := true
-		for _, balPath := range balFiles {
-			contentBytes, err := fs.ReadFile(stdlibs.FS, balPath)
-			if err != nil {
-				ok = false
-				break
-			}
-			content := string(contentBytes)
-
-			virtualPath := "$stdlib/" + balPath
-			cx.DiagnosticEnv().RegisterFile(virtualPath, text.NewStringTextDocument(content))
-
-			st, err := parser.GetSyntaxTree(cx, virtualPath, content)
-			if err != nil || cx.HasDiagnostics() {
-				ok = false
-				break
-			}
-
-			cu := nodebuilder.GetCompilationUnit(cx, st)
-			if cu == nil || cx.HasDiagnostics() {
-				ok = false
-				break
-			}
-			compilationUnits = append(compilationUnits, cu)
-		}
+		id, exported, ok := compileStdlibEntry(env, entry, make(map[string]model.ExportedSymbolSpace), result)
 		if !ok {
 			continue
 		}
-
-		pkgID := cx.NewPackageID(
-			model.Name(entry.org),
-			model.CreateNameComps(model.Name(entry.module)),
-			model.DEFAULT_VERSION,
-		)
-		for _, cu := range compilationUnits {
-			cu.SetPackageID(pkgID)
-		}
-
-		// Pass accumulated stdlib symbols so modules that import other stdlib
-		// modules (e.g. os→io, crypto→time, protobuf.types.any→protobuf) resolve correctly.
-		pkgScope, exported, importedSymbols := semantics.ResolveSymbols(
-			cx,
-			*pkgID,
-			compilationUnits,
-			make(map[string]model.ExportedSymbolSpace),
-			result,
-			nil,
-			entry.org,
-			"",
-		)
-		if cx.HasErrors() {
-			continue
-		}
-		pkg := nodebuilder.ToPackageFromCompilationUnits(cx, compilationUnits)
-		if cx.HasErrors() {
-			continue
-		}
-		pkg.PackageID = pkgID
-		pkg.Scope = pkgScope
-		pkg.Imports = nil
-
-		semantics.ResolvePublicNodeTypes(cx, pkg, importedSymbols)
-		if cx.HasErrors() {
-			continue
-		}
-
-		result[semantics.PackageIdentifier{OrgName: entry.org, ModuleName: entry.module}] = exported
+		result[id] = exported
 	}
-
 	return result
+}
+
+// langlibAwareStdlibs lists modules needing langlib functions (e.g. string:fromBytes), compiled
+// in a second pass so adding one never shifts the counter builtinStdlibs was compiled under.
+var langlibAwareStdlibs = []stdlibEntry{
+	flatEntry("test", "0.0.1", "go1.27"),
 }
 
 func LoadLanglibs(env *context.CompilerEnvironment, cx *context.CompilerContext) (*langlib.Symbols, error) {
@@ -240,6 +248,13 @@ func LoadLanglibs(env *context.CompilerEnvironment, cx *context.CompilerContext)
 	symbols, err := langlib.Build(cx, stdlibSymbols)
 	if err != nil {
 		return nil, fmt.Errorf("loading lang libraries failed: %w", err)
+	}
+	for _, entry := range langlibAwareStdlibs {
+		id, exported, ok := compileStdlibEntry(env, entry, symbols.ImplicitImports, symbols.PublicSymbols)
+		if !ok {
+			return nil, fmt.Errorf("compiling langlib-aware stdlib %s/%s failed", entry.org, entry.module)
+		}
+		symbols.PublicSymbols[id] = exported
 	}
 	return symbols, nil
 }

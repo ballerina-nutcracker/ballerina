@@ -19,6 +19,7 @@ package projects
 import (
 	"sync"
 
+	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -86,6 +87,17 @@ func (c *PackageCompilation) compileModulesInternal() {
 		for _, moduleCtx := range c.packageResolution.topologicallySortedModuleList {
 			for _, docCtx := range moduleCtx.srcDocContextMap {
 				de.RegisterFile(docCtx.registrationKey(), docCtx.getTextDocument())
+			}
+			// Test documents only need registering when their syntax trees actually
+			// flow into compilation (SkipTests(false), i.e. `bal test` — see
+			// resolveTypesAndSymbols/parseDocumentsParallel). Otherwise nodebuilder
+			// never produces a position needing this file's index, and `bal build`/
+			// `bal run` (SkipTests(true), the default) must not register unrelated
+			// files as a side effect.
+			if !moduleCtx.project.BuildOptions().SkipTests() {
+				for _, docCtx := range moduleCtx.testDocContextMap {
+					de.RegisterFile(docCtx.registrationKey(), docCtx.getTextDocument())
+				}
 			}
 		}
 
@@ -224,6 +236,18 @@ func (c *PackageCompilation) DiagnosticEnv() *diagnostics.DiagnosticEnv {
 func (c *PackageCompilation) SemanticModel(moduleID ModuleID) any {
 	// TODO(P6): Return *SemanticModel once the type is implemented.
 	return nil
+}
+
+// ModuleAST returns the compiled AST for the given module, for tooling that
+// needs direct access ahead of a real SemanticModel (e.g. bal test's
+// annotation-discovery step). Returns nil if the module doesn't exist or
+// hasn't reached a compiled state.
+func (c *PackageCompilation) ModuleAST(moduleID ModuleID) *ast.BLangPackage {
+	modCtx := c.rootPackageContext.getModuleContext(moduleID)
+	if modCtx == nil {
+		return nil
+	}
+	return modCtx.getBLangPackage()
 }
 
 // CodeActionManager returns the code action manager.

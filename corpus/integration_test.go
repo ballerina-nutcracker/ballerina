@@ -240,6 +240,14 @@ func splitStderrDiagnostics(stderr string) []string {
 // keeping golden files deterministic across runs.
 var logTimestampPattern = regexp.MustCompile(`time=\S+`)
 
+// testExecutionTimePattern normalizes ballerina/test's wall-clock "Test execution time" trailer
+// so it doesn't make any corpus test exercising startSuite() flaky.
+var testExecutionTimePattern = regexp.MustCompile(`Test execution time : \S+s`)
+
+func normalizeIntegrationStdout(stdout string) string {
+	return testExecutionTimePattern.ReplaceAllString(stdout, "Test execution time : <DURATION>s")
+}
+
 func normalizeIntegrationStderr(stderr string) string {
 	stderr = strings.TrimSpace(stderr)
 	if stderr == "" {
@@ -270,9 +278,10 @@ func isProjectTestSkipped(dirName string) bool {
 }
 
 func evaluateTestResult(expectedStdout, expectedStderr, actualStdout, actualStderr string) testResult {
+	stdoutMatch := expectedStdout == normalizeIntegrationStdout(actualStdout)
 	stderrMatch := expectedStderr == normalizeIntegrationStderr(actualStderr)
 	return testResult{
-		success:        actualStdout == expectedStdout && stderrMatch,
+		success:        stdoutMatch && stderrMatch,
 		expectedStdout: expectedStdout,
 		actualStdout:   actualStdout,
 		expectedStderr: expectedStderr,
@@ -471,12 +480,15 @@ func testProjectSerializationRoundtrip(t *testing.T, dirName, projDir, txtarPath
 		return
 	}
 
-	stdoutMismatch := result.expectedStdout != result.actualStdout
+	stdoutMismatch := result.expectedStdout != normalizeIntegrationStdout(result.actualStdout)
 	stderrMismatch := result.expectedStderr != result.actualStderr
 
 	var msg strings.Builder
 	if stdoutMismatch {
-		fmt.Fprintf(&msg, "stdout mismatch\n%s", test_util.FormatExpectedGot(result.expectedStdout, result.actualStdout))
+		fmt.Fprintf(&msg, "stdout mismatch\n%s", test_util.FormatExpectedGot(
+			result.expectedStdout,
+			normalizeIntegrationStdout(result.actualStdout),
+		))
 	}
 	if stderrMismatch {
 		if msg.Len() > 0 {
@@ -776,7 +788,7 @@ func BenchmarkIntegration(b *testing.B) {
 			if !result.success {
 				b.Fatalf("output mismatch for %s:\nstdout:\n%s\nstderr:\n%s",
 					testPair.InputPath,
-					test_util.FormatExpectedGot(result.expectedStdout, result.actualStdout),
+					test_util.FormatExpectedGot(result.expectedStdout, normalizeIntegrationStdout(result.actualStdout)),
 					test_util.FormatExpectedGot(
 						normalizeIntegrationStderr(result.expectedStderr),
 						normalizeIntegrationStderr(result.actualStderr),

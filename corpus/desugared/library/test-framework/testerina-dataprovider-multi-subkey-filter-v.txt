@@ -1,0 +1,135 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina test (as test))
+  (variable oneRan (type
+    (value-type int)))
+  (variable twoRan (type
+    (value-type int)))
+  (variable threeRan (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref oneRan)
+        (literal 0))
+      (assignment
+        (simple-var-ref twoRan)
+        (literal 0))
+      (assignment
+        (simple-var-ref threeRan)
+        (literal 0))))
+  (function squareDataSet () (
+    (constrained-type
+      (builtin-ref-type map)
+      (tuple-type
+        (value-type int)
+        (value-type int))))
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal one)
+            (list-constructor-expr
+              (literal 1)
+              (literal 1)))
+          (key-value
+            (literal two)
+            (list-constructor-expr
+              (literal 2)
+              (literal 4)))
+          (key-value
+            (literal three)
+            (list-constructor-expr
+              (literal 3)
+              (literal 9)))))))
+  (function testSquare (
+    (variable input (type
+      (value-type int)))
+    (variable expected (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (binary-expr ==
+          (simple-var-ref input)
+          (literal 1))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref oneRan)
+            (literal 1))) (
+        (if
+          (binary-expr ==
+            (simple-var-ref input)
+            (literal 2))
+          (block-stmt
+            (compound-assignment +
+              (simple-var-ref twoRan)
+              (literal 1))) (
+          (block-stmt
+            (compound-assignment +
+              (simple-var-ref threeRan)
+              (literal 1)))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (binary-expr *
+            (simple-var-ref input)
+            (simple-var-ref input)))))
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref expected))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$14 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (expression-stmt
+        (invocation test assertEquals (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation test setTestOptions (
+          (literal target)
+          (literal ddmultisubkeymod)
+          (literal ddmultisubkeymod)
+          (literal false)
+          (literal false)
+          (literal )
+          (literal )
+          (literal testSquare#one,testSquare#three)
+          (literal false)
+          (literal false))))
+      (expression-stmt
+        (invocation test registerTestConfig (
+          (literal testSquare)
+          (simple-var-ref testSquare)
+          (literal true)
+          (list-constructor-expr)
+          (list-constructor-expr)
+          (literal <nil>)
+          (literal <nil>)
+          (literal false)
+          (simple-var-ref squareDataSet))))
+      (var-def
+        (variable exitCode (type
+          (value-type int)) (expr
+          (invocation test startSuite ()))))
+      (expression-stmt
+        (invocation io println (
+          (literal exitCode: )
+          (simple-var-ref exitCode))))
+      (expression-stmt
+        (invocation io println (
+          (literal oneRan: )
+          (simple-var-ref oneRan))))
+      (expression-stmt
+        (invocation io println (
+          (literal twoRan: )
+          (simple-var-ref twoRan))))
+      (expression-stmt
+        (invocation io println (
+          (literal threeRan: )
+          (simple-var-ref threeRan)))))))

@@ -1,0 +1,80 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina test (as test))
+  (variable fooTestRan (type
+    (value-type int)))
+  (variable barTestRan (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref fooTestRan)
+        (literal 0))
+      (assignment
+        (simple-var-ref barTestRan)
+        (literal 0))))
+  (function fooTest () (
+    (value-type null))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref fooTestRan)
+        (literal 1))))
+  (function barTest () (
+    (value-type null))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref barTestRan)
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation test setTestOptions (
+          (literal target)
+          (literal combinedqualmod)
+          (literal combinedqualmod)
+          (literal false)
+          (literal false)
+          (literal )
+          (literal )
+          (literal combinedqualmod.sub:fooTest,combinedqualmod:foo*)
+          (literal false)
+          (literal false))))
+      (expression-stmt
+        (invocation test registerTestConfig (
+          (literal fooTest)
+          (simple-var-ref fooTest)
+          (literal true)
+          (list-constructor-expr)
+          (list-constructor-expr)
+          (literal <nil>)
+          (literal <nil>)
+          (literal false)
+          (literal <nil>))))
+      (expression-stmt
+        (invocation test registerTestConfig (
+          (literal barTest)
+          (simple-var-ref barTest)
+          (literal true)
+          (list-constructor-expr)
+          (list-constructor-expr)
+          (literal <nil>)
+          (literal <nil>)
+          (literal false)
+          (literal <nil>))))
+      (var-def
+        (variable exitCode (type
+          (value-type int)) (expr
+          (invocation test startSuite ()))))
+      (expression-stmt
+        (invocation io println (
+          (literal exitCode: )
+          (simple-var-ref exitCode))))
+      (expression-stmt
+        (invocation io println (
+          (literal fooTestRan: )
+          (simple-var-ref fooTestRan))))
+      (expression-stmt
+        (invocation io println (
+          (literal barTestRan: )
+          (simple-var-ref barTestRan)))))))

@@ -1,0 +1,94 @@
+module $anon.. v 0.0.0;
+barTestRan  int;
+fooTestRan  int;
+fooTest() -> nil{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + fooTestRan %3;
+    fooTestRan = %1;
+    return;
+  }
+}
+barTest() -> nil{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + barTestRan %3;
+    barTestRan = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad target
+    %2 = ConstantLoad combinedqualmod
+    %3 = ConstantLoad combinedqualmod
+    %4 = ConstantLoad false
+    %5 = ConstantLoad false
+    %6 = ConstantLoad 
+    %7 = ConstantLoad 
+    %8 = ConstantLoad combinedqualmod.sub:fooTest,combinedqualmod:foo*
+    %9 = ConstantLoad false
+    %10 = ConstantLoad false
+    %11 = setTestOptions(%1,%2,%3,%4,%5,%6,%7,%8,%9,%10) -> bb1;
+  }
+  bb1 {
+    %12 = ConstantLoad fooTest
+    %13 = fp $anon/.:fooTest
+    %14 = ConstantLoad true
+    %15 = %14;
+    %16 = ConstantLoad 0
+    %17 = newArray [string...][%16]{}
+    %18 = ConstantLoad 0
+    %19 = newArray [function...][%18]{}
+    %20 = ConstantLoad <nil>
+    %21 = %20;
+    %22 = ConstantLoad <nil>
+    %23 = %22;
+    %24 = ConstantLoad false
+    %25 = %24;
+    %26 = ConstantLoad <nil>
+    %27 = %26;
+    %28 = registerTestConfig(%12,%13,%15,%17,%19,%21,%23,%25,%27) -> bb2;
+  }
+  bb2 {
+    %29 = ConstantLoad barTest
+    %30 = fp $anon/.:barTest
+    %31 = ConstantLoad true
+    %32 = %31;
+    %33 = ConstantLoad 0
+    %34 = newArray [string...][%33]{}
+    %35 = ConstantLoad 0
+    %36 = newArray [function...][%35]{}
+    %37 = ConstantLoad <nil>
+    %38 = %37;
+    %39 = ConstantLoad <nil>
+    %40 = %39;
+    %41 = ConstantLoad false
+    %42 = %41;
+    %43 = ConstantLoad <nil>
+    %44 = %43;
+    %45 = registerTestConfig(%29,%30,%32,%34,%36,%38,%40,%42,%44) -> bb3;
+  }
+  bb3 {
+    %46 = startSuite() -> bb4;
+  }
+  bb4 {
+    exitCode = %46;
+    %48 = ConstantLoad exitCode: 
+    %49 = exitCode;
+    %50 = println(%48,%49) -> bb5;
+  }
+  bb5 {
+    %51 = ConstantLoad fooTestRan: 
+    %52 = println(%51,fooTestRan) -> bb6;
+  }
+  bb6 {
+    %53 = ConstantLoad barTestRan: 
+    %54 = println(%53,barTestRan) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}

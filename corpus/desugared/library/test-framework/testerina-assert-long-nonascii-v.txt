@@ -1,0 +1,57 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (import-package ballerina lang string (as lang.string))
+  (import-package ballerina test (as test))
+  (variable longNonAsciiValue (type
+    (value-type string)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref longNonAsciiValue)
+        (binary-expr +
+          (literal XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX)
+          (literal 字XXXXXXXXXX)))))
+  (function callAssertLongNonAscii () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 1))))
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref longNonAsciiValue))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation $default$14 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (expression-stmt
+        (invocation test assertEquals (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable failure (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation callAssertLongNonAscii ())))))
+      (if
+        (type-test-expr is
+          (simple-var-ref failure)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal messageLength: )
+              (invocation lang.string length (
+                (invocation lang.error message (
+                  (simple-var-ref failure))))))))) ())
+      (block-stmt))))

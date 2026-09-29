@@ -1,0 +1,106 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina test (as test))
+  (variable testFooRan (type
+    (value-type int)))
+  (variable otherBazRan (type
+    (value-type int)))
+  (variable unrelatedQuxRan (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref testFooRan)
+        (literal 0))
+      (assignment
+        (simple-var-ref otherBazRan)
+        (literal 0))
+      (assignment
+        (simple-var-ref unrelatedQuxRan)
+        (literal 0))))
+  (function testFooAlpha () (
+    (value-type null))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref testFooRan)
+        (literal 1))))
+  (function otherBazBeta () (
+    (value-type null))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref otherBazRan)
+        (literal 1))))
+  (function unrelatedQux () (
+    (value-type null))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref unrelatedQuxRan)
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation test setTestOptions (
+          (literal target)
+          (literal multiwildcardfiltermod)
+          (literal multiwildcardfiltermod)
+          (literal false)
+          (literal false)
+          (literal )
+          (literal )
+          (literal testFoo*,otherBaz*)
+          (literal false)
+          (literal false))))
+      (expression-stmt
+        (invocation test registerTestConfig (
+          (literal testFooAlpha)
+          (simple-var-ref testFooAlpha)
+          (literal true)
+          (list-constructor-expr)
+          (list-constructor-expr)
+          (literal <nil>)
+          (literal <nil>)
+          (literal false)
+          (literal <nil>))))
+      (expression-stmt
+        (invocation test registerTestConfig (
+          (literal otherBazBeta)
+          (simple-var-ref otherBazBeta)
+          (literal true)
+          (list-constructor-expr)
+          (list-constructor-expr)
+          (literal <nil>)
+          (literal <nil>)
+          (literal false)
+          (literal <nil>))))
+      (expression-stmt
+        (invocation test registerTestConfig (
+          (literal unrelatedQux)
+          (simple-var-ref unrelatedQux)
+          (literal true)
+          (list-constructor-expr)
+          (list-constructor-expr)
+          (literal <nil>)
+          (literal <nil>)
+          (literal false)
+          (literal <nil>))))
+      (var-def
+        (variable exitCode (type
+          (value-type int)) (expr
+          (invocation test startSuite ()))))
+      (expression-stmt
+        (invocation io println (
+          (literal exitCode: )
+          (simple-var-ref exitCode))))
+      (expression-stmt
+        (invocation io println (
+          (literal testFooRan: )
+          (simple-var-ref testFooRan))))
+      (expression-stmt
+        (invocation io println (
+          (literal otherBazRan: )
+          (simple-var-ref otherBazRan))))
+      (expression-stmt
+        (invocation io println (
+          (literal unrelatedQuxRan: )
+          (simple-var-ref unrelatedQuxRan)))))))

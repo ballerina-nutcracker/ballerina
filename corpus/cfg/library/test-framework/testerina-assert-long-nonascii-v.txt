@@ -1,0 +1,31 @@
+(callAssertLongNonAscii
+  (bb0 () ()
+    (expression-stmt
+      (invocation test assertEquals (
+        (literal 1)
+        (simple-var-ref longNonAsciiValue) <default>)))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable failure (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation callAssertLongNonAscii ())))))
+    (type-test-expr is
+      (simple-var-ref failure)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal messageLength: )
+        (invocation lang.string length (
+          (invocation lang.error message (
+            (simple-var-ref failure))))))))
+  )
+  (bb2 (bb1 bb0) ())
+)

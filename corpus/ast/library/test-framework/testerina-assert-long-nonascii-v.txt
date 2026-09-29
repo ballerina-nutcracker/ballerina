@@ -1,0 +1,40 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina test (as test))
+  (variable longNonAsciiValue (type
+    (value-type string)) (expr
+    (binary-expr +
+      (literal XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX)
+      (literal 字XXXXXXXXXX))))
+  (function callAssertLongNonAscii () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation test assertEquals (
+          (literal 1)
+          (simple-var-ref longNonAsciiValue))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable failure (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation callAssertLongNonAscii ())))))
+      (if
+        (type-test-expr is
+          (simple-var-ref failure)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal messageLength: )
+              (invocation length expr:
+                (invocation message expr:
+                  (simple-var-ref failure) ()) ()))))) ())
+      (block-stmt))))

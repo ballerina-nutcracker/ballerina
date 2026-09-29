@@ -97,12 +97,15 @@ func testBIRSerializationRoundtrip(t *testing.T, testPair test_util.TestCase) {
 		return
 	}
 
-	stdoutMismatch := result.expectedStdout != result.actualStdout
+	stdoutMismatch := result.expectedStdout != normalizeIntegrationStdout(result.actualStdout)
 	stderrMismatch := result.expectedStderr != normalizeIntegrationStderr(result.actualStderr)
 
 	var msg strings.Builder
 	if stdoutMismatch {
-		fmt.Fprintf(&msg, "stdout mismatch\n%s", test_util.FormatExpectedGot(result.expectedStdout, result.actualStdout))
+		fmt.Fprintf(&msg, "stdout mismatch\n%s", test_util.FormatExpectedGot(
+			result.expectedStdout,
+			normalizeIntegrationStdout(result.actualStdout),
+		))
 	}
 	if stderrMismatch {
 		if msg.Len() > 0 {

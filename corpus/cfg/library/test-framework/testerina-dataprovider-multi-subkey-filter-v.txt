@@ -1,0 +1,104 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation test setTestOptions (
+        (literal target)
+        (literal ddmultisubkeymod)
+        (literal ddmultisubkeymod)
+        (literal false)
+        (literal false)
+        (literal )
+        (literal )
+        (literal testSquare#one,testSquare#three)
+        (literal false)
+        (literal false))))
+    (expression-stmt
+      (invocation test registerTestConfig (
+        (literal testSquare)
+        (simple-var-ref testSquare)
+        (literal true)
+        (list-constructor-expr)
+        (list-constructor-expr)
+        (literal <nil>)
+        (literal <nil>)
+        (literal false)
+        (simple-var-ref squareDataSet))))
+    (var-def
+      (variable exitCode (type
+        (value-type int)) (expr
+        (invocation test startSuite ()))))
+    (expression-stmt
+      (invocation io println (
+        (literal exitCode: )
+        (simple-var-ref exitCode))))
+    (expression-stmt
+      (invocation io println (
+        (literal oneRan: )
+        (simple-var-ref oneRan))))
+    (expression-stmt
+      (invocation io println (
+        (literal twoRan: )
+        (simple-var-ref twoRan))))
+    (expression-stmt
+      (invocation io println (
+        (literal threeRan: )
+        (simple-var-ref threeRan))))
+  )
+)
+(squareDataSet
+  (bb0 () ()
+    (return
+      (mapping-constructor-expr
+        (key-value
+          (literal one)
+          (list-constructor-expr
+            (literal 1)
+            (literal 1)))
+        (key-value
+          (literal two)
+          (list-constructor-expr
+            (literal 2)
+            (literal 4)))
+        (key-value
+          (literal three)
+          (list-constructor-expr
+            (literal 3)
+            (literal 9)))))
+  )
+)
+(testSquare
+  (bb0 () (bb1 bb3)
+    (binary-expr ==
+      (simple-var-ref input)
+      (literal 1))
+  )
+  (bb1 (bb0) (bb2)
+    (compound-assignment +
+      (simple-var-ref oneRan)
+      (literal 1))
+  )
+  (bb2 (bb1 bb5) ()
+    (expression-stmt
+      (invocation test assertEquals (
+        (binary-expr *
+          (simple-var-ref input)
+          (simple-var-ref input))
+        (simple-var-ref expected) <default>)))
+  )
+  (bb3 (bb0) (bb4 bb6)
+    (binary-expr ==
+      (simple-var-ref input)
+      (literal 2))
+  )
+  (bb4 (bb3) (bb5)
+    (compound-assignment +
+      (simple-var-ref twoRan)
+      (literal 1))
+  )
+  (bb5 (bb4 bb6) (bb2))
+  (bb6 (bb3) (bb5)
+    (compound-assignment +
+      (simple-var-ref threeRan)
+      (literal 1))
+  )
+)

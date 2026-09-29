@@ -1,0 +1,61 @@
+module $anon.. v 0.0.0;
+longNonAsciiValue  string;
+callAssertLongNonAscii() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 1
+    $desugar$0 = %1;
+    $desugar$1 = longNonAsciiValue;
+    %4 = $desugar$0;
+    %5 = $default$14(%4,$desugar$1) -> bb1;
+  }
+  bb1 {
+    $desugar$2 = %5;
+    %7 = $desugar$0;
+    %8 = assertEquals(%7,$desugar$1,$desugar$2) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    %2 = callAssertLongNonAscii() -> bb2;
+  }
+  bb2 {
+    %1 = %2;
+    GOTO bb3;
+  }
+  bb3 {
+    failure = %1;
+    %4 = failure is error
+    %4 ? bb4 : bb8;
+  }
+  bb4 {
+    PushScopeFrame 5
+    %0 = ConstantLoad messageLength: 
+    %1 = message((1, failure)) -> bb5;
+  }
+  bb5 {
+    %2 = length(%1) -> bb6;
+  }
+  bb6 {
+    %3 = %2;
+    %4 = println(%0,%3) -> bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb8 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %1
+  }
+}
