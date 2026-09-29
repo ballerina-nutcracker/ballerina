@@ -1,0 +1,117 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (unary-expr -
+          (literal 1)))))
+    (var-def
+      (variable b (type
+        (value-type byte)) (expr
+        (literal 200))))
+    (compound-assignment &
+      (simple-var-ref b)
+      (simple-var-ref i))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+    (compound-assignment >>
+      (simple-var-ref b)
+      (simple-var-ref i))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+    (var-def
+      (variable c (type
+        (value-type byte)) (expr
+        (literal 5))))
+    (compound-assignment |
+      (simple-var-ref c)
+      (literal 2))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+    (compound-assignment ^
+      (simple-var-ref c)
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+    (var-def
+      (variable w (type
+        (user-defined-type int Unsigned16)) (expr
+        (literal 300))))
+    (compound-assignment &
+      (simple-var-ref w)
+      (simple-var-ref i))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref w))))
+    (var-def
+      (variable j (type
+        (value-type int)) (expr
+        (literal 12))))
+    (var-def
+      (variable k (type
+        (value-type byte)) (expr
+        (literal 7))))
+    (compound-assignment &
+      (simple-var-ref j)
+      (simple-var-ref k))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref j))))
+    (var-def
+      (variable u (type
+        (user-defined-type int Unsigned16)) (expr
+        (literal 65535))))
+    (compound-assignment >>>
+      (simple-var-ref u)
+      (literal 4))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref u))))
+    (var-def
+      (variable bs (type
+        (array-type
+          (value-type byte) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 255)))))
+    (compound-assignment &
+      (index-based-access
+        (simple-var-ref bs)
+        (literal 0))
+      (literal 15))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref bs)
+          (literal 0)))))
+    (var-def
+      (variable f (type
+        (value-type float)) (expr
+        (literal 1.5))))
+    (compound-assignment *
+      (simple-var-ref f)
+      (literal 2))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref f))))
+    (compound-assignment /
+      (simple-var-ref f)
+      (literal 4))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref f))))
+    (var-def
+      (variable d (type
+        (value-type decimal)) (expr
+        (literal 1.5))))
+    (compound-assignment *
+      (simple-var-ref d)
+      (literal 3))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d))))
+  )
+)

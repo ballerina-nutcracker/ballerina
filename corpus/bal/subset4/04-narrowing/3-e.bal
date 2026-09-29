@@ -18,8 +18,8 @@ import ballerina/io;
 public function main() {
     int|string foo = 2;
     while foo == 2 {
-        foo = foo + 5;
-        int _ = foo; // @error
+        foo += 5; // @error operand type is the declared int|string
     }
     io:println(foo);
 }
+

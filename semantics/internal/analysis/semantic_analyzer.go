@@ -2051,25 +2051,9 @@ func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 			a.internalErr("unexpected nil symbol", variable.GetPosition())
 			return false
 		}
-		ctx := a.ctx()
-		switch ctx.SymbolKind(symbol) {
-		case model.SymbolKindConstant:
-			a.semanticErr("cannot assign to constant", variable.GetPosition())
+		if msg, ok := common.AssignmentTargetError(a.ctx().SymbolKind(symbol)); ok {
+			a.semanticErr(msg, variable.GetPosition())
 			return false
-		case model.SymbolKindParemeter:
-			a.semanticErr("cannot assign to parameter", variable.GetPosition())
-			return false
-		case model.SymbolKindFunction:
-			a.semanticErr("cannot assign to function", variable.GetPosition())
-			return false
-		case model.SymbolKindType:
-			a.semanticErr("cannot assign to type", variable.GetPosition())
-			return false
-		case model.SymbolKindAnnotation:
-			a.semanticErr("cannot assign to annotation", variable.GetPosition())
-			return false
-		case model.SymbolKindVariable, model.SymbolKindXMLNS:
-			// Continue with regular assignment analysis.
 		}
 	}
 	if !analyzeActionOrExpression(a, variable, semtypes.SemType{}) {
@@ -2080,17 +2064,11 @@ func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 	return analyzeActionOrExpression(a, expression, expectedType)
 }
 
+// analyzeCompoundAssignment relies on the type resolver having checked the assignment target and
+// the type of `lvexpr op expr`.
 func analyzeCompoundAssignment[A analyzer](a A, assignment *ast.BLangCompoundAssignment) bool {
-	if !analyzeAssignment(a, assignment) {
-		return false
-	}
-	lhsTy := assignment.GetVariable().GetDeterminedType()
-	rhsTy := assignment.GetExpression().GetDeterminedType()
-	if semtypes.ContainsBasicType(lhsTy, semtypes.Nil) || semtypes.ContainsBasicType(rhsTy, semtypes.Nil) {
-		a.semanticErr("compound assignment operands cannot be nilable", assignment.GetPosition())
-		return false
-	}
-	return true
+	return analyzeActionOrExpression(a, assignment.GetVariable(), semtypes.SemType{}) &&
+		analyzeActionOrExpression(a, assignment.GetExpression(), semtypes.SemType{})
 }
 
 func analyzeIf[A analyzer](a A, ifStmt *ast.BLangIf) bool {
