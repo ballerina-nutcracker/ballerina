@@ -7,6 +7,10 @@ on:
       - reopened
       - edited
       - synchronize
+  # Jobs skip in the merge queue; the trigger only lets the required checks report.
+  merge_group:
+    branches:
+      - main
 
 # IMPORTANT: pull_request_target runs with base branch context and has access to secrets.
 # Permissions should be used with extreme caution.
@@ -14,12 +18,13 @@ on:
 permissions: {}
 
 concurrency:
-  group: lint-pr-${{ github.event.pull_request.number }}
+  group: lint-pr-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   validate-pr-title:
     name: Validate PR Title
+    if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,6 +43,7 @@ jobs:
 
   validate-commit-messages:
     name: Validate Commit Messages
+    if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     permissions:
       contents: read
