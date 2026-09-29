@@ -1,0 +1,34 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable result (type
+        (value-type int))))
+    (assignment
+      (simple-var-ref counter)
+      (invocation spawner ()))
+    (assignment
+      (simple-var-ref result)
+      (simple-var-ref counter))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)
+(spawner
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)

@@ -1,0 +1,80 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as internal))
+  (function waitForLatch (
+    (variable latch (type
+      (value-type handle)))
+    (variable name (type
+      (value-type string)))) (
+    (value-type string))
+    (block-function-body
+      (expression-stmt
+        (invocation internal waitOnLatch (
+          (simple-var-ref latch))))
+      (return
+        (simple-var-ref name))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable opened (type
+          (value-type handle)) (expr
+          (invocation internal createLatch ()))))
+      (expression-stmt
+        (invocation internal openLatch (
+          (simple-var-ref opened))))
+      (expression-stmt
+        (invocation internal waitOnLatch (
+          (simple-var-ref opened))))
+      (expression-stmt
+        (invocation io println (
+          (literal already open returns immediately))))
+      (var-def
+        (variable closed (type
+          (value-type handle)) (expr
+          (invocation internal createLatch ()))))
+      (var-def
+        (variable first (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type string))) (expr
+          (start-action
+            (invocation waitForLatch (
+              (simple-var-ref closed)
+              (literal first)))))))
+      (var-def
+        (variable second (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type string))) (expr
+          (start-action
+            (invocation waitForLatch (
+              (simple-var-ref closed)
+              (literal second)))))))
+      (expression-stmt
+        (invocation io println (
+          (literal waiters are still blocked))))
+      (expression-stmt
+        (invocation internal openLatch (
+          (simple-var-ref closed))))
+      (var-def
+        (variable firstResult (type
+          (union-type
+            (value-type string)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref first)))))
+      (var-def
+        (variable secondResult (type
+          (union-type
+            (value-type string)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref second)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref firstResult))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref secondResult)))))))

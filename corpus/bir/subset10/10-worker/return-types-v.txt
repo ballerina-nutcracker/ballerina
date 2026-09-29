@@ -1,0 +1,125 @@
+module $anon.. v 0.0.0;
+$worker:main:errorWorker() -> error{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad normal error value
+    %3 = newError error(%2)
+    %0 = %3;
+    return;
+  }
+}
+$worker:main:nilWorker() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad nil
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$worker:main:scalarWorker() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 42
+    %0 = %2;
+    return;
+  }
+}
+$worker:main:structuredWorker() -> {| first: int, second: string, never... |}{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad first
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad second
+    %5 = ConstantLoad two
+    %6 = newMap {| first: int, second: string, never... |}{%2=%3, %4=%5}
+    %0 = %6;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %7 = closure_fp $anon/.:$worker:main:nilWorker
+    $desugar$5 = %7;
+    %9 = closure_fp $anon/.:$worker:main:scalarWorker
+    $desugar$6 = %9;
+    %11 = closure_fp $anon/.:$worker:main:structuredWorker
+    $desugar$7 = %11;
+    %13 = closure_fp $anon/.:$worker:main:errorWorker
+    $desugar$8 = %13;
+    %15 = start $desugar$5() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %15;
+    %16 = start $desugar$6() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %16;
+    %17 = start $desugar$7() isolated=false -> bb4;
+  }
+  bb4 {
+    $desugar$3 = %17;
+    %18 = start $desugar$8() isolated=false -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %18;
+    %19 = openLatch($desugar$0) -> bb6;
+  }
+  bb6 {
+    %20 = wait $desugar$1 -> bb7;
+  }
+  bb7 {
+    nilResult = %20;
+    %22 = nilResult;
+    %23 = println(%22) -> bb8;
+  }
+  bb8 {
+    %24 = wait $desugar$2 -> bb9;
+  }
+  bb9 {
+    scalar = %24;
+    %26 = scalar;
+    %27 = println(%26) -> bb10;
+  }
+  bb10 {
+    %28 = wait $desugar$3 -> bb11;
+  }
+  bb11 {
+    pair = %28;
+    %31 = ConstantLoad first
+    %30 = pair[%31];
+    %32 = %30;
+    %33 = println(%32) -> bb12;
+  }
+  bb12 {
+    %35 = ConstantLoad second
+    %34 = pair[%35];
+    %36 = println(%34) -> bb13;
+  }
+  bb13 {
+    %37 = wait $desugar$4 -> bb14;
+  }
+  bb14 {
+    e = %37;
+    %39 = message(e) -> bb15;
+  }
+  bb15 {
+    %40 = println(%39) -> bb16;
+  }
+  bb16 {
+    return;
+  }
+}

@@ -1,0 +1,51 @@
+module $anon.. v 0.0.0;
+$worker:launch:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %3 = (1, captured);
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+launch() -> future<int>{
+  bb0 {
+    %1 = ConstantLoad 5
+    captured = %1;
+    %3 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %3;
+    %6 = closure_fp $anon/.:$worker:launch:w
+    $desugar$2 = %6;
+    %8 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %8;
+    %9 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %0 = $desugar$1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = launch() -> bb1;
+  }
+  bb1 {
+    escaped = %1;
+    %3 = wait escaped -> bb2;
+  }
+  bb2 {
+    result = %3;
+    %5 = println(result) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

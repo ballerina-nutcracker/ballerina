@@ -1,0 +1,222 @@
+module $anon.. v 0.0.0;
+class Counter {
+  value int
+
+  doubled() -> int{
+    bb0 {
+      %2 = createLatch() -> bb1;
+    }
+    bb1 {
+      $desugar$0 = %2;
+      %5 = closure_fp $anon/.:$worker:Counter.doubled:w
+      $desugar$2 = %5;
+      %7 = start $desugar$2() isolated=false -> bb2;
+    }
+    bb2 {
+      $desugar$1 = %7;
+      %8 = openLatch($desugar$0) -> bb3;
+    }
+    bb3 {
+      %9 = wait $desugar$1 -> bb4;
+    }
+    bb4 {
+      %0 = %9;
+      return;
+    }
+  }
+
+  init(int) -> nil{
+    bb0 {
+      %3 = createLatch() -> bb1;
+    }
+    bb1 {
+      $desugar$0 = %3;
+      %6 = closure_fp $anon/.:$worker:Counter.init:w
+      $desugar$2 = %6;
+      %8 = start $desugar$2() isolated=false -> bb2;
+    }
+    bb2 {
+      $desugar$1 = %8;
+      %9 = openLatch($desugar$0) -> bb3;
+    }
+    bb3 {
+      %10 = wait $desugar$1 -> bb4;
+    }
+    bb4 {
+      %11 = ConstantLoad value
+      self[%11] = %10;
+      return;
+    }
+  }
+}
+class Greeter {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get greeting Greeter.$resource$get$0() -> string{
+    bb0 {
+      %2 = createLatch() -> bb1;
+    }
+    bb1 {
+      $desugar$0 = %2;
+      %5 = closure_fp $anon/.:$worker:Greeter.Greeter.$resource$get$0:w
+      $desugar$2 = %5;
+      %7 = start $desugar$2() isolated=false -> bb2;
+    }
+    bb2 {
+      $desugar$1 = %7;
+      %8 = openLatch($desugar$0) -> bb3;
+    }
+    bb3 {
+      %9 = wait $desugar$1 -> bb4;
+    }
+    bb4 {
+      %0 = %9;
+      return;
+    }
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:main.$anonFunc$_0:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+$worker:Counter.doubled:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad value
+    %3 = (1, self)[%4];
+    %5 = %3;
+    %6 = ConstantLoad 2
+    %7 = %6;
+    %2 = * %5 %7;
+    %0 = %2;
+    return;
+  }
+}
+$worker:Counter.init:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %3 = (1, seed);
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$worker:Greeter.Greeter.$resource$get$0:w() -> string{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad hello
+    %0 = %2;
+    return;
+  }
+}
+$worker:main.$anonFunc$_0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 5
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Counter
+    %2 = ConstantLoad 41
+    %3 = %1.init(%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    counter = %4;
+    %8 = ConstantLoad value
+    %7 = counter[%8];
+    %9 = %7;
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
+    %11 = counter.doubled() -> bb6;
+  }
+  bb6 {
+    %12 = %11;
+    %13 = println(%12) -> bb7;
+  }
+  bb7 {
+    %14 = newObject $anon/.:Greeter
+    %15 = %14.init() -> bb8;
+  }
+  bb8 {
+    %17 = %15 is nil
+    %17 ? bb9 : bb10;
+  }
+  bb9 {
+    %16 = %14;
+    GOTO bb11;
+  }
+  bb10 {
+    %16 = %15;
+    GOTO bb11;
+  }
+  bb11 {
+    greeter = %16;
+    %19 = ConstantLoad greeting
+    %20 = greeter->[%19].get() -> bb12;
+  }
+  bb12 {
+    greeting = %20;
+    %22 = println(greeting) -> bb13;
+  }
+  bb13 {
+    %23 = closure_fp $anon/.:$anonFunc$_0
+    anon = %23;
+    %25 = anon() -> bb14;
+  }
+  bb14 {
+    %26 = %25;
+    %27 = println(%26) -> bb15;
+  }
+  bb15 {
+    return;
+  }
+}

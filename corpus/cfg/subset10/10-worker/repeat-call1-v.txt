@@ -1,0 +1,38 @@
+(counted
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref seed)
+            (literal 1)))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation counted (
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation counted (
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation counted (
+          (literal 3))))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref seed)
+        (literal 1)))
+  )
+)

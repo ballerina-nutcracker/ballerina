@@ -1,0 +1,165 @@
+module $anon.. v 0.0.0;
+class A {
+  value int
+
+  init() -> nil{
+    bb0 {
+      %2 = createLatch() -> bb1;
+    }
+    bb1 {
+      $desugar$0 = %2;
+      %5 = closure_fp $anon/.:$worker:A.init:w
+      $desugar$2 = %5;
+      %7 = start $desugar$2() isolated=false -> bb2;
+    }
+    bb2 {
+      $desugar$1 = %7;
+      %8 = openLatch($desugar$0) -> bb3;
+    }
+    bb3 {
+      %9 = wait $desugar$1 -> bb4;
+    }
+    bb4 {
+      %10 = ConstantLoad value
+      self[%10] = %9;
+      return;
+    }
+  }
+}
+class B {
+  value int
+
+  init() -> nil{
+    bb0 {
+      %2 = createLatch() -> bb1;
+    }
+    bb1 {
+      $desugar$0 = %2;
+      %5 = closure_fp $anon/.:$worker:B.init:w
+      $desugar$2 = %5;
+      %7 = start $desugar$2() isolated=false -> bb2;
+    }
+    bb2 {
+      $desugar$1 = %7;
+      %8 = openLatch($desugar$0) -> bb3;
+    }
+    bb3 {
+      %9 = wait $desugar$1 -> bb4;
+    }
+    bb4 {
+      %10 = ConstantLoad value
+      self[%10] = %9;
+      return;
+    }
+  }
+}
+$worker:A.init:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}
+$worker:B.init:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+$worker:shadowed:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 3
+    %0 = %2;
+    return;
+  }
+}
+shadowed() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:shadowed:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:A
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    a = %3;
+    %6 = newObject $anon/.:B
+    %7 = %6.init() -> bb5;
+  }
+  bb5 {
+    %9 = %7 is nil
+    %9 ? bb6 : bb7;
+  }
+  bb6 {
+    %8 = %6;
+    GOTO bb8;
+  }
+  bb7 {
+    %8 = %7;
+    GOTO bb8;
+  }
+  bb8 {
+    b = %8;
+    %12 = ConstantLoad value
+    %11 = a[%12];
+    %13 = %11;
+    %14 = println(%13) -> bb9;
+  }
+  bb9 {
+    %16 = ConstantLoad value
+    %15 = b[%16];
+    %17 = %15;
+    %18 = println(%17) -> bb10;
+  }
+  bb10 {
+    %19 = shadowed() -> bb11;
+  }
+  bb11 {
+    %20 = %19;
+    %21 = println(%20) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}

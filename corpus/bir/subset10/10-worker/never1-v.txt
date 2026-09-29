@@ -1,0 +1,41 @@
+module $anon.. v 0.0.0;
+$worker:alwaysPanics:w() -> never{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad always
+    %3 = newError error(%2)
+    panic %3;
+  }
+}
+alwaysPanics() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:alwaysPanics:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = alwaysPanics() -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad worker never observed
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

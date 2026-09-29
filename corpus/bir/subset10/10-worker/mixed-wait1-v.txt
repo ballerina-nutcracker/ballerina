@@ -1,0 +1,162 @@
+module $anon.. v 0.0.0;
+one() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$worker:alternate:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}
+multiple() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:multiple:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = start one() isolated=false -> bb4;
+  }
+  bb4 {
+    f = %8;
+    %10 = wait {w: $desugar$1, f: f} -> bb5;
+  }
+  bb5 {
+    both = %10;
+    %13 = ConstantLoad w
+    %12 = both[%13];
+    %14 = %12;
+    %15 = println(%14) -> bb6;
+  }
+  bb6 {
+    %17 = ConstantLoad f
+    %16 = both[%17];
+    %18 = println(%16) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}
+$worker:claimed:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+alternate() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:alternate:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = start one() isolated=false -> bb4;
+  }
+  bb4 {
+    f = %8;
+    %10 = wait $desugar$1 | f -> bb5;
+  }
+  bb5 {
+    first = %10;
+    %12 = println(first) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+$worker:multiple:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+claimed() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:claimed:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = start one() isolated=false -> bb4;
+  }
+  bb4 {
+    f = %8;
+    %10 = wait f -> bb5;
+  }
+  bb5 {
+    claim = %10;
+    %12 = println(claim) -> bb6;
+  }
+  bb6 {
+    %13 = wait {w: $desugar$1, f: f} -> bb7;
+  }
+  bb7 {
+    both = %13;
+    %16 = ConstantLoad w
+    %15 = both[%16];
+    %17 = %15;
+    %18 = println(%17) -> bb8;
+  }
+  bb8 {
+    %20 = ConstantLoad f
+    %19 = both[%20];
+    %21 = println(%19) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = multiple() -> bb1;
+  }
+  bb1 {
+    %2 = alternate() -> bb2;
+  }
+  bb2 {
+    %3 = claimed() -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

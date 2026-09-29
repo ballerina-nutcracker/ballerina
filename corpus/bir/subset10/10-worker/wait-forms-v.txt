@@ -1,0 +1,100 @@
+module $anon.. v 0.0.0;
+$worker:main:w1() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}
+$worker:main:w2() -> string{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad two
+    %0 = %2;
+    return;
+  }
+}
+$worker:main:w3() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 3
+    %0 = %2;
+    return;
+  }
+}
+$worker:main:w4() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 3
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %7 = closure_fp $anon/.:$worker:main:w1
+    $desugar$5 = %7;
+    %9 = closure_fp $anon/.:$worker:main:w2
+    $desugar$6 = %9;
+    %11 = closure_fp $anon/.:$worker:main:w3
+    $desugar$7 = %11;
+    %13 = closure_fp $anon/.:$worker:main:w4
+    $desugar$8 = %13;
+    %15 = start $desugar$5() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %15;
+    %16 = start $desugar$6() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %16;
+    %17 = start $desugar$7() isolated=false -> bb4;
+  }
+  bb4 {
+    $desugar$3 = %17;
+    %18 = start $desugar$8() isolated=false -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %18;
+    %19 = openLatch($desugar$0) -> bb6;
+  }
+  bb6 {
+    %20 = wait {w1: $desugar$1, w2: $desugar$2} -> bb7;
+  }
+  bb7 {
+    multiple = %20;
+    %23 = ConstantLoad w1
+    %22 = multiple[%23];
+    %24 = %22;
+    %25 = println(%24) -> bb8;
+  }
+  bb8 {
+    %27 = ConstantLoad w2
+    %26 = multiple[%27];
+    %28 = println(%26) -> bb9;
+  }
+  bb9 {
+    %29 = wait $desugar$3 | $desugar$4 -> bb10;
+  }
+  bb10 {
+    alternate = %29;
+    %31 = alternate;
+    %32 = println(%31) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}

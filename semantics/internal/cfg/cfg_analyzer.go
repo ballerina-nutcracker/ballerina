@@ -87,7 +87,23 @@ func analyzeExplicitReturn(ctx *context.CompilerContext, pkg *ast.BLangPackage, 
 		s := pkg.Services[i]
 		spawnObjectMembers(s.Methods, s.ResourceMethods)
 	}
+	for _, worker := range cfg.workers {
+		wg.Go(func() { analyzeWorkerExplicitReturn(ctx, worker.decl, worker.cfg) })
+	}
 	wg.Wait()
+}
+
+// analyzeWorkerExplicitReturn validates a worker body against its declared
+// return type. A worker has no function symbol, so its return type comes from
+// the future<T> its own symbol carries; the check itself is the function one.
+func analyzeWorkerExplicitReturn(
+	ctx *context.CompilerContext,
+	worker *ast.BLangNamedWorkerDeclaration,
+	workerCfg functionCFG,
+) {
+	retType := semtypes.FutureEventualType(
+		semtypes.ContextFrom(ctx.GetTypeEnv()), ctx.SymbolType(worker.Symbol()))
+	checkExplicitReturn(ctx, worker, retType, workerCfg)
 }
 
 type invokableNode interface {
@@ -105,41 +121,41 @@ func analyzeInvokableExplicitReturn(ctx *context.CompilerContext, fn invokableNo
 		return
 	}
 	sym := ctx.GetSymbol(fn.Symbol()).(model.FunctionSymbol)
-	retType := sym.TypedSignature().ReturnType
-	if semtypes.ContainsBasicType(retType, semtypes.Nil) {
-		return
-	}
-
 	fnCfg, ok := cfg.lookupFunctionCfg(fn.Symbol())
 	if !ok {
 		return
 	}
-	if semtypes.IsNever(retType) {
-		analyzeFunctionNeverReturn(ctx, fn, fnCfg)
-		return
-	}
-
-	for _, bb := range fnCfg.bbs {
-		if !bb.isTerminal() || !bb.isReachable() {
-			continue
-		}
-		if terminalBlockHasReturnOrPanic(bb) {
-			continue
-		}
-		pos := positionForMissingReturn(bb, fn)
-		ctx.SemanticError("missing return statement", pos)
-	}
+	checkExplicitReturn(ctx, fn, sym.TypedSignature().ReturnType, fnCfg)
 }
 
-func analyzeFunctionNeverReturn(ctx *context.CompilerContext, fn invokableNode, fnCfg functionCFG) {
-	for _, bb := range fnCfg.bbs {
+// checkExplicitReturn validates that every reachable terminal block of a
+// function-like body satisfies the body's declared return type: a type that
+// cannot be nil needs an explicit return or a panic on every path, and `never`
+// needs a panic. Falling off the end is a nil return, so a type containing nil
+// needs no check at all.
+func checkExplicitReturn(
+	ctx *context.CompilerContext,
+	node ast.BLangNode,
+	retType semtypes.SemType,
+	bodyCfg functionCFG,
+) {
+	if semtypes.ContainsBasicType(retType, semtypes.Nil) {
+		return
+	}
+	message := "missing return statement"
+	satisfied := terminalBlockHasReturnOrPanic
+	if semtypes.IsNever(retType) {
+		message = "expected panic"
+		satisfied = terminalBlockHasPanic
+	}
+	for _, bb := range bodyCfg.bbs {
 		if !bb.isTerminal() || !bb.isReachable() {
 			continue
 		}
-		if terminalBlockHasPanic(bb) {
+		if satisfied(bb) {
 			continue
 		}
-		ctx.SemanticError("expected panic", positionForMissingReturn(bb, fn))
+		ctx.SemanticError(message, positionForMissingReturn(bb, node))
 	}
 }
 

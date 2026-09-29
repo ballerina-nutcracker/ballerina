@@ -1,0 +1,25 @@
+(main
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (panic
+          (error-constructor-expr (
+            (literal boom))))))
+    (var-def
+      (variable v (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal boom))))
+  )
+)

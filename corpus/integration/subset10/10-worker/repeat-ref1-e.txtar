@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+   --> repeat-ref1-e.bal:101:30
+    |
+101 |     record {|future<int> f = w;|} r = {}; // @error reference inside a record field default
+    |                              ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> repeat-ref1-e.bal:25:27
+   |
+25 |         int result = wait w; // @error reference inside a loop body
+   |                           ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> repeat-ref1-e.bal:36:19
+   |
+36 |     while observe(w) && i < 2 { // @error reference inside a loop condition
+   |                   ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> repeat-ref1-e.bal:57:27
+   |
+57 |         int result = wait w; // @error reference inside a foreach body
+   |                           ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> repeat-ref1-e.bal:67:21
+   |
+67 |         return wait w; // @error reference inside an anonymous function
+   |                     ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> repeat-ref1-e.bal:81:16
+   |
+81 |         select w; // @error reference inside a query select clause
+   |                ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> repeat-ref1-e.bal:90:23
+   |
+90 |         where observe(w) // @error reference inside a query where clause
+   |                       ^
