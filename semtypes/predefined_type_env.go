@@ -438,7 +438,7 @@ func (p *predefinedTypeEnv) atomCellObjectMemberRO() *typeAtom {
 // cellAtomicObjectMemberKind returns the cellAtomicType for object member kind
 func (p *predefinedTypeEnv) cellAtomicObjectMemberKind() *cellAtomicType {
 	if p._cellAtomicObjectMemberKind == nil {
-		val := cellAtomicTypeFrom(Union(StringConst("field"), StringConst("method")), CellMutabilityNone)
+		val := cellAtomicTypeFrom(Union(new(MemberKindField).field().typeOf, allMethodField().typeOf), CellMutabilityNone)
 		p._cellAtomicObjectMemberKind = &val
 		p.addInitializedCellAtom(&val)
 	}
