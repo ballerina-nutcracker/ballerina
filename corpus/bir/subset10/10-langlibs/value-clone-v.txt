@@ -1,0 +1,236 @@
+module $anon.. v 0.0.0;
+cloneNumbers([int...]) -> [int...]{
+  bb0 {
+    %2 = clone(ns) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad name
+    %2 = ConstantLoad Alice
+    %3 = ConstantLoad age
+    %4 = ConstantLoad 30
+    %5 = newMap {| age: int, name: string, never... |}{%1=%2, %3=%4}
+    p = %5;
+    %7 = clone(p) -> bb1;
+  }
+  bb1 {
+    q = %7;
+    %9 = println(q) -> bb2;
+  }
+  bb2 {
+    %10 = == p q;
+    %11 = %10;
+    %12 = println(%11) -> bb3;
+  }
+  bb3 {
+    %13 = unknown p q;
+    %14 = %13;
+    %15 = println(%14) -> bb4;
+  }
+  bb4 {
+    %16 = clone(p) -> bb5;
+  }
+  bb5 {
+    r = %16;
+    %18 = println(r) -> bb6;
+  }
+  bb6 {
+    %19 = ConstantLoad a
+    %20 = ConstantLoad 1
+    %21 = ConstantLoad b
+    %22 = ConstantLoad 2
+    %23 = newMap {| int... |}{%19=%20, %21=%22}
+    counts = %23;
+    %25 = clone(counts) -> bb7;
+  }
+  bb7 {
+    countsClone = %25;
+    %27 = println(countsClone) -> bb8;
+  }
+  bb8 {
+    %28 = ConstantLoad 1
+    %29 = ConstantLoad 2
+    %30 = ConstantLoad 3
+    %31 = ConstantLoad 3
+    %32 = newArray [int...][%31]{%28, %29, %30}
+    a = %32;
+    %34 = clone(a) -> bb9;
+  }
+  bb9 {
+    b = %34;
+    %36 = println(b) -> bb10;
+  }
+  bb10 {
+    %37 = ConstantLoad 1
+    %38 = ConstantLoad one
+    %39 = ConstantLoad 2
+    %40 = newArray [int, string, never...][%39]{%37, %38}
+    t = %40;
+    %42 = clone(t) -> bb11;
+  }
+  bb11 {
+    tc = %42;
+    %44 = println(tc) -> bb12;
+  }
+  bb12 {
+    %45 = ConstantLoad name
+    %46 = ConstantLoad core
+    %47 = ConstantLoad lead
+    %48 = newMap {| lead: {| age: int, name: string, never... |}, name: string, never... |}{%45=%46, %47=p}
+    team = %48;
+    %50 = clone(team) -> bb13;
+  }
+  bb13 {
+    teamClone = %50;
+    %52 = println(teamClone) -> bb14;
+  }
+  bb14 {
+    %55 = ConstantLoad lead
+    %54 = teamClone[%55];
+    %57 = ConstantLoad lead
+    %56 = team[%57];
+    %53 = unknown %54 %56;
+    %58 = %53;
+    %59 = println(%58) -> bb15;
+  }
+  bb15 {
+    %60 = ConstantLoad n
+    %61 = ConstantLoad 1
+    %62 = ConstantLoad xs
+    %63 = ConstantLoad 1
+    %64 = ConstantLoad 2
+    %65 = ConstantLoad 2
+    %66 = newArray [json...][%65]{%63, %64}
+    %67 = newMap {| json... |}{%60=%61, %62=%66}
+    j = %67;
+    %69 = clone(j) -> bb16;
+  }
+  bb16 {
+    jc = %69;
+    %71 = println(jc) -> bb17;
+  }
+  bb17 {
+    %72 = ConstantLoad x
+    %73 = ConstantLoad 1
+    %74 = ConstantLoad 2
+    %75 = ConstantLoad 2
+    %76 = newArray [anydata...][%75]{%73, %74}
+    %77 = newMap {| anydata... |}{%72=%76}
+    ad = %77;
+    %79 = clone(ad) -> bb18;
+  }
+  bb18 {
+    c = %79;
+    %81 = println(c) -> bb19;
+  }
+  bb19 {
+    %82 = ConstantLoad 1
+    %83 = %82;
+    %84 = clone(%83) -> bb20;
+  }
+  bb20 {
+    %85 = %84;
+    %86 = println(%85) -> bb21;
+  }
+  bb21 {
+    %87 = ConstantLoad hi
+    %88 = clone(%87) -> bb22;
+  }
+  bb22 {
+    %89 = println(%88) -> bb23;
+  }
+  bb23 {
+    %90 = ConstantLoad 1.5
+    %91 = %90;
+    %92 = clone(%91) -> bb24;
+  }
+  bb24 {
+    %93 = %92;
+    %94 = println(%93) -> bb25;
+  }
+  bb25 {
+    %95 = ConstantLoad 2.5
+    d = %95;
+    %97 = d;
+    %98 = clone(%97) -> bb26;
+  }
+  bb26 {
+    %99 = %98;
+    %100 = println(%99) -> bb27;
+  }
+  bb27 {
+    %101 = ConstantLoad true
+    %102 = %101;
+    %103 = clone(%102) -> bb28;
+  }
+  bb28 {
+    %104 = %103;
+    %105 = println(%104) -> bb29;
+  }
+  bb29 {
+    %106 = ConstantLoad <nil>
+    n = %106;
+    %108 = n;
+    %109 = clone(%108) -> bb30;
+  }
+  bb30 {
+    %110 = %109;
+    %111 = println(%110) -> bb31;
+  }
+  bb31 {
+    %112 = ConstantLoad boom
+    %113 = newError error(%112)
+    e = %113;
+    %116 = clone(e) -> bb32;
+  }
+  bb32 {
+    %115 = unknown %116 e;
+    %117 = %115;
+    %118 = println(%117) -> bb33;
+  }
+  bb33 {
+    %119 = ConstantLoad 31
+    %120 = ConstantLoad age
+    q[%120] = %119;
+    %121 = println(p) -> bb34;
+  }
+  bb34 {
+    %122 = println(q) -> bb35;
+  }
+  bb35 {
+    %123 = ConstantLoad 100
+    %124 = ConstantLoad 0
+    b[%124] = %123;
+    %125 = println(a) -> bb36;
+  }
+  bb36 {
+    %126 = println(b) -> bb37;
+  }
+  bb37 {
+    %127 = ConstantLoad 200
+    %128 = ConstantLoad 1
+    a[%128] = %127;
+    %129 = println(a) -> bb38;
+  }
+  bb38 {
+    %130 = println(b) -> bb39;
+  }
+  bb39 {
+    %131 = ConstantLoad 7
+    %132 = ConstantLoad 8
+    %133 = ConstantLoad 2
+    %134 = newArray [int...][%133]{%131, %132}
+    %135 = cloneNumbers(%134) -> bb40;
+  }
+  bb40 {
+    %136 = println(%135) -> bb41;
+  }
+  bb41 {
+    return;
+  }
+}

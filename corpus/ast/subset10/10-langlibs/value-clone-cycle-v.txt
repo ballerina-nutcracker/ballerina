@@ -1,0 +1,108 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type anydata))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal tag)
+              (literal root))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref m)
+          (literal self))
+        (simple-var-ref m))
+      (var-def
+        (variable mClone (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type anydata))) (expr
+          (invocation clone expr:
+            (simple-var-ref m) ()))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref mClone)
+            (simple-var-ref m)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (index-based-access
+              (simple-var-ref mClone)
+              (literal self))
+            (simple-var-ref mClone)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref mClone)
+            (literal tag)))))
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type anydata) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)))))
+      (expression-stmt
+        (invocation push expr:
+          (simple-var-ref arr) (
+          (simple-var-ref arr))))
+      (var-def
+        (variable arrClone (type
+          (array-type
+            (value-type anydata) dimensions: 1 ([]))) (expr
+          (invocation clone expr:
+            (simple-var-ref arr) ()))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (simple-var-ref arrClone)
+            (simple-var-ref arr)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (index-based-access
+              (simple-var-ref arrClone)
+              (literal 1))
+            (simple-var-ref arrClone)))))
+      (var-def
+        (variable shared (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable dag (type
+          (array-type
+            (value-type anydata) dimensions: 2 ([][]))) (expr
+          (list-constructor-expr
+            (simple-var-ref shared)
+            (simple-var-ref shared)))))
+      (var-def
+        (variable dagClone (type
+          (array-type
+            (value-type anydata) dimensions: 2 ([][]))) (expr
+          (invocation clone expr:
+            (simple-var-ref dag) ()))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (index-based-access
+              (simple-var-ref dagClone)
+              (literal 0))
+            (index-based-access
+              (simple-var-ref dagClone)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ===
+            (index-based-access
+              (simple-var-ref dagClone)
+              (literal 0))
+            (simple-var-ref shared))))))))
