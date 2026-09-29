@@ -1,0 +1,64 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [{| m: {| int... |}, never... |}...][%1]{}
+    grown = %2;
+    %4 = ConstantLoad 1
+    %6 = ConstantLoad m
+    %8 = ConstantLoad 1
+    %7 = grown[%8] (fill);
+    %5 = %7[%6] (fill);
+    %9 = ConstantLoad k
+    %5[%9] = %4;
+    %10 = println(grown) -> bb1;
+  }
+  bb1 {
+    %11 = newMap {| m: {| int... |}, never... |}{}
+    %12 = newMap {| m: {| int... |}, never... |}{}
+    %13 = ConstantLoad 2
+    %14 = newArray [{| m: {| int... |}, never... |}, {| m: {| int... |}, never... |}, never...][%13]{%11, %12}
+    fixed = %14;
+    %16 = ConstantLoad 2
+    %18 = ConstantLoad m
+    %20 = ConstantLoad 0
+    %19 = fixed[%20] (fill);
+    %17 = %19[%18] (fill);
+    %21 = ConstantLoad k
+    %17[%21] = %16;
+    %22 = println(fixed) -> bb2;
+  }
+  bb2 {
+    %23 = ConstantLoad 0
+    %24 = newArray [{| m: {| int... |}, s: ..., never... |}...][%23]{}
+    recursive = %24;
+    %26 = ConstantLoad 3
+    %28 = ConstantLoad m
+    %30 = ConstantLoad s
+    %32 = ConstantLoad s
+    %34 = ConstantLoad 0
+    %33 = recursive[%34] (fill);
+    %31 = %33[%32] (fill);
+    %29 = %31[%30] (fill);
+    %27 = %29[%28] (fill);
+    %35 = ConstantLoad k
+    %27[%35] = %26;
+    %36 = println(recursive) -> bb3;
+  }
+  bb3 {
+    %37 = ConstantLoad 0
+    %38 = newArray [[{| int... |}...]...][%37]{}
+    lists = %38;
+    %40 = ConstantLoad 4
+    %42 = ConstantLoad 1
+    %44 = ConstantLoad 0
+    %43 = lists[%44] (fill);
+    %41 = %43[%42] (fill);
+    %45 = ConstantLoad k
+    %41[%45] = %40;
+    %46 = println(lists) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

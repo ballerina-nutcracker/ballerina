@@ -1,0 +1,25 @@
+(main
+  (bb0 () ()
+    (assignment
+      (index-based-access
+        (field-based-access m
+          (simple-var-ref g))
+        (literal k))
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref g))))
+    (assignment
+      (index-based-access
+        (index-based-access
+          (index-based-access
+            (simple-var-ref gm)
+            (literal a))
+          (literal m))
+        (literal k))
+      (literal 2))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref gm))))
+  )
+)

@@ -56,6 +56,9 @@ func Diff(t1, t2 SemType) SemType {
 	if some1 == 0 && some2 == 0 {
 		return basicTypeUnion(all1 & ^all2)
 	}
+	if some2 == 0 && some1&all2 == 0 {
+		return createComplexSemTypeWithAllBitSetSomeBitSetSubtypeDataList(all1 & ^all2, some1, t1.dataList)
+	}
 	if IsNever(t1) {
 		return t1
 	}

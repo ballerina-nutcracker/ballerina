@@ -1,0 +1,89 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = newMap {| anydata... |}{}
+    v = %1;
+    %4 = ConstantLoad typedesc
+    %5 = cloneWithType(v,%4) -> bb1;
+  }
+  bb1 {
+    %6 = %5 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+  bb3 {
+    %3 = %5;
+    GOTO bb4;
+  }
+  bb4 {
+    m = %3;
+    %8 = ConstantLoad 1
+    %10 = ConstantLoad a
+    %9 = m[%10] (fill);
+    %11 = ConstantLoad b
+    %9[%11] = %8;
+    %12 = println(m) -> bb5;
+  }
+  bb5 {
+    %14 = ConstantLoad typedesc
+    %15 = cloneWithType(v,%14) -> bb6;
+  }
+  bb6 {
+    %16 = %15 is error
+    %16 ? bb7 : bb8;
+  }
+  bb7 {
+    %0 = %15;
+    return;
+  }
+  bb8 {
+    %13 = %15;
+    GOTO bb9;
+  }
+  bb9 {
+    r = %13;
+    %18 = ConstantLoad 1
+    %20 = ConstantLoad m
+    %19 = r[%20] (fill);
+    %21 = ConstantLoad k
+    %19[%21] = %18;
+    %22 = println(r) -> bb10;
+  }
+  bb10 {
+    %23 = ConstantLoad a
+    %24 = newMap {| anydata... |}{}
+    %25 = newMap {| anydata... |}{%23=%24}
+    nested = %25;
+    %28 = ConstantLoad typedesc
+    %29 = cloneWithType(nested,%28) -> bb11;
+  }
+  bb11 {
+    %30 = %29 is error
+    %30 ? bb12 : bb13;
+  }
+  bb12 {
+    %0 = %29;
+    return;
+  }
+  bb13 {
+    %27 = %29;
+    GOTO bb14;
+  }
+  bb14 {
+    mm = %27;
+    %32 = ConstantLoad 1
+    %34 = ConstantLoad b
+    %36 = ConstantLoad a
+    %35 = mm[%36] (fill);
+    %33 = %35[%34] (fill);
+    %37 = ConstantLoad c
+    %33[%37] = %32;
+    %38 = println(mm) -> bb15;
+  }
+  bb15 {
+    return;
+  }
+}

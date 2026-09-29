@@ -130,7 +130,7 @@ func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields [
 				if matched {
 					continue
 				}
-				if !slices.Contains(hasDefaults, name) && !pos.IsOptional(cx, name) {
+				if !slices.Contains(hasDefaults, name) && !isOptionalCell(cx, pos.types[i]) {
 					return false
 				}
 			}

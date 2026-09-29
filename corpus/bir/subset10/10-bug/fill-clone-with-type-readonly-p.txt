@@ -1,0 +1,31 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = newMap {| anydata... |}{}
+    v = %1;
+    %4 = ConstantLoad typedesc
+    %5 = cloneWithType(v,%4) -> bb1;
+  }
+  bb1 {
+    %6 = %5 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+  bb3 {
+    %3 = %5;
+    GOTO bb4;
+  }
+  bb4 {
+    r = %3;
+    w = r;
+    %9 = ConstantLoad 1
+    %11 = ConstantLoad a
+    %10 = w[%11] (fill);
+    %12 = ConstantLoad b
+    %10[%12] = %9;
+    return;
+  }
+}

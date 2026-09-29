@@ -93,19 +93,19 @@ func (m *Map) Get(key string) (BalValue, bool) {
 // FillingGet returns the value at key, inserting a fresh filler value when
 // the key is absent. Used to support nested member lvalue assignments like
 // `m[k1][k2] = v`, where intermediate containers must be auto-created.
-// Panics if insertion is required and the map is readonly or key names a
-// readonly field. Filler values are not type-checked against the inherent
-// type.
-func (m *Map) FillingGet(tc semtypes.Context, key string, filler FillerFactory) BalValue {
+// The filler is derived from the member type the inherent type requires for key.
+// Panics if insertion is required and the map is readonly, key names a
+// readonly field, or that member type has no filler value.
+func (m *Map) FillingGet(tc semtypes.Context, key string) BalValue {
 	if e, ok := m.data[key]; ok {
 		return e.value
 	}
 	m.checkMutable()
 	m.checkFieldMutable(key)
-	if filler == nil {
+	v, ok := FillerValue(tc, m.atomic.FieldInnerVal(key))
+	if !ok {
 		panic(NewErrorWithMessage("no filler value"))
 	}
-	v := filler()
 	m.putUnchecked(key, v)
 	return v
 }

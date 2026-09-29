@@ -1,0 +1,84 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Holder
+    (record-type
+      (field m optional
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int)))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (value-type anydata)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref v) ())))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref m)
+            (literal a))
+          (literal b))
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref m))))
+      (var-def
+        (variable r (type
+          (user-defined-type Holder)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref v) ())))))
+      (assignment
+        (index-based-access
+          (field-based-access m
+            (simple-var-ref r))
+          (literal k))
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (var-def
+        (variable nested (type
+          (value-type anydata)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (mapping-constructor-expr))))))
+      (var-def
+        (variable mm (type
+          (constrained-type
+            (builtin-ref-type map)
+            (constrained-type
+              (builtin-ref-type map)
+              (constrained-type
+                (builtin-ref-type map)
+                (value-type int))))) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref nested) ())))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (index-based-access
+              (simple-var-ref mm)
+              (literal a))
+            (literal b))
+          (literal c))
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref mm)))))))

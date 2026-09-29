@@ -64,10 +64,14 @@ func (m *MappingAtomicType) FieldInnerVal(name string) SemType {
 func (m *MappingAtomicType) IsOptional(cx Context, name string) bool {
 	for i, n := range m.names {
 		if n == name {
-			return IsSubtype(cx, Undef, cellInner(m.types[i]))
+			return isOptionalCell(cx, m.types[i])
 		}
 	}
 	return true
+}
+
+func isOptionalCell(cx Context, cell SemType) bool {
+	return IsSubtype(cx, Undef, cellInner(cell))
 }
 
 type matchQuantifier int
@@ -79,8 +83,8 @@ const (
 
 func AllMapConstraintTypesMatch(cx Context, ty SemType, predicate func(SemType) bool) bool {
 	return mappingAtomsMatch(cx, ty, matchAll, func(cx Context, atom *MappingAtomicType) bool {
-		for i, name := range atom.names {
-			if atom.IsOptional(cx, name) && IsNever(CellInnerVal(atom.types[i])) {
+		for i := range atom.names {
+			if isOptionalCell(cx, atom.types[i]) && IsNever(CellInnerVal(atom.types[i])) {
 				continue
 			}
 			return false
@@ -156,10 +160,10 @@ func mappingAtomHasFieldByName(atom *MappingAtomicType, key string) bool {
 	return slices.Contains(atom.names, key)
 }
 
-func mappingAtomHasOptionalFieldByName(_ Context, atom *MappingAtomicType, key string) bool {
+func mappingAtomHasOptionalFieldByName(cx Context, atom *MappingAtomicType, key string) bool {
 	for i, n := range atom.names {
 		if n == key {
-			return ContainsUndef(cellInner(atom.types[i]))
+			return isOptionalCell(cx, atom.types[i])
 		}
 	}
 	return false

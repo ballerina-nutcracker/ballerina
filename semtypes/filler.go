@@ -31,8 +31,9 @@ type SingleValueFiller Value
 
 // MappingFiller represents the filler of an empty mapping atomic type.
 type MappingFiller struct {
-	Atomic *MappingAtomicType
-	Type   SemType
+	Atomic   *MappingAtomicType
+	Type     SemType
+	Readonly bool
 }
 
 // ListFiller represents the filler of a list atomic type. Members holds
@@ -40,9 +41,10 @@ type MappingFiller struct {
 // when an out-of-range index forces the list to grow) is derived on demand
 // from Atomic.Rest().
 type ListFiller struct {
-	Atomic  *ListAtomicType
-	Type    SemType
-	Members []Filler
+	Atomic   *ListAtomicType
+	Type     SemType
+	Members  []Filler
+	Readonly bool
 }
 
 // TableFiller represents empty table of type Type
@@ -162,16 +164,29 @@ func initFnFillerCompatible(cx Context, initFnTy SemType) bool {
 
 func mappingFiller(cx Context, t SemType) (Filler, bool) {
 	mat := ToMappingAtomicType(cx, t)
-	// NOTE: this don't take into account default fields (Which is not a part of type)
-	if mat == nil || len(mat.names) != 0 {
+	if mat == nil {
 		return nil, false
 	}
 	if filler, memoized := cx._fillerMemo[mat]; memoized {
 		return filler, filler != nil
 	}
-	filler := MappingFiller{Atomic: mat, Type: t}
+	// NOTE: this don't take into account default fields (Which is not a part of type). See #1050
+	if !allFieldsOptional(cx, mat) {
+		cx._fillerMemo[mat] = nil
+		return nil, false
+	}
+	filler := MappingFiller{Atomic: mat, Type: t, Readonly: IsSubtype(cx, t, ValReadonly)}
 	cx._fillerMemo[mat] = filler
 	return filler, true
+}
+
+func allFieldsOptional(cx Context, mat *MappingAtomicType) bool {
+	for _, ty := range mat.types {
+		if !isOptionalCell(cx, ty) {
+			return false
+		}
+	}
+	return true
 }
 
 func listFiller(cx Context, t SemType) (Filler, bool) {
@@ -192,7 +207,7 @@ func listFiller(cx Context, t SemType) (Filler, bool) {
 		}
 		memberFillers[i] = filler
 	}
-	filler := ListFiller{Atomic: lat, Type: t, Members: memberFillers}
+	filler := ListFiller{Atomic: lat, Type: t, Members: memberFillers, Readonly: IsSubtype(cx, t, ValReadonly)}
 	cx._fillerMemo[lat] = filler
 	return filler, true
 }

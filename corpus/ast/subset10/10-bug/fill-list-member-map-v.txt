@@ -1,0 +1,95 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Holder
+    (record-type
+      (field m optional
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int)))))
+  (type-definition S
+    (record-type
+      (field s optional
+        (user-defined-type S))
+      (field m optional
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable grown (type
+          (array-type
+            (user-defined-type Holder) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (index-based-access
+              (simple-var-ref grown)
+              (literal 1))
+            (literal m))
+          (literal k))
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref grown))))
+      (var-def
+        (variable fixed (type
+          (array-type
+            (user-defined-type Holder) dimensions: 1 ([
+            (literal 2)]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (index-based-access
+              (simple-var-ref fixed)
+              (literal 0))
+            (literal m))
+          (literal k))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fixed))))
+      (var-def
+        (variable recursive (type
+          (array-type
+            (user-defined-type S) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (index-based-access
+              (index-based-access
+                (index-based-access
+                  (simple-var-ref recursive)
+                  (literal 0))
+                (literal s))
+              (literal s))
+            (literal m))
+          (literal k))
+        (literal 3))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref recursive))))
+      (var-def
+        (variable lists (type
+          (array-type
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)) dimensions: 2 ([][]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (index-based-access
+              (simple-var-ref lists)
+              (literal 0))
+            (literal 1))
+          (literal k))
+        (literal 4))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref lists)))))))

@@ -1,0 +1,29 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (constrained-type
+            (builtin-ref-type map)
+            (intersection-type
+              (constrained-type
+                (builtin-ref-type map)
+                (value-type int))
+              (value-type readonly)))) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable w (type
+          (constrained-type
+            (builtin-ref-type map)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (simple-var-ref r))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref w)
+            (literal k))
+          (literal y))
+        (literal 1)))))

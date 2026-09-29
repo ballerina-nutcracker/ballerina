@@ -1,0 +1,17 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (user-defined-type Mixed))) (expr
+        (mapping-constructor-expr))))
+    (assignment
+      (index-based-access
+        (index-based-access
+          (simple-var-ref m)
+          (literal k))
+        (literal a))
+      (literal 1))
+  )
+)

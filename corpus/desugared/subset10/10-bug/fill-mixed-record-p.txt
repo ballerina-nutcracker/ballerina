@@ -1,0 +1,23 @@
+(package
+  (type-definition Mixed
+    (record-type
+      (field a optional
+        (value-type int))
+      (field b
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (user-defined-type Mixed))) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref m)
+            (literal k))
+          (literal a))
+        (literal 1)))))

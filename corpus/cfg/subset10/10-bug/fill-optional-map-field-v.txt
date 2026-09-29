@@ -1,0 +1,77 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable o (type
+        (user-defined-type Outer)) (expr
+        (mapping-constructor-expr))))
+    (assignment
+      (index-based-access
+        (field-based-access m
+          (simple-var-ref o))
+        (literal k))
+      (literal 2))
+    (assignment
+      (index-based-access
+        (index-based-access
+          (simple-var-ref o)
+          (literal m))
+        (literal j))
+      (literal 3))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref o))))
+    (var-def
+      (variable c (type
+        (user-defined-type ClosedOuter)) (expr
+        (mapping-constructor-expr))))
+    (assignment
+      (index-based-access
+        (field-based-access m
+          (simple-var-ref c))
+        (literal k))
+      (literal 4))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+    (var-def
+      (variable ro (type
+        (user-defined-type RestOuter)) (expr
+        (mapping-constructor-expr))))
+    (assignment
+      (index-based-access
+        (index-based-access
+          (simple-var-ref ro)
+          (literal x))
+        (literal k))
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ro))))
+    (var-def
+      (variable inner (type
+        (constrained-type
+          (builtin-ref-type map)
+          (user-defined-type Inner))) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable wide (type
+        (constrained-type
+          (builtin-ref-type map)
+          (union-type
+            (user-defined-type Inner)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type string))))) (expr
+        (simple-var-ref inner))))
+    (assignment
+      (index-based-access
+        (index-based-access
+          (simple-var-ref wide)
+          (literal k))
+        (literal y))
+      (literal 5))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref inner))))
+  )
+)

@@ -1,0 +1,47 @@
+(package
+  (import-package ballerina io (as io))
+  (variable g (type
+    (user-defined-type Holder)))
+  (variable gm (type
+    (constrained-type
+      (builtin-ref-type map)
+      (user-defined-type Holder))))
+  (type-definition Holder
+    (record-type
+      (field m optional
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref g)
+        (mapping-constructor-expr))
+      (assignment
+        (simple-var-ref gm)
+        (mapping-constructor-expr))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref g)
+            (literal m))
+          (literal k))
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref g))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (index-based-access
+              (simple-var-ref gm)
+              (literal a))
+            (literal m))
+          (literal k))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref gm)))))))

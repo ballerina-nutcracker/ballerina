@@ -1,0 +1,38 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (value-type anydata)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable r (type
+          (intersection-type
+            (constrained-type
+              (builtin-ref-type map)
+              (constrained-type
+                (builtin-ref-type map)
+                (value-type int)))
+            (value-type readonly))) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref v) ())))))
+      (var-def
+        (variable w (type
+          (constrained-type
+            (builtin-ref-type map)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (simple-var-ref r))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref w)
+            (literal a))
+          (literal b))
+        (literal 1)))))

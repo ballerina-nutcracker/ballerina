@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: inherent type violation: cannot mutate readonly value
+        at main(fill-clone-with-type-readonly-p.bal:21)

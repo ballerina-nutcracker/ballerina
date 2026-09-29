@@ -153,7 +153,7 @@ func execMapFillingLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Fra
 	if container == nil {
 		panic(values.NewErrorWithMessage(fmt.Sprintf("missing key: %q", key)))
 	}
-	setOperandValue(ctx, access.LhsOp, frame, container.(*values.Map).FillingGet(ctx.TypeCtx(), key, access.Filler))
+	setOperandValue(ctx, access.LhsOp, frame, container.(*values.Map).FillingGet(ctx.TypeCtx(), key))
 }
 
 func execMapLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {
