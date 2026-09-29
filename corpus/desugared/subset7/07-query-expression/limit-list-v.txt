@@ -15,91 +15,116 @@
             (literal 4)
             (literal 5)))))
       (var-def
+        (variable $desugar$5 (expr
+          (numeric-literal 0))))
+      (var-def
         (variable $desugar$0 (expr
-          (simple-var-ref xs))))
-      (var-def
-        (variable $desugar$1 (expr
-          (invocation lang.array length (
-            (simple-var-ref $desugar$0))))))
-      (var-def
-        (variable $desugar$2 (expr
           (list-constructor-expr))))
       (var-def
         (variable x))
       (var-def
-        (variable $desugar$3 (expr
-          (numeric-literal 0))))
+        (variable $desugar$1 (expr
+          (simple-var-ref xs))))
       (var-def
-        (variable $desugar$4 (expr
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
           (literal 3))))
       (if
         (binary-expr <
-          (simple-var-ref $desugar$4)
+          (simple-var-ref $desugar$3)
           (numeric-literal 0))
         (block-stmt
           (panic
             (error-constructor-expr (
               (literal limit cannot be negative))))) ())
       (var-def
-        (variable $desugar$5 (expr
+        (variable $desugar$4 (expr
+          (numeric-literal 0))))
+      (if
+        (binary-expr &&
+          (binary-expr ==
+            (simple-var-ref $desugar$5)
+            (numeric-literal 0))
+          (binary-expr ==
+            (simple-var-ref $desugar$3)
+            (numeric-literal 0)))
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$5)
+            (numeric-literal 1))) ())
+      (var-def
+        (variable $desugar$6 (expr
           (numeric-literal 0))))
       (while
-        (binary-expr <
-          (simple-var-ref $desugar$3)
-          (simple-var-ref $desugar$1))
+        (binary-expr &&
+          (binary-expr <
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$2))
+          (binary-expr ==
+            (simple-var-ref $desugar$5)
+            (numeric-literal 0)))
         (block-stmt
           (assignment
             (simple-var-ref x)
             (index-based-access
-              (simple-var-ref $desugar$0)
-              (simple-var-ref $desugar$3)))
+              (simple-var-ref $desugar$1)
+              (simple-var-ref $desugar$6)))
           (if
-            (binary-expr >=
-              (simple-var-ref $desugar$5)
-              (simple-var-ref $desugar$4))
+            (binary-expr <
+              (simple-var-ref $desugar$4)
+              (simple-var-ref $desugar$3))
             (block-stmt
               (assignment
-                (simple-var-ref $desugar$3)
+                (simple-var-ref $desugar$4)
                 (binary-expr +
-                  (simple-var-ref $desugar$3)
+                  (simple-var-ref $desugar$4)
                   (numeric-literal 1)))
-              (continue)) ())
+              (expression-stmt
+                (invocation lang.array push (
+                  (simple-var-ref $desugar$0)
+                  (binary-expr *
+                    (simple-var-ref x)
+                    (literal 2)))))
+              (if
+                (binary-expr &&
+                  (binary-expr ==
+                    (simple-var-ref $desugar$5)
+                    (numeric-literal 0))
+                  (binary-expr >=
+                    (simple-var-ref $desugar$4)
+                    (simple-var-ref $desugar$3)))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$5)
+                    (numeric-literal 1))) ())) ())
           (assignment
-            (simple-var-ref $desugar$5)
+            (simple-var-ref $desugar$6)
             (binary-expr +
-              (simple-var-ref $desugar$5)
-              (numeric-literal 1)))
-          (expression-stmt
-            (invocation lang.array push (
-              (simple-var-ref $desugar$2)
-              (binary-expr *
-                (simple-var-ref x)
-                (literal 2)))))
-          (assignment
-            (simple-var-ref $desugar$3)
-            (binary-expr +
-              (simple-var-ref $desugar$3)
+              (simple-var-ref $desugar$6)
               (numeric-literal 1)))))
       (var-def
         (variable out1 (type
           (array-type
             (value-type int) dimensions: 1 ([]))) (expr
-          (simple-var-ref $desugar$2))))
+          (simple-var-ref $desugar$0))))
       (var-def
-        (variable $desugar$6 (expr
-          (simple-var-ref xs))))
+        (variable $desugar$12 (expr
+          (numeric-literal 0))))
       (var-def
         (variable $desugar$7 (expr
-          (invocation lang.array length (
-            (simple-var-ref $desugar$6))))))
-      (var-def
-        (variable $desugar$8 (expr
           (list-constructor-expr))))
       (var-def
         (variable x))
       (var-def
+        (variable $desugar$8 (expr
+          (simple-var-ref xs))))
+      (var-def
         (variable $desugar$9 (expr
-          (numeric-literal 0))))
+          (invocation lang.array length (
+            (simple-var-ref $desugar$8))))))
       (var-def
         (variable $desugar$10 (expr
           (literal 2))))
@@ -114,60 +139,78 @@
       (var-def
         (variable $desugar$11 (expr
           (numeric-literal 0))))
+      (if
+        (binary-expr &&
+          (binary-expr ==
+            (simple-var-ref $desugar$12)
+            (numeric-literal 0))
+          (binary-expr ==
+            (simple-var-ref $desugar$10)
+            (numeric-literal 0)))
+        (block-stmt
+          (assignment
+            (simple-var-ref $desugar$12)
+            (numeric-literal 1))) ())
+      (var-def
+        (variable $desugar$13 (expr
+          (numeric-literal 0))))
       (while
-        (binary-expr <
-          (simple-var-ref $desugar$9)
-          (simple-var-ref $desugar$7))
+        (binary-expr &&
+          (binary-expr <
+            (simple-var-ref $desugar$13)
+            (simple-var-ref $desugar$9))
+          (binary-expr ==
+            (simple-var-ref $desugar$12)
+            (numeric-literal 0)))
         (block-stmt
           (assignment
             (simple-var-ref x)
             (index-based-access
-              (simple-var-ref $desugar$6)
-              (simple-var-ref $desugar$9)))
-          (if
-            (unary-expr !
-              (binary-expr ==
-                (binary-expr %
-                  (simple-var-ref x)
-                  (literal 2))
-                (literal 1)))
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$9)
-                (binary-expr +
-                  (simple-var-ref $desugar$9)
-                  (numeric-literal 1)))
-              (continue)) ())
-          (if
-            (binary-expr >=
-              (simple-var-ref $desugar$11)
-              (simple-var-ref $desugar$10))
-            (block-stmt
-              (assignment
-                (simple-var-ref $desugar$9)
-                (binary-expr +
-                  (simple-var-ref $desugar$9)
-                  (numeric-literal 1)))
-              (continue)) ())
-          (assignment
-            (simple-var-ref $desugar$11)
-            (binary-expr +
-              (simple-var-ref $desugar$11)
-              (numeric-literal 1)))
-          (expression-stmt
-            (invocation lang.array push (
               (simple-var-ref $desugar$8)
-              (simple-var-ref x))))
+              (simple-var-ref $desugar$13)))
+          (if
+            (binary-expr ==
+              (binary-expr %
+                (simple-var-ref x)
+                (literal 2))
+              (literal 1))
+            (block-stmt
+              (if
+                (binary-expr <
+                  (simple-var-ref $desugar$11)
+                  (simple-var-ref $desugar$10))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref $desugar$11)
+                    (binary-expr +
+                      (simple-var-ref $desugar$11)
+                      (numeric-literal 1)))
+                  (expression-stmt
+                    (invocation lang.array push (
+                      (simple-var-ref $desugar$7)
+                      (simple-var-ref x))))
+                  (if
+                    (binary-expr &&
+                      (binary-expr ==
+                        (simple-var-ref $desugar$12)
+                        (numeric-literal 0))
+                      (binary-expr >=
+                        (simple-var-ref $desugar$11)
+                        (simple-var-ref $desugar$10)))
+                    (block-stmt
+                      (assignment
+                        (simple-var-ref $desugar$12)
+                        (numeric-literal 1))) ())) ())) ())
           (assignment
-            (simple-var-ref $desugar$9)
+            (simple-var-ref $desugar$13)
             (binary-expr +
-              (simple-var-ref $desugar$9)
+              (simple-var-ref $desugar$13)
               (numeric-literal 1)))))
       (var-def
         (variable out2 (type
           (array-type
             (value-type int) dimensions: 1 ([]))) (expr
-          (simple-var-ref $desugar$8))))
+          (simple-var-ref $desugar$7))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref out1))))

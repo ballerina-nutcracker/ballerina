@@ -1,0 +1,35 @@
+(main
+  (bb0 () (bb1))
+  (bb1 (bb0) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable value))
+      (list-constructor-expr
+        (literal 1)))
+  )
+  (bb2 (bb1) ()
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref value))
+    (panic
+      (error-constructor-expr (
+        (literal query action panic))))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (query-action
+        (from-clause
+          (var-def
+            (variable value))
+          (list-constructor-expr
+            (literal 1)))
+        (do-clause
+          (block-stmt
+            (assignment
+              (wildcard-binding-pattern)
+              (simple-var-ref value))
+            (panic
+              (error-constructor-expr (
+                (literal query action panic))))))))
+  )
+)

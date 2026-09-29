@@ -1,0 +1,256 @@
+module $anon.. v 0.0.0;
+status  nil|error;
+total  int;
+store() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int...][%1]{}
+    seen = %2;
+    lock-start "$anon/.:status" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 18
+    %1 = ConstantLoad <nil>
+    $desugar$0 = %1;
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 2
+    %6 = ConstantLoad 3
+    %7 = ConstantLoad 3
+    %8 = newArray [int, int, int, never...][%7]{%4, %5, %6}
+    $desugar$1 = %8;
+    %10 = length($desugar$1) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %10;
+    %12 = ConstantLoad 0
+    $desugar$3 = %12;
+    GOTO bb3;
+  }
+  bb3 {
+    %15 = $desugar$3;
+    %16 = $desugar$2;
+    %14 = < %15 %16;
+    %14 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    (1, value) = %0;
+    %1 = (1, value);
+    %2 = push((2, seen),%1) -> bb6;
+  }
+  bb5 {
+    %17 = $desugar$0 is error
+    %17 ? bb7 : bb8;
+  }
+  bb6 {
+    %4 = (1, $desugar$3);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$3) = %3;
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb7 {
+    (1, %0) = $desugar$0;
+    PopScopeFrame
+    lock-end "$anon/.:status" GOTO bb10;
+  }
+  bb8 {
+    %0 = $desugar$0;
+    GOTO bb9;
+  }
+  bb9 {
+    status = %0;
+    PopScopeFrame
+    lock-end "$anon/.:status" GOTO bb11;
+  }
+  bb10 {
+    return;
+  }
+  bb11 {
+    lock-start "$anon/.:status" GOTO bb12;
+  }
+  bb12 {
+    PushScopeFrame 17
+    %1 = ConstantLoad <nil>
+    $desugar$4 = %1;
+    %4 = ConstantLoad 4
+    %5 = ConstantLoad 5
+    %6 = ConstantLoad 2
+    %7 = newArray [int, int, never...][%6]{%4, %5}
+    $desugar$5 = %7;
+    %9 = length($desugar$5) -> bb13;
+  }
+  bb13 {
+    $desugar$6 = %9;
+    %11 = ConstantLoad 0
+    $desugar$7 = %11;
+    GOTO bb14;
+  }
+  bb14 {
+    %14 = $desugar$7;
+    %15 = $desugar$6;
+    %13 = < %14 %15;
+    %13 ? bb15 : bb16;
+  }
+  bb15 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$5)[(1, $desugar$7)];
+    (1, value) = %0;
+    %1 = (1, value);
+    %2 = push((2, seen),%1) -> bb17;
+  }
+  bb16 {
+    %16 = $desugar$4 is error
+    %16 ? bb18 : bb19;
+  }
+  bb17 {
+    %4 = (1, $desugar$7);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$7) = %3;
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb18 {
+    (1, %4) = $desugar$4;
+    PopScopeFrame
+    lock-end "$anon/.:status" GOTO bb21;
+  }
+  bb19 {
+    %0 = $desugar$4;
+    GOTO bb20;
+  }
+  bb20 {
+    status = %0;
+    PopScopeFrame
+    lock-end "$anon/.:status" GOTO bb22;
+  }
+  bb21 {
+    panic %4;
+  }
+  bb22 {
+    %5 = println(seen) -> bb23;
+  }
+  bb23 {
+    return;
+  }
+}
+accumulate() -> nil{
+  bb0 {
+    lock-start "$anon/.:total" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 19
+    %1 = ConstantLoad <nil>
+    $desugar$0 = %1;
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 2
+    %6 = ConstantLoad 3
+    %7 = ConstantLoad 3
+    %8 = newArray [int, int, int, never...][%7]{%4, %5, %6}
+    $desugar$1 = %8;
+    %10 = length($desugar$1) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %10;
+    %12 = ConstantLoad 0
+    $desugar$3 = %12;
+    GOTO bb3;
+  }
+  bb3 {
+    %15 = $desugar$3;
+    %16 = $desugar$2;
+    %14 = < %15 %16;
+    %14 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    (1, value) = %0;
+    %2 = (1, value);
+    %1 = + total %2;
+    total = %1;
+    %4 = (1, $desugar$3);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$3) = %3;
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb5 {
+    %17 = $desugar$0 is error
+    %17 ? bb6 : bb7;
+  }
+  bb6 {
+    (1, %1) = $desugar$0;
+    PopScopeFrame
+    lock-end "$anon/.:total" GOTO bb9;
+  }
+  bb7 {
+    %0 = $desugar$0;
+    GOTO bb8;
+  }
+  bb8 {
+    _ = %0;
+    PopScopeFrame
+    lock-end "$anon/.:total" GOTO bb10;
+  }
+  bb9 {
+    panic %1;
+  }
+  bb10 {
+    return;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %2 = store() -> bb1;
+  }
+  bb1 {
+    %3 = %2 is error
+    %3 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %2;
+    return;
+  }
+  bb3 {
+    %1 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %4 = accumulate() -> bb5;
+  }
+  bb5 {
+    lock-start "$anon/.:status" GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 3
+    %0 = status is nil
+    %1 = %0;
+    %2 = println(%1) -> bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    lock-end "$anon/.:status" GOTO bb8;
+  }
+  bb8 {
+    lock-start "$anon/.:total" GOTO bb9;
+  }
+  bb9 {
+    PushScopeFrame 1
+    %0 = println(total) -> bb10;
+  }
+  bb10 {
+    PopScopeFrame
+    lock-end "$anon/.:total" GOTO bb11;
+  }
+  bb11 {
+    return;
+  }
+}

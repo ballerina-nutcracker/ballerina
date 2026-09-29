@@ -1,0 +1,282 @@
+(FailingIterator
+  (next
+    (bb0 () (bb1 bb2)
+      (binary-expr <
+        (field-based-access index
+          (simple-var-ref self))
+        (literal 2))
+    )
+    (bb1 (bb0) ()
+      (compound-assignment +
+        (field-based-access index
+          (simple-var-ref self))
+        (literal 1))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (binary-expr *
+              (field-based-access index
+                (simple-var-ref self))
+              (literal 10)))))
+    )
+    (bb2 (bb0) ()
+      (return
+        (error-constructor-expr (
+          (literal iterator completion failed))))
+    )
+  )
+)
+(FailingNumbers
+  (iterator
+    (bb0 () ()
+      (return
+        (new ()))
+    )
+  )
+)
+(NumberIterator
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access values
+          (simple-var-ref self))
+        (simple-var-ref values))
+    )
+  )
+  (next
+    (bb0 () (bb1 bb2)
+      (binary-expr >=
+        (field-based-access index
+          (simple-var-ref self))
+        (invocation lang.array length (
+          (field-based-access values
+            (simple-var-ref self)))))
+    )
+    (bb1 (bb0) ()
+      (return
+        (literal <nil>))
+    )
+    (bb2 (bb0) ()
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (index-based-access
+            (field-based-access values
+              (simple-var-ref self))
+            (field-based-access index
+              (simple-var-ref self))))))
+      (compound-assignment +
+        (field-based-access index
+          (simple-var-ref self))
+        (literal 1))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (simple-var-ref value))))
+    )
+  )
+)
+(Numbers
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access values
+          (simple-var-ref self))
+        (simple-var-ref values))
+    )
+  )
+  (iterator
+    (bb0 () ()
+      (return
+        (new (
+          (field-based-access values
+            (simple-var-ref self)))))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable doubled (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable value))
+            (new
+              (user-defined-type Numbers) (
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)
+                (literal 3)))))
+          (select-clause
+            (binary-expr *
+              (simple-var-ref value)
+              (literal 2)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref doubled))))
+    (var-def
+      (variable numbers (type
+        (stream-type
+          (value-type int)
+          (value-type null))) (expr
+        (new (
+          (new
+            (user-defined-type NumberIterator) (
+            (list-constructor-expr
+              (literal 4)
+              (literal 5)
+              (literal 6)))))))))
+    (var-def
+      (variable filtered (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable value))
+            (simple-var-ref numbers))
+          (where-clause
+            (binary-expr !=
+              (simple-var-ref value)
+              (literal 5)))
+          (select-clause
+            (simple-var-ref value))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref filtered))))
+    (var-def
+      (variable pairs (type
+        (array-type
+          (tuple-type
+            (value-type int)
+            (value-type int)) dimensions: 1 ([]))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable left))
+            (list-constructor-expr
+              (literal 10)
+              (literal 20)))
+          (join-clause
+            (var-def
+              (variable right))
+            (new
+              (user-defined-type Numbers) (
+              (list-constructor-expr
+                (literal 20)
+                (literal 30))))
+            (on-clause
+              (simple-var-ref left)
+              (simple-var-ref right)))
+          (select-clause
+            (list-constructor-expr
+              (simple-var-ref left)
+              (simple-var-ref right)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref pairs))))
+    (var-def
+      (variable failing (type
+        (stream-type
+          (value-type int)
+          (union-type
+            (error-type)
+            (value-type null)))) (expr
+        (new (
+          (new
+            (user-defined-type FailingIterator) ()))))))
+    (var-def
+      (variable streamed (type
+        (union-type
+          (array-type
+            (value-type int) dimensions: 1 ([]))
+          (error-type))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable value))
+            (simple-var-ref failing))
+          (select-clause
+            (simple-var-ref value))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref streamed)
+          (error-type)))))
+    (type-test-expr is
+      (simple-var-ref streamed)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref streamed))))))
+  )
+  (bb2 (bb1 bb0) ()
+    (var-def
+      (variable ordered (type
+        (union-type
+          (array-type
+            (value-type int) dimensions: 1 ([]))
+          (error-type))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable value))
+            (new
+              (user-defined-type FailingNumbers) ()))
+          (order-by-clause
+            (order-key ascending
+              (simple-var-ref value)))
+          (select-clause
+            (simple-var-ref value))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref ordered)
+          (error-type)))))
+    (var-def
+      (variable failedCount (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable value))
+            (new
+              (user-defined-type FailingNumbers) ()))
+          (collect-clause
+            (invocation lang.array length (
+              (simple-var-ref value))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref failedCount)
+          (error-type)))))
+    (var-def
+      (variable count (type
+        (value-type int)) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable value))
+            (new
+              (user-defined-type Numbers) (
+              (list-constructor-expr
+                (literal 7)
+                (literal 8)))))
+          (collect-clause
+            (invocation lang.array length (
+              (simple-var-ref value))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref count))))
+  )
+)

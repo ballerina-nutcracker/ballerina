@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: group by variable type is incompatible with initializer expression
+  --> query-clause-type-e.bal:20:41
+   |
+20 |     int[] _ = from var x in xs group by string g = x select g.length(); // @error group by variable type incompatible with initializer
+   |                                         ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: grouping key expression must be a subtype of anydata
+  --> query-clause-type-e.bal:21:41
+   |
+21 |     int[] _ = from var x in xs group by var e = error("boom") select e.message().length() + x[0]; // @error grouping key must be anydata
+   |                                         ^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: join clause variable type is incompatible with collection member type
+  --> query-clause-type-e.bal:22:37
+   |
+22 |     int[] _ = from var x in xs join string y in ys on x equals y select x + y.length(); // @error join variable type incompatible with collection
+   |                                     ^^^^^^^^

@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: '5' is not an iterable collection
+  --> query-collection-type-e.bal:25:15
+   |
+25 |     int[] _ = from var value in 5 select value; // @error int is not iterable
+   |               ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: '[int...]|{| int... |}' is not an iterable collection
+  --> query-collection-type-e.bal:26:15
+   |
+26 |     int[] _ = from var value in either select value; // @error union of collections is not iterable
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: 'object { public function init() returns nil }' is not an iterable collection
+  --> query-collection-type-e.bal:24:15
+   |
+24 |     int[] _ = from var value in plain select value; // @error object is not iterable
+   |               ^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: 'object { public function init() returns nil }' is not an iterable collection
+  --> query-collection-type-e.bal:28:36
+   |
+28 |     int[] _ = from var left in [1] join var right in plain on left equals right select left + right; // @error join object is not iterable
+   |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: 'string|[int...]' is not an iterable collection
+  --> query-collection-type-e.bal:27:15
+   |
+27 |     int[] _ = from var value in mixed select value; // @error union of collections is not iterable
+   |               ^^^^^^^^^^^^^^^^^^^^^^^

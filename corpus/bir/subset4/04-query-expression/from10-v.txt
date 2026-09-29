@@ -9,42 +9,42 @@ main() -> nil{
     %6 = ConstantLoad 3
     %7 = newMap {| k1: int, k2: int, k3: int, never... |}{%1=%2, %3=%4, %5=%6}
     xs = %7;
-    $desugar$0 = xs;
-    %10 = keys($desugar$0) -> bb1;
+    %9 = ConstantLoad 0
+    %10 = newArray list[%9]{}
+    $desugar$0 = %10;
+    $desugar$1 = xs;
+    %14 = keys($desugar$1) -> bb1;
   }
   bb1 {
-    $desugar$1 = %10;
-    %12 = length($desugar$1) -> bb2;
+    $desugar$2 = %14;
+    %16 = length($desugar$2) -> bb2;
   }
   bb2 {
-    $desugar$2 = %12;
-    %14 = ConstantLoad 0
-    %15 = newArray list[%14]{}
-    $desugar$3 = %15;
+    $desugar$3 = %16;
     %18 = ConstantLoad 0
     $desugar$4 = %18;
     GOTO bb3;
   }
   bb3 {
     %21 = $desugar$4;
-    %22 = $desugar$2;
+    %22 = $desugar$3;
     %20 = < %21 %22;
     %20 ? bb4 : bb5;
   }
   bb4 {
     PushScopeFrame 12
-    %1 = (1, $desugar$1)[(1, $desugar$4)];
-    %0 = (1, $desugar$0)[%1];
+    %1 = (1, $desugar$2)[(1, $desugar$4)];
+    %0 = (1, $desugar$1)[%1];
     (1, x) = %0;
     %3 = (1, x);
     %4 = ConstantLoad 2
     %5 = %4;
     %2 = * %3 %5;
     %6 = %2;
-    %7 = push((1, $desugar$3),%6) -> bb6;
+    %7 = push((1, $desugar$0),%6) -> bb6;
   }
   bb5 {
-    out = $desugar$3;
+    out = $desugar$0;
     %24 = println(out) -> bb7;
   }
   bb6 {

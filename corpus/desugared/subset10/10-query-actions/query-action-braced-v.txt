@@ -1,0 +1,256 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (class-definition NumberClient
+    (function init () ()
+      (block-function-body))
+    (function $remote$failing () (
+      (union-type
+        (value-type int)
+        (error-type)))
+      (block-function-body
+        (return
+          (error-constructor-expr (
+            (literal remote failed))))))
+    (function $remote$value () (
+      (union-type
+        (value-type int)
+        (error-type)))
+      (block-function-body
+        (return
+          (literal 7)))))
+  (function collectBraced (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable seen (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal <nil>))))
+      (var-def
+        (variable x))
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref xs))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$3)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (assignment
+            (simple-var-ref x)
+            (index-based-access
+              (simple-var-ref $desugar$1)
+              (simple-var-ref $desugar$3)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref seen)
+              (simple-var-ref x))))
+          (assignment
+            (simple-var-ref $desugar$3)
+            (binary-expr +
+              (simple-var-ref $desugar$3)
+              (numeric-literal 1)))))
+      (var-def
+        (variable result (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (value-type null)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref seen))))
+      (assignment
+        (simple-var-ref seen)
+        (list-constructor-expr))
+      (var-def
+        (variable checked (type
+          (value-type null)) (expr
+          (checked-expr
+            (expression-thunk
+            (var-def
+              (variable $desugar$4 (expr
+                (literal <nil>))))
+            (var-def
+              (variable x))
+            (var-def
+              (variable $desugar$5 (expr
+                (simple-var-ref xs))))
+            (var-def
+              (variable $desugar$6 (expr
+                (invocation lang.array length (
+                  (simple-var-ref $desugar$5))))))
+            (var-def
+              (variable $desugar$7 (expr
+                (numeric-literal 0))))
+            (while
+              (binary-expr <
+                (simple-var-ref $desugar$7)
+                (simple-var-ref $desugar$6))
+              (block-stmt
+                (assignment
+                  (simple-var-ref x)
+                  (index-based-access
+                    (simple-var-ref $desugar$5)
+                    (simple-var-ref $desugar$7)))
+                (expression-stmt
+                  (invocation lang.array push (
+                    (simple-var-ref seen)
+                    (binary-expr *
+                      (simple-var-ref x)
+                      (literal 2)))))
+                (assignment
+                  (simple-var-ref $desugar$7)
+                  (binary-expr +
+                    (simple-var-ref $desugar$7)
+                    (numeric-literal 1)))))
+            (simple-var-ref $desugar$4))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref checked)
+            (value-type null)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref seen))))
+      (assignment
+        (simple-var-ref seen)
+        (list-constructor-expr))
+      (var-def
+        (variable panicked (type
+          (value-type null)) (expr
+          (check-panicked-expr
+            (expression-thunk
+            (var-def
+              (variable $desugar$8 (expr
+                (literal <nil>))))
+            (var-def
+              (variable x))
+            (var-def
+              (variable $desugar$9 (expr
+                (simple-var-ref xs))))
+            (var-def
+              (variable $desugar$10 (expr
+                (invocation lang.array length (
+                  (simple-var-ref $desugar$9))))))
+            (var-def
+              (variable $desugar$11 (expr
+                (numeric-literal 0))))
+            (while
+              (binary-expr <
+                (simple-var-ref $desugar$11)
+                (simple-var-ref $desugar$10))
+              (block-stmt
+                (assignment
+                  (simple-var-ref x)
+                  (index-based-access
+                    (simple-var-ref $desugar$9)
+                    (simple-var-ref $desugar$11)))
+                (expression-stmt
+                  (invocation lang.array push (
+                    (simple-var-ref seen)
+                    (binary-expr *
+                      (simple-var-ref x)
+                      (literal 3)))))
+                (assignment
+                  (simple-var-ref $desugar$11)
+                  (binary-expr +
+                    (simple-var-ref $desugar$11)
+                    (numeric-literal 1)))))
+            (simple-var-ref $desugar$8))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref panicked)
+            (value-type null)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref seen))))))
+  (function callBraced (
+    (variable numbers (type
+      (user-defined-type NumberClient)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (checked-expr
+            (remote-method-call value expr:
+              (simple-var-ref numbers) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref value))))
+      (var-def
+        (variable failed (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (remote-method-call failing expr:
+              (simple-var-ref numbers) ())))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref failed)
+            (error-type)))))
+      (var-def
+        (variable unreachable (type
+          (value-type int)) (expr
+          (checked-expr
+            (remote-method-call failing expr:
+              (simple-var-ref numbers) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref unreachable))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable collected (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (invocation collectBraced (
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3)))))))
+      (var-def
+        (variable called (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (invocation callBraced (
+            (new ()))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref collected)
+            (value-type null)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref called)
+            (error-type))))))))

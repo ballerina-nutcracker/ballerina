@@ -43,29 +43,6 @@ func TestResolveQueryExprErrorCases(t *testing.T) {
 		diagSub string
 	}{
 		{
-			name: "missing select clause list",
-			query: newQueryExpr(
-				newFromClause(newIntListLiteral(1), nil, true),
-			),
-			diagSub: "query expression requires from and select clauses",
-		},
-		{
-			name: "must start with from clause",
-			query: newQueryExpr(
-				newSelectClause(newIntLiteral(1)),
-				newSelectClause(newIntLiteral(2)),
-			),
-			diagSub: "query expression must start with a from clause",
-		},
-		{
-			name: "requires select clause",
-			query: newQueryExpr(
-				newFromClause(newIntListLiteral(1), nil, true),
-				newWhereClause(newIntLiteral(1)),
-			),
-			diagSub: "query expression requires a select or collect clause",
-		},
-		{
 			name: "from collection resolution fails",
 			query: newQueryExpr(
 				newFromClause(newUnsupportedExprNode(), nil, true),
@@ -79,7 +56,7 @@ func TestResolveQueryExprErrorCases(t *testing.T) {
 				newFromClause(newIntLiteral(42), nil, true),
 				newSelectClause(newIntLiteral(1)),
 			),
-			diagSub: "query from clause currently supports only list or map collections",
+			diagSub: "is not an iterable collection",
 		},
 		{
 			name: "from binding variable is nil",
@@ -256,7 +233,7 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 				false,
 				newOnClause(newIntLiteral(1), newIntLiteral(1)),
 			),
-			diagSub: "query from clause currently supports only list or map collections",
+			diagSub: "is not an iterable collection",
 		},
 		{
 			name: "outer join without var",
@@ -294,7 +271,7 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 		{
 			name:    "unsupported intermediate clause",
 			clause:  newCollectClause(),
-			diagSub: "only join + let + where + group by + order by + limit clauses are supported as intermediate query clauses",
+			diagSub: "only from + join + let + where + group by + order by + limit clauses are supported as intermediate query clauses",
 		},
 	}
 
@@ -306,7 +283,7 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 				newSelectClause(newIntLiteral(1)),
 			)
 			resolver, cx := newTestQueryResolver()
-			_, ok := resolveQueryIntermediateClauses(resolver, nil, query, len(query.QueryClauseList)-1)
+			_, _, ok := resolveQueryIntermediateClauses(resolver, nil, query.QueryClauseList, len(query.QueryClauseList)-1)
 			if ok {
 				t.Fatalf("expected resolveQueryIntermediateClauses to fail")
 			}
@@ -782,8 +759,9 @@ func assertDiagnosticContains(t *testing.T, cx *context.CompilerContext, substr 
 }
 
 func newQueryExpr(clauses ...ast.BLangNode) *ast.BLangQueryExpr {
-	query := &ast.BLangQueryExpr{
-		QueryClauseList: clauses,
+	query := &ast.BLangQueryExpr{}
+	for _, clause := range clauses {
+		query.AddQueryClause(clause)
 	}
 	query.SetPosition(queryTestPos)
 	return query

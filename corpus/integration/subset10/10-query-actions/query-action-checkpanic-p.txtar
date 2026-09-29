@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: query action checkpanic
+        at main(query-action-checkpanic-p.bal:25)

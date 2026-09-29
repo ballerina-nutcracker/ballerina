@@ -305,6 +305,29 @@ func defaultExpressionEffect(chain *binding) expressionEffect {
 	return expressionEffect{ifTrue: chain, ifFalse: chain}
 }
 
+// queryActionEffect returns the effect a statement continues with after evaluating expr. A
+// query action's do body may unnarrow variables, and that applies unconditionally afterwards,
+// also when the action sits under check, checkpanic, trap or braces. Every other expression
+// leaves the chain in scope before it.
+func queryActionEffect(chain *binding, expr ast.BLangActionOrExpression, effect expressionEffect) expressionEffect {
+	for {
+		switch e := expr.(type) {
+		case *ast.BLangQueryAction:
+			return effect
+		case *ast.BLangCheckedExpr:
+			expr = e.Expr
+		case *ast.BLangCheckPanickedExpr:
+			expr = e.Expr
+		case *ast.BLangTrapExpr:
+			expr = e.Expr
+		case *ast.BLangGroupExpr:
+			expr = e.Expression
+		default:
+			return defaultExpressionEffect(chain)
+		}
+	}
+}
+
 func defaultStmtEffect(chain *binding) statementEffect {
 	return statementEffect{binding: chain, nonCompletion: false}
 }

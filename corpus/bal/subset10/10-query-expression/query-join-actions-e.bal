@@ -14,27 +14,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-type Person record {|
-    int id;
-    string name;
-|};
-
-type Department record {|
-    int ownerId;
-    string name;
-|};
+client class NumberSource {
+    remote function values() returns int[] {
+        return [1, 2];
+    }
+}
 
 public function main() {
-    Person[] people = [
-        {id: 1, name: "Alex"}
-    ];
-    Department[] departments = [
-        {ownerId: 1, name: "HR"}
-    ];
+    NumberSource numbers = new;
+    int[] _ = from var left in [1, 2]
+        join var right in numbers->values() on left equals right // @error
+        select left;
 
-    string[][] _ = from var person in people
-        select from var dept in departments
-            join var owner in person.id
-            on dept.ownerId equals owner.id
-            select dept.name;
+    from var left in [1, 2]
+        join var right in (numbers->values()) on left equals right // @error
+        do {};
 }

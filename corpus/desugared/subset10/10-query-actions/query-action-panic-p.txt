@@ -1,0 +1,44 @@
+(package
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (literal <nil>))))
+      (var-def
+        (variable value))
+      (var-def
+        (variable $desugar$1 (expr
+          (list-constructor-expr
+            (literal 1)))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$3 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$3)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (assignment
+            (simple-var-ref value)
+            (index-based-access
+              (simple-var-ref $desugar$1)
+              (simple-var-ref $desugar$3)))
+          (assignment
+            (wildcard-binding-pattern)
+            (simple-var-ref value))
+          (panic
+            (error-constructor-expr (
+              (literal query action panic))))
+          (assignment
+            (simple-var-ref $desugar$3)
+            (binary-expr +
+              (simple-var-ref $desugar$3)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (simple-var-ref $desugar$0)))))

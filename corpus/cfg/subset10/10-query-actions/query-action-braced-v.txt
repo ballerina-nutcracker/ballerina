@@ -1,0 +1,216 @@
+(NumberClient
+  ($remote$failing
+    (bb0 () ()
+      (return
+        (error-constructor-expr (
+          (literal remote failed))))
+    )
+  )
+  ($remote$value
+    (bb0 () ()
+      (return
+        (literal 7))
+    )
+  )
+)
+(callBraced
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (value-type int)) (expr
+        (checked-expr
+          (remote-method-call value expr:
+            (simple-var-ref numbers) ())))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref value))))
+    (var-def
+      (variable failed (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (remote-method-call failing expr:
+            (simple-var-ref numbers) ())))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref failed)
+          (error-type)))))
+    (var-def
+      (variable unreachable (type
+        (value-type int)) (expr
+        (checked-expr
+          (remote-method-call failing expr:
+            (simple-var-ref numbers) ())))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref unreachable))))
+  )
+)
+(collectBraced
+  (bb0 () (bb1)
+    (var-def
+      (variable seen (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (from-clause
+      (var-def
+        (variable x))
+      (simple-var-ref xs))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref seen)
+        (simple-var-ref x))))
+  )
+  (bb3 (bb1) (bb4)
+    (var-def
+      (variable result (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (query-action
+          (from-clause
+            (var-def
+              (variable x))
+            (simple-var-ref xs))
+          (do-clause
+            (block-stmt
+              (expression-stmt
+                (invocation lang.array push (
+                  (simple-var-ref seen)
+                  (simple-var-ref x))))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref result)
+          (value-type null)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref seen))))
+    (assignment
+      (simple-var-ref seen)
+      (list-constructor-expr))
+  )
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (from-clause
+      (var-def
+        (variable x))
+      (simple-var-ref xs))
+  )
+  (bb5 (bb4) (bb4)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref seen)
+        (binary-expr *
+          (simple-var-ref x)
+          (literal 2)))))
+  )
+  (bb6 (bb4) (bb7)
+    (var-def
+      (variable checked (type
+        (value-type null)) (expr
+        (checked-expr
+          (query-action
+            (from-clause
+              (var-def
+                (variable x))
+              (simple-var-ref xs))
+            (do-clause
+              (block-stmt
+                (expression-stmt
+                  (invocation lang.array push (
+                    (simple-var-ref seen)
+                    (binary-expr *
+                      (simple-var-ref x)
+                      (literal 2))))))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref checked)
+          (value-type null)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref seen))))
+    (assignment
+      (simple-var-ref seen)
+      (list-constructor-expr))
+  )
+  (bb7 (bb6 bb8) (bb8 bb9)
+    (from-clause
+      (var-def
+        (variable x))
+      (simple-var-ref xs))
+  )
+  (bb8 (bb7) (bb7)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref seen)
+        (binary-expr *
+          (simple-var-ref x)
+          (literal 3)))))
+  )
+  (bb9 (bb7) ()
+    (var-def
+      (variable panicked (type
+        (value-type null)) (expr
+        (check-panicked-expr
+          (query-action
+            (from-clause
+              (var-def
+                (variable x))
+              (simple-var-ref xs))
+            (do-clause
+              (block-stmt
+                (expression-stmt
+                  (invocation lang.array push (
+                    (simple-var-ref seen)
+                    (binary-expr *
+                      (simple-var-ref x)
+                      (literal 3))))))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref panicked)
+          (value-type null)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref seen))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable collected (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (invocation collectBraced (
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))))
+    (var-def
+      (variable called (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (invocation callBraced (
+          (new ()))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref collected)
+          (value-type null)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref called)
+          (error-type)))))
+  )
+)

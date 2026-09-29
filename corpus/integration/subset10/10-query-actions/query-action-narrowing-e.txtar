@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> query-action-narrowing-e.bal:25:17
+   |
+25 |         int y = x; // @error x is int|string after the do body assigns it
+   |                 ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> query-action-narrowing-e.bal:36:17
+   |
+36 |         int w = z; // @error z is int|string after the do body assigns it
+   |                 ^

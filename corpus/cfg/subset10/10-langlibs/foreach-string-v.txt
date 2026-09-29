@@ -1,0 +1,85 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable chars (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (literal héllo)
+    (var-def
+      (variable c (type
+        (user-defined-type string Char))))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref chars)
+        (simple-var-ref c))))
+  )
+  (bb3 (bb1) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref chars))))
+    (var-def
+      (variable count (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (literal a😀b)
+    (var-def
+      (variable c))
+  )
+  (bb5 (bb4) (bb4)
+    (compound-assignment +
+      (simple-var-ref count)
+      (literal 1))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref c))
+  )
+  (bb6 (bb4) (bb7)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref count))))
+    (var-def
+      (variable reversed (type
+        (value-type string)) (expr
+        (literal ))))
+  )
+  (bb7 (bb6 bb8) (bb8 bb9)
+    (literal xyz)
+    (var-def
+      (variable c (type
+        (value-type string))))
+  )
+  (bb8 (bb7) (bb7)
+    (assignment
+      (simple-var-ref reversed)
+      (binary-expr +
+        (simple-var-ref c)
+        (simple-var-ref reversed)))
+  )
+  (bb9 (bb7) (bb10)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref reversed))))
+  )
+  (bb10 (bb9 bb11) (bb11 bb12)
+    (literal )
+    (var-def
+      (variable c))
+  )
+  (bb11 (bb10) (bb10)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+  )
+  (bb12 (bb10) ()
+    (expression-stmt
+      (invocation io println (
+        (literal done))))
+  )
+)

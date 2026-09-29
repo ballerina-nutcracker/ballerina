@@ -1,0 +1,181 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [string...][%1]{}
+    chars = %2;
+    %4 = ConstantLoad héllo
+    $desugar$0 = %4;
+    %6 = iterator($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %6;
+    GOTO bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad true
+    %8 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1).next() -> bb5;
+  }
+  bb4 {
+    %9 = println(chars) -> bb9;
+  }
+  bb5 {
+    $desugar$3 = %0;
+    %2 = $desugar$3 is nil
+    %2 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb7 {
+    %4 = ConstantLoad value
+    %3 = $desugar$3[%4];
+    c = %3;
+    %6 = push((1, chars),c) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb9 {
+    %10 = ConstantLoad 0
+    count = %10;
+    %12 = ConstantLoad a😀b
+    $desugar$4 = %12;
+    %14 = iterator($desugar$4) -> bb10;
+  }
+  bb10 {
+    $desugar$5 = %14;
+    GOTO bb11;
+  }
+  bb11 {
+    %16 = ConstantLoad true
+    %16 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$5).next() -> bb14;
+  }
+  bb13 {
+    %17 = count;
+    %18 = println(%17) -> bb17;
+  }
+  bb14 {
+    $desugar$7 = %0;
+    %2 = $desugar$7 is nil
+    %2 ? bb15 : bb16;
+  }
+  bb15 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb16 {
+    %4 = ConstantLoad value
+    %3 = $desugar$7[%4];
+    c = %3;
+    %7 = (1, count);
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    (1, count) = %6;
+    %10 = c;
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb17 {
+    %19 = ConstantLoad 
+    reversed = %19;
+    %21 = ConstantLoad xyz
+    $desugar$8 = %21;
+    %23 = iterator($desugar$8) -> bb18;
+  }
+  bb18 {
+    $desugar$9 = %23;
+    GOTO bb19;
+  }
+  bb19 {
+    %25 = ConstantLoad true
+    %25 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$9).next() -> bb22;
+  }
+  bb21 {
+    %26 = println(reversed) -> bb25;
+  }
+  bb22 {
+    $desugar$11 = %0;
+    %2 = $desugar$11 is nil
+    %2 ? bb23 : bb24;
+  }
+  bb23 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb21;
+  }
+  bb24 {
+    %4 = ConstantLoad value
+    %3 = $desugar$11[%4];
+    c = %3;
+    %6 = + c (1, reversed);
+    (1, reversed) = %6;
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb25 {
+    %27 = ConstantLoad 
+    $desugar$12 = %27;
+    %29 = iterator($desugar$12) -> bb26;
+  }
+  bb26 {
+    $desugar$13 = %29;
+    GOTO bb27;
+  }
+  bb27 {
+    %31 = ConstantLoad true
+    %31 ? bb28 : bb29;
+  }
+  bb28 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$13).next() -> bb30;
+  }
+  bb29 {
+    %32 = ConstantLoad done
+    %33 = println(%32) -> bb34;
+  }
+  bb30 {
+    $desugar$15 = %0;
+    %2 = $desugar$15 is nil
+    %2 ? bb31 : bb32;
+  }
+  bb31 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb29;
+  }
+  bb32 {
+    %4 = ConstantLoad value
+    %3 = $desugar$15[%4];
+    c = %3;
+    %6 = println(c) -> bb33;
+  }
+  bb33 {
+    PopScopeFrame
+    GOTO bb27;
+  }
+  bb34 {
+    return;
+  }
+}

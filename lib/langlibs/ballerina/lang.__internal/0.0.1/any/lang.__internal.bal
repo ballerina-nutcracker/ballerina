@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-public isolated function querySort(any[] sortKeyRows, any[] sortDirections, any[] rowIndices, any[] payloadRows) = external;
+public isolated function querySort(any[] sortKeyRows, any[] sortDirections, any[] rows) = external;
 
 public isolated function queryGroup(any[] rows, any[] keyRows, any[] scalarFlags) returns any[] = external;
 

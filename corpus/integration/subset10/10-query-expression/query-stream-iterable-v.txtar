@@ -1,0 +1,10 @@
+-- stdout --
+[2,4,6]
+[4,6]
+[[20,20]]
+true
+iterator completion failed
+true
+true
+2
+-- stderr --

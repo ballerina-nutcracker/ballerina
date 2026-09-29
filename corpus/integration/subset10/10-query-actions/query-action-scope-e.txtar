@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: left
+  --> query-action-scope-e.bal:19:28
+   |
+19 |         join var right in [left] // @error
+   |                            ^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: left
+  --> query-action-scope-e.bal:30:32
+   |
+30 |         on left equals right + left // @error
+   |                                ^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: right
+  --> query-action-scope-e.bal:25:19
+   |
+25 |         on left + right equals right // @error
+   |                   ^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: value
+  --> query-action-scope-e.bal:34:15
+   |
+34 |         limit value // @error
+   |               ^^^^^

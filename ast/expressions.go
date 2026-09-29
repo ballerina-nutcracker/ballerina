@@ -325,9 +325,17 @@ type (
 		ElseExpr  BLangExpression
 	}
 
+	bLangQueryClauseListBase struct {
+		QueryClauseList []BLangNode
+	}
+	BLangQueryAction struct {
+		bLangActionBase
+		bLangQueryClauseListBase
+		DoClause *BLangDoClause
+	}
 	BLangQueryExpr struct {
 		bLangExpressionBase
-		QueryClauseList    []BLangNode
+		bLangQueryClauseListBase
 		QueryConstructType TypeKind
 	}
 
@@ -675,6 +683,7 @@ var (
 	_ BLangExpression             = &BLangInvocation{}
 	_ BLangAction                 = &BLangRemoteMethodCallAction{}
 	_ BLangAction                 = &BLangClientResourceAccessAction{}
+	_ BLangAction                 = &BLangQueryAction{}
 	_ BLangAction                 = &BLangStartAction{}
 	_ BLangAction                 = &BLangSingleWaitAction{}
 	_ BLangAction                 = &BLangAlternateWaitAction{}
@@ -891,7 +900,7 @@ func NewBLangTernaryExpr(
 	}
 }
 
-func (b *BLangQueryExpr) GetQueryClauses() []Node {
+func (b *bLangQueryClauseListBase) GetQueryClauses() []Node {
 	result := make([]Node, len(b.QueryClauseList))
 	for i := range b.QueryClauseList {
 		result[i] = b.QueryClauseList[i]
@@ -899,7 +908,7 @@ func (b *BLangQueryExpr) GetQueryClauses() []Node {
 	return result
 }
 
-func (b *BLangQueryExpr) AddQueryClause(queryClause Node) {
+func (b *bLangQueryClauseListBase) AddQueryClause(queryClause Node) {
 	if node, ok := queryClause.(BLangNode); ok {
 		b.QueryClauseList = append(b.QueryClauseList, node)
 		return
@@ -1288,3 +1297,10 @@ var (
 	_ BLangNode       = &BLangXMLCommentLiteral{}
 	_ BLangNode       = &BLangXMLTextLiteral{}
 )
+
+func NewBLangQueryAction(pos Location, doClause *BLangDoClause) *BLangQueryAction {
+	return &BLangQueryAction{
+		bLangActionBase: bLangActionBase{bLangNodeBase: bLangNodeBase{pos: pos}},
+		DoClause:        doClause,
+	}
+}

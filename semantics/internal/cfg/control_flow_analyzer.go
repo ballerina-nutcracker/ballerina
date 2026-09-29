@@ -289,6 +289,9 @@ func (analyzer *functionControlFlowAnalyzer) addNode(bb bbRef, node ast.Node) {
 
 // analyzeStatement dispatches to the appropriate handler based on statement type
 func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt ast.StatementNode) stmtEffect {
+	if action := queryActionInStatement(stmt); action != nil {
+		curBB = analyzer.analyzeQueryAction(curBB, action)
+	}
 	switch s := stmt.(type) {
 	case *ast.BLangReturn:
 		return analyzer.analyzeReturn(curBB, s)
@@ -336,6 +339,60 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 		analyzer.addNode(curBB, stmt)
 		return continueEffect(curBB)
 	}
+}
+
+// queryActionInStatement returns the query action a statement evaluates: an action statement,
+// the initializer of a variable definition, the value of an assignment or a return value,
+// possibly under check, checkpanic or trap. Actions take no other position in a statement.
+func queryActionInStatement(stmt ast.StatementNode) *ast.BLangQueryAction {
+	var expr ast.BLangActionOrExpression
+	switch s := stmt.(type) {
+	case *ast.BLangExpressionStmt:
+		expr = s.Expr
+	case *ast.BLangVariableDef:
+		expr = s.Var.Expr
+	case *ast.BLangAssignment:
+		expr = s.Expr
+	case *ast.BLangReturn:
+		expr = s.Expr
+	default:
+		return nil
+	}
+	for {
+		switch e := expr.(type) {
+		case *ast.BLangQueryAction:
+			return e
+		case *ast.BLangCheckedExpr:
+			expr = e.Expr
+		case *ast.BLangCheckPanickedExpr:
+			expr = e.Expr
+		case *ast.BLangTrapExpr:
+			expr = e.Expr
+		default:
+			return nil
+		}
+	}
+}
+
+// analyzeQueryAction models a query action like a foreach: the clauses form the header block,
+// the do body is the loop body with a back edge to the header, and the enclosing statement
+// continues in the exit block. break and continue in the body target the enclosing loop, so
+// the action is not pushed on the loop stack.
+func (analyzer *functionControlFlowAnalyzer) analyzeQueryAction(curBB bbRef, action *ast.BLangQueryAction) bbRef {
+	loopHead := analyzer.createNewBB()
+	loopBody := analyzer.createNewBB()
+	loopEnd := analyzer.createNewBB()
+	analyzer.addEdge(curBB, loopHead)
+	for _, clause := range action.QueryClauseList {
+		analyzer.addNode(loopHead, clause)
+	}
+	analyzer.addEdge(loopHead, loopBody)
+	analyzer.addEdge(loopHead, loopEnd)
+	bodyEffect := analyzer.analyzeBlockStmt(loopBody, action.DoClause.Body)
+	if !bodyEffect.isTerminal() {
+		analyzer.addEdge(bodyEffect.nextBB, loopHead)
+	}
+	return loopEnd
 }
 
 // Terminal statement handlers - these terminate control flow

@@ -1,0 +1,19 @@
+-- stdout --
+true
+true
+3
+<a/>
+text
+<!--note-->
+true
+x<a/>
+x<b/>
+y<a/>
+y<b/>
+true
+b
+d
+true
+<b/>
+true
+-- stderr --

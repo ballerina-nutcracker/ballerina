@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: break statement not allowed outside loop
+  --> query-action-loop-control-e.bal:21:9
+   |
+21 |         break; // @error break requires an enclosing loop
+   |         ^^^^^^
+
+error[SEMANTIC_ERROR]: continue statement not allowed outside loop
+  --> query-action-loop-control-e.bal:27:9
+   |
+27 |         continue; // @error continue requires an enclosing loop
+   |         ^^^^^^^^^

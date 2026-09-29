@@ -230,7 +230,7 @@ type MatchPatternNode interface {
 
 type InputClauseNode interface {
 	Node
-	GetCollection() BLangExpression
+	GetCollection() BLangActionOrExpression
 	GetVariableDefinitionNode() *BLangVariableDef
 	IsDeclaredWithVar() bool
 }
@@ -239,10 +239,13 @@ type FromClauseNode = InputClauseNode
 
 type SelectClauseNode interface {
 	Node
-	GetExpression() BLangExpression
+	GetExpression() BLangActionOrExpression
 }
 
-type CollectClauseNode = SelectClauseNode
+type CollectClauseNode interface {
+	Node
+	GetExpression() BLangExpression
+}
 
 type DoClauseNode interface {
 	Node

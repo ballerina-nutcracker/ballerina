@@ -1,0 +1,29 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got nil|error
+  --> query-action-iterator-completion-e.bal:32:17
+   |
+32 |     () result = from var value in new FailingIterable()
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 |         do { // @error
+   |         ^^^^^^^^^^^^^^
+34 |             int _ = value;
+   |             ^^^^^^^^^^^^^^
+35 |         };
+   |         ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got nil|error
+  --> query-action-iterator-completion-e.bal:38:21
+   |
+38 |     () joinResult = from var left in [1]
+   |                     ^^^^^^^^^^^^^^^^^^^^
+39 |         join var right in new FailingIterable()
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+40 |         on left equals right
+   |         ^^^^^^^^^^^^^^^^^^^^
+41 |         do { // @error
+   |         ^^^^^^^^^^^^^^
+42 |             int _ = left + right;
+   |             ^^^^^^^^^^^^^^^^^^^^^
+43 |         };
+   |         ^

@@ -19,6 +19,7 @@ package stringruntime
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"unicode/utf8"
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
@@ -31,6 +32,12 @@ const (
 	orgName    = "ballerina"
 	moduleName = "lang.string"
 )
+
+type stringIteratorHandle struct {
+	value  string
+	offset int
+	mu     sync.Mutex
+}
 
 func stringLength(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	return int64(utf8.RuneCountInString(args[0].(string))), nil
@@ -142,6 +149,8 @@ func initStringModule(rt *runtime.Runtime) {
 	ld := semtypes.NewListDefinition()
 	byteArrTy := ld.Define(env, nil, semtypes.ListRest(semtypes.Byte))
 
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "createIteratorHandle", createStringIteratorHandle)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "iteratorNext", stringIteratorNext)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "length", stringLength)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "indexOf", stringIndexOf)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "includes", stringIncludes)
@@ -192,4 +201,20 @@ func mapASCII(s string, f func(rune) rune) string {
 
 func init() {
 	runtime.RegisterModuleInitializer(initStringModule)
+}
+
+func createStringIteratorHandle(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return &stringIteratorHandle{value: args[0].(string)}, nil
+}
+
+func stringIteratorNext(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	iterator := args[0].(*stringIteratorHandle)
+	iterator.mu.Lock()
+	defer iterator.mu.Unlock()
+	if iterator.offset >= len(iterator.value) {
+		return nil, nil
+	}
+	char, size := utf8.DecodeRuneInString(iterator.value[iterator.offset:])
+	iterator.offset += size
+	return string(char), nil
 }

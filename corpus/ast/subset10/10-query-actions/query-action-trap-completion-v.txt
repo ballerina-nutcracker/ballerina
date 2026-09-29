@@ -1,0 +1,71 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition FailingIterator
+    (variable index (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (union-type
+          (error-type)
+          (value-type null))))
+      (block-function-body
+        (lock
+          (block-stmt
+            (if
+              (binary-expr ==
+                (field-based-access index
+                  (simple-var-ref self))
+                (literal 0))
+              (block-stmt
+                (assignment
+                  (field-based-access index
+                    (simple-var-ref self))
+                  (literal 1))
+                (return
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal value)
+                      (literal 10))))) ())
+            (block-stmt
+              (return
+                (error-constructor-expr (
+                  (literal completion failed))))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable values (type
+          (stream-type
+            (value-type int)
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (new (
+            (new
+              (user-defined-type FailingIterator) ()))))))
+      (var-def
+        (variable result (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (query-action
+              (from-clause
+                (var-def
+                  (variable value))
+                (simple-var-ref values))
+              (do-clause
+                (block-stmt
+                  (assignment
+                    (wildcard-binding-pattern)
+                    (simple-var-ref value)))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (error-type))))))))

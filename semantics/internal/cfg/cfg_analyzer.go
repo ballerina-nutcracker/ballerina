@@ -119,11 +119,12 @@ func analyzeInvokableExplicitReturn(ctx *context.CompilerContext, fn invokableNo
 		return
 	}
 
+	tyCtx := semtypes.ContextFrom(ctx.GetTypeEnv())
 	for _, bb := range fnCfg.bbs {
 		if !bb.isTerminal() || !bb.isReachable() {
 			continue
 		}
-		if terminalBlockHasReturnOrPanic(bb) {
+		if terminalBlockHasReturnOrPanic(tyCtx, bb) {
 			continue
 		}
 		pos := positionForMissingReturn(bb, fn)
@@ -143,20 +144,19 @@ func analyzeFunctionNeverReturn(ctx *context.CompilerContext, fn invokableNode, 
 	}
 }
 
-func terminalBlockHasReturnOrPanic(bb basicBlock) bool {
+func terminalBlockHasReturnOrPanic(tyCtx semtypes.Context, bb basicBlock) bool {
 	if len(bb.nodes) == 0 {
 		return false
 	}
-	last := bb.nodes[len(bb.nodes)-1]
-	switch last.(type) {
+	switch last := bb.nodes[len(bb.nodes)-1].(type) {
 	case *ast.BLangReturn, *ast.BLangPanic:
 		return true
 	case *ast.BLangExpressionStmt:
-		// The only other way a reachable block becomes terminal is via a
-		// `check`/`checkpanic` expression statement whose operand is
-		// statically a subtype of error (see analyzeStatement in
-		// control_flow_analyzer.go).
-		return true
+		// A check or checkpanic whose operand is always an error leaves the function (see
+		// analyzeStatement in control_flow_analyzer.go); any other expression statement,
+		// including a query action, falls through to the end of the function.
+		expr, ok := last.Expr.(ast.BLangExpression)
+		return ok && alwaysTerminatesViaCheck(tyCtx, expr)
 	default:
 		return false
 	}

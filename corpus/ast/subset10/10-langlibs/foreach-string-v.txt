@@ -1,0 +1,71 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable chars (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (foreach
+        (var-def
+          (variable c (type
+            (user-defined-type string Char))))
+        (literal héllo)
+        (block-stmt
+          (expression-stmt
+            (invocation push expr:
+              (simple-var-ref chars) (
+              (simple-var-ref c))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref chars))))
+      (var-def
+        (variable count (type
+          (value-type int)) (expr
+          (literal 0))))
+      (foreach
+        (var-def
+          (variable c))
+        (literal a😀b)
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref count)
+            (literal 1))
+          (assignment
+            (wildcard-binding-pattern)
+            (simple-var-ref c))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref count))))
+      (var-def
+        (variable reversed (type
+          (value-type string)) (expr
+          (literal ))))
+      (foreach
+        (var-def
+          (variable c (type
+            (value-type string))))
+        (literal xyz)
+        (block-stmt
+          (assignment
+            (simple-var-ref reversed)
+            (binary-expr +
+              (simple-var-ref c)
+              (simple-var-ref reversed)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref reversed))))
+      (foreach
+        (var-def
+          (variable c))
+        (literal )
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref c))))))
+      (expression-stmt
+        (invocation io println (
+          (literal done)))))))

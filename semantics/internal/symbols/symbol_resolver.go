@@ -1436,7 +1436,11 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 	case *ast.BLangAnnotAccessExpr:
 		resolveAnnotationReference(resolver, n.PkgAlias, n.AnnotationName, n.GetPosition(), n)
 	case *ast.BLangQueryExpr:
-		return newBlockSymbolResolverWithBlockScope(resolver, n)
+		resolveQuerySymbols(resolver, n, n.QueryClauseList)
+		return nil
+	case *ast.BLangQueryAction:
+		ast.Walk(resolveQuerySymbols(resolver, n, n.QueryClauseList), n.DoClause)
+		return nil
 	case *ast.BLangInvocation:
 		if n.GetExpression() != nil {
 			createDeferredMethodSymbol(resolver, n)
@@ -1465,6 +1469,41 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 		}
 		n.Inclusions = inclusions
 		allocateRecordDefaultSymbols(resolver, n)
+	}
+	return resolver
+}
+
+func resolveQuerySymbols(parent symbolResolver, node ast.BLangNode, clauses []ast.BLangNode) *blockSymbolResolver {
+	resolver := newBlockSymbolResolverWithBlockScope(parent, node)
+	for _, clause := range clauses {
+		switch clause := clause.(type) {
+		case *ast.BLangJoinClause:
+			ast.Walk(parent, clause.Collection.(ast.BLangNode))
+			ast.Walk(resolver, clause.OnClause.OnExpr.(ast.BLangNode))
+			right := newBlockSymbolResolverWithBlockScope(parent, clause)
+			// The right scope's parent is the scope outside the query, so a clash with a
+			// variable declared there is reported when the join variable is defined. Only a
+			// clash with an earlier query variable needs a check here.
+			name := clause.VariableDefinitionNode.Var.Name.GetValue()
+			if isShadowedWithin(resolver, parent, name) {
+				semanticError(resolver, "Variable already defined: "+name, clause.VariableDefinitionNode.GetPosition())
+			}
+			ast.Walk(right, clause.VariableDefinitionNode)
+			ast.Walk(right, clause.OnClause.EqualsExpr.(ast.BLangNode))
+			resolver = &blockSymbolResolver{
+				parent: resolver,
+				scope: &model.BlockScope{BlockScopeBase: model.BlockScopeBase{
+					Parent: resolver.scope,
+					Main:   right.scope.MainSpace(),
+					Prefix: make(map[string]model.ExportedSymbolSpace),
+				}},
+				node: clause,
+			}
+		case *ast.BLangLimitClause:
+			ast.Walk(parent, clause.Expression.(ast.BLangNode))
+		default:
+			ast.Walk(resolver, clause)
+		}
 	}
 	return resolver
 }
@@ -1611,6 +1650,25 @@ func isShadowed(resolver *blockSymbolResolver, name string) bool {
 		} else {
 			break
 		}
+	}
+	return false
+}
+
+// isShadowedWithin reports whether name is defined in a block scope from resolver up to, but
+// not including, the enclosing resolver outer.
+func isShadowedWithin(resolver *blockSymbolResolver, outer symbolResolver, name string) bool {
+	if name == string(model.IGNORE) {
+		return false
+	}
+	for current := resolver; current != nil && symbolResolver(current) != outer; {
+		if _, ok := current.scope.MainSpace().GetSymbol(name); ok {
+			return true
+		}
+		next, ok := current.parent.(*blockSymbolResolver)
+		if !ok {
+			return false
+		}
+		current = next
 	}
 	return false
 }
