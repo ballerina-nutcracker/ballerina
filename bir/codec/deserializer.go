@@ -672,7 +672,8 @@ func (br *birReader) readInstruction(varMap map[int32]*bir.BIRLocalVariableDcl) 
 			var isKeyValuePair bool
 			br.read(&isKeyValuePair)
 			if !isKeyValuePair {
-				panic("spread entries in mapping constructors are not supported")
+				values[k] = bir.NewMappingConstructorSpreadEntry(br.readOperand(varMap))
+				continue
 			}
 			keyOp := br.readOperand(varMap)
 			valueOp := br.readOperand(varMap)

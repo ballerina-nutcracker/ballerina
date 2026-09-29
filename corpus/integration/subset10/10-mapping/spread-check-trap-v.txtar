@@ -1,0 +1,18 @@
+-- stdout --
+eval check
+{"x":1,"y":2,"z":1}
+eval check
+true
+eval A
+eval B
+5
+eval A
+true
+eval trap
+true
+true
+eval ok
+{"x":1,"y":2,"z":6}
+eval arg
+true
+-- stderr --

@@ -1,0 +1,73 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Node
+    (record-type
+      (field value
+        (value-type int))
+      (field next
+        (union-type
+          (user-defined-type Node)
+          (value-type null)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable leaf (type
+          (user-defined-type Node)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 2))
+            (key-value
+              (literal next)
+              (literal <nil>))))))
+      (var-def
+        (variable head (type
+          (user-defined-type Node)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 1))
+            (key-value
+              (literal next)
+              (simple-var-ref leaf))))))
+      (var-def
+        (variable copied (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref head))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref copied)
+            (literal value)))))
+      (var-def
+        (variable next (type
+          (union-type
+            (user-defined-type Node)
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref copied)
+            (literal next)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref next)
+          (user-defined-type Node))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref next)
+                (literal value)))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref copied)
+              (record-type
+                (field value
+                  (value-type int))
+                (field next
+                  (union-type
+                    (user-defined-type Node)
+                    (value-type null))))))))))))

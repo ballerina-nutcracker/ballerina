@@ -1,0 +1,8 @@
+-- stdout --
+{"x":1}
+true
+{"y":2}
+true
+true
+{"x":3}
+-- stderr --

@@ -1,0 +1,318 @@
+module $anon.. v 0.0.0;
+defaultEvaluations  int;
+class Box {
+  value {| x: int, y: int, z: int, never... |}
+
+  init({| x: int, y: int, never... |},{| x: int, y: int, z: int, never... |}) -> nil{
+    bb0 {
+      %4 = ConstantLoad value
+      self[%4] = q;
+      return;
+    }
+  }
+}
+nextTag() -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + defaultEvaluations %3;
+    defaultEvaluations = %1;
+    %0 = defaultEvaluations;
+    return;
+  }
+}
+basePoint() -> {| x: int, y: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad y
+    %4 = ConstantLoad 2
+    %5 = newMap {| x: int, y: int, never... |}{%1=%2, %3=%4}
+    %0 = %5;
+    return;
+  }
+}
+fromPrevious({| x: int, y: int, never... |},{| x: int, y: int, z: int, never... |}) -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %0 = q;
+    return;
+  }
+}
+chained({| x: int, y: int, never... |},{| x: int, y: int, z: int, never... |},{| int... |}) -> {| int... |}{
+  bb0 {
+    %0 = r;
+    return;
+  }
+}
+fromCall({| x: int, y: int, z: int, never... |}) -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %0 = p;
+    return;
+  }
+}
+fresh({| x: int, y: int, never... |},{| int... |}) -> {| int... |}{
+  bb0 {
+    %3 = length(m) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad size
+    m[%4] = %3;
+    %0 = m;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad y
+    %4 = ConstantLoad 2
+    %5 = newMap {| x: int, y: int, never... |}{%1=%2, %3=%4}
+    p = %5;
+    $desugar$0 = p;
+    %8 = $default$0($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %8;
+    %10 = fromPrevious($desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    %11 = println(%10) -> bb3;
+  }
+  bb3 {
+    %12 = ConstantLoad x
+    %13 = ConstantLoad 3
+    %14 = ConstantLoad y
+    %15 = ConstantLoad 4
+    %16 = ConstantLoad z
+    %17 = ConstantLoad 5
+    %18 = newMap {| x: int, y: int, z: int, never... |}{%12=%13, %14=%15, %16=%17}
+    %19 = fromPrevious(p,%18) -> bb4;
+  }
+  bb4 {
+    %20 = println(%19) -> bb5;
+  }
+  bb5 {
+    $desugar$2 = p;
+    %22 = $default$1($desugar$2) -> bb6;
+  }
+  bb6 {
+    $desugar$3 = %22;
+    %24 = $default$2($desugar$2,$desugar$3) -> bb7;
+  }
+  bb7 {
+    $desugar$4 = %24;
+    %26 = chained($desugar$2,$desugar$3,$desugar$4) -> bb8;
+  }
+  bb8 {
+    %27 = println(%26) -> bb9;
+  }
+  bb9 {
+    $desugar$5 = p;
+    %29 = ConstantLoad x
+    %30 = ConstantLoad 6
+    %31 = ConstantLoad y
+    %32 = ConstantLoad 7
+    %33 = ConstantLoad z
+    %34 = ConstantLoad 8
+    %35 = newMap {| x: int, y: int, z: int, never... |}{%29=%30, %31=%32, %33=%34}
+    $desugar$6 = %35;
+    %37 = $default$2($desugar$5,$desugar$6) -> bb10;
+  }
+  bb10 {
+    $desugar$7 = %37;
+    %39 = chained($desugar$5,$desugar$6,$desugar$7) -> bb11;
+  }
+  bb11 {
+    %40 = println(%39) -> bb12;
+  }
+  bb12 {
+    $desugar$8 = p;
+    %42 = $default$1($desugar$8) -> bb13;
+  }
+  bb13 {
+    $desugar$9 = %42;
+    %44 = ConstantLoad a
+    %45 = ConstantLoad 9
+    %46 = newMap {| int... |}{%44=%45}
+    $desugar$10 = %46;
+    %48 = chained($desugar$8,$desugar$9,$desugar$10) -> bb14;
+  }
+  bb14 {
+    %49 = println(%48) -> bb15;
+  }
+  bb15 {
+    %50 = $default$3() -> bb16;
+  }
+  bb16 {
+    $desugar$11 = %50;
+    %52 = fromCall($desugar$11) -> bb17;
+  }
+  bb17 {
+    %53 = println(%52) -> bb18;
+  }
+  bb18 {
+    %54 = $default$3() -> bb19;
+  }
+  bb19 {
+    $desugar$12 = %54;
+    %56 = fromCall($desugar$12) -> bb20;
+  }
+  bb20 {
+    %57 = println(%56) -> bb21;
+  }
+  bb21 {
+    %58 = ConstantLoad x
+    %59 = ConstantLoad 0
+    %60 = ConstantLoad y
+    %61 = ConstantLoad 0
+    %62 = ConstantLoad z
+    %63 = ConstantLoad 0
+    %64 = newMap {| x: int, y: int, z: int, never... |}{%58=%59, %60=%61, %62=%63}
+    %65 = fromCall(%64) -> bb22;
+  }
+  bb22 {
+    %66 = println(%65) -> bb23;
+  }
+  bb23 {
+    %67 = println(defaultEvaluations) -> bb24;
+  }
+  bb24 {
+    $desugar$13 = p;
+    %69 = $default$4($desugar$13) -> bb25;
+  }
+  bb25 {
+    $desugar$14 = %69;
+    %71 = fresh($desugar$13,$desugar$14) -> bb26;
+  }
+  bb26 {
+    %72 = println(%71) -> bb27;
+  }
+  bb27 {
+    $desugar$15 = p;
+    %74 = $default$4($desugar$15) -> bb28;
+  }
+  bb28 {
+    $desugar$16 = %74;
+    %76 = fresh($desugar$15,$desugar$16) -> bb29;
+  }
+  bb29 {
+    %77 = println(%76) -> bb30;
+  }
+  bb30 {
+    $desugar$17 = p;
+    %79 = $default$5($desugar$17) -> bb31;
+  }
+  bb31 {
+    $desugar$18 = %79;
+    %81 = newObject $anon/.:Box
+    %82 = %81.init($desugar$17,$desugar$18) -> bb32;
+  }
+  bb32 {
+    %84 = %82 is nil
+    %84 ? bb33 : bb34;
+  }
+  bb33 {
+    %83 = %81;
+    GOTO bb35;
+  }
+  bb34 {
+    %83 = %82;
+    GOTO bb35;
+  }
+  bb35 {
+    defaulted = %83;
+    %87 = ConstantLoad value
+    %86 = defaulted[%87];
+    %88 = println(%86) -> bb36;
+  }
+  bb36 {
+    %89 = newObject $anon/.:Box
+    %90 = ConstantLoad x
+    %91 = ConstantLoad 11
+    %92 = ConstantLoad y
+    %93 = ConstantLoad 12
+    %94 = ConstantLoad z
+    %95 = ConstantLoad 13
+    %96 = newMap {| x: int, y: int, z: int, never... |}{%90=%91, %92=%93, %94=%95}
+    %97 = %89.init(p,%96) -> bb37;
+  }
+  bb37 {
+    %99 = %97 is nil
+    %99 ? bb38 : bb39;
+  }
+  bb38 {
+    %98 = %89;
+    GOTO bb40;
+  }
+  bb39 {
+    %98 = %97;
+    GOTO bb40;
+  }
+  bb40 {
+    supplied = %98;
+    %102 = ConstantLoad value
+    %101 = supplied[%102];
+    %103 = println(%101) -> bb41;
+  }
+  bb41 {
+    return;
+  }
+}
+$default$0({| x: int, y: int, never... |}) -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %2 = ConstantLoad z
+    %3 = ConstantLoad 10
+    %4 = newMap {| x: int, y: int, z: int, never... |}{...p, %2=%3}
+    %0 = %4;
+    return;
+  }
+}
+$default$1({| x: int, y: int, never... |}) -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %2 = ConstantLoad z
+    %3 = ConstantLoad 20
+    %4 = newMap {| x: int, y: int, z: int, never... |}{...p, %2=%3}
+    %0 = %4;
+    return;
+  }
+}
+$default$2({| x: int, y: int, never... |},{| x: int, y: int, z: int, never... |}) -> {| int... |}{
+  bb0 {
+    %3 = ConstantLoad w
+    %4 = ConstantLoad 30
+    %5 = newMap {| int... |}{...q, %3=%4}
+    %0 = %5;
+    return;
+  }
+}
+$default$3() -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %1 = basePoint() -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad z
+    %3 = nextTag() -> bb2;
+  }
+  bb2 {
+    %4 = newMap {| x: int, y: int, z: int, never... |}{...%1, %2=%3}
+    %0 = %4;
+    return;
+  }
+}
+$default$4({| x: int, y: int, never... |}) -> {| int... |}{
+  bb0 {
+    %2 = newMap {| int... |}{...p}
+    %0 = %2;
+    return;
+  }
+}
+$default$5({| x: int, y: int, never... |}) -> {| x: int, y: int, z: int, never... |}{
+  bb0 {
+    %2 = ConstantLoad z
+    %3 = ConstantLoad 40
+    %4 = newMap {| x: int, y: int, z: int, never... |}{...p, %2=%3}
+    %0 = %4;
+    return;
+  }
+}

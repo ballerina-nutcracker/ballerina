@@ -1,0 +1,79 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Leaf
+    (record-type
+      (field value
+        (value-type float))))
+  (type-definition Middle
+    (record-type
+      (field leaf
+        (user-defined-type Leaf))
+      (field weight
+        (value-type decimal))))
+  (type-definition Outer
+    (record-type
+      (field middle
+        (user-defined-type Middle))))
+  (type-definition Pair
+    (record-type
+      (field a
+        (value-type int))
+      (field b
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable nested (type
+          (user-defined-type Outer)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal middle)
+              (mapping-constructor-expr
+                (key-value
+                  (literal leaf)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal value)
+                      (literal 1))))
+                (key-value
+                  (literal weight)
+                  (literal 2))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nested))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (index-based-access
+                (index-based-access
+                  (simple-var-ref nested)
+                  (literal middle))
+                (literal leaf))
+              (literal value))
+            (value-type float)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (index-based-access
+                (simple-var-ref nested)
+                (literal middle))
+              (literal weight))
+            (value-type decimal)))))
+      (var-def
+        (variable p (type
+          (user-defined-type Pair)) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (mapping-constructor-expr
+                (key-value
+                  (literal a)
+                  (literal 1))
+                (key-value
+                  (literal b)
+                  (literal 2))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref p)))))))
