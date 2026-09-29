@@ -74,7 +74,7 @@ main() -> nil{
   }
   bb6 {
     childObject = %15;
-    %18 = childObject is object&object { private function id() returns int }
+    %18 = childObject is object&object { function id() returns int }
     %19 = %18;
     %20 = println(%19) -> bb7;
   }
@@ -96,7 +96,7 @@ main() -> nil{
   }
   bb11 {
     parentObject = %23;
-    %26 = parentObject is object&object&object { private function id() returns int }
+    %26 = parentObject is object&object&object { function id() returns int }
     %27 = %26;
     %28 = println(%27) -> bb12;
   }

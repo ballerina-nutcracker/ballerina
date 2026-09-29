@@ -19,7 +19,7 @@ import ballerina/io;
 public type ServiceLifeCycle service object {
     public function onAttach(string message);
     public function onDetach(string message);
-    function trigger(string message);
+    public function trigger(string message);
 };
 
 public class MyListener {

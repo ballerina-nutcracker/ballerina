@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected object { function f() returns int }, got object { private function f() returns int; public function init() returns nil }
+  --> member-visibility-private-method1-e.bal:25:46
+   |
+25 |     object { function f() returns int; } _ = new CM(); // @error
+   |                                              ^^^^^^^^

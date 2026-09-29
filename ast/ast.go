@@ -271,6 +271,7 @@ type (
 
 // bLangInvokableNodeBase flag methods
 func (b *bLangInvokableNodeBase) IsPublic() bool        { return b.flags.Has(model.FlagPublic) }
+func (b *bLangInvokableNodeBase) IsPrivate() bool       { return b.flags.Has(model.FlagPrivate) }
 func (b *bLangInvokableNodeBase) IsRemote() bool        { return b.flags.Has(model.FlagRemote) }
 func (b *bLangInvokableNodeBase) IsTransactional() bool { return b.flags.Has(model.FlagTransactional) }
 func (b *bLangInvokableNodeBase) IsResource() bool      { return b.flags.Has(model.FlagResource) }
@@ -312,6 +313,7 @@ func (b *bLangInvokableNodeBase) ReturnType() TypeDescriptor {
 
 // bLangVariableBase flag methods
 func (b *bLangVariableBase) IsPublic() bool           { return b.flags.Has(model.FlagPublic) }
+func (b *bLangVariableBase) IsPrivate() bool          { return b.flags.Has(model.FlagPrivate) }
 func (b *bLangVariableBase) IsFinal() bool            { return b.flags.Has(model.FlagFinal) }
 func (b *bLangVariableBase) IsConfigurable() bool     { return b.flags.Has(model.FlagConfigurable) }
 func (b *bLangVariableBase) IsDefaultableParam() bool { return b.flags.Has(model.FlagDefaultableParam) }

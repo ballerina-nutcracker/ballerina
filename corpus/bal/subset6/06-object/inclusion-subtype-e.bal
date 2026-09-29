@@ -18,7 +18,7 @@ type Foo object {
     int x;
 };
 
-type Bar object { // @error
+type Bar object {
     *Foo;
-    string x;
+    string x; // @error
 };

@@ -1459,11 +1459,11 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 		}
 		n.Inclusions, n.InclusionPositions = inclusions, positions
 	case *ast.BLangRecordType:
-		inclusions, ok := resolveRecordTypeInclusions(resolver, n.TypeInclusions)
+		inclusions, positions, ok := resolveRecordTypeInclusions(resolver, n.TypeInclusions)
 		if !ok {
 			return nil
 		}
-		n.Inclusions = inclusions
+		n.Inclusions, n.InclusionPositions = inclusions, positions
 		allocateRecordDefaultSymbols(resolver, n)
 	}
 	return resolver
@@ -1874,10 +1874,11 @@ func allocateRecordDefaultSymbols(resolver symbolResolver, recordType *ast.BLang
 	}
 }
 
-func resolveRecordTypeInclusions[T symbolResolver](resolver T, typeInclusions []ast.BType) ([]model.SymbolRef, bool) {
+func resolveRecordTypeInclusions[T symbolResolver](resolver T, typeInclusions []ast.BType) ([]model.SymbolRef, []diagnostics.Location, bool) {
 	ctx := resolver.GetCtx()
 	localTypeDefns := resolver.GetTypeDefns()
 	var inclusions []model.SymbolRef
+	var positions []diagnostics.Location
 	for _, inc := range typeInclusions {
 		udt, ok := inc.(*ast.BLangUserDefinedType)
 		if !ok {
@@ -1885,7 +1886,7 @@ func resolveRecordTypeInclusions[T symbolResolver](resolver T, typeInclusions []
 			continue
 		}
 		if !referUserDefinedType(resolver, udt) {
-			return nil, false
+			return nil, nil, false
 		}
 		symRef := udt.Symbol()
 		if tDefn, ok := localTypeDefns[symRef]; ok {
@@ -1906,8 +1907,9 @@ func resolveRecordTypeInclusions[T symbolResolver](resolver T, typeInclusions []
 			}
 		}
 		inclusions = append(inclusions, symRef)
+		positions = append(positions, udt.GetPosition())
 	}
-	return inclusions, true
+	return inclusions, positions, true
 }
 
 func collectTransitiveFields(ctx *context.CompilerContext, inclusions []model.SymbolRef, directFields []inclusionMemberForSymbolResolution, localTypeDefns map[model.SymbolRef]*ast.BLangTypeDefinition, localClassDefns map[model.SymbolRef]*ast.BLangClassDefinition) []inclusionMemberForSymbolResolution {

@@ -73,7 +73,7 @@ class Words {
     }
   }
 
-  iterator() -> object { private [string...] data; private int idx; public function init([string...], int) returns nil; private int len; public function next() returns nil|{| value: string, never... |} }{
+  iterator() -> object { [string...] data; int idx; public function init([string...], int) returns nil; int len; public function next() returns nil|{| value: string, never... |} }{
     bb0 {
       %2 = newObject $anon/.:WordIterator
       %4 = ConstantLoad data

@@ -71,7 +71,7 @@ class NumberGenerator {
     }
   }
 
-  iterator() -> object { private int index; public function init() returns nil; private [int...] items; public function next() returns nil|{| value: int, never... |} }{
+  iterator() -> object { int index; public function init() returns nil; [int...] items; public function next() returns nil|{| value: int, never... |} }{
     bb0 {
       %2 = newObject $anon/.:NumberIterator
       %3 = %2.init() -> bb1;

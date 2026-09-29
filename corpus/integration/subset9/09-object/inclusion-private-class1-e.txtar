@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type reference 'C': a referenced class cannot have private fields or methods
+  --> inclusion-private-class1-e.bal:23:6
+   |
+23 |     *C; // @error
+   |      ^

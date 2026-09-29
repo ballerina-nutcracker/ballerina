@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected object { function f() returns int }, got object { function f() returns int; public function init() returns nil }
+  --> main.bal:27:15
+   |
+27 |     foo:M _ = new C(); // @error
+   |               ^^^^^^^

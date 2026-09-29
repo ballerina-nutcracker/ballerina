@@ -1338,7 +1338,7 @@ func validateStreamCloseMethod[A analyzer](a A, impl ast.BLangExpression, comple
 		return true
 	}
 	visibilityTy := semtypes.ObjectMemberVisibility(cx, closeName, implTy)
-	if !semtypes.IsSubtype(cx, visibilityTy, semtypes.StringConst("public")) {
+	if !semtypes.IsSubtype(cx, visibilityTy, semtypes.StringConst(semtypes.VisibilityPublic)) {
 		a.semanticErr("stream implementor close method must be public", impl.GetPosition())
 		return false
 	}

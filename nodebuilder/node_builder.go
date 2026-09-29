@@ -1360,7 +1360,7 @@ func (n *nodeBuilder) functionQualifierFlags(qualifierList st.NodeList[st.Token]
 		case st.ISOLATED_KEYWORD:
 			flags |= model.FlagIsolated
 		case st.PRIVATE_KEYWORD:
-			// Private functions do not require a flag.
+			flags |= model.FlagPrivate
 		default:
 			n.internalError("unexpected function qualifier", qualifier)
 		}
@@ -5413,6 +5413,8 @@ func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode) *ast.
 	var flags model.Flag
 	if vis := objectField.VisibilityQualifier(); vis != nil && vis.Kind() == st.PUBLIC_KEYWORD {
 		flags |= model.FlagPublic
+	} else if vis != nil && vis.Kind() == st.PRIVATE_KEYWORD {
+		flags |= model.FlagPrivate
 	}
 	qualifiers := objectField.QualifierList()
 	for qualifier := range qualifiers.Iterator() {

@@ -1,0 +1,72 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition T
+    (object-type
+      (field x
+        (value-type int))))
+  (class-definition C
+    (variable x (type
+      (value-type int)) (expr
+      (literal 1)))
+    (variable y (type
+      (value-type int)) (expr
+      (literal 2)))
+    (function sum () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (field-based-access x
+              (simple-var-ref self))
+            (field-based-access y
+              (simple-var-ref self)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type any)) (expr
+          (new
+            (user-defined-type C) ()))))
+      (if
+        (type-test-expr !is
+          (simple-var-ref a)
+          (user-defined-type T))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (literal not T))))) (
+        (if
+          (type-test-expr is
+            (simple-var-ref a)
+            (user-defined-type C))
+          (block-stmt
+            (var-def
+              (variable c (type
+                (user-defined-type C)) (expr
+                (simple-var-ref a))))
+            (expression-stmt
+              (invocation io println (
+                (invocation sum expr:
+                  (simple-var-ref c) ()))))) ())))
+      (var-def
+        (variable v (type
+          (union-type
+            (user-defined-type T)
+            (value-type int))) (expr
+          (new
+            (user-defined-type C) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type int))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref v))))) (
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access x
+                (simple-var-ref v)))))))))))

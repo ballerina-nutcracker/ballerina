@@ -1,0 +1,126 @@
+module $anon.. v 0.0.0;
+class C {
+  x int
+  y int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad x
+      self[%3] = %2;
+      %4 = ConstantLoad 2
+      %5 = ConstantLoad y
+      self[%5] = %4;
+      return;
+    }
+  }
+
+  sum() -> int{
+    bb0 {
+      %4 = ConstantLoad x
+      %3 = self[%4];
+      %5 = %3;
+      %7 = ConstantLoad y
+      %6 = self[%7];
+      %8 = %6;
+      %2 = + %5 %8;
+      %0 = %2;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:C
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    a = %3;
+    %6 = a !is object { int x }
+    %6 ? bb5 : bb7;
+  }
+  bb5 {
+    PushScopeFrame 2
+    %0 = ConstantLoad not T
+    %1 = println(%0) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb7 {
+    %7 = a is object { public function init() returns nil; function sum() returns int; int x; private int y }
+    %7 ? bb8 : bb11;
+  }
+  bb8 {
+    PushScopeFrame 4
+    c = (1, a);
+    %1 = c.sum() -> bb9;
+  }
+  bb9 {
+    %2 = %1;
+    %3 = println(%2) -> bb10;
+  }
+  bb10 {
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb11 {
+    GOTO bb12;
+  }
+  bb12 {
+    %8 = newObject $anon/.:C
+    %9 = %8.init() -> bb13;
+  }
+  bb13 {
+    %11 = %9 is nil
+    %11 ? bb14 : bb15;
+  }
+  bb14 {
+    %10 = %8;
+    GOTO bb16;
+  }
+  bb15 {
+    %10 = %9;
+    GOTO bb16;
+  }
+  bb16 {
+    v = %10;
+    %13 = v is int
+    %13 ? bb17 : bb19;
+  }
+  bb17 {
+    PushScopeFrame 1
+    %0 = println((1, v)) -> bb18;
+  }
+  bb18 {
+    PopScopeFrame
+    GOTO bb21;
+  }
+  bb19 {
+    PushScopeFrame 4
+    %1 = ConstantLoad x
+    %0 = (1, v)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb20;
+  }
+  bb20 {
+    PopScopeFrame
+    GOTO bb21;
+  }
+  bb21 {
+    return;
+  }
+}

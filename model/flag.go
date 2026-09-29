@@ -20,6 +20,7 @@ type Flag uint64
 
 const (
 	FlagPublic                       Flag = 1 << 0
+	FlagPrivate                      Flag = 1 << 1
 	FlagRemote                       Flag = 1 << 2
 	FlagTransactional                Flag = 1 << 3
 	FlagNative                       Flag = 1 << 4

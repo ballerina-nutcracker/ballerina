@@ -403,14 +403,22 @@ func (s *toStringState) objectAtomicTypeToString(atom atom) string {
 	return result
 }
 
-func visibilityToString(cx Context, visibilityTy SemType) string {
-	if IsSameType(cx, visibilityTy, StringConst("public")) {
+// visibilityToString prints a member's visibility region as its source qualifier: "public", "<module>:<owner>"
+// (private) or "<module>" (no qualifier).
+func visibilityToString(_ Context, visibilityTy SemType) string {
+	shape := SingleShape(visibilityTy)
+	if shape.IsEmpty() {
+		return ""
+	}
+	region := shape.Get().Value.(string)
+	switch {
+	case region == VisibilityPublic:
 		return "public "
-	}
-	if IsSameType(cx, visibilityTy, StringConst("private")) {
+	case strings.Contains(region, ":"):
 		return "private "
+	default:
+		return ""
 	}
-	return ""
 }
 
 func (s *toStringState) objectMethodToString(name string, kindTy SemType, fnTy SemType) string {

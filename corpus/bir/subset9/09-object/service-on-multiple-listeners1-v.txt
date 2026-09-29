@@ -1,8 +1,8 @@
 module $anon.. v 0.0.0;
-$desugar$0  object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; public function start() returns nil|error; private string tag };
-$desugar$1  object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; public function start() returns nil|error; private string tag };
+$desugar$0  object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; public function start() returns nil|error; string tag };
+$desugar$1  object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; public function start() returns nil|error; string tag };
 $moduleListeners  [object { public function attach(never, [string...]) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, string) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, nil) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }...];
-l  object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; public function start() returns nil|error; private string tag };
+l  object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; public function start() returns nil|error; string tag };
 class TaggedListener {
   tag string
 
@@ -61,7 +61,7 @@ class $service$0 {
     }
   }
 }
-makeListener(string) -> object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; public function start() returns nil|error; private string tag }{
+makeListener(string) -> object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; public function start() returns nil|error; string tag }{
   bb0 {
     %2 = newObject $anon/.:TaggedListener
     %3 = %2.init(tag) -> bb1;

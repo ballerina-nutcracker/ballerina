@@ -20,11 +20,11 @@ type Member struct {
 	Name       string
 	ValueType  SemType
 	Kind       MemberKind
-	Visibility Visibility
+	Visibility string
 	Immutable  bool
 }
 
-func newMember(name string, valueTy SemType, kind MemberKind, visibility Visibility, immutable bool) *Member {
+func newMember(name string, valueTy SemType, kind MemberKind, visibility string, immutable bool) *Member {
 	return &Member{Name: name, ValueType: valueTy, Kind: kind, Visibility: visibility, Immutable: immutable}
 }
 
@@ -70,28 +70,13 @@ func allMethodField() Field {
 	return Field{name: "kind", typeOf: ty, readonly: true, optional: false}
 }
 
-type Visibility uint8
+// VisibilityPublic is the visibility region of public members.
+const VisibilityPublic = "public"
 
-const (
-	VisibilityPublic Visibility = iota
-	VisibilityPrivate
-)
+var visibilityAll = Field{name: "visibility", typeOf: String, readonly: true, optional: false}
 
-var (
-	visibilityPublicTag  = StringConst("public")
-	visibilityPrivateTag = StringConst("private")
-	visibilityAll        = Field{name: "visibility", typeOf: Union(visibilityPublicTag, visibilityPrivateTag), readonly: true, optional: false}
-)
-
-func (v *Visibility) field() Field {
-	switch *v {
-	case VisibilityPublic:
-		return Field{name: "visibility", typeOf: visibilityPublicTag, readonly: true, optional: false}
-	case VisibilityPrivate:
-		return Field{name: "visibility", typeOf: visibilityPrivateTag, readonly: true, optional: false}
-	default:
-		panic("invalid visibility")
-	}
+func visibilityField(region string) Field {
+	return Field{name: "visibility", typeOf: StringConst(region), readonly: true, optional: false}
 }
 
 // ObjectMemberKind returns the kind of the member as a subtype of "field"|"method"|"remote-method"|"resource-method"
@@ -104,7 +89,7 @@ func ObjectMemberKind(ctx Context, name, ty SemType) SemType {
 	return mappingMemberTypeInner(ctx, memberMap, StringConst("kind"))
 }
 
-// ObjectMemberVisibility returns the visibility of the member as a subtype of "public"|"private"
+// ObjectMemberVisibility returns the type of the member's visibility region string
 func ObjectMemberVisibility(ctx Context, name, ty SemType) SemType {
 	objectTy := convertObjectToMappingTy(ctx, ty)
 	if IsZero(objectTy) {

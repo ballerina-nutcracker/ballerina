@@ -1,0 +1,45 @@
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+
+import ballerina/io;
+
+type T object {
+    int x;
+    function f() returns int;
+};
+
+type U object {
+    *T;
+    int y;
+};
+
+class C {
+    int x = 1;
+    int y = 2;
+
+    function f() returns int {
+        return self.x + self.y;
+    }
+}
+
+public function main() {
+    U u = new C();
+    T t = u;
+    any a = u;
+    io:println(t.f()); // @output 3
+    io:println(a is T); // @output true
+}

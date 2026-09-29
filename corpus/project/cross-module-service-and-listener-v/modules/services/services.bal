@@ -27,7 +27,7 @@ service on lifecycle:l {
         io:println("listener-> ", message);
     }
 
-    function trigger(string message) {
+    public function trigger(string message) {
         io:println("trigger-> ", message);
     }
 }

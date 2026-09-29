@@ -74,7 +74,7 @@ failValues() -> [int...]{
     panic %2;
   }
 }
-failClient() -> client object { private remote function $remote$value(int) returns int; private remote function $remote$values([int...]) returns int; public function init() returns nil }{
+failClient() -> client object { public remote function $remote$value(int) returns int; public remote function $remote$values([int...]) returns int; public function init() returns nil }{
   bb0 {
     %1 = ConstantLoad receiver panic
     %2 = newError error(%1)

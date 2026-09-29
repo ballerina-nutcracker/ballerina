@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: mismatched visibility qualifiers for field 'x' with object type inclusion
+  --> main.bal:22:5
+   |
+22 |     int x = 1; // @error
+   |     ^^^^^^^^^^

@@ -2984,9 +2984,9 @@ func resolveClassDefinitionType(t typeResolver, classDef *ast.BLangClassDefiniti
 	od := semtypes.NewObjectDefinition()
 	classDef.Definition = &od
 
-	semType, ok := finishResolveObjectDefinitionType(t, &od, classDef.Fields, classDef.Methods, classDef.ResourceMethods, classDef.InitFunction,
-		classDef.Inclusions, classDef.GetPosition(), depth, classDef.IsIsolated(), classDef.IsReadonly(), isClient, isService,
-		classDef.Symbol())
+	semType, ok := finishResolveObjectDefinitionType(t, &od, t.symbolName(classDef.Symbol()), classDef.Fields, classDef.Methods,
+		classDef.ResourceMethods, classDef.InitFunction, classDef.Inclusions, classDef.InclusionPositions, classDef.GetPosition(),
+		depth, classDef.IsIsolated(), classDef.IsReadonly(), isClient, isService, classDef.Symbol())
 	if !ok {
 		return semtypes.SemType{}, false
 	}
@@ -3051,8 +3051,9 @@ func resolveServiceType(t typeResolver, svc *ast.BLangService, depth int, attach
 
 	od := semtypes.NewObjectDefinition()
 	svc.Definition = &od
-	objectBodyTy, ok := finishResolveObjectDefinitionType(t, &od, svc.Fields, svc.Methods, svc.ResourceMethods, svc.InitFunction,
-		nil, svc.GetPosition(), depth, svc.IsIsolated(), false, false, true, model.SymbolRef{})
+	objectBodyTy, ok := finishResolveObjectDefinitionType(t, &od, t.symbolName(svc.Symbol()), svc.Fields, svc.Methods,
+		svc.ResourceMethods, svc.InitFunction, nil, nil, svc.GetPosition(), depth, svc.IsIsolated(), false, false, true,
+		model.SymbolRef{})
 	if !ok {
 		return false
 	}
@@ -3085,9 +3086,9 @@ func inferServiceType(listenerServiceTypes []semtypes.SemType) semtypes.SemType 
 	return serviceTy
 }
 
-func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefinition, fields []*ast.BLangVariable,
+func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefinition, owner string, fields []*ast.BLangVariable,
 	methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, initFn *ast.BLangFunction, inclusions []model.SymbolRef,
-	pos diagnostics.Location, depth int, isIsolated, isReadonly, isClient, isService bool, distinctSymbol model.SymbolRef,
+	inclusionPositions []diagnostics.Location, pos diagnostics.Location, depth int, isIsolated, isReadonly, isClient, isService bool, distinctSymbol model.SymbolRef,
 ) (semtypes.SemType, bool) {
 	for _, field := range fields {
 		fieldTy, ok := resolveBType(t, field.TypeNode(), depth+1)
@@ -3124,12 +3125,12 @@ func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefini
 		rm.Name.SetDeterminedType(semtypes.Never)
 	}
 
-	includedMembers, ok := collectObjectIncludedMembers(t, inclusions, pos, depth)
+	includedMembers, ok := collectObjectIncludedMembers(t, inclusions, inclusionPositions, pos, depth)
 	if !ok {
 		return semtypes.SemType{}, false
 	}
 
-	directMembers, ok := buildObjectDirectMembers(t, fields, methods, initFn, isClient, isService)
+	directMembers, ok := buildObjectDirectMembers(t, owner, fields, methods, initFn, isClient, isService)
 	if !ok {
 		return semtypes.SemType{}, false
 	}
@@ -3142,11 +3143,10 @@ func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefini
 	return defineObjectSemType(t, od, isIsolated, isReadonly, isClient, isService, members, distinctSymbol, inclusions), true
 }
 
-func collectObjectIncludedMembers(t typeResolver, inclusions []model.SymbolRef, pos diagnostics.Location, depth int) (map[string][]semtypes.Member, bool) {
+func collectObjectIncludedMembers(t typeResolver, inclusions []model.SymbolRef, positions []diagnostics.Location, pos diagnostics.Location, depth int) (map[string][]semtypes.Member, bool) {
 	includedMembers := make(map[string][]semtypes.Member)
-	incMembers, err := collectIncludedMembers(t, inclusions, depth)
-	if err {
-		t.semanticError("error resolving type inclusion", pos)
+	incMembers, ok := collectIncludedMembers(t, inclusions, positions, pos, depth)
+	if !ok {
 		return nil, false
 	}
 	for _, m := range incMembers {
@@ -3163,14 +3163,11 @@ func collectObjectIncludedMembers(t typeResolver, inclusions []model.SymbolRef, 
 	return includedMembers, true
 }
 
-func buildObjectDirectMembers(t typeResolver, fields []*ast.BLangVariable, methods map[string]*ast.BLangFunction, initFn *ast.BLangFunction, isClient bool, isService bool) ([]directMember, bool) {
+func buildObjectDirectMembers(t typeResolver, owner string, fields []*ast.BLangVariable, methods map[string]*ast.BLangFunction, initFn *ast.BLangFunction, isClient bool, isService bool) ([]directMember, bool) {
 	var directMembers []directMember
 	for _, field := range fields {
 		fieldTy := field.GetDeterminedType()
-		vis := semtypes.VisibilityPrivate
-		if field.IsPublic() {
-			vis = semtypes.VisibilityPublic
-		}
+		vis := memberVisibility(t, field.IsPublic(), privateOwner(field.IsPrivate(), owner))
 		directMembers = append(directMembers, directMember{
 			name:       field.Name.GetValue(),
 			valueTy:    fieldTy,
@@ -3190,10 +3187,8 @@ func buildObjectDirectMembers(t typeResolver, fields []*ast.BLangVariable, metho
 	for name := range methods {
 		method := methods[name]
 		methodTy := methodMemberType(t, method.Symbol())
-		vis := semtypes.VisibilityPrivate
-		if method.IsPublic() {
-			vis = semtypes.VisibilityPublic
-		}
+		vis := memberVisibility(t, method.IsPublic() || method.IsRemote() || method.IsResource(),
+			privateOwner(method.IsPrivate(), owner))
 		memberKind := semtypes.MemberKindMethod
 		if method.IsRemote() {
 			if !isClient && !isService {
@@ -8194,9 +8189,8 @@ func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int, owner
 	ty.Definition = &od
 	// Step 1: Accumulate included members from symbols
 	includedMembers := make(map[string][]semtypes.Member)
-	incMembers, err := collectIncludedMembers(t, ty.Inclusions, depth)
-	if err {
-		t.semanticError("error resolving type inclusion", ty.GetPosition())
+	incMembers, ok := collectIncludedMembers(t, ty.Inclusions, ty.InclusionPositions, ty.GetPosition(), depth)
+	if !ok {
 		return semtypes.SemType{}, false
 	}
 	for _, m := range incMembers {
@@ -8232,9 +8226,9 @@ func resolveObjectType(t typeResolver, ty *ast.BLangObjectType, depth int, owner
 			name:       m.Name(),
 			valueTy:    valueTy,
 			kind:       kind,
-			visibility: semtypeVisibility(m.IsPublic()),
+			visibility: memberVisibility(t, isPublicObjectTypeMember(m), ""),
 			immutable:  m.MemberKind() != ast.ObjectMemberKindField,
-			pos:        ty.GetPosition(),
+			pos:        m.(ast.BLangNode).GetPosition(),
 		})
 	}
 
@@ -8317,7 +8311,7 @@ type directMember struct {
 	name       string
 	valueTy    semtypes.SemType
 	kind       semtypes.MemberKind
-	visibility semtypes.Visibility
+	visibility string
 	immutable  bool
 	pos        diagnostics.Location
 }
@@ -8330,6 +8324,17 @@ func validateOverridesAndMerge(t typeResolver, directMembers []directMember, inc
 				if incMember.Kind != dm.kind {
 					t.semanticError(
 						fmt.Sprintf("member '%s' conflicts with included member of different kind", dm.name),
+						dm.pos,
+					)
+					return nil, false
+				}
+				if incMember.Visibility != dm.visibility {
+					memberKind := "method"
+					if dm.kind == semtypes.MemberKindField {
+						memberKind = "field"
+					}
+					t.semanticError(
+						fmt.Sprintf("mismatched visibility qualifiers for %s '%s' with object type inclusion", memberKind, dm.name),
 						dm.pos,
 					)
 					return nil, false
@@ -8416,8 +8421,8 @@ func resolveRecordInclusions(t typeResolver, recordTy *ast.BLangRecordType, dept
 		}
 	}
 
-	incMembers, err := collectIncludedMembers(t, recordTy.Inclusions, depth)
-	if err {
+	incMembers, ok := collectIncludedMembers(t, recordTy.Inclusions, recordTy.InclusionPositions, recordTy.GetPosition(), depth)
+	if !ok {
 		return recordInclusionResolutionResult{}, false
 	}
 
@@ -8735,12 +8740,7 @@ func inclusionMemberToSemtypeMember(t typeResolver, m model.InclusionMember, loc
 	if !ok {
 		return semtypes.Member{}, false
 	}
-	vis := semtypes.VisibilityPrivate
-	if fd, ok := m.(*model.FieldDescriptor); ok {
-		vis = semtypeVisibility(fd.IsPublic())
-	} else if md, ok := m.(*model.MethodDescriptor); ok {
-		vis = semtypeVisibility(md.IsPublic())
-	}
+	vis := memberVisibility(t, isPublicInclusionMember(m), "")
 	return semtypes.Member{
 		Name:       m.MemberName(),
 		ValueType:  m.MemberType(),
@@ -8750,11 +8750,48 @@ func inclusionMemberToSemtypeMember(t typeResolver, m model.InclusionMember, loc
 	}, true
 }
 
-func semtypeVisibility(isPublic bool) semtypes.Visibility {
+// memberVisibility returns the visibility region of an object member. privateOwner is the name of the class or
+// service declaring a private member, and empty for every other member.
+func memberVisibility(t typeResolver, isPublic bool, privateOwner string) string {
 	if isPublic {
 		return semtypes.VisibilityPublic
 	}
-	return semtypes.VisibilityPrivate
+	pkgID := t.packageID()
+	modulePath := pkgID.OrgName.Value() + "/" + pkgID.Name.Value()
+	if privateOwner != "" {
+		return modulePath + ":" + privateOwner
+	}
+	return modulePath
+}
+
+func privateOwner(isPrivate bool, owner string) string {
+	if isPrivate {
+		return owner
+	}
+	return ""
+}
+
+// isPublicObjectTypeMember reports whether an object type descriptor member is in the public region. Remote
+// methods, resource methods and init are always public.
+func isPublicObjectTypeMember(m ast.ObjectMember) bool {
+	kind := m.MemberKind()
+	return m.IsPublic() || kind == ast.ObjectMemberKindRemoteMethod || kind == ast.ObjectMemberKindResourceMethod ||
+		(kind == ast.ObjectMemberKindMethod && m.Name() == "init")
+}
+
+// isPublicInclusionMember reports whether an included member is in the public region. Remote methods, resource
+// methods and init are always public.
+func isPublicInclusionMember(m model.InclusionMember) bool {
+	switch member := m.(type) {
+	case *model.FieldDescriptor:
+		return member.IsPublic()
+	case *model.MethodDescriptor:
+		kind := member.MemberKind()
+		return member.IsPublic() || kind == model.InclusionMemberKindRemoteMethod ||
+			kind == model.InclusionMemberKindResourceMethod || member.MemberName() == "init"
+	default:
+		return true
+	}
 }
 
 func semtypeNetworkQualifier(t typeResolver, nq ast.ObjectNetworkQuals, loc diagnostics.Location) (semtypes.NetworkQualifier, bool) {

@@ -192,10 +192,11 @@ type (
 	BLangRecordType struct {
 		bLangTypeBase
 		bStructureTypeBase
-		Inclusions []model.SymbolRef
-		Definition semtypes.Definition
-		RestType   BType
-		IsOpen     bool
+		Inclusions         []model.SymbolRef
+		InclusionPositions []diagnostics.Location // Positions of each inclusion, parallel to Inclusions
+		Definition         semtypes.Definition
+		RestType           BType
+		IsOpen             bool
 	}
 
 	BLangFunctionType struct {

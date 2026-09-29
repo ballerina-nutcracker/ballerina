@@ -75,7 +75,7 @@ main() -> nil{
   }
   bb6 {
     defaulted = %7;
-    %10 = defaulted is object { private int count; private function describe() returns string; public function init(string, int) returns nil|error; private string label }
+    %10 = defaulted is object { private int count; function describe() returns string; public function init(string, int) returns nil|error; private string label }
     %10 ? bb7 : bb10;
   }
   bb7 {
@@ -110,7 +110,7 @@ main() -> nil{
   }
   bb14 {
     named = %4;
-    %7 = named is object { private int count; private function describe() returns string; public function init(string, int) returns nil|error; private string label }
+    %7 = named is object { private int count; function describe() returns string; public function init(string, int) returns nil|error; private string label }
     %7 ? bb15 : bb18;
   }
   bb15 {

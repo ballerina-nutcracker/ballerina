@@ -1,0 +1,5 @@
+-- stdout --
+3
+sent ping
+hello
+-- stderr --

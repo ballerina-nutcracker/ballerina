@@ -1,0 +1,38 @@
+(C
+  (f
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (field-based-access x
+            (simple-var-ref self))
+          (field-based-access y
+            (simple-var-ref self))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable u (type
+        (user-defined-type U)) (expr
+        (new
+          (user-defined-type C) ()))))
+    (var-def
+      (variable t (type
+        (user-defined-type T)) (expr
+        (simple-var-ref u))))
+    (var-def
+      (variable a (type
+        (value-type any)) (expr
+        (simple-var-ref u))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f expr:
+          (simple-var-ref t) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref a)
+          (user-defined-type T)))))
+  )
+)

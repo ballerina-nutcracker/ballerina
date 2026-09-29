@@ -1,0 +1,69 @@
+(C
+  (sum
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (field-based-access x
+            (simple-var-ref self))
+          (field-based-access y
+            (simple-var-ref self))))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb3)
+    (var-def
+      (variable a (type
+        (value-type any)) (expr
+        (new
+          (user-defined-type C) ()))))
+    (type-test-expr !is
+      (simple-var-ref a)
+      (user-defined-type T))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal not T))))
+  )
+  (bb2 (bb1 bb5) (bb6 bb8)
+    (var-def
+      (variable v (type
+        (union-type
+          (user-defined-type T)
+          (value-type int))) (expr
+        (new
+          (user-defined-type C) ()))))
+    (type-test-expr is
+      (simple-var-ref v)
+      (value-type int))
+  )
+  (bb3 (bb0) (bb4 bb5)
+    (type-test-expr is
+      (simple-var-ref a)
+      (user-defined-type C))
+  )
+  (bb4 (bb3) (bb5)
+    (var-def
+      (variable c (type
+        (user-defined-type C)) (expr
+        (simple-var-ref a))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sum expr:
+          (simple-var-ref c) ()))))
+  )
+  (bb5 (bb4 bb3) (bb2))
+  (bb6 (bb2) (bb7)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v))))
+  )
+  (bb7 (bb6 bb8) ())
+  (bb8 (bb2) (bb7)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref v)))))
+  )
+)

@@ -80,16 +80,16 @@ func stripDistinctAtomsFromSemType(ty SemType, typeCode basicTypeCode, stripBdd 
 //	  },
 //	   [field_name]: {
 //	     "field"|"method"|"remote-method"|"resource-method" kind,
-//	     "public"|"private" visibility,
+//	     string visibility,
 //	      Val value;
 //	   }
 //	   ...{
 //	     "field" kind,
-//	     "public"|"private" visibility,
+//	     string visibility,
 //	      Val value;
 //	   } | {
 //	      "method"|"remote-method"|"resource-method" kind,
-//	      "public"|"private" visibility,
+//	      string visibility,
 //	      Function value;
 //	   }
 //	}
@@ -115,10 +115,10 @@ func (o *ObjectDefinition) Define(env Env, qualifiers ObjectQualifiers, members 
 }
 
 func objectDefinitionValidateMembers(members []Member) bool {
-	// Check if there are two members with same name
+	// Check if there are two members with same name or a member without a visibility region
 	nameMap := make(map[string]bool)
 	for _, member := range members {
-		if nameMap[member.Name] {
+		if nameMap[member.Name] || member.Visibility == "" {
 			return false
 		}
 		nameMap[member.Name] = true
@@ -173,7 +173,7 @@ func memberField(env Env, member *Member, mut CellMutability) cellField {
 		[]Field{
 			FieldFrom("value", member.ValueType, member.Immutable, false),
 			(&member.Kind).field(),
-			(&member.Visibility).field(),
+			visibilityField(member.Visibility),
 		},
 		Never)
 	return cellFieldFrom(member.Name, cellContainingWithEnvSemTypeCellMutability(env, semtype, fieldMut))

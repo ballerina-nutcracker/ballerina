@@ -1,0 +1,28 @@
+(C
+  (f
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (field-based-access x
+            (simple-var-ref self))
+          (literal 1)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable t (type
+        (user-defined-type T)) (expr
+        (new
+          (user-defined-type C) ()))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref t)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f expr:
+          (simple-var-ref t) ()))))
+  )
+)

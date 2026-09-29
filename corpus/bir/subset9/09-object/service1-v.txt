@@ -1,10 +1,10 @@
 module $anon.. v 0.0.0;
 $moduleListeners  [object { public function attach(never, [string...]) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, string) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, nil) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }...];
-l  object { public function attach(service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; private function trigger(string) returns nil }, nil) returns nil; public function detach(service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; private function trigger(string) returns nil }) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init() returns nil; private nil|service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; private function trigger(string) returns nil } s; public function start() returns nil|error; private function trigger(string) returns nil };
+l  object { public function attach(service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; function trigger(string) returns nil }, nil) returns nil; public function detach(service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; function trigger(string) returns nil }) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init() returns nil; private nil|service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; function trigger(string) returns nil } s; public function start() returns nil|error; function trigger(string) returns nil };
 class MyListener {
-  s nil|service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; private function trigger(string) returns nil }
+  s nil|service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; function trigger(string) returns nil }
 
-  attach(service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; private function trigger(string) returns nil },nil) -> nil{
+  attach(service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; function trigger(string) returns nil },nil) -> nil{
     bb0 {
       _ = svc;
       _ = attachPoint;
@@ -18,7 +18,7 @@ class MyListener {
     }
   }
 
-  detach(service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; private function trigger(string) returns nil }) -> nil|error{
+  detach(service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; function trigger(string) returns nil }) -> nil|error{
     bb0 {
       _ = svc;
       %4 = ConstantLoad detached
@@ -146,7 +146,7 @@ main() -> nil{
     return;
   }
 }
-$default$0(service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; private function trigger(string) returns nil }) -> nil{
+$default$0(service object { public function onAttach(string) returns nil; public function onDetach(string) returns nil; function trigger(string) returns nil }) -> nil{
   bb0 {
     %2 = ConstantLoad <nil>
     %0 = %2;

@@ -458,7 +458,7 @@ func (p *predefinedTypeEnv) atomCellObjectMemberKind() *typeAtom {
 // cellAtomicObjectMemberVisibility returns the cellAtomicType for object member visibility
 func (p *predefinedTypeEnv) cellAtomicObjectMemberVisibility() *cellAtomicType {
 	if p._cellAtomicObjectMemberVisibility == nil {
-		val := cellAtomicTypeFrom(Union(StringConst("public"), StringConst("private")), CellMutabilityNone)
+		val := cellAtomicTypeFrom(String, CellMutabilityNone)
 		p._cellAtomicObjectMemberVisibility = &val
 		p.addInitializedCellAtom(&val)
 	}

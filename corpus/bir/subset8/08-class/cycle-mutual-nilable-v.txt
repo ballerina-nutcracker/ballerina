@@ -1,9 +1,9 @@
 module $anon.. v 0.0.0;
 class A {
   va int
-  b nil|object { private nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va } a; public function init(int, nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va }) returns nil; private int vb }
+  b nil|object { nil|object { nil|... b; public function init(int, nil|...) returns nil; int va } a; public function init(int, nil|object { nil|... b; public function init(int, nil|...) returns nil; int va }) returns nil; int vb }
 
-  init(int,nil|object { private nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va } a; public function init(int, nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va }) returns nil; private int vb }) -> nil{
+  init(int,nil|object { nil|object { nil|... b; public function init(int, nil|...) returns nil; int va } a; public function init(int, nil|object { nil|... b; public function init(int, nil|...) returns nil; int va }) returns nil; int vb }) -> nil{
     bb0 {
       %4 = ConstantLoad va
       self[%4] = va;
@@ -15,9 +15,9 @@ class A {
 }
 class B {
   vb int
-  a nil|object { private nil|object { private nil|... a; public function init(int, nil|...) returns nil; private int vb } b; public function init(int, nil|object { private nil|... a; public function init(int, nil|...) returns nil; private int vb }) returns nil; private int va }
+  a nil|object { nil|object { nil|... a; public function init(int, nil|...) returns nil; int vb } b; public function init(int, nil|object { nil|... a; public function init(int, nil|...) returns nil; int vb }) returns nil; int va }
 
-  init(int,nil|object { private nil|object { private nil|... a; public function init(int, nil|...) returns nil; private int vb } b; public function init(int, nil|object { private nil|... a; public function init(int, nil|...) returns nil; private int vb }) returns nil; private int va }) -> nil{
+  init(int,nil|object { nil|object { nil|... a; public function init(int, nil|...) returns nil; int vb } b; public function init(int, nil|object { nil|... a; public function init(int, nil|...) returns nil; int vb }) returns nil; int va }) -> nil{
     bb0 {
       %4 = ConstantLoad vb
       self[%4] = vb;
@@ -90,7 +90,7 @@ main() -> nil{
     %24 = ConstantLoad b
     %23 = a2[%24];
     bRef = %23;
-    %26 = bRef is object { private nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va } a; public function init(int, nil|object { private nil|... b; public function init(int, nil|...) returns nil; private int va }) returns nil; private int vb }
+    %26 = bRef is object { nil|object { nil|... b; public function init(int, nil|...) returns nil; int va } a; public function init(int, nil|object { nil|... b; public function init(int, nil|...) returns nil; int va }) returns nil; int vb }
     %26 ? bb13 : bb14;
   }
   bb13 {

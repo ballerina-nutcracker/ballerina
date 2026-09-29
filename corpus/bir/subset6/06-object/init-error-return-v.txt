@@ -59,7 +59,7 @@ main() -> nil{
   }
   bb4 {
     r1 = %4;
-    %7 = r1 is object { private function getVal() returns int; public function init(int) returns nil|error; private int val }
+    %7 = r1 is object { function getVal() returns int; public function init(int) returns nil|error; int val }
     %7 ? bb5 : bb8;
   }
   bb5 {

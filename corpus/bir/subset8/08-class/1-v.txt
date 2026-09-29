@@ -11,7 +11,7 @@ class Bar {
   }
 }
 class Foo {
-  bar object { public function init(int) returns nil; private int value }
+  bar object { public function init(int) returns nil; int value }
 
   foo(int) -> int{
     bb0 {
@@ -27,7 +27,7 @@ class Foo {
     }
   }
 
-  init(object { public function init(int) returns nil; private int value }) -> nil{
+  init(object { public function init(int) returns nil; int value }) -> nil{
     bb0 {
       %3 = ConstantLoad bar
       self[%3] = bar;

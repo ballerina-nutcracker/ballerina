@@ -22,8 +22,8 @@ type Baz object {
     boolean x;
 };
 
-type Bar object { // @error
+type Bar object {
     *Foo;
     *Baz;
-    string x;
+    string x; // @error
 };

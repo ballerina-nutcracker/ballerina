@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: service body does not implement the service type
+  --> main.bal:23:1
+   |
+23 | service on l { // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^
+24 |     public function onAttach(string message) {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |         io:println("listener-> ", message);
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |     }
+   |     ^
+27 | 
+   | 
+28 |     public function onDetach(string message) {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 |         io:println("listener-> ", message);
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 |     }
+   |     ^
+31 | 
+   | 
+32 |     function trigger(string message) {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 |         io:println("trigger-> ", message);
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+34 |     }
+   |     ^
+35 | }
+   | ^

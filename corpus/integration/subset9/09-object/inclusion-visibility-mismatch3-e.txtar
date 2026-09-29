@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: mismatched visibility qualifiers for method 'f' with object type inclusion
+  --> inclusion-visibility-mismatch3-e.bal:24:5
+   |
+24 |     public function f() returns int; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
