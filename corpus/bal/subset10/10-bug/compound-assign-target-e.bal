@@ -13,13 +13,26 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/io;
 
-public function main() {
-    int|string foo = 2;
-    while foo == 2 {
-        foo += 5;
-    }
-    io:println(foo); // @output 7
+const C = 1;
+
+type T int;
+
+function f() {
 }
 
+function byteParamAdd(byte p) {
+    p += 1; // @error cannot assign to parameter
+}
+
+function nilableParamAdd(int? p) {
+    p += 1; // @error cannot assign to parameter
+}
+
+public function main() {
+    C += 1; // @error cannot assign to constant
+    T += 1; // @error cannot assign to type
+    f += 1; // @error cannot assign to function
+    byteParamAdd(1);
+    nilableParamAdd(1);
+}

@@ -1,0 +1,121 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: compound assignment operands cannot be nilable
+   --> compound-assign-op-type-e.bal:121:5
+    |
+121 |     x += y; // @error operand type int? is nilable
+    |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: compound assignment operands cannot be nilable
+   --> compound-assign-op-type-e.bal:154:9
+    |
+154 |         n += 1; // @error operand type is the declared int?
+    |         ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected 1|2, got int
+   --> compound-assign-op-type-e.bal:115:5
+    |
+115 |     v += 1; // @error 1|2 + int is int
+    |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got float
+  --> compound-assign-op-type-e.bal:82:5
+   |
+82 |     i *= f; // @error int * float is float
+   |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Signed8, got int
+  --> compound-assign-op-type-e.bal:76:5
+   |
+76 |     x += 1; // @error int:Signed8 + int is int
+   |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+   --> compound-assign-op-type-e.bal:102:5
+    |
+102 |     t[0] += 1; // @error byte + int is int
+    |     ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+   --> compound-assign-op-type-e.bal:108:9
+    |
+108 |         x += 1; // @error byte + int is int
+    |         ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> compound-assign-op-type-e.bal:27:9
+   |
+27 |         self.b += 1; // @error byte + int is int
+   |         ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> compound-assign-op-type-e.bal:33:5
+   |
+33 |     b <<= 1; // @error byte << int is int
+   |     ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> compound-assign-op-type-e.bal:38:5
+   |
+38 |     b += 1; // @error byte + int is int
+   |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> compound-assign-op-type-e.bal:43:5
+   |
+43 |     b *= 2; // @error byte * int is int
+   |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> compound-assign-op-type-e.bal:49:5
+   |
+49 |     b |= i; // @error byte | int is int
+   |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> compound-assign-op-type-e.bal:55:5
+   |
+55 |     b ^= i; // @error byte ^ int is int
+   |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> compound-assign-op-type-e.bal:66:5
+   |
+66 |     g += 1; // @error byte + int is int
+   |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> compound-assign-op-type-e.bal:87:5
+   |
+87 |     bs[0] += 1; // @error byte + int is int
+   |     ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> compound-assign-op-type-e.bal:92:5
+   |
+92 |     r.a <<= 1; // @error byte << int is int
+   |     ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> compound-assign-op-type-e.bal:97:5
+   |
+97 |     c.b += 1; // @error byte + int is int
+   |     ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string:Char, got string
+  --> compound-assign-op-type-e.bal:71:5
+   |
+71 |     c += "b"; // @error string:Char + string is string
+   |     ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: union types not supported for +
+   --> compound-assign-op-type-e.bal:147:9
+    |
+147 |         v += 1; // @error operand type is the declared int|string
+    |         ^^^^^^^
+
+error[SEMANTIC_ERROR]: union types not supported for +
+  --> compound-assign-op-type-e.bal:61:9
+   |
+61 |         v += 1; // @error operand type is the declared byte|string
+   |         ^^^^^^^

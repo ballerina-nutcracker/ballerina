@@ -32,6 +32,22 @@ func IsSelfFieldAccess(n *ast.BLangFieldBaseAccess) bool {
 	return ok && varRef.VariableName.GetValue() == "self"
 }
 
+// AssignmentTargetError returns the reason a symbol of the given kind cannot be assigned to, if any.
+func AssignmentTargetError(kind model.SymbolKind) (string, bool) {
+	switch kind {
+	case model.SymbolKindConstant:
+		return "cannot assign to constant", true
+	case model.SymbolKindParemeter:
+		return "cannot assign to parameter", true
+	case model.SymbolKindFunction:
+		return "cannot assign to function", true
+	case model.SymbolKindType:
+		return "cannot assign to type", true
+	default:
+		return "", false
+	}
+}
+
 func IterableType(ctx *context.CompilerContext, symbolType func(model.SymbolRef) semtypes.SemType) (semtypes.SemType, bool) {
 	ref, ok := ctx.LangLibDistinctTypeSymbol("lang.object", "Iterable")
 	if !ok {

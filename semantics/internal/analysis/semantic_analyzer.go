@@ -2151,6 +2151,27 @@ func deferredLocalInitFunction(a analyzer, assignment assignmentNode, symbol mod
 	return fa, ok && md.NoInitializer
 }
 
+// analyzeFinalAssignmentTarget reports whether assignment may assign to symbol given that a final
+// variable can only be assigned by its deferred initialization.
+func analyzeFinalAssignmentTarget(a analyzer, assignment assignmentNode, symbol model.SymbolRef) bool {
+	ctx := a.ctx()
+	meta, ok := ctx.ValueSymbolMetadata(symbol)
+	if !ok || !meta.Final || isDeferredInitAssignment(a, assignment, symbol) {
+		return true
+	}
+	variable := assignment.GetVariable()
+	fa, deferred := deferredLocalInitFunction(a, assignment, symbol)
+	if !deferred {
+		a.semanticErr("cannot assign a value to final variable '"+ctx.SymbolName(symbol)+"'", variable.GetPosition())
+		return false
+	}
+	if fa.isLambda {
+		a.unimplementedErr("deferred initialization of a final variable in a lambda", variable.GetPosition())
+		return false
+	}
+	return true
+}
+
 func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 	variable := assignment.GetVariable()
 	if symbolNode, ok := variable.(ast.BNodeWithSymbol); ok {
@@ -2159,36 +2180,12 @@ func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 			a.internalErr("unexpected nil symbol", variable.GetPosition())
 			return false
 		}
-		ctx := a.ctx()
-		if meta, ok := ctx.ValueSymbolMetadata(symbol); ok && meta.Final && !isDeferredInitAssignment(a, assignment, symbol) {
-			fa, deferred := deferredLocalInitFunction(a, assignment, symbol)
-			if !deferred {
-				a.semanticErr("cannot assign a value to final variable '"+ctx.SymbolName(symbol)+"'", variable.GetPosition())
-				return false
-			}
-			if fa.isLambda {
-				a.unimplementedErr("deferred initialization of a final variable in a lambda", variable.GetPosition())
-				return false
-			}
+		if !analyzeFinalAssignmentTarget(a, assignment, symbol) {
+			return false
 		}
-		switch ctx.SymbolKind(symbol) {
-		case model.SymbolKindConstant:
-			a.semanticErr("cannot assign to constant", variable.GetPosition())
+		if msg, ok := common.AssignmentTargetError(a.ctx().SymbolKind(symbol)); ok {
+			a.semanticErr(msg, variable.GetPosition())
 			return false
-		case model.SymbolKindParemeter:
-			a.semanticErr("cannot assign to parameter", variable.GetPosition())
-			return false
-		case model.SymbolKindFunction:
-			a.semanticErr("cannot assign to function", variable.GetPosition())
-			return false
-		case model.SymbolKindType:
-			a.semanticErr("cannot assign to type", variable.GetPosition())
-			return false
-		case model.SymbolKindAnnotation:
-			a.semanticErr("cannot assign to annotation", variable.GetPosition())
-			return false
-		case model.SymbolKindVariable, model.SymbolKindXMLNS:
-			// Continue with regular assignment analysis.
 		}
 	}
 	if !analyzeActionOrExpression(a, variable, semtypes.SemType{}) {
@@ -2199,17 +2196,16 @@ func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 	return analyzeActionOrExpression(a, expression, expectedType)
 }
 
+// analyzeCompoundAssignment relies on the type resolver having checked the assignment target and
+// the type of `lvexpr op expr`.
 func analyzeCompoundAssignment[A analyzer](a A, assignment *ast.BLangCompoundAssignment) bool {
-	if !analyzeAssignment(a, assignment) {
-		return false
+	if symbolNode, ok := assignment.GetVariable().(ast.BNodeWithSymbol); ok && ast.SymbolIsSet(symbolNode) {
+		if !analyzeFinalAssignmentTarget(a, assignment, symbolNode.Symbol()) {
+			return false
+		}
 	}
-	lhsTy := assignment.GetVariable().GetDeterminedType()
-	rhsTy := assignment.GetExpression().GetDeterminedType()
-	if semtypes.ContainsBasicType(lhsTy, semtypes.Nil) || semtypes.ContainsBasicType(rhsTy, semtypes.Nil) {
-		a.semanticErr("compound assignment operands cannot be nilable", assignment.GetPosition())
-		return false
-	}
-	return true
+	return analyzeActionOrExpression(a, assignment.GetVariable(), semtypes.SemType{}) &&
+		analyzeActionOrExpression(a, assignment.GetExpression(), semtypes.SemType{})
 }
 
 func analyzeIf[A analyzer](a A, ifStmt *ast.BLangIf) bool {

@@ -1,0 +1,128 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = unknown %1;
+    i = %2;
+    %4 = ConstantLoad 200
+    b = %4;
+    %7 = b;
+    %8 = i;
+    %6 = unknown %7 %8;
+    b = %6;
+    %9 = b;
+    %10 = println(%9) -> bb1;
+  }
+  bb1 {
+    %12 = b;
+    %13 = i;
+    %11 = unknown %12 %13;
+    b = %11;
+    %14 = b;
+    %15 = println(%14) -> bb2;
+  }
+  bb2 {
+    %16 = ConstantLoad 5
+    c = %16;
+    %19 = c;
+    %20 = ConstantLoad 2
+    %21 = %20;
+    %18 = unknown %19 %21;
+    c = %18;
+    %22 = c;
+    %23 = println(%22) -> bb3;
+  }
+  bb3 {
+    %25 = c;
+    %26 = ConstantLoad 1
+    %27 = %26;
+    %24 = unknown %25 %27;
+    c = %24;
+    %28 = c;
+    %29 = println(%28) -> bb4;
+  }
+  bb4 {
+    %30 = ConstantLoad 300
+    w = %30;
+    %33 = w;
+    %34 = i;
+    %32 = unknown %33 %34;
+    w = %32;
+    %35 = w;
+    %36 = println(%35) -> bb5;
+  }
+  bb5 {
+    %37 = ConstantLoad 12
+    j = %37;
+    %39 = ConstantLoad 7
+    k = %39;
+    %42 = j;
+    %43 = k;
+    %41 = unknown %42 %43;
+    j = %41;
+    %44 = j;
+    %45 = println(%44) -> bb6;
+  }
+  bb6 {
+    %46 = ConstantLoad 65535
+    u = %46;
+    %49 = u;
+    %50 = ConstantLoad 4
+    %51 = %50;
+    %48 = unknown %49 %51;
+    u = %48;
+    %52 = u;
+    %53 = println(%52) -> bb7;
+  }
+  bb7 {
+    %54 = ConstantLoad 255
+    %55 = ConstantLoad 1
+    %56 = newArray [int:Unsigned8...][%55]{%54}
+    bs = %56;
+    %58 = ConstantLoad 0
+    %59 = bs[%58];
+    %60 = %59;
+    %61 = ConstantLoad 15
+    %62 = %61;
+    %63 = unknown %60 %62;
+    bs[%58] = %63;
+    %65 = ConstantLoad 0
+    %64 = bs[%65];
+    %66 = %64;
+    %67 = println(%66) -> bb8;
+  }
+  bb8 {
+    %68 = ConstantLoad 1.5
+    f = %68;
+    %71 = f;
+    %72 = ConstantLoad 2
+    %73 = %72;
+    %70 = * %71 %73;
+    f = %70;
+    %74 = f;
+    %75 = println(%74) -> bb9;
+  }
+  bb9 {
+    %77 = f;
+    %78 = ConstantLoad 4
+    %79 = %78;
+    %76 = / %77 %79;
+    f = %76;
+    %80 = f;
+    %81 = println(%80) -> bb10;
+  }
+  bb10 {
+    %82 = ConstantLoad 1.5
+    d = %82;
+    %85 = d;
+    %86 = ConstantLoad 3
+    %87 = %86;
+    %84 = * %85 %87;
+    d = %84;
+    %88 = d;
+    %89 = println(%88) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}
