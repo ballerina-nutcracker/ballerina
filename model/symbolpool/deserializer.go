@@ -432,6 +432,9 @@ func (sr *symbolReader) readInclusionMembers(space *model.SymbolSpace) []model.I
 			if flags&4 != 0 {
 				fdFlags |= model.FieldDescriptorHasDefault
 			}
+			if flags&8 != 0 {
+				fdFlags |= model.FieldDescriptorFinal
+			}
 			fd := model.NewFieldDescriptor(name, fdFlags, isPublic)
 			fd.SetMemberType(ty)
 			fd.DefaultFnRef = sr.readSymbolRef(space)

@@ -1996,7 +1996,7 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		return nil
 	case *ast.BLangClassDefinition:
 		analyzeClassLikeDefn(a, n.Fields, n.InitFunction, n.Methods, n.ResourceMethods, n.Inclusions,
-			n.InclusionPositions, n.IsIsolated(), enclosingFromClass(n))
+			n.InclusionPositions, n.IsIsolated(), enclosingFromClass(a.ctx(), n))
 		return nil
 	case *ast.BLangService:
 		for _, expr := range n.AttachedExprs {
@@ -2004,7 +2004,7 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		}
 		validateServiceListenerTypes(a, n)
 		analyzeClassLikeDefn(a, n.Fields, n.InitFunction, n.Methods, n.ResourceMethods, n.Inclusions,
-			n.InclusionPositions, n.IsIsolated(), enclosingFromService(n))
+			n.InclusionPositions, n.IsIsolated(), enclosingFromService(a.ctx(), n))
 		return nil
 	default:
 		return a
@@ -2172,8 +2172,47 @@ func analyzeFinalAssignmentTarget(a analyzer, assignment assignmentNode, symbol 
 	return true
 }
 
+// finalSelfFieldReassignment returns the final field of the enclosing class
+// that assignment writes as `self.f` outside its one-time initialization: a
+// plain `=` directly in the class init to a field without an initializer. It
+// returns nil if there is no such field.
+func finalSelfFieldReassignment(a analyzer, assignment assignmentNode) *model.FieldDescriptor {
+	access, ok := assignment.GetVariable().(*ast.BLangFieldBaseAccess)
+	if !ok || !common.IsSelfFieldAccess(access) {
+		return nil
+	}
+	cls, ok := enclosingClassOf(a)
+	if !ok {
+		return nil
+	}
+	_, plain := assignment.(*ast.BLangAssignment)
+	name := access.Field.GetValue()
+	for _, field := range cls.fieldDescriptors {
+		if field.MemberName() != name || !field.IsFinal() {
+			continue
+		}
+		if plain && !field.HasDefault() && inInitFunction(a) {
+			return nil
+		}
+		return field
+	}
+	return nil
+}
+
+func analyzeFinalSelfFieldTarget(a analyzer, assignment assignmentNode) bool {
+	field := finalSelfFieldReassignment(a, assignment)
+	if field == nil {
+		return true
+	}
+	a.semanticErr("cannot assign a value to final field '"+field.MemberName()+"'", assignment.GetVariable().GetPosition())
+	return false
+}
+
 func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 	variable := assignment.GetVariable()
+	if !analyzeFinalSelfFieldTarget(a, assignment) {
+		return false
+	}
 	if symbolNode, ok := variable.(ast.BNodeWithSymbol); ok {
 		symbol := symbolNode.Symbol()
 		if !ast.SymbolIsSet(symbolNode) {
@@ -2199,6 +2238,9 @@ func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 // analyzeCompoundAssignment relies on the type resolver having checked the assignment target and
 // the type of `lvexpr op expr`.
 func analyzeCompoundAssignment[A analyzer](a A, assignment *ast.BLangCompoundAssignment) bool {
+	if !analyzeFinalSelfFieldTarget(a, assignment) {
+		return false
+	}
 	if symbolNode, ok := assignment.GetVariable().(ast.BNodeWithSymbol); ok && ast.SymbolIsSet(symbolNode) {
 		if !analyzeFinalAssignmentTarget(a, assignment, symbolNode.Symbol()) {
 			return false

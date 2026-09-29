@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "crossmodulefinalfieldincludedv"
+version = "0.1.0"

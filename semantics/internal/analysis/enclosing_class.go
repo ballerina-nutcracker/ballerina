@@ -16,7 +16,12 @@
 
 package analysis
 
-import "github.com/ballerina-nutcracker/ballerina/ast"
+import (
+	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
+)
 
 // enclosingClassBody captures the subset of a class or service body that
 // semantic analysis (in particular lock validation and isolated-field
@@ -29,22 +34,44 @@ type enclosingClassBody struct {
 	name     string
 	isolated bool
 	fields   []*ast.BLangVariable
-	initFn   *ast.BLangFunction
+	// fieldDescriptors describe every field the body has, both declared in
+	// it and included with `*T`.
+	fieldDescriptors []*model.FieldDescriptor
+	initFn           *ast.BLangFunction
 }
 
-func enclosingFromClass(c *ast.BLangClassDefinition) *enclosingClassBody {
+func enclosingFromClass(ctx *context.CompilerContext, c *ast.BLangClassDefinition) *enclosingClassBody {
 	return &enclosingClassBody{
-		name:     c.Name.GetValue(),
-		isolated: c.IsIsolated(),
-		fields:   c.Fields,
-		initFn:   c.InitFunction,
+		name:             c.Name.GetValue(),
+		isolated:         c.IsIsolated(),
+		fields:           c.Fields,
+		fieldDescriptors: memberFieldDescriptors(ctx.SymbolMembers(c.Symbol())),
+		initFn:           c.InitFunction,
 	}
 }
 
-func enclosingFromService(s *ast.BLangService) *enclosingClassBody {
-	return &enclosingClassBody{
-		isolated: s.IsIsolated(),
-		fields:   s.Fields,
-		initFn:   s.InitFunction,
+// enclosingFromService builds the body of s. A service cannot include types,
+// so its fields are the ones it declares.
+func enclosingFromService(ctx *context.CompilerContext, s *ast.BLangService) *enclosingClassBody {
+	fieldDescriptors := make([]*model.FieldDescriptor, len(s.Fields))
+	for i, field := range s.Fields {
+		fd := common.ClassFieldDescriptor(field, ctx.SymbolType(field.Symbol()))
+		fieldDescriptors[i] = &fd
 	}
+	return &enclosingClassBody{
+		isolated:         s.IsIsolated(),
+		fields:           s.Fields,
+		fieldDescriptors: fieldDescriptors,
+		initFn:           s.InitFunction,
+	}
+}
+
+func memberFieldDescriptors(members []model.InclusionMember) []*model.FieldDescriptor {
+	var fields []*model.FieldDescriptor
+	for _, member := range members {
+		if field, ok := member.(*model.FieldDescriptor); ok {
+			fields = append(fields, field)
+		}
+	}
+	return fields
 }

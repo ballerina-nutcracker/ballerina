@@ -2909,9 +2909,15 @@ func objectTypeMembers(t typeResolver, td *ast.BLangObjectType) []model.Inclusio
 	return members
 }
 
-// classMembers accumulate members both added by type inclusion and defined in the class decl itself
+// classMembers accumulate members both added by type inclusion and defined in the class decl itself.
+// A field the class declares itself replaces an included field of the same name. An included field
+// has no default in the class, since the including class must initialize it.
 func classMembers(t typeResolver, classDef *ast.BLangClassDefinition) []model.InclusionMember {
 	var members []model.InclusionMember
+	directFields := make(map[string]bool)
+	for _, field := range classDef.Fields {
+		directFields[field.Name.GetValue()] = true
+	}
 	// Collect transitive members from included types
 	for _, symRef := range classDef.Inclusions {
 		incSym := getMemberCarrier(t, symRef)
@@ -2919,11 +2925,21 @@ func classMembers(t typeResolver, classDef *ast.BLangClassDefinition) []model.In
 			t.internalError("failed to find included symbol", classDef.GetPosition())
 			return nil
 		}
-		members = append(members, incSym.Members()...)
+		for _, m := range incSym.Members() {
+			field, ok := m.(*model.FieldDescriptor)
+			if !ok {
+				members = append(members, m)
+				continue
+			}
+			if directFields[field.MemberName()] {
+				continue
+			}
+			members = append(members, field.WithoutDefault())
+		}
 	}
 	// Add direct members
 	for _, field := range classDef.Fields {
-		fd := classFieldDescriptor(t, field)
+		fd := common.ClassFieldDescriptor(field, t.symbolType(field.Symbol()))
 		members = append(members, &fd)
 	}
 	for name := range classDef.Methods {
@@ -2957,16 +2973,6 @@ func methodDescriptor(method *ast.BMethodDecl, fnRef model.SymbolRef) model.Meth
 	md := model.NewMethodDescriptor(method.Name(), kind, method.IsPublic(), fnRef)
 	md.SetMemberType(method.GetDeterminedType())
 	return md
-}
-
-func classFieldDescriptor(t typeResolver, field *ast.BLangVariable) model.FieldDescriptor {
-	var flags model.FieldDescriptorFlag
-	if field.IsReadonly() {
-		flags |= model.FieldDescriptorReadonly
-	}
-	fd := model.NewFieldDescriptor(field.Name.GetValue(), flags, field.IsPublic())
-	fd.SetMemberType(t.symbolType(field.Symbol()))
-	return fd
 }
 
 func classMethodDescriptor(t typeResolver, name string, method *ast.BLangFunction) model.MethodDescriptor {
