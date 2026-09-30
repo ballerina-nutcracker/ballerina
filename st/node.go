@@ -397,7 +397,15 @@ func into[T Node](node Node) T {
 
 func (n *NonTerminalNodeBase) getChildPosition(bucket int) int {
 	childPos := n.position
-	for i := range bucket {
+	start := 0
+	for i := bucket - 1; i >= 0; i-- {
+		if prev := n.childBuckets[i]; prev != nil {
+			childPos = prev.Position() + int(prev.InternalNode().WidthWithMinutiae())
+			start = i + 1
+			break
+		}
+	}
+	for i := start; i < bucket; i++ {
 		childNode := n.internalNode.ChildInBucket(i)
 		if IsSTNodePresent(childNode) {
 			childPos += int(childNode.WidthWithMinutiae())
