@@ -1,0 +1,5 @@
+-- stdout --
+client read failed: true
+local onClose count: 1
+peer onClose count: 1
+-- stderr --

@@ -1,0 +1,13 @@
+-- stdout --
+File does not contain valid certificates: /nonexistent/ca.pem
+true
+true
+File does not contain valid certificates: /nonexistent/c.pem
+File does not contain valid private key: /nonexistent/k.pem
+true
+true
+true
+Unable to initialize the tcp listener.
+true true
+true
+-- stderr --

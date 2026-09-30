@@ -1,0 +1,6 @@
+-- stdout --
+1
+true
+1
+-- stderr --
+error: Error while SSL handshake: tls: first record does not look like a TLS handshake
