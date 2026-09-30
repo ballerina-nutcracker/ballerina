@@ -17,6 +17,7 @@
 package semtypes
 
 import (
+	"math"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/decimal"
@@ -146,6 +147,7 @@ func TestFloatSingleton(t *testing.T) {
 }
 
 func TestDecimalSingleton(t *testing.T) {
+	t.Parallel()
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	val, err := decimal.FromString("1.5")
@@ -153,9 +155,65 @@ func TestDecimalSingleton(t *testing.T) {
 		t.Fatalf("failed to parse decimal: %v", err)
 	}
 	actual := ToString(cx, DecimalConst(*val))
-	expected := "1.5"
+	expected := "1.5d"
 	if actual != expected {
 		t.Errorf("got %s expected %s", actual, expected)
+	}
+}
+
+func TestFloatLiterals(t *testing.T) {
+	t.Parallel()
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	cases := []struct {
+		value    float64
+		expected string
+	}{
+		{2.0, "2.0"},
+		{-0.5, "-0.5"},
+		{math.Copysign(0, -1), "-0.0"},
+		{1e21, "1e+21"},
+		{math.NaN(), "float:NaN"},
+		{math.Inf(1), "float:Infinity"},
+		{math.Inf(-1), "-float:Infinity"},
+	}
+	for _, each := range cases {
+		actual := ToString(cx, FloatConst(each.value))
+		if actual != each.expected {
+			t.Errorf("got %s expected %s", actual, each.expected)
+		}
+	}
+}
+
+func TestNegatedEnumerableSubtypes(t *testing.T) {
+	t.Parallel()
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	val, err := decimal.FromString("1.5")
+	if err != nil {
+		t.Fatalf("failed to parse decimal: %v", err)
+	}
+	cases := []struct {
+		ty       SemType
+		expected string
+	}{
+		{Diff(Float, FloatConst(1.5)), "float&¬1.5"},
+		{Diff(Float, Union(FloatConst(1.5), FloatConst(2.5))), "float&¬1.5&¬2.5"},
+		{Union(Int, Diff(Float, FloatConst(1.5))), "int|float&¬1.5"},
+		{Diff(Decimal, DecimalConst(*val)), "decimal&¬1.5d"},
+		{Diff(String, StringConst("a")), "string&¬\"a\""},
+		{Diff(String, Union(StringConst("a"), StringConst("bc"))), "string&¬\"a\"&¬\"bc\""},
+		{Diff(String, Char), "string&¬string:Char"},
+		{Diff(String, Union(Char, StringConst("bc"))), "string&¬string:Char&¬\"bc\""},
+		{Diff(Union(Char, StringConst("bc")), StringConst("a")), "string:Char&¬\"a\"|\"bc\""},
+		{Union(StringConst("a"), Diff(String, Char)), "\"a\"|string&¬string:Char"},
+		{Union(StringConst("a"), Diff(String, Union(Char, StringConst("bc")))), "\"a\"|string&¬string:Char&¬\"bc\""},
+	}
+	for _, each := range cases {
+		actual := ToString(cx, each.ty)
+		if actual != each.expected {
+			t.Errorf("got %s expected %s", actual, each.expected)
+		}
 	}
 }
 

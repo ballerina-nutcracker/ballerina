@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got 2.0
+  --> tostring1-e.bal:54:13
+   |
+54 |     int _ = f; // @error
+   |             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got 2.0d
+  --> tostring1-e.bal:56:13
+   |
+56 |     int _ = d; // @error
+   |             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got decimal&¬1.5d
+  --> tostring1-e.bal:28:13
+   |
+28 |     int _ = d; // @error
+   |             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got float&¬1.5
+  --> tostring1-e.bal:21:13
+   |
+21 |     int _ = f; // @error
+   |             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got string&¬"a"&¬"bc"
+  --> tostring1-e.bal:35:13
+   |
+35 |     int _ = s; // @error
+   |             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got string&¬string:Char
+  --> tostring1-e.bal:42:13
+   |
+42 |     int _ = s; // @error
+   |             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got string:Char&¬"a"|"bc"
+  --> tostring1-e.bal:49:13
+   |
+49 |     int _ = s; // @error
+   |             ^
