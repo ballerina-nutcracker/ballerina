@@ -11,4 +11,13 @@ HEAD
 OPTIONS
 GET
 POST
+GET
+POST
+PUT
+PATCH
+DELETE
+OPTIONS
+7 rock
+8 jazz
+true
 -- stderr --

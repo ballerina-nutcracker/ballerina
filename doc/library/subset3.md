@@ -193,7 +193,7 @@ All seven accessors are declared as resource methods on `http:Client`, so a requ
 
 ```ballerina
 resource isolated function get [PathParamType... path](map<string|string[]>? headers = (),
-        *QueryParams params) returns Response|error = external;
+        TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
 ```
 
 `PathParamType` is `boolean|int|float|decimal|string`. Each segment of the call site's path becomes one element of `path`, whether it was written as a name or as a computed segment, and `get` is the accessor used when the call site names none:
@@ -207,7 +207,15 @@ http:Response d = check c->/albums/[42].delete();    // DELETE /albums/42
 http:Response e = check c->/;                        // GET /
 ```
 
-`post`, `put`, `patch` and `delete` take a leading `message`, plus `headers` and `mediaType`, exactly as their remote counterparts do; `delete`'s `message` is defaultable. `head` and `options` take only `headers`.
+`post`, `put`, `patch` and `delete` take a leading `message`, plus `headers` and `mediaType`, exactly as their remote counterparts do; `delete`'s `message` is defaultable. `get` and `options` take `headers`, and `head` takes only `headers`.
+
+Every accessor except `head` binds the response payload exactly as its remote counterpart does (see [Client — response data binding](#client--response-data-binding)), through a `TargetType targetType = <>` parameter placed before `*QueryParams`. The target is inferred from the contextually expected type, or named explicitly:
+
+```ballerina
+Album album = check c->/albums/[42];                       // bound from the JSON body
+string text = check c->/albums/[42](targetType = string);  // explicit target
+http:Response raw = check c->/albums/[42];                 // the raw response
+```
 
 Query parameters are named arguments, collected by the `*QueryParams` included record parameter:
 
@@ -223,7 +231,7 @@ public type QueryParams record {|
 |};
 ```
 
-The four `never` fields reserve the names the method's own parameters use, so `headers`, `targetType`, `message` and `mediaType` cannot be smuggled in as query parameters.
+The four `never` fields reserve the names the method's own parameters use, so `headers`, `targetType`, `message` and `mediaType` cannot be smuggled in as query parameters; a named `targetType` argument always binds to the method's own parameter.
 
 | Call | Request target |
 |---|---|
@@ -241,7 +249,7 @@ Two renderings deliberately differ from jBallerina's wire format, in both cases 
 - **Values use Ballerina's `toString`.** jBallerina formats a segment with Java's `String.valueOf`, so a `float` goes out as `Double.toString` gives it — `1.0E10`. Here every segment and query value goes through Ballerina's own `toString`, giving `1e10`. `int`, `boolean`, `decimal` and `string` are identical either way; a whole float still keeps its `.0` and a decimal still keeps its trailing zeros.
 - **Query components are escaped.** jBallerina concatenates the target and lets the transport encode only the space, so a value containing `&` or `=` silently splits into extra parameters. Here keys and values are escaped with `url.QueryEscape`, so such a value stays one parameter — at the cost of a space rendering as `+` rather than `%20`.
 
-Not covered in this subset: the `targetType` parameter. jBallerina's resource methods are dependently typed on `TargetType targetType = <>`, which the interpreter does not yet support for resource methods (#825), so these methods return the raw `http:Response` and a target of any other type is a compile error. Use the remote method form when the payload needs binding. The `@http:Query` annotation for renaming a query parameter on the wire is also not supported.
+Not covered in this subset: the `@http:Query` annotation for renaming a query parameter on the wire.
 
 ### Response
 

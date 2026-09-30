@@ -16,21 +16,22 @@
 
 import ballerina/http;
 
-type Album record {|
-    int id;
-|};
+// Each case is in its own function because the compiler reports only the first
+// failing resource access per function.
+
+// A named `targetType` binds to the method's own parameter, so it must be a
+// `TargetType` typedesc rather than a query value.
+function namedTargetTypeMustBeTypedesc(http:Client c) returns error? {
+    http:Response _ = check c->/albums(targetType = "json"); // @error targetType is not a query parameter
+}
+
+// `head` has no `targetType` parameter, so its result cannot be bound.
+function headCannotBind(http:Client c) returns error? {
+    string _ = check c->/albums.head(); // @error head returns only http:Response
+}
 
 public function main() returns error? {
     http:Client c = check new ("https://example.com");
-    Album album = {id: 1};
-
-    // A computed path segment must be a member of `PathParamType`; a record is not.
-    http:Response _ = check c->/albums/[album]; // @error record is not a PathParamType
-
-    // `QueryParams` declares headers, message and mediaType as `never`, so none of
-    // them can be supplied as a query parameter.
-    http:Response _ = check c->/albums(message = "body"); // @error message is a never field
-    http:Response _ = check c->/albums(mediaType = "text/plain"); // @error mediaType is a never field
-
-    return;
+    check namedTargetTypeMustBeTypedesc(c);
+    check headCannotBind(c);
 }

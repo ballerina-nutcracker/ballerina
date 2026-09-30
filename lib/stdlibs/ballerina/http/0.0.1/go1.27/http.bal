@@ -819,15 +819,15 @@ public isolated client class Client {
     # Retrieves a representation of the specified resource, addressed with the client resource
     # access path syntax (`client->/albums/[id]`).
     #
-    # The `targetType` parameter of jBallerina's client resource methods is absent here, so the
-    # raw `Response` is always returned; see the README's *Resource function call syntax* row.
-    #
     # + path - The resource path segments, appended to the base URL
     # + headers - Optional request headers as a `map<string|string[]>`
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
     # + params - Query parameters, supplied as named arguments
-    # + return - The `http:Response`, or an `error` if the request fails
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
     isolated resource function get [PathParamType... path](map<string|string[]>? headers = (),
-            *QueryParams params) returns Response|error = external;
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
 
     # Creates a new resource or submits data to a resource for processing, addressed with the
     # client resource access path syntax (`client->/albums.post(payload)`).
@@ -836,11 +836,14 @@ public isolated client class Client {
     # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
     # + params - Query parameters, supplied as named arguments
-    # + return - The `http:Response`, or an `error` if the request fails
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
     isolated resource function post [PathParamType... path](RequestMessage message,
             map<string|string[]>? headers = (), string? mediaType = (),
-            *QueryParams params) returns Response|error = external;
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
 
     # Creates a new resource or replaces a representation of the specified resource, addressed
     # with the client resource access path syntax (`client->/albums/[id].put(payload)`).
@@ -849,11 +852,14 @@ public isolated client class Client {
     # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
     # + params - Query parameters, supplied as named arguments
-    # + return - The `http:Response`, or an `error` if the request fails
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
     isolated resource function put [PathParamType... path](RequestMessage message,
             map<string|string[]>? headers = (), string? mediaType = (),
-            *QueryParams params) returns Response|error = external;
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
 
     # Applies a partial modification to the specified resource, addressed with the client
     # resource access path syntax (`client->/albums/[id].patch(payload)`).
@@ -862,11 +868,14 @@ public isolated client class Client {
     # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
     # + params - Query parameters, supplied as named arguments
-    # + return - The `http:Response`, or an `error` if the request fails
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
     isolated resource function patch [PathParamType... path](RequestMessage message,
             map<string|string[]>? headers = (), string? mediaType = (),
-            *QueryParams params) returns Response|error = external;
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
 
     # Deletes the specified resource, addressed with the client resource access path syntax
     # (`client->/albums/[id].delete()`).
@@ -876,11 +885,14 @@ public isolated client class Client {
     #             `http:Request`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
     # + params - Query parameters, supplied as named arguments
-    # + return - The `http:Response`, or an `error` if the request fails
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
     isolated resource function delete [PathParamType... path](RequestMessage message = (),
             map<string|string[]>? headers = (), string? mediaType = (),
-            *QueryParams params) returns Response|error = external;
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
 
     # Retrieves the headers of the specified resource without a body, addressed with the client
     # resource access path syntax (`client->/albums/[id].head()`).
@@ -897,8 +909,11 @@ public isolated client class Client {
     #
     # + path - The resource path segments, appended to the base URL
     # + headers - Optional request headers as a `map<string|string[]>`
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
     # + params - Query parameters, supplied as named arguments
-    # + return - The `http:Response`, or an `error` if the request fails
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
     isolated resource function options [PathParamType... path](map<string|string[]>? headers = (),
-            *QueryParams params) returns Response|error = external;
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
 }

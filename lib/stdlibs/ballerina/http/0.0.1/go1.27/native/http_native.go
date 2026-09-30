@@ -541,7 +541,7 @@ func initHttpModule(rt *runtime.Runtime) {
 	for idx, accessor := range clientResourceAccessors {
 		verb := strings.ToUpper(accessor)
 		switch accessor {
-		case "get", "head", "options":
+		case "head":
 			// args = [self, path, headers, params]
 			runtime.RegisterExternFunction(rt, orgName, moduleName, clientResourceExternKey(accessor, idx),
 				func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -552,17 +552,28 @@ func initHttpModule(rt *runtime.Runtime) {
 					}
 					return resp, nil
 				})
-		default:
-			// args = [self, path, message, headers, mediaType, params]
+		case "get", "options":
+			// args = [self, path, headers, targetType, params]
 			runtime.RegisterExternFunction(rt, orgName, moduleName, clientResourceExternKey(accessor, idx),
 				func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-					path := resourceRequestPath(args[1].(*values.List), args[5])
+					path := resourceRequestPath(args[1].(*values.List), args[4])
+					resp, errVal := sendSimple(ctx, verb, path, args[0].(*values.Object), args[2])
+					if errVal != nil {
+						return errVal, nil
+					}
+					return bindResponse(ctx, &types, resp, args[3]), nil
+				})
+		default:
+			// args = [self, path, message, headers, mediaType, targetType, params]
+			runtime.RegisterExternFunction(rt, orgName, moduleName, clientResourceExternKey(accessor, idx),
+				func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+					path := resourceRequestPath(args[1].(*values.List), args[6])
 					resp, errVal := sendBody(ctx, verb, path, args[0].(*values.Object),
 						args[2], args[3], args[4])
 					if errVal != nil {
 						return errVal, nil
 					}
-					return resp, nil
+					return bindResponse(ctx, &types, resp, args[5]), nil
 				})
 		}
 	}
