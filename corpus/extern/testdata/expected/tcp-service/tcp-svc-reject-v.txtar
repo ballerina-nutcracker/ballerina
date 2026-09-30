@@ -1,0 +1,4 @@
+-- stdout --
+true
+Socket connection already closed.
+-- stderr --
