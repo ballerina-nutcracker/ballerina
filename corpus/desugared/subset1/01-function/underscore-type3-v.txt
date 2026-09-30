@@ -1,0 +1,30 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition _Value
+    (value-type int))
+  (function identity (
+    (variable _value (type
+      (user-defined-type _Value)))) (
+    (user-defined-type _Value))
+    (block-function-body
+      (return
+        (simple-var-ref _value))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable _value (type
+          (user-defined-type _Value)) (expr
+          (invocation identity (
+            (literal 42))))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (simple-var-ref _value))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation identity (
+          (literal 1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref _value)))))))
