@@ -234,12 +234,6 @@ func (b BuildOptions) TraceRecovery() bool {
 	return b.compilationOptions.TraceRecovery()
 }
 
-// Stats returns whether compilation stats collection is enabled.
-// Delegated to CompilationOptions.
-func (b BuildOptions) Stats() bool {
-	return b.compilationOptions.Stats()
-}
-
 // AcceptTheirs merges the given build options by favoring theirs if there are conflicts.
 func (b BuildOptions) AcceptTheirs(theirs BuildOptions) BuildOptions {
 	merged := BuildOptions{
@@ -456,13 +450,6 @@ func (b *BuildOptionsBuilder) WithDumpST(value bool) *BuildOptionsBuilder {
 // Delegates to CompilationOptionsBuilder.
 func (b *BuildOptionsBuilder) WithTraceRecovery(value bool) *BuildOptionsBuilder {
 	b.compilationOptionsBuilder.WithTraceRecovery(value)
-	return b
-}
-
-// WithStats sets whether compilation stats collection is enabled.
-// Delegates to CompilationOptionsBuilder.
-func (b *BuildOptionsBuilder) WithStats(value bool) *BuildOptionsBuilder {
-	b.compilationOptionsBuilder.WithStats(value)
 	return b
 }
 

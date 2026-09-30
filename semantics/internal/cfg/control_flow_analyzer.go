@@ -98,7 +98,7 @@ func (cfg *PackageCFG) allFunctionCfgs(yield func(model.SymbolRef, *functionCFG)
 }
 
 // Build creates the control flow graph for the given pkg
-func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
+func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage, parent context.TraceSpan) *PackageCFG {
 	cfg := &PackageCFG{
 		funcCfgs:   make(map[model.SymbolRef]functionCFG),
 		methodCfgs: make(map[model.SymbolRef]map[model.SymbolRef]functionCFG),
@@ -109,7 +109,9 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			span := parent.StartChild("Function", traceIdentity(fn.Name))
 			fnCfg := analyzeFunction(ctx, fn)
+			span.End()
 			mu.Lock()
 			cfg.funcCfgs[fn.Symbol()] = fnCfg
 			mu.Unlock()
@@ -120,7 +122,9 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 		initFn := pkg.InitFunction
 		go func() {
 			defer wg.Done()
+			span := parent.StartChild("Init Function", traceIdentity(initFn.Name))
 			fnCfg := analyzeFunction(ctx, initFn)
+			span.End()
 			mu.Lock()
 			cfg.funcCfgs[initFn.Symbol()] = fnCfg
 			mu.Unlock()
@@ -129,7 +133,9 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	analyzeClassBody := func(dest map[model.SymbolRef]functionCFG, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
 		analyzeMethod := func(sym model.SymbolRef, body ast.FunctionBodyNode) {
 			wg.Go(func() {
+				span := parent.StartChild("Method", ctx.SymbolName(sym))
 				fnCfg := analyzeFunctionBody(ctx, body)
+				span.End()
 				mu.Lock()
 				dest[sym] = fnCfg
 				mu.Unlock()
@@ -616,4 +622,12 @@ func (analyzer *functionControlFlowAnalyzer) removeBlocksAndReindex(toRemove []i
 		bb.children = remapRefs(bb.children, oldToNew)
 	}
 	analyzer.bbs = newBbs
+}
+
+// traceIdentity renders a node's name for a span label.
+func traceIdentity(name ast.IdentifierNode) string {
+	if name == nil {
+		return ""
+	}
+	return name.GetValue()
 }

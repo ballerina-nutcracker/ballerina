@@ -57,6 +57,7 @@ type (
 		importedPkgs     map[string]*ast.BLangImportPackage
 		importedSymbols  map[string]model.ExportedSymbolSpace
 		moduleVarMetaMap map[model.SymbolRef]varDeclMetadata
+		span             context.TraceSpan
 	}
 	constantAnalyzer struct {
 		analyzerBase
@@ -333,9 +334,10 @@ func (la *loopAnalyzer) internalErr(message string, loc diagnostics.Location) {
 	la.parent.ctx().InternalError(message, loc)
 }
 
-func newSemanticAnalyzer(ctx *context.CompilerContext) *semanticAnalyzer {
+func newSemanticAnalyzer(ctx *context.CompilerContext, span context.TraceSpan) *semanticAnalyzer {
 	return &semanticAnalyzer{
 		compilerCtx:      ctx,
+		span:             span,
 		typeCtx:          semtypes.ContextFrom(ctx.GetTypeEnv()),
 		importedPkgs:     make(map[string]*ast.BLangImportPackage),
 		importedSymbols:  make(map[string]model.ExportedSymbolSpace),
@@ -343,8 +345,13 @@ func newSemanticAnalyzer(ctx *context.CompilerContext) *semanticAnalyzer {
 	}
 }
 
-func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
-	analyzer := newSemanticAnalyzer(ctx)
+func Analyze(
+	ctx *context.CompilerContext,
+	pkg *ast.BLangPackage,
+	importedSymbols map[string]model.ExportedSymbolSpace,
+	parent context.TraceSpan,
+) {
+	analyzer := newSemanticAnalyzer(ctx, parent)
 	analyzer.analyze(pkg, importedSymbols)
 }
 
@@ -354,9 +361,75 @@ func (sa *semanticAnalyzer) analyze(pkg *ast.BLangPackage, importedSymbols map[s
 		importedSymbols = make(map[string]model.ExportedSymbolSpace)
 	}
 	sa.importedSymbols = importedSymbols
+	metadataSpan := sa.span.StartChild("Module Variable Metadata", "")
 	sa.moduleVarMetaMap = sa.buildModuleVarMetadata()
+	metadataSpan.End()
+	isolationSpan := sa.span.StartChild("Module Isolation Validation", "")
 	sa.validateModuleLevelIsolatedDecls(pkg)
-	ast.Walk(sa, pkg)
+	isolationSpan.End()
+	sa.walkTopLevelNodes(pkg)
+}
+
+// walkTopLevelNodes reproduces ast.Walk's package traversal so that each
+// top-level node can be bracketed by its own span. The order below must stay
+// identical to the *ast.BLangPackage case of ast.Walk: diagnostics are reported
+// as the walk reaches each node, so their order depends on it.
+func (sa *semanticAnalyzer) walkTopLevelNodes(pkg *ast.BLangPackage) {
+	visitor := sa.Visit(pkg)
+	if visitor == nil {
+		return
+	}
+	walk := func(operation, identity string, node ast.BLangNode) {
+		span := sa.span.StartChild(operation, identity)
+		ast.Walk(visitor, node)
+		span.End()
+	}
+	for i := range pkg.Imports {
+		walk("Import", pkg.Imports[i].Alias.GetValue(), pkg.Imports[i])
+	}
+	for i := range pkg.XmlnsList {
+		walk("XML Namespace", xmlnsPrefix(pkg.XmlnsList[i]), pkg.XmlnsList[i])
+	}
+	for i := range pkg.Constants {
+		walk("Constant", traceIdentity(pkg.Constants[i].Name), pkg.Constants[i])
+	}
+	for i := range pkg.GlobalVars {
+		walk("Global Variable", traceIdentity(pkg.GlobalVars[i].Name), pkg.GlobalVars[i])
+	}
+	for i := range pkg.Services {
+		walk("Service", sa.compilerCtx.SymbolName(pkg.Services[i].Symbol()), pkg.Services[i])
+	}
+	for i := range pkg.Functions {
+		walk("Function", traceIdentity(pkg.Functions[i].Name), pkg.Functions[i])
+	}
+	for i := range pkg.TypeDefinitions {
+		walk("Type Definition", traceIdentity(pkg.TypeDefinitions[i].Name), pkg.TypeDefinitions[i])
+	}
+	for i := range pkg.Annotations {
+		walk("Annotation", traceIdentity(pkg.Annotations[i].Name), pkg.Annotations[i])
+	}
+	if pkg.InitFunction != nil {
+		walk("Init Function", traceIdentity(pkg.InitFunction.Name), pkg.InitFunction)
+	}
+	for i := range pkg.ClassDefinitions {
+		walk("Class Definition", traceIdentity(pkg.ClassDefinitions[i].Name), pkg.ClassDefinitions[i])
+	}
+	visitor.Visit(nil)
+}
+
+// traceIdentity renders a node's name for a span label.
+func traceIdentity(name ast.IdentifierNode) string {
+	if name == nil {
+		return ""
+	}
+	return name.GetValue()
+}
+
+func xmlnsPrefix(xmlns *ast.BLangXMLNS) string {
+	if prefix := xmlns.GetPrefix(); prefix != nil {
+		return prefix.GetValue()
+	}
+	return ""
 }
 
 func (sa *semanticAnalyzer) moduleVarMetadata(ref model.SymbolRef) (varDeclMetadata, bool) {

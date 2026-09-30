@@ -309,20 +309,26 @@ func (v *varRefChecker) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 }
 
 // analyzeUninitializedVars is the public entry point for uninitialized variable analysis
-func analyzeUninitializedVars(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func analyzeUninitializedVars(
+	ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Uninitialized Variable Analysis", "")
+	defer span.End()
 	var wg sync.WaitGroup
 	for _, fn := range common.PackageFunctionDecls(pkg) {
 		wg.Add(1)
 		go func(fn common.FunctionDecl) {
 			defer wg.Done()
-			analyzeFunctionUninitializedVars(ctx, fn, cfg)
+			analyzeFunctionUninitializedVars(ctx, fn, cfg, span)
 		}(fn)
 	}
 	wg.Wait()
 }
 
 // analyzeFunctionUninitializedVars analyzes a single function for uninitialized variables
-func analyzeFunctionUninitializedVars(ctx *context.CompilerContext, fn common.FunctionDecl, cfg *PackageCFG) {
+func analyzeFunctionUninitializedVars(
+	ctx *context.CompilerContext, fn common.FunctionDecl, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Uninitialized Variables", traceIdentity(fn.GetName()))
+	defer span.End()
 	fnCfg, ok := cfg.lookupFunctionCfg(fn.Symbol())
 	if !ok {
 		return

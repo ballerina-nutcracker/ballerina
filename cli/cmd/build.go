@@ -53,8 +53,6 @@ type buildOptions struct {
 	dumpCFG          bool
 	dumpBIR          bool
 	traceRecovery    bool
-	stats            bool
-	statsOneline     bool
 	logFile          string
 	format           string
 	output           string // -o: explicit output path
@@ -93,8 +91,6 @@ func createBuildCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.dumpCFG, "dump-cfg", false, "Dump control flow graph")
 	cmd.Flags().BoolVar(&opts.dumpBIR, "dump-bir", false, "Dump Ballerina Intermediate Representation")
 	cmd.Flags().BoolVar(&opts.traceRecovery, "trace-recovery", false, "Enable error recovery tracing")
-	cmd.Flags().BoolVar(&opts.stats, "stats", false, "Print per-stage compilation timing statistics")
-	cmd.Flags().BoolVar(&opts.statsOneline, "stats-oneline", false, "Print per-stage compilation timing totals only")
 	cmd.Flags().StringVar(&opts.logFile, "log-file", "", "Write debug output to specified file")
 	cmd.Flags().StringVar(&opts.format, "format", "", "Output format for dump operations (dot)")
 	cmd.Flags().StringVarP(&opts.output, "output", "o", "", "Output path (default: target/bin/<package-name>)")
@@ -134,7 +130,6 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 		WithDumpTokens(opts.dumpTokens).
 		WithDumpST(opts.dumpST).
 		WithTraceRecovery(opts.traceRecovery).
-		WithStats(opts.stats || opts.statsOneline).
 		WithTargetDir(targetDirOverride).
 		Build()
 
@@ -326,12 +321,6 @@ func buildOneProject(cmd *cobra.Command, opts *buildOptions, stderr io.Writer, f
 			// summary.
 			return fmt.Errorf("compilation contains errors")
 		}
-	}
-
-	if opts.statsOneline {
-		_, _ = fmt.Fprint(stderr, compilation.StatsReportOneline())
-	} else if opts.stats {
-		_, _ = fmt.Fprint(stderr, compilation.StatsReport())
 	}
 
 	backend := projects.NewBallerinaBackend(compilation)

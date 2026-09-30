@@ -116,7 +116,7 @@ type CompilerEnvironment struct {
 	// record fields, keyed by the enclosing type definition's symbol ref. Record
 	// types are structural, so a field has no symbol of its own to key on.
 	recordFieldAnnotations sync.Map // model.SymbolRef -> values.FieldAnnotationValues
-	statsEnabled           bool
+	traceState             traceState
 	diagnosticContext      *diagnostics.DiagnosticEnv
 }
 
@@ -473,7 +473,17 @@ func (c *CompilerEnvironment) NewPackageID(orgName model.Name, nameComps []model
 	return model.NewPackageID(c.packageInterner, orgName, nameComps, version)
 }
 
-func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEnvironment {
+// TraceOptions configures the frontend trace recorder.
+type TraceOptions struct {
+	// Enabled records a span for every frontend invocation.
+	Enabled bool
+	// Nested also records the children each phase starts, giving a span tree
+	// instead of one span per phase. Without it a phase's children cost
+	// nothing: no span is allocated and none is recorded.
+	Nested bool
+}
+
+func NewCompilerEnvironment(typeEnv semtypes.Env, traceOptions TraceOptions) *CompilerEnvironment {
 	return &CompilerEnvironment{
 		anonTypeCount:              make(map[*model.PackageID]int),
 		anonFuncCount:              make(map[*model.PackageID]int),
@@ -482,7 +492,7 @@ func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEn
 		distinctTypes:              newDistinctTypeTracker(),
 		langLibDistinctTypeSymbols: newLangLibDistinctTypeRegistry(),
 		typeEnv:                    typeEnv,
-		statsEnabled:               statsEnabled,
+		traceState:                 newTraceState(traceOptions),
 		diagnosticContext:          diagnostics.NewDiagnosticEnv(),
 	}
 }

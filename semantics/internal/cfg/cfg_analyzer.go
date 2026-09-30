@@ -32,23 +32,27 @@ import (
 // - Unitialized variable analysis: validate all variables are initialized before use in all code paths
 // - Unitialized field analysis: validate object fields are initialized in all code paths in init method (if they don't have inline initializers)
 // - Unitialized global var analysis: validate all module global variables are initialized in module init funciton (if they don't have inline initializers)
-func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG, parent context.TraceSpan) {
 	var wg sync.WaitGroup
-	wg.Go(func() { analyzeReachability(ctx, cfg) })
-	wg.Go(func() { analyzeExplicitReturn(ctx, pkg, cfg) })
-	wg.Go(func() { analyzeUninitializedVars(ctx, pkg, cfg) })
-	wg.Go(func() { analyzeUninitializedFields(ctx, pkg, cfg) })
-	wg.Go(func() { analyzeUninitializedGlobalVars(ctx, pkg, cfg) })
+	wg.Go(func() { analyzeReachability(ctx, cfg, parent) })
+	wg.Go(func() { analyzeExplicitReturn(ctx, pkg, cfg, parent) })
+	wg.Go(func() { analyzeUninitializedVars(ctx, pkg, cfg, parent) })
+	wg.Go(func() { analyzeUninitializedFields(ctx, pkg, cfg, parent) })
+	wg.Go(func() { analyzeUninitializedGlobalVars(ctx, pkg, cfg, parent) })
 	wg.Wait()
 }
 
 // analyzeReachability checks for unreachable code in all functions.
-func analyzeReachability(ctx *context.CompilerContext, cfg *PackageCFG) {
+func analyzeReachability(ctx *context.CompilerContext, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Reachability Analysis", "")
+	defer span.End()
 	var wg sync.WaitGroup
-	for _, fcfg := range cfg.allFunctionCfgs {
+	for ref, fcfg := range cfg.allFunctionCfgs {
 		wg.Add(1)
-		go func(fcfg *functionCFG) {
+		go func(ref model.SymbolRef, fcfg *functionCFG) {
 			defer wg.Done()
+			fnSpan := span.StartChild("Reachability", ctx.SymbolName(ref))
+			defer fnSpan.End()
 			for _, bb := range fcfg.bbs {
 				if !bb.isReachable() {
 					for _, node := range bb.nodes {
@@ -56,17 +60,20 @@ func analyzeReachability(ctx *context.CompilerContext, cfg *PackageCFG) {
 					}
 				}
 			}
-		}(fcfg)
+		}(ref, fcfg)
 	}
 	wg.Wait()
 }
 
 // analyzeExplicitReturn validates that functions with non-nil return types
 // have explicit return statements.
-func analyzeExplicitReturn(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func analyzeExplicitReturn(
+	ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Explicit Return Analysis", "")
+	defer span.End()
 	var wg sync.WaitGroup
 	spawn := func(n invokableNode) {
-		wg.Go(func() { analyzeInvokableExplicitReturn(ctx, n, cfg) })
+		wg.Go(func() { analyzeInvokableExplicitReturn(ctx, n, cfg, span) })
 	}
 	for i := range pkg.Functions {
 		spawn(pkg.Functions[i])
@@ -97,7 +104,10 @@ type invokableNode interface {
 	GetBody() ast.FunctionBodyNode
 }
 
-func analyzeInvokableExplicitReturn(ctx *context.CompilerContext, fn invokableNode, cfg *PackageCFG) {
+func analyzeInvokableExplicitReturn(
+	ctx *context.CompilerContext, fn invokableNode, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Explicit Return", ctx.SymbolName(fn.Symbol()))
+	defer span.End()
 	if fn.IsNative() {
 		return
 	}

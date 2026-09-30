@@ -242,28 +242,6 @@ func (c *PackageCompilation) CompletionManager() any {
 	return nil
 }
 
-// StatsReport returns a formatted compilation stats report with per-module breakdown.
-// Returns empty string if stats were not enabled.
-func (c *PackageCompilation) StatsReport() string {
-	return formatStatsReport(collectModuleStats(c.packageResolution.topologicallySortedModuleList))
-}
-
-// StatsReportOneline returns a compact stats report showing only per-stage totals.
-// Returns empty string if stats were not enabled.
-func (c *PackageCompilation) StatsReportOneline() string {
-	return formatStatsReportOneline(collectModuleStats(c.packageResolution.topologicallySortedModuleList))
-}
-
-func collectModuleStats(moduleList []*moduleContext) []*context.ModuleStats {
-	var allStats []*context.ModuleStats
-	for _, m := range moduleList {
-		if s := m.compilerCtx.GetModuleStats(); s != nil {
-			allStats = append(allStats, s)
-		}
-	}
-	return allStats
-}
-
 // getCompilationOptions returns the compilation options.
 // Java source: PackageCompilation.compilationOptions()
 func (c *PackageCompilation) getCompilationOptions() CompilationOptions {

@@ -21,11 +21,14 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
+	span := cx.StartNamedSpan("AST Build", syntaxTree.FilePath())
+	defer span.End()
 	builder := newNodeBuilder(cx)
 	compilationUnit := builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 	return compilationUnit.(*ast.BLangCompilationUnit)
@@ -33,12 +36,16 @@ func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) 
 
 // GetRecoveredCompilationUnit builds an AST while preserving malformed syntax as bad nodes.
 func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
+	span := cx.StartNamedSpan("AST Build (recovered)", syntaxTree.FilePath())
+	defer span.End()
 	builder := newRecoveringNodeBuilder(cx)
 	compilationUnit := builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 	return compilationUnit.(*ast.BLangCompilationUnit)
 }
 
 func ToPackageFromCompilationUnits(cx *context.CompilerContext, compilationUnits []*ast.BLangCompilationUnit) *ast.BLangPackage {
+	span := cx.StartPackageSpan("Package Assembly", packageAssemblyID(compilationUnits))
+	defer span.End()
 	pkg := ast.NewBLangPackage()
 	for _, compilationUnit := range compilationUnits {
 		packageID := compilationUnit.GetPackageID()
@@ -51,6 +58,17 @@ func ToPackageFromCompilationUnits(cx *context.CompilerContext, compilationUnits
 		addCompilationUnitNodesToPackage(cx, pkg, compilationUnit)
 	}
 	return pkg
+}
+
+// packageAssemblyID returns the package identity the compilation units are
+// assembled into. Units of a valid package all share one identity, which
+// ToPackageFromCompilationUnits enforces with a diagnostic; assembly also runs
+// before any identity is established, so there may be none yet.
+func packageAssemblyID(compilationUnits []*ast.BLangCompilationUnit) *model.PackageID {
+	if len(compilationUnits) == 0 {
+		return nil
+	}
+	return compilationUnits[0].GetPackageID()
 }
 
 func addCompilationUnitNodesToPackage(cx *context.CompilerContext, pkg *ast.BLangPackage, compilationUnit *ast.BLangCompilationUnit) {
