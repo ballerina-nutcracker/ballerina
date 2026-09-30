@@ -475,14 +475,27 @@ func intSubtypeToString(st intSubtype) string {
 			}
 		}
 	}
-	// Individual values or ranges
 	var parts []string
 	for _, r := range st.Ranges {
-		for v := r.Min; v <= r.Max; v++ {
-			parts = append(parts, fmt.Sprintf("%d", v))
-		}
+		parts = append(parts, intRangeToString(r)...)
 	}
 	return strings.Join(parts, "|")
+}
+
+const minCompactedIntRangeValues = 256
+
+func intRangeToString(r intRange) []string {
+	// Unsigned so the width of ranges near the int64 limits doesn't overflow.
+	if uint64(r.Max)-uint64(r.Min) >= minCompactedIntRangeValues-1 {
+		return []string{fmt.Sprintf("int(%d..%d)", r.Min, r.Max)}
+	}
+	var parts []string
+	for v := r.Min; ; v++ {
+		parts = append(parts, fmt.Sprintf("%d", v))
+		if v == r.Max {
+			return parts
+		}
+	}
 }
 
 func booleanSubtypeToString(st booleanSubtype) string {

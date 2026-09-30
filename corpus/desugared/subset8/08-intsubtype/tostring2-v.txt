@@ -1,0 +1,33 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (import-package ballerina lang value (as lang.value))
+  (type-definition BooleanOrString
+    (union-type
+      (value-type boolean)
+      (value-type string)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable max (type
+          (value-type anydata)) (expr
+          (literal 9223372036854775807))))
+      (var-def
+        (variable r (type
+          (union-type
+            (user-defined-type BooleanOrString)
+            (error-type))) (expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref max)
+            (simple-var-ref BooleanOrString))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref r)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation lang.error message (
+                (simple-var-ref r))))))) ())
+      (block-stmt))))
