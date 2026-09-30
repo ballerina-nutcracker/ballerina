@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: missing annotation name
+  --> missing-name-eof-e.bal:17:1
+   |
+17 | @ // @error missing annotation name
+   | ^
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> missing-name-eof-e.bal:17:36
+   |
+17 | @ // @error missing annotation name
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> missing-name-eof-e.bal:17:36
+   |
+17 | @ // @error missing annotation name
+   |
+
+error[SYNTAX_ERROR]: missing variable name
+  --> missing-name-eof-e.bal:17:36
+   |
+17 | @ // @error missing annotation name
+   |

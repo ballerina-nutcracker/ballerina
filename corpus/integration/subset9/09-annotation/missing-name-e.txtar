@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: missing annotation name
+  --> missing-name-e.bal:17:1
+   |
+17 | @ // @error missing annotation name
+   | ^
+
+error[SYNTAX_ERROR]: missing annotation name
+  --> missing-name-e.bal:21:1
+   |
+21 | @ public function sameLine() { // @error missing annotation name
+   | ^
+
+error[SYNTAX_ERROR]: missing annotation name
+  --> missing-name-e.bal:24:1
+   |
+24 | @ // @error missing annotation name
+   | ^
+
+error[SYNTAX_ERROR]: missing annotation name
+  --> missing-name-e.bal:25:1
+   |
+25 | @ // @error missing annotation name
+   | ^
+
+error[SYNTAX_ERROR]: missing annotation name
+  --> missing-name-e.bal:29:1
+   |
+29 | @ {} // @error missing annotation name
+   | ^
