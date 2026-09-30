@@ -27,9 +27,8 @@ public function main() returns error? {
     // A computed path segment must be a member of `PathParamType`; a record is not.
     http:Response _ = check c->/albums/[album]; // @error record is not a PathParamType
 
-    // `QueryParams` declares headers, targetType, message and mediaType as `never`,
-    // so none of them can be supplied as a query parameter.
-    http:Response _ = check c->/albums(targetType = "json"); // @error targetType is a never field
+    // `QueryParams` declares headers, message and mediaType as `never`, so none of
+    // them can be supplied as a query parameter.
     http:Response _ = check c->/albums(message = "body"); // @error message is a never field
     http:Response _ = check c->/albums(mediaType = "text/plain"); // @error mediaType is a never field
 

@@ -17,12 +17,20 @@
 import ballerina/http;
 import ballerina/io;
 
-// Each accessor echoes back the method the listener actually dispatched on, so a
-// client resource method bound to the wrong native implementation would surface
-// as a mismatched verb rather than passing silently. The extern lookup key of a
-// resource method embeds its declaration index within the class, which makes
-// that pairing worth asserting for every accessor.
-service /verb on new http:Listener(19225) {
+type Album record {|
+    int id;
+    string tag;
+|};
+
+listener http:Listener resourceListener = new (19225);
+
+// Each accessor echoes back the method the listener actually dispatched on, as a
+// header and as the text payload, so a client resource method bound to the wrong
+// native implementation would surface as a mismatched verb rather than passing
+// silently. The extern lookup key of a resource method embeds its declaration
+// index within the class, which makes that pairing worth asserting for every
+// accessor.
+service /verb on resourceListener {
     resource function get [string... rest](http:Request req) returns http:Response {
         return echoMethod(req);
     }
@@ -56,7 +64,19 @@ function echoMethod(http:Request req) returns http:Response {
     http:Response resp = new;
     resp.setHeader("x-method", req.method);
     resp.setHeader("x-raw-path", req.rawPath);
+    resp.setTextPayload(req.method);
     return resp;
+}
+
+service /albums on resourceListener {
+    resource function get [int id](http:Request req) returns Album {
+        return {id, tag: req.getQueryParamValue("tag") ?: ""};
+    }
+
+    resource function post [int id](http:Request req) returns Album|error {
+        Album album = check (check req.getJsonPayload()).cloneWithType();
+        return {id, tag: album.tag};
+    }
 }
 
 public function testMain() returns error? {
@@ -98,6 +118,38 @@ public function testMain() returns error? {
 
     http:Response typedResp = check c->/verb/albums.post("body", mediaType = "text/plain");
     io:println(check typedResp.getHeader("x-method")); // @output POST
+
+    // Every accessor except `head` binds the payload to the expected type, which
+    // also asserts each one reads `targetType` from its own argument position.
+    string getBody = check c->/verb/albums/[1];
+    io:println(getBody); // @output GET
+
+    string postBody = check c->/verb/albums.post("body");
+    io:println(postBody); // @output POST
+
+    string putBody = check c->/verb/albums.put("body");
+    io:println(putBody); // @output PUT
+
+    string patchBody = check c->/verb/albums.patch("body");
+    io:println(patchBody); // @output PATCH
+
+    string deleteBody = check c->/verb/albums.delete();
+    io:println(deleteBody); // @output DELETE
+
+    string optionsBody = check c->/verb/albums.options();
+    io:println(optionsBody); // @output OPTIONS
+
+    // A JSON payload binds to a record, with query parameters and a request body
+    // travelling alongside the inferred `targetType`.
+    Album fetched = check c->/albums/[7](tag = "rock");
+    io:println(fetched.id, " ", fetched.tag); // @output 7 rock
+
+    Album created = check c->/albums/[8].post({id: 0, tag: "jazz"});
+    io:println(created.id, " ", created.tag); // @output 8 jazz
+
+    // A payload that does not fit the target type is a binding error.
+    int|error mismatched = c->/albums/[9](tag = "folk");
+    io:println(mismatched is error); // @output true
 
     return;
 }

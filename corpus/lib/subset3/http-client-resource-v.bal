@@ -20,8 +20,9 @@ import ballerina/io;
 public function main() returns error? {
     http:Client c = check new ("https://example.com");
 
-    // Every accessor is reachable through the client resource access syntax and
-    // returns the raw response. `get` is the accessor when the call names none.
+    // Every accessor is reachable through the client resource access syntax, and
+    // an `http:Response` target returns the raw response. `get` is the accessor
+    // when the call names none.
     http:Response getResp = check c->/albums/[1];
     io:println(getResp.statusCode); // @output 200
     io:println(check getResp.getTextPayload()); // @output test body
@@ -78,6 +79,37 @@ public function main() returns error? {
     // explicit media type override.
     http:Response postQueryResp = check c->/albums.post("req", mediaType = "text/plain", tag = "rock");
     io:println(check postQueryResp.getTextPayload()); // @output test body
+
+    // Every accessor except `head` binds the payload to the contextually
+    // expected type, inferred through `targetType = <>`.
+    string getBody = check c->/albums/[1];
+    io:println(getBody); // @output test body
+
+    string postBody = check c->/albums.post("req");
+    io:println(postBody); // @output test body
+
+    string putBody = check c->/albums/[1].put("req");
+    io:println(putBody); // @output test body
+
+    string patchBody = check c->/albums/[1].patch("req");
+    io:println(patchBody); // @output test body
+
+    string deleteBody = check c->/albums/[1].delete();
+    io:println(deleteBody); // @output test body
+
+    string optionsBody = check c->/albums.options();
+    io:println(optionsBody); // @output test body
+
+    // `targetType` can also be passed explicitly, by name or by position, and
+    // binding still applies alongside headers, a media type and query parameters.
+    var namedTarget = check c->/albums(targetType = string, tag = "rock");
+    io:println(namedTarget); // @output test body
+
+    var positionalTarget = check c->/albums({"X-Custom": "value"}, string);
+    io:println(positionalTarget); // @output test body
+
+    byte[] bytesBody = check c->/albums.post("req", {"X-Custom": "value"}, "text/plain", tag = "rock");
+    io:println(bytesBody.length()); // @output 9
 
     return;
 }
