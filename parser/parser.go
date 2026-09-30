@@ -6782,6 +6782,7 @@ func (b *ballerinaParser) parseAnnotation() st.STNode {
 	if b.isPredeclaredIdentifier(b.peek().Kind()) {
 		annotReference = b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_ANNOT_REFERENCE)
 	} else {
+		atToken = st.AddDiagnostic(atToken, &common.ERROR_MISSING_ANNOTATION_NAME)
 		annotReference = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
 		annotReference = st.CreateSimpleNameReferenceNode(annotReference)
 	}

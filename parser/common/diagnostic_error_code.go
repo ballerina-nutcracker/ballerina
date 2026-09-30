@@ -248,6 +248,7 @@ var ERROR_MISSING_FIELD_MATCH_PATTERN_MEMBER = DiagnosticErrorCode{diagnosticId:
 var ERROR_MISSING_OBJECT_CONSTRUCTOR_EXPRESSION = DiagnosticErrorCode{diagnosticId: "BCE0531", messageKey: "error.missing.object.constructor.expression"}
 var ERROR_MISSING_GROUPING_KEY = DiagnosticErrorCode{diagnosticId: "BCE0532", messageKey: "error.missing.grouping.key"}
 var ERROR_MISSING_NATURAL_PROMPT_BLOCK = DiagnosticErrorCode{diagnosticId: "BCE0533", messageKey: "error.missing.natural.prompt.block"}
+var ERROR_MISSING_ANNOTATION_NAME = DiagnosticErrorCode{diagnosticId: "BCE0534", messageKey: "error.missing.annotation.name"}
 
 // Invalid nodes
 var ERROR_INVALID_TOKEN = DiagnosticErrorCode{diagnosticId: "BCE0600", messageKey: "error.invalid.token"}
