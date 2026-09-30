@@ -177,7 +177,7 @@ error subtypes are not yet supported.
 `random:Error` is a plain `error` alias; the `distinct` type descriptor is not
 yet supported.
 
-## [math.vector](https://github.com/ballerina-platform/module-ballerina-math.vector/blob/master/docs/spec/spec.md)
+## [math.vector](https://github.com/ballerina-platform/module-ballerina-math.vector/blob/main/ballerina/README.md)
 
 Vector math operations over `float[]` vectors.
 
@@ -219,7 +219,7 @@ Types: `Utc`, `Civil`, `Date`, `TimeOfDay`, `Seconds`, `ZoneOffset`, `Zone`,
 | `TimeZone.civilAddDuration` | Add a `Duration` to a `Civil` value within the timezone |
 | `TimeZone.fixedOffset` | Return the zone's `ZoneOffset` if it always has a constant UTC offset, or `()` otherwise |
 
-## [url](https://github.com/ballerina-platform/module-ballerina-url/blob/master/docs/spec/spec.md)
+## [url](https://github.com/ballerina-platform/module-ballerina-url/blob/master/ballerina/README.md)
 
 | Function | Notes |
 |---|---|

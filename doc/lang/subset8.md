@@ -1,6 +1,6 @@
 # Supported language features (subset 8)
 
-**Supported Ballerina code:** see [corpus/bal](../corpus/bal)—the [corpus/bal/subset8](../corpus/bal/subset8) directory contains the tests and examples that define what is supported in this subset.
+**Supported Ballerina code:** see [corpus/bal](../../corpus/bal)—the [corpus/bal/subset8](../../corpus/bal/subset8) directory contains the tests and examples that define what is supported in this subset.
 
 ## Module-level declarations
 

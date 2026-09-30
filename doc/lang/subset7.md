@@ -1,6 +1,6 @@
 # Supported language features (subset 7)
 
-**Supported Ballerina code:** see [corpus/bal](../corpus/bal)—the [corpus/bal/subset7](../corpus/bal/subset7) directory contains the tests and examples that define what is supported in this subset.
+**Supported Ballerina code:** see [corpus/bal](../../corpus/bal)—the [corpus/bal/subset7](../../corpus/bal/subset7) directory contains the tests and examples that define what is supported in this subset.
 
 ## Module-level declarations
 
@@ -36,7 +36,7 @@
 
 - [Literal](https://ballerina.io/spec/lang/master/#literal)
   - Currently support `nil-literal`, `boolean-literal`, `numeric-literal` and `string-literal` only
-- [lvexpr](https://ballerina.io/spec/lang/master/#section_7.14.1)
+- [lvexpr](https://ballerina.io/spec/lang/master/#lvexpr)
   - Currently only supports [variable-reference-lvexpr](https://ballerina.io/spec/lang/master/#variable-reference-lvexpr)
 - [`Call`](https://ballerina.io/spec/lang/master/#call-expr)
 - [List constructor](https://ballerina.io/spec/lang/master/#list-constructor-expr)

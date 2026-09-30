@@ -20,8 +20,8 @@ Fixes #<Issue Number>
 > Summarize the solution and implementation details.
 
 ## Checklist
-- [ ] Read the [Contributing Guide](CONTRIBUTING.md)
-- [ ] Added or updated [corpus tests](AGENTS.md#corpus-tests)
+- [ ] Read the [Contributing Guide](https://github.com/ballerina-nutcracker/ballerina/blob/main/CONTRIBUTING.md)
+- [ ] Added or updated [corpus tests](https://github.com/ballerina-nutcracker/ballerina/blob/main/AGENTS.md#corpus-tests)
 
 ## Remarks
 > Add any additional context, known issues, or TODOs related to this PR.
