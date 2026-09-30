@@ -1,0 +1,72 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable total (type
+        (value-type int)) (expr
+        (literal 0))))
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr <
+      (simple-var-ref i)
+      (literal 2))
+  )
+  (bb2 (bb1) (bb1)
+    (var-def
+      (variable step (type
+        (function-type () (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable own (type
+                  (union-type
+                    (value-type int)
+                    (value-type string))) (expr
+                  (literal 1))))
+              (var-def
+                (variable before (type
+                  (value-type int)) (expr
+                  (literal 0))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref own)
+                  (value-type int))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref before)
+                    (simple-var-ref own))) ())
+              (block-stmt
+                (var-def
+                  (variable setter (type
+                    (function-type () (
+                      (value-type null)))) (expr
+                    (lambda
+                      (function $anonFunc$_1 () (
+                        (value-type null))
+                        (block-function-body
+                          (assignment
+                            (simple-var-ref own)
+                            (literal changed))))))))
+                (expression-stmt
+                  (invocation setter ()))
+                (return
+                  (simple-var-ref before)))))))))
+    (compound-assignment +
+      (simple-var-ref total)
+      (invocation step ()))
+    (compound-assignment +
+      (simple-var-ref i)
+      (literal 1))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref total))))
+  )
+)

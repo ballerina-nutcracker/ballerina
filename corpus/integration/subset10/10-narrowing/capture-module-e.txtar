@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-module-e.bal:29:17
+   |
+29 |         int y = moduleVar; // @error a mutable module variable cannot be narrowed
+   |                 ^^^^^^^^^

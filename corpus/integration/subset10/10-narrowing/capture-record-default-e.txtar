@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> capture-record-default-e.bal:26:27
+   |
+26 |         record {| int a = x; int b = x; |} r = {}; // @error both defaults capture mutable x
+   |                           ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> capture-record-default-e.bal:26:38
+   |
+26 |         record {| int a = x; int b = x; |} r = {}; // @error both defaults capture mutable x
+   |                                      ^

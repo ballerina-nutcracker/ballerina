@@ -1,0 +1,36 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (literal 1))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable pair (type
+        (tuple-type
+          (value-type int)
+          (function-type () (
+            (value-type null))))) (expr
+        (list-constructor-expr
+          (simple-var-ref x)
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type null))
+              (block-function-body
+                (assignment
+                  (simple-var-ref x)
+                  (literal changed)))))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref pair)
+          (literal 0)))))
+  )
+  (bb2 (bb1 bb0) ())
+)

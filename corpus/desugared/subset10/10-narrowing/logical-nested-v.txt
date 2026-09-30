@@ -1,0 +1,75 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 1))))
+      (var-def
+        (variable b (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 2))))
+      (var-def
+        (variable c (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal three))))
+      (if
+        (binary-expr &&
+          (type-test-expr is
+            (simple-var-ref a)
+            (value-type int))
+          (group-expr
+            (binary-expr ||
+              (type-test-expr is
+                (simple-var-ref b)
+                (value-type int))
+              (type-test-expr is
+                (simple-var-ref c)
+                (value-type int)))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (binary-expr +
+                (simple-var-ref a)
+                (literal 1)))))
+          (if
+            (type-test-expr is
+              (simple-var-ref b)
+              (value-type int))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (binary-expr +
+                    (simple-var-ref b)
+                    (literal 1)))))) ())
+          (block-stmt)) ())
+      (block-stmt
+        (if
+          (binary-expr ||
+            (unary-expr !
+              (group-expr
+                (type-test-expr is
+                  (simple-var-ref a)
+                  (value-type int))))
+            (unary-expr !
+              (group-expr
+                (binary-expr &&
+                  (type-test-expr is
+                    (simple-var-ref b)
+                    (value-type int))
+                  (type-test-expr is
+                    (simple-var-ref c)
+                    (value-type int))))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal dual))))) ())
+        (block-stmt)))))

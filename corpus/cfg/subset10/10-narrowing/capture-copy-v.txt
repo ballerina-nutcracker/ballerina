@@ -1,0 +1,39 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (literal 1))))
+    (var-def
+      (variable setter (type
+        (function-type () (
+          (value-type null)))) (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type null))
+            (block-function-body
+              (assignment
+                (simple-var-ref x)
+                (literal changed))))))))
+    (expression-stmt
+      (invocation setter ()))
+    (var-def
+      (variable copy (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (simple-var-ref x))))
+    (type-test-expr is
+      (simple-var-ref copy)
+      (value-type string))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string length (
+          (simple-var-ref copy))))))
+  )
+  (bb2 (bb1 bb0) ())
+)

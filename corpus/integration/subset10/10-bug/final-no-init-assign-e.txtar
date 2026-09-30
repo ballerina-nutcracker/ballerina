@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to final variable 'value'
+  --> final-no-init-assign-e.bal:26:5
+   |
+26 |     value = 6; // @error only init may assign a final module variable
+   |     ^^^^^

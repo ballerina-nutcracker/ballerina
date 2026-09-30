@@ -77,6 +77,9 @@ type (
 		// closure expressions (record-field defaults, default-param exprs,
 		// nested isolated function bodies).
 		locals *localScope
+		// isModuleInit marks the module `init` function, whose body may assign
+		// module variables declared without an initializer.
+		isModuleInit bool
 	}
 
 	loopAnalyzer struct {
@@ -382,7 +385,12 @@ func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		if n.IsConstant() {
 			return createConstantAnalyzer(sa, n)
 		}
-		return sa
+		if n.Expr == nil {
+			return sa
+		}
+		walkGlobalVarDeclaration(sa, n)
+		analyzeGlobalVarInit(sa, n)
+		return nil
 	case *ast.BLangVarRef:
 		checkIsolatedModuleVarOutsideLock(sa, n)
 		return nil
@@ -401,6 +409,48 @@ func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		// Now delegates function creation to visitInner
 		return visitInner(sa, node)
 	}
+}
+
+// walkGlobalVarDeclaration walks everything of a module-level variable except
+// its initializer, which analyzeGlobalVarInit analyzes.
+func walkGlobalVarDeclaration(sa *semanticAnalyzer, n *ast.BLangVariable) {
+	for i := range n.AnnAttachments {
+		ast.Walk(sa, &n.AnnAttachments[i])
+	}
+	if typeNode := n.TypeNode(); typeNode != nil {
+		ast.Walk(sa, typeNode.(ast.BLangNode))
+	}
+}
+
+func analyzeGlobalVarInit(sa *semanticAnalyzer, n *ast.BLangVariable) {
+	expectedType := sa.ctx().SymbolType(n.Symbol())
+	if n.IsListener() {
+		expectedType = common.ListenerInitExpectedType(expectedType)
+	}
+	if analyzeActionOrExpression(sa, n.Expr, expectedType) {
+		ast.Walk(&moduleVarRefChecker{sa: sa}, n.Expr.(ast.BLangNode))
+	}
+}
+
+// moduleVarRefChecker reports the isolated module variables a module-level
+// initializer reads outside a lock. The initializer itself is already analyzed,
+// and each lambda in it checks its own body.
+type moduleVarRefChecker struct {
+	sa *semanticAnalyzer
+}
+
+func (c *moduleVarRefChecker) Visit(node ast.BLangNode) ast.Visitor {
+	switch n := node.(type) {
+	case *ast.BLangVarRef:
+		checkIsolatedModuleVarOutsideLock(c.sa, n)
+	case *ast.BLangLambdaFunction:
+		return nil
+	}
+	return c
+}
+
+func (c *moduleVarRefChecker) VisitTypeData(*ast.TypeData) ast.Visitor {
+	return nil
 }
 
 func (sa *semanticAnalyzer) processImport(importNode *ast.BLangImportPackage) {
@@ -464,6 +514,7 @@ func initializeFunctionAnalyzer(parent analyzer, function *ast.BLangFunction) *f
 	if function.Name.GetValue() == "init" {
 		// this is to seperate class init from module init
 		if _, isTopLevel := parent.(*semanticAnalyzer); isTopLevel {
+			fa.isModuleInit = true
 			fnSymbol := parent.ctx().GetSymbol(function.Symbol()).(model.FunctionSymbol)
 			validateInitFunction(parent, function, fnSymbol, function.GetPosition())
 		}
@@ -2043,6 +2094,20 @@ type assignmentNode interface {
 	GetExpression() ast.BLangActionOrExpression
 }
 
+// isDeferredInitAssignment reports whether the module `init` function body is
+// assigning a module-level variable declared without an initializer. Such a
+// declaration gets its one value from `init`, and analyzeUninitializedGlobalVars
+// checks that it always does. A lambda written inside `init` is a separate
+// closure and does not qualify.
+func isDeferredInitAssignment(a analyzer, symbol model.SymbolRef) bool {
+	fa := enclosingFunctionAnalyzer(a)
+	if fa == nil || !fa.isModuleInit {
+		return false
+	}
+	md, ok := a.moduleVarMetadata(symbol)
+	return ok && md.NoInitializer
+}
+
 func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 	variable := assignment.GetVariable()
 	if symbolNode, ok := variable.(ast.BNodeWithSymbol); ok {
@@ -2052,6 +2117,10 @@ func analyzeAssignment[A analyzer](a A, assignment assignmentNode) bool {
 			return false
 		}
 		ctx := a.ctx()
+		if meta, ok := ctx.ValueSymbolMetadata(symbol); ok && meta.Final && !isDeferredInitAssignment(a, symbol) {
+			a.semanticErr("cannot assign a value to final variable '"+ctx.SymbolName(symbol)+"'", variable.GetPosition())
+			return false
+		}
 		switch ctx.SymbolKind(symbol) {
 		case model.SymbolKindConstant:
 			a.semanticErr("cannot assign to constant", variable.GetPosition())

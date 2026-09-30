@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: union types not supported for +
+  --> capture-query-call-e.bal:34:32
+   |
+34 |         let int a = x is int ? run(saved) + x : 0 // @error saved may have assigned a string to x
+   |                                ^^^^^^^^^^^^^^
