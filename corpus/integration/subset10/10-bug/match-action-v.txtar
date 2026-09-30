@@ -1,0 +1,15 @@
+-- stdout --
+wait one
+start
+remote seven
+check eight
+trap seven
+resource nine
+1
+2
+5
+6
+3
+4
+done
+-- stderr --

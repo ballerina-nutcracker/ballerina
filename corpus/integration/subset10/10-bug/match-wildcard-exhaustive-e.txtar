@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing return statement
+  --> match-wildcard-exhaustive-e.bal:17:1
+   |
+17 | function wildcardNotExhaustive(int|error v) returns int { // @error missing return statement
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 |     match v {
+   |     ^^^^^^^^^
+19 |         _ => {
+   |         ^^^^^^
+20 |             return 1;
+   |             ^^^^^^^^^
+21 |         }
+   |         ^
+22 |     }
+   |     ^
+23 | }
+   | ^

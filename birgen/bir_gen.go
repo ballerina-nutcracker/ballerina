@@ -937,12 +937,13 @@ func matchStatement(ctx context, curBB *bir.BIRBasicBlock, stmt *ast.BLangMatchS
 	}
 	curBB = exprEffect.block
 	matchOperand := exprEffect.result
+	targetIsAny := semtypes.IsSubtype(ctx.function().pkgCtx.typeCtx, stmt.Expr.GetDeterminedType(), semtypes.Any)
 	finalBB := ctx.function().addBB()
 
 	for _, clause := range stmt.MatchClauses {
 		clauseBodyBB := ctx.function().addBB()
 
-		if isUnconditionalWildcard(&clause) {
+		if isUnconditionalWildcard(&clause, targetIsAny) {
 			curBB.Terminator = bir.NewGoto(clauseBodyBB, ctx.function().loc(stmt.GetPosition()))
 			bodyEffect, ok := blockStatement(ctx, clauseBodyBB, &clause.Body)
 			if !ok {
@@ -969,27 +970,26 @@ func matchStatement(ctx context, curBB *bir.BIRBasicBlock, stmt *ast.BLangMatchS
 				curBB.Instructions = append(curBB.Instructions, binaryOp)
 				condOperand = orOperands(ctx, curBB, condOperand, eqResult, eqPos)
 			case *ast.BLangWildCardMatchPattern:
-				// Wildcard in multi-pattern — always matches; but may have guard
-				trueOperand := ctx.addTempVar(semtypes.Boolean)
-				constLoad := bir.NewConstantLoad(trueOperand, true, ctx.function().loc(p.GetPosition()))
-				curBB.Instructions = append(curBB.Instructions, constLoad)
-				condOperand = orOperands(ctx, curBB, condOperand, trueOperand, ctx.function().loc(p.GetPosition()))
+				pos := ctx.function().loc(p.GetPosition())
+				matched := wildcardMatchCondition(ctx, curBB, matchOperand, targetIsAny, pos)
+				condOperand = orOperands(ctx, curBB, condOperand, matched, pos)
 			default:
 				ctx.internalError(fmt.Sprintf("unexpected match pattern type: %T", pattern), pattern.GetPosition())
 				return statementEffect{}, false
 			}
 		}
 
+		nextCheckBB := ctx.function().addBB()
 		if clause.Guard != nil {
-			guardEffect, ok := handleActionOrExpression(ctx, curBB, clause.Guard)
+			guardBB := ctx.function().addBB()
+			curBB.Terminator = bir.NewBranch(condOperand, guardBB, nextCheckBB, ctx.function().loc(stmt.GetPosition()))
+			guardEffect, ok := handleActionOrExpression(ctx, guardBB, clause.Guard)
 			if !ok {
 				return statementEffect{}, false
 			}
 			curBB = guardEffect.block
-			condOperand = andOperands(ctx, curBB, condOperand, guardEffect.result, ctx.function().loc(clause.Guard.GetPosition()))
+			condOperand = guardEffect.result
 		}
-
-		nextCheckBB := ctx.function().addBB()
 		curBB.Terminator = bir.NewBranch(condOperand, clauseBodyBB, nextCheckBB, ctx.function().loc(stmt.GetPosition()))
 
 		bodyEffect, ok := blockStatement(ctx, clauseBodyBB, &clause.Body)
@@ -1010,8 +1010,19 @@ func matchStatement(ctx context, curBB *bir.BIRBasicBlock, stmt *ast.BLangMatchS
 	return statementEffect{block: finalBB}, true
 }
 
-func isUnconditionalWildcard(clause *ast.BLangMatchClause) bool {
-	if clause.Guard != nil {
+// wildcardMatchCondition emits the test for `_`, which matches only values belonging to `any`.
+func wildcardMatchCondition(ctx context, bb *bir.BIRBasicBlock, matchOperand *bir.BIROperand, targetIsAny bool, pos bir.Location) *bir.BIROperand {
+	result := ctx.addTempVar(semtypes.Boolean)
+	if targetIsAny {
+		bb.Instructions = append(bb.Instructions, bir.NewConstantLoad(result, true, pos))
+	} else {
+		bb.Instructions = append(bb.Instructions, bir.NewTypeTest(semtypes.Any, result, matchOperand, pos))
+	}
+	return result
+}
+
+func isUnconditionalWildcard(clause *ast.BLangMatchClause, targetIsAny bool) bool {
+	if !targetIsAny || clause.Guard != nil {
 		return false
 	}
 	if len(clause.Patterns) != 1 {
@@ -1027,13 +1038,6 @@ func orOperands(ctx context, bb *bir.BIRBasicBlock, existing *bir.BIROperand, ne
 	}
 	result := ctx.addTempVar(semtypes.Boolean)
 	binaryOp := bir.NewBinaryOp(bir.InstructionKindOr, result, existing, new, pos)
-	bb.Instructions = append(bb.Instructions, binaryOp)
-	return result
-}
-
-func andOperands(ctx context, bb *bir.BIRBasicBlock, existing *bir.BIROperand, new *bir.BIROperand, pos bir.Location) *bir.BIROperand {
-	result := ctx.addTempVar(semtypes.Boolean)
-	binaryOp := bir.NewBinaryOp(bir.InstructionKindAnd, result, existing, new, pos)
 	bb.Instructions = append(bb.Instructions, binaryOp)
 	return result
 }

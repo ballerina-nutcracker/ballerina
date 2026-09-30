@@ -19,7 +19,7 @@ main() -> nil{
   }
   bb3 {
     %7 = ConstantLoad true
-    %9 = guardValue() -> bb6;
+    %7 ? bb7 : bb6;
   }
   bb4 {
     PopScopeFrame
@@ -28,32 +28,35 @@ main() -> nil{
   bb5 {
     PushScopeFrame 2
     %0 = ConstantLoad guarded
-    %1 = println(%0) -> bb11;
+    %1 = println(%0) -> bb12;
   }
   bb6 {
-    %10 = %9;
-    %11 = n is nil
-    %11 ? bb7 : bb8;
+    GOTO bb1;
   }
   bb7 {
-    %12 = ConstantLoad <nil>
-    GOTO bb9;
+    %9 = guardValue() -> bb8;
   }
   bb8 {
-    %12 = + %10 n;
-    GOTO bb9;
+    %10 = %9;
+    %11 = n is nil
+    %11 ? bb9 : bb10;
   }
   bb9 {
+    %12 = ConstantLoad <nil>
+    GOTO bb11;
+  }
+  bb10 {
+    %12 = + %10 n;
+    GOTO bb11;
+  }
+  bb11 {
     %13 = %12;
     %14 = ConstantLoad 1
     %15 = %14;
     %8 = == %13 %15;
-    %16 = && %7 %8;
-    %16 ? bb5 : bb10;
+    %8 ? bb5 : bb6;
   }
-  bb10 {
-  }
-  bb11 {
+  bb12 {
     PopScopeFrame
     GOTO bb1;
   }

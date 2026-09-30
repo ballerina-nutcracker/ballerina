@@ -2152,7 +2152,7 @@ func (n *nodeBuilder) transformForEachStatement(forEachStatementNode *st.ForEach
 	return ast.NewBLangForeach(
 		n.getPosition(forEachStatementNode),
 		varDef,
-		n.createExpression(forEachStatementNode.ActionOrExpressionNode()),
+		n.createActionOrExpression(forEachStatementNode.ActionOrExpressionNode()),
 		body,
 		onFailClause,
 	)
@@ -4911,7 +4911,7 @@ func (n *nodeBuilder) transformTypeReferenceTypeDesc(typeReferenceTypeDescNode *
 
 func (n *nodeBuilder) transformMatchStatement(matchStatementNode *st.MatchStatementNode) ast.BLangNode {
 	matchStatement := &ast.BLangMatchStatement{}
-	matchStmtExpr := n.createExpression(matchStatementNode.Condition())
+	matchStmtExpr := n.createActionOrExpression(matchStatementNode.Condition())
 	matchStatement.Expr = matchStmtExpr
 
 	matchClauses := matchStatementNode.MatchClauses()

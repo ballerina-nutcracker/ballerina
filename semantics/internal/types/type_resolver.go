@@ -8588,7 +8588,9 @@ func resolveMatchStatement(t typeResolver, chain *binding, stmt *ast.BLangMatchS
 		}
 		bodyEffects = append(bodyEffects, bodyEffect)
 
-		remainingType = semtypes.Diff(remainingType, clause.AcceptedType)
+		if clause.Guard == nil {
+			remainingType = semtypes.Diff(remainingType, clause.AcceptedType)
+		}
 	}
 
 	stmt.IsExhaustive = semtypes.IsEmpty(tyCtx, remainingType)

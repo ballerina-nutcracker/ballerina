@@ -1,0 +1,251 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function side (
+    (variable s (type
+      (value-type string)))) (
+    (value-type boolean))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (literal guard )
+            (simple-var-ref s)))))
+      (return
+        (literal true))))
+  (function wildcard (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (error-type))))) (
+    (value-type string))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 2))
+          (block-stmt
+            (return
+              (literal two))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (return
+              (literal wildcard)))))
+      (return
+        (literal fell through))))
+  (function multiPattern (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (error-type))))) (
+    (value-type string))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (block-stmt
+            (return
+              (literal one))))
+        (match-clause
+          (const-pattern
+            (literal 2))
+          (wildcard-match-pattern)
+          (block-stmt
+            (return
+              (literal multi)))))
+      (return
+        (literal none))))
+  (function guarded (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (error-type))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (match-guard
+            (invocation side (
+              (literal wildcard))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal guarded body)))))))))
+  (function constGuarded (
+    (variable v (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 2))
+          (match-guard
+            (invocation side (
+              (literal const))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal const body)))))))))
+  (function narrowed (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (error-type))))) (
+    (value-type int))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (var-def
+              (variable i (type
+                (value-type int)) (expr
+                (simple-var-ref v))))
+            (return
+              (simple-var-ref i)))))
+      (return
+        (unary-expr -
+          (literal 1)))))
+  (function anyOrError (
+    (variable v (type
+      (union-type
+        (value-type any)
+        (error-type))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal any)))))))))
+  (function anyMulti (
+    (variable v (type
+      (value-type any)))) (
+    (value-type string))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (wildcard-match-pattern)
+          (block-stmt
+            (return
+              (literal any multi)))))))
+  (function readonlyTarget (
+    (variable v (type
+      (value-type readonly)))) (
+    (value-type string))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (return
+              (literal matched)))))
+      (return
+        (literal not matched))))
+  (function nilOrError (
+    (variable v (type
+      (union-type
+        (error-type)
+        (value-type null))))) (
+    (value-type string))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (return
+              (literal matched)))))
+      (return
+        (literal not matched))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation wildcard (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation wildcard (
+            (error-constructor-expr (
+              (literal e))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation multiPattern (
+            (literal 1)))
+          (invocation multiPattern (
+            (literal 2)))
+          (invocation multiPattern (
+            (literal 3)))
+          (invocation multiPattern (
+            (error-constructor-expr (
+              (literal e))))))))
+      (expression-stmt
+        (invocation guarded (
+          (literal 1))))
+      (expression-stmt
+        (invocation guarded (
+          (error-constructor-expr (
+            (literal e))))))
+      (expression-stmt
+        (invocation constGuarded (
+          (literal 3))))
+      (expression-stmt
+        (invocation constGuarded (
+          (literal 2))))
+      (expression-stmt
+        (invocation io println (
+          (invocation narrowed (
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation narrowed (
+            (error-constructor-expr (
+              (literal e))))))))
+      (expression-stmt
+        (invocation anyOrError (
+          (literal s))))
+      (expression-stmt
+        (invocation anyOrError (
+          (error-constructor-expr (
+            (literal e))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation anyMulti (
+            (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation readonlyTarget (
+            (literal 1)))
+          (literal  )
+          (invocation readonlyTarget (
+            (error-constructor-expr (
+              (literal e))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation nilOrError (
+            (literal <nil>)))
+          (literal  )
+          (invocation nilOrError (
+            (error-constructor-expr (
+              (literal e))))))))
+      (expression-stmt
+        (invocation io println (
+          (literal done)))))))

@@ -1,0 +1,207 @@
+(anyMulti
+  (bb0 () (bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal any multi))
+  )
+)
+(anyOrError
+  (bb0 () (bb2 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb0) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal any))))
+  )
+)
+(constGuarded
+  (bb0 () (bb2 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb0) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal const body))))
+  )
+)
+(guarded
+  (bb0 () (bb2 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb0) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal guarded body))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation wildcard (
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation wildcard (
+          (error-constructor-expr (
+            (literal e))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation multiPattern (
+          (literal 1)))
+        (invocation multiPattern (
+          (literal 2)))
+        (invocation multiPattern (
+          (literal 3)))
+        (invocation multiPattern (
+          (error-constructor-expr (
+            (literal e))))))))
+    (expression-stmt
+      (invocation guarded (
+        (literal 1))))
+    (expression-stmt
+      (invocation guarded (
+        (error-constructor-expr (
+          (literal e))))))
+    (expression-stmt
+      (invocation constGuarded (
+        (literal 3))))
+    (expression-stmt
+      (invocation constGuarded (
+        (literal 2))))
+    (expression-stmt
+      (invocation io println (
+        (invocation narrowed (
+          (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation narrowed (
+          (error-constructor-expr (
+            (literal e))))))))
+    (expression-stmt
+      (invocation anyOrError (
+        (literal s))))
+    (expression-stmt
+      (invocation anyOrError (
+        (error-constructor-expr (
+          (literal e))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation anyMulti (
+          (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation readonlyTarget (
+          (literal 1)))
+        (literal  )
+        (invocation readonlyTarget (
+          (error-constructor-expr (
+            (literal e))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation nilOrError (
+          (literal <nil>)))
+        (literal  )
+        (invocation nilOrError (
+          (error-constructor-expr (
+            (literal e))))))))
+    (expression-stmt
+      (invocation io println (
+        (literal done))))
+  )
+)
+(multiPattern
+  (bb0 () (bb2 bb3 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal none))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal one))
+  )
+  (bb3 (bb0) ()
+    (return
+      (literal multi))
+  )
+)
+(narrowed
+  (bb0 () (bb2 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (return
+      (unary-expr -
+        (literal 1)))
+  )
+  (bb2 (bb0) ()
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (simple-var-ref v))))
+    (return
+      (simple-var-ref i))
+  )
+)
+(nilOrError
+  (bb0 () (bb2 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal not matched))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal matched))
+  )
+)
+(readonlyTarget
+  (bb0 () (bb2 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal not matched))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal matched))
+  )
+)
+(side
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (literal guard )
+          (simple-var-ref s)))))
+    (return
+      (literal true))
+  )
+)
+(wildcard
+  (bb0 () (bb2 bb3 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal fell through))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal two))
+  )
+  (bb3 (bb0) ()
+    (return
+      (literal wildcard))
+  )
+)

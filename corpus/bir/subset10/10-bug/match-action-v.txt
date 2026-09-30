@@ -1,0 +1,443 @@
+module $anon.. v 0.0.0;
+class Client {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  $remote$checked() -> int|error{
+    bb0 {
+      %2 = ConstantLoad 8
+      %0 = %2;
+      return;
+    }
+  }
+
+  $remote$failing() -> int|error{
+    bb0 {
+      %2 = ConstantLoad boom
+      %3 = newError error(%2)
+      %0 = %3;
+      return;
+    }
+  }
+
+  $remote$value() -> int{
+    bb0 {
+      %2 = ConstantLoad 7
+      %0 = %2;
+      return;
+    }
+  }
+
+  $remote$values() -> [int...]{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad 2
+      %4 = ConstantLoad 2
+      %5 = newArray [int...][%4]{%2, %3}
+      %0 = %5;
+      return;
+    }
+  }
+
+  resource get num Client.$resource$get$0() -> int{
+    bb0 {
+      %2 = ConstantLoad 9
+      %0 = %2;
+      return;
+    }
+  }
+
+  resource get items Client.$resource$get$1() -> [int...]{
+    bb0 {
+      %2 = ConstantLoad 5
+      %3 = ConstantLoad 6
+      %4 = ConstantLoad 2
+      %5 = newArray [int...][%4]{%2, %3}
+      %0 = %5;
+      return;
+    }
+  }
+}
+one() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+list() -> [int...]{
+  bb0 {
+    %1 = ConstantLoad 3
+    %2 = ConstantLoad 4
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    %0 = %4;
+    return;
+  }
+}
+failing() -> int|error{
+  bb0 {
+    %1 = ConstantLoad boom
+    %2 = newError error(%1)
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = start one() isolated=false -> bb1;
+  }
+  bb1 {
+    f = %1;
+    %3 = wait f -> bb2;
+  }
+  bb2 {
+    %4 = ConstantLoad 1
+    %5 = == %3 %4;
+    %5 ? bb4 : bb5;
+  }
+  bb3 {
+    %7 = start one() isolated=false -> bb10;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = ConstantLoad wait one
+    %1 = println(%0) -> bb6;
+  }
+  bb5 {
+    %6 = %3 is any
+    %6 ? bb7 : bb8;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb7 {
+    PushScopeFrame 2
+    %0 = ConstantLoad wait other
+    %1 = println(%0) -> bb9;
+  }
+  bb8 {
+    GOTO bb3;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb10 {
+    GOTO bb12;
+  }
+  bb11 {
+    %8 = newObject $anon/.:Client
+    %9 = %8.init() -> bb14;
+  }
+  bb12 {
+    PushScopeFrame 2
+    %0 = ConstantLoad start
+    %1 = println(%0) -> bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb14 {
+    %11 = %9 is nil
+    %11 ? bb15 : bb16;
+  }
+  bb15 {
+    %10 = %8;
+    GOTO bb17;
+  }
+  bb16 {
+    %10 = %9;
+    GOTO bb17;
+  }
+  bb17 {
+    c = %10;
+    %13 = c.$remote$value() -> bb18;
+  }
+  bb18 {
+    %14 = ConstantLoad 7
+    %15 = == %13 %14;
+    %15 ? bb20 : bb21;
+  }
+  bb19 {
+    %17 = c.$remote$checked() -> bb25;
+  }
+  bb20 {
+    PushScopeFrame 2
+    %0 = ConstantLoad remote seven
+    %1 = println(%0) -> bb22;
+  }
+  bb21 {
+    GOTO bb23;
+  }
+  bb22 {
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb23 {
+    PushScopeFrame 2
+    %0 = ConstantLoad remote other
+    %1 = println(%0) -> bb24;
+  }
+  bb24 {
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb25 {
+    %18 = %17 is error
+    %18 ? bb26 : bb27;
+  }
+  bb26 {
+    %0 = %17;
+    return;
+  }
+  bb27 {
+    %16 = %17;
+    GOTO bb28;
+  }
+  bb28 {
+    %19 = ConstantLoad 8
+    %20 = == %16 %19;
+    %20 ? bb30 : bb31;
+  }
+  bb29 {
+    GOTO bb33;
+  }
+  bb30 {
+    PushScopeFrame 2
+    %0 = ConstantLoad check eight
+    %1 = println(%0) -> bb32;
+  }
+  bb31 {
+    GOTO bb29;
+  }
+  bb32 {
+    PopScopeFrame
+    GOTO bb29;
+  }
+  bb33 {
+    %22 = c.$remote$value() -> bb34;
+  }
+  bb34 {
+    %21 = %22;
+    GOTO bb35;
+  }
+  bb35 {
+    %23 = ConstantLoad 7
+    %24 = == %21 %23;
+    %24 ? bb37 : bb38;
+  }
+  bb36 {
+    %25 = ConstantLoad num
+    %26 = c->[%25].get() -> bb40;
+  }
+  bb37 {
+    PushScopeFrame 2
+    %0 = ConstantLoad trap seven
+    %1 = println(%0) -> bb39;
+  }
+  bb38 {
+    GOTO bb36;
+  }
+  bb39 {
+    PopScopeFrame
+    GOTO bb36;
+  }
+  bb40 {
+    %27 = ConstantLoad 9
+    %28 = == %26 %27;
+    %28 ? bb42 : bb43;
+  }
+  bb41 {
+    %29 = start failing() isolated=false -> bb45;
+  }
+  bb42 {
+    PushScopeFrame 2
+    %0 = ConstantLoad resource nine
+    %1 = println(%0) -> bb44;
+  }
+  bb43 {
+    GOTO bb41;
+  }
+  bb44 {
+    PopScopeFrame
+    GOTO bb41;
+  }
+  bb45 {
+    failed = %29;
+    %31 = wait failed -> bb46;
+  }
+  bb46 {
+    %32 = %31 is any
+    %32 ? bb48 : bb49;
+  }
+  bb47 {
+    %33 = c.$remote$failing() -> bb51;
+  }
+  bb48 {
+    PushScopeFrame 2
+    %0 = ConstantLoad wait wildcard
+    %1 = println(%0) -> bb50;
+  }
+  bb49 {
+    GOTO bb47;
+  }
+  bb50 {
+    PopScopeFrame
+    GOTO bb47;
+  }
+  bb51 {
+    %34 = %33 is any
+    %34 ? bb53 : bb54;
+  }
+  bb52 {
+    %35 = c.$remote$values() -> bb56;
+  }
+  bb53 {
+    PushScopeFrame 2
+    %0 = ConstantLoad remote wildcard
+    %1 = println(%0) -> bb55;
+  }
+  bb54 {
+    GOTO bb52;
+  }
+  bb55 {
+    PopScopeFrame
+    GOTO bb52;
+  }
+  bb56 {
+    $desugar$0 = %35;
+    %37 = ConstantLoad 0
+    $desugar$1 = %37;
+    %39 = length($desugar$0) -> bb57;
+  }
+  bb57 {
+    $desugar$2 = %39;
+    GOTO bb58;
+  }
+  bb58 {
+    %42 = $desugar$1;
+    %43 = $desugar$2;
+    %41 = < %42 %43;
+    %41 ? bb59 : bb60;
+  }
+  bb59 {
+    PushScopeFrame 8
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    x = %0;
+    %2 = x;
+    %3 = println(%2) -> bb61;
+  }
+  bb60 {
+    %44 = ConstantLoad items
+    %45 = c->[%44].get() -> bb62;
+  }
+  bb61 {
+    %5 = (1, $desugar$1);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$1) = %4;
+    PopScopeFrame
+    GOTO bb58;
+  }
+  bb62 {
+    $desugar$3 = %45;
+    %47 = ConstantLoad 0
+    $desugar$4 = %47;
+    %49 = length($desugar$3) -> bb63;
+  }
+  bb63 {
+    $desugar$5 = %49;
+    GOTO bb64;
+  }
+  bb64 {
+    %52 = $desugar$4;
+    %53 = $desugar$5;
+    %51 = < %52 %53;
+    %51 ? bb65 : bb66;
+  }
+  bb65 {
+    PushScopeFrame 8
+    %0 = (1, $desugar$3)[(1, $desugar$4)];
+    x = %0;
+    %2 = x;
+    %3 = println(%2) -> bb67;
+  }
+  bb66 {
+    %54 = start list() isolated=false -> bb68;
+  }
+  bb67 {
+    %5 = (1, $desugar$4);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$4) = %4;
+    PopScopeFrame
+    GOTO bb64;
+  }
+  bb68 {
+    g = %54;
+    %57 = wait g -> bb69;
+  }
+  bb69 {
+    %58 = %57 is error
+    %58 ? bb70 : bb71;
+  }
+  bb70 {
+    panic %57;
+  }
+  bb71 {
+    %56 = %57;
+    GOTO bb72;
+  }
+  bb72 {
+    $desugar$6 = %56;
+    %60 = ConstantLoad 0
+    $desugar$7 = %60;
+    %62 = length($desugar$6) -> bb73;
+  }
+  bb73 {
+    $desugar$8 = %62;
+    GOTO bb74;
+  }
+  bb74 {
+    %65 = $desugar$7;
+    %66 = $desugar$8;
+    %64 = < %65 %66;
+    %64 ? bb75 : bb76;
+  }
+  bb75 {
+    PushScopeFrame 8
+    %0 = (1, $desugar$6)[(1, $desugar$7)];
+    x = %0;
+    %2 = x;
+    %3 = println(%2) -> bb77;
+  }
+  bb76 {
+    %67 = ConstantLoad done
+    %68 = println(%67) -> bb78;
+  }
+  bb77 {
+    %5 = (1, $desugar$7);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$7) = %4;
+    PopScopeFrame
+    GOTO bb74;
+  }
+  bb78 {
+    return;
+  }
+  
+  error-table {
+    [bb33, bb34] -> bb35, %21
+  }
+}

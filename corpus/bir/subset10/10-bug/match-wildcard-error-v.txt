@@ -1,0 +1,376 @@
+module $anon.. v 0.0.0;
+side(string) -> boolean{
+  bb0 {
+    %3 = ConstantLoad guard 
+    %2 = + %3 s;
+    %4 = println(%2) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad true
+    %0 = %5;
+    return;
+  }
+}
+wildcard(int|error) -> string{
+  bb0 {
+    %2 = ConstantLoad 2
+    %3 = == v %2;
+    %3 ? bb2 : bb3;
+  }
+  bb1 {
+    %5 = ConstantLoad fell through
+    %0 = %5;
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad two
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    %4 = v is any
+    %4 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = ConstantLoad wildcard
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    GOTO bb1;
+  }
+}
+multiPattern(int|error) -> string{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = == v %2;
+    %3 ? bb2 : bb3;
+  }
+  bb1 {
+    %8 = ConstantLoad none
+    %0 = %8;
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad one
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    %4 = ConstantLoad 2
+    %5 = == v %4;
+    %6 = v is any
+    %7 = || %5 %6;
+    %7 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = ConstantLoad multi
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    GOTO bb1;
+  }
+}
+guarded(int|error) -> nil{
+  bb0 {
+    %2 = v is any
+    %2 ? bb4 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad guarded body
+    %1 = println(%0) -> bb6;
+  }
+  bb3 {
+    GOTO bb1;
+  }
+  bb4 {
+    %3 = ConstantLoad wildcard
+    %4 = side(%3) -> bb5;
+  }
+  bb5 {
+    %4 ? bb2 : bb3;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+constGuarded(int) -> nil{
+  bb0 {
+    %2 = ConstantLoad 2
+    %3 = == v %2;
+    %3 ? bb4 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad const body
+    %1 = println(%0) -> bb6;
+  }
+  bb3 {
+    GOTO bb1;
+  }
+  bb4 {
+    %4 = ConstantLoad const
+    %5 = side(%4) -> bb5;
+  }
+  bb5 {
+    %5 ? bb2 : bb3;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+narrowed(int|error) -> int{
+  bb0 {
+    %2 = v is any
+    %2 ? bb2 : bb3;
+  }
+  bb1 {
+    %3 = ConstantLoad 1
+    %4 = unknown %3;
+    %0 = %4;
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    i = (1, v);
+    (1, %0) = i;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    GOTO bb1;
+  }
+}
+anyOrError(nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object) -> nil{
+  bb0 {
+    %2 = v is any
+    %2 ? bb2 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad any
+    %1 = println(%0) -> bb4;
+  }
+  bb3 {
+    GOTO bb1;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+anyMulti(any) -> string{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = == v %2;
+    %4 = ConstantLoad true
+    %5 = || %3 %4;
+    %5 ? bb2 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad any multi
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+  }
+}
+readonlyTarget(nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly) -> string{
+  bb0 {
+    %2 = v is any
+    %2 ? bb2 : bb3;
+  }
+  bb1 {
+    %3 = ConstantLoad not matched
+    %0 = %3;
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad matched
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    GOTO bb1;
+  }
+}
+nilOrError(nil|error) -> string{
+  bb0 {
+    %2 = v is any
+    %2 ? bb2 : bb3;
+  }
+  bb1 {
+    %3 = ConstantLoad not matched
+    %0 = %3;
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad matched
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    GOTO bb1;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = wildcard(%2) -> bb1;
+  }
+  bb1 {
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad e
+    %6 = newError error(%5)
+    %7 = wildcard(%6) -> bb3;
+  }
+  bb3 {
+    %8 = println(%7) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %11 = multiPattern(%10) -> bb5;
+  }
+  bb5 {
+    %12 = ConstantLoad 2
+    %13 = %12;
+    %14 = multiPattern(%13) -> bb6;
+  }
+  bb6 {
+    %15 = ConstantLoad 3
+    %16 = %15;
+    %17 = multiPattern(%16) -> bb7;
+  }
+  bb7 {
+    %18 = ConstantLoad e
+    %19 = newError error(%18)
+    %20 = multiPattern(%19) -> bb8;
+  }
+  bb8 {
+    %21 = println(%11,%14,%17,%20) -> bb9;
+  }
+  bb9 {
+    %22 = ConstantLoad 1
+    %23 = %22;
+    %24 = guarded(%23) -> bb10;
+  }
+  bb10 {
+    %25 = ConstantLoad e
+    %26 = newError error(%25)
+    %27 = guarded(%26) -> bb11;
+  }
+  bb11 {
+    %28 = ConstantLoad 3
+    %29 = %28;
+    %30 = constGuarded(%29) -> bb12;
+  }
+  bb12 {
+    %31 = ConstantLoad 2
+    %32 = %31;
+    %33 = constGuarded(%32) -> bb13;
+  }
+  bb13 {
+    %34 = ConstantLoad 5
+    %35 = %34;
+    %36 = narrowed(%35) -> bb14;
+  }
+  bb14 {
+    %37 = %36;
+    %38 = println(%37) -> bb15;
+  }
+  bb15 {
+    %39 = ConstantLoad e
+    %40 = newError error(%39)
+    %41 = narrowed(%40) -> bb16;
+  }
+  bb16 {
+    %42 = %41;
+    %43 = println(%42) -> bb17;
+  }
+  bb17 {
+    %44 = ConstantLoad s
+    %45 = anyOrError(%44) -> bb18;
+  }
+  bb18 {
+    %46 = ConstantLoad e
+    %47 = newError error(%46)
+    %48 = anyOrError(%47) -> bb19;
+  }
+  bb19 {
+    %49 = ConstantLoad 3
+    %50 = %49;
+    %51 = anyMulti(%50) -> bb20;
+  }
+  bb20 {
+    %52 = println(%51) -> bb21;
+  }
+  bb21 {
+    %53 = ConstantLoad 1
+    %54 = %53;
+    %55 = readonlyTarget(%54) -> bb22;
+  }
+  bb22 {
+    %56 = ConstantLoad  
+    %57 = ConstantLoad e
+    %58 = newError error(%57)
+    %59 = readonlyTarget(%58) -> bb23;
+  }
+  bb23 {
+    %60 = println(%55,%56,%59) -> bb24;
+  }
+  bb24 {
+    %61 = ConstantLoad <nil>
+    %62 = %61;
+    %63 = nilOrError(%62) -> bb25;
+  }
+  bb25 {
+    %64 = ConstantLoad  
+    %65 = ConstantLoad e
+    %66 = newError error(%65)
+    %67 = nilOrError(%66) -> bb26;
+  }
+  bb26 {
+    %68 = println(%63,%64,%67) -> bb27;
+  }
+  bb27 {
+    %69 = ConstantLoad done
+    %70 = println(%69) -> bb28;
+  }
+  bb28 {
+    return;
+  }
+}

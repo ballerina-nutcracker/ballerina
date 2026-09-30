@@ -1,0 +1,9 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unmatchable match clause
+  --> match-wildcard-error-e.bal:19:9
+   |
+19 |         _ => { // @error unmatchable match clause
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |         }
+   |         ^

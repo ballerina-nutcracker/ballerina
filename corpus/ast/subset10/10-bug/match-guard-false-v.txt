@@ -1,0 +1,238 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function guarded (
+    (variable v (type
+      (value-type int)))
+    (variable b (type
+      (value-type boolean)))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (match-guard
+            (simple-var-ref b))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal guarded)))))))
+      (expression-stmt
+        (invocation io println (
+          (literal after))))))
+  (function guardedThenConst (
+    (variable v (type
+      (value-type int)))
+    (variable b (type
+      (value-type boolean)))) (
+    (value-type string))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (match-guard
+            (simple-var-ref b))
+          (block-stmt
+            (return
+              (literal guarded one))))
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (block-stmt
+            (return
+              (literal one)))))
+      (return
+        (literal none))))
+  (function side (
+    (variable s (type
+      (value-type string)))) (
+    (value-type boolean))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (literal guard )
+            (simple-var-ref s)))))
+      (return
+        (literal true))))
+  (function guardThenDefault (
+    (variable v (type
+      (value-type int)))
+    (variable b (type
+      (value-type boolean)))) (
+    (value-type int))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (match-guard
+            (simple-var-ref b))
+          (block-stmt
+            (return
+              (literal 10))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (return
+              (literal 20)))))))
+  (function guardedExhaustive (
+    (variable v (type
+      (value-type boolean)))
+    (variable b (type
+      (value-type boolean)))) (
+    (value-type int))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal true))
+          (match-guard
+            (simple-var-ref b))
+          (block-stmt
+            (return
+              (literal 1))))
+        (match-clause
+          (const-pattern
+            (literal true))
+          (block-stmt
+            (return
+              (literal 2))))
+        (match-clause
+          (const-pattern
+            (literal false))
+          (block-stmt
+            (return
+              (literal 3)))))))
+  (function failingGuard () (
+    (union-type
+      (value-type boolean)
+      (error-type)))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (literal guard error))))))
+  (function checkGuard (
+    (variable v (type
+      (value-type int)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (match-guard
+            (checked-expr
+              (invocation failingGuard ())))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal check body)))))))
+      (expression-stmt
+        (invocation io println (
+          (literal check after))))))
+  (function shortCircuit (
+    (variable v (type
+      (value-type int)))
+    (variable b (type
+      (value-type boolean)))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (const-pattern
+            (literal 2))
+          (match-guard
+            (binary-expr &&
+              (simple-var-ref b)
+              (invocation side (
+                (literal short)))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal short body))))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal short default)))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation guarded (
+          (literal 1)
+          (literal true))))
+      (expression-stmt
+        (invocation guarded (
+          (literal 1)
+          (literal false))))
+      (expression-stmt
+        (invocation io println (
+          (invocation guardedThenConst (
+            (literal 1)
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation guardedThenConst (
+            (literal 1)
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation guardedThenConst (
+            (literal 2)
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation guardThenDefault (
+            (literal 1)
+            (literal true)))
+          (invocation guardThenDefault (
+            (literal 1)
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation guardedExhaustive (
+            (literal true)
+            (literal true)))
+          (invocation guardedExhaustive (
+            (literal true)
+            (literal false)))
+          (invocation guardedExhaustive (
+            (literal false)
+            (literal true))))))
+      (var-def
+        (variable e (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (invocation checkGuard (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref e)
+            (error-type)))))
+      (expression-stmt
+        (invocation shortCircuit (
+          (literal 1)
+          (literal false))))
+      (expression-stmt
+        (invocation shortCircuit (
+          (literal 3)
+          (literal true))))
+      (expression-stmt
+        (invocation shortCircuit (
+          (literal 2)
+          (literal true)))))))

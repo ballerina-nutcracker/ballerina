@@ -1,0 +1,381 @@
+module $anon.. v 0.0.0;
+guarded(int,boolean) -> nil{
+  bb0 {
+    %3 = ConstantLoad true
+    %3 ? bb4 : bb3;
+  }
+  bb1 {
+    %4 = ConstantLoad after
+    %5 = println(%4) -> bb6;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad guarded
+    %1 = println(%0) -> bb5;
+  }
+  bb3 {
+    GOTO bb1;
+  }
+  bb4 {
+    b ? bb2 : bb3;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb6 {
+    return;
+  }
+}
+guardedThenConst(int,boolean) -> string{
+  bb0 {
+    %3 = ConstantLoad 1
+    %4 = == v %3;
+    %4 ? bb4 : bb3;
+  }
+  bb1 {
+    %7 = ConstantLoad none
+    %0 = %7;
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad guarded one
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    %5 = ConstantLoad 1
+    %6 = == v %5;
+    %6 ? bb5 : bb6;
+  }
+  bb4 {
+    b ? bb2 : bb3;
+  }
+  bb5 {
+    PushScopeFrame 1
+    %0 = ConstantLoad one
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    GOTO bb1;
+  }
+}
+side(string) -> boolean{
+  bb0 {
+    %3 = ConstantLoad guard 
+    %2 = + %3 s;
+    %4 = println(%2) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad true
+    %0 = %5;
+    return;
+  }
+}
+guardThenDefault(int,boolean) -> int{
+  bb0 {
+    %3 = ConstantLoad 1
+    %4 = == v %3;
+    %4 ? bb4 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 10
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    GOTO bb5;
+  }
+  bb4 {
+    b ? bb2 : bb3;
+  }
+  bb5 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 20
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}
+guardedExhaustive(boolean,boolean) -> int{
+  bb0 {
+    %3 = ConstantLoad true
+    %4 = == v %3;
+    %4 ? bb4 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 1
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    %5 = ConstantLoad true
+    %6 = == v %5;
+    %6 ? bb5 : bb6;
+  }
+  bb4 {
+    b ? bb2 : bb3;
+  }
+  bb5 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 2
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    %7 = ConstantLoad false
+    %8 = == v %7;
+    %8 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 3
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+  }
+}
+failingGuard() -> boolean|error{
+  bb0 {
+    %1 = ConstantLoad guard error
+    %2 = newError error(%1)
+    %0 = %2;
+    return;
+  }
+}
+checkGuard(int) -> nil|error{
+  bb0 {
+    %2 = ConstantLoad true
+    %2 ? bb4 : bb3;
+  }
+  bb1 {
+    %6 = ConstantLoad check after
+    %7 = println(%6) -> bb10;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad check body
+    %1 = println(%0) -> bb9;
+  }
+  bb3 {
+    GOTO bb1;
+  }
+  bb4 {
+    %4 = failingGuard() -> bb5;
+  }
+  bb5 {
+    %5 = %4 is error
+    %5 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %4;
+    return;
+  }
+  bb7 {
+    %3 = %4;
+    GOTO bb8;
+  }
+  bb8 {
+    %3 ? bb2 : bb3;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb10 {
+    return;
+  }
+}
+shortCircuit(int,boolean) -> nil{
+  bb0 {
+    %3 = ConstantLoad 1
+    %4 = == v %3;
+    %5 = ConstantLoad 2
+    %6 = == v %5;
+    %7 = || %4 %6;
+    %7 ? bb4 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad short body
+    %1 = println(%0) -> bb8;
+  }
+  bb3 {
+    GOTO bb9;
+  }
+  bb4 {
+    %8 = b;
+    b ? bb5 : bb6;
+  }
+  bb5 {
+    %9 = ConstantLoad short
+    %10 = side(%9) -> bb7;
+  }
+  bb6 {
+    %8 ? bb2 : bb3;
+  }
+  bb7 {
+    %8 = %10;
+    GOTO bb6;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb9 {
+    PushScopeFrame 2
+    %0 = ConstantLoad short default
+    %1 = println(%0) -> bb10;
+  }
+  bb10 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = ConstantLoad true
+    %4 = %3;
+    %5 = guarded(%2,%4) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %8 = ConstantLoad false
+    %9 = %8;
+    %10 = guarded(%7,%9) -> bb2;
+  }
+  bb2 {
+    %11 = ConstantLoad 1
+    %12 = %11;
+    %13 = ConstantLoad true
+    %14 = %13;
+    %15 = guardedThenConst(%12,%14) -> bb3;
+  }
+  bb3 {
+    %16 = println(%15) -> bb4;
+  }
+  bb4 {
+    %17 = ConstantLoad 1
+    %18 = %17;
+    %19 = ConstantLoad false
+    %20 = %19;
+    %21 = guardedThenConst(%18,%20) -> bb5;
+  }
+  bb5 {
+    %22 = println(%21) -> bb6;
+  }
+  bb6 {
+    %23 = ConstantLoad 2
+    %24 = %23;
+    %25 = ConstantLoad false
+    %26 = %25;
+    %27 = guardedThenConst(%24,%26) -> bb7;
+  }
+  bb7 {
+    %28 = println(%27) -> bb8;
+  }
+  bb8 {
+    %29 = ConstantLoad 1
+    %30 = %29;
+    %31 = ConstantLoad true
+    %32 = %31;
+    %33 = guardThenDefault(%30,%32) -> bb9;
+  }
+  bb9 {
+    %34 = %33;
+    %35 = ConstantLoad 1
+    %36 = %35;
+    %37 = ConstantLoad false
+    %38 = %37;
+    %39 = guardThenDefault(%36,%38) -> bb10;
+  }
+  bb10 {
+    %40 = %39;
+    %41 = println(%34,%40) -> bb11;
+  }
+  bb11 {
+    %42 = ConstantLoad true
+    %43 = %42;
+    %44 = ConstantLoad true
+    %45 = %44;
+    %46 = guardedExhaustive(%43,%45) -> bb12;
+  }
+  bb12 {
+    %47 = %46;
+    %48 = ConstantLoad true
+    %49 = %48;
+    %50 = ConstantLoad false
+    %51 = %50;
+    %52 = guardedExhaustive(%49,%51) -> bb13;
+  }
+  bb13 {
+    %53 = %52;
+    %54 = ConstantLoad false
+    %55 = %54;
+    %56 = ConstantLoad true
+    %57 = %56;
+    %58 = guardedExhaustive(%55,%57) -> bb14;
+  }
+  bb14 {
+    %59 = %58;
+    %60 = println(%47,%53,%59) -> bb15;
+  }
+  bb15 {
+    %61 = ConstantLoad 1
+    %62 = %61;
+    %63 = checkGuard(%62) -> bb16;
+  }
+  bb16 {
+    e = %63;
+    %65 = e is error
+    %66 = %65;
+    %67 = println(%66) -> bb17;
+  }
+  bb17 {
+    %68 = ConstantLoad 1
+    %69 = %68;
+    %70 = ConstantLoad false
+    %71 = %70;
+    %72 = shortCircuit(%69,%71) -> bb18;
+  }
+  bb18 {
+    %73 = ConstantLoad 3
+    %74 = %73;
+    %75 = ConstantLoad true
+    %76 = %75;
+    %77 = shortCircuit(%74,%76) -> bb19;
+  }
+  bb19 {
+    %78 = ConstantLoad 2
+    %79 = %78;
+    %80 = ConstantLoad true
+    %81 = %80;
+    %82 = shortCircuit(%79,%81) -> bb20;
+  }
+  bb20 {
+    return;
+  }
+}

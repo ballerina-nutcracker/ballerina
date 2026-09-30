@@ -1,0 +1,16 @@
+-- stdout --
+wildcard
+fell through
+onemultimultinone
+guard wildcard
+guarded body
+guard const
+const body
+5
+-1
+any
+any multi
+matched not matched
+matched not matched
+done
+-- stderr --

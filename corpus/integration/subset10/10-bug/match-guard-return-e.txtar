@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing return statement
+  --> match-guard-return-e.bal:17:1
+   |
+17 | function guardedNotExhaustive(int v, boolean b) returns int { // @error missing return statement
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 |     match v {
+   |     ^^^^^^^^^
+19 |         _ if b => {
+   |         ^^^^^^^^^^^
+20 |             return 1;
+   |             ^^^^^^^^^
+21 |         }
+   |         ^
+22 |     }
+   |     ^
+23 | }
+   | ^

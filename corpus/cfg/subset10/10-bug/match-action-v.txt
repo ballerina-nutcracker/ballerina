@@ -1,0 +1,224 @@
+(Client
+  (Client.$resource$get$0
+    (bb0 () ()
+      (return
+        (literal 9))
+    )
+  )
+  (Client.$resource$get$1
+    (bb0 () ()
+      (return
+        (list-constructor-expr
+          (literal 5)
+          (literal 6)))
+    )
+  )
+  ($remote$checked
+    (bb0 () ()
+      (return
+        (literal 8))
+    )
+  )
+  ($remote$failing
+    (bb0 () ()
+      (return
+        (error-constructor-expr (
+          (literal boom))))
+    )
+  )
+  ($remote$value
+    (bb0 () ()
+      (return
+        (literal 7))
+    )
+  )
+  ($remote$values
+    (bb0 () ()
+      (return
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))
+    )
+  )
+)
+(failing
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal boom))))
+  )
+)
+(list
+  (bb0 () ()
+    (return
+      (list-constructor-expr
+        (literal 3)
+        (literal 4)))
+  )
+)
+(main
+  (bb0 () (bb2 bb3 bb1)
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation one ())))))
+    (single-wait-action
+      (simple-var-ref f))
+  )
+  (bb1 (bb2 bb3 bb0) (bb5)
+    (start-action
+      (invocation one ()))
+  )
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal wait one))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal wait other))))
+  )
+  (bb4 (bb5) (bb7 bb8)
+    (var-def
+      (variable c (type
+        (user-defined-type Client)) (expr
+        (new ()))))
+    (remote-method-call value expr:
+      (simple-var-ref c) ())
+  )
+  (bb5 (bb1) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (literal start))))
+  )
+  (bb6 (bb7 bb8) (bb10 bb9)
+    (checked-expr
+      (remote-method-call checked expr:
+        (simple-var-ref c) ()))
+  )
+  (bb7 (bb4) (bb6)
+    (expression-stmt
+      (invocation io println (
+        (literal remote seven))))
+  )
+  (bb8 (bb4) (bb6)
+    (expression-stmt
+      (invocation io println (
+        (literal remote other))))
+  )
+  (bb9 (bb10 bb6) (bb12 bb11)
+    (trap-expr
+      (remote-method-call value expr:
+        (simple-var-ref c) ()))
+  )
+  (bb10 (bb6) (bb9)
+    (expression-stmt
+      (invocation io println (
+        (literal check eight))))
+  )
+  (bb11 (bb12 bb9) (bb14 bb13)
+    (client-resource-access get expr:
+      (simple-var-ref c) name:num)
+  )
+  (bb12 (bb9) (bb11)
+    (expression-stmt
+      (invocation io println (
+        (literal trap seven))))
+  )
+  (bb13 (bb14 bb11) (bb16 bb15)
+    (var-def
+      (variable failed (type
+        (constrained-type
+          (builtin-ref-type future)
+          (union-type
+            (value-type int)
+            (error-type)))) (expr
+        (start-action
+          (invocation failing ())))))
+    (single-wait-action
+      (simple-var-ref failed))
+  )
+  (bb14 (bb11) (bb13)
+    (expression-stmt
+      (invocation io println (
+        (literal resource nine))))
+  )
+  (bb15 (bb16 bb13) (bb18 bb17)
+    (remote-method-call failing expr:
+      (simple-var-ref c) ())
+  )
+  (bb16 (bb13) (bb15)
+    (expression-stmt
+      (invocation io println (
+        (literal wait wildcard))))
+  )
+  (bb17 (bb18 bb15) (bb19))
+  (bb18 (bb15) (bb17)
+    (expression-stmt
+      (invocation io println (
+        (literal remote wildcard))))
+  )
+  (bb19 (bb17 bb20) (bb20 bb21)
+    (remote-method-call values expr:
+      (simple-var-ref c) ())
+    (var-def
+      (variable x (type
+        (value-type int))))
+  )
+  (bb20 (bb19) (bb19)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+  (bb21 (bb19) (bb22))
+  (bb22 (bb21 bb23) (bb23 bb24)
+    (client-resource-access get expr:
+      (simple-var-ref c) name:items)
+    (var-def
+      (variable x (type
+        (value-type int))))
+  )
+  (bb23 (bb22) (bb22)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+  (bb24 (bb22) (bb25)
+    (var-def
+      (variable g (type
+        (constrained-type
+          (builtin-ref-type future)
+          (array-type
+            (value-type int) dimensions: 1 ([])))) (expr
+        (start-action
+          (invocation list ())))))
+  )
+  (bb25 (bb24 bb26) (bb26 bb27)
+    (check-panicked-expr
+      (single-wait-action
+        (simple-var-ref g)))
+    (var-def
+      (variable x (type
+        (value-type int))))
+  )
+  (bb26 (bb25) (bb25)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+  (bb27 (bb25) ()
+    (expression-stmt
+      (invocation io println (
+        (literal done))))
+  )
+)
+(one
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)

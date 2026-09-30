@@ -1,0 +1,15 @@
+-- stdout --
+guarded
+after
+after
+guarded one
+one
+none
+1020
+123
+true
+short default
+short default
+guard short
+short body
+-- stderr --

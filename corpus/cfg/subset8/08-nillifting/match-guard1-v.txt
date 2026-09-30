@@ -8,7 +8,7 @@
   )
 )
 (main
-  (bb0 () (bb2 bb3)
+  (bb0 () (bb2 bb3 bb1)
     (var-def
       (variable value (type
         (value-type int)) (expr
@@ -21,7 +21,7 @@
         (literal 0))))
     (simple-var-ref value)
   )
-  (bb1 (bb2 bb3) ())
+  (bb1 (bb2 bb3 bb0) ())
   (bb2 (bb0) (bb1)
     (expression-stmt
       (invocation io println (
