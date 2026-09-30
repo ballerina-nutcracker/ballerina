@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: bad type cast
+        at main(typedesc-cast-p.bal:19)

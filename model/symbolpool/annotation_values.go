@@ -156,7 +156,7 @@ func (sw *symbolWriter) writeAnnotationValue(buf *bytes.Buffer, value values.Ann
 		return nil
 	case annotationValueTagTypedesc:
 		td := value.(*values.TypeDesc)
-		if err := sw.writeType(buf, td.Type); err != nil {
+		if err := sw.writeType(buf, td.Constraint()); err != nil {
 			return err
 		}
 		return sw.writeAnnotationValues(buf, td.Annotations)
@@ -281,7 +281,7 @@ func (sr *symbolReader) readAnnotationValue() values.AnnotationValue {
 		restFiller, _ := values.FillerFactoryFor(tyCtx, atomic.Rest())
 		return values.NewList(ty, atomic, isReadonly, restFiller, int(count), initial)
 	case annotationValueTagTypedesc:
-		return values.NewTypeDesc(sr.readType(), sr.readAnnotationValues())
+		return values.NewTypeDesc(sr.env.GetTypeEnv(), sr.readType(), sr.readAnnotationValues())
 	case annotationValueTagRuntimeRef:
 		return &values.RuntimeAnnotationValueRef{
 			Organization: sr.readStringCP(),

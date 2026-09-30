@@ -1198,7 +1198,7 @@ func (br *birReader) readConstValueByTag(tag typeTag) any {
 			field := string(br.readStringCPEntry())
 			fieldAnnotations[field] = br.readAnnotationValues()
 		}
-		return values.NewTypeDescWithFieldAnnotations(ty, annotations, fieldAnnotations)
+		return values.NewTypeDescWithFieldAnnotations(br.ctx.GetTypeEnv(), ty, annotations, fieldAnnotations)
 	case typeTagRuntimeRef:
 		return &values.RuntimeAnnotationValueRef{
 			Organization: string(br.readStringCPEntry()),

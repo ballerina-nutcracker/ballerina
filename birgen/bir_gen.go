@@ -1268,13 +1268,14 @@ func typedescExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangTy
 func newTypeDescValue(ctx context, constraint semtypes.SemType, typeDesc ast.TypeDescriptor) *values.TypeDesc {
 	udt, ok := typeDesc.(*ast.BLangUserDefinedType)
 	if !ok || !ast.SymbolIsSet(udt) {
-		return values.NewTypeDesc(constraint, nil)
+		return values.NewTypeDesc(ctx.typeEnv(), constraint, nil)
 	}
 	return newTypeDescValueForSymbol(ctx, constraint, udt.Symbol())
 }
 
 func newTypeDescValueForSymbol(ctx context, constraint semtypes.SemType, symRef model.SymbolRef) *values.TypeDesc {
 	return values.NewTypeDescWithFieldAnnotations(
+		ctx.typeEnv(),
 		constraint,
 		ctx.compilerContext().SymbolAnnotationValues(symRef),
 		ctx.compilerContext().RecordFieldAnnotationValues(symRef),
