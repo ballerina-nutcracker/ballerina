@@ -1,0 +1,4 @@
+-- stdout --
+onConnect
+hello
+-- stderr --
