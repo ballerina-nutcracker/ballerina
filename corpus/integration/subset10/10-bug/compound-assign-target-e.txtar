@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign to constant
+  --> compound-assign-target-e.bal:33:5
+   |
+33 |     C += 1; // @error cannot assign to constant
+   |     ^
+
+error[SEMANTIC_ERROR]: cannot assign to function
+  --> compound-assign-target-e.bal:35:5
+   |
+35 |     f += 1; // @error cannot assign to function
+   |     ^
+
+error[SEMANTIC_ERROR]: cannot assign to parameter
+  --> compound-assign-target-e.bal:25:5
+   |
+25 |     p += 1; // @error cannot assign to parameter
+   |     ^
+
+error[SEMANTIC_ERROR]: cannot assign to parameter
+  --> compound-assign-target-e.bal:29:5
+   |
+29 |     p += 1; // @error cannot assign to parameter
+   |     ^
+
+error[SEMANTIC_ERROR]: cannot assign to type
+  --> compound-assign-target-e.bal:34:5
+   |
+34 |     T += 1; // @error cannot assign to type
+   |     ^

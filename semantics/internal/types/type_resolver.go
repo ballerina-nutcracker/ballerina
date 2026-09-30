@@ -1756,12 +1756,8 @@ func resolveStatement(t typeResolver, chain *binding, stmt ast.StatementNode) (s
 
 func resolveCompoundAssignment(t typeResolver, chain *binding, s *ast.BLangCompoundAssignment) (statementEffect, bool) {
 	lhs := s.GetVariable()
-	rhs := s.GetExpression()
 	lhsTy, rhsChain, ok := resolveCompoundAssignmentLhs(t, chain, lhs)
-	if !ok {
-		return statementEffect{}, false
-	}
-	if _, _, ok := resolveCompoundAssignmentInner(t, rhsChain, lhsTy, rhs, s.OpKind, s.GetPosition()); !ok {
+	if !ok || !resolveCompoundAssignmentInner(t, rhsChain, lhsTy, s) {
 		return statementEffect{}, false
 	}
 	if expr, ok := s.GetVariable().(ast.NodeWithSymbol); ok {
@@ -1771,9 +1767,10 @@ func resolveCompoundAssignment(t typeResolver, chain *binding, s *ast.BLangCompo
 }
 
 // resolveCompoundAssignmentLhs resolves the LHS of a compound assignment and returns the
-// narrowed LHS type to use as the operand type along with the chain in which the RHS should be
-// resolved. The LHS node's determined type is always set to its writable (unnarrowed) type so
-// that later assignment validation checks the RHS against the declared target type.
+// LHS type to use as the operand type along with the chain in which the RHS should be
+// resolved. The LHS node's determined type is always set to its writable (unnarrowed) type, which
+// is the target type the result of the operation is checked against. A variable reference
+// target is not narrowed: its operand type is the declared type of the variable (spec §7.15.1).
 func resolveCompoundAssignmentLhs(t typeResolver, chain *binding, lhs ast.BLangExpression) (semtypes.SemType, *binding, bool) {
 	switch lhs.(type) {
 	case *ast.BLangIndexBasedAccess, *ast.BLangFieldBaseAccess:
@@ -1788,35 +1785,57 @@ func resolveCompoundAssignmentLhs(t typeResolver, chain *binding, lhs ast.BLangE
 		if !ok {
 			return semtypes.SemType{}, nil, false
 		}
-		if ref, isVarRef := varRefExp(chain, lhs); isVarRef {
-			return t.symbolType(ref), chain, true
-		}
 		return lhs.GetDeterminedType(), chain, true
 	}
 }
 
-func resolveCompoundAssignmentInner(t typeResolver, chain *binding, lhsTy semtypes.SemType, rhs ast.BLangActionOrExpression, op model.OperatorKind, pos diagnostics.Location) (semtypes.SemType, expressionEffect, bool) {
+// resolveCompoundAssignmentInner resolves `lvexpr op expr` and checks that its static type is a
+// subtype of the target type of the compound assignment (spec §7.15.3).
+func resolveCompoundAssignmentInner(t typeResolver, chain *binding, lhsTy semtypes.SemType, s *ast.BLangCompoundAssignment) bool {
+	target, rhs, op, pos := s.GetVariable(), s.GetExpression(), s.OpKind, s.GetPosition()
+	if symbolNode, ok := target.(ast.BNodeWithSymbol); ok && ast.SymbolIsSet(symbolNode) {
+		if msg, ok := common.AssignmentTargetError(t.compilerContext().SymbolKind(symbolNode.Symbol())); ok {
+			t.semanticError(msg, target.GetPosition())
+			return false
+		}
+	}
 	// Use the widened basic-type form of the LHS as the contextual expected type for the RHS
 	// so that literals (e.g. `r["x"] += 1` where `x` is float) are typed against the LHS basic
 	// type rather than a possibly-singleton narrowed type.
 	rhsExpectedType := semtypes.WidenToBasicTypes(lhsTy)
+	var opTy semtypes.SemType
+	var ok bool
 	switch op {
 	case model.OperatorKind_ADD, model.OperatorKind_SUB:
-		return resolveAdditiveExprInner(t, chain, lhsTy, rhs, op, rhsExpectedType, pos)
+		opTy, _, ok = resolveAdditiveExprInner(t, chain, lhsTy, rhs, op, rhsExpectedType, pos)
 	case model.OperatorKind_MUL, model.OperatorKind_DIV, model.OperatorKind_MOD:
-		return resolveMultiplicativeExprInner(t, chain, lhsTy, rhs, op, rhsExpectedType, pos)
+		opTy, _, ok = resolveMultiplicativeExprInner(t, chain, lhsTy, rhs, op, rhsExpectedType, pos)
 	case model.OperatorKind_BITWISE_AND, model.OperatorKind_BITWISE_OR, model.OperatorKind_BITWISE_XOR:
-		return resolveBitWiseExprInner(t, chain, lhsTy, rhs, op, pos)
+		opTy, _, ok = resolveBitWiseExprInner(t, chain, lhsTy, rhs, op, pos)
 	case model.OperatorKind_BITWISE_LEFT_SHIFT, model.OperatorKind_BITWISE_RIGHT_SHIFT, model.OperatorKind_BITWISE_UNSIGNED_RIGHT_SHIFT:
-		return resolveShiftExprInner(t, chain, lhsTy, rhs, op, pos)
+		opTy, _, ok = resolveShiftExprInner(t, chain, lhsTy, rhs, op, pos)
 	case model.OperatorKind_AND:
-		return resolveAndExprInner(t, chain, lhsTy, defaultExpressionEffect(chain), rhs, pos)
+		opTy, _, ok = resolveAndExprInner(t, chain, lhsTy, defaultExpressionEffect(chain), rhs, pos)
 	case model.OperatorKind_OR:
-		return resolveOrExprInner(t, chain, lhsTy, defaultExpressionEffect(chain), rhs, pos)
+		opTy, _, ok = resolveOrExprInner(t, chain, lhsTy, defaultExpressionEffect(chain), rhs, pos)
 	default:
 		t.internalError(fmt.Sprintf("unexpected compound assignment operator %s", string(op)), pos)
-		return semtypes.SemType{}, expressionEffect{}, false
+		return false
 	}
+	if !ok {
+		return false
+	}
+	if semtypes.ContainsBasicType(lhsTy, semtypes.Nil) || semtypes.ContainsBasicType(rhs.GetDeterminedType(), semtypes.Nil) {
+		t.semanticError("compound assignment operands cannot be nilable", pos)
+		return false
+	}
+	tyCtx := t.typeContext()
+	targetTy := target.GetDeterminedType()
+	if !semtypes.IsSubtype(tyCtx, opTy, targetTy) {
+		t.semanticError(common.FormatIncompatibleTypeMessage(tyCtx, targetTy, opTy), pos)
+		return false
+	}
+	return true
 }
 
 func resolveAssignment(t typeResolver, chain *binding, s assignmentNode) (statementEffect, bool) {
