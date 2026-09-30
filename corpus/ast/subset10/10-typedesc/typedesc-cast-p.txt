@@ -1,0 +1,22 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable ta (type
+          (constrained-type
+            (value-type typedesc)
+            (value-type anydata))) (expr
+          (typedesc-expr
+            (value-type int)))))
+      (var-def
+        (variable _ (type
+          (constrained-type
+            (value-type typedesc)
+            (value-type string))) (expr
+          (type-conversion-expr
+            (simple-var-ref ta)
+            (constrained-type
+              (value-type typedesc)
+              (value-type string)))))))))

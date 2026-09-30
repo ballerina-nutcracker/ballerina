@@ -1,0 +1,193 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable ti (type
+        (constrained-type
+          (value-type typedesc)
+          (value-type int))) (expr
+        (typedesc-expr
+          (value-type int)))))
+    (var-def
+      (variable tt (type
+        (constrained-type
+          (value-type typedesc)
+          (user-defined-type T))) (expr
+        (simple-var-ref T))))
+    (var-def
+      (variable ta (type
+        (constrained-type
+          (value-type typedesc)
+          (value-type anydata))) (expr
+        (typedesc-expr
+          (value-type int)))))
+    (var-def
+      (variable tu (type
+        (constrained-type
+          (value-type typedesc)
+          (value-type anydata))) (expr
+        (simple-var-ref IntOrString))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref ti)
+          (constrained-type
+            (value-type typedesc)
+            (value-type int))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref ti)
+          (constrained-type
+            (value-type typedesc)
+            (value-type anydata))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref ti)
+          (constrained-type
+            (value-type typedesc)
+            (union-type
+              (value-type int)
+              (value-type string)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref ti)
+          (value-type typedesc)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref ti)
+          (constrained-type
+            (value-type typedesc)
+            (value-type string))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref ta)
+          (constrained-type
+            (value-type typedesc)
+            (value-type int))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref ta)
+          (constrained-type
+            (value-type typedesc)
+            (value-type string))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref tt)
+          (constrained-type
+            (value-type typedesc)
+            (user-defined-type T))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref tt)
+          (constrained-type
+            (value-type typedesc)
+            (record-type
+              (field v
+                (value-type int))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref tt)
+          (constrained-type
+            (value-type typedesc)
+            (record-type
+              (field v
+                (value-type string))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref tu)
+          (constrained-type
+            (value-type typedesc)
+            (value-type int))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref tu)
+          (constrained-type
+            (value-type typedesc)
+            (user-defined-type IntOrString))))))
+    (var-def
+      (variable tn (type
+        (constrained-type
+          (value-type typedesc)
+          (user-defined-type Node))) (expr
+        (simple-var-ref Node))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref tn)
+          (constrained-type
+            (value-type typedesc)
+            (user-defined-type Node))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref tn)
+          (constrained-type
+            (value-type typedesc)
+            (value-type int))))))
+    (var-def
+      (variable tf (type
+        (constrained-type
+          (value-type typedesc)
+          (value-type int))) (expr
+        (simple-var-ref Five))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref tf)
+          (constrained-type
+            (value-type typedesc)
+            (finite-type
+              (literal 5)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref tf)
+          (constrained-type
+            (value-type typedesc)
+            (finite-type
+              (literal 6)))))))
+    (var-def
+      (variable a (type
+        (value-type any)) (expr
+        (simple-var-ref ti))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref a)
+          (constrained-type
+            (value-type typedesc)
+            (value-type int))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref a)
+          (value-type readonly)))))
+    (var-def
+      (variable narrowed (type
+        (constrained-type
+          (value-type typedesc)
+          (value-type int))) (expr
+        (type-conversion-expr
+          (simple-var-ref ta)
+          (constrained-type
+            (value-type typedesc)
+            (value-type int))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref narrowed)
+          (constrained-type
+            (value-type typedesc)
+            (value-type int))))))
+  )
+)
