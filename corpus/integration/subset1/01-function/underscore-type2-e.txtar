@@ -1,0 +1,97 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:19:12
+   |
+19 | type Alias _; // @error
+   |            ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:20:12
+   |
+20 | type Array _[]; // @error
+   |            ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:21:15
+   |
+21 | type Optional _?; // @error
+   |               ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:22:16
+   |
+22 | type Union int|_; // @error
+   |                ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:23:18
+   |
+23 | type Tuple [int, _]; // @error
+   |                  ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:24:18
+   |
+24 | type Mapping map<_>; // @error
+   |                  ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:25:21
+   |
+25 | type Parenthesized (_); // @error
+   |                     ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:26:19
+   |
+26 | type Qualified io:_; // @error
+   |                   ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:27:22
+   |
+27 | type Predeclared int:_; // @error
+   |                      ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:29:1
+   |
+29 | _ moduleValue = 1; // @error
+   | ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:31:22
+   |
+31 | function acceptValue(_ value) { // @error
+   |                      ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:35:5
+   |
+35 |     _ localValue = 1; // @error
+   |     ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:36:5
+   |
+36 |     _[] arrayValue = []; // @error
+   |     ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:37:9
+   |
+37 |     int|_ unionValue = 1; // @error
+   |         ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:38:11
+   |
+38 |     [int, _] tupleValue = [1, 2]; // @error
+   |           ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type2-e.bal:39:8
+   |
+39 |     io:_ qualifiedValue = 1; // @error
+   |        ^

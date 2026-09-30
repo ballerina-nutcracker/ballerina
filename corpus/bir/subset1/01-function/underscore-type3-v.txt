@@ -1,0 +1,29 @@
+module $anon.. v 0.0.0;
+identity(int) -> int{
+  bb0 {
+    %0 = _value;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 42
+    %2 = %1;
+    %3 = identity(%2) -> bb1;
+  }
+  bb1 {
+    _value = %3;
+    _ = _value;
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %8 = identity(%7) -> bb2;
+  }
+  bb2 {
+    %9 = %8;
+    %10 = _value;
+    %11 = println(%10) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
