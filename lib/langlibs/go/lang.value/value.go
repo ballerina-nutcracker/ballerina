@@ -43,7 +43,7 @@ func initValueModule(rt *runtime.Runtime) {
 
 func cloneWithType(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	td := args[1].(*values.TypeDesc)
-	result, convErr := values.CloneWithType(ctx.TypeCtx(), args[0], td.Type)
+	result, convErr := values.CloneWithType(ctx.TypeCtx(), args[0], td.Constraint())
 	if convErr != nil {
 		return convErr, nil
 	}

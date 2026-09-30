@@ -35,10 +35,12 @@ type Function struct {
 	ParentFrame any // *exec.Frame at runtime, nil for non-closures
 }
 
-// TypeDesc is the runtime representation of a typedesc value: the semtype it
-// denotes together with the runtime-visible annotations of that type.
+// TypeDesc is the runtime representation of a typedesc value: the type it
+// describes together with the runtime-visible annotations of that type.
 type TypeDesc struct {
+	// Type is the type of the typedesc value itself, typedesc<constraint>.
 	Type        semtypes.SemType
+	constraint  semtypes.SemType
 	Annotations AnnotationValues
 	// FieldAnnotations holds the runtime-visible annotations attached to the
 	// individual fields of a record type, keyed by field name. Fields without
@@ -46,15 +48,16 @@ type TypeDesc struct {
 	FieldAnnotations FieldAnnotationValues
 }
 
-// NewTypeDesc returns a fully initialized TypeDesc.
-func NewTypeDesc(ty semtypes.SemType, annotations AnnotationValues) *TypeDesc {
-	return NewTypeDescWithFieldAnnotations(ty, annotations, nil)
+// NewTypeDesc returns a fully initialized TypeDesc describing constraint.
+func NewTypeDesc(env semtypes.Env, constraint semtypes.SemType, annotations AnnotationValues) *TypeDesc {
+	return NewTypeDescWithFieldAnnotations(env, constraint, annotations, nil)
 }
 
-// NewTypeDescWithFieldAnnotations returns a fully initialized TypeDesc carrying
-// per-record-field annotations.
+// NewTypeDescWithFieldAnnotations returns a fully initialized TypeDesc
+// describing constraint and carrying per-record-field annotations.
 func NewTypeDescWithFieldAnnotations(
-	ty semtypes.SemType,
+	env semtypes.Env,
+	constraint semtypes.SemType,
 	annotations AnnotationValues,
 	fieldAnnotations FieldAnnotationValues,
 ) *TypeDesc {
@@ -65,10 +68,16 @@ func NewTypeDescWithFieldAnnotations(
 		fieldAnnotations = NewFieldAnnotationValues()
 	}
 	return &TypeDesc{
-		Type:             ty,
+		Type:             semtypes.TypedescContaining(env, constraint),
+		constraint:       constraint,
 		Annotations:      annotations,
 		FieldAnnotations: fieldAnnotations,
 	}
+}
+
+// Constraint returns the type this typedesc value describes.
+func (td *TypeDesc) Constraint() semtypes.SemType {
+	return td.constraint
 }
 
 // FillerFactory produces a fresh filler value each time it is invoked.
@@ -180,7 +189,7 @@ func SemTypeForValue(v BalValue) semtypes.SemType {
 	case XMLValue:
 		return v.Type()
 	case *TypeDesc:
-		return semtypes.Typedesc
+		return v.Type
 	default:
 		return semtypes.Any
 	}

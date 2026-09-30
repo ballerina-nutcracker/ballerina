@@ -110,9 +110,9 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc semtype")
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.Int):
 				return int64(1), nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.String):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.String):
 				return "foo", nil
 			}
 			panic(values.NewErrorWithMessage("unsupported inferred typedesc constraint"))
@@ -122,7 +122,7 @@ func TestDependentlyTyped(t *testing.T) {
 			if !ok {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
-			if !semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int) {
+			if !semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.Int) {
 				panic(values.NewErrorWithMessage("inferredSubType requires typedesc<int>"))
 			}
 			return int64(1), nil
@@ -133,9 +133,9 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Int, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Int, td.Constraint()):
 				return int64(0), nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Constraint()):
 				return "bar", nil
 			}
 			panic(values.NewErrorWithMessage("unsupported inferredPartially typedesc constraint"))
@@ -153,8 +153,8 @@ func TestDependentlyTyped(t *testing.T) {
 			}
 			xVal, _ := src.Get("x")
 			yVal, _ := src.Get("y")
-			atomic := semtypes.ToMappingAtomicType(ctx.TypeCtx(), td.Type)
-			return values.NewMap(td.Type, atomic, false, []values.MapEntry{
+			atomic := semtypes.ToMappingAtomicType(ctx.TypeCtx(), td.Constraint())
+			return values.NewMap(td.Constraint(), atomic, false, []values.MapEntry{
 				{Key: "x", Value: xVal.(int64) + dx},
 				{Key: "y", Value: yVal.(int64) + dy},
 			}), nil
@@ -169,9 +169,9 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.Int):
 				return val, nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.String):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.String):
 				return fmt.Sprintf("%d", val), nil
 			}
 			panic(values.NewErrorWithMessage("unsupported inferredWithDefault typedesc constraint"))
@@ -182,7 +182,7 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[0])
 			}
 			// return an error to verify the inferred typedesc was widened to include error
-			if semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Error, td.Type) {
+			if semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Error, td.Constraint()) {
 				return values.NewErrorWithMessage("error"), nil
 			}
 			panic(values.NewErrorWithMessage("inferredMaybeError: expected error to be in typedesc"))
@@ -199,7 +199,7 @@ func TestDependentlyTyped(t *testing.T) {
 			if !ok {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
-			if !semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Type) {
+			if !semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Constraint()) {
 				panic(values.NewErrorWithMessage("Getter.get: expected string-compatible typedesc"))
 			}
 			return "immutable", nil
@@ -227,13 +227,13 @@ func dependentArrayExtern(kind arrayReturnKind) extern.NativeFunc {
 			return nil, fmt.Errorf("expected typedesc argument, got %T", args[0])
 		}
 		if kind == arrayReturnZero {
-			if !semtypes.IsSameType(ctx.TypeCtx(), td.Type, semtypes.Val) && !semtypes.IsSameType(ctx.TypeCtx(), td.Type, semtypes.String) {
-				return nil, fmt.Errorf("expected maximal or explicit string typedesc constraint for zero-length array, got %s", semtypes.ToString(ctx.TypeCtx(), td.Type))
+			if !semtypes.IsSameType(ctx.TypeCtx(), td.Constraint(), semtypes.Val) && !semtypes.IsSameType(ctx.TypeCtx(), td.Constraint(), semtypes.String) {
+				return nil, fmt.Errorf("expected maximal or explicit string typedesc constraint for zero-length array, got %s", semtypes.ToString(ctx.TypeCtx(), td.Constraint()))
 			}
-		} else if !semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.List) && !semtypes.IsSameType(ctx.TypeCtx(), td.Type, semtypes.String) {
-			return nil, fmt.Errorf("expected string or explicit array typedesc constraint, got %s", semtypes.ToString(ctx.TypeCtx(), td.Type))
+		} else if !semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.List) && !semtypes.IsSameType(ctx.TypeCtx(), td.Constraint(), semtypes.String) {
+			return nil, fmt.Errorf("expected string or explicit array typedesc constraint, got %s", semtypes.ToString(ctx.TypeCtx(), td.Constraint()))
 		}
-		element := td.Type
+		element := td.Constraint()
 		label := "open"
 		size := 1
 		switch kind {
@@ -254,9 +254,9 @@ func dependentArrayExtern(kind arrayReturnKind) extern.NativeFunc {
 			element = semtypes.Intersect(element, semtypes.ValReadonly)
 			label = "readonly"
 		}
-		if semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.List) {
-			inner := newExternList(ctx, td.Type, []values.BalValue{"explicit"})
-			return newExternList(ctx, externArrayType(ctx, td.Type, 0, true), []values.BalValue{inner}), nil
+		if semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.List) {
+			inner := newExternList(ctx, td.Constraint(), []values.BalValue{"explicit"})
+			return newExternList(ctx, externArrayType(ctx, td.Constraint(), 0, true), []values.BalValue{inner}), nil
 		}
 		items := make([]values.BalValue, size)
 		for i := range items {
@@ -326,7 +326,7 @@ func TestDependentlyTypedIncludedRecordParam(t *testing.T) {
 			yVal, _ := src.Get("y")
 			dxVal, _ := opts.Get("dx")
 			dyVal, _ := opts.Get("dy")
-			out := values.NewMap(td.Type, semtypes.ToMappingAtomicType(ctx.TypeCtx(), td.Type), false, nil)
+			out := values.NewMap(td.Constraint(), semtypes.ToMappingAtomicType(ctx.TypeCtx(), td.Constraint()), false, nil)
 			out.Put(ctx.TypeCtx(), "x", xVal.(int64)+dxVal.(int64))
 			out.Put(ctx.TypeCtx(), "y", yVal.(int64)+dyVal.(int64))
 			return out, nil
@@ -345,9 +345,9 @@ func TestDependentlyTypedMethod(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[3])
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Constraint()):
 				return "string response", nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Int, td.Type):
+			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Int, td.Constraint()):
 				return int64(2), nil
 			}
 			panic(values.NewErrorWithMessage("unsupported targetType"))
@@ -464,9 +464,9 @@ func TestDependentlyTypedResourceMethod(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[len(args)-1])
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.String):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.String):
 				return "explicit", nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.Int):
 				return int64(42), nil
 			}
 			panic(values.NewErrorWithMessage("unsupported targetType"))
@@ -483,9 +483,9 @@ func TestDependentlyTypedResourceMethod(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[len(args)-1])
 			}
 			switch {
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.String):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.String):
 				return fmt.Sprintf("item %d", id), nil
-			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int):
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.Int):
 				return id * 2, nil
 			}
 			panic(values.NewErrorWithMessage("unsupported targetType"))
@@ -1165,9 +1165,9 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 			return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 		}
 		switch {
-		case semtypes.IsSubtype(tyCtx, td.Type, semtypes.Int):
+		case semtypes.IsSubtype(tyCtx, td.Constraint(), semtypes.Int):
 			return int64(1), nil
-		case semtypes.IsSubtype(tyCtx, td.Type, semtypes.String):
+		case semtypes.IsSubtype(tyCtx, td.Constraint(), semtypes.String):
 			return "foo", nil
 		}
 		panic(values.NewErrorWithMessage("unsupported inferred typedesc constraint"))
@@ -1177,7 +1177,7 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 		if !ok {
 			return nil, fmt.Errorf("expected typedesc argument, got %T", args[0])
 		}
-		innerTy := externArrayType(ctx, td.Type, 0, true)
+		innerTy := externArrayType(ctx, td.Constraint(), 0, true)
 		first := newExternList(ctx, innerTy, []values.BalValue{"first"})
 		second := newExternList(ctx, innerTy, []values.BalValue{"serialized"})
 		outerTy := externArrayType(ctx, innerTy, 2, false)

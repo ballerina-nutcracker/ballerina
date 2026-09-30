@@ -49,7 +49,7 @@ var (
 // carrying the status detail, and anything else is deserialised into the target type.
 func bindResponse(ctx *extern.Context, types *httpTypes, resp *values.Object, targetArg values.BalValue) values.BalValue {
 	tc := ctx.TypeCtx()
-	target := targetArg.(*values.TypeDesc).Type
+	target := targetArg.(*values.TypeDesc).Constraint()
 	if admitsResponse(tc, target) {
 		return resp
 	}
