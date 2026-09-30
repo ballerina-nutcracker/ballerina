@@ -1,0 +1,30 @@
+name: Doc Links
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.md'
+      - '.github/scripts/check_doc_links.py'
+      - '.github/scripts/test_check_doc_links.py'
+      - '.github/workflows/doc-links.yml'
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-links:
+    name: Check doc links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Test link checker
+        run: python3 .github/scripts/test_check_doc_links.py
+      - name: Validate links in Markdown files
+        run: python3 .github/scripts/check_doc_links.py
