@@ -25,26 +25,44 @@ main() -> nil{
   }
   bb4 {
     $desugar$0 = %9;
-    %12 = closure_fp $anon/.:$worker:main:w
-    $desugar$2 = %12;
-    %14 = start $desugar$2() isolated=false -> bb5;
+    %13 = closure_fp $anon/.:$worker:main:$function
+    $desugar$3 = %13;
+    %15 = closure_fp $anon/.:$worker:main:w
+    $desugar$4 = %15;
+    %17 = start $desugar$3() isolated=false -> bb5;
   }
   bb5 {
-    $desugar$1 = %14;
-    %15 = openLatch($desugar$0) -> bb6;
+    $desugar$1 = %17;
+    %18 = start $desugar$4() isolated=false -> bb6;
   }
   bb6 {
-    %16 = wait $desugar$1 -> bb7;
+    $desugar$2 = %18;
+    %19 = openLatch($desugar$0) -> bb7;
   }
   bb7 {
-    r = %16;
-    %19 = r;
-    %20 = y;
-    %18 = + %19 %20;
-    %21 = %18;
-    %22 = println(%21) -> bb8;
+    %20 = wait $desugar$1 -> bb8;
   }
   bb8 {
+    %0 = %20;
+    return;
+  }
+}
+$worker:main:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = wait (1, $desugar$2) -> bb2;
+  }
+  bb2 {
+    r = %2;
+    %5 = r;
+    %6 = (1, y);
+    %4 = + %5 %6;
+    %7 = %4;
+    %8 = println(%7) -> bb3;
+  }
+  bb3 {
     return;
   }
 }

@@ -202,6 +202,7 @@ type functionContext struct {
 	defaultClosureVars   map[model.SymbolRef]model.SymbolRef
 	generatedFunctions   []*ast.BLangFunction
 	workerFutureSlots    map[model.SymbolRef]*ast.BLangVarRef
+	returnTypeDescriptor *ast.BLangReturnTypeDescriptor
 	// uniqueNamePrefix is unique within the module. Append to it to build
 	// unique names for generated functions, prefixing the result with a
 	// `$<kind>` tag (see constants.WorkerClosurePrefix) so generated names group by
@@ -1849,11 +1850,12 @@ func desugarResourceMethod(
 	span := parent.StartChild("Resource Method", rm.Name.GetValue())
 	defer span.End()
 	cx := &functionContext{
-		pkgCtx:           pkgCtx,
-		owner:            rm.Symbol(),
-		uniqueNamePrefix: uniqueName(pkgCtx, typeName, rm.Symbol()),
-		isIsolated:       rm.IsIsolated(),
-		span:             span,
+		pkgCtx:               pkgCtx,
+		owner:                rm.Symbol(),
+		returnTypeDescriptor: rm.GetReturnTypeDescriptor(),
+		uniqueNamePrefix:     uniqueName(pkgCtx, typeName, rm.Symbol()),
+		isIsolated:           rm.IsIsolated(),
+		span:                 span,
 	}
 	cx.pushScope(rm.Scope())
 	defer cx.popScope()
@@ -1875,11 +1877,12 @@ func desugarFunction(
 	span := parent.StartChild("Function", fn.Name.GetValue())
 	defer span.End()
 	cx := &functionContext{
-		pkgCtx:           pkgCtx,
-		owner:            fn.Symbol(),
-		uniqueNamePrefix: uniqueName(pkgCtx, parentPrefix, fn.Symbol()),
-		isIsolated:       fn.IsIsolated(),
-		span:             span,
+		pkgCtx:               pkgCtx,
+		owner:                fn.Symbol(),
+		returnTypeDescriptor: fn.GetReturnTypeDescriptor(),
+		uniqueNamePrefix:     uniqueName(pkgCtx, parentPrefix, fn.Symbol()),
+		isIsolated:           fn.IsIsolated(),
+		span:                 span,
 	}
 	return desugarFunctionWithContext(cx, fn), cx.generatedFunctions
 }
@@ -1896,12 +1899,13 @@ func desugarNestedFunction(cx *functionContext, fn *ast.BLangFunction) *ast.BLan
 	span := cx.span.StartChild("Function", fn.Name.GetValue())
 	defer span.End()
 	nested := &functionContext{
-		pkgCtx:            cx.pkgCtx,
-		owner:             fn.Symbol(),
-		uniqueNamePrefix:  uniqueName(cx.pkgCtx, cx.uniqueNamePrefix, fn.Symbol()),
-		workerFutureSlots: cx.workerFutureSlots,
-		isIsolated:        fn.IsIsolated(),
-		span:              span,
+		pkgCtx:               cx.pkgCtx,
+		owner:                fn.Symbol(),
+		returnTypeDescriptor: fn.GetReturnTypeDescriptor(),
+		uniqueNamePrefix:     uniqueName(cx.pkgCtx, cx.uniqueNamePrefix, fn.Symbol()),
+		workerFutureSlots:    cx.workerFutureSlots,
+		isIsolated:           fn.IsIsolated(),
+		span:                 span,
 	}
 	fn = desugarFunctionWithContext(nested, fn)
 	cx.generatedFunctions = append(cx.generatedFunctions, nested.generatedFunctions...)

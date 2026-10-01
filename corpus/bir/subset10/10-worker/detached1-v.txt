@@ -7,16 +7,25 @@ launch() -> future<int>{
   }
   bb1 {
     $desugar$0 = %3;
-    %6 = closure_fp $anon/.:$worker:launch:w
-    $desugar$2 = %6;
-    %8 = start $desugar$2() isolated=false -> bb2;
+    %7 = closure_fp $anon/.:$worker:launch:$function
+    $desugar$3 = %7;
+    %9 = closure_fp $anon/.:$worker:launch:w
+    $desugar$4 = %9;
+    %11 = start $desugar$3() isolated=false -> bb2;
   }
   bb2 {
-    $desugar$1 = %8;
-    %9 = openLatch($desugar$0) -> bb3;
+    $desugar$1 = %11;
+    %12 = start $desugar$4() isolated=false -> bb3;
   }
   bb3 {
-    %0 = $desugar$1;
+    $desugar$2 = %12;
+    %13 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %14 = wait $desugar$1 -> bb5;
+  }
+  bb5 {
+    %0 = %14;
     return;
   }
 }
@@ -33,6 +42,15 @@ main() -> nil{
     %5 = println(result) -> bb3;
   }
   bb3 {
+    return;
+  }
+}
+$worker:launch:$function() -> future<int>{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %0 = (1, $desugar$2);
     return;
   }
 }

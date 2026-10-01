@@ -39,6 +39,28 @@ main() -> nil{
     return;
   }
 }
+$worker:init:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = wait (1, $desugar$2) -> bb2;
+  }
+  bb2 {
+    observed = %2;
+    %5 = observed;
+    %6 = spin() -> bb3;
+  }
+  bb3 {
+    %7 = %6;
+    %4 = == %5 %7;
+    %8 = %4;
+    %9 = println(%8) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
 $worker:init:reader() -> int{
   bb0 {
     %1 = waitOnLatch((1, $desugar$0)) -> bb1;

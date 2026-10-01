@@ -26,7 +26,30 @@
         (var-def
           (variable $desugar$1))
         (var-def
-          (variable $desugar$2 (expr
+          (variable $desugar$2))
+        (var-def
+          (variable $desugar$3 (expr
+            (lambda
+              (function $worker:Holder.init:$function () (
+                (value-type null))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (var-def
+                    (variable observed (type
+                      (value-type int)) (expr
+                      (single-wait-action
+                        (simple-var-ref $desugar$2)))))
+                  (lock
+                    (block-stmt
+                      (assignment
+                        (index-based-access
+                          (simple-var-ref self)
+                          (literal seen))
+                        (simple-var-ref observed))))))))))
+        (var-def
+          (variable $desugar$4 (expr
             (lambda
               (function $worker:Holder.init:reader () (
                 (value-type int))
@@ -41,22 +64,17 @@
         (assignment
           (simple-var-ref $desugar$1)
           (start-action isolated
-            (invocation $desugar$2 ())))
+            (invocation $desugar$3 ())))
+        (assignment
+          (simple-var-ref $desugar$2)
+          (start-action isolated
+            (invocation $desugar$4 ())))
         (expression-stmt
           (invocation lang.__internal openLatch (
             (simple-var-ref $desugar$0))))
-        (var-def
-          (variable observed (type
-            (value-type int)) (expr
-            (single-wait-action
-              (simple-var-ref $desugar$1)))))
-        (lock
-          (block-stmt
-            (assignment
-              (index-based-access
-                (simple-var-ref self)
-                (literal seen))
-              (simple-var-ref observed))))))
+        (return
+          (single-wait-action
+            (simple-var-ref $desugar$1)))))
     (function sawInitializedField () (
       (value-type boolean))
       (block-function-body

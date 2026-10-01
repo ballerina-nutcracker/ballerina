@@ -10,7 +10,44 @@
       (var-def
         (variable $desugar$1))
       (var-def
-        (variable $desugar$2 (expr
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $worker:main:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable alias (type
+                    (constrained-type
+                      (builtin-ref-type future)
+                      (value-type int))) (expr
+                    (simple-var-ref $desugar$2))))
+                (var-def
+                  (variable first (type
+                    (union-type
+                      (value-type int)
+                      (error-type))) (expr
+                    (single-wait-action
+                      (simple-var-ref alias)))))
+                (var-def
+                  (variable second (type
+                    (union-type
+                      (value-type int)
+                      (error-type))) (expr
+                    (single-wait-action
+                      (simple-var-ref alias)))))
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref first))))
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref second))))))))))
+      (var-def
+        (variable $desugar$4 (expr
           (lambda
             (function $worker:main:w () (
               (value-type int))
@@ -23,33 +60,14 @@
       (assignment
         (simple-var-ref $desugar$1)
         (start-action
-          (invocation $desugar$2 ())))
+          (invocation $desugar$3 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$4 ())))
       (expression-stmt
         (invocation lang.__internal openLatch (
           (simple-var-ref $desugar$0))))
-      (var-def
-        (variable alias (type
-          (constrained-type
-            (builtin-ref-type future)
-            (value-type int))) (expr
-          (simple-var-ref $desugar$1))))
-      (var-def
-        (variable first (type
-          (union-type
-            (value-type int)
-            (error-type))) (expr
-          (single-wait-action
-            (simple-var-ref alias)))))
-      (var-def
-        (variable second (type
-          (union-type
-            (value-type int)
-            (error-type))) (expr
-          (single-wait-action
-            (simple-var-ref alias)))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref first))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref second)))))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1))))))
