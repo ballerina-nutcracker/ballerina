@@ -1,0 +1,5 @@
+-- stdout --
+b failed
+-- stderr --
+error: b failed
+        at main(message-ignored-flush1-p.bal:34)

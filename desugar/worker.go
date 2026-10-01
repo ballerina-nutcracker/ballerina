@@ -31,6 +31,7 @@ import (
 // The emitted sequence is:
 //
 //	handle $latch = createLatch();
+//	handle $m1 = createWorkerMessage(); ...      // one per send
 //	future<T> $default; future<T1> $w1; ... future<Tn> $wn;
 //	var $cd = function () returns T { waitOnLatch($latch); <trailing stmts> };
 //	var $c1 = function () returns T1 { waitOnLatch($latch); <body 1> }; ...
@@ -50,6 +51,12 @@ func desugarWorkerRegion(cx *functionContext, body *ast.BLangBlockFunctionBody) 
 	stmts := make([]ast.StatementNode, 0, 3*len(workers)+6)
 	stmts = append(stmts, latchDef)
 
+	cx.workerMessages = maps.Clone(cx.workerMessages)
+	if cx.workerMessages == nil {
+		cx.workerMessages = make(map[model.WorkerMessageRef]*ast.BLangVarRef)
+	}
+	stmts = append(stmts, declareWorkerMessages(cx, body, pos)...)
+
 	cx.workerFutureSlots = maps.Clone(cx.workerFutureSlots)
 	if cx.workerFutureSlots == nil {
 		cx.workerFutureSlots = make(map[model.SymbolRef]*ast.BLangVarRef, len(workers)+1)
@@ -65,13 +72,13 @@ func desugarWorkerRegion(cx *functionContext, body *ast.BLangBlockFunctionBody) 
 		cx.workerFutureSlots[worker.Symbol()] = ref
 	}
 
-	defaultClosureDef, defaultStart := desugarDefaultWorker(cx, body, latchRef, defaultSlot)
-	stmts = append(stmts, defaultClosureDef)
+	defaultClosureDefs, defaultStart := desugarDefaultWorker(cx, body, latchRef, defaultSlot)
+	stmts = append(stmts, defaultClosureDefs...)
 	starts := make([]ast.StatementNode, 0, len(workers)+1)
 	starts = append(starts, defaultStart)
 	for i, worker := range workers {
-		closureDef, start := desugarNamedWorker(cx, worker, latchRef, slotRefs[i])
-		stmts = append(stmts, closureDef)
+		closureDefs, start := desugarNamedWorker(cx, worker, latchRef, slotRefs[i])
+		stmts = append(stmts, closureDefs...)
 		starts = append(starts, start)
 	}
 
@@ -80,70 +87,64 @@ func desugarWorkerRegion(cx *functionContext, body *ast.BLangBlockFunctionBody) 
 	return append(stmts, returnDefaultWorkerResult(cx, body, defaultSlot))
 }
 
-// desugarNamedWorker lowers one worker into the statement that binds its
-// closure and the statement that starts it and publishes the resulting future
-// into slot. The two are returned separately because every closure must be
-// bound before the first worker is started.
+// desugarNamedWorker lowers one worker into the statements that bind its
+// closures and the statement that starts it and publishes the resulting future
+// into slot. They are returned separately because every closure must be bound
+// before the first worker is started.
 func desugarNamedWorker(
 	cx *functionContext,
 	worker *ast.BLangNamedWorkerDeclaration,
 	latch *ast.BLangVarRef,
 	slot *ast.BLangVarRef,
-) (closureDef ast.StatementNode, start ast.StatementNode) {
-	closure := createWorkerClosure(cx, worker, latch)
+) (closureDefs []ast.StatementNode, start ast.StatementNode) {
+	closureDefs, closure := createWorkerClosure(cx, worker, latch)
 	closureDef, closureRef := assignToLocal(cx, closure, worker.GetPosition())
-	return closureDef, createWorkerStart(cx, worker.Symbol(), closureRef, slot, worker.GetPosition())
+	return append(closureDefs, closureDef), createWorkerStart(cx, worker.Symbol(), closureRef, slot, worker.GetPosition())
 }
 
 // desugarDefaultWorker lowers the trailing statements of a body with named
-// workers into the default worker's closure, and returns the statement that
-// binds it and the one that starts it.
+// workers into the default worker's closure, and returns the statements that
+// bind its closures and the one that starts it.
 func desugarDefaultWorker(
 	cx *functionContext,
 	body *ast.BLangBlockFunctionBody,
 	latch *ast.BLangVarRef,
 	slot *ast.BLangVarRef,
-) (closureDef ast.StatementNode, start ast.StatementNode) {
+) (closureDefs []ast.StatementNode, start ast.StatementNode) {
 	pos := defaultWorkerPosition(body)
 	returnTy := workerReturnType(cx, body.DefaultWorker)
-	isolated := cx.isIsolated
-
-	latchWait := expressionStatement(waitOnLatchInvocation(cx, latch, pos), pos)
-	// The statements are lowered in this context rather than as a nested
-	// function; BIR gen resolves the variables they capture lexically.
-	closureBody := &ast.BLangBlockFunctionBody{
-		Stmts: append([]ast.StatementNode{latchWait}, walkStatementList(cx, body.Stmts)...),
-	}
-	closureBody.SetDeterminedType(semtypes.Never)
-	setPositionIfMissing(closureBody, pos)
-
 	name := workerClosureName(cx, constants.DefaultWorkerName)
-	closureTy := workerClosureType(cx, returnTy, isolated)
-	symRef := addWorkerClosureSymbol(cx, name, pos, closureTy, returnTy, isolated)
 	var returnTypeDescriptor ast.BType
 	if cx.returnTypeDescriptor != nil {
 		returnTypeDescriptor = cx.returnTypeDescriptor.TypeDescriptor
 	}
-	fn := newWorkerClosureFunction(name, symRef, closureBody, returnTypeDescriptor, cx.currentScope(), isolated, pos)
-
-	lambda := &ast.BLangLambdaFunction{Function: fn}
-	lambda.SetDeterminedType(closureTy)
-	setPositionIfMissing(lambda, pos)
+	sends := asyncSendsOf(body.Stmts)
+	// The statements are lowered in this context rather than as a nested
+	// function; BIR gen resolves the variables they capture lexically.
+	stmts := walkStatementList(cx, body.Stmts)
+	if len(sends) > 0 {
+		inner := newWorkerClosure(cx, name+workerBodySuffix, newBlockFunctionBody(stmts, pos), returnTy, returnTypeDescriptor, cx.currentScope(), pos)
+		innerDef, innerRef := assignToLocal(cx, inner, pos)
+		closureDefs = append(closureDefs, innerDef)
+		stmts = withTerminationDelivery(cx, innerRef, returnTy, sends, diagnostics.EndLocation(body.GetPosition()))
+	}
+	latchWait := expressionStatement(waitOnLatchInvocation(cx, latch, pos), pos)
+	closureBody := newBlockFunctionBody(append([]ast.StatementNode{latchWait}, stmts...), pos)
+	lambda := newWorkerClosure(cx, name, closureBody, returnTy, returnTypeDescriptor, cx.currentScope(), pos)
 	closureDef, closureRef := assignToLocal(cx, lambda, pos)
 	// Starting over the trailing statements keeps the stack trace of a panic
 	// in them unchanged.
-	return closureDef, createWorkerStart(cx, body.DefaultWorker, closureRef, slot, pos)
+	return append(closureDefs, closureDef), createWorkerStart(cx, body.DefaultWorker, closureRef, slot, pos)
 }
 
-// defaultWorkerPosition spans the trailing statements of a body, or is the
-// body's closing brace when there are none.
+// defaultWorkerPosition spans the trailing statements of a body and its
+// closing brace, where the default worker terminates.
 func defaultWorkerPosition(body *ast.BLangBlockFunctionBody) diagnostics.Location {
+	end := diagnostics.EndLocation(body.GetPosition())
 	if len(body.Stmts) == 0 {
-		return diagnostics.EndLocation(body.GetPosition())
+		return end
 	}
-	first := body.Stmts[0].GetPosition()
-	last := body.Stmts[len(body.Stmts)-1].GetPosition()
-	return diagnostics.SpanLocations(first, last)
+	return diagnostics.SpanLocations(body.Stmts[0].GetPosition(), end)
 }
 
 // returnDefaultWorkerResult makes the function return what its default worker
@@ -193,29 +194,94 @@ func declareWorkerFutureSlot(
 
 // createWorkerClosure turns a source worker into an anonymous function whose
 // body awaits the startup latch before executing any source statement, so it
-// cannot observe an unassigned sibling slot.
+// cannot observe an unassigned sibling slot. A worker that waits for the
+// delivery of its async messages runs its body in a second closure; the
+// statements binding it are returned too.
 func createWorkerClosure(
 	cx *functionContext,
 	worker *ast.BLangNamedWorkerDeclaration,
 	latch *ast.BLangVarRef,
-) ast.BLangExpression {
+) ([]ast.StatementNode, ast.BLangExpression) {
 	pos := worker.GetPosition()
 	returnTy := workerReturnType(cx, worker.Symbol())
-	isolated := cx.isIsolated
+	name := workerClosureName(cx, worker.Name)
+	returnTypeDescriptor := worker.ReturnType.TypeDescriptor
 
 	workerBody := worker.Body
 	latchWait := expressionStatement(waitOnLatchInvocation(cx, latch, pos), pos)
-	workerBody.Stmts = append([]ast.StatementNode{latchWait}, workerBody.Stmts...)
+	sends := asyncSendsOf(workerBody.Stmts)
+	if len(sends) == 0 {
+		workerBody.Stmts = append([]ast.StatementNode{latchWait}, workerBody.Stmts...)
+		lambda := newWorkerClosure(cx, name, workerBody, returnTy, returnTypeDescriptor, worker.Scope(), pos)
+		lambda.Function = desugarNestedFunction(cx, lambda.Function)
+		return nil, lambda
+	}
+	inner := newWorkerClosure(cx, name+workerBodySuffix, workerBody, returnTy, returnTypeDescriptor, worker.Scope(), pos)
+	inner.Function = desugarNestedFunction(cx, inner.Function)
+	innerDef, innerRef := assignToLocal(cx, inner, pos)
+	terminationPos := diagnostics.EndLocation(workerBody.GetPosition())
+	stmts := append([]ast.StatementNode{latchWait}, withTerminationDelivery(cx, innerRef, returnTy, sends, terminationPos)...)
+	lambda := newWorkerClosure(cx, name, newBlockFunctionBody(stmts, pos), returnTy, returnTypeDescriptor, cx.currentScope(), pos)
+	return []ast.StatementNode{innerDef}, lambda
+}
 
+// workerBodySuffix names the hidden function a worker's body runs in when the
+// worker waits for the delivery of its async messages before terminating.
+const workerBodySuffix = "$body"
+
+// newWorkerClosure builds a generated anonymous function of the current
+// function from body as it is; the caller lowers it if needed.
+func newWorkerClosure(
+	cx *functionContext,
+	name string,
+	body *ast.BLangBlockFunctionBody,
+	returnTy semtypes.SemType,
+	returnTypeDescriptor ast.BType,
+	scope model.Scope,
+	pos diagnostics.Location,
+) *ast.BLangLambdaFunction {
+	isolated := cx.isIsolated
 	closureTy := workerClosureType(cx, returnTy, isolated)
-	name := workerClosureName(cx, worker.Name)
 	symRef := addWorkerClosureSymbol(cx, name, pos, closureTy, returnTy, isolated)
-	fn := newWorkerClosureFunction(name, symRef, workerBody, worker.ReturnType.TypeDescriptor, worker.Scope(), isolated, pos)
-
-	lambda := &ast.BLangLambdaFunction{Function: desugarNestedFunction(cx, fn)}
+	fn := newWorkerClosureFunction(name, symRef, body, returnTypeDescriptor, scope, isolated, pos)
+	lambda := &ast.BLangLambdaFunction{Function: fn}
 	lambda.SetDeterminedType(closureTy)
 	setPositionIfMissing(lambda, pos)
 	return lambda
+}
+
+func newBlockFunctionBody(stmts []ast.StatementNode, pos diagnostics.Location) *ast.BLangBlockFunctionBody {
+	body := &ast.BLangBlockFunctionBody{Stmts: stmts}
+	body.SetDeterminedType(semtypes.Never)
+	setPositionIfMissing(body, pos)
+	return body
+}
+
+// withTerminationDelivery runs a worker's body as the hidden function bound to
+// inner, then holds the worker until every async message it sent is received,
+// and returns what the body returned. pos is where the worker terminates.
+// inner is bound before the workers start, like every worker closure.
+//
+//	T $r = inner();
+//	awaitWorkerMessageDelivery([<async send messages>], [<their receivers' futures>]);
+//	return $r;
+func withTerminationDelivery(
+	cx *functionContext,
+	inner *ast.BLangVarRef,
+	returnTy semtypes.SemType,
+	sends []*ast.BLangWorkerAsyncSendAction,
+	pos diagnostics.Location,
+) []ast.StatementNode {
+	call := &ast.BLangInvocation{}
+	call.Name = inner.VariableName
+	call.SetSymbol(inner.Symbol())
+	call.SetDeterminedType(returnTy)
+	setPositionIfMissing(call, pos)
+	resultDef, resultRef := assignToLocal(cx, call, pos)
+	ret := &ast.BLangReturn{Expr: copyVarRef(resultRef)}
+	ret.SetDeterminedType(semtypes.Never)
+	setPositionIfMissing(ret, pos)
+	return []ast.StatementNode{resultDef, awaitDeliveryStatement(cx, sends, pos), ret}
 }
 
 func newWorkerClosureFunction(

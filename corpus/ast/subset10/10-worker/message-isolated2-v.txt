@@ -1,0 +1,69 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function exchange () (
+    (value-type int))
+    (block-function-body
+      (named-worker a (
+        (value-type int))
+        (block-function-body
+          (expression-stmt
+            (worker-async-send-action function
+              (literal 1)))
+          (return
+            (literal 10))))
+      (named-worker b (
+        (value-type int))
+        (block-function-body
+          (expression-stmt
+            (worker-async-send-action function
+              (literal 2)))
+          (return
+            (literal 20))))
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (worker-receive-action a))))
+      (var-def
+        (variable y (type
+          (value-type int)) (expr
+          (worker-receive-action b))))
+      (var-def
+        (variable p (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref a)))))
+      (var-def
+        (variable q (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref b)))))
+      (return
+        (binary-expr +
+          (binary-expr +
+            (binary-expr +
+              (simple-var-ref x)
+              (simple-var-ref y))
+            (simple-var-ref p))
+          (simple-var-ref q)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (foreach
+        (var-def
+          (variable _ (type
+            (value-type int))))
+        (binary-expr ..<
+          (literal 0)
+          (literal 20))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref total)
+            (invocation exchange ()))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref total)))))))

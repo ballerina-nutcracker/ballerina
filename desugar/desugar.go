@@ -199,6 +199,7 @@ type functionContext struct {
 	defaultClosureVars   map[model.SymbolRef]model.SymbolRef
 	generatedFunctions   []*ast.BLangFunction
 	workerFutureSlots    map[model.SymbolRef]*ast.BLangVarRef
+	workerMessages       map[model.WorkerMessageRef]*ast.BLangVarRef
 	returnTypeDescriptor *ast.BLangReturnTypeDescriptor
 	// uniqueNamePrefix is unique within the module. Append to it to build
 	// unique names for generated functions, prefixing the result with a
@@ -1876,6 +1877,7 @@ func desugarNestedFunction(cx *functionContext, fn *ast.BLangFunction) *ast.BLan
 		returnTypeDescriptor: fn.GetReturnTypeDescriptor(),
 		uniqueNamePrefix:     uniqueName(cx.pkgCtx, cx.uniqueNamePrefix, fn.Symbol()),
 		workerFutureSlots:    cx.workerFutureSlots,
+		workerMessages:       cx.workerMessages,
 		isIsolated:           fn.IsIsolated(),
 	}
 	fn = desugarFunctionWithContext(nested, fn)

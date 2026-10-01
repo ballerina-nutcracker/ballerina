@@ -1,0 +1,78 @@
+(double
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (return
+          (binary-expr *
+            (simple-var-ref x)
+            (literal 2)))))
+    (expression-stmt
+      (worker-async-send-action a
+        (simple-var-ref n)))
+    (return
+      (single-wait-action
+        (simple-var-ref a)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation double (
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation triple (
+          (literal 2))))))
+  )
+)
+(triple
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (return
+          (binary-expr *
+            (simple-var-ref x)
+            (literal 3)))))
+    (expression-stmt
+      (worker-async-send-action a
+        (simple-var-ref n)))
+    (return
+      (single-wait-action
+        (simple-var-ref a)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr *
+        (simple-var-ref x)
+        (literal 2)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr *
+        (simple-var-ref x)
+        (literal 3)))
+  )
+)

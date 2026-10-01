@@ -47,7 +47,7 @@
 - [Named workers](https://ballerina.io/spec/lang/master/#section_7.3.2) ([`named-worker-decl`](https://ballerina.io/spec/lang/master/#named-worker-decl))
   - Only in a `block-function-body`, with optional annotations and return type
   - [`wait`](https://ballerina.io/spec/lang/master/#wait-action) on a worker name has the worker's return type as its eventual type
-  - Message passing (send, receive, flush), `fork`, `transactional` workers and `on fail` are not supported
+  - `fork`, `transactional` workers and `on fail` are not supported; message passing is listed under Actions
 
 ## Expressions
 
@@ -60,6 +60,9 @@
 - [Client resource access action](https://ballerina.io/spec/lang/master/#client-resource-access-action)
 - [Start action](https://ballerina.io/spec/lang/master/#start-action)
 - [Wait action](https://ballerina.io/spec/lang/master/#wait-action)
+- [Worker message passing](https://ballerina.io/spec/lang/master/#section_7.8): async send, sync send, receive, multiple receive and flush
+  - Alternate receive (`<- a | b`) is not supported
+  - A message action must be a statement of the worker itself (or a `check`, `trap`, `return`, parenthesized, `match` subject or `foreach` collection operand there); it is not supported inside nested blocks, after an `if` without `else`, in queries, compound assignments, a send under `trap`, or a lambda that doesn't declare the peer
 - [Error constructor](https://ballerina.io/spec/lang/master/#error-constructor-expr)
 - [Check expression](https://ballerina.io/spec/lang/master/#checking-expr)
 - [Trap expression](https://ballerina.io/spec/lang/master/#trap-expr)

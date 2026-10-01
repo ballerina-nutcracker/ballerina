@@ -1,0 +1,71 @@
+(IntFn
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access result
+          (simple-var-ref self))
+        (invocation callback ()))
+    )
+  )
+)
+(StringFn
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access result
+          (simple-var-ref self))
+        (invocation callback ()))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable local (type
+        (union-type
+          (user-defined-type IntFn)
+          (user-defined-type StringFn))) (expr
+        (new (
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (named-worker w (
+                  (value-type null))
+                  (block-function-body
+                    (expression-stmt
+                      (worker-async-send-action function
+                        (literal 2)))))
+                (return
+                  (worker-receive-action w))))))))))
+    (type-test-expr is
+      (simple-var-ref local)
+      (user-defined-type IntFn))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access result
+          (simple-var-ref local)))))
+  )
+  (bb2 (bb1 bb0) ())
+)
+($anonFunc$_0
+  (bb0 () ()
+    (named-worker w (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 2)))))
+    (return
+      (worker-receive-action w))
+  )
+)
+(worker w
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 2)))
+  )
+)

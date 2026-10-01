@@ -33,3 +33,31 @@ public isolated function waitOnLatch(handle latch) = external;
 
 # Opens the latch, releasing every waiting strand. A latch may be opened once.
 public isolated function openLatch(handle latch) = external;
+
+# Creates a message one worker sends to another.
+public isolated function createWorkerMessage() returns handle = external;
+
+# Stores a clone of the value sent as the message.
+public isolated function setWorkerMessageValue(handle message, any|error value) = external;
+
+# Returns the value of the message once its sender stored it, or the sender's
+# failure if it terminates first.
+public isolated function getWorkerMessageValue(handle message, future<any|error> sender) returns any|error = external;
+
+# Returns the values of the messages once every sender stored its message, or
+# the failure of a sender that terminates first.
+public isolated function getWorkerMessageValues(handle[] messages, future<any|error>[] senders)
+        returns (any|error)[]|error = external;
+
+# Returns once the receiver took the message, or the receiver's failure if it
+# terminates first.
+public isolated function waitWorkerMessageReceived(handle message, future<any|error> receiver) returns error? = external;
+
+# Returns once each receiver took every message sent to it. Of the receivers
+# that terminate leaving a message unreceived, a panic is raised first, else
+# the first error is returned.
+public isolated function flushWorkerMessages(handle[][] messages, future<any|error>[] receivers) returns error? = external;
+
+# Returns once every message was received; panics with the termination value
+# of a receiver that terminates leaving one unreceived.
+public isolated function awaitWorkerMessageDelivery(handle[] messages, future<any|error>[] receivers) = external;
