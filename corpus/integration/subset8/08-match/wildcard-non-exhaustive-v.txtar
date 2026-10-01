@@ -1,0 +1,6 @@
+-- stdout --
+no match
+matched
+no match
+matched
+-- stderr --

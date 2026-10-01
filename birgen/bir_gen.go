@@ -943,7 +943,7 @@ func matchStatement(ctx context, curBB *bir.BIRBasicBlock, stmt *ast.BLangMatchS
 	for _, clause := range stmt.MatchClauses {
 		clauseBodyBB := ctx.function().addBB()
 
-		if isUnconditionalWildcard(&clause) {
+		if isUnconditionalWildcard(ctx, operandTy, &clause) {
 			curBB.Terminator = bir.NewGoto(clauseBodyBB, ctx.function().loc(stmt.GetPosition()))
 			bodyEffect, ok := blockStatement(ctx, clauseBodyBB, &clause.Body)
 			if !ok {
@@ -1009,15 +1009,15 @@ func matchStatement(ctx context, curBB *bir.BIRBasicBlock, stmt *ast.BLangMatchS
 	return statementEffect{block: finalBB}, true
 }
 
-func isUnconditionalWildcard(clause *ast.BLangMatchClause) bool {
+func isUnconditionalWildcard(ctx context, operandTy semtypes.SemType, clause *ast.BLangMatchClause) bool {
 	if clause.Guard != nil {
 		return false
 	}
 	if len(clause.Patterns) != 1 {
 		return false
 	}
-	_, ok := clause.Patterns[0].(*ast.BLangWildCardMatchPattern)
-	return ok
+	p, ok := clause.Patterns[0].(*ast.BLangWildCardMatchPattern)
+	return ok && wildcardMatchesAll(ctx, operandTy, p)
 }
 
 func wildcardMatchesAll(ctx context, operandTy semtypes.SemType, p *ast.BLangWildCardMatchPattern) bool {

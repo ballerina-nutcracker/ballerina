@@ -1,7 +1,8 @@
 module $anon.. v 0.0.0;
 foo(nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object) -> nil{
   bb0 {
-    GOTO bb1;
+    %2 = v is any
+    %2 ? bb2 : bb3;
   }
   bb1 {
     return;
@@ -9,9 +10,12 @@ foo(nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|f
   bb2 {
     PushScopeFrame 2
     %0 = ConstantLoad should not match
-    %1 = println(%0) -> bb3;
+    %1 = println(%0) -> bb4;
   }
   bb3 {
+    GOTO bb1;
+  }
+  bb4 {
     PopScopeFrame
     GOTO bb1;
   }

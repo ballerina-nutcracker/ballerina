@@ -1,0 +1,68 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation wildcardNoGuard (
+          (error-constructor-expr (
+            (literal e))))))
+      (expression-stmt
+        (invocation wildcardNoGuard (
+          (literal 1))))
+      (expression-stmt
+        (invocation constThenWildcard (
+          (error-constructor-expr (
+            (literal e))))))
+      (expression-stmt
+        (invocation constThenWildcard (
+          (literal 5))))))
+  (function wildcardNoGuard (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (error-type))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal matched))))
+            (return
+              (literal <nil>)))))
+      (expression-stmt
+        (invocation io println (
+          (literal no match))))))
+  (function constThenWildcard (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (error-type))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 0))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal zero))))
+            (return
+              (literal <nil>))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal matched))))
+            (return
+              (literal <nil>)))))
+      (expression-stmt
+        (invocation io println (
+          (literal no match)))))))
