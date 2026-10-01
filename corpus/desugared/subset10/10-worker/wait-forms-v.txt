@@ -16,7 +16,47 @@
       (var-def
         (variable $desugar$4))
       (var-def
-        (variable $desugar$5 (expr
+        (variable $desugar$5))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:main:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable multiple (type
+                    (record-type
+                      (field w1
+                        (value-type int))
+                      (field w2
+                        (value-type string)))) (expr
+                    (multiple-wait-action w1
+                      (simple-var-ref $desugar$2) w2
+                      (simple-var-ref $desugar$3)))))
+                (expression-stmt
+                  (invocation io println (
+                    (index-based-access
+                      (simple-var-ref multiple)
+                      (literal w1)))))
+                (expression-stmt
+                  (invocation io println (
+                    (index-based-access
+                      (simple-var-ref multiple)
+                      (literal w2)))))
+                (var-def
+                  (variable alternate (type
+                    (value-type int)) (expr
+                    (alternate-wait-action
+                      (simple-var-ref $desugar$4)
+                      (simple-var-ref $desugar$5)))))
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref alternate))))))))))
+      (var-def
+        (variable $desugar$7 (expr
           (lambda
             (function $worker:main:w1 () (
               (value-type int))
@@ -27,7 +67,7 @@
                 (return
                   (literal 1))))))))
       (var-def
-        (variable $desugar$6 (expr
+        (variable $desugar$8 (expr
           (lambda
             (function $worker:main:w2 () (
               (value-type string))
@@ -38,7 +78,7 @@
                 (return
                   (literal two))))))))
       (var-def
-        (variable $desugar$7 (expr
+        (variable $desugar$9 (expr
           (lambda
             (function $worker:main:w3 () (
               (value-type int))
@@ -49,7 +89,7 @@
                 (return
                   (literal 3))))))))
       (var-def
-        (variable $desugar$8 (expr
+        (variable $desugar$10 (expr
           (lambda
             (function $worker:main:w4 () (
               (value-type int))
@@ -62,48 +102,26 @@
       (assignment
         (simple-var-ref $desugar$1)
         (start-action
-          (invocation $desugar$5 ())))
+          (invocation $desugar$6 ())))
       (assignment
         (simple-var-ref $desugar$2)
         (start-action
-          (invocation $desugar$6 ())))
+          (invocation $desugar$7 ())))
       (assignment
         (simple-var-ref $desugar$3)
         (start-action
-          (invocation $desugar$7 ())))
+          (invocation $desugar$8 ())))
       (assignment
         (simple-var-ref $desugar$4)
         (start-action
-          (invocation $desugar$8 ())))
+          (invocation $desugar$9 ())))
+      (assignment
+        (simple-var-ref $desugar$5)
+        (start-action
+          (invocation $desugar$10 ())))
       (expression-stmt
         (invocation lang.__internal openLatch (
           (simple-var-ref $desugar$0))))
-      (var-def
-        (variable multiple (type
-          (record-type
-            (field w1
-              (value-type int))
-            (field w2
-              (value-type string)))) (expr
-          (multiple-wait-action w1
-            (simple-var-ref $desugar$1) w2
-            (simple-var-ref $desugar$2)))))
-      (expression-stmt
-        (invocation io println (
-          (index-based-access
-            (simple-var-ref multiple)
-            (literal w1)))))
-      (expression-stmt
-        (invocation io println (
-          (index-based-access
-            (simple-var-ref multiple)
-            (literal w2)))))
-      (var-def
-        (variable alternate (type
-          (value-type int)) (expr
-          (alternate-wait-action
-            (simple-var-ref $desugar$3)
-            (simple-var-ref $desugar$4)))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref alternate)))))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1))))))

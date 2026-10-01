@@ -2408,6 +2408,9 @@ func resolveBlockFunctionBody(t typeResolver, chain *binding, body *ast.BLangBlo
 		returnTypes[i] = returnTy
 		startupChain = workerChain
 	}
+	if len(body.Workers) > 0 {
+		t.setSymbolType(body.DefaultWorker, semtypes.FutureContaining(t.typeEnv(), t.expectedReturnType()))
+	}
 	// Workers run concurrently with each other and with the rest of the
 	// default worker, so every worker's captures are in effect in every worker
 	// body and in the trailing statements.

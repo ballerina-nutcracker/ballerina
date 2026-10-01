@@ -16,23 +16,18 @@
 
 import ballerina/io;
 
-isolated int counter = 0;
-
-// A worker declarator can only appear at the top of a function body, never
-// inside a lock statement, so worker startup while a lock is held is only
-// reachable across a call. The existing dynamic start check rejects it.
-isolated function spawner() returns int {
+function compute() returns int {
     worker w returns int {
         return 1;
     }
-    return wait w; // @panic
+    int v = wait w;
+    io:println(v); // @output 1
+    if v > 0 {
+        panic error("boom"); // @panic
+    }
+    return v;
 }
 
 public function main() {
-    int result;
-    lock {
-        counter = spawner();
-        result = counter;
-    }
-    io:println(result);
+    io:println(compute());
 }

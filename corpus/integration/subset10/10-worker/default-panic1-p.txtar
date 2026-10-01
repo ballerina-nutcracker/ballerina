@@ -1,0 +1,6 @@
+-- stdout --
+1
+-- stderr --
+error: boom
+        at compute(default-panic1-p.bal:26)
+           main(default-panic1-p.bal:32)

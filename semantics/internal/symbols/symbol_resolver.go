@@ -1249,7 +1249,7 @@ func resolveBlockFunctionBody(resolver *blockSymbolResolver, body *ast.BLangBloc
 	for _, stmt := range body.InitStmts {
 		ast.Walk(resolver, stmt.(ast.BLangNode))
 	}
-	declareNamedWorkers(resolver, body.Workers)
+	declareNamedWorkers(resolver, body)
 	for _, worker := range body.Workers {
 		resolveNamedWorker(resolver, worker)
 	}
@@ -1260,8 +1260,17 @@ func resolveBlockFunctionBody(resolver *blockSymbolResolver, body *ast.BLangBloc
 
 // declareNamedWorkers declares every worker symbol before any worker body is
 // resolved, so a worker body can refer to peers declared before or after it.
-func declareNamedWorkers(resolver *blockSymbolResolver, workers []*ast.BLangNamedWorkerDeclaration) {
-	for _, worker := range workers {
+// A body with named workers also gets a default worker symbol.
+func declareNamedWorkers(resolver *blockSymbolResolver, body *ast.BLangBlockFunctionBody) {
+	if len(body.Workers) == 0 {
+		return
+	}
+	// The name can't be written in source, so there is no shadowing check: a
+	// lambda with its own workers nested in a body with workers declares another.
+	resolver.AddSymbol(constants.DefaultWorkerName, model.NewWorkerSymbol(constants.DefaultWorkerName, body.GetPosition()))
+	lookup, _ := resolver.GetSymbol(constants.DefaultWorkerName)
+	body.DefaultWorker = lookup.ref
+	for _, worker := range body.Workers {
 		name := worker.Name
 		if isShadowed(resolver, name) {
 			semanticError(resolver, "Variable already defined: "+name, worker.GetPosition())

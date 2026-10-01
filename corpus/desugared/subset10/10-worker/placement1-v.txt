@@ -15,7 +15,24 @@
         (var-def
           (variable $desugar$1))
         (var-def
-          (variable $desugar$2 (expr
+          (variable $desugar$2))
+        (var-def
+          (variable $desugar$3 (expr
+            (lambda
+              (function $worker:Counter.init:$function () (
+                (value-type null))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (assignment
+                    (index-based-access
+                      (simple-var-ref self)
+                      (literal value))
+                    (single-wait-action
+                      (simple-var-ref $desugar$2)))))))))
+        (var-def
+          (variable $desugar$4 (expr
             (lambda
               (function $worker:Counter.init:w () (
                 (value-type int))
@@ -30,14 +47,15 @@
         (assignment
           (simple-var-ref $desugar$1)
           (start-action
-            (invocation $desugar$2 ())))
+            (invocation $desugar$3 ())))
+        (assignment
+          (simple-var-ref $desugar$2)
+          (start-action
+            (invocation $desugar$4 ())))
         (expression-stmt
           (invocation lang.__internal openLatch (
             (simple-var-ref $desugar$0))))
-        (assignment
-          (index-based-access
-            (simple-var-ref self)
-            (literal value))
+        (return
           (single-wait-action
             (simple-var-ref $desugar$1)))))
     (function doubled () (
@@ -49,7 +67,21 @@
         (var-def
           (variable $desugar$1))
         (var-def
-          (variable $desugar$2 (expr
+          (variable $desugar$2))
+        (var-def
+          (variable $desugar$3 (expr
+            (lambda
+              (function $worker:Counter.doubled:$function () (
+                (value-type int))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (return
+                    (single-wait-action
+                      (simple-var-ref $desugar$2)))))))))
+        (var-def
+          (variable $desugar$4 (expr
             (lambda
               (function $worker:Counter.doubled:w () (
                 (value-type int))
@@ -66,7 +98,11 @@
         (assignment
           (simple-var-ref $desugar$1)
           (start-action
-            (invocation $desugar$2 ())))
+            (invocation $desugar$3 ())))
+        (assignment
+          (simple-var-ref $desugar$2)
+          (start-action
+            (invocation $desugar$4 ())))
         (expression-stmt
           (invocation lang.__internal openLatch (
             (simple-var-ref $desugar$0))))
@@ -85,7 +121,21 @@
         (var-def
           (variable $desugar$1))
         (var-def
-          (variable $desugar$2 (expr
+          (variable $desugar$2))
+        (var-def
+          (variable $desugar$3 (expr
+            (lambda
+              (function $worker:Greeter.Greeter.$resource$get$0:$function () (
+                (value-type string))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (return
+                    (single-wait-action
+                      (simple-var-ref $desugar$2)))))))))
+        (var-def
+          (variable $desugar$4 (expr
             (lambda
               (function $worker:Greeter.Greeter.$resource$get$0:w () (
                 (value-type string))
@@ -98,7 +148,11 @@
         (assignment
           (simple-var-ref $desugar$1)
           (start-action
-            (invocation $desugar$2 ())))
+            (invocation $desugar$3 ())))
+        (assignment
+          (simple-var-ref $desugar$2)
+          (start-action
+            (invocation $desugar$4 ())))
         (expression-stmt
           (invocation lang.__internal openLatch (
             (simple-var-ref $desugar$0))))
@@ -146,7 +200,21 @@
                 (var-def
                   (variable $desugar$1))
                 (var-def
-                  (variable $desugar$2 (expr
+                  (variable $desugar$2))
+                (var-def
+                  (variable $desugar$3 (expr
+                    (lambda
+                      (function $worker:main.$anonFunc$_0:$function () (
+                        (value-type int))
+                        (block-function-body
+                          (expression-stmt
+                            (invocation lang.__internal waitOnLatch (
+                              (simple-var-ref $desugar$0))))
+                          (return
+                            (single-wait-action
+                              (simple-var-ref $desugar$2)))))))))
+                (var-def
+                  (variable $desugar$4 (expr
                     (lambda
                       (function $worker:main.$anonFunc$_0:w () (
                         (value-type int))
@@ -159,7 +227,11 @@
                 (assignment
                   (simple-var-ref $desugar$1)
                   (start-action
-                    (invocation $desugar$2 ())))
+                    (invocation $desugar$3 ())))
+                (assignment
+                  (simple-var-ref $desugar$2)
+                  (start-action
+                    (invocation $desugar$4 ())))
                 (expression-stmt
                   (invocation lang.__internal openLatch (
                     (simple-var-ref $desugar$0))))

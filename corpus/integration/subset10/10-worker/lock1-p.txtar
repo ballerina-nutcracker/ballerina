@@ -1,5 +1,5 @@
 -- stdout --
 -- stderr --
 error: attempted strand start while holding a lock
-        at spawner(lock1-p.bal:25)
+        at spawner(lock1-p.bal:28)
            main(lock1-p.bal:34)

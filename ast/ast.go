@@ -129,6 +129,8 @@ type (
 		InitStmts []StatementNode
 		Workers   []*BLangNamedWorkerDeclaration
 		Stmts     []StatementNode
+		// DefaultWorker is the default worker symbol; zero when Workers is empty.
+		DefaultWorker model.SymbolRef
 	}
 
 	BLangNamedWorkerDeclaration struct {

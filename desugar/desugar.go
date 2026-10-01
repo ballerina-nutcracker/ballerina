@@ -199,6 +199,7 @@ type functionContext struct {
 	defaultClosureVars   map[model.SymbolRef]model.SymbolRef
 	generatedFunctions   []*ast.BLangFunction
 	workerFutureSlots    map[model.SymbolRef]*ast.BLangVarRef
+	returnTypeDescriptor *ast.BLangReturnTypeDescriptor
 	// uniqueNamePrefix is unique within the module. Append to it to build
 	// unique names for generated functions, prefixing the result with a
 	// `$<kind>` tag (see constants.WorkerClosurePrefix) so generated names group by
@@ -1829,10 +1830,11 @@ func desugarResourceMethod(pkgCtx *packageContext, typeName string, rm *ast.BLan
 		return nil
 	}
 	cx := &functionContext{
-		pkgCtx:           pkgCtx,
-		owner:            rm.Symbol(),
-		uniqueNamePrefix: uniqueName(pkgCtx, typeName, rm.Symbol()),
-		isIsolated:       rm.IsIsolated(),
+		pkgCtx:               pkgCtx,
+		owner:                rm.Symbol(),
+		returnTypeDescriptor: rm.GetReturnTypeDescriptor(),
+		uniqueNamePrefix:     uniqueName(pkgCtx, typeName, rm.Symbol()),
+		isIsolated:           rm.IsIsolated(),
 	}
 	cx.pushScope(rm.Scope())
 	defer cx.popScope()
@@ -1850,10 +1852,11 @@ func desugarResourceMethod(pkgCtx *packageContext, typeName string, rm *ast.BLan
 // function that is not a method.
 func desugarFunction(pkgCtx *packageContext, parentPrefix string, fn *ast.BLangFunction) (*ast.BLangFunction, []*ast.BLangFunction) {
 	cx := &functionContext{
-		pkgCtx:           pkgCtx,
-		owner:            fn.Symbol(),
-		uniqueNamePrefix: uniqueName(pkgCtx, parentPrefix, fn.Symbol()),
-		isIsolated:       fn.IsIsolated(),
+		pkgCtx:               pkgCtx,
+		owner:                fn.Symbol(),
+		returnTypeDescriptor: fn.GetReturnTypeDescriptor(),
+		uniqueNamePrefix:     uniqueName(pkgCtx, parentPrefix, fn.Symbol()),
+		isIsolated:           fn.IsIsolated(),
 	}
 	return desugarFunctionWithContext(cx, fn), cx.generatedFunctions
 }
@@ -1868,11 +1871,12 @@ func uniqueName(pkgCtx *packageContext, parentPrefix string, owner model.SymbolR
 
 func desugarNestedFunction(cx *functionContext, fn *ast.BLangFunction) *ast.BLangFunction {
 	nested := &functionContext{
-		pkgCtx:            cx.pkgCtx,
-		owner:             fn.Symbol(),
-		uniqueNamePrefix:  uniqueName(cx.pkgCtx, cx.uniqueNamePrefix, fn.Symbol()),
-		workerFutureSlots: cx.workerFutureSlots,
-		isIsolated:        fn.IsIsolated(),
+		pkgCtx:               cx.pkgCtx,
+		owner:                fn.Symbol(),
+		returnTypeDescriptor: fn.GetReturnTypeDescriptor(),
+		uniqueNamePrefix:     uniqueName(cx.pkgCtx, cx.uniqueNamePrefix, fn.Symbol()),
+		workerFutureSlots:    cx.workerFutureSlots,
+		isIsolated:           fn.IsIsolated(),
 	}
 	fn = desugarFunctionWithContext(nested, fn)
 	cx.generatedFunctions = append(cx.generatedFunctions, nested.generatedFunctions...)
