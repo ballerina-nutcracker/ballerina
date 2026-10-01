@@ -440,6 +440,10 @@ type (
 		bLangInvocationBase
 		Path       []BLangResourceAccessSegment
 		MethodName string
+		// resourceMethod is the resource method selected by path dispatch. It is kept
+		// apart from RawSymbol because, for a dependently-typed resource method,
+		// RawSymbol is replaced with the monomorphized function that is actually called.
+		resourceMethod model.SymbolRef
 	}
 
 	BLangStartAction struct {
@@ -807,11 +811,11 @@ func (n *BLangRemoteMethodCallAction) SetMethodSymbol(symbolRef model.SymbolRef)
 }
 
 func (n *BLangClientResourceAccessAction) MethodSymbol() model.SymbolRef {
-	return *n.RawSymbol.(*model.SymbolRef)
+	return n.resourceMethod
 }
 
 func (n *BLangClientResourceAccessAction) SetMethodSymbol(symbolRef model.SymbolRef) {
-	n.RawSymbol = &symbolRef
+	n.resourceMethod = symbolRef
 }
 
 func (b *BLangGroupExpr) GetExpression() BLangExpression {

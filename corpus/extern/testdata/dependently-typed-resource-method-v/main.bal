@@ -22,6 +22,30 @@ public function main() {
     string explicit = checkpanic c->/values/one/two(string);
     io:println(explicit); // @output explicit
 
+    string seg = "one";
+    string computed = checkpanic c->/values/[seg](string);
+    io:println(computed); // @output explicit
+
+    int computedInferred = checkpanic c->/values/[seg]();
+    io:println(computedInferred); // @output 42
+
+    string mixed = checkpanic c->/values/one/[seg](string);
+    io:println(mixed); // @output explicit
+
+    int multiComputed = checkpanic c->/values/[seg]/[seg + "x"]();
+    io:println(multiComputed); // @output 42
+
+    string literalSeg = checkpanic c->/values/["lit"](string);
+    io:println(literalSeg); // @output explicit
+
     int inferred = checkpanic c->/values/three();
     io:println(inferred); // @output 42
+
+    api:ItemClient items = new ();
+    int id = 7;
+    string item = checkpanic items->/items/[id](string);
+    io:println(item); // @output item 7
+
+    int doubled = checkpanic items->/items/[id + 1]();
+    io:println(doubled); // @output 16
 }

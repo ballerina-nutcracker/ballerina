@@ -19,3 +19,10 @@ public client class Client {
 
     resource function get values/[string... path](typedesc<anydata> targetType = <>) returns targetType|error = external;
 }
+
+public client class ItemClient {
+    public function init() {
+    }
+
+    resource function get items/[int id](typedesc<anydata> targetType = <>) returns targetType|error = external;
+}
