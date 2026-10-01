@@ -1249,7 +1249,7 @@ func resolveFunctionBody(r *blockSymbolResolver, body ast.FunctionBodyNode) bool
 // unavailable in the initialization region and available everywhere after it.
 func resolveBlockFunctionBody(r *blockSymbolResolver, body *ast.BLangBlockFunctionBody) bool {
 	ok := resolveStmts(r, body.InitStmts)
-	ok = declareNamedWorkers(r, body.Workers) && ok
+	ok = declareNamedWorkers(r, body) && ok
 	for _, worker := range body.Workers {
 		ok = resolveNamedWorker(r, worker) && ok
 	}
@@ -1258,9 +1258,18 @@ func resolveBlockFunctionBody(r *blockSymbolResolver, body *ast.BLangBlockFuncti
 
 // declareNamedWorkers declares every worker symbol before any worker body is
 // resolved, so a worker body can refer to peers declared before or after it.
-func declareNamedWorkers(r *blockSymbolResolver, workers []*ast.BLangNamedWorkerDeclaration) bool {
+// A body with named workers also gets a default worker symbol.
+func declareNamedWorkers(r *blockSymbolResolver, body *ast.BLangBlockFunctionBody) bool {
+	if len(body.Workers) == 0 {
+		return true
+	}
+	// The name can't be written in source, so there is no shadowing check: a
+	// lambda with its own workers nested in a body with workers declares another.
+	r.AddSymbol(constants.DefaultWorkerName, model.NewWorkerSymbol(constants.DefaultWorkerName, body.GetPosition()))
+	lookup, _ := r.GetSymbol(constants.DefaultWorkerName)
+	body.DefaultWorker = lookup.ref
 	ok := true
-	for _, worker := range workers {
+	for _, worker := range body.Workers {
 		name := worker.Name
 		if isShadowed(r, name) {
 			r.GetCtx().SemanticError("Variable already defined: "+name, worker.GetPosition())

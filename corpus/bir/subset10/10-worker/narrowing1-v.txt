@@ -5,30 +5,25 @@ typeTest() -> nil{
   }
   bb1 {
     $desugar$0 = %1;
-    %4 = closure_fp $anon/.:$worker:typeTest:w
-    $desugar$2 = %4;
-    %6 = start $desugar$2() isolated=false -> bb2;
+    %5 = closure_fp $anon/.:$worker:typeTest:$function
+    $desugar$3 = %5;
+    %7 = closure_fp $anon/.:$worker:typeTest:w
+    $desugar$4 = %7;
+    %9 = start $desugar$3() isolated=false -> bb2;
   }
   bb2 {
-    $desugar$1 = %6;
-    %7 = openLatch($desugar$0) -> bb3;
+    $desugar$1 = %9;
+    %10 = start $desugar$4() isolated=false -> bb3;
   }
   bb3 {
-    %8 = $desugar$1 is future<int>
-    %8 ? bb4 : bb6;
+    $desugar$2 = %10;
+    %11 = openLatch($desugar$0) -> bb4;
   }
   bb4 {
-    PushScopeFrame 2
-    %0 = ConstantLoad is future<int>
-    %1 = println(%0) -> bb5;
+    %12 = wait $desugar$1 -> bb5;
   }
   bb5 {
-    PopScopeFrame
-    GOTO bb6;
-  }
-  bb6 {
-    PushScopeFrame 0
-    PopScopeFrame
+    %0 = %12;
     return;
   }
 }
@@ -38,21 +33,25 @@ typeTestResult() -> nil{
   }
   bb1 {
     $desugar$0 = %1;
-    %4 = closure_fp $anon/.:$worker:typeTestResult:w
-    $desugar$2 = %4;
-    %6 = start $desugar$2() isolated=false -> bb2;
+    %5 = closure_fp $anon/.:$worker:typeTestResult:$function
+    $desugar$3 = %5;
+    %7 = closure_fp $anon/.:$worker:typeTestResult:w
+    $desugar$4 = %7;
+    %9 = start $desugar$3() isolated=false -> bb2;
   }
   bb2 {
-    $desugar$1 = %6;
-    %7 = openLatch($desugar$0) -> bb3;
+    $desugar$1 = %9;
+    %10 = start $desugar$4() isolated=false -> bb3;
   }
   bb3 {
-    %8 = $desugar$1 is future<string>
-    isString = %8;
-    %10 = isString;
-    %11 = println(%10) -> bb4;
+    $desugar$2 = %10;
+    %11 = openLatch($desugar$0) -> bb4;
   }
   bb4 {
+    %12 = wait $desugar$1 -> bb5;
+  }
+  bb5 {
+    %0 = %12;
     return;
   }
 }
@@ -62,28 +61,26 @@ matchStatement() -> nil{
   }
   bb1 {
     $desugar$0 = %1;
-    %4 = closure_fp $anon/.:$worker:matchStatement:w
-    $desugar$2 = %4;
-    %6 = start $desugar$2() isolated=false -> bb2;
+    %5 = closure_fp $anon/.:$worker:matchStatement:$function
+    $desugar$3 = %5;
+    %7 = closure_fp $anon/.:$worker:matchStatement:w
+    $desugar$4 = %7;
+    %9 = start $desugar$3() isolated=false -> bb2;
   }
   bb2 {
-    $desugar$1 = %6;
-    %7 = openLatch($desugar$0) -> bb3;
+    $desugar$1 = %9;
+    %10 = start $desugar$4() isolated=false -> bb3;
   }
   bb3 {
-    GOTO bb5;
+    $desugar$2 = %10;
+    %11 = openLatch($desugar$0) -> bb4;
   }
   bb4 {
-    return;
+    %12 = wait $desugar$1 -> bb5;
   }
   bb5 {
-    PushScopeFrame 2
-    %0 = ConstantLoad matched
-    %1 = println(%0) -> bb6;
-  }
-  bb6 {
-    PopScopeFrame
-    GOTO bb4;
+    %0 = %12;
+    return;
   }
 }
 main() -> nil{
@@ -100,6 +97,26 @@ main() -> nil{
     return;
   }
 }
+$worker:matchStatement:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    GOTO bb3;
+  }
+  bb2 {
+    return;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad matched
+    %1 = println(%0) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
 $worker:matchStatement:w() -> int{
   bb0 {
     %1 = waitOnLatch((1, $desugar$0)) -> bb1;
@@ -110,6 +127,29 @@ $worker:matchStatement:w() -> int{
     return;
   }
 }
+$worker:typeTest:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = (1, $desugar$2) is future<int>
+    %2 ? bb2 : bb4;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad is future<int>
+    %1 = println(%0) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb4 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
 $worker:typeTest:w() -> int{
   bb0 {
     %1 = waitOnLatch((1, $desugar$0)) -> bb1;
@@ -117,6 +157,20 @@ $worker:typeTest:w() -> int{
   bb1 {
     %2 = ConstantLoad 1
     %0 = %2;
+    return;
+  }
+}
+$worker:typeTestResult:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = (1, $desugar$2) is future<string>
+    isString = %2;
+    %4 = isString;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
     return;
   }
 }

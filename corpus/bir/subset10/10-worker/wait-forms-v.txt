@@ -5,56 +5,74 @@ main() -> nil{
   }
   bb1 {
     $desugar$0 = %1;
-    %7 = closure_fp $anon/.:$worker:main:w1
-    $desugar$5 = %7;
-    %9 = closure_fp $anon/.:$worker:main:w2
-    $desugar$6 = %9;
-    %11 = closure_fp $anon/.:$worker:main:w3
-    $desugar$7 = %11;
-    %13 = closure_fp $anon/.:$worker:main:w4
-    $desugar$8 = %13;
-    %15 = start $desugar$5() isolated=false -> bb2;
+    %8 = closure_fp $anon/.:$worker:main:$function
+    $desugar$6 = %8;
+    %10 = closure_fp $anon/.:$worker:main:w1
+    $desugar$7 = %10;
+    %12 = closure_fp $anon/.:$worker:main:w2
+    $desugar$8 = %12;
+    %14 = closure_fp $anon/.:$worker:main:w3
+    $desugar$9 = %14;
+    %16 = closure_fp $anon/.:$worker:main:w4
+    $desugar$10 = %16;
+    %18 = start $desugar$6() isolated=false -> bb2;
   }
   bb2 {
-    $desugar$1 = %15;
-    %16 = start $desugar$6() isolated=false -> bb3;
+    $desugar$1 = %18;
+    %19 = start $desugar$7() isolated=false -> bb3;
   }
   bb3 {
-    $desugar$2 = %16;
-    %17 = start $desugar$7() isolated=false -> bb4;
+    $desugar$2 = %19;
+    %20 = start $desugar$8() isolated=false -> bb4;
   }
   bb4 {
-    $desugar$3 = %17;
-    %18 = start $desugar$8() isolated=false -> bb5;
+    $desugar$3 = %20;
+    %21 = start $desugar$9() isolated=false -> bb5;
   }
   bb5 {
-    $desugar$4 = %18;
-    %19 = openLatch($desugar$0) -> bb6;
+    $desugar$4 = %21;
+    %22 = start $desugar$10() isolated=false -> bb6;
   }
   bb6 {
-    %20 = wait {w1: $desugar$1, w2: $desugar$2} -> bb7;
+    $desugar$5 = %22;
+    %23 = openLatch($desugar$0) -> bb7;
   }
   bb7 {
-    multiple = %20;
-    %23 = ConstantLoad w1
-    %22 = multiple[%23];
-    %24 = %22;
-    %25 = println(%24) -> bb8;
+    %24 = wait $desugar$1 -> bb8;
   }
   bb8 {
-    %27 = ConstantLoad w2
-    %26 = multiple[%27];
-    %28 = println(%26) -> bb9;
+    %0 = %24;
+    return;
   }
-  bb9 {
-    %29 = wait $desugar$3 | $desugar$4 -> bb10;
+}
+$worker:main:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
   }
-  bb10 {
-    alternate = %29;
-    %31 = alternate;
-    %32 = println(%31) -> bb11;
+  bb1 {
+    %2 = wait {w1: (1, $desugar$2), w2: (1, $desugar$3)} -> bb2;
   }
-  bb11 {
+  bb2 {
+    multiple = %2;
+    %5 = ConstantLoad w1
+    %4 = multiple[%5];
+    %6 = %4;
+    %7 = println(%6) -> bb3;
+  }
+  bb3 {
+    %9 = ConstantLoad w2
+    %8 = multiple[%9];
+    %10 = println(%8) -> bb4;
+  }
+  bb4 {
+    %11 = wait (1, $desugar$4) | (1, $desugar$5) -> bb5;
+  }
+  bb5 {
+    alternate = %11;
+    %13 = alternate;
+    %14 = println(%13) -> bb6;
+  }
+  bb6 {
     return;
   }
 }
