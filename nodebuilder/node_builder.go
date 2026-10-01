@@ -974,13 +974,22 @@ func isUnsupportedIdentifierToken(token st.Token) bool {
 	return token.Text() == "'" || token.Text() == "_" || token.Text() == "'_"
 }
 
+func (n *nodeBuilder) createIdentifierNodeFromModulePrefixToken(pos diagnostics.Location, token st.Token) ast.IdentifierNode {
+	if token != nil && token.Text() == "'_" {
+		identifierName := token.Text()
+		identifier := createIdentifier(pos, &identifierName, &identifierName)
+		return &identifier
+	}
+	return n.createIdentifierNodeFromToken(pos, token)
+}
+
 func (n *nodeBuilder) createBLangNameReference(node st.Node) [2]ast.IdentifierNode {
 	switch node.Kind() {
 	case st.QUALIFIED_NAME_REFERENCE:
 		iNode := node.(*st.QualifiedNameReferenceNode)
 		modulePrefix := iNode.ModulePrefix()
 		identifier := iNode.Identifier()
-		pkgAlias := n.createIdentifierNodeFromToken(n.getPosition(modulePrefix), modulePrefix)
+		pkgAlias := n.createIdentifierNodeFromModulePrefixToken(n.getPosition(modulePrefix), modulePrefix)
 		namePos := n.getPosition(identifier)
 		name := n.createIdentifierNodeFromToken(namePos, identifier)
 		return [...]ast.IdentifierNode{pkgAlias, name}

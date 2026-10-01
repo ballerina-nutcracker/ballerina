@@ -930,7 +930,7 @@ func reportUnusedImports(resolver *compilationUnitSymbolResolver, imports []ast.
 	for i := range imports {
 		imp := &imports[i]
 		alias := imp.Alias.Value
-		if alias == string(model.IGNORE) {
+		if imp.Alias.OriginalValue == string(model.IGNORE) {
 			continue
 		}
 		if !resolver.usedPrefixes[alias] {
@@ -1229,6 +1229,9 @@ func resolveExternalImport(
 	}
 	var key string
 	if imp.Alias != nil {
+		if imp.Alias.OriginalValue == string(model.IGNORE) {
+			return
+		}
 		key = imp.Alias.Value
 	} else {
 		comps := imp.GetPackageName()
