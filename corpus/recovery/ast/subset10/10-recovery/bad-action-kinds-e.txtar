@@ -18,10 +18,7 @@
 function actions() {
     any a = start foo(; // @error
     any b = wait {one: f two: g}; // @error
-    any c = <- worker1; // @error
-    any d = flush worker1; // @error
     any e = commit; // @error
-    value -> worker1; // @error
     any f = client->get(; // @error
     any g = client->/path.get(; // @error
     any h = (start foo(); // @error
@@ -30,9 +27,9 @@ function actions() {
 -- ast --
 (compilation-unit (position 1:1 1:1)
 (package-id $anon . 0.0.0)
-  (function (position 1:1 29:1) actions () (
+  (function (position 1:1 26:1) actions () (
     (value-type (position <built-in>) null))
-    (block-function-body (position 17:20 29:1)
+    (block-function-body (position 17:20 26:1)
       (var-def (position 18:1 19:1)
         (variable (position 18:1 19:1) a (type
           (value-type (position 18:1 18:9) any)) (expr
@@ -45,36 +42,26 @@ function actions() {
             (simple-var-ref (position 19:24 19:26) f) two
             (simple-var-ref (position 19:31 19:32) g)))))
       (var-def (position 20:1 21:1)
-        (variable (position 20:1 21:1) c (type
+        (variable (position 20:1 21:1) e (type
           (value-type (position 20:1 20:9) any)) (expr
-          (bad-expr-or-action receive-action (position 20:13 20:23) (tokens ("<-" 20:13 20:15))))))
+          (bad-expr-or-action commit-action (position 20:13 20:19) (tokens ("commit" 20:13 20:19))))))
       (var-def (position 21:1 22:1)
-        (variable (position 21:1 22:1) d (type
+        (variable (position 21:1 22:1) f (type
           (value-type (position 21:1 21:9) any)) (expr
-          (bad-expr-or-action flush-action (position 21:13 21:26) (tokens ("flush" 21:13 21:18))))))
+          (remote-method-call (position 21:13 21:25) get expr:
+            (simple-var-ref (position 21:13 21:19) (bad-identifier)) ()))))
       (var-def (position 22:1 23:1)
-        (variable (position 22:1 23:1) e (type
+        (variable (position 22:1 23:1) g (type
           (value-type (position 22:1 22:9) any)) (expr
-          (bad-expr-or-action commit-action (position 22:13 22:19) (tokens ("commit" 22:13 22:19))))))
-      (expression-stmt (position 23:1 24:1)
-        (bad-expr-or-action async-send-action (position 23:1 23:21) (tokens ("->" 23:11 23:13))))
-      (var-def (position 24:1 25:1)
-        (variable (position 24:1 25:1) f (type
-          (value-type (position 24:1 24:9) any)) (expr
-          (remote-method-call (position 24:13 24:25) get expr:
-            (simple-var-ref (position 24:13 24:19) (bad-identifier)) ()))))
-      (var-def (position 25:1 26:1)
-        (variable (position 25:1 26:1) g (type
-          (value-type (position 25:1 25:9) any)) (expr
-          (client-resource-access (position 25:13 25:31) get expr:
-            (simple-var-ref (position 25:13 25:19) (bad-identifier)) name:path))))
-      (var-def (position 26:1 27:1)
-        (variable (position 26:1 27:1) h (type
-          (value-type (position 26:1 26:9) any)) (expr
-          (start-action (position 26:14 26:25)
-            (invocation (position 26:20 26:25) foo ())))))
-      (expression-stmt (position 27:1 28:1)
-        (bad-expr-or-action query-action (position 27:1 27:28) (tokens ("from" 27:5 27:9) ("int" 27:10 27:13) ("in" 27:16 27:18) ("[" 27:19 27:20) ("]" 27:21 27:22) ("do" 27:23 27:25) ("{" 27:26 27:27) ("}" 27:27 27:28)))))))
+          (client-resource-access (position 22:13 22:31) get expr:
+            (simple-var-ref (position 22:13 22:19) (bad-identifier)) name:path))))
+      (var-def (position 23:1 24:1)
+        (variable (position 23:1 24:1) h (type
+          (value-type (position 23:1 23:9) any)) (expr
+          (start-action (position 23:14 23:25)
+            (invocation (position 23:20 23:25) foo ())))))
+      (expression-stmt (position 24:1 25:1)
+        (bad-expr-or-action query-action (position 24:1 24:28) (tokens ("from" 24:5 24:9) ("int" 24:10 24:13) ("in" 24:16 24:18) ("[" 24:19 24:20) ("]" 24:21 24:22) ("do" 24:23 24:25) ("{" 24:26 24:27) ("}" 24:27 24:28)))))))
 -- stderr --
 error[SYNTAX_ERROR]: missing close paren token
   --> bad-action-kinds-e.bal:18:23
@@ -83,21 +70,21 @@ error[SYNTAX_ERROR]: missing close paren token
    |
 
 error[SYNTAX_ERROR]: missing close paren token
-  --> bad-action-kinds-e.bal:24:25
+  --> bad-action-kinds-e.bal:21:25
    |
-24 |     any f = client->get(; // @error
-   |
-
-error[SYNTAX_ERROR]: missing close paren token
-  --> bad-action-kinds-e.bal:25:31
-   |
-25 |     any g = client->/path.get(; // @error
+21 |     any f = client->get(; // @error
    |
 
 error[SYNTAX_ERROR]: missing close paren token
-  --> bad-action-kinds-e.bal:26:25
+  --> bad-action-kinds-e.bal:22:31
    |
-26 |     any h = (start foo(); // @error
+22 |     any g = client->/path.get(; // @error
+   |
+
+error[SYNTAX_ERROR]: missing close paren token
+  --> bad-action-kinds-e.bal:23:25
+   |
+23 |     any h = (start foo(); // @error
    |
 
 error[SYNTAX_ERROR]: missing comma token
@@ -107,43 +94,25 @@ error[SYNTAX_ERROR]: missing comma token
    |
 
 error[SYNTAX_ERROR]: qualifier not allowed
-  --> bad-action-kinds-e.bal:24:13
+  --> bad-action-kinds-e.bal:21:13
    |
-24 |     any f = client->get(; // @error
+21 |     any f = client->get(; // @error
    |             ^^^^^^
 
 error[SYNTAX_ERROR]: qualifier not allowed
-  --> bad-action-kinds-e.bal:25:13
+  --> bad-action-kinds-e.bal:22:13
    |
-25 |     any g = client->/path.get(; // @error
+22 |     any g = client->/path.get(; // @error
    |             ^^^^^^
 
 fatal[UNIMPLEMENTED_ERROR]: transformCommitAction unimplemented
-  --> bad-action-kinds-e.bal:22:13
+  --> bad-action-kinds-e.bal:20:13
    |
-22 |     any e = commit; // @error
+20 |     any e = commit; // @error
    |             ^^^^^^
 
 fatal[UNIMPLEMENTED_ERROR]: transformQueryAction unimplemented
-  --> bad-action-kinds-e.bal:27:1
+  --> bad-action-kinds-e.bal:24:1
    |
-27 |     from int x in [1] do {}; // @error
+24 |     from int x in [1] do {}; // @error
    |     ^^^^^^^^^^^^^^^^^^^^^^^
-
-fatal[UNIMPLEMENTED_ERROR]: worker flush is not supported
-  --> bad-action-kinds-e.bal:21:13
-   |
-21 |     any d = flush worker1; // @error
-   |             ^^^^^^^^^^^^^
-
-fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
-  --> bad-action-kinds-e.bal:20:13
-   |
-20 |     any c = <- worker1; // @error
-   |             ^^^^^^^^^^
-
-fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
-  --> bad-action-kinds-e.bal:23:1
-   |
-23 |     value -> worker1; // @error
-   |     ^^^^^^^^^^^^^^^^

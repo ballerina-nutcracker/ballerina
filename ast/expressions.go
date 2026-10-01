@@ -17,11 +17,10 @@
 package ast
 
 import (
-	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -74,24 +73,6 @@ type BLangAction interface {
 	BLangActionOrExpression
 	actionNode()
 }
-type Channel struct {
-	Sender     string
-	Receiver   string
-	EventIndex int
-}
-
-func (c *Channel) WorkerPairId() string {
-	return WorkerPairId(c.Sender, c.Receiver)
-}
-
-func (c *Channel) ChannelId() string {
-	return c.Sender + "->" + c.Receiver + ":" + strconv.Itoa(c.EventIndex)
-}
-
-func WorkerPairId(sender, receiver string) string {
-	return sender + "->" + receiver
-}
-
 type (
 	BLangMarkdownDocumentationLine struct {
 		bLangNodeBase
@@ -290,11 +271,6 @@ type (
 		// this should still work
 	}
 
-	BLangAlternateWorkerReceive struct {
-		bLangExpressionBase
-		workerReceives []BLangWorkerReceive
-	}
-
 	BLangAnnotAccessExpr struct {
 		bLangExpressionBase
 		Expr           BLangExpression
@@ -392,28 +368,6 @@ type (
 		RhsExpr BLangExpression
 	}
 
-	BLangWorkerSendReceiveExprBase struct {
-		bLangExpressionBase
-		WorkerType       BType
-		WorkerIdentifier *BLangIdentifier
-		Channel          *Channel
-	}
-
-	BLangWorkerReceive struct {
-		BLangWorkerSendReceiveExprBase
-		Send               *BLangWorkerSendExprBase
-		MatchingSendsError BType
-	}
-
-	BLangWorkerSendExprBase struct {
-		BLangWorkerSendReceiveExprBase
-		Expr                     BLangExpression
-		Receive                  *BLangWorkerReceive
-		SendType                 BType
-		SendTypeWithNoMsgIgnored BType
-		NoMessagePossible        bool
-	}
-
 	bLangInvocationBase struct {
 		Name IdentifierNode
 		// RawSymbol holds either a *model.SymbolRef (resolved) or a *deferredMethodSymbol (unresolved).
@@ -481,6 +435,63 @@ type (
 	BLangGroupExpr struct {
 		bLangExpressionBase
 		Expression BLangExpression
+	}
+
+	// BLangWorkerPeer is the peer of a message action as written in source.
+	BLangWorkerPeer struct {
+		// Name is constants.DefaultWorkerName for the `function` keyword; a
+		// quoted 'function is "function".
+		Name   string
+		Symbol model.SymbolRef
+		Pos    diagnostics.Location
+	}
+
+	BLangWorkerAsyncSendAction struct {
+		bLangActionBase
+		Expr    BLangExpression
+		Peer    BLangWorkerPeer
+		Message model.WorkerMessageRef
+		// Covered means a later sync send or flush to Peer provides a point
+		// to observe receiver failure.
+		Covered bool
+	}
+
+	BLangWorkerSyncSendAction struct {
+		bLangActionBase
+		Expr    BLangExpression
+		Peer    BLangWorkerPeer
+		Message model.WorkerMessageRef
+	}
+
+	BLangWorkerReceiveAction struct {
+		bLangActionBase
+		Peer    BLangWorkerPeer
+		Message model.WorkerMessageRef
+	}
+
+	BLangWorkerReceiveField struct {
+		// FieldName defaults to the peer's source name (`function` for the
+		// keyword).
+		FieldName string
+		Peer      BLangWorkerPeer
+		Message   model.WorkerMessageRef
+	}
+
+	BLangWorkerMultipleReceiveAction struct {
+		bLangActionBase
+		Fields []BLangWorkerReceiveField
+	}
+
+	BLangWorkerFlushCoverage struct {
+		Peer     model.SymbolRef
+		Messages []model.WorkerMessageRef
+	}
+
+	BLangWorkerFlushAction struct {
+		bLangActionBase
+		// Peer is nil when the flush has no peer.
+		Peer    *BLangWorkerPeer
+		Covered []BLangWorkerFlushCoverage
 	}
 
 	BLangTypedescExpr struct {
@@ -695,6 +706,16 @@ var (
 	_ BLangAction                 = &BLangSingleWaitAction{}
 	_ BLangAction                 = &BLangAlternateWaitAction{}
 	_ BLangAction                 = &BLangMultipleWaitAction{}
+	_ BLangAction                 = &BLangWorkerAsyncSendAction{}
+	_ BLangAction                 = &BLangWorkerSyncSendAction{}
+	_ BLangAction                 = &BLangWorkerReceiveAction{}
+	_ BLangAction                 = &BLangWorkerMultipleReceiveAction{}
+	_ BLangAction                 = &BLangWorkerFlushAction{}
+	_ ActionNode                  = &BLangWorkerAsyncSendAction{}
+	_ ActionNode                  = &BLangWorkerSyncSendAction{}
+	_ ActionNode                  = &BLangWorkerReceiveAction{}
+	_ ActionNode                  = &BLangWorkerMultipleReceiveAction{}
+	_ ActionNode                  = &BLangWorkerFlushAction{}
 	_ BLangExpression             = &BLangQueryExpr{}
 	_ GroupExpressionNode         = &BLangGroupExpr{}
 	_ TypedescExpressionNode      = &BLangTypedescExpr{}
@@ -720,7 +741,6 @@ var (
 
 var (
 	_ BLangNode       = &BLangTypeConversionExpr{}
-	_ BLangNode       = &BLangAlternateWorkerReceive{}
 	_ BLangNode       = &BLangAnnotAccessExpr{}
 	_ BLangNode       = &BLangArrowFunction{}
 	_ BLangNode       = &BLangLambdaFunction{}
@@ -738,7 +758,6 @@ var (
 	_ BLangNode       = &BLangNumericLiteral{}
 	_ BLangNode       = &BLangNilConditionalExpr{}
 	_ BLangExpression = &BLangNilConditionalExpr{}
-	_ BLangNode       = &BLangWorkerReceive{}
 	_ BLangNode       = &BLangInvocation{}
 	_ BLangNode       = &BLangMarkdownDocumentationLine{}
 	_ BLangNode       = &BLangMarkdownParameterDocumentation{}
@@ -775,8 +794,12 @@ func (*BLangVariableReferenceBase) isVariableReference() {}
 func (*BLangVarRef) isLExpr()               {}
 func (*bLangAccessExpressionBase) isLExpr() {}
 
-func (*BLangCommitExpr) isAction()    {}
-func (*BLangWorkerReceive) isAction() {}
+func (*BLangCommitExpr) isAction()                  {}
+func (*BLangWorkerAsyncSendAction) isAction()       {}
+func (*BLangWorkerSyncSendAction) isAction()        {}
+func (*BLangWorkerReceiveAction) isAction()         {}
+func (*BLangWorkerMultipleReceiveAction) isAction() {}
+func (*BLangWorkerFlushAction) isAction()           {}
 
 func (n *BLangVariableReferenceBase) Symbol() model.SymbolRef {
 	return n.symbol
@@ -854,19 +877,12 @@ func (b *BLangLambdaFunction) SetInferredParams() {
 	b.flags |= bLangLambdaFunctionFlagInferredParams
 }
 
-func (b *BLangAlternateWorkerReceive) ToActionString() string {
-	panic("Not implemented")
-}
-
-func (b *BLangWorkerReceive) GetWorkerName() *BLangIdentifier {
-	return b.WorkerIdentifier
-}
-
-func (b *BLangWorkerReceive) ToActionString() string {
-	if b.WorkerIdentifier != nil {
-		return fmt.Sprintf(" <- %s", b.WorkerIdentifier.Value)
+// SourceName is the peer as written in source.
+func (p *BLangWorkerPeer) SourceName() string {
+	if p.Name == constants.DefaultWorkerName {
+		return "function"
 	}
-	return " <- "
+	return p.Name
 }
 
 func (b *BLangBinaryExpr) GetLeftExpression() BLangExpression {
@@ -1059,14 +1075,6 @@ func (b *BLangMarkDownDeprecationDocumentation) GetDocumentation() string {
 
 func (b *BLangMarkDownDeprecatedParametersDocumentation) GetParameters() []BLangMarkdownParameterDocumentation {
 	return b.Parameters
-}
-
-func (b *BLangWorkerSendExprBase) GetExpr() BLangExpression {
-	return b.Expr
-}
-
-func (b *BLangWorkerSendExprBase) GetWorkerName() *BLangIdentifier {
-	return b.WorkerIdentifier
 }
 
 func (b *bLangInvocationBase) SetRawSymbol(symbol model.Symbol) {
