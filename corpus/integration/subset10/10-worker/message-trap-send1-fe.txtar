@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> message-trap-send1-fe.bal:27:21
+   |
+27 |     error? _ = trap (value() ->> b); // @error worker message send/receive is not supported here
+   |                     ^^^^^^^^^^^^^^^

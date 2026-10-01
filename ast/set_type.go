@@ -38,10 +38,6 @@ func SetType(node BLangActionOrExpression, ty semtypes.SemType) {
 		n.Ty = ty
 	case *bLangAccessExpressionBase:
 		n.Ty = ty
-	case *BLangWorkerSendReceiveExprBase:
-		n.Ty = ty
-	case *BLangWorkerSendExprBase:
-		n.Ty = ty
 	case *BLangLiteral:
 		n.Ty = ty
 	case *BLangNumericLiteral:
@@ -130,11 +126,17 @@ func SetType(node BLangActionOrExpression, ty semtypes.SemType) {
 		n.Ty = ty
 	case *BLangXMLFilterExpression:
 		n.Ty = ty
-	case *BLangWorkerReceive:
-		n.Ty = ty
-	case *BLangAlternateWorkerReceive:
-		n.Ty = ty
 	case *BLangCommitExpr:
+		n.Ty = ty
+	case *BLangWorkerAsyncSendAction:
+		n.Ty = ty
+	case *BLangWorkerSyncSendAction:
+		n.Ty = ty
+	case *BLangWorkerReceiveAction:
+		n.Ty = ty
+	case *BLangWorkerMultipleReceiveAction:
+		n.Ty = ty
+	case *BLangWorkerFlushAction:
 		n.Ty = ty
 	case *BLangWildCardBindingPattern:
 		n.Ty = ty

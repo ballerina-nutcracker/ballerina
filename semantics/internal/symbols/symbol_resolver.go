@@ -2750,6 +2750,10 @@ func resolveExpr(r symbolResolver, expr ast.BLangActionOrExpression) bool {
 			return resolveTypeDesc(r, typeDescriptor)
 		}
 		return true
+	case *ast.BLangWorkerAsyncSendAction, *ast.BLangWorkerSyncSendAction, *ast.BLangWorkerReceiveAction,
+		*ast.BLangWorkerMultipleReceiveAction, *ast.BLangWorkerFlushAction:
+		r.GetCtx().Unimplemented("worker message passing is not supported", n.GetPosition())
+		return false
 	case *ast.BLangInferredTypedescDefault, *ast.BLangDefaultArg:
 		return true
 	case *ast.BLangTypeConversionExpr:
