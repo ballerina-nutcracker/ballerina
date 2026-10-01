@@ -1,0 +1,65 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Flag
+    (union-type
+      (finite-type
+        (literal true))
+      (finite-type
+        (literal false))))
+  (type-definition Yes
+    (finite-type
+      (literal true)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation classify (
+            (literal 1)
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation classify (
+            (literal 1)
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation classify (
+            (literal 2)
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation classify (
+            (literal 3)
+            (literal true))))))))
+  (function classify (
+    (variable v (type
+      (value-type int)))
+    (variable f (type
+      (user-defined-type Flag)))) (
+    (value-type string))
+    (block-function-body
+      (var-def
+        (variable y (type
+          (user-defined-type Yes)) (expr
+          (literal true))))
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (match-guard
+            (simple-var-ref f))
+          (block-stmt
+            (return
+              (literal flag))))
+        (match-clause
+          (const-pattern
+            (literal 2))
+          (match-guard
+            (simple-var-ref y))
+          (block-stmt
+            (return
+              (literal yes)))))
+      (return
+        (literal other)))))

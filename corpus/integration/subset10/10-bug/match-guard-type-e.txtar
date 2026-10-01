@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got 5
+  --> match-guard-type-e.bal:25:14
+   |
+25 |         _ if 5 => { // @error
+   |              ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got nil|boolean
+  --> match-guard-type-e.bal:32:14
+   |
+32 |         _ if b => { // @error
+   |              ^
