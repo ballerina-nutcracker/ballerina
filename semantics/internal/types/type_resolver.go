@@ -2464,8 +2464,17 @@ func resolveNamedWorker(
 
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
 	resolveBlockFunctionBody(ft, boundaryChain, worker.Body)
+	mergeImplicitImportsInto(t, ft)
 
 	worker.SetDeterminedType(semtypes.Never)
+}
+
+// mergeImplicitImportsInto hands the implicit imports a child resolver
+// collected to its parent, which owns the imports of the enclosing function.
+func mergeImplicitImportsInto(parent typeResolver, child *functionTypeResolver) {
+	for name, imp := range child.implicitImports {
+		parent.addImplicitImport(name, imp)
+	}
 }
 
 // waitEventualType returns the type a wait on the given operand yields. A
@@ -2526,6 +2535,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 		}
 		body.SetDeterminedType(semtypes.Never)
 	}
+	mergeImplicitImportsInto(t, ft)
 
 	e.Function.SetDeterminedType(semtypes.Never)
 	e.Function.Name.SetDeterminedType(semtypes.Never)
@@ -2607,6 +2617,7 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
+	mergeImplicitImportsInto(t, ft)
 	returnTy := returnResult.ty
 	body.SetDeterminedType(semtypes.Never)
 
