@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-stmt-contexts-e.bal:21:57
+   |
+21 |     return 1 + call(function() returns int { string s = 1; return s.length(); }); // @error incompatible type
+   |                                                         ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 2
+  --> anon-stmt-contexts-e.bal:26:54
+   |
+26 |     x = 1 + call(function() returns int { string s = 2; return s.length(); }); // @error incompatible type
+   |                                                      ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 3
+  --> anon-stmt-contexts-e.bal:27:55
+   |
+27 |     x += 1 + call(function() returns int { string s = 3; return s.length(); }); // @error incompatible type
+   |                                                       ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 4
+  --> anon-stmt-contexts-e.bal:29:49
+   |
+29 |     xs[call(function() returns int { string s = 4; return s.length(); })] = 1; // @error incompatible type
+   |                                                 ^

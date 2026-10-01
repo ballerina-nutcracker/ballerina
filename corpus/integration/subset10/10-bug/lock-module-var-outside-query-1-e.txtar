@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-query-1-e.bal:25:19
+   |
+25 |         where x > threshold // @error
+   |                   ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-query-1-e.bal:26:15
+   |
+26 |         limit threshold // @error
+   |               ^^^^^^^^^

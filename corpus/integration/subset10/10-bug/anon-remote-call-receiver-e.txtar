@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-remote-call-receiver-e.bal:28:44
+   |
+28 |     mk(function() returns int { string s = 1; return s.length(); })->bar(); // @error incompatible type
+   |                                            ^
