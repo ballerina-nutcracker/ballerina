@@ -1,0 +1,176 @@
+(checkPanicked
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 1)))))
+    (named-worker b (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 2)))))
+    (var-def
+      (variable r (type
+        (record-type
+          (field a
+            (value-type int))
+          (field b
+            (value-type int)))) (expr
+        (check-panicked-expr
+          (worker-multiple-receive-action a:a b:b)))))
+    (return
+      (binary-expr +
+        (field-based-access a
+          (simple-var-ref r))
+        (field-based-access b
+          (simple-var-ref r))))
+  )
+)
+(checked
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (checked-expr
+            (worker-sync-send-action function
+              (literal 1))))))
+    (named-worker b (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (checked-expr
+            (invocation failWith (
+              (literal b failed)))))
+        (expression-stmt
+          (checked-expr
+            (worker-sync-send-action function
+              (literal 2))))))
+    (var-def
+      (variable r (type
+        (record-type
+          (field a
+            (value-type int))
+          (field b
+            (value-type int)))) (expr
+        (checked-expr
+          (worker-multiple-receive-action a:a b:b)))))
+    (return
+      (binary-expr +
+        (field-based-access a
+          (simple-var-ref r))
+        (field-based-access b
+          (simple-var-ref r))))
+  )
+)
+(failWith
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (simple-var-ref message))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation returned ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation checked ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation checkPanicked ()))))
+  )
+)
+(returned
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (checked-expr
+            (invocation failWith (
+              (literal a failed)))))
+        (expression-stmt
+          (checked-expr
+            (worker-sync-send-action function
+              (literal 1))))))
+    (named-worker b (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (checked-expr
+            (worker-sync-send-action function
+              (literal 2))))))
+    (return
+      (worker-multiple-receive-action a:a b:b))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (invocation failWith (
+          (literal a failed)))))
+    (expression-stmt
+      (checked-expr
+        (worker-sync-send-action function
+          (literal 1))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (worker-sync-send-action function
+          (literal 1))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 1)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (invocation failWith (
+          (literal b failed)))))
+    (expression-stmt
+      (checked-expr
+        (worker-sync-send-action function
+          (literal 2))))
+  )
+)
+(worker b
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (worker-sync-send-action function
+          (literal 2))))
+  )
+)
+(worker b
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 2)))
+  )
+)

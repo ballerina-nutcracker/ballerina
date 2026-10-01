@@ -2819,11 +2819,11 @@ func resolveExpr(r symbolResolver, expr ast.BLangActionOrExpression) bool {
 	case *ast.BLangStartAction:
 		return resolveOptionalExpr(r, n.Call)
 	case *ast.BLangSingleWaitAction:
-		return resolveWaitAction(r, []ast.BLangExpression{n.FutureExpr}, n.GetPosition(), true)
+		return resolveWaitAction(r, n, []ast.BLangExpression{n.FutureExpr})
 	case *ast.BLangAlternateWaitAction:
-		return resolveWaitAction(r, n.FutureExprs, n.GetPosition(), false)
+		return resolveWaitAction(r, n, n.FutureExprs)
 	case *ast.BLangMultipleWaitAction:
-		return resolveWaitAction(r, n.FutureExprs, n.GetPosition(), true)
+		return resolveWaitAction(r, n, n.FutureExprs)
 	case *ast.BLangRemoteMethodCallAction:
 		// We are creating a deferred symbol here since without determining the type of the reciever we can't determine the actual function symbol
 		createDeferredMethodSymbol(r, n)

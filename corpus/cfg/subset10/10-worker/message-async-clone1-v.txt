@@ -1,0 +1,81 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (array-type
+        (value-type int) dimensions: 1 ([])))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (worker-receive-action b))))
+        (var-def
+          (variable received (type
+            (array-type
+              (value-type int) dimensions: 1 ([]))) (expr
+            (worker-receive-action function))))
+        (return
+          (simple-var-ref received))))
+    (named-worker b (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (expression-stmt
+          (worker-async-send-action a
+            (literal 1)))))
+    (var-def
+      (variable values (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (expression-stmt
+      (worker-async-send-action a
+        (simple-var-ref values)))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref values)
+        (literal 3))))
+    (expression-stmt
+      (worker-async-send-action b
+        (literal 0)))
+    (var-def
+      (variable received (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref received))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (worker-receive-action b))))
+    (var-def
+      (variable received (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (worker-receive-action function))))
+    (return
+      (simple-var-ref received))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 1)))
+  )
+)

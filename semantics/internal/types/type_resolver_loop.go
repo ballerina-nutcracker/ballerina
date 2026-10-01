@@ -54,6 +54,9 @@ func (l *loopTypeResolver) nextMonoFnName(origName string) string {
 func (l *loopTypeResolver) nextXMLStepFnName() string {
 	return l.parentResolver.nextXMLStepFnName()
 }
+func (l *loopTypeResolver) nextXMLStepIndex(scope model.Scope, owner string) int {
+	return l.parentResolver.nextXMLStepIndex(scope, owner)
+}
 func (l *loopTypeResolver) packageID() *model.PackageID { return l.parentResolver.packageID() }
 func (l *loopTypeResolver) typeEnv() semtypes.Env       { return l.parentResolver.typeEnv() }
 func (l *loopTypeResolver) opaqueContext() *opaque.Context {

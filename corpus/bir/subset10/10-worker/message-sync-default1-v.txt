@@ -1,0 +1,239 @@
+module $anon.. v 0.0.0;
+pending  nil|future<string>;
+progress  int;
+delivered() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = createWorkerMessage() -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %3;
+    %7 = closure_fp $anon/.:$worker:delivered:$function
+    $desugar$4 = %7;
+    %9 = closure_fp $anon/.:$worker:delivered:a
+    $desugar$5 = %9;
+    %11 = start $desugar$4() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %11;
+    %12 = start $desugar$5() isolated=false -> bb4;
+  }
+  bb4 {
+    $desugar$3 = %12;
+    %13 = openLatch($desugar$0) -> bb5;
+  }
+  bb5 {
+    %14 = wait $desugar$2 -> bb6;
+  }
+  bb6 {
+    %0 = %14;
+    return;
+  }
+}
+failed(boolean) -> nil|error{
+  bb0 {
+    %2 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %4 = createWorkerMessage() -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %4;
+    %8 = closure_fp $anon/.:$worker:failed:$function
+    $desugar$4 = %8;
+    %10 = closure_fp $anon/.:$worker:failed:a
+    $desugar$5 = %10;
+    %12 = start $desugar$4() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %12;
+    %13 = start $desugar$5() isolated=false -> bb4;
+  }
+  bb4 {
+    $desugar$3 = %13;
+    %14 = openLatch($desugar$0) -> bb5;
+  }
+  bb5 {
+    %15 = wait $desugar$2 -> bb6;
+  }
+  bb6 {
+    %0 = %15;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = delivered() -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad true
+    %3 = %2;
+    %4 = failed(%3) -> bb2;
+  }
+  bb2 {
+    e = %4;
+    %7 = e is error
+    %7 ? bb3 : bb4;
+  }
+  bb3 {
+    %8 = message(e) -> bb6;
+  }
+  bb4 {
+    %9 = ConstantLoad done
+    %6 = %9;
+    GOTO bb5;
+  }
+  bb5 {
+    %10 = println(%6) -> bb7;
+  }
+  bb6 {
+    %6 = %8;
+    GOTO bb5;
+  }
+  bb7 {
+    f = pending;
+    %12 = f is future<string>
+    %12 ? bb8 : bb11;
+  }
+  bb8 {
+    PushScopeFrame 3
+    %0 = wait (1, f) -> bb9;
+  }
+  bb9 {
+    r = %0;
+    %2 = println(r) -> bb10;
+  }
+  bb10 {
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb11 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$worker:delivered:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    progress = %2;
+    %3 = getWorkerMessageValue((1, $desugar$1),(1, $desugar$3)) -> bb2;
+  }
+  bb2 {
+    _ = %3;
+    %5 = wait (1, $desugar$3) -> bb3;
+  }
+  bb3 {
+    r = %5;
+    %7 = println(r) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$worker:delivered:a() -> string{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %4 = setWorkerMessageValue((1, $desugar$1),%3) -> bb2;
+  }
+  bb2 {
+    %5 = waitWorkerMessageReceived((1, $desugar$1),(1, $desugar$2)) -> bb3;
+  }
+  bb3 {
+    sent = %5;
+    %8 = sent is nil
+    %8 ? bb4 : bb5;
+  }
+  bb4 {
+    %10 = ConstantLoad taken after 
+    %11 = toString(progress) -> bb7;
+  }
+  bb5 {
+    %12 = ConstantLoad failed
+    %7 = %12;
+    GOTO bb6;
+  }
+  bb6 {
+    %0 = %7;
+    return;
+  }
+  bb7 {
+    %9 = + %10 %11;
+    %7 = %9;
+    GOTO bb6;
+  }
+}
+$worker:failed:$function() -> nil|error{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    pending = (1, $desugar$3);
+    (1, early) ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad default failed
+    %1 = newError error(%0)
+    (1, %0) = %1;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb4 {
+    %2 = getWorkerMessageValue((1, $desugar$1),(1, $desugar$3)) -> bb5;
+  }
+  bb5 {
+    _ = %2;
+    return;
+  }
+}
+$worker:failed:a() -> string{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %4 = setWorkerMessageValue((1, $desugar$1),%3) -> bb2;
+  }
+  bb2 {
+    %5 = waitWorkerMessageReceived((1, $desugar$1),(1, $desugar$2)) -> bb3;
+  }
+  bb3 {
+    sent = %5;
+    %8 = sent is error
+    %8 ? bb4 : bb5;
+  }
+  bb4 {
+    %9 = message(sent) -> bb7;
+  }
+  bb5 {
+    %10 = ConstantLoad taken
+    %7 = %10;
+    GOTO bb6;
+  }
+  bb6 {
+    %0 = %7;
+    return;
+  }
+  bb7 {
+    %7 = %9;
+    GOTO bb6;
+  }
+}

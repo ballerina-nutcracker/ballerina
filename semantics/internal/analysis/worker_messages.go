@@ -60,3 +60,51 @@ func validateWorkerMessageResult(cx scope.Context, e ast.BLangActionOrExpression
 	f := scope.FactsOfType(cx, e)
 	return f, validateResolvedType(cx, e, expected)
 }
+
+// validateWorkerMultipleReceive rejects a multiple receive from several
+// workers whose error the worker could handle: a failed multiple receive takes
+// none of its messages, so the other senders wait until the receiving worker
+// terminates.
+func validateWorkerMultipleReceive(cx scope.Context, e *ast.BLangWorkerMultipleReceiveAction, expected semtypes.SemType) (scope.Facts, bool) {
+	if len(e.Fields) > 1 && !semtypes.IsEmpty(cx.TyCtx(), semtypes.Intersect(e.Type(), semtypes.Error)) {
+		cx.UnimplementedErr("a multiple receive that can fail must be the operand of check, checkpanic or return", e.GetPosition())
+		return scope.NoFacts, false
+	}
+	return validateWorkerMessageResult(cx, e, expected)
+}
+
+// trapsMultipleReceive reports whether trap's operand is a multiple receive
+// from more than one worker, directly or under parentheses, check or
+// checkpanic. The trap would let the worker go on after the receive failed or
+// panicked, leaving the other senders' messages unreceived.
+func trapsMultipleReceive(operand ast.BLangActionOrExpression) bool {
+	switch e := operand.(type) {
+	case *ast.BLangWorkerMultipleReceiveAction:
+		return len(e.Fields) > 1
+	case *ast.BLangGroupExpr:
+		return trapsMultipleReceive(e.Expression)
+	case *ast.BLangCheckedExpr:
+		return trapsMultipleReceive(e.Expr)
+	case *ast.BLangCheckPanickedExpr:
+		return trapsMultipleReceive(e.Expr)
+	default:
+		return false
+	}
+}
+
+// validateErrorEndingOperand validates the operand of a check, checkpanic or
+// return, whose error ends the worker, so a multiple receive there may fail.
+func validateErrorEndingOperand(cx scope.Context, expr ast.BLangActionOrExpression, expected semtypes.SemType) (scope.Facts, bool) {
+	switch e := expr.(type) {
+	case *ast.BLangWorkerMultipleReceiveAction:
+		return validateWorkerMessageResult(cx, e, expected)
+	case *ast.BLangGroupExpr:
+		inner, ok := validateErrorEndingOperand(cx, e.Expression, expected)
+		if !ok {
+			return scope.NoFacts, false
+		}
+		return scope.Either(scope.FactsOfType(cx, e), inner), true
+	default:
+		return validateActionOrExpr(cx, expr, expected)
+	}
+}

@@ -104,7 +104,9 @@ func validateActionOrExprInner(cx scope.Context, e ast.BLangActionOrExpression, 
 		return validateWorkerAsyncSend(cx, e, expected)
 	case *ast.BLangWorkerSyncSendAction:
 		return validateWorkerSyncSend(cx, e, expected)
-	case *ast.BLangWorkerReceiveAction, *ast.BLangWorkerMultipleReceiveAction, *ast.BLangWorkerFlushAction:
+	case *ast.BLangWorkerMultipleReceiveAction:
+		return validateWorkerMultipleReceive(cx, e, expected)
+	case *ast.BLangWorkerReceiveAction, *ast.BLangWorkerFlushAction:
 		return validateWorkerMessageResult(cx, e, expected)
 	case *ast.BLangSingleWaitAction:
 		return validateSingleWait(cx, e, expected)
@@ -408,7 +410,7 @@ func validateTypeTest(cx scope.Context, e *ast.BLangTypeTestExpr, expected semty
 // of the enclosing function's return type. A default expression is its own
 // closure with no return type yet (#1219).
 func validateCheckedExpr(cx scope.Context, e *ast.BLangCheckedExpr, expected semtypes.SemType) (scope.Facts, bool) {
-	inner, ok := validateActionOrExpr(cx, e.Expr, semtypes.SemType{})
+	inner, ok := validateErrorEndingOperand(cx, e.Expr, semtypes.SemType{})
 	if !ok {
 		return scope.NoFacts, false
 	}
@@ -433,7 +435,7 @@ func validateCheckedExpr(cx scope.Context, e *ast.BLangCheckedExpr, expected sem
 }
 
 func validateCheckPanickedExpr(cx scope.Context, e *ast.BLangCheckPanickedExpr, expected semtypes.SemType) (scope.Facts, bool) {
-	inner, ok := validateActionOrExpr(cx, e.Expr, semtypes.SemType{})
+	inner, ok := validateErrorEndingOperand(cx, e.Expr, semtypes.SemType{})
 	if !ok {
 		return scope.NoFacts, false
 	}
@@ -445,6 +447,10 @@ func validateCheckPanickedExpr(cx scope.Context, e *ast.BLangCheckPanickedExpr, 
 }
 
 func validateTrapExpr(cx scope.Context, e *ast.BLangTrapExpr, expected semtypes.SemType) (scope.Facts, bool) {
+	if trapsMultipleReceive(e.Expr) {
+		cx.UnimplementedErr("a multiple receive from more than one worker under trap is not supported", e.GetPosition())
+		return scope.NoFacts, false
+	}
 	inner, ok := validateActionOrExpr(cx, e.Expr, semtypes.SemType{})
 	if !ok {
 		return scope.NoFacts, false

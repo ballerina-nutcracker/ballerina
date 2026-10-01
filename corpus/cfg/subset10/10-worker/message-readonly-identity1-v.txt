@@ -1,0 +1,53 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable values (type
+        (intersection-type
+          (array-type
+            (value-type int) dimensions: 1 ([]))
+          (value-type readonly))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (named-worker a (
+      (value-type boolean))
+      (block-function-body
+        (var-def
+          (variable received (type
+            (intersection-type
+              (array-type
+                (value-type int) dimensions: 1 ([]))
+              (value-type readonly))) (expr
+            (worker-receive-action function))))
+        (return
+          (binary-expr ===
+            (simple-var-ref received)
+            (simple-var-ref values)))))
+    (expression-stmt
+      (worker-async-send-action a
+        (simple-var-ref values)))
+    (var-def
+      (variable same (type
+        (value-type boolean)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref same))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable received (type
+        (intersection-type
+          (array-type
+            (value-type int) dimensions: 1 ([]))
+          (value-type readonly))) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr ===
+        (simple-var-ref received)
+        (simple-var-ref values)))
+  )
+)

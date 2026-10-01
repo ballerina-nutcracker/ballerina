@@ -1,0 +1,56 @@
+(boom
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal a panicked))))
+  )
+)
+(exchange
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 1)))
+        (expression-stmt
+          (invocation boom ()))))
+    (return
+      (worker-receive-action a))
+  )
+)
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable total (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (literal 20))
+    (var-def
+      (variable _ (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref total)
+      (invocation exchange ()))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref total))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 1)))
+    (expression-stmt
+      (invocation boom ()))
+  )
+)

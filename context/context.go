@@ -209,24 +209,22 @@ func (c *CompilerContext) AddToCaptureGroup(group model.CaptureGroupRef, ref mod
 	c.env.addToCaptureGroup(group, ref)
 }
 
-// WorkerMessageTypeStore holds the type of each worker message for type
-// resolution.
-type WorkerMessageTypeStore = workermessages.Store
+type WorkerMessageType = workermessages.Result
 
-// NewWorkerMessage allocates a worker message handle.
 func (c *CompilerContext) NewWorkerMessage() model.WorkerMessageRef {
 	return c.env.newWorkerMessage()
 }
 
-// WorkerMessageTypes returns the store of the worker message types published
-// outside candidate trials.
-func (c *CompilerContext) WorkerMessageTypes() *WorkerMessageTypeStore {
-	return c.env.workerMessageTypes
+func (c *CompilerContext) SetWorkerMessageType(ref model.WorkerMessageRef, ty semtypes.SemType) error {
+	return c.env.workerMessageTypes.Publish(ref, ty)
 }
 
-// NewWorkerMessageTypeStore returns an empty store for a candidate trial.
-func (c *CompilerContext) NewWorkerMessageTypeStore() *WorkerMessageTypeStore {
-	return workermessages.NewStore()
+func (c *CompilerContext) WorkerMessageType(ref model.WorkerMessageRef) <-chan WorkerMessageType {
+	return c.env.workerMessageTypes.Type(ref)
+}
+
+func (c *CompilerContext) FailWorkerMessageTypeIfUnset(ref model.WorkerMessageRef) {
+	c.env.workerMessageTypes.FailIfUnset(ref)
 }
 
 func (c *CompilerContext) CaptureGroupContains(group model.CaptureGroupRef, ref model.SymbolRef) bool {
@@ -331,8 +329,6 @@ func (c *CompilerContext) HasDiagnostics() bool {
 	return len(c.diagnostics) > 0
 }
 
-// HasErrors reports whether an error was reported. Type resolution calls it
-// while other goroutines report diagnostics.
 func (c *CompilerContext) HasErrors() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()

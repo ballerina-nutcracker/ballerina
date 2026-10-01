@@ -26,25 +26,21 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
-// Store maps each worker message to the type of the value sent. A send
-// publishes its type once; a receive blocks until it is published or poisoned.
+// Result is a resolved message type or a failure to resolve its send.
+type Result struct {
+	Type   semtypes.SemType
+	Failed bool
+}
+
+// Store hands message type results from sends to receives.
 type Store struct {
 	mu      sync.Mutex
 	entries map[model.WorkerMessageRef]*entry
 }
 
-type entryState uint8
-
-const (
-	entryUnset entryState = iota
-	entryPublished
-	entryPoisoned
-)
-
 type entry struct {
-	ready chan struct{}
-	ty    semtypes.SemType
-	state entryState
+	result  *Result
+	waiters []chan Result
 }
 
 func NewStore() *Store {
@@ -55,10 +51,19 @@ func NewStore() *Store {
 func (s *Store) entryFor(ref model.WorkerMessageRef) *entry {
 	e, ok := s.entries[ref]
 	if !ok {
-		e = &entry{ready: make(chan struct{})}
+		e = &entry{}
 		s.entries[ref] = e
 	}
 	return e
+}
+
+func (e *entry) publish(result Result) {
+	e.result = &result
+	for _, waiter := range e.waiters {
+		waiter <- result
+		close(waiter)
+	}
+	e.waiters = nil
 }
 
 // Publish records the type of the value sent as ref. Publishing a message
@@ -67,34 +72,35 @@ func (s *Store) Publish(ref model.WorkerMessageRef, ty semtypes.SemType) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	e := s.entryFor(ref)
-	if e.state != entryUnset {
+	if e.result != nil {
 		return fmt.Errorf("worker message %d published twice", ref)
 	}
-	e.ty = ty
-	e.state = entryPublished
-	close(e.ready)
+	e.publish(Result{Type: ty})
 	return nil
 }
 
-// PublishPoisonIfUnset releases the receive of ref without a type, unless the
-// send already published one.
-func (s *Store) PublishPoisonIfUnset(ref model.WorkerMessageRef) {
+// FailIfUnset releases the receivers of ref if its send never published a type.
+func (s *Store) FailIfUnset(ref model.WorkerMessageRef) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	e := s.entryFor(ref)
-	if e.state != entryUnset {
-		return
+	if e.result == nil {
+		e.publish(Result{Failed: true})
 	}
-	e.state = entryPoisoned
-	close(e.ready)
 }
 
-// Type blocks until ref is published or poisoned. It reports false when ref
-// was poisoned.
-func (s *Store) Type(ref model.WorkerMessageRef) (semtypes.SemType, bool) {
+// Type returns a channel that yields one result once ref is resolved or fails.
+// Each call returns an independent channel.
+func (s *Store) Type(ref model.WorkerMessageRef) <-chan Result {
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	e := s.entryFor(ref)
-	s.mu.Unlock()
-	<-e.ready
-	return e.ty, e.state == entryPublished
+	result := make(chan Result, 1)
+	if e.result != nil {
+		result <- *e.result
+		close(result)
+	} else {
+		e.waiters = append(e.waiters, result)
+	}
+	return result
 }

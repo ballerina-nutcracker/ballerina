@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected {| a: int, never... |}, got {| a: int, b: int, never... |}
+  --> message-semantic2-e.bal:28:27
+   |
+28 |     record {|int a;|} _ = <- {a, b}; // @error the closed record has no field b
+   |                           ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: worker message value must be a subtype of value:Cloneable
+  --> message-semantic2-e.bal:34:9
+   |
+34 |         v -> function; // @error any isn't Cloneable
+   |         ^
+
+error[SEMANTIC_ERROR]: worker message value must be a subtype of value:Cloneable
+  --> message-semantic2-e.bal:43:9
+   |
+43 |     _ = new Counter() ->> a; // @error an object isn't Cloneable
+   |         ^^^^^^^^^^^^^
