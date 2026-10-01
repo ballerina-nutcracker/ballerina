@@ -1,5 +1,6 @@
 (package
   (import-package ballerina io (as io))
+  (import-package ballerina lang value (as lang.value))
   (class-definition IntAdd
     (function init (
       (variable callback (type
