@@ -68,7 +68,7 @@ $worker:main:$function() -> nil{
     %4 = elements((1, x),%3) -> bb2;
   }
   bb2 {
-    %5 = fp $anon/.:$xmlStep$main$1
+    %5 = fp $anon/.:$xmlStep$main$$function$0
     %6 = map(%4,%5) -> bb3;
   }
   bb3 {
@@ -136,7 +136,7 @@ $xmlStep$main$0(xml:Element) -> xml<xml:Element>{
     return;
   }
 }
-$xmlStep$main$1(xml:Element) -> xml<xml:Element>{
+$xmlStep$main$$function$0(xml:Element) -> xml<xml:Element>{
   bb0 {
     %2 = getChildren($xmlStepItem) -> bb1;
   }

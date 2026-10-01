@@ -27,6 +27,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	balCommon "github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -2389,10 +2390,19 @@ func buildReturnTypeOp(t typeResolver, chain *binding, params map[string]param, 
 // and the remaining default-worker statements. Every worker is resolved with
 // the narrowing state produced by the initialization region, so a worker sees
 // exactly what the default worker had in scope at the startup point.
+//
+// The trailing statements and every named worker body are resolved by child
+// resolvers, all built before any of them runs. While the children run, t is
+// only read.
 func resolveBlockFunctionBody(t typeResolver, chain *binding, body *ast.BLangBlockFunctionBody) {
 	startupChain := chain
 	if len(body.InitStmts) > 0 {
 		startupChain = resolveBlockStatements(t, chain, body.InitStmts).binding
+	}
+	if len(body.Workers) == 0 {
+		resolveBlockStatements(t, startupChain, body.Stmts)
+		body.SetDeterminedType(semtypes.Never)
+		return
 	}
 	returnTypes := make([]semtypes.SemType, len(body.Workers))
 	for i, worker := range body.Workers {
@@ -2408,20 +2418,44 @@ func resolveBlockFunctionBody(t typeResolver, chain *binding, body *ast.BLangBlo
 		returnTypes[i] = returnTy
 		startupChain = workerChain
 	}
-	if len(body.Workers) > 0 {
-		t.setSymbolType(body.DefaultWorker, semtypes.FutureContaining(t.typeEnv(), t.expectedReturnType()))
-	}
+	t.setSymbolType(body.DefaultWorker, semtypes.FutureContaining(t.typeEnv(), t.expectedReturnType()))
 	// Workers run concurrently with each other and with the rest of the
 	// default worker, so every worker's captures are in effect in every worker
 	// body and in the trailing statements.
 	for _, worker := range body.Workers {
 		startupChain = addCaptureGroup(startupChain, worker.CaptureGroup())
 	}
+	children := make([]workerResolution, 0, len(body.Workers)+1)
 	for i, worker := range body.Workers {
-		resolveNamedWorker(t, startupChain, worker, returnTypes[i])
+		children = append(children, newNamedWorkerResolution(t, startupChain, worker, returnTypes[i]))
 	}
-	resolveBlockStatements(t, startupChain, body.Stmts)
+	children = append(children, newDefaultWorkerResolution(t, startupChain, body))
+	for _, child := range children {
+		child.resolve()
+	}
+	for _, child := range children {
+		mergeChildResolver(t, child.resolver)
+	}
 	body.SetDeterminedType(semtypes.Never)
+}
+
+// workerResolution is a worker's child resolver together with what it
+// resolves: a named worker's body, or the default worker's trailing
+// statements when worker is nil.
+type workerResolution struct {
+	resolver *functionTypeResolver
+	chain    *binding
+	worker   *ast.BLangNamedWorkerDeclaration
+	stmts    []ast.StatementNode
+}
+
+func (r workerResolution) resolve() {
+	if r.worker == nil {
+		resolveBlockStatements(r.resolver, r.chain, r.stmts)
+		return
+	}
+	resolveBlockFunctionBody(r.resolver, r.chain, r.worker.Body)
+	r.worker.SetDeterminedType(semtypes.Never)
 }
 
 // declareNamedWorkerType resolves a worker's return type and gives its symbol
@@ -2443,31 +2477,54 @@ func declareNamedWorkerType(
 	return returnTy, chain, true
 }
 
-// resolveNamedWorker resolves a worker body in an independent return context.
-func resolveNamedWorker(
+// newNamedWorkerResolution prepares the resolution of a worker body in an
+// independent return context, behind a function boundary.
+func newNamedWorkerResolution(
 	t typeResolver,
 	chain *binding,
 	worker *ast.BLangNamedWorkerDeclaration,
 	returnTy semtypes.SemType,
-) {
-	ft := &functionTypeResolver{
+) workerResolution {
+	return workerResolution{
+		resolver: newWorkerChildResolver(t, returnTy, worker.Name, worker.Scope()),
+		chain:    &binding{flags: bindingFlagFunctionBoundary, prev: chain},
+		worker:   worker,
+	}
+}
+
+// newDefaultWorkerResolution prepares the resolution of the trailing
+// statements of a body with workers. They belong to the enclosing function, so
+// they keep its return type, scope and narrowing, with no function boundary.
+func newDefaultWorkerResolution(t typeResolver, chain *binding, body *ast.BLangBlockFunctionBody) workerResolution {
+	ft := newWorkerChildResolver(t, t.expectedReturnType(), constants.DefaultWorkerName, t.currentScope())
+	// Mono symbols of the trailing statements share the function scope with
+	// those of the initialization statements, so their names continue from them.
+	ft.monoCounters = maps.Clone(resolverMonoCounters(t))
+	return workerResolution{resolver: ft, chain: chain, stmts: body.Stmts}
+}
+
+func newWorkerChildResolver(t typeResolver, returnTy semtypes.SemType, workerName string, scope model.Scope) *functionTypeResolver {
+	return &functionTypeResolver{
 		atomSideTableBase: newAtomSideTableBase(),
 		parentResolver:    t,
 		tyCtx:             semtypes.ContextFrom(t.typeEnv()),
 		retTy:             returnTy,
 		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
-		xmlStepOwner:      workerXMLStepOwner(t, worker.Name),
-		scope:             worker.Scope(),
+		xmlStepOwner:      workerXMLStepOwner(t, workerName),
+		scope:             scope,
 		context:           resolverContextForFunction(isolatedContext(t)),
 		ephemeralState:    childEphemeralState(t),
 	}
+}
 
-	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
-	resolveBlockFunctionBody(ft, boundaryChain, worker.Body)
-	mergeChildResolver(t, ft)
-
-	worker.SetDeterminedType(semtypes.Never)
+// resolverMonoCounters returns the mono counters of the function body t
+// resolves.
+func resolverMonoCounters(t typeResolver) map[string]int {
+	if loop, ok := t.(*loopTypeResolver); ok {
+		return resolverMonoCounters(loop.parentResolver)
+	}
+	return t.(*functionTypeResolver).monoCounters
 }
 
 // workerXMLStepOwner qualifies the XML step owner of the function declaring a
