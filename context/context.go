@@ -331,6 +331,8 @@ func (c *CompilerContext) HasDiagnostics() bool {
 	return len(c.diagnostics) > 0
 }
 
+// HasErrors reports whether an error was reported. Type resolution calls it
+// while other goroutines report diagnostics.
 func (c *CompilerContext) HasErrors() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
