@@ -37,4 +37,5 @@ public function main() {
     int|_ unionValue = 1; // @error
     [int, _] tupleValue = [1, 2]; // @error
     io:_ qualifiedValue = 1; // @error
+    transaction:_ transactionValue = 1; // @error
 }
