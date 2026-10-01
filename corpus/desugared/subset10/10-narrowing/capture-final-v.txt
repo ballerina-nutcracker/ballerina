@@ -1,5 +1,6 @@
 (package
   (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
   (function main () (
     (value-type null))
     (block-function-body
