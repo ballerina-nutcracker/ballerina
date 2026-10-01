@@ -1787,7 +1787,10 @@ func analyzeInvocation[A analyzer](a A, inv invocable, receiverExpectedType, exp
 // resolution, not against the function parameter list, so we walk them
 // here independently of the call's argument analysis.
 func analyzeClientResourceAccessAction[A analyzer](a A, expr *ast.BLangClientResourceAccessAction, expectedType semtypes.SemType) bool {
-	pathType := resolvedResourceMethodPathType(a, expr)
+	pathType, ok := resolvedResourceMethodPathType(a, expr)
+	if !ok {
+		return false
+	}
 	for i := range expr.Path {
 		seg := &expr.Path[i]
 		if seg.Kind != ast.ResourceAccessSegmentComputed {
@@ -1801,13 +1804,13 @@ func analyzeClientResourceAccessAction[A analyzer](a A, expr *ast.BLangClientRes
 	return analyzeInvocation(a, expr, semtypes.CreateClientObject(a.tyCtx()), expectedType)
 }
 
-func resolvedResourceMethodPathType[A analyzer](a A, expr *ast.BLangClientResourceAccessAction) semtypes.SemType {
-	ref := expr.MethodSymbol()
-	rmSym, ok := a.getSymbol(ref).(model.ResourceMethodSymbol)
+func resolvedResourceMethodPathType[A analyzer](a A, expr *ast.BLangClientResourceAccessAction) (semtypes.SemType, bool) {
+	rmSym, ok := a.getSymbol(expr.MethodSymbol()).(model.ResourceMethodSymbol)
 	if !ok {
-		return semtypes.SemType{}
+		a.internalError("client resource access action is not bound to a resource method", expr.GetPosition())
+		return semtypes.SemType{}, false
 	}
-	return rmSym.PathListType()
+	return rmSym.PathListType(), true
 }
 
 func resourcePathSegmentExpectedType(ctx semtypes.Context, pathType semtypes.SemType, index int) semtypes.SemType {

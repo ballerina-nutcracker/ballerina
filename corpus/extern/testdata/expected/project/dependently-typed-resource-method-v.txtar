@@ -1,4 +1,11 @@
 -- stdout --
 explicit
+explicit
 42
+explicit
+42
+explicit
+42
+item 7
+16
 -- stderr --
