@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: wait on a worker is not supported here when the workers exchange messages
+  --> message-nested-wait1-fe.bal:22:13
+   |
+22 |         _ = wait a; // @error wait on a worker is not supported here when the workers exchange messages
+   |             ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: wait on a worker is not supported here when the workers exchange messages
+  --> message-nested-wait1-fe.bal:32:13
+   |
+32 |         _ = wait a; // @error wait on a worker is not supported here when the workers exchange messages
+   |             ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: wait on a worker is not supported here when the workers exchange messages
+  --> message-nested-wait1-fe.bal:49:13
+   |
+49 |     int y = wait b; // @error the statements after an if without else form a nested block
+   |             ^^^^^^

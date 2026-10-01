@@ -19,9 +19,9 @@
 // holding a sync send, not a mapping constructor or an async send.
 function qualifiedSyncSend() {
     worker w {
-        int _ = <- function; // @error worker message passing is not supported
+        string _ = <- function;
     }
     {
-        int:MAX_VALUE ->> w; // @error worker message passing is not supported
+        xml:XML_NAMESPACE_URI ->> w; // @error worker message send/receive is not supported here
     }
 }
