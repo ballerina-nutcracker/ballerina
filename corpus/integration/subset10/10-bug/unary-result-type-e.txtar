@@ -1,0 +1,61 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected 1.0|2.0, got float
+  --> unary-result-type-e.bal:30:17
+   |
+30 |     1.0|2.0 _ = -f; // @error
+   |                 ^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected 1d|2d, got decimal
+  --> unary-result-type-e.bal:31:15
+   |
+31 |     1d|2d _ = -dec; // @error
+   |               ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected 1|2, got int
+  --> unary-result-type-e.bal:29:13
+   |
+29 |     1|2 _ = ~u; // @error
+   |             ^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected float|int:Unsigned8, got int|float
+  --> unary-result-type-e.bal:34:20
+   |
+34 |     byte|float _ = -bf; // @error
+   |                    ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Signed8, got int
+  --> unary-result-type-e.bal:28:21
+   |
+28 |     int:Signed8 _ = -s; // @error
+   |                     ^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> unary-result-type-e.bal:25:14
+   |
+25 |     byte _ = -b; // @error
+   |              ^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> unary-result-type-e.bal:26:14
+   |
+26 |     byte _ = ~b; // @error
+   |              ^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got int
+  --> unary-result-type-e.bal:27:23
+   |
+27 |     int:Unsigned8 _ = ~b; // @error
+   |                       ^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil|int:Unsigned8, got nil|int
+  --> unary-result-type-e.bal:32:15
+   |
+32 |     byte? _ = -nb; // @error
+   |               ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil|int:Unsigned8, got nil|int
+  --> unary-result-type-e.bal:33:15
+   |
+33 |     byte? _ = ~nb; // @error
+   |               ^^^
