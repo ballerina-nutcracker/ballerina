@@ -175,8 +175,6 @@ func resolveRestricted(a analyzer, lock *ast.BLangLock) bool {
 
 // validateLockInvocations enforces all invocations within lock statement must be to isolated functions.
 func validateLockInvocations(a analyzer, body ast.BLangNode) bool {
-	tyCtx := a.tyCtx()
-	isolatedFn := semtypes.CreateIsolatedFn(tyCtx)
 	ok := true
 	everyNode(a, body, func(_ analyzer, inner ast.BLangNode) bool {
 		switch n := inner.(type) {
@@ -196,9 +194,8 @@ func validateLockInvocations(a analyzer, body ast.BLangNode) bool {
 					ok = false
 				}
 			}
-		case *ast.BLangRemoteMethodCallAction:
-			fnSym := n.MethodSymbol()
-			if !semtypes.IsSubtype(tyCtx, a.ctx().SymbolType(fnSym), isolatedFn) {
+		case *ast.BLangRemoteMethodCallAction, *ast.BLangClientResourceAccessAction:
+			if !isIsolatedInvocationTarget(a, n.(ast.Invocable)) {
 				a.semanticErr("invocation of a non-isolated function inside lock statement", n.GetPosition())
 				ok = false
 			}
@@ -739,8 +736,6 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 		return visitor
 	}
 	a := visitor.a
-	tyCtx := a.tyCtx()
-	isolatedFn := semtypes.CreateIsolatedFn(tyCtx)
 	switch node := n.(type) {
 	case *ast.BLangVariableDef:
 		v := node.Var
@@ -765,9 +760,8 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 			a.semanticErr("invocation of a non-isolated function", loc)
 		}
 		return visitor
-	case *ast.BLangRemoteMethodCallAction:
-		fnSym := node.MethodSymbol()
-		if !semtypes.IsSubtype(tyCtx, a.ctx().SymbolType(fnSym), isolatedFn) {
+	case *ast.BLangRemoteMethodCallAction, *ast.BLangClientResourceAccessAction:
+		if !isIsolatedInvocationTarget(a, node.(ast.Invocable)) {
 			a.semanticErr("invocation of a non-isolated function", n.GetPosition())
 		}
 		return visitor

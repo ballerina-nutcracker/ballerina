@@ -1,0 +1,49 @@
+(Baz
+  (qux
+    (bb0 () ()
+      (return
+        (client-resource-access get expr:
+          (simple-var-ref f) name:count))
+    )
+  )
+)
+(Foo
+  (Foo.$resource$get$0
+    (bb0 () ()
+      (return
+        (literal 1))
+    )
+  )
+)
+(bar
+  (bb0 () ()
+    (return
+      (client-resource-access get expr:
+        (simple-var-ref f) name:count))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (user-defined-type Foo)) (expr
+        (new ()))))
+    (compound-assignment +
+      (simple-var-ref counter)
+      (client-resource-access get expr:
+        (simple-var-ref f) name:count))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref counter))))
+    (expression-stmt
+      (invocation io println (
+        (invocation bar (
+          (new ()))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation qux expr:
+          (new
+            (user-defined-type Baz) ()) (
+          (new ()))))))
+  )
+)

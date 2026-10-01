@@ -1,0 +1,57 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable counter (type
+    (value-type int)) (expr
+    (literal 0)))
+  (class-definition Foo
+    (resource-function get name:count
+      (value-type int)
+      (block-function-body
+        (return
+          (literal 1)))))
+  (function bar (
+    (variable f (type
+      (user-defined-type Foo)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (client-resource-access get expr:
+          (simple-var-ref f) name:count))))
+  (class-definition Baz
+    (function qux (
+      (variable f (type
+        (user-defined-type Foo)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (client-resource-access get expr:
+            (simple-var-ref f) name:count)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (var-def
+            (variable f (type
+              (user-defined-type Foo)) (expr
+              (new ()))))
+          (compound-assignment +
+            (simple-var-ref counter)
+            (client-resource-access get expr:
+              (simple-var-ref f) name:count))))
+      (lock
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref counter))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation bar (
+            (new ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation qux expr:
+            (new
+              (user-defined-type Baz) ()) (
+            (new ())))))))))

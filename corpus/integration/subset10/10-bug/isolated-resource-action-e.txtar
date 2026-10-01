@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> isolated-resource-action-e.bal:27:12
+   |
+27 |     return f->/count(); // @error
+   |            ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> isolated-resource-action-e.bal:32:16
+   |
+32 |         return f->/count(); // @error
+   |                ^^^^^^^^^^^

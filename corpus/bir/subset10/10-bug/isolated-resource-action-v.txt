@@ -1,0 +1,157 @@
+module $anon.. v 0.0.0;
+counter  int;
+class Foo {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get count Foo.$resource$get$0() -> int{
+    bb0 {
+      %2 = ConstantLoad 1
+      %0 = %2;
+      return;
+    }
+  }
+}
+class Baz {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  qux(client object { public function init() returns nil }) -> int{
+    bb0 {
+      %3 = ConstantLoad count
+      %4 = f->[%3].get() -> bb1;
+    }
+    bb1 {
+      %0 = %4;
+      return;
+    }
+  }
+}
+bar(client object { public function init() returns nil }) -> int{
+  bb0 {
+    %2 = ConstantLoad count
+    %3 = f->[%2].get() -> bb1;
+  }
+  bb1 {
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    lock-start "$anon/.:counter" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 9
+    %0 = newObject $anon/.:Foo
+    %1 = %0.init() -> bb2;
+  }
+  bb2 {
+    %3 = %1 is nil
+    %3 ? bb3 : bb4;
+  }
+  bb3 {
+    %2 = %0;
+    GOTO bb5;
+  }
+  bb4 {
+    %2 = %1;
+    GOTO bb5;
+  }
+  bb5 {
+    f = %2;
+    %6 = ConstantLoad count
+    %7 = f->[%6].get() -> bb6;
+  }
+  bb6 {
+    %8 = %7;
+    %5 = + counter %8;
+    counter = %5;
+    PopScopeFrame
+    lock-end "$anon/.:counter" GOTO bb7;
+  }
+  bb7 {
+    lock-start "$anon/.:counter" GOTO bb8;
+  }
+  bb8 {
+    PushScopeFrame 1
+    %0 = println(counter) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    lock-end "$anon/.:counter" GOTO bb10;
+  }
+  bb10 {
+    %1 = newObject $anon/.:Foo
+    %2 = %1.init() -> bb11;
+  }
+  bb11 {
+    %4 = %2 is nil
+    %4 ? bb12 : bb13;
+  }
+  bb12 {
+    %3 = %1;
+    GOTO bb14;
+  }
+  bb13 {
+    %3 = %2;
+    GOTO bb14;
+  }
+  bb14 {
+    %5 = bar(%3) -> bb15;
+  }
+  bb15 {
+    %6 = %5;
+    %7 = println(%6) -> bb16;
+  }
+  bb16 {
+    %8 = newObject $anon/.:Baz
+    %9 = %8.init() -> bb17;
+  }
+  bb17 {
+    %11 = %9 is nil
+    %11 ? bb18 : bb19;
+  }
+  bb18 {
+    %10 = %8;
+    GOTO bb20;
+  }
+  bb19 {
+    %10 = %9;
+    GOTO bb20;
+  }
+  bb20 {
+    %12 = newObject $anon/.:Foo
+    %13 = %12.init() -> bb21;
+  }
+  bb21 {
+    %15 = %13 is nil
+    %15 ? bb22 : bb23;
+  }
+  bb22 {
+    %14 = %12;
+    GOTO bb24;
+  }
+  bb23 {
+    %14 = %13;
+    GOTO bb24;
+  }
+  bb24 {
+    %16 = %10.qux(%14) -> bb25;
+  }
+  bb25 {
+    %17 = %16;
+    %18 = println(%17) -> bb26;
+  }
+  bb26 {
+    return;
+  }
+}

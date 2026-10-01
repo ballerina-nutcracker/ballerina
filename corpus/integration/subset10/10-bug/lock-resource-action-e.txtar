@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invocation of a non-isolated function inside lock statement
+  --> lock-resource-action-e.bal:31:20
+   |
+31 |         counter += f->/count(); // @error
+   |                    ^^^^^^^^^^^
