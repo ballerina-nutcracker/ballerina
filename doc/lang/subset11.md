@@ -61,6 +61,10 @@
 - [Client resource access action](https://ballerina.io/spec/lang/master/#client-resource-access-action)
 - [Start action](https://ballerina.io/spec/lang/master/#start-action)
 - [Wait action](https://ballerina.io/spec/lang/master/#wait-action)
+- [Worker message passing](https://ballerina.io/spec/lang/master/#section_7.8): async send, sync send, receive, multiple receive and flush
+  - Alternate receive (`<- a | b`) is not supported
+  - A message action must be a statement of the worker itself (or a `check`, `trap`, `return`, parenthesized, `match` subject or `foreach` collection operand there); it is not supported inside nested blocks, after an `if` without `else`, in queries, compound assignments, a send under `trap`, or a lambda that doesn't declare the peer
+  - When the workers of a function body exchange messages, a `wait` on one of those workers must likewise be a statement of a worker; it is not supported inside nested blocks or after an `if` without `else`
 - [Error constructor](https://ballerina.io/spec/lang/master/#error-constructor-expr)
   - Detail fields that are not given as named arguments take the default values of the detail record type, with the following restrictions:
     - When the contextually expected type is a union of error types, named arguments are not used to select a member, so defaults are applied only when the detail type has a single mapping alternative.
