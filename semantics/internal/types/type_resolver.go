@@ -218,6 +218,11 @@ type packageTypeResolver struct {
 	ephemeralState ephemeralState
 
 	deferredEmptinessChecks []deferredEmptinessCheck
+
+	// resolvingPublicNodes is set while ResolvePublicNodes runs. The lazily
+	// resolved state above isn't safe for concurrent use, so workers are
+	// resolved one after another then.
+	resolvingPublicNodes bool
 }
 
 func (t *packageTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool {
@@ -794,7 +799,9 @@ func (t *packageTypeResolver) resolveTypeOnce(ref model.SymbolRef, resolve func(
 // ResolvePublicNodeTypes resolves types of public symbols. After this dependencies can use the ExportedSymbolSpace for this package.
 func ResolvePublicNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
 	t := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
+	t.resolvingPublicNodes = true
 	t.resolveTopLevelTypes(pkg)
+	t.resolvingPublicNodes = false
 	mergeImplicitImports(pkg, t.implicitImports)
 }
 
@@ -2379,8 +2386,13 @@ func resolveBlockFunctionBody(t typeResolver, chain *binding, body *ast.BLangBlo
 		children = append(children, newNamedWorkerResolution(t, startupChain, worker, returnTypes[i]))
 	}
 	children = append(children, newDefaultWorkerResolution(t, startupChain, body))
-	for _, child := range children {
-		child.resolve()
+	if isResolvingPublicNodes(t) {
+		// Symbol resolution rejects message actions here, so no worker waits on another.
+		for _, child := range children {
+			child.resolve()
+		}
+	} else {
+		runWorkerResolutions(children)
 	}
 	for _, child := range children {
 		mergeChildResolver(t, child.resolver)
@@ -2403,6 +2415,44 @@ func (r workerResolution) resolve() {
 		return
 	}
 	resolveBlockFunctionBody(r.resolver, r.chain, r.worker.Body)
+}
+
+// runWorkerResolutions resolves every child in its own goroutine and waits for
+// all of them. A Go panic in a child is re-raised here once every child has
+// finished.
+func runWorkerResolutions(children []workerResolution) {
+	// A receive waits for its send's type. Bidirectional messaging can require
+	// alternating progress between worker bodies; resolving a whole body before
+	// starting its peers could block before they publish the types it needs.
+	panics := make([]any, len(children))
+	var wg sync.WaitGroup
+	for i, child := range children {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					panics[i] = r
+				}
+			}()
+			child.resolve()
+		}()
+	}
+	wg.Wait()
+	for _, r := range panics {
+		if r != nil {
+			panic(r) //nolint:forbidigo // Re-raise a child goroutine's panic on the resolving goroutine.
+		}
+	}
+}
+
+func isResolvingPublicNodes(t typeResolver) bool {
+	for current := t; current != nil; current = current.parent() {
+		if resolver, ok := current.(*packageTypeResolver); ok {
+			return resolver.resolvingPublicNodes
+		}
+	}
+	return false
 }
 
 // declareNamedWorkerType resolves a worker's return type and gives its symbol
@@ -2460,7 +2510,7 @@ func newWorkerChildResolver(t typeResolver, returnTy semtypes.SemType, workerNam
 		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
 		xmlStepOwner:      workerXMLStepOwner(t, workerName),
-		xmlStepCounters:   resolverXMLStepCounters(t),
+		xmlStepCounters:   maps.Clone(resolverXMLStepCounters(t)),
 		scope:             scope,
 		context:           resolverContextForFunction(isolatedContext(t)),
 		ephemeralState:    childEphemeralState(t),
@@ -2495,12 +2545,14 @@ func resolverXMLStepOwner(t typeResolver) string {
 }
 
 // mergeChildResolver hands what a child resolver collected to its parent: the
-// implicit imports, which the enclosing function owns, and whether a candidate
+// implicit imports, which the enclosing function owns, the XML step counters,
+// which a worker's goroutine advances in its own copy, and whether a candidate
 // trial in flight reported an unimplemented error.
 func mergeChildResolver(parent typeResolver, child *functionTypeResolver) {
 	for name, imp := range child.implicitImports {
 		parent.addImplicitImport(name, imp)
 	}
+	maps.Copy(resolverXMLStepCounters(parent), child.xmlStepCounters)
 	if state := resolverEphemeralState(parent); state != nil && child.ephemeralState.unimplementedReported {
 		state.unimplementedReported = true
 	}
