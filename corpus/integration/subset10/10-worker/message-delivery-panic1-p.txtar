@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: b panicked
+        at boom(message-delivery-panic1-p.bal:19)
+           main(message-delivery-panic1-p.bal:26)

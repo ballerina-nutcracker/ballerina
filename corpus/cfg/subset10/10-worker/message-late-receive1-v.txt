@@ -1,0 +1,58 @@
+(launch
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (return
+          (binary-expr *
+            (simple-var-ref x)
+            (literal 2)))))
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (simple-var-ref w))))
+    (expression-stmt
+      (worker-async-send-action w
+        (literal 5)))
+    (return
+      (simple-var-ref f))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable escaped (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (invocation launch ()))))
+    (var-def
+      (variable result (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref escaped)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr *
+        (simple-var-ref x)
+        (literal 2)))
+  )
+)

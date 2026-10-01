@@ -1,0 +1,64 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (named-worker a (
+        (value-type null))
+        (block-function-body
+          (var-def
+            (variable e (type
+              (error-type)) (expr
+              (error-constructor-expr (
+                (literal sent))))))
+          (expression-stmt
+            (worker-async-send-action function
+              (simple-var-ref e)))
+          (var-def
+            (variable f (type
+              (error-type)) (expr
+              (error-constructor-expr (
+                (literal also sent))))))
+          (expression-stmt
+            (worker-async-send-action function
+              (simple-var-ref f)))))
+      (var-def
+        (variable single (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (worker-receive-action a))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref single)
+              (error-type))
+            (invocation message expr:
+              (simple-var-ref single) ())
+            (literal value)))))
+      (var-def
+        (variable r (type
+          (record-type
+            (field a
+              (union-type
+                (value-type int)
+                (error-type))))) (expr
+          (worker-multiple-receive-action a:a))))
+      (var-def
+        (variable fieldValue (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (field-based-access a
+            (simple-var-ref r)))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref fieldValue)
+              (error-type))
+            (invocation message expr:
+              (simple-var-ref fieldValue) ())
+            (literal value))))))))

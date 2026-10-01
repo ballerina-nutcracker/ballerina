@@ -1,0 +1,55 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported outside a module-level function or method
+  --> message-module-level1-fv.bal:39:9
+   |
+39 |         1 -> function; // @error
+   |         ^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported outside a module-level function or method
+  --> message-module-level1-fv.bal:41:12
+   |
+41 |     return <- w; // @error
+   |            ^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported outside a module-level function or method
+  --> message-module-level1-fv.bal:46:13
+   |
+46 |             2 -> function; // @error
+   |             ^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported outside a module-level function or method
+  --> message-module-level1-fv.bal:48:16
+   |
+48 |         return <- w; // @error
+   |                ^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported outside a module-level function or method
+  --> message-module-level1-fv.bal:56:13
+   |
+56 |             3 ->> function; // @error
+   |             ^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported outside a module-level function or method
+  --> message-module-level1-fv.bal:58:16
+   |
+58 |         return <- w; // @error
+   |                ^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported outside a module-level function or method
+  --> message-module-level1-fv.bal:65:13
+   |
+65 |             4 -> function; // @error
+   |             ^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported outside a module-level function or method
+  --> message-module-level1-fv.bal:66:19
+   |
+66 |             check flush; // @error
+   |                   ^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported outside a module-level function or method
+  --> message-module-level1-fv.bal:68:16
+   |
+68 |         return <- w; // @error
+   |                ^^^^

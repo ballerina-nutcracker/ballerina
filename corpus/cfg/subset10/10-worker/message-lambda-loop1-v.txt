@@ -1,0 +1,81 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable exchange (expr
+        (lambda
+          (function $anonFunc$_0 (
+            (variable n (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (named-worker a (
+                (value-type int))
+                (block-function-body
+                  (var-def
+                    (variable x (type
+                      (value-type int)) (expr
+                      (worker-receive-action function))))
+                  (return
+                    (binary-expr *
+                      (simple-var-ref x)
+                      (simple-var-ref x)))))
+              (expression-stmt
+                (worker-async-send-action a
+                  (simple-var-ref n)))
+              (return
+                (single-wait-action
+                  (simple-var-ref a)))))))))
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 1))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr <=
+      (simple-var-ref i)
+      (literal 3))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (invocation exchange (
+          (simple-var-ref i))))))
+    (compound-assignment +
+      (simple-var-ref i)
+      (literal 1))
+  )
+  (bb3 (bb1) ())
+)
+($anonFunc$_0
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (return
+          (binary-expr *
+            (simple-var-ref x)
+            (simple-var-ref x)))))
+    (expression-stmt
+      (worker-async-send-action a
+        (simple-var-ref n)))
+    (return
+      (single-wait-action
+        (simple-var-ref a)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr *
+        (simple-var-ref x)
+        (simple-var-ref x)))
+  )
+)

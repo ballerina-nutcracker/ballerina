@@ -1,0 +1,126 @@
+(flushAll
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (return
+          (worker-receive-action function))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (return
+          (worker-receive-action function))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 1)))
+    (expression-stmt
+      (worker-async-send-action b
+        (literal 2)))
+    (expression-stmt
+      (worker-flush-action))
+    (var-def
+      (variable r (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (multiple-wait-action a
+          (simple-var-ref a) b
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(flushNothing
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body))
+    (expression-stmt
+      (worker-flush-action a))
+    (expression-stmt
+      (worker-flush-action))
+    (expression-stmt
+      (single-wait-action
+        (simple-var-ref a)))
+    (expression-stmt
+      (invocation io println (
+        (literal nothing to flush))))
+  )
+)
+(flushPeer
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (var-def
+          (variable y (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (return
+          (binary-expr +
+            (simple-var-ref x)
+            (simple-var-ref y)))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 1)))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 2)))
+    (expression-stmt
+      (worker-flush-action a))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation flushPeer ()))
+    (expression-stmt
+      (invocation flushAll ()))
+    (expression-stmt
+      (invocation flushNothing ()))
+  )
+)
+(worker a
+  (bb0 () ()
+    (return
+      (worker-receive-action function))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (var-def
+      (variable y (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref y)))
+  )
+)
+(worker a
+  (bb0 () ())
+)
+(worker b
+  (bb0 () ()
+    (return
+      (worker-receive-action function))
+  )
+)

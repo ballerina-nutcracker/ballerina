@@ -1,0 +1,175 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function exchange () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$3))
+      (var-def
+        (variable $desugar$4))
+      (var-def
+        (variable $desugar$5))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:exchange:$function () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable x (type
+                    (value-type int)) (expr
+                    (invocation lang.__internal getWorkerMessageValue (
+                      (simple-var-ref $desugar$1)
+                      (simple-var-ref $desugar$4))))))
+                (var-def
+                  (variable y (type
+                    (value-type int)) (expr
+                    (invocation lang.__internal getWorkerMessageValue (
+                      (simple-var-ref $desugar$2)
+                      (simple-var-ref $desugar$5))))))
+                (var-def
+                  (variable p (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$4)))))
+                (var-def
+                  (variable q (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$5)))))
+                (return
+                  (binary-expr +
+                    (binary-expr +
+                      (binary-expr +
+                        (simple-var-ref x)
+                        (simple-var-ref y))
+                      (simple-var-ref p))
+                    (simple-var-ref q)))))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $worker:exchange:a$body () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$1)
+                    (literal 1))))
+                (return
+                  (literal 10))))))))
+      (var-def
+        (variable $desugar$9 (expr
+          (lambda
+            (function $worker:exchange:a () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$8 (expr
+                    (invocation $desugar$7 ()))))
+                (expression-stmt
+                  (invocation lang.__internal awaitWorkerMessageDelivery (
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$1))
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$3)))))
+                (return
+                  (simple-var-ref $desugar$8))))))))
+      (var-def
+        (variable $desugar$10 (expr
+          (lambda
+            (function $worker:exchange:b$body () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$2)
+                    (literal 2))))
+                (return
+                  (literal 20))))))))
+      (var-def
+        (variable $desugar$12 (expr
+          (lambda
+            (function $worker:exchange:b () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$11 (expr
+                    (invocation $desugar$10 ()))))
+                (expression-stmt
+                  (invocation lang.__internal awaitWorkerMessageDelivery (
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$2))
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$3)))))
+                (return
+                  (simple-var-ref $desugar$11))))))))
+      (assignment
+        (simple-var-ref $desugar$3)
+        (start-action isolated
+          (invocation $desugar$6 ())))
+      (assignment
+        (simple-var-ref $desugar$4)
+        (start-action isolated
+          (invocation $desugar$9 ())))
+      (assignment
+        (simple-var-ref $desugar$5)
+        (start-action isolated
+          (invocation $desugar$12 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$3)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 20))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
+          (compound-assignment +
+            (simple-var-ref total)
+            (invocation exchange ()))
+          (assignment
+            (simple-var-ref $desugar$0)
+            (binary-expr +
+              (simple-var-ref $desugar$0)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref total)))))))

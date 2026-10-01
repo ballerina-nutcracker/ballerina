@@ -1,0 +1,98 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function bySyncSend () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (named-worker a (
+        (union-type
+          (value-type int)
+          (error-type)))
+        (block-function-body
+          (var-def
+            (variable x (type
+              (value-type int)) (expr
+              (checked-expr
+                (worker-receive-action function)))))
+          (var-def
+            (variable y (type
+              (value-type int)) (expr
+              (checked-expr
+                (worker-receive-action function)))))
+          (return
+            (binary-expr +
+              (simple-var-ref x)
+              (simple-var-ref y)))))
+      (expression-stmt
+        (worker-async-send-action a
+          (literal 1)))
+      (expression-stmt
+        (checked-expr
+          (worker-sync-send-action a
+            (literal 2))))
+      (return
+        (single-wait-action
+          (simple-var-ref a)))))
+  (function byFlushPeer () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (named-worker a (
+        (union-type
+          (value-type int)
+          (error-type)))
+        (block-function-body
+          (return
+            (checked-expr
+              (worker-receive-action function)))))
+      (expression-stmt
+        (worker-async-send-action a
+          (literal 3)))
+      (expression-stmt
+        (checked-expr
+          (worker-flush-action a)))
+      (return
+        (single-wait-action
+          (simple-var-ref a)))))
+  (function byFlush () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (named-worker a (
+        (union-type
+          (value-type int)
+          (error-type)))
+        (block-function-body
+          (return
+            (checked-expr
+              (worker-receive-action function)))))
+      (expression-stmt
+        (worker-async-send-action a
+          (literal 4)))
+      (expression-stmt
+        (checked-expr
+          (worker-flush-action)))
+      (return
+        (single-wait-action
+          (simple-var-ref a)))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation bySyncSend ())))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation byFlushPeer ())))))
+      (expression-stmt
+        (invocation io println (
+          (checked-expr
+            (invocation byFlush ()))))))))

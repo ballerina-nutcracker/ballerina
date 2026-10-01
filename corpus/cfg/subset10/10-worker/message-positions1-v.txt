@@ -1,0 +1,205 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (checked-expr
+          (invocation positions ())))))
+  )
+)
+(positions
+  (bb0 () (bb1)
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable value (type
+            (value-type int)) (expr
+            (checked-expr
+              (worker-receive-action function)))))
+        (expression-stmt
+          (worker-async-send-action function
+            (simple-var-ref value)))
+        (var-def
+          (variable trapped (type
+            (union-type
+              (value-type int)
+              (error-type))) (expr
+            (trap-expr
+              (worker-receive-action function)))))
+        (expression-stmt
+          (worker-async-send-action function
+            (simple-var-ref trapped)))
+        (var-def
+          (variable list (type
+            (array-type
+              (value-type int) dimensions: 1 ([]))) (expr
+            (checked-expr
+              (worker-receive-action function)))))
+        (expression-stmt
+          (worker-async-send-action function
+            (simple-var-ref list)))
+        (var-def
+          (variable matched (type
+            (value-type int)) (expr
+            (checked-expr
+              (worker-receive-action function)))))
+        (expression-stmt
+          (worker-async-send-action function
+            (simple-var-ref matched)))
+        (var-def
+          (variable braced (type
+            (value-type int)) (expr
+            (checked-expr
+              (worker-receive-action function)))))
+        (expression-stmt
+          (worker-async-send-action function
+            (simple-var-ref braced)))
+        (var-def
+          (variable last (type
+            (value-type int)) (expr
+            (checked-expr
+              (worker-receive-action function)))))
+        (expression-stmt
+          (worker-async-send-action function
+            (simple-var-ref last)))
+        (expression-stmt
+          (checked-expr
+            (worker-flush-action function)))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 1)))
+    (var-def
+      (variable first (type
+        (value-type int)) (expr
+        (checked-expr
+          (worker-receive-action a)))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 2)))
+    (var-def
+      (variable second (type
+        (value-type int)) (expr
+        (checked-expr
+          (worker-receive-action a)))))
+    (expression-stmt
+      (worker-async-send-action a
+        (list-constructor-expr
+          (literal 3)
+          (literal 4))))
+    (var-def
+      (variable sum (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (checked-expr
+      (worker-receive-action a))
+    (var-def
+      (variable v (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref sum)
+      (simple-var-ref v))
+  )
+  (bb3 (bb1) (bb5 bb4)
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 5)))
+    (checked-expr
+      (worker-receive-action a))
+  )
+  (bb4 (bb5 bb3) ()
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 6)))
+    (var-def
+      (variable braced (type
+        (value-type int)) (expr
+        (checked-expr
+          (worker-receive-action a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref first)
+        (literal  )
+        (simple-var-ref second)
+        (literal  )
+        (simple-var-ref sum)
+        (literal  )
+        (simple-var-ref braced))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 7)))
+    (expression-stmt
+      (checked-expr
+        (worker-flush-action a)))
+    (return
+      (worker-receive-action a))
+  )
+  (bb5 (bb3) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (literal matched five))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (value-type int)) (expr
+        (checked-expr
+          (worker-receive-action function)))))
+    (expression-stmt
+      (worker-async-send-action function
+        (simple-var-ref value)))
+    (var-def
+      (variable trapped (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (worker-receive-action function)))))
+    (expression-stmt
+      (worker-async-send-action function
+        (simple-var-ref trapped)))
+    (var-def
+      (variable list (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (worker-receive-action function)))))
+    (expression-stmt
+      (worker-async-send-action function
+        (simple-var-ref list)))
+    (var-def
+      (variable matched (type
+        (value-type int)) (expr
+        (checked-expr
+          (worker-receive-action function)))))
+    (expression-stmt
+      (worker-async-send-action function
+        (simple-var-ref matched)))
+    (var-def
+      (variable braced (type
+        (value-type int)) (expr
+        (checked-expr
+          (worker-receive-action function)))))
+    (expression-stmt
+      (worker-async-send-action function
+        (simple-var-ref braced)))
+    (var-def
+      (variable last (type
+        (value-type int)) (expr
+        (checked-expr
+          (worker-receive-action function)))))
+    (expression-stmt
+      (worker-async-send-action function
+        (simple-var-ref last)))
+    (expression-stmt
+      (checked-expr
+        (worker-flush-action function)))
+  )
+)
