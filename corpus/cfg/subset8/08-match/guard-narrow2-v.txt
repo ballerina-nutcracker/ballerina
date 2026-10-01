@@ -1,0 +1,174 @@
+(guardFalse
+  (bb0 () (bb2 bb3)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb3) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal big))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal other))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation multiBlock (
+        (literal 5))))
+    (expression-stmt
+      (invocation multiPattern (
+        (literal 2))))
+    (expression-stmt
+      (invocation multiPattern (
+        (literal 3))))
+    (expression-stmt
+      (invocation multiPattern (
+        (literal 9))))
+    (expression-stmt
+      (invocation nonVarRef ()))
+    (expression-stmt
+      (invocation otherVar (
+        (literal 1)
+        (literal 3))))
+    (expression-stmt
+      (invocation otherVar (
+        (literal 1)
+        (literal x))))
+    (expression-stmt
+      (invocation guardFalse (
+        (literal 1))))
+    (expression-stmt
+      (invocation orGuard (
+        (literal a))))
+    (expression-stmt
+      (invocation seq (
+        (literal 1))))
+    (expression-stmt
+      (invocation seq (
+        (literal 2))))
+  )
+)
+(multiBlock
+  (bb0 () (bb2)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref v)
+          (literal 1)))))
+  )
+)
+(multiPattern
+  (bb0 () (bb2 bb3 bb4)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb3 bb4) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal two))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal three))))
+  )
+  (bb4 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal other))))
+  )
+)
+(nonVarRef
+  (bb0 () (bb2 bb3)
+    (invocation val ())
+  )
+  (bb1 (bb2 bb3) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal four))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal other))))
+  )
+)
+(orGuard
+  (bb0 () (bb2 bb3)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb3) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal a))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal other))))
+  )
+)
+(otherVar
+  (bb0 () (bb2 bb3)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb3) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref w)
+          (simple-var-ref v)))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal other))))
+  )
+)
+(seq
+  (bb0 () (bb2 bb3 bb4)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb3 bb4) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal c1))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal c2))))
+  )
+  (bb4 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal c3))))
+  )
+)
+(trace
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref s))))
+    (return
+      (simple-var-ref b))
+  )
+)
+(val
+  (bb0 () ()
+    (return
+      (literal 4))
+  )
+)

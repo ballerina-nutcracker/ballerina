@@ -1,0 +1,13 @@
+-- stdout --
+one
+no match
+one
+a
+other
+one
+other
+2
+guard evaluated
+one
+other
+-- stderr --

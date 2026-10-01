@@ -1,0 +1,277 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation multiBlock (
+          (literal 5))))
+      (expression-stmt
+        (invocation multiPattern (
+          (literal 2))))
+      (expression-stmt
+        (invocation multiPattern (
+          (literal 3))))
+      (expression-stmt
+        (invocation multiPattern (
+          (literal 9))))
+      (expression-stmt
+        (invocation nonVarRef ()))
+      (expression-stmt
+        (invocation otherVar (
+          (literal 1)
+          (literal 3))))
+      (expression-stmt
+        (invocation otherVar (
+          (literal 1)
+          (literal x))))
+      (expression-stmt
+        (invocation guardFalse (
+          (literal 1))))
+      (expression-stmt
+        (invocation orGuard (
+          (literal a))))
+      (expression-stmt
+        (invocation seq (
+          (literal 1))))
+      (expression-stmt
+        (invocation seq (
+          (literal 2))))))
+  (function multiBlock (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (match-guard
+            (binary-expr &&
+              (type-test-expr is
+                (simple-var-ref v)
+                (value-type int))
+              (binary-expr >
+                (simple-var-ref v)
+                (literal 0))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (binary-expr +
+                  (simple-var-ref v)
+                  (literal 1))))))))))
+  (function multiPattern (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (const-pattern
+            (literal 2))
+          (const-pattern
+            (literal a))
+          (match-guard
+            (binary-expr &&
+              (type-test-expr is
+                (simple-var-ref v)
+                (value-type int))
+              (binary-expr ==
+                (binary-expr *
+                  (simple-var-ref v)
+                  (literal 2))
+                (literal 4))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal two))))))
+        (match-clause
+          (const-pattern
+            (literal 3))
+          (match-guard
+            (binary-expr ==
+              (binary-expr +
+                (simple-var-ref v)
+                (literal 1))
+              (literal 4)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal three))))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal other)))))))))
+  (function val () (
+    (union-type
+      (value-type int)
+      (value-type string)))
+    (block-function-body
+      (return
+        (literal 4))))
+  (function nonVarRef () (
+    (value-type null))
+    (block-function-body
+      (match
+        (invocation val ())
+        (match-clause
+          (const-pattern
+            (literal 4))
+          (match-guard
+            (literal true))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal four))))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal other)))))))))
+  (function otherVar (
+    (variable v (type
+      (value-type int)))
+    (variable w (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (match-guard
+            (type-test-expr is
+              (simple-var-ref w)
+              (value-type int)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (binary-expr +
+                  (simple-var-ref w)
+                  (simple-var-ref v)))))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal other)))))))))
+  (function guardFalse (
+    (variable v (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (match-guard
+            (binary-expr >
+              (simple-var-ref v)
+              (literal 5)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal big))))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal other)))))))))
+  (function orGuard (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal a))
+          (match-guard
+            (binary-expr ||
+              (binary-expr ==
+                (invocation lang.string length (
+                  (simple-var-ref v)))
+                (literal 0))
+              (binary-expr ==
+                (simple-var-ref v)
+                (literal a))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal a))))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal other)))))))))
+  (function seq (
+    (variable v (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (match-guard
+            (invocation trace (
+              (literal g1)
+              (literal false))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal c1))))))
+        (match-clause
+          (const-pattern
+            (literal 2))
+          (match-guard
+            (invocation trace (
+              (literal g2)
+              (literal true))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal c2))))))
+        (match-clause
+          (wildcard-match-pattern)
+          (match-guard
+            (invocation trace (
+              (literal g3)
+              (literal true))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal c3)))))))))
+  (function trace (
+    (variable s (type
+      (value-type string)))
+    (variable b (type
+      (value-type boolean)))) (
+    (value-type boolean))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref s))))
+      (return
+        (simple-var-ref b)))))

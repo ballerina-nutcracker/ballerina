@@ -1,0 +1,6 @@
+-- stdout --
+other
+-- stderr --
+error: divide by zero
+        at f(guard-narrow-p.bal:27)
+           main(guard-narrow-p.bal:22)

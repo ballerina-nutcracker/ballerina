@@ -35,8 +35,7 @@ classify(int,boolean) -> nil{
     %8 = ConstantLoad 3
     %9 = == x %8;
     %10 = || %7 %9;
-    %11 = && %10 allowed;
-    %11 ? bb2 : bb3;
+    %10 ? bb4 : bb3;
   }
   bb1 {
     return;
@@ -44,21 +43,24 @@ classify(int,boolean) -> nil{
   bb2 {
     PushScopeFrame 2
     %0 = ConstantLoad small-allowed
-    %1 = println(%0) -> bb4;
+    %1 = println(%0) -> bb5;
   }
   bb3 {
-    GOTO bb5;
+    GOTO bb6;
   }
   bb4 {
+    allowed ? bb2 : bb3;
+  }
+  bb5 {
     PopScopeFrame
     GOTO bb1;
   }
-  bb5 {
+  bb6 {
     PushScopeFrame 2
     %0 = ConstantLoad other
-    %1 = println(%0) -> bb6;
+    %1 = println(%0) -> bb7;
   }
-  bb6 {
+  bb7 {
     PopScopeFrame
     GOTO bb1;
   }

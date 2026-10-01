@@ -1,0 +1,59 @@
+(constThenWildcard
+  (bb0 () (bb2 bb3 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal no match))))
+  )
+  (bb2 (bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal zero))))
+    (return
+      (literal <nil>))
+  )
+  (bb3 (bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal matched))))
+    (return
+      (literal <nil>))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation wildcardNoGuard (
+        (error-constructor-expr (
+          (literal e))))))
+    (expression-stmt
+      (invocation wildcardNoGuard (
+        (literal 1))))
+    (expression-stmt
+      (invocation constThenWildcard (
+        (error-constructor-expr (
+          (literal e))))))
+    (expression-stmt
+      (invocation constThenWildcard (
+        (literal 5))))
+  )
+)
+(wildcardNoGuard
+  (bb0 () (bb2 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal no match))))
+  )
+  (bb2 (bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal matched))))
+    (return
+      (literal <nil>))
+  )
+)
