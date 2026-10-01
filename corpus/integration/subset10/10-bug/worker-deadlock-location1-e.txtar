@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker message deadlock
+  --> worker-deadlock-location1-e.bal:20:17
+   |
+20 |         int x = <- b; // @error worker message deadlock should identify this blocked receive
+   |                 ^^^^

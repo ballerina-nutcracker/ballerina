@@ -1,0 +1,52 @@
+(Calculator
+  (Calculator.$resource$get$0
+    (bb0 () ()
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (var-def
+            (variable x (type
+              (value-type int)) (expr
+              (worker-receive-action function))))
+          (return
+            (binary-expr *
+              (simple-var-ref x)
+              (literal 2)))))
+      (expression-stmt
+        (worker-async-send-action w
+          (simple-var-ref n)))
+      (return
+        (single-wait-action
+          (simple-var-ref w)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Calculator)) (expr
+        (new ()))))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (client-resource-access get expr:
+          (simple-var-ref c) name:doubled
+          (literal 21)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr *
+        (simple-var-ref x)
+        (literal 2)))
+  )
+)

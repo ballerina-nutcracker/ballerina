@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: b failed
+        at main(message-flush-delivery1-p.bal:31)

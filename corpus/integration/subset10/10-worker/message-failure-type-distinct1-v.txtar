@@ -1,0 +1,6 @@
+-- stdout --
+1 {"b":2}
+a failed b failed
+true
+5
+-- stderr --

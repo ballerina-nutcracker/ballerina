@@ -1,0 +1,6 @@
+-- stdout --
+{"a":1,"b":2}
+-- stderr --
+error: inherent type violation
+        at addField(message-multiple-closed1-p.bal:20)
+           main(message-multiple-closed1-p.bal:34)

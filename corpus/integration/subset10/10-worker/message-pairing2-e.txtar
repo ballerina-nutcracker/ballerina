@@ -43,10 +43,10 @@ error[SEMANTIC_ERROR]: worker message deadlock
    |             ^^^^
 
 error[SEMANTIC_ERROR]: worker message deadlock
-  --> message-pairing2-e.bal:49:5
+  --> message-pairing2-e.bal:46:17
    |
-49 |     wait a; // @error a can't terminate before b receives its message
-   |     ^^^^^^
+46 |         int _ = <- function; // @error a cannot terminate before b receives its message
+   |                 ^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: worker message deadlock
   --> message-pairing2-e.bal:83:19
@@ -55,7 +55,7 @@ error[SEMANTIC_ERROR]: worker message deadlock
    |                   ^^^^^^^^^
 
 error[SEMANTIC_ERROR]: worker message deadlock
-  --> message-pairing2-e.bal:95:5
+  --> message-pairing2-e.bal:89:9
    |
-95 |     wait a; // @error a's sync send waits for b, which waits for the default worker
-   |     ^^^^^^
+89 |         1 ->> b; // @error a's sync send waits for b, which waits for the default worker
+   |         ^^^^^^^

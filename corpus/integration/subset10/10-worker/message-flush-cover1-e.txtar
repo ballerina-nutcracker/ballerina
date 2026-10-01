@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: async send to a worker that can fail must be followed by a sync send or flush to it
+  --> message-flush-cover1-e.bal:23:5
+   |
+23 |     1 -> a; // @error no flush or sync send follows the send
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: async send to a worker that can fail must be followed by a sync send or flush to it
+  --> message-flush-cover1-e.bal:33:5
+   |
+33 |     1 -> a; // @error flushing b doesn't cover the send to a
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: async send to a worker that can fail must be followed by a sync send or flush to it
+  --> message-flush-cover1-e.bal:46:5
+   |
+46 |     1 -> a; // @error a sync send to b doesn't cover the send to a
+   |     ^^^^^^

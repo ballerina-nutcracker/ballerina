@@ -1,0 +1,61 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (checked-expr
+              (invocation int fromString (
+                (literal not a number)))))))
+        (expression-stmt
+          (worker-async-send-action function
+            (simple-var-ref x)))))
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (worker-receive-action a))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref r)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref r)))
+          (literal value)))))
+    (var-def
+      (variable w (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref w)
+            (error-type))
+          (literal a failed)
+          (literal a done)))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation int fromString (
+            (literal not a number)))))))
+    (expression-stmt
+      (worker-async-send-action function
+        (simple-var-ref x)))
+  )
+)

@@ -43,7 +43,7 @@ error[SEMANTIC_ERROR]: worker interaction after wait action
    |     ^^^^^^
 
 error[SEMANTIC_ERROR]: worker message deadlock
-  --> message-pairing1-e.bal:80:9
+  --> message-pairing1-e.bal:75:17
    |
-80 |     _ = wait a | b; // @error neither worker can finish before the default worker sends
-   |         ^^^^^^^^^^
+75 |         int _ = <- function; // @error neither worker can finish before the default worker sends
+   |                 ^^^^^^^^^^^

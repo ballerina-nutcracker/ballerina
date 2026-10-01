@@ -48,7 +48,7 @@
 - [Named workers](https://ballerina.io/spec/lang/master/#section_7.3.2) ([`named-worker-decl`](https://ballerina.io/spec/lang/master/#named-worker-decl))
   - Only in a `block-function-body`, with optional annotations and return type
   - [`wait`](https://ballerina.io/spec/lang/master/#wait-action) on a worker name has the worker's return type as its eventual type
-  - Message passing (send, receive, flush), `fork`, `transactional` workers and `on fail` are not supported
+  - `fork`, `transactional` workers and `on fail` are not supported; message passing is listed under Actions
 
 ## Expressions
 
@@ -62,9 +62,11 @@
 - [Start action](https://ballerina.io/spec/lang/master/#start-action)
 - [Wait action](https://ballerina.io/spec/lang/master/#wait-action)
 - [Worker message passing](https://ballerina.io/spec/lang/master/#section_7.8): async send, sync send, receive, multiple receive and flush
-  - Alternate receive (`<- a | b`) is not supported
-  - A message action must be a statement of the worker itself (or a `check`, `trap`, `return`, parenthesized, `match` subject or `foreach` collection operand there); it is not supported inside nested blocks, after an `if` without `else`, in queries, compound assignments, a send under `trap`, or a lambda that doesn't declare the peer
-  - When the workers of a function body exchange messages, a `wait` on one of those workers must likewise be a statement of a worker; it is not supported inside nested blocks or after an `if` without `else`
+  - Alternate receive (`<- a | b`) is not defined in the linked language specification and is not supported. Alternate wait (`wait a | b`) is defined in [§7.7.3](https://ballerina.io/spec/lang/master/#section_7.7.3) and is supported
+  - The placement, error-handling and wait-placement restrictions below are implementation limitations, not additional language rules; programs must still satisfy the specification's [send-receive correspondence rules](https://ballerina.io/spec/lang/master/#section_7.8.4)
+  - A message action must be a statement of the worker itself (or a `check`, `trap`, `return`, parenthesized, `match` subject or `foreach` collection operand there); it is not supported inside nested blocks, after an `if` without `else`, in queries, compound assignments, a send under `trap`, a lambda that doesn't declare the peer, or a function body outside a module-level function or method (an anonymous function in a module-level initializer, default parameter or object field initializer)
+  - A multiple receive from more than one worker that can fail must be returned or be the operand of `check` or `checkpanic`, so its error ends the worker; handling the error otherwise (for example assigning it, or a `match` on it) is not supported. A multiple receive from more than one worker is not supported under `trap`, which could also catch a sender's panic
+  - When the workers of a function body exchange messages, a `wait` on one of those workers (named directly or in parentheses) must likewise be a statement of a worker; it is not supported inside nested blocks or after an `if` without `else`
 - [Error constructor](https://ballerina.io/spec/lang/master/#error-constructor-expr)
 - [Checking expression](https://ballerina.io/spec/lang/master/#checking-expr) (`check` and `checkpanic`)
   - Currently `check` is not supported in [defaultable parameter expressions](https://ballerina.io/spec/lang/master/#defaultable-param) or [record field default expressions](https://ballerina.io/spec/lang/master/#record-type-descriptor), even when the operand cannot produce an error.
