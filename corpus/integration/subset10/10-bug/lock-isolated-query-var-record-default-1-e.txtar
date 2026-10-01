@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> lock-isolated-query-var-record-default-1-e.bal:24:43
+   |
+24 |     int[] ys = from record {| int value = seed; |} r in xs select r.value; // @error
+   |                                           ^^^^

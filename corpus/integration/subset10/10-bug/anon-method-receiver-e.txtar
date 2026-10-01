@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-method-receiver-e.bal:28:54
+   |
+28 |     int n = make(function() returns int { string s = 1; return s.length(); }).get(); // @error incompatible type
+   |                                                      ^

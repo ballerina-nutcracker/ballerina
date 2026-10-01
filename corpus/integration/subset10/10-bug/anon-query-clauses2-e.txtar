@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-query-clauses2-e.bal:22:71
+   |
+22 |     int[] ys = from int x in list(function() returns int { string s = 1; return s.length(); }) // @error incompatible type
+   |                                                                       ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 2
+  --> anon-query-clauses2-e.bal:23:64
+   |
+23 |         join int z in list(function() returns int { string s = 2; return s.length(); }) // @error incompatible type
+   |                                                                ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 3
+  --> anon-query-clauses2-e.bal:24:61
+   |
+24 |             on x + call(function() returns int { string s = 3; return s.length(); }) // @error incompatible type
+   |                                                             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 4
+  --> anon-query-clauses2-e.bal:25:65
+   |
+25 |             equals z + call(function() returns int { string s = 4; return s.length(); }) // @error incompatible type
+   |                                                                 ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 5
+  --> anon-query-clauses2-e.bal:26:71
+   |
+26 |         group by int k = x + call(function() returns int { string s = 5; return s.length(); }) // @error incompatible type
+   |                                                                       ^
