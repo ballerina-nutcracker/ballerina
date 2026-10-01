@@ -14,12 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function workerFlush() {
-    worker sender {
-        1 -> receiver;
-        error? e = flush receiver; // @error worker flush is not supported
+
+function compound() {
+    worker a returns int {
+        int x = 0;
+        x += <- function; // @error worker message send/receive is not supported here
+        x += 1 -> function; // @error worker message send/receive is not supported here
+        x += (<- function); // @error worker message send/receive is not supported here
+        return x;
     }
-    worker receiver {
-        int _ = <- sender;
-    }
+    int _ = wait a;
 }

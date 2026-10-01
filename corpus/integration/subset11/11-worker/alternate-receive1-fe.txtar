@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: alternate receive is not supported
+  --> alternate-receive1-fe.bal:25:13
+   |
+25 |     int _ = <- a | b; // @error alternate receive is not supported
+   |             ^^^^^^^^

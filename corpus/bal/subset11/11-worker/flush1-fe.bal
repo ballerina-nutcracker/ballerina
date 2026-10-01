@@ -14,15 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Every worker message-passing form is rejected: asynchronous send, synchronous
-// send, and receive.
-function messagePassing() {
+function workerFlush() {
     worker sender {
         1 -> receiver; // @error worker message passing is not supported
-        2 ->> receiver; // @error worker message passing is not supported
+        error? _ = flush receiver; // @error worker message passing is not supported
     }
     worker receiver {
-        int _ = <- sender;
-        int _ = <- sender;
+        int _ = <- sender; // @error worker message passing is not supported
     }
 }
