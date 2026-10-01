@@ -1,0 +1,66 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 1)))
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 3)))))
+    (named-worker b (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 2)))))
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (worker-multiple-receive-action a:a second:b))))
+    (assignment
+      (index-based-access
+        (simple-var-ref m)
+        (literal c))
+      (literal 3))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+    (var-def
+      (variable r (type
+        (record-type
+          (field a
+            (value-type int))
+          (rest
+            (value-type int)))) (expr
+        (worker-multiple-receive-action a:a))))
+    (assignment
+      (index-based-access
+        (simple-var-ref r)
+        (literal x))
+      (literal 4))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 1)))
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 3)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 2)))
+  )
+)

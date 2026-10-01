@@ -43,10 +43,10 @@ function deliveryDeadlock() {
         1 -> b;
     }
     worker b {
-        int _ = <- function;
+        int _ = <- function; // @error a cannot terminate before b receives its message
         int _ = <- a;
     }
-    wait a; // @error a can't terminate before b receives its message
+    wait a;
     2 -> b;
 }
 
@@ -86,13 +86,13 @@ function multipleReceiveDeadlock() {
 
 function syncSendDeadlock() {
     worker a {
-        1 ->> b;
+        1 ->> b; // @error a's sync send waits for b, which waits for the default worker
     }
     worker b {
         int _ = <- function;
         int _ = <- a;
     }
-    wait a; // @error a's sync send waits for b, which waits for the default worker
+    wait a;
     2 -> b;
 }
 

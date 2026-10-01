@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: undefined worker 'nobody'
+  --> message-flush-peer1-e.bal:22:17
+   |
+22 |     check flush nobody; // @error undefined worker
+   |                 ^^^^^^
+
+error[SEMANTIC_ERROR]: worker can't send/receive to itself
+  --> message-flush-peer1-e.bal:28:21
+   |
+28 |         check flush a; // @error a worker can't flush to itself
+   |                     ^
+
+error[SEMANTIC_ERROR]: worker can't send/receive to itself
+  --> message-flush-peer1-e.bal:39:17
+   |
+39 |     check flush function; // @error the default worker can't flush to itself
+   |                 ^^^^^^^^

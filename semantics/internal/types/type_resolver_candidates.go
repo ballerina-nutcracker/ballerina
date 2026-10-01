@@ -17,9 +17,6 @@
 package types
 
 import (
-	"maps"
-
-	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -30,9 +27,8 @@ type ephemeralState struct {
 	// unimplementedReported records that a trial reported an unimplemented error. Compilation fails on that
 	// diagnostic, so a new expression whose trials all failed does not add its own.
 	unimplementedReported bool
-	// symbolTypes shadows the compiler context's symbol types while a trial runs. It is non-nil exactly while
-	// depth > 0 and is shared by every trial in the nesting: a trial writes a symbol's type before reading it, so
-	// stale entries from sibling candidates or inner trials are overwritten before they can be read.
+	// symbolTypes holds types written by this resolver's trials and is non-nil
+	// exactly while depth > 0.
 	symbolTypes map[model.SymbolRef]semtypes.SemType
 }
 
@@ -57,7 +53,7 @@ func resolverEphemeralState(t typeResolver) *ephemeralState {
 	case *packageTypeResolver:
 		return &resolver.ephemeralState
 	case *functionTypeResolver:
-		return resolver.ephemeralState
+		return &resolver.ephemeralState
 	case *loopTypeResolver:
 		return resolverEphemeralState(resolver.parentResolver)
 	default:
@@ -65,22 +61,7 @@ func resolverEphemeralState(t typeResolver) *ephemeralState {
 	}
 }
 
-// childEphemeralState is the ephemeral state of a child resolver of t. It is
-// owned by the goroutine resolving the child and starts inside every candidate
-// trial t is in, with a copy of the symbol types those trials recorded;
-// mergeChildResolver hands the outcome back.
-func childEphemeralState(t typeResolver) *ephemeralState {
-	state := &ephemeralState{}
-	if parent := resolverEphemeralState(t); parent != nil {
-		state.depth = parent.depth
-		state.symbolTypes = maps.Clone(parent.symbolTypes)
-	}
-	return state
-}
-
-// enterEphemeral starts a candidate trial. The trial gets its own worker
-// message type store, so its sends publish without clashing with another
-// trial or the final resolution, and it is discarded with the trial.
+// enterEphemeral starts a candidate trial.
 func enterEphemeral(t typeResolver) func() {
 	state := resolverEphemeralState(t)
 	if state == nil {
@@ -90,34 +71,11 @@ func enterEphemeral(t typeResolver) func() {
 		state.symbolTypes = make(map[model.SymbolRef]semtypes.SemType)
 	}
 	state.depth++
-	messageTypes := resolverMessageTypesSlot(t)
-	previous := *messageTypes
-	*messageTypes = t.compilerContext().NewWorkerMessageTypeStore()
 	return func() {
-		*messageTypes = previous
 		state.depth--
 		if state.depth == 0 {
 			state.symbolTypes = nil
 		}
-	}
-}
-
-// resolverMessageTypes returns the worker message type store t publishes to
-// and reads from.
-func resolverMessageTypes(t typeResolver) *context.WorkerMessageTypeStore {
-	return *resolverMessageTypesSlot(t)
-}
-
-func resolverMessageTypesSlot(t typeResolver) **context.WorkerMessageTypeStore {
-	switch resolver := t.(type) {
-	case *packageTypeResolver:
-		return &resolver.messageTypes
-	case *functionTypeResolver:
-		return &resolver.messageTypes
-	case *loopTypeResolver:
-		return resolverMessageTypesSlot(resolver.parentResolver)
-	default:
-		return nil
 	}
 }
 

@@ -1,0 +1,5 @@
+-- stdout --
+error("a failed")
+error("b failed")
+3
+-- stderr --

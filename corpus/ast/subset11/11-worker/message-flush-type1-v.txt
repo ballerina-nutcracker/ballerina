@@ -1,0 +1,79 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function afterSyncSend () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (named-worker a (
+        (union-type
+          (error-type)
+          (value-type null)))
+        (block-function-body
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (checked-expr
+                (worker-receive-action function)))))
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (checked-expr
+                (worker-receive-action function)))))))
+      (expression-stmt
+        (worker-async-send-action a
+          (literal 1)))
+      (expression-stmt
+        (checked-expr
+          (worker-sync-send-action a
+            (literal 2))))
+      (expression-stmt
+        (worker-flush-action a))
+      (expression-stmt
+        (worker-flush-action))
+      (return
+        (single-wait-action
+          (simple-var-ref a)))))
+  (function afterFlush () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (named-worker a (
+        (union-type
+          (error-type)
+          (value-type null)))
+        (block-function-body
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (checked-expr
+                (worker-receive-action function)))))))
+      (expression-stmt
+        (worker-async-send-action a
+          (literal 1)))
+      (expression-stmt
+        (checked-expr
+          (worker-flush-action a)))
+      (expression-stmt
+        (worker-flush-action a))
+      (expression-stmt
+        (worker-flush-action))
+      (return
+        (single-wait-action
+          (simple-var-ref a)))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (expression-stmt
+        (checked-expr
+          (invocation afterSyncSend ())))
+      (expression-stmt
+        (checked-expr
+          (invocation afterFlush ())))
+      (expression-stmt
+        (invocation io println (
+          (literal flushed)))))))

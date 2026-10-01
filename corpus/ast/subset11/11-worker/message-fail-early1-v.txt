@@ -1,0 +1,43 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function failWith (
+    (variable message (type
+      (value-type string)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (simple-var-ref message))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (named-worker a (
+        (union-type
+          (error-type)
+          (value-type null)))
+        (block-function-body
+          (expression-stmt
+            (checked-expr
+              (invocation failWith (
+                (literal a failed)))))
+          (expression-stmt
+            (worker-async-send-action function
+              (literal 1)))))
+      (var-def
+        (variable r (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (worker-receive-action a))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref r)
+              (error-type))
+            (invocation message expr:
+              (simple-var-ref r) ())
+            (literal received))))))))

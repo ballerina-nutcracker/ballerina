@@ -22,10 +22,10 @@ isolated int counter = 0;
 // inside a lock statement, so worker startup while a lock is held is only
 // reachable across a call. The existing dynamic start check rejects it.
 isolated function spawner() returns int {
-    worker w returns int {
+    worker w returns int { // @panic
         return 1;
     }
-    return wait w; // @panic
+    return wait w;
 }
 
 public function main() {

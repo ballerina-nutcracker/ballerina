@@ -48,7 +48,7 @@
 - [Named workers](https://ballerina.io/spec/lang/master/#section_7.3.2) ([`named-worker-decl`](https://ballerina.io/spec/lang/master/#named-worker-decl))
   - Only in a `block-function-body`, with optional annotations and return type
   - [`wait`](https://ballerina.io/spec/lang/master/#wait-action) on a worker name has the worker's return type as its eventual type
-  - Message passing (send, receive, flush), `fork`, `transactional` workers and `on fail` are not supported
+  - `fork`, `transactional` workers and `on fail` are not supported; message passing is listed under Actions
 
 ## Expressions
 
@@ -61,10 +61,14 @@
 - [Client resource access action](https://ballerina.io/spec/lang/master/#client-resource-access-action)
 - [Start action](https://ballerina.io/spec/lang/master/#start-action)
 - [Wait action](https://ballerina.io/spec/lang/master/#wait-action)
-- [Worker message passing](https://ballerina.io/spec/lang/master/#section_7.8): async send, sync send, receive, multiple receive and flush
-  - Alternate receive (`<- a | b`) is not supported
-  - A message action must be a statement of the worker itself (or a `check`, `trap`, `return`, parenthesized, `match` subject or `foreach` collection operand there); it is not supported inside nested blocks, after an `if` without `else`, in queries, compound assignments, a send under `trap`, or a lambda that doesn't declare the peer
-  - When the workers of a function body exchange messages, a `wait` on one of those workers must likewise be a statement of a worker; it is not supported inside nested blocks or after an `if` without `else`
+- [Worker message passing](https://ballerina.io/spec/lang/master/#section_7.8)
+  - Message actions are not supported inside nested statement blocks or after an `if` without `else` in the same block.
+    - When a function body's worker group contains message actions, `wait` actions referring directly to workers in that group are also unsupported in those positions, including references enclosed in parentheses.
+  - Message actions are not supported in query expressions or as compound-assignment operands.
+  - Send actions are not supported under `trap`.
+  - A multiple receive with more than one receive field and a possible error result is supported only as the operand of `check`, `checkpanic` or `return`. A multiple receive with more than one receive field is not supported under `trap`.
+  - Message actions are not supported in anonymous functions in module variable initializers, parameter default expressions, or object or record field initializers.
+  - The corresponding receive's contextually expected type is not used to type the expression being sent.
 - [Error constructor](https://ballerina.io/spec/lang/master/#error-constructor-expr)
   - Detail fields that are not given as named arguments take the default values of the detail record type, with the following restrictions:
     - When the contextually expected type is a union of error types, named arguments are not used to select a member, so defaults are applied only when the detail type has a single mapping alternative.

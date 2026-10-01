@@ -1,0 +1,5 @@
+-- stdout --
+default failed
+a panicked: default failed
+default failed
+-- stderr --

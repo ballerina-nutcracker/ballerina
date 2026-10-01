@@ -56,7 +56,7 @@ func resolveWorkerMessageSend(
 	if !ok {
 		return chain, false
 	}
-	if err := resolverMessageTypes(t).Publish(message, result.ty); err != nil {
+	if err := t.compilerContext().SetWorkerMessageType(message, result.ty); err != nil {
 		t.internalError(err.Error(), pos)
 		return chain, false
 	}
@@ -64,7 +64,7 @@ func resolveWorkerMessageSend(
 }
 
 func resolveWorkerReceiveAction(t typeResolver, chain *binding, e *ast.BLangWorkerReceiveAction) (semtypes.SemType, expressionEffect, bool) {
-	messageTy, ok := workerMessageType(t, e.Message, e.GetPosition())
+	messageTy, ok := workerMessageType(t, e.Message)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -73,28 +73,72 @@ func resolveWorkerReceiveAction(t typeResolver, chain *binding, e *ast.BLangWork
 	return resultTy, defaultExpressionEffect(chain), true
 }
 
-// resolveWorkerMultipleReceiveAction types a multiple receive as the closed
-// record of the received values, built like a mapping constructor with no
-// expected type, unioned with the failure type of every peer.
-func resolveWorkerMultipleReceiveAction(t typeResolver, chain *binding, e *ast.BLangWorkerMultipleReceiveAction) (semtypes.SemType, expressionEffect, bool) {
-	fields := make([]semtypes.Field, len(e.Fields))
+// resolveWorkerMultipleReceiveAction types a multiple receive as the record
+// type R of the received values unioned with the failure type of every peer.
+func resolveWorkerMultipleReceiveAction(t typeResolver, chain *binding, e *ast.BLangWorkerMultipleReceiveAction, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	fields := make([]semtypes.MappingFieldInfo, len(e.Fields))
 	failureTy := semtypes.Never
 	for i, field := range e.Fields {
-		messageTy, ok := workerMessageType(t, field.Message, e.GetPosition())
+		messageTy, ok := workerMessageType(t, field.Message)
 		if !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		if !semtypes.SingleShape(messageTy).IsEmpty() {
-			messageTy = semtypes.WidenToBasicTypes(messageTy)
-		}
-		fields[i] = semtypes.FieldFrom(field.FieldName, messageTy, false, false)
+		fields[i] = semtypes.MappingFieldInfo{Name: field.FieldName, Type: messageTy}
 		failureTy = semtypes.Union(failureTy, workerFailureType(t, field.Peer.Symbol))
 	}
-	md := semtypes.NewMappingDefinition()
-	recordTy := md.Define(t.typeEnv(), fields, semtypes.Never)
+	recordTy, ok := multipleReceiveRecordType(t, e, fields, expectedType)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
 	resultTy := semtypes.Union(recordTy, failureTy)
 	setNodeType(t, e, resultTy)
 	return resultTy, defaultExpressionEffect(chain), true
+}
+
+// multipleReceiveRecordType chooses R the way a mapping constructor chooses
+// its inherent type: the only alternative of the mapping part of expectedType
+// that fields fit, where every field of R is received. Without an expected
+// type, or when no alternative fits, R is the closed record of fields, which
+// semantic analysis then checks against the expected type.
+func multipleReceiveRecordType(t typeResolver, e *ast.BLangWorkerMultipleReceiveAction, fields []semtypes.MappingFieldInfo, expectedType semtypes.SemType) (semtypes.SemType, bool) {
+	if semtypes.IsZero(expectedType) {
+		return closedReceiveRecordType(t, fields), true
+	}
+	candidates, ok := mappingConstructorCandidates(t, e.GetPosition(), expectedType)
+	if !ok {
+		return semtypes.SemType{}, false
+	}
+	var fitting []mappingCandidate
+	for _, candidate := range candidates {
+		if semtypes.MappingAlternativeAllowsFields(t.typeContext(), candidate.alt, fields, noDefaultableFields) {
+			fitting = append(fitting, candidate)
+		}
+	}
+	switch len(fitting) {
+	case 0:
+		return closedReceiveRecordType(t, fields), true
+	case 1:
+		return fitting[0].alt.Type(), true
+	default:
+		t.semanticError("ambiguous inherent type for multiple receive", e.GetPosition())
+		return semtypes.SemType{}, false
+	}
+}
+
+func noDefaultableFields(*semtypes.MappingAtomicType) []string {
+	return nil
+}
+
+func closedReceiveRecordType(t typeResolver, fields []semtypes.MappingFieldInfo) semtypes.SemType {
+	recordFields := make([]semtypes.Field, len(fields))
+	for i, field := range fields {
+		fieldTy := field.Type
+		if !semtypes.SingleShape(fieldTy).IsEmpty() {
+			fieldTy = semtypes.WidenToBasicTypes(fieldTy)
+		}
+		recordFields[i] = semtypes.FieldFrom(field.Name, fieldTy, false, false)
+	}
+	return createClosedRecordType(t.typeEnv(), recordFields, semtypes.Never)
 }
 
 // resolveWorkerFlushAction types a flush with the failure of every peer whose
@@ -108,21 +152,10 @@ func resolveWorkerFlushAction(t typeResolver, chain *binding, e *ast.BLangWorker
 	return resultTy, defaultExpressionEffect(chain), true
 }
 
-// workerMessageType waits for the send of message to publish its type. A
-// receive is only paired with a send pairing proved can run before it, so the
-// wait ends.
-func workerMessageType(t typeResolver, message model.WorkerMessageRef, pos diagnostics.Location) (semtypes.SemType, bool) {
-	store := resolverMessageTypes(t)
-	ty, ok := store.Type(message)
-	if !ok {
-		// The send failed to resolve, which it reported unless it was in a
-		// candidate trial.
-		if !t.isEphemeral() && !t.compilerContext().HasErrors() {
-			t.internalError("worker message type was never published", pos)
-		}
-		return semtypes.SemType{}, false
-	}
-	return ty, true
+// workerMessageType waits for the send's type or a resolution failure.
+func workerMessageType(t typeResolver, message model.WorkerMessageRef) (semtypes.SemType, bool) {
+	result := <-t.compilerContext().WorkerMessageType(message)
+	return result.Type, !result.Failed
 }
 
 func workerFailureType(t typeResolver, peer model.SymbolRef) semtypes.SemType {

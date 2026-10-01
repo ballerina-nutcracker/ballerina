@@ -1,0 +1,92 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable pending (type
+    (union-type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type string))
+      (value-type null))) (expr
+    (literal <nil>)))
+  (function run (
+    (variable early (type
+      (value-type boolean)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (named-worker a (
+        (value-type string))
+        (block-function-body
+          (var-def
+            (variable r (type
+              (union-type
+                (value-type int)
+                (error-type))) (expr
+              (worker-receive-action function))))
+          (return
+            (ternary-expr
+              (type-test-expr is
+                (simple-var-ref r)
+                (error-type))
+              (invocation message expr:
+                (simple-var-ref r) ())
+              (literal received)))))
+      (assignment
+        (simple-var-ref pending)
+        (simple-var-ref a))
+      (if
+        (simple-var-ref early)
+        (block-stmt
+          (return
+            (error-constructor-expr (
+              (literal default failed))))) (
+        (block-stmt)))
+      (expression-stmt
+        (worker-async-send-action a
+          (literal 1)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (invocation run (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref e)
+              (error-type))
+            (invocation message expr:
+              (simple-var-ref e) ())
+            (literal done)))))
+      (var-def
+        (variable f (type
+          (union-type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type string))
+            (value-type null))) (expr
+          (simple-var-ref pending))))
+      (if
+        (type-test-expr is
+          (simple-var-ref f)
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type string)))
+        (block-stmt
+          (var-def
+            (variable r (type
+              (union-type
+                (value-type string)
+                (error-type))) (expr
+              (single-wait-action
+                (simple-var-ref f)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref r))))) ())
+      (block-stmt))))

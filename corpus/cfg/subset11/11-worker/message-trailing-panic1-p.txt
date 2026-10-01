@@ -1,0 +1,37 @@
+(boom
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal boom))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation run ()))
+  )
+)
+(run
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (worker-receive-action function))))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 1)))
+    (expression-stmt
+      (invocation boom ()))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+  )
+)

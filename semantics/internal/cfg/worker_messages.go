@@ -19,6 +19,7 @@ package cfg
 import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -55,7 +56,7 @@ func (f *workerBodyFinder) Visit(node ast.BLangNode) ast.Visitor {
 func (f *workerBodyFinder) VisitTypeData(_ *ast.TypeData) ast.Visitor { return f }
 
 func checkWorkerMessageTermination(ctx *context.CompilerContext, tyCtx semtypes.Context, stmts []ast.StatementNode) {
-	collector := &workerTerminationCollector{}
+	collector := &workerTerminationCollector{ctx: ctx, tyCtx: tyCtx}
 	for _, stmt := range stmts {
 		ast.Walk(collector, stmt.(ast.BLangNode))
 	}
@@ -84,8 +85,12 @@ func returnsError(tyCtx semtypes.Context, ret *ast.BLangReturn) bool {
 
 // workerTerminationCollector collects, in source order, the message actions
 // and returns of a worker's statements. Nested functions belong to their own
-// workers, so it doesn't descend into them.
+// workers, so it doesn't descend into them. A flush is a message action only
+// when it covers a send to a peer that can fail: only then must it run before
+// the worker terminates with success (spec 7.8.1).
 type workerTerminationCollector struct {
+	ctx            *context.CompilerContext
+	tyCtx          semtypes.Context
 	messageActions []diagnostics.Location
 	returns        []*ast.BLangReturn
 }
@@ -97,8 +102,16 @@ func (c *workerTerminationCollector) Visit(node ast.BLangNode) ast.Visitor {
 	case *ast.BLangReturn:
 		c.returns = append(c.returns, node)
 	case *ast.BLangWorkerAsyncSendAction, *ast.BLangWorkerSyncSendAction, *ast.BLangWorkerReceiveAction,
-		*ast.BLangWorkerMultipleReceiveAction, *ast.BLangWorkerFlushAction:
+		*ast.BLangWorkerMultipleReceiveAction:
 		c.messageActions = append(c.messageActions, node.GetPosition())
+	case *ast.BLangWorkerFlushAction:
+		for _, coverage := range node.Covered {
+			failureTy := common.WorkerFailureType(c.tyCtx, c.ctx.SymbolType(coverage.Peer))
+			if !semtypes.IsEmpty(c.tyCtx, failureTy) {
+				c.messageActions = append(c.messageActions, node.GetPosition())
+				break
+			}
+		}
 	}
 	return c
 }

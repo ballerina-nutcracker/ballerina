@@ -1,0 +1,64 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (array-type
+        (value-type int) dimensions: 1 ([])))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (var-def
+          (variable y (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (var-def
+          (variable z (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (return
+          (list-constructor-expr
+            (simple-var-ref x)
+            (simple-var-ref y)
+            (simple-var-ref z)))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 1)))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 2)))
+    (expression-stmt
+      (worker-sync-send-action a
+        (literal 3)))
+    (var-def
+      (variable r (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (var-def
+      (variable y (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (var-def
+      (variable z (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (list-constructor-expr
+        (simple-var-ref x)
+        (simple-var-ref y)
+        (simple-var-ref z)))
+  )
+)
