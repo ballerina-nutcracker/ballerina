@@ -1,0 +1,133 @@
+(constGuard
+  (bb0 () (bb2 bb3)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb3) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal a))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal other))))
+  )
+)
+(guard
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal guard evaluated))))
+    (return
+      (literal true))
+  )
+)
+(intGuard
+  (bb0 () (bb2 bb3)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb3) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal one))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal other))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation wildcardGuard (
+        (literal 1))))
+    (expression-stmt
+      (invocation wildcardGuardError (
+        (error-constructor-expr (
+          (literal e))))))
+    (expression-stmt
+      (invocation wildcardGuardError (
+        (literal 1))))
+    (expression-stmt
+      (invocation constGuard (
+        (literal a))))
+    (expression-stmt
+      (invocation constGuard (
+        (literal 5))))
+    (expression-stmt
+      (invocation intGuard (
+        (literal 1))))
+    (expression-stmt
+      (invocation intGuard (
+        (literal x))))
+    (expression-stmt
+      (invocation typeTestGuard (
+        (literal 1))))
+    (expression-stmt
+      (invocation sideEffectGuard (
+        (literal 1))))
+    (expression-stmt
+      (invocation sideEffectGuard (
+        (literal 2))))
+  )
+)
+(sideEffectGuard
+  (bb0 () (bb2 bb3)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb3) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal one))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal other))))
+  )
+)
+(typeTestGuard
+  (bb0 () (bb2 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb0) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref v)
+          (literal 1)))))
+  )
+)
+(wildcardGuard
+  (bb0 () (bb2 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb0) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal one))))
+  )
+)
+(wildcardGuardError
+  (bb0 () (bb2 bb1)
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal no match))))
+  )
+  (bb2 (bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal one))))
+    (return
+      (literal <nil>))
+  )
+)

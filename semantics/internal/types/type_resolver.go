@@ -8706,13 +8706,11 @@ func resolveMatchStatement(t typeResolver, chain *binding, stmt *ast.BLangMatchS
 			t.semanticError("unreachable match clause", clause.GetPosition())
 		}
 
-		var bodyChain *binding
-		var ok bool
-		clause.AcceptedType, bodyChain, ok = matchClauseAcceptedType(t, chain, clause, remainingType)
+		patternTy, ok := matchClausePatternType(t, chain, clause, remainingType)
 		if !ok {
 			return defaultStmtEffect(chain), false
 		}
-		clauseAcceptedType := semtypes.Intersect(remainingType, clause.AcceptedType)
+		clauseAcceptedType := semtypes.Intersect(remainingType, patternTy)
 
 		clauseIsEmpty := semtypes.IsEmpty(tyCtx, clauseAcceptedType)
 		if clauseIsEmpty {
@@ -8721,27 +8719,28 @@ func resolveMatchStatement(t typeResolver, chain *binding, stmt *ast.BLangMatchS
 
 		clause.AcceptedType = clauseAcceptedType
 
-		if clauseIsEmpty {
-			_, ok := resolveMatchClause(t, bodyChain, clause)
+		clauseChain := chain
+		if isVarRef && !clauseIsEmpty {
+			baseRef := t.unnarrowedSymbol(exprRef)
+			narrowedSym := narrowSymbol(t, baseRef, clauseAcceptedType)
+			clauseChain = &binding{
+				ref:            baseRef,
+				narrowedSymbol: narrowedSym,
+				prev:           chain,
+			}
+		}
+
+		bodyChain := clauseChain
+		if clause.Guard != nil {
+			bodyChain, ok = resolveMatchGuard(t, clauseChain, clause.Guard)
 			if !ok {
 				return defaultStmtEffect(chain), false
 			}
+		}
+
+		bodyEffect := resolveMatchClause(t, bodyChain, clause)
+		if clauseIsEmpty {
 			continue
-		}
-
-		if isVarRef {
-			baseRef := t.unnarrowedSymbol(exprRef)
-			narrowedSym := narrowSymbol(t, baseRef, clauseAcceptedType)
-			bodyChain = &binding{
-				ref:            baseRef,
-				narrowedSymbol: narrowedSym,
-				prev:           bodyChain,
-			}
-		}
-
-		bodyEffect, ok := resolveMatchClause(t, bodyChain, clause)
-		if !ok {
-			return defaultStmtEffect(chain), false
 		}
 		bodyEffects = append(bodyEffects, bodyEffect)
 
@@ -8762,14 +8761,14 @@ func resolveMatchStatement(t typeResolver, chain *binding, stmt *ast.BLangMatchS
 	return result, true
 }
 
-func matchClauseAcceptedType(t typeResolver, chain *binding, clause *ast.BLangMatchClause, remainingType semtypes.SemType) (semtypes.SemType, *binding, bool) {
+func matchClausePatternType(t typeResolver, chain *binding, clause *ast.BLangMatchClause, remainingType semtypes.SemType) (semtypes.SemType, bool) {
 	tyCtx := semtypes.ContextFrom(t.typeEnv())
 	acceptedTy := semtypes.Never
 	patternRemaining := remainingType
 	for i, pattern := range clause.Patterns {
 		patternTy, ok := resolveMatchPattern(t, chain, pattern, remainingType)
 		if !ok {
-			return semtypes.SemType{}, nil, false
+			return semtypes.SemType{}, false
 		}
 		if i > 0 && semtypes.IsEmpty(tyCtx, semtypes.Intersect(patternTy, patternRemaining)) {
 			t.semanticError("unmatchable match pattern", pattern.GetPosition())
@@ -8777,15 +8776,15 @@ func matchClauseAcceptedType(t typeResolver, chain *binding, clause *ast.BLangMa
 		patternRemaining = semtypes.Diff(patternRemaining, patternTy)
 		acceptedTy = semtypes.Union(acceptedTy, patternTy)
 	}
-	if clause.Guard != nil {
-		guardResult, ok := resolveActionOrExpression(t, chain, clause.Guard, semtypes.Boolean)
-		if !ok {
-			return semtypes.SemType{}, nil, false
-		}
-		guardEffect := guardResult.effect
-		return acceptedTy, guardEffect.ifTrue, true
+	return acceptedTy, true
+}
+
+func resolveMatchGuard(t typeResolver, chain *binding, guard ast.BLangExpression) (*binding, bool) {
+	guardResult, ok := resolveActionOrExpression(t, chain, guard, semtypes.Boolean)
+	if !ok {
+		return nil, false
 	}
-	return acceptedTy, chain, true
+	return guardResult.effect.ifTrue, true
 }
 
 func resolveObjectMemberType(t typeResolver, m ast.ObjectMember, depth int) (semtypes.SemType, bool) {
@@ -8832,11 +8831,11 @@ func functionTypeTypedSignature(fnType *ast.BLangFunctionType) model.TypedFuncti
 	return model.TypedFunctionSignature{ParamTypes: paramTypes, ReturnType: returnType, RestParamType: restType, Flags: flags}
 }
 
-func resolveMatchClause(t typeResolver, chain *binding, clause *ast.BLangMatchClause) (statementEffect, bool) {
+func resolveMatchClause(t typeResolver, chain *binding, clause *ast.BLangMatchClause) statementEffect {
 	bodyEffect := resolveBlockStatements(t, chain, clause.Body.Stmts)
 	(&clause.Body).SetDeterminedType(semtypes.Never)
 	clause.SetDeterminedType(semtypes.Never)
-	return bodyEffect, true
+	return bodyEffect
 }
 
 func isValidConstPatternExpr(t typeResolver, expr ast.BLangExpression) bool {

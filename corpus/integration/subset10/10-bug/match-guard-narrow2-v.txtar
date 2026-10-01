@@ -1,0 +1,16 @@
+-- stdout --
+6
+two
+three
+other
+four
+4
+other
+other
+a
+g1
+g3
+c3
+g2
+c2
+-- stderr --
