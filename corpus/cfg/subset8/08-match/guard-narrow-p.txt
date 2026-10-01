@@ -1,0 +1,26 @@
+(f
+  (bb0 () (bb2 bb3)
+    (simple-var-ref v)
+  )
+  (bb1 (bb2 bb3) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal x))))
+  )
+  (bb3 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal other))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation f (
+        (literal 1))))
+    (expression-stmt
+      (invocation f (
+        (literal 0))))
+  )
+)

@@ -1,0 +1,190 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation wildcardGuard (
+          (literal 1))))
+      (expression-stmt
+        (invocation wildcardGuardError (
+          (error-constructor-expr (
+            (literal e))))))
+      (expression-stmt
+        (invocation wildcardGuardError (
+          (literal 1))))
+      (expression-stmt
+        (invocation constGuard (
+          (literal a))))
+      (expression-stmt
+        (invocation constGuard (
+          (literal 5))))
+      (expression-stmt
+        (invocation intGuard (
+          (literal 1))))
+      (expression-stmt
+        (invocation intGuard (
+          (literal x))))
+      (expression-stmt
+        (invocation typeTestGuard (
+          (literal 1))))
+      (expression-stmt
+        (invocation sideEffectGuard (
+          (literal 1))))
+      (expression-stmt
+        (invocation sideEffectGuard (
+          (literal 2))))))
+  (function wildcardGuard (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (error-type))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (match-guard
+            (binary-expr ==
+              (binary-expr +
+                (simple-var-ref v)
+                (literal 1))
+              (literal 2)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal one)))))))))
+  (function wildcardGuardError (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (error-type))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (match-guard
+            (binary-expr ==
+              (binary-expr +
+                (simple-var-ref v)
+                (literal 1))
+              (literal 2)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal one))))
+            (return
+              (literal <nil>)))))
+      (expression-stmt
+        (invocation io println (
+          (literal no match))))))
+  (function constGuard (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal a))
+          (match-guard
+            (binary-expr ==
+              (invocation lang.string length (
+                (simple-var-ref v)))
+              (literal 1)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal a))))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal other)))))))))
+  (function intGuard (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (match-guard
+            (binary-expr ==
+              (binary-expr +
+                (simple-var-ref v)
+                (literal 1))
+              (literal 2)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal one))))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal other)))))))))
+  (function typeTestGuard (
+    (variable v (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (wildcard-match-pattern)
+          (match-guard
+            (type-test-expr is
+              (simple-var-ref v)
+              (value-type int)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (binary-expr +
+                  (simple-var-ref v)
+                  (literal 1))))))))))
+  (function sideEffectGuard (
+    (variable v (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (match
+        (simple-var-ref v)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (match-guard
+            (invocation guard ()))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal one))))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (literal other)))))))))
+  (function guard () (
+    (value-type boolean))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal guard evaluated))))
+      (return
+        (literal true)))))

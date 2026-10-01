@@ -937,6 +937,7 @@ func matchStatement(ctx context, curBB *bir.BIRBasicBlock, stmt *ast.BLangMatchS
 	}
 	curBB = exprEffect.block
 	matchOperand := exprEffect.result
+	operandTy := stmt.Expr.GetDeterminedType()
 	finalBB := ctx.function().addBB()
 
 	for _, clause := range stmt.MatchClauses {
@@ -969,28 +970,26 @@ func matchStatement(ctx context, curBB *bir.BIRBasicBlock, stmt *ast.BLangMatchS
 				curBB.Instructions = append(curBB.Instructions, binaryOp)
 				condOperand = orOperands(ctx, curBB, condOperand, eqResult, eqPos)
 			case *ast.BLangWildCardMatchPattern:
-				// Wildcard in multi-pattern — always matches; but may have guard
-				trueOperand := ctx.addTempVar(semtypes.Boolean)
-				constLoad := bir.NewConstantLoad(trueOperand, true, ctx.function().loc(p.GetPosition()))
-				curBB.Instructions = append(curBB.Instructions, constLoad)
-				condOperand = orOperands(ctx, curBB, condOperand, trueOperand, ctx.function().loc(p.GetPosition()))
+				matchResult := wildcardPatternTest(ctx, curBB, operandTy, matchOperand, p)
+				condOperand = orOperands(ctx, curBB, condOperand, matchResult, ctx.function().loc(p.GetPosition()))
 			default:
 				ctx.internalError(fmt.Sprintf("unexpected match pattern type: %T", pattern), pattern.GetPosition())
 				return statementEffect{}, false
 			}
 		}
 
+		nextCheckBB := ctx.function().addBB()
 		if clause.Guard != nil {
-			guardEffect, ok := handleActionOrExpression(ctx, curBB, clause.Guard)
+			guardBB := ctx.function().addBB()
+			curBB.Terminator = bir.NewBranch(condOperand, guardBB, nextCheckBB, ctx.function().loc(stmt.GetPosition()))
+			guardEffect, ok := handleActionOrExpression(ctx, guardBB, clause.Guard)
 			if !ok {
 				return statementEffect{}, false
 			}
-			curBB = guardEffect.block
-			condOperand = andOperands(ctx, curBB, condOperand, guardEffect.result, ctx.function().loc(clause.Guard.GetPosition()))
+			guardEffect.block.Terminator = bir.NewBranch(guardEffect.result, clauseBodyBB, nextCheckBB, ctx.function().loc(clause.Guard.GetPosition()))
+		} else {
+			curBB.Terminator = bir.NewBranch(condOperand, clauseBodyBB, nextCheckBB, ctx.function().loc(stmt.GetPosition()))
 		}
-
-		nextCheckBB := ctx.function().addBB()
-		curBB.Terminator = bir.NewBranch(condOperand, clauseBodyBB, nextCheckBB, ctx.function().loc(stmt.GetPosition()))
 
 		bodyEffect, ok := blockStatement(ctx, clauseBodyBB, &clause.Body)
 		if !ok {
@@ -1021,19 +1020,27 @@ func isUnconditionalWildcard(clause *ast.BLangMatchClause) bool {
 	return ok
 }
 
+func wildcardMatchesAll(ctx context, operandTy semtypes.SemType, p *ast.BLangWildCardMatchPattern) bool {
+	return semtypes.IsSubtype(ctx.function().pkgCtx.typeContext(), operandTy, p.GetAcceptedType())
+}
+
+func wildcardPatternTest(ctx context, bb *bir.BIRBasicBlock, operandTy semtypes.SemType, matchOperand *bir.BIROperand, p *ast.BLangWildCardMatchPattern) *bir.BIROperand {
+	result := ctx.addTempVar(semtypes.Boolean)
+	pos := ctx.function().loc(p.GetPosition())
+	if wildcardMatchesAll(ctx, operandTy, p) {
+		bb.Instructions = append(bb.Instructions, bir.NewConstantLoad(result, true, pos))
+	} else {
+		bb.Instructions = append(bb.Instructions, bir.NewTypeTest(p.GetAcceptedType(), result, matchOperand, pos))
+	}
+	return result
+}
+
 func orOperands(ctx context, bb *bir.BIRBasicBlock, existing *bir.BIROperand, new *bir.BIROperand, pos bir.Location) *bir.BIROperand {
 	if existing == nil {
 		return new
 	}
 	result := ctx.addTempVar(semtypes.Boolean)
 	binaryOp := bir.NewBinaryOp(bir.InstructionKindOr, result, existing, new, pos)
-	bb.Instructions = append(bb.Instructions, binaryOp)
-	return result
-}
-
-func andOperands(ctx context, bb *bir.BIRBasicBlock, existing *bir.BIROperand, new *bir.BIROperand, pos bir.Location) *bir.BIROperand {
-	result := ctx.addTempVar(semtypes.Boolean)
-	binaryOp := bir.NewBinaryOp(bir.InstructionKindAnd, result, existing, new, pos)
 	bb.Instructions = append(bb.Instructions, binaryOp)
 	return result
 }
