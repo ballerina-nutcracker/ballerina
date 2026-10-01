@@ -2457,6 +2457,7 @@ func resolveNamedWorker(
 		retTy:             returnTy,
 		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
+		xmlStepOwner:      workerXMLStepOwner(t, worker.Name),
 		scope:             worker.Scope(),
 		context:           resolverContextForFunction(isolatedContext(t)),
 		ephemeralState:    resolverEphemeralState(t),
@@ -2467,6 +2468,24 @@ func resolveNamedWorker(
 	mergeImplicitImportsInto(t, ft)
 
 	worker.SetDeterminedType(semtypes.Never)
+}
+
+// workerXMLStepOwner qualifies the XML step owner of the function declaring a
+// worker with the worker's name, so XML steps of sibling workers get distinct
+// function names.
+func workerXMLStepOwner(t typeResolver, workerName string) string {
+	return resolverXMLStepOwner(t) + "$" + workerName
+}
+
+func resolverXMLStepOwner(t typeResolver) string {
+	switch resolver := t.(type) {
+	case *functionTypeResolver:
+		return resolver.xmlStepOwner
+	case *loopTypeResolver:
+		return resolverXMLStepOwner(resolver.parentResolver)
+	default:
+		return moduleXMLStepOwner
+	}
 }
 
 // mergeImplicitImportsInto hands the implicit imports a child resolver
