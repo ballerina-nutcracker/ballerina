@@ -106,19 +106,31 @@ func (s *argumentStateSnapshotter) Visit(node ast.BLangNode) ast.Visitor {
 		s.nodes = append(s.nodes, nodeSnapshot{node: node, state: state.Interface()})
 		s.seen[node] = struct{}{}
 	}
-	// BLangInvocation.Symbol panics while the node still carries a deferred method
-	// symbol, which is the normal state here: the snapshot is taken before the
-	// candidate trials resolve the arguments. Such a symbol has no compiler-state
-	// entry to restore yet, and the node snapshot above already captures RawSymbol,
-	// so the restore puts the deferred symbol back on its own.
-	if inv, ok := node.(*ast.BLangInvocation); ok {
-		if ref, ok := inv.RawSymbol.(*model.SymbolRef); ok && ref != nil {
-			s.snapshotSymbol(*ref)
-		}
-	} else if symbolNode, ok := node.(ast.NodeWithSymbol); ok {
-		s.snapshotSymbol(symbolNode.Symbol())
+	if ref, ok := declaredSymbol(node); ok {
+		s.snapshotSymbol(ref)
 	}
 	return s
+}
+
+// declaredSymbol returns the symbol node declares, if any. Only those symbols
+// belong to the argument subtree: a referenced symbol is owned by its
+// declaration, which may be resolved concurrently by another worker.
+func declaredSymbol(node ast.BLangNode) (model.SymbolRef, bool) {
+	switch node := node.(type) {
+	case *ast.BLangVariable, *ast.BLangFunction, *ast.BLangResourceMethod, *ast.BMethodDecl,
+		*ast.BLangClassDefinition, *ast.BLangNamedWorkerDeclaration, *ast.BLangTypeDefinition,
+		*ast.BLangXMLNS:
+		return node.(ast.NodeWithSymbol).Symbol(), true
+	case *ast.BLangFunctionTypeParam:
+		return node.SymbolRef, true
+	case *ast.BLangMappingKeyValueField:
+		if key, ok := node.Key.Expr.(ast.BNodeWithSymbol); ok {
+			return key.Symbol(), true
+		}
+		return model.SymbolRef{}, false
+	default:
+		return model.SymbolRef{}, false
+	}
 }
 
 func (s *argumentStateSnapshotter) VisitTypeData(_ *ast.TypeData) ast.Visitor { return s }
@@ -144,6 +156,8 @@ func (s *argumentStateSnapshotter) snapshotSymbol(ref model.SymbolRef) {
 	s.symbols = append(s.symbols, snapshot)
 }
 
+// snapshotArgumentState captures the argument subtrees and the symbols they
+// declare, and returns a function restoring them after a candidate trial.
 func snapshotArgumentState(t typeResolver, args []ast.BLangExpression) func() {
 	snapshotter := &argumentStateSnapshotter{
 		t:       t,

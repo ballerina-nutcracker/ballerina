@@ -1,0 +1,121 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition IntBox
+    (variable result (type
+      (value-type int)))
+    (function init (
+      (variable value (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access result
+            (simple-var-ref self))
+          (simple-var-ref value)))))
+  (class-definition StringBox
+    (variable result (type
+      (value-type string)))
+    (function init (
+      (variable value (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access result
+            (simple-var-ref self))
+          (simple-var-ref value)))))
+  (function run (
+    (variable n (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (value-type int)) (expr
+          (simple-var-ref n))))
+      (named-worker a (
+        (value-type int))
+        (block-function-body
+          (var-def
+            (variable first (type
+              (union-type
+                (user-defined-type IntBox)
+                (user-defined-type StringBox))) (expr
+              (new (
+                (simple-var-ref v))))))
+          (var-def
+            (variable second (type
+              (union-type
+                (user-defined-type IntBox)
+                (user-defined-type StringBox))) (expr
+              (new (
+                (binary-expr +
+                  (simple-var-ref v)
+                  (literal 1)))))))
+          (return
+            (ternary-expr
+              (binary-expr &&
+                (type-test-expr is
+                  (simple-var-ref first)
+                  (user-defined-type IntBox))
+                (type-test-expr is
+                  (simple-var-ref second)
+                  (user-defined-type IntBox)))
+              (binary-expr +
+                (field-based-access result
+                  (simple-var-ref first))
+                (field-based-access result
+                  (simple-var-ref second)))
+              (literal 0)))))
+      (named-worker b (
+        (value-type int))
+        (block-function-body
+          (var-def
+            (variable sum (type
+              (value-type int)) (expr
+              (literal 0))))
+          (foreach
+            (var-def
+              (variable i (type
+                (value-type int))))
+            (binary-expr ..<
+              (literal 0)
+              (literal 3))
+            (block-stmt
+              (compound-assignment +
+                (simple-var-ref sum)
+                (binary-expr +
+                  (simple-var-ref v)
+                  (simple-var-ref i)))))
+          (return
+            (simple-var-ref sum))))
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (binary-expr +
+            (simple-var-ref v)
+            (simple-var-ref v)))))
+      (var-def
+        (variable ra (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref a)))))
+      (var-def
+        (variable rb (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref b)))))
+      (return
+        (binary-expr +
+          (binary-expr +
+            (simple-var-ref ra)
+            (simple-var-ref rb))
+          (simple-var-ref x)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation run (
+            (literal 1)))))))))
