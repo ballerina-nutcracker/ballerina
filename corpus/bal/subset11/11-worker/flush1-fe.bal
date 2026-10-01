@@ -15,11 +15,12 @@
 // under the License.
 
 function workerFlush() {
-    worker sender {
+    worker sender returns error? {
         1 -> receiver; // @error worker message passing is not supported
-        error? _ = flush receiver; // @error worker message passing is not supported
+        error? e = flush receiver; // @error worker message passing is not supported
+        return e;
     }
-    worker receiver {
-        int _ = <- sender; // @error worker message passing is not supported
+    worker receiver returns error? {
+        int _ = check <- sender; // @error worker message passing is not supported
     }
 }

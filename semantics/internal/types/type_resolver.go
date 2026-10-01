@@ -222,6 +222,7 @@ type packageTypeResolver struct {
 	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
 	opaqueCtx      *opaque.Context
 	ephemeralState ephemeralState
+	messageTypes   *context.WorkerMessageTypeStore
 	// span is the phase span definition children attach to. Top-level
 	// resolution is sequential, so a definition resolver can swap it for its
 	// own span while it runs; the concurrent body phase never writes it.
@@ -457,6 +458,7 @@ type functionTypeResolver struct {
 	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
 	opaqueCtx      *opaque.Context
 	ephemeralState *ephemeralState
+	messageTypes   *context.WorkerMessageTypeStore
 	// span is the body's own span when one was started for it; the zero handle
 	// defers to the enclosing resolver.
 	span context.TraceSpan
@@ -740,6 +742,7 @@ func newPackageTypeResolver(
 		xmlStepCounters:      make(map[string]int),
 		scope:                moduleScope,
 		span:                 span,
+		messageTypes:         ctx.WorkerMessageTypes(),
 	}
 }
 
@@ -905,6 +908,7 @@ func ResolvePrivateNodes(
 			scope:             scope,
 			ephemeralState:    &ephemeralState{},
 			span:              span,
+			messageTypes:      resolverMessageTypes(p),
 		}
 		for _, fieldNode := range fields {
 			field := fieldNode
@@ -1188,6 +1192,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl, span co
 		context:           resolverContextForFunction(fn.IsIsolated()),
 		ephemeralState:    &ephemeralState{},
 		span:              span,
+		messageTypes:      resolverMessageTypes(p),
 	}
 	if !isPolymorphicFnSymbol(fnSym) {
 		ft.retTy = fnSym.TypedSignature().ReturnType
@@ -2490,6 +2495,8 @@ type workerResolution struct {
 	chain    *binding
 	worker   *ast.BLangNamedWorkerDeclaration
 	stmts    []ast.StatementNode
+	// sendMessages are the messages the worker sends.
+	sendMessages []model.WorkerMessageRef
 }
 
 func (r workerResolution) resolve() {
@@ -2518,6 +2525,9 @@ func runWorkerResolutions(children []workerResolution) {
 					panics[i] = r
 				}
 			}()
+			// Release the receives of siblings waiting on a send this worker
+			// never resolved.
+			defer poisonUnsetMessages(child.resolver.messageTypes, child.sendMessages)
 			child.resolve()
 		}()
 	}
@@ -2526,6 +2536,12 @@ func runWorkerResolutions(children []workerResolution) {
 		if r != nil {
 			panic(r) //nolint:forbidigo // Re-raise a child goroutine's panic on the resolving goroutine.
 		}
+	}
+}
+
+func poisonUnsetMessages(store *context.WorkerMessageTypeStore, messages []model.WorkerMessageRef) {
+	for _, message := range messages {
+		store.PublishPoisonIfUnset(message)
 	}
 }
 
@@ -2567,9 +2583,10 @@ func newNamedWorkerResolution(
 	returnTy semtypes.SemType,
 ) workerResolution {
 	return workerResolution{
-		resolver: newWorkerChildResolver(t, returnTy, worker.Name, worker.Scope()),
-		chain:    &binding{flags: bindingFlagFunctionBoundary, prev: chain},
-		worker:   worker,
+		resolver:     newWorkerChildResolver(t, returnTy, worker.Name, worker.Scope()),
+		chain:        &binding{flags: bindingFlagFunctionBoundary, prev: chain},
+		worker:       worker,
+		sendMessages: worker.SendMessages,
 	}
 }
 
@@ -2581,7 +2598,7 @@ func newDefaultWorkerResolution(t typeResolver, chain *binding, body *ast.BLangB
 	// Mono symbols of the trailing statements share the function scope with
 	// those of the initialization statements, so their names continue from them.
 	ft.monoCounters = maps.Clone(resolverMonoCounters(t))
-	return workerResolution{resolver: ft, chain: chain, stmts: body.Stmts}
+	return workerResolution{resolver: ft, chain: chain, stmts: body.Stmts, sendMessages: body.DefaultWorkerSendMessages}
 }
 
 func newWorkerChildResolver(t typeResolver, returnTy semtypes.SemType, workerName string, scope model.Scope) *functionTypeResolver {
@@ -2597,6 +2614,7 @@ func newWorkerChildResolver(t typeResolver, returnTy semtypes.SemType, workerNam
 		scope:             scope,
 		context:           resolverContextForFunction(isolatedContext(t)),
 		ephemeralState:    childEphemeralState(t),
+		messageTypes:      resolverMessageTypes(t),
 	}
 }
 
@@ -2679,6 +2697,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 		scope:             e.Function.Scope(),
 		context:           resolverContextForFunction(fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0),
 		ephemeralState:    childEphemeralState(t),
+		messageTypes:      resolverMessageTypes(t),
 	}
 	defer mergeChildResolver(t, ft)
 
@@ -2777,6 +2796,7 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		scope:             e.Function.Scope(),
 		context:           resolverContextForFunction(flags&model.FuncSymbolFlagIsolated != 0),
 		ephemeralState:    childEphemeralState(t),
+		messageTypes:      resolverMessageTypes(t),
 	}
 	defer mergeChildResolver(t, ft)
 	outerChain := addCaptureGroup(chain, e.Function.CaptureGroup())
@@ -4210,10 +4230,16 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return returnedFunction(result, ok)
 	case *ast.BLangClientResourceAccessAction:
 		return resolveClientResourceAccessAction(t, chain, e, expectedType)
-	case *ast.BLangWorkerAsyncSendAction, *ast.BLangWorkerSyncSendAction, *ast.BLangWorkerReceiveAction,
-		*ast.BLangWorkerMultipleReceiveAction, *ast.BLangWorkerFlushAction:
-		t.unimplemented("worker message passing is not supported", e.GetPosition())
-		return expressionResult{}, false
+	case *ast.BLangWorkerAsyncSendAction:
+		return resolved(resolveWorkerAsyncSendAction(t, chain, e))
+	case *ast.BLangWorkerSyncSendAction:
+		return resolved(resolveWorkerSyncSendAction(t, chain, e))
+	case *ast.BLangWorkerReceiveAction:
+		return resolved(resolveWorkerReceiveAction(t, chain, e))
+	case *ast.BLangWorkerMultipleReceiveAction:
+		return resolved(resolveWorkerMultipleReceiveAction(t, chain, e))
+	case *ast.BLangWorkerFlushAction:
+		return resolved(resolveWorkerFlushAction(t, chain, e))
 	case *ast.BLangStartAction:
 		return resolved(resolveStartAction(t, chain, e, expectedType))
 	case *ast.BLangSingleWaitAction:
