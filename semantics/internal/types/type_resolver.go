@@ -8631,7 +8631,7 @@ func matchClauseAcceptedType(t typeResolver, chain *binding, clause *ast.BLangMa
 		acceptedTy = semtypes.Union(acceptedTy, patternTy)
 	}
 	if clause.Guard != nil {
-		guardResult, ok := resolveActionOrExpression(t, chain, clause.Guard, remainingType)
+		guardResult, ok := resolveActionOrExpression(t, chain, clause.Guard, semtypes.Boolean)
 		if !ok {
 			return semtypes.SemType{}, nil, false
 		}
