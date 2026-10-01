@@ -23,7 +23,58 @@
       (var-def
         (variable $desugar$4))
       (var-def
-        (variable $desugar$5 (expr
+        (variable $desugar$5))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:main:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable nilResult (type
+                    (value-type null)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$2)))))
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref nilResult))))
+                (var-def
+                  (variable scalar (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$3)))))
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref scalar))))
+                (var-def
+                  (variable pair (type
+                    (user-defined-type Pair)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$4)))))
+                (expression-stmt
+                  (invocation io println (
+                    (index-based-access
+                      (simple-var-ref pair)
+                      (literal first)))))
+                (expression-stmt
+                  (invocation io println (
+                    (index-based-access
+                      (simple-var-ref pair)
+                      (literal second)))))
+                (var-def
+                  (variable e (type
+                    (error-type)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$5)))))
+                (expression-stmt
+                  (invocation io println (
+                    (invocation lang.error message (
+                      (simple-var-ref e))))))))))))
+      (var-def
+        (variable $desugar$7 (expr
           (lambda
             (function $worker:main:nilWorker () (
               (value-type null))
@@ -35,7 +86,7 @@
                   (invocation io println (
                     (literal nil))))))))))
       (var-def
-        (variable $desugar$6 (expr
+        (variable $desugar$8 (expr
           (lambda
             (function $worker:main:scalarWorker () (
               (value-type int))
@@ -46,7 +97,7 @@
                 (return
                   (literal 42))))))))
       (var-def
-        (variable $desugar$7 (expr
+        (variable $desugar$9 (expr
           (lambda
             (function $worker:main:structuredWorker () (
               (user-defined-type Pair))
@@ -63,7 +114,7 @@
                       (literal second)
                       (literal two))))))))))
       (var-def
-        (variable $desugar$8 (expr
+        (variable $desugar$10 (expr
           (lambda
             (function $worker:main:errorWorker () (
               (error-type))
@@ -77,59 +128,26 @@
       (assignment
         (simple-var-ref $desugar$1)
         (start-action
-          (invocation $desugar$5 ())))
+          (invocation $desugar$6 ())))
       (assignment
         (simple-var-ref $desugar$2)
         (start-action
-          (invocation $desugar$6 ())))
+          (invocation $desugar$7 ())))
       (assignment
         (simple-var-ref $desugar$3)
         (start-action
-          (invocation $desugar$7 ())))
+          (invocation $desugar$8 ())))
       (assignment
         (simple-var-ref $desugar$4)
         (start-action
-          (invocation $desugar$8 ())))
+          (invocation $desugar$9 ())))
+      (assignment
+        (simple-var-ref $desugar$5)
+        (start-action
+          (invocation $desugar$10 ())))
       (expression-stmt
         (invocation lang.__internal openLatch (
           (simple-var-ref $desugar$0))))
-      (var-def
-        (variable nilResult (type
-          (value-type null)) (expr
-          (single-wait-action
-            (simple-var-ref $desugar$1)))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref nilResult))))
-      (var-def
-        (variable scalar (type
-          (value-type int)) (expr
-          (single-wait-action
-            (simple-var-ref $desugar$2)))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref scalar))))
-      (var-def
-        (variable pair (type
-          (user-defined-type Pair)) (expr
-          (single-wait-action
-            (simple-var-ref $desugar$3)))))
-      (expression-stmt
-        (invocation io println (
-          (index-based-access
-            (simple-var-ref pair)
-            (literal first)))))
-      (expression-stmt
-        (invocation io println (
-          (index-based-access
-            (simple-var-ref pair)
-            (literal second)))))
-      (var-def
-        (variable e (type
-          (error-type)) (expr
-          (single-wait-action
-            (simple-var-ref $desugar$4)))))
-      (expression-stmt
-        (invocation io println (
-          (invocation lang.error message (
-            (simple-var-ref e)))))))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1))))))
