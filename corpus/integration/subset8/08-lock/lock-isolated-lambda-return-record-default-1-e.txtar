@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> lock-isolated-lambda-return-record-default-1-e.bal:22:54
+   |
+22 |     var f = function() returns record {| int value = seed; |} { // @error
+   |                                                      ^^^^

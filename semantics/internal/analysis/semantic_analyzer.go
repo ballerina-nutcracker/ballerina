@@ -1403,6 +1403,9 @@ func analyzeLambdaFunction[A analyzer](a A, expr *ast.BLangLambdaFunction) bool 
 	if fn.RestParam != nil {
 		ast.Walk(fa, fn.RestParam)
 	}
+	if returnType := fn.ReturnTypeDescriptorNode(); returnType != nil {
+		ast.Walk(fa, returnType)
+	}
 	if fn.Body != nil {
 		ast.Walk(fa, fn.GetBody().(ast.BLangNode))
 	}
