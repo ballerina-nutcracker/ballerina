@@ -72,6 +72,17 @@ func resolverEphemeralState(t typeResolver) *ephemeralState {
 	}
 }
 
+// childEphemeralState is the ephemeral state of a child resolver of t. It is
+// owned by the goroutine resolving the child and starts inside every candidate
+// trial t is in; mergeChildResolver hands the outcome back.
+func childEphemeralState(t typeResolver) *ephemeralState {
+	state := &ephemeralState{}
+	if parent := resolverEphemeralState(t); parent != nil {
+		state.depth = parent.depth
+	}
+	return state
+}
+
 func enterEphemeral(t typeResolver) func() {
 	state := resolverEphemeralState(t)
 	if state == nil {
