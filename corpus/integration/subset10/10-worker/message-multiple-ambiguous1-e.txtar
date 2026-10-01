@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for multiple receive
+  --> message-multiple-ambiguous1-e.bal:24:53
+   |
+24 |     record {|int a;|}|record {|int a; int b?;|} _ = <- {a}; // @error ambiguous inherent type
+   |                                                     ^^^^^^

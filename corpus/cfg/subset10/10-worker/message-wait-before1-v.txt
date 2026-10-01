@@ -1,0 +1,48 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action b
+            (literal 1)))
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 2)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (return
+          (worker-receive-action a))))
+    (var-def
+      (variable rb (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref b)))))
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref rb)
+        (literal  )
+        (simple-var-ref x))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action b
+        (literal 1)))
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 2)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (return
+      (worker-receive-action a))
+  )
+)

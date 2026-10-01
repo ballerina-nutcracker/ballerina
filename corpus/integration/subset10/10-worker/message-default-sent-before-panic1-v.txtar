@@ -1,0 +1,4 @@
+-- stdout --
+default panicked
+10
+-- stderr --

@@ -1,0 +1,54 @@
+-- qualified-sync-send-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+import ballerina/lang.'int as ints;
+
+function qualifiedSends() {
+    worker w {
+        int _ = <- function;
+    }
+    {
+        ints:MAX_VALUE ->> w;
+    }
+}
+% // @error
+-- ast --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (import-package (position 1:1 17:1) ballerina lang int (as ints))
+  (function (position 17:1 26:1) qualifiedSends () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 18:27 26:1)
+      (named-worker (position 19:1 22:1) w (
+        (value-type (position <built-in>) null))
+        (block-function-body (position 19:14 22:1)
+          (var-def (position 20:1 21:1)
+            (variable (position 20:1 21:1) _ (type
+              (value-type (position 20:1 20:13) int)) (expr
+              (worker-receive-action (position 20:17 20:28) function))))))
+      (block-stmt (position 22:1 25:1)
+        (expression-stmt (position 23:1 24:1)
+          (worker-sync-send-action (position 23:1 23:29) w
+            (simple-var-ref (position 23:1 23:24) ints MAX_VALUE))))))
+  (bad-top-level trailing-tokens (position 26:1 27:1)))
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> qualified-sync-send-e.bal:26:1
+   |
+26 | % // @error
+   | ^^^^^^^^^^^
+27 | 
+   |

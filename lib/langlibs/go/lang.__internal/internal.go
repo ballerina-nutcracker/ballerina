@@ -111,6 +111,13 @@ func initInternalModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "createLatch", createLatch)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "waitOnLatch", waitOnLatch)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "openLatch", openLatch)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "createWorkerMessage", createWorkerMessage)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "setWorkerMessageValue", setWorkerMessageValue)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "getWorkerMessageValue", getWorkerMessageValue)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "getWorkerMessageValues", getWorkerMessageValues)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "waitWorkerMessageReceived", waitWorkerMessageReceived)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "flushWorkerMessages", flushWorkerMessages)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "awaitWorkerMessageDelivery", awaitWorkerMessageDelivery)
 }
 
 // latch is a one-shot barrier: strands that wait on it are held until it is
@@ -128,7 +135,13 @@ func (l *latch) isOpen() bool {
 	}
 }
 
+// createLatch is the first step of starting a worker region, so it reports a
+// region started while holding a lock at the region's position. The default
+// worker's start comes first and sits after the named workers' declarations.
 func createLatch(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	if ctx.HoldsLock() {
+		panic(values.NewErrorWithMessage("attempted strand start while holding a lock"))
+	}
 	return &latch{opened: make(chan struct{})}, nil
 }
 

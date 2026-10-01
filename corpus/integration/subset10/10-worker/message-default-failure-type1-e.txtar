@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: async send to a worker that can fail must be followed by a sync send or flush to it
+  --> message-default-failure-type1-e.bal:48:9
+   |
+48 |         1 -> function; // @error the default worker can fail and nothing reports it
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expression value must be assigned
+  --> message-default-failure-type1-e.bal:40:9
+   |
+40 |         flush function; // @error the flush's type includes the default worker's failure type
+   |         ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got error|1
+  --> message-default-failure-type1-e.bal:23:17
+   |
+23 |         int _ = <- function; // @error the receive's type includes the default worker's failure type
+   |                 ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got nil|error
+  --> message-default-failure-type1-e.bal:31:16
+   |
+31 |         () _ = 1 ->> function; // @error the sync send's type includes the default worker's failure type
+   |                ^^^^^^^^^^^^^^

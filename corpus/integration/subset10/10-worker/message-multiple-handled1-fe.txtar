@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: a multiple receive from more than one worker under trap is not supported
+  --> message-multiple-handled1-fe.bal:47:38
+   |
+47 |     record {int a; int b;}|error r = trap <- {a, b}; // @error trap handles the error
+   |                                      ^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: a multiple receive from more than one worker under trap is not supported
+  --> message-multiple-handled1-fe.bal:59:38
+   |
+59 |     record {int a; int b;}|error r = trap checkpanic <- {a, b}; // @error trap also catches checkpanic's panic
+   |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: a multiple receive from more than one worker under trap is not supported
+  --> message-multiple-handled1-fe.bal:77:38
+   |
+77 |     record {int a; int b;}|error r = trap <- {a, b}; // @error trap catches a sender's panic
+   |                                      ^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: a multiple receive that can fail must be the operand of check, checkpanic or return
+  --> message-multiple-handled1-fe.bal:32:42
+   |
+32 |     record {| int a; int b; |}|error r = <- {a, b}; // @error the error of a multiple receive must end the worker
+   |                                          ^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: a multiple receive that can fail must be the operand of check, checkpanic or return
+  --> message-multiple-handled1-fe.bal:90:11
+   |
+90 |     match <- {a, b} { // @error a match handles the error
+   |           ^^^^^^^^^

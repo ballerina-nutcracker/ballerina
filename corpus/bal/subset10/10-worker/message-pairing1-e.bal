@@ -72,12 +72,12 @@ function sendAfterMultipleWait() {
 
 function alternateWaitDeadlock() {
     worker a {
-        int _ = <- function;
+        int _ = <- function; // @error neither worker can finish before the default worker sends
     }
     worker b {
         int _ = <- function;
     }
-    _ = wait a | b; // @error neither worker can finish before the default worker sends
+    _ = wait a | b;
     1 -> a;
     2 -> b;
 }

@@ -1,0 +1,47 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (simple-var-ref progress)
+          (literal 1))
+        (expression-stmt
+          (worker-async-send-action function
+            (literal <nil>)))
+        (assignment
+          (simple-var-ref progress)
+          (literal 2))
+        (expression-stmt
+          (worker-sync-send-action function
+            (literal <nil>)))))
+    (expression-stmt
+      (worker-receive-action a))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr >=
+          (simple-var-ref progress)
+          (literal 1)))))
+    (expression-stmt
+      (worker-receive-action a))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref progress))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (assignment
+      (simple-var-ref progress)
+      (literal 1))
+    (expression-stmt
+      (worker-async-send-action function
+        (literal <nil>)))
+    (assignment
+      (simple-var-ref progress)
+      (literal 2))
+    (expression-stmt
+      (worker-sync-send-action function
+        (literal <nil>)))
+  )
+)
