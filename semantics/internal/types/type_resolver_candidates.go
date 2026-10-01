@@ -17,6 +17,8 @@
 package types
 
 import (
+	"maps"
+
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -60,6 +62,19 @@ func resolverEphemeralState(t typeResolver) *ephemeralState {
 	default:
 		return nil
 	}
+}
+
+// childEphemeralState is the ephemeral state of a child resolver of t. It is
+// owned by the goroutine resolving the child and starts inside every candidate
+// trial t is in, with a copy of the symbol types those trials recorded;
+// mergeChildResolver hands the outcome back.
+func childEphemeralState(t typeResolver) *ephemeralState {
+	state := &ephemeralState{}
+	if parent := resolverEphemeralState(t); parent != nil {
+		state.depth = parent.depth
+		state.symbolTypes = maps.Clone(parent.symbolTypes)
+	}
+	return state
 }
 
 func enterEphemeral(t typeResolver) func() {
