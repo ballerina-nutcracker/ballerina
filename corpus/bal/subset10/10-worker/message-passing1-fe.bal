@@ -22,7 +22,7 @@ function messagePassing() {
         2 ->> receiver; // @error worker message passing is not supported
     }
     worker receiver {
-        int _ = <- sender;
-        int _ = <- sender;
+        int _ = <- sender; // @error worker message passing is not supported
+        int _ = <- sender; // @error worker message passing is not supported
     }
 }

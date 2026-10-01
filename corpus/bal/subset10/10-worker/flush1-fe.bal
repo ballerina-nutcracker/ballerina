@@ -16,10 +16,10 @@
 
 function workerFlush() {
     worker sender {
-        1 -> receiver;
-        error? e = flush receiver; // @error worker flush is not supported
+        1 -> receiver; // @error worker message passing is not supported
+        error? _ = flush receiver; // @error worker message passing is not supported
     }
     worker receiver {
-        int _ = <- sender;
+        int _ = <- sender; // @error worker message passing is not supported
     }
 }
