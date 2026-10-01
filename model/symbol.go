@@ -108,6 +108,9 @@ const (
 // CaptureGroupRef identifies a capture group in the compiler environment. Zero means no group.
 type CaptureGroupRef int
 
+// WorkerMessageRef identifies a message sent between workers. Zero means unset.
+type WorkerMessageRef int
+
 type FunctionSymbol interface {
 	Symbol
 	TypedSignature() TypedFunctionSignature
