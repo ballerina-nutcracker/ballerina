@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "a"
+  --> anon-xml-template-e.bal:24:65
+   |
+24 |     xml c = xml `<a k="${str(function() returns string { int s = "a"; return s.toString(); })}"/>`; // @error incompatible type
+   |                                                                 ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-xml-template-e.bal:22:64
+   |
+22 |     xml a = xml `<a>${call(function() returns int { string s = 1; return s.length(); })}</a>`; // @error incompatible type
+   |                                                                ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 2
+  --> anon-xml-template-e.bal:23:65
+   |
+23 |     xml b = xml `<a/>${call(function() returns int { string s = 2; return s.length(); })}<b/>`; // @error incompatible type
+   |                                                                 ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 3
+  --> anon-xml-template-e.bal:25:65
+   |
+25 |     xml d = xml `<a><b>${call(function() returns int { string s = 3; return s.length(); })}</b></a>`; // @error incompatible type
+   |                                                                 ^

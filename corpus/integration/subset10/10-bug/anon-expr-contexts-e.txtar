@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-expr-contexts-e.bal:23:67
+   |
+23 |     string t = string `${call(function() returns int { string s = 1; return s.length(); })}`; // @error incompatible type
+   |                                                                   ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 2
+  --> anon-expr-contexts-e.bal:24:68
+   |
+24 |     int|error r = trap id(call(function() returns int { string s = 2; return s.length(); })); // @error incompatible type
+   |                                                                    ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 3
+  --> anon-expr-contexts-e.bal:25:72
+   |
+25 |     future<int> fu = start id(call(function() returns int { string s = 3; return s.length(); })); // @error incompatible type
+   |                                                                        ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 4
+  --> anon-expr-contexts-e.bal:26:61
+   |
+26 |     int n = id(a = call(function() returns int { string s = 4; return s.length(); })); // @error incompatible type
+   |                                                             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 5
+  --> anon-expr-contexts-e.bal:27:59
+   |
+27 |     int m = <int>call(function() returns int { string s = 5; return s.length(); }); // @error incompatible type
+   |                                                           ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 6
+  --> anon-expr-contexts-e.bal:28:55
+   |
+28 |     int k = -call(function() returns int { string s = 6; return s.length(); }); // @error incompatible type
+   |                                                       ^

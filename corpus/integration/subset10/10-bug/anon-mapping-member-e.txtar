@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-mapping-member-e.bal:19:78
+   |
+19 |     map<function () returns int> m = {a: function() returns int { string s = 1; return s.length(); }}; // @error incompatible type
+   |                                                                              ^

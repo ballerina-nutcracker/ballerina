@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-nested-loop-1-e.bal:25:24
+   |
+25 |             io:println(counter + i + j); // @error
+   |                        ^^^^^^^

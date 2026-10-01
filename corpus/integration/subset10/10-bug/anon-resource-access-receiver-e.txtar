@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-resource-access-receiver-e.bal:29:44
+   |
+29 |     mk(function() returns int { string s = 1; return s.length(); })->/; // @error incompatible type
+   |                                            ^

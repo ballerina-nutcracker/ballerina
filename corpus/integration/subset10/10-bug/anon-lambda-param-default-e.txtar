@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-lambda-param-default-e.bal:18:28
+   |
+18 |                 string s = 1; // @error incompatible type
+   |                            ^

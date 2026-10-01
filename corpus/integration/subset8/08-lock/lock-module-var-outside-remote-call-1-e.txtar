@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-remote-call-1-e.bal:25:5
+   |
+25 |     g->bar(); // @error
+   |     ^

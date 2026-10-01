@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-module-var3-e.bal:17:16
+   |
+17 |     string s = 1; // @error incompatible type
+   |                ^

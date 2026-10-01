@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-assign-outside-loop-1-e.bal:21:9
+   |
+21 |         counter = i; // @error
+   |         ^^^^^^^

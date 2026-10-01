@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: mutable field access within isolated object must be inside a lock statement
+  --> lock-class-field-outside-loop-1-e.bal:26:13
+   |
+26 |             self.count = i; // @error
+   |             ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: mutable field access within isolated object must be inside a lock statement
+  --> lock-class-field-outside-loop-1-e.bal:34:22
+   |
+34 |             total += self.count; // @error
+   |                      ^^^^^^^^^^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-resource-access-1-e.bal:26:5
+   |
+26 |     g->/; // @error
+   |     ^
