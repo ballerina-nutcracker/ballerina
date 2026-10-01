@@ -78,23 +78,26 @@ func walkBlockStmt(cx *functionContext, stmt *ast.BLangBlockStmt) desugaredNode[
 }
 
 func walkBlockFunctionBody(cx *functionContext, body *ast.BLangBlockFunctionBody) {
-	var allStmts []ast.StatementNode
-
-	walkStatements := func(stmts []ast.StatementNode) {
-		for _, stmt := range stmts {
-			result := walkStatement(cx, stmt)
-			allStmts = append(allStmts, result.initStmts...)
-			allStmts = append(allStmts, result.replacementNode)
-		}
+	allStmts := walkStatementList(cx, body.InitStmts)
+	if len(body.Workers) == 0 {
+		allStmts = append(allStmts, walkStatementList(cx, body.Stmts)...)
+	} else {
+		allStmts = append(allStmts, desugarWorkerRegion(cx, body)...)
 	}
-
-	walkStatements(body.InitStmts)
-	allStmts = append(allStmts, desugarWorkerRegion(cx, body)...)
-	walkStatements(body.Stmts)
 
 	body.InitStmts = nil
 	body.Workers = nil
 	body.Stmts = allStmts
+}
+
+func walkStatementList(cx *functionContext, stmts []ast.StatementNode) []ast.StatementNode {
+	var allStmts []ast.StatementNode
+	for _, stmt := range stmts {
+		result := walkStatement(cx, stmt)
+		allStmts = append(allStmts, result.initStmts...)
+		allStmts = append(allStmts, result.replacementNode)
+	}
+	return allStmts
 }
 
 func walkAssignment(cx *functionContext, stmt *ast.BLangAssignment) desugaredNode[ast.StatementNode] {

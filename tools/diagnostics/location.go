@@ -84,3 +84,14 @@ func (loc *Location) EndOffset() int {
 func (loc Location) String() string {
 	return fmt.Sprintf("(%d:%d,%d)", loc.fileIndex, loc.startOffset, loc.endOffset)
 }
+
+// SpanLocations returns the location from the start of first to the end of
+// last. Both must be in the same file.
+func SpanLocations(first, last Location) Location {
+	return Location{fileIndex: first.fileIndex, startOffset: first.startOffset, endOffset: last.endOffset}
+}
+
+// EndLocation returns the location of the last byte of loc.
+func EndLocation(loc Location) Location {
+	return Location{fileIndex: loc.fileIndex, startOffset: loc.endOffset - 1, endOffset: loc.endOffset}
+}
