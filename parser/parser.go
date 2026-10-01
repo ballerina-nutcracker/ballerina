@@ -14295,7 +14295,7 @@ func (b *ballerinaParser) mergeQualifiedNameWithExpr(qualifiedName st.STNode, ex
 			return st.CreateEmptyNode()
 		}
 		newLhsExpr := b.mergeQualifiedNameWithExpr(qualifiedName, syncSend.Expression)
-		return st.CreateAsyncSendActionNode(newLhsExpr, syncSend.SyncSendToken, syncSend.PeerWorker)
+		return st.CreateSyncSendActionNode(newLhsExpr, syncSend.SyncSendToken, syncSend.PeerWorker)
 	case st.FUNCTION_CALL:
 		funcCall, ok := exprOrAction.(*st.STFunctionCallExpressionNode)
 		if !ok {
