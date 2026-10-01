@@ -6,6 +6,12 @@ error[SEMANTIC_ERROR]: incompatible type: expected boolean, got "x"
 50 |         _ if "x" => { // @error
    |              ^^^
 
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got 2
+  --> match-guard-type2-e.bal:48:14
+   |
+48 |         2 if v => { // @error
+   |              ^
+
 error[SEMANTIC_ERROR]: incompatible type: expected boolean, got any
   --> match-guard-type2-e.bal:68:14
    |
@@ -23,12 +29,6 @@ error[SEMANTIC_ERROR]: incompatible type: expected boolean, got int
    |
 35 |         _ if count() => { // @error
    |              ^^^^^^^
-
-error[SEMANTIC_ERROR]: incompatible type: expected boolean, got int
-  --> match-guard-type2-e.bal:48:14
-   |
-48 |         2 if v => { // @error
-   |              ^
 
 error[SEMANTIC_ERROR]: incompatible type: expected boolean, got int
   --> match-guard-type2-e.bal:59:22

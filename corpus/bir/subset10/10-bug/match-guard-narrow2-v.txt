@@ -1,0 +1,436 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 5
+    %2 = %1;
+    %3 = multiBlock(%2) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %6 = multiPattern(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad 3
+    %8 = %7;
+    %9 = multiPattern(%8) -> bb3;
+  }
+  bb3 {
+    %10 = ConstantLoad 9
+    %11 = %10;
+    %12 = multiPattern(%11) -> bb4;
+  }
+  bb4 {
+    %13 = nonVarRef() -> bb5;
+  }
+  bb5 {
+    %14 = ConstantLoad 1
+    %15 = %14;
+    %16 = ConstantLoad 3
+    %17 = %16;
+    %18 = otherVar(%15,%17) -> bb6;
+  }
+  bb6 {
+    %19 = ConstantLoad 1
+    %20 = %19;
+    %21 = ConstantLoad x
+    %22 = otherVar(%20,%21) -> bb7;
+  }
+  bb7 {
+    %23 = ConstantLoad 1
+    %24 = %23;
+    %25 = guardFalse(%24) -> bb8;
+  }
+  bb8 {
+    %26 = ConstantLoad a
+    %27 = orGuard(%26) -> bb9;
+  }
+  bb9 {
+    %28 = ConstantLoad 1
+    %29 = %28;
+    %30 = seq(%29) -> bb10;
+  }
+  bb10 {
+    %31 = ConstantLoad 2
+    %32 = %31;
+    %33 = seq(%32) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}
+multiBlock(int|string) -> nil{
+  bb0 {
+    %2 = ConstantLoad true
+    %2 ? bb4 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 5
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = + (1, v) %2;
+    %3 = %0;
+    %4 = println(%3) -> bb7;
+  }
+  bb3 {
+    GOTO bb1;
+  }
+  bb4 {
+    %4 = v is int
+    %3 = %4;
+    %4 ? bb5 : bb6;
+  }
+  bb5 {
+    %6 = ConstantLoad 0
+    %7 = %6;
+    %5 = > v %7;
+    %3 = %5;
+    GOTO bb6;
+  }
+  bb6 {
+    %3 ? bb2 : bb3;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+multiPattern(int|string) -> nil{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = == v %2;
+    %4 = ConstantLoad 2
+    %5 = == v %4;
+    %6 = || %3 %5;
+    %7 = ConstantLoad a
+    %8 = == v %7;
+    %9 = || %6 %8;
+    %9 ? bb4 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad two
+    %1 = println(%0) -> bb7;
+  }
+  bb3 {
+    %19 = ConstantLoad 3
+    %20 = == v %19;
+    %20 ? bb10 : bb9;
+  }
+  bb4 {
+    %11 = v is int
+    %10 = %11;
+    %11 ? bb5 : bb6;
+  }
+  bb5 {
+    %14 = ConstantLoad 2
+    %15 = %14;
+    %13 = * v %15;
+    %16 = %13;
+    %17 = ConstantLoad 4
+    %18 = %17;
+    %12 = == %16 %18;
+    %10 = %12;
+    GOTO bb6;
+  }
+  bb6 {
+    %10 ? bb2 : bb3;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb8 {
+    PushScopeFrame 2
+    %0 = ConstantLoad three
+    %1 = println(%0) -> bb11;
+  }
+  bb9 {
+    GOTO bb12;
+  }
+  bb10 {
+    %23 = ConstantLoad 1
+    %24 = %23;
+    %22 = + v %24;
+    %25 = %22;
+    %26 = ConstantLoad 4
+    %27 = %26;
+    %21 = == %25 %27;
+    %21 ? bb8 : bb9;
+  }
+  bb11 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb12 {
+    PushScopeFrame 2
+    %0 = ConstantLoad other
+    %1 = println(%0) -> bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+val() -> int|string{
+  bb0 {
+    %1 = ConstantLoad 4
+    %0 = %1;
+    return;
+  }
+}
+nonVarRef() -> nil{
+  bb0 {
+    %1 = val() -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 4
+    %3 = == %1 %2;
+    %3 ? bb5 : bb4;
+  }
+  bb2 {
+    return;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad four
+    %1 = println(%0) -> bb6;
+  }
+  bb4 {
+    GOTO bb7;
+  }
+  bb5 {
+    %4 = ConstantLoad true
+    %4 ? bb3 : bb4;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb7 {
+    PushScopeFrame 2
+    %0 = ConstantLoad other
+    %1 = println(%0) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
+otherVar(int,int|string) -> nil{
+  bb0 {
+    %3 = ConstantLoad 1
+    %4 = == v %3;
+    %4 ? bb4 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 4
+    %1 = (1, v);
+    %0 = + (1, w) %1;
+    %2 = %0;
+    %3 = println(%2) -> bb5;
+  }
+  bb3 {
+    GOTO bb6;
+  }
+  bb4 {
+    %5 = w is int
+    %5 ? bb2 : bb3;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb6 {
+    PushScopeFrame 2
+    %0 = ConstantLoad other
+    %1 = println(%0) -> bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+guardFalse(int) -> nil{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = == v %2;
+    %3 ? bb4 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad big
+    %1 = println(%0) -> bb5;
+  }
+  bb3 {
+    GOTO bb6;
+  }
+  bb4 {
+    %5 = v;
+    %6 = ConstantLoad 5
+    %7 = %6;
+    %4 = > %5 %7;
+    %4 ? bb2 : bb3;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb6 {
+    PushScopeFrame 2
+    %0 = ConstantLoad other
+    %1 = println(%0) -> bb7;
+  }
+  bb7 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+orGuard(int|string) -> nil{
+  bb0 {
+    %2 = ConstantLoad a
+    %3 = == v %2;
+    %3 ? bb4 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad a
+    %1 = println(%0) -> bb8;
+  }
+  bb3 {
+    GOTO bb9;
+  }
+  bb4 {
+    %6 = length(v) -> bb5;
+  }
+  bb5 {
+    %7 = %6;
+    %8 = ConstantLoad 0
+    %9 = %8;
+    %5 = == %7 %9;
+    %4 = %5;
+    %5 ? bb7 : bb6;
+  }
+  bb6 {
+    %11 = ConstantLoad a
+    %10 = == v %11;
+    %4 = %10;
+    GOTO bb7;
+  }
+  bb7 {
+    %4 ? bb2 : bb3;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb9 {
+    PushScopeFrame 2
+    %0 = ConstantLoad other
+    %1 = println(%0) -> bb10;
+  }
+  bb10 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+seq(int) -> nil{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = == v %2;
+    %3 ? bb4 : bb3;
+  }
+  bb1 {
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = ConstantLoad c1
+    %1 = println(%0) -> bb6;
+  }
+  bb3 {
+    %8 = ConstantLoad 2
+    %9 = == v %8;
+    %9 ? bb9 : bb8;
+  }
+  bb4 {
+    %4 = ConstantLoad g1
+    %5 = ConstantLoad false
+    %6 = %5;
+    %7 = trace(%4,%6) -> bb5;
+  }
+  bb5 {
+    %7 ? bb2 : bb3;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb7 {
+    PushScopeFrame 2
+    %0 = ConstantLoad c2
+    %1 = println(%0) -> bb11;
+  }
+  bb8 {
+    %14 = ConstantLoad true
+    %14 ? bb14 : bb13;
+  }
+  bb9 {
+    %10 = ConstantLoad g2
+    %11 = ConstantLoad true
+    %12 = %11;
+    %13 = trace(%10,%12) -> bb10;
+  }
+  bb10 {
+    %13 ? bb7 : bb8;
+  }
+  bb11 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb12 {
+    PushScopeFrame 2
+    %0 = ConstantLoad c3
+    %1 = println(%0) -> bb16;
+  }
+  bb13 {
+    GOTO bb1;
+  }
+  bb14 {
+    %15 = ConstantLoad g3
+    %16 = ConstantLoad true
+    %17 = %16;
+    %18 = trace(%15,%17) -> bb15;
+  }
+  bb15 {
+    %18 ? bb12 : bb13;
+  }
+  bb16 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+trace(string,boolean) -> boolean{
+  bb0 {
+    %3 = println(s) -> bb1;
+  }
+  bb1 {
+    %0 = b;
+    return;
+  }
+}
