@@ -59,7 +59,7 @@
                         (simple-var-ref x)
                         (literal <nil>)))
                       (lambda
-                        (function $xmlStep$main$1 (
+                        (function $xmlStep$main$$function$0 (
                           (variable $xmlStepItem)) ()
                           (expr-function-body
                             (xml-filter-expression
