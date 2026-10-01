@@ -1,0 +1,68 @@
+(isReadonly
+  (bb0 () ()
+    (return
+      (type-test-expr is
+        (simple-var-ref v)
+        (value-type readonly)))
+  )
+)
+(main
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 1)))
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 2)))))
+    (named-worker b (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action function
+            (literal x)))))
+    (var-def
+      (variable r (type
+        (intersection-type
+          (record-type
+            (field a
+              (value-type int))
+            (field b
+              (value-type string)))
+          (value-type readonly))) (expr
+        (worker-multiple-receive-action a:a b:b))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isReadonly (
+          (simple-var-ref r))))))
+    (var-def
+      (variable m (type
+        (record-type
+          (field a
+            (value-type int)))) (expr
+        (worker-multiple-receive-action a:a))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isReadonly (
+          (simple-var-ref m))))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 1)))
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 2)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action function
+        (literal x)))
+  )
+)

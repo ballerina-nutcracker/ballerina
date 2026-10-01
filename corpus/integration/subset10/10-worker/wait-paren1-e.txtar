@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker interaction after wait action
+  --> wait-paren1-e.bal:26:5
+   |
+26 |     5 -> a; // @error worker interaction after wait action
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: worker interaction after wait action
+  --> wait-paren1-e.bal:36:5
+   |
+36 |     5 -> a; // @error worker interaction after wait action
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: worker message deadlock
+  --> wait-paren1-e.bal:42:17
+   |
+42 |         int x = <- function; // @error worker message deadlock
+   |                 ^^^^^^^^^^^

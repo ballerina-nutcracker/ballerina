@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker can terminate before running all its message actions
+  --> message-termination-type1-e.bal:25:9
+   |
+25 |         return v; // @error v may be an int
+   |         ^^^^^^^^^

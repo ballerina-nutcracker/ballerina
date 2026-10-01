@@ -1,0 +1,100 @@
+module $anon.. v 0.0.0;
+launch() -> future<int>{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = createWorkerMessage() -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %3;
+    %7 = closure_fp $anon/.:$worker:launch:$function$body
+    $desugar$4 = %7;
+    %9 = closure_fp $anon/.:$worker:launch:$function
+    $desugar$6 = %9;
+    %11 = closure_fp $anon/.:$worker:launch:w
+    $desugar$7 = %11;
+    %13 = start $desugar$6() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %13;
+    %14 = start $desugar$7() isolated=false -> bb4;
+  }
+  bb4 {
+    $desugar$3 = %14;
+    %15 = openLatch($desugar$0) -> bb5;
+  }
+  bb5 {
+    %16 = wait $desugar$2 -> bb6;
+  }
+  bb6 {
+    %0 = %16;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = launch() -> bb1;
+  }
+  bb1 {
+    escaped = %1;
+    %3 = wait escaped -> bb2;
+  }
+  bb2 {
+    result = %3;
+    %5 = println(result) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$worker:launch:$function() -> future<int>{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = (1, $desugar$4)() -> bb2;
+  }
+  bb2 {
+    $desugar$5 = %2;
+    %4 = ConstantLoad 1
+    %5 = newArray list[%4]{(1, $desugar$1)}
+    %6 = ConstantLoad 1
+    %7 = newArray list[%6]{(1, $desugar$3)}
+    %8 = awaitWorkerMessageDelivery(%5,%7) -> bb3;
+  }
+  bb3 {
+    %0 = $desugar$5;
+    return;
+  }
+}
+$worker:launch:$function$body() -> future<int>{
+  bb0 {
+    f = (1, $desugar$3);
+    %2 = ConstantLoad 5
+    %3 = %2;
+    %4 = setWorkerMessageValue((1, $desugar$1),%3) -> bb1;
+  }
+  bb1 {
+    %0 = f;
+    return;
+  }
+}
+$worker:launch:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = getWorkerMessageValue((1, $desugar$1),(1, $desugar$2)) -> bb2;
+  }
+  bb2 {
+    x = %2;
+    %5 = x;
+    %6 = ConstantLoad 2
+    %7 = %6;
+    %4 = * %5 %7;
+    %0 = %4;
+    return;
+  }
+}

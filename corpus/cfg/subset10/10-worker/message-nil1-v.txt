@@ -1,0 +1,94 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (value-type int)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (union-type
+              (value-type int)
+              (value-type null))) (expr
+            (worker-receive-action function))))
+        (var-def
+          (variable y (type
+            (union-type
+              (value-type int)
+              (value-type null))) (expr
+            (worker-receive-action function))))
+        (expression-stmt
+          (worker-async-send-action function
+            (literal <nil>)))
+        (return
+          (ternary-expr
+            (binary-expr &&
+              (type-test-expr is
+                (simple-var-ref x)
+                (value-type null))
+              (type-test-expr is
+                (simple-var-ref y)
+                (value-type null)))
+            (literal <nil>)
+            (literal 1)))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal <nil>)))
+    (expression-stmt
+      (worker-sync-send-action a
+        (literal <nil>)))
+    (var-def
+      (variable z (type
+        (value-type null)) (expr
+        (worker-receive-action a))))
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (binary-expr &&
+            (type-test-expr is
+              (simple-var-ref z)
+              (value-type null))
+            (type-test-expr is
+              (simple-var-ref r)
+              (value-type null)))
+          (literal nil)
+          (literal other)))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (worker-receive-action function))))
+    (var-def
+      (variable y (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (worker-receive-action function))))
+    (expression-stmt
+      (worker-async-send-action function
+        (literal <nil>)))
+    (return
+      (ternary-expr
+        (binary-expr &&
+          (type-test-expr is
+            (simple-var-ref x)
+            (value-type null))
+          (type-test-expr is
+            (simple-var-ref y)
+            (value-type null)))
+        (literal <nil>)
+        (literal 1)))
+  )
+)

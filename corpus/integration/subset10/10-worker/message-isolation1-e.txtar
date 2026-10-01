@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> message-isolation1-e.bal:23:9
+   |
+23 |         counter -> function; // @error access of a mutable variable from an isolated worker
+   |         ^^^^^^^

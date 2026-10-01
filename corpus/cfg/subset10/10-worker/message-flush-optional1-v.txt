@@ -1,0 +1,43 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation run (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation run (
+          (literal false))))))
+  )
+)
+(run
+  (bb0 () (bb1 bb3)
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (return
+          (worker-receive-action function))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 1)))
+    (simple-var-ref early)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal 0))
+  )
+  (bb2 (bb3) ()
+    (expression-stmt
+      (worker-flush-action a))
+    (return
+      (single-wait-action
+        (simple-var-ref a)))
+  )
+  (bb3 (bb0) (bb2))
+)
+(worker a
+  (bb0 () ()
+    (return
+      (worker-receive-action function))
+  )
+)

@@ -1,0 +1,134 @@
+(doubledSum
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable m (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (var-def
+          (variable r (type
+            (value-type int)) (expr
+            (ternary-expr
+              (binary-expr <=
+                (simple-var-ref m)
+                (literal 0))
+              (literal 0)
+              (binary-expr +
+                (simple-var-ref m)
+                (invocation doubledSum (
+                  (binary-expr -
+                    (simple-var-ref m)
+                    (literal 1)))))))))
+        (expression-stmt
+          (worker-async-send-action function
+            (simple-var-ref r)))
+        (return
+          (simple-var-ref r))))
+    (expression-stmt
+      (worker-async-send-action a
+        (simple-var-ref n)))
+    (var-def
+      (variable received (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+    (var-def
+      (variable waited (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (return
+      (binary-expr +
+        (simple-var-ref received)
+        (simple-var-ref waited)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation sum (
+          (literal 4))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation doubledSum (
+          (literal 3))))))
+  )
+)
+(sum
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable m (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (return
+          (ternary-expr
+            (binary-expr <=
+              (simple-var-ref m)
+              (literal 0))
+            (literal 0)
+            (binary-expr +
+              (simple-var-ref m)
+              (invocation sum (
+                (binary-expr -
+                  (simple-var-ref m)
+                  (literal 1)))))))))
+    (expression-stmt
+      (worker-async-send-action a
+        (simple-var-ref n)))
+    (return
+      (single-wait-action
+        (simple-var-ref a)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (ternary-expr
+        (binary-expr <=
+          (simple-var-ref m)
+          (literal 0))
+        (literal 0)
+        (binary-expr +
+          (simple-var-ref m)
+          (invocation sum (
+            (binary-expr -
+              (simple-var-ref m)
+              (literal 1)))))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (ternary-expr
+          (binary-expr <=
+            (simple-var-ref m)
+            (literal 0))
+          (literal 0)
+          (binary-expr +
+            (simple-var-ref m)
+            (invocation doubledSum (
+              (binary-expr -
+                (simple-var-ref m)
+                (literal 1)))))))))
+    (expression-stmt
+      (worker-async-send-action function
+        (simple-var-ref r)))
+    (return
+      (simple-var-ref r))
+  )
+)

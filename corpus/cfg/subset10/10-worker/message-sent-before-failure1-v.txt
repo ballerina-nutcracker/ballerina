@@ -1,0 +1,56 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 1)))
+        (return
+          (error-constructor-expr (
+            (literal after send))))))
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (worker-receive-action a))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref r)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref r)))
+          (simple-var-ref r)))))
+    (var-def
+      (variable w (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref w)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref w)))
+          (literal done)))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 1)))
+    (return
+      (error-constructor-expr (
+        (literal after send))))
+  )
+)

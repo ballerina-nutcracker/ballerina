@@ -1,0 +1,3 @@
+-- stdout --
+{"first":10,"b":"x","function":true}
+-- stderr --

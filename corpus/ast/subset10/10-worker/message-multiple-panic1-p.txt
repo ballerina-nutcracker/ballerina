@@ -1,0 +1,35 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function boom () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal b panicked))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (named-worker a (
+        (value-type null))
+        (block-function-body
+          (expression-stmt
+            (worker-async-send-action function
+              (literal 1)))))
+      (named-worker b (
+        (value-type null))
+        (block-function-body
+          (var-def
+            (variable x (type
+              (value-type int)) (expr
+              (invocation boom ()))))
+          (expression-stmt
+            (worker-async-send-action function
+              (simple-var-ref x)))))
+      (var-def
+        (variable _ (type
+          (record-type
+            (field a
+              (value-type int))
+            (field b
+              (value-type int)))) (expr
+          (worker-multiple-receive-action a:a b:b)))))))
