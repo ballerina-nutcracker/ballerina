@@ -471,6 +471,25 @@ func TestDependentlyTypedResourceMethod(t *testing.T) {
 			}
 			panic(values.NewErrorWithMessage("unsupported targetType"))
 		},
+	}, {
+		Org: "testorg", Module: "dependentresourcemethod.api", FuncName: "ItemClient.$resource$get$0",
+		Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			id, ok := args[1].(int64)
+			if !ok {
+				return nil, fmt.Errorf("expected int path segment, got %T", args[1])
+			}
+			td, ok := args[len(args)-1].(*values.TypeDesc)
+			if !ok {
+				return nil, fmt.Errorf("expected typedesc argument, got %T", args[len(args)-1])
+			}
+			switch {
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.String):
+				return fmt.Sprintf("item %d", id), nil
+			case semtypes.IsSubtype(ctx.TypeCtx(), td.Type, semtypes.Int):
+				return id * 2, nil
+			}
+			panic(values.NewErrorWithMessage("unsupported targetType"))
+		},
 	}}
 	runExtern(t, projectCase("dependently-typed-resource-method-v"), testharness.NewTestPal(), externs)
 }
