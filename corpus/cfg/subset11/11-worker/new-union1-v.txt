@@ -1,0 +1,123 @@
+(IntFn
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access result
+          (simple-var-ref self))
+        (invocation callback ()))
+    )
+  )
+)
+(StringFn
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access result
+          (simple-var-ref self))
+        (invocation callback ()))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable local (type
+        (union-type
+          (user-defined-type IntFn)
+          (user-defined-type StringFn))) (expr
+        (new (
+          (lambda
+            (function $anonFunc$_1 () (
+              (value-type string))
+              (block-function-body
+                (named-worker w (
+                  (value-type string))
+                  (block-function-body
+                    (return
+                      (literal a))))
+                (var-def
+                  (variable v (type
+                    (value-type string)) (expr
+                    (single-wait-action
+                      (simple-var-ref w)))))
+                (return
+                  (binary-expr +
+                    (simple-var-ref v)
+                    (literal b)))))))))))
+    (var-def
+      (variable m (type
+        (union-type
+          (user-defined-type IntFn)
+          (user-defined-type StringFn))) (expr
+        (simple-var-ref moduleLevel))))
+    (type-test-expr is
+      (simple-var-ref m)
+      (user-defined-type IntFn))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access result
+          (simple-var-ref m)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (type-test-expr is
+      (simple-var-ref local)
+      (user-defined-type StringFn))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access result
+          (simple-var-ref local)))))
+  )
+  (bb4 (bb3 bb2) ())
+)
+($anonFunc$_0
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 2))))
+    (var-def
+      (variable v (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (return
+      (binary-expr +
+        (simple-var-ref v)
+        (literal 1)))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (named-worker w (
+      (value-type string))
+      (block-function-body
+        (return
+          (literal a))))
+    (var-def
+      (variable v (type
+        (value-type string)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (return
+      (binary-expr +
+        (simple-var-ref v)
+        (literal b)))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 2))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal a))
+  )
+)
