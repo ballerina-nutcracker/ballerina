@@ -120,6 +120,10 @@ func walkExpressionInner(cx *functionContext, node ast.BLangActionOrExpression) 
 		return walkClientResourceAccessAction(cx, expr)
 	case *ast.BLangStartAction:
 		return walkStartAction(cx, expr)
+	case *ast.BLangWorkerAsyncSendAction, *ast.BLangWorkerSyncSendAction, *ast.BLangWorkerReceiveAction,
+		*ast.BLangWorkerMultipleReceiveAction, *ast.BLangWorkerFlushAction:
+		cx.pkgCtx.compilerCtx.Unimplemented("worker message passing is not supported", expr.GetPosition())
+		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangSingleWaitAction:
 		expr.FutureExpr = walkExpression(cx, expr.FutureExpr).(ast.BLangExpression)
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}

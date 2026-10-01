@@ -19,6 +19,7 @@ package types
 import (
 	"maps"
 
+	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -77,6 +78,9 @@ func childEphemeralState(t typeResolver) *ephemeralState {
 	return state
 }
 
+// enterEphemeral starts a candidate trial. The trial gets its own worker
+// message type store, so its sends publish without clashing with another
+// trial or the final resolution, and it is discarded with the trial.
 func enterEphemeral(t typeResolver) func() {
 	state := resolverEphemeralState(t)
 	if state == nil {
@@ -86,11 +90,34 @@ func enterEphemeral(t typeResolver) func() {
 		state.symbolTypes = make(map[model.SymbolRef]semtypes.SemType)
 	}
 	state.depth++
+	messageTypes := resolverMessageTypesSlot(t)
+	previous := *messageTypes
+	*messageTypes = t.compilerContext().NewWorkerMessageTypeStore()
 	return func() {
+		*messageTypes = previous
 		state.depth--
 		if state.depth == 0 {
 			state.symbolTypes = nil
 		}
+	}
+}
+
+// resolverMessageTypes returns the worker message type store t publishes to
+// and reads from.
+func resolverMessageTypes(t typeResolver) *context.WorkerMessageTypeStore {
+	return *resolverMessageTypesSlot(t)
+}
+
+func resolverMessageTypesSlot(t typeResolver) **context.WorkerMessageTypeStore {
+	switch resolver := t.(type) {
+	case *packageTypeResolver:
+		return &resolver.messageTypes
+	case *functionTypeResolver:
+		return &resolver.messageTypes
+	case *loopTypeResolver:
+		return resolverMessageTypesSlot(resolver.parentResolver)
+	default:
+		return nil
 	}
 }
 
