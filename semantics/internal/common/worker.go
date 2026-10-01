@@ -14,13 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function workerFlush() {
-    worker sender returns error? {
-        1 -> receiver; // @error worker message passing is not supported
-        error? e = flush receiver; // @error worker message passing is not supported
-        return e;
-    }
-    worker receiver returns error? {
-        int _ = check <- sender; // @error worker message passing is not supported
-    }
+package common
+
+import "github.com/ballerina-nutcracker/ballerina/semtypes"
+
+// WorkerFailureType is the error part of a worker's declared return type,
+// given the worker's future<T> type: what a message action gets when the peer
+// fails instead of doing its part.
+func WorkerFailureType(cx semtypes.Context, workerTy semtypes.SemType) semtypes.SemType {
+	return semtypes.Intersect(semtypes.FutureEventualType(cx, workerTy), semtypes.Error)
 }

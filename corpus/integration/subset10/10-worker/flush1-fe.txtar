@@ -9,11 +9,11 @@ fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
 fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
   --> flush1-fe.bal:20:20
    |
-20 |         error? _ = flush receiver; // @error worker message passing is not supported
+20 |         error? e = flush receiver; // @error worker message passing is not supported
    |                    ^^^^^^^^^^^^^^
 
 fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
-  --> flush1-fe.bal:23:17
+  --> flush1-fe.bal:24:23
    |
-23 |         int _ = <- sender; // @error worker message passing is not supported
-   |                 ^^^^^^^^^
+24 |         int _ = check <- sender; // @error worker message passing is not supported
+   |                       ^^^^^^^^^

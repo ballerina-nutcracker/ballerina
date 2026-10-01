@@ -41,6 +41,7 @@ func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCF
 	wg.Go(func() { analyzeUninitializedFields(ctx, pkg, cfg) })
 	wg.Go(func() { analyzeUninitializedGlobalVars(ctx, pkg, cfg) })
 	wg.Go(func() { analyzeFinalReassignments(ctx, pkg, cfg) })
+	wg.Go(func() { analyzeWorkerMessageTermination(ctx, pkg) })
 	wg.Wait()
 }
 

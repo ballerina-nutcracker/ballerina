@@ -14,13 +14,22 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function workerFlush() {
-    worker sender returns error? {
-        1 -> receiver; // @error worker message passing is not supported
-        error? e = flush receiver; // @error worker message passing is not supported
-        return e;
+
+class Counter {
+    int count = 0;
+}
+
+function nonCloneable() {
+    worker a {
+        Counter _ = <- function;
     }
-    worker receiver returns error? {
-        int _ = check <- sender; // @error worker message passing is not supported
+    new Counter() -> a; // @error an object isn't Cloneable
+}
+
+function uncoveredAsyncSend() returns error? {
+    worker a returns error? {
+        int _ = check <- function;
     }
+    1 -> a; // @error a can fail and nothing reports it
+    check wait a;
 }
