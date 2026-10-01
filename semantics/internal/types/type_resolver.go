@@ -2382,12 +2382,12 @@ func resolveNamedWorker(
 		xmlStepOwner:      workerXMLStepOwner(t, worker.Name),
 		scope:             worker.Scope(),
 		context:           resolverContextForFunction(isolatedContext(t)),
-		ephemeralState:    resolverEphemeralState(t),
+		ephemeralState:    childEphemeralState(t),
 	}
 
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
 	resolveBlockFunctionBody(ft, boundaryChain, worker.Body)
-	mergeImplicitImportsInto(t, ft)
+	mergeChildResolver(t, ft)
 
 }
 
@@ -2409,11 +2409,15 @@ func resolverXMLStepOwner(t typeResolver) string {
 	}
 }
 
-// mergeImplicitImportsInto hands the implicit imports a child resolver
-// collected to its parent, which owns the imports of the enclosing function.
-func mergeImplicitImportsInto(parent typeResolver, child *functionTypeResolver) {
+// mergeChildResolver hands what a child resolver collected to its parent: the
+// implicit imports, which the enclosing function owns, and whether a candidate
+// trial in flight reported an unimplemented error.
+func mergeChildResolver(parent typeResolver, child *functionTypeResolver) {
 	for name, imp := range child.implicitImports {
 		parent.addImplicitImport(name, imp)
+	}
+	if state := resolverEphemeralState(parent); state != nil && child.ephemeralState.unimplementedReported {
+		state.unimplementedReported = true
 	}
 }
 
@@ -2461,8 +2465,9 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 		xmlStepOwner:      fnSym.Name(),
 		scope:             e.Function.Scope(),
 		context:           resolverContextForFunction(fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0),
-		ephemeralState:    resolverEphemeralState(t),
+		ephemeralState:    childEphemeralState(t),
 	}
+	defer mergeChildResolver(t, ft)
 
 	// Constructing the lambda captures its free variables. The body is checked
 	// behind a function boundary with those captures already in effect.
@@ -2477,7 +2482,6 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 	}
-	mergeImplicitImportsInto(t, ft)
 
 	setNodeType(t, e, fnType)
 	return fnType, defaultExpressionEffect(outerChain), true
@@ -2562,8 +2566,9 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		xmlStepOwner:      fnSym.Name(),
 		scope:             e.Function.Scope(),
 		context:           resolverContextForFunction(flags&model.FuncSymbolFlagIsolated != 0),
-		ephemeralState:    resolverEphemeralState(t),
+		ephemeralState:    childEphemeralState(t),
 	}
+	defer mergeChildResolver(t, ft)
 	outerChain := addCaptureGroup(chain, e.Function.CaptureGroup())
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: outerChain}
 	body := e.Function.Body.(*ast.BLangExprFunctionBody)
@@ -2571,7 +2576,6 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	mergeImplicitImportsInto(t, ft)
 	returnTy := returnResult.ty
 
 	sig.ReturnType = returnTy
