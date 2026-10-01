@@ -4114,6 +4114,10 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return returnedFunction(result, ok)
 	case *ast.BLangClientResourceAccessAction:
 		return resolveClientResourceAccessAction(t, chain, e, expectedType)
+	case *ast.BLangWorkerAsyncSendAction, *ast.BLangWorkerSyncSendAction, *ast.BLangWorkerReceiveAction,
+		*ast.BLangWorkerMultipleReceiveAction, *ast.BLangWorkerFlushAction:
+		t.unimplemented("worker message passing is not supported", e.GetPosition())
+		return expressionResult{}, false
 	case *ast.BLangStartAction:
 		return resolved(resolveStartAction(t, chain, e, expectedType))
 	case *ast.BLangSingleWaitAction:

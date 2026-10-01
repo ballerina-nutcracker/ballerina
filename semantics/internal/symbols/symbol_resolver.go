@@ -143,6 +143,11 @@ type (
 		// inFunction is true for function and default-expression resolvers and for
 		// every resolver nested inside one.
 		inFunction bool
+		// messageGroup is the worker message group of the body whose worker
+		// statements this resolver resolves, when that body has workers.
+		messageGroup *workerMessageGroup
+		// messageWorker is the worker whose statements this resolver resolves.
+		messageWorker model.SymbolRef
 	}
 
 	// workerSymbolResolver hides a named worker's own name: a worker is not
@@ -1253,7 +1258,11 @@ func resolveBlockFunctionBody(r *blockSymbolResolver, body *ast.BLangBlockFuncti
 	for _, worker := range body.Workers {
 		ok = resolveNamedWorker(r, worker) && ok
 	}
-	return resolveStmts(r, body.Stmts) && ok
+	ok = resolveStmts(r, body.Stmts) && ok
+	if len(body.Workers) > 0 {
+		ok = pairWorkerMessages(r, r.messageGroup) && ok
+	}
+	return ok
 }
 
 // declareNamedWorkers declares every worker symbol before any worker body is
@@ -1279,12 +1288,53 @@ func declareNamedWorkers(r *blockSymbolResolver, body *ast.BLangBlockFunctionBod
 		symbol := model.NewWorkerSymbol(name, worker.GetPosition())
 		addSymbolAndSetOnNode(r, name, symbol, worker)
 	}
+	r.messageGroup = newWorkerMessageGroup(body, !inModuleLevelFunction(r))
+	r.messageWorker = body.DefaultWorker
 	return ok
+}
+
+// inModuleLevelFunction reports whether r is inside the body of a
+// module-level function, or of a method of a class or service, and not in a
+// default expression.
+func inModuleLevelFunction(r *blockSymbolResolver) bool {
+	for current := r; current != nil; {
+		if _, isDefaultExpr := current.node.(*ast.BLangVariable); isDefaultExpr {
+			return false
+		}
+		parent := nearestBlockResolver(current.parent)
+		if parent == nil || isClassOrService(parent.node) {
+			return isNamedFunction(current.node)
+		}
+		current = parent
+	}
+	return false
+}
+
+func isClassOrService(node ast.BLangNode) bool {
+	switch node.(type) {
+	case *ast.BLangClassDefinition, *ast.BLangService:
+		return true
+	default:
+		return false
+	}
+}
+
+func isNamedFunction(node ast.BLangNode) bool {
+	switch n := node.(type) {
+	case *ast.BLangFunction:
+		return !n.IsAnonymous()
+	case *ast.BLangResourceMethod:
+		return true
+	default:
+		return false
+	}
 }
 
 func resolveNamedWorker(r *blockSymbolResolver, worker *ast.BLangNamedWorkerDeclaration) bool {
 	peers := &workerSymbolResolver{blockSymbolResolver: r, workerName: worker.Name}
 	workerResolver := newFunctionResolver(peers, worker)
+	workerResolver.messageGroup = r.messageGroup
+	workerResolver.messageWorker = worker.Symbol()
 	worker.SetScope(workerResolver.scope)
 	ok := true
 	for i := range worker.AnnAttachments {
@@ -2750,10 +2800,16 @@ func resolveExpr(r symbolResolver, expr ast.BLangActionOrExpression) bool {
 			return resolveTypeDesc(r, typeDescriptor)
 		}
 		return true
-	case *ast.BLangWorkerAsyncSendAction, *ast.BLangWorkerSyncSendAction, *ast.BLangWorkerReceiveAction,
-		*ast.BLangWorkerMultipleReceiveAction, *ast.BLangWorkerFlushAction:
-		r.GetCtx().Unimplemented("worker message passing is not supported", n.GetPosition())
-		return false
+	case *ast.BLangWorkerAsyncSendAction:
+		return resolveAsyncSendAction(r, n)
+	case *ast.BLangWorkerSyncSendAction:
+		return resolveSyncSendAction(r, n)
+	case *ast.BLangWorkerReceiveAction:
+		return resolveReceiveAction(r, n)
+	case *ast.BLangWorkerMultipleReceiveAction:
+		return resolveMultipleReceiveAction(r, n)
+	case *ast.BLangWorkerFlushAction:
+		return resolveFlushAction(r, n)
 	case *ast.BLangInferredTypedescDefault, *ast.BLangDefaultArg:
 		return true
 	case *ast.BLangTypeConversionExpr:
@@ -2800,11 +2856,11 @@ func resolveExpr(r symbolResolver, expr ast.BLangActionOrExpression) bool {
 	case *ast.BLangStartAction:
 		return resolveOptionalExpr(r, n.Call)
 	case *ast.BLangSingleWaitAction:
-		return resolveOptionalExpr(r, n.FutureExpr)
+		return resolveWaitAction(r, []ast.BLangExpression{n.FutureExpr}, n.GetPosition(), true)
 	case *ast.BLangAlternateWaitAction:
-		return resolveExprs(r, n.FutureExprs)
+		return resolveWaitAction(r, n.FutureExprs, n.GetPosition(), false)
 	case *ast.BLangMultipleWaitAction:
-		return resolveExprs(r, n.FutureExprs)
+		return resolveWaitAction(r, n.FutureExprs, n.GetPosition(), true)
 	case *ast.BLangRemoteMethodCallAction:
 		// We are creating a deferred symbol here since without determining the type of the reciever we can't determine the actual function symbol
 		createDeferredMethodSymbol(r, n)

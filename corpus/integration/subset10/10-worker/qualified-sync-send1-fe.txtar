@@ -1,13 +1,7 @@
 -- stdout --
 -- stderr --
-fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
-  --> qualified-sync-send1-fe.bal:22:17
-   |
-22 |         int _ = <- function; // @error worker message passing is not supported
-   |                 ^^^^^^^^^^^
-
-fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
   --> qualified-sync-send1-fe.bal:25:9
    |
-25 |         int:MAX_VALUE ->> w; // @error worker message passing is not supported
-   |         ^^^^^^^^^^^^^^^^^^^
+25 |         xml:XML_NAMESPACE_URI ->> w; // @error worker message send/receive is not supported here
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
