@@ -1877,6 +1877,11 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		return nil
 	case *ast.BLangMatchStatement:
 		return a
+	case *ast.BLangMatchClause:
+		if n.Guard != nil && !analyzeMatchGuard(a, n.Guard) {
+			return nil
+		}
+		return a
 	case *ast.BLangVariableDef:
 		if !analyzeSimpleVariableDef(a, n) {
 			return nil
@@ -2163,6 +2168,10 @@ func analyzeIf[A analyzer](a A, ifStmt *ast.BLangIf) bool {
 
 func analyzeWhile[A analyzer](a A, whileStmt *ast.BLangWhile) bool {
 	return analyzeActionOrExpression(a, whileStmt.Expr, semtypes.Boolean)
+}
+
+func analyzeMatchGuard[A analyzer](a A, guard ast.BLangExpression) bool {
+	return analyzeActionOrExpression(a, guard, semtypes.Boolean)
 }
 
 func validateForeach[A analyzer](a A, foreachStmt *ast.BLangForeach) bool {
