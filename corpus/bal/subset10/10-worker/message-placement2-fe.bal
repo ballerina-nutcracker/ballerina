@@ -15,13 +15,16 @@
 // under the License.
 
 
-// A statement starting with `{` whose first member is `m:x ->> w` is a block
-// holding a sync send, not a mapping constructor or an async send.
-function qualifiedSyncSend() {
-    worker w {
-        string _ = <- function;
+function inQueryFrom() {
+    worker a {
+        [1] -> function;
     }
-    {
-        xml:XML_NAMESPACE_URI ->> w; // @error worker message send/receive is not supported here
+    int[] _ = from int i in <- a select i; // @error worker message send/receive is not supported here
+}
+
+function inQuerySelect() {
+    worker a {
+        1 -> function;
     }
+    int[] _ = from int _ in [1] select <- a; // @error worker message send/receive is not supported here
 }

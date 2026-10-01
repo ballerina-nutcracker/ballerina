@@ -145,6 +145,11 @@ type (
 		// inFunction is true for function and default-expression resolvers and for
 		// every resolver nested inside one.
 		inFunction bool
+		// messageGroup is the worker message group of the body whose worker
+		// statements this resolver resolves, when that body has workers.
+		messageGroup *workerMessageGroup
+		// messageWorker is the worker whose statements this resolver resolves.
+		messageWorker model.SymbolRef
 	}
 
 	// workerSymbolResolver hides a named worker's own name: a worker is not
@@ -1256,6 +1261,9 @@ func resolveBlockFunctionBody(resolver *blockSymbolResolver, body *ast.BLangBloc
 	for _, stmt := range body.Stmts {
 		ast.Walk(resolver, stmt.(ast.BLangNode))
 	}
+	if len(body.Workers) > 0 {
+		pairWorkerMessages(resolver, resolver.messageGroup)
+	}
 }
 
 // declareNamedWorkers declares every worker symbol before any worker body is
@@ -1279,11 +1287,52 @@ func declareNamedWorkers(resolver *blockSymbolResolver, body *ast.BLangBlockFunc
 		symbol := model.NewWorkerSymbol(name, worker.GetPosition())
 		addSymbolAndSetOnNode(resolver, name, symbol, worker)
 	}
+	resolver.messageGroup = newWorkerMessageGroup(body, !inModuleLevelFunction(resolver))
+	resolver.messageWorker = body.DefaultWorker
+}
+
+// inModuleLevelFunction reports whether resolver is inside the body of a
+// module-level function, or of a method of a class or service, and not in a
+// default expression.
+func inModuleLevelFunction(resolver *blockSymbolResolver) bool {
+	for current := resolver; current != nil; {
+		if _, isDefaultExpr := current.node.(*ast.BLangVariable); isDefaultExpr {
+			return false
+		}
+		parent := nearestBlockResolver(current.parent)
+		if parent == nil || isClassOrService(parent.node) {
+			return isNamedFunction(current.node)
+		}
+		current = parent
+	}
+	return false
+}
+
+func isClassOrService(node ast.BLangNode) bool {
+	switch node.(type) {
+	case *ast.BLangClassDefinition, *ast.BLangService:
+		return true
+	default:
+		return false
+	}
+}
+
+func isNamedFunction(node ast.BLangNode) bool {
+	switch n := node.(type) {
+	case *ast.BLangFunction:
+		return !n.IsAnonymous()
+	case *ast.BLangResourceMethod:
+		return true
+	default:
+		return false
+	}
 }
 
 func resolveNamedWorker(resolver *blockSymbolResolver, worker *ast.BLangNamedWorkerDeclaration) {
 	peers := &workerSymbolResolver{blockSymbolResolver: resolver, workerName: worker.Name}
 	workerResolver := newFunctionResolver(peers, worker)
+	workerResolver.messageGroup = resolver.messageGroup
+	workerResolver.messageWorker = worker.Symbol()
 	worker.SetScope(workerResolver.scope)
 	ast.Walk(workerResolver, worker)
 	reportUnusedVariables(workerResolver.GetCtx(), workerResolver.getUnused())
@@ -1637,9 +1686,29 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 	case *ast.BLangQueryExpr:
 		resolveQuerySymbols(resolver, n)
 		return nil
-	case *ast.BLangWorkerAsyncSendAction, *ast.BLangWorkerSyncSendAction, *ast.BLangWorkerReceiveAction,
-		*ast.BLangWorkerMultipleReceiveAction, *ast.BLangWorkerFlushAction:
-		resolver.GetCtx().Unimplemented("worker message passing is not supported", n.GetPosition())
+	case *ast.BLangWorkerAsyncSendAction:
+		resolveAsyncSendAction(resolver, n)
+		return nil
+	case *ast.BLangWorkerSyncSendAction:
+		resolveSyncSendAction(resolver, n)
+		return nil
+	case *ast.BLangWorkerReceiveAction:
+		resolveReceiveAction(resolver, n)
+		return nil
+	case *ast.BLangWorkerMultipleReceiveAction:
+		resolveMultipleReceiveAction(resolver, n)
+		return nil
+	case *ast.BLangWorkerFlushAction:
+		resolveFlushAction(resolver, n)
+		return nil
+	case *ast.BLangSingleWaitAction:
+		resolveWaitAction(resolver, []ast.BLangExpression{n.FutureExpr}, n.GetPosition(), true)
+		return nil
+	case *ast.BLangAlternateWaitAction:
+		resolveWaitAction(resolver, n.FutureExprs, n.GetPosition(), false)
+		return nil
+	case *ast.BLangMultipleWaitAction:
+		resolveWaitAction(resolver, n.FutureExprs, n.GetPosition(), true)
 		return nil
 	case *ast.BLangInvocation:
 		if n.GetExpression() != nil {

@@ -21,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ballerina-nutcracker/ballerina/context/internal/workermessages"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -195,6 +196,26 @@ func (c *CompilerContext) NewCaptureGroup() model.CaptureGroupRef {
 
 func (c *CompilerContext) AddToCaptureGroup(group model.CaptureGroupRef, ref model.SymbolRef) {
 	c.env.addToCaptureGroup(group, ref)
+}
+
+// WorkerMessageTypeStore holds the type of each worker message for type
+// resolution.
+type WorkerMessageTypeStore = workermessages.Store
+
+// NewWorkerMessage allocates a worker message handle.
+func (c *CompilerContext) NewWorkerMessage() model.WorkerMessageRef {
+	return c.env.newWorkerMessage()
+}
+
+// WorkerMessageTypes returns the store of the worker message types published
+// outside candidate trials.
+func (c *CompilerContext) WorkerMessageTypes() *WorkerMessageTypeStore {
+	return c.env.workerMessageTypes
+}
+
+// NewWorkerMessageTypeStore returns an empty store for a candidate trial.
+func (c *CompilerContext) NewWorkerMessageTypeStore() *WorkerMessageTypeStore {
+	return workermessages.NewStore()
 }
 
 func (c *CompilerContext) CaptureGroupContains(group model.CaptureGroupRef, ref model.SymbolRef) bool {

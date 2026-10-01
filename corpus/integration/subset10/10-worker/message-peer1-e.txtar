@@ -1,0 +1,79 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Variable already defined: a
+  --> message-peer1-e.bal:79:5
+   |
+79 |     worker a { // @error a parameter already has the name
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+80 |         wait b;
+   |         ^^^^^^^
+81 |         1 -> function;
+   |         ^^^^^^^^^^^^^^
+82 |     }
+   |     ^
+
+error[SEMANTIC_ERROR]: duplicate field 'x' in multiple receive
+  --> message-peer1-e.bal:75:32
+   |
+75 |     record {} _ = <- {x: a, x: b}; // @error field names are distinct
+   |                                ^
+
+error[SEMANTIC_ERROR]: duplicate worker 'a' in multiple receive
+  --> message-peer1-e.bal:52:41
+   |
+52 |     record {} _ = <- {first: a, second: a}; // @error a peer appears at most once
+   |                                         ^
+
+error[SEMANTIC_ERROR]: undefined worker 'nobody'
+  --> message-peer1-e.bal:20:14
+   |
+20 |         1 -> nobody; // @error undefined worker
+   |              ^^^^^^
+
+error[SEMANTIC_ERROR]: undefined worker 'nobody'
+  --> message-peer1-e.bal:65:26
+   |
+65 |     record {} _ = <- {a, nobody}; // @error undefined worker
+   |                          ^^^^^^
+
+error[SEMANTIC_ERROR]: undefined worker 'w'
+  --> message-peer1-e.bal:37:16
+   |
+37 |     int _ = <- w; // @error workers aren't in scope before their declarations
+   |                ^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> message-peer1-e.bal:78:25
+   |
+78 | function rejectedWorker(int a) { // @error the parameter is unused
+   |                         ^^^^^
+
+error[SEMANTIC_ERROR]: worker can't send/receive to itself
+  --> message-peer1-e.bal:27:10
+   |
+27 |     1 -> function; // @error the default worker can't send to itself
+   |          ^^^^^^^^
+
+error[SEMANTIC_ERROR]: worker can't send/receive to itself
+  --> message-peer1-e.bal:33:16
+   |
+33 |     int _ = <- function; // @error the default worker can't receive from itself
+   |                ^^^^^^^^
+
+error[SEMANTIC_ERROR]: worker can't send/receive to itself
+  --> message-peer1-e.bal:38:10
+   |
+38 |     1 -> function; // @error the initialization statements belong to the default worker
+   |          ^^^^^^^^
+
+error[SEMANTIC_ERROR]: worker can't send/receive to itself
+  --> message-peer1-e.bal:44:10
+   |
+44 |     1 -> function; // @error a body without workers still has a default worker
+   |          ^^^^^^^^
+
+error[SEMANTIC_ERROR]: worker can't send/receive to itself
+  --> message-peer1-e.bal:57:14
+   |
+57 |         1 -> a; // @error a worker can't send to itself
+   |              ^
