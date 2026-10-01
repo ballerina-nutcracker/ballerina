@@ -1,0 +1,8 @@
+(package
+  (import-package ballerina io (as _))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation _ println (
+          (literal quoted underscore import prefix)))))))

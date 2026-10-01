@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: println
+  --> import-quoted-underscore3-e.bal:20:5
+   |
+20 |     '_:println("not accessible"); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

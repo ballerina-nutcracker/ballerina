@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unused import prefix '_'
+  --> import-quoted-underscore1-e.bal:17:1
+   |
+17 | import ballerina/io as '_; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^
