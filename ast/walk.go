@@ -592,15 +592,18 @@ func Walk(v Visitor, node BLangNode) {
 		}
 
 	// Section 7: Expressions - Worker
-	case *BLangWorkerReceive:
-		if node.WorkerIdentifier != nil {
-			Walk(v, node.WorkerIdentifier)
+	case *BLangWorkerAsyncSendAction:
+		if node.Expr != nil {
+			Walk(v, node.Expr)
 		}
 
-	case *BLangAlternateWorkerReceive:
-		for i := range node.workerReceives {
-			Walk(v, &node.workerReceives[i])
+	case *BLangWorkerSyncSendAction:
+		if node.Expr != nil {
+			Walk(v, node.Expr)
 		}
+
+	case *BLangWorkerReceiveAction, *BLangWorkerMultipleReceiveAction, *BLangWorkerFlushAction:
+		// Leaf nodes
 
 	// Section 8: Type Nodes
 	case *BLangArrayType:

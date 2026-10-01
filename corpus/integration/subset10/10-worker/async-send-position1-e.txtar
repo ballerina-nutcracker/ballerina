@@ -1,0 +1,49 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: async send action can only be used as a statement
+  --> async-send-position1-e.bal:21:13
+   |
+21 |     int a = 1 -> w; // @error async send in a variable initializer
+   |             ^^^^^^
+
+error[SYNTAX_ERROR]: async send action can only be used as a statement
+  --> async-send-position1-e.bal:23:9
+   |
+23 |     b = 2 -> w; // @error async send in an assignment
+   |         ^^^^^^
+
+error[SYNTAX_ERROR]: async send action can only be used as a statement
+  --> async-send-position1-e.bal:24:19
+   |
+24 |     var c = check 3 -> w; // @error async send under check
+   |                   ^^^^^^
+
+error[SYNTAX_ERROR]: async send action can only be used as a statement
+  --> async-send-position1-e.bal:25:18
+   |
+25 |     var d = trap 4 -> w; // @error async send under trap
+   |                  ^^^^^^
+
+error[SYNTAX_ERROR]: async send action can only be used as a statement
+  --> async-send-position1-e.bal:26:14
+   |
+26 |     var e = (5 -> w); // @error async send in parentheses
+   |              ^^^^^^
+
+error[SYNTAX_ERROR]: async send action can only be used as a statement
+  --> async-send-position1-e.bal:27:11
+   |
+27 |     match 6 -> w { // @error async send as a match subject
+   |           ^^^^^^
+
+error[SYNTAX_ERROR]: async send action can only be used as a statement
+  --> async-send-position1-e.bal:31:22
+   |
+31 |     foreach int i in 7 -> w { // @error async send as a foreach collection
+   |                      ^^^^^^
+
+error[SYNTAX_ERROR]: async send action can only be used as a statement
+  --> async-send-position1-e.bal:33:12
+   |
+33 |     return 8 -> w; // @error async send in a return
+   |            ^^^^^^

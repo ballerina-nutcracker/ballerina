@@ -14,12 +14,21 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function workerFlush() {
-    worker sender {
-        1 -> receiver; // @error worker message passing is not supported
-        error? _ = flush receiver; // @error worker message passing is not supported
+
+function positions() returns error? {
+    worker w {
     }
-    worker receiver {
-        int _ = <- sender; // @error worker message passing is not supported
+    int a = 1 -> w; // @error async send in a variable initializer
+    int b = 0;
+    b = 2 -> w; // @error async send in an assignment
+    var c = check 3 -> w; // @error async send under check
+    var d = trap 4 -> w; // @error async send under trap
+    var e = (5 -> w); // @error async send in parentheses
+    match 6 -> w { // @error async send as a match subject
+        _ => {
+        }
     }
+    foreach int i in 7 -> w { // @error async send as a foreach collection
+    }
+    return 8 -> w; // @error async send in a return
 }

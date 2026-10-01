@@ -131,6 +131,8 @@ type (
 		Stmts     []StatementNode
 		// DefaultWorker is the default worker symbol; zero when Workers is empty.
 		DefaultWorker model.SymbolRef
+		// DefaultWorkerSendMessages are the messages the default worker sends.
+		DefaultWorkerSendMessages []model.WorkerMessageRef
 	}
 
 	BLangNamedWorkerDeclaration struct {
@@ -140,8 +142,10 @@ type (
 		AnnAttachments []BLangAnnotationAttachment
 		ReturnType     *BLangReturnTypeDescriptor
 		Body           *BLangBlockFunctionBody
-		symbol         model.SymbolRef
-		scope          model.Scope
+		// SendMessages are the messages the worker sends.
+		SendMessages []model.WorkerMessageRef
+		symbol       model.SymbolRef
+		scope        model.Scope
 	}
 
 	BLangExprFunctionBody struct {

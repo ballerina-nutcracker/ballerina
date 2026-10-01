@@ -1637,6 +1637,10 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 	case *ast.BLangQueryExpr:
 		resolveQuerySymbols(resolver, n)
 		return nil
+	case *ast.BLangWorkerAsyncSendAction, *ast.BLangWorkerSyncSendAction, *ast.BLangWorkerReceiveAction,
+		*ast.BLangWorkerMultipleReceiveAction, *ast.BLangWorkerFlushAction:
+		resolver.GetCtx().Unimplemented("worker message passing is not supported", n.GetPosition())
+		return nil
 	case *ast.BLangInvocation:
 		if n.GetExpression() != nil {
 			createDeferredMethodSymbol(resolver, n)

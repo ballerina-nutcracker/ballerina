@@ -14,12 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function workerFlush() {
-    worker sender {
-        1 -> receiver; // @error worker message passing is not supported
-        error? _ = flush receiver; // @error worker message passing is not supported
+
+function alternate() {
+    worker a {
+        1 -> function;
     }
-    worker receiver {
-        int _ = <- sender; // @error worker message passing is not supported
+    worker b {
+        2 -> function;
     }
+    int _ = <- a | b; // @error alternate receive is not supported
 }

@@ -14,12 +14,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function workerFlush() {
-    worker sender {
-        1 -> receiver; // @error worker message passing is not supported
-        error? _ = flush receiver; // @error worker message passing is not supported
+
+function value() returns int {
+    return 1;
+}
+
+// A panic trapped while computing the value would skip the send.
+function trappedSyncSend() {
+    worker b {
+        int|error _ = <- function;
     }
-    worker receiver {
-        int _ = <- sender; // @error worker message passing is not supported
-    }
+    error? _ = trap (value() ->> b); // @error worker message send/receive is not supported here
+    wait b;
 }

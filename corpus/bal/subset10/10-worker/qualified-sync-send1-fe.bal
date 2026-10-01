@@ -14,12 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function workerFlush() {
-    worker sender {
-        1 -> receiver; // @error worker message passing is not supported
-        error? _ = flush receiver; // @error worker message passing is not supported
+
+// A statement starting with `{` whose first member is `m:x ->> w` is a block
+// holding a sync send, not a mapping constructor or an async send.
+function qualifiedSyncSend() {
+    worker w {
+        int _ = <- function; // @error worker message passing is not supported
     }
-    worker receiver {
-        int _ = <- sender; // @error worker message passing is not supported
+    {
+        int:MAX_VALUE ->> w; // @error worker message passing is not supported
     }
 }

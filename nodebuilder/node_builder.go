@@ -31,6 +31,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 	balCommon "github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 )
 
 type nodeBuilderMode uint8
@@ -1797,16 +1798,21 @@ func (n *nodeBuilder) transformAssignmentStatement(assignmentStatementNode *st.A
 	return ast.NewBLangAssignment(
 		n.getPosition(assignmentStatementNode),
 		lhsExpr,
-		n.createActionOrExpression(assignmentStatementNode.Expression()),
+		n.createValueActionOrExpression(assignmentStatementNode.Expression()),
 	)
 }
 
 func (n *nodeBuilder) transformCompoundAssignmentStatement(compoundAssignmentStmtNode *st.CompoundAssignmentStatementNode) ast.BLangNode {
+	rhs := n.createActionOrExpression(compoundAssignmentStmtNode.RhsExpression())
+	if isWorkerMessageActionNode(rhs) {
+		n.unimplemented("worker message send/receive is not supported here", compoundAssignmentStmtNode.RhsExpression())
+		return n.badStmt(compoundAssignmentStmtNode)
+	}
 	lhsExpr := ast.NewBLangAssignmentLExpr(n.createExpression(compoundAssignmentStmtNode.LhsExpression()), true)
 	return ast.NewBLangCompoundAssignment(
 		n.getPosition(compoundAssignmentStmtNode),
 		lhsExpr,
-		n.createActionOrExpression(compoundAssignmentStmtNode.RhsExpression()),
+		rhs,
 		model.OperatorKindValueFrom(compoundAssignmentStmtNode.BinaryOperator().Text()),
 	)
 }
@@ -1833,7 +1839,7 @@ func (n *nodeBuilder) createBLangVarDef(location diagnostics.Location, typedBind
 	case st.CAPTURE_BINDING_PATTERN, st.WILDCARD_BINDING_PATTERN:
 		var expr ast.BLangActionOrExpression
 		if initializer != nil {
-			expr = n.createActionOrExpression(initializer)
+			expr = n.createValueActionOrExpression(initializer)
 		}
 		typeDesc := typedBindingPattern.TypeDescriptor()
 		isDeclaredWithVar := isDeclaredWithVar(typeDesc)
@@ -1995,9 +2001,47 @@ func (n *nodeBuilder) createExpressionInner(expressionNode st.Node) (ast.BLangEx
 	}
 	expr, ok := actionOrExpr.(ast.BLangExpression)
 	if !ok {
+		if isWorkerMessageActionNode(actionOrExpr) {
+			n.unimplemented("worker message send/receive is not supported here", expressionNode)
+			return n.badExprOrAction(expressionNode), nil
+		}
 		return nil, fmt.Errorf("syntax node %T transformed to non-expression node %T", expressionNode, actionOrExpr)
 	}
 	return expr, nil
+}
+
+// sendsWorkerMessage reports whether expr is a send, possibly under check.
+func sendsWorkerMessage(expr ast.BLangActionOrExpression) bool {
+	switch expr := expr.(type) {
+	case *ast.BLangWorkerAsyncSendAction, *ast.BLangWorkerSyncSendAction:
+		return true
+	case *ast.BLangCheckedExpr:
+		return sendsWorkerMessage(expr.Expr)
+	case *ast.BLangCheckPanickedExpr:
+		return sendsWorkerMessage(expr.Expr)
+	default:
+		return false
+	}
+}
+
+func isWorkerMessageActionNode(node ast.BLangActionOrExpression) bool {
+	switch node.(type) {
+	case *ast.BLangWorkerAsyncSendAction, *ast.BLangWorkerSyncSendAction, *ast.BLangWorkerReceiveAction,
+		*ast.BLangWorkerMultipleReceiveAction, *ast.BLangWorkerFlushAction:
+		return true
+	default:
+		return false
+	}
+}
+
+// createValueActionOrExpression creates an action or expression whose value
+// is used, which an async send doesn't have.
+func (n *nodeBuilder) createValueActionOrExpression(actionOrExpression st.Node) ast.BLangActionOrExpression {
+	if actionOrExpression != nil && actionOrExpression.Kind() == st.ASYNC_SEND_ACTION {
+		n.cx.SyntaxError("async send action can only be used as a statement", n.getPosition(actionOrExpression))
+		return n.badExprOrAction(actionOrExpression)
+	}
+	return n.createActionOrExpression(actionOrExpression)
 }
 
 // createActionOrExpression creates an action or expression node from a syntax tree node
@@ -2114,7 +2158,7 @@ func (n *nodeBuilder) transformReturnStatement(returnStatementNode *st.ReturnSta
 	pos := n.getPosition(returnStatementNode)
 	var expr ast.BLangActionOrExpression
 	if returnStatementNode.Expression() != nil {
-		expr = n.createActionOrExpression(returnStatementNode.Expression())
+		expr = n.createValueActionOrExpression(returnStatementNode.Expression())
 	} else {
 		expr = ast.NewBLangLiteral(pos, ast.LiteralKindNil, nil, "", false)
 	}
@@ -2159,7 +2203,7 @@ func (n *nodeBuilder) transformForEachStatement(forEachStatementNode *st.ForEach
 	return ast.NewBLangForeach(
 		n.getPosition(forEachStatementNode),
 		varDef,
-		n.createActionOrExpression(forEachStatementNode.ActionOrExpressionNode()),
+		n.createValueActionOrExpression(forEachStatementNode.ActionOrExpressionNode()),
 		body,
 		onFailClause,
 	)
@@ -2189,14 +2233,14 @@ func (n *nodeBuilder) transformBinaryExpression(binaryBLangExpression *st.Binary
 }
 
 func (n *nodeBuilder) transformBracedExpression(bracedBLangExpression *st.BracedExpressionNode) ast.BLangNode {
-	return n.createActionOrExpression(bracedBLangExpression.Expression())
+	return n.createValueActionOrExpression(bracedBLangExpression.Expression())
 }
 
 func (n *nodeBuilder) transformCheckExpression(checkBLangExpression *st.CheckExpressionNode) ast.BLangNode {
 	pos := n.getPosition(checkBLangExpression)
 	// we are deviating from the spec here (https://ballerina.io/spec/lang/master/#section_6.33) check is only suppose
 	// to work with expression but jBallerina also allow remote method calls (which is an action)
-	expr := n.createActionOrExpression(checkBLangExpression.Expression())
+	expr := n.createValueActionOrExpression(checkBLangExpression.Expression())
 	if checkBLangExpression.CheckKeyword().Kind() == st.CHECK_KEYWORD {
 		checkedExpr := &ast.BLangCheckedExpr{}
 		checkedExpr.SetPosition(pos)
@@ -3150,7 +3194,13 @@ func (n *nodeBuilder) transformBuiltinSimpleNameReference(builtinSimpleNameRefer
 
 func (n *nodeBuilder) transformTrapExpression(trapBLangExpression *st.TrapExpressionNode) ast.BLangNode {
 	pos := n.getPosition(trapBLangExpression)
-	expr := n.createActionOrExpression(trapBLangExpression.Expression())
+	expr := n.createValueActionOrExpression(trapBLangExpression.Expression())
+	if sendsWorkerMessage(expr) {
+		// A trapped panic in the value would skip the send while the worker
+		// carries on, which pairing can't account for.
+		n.unimplemented("worker message send/receive is not supported here", trapBLangExpression.Expression())
+		return n.badExprOrAction(trapBLangExpression)
+	}
 	trapExpr := &ast.BLangTrapExpr{}
 	trapExpr.SetPosition(pos)
 	trapExpr.Expr = expr
@@ -4472,8 +4522,18 @@ func (n *nodeBuilder) transformStartAction(startActionNode *st.StartActionNode) 
 }
 
 func (n *nodeBuilder) transformFlushAction(flushActionNode *st.FlushActionNode) ast.BLangNode {
-	n.unimplemented("worker flush is not supported", flushActionNode)
-	return n.badExprOrAction(flushActionNode)
+	action := &ast.BLangWorkerFlushAction{}
+	action.SetPosition(n.getPosition(flushActionNode))
+	if peer := flushActionNode.PeerWorker(); peer != nil {
+		nameRef, ok := peer.(*st.SimpleNameReferenceNode)
+		if !ok {
+			n.internalError("flush peer is not a simple name", peer)
+			return n.badExprOrAction(flushActionNode)
+		}
+		workerPeer := n.createWorkerPeer(nameRef)
+		action.Peer = &workerPeer
+	}
+	return action
 }
 
 func (n *nodeBuilder) transformSingletonTypeDescriptor(singletonTypeDescriptorNode *st.SingletonTypeDescriptorNode) ast.BLangNode {
@@ -4540,28 +4600,85 @@ func (n *nodeBuilder) transformNamedArgBindingPattern(namedArgBindingPatternNode
 }
 
 func (n *nodeBuilder) transformAsyncSendAction(asyncSendActionNode *st.AsyncSendActionNode) ast.BLangNode {
-	n.unimplemented("worker message passing is not supported", asyncSendActionNode)
-	return n.badExprOrAction(asyncSendActionNode)
+	action := &ast.BLangWorkerAsyncSendAction{
+		Expr: n.createExpression(asyncSendActionNode.Expression()),
+		Peer: n.createWorkerPeer(asyncSendActionNode.PeerWorker()),
+	}
+	action.SetPosition(n.getPosition(asyncSendActionNode))
+	return action
 }
 
 func (n *nodeBuilder) transformSyncSendAction(syncSendActionNode *st.SyncSendActionNode) ast.BLangNode {
-	n.unimplemented("worker message passing is not supported", syncSendActionNode)
-	return n.badExprOrAction(syncSendActionNode)
+	action := &ast.BLangWorkerSyncSendAction{
+		Expr: n.createExpression(syncSendActionNode.Expression()),
+		Peer: n.createWorkerPeer(syncSendActionNode.PeerWorker()),
+	}
+	action.SetPosition(n.getPosition(syncSendActionNode))
+	return action
 }
 
 func (n *nodeBuilder) transformReceiveAction(receiveActionNode *st.ReceiveActionNode) ast.BLangNode {
-	n.unimplemented("worker message passing is not supported", receiveActionNode)
-	return n.badExprOrAction(receiveActionNode)
+	pos := n.getPosition(receiveActionNode)
+	switch workers := receiveActionNode.ReceiveWorkers().(type) {
+	case *st.SimpleNameReferenceNode:
+		action := &ast.BLangWorkerReceiveAction{Peer: n.createWorkerPeer(workers)}
+		action.SetPosition(pos)
+		return action
+	case *st.ReceiveFieldsNode:
+		action, ok := n.transformReceiveFields(workers).(*ast.BLangWorkerMultipleReceiveAction)
+		if !ok {
+			return n.badExprOrAction(receiveActionNode)
+		}
+		action.SetPosition(pos)
+		return action
+	case *st.AlternateReceiveNode:
+		n.unimplemented("alternate receive is not supported", receiveActionNode)
+		return n.badExprOrAction(receiveActionNode)
+	default:
+		n.internalError("unexpected receive workers", receiveActionNode)
+		return n.badExprOrAction(receiveActionNode)
+	}
 }
 
 func (n *nodeBuilder) transformReceiveFields(receiveFieldsNode *st.ReceiveFieldsNode) ast.BLangNode {
-	n.unimplemented("transformReceiveFields unimplemented", receiveFieldsNode)
-	return nil
+	action := &ast.BLangWorkerMultipleReceiveAction{}
+	fields := receiveFieldsNode.ReceiveFields()
+	for field := range fields.Iterator() {
+		switch field := field.(type) {
+		case *st.SimpleNameReferenceNode:
+			peer := n.createWorkerPeer(field)
+			action.Fields = append(action.Fields, ast.BLangWorkerReceiveField{FieldName: peer.SourceName(), Peer: peer})
+		case *st.ReceiveFieldNode:
+			fieldName := n.createIdentifierNodeFromToken(n.getPosition(field.FieldName()), field.FieldName().Name())
+			action.Fields = append(action.Fields, ast.BLangWorkerReceiveField{
+				FieldName: fieldName.GetValue(),
+				Peer:      n.createWorkerPeer(field.PeerWorker()),
+			})
+		default:
+			if _, ok := field.(st.Token); ok {
+				continue
+			}
+			n.internalError("unexpected receive field", field)
+			return n.badExprOrAction(receiveFieldsNode)
+		}
+	}
+	return action
+}
+
+// createWorkerPeer records the peer of a message action. The `function`
+// keyword names the default worker.
+func (n *nodeBuilder) createWorkerPeer(nameRef *st.SimpleNameReferenceNode) ast.BLangWorkerPeer {
+	pos := n.getPosition(nameRef)
+	name := nameRef.Name()
+	if name != nil && name.Kind() == st.FUNCTION_KEYWORD {
+		return ast.BLangWorkerPeer{Name: constants.DefaultWorkerName, Pos: pos}
+	}
+	return ast.BLangWorkerPeer{Name: n.createIdentifierNodeFromToken(pos, name).GetValue(), Pos: pos}
 }
 
 func (n *nodeBuilder) transformAlternateReceive(alternateReceiveNode *st.AlternateReceiveNode) ast.BLangNode {
-	n.unimplemented("transformAlternateReceive unimplemented", alternateReceiveNode)
-	return nil
+	n.unimplemented("alternate receive is not supported", alternateReceiveNode)
+	return n.badExprOrAction(alternateReceiveNode)
 }
 
 func (n *nodeBuilder) transformRestDescriptor(restDescriptorNode *st.RestDescriptorNode) ast.BLangNode {
@@ -4982,7 +5099,7 @@ func (n *nodeBuilder) transformTypeReferenceTypeDesc(typeReferenceTypeDescNode *
 
 func (n *nodeBuilder) transformMatchStatement(matchStatementNode *st.MatchStatementNode) ast.BLangNode {
 	matchStatement := &ast.BLangMatchStatement{}
-	matchStmtExpr := n.createActionOrExpression(matchStatementNode.Condition())
+	matchStmtExpr := n.createValueActionOrExpression(matchStatementNode.Condition())
 	matchStatement.Expr = matchStmtExpr
 
 	matchClauses := matchStatementNode.MatchClauses()
