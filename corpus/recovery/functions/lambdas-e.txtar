@@ -1,4 +1,35 @@
--- stdout --
+-- lambdas-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function lambdas() {
+    var a = function(int _) returns int => 1; // @error
+    var b = function(int... _) returns int => 1; // @error
+    var c = function(int x = ) returns int => 1; // @error
+    var d = function() returns mod:_ => 1; // @error
+    var e = (_)=>1; // @error
+    var f = isolated isolated function() returns int => 1; // @error
+    var g = function(@mod:_ int x) returns int => x; // @error
+    var h = function() returns @mod:_ int => 1; // @error
+    var validParameterSibling = function(int x) returns int => x;
+    var validReturnSibling = function() returns int => 1;
+    int later = validParameterSibling(validReturnSibling()); // @error unused surviving sibling
+}
+function valid() {}
+-- ast --
 (package
   (function lambdas () (
     (value-type null))
@@ -51,123 +82,3 @@
   (function valid () (
     (value-type null))
     (block-function-body)))
--- stderr --
-error[SEMANTIC_ERROR]: unused variable 'a'
-  --> recovery/functions/lambdas-e.bal:18:1
-   |
-18 |     var a = function(int _) returns int => 1; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-19 |     var b = function(int... _) returns int => 1; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'b'
-  --> recovery/functions/lambdas-e.bal:19:1
-   |
-19 |     var b = function(int... _) returns int => 1; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-20 |     var c = function(int x = ) returns int => 1; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'c'
-  --> recovery/functions/lambdas-e.bal:20:1
-   |
-20 |     var c = function(int x = ) returns int => 1; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-21 |     var d = function() returns mod:_ => 1; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'd'
-  --> recovery/functions/lambdas-e.bal:21:1
-   |
-21 |     var d = function() returns mod:_ => 1; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-22 |     var e = (_)=>1; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'e'
-  --> recovery/functions/lambdas-e.bal:22:1
-   |
-22 |     var e = (_)=>1; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
-23 |     var f = isolated isolated function() returns int => 1; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'f'
-  --> recovery/functions/lambdas-e.bal:23:1
-   |
-23 |     var f = isolated isolated function() returns int => 1; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-24 |     var g = function(@mod:_ int x) returns int => x; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'g'
-  --> recovery/functions/lambdas-e.bal:24:1
-   |
-24 |     var g = function(@mod:_ int x) returns int => x; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-25 |     var h = function() returns @mod:_ int => 1; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'h'
-  --> recovery/functions/lambdas-e.bal:25:1
-   |
-25 |     var h = function() returns @mod:_ int => 1; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-26 |     var validParameterSibling = function(int x) returns int => x;
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> recovery/functions/lambdas-e.bal:28:1
-   |
-28 |     int later = validParameterSibling(validReturnSibling()); // @error unused surviving sibling
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-29 | }
-   |
-
-error[SYNTAX_ERROR]: duplicate qualifier
-  --> recovery/functions/lambdas-e.bal:23:13
-   |
-23 |     var f = isolated isolated function() returns int => 1; // @error
-   |             ^^^^^^^^^^^^^^^^^^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/functions/lambdas-e.bal:18:26
-   |
-18 |     var a = function(int _) returns int => 1; // @error
-   |                          ^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/functions/lambdas-e.bal:19:29
-   |
-19 |     var b = function(int... _) returns int => 1; // @error
-   |                             ^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/functions/lambdas-e.bal:21:36
-   |
-21 |     var d = function() returns mod:_ => 1; // @error
-   |                                    ^^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/functions/lambdas-e.bal:22:14
-   |
-22 |     var e = (_)=>1; // @error
-   |              ^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/functions/lambdas-e.bal:24:27
-   |
-24 |     var g = function(@mod:_ int x) returns int => x; // @error
-   |                           ^^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/functions/lambdas-e.bal:25:37
-   |
-25 |     var h = function() returns @mod:_ int => 1; // @error
-   |                                     ^^
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/functions/lambdas-e.bal:20:30
-   |
-20 |     var c = function(int x = ) returns int => 1; // @error
-   |

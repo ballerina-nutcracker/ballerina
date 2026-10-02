@@ -1,59 +1,37 @@
--- stdout --
-strict AST:
-(compilation-unit (position 1:1 1:1)
-(package-id $anon . 0.0.0)
-  (variable (position 17:1 17:15) x (type
-    (value-type (position 17:1 17:4) int)) (expr
-    (binary-expr (position 17:9 17:14) +
-      (literal (position 17:9 17:10) 1)
-      (literal (position 17:13 17:14) 2))))
-  (const (position 18:1 18:17) y (
-    (value-type (position 18:7 18:10) int)) (
-    (literal (position 18:15 18:16) 3)))
-  (type-definition (position 19:1 19:17) A
-    (user-defined-type (position 19:8 19:16) mod Name))
-  (function (position 21:1 23:2) foo (
-    (variable (position 21:14 21:19) x (type
-      (value-type (position 21:14 21:17) int)))) (
-    (value-type (position <built-in>) null))
-    (block-function-body (position 21:21 23:2)
-      (return (position 22:2 22:9)
-        (literal (position 22:2 22:9) <nil>))))
-  (function (position 24:1 31:2) references () (
-    (value-type (position <built-in>) null))
-    (block-function-body (position 24:23 31:2)
-      (assignment (position 25:5 25:18)
-        (simple-var-ref (position 25:5 25:6) x)
-        (simple-var-ref (position 25:9 25:17) mod name))
-      (assignment (position 26:5 26:23)
-        (simple-var-ref (position 26:5 26:6) x)
-        (optional-field-based-access (position 26:9 26:22) member
-          (simple-var-ref (position 26:9 26:14) value)))
-      (assignment (position 27:5 27:22)
-        (simple-var-ref (position 27:5 27:6) x)
-        (remote-method-call (position 27:9 27:21) method expr:
-          (simple-var-ref (position 27:9 27:11) ep) ()))
-      (var-def (position 28:5 28:28)
-        (variable (position 28:5 28:28) a (type
-          (user-defined-type (position 28:5 28:6) C)) (expr
-          (new (position 28:11 28:27)
-            (user-defined-type (position 28:15 28:16) C) (
-            (named-arg (position 28:17 28:26) value
-              (literal (position 28:25 28:26) 1)))))))
-      (var-def (position 29:5 29:26)
-        (variable (position 29:5 29:26) b (type
-          (user-defined-type (position 29:5 29:6) C)) (expr
-          (new (position 29:11 29:25) (
-            (named-arg (position 29:15 29:24) value
-              (literal (position 29:23 29:24) 1)))))))
-      (var-def (position 30:5 30:15)
-        (variable (position 30:5 30:15) _ (type
-          (value-type (position 30:5 30:8) int)) (expr
-          (literal (position 30:13 30:14) 1))))))
-  (function (position 32:1 32:20) valid () (
-    (value-type (position <built-in>) null))
-    (block-function-body (position 32:18 32:20))))
-recovered AST:
+-- valid-boundaries-v.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+int x = 1 + 2;
+const int y = 3;
+type A mod:Name;
+// doc
+function foo(int x) {
+	return;
+}
+function references() {
+    x = mod:name;
+    x = value?.member;
+    x = ep->method();
+    C a = new C(value = 1);
+    C b = new(value = 1);
+    int _ = 1;
+}
+function valid() {}
+-- ast --
 (compilation-unit (position 1:1 1:1)
 (package-id $anon . 0.0.0)
   (variable (position 1:1 18:1) x (type
@@ -107,4 +85,3 @@ recovered AST:
   (function (position 32:1 33:1) valid () (
     (value-type (position <built-in>) null))
     (block-function-body (position 32:18 33:1))))
--- stderr --

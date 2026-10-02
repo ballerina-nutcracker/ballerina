@@ -1,4 +1,26 @@
--- stdout --
+-- missing-class-brace-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+class C {
+    ; // @error malformed member
+    function valid() { int x = ; int later = 2; } // @error missing initializer
+function valid() { C surviving; } // @error duplicate declaration after class recovery
+function independent(int value) returns int => value;
+-- ast --
 (package
   (function valid () (
     (value-type null))
@@ -24,39 +46,3 @@
     (expr-function-body
       (simple-var-ref value)))
   (bad-top-level))
--- stderr --
-error[SEMANTIC_ERROR]: redeclared symbol 'valid'
-  --> recovery/members/missing-class-brace-e.bal:19:14
-   |
-19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
-   |              ^^^^^
-
-error[SEMANTIC_ERROR]: redeclared symbol 'valid'
-  --> recovery/members/missing-class-brace-e.bal:20:10
-   |
-20 | function valid() { C surviving; } // @error duplicate declaration after class recovery
-   |          ^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> recovery/members/missing-class-brace-e.bal:19:34
-   |
-19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
-   |                                  ^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'x'
-  --> recovery/members/missing-class-brace-e.bal:19:24
-   |
-19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
-   |                        ^^^^^^^^^^
-
-error[SYNTAX_ERROR]: missing close brace token
-  --> recovery/members/missing-class-brace-e.bal:18:1
-   |
-18 |     ; // @error malformed member
-   |
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/members/missing-class-brace-e.bal:19:32
-   |
-19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
-   |

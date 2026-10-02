@@ -1,4 +1,45 @@
--- stdout --
+-- class-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+class C {
+    int _; // @error
+    int goodField;
+    function _(int x) {} // @error
+    function init(int _) {} // @error
+    *mod:_; // @error
+    *; // @error
+    function valid() { int x = ; int later = 2; } // @error
+}
+function _() {} // @error
+function valid() { C surviving; } // @error unused surviving sibling
+class InclusionFailure {
+    *Missing; // @error
+    int good;
+    function method() returns int => self.good;
+}
+type RecordWithBadInclusion record {
+    *mod:_; // @error
+    int good;
+};
+type RecordWithUnknownInclusion record {
+    *Missing; // @error
+    int good = 1;
+};
+-- ast --
 (package
   (type-definition RecordWithBadInclusion
     (bad-type))
@@ -41,81 +82,3 @@
         (variable surviving (type
           (user-defined-type C))))))
   (bad-top-level))
--- stderr --
-error[SEMANTIC_ERROR]: Unknown type: Missing
-  --> recovery/members/class-e.bal:29:6
-   |
-29 |     *Missing; // @error
-   |      ^^^^^^^
-
-error[SEMANTIC_ERROR]: Unknown type: Missing
-  --> recovery/members/class-e.bal:38:6
-   |
-38 |     *Missing; // @error
-   |      ^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> recovery/members/class-e.bal:24:34
-   |
-24 |     function valid() { int x = ; int later = 2; } // @error
-   |                                  ^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'surviving'
-  --> recovery/members/class-e.bal:27:20
-   |
-27 | function valid() { C surviving; } // @error unused surviving sibling
-   |                    ^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'x'
-  --> recovery/members/class-e.bal:24:24
-   |
-24 |     function valid() { int x = ; int later = 2; } // @error
-   |                        ^^^^^^^^^^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/members/class-e.bal:18:9
-   |
-18 |     int _; // @error
-   |         ^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/members/class-e.bal:20:14
-   |
-20 |     function _(int x) {} // @error
-   |              ^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/members/class-e.bal:21:23
-   |
-21 |     function init(int _) {} // @error
-   |                       ^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/members/class-e.bal:22:10
-   |
-22 |     *mod:_; // @error
-   |          ^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/members/class-e.bal:26:10
-   |
-26 | function _() {} // @error
-   |          ^
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/members/class-e.bal:34:10
-   |
-34 |     *mod:_; // @error
-   |          ^
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/members/class-e.bal:23:6
-   |
-23 |     *; // @error
-   |
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/members/class-e.bal:24:32
-   |
-24 |     function valid() { int x = ; int later = 2; } // @error
-   |

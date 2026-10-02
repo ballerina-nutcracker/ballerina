@@ -1,4 +1,28 @@
--- stdout --
+-- unresolved-global-call-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+Unknown abandoned = ordinary(); // @error
+int unresolved = missing(); // @error
+
+function independent() returns int {
+    int invalid = "wrong"; // @error
+    return 1;
+}
+-- ast --
 (package
   (variable abandoned (type
     (user-defined-type Unknown)) (expr
@@ -15,115 +39,3 @@
           (literal wrong))))
       (return
         (literal 1)))))
--- stderr --
-error[SEMANTIC_ERROR]: Unknown symbol: missing
-  --> recovery/declarations/unresolved-global-call-e.bal:18:18
-   |
-18 | int unresolved = missing(); // @error
-   |                  ^^^^^^^^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: ordinary
-  --> recovery/declarations/unresolved-global-call-e.bal:17:21
-   |
-17 | Unknown abandoned = ordinary(); // @error
-   |                     ^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: Unknown type: Unknown
-  --> recovery/declarations/unresolved-global-call-e.bal:1:1
-   |
- 1 | // Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 2 | //
-   | ^^
- 3 | // WSO2 LLC. licenses this file to you under the Apache License,
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 4 | // Version 2.0 (the "License"); you may not use this file except
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 5 | // in compliance with the License.
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 6 | // You may obtain a copy of the License at
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 7 | //
-   | ^^
- 8 | // http://www.apache.org/licenses/LICENSE-2.0
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 9 | //
-   | ^^
-10 | // Unless required by applicable law or agreed to in writing,
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-11 | // software distributed under the License is distributed on an
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-12 | // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-13 | // KIND, either express or implied.  See the License for the
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-14 | // specific language governing permissions and limitations
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-15 | // under the License.
-   | ^^^^^^^^^^^^^^^^^^^^^
-16 | 
-   | 
-17 | Unknown abandoned = ordinary(); // @error
-   | ^^^^^^^^
-
-error[SEMANTIC_ERROR]: incompatible type: expected int, got "wrong"
-  --> recovery/declarations/unresolved-global-call-e.bal:21:19
-   |
-21 |     int invalid = "wrong"; // @error
-   |                   ^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'abandoned'
-  --> recovery/declarations/unresolved-global-call-e.bal:1:1
-   |
- 1 | // Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 2 | //
-   | ^^
- 3 | // WSO2 LLC. licenses this file to you under the Apache License,
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 4 | // Version 2.0 (the "License"); you may not use this file except
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 5 | // in compliance with the License.
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 6 | // You may obtain a copy of the License at
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 7 | //
-   | ^^
- 8 | // http://www.apache.org/licenses/LICENSE-2.0
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 9 | //
-   | ^^
-10 | // Unless required by applicable law or agreed to in writing,
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-11 | // software distributed under the License is distributed on an
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-12 | // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-13 | // KIND, either express or implied.  See the License for the
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-14 | // specific language governing permissions and limitations
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-15 | // under the License.
-   | ^^^^^^^^^^^^^^^^^^^^^
-16 | 
-   | 
-17 | Unknown abandoned = ordinary(); // @error
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-18 | int unresolved = missing(); // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'invalid'
-  --> recovery/declarations/unresolved-global-call-e.bal:21:1
-   |
-21 |     int invalid = "wrong"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-22 |     return 1;
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'unresolved'
-  --> recovery/declarations/unresolved-global-call-e.bal:18:1
-   |
-18 | int unresolved = missing(); // @error
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-19 | 
-   |

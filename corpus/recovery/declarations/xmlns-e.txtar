@@ -1,4 +1,35 @@
--- stdout --
+-- xmlns-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+xmlns "https://example.com/module" as moduleNS;
+xmlns "" as emptyNS; // @error
+xmlns missingURI as missingNS; // @error
+xmlns "https://example.com/later" as laterNS;
+
+function recovered() returns int {
+    xmlns "https://example.com/local" as localNS;
+    xmlns "" as emptyLocal; // @error
+    xmlns missingLocalURI as missingLocal; // @error
+    xmlns "https://example.com/laterLocal" as laterLocal;
+    return probe("later"); // @error
+}
+
+function probe(int value) returns int => value;
+-- ast --
 (package
   (xmlns
     (literal https://example.com/module) as moduleNS)
@@ -28,37 +59,3 @@
     (value-type int))
     (expr-function-body
       (simple-var-ref value))))
--- stderr --
-error[SEMANTIC_ERROR]: Unknown symbol: missingLocalURI
-  --> recovery/declarations/xmlns-e.bal:25:11
-   |
-25 |     xmlns missingLocalURI as missingLocal; // @error
-   |           ^^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: missingURI
-  --> recovery/declarations/xmlns-e.bal:19:7
-   |
-19 | xmlns missingURI as missingNS; // @error
-   |       ^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: XML namespace URI cannot be empty
-  --> recovery/declarations/xmlns-e.bal:18:1
-   |
-18 | xmlns "" as emptyNS; // @error
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-19 | xmlns missingURI as missingNS; // @error
-   |
-
-error[SEMANTIC_ERROR]: XML namespace URI cannot be empty
-  --> recovery/declarations/xmlns-e.bal:24:1
-   |
-24 |     xmlns "" as emptyLocal; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-25 |     xmlns missingLocalURI as missingLocal; // @error
-   |
-
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> recovery/declarations/xmlns-e.bal:27:12
-   |
-27 |     return probe("later"); // @error
-   |            ^^^^^^^^^^^^^^
