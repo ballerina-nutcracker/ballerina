@@ -1,0 +1,95 @@
+-- stdout --
+(package
+  (class-definition Surviving
+    (variable good (type
+      (value-type int)))
+    (function method () (
+      (value-type int))
+      (expr-function-body
+        (field-based-access good
+          (simple-var-ref self)))))
+  (service
+    (absolute-resource-path /)
+    (on
+    (simple-var-ref endpoint))
+    (variable goodField (type
+      (value-type int)))
+    (function useMembers () (
+      (value-type int))
+      (block-function-body
+        (expression-stmt
+          (invocation valid ()))
+        (return
+          (field-based-access goodField
+            (simple-var-ref self)))))
+    (function valid () (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (bad-expr-or-action))))
+        (var-def
+          (variable later (type
+            (value-type int)) (expr
+            (literal 2))))))
+    (resource-function get name:good
+      (value-type int)
+      (expr-function-body
+        (invocation useMembers ())))
+    (bad-top-level)
+    (bad-top-level)
+    (bad-top-level))
+  (function independent () (
+    (value-type null))
+    (block-function-body)))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: endpoint
+  --> recovery/members/service-e.bal:17:14
+   |
+17 | service / on endpoint { // @error unresolved endpoint
+   |              ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/members/service-e.bal:23:34
+   |
+23 |     function valid() { int x = ; int later = 2; } // @error
+   |                                  ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> recovery/members/service-e.bal:23:24
+   |
+23 |     function valid() { int x = ; int later = 2; } // @error
+   |                        ^^^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/members/service-e.bal:18:9
+   |
+18 |     int _; // @error
+   |         ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/members/service-e.bal:21:36
+   |
+21 |     resource function get path(int _) {} // @error
+   |                                    ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/members/service-e.bal:22:23
+   |
+22 |     function init(int _) {} // @error
+   |                       ^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/members/service-e.bal:23:32
+   |
+23 |     function valid() { int x = ; int later = 2; } // @error
+   |
+
+error[SYNTAX_ERROR]: type inclusion in object constructor
+  --> recovery/members/service-e.bal:20:1
+   |
+20 |     *mod:_; // @error
+   |     ^^^^^^^^^^^^^^^^^
+21 |     resource function get path(int _) {} // @error
+   |     ^^^^^^^^^

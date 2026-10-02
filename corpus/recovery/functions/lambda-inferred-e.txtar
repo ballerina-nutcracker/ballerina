@@ -1,0 +1,55 @@
+-- stdout --
+(package
+  (function consume (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function consumeFunction (
+    (variable callable (type
+      (function-type () (
+        (value-type int)))))) (
+    (value-type int))
+    (expr-function-body
+      (invocation callable ())))
+  (function inferredBody () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable inferred (type
+          (function-type (
+            (value-type int)) (
+            (value-type int)))) (expr
+          (lambda [callable=unresolved] [function=unresolved] [name=unresolved] [expression-body=unresolved]
+            (function $anonFunc$_0 (
+              (variable value)) ()
+              (expr-function-body
+                (binary-expr +
+                  (simple-var-ref value)
+                  (simple-var-ref missingInferred))))))))
+      (expression-stmt
+        (invocation consume (
+          (invocation inferred (
+            (literal 1))))))
+      (expression-stmt
+        (invocation consume (
+          (literal 2)))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingInferred
+  --> recovery/functions/lambda-inferred-e.bal:21:59
+   |
+21 |     function(int) returns int inferred = value => value + missingInferred; // @error
+   |                                                           ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expression value must be assigned
+  --> recovery/functions/lambda-inferred-e.bal:22:1
+   |
+22 |     consume(inferred(1)); // @error expression value must be assigned
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expression value must be assigned
+  --> recovery/functions/lambda-inferred-e.bal:23:1
+   |
+23 |     consume(2); // @error expression value must be assigned
+   |     ^^^^^^^^^^

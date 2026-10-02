@@ -1,0 +1,360 @@
+-- stdout --
+(package
+  (class-definition Survivor
+    (function method () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable bad (type
+            (value-type int)) (expr
+            (bad-expr-or-action))))
+        (return
+          (literal 5)))))
+  (function brokenBody () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (bad-expr-or-action))))
+      (bad-stmt)
+      (bad-stmt)
+      (var-def
+        (variable unknown (type
+          (value-type int)) (expr
+          (binary-expr +
+            (simple-var-ref absent)
+            (literal 1)))))
+      (var-def
+        (variable invocation (type
+          (value-type int)) (expr
+          (invocation probe (
+            (simple-var-ref absentArgument))))))
+      (assignment
+        (simple-var-ref unknown)
+        (literal 2))
+      (var-def
+        (variable unavailable (expr
+          (simple-var-ref absentInferred))))
+      (var-def
+        (variable dependent (type
+          (value-type int)) (expr
+          (binary-expr +
+            (simple-var-ref unavailable)
+            (literal 1)))))
+      (block-stmt
+        (var-def
+          (variable nested (type
+            (value-type int)) (expr
+            (simple-var-ref missing))))
+        (expression-stmt
+          (invocation probe (
+            (literal inner)))))
+      (if
+        (group-expr
+          (bad-expr-or-action))
+        (block-stmt
+          (expression-stmt
+            (invocation probe (
+              (literal skippedBad))))) ())
+      (block-stmt
+        (if
+          (simple-var-ref missingCondition)
+          (block-stmt
+            (expression-stmt
+              (invocation probe (
+                (literal skipped))))) ())
+        (block-stmt
+          (if
+            (literal true)
+            (block-stmt
+              (var-def
+                (variable badInner (type
+                  (value-type int)) (expr
+                  (bad-expr-or-action))))
+              (expression-stmt
+                (invocation probe (
+                  (literal innerIf))))) ())
+          (block-stmt
+            (while
+              (simple-var-ref missingLoop)
+              (block-stmt
+                (expression-stmt
+                  (invocation probe (
+                    (literal skipped))))))
+            (foreach
+              (var-def
+                (variable item))
+              (simple-var-ref missingCollection)
+              (block-stmt
+                (expression-stmt
+                  (invocation probe (
+                    (literal skipped))))))
+            (foreach
+              (var-def
+                (variable item (type
+                  (user-defined-type Unknown))))
+              (list-constructor-expr
+                (literal 1))
+              (block-stmt
+                (expression-stmt
+                  (invocation probe (
+                    (literal skipped))))))
+            (match
+              (simple-var-ref missingMatch)
+              (match-clause
+                (wildcard-match-pattern)
+                (block-stmt
+                  (expression-stmt
+                    (invocation probe (
+                      (literal skipped)))))))
+            (match
+              (literal 1)
+              (match-clause
+                (const-pattern
+                  (simple-var-ref missingPattern))
+                (block-stmt
+                  (expression-stmt
+                    (invocation probe (
+                      (literal skipped)))))))
+            (match
+              (literal 1)
+              (match-clause
+                (wildcard-match-pattern)
+                (match-guard
+                  (simple-var-ref missingGuard))
+                (block-stmt
+                  (expression-stmt
+                    (invocation probe (
+                      (literal skipped)))))))
+            (expression-stmt
+              (invocation probe (
+                (literal outer))))
+            (var-def
+              (variable later (type
+                (value-type int)) (expr
+                (literal 4))))
+            (return
+              (simple-var-ref later)))))))
+  (function probe (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function unavailableSignature (
+    (variable value (type
+      (user-defined-type Unknown)))) (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation probe (
+          (literal signatureSkipped))))
+      (return
+        (literal 1))))
+  (function callers (
+    (variable survivor (type
+      (user-defined-type Survivor)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable named (type
+          (value-type int)) (expr
+          (invocation brokenBody ()))))
+      (var-def
+        (variable method (type
+          (value-type int)) (expr
+          (invocation method expr:
+            (simple-var-ref survivor) ()))))
+      (return
+        (binary-expr +
+          (simple-var-ref named)
+          (simple-var-ref method))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: absent
+  --> recovery/statements/continuation-e.bal:21:19
+   |
+21 |     int unknown = absent + 1; // @error
+   |                   ^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: absentArgument
+  --> recovery/statements/continuation-e.bal:22:28
+   |
+22 |     int invocation = probe(absentArgument); // @error
+   |                            ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: absentInferred
+  --> recovery/statements/continuation-e.bal:24:23
+   |
+24 |     var unavailable = absentInferred; // @error
+   |                       ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missing
+  --> recovery/statements/continuation-e.bal:26:20
+   |
+26 |     { int nested = missing; probe("inner"); } // @error
+   |                    ^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingCollection
+  --> recovery/statements/continuation-e.bal:31:25
+   |
+31 |     foreach var item in missingCollection { probe("skipped"); } // @error
+   |                         ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingCondition
+  --> recovery/statements/continuation-e.bal:28:8
+   |
+28 |     if missingCondition { probe("skipped"); } // @error
+   |        ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingGuard
+  --> recovery/statements/continuation-e.bal:35:20
+   |
+35 |     match 1 { _ if missingGuard => { probe("skipped"); } } // @error
+   |                    ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingLoop
+  --> recovery/statements/continuation-e.bal:30:11
+   |
+30 |     while missingLoop { probe("skipped"); } // @error
+   |           ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingMatch
+  --> recovery/statements/continuation-e.bal:33:11
+   |
+33 |     match missingMatch { _ => { probe("skipped"); } } // @error
+   |           ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingPattern
+  --> recovery/statements/continuation-e.bal:34:15
+   |
+34 |     match 1 { missingPattern => { probe("skipped"); } } // @error
+   |               ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: Unknown
+  --> recovery/statements/continuation-e.bal:32:13
+   |
+32 |     foreach Unknown item in [1] { probe("skipped"); } // @error
+   |             ^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: Unknown
+  --> recovery/statements/continuation-e.bal:41:31
+   |
+41 | function unavailableSignature(Unknown value) returns int { // @error
+   |                               ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> recovery/statements/continuation-e.bal:26:29
+   |
+26 |     { int nested = missing; probe("inner"); } // @error
+   |                             ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> recovery/statements/continuation-e.bal:29:32
+   |
+29 |     if true { int badInner = ; probe("innerIf"); } // @error
+   |                                ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> recovery/statements/continuation-e.bal:36:1
+   |
+36 |     probe("outer"); // @error later outer sibling resolved
+   |     ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> recovery/statements/continuation-e.bal:18:1
+   |
+18 |     int bad = ; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^
+19 |     int '_ = 1; // @error bad statement
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> recovery/statements/continuation-e.bal:47:1
+   |
+47 |         int bad = ; // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^
+48 |         return 5;
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'badInner'
+  --> recovery/statements/continuation-e.bal:29:15
+   |
+29 |     if true { int badInner = ; probe("innerIf"); } // @error
+   |               ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'dependent'
+  --> recovery/statements/continuation-e.bal:25:1
+   |
+25 |     int dependent = unavailable + 1; // @error unused dependent
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |     { int nested = missing; probe("inner"); } // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'invocation'
+  --> recovery/statements/continuation-e.bal:22:1
+   |
+22 |     int invocation = probe(absentArgument); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |     unknown = 2;
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'item'
+  --> recovery/statements/continuation-e.bal:31:13
+   |
+31 |     foreach var item in missingCollection { probe("skipped"); } // @error
+   |             ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'item'
+  --> recovery/statements/continuation-e.bal:32:13
+   |
+32 |     foreach Unknown item in [1] { probe("skipped"); } // @error
+   |             ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'nested'
+  --> recovery/statements/continuation-e.bal:26:7
+   |
+26 |     { int nested = missing; probe("inner"); } // @error
+   |       ^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> recovery/statements/continuation-e.bal:41:31
+   |
+41 | function unavailableSignature(Unknown value) returns int { // @error
+   |                               ^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/statements/continuation-e.bal:19:9
+   |
+19 |     int '_ = 1; // @error bad statement
+   |         ^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/statements/continuation-e.bal:18:15
+   |
+18 |     int bad = ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/statements/continuation-e.bal:20:24
+   |
+20 |     int| malformedType = 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/statements/continuation-e.bal:27:17
+   |
+27 |     if (true && ) { probe("skippedBad"); } // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/statements/continuation-e.bal:29:30
+   |
+29 |     if true { int badInner = ; probe("innerIf"); } // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/statements/continuation-e.bal:47:19
+   |
+47 |         int bad = ; // @error
+   |

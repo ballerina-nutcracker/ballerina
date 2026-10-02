@@ -6014,6 +6014,7 @@ func isQuotedUnderscoreModulePrefix(token st.Token) bool {
 	return parent != nil && parent.Kind() == st.QUALIFIED_NAME_REFERENCE && parent.ChildInBucket(0) == token
 }
 
+// TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
 func (n *nodeBuilder) malformedSyntax(node st.Node, skip func(st.Node) bool) bool {
 	if node == nil || (skip != nil && skip(node)) {
 		return false
@@ -6062,6 +6063,7 @@ func (n *nodeBuilder) malformedSyntax(node st.Node, skip func(st.Node) bool) boo
 	return malformed || (node.HasDiagnostics() && !childDiagnostics)
 }
 
+// TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
 func (n *nodeBuilder) malformedDeclaration(node st.Node) bool {
 	var body st.Node
 	var members []st.Node
@@ -6114,6 +6116,7 @@ func expressionBoundary(node st.Node) bool {
 	}
 }
 
+// TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
 func (n *nodeBuilder) malformedStatement(node st.Node) bool {
 	if _, ok := node.(*st.BlockStatementNode); ok {
 		return false
@@ -6123,6 +6126,7 @@ func (n *nodeBuilder) malformedStatement(node st.Node) bool {
 	})
 }
 
+// TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
 func (n *nodeBuilder) malformedExpression(node st.Node) bool {
 	if node == nil {
 		return false

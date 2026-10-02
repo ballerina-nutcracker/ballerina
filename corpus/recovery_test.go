@@ -64,19 +64,37 @@ func TestRecovery(t *testing.T) {
 			}
 			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 			cx := context.NewCompilerContext(env)
-			result, err := runRecoveryPipeline(env, cx, nil, inputPath, string(content))
+			astOnly := strings.HasPrefix(filepath.ToSlash(inputPath), "recovery/ast/")
+			var result *testphases.PipelineResult
+			if astOnly {
+				result, err = runRecoveryAST(cx, inputPath, string(content))
+			} else {
+				result, err = runRecoveryPipeline(env, cx, nil, inputPath, string(content))
+			}
 			if err != nil {
 				t.Fatal(err)
 			}
 			typeContext := semtypes.ContextFrom(env.GetTypeEnv())
-			printer := ast.PrettyPrinter{LambdaResolutionContext: &typeContext, Fallback: printRecoveryFallback}
-			actualAST := printer.Print(result.Package)
+			printer := ast.PrettyPrinter{LambdaResolutionContext: &typeContext, Fallback: printRecoveryFallback, ShowNodeLocations: astOnly, DiagnosticEnv: cx.DiagnosticEnv()}
+			var actualAST string
+			if astOnly {
+				actualAST = printer.Print(result.CompilationUnit)
+				if strings.HasSuffix(inputPath, "-v.bal") {
+					tree, err := parser.GetSyntaxTree(cx, inputPath, string(content))
+					if err != nil {
+						t.Fatal(err)
+					}
+					strictPrinter := ast.PrettyPrinter{ShowNodeLocations: true, DiagnosticEnv: cx.DiagnosticEnv(), Fallback: printRecoveryFallback}
+					actualAST = "strict AST:\n" + strictPrinter.Print(nodebuilder.GetCompilationUnit(cx, tree)) + "\nrecovered AST:\n" + actualAST
+				}
+			} else {
+				actualAST = printer.Print(result.Package)
+			}
 			diagnosticResult := projects.NewDiagnosticResult(cx.Diagnostics())
 			var diagnosticText bytes.Buffer
 			testharness.PrintDiagnostics(os.DirFS("."), &diagnosticText, diagnosticResult, cx.DiagnosticEnv())
 			testharness.ValidateErrorMarkers(t, inputPath, string(content), diagnosticResult, cx.DiagnosticEnv())
-			compareRecoveryGolden(t, strings.TrimSuffix(inputPath, ".bal")+".ast.txt", actualAST)
-			compareRecoveryGolden(t, strings.TrimSuffix(inputPath, ".bal")+".diagnostics.txt", normalizeIntegrationStderr(diagnosticText.String()))
+			compareRecoveryGolden(t, strings.TrimSuffix(inputPath, ".bal")+".txtar", actualAST, normalizeIntegrationStderr(diagnosticText.String()))
 		})
 		return nil
 	})
@@ -99,18 +117,40 @@ func printRecoveryFallback(p *ast.PrettyPrinter, node ast.BLangNode) {
 	}
 }
 
-func compareRecoveryGolden(t *testing.T, expectedPath, actual string) {
+func compareRecoveryGolden(t *testing.T, expectedPath, actualAST, actualDiagnostics string) {
 	t.Helper()
 	if *update {
-		if test_util.UpdateIfNeeded(t, expectedPath, actual) {
+		if test_util.UpdateTxtarArchiveIfNeeded(t, expectedPath, test_util.TxtarFilesStdoutStderr(actualAST, actualDiagnostics)) {
 			t.Errorf("updated recovery golden: %s", expectedPath)
 		}
 		return
 	}
-	expected := test_util.ReadExpectedFile(t, expectedPath)
-	if expected != actual {
-		t.Errorf("recovery golden mismatch: %s\n%s", expectedPath, test_util.FormatExpectedGot(expected, actual))
+	expectedAST, expectedDiagnostics, err := test_util.LoadTxtarStdoutStderr(expectedPath)
+	if err != nil {
+		t.Fatal(err)
 	}
+	for _, output := range []struct{ name, expected, actual string }{
+		{"AST", expectedAST, actualAST},
+		{"diagnostics", expectedDiagnostics, actualDiagnostics},
+	} {
+		if test_util.NormalizeNewlines(output.expected) != test_util.NormalizeNewlines(output.actual) {
+			t.Errorf("recovery %s mismatch: %s\n%s", output.name, expectedPath, test_util.FormatExpectedGot(output.expected, output.actual))
+		}
+	}
+}
+
+// AST-only fixtures exercise source forms whose semantic recovery is not supported yet.
+func runRecoveryAST(cx *context.CompilerContext, inputPath, content string) (*testphases.PipelineResult, error) {
+	cx.DiagnosticEnv().RegisterFile(inputPath, text.NewStringTextDocument(content))
+	tree, err := parser.GetSyntaxTree(cx, inputPath, content)
+	if err != nil {
+		return nil, err
+	}
+	unit := nodebuilder.GetRecoveredCompilationUnit(cx, tree)
+	if unit == nil {
+		return nil, fmt.Errorf("recovered compilation unit is nil")
+	}
+	return &testphases.PipelineResult{CompilationUnit: unit}, nil
 }
 
 type recoveryPhases struct {

@@ -1,0 +1,24 @@
+-- stdout --
+(package
+  (variable sibling (type
+    (value-type int)) (expr
+    (invocation surviving ())))
+  (function surviving () (
+    (value-type int))
+    (block-function-body
+      (bad-stmt)
+      (return
+        (literal 7))))
+  (bad-top-level))
+-- stderr --
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/declarations/malformed-typed-binding-e.bal:17:7
+   |
+17 | int[] '_ = [0]; // @error malformed module variable name
+   |       ^^^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/declarations/malformed-typed-binding-e.bal:20:11
+   |
+20 |     int[] '_ = [0]; // @error malformed local variable name
+   |           ^^^

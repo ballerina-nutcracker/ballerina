@@ -1,0 +1,51 @@
+-- stdout --
+(package
+  (function nested () (
+    (value-type null))
+    (block-function-body
+      (if
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable inner (type
+              (value-type int)) (expr
+              (literal 1))))
+          (bad-stmt)) (
+        (block-stmt
+          (var-def
+            (variable other (type
+              (value-type int)) (expr
+              (literal 2)))))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 3))))))
+  (function valid () (
+    (value-type null))
+    (block-function-body)))
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'inner'
+  --> recovery/functions/nested-block-e.bal:18:15
+   |
+18 |     if true { int inner = 1; else { int other = 2; } // @error
+   |               ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/functions/nested-block-e.bal:19:1
+   |
+19 |     int later = 3; // @error unused surviving sibling
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'other'
+  --> recovery/functions/nested-block-e.bal:18:37
+   |
+18 |     if true { int inner = 1; else { int other = 2; } // @error
+   |                                     ^^^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: missing close brace token
+  --> recovery/functions/nested-block-e.bal:18:30
+   |
+18 |     if true { int inner = 1; else { int other = 2; } // @error
+   |

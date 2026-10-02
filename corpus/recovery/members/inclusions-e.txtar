@@ -1,0 +1,104 @@
+-- stdout --
+(package
+  (type-definition ObjectBase
+    (object-type
+      (field inheritedValue
+        (value-type int))))
+  (type-definition RecordBase
+    (record-type
+      (field inheritedValue
+        (value-type int))))
+  (type-definition NotStructured
+    (value-type int))
+  (type-definition MixedObject
+    (object-type
+      (field localValue
+        (value-type int))))
+  (type-definition MixedRecord
+    (record-type
+      (field localValue
+        (value-type int))))
+  (class-definition MixedClass
+    (function read () (
+      (value-type int))
+      (expr-function-body
+        (binary-expr +
+          (simple-var-ref inheritedValue)
+          (simple-var-ref missingClassReadValue)))))
+  (class-definition ObjectConsumer
+    (function read () (
+      (value-type int))
+      (expr-function-body
+        (binary-expr +
+          (simple-var-ref inheritedValue)
+          (simple-var-ref localValue)))))
+  (function readClass (
+    (variable value (type
+      (user-defined-type MixedClass)))) (
+    (value-type int))
+    (expr-function-body
+      (invocation read expr:
+        (simple-var-ref value) ())))
+  (function readObject (
+    (variable value (type
+      (user-defined-type MixedObject)))) (
+    (value-type int))
+    (expr-function-body
+      (field-based-access inheritedValue
+        (simple-var-ref value))))
+  (function readRecord (
+    (variable value (type
+      (user-defined-type MixedRecord)))) (
+    (value-type int))
+    (expr-function-body
+      (field-based-access inheritedValue
+        (simple-var-ref value))))
+  (function readConsumer (
+    (variable value (type
+      (user-defined-type ObjectConsumer)))) (
+    (value-type int))
+    (expr-function-body
+      (invocation read expr:
+        (simple-var-ref value) ()))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingClassReadValue
+  --> recovery/members/inclusions-e.bal:29:53
+   |
+29 |     function read() returns int => inheritedValue + missingClassReadValue; // @error
+   |                                                     ^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingClassBase
+  --> recovery/members/inclusions-e.bal:26:6
+   |
+26 |     *MissingClassBase; // @error
+   |      ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingObjectBase
+  --> recovery/members/inclusions-e.bal:32:6
+   |
+32 |     *MissingObjectBase; // @error
+   |      ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingRecordBase
+  --> recovery/members/inclusions-e.bal:42:6
+   |
+42 |     *MissingRecordBase; // @error
+   |      ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: included type is not a record type
+  --> recovery/members/inclusions-e.bal:43:6
+   |
+43 |     *NotStructured; // @error
+   |      ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: type inclusion must be an object type or class
+  --> recovery/members/inclusions-e.bal:27:6
+   |
+27 |     *NotStructured; // @error
+   |      ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: type inclusion must be an object type or class
+  --> recovery/members/inclusions-e.bal:33:6
+   |
+33 |     *NotStructured; // @error
+   |      ^^^^^^^^^^^^^

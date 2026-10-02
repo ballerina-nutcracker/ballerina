@@ -1,0 +1,126 @@
+-- stdout --
+(package
+  (import-package ballerina lang array (as lang.array))
+  (class-definition Signatures
+    (function anotherUnknown (
+      (variable value (type
+        (user-defined-type MissingOther)))) (
+      (value-type int))
+      (expr-function-body
+        (literal 2)))
+    (function surviving (
+      (variable value (type
+        (value-type int)))) (
+      (value-type int))
+      (expr-function-body
+        (simple-var-ref value)))
+    (function unknown (
+      (variable value (type
+        (user-defined-type MissingMethod)))) (
+      (value-type int))
+      (expr-function-body
+        (literal 1))))
+  (function unknownOrdinary (
+    (variable value (type
+      (user-defined-type Missing)))) (
+    (value-type int))
+    (expr-function-body
+      (literal 1)))
+  (function unknownRest () (
+    (value-type int))
+    (expr-function-body
+      (literal 2)))
+  (function unknownReturn (
+    (variable value (type
+      (value-type int)))) (
+    (user-defined-type MissingReturn))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function independent (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (simple-var-ref value)
+        (invocation lang.array length (
+          (simple-var-ref labels))))))
+  (function bodyOnly (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (bad-expr-or-action)))
+  (function callBodyOnly (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (invocation bodyOnly (
+        (simple-var-ref value))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: Missing
+  --> recovery/functions/unknown-types-e.bal:17:26
+   |
+17 | function unknownOrdinary(Missing value) returns int => 1; // @error
+   |                          ^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingMethod
+  --> recovery/functions/unknown-types-e.bal:22:22
+   |
+22 |     function unknown(MissingMethod value) returns int => 1; // @error
+   |                      ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingOther
+  --> recovery/functions/unknown-types-e.bal:24:29
+   |
+24 |     function anotherUnknown(MissingOther value) returns int => 2; // @error
+   |                             ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingRest
+  --> recovery/functions/unknown-types-e.bal:18:22
+   |
+18 | function unknownRest(MissingRest... values) returns int => 2; // @error
+   |                      ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingReturn
+  --> recovery/functions/unknown-types-e.bal:19:43
+   |
+19 | function unknownReturn(int value) returns MissingReturn => value; // @error
+   |                                           ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> recovery/functions/unknown-types-e.bal:17:26
+   |
+17 | function unknownOrdinary(Missing value) returns int => 1; // @error
+   |                          ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> recovery/functions/unknown-types-e.bal:22:22
+   |
+22 |     function unknown(MissingMethod value) returns int => 1; // @error
+   |                      ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> recovery/functions/unknown-types-e.bal:24:29
+   |
+24 |     function anotherUnknown(MissingOther value) returns int => 2; // @error
+   |                             ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> recovery/functions/unknown-types-e.bal:26:19
+   |
+26 | function bodyOnly(int value) returns int => value + ; // @error
+   |                   ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'values'
+  --> recovery/functions/unknown-types-e.bal:18:22
+   |
+18 | function unknownRest(MissingRest... values) returns int => 2; // @error
+   |                      ^^^^^^^^^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/unknown-types-e.bal:26:53
+   |
+26 | function bodyOnly(int value) returns int => value + ; // @error
+   |

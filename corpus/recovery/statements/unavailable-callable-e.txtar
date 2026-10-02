@@ -1,0 +1,66 @@
+-- stdout --
+(package
+  (function inferredCallable () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable unavailable (expr
+          (simple-var-ref missing))))
+      (expression-stmt
+        (invocation unavailable ()))
+      (expression-stmt
+        (invocation probe (
+          (literal later))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 1))))
+      (return
+        (simple-var-ref later))))
+  (function unknownCallable () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable unavailable (type
+          (user-defined-type Unknown))))
+      (expression-stmt
+        (invocation unavailable ()))
+      (expression-stmt
+        (invocation probe (
+          (literal later))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 2))))
+      (return
+        (simple-var-ref later))))
+  (function probe (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missing
+  --> recovery/statements/unavailable-callable-e.bal:18:23
+   |
+18 |     var unavailable = missing; // @error
+   |                       ^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: Unknown
+  --> recovery/statements/unavailable-callable-e.bal:26:1
+   |
+26 |     Unknown unavailable; // @error
+   |     ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> recovery/statements/unavailable-callable-e.bal:20:1
+   |
+20 |     probe("later"); // @error later sibling resolved
+   |     ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> recovery/statements/unavailable-callable-e.bal:28:1
+   |
+28 |     probe("later"); // @error later sibling resolved
+   |     ^^^^^^^^^^^^^^

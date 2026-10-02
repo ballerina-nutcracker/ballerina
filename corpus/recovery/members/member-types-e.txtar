@@ -1,0 +1,72 @@
+-- stdout --
+(package
+  (class-definition MemberTypes
+    (variable firstField (type
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type int))))
+    (variable secondField (type
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type int))))
+    (function init (
+      (variable value (type
+        (constrained-type
+          (builtin-ref-type xml)
+          (value-type int))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (wildcard-binding-pattern)
+          (simple-var-ref value))))
+    (function method () (
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type int)))
+      (block-function-body))
+    (resource-function get name:first
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type int))
+      (block-function-body))
+    (resource-function get name:second
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type int))
+      (block-function-body))))
+-- stderr --
+error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml, got int
+  --> recovery/members/member-types-e.bal:18:1
+   |
+18 |     xml<int> firstField; // @error invalid XML constraint
+   |     ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml, got int
+  --> recovery/members/member-types-e.bal:19:1
+   |
+19 |     xml<int> secondField; // @error independently resolved field type
+   |     ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml, got int
+  --> recovery/members/member-types-e.bal:20:19
+   |
+20 |     function init(xml<int> value) { _ = value; } // @error independently resolved initializer signature
+   |                   ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml, got int
+  --> recovery/members/member-types-e.bal:21:31
+   |
+21 |     function method() returns xml<int> {} // @error independently resolved method signature
+   |                               ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml, got int
+  --> recovery/members/member-types-e.bal:22:43
+   |
+22 |     resource function get first() returns xml<int> {} // @error independently resolved resource signature
+   |                                           ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml, got int
+  --> recovery/members/member-types-e.bal:23:44
+   |
+23 |     resource function get second() returns xml<int> {} // @error independently resolved resource signature
+   |                                            ^^^^^^^^^

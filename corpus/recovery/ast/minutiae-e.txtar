@@ -1,0 +1,32 @@
+-- stdout --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (bad-top-level (position 1:1 19:1))
+  (function (position 19:1 23:1) foo () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 19:16 23:1)
+      (block-stmt (position 20:1 21:1)
+        (bad-stmt (position 20:7 20:19))
+        (var-def (position 20:19 20:33)
+          (variable (position 20:19 20:33) good (type
+            (value-type (position 20:19 20:23) int)) (expr
+            (literal (position 20:30 20:31) 2)))))
+      (var-def (position 21:1 22:1)
+        (variable (position 21:1 22:1) later (type
+          (value-type (position 21:1 21:9) int)) (expr
+          (literal (position 21:17 21:18) 3))))))
+  (function (position 23:1 24:1) valid () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 23:18 24:1))))
+-- stderr --
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/ast/minutiae-e.bal:18:10
+   |
+18 | function _() {} // @error
+   |          ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/ast/minutiae-e.bal:20:11
+   |
+20 |     { int '_ = 1; int good = 2; } // @error
+   |           ^^^

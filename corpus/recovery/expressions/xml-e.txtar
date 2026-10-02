@@ -1,0 +1,27 @@
+-- stdout --
+(package
+  (function xmlNames () (
+    (value-type null))
+    (block-function-body
+      (bad-stmt)
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 1))))))
+  (function valid () (
+    (value-type null))
+    (block-function-body)))
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/expressions/xml-e.bal:19:1
+   |
+19 |     int later = 1; // @error unused surviving sibling
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | }
+   |
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/expressions/xml-e.bal:18:20
+   |
+18 |     x = value.<mod:_>; // @error
+   |                    ^

@@ -1,0 +1,86 @@
+-- stdout --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (function (position 1:1 28:1) foo () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 17:16 28:1)
+      (assignment (position 18:1 19:1)
+        (simple-var-ref (position 18:1 18:7) x)
+        (bad-expr-or-action (position 18:9 18:18)))
+      (assignment (position 19:1 20:1)
+        (simple-var-ref (position 19:1 19:7) x)
+        (bad-expr-or-action (position 19:9 19:21)))
+      (assignment (position 20:1 21:1)
+        (simple-var-ref (position 20:1 20:7) x)
+        (bad-expr-or-action (position 20:9 20:22)))
+      (assignment (position 21:1 22:1)
+        (simple-var-ref (position 21:1 21:7) x)
+        (bad-expr-or-action (position 21:9 21:17)))
+      (var-def (position 22:1 23:1)
+        (variable (position 22:1 23:1) a (type
+          (user-defined-type (position 22:1 22:7) C)) (expr
+          (bad-expr-or-action (position 22:11 22:21)))))
+      (var-def (position 23:1 24:1)
+        (variable (position 23:1 24:1) b (type
+          (user-defined-type (position 23:1 23:7) C)) (expr
+          (bad-expr-or-action (position 23:11 23:24)))))
+      (assignment (position 24:1 25:1)
+        (simple-var-ref (position 24:1 24:7) x)
+        (bad-expr-or-action (position 24:9 24:41)))
+      (assignment (position 25:1 26:1)
+        (simple-var-ref (position 25:1 25:7) x)
+        (bad-expr-or-action (position 25:9 25:15)))
+      (assignment (position 26:1 27:1)
+        (simple-var-ref (position 26:1 26:7) x)
+        (literal (position 26:9 26:10) 1))))
+  (function (position 28:1 29:1) valid () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 28:18 29:1))))
+-- stderr --
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/ast/names-e.bal:18:16
+   |
+18 |     x = value?.'_; // @error
+   |                ^^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/ast/names-e.bal:19:20
+   |
+19 |     x = value?.mod:_; // @error
+   |                    ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/ast/names-e.bal:20:20
+   |
+20 |     x = value?.mod:'_; // @error
+   |                    ^^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/ast/names-e.bal:21:13
+   |
+21 |     x = ep->'_(); // @error
+   |             ^^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/ast/names-e.bal:22:15
+   |
+22 |     C a = new(_ = 1); // @error
+   |               ^^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/ast/names-e.bal:23:17
+   |
+23 |     C b = new C('_ = 1); // @error
+   |                 ^^^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/ast/names-e.bal:24:22
+   |
+24 |     x = function(int _) returns int => 1; // @error
+   |                      ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/ast/names-e.bal:25:10
+   |
+25 |     x = (_)=>1; // @error
+   |          ^
