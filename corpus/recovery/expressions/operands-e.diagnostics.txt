@@ -1,21 +1,3 @@
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/expressions/operands-e.bal:18:18
-   |
-18 |     int unary = -; // @error
-   |                  
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/expressions/operands-e.bal:19:21
-   |
-19 |     int binary = 1 +; // @error
-   |                     
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/expressions/operands-e.bal:20:27
-   |
-20 |     int nested = (1 + (2 *)); // @error
-   |                           
-
 error[SEMANTIC_ERROR]: unused variable 'unary'
   --> recovery/expressions/operands-e.bal:18:1
    |
@@ -23,6 +5,12 @@ error[SEMANTIC_ERROR]: unused variable 'unary'
    |     ^^^^^^^^^^^^^^^^^^^^^^^^
 19 |     int binary = 1 +; // @error
    |     
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/expressions/operands-e.bal:18:18
+   |
+18 |     int unary = -; // @error
+   |                  
 
 error[SEMANTIC_ERROR]: unused variable 'binary'
   --> recovery/expressions/operands-e.bal:19:1
@@ -32,6 +20,12 @@ error[SEMANTIC_ERROR]: unused variable 'binary'
 20 |     int nested = (1 + (2 *)); // @error
    |     
 
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/expressions/operands-e.bal:19:21
+   |
+19 |     int binary = 1 +; // @error
+   |                     
+
 error[SEMANTIC_ERROR]: unused variable 'nested'
   --> recovery/expressions/operands-e.bal:20:1
    |
@@ -39,6 +33,12 @@ error[SEMANTIC_ERROR]: unused variable 'nested'
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 21 |     int later = 3; // @error unused surviving sibling
    |     
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/expressions/operands-e.bal:20:27
+   |
+20 |     int nested = (1 + (2 *)); // @error
+   |                           
 
 error[SEMANTIC_ERROR]: unused variable 'later'
   --> recovery/expressions/operands-e.bal:21:1

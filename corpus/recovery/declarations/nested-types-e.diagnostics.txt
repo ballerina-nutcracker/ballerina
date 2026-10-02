@@ -46,12 +46,6 @@ error[SEMANTIC_ERROR]: Unknown type: MissingSecondField
 30 |     MissingSecondField another; // @error
    |     ^^^^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: Unknown symbol: discardedValue
-  --> recovery/declarations/nested-types-e.bal:35:23
-   |
-35 | int unresolvedValue = discardedValue; // @error
-   |                       ^^^^^^^^^^^^^^
-
 error[SEMANTIC_ERROR]: unused variable 'unresolvedValue'
   --> recovery/declarations/nested-types-e.bal:35:1
    |
@@ -59,6 +53,12 @@ error[SEMANTIC_ERROR]: unused variable 'unresolvedValue'
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 36 | UnknownArray failedValue = []; // @error unused value
    | 
+
+error[SEMANTIC_ERROR]: Unknown symbol: discardedValue
+  --> recovery/declarations/nested-types-e.bal:35:23
+   |
+35 | int unresolvedValue = discardedValue; // @error
+   |                       ^^^^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: unused variable 'failedValue'
   --> recovery/declarations/nested-types-e.bal:36:1

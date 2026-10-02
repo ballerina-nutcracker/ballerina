@@ -1,0 +1,188 @@
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> recovery/statements/continuation-e.bal:18:1
+   |
+18 |     int bad = ; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^
+19 |     int '_ = 1; // @error bad statement
+   |     
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/statements/continuation-e.bal:18:15
+   |
+18 |     int bad = ; // @error
+   |               
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/statements/continuation-e.bal:19:9
+   |
+19 |     int '_ = 1; // @error bad statement
+   |         ^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/statements/continuation-e.bal:20:24
+   |
+20 |     int| malformedType = 1; // @error
+   |                        
+
+error[SEMANTIC_ERROR]: Unknown symbol: absent
+  --> recovery/statements/continuation-e.bal:21:19
+   |
+21 |     int unknown = absent + 1; // @error
+   |                   ^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'invocation'
+  --> recovery/statements/continuation-e.bal:22:1
+   |
+22 |     int invocation = probe(absentArgument); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |     unknown = 2;
+   |     
+
+error[SEMANTIC_ERROR]: Unknown symbol: absentArgument
+  --> recovery/statements/continuation-e.bal:22:28
+   |
+22 |     int invocation = probe(absentArgument); // @error
+   |                            ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: absentInferred
+  --> recovery/statements/continuation-e.bal:24:23
+   |
+24 |     var unavailable = absentInferred; // @error
+   |                       ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'dependent'
+  --> recovery/statements/continuation-e.bal:25:1
+   |
+25 |     int dependent = unavailable + 1; // @error unused dependent
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |     { int nested = missing; probe("inner"); } // @error
+   |     
+
+error[SEMANTIC_ERROR]: unused variable 'nested'
+  --> recovery/statements/continuation-e.bal:26:7
+   |
+26 |     { int nested = missing; probe("inner"); } // @error
+   |       ^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missing
+  --> recovery/statements/continuation-e.bal:26:20
+   |
+26 |     { int nested = missing; probe("inner"); } // @error
+   |                    ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> recovery/statements/continuation-e.bal:26:29
+   |
+26 |     { int nested = missing; probe("inner"); } // @error
+   |                             ^^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/statements/continuation-e.bal:27:17
+   |
+27 |     if (true && ) { probe("skippedBad"); } // @error
+   |                 
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingCondition
+  --> recovery/statements/continuation-e.bal:28:8
+   |
+28 |     if missingCondition { probe("skipped"); } // @error
+   |        ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'badInner'
+  --> recovery/statements/continuation-e.bal:29:15
+   |
+29 |     if true { int badInner = ; probe("innerIf"); } // @error
+   |               ^^^^^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/statements/continuation-e.bal:29:30
+   |
+29 |     if true { int badInner = ; probe("innerIf"); } // @error
+   |                              
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> recovery/statements/continuation-e.bal:29:32
+   |
+29 |     if true { int badInner = ; probe("innerIf"); } // @error
+   |                                ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingLoop
+  --> recovery/statements/continuation-e.bal:30:11
+   |
+30 |     while missingLoop { probe("skipped"); } // @error
+   |           ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'item'
+  --> recovery/statements/continuation-e.bal:31:13
+   |
+31 |     foreach var item in missingCollection { probe("skipped"); } // @error
+   |             ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingCollection
+  --> recovery/statements/continuation-e.bal:31:25
+   |
+31 |     foreach var item in missingCollection { probe("skipped"); } // @error
+   |                         ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: Unknown
+  --> recovery/statements/continuation-e.bal:32:13
+   |
+32 |     foreach Unknown item in [1] { probe("skipped"); } // @error
+   |             ^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'item'
+  --> recovery/statements/continuation-e.bal:32:13
+   |
+32 |     foreach Unknown item in [1] { probe("skipped"); } // @error
+   |             ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingMatch
+  --> recovery/statements/continuation-e.bal:33:11
+   |
+33 |     match missingMatch { _ => { probe("skipped"); } } // @error
+   |           ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingPattern
+  --> recovery/statements/continuation-e.bal:34:15
+   |
+34 |     match 1 { missingPattern => { probe("skipped"); } } // @error
+   |               ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingGuard
+  --> recovery/statements/continuation-e.bal:35:20
+   |
+35 |     match 1 { _ if missingGuard => { probe("skipped"); } } // @error
+   |                    ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> recovery/statements/continuation-e.bal:36:1
+   |
+36 |     probe("outer"); // @error later outer sibling resolved
+   |     ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: Unknown
+  --> recovery/statements/continuation-e.bal:41:31
+   |
+41 | function unavailableSignature(Unknown value) returns int { // @error
+   |                               ^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> recovery/statements/continuation-e.bal:41:31
+   |
+41 | function unavailableSignature(Unknown value) returns int { // @error
+   |                               ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> recovery/statements/continuation-e.bal:47:1
+   |
+47 |         int bad = ; // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^
+48 |         return 5;
+   |         
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/statements/continuation-e.bal:47:19
+   |
+47 |         int bad = ; // @error
+   |                   
+

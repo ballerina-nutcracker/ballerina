@@ -1,0 +1,171 @@
+(package
+  (class-definition Survivor
+    (function method () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable bad (type
+            (value-type int)) (expr
+            (bad-expr-or-action))))
+        (return
+          (literal 5)))))
+  (function brokenBody () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (bad-expr-or-action))))
+      (bad-stmt)
+      (bad-stmt)
+      (var-def
+        (variable unknown (type
+          (value-type int)) (expr
+          (binary-expr +
+            (simple-var-ref absent)
+            (literal 1)))))
+      (var-def
+        (variable invocation (type
+          (value-type int)) (expr
+          (invocation probe (
+            (simple-var-ref absentArgument))))))
+      (assignment
+        (simple-var-ref unknown)
+        (literal 2))
+      (var-def
+        (variable unavailable (expr
+          (simple-var-ref absentInferred))))
+      (var-def
+        (variable dependent (type
+          (value-type int)) (expr
+          (binary-expr +
+            (simple-var-ref unavailable)
+            (literal 1)))))
+      (block-stmt
+        (var-def
+          (variable nested (type
+            (value-type int)) (expr
+            (simple-var-ref missing))))
+        (expression-stmt
+          (invocation probe (
+            (literal inner)))))
+      (if
+        (group-expr
+          (bad-expr-or-action))
+        (block-stmt
+          (expression-stmt
+            (invocation probe (
+              (literal skippedBad))))) ())
+      (block-stmt
+        (if
+          (simple-var-ref missingCondition)
+          (block-stmt
+            (expression-stmt
+              (invocation probe (
+                (literal skipped))))) ())
+        (block-stmt
+          (if
+            (literal true)
+            (block-stmt
+              (var-def
+                (variable badInner (type
+                  (value-type int)) (expr
+                  (bad-expr-or-action))))
+              (expression-stmt
+                (invocation probe (
+                  (literal innerIf))))) ())
+          (block-stmt
+            (while
+              (simple-var-ref missingLoop)
+              (block-stmt
+                (expression-stmt
+                  (invocation probe (
+                    (literal skipped))))))
+            (foreach
+              (var-def
+                (variable item))
+              (simple-var-ref missingCollection)
+              (block-stmt
+                (expression-stmt
+                  (invocation probe (
+                    (literal skipped))))))
+            (foreach
+              (var-def
+                (variable item (type
+                  (user-defined-type Unknown))))
+              (list-constructor-expr
+                (literal 1))
+              (block-stmt
+                (expression-stmt
+                  (invocation probe (
+                    (literal skipped))))))
+            (match
+              (simple-var-ref missingMatch)
+              (match-clause
+                (wildcard-match-pattern)
+                (block-stmt
+                  (expression-stmt
+                    (invocation probe (
+                      (literal skipped)))))))
+            (match
+              (literal 1)
+              (match-clause
+                (const-pattern
+                  (simple-var-ref missingPattern))
+                (block-stmt
+                  (expression-stmt
+                    (invocation probe (
+                      (literal skipped)))))))
+            (match
+              (literal 1)
+              (match-clause
+                (wildcard-match-pattern)
+                (match-guard
+                  (simple-var-ref missingGuard))
+                (block-stmt
+                  (expression-stmt
+                    (invocation probe (
+                      (literal skipped)))))))
+            (expression-stmt
+              (invocation probe (
+                (literal outer))))
+            (var-def
+              (variable later (type
+                (value-type int)) (expr
+                (literal 4))))
+            (return
+              (simple-var-ref later)))))))
+  (function probe (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function unavailableSignature (
+    (variable value (type
+      (user-defined-type Unknown)))) (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation probe (
+          (literal signatureSkipped))))
+      (return
+        (literal 1))))
+  (function callers (
+    (variable survivor (type
+      (user-defined-type Survivor)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable named (type
+          (value-type int)) (expr
+          (invocation brokenBody ()))))
+      (var-def
+        (variable method (type
+          (value-type int)) (expr
+          (invocation method expr:
+            (simple-var-ref survivor) ()))))
+      (return
+        (binary-expr +
+          (simple-var-ref named)
+          (simple-var-ref method))))))

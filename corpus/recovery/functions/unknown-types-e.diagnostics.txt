@@ -1,9 +1,3 @@
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/functions/unknown-types-e.bal:26:53
-   |
-26 | function bodyOnly(int value) returns int => value + ; // @error
-   |                                                     
-
 error[SEMANTIC_ERROR]: Unknown type: Missing
   --> recovery/functions/unknown-types-e.bal:17:26
    |
@@ -34,18 +28,6 @@ error[SEMANTIC_ERROR]: Unknown type: MissingReturn
 19 | function unknownReturn(int value) returns MissingReturn => value; // @error
    |                                           ^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: Unknown type: MissingOther
-  --> recovery/functions/unknown-types-e.bal:24:29
-   |
-24 |     function anotherUnknown(MissingOther value) returns int => 2; // @error
-   |                             ^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> recovery/functions/unknown-types-e.bal:24:29
-   |
-24 |     function anotherUnknown(MissingOther value) returns int => 2; // @error
-   |                             ^^^^^^^^^^^^^^^^^^
-
 error[SEMANTIC_ERROR]: Unknown type: MissingMethod
   --> recovery/functions/unknown-types-e.bal:22:22
    |
@@ -58,9 +40,27 @@ error[SEMANTIC_ERROR]: unused variable 'value'
 22 |     function unknown(MissingMethod value) returns int => 1; // @error
    |                      ^^^^^^^^^^^^^^^^^^^
 
+error[SEMANTIC_ERROR]: Unknown type: MissingOther
+  --> recovery/functions/unknown-types-e.bal:24:29
+   |
+24 |     function anotherUnknown(MissingOther value) returns int => 2; // @error
+   |                             ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> recovery/functions/unknown-types-e.bal:24:29
+   |
+24 |     function anotherUnknown(MissingOther value) returns int => 2; // @error
+   |                             ^^^^^^^^^^^^^^^^^^
+
 error[SEMANTIC_ERROR]: unused variable 'value'
   --> recovery/functions/unknown-types-e.bal:26:19
    |
 26 | function bodyOnly(int value) returns int => value + ; // @error
    |                   ^^^^^^^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/unknown-types-e.bal:26:53
+   |
+26 | function bodyOnly(int value) returns int => value + ; // @error
+   |                                                     
 

@@ -18,10 +18,12 @@ package corpus
 
 import (
 	"bytes"
+	"cmp"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -40,7 +42,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
-const recoveryTarget = testphases.PhaseTypeResolution
+const recoveryTarget = testphases.PhaseTypeNarrowing
 
 func TestRecovery(t *testing.T) {
 	count := 0
@@ -70,7 +72,7 @@ func TestRecovery(t *testing.T) {
 			}
 			printer := ast.PrettyPrinter{}
 			actualAST := printer.Print(result.Package)
-			diagnosticResult := projects.NewDiagnosticResult(cx.Diagnostics())
+			diagnosticResult := projects.NewDiagnosticResult(sortedRecoveryDiagnostics(cx))
 			var diagnosticText bytes.Buffer
 			testharness.PrintDiagnostics(os.DirFS("."), &diagnosticText, diagnosticResult, cx.DiagnosticEnv())
 			testharness.ValidateErrorMarkers(t, inputPath, string(content), diagnosticResult, cx.DiagnosticEnv())
@@ -85,6 +87,22 @@ func TestRecovery(t *testing.T) {
 	if count == 0 {
 		t.Fatal("no recovery fixtures discovered")
 	}
+}
+
+func sortedRecoveryDiagnostics(cx *context.CompilerContext) []diagnostics.Diagnostic {
+	diags := slices.Clone(cx.Diagnostics())
+	slices.SortFunc(diags, func(a, b diagnostics.Diagnostic) int {
+		al, bl := a.Location(), b.Location()
+		return cmp.Or(
+			strings.Compare(cx.DiagnosticEnv().FileName(al), cx.DiagnosticEnv().FileName(bl)),
+			cmp.Compare(al.StartOffset(), bl.StartOffset()),
+			cmp.Compare(al.EndOffset(), bl.EndOffset()),
+			cmp.Compare(a.DiagnosticInfo().Severity(), b.DiagnosticInfo().Severity()),
+			strings.Compare(a.DiagnosticInfo().Code(), b.DiagnosticInfo().Code()),
+			strings.Compare(a.Message(), b.Message()),
+		)
+	})
+	return diags
 }
 
 func compareRecoveryGolden(t *testing.T, expectedPath, actual string) {
@@ -125,7 +143,8 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 	result.Package.PackageID = pkgID
 	result.Package.Scope = pkgScope
 	semantics.ResolvePublicNodeTypes(cx, result.Package, importedSymbols)
-	completed := testphases.PhaseTypeResolution
+	semantics.ResolvePrivateNodesTypes(cx, result.Package, importedSymbols)
+	completed := testphases.PhaseTypeNarrowing
 	for _, d := range cx.Diagnostics() {
 		info := d.DiagnosticInfo()
 		if info.Code() == "INTERNAL_ERROR" || info.Code() == "UNIMPLEMENTED_ERROR" || info.Severity() == diagnostics.Fatal {

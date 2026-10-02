@@ -1,0 +1,29 @@
+(package
+  (xmlns
+    (literal https://example.com/module) as moduleNS)
+  (xmlns
+    (literal ) as emptyNS)
+  (xmlns
+    (simple-var-ref missingURI) as missingNS)
+  (xmlns
+    (literal https://example.com/later) as laterNS)
+  (function recovered () (
+    (value-type int))
+    (block-function-body
+      (xmlns
+        (literal https://example.com/local) as localNS)
+      (xmlns
+        (literal ) as emptyLocal)
+      (xmlns
+        (simple-var-ref missingLocalURI) as missingLocal)
+      (xmlns
+        (literal https://example.com/laterLocal) as laterLocal)
+      (return
+        (invocation probe (
+          (literal later))))))
+  (function probe (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value))))

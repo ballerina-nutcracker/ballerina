@@ -1,0 +1,41 @@
+(package
+  (function inferredCallable () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable unavailable (expr
+          (simple-var-ref missing))))
+      (expression-stmt
+        (invocation unavailable ()))
+      (expression-stmt
+        (invocation probe (
+          (literal later))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 1))))
+      (return
+        (simple-var-ref later))))
+  (function unknownCallable () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable unavailable (type
+          (user-defined-type Unknown))))
+      (expression-stmt
+        (invocation unavailable ()))
+      (expression-stmt
+        (invocation probe (
+          (literal later))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 2))))
+      (return
+        (simple-var-ref later))))
+  (function probe (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value))))
