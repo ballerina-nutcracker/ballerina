@@ -3,11 +3,11 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad loop
     %2 = ConstantLoad <nil>
-    %3 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}{%1=%2}
+    %3 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|{| nil|boolean|int|float|string|...|...... |}...]|{| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|...... |}... |}{%1=%2}
     j1 = %3;
     %5 = ConstantLoad loop
     %6 = ConstantLoad <nil>
-    %7 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}{%5=%6}
+    %7 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|{| nil|boolean|int|float|string|...|...... |}...]|{| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|...... |}... |}{%5=%6}
     j2 = %7;
     %9 = == j1 j2;
     %10 = %9;
@@ -32,14 +32,14 @@ main() -> nil{
     j2[%20] = j1;
     %21 = ConstantLoad loop
     %22 = ConstantLoad <nil>
-    %23 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|{| nil|boolean|int|float|string|...|...... |}... |}{%21=%22}
+    %23 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|{| nil|boolean|int|float|string|...|...... |}...]|{| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|...... |}... |}{%21=%22}
     j3 = %23;
     %25 = ConstantLoad loop
     %26 = ConstantLoad loop
     %27 = ConstantLoad loop
-    %28 = newMap {| nil|boolean|int|float|string|...|...... |}{%27=j3}
-    %29 = newMap {| nil|boolean|int|float|string|...|...... |}{%26=%28}
-    %30 = newMap {| nil|boolean|int|float|string|...|...... |}{%25=%29}
+    %28 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|...... |}{%27=j3}
+    %29 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|...... |}{%26=%28}
+    %30 = newMap {| nil|boolean|int|float|string|[nil|boolean|int|float|string|...|......]|...... |}{%25=%29}
     %31 = ConstantLoad loop
     j3[%31] = %30;
     %32 = == j1 j3;

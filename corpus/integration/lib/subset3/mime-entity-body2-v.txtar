@@ -1,0 +1,18 @@
+-- stdout --
+["z","y","x","w"]
+true
+true
+true true
+[-0.0,-0.0,-0.0,0,0]
+true true true
+true
+Error occurred while extracting json data from entity
+error
+error
+error
+<a>t</a>
+0
+[]
+[]
+["1","2","3"]
+-- stderr --

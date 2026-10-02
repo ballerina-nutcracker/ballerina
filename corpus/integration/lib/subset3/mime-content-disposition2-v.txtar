@@ -1,0 +1,11 @@
+-- stdout --
+true
+Form-Data
+a b
+f.txt
+10 "y"
+Form-Data;name="a b";filename="f.txt";size=10;X="y"
+attachment;name="q";k=v w;z=1
+0
+form-data;name="upload";filename="file.txt"
+-- stderr --
