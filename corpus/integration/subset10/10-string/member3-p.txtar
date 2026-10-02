@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: string index out of range: index: -1, size: 3
+        at main(member3-p.bal:22)

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid operation: type 'string' does not support member access for assignment
+  --> member4-e.bal:19:5
+   |
+19 |     s[0] = "x"; // @error string members cannot be assigned
+   |     ^^^^
+
+error[SEMANTIC_ERROR]: invalid operation: type 'string' does not support member access for assignment
+  --> member4-e.bal:20:5
+   |
+20 |     s[1] += "y"; // @error string members cannot be assigned
+   |     ^^^^

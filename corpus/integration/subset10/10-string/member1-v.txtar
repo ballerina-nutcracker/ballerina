@@ -1,0 +1,15 @@
+-- stdout --
+a
+b
+c
+b
+x
+é
+€
+😀
+z
+true
+true
+true
+b
+-- stderr --
