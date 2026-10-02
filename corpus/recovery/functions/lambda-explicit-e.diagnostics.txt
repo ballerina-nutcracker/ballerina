@@ -10,6 +10,24 @@ error[SEMANTIC_ERROR]: Unknown symbol: missingBlock
 27 |             consume(missingBlock); // @error
    |                     ^^^^^^^^^^^^
 
+error[SEMANTIC_ERROR]: expression value must be assigned
+  --> recovery/functions/lambda-explicit-e.bal:24:1
+   |
+24 |         consume(broken(2)); // @error expression value must be assigned
+   |         ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expression value must be assigned
+  --> recovery/functions/lambda-explicit-e.bal:30:1
+   |
+30 |         consume(block(3)); // @error expression value must be assigned
+   |         ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expression value must be assigned
+  --> recovery/functions/lambda-explicit-e.bal:32:1
+   |
+32 |         consume(complete(4)); // @error expression value must be assigned
+   |         ^^^^^^^^^^^^^^^^^^^^
+
 error[SEMANTIC_ERROR]: incompatible arguments for function call
   --> recovery/functions/lambda-explicit-e.bal:25:1
    |

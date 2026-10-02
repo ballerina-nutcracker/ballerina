@@ -299,18 +299,16 @@ func isIsolatedInvocation(a analyzer, call ast.Invocable) bool {
 //   - Variable references to variables not define inside the lock statement is allowed only if the refernce occures inside an isolated expression.
 //     Or the referred variable must be the restricted-variable
 func validateLockBody(a analyzer, lock *ast.BLangLock) bool {
-	cls, _ := enclosingClassOf(a)
-	v := &lockBodyVisitor{enclosingClass: cls, a: a, lock: lock, locals: make(map[model.SymbolRef]struct{}), ok: true}
+	v := &lockBodyVisitor{a: a, lock: lock, locals: make(map[model.SymbolRef]struct{}), ok: true}
 	ast.Walk(v, &lock.Body)
 	return v.ok
 }
 
 type lockBodyVisitor struct {
-	a              analyzer
-	enclosingClass *enclosingClassBody
-	lock           *ast.BLangLock
-	locals         map[model.SymbolRef]struct{}
-	ok             bool
+	a      analyzer
+	lock   *ast.BLangLock
+	locals map[model.SymbolRef]struct{}
+	ok     bool
 }
 
 func (v *lockBodyVisitor) VisitTypeData(_ *ast.TypeData) ast.Visitor { return v }
@@ -318,6 +316,9 @@ func (v *lockBodyVisitor) VisitTypeData(_ *ast.TypeData) ast.Visitor { return v 
 func (v *lockBodyVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	if n == nil {
 		return v
+	}
+	if analysisPrerequisitesUnavailable(v.a, n) {
+		return nil
 	}
 	switch node := n.(type) {
 	case *ast.BLangLambdaFunction, *ast.BLangFunction:
@@ -365,18 +366,18 @@ func (v *lockBodyVisitor) isIsolatedExpression(expr ast.BLangExpression) bool {
 
 // checkAssignment validates transfer in for assignment.
 func (v *lockBodyVisitor) checkAssignment(lhs ast.BLangExpression, rhs ast.BLangActionOrExpression, pos diagnostics.Location) {
-	// If the LHS targets the restricted variable, no check.
-	if v.assignsRestricted(lhs) {
+	if analysisPrerequisitesUnavailable(v.a, lhs) || analysisPrerequisitesUnavailable(v.a, rhs) {
 		return
 	}
-	// If the LHS is a local declared inside the lock body, no check.
-	lhsRef, ok := exprRef(v.enclosingFields(), lhs)
+	lhsRef, ok := exprRef(v.a, lhs)
 	if !ok {
-		v.ok = false
-		v.a.internalErr("failed to find variable symbol", lhs.GetPosition())
 		return
 	}
 	lhsRef = v.a.ctx().UnnarrowedSymbol(lhsRef)
+	if lhsRef == v.lock.RestrictedSymbol {
+		return
+	}
+	// If the LHS is a local declared inside the lock body, no check.
 	if _, isLocal := v.locals[lhsRef]; isLocal {
 		return
 	}
@@ -396,22 +397,6 @@ func (v *lockBodyVisitor) checkAssignment(lhs ast.BLangExpression, rhs ast.BLang
 		v.a.semanticErr("access of mutable variable", rhs.GetPosition())
 		v.ok = false
 	}
-}
-
-// assignsRestricted reports whether lhs targets the lock's restricted variable.
-// findRestrictedVariable now returns a uniform SymbolRef in both module-var
-// and self-field cases, so this is a single ref-equality test on the LHS
-// base symbol.
-func (v *lockBodyVisitor) assignsRestricted(lhs ast.BLangExpression) bool {
-	lhsRef, ok := exprRef(v.enclosingFields(), lhs)
-	if !ok {
-		v.ok = false
-		v.a.internalErr("failed to find variable symbol", lhs.GetPosition())
-		// avoid continuing the validation
-		return true
-	}
-	lhsRef = v.a.ctx().UnnarrowedSymbol(lhsRef)
-	return v.lock.RestrictedSymbol == lhsRef
 }
 
 // containsTransferInRef reports whether expr's subtree contains any reference
@@ -452,6 +437,9 @@ func (sa *semanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDecl
 	out := make(map[model.SymbolRef]varDeclMetadata)
 	for i := range sa.pkg.GlobalVars {
 		v := sa.pkg.GlobalVars[i]
+		if analysisPrerequisitesUnavailable(sa, v) {
+			continue
+		}
 		out[v.Symbol()] = varDeclMetadata{
 			Type:          v.GetDeterminedType(),
 			Final:         v.IsFinal(),
@@ -462,6 +450,9 @@ func (sa *semanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDecl
 	}
 	for i := range sa.pkg.Constants {
 		c := sa.pkg.Constants[i]
+		if analysisPrerequisitesUnavailable(sa, c) {
+			continue
+		}
 		out[c.Symbol()] = varDeclMetadata{
 			Type:         c.GetDeterminedType(),
 			Final:        true,
@@ -630,6 +621,9 @@ func inInitFunction(a analyzer) bool {
 // expression.
 func (sa *semanticAnalyzer) validateModuleLevelIsolatedDecls(pkg *ast.BLangPackage) {
 	check := func(expr ast.BLangExpression, sym model.SymbolRef) {
+		if analysisPrerequisitesUnavailable(sa, expr) {
+			return
+		}
 		vs, ok := sa.ctx().GetSymbol(sym).(model.ValueSymbol)
 		if !ok || !vs.IsIsolated() {
 			return
@@ -737,6 +731,9 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	if n == nil {
 		return visitor
 	}
+	if analysisPrerequisitesUnavailable(visitor.a, n) {
+		return nil
+	}
 	a := visitor.a
 	switch node := n.(type) {
 	case *ast.BLangVariableDef:
@@ -807,6 +804,9 @@ func (visitor *isolatedFnVisitor) walkInvocableOperands(call ast.Invocable) {
 
 func (visitor *isolatedFnVisitor) walkLambda(node *ast.BLangLambdaFunction) {
 	fn := node.Function
+	if lambdaExpressionBodyUnresolved(fn) || fn.GetBody() == nil {
+		return
+	}
 	validateIsolatedCapture(visitor.a, visitor.scope, fn.GetBody().(ast.BLangNode))
 	inner := newLocalScope(visitor.scope)
 	for _, param := range fn.RequiredParams {
@@ -846,6 +846,9 @@ type captureVisitor struct {
 func (v *captureVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	if n == nil {
 		return v
+	}
+	if analysisPrerequisitesUnavailable(v.a, n) {
+		return nil
 	}
 	switch n.(type) {
 	case *ast.BLangLambdaFunction, *ast.BLangFunction:
@@ -922,31 +925,40 @@ func (visitor *isolatedFnVisitor) checkRead(ref *ast.BLangVarRef) {
 	}
 }
 
-func (v *lockBodyVisitor) enclosingFields() []*ast.BLangVariable {
-	if v.enclosingClass == nil {
-		return nil
+func selfFieldRef(a analyzer, fieldName string) (model.SymbolRef, bool) {
+	for cur := a; cur != nil; cur = cur.parentAnalyzer() {
+		fa, ok := cur.(*functionAnalyzer)
+		if !ok || fa.enclosingClass == nil {
+			continue
+		}
+		node, ok := fa.function.(ast.NodeWithScope)
+		if !ok {
+			return model.SymbolRef{}, false
+		}
+		scope, ok := node.Scope().(*model.FunctionScope)
+		if !ok {
+			return model.SymbolRef{}, false
+		}
+		classScope, ok := scope.Parent.(model.BlockLevelScope)
+		if !ok {
+			return model.SymbolRef{}, false
+		}
+		return classScope.MainSpace().GetSymbol(fieldName)
 	}
-	return v.enclosingClass.fields
+	return model.SymbolRef{}, false
 }
 
-func exprRef(enclosingFields []*ast.BLangVariable, expr ast.BLangExpression) (model.SymbolRef, bool) {
+func exprRef(a analyzer, expr ast.BLangExpression) (model.SymbolRef, bool) {
 	switch expr := expr.(type) {
 	case *ast.BLangVarRef:
 		return expr.Symbol(), true
 	case *ast.BLangFieldBaseAccess:
 		if common.IsSelfFieldAccess(expr) {
-			fieldName := expr.Field.GetValue()
-			for _, field := range enclosingFields {
-				if field.Name.GetValue() != fieldName {
-					continue
-				}
-				return field.Symbol(), true
-			}
-		} else {
-			return exprRef(enclosingFields, expr.Expr)
+			return selfFieldRef(a, expr.Field.GetValue())
 		}
+		return exprRef(a, expr.Expr)
 	case *ast.BLangIndexBasedAccess:
-		return exprRef(enclosingFields, expr.Expr)
+		return exprRef(a, expr.Expr)
 	}
 	return model.SymbolRef{}, false
 }

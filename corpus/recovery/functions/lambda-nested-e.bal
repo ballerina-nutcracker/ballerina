@@ -27,7 +27,7 @@ function nestedBodies() {
                 consume(after); // @error capture after nested failure in enclosing context
                 return 1;
             };
-            consume(enclosing());
+            consume(enclosing()); // @error expression value must be assigned
             consume(before); // @error nested capture propagated
             consume(after); // @error enclosing capture context restored
         }

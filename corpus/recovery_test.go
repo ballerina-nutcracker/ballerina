@@ -42,7 +42,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
-const recoveryTarget = testphases.PhaseTypeNarrowing
+const recoveryTarget = testphases.PhaseSemanticAnalysis
 
 func TestRecovery(t *testing.T) {
 	count := 0
@@ -145,7 +145,8 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 	result.Package.Scope = pkgScope
 	semantics.ResolvePublicNodeTypes(cx, result.Package, importedSymbols)
 	semantics.ResolvePrivateNodesTypes(cx, result.Package, importedSymbols)
-	completed := testphases.PhaseTypeNarrowing
+	semantics.AnalyzeSemantics(cx, result.Package, importedSymbols)
+	completed := testphases.PhaseSemanticAnalysis
 	for _, d := range cx.Diagnostics() {
 		info := d.DiagnosticInfo()
 		if info.Code() == "INTERNAL_ERROR" || info.Code() == "UNIMPLEMENTED_ERROR" || info.Severity() == diagnostics.Fatal {
