@@ -46,6 +46,7 @@ type nodeBuilder struct {
 	currentCompUnit      *ast.BLangCompilationUnit
 	cx                   *context.CompilerContext
 	mode                 nodeBuilderMode
+	undiagnosedMalformed bool
 }
 
 func (n *nodeBuilder) de() *diagnostics.DiagnosticEnv {
@@ -967,6 +968,10 @@ func (n *nodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, to
 	return &identifier
 }
 
+func isUnsupportedIdentifierText(text string) bool {
+	return text == "'" || text == "_" || text == "'_"
+}
+
 func (n *nodeBuilder) createIdentifierNodeFromModulePrefixToken(pos diagnostics.Location, token st.Token) ast.IdentifierNode {
 	if token != nil && token.Text() == "'_" {
 		identifierName := token.Text()
@@ -1283,6 +1288,7 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLa
 	compilationUnit := ast.BLangCompilationUnit{}
 	n.currentCompUnit = &compilationUnit
 	defer func() { n.currentCompUnit = nil }()
+	n.undiagnosedMalformed = hasUndiagnosedMalformedSyntax(modulePartNode.InternalNode())
 	compilationUnit.SetPackageID(n.PackageID)
 	pos := n.getPosition(modulePartNode)
 
@@ -6034,8 +6040,12 @@ func isQuotedUnderscoreModulePrefix(token st.Token) bool {
 	return parent != nil && parent.Kind() == st.QUALIFIED_NAME_REFERENCE && parent.ChildInBucket(0) == token
 }
 
+// TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
 func (n *nodeBuilder) malformedSyntax(node st.Node, skip func(st.Node) bool) bool {
 	if node == nil || (skip != nil && skip(node)) {
+		return false
+	}
+	if !n.mayBeMalformed(node) {
 		return false
 	}
 	if node.Kind() == st.WILDCARD_BINDING_PATTERN {
@@ -6082,6 +6092,48 @@ func (n *nodeBuilder) malformedSyntax(node st.Node, skip func(st.Node) bool) boo
 	return malformed || (node.HasDiagnostics() && !childDiagnostics)
 }
 
+func (n *nodeBuilder) mayBeMalformed(node st.Node) bool {
+	return n.undiagnosedMalformed || node.HasDiagnostics()
+}
+
+// hasUndiagnosedMalformedSyntax reports whether the tree contains syntax that malformedSyntax treats as malformed
+// without the parser having attached a diagnostic to it. It walks the internal tree to avoid creating facades.
+func hasUndiagnosedMalformedSyntax(node st.STNode) bool {
+	if node == nil {
+		return false
+	}
+	if token, ok := node.(st.STToken); ok {
+		return token.IsMissing() || (token.Kind() == st.IDENTIFIER_TOKEN && isUnsupportedIdentifierText(token.Text()))
+	}
+	if attachPoint, ok := node.(*st.STAnnotationAttachPointNode); ok && !isKnownAnnotationAttachPoint(attachPoint) {
+		return true
+	}
+	for i := range node.BucketCount() {
+		if hasUndiagnosedMalformedSyntax(node.ChildInBucket(i)) {
+			return true
+		}
+	}
+	return false
+}
+
+func isKnownAnnotationAttachPoint(attachPoint *st.STAnnotationAttachPointNode) bool {
+	identifiers, ok := attachPoint.Identifiers.(*st.STNodeList)
+	if !ok {
+		return false
+	}
+	parts := make([]string, 0, identifiers.Size())
+	for i := range identifiers.Size() {
+		token, ok := identifiers.Get(i).(st.STToken)
+		if !ok {
+			return false
+		}
+		parts = append(parts, token.Text())
+	}
+	_, known := annotationAttachPointFromParts(parts)
+	return known
+}
+
+// TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
 func (n *nodeBuilder) malformedDeclaration(node st.Node) bool {
 	var body st.Node
 	var members []st.Node
@@ -6134,11 +6186,12 @@ func expressionBoundary(node st.Node) bool {
 	}
 }
 
+// TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
 func (n *nodeBuilder) malformedStatement(node st.Node) bool {
-	if _, ok := node.(*st.BlockStatementNode); ok {
+	if _, ok := node.(*st.BlockStatementNode); ok || node == nil || !n.mayBeMalformed(node) {
 		return false
 	}
-	if node != nil && !node.HasDiagnostics() {
+	if !node.HasDiagnostics() {
 		switch statement := node.(type) {
 		case *st.VariableDeclarationNode:
 			annotations := statement.Annotations()
@@ -6166,6 +6219,9 @@ func (n *nodeBuilder) malformedStatement(node st.Node) bool {
 }
 
 func (n *nodeBuilder) malformedNameReference(node st.Node) bool {
+	if !n.mayBeMalformed(node) {
+		return false
+	}
 	if node.HasDiagnostics() {
 		return n.malformedSyntax(node, nil)
 	}
@@ -6185,7 +6241,7 @@ func (n *nodeBuilder) malformedNameReference(node st.Node) bool {
 
 // TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
 func (n *nodeBuilder) malformedExpression(node st.Node) bool {
-	if node == nil {
+	if node == nil || !n.mayBeMalformed(node) {
 		return false
 	}
 	scanSyntax := node.HasDiagnostics()

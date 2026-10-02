@@ -1,0 +1,131 @@
+-- stdout --
+(package
+  (function blockBody () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable broken (type
+          (value-type int)) (expr
+          (bad-expr-or-action))))
+      (block-stmt
+        (bad-stmt)
+        (var-def
+          (variable inner (type
+            (value-type int)) (expr
+            (literal 2)))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 3))))
+      (return
+        (simple-var-ref later))))
+  (function expressionBody () (
+    (value-type int))
+    (expr-function-body
+      (bad-expr-or-action)))
+  (function lambdas () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable explicit (expr
+          (lambda [callable=function() returns int] [function=never] [name=never] [expression-body=unresolved]
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (expr-function-body
+                (bad-expr-or-action)))))))
+      (var-def
+        (variable block (expr
+          (lambda [callable=function() returns int] [function=never] [name=never]
+            (function $anonFunc$_1 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable broken (type
+                    (value-type int)) (expr
+                    (bad-expr-or-action))))
+                (return
+                  (literal 1))))))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 2))))))
+  (function caller () (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (invocation blockBody ())
+        (invocation expressionBody ())))))
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'block'
+  --> recovery/functions/bodies-e.bal:26:1
+   |
+26 |     var block = function() returns int { int broken = ; return 1; }; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 |     int later = 2; // @error unused surviving sibling
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'broken'
+  --> recovery/functions/bodies-e.bal:18:1
+   |
+18 |     int broken = ; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     { int '_ = 1; int inner = 2; } // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'broken'
+  --> recovery/functions/bodies-e.bal:26:42
+   |
+26 |     var block = function() returns int { int broken = ; return 1; }; // @error
+   |                                          ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'explicit'
+  --> recovery/functions/bodies-e.bal:25:1
+   |
+25 |     var explicit = function() returns int => 1 +; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |     var block = function() returns int { int broken = ; return 1; }; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'inner'
+  --> recovery/functions/bodies-e.bal:19:19
+   |
+19 |     { int '_ = 1; int inner = 2; } // @error
+   |                   ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/functions/bodies-e.bal:27:1
+   |
+27 |     int later = 2; // @error unused surviving sibling
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 | }
+   |
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/functions/bodies-e.bal:19:11
+   |
+19 |     { int '_ = 1; int inner = 2; } // @error
+   |           ^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:18:18
+   |
+18 |     int broken = ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:23:45
+   |
+23 | function expressionBody() returns int => 1 +; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:25:49
+   |
+25 |     var explicit = function() returns int => 1 +; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:26:55
+   |
+26 |     var block = function() returns int { int broken = ; return 1; }; // @error
+   |

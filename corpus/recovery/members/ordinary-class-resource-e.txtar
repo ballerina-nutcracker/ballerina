@@ -1,0 +1,36 @@
+-- stdout --
+(package
+  (class-definition MemberTypes
+    (function surviving (
+      (variable value (type
+        (value-type int)))) (
+      (value-type int))
+      (expr-function-body
+        (simple-var-ref value)))
+    (resource-function get name:second
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type int))
+      (block-function-body)))
+  (function independent (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value))))
+-- stderr --
+error[SEMANTIC_ERROR]: resource methods are only allowed in client or service classes
+  --> recovery/members/ordinary-class-resource-e.bal:18:1
+   |
+18 |     resource function get second() returns xml<int> {} // @error resource in ordinary class
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     function surviving(int value) returns int => value;
+   |
+
+error[SEMANTIC_ERROR]: resource methods are only allowed in client or service classes
+  --> recovery/members/ordinary-class-resource-e.bal:18:1
+   |
+18 |     resource function get second() returns xml<int> {} // @error resource in ordinary class
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     function surviving(int value) returns int => value;
+   |

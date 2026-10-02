@@ -1,0 +1,128 @@
+-- stdout --
+(package
+  (variable unresolvedValue (type
+    (value-type int)) (expr
+    (simple-var-ref discardedValue)))
+  (variable failedValue (type
+    (user-defined-type UnknownArray)) (expr
+    (list-constructor-expr)))
+  (variable independentValue (type
+    (value-type int)) (expr
+    (literal 3)))
+  (type-definition BrokenArray
+    (bad-type))
+  (type-definition BrokenTuple
+    (bad-type))
+  (type-definition UnknownArray
+    (array-type
+      (user-defined-type MissingElement) dimensions: 1 ([])))
+  (type-definition UnknownRecord
+    (record-type
+      (field broken
+        (user-defined-type MissingField))
+      (field surviving
+        (value-type int))
+      (field another
+        (user-defined-type AnotherMissingField))))
+  (type-definition Independent
+    (record-type
+      (field value
+        (value-type int))))
+  (class-definition UnknownFields
+    (variable broken (type
+      (user-defined-type MissingClassField)))
+    (variable surviving (type
+      (value-type int)))
+    (variable another (type
+      (user-defined-type MissingSecondField)))
+    (function survivingMethod (
+      (variable value (type
+        (value-type int)))) (
+      (value-type int))
+      (expr-function-body
+        (simple-var-ref value))))
+  (function consumeFailed (
+    (variable value (type
+      (user-defined-type UnknownArray)))) (
+    (value-type int))
+    (expr-function-body
+      (literal 1)))
+  (function independent (
+    (variable value (type
+      (user-defined-type Independent)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (field-based-access value
+          (simple-var-ref value))
+        (simple-var-ref independentValue)))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: discardedValue
+  --> recovery/declarations/nested-types-e.bal:35:23
+   |
+35 | int unresolvedValue = discardedValue; // @error
+   |                       ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: AnotherMissingField
+  --> recovery/declarations/nested-types-e.bal:23:1
+   |
+23 |     AnotherMissingField another; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingClassField
+  --> recovery/declarations/nested-types-e.bal:27:1
+   |
+27 |     MissingClassField broken; // @error
+   |     ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingElement
+  --> recovery/declarations/nested-types-e.bal:19:19
+   |
+19 | type UnknownArray MissingElement[]; // @error
+   |                   ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingField
+  --> recovery/declarations/nested-types-e.bal:21:1
+   |
+21 |     MissingField broken; // @error
+   |     ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingSecondField
+  --> recovery/declarations/nested-types-e.bal:30:1
+   |
+30 |     MissingSecondField another; // @error
+   |     ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'failedValue'
+  --> recovery/declarations/nested-types-e.bal:36:1
+   |
+36 | UnknownArray failedValue = []; // @error unused value
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+37 | int independentValue = 3;
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'unresolvedValue'
+  --> recovery/declarations/nested-types-e.bal:35:1
+   |
+35 | int unresolvedValue = discardedValue; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 | UnknownArray failedValue = []; // @error unused value
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> recovery/declarations/nested-types-e.bal:25:24
+   |
+25 | function consumeFailed(UnknownArray value) returns int => 1; // @error unused value
+   |                        ^^^^^^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/declarations/nested-types-e.bal:17:26
+   |
+17 | type BrokenArray missing:[]; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/declarations/nested-types-e.bal:18:32
+   |
+18 | type BrokenTuple [int, missing:]; // @error
+   |

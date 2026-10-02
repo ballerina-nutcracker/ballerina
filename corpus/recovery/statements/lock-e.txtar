@@ -1,0 +1,112 @@
+-- stdout --
+(package
+  (variable outside (type
+    (array-type
+      (value-type int) dimensions: 1 ([]))) (expr
+    (list-constructor-expr
+      (literal 0))))
+  (class-definition LockRecovery
+    (variable state (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))) (expr
+      (list-constructor-expr)))
+    (function update () (
+      (value-type null))
+      (block-function-body
+        (lock
+          (block-stmt
+            (assignment
+              (field-based-access state
+                (simple-var-ref self))
+              (list-constructor-expr))
+            (assignment
+              (field-based-access missing
+                (simple-var-ref self))
+              (literal 1))
+            (compound-assignment +
+              (field-based-access missing
+                (simple-var-ref self))
+              (literal 1))
+            (if
+              (simple-var-ref missingCondition)
+              (block-stmt
+                (assignment
+                  (field-based-access anotherMissing
+                    (simple-var-ref self))
+                  (literal 1))
+                (assignment
+                  (index-based-access
+                    (simple-var-ref outside)
+                    (literal 0))
+                  (literal 2))) ())
+            (block-stmt
+              (var-def
+                (variable local (type
+                  (value-type int)) (expr
+                  (literal 0))))
+              (assignment
+                (simple-var-ref local)
+                (literal 1))
+              (assignment
+                (index-based-access
+                  (simple-var-ref outside)
+                  (literal 0))
+                (literal 1)))))
+        (var-def
+          (variable later (type
+            (value-type int)) (expr
+            (literal wrong))))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingCondition
+  --> recovery/statements/lock-e.bal:27:16
+   |
+27 |             if missingCondition { // @error abandoned compound statement
+   |                ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: assignment in a lock statement to a target defined outside the lock must use a plain variable name on the left-hand side
+  --> recovery/statements/lock-e.bal:33:1
+   |
+33 |             outside[0] = 1; // @error independent lock transfer check
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+34 |         }
+   |
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "wrong"
+  --> recovery/statements/lock-e.bal:35:21
+   |
+35 |         int later = "wrong"; // @error independent semantic analysis
+   |                     ^^^^^^^
+
+error[SEMANTIC_ERROR]: undefined member 'anotherMissing'
+  --> recovery/statements/lock-e.bal:28:22
+   |
+28 |                 self.anotherMissing = 1; // @error symbol resolution still visits body
+   |                      ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: undefined member 'missing'
+  --> recovery/statements/lock-e.bal:25:18
+   |
+25 |             self.missing = 1; // @error abandoned assignment
+   |                  ^^^^^^^^
+
+error[SEMANTIC_ERROR]: undefined member 'missing'
+  --> recovery/statements/lock-e.bal:26:18
+   |
+26 |             self.missing += 1; // @error abandoned compound assignment
+   |                  ^^^^^^^^
+
+error[SEMANTIC_ERROR]: union types not supported for +
+  --> recovery/statements/lock-e.bal:26:1
+   |
+26 |             self.missing += 1; // @error abandoned compound assignment
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 |             if missingCondition { // @error abandoned compound statement
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/statements/lock-e.bal:35:1
+   |
+35 |         int later = "wrong"; // @error independent semantic analysis
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 |     }
+   |

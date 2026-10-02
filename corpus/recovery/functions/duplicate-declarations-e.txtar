@@ -1,0 +1,50 @@
+-- stdout --
+(package
+  (function method () (
+    (value-type int))
+    (extern-function-body))
+  (function method () (
+    (value-type int))
+    (extern-function-body))
+  (function surviving (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value))))
+-- stderr --
+error[SEMANTIC_ERROR]: redeclared symbol 'method'
+  --> recovery/functions/duplicate-declarations-e.bal:17:10
+   |
+17 | function method() returns int; // @error missing body
+   |          ^^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'method'
+  --> recovery/functions/duplicate-declarations-e.bal:18:10
+   |
+18 | function method() returns int; // @error duplicate declaration and missing body
+   |          ^^^^^^
+
+error[SYNTAX_ERROR]: missing equal token
+  --> recovery/functions/duplicate-declarations-e.bal:17:30
+   |
+17 | function method() returns int; // @error missing body
+   |
+
+error[SYNTAX_ERROR]: missing equal token
+  --> recovery/functions/duplicate-declarations-e.bal:18:30
+   |
+18 | function method() returns int; // @error duplicate declaration and missing body
+   |
+
+error[SYNTAX_ERROR]: missing external keyword
+  --> recovery/functions/duplicate-declarations-e.bal:17:30
+   |
+17 | function method() returns int; // @error missing body
+   |
+
+error[SYNTAX_ERROR]: missing external keyword
+  --> recovery/functions/duplicate-declarations-e.bal:18:30
+   |
+18 | function method() returns int; // @error duplicate declaration and missing body
+   |

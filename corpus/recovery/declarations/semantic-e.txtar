@@ -1,0 +1,141 @@
+-- stdout --
+(package
+  (variable missingInitializer)
+  (type-definition Invalid
+    (value-type never))
+  (type-definition NestedInvalid
+    (value-type never))
+  (type-definition DuplicateObject
+    (object-type
+      (method-decl method () (
+        (value-type int)))
+      (field value
+        (value-type int))))
+  (class-definition DuplicateMembers
+    (function init () (
+      (value-type null))
+      (block-function-body))
+    (function method () (
+      (value-type int))
+      (expr-function-body
+        (literal 1)))
+    (function surviving () (
+      (value-type int))
+      (expr-function-body
+        (invocation method expr:
+          (simple-var-ref self) ()))))
+  (function valid (
+    (variable value (type
+      (user-defined-type DuplicateMembers)))) (
+    (value-type int))
+    (expr-function-body
+      (invocation surviving expr:
+        (simple-var-ref value) ()))))
+-- stderr --
+error[SEMANTIC_ERROR]: only object and error types can be distinct
+  --> recovery/declarations/semantic-e.bal:17:14
+   |
+17 | type Invalid distinct int; // @error semantic invalid distinct target
+   |              ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: only object and error types can be distinct
+  --> recovery/declarations/semantic-e.bal:18:20
+   |
+18 | type NestedInvalid distinct record { int value; }; // @error semantic invalid distinct target
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'init'
+  --> recovery/declarations/semantic-e.bal:23:1
+   |
+23 |     function init() {} // @error semantic duplicate initializer
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |     function method() returns int => 1;
+   |
+
+error[SEMANTIC_ERROR]: redeclared symbol 'method'
+  --> recovery/declarations/semantic-e.bal:25:1
+   |
+25 |     function method() returns int => 2; // @error semantic duplicate method
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |     function surviving() returns int => self.method();
+   |
+
+error[SEMANTIC_ERROR]: redeclared symbol 'method'
+  --> recovery/declarations/semantic-e.bal:32:1
+   |
+32 |     function method() returns int; // @error semantic duplicate method
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 | };
+   |
+
+error[SEMANTIC_ERROR]: redeclared symbol 'value'
+  --> recovery/declarations/semantic-e.bal:30:1
+   |
+30 |     int value; // @error semantic duplicate field
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 |     function method() returns int;
+   |
+
+error[SEMANTIC_ERROR]: type definition Invalid is empty
+  --> recovery/declarations/semantic-e.bal:1:1
+   |
+ 1 | // Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2 | //
+   | ^^
+ 3 | // WSO2 LLC. licenses this file to you under the Apache License,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 4 | // Version 2.0 (the "License"); you may not use this file except
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 5 | // in compliance with the License.
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 6 | // You may obtain a copy of the License at
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 7 | //
+   | ^^
+ 8 | // http://www.apache.org/licenses/LICENSE-2.0
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 | //
+   | ^^
+10 | // Unless required by applicable law or agreed to in writing,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | // software distributed under the License is distributed on an
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+12 | // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+13 | // KIND, either express or implied.  See the License for the
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 | // specific language governing permissions and limitations
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15 | // under the License.
+   | ^^^^^^^^^^^^^^^^^^^^^
+16 | 
+   | 
+17 | type Invalid distinct int; // @error semantic invalid distinct target
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 | type NestedInvalid distinct record { int value; }; // @error semantic invalid distinct target
+   |
+
+error[SEMANTIC_ERROR]: type definition NestedInvalid is empty
+  --> recovery/declarations/semantic-e.bal:18:1
+   |
+18 | type NestedInvalid distinct record { int value; }; // @error semantic invalid distinct target
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | var missingInitializer; // @error semantic initializer requirement
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'missingInitializer'
+  --> recovery/declarations/semantic-e.bal:19:1
+   |
+19 | var missingInitializer; // @error semantic initializer requirement
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | 
+   |
+
+error[SEMANTIC_ERROR]: var-declared module variable must have an initializer expression for type inference
+  --> recovery/declarations/semantic-e.bal:19:1
+   |
+19 | var missingInitializer; // @error semantic initializer requirement
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | 
+   |

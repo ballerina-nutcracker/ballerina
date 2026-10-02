@@ -1,0 +1,121 @@
+-- stdout --
+(package
+  (type-definition RecordWithBadInclusion
+    (bad-type))
+  (type-definition RecordWithUnknownInclusion
+    (record-type
+      (field good
+        (value-type int)
+        (literal 1))))
+  (class-definition C
+    (variable goodField (type
+      (value-type int)))
+    (function valid () (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (bad-expr-or-action))))
+        (var-def
+          (variable later (type
+            (value-type int)) (expr
+            (literal 2))))))
+    (bad-top-level)
+    (bad-top-level)
+    (bad-top-level)
+    (bad-top-level)
+    (bad-top-level))
+  (class-definition InclusionFailure
+    (variable good (type
+      (value-type int)))
+    (function method () (
+      (value-type int))
+      (expr-function-body
+        (field-based-access good
+          (simple-var-ref self)))))
+  (function valid () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable surviving (type
+          (user-defined-type C))))))
+  (bad-top-level))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: Missing
+  --> recovery/members/class-e.bal:29:6
+   |
+29 |     *Missing; // @error
+   |      ^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: Missing
+  --> recovery/members/class-e.bal:38:6
+   |
+38 |     *Missing; // @error
+   |      ^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/members/class-e.bal:24:34
+   |
+24 |     function valid() { int x = ; int later = 2; } // @error
+   |                                  ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'surviving'
+  --> recovery/members/class-e.bal:27:20
+   |
+27 | function valid() { C surviving; } // @error unused surviving sibling
+   |                    ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> recovery/members/class-e.bal:24:24
+   |
+24 |     function valid() { int x = ; int later = 2; } // @error
+   |                        ^^^^^^^^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/members/class-e.bal:18:9
+   |
+18 |     int _; // @error
+   |         ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/members/class-e.bal:20:14
+   |
+20 |     function _(int x) {} // @error
+   |              ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/members/class-e.bal:21:23
+   |
+21 |     function init(int _) {} // @error
+   |                       ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/members/class-e.bal:22:10
+   |
+22 |     *mod:_; // @error
+   |          ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/members/class-e.bal:26:10
+   |
+26 | function _() {} // @error
+   |          ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/members/class-e.bal:34:10
+   |
+34 |     *mod:_; // @error
+   |          ^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/members/class-e.bal:23:6
+   |
+23 |     *; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/members/class-e.bal:24:32
+   |
+24 |     function valid() { int x = ; int later = 2; } // @error
+   |

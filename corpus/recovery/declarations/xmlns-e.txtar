@@ -1,0 +1,64 @@
+-- stdout --
+(package
+  (xmlns
+    (literal https://example.com/module) as moduleNS)
+  (xmlns
+    (literal ) as emptyNS)
+  (xmlns
+    (simple-var-ref missingURI) as missingNS)
+  (xmlns
+    (literal https://example.com/later) as laterNS)
+  (function recovered () (
+    (value-type int))
+    (block-function-body
+      (xmlns
+        (literal https://example.com/local) as localNS)
+      (xmlns
+        (literal ) as emptyLocal)
+      (xmlns
+        (simple-var-ref missingLocalURI) as missingLocal)
+      (xmlns
+        (literal https://example.com/laterLocal) as laterLocal)
+      (return
+        (invocation probe (
+          (literal later))))))
+  (function probe (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingLocalURI
+  --> recovery/declarations/xmlns-e.bal:25:11
+   |
+25 |     xmlns missingLocalURI as missingLocal; // @error
+   |           ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingURI
+  --> recovery/declarations/xmlns-e.bal:19:7
+   |
+19 | xmlns missingURI as missingNS; // @error
+   |       ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: XML namespace URI cannot be empty
+  --> recovery/declarations/xmlns-e.bal:18:1
+   |
+18 | xmlns "" as emptyNS; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | xmlns missingURI as missingNS; // @error
+   |
+
+error[SEMANTIC_ERROR]: XML namespace URI cannot be empty
+  --> recovery/declarations/xmlns-e.bal:24:1
+   |
+24 |     xmlns "" as emptyLocal; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |     xmlns missingLocalURI as missingLocal; // @error
+   |
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> recovery/declarations/xmlns-e.bal:27:12
+   |
+27 |     return probe("later"); // @error
+   |            ^^^^^^^^^^^^^^

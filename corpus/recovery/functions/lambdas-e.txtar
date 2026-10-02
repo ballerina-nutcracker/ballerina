@@ -1,0 +1,173 @@
+-- stdout --
+(package
+  (function lambdas () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable b (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable c (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable d (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable e (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable f (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable g (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable h (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable validParameterSibling (expr
+          (lambda [callable=function(int) returns int] [function=never] [name=never] [expression-body=never]
+            (function $anonFunc$_0 (
+              (variable x (type
+                (value-type int)))) (
+              (value-type int))
+              (expr-function-body
+                (simple-var-ref x)))))))
+      (var-def
+        (variable validReturnSibling (expr
+          (lambda [callable=function() returns int] [function=never] [name=never] [expression-body=never]
+            (function $anonFunc$_1 () (
+              (value-type int))
+              (expr-function-body
+                (literal 1)))))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (invocation validParameterSibling (
+            (invocation validReturnSibling ()))))))))
+  (function valid () (
+    (value-type null))
+    (block-function-body)))
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> recovery/functions/lambdas-e.bal:18:1
+   |
+18 |     var a = function(int _) returns int => 1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     var b = function(int... _) returns int => 1; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'b'
+  --> recovery/functions/lambdas-e.bal:19:1
+   |
+19 |     var b = function(int... _) returns int => 1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |     var c = function(int x = ) returns int => 1; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'c'
+  --> recovery/functions/lambdas-e.bal:20:1
+   |
+20 |     var c = function(int x = ) returns int => 1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |     var d = function() returns mod:_ => 1; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'd'
+  --> recovery/functions/lambdas-e.bal:21:1
+   |
+21 |     var d = function() returns mod:_ => 1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |     var e = (_)=>1; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'e'
+  --> recovery/functions/lambdas-e.bal:22:1
+   |
+22 |     var e = (_)=>1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |     var f = isolated isolated function() returns int => 1; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'f'
+  --> recovery/functions/lambdas-e.bal:23:1
+   |
+23 |     var f = isolated isolated function() returns int => 1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |     var g = function(@mod:_ int x) returns int => x; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'g'
+  --> recovery/functions/lambdas-e.bal:24:1
+   |
+24 |     var g = function(@mod:_ int x) returns int => x; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |     var h = function() returns @mod:_ int => 1; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'h'
+  --> recovery/functions/lambdas-e.bal:25:1
+   |
+25 |     var h = function() returns @mod:_ int => 1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |     var validParameterSibling = function(int x) returns int => x;
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/functions/lambdas-e.bal:28:1
+   |
+28 |     int later = validParameterSibling(validReturnSibling()); // @error unused surviving sibling
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | }
+   |
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/functions/lambdas-e.bal:18:26
+   |
+18 |     var a = function(int _) returns int => 1; // @error
+   |                          ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/functions/lambdas-e.bal:19:29
+   |
+19 |     var b = function(int... _) returns int => 1; // @error
+   |                             ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/functions/lambdas-e.bal:21:36
+   |
+21 |     var d = function() returns mod:_ => 1; // @error
+   |                                    ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/functions/lambdas-e.bal:22:14
+   |
+22 |     var e = (_)=>1; // @error
+   |              ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/functions/lambdas-e.bal:24:27
+   |
+24 |     var g = function(@mod:_ int x) returns int => x; // @error
+   |                           ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/functions/lambdas-e.bal:25:37
+   |
+25 |     var h = function() returns @mod:_ int => 1; // @error
+   |                                     ^^
+
+error[SYNTAX_ERROR]: duplicate qualifier
+  --> recovery/functions/lambdas-e.bal:23:13
+   |
+23 |     var f = isolated isolated function() returns int => 1; // @error
+   |             ^^^^^^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/lambdas-e.bal:20:30
+   |
+20 |     var c = function(int x = ) returns int => 1; // @error
+   |
