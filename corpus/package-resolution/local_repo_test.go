@@ -43,9 +43,21 @@ import (
 var (
 	pkgResBinsOnce sync.Once
 	pkgResBalBin   string
+	pkgResBinsDir  string
 	pkgResRepoRoot string
 	pkgResBinsErr  error
 )
+
+func TestMain(m *testing.M) {
+	exitCode := m.Run()
+	if err := removePackageResolutionTempDirs(); err != nil {
+		fmt.Fprintf(os.Stderr, "cleaning up package-resolution test directories: %v\n", err)
+		if exitCode == 0 {
+			exitCode = 1
+		}
+	}
+	os.Exit(exitCode)
+}
 
 // TestPackageResolutionScenarios runs each subdirectory with a project/ as a
 // scenario: `bal run <project>` with BAL_ENV pointed at the scenario's bal_env/.
@@ -226,6 +238,16 @@ func setEnvVar(env []string, key, value string) []string {
 	return result
 }
 
+func removePackageResolutionTempDirs() error {
+	if pkgResBinsDir == "" {
+		return nil
+	}
+	if err := os.RemoveAll(pkgResBinsDir); err != nil {
+		return fmt.Errorf("remove %q: %w", pkgResBinsDir, err)
+	}
+	return nil
+}
+
 // ensureBalBinary builds the bal CLI binary once for the lifetime of the test
 // process using a sync.Once guard.
 func ensureBalBinary(t *testing.T) {
@@ -240,11 +262,14 @@ func ensureBalBinary(t *testing.T) {
 		// corpus/package-resolution/ -> corpus/ -> repo root
 		pkgResRepoRoot = filepath.Dir(filepath.Dir(filepath.Dir(thisFile)))
 
-		tmpDir, err := os.MkdirTemp("", "bal-pkg-res-test")
+		// This directory is shared by tests through sync.Once, so TestMain
+		// removes it after the package test suite completes.
+		tmpDir, err := os.MkdirTemp("", "bal-pkg-res-test") //nolint:usetesting // suite-owned shared binary directory
 		if err != nil {
 			pkgResBinsErr = fmt.Errorf("create temp dir: %w", err)
 			return
 		}
+		pkgResBinsDir = tmpDir
 
 		binName := "bal"
 		if runtime.GOOS == "windows" {

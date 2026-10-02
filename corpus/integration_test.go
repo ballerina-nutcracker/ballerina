@@ -111,7 +111,14 @@ var (
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	os.Exit(m.Run())
+	exitCode := m.Run()
+	if err := removeCLIIntegrationTempDirs(); err != nil {
+		fmt.Fprintf(os.Stderr, "cleaning up CLI integration test directories: %v\n", err)
+		if exitCode == 0 {
+			exitCode = 1
+		}
+	}
+	os.Exit(exitCode)
 }
 
 type testResult struct {

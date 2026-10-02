@@ -4,6 +4,7 @@ linters:
   default: standard
   enable:
     - depguard
+    - usetesting
   settings:
     depguard:
       rules:
