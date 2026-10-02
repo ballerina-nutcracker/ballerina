@@ -337,6 +337,7 @@ var ERROR_ANNOTATIONS_NOT_ALLOWED_FOR_TUPLE_REST_DESCRIPTOR = DiagnosticErrorCod
 var ERROR_INVALID_RE_SYNTAX_CHAR = DiagnosticErrorCode{diagnosticId: "BCE0685", messageKey: "error.invalid.syntax.char"}
 var ERROR_MORE_CLAUSES_AFTER_COLLECT_CLAUSE = DiagnosticErrorCode{diagnosticId: "BCE0686", messageKey: "error.more.clauses.after.collect.clause"}
 var ERROR_COLLECT_CLAUSE_IN_QUERY_ACTION = DiagnosticErrorCode{diagnosticId: "BCE0687", messageKey: "error.collect.clause.in.query.action"}
+var ERROR_UNDERSCORE_AS_TYPE_NAME = DiagnosticErrorCode{diagnosticId: "BCE0688", messageKey: "error.'_'.is.a.keyword,.and.may.not.be.used.as.an.identifier"}
 
 func (d *DiagnosticErrorCode) DiagnosticId() string {
 	return d.diagnosticId
