@@ -1,0 +1,84 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = ConstantLoad true
+    %4 = %3;
+    %5 = classify(%2,%4) -> bb1;
+  }
+  bb1 {
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %9 = ConstantLoad false
+    %10 = %9;
+    %11 = classify(%8,%10) -> bb3;
+  }
+  bb3 {
+    %12 = println(%11) -> bb4;
+  }
+  bb4 {
+    %13 = ConstantLoad 2
+    %14 = %13;
+    %15 = ConstantLoad false
+    %16 = %15;
+    %17 = classify(%14,%16) -> bb5;
+  }
+  bb5 {
+    %18 = println(%17) -> bb6;
+  }
+  bb6 {
+    %19 = ConstantLoad 3
+    %20 = %19;
+    %21 = ConstantLoad true
+    %22 = %21;
+    %23 = classify(%20,%22) -> bb7;
+  }
+  bb7 {
+    %24 = println(%23) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+classify(int,boolean) -> string{
+  bb0 {
+    %3 = ConstantLoad true
+    y = %3;
+    %5 = ConstantLoad 1
+    %6 = == v %5;
+    %7 = && %6 f;
+    %7 ? bb2 : bb3;
+  }
+  bb1 {
+    %11 = ConstantLoad other
+    %0 = %11;
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad flag
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    %8 = ConstantLoad 2
+    %9 = == v %8;
+    %10 = && %9 y;
+    %10 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = ConstantLoad yes
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb5 {
+    GOTO bb1;
+  }
+}

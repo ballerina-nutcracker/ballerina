@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got "x"
+  --> match-guard-type2-e.bal:50:14
+   |
+50 |         _ if "x" => { // @error
+   |              ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got any
+  --> match-guard-type2-e.bal:68:14
+   |
+68 |         _ if a => { // @error
+   |              ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got boolean|int
+  --> match-guard-type2-e.bal:28:14
+   |
+28 |         _ if b => { // @error
+   |              ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got int
+  --> match-guard-type2-e.bal:35:14
+   |
+35 |         _ if count() => { // @error
+   |              ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got int
+  --> match-guard-type2-e.bal:48:14
+   |
+48 |         2 if v => { // @error
+   |              ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got int
+  --> match-guard-type2-e.bal:59:22
+   |
+59 |                 _ if w => { // @error
+   |                      ^

@@ -1,0 +1,45 @@
+(classify
+  (bb0 () (bb2 bb3 bb1)
+    (var-def
+      (variable y (type
+        (user-defined-type Yes)) (expr
+        (literal true))))
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal other))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal flag))
+  )
+  (bb3 (bb0) ()
+    (return
+      (literal yes))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation classify (
+          (literal 1)
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation classify (
+          (literal 1)
+          (literal false))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation classify (
+          (literal 2)
+          (literal false))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation classify (
+          (literal 3)
+          (literal true))))))
+  )
+)
