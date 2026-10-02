@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "a"
+  --> field-default-nested-mismatch-e.bal:19:23
+   |
+19 |     record {| int y = "a"; |} r; // @error nested default is not an int
+   |                       ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "b"
+  --> field-default-nested-mismatch-e.bal:20:23
+   |
+20 |     record {| int y = "b"; |}[] arr; // @error default nested in an array is not an int
+   |                       ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "c"
+  --> field-default-nested-mismatch-e.bal:21:27
+   |
+21 |     map<record {| int y = "c"; |}> m; // @error default nested in a map is not an int
+   |                           ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "d"
+  --> field-default-nested-mismatch-e.bal:22:23
+   |
+22 |     record {| int y = "d"; |}? u; // @error default nested in a union is not an int
+   |                       ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "e"
+  --> field-default-nested-mismatch-e.bal:23:24
+   |
+23 |     [record {| int y = "e"; |}] tup; // @error default nested in a tuple is not an int
+   |                        ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "f"
+  --> field-default-nested-mismatch-e.bal:24:23
+   |
+24 |     record {| int y = "f"; |}...; // @error default nested in a rest type is not an int
+   |                       ^^^

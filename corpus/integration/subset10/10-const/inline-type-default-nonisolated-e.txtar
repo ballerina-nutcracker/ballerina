@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> inline-type-default-nonisolated-e.bal:20:25
+   |
+20 | const record {| int x = f(); |} A = {x: 1}; // @error default calls a non-isolated function
+   |                         ^^^

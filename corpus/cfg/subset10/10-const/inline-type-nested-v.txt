@@ -1,0 +1,30 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref M))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref M)
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref T))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref L))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref E))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref R))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref S))))
+  )
+)
