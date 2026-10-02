@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: class definition Numbers is empty
+  --> readonly-class5-e.bal:19:1
+   |
+19 | readonly class Numbers { // @error class definition is empty
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |     public stream<int, ()> values; // @error field type has no readonly values
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | 
+   | 
+22 |     function init(stream<int, ()> values) {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |         self.values = values;
+   |         ^^^^^^^^^^^^^^^^^^^^^
+24 |     }
+   |     ^
+25 | }
+   | ^
+
+error[SEMANTIC_ERROR]: field 'values' of a readonly class must have a type that allows readonly values
+  --> readonly-class5-e.bal:20:5
+   |
+20 |     public stream<int, ()> values; // @error field type has no readonly values
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

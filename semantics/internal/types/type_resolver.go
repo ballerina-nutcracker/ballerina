@@ -3111,6 +3111,9 @@ func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefini
 		if !ok {
 			return semtypes.SemType{}, false
 		}
+		if isReadonly {
+			fieldTy = readonlyClassFieldType(t, field, fieldTy)
+		}
 		field.SetDeterminedType(fieldTy)
 		updateSymbolType(t, field, fieldTy)
 		field.Name.SetDeterminedType(semtypes.Never)
@@ -3157,6 +3160,16 @@ func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefini
 	}
 
 	return defineObjectSemType(t, od, isIsolated, isReadonly, isClient, isService, members, distinctSymbol, inclusions), true
+}
+
+func readonlyClassFieldType(t typeResolver, field *ast.BLangVariable, fieldTy semtypes.SemType) semtypes.SemType {
+	readonlyTy := semtypes.Intersect(fieldTy, semtypes.ValReadonly)
+	name := field.Name.GetValue()
+	pos := field.GetPosition()
+	t.ensureNotEmpty(readonlyTy, func() {
+		t.semanticError(fmt.Sprintf("field '%s' of a readonly class must have a type that allows readonly values", name), pos)
+	})
+	return readonlyTy
 }
 
 func collectObjectIncludedMembers(t typeResolver, inclusions []model.SymbolRef, positions []diagnostics.Location, pos diagnostics.Location, depth int) (map[string][]semtypes.Member, bool) {

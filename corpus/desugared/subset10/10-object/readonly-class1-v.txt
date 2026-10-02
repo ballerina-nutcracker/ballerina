@@ -1,0 +1,218 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Point
+    (object-type
+      (field x public
+        (value-type int))))
+  (type-definition Items
+    (object-type
+      (field items public
+        (array-type
+          (value-type int) dimensions: 1 ([])))))
+  (type-definition ReadonlyGetter
+    (intersection-type
+      (value-type readonly)
+      (object-type
+        (method-decl getX () (
+          (value-type int)))
+        (field x public
+          (value-type int)))))
+  (class-definition ReadonlyPoint
+    (variable x (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))
+          (literal 7)))))
+  (class-definition ReadonlyList
+    (variable values (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (function init (
+      (variable items (type
+        (intersection-type
+          (array-type
+            (value-type int) dimensions: 1 ([]))
+          (value-type readonly))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal values))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal items))
+          (simple-var-ref items)))))
+  (class-definition ReadonlyClient
+    (function init () ()
+      (block-function-body))
+    (function $remote$ping () (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (resource-function get name:count
+      (value-type int)
+      (block-function-body
+        (return
+          (literal 2)))))
+  (class-definition IsolatedReadonlyPoint
+    (variable x (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))
+          (literal 4))))
+    (function getX () (
+      (value-type int))
+      (block-function-body
+        (return
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))))))
+  (class-definition MutablePoint
+    (variable x (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))
+          (literal 1)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable point (type
+          (intersection-type
+            (value-type readonly)
+            (user-defined-type Point))) (expr
+          (new
+            (user-defined-type ReadonlyPoint) ()))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref point)
+            (literal x)))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (new
+            (user-defined-type ReadonlyPoint) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref value)
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref value)
+            (intersection-type
+              (value-type readonly)
+              (user-defined-type Point))))))
+      (var-def
+        (variable readonlyPoint (type
+          (user-defined-type ReadonlyPoint)) (expr
+          (new ()))))
+      (var-def
+        (variable readonlyValue (type
+          (value-type readonly)) (expr
+          (simple-var-ref readonlyPoint))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref readonlyValue)
+            (user-defined-type ReadonlyPoint)))))
+      (var-def
+        (variable list (type
+          (user-defined-type ReadonlyList)) (expr
+          (new (
+            (list-constructor-expr
+              (literal 3)))))))
+      (var-def
+        (variable values (type
+          (intersection-type
+            (array-type
+              (value-type int) dimensions: 1 ([]))
+            (value-type readonly))) (expr
+          (index-based-access
+            (simple-var-ref list)
+            (literal values)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref values))))
+      (var-def
+        (variable listValue (type
+          (value-type any)) (expr
+          (index-based-access
+            (simple-var-ref list)
+            (literal values)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref listValue)
+            (value-type readonly)))))
+      (var-def
+        (variable items (type
+          (value-type any)) (expr
+          (index-based-access
+            (simple-var-ref list)
+            (literal items)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref items)
+            (value-type readonly)))))
+      (var-def
+        (variable readonlyClient (type
+          (user-defined-type ReadonlyClient)) (expr
+          (new ()))))
+      (var-def
+        (variable clientValue (type
+          (value-type any)) (expr
+          (simple-var-ref readonlyClient))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref clientValue)
+            (value-type readonly)))))
+      (var-def
+        (variable pinged (type
+          (value-type int)) (expr
+          (remote-method-call ping expr:
+            (simple-var-ref readonlyClient) ()))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref pinged))))
+      (var-def
+        (variable getter (type
+          (user-defined-type ReadonlyGetter)) (expr
+          (new
+            (user-defined-type IsolatedReadonlyPoint) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation getX expr:
+            (simple-var-ref getter) ()))))
+      (var-def
+        (variable mutableValue (type
+          (value-type any)) (expr
+          (new
+            (user-defined-type MutablePoint) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref mutableValue)
+            (value-type readonly))))))))
