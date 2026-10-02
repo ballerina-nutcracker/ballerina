@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SYNTAX_ERROR]: redeclared symbol 'get'
+error[SEMANTIC_ERROR]: redeclared symbol 'get'
   --> duplicate-method-e.bal:22:5
    |
 22 |     function get(string path) returns string { // @error

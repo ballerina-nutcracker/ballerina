@@ -9,7 +9,7 @@
       (var-def (position 20:1 21:1)
         (variable (position 20:1 21:1) x (type
           (value-type (position 20:1 20:9) int)) (expr
-          (simple-var-ref (position 20:13 20:13) <BAD>)))))))
+          (bad-expr-or-action (position 20:13 20:13))))))))
 error[SYNTAX_ERROR]: missing identifier
   --> recovered-ast.bal:17:4
    |

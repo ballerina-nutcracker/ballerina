@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SYNTAX_ERROR]: redeclared symbol 'get'
+error[SEMANTIC_ERROR]: redeclared symbol 'get'
   --> remote-method-name-e.bal:22:5
    |
 22 |     remote function get(string path) returns string { // @error

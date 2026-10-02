@@ -70,6 +70,9 @@ func Walk(v Visitor, node BLangNode) {
 		for i := range node.ClassDefinitions {
 			Walk(v, node.ClassDefinitions[i])
 		}
+		for _, badNode := range node.BadTopLevelNodes {
+			Walk(v, badNode)
+		}
 
 	case *BLangCompilationUnit:
 		for _, topLevelNode := range node.TopLevelNodes {
@@ -911,7 +914,7 @@ func Walk(v Visitor, node BLangNode) {
 	case *BLangIdentifier:
 		// Leaf node
 
-	case *BLangBadIdentifier, *BLangBadExprOrAction, *BLangBadStmt, *BLangBadTypeNode, *BLangBadTopLevelNode:
+	case *BLangBadExprOrAction, *BLangBadStmt, *BLangBadTypeNode, *BLangBadTopLevelNode:
 		// Leaf node
 
 	case *BLangMarkdownReferenceDocumentation:
@@ -1013,6 +1016,9 @@ func walkClassDefnBody(v Visitor, b *classDefnBase) {
 	}
 	for _, field := range b.Fields {
 		Walk(v, field)
+	}
+	for _, badNode := range b.BadTopLevelNodes {
+		Walk(v, badNode)
 	}
 	WalkTypeData(v, &b.typeData)
 }
