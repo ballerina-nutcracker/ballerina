@@ -1,0 +1,11 @@
+(package
+  (variable sibling (type
+    (value-type int)) (expr
+    (invocation surviving ())))
+  (function surviving () (
+    (value-type int))
+    (block-function-body
+      (bad-stmt)
+      (return
+        (literal 7))))
+  (bad-top-level))

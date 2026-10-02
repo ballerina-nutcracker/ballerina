@@ -1,0 +1,16 @@
+(package
+  (variable abandoned (type
+    (user-defined-type Unknown)) (expr
+    (invocation ordinary ())))
+  (variable unresolved (type
+    (value-type int)) (expr
+    (invocation missing ())))
+  (function independent () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable invalid (type
+          (value-type int)) (expr
+          (literal wrong))))
+      (return
+        (literal 1)))))

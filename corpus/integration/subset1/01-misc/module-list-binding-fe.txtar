@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: binding pattern is not implemented
+  --> module-list-binding-fe.bal:17:4
+   |
+17 | int[] = [0]; // @error unsupported list binding pattern
+   |    ^^

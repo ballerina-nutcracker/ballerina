@@ -1,0 +1,25 @@
+(package
+  (function valid () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 2))))))
+  (function valid () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable surviving (type
+          (user-defined-type C))))))
+  (function independent (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value)))
+  (bad-top-level))
