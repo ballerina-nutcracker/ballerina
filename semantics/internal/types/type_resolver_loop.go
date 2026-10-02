@@ -73,10 +73,6 @@ func (l *loopTypeResolver) unimplemented(msg string, loc diagnostics.Location) {
 	l.parentResolver.unimplemented(msg, loc)
 }
 
-func (l *loopTypeResolver) syntaxError(msg string, loc diagnostics.Location) {
-	l.parentResolver.syntaxError(msg, loc)
-}
-
 func (l *loopTypeResolver) symbolType(ref model.SymbolRef) semtypes.SemType {
 	return l.parentResolver.symbolType(ref)
 }

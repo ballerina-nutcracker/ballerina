@@ -35,9 +35,10 @@ type analyzer interface {
 	getSymbol(ref model.SymbolRef) model.Symbol
 	internalError(message string, loc diagnostics.Location)
 	importedPackage(alias string) *ast.BLangImportPackage
+	// Diagnostic reporting does not stop traversal; analysis helpers return
+	// false or visitors return nil to abandon dependent checks.
 	unimplementedErr(message string, loc diagnostics.Location)
 	semanticErr(message string, loc diagnostics.Location)
-	syntaxErr(message string, loc diagnostics.Location)
 	internalErr(message string, loc diagnostics.Location)
 	parentAnalyzer() analyzer
 	loc() diagnostics.Location
@@ -280,10 +281,6 @@ func (sa *semanticAnalyzer) semanticErr(message string, loc diagnostics.Location
 	sa.compilerCtx.SemanticError(message, loc)
 }
 
-func (sa *semanticAnalyzer) syntaxErr(message string, loc diagnostics.Location) {
-	sa.compilerCtx.SyntaxError(message, loc)
-}
-
 func (sa *semanticAnalyzer) internalErr(message string, loc diagnostics.Location) {
 	sa.compilerCtx.InternalError(message, loc)
 }
@@ -292,52 +289,16 @@ func (sa *semanticAnalyzer) internalError(message string, loc diagnostics.Locati
 	sa.compilerCtx.InternalError(message, loc)
 }
 
-func (ca *constantAnalyzer) unimplementedErr(message string, loc diagnostics.Location) {
-	ca.parentAnalyzer().ctx().Unimplemented(message, loc)
+func (ab *analyzerBase) unimplementedErr(message string, loc diagnostics.Location) {
+	ab.ctx().Unimplemented(message, loc)
 }
 
-func (ca *constantAnalyzer) semanticErr(message string, loc diagnostics.Location) {
-	ca.parentAnalyzer().ctx().SemanticError(message, loc)
+func (ab *analyzerBase) semanticErr(message string, loc diagnostics.Location) {
+	ab.ctx().SemanticError(message, loc)
 }
 
-func (ca *constantAnalyzer) syntaxErr(message string, loc diagnostics.Location) {
-	ca.parentAnalyzer().ctx().SyntaxError(message, loc)
-}
-
-func (ca *constantAnalyzer) internalErr(message string, loc diagnostics.Location) {
-	ca.parentAnalyzer().ctx().InternalError(message, loc)
-}
-
-func (fa *functionAnalyzer) unimplementedErr(message string, loc diagnostics.Location) {
-	fa.parent.ctx().Unimplemented(message, loc)
-}
-
-func (fa *functionAnalyzer) semanticErr(message string, loc diagnostics.Location) {
-	fa.parent.ctx().SemanticError(message, loc)
-}
-
-func (fa *functionAnalyzer) syntaxErr(message string, loc diagnostics.Location) {
-	fa.parent.ctx().SyntaxError(message, loc)
-}
-
-func (fa *functionAnalyzer) internalErr(message string, loc diagnostics.Location) {
-	fa.parent.ctx().InternalError(message, loc)
-}
-
-func (la *loopAnalyzer) unimplementedErr(message string, loc diagnostics.Location) {
-	la.parent.ctx().Unimplemented(message, loc)
-}
-
-func (la *loopAnalyzer) semanticErr(message string, loc diagnostics.Location) {
-	la.parent.ctx().SemanticError(message, loc)
-}
-
-func (la *loopAnalyzer) syntaxErr(message string, loc diagnostics.Location) {
-	la.parent.ctx().SyntaxError(message, loc)
-}
-
-func (la *loopAnalyzer) internalErr(message string, loc diagnostics.Location) {
-	la.parent.ctx().InternalError(message, loc)
+func (ab *analyzerBase) internalErr(message string, loc diagnostics.Location) {
+	ab.ctx().InternalError(message, loc)
 }
 
 func newSemanticAnalyzer(ctx *context.CompilerContext) *semanticAnalyzer {
@@ -765,21 +726,6 @@ func (la *lockAnalyzer) loc() diagnostics.Location { return la.lock.GetPosition(
 
 func (la *lockAnalyzer) ctx() *context.CompilerContext { return la.parent.ctx() }
 func (la *lockAnalyzer) tyCtx() semtypes.Context       { return la.parent.tyCtx() }
-func (la *lockAnalyzer) unimplementedErr(m string, l diagnostics.Location) {
-	la.parent.ctx().Unimplemented(m, l)
-}
-
-func (la *lockAnalyzer) semanticErr(m string, l diagnostics.Location) {
-	la.parent.ctx().SemanticError(m, l)
-}
-
-func (la *lockAnalyzer) syntaxErr(m string, l diagnostics.Location) {
-	la.parent.ctx().SyntaxError(m, l)
-}
-
-func (la *lockAnalyzer) internalErr(m string, l diagnostics.Location) {
-	la.parent.ctx().InternalError(m, l)
-}
 
 // enclosingLockAnalyzer walks the analyzer parent chain looking for a
 // lockAnalyzer that is in the same closure as `a`. The search stops at
