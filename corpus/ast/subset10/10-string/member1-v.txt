@@ -1,0 +1,119 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (literal abc))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref s)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref s)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref s)
+            (literal 2)))))
+      (var-def
+        (variable c (type
+          (user-defined-type string Char)) (expr
+          (index-based-access
+            (simple-var-ref s)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (var-def
+        (variable inferred (expr
+          (literal xy))))
+      (var-def
+        (variable ch (expr
+          (index-based-access
+            (simple-var-ref inferred)
+            (literal 0)))))
+      (var-def
+        (variable inferredChar (type
+          (user-defined-type string Char)) (expr
+          (simple-var-ref ch))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref inferredChar))))
+      (var-def
+        (variable u (type
+          (value-type string)) (expr
+          (literal aé€😀z))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref u)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref u)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref u)
+            (literal 3)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref u)
+            (literal 4)))))
+      (var-def
+        (variable r (type
+          (union-type
+            (value-type string)
+            (error-type))) (expr
+          (trap-expr
+            (index-based-access
+              (simple-var-ref s)
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r)
+            (error-type)))))
+      (assignment
+        (simple-var-ref r)
+        (trap-expr
+          (index-based-access
+            (simple-var-ref s)
+            (unary-expr -
+              (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r)
+            (error-type)))))
+      (assignment
+        (simple-var-ref r)
+        (trap-expr
+          (index-based-access
+            (simple-var-ref u)
+            (literal 5))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r)
+            (error-type)))))
+      (assignment
+        (simple-var-ref r)
+        (trap-expr
+          (index-based-access
+            (simple-var-ref s)
+            (literal 1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r)))))))
