@@ -304,6 +304,7 @@ const (
 	InstructionKindPopScope
 	InstructionKindWaitAll
 	InstructionKindXMLFilter
+	InstructionKindStringLoad
 )
 
 func BB(number int) BIRBasicBlock {

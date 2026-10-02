@@ -589,7 +589,8 @@ func (br *birReader) readInstruction(varMap map[int32]*bir.BIRLocalVariableDcl) 
 		bir.InstructionKindArrayStore, bir.InstructionKindArrayLoad,
 		bir.InstructionKindArrayFillingLoad,
 		bir.InstructionKindMapFillingLoad,
-		bir.InstructionKindObjectStore, bir.InstructionKindObjectLoad:
+		bir.InstructionKindObjectStore, bir.InstructionKindObjectLoad,
+		bir.InstructionKindStringLoad:
 		lhsOp := br.readOperand(varMap)
 		keyOp := br.readOperand(varMap)
 		rhsOp := br.readOperand(varMap)

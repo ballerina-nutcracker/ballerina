@@ -214,6 +214,8 @@ func execInstruction(ctx *extern.Context, inst bir.BIRNonTerminator, frame *Fram
 			execObjectStore(ctx, v, frame)
 		case bir.InstructionKindObjectLoad:
 			execObjectLoad(ctx, v, frame)
+		case bir.InstructionKindStringLoad:
+			execStringLoad(ctx, v, frame)
 		default:
 			fmt.Printf("UNKNOWN_FIELD_ACCESS_KIND(%d)\n", v.GetKind())
 		}
