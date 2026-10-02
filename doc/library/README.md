@@ -9,7 +9,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | Package                                           | Supported | Partially Supported | Not Yet Supported | Support % |
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
-| [constraint](../../lib/stdlibs/ballerina/constraint/0.0.1/go1.27/README.md)   | 8 | 2 | 4 | 57% |
+| [constraint](../../lib/stdlibs/ballerina/constraint/0.0.1/go1.27/README.md)   | 9 | 1 | 4 | 64% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 12 | 36 | 38% |
@@ -27,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **289** | **38** | **73** | **72%** |
+| **Total**                                         | **290** | **37** | **73** | **72%** |
 
 ## Notable Behavioural Changes
 
@@ -45,6 +45,7 @@ Consolidated from each package's README. Only permanent divergences are listed h
 ### constraint
 
 - **Digit counts are computed per value.** jBallerina caches the digit counts of the first float or number value it validates and reuses them for later fields in the same call, so a second `maxIntegerDigits` or `maxFractionDigits` field can be checked against the wrong counts; the Go-native version counts the digits of every value separately.
+- **Custom messages from different fields are ordered by field name.** jBallerina joins the custom messages of failed constraints in the order the record fields are declared; the Go-native version joins them in field-name order, because record fields have no semantic order and the runtime exposes them unordered. The default `Validation failed for ...` part is sorted in both.
 
 ### crypto
 
