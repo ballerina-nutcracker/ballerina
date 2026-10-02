@@ -1,5 +1,4 @@
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function ignore () (
     (value-type null))
     (block-function-body
@@ -10,7 +9,10 @@
       (var-def
         (variable later (type
           (value-type int)) (expr
-          (literal 2))))))
+          (literal 2))))
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref later))))
   (function valid () (
     (value-type null))
     (block-function-body)))

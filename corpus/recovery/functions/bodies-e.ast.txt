@@ -1,5 +1,4 @@
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function blockBody () (
     (value-type int))
     (block-function-body
@@ -52,4 +51,6 @@
   (function caller () (
     (value-type int))
     (expr-function-body
-      (invocation blockBody ()))))
+      (binary-expr +
+        (invocation blockBody ())
+        (invocation expressionBody ())))))

@@ -24,6 +24,6 @@ function expressionBody() returns int => 1 +; // @error
 function lambdas() {
     var explicit = function() returns int => 1 +; // @error
     var block = function() returns int { int broken = ; return 1; }; // @error
-    int later = 2;
+    int later = 2; // @error unused surviving sibling
 }
-function caller() returns int => blockBody();
+function caller() returns int => blockBody() + expressionBody();

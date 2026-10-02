@@ -1,5 +1,11 @@
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
+  (type-definition RecordWithBadInclusion
+    (bad-type))
+  (type-definition RecordWithUnknownInclusion
+    (record-type
+      (field good
+        (value-type int)
+        (literal 1))))
   (class-definition C
     (variable goodField (type
       (value-type int)))
@@ -17,8 +23,20 @@
     (bad-top-level)
     (bad-top-level)
     (bad-top-level)
+    (bad-top-level)
     (bad-top-level))
-  (bad-top-level)
+  (class-definition InclusionFailure
+    (variable good (type
+      (value-type int)))
+    (function method () (
+      (value-type int))
+      (expr-function-body
+        (field-based-access good
+          (simple-var-ref self)))))
   (function valid () (
     (value-type null))
-    (block-function-body)))
+    (block-function-body
+      (var-def
+        (variable surviving (type
+          (user-defined-type C))))))
+  (bad-top-level))

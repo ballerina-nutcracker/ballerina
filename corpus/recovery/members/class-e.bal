@@ -20,7 +20,21 @@ class C {
     function _(int x) {} // @error
     function init(int _) {} // @error
     *mod:_; // @error
+    *; // @error
     function valid() { int x = ; int later = 2; } // @error
 }
 function _() {} // @error
-function valid() {}
+function valid() { C surviving; } // @error unused surviving sibling
+class InclusionFailure {
+    *Missing; // @error
+    int good;
+    function method() returns int => self.good;
+}
+type RecordWithBadInclusion record {
+    *mod:_; // @error
+    int good;
+};
+type RecordWithUnknownInclusion record {
+    *Missing; // @error
+    int good = 1;
+};
