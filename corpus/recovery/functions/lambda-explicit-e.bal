@@ -21,15 +21,15 @@ function explicitBodies() {
     int|string captured = 1;
     if captured is int {
         var broken = function(int x) returns int => captured + x + missing; // @error
-        consume(broken(2));
+        consume(broken(2)); // @error expression value must be assigned
         consume(captured); // @error capture effect survives body failure
         var block = function(int x) returns int {
             consume(missingBlock); // @error
             return x;
         };
-        consume(block(3));
+        consume(block(3)); // @error expression value must be assigned
         var complete = function(int x) returns int => x + 1;
-        consume(complete(4));
+        consume(complete(4)); // @error expression value must be assigned
     }
 }
 

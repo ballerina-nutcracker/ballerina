@@ -14,11 +14,23 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function consume(int value) returns int => value;
-function consumeFunction(function() returns int callable) returns int => callable();
+isolated int[] guard = [1];
 
-function inferredBody() {
-    function(int) returns int inferred = value => value + missingInferred; // @error
-    consume(inferred(1)); // @error expression value must be assigned
-    consume(2); // @error expression value must be assigned
+type Base object {
+    int[] f;
+};
+
+class Derived {
+    *Base;
+    function init() {
+        self.f = [];
+    }
+    function update() {
+        lock {
+            guard[0] = guard[0] + 1;
+            self.f = guard; // @error target outside lock must be a plain variable name
+        }
+    }
 }
+
+public function main() {}
