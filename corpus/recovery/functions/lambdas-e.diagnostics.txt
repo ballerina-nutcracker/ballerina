@@ -43,15 +43,31 @@ error[SEMANTIC_ERROR]: unused variable 'f'
    |
 23 |     var f = isolated isolated function() returns int => 1; // @error
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-24 |     int later = 2; // @error unused surviving sibling
+24 |     var g = function(@mod:_ int x) returns int => x; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'g'
+  --> recovery/functions/lambdas-e.bal:24:1
+   |
+24 |     var g = function(@mod:_ int x) returns int => x; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |     var h = function() returns @mod:_ int => 1; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'h'
+  --> recovery/functions/lambdas-e.bal:25:1
+   |
+25 |     var h = function() returns @mod:_ int => 1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |     var validParameterSibling = function(int x) returns int => x;
    |
 
 error[SEMANTIC_ERROR]: unused variable 'later'
-  --> recovery/functions/lambdas-e.bal:24:1
+  --> recovery/functions/lambdas-e.bal:28:1
    |
-24 |     int later = 2; // @error unused surviving sibling
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-25 | }
+28 |     int later = validParameterSibling(validReturnSibling()); // @error unused surviving sibling
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | }
    |
 
 error[SYNTAX_ERROR]: duplicate qualifier
@@ -83,6 +99,18 @@ error[SYNTAX_ERROR]: invalid identifier
    |
 22 |     var e = (_)=>1; // @error
    |              ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/functions/lambdas-e.bal:24:27
+   |
+24 |     var g = function(@mod:_ int x) returns int => x; // @error
+   |                           ^^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/functions/lambdas-e.bal:25:37
+   |
+25 |     var h = function() returns @mod:_ int => 1; // @error
+   |                                     ^^
 
 error[SYNTAX_ERROR]: missing identifier
   --> recovery/functions/lambdas-e.bal:20:30

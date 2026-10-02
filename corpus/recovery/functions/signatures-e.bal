@@ -24,3 +24,9 @@ function returnsBad() returns mod:_ {} // @error
 @mod:_ function annotated() {} // @error
 public public function qualifiers() {} // @error
 function valid() returns int => 1;
+function discardedReferences() returns int {
+    int ordinaryResult = ordinary(1); // @error discarded declaration reference
+    int defaultResult = defaults(); // @error discarded declaration reference
+    int later = valid();
+    return later;
+}

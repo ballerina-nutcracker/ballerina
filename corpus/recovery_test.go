@@ -27,11 +27,13 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/nodebuilder"
 	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/semantics"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
 	"github.com/ballerina-nutcracker/ballerina/test_util/langlib"
 	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
@@ -39,8 +41,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
-
-const recoveryTarget = testphases.PhaseSemanticAnalysis
 
 func TestRecovery(t *testing.T) {
 	count := 0
@@ -102,18 +102,44 @@ func compareRecoveryGolden(t *testing.T, expectedPath, actual string) {
 	}
 }
 
+type recoveryPhases struct {
+	completed testphases.Phase
+}
+
+func (p *recoveryPhases) run(phase testphases.Phase, execute func() error) error {
+	if phase != p.completed+1 {
+		return fmt.Errorf("recovery phase %d must follow phase %d", phase, p.completed)
+	}
+	if err := execute(); err != nil {
+		return err
+	}
+	p.completed = phase
+	return nil
+}
+
 func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerContext, langlibs *langlib.Symbols, inputPath string, content string) (*testphases.PipelineResult, error) {
 	result := &testphases.PipelineResult{}
+	phases := recoveryPhases{completed: testphases.PhaseParse - 1}
 	cx.DiagnosticEnv().RegisterFile(inputPath, text.NewStringTextDocument(content))
-	tree, err := parser.GetSyntaxTree(cx, inputPath, content)
-	if err != nil {
+	var syntaxTree *st.SyntaxTree
+	if err := phases.run(testphases.PhaseParse, func() error {
+		var err error
+		syntaxTree, err = parser.GetSyntaxTree(cx, inputPath, content)
+		return err
+	}); err != nil {
 		return nil, fmt.Errorf("parsing recovery source: %w", err)
 	}
-	result.CompilationUnit = nodebuilder.GetRecoveredCompilationUnit(cx, tree)
-	if result.CompilationUnit == nil {
-		return nil, fmt.Errorf("recovered compilation unit is nil")
+	if err := phases.run(testphases.PhaseAST, func() error {
+		result.CompilationUnit = nodebuilder.GetRecoveredCompilationUnit(cx, syntaxTree)
+		if result.CompilationUnit == nil {
+			return fmt.Errorf("recovered compilation unit is nil")
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 	if langlibs == nil {
+		var err error
 		langlibs, err = testphases.LoadLanglibs(env, cx)
 		if err != nil {
 			return nil, fmt.Errorf("loading recovery langlibs: %w", err)
@@ -121,22 +147,43 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 	}
 	pkgID := result.CompilationUnit.GetPackageID()
 	units := []*ast.BLangCompilationUnit{result.CompilationUnit}
-	pkgScope, _, importedSymbols := semantics.ResolveSymbols(cx, *pkgID, units, langlibs.ImplicitImports, langlibs.PublicSymbols, nil, "", "")
-	result.Package = nodebuilder.ToPackageFromCompilationUnits(cx, units)
-	result.Package.PackageID = pkgID
-	result.Package.Scope = pkgScope
-	semantics.ResolvePublicNodeTypes(cx, result.Package, importedSymbols)
-	semantics.ResolvePrivateNodesTypes(cx, result.Package, importedSymbols)
-	semantics.AnalyzeSemantics(cx, result.Package, importedSymbols)
-	completed := testphases.PhaseSemanticAnalysis
+	importedSymbols := make(map[string]model.ExportedSymbolSpace)
+	if err := phases.run(testphases.PhaseSymbolResolution, func() error {
+		var pkgScope model.Scope
+		pkgScope, _, importedSymbols = semantics.ResolveSymbols(cx, *pkgID, units, langlibs.ImplicitImports, langlibs.PublicSymbols, nil, "", "")
+		result.Package = nodebuilder.ToPackageFromCompilationUnits(cx, units)
+		result.Package.PackageID = pkgID
+		result.Package.Scope = pkgScope
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	if err := phases.run(testphases.PhaseTypeResolution, func() error {
+		semantics.ResolvePublicNodeTypes(cx, result.Package, importedSymbols)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	if err := phases.run(testphases.PhaseTypeNarrowing, func() error {
+		semantics.ResolvePrivateNodesTypes(cx, result.Package, importedSymbols)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	if err := phases.run(testphases.PhaseSemanticAnalysis, func() error {
+		semantics.AnalyzeSemantics(cx, result.Package, importedSymbols)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
 	for _, d := range cx.Diagnostics() {
 		info := d.DiagnosticInfo()
 		if info.Code() == "INTERNAL_ERROR" || info.Code() == "UNIMPLEMENTED_ERROR" || info.Severity() == diagnostics.Fatal {
 			return nil, fmt.Errorf("non-recoverable diagnostic: %s: %s", info.Code(), d.Message())
 		}
 	}
-	if completed != recoveryTarget {
-		return nil, fmt.Errorf("recovery reached phase %d, want enabled phase %d", completed, recoveryTarget)
+	if phases.completed != testphases.PhaseSemanticAnalysis {
+		return nil, fmt.Errorf("recovery reached phase %d, want semantic analysis", phases.completed)
 	}
 	return result, nil
 }

@@ -1,6 +1,32 @@
 (package
+  (variable missingInitializer)
   (type-definition Invalid
     (value-type never))
-  (function valid () (
-    (value-type null))
-    (block-function-body)))
+  (type-definition NestedInvalid
+    (value-type never))
+  (type-definition DuplicateObject
+    (object-type
+      (method-decl method () (
+        (value-type int)))
+      (field value
+        (value-type int))))
+  (class-definition DuplicateMembers
+    (function init () (
+      (value-type null))
+      (block-function-body))
+    (function method () (
+      (value-type int))
+      (expr-function-body
+        (literal 1)))
+    (function surviving () (
+      (value-type int))
+      (expr-function-body
+        (invocation method expr:
+          (simple-var-ref self) ()))))
+  (function valid (
+    (variable value (type
+      (user-defined-type DuplicateMembers)))) (
+    (value-type int))
+    (expr-function-body
+      (invocation surviving expr:
+        (simple-var-ref value) ()))))

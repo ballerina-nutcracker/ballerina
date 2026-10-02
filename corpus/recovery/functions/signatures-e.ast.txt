@@ -3,6 +3,24 @@
     (value-type int))
     (expr-function-body
       (literal 1)))
+  (function discardedReferences () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable ordinaryResult (type
+          (value-type int)) (expr
+          (invocation ordinary (
+            (literal 1))))))
+      (var-def
+        (variable defaultResult (type
+          (value-type int)) (expr
+          (invocation defaults ()))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (invocation valid ()))))
+      (return
+        (simple-var-ref later))))
   (bad-top-level)
   (bad-top-level)
   (bad-top-level)

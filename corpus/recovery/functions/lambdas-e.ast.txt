@@ -21,9 +21,32 @@
         (variable f (expr
           (bad-expr-or-action))))
       (var-def
+        (variable g (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable h (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable validParameterSibling (expr
+          (lambda [callable=function(int) returns int] [function=never] [name=never] [expression-body=never]
+            (function $anonFunc$_0 (
+              (variable x (type
+                (value-type int)))) (
+              (value-type int))
+              (expr-function-body
+                (simple-var-ref x)))))))
+      (var-def
+        (variable validReturnSibling (expr
+          (lambda [callable=function() returns int] [function=never] [name=never] [expression-body=never]
+            (function $anonFunc$_1 () (
+              (value-type int))
+              (expr-function-body
+                (literal 1)))))))
+      (var-def
         (variable later (type
           (value-type int)) (expr
-          (literal 2))))))
+          (invocation validParameterSibling (
+            (invocation validReturnSibling ()))))))))
   (function valid () (
     (value-type null))
     (block-function-body)))
