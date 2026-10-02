@@ -1,0 +1,34 @@
+error[SEMANTIC_ERROR]: Unknown symbol: missingURI
+  --> recovery/declarations/xmlns-e.bal:19:7
+   |
+19 | xmlns missingURI as missingNS; // @error
+   |       ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingLocalURI
+  --> recovery/declarations/xmlns-e.bal:25:11
+   |
+25 |     xmlns missingLocalURI as missingLocal; // @error
+   |           ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: XML namespace URI cannot be empty
+  --> recovery/declarations/xmlns-e.bal:18:1
+   |
+18 | xmlns "" as emptyNS; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | xmlns missingURI as missingNS; // @error
+   | 
+
+error[SEMANTIC_ERROR]: XML namespace URI cannot be empty
+  --> recovery/declarations/xmlns-e.bal:24:1
+   |
+24 |     xmlns "" as emptyLocal; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |     xmlns missingLocalURI as missingLocal; // @error
+   |     
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> recovery/declarations/xmlns-e.bal:27:12
+   |
+27 |     return probe("later"); // @error
+   |            ^^^^^^^^^^^^^^
+

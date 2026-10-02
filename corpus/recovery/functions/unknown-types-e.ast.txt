@@ -1,4 +1,5 @@
 (package
+  (import-package ballerina lang array (as lang.array))
   (class-definition Signatures
     (function anotherUnknown (
       (variable value (type
@@ -41,8 +42,8 @@
     (expr-function-body
       (binary-expr +
         (simple-var-ref value)
-        (invocation length expr:
-          (simple-var-ref labels) ()))))
+        (invocation lang.array length (
+          (simple-var-ref labels))))))
   (function bodyOnly (
     (variable value (type
       (value-type int)))) (
