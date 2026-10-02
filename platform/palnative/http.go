@@ -31,7 +31,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -155,45 +154,10 @@ func (l *limitedBodyReadCloser) Close() error { return l.rc.Close() }
 // NewHTTPClient is the pal.HTTP.NewClient factory for the native-CLI
 // platform. It builds a *http.Client configured from cfg and wraps it so the
 // runtime sees only the pal.HTTPClient interface.
-func NewHTTPClient(cfg pal.ClientConfig) pal.HTTPClient {
-	tlsConfig := &tls.Config{InsecureSkipVerify: cfg.TLS.InsecureSkipVerify} //nolint:gosec
-	if len(cfg.TLS.CACertPEM) > 0 {
-		pool := x509.NewCertPool()
-		if !pool.AppendCertsFromPEM(cfg.TLS.CACertPEM) {
-			_, _ = fmt.Fprintf(os.Stderr, "ballerina: failed to parse CA certificate PEM (no valid certificates found); custom CA not loaded\n")
-		} else {
-			tlsConfig.RootCAs = pool
-			if !cfg.TLS.InsecureSkipVerify {
-				// Go 1.15+ requires SANs for hostname verification; many self-signed and
-				// Java-issued certs only set the CN field. When a custom CA is provided
-				// we do our own verification so CN-only certs are accepted as a fallback.
-				tlsConfig.InsecureSkipVerify = true //nolint:gosec
-				tlsConfig.VerifyConnection = tlsVerifyConnectionWithCNFallback(pool)
-			}
-		}
-	}
-	if len(cfg.TLS.ClientCertPEM) > 0 && len(cfg.TLS.ClientKeyPEM) > 0 {
-		if cert, err := tls.X509KeyPair(cfg.TLS.ClientCertPEM, cfg.TLS.ClientKeyPEM); err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "ballerina: tls.X509KeyPair failed (client certificate not loaded): %v\n", err)
-		} else {
-			tlsConfig.Certificates = []tls.Certificate{cert}
-		}
-	}
-	tlsConfig.ServerName = cfg.TLS.ServerName
-	tlsConfig.SessionTicketsDisabled = cfg.TLS.DisableSessionTickets
-	tlsConfig.MinVersion = tls.VersionTLS12 // secure default; overridden below if configured
-	if cfg.TLS.MinVersion != 0 {
-		tlsConfig.MinVersion = cfg.TLS.MinVersion
-	}
-	if cfg.TLS.MaxVersion != 0 {
-		tlsConfig.MaxVersion = cfg.TLS.MaxVersion
-	}
-	if len(cfg.TLS.CipherSuiteNames) > 0 {
-		if resolved := resolveCipherSuites(cfg.TLS.CipherSuiteNames); len(resolved) > 0 {
-			tlsConfig.CipherSuites = resolved
-		} else {
-			fmt.Fprintf(os.Stderr, "warning: no valid cipher suites resolved from cfg.TLS.CipherSuiteNames %v; keeping secure defaults\n", cfg.TLS.CipherSuiteNames)
-		}
+func NewHTTPClient(cfg pal.ClientConfig) (pal.HTTPClient, error) {
+	tlsConfig, err := buildTLSConfig(cfg.TLS)
+	if err != nil {
+		return nil, err
 	}
 	// Build a net.Dialer with a configurable connect timeout.
 	// TCP keep-alive is disabled (KeepAlive:-1) to match jBallerina's default
@@ -219,6 +183,24 @@ func NewHTTPClient(cfg pal.ClientConfig) pal.HTTPClient {
 		DisableCompression:    cfg.Pool.DisableCompression,
 		// Response header size limit (jBallerina default 8192, always set explicitly).
 		MaxResponseHeaderBytes: cfg.ResponseLimits.MaxHeaderSize,
+	}
+	if tlsConfig.VerifyConnection != nil {
+		// The shared callback can't see which host a pooled connection dials, so
+		// non-proxied HTTPS connections rebind it to the dialed host here.
+		// Cloning at dial time picks up the ALPN protocols the transport adds.
+		transport.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			host, _, _ := net.SplitHostPort(addr)
+			connTLSConfig := transport.TLSClientConfig.Clone()
+			if connTLSConfig.ServerName == "" {
+				connTLSConfig.ServerName = host
+			}
+			connTLSConfig.VerifyConnection = tlsVerifyConnectionWithCNFallback(connTLSConfig.RootCAs, connTLSConfig.ServerName)
+			conn, err := dialer.DialContext(ctx, network, addr)
+			if err != nil {
+				return nil, err
+			}
+			return tlsClientHandshake(ctx, conn, connTLSConfig, cfg.TLS.HandshakeTimeout)
+		}
 	}
 	if cfg.Proxy.Host != "" {
 		proxyURL := &url.URL{
@@ -269,7 +251,7 @@ func NewHTTPClient(cfg pal.ClientConfig) pal.HTTPClient {
 			return nil
 		}
 	}
-	return &httpClient{client: c, maxEntityBodySize: cfg.ResponseLimits.MaxEntityBodySize}
+	return &httpClient{client: c, maxEntityBodySize: cfg.ResponseLimits.MaxEntityBodySize}, nil
 }
 
 // poolDefault returns d if non-zero, otherwise def.
@@ -311,8 +293,21 @@ func resolveCipherSuites(names []string) []uint16 {
 // server's certificate chain against rootCAs and falls back to CN-based hostname matching
 // when no SANs are present. Go 1.15+ disabled CN-only hostname verification (RFC 6125 §2.3),
 // but many self-signed and Java-issued certificates still rely on it.
-func tlsVerifyConnectionWithCNFallback(rootCAs *x509.CertPool) func(tls.ConnectionState) error {
+//
+// The hostname is checked against expectedServerName when set, else cs.ServerName, which
+// Go leaves empty for IP literals since it never sends SNI for them (RFC 6066). Callers
+// that know the dialed host pass it as expectedServerName; the cs.ServerName fallback only
+// serves proxied HTTPS, where http.Transport runs the handshake itself. An empty name is
+// rejected: matching it would accept any trusted certificate with no SANs and an empty CN.
+func tlsVerifyConnectionWithCNFallback(rootCAs *x509.CertPool, expectedServerName string) func(tls.ConnectionState) error {
 	return func(cs tls.ConnectionState) error {
+		serverName := expectedServerName
+		if serverName == "" {
+			serverName = cs.ServerName
+		}
+		if serverName == "" {
+			return fmt.Errorf("x509: cannot verify certificate hostname: no server name")
+		}
 		opts := x509.VerifyOptions{
 			Roots:         rootCAs,
 			Intermediates: x509.NewCertPool(),
@@ -323,15 +318,15 @@ func tlsVerifyConnectionWithCNFallback(rootCAs *x509.CertPool) func(tls.Connecti
 		if _, err := cs.PeerCertificates[0].Verify(opts); err != nil {
 			return err
 		}
-		// cs.ServerName is the SNI hostname (no port). Try SAN-based verification first.
-		// Only fall back to CN matching for certs that genuinely have no SANs — when SANs
-		// are present but don't match, that is a real mismatch and must not be bypassed.
+		// Try SAN-based verification first. Only fall back to CN matching for
+		// certs that genuinely have no SANs — when SANs are present but don't
+		// match, that is a real mismatch and must not be bypassed.
 		leaf := cs.PeerCertificates[0]
-		if err := leaf.VerifyHostname(cs.ServerName); err != nil {
+		if err := leaf.VerifyHostname(serverName); err != nil {
 			if len(leaf.DNSNames) > 0 || len(leaf.IPAddresses) > 0 {
 				return err
 			}
-			return tlsMatchCN(leaf.Subject.CommonName, cs.ServerName)
+			return tlsMatchCN(leaf.Subject.CommonName, serverName)
 		}
 		return nil
 	}

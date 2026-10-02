@@ -17,6 +17,7 @@
 package langruntime
 
 import (
+	"math"
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/decimal"
@@ -32,8 +33,8 @@ const (
 
 func runtimeSleep(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	seconds := args[0].(*decimal.Decimal)
-	dur := time.Duration(seconds.Float64() * float64(time.Second))
-	deadline := ctx.Env.Platform.Time.MonotonicNow() + dur
+	dur := secondsToSleepDuration(seconds.Float64())
+	deadline := sleepDeadline(ctx.Env.Platform.Time.MonotonicNow(), dur)
 	// Hand the thread back on every pass, the same way the wait actions poll
 	// (see waitAllFutures). Blocking on a timer between yields would hold this
 	// strand's turn for the whole timer, stalling every other strand sharing
@@ -46,6 +47,32 @@ func runtimeSleep(ctx *extern.Context, args []values.BalValue) (values.BalValue,
 
 func initRuntimeModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "sleep", runtimeSleep)
+}
+
+// secondsToSleepDuration converts a duration given in seconds to a
+// time.Duration, clamping non-finite and out-of-int64-range results
+// (reachable from decimal's much wider value range) to the max
+// representable duration instead of relying on the platform-specific
+// float-to-int64 overflow behavior. Non-positive durations pass through as
+// a no-op, same as time.Sleep's own documented behavior.
+func secondsToSleepDuration(seconds float64) time.Duration {
+	nanos := seconds * float64(time.Second)
+	if nanos <= 0 {
+		return 0
+	}
+	if nanos >= math.MaxInt64 {
+		return math.MaxInt64
+	}
+	return time.Duration(nanos)
+}
+
+// sleepDeadline returns now+dur, saturating at the max duration instead of
+// wrapping negative, which would end the sleep immediately.
+func sleepDeadline(now, dur time.Duration) time.Duration {
+	if dur > 0 && now > math.MaxInt64-dur {
+		return math.MaxInt64
+	}
+	return now + dur
 }
 
 func init() {
