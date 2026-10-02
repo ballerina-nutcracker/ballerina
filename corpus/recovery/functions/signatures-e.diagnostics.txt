@@ -1,3 +1,31 @@
+error[SEMANTIC_ERROR]: Unknown symbol: defaults
+  --> recovery/functions/signatures-e.bal:29:25
+   |
+29 |     int defaultResult = defaults(); // @error discarded declaration reference
+   |                         ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: ordinary
+  --> recovery/functions/signatures-e.bal:28:26
+   |
+28 |     int ordinaryResult = ordinary(1); // @error discarded declaration reference
+   |                          ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'defaultResult'
+  --> recovery/functions/signatures-e.bal:29:1
+   |
+29 |     int defaultResult = defaults(); // @error discarded declaration reference
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 |     int later = valid();
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'ordinaryResult'
+  --> recovery/functions/signatures-e.bal:28:1
+   |
+28 |     int ordinaryResult = ordinary(1); // @error discarded declaration reference
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 |     int defaultResult = defaults(); // @error discarded declaration reference
+   |
+
 error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
   --> recovery/functions/signatures-e.bal:17:10
    |

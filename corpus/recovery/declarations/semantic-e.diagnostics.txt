@@ -1,8 +1,46 @@
 error[SEMANTIC_ERROR]: only object and error types can be distinct
   --> recovery/declarations/semantic-e.bal:17:14
    |
-17 | type Invalid distinct int; // @error
+17 | type Invalid distinct int; // @error semantic invalid distinct target
    |              ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: only object and error types can be distinct
+  --> recovery/declarations/semantic-e.bal:18:20
+   |
+18 | type NestedInvalid distinct record { int value; }; // @error semantic invalid distinct target
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'init'
+  --> recovery/declarations/semantic-e.bal:23:1
+   |
+23 |     function init() {} // @error semantic duplicate initializer
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |     function method() returns int => 1;
+   |
+
+error[SEMANTIC_ERROR]: redeclared symbol 'method'
+  --> recovery/declarations/semantic-e.bal:25:1
+   |
+25 |     function method() returns int => 2; // @error semantic duplicate method
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |     function surviving() returns int => self.method();
+   |
+
+error[SEMANTIC_ERROR]: redeclared symbol 'method'
+  --> recovery/declarations/semantic-e.bal:32:1
+   |
+32 |     function method() returns int; // @error semantic duplicate method
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 | };
+   |
+
+error[SEMANTIC_ERROR]: redeclared symbol 'value'
+  --> recovery/declarations/semantic-e.bal:30:1
+   |
+30 |     int value; // @error semantic duplicate field
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 |     function method() returns int;
+   |
 
 error[SEMANTIC_ERROR]: type definition Invalid is empty
   --> recovery/declarations/semantic-e.bal:1:1
@@ -39,7 +77,31 @@ error[SEMANTIC_ERROR]: type definition Invalid is empty
    | ^^^^^^^^^^^^^^^^^^^^^
 16 | 
    | 
-17 | type Invalid distinct int; // @error
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-18 | function valid() {}
+17 | type Invalid distinct int; // @error semantic invalid distinct target
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 | type NestedInvalid distinct record { int value; }; // @error semantic invalid distinct target
+   |
+
+error[SEMANTIC_ERROR]: type definition NestedInvalid is empty
+  --> recovery/declarations/semantic-e.bal:18:1
+   |
+18 | type NestedInvalid distinct record { int value; }; // @error semantic invalid distinct target
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | var missingInitializer; // @error semantic initializer requirement
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'missingInitializer'
+  --> recovery/declarations/semantic-e.bal:19:1
+   |
+19 | var missingInitializer; // @error semantic initializer requirement
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | 
+   |
+
+error[SEMANTIC_ERROR]: var-declared module variable must have an initializer expression for type inference
+  --> recovery/declarations/semantic-e.bal:19:1
+   |
+19 | var missingInitializer; // @error semantic initializer requirement
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | 
    |

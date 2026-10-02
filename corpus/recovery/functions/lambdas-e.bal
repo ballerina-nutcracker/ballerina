@@ -21,6 +21,10 @@ function lambdas() {
     var d = function() returns mod:_ => 1; // @error
     var e = (_)=>1; // @error
     var f = isolated isolated function() returns int => 1; // @error
-    int later = 2; // @error unused surviving sibling
+    var g = function(@mod:_ int x) returns int => x; // @error
+    var h = function() returns @mod:_ int => 1; // @error
+    var validParameterSibling = function(int x) returns int => x;
+    var validReturnSibling = function() returns int => 1;
+    int later = validParameterSibling(validReturnSibling()); // @error unused surviving sibling
 }
 function valid() {}

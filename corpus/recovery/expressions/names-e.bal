@@ -16,7 +16,8 @@
 
 function names() {
     x = mod:_; // @error
-    x = mod:'_; // @error
+    x = mod:'_; // @error formerly silent malformed quoted identifier
+    int '_ = 1; // @error formerly silent malformed local identifier
     x = mod:; // @error
     x = _:name; // @error
     x = mod:_(1); // @error

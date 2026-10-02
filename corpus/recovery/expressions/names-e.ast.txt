@@ -8,6 +8,7 @@
       (assignment
         (simple-var-ref x)
         (bad-expr-or-action))
+      (bad-stmt)
       (assignment
         (simple-var-ref x)
         (bad-expr-or-action))

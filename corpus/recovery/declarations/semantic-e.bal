@@ -14,5 +14,21 @@
 // specific language governing permissions and limitations
 // under the License.
 
-type Invalid distinct int; // @error
-function valid() {}
+type Invalid distinct int; // @error semantic invalid distinct target
+type NestedInvalid distinct record { int value; }; // @error semantic invalid distinct target
+var missingInitializer; // @error semantic initializer requirement
+
+class DuplicateMembers {
+    function init() {}
+    function init() {} // @error semantic duplicate initializer
+    function method() returns int => 1;
+    function method() returns int => 2; // @error semantic duplicate method
+    function surviving() returns int => self.method();
+}
+type DuplicateObject object {
+    int value;
+    int value; // @error semantic duplicate field
+    function method() returns int;
+    function method() returns int; // @error semantic duplicate method
+};
+function valid(DuplicateMembers value) returns int => value.surviving();
