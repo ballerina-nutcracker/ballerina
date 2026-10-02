@@ -23,9 +23,3 @@ error[SEMANTIC_ERROR]: duplicate field name 'x'
    |
 20 | public type M map<M|record {| int x; string x; |}>; // @error
    |                                      ^^^^^^^^^
-
-error[SEMANTIC_ERROR]: too many members in list constructor
-  --> toplevel11-e.bal:26:15
-   |
-26 | public T gt = [(), {x: 1}]; // @error cascades from the failed tuple
-   |               ^^^^^^^^^^^^

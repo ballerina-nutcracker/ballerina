@@ -23,7 +23,7 @@ public function f(T t, L l, F fn, M m) {
     _ = [t, l, fn, m];
 }
 
-public T gt = [(), {x: 1}]; // @error cascades from the failed tuple
+public T gt = [(), {x: 1}]; // unresolved tuple prerequisites skip the initializer
 
 public function main() {
 }

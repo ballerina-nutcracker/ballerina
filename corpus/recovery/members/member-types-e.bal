@@ -14,15 +14,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-public class Bad {
-    int & string x = 1; // @error
-}
-
-public function f(Bad b) {
-    _ = b;
-}
-
-public Bad g = new; // unresolved class prerequisites skip the initializer
-
-public function main() {
+service class MemberTypes {
+    xml<int> firstField; // @error invalid XML constraint
+    xml<int> secondField; // @error independently resolved field type
+    function init(xml<int> value) { _ = value; } // @error independently resolved initializer signature
+    function method() returns xml<int> {} // @error independently resolved method signature
+    resource function get first() returns xml<int> {} // @error independently resolved resource signature
+    resource function get second() returns xml<int> {} // @error independently resolved resource signature
 }
