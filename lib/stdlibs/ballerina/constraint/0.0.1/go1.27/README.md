@@ -58,7 +58,7 @@ Support Levels:
 | String pattern constraint | Not Yet Supported | The `pattern` field of `StringConstraints` is omitted because `string:RegExp` and regular expression literals are not supported by the interpreter. |
 | Array constraints | Supported | |
 | Date constraints | Supported | |
-| Custom error messages | Partially Supported | Messages from constraints on different record fields are ordered by field name instead of field declaration order because the runtime does not expose the declaration order of record fields. |
+| Custom error messages | Supported | |
 | Validation against an explicit target type | Supported | `constraint:validate(value, T)`. |
 | Validation against an inferred target type | Not Yet Supported | `T result = check constraint:validate(value)` validates nothing because the typedesc the compiler synthesizes for `<>` carries no annotations. Pass the type explicitly. |
 | Constraints on nested types | Not Yet Supported | Only annotations on the target type itself and on the direct fields of a target record are validated. Annotations on named types used as field types, array members, union members or nested records are not visible at run time. |
@@ -69,3 +69,4 @@ Support Levels:
 ### Notable Behavioural Changes
 
 - **Digit counts are computed per value.** jBallerina caches the digit counts of the first float or number value it validates and reuses them for later fields in the same call, so a second `maxIntegerDigits` or `maxFractionDigits` field can be checked against the wrong counts; the Go-native version counts the digits of every value separately.
+- **Custom messages from different fields are ordered by field name.** jBallerina joins the custom messages of failed constraints in the order the record fields are declared; the Go-native version joins them in field-name order, because record fields have no semantic order and the runtime exposes them unordered. The default `Validation failed for ...` part is sorted in both.

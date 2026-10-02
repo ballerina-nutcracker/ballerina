@@ -13,7 +13,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | Package                                           | Supported | Partially Supported | Not Yet Supported | Support % |
 |---------------------------------------------------|---|---|---|---|
 | [avro](avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
-| [constraint](constraint/0.0.1/go1.27/README.md)   | 8 | 2 | 4 | 57% |
+| [constraint](constraint/0.0.1/go1.27/README.md)   | 9 | 1 | 4 | 64% |
 | [crypto](crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [http](http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
 | [io](io/0.0.1/go1.27/README.md)                   | 21 | 2 | 4 | 78% |
@@ -24,7 +24,7 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [random](random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
 | [time](time/0.0.1/go1.27/README.md)               | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
-| **Total**                                         | **169** | **20** | **68** | **66%** |
+| **Total**                                         | **170** | **19** | **68** | **66%** |
 
 ## Notable Behavioural Changes
 
@@ -44,6 +44,7 @@ tables instead.
 ### constraint
 
 - **Digit counts are computed per value.** jBallerina caches the digit counts of the first float or number value it validates and reuses them for later fields in the same call, so a second `maxIntegerDigits` or `maxFractionDigits` field can be checked against the wrong counts; the Go-native version counts the digits of every value separately.
+- **Custom messages from different fields are ordered by field name.** jBallerina joins the custom messages of failed constraints in the order the record fields are declared; the Go-native version joins them in field-name order, because record fields have no semantic order and the runtime exposes them unordered. The default `Validation failed for ...` part is sorted in both.
 
 ### crypto
 
