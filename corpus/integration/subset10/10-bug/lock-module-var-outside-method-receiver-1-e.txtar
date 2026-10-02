@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-method-receiver-1-e.bal:27:16
+   |
+27 |     io:println(counter.get()); // @error
+   |                ^^^^^^^

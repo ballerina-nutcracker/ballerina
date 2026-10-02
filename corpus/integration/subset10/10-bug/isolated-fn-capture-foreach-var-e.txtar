@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolated-fn-capture-foreach-var-e.bal:23:87
+   |
+23 |         isolated function () returns int f = isolated function() returns int { return xs.length(); }; // @error
+   |                                                                                       ^^

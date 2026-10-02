@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-error-detail-e.bal:21:68
+   |
+21 |     error e = error("msg", f = function() returns int { string s = 1; return s.length(); }); // @error incompatible type
+   |                                                                    ^

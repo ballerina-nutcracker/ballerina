@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-call-arg-e.bal:21:55
+   |
+21 |     int v = apply(function() returns int { string s = 1; return s.length(); }); // @error incompatible type
+   |                                                       ^

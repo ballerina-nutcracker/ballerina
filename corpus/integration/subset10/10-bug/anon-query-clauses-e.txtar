@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-query-clauses-e.bal:22:62
+   |
+22 |         let int y = call(function() returns int { string s = 1; return s.length(); }) // @error incompatible type
+   |                                                              ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 2
+  --> anon-query-clauses-e.bal:23:60
+   |
+23 |         where x > call(function() returns int { string s = 2; return s.length(); }) // @error incompatible type
+   |                                                            ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 3
+  --> anon-query-clauses-e.bal:24:63
+   |
+24 |         order by x + call(function() returns int { string s = 3; return s.length(); }) ascending // @error incompatible type
+   |                                                               ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 4
+  --> anon-query-clauses-e.bal:25:56
+   |
+25 |         limit call(function() returns int { string s = 4; return s.length(); }) // @error incompatible type
+   |                                                        ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 5
+  --> anon-query-clauses-e.bal:26:65
+   |
+26 |         select x + y + call(function() returns int { string s = 5; return s.length(); }); // @error incompatible type
+   |                                                                 ^
