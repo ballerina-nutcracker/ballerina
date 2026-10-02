@@ -6479,7 +6479,11 @@ func resolveIndexBasedAccess(t typeResolver, chain *binding, expr *ast.BLangInde
 		}
 		resultTy = memberTy
 	} else if semtypes.IsSubtype(tyCtx, containerExprTy, semtypes.String) {
-		resultTy = semtypes.String
+		if expr.IsLexpr() {
+			t.semanticError(fmt.Sprintf("invalid operation: type '%s' does not support member access for assignment", semtypes.ToString(tyCtx, containerExprTy)), expr.GetPosition())
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		resultTy = semtypes.Char
 	} else {
 		t.semanticError("unsupported container type for index based access", expr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
