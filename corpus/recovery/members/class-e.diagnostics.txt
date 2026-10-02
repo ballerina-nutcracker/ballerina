@@ -1,14 +1,32 @@
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/members/class-e.bal:23:6
+error[SEMANTIC_ERROR]: Unknown type: Missing
+  --> recovery/members/class-e.bal:29:6
    |
-23 |     *; // @error
-   |      
+29 |     *Missing; // @error
+   |      ^^^^^^^
 
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/members/class-e.bal:24:32
+error[SEMANTIC_ERROR]: Unknown type: Missing
+  --> recovery/members/class-e.bal:38:6
+   |
+38 |     *Missing; // @error
+   |      ^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/members/class-e.bal:24:34
    |
 24 |     function valid() { int x = ; int later = 2; } // @error
-   |                                
+   |                                  ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'surviving'
+  --> recovery/members/class-e.bal:27:20
+   |
+27 | function valid() { C surviving; } // @error unused surviving sibling
+   |                    ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> recovery/members/class-e.bal:24:24
+   |
+24 |     function valid() { int x = ; int later = 2; } // @error
+   |                        ^^^^^^^^^^
 
 error[SYNTAX_ERROR]: invalid identifier
   --> recovery/members/class-e.bal:18:9
@@ -46,33 +64,14 @@ error[SYNTAX_ERROR]: invalid identifier
 34 |     *mod:_; // @error
    |          ^
 
-error[SEMANTIC_ERROR]: unused variable 'x'
-  --> recovery/members/class-e.bal:24:24
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/members/class-e.bal:23:6
+   |
+23 |     *; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/members/class-e.bal:24:32
    |
 24 |     function valid() { int x = ; int later = 2; } // @error
-   |                        ^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> recovery/members/class-e.bal:24:34
    |
-24 |     function valid() { int x = ; int later = 2; } // @error
-   |                                  ^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'surviving'
-  --> recovery/members/class-e.bal:27:20
-   |
-27 | function valid() { C surviving; } // @error unused surviving sibling
-   |                    ^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: Unknown type: Missing
-  --> recovery/members/class-e.bal:29:6
-   |
-29 |     *Missing; // @error
-   |      ^^^^^^^
-
-error[SEMANTIC_ERROR]: Unknown type: Missing
-  --> recovery/members/class-e.bal:38:6
-   |
-38 |     *Missing; // @error
-   |      ^^^^^^^
-

@@ -21,4 +21,3 @@ error[SEMANTIC_ERROR]: incompatible arguments for function call
    |
 28 |     probe("later"); // @error later sibling resolved
    |     ^^^^^^^^^^^^^^
-

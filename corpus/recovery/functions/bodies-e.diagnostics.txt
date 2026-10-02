@@ -1,32 +1,10 @@
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/functions/bodies-e.bal:18:18
-   |
-18 |     int broken = ; // @error
-   |                  
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/functions/bodies-e.bal:23:45
-   |
-23 | function expressionBody() returns int => 1 +; // @error
-   |                                             
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/functions/bodies-e.bal:25:49
-   |
-25 |     var explicit = function() returns int => 1 +; // @error
-   |                                                 
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/functions/bodies-e.bal:26:55
+error[SEMANTIC_ERROR]: unused variable 'block'
+  --> recovery/functions/bodies-e.bal:26:1
    |
 26 |     var block = function() returns int { int broken = ; return 1; }; // @error
-   |                                                       
-
-error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/functions/bodies-e.bal:19:11
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 |     int later = 2; // @error unused surviving sibling
    |
-19 |     { int '_ = 1; int inner = 2; } // @error
-   |           ^^^
 
 error[SEMANTIC_ERROR]: unused variable 'broken'
   --> recovery/functions/bodies-e.bal:18:1
@@ -34,13 +12,7 @@ error[SEMANTIC_ERROR]: unused variable 'broken'
 18 |     int broken = ; // @error
    |     ^^^^^^^^^^^^^^^^^^^^^^^^
 19 |     { int '_ = 1; int inner = 2; } // @error
-   |     
-
-error[SEMANTIC_ERROR]: unused variable 'inner'
-  --> recovery/functions/bodies-e.bal:19:19
    |
-19 |     { int '_ = 1; int inner = 2; } // @error
-   |                   ^^^^^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: unused variable 'broken'
   --> recovery/functions/bodies-e.bal:26:42
@@ -54,15 +26,13 @@ error[SEMANTIC_ERROR]: unused variable 'explicit'
 25 |     var explicit = function() returns int => 1 +; // @error
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 26 |     var block = function() returns int { int broken = ; return 1; }; // @error
-   |     
-
-error[SEMANTIC_ERROR]: unused variable 'block'
-  --> recovery/functions/bodies-e.bal:26:1
    |
-26 |     var block = function() returns int { int broken = ; return 1; }; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-27 |     int later = 2; // @error unused surviving sibling
-   |     
+
+error[SEMANTIC_ERROR]: unused variable 'inner'
+  --> recovery/functions/bodies-e.bal:19:19
+   |
+19 |     { int '_ = 1; int inner = 2; } // @error
+   |                   ^^^^^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: unused variable 'later'
   --> recovery/functions/bodies-e.bal:27:1
@@ -70,5 +40,34 @@ error[SEMANTIC_ERROR]: unused variable 'later'
 27 |     int later = 2; // @error unused surviving sibling
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 28 | }
-   | 
+   |
 
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/functions/bodies-e.bal:19:11
+   |
+19 |     { int '_ = 1; int inner = 2; } // @error
+   |           ^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:18:18
+   |
+18 |     int broken = ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:23:45
+   |
+23 | function expressionBody() returns int => 1 +; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:25:49
+   |
+25 |     var explicit = function() returns int => 1 +; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:26:55
+   |
+26 |     var block = function() returns int { int broken = ; return 1; }; // @error
+   |

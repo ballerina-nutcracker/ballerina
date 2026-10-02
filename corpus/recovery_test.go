@@ -68,14 +68,15 @@ func TestRecovery(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			printer := ast.PrettyPrinter{}
+			typeContext := semtypes.ContextFrom(env.GetTypeEnv())
+			printer := ast.PrettyPrinter{LambdaResolutionContext: &typeContext}
 			actualAST := printer.Print(result.Package)
 			diagnosticResult := projects.NewDiagnosticResult(cx.Diagnostics())
 			var diagnosticText bytes.Buffer
 			testharness.PrintDiagnostics(os.DirFS("."), &diagnosticText, diagnosticResult, cx.DiagnosticEnv())
 			testharness.ValidateErrorMarkers(t, inputPath, string(content), diagnosticResult, cx.DiagnosticEnv())
 			compareRecoveryGolden(t, strings.TrimSuffix(inputPath, ".bal")+".ast.txt", actualAST)
-			compareRecoveryGolden(t, strings.TrimSuffix(inputPath, ".bal")+".diagnostics.txt", diagnosticText.String())
+			compareRecoveryGolden(t, strings.TrimSuffix(inputPath, ".bal")+".diagnostics.txt", normalizeIntegrationStderr(diagnosticText.String()))
 		})
 		return nil
 	})

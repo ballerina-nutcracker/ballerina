@@ -42,5 +42,4 @@ error[SEMANTIC_ERROR]: type definition Invalid is empty
 17 | type Invalid distinct int; // @error
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 18 | function valid() {}
-   | 
-
+   |

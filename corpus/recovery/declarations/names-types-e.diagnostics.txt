@@ -1,8 +1,32 @@
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/declarations/names-types-e.bal:23:9
+error[SEMANTIC_ERROR]: Unknown symbol: discarded
+  --> recovery/declarations/names-types-e.bal:30:1
    |
-23 |     int = 2; // @error
-   |         
+30 |     discarded(); // @error unresolved discarded declaration
+   |     ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/declarations/names-types-e.bal:25:1
+   |
+25 |     int later = 4; // @error unused surviving sibling
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'local'
+  --> recovery/declarations/names-types-e.bal:24:1
+   |
+24 |     mod:_ local = 3; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |     int later = 4; // @error unused surviving sibling
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'surviving'
+  --> recovery/declarations/names-types-e.bal:31:1
+   |
+31 |     int surviving = 5; // @error unused surviving sibling
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 | }
+   |
 
 error[SYNTAX_ERROR]: invalid identifier
   --> recovery/declarations/names-types-e.bal:17:5
@@ -46,33 +70,8 @@ error[SYNTAX_ERROR]: invalid identifier
 28 | function discarded(int _) {} // @error discarded signature
    |                        ^
 
-error[SEMANTIC_ERROR]: unused variable 'local'
-  --> recovery/declarations/names-types-e.bal:24:1
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/declarations/names-types-e.bal:23:9
    |
-24 |     mod:_ local = 3; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
-25 |     int later = 4; // @error unused surviving sibling
-   |     
-
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> recovery/declarations/names-types-e.bal:25:1
+23 |     int = 2; // @error
    |
-25 |     int later = 4; // @error unused surviving sibling
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-26 | }
-   | 
-
-error[SEMANTIC_ERROR]: Unknown symbol: discarded
-  --> recovery/declarations/names-types-e.bal:30:1
-   |
-30 |     discarded(); // @error unresolved discarded declaration
-   |     ^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'surviving'
-  --> recovery/declarations/names-types-e.bal:31:1
-   |
-31 |     int surviving = 5; // @error unused surviving sibling
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-32 | }
-   | 
-

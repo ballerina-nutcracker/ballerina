@@ -2440,6 +2440,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 
 	// Save and reset capture tracker (supports nested lambdas)
 	prevCaptured := t.getCapturedVars()
+	defer t.setCapturedVars(prevCaptured)
 	ft.setCapturedVars(make(map[model.SymbolRef]bool))
 
 	switch body := e.Function.Body.(type) {
@@ -2447,11 +2448,10 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 		resolveBlockStatements(ft, boundaryChain, body.Stmts)
 		body.SetDeterminedType(semtypes.Never)
 	case *ast.BLangExprFunctionBody:
-		if _, ok := resolveActionOrExpression(ft, boundaryChain, body.Expr, ft.retTy); !ok {
-			t.setCapturedVars(prevCaptured)
-			return semtypes.SemType{}, expressionEffect{}, false
+		body.SetDeterminedType(semtypes.SemType{})
+		if _, ok := resolveActionOrExpression(ft, boundaryChain, body.Expr, ft.retTy); ok {
+			body.SetDeterminedType(semtypes.Never)
 		}
-		body.SetDeterminedType(semtypes.Never)
 	}
 
 	// Unnarrow all captured variables
@@ -2466,8 +2466,6 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 			prevCaptured[ref] = true
 		}
 	}
-
-	t.setCapturedVars(prevCaptured)
 
 	e.Function.SetDeterminedType(semtypes.Never)
 	e.Function.Name.SetDeterminedType(semtypes.Never)
