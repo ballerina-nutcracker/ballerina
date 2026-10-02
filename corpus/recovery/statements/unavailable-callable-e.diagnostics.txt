@@ -4,12 +4,6 @@ error[SEMANTIC_ERROR]: Unknown symbol: missing
 18 |     var unavailable = missing; // @error
    |                       ^^^^^^^
 
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> recovery/statements/unavailable-callable-e.bal:20:1
-   |
-20 |     probe("later"); // @error later sibling resolved
-   |     ^^^^^^^^^^^^^^
-
 error[SEMANTIC_ERROR]: Unknown type: Unknown
   --> recovery/statements/unavailable-callable-e.bal:26:1
    |
@@ -17,8 +11,13 @@ error[SEMANTIC_ERROR]: Unknown type: Unknown
    |     ^^^^^^^^
 
 error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> recovery/statements/unavailable-callable-e.bal:20:1
+   |
+20 |     probe("later"); // @error later sibling resolved
+   |     ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
   --> recovery/statements/unavailable-callable-e.bal:28:1
    |
 28 |     probe("later"); // @error later sibling resolved
    |     ^^^^^^^^^^^^^^
-

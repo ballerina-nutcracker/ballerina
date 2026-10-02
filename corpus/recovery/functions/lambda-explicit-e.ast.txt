@@ -1,0 +1,81 @@
+(package
+  (function consume (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function consumeFunction (
+    (variable callable (type
+      (function-type () (
+        (value-type int)))))) (
+    (value-type int))
+    (expr-function-body
+      (invocation callable ())))
+  (function explicitBodies () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable captured (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 1))))
+      (if
+        (type-test-expr is
+          (simple-var-ref captured)
+          (value-type int))
+        (block-stmt
+          (var-def
+            (variable broken (expr
+              (lambda [callable=function(int) returns int] [function=never] [name=never] [expression-body=unresolved]
+                (function $anonFunc$_0 (
+                  (variable x (type
+                    (value-type int)))) (
+                  (value-type int))
+                  (expr-function-body
+                    (binary-expr +
+                      (binary-expr +
+                        (simple-var-ref captured)
+                        (simple-var-ref x))
+                      (simple-var-ref missing))))))))
+          (expression-stmt
+            (invocation consume (
+              (invocation broken (
+                (literal 2))))))
+          (expression-stmt
+            (invocation consume (
+              (simple-var-ref captured))))
+          (var-def
+            (variable block (expr
+              (lambda [callable=function(int) returns int] [function=never] [name=never]
+                (function $anonFunc$_1 (
+                  (variable x (type
+                    (value-type int)))) (
+                  (value-type int))
+                  (block-function-body
+                    (expression-stmt
+                      (invocation consume (
+                        (simple-var-ref missingBlock))))
+                    (return
+                      (simple-var-ref x))))))))
+          (expression-stmt
+            (invocation consume (
+              (invocation block (
+                (literal 3))))))
+          (var-def
+            (variable complete (expr
+              (lambda [callable=function(int) returns int] [function=never] [name=never] [expression-body=never]
+                (function $anonFunc$_2 (
+                  (variable x (type
+                    (value-type int)))) (
+                  (value-type int))
+                  (expr-function-body
+                    (binary-expr +
+                      (simple-var-ref x)
+                      (literal 1))))))))
+          (expression-stmt
+            (invocation consume (
+              (invocation complete (
+                (literal 4))))))) ())
+      (block-stmt))))

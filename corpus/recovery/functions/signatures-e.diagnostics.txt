@@ -4,35 +4,17 @@ error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
 17 | function _() {} // @error
    |          ^
 
-error[SYNTAX_ERROR]: missing function name
-  --> recovery/functions/signatures-e.bal:18:10
-   |
-18 | function (int x) {} // @error
-   |          
-
 error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
   --> recovery/functions/signatures-e.bal:19:23
    |
 19 | function ordinary(int _) {} // @error
    |                       ^
 
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/functions/signatures-e.bal:20:22
-   |
-20 | function missing(int ) {} // @error
-   |                      
-
 error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
   --> recovery/functions/signatures-e.bal:21:22
    |
 21 | function rest(int... _) {} // @error
    |                      ^
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/functions/signatures-e.bal:22:27
-   |
-22 | function defaults(int x = ) {} // @error
-   |                           
 
 error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
   --> recovery/functions/signatures-e.bal:23:35
@@ -52,3 +34,20 @@ error[SYNTAX_ERROR]: invalid token
 25 | public public function qualifiers() {} // @error
    |        ^^^^^^^^^^^^^^^^
 
+error[SYNTAX_ERROR]: missing function name
+  --> recovery/functions/signatures-e.bal:18:10
+   |
+18 | function (int x) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/signatures-e.bal:20:22
+   |
+20 | function missing(int ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/signatures-e.bal:22:27
+   |
+22 | function defaults(int x = ) {} // @error
+   |

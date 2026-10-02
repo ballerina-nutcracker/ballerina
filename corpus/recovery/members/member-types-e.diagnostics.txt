@@ -33,4 +33,3 @@ error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml, got int
    |
 23 |     resource function get second() returns xml<int> {} // @error independently resolved resource signature
    |                                            ^^^^^^^^^
-

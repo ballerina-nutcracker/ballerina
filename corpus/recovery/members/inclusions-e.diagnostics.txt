@@ -1,32 +1,20 @@
-error[SEMANTIC_ERROR]: Unknown type: MissingClassBase
-  --> recovery/members/inclusions-e.bal:26:6
-   |
-26 |     *MissingClassBase; // @error
-   |      ^^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: type inclusion must be an object type or class
-  --> recovery/members/inclusions-e.bal:27:6
-   |
-27 |     *NotStructured; // @error
-   |      ^^^^^^^^^^^^^
-
 error[SEMANTIC_ERROR]: Unknown symbol: missingClassReadValue
   --> recovery/members/inclusions-e.bal:29:53
    |
 29 |     function read() returns int => inheritedValue + missingClassReadValue; // @error
    |                                                     ^^^^^^^^^^^^^^^^^^^^^
 
+error[SEMANTIC_ERROR]: Unknown type: MissingClassBase
+  --> recovery/members/inclusions-e.bal:26:6
+   |
+26 |     *MissingClassBase; // @error
+   |      ^^^^^^^^^^^^^^^^
+
 error[SEMANTIC_ERROR]: Unknown type: MissingObjectBase
   --> recovery/members/inclusions-e.bal:32:6
    |
 32 |     *MissingObjectBase; // @error
    |      ^^^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: type inclusion must be an object type or class
-  --> recovery/members/inclusions-e.bal:33:6
-   |
-33 |     *NotStructured; // @error
-   |      ^^^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: Unknown type: MissingRecordBase
   --> recovery/members/inclusions-e.bal:42:6
@@ -40,3 +28,14 @@ error[SEMANTIC_ERROR]: included type is not a record type
 43 |     *NotStructured; // @error
    |      ^^^^^^^^^^^^^
 
+error[SEMANTIC_ERROR]: type inclusion must be an object type or class
+  --> recovery/members/inclusions-e.bal:27:6
+   |
+27 |     *NotStructured; // @error
+   |      ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: type inclusion must be an object type or class
+  --> recovery/members/inclusions-e.bal:33:6
+   |
+33 |     *NotStructured; // @error
+   |      ^^^^^^^^^^^^^

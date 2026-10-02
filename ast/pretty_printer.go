@@ -26,6 +26,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/prettyprint"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
@@ -41,6 +42,9 @@ type PrettyPrinter struct {
 	hasPendingNodeLocation bool
 	ShowNodeLocations      bool
 	DiagnosticEnv          *diagnostics.DiagnosticEnv
+	// LambdaResolutionContext enables lambda callable and wrapper type annotations;
+	// nil preserves the default output without resolution annotations.
+	LambdaResolutionContext *semtypes.Context
 	// Fallback handles node types this printer doesn't know about (e.g.
 	// desugar-only nodes).
 	Fallback func(p *PrettyPrinter, node BLangNode)
@@ -2464,12 +2468,29 @@ func (p *PrettyPrinter) printFunctionType(node *BLangFunctionType) {
 func (p *PrettyPrinter) printLambdaFunction(node *BLangLambdaFunction) {
 	p.StartNode()
 	p.PrintString("lambda")
+	p.printLambdaResolutionType("callable", node.GetDeterminedType())
 	if node.Function != nil {
+		p.printLambdaResolutionType("function", node.Function.GetDeterminedType())
+		p.printLambdaResolutionType("name", node.Function.Name.GetDeterminedType())
+		if body, ok := node.Function.Body.(*BLangExprFunctionBody); ok {
+			p.printLambdaResolutionType("expression-body", body.GetDeterminedType())
+		}
 		p.indentLevel++
 		p.PrintInner(node.Function)
 		p.indentLevel--
 	}
 	p.EndNode()
+}
+
+func (p *PrettyPrinter) printLambdaResolutionType(label string, ty semtypes.SemType) {
+	if p.LambdaResolutionContext == nil {
+		return
+	}
+	value := "unresolved"
+	if !semtypes.IsZero(ty) {
+		value = semtypes.ToString(*p.LambdaResolutionContext, ty)
+	}
+	p.PrintString(fmt.Sprintf("[%s=%s]", label, value))
 }
 
 func (p *PrettyPrinter) printFunctionTypeParam(node *BLangFunctionTypeParam) {

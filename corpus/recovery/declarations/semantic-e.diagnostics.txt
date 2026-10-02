@@ -1,3 +1,9 @@
+error[SEMANTIC_ERROR]: only object and error types can be distinct
+  --> recovery/declarations/semantic-e.bal:17:14
+   |
+17 | type Invalid distinct int; // @error
+   |              ^^^^^^^^^^^^
+
 error[SEMANTIC_ERROR]: type definition Invalid is empty
   --> recovery/declarations/semantic-e.bal:1:1
    |
@@ -36,11 +42,4 @@ error[SEMANTIC_ERROR]: type definition Invalid is empty
 17 | type Invalid distinct int; // @error
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 18 | function valid() {}
-   | 
-
-error[SEMANTIC_ERROR]: only object and error types can be distinct
-  --> recovery/declarations/semantic-e.bal:17:14
    |
-17 | type Invalid distinct int; // @error
-   |              ^^^^^^^^^^^^
-

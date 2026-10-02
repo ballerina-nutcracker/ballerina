@@ -1,0 +1,5 @@
+error[SEMANTIC_ERROR]: Unknown symbol: missingInferred
+  --> recovery/functions/lambda-inferred-e.bal:21:59
+   |
+21 |     function(int) returns int inferred = value => value + missingInferred; // @error
+   |                                                           ^^^^^^^^^^^^^^^

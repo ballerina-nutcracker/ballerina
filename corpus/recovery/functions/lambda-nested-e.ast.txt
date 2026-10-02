@@ -1,0 +1,70 @@
+(package
+  (function consume (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function consumeFunction (
+    (variable callable (type
+      (function-type () (
+        (value-type int)))))) (
+    (value-type int))
+    (expr-function-body
+      (invocation callable ())))
+  (function nestedBodies () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable before (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 1))))
+      (var-def
+        (variable after (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 2))))
+      (if
+        (type-test-expr is
+          (simple-var-ref before)
+          (value-type int))
+        (block-stmt
+          (if
+            (type-test-expr is
+              (simple-var-ref after)
+              (value-type int))
+            (block-stmt
+              (var-def
+                (variable enclosing (expr
+                  (lambda [callable=function() returns int] [function=never] [name=never]
+                    (function $anonFunc$_0 () (
+                      (value-type int))
+                      (block-function-body
+                        (expression-stmt
+                          (invocation consumeFunction (
+                            (lambda [callable=function() returns int] [function=never] [name=never] [expression-body=unresolved]
+                              (function $anonFunc$_1 () (
+                                (value-type int))
+                                (expr-function-body
+                                  (binary-expr +
+                                    (simple-var-ref before)
+                                    (simple-var-ref missingNested))))))))
+                        (expression-stmt
+                          (invocation consume (
+                            (simple-var-ref after))))
+                        (return
+                          (literal 1))))))))
+              (expression-stmt
+                (invocation consume (
+                  (invocation enclosing ()))))
+              (expression-stmt
+                (invocation consume (
+                  (simple-var-ref before))))
+              (expression-stmt
+                (invocation consume (
+                  (simple-var-ref after))))) ())
+          (block-stmt)) ())
+      (block-stmt))))

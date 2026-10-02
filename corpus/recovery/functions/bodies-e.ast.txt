@@ -27,14 +27,14 @@
     (block-function-body
       (var-def
         (variable explicit (expr
-          (lambda
+          (lambda [callable=function() returns int] [function=never] [name=never] [expression-body=unresolved]
             (function $anonFunc$_0 () (
               (value-type int))
               (expr-function-body
                 (bad-expr-or-action)))))))
       (var-def
         (variable block (expr
-          (lambda
+          (lambda [callable=function() returns int] [function=never] [name=never]
             (function $anonFunc$_1 () (
               (value-type int))
               (block-function-body
