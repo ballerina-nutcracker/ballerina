@@ -1,0 +1,12 @@
+-- stdout --
+ok: {"age":30,"height":1.75,"name":"alice","nickname":"nn"}
+ok: {"age":30,"height":1.75,"name":"alice","nickname":"al","tags":["a","b"]}
+ValidationError: age must be an adult and Validation failed for '$.height:maxFractionDigits','$.name:minLength' constraint(s).
+ValidationError: name is too long.
+ValidationError: age must be an adult and name is too long.
+ValidationError: age must be an adult, name is too long and Validation failed for '$.height:maxFractionDigits','$.nickname:minLength','$.tags:maxLength' constraint(s).
+ok: {"title":"launch","begins":{"year":2999,"month":1,"day":1}}
+ValidationError: Validation failed for '$.begins:futureDate' constraint(s).
+ValidationError: Validation failed for '$.day:validDate' constraint(s).
+ok: {"name":"x","year":2023,"month":2,"day":28}
+-- stderr --

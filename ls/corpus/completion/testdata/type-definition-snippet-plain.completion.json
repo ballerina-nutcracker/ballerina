@@ -165,6 +165,29 @@
           ]
         },
         {
+          "label": "ballerina/constraint",
+          "kind": 9,
+          "detail": "Module",
+          "sortText": "076",
+          "filterText": "constraint",
+          "insertText": "constraint",
+          "additionalTextEdits": [
+            {
+              "range": {
+                "start": {
+                  "line": 0,
+                  "character": 0
+                },
+                "end": {
+                  "line": 0,
+                  "character": 0
+                }
+              },
+              "newText": "import ballerina/constraint;\n"
+            }
+          ]
+        },
+        {
           "label": "ballerina/crypto",
           "kind": 9,
           "detail": "Module",
