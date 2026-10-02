@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate key 'age' in mapping constructor
+  --> readonly-duplicate-e.bal:23:31
+   |
+23 |     var x = {readonly age: 1, age: 2}; // @error duplicate key
+   |                               ^^^
+
+error[SEMANTIC_ERROR]: duplicate key 'age' in mapping constructor
+  --> readonly-duplicate-e.bal:24:28
+   |
+24 |     var y = {readonly age, "age": 2}; // @error duplicate key
+   |                            ^^^^^
+
+error[SEMANTIC_ERROR]: duplicate key 'age' in mapping constructor
+  --> readonly-duplicate-e.bal:25:33
+   |
+25 |     var z = {"age": 1, readonly age: 2}; // @error duplicate key
+   |                                 ^^^

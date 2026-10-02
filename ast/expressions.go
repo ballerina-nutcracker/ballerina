@@ -18,6 +18,7 @@ package ast
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -533,9 +534,10 @@ type (
 
 	BLangMappingConstructorExpr struct {
 		bLangExpressionBase
-		Fields        []MappingField
-		AtomicType    semtypes.MappingAtomicType
-		FieldDefaults []model.FieldDefault
+		Fields             []MappingField
+		ReadonlyFields     []string
+		SelectedAtomicType semtypes.MappingAtomicType
+		FieldDefaults      []model.FieldDefault
 	}
 
 	BLangNamedArgsExpression struct {
@@ -1233,6 +1235,11 @@ func (b *BLangMappingKeyValueField) GetValue() BLangExpression {
 
 func (b *BLangMappingKeyValueField) IsKeyValueField() bool {
 	return true
+}
+
+// IsReadonly reports whether the named field carried an explicit readonly prefix.
+func (b *BLangMappingConstructorExpr) IsReadonly(name string) bool {
+	return slices.Contains(b.ReadonlyFields, name)
 }
 
 func (b *BLangMappingConstructorExpr) GetFields() []MappingField {

@@ -15,9 +15,13 @@
 // under the License.
 
 
+
 import ballerina/io;
 
 public function main() {
-    var x = {readonly "foo": 1}; // @error future: readonly mapping constructor field
-    io:println(x); // @output {"foo":1}
+    var x = {readonly a: 1, b: 2};
+    map<int> m = x;
+    m["b"] = 20;
+    io:println(m); // @output {"a":1,"b":20}
+    m["a"] = 10; // @panic cannot mutate readonly field
 }

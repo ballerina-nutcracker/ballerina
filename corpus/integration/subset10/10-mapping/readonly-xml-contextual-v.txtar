@@ -1,0 +1,9 @@
+-- stdout --
+{"d":<a/>}
+true
+{"d":<a/><b/>}
+true
+true
+true
+true
+-- stderr --

@@ -1,0 +1,54 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad 2
+    %4 = ConstantLoad 2
+    %5 = newArray [int, int, never...][%4]{%2, %3}
+    %6 = ConstantLoad inner
+    %7 = ConstantLoad v
+    %8 = ConstantLoad 1
+    %9 = newMap {| v: int, never... |}{%7=%8}
+    %10 = newMap {| a: [int, int, never...], inner: {| v: int, never... |}, never... |}{%1=%5, %6=%9}
+    x = %10;
+    %13 = ConstantLoad a
+    %12 = x[%13];
+    y = %12;
+    %15 = println(y) -> bb1;
+  }
+  bb1 {
+    %16 = isReadonly(y) -> bb2;
+  }
+  bb2 {
+    %17 = %16;
+    %18 = println(%17) -> bb3;
+  }
+  bb3 {
+    %20 = ConstantLoad v
+    %22 = ConstantLoad inner
+    %21 = x[%22];
+    %19 = %21[%20];
+    %23 = %19;
+    %24 = println(%23) -> bb4;
+  }
+  bb4 {
+    %26 = ConstantLoad inner
+    %25 = x[%26];
+    %27 = isReadonly(%25) -> bb5;
+  }
+  bb5 {
+    %28 = %27;
+    %29 = println(%28) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+isReadonly(any) -> boolean{
+  bb0 {
+    %2 = v is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %0 = %2;
+    return;
+  }
+}

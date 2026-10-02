@@ -1,0 +1,13 @@
+-- stdout --
+{"document":<a/>}
+true
+{"document":<a/><!--c-->}
+true
+{"document":<a>text</a>}
+true
+{"document":<a><b/></a>}
+true
+false
+true
+true
+-- stderr --

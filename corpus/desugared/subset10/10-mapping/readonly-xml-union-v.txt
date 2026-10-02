@@ -1,0 +1,86 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable element (type
+          (union-type
+            (intersection-type
+              (value-type xml)
+              (value-type readonly))
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (xml-element-literal a))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref element))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (simple-var-ref element))))))
+      (var-def
+        (variable sequence (type
+          (union-type
+            (intersection-type
+              (value-type xml)
+              (value-type readonly))
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-comment-literal c)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref sequence))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (simple-var-ref sequence))))))
+      (var-def
+        (variable interpolated (type
+          (union-type
+            (intersection-type
+              (value-type xml)
+              (value-type readonly))
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (xml-template-literal
+            (template-string "<a>")
+            (invocation lang.__internal escapeXMLContent (
+              (literal text)))
+            (template-string "</a>")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref interpolated))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (simple-var-ref interpolated))))))
+      (var-def
+        (variable mutable (type
+          (union-type
+            (value-type xml)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-comment-literal c)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (simple-var-ref mutable))))))))
+  (function isReadonly (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type readonly))))))
