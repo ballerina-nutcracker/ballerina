@@ -1,0 +1,36 @@
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/members/class-e.bal:23:32
+   |
+23 |     function valid() { int x = ; int later = 2; } // @error
+   |                                
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/members/class-e.bal:18:9
+   |
+18 |     int _; // @error
+   |         ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/members/class-e.bal:20:14
+   |
+20 |     function _(int x) {} // @error
+   |              ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/members/class-e.bal:21:23
+   |
+21 |     function init(int _) {} // @error
+   |                       ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/members/class-e.bal:22:10
+   |
+22 |     *mod:_; // @error
+   |          ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/members/class-e.bal:25:10
+   |
+25 | function _() {} // @error
+   |          ^
+

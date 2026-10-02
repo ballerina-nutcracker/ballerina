@@ -1,0 +1,6 @@
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/expressions/xml-e.bal:18:20
+   |
+18 |     x = value.<mod:_>; // @error
+   |                    ^
+

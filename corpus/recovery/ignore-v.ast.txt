@@ -1,0 +1,16 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function ignore () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (literal 1))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 2))))))
+  (function valid () (
+    (value-type null))
+    (block-function-body)))

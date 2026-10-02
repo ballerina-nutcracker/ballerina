@@ -1,0 +1,18 @@
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/expressions/operands-e.bal:18:18
+   |
+18 |     int unary = -; // @error
+   |                  
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/expressions/operands-e.bal:19:21
+   |
+19 |     int binary = 1 +; // @error
+   |                     
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/expressions/operands-e.bal:20:27
+   |
+20 |     int nested = (1 + (2 *)); // @error
+   |                           
+

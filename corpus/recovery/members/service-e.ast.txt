@@ -1,0 +1,29 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (service
+    (absolute-resource-path /)
+    (on
+    (simple-var-ref endpoint))
+    (variable goodField (type
+      (value-type int)))
+    (function valid () (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (bad-expr-or-action))))
+        (var-def
+          (variable later (type
+            (value-type int)) (expr
+            (literal 2))))))
+    (resource-function get name:good
+      (value-type int)
+      (expr-function-body
+        (literal 1)))
+    (bad-top-level)
+    (bad-top-level)
+    (bad-top-level))
+  (function valid () (
+    (value-type null))
+    (block-function-body)))

@@ -1,0 +1,25 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function nested () (
+    (value-type null))
+    (block-function-body
+      (if
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable inner (type
+              (value-type int)) (expr
+              (literal 1))))
+          (bad-stmt)) (
+        (block-stmt
+          (var-def
+            (variable other (type
+              (value-type int)) (expr
+              (literal 2)))))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 3))))))
+  (function valid () (
+    (value-type null))
+    (block-function-body)))

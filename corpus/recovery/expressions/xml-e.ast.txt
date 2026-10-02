@@ -1,0 +1,13 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function xmlNames () (
+    (value-type null))
+    (block-function-body
+      (bad-stmt)
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 1))))))
+  (function valid () (
+    (value-type null))
+    (block-function-body)))

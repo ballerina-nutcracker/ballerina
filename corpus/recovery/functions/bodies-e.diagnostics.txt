@@ -1,0 +1,30 @@
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:18:18
+   |
+18 |     int broken = ; // @error
+   |                  
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:23:45
+   |
+23 | function expressionBody() returns int => 1 +; // @error
+   |                                             
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:25:49
+   |
+25 |     var explicit = function() returns int => 1 +; // @error
+   |                                                 
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/bodies-e.bal:26:55
+   |
+26 |     var block = function() returns int { int broken = ; return 1; }; // @error
+   |                                                       
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/functions/bodies-e.bal:19:11
+   |
+19 |     { int '_ = 1; int inner = 2; } // @error
+   |           ^^^
+

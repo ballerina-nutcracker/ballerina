@@ -1,0 +1,56 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function names () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (assignment
+        (simple-var-ref x)
+        (bad-expr-or-action))
+      (var-def
+        (variable c (type
+          (user-defined-type C)) (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable d (type
+          (user-defined-type C)) (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 3))))))
+  (function valid () (
+    (value-type null))
+    (block-function-body)))

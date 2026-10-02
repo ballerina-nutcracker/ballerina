@@ -1,0 +1,36 @@
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/functions/lambdas-e.bal:20:30
+   |
+20 |     var c = function(int x = ) returns int => 1; // @error
+   |                              
+
+error[SYNTAX_ERROR]: duplicate qualifier
+  --> recovery/functions/lambdas-e.bal:23:13
+   |
+23 |     var f = isolated isolated function() returns int => 1; // @error
+   |             ^^^^^^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/functions/lambdas-e.bal:18:26
+   |
+18 |     var a = function(int _) returns int => 1; // @error
+   |                          ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/functions/lambdas-e.bal:19:29
+   |
+19 |     var b = function(int... _) returns int => 1; // @error
+   |                             ^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/functions/lambdas-e.bal:21:36
+   |
+21 |     var d = function() returns mod:_ => 1; // @error
+   |                                    ^^
+
+error[SYNTAX_ERROR]: invalid identifier
+  --> recovery/functions/lambdas-e.bal:22:14
+   |
+22 |     var e = (_)=>1; // @error
+   |              ^
+
