@@ -53,9 +53,11 @@ var (
 	cliIntegrationBalEnv      string
 	cliIntegrationBinsErr     error
 	cliIntegrationCoverMerge  sync.Mutex
+	cliIntegrationBinsDir     string
 
 	cliIntegrationNoRuntimeBalBinOnce sync.Once
 	cliIntegrationNoRuntimeBalBin     string
+	cliIntegrationNoRuntimeBalBinDir  string
 	cliIntegrationNoRuntimeBalBinErr  error
 )
 
@@ -5187,11 +5189,14 @@ func ensureCLIIntegrationBalBinaries(t *testing.T) {
 		if cliIntegrationBinsErr != nil {
 			return
 		}
-		tmpDir, err := os.MkdirTemp("", "bal-cli-test")
+		// This directory is shared by tests through sync.Once, so TestMain
+		// removes it after the package test suite completes.
+		tmpDir, err := os.MkdirTemp("", "bal-cli-test") //nolint:usetesting // suite-owned shared binary directory
 		if err != nil {
 			cliIntegrationBinsErr = err
 			return
 		}
+		cliIntegrationBinsDir = tmpDir
 
 		// bal build looks up its runner stub at
 		// <dist>/rt/<GOOS>-<GOARCH>/balrt (executable.ResolveStub,
@@ -5238,6 +5243,19 @@ func ensureCLIIntegrationBalBinaries(t *testing.T) {
 	if cliIntegrationBinsErr != nil {
 		t.Fatalf("cli integration test binaries: %v", cliIntegrationBinsErr)
 	}
+}
+
+func removeCLIIntegrationTempDirs() error {
+	var errs []error
+	for _, dir := range []string{cliIntegrationBinsDir, cliIntegrationNoRuntimeBalBinDir} {
+		if dir == "" {
+			continue
+		}
+		if err := os.RemoveAll(dir); err != nil {
+			errs = append(errs, fmt.Errorf("remove %q: %w", dir, err))
+		}
+	}
+	return errors.Join(errs...)
 }
 
 func resolveCLICoverageDir() (string, error) {
@@ -5299,11 +5317,14 @@ func buildBalBinaryTo(repoRoot, coverDir, outputPath string, debugBuild bool) er
 func balBinaryWithoutRuntimeStub(t *testing.T, repoRoot, coverDir string) string {
 	t.Helper()
 	cliIntegrationNoRuntimeBalBinOnce.Do(func() {
-		dir, err := os.MkdirTemp("", "bal-cli-test-no-runtime")
+		// This directory is shared by tests through sync.Once, so TestMain
+		// removes it after the package test suite completes.
+		dir, err := os.MkdirTemp("", "bal-cli-test-no-runtime") //nolint:usetesting // suite-owned shared binary directory
 		if err != nil {
 			cliIntegrationNoRuntimeBalBinErr = err
 			return
 		}
+		cliIntegrationNoRuntimeBalBinDir = dir
 		cliIntegrationNoRuntimeBalBin = filepath.Join(dir, cliIntegrationBalExecutableName(false))
 		cliIntegrationNoRuntimeBalBinErr = buildBalBinaryTo(repoRoot, coverDir, cliIntegrationNoRuntimeBalBin, false)
 	})
