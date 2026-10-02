@@ -1,0 +1,12 @@
+-- stdout --
+true
+target-file.txt
+true
+true
+1 true
+false
+true
+false
+true
+true
+-- stderr --

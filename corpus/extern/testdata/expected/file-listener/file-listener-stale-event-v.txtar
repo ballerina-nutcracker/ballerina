@@ -1,0 +1,5 @@
+-- stdout --
+afterStop=0
+afterRestart=0
+newWatch=1
+-- stderr --

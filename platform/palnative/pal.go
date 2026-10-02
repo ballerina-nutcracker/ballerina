@@ -22,11 +22,14 @@ package palnative
 
 import (
 	"bytes"
+	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
@@ -96,6 +99,32 @@ func NewPlatform() (pal.Platform, func()) {
 				}
 				return os.OpenFile(path, flag, 0o644)
 			},
+			Getwd: os.Getwd,
+			Abs:   Abs,
+			Mkdir: func(path string) error {
+				return os.Mkdir(path, 0o755)
+			},
+			MkdirAll: func(path string) error {
+				return os.MkdirAll(path, 0o755)
+			},
+			Remove:    os.Remove,
+			RemoveAll: os.RemoveAll,
+			Rename:    os.Rename,
+			CreateFile: func(path string) error {
+				f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+				if err != nil {
+					return err
+				}
+				return f.Close()
+			},
+			Stat:          Stat,
+			Lstat:         Lstat,
+			ReadDir:       ReadDir,
+			Copy:          CopyFS,
+			CreateTemp:    CreateTemp,
+			CreateTempDir: CreateTempDir,
+			Readlink:      os.Readlink,
+			Watch:         Watch,
 		},
 		OS: pal.OS{
 			GetEnv: func(name string) string {
@@ -198,4 +227,262 @@ func (p *nativeProcess) Kill() {
 	if p.cmd.Process != nil {
 		_ = p.cmd.Process.Kill()
 	}
+}
+
+// FS helpers
+
+// Abs makes path absolute against the working directory. Like Java's
+// Path.toAbsolutePath, which jBallerina uses, it drops redundant separators
+// but keeps "." and ".." segments, since collapsing ".." textually changes the
+// meaning of a path through a symlink. On Windows a rooted path without a
+// drive, such as \foo, resolves against the working directory's drive.
+func Abs(path string) (string, error) {
+	path = filepath.FromSlash(path)
+	if !filepath.IsAbs(path) {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		if filepath.VolumeName(path) == "" && len(path) > 0 && os.IsPathSeparator(path[0]) {
+			path = filepath.VolumeName(cwd) + path
+		} else {
+			path = cwd + string(filepath.Separator) + path
+		}
+	}
+	return dropRedundantSeparators(path), nil
+}
+
+func dropRedundantSeparators(path string) string {
+	volume := filepath.VolumeName(path)
+	var b strings.Builder
+	b.WriteString(volume)
+	rest := path[len(volume):]
+	for i := 0; i < len(rest); i++ {
+		if i > 0 && os.IsPathSeparator(rest[i]) && os.IsPathSeparator(rest[i-1]) {
+			continue
+		}
+		b.WriteByte(rest[i])
+	}
+	result := b.String()
+	if len(result) > len(volume)+1 && os.IsPathSeparator(result[len(result)-1]) {
+		result = result[:len(result)-1]
+	}
+	return result
+}
+
+// Stat returns metadata for path, following symbolic links. Exposed at package
+// level so test harnesses can wrap it with their own path mapping.
+func Stat(path string) (*pal.FileInfo, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	info := newFileInfo(path, fi)
+	return &info, nil
+}
+
+// Lstat returns metadata for path without following a final symbolic link.
+func Lstat(path string) (*pal.FileInfo, error) {
+	fi, err := os.Lstat(path)
+	if err != nil {
+		return nil, err
+	}
+	info := newFileInfo(path, fi)
+	info.IsSymlink = fi.Mode()&os.ModeSymlink != 0
+	return &info, nil
+}
+
+// ReadDir returns metadata for each entry of the directory at path. Like
+// jBallerina, entries that are symbolic links report their target's metadata,
+// and a dangling link fails the whole listing.
+func ReadDir(path string) ([]pal.FileInfo, error) {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]pal.FileInfo, 0, len(entries))
+	for _, entry := range entries {
+		info, err := Stat(filepath.Join(path, entry.Name()))
+		if err != nil {
+			return nil, err
+		}
+		info.IsSymlink = entry.Type()&os.ModeSymlink != 0
+		result = append(result, *info)
+	}
+	return result, nil
+}
+
+func newFileInfo(path string, fi os.FileInfo) pal.FileInfo {
+	absPath, _ := filepath.Abs(path)
+	return pal.FileInfo{
+		AbsPath:    absPath,
+		Size:       fi.Size(),
+		ModifiedAt: fi.ModTime(),
+		IsDir:      fi.IsDir(),
+		IsReadable: IsReadable(path, fi),
+		IsWritable: IsWritable(path, fi),
+	}
+}
+
+func IsReadable(path string, _ os.FileInfo) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	_ = f.Close()
+	return true
+}
+
+func IsWritable(path string, fi os.FileInfo) bool {
+	if fi.IsDir() {
+		return isDirWritable(path)
+	}
+	f, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err != nil {
+		return false
+	}
+	_ = f.Close()
+	return true
+}
+
+func CreateTemp(prefix, suffix, dir string) (string, error) {
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	f, err := os.CreateTemp(dir, prefix+"*"+suffix)
+	if err != nil {
+		return "", err
+	}
+	name := f.Name()
+	_ = f.Close()
+	abs, _ := filepath.Abs(name)
+	return abs, nil
+}
+
+func CreateTempDir(prefix, suffix, dir string) (string, error) {
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	path, err := os.MkdirTemp(dir, prefix+"*"+suffix)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Abs(path)
+}
+
+func CopyFS(src, dst string, opts pal.CopyOptions) error {
+	return copyEntry(src, dst, opts, nil)
+}
+
+// copyEntry copies src to dst. Unless NoFollowLinks is set, a symlink is
+// copied as its target, so a symlinked directory is copied as a full tree.
+// jBallerina instead produces an empty directory there, because its tree walk
+// never follows links; that is a bug, and the README records the difference.
+func copyEntry(src, dst string, opts pal.CopyOptions, ancestors []os.FileInfo) error {
+	info, err := os.Lstat(src)
+	if err != nil {
+		return err
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		if opts.NoFollowLinks {
+			return copySymlink(src, dst, opts)
+		}
+		if info, err = os.Stat(src); err != nil {
+			return err
+		}
+	}
+	if info.IsDir() {
+		return copyDir(src, dst, info, opts, ancestors)
+	}
+	return copyFile(src, dst, opts)
+}
+
+// copyDir copies the directory src into dst, merging into dst if it already
+// exists. ancestors holds the directories being copied above src, so a
+// followed symlink that loops back to one of them fails instead of recursing
+// forever.
+func copyDir(src, dst string, info os.FileInfo, opts pal.CopyOptions, ancestors []os.FileInfo) error {
+	for _, ancestor := range ancestors {
+		if os.SameFile(ancestor, info) {
+			return &os.PathError{Op: "copy", Path: src, Err: errors.New("symbolic link loop")}
+		}
+	}
+	if err := os.MkdirAll(dst, 0o755); err != nil {
+		return err
+	}
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return err
+	}
+	ancestors = append(ancestors, info)
+	for _, entry := range entries {
+		if err := copyEntry(filepath.Join(src, entry.Name()), filepath.Join(dst, entry.Name()), opts, ancestors); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func copySymlink(src, dst string, opts pal.CopyOptions) error {
+	target, err := os.Readlink(src)
+	if err != nil {
+		return err
+	}
+	if opts.ReplaceExisting {
+		if err := os.Remove(dst); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+	}
+	return os.Symlink(target, dst)
+}
+
+// copyFile follows Java's Files.copy, which jBallerina uses: copying a file
+// onto itself, including through a hard link, is a no-op, and an existing
+// destination is deleted before the copy rather than overwritten in place, so
+// the copy never writes through a destination symlink or hard link.
+func copyFile(src, dst string, opts pal.CopyOptions) error {
+	info, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+	if dstInfo, err := os.Lstat(dst); err == nil {
+		if os.SameFile(info, dstInfo) {
+			return nil
+		}
+		if !opts.ReplaceExisting {
+			return &os.PathError{Op: "copy", Path: dst, Err: os.ErrExist}
+		}
+		if err := os.Remove(dst); err != nil {
+			return err
+		}
+	}
+	if err := copyContents(src, dst); err != nil {
+		return err
+	}
+	if !opts.CopyAttributes {
+		return nil
+	}
+	if err := os.Chmod(dst, info.Mode().Perm()); err != nil {
+		return err
+	}
+	return os.Chtimes(dst, time.Time{}, info.ModTime())
+}
+
+func copyContents(src, dst string) (err error) {
+	srcF, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = srcF.Close() }()
+	dstF, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if cerr := dstF.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
+	_, err = io.Copy(dstF, srcF)
+	return err
 }
