@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: mapping constructor spread field not implemented
+  --> default-spread-fe.bal:24:14
+   |
+24 | const R A = {...PART}; // @error constant mapping spread field not implemented
+   |              ^^^^^^^

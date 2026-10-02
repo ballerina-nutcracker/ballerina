@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> default-nested-constructor-e.bal:31:19
+   |
+31 | const Omitted A = {}; // @error default of inner omits the non-constant x
+   |                   ^^

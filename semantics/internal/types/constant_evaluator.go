@@ -41,7 +41,10 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 	case *ast.BLangLiteral, *ast.BLangNumericLiteral, *ast.BLangConstRef:
 		return nil, true
 	case *ast.BLangVarRef:
-		if vs, ok := t.getSymbol(e.Symbol()).(model.ValueSymbol); ok && vs.IsConst() {
+		// model.ValueSymbol.IsConst also covers final variables and parameters,
+		// which are immutable bindings without a compile-time value. Only a
+		// constant symbol can be folded, and evaluateConstantReference agrees.
+		if _, ok := t.getSymbol(t.unnarrowedSymbol(e.Symbol())).(*model.ConstantValueSymbol); ok {
 			return nil, true
 		}
 		return expr, false
@@ -91,6 +94,9 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 				return offender, false
 			}
 		}
+		if !constantMappingDefaultsAvailable(e) {
+			return e, false
+		}
 		return nil, true
 	case *ast.BLangTemplateExpr:
 		for _, insertion := range e.Insertions {
@@ -109,6 +115,52 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 	default:
 		return expr, false
 	}
+}
+
+// constantMappingDefaultsAvailable reports whether every field the constructor
+// leaves out has a default that folded to a constant. A constructor using a
+// feature the evaluator does not support yet keeps its own unimplemented
+// diagnostic instead of being rejected here as non-constant.
+func constantMappingDefaultsAvailable(e *ast.BLangMappingConstructorExpr) bool {
+	if len(e.FieldDefaults) == 0 {
+		return true
+	}
+	supplied := make(map[string]bool, len(e.Fields))
+	for _, field := range e.Fields {
+		kv, isKeyValue := field.(*ast.BLangMappingKeyValueField)
+		if !isKeyValue || kv.Key.Kind == ast.MappingKeyComputed {
+			return true
+		}
+		keyName, ok := common.StaticMappingKeyName(kv.Key)
+		if !ok {
+			return true
+		}
+		supplied[keyName] = true
+	}
+	for _, fieldDefault := range e.FieldDefaults {
+		if !supplied[fieldDefault.FieldName] && !fieldDefault.IsConst {
+			return false
+		}
+	}
+	return true
+}
+
+// classifyFieldDefault folds a record field's default expression when it is a
+// constant expression, so a constant mapping constructor can supply the field
+// without running the generated default function. A supported constant
+// expression that fails to fold has already reported its own diagnostic, and
+// fails record resolution rather than publishing partial metadata.
+func classifyFieldDefault(t typeResolver, field *ast.BField) bool {
+	if _, ok := isConstantExpression(t, field.Default.Expr); !ok {
+		return true
+	}
+	value, ok := foldConstant(t, field.Default.Expr)
+	if !ok {
+		return false
+	}
+	field.Default.Value = value
+	field.Default.IsConst = true
+	return true
 }
 
 type constantExpressionEvaluator struct {
@@ -218,7 +270,8 @@ func (e *constantExpressionEvaluator) evaluateConstantReference(ref model.Symbol
 }
 
 func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLangMappingConstructorExpr) (values.BalValue, bool) {
-	entries := make([]values.MapEntry, 0, len(expr.Fields))
+	entries := make([]values.MapEntry, 0, len(expr.Fields)+len(expr.FieldDefaults))
+	supplied := make(map[string]bool, len(expr.Fields))
 	for _, field := range expr.Fields {
 		kv, ok := field.(*ast.BLangMappingKeyValueField)
 		if !ok {
@@ -233,6 +286,17 @@ func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLang
 			return nil, false
 		}
 		entries = append(entries, values.MapEntry{Key: key, Value: value})
+		supplied[key] = true
+	}
+
+	for _, fieldDefault := range expr.FieldDefaults {
+		if supplied[fieldDefault.FieldName] {
+			continue
+		}
+		if !fieldDefault.IsConst {
+			return e.internalFailure("omitted field default is not constant", expr.GetPosition())
+		}
+		entries = append(entries, values.MapEntry{Key: fieldDefault.FieldName, Value: fieldDefault.Value})
 	}
 
 	return e.readonlyMappingValue(entries, expr.GetPosition())

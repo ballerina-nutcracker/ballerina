@@ -1,0 +1,114 @@
+module $anon.. v 0.0.0;
+next() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"inner":{"x":5,"y":1},"k":0}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad {"inner":{"x":5,"y":1},"k":0}
+    %4 = %3 is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %5 = %4;
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad {"inner":{"x":7,"y":1},"k":0}
+    %8 = println(%7) -> bb3;
+  }
+  bb3 {
+    %9 = newMap {| inner: {| x: int, y: int, never... |}, k: int, never... |}{} defaults{inner=$anon/.:$default$4, k=$anon/.:$default$5}
+    o = %9;
+    %11 = println(o) -> bb4;
+  }
+  bb4 {
+    %12 = ConstantLoad {"node":{"value":1,"next":null},"other":{"value":3,"next":null}}
+    %13 = println(%12) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = next() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> {| x: int, y: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 5
+    %3 = newMap {| x: int, y: int, never... |}{%1=%2} defaults{x=$anon/.:$default$0, y=$anon/.:$default$1}
+    %0 = %3;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}
+$default$4() -> {| x: int, y: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad y
+    %2 = ConstantLoad 2
+    %3 = newMap {| x: int, y: int, never... |}{%1=%2} defaults{x=$anon/.:$default$0, y=$anon/.:$default$1}
+    %0 = %3;
+    return;
+  }
+}
+$default$5() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}
+$default$6() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$7() -> nil|{| next: nil|..., value: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$default$8() -> {| next: nil|..., value: int, never... |}{
+  bb0 {
+    %1 = newMap {| next: nil|..., value: int, never... |}{} defaults{value=$anon/.:$default$6, next=$anon/.:$default$7}
+    %0 = %1;
+    return;
+  }
+}
+$default$9() -> {| next: nil|..., value: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad value
+    %2 = ConstantLoad 3
+    %3 = newMap {| next: nil|..., value: int, never... |}{%1=%2} defaults{value=$anon/.:$default$6, next=$anon/.:$default$7}
+    %0 = %3;
+    return;
+  }
+}

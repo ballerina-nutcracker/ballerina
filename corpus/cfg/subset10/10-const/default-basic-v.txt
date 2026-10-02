@@ -1,0 +1,48 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref A)
+          (user-defined-type One)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref A)
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref B))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref C))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref D))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref E))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref E)
+          (user-defined-type Mixed)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref A)
+          (intersection-type
+            (value-type readonly)
+            (record-type
+              (field x
+                (finite-type
+                  (literal 5)))))))))
+  )
+)
