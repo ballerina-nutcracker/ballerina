@@ -22,6 +22,11 @@ function types() {
     int '_ = 1; // @error
     int = 2; // @error
     mod:_ local = 3; // @error
-    int later = 4;
+    int later = 4; // @error unused surviving sibling
 }
 function valid() {}
+function discarded(int _) {} // @error discarded signature
+function discardedReferences() {
+    discarded(); // @error unresolved discarded declaration
+    int surviving = 5; // @error unused surviving sibling
+}

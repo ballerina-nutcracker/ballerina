@@ -4,3 +4,11 @@ error[SYNTAX_ERROR]: invalid identifier
 18 |     x = value.<mod:_>; // @error
    |                    ^
 
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/expressions/xml-e.bal:19:1
+   |
+19 |     int later = 1; // @error unused surviving sibling
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | }
+   | 
+

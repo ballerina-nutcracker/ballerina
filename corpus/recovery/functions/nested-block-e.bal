@@ -16,6 +16,6 @@
 
 function nested() {
     if true { int inner = 1; else { int other = 2; } // @error
-    int later = 3;
+    int later = 3; // @error unused surviving sibling
 }
 function valid() {}

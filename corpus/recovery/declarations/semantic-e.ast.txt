@@ -1,5 +1,4 @@
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (type-definition Invalid
     (value-type never))
   (function valid () (

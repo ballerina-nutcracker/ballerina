@@ -30,6 +30,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/nodebuilder"
 	"github.com/ballerina-nutcracker/ballerina/parser"
 	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/semantics"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
 	"github.com/ballerina-nutcracker/ballerina/test_util/langlib"
@@ -39,7 +40,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
-const recoveryTarget = testphases.PhaseAST
+const recoveryTarget = testphases.PhaseSymbolResolution
 
 func TestRecovery(t *testing.T) {
 	count := 0
@@ -68,7 +69,7 @@ func TestRecovery(t *testing.T) {
 				t.Fatal(err)
 			}
 			printer := ast.PrettyPrinter{}
-			actualAST := printer.Print(result.CompilationUnit)
+			actualAST := printer.Print(result.Package)
 			diagnosticResult := projects.NewDiagnosticResult(cx.Diagnostics())
 			var diagnosticText bytes.Buffer
 			testharness.PrintDiagnostics(os.DirFS("."), &diagnosticText, diagnosticResult, cx.DiagnosticEnv())
@@ -111,8 +112,19 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 	if result.CompilationUnit == nil {
 		return nil, fmt.Errorf("recovered compilation unit is nil")
 	}
-	result.Package = nodebuilder.ToPackageFromCompilationUnits(cx, []*ast.BLangCompilationUnit{result.CompilationUnit})
-	completed := testphases.PhaseAST
+	if langlibs == nil {
+		langlibs, err = testphases.LoadLanglibs(env, cx)
+		if err != nil {
+			return nil, fmt.Errorf("loading recovery langlibs: %w", err)
+		}
+	}
+	pkgID := result.CompilationUnit.GetPackageID()
+	units := []*ast.BLangCompilationUnit{result.CompilationUnit}
+	pkgScope, _, _ := semantics.ResolveSymbols(cx, *pkgID, units, langlibs.ImplicitImports, langlibs.PublicSymbols, nil, "", "")
+	completed := testphases.PhaseSymbolResolution
+	result.Package = nodebuilder.ToPackageFromCompilationUnits(cx, units)
+	result.Package.PackageID = pkgID
+	result.Package.Scope = pkgScope
 	for _, d := range cx.Diagnostics() {
 		info := d.DiagnosticInfo()
 		if info.Code() == "INTERNAL_ERROR" || info.Code() == "UNIMPLEMENTED_ERROR" || info.Severity() == diagnostics.Fatal {

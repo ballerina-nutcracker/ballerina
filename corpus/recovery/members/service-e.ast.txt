@@ -1,11 +1,26 @@
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
+  (class-definition Surviving
+    (variable good (type
+      (value-type int)))
+    (function method () (
+      (value-type int))
+      (expr-function-body
+        (field-based-access good
+          (simple-var-ref self)))))
   (service
     (absolute-resource-path /)
     (on
     (simple-var-ref endpoint))
     (variable goodField (type
       (value-type int)))
+    (function useMembers () (
+      (value-type int))
+      (block-function-body
+        (expression-stmt
+          (invocation valid ()))
+        (return
+          (field-based-access goodField
+            (simple-var-ref self)))))
     (function valid () (
       (value-type null))
       (block-function-body
@@ -20,10 +35,10 @@
     (resource-function get name:good
       (value-type int)
       (expr-function-body
-        (literal 1)))
+        (invocation useMembers ())))
     (bad-top-level)
     (bad-top-level)
     (bad-top-level))
-  (function valid () (
+  (function independent () (
     (value-type null))
     (block-function-body)))

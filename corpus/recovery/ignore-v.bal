@@ -17,5 +17,6 @@
 function ignore() {
     int _ = 1;
     int later = 2;
+    _ = later;
 }
 function valid() {}

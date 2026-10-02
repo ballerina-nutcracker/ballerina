@@ -18,6 +18,6 @@ function operands() {
     int unary = -; // @error
     int binary = 1 +; // @error
     int nested = (1 + (2 *)); // @error
-    int later = 3;
+    int later = 3; // @error unused surviving sibling
 }
 function valid() returns int => 4;

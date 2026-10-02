@@ -1,5 +1,4 @@
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function names () (
     (value-type null))
     (block-function-body

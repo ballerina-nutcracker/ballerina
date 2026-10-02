@@ -1,7 +1,15 @@
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/members/service-e.bal:22:32
+error[SYNTAX_ERROR]: type inclusion in object constructor
+  --> recovery/members/service-e.bal:20:1
    |
-22 |     function valid() { int x = ; int later = 2; } // @error
+20 |     *mod:_; // @error
+   |     ^^^^^^^^^^^^^^^^^
+21 |     resource function get path(int _) {} // @error
+   |     ^^^^^^^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/members/service-e.bal:23:32
+   |
+23 |     function valid() { int x = ; int later = 2; } // @error
    |                                
 
 error[SYNTAX_ERROR]: invalid identifier
@@ -11,14 +19,32 @@ error[SYNTAX_ERROR]: invalid identifier
    |         ^
 
 error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/members/service-e.bal:20:36
+  --> recovery/members/service-e.bal:21:36
    |
-20 |     resource function get path(int _) {} // @error
+21 |     resource function get path(int _) {} // @error
    |                                    ^
 
 error[SYNTAX_ERROR]: invalid identifier
-  --> recovery/members/service-e.bal:21:23
+  --> recovery/members/service-e.bal:22:23
    |
-21 |     function init(int _) {} // @error
+22 |     function init(int _) {} // @error
    |                       ^
+
+error[SEMANTIC_ERROR]: Unknown symbol: endpoint
+  --> recovery/members/service-e.bal:17:14
+   |
+17 | service / on endpoint { // @error unresolved endpoint
+   |              ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> recovery/members/service-e.bal:23:24
+   |
+23 |     function valid() { int x = ; int later = 2; } // @error
+   |                        ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/members/service-e.bal:23:34
+   |
+23 |     function valid() { int x = ; int later = 2; } // @error
+   |                                  ^^^^^^^^^^^^^^^
 

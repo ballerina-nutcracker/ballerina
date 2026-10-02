@@ -14,12 +14,21 @@
 // specific language governing permissions and limitations
 // under the License.
 
-service / on endpoint {
+service / on endpoint { // @error unresolved endpoint
     int _; // @error
     int goodField;
+    *mod:_; // @error
     resource function get path(int _) {} // @error
     function init(int _) {} // @error
     function valid() { int x = ; int later = 2; } // @error
-    resource function get good() returns int => 1;
+    function useMembers() returns int {
+        valid();
+        return self.goodField;
+    }
+    resource function get good() returns int => useMembers();
 }
-function valid() {}
+function independent() {}
+class Surviving {
+    int good;
+    function method() returns int => self.good;
+}

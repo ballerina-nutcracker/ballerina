@@ -1,7 +1,4 @@
-(compilation-unit
-(package-id $anon . 0.0.0)
-  (bad-top-level)
-  (bad-top-level)
+(package
   (type-definition Broken
     (bad-type))
   (type-definition Nested
@@ -21,4 +18,16 @@
           (literal 4))))))
   (function valid () (
     (value-type null))
-    (block-function-body)))
+    (block-function-body))
+  (function discardedReferences () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation discarded ()))
+      (var-def
+        (variable surviving (type
+          (value-type int)) (expr
+          (literal 5))))))
+  (bad-top-level)
+  (bad-top-level)
+  (bad-top-level))

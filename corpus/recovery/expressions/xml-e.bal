@@ -16,6 +16,6 @@
 
 function xmlNames() {
     x = value.<mod:_>; // @error
-    int later = 1;
+    int later = 1; // @error unused surviving sibling
 }
 function valid() {}

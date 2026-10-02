@@ -29,6 +29,6 @@ function names() {
     x = Target.@mod:_; // @error
     C c = new C(_ = 1); // @error
     C d = new('_ = 1); // @error
-    int later = 3;
+    int later = 3; // @error unused surviving sibling
 }
 function valid() {}

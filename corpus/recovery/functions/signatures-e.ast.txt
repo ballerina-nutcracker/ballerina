@@ -1,15 +1,14 @@
-(compilation-unit
-(package-id $anon . 0.0.0)
-  (bad-top-level)
-  (bad-top-level)
-  (bad-top-level)
-  (bad-top-level)
-  (bad-top-level)
-  (bad-top-level)
-  (bad-top-level)
-  (bad-top-level)
-  (bad-top-level)
+(package
   (function valid () (
     (value-type int))
     (expr-function-body
-      (literal 1))))
+      (literal 1)))
+  (bad-top-level)
+  (bad-top-level)
+  (bad-top-level)
+  (bad-top-level)
+  (bad-top-level)
+  (bad-top-level)
+  (bad-top-level)
+  (bad-top-level)
+  (bad-top-level))
