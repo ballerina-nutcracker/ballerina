@@ -1,0 +1,7 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation _ println (
+        (literal quoted alias preserved))))
+  )
+)

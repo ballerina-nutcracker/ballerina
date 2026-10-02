@@ -411,6 +411,9 @@ func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 }
 
 func (sa *semanticAnalyzer) processImport(importNode *ast.BLangImportPackage) {
+	if importNode.Alias.OriginalValue == string(model.IGNORE) {
+		return
+	}
 	alias := importNode.Alias.GetValue()
 
 	// Check for duplicate imports

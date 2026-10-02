@@ -1,0 +1,3 @@
+-- stdout --
+quoted underscore import prefix
+-- stderr --
