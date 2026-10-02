@@ -2812,6 +2812,9 @@ func (n *nodeBuilder) transformModuleVariableDeclaration(moduleVariableDeclarati
 	typedBindingPattern := moduleVariableDeclarationNode.TypedBindingPattern()
 	pos := n.getPositionWithoutMetadata(moduleVariableDeclarationNode)
 	nameNode := n.getBLangVariableNode(typedBindingPattern.BindingPattern(), pos)
+	if nameNode == nil {
+		return n.badTopLevel(moduleVariableDeclarationNode)
+	}
 
 	typeDesc := typedBindingPattern.TypeDescriptor()
 	isDeclaredWithVar := typeDesc != nil && isDeclaredWithVar(typeDesc)

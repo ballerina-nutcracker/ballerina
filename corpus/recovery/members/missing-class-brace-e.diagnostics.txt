@@ -1,0 +1,35 @@
+error[SEMANTIC_ERROR]: redeclared symbol 'valid'
+  --> recovery/members/missing-class-brace-e.bal:19:14
+   |
+19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
+   |              ^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'valid'
+  --> recovery/members/missing-class-brace-e.bal:20:10
+   |
+20 | function valid() { C surviving; } // @error duplicate declaration after class recovery
+   |          ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> recovery/members/missing-class-brace-e.bal:19:34
+   |
+19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
+   |                                  ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> recovery/members/missing-class-brace-e.bal:19:24
+   |
+19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
+   |                        ^^^^^^^^^^
+
+error[SYNTAX_ERROR]: missing close brace token
+  --> recovery/members/missing-class-brace-e.bal:18:1
+   |
+18 |     ; // @error malformed member
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/members/missing-class-brace-e.bal:19:32
+   |
+19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
+   |

@@ -69,7 +69,7 @@ func TestRecovery(t *testing.T) {
 				t.Fatal(err)
 			}
 			typeContext := semtypes.ContextFrom(env.GetTypeEnv())
-			printer := ast.PrettyPrinter{LambdaResolutionContext: &typeContext}
+			printer := ast.PrettyPrinter{LambdaResolutionContext: &typeContext, Fallback: printRecoveryFallback}
 			actualAST := printer.Print(result.Package)
 			diagnosticResult := projects.NewDiagnosticResult(cx.Diagnostics())
 			var diagnosticText bytes.Buffer
@@ -85,6 +85,17 @@ func TestRecovery(t *testing.T) {
 	}
 	if count == 0 {
 		t.Fatal("no recovery fixtures discovered")
+	}
+}
+
+func printRecoveryFallback(p *ast.PrettyPrinter, node ast.BLangNode) {
+	switch node.(type) {
+	case *ast.BLangExternFunctionBody:
+		p.StartNode()
+		p.PrintString("extern-function-body")
+		p.EndNode()
+	default:
+		panic(fmt.Sprintf("unsupported recovery node type: %T", node))
 	}
 }
 

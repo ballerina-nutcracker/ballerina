@@ -827,6 +827,9 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 	resolvers := make([]*functionTypeResolver, len(fns))
 	var wg sync.WaitGroup
 	for i, fn := range fns {
+		if !ast.SymbolIsSet(fn) {
+			continue
+		}
 		if isOpaqueFunctionDecl(p, fn) {
 			// The declaration of an opaque function has no body of its own to resolve;
 			// a call to it is monomorphized into a function of the call's own types.
@@ -1188,8 +1191,9 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 	}
 	pkg.SetDeterminedType(semtypes.Never)
 	for i := range pkg.GlobalVars {
-		resolveGlobalVarInit(t, pkg.GlobalVars[i])
-		setOtherNodesAsNever(pkg.GlobalVars[i])
+		if resolveGlobalVarInit(t, pkg.GlobalVars[i]) {
+			setOtherNodesAsNever(pkg.GlobalVars[i])
+		}
 	}
 	detectGlobalVarInitCycles(t, pkg)
 	attachPointBound := common.ListenerAttachPointBound(t.typeContext())
@@ -2095,6 +2099,9 @@ func resolveOnFailClause(t typeResolver, chain *binding, clause *ast.BLangOnFail
 }
 
 func resolveFunctionSignature(t typeResolver, fn *ast.BLangFunction, depth int) (semtypes.SemType, bool) {
+	if !ast.SymbolIsSet(fn) {
+		return semtypes.SemType{}, false
+	}
 	fnSym := t.getSymbol(fn.Symbol())
 	if depSym, ok := fnSym.(model.DependentlyTypedFunctionSymbol); ok {
 		return resolveDependentlyTypedFunctionSignature(t, fn, depSym, depth)
@@ -3715,6 +3722,9 @@ func resolveGlobalVarType(t typeResolver, node *ast.BLangVariable) bool {
 }
 
 func resolveGlobalVarInit(t typeResolver, node *ast.BLangVariable) bool {
+	if node.TypeNode() != nil && semtypes.IsZero(node.GetDeterminedType()) {
+		return false
+	}
 	if node.Expr == nil {
 		return true
 	}
@@ -3725,9 +3735,6 @@ func resolveGlobalVarInit(t typeResolver, node *ast.BLangVariable) bool {
 		return resolveSimpleVariable(t, nil, node)
 	}
 	semType := node.GetDeterminedType()
-	if semtypes.IsZero(semType) {
-		return false
-	}
 	expectedType := semType
 	if node.IsListener() {
 		// A listener-decl is allowed to have an init expression whose type
