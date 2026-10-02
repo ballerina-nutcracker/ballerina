@@ -1,4 +1,37 @@
--- stdout --
+-- names-types-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+int '_ = 1; // @error
+type _ int; // @error
+type Broken mod:_; // @error
+type Nested map<mod:_>[]; // @error
+function types() {
+    int '_ = 1; // @error
+    int = 2; // @error
+    mod:_ local = 3; // @error
+    int later = 4; // @error unused surviving sibling
+}
+function valid() {}
+function discarded(int _) {} // @error discarded signature
+function discardedReferences() {
+    discarded(); // @error unresolved discarded declaration
+    int surviving = 5; // @error unused surviving sibling
+}
+-- ast --
 (package
   (type-definition Broken
     (bad-type))
@@ -32,81 +65,3 @@
   (bad-top-level)
   (bad-top-level)
   (bad-top-level))
--- stderr --
-error[SEMANTIC_ERROR]: Unknown symbol: discarded
-  --> recovery/declarations/names-types-e.bal:30:1
-   |
-30 |     discarded(); // @error unresolved discarded declaration
-   |     ^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> recovery/declarations/names-types-e.bal:25:1
-   |
-25 |     int later = 4; // @error unused surviving sibling
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-26 | }
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'local'
-  --> recovery/declarations/names-types-e.bal:24:1
-   |
-24 |     mod:_ local = 3; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
-25 |     int later = 4; // @error unused surviving sibling
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'surviving'
-  --> recovery/declarations/names-types-e.bal:31:1
-   |
-31 |     int surviving = 5; // @error unused surviving sibling
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-32 | }
-   |
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/declarations/names-types-e.bal:17:5
-   |
-17 | int '_ = 1; // @error
-   |     ^^^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/declarations/names-types-e.bal:18:6
-   |
-18 | type _ int; // @error
-   |      ^^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/declarations/names-types-e.bal:19:17
-   |
-19 | type Broken mod:_; // @error
-   |                 ^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/declarations/names-types-e.bal:20:21
-   |
-20 | type Nested map<mod:_>[]; // @error
-   |                     ^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/declarations/names-types-e.bal:22:9
-   |
-22 |     int '_ = 1; // @error
-   |         ^^^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/declarations/names-types-e.bal:24:9
-   |
-24 |     mod:_ local = 3; // @error
-   |         ^^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/declarations/names-types-e.bal:28:24
-   |
-28 | function discarded(int _) {} // @error discarded signature
-   |                        ^
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/declarations/names-types-e.bal:23:9
-   |
-23 |     int = 2; // @error
-   |

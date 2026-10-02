@@ -14,9 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function ignore() {
-    int _ = 1;
-    int later = 2;
-    _ = later;
-}
-function valid() {}
+type I int;
+type D distinct I; // @error distinct is not permitted for scalar aliases
+public function main() {}

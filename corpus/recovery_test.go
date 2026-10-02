@@ -17,13 +17,9 @@
 package corpus
 
 import (
-	"bytes"
-	"cmp"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 
@@ -40,63 +36,64 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/test_util/langlib"
 	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
 	"github.com/ballerina-nutcracker/ballerina/test_util/testphases"
-	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
+	"golang.org/x/tools/txtar"
 )
 
 func TestRecovery(t *testing.T) {
+	t.Parallel()
 	count := 0
 	err := filepath.WalkDir("recovery", func(inputPath string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if entry.IsDir() || !strings.HasSuffix(inputPath, ".bal") {
+		if entry.IsDir() || !strings.HasSuffix(inputPath, ".txtar") {
 			return nil
 		}
 		count++
-		t.Run(strings.TrimSuffix(strings.TrimPrefix(inputPath, "recovery/"), ".bal"), func(t *testing.T) {
+		t.Run(strings.TrimSuffix(strings.TrimPrefix(inputPath, "recovery/"), ".txtar"), func(t *testing.T) {
+			t.Parallel()
 			defer func() {
 				if r := recover(); r != nil {
 					t.Errorf("recovery pipeline panicked: %v", r)
 				}
 			}()
-			content, err := os.ReadFile(inputPath)
+			archive, err := txtar.ParseFile(inputPath)
 			if err != nil {
 				t.Fatal(err)
 			}
+			sourceName := strings.TrimSuffix(filepath.Base(inputPath), ".txtar") + ".bal"
+			if len(archive.Files) != 2 || archive.Files[0].Name != sourceName || archive.Files[1].Name != "ast" {
+				t.Fatalf("expected exactly %s and ast sections in %s", sourceName, inputPath)
+			}
+			content := string(archive.Files[0].Data)
+			sourcePath := filepath.Join(filepath.Dir(inputPath), sourceName)
 			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 			cx := context.NewCompilerContext(env)
 			astOnly := strings.HasPrefix(filepath.ToSlash(inputPath), "recovery/ast/")
 			var result *testphases.PipelineResult
 			if astOnly {
-				result, err = runRecoveryAST(cx, inputPath, string(content))
+				result, err = runRecoveryAST(cx, sourcePath, content)
 			} else {
-				result, err = runRecoveryPipeline(env, cx, nil, inputPath, string(content))
+				result, err = runRecoveryPipeline(env, cx, nil, sourcePath, content)
 			}
 			if err != nil {
 				t.Fatal(err)
 			}
-			typeContext := semtypes.ContextFrom(env.GetTypeEnv())
-			printer := ast.PrettyPrinter{LambdaResolutionContext: &typeContext, Fallback: printRecoveryFallback, ShowNodeLocations: astOnly, DiagnosticEnv: cx.DiagnosticEnv()}
+			for _, diagnostic := range cx.Diagnostics() {
+				if diagnostic.DiagnosticInfo().Code() == "INTERNAL_ERROR" {
+					t.Errorf("recovery pipeline reported an internal error: %s", diagnostic.String())
+				}
+			}
+			testharness.ValidateErrorMarkers(t, sourcePath, content, projects.NewDiagnosticResult(cx.Diagnostics()), cx.DiagnosticEnv())
+			printer := ast.PrettyPrinter{Fallback: printRecoveryFallback, ShowNodeLocations: astOnly, DiagnosticEnv: cx.DiagnosticEnv()}
 			var actualAST string
 			if astOnly {
 				actualAST = printer.Print(result.CompilationUnit)
-				if strings.HasSuffix(inputPath, "-v.bal") {
-					tree, err := parser.GetSyntaxTree(cx, inputPath, string(content))
-					if err != nil {
-						t.Fatal(err)
-					}
-					strictPrinter := ast.PrettyPrinter{ShowNodeLocations: true, DiagnosticEnv: cx.DiagnosticEnv(), Fallback: printRecoveryFallback}
-					actualAST = "strict AST:\n" + strictPrinter.Print(nodebuilder.GetCompilationUnit(cx, tree)) + "\nrecovered AST:\n" + actualAST
-				}
 			} else {
-				actualAST = printer.Print(result.Package)
+				actualAST = printer.Print(result.Package) + printLambdaResolutionTypes(semtypes.ContextFrom(env.GetTypeEnv()), result.Package)
 			}
-			diagnosticResult := projects.NewDiagnosticResult(sortedRecoveryDiagnostics(cx))
-			var diagnosticText bytes.Buffer
-			testharness.PrintDiagnostics(os.DirFS("."), &diagnosticText, diagnosticResult, cx.DiagnosticEnv())
-			testharness.ValidateErrorMarkers(t, inputPath, string(content), diagnosticResult, cx.DiagnosticEnv())
-			compareRecoveryGolden(t, strings.TrimSuffix(inputPath, ".bal")+".txtar", actualAST, normalizeIntegrationStderr(diagnosticText.String()))
+			compareRecoveryGolden(t, inputPath, archive, actualAST)
 		})
 		return nil
 	})
@@ -106,22 +103,6 @@ func TestRecovery(t *testing.T) {
 	if count == 0 {
 		t.Fatal("no recovery fixtures discovered")
 	}
-}
-
-func sortedRecoveryDiagnostics(cx *context.CompilerContext) []diagnostics.Diagnostic {
-	diags := slices.Clone(cx.Diagnostics())
-	slices.SortFunc(diags, func(a, b diagnostics.Diagnostic) int {
-		al, bl := a.Location(), b.Location()
-		return cmp.Or(
-			strings.Compare(cx.DiagnosticEnv().FileName(al), cx.DiagnosticEnv().FileName(bl)),
-			cmp.Compare(al.StartOffset(), bl.StartOffset()),
-			cmp.Compare(al.EndOffset(), bl.EndOffset()),
-			cmp.Compare(a.DiagnosticInfo().Severity(), b.DiagnosticInfo().Severity()),
-			strings.Compare(a.DiagnosticInfo().Code(), b.DiagnosticInfo().Code()),
-			strings.Compare(a.Message(), b.Message()),
-		)
-	})
-	return diags
 }
 
 func printRecoveryFallback(p *ast.PrettyPrinter, node ast.BLangNode) {
@@ -135,25 +116,70 @@ func printRecoveryFallback(p *ast.PrettyPrinter, node ast.BLangNode) {
 	}
 }
 
-func compareRecoveryGolden(t *testing.T, expectedPath, actualAST, actualDiagnostics string) {
+type lambdaCollector struct {
+	lambdas []*ast.BLangLambdaFunction
+}
+
+func (c *lambdaCollector) Visit(node ast.BLangNode) ast.Visitor {
+	if lambda, ok := node.(*ast.BLangLambdaFunction); ok {
+		c.lambdas = append(c.lambdas, lambda)
+	}
+	return c
+}
+
+func (c *lambdaCollector) VisitTypeData(*ast.TypeData) ast.Visitor { return c }
+
+// printLambdaResolutionTypes reports the types resolved for each lambda, which
+// the AST printer does not show, so recovery goldens can assert them.
+func printLambdaResolutionTypes(typeContext semtypes.Context, pkg *ast.BLangPackage) string {
+	collector := &lambdaCollector{}
+	ast.Walk(collector, pkg)
+	if len(collector.lambdas) == 0 {
+		return ""
+	}
+	var sb strings.Builder
+	sb.WriteString("\n(lambda-types")
+	for _, lambda := range collector.lambdas {
+		sb.WriteString("\n  (")
+		if lambda.Function == nil {
+			sb.WriteString("<missing-function>")
+			writeLambdaResolutionType(&sb, typeContext, "callable", lambda.GetDeterminedType())
+			sb.WriteString(")")
+			continue
+		}
+		sb.WriteString(lambda.Function.Name.GetValue())
+		writeLambdaResolutionType(&sb, typeContext, "callable", lambda.GetDeterminedType())
+		writeLambdaResolutionType(&sb, typeContext, "function", lambda.Function.GetDeterminedType())
+		writeLambdaResolutionType(&sb, typeContext, "name", lambda.Function.Name.GetDeterminedType())
+		if body, ok := lambda.Function.Body.(*ast.BLangExprFunctionBody); ok {
+			writeLambdaResolutionType(&sb, typeContext, "expression-body", body.GetDeterminedType())
+		}
+		sb.WriteString(")")
+	}
+	sb.WriteString(")\n")
+	return sb.String()
+}
+
+func writeLambdaResolutionType(sb *strings.Builder, typeContext semtypes.Context, label string, ty semtypes.SemType) {
+	value := "unresolved"
+	if !semtypes.IsZero(ty) {
+		value = semtypes.ToString(typeContext, ty)
+	}
+	fmt.Fprintf(sb, " [%s=%s]", label, value)
+}
+
+func compareRecoveryGolden(t *testing.T, inputPath string, archive *txtar.Archive, actualAST string) {
 	t.Helper()
+	expectedAST := string(archive.Files[1].Data)
 	if *update {
-		if test_util.UpdateTxtarArchiveIfNeeded(t, expectedPath, test_util.TxtarFilesStdoutStderr(actualAST, actualDiagnostics)) {
-			t.Errorf("updated recovery golden: %s", expectedPath)
+		archive.Files[1].Data = []byte(actualAST)
+		if test_util.UpdateTxtarArchiveIfNeeded(t, inputPath, archive.Files) {
+			t.Errorf("updated recovery AST: %s", inputPath)
 		}
 		return
 	}
-	expectedAST, expectedDiagnostics, err := test_util.LoadTxtarStdoutStderr(expectedPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, output := range []struct{ name, expected, actual string }{
-		{"AST", expectedAST, actualAST},
-		{"diagnostics", expectedDiagnostics, actualDiagnostics},
-	} {
-		if test_util.NormalizeNewlines(output.expected) != test_util.NormalizeNewlines(output.actual) {
-			t.Errorf("recovery %s mismatch: %s\n%s", output.name, expectedPath, test_util.FormatExpectedGot(output.expected, output.actual))
-		}
+	if test_util.NormalizeNewlines(expectedAST) != test_util.NormalizeNewlines(actualAST) {
+		t.Errorf("recovery AST mismatch: %s\n%s", inputPath, test_util.FormatExpectedGot(expectedAST, actualAST))
 	}
 }
 
@@ -244,12 +270,6 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 		return nil
 	}); err != nil {
 		return nil, err
-	}
-	for _, d := range cx.Diagnostics() {
-		info := d.DiagnosticInfo()
-		if info.Code() == "INTERNAL_ERROR" || info.Code() == "UNIMPLEMENTED_ERROR" || info.Severity() == diagnostics.Fatal {
-			return nil, fmt.Errorf("non-recoverable diagnostic: %s: %s", info.Code(), d.Message())
-		}
 	}
 	if phases.completed != testphases.PhaseSemanticAnalysis {
 		return nil, fmt.Errorf("recovery reached phase %d, want semantic analysis", phases.completed)

@@ -18,7 +18,7 @@ public type A record { B b; string x; string x; }; // @error
 
 public type B record { A? a; };
 
-public B g = {a: {b: {a: ()}, x: "q"}}; // @error cascades from the failed record
+public B g = {a: {b: {a: ()}, x: "q"}};
 
 public function main() {
 }

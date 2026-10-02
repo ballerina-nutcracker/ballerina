@@ -1,3 +1,4 @@
+-- declarations-listener-annotation-e.bal --
 // Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
@@ -14,5 +15,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function foo() { x = 1 + 02; } // @error original parser diagnostic only
+listener int = 1; // @error
+annotation on function; // @error
 function valid() {}
+-- ast --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (bad-top-level (position 1:1 18:1))
+  (bad-top-level (position 18:1 19:1))
+  (function (position 19:1 20:1) valid () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 19:18 20:1))))

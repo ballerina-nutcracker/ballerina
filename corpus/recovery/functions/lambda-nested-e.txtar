@@ -1,4 +1,40 @@
--- stdout --
+-- lambda-nested-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function consume(int value) returns int => value;
+function consumeFunction(function() returns int callable) returns int => callable();
+
+function nestedBodies() {
+    int|string before = 1;
+    int|string after = 2;
+    if before is int {
+        if after is int {
+            var enclosing = function() returns int {
+                consumeFunction(function() returns int => before + missingNested); // @error
+                consume(after); // @error capture after nested failure in enclosing context
+                return 1;
+            };
+            consume(enclosing()); // @error expression value must be assigned
+            consume(before); // @error nested capture propagated
+            consume(after); // @error enclosing capture context restored
+        }
+    }
+}
+-- ast --
 (package
   (function consume (
     (variable value (type
@@ -40,13 +76,13 @@
             (block-stmt
               (var-def
                 (variable enclosing (expr
-                  (lambda [callable=function() returns int] [function=never] [name=never]
+                  (lambda
                     (function $anonFunc$_0 () (
                       (value-type int))
                       (block-function-body
                         (expression-stmt
                           (invocation consumeFunction (
-                            (lambda [callable=function() returns int] [function=never] [name=never] [expression-body=unresolved]
+                            (lambda
                               (function $anonFunc$_1 () (
                                 (value-type int))
                                 (expr-function-body
@@ -69,39 +105,6 @@
                   (simple-var-ref after))))) ())
           (block-stmt)) ())
       (block-stmt))))
--- stderr --
-error[SEMANTIC_ERROR]: Unknown symbol: missingNested
-  --> recovery/functions/lambda-nested-e.bal:26:68
-   |
-26 |                 consumeFunction(function() returns int => before + missingNested); // @error
-   |                                                                    ^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: expression value must be assigned
-  --> recovery/functions/lambda-nested-e.bal:26:1
-   |
-26 |                 consumeFunction(function() returns int => before + missingNested); // @error
-   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: expression value must be assigned
-  --> recovery/functions/lambda-nested-e.bal:30:1
-   |
-30 |             consume(enclosing()); // @error expression value must be assigned
-   |             ^^^^^^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> recovery/functions/lambda-nested-e.bal:27:1
-   |
-27 |                 consume(after); // @error capture after nested failure in enclosing context
-   |                 ^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> recovery/functions/lambda-nested-e.bal:31:1
-   |
-31 |             consume(before); // @error nested capture propagated
-   |             ^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> recovery/functions/lambda-nested-e.bal:32:1
-   |
-32 |             consume(after); // @error enclosing capture context restored
-   |             ^^^^^^^^^^^^^^
+(lambda-types
+  ($anonFunc$_0 [callable=function() returns int] [function=never] [name=never])
+  ($anonFunc$_1 [callable=function() returns int] [function=never] [name=never] [expression-body=unresolved]))

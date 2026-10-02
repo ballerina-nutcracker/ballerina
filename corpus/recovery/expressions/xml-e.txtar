@@ -1,4 +1,26 @@
--- stdout --
+-- xml-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function xmlNames() {
+    x = value.<mod:_>; // @error
+    int later = 1; // @error unused surviving sibling
+}
+function valid() {}
+-- ast --
 (package
   (function xmlNames () (
     (value-type null))
@@ -11,17 +33,3 @@
   (function valid () (
     (value-type null))
     (block-function-body)))
--- stderr --
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> recovery/expressions/xml-e.bal:19:1
-   |
-19 |     int later = 1; // @error unused surviving sibling
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-20 | }
-   |
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/xml-e.bal:18:20
-   |
-18 |     x = value.<mod:_>; // @error
-   |                    ^

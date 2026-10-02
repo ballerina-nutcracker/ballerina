@@ -24,12 +24,6 @@ error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
 46 | type B string & int; // @error
    |        ^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: listener initializer is not a listener
-  --> toplevel5-e.bal:24:1
-   |
-24 | public listener int l = 1 + "l"; // @error
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 error[SEMANTIC_ERROR]: service type must be a subtype of service object {}
   --> toplevel5-e.bal:43:1
    |

@@ -211,6 +211,8 @@ type packageTypeResolver struct {
 	// constants and module-level vars) for cycle detection.
 	// Absence means resolution has not started.
 	lazyResolutionStatus  map[model.SymbolRef]resolutionStatus
+	typeDependents        map[model.SymbolRef]map[model.SymbolRef]bool
+	resolvingTypes        []model.SymbolRef
 	functionNodes         map[model.SymbolRef]*ast.BLangFunction
 	typeDefnNodes         map[model.SymbolRef]*ast.BLangTypeDefinition
 	classDefnNodes        map[model.SymbolRef]*ast.BLangClassDefinition
@@ -699,6 +701,8 @@ func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage,
 		packageConstants:     make(map[model.SymbolRef]*ast.BLangVariable),
 		globalVarNodes:       make(map[model.SymbolRef]*ast.BLangVariable),
 		lazyResolutionStatus: make(map[model.SymbolRef]resolutionStatus),
+		typeDependents:       make(map[model.SymbolRef]map[model.SymbolRef]bool),
+		resolvingTypes:       nil,
 		functionNodes:        make(map[model.SymbolRef]*ast.BLangFunction),
 		typeDefnNodes:        make(map[model.SymbolRef]*ast.BLangTypeDefinition),
 		classDefnNodes:       make(map[model.SymbolRef]*ast.BLangClassDefinition),
@@ -708,6 +712,13 @@ func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage,
 }
 
 func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) bool {
+	if len(t.resolvingTypes) != 0 && !ref.IsEmpty() {
+		dependent := t.resolvingTypes[len(t.resolvingTypes)-1]
+		if t.typeDependents[ref] == nil {
+			t.typeDependents[ref] = make(map[model.SymbolRef]bool)
+		}
+		t.typeDependents[ref][dependent] = true
+	}
 	if ref.IsEmpty() || t.lazyResolutionStatus[ref] == resolutionFailed {
 		return false
 	}
@@ -928,7 +939,7 @@ func (t *packageTypeResolver) resolveLazyConstant(constant *ast.BLangVariable) b
 
 // topologicallySortConstants orders constants so that each comes after the constants it depends on.
 // Constants on a cycle, and constants depending on them, are left out after the cycle is reported.
-func topologicallySortConstants(t typeResolver, constants []*ast.BLangVariable) []int {
+func topologicallySortConstants(t *packageTypeResolver, constants []*ast.BLangVariable) []int {
 	nodeSet := make(map[model.SymbolRef]int, len(constants))
 	for i := range constants {
 		nodeSet[constants[i].Symbol()] = i
@@ -976,6 +987,9 @@ func topologicallySortConstants(t typeResolver, constants []*ast.BLangVariable) 
 
 	var visit func(int) bool
 	visit = func(i int) bool {
+		if t.lazyResolutionStatus[constants[i].Symbol()] == resolutionFailed {
+			return false
+		}
 		switch state[i] {
 		case inStack:
 			reportCycle(i)
@@ -993,6 +1007,7 @@ func topologicallySortConstants(t typeResolver, constants []*ast.BLangVariable) 
 		for _, d := range deps[i] {
 			if !visit(d) {
 				state[i] = failed
+				t.lazyResolutionStatus[constants[i].Symbol()] = resolutionFailed
 				return false
 			}
 		}
@@ -1154,10 +1169,10 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 		}
 		t.ensureResolved(gv.Symbol(), 0)
 	}
+	resolvePackageConstants(t, pkg)
 	for i := range pkg.XmlnsList {
 		resolveXMLNS(t, nil, pkg.XmlnsList[i])
 	}
-	resolvePackageConstants(t, pkg)
 	// Annotation values can depend on constants, so resolve them after constants
 	// have been folded even though the annotated type/function nodes were
 	// resolved earlier in the top-level pass.
@@ -1190,14 +1205,19 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 		classDef.Name.SetDeterminedType(semtypes.Never)
 	}
 	pkg.SetDeterminedType(semtypes.Never)
+	resolvedListeners := make([]*ast.BLangVariable, 0)
 	for i := range pkg.GlobalVars {
-		if resolveGlobalVarInit(t, pkg.GlobalVars[i]) {
-			setOtherNodesAsNever(pkg.GlobalVars[i])
+		gv := pkg.GlobalVars[i]
+		if resolveGlobalVarInit(t, gv) {
+			setOtherNodesAsNever(gv)
+			if gv.IsListener() {
+				resolvedListeners = append(resolvedListeners, gv)
+			}
 		}
 	}
 	detectGlobalVarInitCycles(t, pkg)
 	attachPointBound := common.ListenerAttachPointBound(t.typeContext())
-	validateListenerVars(t, pkg, attachPointBound)
+	validateListenerVars(t, resolvedListeners, attachPointBound)
 	for i := range pkg.Services {
 		svc := pkg.Services[i]
 		if !resolveServiceAttachedExpressions(t, svc) || !resolveServiceType(t, svc, 0, attachPointBound) {
@@ -2648,6 +2668,20 @@ func setRecordDefaultFnSignature(t typeResolver, fnRef model.SymbolRef, fieldTy 
 	}
 }
 
+// Recursive types can retain an in-progress definition after its owner fails.
+// Invalidate its dependents too, so the closed recovery definition is never used
+// as a successfully resolved declaration.
+func (p *packageTypeResolver) failTypeDefinition(ref model.SymbolRef) {
+	if p.lazyResolutionStatus[ref] == resolutionFailed {
+		return
+	}
+	p.lazyResolutionStatus[ref] = resolutionFailed
+	p.setSymbolType(ref, semtypes.SemType{})
+	for dependent := range p.typeDependents[ref] {
+		p.failTypeDefinition(dependent)
+	}
+}
+
 func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth int) bool {
 	p := packageResolver(t)
 	if p.lazyResolutionStatus[defn.Symbol()] == resolutionFailed {
@@ -2664,6 +2698,8 @@ func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth 
 		return false
 	}
 	defn.SetCycleDepth(depth)
+	p.resolvingTypes = append(p.resolvingTypes, defn.Symbol())
+	defer func() { p.resolvingTypes = p.resolvingTypes[:len(p.resolvingTypes)-1] }()
 	typeDescriptor := defn.GetTypeData().TypeDescriptor.(ast.BType)
 	var semType semtypes.SemType
 	var ok bool
@@ -2673,12 +2709,11 @@ func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth 
 		semType, ok = resolveBType(t, typeDescriptor, depth)
 	}
 	if ok {
-		semType = resolveDistinctTypeDefinition(t, defn, semType)
+		semType, ok = resolveDistinctTypeDefinition(t, defn, semType)
 	}
-	if !ok {
+	if !ok || p.lazyResolutionStatus[defn.Symbol()] == resolutionFailed {
 		defn.SetCycleDepth(-1)
-		p.lazyResolutionStatus[defn.Symbol()] = resolutionFailed
-		t.setSymbolType(defn.Symbol(), semtypes.SemType{})
+		p.failTypeDefinition(defn.Symbol())
 		return false
 	}
 	if semtypes.IsZero(defn.GetDeterminedType()) {
@@ -2715,36 +2750,39 @@ func resolveClassTypeDefinition(t typeResolver, classDef *ast.BLangClassDefiniti
 		return false
 	}
 	classDef.SetCycleDepth(depth)
+	p.resolvingTypes = append(p.resolvingTypes, classDef.Symbol())
+	defer func() { p.resolvingTypes = p.resolvingTypes[:len(p.resolvingTypes)-1] }()
 	_, ok := resolveClassDefinitionType(t, classDef, depth)
+	ok = ok && p.lazyResolutionStatus[classDef.Symbol()] != resolutionFailed
 	if !ok {
 		classDef.SetCycleDepth(-1)
-		p.lazyResolutionStatus[classDef.Symbol()] = resolutionFailed
-		t.setSymbolType(classDef.Symbol(), semtypes.SemType{})
+		p.failTypeDefinition(classDef.Symbol())
 	}
 	return ok
 }
 
-func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinition, semType semtypes.SemType) semtypes.SemType {
+func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinition, semType semtypes.SemType) (semtypes.SemType, bool) {
 	switch typeDesc := typeDef.GetTypeData().TypeDescriptor.(type) {
 	case *ast.BLangObjectType:
-		return appendDistinctObjectAtoms(t, semType, typeDef.Symbol(), typeDesc.Inclusions)
+		return appendDistinctObjectAtoms(t, semType, typeDef.Symbol(), typeDesc.Inclusions), true
 	case *ast.BLangErrorTypeNode:
-		return appendDistinctErrorAtoms(t, semType, typeDef)
+		return appendDistinctErrorAtoms(t, semType, typeDef), true
 	case *ast.BLangUserDefinedType:
 		if !typeDef.IsDistinct() {
-			return semType
+			return semType, true
 		}
 		parent := t.getSymbol(typeDesc.Symbol())
 		switch parent.(type) {
 		case *model.ErrorTypeSymbol:
-			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ErrorDistinct)
+			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ErrorDistinct), true
 		case model.ObjectType:
-			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ObjectDefinitionDistinct)
+			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ObjectDefinitionDistinct), true
 		default:
-			return semType
+			t.semanticError("only object and error types can be distinct", typeDef.GetPosition())
+			return semtypes.SemType{}, false
 		}
 	default:
-		return semType
+		return semType, true
 	}
 }
 
@@ -3775,13 +3813,9 @@ func resolveServiceAttachedExpressions(t typeResolver, svc *ast.BLangService) bo
 // validateListenerVars verifies each module-level listener variable's
 // resolved type is a subtype of the global LISTENER top type. Reports a
 // semantic error otherwise.
-func validateListenerVars(t typeResolver, pkg *ast.BLangPackage, attachPointBound semtypes.SemType) {
+func validateListenerVars(t typeResolver, listeners []*ast.BLangVariable, attachPointBound semtypes.SemType) {
 	tyCtx := t.typeContext()
-	for i := range pkg.GlobalVars {
-		gv := pkg.GlobalVars[i]
-		if !gv.IsListener() {
-			continue
-		}
+	for _, gv := range listeners {
 		ty := gv.GetDeterminedType()
 		if semtypes.IsZero(ty) {
 			t.internalError("listener variable has no determined type", gv.GetPosition())
@@ -4113,6 +4147,9 @@ func resolveTypedescExpr(t typeResolver, chain *binding, e *ast.BLangTypedescExp
 }
 
 func resolveAnnotAccessExpr(t typeResolver, chain *binding, e *ast.BLangAnnotAccessExpr) (semtypes.SemType, expressionEffect, bool) {
+	if !ast.SymbolIsSet(e) {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
 	receiverResult, ok := resolveActionOrExpression(t, chain, e.Expr, semtypes.SemType{})
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -8428,29 +8465,24 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 // A type descriptor that fails to resolve still defines its definition, as an empty shape, because
 // recursive references taken while it was being resolved point at the atom of that definition.
 
-// defineFailedList defines the definition of a failed list type descriptor as an empty list.
 func defineFailedList(t typeResolver, d *semtypes.ListDefinition) {
 	d.Define(t.typeEnv(), nil, semtypes.ListRest(semtypes.Never))
 }
 
-// defineFailedMapping defines the definition of a failed mapping type descriptor as an empty closed record.
 func defineFailedMapping(t typeResolver, d *semtypes.MappingDefinition) {
 	d.Define(t.typeEnv(), nil, semtypes.Never)
 }
 
-// defineFailedFunction defines the definition of a failed function type descriptor as a function with no parameters.
 func defineFailedFunction(t typeResolver, fd *semtypes.FunctionDefinition) {
 	params := semtypes.NewListDefinition()
 	paramListTy := params.Define(t.typeEnv(), nil, semtypes.ListRest(semtypes.Never))
 	fd.Define(t.typeEnv(), paramListTy, semtypes.Never, semtypes.FunctionQualifiersFrom(t.typeEnv(), false, false))
 }
 
-// defineFailedObject defines the definition of a failed object type descriptor as an empty object.
 func defineFailedObject(t typeResolver, od *semtypes.ObjectDefinition) {
 	od.Define(t.typeEnv(), semtypes.ObjectQualifiersDefault, nil)
 }
 
-// defineFailedFuture defines the definition of a failed future type descriptor as a future of never.
 func defineFailedFuture(t typeResolver, d *semtypes.FutureDefinition) {
 	d.Define(t.typeEnv(), semtypes.Never)
 }

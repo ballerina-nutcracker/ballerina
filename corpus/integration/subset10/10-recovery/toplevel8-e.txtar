@@ -5,9 +5,3 @@ error[SEMANTIC_ERROR]: duplicate field name 'x'
    |
 17 | public type A record { B b; string x; string x; }; // @error
    |                                       ^^^^^^^^^
-
-error[SEMANTIC_ERROR]: mapping type not found in expected type
-  --> toplevel8-e.bal:21:22
-   |
-21 | public B g = {a: {b: {a: ()}, x: "q"}}; // @error cascades from the failed record
-   |                      ^^^^^^^

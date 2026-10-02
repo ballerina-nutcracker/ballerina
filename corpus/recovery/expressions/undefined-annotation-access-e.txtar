@@ -1,3 +1,4 @@
+-- undefined-annotation-access-e.bal --
 // Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
@@ -14,15 +15,23 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function foo() {
-    x = value?.'_; // @error
-    x = value?.mod:_; // @error
-    x = value?.mod:'_; // @error
-    x = ep->'_(); // @error
-    C a = new(_ = 1); // @error
-    C b = new C('_ = 1); // @error
-    x = function(int _) returns int => 1; // @error
-    x = (_)=>1; // @error
-    x = 1;
+function probe() {
+    typedesc<int> t = int;
+    _ = t.@missing; // @error undefined annotation must not panic
 }
-function valid() {}
+-- ast --
+(package
+  (function probe () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (constrained-type
+            (value-type typedesc)
+            (value-type int))) (expr
+          (typedesc-expr
+            (value-type int)))))
+      (assignment
+        (wildcard-binding-pattern)
+        (annot-access-expr missing
+          (simple-var-ref t))))))

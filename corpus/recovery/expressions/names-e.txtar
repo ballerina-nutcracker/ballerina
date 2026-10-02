@@ -1,4 +1,40 @@
--- stdout --
+-- names-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function names() {
+    x = mod:_; // @error
+    x = mod:'_; // @error formerly silent malformed quoted identifier
+    int '_ = 1; // @error formerly silent malformed local identifier
+    x = mod:; // @error
+    x = _:name; // @error
+    x = mod:_(1); // @error
+    x = foo(_ = 1); // @error
+    x = foo(=1); // @error
+    x = value._; // @error
+    x = value?._; // @error
+    x = ep->_(); // @error
+    x = ep->method(_ = 1); // @error
+    x = Target.@mod:_; // @error
+    C c = new C(_ = 1); // @error
+    C d = new('_ = 1); // @error
+    int later = 3; // @error unused surviving sibling
+}
+function valid() {}
+-- ast --
 (package
   (function names () (
     (value-type null))
@@ -55,201 +91,3 @@
   (function valid () (
     (value-type null))
     (block-function-body)))
--- stderr --
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:18:1
-   |
-18 |     x = mod:_; // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:19:1
-   |
-19 |     x = mod:'_; // @error formerly silent malformed quoted identifier
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:21:1
-   |
-21 |     x = mod:; // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:22:1
-   |
-22 |     x = _:name; // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:23:1
-   |
-23 |     x = mod:_(1); // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:24:1
-   |
-24 |     x = foo(_ = 1); // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:25:1
-   |
-25 |     x = foo(=1); // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:26:1
-   |
-26 |     x = value._; // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:27:1
-   |
-27 |     x = value?._; // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:28:1
-   |
-28 |     x = ep->_(); // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:29:1
-   |
-29 |     x = ep->method(_ = 1); // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown symbol: x
-  --> recovery/expressions/names-e.bal:30:1
-   |
-30 |     x = Target.@mod:_; // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown type: C
-  --> recovery/expressions/names-e.bal:31:1
-   |
-31 |     C c = new C(_ = 1); // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: Unknown type: C
-  --> recovery/expressions/names-e.bal:32:1
-   |
-32 |     C d = new('_ = 1); // @error
-   |     ^^
-
-error[SEMANTIC_ERROR]: unused variable 'c'
-  --> recovery/expressions/names-e.bal:31:1
-   |
-31 |     C c = new C(_ = 1); // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-32 |     C d = new('_ = 1); // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'd'
-  --> recovery/expressions/names-e.bal:32:1
-   |
-32 |     C d = new('_ = 1); // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-33 |     int later = 3; // @error unused surviving sibling
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> recovery/expressions/names-e.bal:33:1
-   |
-33 |     int later = 3; // @error unused surviving sibling
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-34 | }
-   |
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:18:13
-   |
-18 |     x = mod:_; // @error
-   |             ^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:19:13
-   |
-19 |     x = mod:'_; // @error formerly silent malformed quoted identifier
-   |             ^^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:20:9
-   |
-20 |     int '_ = 1; // @error formerly silent malformed local identifier
-   |         ^^^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:22:9
-   |
-22 |     x = _:name; // @error
-   |         ^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:23:13
-   |
-23 |     x = mod:_(1); // @error
-   |             ^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:24:13
-   |
-24 |     x = foo(_ = 1); // @error
-   |             ^^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:26:15
-   |
-26 |     x = value._; // @error
-   |               ^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:27:16
-   |
-27 |     x = value?._; // @error
-   |                ^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:28:13
-   |
-28 |     x = ep->_(); // @error
-   |             ^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:29:20
-   |
-29 |     x = ep->method(_ = 1); // @error
-   |                    ^^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:30:21
-   |
-30 |     x = Target.@mod:_; // @error
-   |                     ^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:31:17
-   |
-31 |     C c = new C(_ = 1); // @error
-   |                 ^^
-
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
-  --> recovery/expressions/names-e.bal:32:15
-   |
-32 |     C d = new('_ = 1); // @error
-   |               ^^^
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/expressions/names-e.bal:21:13
-   |
-21 |     x = mod:; // @error
-   |
-
-error[SYNTAX_ERROR]: missing identifier
-  --> recovery/expressions/names-e.bal:25:13
-   |
-25 |     x = foo(=1); // @error
-   |
