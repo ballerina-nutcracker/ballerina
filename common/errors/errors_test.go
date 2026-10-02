@@ -18,14 +18,12 @@ package errors
 
 import (
 	"errors"
-	"os"
 	"strings"
 	"testing"
 )
 
 func TestDecorateWithStackTrace_WithBacktraceDisabled(t *testing.T) {
-	// Ensure BAL_BACKTRACE is not set
-	_ = os.Unsetenv("BAL_BACKTRACE")
+	t.Setenv("BAL_BACKTRACE", "")
 
 	err := errors.New("test error")
 	decorated := DecorateWithStackTrace(err)
@@ -42,9 +40,7 @@ func TestDecorateWithStackTrace_WithBacktraceDisabled(t *testing.T) {
 }
 
 func TestDecorateWithStackTrace_WithBacktraceEnabled(t *testing.T) {
-	// Enable backtrace
-	_ = os.Setenv("BAL_BACKTRACE", "true")
-	defer func() { _ = os.Unsetenv("BAL_BACKTRACE") }()
+	t.Setenv("BAL_BACKTRACE", "true")
 
 	err := errors.New("test error with stack")
 	decorated := DecorateWithStackTrace(err)
@@ -67,8 +63,7 @@ func TestDecorateWithStackTrace_WithBacktraceEnabled(t *testing.T) {
 }
 
 func TestDecorateWithStackTrace_WithNilError(t *testing.T) {
-	_ = os.Setenv("BAL_BACKTRACE", "true")
-	defer func() { _ = os.Unsetenv("BAL_BACKTRACE") }()
+	t.Setenv("BAL_BACKTRACE", "true")
 
 	decorated := DecorateWithStackTrace(nil)
 
@@ -78,8 +73,7 @@ func TestDecorateWithStackTrace_WithNilError(t *testing.T) {
 }
 
 func TestErrorWithStackTrace_StackTrace(t *testing.T) {
-	_ = os.Setenv("BAL_BACKTRACE", "true")
-	defer func() { _ = os.Unsetenv("BAL_BACKTRACE") }()
+	t.Setenv("BAL_BACKTRACE", "true")
 
 	err := errors.New("test error")
 	decorated := DecorateWithStackTrace(err)
