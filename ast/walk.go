@@ -911,7 +911,7 @@ func Walk(v Visitor, node BLangNode) {
 	case *BLangIdentifier:
 		// Leaf node
 
-	case *BLangBadIdentifier, *BLangBadExprOrAction, *BLangBadStmt, *BLangBadTypeNode, *BLangBadTopLevelNode:
+	case *BLangBadExprOrAction, *BLangBadStmt, *BLangBadTypeNode, *BLangBadTopLevelNode:
 		// Leaf node
 
 	case *BLangMarkdownReferenceDocumentation:

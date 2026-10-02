@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SYNTAX_ERROR]: var-declared module variable must have an initializer expression for type inference
+error[SEMANTIC_ERROR]: var-declared module variable must have an initializer expression for type inference
   --> var-no-init-e.bal:17:1
    |
 17 | var x; // @error

@@ -47,14 +47,12 @@ func TestRecoveringNodeBuilderIncludesMinutiaeInNodeRanges(t *testing.T) {
 	assertLocationOffsets(t, recoveringReturn.GetPosition(), strings.Index(source, "\treturn;"), strings.Index(source, "\n}")+1)
 }
 
-func TestRecoveringNodeBuilderPreservesQualifiedReferenceIdentifiers(t *testing.T) {
+func TestRecoveringNodeBuilderReplacesMalformedQualifiedReferences(t *testing.T) {
 	testCases := []struct {
 		name        string
 		source      string
 		aliasValue  string
 		nameValue   string
-		badOriginal string
-		isLiteral   bool
 		missingName bool
 	}{
 		{
@@ -74,7 +72,6 @@ func TestRecoveringNodeBuilderPreservesQualifiedReferenceIdentifiers(t *testing.
 			source:      "function foo() { x = mod:_ ; }",
 			aliasValue:  "mod",
 			nameValue:   "_",
-			badOriginal: "_",
 			missingName: true,
 		},
 		{
@@ -82,8 +79,6 @@ func TestRecoveringNodeBuilderPreservesQualifiedReferenceIdentifiers(t *testing.
 			source:      "function foo() { x = mod:'_; }",
 			aliasValue:  "mod",
 			nameValue:   "_",
-			badOriginal: "'_",
-			isLiteral:   true,
 			missingName: true,
 		},
 	}
@@ -93,48 +88,127 @@ func TestRecoveringNodeBuilderPreservesQualifiedReferenceIdentifiers(t *testing.
 			compilationUnit, _ := buildNodeBuilderCompilationUnit(t, testCase.source, true)
 			function := compilationUnit.TopLevelNodes[0].(*ast.BLangFunction)
 			assignment := function.Body.(*ast.BLangBlockFunctionBody).Stmts[0].(*ast.BLangAssignment)
-			reference := assignment.GetExpression().(*ast.BLangVarRef)
-
-			assertIdentifierValue(t, reference.PkgAlias, testCase.aliasValue)
 			if testCase.missingName {
-				bad, ok := reference.VariableName.(*ast.BLangBadIdentifier)
-				if !ok {
-					t.Fatalf("variable name = %T, want *BLangBadIdentifier", reference.VariableName)
-				}
-				if bad.Value != testCase.nameValue || bad.OriginalValue != testCase.badOriginal {
-					t.Fatalf("bad identifier values = %q, %q, want %q, %q", bad.Value, bad.OriginalValue, testCase.nameValue, testCase.badOriginal)
-				}
-				if bad.IsLiteral() != testCase.isLiteral {
-					t.Fatalf("bad identifier IsLiteral() = %t, want %t", bad.IsLiteral(), testCase.isLiteral)
+				if _, ok := assignment.GetExpression().(*ast.BLangBadExprOrAction); !ok {
+					t.Fatalf("expression = %T, want bad expression", assignment.GetExpression())
 				}
 				return
 			}
+			reference := assignment.GetExpression().(*ast.BLangVarRef)
+			assertIdentifierValue(t, reference.PkgAlias, testCase.aliasValue)
 			assertIdentifierValue(t, reference.VariableName, testCase.nameValue)
 		})
 	}
 }
 
-func TestRecoveringNodeBuilderPreservesBadAnnotationAttachmentIdentifier(t *testing.T) {
+func TestRecoveringNodeBuilderReplacesBadAnnotationAttachment(t *testing.T) {
 	source := "@mod:_{} function foo() {}"
 	compilationUnit, _ := buildNodeBuilderCompilationUnit(t, source, true)
-	function := compilationUnit.TopLevelNodes[0].(*ast.BLangFunction)
-	attachments := function.GetAnnotationAttachments()
-	if len(attachments) != 1 {
-		t.Fatalf("annotation attachment count = %d, want 1", len(attachments))
+	if _, ok := compilationUnit.TopLevelNodes[0].(*ast.BLangBadTopLevelNode); !ok {
+		t.Fatalf("declaration = %T, want bad declaration", compilationUnit.TopLevelNodes[0])
 	}
-	attachment := attachments[0]
-	assertIdentifierValue(t, attachment.GetPackageAlias(), "mod")
-	assertBadIdentifier(t, attachment.GetAnnotationName(), "_", "_", strings.Index(source, "_"), strings.Index(source, "_")+1)
 }
 
-func TestRecoveringNodeBuilderPreservesBadAnnotationAccessIdentifier(t *testing.T) {
+func TestRecoveringNodeBuilderReplacesBadAnnotationAccess(t *testing.T) {
 	source := "function foo() { x = Target.@mod:_; }"
 	compilationUnit, _ := buildNodeBuilderCompilationUnit(t, source, true)
 	function := compilationUnit.TopLevelNodes[0].(*ast.BLangFunction)
 	assignment := function.Body.(*ast.BLangBlockFunctionBody).Stmts[0].(*ast.BLangAssignment)
-	access := assignment.GetExpression().(*ast.BLangAnnotAccessExpr)
-	assertIdentifierValue(t, access.PkgAlias, "mod")
-	assertBadIdentifier(t, access.AnnotationName, "_", "_", strings.Index(source, "_"), strings.Index(source, "_")+1)
+	if _, ok := assignment.GetExpression().(*ast.BLangBadExprOrAction); !ok {
+		t.Fatalf("expression = %T, want bad expression", assignment.GetExpression())
+	}
+}
+
+func TestRecoveringNodeBuilderRetainsMalformedNestedBlockBoundary(t *testing.T) {
+	for _, source := range []string{
+		"function foo() { if true { int x=1; else { int y=2; } int later=3; } function valid() {}",
+		"function foo() { if true int x=1; } else { int y=2; } int later=3; } function valid() {}",
+	} {
+		t.Run(source, func(t *testing.T) {
+			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+			cx := context.NewCompilerContext(env)
+			cx.DiagnosticEnv().RegisterFile("test.bal", text.TextDocumentFromText(source))
+			tree, err := parser.GetSyntaxTree(cx, "test.bal", source)
+			if err != nil {
+				t.Fatal(err)
+			}
+			unit := GetRecoveredCompilationUnit(cx, tree)
+			fn := unit.TopLevelNodes[0].(*ast.BLangFunction)
+			statements := fn.Body.(*ast.BLangBlockFunctionBody).Stmts
+			branch := statements[0].(*ast.BLangIf)
+			body := branch.GetBody().Stmts
+			if len(body) != 2 {
+				t.Fatalf("nested statements = %d, want valid statement and bad boundary", len(body))
+			}
+			if _, ok := body[0].(*ast.BLangVariableDef); !ok {
+				t.Fatalf("inner sibling = %T, want variable declaration", body[0])
+			}
+			bad, ok := body[1].(*ast.BLangBadStmt)
+			if !ok {
+				t.Fatalf("block boundary = %T, want bad statement", body[1])
+			}
+			members := tree.RootNode.(*st.ModulePart).Members()
+			syntaxFn := members.Get(0).(*st.FunctionDefinition)
+			syntaxStatements := syntaxFn.FunctionBody().(*st.FunctionBodyBlockNode).Statements()
+			syntaxIf := syntaxStatements.Get(0).(*st.IfElseStatementNode)
+			rangeWithMinutiae := syntaxIf.IfBody().TextRangeWithMinutiae()
+			assertLocationOffsets(t, bad.GetPosition(), rangeWithMinutiae.StartOffset, rangeWithMinutiae.EndOffset)
+			if _, ok := branch.GetElseStatement().(*ast.BLangBlockStmt).Stmts[0].(*ast.BLangVariableDef); !ok {
+				t.Fatal("else sibling was discarded")
+			}
+			if _, ok := statements[1].(*ast.BLangVariableDef); !ok {
+				t.Fatal("outer sibling was discarded")
+			}
+			if _, ok := unit.TopLevelNodes[1].(*ast.BLangFunction); !ok {
+				t.Fatal("valid sibling function was discarded")
+			}
+			if len(cx.Diagnostics()) != 1 {
+				t.Fatalf("diagnostics = %v, want one syntax diagnostic", cx.Diagnostics())
+			}
+		})
+	}
+}
+
+func TestRecoveringNodeBuilderPreservesStandaloneBlockSiblings(t *testing.T) {
+	source := "function foo() { { int '_ = 1; int good=2; } int later=3; }"
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	cx := context.NewCompilerContext(env)
+	cx.DiagnosticEnv().RegisterFile("test.bal", text.TextDocumentFromText(source))
+	tree, err := parser.GetSyntaxTree(cx, "test.bal", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unit := GetRecoveredCompilationUnit(cx, tree)
+	function := unit.TopLevelNodes[0].(*ast.BLangFunction)
+	statements := function.Body.(*ast.BLangBlockFunctionBody).Stmts
+	if len(statements) != 2 {
+		t.Fatalf("outer statements = %d, want 2", len(statements))
+	}
+	block, ok := statements[0].(*ast.BLangBlockStmt)
+	if !ok {
+		t.Fatalf("standalone block = %T, want block statement", statements[0])
+	}
+	if len(block.Stmts) != 2 {
+		t.Fatalf("inner statements = %d, want 2", len(block.Stmts))
+	}
+	bad, ok := block.Stmts[0].(*ast.BLangBadStmt)
+	if !ok {
+		t.Fatalf("malformed declaration = %T, want bad statement", block.Stmts[0])
+	}
+	assertLocationOffsets(t, bad.GetPosition(), strings.Index(source, "int '_"), strings.Index(source, "int good"))
+	good, ok := block.Stmts[1].(*ast.BLangVariableDef)
+	if !ok {
+		t.Fatalf("inner sibling = %T, want variable declaration", block.Stmts[1])
+	}
+	assertIdentifierValue(t, good.Var.Name, "good")
+	later, ok := statements[1].(*ast.BLangVariableDef)
+	if !ok {
+		t.Fatalf("outer sibling = %T, want variable declaration", statements[1])
+	}
+	assertIdentifierValue(t, later.Var.Name, "later")
+	if len(cx.Diagnostics()) != 1 {
+		t.Fatalf("diagnostics = %v, want one syntax diagnostic", cx.Diagnostics())
+	}
 }
 
 func TestRecoveringNodeBuilderReportsNestedSyntaxDiagnosticOnce(t *testing.T) {
@@ -177,6 +251,184 @@ func TestRecoveringNodeBuilderHandlesMissingIdentifiers(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRecoveringNodeBuilderSignatureBoundaries(t *testing.T) {
+	for _, source := range []string{
+		"function _() {}",
+		"function foo(int _) {}",
+		"function foo(int... _) {}",
+		"function foo(int x = ) {}",
+		"function foo() returns mod:_ {}",
+		"@mod:_ function foo() {}",
+	} {
+		t.Run(source, func(t *testing.T) {
+			unit, _ := buildNodeBuilderCompilationUnit(t, source+" function valid() {}", true)
+			if _, ok := unit.TopLevelNodes[0].(*ast.BLangBadTopLevelNode); !ok {
+				t.Fatalf("declaration = %T, want bad declaration", unit.TopLevelNodes[0])
+			}
+			if _, ok := unit.TopLevelNodes[len(unit.TopLevelNodes)-1].(*ast.BLangFunction); !ok {
+				t.Fatal("valid sibling was discarded")
+			}
+		})
+	}
+}
+
+func TestRecoveringNodeBuilderRetainsClassMembersAndPackageDeclarations(t *testing.T) {
+	source := "class C { int _; int good; function _(int x) {} function valid() { int x = ; } function init(int _) {} *mod:_; } function _() {} function valid() {}"
+	unit, _ := buildNodeBuilderCompilationUnit(t, source, true)
+	class := unit.TopLevelNodes[0].(*ast.BLangClassDefinition)
+	if len(class.BadTopLevelNodes) != 4 || len(class.Fields) != 1 || len(class.Methods) != 1 || class.InitFunction != nil {
+		t.Fatalf("members: bad=%d fields=%d methods=%d init=%v", len(class.BadTopLevelNodes), len(class.Fields), len(class.Methods), class.InitFunction)
+	}
+	method := class.Methods["valid"]
+	decl := method.Body.(*ast.BLangBlockFunctionBody).Stmts[0].(*ast.BLangVariableDef)
+	if _, ok := decl.Var.Expr.(*ast.BLangBadExprOrAction); !ok {
+		t.Fatalf("method initializer = %T, want bad expression", decl.Var.Expr)
+	}
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	cx := context.NewCompilerContext(env)
+	pkg := ToPackageFromCompilationUnits(cx, []*ast.BLangCompilationUnit{unit})
+	if len(pkg.BadTopLevelNodes) != 1 || len(pkg.ClassDefinitions) != 1 || len(pkg.Functions) != 1 || cx.HasDiagnostics() {
+		t.Fatal("package assembly did not retain bad declarations and valid siblings")
+	}
+}
+
+func TestRecoveringNodeBuilderExpressionBoundaries(t *testing.T) {
+	for _, expression := range []string{"mod:_", "mod:_(1)", "foo(_ = 1)", "value._", "function(int _) returns int => 1", "(_)=>1", "-", "1 +", "value.@mod:_"} {
+		t.Run(expression, func(t *testing.T) {
+			unit, _ := buildNodeBuilderCompilationUnit(t, "function foo() { x = "+expression+"; }", true)
+			fn := unit.TopLevelNodes[0].(*ast.BLangFunction)
+			assignment := fn.Body.(*ast.BLangBlockFunctionBody).Stmts[0].(*ast.BLangAssignment)
+			if _, ok := assignment.GetExpression().(*ast.BLangBadExprOrAction); !ok {
+				t.Fatalf("expression = %T, want bad expression", assignment.GetExpression())
+			}
+		})
+	}
+}
+
+func TestRecoveringNodeBuilderOptionalAccessAndRemoteCallNames(t *testing.T) {
+	for _, expression := range []string{
+		"value?._", "value?.'_", "value?.mod:_", "value?.mod:'_",
+		"ep->_()", "ep->'_()", "ep->method(_ = 1)",
+	} {
+		t.Run(expression, func(t *testing.T) {
+			source := "function foo() { x = " + expression + "; x = 1; } function valid() {}"
+			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+			cx := context.NewCompilerContext(env)
+			cx.DiagnosticEnv().RegisterFile("test.bal", text.TextDocumentFromText(source))
+			tree, err := parser.GetSyntaxTree(cx, "test.bal", source)
+			if err != nil {
+				t.Fatal(err)
+			}
+			unit := GetRecoveredCompilationUnit(cx, tree)
+			fn := unit.TopLevelNodes[0].(*ast.BLangFunction)
+			statements := fn.Body.(*ast.BLangBlockFunctionBody).Stmts
+			assignment := statements[0].(*ast.BLangAssignment)
+			if _, ok := assignment.GetExpression().(*ast.BLangBadExprOrAction); !ok {
+				t.Fatalf("expression = %T, want bad expression", assignment.GetExpression())
+			}
+			if len(cx.Diagnostics()) != 1 {
+				t.Fatalf("diagnostics = %v, want one syntax diagnostic", cx.Diagnostics())
+			}
+			if _, ok := statements[1].(*ast.BLangAssignment); !ok {
+				t.Fatal("valid sibling statement was discarded")
+			}
+			if _, ok := unit.TopLevelNodes[1].(*ast.BLangFunction); !ok {
+				t.Fatal("valid sibling function was discarded")
+			}
+		})
+	}
+	for _, expression := range []string{"value?.member", "ep->method()"} {
+		t.Run(expression, func(t *testing.T) {
+			unit, _ := buildNodeBuilderCompilationUnit(t, "function foo() { x = "+expression+"; }", true)
+			fn := unit.TopLevelNodes[0].(*ast.BLangFunction)
+			assignment := fn.Body.(*ast.BLangBlockFunctionBody).Stmts[0].(*ast.BLangAssignment)
+			switch expr := assignment.GetExpression().(type) {
+			case *ast.BLangFieldBaseAccess:
+				assertIdentifierValue(t, expr.Field, "member")
+			case *ast.BLangRemoteMethodCallAction:
+				assertIdentifierValue(t, expr.Name, "method")
+			default:
+				t.Fatalf("valid expression = %T", expr)
+			}
+		})
+	}
+}
+
+func TestRecoveringNodeBuilderConstructorNamedArguments(t *testing.T) {
+	for _, expression := range []string{"new C(_ = 1)", "new(_ = 1)", "new C('_ = 1)", "new('_ = 1)", "new C(value = 1)", "new(value = 1)"} {
+		t.Run(expression, func(t *testing.T) {
+			source := "function foo() { C x = " + expression + "; int _ = 1; } function valid() {}"
+			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+			cx := context.NewCompilerContext(env)
+			cx.DiagnosticEnv().RegisterFile("test.bal", text.TextDocumentFromText(source))
+			tree, err := parser.GetSyntaxTree(cx, "test.bal", source)
+			if err != nil {
+				t.Fatal(err)
+			}
+			unit := GetRecoveredCompilationUnit(cx, tree)
+			fn := unit.TopLevelNodes[0].(*ast.BLangFunction)
+			statements := fn.Body.(*ast.BLangBlockFunctionBody).Stmts
+			decl := statements[0].(*ast.BLangVariableDef)
+			if strings.Contains(expression, "_") {
+				if _, ok := decl.Var.Expr.(*ast.BLangBadExprOrAction); !ok {
+					t.Fatalf("initializer = %T, want bad expression", decl.Var.Expr)
+				}
+				if len(cx.Diagnostics()) != 1 {
+					t.Fatalf("diagnostics = %v, want one syntax diagnostic", cx.Diagnostics())
+				}
+			} else {
+				constructor, ok := decl.Var.Expr.(*ast.BLangNewExpression)
+				if !ok {
+					t.Fatalf("initializer = %T, want constructor", decl.Var.Expr)
+				}
+				argument := constructor.ArgsExprs[0].(*ast.BLangNamedArgsExpression)
+				assertIdentifierValue(t, argument.Name, "value")
+				if cx.HasDiagnostics() {
+					t.Fatalf("valid constructor diagnostics = %v", cx.Diagnostics())
+				}
+			}
+			ignore := statements[1].(*ast.BLangVariableDef)
+			assertIdentifierValue(t, ignore.Var.Name, "_")
+			if _, ok := unit.TopLevelNodes[1].(*ast.BLangFunction); !ok {
+				t.Fatal("valid sibling function was discarded")
+			}
+		})
+	}
+}
+
+func TestRecoveringNodeBuilderRetainsServiceMembers(t *testing.T) {
+	unit, _ := buildNodeBuilderCompilationUnit(t, "service / on endpoint { int _; int valid; resource function get path(int _) {} function valid() { int x = ; } }", true)
+	service := unit.TopLevelNodes[0].(*ast.BLangService)
+	if len(service.BadTopLevelNodes) != 2 || len(service.Fields) != 1 || len(service.Methods) != 1 || len(service.ResourceMethods) != 0 {
+		t.Fatalf("members: bad=%d fields=%d methods=%d resources=%d", len(service.BadTopLevelNodes), len(service.Fields), len(service.Methods), len(service.ResourceMethods))
+	}
+}
+
+func TestRecoveringNodeBuilderReportsPreviouslySilentIdentifiers(t *testing.T) {
+	for _, source := range []string{"function _() {}", "function foo() { x = mod:'_; }", "function foo() { int '_ = 1; }"} {
+		t.Run(source, func(t *testing.T) {
+			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+			cx := context.NewCompilerContext(env)
+			cx.DiagnosticEnv().RegisterFile("test.bal", text.TextDocumentFromText(source))
+			tree, err := parser.GetSyntaxTree(cx, "test.bal", source)
+			if err != nil {
+				t.Fatal(err)
+			}
+			GetRecoveredCompilationUnit(cx, tree)
+			if len(cx.Diagnostics()) != 1 {
+				t.Fatalf("diagnostics = %v, want one syntax diagnostic", cx.Diagnostics())
+			}
+		})
+	}
+}
+
+func TestRecoveringNodeBuilderPreservesIgnoreIdentifiers(t *testing.T) {
+	unit, _ := buildNodeBuilderCompilationUnit(t, "function foo() { int _ = 1; }", true)
+	fn := unit.TopLevelNodes[0].(*ast.BLangFunction)
+	decl := fn.Body.(*ast.BLangBlockFunctionBody).Stmts[0].(*ast.BLangVariableDef)
+	assertIdentifierValue(t, decl.Var.Name, "_")
 }
 
 func TestRecoveringNodeBuilderBadNodesCoverMinutiae(t *testing.T) {
@@ -223,18 +475,6 @@ func assertIdentifierValue(t *testing.T, identifier ast.IdentifierNode, value st
 	if got := identifier.GetValue(); got != value {
 		t.Fatalf("identifier value = %q, want %q", got, value)
 	}
-}
-
-func assertBadIdentifier(t *testing.T, identifier ast.IdentifierNode, value, originalValue string, start, end int) {
-	t.Helper()
-	bad, ok := identifier.(*ast.BLangBadIdentifier)
-	if !ok {
-		t.Fatalf("identifier = %T, want *BLangBadIdentifier", identifier)
-	}
-	if bad.Value != value || bad.OriginalValue != originalValue {
-		t.Fatalf("bad identifier values = %q, %q, want %q, %q", bad.Value, bad.OriginalValue, value, originalValue)
-	}
-	assertLocationOffsets(t, bad.GetPosition(), start, end)
 }
 
 func assertLocationOffsets(t *testing.T, location diagnostics.Location, start, end int) {

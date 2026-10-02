@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SYNTAX_ERROR]: redeclared symbol 'foo'
+error[SEMANTIC_ERROR]: redeclared symbol 'foo'
   --> duplicateField-e.bal:19:5
    |
 19 |     public int foo; // @error
