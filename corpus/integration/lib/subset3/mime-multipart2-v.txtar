@@ -1,0 +1,9 @@
+-- stdout --
+true
+2
+true
+["Content-Disposition","Content-Type","X-A","X-Z"]
+["2","3"]
+value
+a
+-- stderr --

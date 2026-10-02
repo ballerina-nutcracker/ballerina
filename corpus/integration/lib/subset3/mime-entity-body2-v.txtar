@@ -1,0 +1,15 @@
+-- stdout --
+["z","y","x","w"]
+true
+true
+true true
+true
+error
+error
+error
+<a>t</a>
+0
+[]
+[]
+["1","2","3"]
+-- stderr --
