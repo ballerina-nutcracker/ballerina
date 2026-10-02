@@ -709,6 +709,8 @@ func memberAccessInstructionKinds(tyCtx semtypes.Context, containerType semtypes
 		return bir.InstructionKindArrayLoad, bir.InstructionKindArrayStore
 	case semtypes.IsSubtype(tyCtx, containerType, semtypes.Object):
 		return bir.InstructionKindObjectLoad, bir.InstructionKindObjectStore
+	case semtypes.IsSubtype(tyCtx, containerType, semtypes.String):
+		return bir.InstructionKindStringLoad, bir.InstructionKindMapStore
 	default:
 		return bir.InstructionKindMapLoad, bir.InstructionKindMapStore
 	}

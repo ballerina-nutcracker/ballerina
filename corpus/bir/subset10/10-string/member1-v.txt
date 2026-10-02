@@ -1,0 +1,126 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad abc
+    s = %1;
+    %4 = ConstantLoad 0
+    %3 = s[%4];
+    %5 = println(%3) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad 1
+    %6 = s[%7];
+    %8 = println(%6) -> bb2;
+  }
+  bb2 {
+    %10 = ConstantLoad 2
+    %9 = s[%10];
+    %11 = println(%9) -> bb3;
+  }
+  bb3 {
+    %13 = ConstantLoad 1
+    %12 = s[%13];
+    c = %12;
+    %15 = println(c) -> bb4;
+  }
+  bb4 {
+    %16 = ConstantLoad xy
+    inferred = %16;
+    %19 = ConstantLoad 0
+    %18 = inferred[%19];
+    ch = %18;
+    inferredChar = ch;
+    %22 = println(inferredChar) -> bb5;
+  }
+  bb5 {
+    %23 = ConstantLoad aé€😀z
+    u = %23;
+    %26 = ConstantLoad 1
+    %25 = u[%26];
+    %27 = println(%25) -> bb6;
+  }
+  bb6 {
+    %29 = ConstantLoad 2
+    %28 = u[%29];
+    %30 = println(%28) -> bb7;
+  }
+  bb7 {
+    %32 = ConstantLoad 3
+    %31 = u[%32];
+    %33 = println(%31) -> bb8;
+  }
+  bb8 {
+    %35 = ConstantLoad 4
+    %34 = u[%35];
+    %36 = println(%34) -> bb9;
+  }
+  bb9 {
+    GOTO bb10;
+  }
+  bb10 {
+    %39 = ConstantLoad 3
+    %38 = s[%39];
+    %37 = %38;
+    GOTO bb11;
+  }
+  bb11 {
+    r = %37;
+    %41 = r is error
+    %42 = %41;
+    %43 = println(%42) -> bb12;
+  }
+  bb12 {
+    GOTO bb13;
+  }
+  bb13 {
+    %46 = ConstantLoad 1
+    %47 = unknown %46;
+    %45 = s[%47];
+    %44 = %45;
+    GOTO bb14;
+  }
+  bb14 {
+    r = %44;
+    %48 = r is error
+    %49 = %48;
+    %50 = println(%49) -> bb15;
+  }
+  bb15 {
+    GOTO bb16;
+  }
+  bb16 {
+    %53 = ConstantLoad 5
+    %52 = u[%53];
+    %51 = %52;
+    GOTO bb17;
+  }
+  bb17 {
+    r = %51;
+    %54 = r is error
+    %55 = %54;
+    %56 = println(%55) -> bb18;
+  }
+  bb18 {
+    GOTO bb19;
+  }
+  bb19 {
+    %59 = ConstantLoad 1
+    %58 = s[%59];
+    %57 = %58;
+    GOTO bb20;
+  }
+  bb20 {
+    r = %57;
+    %60 = println(r) -> bb21;
+  }
+  bb21 {
+    return;
+  }
+  
+  error-table {
+    [bb10, bb10] -> bb11, %37
+    [bb13, bb13] -> bb14, %44
+    [bb16, bb16] -> bb17, %51
+    [bb19, bb19] -> bb20, %57
+  }
+}

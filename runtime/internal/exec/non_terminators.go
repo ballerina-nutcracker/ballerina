@@ -19,6 +19,7 @@ package exec
 import (
 	"errors"
 	"fmt"
+	"unicode/utf8"
 	"unsafe"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -179,6 +180,30 @@ func execObjectLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) 
 	field := getOperandValue(ctx, access.KeyOp, frame).(string)
 	value, _ := obj.Get(field)
 	setOperandValue(ctx, access.LhsOp, frame, value)
+}
+
+func execStringLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {
+	s := getOperandValue(ctx, access.RhsOp, frame).(string)
+	idx := getOperandValue(ctx, access.KeyOp, frame).(int64)
+	char, ok := codePointAt(s, idx)
+	if !ok {
+		panic(values.NewErrorWithMessage(fmt.Sprintf("string index out of range: index: %d, size: %d", idx, utf8.RuneCountInString(s))))
+	}
+	setOperandValue(ctx, access.LhsOp, frame, char)
+}
+
+func codePointAt(s string, idx int64) (string, bool) {
+	if idx < 0 || idx >= int64(len(s)) {
+		return "", false
+	}
+	for offset := range s {
+		if idx == 0 {
+			_, size := utf8.DecodeRuneInString(s[offset:])
+			return s[offset : offset+size], true
+		}
+		idx--
+	}
+	return "", false
 }
 
 func execTypeCast(ctx *extern.Context, typeCast *bir.TypeCast, frame *Frame) {

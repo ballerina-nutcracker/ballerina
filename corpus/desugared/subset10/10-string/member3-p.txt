@@ -1,0 +1,19 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (literal abc))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (unary-expr -
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref s)
+            (simple-var-ref i))))))))
