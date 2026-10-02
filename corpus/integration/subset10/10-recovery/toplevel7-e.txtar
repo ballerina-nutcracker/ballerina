@@ -1,11 +1,5 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: failed to find a suitable object type
-  --> toplevel7-e.bal:25:16
-   |
-25 | public Bad g = new; // @error cascades from the failed class
-   |                ^^^
-
 error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
   --> toplevel7-e.bal:18:5
    |

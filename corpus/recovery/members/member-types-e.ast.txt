@@ -1,0 +1,35 @@
+(package
+  (class-definition MemberTypes
+    (variable firstField (type
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type int))))
+    (variable secondField (type
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type int))))
+    (function init (
+      (variable value (type
+        (constrained-type
+          (builtin-ref-type xml)
+          (value-type int))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (wildcard-binding-pattern)
+          (simple-var-ref value))))
+    (function method () (
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type int)))
+      (block-function-body))
+    (resource-function get name:first
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type int))
+      (block-function-body))
+    (resource-function get name:second
+      (constrained-type
+        (builtin-ref-type xml)
+        (value-type int))
+      (block-function-body))))

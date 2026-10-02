@@ -40,7 +40,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 )
 
-const recoveryTarget = testphases.PhaseSymbolResolution
+const recoveryTarget = testphases.PhaseTypeResolution
 
 func TestRecovery(t *testing.T) {
 	count := 0
@@ -120,11 +120,12 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 	}
 	pkgID := result.CompilationUnit.GetPackageID()
 	units := []*ast.BLangCompilationUnit{result.CompilationUnit}
-	pkgScope, _, _ := semantics.ResolveSymbols(cx, *pkgID, units, langlibs.ImplicitImports, langlibs.PublicSymbols, nil, "", "")
-	completed := testphases.PhaseSymbolResolution
+	pkgScope, _, importedSymbols := semantics.ResolveSymbols(cx, *pkgID, units, langlibs.ImplicitImports, langlibs.PublicSymbols, nil, "", "")
 	result.Package = nodebuilder.ToPackageFromCompilationUnits(cx, units)
 	result.Package.PackageID = pkgID
 	result.Package.Scope = pkgScope
+	semantics.ResolvePublicNodeTypes(cx, result.Package, importedSymbols)
+	completed := testphases.PhaseTypeResolution
 	for _, d := range cx.Diagnostics() {
 		info := d.DiagnosticInfo()
 		if info.Code() == "INTERNAL_ERROR" || info.Code() == "UNIMPLEMENTED_ERROR" || info.Severity() == diagnostics.Fatal {

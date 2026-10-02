@@ -1,0 +1,57 @@
+(package
+  (variable unresolvedValue (type
+    (value-type int)) (expr
+    (simple-var-ref discardedValue)))
+  (variable failedValue (type
+    (user-defined-type UnknownArray)) (expr
+    (list-constructor-expr)))
+  (variable independentValue (type
+    (value-type int)) (expr
+    (literal 3)))
+  (type-definition BrokenArray
+    (bad-type))
+  (type-definition BrokenTuple
+    (bad-type))
+  (type-definition UnknownArray
+    (array-type
+      (user-defined-type MissingElement) dimensions: 1 ([])))
+  (type-definition UnknownRecord
+    (record-type
+      (field broken
+        (user-defined-type MissingField))
+      (field surviving
+        (value-type int))
+      (field another
+        (user-defined-type AnotherMissingField))))
+  (type-definition Independent
+    (record-type
+      (field value
+        (value-type int))))
+  (class-definition UnknownFields
+    (variable broken (type
+      (user-defined-type MissingClassField)))
+    (variable surviving (type
+      (value-type int)))
+    (variable another (type
+      (user-defined-type MissingSecondField)))
+    (function survivingMethod (
+      (variable value (type
+        (value-type int)))) (
+      (value-type int))
+      (expr-function-body
+        (simple-var-ref value))))
+  (function consumeFailed (
+    (variable value (type
+      (user-defined-type UnknownArray)))) (
+    (value-type int))
+    (expr-function-body
+      (literal 1)))
+  (function independent (
+    (variable value (type
+      (user-defined-type Independent)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (field-based-access value
+          (simple-var-ref value))
+        (simple-var-ref independentValue)))))
