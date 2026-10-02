@@ -1,0 +1,7 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (type-definition Invalid
+    (value-type never))
+  (function valid () (
+    (value-type null))
+    (block-function-body)))

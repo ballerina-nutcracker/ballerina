@@ -1,0 +1,29 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function operands () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable unary (type
+          (value-type int)) (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable binary (type
+          (value-type int)) (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable nested (type
+          (value-type int)) (expr
+          (group-expr
+            (binary-expr +
+              (literal 1)
+              (group-expr
+                (bad-expr-or-action)))))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 3))))))
+  (function valid () (
+    (value-type int))
+    (expr-function-body
+      (literal 4))))

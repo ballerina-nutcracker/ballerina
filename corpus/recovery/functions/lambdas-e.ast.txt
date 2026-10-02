@@ -1,0 +1,30 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function lambdas () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable b (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable c (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable d (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable e (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable f (expr
+          (bad-expr-or-action))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 2))))))
+  (function valid () (
+    (value-type null))
+    (block-function-body)))

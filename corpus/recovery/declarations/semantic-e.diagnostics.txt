@@ -1,0 +1,6 @@
+error[SEMANTIC_ERROR]: only object and error types can be distinct
+  --> recovery/declarations/semantic-e.bal:17:14
+   |
+17 | type Invalid distinct int; // @error
+   |              ^^^^^^^^^^^^
+

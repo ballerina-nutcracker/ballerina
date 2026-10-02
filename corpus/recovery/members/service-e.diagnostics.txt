@@ -1,0 +1,24 @@
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/members/service-e.bal:22:32
+   |
+22 |     function valid() { int x = ; int later = 2; } // @error
+   |                                
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/members/service-e.bal:18:9
+   |
+18 |     int _; // @error
+   |         ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/members/service-e.bal:20:36
+   |
+20 |     resource function get path(int _) {} // @error
+   |                                    ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/members/service-e.bal:21:23
+   |
+21 |     function init(int _) {} // @error
+   |                       ^
+

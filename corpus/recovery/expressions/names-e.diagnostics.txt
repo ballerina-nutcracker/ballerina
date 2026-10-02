@@ -1,0 +1,84 @@
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/expressions/names-e.bal:20:13
+   |
+20 |     x = mod:; // @error
+   |             
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovery/expressions/names-e.bal:24:13
+   |
+24 |     x = foo(=1); // @error
+   |             
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:18:13
+   |
+18 |     x = mod:_; // @error
+   |             ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:19:13
+   |
+19 |     x = mod:'_; // @error
+   |             ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:21:9
+   |
+21 |     x = _:name; // @error
+   |         ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:22:13
+   |
+22 |     x = mod:_(1); // @error
+   |             ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:23:13
+   |
+23 |     x = foo(_ = 1); // @error
+   |             ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:25:15
+   |
+25 |     x = value._; // @error
+   |               ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:26:16
+   |
+26 |     x = value?._; // @error
+   |                ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:27:13
+   |
+27 |     x = ep->_(); // @error
+   |             ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:28:20
+   |
+28 |     x = ep->method(_ = 1); // @error
+   |                    ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:29:21
+   |
+29 |     x = Target.@mod:_; // @error
+   |                     ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:30:17
+   |
+30 |     C c = new C(_ = 1); // @error
+   |                 ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> recovery/expressions/names-e.bal:31:15
+   |
+31 |     C d = new('_ = 1); // @error
+   |               ^^^
+

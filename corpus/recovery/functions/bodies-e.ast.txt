@@ -1,0 +1,55 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function blockBody () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable broken (type
+          (value-type int)) (expr
+          (bad-expr-or-action))))
+      (block-stmt
+        (bad-stmt)
+        (var-def
+          (variable inner (type
+            (value-type int)) (expr
+            (literal 2)))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 3))))
+      (return
+        (simple-var-ref later))))
+  (function expressionBody () (
+    (value-type int))
+    (expr-function-body
+      (bad-expr-or-action)))
+  (function lambdas () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable explicit (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (expr-function-body
+                (bad-expr-or-action)))))))
+      (var-def
+        (variable block (expr
+          (lambda
+            (function $anonFunc$_1 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable broken (type
+                    (value-type int)) (expr
+                    (bad-expr-or-action))))
+                (return
+                  (literal 1))))))))
+      (var-def
+        (variable later (type
+          (value-type int)) (expr
+          (literal 2))))))
+  (function caller () (
+    (value-type int))
+    (expr-function-body
+      (invocation blockBody ()))))
