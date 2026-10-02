@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to final field 'b'
+  --> final-field-service-assign-e.bal:44:9
+   |
+44 |         self.b = 5; // @error final field assigned in a remote method
+   |         ^^^^^^

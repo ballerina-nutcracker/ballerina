@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to final field 'a'
+  --> final-field-compound-e.bal:21:9
+   |
+21 |         self.a += 1; // @error final field compound assigned after initialization
+   |         ^^^^^^
+
+error[SEMANTIC_ERROR]: cannot assign a value to final field 'a'
+  --> final-field-compound-e.bal:25:9
+   |
+25 |         self.a += 1; // @error final field compound assigned outside init
+   |         ^^^^^^
