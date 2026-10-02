@@ -50,11 +50,11 @@ class CheckDocLinksTest(unittest.TestCase):
 
     def test_setext_headings_are_anchors(self):
         path = self.write("doc.md", "Overview\n========\n\nDetails here\n---\n")
-        self.assertTrue({"overview", "details-here"} <= check_doc_links.markdown_anchors(path))
+        self.assertTrue({"overview", "details-here"} <= check_doc_links.markdown_anchors(path.read_text()))
 
     def test_thematic_break_after_blank_line_is_not_a_heading(self):
         path = self.write("doc.md", "Text\n\n---\n")
-        self.assertEqual(check_doc_links.markdown_anchors(path), set())
+        self.assertEqual(check_doc_links.markdown_anchors(path.read_text()), set())
 
     def test_cloudflare_challenge_is_treated_as_reachable(self):
         headers = email.message.Message()
@@ -67,6 +67,26 @@ class CheckDocLinksTest(unittest.TestCase):
         forbidden = urllib.error.HTTPError("https://example.com", 403, "Forbidden", email.message.Message(), None)
         with mock.patch("urllib.request.urlopen", side_effect=forbidden):
             self.assertEqual(check_doc_links.fetch_page("https://example.com").error, "HTTP 403")
+
+    def test_github_file_view_maps_to_raw_content(self):
+        self.assertEqual(
+            check_doc_links.github_raw_url("https://github.com/org/repo/blob/main/docs/spec.md?plain=1"),
+            "https://raw.githubusercontent.com/org/repo/main/docs/spec.md",
+        )
+        self.assertIsNone(check_doc_links.github_raw_url("https://github.com/org/repo/tree/main/docs"))
+        self.assertIsNone(check_doc_links.github_raw_url("https://example.com/org/repo/blob/main/a.md"))
+
+    def test_github_markdown_fragment_is_checked_against_raw_headings(self):
+        response = mock.MagicMock()
+        response.read.return_value = b"# Spec\n\n## 2. Console IO\n"
+        urlopen = mock.MagicMock()
+        urlopen.return_value.__enter__.return_value = response
+        with mock.patch("urllib.request.urlopen", urlopen):
+            page = check_doc_links.fetch_page("https://github.com/org/repo/blob/main/spec.md")
+        self.assertEqual(urlopen.call_args.args[0].full_url, "https://raw.githubusercontent.com/org/repo/main/spec.md")
+        url = "https://github.com/org/repo/blob/main/spec.md"
+        self.assertTrue(check_doc_links.fragment_exists(url, "2-console-io", page))
+        self.assertFalse(check_doc_links.fragment_exists(url, "3-missing", page))
 
     def test_request_errors_are_reported(self):
         failures = [UnicodeEncodeError("ascii", "é", 0, 1, "ordinal not in range"), ssl.SSLError("bad record")]

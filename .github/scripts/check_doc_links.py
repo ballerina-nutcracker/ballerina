@@ -83,7 +83,7 @@ def tracked_markdown_files() -> list[Path]:
 
 def extract_links(path: Path) -> list[Link]:
     links = []
-    for number, line in markdown_lines(path):
+    for number, line in markdown_lines(path.read_text(encoding="utf-8")):
         text = INLINE_CODE_RE.sub("", line)
         targets = inline_link_targets(text)
         targets += AUTOLINK_RE.findall(text)
@@ -108,10 +108,10 @@ def inline_link_target(match: re.Match[str]) -> str:
     return BACKSLASH_ESCAPE_RE.sub(r"\1", match.group(3))
 
 
-def markdown_lines(path: Path) -> list[tuple[int, str]]:
+def markdown_lines(text: str) -> list[tuple[int, str]]:
     lines = []
     fence = None
-    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+    for number, line in enumerate(text.splitlines(), start=1):
         marker = FENCE_RE.match(line)
         if fence is None and marker:
             fence = marker.group(1)
@@ -141,7 +141,7 @@ def check_local_links(links: list[Link]) -> list[str]:
         if not fragment or target.suffix.lower() != ".md":
             continue
         if target not in anchor_cache:
-            anchor_cache[target] = markdown_anchors(target)
+            anchor_cache[target] = markdown_anchors(target.read_text(encoding="utf-8"))
         if urllib.parse.unquote(fragment).lower() not in anchor_cache[target]:
             errors.append(describe(link, f"no heading or anchor '{fragment}' in {relative(target)}"))
     return errors
@@ -155,11 +155,11 @@ def resolve_local_path(source: Path, path_part: str) -> Path:
     return (source.parent / path_part).resolve()
 
 
-def markdown_anchors(path: Path) -> set[str]:
+def markdown_anchors(text: str) -> set[str]:
     anchors = set()
     slug_counts: dict[str, int] = {}
     previous: tuple[int, str] | None = None
-    for number, line in markdown_lines(path):
+    for number, line in markdown_lines(text):
         anchors.update(anchor.lower() for anchor in HTML_ANCHOR_RE.findall(line))
         heading_text = heading_of(line, previous if previous and previous[0] == number - 1 else None)
         previous = (number, line)
@@ -210,16 +210,17 @@ def check_external_links(links: list[Link]) -> list[str]:
 
 
 def fetch_page(url: str) -> Page:
+    raw_url = github_raw_url(url)
     error = "not fetched"
     for attempt in range(FETCH_ATTEMPTS):
         if attempt:
             time.sleep(2**attempt)
         try:
-            request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            request = urllib.request.Request(raw_url or url, headers={"User-Agent": USER_AGENT})
             with urllib.request.urlopen(request, timeout=FETCH_TIMEOUT_SECONDS) as response:
-                content_type = response.headers.get("Content-Type", "")
-                body = response.read().decode("utf-8", errors="replace") if "html" in content_type else ""
-                return Page(None, html_anchors(body))
+                if raw_url:
+                    return Page(None, raw_file_anchors(raw_url, response))
+                return Page(None, html_page_anchors(response))
         except urllib.error.HTTPError as err:
             if is_bot_challenge(err):
                 return Page(None, set())
@@ -229,6 +230,27 @@ def fetch_page(url: str) -> Page:
         except (OSError, ValueError, http.client.HTTPException) as err:
             error = f"request failed: {getattr(err, 'reason', err)}"
     return Page(error, set())
+
+
+# GitHub answers logged-out file views with HTTP 503 and no rendered headings, so check the raw file instead.
+def github_raw_url(url: str) -> str | None:
+    parsed = urllib.parse.urlparse(url)
+    parts = parsed.path.strip("/").split("/")
+    if parsed.hostname != "github.com" or len(parts) < 5 or parts[2] != "blob":
+        return None
+    return "https://raw.githubusercontent.com/" + "/".join(parts[:2] + parts[3:])
+
+
+def raw_file_anchors(raw_url: str, response: http.client.HTTPResponse) -> set[str]:
+    if not urllib.parse.urlparse(raw_url).path.lower().endswith(".md"):
+        return set()
+    return markdown_anchors(response.read().decode("utf-8", errors="replace"))
+
+
+def html_page_anchors(response: http.client.HTTPResponse) -> set[str]:
+    if "html" not in response.headers.get("Content-Type", ""):
+        return set()
+    return html_anchors(response.read().decode("utf-8", errors="replace"))
 
 
 def is_bot_challenge(err: urllib.error.HTTPError) -> bool:
