@@ -1532,22 +1532,24 @@ func resolveSymbolRef[T symbolResolver](
 	target symbolRefNode,
 	unknownMessage string,
 ) bool {
-	if prefix != "" {
-		symRef, ok := resolver.GetPrefixedSymbol(prefix, name)
-		if !ok {
-			semanticError(resolver, "Unknown symbol: "+name, pos)
-			return false
+	symRef, ok := lookupSymbolRef(resolver, name, prefix)
+	if !ok {
+		if prefix != "" {
+			unknownMessage = "Unknown symbol"
 		}
-		target.SetSymbol(symRef)
-	} else {
-		symRef, _, ok := resolver.GetSymbol(name)
-		if !ok {
-			semanticError(resolver, unknownMessage+": "+name, pos)
-			return false
-		}
-		target.SetSymbol(symRef)
+		semanticError(resolver, unknownMessage+": "+name, pos)
+		return false
 	}
+	target.SetSymbol(symRef)
 	return true
+}
+
+func lookupSymbolRef[T symbolResolver](resolver T, name, prefix string) (model.SymbolRef, bool) {
+	if prefix != "" {
+		return resolver.GetPrefixedSymbol(prefix, name)
+	}
+	symRef, _, ok := resolver.GetSymbol(name)
+	return symRef, ok
 }
 
 func resolveAnnotationReference[T symbolResolver](resolver T, pkgAlias, name ast.IdentifierNode, pos diagnostics.Location, target symbolRefNode) {
