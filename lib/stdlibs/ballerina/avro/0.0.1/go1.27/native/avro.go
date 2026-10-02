@@ -171,7 +171,7 @@ func fromAvroExtern(types *avroTypes) extern.NativeFunc {
 		if err != nil {
 			return avroErrorFrom(deserializationError, err), nil
 		}
-		return bindToTarget(tc, decoded, target.Type), nil
+		return bindToTarget(tc, decoded, target.Constraint()), nil
 	}
 }
 

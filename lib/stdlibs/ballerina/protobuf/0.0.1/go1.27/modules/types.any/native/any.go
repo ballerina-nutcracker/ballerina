@@ -211,9 +211,9 @@ func (types *anyTypes) unpackExtern(ctx *extern.Context, args []values.BalValue)
 	if err != nil {
 		return newAnyError(ctx, "failed to unpack google.protobuf."+suffix+" value: "+err.Error())
 	}
-	if semtypes.IsZero(naturalTy) || !semtypes.IsSubtype(ctx.TypeCtx(), naturalTy, targetTypeDesc.Type) {
+	if semtypes.IsZero(naturalTy) || !semtypes.IsSubtype(ctx.TypeCtx(), naturalTy, targetTypeDesc.Constraint()) {
 		return newTypeMismatchError(ctx, fmt.Sprintf("Type %s cannot unpack to %s",
-			typeURL, semtypes.ToString(ctx.TypeCtx(), targetTypeDesc.Type)))
+			typeURL, semtypes.ToString(ctx.TypeCtx(), targetTypeDesc.Constraint())))
 	}
 	return decoded, nil
 }
