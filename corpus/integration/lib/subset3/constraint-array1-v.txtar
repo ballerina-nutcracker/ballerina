@@ -1,0 +1,9 @@
+-- stdout --
+ok: ["a"]
+ValidationError: Validation failed for '$:minLength' constraint(s).
+ValidationError: Validation failed for '$:maxLength' constraint(s).
+ok: [1,2]
+ValidationError: Validation failed for '$:length' constraint(s).
+ValidationError: need at least two.
+ok: [1,2]
+-- stderr --
