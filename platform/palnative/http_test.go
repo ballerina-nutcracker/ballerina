@@ -18,7 +18,15 @@ package palnative
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -81,10 +89,13 @@ func TestNewHTTPClient_HTTP2_TLS(t *testing.T) {
 	server.StartTLS()
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		HTTPVersion: "2.0",
 		TLS:         pal.TLSConfig{InsecureSkipVerify: true},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -112,10 +123,13 @@ func TestNewHTTPClient_HTTP1_TLS(t *testing.T) {
 	server.StartTLS()
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		HTTPVersion: "1.1",
 		TLS:         pal.TLSConfig{InsecureSkipVerify: true},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -196,9 +210,12 @@ func TestNewHTTPClient_InsecureSkipVerify(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		TLS: pal.TLSConfig{InsecureSkipVerify: true},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if err != nil {
 		t.Fatalf("expected successful connection with InsecureSkipVerify=true, got: %v", err)
@@ -219,15 +236,129 @@ func TestNewHTTPClient_TLSVerificationFails(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		TLS: pal.TLSConfig{InsecureSkipVerify: false},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	_, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
 	}
 	if err == nil {
 		t.Fatal("expected TLS verification error for self-signed cert, got nil")
+	}
+}
+
+// newSelfSignedCert returns a self-signed CA-capable server certificate and its PEM.
+func newSelfSignedCert(t *testing.T, commonName string, dnsNames []string, ipAddresses ...net.IP) (tls.Certificate, []byte) {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatalf("GenerateKey: %v", err)
+	}
+	tmpl := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: commonName},
+		DNSNames:              dnsNames,
+		IPAddresses:           ipAddresses,
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(time.Hour),
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	if err != nil {
+		t.Fatalf("CreateCertificate: %v", err)
+	}
+	return tls.Certificate{Certificate: [][]byte{der}, PrivateKey: key},
+		pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+}
+
+// TestNewHTTPClient_CustomCAWithoutServerName verifies that with a custom CA and no
+// configured ServerName, the certificate is verified against the request URL's host,
+// including IP-literal hosts for which no SNI is sent.
+func TestNewHTTPClient_CustomCAWithoutServerName(t *testing.T) {
+	t.Parallel()
+	loopback := net.ParseIP("127.0.0.1")
+	tests := []struct {
+		desc        string
+		host        string
+		cn          string
+		dnsNames    []string
+		ips         []net.IP
+		httpVersion string
+		wantErr     bool
+	}{
+		{desc: "SAN certificate", host: "localhost", dnsNames: []string{"localhost"}},
+		{desc: "CN-only certificate", host: "localhost", cn: "localhost"},
+		{desc: "SAN certificate over HTTP/2", host: "localhost", dnsNames: []string{"localhost"}, httpVersion: "2.0"},
+		{desc: "hostname mismatch", host: "localhost", dnsNames: []string{"other.example"}, wantErr: true},
+		{desc: "IP literal with IP SAN", host: "127.0.0.1", ips: []net.IP{loopback}},
+		{desc: "IP literal with no SANs and empty CN", host: "127.0.0.1", wantErr: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			cert, caPEM := newSelfSignedCert(t, tc.cn, tc.dnsNames, tc.ips...)
+			var gotProto string
+			server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gotProto = r.Proto
+				w.WriteHeader(200)
+			}))
+			server.EnableHTTP2 = true
+			server.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
+			server.StartTLS()
+			defer server.Close()
+			_, port, _ := net.SplitHostPort(server.Listener.Addr().String())
+
+			client, err := NewHTTPClient(pal.ClientConfig{
+				HTTPVersion: tc.httpVersion,
+				TLS:         pal.TLSConfig{CACertPEM: caPEM},
+			})
+			if err != nil {
+				t.Fatalf("NewHTTPClient: %v", err)
+			}
+			status, _, body, err := client.Execute(context.Background(), "GET", "https://"+net.JoinHostPort(tc.host, port)+"/", nil, 0, "", nil)
+			if body != nil {
+				_ = body.Close()
+			}
+			if tc.wantErr {
+				if err == nil {
+					t.Fatal("expected certificate verification error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("expected verification against the URL host to succeed, got: %v", err)
+			}
+			if status != 200 {
+				t.Errorf("expected status 200, got %d", status)
+			}
+			if tc.httpVersion == "2.0" && !strings.HasPrefix(gotProto, "HTTP/2") {
+				t.Errorf("expected HTTP/2 over the custom-CA dialer, got proto: %s", gotProto)
+			}
+		})
+	}
+}
+
+// TestTLSVerifyConnection_EmptyServerName verifies that the callback refuses to match
+// when neither a configured nor an SNI server name is available.
+func TestTLSVerifyConnection_EmptyServerName(t *testing.T) {
+	t.Parallel()
+	cert, caPEM := newSelfSignedCert(t, "", nil)
+	pool := x509.NewCertPool()
+	pool.AppendCertsFromPEM(caPEM)
+	leaf, err := x509.ParseCertificate(cert.Certificate[0])
+	if err != nil {
+		t.Fatalf("ParseCertificate: %v", err)
+	}
+	verify := tlsVerifyConnectionWithCNFallback(pool, "")
+	if err := verify(tls.ConnectionState{PeerCertificates: []*x509.Certificate{leaf}}); err == nil {
+		t.Fatal("expected an error for an empty server name, got nil")
 	}
 }
 
@@ -239,9 +370,12 @@ func TestNewHTTPClient_Timeout(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		Timeout: 100 * time.Millisecond,
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	_, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -263,10 +397,13 @@ func TestNewHTTPClient_RedirectsDisabled(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		FollowRedirects: pal.FollowRedirects{Enabled: false},
 		ResponseLimits:  pal.ResponseLimitConfig{MaxEntityBodySize: -1},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/redirect", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -291,9 +428,12 @@ func TestNewHTTPClient_RedirectsEnabled(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		FollowRedirects: pal.FollowRedirects{Enabled: true, MaxCount: 3},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/redirect", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -314,13 +454,16 @@ func TestNewHTTPClient_TLSVersionRange(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		TLS: pal.TLSConfig{
 			MinVersion:         tls.VersionTLS12,
 			MaxVersion:         tls.VersionTLS13,
 			InsecureSkipVerify: true,
 		},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
@@ -350,12 +493,15 @@ func TestNewHTTPClient_ValidCipherSuites(t *testing.T) {
 	for i, s := range suites {
 		names[i] = s.Name
 	}
-	client := NewHTTPClient(pal.ClientConfig{
+	client, err := NewHTTPClient(pal.ClientConfig{
 		TLS: pal.TLSConfig{
 			CipherSuiteNames:   names,
 			InsecureSkipVerify: true,
 		},
 	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
 	status, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
 	if body != nil {
 		_ = body.Close()
