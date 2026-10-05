@@ -7277,6 +7277,35 @@ func (u OrParameterInformationLabel) Variant1() (TupleParameterInformationLabelI
 	return u.value.(TupleParameterInformationLabelItem1), true
 }
 
+func (t TupleParameterInformationLabelItem1) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]any{t.Item0, t.Item1})
+}
+
+func (t *TupleParameterInformationLabelItem1) UnmarshalJSON(data []byte) error {
+	var items []json.RawMessage
+	if err := json.Unmarshal(data, &items); err != nil {
+		return err
+	}
+	if len(items) != 2 {
+		return fmt.Errorf("tuple requires 2 elements")
+	}
+	var value TupleParameterInformationLabelItem1
+	if string(items[0]) == "null" {
+		return fmt.Errorf("tuple element cannot be null")
+	}
+	if err := json.Unmarshal(items[0], &value.Item0); err != nil {
+		return err
+	}
+	if string(items[1]) == "null" {
+		return fmt.Errorf("tuple element cannot be null")
+	}
+	if err := json.Unmarshal(items[1], &value.Item1); err != nil {
+		return err
+	}
+	*t = value
+	return nil
+}
+
 func (u OrParameterInformationDocumentation) MarshalJSON() ([]byte, error) {
 	switch u.tag {
 	case 0:

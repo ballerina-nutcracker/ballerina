@@ -65,6 +65,7 @@ type requestEntry struct {
 	replyOnce   sync.Once
 	release     chan struct{}
 	releaseOnce sync.Once
+	signature   *signatureRequest
 }
 
 func (e *requestEntry) closeRelease() {
@@ -114,13 +115,14 @@ func (r *requestRegistry) cancelAll() {
 
 // Server handles LSP messages and publishes workspace diagnostics.
 type Server struct {
-	transport      protocol.Transport
-	projects       *workspace.ProjectService
-	compiler       *compile.CompilationService
-	bus            *event.Bus
-	versionSupport bool
-	initialized    bool
-	shuttingDown   bool
+	transport        protocol.Transport
+	projects         *workspace.ProjectService
+	compiler         *compile.CompilationService
+	bus              *event.Bus
+	versionSupport   bool
+	signatureOffsets bool
+	initialized      bool
+	shuttingDown     bool
 
 	diagnosticMu sync.Mutex // Orders document mutations and close clears against diagnostic validation and writes.
 	writeMu      sync.Mutex // Prevents interleaved frames from concurrent response and diagnostic writes.
@@ -276,6 +278,9 @@ func (s *Server) handleTrackedRequest(ctx context.Context, message protocol.Mess
 		// Initialize before dispatch so a release cannot race the worker's startup.
 		entry.release = make(chan struct{})
 	}
+	if message.Method == "textDocument/signatureHelp" {
+		entry.signature = s.captureSignature(message.Params)
+	}
 	s.requestWG.Add(1)
 	go func() {
 		defer s.requestWG.Done()
@@ -313,6 +318,9 @@ func (s *Server) dispatchTracked(ctx context.Context, message protocol.Message) 
 	switch message.Method {
 	case testBlockMethod:
 		return s.handleTestBlockRequest(ctx, message)
+	case "textDocument/signatureHelp":
+		id, _ := requestIDKey(message.ID)
+		return s.handleSignature(ctx, s.registry.lookup(id).signature)
 	}
 	return trackedResult{err: &protocol.RPCError{Code: rpcMethodNotFound, Message: "method not found"}, handled: true}
 }
@@ -345,6 +353,13 @@ func (s *Server) handleInitialize(_ context.Context, params json.RawMessage) (an
 	}
 	s.initialized = true
 	if caps, ok := initializeParams.Capabilities.TextDocument.Value(); ok {
+		if signatureCaps, ok := caps.SignatureHelp.Value(); ok {
+			if information, ok := signatureCaps.SignatureInformation.Value(); ok {
+				if parameters, ok := information.ParameterInformation.Value(); ok {
+					s.signatureOffsets, _ = parameters.LabelOffsetSupport.Value()
+				}
+			}
+		}
 		if diagCaps, ok := caps.PublishDiagnostics.Value(); ok {
 			if versionSupport, ok := diagCaps.VersionSupport.Value(); ok {
 				s.versionSupport = versionSupport
@@ -357,7 +372,8 @@ func (s *Server) handleInitialize(_ context.Context, params json.RawMessage) (an
 		Save:      protocol.NewOptional(protocol.NewOrTextDocumentSyncOptionsSaveBoolean(true)),
 	}
 	return protocol.InitializeResult{Capabilities: protocol.ServerCapabilities{
-		TextDocumentSync: protocol.NewOptional(protocol.NewOrServerCapabilitiesTextDocumentSyncTextDocumentSyncOptions(opts)),
+		TextDocumentSync:      protocol.NewOptional(protocol.NewOrServerCapabilitiesTextDocumentSyncTextDocumentSyncOptions(opts)),
+		SignatureHelpProvider: protocol.NewOptional(protocol.SignatureHelpOptions{TriggerCharacters: protocol.NewOptional([]string{"(", ","})}),
 	}}, true
 }
 

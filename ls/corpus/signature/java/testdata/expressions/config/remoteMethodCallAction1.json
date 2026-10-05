@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 38,
+    "character": 17
+  },
+  "source": "expressions/clientSource.bal",
+  "expected": {"jsonrpc":"2.0","result":{"signatures":[{"label":"remote1(string id, int age, string name)","parameters":[{"label":[8,17]},{"label":[19,26]},{"label":[28,39]}]}],"activeSignature":0,"activeParameter":0}}
+}

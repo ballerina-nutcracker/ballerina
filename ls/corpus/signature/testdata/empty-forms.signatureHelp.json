@@ -1,0 +1,402 @@
+{
+  "source": "empty-forms.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 25,
+          "character": 22
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 26,
+          "character": 21
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 27,
+          "character": 12
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 5,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 29,
+          "character": 15
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 30,
+          "character": 28
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 26,
+          "character": 19
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 27,
+          "character": 5
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 9,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 27,
+          "character": 9
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 10,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 29,
+          "character": 5
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 11,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 29,
+          "character": 11
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 12,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 25,
+          "character": 19
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {},
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/signature.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "signatures": [
+          {
+            "label": "new Box(int size)",
+            "parameters": [
+              {
+                "label": "int size"
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 0
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": {
+        "signatures": [
+          {
+            "label": "new Box(int size)",
+            "parameters": [
+              {
+                "label": "int size"
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 0
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "result": {
+        "signatures": [
+          {
+            "label": "put(int count, string title)",
+            "parameters": [
+              {
+                "label": "int count"
+              },
+              {
+                "label": "string title"
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 0
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 5,
+      "result": {
+        "signatures": [
+          {
+            "label": "send(int count, string title)",
+            "parameters": [
+              {
+                "label": "int count"
+              },
+              {
+                "label": "string title"
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 0
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "result": {
+        "signatures": [
+          {
+            "label": "new Empty()",
+            "parameters": []
+          }
+        ],
+        "activeSignature": 0
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "result": {
+        "signatures": [
+          {
+            "label": "new Box(int size)",
+            "parameters": [
+              {
+                "label": "int size"
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 0
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 9,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 10,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 11,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 12,
+      "result": null
+    }
+  ]
+}

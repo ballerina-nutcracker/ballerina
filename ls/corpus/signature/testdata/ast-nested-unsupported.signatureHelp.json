@@ -1,0 +1,172 @@
+{
+  "source": "ast-nested-unsupported.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 21,
+          "character": 17
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 23,
+          "character": 30
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {},
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/signature.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 21,
+                "character": 12
+              },
+              "end": {
+                "line": 21,
+                "character": 19
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "ambiguous object type"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 23,
+                "character": 9
+              },
+              "end": {
+                "line": 23,
+                "character": 32
+              }
+            },
+            "severity": 1,
+            "code": "INTERNAL_ERROR",
+            "source": "ballerina",
+            "message": "lang.int symbol space not found"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 23,
+                "character": 9
+              },
+              "end": {
+                "line": 23,
+                "character": 32
+              }
+            },
+            "severity": 1,
+            "code": "INTERNAL_ERROR",
+            "source": "ballerina",
+            "message": "lang.value symbol space not found"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 23,
+                "character": 9
+              },
+              "end": {
+                "line": 23,
+                "character": 32
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "method not found: noSuchMethod"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": null
+    }
+  ]
+}

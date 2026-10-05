@@ -1,0 +1,8 @@
+{
+    "position": {
+        "line": 105,
+        "character": 28
+    },
+    "source": "expressions/expressions.bal",
+    "expected": {"jsonrpc":"2.0","result":null}
+}

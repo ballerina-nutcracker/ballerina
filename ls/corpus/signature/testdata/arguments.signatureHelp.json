@@ -1,0 +1,394 @@
+{
+  "source": "arguments.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 24,
+          "character": 27
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 25,
+          "character": 36
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 26,
+          "character": 20
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 5,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 26,
+          "character": 24
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 27,
+          "character": 18
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 28,
+          "character": 18
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 29,
+          "character": 9
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 9,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 26,
+          "character": 4
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 10,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 24,
+          "character": 20
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 11,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 28,
+          "character": 14
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {},
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/signature.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 27,
+                "character": 19
+              },
+              "end": {
+                "line": 27,
+                "character": 20
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "too many arguments"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "signatures": [
+          {
+            "label": "choose(int count, string title, string... extra)",
+            "parameters": [
+              {
+                "label": "int count"
+              },
+              {
+                "label": "string title"
+              },
+              {
+                "label": "string... extra"
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 2
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 5,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "result": {
+        "signatures": [
+          {
+            "label": "arrays([int...] values, int|string value)",
+            "parameters": [
+              {
+                "label": "[int...] values"
+              },
+              {
+                "label": "int|string value"
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 1
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "result": {
+        "signatures": [
+          {
+            "label": "zero()",
+            "parameters": []
+          }
+        ],
+        "activeSignature": 0
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 9,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 10,
+      "result": {
+        "signatures": [
+          {
+            "label": "choose(int count, string title, string... extra)",
+            "parameters": [
+              {
+                "label": "int count"
+              },
+              {
+                "label": "string title"
+              },
+              {
+                "label": "string... extra"
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 1
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 11,
+      "result": {
+        "signatures": [
+          {
+            "label": "arrays([int...] values, int|string value)",
+            "parameters": [
+              {
+                "label": "[int...] values"
+              },
+              {
+                "label": "int|string value"
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 0
+      }
+    }
+  ]
+}
