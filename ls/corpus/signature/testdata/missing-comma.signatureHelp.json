@@ -1,0 +1,135 @@
+{
+  "source": "missing-comma.bal",
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "method": "initialize",
+      "params": {
+        "capabilities": {
+          "textDocument": {
+            "signatureHelp": {
+              "signatureInformation": {
+                "documentationFormat": [
+                  "markdown"
+                ],
+                "parameterInformation": {
+                  "labelOffsetSupport": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "id": 1
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal"
+        },
+        "position": {
+          "line": 18,
+          "character": 10
+        }
+      },
+      "id": 2
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/main.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 18,
+                "character": 11
+              },
+              "end": {
+                "line": 18,
+                "character": 11
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing comma token"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "signatures": [
+          {
+            "label": "foo(int count, string title)",
+            "parameters": [
+              {
+                "label": [
+                  4,
+                  13
+                ]
+              },
+              {
+                "label": [
+                  15,
+                  27
+                ]
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 0
+      }
+    }
+  ]
+}

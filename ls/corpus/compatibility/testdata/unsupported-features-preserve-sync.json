@@ -185,6 +185,12 @@
             "openClose": true,
             "change": 2,
             "save": true
+          },
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
           }
         }
       }
@@ -252,10 +258,7 @@
     {
       "jsonrpc": "2.0",
       "id": "signature-before-edit",
-      "error": {
-        "code": -32601,
-        "message": "method not found"
-      }
+      "result": null
     },
     {
       "jsonrpc": "2.0",
@@ -277,10 +280,7 @@
     {
       "jsonrpc": "2.0",
       "id": "signature-after-edit",
-      "error": {
-        "code": -32601,
-        "message": "method not found"
-      }
+      "result": null
     }
   ]
 }
