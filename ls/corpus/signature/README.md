@@ -16,31 +16,14 @@ while resolution is still held, and a later help request proves that request
 cancellation did not cancel the compiler. Unordered comparison preserves reply
 counts while allowing independent diagnostic and request delivery order.
 
-## Selected Java inputs
+## Function and method calls
 
-`java/testdata/` copies inputs from the Java LS's
-`langserver-core/src/test/resources/signature/`:
-
-| Config | Source | Coverage |
-| --- | --- | --- |
-| `statements/config/stmtCallFunction.json` | `statements/statements.bal` | Typed function |
-| `statements/config/stmtCallMethod.json` | `statements/statements.bal` | Typed object method |
-| `expressions/config/exprFunctionCall.json` | `expressions/expressions.bal` | Names-only function |
-| `expressions/config/exprFunctionCallNamed.json` | `expressions/expressions.bal` | Names-only named argument |
-| `expressions/config/exprFunctionCallNested1.json` | `expressions/expressions.bal` | Names-only nested call |
-| `expressions/config/remoteMethodCallAction1.json` | `expressions/clientSource.bal` | Typed remote method |
-
-Source bytes and every config byte outside `expected` are preserved. The
-config adapter uses the existing framed transport, enables label-offset
-support, and replaces only `expected` during `-update`.
-
-Approved differences: full parameter-segment UTF-16 array ranges instead of
-Java's name-only Gson tuple objects; no documentation, defaults, or return
-text; semantic type spelling; named-argument selection; one signature. The
-large expressions source reaches only symbol resolution in the Go LS, so its
-selected functions intentionally exercise names-only fallback rather than
-pretending typed methods or constructors are supported in that whole file.
-Go-specific sources cover constructors and the other required edge cases.
-Function variables without typed signature metadata also use names-only
-fallback; unnamed parameters consequently have empty label segments, while
-positional active-parameter selection still works.
+`stmt-call-function`, `stmt-call-method` and `remote-method-call` select typed
+function, object-method and remote-method calls from `statements.bal` and
+`remote-client.bal`. `expr-function-call`, `expr-function-call-named` and
+`expr-function-call-nested` select calls from the large `expressions.bal`,
+which reaches only symbol resolution, so they exercise names-only fallback
+rather than typed methods or constructors. Function variables without typed
+signature metadata also use names-only fallback; unnamed parameters
+consequently have empty label segments, while positional active-parameter
+selection still works.
