@@ -97,11 +97,13 @@
         {
           "label": "COUNT",
           "kind": 21,
+          "detail": "1",
           "insertText": "COUNT"
         },
         {
           "label": "Point",
           "kind": 7,
+          "detail": "{| x: int, never... |}",
           "insertText": "Point"
         },
         {
@@ -117,6 +119,7 @@
         {
           "label": "helper",
           "kind": 3,
+          "detail": "function() returns nil",
           "insertText": "helper"
         },
         {

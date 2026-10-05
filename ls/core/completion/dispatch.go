@@ -36,12 +36,14 @@ type handler struct {
 var handlers = []handler{
 	// new per-family handlers land here as they're built, ordered
 	// highest-priority (most specific node context) first
+	typeDefinitionHandler,
+	enumDeclarationHandler,
 	fieldAccessHandler,
 	invocationHandler,
 	importHandler,
-	moduleHandler,  // today's kindModule behavior, migrated
-	blockHandler,   // today's kindBlock behavior, migrated
-	lexicalHandler, // today's kindLexical behavior, migrated
+	moduleHandler,
+	blockHandler,
+	lexicalHandler,
 }
 
 func dispatch(c *cursor) []protocol.CompletionItem {

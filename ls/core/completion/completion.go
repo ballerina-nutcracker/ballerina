@@ -21,22 +21,66 @@ import (
 	stdcontext "context"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/uri"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
 type Request struct {
-	URI    uri.DocumentURI
+	URI    workspace.DocumentURI
 	Text   string
 	Offset int
 }
 
-type Service struct {
-	compiler *compile.CompilationService
+type AvailablePackage struct {
+	Organization string
+	Name         string
 }
 
-func New(compiler *compile.CompilationService) *Service {
-	return &Service{compiler: compiler}
+type Option func(*Service)
+
+func WithAvailablePackages(packages []AvailablePackage) Option {
+	return func(s *Service) {
+		s.packages = append([]AvailablePackage(nil), packages...)
+	}
+}
+
+// WithLogger injects the observability facade the service uses for the AST
+// debug dump (see WithASTDebugLogging). The default (unset) is
+// observability.NewNoop().
+func WithLogger(logger *observability.Logger) Option {
+	return func(s *Service) {
+		if logger != nil {
+			s.logger = logger
+		}
+	}
+}
+
+// WithASTDebugLogging turns on a per-request debug dump of the AST around
+// the completion cursor: the chain's root node, pretty-printed, with the
+// node dispatch() matched on bracketed by >>> <<<. This is a throwaway
+// diagnostic aid for iterating on completion dispatch, not a shipped
+// feature, so it's opt-in and off by default -- pair it with WithLogger to
+// actually see output (a noop logger discards it).
+func WithASTDebugLogging() Option {
+	return func(s *Service) {
+		s.debugAST = true
+	}
+}
+
+type Service struct {
+	compiler *compile.CompilationService
+	packages []AvailablePackage
+	logger   *observability.Logger
+	debugAST bool
+}
+
+func New(compiler *compile.CompilationService, options ...Option) *Service {
+	service := &Service{compiler: compiler, logger: observability.NewNoop()}
+	for _, option := range options {
+		option(service)
+	}
+	return service
 }
 
 func (s *Service) Complete(ctx stdcontext.Context, req Request) ([]protocol.CompletionItem, error) {
@@ -56,19 +100,23 @@ func (s *Service) Complete(ctx stdcontext.Context, req Request) ([]protocol.Comp
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	return completeAt(req, sm), nil
+	return completeAt(req, sm, s.packages, s.logger, s.debugAST), nil
 }
 
-func completeAt(req Request, sm compile.SealedModule) (items []protocol.CompletionItem) {
+func completeAt(req Request, sm compile.SealedModule, packages []AvailablePackage, logger *observability.Logger, debugAST bool) (items []protocol.CompletionItem) {
 	defer func() {
 		if recover() != nil {
 			items = emptyItems
 		}
 	}()
-	if sm.PackageNode() == nil || sm.Context() == nil || sm.Stage() < compile.StageSymbolResolved {
+	if sm.PackageNode() == nil || sm.Context() == nil || sm.Stage() < compile.StageLocalTypeResolved {
 		return emptyItems
 	}
-	return dispatch(newCursor(req, sm))
+	c := newCursor(req, sm, packages)
+	if debugAST {
+		dumpCursorAST(logger, c)
+	}
+	return dispatch(c)
 }
 
 var emptyItems = []protocol.CompletionItem{}

@@ -62,9 +62,18 @@ func lexicalItems(c *cursor, keywords []string) []protocol.CompletionItem {
 	if !hasExpectedType {
 		return set.items()
 	}
-	return set.itemsRanked(func(item protocol.CompletionItem) bool {
+	items := set.itemsRanked(func(item protocol.CompletionItem) bool {
 		return compatible[item.Label]
 	})
+	for index, item := range items {
+		relevance := neutralRelevance
+		if compatible[item.Label] {
+			relevance = relevance.add(1)
+		}
+		item.SortText = protocol.NewOptional(relevance.sortText())
+		items[index] = item
+	}
+	return items
 }
 
 func symbolType(c *cursor, ref model.SymbolRef) semtypes.SemType {

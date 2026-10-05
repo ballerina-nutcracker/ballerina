@@ -27,6 +27,11 @@
     },
     {
       "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
       "id": 2,
       "method": "textDocument/completion",
       "params": {
@@ -62,8 +67,102 @@
     },
     {
       "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///workspace/unusable-generation.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 17
+              },
+              "end": {
+                "line": 0,
+                "character": 17
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing type desc"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 17
+              },
+              "end": {
+                "line": 0,
+                "character": 17
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing identifier"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 17
+              },
+              "end": {
+                "line": 0,
+                "character": 17
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing close paren token"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 0
+              },
+              "end": {
+                "line": 1,
+                "character": 0
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing close brace token"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
       "id": 2,
-      "result": []
+      "result": [
+        {
+          "label": "const",
+          "kind": 14,
+          "insertText": "const"
+        },
+        {
+          "label": "function",
+          "kind": 14,
+          "insertText": "function"
+        },
+        {
+          "label": "import",
+          "kind": 14,
+          "insertText": "import"
+        },
+        {
+          "label": "type",
+          "kind": 14,
+          "insertText": "type"
+        }
+      ]
     }
   ]
 }

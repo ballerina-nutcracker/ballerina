@@ -151,6 +151,23 @@ func WithLogger(logger *observability.Logger) Option {
 	}
 }
 
+// WithCompletionOptions applies additional completion.Option values (e.g.
+// completion.WithASTDebugLogging paired with completion.WithLogger) when
+// constructing the server's completion service. Like WithAvailablePackages,
+// it rebuilds s.completion, so combine both into one call if both are
+// needed rather than chaining the two Options.
+func WithCompletionOptions(options ...completion.Option) Option {
+	return func(s *Server) {
+		s.completion = completion.New(s.compiler, options...)
+	}
+}
+
+func WithAvailablePackages(packages []completion.AvailablePackage) Option {
+	return func(s *Server) {
+		s.completion = completion.New(s.compiler, completion.WithAvailablePackages(packages))
+	}
+}
+
 // New creates a Server using the supplied transport and services, then applies
 // opts in order. A non-nil bus enables event-driven diagnostic publication.
 func New(transport protocol.Transport, projects *workspace.ProjectService, compiler *compile.CompilationService, bus *event.Bus, opts ...Option) *Server {

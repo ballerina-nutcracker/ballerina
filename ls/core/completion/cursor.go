@@ -25,17 +25,18 @@ import (
 )
 
 type cursor struct {
-	req   Request
-	sm    compile.SealedModule
-	chain []ast.BLangNode
+	req      Request
+	sm       compile.SealedModule
+	packages []AvailablePackage
+	chain    []ast.BLangNode
 
 	winnerNode    ast.BLangNode
 	winnerMatched bool
 }
 
-func newCursor(req Request, sm compile.SealedModule) *cursor {
+func newCursor(req Request, sm compile.SealedModule, packages []AvailablePackage) *cursor {
 	fileIndex := sm.Context().DiagnosticEnv().FileIndex(req.URI.Path())
-	c := &cursor{req: req, sm: sm, chain: nodeChainAtOffset(sm.PackageNode(), req.Offset, fileIndex)}
+	c := &cursor{req: req, sm: sm, packages: packages, chain: nodeChainAtOffset(sm.PackageNode(), req.Offset, fileIndex)}
 	c.winnerNode, c.winnerMatched = nearestChainMatch(c)
 	return c
 }
@@ -70,7 +71,7 @@ func nearestChainMatch(c *cursor) (ast.BLangNode, bool) {
 				return c.chain[i], true
 			}
 		case *ast.BLangPackage:
-			if i+1 == len(c.chain) || isBadTopLevel(c.chain[i+1]) {
+			if i+1 == len(c.chain) || isBadTopLevel(c.chain[i+1]) || containsBadNode(c.chain[i+1]) {
 				return c.chain[i], true
 			}
 		}
@@ -87,6 +88,37 @@ func isBadTopLevel(node ast.BLangNode) bool {
 	_, ok := node.(*ast.BLangBadTopLevelNode)
 	return ok
 }
+
+// containsBadNode reports whether node's subtree has any recovered bad node
+// (a malformed signature/declaration the parser couldn't structurally place,
+// e.g. a BLangFunction with an unparseable parameter list). Recovered
+// top-level nodes assemble into a real typed node (BLangFunction,
+// BLangTypeDefinition, ...), not a BLangBadTopLevelNode, so isBadTopLevel
+// alone misses them: the cursor otherwise falls into that malformed node's
+// own (unusable) context instead of module level, and lexicalHandler's
+// fallback offers no keywords.
+func containsBadNode(node ast.BLangNode) bool {
+	d := &badNodeDetector{}
+	ast.Walk(d, node)
+	return d.found
+}
+
+type badNodeDetector struct {
+	found bool
+}
+
+func (d *badNodeDetector) Visit(node ast.BLangNode) ast.Visitor {
+	if d.found || node == nil {
+		return nil
+	}
+	if _, ok := node.(ast.BLangBadNode); ok {
+		d.found = true
+		return nil
+	}
+	return d
+}
+
+func (d *badNodeDetector) VisitTypeData(*ast.TypeData) ast.Visitor { return d }
 
 func nodeChainAtOffset(pkg *ast.BLangPackage, offset, fileIndex int) []ast.BLangNode {
 	finder := &chainFinder{offset: offset, fileIndex: fileIndex}
