@@ -22,7 +22,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/completion"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/uri"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
@@ -38,7 +38,7 @@ func (s *Server) handleCompletion(ctx context.Context, message protocol.Message)
 	if json.Unmarshal(message.Params, &params) != nil {
 		return trackedResult{}
 	}
-	docURI, err := uri.NewFileURI(params.TextDocument.URI)
+	docURI, err := workspace.NewFileURI(params.TextDocument.URI)
 	if err != nil {
 		return trackedResult{}
 	}
