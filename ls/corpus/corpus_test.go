@@ -47,6 +47,7 @@ type transcript struct {
 	Messages                []json.RawMessage `json:"messages"`
 	Expected                []json.RawMessage `json:"expected"`
 	HoldSignatureDependency bool              `json:"holdSignatureDependency,omitempty"`
+	SignatureRepository     bool              `json:"signatureRepository,omitempty"`
 	Unordered               bool              `json:"unordered,omitempty"`
 }
 
@@ -182,6 +183,10 @@ func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*worksp
 	if fixture.HoldSignatureDependency {
 		gate = newSignatureGateRepository(workspace.NewFileSystemRepository(platform, path.Join(rootPath, "repository")))
 		workspaceOptions = append(workspaceOptions, workspace.WithRepositories([]projects.Repository{gate}))
+	} else if fixture.SignatureRepository {
+		workspaceOptions = append(workspaceOptions, workspace.WithRepositories([]projects.Repository{
+			workspace.NewFileSystemRepository(platform, path.Join(rootPath, "repository")),
+		}))
 	}
 	projectService := workspace.New(platform, bus, workspaceOptions...)
 	compiler := compile.New(projectService, bus, compile.WithDebounce(0))
