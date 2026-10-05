@@ -131,19 +131,31 @@
                 "label": [
                   8,
                   17
-                ]
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`id**"
+                }
               },
               {
                 "label": [
                   19,
                   26
-                ]
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`age**"
+                }
               },
               {
                 "label": [
                   28,
                   39
-                ]
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`name**"
+                }
               }
             ]
           }

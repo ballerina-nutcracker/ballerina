@@ -138,10 +138,18 @@
             "label": "foo(int newCount, string newTitle)",
             "parameters": [
               {
-                "label": "int newCount"
+                "label": "int newCount",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`newCount**"
+                }
               },
               {
-                "label": "string newTitle"
+                "label": "string newTitle",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`newTitle**"
+                }
               }
             ]
           }

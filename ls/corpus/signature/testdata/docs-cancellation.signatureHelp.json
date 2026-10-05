@@ -1,0 +1,222 @@
+{
+  "source": "",
+  "sources": {
+    "Ballerina.toml": "[package]\norg = \"testorg\"\nname = \"signature66\"\nversion = \"0.1.0\"\n",
+    "main.bal": "// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).\n//\n// WSO2 LLC. licenses this file to you under the Apache License,\n// Version 2.0 (the \"License\"); you may not use this file except\n// in compliance with the License.\n// You may obtain a copy of the License at\n//\n// http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing,\n// software distributed under the License is distributed on an\n// \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n// KIND, either express or implied. See the License for the\n// specific language governing permissions and limitations\n// under the License.\n\nimport acme/gate;\n# Original description.\n# + count - Original count.\n# + title - Original title.\nfunction foo(int count, string title) {}\npublic function main() {\n    foo(1, \"hi\");\n}\n",
+    "repository/acme/gate/0.1.0/go1.27/bala.json": "{\"bala_version\":\"3.0.0\"}\n",
+    "repository/acme/gate/0.1.0/go1.27/dependency-graph.json": "{\"packages\":[{\"org\":\"acme\",\"name\":\"gate\",\"version\":\"0.1.0\",\"dependencies\":[],\"modules\":[]}],\"modules\":[{\"org\":\"acme\",\"package_name\":\"gate\",\"version\":\"0.1.0\",\"module_name\":\"gate\",\"dependencies\":[]}]}\n",
+    "repository/acme/gate/0.1.0/go1.27/modules/gate/gate.bal": "// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).\n//\n// WSO2 LLC. licenses this file to you under the Apache License,\n// Version 2.0 (the \"License\"); you may not use this file except\n// in compliance with the License.\n// You may obtain a copy of the License at\n//\n// http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing,\n// software distributed under the License is distributed on an\n// \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n// KIND, either express or implied. See the License for the\n// specific language governing permissions and limitations\n// under the License.\n\npublic function probe() returns int { return 0; }\n",
+    "repository/acme/gate/0.1.0/go1.27/package.json": "{\"organization\":\"acme\",\"name\":\"gate\",\"version\":\"0.1.0\",\"platform\":\"go1.27\",\"modules\":[]}\n"
+  },
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file://${root}/main.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).\n//\n// WSO2 LLC. licenses this file to you under the Apache License,\n// Version 2.0 (the \"License\"); you may not use this file except\n// in compliance with the License.\n// You may obtain a copy of the License at\n//\n// http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing,\n// software distributed under the License is distributed on an\n// \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n// KIND, either express or implied. See the License for the\n// specific language governing permissions and limitations\n// under the License.\n\nimport acme/gate;\n# Original description.\n# + count - Original count.\n# + title - Original title.\nfunction foo(int count, string title) {}\npublic function main() {\n    foo(1, \"hi\");\n}\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/awaitSignatureDependency",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file://${root}/main.bal"
+        },
+        "position": {
+          "line": 22,
+          "character": 11
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$/cancelRequest",
+      "params": {
+        "id": 2
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$/cancelRequest",
+      "params": {
+        "id": 2
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/releaseSignatureDependency",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file://${root}/main.bal"
+        },
+        "position": {
+          "line": 22,
+          "character": 11
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {},
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "error": {
+        "code": -32800,
+        "message": "request cancelled"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file://${root}/main.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 20,
+                "character": 13
+              },
+              "end": {
+                "line": 20,
+                "character": 22
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'count'"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 20,
+                "character": 24
+              },
+              "end": {
+                "line": 20,
+                "character": 36
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'title'"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 16,
+                "character": 0
+              },
+              "end": {
+                "line": 16,
+                "character": 17
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused import prefix 'gate'"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": {
+        "signatures": [
+          {
+            "label": "foo(int count, string title)",
+            "documentation": "Description\nOriginal description.",
+            "parameters": [
+              {
+                "label": "int count",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`count**: Original count."
+                }
+              },
+              {
+                "label": "string title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**: Original title."
+                }
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 1
+      }
+    }
+  ],
+  "holdSignatureDependency": true,
+  "unordered": true
+}

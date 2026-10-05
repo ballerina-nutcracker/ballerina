@@ -1,0 +1,103 @@
+{
+  "source": "docs-format-absent.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "capabilities": {}
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature68.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature68.bal"
+        },
+        "position": {
+          "line": 20,
+          "character": 13
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {},
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/signature68.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "signatures": [
+          {
+            "label": "describe(int value)",
+            "documentation": "Description\nDescription with `references` unchanged.",
+            "parameters": [
+              {
+                "label": "int value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`value**: Documented value."
+                }
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 0
+      }
+    }
+  ]
+}

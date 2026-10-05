@@ -27,3 +27,22 @@ rather than typed methods or constructors. Function variables without typed
 signature metadata also use names-only fallback; unnamed parameters
 consequently have empty label segments, while positional active-parameter
 selection still works.
+
+## Documentation
+
+`docs-*` transcripts cover descriptions and per-parameter markdown through real
+framed requests: local/cross-file/external/stdlib declarations, object and
+remote methods, explicit init, required/default/rest/zero parameters, blank and
+multiline text, partial comments, names-only fallback and Unicode offsets.
+`docs-lookup-fallback` does not borrow an assigned function's comment for its
+function variable, and an implicit initializer has no declaration comment.
+`docs-cancellation` and `docs-source-edit` keep documentation tied to the sealed
+source generation without changing cancellation or stale-request behavior.
+Description markup follows the first signature documentation format only;
+parameter markup is markdown even for absent/empty/plaintext-first clients.
+
+`TestSignatureDocumentationExternalIdentity` pairs framed positive fixtures
+with exact call-site/declaration SymbolRef checks for external functions,
+methods, remote methods, explicit initializers and `io:println`. The archived
+original Java inputs and their explicitly deferred whole-response parity are
+explained in `documentation/README.md`.

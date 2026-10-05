@@ -119,10 +119,18 @@
             "label": "inner(value, other)",
             "parameters": [
               {
-                "label": "value"
+                "label": "value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**value**"
+                }
               },
               {
-                "label": "other"
+                "label": "other",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**other**"
+                }
               }
             ]
           }

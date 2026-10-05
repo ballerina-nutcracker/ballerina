@@ -119,10 +119,18 @@
             "label": "quoted(type, second)",
             "parameters": [
               {
-                "label": "type"
+                "label": "type",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**type**"
+                }
               },
               {
-                "label": "second"
+                "label": "second",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**second**"
+                }
               }
             ]
           }
@@ -140,10 +148,18 @@
             "label": "quoted(type, second)",
             "parameters": [
               {
-                "label": "type"
+                "label": "type",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**type**"
+                }
               },
               {
-                "label": "second"
+                "label": "second",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**second**"
+                }
               }
             ]
           }

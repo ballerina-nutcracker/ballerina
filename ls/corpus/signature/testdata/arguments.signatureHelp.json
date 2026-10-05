@@ -271,13 +271,25 @@
             "label": "choose(int count, string title, string... extra)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`count**"
+                }
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**"
+                }
               },
               {
-                "label": "string... extra"
+                "label": "string... extra",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string...`extra**"
+                }
               }
             ]
           }
@@ -315,10 +327,18 @@
             "label": "arrays([int...] values, int|string value)",
             "parameters": [
               {
-                "label": "[int...] values"
+                "label": "[int...] values",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`[int...]`values**"
+                }
               },
               {
-                "label": "int|string value"
+                "label": "int|string value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int|string`value**"
+                }
               }
             ]
           }
@@ -354,13 +374,25 @@
             "label": "choose(int count, string title, string... extra)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`count**"
+                }
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**"
+                }
               },
               {
-                "label": "string... extra"
+                "label": "string... extra",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string...`extra**"
+                }
               }
             ]
           }
@@ -378,10 +410,18 @@
             "label": "arrays([int...] values, int|string value)",
             "parameters": [
               {
-                "label": "[int...] values"
+                "label": "[int...] values",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`[int...]`values**"
+                }
               },
               {
-                "label": "int|string value"
+                "label": "int|string value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int|string`value**"
+                }
               }
             ]
           }

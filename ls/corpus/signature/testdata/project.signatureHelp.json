@@ -164,10 +164,18 @@
             "label": "sibling(int value, string title)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`value**"
+                }
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**"
+                }
               }
             ]
           }
@@ -185,10 +193,18 @@
             "label": "imported(int count, string title)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`count**"
+                }
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**"
+                }
               }
             ]
           }
@@ -206,7 +222,11 @@
             "label": "aliasCall(int|string value)",
             "parameters": [
               {
-                "label": "int|string value"
+                "label": "int|string value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int|string`value**"
+                }
               }
             ]
           }
@@ -224,7 +244,11 @@
             "label": "new Box(int size)",
             "parameters": [
               {
-                "label": "int size"
+                "label": "int size",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`size**"
+                }
               }
             ]
           }
@@ -242,10 +266,18 @@
             "label": "put(int value, string tag)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`value**"
+                }
               },
               {
-                "label": "string tag"
+                "label": "string tag",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`tag**"
+                }
               }
             ]
           }

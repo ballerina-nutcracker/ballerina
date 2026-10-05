@@ -25,9 +25,11 @@ import (
 
 // Help contains byte ranges within Label, independent of wire coordinates.
 type Help struct {
-	Label           string
-	Parameters      [][2]int
-	ActiveParameter *int
+	Label                  string
+	Description            string
+	Parameters             [][2]int
+	ParameterDocumentation []parameterDocumentation
+	ActiveParameter        *int
 }
 
 func At(ctx stdcontext.Context, sm compile.SealedModule, uri workspace.DocumentURI, offset int) (Help, bool, error) {
@@ -272,12 +274,19 @@ func render(sm compile.SealedModule, ref model.SymbolRef, name string, sig model
 	var label strings.Builder
 	label.WriteString(name)
 	label.WriteByte('(')
-	help := Help{Parameters: make([][2]int, 0, len(sig.ParamNames))}
+	comment := documentation(sm, ref)
+	parameterDocs := parameterDescriptions(comment)
+	help := Help{
+		Description:            description(comment),
+		Parameters:             make([][2]int, 0, len(sig.ParamNames)),
+		ParameterDocumentation: make([]parameterDocumentation, 0, len(sig.ParamNames)),
+	}
 	for i, name := range sig.ParamNames {
 		if i > 0 {
 			label.WriteString(", ")
 		}
 		start := label.Len()
+		doc := parameterDocumentation{Name: name, Description: parameterDocs[name]}
 		rest := sig.HasRest && i == len(sig.ParamNames)-1
 		if ready {
 			ty := semtypes.SemType{}
@@ -287,7 +296,8 @@ func render(sm compile.SealedModule, ref model.SymbolRef, name string, sig model
 				ty = typed.ParamTypes[i]
 			}
 			if !semtypes.IsZero(ty) {
-				label.WriteString(semtypes.ToString(tc, ty))
+				doc.Type = semtypes.ToString(tc, ty)
+				label.WriteString(doc.Type)
 				if !rest {
 					label.WriteByte(' ')
 				}
@@ -295,12 +305,16 @@ func render(sm compile.SealedModule, ref model.SymbolRef, name string, sig model
 		}
 		if rest {
 			label.WriteString("...")
+			if doc.Type != "" {
+				doc.Type += "..."
+			}
 			if ready && !semtypes.IsZero(typed.RestParamType) {
 				label.WriteByte(' ')
 			}
 		}
 		label.WriteString(name)
 		help.Parameters = append(help.Parameters, [2]int{start, label.Len()})
+		help.ParameterDocumentation = append(help.ParameterDocumentation, doc)
 	}
 	label.WriteByte(')')
 	help.Label = label.String()

@@ -246,6 +246,20 @@ func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*worksp
 	actualNorm := normalizeRoot(actual, fixture.Root)
 	if *update {
 		fixture.Expected = actualNorm
+		if strings.HasPrefix(fixturePath, "signature/") {
+			expected, err := json.MarshalIndent(fixture.Expected, "  ", "  ")
+			if err != nil {
+				t.Fatal(err)
+			}
+			updated, err := spliceTopLevelJSONField(content, "expected", expected)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := platform.FS.WriteFile(fixturePath, updated); err != nil {
+				t.Fatal(err)
+			}
+			return
+		}
 		updated, err := json.MarshalIndent(fixture, "", "  ")
 		if err != nil {
 			t.Fatal(err)

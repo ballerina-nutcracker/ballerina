@@ -1,0 +1,117 @@
+{
+  "source": "docs-partial-multiline.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "capabilities": {}
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature68.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature68.bal"
+        },
+        "position": {
+          "line": 24,
+          "character": 22
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {},
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/signature68.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "signatures": [
+          {
+            "label": "mixed(int count, string title, string... extra)",
+            "documentation": "Description\nFirst description line.\nSecond description line.",
+            "parameters": [
+              {
+                "label": "int count",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`count**: First count line.\nSecond count line."
+                }
+              },
+              {
+                "label": "string title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**"
+                }
+              },
+              {
+                "label": "string... extra",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string...`extra**: Extra values."
+                }
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 2
+      }
+    }
+  ]
+}

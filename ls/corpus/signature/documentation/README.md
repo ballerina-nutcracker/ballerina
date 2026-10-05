@@ -1,39 +1,50 @@
-# Ticket 68 — blocked documentation fixture
-
-This is a persisted **red reproducer**, not an implemented documentation corpus
-or a passing golden. It is outside `signature/testdata/` intentionally: ticket
-68 stopped at the approved external-callee re-gate, before production changes.
-No additional skips were introduced.
+# Signature documentation — archived Java reference
 
 `testdata/upstream/` preserves the original Java calculate config, both package
-manifests and both source files byte-for-byte. The transcript preserves the
-original request position (line 7, character 30), caller source and dependency
-source. Only the Java Either/tuple wrappers are converted to wire JSON in its
-expected signature; the Java documentation values remain unchanged. The
-expected array contains the target signature response, not a complete passing
-transcript (initialize and diagnostic responses are deliberately not goldened).
+manifests and both sources byte-for-byte. Its Java documentation values remain
+unchanged. The transcript preserves line 7 / character 30 and the original
+caller/dependency bytes, using the framed driver and PAL fixture repository.
+Its expected array contains only the target Java signature response, not a
+complete passing transcript including initialize/diagnostics.
 
-The transcript uses the existing framed driver and PAL filesystem repository,
-with `signatureRepository` selecting the non-gated repository-injection seam.
-The fixture dependency resolves as `test/pkgB:0.1.0`, but the LS returns an
-`Unknown import: test/pkgB` diagnostic and a null signature response. A direct
-probe confirms the sealed generation retains a pkgB external AST at the
-symbol-resolved rung; it does not expose a usable imported calculate callee.
-A normal package compilation of the dependency reports only unused variables.
+The original transcript remains a **known-failing reference**, outside the
+auto-discovered `signature/testdata/` root. No skip was added. It returns null
+with `Unknown import: test/pkgB` / `Unknown symbol: calculate`. Repository
+resolution succeeds and the sealed generation retains an external AST, but
+the imported callee is unusable. Normal dependency compilation reports only
+unused variables. The original cursor is also inside the callee name rather
+than an eligible populated argument, and Java tuples select only names while
+Go preserves whole-parameter tuples.
 
-Evidence and the temporary probe runner are saved at:
+The user-approved ticket68 amendment defers this literal whole-response
+parity. `../testdata/docs-imported.signatureHelp.json` instead uses supported
+external declarations without implicit langlib dependencies, at eligible
+argument positions. Its successful calculate response has exactly the Java
+signature-description and three parameter-documentation values, while keeping
+Go labels, tuples and active-parameter selection. It also covers external
+object methods, remote methods and explicit initializers. `docs-stdlib` covers
+`io:println`. `TestSignatureDocumentationExternalIdentity` drives both framed
+fixtures and independently asserts their actual callee/declaration SymbolRefs
+are equal in the retained external AST.
+
+The remaining `docs-*` fixtures cover local and cross-file declarations,
+zero/required/default/rest parameters, blank/partial/multiline docs, client
+formats, names-only/missing-declaration fallback, Unicode tuples, cancellation
+and edited-source freshness. Parameter text is trimmed intentionally per the
+approved Go decision; the Java parameter builder itself does not trim.
+
+Original failure evidence and replay runner:
 
 - `/tmp/signature68-java-red-bound-repository.txt`
 - `/tmp/signature68-dependency-probe.txt`
 - `/tmp/signature68-probe_test.go`
-- `/tmp/signature68-worker-handoff.md`
 
-To repeat the focused framed red test, copy the saved probe into
+To replay the archived failure, copy the saved probe to
 `ls/corpus/signature68_temporary_test.go`, run
 `go test ./ls/corpus -run TestSignature68TemporaryJavaCalculate -count=1 -v`,
-then remove only that temporary file. The independent dependency probe is
-`TestSignature68TemporaryDependency` in the same saved runner.
+then remove only that temporary file. Do not update the archived Java expected
+response to null or alter its source/cursor to imply literal parity.
 
-Re-gate before changing compiler import usability, core call eligibility or
-parameter label tuples. No documentation implementation or existing signature
-re-goldening has occurred.
+Current implementation evidence, gate results and preservation checks are
+recorded in `/tmp/signature68-worker-handoff.md`. Compiler import-publication,
+core-call eligibility and label-tuple changes remain outside ticket68.

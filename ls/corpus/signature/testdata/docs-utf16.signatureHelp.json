@@ -1,0 +1,129 @@
+{
+  "source": "docs-utf16.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "capabilities": {
+          "textDocument": {
+            "signatureHelp": {
+              "signatureInformation": {
+                "documentationFormat": [
+                  "plaintext"
+                ],
+                "parameterInformation": {
+                  "labelOffsetSupport": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature68.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature68.bal"
+        },
+        "position": {
+          "line": 21,
+          "character": 16
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {},
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/signature68.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "signatures": [
+          {
+            "label": "emoji(string 𐐀name, int count)",
+            "documentation": "Description\nUnicode parameter.",
+            "parameters": [
+              {
+                "label": [
+                  6,
+                  19
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`𐐀name**: Astral formal name."
+                }
+              },
+              {
+                "label": [
+                  21,
+                  30
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`count**: Count parameter."
+                }
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 1
+      }
+    }
+  ]
+}

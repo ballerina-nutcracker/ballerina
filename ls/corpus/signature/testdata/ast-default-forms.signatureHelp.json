@@ -140,10 +140,18 @@
             "label": "new Box(int size, string title)",
             "parameters": [
               {
-                "label": "int size"
+                "label": "int size",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`size**"
+                }
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**"
+                }
               }
             ]
           }
@@ -161,10 +169,18 @@
             "label": "new Box(int size, string title)",
             "parameters": [
               {
-                "label": "int size"
+                "label": "int size",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`size**"
+                }
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**"
+                }
               }
             ]
           }
@@ -182,10 +198,18 @@
             "label": "put(int value, string tag)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`value**"
+                }
               },
               {
-                "label": "string tag"
+                "label": "string tag",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`tag**"
+                }
               }
             ]
           }
@@ -203,10 +227,18 @@
             "label": "send(int value, string tag)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`value**"
+                }
               },
               {
-                "label": "string tag"
+                "label": "string tag",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`tag**"
+                }
               }
             ]
           }

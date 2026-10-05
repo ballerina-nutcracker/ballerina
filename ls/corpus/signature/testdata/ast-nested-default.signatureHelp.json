@@ -83,7 +83,11 @@
             "label": "inner(int value)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`value**"
+                }
               }
             ]
           }

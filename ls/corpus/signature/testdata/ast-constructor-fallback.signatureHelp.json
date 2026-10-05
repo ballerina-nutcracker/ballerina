@@ -135,10 +135,18 @@
             "label": "new Box(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`first**"
+                }
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`second**"
+                }
               }
             ]
           }
@@ -156,10 +164,18 @@
             "label": "new Box(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`first**"
+                }
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`second**"
+                }
               }
             ]
           }

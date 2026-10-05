@@ -100,10 +100,18 @@
             "label": "inner(int value, string title)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`value**"
+                }
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**"
+                }
               }
             ]
           }

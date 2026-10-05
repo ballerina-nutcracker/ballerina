@@ -92,13 +92,21 @@
       "result": {
         "signatures": [
           {
-            "label": "emoji(string \ud801\udc00name, int count)",
+            "label": "emoji(string 𐐀name, int count)",
             "parameters": [
               {
-                "label": "string \ud801\udc00name"
+                "label": "string 𐐀name",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`𐐀name**"
+                }
               },
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`count**"
+                }
               }
             ]
           }

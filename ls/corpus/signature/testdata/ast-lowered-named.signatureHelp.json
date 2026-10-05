@@ -178,10 +178,18 @@
             "label": "pick(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`first**"
+                }
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`second**"
+                }
               }
             ]
           }
@@ -199,10 +207,18 @@
             "label": "pick(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`first**"
+                }
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`second**"
+                }
               }
             ]
           }
@@ -220,10 +236,18 @@
             "label": "pick(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`first**"
+                }
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`second**"
+                }
               }
             ]
           }
@@ -241,10 +265,18 @@
             "label": "quoted(int type, string title)",
             "parameters": [
               {
-                "label": "int type"
+                "label": "int type",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`type**"
+                }
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**"
+                }
               }
             ]
           }

@@ -102,13 +102,25 @@
             "label": "foo(int first, int second, int... rest)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`first**"
+                }
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`second**"
+                }
               },
               {
-                "label": "int... rest"
+                "label": "int... rest",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int...`rest**"
+                }
               }
             ]
           }
@@ -126,13 +138,25 @@
             "label": "foo(int first, int second, int... rest)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`first**"
+                }
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`second**"
+                }
               },
               {
-                "label": "int... rest"
+                "label": "int... rest",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int...`rest**"
+                }
               }
             ]
           }

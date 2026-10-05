@@ -154,7 +154,11 @@
             "label": "new Box(int count)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`count**"
+                }
               }
             ]
           }
@@ -172,7 +176,11 @@
             "label": "new Box(int count)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`count**"
+                }
               }
             ]
           }

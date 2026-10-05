@@ -138,10 +138,18 @@
             "label": "foo(count, title)",
             "parameters": [
               {
-                "label": "count"
+                "label": "count",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**count**"
+                }
               },
               {
-                "label": "title"
+                "label": "title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**title**"
+                }
               }
             ]
           }

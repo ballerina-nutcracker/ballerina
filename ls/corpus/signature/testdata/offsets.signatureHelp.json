@@ -131,13 +131,21 @@
                 "label": [
                   4,
                   13
-                ]
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`count**"
+                }
               },
               {
                 "label": [
                   15,
                   27
-                ]
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**"
+                }
               }
             ]
           }

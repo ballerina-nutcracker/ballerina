@@ -1,0 +1,134 @@
+{
+  "source": "docs-names-only.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "capabilities": {}
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature68.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature68.bal"
+        },
+        "position": {
+          "line": 21,
+          "character": 24
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {},
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/signature68.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 19,
+                "character": 20
+              },
+              "end": {
+                "line": 19,
+                "character": 27
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "Unknown type: Missing"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "signatures": [
+          {
+            "label": "unresolved(count, title, ...extra)",
+            "documentation": "Description\nNames only.",
+            "parameters": [
+              {
+                "label": "count",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**count**: The unresolved parameter."
+                }
+              },
+              {
+                "label": "title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**title**"
+                }
+              },
+              {
+                "label": "...extra",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**extra**: The rest parameter."
+                }
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 2
+      }
+    }
+  ]
+}

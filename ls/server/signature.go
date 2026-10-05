@@ -78,7 +78,7 @@ func (s *Server) handleSignature(ctx context.Context, request *signatureRequest)
 		return empty
 	}
 	parameters := make([]protocol.ParameterInformation, 0, len(help.Parameters))
-	for _, span := range help.Parameters {
+	for i, span := range help.Parameters {
 		label := protocol.NewOrParameterInformationLabelString(help.Label[span[0]:span[1]])
 		if s.signatureOffsets {
 			label = protocol.NewOrParameterInformationLabelVariant1(protocol.TupleParameterInformationLabelItem1{
@@ -86,11 +86,46 @@ func (s *Server) handleSignature(ctx context.Context, request *signatureRequest)
 				Item1: uint32(len(utf16.Encode([]rune(help.Label[:span[1]])))),
 			})
 		}
-		parameters = append(parameters, protocol.ParameterInformation{Label: label})
+		doc := help.ParameterDocumentation[i]
+		parameters = append(parameters, protocol.ParameterInformation{
+			Label: label,
+			Documentation: protocol.NewOptional(protocol.NewOrParameterInformationDocumentationMarkupContent(
+				parameterDocumentationMarkup(doc.Name, doc.Type, doc.Description))),
+		})
 	}
 	result := protocol.SignatureHelp{Signatures: []protocol.SignatureInformation{{Label: help.Label, Parameters: protocol.NewOptional(parameters)}}, ActiveSignature: protocol.NewOptional(uint32(0))}
+	if help.Description != "" {
+		documentation := protocol.NewOrSignatureInformationDocumentationString("Description\n" + help.Description)
+		if s.signatureMarkdown {
+			documentation = protocol.NewOrSignatureInformationDocumentationMarkupContent(protocol.MarkupContent{
+				Kind: protocol.MarkupKindMarkdown, Value: "**Description**  \n" + help.Description,
+			})
+		}
+		result.Signatures[0].Documentation = protocol.NewOptional(documentation)
+	}
 	if help.ActiveParameter != nil {
 		result.ActiveParameter = protocol.NewOptionalNullable(protocol.NewOrSignatureHelpActiveParameterUinteger(uint32(*help.ActiveParameter)))
 	}
 	return trackedResult{handled: true, result: result}
+}
+
+func (s *Server) configureSignatureInformation(information protocol.ClientSignatureInformationOptions) {
+	if parameters, ok := information.ParameterInformation.Value(); ok {
+		s.signatureOffsets, _ = parameters.LabelOffsetSupport.Value()
+	}
+	if formats, ok := information.DocumentationFormat.Value(); ok && len(formats) > 0 {
+		s.signatureMarkdown = formats[0] == protocol.MarkupKindMarkdown
+	}
+}
+
+func parameterDocumentationMarkup(name, typeText, description string) protocol.MarkupContent {
+	value := "**Parameter**  \n**"
+	if typeText != "" {
+		value += "`" + typeText + "`"
+	}
+	value += name + "**"
+	if description != "" {
+		value += ": " + description
+	}
+	return protocol.MarkupContent{Kind: protocol.MarkupKindMarkdown, Value: value}
 }

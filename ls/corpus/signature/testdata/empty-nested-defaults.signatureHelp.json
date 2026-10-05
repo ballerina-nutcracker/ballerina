@@ -102,10 +102,18 @@
             "label": "inner(int value, int other)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`value**"
+                }
               },
               {
-                "label": "int other"
+                "label": "int other",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`other**"
+                }
               }
             ]
           }

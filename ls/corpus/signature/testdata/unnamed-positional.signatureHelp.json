@@ -83,10 +83,18 @@
             "label": "fn(, )",
             "parameters": [
               {
-                "label": ""
+                "label": "",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n****"
+                }
               },
               {
-                "label": ""
+                "label": "",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n****"
+                }
               }
             ]
           }
