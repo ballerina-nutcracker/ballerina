@@ -1,0 +1,160 @@
+{
+  "source": "statements.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "capabilities": {
+          "textDocument": {
+            "signatureHelp": {
+              "signatureInformation": {
+                "parameterInformation": {
+                  "labelOffsetSupport": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 99,
+          "character": 12
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {},
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/signature.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 86,
+                "character": 4
+              },
+              "end": {
+                "line": 86,
+                "character": 10
+              }
+            },
+            "severity": 1,
+            "code": "UNIMPLEMENTED_ERROR",
+            "source": "ballerina",
+            "message": "binding-pattern assignment is not implemented"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 86,
+                "character": 4
+              },
+              "end": {
+                "line": 86,
+                "character": 30
+              }
+            },
+            "severity": 1,
+            "code": "INTERNAL_ERROR",
+            "source": "ballerina",
+            "message": "syntax node *st.AssignmentStatementNode transformed to non-statement node \u003cnil\u003e"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 90,
+                "character": 4
+              },
+              "end": {
+                "line": 90,
+                "character": 39
+              }
+            },
+            "severity": 1,
+            "code": "UNIMPLEMENTED_ERROR",
+            "source": "ballerina",
+            "message": "binding-pattern assignment is not implemented"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 90,
+                "character": 4
+              },
+              "end": {
+                "line": 90,
+                "character": 62
+              }
+            },
+            "severity": 1,
+            "code": "INTERNAL_ERROR",
+            "source": "ballerina",
+            "message": "syntax node *st.AssignmentStatementNode transformed to non-statement node \u003cnil\u003e"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": null
+    }
+  ]
+}

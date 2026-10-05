@@ -1,0 +1,464 @@
+{
+  "source": "expressions.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "capabilities": {
+          "textDocument": {
+            "signatureHelp": {
+              "signatureInformation": {
+                "parameterInformation": {
+                  "labelOffsetSupport": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/signature.bal"
+        },
+        "position": {
+          "line": 121,
+          "character": 28
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {},
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/signature.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 87,
+                "character": 23
+              },
+              "end": {
+                "line": 87,
+                "character": 23
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing identifier"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 88,
+                "character": 28
+              },
+              "end": {
+                "line": 88,
+                "character": 28
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing identifier"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 226,
+                "character": 22
+              },
+              "end": {
+                "line": 226,
+                "character": 33
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing resource path in resource accessor definition"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 386,
+                "character": 27
+              },
+              "end": {
+                "line": 386,
+                "character": 36
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "qualifier not allowed"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 386,
+                "character": 36
+              },
+              "end": {
+                "line": 386,
+                "character": 36
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing identifier"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 390,
+                "character": 29
+              },
+              "end": {
+                "line": 390,
+                "character": 38
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "qualifier not allowed"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 390,
+                "character": 38
+              },
+              "end": {
+                "line": 390,
+                "character": 38
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing identifier"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 411,
+                "character": 0
+              },
+              "end": {
+                "line": 411,
+                "character": 0
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing worker keyword"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 411,
+                "character": 0
+              },
+              "end": {
+                "line": 411,
+                "character": 0
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing identifier"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 411,
+                "character": 18
+              },
+              "end": {
+                "line": 411,
+                "character": 18
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing open brace token"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 411,
+                "character": 20
+              },
+              "end": {
+                "line": 411,
+                "character": 20
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing decimal integer literal"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 412,
+                "character": 5
+              },
+              "end": {
+                "line": 412,
+                "character": 5
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing close brace token"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 419,
+                "character": 0
+              },
+              "end": {
+                "line": 419,
+                "character": 0
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing semicolon token"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 423,
+                "character": 0
+              },
+              "end": {
+                "line": 423,
+                "character": 0
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing semicolon token"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 427,
+                "character": 0
+              },
+              "end": {
+                "line": 427,
+                "character": 0
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing semicolon token"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 446,
+                "character": 0
+              },
+              "end": {
+                "line": 446,
+                "character": 0
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing semicolon token"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 69,
+                "character": 19
+              },
+              "end": {
+                "line": 69,
+                "character": 48
+              }
+            },
+            "severity": 1,
+            "code": "UNIMPLEMENTED_ERROR",
+            "source": "ballerina",
+            "message": "raw templates not supported"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 122,
+                "character": 21
+              },
+              "end": {
+                "line": 122,
+                "character": 39
+              }
+            },
+            "severity": 1,
+            "code": "UNIMPLEMENTED_ERROR",
+            "source": "ballerina",
+            "message": "transformRestArgument unimplemented"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 139,
+                "character": 12
+              },
+              "end": {
+                "line": 139,
+                "character": 46
+              }
+            },
+            "severity": 1,
+            "code": "UNIMPLEMENTED_ERROR",
+            "source": "ballerina",
+            "message": "transformLetExpression unimplemented"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 145,
+                "character": 23
+              },
+              "end": {
+                "line": 145,
+                "character": 43
+              }
+            },
+            "severity": 1,
+            "code": "UNIMPLEMENTED_ERROR",
+            "source": "ballerina",
+            "message": "transformTypeofExpression unimplemented"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 261,
+                "character": 11
+              },
+              "end": {
+                "line": 261,
+                "character": 19
+              }
+            },
+            "severity": 1,
+            "code": "UNIMPLEMENTED_ERROR",
+            "source": "ballerina",
+            "message": "transformTypeofExpression unimplemented"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 371,
+                "character": 18
+              },
+              "end": {
+                "line": 371,
+                "character": 26
+              }
+            },
+            "severity": 1,
+            "code": "UNIMPLEMENTED_ERROR",
+            "source": "ballerina",
+            "message": "transformTypeofExpression unimplemented"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 411,
+                "character": 0
+              },
+              "end": {
+                "line": 412,
+                "character": 5
+              }
+            },
+            "severity": 1,
+            "code": "UNIMPLEMENTED_ERROR",
+            "source": "ballerina",
+            "message": "named worker declarators are not implemented"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": null
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "position": {
+    "line": 7,
+    "character": 30
+  },
+  "source": "workspace/test-workspace/pkgA/main.bal",
+  "expected": {
+    "result": {
+      "signatures": [
+        {
+          "label": "calculate(float x, float y, string operation)",
+          "documentation": {
+            "right": {
+              "kind": "markdown",
+              "value": "**Description**  \nA calculator function with multiple parameters"
+            }
+          },
+          "parameters": [
+            {
+              "label": {
+                "right": {
+                  "first": 16,
+                  "second": 17
+                }
+              },
+              "documentation": {
+                "right": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`float`x**: First operand"
+                }
+              }
+            },
+            {
+              "label": {
+                "right": {
+                  "first": 25,
+                  "second": 26
+                }
+              },
+              "documentation": {
+                "right": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`float`y**: Second operand"
+                }
+              }
+            },
+            {
+              "label": {
+                "right": {
+                  "first": 35,
+                  "second": 44
+                }
+              },
+              "documentation": {
+                "right": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`operation**: The operation to perform"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    },
+    "jsonrpc": "2.0"
+  }
+}

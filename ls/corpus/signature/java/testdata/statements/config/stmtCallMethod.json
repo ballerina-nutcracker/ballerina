@@ -1,8 +1,0 @@
-{
-    "position": {
-        "line": 83,
-        "character": 12
-    },
-    "source": "statements/statements.bal",
-    "expected": {"jsonrpc":"2.0","result":null}
-}

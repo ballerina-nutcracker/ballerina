@@ -1,0 +1,9 @@
+[package]
+org = "test"
+name = "pkgA"
+version = "0.1.0"
+
+[[dependency]]
+org = "test"
+name = "pkgB"
+version = "0.1.0"
