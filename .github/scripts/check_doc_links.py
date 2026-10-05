@@ -278,7 +278,12 @@ def fragment_exists(url: str, fragment: str, page: Page) -> bool:
     if fragment in page.anchors:
         return True
     if urllib.parse.urlparse(url).hostname == "github.com":
-        return GITHUB_LINE_FRAGMENT_RE.match(fragment) is not None or f"user-content-{fragment}" in page.anchors
+        anchor = fragment.lower()
+        return (
+            GITHUB_LINE_FRAGMENT_RE.match(fragment) is not None
+            or anchor in page.anchors
+            or f"user-content-{anchor}" in page.anchors
+        )
     return False
 
 

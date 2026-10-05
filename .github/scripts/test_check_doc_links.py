@@ -86,6 +86,7 @@ class CheckDocLinksTest(unittest.TestCase):
         self.assertEqual(urlopen.call_args.args[0].full_url, "https://raw.githubusercontent.com/org/repo/main/spec.md")
         url = "https://github.com/org/repo/blob/main/spec.md"
         self.assertTrue(check_doc_links.fragment_exists(url, "2-console-io", page))
+        self.assertTrue(check_doc_links.fragment_exists(url, "2-Console-IO", page))
         self.assertFalse(check_doc_links.fragment_exists(url, "3-missing", page))
 
     def test_request_errors_are_reported(self):
