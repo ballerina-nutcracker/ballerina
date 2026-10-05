@@ -118,10 +118,12 @@
             "label": "inner(value, other)",
             "parameters": [
               {
-                "label": "value"
+                "label": "value",
+                "documentation": "Parameter\nvalue"
               },
               {
-                "label": "other"
+                "label": "other",
+                "documentation": "Parameter\nother"
               }
             ]
           }

@@ -113,10 +113,12 @@
             "label": "pair(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": "Parameter\nint first"
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": "Parameter\nint second"
               }
             ]
           }

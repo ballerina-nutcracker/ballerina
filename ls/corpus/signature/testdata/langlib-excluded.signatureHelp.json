@@ -82,10 +82,12 @@
             "label": "push([int...] arr, int... vals)",
             "parameters": [
               {
-                "label": "[int...] arr"
+                "label": "[int...] arr",
+                "documentation": "Parameter\n[int...] arr"
               },
               {
-                "label": "int... vals"
+                "label": "int... vals",
+                "documentation": "Parameter\nint... vals"
               }
             ]
           }

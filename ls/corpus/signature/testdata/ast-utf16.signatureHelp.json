@@ -97,13 +97,15 @@
                 "label": [
                   6,
                   19
-                ]
+                ],
+                "documentation": "Parameter\nstring 𐐀name"
               },
               {
                 "label": [
                   21,
                   30
-                ]
+                ],
+                "documentation": "Parameter\nint count"
               }
             ]
           }

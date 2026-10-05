@@ -80,9 +80,11 @@
         "signatures": [
           {
             "label": "toUpperAscii(string str)",
+            "documentation": "Description\nConverts occurrences of a character in the ASCII range to uppercase.",
             "parameters": [
               {
-                "label": "string str"
+                "label": "string str",
+                "documentation": "Parameter\nstring str: the string to be converted"
               }
             ]
           }

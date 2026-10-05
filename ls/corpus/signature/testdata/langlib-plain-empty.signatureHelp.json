@@ -99,7 +99,8 @@
             "label": "foo(int x)",
             "parameters": [
               {
-                "label": "int x"
+                "label": "int x",
+                "documentation": "Parameter\nint x"
               }
             ]
           }

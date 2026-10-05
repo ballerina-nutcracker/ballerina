@@ -101,10 +101,12 @@
             "label": "inner(int value, int other)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": "Parameter\nint value"
               },
               {
-                "label": "int other"
+                "label": "int other",
+                "documentation": "Parameter\nint other"
               }
             ]
           }

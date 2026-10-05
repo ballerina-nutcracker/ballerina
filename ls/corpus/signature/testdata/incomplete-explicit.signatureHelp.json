@@ -131,10 +131,12 @@
             "label": "new Box(int size, string title)",
             "parameters": [
               {
-                "label": "int size"
+                "label": "int size",
+                "documentation": "Parameter\nint size"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               }
             ]
           }

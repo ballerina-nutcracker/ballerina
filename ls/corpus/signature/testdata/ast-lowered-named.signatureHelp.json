@@ -177,10 +177,12 @@
             "label": "pick(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": "Parameter\nint first"
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": "Parameter\nint second"
               }
             ]
           }
@@ -198,10 +200,12 @@
             "label": "pick(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": "Parameter\nint first"
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": "Parameter\nint second"
               }
             ]
           }
@@ -219,10 +223,12 @@
             "label": "pick(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": "Parameter\nint first"
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": "Parameter\nint second"
               }
             ]
           }
@@ -240,10 +246,12 @@
             "label": "quoted(int type, string title)",
             "parameters": [
               {
-                "label": "int type"
+                "label": "int type",
+                "documentation": "Parameter\nint type"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               }
             ]
           }
@@ -261,10 +269,12 @@
             "label": "pick(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": "Parameter\nint first"
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": "Parameter\nint second"
               }
             ]
           }

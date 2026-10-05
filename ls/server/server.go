@@ -122,6 +122,7 @@ type Server struct {
 	bus               *event.Bus
 	versionSupport    bool
 	signatureOffsets  bool
+	signatureMarkdown bool
 	signatureNoActive bool
 	initialized       bool
 	shuttingDown      bool

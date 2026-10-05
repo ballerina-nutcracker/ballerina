@@ -104,10 +104,12 @@
             "label": "foo(int newCount, string newTitle)",
             "parameters": [
               {
-                "label": "int newCount"
+                "label": "int newCount",
+                "documentation": "Parameter\nint newCount"
               },
               {
-                "label": "string newTitle"
+                "label": "string newTitle",
+                "documentation": "Parameter\nstring newTitle"
               }
             ]
           }

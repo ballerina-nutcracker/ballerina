@@ -130,13 +130,15 @@
                 "label": [
                   4,
                   13
-                ]
+                ],
+                "documentation": "Parameter\nint count"
               },
               {
                 "label": [
                   15,
                   27
-                ]
+                ],
+                "documentation": "Parameter\nstring title"
               }
             ]
           }

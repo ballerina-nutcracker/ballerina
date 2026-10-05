@@ -1,0 +1,298 @@
+{
+  "source": "",
+  "sources": {
+    "Ballerina.toml": "[package]\norg = \"test\"\nname = \"caller68\"\nversion = \"0.1.0\"\n",
+    "main.bal": "// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).\n//\n// WSO2 LLC. licenses this file to you under the Apache License,\n// Version 2.0 (the \"License\"); you may not use this file except\n// in compliance with the License.\n// You may obtain a copy of the License at\n//\n// http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing,\n// software distributed under the License is distributed on an\n// \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n// KIND, either express or implied. See the License for the\n// specific language governing permissions and limitations\n// under the License.\n\nimport test/docs68;\npublic function main() {\n    float result = docs68:calculate(10.5, 20.3, \"add\");\n    _ = result;\n    docs68:Box box = new docs68:Box(1);\n    box.put(2);\n    docs68:Client peer = new docs68:Client(3);\n    peer->send(4);\n}\n",
+    "repository/test/docs68/0.1.0/go1.27/modules/docs68/docs.bal": "// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).\n//\n// WSO2 LLC. licenses this file to you under the Apache License,\n// Version 2.0 (the \"License\"); you may not use this file except\n// in compliance with the License.\n// You may obtain a copy of the License at\n//\n// http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing,\n// software distributed under the License is distributed on an\n// \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n// KIND, either express or implied. See the License for the\n// specific language governing permissions and limitations\n// under the License.\n\n# A calculator function with multiple parameters\n# + x - First operand\n# + y - Second operand\n# + operation - The operation to perform\npublic function calculate(float x, float y, string operation) returns float { _ = y; _ = operation; return x; }\npublic class Box {\n    # Initialize a box.\n    # + size - Initial size.\n    public function init(int size) { _ = size; }\n    # Put a value.\n    # + value - Value to put.\n    public function put(int value) { _ = value; }\n}\npublic client class Client {\n    # Initialize a client.\n    # + seed - Initial seed.\n    public function init(int seed) { _ = seed; }\n    # Send a value.\n    # + value - Value to send.\n    remote function send(int value) { _ = value; }\n}\n",
+    "repository/test/docs68/0.1.0/go1.27/bala.json": "{\"bala_version\":\"3.0.0\"}\n",
+    "repository/test/docs68/0.1.0/go1.27/package.json": "{\"organization\":\"test\",\"name\":\"docs68\",\"version\":\"0.1.0\",\"platform\":\"go1.27\",\"modules\":[]}\n",
+    "repository/test/docs68/0.1.0/go1.27/dependency-graph.json": "{\"packages\":[{\"org\":\"test\",\"name\":\"docs68\",\"version\":\"0.1.0\",\"dependencies\":[],\"modules\":[]}],\"modules\":[{\"org\":\"test\",\"package_name\":\"docs68\",\"version\":\"0.1.0\",\"module_name\":\"docs68\",\"dependencies\":[]}]}\n"
+  },
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "capabilities": {
+          "textDocument": {
+            "signatureHelp": {
+              "signatureInformation": {
+                "documentationFormat": [
+                  "markdown"
+                ],
+                "parameterInformation": {
+                  "labelOffsetSupport": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).\n//\n// WSO2 LLC. licenses this file to you under the Apache License,\n// Version 2.0 (the \"License\"); you may not use this file except\n// in compliance with the License.\n// You may obtain a copy of the License at\n//\n// http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing,\n// software distributed under the License is distributed on an\n// \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n// KIND, either express or implied. See the License for the\n// specific language governing permissions and limitations\n// under the License.\n\nimport test/docs68;\npublic function main() {\n    float result = docs68:calculate(10.5, 20.3, \"add\");\n    _ = result;\n    docs68:Box box = new docs68:Box(1);\n    box.put(2);\n    docs68:Client peer = new docs68:Client(3);\n    peer->send(4);\n}\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal"
+        },
+        "position": {
+          "line": 18,
+          "character": 36
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal"
+        },
+        "position": {
+          "line": 20,
+          "character": 36
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal"
+        },
+        "position": {
+          "line": 21,
+          "character": 12
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 5,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal"
+        },
+        "position": {
+          "line": 22,
+          "character": 43
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal"
+        },
+        "position": {
+          "line": 23,
+          "character": 15
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/main.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 16,
+                "character": 0
+              },
+              "end": {
+                "line": 16,
+                "character": 19
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "Unknown import: test/docs68"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 18,
+                "character": 19
+              },
+              "end": {
+                "line": 18,
+                "character": 54
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "Unknown symbol: calculate"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 20,
+                "character": 4
+              },
+              "end": {
+                "line": 20,
+                "character": 14
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "Unknown symbol: Box"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 20,
+                "character": 25
+              },
+              "end": {
+                "line": 20,
+                "character": 35
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "Unknown symbol: Box"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 22,
+                "character": 4
+              },
+              "end": {
+                "line": 22,
+                "character": 17
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "Unknown symbol: Client"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 22,
+                "character": 29
+              },
+              "end": {
+                "line": 22,
+                "character": 42
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "Unknown symbol: Client"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 5,
+      "result": null
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "result": null
+    }
+  ],
+  "signatureRepository": true
+}

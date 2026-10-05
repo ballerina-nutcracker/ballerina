@@ -99,10 +99,12 @@
             "label": "unresolved(count, title)",
             "parameters": [
               {
-                "label": "count"
+                "label": "count",
+                "documentation": "Parameter\ncount"
               },
               {
-                "label": "title"
+                "label": "title",
+                "documentation": "Parameter\ntitle"
               }
             ]
           }

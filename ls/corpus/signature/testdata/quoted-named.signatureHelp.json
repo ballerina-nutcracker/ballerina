@@ -82,10 +82,12 @@
             "label": "foo(int type, string second)",
             "parameters": [
               {
-                "label": "int type"
+                "label": "int type",
+                "documentation": "Parameter\nint type"
               },
               {
-                "label": "string second"
+                "label": "string second",
+                "documentation": "Parameter\nstring second"
               }
             ]
           }
