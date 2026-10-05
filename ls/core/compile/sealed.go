@@ -30,8 +30,10 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/uri"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
+	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/semantics"
 )
 
 // Stage is the exported name of the LS stage-ladder rung (stage.go's
@@ -59,11 +61,19 @@ const (
 // the root reloads mid-read. Symbol identity (SymbolRef, FunctionSignatureRef)
 // remains valid because the view also pins the same CompilerEnvironment the
 // driver compiled against.
+type ExternalModuleProjection struct {
+	PackageNode *ast.BLangPackage
+	Symbols     model.ExportedSymbolSpace
+}
+
 type SealedModule struct {
-	pkgNode  *ast.BLangPackage
-	ctx      *context.CompilerContext
-	moduleID projects.ModuleID
-	stage    Stage
+	pkgNode             *ast.BLangPackage
+	externalProjections map[semantics.PackageIdentifier]ExternalModuleProjection
+	ctx                 *context.CompilerContext
+	moduleID            projects.ModuleID
+	stage               Stage
+	sources             map[projects.DocumentID]string
+	sourceIDs           map[string]projects.DocumentID
 }
 
 // PackageNode returns the sealed module's package node (nil only for a module
@@ -81,6 +91,21 @@ func (m SealedModule) ModuleID() projects.ModuleID { return m.moduleID }
 // Stage returns the stage this module's sealed generation reached.
 func (m SealedModule) Stage() Stage { return m.stage }
 
+// SourceText returns the exact parser input pinned to this module's AST.
+func (m SealedModule) SourceText(uri workspace.DocumentURI) (string, bool) {
+	id, ok := m.sourceIDs[uri.Path()]
+	if !ok {
+		return "", false
+	}
+	text, ok := m.sources[id]
+	return text, ok
+}
+
+func (m SealedModule) ExternalModuleProjection(org, name string) (ExternalModuleProjection, bool) {
+	projection, ok := m.externalProjections[semantics.PackageIdentifier{OrgName: org, ModuleName: name}]
+	return projection, ok
+}
+
 // SealedModuleFor returns the sealed module containing document u, waiting
 // (context-aware) for the generation current at read time to complete the
 // normal background CFGAnalyzed cycle. The read never substitutes a stale
@@ -92,7 +117,7 @@ func (m SealedModule) Stage() Stage { return m.stage }
 // current generation cannot produce a usable semantic module (syntax/Phase-1
 // failure, missing driver, or no package node), the read reports ok=false —
 // callers surface an empty result, never stale semantics.
-func (s *CompilationService) SealedModuleFor(ctx stdcontext.Context, u uri.DocumentURI) (SealedModule, bool) {
+func (s *CompilationService) SealedModuleFor(ctx stdcontext.Context, u workspace.DocumentURI) (SealedModule, bool) {
 	project, err := s.projects.Project(u)
 	if err != nil || project == nil {
 		return SealedModule{}, false
@@ -129,10 +154,13 @@ func (s *CompilationService) SealedModuleFor(ctx stdcontext.Context, u uri.Docum
 		return SealedModule{}, false
 	}
 	return SealedModule{
-		pkgNode:  d.pkgNode,
-		ctx:      d.ctx,
-		moduleID: docID.ModuleID(),
-		stage:    d.stage,
+		pkgNode:             d.pkgNode,
+		externalProjections: modSnap.externalProjections,
+		ctx:                 d.ctx,
+		moduleID:            docID.ModuleID(),
+		stage:               d.stage,
+		sources:             d.sources,
+		sourceIDs:           d.sourceIDs,
 	}, true
 }
 

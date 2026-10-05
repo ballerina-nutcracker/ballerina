@@ -82,6 +82,10 @@ func addCompilationUnitNodesToPackage(cx *context.CompilerContext, pkg *ast.BLan
 			pkg.XmlnsList = append(pkg.XmlnsList, node)
 		case *ast.BLangClassDefinition:
 			pkg.ClassDefinitions = append(pkg.ClassDefinitions, node)
+		case *ast.BLangBadTopLevelNode:
+			// Recovered parser output: the node's own diagnostic was already
+			// reported during parsing/recovery. Skip it so later, valid
+			// top-level nodes in the same compilation unit still get added.
 		default:
 			pos := compilationUnit.GetPosition()
 			if node != nil {

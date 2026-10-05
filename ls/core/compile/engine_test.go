@@ -22,7 +22,6 @@ import (
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/uri"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	proj "github.com/ballerina-nutcracker/ballerina/projects"
@@ -56,9 +55,9 @@ func newEngineTestServices(t *testing.T) (*workspace.ProjectService, *Compilatio
 	return projects, svc, bus
 }
 
-func openDoc(t *testing.T, p *workspace.ProjectService, raw, text string, version int32) uri.DocumentURI {
+func openDoc(t *testing.T, p *workspace.ProjectService, raw, text string, version int32) workspace.DocumentURI {
 	t.Helper()
-	u, err := uri.NewFileURI(raw)
+	u, err := workspace.NewFileURI(raw)
 	if err != nil {
 		t.Fatalf("NewFileURI: %v", err)
 	}
@@ -72,7 +71,7 @@ func openDoc(t *testing.T, p *workspace.ProjectService, raw, text string, versio
 
 func updateDoc(t *testing.T, p *workspace.ProjectService, raw, text string, version int32) {
 	t.Helper()
-	u, err := uri.NewFileURI(raw)
+	u, err := workspace.NewFileURI(raw)
 	if err != nil {
 		t.Fatalf("NewFileURI: %v", err)
 	}

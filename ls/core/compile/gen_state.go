@@ -32,6 +32,7 @@ package compile
 import (
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/semantics"
 )
 
 // moduleGenSnapshot is one module's carried-forward state from a previously
@@ -42,11 +43,12 @@ import (
 // (design item 4), and a hash of its own document set's content (used to seed
 // the next generation's dirty set).
 type moduleGenSnapshot struct {
-	driver      *moduleDriver
-	errored     bool
-	exported    model.ExportedSymbolSpace
-	fingerprint fingerprint
-	textHash    string
+	driver              *moduleDriver
+	errored             bool
+	exported            model.ExportedSymbolSpace
+	fingerprint         fingerprint
+	textHash            string
+	externalProjections map[semantics.PackageIdentifier]ExternalModuleProjection
 }
 
 // packageGenState is the persisted carry-forward state for one source root.

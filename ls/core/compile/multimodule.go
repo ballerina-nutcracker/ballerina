@@ -23,16 +23,11 @@
 // docs/adr/2026-08-28-ls-owned-staged-compilation-pipeline.md's "Phase 1 ->
 // Phase 2 barrier" bullet.
 //
-// Scope: this orchestrates the package's own (same-package, editable)
-// modules only. External dependency packages (stdlib, Central, BALA) are not
-// driven through packageDriver at all — matching the ADR's "full bypass
-// applies only to the LS's own editable source-root modules" — so a module
-// that imports an external package (e.g. ballerina/io) will not resolve that
-// import through this driver today; this is an existing, not newly
-// introduced, gap already present in phase 1's single-module driver (its
-// moduleResolutionInput.publicSymbols was always empty), now simply carried
-// forward at package granularity. See the phase 2 handoff report for the
-// full reasoning.
+// Scope: Phase 1 also materializes every resolved external dependency
+// package (stdlib, Central, BALA, path, or workspace) before this driver's
+// editable modules run. Their exported symbols are supplied to local import
+// resolution and their package nodes become completion projections; no
+// external module advances beyond top-level type resolution.
 //
 // Phase 2 runs sequentially, not in parallel like
 // projects/package_compilation.go's goroutine-per-module loop. A module
@@ -67,6 +62,8 @@
 package compile
 
 import (
+	stdcontext "context"
+	"sort"
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/context"
@@ -174,7 +171,14 @@ type packageDriver struct {
 
 	drivers       map[projects.ModuleID]*moduleDriver
 	publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace
-	phase1Errored map[projects.ModuleID]bool
+	// externalProjections are read-only StageSymbolResolved completion indexes.
+	// Unlike publicSymbols, they may retain diagnosed dependencies and are never
+	// supplied to semantic resolution of the editable package.
+	externalProjections   map[semantics.PackageIdentifier]ExternalModuleProjection
+	externalMaterializing map[semantics.PackageIdentifier]bool
+	externalSymbolsReady  bool
+	dependencySnapshots   map[projects.ModuleID]moduleGenSnapshot
+	phase1Errored         map[projects.ModuleID]bool
 
 	openText   textProvider
 	priorState *packageGenState
@@ -198,14 +202,17 @@ type packageDriver struct {
 // be nil.
 func newPackageDriver(pkg *projects.Package, openText textProvider, priorState *packageGenState, stale func() bool) *packageDriver {
 	return &packageDriver{
-		pkg:           pkg,
-		env:           pkg.Project().Environment().CompilerEnvironment(),
-		drivers:       make(map[projects.ModuleID]*moduleDriver),
-		publicSymbols: make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace),
-		phase1Errored: make(map[projects.ModuleID]bool),
-		openText:      openText,
-		priorState:    priorState,
-		stale:         stale,
+		pkg:                   pkg,
+		env:                   pkg.Project().Environment().CompilerEnvironment(),
+		drivers:               make(map[projects.ModuleID]*moduleDriver),
+		publicSymbols:         make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace),
+		externalProjections:   make(map[semantics.PackageIdentifier]ExternalModuleProjection),
+		externalMaterializing: make(map[semantics.PackageIdentifier]bool),
+		dependencySnapshots:   make(map[projects.ModuleID]moduleGenSnapshot),
+		phase1Errored:         make(map[projects.ModuleID]bool),
+		openText:              openText,
+		priorState:            priorState,
+		stale:                 stale,
 	}
 }
 
@@ -258,6 +265,97 @@ func (pd *packageDriver) resolutionInputFor(module *projects.Module) moduleResol
 	implicit := make(map[string]model.ExportedSymbolSpace)
 	seedMigratedLangLibs(implicit, pd.publicSymbols)
 	return newModuleResolutionInput(module.Descriptor().Org().Value(), implicit, pd.publicSymbols)
+}
+
+func (pd *packageDriver) loadResolvedDependencySymbols() {
+	if pd.externalSymbolsReady {
+		return
+	}
+	pd.externalSymbolsReady = true
+	dependencies := pd.pkg.Resolution().ResolvedDependencies()
+	identifiers := make([]string, 0, len(dependencies))
+	for identifier := range dependencies {
+		identifiers = append(identifiers, identifier)
+	}
+	sort.Strings(identifiers)
+	for _, identifier := range identifiers {
+		if pd.aborted() {
+			return
+		}
+		descriptor := dependencies[identifier]
+		if descriptor == nil {
+			continue
+		}
+		pd.loadResolvedDependency(*descriptor)
+	}
+}
+
+// loadResolvedDependency materializes one resolved dependency's Phase-1
+// symbols. A dependency is optional for the local package's semantic view:
+// failures, including compiler panics from malformed package content, leave
+// this generation without that projection rather than aborting its cycle.
+func (pd *packageDriver) loadResolvedDependency(descriptor projects.PackageDescriptor) {
+	packageID := semantics.PackageIdentifier{OrgName: descriptor.Org().Value(), ModuleName: descriptor.Name().String()}
+	if pd.externalMaterializing[packageID] {
+		return
+	}
+	pd.externalMaterializing[packageID] = true
+	defer func() {
+		if recover() != nil {
+			return
+		}
+	}()
+
+	resolver := pd.pkg.Project().Environment().PackageResolver()
+	options := pd.pkg.Project().Environment().ResolutionOptions()
+	responses := resolver.ResolvePackages(stdcontext.Background(), []projects.ResolutionRequest{projects.NewResolutionRequest(descriptor)}, options)
+	if len(responses) != 1 || !responses[0].IsResolved() || responses[0].Package() == nil {
+		return
+	}
+	dependencyPackage := responses[0].Package()
+	dependencyDriver := newPackageDriver(dependencyPackage, nil, pd.dependencyPriorState(dependencyPackage), pd.stale)
+	for identifier, symbols := range pd.publicSymbols {
+		dependencyDriver.publicSymbols[identifier] = symbols
+	}
+	dependencyDriver.externalMaterializing = pd.externalMaterializing
+	dependencyDriver.loadResolvedDependencySymbols()
+	if pd.aborted() || dependencyDriver.aborted() {
+		return
+	}
+	dependencyDriver.runPhase1(dependencyDriver.topoModules())
+	if pd.aborted() || dependencyDriver.aborted() {
+		return
+	}
+	for id, snapshot := range dependencyDriver.snapshotForCommit() {
+		pd.dependencySnapshots[id] = snapshot
+	}
+	for _, module := range dependencyDriver.topoModules() {
+		driver, ok := dependencyDriver.drivers[module.ModuleID()]
+		if !ok || driver.currentStage() < stageSymbolResolved {
+			continue
+		}
+		identifier := packageIdentifierFor(module)
+		pd.externalProjections[identifier] = ExternalModuleProjection{PackageNode: driver.pkgNode, Symbols: driver.exported}
+		if driver.symbolResolutionUsable {
+			pd.publicSymbols[identifier] = driver.exported
+		}
+	}
+}
+
+// dependencyPriorState selects the prior generation's snapshots belonging to
+// pkg. ModuleID includes its PackageID, so snapshots from unrelated packages
+// cannot collide with the dependency's module state.
+func (pd *packageDriver) dependencyPriorState(pkg *projects.Package) *packageGenState {
+	if pd.priorState == nil {
+		return nil
+	}
+	modules := make(map[projects.ModuleID]moduleGenSnapshot)
+	for _, id := range pkg.ModuleIDs() {
+		if snapshot, ok := pd.priorState.modules[id]; ok {
+			modules[id] = snapshot
+		}
+	}
+	return &packageGenState{modules: modules}
 }
 
 // dependencyErrored reports whether any of module's direct same-package
@@ -417,17 +515,26 @@ func (pd *packageDriver) runPhase1Module(module *projects.Module, depGraph *proj
 
 	d.advanceTo(stageSymbolResolved, module, input)
 	if d.currentStage() < stageSymbolResolved || !d.symbolResolutionUsable {
-		pd.phase1Errored[id] = true
+		pd.markPhase1Errored(module, d, input)
 		return
 	}
 	pd.publicSymbols[packageIdentifierFor(module)] = d.exported
 
 	d.advanceTo(stageTopLevelTypeResolved, module, input)
 	if d.currentStage() < stageTopLevelTypeResolved || !d.topLevelTypeResolutionUsable {
-		pd.phase1Errored[id] = true
+		pd.markPhase1Errored(module, d, input)
 		return
 	}
 	pd.recordFingerprintAndPrune(module, d)
+}
+
+// markPhase1Errored records that module's Phase 1 result is unusable, so its
+// symbols are never published and its dependents are skipped. The module
+// itself still finishes Phase 1 and remains eligible for Phase 2 (see
+// ensureTopLevelTypeResolved's doc comment).
+func (pd *packageDriver) markPhase1Errored(module *projects.Module, d *moduleDriver, input moduleResolutionInput) {
+	pd.phase1Errored[module.ModuleID()] = true
+	d.advanceTo(stageTopLevelTypeResolved, module, input)
 }
 
 // runPhase1 advances every module in modules through Phase 1, in topological
@@ -445,16 +552,14 @@ func (pd *packageDriver) runPhase1(modules []*projects.Module) {
 	}
 }
 
-// phase2Eligible reports whether module completed Phase 1 successfully (not
-// errored, and reached at least stageTopLevelTypeResolved) and so may
-// proceed into Phase 2. A module never reached by Phase 1 (e.g. because an
+// phase2Eligible reports whether module reached at least
+// stageTopLevelTypeResolved and so may proceed into Phase 2, even if its
+// Phase 1 result was unusable (it then runs Phase 2 for its own LS features;
+// semantic analysis still refuses on its diagnostics). A module never reached by Phase 1 (e.g. because an
 // earlier caller only drove a prefix of the topological order — see
 // advanceModule) is not eligible either.
 func (pd *packageDriver) phase2Eligible(module *projects.Module) (*moduleDriver, bool) {
 	id := module.ModuleID()
-	if pd.phase1Errored[id] {
-		return nil, false
-	}
 	d, ok := pd.drivers[id]
 	if !ok || d.currentStage() < stageTopLevelTypeResolved {
 		return nil, false
@@ -463,19 +568,18 @@ func (pd *packageDriver) phase2Eligible(module *projects.Module) (*moduleDriver,
 }
 
 // advanceAll drives every module of pkg to target: Phase 1 across the whole
-// package, then — only if no module failed Phase 1
-// (package_compilation.go:139-143's "stop the compilation pipeline here" gate)
-// — Phase 2 for every Phase-1-eligible module, sequentially. Checks
+// package, then Phase 2 for every Phase-1-eligible module, sequentially.
+// Unlike package_compilation.go:139-143, a module failing Phase 1 does not
+// stop the others: its dependents were already skipped, and every other
+// module is independent of it. Checks
 // aborted() between modules (design item 5): a superseded generation stops
 // early rather than finishing wasted work. The caller must check aborted()
 // itself before relying on or committing this run's results.
 func (pd *packageDriver) advanceAll(target moduleStage) {
+	pd.loadResolvedDependencySymbols()
 	modules := pd.topoModules()
 	pd.runPhase1(modules)
 	if pd.aborted() {
-		return
-	}
-	if len(pd.phase1Errored) > 0 {
 		return
 	}
 	for _, module := range modules {
@@ -502,6 +606,7 @@ func (pd *packageDriver) advanceAll(target moduleStage) {
 // nil priorState, so every module here is always rebuilt fresh, matching
 // pre-ticket-28 behavior exactly.
 func (pd *packageDriver) advanceModule(target moduleStage, targetModule *projects.Module) {
+	pd.loadResolvedDependencySymbols()
 	depGraph := pd.pkg.Resolution().ModuleDependencyGraph()
 	targetID := targetModule.ModuleID()
 	for _, module := range pd.topoModules() {
@@ -535,7 +640,7 @@ func (pd *packageDriver) allDiagnostics() []diagnostics.Diagnostic {
 		if !ok {
 			continue
 		}
-		all = append(all, d.diagnosticContext().Diagnostics()...)
+		all = append(all, d.publishableDiagnostics()...)
 	}
 	return all
 }
@@ -549,7 +654,10 @@ func (pd *packageDriver) allDiagnostics() []diagnostics.Diagnostic {
 // reset). The caller (realCompilePackage) must not call this if aborted()
 // is true — a superseded run's partial state must never be committed.
 func (pd *packageDriver) snapshotForCommit() map[projects.ModuleID]moduleGenSnapshot {
-	out := make(map[projects.ModuleID]moduleGenSnapshot, len(pd.drivers))
+	out := make(map[projects.ModuleID]moduleGenSnapshot, len(pd.dependencySnapshots)+len(pd.drivers))
+	for id, snapshot := range pd.dependencySnapshots {
+		out[id] = snapshot
+	}
 	for _, module := range pd.topoModules() {
 		id := module.ModuleID()
 		d, ok := pd.drivers[id]
@@ -557,9 +665,10 @@ func (pd *packageDriver) snapshotForCommit() map[projects.ModuleID]moduleGenSnap
 			continue
 		}
 		snap := moduleGenSnapshot{
-			driver:   d,
-			errored:  pd.phase1Errored[id],
-			textHash: pd.textHashes[id],
+			driver:              d,
+			errored:             pd.phase1Errored[id],
+			textHash:            pd.textHashes[id],
+			externalProjections: pd.externalProjections,
 		}
 		if !snap.errored {
 			snap.exported = pd.publicSymbols[packageIdentifierFor(module)]

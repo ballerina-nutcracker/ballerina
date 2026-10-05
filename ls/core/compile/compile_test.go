@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/uri"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
@@ -36,9 +35,9 @@ func newTestServices(t *testing.T) (*workspace.ProjectService, *CompilationServi
 	return projects, svc
 }
 
-func fileURI(t *testing.T, raw string) uri.DocumentURI {
+func fileURI(t *testing.T, raw string) workspace.DocumentURI {
 	t.Helper()
-	u, err := uri.NewFileURI(raw)
+	u, err := workspace.NewFileURI(raw)
 	if err != nil {
 		t.Fatalf("NewFileURI(%q): %v", raw, err)
 	}
@@ -47,7 +46,7 @@ func fileURI(t *testing.T, raw string) uri.DocumentURI {
 
 // applyOpen publishes content through the workspace (fresh palFS + Load) so
 // Compile reads the published CurrentPackage.
-func applyOpen(t *testing.T, projects *workspace.ProjectService, u uri.DocumentURI, text string) {
+func applyOpen(t *testing.T, projects *workspace.ProjectService, u workspace.DocumentURI, text string) {
 	t.Helper()
 	if _, err := projects.Apply(context.Background(), workspace.DocumentChange{
 		Kind: workspace.ChangeOpen, URI: u, Text: text, Version: 1, LanguageID: "ballerina",

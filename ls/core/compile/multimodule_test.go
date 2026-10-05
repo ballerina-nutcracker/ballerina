@@ -19,14 +19,10 @@ package compile
 import (
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 
-	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/uri"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
-	"github.com/ballerina-nutcracker/ballerina/nodebuilder"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
@@ -79,7 +75,7 @@ func mustReadFixture(t *testing.T, path string) string {
 // openMultimoduleFixture opens main.bal from the multimodule fixture,
 // loading the whole package (consumer.bal, greet.bal and standalone.bal read
 // from disk), and returns the resulting *projects.Package.
-func openMultimoduleFixture(t *testing.T, projSvc *workspace.ProjectService) (*projects.Package, uri.DocumentURI) {
+func openMultimoduleFixture(t *testing.T, projSvc *workspace.ProjectService) (*projects.Package, workspace.DocumentURI) {
 	t.Helper()
 	dir := multimoduleFixtureDir(t)
 	mainPath := filepath.Join(dir, "main.bal")
@@ -135,10 +131,17 @@ func mustModuleName(t *testing.T, pkg *projects.Package, name string) projects.M
 	return projects.ModuleName{}
 }
 
-// TestModuleDriver_OwnSyntaxError_RetainsValidTopLevelSiblings verifies the
-// recovered Phase 1 path: a malformed top-level declaration is retained as a
-// bad placeholder while valid declarations in the same module still resolve.
-func TestModuleDriver_OwnSyntaxError_RetainsValidTopLevelSiblings(t *testing.T) {
+// TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents verifies
+// that a module-local syntax error does not gate that module's own Phase 1
+// (runPhase1Module's doc comment: "Parser diagnostics from recovered units
+// do not prevent a stage from executing"): the malformed declaration
+// recovers as a clean BLangBadTopLevelNode that symbol/top-level-type
+// resolution skip without adding a new error, so the module's valid sibling
+// declaration is still resolved, its exports are still published, and its
+// dependents still proceed through Phase 1. Only the parser's own
+// diagnostic is published (publishableDiagnostics), never mixed with
+// resolver/type diagnostics from resolving the rest of the file.
+func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 
@@ -169,7 +172,7 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidTopLevelSiblings(t *testing.T) 
 
 	greetModule := pkg.ModuleByName(mustModuleName(t, pkg, "multimoduleproject.greet"))
 	if pd.phase1Errored[greetModule.ModuleID()] {
-		t.Fatal("parser diagnostics alone must not fail recovered Phase 1")
+		t.Fatal("a lone parser diagnostic must not fail Phase 1 for the module")
 	}
 
 	d, ok := moduleDriverFor(t, pd, pkg, "multimoduleproject.greet")
@@ -179,120 +182,32 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidTopLevelSiblings(t *testing.T) 
 	if !d.diagnosticContext().HasDiagnostics() {
 		t.Fatal("greet's parser diagnostic must be retained")
 	}
-	if d.currentStage() != stageTopLevelTypeResolved {
-		t.Fatalf("greet stage = %v, want stageTopLevelTypeResolved", d.currentStage())
+	// Ticket 58 narrowed ensureLocalTypeResolved's gate to
+	// !d.topLevelTypeResolutionUsable, so a lone parser diagnostic no longer
+	// blocks Phase 2's local-type-resolution stage the way it used to;
+	// semantic analysis still never runs, since ensureSemanticAnalyzed keeps
+	// its own untouched blanket d.ctx.HasDiagnostics() gate.
+	if d.currentStage() != stageLocalTypeResolved {
+		t.Fatalf("greet stage = %v, want stageLocalTypeResolved", d.currentStage())
+	}
+	if !d.localTypeResolutionUsable {
+		t.Error("a bad top-level node alone must not make local type resolution unusable")
 	}
 	if d.pkgNode == nil {
-		t.Fatal("pkgNode = nil, want recovered package with valid siblings")
+		t.Fatal("pkgNode must be built despite the parser diagnostic")
 	}
 	if len(d.units) != 2 {
 		t.Fatalf("units = %d, want 2 (greet.bal and greet_util.bal)", len(d.units))
 	}
-
-	var badCount int
-	for _, u := range d.units {
-		for _, node := range u.GetTopLevelNodes() {
-			if _, ok := node.(*ast.BLangBadTopLevelNode); ok {
-				badCount++
-			}
-		}
-	}
-	if badCount != 1 {
-		t.Errorf("bad top-level placeholders = %d, want 1", badCount)
+	if got := d.publishableDiagnostics(); len(got) != d.parserDiagnosticCount {
+		t.Errorf("publishableDiagnostics() = %d diagnostics, want exactly the %d parser diagnostics", len(got), d.parserDiagnosticCount)
 	}
 
-	filteredUnits := compilationUnitsWithoutBadTopLevelNodes(d.units)
-	if len(filteredUnits) != len(d.units) {
-		t.Fatalf("filtered units = %d, want %d", len(filteredUnits), len(d.units))
-	}
-	for i, original := range d.units {
-		filtered := filteredUnits[i]
-		containsBadNode := false
-		for _, node := range original.GetTopLevelNodes() {
-			if _, ok := node.(*ast.BLangBadTopLevelNode); ok {
-				containsBadNode = true
-			}
-		}
-		if !containsBadNode {
-			if filtered != original {
-				t.Errorf("clean unit %q was copied", original.GetName())
-			}
-			continue
-		}
-		if filtered == original {
-			t.Errorf("recovered unit %q was not filtered", original.GetName())
-		}
-		filteredPosition := filtered.GetPosition()
-		originalPosition := original.GetPosition()
-		if filtered.GetName() != original.GetName() || filtered.GetPackageID() != original.GetPackageID() ||
-			filteredPosition.StartOffset() != originalPosition.StartOffset() ||
-			filteredPosition.EndOffset() != originalPosition.EndOffset() ||
-			!reflect.DeepEqual(filtered.Scope, original.Scope) ||
-			!reflect.DeepEqual(filtered.GetDeterminedType(), original.GetDeterminedType()) {
-			t.Errorf("filtered unit %q did not preserve compilation-unit metadata", original.GetName())
-		}
-		for _, node := range filtered.GetTopLevelNodes() {
-			if _, ok := node.(*ast.BLangBadTopLevelNode); ok {
-				t.Errorf("filtered unit %q retained a bad top-level placeholder", original.GetName())
-			}
-		}
-	}
-	assembled := nodebuilder.ToPackageFromCompilationUnits(d.ctx, filteredUnits)
-	if assembled.PackageID != d.pkgID {
-		t.Errorf("compiler assembly package ID = %p, want %p", assembled.PackageID, d.pkgID)
-	}
-	if len(assembled.Functions) != 2 {
-		t.Errorf("compiler assembly functions = %d, want 2 valid siblings", len(assembled.Functions))
-	}
-	if len(d.pkgNode.Functions) != 2 {
-		t.Errorf("package functions = %d, want 2 valid siblings", len(d.pkgNode.Functions))
-	}
 	if _, ok := pd.publicSymbols[packageIdentifierFor(greetModule)]; !ok {
-		t.Error("greet exports were not published despite parser diagnostic")
+		t.Error("greet exports must still be published despite the parser diagnostic")
 	}
 	if _, ok := moduleDriverFor(t, pd, pkg, "multimoduleproject.consumer"); !ok {
-		t.Error("consumer driver was not retained after greet's recovered Phase 1")
-	}
-}
-
-// TestPackageDriver_RecoveredParserAndResolverErrorDoesNotPublish verifies that
-// parser recovery does not make a later resolver error usable for Phase 1.
-func TestPackageDriver_RecoveredParserAndResolverErrorDoesNotPublish(t *testing.T) {
-	projSvc := newProjectOnlyService(t)
-	pkg, _ := openMultimoduleFixture(t, projSvc)
-
-	dir := multimoduleFixtureDir(t)
-	greetURI := fileURI(t, "file://"+filepath.Join(dir, "modules", "greet", "greet.bal"))
-	applyOpen(t, projSvc, greetURI, "public function greeting() returns string {\n    return \"hello\";\n}\n\nint target = ;\n\npublic function greeting() returns string {\n    return \"hello\";\n}\n")
-
-	proj, err := projSvc.Project(greetURI)
-	if err != nil || proj == nil {
-		t.Fatalf("Project: %v", err)
-	}
-	pkg = proj.CurrentPackage()
-
-	pd := newPackageDriver(pkg, projSvc.OpenText, nil, nil)
-	pd.advanceAll(stageCFGAnalyzed)
-
-	greetModule := pkg.ModuleByName(mustModuleName(t, pkg, "multimoduleproject.greet"))
-	if !pd.phase1Errored[greetModule.ModuleID()] {
-		t.Fatal("resolver error after parser recovery must fail Phase 1")
-	}
-	d, ok := moduleDriverFor(t, pd, pkg, "multimoduleproject.greet")
-	if !ok {
-		t.Fatal("greet driver must retain its partial package")
-	}
-	if d.currentStage() != stageSymbolResolved || d.pkgNode == nil {
-		t.Fatalf("greet stage/pkgNode = %v/%v, want stageSymbolResolved/non-nil", d.currentStage(), d.pkgNode)
-	}
-	if d.symbolResolutionUsable {
-		t.Error("resolver error must make recovered symbol resolution unusable")
-	}
-	if _, ok := pd.publicSymbols[packageIdentifierFor(greetModule)]; ok {
-		t.Error("unusable recovered symbol space must not be published")
-	}
-	if _, ok := moduleDriverFor(t, pd, pkg, "multimoduleproject.consumer"); ok {
-		t.Error("consumer must be skipped after unusable greet Phase 1")
+		t.Error("consumer must still proceed through Phase 1 since greet did not fail it")
 	}
 }
 
@@ -379,7 +294,7 @@ func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing
 		t.Fatal("greet driver must exist")
 	}
 	if greetDriver.currentStage() != stageSymbolResolved {
-		t.Errorf("greet stage = %v, want stageSymbolResolved after resolver error", greetDriver.currentStage())
+		t.Errorf("greet stage = %v, want stageSymbolResolved: its unresolved type reference keeps it out of type resolution", greetDriver.currentStage())
 	}
 	if greetDriver.symbolResolutionUsable {
 		t.Error("greet symbol resolution must be unusable after resolver error")
@@ -391,19 +306,15 @@ func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing
 		}
 	}
 
-	// Phase 2 (which is where standalone's own semantic error would surface)
-	// is skipped across the whole package once any module fails Phase 1,
-	// mirroring projects/package_compilation.go:139-143's package-wide gate
-	// ("subsequent stages operate on assumptions that top-level types are
-	// fully resolved across the whole package"). standalone's Phase 1 still
-	// ran cleanly (it has no dependency on greet), so its driver exists with
-	// zero diagnostics — Phase 1 alone does not surface its body-only error.
+	// Unlike projects/package_compilation.go:139-143, greet's Phase 1 failure
+	// does not skip Phase 2 package-wide: standalone does not depend on greet,
+	// so it still runs Phase 2 and surfaces its own fixed semantic error.
 	n, ok = moduleDiagCount(t, pd, pkg, "multimoduleproject.standalone")
 	if !ok {
 		t.Fatal("module \"multimoduleproject.standalone\" was never driven")
 	}
-	if n != 0 {
-		t.Errorf("standalone diagnostics = %d, want 0 (Phase 2 skipped package-wide; its error is a Phase 2/AnalyzeSemantics diagnostic)", n)
+	if n != 1 {
+		t.Errorf("standalone diagnostics = %d, want 1 (its own fixed semantic error)", n)
 	}
 	standaloneModule := pkg.ModuleByName(mustModuleName(t, pkg, "multimoduleproject.standalone"))
 	if pd.phase1Errored[standaloneModule.ModuleID()] {

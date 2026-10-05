@@ -31,6 +31,14 @@ const recursivePublicTypeSource = "public type Invalid Invalid;\n"
 const unusedTopLevelSource = "const int UNUSED = 1;\n"
 const malformedBodySource = "function broken() {\n    int value = ;\n}\n"
 const malformedSignatureAndBodySource = "function broken(int {\n    int value = ;\n}\n"
+const malformedTopLevelSource = "int value = ;\n"
+
+// breakOutsideLoopSource triggers a diagnostic from inside
+// ResolvePrivateNodesTypes itself (Phase 2 / stage 5's block-statement
+// resolution reports "break statement not allowed outside loop") rather than
+// from symbol resolution (stage 3) or semantic analysis (stage 6) — the
+// signature and every earlier stage resolve this module diagnostic-free.
+const breakOutsideLoopSource = "function main() {\n    break;\n}\n"
 
 // oneSemanticErrorSource produces exactly one SEMANTIC_ERROR diagnostic
 // ("incompatible type"), surfacing only during AnalyzeSemantics (stage 6) —
@@ -110,7 +118,39 @@ func TestModuleDriver_ResolverErrorDoesNotAdvancePhase1(t *testing.T) {
 	}
 }
 
-func TestModuleDriver_UnusedSymbolDoesNotBlockSymbolResolution(t *testing.T) {
+// TestModuleDriver_UnresolvedReferenceReachesLocalTypeResolved covers a
+// cleanly parsed module referencing an unknown name: the reference is bound
+// to a stand-in symbol (bindUnresolvedReferences), so type resolution runs
+// without panicking, while semantic analysis still never runs.
+func TestModuleDriver_UnresolvedReferenceReachesLocalTypeResolved(t *testing.T) {
+	projSvc, _ := newTestServices(t)
+	u := fileURI(t, "file:///workspace/main.bal")
+	applyOpen(t, projSvc, u, "public function main() {\n    int value = missing;\n    int other = value;\n}\n")
+
+	proj, err := projSvc.Project(u)
+	if err != nil || proj == nil {
+		t.Fatalf("Project: %v", err)
+	}
+	module, env := defaultModuleFor(t, proj)
+
+	d := newModuleDriver(env, projSvc.OpenText, nil)
+	d.advanceTo(stageCFGAnalyzed, module, newModuleResolutionInput("", nil, nil))
+
+	if d.currentStage() != stageLocalTypeResolved {
+		t.Fatalf("currentStage() = %v, want stageLocalTypeResolved for an unresolved reference", d.currentStage())
+	}
+	if d.symbolResolutionUsable {
+		t.Error("the unknown symbol must make symbol resolution unusable")
+	}
+	if d.cfg != nil {
+		t.Error("cfg is set, but semantic analysis/CFG must never run on a module with errors")
+	}
+}
+
+// TestModuleDriver_UnusedSymbolDoesNotBlockTypeResolution covers a module
+// whose only error is an unused symbol: symbol resolution is unusable for
+// dependents, but no symbol is left unresolved, so type resolution still runs.
+func TestModuleDriver_UnusedSymbolDoesNotBlockTypeResolution(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
 	applyOpen(t, projSvc, u, unusedTopLevelSource)
@@ -124,8 +164,8 @@ func TestModuleDriver_UnusedSymbolDoesNotBlockSymbolResolution(t *testing.T) {
 	d := newModuleDriver(env, projSvc.OpenText, nil)
 	d.advanceTo(stageTopLevelTypeResolved, module, newModuleResolutionInput("", nil, nil))
 
-	if d.currentStage() != stageSymbolResolved {
-		t.Fatalf("currentStage() = %v, want stageSymbolResolved despite unused-symbol diagnostic", d.currentStage())
+	if d.currentStage() != stageTopLevelTypeResolved {
+		t.Fatalf("currentStage() = %v, want stageTopLevelTypeResolved despite unused-symbol diagnostic", d.currentStage())
 	}
 	if d.pkgNode == nil {
 		t.Error("pkgNode = nil, want the symbol-resolved package")
@@ -169,10 +209,25 @@ func TestModuleDriver_PublicTypeErrorDoesNotAdvancePhase1(t *testing.T) {
 	}
 }
 
-func TestModuleDriver_MalformedFunctionSignatureEntersTopLevelRecovery(t *testing.T) {
+// TestModuleDriver_MalformedFunctionSignatureRunsSymbolResolutionButUnusable
+// covers a function whose own signature is unparseable, alongside a valid
+// sibling. Parser diagnostics no longer gate ensureSymbolResolved (removed
+// along with the bad-node filtering this driver used to do): symbol
+// resolution still runs so a module's scope (and thus e.g. completion) stays
+// available. Here it also surfaces a genuine new resolver diagnostic (an
+// unused-variable check inside the malformed body), which makes this stage's
+// own result unusable for dependents -- same mechanism
+// TestModuleDriver_ResolverErrorDoesNotAdvancePhase1 covers for a clean
+// duplicate-declaration error, except that a module with bad AST nodes still
+// continues to local type resolution. publishableDiagnostics
+// hides that resolver diagnostic because the module already has a parser
+// diagnostic (see parserDiagnosticCount's doc comment on moduleDriver):
+// mixing "missing close paren token" with "unused variable" would be noise
+// from resolving a subtree the parser already gave up on.
+func TestModuleDriver_MalformedFunctionSignatureRunsSymbolResolutionButUnusable(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
-	applyOpen(t, projSvc, u, malformedSignatureAndBodySource)
+	applyOpen(t, projSvc, u, malformedSignatureAndBodySource+"\npublic function sibling() {}\n")
 
 	proj, err := projSvc.Project(u)
 	if err != nil || proj == nil {
@@ -181,14 +236,136 @@ func TestModuleDriver_MalformedFunctionSignatureEntersTopLevelRecovery(t *testin
 	module, env := defaultModuleFor(t, proj)
 
 	d := newModuleDriver(env, projSvc.OpenText, nil)
-	d.advanceTo(stageParsed, module, newModuleResolutionInput("", nil, nil))
+	d.advanceTo(stageSymbolResolved, module, newModuleResolutionInput("", nil, nil))
 
-	if !d.hasRecoveredTopLevel {
-		t.Error("malformed function signature must use top-level recovery even when its body is malformed")
+	if d.currentStage() != stageSymbolResolved {
+		t.Fatalf("currentStage() = %v, want stageSymbolResolved despite malformed function signature", d.currentStage())
+	}
+	if d.pkgNode == nil {
+		t.Error("pkgNode = nil, want a package built despite the parser diagnostic")
+	}
+	if d.symbolResolutionUsable {
+		t.Error("the malformed body's resolver diagnostic must make symbol resolution unusable")
+	}
+	if got := d.publishableDiagnostics(); len(got) != d.parserDiagnosticCount {
+		t.Errorf("publishableDiagnostics() = %d diagnostics, want exactly the %d parser diagnostics", len(got), d.parserDiagnosticCount)
 	}
 }
 
-func TestModuleDriver_MalformedFunctionBodyDoesNotEnterTopLevelRecovery(t *testing.T) {
+// TestModuleDriver_MalformedTopLevelReachesTopLevelTypeResolved covers a
+// fully unparseable top-level declaration (int value = ;): the parser
+// recovers it as a BLangBadTopLevelNode, which symbol resolution and package
+// assembly both skip cleanly (no symbol allocated, no new diagnostic), so
+// this module's Phase 1 proceeds all the way through top-level type
+// resolution using only the parser's own diagnostic.
+func TestModuleDriver_MalformedTopLevelReachesTopLevelTypeResolved(t *testing.T) {
+	projSvc, _ := newTestServices(t)
+	u := fileURI(t, "file:///workspace/main.bal")
+	applyOpen(t, projSvc, u, malformedTopLevelSource)
+
+	proj, err := projSvc.Project(u)
+	if err != nil || proj == nil {
+		t.Fatalf("Project: %v", err)
+	}
+	module, env := defaultModuleFor(t, proj)
+
+	d := newModuleDriver(env, projSvc.OpenText, nil)
+	input := newModuleResolutionInput("", nil, nil)
+	d.advanceTo(stageTopLevelTypeResolved, module, input)
+
+	if d.currentStage() != stageTopLevelTypeResolved {
+		t.Fatalf("currentStage() = %v, want stageTopLevelTypeResolved for a cleanly-recovered bad top-level node", d.currentStage())
+	}
+	if d.pkgNode == nil {
+		t.Error("pkgNode = nil, want a package built despite the parser diagnostic")
+	}
+	if !d.symbolResolutionUsable || !d.topLevelTypeResolutionUsable {
+		t.Error("a bad top-level node alone must not add a new resolver/type error")
+	}
+	if !d.diagnosticContext().HasErrors() {
+		t.Error("parser diagnostic must be retained")
+	}
+}
+
+// TestModuleDriver_MalformedTopLevelReachesLocalTypeResolved covers ticket
+// 58: a module whose only diagnostic is the parser's own (from the recovered
+// bad top-level node) must still reach stageLocalTypeResolved, since Phase 2
+// itself adds no new error for this recovery-mode node (ticket 40). Semantic
+// analysis must not run even so -- it stays gated on the untouched blanket
+// d.ctx.HasDiagnostics() check, which still sees the pre-existing parser
+// diagnostic.
+func TestModuleDriver_MalformedTopLevelReachesLocalTypeResolved(t *testing.T) {
+	projSvc, _ := newTestServices(t)
+	u := fileURI(t, "file:///workspace/main.bal")
+	applyOpen(t, projSvc, u, malformedTopLevelSource)
+
+	proj, err := projSvc.Project(u)
+	if err != nil || proj == nil {
+		t.Fatalf("Project: %v", err)
+	}
+	module, env := defaultModuleFor(t, proj)
+
+	d := newModuleDriver(env, projSvc.OpenText, nil)
+	input := newModuleResolutionInput("", nil, nil)
+	d.advanceTo(stageSemanticAnalyzed, module, input)
+
+	if d.currentStage() != stageLocalTypeResolved {
+		t.Fatalf("currentStage() = %v, want stageLocalTypeResolved for a cleanly-recovered bad top-level node", d.currentStage())
+	}
+	if !d.localTypeResolutionUsable {
+		t.Error("a bad top-level node alone must not make local type resolution unusable")
+	}
+	if d.pkgNode == nil {
+		t.Error("pkgNode = nil, want a package built despite the parser diagnostic")
+	}
+	if !d.diagnosticContext().HasErrors() {
+		t.Error("parser diagnostic must be retained")
+	}
+}
+
+// TestModuleDriver_LocalTypeErrorStopsBeforeSemanticAnalysis covers the other
+// half of ticket 58: a module where Phase 2 (ResolvePrivateNodesTypes) itself
+// reports a new error ("break statement not allowed outside loop") still
+// reaches stageLocalTypeResolved -- mirroring how ensureTopLevelTypeResolved
+// advances d.stage even when its own result is unusable -- but with
+// localTypeResolutionUsable left false, which keeps semantic analysis's own
+// blanket HasDiagnostics() gate from ever letting it run.
+func TestModuleDriver_LocalTypeErrorStopsBeforeSemanticAnalysis(t *testing.T) {
+	projSvc, _ := newTestServices(t)
+	u := fileURI(t, "file:///workspace/main.bal")
+	applyOpen(t, projSvc, u, breakOutsideLoopSource)
+
+	proj, err := projSvc.Project(u)
+	if err != nil || proj == nil {
+		t.Fatalf("Project: %v", err)
+	}
+	module, env := defaultModuleFor(t, proj)
+
+	d := newModuleDriver(env, projSvc.OpenText, nil)
+	input := newModuleResolutionInput("", nil, nil)
+	d.advanceTo(stageSemanticAnalyzed, module, input)
+
+	if d.currentStage() != stageLocalTypeResolved {
+		t.Fatalf("currentStage() = %v, want stageLocalTypeResolved (semantic analysis must not run)", d.currentStage())
+	}
+	if d.localTypeResolutionUsable {
+		t.Error("break-outside-loop must make local type resolution unusable")
+	}
+	if d.cfg != nil {
+		t.Error("cfg is set, but semantic analysis/CFG must never have run")
+	}
+	if !d.diagnosticContext().HasErrors() {
+		t.Error("break-outside-loop must report a semantic error")
+	}
+}
+
+// TestModuleDriver_MalformedFunctionBodyReachesLocalTypeResolved covers a
+// function with a valid signature but a malformed body (missing initializer
+// expression). Walking the body surfaces new resolver diagnostics (unknown
+// symbol / unused variable), so symbol resolution is unusable for dependents,
+// but a module with bad AST nodes still runs through local type resolution
+// (moduleDriver.hasBadNodes) and never reaches semantic analysis.
+func TestModuleDriver_MalformedFunctionBodyReachesLocalTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
 	applyOpen(t, projSvc, u, malformedBodySource)
@@ -200,16 +377,68 @@ func TestModuleDriver_MalformedFunctionBodyDoesNotEnterTopLevelRecovery(t *testi
 	module, env := defaultModuleFor(t, proj)
 
 	d := newModuleDriver(env, projSvc.OpenText, nil)
-	d.advanceTo(stageTopLevelTypeResolved, module, newModuleResolutionInput("", nil, nil))
+	d.advanceTo(stageCFGAnalyzed, module, newModuleResolutionInput("", nil, nil))
 
-	if d.hasRecoveredTopLevel {
-		t.Error("malformed function body must not use top-level recovery")
+	if d.currentStage() != stageLocalTypeResolved {
+		t.Fatalf("currentStage() = %v, want stageLocalTypeResolved for malformed function body", d.currentStage())
 	}
-	if d.currentStage() != stageParsed {
-		t.Fatalf("currentStage() = %v, want stageParsed for unsupported body recovery", d.currentStage())
+	if d.cfg != nil {
+		t.Error("cfg is set, but semantic analysis/CFG must never run on a module with bad AST nodes")
 	}
-	if d.pkgNode != nil {
-		t.Error("pkgNode must remain nil for unsupported body recovery")
+	if d.pkgNode == nil {
+		t.Error("pkgNode = nil, want a package built despite the parser diagnostic")
+	}
+	if d.symbolResolutionUsable {
+		t.Error("the malformed body's resolver diagnostics must make symbol resolution unusable")
+	}
+	if got := d.publishableDiagnostics(); len(got) != d.parserDiagnosticCount {
+		t.Errorf("publishableDiagnostics() = %d diagnostics, want exactly the %d parser diagnostics", len(got), d.parserDiagnosticCount)
+	}
+}
+
+// TestModuleDriver_MalformedFunctionBodyWithSiblingRetainsSibling is the
+// sibling-bearing variant of the test above: symbol resolution is unusable
+// for the same reason, but the valid sibling function
+// must still appear in pkgNode -- nodebuilder no longer truncates package
+// assembly at the first bad node it can't classify (see
+// nodebuilder/mod.go's BLangBadTopLevelNode case), and this driver no longer
+// drops the sibling's compilation unit outright the way the removed
+// filtering used to.
+func TestModuleDriver_MalformedFunctionBodyWithSiblingRetainsSibling(t *testing.T) {
+	projSvc, _ := newTestServices(t)
+	u := fileURI(t, "file:///workspace/main.bal")
+	applyOpen(t, projSvc, u, malformedBodySource+"\npublic function sibling() {}\n")
+
+	proj, err := projSvc.Project(u)
+	if err != nil || proj == nil {
+		t.Fatalf("Project: %v", err)
+	}
+	module, env := defaultModuleFor(t, proj)
+
+	d := newModuleDriver(env, projSvc.OpenText, nil)
+	d.advanceTo(stageSemanticAnalyzed, module, newModuleResolutionInput("", nil, nil))
+
+	if d.currentStage() != stageLocalTypeResolved {
+		t.Fatalf("currentStage() = %v, want stageLocalTypeResolved for malformed body with sibling", d.currentStage())
+	}
+	if d.pkgNode == nil {
+		t.Fatal("pkgNode = nil, want a package built despite the parser diagnostic")
+	}
+	if d.symbolResolutionUsable {
+		t.Error("the malformed body's resolver diagnostics must make symbol resolution unusable")
+	}
+	var names []string
+	for _, fn := range d.pkgNode.Functions {
+		names = append(names, fn.Name.GetValue())
+	}
+	found := false
+	for _, name := range names {
+		if name == "sibling" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("pkgNode.Functions = %v, want it to include the valid sibling function", names)
 	}
 }
 

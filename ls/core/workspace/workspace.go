@@ -59,6 +59,26 @@ func WithMaxProjects(n int) Option {
 	}
 }
 
+// WithRepositories configures package repositories used when the workspace
+// loads projects. Normal construction leaves repositories unset, retaining
+// projects.Load's default repository universe.
+func WithRepositories(repositories []projects.Repository) Option {
+	return func(s *ProjectService) {
+		s.repositories = repositories
+	}
+}
+
+// NewFileSystemRepository creates a package repository backed by platform's
+// filesystem. It is suitable for callers that must keep repository access on
+// PAL rather than constructing an operating-system filesystem directly.
+func NewFileSystemRepository(platform pal.Platform, basePath string) projects.Repository {
+	return projects.NewFileSystemRepository(palFS{
+		pal:      platform.FS,
+		overlays: make(map[string][]byte),
+		now:      time.Now,
+	}, basePath)
+}
+
 // ChangeKind discriminates the kind of DocumentChange.
 type ChangeKind uint8
 
@@ -491,13 +511,13 @@ func (s *ProjectService) loadProject(fsys palFS, sourceRoot, filePath string) (p
 	// directly (palFS overlays the buffer for a non-disk URI).
 	tomlPath := path.Join(sourceRoot, projects.BallerinaTomlFile)
 	if info, err := fsys.Stat(tomlPath); err != nil || info.IsDir() {
-		result, err := projects.Load(fsys, filePath)
+		result, err := projects.Load(fsys, filePath, projects.ProjectLoadConfig{Repositories: s.repositories})
 		if err != nil {
 			return nil, err
 		}
 		return result.Project(), nil
 	}
-	result, err := projects.Load(fsys, sourceRoot)
+	result, err := projects.Load(fsys, sourceRoot, projects.ProjectLoadConfig{Repositories: s.repositories})
 	if err != nil {
 		return nil, err
 	}

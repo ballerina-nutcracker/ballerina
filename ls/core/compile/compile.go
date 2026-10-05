@@ -204,12 +204,12 @@ type cycleRequest struct {
 // enqueue compile cycles, and to ProjectRegistered/ProjectEvicted/
 // ProjectKindTransitioned (inline) to maintain the known-roots set and evict
 // snapshots.
-func New(projects *workspace.ProjectService, bus *event.Bus, opts ...Option) *CompilationService {
+func New(projectService *workspace.ProjectService, bus *event.Bus, opts ...Option) *CompilationService {
 	s := &CompilationService{
-		projects:       projects,
-		reader:         projects,
+		projects:       projectService,
+		reader:         projectService,
 		bus:            bus,
-		store:          newSnapshotStore(16, projects.Generation),
+		store:          newSnapshotStore(16, projectService.Generation),
 		compileFn:      realCompilePackage,
 		inFlight:       make(map[string]bool),
 		pending:        make(map[string]*cycleRequest),
@@ -217,7 +217,7 @@ func New(projects *workspace.ProjectService, bus *event.Bus, opts ...Option) *Co
 		debounceTimers: make(map[string]*time.Timer),
 		debounceGens:   make(map[string]uint64),
 		knownRoots:     make(map[string]struct{}),
-		openText:       projects.OpenText,
+		openText:       projectService.OpenText,
 		genStates:      make(map[string]*packageGenState),
 		maxWorkers:     defaultMaxWorkers(),
 	}
@@ -647,7 +647,7 @@ func extractForURI(project projects.Project, pkg *projects.Package, fileName str
 
 	env := compEnv.DiagnosticEnv()
 	var diags []CompilerDiagnostic
-	for _, diag := range d.diagnosticContext().Diagnostics() {
+	for _, diag := range d.publishableDiagnostics() {
 		location := diag.Location()
 		if !diagnostics.LocationHasSource(location) {
 			continue
