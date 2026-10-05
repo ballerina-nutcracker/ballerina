@@ -93,7 +93,7 @@ From the repo root:
 python3 .agents/skills/stdlib-readme-format/scripts/check_readmes.py
 ```
 
-It validates every per-package README **and** the aggregator in one pass: required sections and their order, status values, `|---|---|---|` separators, no backticks in Feature/API cells, no "Fully implemented and tested" filler in Supported rows, non-empty Comments on every gap row, bullet format, bullets-vs-"no changes"-sentence consistency, aggregator counts/percentages/Total footer recomputed from the per-package tables, verbatim bullet mirroring, and the closing "no changes" sentence membership. **It must exit 0 before you save** — fix every `FAIL` line it prints.
+It validates every per-package README **and** the aggregator in one pass: required sections and their order, status values, `|---|---|---|` separators, no backticks in Feature/API cells, no "Fully implemented and tested" filler in Supported rows, non-empty Comments on every gap row, bullet format, bullets-vs-"no changes"-sentence consistency, aggregator and repo-root `README.md` counts/percentages/Total footer recomputed from the per-package tables, verbatim bullet mirroring, and the closing "no changes" sentence membership. **It must exit 0 before you save** — fix every `FAIL` line it prints.
 
 ### Judgment checks — verify by hand
 
@@ -129,5 +129,7 @@ Maintenance rules — after every per-package README change:
 - Mirror the package's **Notable Behavioural Changes** bullets verbatim into the matching `### <package>` subsection of the aggregator — copy the exact bullet text, don't paraphrase; the checker compares them word for word. Add a `### <package>` subsection when a package gains its first behavioural change; remove it (and add the package to the closing "no notable behavioural changes" sentence) when it has none.
 
 When **adding a brand-new package**, add a new table row (alphabetical), recompute the Total footer, and add a `### <package>` subsection only if that package has notable behavioural changes.
+
+The repo-root `README.md` carries a copy of the same coverage table under **Standard library coverage** (no behavioural-changes section), with links rooted at the repo: `| [<name>](lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md) | S | P | N | X% |`. Keep its rows and Total footer identical to the aggregator's in the same change.
 
 The `check_readmes.py` script (see Validation above) verifies all of this arithmetic and mirroring — run it after every aggregator edit instead of trusting manual recounts.

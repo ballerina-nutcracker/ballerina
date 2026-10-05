@@ -84,6 +84,25 @@ Development is organized by **subsets** of the Ballerina language; each mileston
 - **Supported language features:** [`doc/lang`](doc/lang)
 - **Supported library features:** [`doc/library`](doc/library)
 
+## Standard library coverage
+
+Go-native `ballerina/*` standard library packages are built into the `bal` binary. Each package's README has a feature-by-feature support table; [`lib/stdlibs/ballerina`](lib/stdlibs/ballerina/README.md) lists the notable behavioural changes from jBallerina, and [`doc/library`](doc/library) describes the library surface each milestone ships. Support % is `Supported / Total`, where *Total* also counts features that cannot be supported.
+
+| Package | Supported | Partially Supported | Not Yet Supported | Support % |
+|---|---|---|---|---|
+| [avro](lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md) | 15 | 1 | 0 | 94% |
+| [crypto](lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md) | 26 | 1 | 5 | 81% |
+| [http](lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md) | 28 | 7 | 38 | 38% |
+| [io](lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md) | 21 | 2 | 4 | 78% |
+| [log](lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md) | 7 | 2 | 15 | 29% |
+| [math.vector](lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
+| [os](lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md) | 11 | 1 | 0 | 92% |
+| [protobuf](lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md) | 11 | 2 | 0 | 85% |
+| [random](lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md) | 3 | 1 | 1 | 60% |
+| [time](lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md) | 31 | 1 | 0 | 97% |
+| [url](lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md) | 3 | 0 | 1 | 75% |
+| **Total** | **161** | **18** | **64** | **66%** |
+
 ## Contributing
 
 Contributions are welcome — read the [contribution guidelines](CONTRIBUTING.md) to get started, and the [code of conduct](CODE_OF_CONDUCT.md) before you take part.

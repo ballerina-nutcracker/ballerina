@@ -137,7 +137,7 @@ Update the README row via the **`stdlib-readme-format`** skill:
 
 - Promote the affected row's status (`Not Yet Supported` → `Supported`, or `Partially Supported` → `Supported` if the caveats are resolved).
 - If the parity check in Step 3 surfaced an unavoidable divergence, add it to **Notable Behavioural Changes**.
-- Update the top-level aggregator `lib/stdlibs/ballerina/README.md`: recount this package's row and recompute the **Total** footer; if a behavioural change was added or removed, mirror it into the package's `### <name>` subsection of the consolidated section.
+- Update the top-level aggregator `lib/stdlibs/ballerina/README.md`: recount this package's row and recompute the **Total** footer; if a behavioural change was added or removed, mirror it into the package's `### <name>` subsection of the consolidated section. Apply the same row and Total changes to the **Standard library coverage** table in the repo-root `README.md`.
 - Re-run the full `stdlib-readme-format` validation checklist against the updated README (catches pre-existing violations too).
 - Update `doc/library/subset<N>.md` (the subset the tests were added to above) to document the newly-covered surface — this is separate from, and in addition to, the per-package `README.md`.
 
@@ -151,7 +151,7 @@ Update the README row via the **`stdlib-readme-format`** skill:
 - [ ] `doc/library/subset<N>.md` documents the newly-covered surface.
 - [ ] Every new/touched line in `native/` is exercised (checked via `go tool cover -func=...` or `-html=...`, not the package-total %) — Codecov's patch-coverage check (`codecov.yml`, `native-ci.yml`) targets 80% on just the diff and will fail the PR otherwise.
 - [ ] README row status reflects what's now implemented.
-- [ ] `lib/stdlibs/ballerina/README.md` aggregator updated (package row recounted, Total footer recomputed, behavioural changes mirrored if any changed).
+- [ ] `lib/stdlibs/ballerina/README.md` aggregator updated (package row recounted, Total footer recomputed, behavioural changes mirrored if any changed), and the repo-root `README.md` coverage table matches it.
 - [ ] `stdlib-readme-format` validation checklist passes.
 - [ ] Any unavoidable divergence is in **Notable Behavioural Changes**.
 - [ ] **Run the `validate-stdlib-contract` skill on this package** (at minimum, review its diff output for the touched surface) — the verdict must be PASS, or PASS with notes that you have reviewed.
