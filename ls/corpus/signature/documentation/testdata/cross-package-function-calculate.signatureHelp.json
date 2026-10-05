@@ -1,0 +1,122 @@
+{
+  "source": "",
+  "sources": {
+    "Ballerina.toml": "[package]\norg = \"test\"\nname = \"pkgA\"\nversion = \"0.1.0\"\n\n[[dependency]]\norg = \"test\"\nname = \"pkgB\"\nversion = \"0.1.0\"\n",
+    "main.bal": "import test/pkgB;\n\npublic function main() {\n    // Test 1: Cross-package function call - processData (at opening parenthesis)\n    string result1 = pkgB:processData(\"test\", 3);\n\n    // Test 2: Cross-package function call - calculate (between parameters)\n    float result2 = pkgB:calculate(10.5, 20.3, \"add\");\n\n    // Test 3: Cross-package method call - DataProcessor\n    pkgB:DataProcessor processor = new(\"myProcessor\");\n    string result3 = processor.process(\"hello\", true);\n\n    // Test 4: Cross-package method call - DataProcessor transform\n    string result4 = processor.transform(\"world\", \"[\", \"]\");\n\n    // Test 5: Cross-package action call - ApiClient fetch\n    pkgB:ApiClient cl = new(\"https://api.example.com\");\n    string|error result5 = cl->fetch(123, false);\n\n    // Test 6: Cross-package action call - ApiClient send\n    map<string> headers = {\"Authorization\": \"Bearer token\"};\n    boolean|error result6 = cl->send(\"POST\", \"/submit\", headers);\n}\n",
+    "repository/test/pkgB/0.1.0/go1.27/modules/pkgB/utils.bal": "# A utility function that processes data\n#\n# + data - The input data string\n# + count - The number of times to repeat\n# + return - The processed result string\npublic function processData(string data, int count) returns string {\n    return data.repeat(count);\n}\n\n# A calculator function with multiple parameters\n#\n# + x - First operand\n# + y - Second operand\n# + operation - The operation to perform\n# + return - The calculation result\npublic function calculate(float x, float y, string operation) returns float {\n    if operation == \"add\" {\n        return x + y;\n    } else if operation == \"multiply\" {\n        return x * y;\n    }\n    return 0.0;\n}\n\n# A public class with methods\npublic class DataProcessor {\n    private string name;\n\n    # Initialize the processor\n    #\n    # + name - The processor name\n    public function init(string name) {\n        self.name = name;\n    }\n\n    # Process a value with options\n    #\n    # + value - The value to process\n    # + uppercase - Whether to convert to uppercase\n    # + return - The processed value\n    public function process(string value, boolean uppercase) returns string {\n        if uppercase {\n            return value.toUpperAscii();\n        }\n        return value;\n    }\n\n    # Transform data with multiple parameters\n    #\n    # + input - Input string\n    # + prefix - Prefix to add\n    # + suffix - Suffix to add\n    # + return - Transformed string\n    public function transform(string input, string prefix, string suffix) returns string {\n        return prefix + input + suffix;\n    }\n}\n\n# A client with actions\npublic client class ApiClient {\n    private string endpoint;\n\n    # Initialize the API client\n    #\n    # + endpoint - The API endpoint URL\n    public function init(string endpoint) {\n        self.endpoint = endpoint;\n    }\n\n    # Fetch data from the API\n    #\n    # + id - The resource ID\n    # + includeMetadata - Whether to include metadata\n    # + return - The fetched data or an error\n    remote function fetch(int id, boolean includeMetadata) returns string|error {\n        return \"data-\" + id.toString();\n    }\n\n    # Send data to the API\n    #\n    # + payload - The data payload\n    # + headers - Custom headers\n    # + timeout - Request timeout in seconds\n    # + return - Success status or an error\n    remote function send(string payload, map<string> headers, int timeout) returns boolean|error {\n        return true;\n    }\n}\n\n# Represents a person with basic information\npublic type Person record {\n    # the person's name\n    string name;\n    # the person's age\n    int age;\n    # the person's email address\n    string email;\n};\n",
+    "repository/test/pkgB/0.1.0/go1.27/bala.json": "{\"bala_version\":\"3.0.0\"}\n",
+    "repository/test/pkgB/0.1.0/go1.27/package.json": "{\"organization\":\"test\",\"name\":\"pkgB\",\"version\":\"0.1.0\",\"platform\":\"go1.27\",\"modules\":[]}\n",
+    "repository/test/pkgB/0.1.0/go1.27/dependency-graph.json": "{\"packages\":[{\"org\":\"test\",\"name\":\"pkgB\",\"version\":\"0.1.0\",\"dependencies\":[],\"modules\":[]}],\"modules\":[{\"org\":\"test\",\"package_name\":\"pkgB\",\"version\":\"0.1.0\",\"module_name\":\"pkgB\",\"dependencies\":[]}]}\n"
+  },
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "method": "initialize",
+      "params": {
+        "capabilities": {
+          "textDocument": {
+            "signatureHelp": {
+              "signatureInformation": {
+                "documentationFormat": [
+                  "markdown"
+                ],
+                "parameterInformation": {
+                  "labelOffsetSupport": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "id": 1
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file://${root}/main.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "import test/pkgB;\n\npublic function main() {\n    // Test 1: Cross-package function call - processData (at opening parenthesis)\n    string result1 = pkgB:processData(\"test\", 3);\n\n    // Test 2: Cross-package function call - calculate (between parameters)\n    float result2 = pkgB:calculate(10.5, 20.3, \"add\");\n\n    // Test 3: Cross-package method call - DataProcessor\n    pkgB:DataProcessor processor = new(\"myProcessor\");\n    string result3 = processor.process(\"hello\", true);\n\n    // Test 4: Cross-package method call - DataProcessor transform\n    string result4 = processor.transform(\"world\", \"[\", \"]\");\n\n    // Test 5: Cross-package action call - ApiClient fetch\n    pkgB:ApiClient cl = new(\"https://api.example.com\");\n    string|error result5 = cl->fetch(123, false);\n\n    // Test 6: Cross-package action call - ApiClient send\n    map<string> headers = {\"Authorization\": \"Bearer token\"};\n    boolean|error result6 = cl->send(\"POST\", \"/submit\", headers);\n}\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "file://${root}/main.bal"
+        },
+        "position": {
+          "line": 7,
+          "character": 30
+        }
+      },
+      "id": 2
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "signatures": [
+          {
+            "label": "calculate(float x, float y, string operation)",
+            "documentation": {
+              "kind": "markdown",
+              "value": "**Description**  \nA calculator function with multiple parameters"
+            },
+            "parameters": [
+              {
+                "label": [
+                  16,
+                  17
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`float`x**: First operand"
+                }
+              },
+              {
+                "label": [
+                  25,
+                  26
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`float`y**: Second operand"
+                }
+              },
+              {
+                "label": [
+                  35,
+                  44
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`operation**: The operation to perform"
+                }
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 0
+      }
+    }
+  ],
+  "signatureRepository": true
+}

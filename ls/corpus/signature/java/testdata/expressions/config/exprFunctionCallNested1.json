@@ -1,8 +1,0 @@
-{
-    "position": {
-        "line": 104,
-        "character": 24
-    },
-    "source": "expressions/expressions.bal",
-    "expected": {"jsonrpc":"2.0","result":{"signatures":[{"label":"fooF(a, b)","parameters":[{"label":[5,6]},{"label":[8,9]}]}],"activeSignature":0,"activeParameter":1}}
-}
