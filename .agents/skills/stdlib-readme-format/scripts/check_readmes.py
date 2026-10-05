@@ -149,8 +149,12 @@ def check_coverage_table(path, text, per_pkg):
             continue
         m = re.match(r"\[(.+?)\]\(", c[0])
         if m:
+            if m.group(1) in rows:
+                fail(path, f"coverage table has a duplicate row for '{m.group(1)}'")
             rows[m.group(1)] = c
         elif c[0] in ("**Total**", "Total"):
+            if total_row is not None:
+                fail(path, "coverage table has more than one **Total** footer row")
             total_row = c
 
     listed = list(rows.keys())
