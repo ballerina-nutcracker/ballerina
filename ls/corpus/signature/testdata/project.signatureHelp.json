@@ -163,10 +163,12 @@
             "label": "sibling(int value, string title)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": "Parameter\nint value"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               }
             ]
           }
@@ -184,10 +186,12 @@
             "label": "imported(int count, string title)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": "Parameter\nint count"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               }
             ]
           }
@@ -205,7 +209,8 @@
             "label": "aliasCall(int|string value)",
             "parameters": [
               {
-                "label": "int|string value"
+                "label": "int|string value",
+                "documentation": "Parameter\nint|string value"
               }
             ]
           }
@@ -223,7 +228,8 @@
             "label": "new Box(int size)",
             "parameters": [
               {
-                "label": "int size"
+                "label": "int size",
+                "documentation": "Parameter\nint size"
               }
             ]
           }
@@ -241,10 +247,12 @@
             "label": "put(int value, string tag)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": "Parameter\nint value"
               },
               {
-                "label": "string tag"
+                "label": "string tag",
+                "documentation": "Parameter\nstring tag"
               }
             ]
           }

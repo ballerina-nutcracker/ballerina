@@ -80,9 +80,11 @@
         "signatures": [
           {
             "label": "length([nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...] arr)",
+            "documentation": "Description\nReturns the number of members of an array.",
             "parameters": [
               {
-                "label": "[nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...] arr"
+                "label": "[nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...] arr",
+                "documentation": "Parameter\n[nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...] arr: the array"
               }
             ]
           }

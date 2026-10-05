@@ -125,18 +125,21 @@
         "signatures": [
           {
             "label": "foo(float a, boolean b)",
+            "documentation": "Description\nReturns foo",
             "parameters": [
               {
                 "label": [
                   4,
                   11
-                ]
+                ],
+                "documentation": "Parameter\nfloat a: float"
               },
               {
                 "label": [
                   13,
                   22
-                ]
+                ],
+                "documentation": "Parameter\nboolean b: boolean"
               }
             ]
           }

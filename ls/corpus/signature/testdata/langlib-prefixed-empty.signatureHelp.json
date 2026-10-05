@@ -97,9 +97,11 @@
         "signatures": [
           {
             "label": "fromString(string s)",
+            "documentation": "Description\nReturns the integer that `s` represents.",
             "parameters": [
               {
-                "label": "string s"
+                "label": "string s",
+                "documentation": "Parameter\nstring s: string representation of an integer"
               }
             ]
           }

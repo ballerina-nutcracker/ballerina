@@ -450,13 +450,15 @@
                 "label": [
                   5,
                   6
-                ]
+                ],
+                "documentation": "Parameter\na"
               },
               {
                 "label": [
                   8,
                   9
-                ]
+                ],
+                "documentation": "Parameter\nb"
               }
             ]
           }

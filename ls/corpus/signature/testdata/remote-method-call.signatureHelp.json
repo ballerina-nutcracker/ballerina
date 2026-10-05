@@ -130,19 +130,22 @@
                 "label": [
                   8,
                   17
-                ]
+                ],
+                "documentation": "Parameter\nstring id"
               },
               {
                 "label": [
                   19,
                   26
-                ]
+                ],
+                "documentation": "Parameter\nint age"
               },
               {
                 "label": [
                   28,
                   39
-                ]
+                ],
+                "documentation": "Parameter\nstring name"
               }
             ]
           }

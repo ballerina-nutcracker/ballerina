@@ -99,13 +99,21 @@
                 "label": [
                   2,
                   5
-                ]
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`**"
+                }
               },
               {
                 "label": [
                   7,
                   13
-                ]
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`**"
+                }
               }
             ]
           }

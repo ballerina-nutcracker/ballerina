@@ -270,13 +270,16 @@
             "label": "choose(int count, string title, string... extra)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": "Parameter\nint count"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               },
               {
-                "label": "string... extra"
+                "label": "string... extra",
+                "documentation": "Parameter\nstring... extra"
               }
             ]
           }
@@ -294,13 +297,16 @@
             "label": "choose(int count, string title, string... extra)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": "Parameter\nint count"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               },
               {
-                "label": "string... extra"
+                "label": "string... extra",
+                "documentation": "Parameter\nstring... extra"
               }
             ]
           }
@@ -318,10 +324,12 @@
             "label": "pair(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": "Parameter\nint first"
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": "Parameter\nint second"
               }
             ]
           }
@@ -339,10 +347,12 @@
             "label": "pair(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": "Parameter\nint first"
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": "Parameter\nint second"
               }
             ]
           }
@@ -360,10 +370,12 @@
             "label": "pair(int first, int second)",
             "parameters": [
               {
-                "label": "int first"
+                "label": "int first",
+                "documentation": "Parameter\nint first"
               },
               {
-                "label": "int second"
+                "label": "int second",
+                "documentation": "Parameter\nint second"
               }
             ]
           }
@@ -381,10 +393,12 @@
             "label": "arrays([int...] values, int|string value)",
             "parameters": [
               {
-                "label": "[int...] values"
+                "label": "[int...] values",
+                "documentation": "Parameter\n[int...] values"
               },
               {
-                "label": "int|string value"
+                "label": "int|string value",
+                "documentation": "Parameter\nint|string value"
               }
             ]
           }
@@ -420,13 +434,16 @@
             "label": "choose(int count, string title, string... extra)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": "Parameter\nint count"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               },
               {
-                "label": "string... extra"
+                "label": "string... extra",
+                "documentation": "Parameter\nstring... extra"
               }
             ]
           }
@@ -444,10 +461,12 @@
             "label": "arrays([int...] values, int|string value)",
             "parameters": [
               {
-                "label": "[int...] values"
+                "label": "[int...] values",
+                "documentation": "Parameter\n[int...] values"
               },
               {
-                "label": "int|string value"
+                "label": "int|string value",
+                "documentation": "Parameter\nint|string value"
               }
             ]
           }

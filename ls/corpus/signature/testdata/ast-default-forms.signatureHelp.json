@@ -139,10 +139,12 @@
             "label": "new Box(int size, string title)",
             "parameters": [
               {
-                "label": "int size"
+                "label": "int size",
+                "documentation": "Parameter\nint size"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               }
             ]
           }
@@ -160,10 +162,12 @@
             "label": "new Box(int size, string title)",
             "parameters": [
               {
-                "label": "int size"
+                "label": "int size",
+                "documentation": "Parameter\nint size"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               }
             ]
           }
@@ -181,10 +185,12 @@
             "label": "put(int value, string tag)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": "Parameter\nint value"
               },
               {
-                "label": "string tag"
+                "label": "string tag",
+                "documentation": "Parameter\nstring tag"
               }
             ]
           }
@@ -202,10 +208,12 @@
             "label": "send(int value, string tag)",
             "parameters": [
               {
-                "label": "int value"
+                "label": "int value",
+                "documentation": "Parameter\nint value"
               },
               {
-                "label": "string tag"
+                "label": "string tag",
+                "documentation": "Parameter\nstring tag"
               }
             ]
           }

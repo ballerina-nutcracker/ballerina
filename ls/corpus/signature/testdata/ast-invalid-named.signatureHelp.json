@@ -156,10 +156,12 @@
             "label": "pick(count, title)",
             "parameters": [
               {
-                "label": "count"
+                "label": "count",
+                "documentation": "Parameter\ncount"
               },
               {
-                "label": "title"
+                "label": "title",
+                "documentation": "Parameter\ntitle"
               }
             ]
           }
@@ -177,10 +179,12 @@
             "label": "pick(count, title)",
             "parameters": [
               {
-                "label": "count"
+                "label": "count",
+                "documentation": "Parameter\ncount"
               },
               {
-                "label": "title"
+                "label": "title",
+                "documentation": "Parameter\ntitle"
               }
             ]
           }
@@ -198,10 +202,12 @@
             "label": "pick(count, title)",
             "parameters": [
               {
-                "label": "count"
+                "label": "count",
+                "documentation": "Parameter\ncount"
               },
               {
-                "label": "title"
+                "label": "title",
+                "documentation": "Parameter\ntitle"
               }
             ]
           }
@@ -219,10 +225,12 @@
             "label": "pick(count, title)",
             "parameters": [
               {
-                "label": "count"
+                "label": "count",
+                "documentation": "Parameter\ncount"
               },
               {
-                "label": "title"
+                "label": "title",
+                "documentation": "Parameter\ntitle"
               }
             ]
           }

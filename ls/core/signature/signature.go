@@ -29,10 +29,12 @@ import (
 
 // Help is a rendered call signature and its active parameter.
 type Help struct {
-	Label string
+	Label       string
+	Description string
 	// Parameters contains byte ranges within Label, not wire coordinates.
-	Parameters      [][2]int
-	ActiveParameter *int
+	Parameters             [][2]int
+	ParameterDocumentation []parameterDocumentation
+	ActiveParameter        *int
 }
 
 // At returns signature help at a byte offset in uri's source.
@@ -508,7 +510,7 @@ func originRef(cx *context.CompilerContext, ref model.SymbolRef) model.SymbolRef
 	return ref
 }
 
-// render builds the label. The boolean is false when the label
+// render builds the label and parameter documentation. The boolean is false when the label
 // would have an empty part: a parameter of a function value has no name, and has no type
 // when type resolution did not run.
 func render(sm compile.SealedModule, ref model.SymbolRef, name string, sig model.UntypedFunctionSignature, parameter int) (Help, bool) {
@@ -538,12 +540,19 @@ func render(sm compile.SealedModule, ref model.SymbolRef, name string, sig model
 	var label strings.Builder
 	label.WriteString(name)
 	label.WriteByte('(')
-	help := Help{Parameters: make([][2]int, 0, len(sig.ParamNames))}
+	comment := documentation(sm, ref)
+	parameterDocs := parameterDescriptions(comment)
+	help := Help{
+		Description:            description(comment),
+		Parameters:             make([][2]int, 0, len(sig.ParamNames)),
+		ParameterDocumentation: make([]parameterDocumentation, 0, len(sig.ParamNames)),
+	}
 	for i, name := range sig.ParamNames {
 		if i > 0 {
 			label.WriteString(", ")
 		}
 		start := label.Len()
+		doc := parameterDocumentation{Name: name, Description: parameterDocs[name]}
 		rest := sig.HasRest && i == len(sig.ParamNames)-1
 		if ready {
 			ty := semtypes.SemType{}
@@ -553,7 +562,8 @@ func render(sm compile.SealedModule, ref model.SymbolRef, name string, sig model
 				ty = typed.ParamTypes[i]
 			}
 			if !semtypes.IsZero(ty) {
-				label.WriteString(semtypes.ToString(tc, ty))
+				doc.Type = semtypes.ToString(tc, ty)
+				label.WriteString(doc.Type)
 				if !rest && name != "" {
 					label.WriteByte(' ')
 				}
@@ -561,12 +571,16 @@ func render(sm compile.SealedModule, ref model.SymbolRef, name string, sig model
 		}
 		if rest {
 			label.WriteString("...")
+			if doc.Type != "" {
+				doc.Type += "..."
+			}
 			if ready && !semtypes.IsZero(typed.RestParamType) && name != "" {
 				label.WriteByte(' ')
 			}
 		}
 		label.WriteString(name)
 		help.Parameters = append(help.Parameters, [2]int{start, label.Len()})
+		help.ParameterDocumentation = append(help.ParameterDocumentation, doc)
 	}
 	label.WriteByte(')')
 	help.Label = label.String()

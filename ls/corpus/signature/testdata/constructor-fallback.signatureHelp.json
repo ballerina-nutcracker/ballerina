@@ -153,7 +153,8 @@
             "label": "new Box(int count)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": "Parameter\nint count"
               }
             ]
           }
@@ -171,7 +172,8 @@
             "label": "new Box(int count)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": "Parameter\nint count"
               }
             ]
           }

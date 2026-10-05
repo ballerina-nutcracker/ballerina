@@ -445,18 +445,21 @@
         "signatures": [
           {
             "label": "foo(a, b)",
+            "documentation": "Description\nFunction Foo",
             "parameters": [
               {
                 "label": [
                   4,
                   5
-                ]
+                ],
+                "documentation": "Parameter\na: a float"
               },
               {
                 "label": [
                   7,
                   8
-                ]
+                ],
+                "documentation": "Parameter\nb: b bool"
               }
             ]
           }

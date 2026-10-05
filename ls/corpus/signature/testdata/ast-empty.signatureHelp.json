@@ -82,10 +82,12 @@
             "label": "foo(int count, string title)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": "Parameter\nint count"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               }
             ]
           }

@@ -94,10 +94,12 @@
             "label": "emoji(string 𐐀name, int count)",
             "parameters": [
               {
-                "label": "string 𐐀name"
+                "label": "string 𐐀name",
+                "documentation": "Parameter\nstring 𐐀name"
               },
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": "Parameter\nint count"
               }
             ]
           }

@@ -272,7 +272,8 @@
             "label": "new Box(int size)",
             "parameters": [
               {
-                "label": "int size"
+                "label": "int size",
+                "documentation": "Parameter\nint size"
               }
             ]
           }
@@ -290,7 +291,8 @@
             "label": "new Box(int size)",
             "parameters": [
               {
-                "label": "int size"
+                "label": "int size",
+                "documentation": "Parameter\nint size"
               }
             ]
           }
@@ -308,10 +310,12 @@
             "label": "put(int count, string title)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": "Parameter\nint count"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               }
             ]
           }
@@ -329,10 +333,12 @@
             "label": "send(int count, string title)",
             "parameters": [
               {
-                "label": "int count"
+                "label": "int count",
+                "documentation": "Parameter\nint count"
               },
               {
-                "label": "string title"
+                "label": "string title",
+                "documentation": "Parameter\nstring title"
               }
             ]
           }
@@ -363,7 +369,8 @@
             "label": "new Box(int size)",
             "parameters": [
               {
-                "label": "int size"
+                "label": "int size",
+                "documentation": "Parameter\nint size"
               }
             ]
           }

@@ -82,10 +82,12 @@
             "label": "fn(int, string)",
             "parameters": [
               {
-                "label": "int"
+                "label": "int",
+                "documentation": "Parameter\nint"
               },
               {
-                "label": "string"
+                "label": "string",
+                "documentation": "Parameter\nstring"
               }
             ]
           }

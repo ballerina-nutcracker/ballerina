@@ -132,7 +132,11 @@
                 "label": [
                   8,
                   16
-                ]
+                ],
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int` size**"
+                }
               }
             ]
           }
