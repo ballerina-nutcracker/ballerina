@@ -262,9 +262,7 @@ func ensureBalBinary(t *testing.T) {
 		// corpus/package-resolution/ -> corpus/ -> repo root
 		pkgResRepoRoot = filepath.Dir(filepath.Dir(filepath.Dir(thisFile)))
 
-		// This directory is shared by tests through sync.Once, so TestMain
-		// removes it after the package test suite completes.
-		tmpDir, err := os.MkdirTemp("", "bal-pkg-res-test") //nolint:usetesting // suite-owned shared binary directory
+		tmpDir, err := os.MkdirTemp("", "bal-pkg-res-test") //nolint:usetesting // shared via sync.Once; TestMain removes it
 		if err != nil {
 			pkgResBinsErr = fmt.Errorf("create temp dir: %w", err)
 			return

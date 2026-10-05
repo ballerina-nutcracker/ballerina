@@ -39,9 +39,7 @@ func TestMain(m *testing.M) {
 }
 
 func runTestMain(m *testing.M) int {
-	// The runner stubs are shared by the package test suite and are removed when
-	// runTestMain returns.
-	tmpDir, err := os.MkdirTemp("", "splice-test-*") //nolint:usetesting // suite-owned shared stub directory
+	tmpDir, err := os.MkdirTemp("", "splice-test-*") //nolint:usetesting // suite-owned; removed when runTestMain returns
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "creating temp dir:", err)
 		return 1

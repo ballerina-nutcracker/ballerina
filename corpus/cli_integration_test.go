@@ -5189,9 +5189,7 @@ func ensureCLIIntegrationBalBinaries(t *testing.T) {
 		if cliIntegrationBinsErr != nil {
 			return
 		}
-		// This directory is shared by tests through sync.Once, so TestMain
-		// removes it after the package test suite completes.
-		tmpDir, err := os.MkdirTemp("", "bal-cli-test") //nolint:usetesting // suite-owned shared binary directory
+		tmpDir, err := os.MkdirTemp("", "bal-cli-test") //nolint:usetesting // shared via sync.Once; TestMain removes it
 		if err != nil {
 			cliIntegrationBinsErr = err
 			return
@@ -5317,9 +5315,7 @@ func buildBalBinaryTo(repoRoot, coverDir, outputPath string, debugBuild bool) er
 func balBinaryWithoutRuntimeStub(t *testing.T, repoRoot, coverDir string) string {
 	t.Helper()
 	cliIntegrationNoRuntimeBalBinOnce.Do(func() {
-		// This directory is shared by tests through sync.Once, so TestMain
-		// removes it after the package test suite completes.
-		dir, err := os.MkdirTemp("", "bal-cli-test-no-runtime") //nolint:usetesting // suite-owned shared binary directory
+		dir, err := os.MkdirTemp("", "bal-cli-test-no-runtime") //nolint:usetesting // shared via sync.Once; TestMain removes it
 		if err != nil {
 			cliIntegrationNoRuntimeBalBinErr = err
 			return
