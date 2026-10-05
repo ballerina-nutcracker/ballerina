@@ -37,7 +37,6 @@ import (
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/uri"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -45,7 +44,7 @@ import (
 
 // CompileRequest carries the document URI to compile.
 type CompileRequest struct {
-	URI uri.DocumentURI
+	URI workspace.DocumentURI
 }
 
 // CompileResult holds the core-defined diagnostics from a compilation.
@@ -84,7 +83,7 @@ type CompilerDiagnostic struct {
 type projectReader interface {
 	CurrentProject(root string) (projects.Project, uint64, bool)
 	Generation(root string) (uint64, bool)
-	OpenDocumentsUnder(root string) []uri.DocumentURI
+	OpenDocumentsUnder(root string) []workspace.DocumentURI
 }
 
 // cycleResult is the extracted outcome of one compile, grouped by file.
@@ -571,12 +570,12 @@ func (s *CompilationService) stopDebounceTimers() {
 // generation. ok is false if no stable snapshot exists. Diagnostics are
 // core-defined; the server converts. The caller performs the generation-
 // staleness guard before publishing.
-func (s *CompilationService) DiagnosticsFor(root string) (diags map[uri.DocumentURI][]CompilerDiagnostic, generation uint64, ok bool) {
+func (s *CompilationService) DiagnosticsFor(root string) (diags map[workspace.DocumentURI][]CompilerDiagnostic, generation uint64, ok bool) {
 	snap, has := s.store.Stable(root)
 	if !has {
 		return nil, 0, false
 	}
-	out := make(map[uri.DocumentURI][]CompilerDiagnostic)
+	out := make(map[workspace.DocumentURI][]CompilerDiagnostic)
 	for _, u := range s.reader.OpenDocumentsUnder(root) {
 		out[u] = snap.diagsForFile(u.Path())
 	}

@@ -14,12 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package uri provides DocumentURI identity for the language server core.
-// A DocumentURI is a validated, scheme-typed URI value. Constructors parse
-// and validate the scheme; only file: URIs are admitted end-to-end in Phase A.
-// Broader URI routing (expr:, ai:, bala: overlay layers) is deferred to
-// ticket 08.
-package uri
+package workspace
 
 import (
 	"fmt"

@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/uri"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
 
@@ -30,9 +29,9 @@ func newTestProjectService() *ProjectService {
 	return New(platform, event.New())
 }
 
-func fileURI(t *testing.T, raw string) uri.DocumentURI {
+func fileURI(t *testing.T, raw string) DocumentURI {
 	t.Helper()
-	u, err := uri.NewFileURI(raw)
+	u, err := NewFileURI(raw)
 	if err != nil {
 		t.Fatalf("NewFileURI(%q): %v", raw, err)
 	}

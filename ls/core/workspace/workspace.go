@@ -39,7 +39,6 @@ import (
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/uri"
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
@@ -78,7 +77,7 @@ const (
 // DocumentChange, so this type carries no protocol types.
 type DocumentChange struct {
 	Kind       ChangeKind
-	URI        uri.DocumentURI
+	URI        DocumentURI
 	Text       string // valid for ChangeOpen and ChangeUpdate
 	Version    int32  // valid for ChangeOpen and ChangeUpdate
 	LanguageID string // valid for ChangeOpen
@@ -114,7 +113,7 @@ const (
 // workspace.
 type WatchedFileChange struct {
 	Kind WatchedFileKind
-	URI  uri.DocumentURI
+	URI  DocumentURI
 }
 
 // ProjectService owns document lifecycle state and the source-root-keyed
@@ -123,13 +122,14 @@ type WatchedFileChange struct {
 // synthetic overlayFS with PAL-backed project loading and in-place
 // publication (ticket 28).
 type ProjectService struct {
-	platform  pal.Platform
-	bus       *event.Bus
-	mu        sync.RWMutex // guards the documents map (concurrent engine reads under 09)
-	documents map[uri.DocumentURI]Snapshot
-	index     *projectIndex
-	now       func() time.Time
-	stat      func(string) (fs.FileInfo, error)
+	platform     pal.Platform
+	bus          *event.Bus
+	mu           sync.RWMutex // guards the documents map (concurrent engine reads under 09)
+	documents    map[DocumentURI]Snapshot
+	index        *projectIndex
+	now          func() time.Time
+	stat         func(string) (fs.FileInfo, error)
+	repositories []projects.Repository
 }
 
 // New creates a ProjectService wired to the given PAL platform and synchronous
@@ -140,7 +140,7 @@ func New(platform pal.Platform, bus *event.Bus, opts ...Option) *ProjectService 
 	s := &ProjectService{
 		platform:  platform,
 		bus:       bus,
-		documents: make(map[uri.DocumentURI]Snapshot),
+		documents: make(map[DocumentURI]Snapshot),
 		index:     newProjectIndex(defaultMaxProjects, now),
 		now:       now,
 		stat:      platform.FS.Stat,
@@ -340,7 +340,7 @@ func (s *ProjectService) publishUpdated(sourceRoot string, gen uint64) {
 // index entry. The open-doc count and the generation (advanced from prevGen)
 // are preserved from any existing entry. A load failure is non-fatal: the
 // documents map is still updated, and the next change retries.
-func (s *ProjectService) reloadAt(sourceRoot string, u uri.DocumentURI, prevGen uint64) {
+func (s *ProjectService) reloadAt(sourceRoot string, u DocumentURI, prevGen uint64) {
 	fsys := s.buildPalFS(sourceRoot)
 	project, err := s.loadProject(fsys, sourceRoot, u.Path())
 	if err != nil || project == nil {
@@ -399,16 +399,16 @@ func (s *ProjectService) CurrentProject(root string) (projects.Project, uint64, 
 // stable (URI-sorted) iteration order. Used by the server CE subscriber
 // (branch 10) to publish diagnostics for every open document in the accepted
 // root.
-func (s *ProjectService) OpenDocumentsUnder(root string) []uri.DocumentURI {
+func (s *ProjectService) OpenDocumentsUnder(root string) []DocumentURI {
 	s.mu.RLock()
-	var open []uri.DocumentURI
+	var open []DocumentURI
 	for u := range s.documents {
 		if u.IsFile() {
 			open = append(open, u)
 		}
 	}
 	s.mu.RUnlock()
-	var out []uri.DocumentURI
+	var out []DocumentURI
 	for _, u := range open {
 		sr, ok := s.index.lookupSourceRoot(u.Path())
 		if !ok {
@@ -428,7 +428,7 @@ func (s *ProjectService) OpenDocumentsUnder(root string) []uri.DocumentURI {
 
 // findSourceRootMemoized is the ADR-048 step 1 for a file: URI: find the
 // project source root, memoized by file path. It is file:-only in 08.
-func (s *ProjectService) findSourceRootMemoized(u uri.DocumentURI) (string, error) {
+func (s *ProjectService) findSourceRootMemoized(u DocumentURI) (string, error) {
 	filePath := u.Path()
 	if root, ok := s.index.lookupSourceRoot(filePath); ok {
 		return root, nil
@@ -509,7 +509,7 @@ func (s *ProjectService) loadProject(fsys palFS, sourceRoot, filePath string) (p
 // CurrentPackage via a direct reference. It does not auto-load: a source root
 // that was never Apply'd (or was evicted) returns nil, so Compile returns an
 // empty result.
-func (s *ProjectService) Project(u uri.DocumentURI) (projects.Project, error) {
+func (s *ProjectService) Project(u DocumentURI) (projects.Project, error) {
 	sourceRoot, err := s.findSourceRootMemoized(u)
 	if err != nil {
 		return nil, err
@@ -523,7 +523,7 @@ func (s *ProjectService) Project(u uri.DocumentURI) (projects.Project, error) {
 
 // Snapshot returns the current snapshot for the given URI, replacing the
 // former documentStore.document lookup.
-func (s *ProjectService) Snapshot(u uri.DocumentURI) (Snapshot, bool) {
+func (s *ProjectService) Snapshot(u DocumentURI) (Snapshot, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	snap, ok := s.documents[u]
@@ -535,7 +535,7 @@ func (s *ProjectService) Snapshot(u uri.DocumentURI) (Snapshot, bool) {
 // same content the compile engine's documentText fallback reads for a
 // document that was never opened through the workspace). A document whose
 // root is unknown or not yet loaded reports ok=false.
-func (s *ProjectService) DocumentText(u uri.DocumentURI) (string, bool) {
+func (s *ProjectService) DocumentText(u DocumentURI) (string, bool) {
 	if snap, ok := s.Snapshot(u); ok {
 		return snap.Text, true
 	}
@@ -647,9 +647,9 @@ func (s *ProjectService) applyBallerinaTomlChange(kind WatchedFileKind, tomlPath
 // before the transition. The anchor is the first matching open file: URI; the
 // old root is taken from the filePath→sourceRoot memo (falling back to dir for
 // a single-file doc that was never memoized).
-func (s *ProjectService) findAnchorUnder(dir string) (uri.DocumentURI, string, bool) {
+func (s *ProjectService) findAnchorUnder(dir string) (DocumentURI, string, bool) {
 	s.mu.RLock()
-	var found uri.DocumentURI
+	var found DocumentURI
 	foundOK := false
 	var oldRoot string
 	for u := range s.documents {

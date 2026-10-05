@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/uri"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
 
@@ -115,7 +114,7 @@ func TestOpenDocumentsUnder(t *testing.T) {
 	u1 := fileURI(t, "file:///workspace/od1.bal")
 	u2 := fileURI(t, "file:///workspace/od2.bal")
 	uOther := fileURI(t, "file:///other/od3.bal")
-	for _, u := range []uri.DocumentURI{u1, u2, uOther} {
+	for _, u := range []DocumentURI{u1, u2, uOther} {
 		if _, err := svc.Apply(context.Background(), DocumentChange{
 			Kind: ChangeOpen, URI: u, Text: "import ballerina/io;\n", Version: 1, LanguageID: "ballerina",
 		}); err != nil {

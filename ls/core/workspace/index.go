@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/uri"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
@@ -226,7 +225,7 @@ func (i *projectIndex) supersedeAll() {
 
 // sortDocumentURIs sorts document URIs by their string form for stable
 // iteration order.
-func sortDocumentURIs(us []uri.DocumentURI) {
+func sortDocumentURIs(us []DocumentURI) {
 	sort.Slice(us, func(i, j int) bool { return us[i].String() < us[j].String() })
 }
 
