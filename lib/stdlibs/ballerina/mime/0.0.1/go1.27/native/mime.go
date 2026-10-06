@@ -130,6 +130,10 @@ func mimeError(typeName, msg string) values.BalValue {
 	return values.NewError(semtypes.Error, msg, nil, typeName, nil)
 }
 
+func mimeErrorWithCause(typeName, msg string, cause error) values.BalValue {
+	return values.NewError(semtypes.Error, msg, values.NewErrorWithMessage(cause.Error()), typeName, nil)
+}
+
 // invokeChannelMethod calls a no-argument io:ReadableByteChannel method through the
 // interpreter's normal object dispatch, so mime never reaches into io's native state.
 func invokeChannelMethod(ctx *extern.Context, channel *values.Object, name string) (values.BalValue, error) {
@@ -213,8 +217,8 @@ func stringForBody(ctx *extern.Context, obj *values.Object) (string, error) {
 		return "", err
 	}
 	if body == nil {
-		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
-		return "", fmt.Errorf("Entity body is not a text value")
+		//nolint:staticcheck // cause text mirrors jBallerina's verbatim
+		return "", errors.New("String payload is null")
 	}
 	switch body.kind {
 	case bodyText:
@@ -230,8 +234,8 @@ func stringForBody(ctx *extern.Context, obj *values.Object) (string, error) {
 	case bodyXML:
 		return jsonQuoteXMLText(body.xml.XMLString()), nil
 	default:
-		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
-		return "", fmt.Errorf("Entity body is not a text value")
+		//nolint:staticcheck // cause text mirrors jBallerina's verbatim
+		return "", errors.New("String payload is null")
 	}
 }
 
@@ -403,11 +407,11 @@ func registerBodyExterns(rt *runtime.Runtime, t *mimeTypes) {
 			}
 			text, err := stringForBody(ctx, obj)
 			if err != nil {
-				return mimeError("ParserError", "Entity body is not a JSON value"), nil
+				return mimeErrorWithCause("ParserError", "Error occurred while extracting json data from entity", err), nil
 			}
 			v, err := t.parseJSON(text)
 			if err != nil {
-				return mimeError("ParserError", "Error occurred while extracting json data from entity: "+err.Error()), nil
+				return mimeErrorWithCause("ParserError", "Error occurred while extracting json data from entity", err), nil
 			}
 			return v, nil
 		})
@@ -434,7 +438,7 @@ func registerBodyExterns(rt *runtime.Runtime, t *mimeTypes) {
 			}
 			xmlVal, err := xmlForBody(ctx, obj)
 			if err != nil {
-				return mimeError("ParserError", "Error occurred while extracting xml data from entity: "+err.Error()), nil
+				return mimeErrorWithCause("ParserError", "Error occurred while extracting xml data from entity", err), nil
 			}
 			return xmlVal, nil
 		})
@@ -458,7 +462,7 @@ func registerBodyExterns(rt *runtime.Runtime, t *mimeTypes) {
 			}
 			text, err := stringForBody(ctx, obj)
 			if err != nil {
-				return mimeError("ParserError", "Entity body is not a text value"), nil
+				return mimeErrorWithCause("ParserError", "Error occurred while extracting text data from entity", err), nil
 			}
 			return text, nil
 		})
@@ -526,9 +530,9 @@ func registerHeaderExterns(rt *runtime.Runtime, t *mimeTypes) {
 			if !ok {
 				return nil, fmt.Errorf("second argument must be a string")
 			}
-			mt, ok := parseMediaType(contentType)
-			if !ok {
-				return mimeError("InvalidContentTypeError", "Invalid content-type: "+contentType), nil
+			mt, err := parseMediaType(contentType)
+			if err != nil {
+				return mimeError("InvalidContentTypeError", err.Error()), nil
 			}
 			obj.Put("primaryType", mt.primaryType)
 			obj.Put("subType", mt.subType)

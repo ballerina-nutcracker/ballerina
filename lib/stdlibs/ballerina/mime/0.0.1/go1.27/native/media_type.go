@@ -18,6 +18,7 @@
 package native
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -42,14 +43,30 @@ type contentDisposition struct {
 	params      []headerParam
 }
 
+// mediaTypeError carries javax.activation's MimeTypeParseException text verbatim.
+type mediaTypeError string
+
+func (e mediaTypeError) Error() string {
+	return string(e)
+}
+
+func (mt mediaType) param(name string) string {
+	for _, p := range mt.params {
+		if p.name == name {
+			return p.value
+		}
+	}
+	return ""
+}
+
 // parseMediaType follows javax.activation.MimeType, which jBallerina uses: type and
 // sub-type are required RFC 2045 tokens, lowercased, and the full sub-type (including
 // any `+suffix`) is kept. Params keep their source order.
-func parseMediaType(s string) (mediaType, bool) {
+func parseMediaType(s string) (mediaType, error) {
 	slash := strings.IndexByte(s, '/')
 	semi := strings.IndexByte(s, ';')
 	if slash < 0 || (semi >= 0 && semi < slash) {
-		return mediaType{}, false
+		return mediaType{}, mediaTypeError("Unable to find a sub type.")
 	}
 	end := len(s)
 	if semi >= 0 {
@@ -59,36 +76,34 @@ func parseMediaType(s string) (mediaType, bool) {
 		primaryType: strings.ToLower(strings.TrimSpace(s[:slash])),
 		subType:     strings.ToLower(strings.TrimSpace(s[slash+1 : end])),
 	}
-	if !isToken(mt.primaryType) || !isToken(mt.subType) {
-		return mediaType{}, false
+	if semi >= 0 {
+		params, err := parseMediaTypeParams(s[semi:])
+		if err != nil {
+			return mediaType{}, err
+		}
+		mt.params = params
+	}
+	if !isToken(mt.primaryType) {
+		return mediaType{}, mediaTypeError("Primary type is invalid.")
+	}
+	if !isToken(mt.subType) {
+		return mediaType{}, mediaTypeError("Sub type is invalid.")
 	}
 	if i := strings.LastIndexByte(mt.subType, '+'); i >= 0 {
 		mt.suffix = mt.subType[i+1:]
 	}
-	if semi >= 0 {
-		params, ok := parseMediaTypeParams(s[semi:])
-		if !ok {
-			return mediaType{}, false
-		}
-		mt.params = params
-	}
-	return mt, true
+	return mt, nil
 }
 
-func parseMediaTypeParams(s string) ([]headerParam, bool) {
+// parseMediaTypeParams follows javax.activation.MimeTypeParameterList.parse, including
+// its acceptance of an empty parameter name.
+func parseMediaTypeParams(s string) ([]headerParam, error) {
 	var params []headerParam
-	i := 0
-	for {
-		i = skipSpace(s, i)
-		if i >= len(s) {
-			return params, true
-		}
-		if s[i] != ';' {
-			return nil, false
-		}
+	i := skipSpace(s, 0)
+	for i < len(s) && s[i] == ';' {
 		i = skipSpace(s, i+1)
 		if i >= len(s) {
-			return params, true
+			return params, nil
 		}
 		start := i
 		for i < len(s) && isTokenChar(s[i]) {
@@ -96,25 +111,43 @@ func parseMediaTypeParams(s string) ([]headerParam, bool) {
 		}
 		name := strings.ToLower(s[start:i])
 		i = skipSpace(s, i)
-		if name == "" || i >= len(s) || s[i] != '=' {
-			return nil, false
+		if i >= len(s) || s[i] != '=' {
+			return nil, mediaTypeError("Couldn't find the '=' that separates a parameter name from its value.")
 		}
-		value, next, ok := parseParamValue(s, skipSpace(s, i+1))
-		if !ok {
-			return nil, false
+		i = skipSpace(s, i+1)
+		if i >= len(s) {
+			return nil, mediaTypeError(fmt.Sprintf("Couldn't find a value for parameter named %s", name))
 		}
-		params = append(params, headerParam{name: name, value: value})
-		i = next
+		value, next, err := parseParamValue(s, i)
+		if err != nil {
+			return nil, err
+		}
+		params = setParam(params, name, value)
+		i = skipSpace(s, next)
 	}
+	if i < len(s) {
+		return nil, mediaTypeError("More characters encountered in input than expected.")
+	}
+	return params, nil
 }
 
-func parseParamValue(s string, i int) (string, int, bool) {
-	if i < len(s) && s[i] == '"' {
+func setParam(params []headerParam, name, value string) []headerParam {
+	for i := range params {
+		if params[i].name == name {
+			params[i].value = value
+			return params
+		}
+	}
+	return append(params, headerParam{name: name, value: value})
+}
+
+func parseParamValue(s string, i int) (string, int, error) {
+	if s[i] == '"' {
 		var sb strings.Builder
 		for i++; i < len(s); i++ {
 			switch s[i] {
 			case '"':
-				return sb.String(), i + 1, true
+				return sb.String(), i + 1, nil
 			case '\\':
 				if i+1 < len(s) {
 					i++
@@ -122,13 +155,16 @@ func parseParamValue(s string, i int) (string, int, bool) {
 			}
 			sb.WriteByte(s[i])
 		}
-		return "", 0, false
+		return "", 0, mediaTypeError("Encountered unterminated quoted parameter value.")
+	}
+	if !isTokenChar(s[i]) {
+		return "", 0, mediaTypeError(fmt.Sprintf("Unexpected character encountered at index %d", i))
 	}
 	start := i
 	for i < len(s) && isTokenChar(s[i]) {
 		i++
 	}
-	return s[start:i], i, i > start
+	return s[start:i], i, nil
 }
 
 // parseContentDisposition splits on `;` and `=` the way jBallerina does: the
