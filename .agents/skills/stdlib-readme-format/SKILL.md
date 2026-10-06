@@ -93,7 +93,7 @@ From the repo root:
 python3 .agents/skills/stdlib-readme-format/scripts/check_readmes.py
 ```
 
-It validates every per-package README **and** the aggregator in one pass: required sections and their order, status values, `|---|---|---|` separators, no backticks in Feature/API cells, no "Fully implemented and tested" filler in Supported rows, non-empty Comments on every gap row, bullet format, bullets-vs-"no changes"-sentence consistency, aggregator and repo-root `README.md` counts/percentages/Total footer recomputed from the per-package tables, verbatim bullet mirroring, and the closing "no changes" sentence membership. **It must exit 0 before you save** — fix every `FAIL` line it prints.
+It validates every per-package README **and** the aggregator in one pass: required sections and their order, status values, `|---|---|---|` separators, no backticks in Feature/API cells, no "Fully implemented and tested" filler in Supported rows, non-empty Comments on every gap row, bullet format, bullets-vs-"no changes"-sentence consistency, aggregator counts/percentages/Total footer and the repo-root `README.md` coverage summary recomputed from the per-package tables, verbatim bullet mirroring, and the closing "no changes" sentence membership. **It must exit 0 before you save** — fix every `FAIL` line it prints.
 
 ### Judgment checks — verify by hand
 
@@ -118,18 +118,18 @@ These existing READMEs already conform — useful for cross-reference when in do
 
 ## Top-level summary aggregator
 
-The repo ships a top-level aggregator at `lib/stdlibs/ballerina/README.md` — a summary table of support percentages across stdlibs plus a consolidated **Notable Behavioural Changes** section grouped by package. This skill is responsible for keeping it in sync. **After every per-package README change, update the aggregator** as part of the same task; do not leave it stale.
+The repo ships an aggregator at `doc/library/README.md` — a summary table of support percentages across stdlibs plus a consolidated **Notable Behavioural Changes** section grouped by package. This skill is responsible for keeping it in sync. **After every per-package README change, update the aggregator** as part of the same task; do not leave it stale.
 
 Maintenance rules — after every per-package README change:
 
 - Recount `Supported`, `Partially Supported`, and `Not Yet Supported` rows from the updated per-package `README.md`, and update that package's row in the aggregator table.
 - Recompute support %: `round(Supported / Total * 100)` where `Total = Supported + Partially Supported + Not Yet Supported + Cannot Support`. **Note the asymmetry:** the aggregator table has no `Cannot Support` column, but `Cannot Support` rows still count in the % denominator — that's why a package with zero visible gaps can show less than 100% (e.g. file at 95%). Don't "fix" such a percentage without recounting the per-package table.
-- Keep rows sorted alphabetically (no explicit dependency-level system exists in this repo); row format is `| [<name>](<name>/0.0.1/go1.27/README.md) | S | P | N | X% |`.
+- Keep rows sorted alphabetically (no explicit dependency-level system exists in this repo); row format is `| [<name>](../../lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md) | S | P | N | X% |`.
 - Recompute the **Total** footer row (sum of each column; the % cell is `round(TotalSupported / TotalTotal * 100)`, where `TotalTotal` again includes the invisible `Cannot Support` rows).
 - Mirror the package's **Notable Behavioural Changes** bullets verbatim into the matching `### <package>` subsection of the aggregator — copy the exact bullet text, don't paraphrase; the checker compares them word for word. Add a `### <package>` subsection when a package gains its first behavioural change; remove it (and add the package to the closing "no notable behavioural changes" sentence) when it has none.
 
 When **adding a brand-new package**, add a new table row (alphabetical), recompute the Total footer, and add a `### <package>` subsection only if that package has notable behavioural changes.
 
-The repo-root `README.md` carries a copy of the same coverage table under **Standard library coverage** (no behavioural-changes section), with links rooted at the repo: `| [<name>](lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md) | S | P | N | X% |`. Keep its rows and Total footer identical to the aggregator's in the same change.
+The repo-root `README.md` has a one-sentence **Standard library coverage** summary that links to the aggregator: `**X%** of tracked standard library features are supported across N packages: S supported, P partially supported, U not yet supported.` Keep its numbers equal to the aggregator's Total footer and package count in the same change.
 
 The `check_readmes.py` script (see Validation above) verifies all of this arithmetic and mirroring — run it after every aggregator edit instead of trusting manual recounts.

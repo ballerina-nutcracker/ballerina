@@ -19,9 +19,10 @@
 """Mechanical validator for the stdlib-readme-format skill.
 
 Checks every lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md against the
-format contract, and the coverage tables in the top-level aggregator README and
-the repo-root README against the recounted per-package tables. Judgment-only rules (prose quality, caveat usefulness,
-content accuracy) are NOT checked here — see the skill's checklist.
+format contract, and the aggregator doc/library/README.md and the coverage
+summary in the repo-root README against the recounted per-package tables.
+Judgment-only rules (prose quality, caveat usefulness, content accuracy) are
+NOT checked here — see the skill's checklist.
 
 Usage: python3 .agents/skills/stdlib-readme-format/scripts/check_readmes.py
 Run from the repo root. Exits 1 if any violation is found.
@@ -33,6 +34,7 @@ import re
 import sys
 
 ROOT = "lib/stdlibs/ballerina"
+AGGREGATOR = "doc/library/README.md"
 REPO_README = "README.md"
 STATUSES = ("Supported", "Partially Supported", "Not Yet Supported", "Cannot Support")
 REQUIRED_SECTIONS = [
@@ -42,6 +44,10 @@ REQUIRED_SECTIONS = [
     "## Go Native Interpreter Support Status",
     "### Notable Behavioural Changes",
 ]
+REPO_SUMMARY_RE = re.compile(
+    r"\*\*(\d+)%\*\* of tracked standard library features are supported across (\d+) packages: "
+    r"(\d+) supported, (\d+) partially supported, (\d+) not yet supported"
+)
 NO_CHANGES_RE = re.compile(r"\*\*no\*\* notable behavioural changes", re.IGNORECASE)
 
 violations = []
@@ -140,6 +146,17 @@ def parse_package_readme(path):
     return counts, behavioural_bullets
 
 
+def coverage_totals(per_pkg):
+    sums = [0, 0, 0]
+    grand_total = 0
+    for counts, _ in per_pkg.values():
+        grand_total += sum(counts.values())
+        for idx, st in enumerate(STATUSES[:3]):
+            sums[idx] += counts[st]
+    pct = round(sums[0] / grand_total * 100) if grand_total else 0
+    return sums, pct
+
+
 def check_coverage_table(path, text, per_pkg):
     rows = {}
     total_row = None
@@ -161,15 +178,10 @@ def check_coverage_table(path, text, per_pkg):
     if listed != sorted(listed):
         fail(path, "package rows are not in alphabetical order")
 
-    sums = [0, 0, 0]
-    grand_total = 0
     for pkg, (counts, _) in sorted(per_pkg.items()):
         s, p, n, c = (counts[st] for st in STATUSES)
         total = s + p + n + c
         pct = round(s / total * 100) if total else 0
-        grand_total += total
-        for idx, v in enumerate((s, p, n)):
-            sums[idx] += v
         if pkg not in rows:
             fail(path, f"package '{pkg}' has no row in the coverage table")
             continue
@@ -185,14 +197,14 @@ def check_coverage_table(path, text, per_pkg):
     if total_row is None:
         fail(path, "coverage table has no **Total** footer row")
     else:
-        total_pct = round(sums[0] / grand_total * 100) if grand_total else 0
+        sums, total_pct = coverage_totals(per_pkg)
         expect = [f"**{sums[0]}**", f"**{sums[1]}**", f"**{sums[2]}**", f"**{total_pct}%**"]
         if total_row[1:] != expect:
             fail(path, f"Total footer is stale: has {total_row[1:]}, recount gives {expect}")
 
 
 def check_aggregator(per_pkg):
-    path = f"{ROOT}/README.md"
+    path = AGGREGATOR
     if not os.path.exists(path):
         fail(path, "aggregator README missing")
         return
@@ -223,7 +235,15 @@ def check_aggregator(per_pkg):
 
 def check_repo_readme(per_pkg):
     text = open(REPO_README, encoding="utf-8").read()
-    check_coverage_table(REPO_README, text, per_pkg)
+    matches = REPO_SUMMARY_RE.findall(text)
+    if len(matches) != 1:
+        fail(REPO_README, f"expected exactly one coverage summary sentence, found {len(matches)}")
+        return
+    sums, pct = coverage_totals(per_pkg)
+    expect = (str(pct), str(len(per_pkg)), *map(str, sums))
+    if matches[0] != expect:
+        fail(REPO_README, f"coverage summary is stale: has {list(matches[0])}, recount gives {list(expect)} "
+                          "(percent, packages, supported, partially supported, not yet supported)")
 
 
 def main():
