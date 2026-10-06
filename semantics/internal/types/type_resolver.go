@@ -4274,7 +4274,6 @@ func resolveNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpression, e
 		}
 		determinedTy = intersection
 	}
-	setNodeType(t, e, determinedTy)
 
 	switch {
 	case semtypes.IsSubtypeSimple(determinedTy, semtypes.Object):
@@ -4288,81 +4287,69 @@ func resolveNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpression, e
 }
 
 func resolveObjectNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpression, determinedTy semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
-	cx := t.typeContext()
-	alternatives := semtypes.ObjectAlternatives(cx, determinedTy)
-	if len(alternatives) == 0 {
-		t.semanticError("failed to find a suitable object type", e.GetPosition())
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
 	if !resolveNewArgumentDependencies(t, e.ArgsExprs) {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	finish := func(alternative semtypes.ObjectAlternative, table model.MethodTable) (semtypes.SemType, expressionEffect, bool) {
-		if !constructibleMethodTable(t, table) {
-			t.semanticError("object type cannot be instantiated without a class", e.GetPosition())
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-		args, returnType, argsChain, ok := resolveObjectInitArgs(t, chain, e, alternative, table, true)
-		if !ok {
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-		resultObjType := alternative.Type()
-		if semtypes.IsSubtype(cx, determinedTy, resultObjType) {
-			resultObjType = determinedTy
-		}
-		resultType := semtypes.Union(resultObjType, semtypes.Diff(returnType, semtypes.Nil))
-		setNewExpressionResult(t, e, args, table.Owner)
-		setNodeType(t, e, resultType)
-		return resultType, defaultExpressionEffect(argsChain), true
+	candidates, ok := constructibleAlternatives(t, e, determinedTy)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	if len(alternatives) == 1 {
-		table, ok := methodTableForAlternative(t, alternatives[0])
-		if !ok {
-			t.semanticError("failed to find a suitable object type", e.GetPosition())
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-		return finish(alternatives[0], table)
+	if len(candidates) == 1 {
+		return finishObjectNew(t, chain, e, determinedTy, candidates[0])
 	}
+	selected, outcome := selectCandidate(t, candidates, e.ArgsExprs, func(candidate constructibleAlternative) bool {
+		_, _, _, ok := resolveObjectInitArgs(t, chain, e, candidate.alternative, candidate.table)
+		return ok
+	})
+	switch outcome {
+	case candidateOne:
+		return finishObjectNew(t, chain, e, determinedTy, selected)
+	case candidateAmbiguous:
+		t.semanticError("ambiguous object type", e.GetPosition())
+	default:
+		t.semanticError("failed to find a suitable object type", e.GetPosition())
+	}
+	return semtypes.SemType{}, expressionEffect{}, false
+}
 
-	type survivor struct {
-		alternative semtypes.ObjectAlternative
-		table       model.MethodTable
+type constructibleAlternative struct {
+	alternative semtypes.ObjectAlternative
+	table       model.MethodTable
+}
+
+func constructibleAlternatives(t typeResolver, e *ast.BLangNewExpression, determinedTy semtypes.SemType) ([]constructibleAlternative, bool) {
+	alternatives := semtypes.ObjectAlternatives(t.typeContext(), determinedTy)
+	if len(alternatives) == 0 {
+		t.semanticError("failed to find a suitable object type", e.GetPosition())
+		return nil, false
 	}
-	var survivors []survivor
-	restoreArgumentState := snapshotArgumentState(t, e.ArgsExprs)
-	if state := resolverEphemeralState(t); state != nil {
-		state.refusedDependent = false
-	}
+	var candidates []constructibleAlternative
 	for _, alternative := range alternatives {
 		table, ok := methodTableForAlternative(t, alternative)
-		if !ok || !constructibleMethodTable(t, table) {
-			continue
-		}
-		exitEphemeral := enterEphemeral(t)
-		_, _, _, ok = resolveObjectInitArgs(t, chain, e, alternative, table, false)
-		exitEphemeral()
-		restoreArgumentState()
-		if ok {
-			survivors = append(survivors, survivor{alternative: alternative, table: table})
+		if ok && constructibleMethodTable(t, table) {
+			candidates = append(candidates, constructibleAlternative{alternative: alternative, table: table})
 		}
 	}
+	if len(candidates) == 0 {
+		t.semanticError("object type cannot be instantiated without a class", e.GetPosition())
+		return nil, false
+	}
+	return candidates, true
+}
 
-	if state := resolverEphemeralState(t); state != nil && state.refusedDependent {
-		state.refusedDependent = false
-		t.semanticError("dependently-typed call cannot be an argument of a new expression with more than one object type", e.GetPosition())
+func finishObjectNew(t typeResolver, chain *binding, e *ast.BLangNewExpression, determinedTy semtypes.SemType, candidate constructibleAlternative) (semtypes.SemType, expressionEffect, bool) {
+	args, returnType, argsChain, ok := resolveObjectInitArgs(t, chain, e, candidate.alternative, candidate.table)
+	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	if len(survivors) == 0 {
-		t.semanticError("failed to find a suitable object type", e.GetPosition())
-		return semtypes.SemType{}, expressionEffect{}, false
+	resultObjType := candidate.alternative.Type()
+	if semtypes.IsSubtype(t.typeContext(), determinedTy, resultObjType) {
+		resultObjType = determinedTy
 	}
-	if len(survivors) > 1 {
-		t.semanticError("ambiguous object type", e.GetPosition())
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
-
-	selected := survivors[0]
-	return finish(selected.alternative, selected.table)
+	resultType := semtypes.Union(resultObjType, semtypes.Diff(returnType, semtypes.Nil))
+	setNewExpressionResult(t, e, args, candidate.table.Owner)
+	setNodeType(t, e, resultType)
+	return resultType, defaultExpressionEffect(argsChain), true
 }
 
 // constructibleMethodTable reports whether table's owner is a class, which is what
@@ -4399,7 +4386,7 @@ func initSignature(t typeResolver, table model.MethodTable, pos diagnostics.Loca
 }
 
 func resolveObjectInitArgs(t typeResolver, chain *binding, e *ast.BLangNewExpression, alternative semtypes.ObjectAlternative,
-	table model.MethodTable, reportFailure bool,
+	table model.MethodTable,
 ) ([]ast.BLangExpression, semtypes.SemType, *binding, bool) {
 	signature, initRef, ok := initSignature(t, table, e.GetPosition())
 	if !ok {
@@ -4407,9 +4394,7 @@ func resolveObjectInitArgs(t typeResolver, chain *binding, e *ast.BLangNewExpres
 	}
 	args, fail := lowerInvocationArgsWithSignature(t, e.ArgsExprs, signature, initRef, semtypes.SemType{}, e.GetPosition())
 	if fail != nil {
-		if reportFailure {
-			fail(t)
-		}
+		fail(t)
 		return nil, semtypes.SemType{}, chain, false
 	}
 	if initRef.IsEmpty() {
@@ -4427,9 +4412,7 @@ func resolveObjectInitArgs(t typeResolver, chain *binding, e *ast.BLangNewExpres
 	argList := argListDefinition.Define(t.typeEnv(), argTys,
 		semtypes.ListMutability(semtypes.CellMutabilityNone))
 	if !semtypes.IsSubtype(cx, argList, paramListTy) {
-		if reportFailure {
-			t.semanticError("incompatible arguments for function call", e.GetPosition())
-		}
+		t.semanticError("incompatible arguments for function call", e.GetPosition())
 		return nil, semtypes.SemType{}, chain, false
 	}
 	return args, semtypes.FunctionReturnType(cx, alternative.InitFunctionType(), argList), chain, true
@@ -4450,6 +4433,10 @@ func (r *newArgumentDependencyResolver) Visit(node ast.BLangNode) ast.Visitor {
 			r.ok = r.t.ensureResolved(ref.Symbol(), 0)
 		}
 	case *ast.BLangConstRef:
+		if !ref.Symbol().IsEmpty() {
+			r.ok = r.t.ensureResolved(ref.Symbol(), 0)
+		}
+	case *ast.BLangUserDefinedType:
 		if !ref.Symbol().IsEmpty() {
 			r.ok = r.t.ensureResolved(ref.Symbol(), 0)
 		}
@@ -7367,11 +7354,6 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, args
 	baseSymbol := t.getSymbol(fnSymbol)
 	switch sym := baseSymbol.(type) {
 	case model.DependentlyTypedFunctionSymbol:
-		// Monomorphizing this call would mutate shared symbol state that a candidate
-		// trial cannot roll back, so refuse it and let the caller report the error.
-		if refuseDependentCall(t) {
-			return callArgsResult{}, false
-		}
 		lowered, fail := lowerInvocationArgs(t, args, fnSymbol, expectedType, inv.GetPosition())
 		if fail != nil {
 			fail(t)
@@ -8118,7 +8100,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 		var semTy semtypes.SemType
 		if defn == nil {
 			d := semtypes.NewListDefinition()
-			ty.Definition = &d
+			setTypeDefinition(t, &ty.Definition, &d)
 			var elemTy semtypes.SemType
 			var ok bool
 			elemTy, chain, ok = resolveTypeDataPair(t, chain, &ty.Elemtype, depth+1)
@@ -8214,7 +8196,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			switch ty.ConstraintKind() {
 			case ast.TypeKindMap:
 				d := semtypes.NewMappingDefinition()
-				ty.Definition = &d
+				setTypeDefinition(t, &ty.Definition, &d)
 				rest, chain, ok := resolveTypeDataPair(t, chain, &ty.Constraint, depth+1)
 				if !ok {
 					return semtypes.SemType{}, chain, false
@@ -8229,10 +8211,10 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 				return semtypes.TypedescContaining(t.typeEnv(), constraint), chain, true
 			case ast.TypeKindFuture:
 				d := semtypes.NewFutureDefinition()
-				ty.Definition = &d
+				setTypeDefinition(t, &ty.Definition, &d)
 				constraint, chain, ok := resolveTypeDataPair(t, chain, &ty.Constraint, depth+1)
 				if !ok {
-					ty.Definition = nil
+					setTypeDefinition(t, &ty.Definition, nil)
 					return semtypes.SemType{}, chain, false
 				}
 				return d.Define(t.typeEnv(), constraint), chain, true
@@ -8296,13 +8278,13 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			return semtypes.SemType{}, chain, false
 		}
 		d := semtypes.NewStreamDefinition()
-		ty.Definition = &d
+		setTypeDefinition(t, &ty.Definition, &d)
 		return d.Define(t.typeEnv(), valueTy, completionTy), chain, true
 	case *ast.BLangTupleTypeNode:
 		defn := ty.Definition
 		if defn == nil {
 			d := semtypes.NewListDefinition()
-			ty.Definition = &d
+			setTypeDefinition(t, &ty.Definition, &d)
 			members := make([]semtypes.SemType, len(ty.Members))
 			for i, member := range ty.Members {
 				var ok bool
@@ -8328,7 +8310,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			return defn.GetSemType(t.typeEnv()), chain, true
 		}
 		d := semtypes.NewMappingDefinition()
-		ty.Definition = &d
+		setTypeDefinition(t, &ty.Definition, &d)
 
 		// Resolve and collect included members from symbols
 		result, chain, ok := resolveRecordInclusions(t, chain, ty, depth)
@@ -8419,7 +8401,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			return ty.Definition.GetSemType(t.typeEnv()), chain, true
 		}
 		fd := semtypes.NewFunctionDefinition()
-		ty.Definition = &fd
+		setTypeDefinition(t, &ty.Definition, &fd)
 		paramTypes := make([]semtypes.SemType, len(ty.RequiredParams))
 		for i := range ty.RequiredParams {
 			var paramTy semtypes.SemType
@@ -8492,7 +8474,7 @@ func resolveObjectType(t typeResolver, chain *binding, ty *ast.BLangObjectType, 
 		return defn.GetSemType(t.typeEnv()), chain, true
 	}
 	od := semtypes.NewObjectDefinition()
-	ty.Definition = &od
+	setTypeDefinition(t, &ty.Definition, &od)
 	// Step 1: Accumulate included members from symbols
 	includedMembers := make(map[string][]semtypes.Member)
 	incMembers, ok := collectIncludedMembers(t, ty.Inclusions, ty.InclusionPositions, ty.GetPosition(), depth)

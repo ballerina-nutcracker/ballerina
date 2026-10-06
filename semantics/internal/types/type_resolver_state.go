@@ -23,8 +23,9 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
-// Every AST write performed during type resolution goes through these helpers, so that a candidate trial (see
-// selectCandidate) can resolve expressions without committing anything.
+// Every AST write performed during type resolution goes through these helpers. Each of them does nothing while the
+// resolver is ephemeral, so that a candidate trial (see selectCandidate) resolves expressions without committing
+// anything.
 
 type symbolNode interface {
 	ast.BLangNode
@@ -36,7 +37,10 @@ type methodSymbolNode interface {
 	SetMethodSymbol(model.SymbolRef)
 }
 
-func setNodeType(_ typeResolver, node ast.BLangNode, ty semtypes.SemType) {
+func setNodeType(t typeResolver, node ast.BLangNode, ty semtypes.SemType) {
+	if t.isEphemeral() {
+		return
+	}
 	node.SetDeterminedType(ty)
 }
 
@@ -44,57 +48,96 @@ type typeDataNode interface {
 	SetTypeData(ast.TypeData)
 }
 
-func setTypeData(_ typeResolver, node typeDataNode, data ast.TypeData) {
+func setTypeData(t typeResolver, node typeDataNode, data ast.TypeData) {
+	if t.isEphemeral() {
+		return
+	}
 	node.SetTypeData(data)
 }
 
-func setTypeDataType(_ typeResolver, data *ast.TypeData, ty semtypes.SemType) {
+func setTypeDataType(t typeResolver, data *ast.TypeData, ty semtypes.SemType) {
+	if t.isEphemeral() {
+		return
+	}
 	data.Type = ty
 }
 
-func setLiteralValue(_ typeResolver, node *ast.BLangLiteral, value any) {
+func setLiteralValue(t typeResolver, node *ast.BLangLiteral, value any) {
+	if t.isEphemeral() {
+		return
+	}
 	node.SetValue(value)
 }
 
 func setLiteralSymbolType(t typeResolver, node *ast.BLangLiteral, ty semtypes.SemType) {
+	if t.isEphemeral() {
+		return
+	}
 	updateSymbolType(t, node, ty)
 }
 
-func setNodeSymbol(_ typeResolver, node symbolNode, ref model.SymbolRef) {
+func setNodeSymbol(t typeResolver, node symbolNode, ref model.SymbolRef) {
+	if t.isEphemeral() {
+		return
+	}
 	node.SetSymbol(ref)
 }
 
-func setMethodSymbol(_ typeResolver, node methodSymbolNode, ref model.SymbolRef) {
+func setMethodSymbol(t typeResolver, node methodSymbolNode, ref model.SymbolRef) {
+	if t.isEphemeral() {
+		return
+	}
 	node.SetMethodSymbol(ref)
 }
 
-func setInvocationResolvedSymbol(_ typeResolver, inv invocable, ref model.SymbolRef) {
+func setInvocationResolvedSymbol(t typeResolver, inv invocable, ref model.SymbolRef) {
+	if t.isEphemeral() {
+		return
+	}
 	inv.SetResolvedSymbol(ref)
 }
 
-func setInvocationCallArgs(_ typeResolver, inv invocable, args []ast.BLangExpression) {
+func setInvocationCallArgs(t typeResolver, inv invocable, args []ast.BLangExpression) {
+	if t.isEphemeral() {
+		return
+	}
 	inv.SetCallArgs(args)
 }
 
-func moveLangLibReceiver(_ typeResolver, expr *ast.BLangInvocation, args []ast.BLangExpression, pkgAlias ast.BLangIdentifier) {
+func moveLangLibReceiver(t typeResolver, expr *ast.BLangInvocation, args []ast.BLangExpression, pkgAlias ast.BLangIdentifier) {
+	if t.isEphemeral() {
+		return
+	}
 	expr.ArgExprs = args
 	expr.Expr = nil
 	expr.PkgAlias = &pkgAlias
 }
 
-func clearStreamOperationSymbol(_ typeResolver, expr *ast.BLangInvocation) {
+func clearStreamOperationSymbol(t typeResolver, expr *ast.BLangInvocation) {
+	if t.isEphemeral() {
+		return
+	}
 	expr.RawSymbol = nil
 }
 
-func setLaxAccess(_ typeResolver, expr *ast.BLangFieldBaseAccess) {
+func setLaxAccess(t typeResolver, expr *ast.BLangFieldBaseAccess) {
+	if t.isEphemeral() {
+		return
+	}
 	expr.SetLax()
 }
 
-func setTypedescConstraint(_ typeResolver, node *ast.BLangTypedescExpr, constraint semtypes.SemType) {
+func setTypedescConstraint(t typeResolver, node *ast.BLangTypedescExpr, constraint semtypes.SemType) {
+	if t.isEphemeral() {
+		return
+	}
 	node.Constraint = constraint
 }
 
-func setNewExpressionResult(_ typeResolver, node *ast.BLangNewExpression, args []ast.BLangExpression, classRef model.SymbolRef) {
+func setNewExpressionResult(t typeResolver, node *ast.BLangNewExpression, args []ast.BLangExpression, classRef model.SymbolRef) {
+	if t.isEphemeral() {
+		return
+	}
 	node.ArgsExprs = args
 	node.ClassSymbol = classRef
 }
@@ -102,6 +145,9 @@ func setNewExpressionResult(_ typeResolver, node *ast.BLangNewExpression, args [
 // setMappingKey commits the type of a key whose expression carries a symbol (a `{x}` shorthand key) and the types
 // of the key nodes. A literal key is resolved by the caller.
 func setMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField, valueTy semtypes.SemType) {
+	if t.isEphemeral() {
+		return
+	}
 	switch keyExpr := kv.Key.Expr.(type) {
 	case *ast.BLangLiteral:
 	case ast.BNodeWithSymbol:
@@ -117,12 +163,18 @@ func setMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField, valueTy se
 	kv.SetDeterminedType(semtypes.Never)
 }
 
-func setMappingConstructorInherentType(_ typeResolver, node *ast.BLangMappingConstructorExpr, atom semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+func setMappingConstructorInherentType(t typeResolver, node *ast.BLangMappingConstructorExpr, atom semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+	if t.isEphemeral() {
+		return
+	}
 	node.AtomicType = atom
 	node.FieldDefaults = defaults
 }
 
-func setListConstructorInherentType(_ typeResolver, node *ast.BLangListConstructorExpr, atom semtypes.ListAtomicType, spreadMembers []bool) {
+func setListConstructorInherentType(t typeResolver, node *ast.BLangListConstructorExpr, atom semtypes.ListAtomicType, spreadMembers []bool) {
+	if t.isEphemeral() {
+		return
+	}
 	node.AtomicType = atom
 	node.SpreadMembers = nil
 	for _, isSpread := range spreadMembers {
@@ -133,19 +185,31 @@ func setListConstructorInherentType(_ typeResolver, node *ast.BLangListConstruct
 	}
 }
 
-func setGroupByNonGroupingKeys(_ typeResolver, clause *ast.BLangGroupByClause, keys balCommon.Set[string]) {
+func setGroupByNonGroupingKeys(t typeResolver, clause *ast.BLangGroupByClause, keys balCommon.Set[string]) {
+	if t.isEphemeral() {
+		return
+	}
 	clause.NonGroupingKeys = keys
 }
 
-func setFunctionTypedSignature(_ typeResolver, sym model.FunctionSymbol, sig model.TypedFunctionSignature) {
+func setFunctionTypedSignature(t typeResolver, sym model.FunctionSymbol, sig model.TypedFunctionSignature) {
+	if t.isEphemeral() {
+		return
+	}
 	sym.SetTypedSignature(sig)
 }
 
 func setLambdaSymbolType(t typeResolver, fn *ast.BLangFunction, ty semtypes.SemType) {
+	if t.isEphemeral() {
+		return
+	}
 	updateSymbolType(t, fn, ty)
 }
 
-func setXMLStepLowering(_ typeResolver, expr *ast.BLangXMLStepExpression, lowered ast.BLangExpression) {
+func setXMLStepLowering(t typeResolver, expr *ast.BLangXMLStepExpression, lowered ast.BLangExpression) {
+	if t.isEphemeral() {
+		return
+	}
 	expr.LoweredExpression = lowered
 }
 
@@ -167,7 +231,17 @@ func (v neverVisitor) VisitTypeData(_ *ast.TypeData) ast.Visitor {
 	return v
 }
 
+func setTypeDefinition(t typeResolver, field *semtypes.Definition, defn semtypes.Definition) {
+	if t.isEphemeral() {
+		return
+	}
+	*field = defn
+}
+
 // setOtherNodesAsNever sets the type of every AST node whose determined type is not set to NEVER.
 func setOtherNodesAsNever(t typeResolver, node ast.BLangNode) {
+	if t.isEphemeral() {
+		return
+	}
 	ast.Walk(neverVisitor{t: t}, node)
 }

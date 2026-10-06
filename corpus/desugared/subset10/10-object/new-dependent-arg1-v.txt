@@ -1,0 +1,111 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang value (as lang.value))
+  (class-definition IntHolder
+    (variable v (type
+      (value-type int)))
+    (function init (
+      (variable v (type
+        (value-type int)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal v))
+          (binary-expr +
+            (simple-var-ref v)
+            (simple-var-ref marker))))))
+  (class-definition FloatHolder
+    (variable v (type
+      (value-type float)))
+    (function init (
+      (variable v (type
+        (value-type float)))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal v))
+          (simple-var-ref v))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable j (type
+          (builtin-ref-type json)) (expr
+          (literal 1))))
+      (var-def
+        (variable h (type
+          (union-type
+            (user-defined-type IntHolder)
+            (user-defined-type FloatHolder))) (expr
+          (new (
+            (checked-expr
+              (invocation lang.value cloneWithType (
+                (simple-var-ref j)
+                (typedesc-expr))))
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref h)
+            (user-defined-type IntHolder)))))
+      (var-def
+        (variable h2 (type
+          (union-type
+            (user-defined-type FloatHolder)
+            (user-defined-type IntHolder))) (expr
+          (new (
+            (checked-expr
+              (invocation lang.value cloneWithType (
+                (simple-var-ref j)
+                (typedesc-expr))))
+            (literal x))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref h2)
+          (user-defined-type FloatHolder))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref h2)
+                (literal v)))))) ())
+      (block-stmt
+        (var-def
+          (variable d (type
+            (builtin-ref-type json)) (expr
+            (literal 2))))
+        (var-def
+          (variable h3 (type
+            (union-type
+              (user-defined-type IntHolder)
+              (user-defined-type FloatHolder))) (expr
+            (new (
+              (checked-expr
+                (invocation lang.value fromJsonWithType (
+                  (simple-var-ref d)
+                  (typedesc-expr))))
+              (literal 1))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref h3)
+            (user-defined-type IntHolder))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (index-based-access
+                  (simple-var-ref h3)
+                  (literal v)))))) ())
+        (block-stmt)))))
