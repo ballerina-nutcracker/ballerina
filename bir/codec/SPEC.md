@@ -82,6 +82,8 @@ After the constant pool, the package data follows:
 +------------------+
 | Functions        | See Functions
 +------------------+
+| Record Types     | See Record Types
++------------------+
 ```
 
 ### Global Variables
@@ -182,6 +184,23 @@ After the constant pool, the package data follows:
 |   Ins Count      | int64
 |   Instructions   | See Instructions
 |   Terminator     | See Terminator
++------------------+
+```
+
+### Record Types
+
+Every record type descriptor of the package, named or anonymous.
+
+```
++------------------+
+| Count            | int64 (number of record types)
++------------------+
+| For each type:   |
+|   Type           | int32 (type pool index)
+|   Field Count    | int64 (number of fields with a default)
+|   For each field:|
+|     Name CP      | int32
+|     Function CP  | int32 (lookup key of the default function)
 +------------------+
 ```
 

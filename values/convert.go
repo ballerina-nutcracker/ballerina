@@ -34,21 +34,25 @@ var nonStructuralTypes = []semtypes.SemType{
 	semtypes.Nil, semtypes.Boolean, semtypes.String, semtypes.XML, semtypes.Error,
 }
 
+// FieldDefaultFunc evaluates the default value declared for field in the record type target,
+// whose mapping atom is atom. The bool is false if that field declares no default.
+type FieldDefaultFunc func(target semtypes.SemType, atom *semtypes.MappingAtomicType, field string) (BalValue, bool)
+
 // CloneWithType implements the cloneWithType abstract operation defined in the Ballerina spec
 // (https://ballerina.io/spec/lang/master/#section_16.6).
 //
 // It constructs a value of targetType by deep-cloning value, applying the following conversions:
 //   - the inherent type of any structural value comes from targetType
 //   - numeric values may be converted between int, float, and decimal via NumericConvert
-//   - missing required fields (with or without defaults) cause a ConversionError; default injection
-//     is not yet implemented (tracked as a separate work item)
+//   - a missing field that declares a default in targetType is filled by fieldDefault; any other
+//     missing required field causes a ConversionError
 //
 // Cyclic values return a ConversionError: per the cloneWithType contract, the graph structure
 // is not preserved and the result is always a tree.
 //
 // On failure it returns a ConversionError wrapped as *Error.
-func CloneWithType(tc semtypes.Context, value BalValue, targetType semtypes.SemType) (BalValue, *Error) {
-	result, err := convert(tc, value, targetType, nil)
+func CloneWithType(tc semtypes.Context, value BalValue, targetType semtypes.SemType, fieldDefault FieldDefaultFunc) (BalValue, *Error) {
+	result, err := convert(tc, fieldDefault, value, targetType, nil)
 	if err != nil {
 		return nil, wrapConversionError(err)
 	}
@@ -60,11 +64,11 @@ func CloneWithType(tc semtypes.Context, value BalValue, targetType semtypes.SemT
 // failure short-circuits immediately — value can't convert to anything once cyclic, so it
 // shouldn't be buried among unrelated per-candidate mismatches. See conversionFailureFor for
 // how any other total failure is reported.
-func convert(tc semtypes.Context, value BalValue, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
+func convert(tc semtypes.Context, fieldDefault FieldDefaultFunc, value BalValue, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
 	candidates := candidateTypes(tc, SemTypeForValue(value), target)
 	children := make([]*conversionFailure, 0, len(candidates))
 	for _, candidate := range candidates {
-		result, err := tryConvert(tc, value, candidate, visiting)
+		result, err := tryConvert(tc, fieldDefault, value, candidate, visiting)
 		if err == nil {
 			return result, nil
 		}
@@ -133,7 +137,7 @@ func candidateTypes(tc semtypes.Context, valueTy semtypes.SemType, ty semtypes.S
 // tryConvert converts value to a single, already-decomposed basic-type target (never a union),
 // dispatching on value's shape. Only *Map/*List go through cycle detection, since only
 // structured values can cycle.
-func tryConvert(tc semtypes.Context, value BalValue, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
+func tryConvert(tc semtypes.Context, fieldDefault FieldDefaultFunc, value BalValue, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
 	var convertStructured func(map[BalValue]struct{}) (BalValue, *conversionFailure)
 	switch v := value.(type) {
 	case *Map:
@@ -141,14 +145,14 @@ func tryConvert(tc semtypes.Context, value BalValue, target semtypes.SemType, vi
 			return nil, incompatibleConversion(tc, value, target)
 		}
 		convertStructured = func(visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
-			return tryConvertMap(tc, v, target, visiting)
+			return tryConvertMap(tc, fieldDefault, v, target, visiting)
 		}
 	case *List:
 		if !semtypes.IsSubtype(tc, target, semtypes.List) {
 			return nil, incompatibleConversion(tc, value, target)
 		}
 		convertStructured = func(visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
-			return tryConvertList(tc, v, target, visiting)
+			return tryConvertList(tc, fieldDefault, v, target, visiting)
 		}
 	default:
 		return tryConvertBasicType(tc, v, target)
@@ -162,7 +166,7 @@ func tryConvert(tc semtypes.Context, value BalValue, target semtypes.SemType, vi
 	return convertStructured(visiting)
 }
 
-func tryConvertMap(tc semtypes.Context, source *Map, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
+func tryConvertMap(tc semtypes.Context, fieldDefault FieldDefaultFunc, source *Map, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
 	atomic := semtypes.ToMappingAtomicType(tc, target)
 
 	entries := make([]MapEntry, 0, source.Len())
@@ -172,7 +176,7 @@ func tryConvertMap(tc semtypes.Context, source *Map, target semtypes.SemType, vi
 		seen[key] = struct{}{}
 		fieldTy := mappingFieldType(tc, target, atomic, key)
 		val, _ := source.Get(key)
-		converted, err := convert(tc, val, fieldTy, visiting)
+		converted, err := convert(tc, fieldDefault, val, fieldTy, visiting)
 		if err != nil {
 			return nil, err
 		}
@@ -183,10 +187,13 @@ func tryConvertMap(tc semtypes.Context, source *Map, target semtypes.SemType, vi
 		if _, ok := seen[name]; ok {
 			continue
 		}
+		if defaultValue, ok := fieldDefault(target, atomic, name); ok {
+			entries = append(entries, MapEntry{Key: name, Value: defaultValue})
+			continue
+		}
 		if atomic.IsOptional(tc, name) {
 			continue
 		}
-		// Absence is always an error: nil isn't injected, and defaults aren't supported yet.
 		return nil, missingRequiredField(tc, source, target, name)
 	}
 
@@ -194,7 +201,7 @@ func tryConvertMap(tc semtypes.Context, source *Map, target semtypes.SemType, vi
 	return NewMap(target, atomic, readonly, entries), nil
 }
 
-func tryConvertList(tc semtypes.Context, source *List, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
+func tryConvertList(tc semtypes.Context, fieldDefault FieldDefaultFunc, source *List, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
 	atomic := semtypes.ToListAtomicType(tc.Env(), target)
 
 	fixedLen := atomic.FixedLength()
@@ -209,7 +216,7 @@ func tryConvertList(tc semtypes.Context, source *List, target semtypes.SemType, 
 	items := make([]BalValue, source.Len())
 	for i := 0; i < source.Len(); i++ {
 		memberTy := atomic.MemberAtInnerVal(i)
-		converted, err := convert(tc, source.Get(i), memberTy, visiting)
+		converted, err := convert(tc, fieldDefault, source.Get(i), memberTy, visiting)
 		if err != nil {
 			return nil, err
 		}

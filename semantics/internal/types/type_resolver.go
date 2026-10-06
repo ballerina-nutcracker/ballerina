@@ -8136,7 +8136,8 @@ func resolveBTypeInner(t typeResolver, btype ast.BType, depth int) (semtypes.Sem
 		}
 		semType := d.Define(t.typeEnv(), fields, rest)
 		mat := semtypes.ToMappingAtomicType(t.typeContext(), semType)
-		t.setMappingDefaults(mat, recordFieldDefaults(t, ty))
+		ty.FieldDefaults = recordFieldDefaults(t, ty)
+		t.setMappingDefaults(mat, ty.FieldDefaults)
 		return semType, true
 	case *ast.BLangFunctionType:
 		if ty.IsAnyFunction() {

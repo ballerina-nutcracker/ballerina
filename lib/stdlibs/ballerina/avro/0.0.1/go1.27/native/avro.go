@@ -171,7 +171,7 @@ func fromAvroExtern(types *avroTypes) extern.NativeFunc {
 		if err != nil {
 			return avroErrorFrom(deserializationError, err), nil
 		}
-		return bindToTarget(tc, decoded, target.Type), nil
+		return bindToTarget(ctx, decoded, target.Type), nil
 	}
 }
 
@@ -179,11 +179,11 @@ func fromAvroExtern(types *avroTypes) extern.NativeFunc {
 // the call site asked for, the way http's client data binding does: skip the
 // clone when the decoded value already fits, otherwise convert with the same
 // routine as lang.value:fromJsonWithType so records, enums and tuples narrow.
-func bindToTarget(tc semtypes.Context, decoded values.BalValue, target semtypes.SemType) values.BalValue {
-	if semtypes.IsSubtype(tc, values.SemTypeForValue(decoded), target) {
+func bindToTarget(ctx *extern.Context, decoded values.BalValue, target semtypes.SemType) values.BalValue {
+	if semtypes.IsSubtype(ctx.TypeCtx(), values.SemTypeForValue(decoded), target) {
 		return decoded
 	}
-	bound, convErr := values.CloneWithType(tc, decoded, target)
+	bound, convErr := ctx.CloneWithType(decoded, target)
 	if convErr != nil {
 		return newAvroError(deserializationError, convErr)
 	}

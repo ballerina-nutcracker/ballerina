@@ -17,9 +17,12 @@
 package modules
 
 import (
+	"sync"
+
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -42,6 +45,26 @@ type Registry struct {
 	nativeFunctions     map[string]*ExternFunction
 	runtimeBuiltins     map[string]extern.NativeFunc
 	modules             map[string]*BIRModule
+	recordTypes         recordTypeTable
+}
+
+// recordTypeTable holds the record types of the loaded modules. It is guarded
+// by a mutex because a module's init can start strands that construct records
+// while a later module is still being registered.
+type recordTypeTable struct {
+	mu           sync.RWMutex
+	withDefaults []*recordType
+	// byAtom maps a mapping atom to its record type (one without defaults if
+	// there is none). Atoms are not shared across separately deserialized
+	// modules, so a miss falls back to a structural search of withDefaults.
+	byAtom map[*semtypes.MappingAtomicType]*recordType
+}
+
+type recordType struct {
+	ty semtypes.SemType
+	// fieldDefaults maps a record field name to the lookup key of the
+	// function computing its default value.
+	fieldDefaults map[string]string
 }
 
 func NewRegistry(builtins map[string]extern.NativeFunc) *Registry {
@@ -52,6 +75,7 @@ func NewRegistry(builtins map[string]extern.NativeFunc) *Registry {
 		nativeFunctions:     make(map[string]*ExternFunction),
 		runtimeBuiltins:     builtins,
 		modules:             make(map[string]*BIRModule),
+		recordTypes:         recordTypeTable{byAtom: make(map[*semtypes.MappingAtomicType]*recordType)},
 	}
 }
 
@@ -117,6 +141,65 @@ func (r *Registry) RegisterModule(id *model.PackageID, m *BIRModule) *BIRModule 
 		r.modules[moduleKey(id)] = m
 	}
 	return m
+}
+
+// RegisterRecordTypes records the record types a module declares.
+func (r *Registry) RegisterRecordTypes(tc semtypes.Context, recordTypes []bir.BIRRecordType) {
+	table := &r.recordTypes
+	table.mu.Lock()
+	defer table.mu.Unlock()
+	for _, def := range recordTypes {
+		atom := semtypes.ToMappingAtomicType(tc, def.Type)
+		if atom == nil {
+			continue
+		}
+		recordTy := newRecordType(def)
+		if len(recordTy.fieldDefaults) > 0 {
+			table.withDefaults = append(table.withDefaults, recordTy)
+		}
+		table.byAtom[atom] = recordTy
+	}
+}
+
+func newRecordType(def bir.BIRRecordType) *recordType {
+	fieldDefaults := make(map[string]string, len(def.FieldDefaults))
+	for _, field := range def.FieldDefaults {
+		fieldDefaults[field.FieldName] = field.FunctionLookupKey
+	}
+	return &recordType{ty: def.Type, fieldDefaults: fieldDefaults}
+}
+
+// RecordFieldDefault returns the lookup key of the default function of field in
+// the record type recordTy, whose mapping atom is atom.
+func (r *Registry) RecordFieldDefault(tc semtypes.Context, recordTy semtypes.SemType, atom *semtypes.MappingAtomicType, field string) (string, bool) {
+	key, ok := r.recordTypes.lookup(tc, recordTy, atom).fieldDefaults[field]
+	return key, ok
+}
+
+func (t *recordTypeTable) lookup(tc semtypes.Context, ty semtypes.SemType, atom *semtypes.MappingAtomicType) *recordType {
+	t.mu.RLock()
+	recordTy, ok := t.byAtom[atom]
+	t.mu.RUnlock()
+	if ok {
+		return recordTy
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if recordTy, ok := t.byAtom[atom]; ok {
+		return recordTy
+	}
+	recordTy = t.findStructurally(tc, ty)
+	t.byAtom[atom] = recordTy
+	return recordTy
+}
+
+func (t *recordTypeTable) findStructurally(tc semtypes.Context, ty semtypes.SemType) *recordType {
+	for _, recordTy := range t.withDefaults {
+		if semtypes.IsSameType(tc, recordTy.ty, ty) {
+			return recordTy
+		}
+	}
+	return &recordType{ty: ty, fieldDefaults: make(map[string]string)}
 }
 
 func (r *Registry) registerFunctionDescriptor(fn *bir.BIRFunction) {

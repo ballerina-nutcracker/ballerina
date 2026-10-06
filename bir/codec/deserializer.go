@@ -83,6 +83,7 @@ func (br *birReader) readPackage() (pkg *bir.BIRPackage, err error) {
 	}
 
 	functions := br.readFunctions()
+	recordTypes := br.readRecordTypes()
 
 	pkg = &bir.BIRPackage{
 		PackageID:    pkgID,
@@ -91,6 +92,7 @@ func (br *birReader) readPackage() (pkg *bir.BIRPackage, err error) {
 		Functions:    functions,
 		InitFunction: initFunction,
 		MainFunction: mainFunction,
+		RecordTypes:  recordTypes,
 	}
 	rebindLifecycleFunctions(pkg)
 	return pkg, nil
@@ -230,6 +232,24 @@ func (br *birReader) readGlobalVars(pkgID *model.PackageID) map[string]bir.BIRGl
 		variables[lookupKey] = gv
 	}
 	return variables
+}
+
+func (br *birReader) readRecordTypes() []bir.BIRRecordType {
+	count := br.readLength()
+	recordTypes := make([]bir.BIRRecordType, count)
+	for i := range recordTypes {
+		ty := br.readType()
+		fieldCount := br.readLength()
+		fields := make([]bir.MappingConstructorDefaultEntry, fieldCount)
+		for j := range fields {
+			fields[j] = bir.MappingConstructorDefaultEntry{
+				FieldName:         string(br.readStringCPEntry()),
+				FunctionLookupKey: string(br.readStringCPEntry()),
+			}
+		}
+		recordTypes[i] = bir.BIRRecordType{Type: ty, FieldDefaults: fields}
+	}
+	return recordTypes
 }
 
 func (br *birReader) readClassDefs() []bir.BIRClassDef {
