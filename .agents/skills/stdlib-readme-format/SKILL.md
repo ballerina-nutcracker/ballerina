@@ -130,6 +130,6 @@ Maintenance rules — after every per-package README change:
 
 When **adding a brand-new package**, add a new table row (alphabetical), recompute the Total footer, and add a `### <package>` subsection only if that package has notable behavioural changes.
 
-The repo-root `README.md` has a one-sentence **Standard library coverage** summary that links to the aggregator: `**X%** of tracked standard library features are supported across N packages: S supported, P partially supported, U not yet supported.` Keep its numbers equal to the aggregator's Total footer and package count in the same change.
+The repo-root `README.md` has a one-sentence **Standard library coverage** summary that links to the aggregator: `**X%** of tracked standard library features are supported across N packages: S supported, P partially supported, U not yet supported.` Keep its numbers equal to the aggregator's Total footer and package count in the same change. Below it, a `**Supported packages:**` line lists every package alphabetically as `[<name>](lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md)`, comma-separated; add the new package there too.
 
 The `check_readmes.py` script (see Validation above) verifies all of this arithmetic and mirroring — run it after every aggregator edit instead of trusting manual recounts.

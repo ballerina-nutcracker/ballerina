@@ -227,7 +227,7 @@ If the total is below 80%, find the gaps with `go tool cover -func=/tmp/<name>-c
 
 Author `lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md` using the **`stdlib-readme-format`** skill. Load that skill now and run its validation checklist before saving the file. Copy every unavoidable divergence from the Step 5 parity table into **Notable Behavioural Changes** — these must be present before merge.
 
-Then update the aggregator `doc/library/README.md` (same `stdlib-readme-format` skill): add the new package row (alphabetical), recompute the **Total** footer, and mirror this package's behavioural changes into a `### <name>` subsection (only if it has any). Then update the repo-root `README.md` **Standard library coverage** summary sentence (overall %, package count, Supported / Partially Supported / Not Yet Supported totals) to match the new Total footer.
+Then update the aggregator `doc/library/README.md` (same `stdlib-readme-format` skill): add the new package row (alphabetical), recompute the **Total** footer, and mirror this package's behavioural changes into a `### <name>` subsection (only if it has any). Then update the repo-root `README.md` **Standard library coverage** summary sentence (overall %, package count, Supported / Partially Supported / Not Yet Supported totals) to match the new Total footer, and add the package to its `**Supported packages:**` list (alphabetical, linked to the package README).
 
 Separately, confirm Step 8's `doc/library/subset<N>.md` update is done — it documents released library-feature milestones and is independent of the per-package `README.md` (which tracks jBallerina-parity status, not release scoping).
 

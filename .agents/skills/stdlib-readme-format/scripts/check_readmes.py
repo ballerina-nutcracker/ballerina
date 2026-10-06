@@ -245,6 +245,17 @@ def check_repo_readme(per_pkg):
         fail(REPO_README, f"coverage summary is stale: has {list(matches[0])}, recount gives {list(expect)} "
                           "(percent, packages, supported, partially supported, not yet supported)")
 
+    listed = re.search(r"^\*\*Supported packages:\*\* (.+)$", text, re.MULTILINE)
+    if listed is None:
+        fail(REPO_README, "missing the '**Supported packages:**' list")
+        return
+    links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", listed.group(1))
+    if [name for name, _ in links] != sorted(per_pkg):
+        fail(REPO_README, f"'Supported packages' list is {[n for n, _ in links]}, expected {sorted(per_pkg)}")
+    for name, target in links:
+        if target != f"{ROOT}/{name}/0.0.1/go1.27/README.md":
+            fail(REPO_README, f"'Supported packages' link for '{name}' points to '{target}'")
+
 
 def main():
     readmes = sorted(glob.glob(f"{ROOT}/*/0.0.1/go1.27/README.md"))
