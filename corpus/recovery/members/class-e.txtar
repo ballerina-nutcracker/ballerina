@@ -62,11 +62,11 @@ type RecordWithUnknownInclusion record {
           (variable later (type
             (value-type int)) (expr
             (literal 2))))))
-    (bad-top-level)
-    (bad-top-level)
-    (bad-top-level)
-    (bad-top-level)
-    (bad-top-level))
+    (bad-top-level field)
+    (bad-top-level function)
+    (bad-top-level function)
+    (bad-top-level type-inclusion)
+    (bad-top-level type-inclusion))
   (class-definition InclusionFailure
     (variable good (type
       (value-type int)))
@@ -81,4 +81,4 @@ type RecordWithUnknownInclusion record {
       (var-def
         (variable surviving (type
           (user-defined-type C))))))
-  (bad-top-level))
+  (bad-top-level function))

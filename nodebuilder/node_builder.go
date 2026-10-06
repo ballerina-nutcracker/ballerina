@@ -1464,6 +1464,9 @@ func (n *nodeBuilder) transformTopLevel(node st.Node) (ast.TopLevelNode, error) 
 }
 
 func (n *nodeBuilder) transformTopLevelInner(node st.Node) (ast.TopLevelNode, error) {
+	if enum, ok := node.(*st.EnumDeclarationNode); ok && n.mode == nodeBuilderModeRecover {
+		return n.recoverEnumDeclaration(enum), nil
+	}
 	if n.malformedDeclaration(node) {
 		return n.badTopLevel(node), nil
 	}
@@ -4694,6 +4697,63 @@ func (n *nodeBuilder) transformEnumDeclaration(enumDeclarationNode *st.EnumDecla
 		memberTypeNodes = append(memberTypeNodes, n.createTypeNode(enumMember.Identifier()))
 	}
 
+	typeDescriptor := n.createEnumMemberUnion(enumDeclarationNode, memberTypeNodes)
+	if typeDescriptor == nil {
+		neverType := &ast.BLangValueType{TypeKind: ast.TypeKindNever}
+		neverType.SetPosition(diagnostics.NewBuiltinLocation())
+		typeDescriptor = neverType
+	}
+	typeDef := n.createEnumTypeDefinition(enumDeclarationNode, typeDescriptor)
+	if len(memberTypeNodes) == 0 {
+		n.cx.SyntaxError("missing enum member", typeDef.Name.GetPosition())
+	}
+	return typeDef
+}
+
+func (n *nodeBuilder) recoverEnumDeclaration(node *st.EnumDeclarationNode) ast.TopLevelNode {
+	name := node.Identifier()
+	malformed := n.malformedSyntax(node, func(child st.Node) bool {
+		_, member := child.(*st.EnumMemberNode)
+		return member || child == name
+	})
+	usableName := name != nil && !name.IsMissing() && !n.malformedSyntax(name, nil)
+	malformed = malformed || !usableName
+	validMembers := make([]*st.EnumMemberNode, 0)
+	members := node.EnumMemberList()
+	for member := range members.Iterator() {
+		enumMember, ok := member.(*st.EnumMemberNode)
+		if !ok {
+			continue
+		}
+		if enumMember.Identifier() == nil || enumMember.Identifier().IsMissing() || n.malformedSyntax(enumMember, nil) {
+			malformed = true
+			continue
+		}
+		validMembers = append(validMembers, enumMember)
+	}
+	if !malformed {
+		return n.transformEnumDeclaration(node).(*ast.BLangTypeDefinition)
+	}
+	publicQualifier := node.Qualifier() != nil && node.Qualifier().Kind() == st.PUBLIC_KEYWORD
+	memberTypes := make([]ast.TypeDescriptor, 0, len(validMembers))
+	for _, member := range validMembers {
+		n.currentCompUnit.AddTopLevelNode(n.transformEnumMemberWithVisibility(member, publicQualifier))
+		memberTypes = append(memberTypes, n.createTypeNode(member.Identifier()))
+	}
+	bad := n.badTopLevel(node)
+	if !usableName {
+		return bad
+	}
+	n.currentCompUnit.AddTopLevelNode(bad)
+	typeDescriptor := n.createEnumMemberUnion(node, memberTypes)
+	if typeDescriptor == nil {
+		typeDescriptor = n.badTypeNode(node)
+	}
+	return n.createEnumTypeDefinition(node, typeDescriptor)
+}
+
+func (n *nodeBuilder) createEnumTypeDefinition(enumDeclarationNode *st.EnumDeclarationNode, typeDescriptor ast.TypeDescriptor) *ast.BLangTypeDefinition {
+	publicQualifier := enumDeclarationNode.Qualifier() != nil && enumDeclarationNode.Qualifier().Kind() == st.PUBLIC_KEYWORD
 	identifierPos := n.getPosition(enumDeclarationNode.Identifier())
 	identifier := n.createIdentifierNodeFromToken(identifierPos, enumDeclarationNode.Identifier())
 	var documentation *ast.BLangMarkdownDocumentation
@@ -4704,27 +4764,25 @@ func (n *nodeBuilder) transformEnumDeclaration(enumDeclarationNode *st.EnumDecla
 	if publicQualifier {
 		flags |= model.FlagPublic
 	}
-	typeDef := ast.NewBLangTypeDefinitionWithData(n.getPositionWithoutMetadata(enumDeclarationNode), identifier, ast.TypeData{}, documentation, flags)
+	typeDef := ast.NewBLangTypeDefinitionWithData(n.getPositionWithoutMetadata(enumDeclarationNode), identifier, ast.TypeData{TypeDescriptor: typeDescriptor}, documentation, flags)
 	typeDef.SetPosition(n.getPositionWithoutMetadata(enumDeclarationNode))
-
-	if len(memberTypeNodes) > 0 {
-		current := memberTypeNodes[0]
-		for i := 1; i < len(memberTypeNodes); i++ {
-			current = ast.NewBLangUnionTypeNode(
-				typeDef.GetPosition(),
-				ast.TypeData{TypeDescriptor: current},
-				ast.TypeData{TypeDescriptor: memberTypeNodes[i]},
-			)
-		}
-		typeDef.SetTypeData(ast.TypeData{TypeDescriptor: current})
-	} else {
-		neverType := &ast.BLangValueType{TypeKind: ast.TypeKindNever}
-		neverType.SetPosition(diagnostics.NewBuiltinLocation())
-		typeDef.SetTypeData(ast.TypeData{TypeDescriptor: neverType})
-		n.cx.SyntaxError("missing enum member", typeDef.Name.GetPosition())
-	}
-
 	return typeDef
+}
+
+func (n *nodeBuilder) createEnumMemberUnion(enumDeclarationNode *st.EnumDeclarationNode, memberTypeNodes []ast.TypeDescriptor) ast.TypeDescriptor {
+	if len(memberTypeNodes) == 0 {
+		return nil
+	}
+	pos := n.getPositionWithoutMetadata(enumDeclarationNode)
+	current := memberTypeNodes[0]
+	for i := 1; i < len(memberTypeNodes); i++ {
+		current = ast.NewBLangUnionTypeNode(
+			pos,
+			ast.TypeData{TypeDescriptor: current},
+			ast.TypeData{TypeDescriptor: memberTypeNodes[i]},
+		)
+	}
+	return current
 }
 
 func (n *nodeBuilder) transformEnumMember(enumMemberNode *st.EnumMemberNode) ast.BLangNode {
@@ -5997,9 +6055,43 @@ func (n *nodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode,
 }
 
 func (n *nodeBuilder) badTopLevel(node st.Node) *ast.BLangBadTopLevelNode {
-	bad := &ast.BLangBadTopLevelNode{}
-	bad.SetPosition(n.getRecoveryPosition(node))
-	return bad
+	return ast.NewBLangBadTopLevelNode(n.getRecoveryPosition(node), recoveredTopLevelKind(node))
+}
+
+func recoveredTopLevelKind(node st.Node) ast.BadTopLevelNodeKind {
+	if node == nil {
+		return ast.BadTopLevelNodeUnknown
+	}
+	switch node.Kind() {
+	case st.IMPORT_DECLARATION:
+		return ast.BadTopLevelNodeImport
+	case st.FUNCTION_DEFINITION, st.OBJECT_METHOD_DEFINITION, st.RESOURCE_ACCESSOR_DEFINITION:
+		return ast.BadTopLevelNodeFunction
+	case st.TYPE_DEFINITION:
+		return ast.BadTopLevelNodeTypeDefinition
+	case st.ENUM_DECLARATION:
+		return ast.BadTopLevelNodeEnum
+	case st.CONST_DECLARATION:
+		return ast.BadTopLevelNodeConstant
+	case st.MODULE_VAR_DECL:
+		return ast.BadTopLevelNodeVariable
+	case st.LISTENER_DECLARATION:
+		return ast.BadTopLevelNodeListener
+	case st.CLASS_DEFINITION:
+		return ast.BadTopLevelNodeClass
+	case st.SERVICE_DECLARATION:
+		return ast.BadTopLevelNodeService
+	case st.ANNOTATION_DECLARATION:
+		return ast.BadTopLevelNodeAnnotation
+	case st.MODULE_XML_NAMESPACE_DECLARATION:
+		return ast.BadTopLevelNodeXMLNamespace
+	case st.OBJECT_FIELD:
+		return ast.BadTopLevelNodeField
+	case st.TYPE_REFERENCE:
+		return ast.BadTopLevelNodeTypeInclusion
+	default:
+		return ast.BadTopLevelNodeUnknown
+	}
 }
 
 func (n *nodeBuilder) badStmt(node st.Node) *ast.BLangBadStmt {

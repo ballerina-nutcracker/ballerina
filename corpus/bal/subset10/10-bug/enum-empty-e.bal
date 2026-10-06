@@ -1,4 +1,3 @@
--- missing-function-name-e.bal --
 // Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
@@ -15,12 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function () {} // @error
-function valid() {}
--- ast --
-(compilation-unit (position 1:1 1:1)
-(package-id $anon . 0.0.0)
-  (bad-top-level function (position 1:1 18:1))
-  (function (position 18:1 19:1) valid () (
-    (value-type (position <built-in>) null))
-    (block-function-body (position 18:18 19:1))))
+enum E {} // @error
+
+public function main() {
+}

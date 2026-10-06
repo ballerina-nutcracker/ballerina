@@ -45,4 +45,4 @@ function independent(int value) returns int => value;
     (value-type int))
     (expr-function-body
       (simple-var-ref value)))
-  (bad-top-level))
+  (bad-top-level class))

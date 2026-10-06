@@ -62,6 +62,6 @@ function discardedReferences() {
         (variable surviving (type
           (value-type int)) (expr
           (literal 5))))))
-  (bad-top-level)
-  (bad-top-level)
-  (bad-top-level))
+  (bad-top-level variable)
+  (bad-top-level type-definition)
+  (bad-top-level function))

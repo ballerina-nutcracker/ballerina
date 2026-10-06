@@ -34,4 +34,4 @@ public int sibling = surviving();
       (bad-stmt)
       (return
         (literal 7))))
-  (bad-top-level))
+  (bad-top-level variable))

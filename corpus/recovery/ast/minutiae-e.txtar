@@ -25,7 +25,7 @@ function valid() {}
 -- ast --
 (compilation-unit (position 1:1 1:1)
 (package-id $anon . 0.0.0)
-  (bad-top-level (position 1:1 19:1))
+  (bad-top-level function (position 1:1 19:1))
   (function (position 19:1 23:1) foo () (
     (value-type (position <built-in>) null))
     (block-function-body (position 19:16 23:1)

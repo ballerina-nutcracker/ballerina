@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -63,8 +64,8 @@ func TestRecovery(t *testing.T) {
 				t.Fatal(err)
 			}
 			sourceName := strings.TrimSuffix(filepath.Base(inputPath), ".txtar") + ".bal"
-			if len(archive.Files) != 2 || archive.Files[0].Name != sourceName || archive.Files[1].Name != "ast" {
-				t.Fatalf("expected exactly %s and ast sections in %s", sourceName, inputPath)
+			if len(archive.Files) < 2 || archive.Files[0].Name != sourceName || archive.Files[1].Name != "ast" {
+				t.Fatalf("expected %s and ast sections in %s", sourceName, inputPath)
 			}
 			content := string(archive.Files[0].Data)
 			sourcePath := filepath.Join(filepath.Dir(inputPath), sourceName)
@@ -94,6 +95,16 @@ func TestRecovery(t *testing.T) {
 				actualAST = printer.Print(result.Package) + printLambdaResolutionTypes(semtypes.ContextFrom(env.GetTypeEnv()), result.Package)
 			}
 			compareRecoveryGolden(t, inputPath, archive, actualAST)
+			for _, section := range archive.Files[2:] {
+				switch section.Name {
+				case "symbols":
+					assertRecoverySymbols(t, result, string(section.Data))
+				case "diagnostic-counts":
+					assertRecoveryDiagnosticCounts(t, cx, string(section.Data))
+				default:
+					t.Fatalf("unexpected section %s in %s", section.Name, inputPath)
+				}
+			}
 		})
 		return nil
 	})
@@ -102,6 +113,43 @@ func TestRecovery(t *testing.T) {
 	}
 	if count == 0 {
 		t.Fatal("no recovery fixtures discovered")
+	}
+}
+
+func assertRecoverySymbols(t *testing.T, result *testphases.PipelineResult, expected string) {
+	t.Helper()
+	if result.Package == nil || result.Package.Scope == nil {
+		t.Fatal("symbol expectations require semantic recovery")
+	}
+	for _, expectation := range strings.Fields(expected) {
+		if len(expectation) < 2 || (expectation[0] != '+' && expectation[0] != '-') {
+			t.Fatalf("invalid symbol expectation %q: use +name or -name", expectation)
+		}
+		name := expectation[1:]
+		_, found := result.Package.Scope.GetSymbol(name)
+		if want := expectation[0] == '+'; found != want {
+			t.Errorf("symbol %s: present = %t, want %t", name, found, want)
+		}
+	}
+}
+
+func assertRecoveryDiagnosticCounts(t *testing.T, cx *context.CompilerContext, expected string) {
+	t.Helper()
+	for _, line := range strings.Split(strings.TrimSpace(expected), "\n") {
+		count, message, ok := strings.Cut(line, " ")
+		want, err := strconv.Atoi(count)
+		if !ok || err != nil || want < 0 {
+			t.Fatalf("invalid diagnostic-count expectation %q: use count message", line)
+		}
+		got := 0
+		for _, diagnostic := range cx.Diagnostics() {
+			if diagnostic.Message() == message {
+				got++
+			}
+		}
+		if got != want {
+			t.Errorf("diagnostic %q: count = %d, want %d", message, got, want)
+		}
 	}
 }
 
