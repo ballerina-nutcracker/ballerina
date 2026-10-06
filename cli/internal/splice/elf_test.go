@@ -78,10 +78,10 @@ func TestEmbedELF_RejectsNon64BitOrMalformedStub(t *testing.T) {
 	})
 }
 
-func TestEmbedELF_RejectsAlreadyPackedInput(t *testing.T) {
+func testEmbedELFRejectsAlreadyPackedInput(t *testing.T, stubs spliceTestStubs) {
 	t.Parallel()
 	packedOnce := filepath.Join(t.TempDir(), "packed-once")
-	if err := EmbedELF(linuxAmd64StubPath, []byte("payload"), packedOnce); err != nil {
+	if err := EmbedELF(stubs.linuxAmd64, []byte("payload"), packedOnce); err != nil {
 		t.Fatalf("first EmbedELF: %v", err)
 	}
 

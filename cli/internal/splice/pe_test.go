@@ -134,10 +134,10 @@ func TestEmbedPE_FailsClearlyWhenHeaderSlackInsufficient(t *testing.T) {
 	}
 }
 
-func TestEmbedPE_RejectsAlreadyPackedInput(t *testing.T) {
+func testEmbedPERejectsAlreadyPackedInput(t *testing.T, stubs spliceTestStubs) {
 	t.Parallel()
 	packedOnce := filepath.Join(t.TempDir(), "packed-once.exe")
-	if err := EmbedPE(windowsAmd64StubPath, []byte("payload"), packedOnce); err != nil {
+	if err := EmbedPE(stubs.windowsAmd64, []byte("payload"), packedOnce); err != nil {
 		t.Fatalf("first EmbedPE: %v", err)
 	}
 

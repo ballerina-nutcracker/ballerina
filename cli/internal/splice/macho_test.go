@@ -103,10 +103,10 @@ func TestEmbedMachO_FailsClearlyWhenHeaderSlackInsufficient(t *testing.T) {
 	}
 }
 
-func TestEmbedMachO_RejectsAlreadyPackedInput(t *testing.T) {
+func testEmbedMachORejectsAlreadyPackedInput(t *testing.T, stubs spliceTestStubs) {
 	t.Parallel()
 	packedOnce := filepath.Join(t.TempDir(), "packed-once")
-	if err := EmbedMachO(darwinArm64StubPath, []byte("payload"), packedOnce); err != nil {
+	if err := EmbedMachO(stubs.darwinArm64, []byte("payload"), packedOnce); err != nil {
 		t.Fatalf("first EmbedMachO: %v", err)
 	}
 

@@ -25,55 +25,56 @@ import (
 	"testing"
 )
 
-// Real cross-compiled balrt binaries, built once in TestMain and shared
-// read-only by every test below. Cross-compiled regardless of host so
-// these tests run anywhere.
-var (
-	linuxAmd64StubPath   string
-	windowsAmd64StubPath string
-	darwinArm64StubPath  string
-)
-
-func TestMain(m *testing.M) {
-	os.Exit(runTestMain(m))
+type spliceTestStubs struct {
+	linuxAmd64   string
+	windowsAmd64 string
+	darwinArm64  string
 }
 
-func runTestMain(m *testing.M) int {
-	tmpDir, err := os.MkdirTemp("", "splice-test-*") //nolint:usetesting // suite-owned; removed when runTestMain returns
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "creating temp dir:", err)
-		return 1
-	}
-	defer func() { _ = os.RemoveAll(tmpDir) }()
+func TestEmbedWithRealStubs(t *testing.T) {
+	stubs := buildSpliceTestStubs(t, t.TempDir())
+	t.Run("rejects unknown target OS", func(t *testing.T) {
+		testEmbedRejectsUnknownTargetOS(t, stubs)
+	})
+	t.Run("ELF rejects already-packed input", func(t *testing.T) {
+		testEmbedELFRejectsAlreadyPackedInput(t, stubs)
+	})
+	t.Run("PE rejects already-packed input", func(t *testing.T) {
+		testEmbedPERejectsAlreadyPackedInput(t, stubs)
+	})
+	t.Run("Mach-O rejects already-packed input", func(t *testing.T) {
+		testEmbedMachORejectsAlreadyPackedInput(t, stubs)
+	})
+}
 
+func buildSpliceTestStubs(t *testing.T, tmpDir string) spliceTestStubs {
+	t.Helper()
 	repoRoot, err := moduleRoot()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+		t.Fatal(err)
 	}
 
-	stubs := []struct {
+	stubs := spliceTestStubs{}
+	targets := []struct {
 		dst          *string
 		goos, goarch string
 	}{
-		{&linuxAmd64StubPath, "linux", "amd64"},
-		{&windowsAmd64StubPath, "windows", "amd64"},
-		{&darwinArm64StubPath, "darwin", "arm64"},
+		{&stubs.linuxAmd64, "linux", "amd64"},
+		{&stubs.windowsAmd64, "windows", "amd64"},
+		{&stubs.darwinArm64, "darwin", "arm64"},
 	}
-	for _, s := range stubs {
-		name := "balrt-" + s.goos + "-" + s.goarch
-		if s.goos == "windows" {
+	for _, target := range targets {
+		name := "balrt-" + target.goos + "-" + target.goarch
+		if target.goos == "windows" {
 			name += ".exe"
 		}
 		outPath := filepath.Join(tmpDir, name)
-		if err := crossBuildBalrt(repoRoot, outPath, s.goos, s.goarch); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return 1
+		if err := crossBuildBalrt(repoRoot, outPath, target.goos, target.goarch); err != nil {
+			t.Fatal(err)
 		}
-		*s.dst = outPath
+		*target.dst = outPath
 	}
-
-	return m.Run()
+	return stubs
 }
 
 // moduleRoot resolves the repo root from this package's own directory:
@@ -112,10 +113,10 @@ func crossBuildBalrt(repoRoot, outPath, goos, goarch string) error {
 // valid linux/windows/darwin routes are exercised end-to-end by corpus's
 // per-platform bal build tests; this only covers the fail-loud path
 // ValidatePlatform makes unreachable in production.
-func TestEmbed_RejectsUnknownTargetOS(t *testing.T) {
+func testEmbedRejectsUnknownTargetOS(t *testing.T, stubs spliceTestStubs) {
 	t.Parallel()
 	outPath := filepath.Join(t.TempDir(), "packed")
-	if err := Embed(linuxAmd64StubPath, []byte("payload"), outPath, "plan9"); err == nil {
+	if err := Embed(stubs.linuxAmd64, []byte("payload"), outPath, "plan9"); err == nil {
 		t.Fatal("expected an error for an unrecognized targetOS")
 	}
 }
