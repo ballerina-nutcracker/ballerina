@@ -274,6 +274,7 @@ func (t *packageTypeResolver) internalError(msg string, loc diagnostics.Location
 }
 
 func (t *packageTypeResolver) unimplemented(msg string, loc diagnostics.Location) {
+	noteEphemeralUnimplemented(t)
 	t.ctx.Unimplemented(msg, loc)
 }
 
@@ -448,6 +449,7 @@ func (f *functionTypeResolver) internalError(msg string, loc diagnostics.Locatio
 }
 
 func (f *functionTypeResolver) unimplemented(msg string, loc diagnostics.Location) {
+	noteEphemeralUnimplemented(f)
 	f.parentResolver.unimplemented(msg, loc)
 }
 
@@ -526,6 +528,9 @@ func (f *functionTypeResolver) compilerContext() *context.CompilerContext {
 // (a sequential phase), goes to the parent.
 func (f *functionTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool {
 	if !f.typeEnv().IsReady() {
+		if f.isEphemeral() {
+			return true
+		}
 		return f.parentResolver.ensureNotEmpty(ty, onEmpty)
 	}
 	if semtypes.IsEmpty(f.typeContext(), ty) {
@@ -990,22 +995,24 @@ func resolveInvokableSignature(t typeResolver, chain *binding, fn common.Functio
 	if restParam := fn.GetRestParam(); restParam != nil {
 		chain, _ = resolveSimpleVariableInner(t, chain, restParam, depth+1)
 		restTy = restParam.GetDeterminedType()
-		restParamListTy := restParamListType(t, restTy)
+		listDefn := semtypes.NewListDefinition()
+		restParamListTy := listDefn.Define(t.typeEnv(), nil, semtypes.ListRest(restTy),
+			semtypes.ListMutability(semtypes.CellMutabilityNone))
 		setNodeType(t, restParam, restParamListTy)
 		updateSymbolType(t, restParam, restParamListTy)
 	}
-	signature, chain, ok := invokableSignatureTypes(t, chain, fn, paramTypes, restTy, depth)
+	returnTy, fnType, chain, ok := invokableSignatureTypes(t, chain, fn, paramTypes, restTy, depth)
 	if !ok {
 		return semtypes.SemType{}, chain, false
 	}
-	updateSymbolType(t, fn, signature.fnType)
+	updateSymbolType(t, fn, fnType)
 	sig := fnSym.TypedSignature()
 	sig.Flags |= fn.FuncSymbolFlags()
 	sig.ParamTypes = paramTypes
-	sig.ReturnType = signature.returnTy
+	sig.ReturnType = returnTy
 	sig.RestParamType = restTy
 	fnSym.SetTypedSignature(sig)
-	return signature.fnType, chain, true
+	return fnType, chain, true
 }
 
 // functionSignatureType computes the type of fn from its parameter, rest parameter and return type descriptors
@@ -1033,37 +1040,24 @@ func functionSignatureType(t typeResolver, chain *binding, fn *ast.BLangFunction
 			return semtypes.SemType{}, chain, false
 		}
 	}
-	signature, chain, ok := invokableSignatureTypes(t, chain, fn, paramTypes, restTy, 0)
-	return signature.fnType, chain, ok
+	_, fnType, chain, ok := invokableSignatureTypes(t, chain, fn, paramTypes, restTy, 0)
+	return fnType, chain, ok
 }
 
-type invokableSignature struct {
-	returnTy semtypes.SemType
-	fnType   semtypes.SemType
-}
-
-func invokableSignatureTypes(t typeResolver, chain *binding, fn common.FunctionDecl, paramTypes []semtypes.SemType, restTy semtypes.SemType, depth int) (invokableSignature, *binding, bool) {
+func invokableSignatureTypes(t typeResolver, chain *binding, fn common.FunctionDecl, paramTypes []semtypes.SemType, restTy semtypes.SemType, depth int) (returnTy semtypes.SemType, fnType semtypes.SemType, _ *binding, ok bool) {
 	paramListDefn := semtypes.NewListDefinition()
 	paramListTy := paramListDefn.Define(t.typeEnv(), paramTypes, semtypes.ListRest(restTy),
 		semtypes.ListMutability(semtypes.CellMutabilityNone))
-	returnTy := semtypes.Nil
+	returnTy = semtypes.Nil
 	if retTd := fn.GetReturnTypeDescriptor(); retTd != nil {
-		var ok bool
-		returnTy, chain, ok = resolveBType(t, chain, retTd, depth+1)
-		if !ok {
-			return invokableSignature{}, chain, false
+		if returnTy, chain, ok = resolveBType(t, chain, retTd, depth+1); !ok {
+			return semtypes.SemType{}, semtypes.SemType{}, chain, false
 		}
 	}
 	fnDefn := semtypes.NewFunctionDefinition()
-	fnType := fnDefn.Define(t.typeEnv(), paramListTy, returnTy,
+	fnType = fnDefn.Define(t.typeEnv(), paramListTy, returnTy,
 		semtypes.FunctionQualifiersFrom(t.typeEnv(), fn.IsIsolated(), fn.IsTransactional()))
-	return invokableSignature{returnTy: returnTy, fnType: fnType}, chain, true
-}
-
-func restParamListType(t typeResolver, elementTy semtypes.SemType) semtypes.SemType {
-	listDefn := semtypes.NewListDefinition()
-	return listDefn.Define(t.typeEnv(), nil, semtypes.ListRest(elementTy),
-		semtypes.ListMutability(semtypes.CellMutabilityNone))
+	return returnTy, fnType, chain, true
 }
 
 func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functionTypeResolver {
@@ -4080,21 +4074,17 @@ func resolveInferredTypedescDefault(t typeResolver, chain *binding, e *ast.BLang
 }
 
 func resolveTypedescExpr(t typeResolver, chain *binding, e *ast.BLangTypedescExpr) (semtypes.SemType, expressionEffect, bool) {
-	typeDesc := e.GetTypeDescriptor()
-	if typeDesc == nil {
-		if semtypes.IsZero(e.Constraint) {
-			t.internalError("typedesc expression has no type descriptor", e.GetPosition())
+	constraint := e.Constraint
+	if typeDesc := e.GetTypeDescriptor(); typeDesc != nil {
+		var ok bool
+		if constraint, chain, ok = resolveBType(t, chain, typeDesc.(ast.BType), 0); !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		ty := semtypes.TypedescContaining(t.typeEnv(), e.Constraint)
-		setNodeType(t, e, ty)
-		return ty, defaultExpressionEffect(chain), true
-	}
-	constraint, chain, ok := resolveBType(t, chain, typeDesc.(ast.BType), 0)
-	if !ok {
+		setTypedescConstraint(t, e, constraint)
+	} else if semtypes.IsZero(constraint) {
+		t.internalError("typedesc expression has no type descriptor", e.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	setTypedescConstraint(t, e, constraint)
 	ty := semtypes.TypedescContaining(t.typeEnv(), constraint)
 	setNodeType(t, e, ty)
 	return ty, defaultExpressionEffect(chain), true
@@ -4287,7 +4277,9 @@ func resolveNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpression, e
 }
 
 func resolveObjectNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpression, determinedTy semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
-	if !resolveNewArgumentDependencies(t, e.ArgsExprs) {
+	// A new expression inside a trial is an argument of an outer new expression, whose dependencies already include
+	// these arguments.
+	if !t.isEphemeral() && !resolveNewArgumentDependencies(t, e.ArgsExprs) {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	candidates, ok := constructibleAlternatives(t, e, determinedTy)
@@ -4306,6 +4298,7 @@ func resolveObjectNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpress
 		return finishObjectNew(t, chain, e, determinedTy, selected)
 	case candidateAmbiguous:
 		t.semanticError("ambiguous object type", e.GetPosition())
+	case candidateUnsupported:
 	default:
 		t.semanticError("failed to find a suitable object type", e.GetPosition())
 	}
@@ -4428,17 +4421,9 @@ func (r *newArgumentDependencyResolver) Visit(node ast.BLangNode) ast.Visitor {
 		return nil
 	}
 	switch ref := node.(type) {
-	case *ast.BLangVarRef:
-		if !ref.Symbol().IsEmpty() {
-			r.ok = r.t.ensureResolved(ref.Symbol(), 0)
-		}
-	case *ast.BLangConstRef:
-		if !ref.Symbol().IsEmpty() {
-			r.ok = r.t.ensureResolved(ref.Symbol(), 0)
-		}
-	case *ast.BLangUserDefinedType:
-		if !ref.Symbol().IsEmpty() {
-			r.ok = r.t.ensureResolved(ref.Symbol(), 0)
+	case *ast.BLangVarRef, *ast.BLangConstRef, *ast.BLangUserDefinedType:
+		if symbol := ref.(ast.BNodeWithSymbol).Symbol(); !symbol.IsEmpty() {
+			r.ok = r.t.ensureResolved(symbol, 0)
 		}
 	}
 	return r
@@ -4509,11 +4494,10 @@ func resolveTypeTestExpr(t typeResolver, chain *binding, e *ast.BLangTypeTestExp
 	}
 	tx := t.symbolType(ref)
 	ref = t.unnarrowedSymbol(ref)
-	testTy := e.Type.Type
-	trueTy := semtypes.Intersect(tx, testTy)
+	trueTy := semtypes.Intersect(tx, testedTy)
 	trueSym := narrowSymbol(t, ref, trueTy)
 	trueChain := &binding{ref: ref, narrowedSymbol: trueSym, prev: chain}
-	falseTy := semtypes.Diff(tx, testTy)
+	falseTy := semtypes.Diff(tx, testedTy)
 	falseSym := narrowSymbol(t, ref, falseTy)
 	falseChain := &binding{ref: ref, narrowedSymbol: falseSym, prev: chain}
 	functionSignatures, ok := typeTestFunctionSignatureRefs(t, e.Type.TypeDescriptor, e.GetPosition())
@@ -7287,7 +7271,6 @@ func resolveRemoteMethodCallAction(t typeResolver, chain *binding, expr *ast.BLa
 	}
 	setNodeType(t, expr.Name, semtypes.Never)
 	if methodRef, found := sourceObjectMethodSymbol(t, receiverTy, remoteMethodName); found {
-		setMethodSymbol(t, expr, methodRef)
 		return resolveFunctionCall(t, chain, expr, expr.ArgExprs, methodRef, expectedType)
 	}
 	symbolRef, retTy, effect, ok := finishResolveMethodCall(t, chain, receiverTy, remoteMethodName, expr.RawSymbol.(*common.DeferredMethodSymbol), expr.ArgExprs, expr)
@@ -7518,12 +7501,12 @@ func resolveOpaqueCallArgs(t typeResolver, chain *binding, inv invocable, args [
 		if i < len(sig.ParamTypes) {
 			paramTy = sig.ParamTypes[i]
 		}
-		tys, next, ok := resolveArgs(t, []ast.BLangExpression{arg}, chain, func(int) semtypes.SemType { return paramTy })
+		result, ok := resolveActionOrExpression(t, chain, arg, paramTy)
 		if !ok {
 			return callArgsResult{}, false
 		}
-		chain = next
-		argTys = append(argTys, tys[0])
+		chain = sequentialChain(t, result.effect)
+		argTys = append(argTys, result.ty)
 	}
 	return callArgsResult{argTys: argTys, callee: monoRef, calleeTy: t.symbolType(monoRef), lowered: lowered, chain: chain}, true
 }
@@ -8920,7 +8903,7 @@ func resolveObjectMemberType(t typeResolver, chain *binding, m ast.ObjectMember,
 		if ok {
 			setNodeType(t, m, valueTy)
 			t.setSymbolType(m.Symbol(), valueTy)
-			sig, sigOk := functionTypeTypedSignature(t, chain, &m.BLangFunctionType, depth+1)
+			sig, sigOk := functionTypeTypedSignature(t, chain, &m.BLangFunctionType, depth)
 			if !sigOk {
 				return semtypes.SemType{}, chain, false
 			}

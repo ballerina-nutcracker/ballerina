@@ -23,6 +23,15 @@ import (
 
 type ephemeralState struct {
 	depth int
+	// unimplementedReported records that a trial reported an unimplemented error. Compilation fails on that
+	// diagnostic, so a new expression whose trials all failed does not add its own.
+	unimplementedReported bool
+}
+
+func noteEphemeralUnimplemented(t typeResolver) {
+	if state := resolverEphemeralState(t); state != nil && state.depth > 0 {
+		state.unimplementedReported = true
+	}
 }
 
 func resolverEphemeralState(t typeResolver) *ephemeralState {
@@ -55,6 +64,8 @@ const (
 	candidateNone candidateOutcome = iota
 	candidateOne
 	candidateAmbiguous
+	// candidateUnsupported means no candidate survived and a trial reported an unimplemented error.
+	candidateUnsupported
 )
 
 // selectCandidate runs trial for each candidate while t is ephemeral and returns the only candidate whose trial
@@ -62,30 +73,39 @@ const (
 // again, for real, against the selected candidate.
 func selectCandidate[C any](t typeResolver, candidates []C, roots []ast.BLangExpression, trial func(C) bool) (C, candidateOutcome) {
 	var selected C
-	if len(candidates) < 2 {
-		t.internalError("candidate selection requires at least two candidates", diagnostics.Location{})
+	state := resolverEphemeralState(t)
+	if len(candidates) < 2 || state == nil {
+		t.internalError("candidate selection requires at least two candidates and an ephemeral state", diagnostics.Location{})
 		return selected, candidateNone
 	}
+	outerUnimplemented := state.unimplementedReported
+	state.unimplementedReported = false
+	survivors := runTrials(t, candidates, roots, trial)
+	unimplemented := state.unimplementedReported
+	state.unimplementedReported = outerUnimplemented || unimplemented
+	switch {
+	case len(survivors) == 1:
+		return survivors[0], candidateOne
+	case len(survivors) > 1:
+		return selected, candidateAmbiguous
+	case unimplemented:
+		return selected, candidateUnsupported
+	default:
+		return selected, candidateNone
+	}
+}
+
+func runTrials[C any](t typeResolver, candidates []C, roots []ast.BLangExpression, trial func(C) bool) []C {
 	exitEphemeral := enterEphemeral(t)
 	defer exitEphemeral()
-	survivors := 0
+	var survivors []C
 	for _, candidate := range candidates {
 		checkUnchanged := assertUnchanged(t, roots)
 		ok := trial(candidate)
 		checkUnchanged()
-		if !ok {
-			continue
+		if ok {
+			survivors = append(survivors, candidate)
 		}
-		survivors++
-		selected = candidate
 	}
-	switch survivors {
-	case 0:
-		return selected, candidateNone
-	case 1:
-		return selected, candidateOne
-	default:
-		var none C
-		return none, candidateAmbiguous
-	}
+	return survivors
 }

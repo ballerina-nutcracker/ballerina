@@ -31,7 +31,9 @@ type nodeCopy struct {
 }
 
 // nodeCopier records a struct copy of every node reachable from the roots. Child nodes are compared through their
-// own copies, so a slice of children that was replaced by an equal slice is not a difference.
+// own copies, so a slice of children that was replaced by an equal slice is not a difference. The copy shares slice
+// backing arrays, maps and non-node pointees with the live node, so a write through those is not detected; only
+// field assignments are.
 type nodeCopier struct {
 	t      typeResolver
 	copies []nodeCopy
