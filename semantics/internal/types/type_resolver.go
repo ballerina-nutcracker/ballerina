@@ -226,6 +226,9 @@ func (t *packageTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()
 		}
 		return true
 	}
+	if t.isEphemeral() {
+		return true
+	}
 	t.deferredEmptinessChecks = append(t.deferredEmptinessChecks, deferredEmptinessCheck{ty: ty, onEmpty: onEmpty})
 	return true
 }
@@ -271,13 +274,13 @@ func (t *packageTypeResolver) internalError(msg string, loc diagnostics.Location
 }
 
 func (t *packageTypeResolver) unimplemented(msg string, loc diagnostics.Location) {
-	if t.isEphemeral() {
-		return
-	}
 	t.ctx.Unimplemented(msg, loc)
 }
 
 func (t *packageTypeResolver) syntaxError(msg string, loc diagnostics.Location) {
+	if t.isEphemeral() {
+		return
+	}
 	t.ctx.SyntaxError(msg, loc)
 }
 
@@ -445,13 +448,13 @@ func (f *functionTypeResolver) internalError(msg string, loc diagnostics.Locatio
 }
 
 func (f *functionTypeResolver) unimplemented(msg string, loc diagnostics.Location) {
-	if f.isEphemeral() {
-		return
-	}
 	f.parentResolver.unimplemented(msg, loc)
 }
 
 func (f *functionTypeResolver) syntaxError(msg string, loc diagnostics.Location) {
+	if f.isEphemeral() {
+		return
+	}
 	f.parentResolver.syntaxError(msg, loc)
 }
 
@@ -986,39 +989,81 @@ func resolveInvokableSignature(t typeResolver, chain *binding, fn common.Functio
 	restTy := semtypes.Never
 	if restParam := fn.GetRestParam(); restParam != nil {
 		chain, _ = resolveSimpleVariableInner(t, chain, restParam, depth+1)
-		elementType := restParam.GetDeterminedType()
-		restTy = elementType
-		listDefn := semtypes.NewListDefinition()
-		restParamListTy := listDefn.Define(t.typeEnv(), nil, semtypes.ListRest(elementType),
-			semtypes.ListMutability(semtypes.CellMutabilityNone))
+		restTy = restParam.GetDeterminedType()
+		restParamListTy := restParamListType(t, restTy)
 		setNodeType(t, restParam, restParamListTy)
 		updateSymbolType(t, restParam, restParamListTy)
 	}
+	signature, chain, ok := invokableSignatureTypes(t, chain, fn, paramTypes, restTy, depth)
+	if !ok {
+		return semtypes.SemType{}, chain, false
+	}
+	updateSymbolType(t, fn, signature.fnType)
+	sig := fnSym.TypedSignature()
+	sig.Flags |= fn.FuncSymbolFlags()
+	sig.ParamTypes = paramTypes
+	sig.ReturnType = signature.returnTy
+	sig.RestParamType = restTy
+	fnSym.SetTypedSignature(sig)
+	return signature.fnType, chain, true
+}
+
+// functionSignatureType computes the type of fn from its parameter, rest parameter and return type descriptors
+// without writing anything. A defaulted parameter contributes the capture of its default provider to chain.
+func functionSignatureType(t typeResolver, chain *binding, fn *ast.BLangFunction) (semtypes.SemType, *binding, bool) {
+	restoreContext := setIsolatedContext(t, fn.IsIsolated())
+	defer restoreContext()
+	params := fn.GetParameters()
+	paramTypes := make([]semtypes.SemType, len(params))
+	for i := range params {
+		paramTy, paramChain, ok := resolveBType(t, chain, params[i].TypeNode(), 1)
+		if !ok {
+			return semtypes.SemType{}, chain, false
+		}
+		chain = paramChain
+		if params[i].Expr != nil {
+			chain = addCaptureGroup(chain, params[i].CaptureGroup())
+		}
+		paramTypes[i] = paramTy
+	}
+	restTy := semtypes.Never
+	if restParam := fn.GetRestParam(); restParam != nil {
+		var ok bool
+		if restTy, chain, ok = resolveBType(t, chain, restParam.TypeNode(), 1); !ok {
+			return semtypes.SemType{}, chain, false
+		}
+	}
+	signature, chain, ok := invokableSignatureTypes(t, chain, fn, paramTypes, restTy, 0)
+	return signature.fnType, chain, ok
+}
+
+type invokableSignature struct {
+	returnTy semtypes.SemType
+	fnType   semtypes.SemType
+}
+
+func invokableSignatureTypes(t typeResolver, chain *binding, fn common.FunctionDecl, paramTypes []semtypes.SemType, restTy semtypes.SemType, depth int) (invokableSignature, *binding, bool) {
 	paramListDefn := semtypes.NewListDefinition()
 	paramListTy := paramListDefn.Define(t.typeEnv(), paramTypes, semtypes.ListRest(restTy),
 		semtypes.ListMutability(semtypes.CellMutabilityNone))
-	var returnTy semtypes.SemType
+	returnTy := semtypes.Nil
 	if retTd := fn.GetReturnTypeDescriptor(); retTd != nil {
 		var ok bool
 		returnTy, chain, ok = resolveBType(t, chain, retTd, depth+1)
 		if !ok {
-			return semtypes.SemType{}, chain, false
+			return invokableSignature{}, chain, false
 		}
-
-	} else {
-		returnTy = semtypes.Nil
 	}
 	fnDefn := semtypes.NewFunctionDefinition()
 	fnType := fnDefn.Define(t.typeEnv(), paramListTy, returnTy,
 		semtypes.FunctionQualifiersFrom(t.typeEnv(), fn.IsIsolated(), fn.IsTransactional()))
-	updateSymbolType(t, fn, fnType)
-	sig := fnSym.TypedSignature()
-	sig.Flags |= fn.FuncSymbolFlags()
-	sig.ParamTypes = paramTypes
-	sig.ReturnType = returnTy
-	sig.RestParamType = restTy
-	fnSym.SetTypedSignature(sig)
-	return fnType, chain, true
+	return invokableSignature{returnTy: returnTy, fnType: fnType}, chain, true
+}
+
+func restParamListType(t typeResolver, elementTy semtypes.SemType) semtypes.SemType {
+	listDefn := semtypes.NewListDefinition()
+	return listDefn.Define(t.typeEnv(), nil, semtypes.ListRest(elementTy),
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
 }
 
 func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functionTypeResolver {
@@ -2394,6 +2439,9 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 	if e.HasInferredParams() {
 		return resolveInferredLambdaFunctionExpr(t, chain, e, expectedType)
 	}
+	if t.isEphemeral() {
+		return resolveEphemeralLambdaFunctionExpr(t, chain, e)
+	}
 	fnType, chain, ok := resolveFunctionSignature(t, chain, e.Function, 0)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -2436,6 +2484,17 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 	return fnType, defaultExpressionEffect(outerChain), true
 }
 
+// resolveEphemeralLambdaFunctionExpr types an explicit lambda from its signature alone. Its body and parameter
+// defaults are resolved by the final resolution; a candidate trial only needs the effect of constructing the lambda,
+// which is the capture of its defaults' and its body's capture groups.
+func resolveEphemeralLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambdaFunction) (semtypes.SemType, expressionEffect, bool) {
+	fnType, chain, ok := functionSignatureType(t, chain, e.Function)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	return fnType, defaultExpressionEffect(addCaptureGroup(chain, e.Function.CaptureGroup())), true
+}
+
 func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambdaFunction, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	cx := t.typeContext()
 	functionContext := semtypes.Intersect(expectedType, semtypes.Function)
@@ -2457,6 +2516,10 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 	arityTy := arityDef.Define(t.typeEnv(), arityTypes, semtypes.ListMutability(semtypes.CellMutabilityNone))
 	if semtypes.IsEmpty(cx, semtypes.Intersect(paramListTy, arityTy)) {
 		t.semanticError("anonymous function parameters are incompatible with the expected function type", e.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	if len(params) > 0 && t.isEphemeral() {
+		t.unimplemented("inferred anonymous function parameters are not supported while selecting among candidate types", e.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	paramTypes := make([]semtypes.SemType, len(params))
@@ -2485,12 +2548,13 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		flags = model.FuncSymbolFlagIsolated
 	}
 	fnSym := t.getSymbol(e.Function.Symbol()).(model.FunctionSymbol)
-	setFunctionTypedSignature(t, fnSym, model.TypedFunctionSignature{
+	sig := model.TypedFunctionSignature{
 		ParamTypes:    paramTypes,
 		ReturnType:    expectedReturnTy,
 		RestParamType: semtypes.Never,
 		Flags:         flags,
-	})
+	}
+	setFunctionTypedSignature(t, fnSym, sig)
 	ft := &functionTypeResolver{
 		atomSideTableBase: newAtomSideTableBase(),
 		parentResolver:    t,
@@ -2513,7 +2577,6 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 	returnTy := returnResult.ty
 	setNodeType(t, body, semtypes.Never)
 
-	sig := fnSym.TypedSignature()
 	sig.ReturnType = returnTy
 	setFunctionTypedSignature(t, fnSym, sig)
 	fnType := typeFromFunctionSignature(t, sig)
@@ -4877,6 +4940,10 @@ func resolveQueryExpr(
 	expr *ast.BLangQueryExpr,
 	expectedType semtypes.SemType,
 ) (semtypes.SemType, expressionEffect, bool) {
+	if t.isEphemeral() {
+		t.unimplemented("query expressions are not supported while selecting among candidate types", expr.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
 	if len(expr.QueryClauseList) < 2 {
 		t.semanticError("query expression requires from and select clauses", expr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -7022,6 +7089,9 @@ func finishResolveMethodCall(t typeResolver, chain *binding, receiverTy semtypes
 		t.semanticError("incompatible arguments for function call", node.GetPosition())
 		return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
 	}
+	if t.isEphemeral() {
+		return model.SymbolRef{}, retTy, defaultExpressionEffect(chain), true
+	}
 	sig := model.TypedFunctionSignature{ParamTypes: argTys, ReturnType: retTy}
 	symbolRef := t.createFunctionSymbol(methodSymbol.SymbolSpace(), methodName, sig, fnTy)
 	signatureRef := t.allocateFunctionSignature(make([]model.Param, len(argTys)), false)
@@ -7386,6 +7456,10 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, args
 }
 
 func monomorphizeDependentCall(t typeResolver, inv invocable, sym model.DependentlyTypedFunctionSymbol, fnSymbol model.SymbolRef, argTys []semtypes.SemType) (model.SymbolRef, semtypes.SemType, bool) {
+	if t.isEphemeral() {
+		monoSym := sym.Monomorphize(t.typeContext(), sym.Name(), fnSymbol, argTys)
+		return model.SymbolRef{}, typeFromFunctionSignature(t, monoSym.TypedSignature()), true
+	}
 	monoName := t.nextMonoFnName(sym.Name())
 	monoSym := sym.Monomorphize(t.typeContext(), monoName, fnSymbol, argTys)
 	scope := t.currentScope()
@@ -7968,7 +8042,38 @@ func resolveStreamCompletionType(t typeResolver, chain *binding, typeData *ast.T
 	return resolveTypeDataPair(t, chain, typeData, depth)
 }
 
+// typeDescriptorDeclaresSymbols reports whether resolving btype writes symbol state: method symbols of an object
+// type, named parameters of a function type, or the default function of a record field.
+func typeDescriptorDeclaresSymbols(btype ast.BType) bool {
+	switch ty := btype.(type) {
+	case *ast.BLangObjectType:
+		for m := range ty.Members() {
+			if _, isMethod := m.(*ast.BMethodDecl); isMethod {
+				return true
+			}
+		}
+	case *ast.BLangFunctionType:
+		for i := range ty.RequiredParams {
+			if !ty.RequiredParams[i].SymbolRef.IsEmpty() {
+				return true
+			}
+		}
+		return ty.RestParam != nil && !ty.RestParam.SymbolRef.IsEmpty()
+	case *ast.BLangRecordType:
+		for _, field := range ty.FieldPtrs() {
+			if field.Default != nil {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth int) (semtypes.SemType, *binding, bool) {
+	if t.isEphemeral() && typeDescriptorDeclaresSymbols(btype) {
+		t.unimplemented("type descriptors that declare symbols are not supported while selecting among candidate types", btype.(ast.BLangNode).GetPosition())
+		return semtypes.SemType{}, chain, false
+	}
 	switch ty := btype.(type) {
 	case *ast.BLangReturnTypeDescriptor:
 		return resolveBType(t, chain, ty.TypeDescriptor, depth)
@@ -9096,6 +9201,10 @@ func resolveXMLFilterExpr(t typeResolver, chain *binding, expr *ast.BLangXMLFilt
 }
 
 func resolveXMLStepExpr(t typeResolver, chain *binding, expr *ast.BLangXMLStepExpression, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	if t.isEphemeral() {
+		t.unimplemented("xml step expressions are not supported while selecting among candidate types", expr.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
 	lowered := expr.LoweredExpression
 	if lowered == nil {
 		var ok bool
