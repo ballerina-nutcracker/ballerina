@@ -254,7 +254,7 @@ Before declaring done, check every box:
 
 ### Documentation
 - [ ] `lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md` support table reflects current implementation (no stale `Not Yet Supported` rows for things just implemented).
-- [ ] `doc/library/README.md` aggregator updated (new row, recomputed Total footer, behavioural changes mirrored), and the repo-root `README.md` coverage summary matches its Total footer.
+- [ ] `doc/library/README.md` aggregator updated (new row, recomputed Total footer, behavioural changes mirrored), and the repo-root `README.md` coverage summary matches its Total footer and lists the package under `**Supported packages:**`.
 - [ ] `stdlib-readme-format` validation checklist passes.
 - [ ] `doc/library/subset<N>.md` (the subset agreed with the developer in Step 8) documents this module's newly-supported surface — created fresh if it's a new subset, extended if existing.
 

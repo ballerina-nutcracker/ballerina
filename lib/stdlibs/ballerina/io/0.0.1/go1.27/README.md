@@ -94,8 +94,8 @@ Support Levels:
 | File read — lines | Supported | `fileReadLines`. Terminal carriage characters stripped; trailing empty line excluded. |
 | File read — bytes | Supported | `fileReadBytes`. Returns `readonly & byte[]`. |
 | File read — JSON | Supported | `fileReadJson`. |
-| File read — stream of lines | Partially Supported | `fileReadLinesAsStream`. Returns `stream<string, Error?>`. Terminal carriage characters stripped; trailing empty line excluded. Consume with explicit `next()`/`close()`; iterating a stream with `foreach` or a query expression is not yet supported by the interpreter. |
-| File read — stream of blocks | Partially Supported | `fileReadBlocksAsStream`. Returns `stream<Block, Error?>` where `Block` is `readonly & byte[]`. Default `blockSize` is 4096. Consume with explicit `next()`/`close()`; iterating a stream with `foreach` or a query expression is not yet supported by the interpreter. |
+| File read — stream of lines | Partially Supported | `fileReadLinesAsStream`. Returns `stream<string, Error?>`. Terminal carriage characters stripped; trailing empty line excluded. Consume with explicit `next()`/`close()`; query expressions over a stream (`from ... in`) are not yet supported by the interpreter. |
+| File read — stream of blocks | Partially Supported | `fileReadBlocksAsStream`. Returns `stream<Block, Error?>` where `Block` is `readonly & byte[]`. Default `blockSize` is 4096. Consume with explicit `next()`/`close()`; query expressions over a stream (`from ... in`) are not yet supported by the interpreter. |
 | File write — string | Supported | `fileWriteString`. `OVERWRITE` and `APPEND` modes supported. |
 | File write — lines | Supported | `fileWriteLines`. `OVERWRITE` and `APPEND` modes supported; `\n` appended after each line. |
 | File write — bytes | Supported | `fileWriteBytes`. `OVERWRITE` and `APPEND` modes supported. |

@@ -76,7 +76,7 @@ Support Levels:
 |---|---|---|
 | Seconds type | Supported | |
 | UTC type | Partially Supported | Declared as a plain mutable `[int, decimal]` tuple instead of jBallerina's `readonly & [int, decimal]`; mutation is not guarded at runtime, so treat `Utc` values as immutable |
-| ZoneOffset record | Partially Supported | Declared as a plain open record instead of jBallerina's `readonly & record {\| ... \|}`; mutation is not guarded at runtime, so treat `ZoneOffset` values as immutable |
+| ZoneOffset record | Partially Supported | Declared as a plain closed `record {\| ... \|}` without jBallerina's `readonly &`; mutation is not guarded at runtime, so treat `ZoneOffset` values as immutable |
 | Day-of-week constants and type | Supported | |
 | Date record | Supported | |
 | TimeOfDay record | Supported | |
