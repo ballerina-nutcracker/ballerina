@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: bad type cast
+        at main(numeric-union3-p.bal:23)

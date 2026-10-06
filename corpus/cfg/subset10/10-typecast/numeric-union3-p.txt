@@ -1,0 +1,29 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable d (type
+        (value-type any)) (expr
+        (literal 2.5))))
+    (var-def
+      (variable r (type
+        (union-type
+          (union-type
+            (union-type
+              (value-type int)
+              (value-type float))
+            (value-type boolean))
+          (value-type null))) (expr
+        (type-conversion-expr
+          (simple-var-ref d)
+          (union-type
+            (union-type
+              (union-type
+                (value-type int)
+                (value-type float))
+              (value-type boolean))
+            (value-type null))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
