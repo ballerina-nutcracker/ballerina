@@ -1,0 +1,414 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function defaultId () (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (literal 40)
+          (literal 2)))))
+  (type-definition Person
+    (record-type
+      (field name
+        (value-type string))
+      (field age
+        (value-type int)
+        (literal 18))))
+  (type-definition Address
+    (record-type
+      (field city
+        (value-type string)
+        (literal Colombo))
+      (field country
+        (value-type string)
+        (literal Sri Lanka))))
+  (type-definition Employee
+    (record-type
+      (field name
+        (value-type string))
+      (field id
+        (value-type int)
+        (invocation defaultId ()))
+      (field address
+        (user-defined-type Address)
+        (mapping-constructor-expr))
+      (field previous
+        (array-type
+          (user-defined-type Address) dimensions: 1 ([]))
+        (list-constructor-expr))))
+  (type-definition Base
+    (record-type
+      (field active
+        (value-type boolean)
+        (literal true))))
+  (type-definition Manager
+    (record-type
+      (field name
+        (value-type string))
+      (field level
+        (value-type string)
+        (literal L1))))
+  (type-definition Node
+    (record-type
+      (field value
+        (value-type int)
+        (literal 0))
+      (field label
+        (value-type string)
+        (literal node))
+      (field next
+        (union-type
+          (user-defined-type Node)
+          (value-type null))
+        (literal <nil>))
+      (field children
+        (array-type
+          (user-defined-type Node) dimensions: 1 ([]))
+        (list-constructor-expr))))
+  (type-definition PersonRef
+    (user-defined-type Person))
+  (type-definition PersonRefRef
+    (user-defined-type PersonRef))
+  (type-definition OptPerson
+    (union-type
+      (user-defined-type Person)
+      (value-type null)))
+  (type-definition Holder
+    (record-type
+      (field owner
+        (user-defined-type PersonRef))
+      (field members
+        (array-type
+          (user-defined-type PersonRefRef) dimensions: 1 ([]))
+        (list-constructor-expr))
+      (field byName
+        (constrained-type
+          (builtin-ref-type map)
+          (user-defined-type PersonRef))
+        (mapping-constructor-expr))))
+  (type-definition Settings
+    (record-type
+      (field retries
+        (union-type
+          (value-type int)
+          (value-type null))
+        (literal 3))
+      (field ratio
+        (value-type float)
+        (literal 2))
+      (field tags
+        (array-type
+          (value-type string) dimensions: 1 ([]))
+        (list-constructor-expr))))
+  (type-definition Order
+    (record-type
+      (field price
+        (record-type
+          (field currency
+            (value-type string)
+            (literal LKR))
+          (field amount
+            (value-type int))))
+      (field lines
+        (array-type
+          (record-type
+            (field qty
+              (value-type int)
+              (literal 1))) dimensions: 1 ([]))
+        (list-constructor-expr))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal John))))))
+      (var-def
+        (variable person (type
+          (user-defined-type Person)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref value) (
+              (simple-var-ref Person)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref person))))
+      (var-def
+        (variable fromJson (type
+          (user-defined-type Person)) (expr
+          (checked-expr
+            (invocation fromJsonWithType expr:
+              (simple-var-ref value) (
+              (simple-var-ref Person)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fromJson))))
+      (var-def
+        (variable people (type
+          (array-type
+            (builtin-ref-type json) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (mapping-constructor-expr
+              (key-value
+                (literal name)
+                (literal A)))
+            (mapping-constructor-expr
+              (key-value
+                (literal name)
+                (literal B))
+              (key-value
+                (literal age)
+                (literal 5)))))))
+      (var-def
+        (variable persons (type
+          (array-type
+            (user-defined-type Person) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref people) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref persons))))
+      (var-def
+        (variable employeeData (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal Ann))
+            (key-value
+              (literal address)
+              (mapping-constructor-expr
+                (key-value
+                  (literal city)
+                  (literal Kandy))))
+            (key-value
+              (literal previous)
+              (list-constructor-expr
+                (mapping-constructor-expr)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal country)
+                    (literal India)))))))))
+      (var-def
+        (variable employee (type
+          (user-defined-type Employee)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref employeeData) (
+              (simple-var-ref Employee)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref employee))))
+      (var-def
+        (variable manager (type
+          (user-defined-type Manager)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref value) (
+              (simple-var-ref Manager)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref manager))))
+      (var-def
+        (variable nodeData (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 1))
+            (key-value
+              (literal next)
+              (mapping-constructor-expr
+                (key-value
+                  (literal label)
+                  (literal second))
+                (key-value
+                  (literal next)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal value)
+                      (literal 3))))))
+            (key-value
+              (literal children)
+              (list-constructor-expr
+                (mapping-constructor-expr)
+                (mapping-constructor-expr
+                  (key-value
+                    (literal value)
+                    (literal 9)))))))))
+      (var-def
+        (variable node (type
+          (user-defined-type Node)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref nodeData) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref node))))
+      (var-def
+        (variable refRef (type
+          (user-defined-type PersonRefRef)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref value) (
+              (simple-var-ref PersonRefRef)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref refRef))))
+      (var-def
+        (variable optPerson (type
+          (user-defined-type OptPerson)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref value) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref optPerson))))
+      (var-def
+        (variable holder (type
+          (user-defined-type Holder)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr
+                (key-value
+                  (literal owner)
+                  (simple-var-ref value))
+                (key-value
+                  (literal members)
+                  (list-constructor-expr
+                    (simple-var-ref value)))
+                (key-value
+                  (literal byName)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal j)
+                      (simple-var-ref value))))) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref holder))))
+      (var-def
+        (variable explicitNil (type
+          (user-defined-type Settings)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr
+                (key-value
+                  (literal retries)
+                  (literal <nil>))) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref explicitNil))))
+      (var-def
+        (variable withRest (type
+          (user-defined-type Settings)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr
+                (key-value
+                  (literal extra)
+                  (literal true))) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref withRest))))
+      (var-def
+        (variable first (type
+          (user-defined-type Settings)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr) ())))))
+      (expression-stmt
+        (invocation push expr:
+          (field-based-access tags
+            (simple-var-ref first)) (
+          (literal x))))
+      (var-def
+        (variable second (type
+          (user-defined-type Settings)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr) ())))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access tags
+            (simple-var-ref first))
+          (field-based-access tags
+            (simple-var-ref second)))))
+      (var-def
+        (variable order (type
+          (user-defined-type Order)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr
+                (key-value
+                  (literal price)
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal amount)
+                      (literal 10))))
+                (key-value
+                  (literal lines)
+                  (list-constructor-expr
+                    (mapping-constructor-expr)
+                    (mapping-constructor-expr
+                      (key-value
+                        (literal qty)
+                        (literal 4)))))) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref order))))
+      (var-def
+        (variable local (type
+          (record-type
+            (field mode
+              (value-type string)
+              (literal fast))
+            (field level
+              (value-type int)))) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr
+                (key-value
+                  (literal level)
+                  (literal 2))) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref local))))
+      (var-def
+        (variable localIncluded (type
+          (record-type
+            (field tag
+              (value-type string)
+              (literal t)))) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref localIncluded))))
+      (var-def
+        (variable missingName (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal age)
+              (literal 3))))))
+      (var-def
+        (variable noDefault (type
+          (union-type
+            (user-defined-type Person)
+            (error-type))) (expr
+          (invocation cloneWithType expr:
+            (simple-var-ref missingName) (
+            (simple-var-ref Person))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref noDefault)
+            (error-type))))))))
