@@ -249,12 +249,9 @@ def check_repo_readme(per_pkg):
     if listed is None:
         fail(REPO_README, "missing the '**Supported packages:**' list")
         return
-    links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", listed.group(1))
-    if [name for name, _ in links] != sorted(per_pkg):
-        fail(REPO_README, f"'Supported packages' list is {[n for n, _ in links]}, expected {sorted(per_pkg)}")
-    for name, target in links:
-        if target != f"{ROOT}/{name}/0.0.1/go1.27/README.md":
-            fail(REPO_README, f"'Supported packages' link for '{name}' points to '{target}'")
+    expect = ", ".join(f"[{pkg}]({ROOT}/{pkg}/0.0.1/go1.27/README.md)" for pkg in sorted(per_pkg))
+    if listed.group(1).strip() != expect:
+        fail(REPO_README, f"'Supported packages' list does not match the package READMEs; expected: {expect}")
 
 
 def main():
