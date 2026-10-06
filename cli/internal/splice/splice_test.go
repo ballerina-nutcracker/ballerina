@@ -32,6 +32,7 @@ type spliceTestStubs struct {
 }
 
 func TestEmbedWithRealStubs(t *testing.T) {
+	t.Parallel()
 	stubs := buildSpliceTestStubs(t, t.TempDir())
 	t.Run("rejects unknown target OS", func(t *testing.T) {
 		testEmbedRejectsUnknownTargetOS(t, stubs)
