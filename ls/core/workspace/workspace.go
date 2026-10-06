@@ -300,7 +300,7 @@ func (s *ProjectService) publish(change DocumentChange, sourceRoot string) (uint
 		s.publishLifecycle(sourceRoot, 1)
 		return 1, nil
 	}
-	if s.documentInCurrentPackage(entry.project, change) {
+	if s.documentInCurrentPackage(entry.project, change) && !importSetChanged(entry.project, change) {
 		entry.generation++
 		gen := entry.generation
 		s.mu.Unlock()
@@ -335,6 +335,24 @@ func (s *ProjectService) documentInCurrentPackage(project projects.Project, chan
 		return false
 	}
 	return module.Document(docID) != nil
+}
+
+// importSetChanged reports whether change's live text declares a different
+// import set than the same document in the project's current package. A
+// package resolves its dependencies once from the text it was loaded with, so
+// a changed import set needs a fresh Load. Only syntactically complete import
+// declarations count, so a half-typed import does not reload.
+func importSetChanged(project projects.Project, change DocumentChange) bool {
+	docID, ok := project.DocumentID(change.URI.Path())
+	if !ok {
+		return false
+	}
+	doc := project.CurrentPackage().Module(docID.ModuleID()).Document(docID)
+	live, ok := parseImportSet(change.Text)
+	if !ok {
+		return false
+	}
+	return !sameImportSet(live, importSet(doc.SyntaxTree()))
 }
 
 // publishLifecycle publishes ProjectRegistered (first load / kind transition,
