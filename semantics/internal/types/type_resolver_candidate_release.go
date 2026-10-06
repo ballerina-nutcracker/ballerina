@@ -14,13 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
+//go:build !debug
 
-class IntHolder { function init(int v, int marker) { var _ = v; var _ = marker; } }
-class FloatHolder { function init(float v, string marker) { var _ = v; var _ = marker; } }
+package types
 
-public function main() returns error? {
-    json j = 1;
-    IntHolder|FloatHolder h = new (check j.cloneWithType(), 0); // @error dependently-typed call cannot be an argument of a new expression with more than one object type
-    io:println(h is IntHolder);
+import "github.com/ballerina-nutcracker/ballerina/ast"
+
+func assertUnchanged(_ typeResolver, _ []ast.BLangExpression) func() {
+	return func() {}
 }
