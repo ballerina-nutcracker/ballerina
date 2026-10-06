@@ -12,6 +12,12 @@ error[SEMANTIC_ERROR]: failed to find a suitable object type
 29 |     First|Second unsuitable = new (name = "x"); // @error failed to find a suitable object type
    |                               ^^^^^^^^^^^^^^^^
 
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> new-union-args1-e.bal:32:31
+   |
+32 |     First|object {} precise = new ("x"); // @error the only class is selected, so its argument is reported
+   |                               ^^^^^^^^^
+
 error[SEMANTIC_ERROR]: object type cannot be instantiated without a class
   --> new-union-args1-e.bal:31:27
    |

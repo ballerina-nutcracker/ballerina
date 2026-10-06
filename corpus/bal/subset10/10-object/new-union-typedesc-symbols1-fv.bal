@@ -13,26 +13,29 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 class First {
-    function init(int value = 1) { var _ = value; }
+    function init(any value, int marker) {
+        var _ = value;
+        var _ = marker;
+    }
 }
 
 class Second {
-    function init(int value = 2) { var _ = value; }
+    function init(any value, string marker) {
+        var _ = value;
+        var _ = marker;
+    }
 }
 
-class NoInit {}
+function double(int a) returns int => a * 2;
 
 public function main() {
-    First|Second ambiguous = new (); // @error ambiguous object type
-    First|Second unsuitable = new (name = "x"); // @error failed to find a suitable object type
-    NoInit extra = new (1); // @error too many arguments
-    object {} anonymous = new (); // @error object type cannot be instantiated without a class
-    First|object {} precise = new ("x"); // @error the only class is selected, so its argument is reported
-    var _ = ambiguous;
-    var _ = unsuitable;
-    var _ = extra;
-    var _ = anonymous;
-    var _ = precise;
+    any fn = double;
+    map<int> m = {a: 2};
+    First|Second a = new (fn is object { function run(); }, 1); // @error
+    First|Second b = new (<function (int a) returns int>fn, 1); // @error
+    First|Second c = new (<record {| int a = 1; |}>m, 1); // @error
+    var _ = a;
+    var _ = b;
+    var _ = c;
 }

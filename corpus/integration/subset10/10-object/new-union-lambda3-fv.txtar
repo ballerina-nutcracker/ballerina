@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inferred anonymous function parameters are not supported while selecting among candidate types
+  --> new-union-lambda3-fv.bal:47:28
+   |
+47 |     IntFn|FloatFn f = new (v => v + 1, 1); // @error
+   |                            ^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inferred anonymous function parameters are not supported while selecting among candidate types
+  --> new-union-lambda3-fv.bal:47:28
+   |
+47 |     IntFn|FloatFn f = new (v => v + 1, 1); // @error
+   |                            ^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inferred anonymous function parameters are not supported while selecting among candidate types
+  --> new-union-lambda3-fv.bal:48:36
+   |
+48 |     Outer|OtherOuter o = new (new (v => v + 1, 1), 1); // @error
+   |                                    ^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inferred anonymous function parameters are not supported while selecting among candidate types
+  --> new-union-lambda3-fv.bal:48:36
+   |
+48 |     Outer|OtherOuter o = new (new (v => v + 1, 1), 1); // @error
+   |                                    ^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inferred anonymous function parameters are not supported while selecting among candidate types
+  --> new-union-lambda3-fv.bal:48:36
+   |
+48 |     Outer|OtherOuter o = new (new (v => v + 1, 1), 1); // @error
+   |                                    ^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inferred anonymous function parameters are not supported while selecting among candidate types
+  --> new-union-lambda3-fv.bal:48:36
+   |
+48 |     Outer|OtherOuter o = new (new (v => v + 1, 1), 1); // @error
+   |                                    ^^^^^^^^^^

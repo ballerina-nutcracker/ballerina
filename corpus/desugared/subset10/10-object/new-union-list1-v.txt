@@ -1,0 +1,186 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (class-definition DecList
+    (variable values (type
+      (array-type
+        (value-type decimal) dimensions: 1 ([]))))
+    (function init (
+      (variable values (type
+        (array-type
+          (value-type decimal) dimensions: 1 ([]))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal values))
+          (simple-var-ref values))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition FloatList
+    (variable values (type
+      (array-type
+        (value-type float) dimensions: 1 ([]))))
+    (function init (
+      (variable values (type
+        (array-type
+          (value-type float) dimensions: 1 ([]))))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal values))
+          (simple-var-ref values))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition Pair
+    (variable pair (type
+      (tuple-type
+        (value-type decimal)
+        (value-type string))))
+    (function init (
+      (variable pair (type
+        (tuple-type
+          (value-type decimal)
+          (value-type string))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal pair))
+          (simple-var-ref pair))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition Strings
+    (variable values (type
+      (array-type
+        (value-type string) dimensions: 1 ([]))))
+    (function init (
+      (variable values (type
+        (array-type
+          (value-type string) dimensions: 1 ([]))))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal values))
+          (simple-var-ref values))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable l (type
+          (union-type
+            (user-defined-type DecList)
+            (user-defined-type FloatList))) (expr
+          (new (
+            (list-constructor-expr
+              (literal 1.50))
+            (literal 1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref l)
+          (user-defined-type DecList))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (index-based-access
+                  (simple-var-ref l)
+                  (literal values))
+                (literal 0)))))) ())
+      (block-stmt
+        (var-def
+          (variable p (type
+            (union-type
+              (user-defined-type Pair)
+              (user-defined-type Strings))) (expr
+            (new (
+              (list-constructor-expr
+                (literal 2.50)
+                (literal two))
+              (literal 0))))))
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (simple-var-ref p)
+              (user-defined-type Pair)))))
+        (var-def
+          (variable rest (type
+            (array-type
+              (value-type decimal) dimensions: 1 ([]))) (expr
+            (list-constructor-expr
+              (literal 3.5)
+              (literal 4.5)))))
+        (var-def
+          (variable s (type
+            (union-type
+              (user-defined-type DecList)
+              (user-defined-type FloatList))) (expr
+            (new (
+              (expression-thunk
+              (var-def
+                (variable $desugar$0 (expr
+                  (list-constructor-expr))))
+              (expression-stmt
+                (invocation lang.array push (
+                  (simple-var-ref $desugar$0)
+                  (literal 1.50))))
+              (var-def
+                (variable $desugar$1 (expr
+                  (simple-var-ref rest))))
+              (var-def
+                (variable $desugar$2 (expr
+                  (invocation lang.array length (
+                    (simple-var-ref $desugar$1))))))
+              (var-def
+                (variable $desugar$3 (expr
+                  (numeric-literal 0))))
+              (while
+                (binary-expr <
+                  (simple-var-ref $desugar$3)
+                  (simple-var-ref $desugar$2))
+                (block-stmt
+                  (expression-stmt
+                    (invocation lang.array push (
+                      (simple-var-ref $desugar$0)
+                      (index-based-access
+                        (simple-var-ref $desugar$1)
+                        (simple-var-ref $desugar$3)))))
+                  (assignment
+                    (simple-var-ref $desugar$3)
+                    (binary-expr +
+                      (simple-var-ref $desugar$3)
+                      (numeric-literal 1)))))
+              (simple-var-ref $desugar$0))
+              (literal 2))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref s)
+            (user-defined-type DecList))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation lang.array length (
+                  (index-based-access
+                    (simple-var-ref s)
+                    (literal values)))))))) ())
+        (block-stmt)))))

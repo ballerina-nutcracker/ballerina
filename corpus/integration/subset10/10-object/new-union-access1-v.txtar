@@ -1,0 +1,3 @@
+-- stdout --
+{"value":1} 7 {"name":"tagged"} <a>1</a>
+-- stderr --

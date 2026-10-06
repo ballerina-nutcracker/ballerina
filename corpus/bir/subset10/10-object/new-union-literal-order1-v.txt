@@ -1,0 +1,255 @@
+module $anon.. v 0.0.0;
+class Decimal {
+  value decimal
+
+  init(decimal) -> nil{
+    bb0 {
+      %3 = ConstantLoad value
+      self[%3] = value;
+      return;
+    }
+  }
+}
+class Float {
+  value float
+
+  init(float,int) -> nil{
+    bb0 {
+      %4 = ConstantLoad value
+      self[%4] = value;
+      _ = marker;
+      return;
+    }
+  }
+}
+class HexFloat {
+  value float
+
+  init(float,string) -> nil{
+    bb0 {
+      %4 = ConstantLoad value
+      self[%4] = value;
+      _ = marker;
+      return;
+    }
+  }
+}
+class HexDecimal {
+  value decimal
+
+  init(decimal,int) -> nil{
+    bb0 {
+      %4 = ConstantLoad value
+      self[%4] = value;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Decimal
+    %2 = ConstantLoad 1.50
+    %3 = %1.init(%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    d = %4;
+    %7 = newObject $anon/.:Decimal
+    %8 = ConstantLoad 1.50
+    %9 = %7.init(%8) -> bb5;
+  }
+  bb5 {
+    %11 = %9 is nil
+    %11 ? bb6 : bb7;
+  }
+  bb6 {
+    %10 = %7;
+    GOTO bb8;
+  }
+  bb7 {
+    %10 = %9;
+    GOTO bb8;
+  }
+  bb8 {
+    e = %10;
+    %14 = d is object { public function init(decimal) returns nil; decimal value }
+    %13 = %14;
+    %14 ? bb9 : bb10;
+  }
+  bb9 {
+    %15 = e is object { public function init(decimal) returns nil; decimal value }
+    %13 = %15;
+    GOTO bb10;
+  }
+  bb10 {
+    %13 ? bb11 : bb13;
+  }
+  bb11 {
+    PushScopeFrame 8
+    %1 = ConstantLoad value
+    %0 = (1, d)[%1];
+    %2 = %0;
+    %3 = ConstantLoad  
+    %5 = ConstantLoad value
+    %4 = (1, e)[%5];
+    %6 = %4;
+    %7 = println(%2,%3,%6) -> bb12;
+  }
+  bb12 {
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb13 {
+    PushScopeFrame 17
+    %0 = newObject $anon/.:Float
+    %1 = ConstantLoad 1.5
+    %2 = ConstantLoad 1
+    %3 = %0.init(%1,%2) -> bb14;
+  }
+  bb14 {
+    %5 = %3 is nil
+    %5 ? bb15 : bb16;
+  }
+  bb15 {
+    %4 = %0;
+    GOTO bb17;
+  }
+  bb16 {
+    %4 = %3;
+    GOTO bb17;
+  }
+  bb17 {
+    f = %4;
+    %7 = newObject $anon/.:Float
+    %8 = ConstantLoad 1.5
+    %9 = ConstantLoad 1
+    %10 = %7.init(%8,%9) -> bb18;
+  }
+  bb18 {
+    %12 = %10 is nil
+    %12 ? bb19 : bb20;
+  }
+  bb19 {
+    %11 = %7;
+    GOTO bb21;
+  }
+  bb20 {
+    %11 = %10;
+    GOTO bb21;
+  }
+  bb21 {
+    g = %11;
+    %15 = f is object { public function init(float, int) returns nil; float value }
+    %14 = %15;
+    %15 ? bb22 : bb23;
+  }
+  bb22 {
+    %16 = g is object { public function init(float, int) returns nil; float value }
+    %14 = %16;
+    GOTO bb23;
+  }
+  bb23 {
+    %14 ? bb24 : bb26;
+  }
+  bb24 {
+    PushScopeFrame 8
+    %1 = ConstantLoad value
+    %0 = (1, f)[%1];
+    %2 = %0;
+    %3 = ConstantLoad  
+    %5 = ConstantLoad value
+    %4 = (1, g)[%5];
+    %6 = %4;
+    %7 = println(%2,%3,%6) -> bb25;
+  }
+  bb25 {
+    PopScopeFrame
+    GOTO bb26;
+  }
+  bb26 {
+    PushScopeFrame 17
+    %0 = newObject $anon/.:HexFloat
+    %1 = ConstantLoad 5
+    %2 = ConstantLoad x
+    %3 = %0.init(%1,%2) -> bb27;
+  }
+  bb27 {
+    %5 = %3 is nil
+    %5 ? bb28 : bb29;
+  }
+  bb28 {
+    %4 = %0;
+    GOTO bb30;
+  }
+  bb29 {
+    %4 = %3;
+    GOTO bb30;
+  }
+  bb30 {
+    h = %4;
+    %7 = newObject $anon/.:HexDecimal
+    %8 = ConstantLoad 5
+    %9 = ConstantLoad 1
+    %10 = %7.init(%8,%9) -> bb31;
+  }
+  bb31 {
+    %12 = %10 is nil
+    %12 ? bb32 : bb33;
+  }
+  bb32 {
+    %11 = %7;
+    GOTO bb34;
+  }
+  bb33 {
+    %11 = %10;
+    GOTO bb34;
+  }
+  bb34 {
+    i = %11;
+    %15 = h is object { public function init(float, string) returns nil; float value }
+    %14 = %15;
+    %15 ? bb35 : bb36;
+  }
+  bb35 {
+    %16 = i is object { public function init(decimal, int) returns nil; decimal value }
+    %14 = %16;
+    GOTO bb36;
+  }
+  bb36 {
+    %14 ? bb37 : bb39;
+  }
+  bb37 {
+    PushScopeFrame 8
+    %1 = ConstantLoad value
+    %0 = (1, h)[%1];
+    %2 = %0;
+    %3 = ConstantLoad  
+    %5 = ConstantLoad value
+    %4 = (1, i)[%5];
+    %6 = %4;
+    %7 = println(%2,%3,%6) -> bb38;
+  }
+  bb38 {
+    PopScopeFrame
+    GOTO bb39;
+  }
+  bb39 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

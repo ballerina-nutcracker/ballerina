@@ -1,0 +1,110 @@
+(DecMap
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access values
+          (simple-var-ref self))
+        (simple-var-ref values))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(FloatMap
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access values
+          (simple-var-ref self))
+        (simple-var-ref values))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(PointHolder
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access point
+          (simple-var-ref self))
+        (simple-var-ref point))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(StringHolder
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access point
+          (simple-var-ref self))
+        (simple-var-ref point))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable m (type
+        (union-type
+          (user-defined-type DecMap)
+          (user-defined-type FloatMap))) (expr
+        (new (
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1.50)))
+          (literal 1))))))
+    (type-test-expr is
+      (simple-var-ref m)
+      (user-defined-type DecMap))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (field-based-access values
+            (simple-var-ref m))
+          (literal a)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable x (type
+        (value-type decimal)) (expr
+        (literal 1.25))))
+    (var-def
+      (variable p (type
+        (union-type
+          (user-defined-type PointHolder)
+          (user-defined-type StringHolder))) (expr
+        (new (
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (simple-var-ref x)))
+          (literal 0))))))
+    (type-test-expr is
+      (simple-var-ref p)
+      (user-defined-type PointHolder))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (field-based-access point
+            (simple-var-ref p)))
+        (literal  )
+        (field-based-access y
+          (field-based-access point
+            (simple-var-ref p))))))
+  )
+  (bb4 (bb3 bb2) ())
+)
