@@ -3335,21 +3335,16 @@ func pickNumericType(t typeResolver, n *ast.BLangLiteral, candidates semtypes.Se
 }
 
 func resolveAsInt(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bool) {
+	text := n.OriginalValue
 	var intVal int64
-	switch v := n.GetValue().(type) {
+	value, _ := balCommon.ParseIntLiteral(text)
+	switch v := value.(type) {
 	case int64:
 		intVal = v
 	case float64:
 		intVal = int64(v)
-	case string:
-		parsed, err := strconv.ParseInt(v, 0, 64)
-		if err != nil {
-			t.syntaxError(fmt.Sprintf("invalid int literal: %s", v), n.GetPosition())
-			return semtypes.SemType{}, false
-		}
-		intVal = parsed
 	default:
-		t.internalError(fmt.Sprintf("unexpected int literal value type: %T", n.GetValue()), n.GetPosition())
+		t.internalError(fmt.Sprintf("invalid int literal: %s", text), n.GetPosition())
 		return semtypes.SemType{}, false
 	}
 	n.SetValue(intVal)
@@ -3357,37 +3352,33 @@ func resolveAsInt(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bool) 
 }
 
 func resolveAsFloat(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bool) {
+	text := n.OriginalValue
 	var floatVal float64
-	switch v := n.GetValue().(type) {
-	case string:
-		parsed, ok := parseFloatValue(t, v, n.GetPosition())
+	value, _ := balCommon.ParseIntLiteral(text)
+	switch v := value.(type) {
+	case int64:
+		floatVal = float64(v)
+	case float64:
+		floatVal = v
+	default:
+		if balCommon.HasHexIndicator(text) {
+			text = balCommon.NormalizeHexFloatLiteral(text)
+		}
+		parsed, ok := parseFloatValue(t, text, n.GetPosition())
 		if !ok {
 			return semtypes.SemType{}, false
 		}
 		floatVal = parsed
-	case float64:
-		floatVal = v
-	case int64:
-		floatVal = float64(v)
-	default:
-		t.internalError(fmt.Sprintf("unexpected float literal value type: %T", v), n.GetPosition())
-		return semtypes.SemType{}, false
 	}
 	n.SetValue(floatVal)
 	return semtypes.FloatConst(floatVal), true
 }
 
 func resolveAsDecimal(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bool) {
+	text := n.OriginalValue
 	var decVal *decimal.Decimal
-	switch v := n.GetValue().(type) {
-	case string:
-		parsed, ok := parseDecimalValue(t, stripFloatingPointTypeSuffix(v), n.GetPosition())
-		if !ok {
-			return semtypes.SemType{}, false
-		}
-		decVal = parsed
-	case *decimal.Decimal:
-		decVal = v
+	value, _ := balCommon.ParseIntLiteral(text)
+	switch v := value.(type) {
 	case int64:
 		decVal = decimal.FromInt64(v)
 	case float64:
@@ -3398,8 +3389,11 @@ func resolveAsDecimal(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bo
 		}
 		decVal = d
 	default:
-		t.internalError(fmt.Sprintf("unexpected decimal literal value type: %T", v), n.GetPosition())
-		return semtypes.SemType{}, false
+		parsed, ok := parseDecimalValue(t, stripFloatingPointTypeSuffix(text), n.GetPosition())
+		if !ok {
+			return semtypes.SemType{}, false
+		}
+		decVal = parsed
 	}
 	n.SetValue(decVal)
 	return semtypes.DecimalConst(*decVal), true
