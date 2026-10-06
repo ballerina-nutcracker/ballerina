@@ -19,12 +19,13 @@ package native
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	"maps"
-	"mime"
 	"mime/multipart"
+	"mime/quotedprintable"
 	"net/textproto"
 	"slices"
 	"strings"
@@ -71,24 +72,25 @@ func multipartBoundary(contentType string) (baseType, boundary string, isComposi
 	if contentType == "" {
 		return "", "", false
 	}
-	mediaType, params, err := mime.ParseMediaType(contentType)
+	mt, err := parseMediaType(contentType)
 	if err != nil {
 		return contentType, "", false
 	}
-	primaryType := strings.ToLower(strings.SplitN(mediaType, "/", 2)[0])
-	switch primaryType {
+	baseType = mt.primaryType + "/" + mt.subType
+	switch mt.primaryType {
 	case "multipart":
-		return mediaType, params["boundary"], true
+		return baseType, mt.param("boundary"), true
 	case "message":
-		return mediaType, "", true
+		return baseType, "", true
 	default:
-		return mediaType, "", false
+		return baseType, "", false
 	}
 }
 
 // decodeMultipart splits a raw multipart body into per-part Entity values, defaulting
 // an absent per-part Content-Type to "text/plain" (matching jBallerina's underlying
-// MIME library default) and copying every part header verbatim.
+// MIME library default), copying every part header verbatim and transfer-decoding
+// each part body.
 //
 // A missing boundary is a ParserError here; jBallerina instead silently returns an
 // empty Entity[] in this case (it never attempts to decode a manually-set byte array
@@ -100,7 +102,7 @@ func decodeMultipart(ctx *extern.Context, data []byte, boundary string) (*values
 	reader := multipart.NewReader(bytes.NewReader(data), boundary)
 	var decoded []decodedPart
 	for {
-		part, err := reader.NextPart()
+		part, err := reader.NextRawPart()
 		if errors.Is(err, io.EOF) {
 			break
 		}
@@ -110,7 +112,7 @@ func decodeMultipart(ctx *extern.Context, data []byte, boundary string) (*values
 		if part.Header.Get("Content-Type") == "" {
 			part.Header.Set("Content-Type", "text/plain")
 		}
-		body, err := io.ReadAll(part)
+		body, err := io.ReadAll(transferDecoder(part, part.Header.Get("Content-Transfer-Encoding")))
 		if err != nil {
 			return nil, err
 		}
@@ -128,6 +130,19 @@ func decodeMultipart(ctx *extern.Context, data []byte, boundary string) (*values
 		setEntityBody(partObj, &entityBody{kind: bodyBytes, bytes: d.body})
 	}
 	return parts, nil
+}
+
+// transferDecoder decodes a part body per its Content-Transfer-Encoding, as jBallerina
+// does, while the header itself stays on the part. Unknown encodings pass through.
+func transferDecoder(r io.Reader, encoding string) io.Reader {
+	switch strings.ToLower(strings.TrimSpace(encoding)) {
+	case "base64":
+		return base64.NewDecoder(base64.StdEncoding, r)
+	case "quoted-printable":
+		return quotedprintable.NewReader(r)
+	default:
+		return r
+	}
 }
 
 // newBodyParts calls the private .bal newBodyParts helper so the parts and the list
