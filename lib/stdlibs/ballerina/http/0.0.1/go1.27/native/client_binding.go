@@ -191,11 +191,11 @@ func builderFromType(ctx *extern.Context, types *httpTypes, resp *values.Object,
 	tc := ctx.TypeCtx()
 	switch {
 	case narrowsTo(tc, target, semtypes.String):
-		return bindAtTarget(tc, textValue(resp), semtypes.String, target)
+		return bindAtTarget(ctx, textValue(resp), semtypes.String, target)
 	case narrowsTo(tc, target, semtypes.XML):
-		return bindAtTarget(tc, xmlValue(ctx, resp), semtypes.XML, target)
+		return bindAtTarget(ctx, xmlValue(ctx, resp), semtypes.XML, target)
 	case narrowsTo(tc, target, types.byteArrTy):
-		return bindAtTarget(tc, binaryValue(ctx, types, resp), types.byteArrTy, target)
+		return bindAtTarget(ctx, binaryValue(ctx, types, resp), types.byteArrTy, target)
 	default:
 		return jsonPayloadBuilder(ctx, types, resp, target)
 	}
@@ -210,7 +210,7 @@ func xmlPayloadBuilder(ctx *extern.Context, resp *values.Object,
 	if semtypes.IsEmpty(tc, semtypes.Intersect(target, semtypes.XML)) {
 		return incompatibleTargetError(tc, target, contentType)
 	}
-	return bindAtTarget(tc, xmlValue(ctx, resp), semtypes.XML, target)
+	return bindAtTarget(ctx, xmlValue(ctx, resp), semtypes.XML, target)
 }
 
 func textPayloadBuilder(ctx *extern.Context, types *httpTypes, resp *values.Object,
@@ -218,9 +218,9 @@ func textPayloadBuilder(ctx *extern.Context, types *httpTypes, resp *values.Obje
 	tc := ctx.TypeCtx()
 	switch {
 	case narrowsTo(tc, target, semtypes.String), admits(tc, target, semtypes.String):
-		return bindAtTarget(tc, textValue(resp), semtypes.String, target)
+		return bindAtTarget(ctx, textValue(resp), semtypes.String, target)
 	case narrowsTo(tc, target, types.byteArrTy), admits(tc, target, types.byteArrTy):
-		return bindAtTarget(tc, binaryValue(ctx, types, resp), types.byteArrTy, target)
+		return bindAtTarget(ctx, binaryValue(ctx, types, resp), types.byteArrTy, target)
 	default:
 		return incompatibleTargetError(tc, target, contentType)
 	}
@@ -231,9 +231,9 @@ func formPayloadBuilder(ctx *extern.Context, types *httpTypes, resp *values.Obje
 	tc := ctx.TypeCtx()
 	switch {
 	case narrowsTo(tc, target, types.mapStringTy), admits(tc, target, types.mapStringTy):
-		return bindAtTarget(tc, formDataValue(ctx, types, resp), types.mapStringTy, target)
+		return bindAtTarget(ctx, formDataValue(ctx, types, resp), types.mapStringTy, target)
 	case narrowsTo(tc, target, semtypes.String), admits(tc, target, semtypes.String):
-		return bindAtTarget(tc, textValue(resp), semtypes.String, target)
+		return bindAtTarget(ctx, textValue(resp), semtypes.String, target)
 	default:
 		return incompatibleTargetError(tc, target, contentType)
 	}
@@ -244,7 +244,7 @@ func blobPayloadBuilder(ctx *extern.Context, types *httpTypes, resp *values.Obje
 	tc := ctx.TypeCtx()
 	switch {
 	case narrowsTo(tc, target, types.byteArrTy), admits(tc, target, types.byteArrTy):
-		return bindAtTarget(tc, binaryValue(ctx, types, resp), types.byteArrTy, target)
+		return bindAtTarget(ctx, binaryValue(ctx, types, resp), types.byteArrTy, target)
 	default:
 		return incompatibleTargetError(tc, target, contentType)
 	}
@@ -260,14 +260,14 @@ func narrowsTo(tc semtypes.Context, target, builderTy semtypes.SemType) bool {
 // Turns a payload built at builderTy into the value target asks for. Targets narrower than
 // builderTy (an enum, a closed record, a tuple) must be converted, or the call site ends up
 // holding a value outside its declared type; a target builderTy already fits skips the clone.
-func bindAtTarget(tc semtypes.Context, payload values.BalValue, builderTy, target semtypes.SemType) values.BalValue {
+func bindAtTarget(ctx *extern.Context, payload values.BalValue, builderTy, target semtypes.SemType) values.BalValue {
 	if _, failed := payload.(*values.Error); failed {
 		return payload
 	}
-	if admits(tc, target, builderTy) {
+	if admits(ctx.TypeCtx(), target, builderTy) {
 		return payload
 	}
-	bound, convErr := values.CloneWithType(tc, payload, target)
+	bound, convErr := ctx.CloneWithType(payload, target)
 	if convErr != nil {
 		return payloadBindingError(convErr.Message, convErr)
 	}
@@ -279,7 +279,6 @@ func bindAtTarget(tc semtypes.Context, payload values.BalValue, builderTy, targe
 // Response target has already returned, so that check has no counterpart here.
 func jsonPayloadBuilder(ctx *extern.Context, types *httpTypes, resp *values.Object,
 	target semtypes.SemType) values.BalValue {
-	tc := ctx.TypeCtx()
 	body, err := responseBody(resp)
 	if err != nil {
 		return values.NewErrorWithMessage(err.Error())
@@ -288,7 +287,7 @@ func jsonPayloadBuilder(ctx *extern.Context, types *httpTypes, resp *values.Obje
 	if jsonErr != nil {
 		return jsonErr
 	}
-	bound, convErr := values.CloneWithType(tc, payload, target)
+	bound, convErr := ctx.CloneWithType(payload, target)
 	if convErr != nil {
 		return payloadBindingError(convErr.Message, convErr)
 	}
