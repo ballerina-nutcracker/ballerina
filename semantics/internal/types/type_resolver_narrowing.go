@@ -80,6 +80,10 @@ type expressionResult struct {
 	ty                semtypes.SemType
 	effect            expressionEffect
 	functionSignature model.FunctionSignatureRef
+	symbol            model.SymbolRef    // resolved callee of an invocation or action, narrowed symbol of a var/const ref; empty otherwise
+	lax               bool               // field access resolved as lax access
+	members           []expressionResult // member results of a list or mapping constructor, in source order
+	spreadMembers     []bool             // spread classification of a list constructor's members
 }
 
 type statementEffect struct {
@@ -469,10 +473,6 @@ func sequentialChain(t typeResolver, effect expressionEffect) *binding {
 	return mergeChains(t, effect.ifTrue, effect.ifFalse, semtypes.Union)
 }
 
-func singletonExprEffect(chain *binding, expr ast.BLangActionOrExpression) (expressionEffect, bool) {
-	return singletonResultEffect(chain, expr.GetDeterminedType())
-}
-
 // singletonResultEffect represents the outcome a constant-valued condition cannot
 // take. The impossible outcome keeps the expression's incoming chain: no
 // reachable use reads it, and importing the produced effects there would make an
@@ -521,4 +521,28 @@ func varRefExpInner(expr ast.BLangActionOrExpression) (model.SymbolRef, bool) {
 	default:
 		return model.SymbolRef{}, false
 	}
+}
+
+// withSingletonEffect replaces the effect of a result whose type is a boolean singleton: the branch that cannot be
+// taken narrows every symbol to never.
+func withSingletonEffect(chain *binding, result expressionResult) expressionResult {
+	singletonEffect, isSingleton := singletonResultEffect(chain, result.ty)
+	if !isSingleton {
+		return result
+	}
+	if isSingletonBool(result.ty, true) {
+		singletonEffect.ifTrue = result.effect.ifTrue
+	} else {
+		singletonEffect.ifFalse = result.effect.ifFalse
+	}
+	result.effect = singletonEffect
+	return result
+}
+
+// withRawSymbol records the committed callee of an already resolved invocation in result.
+func withRawSymbol(result expressionResult, symbol model.Symbol) expressionResult {
+	if callee, ok := symbol.(*model.SymbolRef); ok {
+		result.symbol = *callee
+	}
+	return result
 }
