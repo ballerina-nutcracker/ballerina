@@ -1,6 +1,5 @@
 (package
   (import-package ballerina io (as io))
-  (import-package ballerina lang error (as lang.error))
   (import-package ballerina lang value (as lang.value))
   (type-definition IntArray
     (array-type
@@ -43,13 +42,6 @@
         (union-type
           (value-type int)
           (value-type null)))))
-  (type-definition PersonWithDefault
-    (record-type
-      (field name
-        (value-type string))
-      (field age
-        (value-type int)
-        (literal 99))))
   (type-definition IntOrBoolean
     (union-type
       (value-type int)
@@ -286,44 +278,15 @@
               (simple-var-ref PersonNilRequired)))
             (error-type)))))
       (var-def
-        (variable missingWithDefault (type
+        (variable neitherIntNorBool (type
           (builtin-ref-type json)) (expr
-          (mapping-constructor-expr
-            (key-value
-              (literal name)
-              (literal Carol))))))
-      (var-def
-        (variable withDefault (type
-          (union-type
-            (user-defined-type PersonWithDefault)
-            (error-type))) (expr
-          (invocation lang.value fromJsonWithType (
-            (simple-var-ref missingWithDefault)
-            (simple-var-ref PersonWithDefault))))))
-      (if
-        (type-test-expr is
-          (simple-var-ref withDefault)
-          (error-type))
-        (block-stmt
-          (expression-stmt
-            (invocation io println (
-              (invocation lang.error message (
-                (simple-var-ref withDefault))))))) ())
-      (block-stmt
-        (var-def
-          (variable neitherIntNorBool (type
-            (builtin-ref-type json)) (expr
-            (literal hello))))
-        (expression-stmt
-          (invocation io println (
-            (type-test-expr is
-              (invocation lang.value fromJsonWithType (
-                (simple-var-ref neitherIntNorBool)
-                (simple-var-ref IntOrBoolean)))
-              (error-type)))))
-        (return
-          (literal <nil>)))))
-  (function $default$0 () ()
-    (block-function-body
+          (literal hello))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref neitherIntNorBool)
+              (simple-var-ref IntOrBoolean)))
+            (error-type)))))
       (return
-        (literal 99)))))
+        (literal <nil>)))))
