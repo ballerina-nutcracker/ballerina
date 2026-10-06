@@ -206,6 +206,7 @@ type (
 		Inclusions         []model.SymbolRef
 		InclusionPositions []diagnostics.Location // Positions of each inclusion, parallel to Inclusions
 		Definition         semtypes.Definition
+		FieldDefaults      []model.FieldDefault
 		RestType           BType
 		IsOpen             bool
 	}

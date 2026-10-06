@@ -61,6 +61,7 @@ func (bw *birWriter) serialize(pkg *bir.BIRPackage) (result []byte, err error) {
 	bw.writeGlobalVars(birbuf, pkg)
 	bw.writeClassDefs(birbuf, pkg)
 	bw.writeFunctions(birbuf, pkg)
+	bw.writeRecordTypes(birbuf, pkg)
 
 	buf := &bytes.Buffer{}
 	_, err = buf.Write([]byte(BIR_MAGIC))
@@ -102,6 +103,18 @@ func (bw *birWriter) writeGlobalVars(buf *bytes.Buffer, pkg *bir.BIRPackage) {
 		bw.writeStringCPEntry(buf, name.Value())
 		bw.writeFlags(buf, gv.Flags)
 		bw.writeType(buf, gv.GetType())
+	}
+}
+
+func (bw *birWriter) writeRecordTypes(buf *bytes.Buffer, pkg *bir.BIRPackage) {
+	bw.writeLength(buf, len(pkg.RecordTypes))
+	for _, recordType := range pkg.RecordTypes {
+		bw.writeType(buf, recordType.Type)
+		bw.writeLength(buf, len(recordType.FieldDefaults))
+		for _, field := range recordType.FieldDefaults {
+			bw.writeStringCPEntry(buf, field.FieldName)
+			bw.writeStringCPEntry(buf, field.FunctionLookupKey)
+		}
 	}
 }
 

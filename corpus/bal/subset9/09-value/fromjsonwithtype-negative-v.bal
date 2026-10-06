@@ -103,12 +103,11 @@ public function main() returns error? {
     json missingNilableReq = {"name": "Bob"};
     io:println(missingNilableReq.fromJsonWithType(PersonNilRequired) is error); // @output true
 
-    // a declared default does not make a missing field any less required —
-    // default-value injection is not supported yet
+    // a missing field with a declared default is filled from the default
     json missingWithDefault = {"name": "Carol"};
     PersonWithDefault|error withDefault = missingWithDefault.fromJsonWithType(PersonWithDefault);
-    if withDefault is error {
-        io:println(withDefault.message()); // @output '{| json... |}' value cannot be converted to '{| age: int, name: string, never... |}': field 'age' not present in value
+    if withDefault is PersonWithDefault {
+        io:println(withDefault.age); // @output 99
     }
 
     // a simple (non-structured) value matching no member of a scalar union,

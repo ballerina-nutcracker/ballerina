@@ -451,7 +451,58 @@ func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *bir.BIRPac
 			birPkg.ImmediateStopFunction = birFunc
 		}
 	}
+	birPkg.RecordTypes = collectRecordTypes(genCtx, ast)
 	return birPkg
+}
+
+// collectRecordTypes returns every record type descriptor of pkg, named or
+// anonymous, so the runtime can fill missing fields from their defaults.
+func collectRecordTypes(ctx *packageContext, pkg *ast.BLangPackage) []bir.BIRRecordType {
+	collector := &recordTypeCollector{ctx: ctx}
+	ast.Walk(collector, pkg)
+	return collector.recordTypes
+}
+
+type recordTypeCollector struct {
+	ctx         *packageContext
+	recordTypes []bir.BIRRecordType
+}
+
+// Visit handles the desugar-only nodes itself, since ast.Walk does not know them.
+func (c *recordTypeCollector) Visit(node ast.BLangNode) ast.Visitor {
+	switch n := node.(type) {
+	case *ast.BLangRecordType:
+		c.addRecordType(n)
+	case *desugar.BLangExpressionThunk:
+		for _, stmt := range n.InitStmts {
+			ast.Walk(c, stmt.(ast.BLangNode))
+		}
+		ast.Walk(c, n.Expr)
+		return nil
+	case *desugar.BLangServiceInit:
+		// The service is walked from the package's service list.
+		return nil
+	}
+	return c
+}
+
+func (c *recordTypeCollector) VisitTypeData(*ast.TypeData) ast.Visitor {
+	return c
+}
+
+func (c *recordTypeCollector) addRecordType(recordTy *ast.BLangRecordType) {
+	ty := recordTy.GetDeterminedType()
+	if semtypes.ToMappingAtomicType(c.ctx.typeCtx, ty) == nil {
+		return
+	}
+	fields := make([]bir.MappingConstructorDefaultEntry, 0, len(recordTy.FieldDefaults))
+	for _, fd := range recordTy.FieldDefaults {
+		fields = append(fields, bir.MappingConstructorDefaultEntry{
+			FieldName:         fd.FieldName,
+			FunctionLookupKey: buildFunctionLookupKeyFromSymbol(c.ctx, fd.FnRef),
+		})
+	}
+	c.recordTypes = append(c.recordTypes, bir.BIRRecordType{Type: ty, FieldDefaults: fields})
 }
 
 func addGlobalVar(birPkg *bir.BIRPackage, dcl bir.BIRGlobalVariableDcl) {
