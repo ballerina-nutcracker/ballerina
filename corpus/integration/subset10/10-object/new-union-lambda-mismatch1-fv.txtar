@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inferred anonymous function parameters are not supported while selecting among candidate types
+  --> new-union-lambda-mismatch1-fv.bal:32:29
+   |
+32 |     WithFn|WithInt w = new (v => v + 1, 1); // @error
+   |                             ^^^^^^^^^^

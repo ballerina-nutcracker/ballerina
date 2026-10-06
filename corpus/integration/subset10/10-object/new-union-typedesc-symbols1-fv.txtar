@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: type descriptors that declare symbols are not supported while selecting among candidate types
+  --> new-union-typedesc-symbols1-fv.bal:35:33
+   |
+35 |     First|Second a = new (fn is object { function run(); }, 1); // @error
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: type descriptors that declare symbols are not supported while selecting among candidate types
+  --> new-union-typedesc-symbols1-fv.bal:35:33
+   |
+35 |     First|Second a = new (fn is object { function run(); }, 1); // @error
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: type descriptors that declare symbols are not supported while selecting among candidate types
+  --> new-union-typedesc-symbols1-fv.bal:36:28
+   |
+36 |     First|Second b = new (<function (int a) returns int>fn, 1); // @error
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: type descriptors that declare symbols are not supported while selecting among candidate types
+  --> new-union-typedesc-symbols1-fv.bal:36:28
+   |
+36 |     First|Second b = new (<function (int a) returns int>fn, 1); // @error
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: type descriptors that declare symbols are not supported while selecting among candidate types
+  --> new-union-typedesc-symbols1-fv.bal:37:28
+   |
+37 |     First|Second c = new (<record {| int a = 1; |}>m, 1); // @error
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: type descriptors that declare symbols are not supported while selecting among candidate types
+  --> new-union-typedesc-symbols1-fv.bal:37:28
+   |
+37 |     First|Second c = new (<record {| int a = 1; |}>m, 1); // @error
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^

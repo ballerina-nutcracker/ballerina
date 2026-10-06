@@ -1,0 +1,158 @@
+module $anon.. v 0.0.0;
+class IntBox {
+  value int
+
+  init(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad value
+      self[%3] = value;
+      return;
+    }
+  }
+}
+class StringBox {
+  value string
+
+  init(string) -> nil{
+    bb0 {
+      %3 = ConstantLoad value
+      self[%3] = value;
+      return;
+    }
+  }
+}
+class IntOuter {
+  inner object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value }
+
+  init(object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value },int) -> nil{
+    bb0 {
+      %4 = ConstantLoad inner
+      self[%4] = inner;
+      _ = marker;
+      return;
+    }
+  }
+}
+class StringOuter {
+  inner object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value }
+
+  init(object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value },string) -> nil{
+    bb0 {
+      %4 = ConstantLoad inner
+      self[%4] = inner;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:IntOuter
+    %2 = newObject $anon/.:IntBox
+    %3 = ConstantLoad 5
+    %4 = %2.init(%3) -> bb1;
+  }
+  bb1 {
+    %6 = %4 is nil
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %5 = %2;
+    GOTO bb4;
+  }
+  bb3 {
+    %5 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    %7 = ConstantLoad 1
+    %8 = %1.init(%5,%7) -> bb5;
+  }
+  bb5 {
+    %10 = %8 is nil
+    %10 ? bb6 : bb7;
+  }
+  bb6 {
+    %9 = %1;
+    GOTO bb8;
+  }
+  bb7 {
+    %9 = %8;
+    GOTO bb8;
+  }
+  bb8 {
+    o = %9;
+    %12 = o is object { public function init(object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value }, int) returns nil; object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value } inner }
+    %12 ? bb9 : bb11;
+  }
+  bb9 {
+    PushScopeFrame 5
+    %1 = ConstantLoad inner
+    %0 = (1, o)[%1];
+    %2 = %0 is object { public function init(int) returns nil; int value }
+    %3 = %2;
+    %4 = println(%3) -> bb10;
+  }
+  bb10 {
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb11 {
+    PushScopeFrame 12
+    %0 = newObject $anon/.:StringOuter
+    %1 = newObject $anon/.:StringBox
+    %2 = ConstantLoad five
+    %3 = %1.init(%2) -> bb12;
+  }
+  bb12 {
+    %5 = %3 is nil
+    %5 ? bb13 : bb14;
+  }
+  bb13 {
+    %4 = %1;
+    GOTO bb15;
+  }
+  bb14 {
+    %4 = %3;
+    GOTO bb15;
+  }
+  bb15 {
+    %6 = ConstantLoad x
+    %7 = %0.init(%4,%6) -> bb16;
+  }
+  bb16 {
+    %9 = %7 is nil
+    %9 ? bb17 : bb18;
+  }
+  bb17 {
+    %8 = %0;
+    GOTO bb19;
+  }
+  bb18 {
+    %8 = %7;
+    GOTO bb19;
+  }
+  bb19 {
+    s = %8;
+    %11 = s is object { public function init(object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value }, string) returns nil; object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value } inner }
+    %11 ? bb20 : bb22;
+  }
+  bb20 {
+    PushScopeFrame 5
+    %1 = ConstantLoad inner
+    %0 = (1, s)[%1];
+    %2 = %0 is object { public function init(string) returns nil; string value }
+    %3 = %2;
+    %4 = println(%3) -> bb21;
+  }
+  bb21 {
+    PopScopeFrame
+    GOTO bb22;
+  }
+  bb22 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
