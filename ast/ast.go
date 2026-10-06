@@ -82,6 +82,43 @@ type (
 	bLangFunctionBodyBase struct {
 		bLangNodeBase
 	}
+
+	captureOwnerBase struct {
+		captureGroup model.CaptureGroupRef
+	}
+)
+
+// CaptureGroupOwner is a node whose evaluation makes a capture group effective.
+type CaptureGroupOwner interface {
+	BLangNode
+	CaptureGroup() model.CaptureGroupRef
+	SetCaptureGroup(group model.CaptureGroupRef)
+}
+
+func (b *captureOwnerBase) CaptureGroup() model.CaptureGroupRef {
+	return b.captureGroup
+}
+
+func (b *captureOwnerBase) SetCaptureGroup(group model.CaptureGroupRef) {
+	if b.captureGroup != 0 {
+		panic("capture group is already set")
+	}
+	b.captureGroup = group
+}
+
+var (
+	_ CaptureGroupOwner = &BLangFunction{}
+	_ CaptureGroupOwner = &BLangResourceMethod{}
+	_ CaptureGroupOwner = &BLangNamedWorkerDeclaration{}
+	// A defaulted parameter owns the group of its default expression, which is
+	// evaluated like a closure over the preceding parameters. BLangFunctionTypeParam
+	// and BField own their default expressions the same way.
+	_ CaptureGroupOwner = &BLangVariable{}
+	_ CaptureGroupOwner = &BLangWhile{}
+	_ CaptureGroupOwner = &BLangForeach{}
+	_ CaptureGroupOwner = &BLangQueryExpr{}
+	_ CaptureGroupOwner = &BLangFunctionTypeParam{}
+	_ CaptureGroupOwner = &BField{}
 )
 
 func (*bLangFunctionBodyBase) isFunctionBody() {}
@@ -96,6 +133,7 @@ type (
 
 	BLangNamedWorkerDeclaration struct {
 		bLangNodeBase
+		captureOwnerBase
 		Name           string
 		AnnAttachments []BLangAnnotationAttachment
 		ReturnType     *BLangReturnTypeDescriptor
@@ -231,6 +269,7 @@ type (
 
 	BLangVariable struct {
 		bLangVariableBase
+		captureOwnerBase
 		Name IdentifierNode
 	}
 
@@ -240,6 +279,7 @@ type (
 
 	bLangInvokableNodeBase struct {
 		bLangNodeBase
+		captureOwnerBase
 		Name                            IdentifierNode
 		symbol                          model.SymbolRef
 		AnnAttachments                  []BLangAnnotationAttachment

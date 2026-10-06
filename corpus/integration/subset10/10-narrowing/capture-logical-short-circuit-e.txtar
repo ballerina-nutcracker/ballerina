@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-logical-short-circuit-e.bal:40:21
+   |
+40 |             int y = x; // @error the RHS capture reaches the false outcome too
+   |                     ^
