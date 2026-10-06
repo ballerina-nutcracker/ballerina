@@ -1,0 +1,101 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1.8446744073709552e+19
+    value = %1;
+    %4 = value;
+    %5 = ConstantLoad 1.8446744073709552e+19
+    %6 = %5;
+    %3 = == %4 %6;
+    %7 = %3;
+    %8 = println(%7) -> bb1;
+  }
+  bb1 {
+    %9 = ConstantLoad 1.8446744073709552e+19
+    %10 = unknown %9;
+    negative = %10;
+    %13 = negative;
+    %14 = ConstantLoad 1.8446744073709552e+19
+    %15 = unknown %14;
+    %16 = %15;
+    %12 = == %13 %16;
+    %17 = %12;
+    %18 = println(%17) -> bb2;
+  }
+  bb2 {
+    %19 = ConstantLoad 9223372036854775807
+    maximum = %19;
+    %21 = ConstantLoad -9223372036854775808
+    minimum = %21;
+    %25 = maximum;
+    %26 = ConstantLoad 9223372036854775807
+    %27 = %26;
+    %24 = == %25 %27;
+    %23 = %24;
+    %24 ? bb3 : bb4;
+  }
+  bb3 {
+    %29 = minimum;
+    %30 = ConstantLoad -9223372036854775808
+    %31 = %30;
+    %28 = == %29 %31;
+    %23 = %28;
+    GOTO bb4;
+  }
+  bb4 {
+    %32 = %23;
+    %33 = println(%32) -> bb5;
+  }
+  bb5 {
+    %34 = ConstantLoad 9.223372036854776e+18
+    aboveMaximum = %34;
+    %36 = ConstantLoad 9.223372036854776e+18
+    %37 = unknown %36;
+    belowMinimum = %37;
+    %41 = aboveMaximum;
+    %42 = ConstantLoad 9.223372036854776e+18
+    %43 = %42;
+    %40 = == %41 %43;
+    %39 = %40;
+    %40 ? bb6 : bb7;
+  }
+  bb6 {
+    %45 = belowMinimum;
+    %46 = ConstantLoad 9.223372036854776e+18
+    %47 = unknown %46;
+    %48 = %47;
+    %44 = == %45 %48;
+    %39 = %44;
+    GOTO bb7;
+  }
+  bb7 {
+    %49 = %39;
+    %50 = println(%49) -> bb8;
+  }
+  bb8 {
+    %51 = ConstantLoad 1.8446744073709552e+19
+    tie = %51;
+    %53 = ConstantLoad 1.8446744073709556e+19
+    aboveTie = %53;
+    %57 = tie;
+    %58 = value;
+    %56 = == %57 %58;
+    %55 = %56;
+    %56 ? bb9 : bb10;
+  }
+  bb9 {
+    %60 = aboveTie;
+    %61 = ConstantLoad 1.8446744073709556e+19
+    %62 = %61;
+    %59 = == %60 %62;
+    %55 = %59;
+    GOTO bb10;
+  }
+  bb10 {
+    %63 = %55;
+    %64 = println(%63) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}
