@@ -1,0 +1,96 @@
+module $anon.. v 0.0.0;
+quote(string:Char) -> string{
+  bb0 {
+    %4 = ConstantLoad '
+    %3 = + %4 c;
+    %5 = ConstantLoad '
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad ab😀
+    s = %1;
+    %4 = ConstantLoad 2
+    %3 = s[%4];
+    c = %3;
+    %6 = length(c) -> bb1;
+  }
+  bb1 {
+    %7 = %6;
+    %8 = println(%7) -> bb2;
+  }
+  bb2 {
+    %11 = ConstantLoad 0
+    %10 = s[%11];
+    %13 = ConstantLoad 1
+    %12 = s[%13];
+    %9 = + %10 %12;
+    %14 = println(%9) -> bb3;
+  }
+  bb3 {
+    %16 = ConstantLoad 1
+    %15 = s[%16];
+    %17 = quote(%15) -> bb4;
+  }
+  bb4 {
+    %18 = println(%17) -> bb5;
+  }
+  bb5 {
+    %19 = ConstantLoad 1
+    i = %19;
+    %24 = i;
+    %25 = ConstantLoad 1
+    %26 = %25;
+    %23 = + %24 %26;
+    %22 = s[%23];
+    %27 = ConstantLoad 😀
+    %21 = == %22 %27;
+    %28 = %21;
+    %29 = println(%28) -> bb6;
+  }
+  bb6 {
+    %30 = ConstantLoad 
+    %31 = isOutOfRange(%30) -> bb7;
+  }
+  bb7 {
+    %32 = %31;
+    %33 = println(%32) -> bb8;
+  }
+  bb8 {
+    %34 = ConstantLoad é😀
+    %35 = isOutOfRange(%34) -> bb9;
+  }
+  bb9 {
+    %36 = %35;
+    %37 = println(%36) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}
+isOutOfRange(string) -> boolean{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    %4 = length(s) -> bb2;
+  }
+  bb2 {
+    %3 = s[%4];
+    %2 = %3;
+    GOTO bb3;
+  }
+  bb3 {
+    r = %2;
+    %6 = r is error
+    %0 = %6;
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %2
+  }
+}

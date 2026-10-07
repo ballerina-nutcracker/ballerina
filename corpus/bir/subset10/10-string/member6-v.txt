@@ -1,0 +1,123 @@
+module $anon.. v 0.0.0;
+hello() -> string{
+  bb0 {
+    %1 = ConstantLoad hello
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad q
+    ch = %1;
+    %4 = ConstantLoad 0
+    %3 = ch[%4];
+    %5 = println(%3) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad abc
+    lit = %6;
+    %9 = ConstantLoad 1
+    %8 = lit[%9];
+    %10 = println(%8) -> bb2;
+  }
+  bb2 {
+    %11 = ConstantLoad cd
+    u = %11;
+    %14 = ConstantLoad 1
+    %13 = u[%14];
+    %15 = println(%13) -> bb3;
+  }
+  bb3 {
+    %17 = ConstantLoad 2
+    %18 = ConstantLoad xyz
+    %16 = %18[%17];
+    %19 = println(%16) -> bb4;
+  }
+  bb4 {
+    %21 = ConstantLoad 0
+    %22 = ConstantLoad literal
+    %20 = %22[%21];
+    %23 = println(%20) -> bb5;
+  }
+  bb5 {
+    %25 = ConstantLoad 4
+    %26 = hello() -> bb6;
+  }
+  bb6 {
+    %24 = %26[%25];
+    %27 = println(%24) -> bb7;
+  }
+  bb7 {
+    %28 = ConstantLoad hey
+    %29 = ConstantLoad 1
+    %30 = newArray [string...][%29]{%28}
+    arr = %30;
+    %33 = ConstantLoad 2
+    %35 = ConstantLoad 0
+    %34 = arr[%35];
+    %32 = %34[%33];
+    %36 = println(%32) -> bb8;
+  }
+  bb8 {
+    %37 = ConstantLoad 1
+    b = %37;
+    %40 = ConstantLoad abc
+    %39 = %40[b];
+    %41 = println(%39) -> bb9;
+  }
+  bb9 {
+    %43 = ConstantLoad 0
+    %44 = ConstantLoad abc
+    %42 = %44[%43];
+    v = %42;
+    z = v;
+    %48 = ConstantLoad 2
+    %49 = ConstantLoad abc
+    %47 = %49[%48];
+    %50 = ConstantLoad 2
+    %51 = newArray [string:Char...][%50]{z, %47}
+    cs = %51;
+    %53 = println(cs) -> bb10;
+  }
+  bb10 {
+    %54 = ConstantLoad 
+    acc = %54;
+    %56 = ConstantLoad 0
+    $desugar$0 = %56;
+    %58 = ConstantLoad 3
+    $desugar$1 = %58;
+    GOTO bb11;
+  }
+  bb11 {
+    %61 = $desugar$0;
+    %62 = $desugar$1;
+    %60 = < %61 %62;
+    %60 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 12
+    i = (1, $desugar$0);
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %6 = i;
+    %3 = - %5 %6;
+    %7 = ConstantLoad abc
+    %2 = %7[%3];
+    %1 = + (1, acc) %2;
+    (1, acc) = %1;
+    %9 = (1, $desugar$0);
+    %10 = ConstantLoad 1
+    %11 = %10;
+    %8 = + %9 %11;
+    (1, $desugar$0) = %8;
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb13 {
+    %63 = println(acc) -> bb14;
+  }
+  bb14 {
+    return;
+  }
+}
