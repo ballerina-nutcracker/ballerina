@@ -81,7 +81,7 @@ type DispatchHandles struct {
 	LookupFunction       func(*Context, string, string, string) (any, bool)                    // org, module, name
 	Invoke               func(*Context, any, []values.BalValue) (values.BalValue, error)
 	Start                func(*Context, any, []values.BalValue) (<-chan values.BalValue, error)
-	RecordFieldDefault   func(*Context, semtypes.SemType, *semtypes.MappingAtomicType, string) (values.BalValue, bool) // record type, its atom, field
+	RecordFieldDefault   func(*Context, *semtypes.MappingAtomicType, string) (func() values.BalValue, bool) // record atom, field
 }
 
 // MetadataHandles carry runtime introspection implementations independently
@@ -156,11 +156,11 @@ func (c *Context) TypeAnnotations(td *values.TypeDesc) (TypeAnnotations, bool) {
 	return c.Env.metadata.TypeAnnotations(c, td)
 }
 
-// RecordFieldDefault evaluates the default value of field in the record type
-// recordTy, whose mapping atom is atom. The bool is false if that field
-// declares no default.
-func (c *Context) RecordFieldDefault(recordTy semtypes.SemType, atom *semtypes.MappingAtomicType, field string) (values.BalValue, bool) {
-	return c.Env.dispatch.RecordFieldDefault(c, recordTy, atom, field)
+// RecordFieldDefault returns a function evaluating the default value of field
+// in the record type whose mapping atom is atom. The bool is false if that
+// field declares no default the runtime can evaluate.
+func (c *Context) RecordFieldDefault(atom *semtypes.MappingAtomicType, field string) (func() values.BalValue, bool) {
+	return c.Env.dispatch.RecordFieldDefault(c, atom, field)
 }
 
 // CloneWithType performs the cloneWithType abstract operation, filling missing

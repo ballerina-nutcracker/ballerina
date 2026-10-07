@@ -18,6 +18,7 @@ package values
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -34,9 +35,9 @@ var nonStructuralTypes = []semtypes.SemType{
 	semtypes.Nil, semtypes.Boolean, semtypes.String, semtypes.XML, semtypes.Error,
 }
 
-// FieldDefaultFunc evaluates the default value declared for field in the record type target,
-// whose mapping atom is atom. The bool is false if that field declares no default.
-type FieldDefaultFunc func(target semtypes.SemType, atom *semtypes.MappingAtomicType, field string) (BalValue, bool)
+// FieldDefaultFunc returns a function evaluating the default value declared for field in the
+// record type whose mapping atom is atom. The bool is false if that field declares no default.
+type FieldDefaultFunc func(atom *semtypes.MappingAtomicType, field string) (func() BalValue, bool)
 
 // CloneWithType implements the cloneWithType abstract operation defined in the Ballerina spec
 // (https://ballerina.io/spec/lang/master/#section_16.6).
@@ -66,6 +67,9 @@ func CloneWithType(tc semtypes.Context, value BalValue, targetType semtypes.SemT
 // how any other total failure is reported.
 func convert(tc semtypes.Context, fieldDefault FieldDefaultFunc, value BalValue, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
 	candidates := candidateTypes(tc, SemTypeForValue(value), target)
+	if source, ok := value.(*Map); ok && len(candidates) > 1 {
+		candidates = preferCompleteMappings(tc, source, candidates)
+	}
 	children := make([]*conversionFailure, 0, len(candidates))
 	for _, candidate := range candidates {
 		result, err := tryConvert(tc, fieldDefault, value, candidate, visiting)
@@ -78,6 +82,40 @@ func convert(tc semtypes.Context, fieldDefault FieldDefaultFunc, value BalValue,
 		children = append(children, err)
 	}
 	return nil, conversionFailureFor(tc, value, target, children)
+}
+
+// preferCompleteMappings stably moves the mapping candidates source already has every required
+// field of ahead of those that need defaults, so a defaulted member wins only when nothing fits
+// source as it is.
+func preferCompleteMappings(tc semtypes.Context, source *Map, candidates []semtypes.SemType) []semtypes.SemType {
+	if !slices.ContainsFunc(candidates, func(candidate semtypes.SemType) bool {
+		return lacksRequiredField(tc, source, candidate)
+	}) {
+		return candidates
+	}
+	complete := make([]semtypes.SemType, 0, len(candidates))
+	var incomplete []semtypes.SemType
+	for _, candidate := range candidates {
+		if lacksRequiredField(tc, source, candidate) {
+			incomplete = append(incomplete, candidate)
+		} else {
+			complete = append(complete, candidate)
+		}
+	}
+	return append(complete, incomplete...)
+}
+
+func lacksRequiredField(tc semtypes.Context, source *Map, candidate semtypes.SemType) bool {
+	atomic := semtypes.ToMappingAtomicType(tc, candidate)
+	if atomic == nil {
+		return false
+	}
+	for _, name := range atomic.FieldNames() {
+		if _, ok := source.Get(name); !ok && !atomic.IsOptional(tc, name) {
+			return true
+		}
+	}
+	return false
 }
 
 // candidateTypes decomposes ty into its per-basic-type constituents (mapping/list alternatives
@@ -168,12 +206,13 @@ func tryConvert(tc semtypes.Context, fieldDefault FieldDefaultFunc, value BalVal
 
 func tryConvertMap(tc semtypes.Context, fieldDefault FieldDefaultFunc, source *Map, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
 	atomic := semtypes.ToMappingAtomicType(tc, target)
+	defaults, failure := missingFieldDefaults(tc, fieldDefault, source, target, atomic)
+	if failure != nil {
+		return nil, failure
+	}
 
-	entries := make([]MapEntry, 0, source.Len())
-	seen := make(map[string]struct{}, source.Len())
-
+	entries := make([]MapEntry, 0, source.Len()+len(defaults))
 	for _, key := range source.Keys() {
-		seen[key] = struct{}{}
 		fieldTy := mappingFieldType(tc, target, atomic, key)
 		val, _ := source.Get(key)
 		converted, err := convert(tc, fieldDefault, val, fieldTy, visiting)
@@ -183,12 +222,31 @@ func tryConvertMap(tc semtypes.Context, fieldDefault FieldDefaultFunc, source *M
 		entries = append(entries, MapEntry{Key: key, Value: converted})
 	}
 
+	for _, d := range defaults {
+		entries = append(entries, MapEntry{Key: d.name, Value: d.evaluate()})
+	}
+
+	readonly := semtypes.IsSubtype(tc, target, semtypes.ValReadonly)
+	return NewMap(target, atomic, readonly, entries), nil
+}
+
+type fieldDefault struct {
+	name     string
+	evaluate func() BalValue
+}
+
+// missingFieldDefaults returns the defaults of the fields of target absent from source, without
+// evaluating them, or a failure if a required field without a default is absent. Checking every
+// field first keeps defaults from running for a target that then rejects source.
+func missingFieldDefaults(tc semtypes.Context, defaultOf FieldDefaultFunc, source *Map, target semtypes.SemType,
+	atomic *semtypes.MappingAtomicType) ([]fieldDefault, *conversionFailure) {
+	var defaults []fieldDefault
 	for _, name := range atomic.FieldNames() {
-		if _, ok := seen[name]; ok {
+		if _, ok := source.Get(name); ok {
 			continue
 		}
-		if defaultValue, ok := fieldDefault(target, atomic, name); ok {
-			entries = append(entries, MapEntry{Key: name, Value: defaultValue})
+		if evaluate, ok := defaultOf(atomic, name); ok {
+			defaults = append(defaults, fieldDefault{name: name, evaluate: evaluate})
 			continue
 		}
 		if atomic.IsOptional(tc, name) {
@@ -196,9 +254,7 @@ func tryConvertMap(tc semtypes.Context, fieldDefault FieldDefaultFunc, source *M
 		}
 		return nil, missingRequiredField(tc, source, target, name)
 	}
-
-	readonly := semtypes.IsSubtype(tc, target, semtypes.ValReadonly)
-	return NewMap(target, atomic, readonly, entries), nil
+	return defaults, nil
 }
 
 func tryConvertList(tc semtypes.Context, fieldDefault FieldDefaultFunc, source *List, target semtypes.SemType, visiting map[BalValue]struct{}) (BalValue, *conversionFailure) {
