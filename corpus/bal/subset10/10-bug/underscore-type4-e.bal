@@ -16,17 +16,18 @@
 
 import ballerina/io;
 
-type _Value int;
+type Included record {|
+    *_; // @error
+|};
 
-function identity(_Value _value) returns _Value {
-    return _value;
-}
+type QuotedIncluded record {|
+    *'_; // @error
+|};
 
-public function main() {
-    _Value _value = identity(42);
-    int _ = _value;
-    _ = identity(1);
-    io:println(_value); // @output 42
-    '_Value '_quotedValue = identity(43);
-    io:println('_quotedValue); // @output 43
-}
+type QualifiedIncluded record {|
+    *io:_; // @error
+|};
+
+type QuotedQualifiedIncluded record {|
+    *io:'_; // @error
+|};

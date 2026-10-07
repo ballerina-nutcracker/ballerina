@@ -844,7 +844,7 @@ func (n *nodeBuilder) createTypeNodeInner(typeNode st.Node) (ast.TypeDescriptor,
 		pkgAlias, pkgOK := nameRefence[0].(*ast.BLangIdentifier)
 		typeName, nameOK := nameRefence[1].(*ast.BLangIdentifier)
 		if !pkgOK || !nameOK {
-			return nil, fmt.Errorf("invalid user-defined type name")
+			return n.badTypeNode(typeNode), nil
 		}
 		bLUserDefinedType.PkgAlias = *pkgAlias
 		bLUserDefinedType.TypeName = *typeName
@@ -959,19 +959,19 @@ func (n *nodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, to
 		}
 		return n.badIdentifier(token)
 	}
-	if token.IsMissing() || isUnsupportedIdentifierToken(token) {
+	if token.IsMissing() || token.Text() == "'" {
 		if n.mode != nodeBuilderModeRecover {
 			n.cx.InternalError("invalid identifier", pos)
 		}
 		return n.badIdentifier(token)
 	}
 	identifierName := token.Text()
+	if identifierName == "_" || identifierName == "'_" {
+		n.cx.SyntaxError("'_' is a keyword, and may not be used as an identifier", pos)
+		return n.badIdentifier(token)
+	}
 	identifier := createIdentifier(pos, &identifierName, &identifierName)
 	return &identifier
-}
-
-func isUnsupportedIdentifierToken(token st.Token) bool {
-	return token.Text() == "'" || token.Text() == "_" || token.Text() == "'_"
 }
 
 func (n *nodeBuilder) createIdentifierNodeFromModulePrefixToken(pos diagnostics.Location, token st.Token) ast.IdentifierNode {

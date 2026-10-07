@@ -24,6 +24,16 @@ main() -> nil{
     %11 = println(%10) -> bb3;
   }
   bb3 {
+    %12 = ConstantLoad 43
+    %13 = %12;
+    %14 = identity(%13) -> bb4;
+  }
+  bb4 {
+    _quotedValue = %14;
+    %16 = _quotedValue;
+    %17 = println(%16) -> bb5;
+  }
+  bb5 {
     return;
   }
 }

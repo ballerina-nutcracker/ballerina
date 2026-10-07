@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: intervening whitespaces are not allowed
+  --> underscore-type5-e.bal:17:31
+   |
+17 | type MissingColon transaction _; // @error
+   |
+
+error[SYNTAX_ERROR]: missing colon token
+  --> underscore-type5-e.bal:17:31
+   |
+17 | type MissingColon transaction _; // @error
+   |

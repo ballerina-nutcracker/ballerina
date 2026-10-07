@@ -27,4 +27,12 @@
           (literal 1))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref _value)))))))
+          (simple-var-ref _value))))
+      (var-def
+        (variable _quotedValue (type
+          (user-defined-type _Value)) (expr
+          (invocation identity (
+            (literal 43))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref _quotedValue)))))))

@@ -14,19 +14,4 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
-type _Value int;
-
-function identity(_Value _value) returns _Value {
-    return _value;
-}
-
-public function main() {
-    _Value _value = identity(42);
-    int _ = _value;
-    _ = identity(1);
-    io:println(_value); // @output 42
-    '_Value '_quotedValue = identity(43);
-    io:println('_quotedValue); // @output 43
-}
+type MissingColon transaction _; // @error

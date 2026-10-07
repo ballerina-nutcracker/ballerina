@@ -14,19 +14,17 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
+type _ int; // @error
+type '_ int; // @error
 
-type _Value int;
-
-function identity(_Value _value) returns _Value {
-    return _value;
+function _() { // @error
 }
 
-public function main() {
-    _Value _value = identity(42);
-    int _ = _value;
-    _ = identity(1);
-    io:println(_value); // @output 42
-    '_Value '_quotedValue = identity(43);
-    io:println('_quotedValue); // @output 43
+function '_() { // @error
+}
+
+function acceptUnderscore(int _) { // @error
+}
+
+function acceptQuotedUnderscore(int '_) { // @error
 }
