@@ -37,6 +37,9 @@ func (f *chainFinder) Visit(node ast.BLangNode) ast.Visitor {
 		}
 		return f
 	}
+	if _, isImport := node.(*ast.BLangImportPackage); isImport {
+		return nil
+	}
 	loc := node.GetPosition()
 	if locationHasUsableOffsets(loc) && (!locationContains(loc, f.offset) || loc.FileIndex() != f.fileIndex) {
 		return nil

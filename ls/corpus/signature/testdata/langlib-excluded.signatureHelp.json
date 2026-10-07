@@ -71,62 +71,37 @@
       "method": "textDocument/publishDiagnostics",
       "params": {
         "uri": "file:///tmp/signature.bal",
-        "diagnostics": [
-          {
-            "range": {
-              "start": {
-                "line": 18,
-                "character": 4
-              },
-              "end": {
-                "line": 18,
-                "character": 18
-              }
-            },
-            "severity": 1,
-            "code": "INTERNAL_ERROR",
-            "source": "ballerina",
-            "message": "lang.array symbol space not found"
-          },
-          {
-            "range": {
-              "start": {
-                "line": 18,
-                "character": 4
-              },
-              "end": {
-                "line": 18,
-                "character": 18
-              }
-            },
-            "severity": 1,
-            "code": "INTERNAL_ERROR",
-            "source": "ballerina",
-            "message": "lang.value symbol space not found"
-          },
-          {
-            "range": {
-              "start": {
-                "line": 18,
-                "character": 4
-              },
-              "end": {
-                "line": 18,
-                "character": 18
-              }
-            },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
-            "source": "ballerina",
-            "message": "method not found: push"
-          }
-        ]
+        "diagnostics": []
       }
     },
     {
       "jsonrpc": "2.0",
       "id": 2,
-      "result": null
+      "result": {
+        "signatures": [
+          {
+            "label": "push([int...] arr, int... vals)",
+            "parameters": [
+              {
+                "label": "[int...] arr",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`[int...]`arr**"
+                }
+              },
+              {
+                "label": "int... vals",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int...`vals**"
+                }
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 1
+      }
     }
   ]
 }

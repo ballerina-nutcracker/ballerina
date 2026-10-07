@@ -119,38 +119,6 @@
               }
             },
             "severity": 1,
-            "code": "INTERNAL_ERROR",
-            "source": "ballerina",
-            "message": "lang.int symbol space not found"
-          },
-          {
-            "range": {
-              "start": {
-                "line": 23,
-                "character": 9
-              },
-              "end": {
-                "line": 23,
-                "character": 32
-              }
-            },
-            "severity": 1,
-            "code": "INTERNAL_ERROR",
-            "source": "ballerina",
-            "message": "lang.value symbol space not found"
-          },
-          {
-            "range": {
-              "start": {
-                "line": 23,
-                "character": 9
-              },
-              "end": {
-                "line": 23,
-                "character": 32
-              }
-            },
-            "severity": 1,
             "code": "SEMANTIC_ERROR",
             "source": "ballerina",
             "message": "method not found: noSuchMethod"

@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -51,6 +52,9 @@ func At(ctx stdcontext.Context, sm compile.SealedModule, uri workspace.DocumentU
 		return Help{}, false, nil
 	}
 	argument := 0
+	if _, lowered := loweredMethodCallAlias(node); empty && lowered {
+		argument = 1
+	}
 	if !empty {
 		argument, ok = argumentIndex(node, args, paths[0], offset, fileIndex)
 		if !ok {
@@ -87,6 +91,10 @@ func emptyCallContext(paths [][]ast.BLangNode, call ast.BLangNode, args []ast.BL
 	if !locationHasUsableOffsets(loc) || loc.FileIndex() != fileIndex {
 		return false
 	}
+	alias, lowered := loweredMethodCallAlias(call)
+	if lowered {
+		args = args[1:]
+	}
 	for _, arg := range args {
 		if !callWideDefault(arg, loc) {
 			return false
@@ -98,12 +106,29 @@ func emptyCallContext(paths [][]ast.BLangNode, call ast.BLangNode, args []ast.BL
 			return false
 		}
 		for i := len(path) - 1; path[i] != call; i-- {
-			if !callWideDefault(path[i], loc) {
+			if !callWideDefault(path[i], loc) && !(lowered && path[i] == alias) {
 				return false
 			}
 		}
 	}
 	return true
+}
+
+// loweredMethodCallAlias returns the synthetic package alias of a call the type resolver rewrote
+// from x.f(args) to f(x, args...): the receiver is the first argument and the alias spans the whole call.
+func loweredMethodCallAlias(call ast.BLangNode) (ast.BLangNode, bool) {
+	inv, ok := call.(*ast.BLangInvocation)
+	if !ok || inv.Expr != nil || inv.PkgAlias == nil || len(inv.ArgExprs) == 0 {
+		return nil, false
+	}
+	alias, ok := inv.PkgAlias.(ast.BLangNode)
+	if !ok {
+		return nil, false
+	}
+	aliasLoc, loc := alias.GetPosition(), inv.GetPosition()
+	spansCall := locationHasUsableOffsets(aliasLoc) && aliasLoc.FileIndex() == loc.FileIndex() &&
+		aliasLoc.StartOffset() == loc.StartOffset() && aliasLoc.EndOffset() == loc.EndOffset()
+	return alias, spansCall
 }
 
 func callWideDefault(node ast.BLangNode, callLoc ast.Location) bool {
@@ -250,7 +275,14 @@ func callSignature(sm compile.SealedModule, node ast.BLangNode) (model.SymbolRef
 		return model.SymbolRef{}, "", model.UntypedFunctionSignature{}, false
 	}
 	sig, ok := cx.GetFunctionSignature(*ref)
-	return *ref, model.StripRemotePrefix(cx.SymbolName(*ref)), sig, ok
+	return *ref, model.StripRemotePrefix(cx.SymbolName(originRef(cx, *ref))), sig, ok
+}
+
+func originRef(cx *context.CompilerContext, ref model.SymbolRef) model.SymbolRef {
+	if mono, ok := cx.GetSymbol(ref).(model.MonomorphicFunctionSymbol); ok {
+		return mono.PolymorphicSymbol()
+	}
+	return ref
 }
 
 func render(sm compile.SealedModule, ref model.SymbolRef, name string, sig model.UntypedFunctionSignature, argument int) Help {
