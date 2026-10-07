@@ -25,6 +25,10 @@ type Mapping map<_>; // @error
 type Parenthesized (_); // @error
 type Qualified io:_; // @error
 type Predeclared int:_; // @error
+type QuotedAlias '_; // @error
+type QuotedArray '_[]; // @error
+type QuotedQualified io:'_; // @error
+type QuotedPredeclared int:'_; // @error
 
 _ moduleValue = 1; // @error
 
@@ -38,4 +42,7 @@ public function main() {
     [int, _] tupleValue = [1, 2]; // @error
     io:_ qualifiedValue = 1; // @error
     transaction:_ transactionValue = 1; // @error
+    '_ quotedValue = 1; // @error
+    io:'_ quotedQualifiedValue = 1; // @error
+    transaction:'_ quotedTransactionValue = 1; // @error
 }

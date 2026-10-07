@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type4-e.bal:20:6
+   |
+20 |     *_; // @error
+   |      ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type4-e.bal:24:6
+   |
+24 |     *'_; // @error
+   |      ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type4-e.bal:28:9
+   |
+28 |     *io:_; // @error
+   |         ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type4-e.bal:32:9
+   |
+32 |     *io:'_; // @error
+   |         ^^

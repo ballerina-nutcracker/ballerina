@@ -2429,7 +2429,7 @@ func (b *ballerinaParser) parseTypeDescriptorInternal(qualifiers []st.STNode, co
 	qualifiers = b.parseTypeDescQualifiers(qualifiers)
 	nextToken := b.peek()
 	if b.isQualifiedIdentifierPredeclaredPrefix(nextToken.Kind()) {
-		return b.validateTypeNameReference(b.parseQualifiedTypeRefOrTypeDesc(qualifiers, isInConditionalExpr))
+		return b.parseQualifiedTypeRefOrTypeDesc(qualifiers, isInConditionalExpr)
 	}
 	switch nextToken.Kind() {
 	case st.IDENTIFIER_TOKEN:
@@ -2464,7 +2464,7 @@ func (b *ballerinaParser) parseTypeDescriptorInternal(qualifiers []st.STNode, co
 		return b.parseDistinctTypeDesc(distinctKeyword, context)
 	case st.TRANSACTION_KEYWORD:
 		b.reportInvalidQualifierList(qualifiers)
-		return b.validateTypeNameReference(b.parseQualifiedIdentWithTransactionPrefix(context))
+		return b.parseQualifiedIdentWithTransactionPrefix(context)
 	default:
 		if isParameterizedTypeToken(nextToken.Kind()) {
 			b.reportInvalidQualifierList(qualifiers)
@@ -3426,29 +3426,7 @@ func (b *ballerinaParser) parseTypeReference() st.STNode {
 }
 
 func (b *ballerinaParser) parseTypeReferenceInner(isInConditionalExpr bool) st.STNode {
-	return b.validateTypeNameReference(b.parseQualifiedIdentifierInner(common.PARSER_RULE_CONTEXT_TYPE_REFERENCE, isInConditionalExpr))
-}
-
-func (b *ballerinaParser) validateTypeNameReference(reference st.STNode) st.STNode {
-	var name st.STNode
-	switch reference := reference.(type) {
-	case *st.STSimpleNameReferenceNode:
-		name = reference.Name
-	case *st.STQualifiedNameReferenceNode:
-		name = reference.Identifier
-	default:
-		return reference
-	}
-	token, ok := name.(st.STToken)
-	if !ok || !b.isUnderscoreToken(token) {
-		return reference
-	}
-	for _, diagnostic := range token.Diagnostics() {
-		if diagnostic.DiagnosticCode() == &common.ERROR_UNDERSCORE_AS_TYPE_NAME {
-			return reference
-		}
-	}
-	return st.Replace(reference, token, st.AddDiagnostic(token, &common.ERROR_UNDERSCORE_AS_TYPE_NAME))
+	return b.parseQualifiedIdentifierInner(common.PARSER_RULE_CONTEXT_TYPE_REFERENCE, isInConditionalExpr)
 }
 
 func (b *ballerinaParser) parseQualifiedIdentifier(currentCtx common.ParserRuleContext) st.STNode {
@@ -14457,7 +14435,7 @@ func (b *ballerinaParser) getTypeDescFromExpr(expression st.STNode) st.STNode {
 		return expression
 	case st.SIMPLE_NAME_REFERENCE,
 		st.QUALIFIED_NAME_REFERENCE:
-		return b.validateTypeNameReference(expression)
+		return expression
 	default:
 		var simpleTypeDescIdentifier st.STNode
 		simpleTypeDescIdentifier = st.CreateMissingTokenWithDiagnostics(
