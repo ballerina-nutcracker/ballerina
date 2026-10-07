@@ -71,14 +71,10 @@ type (
 		StartFunction         *BIRFunction
 		GracefulStopFunction  *BIRFunction
 		ImmediateStopFunction *BIRFunction
-		RecordTypes           []BIRRecordType
-	}
-
-	// BIRRecordType is a record type descriptor of the package, named or
-	// anonymous, with the default functions of its fields.
-	BIRRecordType struct {
-		Type          semtypes.SemType
-		FieldDefaults []MappingConstructorDefaultEntry
+		// RecordDefaults maps the mapping atom of each record type with field
+		// defaults, including imported ones, to the default functions of its
+		// fields. Only atoms in the package's type pool are serialized.
+		RecordDefaults map[*semtypes.MappingAtomicType][]MappingConstructorDefaultEntry
 	}
 
 	ObjectField struct {

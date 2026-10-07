@@ -56,13 +56,15 @@ func LookupFunction(env *extern.Env, org, module, name string) (any, bool) {
 }
 
 // RecordFieldDefault implements extern.DispatchHandles.RecordFieldDefault.
-func RecordFieldDefault(ctx *extern.Context, recordTy semtypes.SemType, atom *semtypes.MappingAtomicType, field string) (values.BalValue, bool) {
+func RecordFieldDefault(ctx *extern.Context, atom *semtypes.MappingAtomicType, field string) (func() values.BalValue, bool) {
 	reg := ctx.Env.Registry.(*modules.Registry)
-	key, ok := reg.RecordFieldDefault(ctx.TypeCtx(), recordTy, atom, field)
+	key, ok := reg.RecordFieldDefault(atom, field)
 	if !ok {
 		return nil, false
 	}
-	return executeFunction(ctx, reg.GetBIRFunction(key), nil, nil), true
+	return func() values.BalValue {
+		return executeFunction(ctx, reg.GetBIRFunction(key), nil, nil)
+	}, true
 }
 
 // LookupResourceMethod resolves a resource method named resourceMethodName

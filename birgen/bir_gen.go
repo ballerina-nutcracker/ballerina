@@ -46,6 +46,9 @@ type packageContext struct {
 	// PR-TODO: extract them to memoized types struc
 	stringMapTy      semtypes.SemType // Memoized map<string> type
 	serviceClassKeys map[*ast.BLangService]string
+	// closureKeys holds the lookup keys of the generated functions that capture
+	// variables of an enclosing function.
+	closureKeys map[string]struct{}
 }
 
 func (c *packageContext) typeContext() semtypes.Context {
@@ -382,6 +385,7 @@ func newContext(compilerCtx *compilerctx.CompilerContext, packageID *model.Packa
 		packageID:        packageID,
 		birPkg:           birPkg,
 		serviceClassKeys: make(map[*ast.BLangService]string),
+		closureKeys:      make(map[string]struct{}),
 		typeCtx:          semtypes.TypeCheckContext(compilerCtx.GetTypeEnv()),
 	}
 	return c
@@ -451,28 +455,38 @@ func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *bir.BIRPac
 			birPkg.ImmediateStopFunction = birFunc
 		}
 	}
-	birPkg.RecordTypes = collectRecordTypes(genCtx, ast)
+	birPkg.RecordDefaults = collectRecordDefaults(genCtx, ast)
 	return birPkg
 }
 
-// collectRecordTypes returns every record type descriptor of pkg, named or
-// anonymous, so the runtime can fill missing fields from their defaults.
-func collectRecordTypes(ctx *packageContext, pkg *ast.BLangPackage) []bir.BIRRecordType {
-	collector := &recordTypeCollector{ctx: ctx}
+// collectRecordDefaults returns the field defaults of every record type the package can refer
+// to: those of all loaded modules, and the function-local ones of pkg, which only its record
+// type nodes carry. A default that captures a local variable is left out, since the runtime has
+// no enclosing frame to evaluate it in.
+func collectRecordDefaults(ctx *packageContext, pkg *ast.BLangPackage) map[*semtypes.MappingAtomicType][]bir.MappingConstructorDefaultEntry {
+	collector := &recordDefaultsCollector{
+		ctx:      ctx,
+		defaults: make(map[*semtypes.MappingAtomicType][]bir.MappingConstructorDefaultEntry),
+	}
+	for atom, defaults := range ctx.CompilerContext.MappingDefaultsSnapshot() {
+		collector.add(atom, defaults)
+	}
 	ast.Walk(collector, pkg)
-	return collector.recordTypes
+	return collector.defaults
 }
 
-type recordTypeCollector struct {
-	ctx         *packageContext
-	recordTypes []bir.BIRRecordType
+type recordDefaultsCollector struct {
+	ctx      *packageContext
+	defaults map[*semtypes.MappingAtomicType][]bir.MappingConstructorDefaultEntry
 }
 
 // Visit handles the desugar-only nodes itself, since ast.Walk does not know them.
-func (c *recordTypeCollector) Visit(node ast.BLangNode) ast.Visitor {
+func (c *recordDefaultsCollector) Visit(node ast.BLangNode) ast.Visitor {
 	switch n := node.(type) {
 	case *ast.BLangRecordType:
-		c.addRecordType(n)
+		if atom := semtypes.ToMappingAtomicType(c.ctx.typeCtx, n.GetDeterminedType()); atom != nil {
+			c.add(atom, n.FieldDefaults)
+		}
 	case *desugar.BLangExpressionThunk:
 		for _, stmt := range n.InitStmts {
 			ast.Walk(c, stmt.(ast.BLangNode))
@@ -486,23 +500,22 @@ func (c *recordTypeCollector) Visit(node ast.BLangNode) ast.Visitor {
 	return c
 }
 
-func (c *recordTypeCollector) VisitTypeData(*ast.TypeData) ast.Visitor {
+func (c *recordDefaultsCollector) VisitTypeData(*ast.TypeData) ast.Visitor {
 	return c
 }
 
-func (c *recordTypeCollector) addRecordType(recordTy *ast.BLangRecordType) {
-	ty := recordTy.GetDeterminedType()
-	if semtypes.ToMappingAtomicType(c.ctx.typeCtx, ty) == nil {
-		return
+func (c *recordDefaultsCollector) add(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
+	fields := make([]bir.MappingConstructorDefaultEntry, 0, len(defaults))
+	for _, fd := range defaults {
+		key := buildFunctionLookupKeyFromSymbol(c.ctx, fd.FnRef)
+		if _, isClosure := c.ctx.closureKeys[key]; isClosure {
+			continue
+		}
+		fields = append(fields, bir.MappingConstructorDefaultEntry{FieldName: fd.FieldName, FunctionLookupKey: key})
 	}
-	fields := make([]bir.MappingConstructorDefaultEntry, 0, len(recordTy.FieldDefaults))
-	for _, fd := range recordTy.FieldDefaults {
-		fields = append(fields, bir.MappingConstructorDefaultEntry{
-			FieldName:         fd.FieldName,
-			FunctionLookupKey: buildFunctionLookupKeyFromSymbol(c.ctx, fd.FnRef),
-		})
+	if len(fields) > 0 {
+		c.defaults[atom] = fields
 	}
-	c.recordTypes = append(c.recordTypes, bir.BIRRecordType{Type: ty, FieldDefaults: fields})
 }
 
 func addGlobalVar(birPkg *bir.BIRPackage, dcl bir.BIRGlobalVariableDcl) {
@@ -1126,6 +1139,7 @@ func lambdaFunction(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangLambda
 	// access to maintain the frame chain for nested closures
 	if root.fn.isClosure {
 		ctx.function().isClosure = true
+		ctx.function().pkgCtx.closureKeys[birFunc.FunctionLookupKey] = struct{}{}
 	}
 	return expressionEffect{result: resultOperand, block: curBB}, true
 }

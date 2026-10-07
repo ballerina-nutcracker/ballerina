@@ -82,7 +82,7 @@ After the constant pool, the package data follows:
 +------------------+
 | Functions        | See Functions
 +------------------+
-| Record Types     | See Record Types
+| Record Defaults  | See Record Defaults
 +------------------+
 ```
 
@@ -187,16 +187,18 @@ After the constant pool, the package data follows:
 +------------------+
 ```
 
-### Record Types
+### Record Defaults
 
-Every record type descriptor of the package, named or anonymous.
+The field defaults of every record type in the type pool that declares any, including record
+types of other modules. A record type is identified by its mapping atom, so record types with the
+same shape keep their own defaults.
 
 ```
 +------------------+
 | Count            | int64 (number of record types)
 +------------------+
 | For each type:   |
-|   Type           | int32 (type pool index)
+|   Atom Index     | int32 (mapping atom index in the type pool)
 |   Field Count    | int64 (number of fields with a default)
 |   For each field:|
 |     Name CP      | int32
