@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected "a", got string:Char
+  --> member7-e.bal:23:13
+   |
+23 |     "a" a = s[0]; // @error string:Char is not a subtype of "a"
+   |             ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "a"
+  --> member7-e.bal:24:23
+   |
+24 |     string:Char d = s["a"]; // @error key must be int
+   |                       ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got string:Char
+  --> member7-e.bal:22:13
+   |
+22 |     int i = s[0]; // @error member access on a string is string:Char
+   |             ^^^^

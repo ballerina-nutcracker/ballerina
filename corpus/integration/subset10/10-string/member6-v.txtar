@@ -1,0 +1,12 @@
+-- stdout --
+q
+b
+d
+z
+l
+o
+y
+b
+["a","c"]
+cba
+-- stderr --

@@ -1,0 +1,136 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition AB
+    (union-type
+      (finite-type
+        (literal ab))
+      (finite-type
+        (literal cd))))
+  (function hello () (
+    (value-type string))
+    (block-function-body
+      (return
+        (literal hello))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable ch (type
+          (user-defined-type string Char)) (expr
+          (literal q))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref ch)
+            (literal 0)))))
+      (var-def
+        (variable lit (type
+          (finite-type
+            (literal abc))) (expr
+          (literal abc))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref lit)
+            (literal 1)))))
+      (var-def
+        (variable u (type
+          (user-defined-type AB)) (expr
+          (literal cd))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref u)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal xyz)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal literal)
+            (literal 0)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (invocation hello ())
+            (literal 4)))))
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal hey)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (simple-var-ref arr)
+              (literal 0))
+            (literal 2)))))
+      (var-def
+        (variable b (type
+          (value-type byte)) (expr
+          (literal 1))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal abc)
+            (simple-var-ref b)))))
+      (var-def
+        (variable v (expr
+          (index-based-access
+            (literal abc)
+            (literal 0)))))
+      (var-def
+        (variable z (type
+          (user-defined-type string Char)) (expr
+          (simple-var-ref v))))
+      (var-def
+        (variable cs (type
+          (array-type
+            (user-defined-type string Char) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (simple-var-ref z)
+            (index-based-access
+              (literal abc)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref cs))))
+      (var-def
+        (variable acc (type
+          (value-type string)) (expr
+          (literal ))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 3))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
+          (compound-assignment +
+            (simple-var-ref acc)
+            (index-based-access
+              (literal abc)
+              (binary-expr -
+                (literal 2)
+                (simple-var-ref i))))
+          (assignment
+            (simple-var-ref $desugar$0)
+            (binary-expr +
+              (simple-var-ref $desugar$0)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref acc)))))))
