@@ -267,6 +267,28 @@ func (pd *packageDriver) resolutionInputFor(module *projects.Module) moduleResol
 	return newModuleResolutionInput(module.Descriptor().Org().Value(), implicit, pd.publicSymbols)
 }
 
+// loadImplicitLangLibs compiles the implicit lang libraries ahead of the
+// root package's own resolution, the way the CLI does
+// (projects/package_resolution.go bundledLangLibs). Only the root driver
+// calls it: a dependency's libraries are already in the shared
+// publicSymbols and externalMaterializing guard.
+func (pd *packageDriver) loadImplicitLangLibs() {
+	root := pd.pkg.Descriptor()
+	for _, name := range migratedLangLibs {
+		if pd.aborted() {
+			return
+		}
+		if root.Org().Value() == "ballerina" && root.Name().Value() == name {
+			continue
+		}
+		descriptor, err := projects.NewPackageDescriptorFromStrings("ballerina", name, "0.0.1")
+		if err != nil {
+			continue
+		}
+		pd.loadResolvedDependency(descriptor)
+	}
+}
+
 func (pd *packageDriver) loadResolvedDependencySymbols() {
 	if pd.externalSymbolsReady {
 		return
@@ -576,6 +598,7 @@ func (pd *packageDriver) phase2Eligible(module *projects.Module) (*moduleDriver,
 // early rather than finishing wasted work. The caller must check aborted()
 // itself before relying on or committing this run's results.
 func (pd *packageDriver) advanceAll(target moduleStage) {
+	pd.loadImplicitLangLibs()
 	pd.loadResolvedDependencySymbols()
 	modules := pd.topoModules()
 	pd.runPhase1(modules)
@@ -606,6 +629,7 @@ func (pd *packageDriver) advanceAll(target moduleStage) {
 // nil priorState, so every module here is always rebuilt fresh, matching
 // pre-ticket-28 behavior exactly.
 func (pd *packageDriver) advanceModule(target moduleStage, targetModule *projects.Module) {
+	pd.loadImplicitLangLibs()
 	pd.loadResolvedDependencySymbols()
 	depGraph := pd.pkg.Resolution().ModuleDependencyGraph()
 	targetID := targetModule.ModuleID()

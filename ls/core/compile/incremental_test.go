@@ -115,12 +115,9 @@ func TestPackageDriver_Aborted_StopsBetweenModules(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 
-	calls := 0
-	stale := func() bool {
-		calls++
-		return calls > 1
-	}
-	pd := newPackageDriver(pkg, projSvc.OpenText, nil, stale)
+	var pd *packageDriver
+	stale := func() bool { return pd != nil && len(pd.drivers) >= 1 }
+	pd = newPackageDriver(pkg, projSvc.OpenText, nil, stale)
 	pd.advanceAll(stageCFGAnalyzed)
 
 	if !pd.aborted() {

@@ -81,7 +81,16 @@ func TestPackageDriver_EditedExternalDependencyRecompiles(t *testing.T) {
 	generationTwo.advanceAll(stageTopLevelTypeResolved)
 	externalTwo := externalSnapshots(t, packageTwo, generationTwo.snapshotForCommit())
 
+	edited := make(map[projects.ModuleID]bool)
+	for _, id := range dependencyPackage.ModuleIDs() {
+		edited[id] = true
+	}
+	compared := 0
 	for id, snapshotOne := range externalOne {
+		if !edited[id] {
+			continue
+		}
+		compared++
 		snapshotTwo, ok := externalTwo[id]
 		if !ok {
 			t.Fatalf("external module %v missing from generation two", id)
@@ -89,6 +98,9 @@ func TestPackageDriver_EditedExternalDependencyRecompiles(t *testing.T) {
 		if snapshotTwo.driver == snapshotOne.driver {
 			t.Errorf("external module %v was carried forward after its content changed", id)
 		}
+	}
+	if compared == 0 {
+		t.Fatal("edited dependency module was not among the external snapshots")
 	}
 }
 
