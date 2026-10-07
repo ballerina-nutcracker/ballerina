@@ -383,7 +383,7 @@ main() -> nil|error{
     %168 = println(order) -> bb70;
   }
   bb70 {
-    %169 = fp $anon/.:$default$22
+    %169 = fp $anon/.:$default$23
     $desugar$0 = %169;
     %172 = ConstantLoad level
     %173 = ConstantLoad 2
@@ -408,7 +408,7 @@ main() -> nil|error{
     %179 = println(local) -> bb75;
   }
   bb75 {
-    %180 = fp $anon/.:$default$23
+    %180 = fp $anon/.:$default$24
     $desugar$1 = %180;
     %183 = newMap {| never... |}{}
     %184 = ConstantLoad typedesc
@@ -452,56 +452,81 @@ main() -> nil|error{
     %195 = println(picked) -> bb85;
   }
   bb85 {
-    %197 = newMap {| never... |}{}
-    %198 = ConstantLoad typedesc
-    %199 = cloneWithType(%197,%198) -> bb86;
+    %197 = ConstantLoad inner
+    %198 = newMap {| never... |}{}
+    %199 = ConstantLoad z
+    %200 = ConstantLoad 1
+    %201 = newMap {| inner: {| never... |}, z: int, never... |}{%197=%198, %199=%200}
+    %202 = ConstantLoad typedesc
+    %203 = cloneWithType(%201,%202) -> bb86;
   }
   bb86 {
-    %200 = %199 is error
-    %200 ? bb87 : bb88;
+    %204 = %203 is error
+    %204 ? bb87 : bb88;
   }
   bb87 {
-    %0 = %199;
+    %0 = %203;
     return;
   }
   bb88 {
-    %196 = %199;
+    %196 = %203;
     GOTO bb89;
   }
   bb89 {
-    complete = %196;
-    %202 = println(complete) -> bb90;
+    loose = %196;
+    %206 = println(loose) -> bb90;
   }
   bb90 {
-    %203 = ConstantLoad 5
-    base = %203;
-    %205 = closure_fp $anon/.:$default$24
-    $desugar$2 = %205;
-    %207 = newMap {| never... |}{}
-    %208 = ConstantLoad typedesc
-    %209 = cloneWithType(%207,%208) -> bb91;
+    %208 = newMap {| never... |}{}
+    %209 = ConstantLoad typedesc
+    %210 = cloneWithType(%208,%209) -> bb91;
   }
   bb91 {
-    captured = %209;
-    %211 = captured is error
-    %212 = %211;
-    %213 = println(%212) -> bb92;
+    %211 = %210 is error
+    %211 ? bb92 : bb93;
   }
   bb92 {
-    %214 = ConstantLoad age
-    %215 = ConstantLoad 3
-    %216 = newMap {| json... |}{%214=%215}
-    missingName = %216;
-    %218 = ConstantLoad typedesc
-    %219 = cloneWithType(missingName,%218) -> bb93;
+    %0 = %210;
+    return;
   }
   bb93 {
-    noDefault = %219;
-    %221 = noDefault is error
-    %222 = %221;
-    %223 = println(%222) -> bb94;
+    %207 = %210;
+    GOTO bb94;
   }
   bb94 {
+    complete = %207;
+    %213 = println(complete) -> bb95;
+  }
+  bb95 {
+    %214 = ConstantLoad 5
+    base = %214;
+    %216 = closure_fp $anon/.:$default$25
+    $desugar$2 = %216;
+    %218 = newMap {| never... |}{}
+    %219 = ConstantLoad typedesc
+    %220 = cloneWithType(%218,%219) -> bb96;
+  }
+  bb96 {
+    captured = %220;
+    %222 = captured is error
+    %223 = %222;
+    %224 = println(%223) -> bb97;
+  }
+  bb97 {
+    %225 = ConstantLoad age
+    %226 = ConstantLoad 3
+    %227 = newMap {| json... |}{%225=%226}
+    missingName = %227;
+    %229 = ConstantLoad typedesc
+    %230 = cloneWithType(missingName,%229) -> bb98;
+  }
+  bb98 {
+    noDefault = %230;
+    %232 = noDefault is error
+    %233 = %232;
+    %234 = println(%233) -> bb99;
+  }
+  bb99 {
     return;
   }
 }
@@ -646,7 +671,16 @@ $default$18() -> int{
     return;
   }
 }
-$default$19() -> [{| qty: int, never... |}...]{
+$default$19() -> int{
+  bb0 {
+    %1 = failingDefault() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$default$20() -> [{| qty: int, never... |}...]{
   bb0 {
     %1 = ConstantLoad 0
     %2 = newArray [{| qty: int, never... |}...][%1]{}
@@ -654,35 +688,35 @@ $default$19() -> [{| qty: int, never... |}...]{
     return;
   }
 }
-$default$20() -> string{
+$default$21() -> string{
   bb0 {
     %1 = ConstantLoad LKR
     %0 = %1;
     return;
   }
 }
-$default$21() -> int{
+$default$22() -> int{
   bb0 {
     %1 = ConstantLoad 1
     %0 = %1;
     return;
   }
 }
-$default$22() -> string{
+$default$23() -> string{
   bb0 {
     %1 = ConstantLoad fast
     %0 = %1;
     return;
   }
 }
-$default$23() -> string{
+$default$24() -> string{
   bb0 {
     %1 = ConstantLoad t
     %0 = %1;
     return;
   }
 }
-$default$24() -> int{
+$default$25() -> int{
   bb0 {
     %0 = (1, base);
     return;

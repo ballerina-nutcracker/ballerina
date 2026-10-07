@@ -119,6 +119,25 @@
       (field y
         (value-type int)
         (literal 1))))
+  (type-definition TaggedInner
+    (record-type
+      (field a
+        (value-type int)
+        (invocation failingDefault ()))))
+  (type-definition TaggedOuter
+    (record-type
+      (field inner
+        (user-defined-type TaggedInner))
+      (field z
+        (value-type string))))
+  (type-definition LooseOuter
+    (record-type
+      (field inner
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type anydata)))
+      (field z
+        (value-type int))))
   (type-definition Order
     (record-type
       (field price
@@ -421,6 +440,23 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref picked))))
+      (var-def
+        (variable loose (type
+          (union-type
+            (user-defined-type TaggedOuter)
+            (user-defined-type LooseOuter))) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr
+                (key-value
+                  (literal inner)
+                  (mapping-constructor-expr))
+                (key-value
+                  (literal z)
+                  (literal 1))) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref loose))))
       (var-def
         (variable complete (type
           (union-type

@@ -309,6 +309,24 @@
       (invocation io println (
         (simple-var-ref picked))))
     (var-def
+      (variable loose (type
+        (union-type
+          (user-defined-type TaggedOuter)
+          (user-defined-type LooseOuter))) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (mapping-constructor-expr
+              (key-value
+                (literal inner)
+                (mapping-constructor-expr))
+              (key-value
+                (literal z)
+                (literal 1)))
+            (typedesc-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref loose))))
+    (var-def
       (variable complete (type
         (union-type
           (record-type)
