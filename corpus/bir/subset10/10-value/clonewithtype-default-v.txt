@@ -10,6 +10,13 @@ defaultId() -> int{
     return;
   }
 }
+failingDefault() -> int{
+  bb0 {
+    %1 = ConstantLoad default must not run
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
 main() -> nil|error{
   bb0 {
     %1 = ConstantLoad name
@@ -376,7 +383,7 @@ main() -> nil|error{
     %168 = println(order) -> bb70;
   }
   bb70 {
-    %169 = fp $anon/.:$default$20
+    %169 = fp $anon/.:$default$22
     $desugar$0 = %169;
     %172 = ConstantLoad level
     %173 = ConstantLoad 2
@@ -401,7 +408,7 @@ main() -> nil|error{
     %179 = println(local) -> bb75;
   }
   bb75 {
-    %180 = fp $anon/.:$default$21
+    %180 = fp $anon/.:$default$23
     $desugar$1 = %180;
     %183 = newMap {| never... |}{}
     %184 = ConstantLoad typedesc
@@ -424,20 +431,77 @@ main() -> nil|error{
     %188 = println(localIncluded) -> bb80;
   }
   bb80 {
-    %189 = ConstantLoad age
-    %190 = ConstantLoad 3
-    %191 = newMap {| json... |}{%189=%190}
-    missingName = %191;
-    %193 = ConstantLoad typedesc
-    %194 = cloneWithType(missingName,%193) -> bb81;
+    %190 = newMap {| never... |}{}
+    %191 = ConstantLoad typedesc
+    %192 = cloneWithType(%190,%191) -> bb81;
   }
   bb81 {
-    noDefault = %194;
-    %196 = noDefault is error
-    %197 = %196;
-    %198 = println(%197) -> bb82;
+    %193 = %192 is error
+    %193 ? bb82 : bb83;
   }
   bb82 {
+    %0 = %192;
+    return;
+  }
+  bb83 {
+    %189 = %192;
+    GOTO bb84;
+  }
+  bb84 {
+    picked = %189;
+    %195 = println(picked) -> bb85;
+  }
+  bb85 {
+    %197 = newMap {| never... |}{}
+    %198 = ConstantLoad typedesc
+    %199 = cloneWithType(%197,%198) -> bb86;
+  }
+  bb86 {
+    %200 = %199 is error
+    %200 ? bb87 : bb88;
+  }
+  bb87 {
+    %0 = %199;
+    return;
+  }
+  bb88 {
+    %196 = %199;
+    GOTO bb89;
+  }
+  bb89 {
+    complete = %196;
+    %202 = println(complete) -> bb90;
+  }
+  bb90 {
+    %203 = ConstantLoad 5
+    base = %203;
+    %205 = closure_fp $anon/.:$default$24
+    $desugar$2 = %205;
+    %207 = newMap {| never... |}{}
+    %208 = ConstantLoad typedesc
+    %209 = cloneWithType(%207,%208) -> bb91;
+  }
+  bb91 {
+    captured = %209;
+    %211 = captured is error
+    %212 = %211;
+    %213 = println(%212) -> bb92;
+  }
+  bb92 {
+    %214 = ConstantLoad age
+    %215 = ConstantLoad 3
+    %216 = newMap {| json... |}{%214=%215}
+    missingName = %216;
+    %218 = ConstantLoad typedesc
+    %219 = cloneWithType(missingName,%218) -> bb93;
+  }
+  bb93 {
+    noDefault = %219;
+    %221 = noDefault is error
+    %222 = %221;
+    %223 = println(%222) -> bb94;
+  }
+  bb94 {
     return;
   }
 }
@@ -566,7 +630,23 @@ $default$16() -> [string...]{
     return;
   }
 }
-$default$17() -> [{| qty: int, never... |}...]{
+$default$17() -> int{
+  bb0 {
+    %1 = failingDefault() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$default$18() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$19() -> [{| qty: int, never... |}...]{
   bb0 {
     %1 = ConstantLoad 0
     %2 = newArray [{| qty: int, never... |}...][%1]{}
@@ -574,31 +654,37 @@ $default$17() -> [{| qty: int, never... |}...]{
     return;
   }
 }
-$default$18() -> string{
+$default$20() -> string{
   bb0 {
     %1 = ConstantLoad LKR
     %0 = %1;
     return;
   }
 }
-$default$19() -> int{
+$default$21() -> int{
   bb0 {
     %1 = ConstantLoad 1
     %0 = %1;
     return;
   }
 }
-$default$20() -> string{
+$default$22() -> string{
   bb0 {
     %1 = ConstantLoad fast
     %0 = %1;
     return;
   }
 }
-$default$21() -> string{
+$default$23() -> string{
   bb0 {
     %1 = ConstantLoad t
     %0 = %1;
+    return;
+  }
+}
+$default$24() -> int{
+  bb0 {
+    %0 = (1, base);
     return;
   }
 }

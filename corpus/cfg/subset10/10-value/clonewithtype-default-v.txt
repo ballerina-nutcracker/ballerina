@@ -6,6 +6,13 @@
         (literal 2)))
   )
 )
+(failingDefault
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal default must not run))))
+  )
+)
 (main
   (bb0 () ()
     (var-def
@@ -289,6 +296,50 @@
     (expression-stmt
       (invocation io println (
         (simple-var-ref localIncluded))))
+    (var-def
+      (variable picked (type
+        (union-type
+          (user-defined-type Tagged)
+          (user-defined-type Flag))) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (mapping-constructor-expr)
+            (typedesc-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref picked))))
+    (var-def
+      (variable complete (type
+        (union-type
+          (record-type)
+          (user-defined-type Flag))) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (mapping-constructor-expr)
+            (typedesc-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref complete))))
+    (var-def
+      (variable base (type
+        (value-type int)) (expr
+        (literal 5))))
+    (var-def
+      (variable captured (type
+        (union-type
+          (record-type
+            (field x
+              (value-type int)
+              (simple-var-ref base)))
+          (error-type))) (expr
+        (invocation lang.value cloneWithType (
+          (mapping-constructor-expr)
+          (typedesc-expr))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref captured)
+          (error-type)))))
     (var-def
       (variable missingName (type
         (builtin-ref-type json)) (expr

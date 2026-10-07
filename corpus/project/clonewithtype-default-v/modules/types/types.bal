@@ -24,3 +24,7 @@ public type Person record {|
     int age = 18;
     Address address = {};
 |};
+
+public type Count record {|
+    int n = 1;
+|};

@@ -72,6 +72,19 @@ type Settings record {
     string[] tags = [];
 };
 
+isolated function failingDefault() returns int {
+    panic error("default must not run");
+}
+
+type Tagged record {|
+    int a = failingDefault();
+    string tag;
+|};
+
+type Flag record {|
+    int y = 1;
+|};
+
 type Order record {|
     record {|
         string currency = "LKR";
@@ -131,6 +144,16 @@ public function main() returns error? {
 
     record {|*Base; string tag = "t";|} localIncluded = check {}.cloneWithType();
     io:println(localIncluded); // @output {"active":true,"tag":"t"}
+
+    Tagged|Flag picked = check {}.cloneWithType();
+    io:println(picked); // @output {"y":1}
+
+    record {}|Flag complete = check {}.cloneWithType();
+    io:println(complete); // @output {}
+
+    final int base = 5;
+    record {|int x = base;|}|error captured = {}.cloneWithType();
+    io:println(captured is error); // @output true
 
     json missingName = {age: 3};
     Person|error noDefault = missingName.cloneWithType(Person);

@@ -101,6 +101,24 @@
         (array-type
           (value-type string) dimensions: 1 ([]))
         (list-constructor-expr))))
+  (function failingDefault () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal default must not run))))))
+  (type-definition Tagged
+    (record-type
+      (field a
+        (value-type int)
+        (invocation failingDefault ()))
+      (field tag
+        (value-type string))))
+  (type-definition Flag
+    (record-type
+      (field y
+        (value-type int)
+        (literal 1))))
   (type-definition Order
     (record-type
       (field price
@@ -392,6 +410,47 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref localIncluded))))
+      (var-def
+        (variable picked (type
+          (union-type
+            (user-defined-type Tagged)
+            (user-defined-type Flag))) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref picked))))
+      (var-def
+        (variable complete (type
+          (union-type
+            (record-type)
+            (user-defined-type Flag))) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr) ())))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref complete))))
+      (var-def
+        (variable base (type
+          (value-type int)) (expr
+          (literal 5))))
+      (var-def
+        (variable captured (type
+          (union-type
+            (record-type
+              (field x
+                (value-type int)
+                (simple-var-ref base)))
+            (error-type))) (expr
+          (invocation cloneWithType expr:
+            (mapping-constructor-expr) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref captured)
+            (error-type)))))
       (var-def
         (variable missingName (type
           (builtin-ref-type json)) (expr

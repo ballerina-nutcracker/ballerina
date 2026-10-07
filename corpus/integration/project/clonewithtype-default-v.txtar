@@ -1,4 +1,5 @@
 -- stdout --
 {"name":"John","address":{"city":"Kandy","country":"Sri Lanka"},"age":18}
 {"name":"John","address":{"city":"Kandy","country":"Sri Lanka"},"age":18,"team":"core"}
+{"n":1}{"n":2}true
 -- stderr --
