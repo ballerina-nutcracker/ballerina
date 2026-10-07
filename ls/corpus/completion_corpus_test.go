@@ -16,8 +16,11 @@
 package corpus
 
 import (
+	"encoding/json"
+	"slices"
 	"testing"
 
+	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
 
@@ -48,7 +51,31 @@ func TestExcludedContextsCompletionCorpus(t *testing.T) {
 func TestNoResolveOrEditsCompletionCorpus(t *testing.T) {
 	platform, cleanup := palnative.NewPlatform()
 	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/no-resolve-or-edits.completion.json")
+	fixturePath := "completion/testdata/no-resolve-or-edits.completion.json"
+	runTranscript(t, platform, fixturePath)
+	content, err := platform.FS.ReadFile(fixturePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture transcript
+	if err := json.Unmarshal(content, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	var response struct {
+		Result protocol.InitializeResult `json:"result"`
+	}
+	if err := json.Unmarshal(fixture.Expected[0], &response); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{":", ".", ">", "@", "/", "\\", "?"}
+	provider, ok := response.Result.Capabilities.CompletionProvider.Value()
+	if !ok {
+		t.Fatal("missing completion provider")
+	}
+	got, ok := provider.TriggerCharacters.Value()
+	if !ok || !slices.Equal(got, want) {
+		t.Fatalf("completion trigger characters = %q, want %q", got, want)
+	}
 }
 
 func TestCancelledWaitRemainsUsableCompletionCorpus(t *testing.T) {
@@ -97,4 +124,16 @@ func TestLambdaArgumentBlockCompletionCorpus(t *testing.T) {
 	platform, cleanup := palnative.NewPlatform()
 	defer cleanup()
 	runTranscript(t, platform, "completion/testdata/lambda-argument-block.completion.json")
+}
+
+func TestTypeDefinitionSnippetCompletionCorpus(t *testing.T) {
+	platform, cleanup := palnative.NewPlatform()
+	defer cleanup()
+	runTranscript(t, platform, "completion/testdata/type-definition-snippet.completion.json")
+}
+
+func TestTypeDefinitionSnippetPlainCompletionCorpus(t *testing.T) {
+	platform, cleanup := palnative.NewPlatform()
+	defer cleanup()
+	runTranscript(t, platform, "completion/testdata/type-definition-snippet-plain.completion.json")
 }

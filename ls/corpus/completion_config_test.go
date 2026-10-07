@@ -246,7 +246,9 @@ func completionConfigRequest(t *testing.T, platform pal.Platform, env completion
 	defer srv.Flush()
 
 	messages := []protocol.Message{
-		completionConfigMessage(1, "initialize", map[string]any{}),
+		completionConfigMessage(1, "initialize", map[string]any{
+			"capabilities": map[string]any{"textDocument": map[string]any{"completion": map[string]any{"completionItem": map[string]any{"snippetSupport": true}}}},
+		}),
 		completionConfigMessage(nil, "initialized", map[string]any{}),
 		completionConfigMessage(nil, "textDocument/didOpen", map[string]any{
 			"textDocument": map[string]any{

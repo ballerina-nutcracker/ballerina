@@ -18,6 +18,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 	"unicode/utf16"
 	"unicode/utf8"
 
@@ -58,7 +59,31 @@ func (s *Server) handleCompletion(ctx context.Context, message protocol.Message)
 		}
 		return trackedResult{err: &protocol.RPCError{Code: rpcInternalError, Message: "completion failed"}, handled: true}
 	}
+	if !s.snippetSupport {
+		downgradeSnippetItems(items)
+	}
 	return trackedResult{result: items, handled: true}
+}
+
+var (
+	snippetPlaceholderWithText = regexp.MustCompile(`\$\{\d+:([^{}]*)\}`)
+	snippetTabStop             = regexp.MustCompile(`\$\{\d+\}`)
+)
+
+// downgradeSnippetItems rewrites snippet items in place as plain text for
+// clients without snippet support (Java AbstractLSCompletionItem rules).
+func downgradeSnippetItems(items []protocol.CompletionItem) {
+	for i := range items {
+		item := &items[i]
+		if format, ok := item.InsertTextFormat.Value(); !ok || format != protocol.InsertTextFormatSnippet {
+			continue
+		}
+		if text, ok := item.InsertText.Value(); ok {
+			text = snippetPlaceholderWithText.ReplaceAllString(text, "$1")
+			item.InsertText = protocol.NewOptional(snippetTabStop.ReplaceAllString(text, ""))
+		}
+		item.InsertTextFormat = protocol.Optional[protocol.InsertTextFormat]{}
+	}
 }
 
 // byteOffsetFromPosition converts a UTF-16 protocol.Position to a byte offset

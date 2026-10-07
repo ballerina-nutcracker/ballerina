@@ -122,6 +122,7 @@ type Server struct {
 	completion     *completion.Service
 	bus            *event.Bus
 	versionSupport bool
+	snippetSupport bool
 	initialized    bool
 	shuttingDown   bool
 
@@ -368,6 +369,13 @@ func (s *Server) handleInitialize(_ context.Context, params json.RawMessage) (an
 	}
 	s.initialized = true
 	if caps, ok := initializeParams.Capabilities.TextDocument.Value(); ok {
+		if completionCaps, ok := caps.Completion.Value(); ok {
+			if item, ok := completionCaps.CompletionItem.Value(); ok {
+				if snippetSupport, ok := item.SnippetSupport.Value(); ok {
+					s.snippetSupport = snippetSupport
+				}
+			}
+		}
 		if diagCaps, ok := caps.PublishDiagnostics.Value(); ok {
 			if versionSupport, ok := diagCaps.VersionSupport.Value(); ok {
 				s.versionSupport = versionSupport
@@ -381,7 +389,7 @@ func (s *Server) handleInitialize(_ context.Context, params json.RawMessage) (an
 	}
 	return protocol.InitializeResult{Capabilities: protocol.ServerCapabilities{
 		TextDocumentSync:   protocol.NewOptional(protocol.NewOrServerCapabilitiesTextDocumentSyncTextDocumentSyncOptions(opts)),
-		CompletionProvider: protocol.NewOptional(protocol.CompletionOptions{}),
+		CompletionProvider: protocol.NewOptional(protocol.CompletionOptions{TriggerCharacters: protocol.NewOptional([]string{":", ".", ">", "@", "/", "\\", "?"})}),
 	}}, true
 }
 

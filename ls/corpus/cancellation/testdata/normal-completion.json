@@ -43,7 +43,17 @@
             "change": 2,
             "save": true
           },
-          "completionProvider": {}
+          "completionProvider": {
+            "triggerCharacters": [
+              ":",
+              ".",
+              "\u003e",
+              "@",
+              "/",
+              "\\",
+              "?"
+            ]
+          }
         }
       }
     },
