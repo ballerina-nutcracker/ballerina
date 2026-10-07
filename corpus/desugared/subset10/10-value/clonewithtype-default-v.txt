@@ -95,6 +95,18 @@
         (array-type
           (value-type string) dimensions: 1 ([]))
         (list-constructor-expr))))
+  (type-definition Tagged
+    (record-type
+      (field a
+        (value-type int)
+        (invocation failingDefault ()))
+      (field tag
+        (value-type string))))
+  (type-definition Flag
+    (record-type
+      (field y
+        (value-type int)
+        (literal 1))))
   (type-definition Order
     (record-type
       (field price
@@ -118,6 +130,12 @@
         (binary-expr +
           (literal 40)
           (literal 2)))))
+  (function failingDefault () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal default must not run))))))
   (function main () (
     (union-type
       (error-type)
@@ -379,7 +397,7 @@
       (var-def
         (variable $desugar$0 (expr
           (lambda
-            (function $default$20 () ()
+            (function $default$22 () ()
               (block-function-body
                 (return
                   (literal fast))))))))
@@ -404,7 +422,7 @@
       (var-def
         (variable $desugar$1 (expr
           (lambda
-            (function $default$21 () ()
+            (function $default$23 () ()
               (block-function-body
                 (return
                   (literal t))))))))
@@ -421,6 +439,57 @@
       (expression-stmt
         (invocation io println (
           (simple-var-ref localIncluded))))
+      (var-def
+        (variable picked (type
+          (union-type
+            (user-defined-type Tagged)
+            (user-defined-type Flag))) (expr
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (mapping-constructor-expr)
+              (typedesc-expr)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref picked))))
+      (var-def
+        (variable complete (type
+          (union-type
+            (record-type)
+            (user-defined-type Flag))) (expr
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (mapping-constructor-expr)
+              (typedesc-expr)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref complete))))
+      (var-def
+        (variable base (type
+          (value-type int)) (expr
+          (literal 5))))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $default$24 () ()
+              (block-function-body
+                (return
+                  (simple-var-ref base))))))))
+      (var-def
+        (variable captured (type
+          (union-type
+            (record-type
+              (field x
+                (value-type int)
+                (simple-var-ref base)))
+            (error-type))) (expr
+          (invocation lang.value cloneWithType (
+            (mapping-constructor-expr)
+            (typedesc-expr))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref captured)
+            (error-type)))))
       (var-def
         (variable missingName (type
           (builtin-ref-type json)) (expr
@@ -512,12 +581,20 @@
   (function $default$17 () ()
     (block-function-body
       (return
-        (list-constructor-expr))))
+        (invocation failingDefault ()))))
   (function $default$18 () ()
     (block-function-body
       (return
-        (literal LKR))))
+        (literal 1))))
   (function $default$19 () ()
+    (block-function-body
+      (return
+        (list-constructor-expr))))
+  (function $default$20 () ()
+    (block-function-body
+      (return
+        (literal LKR))))
+  (function $default$21 () ()
     (block-function-body
       (return
         (literal 1)))))

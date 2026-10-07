@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import clonewithtypedefault.counts;
 import clonewithtypedefault.types;
 
 import ballerina/io;
@@ -30,4 +31,9 @@ public function main() returns error? {
 
     Employee employee = check value.cloneWithType(Employee);
     io:println(employee); // @output {"name":"John","address":{"city":"Kandy","country":"Sri Lanka"},"age":18,"team":"core"}
+
+    types:Count count = check {}.cloneWithType();
+    counts:Other other = check {}.cloneWithType();
+    counts:Plain|error plain = {}.cloneWithType();
+    io:println(count, other, plain is error); // @output {"n":1}{"n":2}true
 }

@@ -14,17 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-public type Address record {|
-    string city = "Colombo";
-    string country = "Sri Lanka";
+public type Other record {|
+    int n = 2;
 |};
 
-public type Person record {|
-    string name;
-    int age = 18;
-    Address address = {};
-|};
-
-public type Count record {|
-    int n = 1;
+public type Plain record {|
+    int n;
 |};

@@ -14,5 +14,8 @@
 {"price":{"amount":10,"currency":"LKR"},"lines":[{"qty":1},{"qty":4}]}
 {"level":2,"mode":"fast"}
 {"active":true,"tag":"t"}
+{"y":1}
+{}
+true
 true
 -- stderr --
