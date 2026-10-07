@@ -1,0 +1,86 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (function quote (
+    (variable c (type
+      (user-defined-type string Char)))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (binary-expr +
+          (binary-expr +
+            (literal ')
+            (simple-var-ref c))
+          (literal ')))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (literal ab😀))))
+      (var-def
+        (variable c (type
+          (user-defined-type string Char)) (expr
+          (index-based-access
+            (simple-var-ref s)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string length (
+            (simple-var-ref c))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (index-based-access
+              (simple-var-ref s)
+              (literal 0))
+            (index-based-access
+              (simple-var-ref s)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation quote (
+            (index-based-access
+              (simple-var-ref s)
+              (literal 1)))))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 1))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (simple-var-ref s)
+              (binary-expr +
+                (simple-var-ref i)
+                (literal 1)))
+            (literal 😀)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isOutOfRange (
+            (literal ))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isOutOfRange (
+            (literal é😀))))))))
+  (function isOutOfRange (
+    (variable s (type
+      (value-type string)))) (
+    (value-type boolean))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (union-type
+            (user-defined-type string Char)
+            (error-type))) (expr
+          (trap-expr
+            (index-based-access
+              (simple-var-ref s)
+              (invocation lang.string length (
+                (simple-var-ref s))))))))
+      (return
+        (type-test-expr is
+          (simple-var-ref r)
+          (error-type))))))
