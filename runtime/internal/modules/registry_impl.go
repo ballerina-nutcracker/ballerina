@@ -45,16 +45,12 @@ type Registry struct {
 	nativeFunctions     map[string]*ExternFunction
 	runtimeBuiltins     map[string]extern.NativeFunc
 	modules             map[string]*BIRModule
-	recordDefaults      recordDefaultsTable
-}
-
-// recordDefaultsTable maps a record type's mapping atom to the lookup keys of
-// its field default functions, by field name. It is guarded by a mutex because
-// a module's init can start strands that construct records while a later
-// module is still being registered.
-type recordDefaultsTable struct {
-	mu     sync.RWMutex
-	byAtom map[*semtypes.MappingAtomicType]map[string]string
+	// recordDefaults maps a record type's mapping atom to the lookup keys of its
+	// field default functions, by field name. It is guarded by recordDefaultsMu
+	// because a module's init can start strands that construct records while a
+	// later module is still being registered.
+	recordDefaults   map[*semtypes.MappingAtomicType]map[string]string
+	recordDefaultsMu sync.RWMutex
 }
 
 func NewRegistry(builtins map[string]extern.NativeFunc) *Registry {
@@ -65,7 +61,7 @@ func NewRegistry(builtins map[string]extern.NativeFunc) *Registry {
 		nativeFunctions:     make(map[string]*ExternFunction),
 		runtimeBuiltins:     builtins,
 		modules:             make(map[string]*BIRModule),
-		recordDefaults:      recordDefaultsTable{byAtom: make(map[*semtypes.MappingAtomicType]map[string]string)},
+		recordDefaults:      make(map[*semtypes.MappingAtomicType]map[string]string),
 	}
 }
 
@@ -136,25 +132,23 @@ func (r *Registry) RegisterModule(id *model.PackageID, m *BIRModule) *BIRModule 
 // RegisterRecordDefaults records the field defaults of the record types a
 // module refers to.
 func (r *Registry) RegisterRecordDefaults(recordDefaults map[*semtypes.MappingAtomicType][]bir.MappingConstructorDefaultEntry) {
-	table := &r.recordDefaults
-	table.mu.Lock()
-	defer table.mu.Unlock()
+	r.recordDefaultsMu.Lock()
+	defer r.recordDefaultsMu.Unlock()
 	for atom, fields := range recordDefaults {
 		keys := make(map[string]string, len(fields))
 		for _, field := range fields {
 			keys[field.FieldName] = field.FunctionLookupKey
 		}
-		table.byAtom[atom] = keys
+		r.recordDefaults[atom] = keys
 	}
 }
 
 // RecordFieldDefault returns the lookup key of the default function of field in
 // the record type whose mapping atom is atom.
 func (r *Registry) RecordFieldDefault(atom *semtypes.MappingAtomicType, field string) (string, bool) {
-	table := &r.recordDefaults
-	table.mu.RLock()
-	defer table.mu.RUnlock()
-	key, ok := table.byAtom[atom][field]
+	r.recordDefaultsMu.RLock()
+	defer r.recordDefaultsMu.RUnlock()
+	key, ok := r.recordDefaults[atom][field]
 	return key, ok
 }
 

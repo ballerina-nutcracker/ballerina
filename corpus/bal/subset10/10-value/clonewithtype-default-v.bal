@@ -85,6 +85,20 @@ type Flag record {|
     int y = 1;
 |};
 
+type TaggedInner record {|
+    int a = failingDefault();
+|};
+
+type TaggedOuter record {|
+    TaggedInner inner;
+    string z;
+|};
+
+type LooseOuter record {|
+    map<anydata> inner;
+    int z;
+|};
+
 type Order record {|
     record {|
         string currency = "LKR";
@@ -147,6 +161,9 @@ public function main() returns error? {
 
     Tagged|Flag picked = check {}.cloneWithType();
     io:println(picked); // @output {"y":1}
+
+    TaggedOuter|LooseOuter loose = check {inner: {}, z: 1}.cloneWithType();
+    io:println(loose); // @output {"inner":{},"z":1}
 
     record {}|Flag complete = check {}.cloneWithType();
     io:println(complete); // @output {}

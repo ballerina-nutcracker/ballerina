@@ -19,7 +19,9 @@ package codec
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"math"
+	"slices"
 	"sort"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -107,28 +109,19 @@ func (bw *birWriter) writeGlobalVars(buf *bytes.Buffer, pkg *bir.BIRPackage) {
 	}
 }
 
-type recordDefaultsEntry struct {
-	atomIndex int32
-	fields    []bir.MappingConstructorDefaultEntry
-}
-
-// writeRecordDefaults writes the field defaults of the record types in the type pool, keyed by
-// their mapping atom index, so a deserialized atom maps to the defaults of its own record type.
 func (bw *birWriter) writeRecordDefaults(buf *bytes.Buffer, pkg *bir.BIRPackage, tpEncoding semtypes.TypePoolEncoding) {
-	var entries []recordDefaultsEntry
+	byIndex := make(map[int32][]bir.MappingConstructorDefaultEntry)
 	for atom, fields := range pkg.RecordDefaults {
 		if index, ok := tpEncoding.MappingAtomicTypeIndex(atom); ok {
-			entries = append(entries, recordDefaultsEntry{atomIndex: index, fields: fields})
+			byIndex[index] = fields
 		}
 	}
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].atomIndex < entries[j].atomIndex
-	})
-	bw.writeLength(buf, len(entries))
-	for _, entry := range entries {
-		write(buf, entry.atomIndex)
-		bw.writeLength(buf, len(entry.fields))
-		for _, field := range entry.fields {
+	bw.writeLength(buf, len(byIndex))
+	for _, index := range slices.Sorted(maps.Keys(byIndex)) {
+		write(buf, index)
+		fields := byIndex[index]
+		bw.writeLength(buf, len(fields))
+		for _, field := range fields {
 			bw.writeStringCPEntry(buf, field.FieldName)
 			bw.writeStringCPEntry(buf, field.FunctionLookupKey)
 		}
