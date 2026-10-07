@@ -89,6 +89,23 @@
         (invocation io println (
           (simple-var-ref db))))
       (var-def
+        (variable c (type
+          (value-type any)) (expr
+          (literal 5))))
+      (var-def
+        (variable fs (type
+          (union-type
+            (value-type float)
+            (value-type string))) (expr
+          (type-conversion-expr
+            (simple-var-ref c)
+            (union-type
+              (value-type float)
+              (value-type string))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fs))))
+      (var-def
         (variable af (type
           (value-type any)) (expr
           (literal 2.7))))
@@ -149,4 +166,7 @@
                     (value-type float))
                   (value-type boolean))
                 (value-type null)))
-            (value-type null))))))))
+            (value-type null)))))
+      (expression-stmt
+        (invocation io println (
+          (numeric-literal 3)))))))

@@ -39,35 +39,47 @@ main() -> nil{
     %28 = println(%27) -> bb5;
   }
   bb5 {
-    %29 = ConstantLoad 2.7
-    af = %29;
-    %31 = <nil|boolean|int|float>(af)
-    %32 = %31;
-    %33 = println(%32) -> bb6;
+    %29 = ConstantLoad 5
+    c = %29;
+    %31 = <float|string>(c)
+    fs = %31;
+    %33 = println(fs) -> bb6;
   }
   bb6 {
-    %34 = ConstantLoad 5
-    ai = %34;
-    %36 = <nil|boolean|int|float>(ai)
+    %34 = ConstantLoad 2.7
+    af = %34;
+    %36 = <nil|boolean|int|float>(af)
     %37 = %36;
     %38 = println(%37) -> bb7;
   }
   bb7 {
-    %39 = ConstantLoad true
-    ab = %39;
-    %41 = <nil|boolean|int|float>(ab)
+    %39 = ConstantLoad 5
+    ai = %39;
+    %41 = <nil|boolean|int|float>(ai)
     %42 = %41;
     %43 = println(%42) -> bb8;
   }
   bb8 {
-    %44 = ConstantLoad <nil>
-    an = %44;
-    %46 = <nil|boolean|int|float>(an)
-    %47 = %46 is nil
-    %48 = %47;
-    %49 = println(%48) -> bb9;
+    %44 = ConstantLoad true
+    ab = %44;
+    %46 = <nil|boolean|int|float>(ab)
+    %47 = %46;
+    %48 = println(%47) -> bb9;
   }
   bb9 {
+    %49 = ConstantLoad <nil>
+    an = %49;
+    %51 = <nil|boolean|int|float>(an)
+    %52 = %51 is nil
+    %53 = %52;
+    %54 = println(%53) -> bb10;
+  }
+  bb10 {
+    %55 = ConstantLoad 3
+    %56 = %55;
+    %57 = println(%56) -> bb11;
+  }
+  bb11 {
     return;
   }
 }

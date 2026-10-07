@@ -14,11 +14,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// @productions type-cast-expr union-type-descriptor nil-type-descriptor local-var-decl-stmt floating-point-literal function-call-expr
+// @productions type-cast-expr optional-type-descriptor local-var-decl-stmt mapping-constructor-expr int-literal function-call-expr
 import ballerina/io;
 
 public function main() {
-    any d = 2.5d;
-    int|float|boolean|() r = <int|float|boolean|()>d; // @panic bad type cast
-    io:println(r);
+    json j = {a: 1};
+    int? n = <int?>j; // @panic bad type cast
+    io:println(n);
 }

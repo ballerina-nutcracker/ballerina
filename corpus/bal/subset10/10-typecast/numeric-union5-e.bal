@@ -14,11 +14,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// @productions type-cast-expr union-type-descriptor nil-type-descriptor local-var-decl-stmt floating-point-literal function-call-expr
+// @productions type-cast-expr optional-type-descriptor module-const-decl floating-point-literal function-call-expr
 import ballerina/io;
 
+const byte? B = <byte?>300.0; // @error converted value is not a byte
+
 public function main() {
-    any d = 2.5d;
-    int|float|boolean|() r = <int|float|boolean|()>d; // @panic bad type cast
-    io:println(r);
+    io:println(B);
 }

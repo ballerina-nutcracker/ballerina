@@ -1,0 +1,24 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable j (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))))))
+    (var-def
+      (variable n (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (type-conversion-expr
+          (simple-var-ref j)
+          (union-type
+            (value-type int)
+            (value-type null))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+  )
+)
