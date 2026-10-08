@@ -118,7 +118,7 @@ func defaultQualifiers() ObjectQualifiers {
 // ObjectQualifiersFrom creates an ObjectQualifiers instance with the given parameters
 // Migrated from ObjectQualifiers.java:51
 func ObjectQualifiersFrom(isolated bool, readonly bool, networkQualifier NetworkQualifier) ObjectQualifiers {
-	if networkQualifier == NetworkQualifierNone && !isolated {
+	if networkQualifier == NetworkQualifierNone && !isolated && !readonly {
 		return defaultQualifiers()
 	}
 	return ObjectQualifiers{isolated: isolated, readonly: readonly, networkQualifier: networkQualifier}

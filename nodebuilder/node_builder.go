@@ -1837,7 +1837,7 @@ func (n *nodeBuilder) transformServiceDeclaration(serviceDeclarationNode *st.Ser
 		return nil, false
 	}
 
-	members := n.collectClassDefnMembers(serviceDeclarationNode.Members())
+	members := n.collectClassDefnMembers(serviceDeclarationNode.Members(), false)
 	if !n.expectToken(serviceDeclarationNode.CloseBraceToken()) ||
 		!n.expectOptionalToken(serviceDeclarationNode.SemicolonToken()) {
 		return nil, false
@@ -1939,20 +1939,20 @@ func newClassDefnMembers() classDefnMembers {
 }
 
 // collectClassDefnMembers is the member recovery point: a member that fails to build is replaced by a bad member.
-func (n *nodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) classDefnMembers {
+func (n *nodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node], isReadonly bool) classDefnMembers {
 	members := newClassDefnMembers()
 	for member := range memberNodes.Iterator() {
-		if !n.addCollectedMember(&members, member) {
+		if !n.addCollectedMember(&members, member, isReadonly) {
 			members.BadTopLevelNodes = append(members.BadTopLevelNodes, n.badTopLevel(member))
 		}
 	}
 	return members
 }
 
-func (n *nodeBuilder) addCollectedMember(members *classDefnMembers, member st.Node) bool {
+func (n *nodeBuilder) addCollectedMember(members *classDefnMembers, member st.Node, isReadonly bool) bool {
 	switch member := member.(type) {
 	case *st.ObjectFieldNode:
-		field, ok := n.transformClassField(member)
+		field, ok := n.transformClassField(member, isReadonly)
 		if !ok {
 			return false
 		}
@@ -2531,7 +2531,7 @@ func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefi
 		return nil, false
 	}
 
-	members := n.collectClassDefnMembers(classDefinitionNode.Members())
+	members := n.collectClassDefnMembers(classDefinitionNode.Members(), flags.Has(model.FlagReadonly))
 	if !n.expectToken(classDefinitionNode.CloseBrace()) || !n.expectOptionalToken(classDefinitionNode.SemicolonToken()) {
 		return nil, false
 	}
@@ -2572,7 +2572,7 @@ func (n *nodeBuilder) classQualifierFlags(qualifiers st.NodeList[st.Token]) (mod
 	return flags, true
 }
 
-func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode) (*ast.BLangVariable, bool) {
+func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode, isReadonly bool) (*ast.BLangVariable, bool) {
 	if !n.expectNode(objectField) {
 		return nil, false
 	}
@@ -2585,6 +2585,9 @@ func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode) (*ast
 		return nil, false
 	}
 	var flags model.Flag
+	if isReadonly {
+		flags |= model.FlagFinal
+	}
 	if vis != nil && vis.Kind() == st.PUBLIC_KEYWORD {
 		flags |= model.FlagPublic
 	} else if vis != nil && vis.Kind() == st.PRIVATE_KEYWORD {

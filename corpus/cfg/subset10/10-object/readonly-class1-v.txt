@@ -1,0 +1,155 @@
+(IsolatedReadonlyPoint
+  (getX
+    (bb0 () ()
+      (return
+        (field-based-access x
+          (simple-var-ref self)))
+    )
+  )
+)
+(ReadonlyClient
+  (ReadonlyClient.$resource$get$0
+    (bb0 () ()
+      (return
+        (literal 2))
+    )
+  )
+  ($remote$ping
+    (bb0 () ()
+      (return
+        (literal 1))
+    )
+  )
+)
+(ReadonlyList
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access items
+          (simple-var-ref self))
+        (simple-var-ref items))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable point (type
+        (intersection-type
+          (value-type readonly)
+          (user-defined-type Point))) (expr
+        (new
+          (user-defined-type ReadonlyPoint) ()))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref point)))))
+    (var-def
+      (variable value (type
+        (value-type any)) (expr
+        (new
+          (user-defined-type ReadonlyPoint) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref value)
+          (intersection-type
+            (value-type readonly)
+            (user-defined-type Point))))))
+    (var-def
+      (variable readonlyPoint (type
+        (user-defined-type ReadonlyPoint)) (expr
+        (new ()))))
+    (var-def
+      (variable readonlyValue (type
+        (value-type readonly)) (expr
+        (simple-var-ref readonlyPoint))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref readonlyValue)
+          (user-defined-type ReadonlyPoint)))))
+    (var-def
+      (variable list (type
+        (user-defined-type ReadonlyList)) (expr
+        (new (
+          (list-constructor-expr
+            (literal 3)))))))
+    (var-def
+      (variable values (type
+        (intersection-type
+          (array-type
+            (value-type int) dimensions: 1 ([]))
+          (value-type readonly))) (expr
+        (field-based-access values
+          (simple-var-ref list)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref values))))
+    (var-def
+      (variable listValue (type
+        (value-type any)) (expr
+        (field-based-access values
+          (simple-var-ref list)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref listValue)
+          (value-type readonly)))))
+    (var-def
+      (variable items (type
+        (value-type any)) (expr
+        (field-based-access items
+          (simple-var-ref list)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref items)
+          (value-type readonly)))))
+    (var-def
+      (variable readonlyClient (type
+        (user-defined-type ReadonlyClient)) (expr
+        (new ()))))
+    (var-def
+      (variable clientValue (type
+        (value-type any)) (expr
+        (simple-var-ref readonlyClient))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref clientValue)
+          (value-type readonly)))))
+    (var-def
+      (variable pinged (type
+        (value-type int)) (expr
+        (remote-method-call ping expr:
+          (simple-var-ref readonlyClient) ()))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref pinged))))
+    (var-def
+      (variable getter (type
+        (user-defined-type ReadonlyGetter)) (expr
+        (new
+          (user-defined-type IsolatedReadonlyPoint) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation getX expr:
+          (simple-var-ref getter) ()))))
+    (var-def
+      (variable mutableValue (type
+        (value-type any)) (expr
+        (new
+          (user-defined-type MutablePoint) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref mutableValue)
+          (value-type readonly)))))
+  )
+)

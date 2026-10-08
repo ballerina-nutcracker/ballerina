@@ -27,12 +27,14 @@ import (
 // of a class and never mutated after construction: the method-key map and the
 // resource table. It is computed once when a class is registered and shared by
 // reference across all instances, so object creation only allocates the
-// per-instance field map. FieldCount pre-sizes that map.
+// per-instance field map. FieldCount pre-sizes that map. IsReadonly marks a
+// readonly class, whose fields may only be stored by the class's init method.
 type ClassTemplate struct {
 	MethodKeys  map[string]string
 	RTable      map[string][]values.ResourceEntry
 	Annotations values.AnnotationValues
 	FieldCount  int
+	IsReadonly  bool
 }
 
 type Registry struct {
@@ -87,6 +89,7 @@ func buildClassTemplate(def *bir.BIRClassDef) *ClassTemplate {
 		RTable:      rtable,
 		Annotations: annotations,
 		FieldCount:  len(def.Fields),
+		IsReadonly:  def.IsReadonly,
 	}
 }
 
