@@ -1,0 +1,1045 @@
+{
+  "defAnnotation": {
+    "label": "annotation",
+    "filter": "annotation",
+    "insert": "annotation ${1:typeName} ${2:name} on ${3:attachmentPoint};",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defFunction": {
+    "label": "function",
+    "filter": "function",
+    "insert": "function ${1:name}(${2})${3} {\n\t${4}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defExpressionBodiedFunction": {
+    "label": "function <name>(..) => <expression>",
+    "filter": "function",
+    "insert": "function ${1:name}(${2})${3} => (${4});",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defResourceFunction": {
+    "label": "resource function",
+    "filter": "function",
+    "insert": "function ${1:accessor} ${2:path} (${3})${4} {\n\t${5}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defResourceFunctionSignature": {
+    "label": "resource function",
+    "filter": "resource_function",
+    "insert": "resource function ${1:accessor} ${2:path}(${3})${4} {\n\t${5}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defFunctionSignature": {
+    "label": "function <name>();",
+    "filter": "function",
+    "insert": "function ${1:name}(${2})${3};",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defObjectTypeDescSnippet": {
+    "label": "object {}",
+    "filter": "object",
+    "insert": "object {${1}}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defObjectSnippet": {
+    "label": "type <ObjectName> object",
+    "filter": "type_object",
+    "insert": "type ${1:ObjectName} object {${2}};",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defRecord": {
+    "label": "type <RecordName> record {}",
+    "filter": "type_record",
+    "insert": "type ${1:RecordName} record {\n\t${2}\n};",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defClosedRecord": {
+    "label": "type <RecordName> record {||}",
+    "filter": "type_record",
+    "insert": "type ${1:RecordName} record {|\n\t${2}\n|};",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defErrorType": {
+    "label": "type <ErrorName> error<?>",
+    "filter": "type_error",
+    "insert": "type ${1:ErrorName} error<${2:map<anydata>}>;",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defRecordTypeDesc": {
+    "label": "record {}",
+    "filter": "record",
+    "insert": "record {${1}}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defClosedRecordTypeDesc": {
+    "label": "record {||}",
+    "filter": "record",
+    "insert": "record {|${1}|}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defErrorTypeDesc": {
+    "label": "type <ErrorName> error<?>",
+    "filter": "error",
+    "insert": "error<${1:map<anydata>}>;",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defTableTypeDesc": {
+    "label": "type TypeName table<>;",
+    "filter": "type_table",
+    "insert": "type ${1:TypeName} table<${2}>;",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defTableWithKeyTypeDesc": {
+    "label": "type TypeName table<> key",
+    "filter": "type_table_key",
+    "insert": "type ${1:TypeName} table<${2}> key${3}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defStream": {
+    "label": "stream<> streamName = new;",
+    "filter": "stream",
+    "insert": "stream<${1}> ${2:streamName} = new;",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defServiceCommon": {
+    "label": "service",
+    "filter": "service",
+    "insert": "service on ${1:listenerName} {\n\t${2}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defClass": {
+    "label": "class",
+    "filter": "class",
+    "insert": "class ${1:className} {\n\t${2}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defEnum": {
+    "label": "enum",
+    "filter": "enum",
+    "insert": "enum ${1:enumName} {\n\t${2}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defWorker": {
+    "label": "worker",
+    "filter": "worker",
+    "insert": "worker ${1:name} {\n\t${2}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defRemoteFunction": {
+    "label": "remote function <name>();",
+    "filter": "remote_function",
+    "insert": "remote function ${1:name}(${2})${3} {\n\t${4}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defRemoteMethodDecl": {
+    "label": "remote function <name>();",
+    "filter": "remote_function",
+    "insert": "remote function ${1:name}(${2})${3};",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defInitFunction": {
+    "label": "init function",
+    "filter": "init_function",
+    "insert": "function init(${1}) {\n\t${2}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defAttachFunction": {
+    "label": "attach function",
+    "filter": "attach_public_function",
+    "insert": "public function attach(service ${1:s}, string? ${2:name} = ()) returns error? {\n\t${3}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defStartFunction": {
+    "label": "start function",
+    "filter": "start_public_function",
+    "insert": "public function 'start() returns error? {\n\t${1}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defGracefulStopFunction": {
+    "label": "graceful stop function",
+    "filter": "gracefulStop_public_function",
+    "insert": "public function gracefulStop() returns error? {\n\t${1}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defImmediateStopFunction": {
+    "label": "immediate stop function",
+    "filter": "immediateStop_public_function",
+    "insert": "public function immediateStop() returns error? {\n\t${1}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defDetachFunction": {
+    "label": "detach function",
+    "filter": "detach_public_function",
+    "insert": "public function __detach(service ${1:s}) returns error? {\n\t${2}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defRegExp": {
+    "label": "re ``",
+    "filter": "re ``",
+    "insert": "re `${1}`",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defString": {
+    "label": "string ``",
+    "filter": "string ``",
+    "insert": "string `${1}`",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defXml": {
+    "label": "xml ``",
+    "filter": "xml ``",
+    "insert": "xml `${1}`",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defParanthesis": {
+    "label": "()",
+    "filter": "()",
+    "insert": "(${1})",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defSquareBracket": {
+    "label": "[]",
+    "filter": "[]",
+    "insert": "[${1}]",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "defNaturalExpr": {
+    "label": "natural (..) {..}",
+    "filter": "natural (..) {..}",
+    "insert": "natural (${1}) {${2}}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "exprErrorConstructor": {
+    "label": "error constructor",
+    "filter": "error",
+    "insert": "error(\"${1}\")",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "exprObjectConstructor": {
+    "label": "object constructor",
+    "filter": "object",
+    "insert": "object {${1}}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "exprBase16Literal": {
+    "label": "base16",
+    "filter": "base16",
+    "insert": "base16 `${1}`",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "exprBase64Literal": {
+    "label": "base64",
+    "filter": "base64",
+    "insert": "base64 `${1}`",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "kwOn": {
+    "label": "on",
+    "filter": "on",
+    "insert": "on ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwNew": {
+    "label": "new",
+    "filter": "new",
+    "insert": "new ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwDefault": {
+    "label": "default",
+    "filter": "default",
+    "insert": "default",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwTable": {
+    "label": "table",
+    "filter": "table",
+    "insert": "table",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwService": {
+    "label": "service",
+    "filter": "service",
+    "insert": "service",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwString": {
+    "label": "string",
+    "filter": "string",
+    "insert": "string",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwXml": {
+    "label": "xml",
+    "filter": "xml",
+    "insert": "xml",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwLet": {
+    "label": "let",
+    "filter": "let",
+    "insert": "let",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwKey": {
+    "label": "key",
+    "filter": "key",
+    "insert": "key",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwTrap": {
+    "label": "trap",
+    "filter": "trap",
+    "insert": "trap",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwError": {
+    "label": "error",
+    "filter": "error",
+    "insert": "error",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwCheck": {
+    "label": "check",
+    "filter": "check",
+    "insert": "check ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwCheckPanic": {
+    "label": "checkpanic",
+    "filter": "checkpanic",
+    "insert": "checkpanic ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwWait": {
+    "label": "wait",
+    "filter": "wait",
+    "insert": "wait ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwStart": {
+    "label": "start",
+    "filter": "start",
+    "insert": "start ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwAs": {
+    "label": "as",
+    "filter": "as",
+    "insert": "as ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwFrom": {
+    "label": "from",
+    "filter": "from",
+    "insert": "from ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwWhere": {
+    "label": "where",
+    "filter": "where",
+    "insert": "where ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwJoin": {
+    "label": "join",
+    "filter": "join",
+    "insert": "join ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwGroupby": {
+    "label": "group by",
+    "filter": "group by",
+    "insert": "group by ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwCollect": {
+    "label": "collect",
+    "filter": "collect",
+    "insert": "collect ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwOrderby": {
+    "label": "order by",
+    "filter": "order by",
+    "insert": "order by ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwLimit": {
+    "label": "limit",
+    "filter": "limit",
+    "insert": "limit ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwSelect": {
+    "label": "select",
+    "filter": "select",
+    "insert": "select ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwEquals": {
+    "label": "equals",
+    "filter": "equals",
+    "insert": "equals ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwFlush": {
+    "label": "flush",
+    "filter": "flush",
+    "insert": "flush ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwImport": {
+    "label": "import",
+    "filter": "import",
+    "insert": "import ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwFunction": {
+    "label": "function",
+    "filter": "function",
+    "insert": "function ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwResource": {
+    "label": "resource",
+    "filter": "resource",
+    "insert": "resource ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwPublic": {
+    "label": "public",
+    "filter": "public",
+    "insert": "public ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwIsolated": {
+    "label": "isolated",
+    "filter": "isolated",
+    "insert": "isolated ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwPrivate": {
+    "label": "private",
+    "filter": "private",
+    "insert": "private ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwFinal": {
+    "label": "final",
+    "filter": "final",
+    "insert": "final ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwConfigurable": {
+    "label": "configurable",
+    "filter": "configurable",
+    "insert": "configurable",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwFail": {
+    "label": "fail",
+    "filter": "fail",
+    "insert": "fail ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwRemote": {
+    "label": "remote",
+    "filter": "remote",
+    "insert": "remote",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwConst": {
+    "label": "const",
+    "filter": "const",
+    "insert": "const ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwType": {
+    "label": "type",
+    "filter": "type",
+    "insert": "type ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwRecord": {
+    "label": "record",
+    "filter": "record",
+    "insert": "record ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwObject": {
+    "label": "object",
+    "filter": "object",
+    "insert": "object ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwAnnotation": {
+    "label": "annotation",
+    "filter": "annotation",
+    "insert": "annotation ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwVar": {
+    "label": "var",
+    "filter": "var",
+    "insert": "var ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwIn": {
+    "label": "in",
+    "filter": "in",
+    "insert": "in ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwEnum": {
+    "label": "enum",
+    "filter": "enum",
+    "insert": "enum ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwXmlns": {
+    "label": "xmlns",
+    "filter": "xmlns",
+    "insert": "xmlns ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwClass": {
+    "label": "class",
+    "filter": "class",
+    "insert": "class ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwDistinct": {
+    "label": "distinct",
+    "filter": "distinct",
+    "insert": "distinct",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwListener": {
+    "label": "listener",
+    "filter": "listener",
+    "insert": "listener ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwReturns": {
+    "label": "returns",
+    "filter": "returns",
+    "insert": "returns ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwUntaint": {
+    "label": "untainted",
+    "filter": "untainted",
+    "insert": "untainted ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwAbstract": {
+    "label": "abstract",
+    "filter": "abstract",
+    "insert": "abstract ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwClient": {
+    "label": "client",
+    "filter": "client",
+    "insert": "client ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwReadonly": {
+    "label": "readonly",
+    "filter": "readonly",
+    "insert": "readonly ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwExternal": {
+    "label": "external",
+    "filter": "external",
+    "insert": "external;",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwTypeof": {
+    "label": "typeof",
+    "filter": "typeof",
+    "insert": "typeof ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwIs": {
+    "label": "is",
+    "filter": "is",
+    "insert": "is",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwIf": {
+    "label": "if",
+    "filter": "if",
+    "insert": "if",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwAscending": {
+    "label": "ascending",
+    "filter": "ascending",
+    "insert": "ascending",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwDescending": {
+    "label": "descending",
+    "filter": "descending",
+    "insert": "descending",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwTransactional": {
+    "label": "transactional",
+    "filter": "transactional",
+    "insert": "transactional",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwWorker": {
+    "label": "worker",
+    "filter": "worker",
+    "insert": "worker",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwField": {
+    "label": "field",
+    "filter": "field",
+    "insert": "field",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwSource": {
+    "label": "source",
+    "filter": "source",
+    "insert": "source",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwObjFunction": {
+    "label": "object function",
+    "filter": "object function",
+    "insert": "object function",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwServiceRemoteFunction": {
+    "label": "service remote function",
+    "filter": "service remote function",
+    "insert": "service remote function",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwRemoteFunction": {
+    "label": "remote function",
+    "filter": "remote function",
+    "insert": "remote function",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwParameter": {
+    "label": "parameter",
+    "filter": "parameter",
+    "insert": "parameter",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwReturn": {
+    "label": "return",
+    "filter": "return",
+    "insert": "return",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwObjectField": {
+    "label": "object field",
+    "filter": "object field",
+    "insert": "object field",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwRecordField": {
+    "label": "record field",
+    "filter": "record field",
+    "insert": "record field",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwSourceAnnotation": {
+    "label": "source annotation",
+    "filter": "source annotation",
+    "insert": "source annotation",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwSourceExternal": {
+    "label": "source external",
+    "filter": "source external",
+    "insert": "source external",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwSourceVar": {
+    "label": "source var",
+    "filter": "source var",
+    "insert": "source var",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwSourceConst": {
+    "label": "source const",
+    "filter": "source const",
+    "insert": "source const",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwSourceListener": {
+    "label": "source listener",
+    "filter": "source listener",
+    "insert": "source listener",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwSourceWorker": {
+    "label": "source worker",
+    "filter": "source worker",
+    "insert": "source worker",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwSourceClient": {
+    "label": "source client",
+    "filter": "source client",
+    "insert": "source client",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwTrue": {
+    "label": "true",
+    "filter": "true",
+    "insert": "true",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwFalse": {
+    "label": "false",
+    "filter": "false",
+    "insert": "false",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwNil": {
+    "label": "null",
+    "filter": "null",
+    "insert": "null",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "kwOuter": {
+    "label": "outer",
+    "filter": "outer",
+    "insert": "outer ",
+    "detail": "Keyword",
+    "kind": "Keyword"
+  },
+  "stmtBreak": {
+    "label": "break",
+    "filter": "break",
+    "insert": "break;",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtRollback": {
+    "label": "rollback",
+    "filter": "rollback",
+    "insert": "rollback;",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtCommit": {
+    "label": "commit",
+    "filter": "commit",
+    "insert": "commit;",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtContinue": {
+    "label": "continue",
+    "filter": "continue",
+    "insert": "continue;",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtForeach": {
+    "label": "foreach",
+    "filter": "foreach",
+    "insert": "foreach ${1:var} ${2:item} in ${3:itemList} {\n\t${4}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtForeachRangeExp": {
+    "label": "foreach i",
+    "filter": "foreach",
+    "insert": "foreach ${1:int} ${2:i} in ${3:0}...${4:9} {\n\t${5}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtFork": {
+    "label": "fork",
+    "filter": "fork",
+    "insert": "fork {\n\t${1}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtIf": {
+    "label": "if",
+    "filter": "if",
+    "insert": "if ${1:true} {\n\t${2}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtElseIf": {
+    "label": "else if",
+    "filter": "else",
+    "insert": "else if ${1:true} {\n\t${2}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtElse": {
+    "label": "else",
+    "filter": "else",
+    "insert": "else {\n\t${1}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtLock": {
+    "label": "lock",
+    "filter": "lock",
+    "insert": "lock {\n\t${1}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtMatch": {
+    "label": "match",
+    "filter": "match",
+    "insert": "match ",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtNamespaceDeclaration": {
+    "label": "xmlns",
+    "filter": "xmlns",
+    "insert": "xmlns \"${1}\" as ${2:ns};",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "stmtReturn": {
+    "label": "return",
+    "filter": "return",
+    "insert": "return ",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtReturnSc": {
+    "label": "return;",
+    "filter": "return;",
+    "insert": "return;",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtPanic": {
+    "label": "panic",
+    "filter": "panic",
+    "insert": "panic ",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtTransaction": {
+    "label": "transaction",
+    "filter": "transaction",
+    "insert": "transaction {\n\t${1}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtRetry": {
+    "label": "retry",
+    "filter": "retry",
+    "insert": "retry {\n\t${1}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtRetryTransaction": {
+    "label": "retry transaction",
+    "filter": "retry_transaction",
+    "insert": "retry transaction {\n\t${1}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtTrap": {
+    "label": "trap",
+    "filter": "trap",
+    "insert": "trap ",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "stmtWhile": {
+    "label": "while",
+    "filter": "while",
+    "insert": "while ${1:true} {\n\t${2}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "stmtDo": {
+    "label": "do",
+    "filter": "do",
+    "insert": "do {\n\t${1}\n}",
+    "detail": "Statement",
+    "kind": "Snippet"
+  },
+  "clauseFrom": {
+    "label": "from clause",
+    "filter": "from",
+    "insert": "from ${1:var} ${2:item} in ${3}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "clauseDo": {
+    "label": "do",
+    "filter": "do",
+    "insert": "do {\n\t${1}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "clauseLet": {
+    "label": "let clause",
+    "filter": "let",
+    "insert": "let ${1:var} ${2:varName} = ${3}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "clauseGroupby": {
+    "label": "group by clause",
+    "filter": "group by",
+    "insert": "group by ${1:var} ${2:item} = ${3}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "clauseJoin": {
+    "label": "join clause",
+    "filter": "join",
+    "insert": "join ${1:var} ${2:varName} in ${3:expr} on ${4:onExpr} equals ${5:equalsExpr}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "clauseOnFail": {
+    "label": "on fail clause",
+    "filter": "on_fail",
+    "insert": "on fail ${1:var} ${2:varName} {\n\t${3}\n}",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  },
+  "clauseOnConflict": {
+    "label": "on conflict",
+    "filter": "on_conflict",
+    "insert": "on conflict ",
+    "detail": "Snippet",
+    "kind": "Snippet"
+  }
+}

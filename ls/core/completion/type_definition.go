@@ -797,32 +797,17 @@ func typeDefinitionUnionContinuation(req Request) bool {
 
 func typePositionLanguageItems(unionContinuation bool) []protocol.CompletionItem {
 	items := make([]protocol.CompletionItem, 0, 36)
-	keywords := []string{"record", "function", "distinct", "true", "false", "isolated", "client", "transactional", "null", "service"}
-	for _, label := range keywords {
-		if unionContinuation && (label == "isolated" || label == "client" || label == "transactional") {
+	keywordSortText := typeDefinitionSortText(typeDefinitionKeywordOffset, 0)
+	keywords := []snippetID{kwRecord, kwFunction, kwDistinct, kwTrue, kwFalse, kwIsolated, kwClient, kwTransactional, kwNil, kwService}
+	for _, id := range keywords {
+		if unionContinuation && (id == kwIsolated || id == kwClient || id == kwTransactional) {
 			continue
 		}
-		insertText := label
-		if label == "record" || label == "function" || label == "isolated" || label == "client" {
-			insertText += " "
-		}
-		items = append(items, typePositionKeyword(label, insertText))
+		items = append(items, snippetItem(id, keywordSortText))
 	}
 	snippetSortText := typeDefinitionSortText(typeDefinitionSnippetOffset, 0)
-	for _, snippet := range []struct{ label, filter, insertText string }{
-		{"record {}", "record", "record {${1}}"},
-		{"record {||}", "record", "record {|${1}|}"},
-		{"object {}", "object", "object {${1}}"},
-	} {
-		items = append(items, protocol.CompletionItem{
-			Label:            snippet.label,
-			Kind:             protocol.NewOptional(protocol.CompletionItemKindSnippet),
-			Detail:           protocol.NewOptional("Snippet"),
-			SortText:         protocol.NewOptional(snippetSortText),
-			FilterText:       protocol.NewOptional(snippet.filter),
-			InsertText:       protocol.NewOptional(snippet.insertText),
-			InsertTextFormat: protocol.NewOptional(protocol.InsertTextFormatSnippet),
-		})
+	for _, id := range []snippetID{defRecordTypeDesc, defClosedRecordTypeDesc, defObjectTypeDescSnippet} {
+		items = append(items, snippetItem(id, snippetSortText))
 	}
 	for _, label := range []string{"readonly", "handle", "never", "json", "anydata", "any", "byte", "decimal", "xml", "boolean", "future", "int", "float", "function", "string", "typedesc"} {
 		detail := strings.ToUpper(label[:1]) + label[1:]
@@ -833,17 +818,6 @@ func typePositionLanguageItems(unionContinuation bool) []protocol.CompletionItem
 		items = append(items, typePositionDescriptor(label, "type", typeDefinitionDescriptorOffset, 0))
 	}
 	return items
-}
-
-func typePositionKeyword(label, insertText string) protocol.CompletionItem {
-	return protocol.CompletionItem{
-		Label:      label,
-		Kind:       protocol.NewOptional(protocol.CompletionItemKindKeyword),
-		Detail:     protocol.NewOptional("Keyword"),
-		SortText:   protocol.NewOptional(typeDefinitionSortText(typeDefinitionKeywordOffset, 0)),
-		FilterText: protocol.NewOptional(label),
-		InsertText: protocol.NewOptional(insertText),
-	}
 }
 
 func typePositionDescriptor(label, detail string, primaryOffset, secondaryOffset int8) protocol.CompletionItem {
