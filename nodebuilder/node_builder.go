@@ -1655,7 +1655,7 @@ func (n *nodeBuilder) transformServiceDeclaration(serviceDeclarationNode *st.Ser
 	n.populateServiceAttachPoint(&service, serviceDeclarationNode)
 	n.populateServiceAttachedExprs(&service, serviceDeclarationNode)
 
-	members := n.collectClassDefnMembers(serviceDeclarationNode.Members())
+	members := n.collectClassDefnMembers(serviceDeclarationNode.Members(), false)
 	service.Fields = members.Fields
 	service.Methods = members.Methods
 	service.InitFunction = members.InitFunction
@@ -1736,13 +1736,13 @@ func newClassDefnMembers() classDefnMembers {
 	return classDefnMembers{Methods: map[string]*ast.BLangFunction{}}
 }
 
-func (n *nodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) classDefnMembers {
+func (n *nodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node], isReadonly bool) classDefnMembers {
 	members := newClassDefnMembers()
 	for i := 0; i < memberNodes.Size(); i++ {
 		member := memberNodes.Get(i)
 		switch member.Kind() {
 		case st.OBJECT_FIELD:
-			field := n.transformClassField(member.(*st.ObjectFieldNode))
+			field := n.transformClassField(member.(*st.ObjectFieldNode), isReadonly)
 			members.Fields = append(members.Fields, field)
 		case st.FUNCTION_DEFINITION, st.OBJECT_METHOD_DEFINITION:
 			n.addCollectedMethod(&members, member.(*st.FunctionDefinition))
@@ -5387,7 +5387,7 @@ func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefi
 	nameIdentifier := n.createIdentifierNodeFromToken(n.getPosition(classDefinitionNode.ClassName()), classDefinitionNode.ClassName())
 	blangClass.Name = nameIdentifier
 
-	members := n.collectClassDefnMembers(classDefinitionNode.Members())
+	members := n.collectClassDefnMembers(classDefinitionNode.Members(), flags.Has(model.FlagReadonly))
 	blangClass.Fields = members.Fields
 	blangClass.Methods = members.Methods
 	blangClass.InitFunction = members.InitFunction
@@ -5420,9 +5420,12 @@ func (n *nodeBuilder) classQualifierFlags(qualifiers st.NodeList[st.Token]) mode
 	return flags
 }
 
-func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode) *ast.BLangVariable {
+func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode, isReadonly bool) *ast.BLangVariable {
 	identifier := n.createIdentifierNodeFromToken(n.getPosition(objectField.FieldName()), objectField.FieldName())
 	var flags model.Flag
+	if isReadonly {
+		flags |= model.FlagFinal
+	}
 	if vis := objectField.VisibilityQualifier(); vis != nil && vis.Kind() == st.PUBLIC_KEYWORD {
 		flags |= model.FlagPublic
 	} else if vis != nil && vis.Kind() == st.PRIVATE_KEYWORD {

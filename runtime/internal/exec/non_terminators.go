@@ -102,7 +102,7 @@ func execNewObject(ctx *extern.Context, newObject *bir.NewObject, frame *Frame) 
 	tmpl := ctx.Env.Registry.(*modules.Registry).GetClassTemplate(newObject.ClassDefRef)
 	fieldValues := make(map[string]values.BalValue, tmpl.FieldCount)
 	objType := newObject.GetLhsOperand().VariableDcl.GetType()
-	obj := values.NewObject(objType, fieldValues, tmpl.MethodKeys, tmpl.RTable, tmpl.Annotations)
+	obj := values.NewObjectWithReadonly(objType, fieldValues, tmpl.MethodKeys, tmpl.RTable, tmpl.Annotations, tmpl.IsReadonly)
 	setOperandValue(ctx, newObject.GetLhsOperand(), frame, obj)
 }
 
@@ -172,7 +172,24 @@ func execObjectStore(ctx *extern.Context, access *bir.FieldAccess, frame *Frame)
 	obj := getOperandValue(ctx, access.LhsOp, frame).(*values.Object)
 	field := getOperandValue(ctx, access.KeyOp, frame).(string)
 	value := getOperandValue(ctx, access.RhsOp, frame)
+	if obj.IsReadonly() && !isInitializingStore(obj, access.LhsOp.Address, frame) {
+		panic(values.NewErrorWithMessage("inherent type violation: cannot mutate readonly value"))
+	}
 	obj.Put(field, value)
+}
+
+// isInitializingStore reports whether the store target at address is the self of
+// obj's own init method, the only place fields of a readonly object may be stored.
+func isInitializingStore(obj *values.Object, address bir.Address, frame *Frame) bool {
+	if address.FrameIndex != selfLocalIndex {
+		return false
+	}
+	initKey, ok := obj.MethodLookupKey("init")
+	if !ok {
+		return false
+	}
+	owner := resolveFrame(frame, address)
+	return owner.FunctionKey() == initKey && owner.Local(selfLocalIndex) == values.BalValue(obj)
 }
 
 func execObjectLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {

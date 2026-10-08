@@ -259,6 +259,7 @@ func (br *birReader) readClassDef(classDef *bir.BIRClassDef) {
 		}
 	}
 	classDef.Fields = fields
+	br.read(&classDef.IsReadonly)
 
 	methodCount := br.readLength()
 	vTable := make(map[string]*bir.BIRFunction, methodCount)
