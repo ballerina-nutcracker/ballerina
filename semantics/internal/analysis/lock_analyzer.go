@@ -325,7 +325,9 @@ func (v *lockBodyVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	case *ast.BLangVariableDef:
 		v.locals[node.Var.Symbol()] = struct{}{}
 	case *ast.BLangAssignment:
-		v.checkAssignment(node.VarRef, node.Expr, node.GetPosition())
+		if _, isWildcard := node.VarRef.(*ast.BLangWildCardBindingPattern); !isWildcard {
+			v.checkAssignment(node.VarRef, node.Expr, node.GetPosition())
+		}
 	case *ast.BLangCompoundAssignment:
 		v.checkAssignment(node.VarRef.(ast.BLangExpression), node.Expr, node.GetPosition())
 		return v

@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no restricted variable referenced in lock statement
+  --> lock-wildcard-assign-2-e.bal:18:5
+   |
+18 |     lock { // @error no restricted variable referenced in lock statement
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |         _ = 1;
+   |         ^^^^^^
+20 |     }
+   |     ^
