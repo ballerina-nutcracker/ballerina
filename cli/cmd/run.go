@@ -407,9 +407,10 @@ func execWithNativeRunner(pkg *projects.Package, project projects.Project, targe
 	if err != nil {
 		return fmt.Errorf("building native interpreter: %w", err)
 	}
-	defer func() { _ = runner.Close() }()
-
 	code, err := runner.Run(context.Background())
+	if closeErr := runner.Close(); closeErr != nil {
+		fmt.Fprintf(os.Stderr, "warning: cleaning up native interpreter: %v\n", closeErr)
+	}
 	if err != nil {
 		return fmt.Errorf("running native interpreter: %w", err)
 	}

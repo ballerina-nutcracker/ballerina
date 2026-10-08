@@ -313,7 +313,6 @@ func TestDriverSourceConcurrent(t *testing.T) {
 // testNativeRunner_EmbeddedOnlyProjectNoRebuild checks a project depending
 // only on embedded ballerina/io never triggers a native interpreter rebuild.
 func testNativeRunner_EmbeddedOnlyProjectNoRebuild(t *testing.T, cli *balCLI) {
-	t.Parallel()
 	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	balFile := filepath.Join(repoRoot, "corpus", "cli", "testdata", "run", "single-bal-files", "run-and-print.bal")
@@ -346,9 +345,13 @@ func testNativeRunner_ColdBuildAndCacheHit(t *testing.T, cli *balCLI) {
 
 	proxyURL := localDistributionProxy(t, repoRoot)
 	moduleCache := isolatedGoModuleCache(t, tempHome)
+	commandTempDir := t.TempDir()
 	runNative := func() (stdout, stderr string, code int) {
-		env := append(envWithoutVars(os.Environ(), "BALLERINA_SRC", "GOPROXY", "GONOSUMDB"),
+		env := append(envWithoutVars(os.Environ(), "BALLERINA_SRC", "GOPROXY", "GONOSUMDB", "TMPDIR", "TMP", "TEMP"),
 			"BAL_ENV="+tempHome,
+			"TMPDIR="+commandTempDir,
+			"TMP="+commandTempDir,
+			"TEMP="+commandTempDir,
 			"GOPROXY="+proxyURL+",https://proxy.golang.org,direct",
 			"GONOSUMDB=github.com/ballerina-nutcracker/ballerina*",
 			"GOMODCACHE="+moduleCache,
@@ -366,6 +369,7 @@ func testNativeRunner_ColdBuildAndCacheHit(t *testing.T, cli *balCLI) {
 	if !strings.Contains(stderr1, "info: building native interpreter") {
 		t.Errorf("first run: expected 'info: building native interpreter' in stderr\nstderr: %s", stderr1)
 	}
+	assertDirEmpty(t, commandTempDir)
 
 	stdout2, stderr2, code2 := runNative()
 	if code2 != 0 {
@@ -377,6 +381,23 @@ func testNativeRunner_ColdBuildAndCacheHit(t *testing.T, cli *balCLI) {
 	if test_util.NormalizeNewlines(stdout1) != test_util.NormalizeNewlines(stdout2) {
 		t.Errorf("output differs between cold and cached run\nfirst:  %s\nsecond: %s", stdout1, stdout2)
 	}
+}
+
+// assertDirEmpty fails the test if bal run left anything behind in dir.
+func assertDirEmpty(t *testing.T, dir string) {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("reading %s: %v", dir, err)
+	}
+	if len(entries) == 0 {
+		return
+	}
+	names := make([]string, len(entries))
+	for i, e := range entries {
+		names[i] = e.Name()
+	}
+	t.Errorf("bal run left %d entries in %s: %v", len(entries), dir, names)
 }
 
 // runNativeCLICommandWithEnv is like runCLICommand but takes a custom env
@@ -633,7 +654,6 @@ func envWithoutVars(base []string, names ...string) []string {
 // means every error path needs its own explicit print — this test caught a
 // case that was missing one, fixed in run.go).
 func testNativeRunner_GoToolchainUnavailable(t *testing.T, cli *balCLI) {
-	t.Parallel()
 	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 
@@ -663,7 +683,6 @@ func testNativeRunner_GoToolchainUnavailable(t *testing.T, cli *balCLI) {
 // unavailable toolchain) rather than only being covered for bal run's
 // execWithNativeRunner path.
 func testBalBuildNativeDependencyGoToolchainUnavailable(t *testing.T, cli *balCLI) {
-	t.Parallel()
 	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 
@@ -694,7 +713,6 @@ func testBalBuildNativeDependencyGoToolchainUnavailable(t *testing.T, cli *balCL
 // BAL_ENV fixture (the central bala cache setupNativeTestFixtures also
 // populates there) untouched.
 func testNativeRunner_DriverSourceUnresolvable(t *testing.T, cli *balCLI) {
-	t.Parallel()
 	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 
@@ -721,7 +739,6 @@ func testNativeRunner_DriverSourceUnresolvable(t *testing.T, cli *balCLI) {
 // testNativeRunner_OutputPathBlocked covers a regular file blocking the
 // output directory LocalExecutor needs to create — must fail cleanly.
 func testNativeRunner_OutputPathBlocked(t *testing.T, cli *balCLI) {
-	t.Parallel()
 	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 
@@ -748,7 +765,6 @@ func testNativeRunner_OutputPathBlocked(t *testing.T, cli *balCLI) {
 // a native dependency's Go source invalidates the fingerprint and triggers
 // a rebuild, instead of serving stale output.
 func testNativeRunner_FingerprintInvalidatesOnSourceChange(t *testing.T, cli *balCLI) {
-	t.Parallel()
 	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")

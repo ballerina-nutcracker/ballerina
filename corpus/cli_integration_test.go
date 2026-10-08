@@ -5193,7 +5193,8 @@ func runCLICommandWithEnv(t *testing.T, balBin, repoRoot, coverDir string, extra
 
 	cmd := exec.Command(balBin, args...)
 	cmd.Dir = repoRoot
-	env := os.Environ()
+	commandTempDir := t.TempDir()
+	env := append(os.Environ(), "TMPDIR="+commandTempDir, "TMP="+commandTempDir, "TEMP="+commandTempDir)
 	if coverDir != "" {
 		commandCoverDir := t.TempDir()
 		env = append(env, "GOCOVERDIR="+commandCoverDir)
