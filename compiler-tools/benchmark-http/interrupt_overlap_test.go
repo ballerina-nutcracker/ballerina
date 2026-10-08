@@ -33,21 +33,17 @@ import (
 // cleanup markers into.
 const overlapHelperEnv = "HTTPBENCH_OVERLAP_MARKER_DIR"
 
-// TestInterruptOverlappingRegistrationsBothComplete models the live layout of
-// this test binary: TestMain keeps one registration alive while run installs a
-// second, and a single signal must run both before the process exits.
+// TestInterruptOverlappingRegistrationsBothComplete models overlapping
+// registrations: an outer one stays alive while run installs a second, and a
+// single signal must run both before the process exits.
 func TestInterruptOverlappingRegistrationsBothComplete(t *testing.T) {
+	t.Parallel()
 	if runtime.GOOS == "windows" {
 		t.Skip("sending SIGTERM to a child process is unsupported on windows")
 	}
 	dir := t.TempDir()
 	cmd := exec.Command(os.Args[0], "-test.run=TestOverlapHelperProcess")
-	cmd.Env = append(os.Environ(),
-		overlapHelperEnv+"="+dir,
-		// Keep TestMain's own handler out of the helper: the two registrations
-		// under test are installed explicitly below.
-		interruptHelperEnv+"="+filepath.Join(dir, "unused"),
-	)
+	cmd.Env = append(os.Environ(), overlapHelperEnv+"="+dir)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		t.Fatalf("stdout pipe: %v", err)
@@ -84,7 +80,7 @@ func TestOverlapHelperProcess(t *testing.T) {
 	if dir == "" {
 		t.Skip("helper process for TestInterruptOverlappingRegistrationsBothComplete")
 	}
-	// Stands in for TestMain's shared-checkout teardown: a real git worktree
+	// Stands in for a shared-checkout teardown: a real git worktree
 	// removal is slow enough to still be running when a second handler exits.
 	onInterrupt(func() {
 		time.Sleep(500 * time.Millisecond)

@@ -4,7 +4,10 @@ linters:
   default: standard
   enable:
     - depguard
+    - usetesting
   settings:
+    usetesting:
+      os-temp-dir: true
     depguard:
       rules:
         no-test-util-in-production:

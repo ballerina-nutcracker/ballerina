@@ -15,7 +15,7 @@
 // under the License.
 //
 // Payload-round-trip, section-preservation, and execution coverage for
-// ELF live in corpus/cli_integration_test.go (TestBalBuildLinuxTarget*),
+// ELF live in corpus/cli_integration_test.go (TestBalCLI/BalBuildLinuxTarget*),
 // testing the same code through the real bal build CLI. This file only
 // covers rejection paths a real balrt stub can't exercise.
 
@@ -81,7 +81,7 @@ func TestEmbedELF_RejectsNon64BitOrMalformedStub(t *testing.T) {
 func TestEmbedELF_RejectsAlreadyPackedInput(t *testing.T) {
 	t.Parallel()
 	packedOnce := filepath.Join(t.TempDir(), "packed-once")
-	if err := EmbedELF(linuxAmd64StubPath, []byte("payload"), packedOnce); err != nil {
+	if err := EmbedELF(crossBuiltStub(t, "linux", "amd64"), []byte("payload"), packedOnce); err != nil {
 		t.Fatalf("first EmbedELF: %v", err)
 	}
 

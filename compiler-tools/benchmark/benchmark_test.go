@@ -27,7 +27,6 @@ import (
 	"runtime"
 	"slices"
 	"strings"
-	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -48,17 +47,10 @@ var integrationTargets = []string{
 	integrationSinglePath,
 }
 
-var (
-	buildBinaryOnce sync.Once
-	binaryPath      string
-	binaryCoverDir  string
-	binaryBuildErr  error
-)
-
 func TestBenchmarkBinaryRunExportsHTML(t *testing.T) {
 	skipUnlessBenchmarkIntegration(t)
 
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	for _, targetPath := range integrationTargets {
 		t.Run(filepath.Base(targetPath), func(t *testing.T) {
 			tmp := t.TempDir()
@@ -91,7 +83,7 @@ func TestBenchmarkBinaryRunExportsHTMLForDirectoryTarget(t *testing.T) {
 		t.Fatalf("expected multipleFilesMode for %q, got %v", integrationDirPath, target.mode)
 	}
 
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	tmp := t.TempDir()
 	htmlPath := filepath.Join(tmp, "output.html")
 	htmlReport := assertBenchmarkBinarySuccessAndReadReport(t, bin, htmlPath,
@@ -149,7 +141,7 @@ func TestBenchmarkBinaryRunExportsHTMLForPackageTarget(t *testing.T) {
 		t.Fatalf("expected packageMode for %q, got %v", integrationProjectPath, target.mode)
 	}
 
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	tmp := t.TempDir()
 	htmlPath := filepath.Join(tmp, "output.html")
 	htmlReport := assertBenchmarkBinarySuccessAndReadReport(t, bin, htmlPath,
@@ -213,7 +205,7 @@ func TestParseConfigDefaultsToEmptyExportPath(t *testing.T) {
 
 func TestBenchmarkBinaryFailsForInvalidMode(t *testing.T) {
 	t.Parallel()
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	assertBenchmarkBinaryFailure(t, bin,
 		[]string{
 			"--mode", "unknown",
@@ -226,7 +218,7 @@ func TestBenchmarkBinaryFailsForInvalidMode(t *testing.T) {
 
 func TestBenchmarkBinaryFailsForInvalidRunsInMemoryMode(t *testing.T) {
 	t.Parallel()
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	assertBenchmarkBinaryFailure(t, bin,
 		[]string{
 			"--mode", "memory",
@@ -240,7 +232,7 @@ func TestBenchmarkBinaryFailsForInvalidRunsInMemoryMode(t *testing.T) {
 
 func TestBenchmarkBinaryFailsForInvalidWarmupInMemoryMode(t *testing.T) {
 	t.Parallel()
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	assertBenchmarkBinaryFailure(t, bin,
 		[]string{
 			"--mode", "memory",
@@ -352,7 +344,7 @@ func TestBenchmarkResultLabel(t *testing.T) {
 
 func TestBenchmarkBinaryFailsForMissingTarget(t *testing.T) {
 	t.Parallel()
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	assertBenchmarkBinaryFailure(t, bin,
 		[]string{
 			"--export-html", filepath.Join(t.TempDir(), "output.html"),
@@ -366,7 +358,7 @@ func TestBenchmarkBinaryFailsForNonBalFileTarget(t *testing.T) {
 	requireHyperfine(t)
 	t.Parallel()
 
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	tmp := t.TempDir()
 	txtPath := filepath.Join(tmp, "sample.txt")
 	if err := os.WriteFile(txtPath, []byte("not ballerina"), 0o644); err != nil {
@@ -385,7 +377,7 @@ func TestBenchmarkBinaryFailsForDirectoryWithNoBalFiles(t *testing.T) {
 	requireHyperfine(t)
 	t.Parallel()
 
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	tmp := t.TempDir()
 	if err := os.WriteFile(filepath.Join(tmp, "notes.txt"), []byte("readme"), 0o644); err != nil {
 		t.Fatal(err)
@@ -401,7 +393,7 @@ func TestBenchmarkBinaryFailsForDirectoryWithNoBalFiles(t *testing.T) {
 
 func TestBenchmarkBinaryFailsForInvalidRuns(t *testing.T) {
 	t.Parallel()
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	assertBenchmarkBinaryFailure(t, bin,
 		[]string{
 			"--runs", "0",
@@ -414,7 +406,7 @@ func TestBenchmarkBinaryFailsForInvalidRuns(t *testing.T) {
 
 func TestBenchmarkBinaryFailsForInvalidWarmup(t *testing.T) {
 	t.Parallel()
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	assertBenchmarkBinaryFailure(t, bin,
 		[]string{
 			"--warmup", "-1",
@@ -427,7 +419,7 @@ func TestBenchmarkBinaryFailsForInvalidWarmup(t *testing.T) {
 
 func TestBenchmarkBinaryFailsForMissingRequiredArguments(t *testing.T) {
 	t.Parallel()
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	assertBenchmarkBinaryFailure(t, bin,
 		[]string{
 			"--export-html", filepath.Join(t.TempDir(), "output.html"),
@@ -439,7 +431,7 @@ func TestBenchmarkBinaryFailsForMissingRequiredArguments(t *testing.T) {
 
 func TestBenchmarkBinaryFailsForEmptyBaseRef(t *testing.T) {
 	t.Parallel()
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	assertBenchmarkBinaryFailure(t, bin,
 		[]string{
 			"--export-html", filepath.Join(t.TempDir(), "output.html"),
@@ -451,7 +443,7 @@ func TestBenchmarkBinaryFailsForEmptyBaseRef(t *testing.T) {
 
 func TestBenchmarkBinaryFailsForEmptyHeadRef(t *testing.T) {
 	t.Parallel()
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	assertBenchmarkBinaryFailure(t, bin,
 		[]string{
 			"--export-html", filepath.Join(t.TempDir(), "output.html"),
@@ -463,7 +455,7 @@ func TestBenchmarkBinaryFailsForEmptyHeadRef(t *testing.T) {
 
 func TestBenchmarkBinaryFailsForEmptyTarget(t *testing.T) {
 	t.Parallel()
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	assertBenchmarkBinaryFailure(t, bin,
 		[]string{
 			"--export-html", filepath.Join(t.TempDir(), "output.html"),
@@ -475,7 +467,7 @@ func TestBenchmarkBinaryFailsForEmptyTarget(t *testing.T) {
 
 func TestBenchmarkBinaryFailsWithoutHyperfine(t *testing.T) {
 	t.Parallel()
-	bin := ensureBenchmarkBinary(t)
+	bin := buildBenchmarkBinary(t)
 	cmd := exec.Command(bin,
 		"--warmup", "0",
 		"--runs", "1",
@@ -503,50 +495,37 @@ type commandResult struct {
 	err    error
 }
 
-func ensureBenchmarkBinary(t *testing.T) string {
+func buildBenchmarkBinary(t *testing.T) string {
 	t.Helper()
-	buildBinaryOnce.Do(func() {
-		var err error
-		binaryCoverDir, err = resolveIntegrationCoverDir()
-		if err != nil {
-			binaryBuildErr = err
-			return
-		}
-		path := filepath.Join(os.TempDir(), benchmarkTool)
-		if runtime.GOOS == "windows" {
-			path += ".exe"
-		}
-		args := []string{"build", "-o", path}
-		if binaryCoverDir != "" {
-			args = append(args, "-cover", "-coverpkg=./...")
-		}
-		args = append(args, ".")
-		cmd := exec.Command("go", args...)
-		cmd.Dir = "."
-		var stderr bytes.Buffer
-		cmd.Stderr = &stderr
-		binaryBuildErr = cmd.Run()
-		if binaryBuildErr != nil {
-			binaryBuildErr = &buildError{
-				err:    binaryBuildErr,
-				stderr: stderr.String(),
-			}
-			return
-		}
-		binaryPath = path
-	})
-	if binaryBuildErr != nil {
-		t.Fatalf("failed to build benchmark tool: %v", binaryBuildErr)
+	coverDir, err := resolveIntegrationCoverDir()
+	if err != nil {
+		t.Fatal(err)
 	}
-	return binaryPath
+	path := filepath.Join(t.TempDir(), benchmarkTool)
+	if runtime.GOOS == "windows" {
+		path += ".exe"
+	}
+	args := []string{"build", "-o", path}
+	if coverDir != "" {
+		args = append(args, "-cover", "-coverpkg=./...")
+	}
+	args = append(args, ".")
+	cmd := exec.Command("go", args...)
+	cmd.Dir = "."
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("failed to build benchmark tool: %v", &buildError{err: err, stderr: stderr.String()})
+	}
+	return path
 }
 
 func runBenchmarkBinary(t *testing.T, bin string, args ...string) commandResult {
 	t.Helper()
 	cmd := exec.Command(bin, args...)
 	cmd.Dir = "."
-	if binaryCoverDir != "" {
-		cmd.Env = append(os.Environ(), "GOCOVERDIR="+binaryCoverDir)
+	if coverDir := os.Getenv(integrationCoverDirEnv); coverDir != "" {
+		cmd.Env = append(os.Environ(), "GOCOVERDIR="+coverDir)
 	}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer

@@ -310,14 +310,11 @@ func TestDriverSourceConcurrent(t *testing.T) {
 	}
 }
 
-// TestNativeRunner_EmbeddedOnlyProjectNoRebuild checks a project depending
+// testNativeRunner_EmbeddedOnlyProjectNoRebuild checks a project depending
 // only on embedded ballerina/io never triggers a native interpreter rebuild.
-func TestNativeRunner_EmbeddedOnlyProjectNoRebuild(t *testing.T) {
+func testNativeRunner_EmbeddedOnlyProjectNoRebuild(t *testing.T, cli *balCLI) {
 	t.Parallel()
-	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	balFile := filepath.Join(repoRoot, "corpus", "cli", "testdata", "run", "single-bal-files", "run-and-print.bal")
 	_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "run", balFile)
@@ -330,15 +327,11 @@ func TestNativeRunner_EmbeddedOnlyProjectNoRebuild(t *testing.T) {
 	}
 }
 
-// TestNativeRunner_ColdBuildAndCacheHit runs a native-dependency project
+// testNativeRunner_ColdBuildAndCacheHit runs a native-dependency project
 // twice: the first run must build the interpreter (cold), the second must
 // hit loadCachedRunner's fingerprint cache and skip the rebuild.
-func TestNativeRunner_ColdBuildAndCacheHit(t *testing.T) {
-	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testNativeRunner_ColdBuildAndCacheHit(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	// Temp Ballerina home with the testdata native packages in its central cache.
 	tempHome := t.TempDir()
@@ -634,17 +627,14 @@ func envWithoutVars(base []string, names ...string) []string {
 	return filtered
 }
 
-// TestNativeRunner_GoToolchainUnavailable covers a native-dependency
+// testNativeRunner_GoToolchainUnavailable covers a native-dependency
 // project when Go isn't on PATH: must fail with a clear "require Go ...
 // installed" error that actually reaches the user (cobra's SilenceErrors
 // means every error path needs its own explicit print — this test caught a
 // case that was missing one, fixed in run.go).
-func TestNativeRunner_GoToolchainUnavailable(t *testing.T) {
+func testNativeRunner_GoToolchainUnavailable(t *testing.T, cli *balCLI) {
 	t.Parallel()
-	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 
 	// Empty dir as PATH so exec.LookPath("go") fails in the child process only.
@@ -667,17 +657,14 @@ func TestNativeRunner_GoToolchainUnavailable(t *testing.T) {
 	}
 }
 
-// TestBalBuildNativeDependencyGoToolchainUnavailable is
-// TestNativeRunner_GoToolchainUnavailable's counterpart for `bal build`:
+// testBalBuildNativeDependencyGoToolchainUnavailable is
+// testNativeRunner_GoToolchainUnavailable's counterpart for `bal build`:
 // buildNativeStub must fail the same way (chooseNativeExecutor rejecting an
 // unavailable toolchain) rather than only being covered for bal run's
 // execWithNativeRunner path.
-func TestBalBuildNativeDependencyGoToolchainUnavailable(t *testing.T) {
+func testBalBuildNativeDependencyGoToolchainUnavailable(t *testing.T, cli *balCLI) {
 	t.Parallel()
-	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 
 	emptyPathDir := t.TempDir()
@@ -699,19 +686,16 @@ func TestBalBuildNativeDependencyGoToolchainUnavailable(t *testing.T) {
 	}
 }
 
-// TestNativeRunner_DriverSourceUnresolvable covers a native-dependency
+// testNativeRunner_DriverSourceUnresolvable covers a native-dependency
 // project when the embedded driver cache extraction can't succeed. The
 // dev-build extraction path caches under BAL_ENV/interpreter-src (a private
 // dir, not the shared os.TempDir() — see driver_source.go), so this blocks
 // that specific subpath with a regular file, leaving the rest of the
 // BAL_ENV fixture (the central bala cache setupNativeTestFixtures also
 // populates there) untouched.
-func TestNativeRunner_DriverSourceUnresolvable(t *testing.T) {
+func testNativeRunner_DriverSourceUnresolvable(t *testing.T, cli *balCLI) {
 	t.Parallel()
-	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 
 	if err := os.WriteFile(filepath.Join(tempHome, "interpreter-src"), []byte("not a directory"), 0o644); err != nil {
@@ -734,14 +718,11 @@ func TestNativeRunner_DriverSourceUnresolvable(t *testing.T) {
 	}
 }
 
-// TestNativeRunner_OutputPathBlocked covers a regular file blocking the
+// testNativeRunner_OutputPathBlocked covers a regular file blocking the
 // output directory LocalExecutor needs to create — must fail cleanly.
-func TestNativeRunner_OutputPathBlocked(t *testing.T) {
+func testNativeRunner_OutputPathBlocked(t *testing.T, cli *balCLI) {
 	t.Parallel()
-	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 
 	blockedPath := filepath.Join(tempProject, "target")
@@ -763,15 +744,12 @@ func TestNativeRunner_OutputPathBlocked(t *testing.T) {
 	}
 }
 
-// TestNativeRunner_FingerprintInvalidatesOnSourceChange checks that editing
+// testNativeRunner_FingerprintInvalidatesOnSourceChange checks that editing
 // a native dependency's Go source invalidates the fingerprint and triggers
 // a rebuild, instead of serving stale output.
-func TestNativeRunner_FingerprintInvalidatesOnSourceChange(t *testing.T) {
+func testNativeRunner_FingerprintInvalidatesOnSourceChange(t *testing.T, cli *balCLI) {
 	t.Parallel()
-	if goruntime.GOOS == "js" || goruntime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	tempHome, tempProject := setupNativeTestFixtures(t, repoRoot)
 	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
 

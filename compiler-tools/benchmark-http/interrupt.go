@@ -37,7 +37,7 @@ func onInterrupt(cleanup func()) (stop func()) {
 }
 
 // interrupts is the process-wide interrupt coordinator. Registrations overlap
-// — the test binary installs one in TestMain and another inside run — and a
+// — e.g. a test's checkout teardown and the one run installs — and a
 // single handler keeps one os.Exit from truncating another's cleanup.
 var interrupts interruptCoordinator
 

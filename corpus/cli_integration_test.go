@@ -44,36 +44,134 @@ const (
 	cliCoverPackages = "github.com/ballerina-nutcracker/ballerina/..."
 )
 
-var (
-	cliIntegrationBinsOnce    sync.Once
-	cliIntegrationRelBalBin   string
-	cliIntegrationDebugBalBin string
-	cliIntegrationRepoRoot    string
-	cliIntegrationCoverDir    string
-	cliIntegrationBalEnv      string
-	cliIntegrationBinsErr     error
-	cliIntegrationCoverMerge  sync.Mutex
+var cliIntegrationCoverMerge sync.Mutex
 
-	cliIntegrationNoRuntimeBalBinOnce sync.Once
-	cliIntegrationNoRuntimeBalBin     string
-	cliIntegrationNoRuntimeBalBinErr  error
-)
-
-func TestBalHelp(t *testing.T) {
-	t.Parallel()
-	assertBalCommandMatchesTxtarFragments(t, []string{"--help"}, "help", "help.txtar")
+// balCLI is the set of bal binaries shared by every CLI integration test.
+// They are built once by TestBalCLI into its t.TempDir(), which outlives
+// all of its subtests.
+type balCLI struct {
+	relBin   string
+	debugBin string
+	repoRoot string
+	coverDir string
+	balEnv   string
 }
 
-func TestBalVersion(t *testing.T) {
+// TestBalCLI is the root of every test that runs the bal CLI binaries. It
+// owns the directory the binaries are built into, so they are built once and
+// removed after all subtests finish.
+func TestBalCLI(t *testing.T) {
 	t.Parallel()
-	assertBalCommandMatchesTxtarFragments(t, []string{"version"}, "version", "version.txtar")
-}
-
-func TestBalRunDumpFlags(t *testing.T) {
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
 		t.Skip("skipping CLI integration test on WASM (js/wasm)")
 	}
+	cli := newBalCLI(t)
+	tests := []struct {
+		name string
+		run  func(t *testing.T, cli *balCLI)
+	}{
+		{"BalHelp", testBalHelp},
+		{"BalVersion", testBalVersion},
+		{"BalRunDumpFlags", testBalRunDumpFlags},
+		{"BalRunCorpus", testBalRunCorpus},
+		{"BalRunWorkspaceCorpus", testBalRunWorkspaceCorpus},
+		{"BalRunTargetDir", testBalRunTargetDir},
+		{"BalPackCorpus", testBalPackCorpus},
+		{"BalPackTargetDir", testBalPackTargetDir},
+		{"BalBuildCorpus", testBalBuildCorpus},
+		{"BalBuildTargetDir", testBalBuildTargetDir},
+		{"BalCleanCorpus", testBalCleanCorpus},
+		{"BalAddCorpus", testBalAddCorpus},
+		{"BalNewCorpus", testBalNewCorpus},
+		{"BalBuildScenarios", testBalBuildScenarios},
+		{"BalBuildWorkspace", testBalBuildWorkspace},
+		{"BalBuildWorkspaceCrossDependency", testBalBuildWorkspaceCrossDependency},
+		{"BalBuildFromWorkspaceMemberDirectory", testBalBuildFromWorkspaceMemberDirectory},
+		{"BalPackFromWorkspaceMemberDirectory", testBalPackFromWorkspaceMemberDirectory},
+		{"BalPushExplicitPath", testBalPushExplicitPath},
+		{"BalPushArbitraryFilename", testBalPushArbitraryFilename},
+		{"BalPushAutoDiscovery", testBalPushAutoDiscovery},
+		{"BalPushOverwrite", testBalPushOverwrite},
+		{"BalPushMultipleBalas", testBalPushMultipleBalas},
+		{"BalPushNoBalaInTarget", testBalPushNoBalaInTarget},
+		{"BalPushEmptyTargetBalaDir", testBalPushEmptyTargetBalaDir},
+		{"BalPushDirectoryAsBalaPath", testBalPushDirectoryAsBalaPath},
+		{"BalPushExplicitPathDoesNotExist", testBalPushExplicitPathDoesNotExist},
+		{"BalPushAutoDiscoverySkipsDirectory", testBalPushAutoDiscoverySkipsDirectory},
+		{"BalPushZipWithDirectoryEntry", testBalPushZipWithDirectoryEntry},
+		{"BalPushZipSlip", testBalPushZipSlip},
+		{"BalPushZipSlipBackslash", testBalPushZipSlipBackslash},
+		{"BalPushDestinationParentIsFile", testBalPushDestinationParentIsFile},
+		{"BalPushNotAZipArchive", testBalPushNotAZipArchive},
+		{"BalPushMissingBallerinaToml", testBalPushMissingBallerinaToml},
+		{"BalPushMissingBalaToml", testBalPushMissingBalaToml},
+		{"BalPushMalformedBallerinaToml", testBalPushMalformedBallerinaToml},
+		{"BalPushMissingOrgField", testBalPushMissingOrgField},
+		{"BalPushMissingNameField", testBalPushMissingNameField},
+		{"BalPushMissingVersionField", testBalPushMissingVersionField},
+		{"BalPushMalformedBalaToml", testBalPushMalformedBalaToml},
+		{"BalPushMissingPlatformField", testBalPushMissingPlatformField},
+		{"BalPushMaliciousManifestFields", testBalPushMaliciousManifestFields},
+		{"BalPushMissingRepositoryFlag", testBalPushMissingRepositoryFlag},
+		{"BalPushUnsupportedRepositoryValue", testBalPushUnsupportedRepositoryValue},
+		{"BalPushHelp", testBalPushHelp},
+		{"BalBuildLoadWarning", testBalBuildLoadWarning},
+		{"BalBuildWorkspacePartialFailure", testBalBuildWorkspacePartialFailure},
+		{"BalBuildWorkspaceMemberManifestError", testBalBuildWorkspaceMemberManifestError},
+		{"BalBuildCustomOutputPath", testBalBuildCustomOutputPath},
+		{"BalBuildOutputPathBlocked", testBalBuildOutputPathBlocked},
+		{"BalBuildOutputDirNotWritable", testBalBuildOutputDirNotWritable},
+		{"BalBuildNoHomeNoBalEnv", testBalBuildNoHomeNoBalEnv},
+		{"BalBuildStatsFlags", testBalBuildStatsFlags},
+		{"BalBuildRuntimeStubPathOverride", testBalBuildRuntimeStubPathOverride},
+		{"BalBuildAtomicWriteOnPackFailure", testBalBuildAtomicWriteOnPackFailure},
+		{"BalBuildRebuildPreservesExecutableBit", testBalBuildRebuildPreservesExecutableBit},
+		{"BalrtRejectsPlainExecution", testBalrtRejectsPlainExecution},
+		{"BalBuildCorruptedOutputReportsError", testBalBuildCorruptedOutputReportsError},
+		{"BalBinaryAsRuntimeStub", testBalBinaryAsRuntimeStub},
+		{"BalBinaryAsRuntimeStub_CorruptedOutputReportsError", testBalBinaryAsRuntimeStub_CorruptedOutputReportsError},
+		{"BalBuildFlatRuntimeStubDefault", testBalBuildFlatRuntimeStubDefault},
+		{"BalBuildCrossCompile", testBalBuildCrossCompile},
+		{"BalBuildLinuxTargetPayloadRoundTrips", testBalBuildLinuxTargetPayloadRoundTrips},
+		{"BalBuildLinuxTargetRunsOnHost", testBalBuildLinuxTargetRunsOnHost},
+		{"BalBuildWindowsTargetPayloadRoundTrips", testBalBuildWindowsTargetPayloadRoundTrips},
+		{"BalBuildWindowsArm64TargetPayloadRoundTrips", testBalBuildWindowsArm64TargetPayloadRoundTrips},
+		{"BalBuildWindowsTargetExecutes", testBalBuildWindowsTargetExecutes},
+		{"BalBuildDarwinTargetPayloadRoundTrips", testBalBuildDarwinTargetPayloadRoundTrips},
+		{"BalBuildDarwinTargetPassesCodesignStrict", testBalBuildDarwinTargetPassesCodesignStrict},
+		{"BalBuildDarwinCrossCompileAmd64PassesCodesignStrict", testBalBuildDarwinCrossCompileAmd64PassesCodesignStrict},
+		{"BalBuildUnsupportedTargetPlatform", testBalBuildUnsupportedTargetPlatform},
+		{"BalBuildNativeDependency", testBalBuildNativeDependency},
+		{"BalBuildNativeDependencyCrossCompile", testBalBuildNativeDependencyCrossCompile},
+		{"BalBuildNativeDependencyInvalidTarget", testBalBuildNativeDependencyInvalidTarget},
+		{"BalBuildNativeDependencyUnsupportedButBuildable", testBalBuildNativeDependencyUnsupportedButBuildable},
+		{"BalBuildNativeDependencyCacheByTarget", testBalBuildNativeDependencyCacheByTarget},
+		{"BalBuildNativeDependencyPartialTargetOverride", testBalBuildNativeDependencyPartialTargetOverride},
+		{"NativeRunner_EmbeddedOnlyProjectNoRebuild", testNativeRunner_EmbeddedOnlyProjectNoRebuild},
+		{"NativeRunner_ColdBuildAndCacheHit", testNativeRunner_ColdBuildAndCacheHit},
+		{"NativeRunner_GoToolchainUnavailable", testNativeRunner_GoToolchainUnavailable},
+		{"BalBuildNativeDependencyGoToolchainUnavailable", testBalBuildNativeDependencyGoToolchainUnavailable},
+		{"NativeRunner_DriverSourceUnresolvable", testNativeRunner_DriverSourceUnresolvable},
+		{"NativeRunner_OutputPathBlocked", testNativeRunner_OutputPathBlocked},
+		{"NativeRunner_FingerprintInvalidatesOnSourceChange", testNativeRunner_FingerprintInvalidatesOnSourceChange},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			tt.run(t, cli)
+		})
+	}
+}
 
+func testBalHelp(t *testing.T, cli *balCLI) {
+	assertBalCommandMatchesTxtarFragments(t, cli, []string{"--help"}, "help", "help.txtar")
+}
+
+func testBalVersion(t *testing.T, cli *balCLI) {
+	assertBalCommandMatchesTxtarFragments(t, cli, []string{"version"}, "version", "version.txtar")
+}
+
+func testBalRunDumpFlags(t *testing.T, cli *balCLI) {
 	singleBal := filepath.Join("corpus", "cli", "testdata", "run", "single-bal-files", "run-and-print.bal")
 	recoveryBal := filepath.Join("corpus", "cli", "testdata", "run", "dump-flags", "recovered-ast.bal")
 
@@ -90,7 +188,7 @@ func TestBalRunDumpFlags(t *testing.T) {
 		{"dump-recovered-ast", "--dump-recovered-ast", "dump-recovered-ast.txtar", recoveryBal},
 		{"dump-cfg", "--dump-cfg", "dump-cfg.txtar", singleBal},
 	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, true)
+	balBin, repoRoot, coverDir := cli.debugBin, cli.repoRoot, cli.coverDir
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -102,11 +200,8 @@ func TestBalRunDumpFlags(t *testing.T) {
 	}
 }
 
-func TestBalRunCorpus(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalRunCorpus(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	testDataRoot := filepath.Join(repoRoot, "corpus", "cli", "testdata", "run")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "run")
 
@@ -124,18 +219,15 @@ func TestBalRunCorpus(t *testing.T) {
 	}
 }
 
-// TestBalRunWorkspaceCorpus tests the workspace branch in runBallerina (cli/cmd/run.go:206-229).
+// testBalRunWorkspaceCorpus tests the workspace branch in runBallerina (cli/cmd/run.go:206-229).
 // It covers three behaviours:
 //  1. workspace_root_rejected  — running the workspace root directly is rejected.
 //  2. member_resolves          — running a member package path succeeds.
 //  3. missing_member           — running a non-existent sub-path is rejected.
 //
 // Java equivalent: N/A — this is CLI-level integration coverage for the Go workspace branch.
-func TestBalRunWorkspaceCorpus(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalRunWorkspaceCorpus(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	wsRoot := filepath.Join(repoRoot, "corpus", "cli", "testdata", "run", "workspaces", "run-workspace-corpus")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "run", "workspaces")
@@ -164,18 +256,15 @@ func TestBalRunWorkspaceCorpus(t *testing.T) {
 	})
 }
 
-// TestBalRunTargetDir verifies `bal run --target-dir <dir>` is accepted and
+// testBalRunTargetDir verifies `bal run --target-dir <dir>` is accepted and
 // doesn't break execution. Unlike build/pack, run's --target-dir only
 // produces a visible artifact (<dir>/bin/bal) when the package has a
 // genuine third-party native-Go .bala dependency — embedded stdlibs like
 // ballerina/io don't count (isEmbeddedPackage) — so no fixture here
 // exercises that path; this only proves the flag threads through and the
 // program still runs correctly.
-func TestBalRunTargetDir(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalRunTargetDir(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	balFile := filepath.Join("corpus", "cli", "testdata", "run", "single-bal-files", "run-and-print.bal")
 	dir := t.TempDir()
 
@@ -203,7 +292,7 @@ func TestBalRunTargetDir(t *testing.T) {
 	}
 }
 
-// TestBalPackCorpus exercises `bal pack` end-to-end through the coverage-aware
+// testBalPackCorpus exercises `bal pack` end-to-end through the coverage-aware
 // CLI harness. Each subtest invokes the binary with the scenario's args and
 // substring-matches the captured stdout/stderr/exitcode against the txtar at
 // corpus/cli/output/pack/<scenario>.txtar. This is the corpus replacement for
@@ -211,11 +300,8 @@ func TestBalRunTargetDir(t *testing.T) {
 // keeps subprocess coverage flowing into the cli/cmd profile.
 //
 // Java equivalent: N/A — pack is Go-only CLI integration coverage.
-func TestBalPackCorpus(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalPackCorpus(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	testdataRoot := filepath.Join("corpus", "cli", "testdata", "pack")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "pack")
 
@@ -329,10 +415,7 @@ func TestBalPackCorpus(t *testing.T) {
 
 			binToUse := balBin
 			if tt.useDebugBinary {
-				if cliIntegrationDebugBalBin == "" {
-					t.Skip("debug-tagged bal binary unavailable; skipping debug-only scenario")
-				}
-				binToUse = cliIntegrationDebugBalBin
+				binToUse = cli.debugBin
 			}
 
 			// Substitute the per-scenario {{TMPDIR}} placeholder in each arg
@@ -348,16 +431,13 @@ func TestBalPackCorpus(t *testing.T) {
 	}
 }
 
-// TestBalPackTargetDir verifies `bal pack --target-dir <dir>` writes the bala
+// testBalPackTargetDir verifies `bal pack --target-dir <dir>` writes the bala
 // into <dir>/bala instead of the project's own target/bala, matching how
 // bal clean's own --target-dir corpus tests already cover the flag on that
 // command — build and run get the equivalent coverage in their own
-// TestBal*TargetDir tests below.
-func TestBalPackTargetDir(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+// testBal*TargetDir tests below.
+func testBalPackTargetDir(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	basicProject := filepath.Join("corpus", "cli", "testdata", "pack", "basic", "project")
 	dir := t.TempDir()
 
@@ -382,7 +462,7 @@ func TestBalPackTargetDir(t *testing.T) {
 	}
 }
 
-// TestBalBuildCorpus exercises `bal build` end-to-end: it runs `bal build` on
+// testBalBuildCorpus exercises `bal build` end-to-end: it runs `bal build` on
 // a fixture project, then executes the *produced binary* directly (not the
 // bal CLI) and checks its stdout/stderr/exitcode. This is the Phase 1
 // "end-to-end working sample" milestone from
@@ -390,11 +470,8 @@ func TestBalPackTargetDir(t *testing.T) {
 // pure Ballerina, the other calls a native (lib/rt) stdlib function
 // (time:utcToString) to prove the embedded-binary output already dispatches
 // to native Go code with no extra wiring.
-func TestBalBuildCorpus(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildCorpus(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	testdataRoot := filepath.Join("corpus", "cli", "testdata", "build")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "build")
 
@@ -440,7 +517,7 @@ func TestBalBuildCorpus(t *testing.T) {
 			t.Cleanup(func() { _ = os.RemoveAll(filepath.Join(targetDirBase, "target")) })
 
 			stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-				[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", tt.projectDir)
+				[]string{"BAL_ENV=" + cli.balEnv}, "build", tt.projectDir)
 			if exitCode != 0 {
 				t.Fatalf("bal build failed for %s: exit=%d\nstdout:\n%s\nstderr:\n%s", tt.projectDir, exitCode, stdout, stderr)
 			}
@@ -510,18 +587,15 @@ func TestBalBuildCorpus(t *testing.T) {
 	}
 }
 
-// TestBalBuildTargetDir verifies `bal build --target-dir <dir>` writes the
+// testBalBuildTargetDir verifies `bal build --target-dir <dir>` writes the
 // binary to <dir>/bin/<pkgName> instead of <projectDir>/target/bin/<pkgName>.
-func TestBalBuildTargetDir(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildTargetDir(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	dir := t.TempDir()
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "--target-dir", dir)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, "--target-dir", dir)
 	if exitCode != 0 {
 		t.Fatalf("bal build --target-dir failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
 	}
@@ -545,7 +619,7 @@ func TestBalBuildTargetDir(t *testing.T) {
 	}
 }
 
-// TestBalCleanCorpus exercises `bal clean` end-to-end through the
+// testBalCleanCorpus exercises `bal clean` end-to-end through the
 // coverage-aware CLI harness. It deliberately adds no new checked-in project
 // fixtures of its own: "basic"/"noop-absent-target"/"workspace" copy
 // existing pack/run fixtures into a temp dir (via copyDir) and inject the
@@ -560,11 +634,8 @@ func TestBalBuildTargetDir(t *testing.T) {
 // rather than a loaded package.
 //
 // Java equivalent: N/A — clean is Go-only CLI integration coverage.
-func TestBalCleanCorpus(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalCleanCorpus(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	testdataRoot := filepath.Join("corpus", "cli", "testdata", "clean")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "clean")
 	packBasicFixture := filepath.Join(repoRoot, "corpus", "cli", "testdata", "pack", "basic", "project")
@@ -906,7 +977,7 @@ func TestBalCleanCorpus(t *testing.T) {
 	})
 }
 
-// TestBalAddCorpus exercises `bal add` end-to-end through the coverage-aware
+// testBalAddCorpus exercises `bal add` end-to-end through the coverage-aware
 // CLI harness. Unlike pack/clean, `bal add` takes no package-path argument —
 // it always operates on the process cwd — so each scenario needing a real
 // package copies its checked-in fixture (under corpus/cli/testdata/add) into
@@ -921,11 +992,8 @@ func TestBalCleanCorpus(t *testing.T) {
 // copy rather than checking in a near-identical second project fixture.
 //
 // Java equivalent: N/A — add is Go-only CLI integration coverage.
-func TestBalAddCorpus(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalAddCorpus(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	basicFixture := filepath.Join(repoRoot, "corpus", "cli", "testdata", "pack", "basic", "project")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "add")
 
@@ -1110,7 +1178,7 @@ func TestBalAddCorpus(t *testing.T) {
 	})
 }
 
-// TestBalNewCorpus exercises `bal new` end-to-end through the coverage-aware
+// testBalNewCorpus exercises `bal new` end-to-end through the coverage-aware
 // CLI harness. `new.go` already has extensive branch-level unit coverage
 // (cli/cmd/new_test.go), so this is a representative sample proving the
 // command works through the real binary + cobra wiring + filesystem, not an
@@ -1127,11 +1195,8 @@ func TestBalAddCorpus(t *testing.T) {
 //
 // Java equivalent: N/A — this is CLI-level integration coverage for the Go
 // implementation of `bal new`.
-func TestBalNewCorpus(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalNewCorpus(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	testdataRoot := filepath.Join("corpus", "cli", "testdata", "new")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "new")
 
@@ -1712,7 +1777,7 @@ func TestBalNewCorpus(t *testing.T) {
 	// white-box tests calling validateWorkspacePath directly / relying on
 	// executeNewCommandWithArgs) cover runNewWorkspace's early error
 	// branches, both reachable through the real CLI via the same chmod
-	// tricks used elsewhere in this file (e.g. TestBalCleanCorpus's
+	// tricks used elsewhere in this file (e.g. testBalCleanCorpus's
 	// delete-failure subtest).
 	t.Run("workspace-validate-path-stat-error", func(t *testing.T) {
 		skipIfNoPermissionEnforcement(t, "permission-based stat-failure injection")
@@ -2045,7 +2110,7 @@ func normalizePaths(s, repoRoot string) string {
 // assertStdoutStderrMatchesTxtarFragments compares already-captured
 // stdout/stderr/exitCode against a txtar fixture, using substring (not
 // exact) matching for each non-blank fixture line. For callers (like
-// TestBalAddCorpus) that must run the command through their own
+// testBalAddCorpus) that must run the command through their own
 // fixture-copy/working-directory setup before comparing — as opposed to
 // assertBalCommandMatchesTxtarFragmentsLoose below, which runs a plain-args
 // command itself — so they call this directly instead of reimplementing
@@ -2093,9 +2158,6 @@ func assertStdoutStderrMatchesTxtarFragments(t *testing.T, stdout, stderr string
 // contains machine-specific absolute paths that cannot be captured exactly in a txtar fixture.
 func assertBalCommandMatchesTxtarFragmentsLoose(t *testing.T, balBin, repoRoot, coverDir string, args []string, txtarPath string) {
 	t.Helper()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
 
 	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, args...)
 	stdout = normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
@@ -2140,9 +2202,6 @@ func assertBalCommandMatchesTxtarFragmentsLoose(t *testing.T, balBin, repoRoot, 
 // installed, to exercise the missing-stub error path).
 func assertBalCommandMatchesTxtarFragmentsLooseWithEnv(t *testing.T, balBin, repoRoot, coverDir string, extraEnv, args []string, txtarPath string) {
 	t.Helper()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir, extraEnv, args...)
 	stdout = test_util.NormalizeNewlines(stdout)
@@ -2180,18 +2239,15 @@ func assertBalCommandMatchesTxtarFragmentsLooseWithEnv(t *testing.T, balBin, rep
 	}
 }
 
-// TestBalBuildScenarios covers bal build's error/edge-case paths — as
-// opposed to TestBalBuildCorpus, which covers the successful build+run
-// paths — mirroring TestBalPackCorpus's scenario-table pattern rather than
+// testBalBuildScenarios covers bal build's error/edge-case paths — as
+// opposed to testBalBuildCorpus, which covers the successful build+run
+// paths — mirroring testBalPackCorpus's scenario-table pattern rather than
 // an in-process cli/cmd/build_test.go (see corpus/cli_integration_test.go's
-// TestBalPackCorpus doc comment for why: keeps subprocess coverage flowing
+// testBalPackCorpus doc comment for why: keeps subprocess coverage flowing
 // into the cli/cmd profile, consistent with how pack's equivalent in-process
 // suite was replaced).
-func TestBalBuildScenarios(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildScenarios(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	testdataRoot := filepath.Join("corpus", "cli", "testdata", "build")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "build")
 
@@ -2291,27 +2347,23 @@ func TestBalBuildScenarios(t *testing.T) {
 			}
 			args := substituteScenarioPlaceholders(t, tt.args)
 			assertBalCommandMatchesTxtarFragmentsLooseWithEnv(t, binToUse, repoRoot, coverDir,
-				[]string{"BAL_ENV=" + cliIntegrationBalEnv}, args, filepath.Join(outputsRoot, tt.txtar))
+				[]string{"BAL_ENV=" + cli.balEnv}, args, filepath.Join(outputsRoot, tt.txtar))
 		})
 	}
 }
 
-// TestBalBuildWorkspace covers `bal build <workspace-root>`: every member
+// testBalBuildWorkspace covers `bal build <workspace-root>`: every member
 // must be built to its own target/bin/<name>. Each member also depends on
 // mockorg/leafpkg via repository = "local" (missing locally, falls back to
 // central with a warning), so this also checks per-member diagnostics: the
 // warning must appear once per member and the build must still succeed.
-func TestBalBuildWorkspace(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildWorkspace(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	testdataRoot := filepath.Join("corpus", "cli", "testdata", "build")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "build")
 	workspaceDir := filepath.Join(testdataRoot, "workspace", "project")
 
-	// leafpkg only exists in this mock central cache, not cliIntegrationBalEnv.
+	// leafpkg only exists in this mock central cache, not cli.balEnv.
 	tempHome := t.TempDir()
 	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
 	copyDir(t, filepath.Join(repoRoot, "projects", "testdata", "repo", "bala"), centralCache)
@@ -2378,7 +2430,7 @@ func TestBalBuildWorkspace(t *testing.T) {
 	}
 }
 
-// TestBalBuildWorkspaceCrossDependency covers a workspace member (pkga)
+// testBalBuildWorkspaceCrossDependency covers a workspace member (pkga)
 // depending on a sibling member (pkgb) by org/name, resolved via
 // workspaceRepository. Regression test: runBuild's workspace loop reloads
 // each member into its own fresh Environment (to avoid sharing one
@@ -2387,18 +2439,14 @@ func TestBalBuildWorkspace(t *testing.T) {
 // in isolation, which lost workspaceRepository entirely and broke this
 // exact scenario ("Unknown import"). The fix reloads the whole workspace
 // per member instead, so sibling resolution stays intact.
-func TestBalBuildWorkspaceCrossDependency(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildWorkspaceCrossDependency(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	testdataRoot := filepath.Join("corpus", "cli", "testdata", "build")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "build")
 	workspaceDir := filepath.Join(testdataRoot, "workspace-cross-dependency", "project")
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", workspaceDir)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", workspaceDir)
 	if exitCode != 0 {
 		t.Fatalf("bal build on a workspace with a cross-member dependency failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
 	}
@@ -2433,7 +2481,7 @@ func TestBalBuildWorkspaceCrossDependency(t *testing.T) {
 	}
 }
 
-// TestBalBuildFromWorkspaceMemberDirectory covers running bal build with the
+// testBalBuildFromWorkspaceMemberDirectory covers running bal build with the
 // process cwd set to a workspace member's own directory (args empty, so
 // path defaults to "."), rather than passing the member's path from outside
 // the workspace. Regression test: build.go used to load straight from cwd
@@ -2441,12 +2489,8 @@ func TestBalBuildWorkspaceCrossDependency(t *testing.T) {
 // resolution (pkga importing pkgb by org/name) was invisible and failed
 // with "Unknown import" — bal run already handled this correctly via
 // findWorkspaceRoot.
-func TestBalBuildFromWorkspaceMemberDirectory(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildFromWorkspaceMemberDirectory(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "build")
 
 	srcWorkspace := filepath.Join(repoRoot, "corpus", "cli", "testdata", "build", "workspace-cross-dependency", "project")
@@ -2454,7 +2498,7 @@ func TestBalBuildFromWorkspaceMemberDirectory(t *testing.T) {
 	copyDir(t, srcWorkspace, workspaceDir)
 	memberDir := filepath.Join(workspaceDir, "pkga")
 
-	env := append(os.Environ(), "BAL_ENV="+cliIntegrationBalEnv)
+	env := append(os.Environ(), "BAL_ENV="+cli.balEnv)
 	if coverDir != "" {
 		commandCoverDir := t.TempDir()
 		env = append(env, "GOCOVERDIR="+commandCoverDir)
@@ -2495,25 +2539,21 @@ func TestBalBuildFromWorkspaceMemberDirectory(t *testing.T) {
 	}
 }
 
-// TestBalPackFromWorkspaceMemberDirectory is
-// TestBalBuildFromWorkspaceMemberDirectory's counterpart for bal pack: pack
+// testBalPackFromWorkspaceMemberDirectory is
+// testBalBuildFromWorkspaceMemberDirectory's counterpart for bal pack: pack
 // already rejects being pointed at a workspace root directly, but a member's
 // own directory (cwd inside it, no positional arg) must still resolve
 // sibling dependencies via the workspace root rather than failing with
 // "Unknown import".
-func TestBalPackFromWorkspaceMemberDirectory(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalPackFromWorkspaceMemberDirectory(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	srcWorkspace := filepath.Join(repoRoot, "corpus", "cli", "testdata", "build", "workspace-cross-dependency", "project")
 	workspaceDir := t.TempDir()
 	copyDir(t, srcWorkspace, workspaceDir)
 	memberDir := filepath.Join(workspaceDir, "pkga")
 
-	env := append(os.Environ(), "BAL_ENV="+cliIntegrationBalEnv)
+	env := append(os.Environ(), "BAL_ENV="+cli.balEnv)
 	if coverDir != "" {
 		commandCoverDir := t.TempDir()
 		env = append(env, "GOCOVERDIR="+commandCoverDir)
@@ -2532,19 +2572,15 @@ func TestBalPackFromWorkspaceMemberDirectory(t *testing.T) {
 // bal push corpus tests
 // =============================================================================
 //
-// TestBalPush* exercises `bal push` end-to-end through the coverage-aware CLI
+// testBalPush* exercises `bal push` end-to-end through the coverage-aware CLI
 // harness, mirroring (and replacing) the in-process cli/cmd/push_test.go
 // suite so subprocess coverage flows into the cli/cmd profile the same way
-// TestBalPackCorpus/TestBalBuildCorpus already do for pack/build. Each test
+// testBalPackCorpus/testBalBuildCorpus already do for pack/build. Each test
 // gets its own isolated BAL_ENV (a fresh t.TempDir()) since push writes into
-// <BAL_ENV>/repositories/local/bala/..., unlike the shared cliIntegrationBalEnv
+// <BAL_ENV>/repositories/local/bala/..., unlike the shared cli.balEnv
 // build/pack use read-only.
 
-func TestBalPushExplicitPath(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushExplicitPath(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	entries := map[string][]byte{
@@ -2556,7 +2592,7 @@ func TestBalPushExplicitPath(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "testorg-myproject-any-0.1.0.bala", entries)
 
-	stdout, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	stdout, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err != nil {
 		t.Fatalf("push failed: %v\nstderr: %s", err, stderr)
 	}
@@ -2600,11 +2636,7 @@ func TestBalPushExplicitPath(t *testing.T) {
 
 // Filename intentionally disagrees with the manifest; destination must
 // follow the manifest, not the filename.
-func TestBalPushArbitraryFilename(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushArbitraryFilename(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	entries := map[string][]byte{
@@ -2614,7 +2646,7 @@ func TestBalPushArbitraryFilename(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "foo-bar-any-9.9.9.zip", entries)
 
-	stdout, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	stdout, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err != nil {
 		t.Fatalf("push with non-.bala extension failed: %v\nstderr: %s", err, stderr)
 	}
@@ -2644,11 +2676,7 @@ func TestBalPushArbitraryFilename(t *testing.T) {
 	}
 }
 
-func TestBalPushAutoDiscovery(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushAutoDiscovery(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	projectDir := t.TempDir()
@@ -2665,7 +2693,7 @@ func TestBalPushAutoDiscovery(t *testing.T) {
 	balaPath := filepath.Join(balaDir, "acme-widgets-any-1.2.3.bala")
 	writePushBalaFile(t, balaPath, entries)
 
-	stdout, stderr, err := executePushCLI(t, projectDir, balaEnv, "--repository", "local")
+	stdout, stderr, err := executePushCLI(t, cli, projectDir, balaEnv, "--repository", "local")
 	if err != nil {
 		t.Fatalf("push failed: %v\nstderr: %s", err, stderr)
 	}
@@ -2684,11 +2712,7 @@ func TestBalPushAutoDiscovery(t *testing.T) {
 	}
 }
 
-func TestBalPushOverwrite(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushOverwrite(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	destDir := filepath.Join(balaEnv, "repositories", "local", "bala",
@@ -2708,7 +2732,7 @@ func TestBalPushOverwrite(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "acme-widgets-any-0.1.0.bala", entries)
 
-	if _, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local"); err != nil {
+	if _, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local"); err != nil {
 		t.Fatalf("push failed: %v\nstderr: %s", err, stderr)
 	}
 
@@ -2722,11 +2746,7 @@ func TestBalPushOverwrite(t *testing.T) {
 	}
 }
 
-func TestBalPushMultipleBalas(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushMultipleBalas(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	projectDir := t.TempDir()
@@ -2743,7 +2763,7 @@ func TestBalPushMultipleBalas(t *testing.T) {
 		})
 	}
 
-	_, stderr, err := executePushCLI(t, projectDir, balaEnv, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, projectDir, balaEnv, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected ambiguity error for multiple bala files, got success")
 	}
@@ -2752,15 +2772,11 @@ func TestBalPushMultipleBalas(t *testing.T) {
 	}
 }
 
-func TestBalPushNoBalaInTarget(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushNoBalaInTarget(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 	projectDir := t.TempDir()
 
-	_, stderr, err := executePushCLI(t, projectDir, balaEnv, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, projectDir, balaEnv, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected error when no bala is present, got success")
 	}
@@ -2770,13 +2786,9 @@ func TestBalPushNoBalaInTarget(t *testing.T) {
 	}
 }
 
-// target/bala exists but is empty, unlike TestBalPushNoBalaInTarget where
+// target/bala exists but is empty, unlike testBalPushNoBalaInTarget where
 // target/bala itself is missing.
-func TestBalPushEmptyTargetBalaDir(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushEmptyTargetBalaDir(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 	projectDir := t.TempDir()
 	balaDir := filepath.Join(projectDir, projects.TargetDir, "bala")
@@ -2784,7 +2796,7 @@ func TestBalPushEmptyTargetBalaDir(t *testing.T) {
 		t.Fatalf("mkdir target/bala: %v", err)
 	}
 
-	_, stderr, err := executePushCLI(t, projectDir, balaEnv, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, projectDir, balaEnv, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected error when target/bala is empty, got success")
 	}
@@ -2793,15 +2805,11 @@ func TestBalPushEmptyTargetBalaDir(t *testing.T) {
 	}
 }
 
-func TestBalPushDirectoryAsBalaPath(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushDirectoryAsBalaPath(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	dir := t.TempDir()
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, dir, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, dir, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected directory-rejection error, got success")
 	}
@@ -2810,15 +2818,11 @@ func TestBalPushDirectoryAsBalaPath(t *testing.T) {
 	}
 }
 
-func TestBalPushExplicitPathDoesNotExist(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushExplicitPathDoesNotExist(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	missing := filepath.Join(t.TempDir(), "does-not-exist.bala")
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, missing, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, missing, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected error for a nonexistent explicit path, got success")
 	}
@@ -2827,11 +2831,7 @@ func TestBalPushExplicitPathDoesNotExist(t *testing.T) {
 	}
 }
 
-func TestBalPushAutoDiscoverySkipsDirectory(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushAutoDiscoverySkipsDirectory(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	projectDir := t.TempDir()
@@ -2842,7 +2842,7 @@ func TestBalPushAutoDiscoverySkipsDirectory(t *testing.T) {
 	writePushBalaFile(t, filepath.Join(balaDir, "acme-widgets-any-0.1.0.bala"),
 		validPushBalaEntries())
 
-	_, stderr, err := executePushCLI(t, projectDir, balaEnv, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, projectDir, balaEnv, "--repository", "local")
 	if err != nil {
 		t.Fatalf("expected push to succeed, got error: %v\nstderr: %s", err, stderr)
 	}
@@ -2855,11 +2855,7 @@ func TestBalPushAutoDiscoverySkipsDirectory(t *testing.T) {
 
 // bal pack never emits explicit directory entries, but a third-party tool
 // might; guards the IsDir branch in extractZipEntry.
-func TestBalPushZipWithDirectoryEntry(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushZipWithDirectoryEntry(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	tmp := t.TempDir()
@@ -2871,7 +2867,7 @@ func TestBalPushZipWithDirectoryEntry(t *testing.T) {
 		{"modules/sub/lib.bal", []byte("public function libfn() {}\n")},
 	})
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err != nil {
 		t.Fatalf("expected push to succeed, got error: %v\nstderr: %s", err, stderr)
 	}
@@ -2887,11 +2883,7 @@ func TestBalPushZipWithDirectoryEntry(t *testing.T) {
 }
 
 // Entries are written in a fixed order so the malicious one is encountered first.
-func TestBalPushZipSlip(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushZipSlip(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	tmp := t.TempDir()
@@ -2902,7 +2894,7 @@ func TestBalPushZipSlip(t *testing.T) {
 		{"Ballerina.toml", []byte("[package]\norg = \"evil\"\nname = \"pkg\"\nversion = \"0.1.0\"\n")},
 	})
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected zip-slip rejection, got success")
 	}
@@ -2920,12 +2912,8 @@ func TestBalPushZipSlip(t *testing.T) {
 }
 
 // A literal backslash is a separate zip-slip guard from the "../" check
-// TestBalPushZipSlip exercises.
-func TestBalPushZipSlipBackslash(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+// testBalPushZipSlip exercises.
+func testBalPushZipSlipBackslash(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	tmp := t.TempDir()
@@ -2936,7 +2924,7 @@ func TestBalPushZipSlipBackslash(t *testing.T) {
 		{"Ballerina.toml", []byte("[package]\norg = \"evil\"\nname = \"pkg\"\nversion = \"0.1.0\"\n")},
 	})
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected zip-slip rejection, got success")
 	}
@@ -2953,11 +2941,7 @@ func TestBalPushZipSlipBackslash(t *testing.T) {
 	}
 }
 
-func TestBalPushDestinationParentIsFile(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushDestinationParentIsFile(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	// destDir's parent (.../acme/widgets/1.2.3) collides with a regular file,
@@ -2977,7 +2961,7 @@ func TestBalPushDestinationParentIsFile(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "acme-widgets-any-1.2.3.bala", entries)
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected error when destination parent collides with a file, got success")
 	}
@@ -2986,11 +2970,7 @@ func TestBalPushDestinationParentIsFile(t *testing.T) {
 	}
 }
 
-func TestBalPushNotAZipArchive(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushNotAZipArchive(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	dir := t.TempDir()
@@ -2999,7 +2979,7 @@ func TestBalPushNotAZipArchive(t *testing.T) {
 		t.Fatalf("write %s: %v", balaPath, err)
 	}
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected error for a non-zip bala file, got success")
 	}
@@ -3008,11 +2988,7 @@ func TestBalPushNotAZipArchive(t *testing.T) {
 	}
 }
 
-func TestBalPushMissingBallerinaToml(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushMissingBallerinaToml(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	entries := map[string][]byte{
@@ -3021,7 +2997,7 @@ func TestBalPushMissingBallerinaToml(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "mockorg-foo-any-1.0.0.bala", entries)
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected missing-manifest error, got success")
 	}
@@ -3036,11 +3012,7 @@ func TestBalPushMissingBallerinaToml(t *testing.T) {
 	}
 }
 
-func TestBalPushMissingBalaToml(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushMissingBalaToml(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	entries := map[string][]byte{
@@ -3049,7 +3021,7 @@ func TestBalPushMissingBalaToml(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "mockorg-foo-any-1.0.0.bala", entries)
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected missing-Bala.toml error, got success")
 	}
@@ -3063,11 +3035,7 @@ func TestBalPushMissingBalaToml(t *testing.T) {
 	}
 }
 
-func TestBalPushMalformedBallerinaToml(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushMalformedBallerinaToml(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	entries := map[string][]byte{
@@ -3077,7 +3045,7 @@ func TestBalPushMalformedBallerinaToml(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "mockorg-foo-any-1.0.0.bala", entries)
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected parse error, got success")
 	}
@@ -3086,11 +3054,7 @@ func TestBalPushMalformedBallerinaToml(t *testing.T) {
 	}
 }
 
-func TestBalPushMissingOrgField(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushMissingOrgField(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	entries := map[string][]byte{
@@ -3100,7 +3064,7 @@ func TestBalPushMissingOrgField(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "mockorg-foo-any-1.0.0.bala", entries)
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected missing-field error, got success")
 	}
@@ -3109,11 +3073,7 @@ func TestBalPushMissingOrgField(t *testing.T) {
 	}
 }
 
-func TestBalPushMissingNameField(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushMissingNameField(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	entries := map[string][]byte{
@@ -3123,7 +3083,7 @@ func TestBalPushMissingNameField(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "mockorg-foo-any-1.0.0.bala", entries)
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected missing-name-field error, got success")
 	}
@@ -3132,11 +3092,7 @@ func TestBalPushMissingNameField(t *testing.T) {
 	}
 }
 
-func TestBalPushMissingVersionField(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushMissingVersionField(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	entries := map[string][]byte{
@@ -3146,7 +3102,7 @@ func TestBalPushMissingVersionField(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "mockorg-foo-any-1.0.0.bala", entries)
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected missing-version-field error, got success")
 	}
@@ -3155,11 +3111,7 @@ func TestBalPushMissingVersionField(t *testing.T) {
 	}
 }
 
-func TestBalPushMalformedBalaToml(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushMalformedBalaToml(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	entries := map[string][]byte{
@@ -3170,7 +3122,7 @@ func TestBalPushMalformedBalaToml(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "mockorg-foo-any-1.0.0.bala", entries)
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected parse error, got success")
 	}
@@ -3179,11 +3131,7 @@ func TestBalPushMalformedBalaToml(t *testing.T) {
 	}
 }
 
-func TestBalPushMissingPlatformField(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushMissingPlatformField(t *testing.T, cli *balCLI) {
 	balaEnv := t.TempDir()
 
 	entries := map[string][]byte{
@@ -3193,7 +3141,7 @@ func TestBalPushMissingPlatformField(t *testing.T) {
 	}
 	balaPath := writePushBalaFixture(t, "mockorg-foo-any-1.0.0.bala", entries)
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 	if err == nil {
 		t.Fatal("expected missing-platform-field error, got success")
 	}
@@ -3205,10 +3153,7 @@ func TestBalPushMissingPlatformField(t *testing.T) {
 // Manifest fields flow straight into filepath.Join(...) for the destination
 // and into os.RemoveAll before extraction even starts, so "." / ".." /
 // embedded separators must be rejected rather than trusted.
-func TestBalPushMaliciousManifestFields(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushMaliciousManifestFields(t *testing.T, cli *balCLI) {
 	tests := []struct {
 		name             string
 		org, pkg, ver    string
@@ -3234,7 +3179,7 @@ func TestBalPushMaliciousManifestFields(t *testing.T) {
 			}
 			balaPath := writePushBalaFixture(t, "mockorg-foo-any-1.0.0.bala", entries)
 
-			_, stderr, err := executePushCLI(t, t.TempDir(), balaEnv, balaPath, "--repository", "local")
+			_, stderr, err := executePushCLI(t, cli, t.TempDir(), balaEnv, balaPath, "--repository", "local")
 			if err == nil {
 				t.Fatal("expected rejection, got success")
 			}
@@ -3250,14 +3195,10 @@ func TestBalPushMaliciousManifestFields(t *testing.T) {
 	}
 }
 
-func TestBalPushMissingRepositoryFlag(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushMissingRepositoryFlag(t *testing.T, cli *balCLI) {
 	balaPath := writePushBalaFixture(t, "acme-widgets-any-1.2.3.bala", validPushBalaEntries())
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), "", balaPath)
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), "", balaPath)
 	if err == nil {
 		t.Fatal("expected error when --repository is omitted, got success")
 	}
@@ -3266,14 +3207,10 @@ func TestBalPushMissingRepositoryFlag(t *testing.T) {
 	}
 }
 
-func TestBalPushUnsupportedRepositoryValue(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalPushUnsupportedRepositoryValue(t *testing.T, cli *balCLI) {
 	balaPath := writePushBalaFixture(t, "acme-widgets-any-1.2.3.bala", validPushBalaEntries())
 
-	_, stderr, err := executePushCLI(t, t.TempDir(), "", balaPath, "--repository", "central")
+	_, stderr, err := executePushCLI(t, cli, t.TempDir(), "", balaPath, "--repository", "central")
 	if err == nil {
 		t.Fatal("expected error for --repository=central, got success")
 	}
@@ -3282,12 +3219,8 @@ func TestBalPushUnsupportedRepositoryValue(t *testing.T) {
 	}
 }
 
-func TestBalPushHelp(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	stdout, stderr, err := executePushCLI(t, t.TempDir(), "", "--help")
+func testBalPushHelp(t *testing.T, cli *balCLI) {
+	stdout, stderr, err := executePushCLI(t, cli, t.TempDir(), "", "--help")
 	if err != nil {
 		t.Fatalf("--help returned error: %v\nstderr: %s", err, stderr)
 	}
@@ -3301,11 +3234,11 @@ func TestBalPushHelp(t *testing.T) {
 
 // runPushCLI runs `bal push <args...>` as a subprocess in dir, with BAL_ENV
 // set to balaEnv (skipped if balaEnv is ""). Each push test gets its own
-// balaEnv, unlike build/pack's shared cliIntegrationBalEnv, since push writes
+// balaEnv, unlike build/pack's shared cli.balEnv, since push writes
 // into <BAL_ENV>/repositories/local/bala/...
-func runPushCLI(t *testing.T, dir, balaEnv string, args ...string) (stdout, stderr string, exitCode int) {
+func runPushCLI(t *testing.T, cli *balCLI, dir, balaEnv string, args ...string) (stdout, stderr string, exitCode int) {
 	t.Helper()
-	balBin, _, coverDir := integrationTestBalCLI(t, false)
+	balBin, coverDir := cli.relBin, cli.coverDir
 	env := os.Environ()
 	if balaEnv != "" {
 		env = append(env, "BAL_ENV="+balaEnv)
@@ -3318,9 +3251,9 @@ func runPushCLI(t *testing.T, dir, balaEnv string, args ...string) (stdout, stde
 	return runNativeCLICommandWithEnv(t, balBin, dir, append([]string{"push"}, args...), env)
 }
 
-func executePushCLI(t *testing.T, dir, balaEnv string, args ...string) (stdout, stderr string, err error) {
+func executePushCLI(t *testing.T, cli *balCLI, dir, balaEnv string, args ...string) (stdout, stderr string, err error) {
 	t.Helper()
-	stdout, stderr, exitCode := runPushCLI(t, dir, balaEnv, args...)
+	stdout, stderr, exitCode := runPushCLI(t, cli, dir, balaEnv, args...)
 	if exitCode != 0 {
 		err = fmt.Errorf("push exited with code %d", exitCode)
 	}
@@ -3445,18 +3378,14 @@ func writePushBalaFile(t *testing.T, balaPath string, entries map[string][]byte)
 	}
 }
 
-// TestBalBuildLoadWarning covers a plain, non-workspace package with a
+// testBalBuildLoadWarning covers a plain, non-workspace package with a
 // repository = "local" dependency that's missing locally and falls back to
-// central with a warning — the same mechanism TestBalBuildWorkspace checks
+// central with a warning — the same mechanism testBalBuildWorkspace checks
 // per-member, but here at the top-level result.Diagnostics() check in
 // runBuild (before any workspace/member branching), which a workspace
 // build never exercises since it always takes the member-loop path.
-func TestBalBuildLoadWarning(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildLoadWarning(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "local-repo-miss-warning", "project")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "build")
 
@@ -3500,19 +3429,15 @@ func TestBalBuildLoadWarning(t *testing.T) {
 	}
 }
 
-// TestBalBuildWorkspacePartialFailure covers a workspace where one member
+// testBalBuildWorkspacePartialFailure covers a workspace where one member
 // fails to compile: bal build must stop there, not attempt later members
 // (matching jballerina), while still exiting non-zero.
-func TestBalBuildWorkspacePartialFailure(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildWorkspacePartialFailure(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	workspaceDir := filepath.Join("corpus", "cli", "testdata", "build", "workspace-partial-failure", "project")
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", workspaceDir)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", workspaceDir)
 	if exitCode == 0 {
 		t.Fatalf("expected a non-zero exit code when one workspace member fails to compile, got 0\nstdout:\n%s\nstderr:\n%s", stdout, stderr)
 	}
@@ -3524,23 +3449,19 @@ func TestBalBuildWorkspacePartialFailure(t *testing.T) {
 	}
 }
 
-// TestBalBuildWorkspaceMemberManifestError covers a workspace where one
+// testBalBuildWorkspaceMemberManifestError covers a workspace where one
 // member's manifest fails to load (as opposed to
-// TestBalBuildWorkspacePartialFailure's compile error): the workspace-wide
+// testBalBuildWorkspacePartialFailure's compile error): the workspace-wide
 // load itself already surfaces the member's error in result.Diagnostics()
 // before runBuild ever reaches the per-member build loop, so the whole
 // build must abort with none of the members — not even a healthy sibling —
 // ever attempted.
-func TestBalBuildWorkspaceMemberManifestError(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildWorkspaceMemberManifestError(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	workspaceDir := filepath.Join("corpus", "cli", "testdata", "build", "workspace-member-manifest-error", "project")
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", workspaceDir)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", workspaceDir)
 	if exitCode == 0 {
 		t.Fatalf("expected a non-zero exit code when a workspace member's manifest fails to load, got 0\nstdout:\n%s\nstderr:\n%s", stdout, stderr)
 	}
@@ -3555,22 +3476,18 @@ func TestBalBuildWorkspaceMemberManifestError(t *testing.T) {
 	}
 }
 
-// TestBalBuildCustomOutputPath covers the -o flag, including creating
+// testBalBuildCustomOutputPath covers the -o flag, including creating
 // parent directories for a path that doesn't exist yet — common in
 // CI/deployment workflows targeting a specific output location rather than
 // the default target/bin/<package-name>.
-func TestBalBuildCustomOutputPath(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildCustomOutputPath(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 
 	outPath := filepath.Join(t.TempDir(), "nested", "dir", "custom-name")
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outPath)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, "-o", outPath)
 	if exitCode != 0 {
 		t.Fatalf("bal build -o failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
 	}
@@ -3582,16 +3499,12 @@ func TestBalBuildCustomOutputPath(t *testing.T) {
 	}
 }
 
-// TestBalBuildOutputPathBlocked covers a regular file sitting where -o
+// testBalBuildOutputPathBlocked covers a regular file sitting where -o
 // needs to create a parent directory: executable.Pack must fail, and
 // buildOneProject must surface that as a clear "write executable" error
 // rather than a bare/unwrapped one.
-func TestBalBuildOutputPathBlocked(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildOutputPathBlocked(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 
 	blockingFile := filepath.Join(t.TempDir(), "blocker")
@@ -3601,7 +3514,7 @@ func TestBalBuildOutputPathBlocked(t *testing.T) {
 	outPath := filepath.Join(blockingFile, "bin", "program")
 
 	_, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outPath)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, "-o", outPath)
 	if exitCode == 0 {
 		t.Fatal("expected a non-zero exit code when the output path is blocked, got 0")
 	}
@@ -3610,21 +3523,17 @@ func TestBalBuildOutputPathBlocked(t *testing.T) {
 	}
 }
 
-// TestBalBuildOutputDirNotWritable covers an existing output directory
+// testBalBuildOutputDirNotWritable covers an existing output directory
 // that isn't writable — creating the packer's temp file must fail
 // cleanly rather than partially writing over a previous executable.
-func TestBalBuildOutputDirNotWritable(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
+func testBalBuildOutputDirNotWritable(t *testing.T, cli *balCLI) {
 	if runtime.GOOS == "windows" {
 		t.Skip("POSIX permission bits don't apply on windows")
 	}
 	if os.Geteuid() == 0 {
 		t.Skip("root ignores POSIX permission bits, so the directory wouldn't actually be unwritable")
 	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 
 	outDir := t.TempDir()
@@ -3635,7 +3544,7 @@ func TestBalBuildOutputDirNotWritable(t *testing.T) {
 	outPath := filepath.Join(outDir, "program")
 
 	_, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outPath)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, "-o", outPath)
 	if exitCode == 0 {
 		t.Fatal("expected a non-zero exit code when the output directory isn't writable")
 	}
@@ -3644,19 +3553,15 @@ func TestBalBuildOutputDirNotWritable(t *testing.T) {
 	}
 }
 
-// TestBalBuildNoHomeNoBalEnv covers getBallerinaEnvPath's fallback when
+// testBalBuildNoHomeNoBalEnv covers getBallerinaEnvPath's fallback when
 // BAL_ENV is unset: it resolves the user's home directory itself, which
 // fails if neither is available — e.g. a minimal container environment.
 // Uses runNativeCLICommandWithEnv (a full, explicit env rather than
 // extraEnv appended on top of the inherited one) since this needs to
 // remove variables, not just add one; a copied project dir keeps the
 // build output out of the checked-in fixture.
-func TestBalBuildNoHomeNoBalEnv(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildNoHomeNoBalEnv(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	srcProject := filepath.Join(repoRoot, "corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	projectDir := t.TempDir()
@@ -3676,22 +3581,18 @@ func TestBalBuildNoHomeNoBalEnv(t *testing.T) {
 	}
 }
 
-// TestBalBuildStatsFlags covers --stats and --stats-oneline: both must
+// testBalBuildStatsFlags covers --stats and --stats-oneline: both must
 // print a per-stage compilation timing report to stderr without affecting
 // the build's own success or output path.
-func TestBalBuildStatsFlags(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildStatsFlags(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 
 	for _, flag := range []string{"--stats", "--stats-oneline"} {
 		t.Run(flag, func(t *testing.T) {
 			t.Parallel()
 			stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-				[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, flag)
+				[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, flag)
 			if exitCode != 0 {
 				t.Fatalf("bal build %s failed: exit=%d\nstdout:\n%s\nstderr:\n%s", flag, exitCode, stdout, stderr)
 			}
@@ -3705,18 +3606,14 @@ func TestBalBuildStatsFlags(t *testing.T) {
 	}
 }
 
-// TestBalBuildRuntimeStubPathOverride covers the RuntimeStubPath link-time
+// testBalBuildRuntimeStubPathOverride covers the RuntimeStubPath link-time
 // override (set via -ldflags -X main.RuntimeStubPath=..., not a bal build
 // flag): when it points at an existing file, that file is used as the
 // runner stub as-is, skipping the default <dist>/rt/<os>-<arch> lookup
 // entirely; when it's missing, bal build must fail with a clear error
 // naming the override path.
-func TestBalBuildRuntimeStubPathOverride(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	_, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildRuntimeStubPathOverride(t *testing.T, cli *balCLI) {
+	repoRoot, coverDir := cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 
 	t.Run("valid override is used as the stub", func(t *testing.T) {
@@ -3740,7 +3637,7 @@ func TestBalBuildRuntimeStubPathOverride(t *testing.T) {
 		balBin := buildBalBinaryWithRuntimeStubOverride(t, repoRoot, coverDir, overridePath)
 
 		stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-			[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir)
+			[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir)
 		if exitCode != 0 {
 			t.Fatalf("bal build with a valid override failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
 		}
@@ -3767,7 +3664,7 @@ func TestBalBuildRuntimeStubPathOverride(t *testing.T) {
 		balBin := buildBalBinaryWithRuntimeStubOverride(t, repoRoot, coverDir, overridePath)
 
 		_, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-			[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir)
+			[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir)
 		if exitCode == 0 {
 			t.Fatal("expected a non-zero exit code for a missing override stub")
 		}
@@ -3790,7 +3687,7 @@ func TestBalBuildRuntimeStubPathOverride(t *testing.T) {
 			nonHostTarget = "darwin"
 		}
 		_, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-			[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+			[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir,
 			"--target-os", nonHostTarget, "--target-arch", "amd64")
 		if exitCode == 0 {
 			t.Fatal("expected a non-zero exit code when overriding the stub while cross-compiling")
@@ -3801,20 +3698,16 @@ func TestBalBuildRuntimeStubPathOverride(t *testing.T) {
 	})
 }
 
-// TestBalBuildAtomicWriteOnPackFailure covers splice.Embed's atomic-write
+// testBalBuildAtomicWriteOnPackFailure covers splice.Embed's atomic-write
 // guarantee: a failed rebuild (RuntimeStubPath pointing at a directory)
 // must leave the previous output untouched, with no leftover temp file.
-func TestBalBuildAtomicWriteOnPackFailure(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildAtomicWriteOnPackFailure(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	outBin := filepath.Join(t.TempDir(), hostExeSuffix("myprogram"))
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, "-o", outBin)
 	if exitCode != 0 {
 		t.Fatalf("first build failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
 	}
@@ -3825,7 +3718,7 @@ func TestBalBuildAtomicWriteOnPackFailure(t *testing.T) {
 
 	badBalBin := buildBalBinaryWithRuntimeStubOverride(t, repoRoot, coverDir, t.TempDir()) // a directory, not a file
 	_, _, exitCode = runCLICommandWithEnv(t, badBalBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, "-o", outBin)
 	if exitCode == 0 {
 		t.Fatal("expected the rebuild to fail when the stub is a directory")
 	}
@@ -3848,15 +3741,11 @@ func TestBalBuildAtomicWriteOnPackFailure(t *testing.T) {
 	}
 }
 
-// TestBalBuildRebuildPreservesExecutableBit covers a regression risk
+// testBalBuildRebuildPreservesExecutableBit covers a regression risk
 // shared by every platform's packer: O_TRUNC reuses the inode, so
 // rebuilding into the same path could silently lose the executable bit.
-func TestBalBuildRebuildPreservesExecutableBit(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildRebuildPreservesExecutableBit(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	outBin := filepath.Join(t.TempDir(), hostExeSuffix("myprogram"))
 
@@ -3867,7 +3756,7 @@ func TestBalBuildRebuildPreservesExecutableBit(t *testing.T) {
 			}
 		}
 		_, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-			[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+			[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, "-o", outBin)
 		if exitCode != 0 {
 			t.Fatalf("build #%d failed: exit=%d\nstderr:\n%s", i+1, exitCode, stderr)
 		}
@@ -4026,11 +3915,12 @@ func expectedCorruptionErrorSubstring() string {
 // override), then bal builds projectDir with it, returning the path to the
 // resulting executable — bal's own machine code with a BIR payload appended.
 // Running that output directly exercises bal.go's own main(), not balrt's.
-func buildBalAsStubOutput(t *testing.T, balBin, repoRoot, coverDir, projectDir string) string {
+func buildBalAsStubOutput(t *testing.T, cli *balCLI, projectDir string) string {
 	t.Helper()
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	packerBal := buildBalBinaryWithRuntimeStubOverride(t, repoRoot, coverDir, balBin)
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, packerBal, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir)
 	if exitCode != 0 {
 		t.Fatalf("bal build with bal itself as the stub failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
 	}
@@ -4043,17 +3933,13 @@ func buildBalAsStubOutput(t *testing.T, balBin, repoRoot, coverDir, projectDir s
 	return strings.TrimSpace(line)
 }
 
-// TestBalrtRejectsPlainExecution covers balrt's main() run against a plain,
+// testBalrtRejectsPlainExecution covers balrt's main() run against a plain,
 // non-packed binary. balrt has no purpose other than running a bal
 // build/pack output, so this is its expected failure mode, not merely a
 // theoretical error path — a plain balrt build (no BIR ever embedded) must
 // already reproduce it.
-func TestBalrtRejectsPlainExecution(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	_, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalrtRejectsPlainExecution(t *testing.T, cli *balCLI) {
+	repoRoot, coverDir := cli.repoRoot, cli.coverDir
 
 	balrtName := "balrt"
 	if runtime.GOOS == "windows" {
@@ -4074,23 +3960,19 @@ func TestBalrtRejectsPlainExecution(t *testing.T) {
 	}
 }
 
-// TestBalBuildCorruptedOutputReportsError covers running a bal build output
+// testBalBuildCorruptedOutputReportsError covers running a bal build output
 // (the common case: balrt as the runner stub) whose embedded payload has
 // been corrupted after the fact — the file still declares itself a
 // compiled program (magic trailer or payload section, depending on
 // platform), but the payload itself is bad, so balrt's own main() must
 // report a clear error rather than crash or silently do nothing.
-func TestBalBuildCorruptedOutputReportsError(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildCorruptedOutputReportsError(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	outBin := filepath.Join(t.TempDir(), hostExeSuffix("myprogram"))
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, "-o", outBin)
 	if exitCode != 0 {
 		t.Fatalf("bal build failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
 	}
@@ -4107,20 +3989,16 @@ func TestBalBuildCorruptedOutputReportsError(t *testing.T) {
 	}
 }
 
-// TestBalBinaryAsRuntimeStub covers bal's own main() detecting and running
+// testBalBinaryAsRuntimeStub covers bal's own main() detecting and running
 // an embedded program. RuntimeStubPath lets bal build use the full bal
 // binary as its own runner stub; running the produced executable directly
 // must execute the embedded program instead of behaving as the bal CLI.
-func TestBalBinaryAsRuntimeStub(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBinaryAsRuntimeStub(t *testing.T, cli *balCLI) {
+	repoRoot, coverDir := cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "build")
 
-	producedBin := buildBalAsStubOutput(t, balBin, repoRoot, coverDir, projectDir)
+	producedBin := buildBalAsStubOutput(t, cli, projectDir)
 
 	runOut, runErr, runExit := runCLICommand(t, producedBin, repoRoot, coverDir)
 	runOut = test_util.NormalizeNewlines(runOut)
@@ -4140,20 +4018,16 @@ func TestBalBinaryAsRuntimeStub(t *testing.T) {
 	}
 }
 
-// TestBalBinaryAsRuntimeStub_CorruptedOutputReportsError is
-// TestBalBuildCorruptedOutputReportsError's counterpart for bal.go's own
+// testBalBinaryAsRuntimeStub_CorruptedOutputReportsError is
+// testBalBuildCorruptedOutputReportsError's counterpart for bal.go's own
 // main(): the produced executable here is bal's own machine code (not
 // balrt's), so corrupting its embedded payload exercises bal.go's
 // err != nil branch specifically.
-func TestBalBinaryAsRuntimeStub_CorruptedOutputReportsError(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBinaryAsRuntimeStub_CorruptedOutputReportsError(t *testing.T, cli *balCLI) {
+	repoRoot, coverDir := cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 
-	producedBin := buildBalAsStubOutput(t, balBin, repoRoot, coverDir, projectDir)
+	producedBin := buildBalAsStubOutput(t, cli, projectDir)
 	corruptPackedPayload(t, producedBin)
 
 	_, runErr, runExit := runCLICommand(t, producedBin, repoRoot, coverDir)
@@ -4166,16 +4040,12 @@ func TestBalBinaryAsRuntimeStub_CorruptedOutputReportsError(t *testing.T) {
 	}
 }
 
-// TestBalBuildFlatRuntimeStubDefault covers ResolveStub's flat-sibling
+// testBalBuildFlatRuntimeStubDefault covers ResolveStub's flat-sibling
 // fallback: a bal binary built alongside a plain "balrt" (no rt/<os>-<arch>
 // subtree, no RuntimeStubPath override) must still find and use it as the
 // runner stub — the layout a local dev build produces with no extra flags.
-func TestBalBuildFlatRuntimeStubDefault(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	_, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildFlatRuntimeStubDefault(t *testing.T, cli *balCLI) {
+	repoRoot, coverDir := cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 
 	dir := t.TempDir()
@@ -4192,7 +4062,7 @@ func TestBalBuildFlatRuntimeStubDefault(t *testing.T) {
 	}
 
 	_, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir)
 	if exitCode != 0 {
 		t.Fatalf("bal build with a flat sibling balrt (no rt/ layout, no override) failed: exit=%d\nstderr:\n%s", exitCode, stderr)
 	}
@@ -4201,7 +4071,7 @@ func TestBalBuildFlatRuntimeStubDefault(t *testing.T) {
 // buildCrossBalrtStub cross-builds a balrt stub for goos/goarch (not
 // necessarily the host's own) into rtDir/<goos>-<goarch>/balrt[.exe] — used
 // to provision a second platform's stub in the shared test rt/ directory,
-// alongside the host's own (already built by ensureCLIIntegrationBalBinaries),
+// alongside the host's own (already built by newBalCLI),
 // so a cross-compile test can verify bal build picks the correct one. No
 // -cover: this binary is never executed (a different-arch binary can't run
 // on the host) — only its packed output's header is inspected.
@@ -4213,7 +4083,7 @@ func buildCrossBalrtStub(t *testing.T, repoRoot, rtDir, goos, goarch string) str
 	}
 	outputPath := filepath.Join(rtDir, goos+"-"+goarch, name)
 	if goos == runtime.GOOS && goarch == runtime.GOARCH {
-		// ensureCLIIntegrationBalBinaries already built this exact path as
+		// newBalCLI already built this exact path as
 		// the shared, coverage-instrumented host stub — rebuilding here
 		// (without -cover) would silently clobber it and lose coverage.
 		return outputPath
@@ -4241,7 +4111,7 @@ func buildCrossBalrtStub(t *testing.T, repoRoot, rtDir, goos, goarch string) str
 	return outputPath
 }
 
-// TestBalBuildCrossCompile covers `bal build --target-os/--target-arch` for
+// testBalBuildCrossCompile covers `bal build --target-os/--target-arch` for
 // a package with no native Go dependencies — the executable.ResolveStub
 // path. The shared test bal binary only has its own host platform's balrt
 // provisioned by default, so this provisions a second platform's stub
@@ -4251,12 +4121,8 @@ func buildCrossBalrtStub(t *testing.T, repoRoot, rtDir, goos, goarch string) str
 // stub's). Targets windows/amd64 specifically (unless the host itself is
 // windows/amd64) so the target-platform-follows-.exe-suffix behavior is
 // exercised deterministically, not left to chance.
-func TestBalBuildCrossCompile(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildCrossCompile(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	targetOS, targetArch := "windows", "amd64"
 	if runtime.GOOS == "windows" && runtime.GOARCH == "amd64" {
@@ -4266,7 +4132,7 @@ func TestBalBuildCrossCompile(t *testing.T) {
 
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir,
 		"--target-os", targetOS, "--target-arch", targetArch)
 	if exitCode != 0 {
 		t.Fatalf("cross-compiled bal build failed (exit %d)\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
@@ -4292,21 +4158,17 @@ func TestBalBuildCrossCompile(t *testing.T) {
 	}
 }
 
-// TestBalBuildLinuxTargetPayloadRoundTrips covers bal build
+// testBalBuildLinuxTargetPayloadRoundTrips covers bal build
 // --target-os=linux end to end: the output must be a real ELF64 binary
 // with the payload in a genuine section (splice.EmbedELF), never raw
 // trailing bytes. Runs on any host — inspects structure, doesn't execute.
-func TestBalBuildLinuxTargetPayloadRoundTrips(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildLinuxTargetPayloadRoundTrips(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	buildCrossBalrtStub(t, repoRoot, filepath.Join(filepath.Dir(balBin), "rt"), "linux", "amd64")
 
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir,
 		"--target-os", "linux", "--target-arch", "amd64")
 	if exitCode != 0 {
 		t.Fatalf("linux-target bal build failed (exit %d)\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
@@ -4336,20 +4198,19 @@ func TestBalBuildLinuxTargetPayloadRoundTrips(t *testing.T) {
 	}
 }
 
-// TestBalBuildLinuxTargetRunsOnHost covers actually executing a
+// testBalBuildLinuxTargetRunsOnHost covers actually executing a
 // linux/amd64 bal build output — gated to a matching host since only
 // there can the produced binary run directly.
-func TestBalBuildLinuxTargetRunsOnHost(t *testing.T) {
-	t.Parallel()
+func testBalBuildLinuxTargetRunsOnHost(t *testing.T, cli *balCLI) {
 	if runtime.GOOS != "linux" || runtime.GOARCH != "amd64" {
 		t.Skip("requires a linux/amd64 host to execute the produced binary directly")
 	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	outBin := filepath.Join(t.TempDir(), "myprogram")
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, "-o", outBin)
 	if exitCode != 0 {
 		t.Fatalf("bal build failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
 	}
@@ -4360,21 +4221,17 @@ func TestBalBuildLinuxTargetRunsOnHost(t *testing.T) {
 	}
 }
 
-// TestBalBuildWindowsTargetPayloadRoundTrips covers bal build
+// testBalBuildWindowsTargetPayloadRoundTrips covers bal build
 // --target-os=windows end to end: the output must be a real PE64 binary
 // with the payload in a genuine section (splice.EmbedPE), never raw
 // trailing bytes. Runs on any host — inspects structure, doesn't execute.
-func TestBalBuildWindowsTargetPayloadRoundTrips(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildWindowsTargetPayloadRoundTrips(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	buildCrossBalrtStub(t, repoRoot, filepath.Join(filepath.Dir(balBin), "rt"), "windows", "amd64")
 
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir,
 		"--target-os", "windows", "--target-arch", "amd64")
 	if exitCode != 0 {
 		t.Fatalf("windows-target bal build failed (exit %d)\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
@@ -4404,21 +4261,17 @@ func TestBalBuildWindowsTargetPayloadRoundTrips(t *testing.T) {
 	}
 }
 
-// TestBalBuildWindowsArm64TargetPayloadRoundTrips is
-// TestBalBuildWindowsTargetPayloadRoundTrips for windows/arm64 — the PE
+// testBalBuildWindowsArm64TargetPayloadRoundTrips is
+// testBalBuildWindowsTargetPayloadRoundTrips for windows/arm64 — the PE
 // splicer doesn't branch on machine type, but this confirms the produced
 // binary is genuinely arm64, not just structurally a valid PE.
-func TestBalBuildWindowsArm64TargetPayloadRoundTrips(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildWindowsArm64TargetPayloadRoundTrips(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	buildCrossBalrtStub(t, repoRoot, filepath.Join(filepath.Dir(balBin), "rt"), "windows", "arm64")
 
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir,
 		"--target-os", "windows", "--target-arch", "arm64")
 	if exitCode != 0 {
 		t.Fatalf("windows/arm64-target bal build failed (exit %d)\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
@@ -4453,20 +4306,19 @@ func TestBalBuildWindowsArm64TargetPayloadRoundTrips(t *testing.T) {
 	}
 }
 
-// TestBalBuildWindowsTargetExecutes covers actually executing a
+// testBalBuildWindowsTargetExecutes covers actually executing a
 // windows bal build output (host's own arch) — gated to a windows host
 // since only there can the produced binary run directly.
-func TestBalBuildWindowsTargetExecutes(t *testing.T) {
-	t.Parallel()
+func testBalBuildWindowsTargetExecutes(t *testing.T, cli *balCLI) {
 	if runtime.GOOS != "windows" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
 		t.Skip("requires a windows/amd64 or windows/arm64 host to execute the produced binary directly")
 	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	outBin := filepath.Join(t.TempDir(), "myprogram.exe")
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, "-o", outBin)
 	if exitCode != 0 {
 		t.Fatalf("bal build failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
 	}
@@ -4477,22 +4329,18 @@ func TestBalBuildWindowsTargetExecutes(t *testing.T) {
 	}
 }
 
-// TestBalBuildDarwinTargetPayloadRoundTrips covers bal build
+// testBalBuildDarwinTargetPayloadRoundTrips covers bal build
 // --target-os=darwin end to end: the output must be a real Mach-O64
 // binary with the payload in a genuine section (splice.EmbedMachO),
 // never raw trailing bytes. Runs on any host — inspects structure only;
-// see TestBalBuildDarwinTargetPassesCodesignStrict for signature/execution.
-func TestBalBuildDarwinTargetPayloadRoundTrips(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+// see testBalBuildDarwinTargetPassesCodesignStrict for signature/execution.
+func testBalBuildDarwinTargetPayloadRoundTrips(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	buildCrossBalrtStub(t, repoRoot, filepath.Join(filepath.Dir(balBin), "rt"), "darwin", "arm64")
 
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir,
 		"--target-os", "darwin", "--target-arch", "arm64")
 	if exitCode != 0 {
 		t.Fatalf("darwin-target bal build failed (exit %d)\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
@@ -4525,25 +4373,24 @@ func TestBalBuildDarwinTargetPayloadRoundTrips(t *testing.T) {
 	}
 }
 
-// TestBalBuildDarwinTargetPassesCodesignStrict covers the exact bug this
+// testBalBuildDarwinTargetPassesCodesignStrict covers the exact bug this
 // packing migration fixes: a host-built (no cross-compile involved) bal
 // build output must pass `codesign --verify --strict` — which raw-append
 // output never could on arm64 — and must actually execute correctly.
 // Gated to darwin with the codesign tool available.
-func TestBalBuildDarwinTargetPassesCodesignStrict(t *testing.T) {
-	t.Parallel()
+func testBalBuildDarwinTargetPassesCodesignStrict(t *testing.T, cli *balCLI) {
 	if runtime.GOOS != "darwin" {
 		t.Skip("requires a darwin host with the codesign tool")
 	}
 	if _, err := exec.LookPath("codesign"); err != nil {
 		t.Skip("codesign not found on PATH")
 	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	outBin := filepath.Join(t.TempDir(), "myprogram")
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir, "-o", outBin)
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, "-o", outBin)
 	if exitCode != 0 {
 		t.Fatalf("bal build failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
 	}
@@ -4559,25 +4406,24 @@ func TestBalBuildDarwinTargetPassesCodesignStrict(t *testing.T) {
 	}
 }
 
-// TestBalBuildDarwinCrossCompileAmd64PassesCodesignStrict covers the
+// testBalBuildDarwinCrossCompileAmd64PassesCodesignStrict covers the
 // from-scratch signing path: darwin/amd64 stubs are never signed by
-// Go's linker, unlike arm64 which TestBalBuildDarwinTargetPassesCodesignStrict
+// Go's linker, unlike arm64 which testBalBuildDarwinTargetPassesCodesignStrict
 // re-signs. Cross-compiled, so no amd64 host needed — verifies the
 // signature only, doesn't execute the binary.
-func TestBalBuildDarwinCrossCompileAmd64PassesCodesignStrict(t *testing.T) {
-	t.Parallel()
+func testBalBuildDarwinCrossCompileAmd64PassesCodesignStrict(t *testing.T, cli *balCLI) {
 	if runtime.GOOS != "darwin" {
 		t.Skip("requires a darwin host with the codesign tool")
 	}
 	if _, err := exec.LookPath("codesign"); err != nil {
 		t.Skip("codesign not found on PATH")
 	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	buildCrossBalrtStub(t, repoRoot, filepath.Join(filepath.Dir(balBin), "rt"), "darwin", "amd64")
 
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir,
 		"--target-os", "darwin", "--target-arch", "amd64")
 	if exitCode != 0 {
 		t.Fatalf("darwin/amd64 cross-compile build failed (exit %d)\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
@@ -4595,21 +4441,17 @@ func TestBalBuildDarwinCrossCompileAmd64PassesCodesignStrict(t *testing.T) {
 	}
 }
 
-// TestBalBuildUnsupportedTargetPlatform covers a --target-os/--target-arch
+// testBalBuildUnsupportedTargetPlatform covers a --target-os/--target-arch
 // combination bal build doesn't support for a package with no native Go
 // dependencies (executable.ResolveStub's platform-support check) — must
 // fail clearly, naming the supported list, rather than silently looking for
 // a stub that will never exist.
-func TestBalBuildUnsupportedTargetPlatform(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildUnsupportedTargetPlatform(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
 
 	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-		[]string{"BAL_ENV=" + cliIntegrationBalEnv}, "build", projectDir,
+		[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir,
 		"--target-os", "plan9", "--target-arch", "amd64")
 	if exitCode == 0 {
 		t.Fatalf("expected a non-zero exit code for an unsupported target platform, got 0\nstdout: %s\nstderr: %s", stdout, stderr)
@@ -4619,23 +4461,18 @@ func TestBalBuildUnsupportedTargetPlatform(t *testing.T) {
 	}
 }
 
-// TestBalBuildNativeDependency exercises `bal build` end-to-end on a package
+// testBalBuildNativeDependency exercises `bal build` end-to-end on a package
 // with a native Go dependency: it must build a native-woven standalone stub
 // (targeting cli/internal/balrt, not the full CLI) instead of looking up the
 // predefined installed stub, and the produced binary must be genuinely
 // standalone — runnable with no bal/Go toolchain involved. Mirrors
-// TestNativeRunner_ColdBuildAndCacheHit's cold/cache-hit pattern for bal run
+// testNativeRunner_ColdBuildAndCacheHit's cold/cache-hit pattern for bal run
 // (native_runner_test.go) and this file's own stub-size/run-and-compare
-// pattern for bal build (TestBalBuildCorpus); reuses the same
+// pattern for bal build (testBalBuildCorpus); reuses the same
 // native-multi-org-v fixture + golden output as TestNativeMultiOrgPackages
 // (native_runner_test.go).
-func TestBalBuildNativeDependency(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildNativeDependency(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	// Build a temp Ballerina home whose central cache contains the testdata
 	// native packages so bal build can resolve them.
@@ -4724,7 +4561,7 @@ func TestBalBuildNativeDependency(t *testing.T) {
 	}
 }
 
-// TestBalBuildNativeDependencyCrossCompile exercises `bal build
+// testBalBuildNativeDependencyCrossCompile exercises `bal build
 // --target-os/--target-arch` on a package with a native Go dependency:
 // cross-compilation must actually cross-compile (LocalExecutor sets
 // GOOS/GOARCH on the go build subprocess) rather than silently producing a
@@ -4735,12 +4572,7 @@ func TestBalBuildNativeDependency(t *testing.T) {
 // ".exe" suffix on the intermediate native-woven stub it builds — distinct
 // from buildOneProject's suffix on the final packed output, which the
 // non-windows case alone wouldn't reach.
-func TestBalBuildNativeDependencyCrossCompile(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-
+func testBalBuildNativeDependencyCrossCompile(t *testing.T, cli *balCLI) {
 	nonHostTarget := "linux"
 	if runtime.GOOS == "linux" {
 		nonHostTarget = "darwin"
@@ -4755,7 +4587,7 @@ func TestBalBuildNativeDependencyCrossCompile(t *testing.T) {
 		targetOS, targetArch := target.os, target.arch
 		t.Run(targetOS+"-"+targetArch, func(t *testing.T) {
 			t.Parallel()
-			balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+			balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 			tempHome := t.TempDir()
 			centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
@@ -4838,19 +4670,14 @@ func expectedBinaryFormat(goos string) string {
 	}
 }
 
-// TestBalBuildNativeDependencyInvalidTarget covers a bogus --target-os/
+// testBalBuildNativeDependencyInvalidTarget covers a bogus --target-os/
 // --target-arch combined with a native Go dependency. The native path
 // validates against the same curated supportedPlatforms list as the
 // no-native-dep path (executable.ResolveStub) via executable.ValidatePlatform,
 // so this is rejected before ever touching the Go toolchain, not left to
 // go build's own (less clear) validation.
-func TestBalBuildNativeDependencyInvalidTarget(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildNativeDependencyInvalidTarget(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	tempHome := t.TempDir()
 	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
@@ -4881,19 +4708,14 @@ func TestBalBuildNativeDependencyInvalidTarget(t *testing.T) {
 	}
 }
 
-// TestBalBuildNativeDependencyUnsupportedButBuildable covers a target that
+// testBalBuildNativeDependencyUnsupportedButBuildable covers a target that
 // Go itself can genuinely cross-compile to (linux/386 is a real, universally
 // supported GOOS/GOARCH pair) but that isn't in bal's curated
 // supportedPlatforms list. The native-dependency path must still reject it —
 // compiling the stub from source rather than looking up a prebuilt one isn't
 // license to support extra platforms bal doesn't otherwise ship for.
-func TestBalBuildNativeDependencyUnsupportedButBuildable(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildNativeDependencyUnsupportedButBuildable(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	tempHome := t.TempDir()
 	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
@@ -4959,19 +4781,14 @@ func mustReadFileBytes(t *testing.T, path string) []byte {
 	return data
 }
 
-// TestBalBuildNativeDependencyCacheByTarget covers cache correctness across
+// testBalBuildNativeDependencyCacheByTarget covers cache correctness across
 // alternating cross-compile targets: building for target A, then target B,
 // then target A again must cache-hit the third time (not needlessly
 // rebuild) and must reuse target A's own cached stub — not target B's, nor
 // a stale/incorrect one. Directly exercises buildNativeStub's
 // platform-segmented cache path (target/bin/native/<os>-<arch>/).
-func TestBalBuildNativeDependencyCacheByTarget(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildNativeDependencyCacheByTarget(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	tempHome := t.TempDir()
 	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
@@ -5037,19 +4854,15 @@ func TestBalBuildNativeDependencyCacheByTarget(t *testing.T) {
 	}
 }
 
-// TestBalBuildNativeDependencyPartialTargetOverride covers --target-arch
+// testBalBuildNativeDependencyPartialTargetOverride covers --target-arch
 // given alone (no --target-os) combined with a native dependency: the
 // unset OS dimension must default to the host's own, matching Go's own
 // GOOS/GOARCH convention. That defaulting is already unit-tested generically
 // (TestResolveTargetPlatform), but this exercises it actually threading
 // through build.go's native path into buildNativeStub's cache path and
 // LocalExecutor's cross-compile env — not just the flag-parsing layer.
-func TestBalBuildNativeDependencyPartialTargetOverride(t *testing.T) {
-	t.Parallel()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
+func testBalBuildNativeDependencyPartialTargetOverride(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 
 	tempHome := t.TempDir()
 	centralCache := filepath.Join(tempHome, "repositories", "central.ballerina.io", "bala")
@@ -5158,86 +4971,63 @@ func binaryArch(path string) (string, error) {
 	return "", fmt.Errorf("unrecognized binary format at %s", path)
 }
 
-func assertBalCommandMatchesTxtarFragments(t *testing.T, args []string, txtarPathParts ...string) {
+func assertBalCommandMatchesTxtarFragments(t *testing.T, cli *balCLI, args []string, txtarPathParts ...string) {
 	t.Helper()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	balBin, repoRoot, coverDir := integrationTestBalCLI(t, false)
-	assertBalCommandMatchesTxtarFragmentsForBinary(t, balBin, repoRoot, coverDir, args, txtarPathParts...)
+	assertBalCommandMatchesTxtarFragmentsForBinary(t, cli.relBin, cli.repoRoot, cli.coverDir, args, txtarPathParts...)
 }
 
-func integrationTestBalCLI(t *testing.T, debugBuild bool) (balBin, repoRoot, coverDir string) {
+func newBalCLI(t *testing.T) *balCLI {
 	t.Helper()
-	ensureCLIIntegrationBalBinaries(t)
-	if debugBuild {
-		return cliIntegrationDebugBalBin, cliIntegrationRepoRoot, cliIntegrationCoverDir
+	repoRoot, err := filepath.Abs("..")
+	if err != nil {
+		t.Fatalf("resolving repo root: %v", err)
 	}
-	return cliIntegrationRelBalBin, cliIntegrationRepoRoot, cliIntegrationCoverDir
-}
-
-func ensureCLIIntegrationBalBinaries(t *testing.T) {
-	t.Helper()
-	cliIntegrationBinsOnce.Do(func() {
-		cliIntegrationRepoRoot, cliIntegrationBinsErr = filepath.Abs("..")
-		if cliIntegrationBinsErr != nil {
-			return
-		}
-		cliIntegrationCoverDir, cliIntegrationBinsErr = resolveCLICoverageDir()
-		if cliIntegrationBinsErr != nil {
-			return
-		}
-		tmpDir, err := os.MkdirTemp("", "bal-cli-test")
-		if err != nil {
-			cliIntegrationBinsErr = err
-			return
-		}
-
-		// bal build looks up its runner stub at
-		// <dist>/rt/<GOOS>-<GOARCH>/balrt (executable.ResolveStub,
-		// executable.DistributionDir), relative to wherever the running bal
-		// binary itself lives — tmpDir plays that role here, so rt/ is a
-		// sibling of the bal/bal-debug binaries built into it below.
-		//
-		// cliIntegrationBalEnv is a separate, unrelated isolated BAL_ENV used
-		// only for BallerinaEnvFs (stdlib bala cache) resolution, keeping
-		// tests from touching the real ~/.ballerina. Confirmed empty (no
-		// pre-populated stdlib bala cache) works fine for these fixtures'
-		// ballerina/time and ballerina/io imports, since core stdlib modules
-		// resolve from lib/stdlibs source, not a bala cache lookup.
-		cliIntegrationBalEnv = filepath.Join(tmpDir, "bal-env")
-		if cliIntegrationBinsErr = os.MkdirAll(cliIntegrationBalEnv, 0o755); cliIntegrationBinsErr != nil {
-			return
-		}
-		balrtName := "balrt"
-		if runtime.GOOS == "windows" {
-			balrtName += ".exe"
-		}
-		platformDir := runtime.GOOS + "-" + runtime.GOARCH
-		balrtPath := filepath.Join(tmpDir, "rt", platformDir, balrtName)
-		if cliIntegrationBinsErr = os.MkdirAll(filepath.Dir(balrtPath), 0o755); cliIntegrationBinsErr != nil {
-			return
-		}
-		if cliIntegrationBinsErr = buildBalrtBinaryTo(cliIntegrationRepoRoot, cliIntegrationCoverDir, balrtPath); cliIntegrationBinsErr != nil {
-			return
-		}
-		for _, spec := range []struct {
-			debug   bool
-			destPtr *string
-		}{
-			{false, &cliIntegrationRelBalBin},
-			{true, &cliIntegrationDebugBalBin},
-		} {
-			name := cliIntegrationBalExecutableName(spec.debug)
-			*spec.destPtr = filepath.Join(tmpDir, name)
-			if cliIntegrationBinsErr = buildBalBinaryTo(cliIntegrationRepoRoot, cliIntegrationCoverDir, *spec.destPtr, spec.debug); cliIntegrationBinsErr != nil {
-				return
-			}
-		}
-	})
-	if cliIntegrationBinsErr != nil {
-		t.Fatalf("cli integration test binaries: %v", cliIntegrationBinsErr)
+	coverDir, err := resolveCLICoverageDir()
+	if err != nil {
+		t.Fatal(err)
 	}
+	dir := t.TempDir()
+
+	// bal build looks up its runner stub at
+	// <dist>/rt/<GOOS>-<GOARCH>/balrt (executable.ResolveStub,
+	// executable.DistributionDir), relative to wherever the running bal
+	// binary itself lives — dir plays that role here, so rt/ is a
+	// sibling of the bal/bal-debug binaries built into it below.
+	//
+	// balEnv is a separate, unrelated isolated BAL_ENV used
+	// only for BallerinaEnvFs (stdlib bala cache) resolution, keeping
+	// tests from touching the real ~/.ballerina. Confirmed empty (no
+	// pre-populated stdlib bala cache) works fine for these fixtures'
+	// ballerina/time and ballerina/io imports, since core stdlib modules
+	// resolve from lib/stdlibs source, not a bala cache lookup.
+	cli := &balCLI{
+		relBin:   filepath.Join(dir, cliIntegrationBalExecutableName(false)),
+		debugBin: filepath.Join(dir, cliIntegrationBalExecutableName(true)),
+		repoRoot: repoRoot,
+		coverDir: coverDir,
+		balEnv:   filepath.Join(dir, "bal-env"),
+	}
+	if err := os.MkdirAll(cli.balEnv, 0o755); err != nil {
+		t.Fatalf("creating BAL_ENV: %v", err)
+	}
+	balrtName := "balrt"
+	if runtime.GOOS == "windows" {
+		balrtName += ".exe"
+	}
+	balrtPath := filepath.Join(dir, "rt", runtime.GOOS+"-"+runtime.GOARCH, balrtName)
+	if err := os.MkdirAll(filepath.Dir(balrtPath), 0o755); err != nil {
+		t.Fatalf("creating rt dir: %v", err)
+	}
+	if err := buildBalrtBinaryTo(repoRoot, coverDir, balrtPath); err != nil {
+		t.Fatal(err)
+	}
+	if err := buildBalBinaryTo(repoRoot, coverDir, cli.relBin, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := buildBalBinaryTo(repoRoot, coverDir, cli.debugBin, true); err != nil {
+		t.Fatal(err)
+	}
+	return cli
 }
 
 func resolveCLICoverageDir() (string, error) {
@@ -5298,27 +5088,18 @@ func buildBalBinaryTo(repoRoot, coverDir, outputPath string, debugBuild bool) er
 // (executable.DistributionDir) rather than $BAL_ENV.
 func balBinaryWithoutRuntimeStub(t *testing.T, repoRoot, coverDir string) string {
 	t.Helper()
-	cliIntegrationNoRuntimeBalBinOnce.Do(func() {
-		dir, err := os.MkdirTemp("", "bal-cli-test-no-runtime")
-		if err != nil {
-			cliIntegrationNoRuntimeBalBinErr = err
-			return
-		}
-		cliIntegrationNoRuntimeBalBin = filepath.Join(dir, cliIntegrationBalExecutableName(false))
-		cliIntegrationNoRuntimeBalBinErr = buildBalBinaryTo(repoRoot, coverDir, cliIntegrationNoRuntimeBalBin, false)
-	})
-	if cliIntegrationNoRuntimeBalBinErr != nil {
-		t.Fatalf("building bal binary without runtime stub: %v", cliIntegrationNoRuntimeBalBinErr)
+	balBin := filepath.Join(t.TempDir(), cliIntegrationBalExecutableName(false))
+	if err := buildBalBinaryTo(repoRoot, coverDir, balBin, false); err != nil {
+		t.Fatalf("building bal binary without runtime stub: %v", err)
 	}
-	return cliIntegrationNoRuntimeBalBin
+	return balBin
 }
 
 // buildBalBinaryWithRuntimeStubOverride builds a fresh bal binary with
 // RuntimeStubPath baked in via -ldflags — the same link-time mechanism
 // production packaging uses (see main.RuntimeStubPath) — so
 // executable.ResolveStub's override branch can be exercised without a real
-// rt/ distribution layout. Not cached like balBinaryWithoutRuntimeStub:
-// each override path needs its own build.
+// rt/ distribution layout. Each override path needs its own build.
 func buildBalBinaryWithRuntimeStubOverride(t *testing.T, repoRoot, coverDir, overridePath string) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -5344,9 +5125,9 @@ func buildBalBinaryWithRuntimeStubOverride(t *testing.T, repoRoot, coverDir, ove
 // instrumentation as bal/bal-debug when coverDir is set — balrt IS CLI code
 // under test (executable.Run executes inside it, for every program bal
 // build produces), and without this, that coverage is invisible even though
-// TestBalBuildCorpus genuinely exercises it on every run: it only shows up
+// testBalBuildCorpus genuinely exercises it on every run: it only shows up
 // once the produced binary is instrumented and BAL_GOCOVERDIR is set when
-// running it (already threaded through in TestBalBuildCorpus's own
+// running it (already threaded through in testBalBuildCorpus's own
 // runCLICommand call for the produced binary).
 func buildBalrtBinaryTo(repoRoot, coverDir, outputPath string) error {
 	args := []string{"build", "-o", outputPath}
@@ -5365,9 +5146,6 @@ func buildBalrtBinaryTo(repoRoot, coverDir, outputPath string) error {
 
 func assertBalCommandMatchesTxtarFragmentsForBinary(t *testing.T, balBin, repoRoot, coverDir string, args []string, txtarPathParts ...string) {
 	t.Helper()
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
 
 	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, args...)
 

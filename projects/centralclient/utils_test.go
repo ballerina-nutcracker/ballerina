@@ -18,30 +18,12 @@ package centralclient
 
 import (
 	"io/fs"
-	"os"
 	"path"
 	"strings"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/common/bfs"
 )
-
-var tempBalaCache string
-
-func TestMain(t *testing.M) {
-	tempBalaCache = path.Join("build", "temp-test-utils-bala-cache")
-	if err := os.MkdirAll(tempBalaCache, 0o755); err != nil {
-		panic(err)
-	}
-
-	code := t.Run()
-
-	if err := os.RemoveAll(tempBalaCache); err != nil {
-		panic(err)
-	}
-
-	os.Exit(code)
-}
 
 func TestGetAsList(t *testing.T) {
 	tests := []struct {

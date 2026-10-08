@@ -33,28 +33,21 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
 	"golang.org/x/tools/txtar"
 )
 
-var (
-	pkgResBinsOnce sync.Once
-	pkgResBalBin   string
-	pkgResRepoRoot string
-	pkgResBinsErr  error
-)
-
 // TestPackageResolutionScenarios runs each subdirectory with a project/ as a
 // scenario: `bal run <project>` with BAL_ENV pointed at the scenario's bal_env/.
 func TestPackageResolutionScenarios(t *testing.T) {
+	t.Parallel()
 	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
 		t.Skip("skipping CLI integration test on WASM (js/wasm)")
 	}
 
-	ensureBalBinary(t)
+	balBin, repoRoot := buildBalBinary(t)
 
 	// Resolve the directory that contains this test file.
 	_, thisFile, _, ok := runtime.Caller(0)
@@ -88,13 +81,13 @@ func TestPackageResolutionScenarios(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			runScenario(t, scenarioDir, projectDir)
+			runScenario(t, balBin, repoRoot, scenarioDir, projectDir)
 		})
 	}
 }
 
 // runScenario executes a single package-resolution scenario.
-func runScenario(t *testing.T, scenarioDir, projectDir string) {
+func runScenario(t *testing.T, balBin, repoRoot, scenarioDir, projectDir string) {
 	t.Helper()
 
 	balEnvDir := filepath.Join(scenarioDir, "bal_env")
@@ -108,7 +101,7 @@ func runScenario(t *testing.T, scenarioDir, projectDir string) {
 	}
 
 	// Run: bal run <absolute-project-path>
-	stdout, stderr := runBalRun(t, projectDir, balEnvDir)
+	stdout, stderr := runBalRun(t, balBin, repoRoot, projectDir, balEnvDir)
 
 	// Log full captured output on failure so CI logs surface stderr context
 	// when only stdout-expected is non-empty. t.Cleanup runs in LIFO so
@@ -129,7 +122,7 @@ func runScenario(t *testing.T, scenarioDir, projectDir string) {
 
 // runBalRun invokes the bal binary with `run <projectDir>`, overriding BAL_ENV
 // to the given balEnvDir. Returns captured stdout and stderr.
-func runBalRun(t *testing.T, projectDir, balEnvDir string) (stdout, stderr string) {
+func runBalRun(t *testing.T, balBin, repoRoot, projectDir, balEnvDir string) (stdout, stderr string) {
 	t.Helper()
 
 	deadline, ok := t.Deadline()
@@ -142,8 +135,8 @@ func runBalRun(t *testing.T, projectDir, balEnvDir string) (stdout, stderr strin
 	}
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, pkgResBalBin, "run", projectDir)
-	cmd.Dir = pkgResRepoRoot
+	cmd := exec.CommandContext(ctx, balBin, "run", projectDir)
+	cmd.Dir = repoRoot
 
 	// Build subprocess environment: inherit current env, then override BAL_ENV.
 	env := os.Environ()
@@ -226,39 +219,27 @@ func setEnvVar(env []string, key, value string) []string {
 	return result
 }
 
-// ensureBalBinary builds the bal CLI binary once for the lifetime of the test
-// process using a sync.Once guard.
-func ensureBalBinary(t *testing.T) {
+// buildBalBinary builds the bal CLI into t.TempDir() and returns the binary
+// path and the repo root it was built from.
+func buildBalBinary(t *testing.T) (balBin, repoRoot string) {
 	t.Helper()
-	pkgResBinsOnce.Do(func() {
-		// Resolve repo root: this file is at <repo>/corpus/package-resolution/resolution_test.go
-		_, thisFile, _, ok := runtime.Caller(0)
-		if !ok {
-			pkgResBinsErr = fmt.Errorf("runtime.Caller failed")
-			return
-		}
-		// corpus/package-resolution/ -> corpus/ -> repo root
-		pkgResRepoRoot = filepath.Dir(filepath.Dir(filepath.Dir(thisFile)))
-
-		tmpDir, err := os.MkdirTemp("", "bal-pkg-res-test")
-		if err != nil {
-			pkgResBinsErr = fmt.Errorf("create temp dir: %w", err)
-			return
-		}
-
-		binName := "bal"
-		if runtime.GOOS == "windows" {
-			binName = "bal.exe"
-		}
-		pkgResBalBin = filepath.Join(tmpDir, binName)
-
-		buildCmd := exec.Command("go", "build", "-o", pkgResBalBin, "./cli/cmd")
-		buildCmd.Dir = pkgResRepoRoot
-		if out, err := buildCmd.CombinedOutput(); err != nil {
-			pkgResBinsErr = fmt.Errorf("build bal binary: %w\n%s", err, string(out))
-		}
-	})
-	if pkgResBinsErr != nil {
-		t.Fatalf("bal binary setup: %v", pkgResBinsErr)
+	// Resolve repo root: this file is at <repo>/corpus/package-resolution/local_repo_test.go
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
 	}
+	repoRoot = filepath.Dir(filepath.Dir(filepath.Dir(thisFile)))
+
+	binName := "bal"
+	if runtime.GOOS == "windows" {
+		binName = "bal.exe"
+	}
+	balBin = filepath.Join(t.TempDir(), binName)
+
+	buildCmd := exec.Command("go", "build", "-o", balBin, "./cli/cmd")
+	buildCmd.Dir = repoRoot
+	if out, err := buildCmd.CombinedOutput(); err != nil {
+		t.Fatalf("build bal binary: %v\n%s", err, out)
+	}
+	return balBin, repoRoot
 }
