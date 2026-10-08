@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: let clause variable type is incompatible with initializer expression
+  --> module-var-init-let-e.bal:19:9
+   |
+19 |     let int k = "s" // @error
+   |         ^^^^^^^^^^^

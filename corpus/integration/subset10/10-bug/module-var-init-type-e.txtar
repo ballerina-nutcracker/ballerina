@@ -1,0 +1,91 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected function(int) returns int, got function(string) returns int
+  --> module-var-init-type-e.bal:47:39
+   |
+47 | final function (int) returns int fp = strLen; // @error
+   |                                       ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "s"
+  --> module-var-init-type-e.bal:33:15
+   |
+33 | final int a = "s"; // @error
+   |               ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got 1.5
+  --> module-var-init-type-e.bal:34:9
+   |
+34 | int b = 1.50f; // @error
+   |         ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got 1|"s"
+  --> module-var-init-type-e.bal:41:9
+   |
+41 | int k = flag ? 1 : "s"; // @error
+   |         ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got [int...]
+  --> module-var-init-type-e.bal:46:9
+   |
+46 | int q = from int x in [1] select x; // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got float
+  --> module-var-init-type-e.bal:36:15
+   |
+36 | final int d = f; // @error
+   |               ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|"z"
+  --> module-var-init-type-e.bal:42:9
+   |
+42 | int l = opt ?: "z"; // @error
+   |         ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got string
+  --> module-var-init-type-e.bal:39:9
+   |
+39 | int i = str(); // @error
+   |         ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got string
+  --> module-var-init-type-e.bal:40:9
+   |
+40 | int j = check strOrErr(); // @error
+   |         ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got string
+  --> module-var-init-type-e.bal:45:46
+   |
+45 | final int[] xs = from int x in [1, 2] select x.toString(); // @error
+   |                                              ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got true
+  --> module-var-init-type-e.bal:38:18
+   |
+38 | isolated int h = true; // @error
+   |                  ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned8, got 300
+  --> module-var-init-type-e.bal:35:16
+   |
+35 | final byte c = 300; // @error
+   |                ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int|string, got 2.0
+  --> module-var-init-type-e.bal:44:16
+   |
+44 | string|int n = 2.0; // @error
+   |                ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil|int, got 1.5
+  --> module-var-init-type-e.bal:43:10
+   |
+43 | int? m = 1.5; // @error
+   |          ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> module-var-init-type-e.bal:37:18
+   |
+37 | final string g = 1; // @error
+   |                  ^

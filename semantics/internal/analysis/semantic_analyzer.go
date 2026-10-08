@@ -378,6 +378,12 @@ func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		if n.IsConstant() {
 			return createConstantAnalyzer(sa, n)
 		}
+		if n.Expr != nil {
+			if analyzeModuleVarInit(sa, n) {
+				walkVariableNonExprChildren(sa, n)
+			}
+			return nil
+		}
 		return sa
 	case *ast.BLangReturn:
 		// Error: return only valid in functions
@@ -394,6 +400,14 @@ func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		// Now delegates function creation to visitInner
 		return visitInner(sa, node)
 	}
+}
+
+func analyzeModuleVarInit(sa *semanticAnalyzer, variable *ast.BLangVariable) bool {
+	expectedType := sa.ctx().SymbolType(variable.Symbol())
+	if variable.IsListener() {
+		expectedType = semtypes.Union(expectedType, semtypes.Error)
+	}
+	return analyzeActionOrExpression(sa, variable.Expr, expectedType)
 }
 
 func (sa *semanticAnalyzer) processImport(importNode *ast.BLangImportPackage) {
