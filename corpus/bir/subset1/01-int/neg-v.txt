@@ -21,7 +21,7 @@ main() -> nil{
   }
   bb4 {
     %12 = ConstantLoad 1
-    %13 = unknown %12;
+    %13 = - %12;
     %14 = %13;
     %15 = neg(%14) -> bb5;
   }
@@ -44,15 +44,15 @@ main() -> nil{
 }
 neg(int) -> int{
   bb0 {
-    %2 = unknown x;
+    %2 = - x;
     %0 = %2;
     return;
   }
 }
 negneg(int) -> int{
   bb0 {
-    %2 = unknown x;
-    %3 = unknown %2;
+    %2 = - x;
+    %3 = - %2;
     %0 = %3;
     return;
   }

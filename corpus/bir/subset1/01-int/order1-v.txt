@@ -37,7 +37,7 @@ main() -> nil{
     %24 = ConstantLoad 2
     %25 = %24;
     %26 = ConstantLoad 1
-    %27 = unknown %26;
+    %27 = - %26;
     %28 = %27;
     %29 = greaterThan(%25,%28) -> bb6;
   }
@@ -80,7 +80,7 @@ main() -> nil{
   }
   bb13 {
     %53 = ConstantLoad 1
-    %54 = unknown %53;
+    %54 = - %53;
     %55 = %54;
     %56 = ConstantLoad 17
     %57 = %56;

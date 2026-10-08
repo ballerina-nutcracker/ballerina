@@ -8,12 +8,12 @@ main() -> nil{
   bb1 {
     x = %3;
     y = x;
-    %6 = unknown x y;
+    %6 = === x y;
     %7 = %6;
     %8 = println(%7) -> bb2;
   }
   bb2 {
-    %9 = unknown x y;
+    %9 = !== x y;
     %10 = %9;
     %11 = println(%10) -> bb3;
   }

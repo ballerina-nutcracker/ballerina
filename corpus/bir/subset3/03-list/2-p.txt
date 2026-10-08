@@ -4,7 +4,7 @@ main() -> nil{
     %1 = ConstantLoad 17
     %2 = ConstantLoad 42
     %3 = ConstantLoad 11
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = ConstantLoad 3
     %6 = newArray [any...][%5]{%1, %2, %4}
     v = %6;

@@ -33,7 +33,7 @@ main() -> nil{
     %26 = ConstantLoad 1
     %27 = newArray [int...][%26]{%25}
     %28 = ConstantLoad 1
-    %29 = unknown %28;
+    %29 = - %28;
     %30 = ConstantLoad 1
     %31 = newArray [int...][%30]{%29}
     %32 = ConstantLoad 2
@@ -43,7 +43,7 @@ main() -> nil{
     %36 = ConstantLoad 1
     %37 = newArray [int...][%36]{%35}
     %38 = ConstantLoad 2
-    %39 = unknown %38;
+    %39 = - %38;
     %40 = ConstantLoad 1
     %41 = newArray [int...][%40]{%39}
     %42 = ConstantLoad 2
