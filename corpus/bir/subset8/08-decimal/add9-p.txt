@@ -2,10 +2,10 @@ module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 9E+6144
-    %2 = unknown %1;
+    %2 = - %1;
     d1 = %2;
     %4 = ConstantLoad 1E+6144
-    %5 = unknown %4;
+    %5 = - %4;
     d2 = %5;
     %8 = d1;
     %9 = d2;

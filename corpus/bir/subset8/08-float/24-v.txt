@@ -32,7 +32,7 @@ main() -> nil{
   }
   bb6 {
     %19 = ConstantLoad 1
-    %20 = unknown %19;
+    %20 = - %19;
     %21 = %20;
     %22 = ConstantLoad 1
     %23 = %22;
@@ -43,10 +43,10 @@ main() -> nil{
   }
   bb8 {
     %26 = ConstantLoad 0.5
-    %27 = unknown %26;
+    %27 = - %26;
     %28 = %27;
     %29 = ConstantLoad 1
-    %30 = unknown %29;
+    %30 = - %29;
     %31 = %30;
     %32 = floatCmp(%28,%31) -> bb9;
   }
@@ -55,7 +55,7 @@ main() -> nil{
   }
   bb10 {
     %34 = ConstantLoad 0.5
-    %35 = unknown %34;
+    %35 = - %34;
     %36 = %35;
     %38 = ConstantLoad 1
     %39 = %38;
@@ -70,10 +70,10 @@ main() -> nil{
   }
   bb12 {
     %45 = ConstantLoad 0.5
-    %46 = unknown %45;
+    %46 = - %45;
     %47 = %46;
     %49 = ConstantLoad 1
-    %50 = unknown %49;
+    %50 = - %49;
     %51 = %50;
     %52 = ConstantLoad 0
     %53 = %52;
@@ -86,7 +86,7 @@ main() -> nil{
   }
   bb14 {
     %57 = ConstantLoad 0
-    %58 = unknown %57;
+    %58 = - %57;
     %59 = %58;
     %60 = ConstantLoad 0
     %61 = %60;

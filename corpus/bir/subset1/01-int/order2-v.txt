@@ -26,7 +26,7 @@ main() -> nil{
     %15 = ConstantLoad 2
     %16 = %15;
     %17 = ConstantLoad 1
-    %18 = unknown %17;
+    %18 = - %17;
     %19 = %18;
     %20 = gte(%16,%19) -> bb5;
   }
@@ -80,7 +80,7 @@ main() -> nil{
   }
   bb14 {
     %51 = ConstantLoad 1
-    %52 = unknown %51;
+    %52 = - %51;
     %53 = %52;
     %54 = ConstantLoad 17
     %55 = %54;
