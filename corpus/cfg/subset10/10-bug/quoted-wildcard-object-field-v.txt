@@ -1,0 +1,13 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable o (type
+        (user-defined-type O)) (expr
+        (new
+          (user-defined-type C) ()))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access '_
+          (simple-var-ref o)))))
+  )
+)
