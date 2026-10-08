@@ -14,10 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
 public function main() {
-    string k = "id";
-    map<int> m = {id: 1, [k]: 2}; // @panic
-    io:println(m);
+    string k;
+    map<int> m = {[k]: 1}; // @error
+    _ = m;
 }

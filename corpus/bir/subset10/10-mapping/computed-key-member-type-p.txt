@@ -6,7 +6,7 @@ main() -> nil{
     %3 = ConstantLoad id
     %4 = ConstantLoad 1
     %5 = ConstantLoad s
-    %6 = newMap {| count: int, id: int, string... |}{%3=%4, [k]=%5}
+    %6 = newMap {| count: int, id: int, string... |}{%3=%4} computed{k=%5}
     s = %6;
     %8 = println(s) -> bb1;
   }

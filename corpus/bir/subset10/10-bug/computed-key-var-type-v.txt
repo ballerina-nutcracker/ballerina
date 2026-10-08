@@ -6,7 +6,7 @@ main() -> nil{
     localKey = %1;
     %3 = ConstantLoad 1
     %4 = ConstantLoad 2
-    %5 = newMap {| int... |}{[moduleKey]=%3, [localKey]=%4}
+    %5 = newMap {| int... |}{} computed{moduleKey=%3, localKey=%4}
     m = %5;
     %7 = println(m) -> bb1;
   }

@@ -309,24 +309,7 @@ func (p *PrettyPrinter) PrintNewArray(array *NewArray) string {
 }
 
 func (p *PrettyPrinter) PrintNewMap(m *NewMap) string {
-	values := strings.Builder{}
-	for i, entry := range m.Values {
-		if i > 0 {
-			values.WriteString(", ")
-		}
-		if entry.IsKeyValuePair() {
-			kv := entry.(*MappingConstructorKeyValueEntry)
-			if kv.IsComputed() {
-				values.WriteString("[" + p.PrintOperand(*kv.KeyOp()) + "]")
-			} else {
-				values.WriteString(p.PrintOperand(*kv.KeyOp()))
-			}
-			values.WriteString("=")
-			values.WriteString(p.PrintOperand(*kv.ValueOp()))
-		} else {
-			values.WriteString(p.PrintOperand(*entry.ValueOp()))
-		}
-	}
+	values := p.printMappingConstructorEntries(m.Values)
 	defaults := strings.Builder{}
 	for i, def := range m.Defaults {
 		if i > 0 {
@@ -336,10 +319,32 @@ func (p *PrettyPrinter) PrintNewMap(m *NewMap) string {
 		defaults.WriteString("=")
 		defaults.WriteString(def.FunctionLookupKey)
 	}
+	result := fmt.Sprintf("%s = newMap %s{%s}", p.PrintOperand(*m.LhsOp), p.PrintSemType(m.Type), values)
 	if defaults.Len() > 0 {
-		return fmt.Sprintf("%s = newMap %s{%s} defaults{%s}", p.PrintOperand(*m.LhsOp), p.PrintSemType(m.Type), values.String(), defaults.String())
+		result += fmt.Sprintf(" defaults{%s}", defaults.String())
 	}
-	return fmt.Sprintf("%s = newMap %s{%s}", p.PrintOperand(*m.LhsOp), p.PrintSemType(m.Type), values.String())
+	if len(m.ComputedValues) > 0 {
+		result += fmt.Sprintf(" computed{%s}", p.printMappingConstructorEntries(m.ComputedValues))
+	}
+	return result
+}
+
+func (p *PrettyPrinter) printMappingConstructorEntries(entries []MappingConstructorEntry) string {
+	values := strings.Builder{}
+	for i, entry := range entries {
+		if i > 0 {
+			values.WriteString(", ")
+		}
+		if entry.IsKeyValuePair() {
+			kv := entry.(*MappingConstructorKeyValueEntry)
+			values.WriteString(p.PrintOperand(*kv.KeyOp()))
+			values.WriteString("=")
+			values.WriteString(p.PrintOperand(*kv.ValueOp()))
+		} else {
+			values.WriteString(p.PrintOperand(*entry.ValueOp()))
+		}
+	}
+	return values.String()
 }
 
 func (p *PrettyPrinter) PrintNewError(e *NewError) string {

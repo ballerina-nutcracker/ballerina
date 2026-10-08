@@ -51,17 +51,6 @@ func execNewArray(ctx *extern.Context, newArray *bir.NewArray, frame *Frame) {
 	setOperandValue(ctx, newArray.LhsOp, frame, list)
 }
 
-// checkComputedMappingEntry panics if a computed key repeats an earlier key or its value
-// does not belong to the member type the inherent type gives that key.
-func checkComputedMappingEntry(ctx *extern.Context, atomic *semtypes.MappingAtomicType, seen map[string]struct{}, key string, value values.BalValue) {
-	if _, exists := seen[key]; exists {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("duplicate key '%s' in mapping constructor", key)))
-	}
-	if !semtypes.IsSubtype(ctx.TypeCtx(), values.SemTypeForValue(value), atomic.FieldInnerVal(key)) {
-		panic(values.NewErrorWithMessage("inherent type violation"))
-	}
-}
-
 func execNewMap(ctx *extern.Context, newMap *bir.NewMap, frame *Frame) {
 	atomic := semtypes.ToMappingAtomicType(ctx.TypeCtx(), newMap.Type)
 	if atomic == nil {
@@ -73,9 +62,6 @@ func execNewMap(ctx *extern.Context, newMap *bir.NewMap, frame *Frame) {
 		kv := entry.(*bir.MappingConstructorKeyValueEntry)
 		keyStr := getOperandValue(ctx, kv.KeyOp(), frame).(string)
 		valueVal := getOperandValue(ctx, kv.ValueOp(), frame)
-		if kv.IsComputed() {
-			checkComputedMappingEntry(ctx, atomic, seen, keyStr, valueVal)
-		}
 		seen[keyStr] = struct{}{}
 		entries = append(entries, values.MapEntry{Key: keyStr, Value: valueVal})
 	}
@@ -88,6 +74,11 @@ func execNewMap(ctx *extern.Context, newMap *bir.NewMap, frame *Frame) {
 		entries = append(entries, values.MapEntry{Key: def.FieldName, Value: val})
 	}
 	m := values.NewMap(newMap.Type, atomic, newMap.IsReadonly, entries)
+	for _, entry := range newMap.ComputedValues {
+		kv := entry.(*bir.MappingConstructorKeyValueEntry)
+		keyStr := getOperandValue(ctx, kv.KeyOp(), frame).(string)
+		m.InitComputedField(ctx.TypeCtx(), keyStr, getOperandValue(ctx, kv.ValueOp(), frame))
+	}
 	setOperandValue(ctx, newMap.GetLhsOperand(), frame, m)
 }
 

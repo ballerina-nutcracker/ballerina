@@ -1,0 +1,116 @@
+module $anon.. v 0.0.0;
+key(string) -> string{
+  bb0 {
+    %2 = ConstantLoad key 
+    %3 = println(%2,k) -> bb1;
+  }
+  bb1 {
+    %0 = k;
+    return;
+  }
+}
+val(int) -> int{
+  bb0 {
+    %2 = ConstantLoad val 
+    %3 = v;
+    %4 = println(%2,%3) -> bb1;
+  }
+  bb1 {
+    %0 = v;
+    return;
+  }
+}
+keyOrError(boolean) -> string|error{
+  bb0 {
+    bad ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad bad key
+    %1 = newError error(%0)
+    (1, %0) = %1;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad z
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}
+build(boolean) -> error|{| int... |}{
+  bb0 {
+    %3 = bad;
+    %4 = keyOrError(%3) -> bb1;
+  }
+  bb1 {
+    %5 = %4 is error
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+  bb3 {
+    %2 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    %6 = ConstantLoad 1
+    %7 = newMap {| int... |}{} computed{%2=%6}
+    %0 = %7;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad k1
+    %2 = key(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %5 = val(%4) -> bb2;
+  }
+  bb2 {
+    %6 = ConstantLoad a
+    %7 = ConstantLoad 2
+    %8 = %7;
+    %9 = val(%8) -> bb3;
+  }
+  bb3 {
+    %10 = ConstantLoad k2
+    %11 = key(%10) -> bb4;
+  }
+  bb4 {
+    %12 = ConstantLoad 3
+    %13 = %12;
+    %14 = val(%13) -> bb5;
+  }
+  bb5 {
+    %15 = newMap {| int... |}{%6=%9} computed{%2=%5, %11=%14}
+    m = %15;
+    %17 = println(m) -> bb6;
+  }
+  bb6 {
+    %18 = ConstantLoad false
+    %19 = %18;
+    %20 = build(%19) -> bb7;
+  }
+  bb7 {
+    %21 = println(%20) -> bb8;
+  }
+  bb8 {
+    %22 = ConstantLoad true
+    %23 = %22;
+    %24 = build(%23) -> bb9;
+  }
+  bb9 {
+    %25 = println(%24) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}

@@ -75,10 +75,12 @@ type (
 	NewMap struct {
 		// JBallerina call this NewStruct but prints as NewMap
 		BIRInstructionBase
-		Type       semtypes.SemType
-		Values     []MappingConstructorEntry
-		Defaults   []MappingConstructorDefaultEntry
-		IsReadonly bool
+		Type   semtypes.SemType
+		Values []MappingConstructorEntry
+		// ComputedValues are applied in order after the mapping has been constructed from Values and Defaults.
+		ComputedValues []MappingConstructorEntry
+		Defaults       []MappingConstructorDefaultEntry
+		IsReadonly     bool
 	}
 
 	MappingConstructorDefaultEntry struct {
@@ -218,9 +220,8 @@ const (
 
 type (
 	MappingConstructorKeyValueEntry struct {
-		keyOp      *BIROperand
-		valueOp    *BIROperand
-		isComputed bool
+		keyOp   *BIROperand
+		valueOp *BIROperand
 	}
 )
 
@@ -435,7 +436,7 @@ func (n *NewMap) GetKind() InstructionKind {
 	return InstructionKindNewStructure
 }
 
-func NewMapConstructor(typ semtypes.SemType, lhsOp *BIROperand, values []MappingConstructorEntry, defaults []MappingConstructorDefaultEntry, isReadonly bool, pos Location) *NewMap {
+func NewMapConstructor(typ semtypes.SemType, lhsOp *BIROperand, values, computedValues []MappingConstructorEntry, defaults []MappingConstructorDefaultEntry, isReadonly bool, pos Location) *NewMap {
 	return &NewMap{
 		BIRInstructionBase: BIRInstructionBase{
 			BIRNodeBase: BIRNodeBase{
@@ -443,10 +444,11 @@ func NewMapConstructor(typ semtypes.SemType, lhsOp *BIROperand, values []Mapping
 			},
 			LhsOp: lhsOp,
 		},
-		Type:       typ,
-		Values:     values,
-		Defaults:   defaults,
-		IsReadonly: isReadonly,
+		Type:           typ,
+		Values:         values,
+		ComputedValues: computedValues,
+		Defaults:       defaults,
+		IsReadonly:     isReadonly,
 	}
 }
 
@@ -584,24 +586,9 @@ func NewFPLoad(functionLookupKey string, typ semtypes.SemType, lhsOp *BIROperand
 
 func NewMappingConstructorKeyValueEntry(keyOp, valueOp *BIROperand) *MappingConstructorKeyValueEntry {
 	return &MappingConstructorKeyValueEntry{
-		keyOp:      keyOp,
-		valueOp:    valueOp,
-		isComputed: false,
+		keyOp:   keyOp,
+		valueOp: valueOp,
 	}
-}
-
-// NewComputedMappingConstructorKeyValueEntry creates an entry whose key is only known at
-// runtime, so the runtime must check it against the other keys and the inherent type.
-func NewComputedMappingConstructorKeyValueEntry(keyOp, valueOp *BIROperand) *MappingConstructorKeyValueEntry {
-	return &MappingConstructorKeyValueEntry{
-		keyOp:      keyOp,
-		valueOp:    valueOp,
-		isComputed: true,
-	}
-}
-
-func (m *MappingConstructorKeyValueEntry) IsComputed() bool {
-	return m.isComputed
 }
 
 func (m *MappingConstructorKeyValueEntry) IsKeyValuePair() bool {

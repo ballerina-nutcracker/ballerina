@@ -6,7 +6,7 @@ main() -> nil{
     %3 = ConstantLoad id
     %4 = ConstantLoad 1
     %5 = ConstantLoad 2
-    %6 = newMap {| id: int, never... |}{%3=%4, [k]=%5}
+    %6 = newMap {| id: int, never... |}{%3=%4} computed{k=%5}
     c = %6;
     %8 = println(c) -> bb1;
   }

@@ -1,0 +1,53 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function prefix () (
+    (value-type string))
+    (block-function-body
+      (return
+        (literal p))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))) (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (binary-expr +
+                (literal x)
+                (literal y))
+              (literal v))
+            (computed-key-value
+              (binary-expr +
+                (invocation prefix ())
+                (literal 1))
+              (literal w))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref s))))
+      (var-def
+        (variable q (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (index-based-access
+                (group-expr
+                  (query-expr
+                    (from-clause
+                      (var-def
+                        (variable x (type
+                          (value-type string))))
+                      (list-constructor-expr
+                        (literal q)))
+                    (select-clause
+                      (simple-var-ref x))))
+                (literal 0))
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref q)))))))
