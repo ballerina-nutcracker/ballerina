@@ -1,0 +1,20 @@
+(C
+  ('_
+    (bb0 () ()
+      (literal 5)
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable o (type
+        (user-defined-type O)) (expr
+        (new
+          (user-defined-type C) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation '_ expr:
+          (simple-var-ref o) ()))))
+  )
+)

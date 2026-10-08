@@ -1,0 +1,23 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal _)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.map hasKey (
+          (simple-var-ref value)
+          (literal _))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.map hasKey (
+          (simple-var-ref value)
+          (literal '_))))))
+  )
+)

@@ -1,0 +1,15 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable e (type
+        (error-type
+          (user-defined-type D))) (expr
+        (error-constructor-expr (
+          (literal m)) (
+          (named-arg _
+            (literal 2)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e))))
+  )
+)

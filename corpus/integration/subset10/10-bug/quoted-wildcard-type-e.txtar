@@ -1,0 +1,73 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: '_
+  --> quoted-wildcard-type-e.bal:21:22
+   |
+21 | type QuotedQualified io:'_; // @error
+   |                      ^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: '_
+  --> quoted-wildcard-type-e.bal:22:24
+   |
+22 | type QuotedPredeclared int:'_; // @error
+   |                        ^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: '_
+  --> quoted-wildcard-type-e.bal:29:6
+   |
+29 |     *io:'_; // @error
+   |      ^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: '_
+  --> quoted-wildcard-type-e.bal:34:5
+   |
+34 |     io:'_ quotedQualifiedValue = 1; // @error
+   |     ^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: '_
+  --> quoted-wildcard-type-e.bal:35:5
+   |
+35 |     transaction:'_ quotedTransactionValue = 1; // @error
+   |     ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: '_
+  --> quoted-wildcard-type-e.bal:19:18
+   |
+19 | type QuotedAlias '_; // @error
+   |                  ^^
+
+error[SEMANTIC_ERROR]: Unknown type: '_
+  --> quoted-wildcard-type-e.bal:20:18
+   |
+20 | type QuotedArray '_[]; // @error
+   |                  ^^
+
+error[SEMANTIC_ERROR]: Unknown type: '_
+  --> quoted-wildcard-type-e.bal:25:6
+   |
+25 |     *'_; // @error
+   |      ^^
+
+error[SEMANTIC_ERROR]: Unknown type: '_
+  --> quoted-wildcard-type-e.bal:33:5
+   |
+33 |     '_ quotedValue = 1; // @error
+   |     ^^
+
+error[SEMANTIC_ERROR]: unused variable 'quotedQualifiedValue'
+  --> quoted-wildcard-type-e.bal:34:5
+   |
+34 |     io:'_ quotedQualifiedValue = 1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'quotedTransactionValue'
+  --> quoted-wildcard-type-e.bal:35:5
+   |
+35 |     transaction:'_ quotedTransactionValue = 1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'quotedValue'
+  --> quoted-wildcard-type-e.bal:33:5
+   |
+33 |     '_ quotedValue = 1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^

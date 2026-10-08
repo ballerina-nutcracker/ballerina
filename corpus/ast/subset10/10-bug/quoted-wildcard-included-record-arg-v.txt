@@ -1,0 +1,80 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field _
+        (value-type int))
+      (field x
+        (value-type int))))
+  (type-definition Rest
+    (record-type
+      (field x
+        (value-type int))
+      (rest
+        (value-type int))))
+  (function f (
+    (variable r (type
+      (user-defined-type R)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))))
+  (function h (
+    (variable r (type
+      (user-defined-type Rest)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))))
+  (function g (
+    (variable '_ (type
+      (value-type int)))
+    (variable y (type
+      (value-type int)) (expr
+      (literal 2)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref '_)
+            (simple-var-ref y)))))))
+  (class-definition C
+    (function init (
+      (variable r (type
+        (user-defined-type R)))) (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref r)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation f (
+          (named-arg '_
+            (literal 1))
+          (named-arg x
+            (literal 2)))))
+      (assignment
+        (wildcard-binding-pattern)
+        (new
+          (user-defined-type C) (
+          (named-arg '_
+            (literal 7))
+          (named-arg x
+            (literal 8)))))
+      (expression-stmt
+        (invocation h (
+          (named-arg x
+            (literal 3))
+          (named-arg '_
+            (literal 4)))))
+      (expression-stmt
+        (invocation g (
+          (named-arg '_
+            (literal 1))))))))

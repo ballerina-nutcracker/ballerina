@@ -595,6 +595,12 @@ func (sig *UntypedFunctionSignature) SetIncludedRecordMetadata(index int, metada
 	sig.IncludedRecordMetadata[index] = &metadata
 }
 
+// IncludedRecordFieldName converts a parameter or named argument name to a record field name.
+// The quoted identifier `'_` keeps its quote in signatures and named arguments but denotes the field `_`.
+func IncludedRecordFieldName(name string) string {
+	return strings.TrimPrefix(name, "'")
+}
+
 func (sig UntypedFunctionSignature) Index(name string) (int, ParamIndexResult) {
 	fixedParamCount := sig.FixedParamCount()
 	for i, paramName := range sig.ParamNames[:fixedParamCount] {
@@ -602,6 +608,7 @@ func (sig UntypedFunctionSignature) Index(name string) (int, ParamIndexResult) {
 			return i, ParamIndexFound
 		}
 	}
+	fieldName := IncludedRecordFieldName(name)
 	var explicitMatches []int
 	var restMatches []int
 Outer:
@@ -609,8 +616,8 @@ Outer:
 		if inclRecord == nil {
 			continue
 		}
-		for _, fieldName := range inclRecord.RequiredFields {
-			if fieldName == name {
+		for _, requiredField := range inclRecord.RequiredFields {
+			if requiredField == fieldName {
 				explicitMatches = append(explicitMatches, i)
 				continue Outer
 			}
@@ -618,8 +625,8 @@ Outer:
 		if !inclRecord.IsOpen {
 			continue
 		}
-		for _, fieldName := range inclRecord.NeverFields {
-			if fieldName == name {
+		for _, neverField := range inclRecord.NeverFields {
+			if neverField == fieldName {
 				continue Outer
 			}
 		}

@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-enum '_ { R } // @error
+enum _ { R } // @error
 -- ast --
 (package
   (const R enum-member (
@@ -27,7 +27,7 @@ enum '_ { R } // @error
 error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
   --> enum-invalid-name-e.bal:17:6
    |
-17 | enum '_ { R } // @error
-   |      ^^^
+17 | enum _ { R } // @error
+   |      ^^
 -- diagnostic-counts --
 1 '_' is a keyword, and may not be used as an identifier
