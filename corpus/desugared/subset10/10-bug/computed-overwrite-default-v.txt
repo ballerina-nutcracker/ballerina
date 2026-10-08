@@ -24,7 +24,7 @@
         (variable value (type
           (user-defined-type Defaulted)) (expr
           (mapping-constructor-expr
-            (key-value
+            (computed-key-value
               (simple-var-ref key)
               (literal 20))))))
       (expression-stmt

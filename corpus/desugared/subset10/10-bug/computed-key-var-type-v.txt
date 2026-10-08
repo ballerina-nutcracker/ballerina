@@ -20,10 +20,10 @@
             (builtin-ref-type map)
             (value-type int))) (expr
           (mapping-constructor-expr
-            (key-value
+            (computed-key-value
               (simple-var-ref moduleKey)
               (literal 1))
-            (key-value
+            (computed-key-value
               (simple-var-ref localKey)
               (literal 2))))))
       (expression-stmt

@@ -4782,7 +4782,7 @@ func resolveMappingConstructorFields(t typeResolver, chain *binding, e *ast.BLan
 				return nil, chain, false
 			}
 			chain = keyChain
-			required = semtypes.MappingMemberTypeInnerVal(t.typeContext(), candidate.alt.Type(), semtypes.Intersect(keyTy, semtypes.String))
+			required = common.ComputedMappingFieldType(t.typeContext(), candidate.alt.Type(), keyTy)
 		} else {
 			name, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
 			if !ok {
@@ -5309,7 +5309,7 @@ func checkMappingConstructorRest(t typeResolver, sources mappingConstructorSourc
 // resolveComputedMappingKey resolves a computed key as an ordinary expression,
 // so a variable it refers to keeps its own type.
 func resolveComputedMappingKey(t typeResolver, chain *binding, kv *ast.BLangMappingKeyValueField) (semtypes.SemType, *binding, bool) {
-	keyResult, ok := resolveActionOrExpression(t, chain, kv.Key.Expr, semtypes.SemType{})
+	keyResult, ok := resolveActionOrExpression(t, chain, kv.Key.Expr, semtypes.String)
 	if !ok {
 		return semtypes.SemType{}, nil, false
 	}

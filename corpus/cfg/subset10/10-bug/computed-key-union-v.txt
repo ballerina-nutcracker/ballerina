@@ -1,0 +1,33 @@
+(isR1
+  (bb0 () ()
+    (return
+      (type-test-expr is
+        (simple-var-ref v)
+        (user-defined-type R1)))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable k (type
+        (value-type string)) (expr
+        (literal c))))
+    (var-def
+      (variable r (type
+        (union-type
+          (user-defined-type R1)
+          (user-defined-type R2))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))
+          (computed-key-value
+            (simple-var-ref k)
+            (literal x))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isR1 (
+          (simple-var-ref r)))
+        (simple-var-ref r))))
+  )
+)

@@ -1,0 +1,29 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (computed-key-value
+            (simple-var-ref moduleKey)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+    (var-def
+      (variable r (type
+        (user-defined-type Open)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal id)
+            (literal 1))
+          (computed-key-value
+            (simple-var-ref moduleKey)
+            (literal rest))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
