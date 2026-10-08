@@ -1,0 +1,88 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (value-type string)) (expr
+          (literal it's))))
+      (var-def
+        (variable e (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<e a='")
+            (invocation lang.__internal escapeXMLAttribute (
+              (simple-var-ref v)))
+            (template-string "'/>")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e))))
+      (var-def
+        (variable q (type
+          (value-type string)) (expr
+          (literal say "hi" & 'bye' <now>))))
+      (var-def
+        (variable f (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<e a='")
+            (invocation lang.__internal escapeXMLAttribute (
+              (simple-var-ref q)))
+            (template-string "' b=\"")
+            (invocation lang.__internal escapeXMLAttribute (
+              (simple-var-ref q)))
+            (template-string "\"/>")))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref f))))
+      (var-def
+        (variable ws (type
+          (value-type string)) (expr
+          (literal a	b
+cd
+e))))
+      (var-def
+        (variable g (type
+          (value-type xml)) (expr
+          (xml-template-literal
+            (template-string "<e a='")
+            (invocation lang.__internal escapeXMLAttribute (
+              (simple-var-ref ws)))
+            (template-string "' b=\"")
+            (invocation lang.__internal escapeXMLAttribute (
+              (simple-var-ref ws)))
+            (template-string "\">")
+            (invocation lang.__internal escapeXMLContent (
+              (simple-var-ref ws)))
+            (template-string "</e>")))))
+      (if
+        (type-test-expr is
+          (simple-var-ref g)
+          (user-defined-type xml Element))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (binary-expr ==
+                (index-based-access
+                  (invocation lang.xml getAttributes (
+                    (simple-var-ref g)))
+                  (literal a))
+                (simple-var-ref ws)))))
+          (expression-stmt
+            (invocation io println (
+              (binary-expr ==
+                (index-based-access
+                  (invocation lang.xml getAttributes (
+                    (simple-var-ref g)))
+                  (literal b))
+                (simple-var-ref ws)))))
+          (expression-stmt
+            (invocation io println (
+              (binary-expr ==
+                (invocation lang.xml data (
+                  (simple-var-ref g)))
+                (simple-var-ref ws)))))) ())
+      (block-stmt))))
