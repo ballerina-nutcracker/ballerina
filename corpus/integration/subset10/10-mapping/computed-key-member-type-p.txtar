@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: inherent type violation
+        at main(computed-key-member-type-p.bal:27)

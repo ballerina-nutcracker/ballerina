@@ -4669,58 +4669,69 @@ func resolveMappingConstructorExpr(t typeResolver, chain *binding, e *ast.BLangM
 }
 
 func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr) (semtypes.SemType, expressionEffect, bool) {
-	fields := make([]semtypes.Field, len(e.Fields))
-	for i, f := range e.Fields {
+	var fields []semtypes.Field
+	restTy := semtypes.Never
+	for _, f := range e.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
+		computed := kv.Key.Kind == ast.MappingKeyComputed
+		if computed {
+			var ok bool
+			chain, ok = resolveComputedMappingKey(t, chain, kv)
+			if !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+		}
 		valueResult, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, semtypes.SemType{})
 		if !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		valueTy := valueResult.ty
 		chain = sequentialChain(t, valueResult.effect)
-		var broadTy semtypes.SemType
-		if semtypes.SingleShape(valueTy).IsEmpty() {
-			broadTy = valueTy
-		} else {
-			broadTy = semtypes.WidenToBasicTypes(valueTy)
+		broadTy := broadMappingFieldType(valueResult.ty)
+		if computed {
+			restTy = semtypes.Union(restTy, broadTy)
+			continue
 		}
-		var keyName string
-		switch keyExpr := kv.Key.Expr.(type) {
-		case *ast.BLangLiteral:
-			keyName = keyExpr.Value.(string)
-			resolveLiteral(t, keyExpr, semtypes.SemType{})
-		case ast.BNodeWithSymbol:
-			t.setSymbolType(keyExpr.Symbol(), valueTy)
-			keyName = t.symbolName(keyExpr.Symbol())
-			if e, ok := keyExpr.(ast.BLangExpression); ok {
-				e.SetDeterminedType(valueTy)
-			}
-			if ref, ok := keyExpr.(*ast.BLangVarRef); ok {
-				setVarRefIdentifierTypes(ref)
-			}
+		resolveMappingKey(t, kv)
+		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
+		if !ok {
+			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		kv.Key.SetDeterminedType(semtypes.Never)
-		kv.SetDeterminedType(semtypes.Never)
-		fields[i] = semtypes.FieldFrom(keyName, broadTy, false, false)
+		fields = append(fields, semtypes.FieldFrom(keyName, broadTy, false, false))
 	}
 	md := semtypes.NewMappingDefinition()
-	mapTy := md.Define(t.typeEnv(), fields, semtypes.Never)
+	mapTy := md.Define(t.typeEnv(), fields, restTy)
 	e.SetDeterminedType(mapTy)
 	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
 	e.AtomicType = *mat
 	return mapTy, defaultExpressionEffect(chain), true
 }
 
+func broadMappingFieldType(valueTy semtypes.SemType) semtypes.SemType {
+	if semtypes.SingleShape(valueTy).IsEmpty() {
+		return valueTy
+	}
+	return semtypes.WidenToBasicTypes(valueTy)
+}
+
 func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	memberChain := chain
 	for _, f := range e.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
+		if kv.Key.Kind == ast.MappingKeyComputed {
+			var ok bool
+			memberChain, ok = resolveComputedMappingKey(t, memberChain, kv)
+			if !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+		}
 		valueResult, ok := resolveActionOrExpression(t, memberChain, kv.ValueExpr, semtypes.SemType{})
 		if !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 		memberChain = sequentialChain(t, valueResult.effect)
-		resolveMappingKey(t, kv)
+		if kv.Key.Kind != ast.MappingKeyComputed {
+			resolveMappingKey(t, kv)
+		}
 	}
 
 	if !contextualizeMappingConstructor(t, e, expectedType) {
@@ -4739,11 +4750,11 @@ func contextualizeMappingConstructor(t typeResolver, e *ast.BLangMappingConstruc
 	}
 	for _, f := range e.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
-		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
+		memberTy, ok := common.MappingFieldExpectedType(t.compilerContext(), t.typeContext(), resultType, mat, kv)
 		if !ok {
 			return false
 		}
-		if !contextualizeConstructorMember(t, kv.ValueExpr, mat.FieldInnerVal(keyName)) {
+		if !contextualizeConstructorMember(t, kv.ValueExpr, memberTy) {
 			return false
 		}
 	}
@@ -4757,6 +4768,18 @@ func contextualizeMappingConstructor(t typeResolver, e *ast.BLangMappingConstruc
 	}
 	e.SetDeterminedType(resultType)
 	return true
+}
+
+// resolveComputedMappingKey resolves a computed key as an ordinary expression,
+// so a variable it refers to keeps its own type.
+func resolveComputedMappingKey(t typeResolver, chain *binding, kv *ast.BLangMappingKeyValueField) (*binding, bool) {
+	keyResult, ok := resolveActionOrExpression(t, chain, kv.Key.Expr, semtypes.SemType{})
+	if !ok {
+		return nil, false
+	}
+	kv.Key.SetDeterminedType(semtypes.Never)
+	kv.SetDeterminedType(semtypes.Never)
+	return sequentialChain(t, keyResult.effect), true
 }
 
 func resolveMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField) {
@@ -4800,14 +4823,17 @@ func selectMappingInherentType(t typeResolver, expr *ast.BLangMappingConstructor
 	alts := semtypes.MappingAlternatives(tc, expectedType)
 	var validAlts []semtypes.MappingAlternative
 
-	fields := make([]semtypes.MappingFieldInfo, len(expr.Fields))
-	for i, f := range expr.Fields {
+	var fields []semtypes.MappingFieldInfo
+	for _, f := range expr.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
+		if kv.Key.Kind == ast.MappingKeyComputed {
+			continue
+		}
 		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
 		if !ok {
 			return semtypes.SemType{}, nil, false
 		}
-		fields[i] = semtypes.MappingFieldInfo{Name: keyName, Type: kv.ValueExpr.GetDeterminedType()}
+		fields = append(fields, semtypes.MappingFieldInfo{Name: keyName, Type: kv.ValueExpr.GetDeterminedType()})
 	}
 	sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
 

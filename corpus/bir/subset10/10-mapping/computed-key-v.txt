@@ -1,0 +1,80 @@
+module $anon.. v 0.0.0;
+calls  int;
+moduleKey  string;
+nextKey() -> string{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %1 = + calls %3;
+    calls = %1;
+    %5 = ConstantLoad k
+    %6 = toString(calls) -> bb1;
+  }
+  bb1 {
+    %4 = + %5 %6;
+    %0 = %4;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad b
+    localKey = %1;
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad 2
+    %6 = ConstantLoad c
+    %7 = ConstantLoad d
+    %5 = + %6 %7;
+    %8 = ConstantLoad 3
+    %9 = ConstantLoad e
+    %10 = ConstantLoad 4
+    %11 = newMap {| int... |}{[moduleKey]=%3, [localKey]=%4, [%5]=%8, %9=%10}
+    m = %11;
+    %13 = println(m) -> bb1;
+  }
+  bb1 {
+    %14 = ConstantLoad 5
+    %15 = ConstantLoad name
+    %16 = ConstantLoad x
+    %17 = newMap {| name: string, int... |}{[localKey]=%14, %15=%16}
+    inferred = %17;
+    %19 = println(inferred) -> bb2;
+  }
+  bb2 {
+    %20 = inferred[localKey];
+    b = %20;
+    %22 = println(b) -> bb3;
+  }
+  bb3 {
+    %23 = ConstantLoad id
+    %24 = ConstantLoad 1
+    %25 = ConstantLoad rest
+    %26 = newMap {| id: int, anydata... |}{%23=%24, [localKey]=%25}
+    r = %26;
+    %28 = println(r) -> bb4;
+  }
+  bb4 {
+    %29 = ConstantLoad id
+    %30 = ConstantLoad 2
+    %31 = ConstantLoad s
+    %32 = newMap {| id: int, string... |}{%29=%30, [moduleKey]=%31}
+    s = %32;
+    %34 = println(s) -> bb5;
+  }
+  bb5 {
+    %35 = nextKey() -> bb6;
+  }
+  bb6 {
+    %36 = ConstantLoad 1
+    %37 = nextKey() -> bb7;
+  }
+  bb7 {
+    %38 = ConstantLoad 2
+    %39 = newMap {| int... |}{[%35]=%36, [%37]=%38}
+    ordered = %39;
+    %41 = println(ordered) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

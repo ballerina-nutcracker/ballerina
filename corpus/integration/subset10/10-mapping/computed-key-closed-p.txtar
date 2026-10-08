@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: inherent type violation
+        at main(computed-key-closed-p.bal:25)

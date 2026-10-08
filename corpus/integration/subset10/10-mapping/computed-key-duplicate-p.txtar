@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: duplicate key 'id' in mapping constructor
+        at main(computed-key-duplicate-p.bal:21)
