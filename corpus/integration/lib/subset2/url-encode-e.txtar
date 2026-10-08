@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> url-encode-e.bal:20:15
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'string', got '42'
+  --> url-encode-e.bal:20:26
    |
 20 |     _ = check url:encode(42, "UTF-8"); // @error argument type mismatch
-   |               ^^^^^^^^^^^^^^^^^^^^^^^
+   |                          ^^

@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> push1-e.bal:19:5
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'int', got 'true'
+  --> push1-e.bal:19:12
    |
 19 |     v.push(true); // @error
-   |     ^^^^^^^^^^^^
+   |            ^^^^

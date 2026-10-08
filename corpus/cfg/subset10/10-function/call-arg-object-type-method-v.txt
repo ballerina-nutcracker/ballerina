@@ -1,0 +1,25 @@
+(Square
+  (scale
+    (bb0 () ()
+      (return
+        (binary-expr *
+          (field-based-access side
+            (simple-var-ref self))
+          (simple-var-ref factor)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (user-defined-type Shape)) (expr
+        (new
+          (user-defined-type Square) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation scale expr:
+          (simple-var-ref s) (
+          (literal 3))))))
+  )
+)

@@ -6897,10 +6897,7 @@ func finishResolveMethodCall(t typeResolver, chain *binding, receiverTy semtypes
 	if !ok {
 		return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
 	}
-	argLd := semtypes.NewListDefinition()
-	argListTy := argLd.Define(t.typeEnv(), argTys,
-		semtypes.ListMutability(semtypes.CellMutabilityNone))
-	retTy := semtypes.FunctionReturnType(t.typeContext(), fnTy, argListTy)
+	retTy := functionTypeReturnType(t, fnTy, argTys)
 	if semtypes.IsZero(retTy) {
 		t.semanticError("incompatible arguments for function call", node.GetPosition())
 		return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
@@ -7680,21 +7677,81 @@ func resolveFunctionCall(t typeResolver, chain *binding, inv invocable, symbolRe
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
+	var retTy semtypes.SemType
+	if sig := isSimpleFunctionCall(t, symbolRef); sig != nil {
+		retTy, ok = resolveSimpleFunctionCall(t, sig, argTys, inv)
+	} else {
+		retTy, ok = functionTypeCallReturnType(t, symbolRef, argTys, inv)
+	}
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	inv.SetDeterminedType(retTy)
+	return retTy, defaultExpressionEffect(chain), true
+}
 
-	argLd := semtypes.NewListDefinition()
-	argListTy := argLd.Define(t.typeEnv(), argTys,
-		semtypes.ListMutability(semtypes.CellMutabilityNone))
+// isSimpleFunctionCall returns the signature of a declared or monomorphized function, whose type is
+// built from that signature, so the call can be checked against the signature directly. It returns
+// nil when the call must be checked against the callee's function type instead.
+func isSimpleFunctionCall(t typeResolver, ref model.SymbolRef) *model.TypedFunctionSignature {
+	switch sym := t.getSymbol(ref).(type) {
+	case model.DependentlyTypedFunctionSymbol:
+		return nil
+	case model.FunctionSymbol:
+		sig := sym.TypedSignature()
+		return &sig
+	default:
+		return nil
+	}
+}
 
-	retTy := semtypes.FunctionReturnType(t.typeContext(), t.symbolType(symbolRef), argListTy)
+func resolveSimpleFunctionCall(t typeResolver, sig *model.TypedFunctionSignature, argTys []semtypes.SemType, inv invocable) (semtypes.SemType, bool) {
+	cx := t.typeContext()
+	nParams := len(sig.ParamTypes)
+	if len(argTys) < nParams {
+		t.internalError("argument count does not match signature after lowering", inv.GetPosition())
+		return semtypes.SemType{}, false
+	}
+	// RestParamType is zero for functions declared in object type descriptors without a rest param
+	restTy := sig.RestParamType
+	if semtypes.IsZero(restTy) {
+		restTy = semtypes.Never
+	}
+	args := inv.CallArgs()
+	valid := true
+	for i, argTy := range argTys {
+		paramTy := restTy
+		if i < nParams {
+			paramTy = sig.ParamTypes[i]
+		}
+		if !semtypes.IsSubtype(cx, argTy, paramTy) {
+			t.semanticError(fmt.Sprintf("incompatible type for argument: expected '%s', got '%s'",
+				semtypes.ToString(cx, paramTy), semtypes.ToString(cx, argTy)), args[i].GetPosition())
+			valid = false
+		}
+	}
+	if !valid {
+		return semtypes.SemType{}, false
+	}
+	return sig.ReturnType, true
+}
+
+func functionTypeCallReturnType(t typeResolver, symbolRef model.SymbolRef, argTys []semtypes.SemType, inv invocable) (semtypes.SemType, bool) {
+	retTy := functionTypeReturnType(t, t.symbolType(symbolRef), argTys)
 	if semtypes.IsZero(retTy) {
 		// This can only happen when function call is not well-typed and since we
 		// ensure funcTy is a function subtype, this can only be caused by invalid args
 		t.semanticError("incompatible arguments for function call", inv.GetPosition())
-		return semtypes.SemType{}, expressionEffect{}, false
+		return semtypes.SemType{}, false
 	}
+	return retTy, true
+}
 
-	inv.SetDeterminedType(retTy)
-	return retTy, defaultExpressionEffect(chain), true
+func functionTypeReturnType(t typeResolver, fnTy semtypes.SemType, argTys []semtypes.SemType) semtypes.SemType {
+	argLd := semtypes.NewListDefinition()
+	argListTy := argLd.Define(t.typeEnv(), argTys,
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
+	return semtypes.FunctionReturnType(t.typeContext(), fnTy, argListTy)
 }
 
 // methodMemberType returns a function type describing a class method for inclusion in its

@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> http-parse-header-e.bal:20:15
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'string', got '42'
+  --> http-parse-header-e.bal:20:32
    |
 20 |     _ = check http:parseHeader(42); // @error argument type mismatch
-   |               ^^^^^^^^^^^^^^^^^^^^
+   |                                ^^

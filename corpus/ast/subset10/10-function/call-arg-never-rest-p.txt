@@ -1,0 +1,29 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation count ()))))
+      (var-def
+        (variable n (type
+          (value-type int)) (expr
+          (invocation count (
+            (invocation neverReturn ()))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref n))))))
+  (function neverReturn () (
+    (value-type never))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal never returns))))))
+  (function count () (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation length expr:
+          (simple-var-ref values) ())))))

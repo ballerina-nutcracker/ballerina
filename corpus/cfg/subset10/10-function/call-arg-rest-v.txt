@@ -1,0 +1,82 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation sum ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sum (
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sum (
+          (literal 1)
+          (literal 2)
+          (literal 3)
+          (literal 4))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation scaled (
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation scaled (
+          (literal 2)
+          (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation scaled (
+          (literal 2)
+          (literal 5)
+          (literal 6)
+          (literal 7))))))
+  )
+)
+(scaled
+  (bb0 () (bb1)
+    (var-def
+      (variable total (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref values)
+    (var-def
+      (variable v (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref total)
+      (binary-expr *
+        (simple-var-ref factor)
+        (simple-var-ref v)))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref total))
+  )
+)
+(sum
+  (bb0 () (bb1)
+    (var-def
+      (variable total (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref values)
+    (var-def
+      (variable v (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref total)
+      (simple-var-ref v))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref total))
+  )
+)

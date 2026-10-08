@@ -1,0 +1,29 @@
+(count
+  (bb0 () ()
+    (return
+      (invocation lang.array length (
+        (simple-var-ref values))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation count ()))))
+    (var-def
+      (variable n (type
+        (value-type int)) (expr
+        (invocation count (
+          (invocation neverReturn ()))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+  )
+)
+(neverReturn
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal never returns))))
+  )
+)

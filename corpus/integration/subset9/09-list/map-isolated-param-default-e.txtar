@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> map-isolated-param-default-e.bal:20:49
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'isolated function(int) returns int', got 'function(int) returns int'
+  --> map-isolated-param-default-e.bal:20:57
    |
 20 | isolated function invalidDefault(int[] values = [1].map(nonIsolated)) returns int { // @error
-   |                                                 ^^^^^^^^^^^^^^^^^^^^
+   |                                                         ^^^^^^^^^^^

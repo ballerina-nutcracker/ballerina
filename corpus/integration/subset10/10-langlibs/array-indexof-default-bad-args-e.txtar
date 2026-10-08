@@ -1,16 +1,16 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> array-indexof-default-bad-args-e.bal:27:9
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'int', got '"x"'
+  --> array-indexof-default-bad-args-e.bal:27:24
    |
 27 |     _ = arr.indexOf(2, "x"); // @error startIndex is an int
-   |         ^^^^^^^^^^^^^^^^^^^
+   |                        ^^^
 
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> array-indexof-default-bad-args-e.bal:28:9
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'int', got '"x"'
+  --> array-indexof-default-bad-args-e.bal:28:37
    |
 28 |     _ = arr.indexOf(2, startIndex = "x"); // @error startIndex is an int
-   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |                                     ^^^
 
 error[SEMANTIC_ERROR]: missing required parameter 'val'
   --> array-indexof-default-bad-args-e.bal:23:9

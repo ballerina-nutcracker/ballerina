@@ -1,7 +1,13 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> 2-e.bal:19:16
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'string', got '1'
+  --> 2-e.bal:19:20
    |
 19 |     string _ = bar(1, 1); // @error
-   |                ^^^^^^^^^
+   |                    ^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'string', got '1'
+  --> 2-e.bal:19:23
+   |
+19 |     string _ = bar(1, 1); // @error
+   |                       ^

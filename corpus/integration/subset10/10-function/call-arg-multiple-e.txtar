@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'int', got '"three"'
+  --> call-arg-multiple-e.bal:20:12
+   |
+20 |         2, "three", // @error
+   |            ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'int', got 'true'
+  --> call-arg-multiple-e.bal:18:9
+   |
+18 |     foo(true, // @error
+   |         ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'string', got '1'
+  --> call-arg-multiple-e.bal:19:9
+   |
+19 |         1, // @error
+   |         ^

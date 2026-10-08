@@ -36,8 +36,8 @@ error[SEMANTIC_ERROR]: XML callback has incompatible return type
 41 |     });
    |     ^
 
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> lang-xml-callback-e.bal:25:12
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'isolated function(xml:Element) returns xml:Element', got 'function(xml:Element) returns xml:Element'
+  --> lang-xml-callback-e.bal:25:24
    |
 25 |     return element.map(nonIsolated); // @error
-   |            ^^^^^^^^^^^^^^^^^^^^^^^^
+   |                        ^^^^^^^^^^^

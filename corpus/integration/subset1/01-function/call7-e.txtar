@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> call7-e.bal:21:5
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'boolean', got 'int'
+  --> call7-e.bal:21:9
    |
 21 |     foo(x); // @error
-   |     ^^^^^^
+   |         ^
