@@ -1,0 +1,68 @@
+(C
+  (init
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+    )
+  )
+)
+(f
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(g
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref '_)
+          (simple-var-ref y)))))
+  )
+)
+(h
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation f (
+        (mapping-constructor-expr
+          (key-value
+            (literal _)
+            (literal 1))
+          (key-value
+            (literal x)
+            (literal 2))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (new
+        (user-defined-type C) (
+        (mapping-constructor-expr
+          (key-value
+            (literal _)
+            (literal 7))
+          (key-value
+            (literal x)
+            (literal 8))))))
+    (expression-stmt
+      (invocation h (
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 3))
+          (key-value
+            (literal _)
+            (literal 4))))))
+    (expression-stmt
+      (invocation g (
+        (literal 1) <default>)))
+  )
+)
