@@ -145,7 +145,7 @@ cd
   }
   bb20 {
     %57 = ConstantLoad 1
-    %58 = unknown %57;
+    %58 = - %57;
     %59 = %58;
     %60 = ConstantLoad 0
     %61 = %60;

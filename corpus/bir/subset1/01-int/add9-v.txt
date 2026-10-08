@@ -49,7 +49,7 @@ main() -> nil{
     %40 = ConstantLoad 5
     %41 = %40;
     %42 = ConstantLoad 5
-    %43 = unknown %42;
+    %43 = - %42;
     %44 = %43;
     %45 = ConstantLoad 9
     %46 = %45;
@@ -80,12 +80,12 @@ main() -> nil{
     %65 = ConstantLoad 3
     %66 = %65;
     %67 = ConstantLoad 5
-    %68 = unknown %67;
+    %68 = - %67;
     %69 = %68;
     %70 = ConstantLoad 9
     %71 = %70;
     %72 = ConstantLoad 4
-    %73 = unknown %72;
+    %73 = - %72;
     %74 = %73;
     %75 = add(%66,%69,%71,%74) -> bb7;
   }

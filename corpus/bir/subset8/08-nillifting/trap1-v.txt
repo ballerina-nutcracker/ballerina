@@ -42,7 +42,7 @@ main() -> nil{
     GOTO bb10;
   }
   bb9 {
-    %15 = unknown left;
+    %15 = - left;
     GOTO bb10;
   }
   bb10 {

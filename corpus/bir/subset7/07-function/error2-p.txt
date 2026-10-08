@@ -6,7 +6,7 @@ main() -> nil{
     %3 = ConstantLoad 1
     %4 = %3;
     %5 = ConstantLoad 1
-    %6 = unknown %5;
+    %6 = - %5;
     %7 = %6;
     %8 = f(%4,%7) -> bb1;
   }

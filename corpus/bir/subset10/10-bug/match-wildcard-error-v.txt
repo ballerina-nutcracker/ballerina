@@ -144,7 +144,7 @@ narrowed(int|error) -> int{
   }
   bb1 {
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %0 = %4;
     return;
   }

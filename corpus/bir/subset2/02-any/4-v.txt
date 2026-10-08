@@ -22,7 +22,7 @@ main() -> nil{
   }
   bb4 {
     %14 = ConstantLoad 9223372036854775807
-    %15 = unknown %14;
+    %15 = - %14;
     %16 = %15;
     %17 = ConstantLoad 1
     %18 = %17;

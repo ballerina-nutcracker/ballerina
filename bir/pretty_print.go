@@ -600,8 +600,26 @@ func (p *PrettyPrinter) PrintInstructionKind(kind InstructionKind) string {
 		return "=="
 	case InstructionKindNotEqual:
 		return "!="
+	case InstructionKindRefEqual:
+		return "==="
+	case InstructionKindRefNotEqual:
+		return "!=="
 	case InstructionKindNot:
 		return "!"
+	case InstructionKindNegate:
+		return "-"
+	case InstructionKindBitwiseAnd:
+		return "&"
+	case InstructionKindBitwiseOr:
+		return "|"
+	case InstructionKindBitwiseXor:
+		return "^"
+	case InstructionKindBitwiseLeftShift:
+		return "<<"
+	case InstructionKindBitwiseRightShift:
+		return ">>"
+	case InstructionKindBitwiseUnsignedRightShift:
+		return ">>>"
 	case InstructionKindBitwiseComplement:
 		return "~"
 	case InstructionKindAnnotAccess:

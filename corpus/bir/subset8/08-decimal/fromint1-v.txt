@@ -14,7 +14,7 @@ main() -> nil{
   }
   bb2 {
     %9 = ConstantLoad 1
-    %10 = unknown %9;
+    %10 = - %9;
     %11 = <decimal>(%10)
     %12 = %11;
     %13 = println(%12) -> bb3;
@@ -39,21 +39,21 @@ main() -> nil{
   }
   bb6 {
     %26 = ConstantLoad 2147483648
-    %27 = unknown %26;
+    %27 = - %26;
     %28 = <decimal>(%27)
     %29 = %28;
     %30 = println(%29) -> bb7;
   }
   bb7 {
     %31 = ConstantLoad 2147483647
-    %32 = unknown %31;
+    %32 = - %31;
     %33 = <decimal>(%32)
     %34 = %33;
     %35 = println(%34) -> bb8;
   }
   bb8 {
     %36 = ConstantLoad 2147483649
-    %37 = unknown %36;
+    %37 = - %36;
     %38 = <decimal>(%37)
     %39 = %38;
     %40 = println(%39) -> bb9;

@@ -3,7 +3,7 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad 5
     b = %1;
-    %3 = unknown b;
+    %3 = - b;
     r = %3;
     %5 = ConstantLoad 1000
     r = %5;
@@ -14,21 +14,21 @@ main() -> nil{
     %8 = ~ b;
     c = %8;
     %10 = ConstantLoad 9000
-    %11 = unknown %10;
+    %11 = - %10;
     c = %11;
     %12 = c;
     %13 = println(%12) -> bb2;
   }
   bb2 {
     %14 = ConstantLoad 128
-    %15 = unknown %14;
+    %15 = - %14;
     s = %15;
     p = s;
     %18 = p;
     %19 = println(%18) -> bb3;
   }
   bb3 {
-    %20 = unknown s;
+    %20 = - s;
     n = %20;
     %22 = n;
     %23 = println(%22) -> bb4;
@@ -44,7 +44,7 @@ main() -> nil{
     GOTO bb7;
   }
   bb6 {
-    %27 = unknown nb;
+    %27 = - nb;
     GOTO bb7;
   }
   bb7 {
@@ -72,7 +72,7 @@ main() -> nil{
   bb12 {
     %36 = ConstantLoad 1
     f = %36;
-    %38 = unknown f;
+    %38 = - f;
     g = %38;
     %40 = ConstantLoad 5
     g = %40;
@@ -81,7 +81,7 @@ main() -> nil{
   }
   bb13 {
     %43 = ConstantLoad 1
-    %44 = unknown %43;
+    %44 = - %43;
     %45 = ~ %44;
     z = %45;
     %47 = z;
@@ -89,7 +89,7 @@ main() -> nil{
   }
   bb14 {
     %49 = ConstantLoad 5
-    %50 = unknown %49;
+    %50 = - %49;
     k = %50;
     %52 = k;
     %53 = println(%52) -> bb15;
@@ -97,7 +97,7 @@ main() -> nil{
   bb15 {
     %54 = ConstantLoad 5
     bf = %54;
-    %56 = unknown bf;
+    %56 = - bf;
     w = %56;
     %58 = ConstantLoad 1000
     w = %58;

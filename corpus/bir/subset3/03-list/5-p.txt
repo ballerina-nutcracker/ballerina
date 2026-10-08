@@ -4,12 +4,12 @@ main() -> nil{
     %1 = ConstantLoad 17
     %2 = ConstantLoad 42
     %3 = ConstantLoad 11
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = ConstantLoad 3
     %6 = newArray [any...][%5]{%1, %2, %4}
     v = %6;
     %8 = ConstantLoad 1
-    %9 = unknown %8;
+    %9 = - %8;
     i = %9;
     %11 = v[i];
     %12 = println(%11) -> bb1;
