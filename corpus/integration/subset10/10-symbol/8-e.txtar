@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: undefinedInService
+  --> 8-e.bal:49:16
+   |
+49 |         return undefinedInService; // @error
+   |                ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: service 'init' must not declare required parameters
+  --> 8-e.bal:44:19
+   |
+44 |     function init(int a) { // @error
+   |                   ^^^^^

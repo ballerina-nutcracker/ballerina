@@ -31,36 +31,36 @@ func xmlnsPrefixName(prefix string) string {
 	return prefix
 }
 
-func defineXMLNS[T symbolResolver](resolver T, scope model.Scope, prefix, uri string, pos diagnostics.Location) (model.SymbolRef, bool) {
+func defineXMLNS(resolver symbolResolver, scope model.Scope, prefix, uri string, pos diagnostics.Location) (model.SymbolRef, bool) {
 	if uri == "" {
-		semanticError(resolver, "XML namespace URI cannot be empty", pos)
+		resolver.GetCtx().SemanticError("XML namespace URI cannot be empty", pos)
 		return model.SymbolRef{}, false
 	}
 	return declareXMLNS(resolver, scope, prefix, uri, pos)
 }
 
-func declareXMLNS[T symbolResolver](resolver T, scope model.Scope, prefix, uri string, pos diagnostics.Location) (model.SymbolRef, bool) {
+func declareXMLNS(resolver symbolResolver, scope model.Scope, prefix, uri string, pos diagnostics.Location) (model.SymbolRef, bool) {
 	ensurePrefixMap(resolver, scope)
 	name := xmlnsPrefixName(prefix)
 	if localXMLNSPrefixExists(scope, name) {
 		switch prefix {
 		case model.XMLNSReservedPrefix:
-			semanticError(resolver, "cannot redeclare reserved XML namespace prefix 'xmlns'", pos)
+			resolver.GetCtx().SemanticError("cannot redeclare reserved XML namespace prefix 'xmlns'", pos)
 		case "":
-			semanticError(resolver, "default XML namespace already declared in this scope", pos)
+			resolver.GetCtx().SemanticError("default XML namespace already declared in this scope", pos)
 		default:
-			semanticError(resolver, "XML namespace prefix '"+prefix+"' already declared in this scope", pos)
+			resolver.GetCtx().SemanticError("XML namespace prefix '"+prefix+"' already declared in this scope", pos)
 		}
 		return model.SymbolRef{}, false
 	}
 	if localPrefixExists(scope, name) {
-		semanticError(resolver, "redeclared symbol '"+name+"'", pos)
+		resolver.GetCtx().SemanticError("redeclared symbol '"+name+"'", pos)
 		return model.SymbolRef{}, false
 	}
 	return defineXMLNSSymbol(resolver, scope, name, uri, pos), true
 }
 
-func ensurePrefixMap[T symbolResolver](resolver T, scope model.Scope) {
+func ensurePrefixMap(resolver symbolResolver, scope model.Scope) {
 	switch s := scope.(type) {
 	case *model.ModuleScope:
 		if s.Prefix == nil {
@@ -84,7 +84,7 @@ func ensurePrefixMap[T symbolResolver](resolver T, scope model.Scope) {
 	}
 }
 
-func defineXMLNSSymbol[T symbolResolver](resolver T, scope model.Scope, prefix, uri string, location diagnostics.Location) model.SymbolRef {
+func defineXMLNSSymbol(resolver symbolResolver, scope model.Scope, prefix, uri string, location diagnostics.Location) model.SymbolRef {
 	space := resolver.GetCtx().NewSymbolSpace(resolver.GetPkgID())
 	space.AddSymbol(prefix, model.NewXMLNSSymbol(prefix, uri, location))
 	exported := model.NewExportedSymbolSpaces([]*model.SymbolSpace{space}, nil)
@@ -166,23 +166,25 @@ func processCompilationUnitXMLNS(resolver *compilationUnitSymbolResolver, cu *as
 	}
 }
 
-func processBlockXMLNS(resolver *blockSymbolResolver, decl *ast.BLangXMLNS) {
-	processXMLNSDecl(resolver, resolver.scope, decl)
+func processBlockXMLNS(resolver *blockSymbolResolver, decl *ast.BLangXMLNS) bool {
+	return processXMLNSDecl(resolver, resolver.scope, decl)
 }
 
-func processXMLNSDecl[T symbolResolver](resolver T, scope model.Scope, decl *ast.BLangXMLNS) {
+func processXMLNSDecl(resolver symbolResolver, scope model.Scope, decl *ast.BLangXMLNS) bool {
 	if decl.GetNamespaceURI() == nil {
-		semanticError(resolver, "xmlns declaration missing URI", decl.GetPosition())
-		return
+		resolver.GetCtx().SemanticError("xmlns declaration missing URI", decl.GetPosition())
+		return false
 	}
 	prefix := ""
 	if p := decl.GetPrefix(); p != nil {
 		prefix = p.GetValue()
 	}
 	ref, ok := declareXMLNS(resolver, scope, prefix, "", decl.GetPosition())
-	if ok {
-		decl.SetSymbol(ref)
+	if !ok {
+		return false
 	}
+	decl.SetSymbol(ref)
+	return true
 }
 
 func splitXMLName(name string) (prefix, local string) {
@@ -192,68 +194,78 @@ func splitXMLName(name string) (prefix, local string) {
 	return "", name
 }
 
-func resolveXMLElementLiteralNamespaces[T symbolResolver](resolver T, scope model.Scope, e *ast.BLangXMLElementLiteral, rootNeeds map[string]model.SymbolRef) {
+func resolveXMLElementLiteralNamespaces(resolver symbolResolver, scope model.Scope, e *ast.BLangXMLElementLiteral, rootNeeds map[string]model.SymbolRef) bool {
 	ensurePrefixMap(resolver, scope)
 	childScope := newXMLNSChildScope(scope)
-	e.Attrs = stripInlineXMLNSAttrs(resolver, childScope, e)
+	attrs, ok := stripInlineXMLNSAttrs(resolver, childScope, e)
+	e.Attrs = attrs
 
 	name := e.LocalName
 	if e.Prefix != "" {
 		name = e.Prefix + ":" + e.LocalName
 	}
-	e.NamespaceSymbol = resolveXMLNameRef(resolver, childScope, name, e.GetPosition(), rootNeeds, true)
+	nsRef, nameOk := resolveXMLNameRef(resolver, childScope, name, e.GetPosition(), rootNeeds, true)
+	e.NamespaceSymbol = nsRef
+	ok = nameOk && ok
 	for i := range e.Attrs {
 		attr := &e.Attrs[i]
-		attr.NamespaceSymbol = resolveXMLNameRef(resolver, childScope, attr.Name, attr.GetPosition(), rootNeeds, false)
+		attrRef, attrOk := resolveXMLNameRef(resolver, childScope, attr.Name, attr.GetPosition(), rootNeeds, false)
+		attr.NamespaceSymbol = attrRef
+		ok = attrOk && ok
 	}
 
 	if e.Content != nil {
-		resolveXMLContent(resolver, childScope, e.Content, rootNeeds)
+		ok = resolveXMLContent(resolver, childScope, e.Content, rootNeeds) && ok
 	}
+	return ok
 }
 
-func resolveXMLContent[T symbolResolver](resolver T, scope model.Scope, content ast.BLangExpression, rootNeeds map[string]model.SymbolRef) {
+func resolveXMLContent(resolver symbolResolver, scope model.Scope, content ast.BLangExpression, rootNeeds map[string]model.SymbolRef) bool {
 	switch c := content.(type) {
 	case *ast.BLangXMLElementLiteral:
-		resolveXMLElementLiteralNamespaces(resolver, scope, c, rootNeeds)
+		return resolveXMLElementLiteralNamespaces(resolver, scope, c, rootNeeds)
 	case *ast.BLangXMLSequenceLiteral:
+		ok := true
 		for _, child := range c.Children {
-			resolveXMLContent(resolver, scope, child, rootNeeds)
+			ok = resolveXMLContent(resolver, scope, child, rootNeeds) && ok
 		}
+		return ok
 	}
+	return true
 }
 
-func resolveXMLNameRef[T symbolResolver](resolver T, scope model.Scope, name string, pos diagnostics.Location, rootNeeds map[string]model.SymbolRef, isElement bool) model.SymbolRef {
+func resolveXMLNameRef(resolver symbolResolver, scope model.Scope, name string, pos diagnostics.Location, rootNeeds map[string]model.SymbolRef, isElement bool) (model.SymbolRef, bool) {
 	prefix, _ := splitXMLName(name)
 	if prefix == "" {
 		if !isElement {
-			return model.SymbolRef{}
+			return model.SymbolRef{}, true
 		}
 		ref, defScope, ok := lookupXMLNS(scope, model.DefaultXMLNSSymbolName)
 		if !ok || defScope == scope {
-			return ref
+			return ref, true
 		}
 		if _, fromXMLAncestor := defScope.(*xmlnsChildScope); fromXMLAncestor {
-			return ref
+			return ref, true
 		}
 		rootNeeds["xmlns"] = ref
-		return ref
+		return ref, true
 	}
 	ref, defScope, ok := lookupXMLNS(scope, prefix)
 	if !ok {
-		semanticError(resolver, "undefined XML namespace prefix '"+prefix+"'", pos)
-		return model.SymbolRef{}
+		resolver.GetCtx().SemanticError("undefined XML namespace prefix '"+prefix+"'", pos)
+		return model.SymbolRef{}, false
 	}
 	if defScope != scope {
 		if _, fromXMLAncestor := defScope.(*xmlnsChildScope); !fromXMLAncestor {
 			rootNeeds["xmlns:"+prefix] = ref
 		}
 	}
-	return ref
+	return ref, true
 }
 
-func stripInlineXMLNSAttrs[T symbolResolver](resolver T, childScope model.Scope, e *ast.BLangXMLElementLiteral) []ast.BLangXMLAttribute {
+func stripInlineXMLNSAttrs(resolver symbolResolver, childScope model.Scope, e *ast.BLangXMLElementLiteral) ([]ast.BLangXMLAttribute, bool) {
 	kept := make([]ast.BLangXMLAttribute, 0, len(e.Attrs))
+	allOk := true
 	for i := range e.Attrs {
 		attr := e.Attrs[i]
 		prefix, local := splitXMLName(attr.Name)
@@ -263,6 +275,7 @@ func stripInlineXMLNSAttrs[T symbolResolver](resolver T, childScope model.Scope,
 		}
 		uri, ok := xmlnsAttrURI(resolver, &attr)
 		if !ok {
+			allOk = false
 			continue
 		}
 		var nsPrefix string
@@ -273,11 +286,12 @@ func stripInlineXMLNSAttrs[T symbolResolver](resolver T, childScope model.Scope,
 		}
 		ref, ok := defineXMLNS(resolver, childScope, nsPrefix, uri, attr.GetPosition())
 		if !ok {
+			allOk = false
 			continue
 		}
 		e.Namespaces = append(e.Namespaces, ref)
 	}
-	return kept
+	return kept, allOk
 }
 
 func isXMLNSAttr(prefix, local string) bool {
@@ -287,19 +301,19 @@ func isXMLNSAttr(prefix, local string) bool {
 	return prefix == "xmlns"
 }
 
-func xmlnsAttrURI[T symbolResolver](resolver T, attr *ast.BLangXMLAttribute) (string, bool) {
+func xmlnsAttrURI(resolver symbolResolver, attr *ast.BLangXMLAttribute) (string, bool) {
 	if attr.Value == nil {
-		semanticError(resolver, "xmlns attribute missing URI", attr.GetPosition())
+		resolver.GetCtx().SemanticError("xmlns attribute missing URI", attr.GetPosition())
 		return "", false
 	}
 	lit, ok := attr.Value.(*ast.BLangLiteral)
 	if !ok {
-		semanticError(resolver, "xmlns attribute URI must be a string literal", attr.GetPosition())
+		resolver.GetCtx().SemanticError("xmlns attribute URI must be a string literal", attr.GetPosition())
 		return "", false
 	}
 	uri, ok := lit.GetValue().(string)
 	if !ok {
-		semanticError(resolver, "xmlns attribute URI must be a string", attr.GetPosition())
+		resolver.GetCtx().SemanticError("xmlns attribute URI must be a string", attr.GetPosition())
 		return "", false
 	}
 	return uri, true
@@ -328,19 +342,22 @@ func (s *xmlnsChildScope) AddSymbol(name string, symbol model.Symbol) {
 
 var _ model.Scope = &xmlnsChildScope{}
 
-func xmlnsDeclKey[T symbolResolver](resolver T, symbol model.Symbol) string {
+func xmlnsDeclKey(resolver symbolResolver, symbol model.Symbol) (string, bool) {
 	key, err := model.XMLNamespaceDeclKey(symbol)
 	if err != nil {
 		resolver.GetCtx().InternalError(err.Error(), diagnostics.Location{})
-		return ""
+		return "", false
 	}
-	return key
+	return key, true
 }
 
-func mergeNamespaces[T symbolResolver](resolver T, root *ast.BLangXMLElementLiteral, extras map[string]model.SymbolRef) {
+func mergeNamespaces(resolver symbolResolver, root *ast.BLangXMLElementLiteral, extras map[string]model.SymbolRef) bool {
+	ok := true
 	existing := make(map[string]struct{}, len(root.Namespaces))
 	for _, ref := range root.Namespaces {
-		existing[xmlnsDeclKey(resolver, resolver.GetCtx().GetSymbol(ref))] = struct{}{}
+		key, keyOk := xmlnsDeclKey(resolver, resolver.GetCtx().GetSymbol(ref))
+		existing[key] = struct{}{}
+		ok = keyOk && ok
 	}
 	for k, v := range extras {
 		if _, exists := existing[k]; exists {
@@ -349,54 +366,61 @@ func mergeNamespaces[T symbolResolver](resolver T, root *ast.BLangXMLElementLite
 		root.Namespaces = append(root.Namespaces, v)
 		existing[k] = struct{}{}
 	}
+	return ok
 }
 
-func appendXMLNSTemplateNamespace[T symbolResolver](resolver T, insn *ast.XMLTemplateNamespaceInsertion, seen map[string]struct{}, ref model.SymbolRef) {
-	key := xmlnsDeclKey(resolver, resolver.GetCtx().GetSymbol(ref))
+func appendXMLNSTemplateNamespace(resolver symbolResolver, insn *ast.XMLTemplateNamespaceInsertion, seen map[string]struct{}, ref model.SymbolRef) bool {
+	key, ok := xmlnsDeclKey(resolver, resolver.GetCtx().GetSymbol(ref))
 	if _, exists := seen[key]; exists {
-		return
+		return ok
 	}
 	insn.Namespaces = append(insn.Namespaces, ref)
 	seen[key] = struct{}{}
+	return ok
 }
 
-func resolveXMLTemplateNamespaces[T symbolResolver](resolver T, scope model.Scope, e *ast.BLangXMLTemplateExpr) {
+func resolveXMLTemplateNamespaces(resolver symbolResolver, scope model.Scope, e *ast.BLangXMLTemplateExpr) bool {
 	ensurePrefixMap(resolver, scope)
+	ok := true
 	for stringIndex := range e.NamespaceInsertions {
 		for i := range e.NamespaceInsertions[stringIndex] {
 			insn := &e.NamespaceInsertions[stringIndex][i]
 			seen := make(map[string]struct{}, len(insn.Namespaces))
 			for _, ref := range insn.Namespaces {
-				seen[xmlnsDeclKey(resolver, resolver.GetCtx().GetSymbol(ref))] = struct{}{}
+				key, keyOk := xmlnsDeclKey(resolver, resolver.GetCtx().GetSymbol(ref))
+				seen[key] = struct{}{}
+				ok = keyOk && ok
 			}
 			if insn.NeedsDefaultNS {
-				if ref, _, ok := lookupXMLNS(scope, model.DefaultXMLNSSymbolName); ok {
-					appendXMLNSTemplateNamespace(resolver, insn, seen, ref)
+				if ref, _, found := lookupXMLNS(scope, model.DefaultXMLNSSymbolName); found {
+					ok = appendXMLNSTemplateNamespace(resolver, insn, seen, ref) && ok
 				}
 			}
 			for prefix := range insn.UsedPrefixes {
-				ref, _, ok := lookupXMLNS(scope, prefix)
-				if !ok {
-					semanticError(resolver, "undefined XML namespace prefix '"+prefix+"'", e.GetPosition())
+				ref, _, found := lookupXMLNS(scope, prefix)
+				if !found {
+					resolver.GetCtx().SemanticError("undefined XML namespace prefix '"+prefix+"'", e.GetPosition())
+					ok = false
 					continue
 				}
 				if prefix == "" || prefix == model.XMLNSReservedPrefix {
 					continue
 				}
-				appendXMLNSTemplateNamespace(resolver, insn, seen, ref)
+				ok = appendXMLNSTemplateNamespace(resolver, insn, seen, ref) && ok
 			}
 		}
 	}
+	return ok
 }
 
-func resolveAtomicNamePattern[T symbolResolver](resolver T, scope model.Scope, pattern ast.BLangAtomicNamePattern) ast.BLangAtomicNamePattern {
+func resolveAtomicNamePattern(resolver symbolResolver, scope model.Scope, pattern ast.BLangAtomicNamePattern) (ast.BLangAtomicNamePattern, bool) {
 	switch pattern.Kind {
 	case ast.NamePatternKindQualifiedIdentifier, ast.NamePatternKindPrefix:
 		prefix := pattern.NamespacePrefix.GetValue()
 		ref, _, ok := lookupXMLNS(scope, prefix)
 		if !ok {
-			semanticError(resolver, "undefined XML namespace prefix '"+prefix+"'", pattern.NamespacePrefix.GetPosition())
-			return pattern
+			resolver.GetCtx().SemanticError("undefined XML namespace prefix '"+prefix+"'", pattern.NamespacePrefix.GetPosition())
+			return pattern, false
 		}
 		pattern.NamespaceSymbol = ref
 	case ast.NamePatternKindIdentifier:
@@ -407,5 +431,5 @@ func resolveAtomicNamePattern[T symbolResolver](resolver T, scope model.Scope, p
 	case ast.NamePatternKindWildCard:
 		// A wildcard matches any name, so there is no prefix to resolve.
 	}
-	return pattern
+	return pattern, true
 }

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: redeclared symbol 'F'
+  --> 20-e.bal:17:6
+   |
+17 | type F function (int a) returns int; // @error
+   |      ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'F'
+  --> 20-e.bal:18:6
+   |
+18 | type F function (int a) returns int; // @error
+   |      ^
