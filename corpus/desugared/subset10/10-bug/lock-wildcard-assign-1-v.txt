@@ -1,0 +1,85 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (variable m (type
+    (value-type int)))
+  (variable iv (type
+    (array-type
+      (value-type int) dimensions: 1 ([]))))
+  (class-definition Holder
+    (variable f (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal f))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+    (function discard () (
+      (value-type null))
+      (block-function-body
+        (lock
+          (block-stmt
+            (assignment
+              (wildcard-binding-pattern)
+              (index-based-access
+                (simple-var-ref self)
+                (literal f))))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref m)
+        (literal 1))
+      (assignment
+        (simple-var-ref iv)
+        (list-constructor-expr))))
+  (function discardLength () (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (assignment
+            (wildcard-binding-pattern)
+            (invocation lang.array length (
+              (simple-var-ref iv))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (assignment
+            (wildcard-binding-pattern)
+            (literal 1))
+          (assignment
+            (wildcard-binding-pattern)
+            (simple-var-ref m))
+          (assignment
+            (wildcard-binding-pattern)
+            (simple-var-ref iv))
+          (var-def
+            (variable x (type
+              (value-type int)) (expr
+              (literal 1))))
+          (assignment
+            (wildcard-binding-pattern)
+            (simple-var-ref x))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref iv)
+              (simple-var-ref x))))))
+      (expression-stmt
+        (invocation discardLength ()))
+      (expression-stmt
+        (invocation discard expr:
+          (new
+            (user-defined-type Holder) ()) ()))
+      (lock
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation lang.array length (
+                (simple-var-ref iv)))))))))))

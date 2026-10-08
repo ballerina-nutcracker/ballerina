@@ -1,0 +1,52 @@
+(Holder
+  (discard
+    (bb0 () ()
+      (assignment
+        (wildcard-binding-pattern)
+        (field-based-access f
+          (simple-var-ref self)))
+    )
+  )
+)
+(discardLength
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation lang.array length (
+        (simple-var-ref iv))))
+  )
+)
+(main
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (literal 1))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref m))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref iv))
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (literal 1))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref x))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref iv)
+        (simple-var-ref x))))
+    (expression-stmt
+      (invocation discardLength ()))
+    (expression-stmt
+      (invocation discard expr:
+        (new
+          (user-defined-type Holder) ()) ()))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref iv))))))
+  )
+)
