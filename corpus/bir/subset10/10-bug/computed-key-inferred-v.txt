@@ -1,0 +1,88 @@
+module $anon.. v 0.0.0;
+isOpenWithIntRest(any) -> boolean{
+  bb0 {
+    %2 = v is {| b: string, int... |}
+    %0 = %2;
+    return;
+  }
+}
+isOpenWithIntOrStringRest(any) -> boolean{
+  bb0 {
+    %2 = v is {| b: string, int|string... |}
+    %0 = %2;
+    return;
+  }
+}
+isClosed(any) -> boolean{
+  bb0 {
+    %2 = v is {| b: string, never... |}
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    k = %1;
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad b
+    %5 = ConstantLoad s
+    %6 = newMap {| b: string, int... |}{[k]=%3, %4=%5}
+    m = %6;
+    %8 = isOpenWithIntRest(m) -> bb1;
+  }
+  bb1 {
+    %9 = %8;
+    %10 = println(%9) -> bb2;
+  }
+  bb2 {
+    %11 = isClosed(m) -> bb3;
+  }
+  bb3 {
+    %12 = %11;
+    %13 = println(%12) -> bb4;
+  }
+  bb4 {
+    %14 = ConstantLoad c
+    j = %14;
+    %16 = ConstantLoad 1
+    %17 = ConstantLoad b
+    %18 = ConstantLoad s
+    %19 = ConstantLoad t
+    %20 = newMap {| b: string, int|string... |}{[k]=%16, %17=%18, [j]=%19}
+    u = %20;
+    %22 = isOpenWithIntOrStringRest(u) -> bb5;
+  }
+  bb5 {
+    %23 = %22;
+    %24 = isOpenWithIntRest(u) -> bb6;
+  }
+  bb6 {
+    %25 = %24;
+    %26 = println(%23,%25) -> bb7;
+  }
+  bb7 {
+    %27 = ConstantLoad 1
+    %28 = newMap {| int... |}{[k]=%27}
+    n = %28;
+    %30 = ConstantLoad z
+    z = %30;
+    %32 = ConstantLoad 42
+    n[z] = %32;
+    %33 = println(n) -> bb8;
+  }
+  bb8 {
+    %34 = ConstantLoad 1
+    %35 = ConstantLoad 2
+    %36 = ConstantLoad 2
+    %37 = newArray [int, int, never...][%36]{%34, %35}
+    %38 = newMap {| [int, int, never...]... |}{[k]=%37}
+    l = %38;
+    %40 = l[k];
+    li = %40;
+    %42 = println(li) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}

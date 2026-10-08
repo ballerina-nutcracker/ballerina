@@ -1,0 +1,36 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable k (type
+        (value-type string)) (expr
+        (literal a))))
+    (var-def
+      (variable c (type
+        (value-type string)) (expr
+        (literal c))))
+    (var-def
+      (variable f (type
+        (function-type () (
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type string))))) (expr
+        (lambda
+          (function $anonFunc$_0 () ()
+            (expr-function-body
+              (mapping-constructor-expr
+                (computed-key-value
+                  (simple-var-ref c)
+                  (simple-var-ref k)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f ()))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (mapping-constructor-expr
+      (computed-key-value
+        (simple-var-ref c)
+        (simple-var-ref k)))
+  )
+)

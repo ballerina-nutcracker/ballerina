@@ -10,13 +10,13 @@
           (builtin-ref-type map)
           (value-type int))) (expr
         (mapping-constructor-expr
-          (key-value
+          (computed-key-value
             (simple-var-ref moduleKey)
             (literal 1))
-          (key-value
+          (computed-key-value
             (simple-var-ref localKey)
             (literal 2))
-          (key-value
+          (computed-key-value
             (binary-expr +
               (literal c)
               (literal d))
@@ -30,7 +30,7 @@
     (var-def
       (variable inferred (expr
         (mapping-constructor-expr
-          (key-value
+          (computed-key-value
             (simple-var-ref localKey)
             (literal 5))
           (key-value
@@ -59,7 +59,7 @@
           (key-value
             (literal id)
             (literal 1))
-          (key-value
+          (computed-key-value
             (simple-var-ref localKey)
             (literal rest))))))
     (expression-stmt
@@ -72,7 +72,7 @@
           (key-value
             (literal id)
             (literal 2))
-          (key-value
+          (computed-key-value
             (simple-var-ref moduleKey)
             (literal s))))))
     (expression-stmt
@@ -84,10 +84,10 @@
           (builtin-ref-type map)
           (value-type int))) (expr
         (mapping-constructor-expr
-          (key-value
+          (computed-key-value
             (invocation nextKey ())
             (literal 1))
-          (key-value
+          (computed-key-value
             (invocation nextKey ())
             (literal 2))))))
     (expression-stmt

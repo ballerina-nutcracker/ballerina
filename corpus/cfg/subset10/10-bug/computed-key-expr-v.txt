@@ -1,0 +1,27 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable q (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (computed-key-value
+            (index-based-access
+              (group-expr
+                (query-expr
+                  (from-clause
+                    (var-def
+                      (variable x (type
+                        (value-type string))))
+                    (list-constructor-expr
+                      (literal q)))
+                  (select-clause
+                    (simple-var-ref x))))
+              (literal 0))
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref q))))
+  )
+)

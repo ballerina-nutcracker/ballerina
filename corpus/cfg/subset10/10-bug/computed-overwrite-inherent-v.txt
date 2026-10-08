@@ -2,10 +2,10 @@
   (bb0 () ()
     (return
       (mapping-constructor-expr
-        (key-value
+        (computed-key-value
           (simple-var-ref key)
           (literal invalid))
-        (key-value
+        (computed-key-value
           (simple-var-ref key)
           (literal 2))))
   )
@@ -20,10 +20,10 @@
       (variable valid (type
         (user-defined-type Counts)) (expr
         (mapping-constructor-expr
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 1))
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 2))))))
     (expression-stmt

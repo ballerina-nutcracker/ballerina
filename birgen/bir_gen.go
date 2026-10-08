@@ -1596,20 +1596,17 @@ func mappingConstructorExpression(ctx context, curBB *bir.BIRBasicBlock, expr *a
 }
 
 func mappingKeyName(ctx context, key *ast.BLangMappingKey) (string, bool) {
-	switch expr := key.Expr.(type) {
-	case *ast.BLangLiteral:
-		name, ok := expr.Value.(string)
-		if !ok {
-			ctx.internalError(fmt.Sprintf("invalid mapping key literal type: %T", expr.Value), key.GetPosition())
-			return "", false
-		}
-		return name, true
-	case *ast.BLangVarRef:
-		return expr.VariableName.GetValue(), true
-	default:
+	lit, ok := key.Expr.(*ast.BLangLiteral)
+	if !ok {
 		ctx.internalError(fmt.Sprintf("unexpected mapping key expression type: %T", key.Expr), key.GetPosition())
 		return "", false
 	}
+	name, ok := lit.Value.(string)
+	if !ok {
+		ctx.internalError(fmt.Sprintf("invalid mapping key literal type: %T", lit.Value), key.GetPosition())
+		return "", false
+	}
+	return name, true
 }
 
 func newMappingConstructorEntry(field mappingField, keyOp, valueOp *bir.BIROperand) *bir.MappingConstructorKeyValueEntry {
