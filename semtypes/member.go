@@ -109,6 +109,29 @@ func ObjectMemberType(ctx Context, name, ty SemType) SemType {
 	return mappingMemberTypeInner(ctx, memberMap, StringConst("value"))
 }
 
+// ObjectMemberIsImmutable reports whether the member selected by name is an immutable cell in
+// every alternative of the object type ty. Members of a readonly object are immutable cells.
+func ObjectMemberIsImmutable(ctx Context, name string, ty SemType) bool {
+	mappingTy := convertObjectToMappingTy(ctx, ty)
+	if IsZero(mappingTy) {
+		return false
+	}
+	alts := MappingAlternatives(ctx, mappingTy)
+	if len(alts) == 0 {
+		return false
+	}
+	for _, alt := range alts {
+		atomic := alt.Atomic()
+		if atomic == nil {
+			return false
+		}
+		if CellMut(atomic.FieldCell(name)) != CellMutabilityNone {
+			return false
+		}
+	}
+	return true
+}
+
 // convertObjectToMappingTy structurally reinterprets the object component as a mapping type.
 func convertObjectToMappingTy(_ Context, ty SemType) SemType {
 	objectTy := Intersect(ty, Object)

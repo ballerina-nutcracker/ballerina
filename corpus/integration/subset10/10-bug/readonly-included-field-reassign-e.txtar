@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to potentially initialized final field 'items'
+  --> readonly-included-field-reassign-e.bal:26:9
+   |
+26 |         self.items = b; // @error reassignment of included field in readonly class
+   |         ^^^^^^^^^^

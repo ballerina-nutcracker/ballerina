@@ -232,6 +232,21 @@ func FinalFieldReassigned(cx Context, access *ast.BLangFieldBaseAccess, compound
 	return "", false
 }
 
+// ReadonlyObjectFieldUpdated reports whether access writes a field of a
+// readonly object. Only the enclosing class's init may assign such a field,
+// and only through self.
+func ReadonlyObjectFieldUpdated(cx Context, access *ast.BLangFieldBaseAccess) bool {
+	tyCtx := cx.TyCtx()
+	containerTy := access.Expr.Type()
+	if !semtypes.IsSubtype(tyCtx, containerTy, semtypes.Object) ||
+		!semtypes.ObjectMemberIsImmutable(tyCtx, access.Field.GetValue(), containerTy) {
+		return false
+	}
+	fn, ok := EnclosingFunction(cx)
+	receiver, isRef := access.Expr.(*ast.BLangVarRef)
+	return !ok || !isRef || !fn.isSelf(receiver.Symbol()) || !fn.isClassInit()
+}
+
 // TargetIndex is a member of inner.
 func TargetIndex(inner LValue, _ *ast.BLangIndexBasedAccess) LValue {
 	return LValue{root: inner.root}

@@ -714,6 +714,13 @@ func (f *FieldDescriptor) WithoutDefault() *FieldDescriptor {
 	return &fd
 }
 
+// WithFinal returns a final copy of f, leaving the original descriptor unchanged.
+func (f *FieldDescriptor) WithFinal() *FieldDescriptor {
+	fd := *f
+	fd.flags |= FieldDescriptorFinal
+	return &fd
+}
+
 type MethodDescriptor struct {
 	name      string
 	kind      InclusionMemberKind
