@@ -103,10 +103,10 @@ func initInternalModule(rt *runtime.Runtime) {
 		return queryCollect(ctx, rows, int(slotCount), flattenFlags)
 	})
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "escapeXMLContent", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return values.EscapeXMLContent(values.String(args[0], nil)), nil
+		return values.EscapeXMLTemplateContent(values.String(args[0], nil)), nil
 	})
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "escapeXMLAttribute", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return values.EscapeXMLAttribute(values.String(args[0], nil)), nil
+		return values.EscapeXMLTemplateAttribute(values.String(args[0], nil)), nil
 	})
 }
 

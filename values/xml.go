@@ -166,14 +166,40 @@ var xmlAttributeEscaper = strings.NewReplacer(
 	"\"", "&quot;",
 )
 
-// EscapeXMLContent escapes characters in XML text node bodies.
-func EscapeXMLContent(s string) string {
+var xmlTemplateContentEscaper = strings.NewReplacer(
+	"&", "&amp;",
+	"<", "&lt;",
+	">", "&gt;",
+	"\r", "&#13;",
+)
+
+var xmlTemplateAttributeEscaper = strings.NewReplacer(
+	"&", "&amp;",
+	"<", "&lt;",
+	"\"", "&quot;",
+	"'", "&apos;",
+	"\t", "&#9;",
+	"\n", "&#10;",
+	"\r", "&#13;",
+)
+
+func escapeXMLContent(s string) string {
 	return xmlContentEscaper.Replace(s)
 }
 
 // EscapeXMLAttribute escapes characters in XML attribute values quoted with `"`.
 func EscapeXMLAttribute(s string) string {
 	return xmlAttributeEscaper.Replace(s)
+}
+
+// EscapeXMLTemplateContent escapes an xml template insertion into character data.
+func EscapeXMLTemplateContent(s string) string {
+	return xmlTemplateContentEscaper.Replace(s)
+}
+
+// EscapeXMLTemplateAttribute escapes an xml template insertion into an attribute value quoted with either `"` or `'`.
+func EscapeXMLTemplateAttribute(s string) string {
+	return xmlTemplateAttributeEscaper.Replace(s)
 }
 
 func (s *XMLSequence) Type() semtypes.SemType { return s.semType }
@@ -215,7 +241,7 @@ func (t *XMLText) IterItems() []XMLValue {
 }
 
 func (t *XMLText) XMLString() string {
-	return EscapeXMLContent(t.Body)
+	return escapeXMLContent(t.Body)
 }
 
 func (c *XMLComment) Type() semtypes.SemType { return c.semType }
