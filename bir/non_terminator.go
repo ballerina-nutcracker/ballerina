@@ -218,8 +218,9 @@ const (
 
 type (
 	MappingConstructorKeyValueEntry struct {
-		keyOp   *BIROperand
-		valueOp *BIROperand
+		keyOp      *BIROperand
+		valueOp    *BIROperand
+		isComputed bool
 	}
 )
 
@@ -583,9 +584,24 @@ func NewFPLoad(functionLookupKey string, typ semtypes.SemType, lhsOp *BIROperand
 
 func NewMappingConstructorKeyValueEntry(keyOp, valueOp *BIROperand) *MappingConstructorKeyValueEntry {
 	return &MappingConstructorKeyValueEntry{
-		keyOp:   keyOp,
-		valueOp: valueOp,
+		keyOp:      keyOp,
+		valueOp:    valueOp,
+		isComputed: false,
 	}
+}
+
+// NewComputedMappingConstructorKeyValueEntry creates an entry whose key is only known at
+// runtime, so the runtime must check it against the other keys and the inherent type.
+func NewComputedMappingConstructorKeyValueEntry(keyOp, valueOp *BIROperand) *MappingConstructorKeyValueEntry {
+	return &MappingConstructorKeyValueEntry{
+		keyOp:      keyOp,
+		valueOp:    valueOp,
+		isComputed: true,
+	}
+}
+
+func (m *MappingConstructorKeyValueEntry) IsComputed() bool {
+	return m.isComputed
 }
 
 func (m *MappingConstructorKeyValueEntry) IsKeyValuePair() bool {

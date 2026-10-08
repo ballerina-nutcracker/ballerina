@@ -128,7 +128,13 @@ func mapQuerySelectExpectedTypeWithValue(env semtypes.Env, valueTy semtypes.SemT
 	return ld.Define(env, []semtypes.SemType{semtypes.String, valueTy})
 }
 
+// MappingKeyName returns the field name of a literal or identifier key. A
+// computed key has no static name; its value is only known at runtime.
 func MappingKeyName(ctx *context.CompilerContext, key *ast.BLangMappingKey) (string, bool) {
+	if key.Kind == ast.MappingKeyComputed {
+		ctx.InternalError("computed mapping key has no static name", key.GetPosition())
+		return "", false
+	}
 	switch expr := key.Expr.(type) {
 	case *ast.BLangLiteral:
 		return expr.Value.(string), true
@@ -138,6 +144,20 @@ func MappingKeyName(ctx *context.CompilerContext, key *ast.BLangMappingKey) (str
 		ctx.InternalError(fmt.Sprintf("unexpected record key expression type: %T", key.Expr), key.GetPosition())
 		return "", false
 	}
+}
+
+// MappingFieldExpectedType returns the type a mapping constructor field's value
+// must have when the constructor has type mappingTy with atomic type mat.
+func MappingFieldExpectedType(ctx *context.CompilerContext, tc semtypes.Context, mappingTy semtypes.SemType, mat *semtypes.MappingAtomicType, kv *ast.BLangMappingKeyValueField) (semtypes.SemType, bool) {
+	if kv.Key.Kind == ast.MappingKeyComputed {
+		keyTy := semtypes.Intersect(kv.Key.Expr.GetDeterminedType(), semtypes.String)
+		return semtypes.MappingMemberTypeInnerVal(tc, mappingTy, keyTy), true
+	}
+	keyName, ok := MappingKeyName(ctx, kv.Key)
+	if !ok {
+		return semtypes.SemType{}, false
+	}
+	return mat.FieldInnerVal(keyName), true
 }
 
 func FormatIncompatibleTypeMessage(ctx semtypes.Context, expectedType, actualType semtypes.SemType) string {
