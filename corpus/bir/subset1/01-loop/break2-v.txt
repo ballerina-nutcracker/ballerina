@@ -22,7 +22,7 @@ main() -> nil{
     %15 = ConstantLoad 0
     %16 = %15;
     %17 = ConstantLoad 1
-    %18 = unknown %17;
+    %18 = - %17;
     %19 = %18;
     %20 = ConstantLoad 4
     %21 = %20;

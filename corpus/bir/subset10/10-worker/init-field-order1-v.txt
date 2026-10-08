@@ -11,7 +11,7 @@ class Holder {
       %3 = ConstantLoad value
       self[%3] = %2;
       %4 = ConstantLoad 1
-      %5 = unknown %4;
+      %5 = - %4;
       %6 = ConstantLoad seen
       self[%6] = %5;
       %7 = createLatch() -> bb2;

@@ -11,7 +11,7 @@ main() -> nil{
     %8 = newArray [int, never...][%7]{%6}
     b = %8;
     %10 = ConstantLoad 1
-    %11 = unknown %10;
+    %11 = - %10;
     %12 = ConstantLoad 1
     %13 = newArray [int, never...][%12]{%11}
     c = %13;

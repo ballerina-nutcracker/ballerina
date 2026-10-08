@@ -13,7 +13,7 @@ main() -> nil{
   }
   bb2 {
     %8 = ConstantLoad 2.675
-    %9 = unknown %8;
+    %9 = - %8;
     %10 = %9;
     %11 = ConstantLoad 2
     %12 = %11;
@@ -58,7 +58,7 @@ main() -> nil{
   }
   bb10 {
     %37 = ConstantLoad 0.45
-    %38 = unknown %37;
+    %38 = - %37;
     %39 = %38;
     %40 = ConstantLoad 1
     %41 = %40;
@@ -125,7 +125,7 @@ main() -> nil{
   }
   bb22 {
     %80 = ConstantLoad 0.125
-    %81 = unknown %80;
+    %81 = - %80;
     %82 = %81;
     %83 = ConstantLoad 2
     %84 = %83;
@@ -139,7 +139,7 @@ main() -> nil{
     %88 = ConstantLoad 1250
     %89 = %88;
     %90 = ConstantLoad 2
-    %91 = unknown %90;
+    %91 = - %90;
     %92 = %91;
     %93 = round(%89,%92) -> bb25;
   }
@@ -151,7 +151,7 @@ main() -> nil{
     %96 = ConstantLoad 1350
     %97 = %96;
     %98 = ConstantLoad 2
-    %99 = unknown %98;
+    %99 = - %98;
     %100 = %99;
     %101 = round(%97,%100) -> bb27;
   }
@@ -161,10 +161,10 @@ main() -> nil{
   }
   bb28 {
     %104 = ConstantLoad 1350
-    %105 = unknown %104;
+    %105 = - %104;
     %106 = %105;
     %107 = ConstantLoad 2
-    %108 = unknown %107;
+    %108 = - %107;
     %109 = %108;
     %110 = round(%106,%109) -> bb29;
   }
@@ -176,7 +176,7 @@ main() -> nil{
     %113 = ConstantLoad 6e+307
     %114 = %113;
     %115 = ConstantLoad 308
-    %116 = unknown %115;
+    %116 = - %115;
     %117 = %116;
     %118 = round(%114,%117) -> bb31;
   }
@@ -188,7 +188,7 @@ main() -> nil{
     %121 = ConstantLoad 4e+307
     %122 = %121;
     %123 = ConstantLoad 308
-    %124 = unknown %123;
+    %124 = - %123;
     %125 = %124;
     %126 = round(%122,%125) -> bb33;
   }
@@ -200,7 +200,7 @@ main() -> nil{
     %129 = ConstantLoad 1.7e+308
     %130 = %129;
     %131 = ConstantLoad 308
-    %132 = unknown %131;
+    %132 = - %131;
     %133 = %132;
     %134 = round(%130,%133) -> bb35;
   }
@@ -210,10 +210,10 @@ main() -> nil{
   }
   bb36 {
     %137 = ConstantLoad 1.7e+308
-    %138 = unknown %137;
+    %138 = - %137;
     %139 = %138;
     %140 = ConstantLoad 308
-    %141 = unknown %140;
+    %141 = - %140;
     %142 = %141;
     %143 = round(%139,%142) -> bb37;
   }
