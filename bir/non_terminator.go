@@ -75,10 +75,12 @@ type (
 	NewMap struct {
 		// JBallerina call this NewStruct but prints as NewMap
 		BIRInstructionBase
-		Type       semtypes.SemType
-		Values     []MappingConstructorEntry
-		Defaults   []MappingConstructorDefaultEntry
-		IsReadonly bool
+		Type   semtypes.SemType
+		Values []MappingConstructorEntry
+		// ComputedValues are applied in order after the mapping has been constructed from Values and Defaults.
+		ComputedValues []MappingConstructorEntry
+		Defaults       []MappingConstructorDefaultEntry
+		IsReadonly     bool
 	}
 
 	MappingConstructorDefaultEntry struct {
@@ -434,7 +436,7 @@ func (n *NewMap) GetKind() InstructionKind {
 	return InstructionKindNewStructure
 }
 
-func NewMapConstructor(typ semtypes.SemType, lhsOp *BIROperand, values []MappingConstructorEntry, defaults []MappingConstructorDefaultEntry, isReadonly bool, pos Location) *NewMap {
+func NewMapConstructor(typ semtypes.SemType, lhsOp *BIROperand, values, computedValues []MappingConstructorEntry, defaults []MappingConstructorDefaultEntry, isReadonly bool, pos Location) *NewMap {
 	return &NewMap{
 		BIRInstructionBase: BIRInstructionBase{
 			BIRNodeBase: BIRNodeBase{
@@ -442,10 +444,11 @@ func NewMapConstructor(typ semtypes.SemType, lhsOp *BIROperand, values []Mapping
 			},
 			LhsOp: lhsOp,
 		},
-		Type:       typ,
-		Values:     values,
-		Defaults:   defaults,
-		IsReadonly: isReadonly,
+		Type:           typ,
+		Values:         values,
+		ComputedValues: computedValues,
+		Defaults:       defaults,
+		IsReadonly:     isReadonly,
 	}
 }
 

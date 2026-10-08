@@ -1,0 +1,35 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad b
+    %4 = ConstantLoad 3
+    %5 = ConstantLoad a
+    %6 = ConstantLoad 2
+    %7 = newMap {| int... |}{%1=%2, %3=%4} computed{%5=%6}
+    m = %7;
+    %9 = println(m) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad b
+    %11 = ConstantLoad 1
+    %12 = ConstantLoad a
+    %13 = ConstantLoad 2
+    %14 = newMap {| int... |}{%12=%13} computed{%10=%11}
+    n = %14;
+    %16 = println(n) -> bb2;
+  }
+  bb2 {
+    %17 = ConstantLoad c
+    %18 = ConstantLoad 1
+    %19 = ConstantLoad c
+    %20 = ConstantLoad 2
+    %21 = newMap {| int... |}{} computed{%17=%18, %19=%20}
+    d = %21;
+    %23 = println(d) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

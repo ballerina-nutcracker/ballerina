@@ -1,0 +1,4 @@
+-- stdout --
+{"a":1}
+{"id":1,"a":"rest"}
+-- stderr --

@@ -4740,9 +4740,21 @@ func inferredMemberType(ty semtypes.SemType, readonly bool) semtypes.SemType {
 }
 
 func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, readonlyValue bool) (semtypes.SemType, expressionEffect, bool) {
-	fields := make([]semtypes.Field, len(e.Fields))
-	for i, f := range e.Fields {
+	var fields []semtypes.Field
+	restTy := semtypes.Never
+	for _, f := range e.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
+		if !resolveMappingKey(t, chain, kv) {
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		if kv.Key.Kind == ast.MappingKeyComputed {
+			valueTy, ok := resolveMemberValue(t, chain, kv.ValueExpr, readonlyValue)
+			if !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+			restTy = semtypes.Union(restTy, inferredMemberType(valueTy, readonlyValue))
+			continue
+		}
 		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
 		if !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
@@ -4756,24 +4768,10 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 		if !e.IsReadonly(keyName) {
 			fieldTy = inferredMemberType(valueTy, readonly)
 		}
-		switch keyExpr := kv.Key.Expr.(type) {
-		case *ast.BLangLiteral:
-			resolveLiteral(t, keyExpr, semtypes.SemType{})
-		case ast.BNodeWithSymbol:
-			t.setSymbolType(keyExpr.Symbol(), valueTy)
-			if e, ok := keyExpr.(ast.BLangExpression); ok {
-				e.SetDeterminedType(valueTy)
-			}
-			if ref, ok := keyExpr.(*ast.BLangVarRef); ok {
-				setVarRefIdentifierTypes(ref)
-			}
-		}
-		kv.Key.SetDeterminedType(semtypes.Never)
-		kv.SetDeterminedType(semtypes.Never)
-		fields[i] = semtypes.FieldFrom(keyName, fieldTy, readonly, false)
+		fields = append(fields, semtypes.FieldFrom(keyName, fieldTy, readonly, false))
 	}
 	md := semtypes.NewMappingDefinition()
-	mapTy := md.Define(t.typeEnv(), fields, semtypes.Never)
+	mapTy := md.Define(t.typeEnv(), fields, restTy)
 	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
 	e.SelectedAtomicType = *mat
 	e.SetDeterminedType(mapTy)
@@ -4781,6 +4779,12 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 }
 
 func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	for _, f := range e.Fields {
+		if !resolveMappingKey(t, chain, f.(*ast.BLangMappingKeyValueField)) {
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+	}
+
 	resultType, mat, ok := selectMappingInherentType(t, chain, e, expectedType)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -4788,24 +4792,33 @@ func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e
 
 	for _, f := range e.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
-		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
-		if !ok {
-			return semtypes.SemType{}, expressionEffect{}, false
-		}
-		requiredType := mat.FieldInnerVal(keyName)
-		if e.IsReadonly(keyName) {
-			requiredType = semtypes.Intersect(requiredType, semtypes.ValReadonly)
-			if semtypes.IsEmpty(t.typeContext(), requiredType) {
-				t.semanticError(fmt.Sprintf("field '%s' cannot be readonly: its type in the inherent type has no readonly values", keyName),
-					kv.GetPosition())
+		var requiredType semtypes.SemType
+		if kv.Key.Kind == ast.MappingKeyComputed {
+			keyTy := kv.Key.Expr.GetDeterminedType()
+			if name, ok := computedKeyReadonlyField(t.typeContext(), resultType, keyTy); ok {
+				t.semanticError(fmt.Sprintf("cannot mutate readonly field '%s'", name), kv.Key.GetPosition())
 				return semtypes.SemType{}, expressionEffect{}, false
+			}
+			requiredType = common.ComputedMappingFieldType(t.typeContext(), resultType, keyTy)
+		} else {
+			keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
+			if !ok {
+				return semtypes.SemType{}, expressionEffect{}, false
+			}
+			requiredType = mat.FieldInnerVal(keyName)
+			if e.IsReadonly(keyName) {
+				requiredType = semtypes.Intersect(requiredType, semtypes.ValReadonly)
+				if semtypes.IsEmpty(t.typeContext(), requiredType) {
+					t.semanticError(fmt.Sprintf("field '%s' cannot be readonly: its type in the inherent type has no readonly values", keyName),
+						kv.GetPosition())
+					return semtypes.SemType{}, expressionEffect{}, false
+				}
 			}
 		}
 		kv.ValueExpr.SetDeterminedType(semtypes.SemType{})
 		if _, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, requiredType); !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		resolveMappingKey(t, kv)
 	}
 
 	e.SelectedAtomicType = *mat
@@ -4822,22 +4835,34 @@ func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e
 	return inherentTy, defaultExpressionEffect(chain), true
 }
 
-func resolveMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField) {
-	switch keyExpr := kv.Key.Expr.(type) {
-	case *ast.BLangLiteral:
-		resolveLiteral(t, keyExpr, semtypes.SemType{})
-	case ast.BNodeWithSymbol:
-		valueTy := kv.ValueExpr.GetDeterminedType()
-		t.setSymbolType(keyExpr.Symbol(), valueTy)
-		if e, ok := keyExpr.(ast.BLangExpression); ok {
-			e.SetDeterminedType(valueTy)
+func resolveMappingKey(t typeResolver, chain *binding, kv *ast.BLangMappingKeyValueField) bool {
+	if kv.Key.Kind == ast.MappingKeyComputed {
+		if _, ok := resolveActionOrExpression(t, chain, kv.Key.Expr, semtypes.String); !ok {
+			return false
 		}
-		if ref, ok := keyExpr.(*ast.BLangVarRef); ok {
-			setVarRefIdentifierTypes(ref)
-		}
+	} else if lit, ok := kv.Key.Expr.(*ast.BLangLiteral); ok {
+		resolveLiteral(t, lit, semtypes.SemType{})
 	}
 	kv.Key.SetDeterminedType(semtypes.Never)
 	kv.SetDeterminedType(semtypes.Never)
+	return true
+}
+
+// computedKeyReadonlyField reports the field a computed name field always modifies when that field is
+// readonly in a mutable inherent type, so the mapping constructor is bound to panic.
+func computedKeyReadonlyField(tyCtx semtypes.Context, inherentTy, keyTy semtypes.SemType) (string, bool) {
+	if semtypes.IsSubtype(tyCtx, inherentTy, semtypes.ValReadonly) {
+		return "", false
+	}
+	shape := semtypes.SingleShape(keyTy)
+	if shape.IsEmpty() {
+		return "", false
+	}
+	name, ok := shape.Get().Value.(string)
+	if !ok {
+		return "", false
+	}
+	return name, mappingFieldIsReadonly(tyCtx, inherentTy, name)
 }
 
 func defaultableMappingFields(t typeResolver, atom *semtypes.MappingAtomicType) []string {
@@ -4890,9 +4915,12 @@ func selectMappingInherentType(t typeResolver, chain *binding, expr *ast.BLangMa
 }
 
 func applicableMappingAlternatives(t typeResolver, chain *binding, expr *ast.BLangMappingConstructorExpr, alts []semtypes.MappingAlternative) ([]semtypes.MappingAlternative, bool) {
-	fields := make([]semtypes.MappingFieldInfo, len(expr.Fields))
-	for i, f := range expr.Fields {
+	var fields []semtypes.MappingFieldInfo
+	for _, f := range expr.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
+		if kv.Key.Kind == ast.MappingKeyComputed {
+			continue
+		}
 		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
 		if !ok {
 			return nil, false
@@ -4901,7 +4929,7 @@ func applicableMappingAlternatives(t typeResolver, chain *binding, expr *ast.BLa
 		if !ok {
 			return nil, false
 		}
-		fields[i] = semtypes.MappingFieldInfo{Name: keyName, Type: valueTy}
+		fields = append(fields, semtypes.MappingFieldInfo{Name: keyName, Type: valueTy})
 	}
 	sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
 

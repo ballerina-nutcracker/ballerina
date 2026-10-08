@@ -1,0 +1,35 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    k = %1;
+    %3 = ConstantLoad 1
+    %4 = newMap {| int... |}{} computed{k=%3}
+    m = %4;
+    s = k;
+    %7 = ConstantLoad true
+    %8 = newMap {| boolean... |}{} computed{k=%7}
+    n = %8;
+    %10 = println(s,m,n) -> bb1;
+  }
+  bb1 {
+    %11 = ConstantLoad c
+    c = %11;
+    %13 = closure_fp $anon/.:$anonFunc$_0
+    f = %13;
+    %15 = f() -> bb2;
+  }
+  bb2 {
+    %16 = println(%15) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$anonFunc$_0() -> {| string... |}{
+  bb0 {
+    %1 = newMap {| string... |}{} computed{(1, c)=(1, k)}
+    %0 = %1;
+    return;
+  }
+}

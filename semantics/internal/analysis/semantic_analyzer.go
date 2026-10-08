@@ -1544,9 +1544,15 @@ func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstr
 	}
 	for _, f := range expr.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
-		// TODO(#987): use string as the expected type once computed keys are resolved as expressions.
-		if kv.Key.Kind == ast.MappingKeyComputed && !analyzeActionOrExpression(a, kv.Key.Expr, semtypes.SemType{}) {
-			return false
+		if kv.Key.Kind == ast.MappingKeyComputed {
+			if !analyzeActionOrExpression(a, kv.Key.Expr, semtypes.String) {
+				return false
+			}
+			fieldTy := common.ComputedMappingFieldType(a.tyCtx(), expr.GetDeterminedType(), kv.Key.Expr.GetDeterminedType())
+			if !analyzeActionOrExpression(a, kv.ValueExpr, fieldTy) {
+				return false
+			}
+			continue
 		}
 		keyName, ok := common.MappingKeyName(a.ctx(), kv.Key)
 		if !ok {

@@ -1,0 +1,33 @@
+(package
+  (import-package ballerina io (as io))
+  (function isFloat (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type float)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable k (type
+          (value-type string)) (expr
+          (literal a))))
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type float))) (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (simple-var-ref k)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isFloat (
+            (index-based-access
+              (simple-var-ref f)
+              (simple-var-ref k))))))))))

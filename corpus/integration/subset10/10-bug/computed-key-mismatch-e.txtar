@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "s"
+  --> computed-key-mismatch-e.bal:19:24
+   |
+19 |     map<int> m = {[k]: "s"}; // @error
+   |                        ^^^

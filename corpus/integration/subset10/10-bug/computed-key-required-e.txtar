@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'a'
+  --> computed-key-required-e.bal:22:11
+   |
+22 |     R r = {["a"]: 1}; // @error
+   |           ^^^^^^^^^^

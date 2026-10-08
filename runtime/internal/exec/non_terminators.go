@@ -74,6 +74,11 @@ func execNewMap(ctx *extern.Context, newMap *bir.NewMap, frame *Frame) {
 		panic("mapping inherent type has no atomic representation")
 	}
 	m := values.NewMap(newMap.Type, atomic, newMap.IsReadonly, entries)
+	for _, entry := range newMap.ComputedValues {
+		kv := entry.(*bir.MappingConstructorKeyValueEntry)
+		keyStr := getOperandValue(ctx, kv.KeyOp(), frame).(string)
+		m.InitComputedField(ctx.TypeCtx(), keyStr, getOperandValue(ctx, kv.ValueOp(), frame))
+	}
 	setOperandValue(ctx, newMap.GetLhsOperand(), frame, m)
 }
 

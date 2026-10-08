@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> computed-key-uninit-e.bal:19:20
+   |
+19 |     map<int> m = {[k]: 1}; // @error
+   |                    ^

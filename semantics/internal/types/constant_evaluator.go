@@ -285,13 +285,10 @@ func (e *constantExpressionEvaluator) constantMappingKey(field *ast.BLangMapping
 		e.unsupportedFailure("constant computed mapping key not implemented", key.GetPosition())
 		return "", false
 	}
-	switch expr := key.Expr.(type) {
-	case *ast.BLangLiteral:
-		if value, ok := expr.Value.(string); ok {
+	if lit, ok := key.Expr.(*ast.BLangLiteral); ok {
+		if value, ok := lit.Value.(string); ok {
 			return value, true
 		}
-	case *ast.BLangVarRef:
-		return expr.VariableName.GetValue(), true
 	}
 	e.resolver.internalError(fmt.Sprintf("unexpected constant mapping key expression %T", key.Expr), key.GetPosition())
 	return "", false

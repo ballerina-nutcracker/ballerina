@@ -129,15 +129,21 @@ func mapQuerySelectExpectedTypeWithValue(env semtypes.Env, valueTy semtypes.SemT
 }
 
 func MappingKeyName(ctx *context.CompilerContext, key *ast.BLangMappingKey) (string, bool) {
-	switch expr := key.Expr.(type) {
-	case *ast.BLangLiteral:
-		return expr.Value.(string), true
-	case *ast.BLangVarRef:
-		return expr.VariableName.GetValue(), true
-	default:
-		ctx.InternalError(fmt.Sprintf("unexpected record key expression type: %T", key.Expr), key.GetPosition())
-		return "", false
+	if lit, ok := key.Expr.(*ast.BLangLiteral); ok && key.Kind != ast.MappingKeyComputed {
+		return lit.Value.(string), true
 	}
+	ctx.InternalError(fmt.Sprintf("mapping key is not a field name literal: %T", key.Expr), key.GetPosition())
+	return "", false
+}
+
+// ComputedMappingFieldType returns the type inherentType requires for the value of a computed name
+// field whose key has type keyTy. A key that is not a string is an error reported on the key; the
+// value is then resolved as if the key were any string so that no follow-on error is reported.
+func ComputedMappingFieldType(cx semtypes.Context, inherentType, keyTy semtypes.SemType) semtypes.SemType {
+	if !semtypes.IsSubtype(cx, keyTy, semtypes.String) {
+		keyTy = semtypes.String
+	}
+	return semtypes.MappingMemberTypeInnerValProj(cx, inherentType, keyTy)
 }
 
 func FormatIncompatibleTypeMessage(ctx semtypes.Context, expectedType, actualType semtypes.SemType) string {
