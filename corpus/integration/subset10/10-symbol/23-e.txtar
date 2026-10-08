@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: UnknownAnnotType
+  --> 23-e.bal:18:12
+   |
+18 | annotation UnknownAnnotType A on function; // @error
+   |            ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: redeclared annotation 'A'
+  --> 23-e.bal:17:16
+   |
+17 | annotation int A on function; // @error
+   |                ^
+
+error[SEMANTIC_ERROR]: redeclared annotation 'A'
+  --> 23-e.bal:18:29
+   |
+18 | annotation UnknownAnnotType A on function; // @error
+   |                             ^

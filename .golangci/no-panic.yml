@@ -22,6 +22,8 @@ linters:
       forbid:
         - pattern: ^panic$
           msg: return or report an internal error instead of panicking
+        - pattern: ^ast\.(Walk|Visitor)$
+          msg: symbol resolution must traverse the AST explicitly instead of using ast.Walk or ast.Visitor
     depguard:
       rules:
         no-test-util-in-production:
@@ -47,6 +49,16 @@ linters:
 
   disable:
     - unused
+  exclusions:
+    rules:
+      - linters:
+          - forbidigo
+        text: ast\.(Walk|Visitor)
+        path-except: internal/symbols/
+      - linters:
+          - forbidigo
+        text: ast\.(Walk|Visitor)
+        path: _test\.go$
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

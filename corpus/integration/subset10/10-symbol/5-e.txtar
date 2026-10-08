@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingArg
+  --> 5-e.bal:24:8
+   |
+24 |     }, missingArg); // @error
+   |        ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingInBody
+  --> 5-e.bal:23:20
+   |
+23 |         return n + missingInBody; // @error
+   |                    ^^^^^^^^^^^^^
