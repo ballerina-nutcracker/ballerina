@@ -344,6 +344,6 @@ These are intentional departures from the [language specification](https://balle
 
 ## Object/class definitions
 
-- Only `client`, `service` and `isolated` `object-type-quals` / `class-type-quals` are supported
+- Only `client`, `service` and `isolated` `object-type-quals` are supported
 - Supports `object-field-descriptor`, `method-decl`, `remote-method-decl` and `resource-method-decl` members
 - Supports `included-record-param`, `rest-param` and `defaultable-param` in methods
