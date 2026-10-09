@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> anon-isolated-lock-e.bal:25:45
+   |
+25 |         counter += [1].map(value => value + g)[0]; // @error
+   |                                             ^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> anon-isolated-lock-e.bal:24:37
+   |
+24 |         counter += [1].map(value => nonIso(value))[0]; // @error
+   |                                     ^^^^^^^^^^^^^

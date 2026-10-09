@@ -12,7 +12,7 @@ error[SEMANTIC_ERROR]: invocation of a non-isolated function
 28 |     return value/*.slice(0, nextIndex()); // @error
    |                             ^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: invocation of a non-isolated function inside lock statement
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
   --> xml-step-contexts-e.bal:33:30
    |
 33 |         _ = value/*.slice(0, nextIndex()); // @error

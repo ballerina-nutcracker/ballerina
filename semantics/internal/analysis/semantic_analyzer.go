@@ -84,6 +84,9 @@ type (
 		// deferred initialization of their final locals is unimplemented
 		// (https://github.com/ballerina-nutcracker/ballerina/issues/952).
 		isLambda bool
+		// inferredIsolated marks an infer-anonymous function whose isolation
+		// is inferred from the expected function type (spec §6.18).
+		inferredIsolated bool
 	}
 
 	loopAnalyzer struct {
@@ -942,7 +945,7 @@ func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression
 	case *ast.BLangNewExpression:
 		return analyzeNewExpression(a, expr, expectedType)
 	case *ast.BLangLambdaFunction:
-		return analyzeLambdaFunction(a, expr)
+		return analyzeLambdaFunction(a, expr) && validateResolvedType(a, expr, expectedType)
 	case *ast.BLangRemoteMethodCallAction:
 		return analyzeInvocation(a, expr, semtypes.SemType{}, expectedType)
 	case *ast.BLangClientResourceAccessAction:
@@ -1390,14 +1393,26 @@ func enclosingFunctionIsIsolated(a analyzer) bool {
 	if fa == nil {
 		return false
 	}
-	return fa.function.IsIsolated()
+	return fa.function.IsIsolated() || fa.inferredIsolated
+}
+
+func isInferredIsolatedLambda(a analyzer, expr *ast.BLangLambdaFunction) bool {
+	if !expr.HasInferredParams() {
+		return false
+	}
+	fnSym := a.ctx().GetSymbol(expr.Function.Symbol()).(model.FunctionSymbol)
+	return fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0
 }
 
 func analyzeLambdaFunction[A analyzer](a A, expr *ast.BLangLambdaFunction) bool {
 	fa := initializeFunctionAnalyzer(a, expr.Function)
 	fa.isLambda = true
 	fn := expr.Function
-	if fn.IsIsolated() && fn.Body != nil && !enclosingFunctionIsIsolated(a) {
+	fa.inferredIsolated = isInferredIsolatedLambda(a, expr)
+	if (fn.IsIsolated() || fa.inferredIsolated) && fn.Body != nil && !enclosingFunctionIsIsolated(a) {
+		if fa.inferredIsolated {
+			validateIsolatedFunction(fa, fn)
+		}
 		validateIsolatedCapture(a, enclosingFunctionLocals(a), fn.Body.(ast.BLangNode))
 	}
 	// Walk params + body directly rather than the BLangFunction node

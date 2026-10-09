@@ -1,0 +1,70 @@
+(package
+  (import-package ballerina io (as io))
+  (function apply (
+    (variable f (type
+      (function-type (
+        (value-type int)) (
+        (value-type int)))))
+    (variable v (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (invocation f (
+        (simple-var-ref v)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable k (type
+          (value-type int)) (expr
+          (literal 10))))
+      (var-def
+        (variable f (type
+          (function-type () (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_0 () ()
+              (expr-function-body
+                (simple-var-ref k)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation apply (
+            (lambda
+              (function $anonFunc$_1 (
+                (variable x)) ()
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref x)
+                    (simple-var-ref k)))))
+            (literal 1))))))
+      (var-def
+        (variable a (type
+          (value-type any)) (expr
+          (simple-var-ref f))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref a)
+            (function-type () (
+              (value-type int)))))))
+      (var-def
+        (variable h (type
+          (function-type () (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_2 () ()
+              (expr-function-body
+                (simple-var-ref k)))))))
+      (var-def
+        (variable b (type
+          (value-type any)) (expr
+          (simple-var-ref h))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref b)
+            (function-type () (
+              (value-type int))))))))))

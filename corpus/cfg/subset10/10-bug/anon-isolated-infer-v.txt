@@ -1,0 +1,81 @@
+(apply
+  (bb0 () ()
+    (invocation f (
+      (simple-var-ref v)))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable k (type
+        (value-type int)) (expr
+        (literal 10))))
+    (var-def
+      (variable f (type
+        (function-type () (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_0 () ()
+            (expr-function-body
+              (simple-var-ref k)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation apply (
+          (lambda
+            (function $anonFunc$_1 (
+              (variable x)) ()
+              (expr-function-body
+                (binary-expr +
+                  (simple-var-ref x)
+                  (simple-var-ref k)))))
+          (literal 1))))))
+    (var-def
+      (variable a (type
+        (value-type any)) (expr
+        (simple-var-ref f))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref a)
+          (function-type () (
+            (value-type int)))))))
+    (var-def
+      (variable h (type
+        (function-type () (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_2 () ()
+            (expr-function-body
+              (simple-var-ref k)))))))
+    (var-def
+      (variable b (type
+        (value-type any)) (expr
+        (simple-var-ref h))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref b)
+          (function-type () (
+            (value-type int)))))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (simple-var-ref k)
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref x)
+      (simple-var-ref k))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (simple-var-ref k)
+  )
+)

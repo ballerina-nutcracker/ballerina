@@ -7,6 +7,12 @@ error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
    |                ^^^^^
 
 error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> map-isolated-param-semantic-e.bal:22:36
+   |
+22 |         return values.map(value => nonIsolated(value)).length(); // @error
+   |                                    ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
   --> map-isolated-param-semantic-e.bal:27:28
    |
 27 |     int[] values = [1].map(nonIsolated); // @error
@@ -29,9 +35,3 @@ error[SEMANTIC_ERROR]: invocation of a non-isolated function
    |
 38 |         return [1].map(value => [value].map(nonIsolated)[0])[0]; // @error
    |                                             ^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: invocation of a non-isolated function inside lock statement
-  --> map-isolated-param-semantic-e.bal:22:36
-   |
-22 |         return values.map(value => nonIsolated(value)).length(); // @error
-   |                                    ^^^^^^^^^^^^^^^^^^
