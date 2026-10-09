@@ -1,0 +1,46 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (field-based-access sum
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access neg
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access conv
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access tmpl
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access cond
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access guard
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access list
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access mapping
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access n
+          (field-based-access inner
+            (simple-var-ref A))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref A)
+          (value-type readonly)))))
+  )
+)

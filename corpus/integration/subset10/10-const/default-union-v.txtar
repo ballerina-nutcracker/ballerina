@@ -1,0 +1,5 @@
+-- stdout --
+{"x":1}
+true
+{"x":4}
+-- stderr --

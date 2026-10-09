@@ -1,0 +1,30 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref B))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref C))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref D))))
+    (var-def
+      (variable runtimeValue (type
+        (user-defined-type Leafy)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access runtime
+          (simple-var-ref runtimeValue)))))
+  )
+)
+(next
+  (bb0 () ()
+    (return
+      (literal 42))
+  )
+)

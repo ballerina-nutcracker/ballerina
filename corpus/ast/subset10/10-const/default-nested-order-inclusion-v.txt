@@ -1,0 +1,50 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Leaf
+    (record-type
+      (field inner
+        (union-type
+          (user-defined-type Inner)
+          (value-type null))
+        (literal <nil>))
+      (field x
+        (value-type int)
+        (literal 1))))
+  (type-definition Inner
+    (record-type
+      (field a
+        (user-defined-type Leaf)
+        (mapping-constructor-expr))))
+  (type-definition Middle
+    (record-type
+      (field z
+        (value-type int)
+        (literal 3))))
+  (type-definition Outer
+    (record-type
+      (field middle
+        (user-defined-type Middle)
+        (mapping-constructor-expr))))
+  (const C (
+    (user-defined-type Outer)) (
+    (mapping-constructor-expr)))
+  (const M (
+    (user-defined-type Middle)) (
+    (mapping-constructor-expr)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (user-defined-type Outer)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref o))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref M)))))))

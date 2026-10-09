@@ -1,0 +1,30 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref B))))
+    (var-def
+      (variable r (type
+        (user-defined-type Runtime)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (var-def
+      (variable o (type
+        (user-defined-type Outer)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref o))))
+  )
+)
+(next
+  (bb0 () ()
+    (return
+      (literal 42))
+  )
+)

@@ -1,0 +1,7 @@
+-- stdout --
+{"runtime":3,"b":true,"s":"m","x":1,"n":null}
+{"runtime":7,"x":1,"n":null}
+{"x":5,"runtime":7,"n":null}
+{"x":5,"runtime":7,"n":null}
+42
+-- stderr --

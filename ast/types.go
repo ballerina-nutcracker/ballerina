@@ -22,6 +22,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 type ObjectNetworkQuals uint8
@@ -111,10 +112,15 @@ type (
 	// symbol and scope of the closure desugar generates to evaluate it. FnRef and FnScope are
 	// allocated during symbol resolution so desugar, which runs concurrently, does not have
 	// to allocate symbol spaces. See model.DefaultableParam for the equivalent on parameters.
+	// The closure exists for every default. When the default is a constant expression,
+	// IsConst is set and Value holds its folded value, which compile-time evaluation uses
+	// instead of the closure; a nil Value is a folded ().
 	BFieldDefault struct {
 		Expr    BLangExpression
 		FnRef   model.SymbolRef
 		FnScope model.Scope
+		Value   values.BalValue
+		IsConst bool
 	}
 
 	bObjectFieldBase struct {

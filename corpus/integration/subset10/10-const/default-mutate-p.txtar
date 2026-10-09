@@ -1,0 +1,5 @@
+-- stdout --
+{}
+-- stderr --
+error: inherent type violation: cannot mutate readonly value
+        at main(default-mutate-p.bal:27)

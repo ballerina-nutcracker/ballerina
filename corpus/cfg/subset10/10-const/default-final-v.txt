@@ -1,0 +1,108 @@
+(build
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (record-type
+          (field z
+            (value-type int)
+            (simple-var-ref p))
+          (field w
+            (value-type int)
+            (literal 3)))) (expr
+        (mapping-constructor-expr))))
+    (return
+      (binary-expr +
+        (field-based-access z
+          (simple-var-ref r))
+        (field-based-access w
+          (simple-var-ref r))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation sumInLoop ()))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref A))))
+    (var-def
+      (variable r (type
+        (user-defined-type FromFinal)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (expression-stmt
+      (invocation io println (
+        (invocation build (
+          (literal 5))))))
+  )
+)
+(sumInLoop
+  (bb0 () (bb1)
+    (var-def
+      (variable total (type
+        (value-type int)) (expr
+        (literal 0))))
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr <
+      (simple-var-ref i)
+      (literal 2))
+  )
+  (bb2 (bb1) (bb1)
+    (var-def
+      (variable r (type
+        (record-type
+          (field z
+            (value-type int)
+            (literal 2))
+          (field w
+            (value-type int)
+            (literal 1)))) (expr
+        (mapping-constructor-expr))))
+    (compound-assignment +
+      (simple-var-ref total)
+      (binary-expr +
+        (field-based-access z
+          (simple-var-ref r))
+        (field-based-access w
+          (simple-var-ref r))))
+    (compound-assignment +
+      (simple-var-ref i)
+      (literal 1))
+  )
+  (bb3 (bb1) (bb4))
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (binary-expr ..<
+      (literal 0)
+      (literal 2))
+    (var-def
+      (variable j (type
+        (value-type int))))
+  )
+  (bb5 (bb4) (bb4)
+    (var-def
+      (variable r (type
+        (record-type
+          (field z
+            (value-type int)
+            (literal 10)))) (expr
+        (mapping-constructor-expr))))
+    (compound-assignment +
+      (simple-var-ref total)
+      (binary-expr +
+        (field-based-access z
+          (simple-var-ref r))
+        (simple-var-ref j)))
+  )
+  (bb6 (bb4) ()
+    (return
+      (simple-var-ref total))
+  )
+)

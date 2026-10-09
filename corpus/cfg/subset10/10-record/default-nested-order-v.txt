@@ -1,0 +1,14 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (user-defined-type B)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref C))))
+  )
+)

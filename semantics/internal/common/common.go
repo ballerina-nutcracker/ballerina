@@ -128,16 +128,26 @@ func mapQuerySelectExpectedTypeWithValue(env semtypes.Env, valueTy semtypes.SemT
 	return ld.Define(env, []semtypes.SemType{semtypes.String, valueTy})
 }
 
-func MappingKeyName(ctx *context.CompilerContext, key *ast.BLangMappingKey) (string, bool) {
+// StaticMappingKeyName reads a mapping key that is known without evaluation,
+// reporting no diagnostic for a key of any other shape.
+func StaticMappingKeyName(key *ast.BLangMappingKey) (string, bool) {
 	switch expr := key.Expr.(type) {
 	case *ast.BLangLiteral:
-		return expr.Value.(string), true
+		name, ok := expr.Value.(string)
+		return name, ok
 	case *ast.BLangVarRef:
 		return expr.VariableName.GetValue(), true
 	default:
-		ctx.InternalError(fmt.Sprintf("unexpected record key expression type: %T", key.Expr), key.GetPosition())
 		return "", false
 	}
+}
+
+func MappingKeyName(ctx *context.CompilerContext, key *ast.BLangMappingKey) (string, bool) {
+	if name, ok := StaticMappingKeyName(key); ok {
+		return name, true
+	}
+	ctx.InternalError(fmt.Sprintf("unexpected record key expression type: %T", key.Expr), key.GetPosition())
+	return "", false
 }
 
 func FormatIncompatibleTypeMessage(ctx semtypes.Context, expectedType, actualType semtypes.SemType) string {

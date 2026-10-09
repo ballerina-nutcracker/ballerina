@@ -1,0 +1,5 @@
+-- stdout --
+{"middle":{"z":3,"a":{"inner":null,"x":1}}}
+{"middle":{"z":3,"a":{"inner":null,"x":1}}}
+{"z":3,"a":{"inner":null,"x":1}}
+-- stderr --

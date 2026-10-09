@@ -1,0 +1,7 @@
+-- stdout --
+{"inner":{"x":5,"y":1},"k":0}
+true
+{"inner":{"x":7,"y":1},"k":0}
+{"inner":{"y":2,"x":42},"k":0}
+{"node":{"value":1,"next":null},"other":{"value":3,"next":null}}
+-- stderr --
