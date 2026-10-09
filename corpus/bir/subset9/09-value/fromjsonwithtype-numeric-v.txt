@@ -58,7 +58,7 @@ main() -> nil|error{
     %31 = println(%30) -> bb11;
   }
   bb11 {
-    %32 = ConstantLoad 9.223372036854776E+18
+    %32 = ConstantLoad 9223372036854775808
     tooBig = %32;
     tooBigJson = tooBig;
     %35 = ConstantLoad typedesc

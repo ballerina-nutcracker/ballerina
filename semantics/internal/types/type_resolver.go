@@ -19,6 +19,8 @@ package types
 import (
 	"fmt"
 	"maps"
+	"math"
+	"math/big"
 	"slices"
 	"sort"
 	"strconv"
@@ -3382,7 +3384,8 @@ func resolveAsInt(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bool) 
 	case int64:
 		intVal = v
 	case float64:
-		intVal = int64(v)
+		t.semanticError(fmt.Sprintf("int literal out of range: %s", text), n.GetPosition())
+		return semtypes.SemType{}, false
 	default:
 		t.internalError(fmt.Sprintf("invalid int literal: %s", text), n.GetPosition())
 		return semtypes.SemType{}, false
@@ -3399,6 +3402,10 @@ func resolveAsFloat(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bool
 	case int64:
 		floatVal = float64(v)
 	case float64:
+		if math.IsInf(v, 0) {
+			t.semanticError(fmt.Sprintf("invalid float literal: %s", text), n.GetPosition())
+			return semtypes.SemType{}, false
+		}
 		floatVal = v
 	default:
 		if balCommon.HasHexIndicator(text) {
@@ -3422,12 +3429,11 @@ func resolveAsDecimal(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bo
 	case int64:
 		decVal = decimal.FromInt64(v)
 	case float64:
-		d, err := decimal.FromString(strconv.FormatFloat(v, 'g', -1, 64))
-		if err != nil {
-			t.internalError(fmt.Sprintf("failed to convert float %v to decimal: %v", v, err), n.GetPosition())
+		parsed, ok := parseDecimalValue(t, outOfRangeIntLiteralDigits(text), n.GetPosition())
+		if !ok {
 			return semtypes.SemType{}, false
 		}
-		decVal = d
+		decVal = parsed
 	default:
 		parsed, ok := parseDecimalValue(t, stripFloatingPointTypeSuffix(text), n.GetPosition())
 		if !ok {
@@ -3452,6 +3458,16 @@ func stripFloatingPointTypeSuffix(s string) string {
 		return s[:len(s)-1]
 	}
 	return s
+}
+
+// outOfRangeIntLiteralDigits returns the decimal digits of an int literal that
+// did not fit in int.
+func outOfRangeIntLiteralDigits(text string) string {
+	if !balCommon.HasHexIndicator(text) {
+		return text
+	}
+	val, _ := new(big.Int).SetString(text, 0)
+	return val.String()
 }
 
 func parseFloatValue(t typeResolver, strValue string, pos diagnostics.Location) (float64, bool) {
