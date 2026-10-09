@@ -62,6 +62,10 @@
 - [Start action](https://ballerina.io/spec/lang/master/#start-action)
 - [Wait action](https://ballerina.io/spec/lang/master/#wait-action)
 - [Error constructor](https://ballerina.io/spec/lang/master/#error-constructor-expr)
+  - Detail fields that are not given as named arguments take the default values of the detail record type, with the following restrictions:
+    - When the contextually expected type is a union of error types, named arguments are not used to select a member, so defaults are applied only when the detail type has a single mapping alternative.
+    - When the detail type is an intersection of record types, only one of them may supply defaults for the omitted fields. The specification does not define how defaults combine across an intersection.
+    - A default is not applied to a field whose type another intersected record narrows, even when the default value belongs to the narrowed type.
 - [Checking expression](https://ballerina.io/spec/lang/master/#checking-expr) (`check` and `checkpanic`)
   - Currently `check` is not supported in [defaultable parameter expressions](https://ballerina.io/spec/lang/master/#defaultable-param) or [record field default expressions](https://ballerina.io/spec/lang/master/#record-type-descriptor), even when the operand cannot produce an error.
 - [Trap expression](https://ballerina.io/spec/lang/master/#trap-expr)
