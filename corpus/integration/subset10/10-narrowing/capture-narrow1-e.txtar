@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-narrow1-e.bal:27:17
+   |
+27 |         int y = x; // @error x is captured, so the type test cannot narrow it
+   |                 ^

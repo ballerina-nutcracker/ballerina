@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> capture-argument-e.bal:27:16
+   |
+27 |     io:println(pick(x is int, x)); // @error x is not narrowed by an argument
+   |                ^^^^^^^^^^^^^^^^^

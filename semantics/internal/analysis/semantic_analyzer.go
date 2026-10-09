@@ -378,7 +378,12 @@ func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		if n.IsConstant() {
 			return createConstantAnalyzer(sa, n)
 		}
-		return sa
+		if n.Expr == nil {
+			return sa
+		}
+		walkGlobalVarDeclaration(sa, n)
+		analyzeGlobalVarInit(sa, n)
+		return nil
 	case *ast.BLangReturn:
 		// Error: return only valid in functions
 		sa.semanticErr("return statement outside function", n.GetPosition())
@@ -394,6 +399,25 @@ func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		// Now delegates function creation to visitInner
 		return visitInner(sa, node)
 	}
+}
+
+// walkGlobalVarDeclaration walks everything of a module-level variable except
+// its initializer, which analyzeGlobalVarInit analyzes.
+func walkGlobalVarDeclaration(sa *semanticAnalyzer, n *ast.BLangVariable) {
+	for i := range n.AnnAttachments {
+		ast.Walk(sa, &n.AnnAttachments[i])
+	}
+	if typeNode := n.TypeNode(); typeNode != nil {
+		ast.Walk(sa, typeNode.(ast.BLangNode))
+	}
+}
+
+func analyzeGlobalVarInit(sa *semanticAnalyzer, n *ast.BLangVariable) {
+	expectedType := sa.ctx().SymbolType(n.Symbol())
+	if n.IsListener() {
+		expectedType = common.ListenerInitExpectedType(expectedType)
+	}
+	analyzeActionOrExpression(sa, n.Expr, expectedType)
 }
 
 func (sa *semanticAnalyzer) processImport(importNode *ast.BLangImportPackage) {
@@ -1529,6 +1553,17 @@ func listOfMemberType(env semtypes.Env, memberTy semtypes.SemType) semtypes.SemT
 	return ld.Define(env, nil, semtypes.ListRest(memberTy))
 }
 
+func analyzeComputedMappingField[A analyzer](a A, expr *ast.BLangMappingConstructorExpr, mat semtypes.MappingAtomicType, kv *ast.BLangMappingKeyValueField) bool {
+	if !analyzeActionOrExpression(a, kv.Key.Expr, semtypes.String) {
+		return false
+	}
+	valueTy, ok := common.MappingFieldExpectedType(a.ctx(), a.tyCtx(), expr.GetDeterminedType(), &mat, kv)
+	if !ok {
+		return false
+	}
+	return analyzeActionOrExpression(a, kv.ValueExpr, valueTy)
+}
+
 func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) bool {
 	// The type resolver has already selected the inherent type and re-resolved field values
 	// with per-field expected types. We only need to validate fields here.
@@ -1544,9 +1579,11 @@ func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstr
 	}
 	for _, f := range expr.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
-		// TODO(#987): use string as the expected type once computed keys are resolved as expressions.
-		if kv.Key.Kind == ast.MappingKeyComputed && !analyzeActionOrExpression(a, kv.Key.Expr, semtypes.SemType{}) {
-			return false
+		if kv.Key.Kind == ast.MappingKeyComputed {
+			if !analyzeComputedMappingField(a, expr, mat, kv) {
+				return false
+			}
+			continue
 		}
 		keyName, ok := common.MappingKeyName(a.ctx(), kv.Key)
 		if !ok {

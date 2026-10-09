@@ -189,6 +189,18 @@ func (c *CompilerContext) ValueSymbolMetadata(symbol model.SymbolRef) (ValueSymb
 	return c.env.ValueSymbolMetadata(symbol)
 }
 
+func (c *CompilerContext) NewCaptureGroup() model.CaptureGroupRef {
+	return c.env.newCaptureGroup()
+}
+
+func (c *CompilerContext) AddToCaptureGroup(group model.CaptureGroupRef, ref model.SymbolRef) {
+	c.env.addToCaptureGroup(group, ref)
+}
+
+func (c *CompilerContext) CaptureGroupContains(group model.CaptureGroupRef, ref model.SymbolRef) bool {
+	return c.env.captureGroupContains(group, ref)
+}
+
 func (c *CompilerContext) SetSymbolType(symbol model.SymbolRef, ty semtypes.SemType) {
 	c.GetSymbol(symbol).SetType(ty)
 }
