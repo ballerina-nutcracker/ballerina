@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: converted constant does not belong to target type
+  --> numeric-union5-e.bal:20:17
+   |
+20 | const byte? B = <byte?>300.0; // @error converted value is not a byte
+   |                 ^^^^^^^^^^^^

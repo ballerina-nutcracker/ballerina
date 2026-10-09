@@ -1,0 +1,171 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (value-type float)) (expr
+        (literal 2.7))))
+    (var-def
+      (variable n (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (type-conversion-expr
+          (simple-var-ref f)
+          (union-type
+            (value-type int)
+            (value-type null))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+    (var-def
+      (variable a (type
+        (value-type anydata)) (expr
+        (literal 2.7))))
+    (var-def
+      (variable s (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (type-conversion-expr
+          (simple-var-ref a)
+          (union-type
+            (value-type int)
+            (value-type string))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref s))))
+    (var-def
+      (variable b (type
+        (value-type any)) (expr
+        (literal 200))))
+    (var-def
+      (variable bs (type
+        (union-type
+          (value-type byte)
+          (value-type string))) (expr
+        (type-conversion-expr
+          (simple-var-ref b)
+          (union-type
+            (value-type byte)
+            (value-type string))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref bs))))
+    (var-def
+      (variable d (type
+        (value-type decimal)) (expr
+        (literal 3.5))))
+    (var-def
+      (variable fl (type
+        (union-type
+          (value-type float)
+          (value-type null))) (expr
+        (type-conversion-expr
+          (simple-var-ref d)
+          (union-type
+            (value-type float)
+            (value-type null))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fl))))
+    (var-def
+      (variable i (type
+        (value-type any)) (expr
+        (literal 7))))
+    (var-def
+      (variable db (type
+        (union-type
+          (value-type decimal)
+          (value-type boolean))) (expr
+        (type-conversion-expr
+          (simple-var-ref i)
+          (union-type
+            (value-type decimal)
+            (value-type boolean))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref db))))
+    (var-def
+      (variable c (type
+        (value-type any)) (expr
+        (literal 5))))
+    (var-def
+      (variable fs (type
+        (union-type
+          (value-type float)
+          (value-type string))) (expr
+        (type-conversion-expr
+          (simple-var-ref c)
+          (union-type
+            (value-type float)
+            (value-type string))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fs))))
+    (var-def
+      (variable af (type
+        (value-type any)) (expr
+        (literal 2.7))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref af)
+          (union-type
+            (union-type
+              (union-type
+                (value-type int)
+                (value-type float))
+              (value-type boolean))
+            (value-type null))))))
+    (var-def
+      (variable ai (type
+        (value-type any)) (expr
+        (literal 5))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref ai)
+          (union-type
+            (union-type
+              (union-type
+                (value-type int)
+                (value-type float))
+              (value-type boolean))
+            (value-type null))))))
+    (var-def
+      (variable ab (type
+        (value-type any)) (expr
+        (literal true))))
+    (expression-stmt
+      (invocation io println (
+        (type-conversion-expr
+          (simple-var-ref ab)
+          (union-type
+            (union-type
+              (union-type
+                (value-type int)
+                (value-type float))
+              (value-type boolean))
+            (value-type null))))))
+    (var-def
+      (variable an (type
+        (value-type any)) (expr
+        (literal <nil>))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (type-conversion-expr
+            (simple-var-ref an)
+            (union-type
+              (union-type
+                (union-type
+                  (value-type int)
+                  (value-type float))
+                (value-type boolean))
+              (value-type null)))
+          (value-type null)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref C))))
+  )
+)

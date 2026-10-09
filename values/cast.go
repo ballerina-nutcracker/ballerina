@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
@@ -43,21 +44,28 @@ func CastValue(typeCtx semtypes.Context, value BalValue, targetType semtypes.Sem
 // ConvertNumericValue performs the numeric conversion behind the `<Type>` cast
 // operator, sharing the same NumericConvertTo* rules used by cloneWithType and
 // fromJsonWithType. Any conversion failure is reported as a bad-type-cast error.
+// Only a numeric value converts to a target that also admits non-numeric types,
+// such as `int?`.
 func ConvertNumericValue(value BalValue, targetType semtypes.SemType) (BalValue, error) {
+	numericType := semtypes.Intersect(semtypes.WidenToBasicTypes(targetType), semtypes.Number)
 	switch {
-	case semtypes.IsSubtypeSimple(targetType, semtypes.Int):
+	case semtypes.IsNever(numericType):
+		return nil, ErrBadTypeCast
+	case !isNumericValue(value) && !semtypes.IsSubtypeSimple(targetType, semtypes.Number):
+		return nil, ErrBadTypeCast
+	case semtypes.IsSubtypeSimple(numericType, semtypes.Int):
 		n, err := NumericConvertToInt(value)
 		if err != nil {
 			return nil, fmt.Errorf("bad type cast: %w", err)
 		}
 		return n, nil
-	case semtypes.IsSubtypeSimple(targetType, semtypes.Float):
+	case semtypes.IsSubtypeSimple(numericType, semtypes.Float):
 		f, err := NumericConvertToFloat(value)
 		if err != nil {
 			return nil, fmt.Errorf("bad type cast: %w", err)
 		}
 		return f, nil
-	case semtypes.IsSubtypeSimple(targetType, semtypes.Decimal):
+	case semtypes.IsSubtypeSimple(numericType, semtypes.Decimal):
 		d, err := NumericConvertToDecimal(value)
 		if err != nil {
 			return nil, fmt.Errorf("bad type cast: %w", err)
@@ -66,4 +74,12 @@ func ConvertNumericValue(value BalValue, targetType semtypes.SemType) (BalValue,
 	default:
 		return nil, ErrBadTypeCast
 	}
+}
+
+func isNumericValue(value BalValue) bool {
+	switch value.(type) {
+	case int64, float64, *decimal.Decimal:
+		return true
+	}
+	return false
 }
