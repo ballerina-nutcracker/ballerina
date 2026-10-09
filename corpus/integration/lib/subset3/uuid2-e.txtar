@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int:Unsigned32, got -1
+  --> uuid2-e.bal:23:18
+   |
+23 |         timeLow: -1, // @error
+   |                  ^^

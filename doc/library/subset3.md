@@ -7,7 +7,7 @@ module, building on the language's new `stream` type, with client-side
 response data binding, XML payloads, and `anydata` resource returns for the
 `http` module, and the new `ballerina/protobuf` package, providing the protobuf
 well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the
-scalar wrapper types) used by generated gRPC client/service code.
+scalar wrapper types) used by generated gRPC client/service code, and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -221,3 +221,25 @@ resource function get album() returns xml {
 | `protobuf.types.duration`, `protobuf.types.empty`, `protobuf.types.struct`, `protobuf.types.timestamp`, `protobuf.types.wrappers` context record types | Supported |
 
 Not covered in this subset: arbitrary user-defined message record (de)serialization via the `@protobuf:Descriptor` annotation — blocked on `typeof` support rather than on the library — and the `.proto`-to-Ballerina code generator (`ballerina/grpc` and its tooling are not ported).
+
+## [uuid](https://github.com/ballerina-platform/module-ballerina-uuid/blob/master/docs/spec/spec.md)
+
+RFC 4122 UUID generation, validation, version detection, and conversions
+between string, byte array, and the `Uuid` record.
+
+| Function | Notes |
+|---|---|
+| `createType1AsString` / `createType1AsRecord` | Time-based UUID (type 1); the node identifier is a random 6-byte value (RFC 4122 §4.5) rather than the host MAC address |
+| `createType3AsString` / `createType3AsRecord` | Namespace + name UUID (type 3, MD5) |
+| `createType4AsString` / `createType4AsRecord` | Random UUID (type 4) |
+| `createType5AsString` / `createType5AsRecord` | Namespace + name UUID (type 5, SHA-1) |
+| `createRandomUuid` | Alias for `createType4AsString` |
+| `nilAsString` / `nilAsRecord` | The nil UUID (`00000000-0000-0000-0000-000000000000`) |
+| `validate` | Tests whether a string is a well-formed UUID |
+| `getVersion` | Detects the RFC version (`V1`, `V3`, `V4`, `V5`) of a UUID string |
+| `toBytes` / `toString` / `toRecord` | Convert between a UUID string, `byte[]`, and the `Uuid` record; `byte[]` inputs must be exactly 16 bytes |
+
+Predefined `NamespaceUUID` constants (`NAME_SPACE_DNS`, `NAME_SPACE_URL`,
+`NAME_SPACE_OID`, `NAME_SPACE_X500`, `NAME_SPACE_NIL`) are available for type
+3/5 generation. The `Uuid` record is `readonly` with `int:Unsigned32` /
+`int:Unsigned16` / `int:Unsigned8` fields, matching jBallerina's contract.
