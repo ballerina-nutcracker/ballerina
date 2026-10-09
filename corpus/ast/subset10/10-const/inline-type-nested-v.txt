@@ -1,0 +1,97 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const SIZE (
+    (value-type int)) (
+    (literal 2)))
+  (const A (
+    (union-type
+      (array-type
+        (value-type int) dimensions: 1 ([
+        (literal 3)]))
+      (value-type string))) (
+    (list-constructor-expr
+      (literal 1))))
+  (const M (
+    (constrained-type
+      (builtin-ref-type map)
+      (array-type
+        (value-type int) dimensions: 1 ([
+        (literal 2)])))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (list-constructor-expr
+          (literal 1))))))
+  (const T (
+    (tuple-type
+      (value-type int)
+      (array-type
+        (value-type int) dimensions: 1 ([
+        (literal 2)])))) (
+    (list-constructor-expr
+      (literal 1)
+      (list-constructor-expr
+        (literal 2)))))
+  (const L (
+    (array-type
+      (array-type
+        (value-type int) dimensions: 1 ([
+        (literal 2)])) dimensions: 1 ([]))) (
+    (list-constructor-expr
+      (list-constructor-expr
+        (literal 1)))))
+  (const E (
+    (array-type
+      (value-type int) dimensions: 1 ([
+      (literal 2)]))) (
+    (list-constructor-expr)))
+  (const R (
+    (record-type
+      (field x
+        (value-type int)
+        (simple-var-ref SIZE))
+      (field y
+        (array-type
+          (value-type int) dimensions: 1 ([
+          (simple-var-ref SIZE)]))
+        (list-constructor-expr
+          (literal 4))))) (
+    (mapping-constructor-expr)))
+  (const S (
+    (record-type
+      (field x
+        (value-type int)
+        (binary-expr *
+          (simple-var-ref SIZE)
+          (literal 3))))) (
+    (mapping-constructor-expr)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref M))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref M)
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref T))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref L))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref E))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref R))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref S)))))))

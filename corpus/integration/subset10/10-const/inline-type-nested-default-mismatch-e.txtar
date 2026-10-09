@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "a"
+  --> inline-type-nested-default-mismatch-e.bal:18:35
+   |
+18 | const record {| record {| int y = "a"; |} r; |} A = {r: {}}; // @error nested default is not an int
+   |                                   ^^^
