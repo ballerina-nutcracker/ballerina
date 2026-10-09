@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: undefinedName
+  --> 1-e.bal:18:13
+   |
+18 |     int a = undefinedName; // @error
+   |             ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: undefinedName
+  --> 1-e.bal:19:13
+   |
+19 |     int b = undefinedName + a; // @error
+   |             ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: undefinedName
+  --> 1-e.bal:20:13
+   |
+20 |     int _ = undefinedName + b; // @error
+   |             ^^^^^^^^^^^^^
