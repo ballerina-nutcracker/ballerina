@@ -1,0 +1,41 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition View
+    (object-type
+      (field n public
+        (value-type int))))
+  (class-definition Counter
+    (variable n (type
+      (value-type int)))
+    (function init (
+      (variable n (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access n
+            (simple-var-ref self))
+          (simple-var-ref n)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (user-defined-type View)) (expr
+          (new
+            (user-defined-type Counter) (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (value-type readonly)))))
+      (assignment
+        (field-based-access n
+          (simple-var-ref v))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access n
+            (simple-var-ref v))))))))

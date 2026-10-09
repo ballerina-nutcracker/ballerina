@@ -28,6 +28,9 @@ import (
 
 const maxRecursionDepth = 5000
 
+// selfLocalIndex is the frame slot holding the receiver of a method.
+const selfLocalIndex = 1
+
 func executeFunction(ctx *extern.Context, birFunc *bir.BIRFunction, args []values.BalValue, parentFrame *Frame) values.BalValue {
 	frame := createFunctionFrame(ctx, birFunc, args, parentFrame)
 	bb := &birFunc.BasicBlocks[0]
@@ -81,7 +84,7 @@ func initLocalsForFunction(ctx *extern.Context, birFunc *bir.BIRFunction, args [
 		panic(values.NewErrorWithMessage("not enough arguments"))
 	}
 	if argOffset != 0 {
-		frame.SetLocal(1, args[0])
+		frame.SetLocal(selfLocalIndex, args[0])
 	}
 	for i := range requiredCount {
 		frame.SetLocal(i+paramLocalOffset, args[i+argOffset])
