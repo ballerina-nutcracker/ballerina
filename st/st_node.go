@@ -511,7 +511,7 @@ func findToken(n STNode, dir direction) STToken {
 			}
 			panic("expected STToken")
 		}
-		if (!IsSTNodePresent(child) || IsSTNodeList(child)) && child.BucketCount() == 0 {
+		if !IsSTNodePresent(child) || (IsSTNodeList(child) && child.BucketCount() == 0) {
 			continue
 		}
 		var token STToken

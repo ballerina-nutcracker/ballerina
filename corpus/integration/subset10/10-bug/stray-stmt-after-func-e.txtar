@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: import declaration after other declarations
+  --> stray-stmt-after-func-e.bal:20:1
+   |
+20 | } // @error
+   | ^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> stray-stmt-after-func-e.bal:21:11
+   |
+21 | xs.push(1); // @error
+   |
