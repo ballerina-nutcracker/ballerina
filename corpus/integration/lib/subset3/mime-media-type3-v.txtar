@@ -1,0 +1,17 @@
+-- stdout --
+Unable to find a sub type.
+Unable to find a sub type.
+Unable to find a sub type.
+Primary type is invalid.
+Primary type is invalid.
+Sub type is invalid.
+Sub type is invalid.
+Couldn't find the '=' that separates a parameter name from its value.
+Encountered unterminated quoted parameter value.
+Couldn't find a value for parameter named a
+More characters encountered in input than expected.
+Unexpected character encountered at index 4
+Couldn't find the '=' that separates a parameter name from its value.
+text/plain
+text/plain; =x
+-- stderr --

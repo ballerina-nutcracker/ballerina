@@ -18,12 +18,13 @@ in each package's support table (Supported + Partially Supported + Not Yet Suppo
 | [io](io/0.0.1/go1.27/README.md)                   | 21 | 2 | 4 | 78% |
 | [log](log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
 | [math.vector](math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
+| [mime](mime/0.0.1/go1.27/README.md)               | 15 | 2 | 2 | 79% |
 | [os](os/0.0.1/go1.27/README.md)                   | 11 | 1 | 0 | 92% |
 | [protobuf](protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
 | [random](random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
 | [time](time/0.0.1/go1.27/README.md)               | 31 | 1 | 0 | 97% |
 | [url](url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
-| **Total**                                         | **161** | **18** | **64** | **66%** |
+| **Total**                                         | **176** | **20** | **66** | **67%** |
 
 ## Notable Behavioural Changes
 
@@ -69,6 +70,14 @@ tables instead.
 
 - **Module name always empty.** jBallerina uses JVM `StackWalker` to detect the calling module name at runtime; the Go-native version has no equivalent mechanism, so `module=""` in all log records.
 - **Error field format.** jBallerina serialises a full `FullErrorDetails` record (message, stack trace, cause chain) for the `error` field; the Go-native version formats the error as `error("message")` using the Ballerina `toBalString` representation of the error value.
+
+### mime
+
+- **A missing multipart boundary is a `ParserError`, not a silent empty array.** jBallerina's `getBodyParts()` only ever decodes from a byte-channel data source set internally by the HTTP transport for an inbound request/response; a manually-constructed `Entity` (via `setByteArray`) has a plain byte-array data source instead, so `getBodyParts()` silently returns an empty `Entity[]` rather than decoding or erroring — jBallerina has no public API that decodes an arbitrary `byte[]` as multipart at all. This port has one representation for an `Entity`'s body regardless of how it was constructed, so it always attempts to decode a composite (`multipart/*` or `message/*`) byte-array body and surfaces a missing boundary as a `ParserError` — the more debuggable choice, and unavoidable given this port lets a manually-constructed `Entity` decode multipart content at all (which jBallerina's public API cannot exercise).
+- **Invalid content type messages are not wrapped.** jBallerina's `getMediaType()` puts the string form of an inner error into the message, e.g. `error InvalidContentTypeError ("Unable to find a sub type.")`; the Go-native version returns the javax.activation parse message itself, e.g. `Unable to find a sub type.`.
+- **Content disposition parameter names are case-insensitive.** jBallerina only recognises lower-case `name` and `filename`, so `FORM-DATA; NAME="n"; FileName="f"` leaves both quoted in `parameters`, and `toString()` throws a Java `NullPointerException` for some unquoted values or values containing `;`; the Go-native version matches `name` and `filename` case-insensitively (as RFC 2183 specifies), unquotes them into the `name` and `fileName` fields, and never fails in `toString()`.
+- **A scalar JSON body can be read with `getJson()`.** jBallerina fails with a `ParserError` wrapping a Java `ClassCastException` when the body is a JSON scalar such as `12`; the Go-native version returns the scalar value.
+- **Parameter and header order is deterministic but not jBallerina's.** `MediaType.parameters` (and therefore `MediaType.toString()`) keeps the order the parameters appear in the source string; jBallerina's order follows Java `Hashtable` hashing. Headers of a decoded multipart part are added in sorted name order, since Go's multipart reader does not keep their wire order.
 
 ### os
 

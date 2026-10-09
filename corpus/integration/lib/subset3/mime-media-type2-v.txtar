@@ -1,0 +1,14 @@
+-- stdout --
+true
+vnd.api+json json application/vnd.api+json
+text/plain UTF-8 x y
+true
+c
+true
+true
+true
+true
+true
+true
+true
+-- stderr --

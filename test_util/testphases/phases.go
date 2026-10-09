@@ -111,6 +111,7 @@ var builtinStdlibs = []stdlibEntry{
 	flatEntry("http", "0.0.1", "go1.27"),
 	flatEntry("log", "0.0.1", "go1.27"),
 	flatEntry("math.vector", "0.0.1", "go1.27"),
+	flatEntry("mime", "0.0.1", "go1.27"),
 	flatEntry("os", "0.0.1", "go1.27"),
 	flatEntry("random", "0.0.1", "go1.27"),
 	flatEntry("time", "0.0.1", "go1.27"),

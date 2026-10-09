@@ -1,0 +1,14 @@
+-- stdout --
+application/xml
+<hello>world</hello>
+<hello>world</hello>
+"<hello>world</hello>" 22
+"<a href=\"x\"><b\/>café\t\"q\"\\<\/a>"
+<a href="x"><b/>café	"q"\</a>
+application/xml
+true
+<x>y</x>
+true
+true
+application/xhtml+xml
+-- stderr --
