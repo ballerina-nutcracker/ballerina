@@ -1299,6 +1299,10 @@ func desugarTypeDesc(ctx desugarContext, typeDesc ast.BType, parentScope model.S
 		if constraint, ok := td.Constraint.TypeDescriptor.(ast.BType); ok {
 			return desugarTypeDesc(ctx, constraint, parentScope)
 		}
+	case *ast.BLangErrorTypeNode:
+		if detail, ok := td.DetailType.TypeDescriptor.(ast.BType); ok {
+			return desugarTypeDesc(ctx, detail, parentScope)
+		}
 	case *ast.BLangTupleTypeNode:
 		var result desugaredTypeDescResult
 		for i := range td.Members {
