@@ -1517,8 +1517,8 @@ func analyzeIndexBasedAccess[A analyzer](a A, expr *ast.BLangIndexBasedAccess, e
 }
 
 func analyzeListConstructorExpr[A analyzer](a A, expr *ast.BLangListConstructorExpr, expectedType semtypes.SemType) bool {
-	// The type resolver has already selected the inherent type and re-resolved members
-	// with per-member expected types. We only need to validate members here.
+	// The type resolver has already selected the inherent type and resolved members once
+	// against it. We only need to validate members here.
 	lat := expr.AtomicType
 	memberIndex := 0
 	restMember := false
@@ -1570,8 +1570,8 @@ func analyzeComputedMappingField[A analyzer](a A, expr *ast.BLangMappingConstruc
 }
 
 func analyzeMappingConstructorExpr[A analyzer](a A, expr *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) bool {
-	// The type resolver has already selected the inherent type and re-resolved field values
-	// with per-field expected types. We only need to validate fields here.
+	// The type resolver has already selected the inherent type and resolved field values once
+	// against it. We only need to validate fields here.
 	mat := expr.SelectedAtomicType
 	hasValue := make(map[string]bool, len(expr.Fields)+len(expr.FieldDefaults))
 	for _, fd := range expr.FieldDefaults {

@@ -80,10 +80,8 @@ type expressionResult struct {
 	ty                semtypes.SemType
 	effect            expressionEffect
 	functionSignature model.FunctionSignatureRef
-	symbol            model.SymbolRef    // resolved callee of an invocation or action, narrowed symbol of a var/const ref; empty otherwise
-	lax               bool               // field access resolved as lax access
-	members           []expressionResult // member results of a list or mapping constructor, in source order
-	spreadMembers     []bool             // spread classification of a list constructor's members
+	symbol            model.SymbolRef // resolved callee of an invocation or action, narrowed symbol of a var/const ref; empty otherwise
+	lax               bool            // field access resolved as lax access
 }
 
 type statementEffect struct {

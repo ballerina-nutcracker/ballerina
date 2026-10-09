@@ -4721,10 +4721,159 @@ func resolveCheckedExpr(t typeResolver, chain *binding, e *ast.BLangCheckedExpr,
 }
 
 func resolveMappingConstructorExpr(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (expressionResult, bool) {
-	if !semtypes.IsZero(expectedType) {
-		return resolveMappingConstructorWithExpectedType(t, chain, e, expectedType)
+	if semtypes.IsZero(expectedType) {
+		return resolveMappingConstructorBottomUp(t, chain, e, false)
 	}
-	return resolveMappingConstructorBottomUp(t, chain, e, false)
+	candidates, ok := mappingConstructorCandidates(t, e, expectedType)
+	if !ok {
+		return expressionResult{}, false
+	}
+	if len(candidates) == 1 {
+		return finishMappingConstructor(t, chain, e, candidates[0])
+	}
+	if _, moduleLevel := t.(*packageTypeResolver); moduleLevel {
+		t.unimplemented("mapping constructors with more than one applicable type are not supported at module level", e.GetPosition())
+		return expressionResult{}, false
+	}
+	// A constructor inside a trial is part of an outer trial root, whose dependencies are already resolved.
+	if !t.isEphemeral() && !resolveTrialDependencies(t, []ast.BLangExpression{e}) {
+		return expressionResult{}, false
+	}
+	selected, outcome := selectCandidate(t, candidates, []ast.BLangExpression{e}, func(candidate mappingCandidate) bool {
+		_, ok := finishMappingConstructor(t, chain, e, candidate)
+		return ok
+	})
+	switch outcome {
+	case candidateOne:
+		return finishMappingConstructor(t, chain, e, selected)
+	case candidateAmbiguous:
+		t.semanticError("ambiguous inherent type for mapping constructor", e.GetPosition())
+	case candidateUnsupported:
+	default:
+		t.semanticError("no applicable inherent type for mapping constructor", e.GetPosition())
+	}
+	return expressionResult{}, false
+}
+
+type mappingCandidate struct {
+	alt  semtypes.MappingAlternative
+	atom *semtypes.MappingAtomicType
+}
+
+func mappingConstructorCandidates(t typeResolver, e *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) ([]mappingCandidate, bool) {
+	return constructorCandidates(t, "mapping", e.GetPosition(), semtypes.Intersect(expectedType, semtypes.Mapping), semtypes.MappingAlternatives,
+		func(alt semtypes.MappingAlternative) (mappingCandidate, bool) {
+			atom := semtypes.ToMappingAtomicType(t.typeContext(), alt.Type())
+			return mappingCandidate{alt: alt, atom: atom}, atom != nil
+		})
+}
+
+type constructorAlternative interface {
+	Type() semtypes.SemType
+	HasNegativeAtoms() bool
+}
+
+// constructorCandidates builds one candidate per alternative of part, the list or mapping part of a constructor's
+// expected type. Every alternative is built from an intersected atom, so candidate fails only on a compiler bug.
+func constructorCandidates[A constructorAlternative, C any](t typeResolver, kind string, pos diagnostics.Location, part semtypes.SemType,
+	alternatives func(semtypes.Context, semtypes.SemType) []A, candidate func(A) (C, bool),
+) ([]C, bool) {
+	if !t.ensureNotEmpty(part, func() {
+		t.semanticError(kind+" type not found in expected type", pos)
+	}) {
+		return nil, false
+	}
+	alts := alternatives(t.typeContext(), part)
+	if len(alts) == 0 {
+		// Only an empty part has no alternatives, which ensureNotEmpty reports once the type env is ready.
+		if t.typeEnv().IsReady() {
+			t.internalError(kind+" constructor expected type has no alternatives", pos)
+		}
+		return nil, false
+	}
+	candidates := make([]C, len(alts))
+	for i, alt := range alts {
+		if alt.HasNegativeAtoms() {
+			t.internalError(kind+" constructor alternative has negative atoms", pos)
+			return nil, false
+		}
+		c, ok := candidate(alt)
+		if !ok {
+			t.internalError(kind+" constructor alternative is not atomic", pos)
+			return nil, false
+		}
+		candidates[i] = c
+	}
+	return candidates, true
+}
+
+func finishMappingConstructor(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, candidate mappingCandidate) (expressionResult, bool) {
+	fields, chain, ok := resolveMappingConstructorFields(t, chain, e, candidate)
+	if !ok {
+		return expressionResult{}, false
+	}
+	// Inside a trial the constructor must fit the candidate, so that an outer trial can tell candidates apart by an
+	// inner constructor. Outside a trial a misfit is reported by semantic analysis at the field.
+	if t.isEphemeral() && !semtypes.MappingAlternativeAllowsFields(t.typeContext(), candidate.alt, fields, func(atom *semtypes.MappingAtomicType) []string {
+		return defaultableMappingFields(t, atom)
+	}) {
+		return expressionResult{}, false
+	}
+	var fieldDefaults []model.FieldDefault
+	if defaults, found := t.mappingDefaults(candidate.atom); found {
+		fieldDefaults = append([]model.FieldDefault(nil), defaults...)
+	}
+	setMappingConstructorInherentType(t, e, *candidate.atom, fieldDefaults)
+	inherentTy := candidate.alt.Type()
+	if len(e.ReadonlyFields) != 0 {
+		// The inherent type the value is constructed with narrows the explicitly readonly
+		// fields to immutable cells; the shape validated against remains SelectedAtomicType.
+		inherentTy = semtypes.MappingWithReadonlyFields(t.typeEnv(), candidate.atom, e.ReadonlyFields)
+	}
+	setNodeType(t, e, inherentTy)
+	return expressionResult{ty: inherentTy, effect: defaultExpressionEffect(chain)}, true
+}
+
+// resolveMappingConstructorFields resolves each field value against the candidate's field type for its key. A
+// computed key takes the member type for the key's type and is not part of the returned fields.
+func resolveMappingConstructorFields(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, candidate mappingCandidate) ([]semtypes.MappingFieldInfo, *binding, bool) {
+	fields := make([]semtypes.MappingFieldInfo, 0, len(e.Fields))
+	for _, f := range e.Fields {
+		kv := f.(*ast.BLangMappingKeyValueField)
+		computed := kv.Key.Kind == ast.MappingKeyComputed
+		var keyName string
+		var required semtypes.SemType
+		if computed {
+			keyTy, keyChain, ok := resolveComputedMappingKey(t, chain, kv)
+			if !ok {
+				return nil, chain, false
+			}
+			chain = keyChain
+			required = semtypes.MappingMemberTypeInnerVal(t.typeContext(), candidate.alt.Type(), semtypes.Intersect(keyTy, semtypes.String))
+		} else {
+			name, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
+			if !ok {
+				return nil, chain, false
+			}
+			keyName = name
+			readonlyRequired, ok := readonlyFieldRequiredType(t, e, kv, candidate.atom.FieldInnerVal(keyName))
+			if !ok {
+				return nil, chain, false
+			}
+			required = readonlyRequired
+		}
+		result, ok := resolveActionOrExpression(t, chain, kv.ValueExpr, required)
+		if !ok {
+			return nil, chain, false
+		}
+		chain = sequentialChain(t, result.effect)
+		if computed {
+			continue
+		}
+		resolveMappingKey(t, kv, result.ty)
+		fields = append(fields, semtypes.MappingFieldInfo{Name: keyName, Type: result.ty})
+	}
+	return fields, chain, true
 }
 
 // resolveMemberValue resolves a constructor member that has no contextually expected type.
@@ -4770,12 +4919,11 @@ func inferredMemberType(ty semtypes.SemType, readonly bool) semtypes.SemType {
 func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, readonlyValue bool) (expressionResult, bool) {
 	var fields []semtypes.Field
 	restTy := semtypes.Never
-	members := make([]expressionResult, len(e.Fields))
-	for i, f := range e.Fields {
+	for _, f := range e.Fields {
 		kv := f.(*ast.BLangMappingKeyValueField)
 		if kv.Key.Kind == ast.MappingKeyComputed {
 			var ok bool
-			chain, ok = resolveComputedMappingKey(t, chain, kv)
+			_, chain, ok = resolveComputedMappingKey(t, chain, kv)
 			if !ok {
 				return expressionResult{}, false
 			}
@@ -4783,7 +4931,6 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 			if !ok {
 				return expressionResult{}, false
 			}
-			members[i] = valueResult
 			chain = sequentialChain(t, valueResult.effect)
 			restTy = semtypes.Union(restTy, inferredMemberType(valueResult.ty, readonlyValue))
 			continue
@@ -4797,7 +4944,6 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 		if !ok {
 			return expressionResult{}, false
 		}
-		members[i] = valueResult
 		chain = sequentialChain(t, valueResult.effect)
 		fieldTy := valueResult.ty
 		if !e.IsReadonly(keyName) {
@@ -4815,108 +4961,19 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 	setNodeType(t, e, mapTy)
 	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
 	setMappingConstructorInherentType(t, e, *mat, nil)
-	return expressionResult{ty: mapTy, effect: defaultExpressionEffect(chain), members: members}, true
-}
-
-func resolveMappingConstructorWithExpectedType(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) (expressionResult, bool) {
-	memberChain := chain
-	members := make([]expressionResult, len(e.Fields))
-	for i, f := range e.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
-		readonly := false
-		if kv.Key.Kind == ast.MappingKeyComputed {
-			var ok bool
-			memberChain, ok = resolveComputedMappingKey(t, memberChain, kv)
-			if !ok {
-				return expressionResult{}, false
-			}
-		} else {
-			keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
-			if !ok {
-				return expressionResult{}, false
-			}
-			readonly = e.IsReadonly(keyName)
-		}
-		valueResult, ok := resolveMemberValue(t, memberChain, kv.ValueExpr, readonly)
-		if !ok {
-			return expressionResult{}, false
-		}
-		members[i] = valueResult
-		memberChain = sequentialChain(t, valueResult.effect)
-		if kv.Key.Kind != ast.MappingKeyComputed {
-			resolveMappingKey(t, kv, valueResult.ty)
-		}
-	}
-
-	resultType, ok := contextualizeMappingConstructor(t, e, members, expectedType)
-	if !ok {
-		return expressionResult{}, false
-	}
-	return expressionResult{ty: resultType, effect: defaultExpressionEffect(memberChain), members: members}, true
-}
-
-// contextualizeMappingConstructor applies expectedType to an already resolved
-// mapping constructor whose field values resolved to members. It selects the
-// inherent type and updates the members' contextual type, value and atomic
-// metadata. It resolves no flow effects.
-func contextualizeMappingConstructor(t typeResolver, e *ast.BLangMappingConstructorExpr, members []expressionResult, expectedType semtypes.SemType) (semtypes.SemType, bool) {
-	if len(members) != len(e.Fields) {
-		t.internalError("mapping constructor contextualized without its member results", e.GetPosition())
-		return semtypes.SemType{}, false
-	}
-	resultType, mat, ok := selectMappingInherentType(t, e, memberResultTypes(members), expectedType)
-	if !ok {
-		return semtypes.SemType{}, false
-	}
-	for i, f := range e.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
-		memberTy, ok := common.MappingFieldExpectedType(t.compilerContext(), t.typeContext(), resultType, mat, kv)
-		if !ok {
-			return semtypes.SemType{}, false
-		}
-		requiredType, ok := readonlyFieldRequiredType(t, e, kv, memberTy)
-		if !ok {
-			return semtypes.SemType{}, false
-		}
-		if _, ok := contextualizeConstructorMember(t, kv.ValueExpr, members[i], requiredType); !ok {
-			return semtypes.SemType{}, false
-		}
-	}
-	// The defaults belong to the selected inherent type, so they replace whatever
-	// an earlier selection left behind rather than accumulating with it.
-	var fieldDefaults []model.FieldDefault
-	if defaults, found := t.mappingDefaults(mat); found {
-		fieldDefaults = append([]model.FieldDefault(nil), defaults...)
-	}
-	setMappingConstructorInherentType(t, e, *mat, fieldDefaults)
-	inherentTy := resultType
-	if len(e.ReadonlyFields) != 0 {
-		// The inherent type the value is constructed with narrows the explicitly readonly
-		// fields to immutable cells; the shape validated against remains SelectedAtomicType.
-		inherentTy = semtypes.MappingWithReadonlyFields(t.typeEnv(), mat, e.ReadonlyFields)
-	}
-	setNodeType(t, e, inherentTy)
-	return inherentTy, true
-}
-
-func memberResultTypes(members []expressionResult) []semtypes.SemType {
-	tys := make([]semtypes.SemType, len(members))
-	for i, member := range members {
-		tys[i] = member.ty
-	}
-	return tys
+	return expressionResult{ty: mapTy, effect: defaultExpressionEffect(chain)}, true
 }
 
 // resolveComputedMappingKey resolves a computed key as an ordinary expression,
 // so a variable it refers to keeps its own type.
-func resolveComputedMappingKey(t typeResolver, chain *binding, kv *ast.BLangMappingKeyValueField) (*binding, bool) {
+func resolveComputedMappingKey(t typeResolver, chain *binding, kv *ast.BLangMappingKeyValueField) (semtypes.SemType, *binding, bool) {
 	keyResult, ok := resolveActionOrExpression(t, chain, kv.Key.Expr, semtypes.SemType{})
 	if !ok {
-		return nil, false
+		return semtypes.SemType{}, nil, false
 	}
 	setNodeType(t, kv.Key, semtypes.Never)
 	setNodeType(t, kv, semtypes.Never)
-	return sequentialChain(t, keyResult.effect), true
+	return keyResult.ty, sequentialChain(t, keyResult.effect), true
 }
 
 // readonlyFieldRequiredType narrows the type an explicitly readonly field's value must have to its
@@ -4955,69 +5012,6 @@ func defaultableMappingFields(t typeResolver, atom *semtypes.MappingAtomicType) 
 		fields[i] = field.FieldName
 	}
 	return fields
-}
-
-func selectMappingInherentType(t typeResolver, expr *ast.BLangMappingConstructorExpr, memberTypes []semtypes.SemType, expectedType semtypes.SemType) (semtypes.SemType, *semtypes.MappingAtomicType, bool) {
-	expectedMappingType := semtypes.Intersect(expectedType, semtypes.Mapping)
-	tc := t.typeContext()
-	if semtypes.IsEmpty(tc, expectedMappingType) {
-		t.semanticError("mapping type not found in expected type", expr.GetPosition())
-		return semtypes.SemType{}, nil, false
-	}
-	alts := semtypes.MappingAlternatives(tc, expectedType)
-	validAlts := alts
-	if len(alts) > 1 {
-		var ok bool
-		validAlts, ok = applicableMappingAlternatives(t, expr, memberTypes, alts)
-		if !ok {
-			return semtypes.SemType{}, nil, false
-		}
-	}
-
-	if len(validAlts) == 0 {
-		t.semanticError("no applicable inherent type for mapping constructor", expr.GetPosition())
-		return semtypes.SemType{}, nil, false
-	}
-	if len(validAlts) > 1 {
-		t.semanticError("ambiguous inherent type for mapping constructor", expr.GetPosition())
-		return semtypes.SemType{}, nil, false
-	}
-
-	selectedSemType := validAlts[0].Type()
-	mat := semtypes.ToMappingAtomicType(tc, selectedSemType)
-	if mat == nil {
-		t.semanticError("applicable type for mapping constructor is not atomic", expr.GetPosition())
-		return semtypes.SemType{}, nil, false
-	}
-
-	return selectedSemType, mat, true
-}
-
-func applicableMappingAlternatives(t typeResolver, expr *ast.BLangMappingConstructorExpr, memberTypes []semtypes.SemType, alts []semtypes.MappingAlternative) ([]semtypes.MappingAlternative, bool) {
-	var fields []semtypes.MappingFieldInfo
-	for i, f := range expr.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
-		if kv.Key.Kind == ast.MappingKeyComputed {
-			continue
-		}
-		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
-		if !ok {
-			return nil, false
-		}
-		fields = append(fields, semtypes.MappingFieldInfo{Name: keyName, Type: memberTypes[i]})
-	}
-	sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
-
-	defaultableFields := func(atom *semtypes.MappingAtomicType) []string {
-		return defaultableMappingFields(t, atom)
-	}
-	var validAlts []semtypes.MappingAlternative
-	for _, alt := range alts {
-		if semtypes.MappingAlternativeAllowsFields(t.typeContext(), alt, fields, defaultableFields) {
-			validAlts = append(validAlts, alt)
-		}
-	}
-	return validAlts, true
 }
 
 func resolveTypeConversionExpr(t typeResolver, chain *binding, e *ast.BLangTypeConversionExpr) (semtypes.SemType, expressionEffect, bool) {
@@ -5677,17 +5671,125 @@ func resolveConstRef(t typeResolver, chain *binding, expr *ast.BLangConstRef) (e
 }
 
 func resolveListConstructorExpr(t typeResolver, chain *binding, expr *ast.BLangListConstructorExpr, expectedType semtypes.SemType) (expressionResult, bool) {
-	if !semtypes.IsZero(expectedType) {
-		return resolveListConstructorWithExpectedType(t, chain, expr, expectedType)
+	if semtypes.IsZero(expectedType) {
+		return resolveListConstructorInner(t, chain, expr, false)
 	}
-	return resolveListConstructorInner(t, chain, expr, false)
+	candidates, ok := listConstructorCandidates(t, expr, expectedType)
+	if !ok {
+		return expressionResult{}, false
+	}
+	spread := listSpreadMembers(chain, expr)
+	if len(candidates) == 1 {
+		return finishListConstructor(t, chain, expr, spread, candidates[0])
+	}
+	if _, moduleLevel := t.(*packageTypeResolver); moduleLevel {
+		t.unimplemented("list constructors with more than one applicable type are not supported at module level", expr.GetPosition())
+		return expressionResult{}, false
+	}
+	// A constructor inside a trial is part of an outer trial root, whose dependencies are already resolved.
+	if !t.isEphemeral() && !resolveTrialDependencies(t, []ast.BLangExpression{expr}) {
+		return expressionResult{}, false
+	}
+	selected, outcome := selectCandidate(t, candidates, []ast.BLangExpression{expr}, func(candidate listCandidate) bool {
+		_, ok := finishListConstructor(t, chain, expr, spread, candidate)
+		return ok
+	})
+	switch outcome {
+	case candidateOne:
+		return finishListConstructor(t, chain, expr, spread, selected)
+	case candidateAmbiguous:
+		t.semanticError("ambiguous inherent type for list constructor", expr.GetPosition())
+	case candidateUnsupported:
+	default:
+		t.semanticError("no applicable inherent type for list constructor", expr.GetPosition())
+	}
+	return expressionResult{}, false
+}
+
+type listCandidate struct {
+	alt  semtypes.ListAlternative
+	atom *semtypes.ListAtomicType
+}
+
+func listConstructorCandidates(t typeResolver, expr *ast.BLangListConstructorExpr, expectedType semtypes.SemType) ([]listCandidate, bool) {
+	return constructorCandidates(t, "list", expr.GetPosition(), semtypes.Intersect(expectedType, semtypes.List), semtypes.ListAlternatives,
+		func(alt semtypes.ListAlternative) (listCandidate, bool) {
+			atom := semtypes.ToListAtomicType(t.typeEnv(), alt.Type())
+			return listCandidate{alt: alt, atom: atom}, atom != nil
+		})
+}
+
+// listSpreadMembers classifies the members of expr that spread into the list: explicit spreads and references to
+// query-aggregated variables.
+func listSpreadMembers(chain *binding, expr *ast.BLangListConstructorExpr) []bool {
+	spread := make([]bool, len(expr.Exprs))
+	for i, memberExpr := range expr.Exprs {
+		spread[i] = expr.IsSpreadMember(i) || isQueryAggregatedVariableReference(chain, memberExpr)
+	}
+	return spread
+}
+
+func finishListConstructor(t typeResolver, chain *binding, expr *ast.BLangListConstructorExpr, spread []bool, candidate listCandidate) (expressionResult, bool) {
+	members, chain, ok := resolveListConstructorMembers(t, chain, expr, spread, candidate)
+	if !ok {
+		return expressionResult{}, false
+	}
+	// Inside a trial the constructor must fit the candidate, so that an outer trial can tell candidates apart by an
+	// inner constructor. Outside a trial a misfit is reported by semantic analysis at the member.
+	if t.isEphemeral() && !semtypes.ListAlternativeAllowsMembers(t.typeContext(), candidate.alt, members) {
+		return expressionResult{}, false
+	}
+	setListConstructorInherentType(t, expr, *candidate.atom, spread)
+	setNodeType(t, expr, candidate.alt.Type())
+	return expressionResult{ty: candidate.alt.Type(), effect: defaultExpressionEffect(chain)}, true
+}
+
+// resolveListConstructorMembers resolves each member against the candidate's member type at its index. From the
+// first spread member on, the index is the candidate's fixed length, for which the candidate yields its rest type.
+func resolveListConstructorMembers(t typeResolver, chain *binding, expr *ast.BLangListConstructorExpr, spread []bool, candidate listCandidate) ([]semtypes.ListMemberInfo, *binding, bool) {
+	members := make([]semtypes.ListMemberInfo, len(expr.Exprs))
+	index := 0
+	for i, memberExpr := range expr.Exprs {
+		if spread[i] {
+			index = max(index, candidate.atom.FixedLength())
+		}
+		required := candidate.atom.MemberAtInnerVal(index)
+		if semtypes.IsNever(required) {
+			if spread[i] {
+				t.semanticError("aggregated variable reference cannot be used as a spread member for a fixed-length list constructor", memberExpr.GetPosition())
+			} else {
+				t.semanticError("too many members in list constructor", expr.GetPosition())
+			}
+			return nil, chain, false
+		}
+		if spread[i] {
+			required = queryAggregatedListType(t.typeEnv(), required, false)
+		}
+		result, ok := resolveActionOrExpression(t, chain, memberExpr, required)
+		if !ok {
+			return nil, chain, false
+		}
+		chain = sequentialChain(t, result.effect)
+		memberTy := result.ty
+		if spread[i] {
+			// A spread operand that is not a list fits no candidate. Outside a trial semantic analysis reports it.
+			if t.isEphemeral() && !semtypes.IsSubtypeSimple(result.ty, semtypes.List) {
+				return nil, chain, false
+			}
+			memberTy = semtypes.ListProj(t.typeContext(), semtypes.Intersect(result.ty, semtypes.List), semtypes.Int)
+		}
+		members[i] = semtypes.ListMemberInfo{Index: index, ValueType: memberTy}
+		if index < candidate.atom.FixedLength() {
+			index++
+		}
+	}
+	return members, chain, true
 }
 
 func resolveListConstructorInner(t typeResolver, chain *binding, expr *ast.BLangListConstructorExpr, readonlyValue bool) (expressionResult, bool) {
 	memberTypes := make([]semtypes.SemType, 0, len(expr.Exprs))
 	restTy := semtypes.Never
 	spreadMembers := make([]bool, len(expr.Exprs))
-	members := make([]expressionResult, len(expr.Exprs))
 	hasSpread := false
 	mutability := semtypes.CellMutabilityLimited
 	if readonlyValue {
@@ -5699,7 +5801,6 @@ func resolveListConstructorInner(t typeResolver, chain *binding, expr *ast.BLang
 		if !ok {
 			return expressionResult{}, false
 		}
-		members[i] = memberResult
 		memberTy := memberResult.ty
 		chain = sequentialChain(t, memberResult.effect)
 		if isSpread {
@@ -5724,116 +5825,7 @@ func resolveListConstructorInner(t typeResolver, chain *binding, expr *ast.BLang
 	lat := semtypes.ToListAtomicType(t.typeEnv(), listTy)
 	setListConstructorInherentType(t, expr, *lat, spreadMembers)
 
-	return expressionResult{ty: listTy, effect: defaultExpressionEffect(chain), members: members, spreadMembers: spreadMembers}, true
-}
-
-func resolveListConstructorWithExpectedType(t typeResolver, chain *binding, expr *ast.BLangListConstructorExpr, expectedType semtypes.SemType) (expressionResult, bool) {
-	spreadMembers := make([]bool, len(expr.Exprs))
-	members := make([]expressionResult, len(expr.Exprs))
-	readonlyValue := isReadonlyListExpectation(t, expectedType)
-	memberChain := chain
-	for i, memberExpr := range expr.Exprs {
-		spreadMembers[i] = expr.IsSpreadMember(i) || isQueryAggregatedVariableReference(memberChain, memberExpr)
-		memberResult, ok := resolveMemberValue(t, memberChain, memberExpr, readonlyValue && !spreadMembers[i])
-		if !ok {
-			return expressionResult{}, false
-		}
-		members[i] = memberResult
-		memberChain = sequentialChain(t, memberResult.effect)
-	}
-
-	resultType, ok := contextualizeListConstructor(t, expr, members, spreadMembers, expectedType)
-	if !ok {
-		return expressionResult{}, false
-	}
-	return expressionResult{ty: resultType, effect: defaultExpressionEffect(memberChain), members: members, spreadMembers: spreadMembers}, true
-}
-
-// contextualizeListConstructor applies expectedType to an already resolved list
-// constructor whose members resolved to members. It selects the inherent type
-// and updates the members' contextual type, value and atomic metadata. It
-// resolves no flow effects, and it relies on the spread classification made when
-// the members were first resolved.
-func contextualizeListConstructor(t typeResolver, expr *ast.BLangListConstructorExpr, members []expressionResult, spreadMembers []bool, expectedType semtypes.SemType) (semtypes.SemType, bool) {
-	if len(members) != len(expr.Exprs) || len(spreadMembers) != len(expr.Exprs) {
-		t.internalError("list constructor contextualized without its member results", expr.GetPosition())
-		return semtypes.SemType{}, false
-	}
-	resultType, lat, ok := selectListInherentType(t, expr, memberResultTypes(members), expectedType)
-	if !ok {
-		return semtypes.SemType{}, false
-	}
-	memberIndex := 0
-	restMember := false
-	for i, memberExpr := range expr.Exprs {
-		isSpread := spreadMembers[i]
-		requiredType := lat.MemberAtInnerVal(memberIndex)
-		if restMember || isSpread {
-			requiredType = lat.Rest()
-		}
-		if semtypes.IsNever(requiredType) {
-			if isSpread {
-				t.semanticError("aggregated variable reference cannot be used as a spread member for a fixed-length list constructor", memberExpr.GetPosition())
-				return semtypes.SemType{}, false
-			}
-			t.semanticError("too many members in list constructor", expr.GetPosition())
-			return semtypes.SemType{}, false
-		}
-		if isSpread {
-			spreadExpectedType := queryAggregatedListType(t.typeEnv(), requiredType, false)
-			if _, ok := contextualizeConstructorMember(t, memberExpr, members[i], spreadExpectedType); !ok {
-				return semtypes.SemType{}, false
-			}
-			restMember = true
-			memberIndex = lat.FixedLength()
-			continue
-		}
-		if _, ok := contextualizeConstructorMember(t, memberExpr, members[i], requiredType); !ok {
-			return semtypes.SemType{}, false
-		}
-		if !restMember {
-			memberIndex++
-		}
-	}
-	setListConstructorInherentType(t, expr, lat, spreadMembers)
-	setNodeType(t, expr, resultType)
-	return resultType, true
-}
-
-// contextualizeConstructorMember applies the contextually expected type to an
-// already resolved constructor member whose first resolution produced result.
-// Only the forms whose type or stored value depends on the context are
-// revisited; every other member keeps the reference, call, signature and
-// lambda-body information its first resolution produced.
-func contextualizeConstructorMember(t typeResolver, expr ast.BLangExpression, result expressionResult, expectedType semtypes.SemType) (semtypes.SemType, bool) {
-	if semtypes.IsZero(expectedType) {
-		return result.ty, true
-	}
-	switch member := expr.(type) {
-	case *ast.BLangLiteral:
-		setNodeType(t, member, semtypes.SemType{})
-		return resolveLiteral(t, member, expectedType)
-	case *ast.BLangNumericLiteral:
-		setNodeType(t, member, semtypes.SemType{})
-		return resolveNumericLiteral(t, member, expectedType)
-	case *ast.BLangListConstructorExpr:
-		return contextualizeListConstructor(t, member, result.members, result.spreadMembers, expectedType)
-	case *ast.BLangMappingConstructorExpr:
-		return contextualizeMappingConstructor(t, member, result.members, expectedType)
-	case *ast.BLangErrorConstructorExpr:
-		ty := contextualErrorType(t, result.ty, expectedType)
-		setNodeType(t, member, ty)
-		return ty, true
-	case *ast.BLangGroupExpr:
-		ty, ok := contextualizeConstructorMember(t, member.Expression, result, expectedType)
-		if !ok {
-			return semtypes.SemType{}, false
-		}
-		setNodeType(t, member, ty)
-		return ty, true
-	default:
-		return result.ty, true
-	}
+	return expressionResult{ty: listTy, effect: defaultExpressionEffect(chain)}, true
 }
 
 // contextualErrorType selects the error root an error constructor takes from its
@@ -5850,18 +5842,6 @@ func contextualErrorType(t typeResolver, baseType, expectedType semtypes.SemType
 	return errorPart
 }
 
-// isReadonlyListExpectation reports whether every list the expected type allows is readonly, so
-// the members must be resolved readonly before an inherent type can be selected. Emptiness cannot
-// be decided until every recursive type is defined; until then the members are resolved as mutable.
-func isReadonlyListExpectation(t typeResolver, expectedType semtypes.SemType) bool {
-	if !t.typeEnv().IsReady() {
-		return false
-	}
-	tc := t.typeContext()
-	expectedListType := semtypes.Intersect(expectedType, semtypes.List)
-	return !semtypes.IsEmpty(tc, expectedListType) && semtypes.IsSubtype(tc, expectedListType, semtypes.ValReadonly)
-}
-
 func isQueryAggregatedVariableReference(chain *binding, expr ast.BLangExpression) bool {
 	switch ref := expr.(type) {
 	case *ast.BLangVarRef:
@@ -5876,53 +5856,6 @@ func widenedListMemberType(ty semtypes.SemType) semtypes.SemType {
 		return ty
 	}
 	return semtypes.WidenToBasicTypes(ty)
-}
-
-func selectListInherentType(t typeResolver, expr *ast.BLangListConstructorExpr, memberTypes []semtypes.SemType, expectedType semtypes.SemType) (semtypes.SemType, semtypes.ListAtomicType, bool) {
-	expectedListType := semtypes.Intersect(expectedType, semtypes.List)
-	tc := t.typeContext()
-	if !t.ensureNotEmpty(expectedListType, func() {
-		t.semanticError("list type not found in expected type", expr.GetPosition())
-	}) {
-		return semtypes.SemType{}, semtypes.ListAtomicType{}, false
-	}
-	alts := semtypes.ListAlternatives(tc, expectedListType)
-	validAlts := alts
-	if len(alts) > 1 {
-		validAlts = applicableListAlternatives(tc, memberTypes, alts)
-	}
-
-	if len(validAlts) == 0 {
-		t.semanticError("no applicable inherent type for list constructor", expr.GetPosition())
-		return semtypes.SemType{}, semtypes.ListAtomicType{}, false
-	}
-	if len(validAlts) > 1 {
-		t.semanticError("ambiguous inherent type for list constructor", expr.GetPosition())
-		return semtypes.SemType{}, semtypes.ListAtomicType{}, false
-	}
-
-	selectedSemType := validAlts[0].Type()
-	lat := semtypes.ToListAtomicType(tc.Env(), selectedSemType)
-	if lat == nil {
-		t.semanticError("applicable type for list constructor is not atomic", expr.GetPosition())
-		return semtypes.SemType{}, semtypes.ListAtomicType{}, false
-	}
-
-	return selectedSemType, *lat, true
-}
-
-func applicableListAlternatives(tc semtypes.Context, memberTypes []semtypes.SemType, alts []semtypes.ListAlternative) []semtypes.ListAlternative {
-	members := make([]semtypes.ListMemberInfo, len(memberTypes))
-	for i, memberTy := range memberTypes {
-		members[i] = semtypes.ListMemberInfo{Index: i, ValueType: memberTy}
-	}
-	var validAlts []semtypes.ListAlternative
-	for _, alt := range alts {
-		if semtypes.ListAlternativeAllowsMembers(tc, alt, members) {
-			validAlts = append(validAlts, alt)
-		}
-	}
-	return validAlts
 }
 
 func resolveErrorConstructorExpr(t typeResolver, chain *binding, expr *ast.BLangErrorConstructorExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
