@@ -1,0 +1,77 @@
+(call
+  (bb0 () ()
+    (return
+      (invocation fn ()))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation f ()))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref x))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref x))))
+    (var-def
+      (variable ra (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (var-def
+      (variable rb (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref b)))))
+    (return
+      (binary-expr +
+        (binary-expr +
+          (simple-var-ref ra)
+          (simple-var-ref rb))
+        (simple-var-ref x)))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (return
+      (simple-var-ref r))
+  )
+)
+(worker a
+  (bb0 () ()
+    (return
+      (simple-var-ref x))
+  )
+)
+(worker b
+  (bb0 () ()
+    (return
+      (simple-var-ref x))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)

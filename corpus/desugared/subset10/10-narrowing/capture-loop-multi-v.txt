@@ -1,0 +1,101 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 1))))
+      (var-def
+        (variable b (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 2))))
+      (var-def
+        (variable c (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 3))))
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 3))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
+          (var-def
+            (variable setA (type
+              (function-type () (
+                (value-type null)))) (expr
+              (lambda
+                (function $anonFunc$_0 () (
+                  (value-type null))
+                  (block-function-body
+                    (assignment
+                      (simple-var-ref a)
+                      (simple-var-ref i))))))))
+          (var-def
+            (variable getB (type
+              (function-type () (
+                (union-type
+                  (value-type int)
+                  (value-type string))))) (expr
+              (lambda
+                (function $anonFunc$_1 () (
+                  (union-type
+                    (value-type int)
+                    (value-type string)))
+                  (block-function-body
+                    (return
+                      (simple-var-ref b))))))))
+          (expression-stmt
+            (invocation setA ()))
+          (expression-stmt
+            (invocation io println (
+              (invocation getB ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref c)
+              (value-type int))
+            (block-stmt
+              (compound-assignment +
+                (simple-var-ref total)
+                (simple-var-ref c))) ())
+          (block-stmt)
+          (assignment
+            (simple-var-ref $desugar$0)
+            (binary-expr +
+              (simple-var-ref $desugar$0)
+              (numeric-literal 1)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref c)
+          (value-type int))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref total)
+            (simple-var-ref c))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref total))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref a))))))))

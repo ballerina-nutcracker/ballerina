@@ -694,6 +694,9 @@ func (sw *symbolWriter) writeValueSymbolBody(buf *bytes.Buffer, ref model.Symbol
 	if err := write(buf, sym.IsIsolated()); err != nil {
 		return err
 	}
+	if err := write(buf, sym.IsTopLevel()); err != nil {
+		return err
+	}
 	return sw.writeFunctionSignatureIndex(buf, ref)
 }
 

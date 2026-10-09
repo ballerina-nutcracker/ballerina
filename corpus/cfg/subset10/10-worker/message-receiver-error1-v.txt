@@ -1,0 +1,47 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (wildcard-binding-pattern)
+          (checked-expr
+            (invocation int fromString (
+              (literal not a number)))))
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (worker-receive-action function))))))
+    (var-def
+      (variable r (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (worker-sync-send-action a
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref r)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref r)))
+          (literal received)))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (checked-expr
+        (invocation int fromString (
+          (literal not a number)))))
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+  )
+)

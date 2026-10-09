@@ -1,0 +1,99 @@
+(failWith
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (simple-var-ref message))))
+  )
+)
+(main
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (checked-expr
+            (invocation failWith (
+              (literal a failed)))))
+        (expression-stmt
+          (worker-async-send-action b
+            (literal 1)))
+        (expression-stmt
+          (checked-expr
+            (worker-flush-action b)))))
+    (named-worker b (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (checked-expr
+            (invocation failWith (
+              (literal b failed)))))
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (checked-expr
+              (worker-receive-action a)))))))
+    (var-def
+      (variable ra (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (var-def
+      (variable rb (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref ra)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref ra)))
+          (literal a done)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref rb)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref rb)))
+          (literal b done)))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (invocation failWith (
+          (literal a failed)))))
+    (expression-stmt
+      (worker-async-send-action b
+        (literal 1)))
+    (expression-stmt
+      (checked-expr
+        (worker-flush-action b)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (invocation failWith (
+          (literal b failed)))))
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (checked-expr
+          (worker-receive-action a)))))
+  )
+)

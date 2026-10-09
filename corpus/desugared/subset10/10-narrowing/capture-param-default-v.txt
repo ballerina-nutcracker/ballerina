@@ -1,0 +1,41 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Getter
+    (function-type (
+      (value-type int)) (
+      (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable base (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 5))))
+      (if
+        (type-test-expr is
+          (simple-var-ref base)
+          (value-type int))
+        (block-stmt
+          (var-def
+            (variable withDefault (type
+              (user-defined-type Getter)) (expr
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable a (type
+                    (value-type int)) (expr
+                    (simple-var-ref base)))) (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (simple-var-ref a))))))))
+          (expression-stmt
+            (invocation io println (
+              (invocation withDefault (
+                (literal 1))))))) ())
+      (block-stmt)))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 0)))))

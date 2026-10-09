@@ -111,6 +111,13 @@ func initInternalModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "createLatch", createLatch)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "waitOnLatch", waitOnLatch)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "openLatch", openLatch)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "createWorkerMessage", createWorkerMessage)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "setWorkerMessageValue", setWorkerMessageValue)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "getWorkerMessageValue", getWorkerMessageValue)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "getWorkerMessageValues", getWorkerMessageValues)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "waitWorkerMessageReceived", waitWorkerMessageReceived)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "flushWorkerMessages", flushWorkerMessages)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "awaitWorkerMessageDelivery", awaitWorkerMessageDelivery)
 }
 
 // latch is a one-shot publication barrier: strands that wait on it are held

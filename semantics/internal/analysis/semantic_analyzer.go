@@ -446,7 +446,12 @@ func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		if n.IsConstant() {
 			return createConstantAnalyzer(sa, n)
 		}
-		return sa
+		if n.Expr == nil {
+			return sa
+		}
+		walkGlobalVarDeclaration(sa, n)
+		analyzeGlobalVarInit(sa, n)
+		return nil
 	case *ast.BLangReturn:
 		// Error: return only valid in functions
 		sa.semanticErr("return statement outside function", n.GetPosition())
@@ -462,6 +467,25 @@ func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 		// Now delegates function creation to visitInner
 		return visitInner(sa, node)
 	}
+}
+
+// walkGlobalVarDeclaration walks everything of a module-level variable except
+// its initializer, which analyzeGlobalVarInit analyzes.
+func walkGlobalVarDeclaration(sa *semanticAnalyzer, n *ast.BLangVariable) {
+	for i := range n.AnnAttachments {
+		ast.Walk(sa, &n.AnnAttachments[i])
+	}
+	if typeNode := n.TypeNode(); typeNode != nil {
+		ast.Walk(sa, typeNode.(ast.BLangNode))
+	}
+}
+
+func analyzeGlobalVarInit(sa *semanticAnalyzer, n *ast.BLangVariable) {
+	expectedType := sa.ctx().SymbolType(n.Symbol())
+	if n.IsListener() {
+		expectedType = common.ListenerInitExpectedType(expectedType)
+	}
+	analyzeActionOrExpression(sa, n.Expr, expectedType)
 }
 
 func (sa *semanticAnalyzer) processImport(importNode *ast.BLangImportPackage) {
@@ -1017,6 +1041,16 @@ func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression
 		return analyzeClientResourceAccessAction(a, expr, expectedType)
 	case *ast.BLangStartAction:
 		return analyzeStartAction(a, expr, expectedType)
+	case *ast.BLangWorkerAsyncSendAction:
+		return analyzeWorkerAsyncSendAction(a, expr, expectedType)
+	case *ast.BLangWorkerSyncSendAction:
+		return analyzeWorkerMessageValue(a, expr.Expr) && validateResolvedType(a, expr, expectedType)
+	case *ast.BLangWorkerReceiveAction:
+		return validateResolvedType(a, expr, expectedType)
+	case *ast.BLangWorkerMultipleReceiveAction:
+		return validateResolvedType(a, expr, expectedType)
+	case *ast.BLangWorkerFlushAction:
+		return validateResolvedType(a, expr, expectedType)
 	case *ast.BLangSingleWaitAction:
 		return analyzeSingleWaitAction(a, expr, expectedType)
 	case *ast.BLangAlternateWaitAction:
@@ -1170,6 +1204,35 @@ func analyzeStartAction[A analyzer](a A, expr *ast.BLangStartAction, expectedTyp
 	}
 	expr.IsIsolated = isIsolatedInvocationTarget(a, call) && isIsolatedInvocation(a, call)
 	return validateResolvedType(a, expr, expectedType)
+}
+
+// analyzeWorkerAsyncSendAction checks the value sent, and that a failure of
+// the receiver can be observed: an async send to a worker that can fail must
+// be followed by a sync send or flush to it.
+func analyzeWorkerAsyncSendAction[A analyzer](a A, expr *ast.BLangWorkerAsyncSendAction, expectedType semtypes.SemType) bool {
+	if !analyzeWorkerMessageValue(a, expr.Expr) {
+		return false
+	}
+	if !expr.Covered && !semtypes.IsEmpty(a.tyCtx(), workerFailureType(a, expr.Peer.Symbol)) {
+		a.semanticErr("async send to a worker that can fail must be followed by a sync send or flush to it", expr.GetPosition())
+		return false
+	}
+	return validateResolvedType(a, expr, expectedType)
+}
+
+func analyzeWorkerMessageValue[A analyzer](a A, expr ast.BLangExpression) bool {
+	if !analyzeActionOrExpression(a, expr, semtypes.SemType{}) {
+		return false
+	}
+	if !semtypes.IsSubtype(a.tyCtx(), expr.GetDeterminedType(), semtypes.CreateCloneable(a.tyCtx())) {
+		a.semanticErr("worker message value must be a subtype of value:Cloneable", expr.GetPosition())
+		return false
+	}
+	return true
+}
+
+func workerFailureType(a analyzer, peer model.SymbolRef) semtypes.SemType {
+	return common.WorkerFailureType(a.tyCtx(), a.ctx().SymbolType(peer))
 }
 
 func analyzeSingleWaitAction[A analyzer](a A, expr *ast.BLangSingleWaitAction, expectedType semtypes.SemType) bool {

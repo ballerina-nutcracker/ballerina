@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign to a variable narrowed outside the enclosing loop
+  --> loop-assign-provenance-e.bal:29:17
+   |
+29 |                 n = 1; // @error cannot assign to a variable narrowed outside the enclosing loop
+   |                 ^
+
+error[SEMANTIC_ERROR]: cannot assign to a variable narrowed outside the enclosing loop
+  --> loop-assign-provenance-e.bal:31:17
+   |
+31 |                 n = 2; // @error cannot assign to a variable narrowed outside the enclosing loop
+   |                 ^

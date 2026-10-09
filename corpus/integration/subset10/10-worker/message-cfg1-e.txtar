@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker can terminate before running all its message actions
+  --> message-cfg1-e.bal:23:9
+   |
+23 |         return; // @error the default worker can return before its send
+   |         ^^^^^^^
+
+error[SEMANTIC_ERROR]: worker can terminate before running all its message actions
+  --> message-cfg1-e.bal:32:13
+   |
+32 |             return; // @error a can return before its receive
+   |             ^^^^^^^
+
+error[SEMANTIC_ERROR]: worker can terminate before running all its message actions
+  --> message-cfg1-e.bal:44:13
+   |
+44 |             return; // @error a can return before its flush
+   |             ^^^^^^^
+
+error[SEMANTIC_ERROR]: worker can terminate before running all its message actions
+  --> message-cfg1-e.bal:55:9
+   |
+55 |         return; // @error the trailing statements have message actions
+   |         ^^^^^^^

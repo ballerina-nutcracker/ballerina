@@ -1,0 +1,3 @@
+-- stdout --
+'int' from string: invalid number format: not a number
+-- stderr --

@@ -58,7 +58,7 @@ type varDeclInfo struct {
 
 type symbolResolver interface {
 	varStatusTracker
-	GetSymbol(name string) (model.SymbolRef, scopeKind, bool)
+	GetSymbol(name string) (symbolLookup, bool)
 	ast.Visitor
 	GetPrefixedSymbol(prefix, name string) (model.SymbolRef, bool)
 	GetAnnotationSymbol(prefix, name string) (model.SymbolRef, bool)
@@ -73,6 +73,17 @@ type symbolResolver interface {
 	// recordDefaultScope is the module level scope owning generated record field default functions. These
 	// have to live in a module level scope since they are part of the module's exported symbols.
 	recordDefaultScope() model.Scope
+	// recordCapture records a captured block-level symbol in the capture groups of
+	// the regions between this resolver and the symbol's declaration.
+	recordCapture(ref model.SymbolRef)
+}
+
+// symbolLookup is the result of an unprefixed symbol lookup. captured is true
+// when the lookup crossed a closure boundary to reach a block-level symbol.
+type symbolLookup struct {
+	ref      model.SymbolRef
+	kind     scopeKind
+	captured bool
 }
 
 type (
@@ -130,6 +141,15 @@ type (
 		scope      model.BlockLevelScope
 		node       ast.BLangNode
 		varTracker *varTracker
+		captureAnalyzer
+		// inFunction is true for function and default-expression resolvers and for
+		// every resolver nested inside one.
+		inFunction bool
+		// messageGroup is the worker message group of the body whose worker
+		// statements this resolver resolves, when that body has workers.
+		messageGroup *workerMessageGroup
+		// messageWorker is the worker whose statements this resolver resolves.
+		messageWorker model.SymbolRef
 	}
 
 	// workerSymbolResolver hides a named worker's own name: a worker is not
@@ -267,35 +287,65 @@ func newCompilationUnitSymbolResolver(moduleResolver *moduleSymbolResolver, scop
 	}
 }
 
-func newFunctionResolver(parent symbolResolver, node ast.BLangNode) *blockSymbolResolver {
+func newFunctionResolver(parent symbolResolver, node ast.CaptureGroupOwner) *blockSymbolResolver {
 	pkgID := parent.GetPkgID()
 	parentScope := parent.GetScope()
 	scope := parent.GetCtx().NewFunctionScope(parentScope, pkgID)
+	kind := captureRegionNone
+	if isInFunction(parent) {
+		kind = captureRegionClosure
+	}
 	return &blockSymbolResolver{
-		parent:     parent,
-		scope:      scope,
-		node:       node,
-		varTracker: new(varTracker{}),
+		parent:          parent,
+		scope:           scope,
+		node:            node,
+		varTracker:      new(varTracker{}),
+		captureAnalyzer: newCaptureAnalyzer(parent.GetCtx(), kind, node),
+		inFunction:      true,
 	}
 }
 
 func newBlockSymbolResolverWithBlockScope(parent symbolResolver, node ast.BLangNode) *blockSymbolResolver {
+	return newScopedBlockResolver(parent, node, captureRegionNone, nil)
+}
+
+// newAccumBlockResolver creates a block resolver whose children accumulate their
+// captures into owner's group (a loop or a query).
+func newAccumBlockResolver(parent symbolResolver, owner ast.CaptureGroupOwner) *blockSymbolResolver {
+	return newScopedBlockResolver(parent, owner, captureRegionAccum, owner)
+}
+
+// newDefaultExprResolver creates the closure resolver for a default expression
+// owned by owner (a parameter or a record field).
+func newDefaultExprResolver(parent symbolResolver, owner ast.CaptureGroupOwner) *blockSymbolResolver {
+	return newScopedBlockResolver(parent, owner, captureRegionClosure, owner)
+}
+
+func newScopedBlockResolver(parent symbolResolver, node ast.BLangNode, kind captureRegionKind, owner ast.CaptureGroupOwner) *blockSymbolResolver {
 	pkgID := parent.GetPkgID()
 	parentScope := parent.GetScope()
 	scope := parent.GetCtx().NewBlockScope(parentScope, pkgID)
 	return &blockSymbolResolver{
-		parent: parent,
-		scope:  scope,
-		node:   node,
+		parent:          parent,
+		scope:           scope,
+		node:            node,
+		varTracker:      nil,
+		captureAnalyzer: newCaptureAnalyzer(parent.GetCtx(), kind, owner),
+		inFunction:      kind == captureRegionClosure || isInFunction(parent),
 	}
 }
 
-func (ms *compilationUnitSymbolResolver) GetSymbol(name string) (model.SymbolRef, scopeKind, bool) {
+func isInFunction(resolver symbolResolver) bool {
+	bs := nearestBlockResolver(resolver)
+	return bs != nil && bs.inFunction
+}
+
+func (ms *compilationUnitSymbolResolver) GetSymbol(name string) (symbolLookup, bool) {
 	if ref, ok := ms.moduleResolver.packageSymbols[name]; ok {
-		return ref, moduleScopeKind, true
+		return symbolLookup{ref: ref, kind: moduleScopeKind, captured: false}, true
 	}
 	ref, ok := ms.moduleResolver.packageScope.Main.GetSymbol(name)
-	return ref, moduleScopeKind, ok
+	return symbolLookup{ref: ref, kind: moduleScopeKind, captured: false}, ok
 }
 
 func (ms *compilationUnitSymbolResolver) GetSymbolFromCurrentScope(name string) (model.SymbolRef, scopeKind, bool) {
@@ -357,6 +407,12 @@ func (ms *compilationUnitSymbolResolver) recordDefaultScope() model.Scope {
 	return ms.scope
 }
 
+// recordCapture is unreachable: a captured symbol is always declared in a block
+// scope, and the block resolver declaring it stops the walk.
+func (ms *compilationUnitSymbolResolver) recordCapture(ref model.SymbolRef) {
+	internalError(ms, "captured symbol is not declared in a block scope: "+ms.GetCtx().SymbolName(ref), diagnostics.NewBuiltinLocation())
+}
+
 func (ms *compilationUnitSymbolResolver) GetTypeDefns() map[model.SymbolRef]*ast.BLangTypeDefinition {
 	return ms.moduleResolver.typeDefns
 }
@@ -365,17 +421,20 @@ func (ms *compilationUnitSymbolResolver) GetClassDefns() map[model.SymbolRef]*as
 	return ms.moduleResolver.classDefns
 }
 
-func (bs *blockSymbolResolver) GetSymbol(name string) (model.SymbolRef, scopeKind, bool) {
-	ref, ok := bs.scope.MainSpace().GetSymbol(name)
-	if ok {
-		return ref, blockScopeKind, true
+func (bs *blockSymbolResolver) GetSymbol(name string) (symbolLookup, bool) {
+	if ref, ok := bs.scope.MainSpace().GetSymbol(name); ok {
+		return symbolLookup{ref: ref, kind: blockScopeKind, captured: false}, true
 	}
-	return bs.parent.GetSymbol(name)
+	lookup, ok := bs.parent.GetSymbol(name)
+	if ok && lookup.kind == blockScopeKind && bs.captureRegionKind == captureRegionClosure {
+		lookup.captured = true
+	}
+	return lookup, ok
 }
 
-func (ws *workerSymbolResolver) GetSymbol(name string) (model.SymbolRef, scopeKind, bool) {
+func (ws *workerSymbolResolver) GetSymbol(name string) (symbolLookup, bool) {
 	if name == ws.workerName {
-		return model.SymbolRef{}, blockScopeKind, false
+		return symbolLookup{ref: model.SymbolRef{}, kind: blockScopeKind, captured: false}, false
 	}
 	return ws.blockSymbolResolver.GetSymbol(name)
 }
@@ -458,8 +517,8 @@ func isIgnoredDeclName(name string) bool {
 }
 
 func addTopLevelSymbol(resolver *compilationUnitSymbolResolver, name string, symbol model.Symbol, pos diagnostics.Location) bool {
-	if prevRef, _, exists := resolver.GetSymbol(name); exists {
-		resolver.markUsed(prevRef)
+	if prev, exists := resolver.GetSymbol(name); exists {
+		resolver.markUsed(prev.ref)
 		msg := "redeclared symbol '" + name + "'"
 		if prev, ok := resolver.moduleResolver.prevPos[name]; ok && !prev.reported {
 			semanticError(resolver, msg, prev.pos)
@@ -510,7 +569,8 @@ func (ms *compilationUnitSymbolResolver) isTypeRefToTypedesc(ref *ast.BLangUserD
 		ty := ms.moduleResolver.ctx.GetSymbol(symRef).Type()
 		return !semtypes.IsZero(ty) && semtypes.IsSubtype(ms.moduleResolver.tyCtx, ty, semtypes.Typedesc)
 	}
-	symRef, _, ok := ms.GetSymbol(typeName)
+	lookup, ok := ms.GetSymbol(typeName)
+	symRef := lookup.ref
 	if !ok {
 		return false
 	}
@@ -612,7 +672,8 @@ func returnTypeReferencesTypedescParam(node ast.BLangNode, typedescParams map[st
 
 func addSymbolAndSetOnNode[T symbolResolver](resolver T, name string, symbol model.Symbol, node ast.BNodeWithSymbol) {
 	resolver.AddSymbol(name, symbol)
-	symRef, _, _ := resolver.GetSymbol(name)
+	lookup, _ := resolver.GetSymbol(name)
+	symRef := lookup.ref
 	node.SetSymbol(symRef)
 }
 
@@ -727,7 +788,9 @@ func (ms *compilationUnitSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTy
 		if prefix != "" {
 			symRef, ok = ms.GetPrefixedSymbol(prefix, targetName)
 		} else {
-			symRef, _, ok = ms.GetSymbol(targetName)
+			var lookup symbolLookup
+			lookup, ok = ms.GetSymbol(targetName)
+			symRef = lookup.ref
 		}
 		if !ok {
 			symbol = new(model.NewTypeSymbol(name, isPublic, typeDef.Name.GetPosition()))
@@ -751,7 +814,8 @@ func (ms *compilationUnitSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTy
 	if !addTopLevelSymbol(ms, name, symbol, typeDef.Name.GetPosition()) {
 		return
 	}
-	symRef, _, _ := ms.GetSymbol(name)
+	lookup, _ := ms.GetSymbol(name)
+	symRef := lookup.ref
 	if typeDef.IsDistinct() {
 		switch carrier := ms.moduleResolver.ctx.GetSymbol(symRef).(type) {
 		case *model.ErrorTypeSymbol:
@@ -864,11 +928,14 @@ func (ms *compilationUnitSymbolResolver) allocateAnnotationSymbol(annotation *as
 func (ms *compilationUnitSymbolResolver) allocateConstantSymbol(constDef *ast.BLangVariable) {
 	name := constDef.Name.GetValue()
 	isPublic := constDef.IsPublic()
-	if !addTopLevelSymbol(ms, name, model.NewConstantValueSymbol(name, isPublic, constDef.Name.GetPosition()), constDef.Name.GetPosition()) {
+	symbol := model.NewConstantValueSymbol(name, isPublic, constDef.Name.GetPosition())
+	symbol.SetTopLevel()
+	if !addTopLevelSymbol(ms, name, symbol, constDef.Name.GetPosition()) {
 		return
 	}
 	if !isPublic {
-		symRef, _, _ := ms.GetSymbol(name)
+		lookup, _ := ms.GetSymbol(name)
+		symRef := lookup.ref
 		markInit(ms, name, symRef, constDef.GetPosition())
 	}
 }
@@ -890,6 +957,7 @@ func (ms *compilationUnitSymbolResolver) allocateGlobalVarSymbol(globalVar *ast.
 		if globalVar.IsListener() {
 			symbol.SetListener()
 		}
+		symbol.SetTopLevel()
 		if !addTopLevelSymbol(ms, name, &symbol, globalVar.Name.GetPosition()) {
 			return
 		}
@@ -912,7 +980,8 @@ func (ms *compilationUnitSymbolResolver) allocateClassSymbol(classDef *ast.BLang
 	if !addTopLevelSymbol(ms, name, symbol, classDef.Name.GetPosition()) {
 		return
 	}
-	symRef, _, _ := ms.GetSymbol(name)
+	lookup, _ := ms.GetSymbol(name)
+	symRef := lookup.ref
 	if classDef.IsDistinct() {
 		symbol.SetDistinctTypeIDs([]int{ms.moduleResolver.ctx.DistinctTypeID(symRef)})
 		registerLangLibDistinctTypeSymbol(ms, classDef.Name.GetValue(), symRef, classDef.GetPosition())
@@ -1185,19 +1254,31 @@ func resolveBlockFunctionBody(resolver *blockSymbolResolver, body *ast.BLangBloc
 	for _, stmt := range body.InitStmts {
 		ast.Walk(resolver, stmt.(ast.BLangNode))
 	}
-	declareNamedWorkers(resolver, body.Workers)
+	declareNamedWorkers(resolver, body)
 	for _, worker := range body.Workers {
 		resolveNamedWorker(resolver, worker)
 	}
 	for _, stmt := range body.Stmts {
 		ast.Walk(resolver, stmt.(ast.BLangNode))
 	}
+	if len(body.Workers) > 0 {
+		pairWorkerMessages(resolver, resolver.messageGroup)
+	}
 }
 
 // declareNamedWorkers declares every worker symbol before any worker body is
 // resolved, so a worker body can refer to peers declared before or after it.
-func declareNamedWorkers(resolver *blockSymbolResolver, workers []*ast.BLangNamedWorkerDeclaration) {
-	for _, worker := range workers {
+// A body with named workers also gets a default worker symbol.
+func declareNamedWorkers(resolver *blockSymbolResolver, body *ast.BLangBlockFunctionBody) {
+	if len(body.Workers) == 0 {
+		return
+	}
+	// The name can't be written in source, so there is no shadowing check: a
+	// lambda with its own workers nested in a body with workers declares another.
+	resolver.AddSymbol(constants.DefaultWorkerName, model.NewWorkerSymbol(constants.DefaultWorkerName, body.GetPosition()))
+	lookup, _ := resolver.GetSymbol(constants.DefaultWorkerName)
+	body.DefaultWorker = lookup.ref
+	for _, worker := range body.Workers {
 		name := worker.Name
 		if isShadowed(resolver, name) {
 			semanticError(resolver, "Variable already defined: "+name, worker.GetPosition())
@@ -1206,11 +1287,52 @@ func declareNamedWorkers(resolver *blockSymbolResolver, workers []*ast.BLangName
 		symbol := model.NewWorkerSymbol(name, worker.GetPosition())
 		addSymbolAndSetOnNode(resolver, name, symbol, worker)
 	}
+	resolver.messageGroup = newWorkerMessageGroup(body, !inModuleLevelFunction(resolver))
+	resolver.messageWorker = body.DefaultWorker
+}
+
+// inModuleLevelFunction reports whether resolver is inside the body of a
+// module-level function, or of a method of a class or service, and not in a
+// default expression.
+func inModuleLevelFunction(resolver *blockSymbolResolver) bool {
+	for current := resolver; current != nil; {
+		if _, isDefaultExpr := current.node.(*ast.BLangVariable); isDefaultExpr {
+			return false
+		}
+		parent := nearestBlockResolver(current.parent)
+		if parent == nil || isClassOrService(parent.node) {
+			return isNamedFunction(current.node)
+		}
+		current = parent
+	}
+	return false
+}
+
+func isClassOrService(node ast.BLangNode) bool {
+	switch node.(type) {
+	case *ast.BLangClassDefinition, *ast.BLangService:
+		return true
+	default:
+		return false
+	}
+}
+
+func isNamedFunction(node ast.BLangNode) bool {
+	switch n := node.(type) {
+	case *ast.BLangFunction:
+		return !n.IsAnonymous()
+	case *ast.BLangResourceMethod:
+		return true
+	default:
+		return false
+	}
 }
 
 func resolveNamedWorker(resolver *blockSymbolResolver, worker *ast.BLangNamedWorkerDeclaration) {
 	peers := &workerSymbolResolver{blockSymbolResolver: resolver, workerName: worker.Name}
 	workerResolver := newFunctionResolver(peers, worker)
+	workerResolver.messageGroup = resolver.messageGroup
+	workerResolver.messageWorker = worker.Symbol()
 	worker.SetScope(workerResolver.scope)
 	ast.Walk(workerResolver, worker)
 	reportUnusedVariables(workerResolver.GetCtx(), workerResolver.getUnused())
@@ -1366,7 +1488,9 @@ func (bs *blockSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		n.SetScope(resolver.scope)
 		return resolver
 	case *ast.BLangWhile:
-		resolver := newBlockSymbolResolverWithBlockScope(bs, n)
+		// The whole while node is a repeated region: its condition, body and on-fail
+		// clause all re-execute, so they share one capture group.
+		resolver := newAccumBlockResolver(bs, n)
 		n.SetScope(resolver.scope)
 		return resolver
 	case *ast.BLangForeach:
@@ -1380,6 +1504,10 @@ func (bs *blockSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 	case *ast.BLangVariableDef:
 		defineVariable(bs, n.GetVariable(), n.GetVariable().IsFinal())
 	case *ast.BLangVariable:
+		if isDefaultedParameter(bs, n) {
+			walkParameterDefaultChildren(bs, n)
+			return nil
+		}
 		walkSimpleVariableChildren(bs, n, n.Symbol())
 		return nil
 	case *ast.BLangLambdaFunction:
@@ -1415,10 +1543,48 @@ func walkSimpleVariableChildren[T symbolResolver](resolver T, variable *ast.BLan
 	}
 }
 
+type parameterizedNode interface {
+	GetParameters() []ast.BLangVariable
+}
+
+// isDefaultedParameter reports whether variable is a defaulted parameter of the
+// signature the resolver is walking.
+func isDefaultedParameter(bs *blockSymbolResolver, variable *ast.BLangVariable) bool {
+	if variable.Expr == nil {
+		return false
+	}
+	owner, ok := bs.node.(parameterizedNode)
+	if !ok {
+		return false
+	}
+	params := owner.GetParameters()
+	for i := range params {
+		if &params[i] == variable {
+			return true
+		}
+	}
+	return false
+}
+
+// walkParameterDefaultChildren walks a defaulted parameter, resolving its default
+// expression with its own closure resolver.
+func walkParameterDefaultChildren(bs *blockSymbolResolver, variable *ast.BLangVariable) {
+	if variable.Name != nil {
+		ast.Walk(bs, variable.Name)
+	}
+	for i := range variable.AnnAttachments {
+		ast.Walk(bs, &variable.AnnAttachments[i])
+	}
+	if typeNode := variable.TypeNode(); typeNode != nil {
+		ast.Walk(bs, typeNode.(ast.BLangNode))
+		associateFunctionSignatureFromTypeDescriptor(bs, variable.Symbol(), typeNode, variable.GetPosition())
+	}
+	ast.Walk(newDefaultExprResolver(bs, variable), variable.Expr.(ast.BLangNode))
+}
+
 func resolveFunctionTypeSymbols[T symbolResolver](resolver T, fnType *ast.BLangFunctionType) {
 	ensureFunctionTypeSignature(resolver, resolver.GetScope(), fnType)
-	paramScope := resolver.GetCtx().NewBlockScope(resolver.GetScope(), resolver.GetPkgID())
-	paramResolver := &blockSymbolResolver{parent: resolver, scope: paramScope, node: fnType}
+	paramResolver := newBlockSymbolResolverWithBlockScope(resolver, fnType)
 	for i := range fnType.RequiredParams {
 		param := fnType.RequiredParams[i]
 		if param.TypeDesc != nil {
@@ -1427,14 +1593,14 @@ func resolveFunctionTypeSymbols[T symbolResolver](resolver T, fnType *ast.BLangF
 		if param.Name != nil {
 			name := param.Name.GetValue()
 			symbol := model.NewVariableSymbol(name, false, false, true, param.Name.GetPosition())
-			paramScope.AddSymbol(name, &symbol)
-			ref, _ := paramScope.GetSymbol(name)
+			paramResolver.scope.AddSymbol(name, &symbol)
+			ref, _ := paramResolver.scope.GetSymbol(name)
 			param.SymbolRef = ref
 			param.Name.SetDeterminedType(semtypes.Never)
 			associateFunctionSignatureFromTypeDescriptor(resolver, param.SymbolRef, param.TypeDesc, param.GetPosition())
 		}
 		if param.InitExpr != nil {
-			ast.Walk(paramResolver, param.InitExpr.(ast.BLangNode))
+			ast.Walk(newDefaultExprResolver(paramResolver, param), param.InitExpr.(ast.BLangNode))
 		}
 	}
 	if fnType.RestParam != nil {
@@ -1445,8 +1611,8 @@ func resolveFunctionTypeSymbols[T symbolResolver](resolver T, fnType *ast.BLangF
 		if param.Name != nil {
 			name := param.Name.GetValue()
 			symbol := model.NewVariableSymbol(name, false, false, true, param.Name.GetPosition())
-			paramScope.AddSymbol(name, &symbol)
-			ref, _ := paramScope.GetSymbol(name)
+			paramResolver.scope.AddSymbol(name, &symbol)
+			ref, _ := paramResolver.scope.GetSymbol(name)
 			param.SymbolRef = ref
 			param.Name.SetDeterminedType(semtypes.Never)
 			associateFunctionSignatureFromTypeDescriptor(resolver, param.SymbolRef, param.TypeDesc, param.GetPosition())
@@ -1518,7 +1684,32 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 	case *ast.BLangAnnotAccessExpr:
 		resolveAnnotationReference(resolver, n.PkgAlias, n.AnnotationName, n.GetPosition(), n)
 	case *ast.BLangQueryExpr:
-		return newBlockSymbolResolverWithBlockScope(resolver, n)
+		resolveQuerySymbols(resolver, n)
+		return nil
+	case *ast.BLangWorkerAsyncSendAction:
+		resolveAsyncSendAction(resolver, n)
+		return nil
+	case *ast.BLangWorkerSyncSendAction:
+		resolveSyncSendAction(resolver, n)
+		return nil
+	case *ast.BLangWorkerReceiveAction:
+		resolveReceiveAction(resolver, n)
+		return nil
+	case *ast.BLangWorkerMultipleReceiveAction:
+		resolveMultipleReceiveAction(resolver, n)
+		return nil
+	case *ast.BLangWorkerFlushAction:
+		resolveFlushAction(resolver, n)
+		return nil
+	case *ast.BLangSingleWaitAction:
+		resolveWaitAction(resolver, []ast.BLangExpression{n.FutureExpr}, n.GetPosition(), true)
+		return nil
+	case *ast.BLangAlternateWaitAction:
+		resolveWaitAction(resolver, n.FutureExprs, n.GetPosition(), false)
+		return nil
+	case *ast.BLangMultipleWaitAction:
+		resolveWaitAction(resolver, n.FutureExprs, n.GetPosition(), true)
+		return nil
 	case *ast.BLangInvocation:
 		if n.GetExpression() != nil {
 			createDeferredMethodSymbol(resolver, n)
@@ -1541,14 +1732,62 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 		}
 		n.Inclusions, n.InclusionPositions = inclusions, positions
 	case *ast.BLangRecordType:
-		inclusions, positions, ok := resolveRecordTypeInclusions(resolver, n.TypeInclusions)
-		if !ok {
-			return nil
-		}
-		n.Inclusions, n.InclusionPositions = inclusions, positions
-		allocateRecordDefaultSymbols(resolver, n)
+		resolveRecordTypeSymbols(resolver, n)
+		return nil
 	}
 	return resolver
+}
+
+// resolveQuerySymbols walks a query expression so that only the initial
+// collection is outside the query's repeated region. Every subsequent clause and
+// terminal expression accumulates into the query's capture group.
+func resolveQuerySymbols[T symbolResolver](resolver T, query *ast.BLangQueryExpr) {
+	onceEvaluated := newBlockSymbolResolverWithBlockScope(resolver, query)
+	clauses := query.QueryClauseList
+	start := 0
+	if len(clauses) > 0 {
+		if from, ok := clauses[0].(*ast.BLangFromClause); ok && from.Collection != nil {
+			ast.Walk(onceEvaluated, from.Collection.(ast.BLangNode))
+			start = 1
+		}
+	}
+	repeated := newAccumBlockResolver(onceEvaluated, query)
+	if start == 1 {
+		if from := clauses[0].(*ast.BLangFromClause); from.VariableDefinitionNode != nil {
+			ast.Walk(repeated, from.VariableDefinitionNode)
+		}
+	}
+	for i := start; i < len(clauses); i++ {
+		ast.Walk(repeated, clauses[i])
+	}
+}
+
+// resolveRecordTypeSymbols walks a record type descriptor, resolving each field
+// default with its own closure resolver.
+func resolveRecordTypeSymbols[T symbolResolver](resolver T, recordType *ast.BLangRecordType) {
+	inclusions, positions, ok := resolveRecordTypeInclusions(resolver, recordType.TypeInclusions)
+	if !ok {
+		return
+	}
+	recordType.Inclusions, recordType.InclusionPositions = inclusions, positions
+	allocateRecordDefaultSymbols(resolver, recordType)
+	for _, inclusion := range recordType.TypeInclusions {
+		ast.Walk(resolver, inclusion.(ast.BLangNode))
+	}
+	for _, field := range recordType.FieldPtrs() {
+		attachments := field.GetAnnotationAttachments()
+		for i := range attachments {
+			ast.Walk(resolver, &attachments[i])
+		}
+		ast.Walk(resolver, field.Type.(ast.BLangNode))
+		if field.Default == nil {
+			continue
+		}
+		ast.Walk(newDefaultExprResolver(resolver, field), field.Default.Expr.(ast.BLangNode))
+	}
+	if recordType.RestType != nil {
+		ast.Walk(resolver, recordType.RestType.(ast.BLangNode))
+	}
 }
 
 func resolveMappingConstructor[T symbolResolver](resolver T, n *ast.BLangMappingConstructorExpr) ast.Visitor {
@@ -1585,7 +1824,8 @@ func markUnprefixedRefUsed[T symbolResolver](resolver T, name, prefix string) {
 	if prefix != "" {
 		return
 	}
-	symRef, _, ok := resolver.GetSymbol(name)
+	lookup, ok := resolver.GetSymbol(name)
+	symRef := lookup.ref
 	if !ok {
 		return
 	}
@@ -1612,12 +1852,15 @@ func resolveSymbolRef[T symbolResolver](
 		}
 		target.SetSymbol(symRef)
 	} else {
-		symRef, _, ok := resolver.GetSymbol(name)
+		lookup, ok := resolver.GetSymbol(name)
 		if !ok {
 			semanticError(resolver, unknownMessage+": "+name, pos)
 			return false
 		}
-		target.SetSymbol(symRef)
+		if lookup.captured {
+			resolver.recordCapture(lookup.ref)
+		}
+		target.SetSymbol(lookup.ref)
 	}
 	return true
 }
@@ -1711,11 +1954,12 @@ func defineVariable(resolver *blockSymbolResolver, variable *ast.BLangVariable, 
 }
 
 func resolveForeachSymbols(bs *blockSymbolResolver, n *ast.BLangForeach) {
-	resolver := newBlockSymbolResolverWithBlockScope(bs, n)
-	n.SetScope(resolver.scope)
 	if n.Collection != nil {
-		ast.Walk(resolver, n.Collection.(ast.BLangNode))
+		// The collection is evaluated once, ahead of the repeated region.
+		ast.Walk(bs, n.Collection.(ast.BLangNode))
 	}
+	resolver := newAccumBlockResolver(bs, n)
+	n.SetScope(resolver.scope)
 	if n.VariableDef != nil {
 		defineVariable(resolver, n.VariableDef.GetVariable(), true)
 		ast.Walk(resolver, n.VariableDef.Var)
@@ -1753,7 +1997,9 @@ func setTypeDescriptorSymbol[T symbolResolver](resolver T, td ast.TypeDescriptor
 					semanticError(resolver, "Unknown type: "+tyName, td.GetPosition())
 				}
 			} else {
-				symRef, _, ok = resolver.GetSymbol(tyName)
+				var lookup symbolLookup
+				lookup, ok = resolver.GetSymbol(tyName)
+				symRef = lookup.ref
 				if !ok {
 					semanticError(resolver, "Unknown type: "+tyName, td.GetPosition())
 				}
@@ -1782,7 +2028,8 @@ func (ms *compilationUnitSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 			return nil
 		}
 		name := n.Name.GetValue()
-		symRef, _, ok := ms.GetSymbol(name)
+		lookup, ok := ms.GetSymbol(name)
+		symRef := lookup.ref
 		if !ok {
 			kind := "variable"
 			if n.IsConstant() {
@@ -1795,7 +2042,8 @@ func (ms *compilationUnitSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		return nil
 	case *ast.BLangTypeDefinition:
 		name := n.Name.GetValue()
-		symRef, _, ok := ms.GetSymbol(name)
+		lookup, ok := ms.GetSymbol(name)
+		symRef := lookup.ref
 		if !ok {
 			internalError(ms, "Module level type symbol not found: "+name, n.Name.GetPosition())
 		}
@@ -1816,7 +2064,8 @@ func (ms *compilationUnitSymbolResolver) Visit(node ast.BLangNode) ast.Visitor {
 		return ms
 	case *ast.BLangClassDefinition:
 		name := n.Name.GetValue()
-		symRef, _, ok := ms.GetSymbol(name)
+		lookup, ok := ms.GetSymbol(name)
+		symRef := lookup.ref
 		if !ok {
 			internalError(ms, "Module level class symbol not found: "+name, n.Name.GetPosition())
 		}
@@ -2089,7 +2338,8 @@ func resolveServiceDefinition(ms *compilationUnitSymbolResolver, svc *ast.BLangS
 	serviceSymbolName := ms.moduleResolver.nextServiceSymbolName()
 	serviceSymbol := model.NewTypeSymbol(serviceSymbolName, false, svc.GetPosition())
 	svcResolver.AddSymbol(serviceSymbolName, &serviceSymbol)
-	serviceSymbolRef, _, _ := svcResolver.GetSymbol(serviceSymbolName)
+	lookup, _ := svcResolver.GetSymbol(serviceSymbolName)
+	serviceSymbolRef := lookup.ref
 	svc.SetSymbol(serviceSymbolRef)
 	for i := range svc.AnnAttachments {
 		ast.Walk(svcResolver, &svc.AnnAttachments[i])
@@ -2122,7 +2372,7 @@ func resolveClassDefinition(ms *compilationUnitSymbolResolver, classDef *ast.BLa
 func finishResolveClassDefinition(ms *compilationUnitSymbolResolver, blockRes *blockSymbolResolver, fields []*ast.BLangVariable, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, initFn *ast.BLangFunction, includedFields []inclusionMemberForSymbolResolution, methodTargetScope methodSymbolTargetScope, methodSymbolName func(string) string, resourceMethodsAreNetworkClass bool) {
 	for _, field := range fields {
 		name := field.GetName().GetValue()
-		if _, sk, exists := blockRes.GetSymbol(name); exists && sk == blockScopeKind {
+		if lookup, exists := blockRes.GetSymbol(name); exists && lookup.kind == blockScopeKind {
 			semanticError(blockRes, "redeclared symbol '"+name+"'", field.GetPosition())
 			continue
 		}
@@ -2135,7 +2385,7 @@ func finishResolveClassDefinition(ms *compilationUnitSymbolResolver, blockRes *b
 
 	orderedMethods := common.MethodsInResolutionOrder(methods)
 	for _, m := range orderedMethods {
-		if _, sk, exists := blockRes.GetSymbol(m.Name); exists && sk == blockScopeKind {
+		if lookup, exists := blockRes.GetSymbol(m.Name); exists && lookup.kind == blockScopeKind {
 			semanticError(blockRes, "redeclared symbol '"+model.StripRemotePrefix(m.Name)+"'", m.Method.Name.GetPosition())
 			continue
 		}
@@ -2148,7 +2398,7 @@ func finishResolveClassDefinition(ms *compilationUnitSymbolResolver, blockRes *b
 	}
 
 	for _, m := range includedFields {
-		if _, _, exists := blockRes.GetSymbol(m.name); exists {
+		if _, exists := blockRes.GetSymbol(m.name); exists {
 			continue
 		}
 		symbol := model.NewVariableSymbol(m.name, m.isPublic, false, false, diagnostics.NewBuiltinLocation())

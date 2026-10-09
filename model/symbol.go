@@ -77,6 +77,7 @@ type ValueSymbol interface {
 	IsIsolated() bool
 	IsFinal() bool
 	IsConfigurable() bool
+	IsTopLevel() bool
 }
 
 // symbolTypeSetter is a private interface for updating symbol types during type resolution.
@@ -101,7 +102,14 @@ const (
 	valueSymbolFlagFinal
 	valueSymbolFlagConfigurable
 	valueSymbolFlagListener
+	valueSymbolFlagTopLevel
 )
+
+// CaptureGroupRef identifies a capture group in the compiler environment. Zero means no group.
+type CaptureGroupRef int
+
+// WorkerMessageRef identifies a message sent between workers. Zero means unset.
+type WorkerMessageRef int
 
 type FunctionSymbol interface {
 	Symbol
@@ -1321,6 +1329,10 @@ func (vs *VariableSymbol) SetConfigurable() { vs.setFlag(valueSymbolFlagConfigur
 func (vs *VariableSymbol) IsListener() bool { return vs.hasFlag(valueSymbolFlagListener) }
 
 func (vs *VariableSymbol) SetListener() { vs.setFlag(valueSymbolFlagListener) }
+
+func (vs *VariableSymbol) IsTopLevel() bool { return vs.hasFlag(valueSymbolFlagTopLevel) }
+
+func (vs *VariableSymbol) SetTopLevel() { vs.setFlag(valueSymbolFlagTopLevel) }
 
 func (vs *VariableSymbol) hasFlag(flag valueSymbolFlags) bool { return vs.flags&flag != 0 }
 

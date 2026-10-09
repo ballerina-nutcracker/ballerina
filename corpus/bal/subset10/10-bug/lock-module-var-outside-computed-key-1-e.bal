@@ -17,7 +17,7 @@
 
 import ballerina/io;
 
-isolated string key = "a";
+isolated string key = "a"; // @error computed key overwrites the type of key (#987)
 
 public function main() {
     map<int> m = {[key]: 1}; // @error

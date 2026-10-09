@@ -1,0 +1,131 @@
+(failAfterSyncSend
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (checked-expr
+              (worker-receive-action function)))))
+        (return
+          (error-constructor-expr (
+            (literal after))))))
+    (var-def
+      (variable sent (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (worker-sync-send-action a
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref sent)
+            (error-type))
+          (literal failed)
+          (literal delivered)))))
+    (var-def
+      (variable r (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref r)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref r)))
+          (literal done)))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation failAfterSyncSend ()))
+    (expression-stmt
+      (invocation panicAfterFlush ()))
+  )
+)
+(panicAfterFlush
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (checked-expr
+              (worker-receive-action function)))))
+        (panic
+          (error-constructor-expr (
+            (literal after))))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 1)))
+    (var-def
+      (variable flushed (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (worker-flush-action a))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref flushed)
+            (error-type))
+          (literal failed)
+          (literal flushed)))))
+    (var-def
+      (variable r (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (single-wait-action
+            (simple-var-ref a))))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref r)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref r)))
+          (literal done)))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (checked-expr
+          (worker-receive-action function)))))
+    (panic
+      (error-constructor-expr (
+        (literal after))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (checked-expr
+          (worker-receive-action function)))))
+    (return
+      (error-constructor-expr (
+        (literal after))))
+  )
+)

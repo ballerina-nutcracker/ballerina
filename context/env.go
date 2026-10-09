@@ -19,9 +19,12 @@ package context
 import (
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"github.com/ballerina-nutcracker/ballerina/common/constants"
+	"github.com/ballerina-nutcracker/ballerina/context/internal/capturegroups"
 	"github.com/ballerina-nutcracker/ballerina/context/internal/functionsignatures"
+	"github.com/ballerina-nutcracker/ballerina/context/internal/workermessages"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -96,14 +99,19 @@ func (t *distinctTypeTracker) symbolRef(id int) (model.SymbolRef, bool) {
 
 // CompilerEnvironment maintain the shared state of the frontend.
 type CompilerEnvironment struct {
-	anonTypeCount              map[*model.PackageID]int
-	anonFuncCount              map[*model.PackageID]int
-	packageInterner            *model.PackageIDInterner
-	symbolSpaces               []*model.SymbolSpace
-	symbolSpacesMu             sync.RWMutex // we need this because desugaring add new init functions concurrently we shouldn't need this if the spaces are scoped to the module, may be we should do that?
-	typeEnv                    semtypes.Env
-	underlyingSymbol           sync.Map
-	functionSignatures         functionsignatures.Store
+	anonTypeCount      map[*model.PackageID]int
+	anonFuncCount      map[*model.PackageID]int
+	packageInterner    *model.PackageIDInterner
+	symbolSpaces       []*model.SymbolSpace
+	symbolSpacesMu     sync.RWMutex // we need this because desugaring add new init functions concurrently we shouldn't need this if the spaces are scoped to the module, may be we should do that?
+	typeEnv            semtypes.Env
+	underlyingSymbol   sync.Map
+	functionSignatures functionsignatures.Store
+	captureGroups      capturegroups.Store
+	// workerMessageCount allocates worker message handles. It is separate from
+	// the type stores, so a candidate trial's store never mints one.
+	workerMessageCount         atomic.Int64
+	workerMessageTypes         *workermessages.Store
 	distinctTypes              distinctTypeTracker
 	langLibDistinctTypeSymbols langLibDistinctTypeRegistry
 	mappingDefaults            sync.Map // *semtypes.MappingAtomicType -> []model.FieldDefault
@@ -430,6 +438,7 @@ type ValueSymbolMetadata struct {
 	Const        bool
 	Configurable bool
 	Isolated     bool
+	TopLevel     bool
 }
 
 func (c *CompilerEnvironment) ValueSymbolMetadata(symbol model.SymbolRef) (ValueSymbolMetadata, bool) {
@@ -443,7 +452,24 @@ func (c *CompilerEnvironment) ValueSymbolMetadata(symbol model.SymbolRef) (Value
 		Const:        valueSymbol.IsConst(),
 		Configurable: valueSymbol.IsConfigurable(),
 		Isolated:     valueSymbol.IsIsolated(),
+		TopLevel:     valueSymbol.IsTopLevel(),
 	}, true
+}
+
+func (c *CompilerEnvironment) newCaptureGroup() model.CaptureGroupRef {
+	return c.captureGroups.Allocate()
+}
+
+func (c *CompilerEnvironment) addToCaptureGroup(group model.CaptureGroupRef, ref model.SymbolRef) {
+	c.captureGroups.Add(group, ref)
+}
+
+func (c *CompilerEnvironment) newWorkerMessage() model.WorkerMessageRef {
+	return model.WorkerMessageRef(c.workerMessageCount.Add(1))
+}
+
+func (c *CompilerEnvironment) captureGroupContains(group model.CaptureGroupRef, ref model.SymbolRef) bool {
+	return c.captureGroups.Contains(group, ref)
 }
 
 func (c *CompilerEnvironment) SetSymbolType(symbol model.SymbolRef, ty semtypes.SemType) {
@@ -480,6 +506,8 @@ func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEn
 		anonFuncCount:              make(map[*model.PackageID]int),
 		packageInterner:            model.DefaultPackageIDInterner,
 		functionSignatures:         functionsignatures.NewStore(),
+		captureGroups:              capturegroups.NewStore(),
+		workerMessageTypes:         workermessages.NewStore(),
 		distinctTypes:              newDistinctTypeTracker(),
 		langLibDistinctTypeSymbols: newLangLibDistinctTypeRegistry(),
 		typeEnv:                    typeEnv,

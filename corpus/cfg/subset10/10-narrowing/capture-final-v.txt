@@ -1,0 +1,80 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (literal 1))))
+    (var-def
+      (variable y (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (literal two))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable inherited (type
+        (function-type () (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref x))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation inherited ()))))
+  )
+  (bb2 (bb1 bb0) ()
+    (var-def
+      (variable fresh (type
+        (function-type () (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_1 () (
+            (value-type int))
+            (block-function-body
+              (if
+                (type-test-expr is
+                  (simple-var-ref y)
+                  (value-type string))
+                (block-stmt
+                  (return
+                    (invocation lang.string length (
+                      (simple-var-ref y))))) ())
+              (block-stmt
+                (return
+                  (literal 0)))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fresh ()))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (simple-var-ref x))
+  )
+)
+($anonFunc$_1
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref y)
+      (value-type string))
+  )
+  (bb1 (bb0) ()
+    (return
+      (invocation lang.string length (
+        (simple-var-ref y))))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 0))
+  )
+)

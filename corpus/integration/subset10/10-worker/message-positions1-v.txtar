@@ -1,0 +1,5 @@
+-- stdout --
+matched five
+1 2 7 6
+7
+-- stderr --

@@ -1,0 +1,113 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (var-def
+          (variable inner (expr
+            (lambda
+              (function $anonFunc$_0 () (
+                (value-type int))
+                (block-function-body
+                  (named-worker b (
+                    (value-type int))
+                    (block-function-body
+                      (var-def
+                        (variable y (type
+                          (value-type int)) (expr
+                          (worker-receive-action function))))
+                      (return
+                        (binary-expr +
+                          (simple-var-ref y)
+                          (literal 1)))))
+                  (expression-stmt
+                    (worker-async-send-action b
+                      (simple-var-ref x)))
+                  (return
+                    (single-wait-action
+                      (simple-var-ref b)))))))))
+        (return
+          (invocation inner ()))))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 10)))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable y (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (return
+          (binary-expr +
+            (simple-var-ref y)
+            (literal 1)))))
+    (expression-stmt
+      (worker-async-send-action b
+        (simple-var-ref x)))
+    (return
+      (single-wait-action
+        (simple-var-ref b)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (var-def
+      (variable inner (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (named-worker b (
+                (value-type int))
+                (block-function-body
+                  (var-def
+                    (variable y (type
+                      (value-type int)) (expr
+                      (worker-receive-action function))))
+                  (return
+                    (binary-expr +
+                      (simple-var-ref y)
+                      (literal 1)))))
+              (expression-stmt
+                (worker-async-send-action b
+                  (simple-var-ref x)))
+              (return
+                (single-wait-action
+                  (simple-var-ref b)))))))))
+    (return
+      (invocation inner ()))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable y (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr +
+        (simple-var-ref y)
+        (literal 1)))
+  )
+)

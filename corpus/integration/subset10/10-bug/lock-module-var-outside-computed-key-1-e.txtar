@@ -5,3 +5,9 @@ error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock stat
    |
 23 |     map<int> m = {[key]: 1}; // @error
    |                    ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected 1, got "a"
+  --> lock-module-var-outside-computed-key-1-e.bal:20:23
+   |
+20 | isolated string key = "a"; // @error computed key overwrites the type of key (#987)
+   |                       ^^^

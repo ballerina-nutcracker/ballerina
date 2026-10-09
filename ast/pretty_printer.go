@@ -122,6 +122,16 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printAlternateWaitAction(t)
 	case *BLangMultipleWaitAction:
 		p.printMultipleWaitAction(t)
+	case *BLangWorkerAsyncSendAction:
+		p.printWorkerSendAction("worker-async-send-action", t.Expr, t.Peer)
+	case *BLangWorkerSyncSendAction:
+		p.printWorkerSendAction("worker-sync-send-action", t.Expr, t.Peer)
+	case *BLangWorkerReceiveAction:
+		p.printWorkerReceiveAction(t)
+	case *BLangWorkerMultipleReceiveAction:
+		p.printWorkerMultipleReceiveAction(t)
+	case *BLangWorkerFlushAction:
+		p.printWorkerFlushAction(t)
 	case *BLangNamedArgsExpression:
 		p.printNamedArgsExpression(t)
 	case *BLangDefaultArg:
@@ -1024,6 +1034,41 @@ func (p *PrettyPrinter) printMultipleWaitAction(node *BLangMultipleWaitAction) {
 		p.PrintInner(futureExpr)
 	}
 	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printWorkerSendAction(kind string, expr BLangExpression, peer BLangWorkerPeer) {
+	p.StartNode()
+	p.PrintString(kind)
+	p.PrintString(peer.SourceName())
+	p.indentLevel++
+	p.PrintInner(expr)
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printWorkerReceiveAction(node *BLangWorkerReceiveAction) {
+	p.StartNode()
+	p.PrintString("worker-receive-action")
+	p.PrintString(node.Peer.SourceName())
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printWorkerMultipleReceiveAction(node *BLangWorkerMultipleReceiveAction) {
+	p.StartNode()
+	p.PrintString("worker-multiple-receive-action")
+	for _, field := range node.Fields {
+		p.PrintString(field.FieldName + ":" + field.Peer.SourceName())
+	}
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printWorkerFlushAction(node *BLangWorkerFlushAction) {
+	p.StartNode()
+	p.PrintString("worker-flush-action")
+	if node.Peer != nil {
+		p.PrintString(node.Peer.SourceName())
+	}
 	p.EndNode()
 }
 

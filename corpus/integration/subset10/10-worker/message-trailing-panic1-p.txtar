@@ -1,0 +1,6 @@
+-- stdout --
+-- stderr --
+error: boom
+        at boom(message-trailing-panic1-p.bal:19)
+           run(message-trailing-panic1-p.bal:29)
+           main(message-trailing-panic1-p.bal:33)
