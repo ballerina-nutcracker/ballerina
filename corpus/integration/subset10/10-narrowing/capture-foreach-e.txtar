@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-foreach-e.bal:25:21
+   |
+25 |             int y = x; // @error a later capture in the loop reaches this use
+   |                     ^

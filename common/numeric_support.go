@@ -16,6 +16,11 @@
 
 package common
 
+import (
+	"strconv"
+	"strings"
+)
+
 // HasHexIndicator checks if literal has hex indicator
 // migrated from NumericLiteralSupport.java:77:5
 func HasHexIndicator(literalValue string) bool {
@@ -45,4 +50,46 @@ func IsDecimalDiscriminated(literalValue string) bool {
 	}
 	// Check if it's not a hex literal
 	return !HasHexIndicator(literalValue)
+}
+
+// NormalizeHexFloatLiteral appends the "p0" exponent a hex float literal needs for strconv.ParseFloat when it has none.
+func NormalizeHexFloatLiteral(text string) string {
+	if !strings.ContainsAny(text, "pP") {
+		return text + "p0"
+	}
+	return text
+}
+
+// ParseIntLiteral parses the text of an int literal. It returns an int64 when the value fits, otherwise the value as a
+// float64. ok is false when text is not an int literal or its value does not fit a float64.
+func ParseIntLiteral(text string) (value any, ok bool) {
+	digits, radix := text, 10
+	if HasHexIndicator(text) {
+		digits, radix = strings.ReplaceAll(strings.ToLower(text), "0x", ""), 16
+	}
+	if !isIntLiteralDigits(digits, radix) {
+		return nil, false
+	}
+	if v, err := strconv.ParseInt(digits, radix, 64); err == nil {
+		return v, true
+	}
+	f, err := strconv.ParseFloat(digits, 64)
+	if err != nil {
+		return nil, false
+	}
+	return f, true
+}
+
+func isIntLiteralDigits(digits string, radix int) bool {
+	digits = strings.TrimPrefix(digits, "-")
+	if digits == "" {
+		return false
+	}
+	for _, c := range digits {
+		isDigit := c >= '0' && c <= '9'
+		if !isDigit && (radix != 16 || c < 'a' || c > 'f') {
+			return false
+		}
+	}
+	return true
 }

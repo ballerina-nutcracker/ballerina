@@ -1,0 +1,294 @@
+module $anon.. v 0.0.0;
+class IntArgs {
+  next nil|{| value: int, never... |}
+  lax json
+  ann nil|{| name: string, never... |}
+  filtered xml
+
+  init(nil|{| value: int, never... |},json,nil|{| name: string, never... |},xml,int) -> nil{
+    bb0 {
+      %7 = ConstantLoad next
+      self[%7] = next;
+      %8 = ConstantLoad lax
+      self[%8] = lax;
+      %9 = ConstantLoad ann
+      self[%9] = ann;
+      %10 = ConstantLoad filtered
+      self[%10] = filtered;
+      _ = marker;
+      return;
+    }
+  }
+}
+class StringArgs {
+
+  init(nil|{| value: int, never... |},json,nil|{| name: string, never... |},xml,string) -> nil{
+    bb0 {
+      _ = next;
+      _ = lax;
+      _ = ann;
+      _ = filtered;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int, int, never...][%3]{%1, %2}
+    %5 = toStream(%4) -> bb1;
+  }
+  bb1 {
+    s = %5;
+    %7 = ConstantLoad a
+    %8 = ConstantLoad b
+    %9 = ConstantLoad 7
+    %10 = newMap {| json... |}{%8=%9}
+    %11 = newMap {| json... |}{%7=%10}
+    j = %11;
+    %13 = ConstantLoad typedesc
+    td = %13;
+    %15 = ConstantLoad 1
+    %16 = newXMLText(%15)
+    %17 = newXMLElement("a", %16)
+    %18 = ConstantLoad 2
+    %19 = newXMLText(%18)
+    %20 = newXMLElement("b", %19)
+    %21 = newXMLSequence{%17, %20}
+    x = %21;
+    %23 = newObject $anon/.:IntArgs
+    %25 = streamNext s
+    %26 = %25 is error
+    %26 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %25;
+    return;
+  }
+  bb3 {
+    %24 = %25;
+    GOTO bb4;
+  }
+  bb4 {
+    $desugar$0 = j;
+    %29 = ConstantLoad lax field access failed
+    %30 = newError error(%29)
+    $desugar$1 = %30;
+    %32 = $desugar$0 is error
+    %32 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 0
+    (1, $desugar$1) = (1, $desugar$0);
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb6 {
+    %33 = $desugar$0 !is mapping
+    %33 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$1) = %1;
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb8 {
+    PushScopeFrame 6
+    GOTO bb9;
+  }
+  bb9 {
+    %1 = ConstantLoad a
+    %2 = get((1, $desugar$0),%1) -> bb10;
+  }
+  bb10 {
+    %0 = %2;
+    GOTO bb11;
+  }
+  bb11 {
+    $desugar$2 = %0;
+    %4 = $desugar$2 is error
+    %4 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 0
+    (2, $desugar$1) = (1, $desugar$2);
+    PopScopeFrame
+    GOTO bb17;
+  }
+  bb13 {
+    %5 = $desugar$2 is json
+    %5 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    (2, $desugar$1) = (1, $desugar$2);
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb15 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$1) = %1;
+    PopScopeFrame
+    GOTO bb16;
+  }
+  bb16 {
+    GOTO bb17;
+  }
+  bb17 {
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb18 {
+    GOTO bb19;
+  }
+  bb19 {
+    $desugar$3 = $desugar$1;
+    %35 = ConstantLoad lax field access failed
+    %36 = newError error(%35)
+    $desugar$4 = %36;
+    %38 = $desugar$3 is error
+    %38 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 0
+    (1, $desugar$4) = (1, $desugar$3);
+    PopScopeFrame
+    GOTO bb34;
+  }
+  bb21 {
+    %39 = $desugar$3 !is mapping
+    %39 ? bb22 : bb23;
+  }
+  bb22 {
+    PushScopeFrame 2
+    %0 = ConstantLoad lax field access receiver is not a mapping
+    %1 = newError error(%0)
+    (1, $desugar$4) = %1;
+    PopScopeFrame
+    GOTO bb33;
+  }
+  bb23 {
+    PushScopeFrame 6
+    GOTO bb24;
+  }
+  bb24 {
+    %1 = ConstantLoad b
+    %2 = get((1, $desugar$3),%1) -> bb25;
+  }
+  bb25 {
+    %0 = %2;
+    GOTO bb26;
+  }
+  bb26 {
+    $desugar$5 = %0;
+    %4 = $desugar$5 is error
+    %4 ? bb27 : bb28;
+  }
+  bb27 {
+    PushScopeFrame 0
+    (2, $desugar$4) = (1, $desugar$5);
+    PopScopeFrame
+    GOTO bb32;
+  }
+  bb28 {
+    %5 = $desugar$5 is json
+    %5 ? bb29 : bb30;
+  }
+  bb29 {
+    PushScopeFrame 0
+    (2, $desugar$4) = (1, $desugar$5);
+    PopScopeFrame
+    GOTO bb31;
+  }
+  bb30 {
+    PushScopeFrame 2
+    %0 = ConstantLoad invalid lax field member
+    %1 = newError error(%0)
+    (2, $desugar$4) = %1;
+    PopScopeFrame
+    GOTO bb31;
+  }
+  bb31 {
+    GOTO bb32;
+  }
+  bb32 {
+    PopScopeFrame
+    GOTO bb33;
+  }
+  bb33 {
+    GOTO bb34;
+  }
+  bb34 {
+    %40 = $desugar$4 is error
+    %40 ? bb35 : bb36;
+  }
+  bb35 {
+    %0 = $desugar$4;
+    return;
+  }
+  bb36 {
+    %27 = $desugar$4;
+    GOTO bb37;
+  }
+  bb37 {
+    %41 = ConstantLoad $anon/.:0.0.0:Tag
+    %42 = .@ td %41;
+    %43 = xmlFilter(x, [{"", "a"}])
+    %44 = ConstantLoad 1
+    %45 = %23.init(%24,%27,%42,%43,%44) -> bb38;
+  }
+  bb38 {
+    %47 = %45 is nil
+    %47 ? bb39 : bb40;
+  }
+  bb39 {
+    %46 = %23;
+    GOTO bb41;
+  }
+  bb40 {
+    %46 = %45;
+    GOTO bb41;
+  }
+  bb41 {
+    a = %46;
+    %49 = a is object { nil|{| name: string, never... |} ann; xml filtered; public function init(nil|{| value: int, never... |}, json, nil|{| name: string, never... |}, xml, int) returns nil; json lax; nil|{| value: int, never... |} next }
+    %49 ? bb42 : bb44;
+  }
+  bb42 {
+    PushScopeFrame 12
+    %1 = ConstantLoad next
+    %0 = (1, a)[%1];
+    %2 = ConstantLoad  
+    %4 = ConstantLoad lax
+    %3 = (1, a)[%4];
+    %5 = ConstantLoad  
+    %7 = ConstantLoad ann
+    %6 = (1, a)[%7];
+    %8 = ConstantLoad  
+    %10 = ConstantLoad filtered
+    %9 = (1, a)[%10];
+    %11 = println(%0,%2,%3,%5,%6,%8,%9) -> bb43;
+  }
+  bb43 {
+    PopScopeFrame
+    GOTO bb44;
+  }
+  bb44 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+  
+  error-table {
+    [bb9, bb10] -> bb11, %0
+    [bb24, bb25] -> bb26, %0
+  }
+}

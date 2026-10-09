@@ -1,0 +1,74 @@
+(package
+  (import-package ballerina io (as io))
+  (variable box (type
+    (union-type
+      (user-defined-type IntBox)
+      (user-defined-type StringBox))))
+  (variable later (type
+    (value-type int)))
+  (type-definition Count
+    (value-type int))
+  (class-definition IntBox
+    (variable value (type
+      (value-type int)))
+    (function init (
+      (variable value (type
+        (value-type int)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (binary-expr +
+            (simple-var-ref value)
+            (simple-var-ref marker))))))
+  (class-definition StringBox
+    (variable value (type
+      (value-type string)))
+    (function init (
+      (variable value (type
+        (value-type string)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref value))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref later)
+        (literal 4))
+      (assignment
+        (simple-var-ref box)
+        (new (
+          (type-conversion-expr
+            (group-expr
+              (binary-expr +
+                (simple-var-ref later)
+                (literal 1)))
+            (user-defined-type Count))
+          (literal 1))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref box)
+          (user-defined-type IntBox))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref box)
+                (literal value)))))) ())
+      (block-stmt))))

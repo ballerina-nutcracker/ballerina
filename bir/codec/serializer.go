@@ -322,6 +322,7 @@ func (bw *birWriter) writeInstruction(buf *bytes.Buffer, instr bir.BIRInstructio
 			write(buf, entry.IsKeyValuePair())
 			if entry.IsKeyValuePair() {
 				kvEntry := entry.(*bir.MappingConstructorKeyValueEntry)
+				write(buf, kvEntry.IsComputed())
 				bw.writeOperand(buf, kvEntry.KeyOp())
 				bw.writeOperand(buf, kvEntry.ValueOp())
 			}

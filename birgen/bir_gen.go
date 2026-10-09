@@ -1537,8 +1537,10 @@ func xmlSequenceLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXM
 }
 
 type mappingField struct {
-	key   string
-	value ast.BLangExpression
+	key string
+	// keyExpr is set for a computed key, whose name is only known at runtime.
+	keyExpr ast.BLangExpression
+	value   ast.BLangExpression
 }
 
 func mappingConstructorExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangMappingConstructorExpr) (expressionEffect, bool) {
@@ -1546,6 +1548,10 @@ func mappingConstructorExpression(ctx context, curBB *bir.BIRBasicBlock, expr *a
 	for _, field := range expr.Fields {
 		switch f := field.(type) {
 		case *ast.BLangMappingKeyValueField:
+			if f.Key.Kind == ast.MappingKeyComputed {
+				fields = append(fields, mappingField{keyExpr: f.Key.Expr, value: f.ValueExpr})
+				continue
+			}
 			keyName, ok := mappingKeyName(ctx, f.Key)
 			if !ok {
 				return expressionEffect{}, false
@@ -1583,19 +1589,38 @@ func mappingKeyName(ctx context, key *ast.BLangMappingKey) (string, bool) {
 	}
 }
 
+func newMappingConstructorEntry(field mappingField, keyOp, valueOp *bir.BIROperand) *bir.MappingConstructorKeyValueEntry {
+	if field.keyExpr != nil {
+		return bir.NewComputedMappingConstructorKeyValueEntry(keyOp, valueOp)
+	}
+	return bir.NewMappingConstructorKeyValueEntry(keyOp, valueOp)
+}
+
+func mappingFieldKey(ctx context, curBB *bir.BIRBasicBlock, field mappingField, pos bir.Location) (expressionEffect, bool) {
+	if field.keyExpr != nil {
+		return handleActionOrExpression(ctx, curBB, field.keyExpr)
+	}
+	keyOperand := ctx.addTempVar(semtypes.String)
+	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(keyOperand, field.key, pos))
+	return expressionEffect{result: keyOperand, block: curBB}, true
+}
+
 func mappingConstructorExpressionInner(ctx context, curBB *bir.BIRBasicBlock, mapType semtypes.SemType, fields []mappingField, defaults []bir.MappingConstructorDefaultEntry, pos bir.Location) (expressionEffect, bool) {
 	var entries []bir.MappingConstructorEntry
 	for _, field := range fields {
-		keyOperand := ctx.addTempVar(semtypes.String)
-		keyLoad := bir.NewConstantLoad(keyOperand, field.key, pos)
-		curBB.Instructions = append(curBB.Instructions, keyLoad)
+		keyEffect, ok := mappingFieldKey(ctx, curBB, field, pos)
+		if !ok {
+			return keyEffect, false
+		}
+		curBB = keyEffect.block
+		keyOperand := keyEffect.result
 
 		valueEffect, ok := handleActionOrExpression(ctx, curBB, field.value)
 		if !ok {
 			return valueEffect, false
 		}
 		curBB = valueEffect.block
-		entries = append(entries, bir.NewMappingConstructorKeyValueEntry(keyOperand, valueEffect.result))
+		entries = append(entries, newMappingConstructorEntry(field, keyOperand, valueEffect.result))
 	}
 	resultOperand := ctx.addTempVar(mapType)
 	isReadonly := semtypes.IsSubtype(ctx.function().pkgCtx.typeCtx, mapType, semtypes.ValReadonly)

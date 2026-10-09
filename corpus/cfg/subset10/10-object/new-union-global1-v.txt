@@ -1,0 +1,39 @@
+(IntBox
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access value
+          (simple-var-ref self))
+        (binary-expr +
+          (simple-var-ref value)
+          (simple-var-ref marker)))
+    )
+  )
+)
+(StringBox
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access value
+          (simple-var-ref self))
+        (simple-var-ref value))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref box)
+      (user-defined-type IntBox))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref box)))))
+  )
+  (bb2 (bb1 bb0) ())
+)

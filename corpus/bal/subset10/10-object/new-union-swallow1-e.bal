@@ -13,14 +13,23 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+class First {
+    function init(int value, int marker) {
+        var _ = value;
+        var _ = marker;
+    }
+}
 
-import ballerina/io;
+class Second {
+    function init(int value, string marker) {
+        var _ = value;
+        var _ = marker;
+    }
+}
 
-class IntHolder { function init(int v, int marker) { var _ = v; var _ = marker; } }
-class FloatHolder { function init(float v, string marker) { var _ = v; var _ = marker; } }
+function foo(int value) returns int => value;
 
-public function main() returns error? {
-    json j = 1;
-    IntHolder|FloatHolder h = new (check j.cloneWithType(), 0); // @error dependently-typed call cannot be an argument of a new expression with more than one object type
-    io:println(h is IntHolder);
+public function main() {
+    First|Second s = new (foo(1.5), 1); // @error failed to find a suitable object type
+    var _ = s;
 }

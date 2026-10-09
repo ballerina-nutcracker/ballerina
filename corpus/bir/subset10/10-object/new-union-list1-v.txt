@@ -1,0 +1,203 @@
+module $anon.. v 0.0.0;
+class DecList {
+  values [decimal...]
+
+  init([decimal...],int) -> nil{
+    bb0 {
+      %4 = ConstantLoad values
+      self[%4] = values;
+      _ = marker;
+      return;
+    }
+  }
+}
+class FloatList {
+  values [float...]
+
+  init([float...],string) -> nil{
+    bb0 {
+      %4 = ConstantLoad values
+      self[%4] = values;
+      _ = marker;
+      return;
+    }
+  }
+}
+class Pair {
+  pair [decimal, string, never...]
+
+  init([decimal, string, never...],int) -> nil{
+    bb0 {
+      %4 = ConstantLoad pair
+      self[%4] = pair;
+      _ = marker;
+      return;
+    }
+  }
+}
+class Strings {
+  values [string...]
+
+  init([string...],string) -> nil{
+    bb0 {
+      %4 = ConstantLoad values
+      self[%4] = values;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:DecList
+    %2 = ConstantLoad 1.50
+    %3 = ConstantLoad 1
+    %4 = newArray [decimal...][%3]{%2}
+    %5 = ConstantLoad 1
+    %6 = %1.init(%4,%5) -> bb1;
+  }
+  bb1 {
+    %8 = %6 is nil
+    %8 ? bb2 : bb3;
+  }
+  bb2 {
+    %7 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %7 = %6;
+    GOTO bb4;
+  }
+  bb4 {
+    l = %7;
+    %10 = l is object { public function init([decimal...], int) returns nil; [decimal...] values }
+    %10 ? bb5 : bb7;
+  }
+  bb5 {
+    PushScopeFrame 6
+    %1 = ConstantLoad 0
+    %3 = ConstantLoad values
+    %2 = (1, l)[%3];
+    %0 = %2[%1];
+    %4 = %0;
+    %5 = println(%4) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb7 {
+    PushScopeFrame 39
+    %0 = newObject $anon/.:Pair
+    %1 = ConstantLoad 2.50
+    %2 = ConstantLoad two
+    %3 = ConstantLoad 2
+    %4 = newArray [decimal, string, never...][%3]{%1, %2}
+    %5 = ConstantLoad 0
+    %6 = %0.init(%4,%5) -> bb8;
+  }
+  bb8 {
+    %8 = %6 is nil
+    %8 ? bb9 : bb10;
+  }
+  bb9 {
+    %7 = %0;
+    GOTO bb11;
+  }
+  bb10 {
+    %7 = %6;
+    GOTO bb11;
+  }
+  bb11 {
+    p = %7;
+    %10 = p is object { public function init([decimal, string, never...], int) returns nil; [decimal, string, never...] pair }
+    %11 = %10;
+    %12 = println(%11) -> bb12;
+  }
+  bb12 {
+    %13 = ConstantLoad 3.5
+    %14 = ConstantLoad 4.5
+    %15 = ConstantLoad 2
+    %16 = newArray [decimal...][%15]{%13, %14}
+    rest = %16;
+    %18 = newObject $anon/.:DecList
+    %19 = ConstantLoad 0
+    %20 = newArray [decimal...][%19]{}
+    $desugar$0 = %20;
+    %22 = ConstantLoad 1.50
+    %23 = %22;
+    %24 = push($desugar$0,%23) -> bb13;
+  }
+  bb13 {
+    $desugar$1 = rest;
+    %26 = length($desugar$1) -> bb14;
+  }
+  bb14 {
+    $desugar$2 = %26;
+    %28 = ConstantLoad 0
+    $desugar$3 = %28;
+    GOTO bb15;
+  }
+  bb15 {
+    %31 = $desugar$3;
+    %32 = $desugar$2;
+    %30 = < %31 %32;
+    %30 ? bb16 : bb17;
+  }
+  bb16 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1)[(1, $desugar$3)];
+    %1 = %0;
+    %2 = push((1, $desugar$0),%1) -> bb18;
+  }
+  bb17 {
+    %33 = ConstantLoad 2
+    %34 = %18.init($desugar$0,%33) -> bb19;
+  }
+  bb18 {
+    %4 = (1, $desugar$3);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$3) = %3;
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb19 {
+    %36 = %34 is nil
+    %36 ? bb20 : bb21;
+  }
+  bb20 {
+    %35 = %18;
+    GOTO bb22;
+  }
+  bb21 {
+    %35 = %34;
+    GOTO bb22;
+  }
+  bb22 {
+    s = %35;
+    %38 = s is object { public function init([decimal...], int) returns nil; [decimal...] values }
+    %38 ? bb23 : bb26;
+  }
+  bb23 {
+    PushScopeFrame 5
+    %1 = ConstantLoad values
+    %0 = (1, s)[%1];
+    %2 = length(%0) -> bb24;
+  }
+  bb24 {
+    %3 = %2;
+    %4 = println(%3) -> bb25;
+  }
+  bb25 {
+    PopScopeFrame
+    GOTO bb26;
+  }
+  bb26 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

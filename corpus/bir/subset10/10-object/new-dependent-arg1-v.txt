@@ -1,0 +1,178 @@
+module $anon.. v 0.0.0;
+class IntHolder {
+  v int
+
+  init(int,int) -> nil{
+    bb0 {
+      %5 = v;
+      %6 = marker;
+      %4 = + %5 %6;
+      %7 = ConstantLoad v
+      self[%7] = %4;
+      return;
+    }
+  }
+}
+class FloatHolder {
+  v float
+
+  init(float,string) -> nil{
+    bb0 {
+      %4 = ConstantLoad v
+      self[%4] = v;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad 1
+    j = %1;
+    %3 = newObject $anon/.:IntHolder
+    %5 = ConstantLoad typedesc
+    %6 = cloneWithType(j,%5) -> bb1;
+  }
+  bb1 {
+    %7 = %6 is error
+    %7 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+  bb3 {
+    %4 = %6;
+    GOTO bb4;
+  }
+  bb4 {
+    %8 = ConstantLoad 0
+    %9 = %3.init(%4,%8) -> bb5;
+  }
+  bb5 {
+    %11 = %9 is nil
+    %11 ? bb6 : bb7;
+  }
+  bb6 {
+    %10 = %3;
+    GOTO bb8;
+  }
+  bb7 {
+    %10 = %9;
+    GOTO bb8;
+  }
+  bb8 {
+    h = %10;
+    %13 = h is object { public function init(int, int) returns nil; int v }
+    %14 = %13;
+    %15 = println(%14) -> bb9;
+  }
+  bb9 {
+    %16 = newObject $anon/.:FloatHolder
+    %18 = ConstantLoad typedesc
+    %19 = cloneWithType(j,%18) -> bb10;
+  }
+  bb10 {
+    %20 = %19 is error
+    %20 ? bb11 : bb12;
+  }
+  bb11 {
+    %0 = %19;
+    return;
+  }
+  bb12 {
+    %17 = %19;
+    GOTO bb13;
+  }
+  bb13 {
+    %21 = ConstantLoad x
+    %22 = %16.init(%17,%21) -> bb14;
+  }
+  bb14 {
+    %24 = %22 is nil
+    %24 ? bb15 : bb16;
+  }
+  bb15 {
+    %23 = %16;
+    GOTO bb17;
+  }
+  bb16 {
+    %23 = %22;
+    GOTO bb17;
+  }
+  bb17 {
+    h2 = %23;
+    %26 = h2 is object { public function init(float, string) returns nil; float v }
+    %26 ? bb18 : bb20;
+  }
+  bb18 {
+    PushScopeFrame 4
+    %1 = ConstantLoad v
+    %0 = (1, h2)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb19;
+  }
+  bb19 {
+    PopScopeFrame
+    GOTO bb20;
+  }
+  bb20 {
+    PushScopeFrame 13
+    %0 = ConstantLoad 2
+    d = %0;
+    %2 = newObject $anon/.:IntHolder
+    %4 = ConstantLoad typedesc
+    %5 = fromJsonWithType(d,%4) -> bb21;
+  }
+  bb21 {
+    %6 = %5 is error
+    %6 ? bb22 : bb23;
+  }
+  bb22 {
+    (1, %0) = %5;
+    PopScopeFrame
+    return;
+  }
+  bb23 {
+    %3 = %5;
+    GOTO bb24;
+  }
+  bb24 {
+    %7 = ConstantLoad 1
+    %8 = %2.init(%3,%7) -> bb25;
+  }
+  bb25 {
+    %10 = %8 is nil
+    %10 ? bb26 : bb27;
+  }
+  bb26 {
+    %9 = %2;
+    GOTO bb28;
+  }
+  bb27 {
+    %9 = %8;
+    GOTO bb28;
+  }
+  bb28 {
+    h3 = %9;
+    %12 = h3 is object { public function init(int, int) returns nil; int v }
+    %12 ? bb29 : bb31;
+  }
+  bb29 {
+    PushScopeFrame 4
+    %1 = ConstantLoad v
+    %0 = (1, h3)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb30;
+  }
+  bb30 {
+    PopScopeFrame
+    GOTO bb31;
+  }
+  bb31 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

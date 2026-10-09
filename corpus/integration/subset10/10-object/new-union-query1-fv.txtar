@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: query expressions are not supported while selecting among candidate types
+  --> new-union-query1-fv.bal:32:33
+   |
+32 |     IntList|StringList l = new (from int v in values select v * 2, 1); // @error
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: query expressions are not supported while selecting among candidate types
+  --> new-union-query1-fv.bal:32:33
+   |
+32 |     IntList|StringList l = new (from int v in values select v * 2, 1); // @error
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

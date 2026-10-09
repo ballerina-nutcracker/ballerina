@@ -1,0 +1,21 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable k (type
+        (value-type string)) (expr
+        (literal x))))
+    (var-def
+      (variable c (type
+        (user-defined-type Closed)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal id)
+            (literal 1))
+          (key-value
+            (simple-var-ref k)
+            (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+  )
+)

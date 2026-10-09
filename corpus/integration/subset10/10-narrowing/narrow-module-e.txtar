@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> narrow-module-e.bal:31:17
+   |
+31 |         int y = moduleVar; // @error a mutable module variable cannot be narrowed
+   |                 ^^^^^^^^^

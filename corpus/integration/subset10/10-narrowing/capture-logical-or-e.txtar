@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-logical-or-e.bal:34:21
+   |
+34 |             int z = x; // @error x is captured by the logical RHS operand
+   |                     ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-logical-or-e.bal:39:17
+   |
+39 |         int w = x; // @error the RHS capture is still in effect after the if
+   |                 ^

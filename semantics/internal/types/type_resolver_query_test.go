@@ -22,6 +22,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -951,7 +952,7 @@ func newUnsupportedTypeNode() ast.BType {
 }
 
 func newIntLiteral(value int64) *ast.BLangLiteral {
-	return ast.NewBLangLiteral(queryTestPos, ast.LiteralKindInt, value, "", false)
+	return ast.NewBLangLiteral(queryTestPos, ast.LiteralKindInt, value, strconv.FormatInt(value, 10), false)
 }
 
 func newIntListLiteral(values ...int64) *ast.BLangListConstructorExpr {

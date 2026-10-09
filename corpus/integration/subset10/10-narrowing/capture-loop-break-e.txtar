@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-break-e.bal:32:21
+   |
+32 |             int y = x; // @error the loop's group includes x
+   |                     ^

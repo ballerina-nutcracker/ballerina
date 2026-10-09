@@ -20,7 +20,6 @@ package nodebuilder
 import (
 	"fmt"
 	"iter"
-	"math"
 	"strconv"
 	"strings"
 
@@ -1097,32 +1096,17 @@ func (n *nodeBuilder) getIntegerLiteral(literal st.Node, textValue string) any {
 		if textValue[0] == '0' && len(textValue) > 1 {
 			n.cx.SyntaxError("invalid integer literal: leading zero", n.getPosition(literal))
 		}
-		return n.parseLong(literal, textValue, textValue, 10)
 	case st.HEX_INTEGER_LITERAL_TOKEN:
-		processedNodeValue := strings.ToLower(textValue)
-		processedNodeValue = strings.ReplaceAll(processedNodeValue, "0x", "")
-		return n.parseLong(literal, textValue, processedNodeValue, 16)
 	default:
 		n.internalError("unexpected integer literal token kind", literal)
 		return nil
 	}
-}
-
-// parseLong parses a long integer value
-func (n *nodeBuilder) parseLong(literal st.Node, originalNodeValue, processedNodeValue string, radix int) any {
-	val, err := strconv.ParseInt(processedNodeValue, radix, 64)
-	if err != nil {
-		fVal, fErr := strconv.ParseFloat(processedNodeValue, 64)
-		if fErr != nil {
-			n.internalError("failed to parse numeric literal", literal)
-			return originalNodeValue
-		}
-		if math.IsInf(fVal, 0) {
-			return originalNodeValue
-		}
-		return fVal
+	value, ok := balCommon.ParseIntLiteral(textValue)
+	if !ok {
+		n.internalError("failed to parse numeric literal", literal)
+		return textValue
 	}
-	return val
+	return value
 }
 
 // withinByteRange checks if integer is in byte range (0-255)
@@ -1135,14 +1119,6 @@ func withinByteRange(value any) bool {
 	default:
 		return false
 	}
-}
-
-// getHexNodeValue processes hex floating point values
-func getHexNodeValue(value string) string {
-	if !strings.Contains(value, "p") && !strings.Contains(value, "P") {
-		value = value + "p0"
-	}
-	return value
 }
 
 // isTokenInRegExp checks if token is in regexp context
@@ -1229,7 +1205,7 @@ func (n *nodeBuilder) createSimpleLiteralInner(literal st.Node) ast.LiteralNode 
 		default:
 			// TODO: Check effect of mapping negative(-) numbers as unary-expr
 			literalKind = ast.LiteralKindFloat
-			value = getHexNodeValue(textValue)
+			value = balCommon.NormalizeHexFloatLiteral(textValue)
 			originalValue = &textValue
 		}
 		numericLiteral := ast.NewBLangNumericLiteral(
