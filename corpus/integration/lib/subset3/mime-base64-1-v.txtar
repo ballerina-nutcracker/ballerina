@@ -1,0 +1,12 @@
+-- stdout --
+SGVsbG8=
+Hello
+3
+true
+100
+true
+true
+café
+SGVsbG8=
+Hello
+-- stderr --

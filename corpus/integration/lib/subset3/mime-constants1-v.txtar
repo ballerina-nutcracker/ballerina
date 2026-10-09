@@ -1,0 +1,10 @@
+-- stdout --
+application/json
+text/plain
+application/octet-stream
+content-type
+content-length
+UTF-8
+multipart/form-data
+image/jpeg
+-- stderr --
