@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-narrow3-e.bal:35:17
+   |
+35 |         int y = x; // @error x is captured on a path that reaches here
+   |                 ^

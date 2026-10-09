@@ -100,6 +100,7 @@ type (
 	BField struct {
 		// TODO: think how to align this with BLangMemberTypeDesc. Ideally this should be an inclusion on that
 		bLangNodeBase
+		captureOwnerBase
 		bFieldAnnotationBase
 		Name    model.Name
 		Type    BType
@@ -221,6 +222,7 @@ type (
 
 	BLangFunctionTypeParam struct {
 		bLangNodeBase
+		captureOwnerBase
 		Name                IdentifierNode
 		TypeDesc            BType
 		InitExpr            BLangExpression

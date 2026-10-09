@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-call-e.bal:34:21
+   |
+34 |             int y = x; // @error saved may have assigned a string to x
+   |                     ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-call-e.bal:50:21
+   |
+50 |             int y = x; // @error saved may have assigned a string to x
+   |                     ^

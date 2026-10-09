@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-branch-e.bal:32:21
+   |
+32 |             int v = x; // @error x is captured under the if below
+   |                     ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-loop-branch-e.bal:36:21
+   |
+36 |             int v = y; // @error y is captured under the match below
+   |                     ^

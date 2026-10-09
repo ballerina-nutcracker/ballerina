@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "s"
+  --> computed-key-e.bal:25:24
+   |
+25 |     map<int> n = {[k]: "s"}; // @error
+   |                        ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got int
+  --> computed-key-e.bal:24:20
+   |
+24 |     map<int> m = {[i]: 1}; // @error
+   |                    ^
+
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'id'
+  --> computed-key-e.bal:26:16
+   |
+26 |     Closed c = {[k]: 1}; // @error
+   |                ^^^^^^^^

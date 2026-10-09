@@ -316,7 +316,11 @@ func (p *PrettyPrinter) PrintNewMap(m *NewMap) string {
 		}
 		if entry.IsKeyValuePair() {
 			kv := entry.(*MappingConstructorKeyValueEntry)
-			values.WriteString(p.PrintOperand(*kv.KeyOp()))
+			if kv.IsComputed() {
+				values.WriteString("[" + p.PrintOperand(*kv.KeyOp()) + "]")
+			} else {
+				values.WriteString(p.PrintOperand(*kv.KeyOp()))
+			}
 			values.WriteString("=")
 			values.WriteString(p.PrintOperand(*kv.ValueOp()))
 		} else {
