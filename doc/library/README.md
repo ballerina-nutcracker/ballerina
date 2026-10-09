@@ -1,35 +1,29 @@
-# Ballerina Standard Library — Go Native Support
+# Ballerina Standard Library Support
 
-This directory contains the Go-native implementations of the `ballerina/*` standard library
-packages baked into the interpreter binary. Each package is compiled into embedded `.sym`/`.bir`
-artefacts and laid out as `<name>/0.0.1/go1.27/`. See each package's own README (linked below)
-for the full feature-by-feature support table and behavioural notes.
+Coverage of the Go-native `ballerina/*` standard library packages built into the `bal` binary. Each package lives under [`lib/stdlibs/ballerina/<name>/0.0.1/go1.27/`](../../lib/stdlibs/ballerina); its README (linked below) holds the full feature-by-feature support table and behavioural notes. The library surface shipped in each release milestone is described in the `subset<N>.md` files in this directory.
 
 ## Packages
 
-Support % is computed as `round(Supported / Total * 100)`, where *Total* is the number of rows
-in each package's support table (Supported + Partially Supported + Not Yet Supported + Cannot Support).
+Support % is computed as `round(Supported / Total * 100)`, where *Total* is the number of rows in each package's support table (Supported + Partially Supported + Not Yet Supported + Cannot Support).
 
 | Package                                           | Supported | Partially Supported | Not Yet Supported | Support % |
 |---------------------------------------------------|---|---|---|---|
-| [avro](avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
-| [crypto](crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
-| [http](http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
-| [io](io/0.0.1/go1.27/README.md)                   | 21 | 2 | 4 | 78% |
-| [log](log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
-| [math.vector](math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
-| [os](os/0.0.1/go1.27/README.md)                   | 11 | 1 | 0 | 92% |
-| [protobuf](protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
-| [random](random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
-| [time](time/0.0.1/go1.27/README.md)               | 31 | 1 | 0 | 97% |
-| [url](url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
-| **Total**                                         | **161** | **18** | **64** | **66%** |
+| [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
+| [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
+| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
+| [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
+| [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
+| [math.vector](../../lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
+| [os](../../lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md)                   | 11 | 1 | 0 | 92% |
+| [protobuf](../../lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
+| [random](../../lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
+| [time](../../lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md)               | 29 | 3 | 0 | 91% |
+| [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
+| **Total**                                         | **157** | **22** | **64** | **65%** |
 
 ## Notable Behavioural Changes
 
-Consolidated from each package's README. Only permanent, architectural Go-level divergences are
-listed here; temporary language gaps are tracked as `Not Yet Supported` rows in the per-package
-tables instead.
+Consolidated from each package's README. Only permanent, architectural Go-level divergences are listed here; temporary language gaps are tracked as support-table rows in the per-package tables instead.
 
 ### avro
 
@@ -60,7 +54,6 @@ tables instead.
 ### io
 
 - **`fileWriteJson` key ordering.** jBallerina writes JSON object keys in insertion order; the Go-native version writes them in **alphabetical order** — Go's `encoding/json` sorts map keys.
-- **Streams are consumed via `next()`/`close()` only.** The returned streams are driven with explicit `.next()` and `.close()` calls. Iterating a stream with a `foreach` statement or a query (`from ... in`) expression is not yet supported at the language level, so those constructs cannot yet consume these streams.
 - **Write-from-stream accepts a generic `error?` completion.** jBallerina declares `fileWriteLinesFromStream`/`fileWriteBlocksFromStream` with a `stream<_, io:Error?>` parameter, which rejects a stream held as `stream<_, error?>` (e.g. `stream<byte[], error?> s = check io:fileReadBlocksAsStream(p); check io:fileWriteBlocksFromStream(out, s);` fails to compile in jBallerina). This port widens the parameter completion type to the generic `error?`, so both `io:Error?` and plain `error?` completion streams are accepted. This is a strict superset — every jBallerina-valid call still compiles — and the return type remains the specific `io:Error?`.
 - **`writeVarInt`/`readVarInt` round-trip the full `int` range.** jBallerina's variable-length integer implementation breaks for very large magnitudes: `readVarInt` panics on encodings longer than 8 bytes (so its own `writeVarInt` output for values needing 9-10 bytes cannot be read back), and `writeVarInt(int:MIN_VALUE)` silently writes a single `0x00` byte. This port encodes such values with the minimal correct width and reads encodings up to 10 bytes, so every `int` round-trips; the wire format is identical to jBallerina for all values jBallerina handles correctly.
 - **Unknown charset handling differs between `writeString` and `readString`.** `WritableDataChannel.writeString` surfaces an unsupported charset as a Go error, which the interpreter turns into a panic, matching jBallerina's unchecked `UnsupportedEncodingException`. `ReadableDataChannel.readString` instead returns it as an `io:Error` value.
@@ -85,9 +78,6 @@ tables instead.
 
 ### time
 
-- **`Utc` type mutability.** jBallerina declares `Utc` as `readonly & [int, decimal]` (immutable tuple). The Go-native version uses a plain mutable tuple type because `readonly &` intersection types on tuples are not yet supported by the interpreter's AST transformation. Programs should treat `Utc` values as immutable by convention; mutation is not guarded at runtime.
-- **`ZoneOffset` type mutability.** Same as above — `ZoneOffset` is declared as a plain open record instead of `readonly & record {| ... |}`. Programs should not mutate `ZoneOffset` values.
-- **`FormatError` is not distinct.** jBallerina's `FormatError` is a `distinct Error` subtype, allowing `error is time:FormatError` checks to distinguish it from other errors. The Go-native version declares `FormatError` as a plain `error` alias because `distinct` type descriptors are not yet supported. `error is time:FormatError` will not narrow correctly in the Go version.
 - **Error message wording for `dateValidate`, `dayOfWeek`, `utcFromCivil`, `TimeZone.init`, `TimeZone.utcFromCivil`.** These functions return errors whose message text is produced by Go's standard `time` package or the Go-native implementation rather than Java's `DateTimeException.getMessage()`. The message content differs (e.g., "invalid date: 2021-02-30" vs. "Invalid value for DayOfMonth..."). Programs must not depend on the exact error message text.
 - **`monotonicNow()` epoch.** The specification states the epoch is "unspecified". jBallerina uses the JVM process start (`System.nanoTime()`); the Go-native version uses the time at which the PAL was constructed. The two values are not comparable across processes and will differ between implementations. This is expected behavior.
 - **Named IANA timezones in `civilToString`, `civilToEmailString`, and `TimeZone`.** When a `Civil` record carries a `timeAbbrev` containing an IANA zone name (e.g., `"Asia/Colombo"`), or when a `TimeZone` object is constructed from an IANA name, the Go-native version resolves the zone using the host operating system's timezone database via `time.LoadLocation`. If the host has an incomplete or missing IANA database, an error is returned. jBallerina ships its own bundled IANA data.

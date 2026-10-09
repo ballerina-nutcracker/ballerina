@@ -75,8 +75,8 @@ Support Levels:
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
 | Seconds type | Supported | |
-| UTC type | Supported | `readonly &` intersection dropped — equivalent mutable tuple type used (see Notable Behavioural Changes) |
-| ZoneOffset record | Supported | `readonly &` intersection dropped — equivalent mutable record used (see Notable Behavioural Changes) |
+| UTC type | Partially Supported | Declared as a plain mutable `[int, decimal]` tuple instead of jBallerina's `readonly & [int, decimal]`; mutation is not guarded at runtime, so treat `Utc` values as immutable |
+| ZoneOffset record | Partially Supported | Declared as a plain closed `record {\| ... \|}` without jBallerina's `readonly &`; mutation is not guarded at runtime, so treat `ZoneOffset` values as immutable |
 | Day-of-week constants and type | Supported | |
 | Date record | Supported | |
 | TimeOfDay record | Supported | |
@@ -105,13 +105,10 @@ Support Levels:
 | TimeZone class | Supported | Declared as plain `class`; `readonly` qualifier dropped because readonly classes are not yet supported |
 | Load system timezone | Supported | Uses `time.Local`; delegates to the host OS timezone database |
 | Get named timezone | Supported | `getZone` returns nil for any invalid zone ID rather than an error |
-| distinct error types | Partially Supported | `FormatError` is currently an alias for `error`; `distinct` type descriptors not yet supported in the interpreter |
+| distinct error types | Partially Supported | `FormatError` is declared as a plain `error` alias instead of a `distinct Error` subtype, so `err is time:FormatError` does not distinguish it from other errors |
 
 ### Notable Behavioural Changes
 
-- **`Utc` type mutability.** jBallerina declares `Utc` as `readonly & [int, decimal]` (immutable tuple). The Go-native version uses a plain mutable tuple type because `readonly &` intersection types on tuples are not yet supported by the interpreter's AST transformation. Programs should treat `Utc` values as immutable by convention; mutation is not guarded at runtime.
-- **`ZoneOffset` type mutability.** Same as above — `ZoneOffset` is declared as a plain open record instead of `readonly & record {| ... |}`. Programs should not mutate `ZoneOffset` values.
-- **`FormatError` is not distinct.** jBallerina's `FormatError` is a `distinct Error` subtype, allowing `error is time:FormatError` checks to distinguish it from other errors. The Go-native version declares `FormatError` as a plain `error` alias because `distinct` type descriptors are not yet supported. `error is time:FormatError` will not narrow correctly in the Go version.
 - **Error message wording for `dateValidate`, `dayOfWeek`, `utcFromCivil`, `TimeZone.init`, `TimeZone.utcFromCivil`.** These functions return errors whose message text is produced by Go's standard `time` package or the Go-native implementation rather than Java's `DateTimeException.getMessage()`. The message content differs (e.g., "invalid date: 2021-02-30" vs. "Invalid value for DayOfMonth..."). Programs must not depend on the exact error message text.
 - **`monotonicNow()` epoch.** The specification states the epoch is "unspecified". jBallerina uses the JVM process start (`System.nanoTime()`); the Go-native version uses the time at which the PAL was constructed. The two values are not comparable across processes and will differ between implementations. This is expected behavior.
 - **Named IANA timezones in `civilToString`, `civilToEmailString`, and `TimeZone`.** When a `Civil` record carries a `timeAbbrev` containing an IANA zone name (e.g., `"Asia/Colombo"`), or when a `TimeZone` object is constructed from an IANA name, the Go-native version resolves the zone using the host operating system's timezone database via `time.LoadLocation`. If the host has an incomplete or missing IANA database, an error is returned. jBallerina ships its own bundled IANA data.
