@@ -1,0 +1,135 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (import-package ballerina lang error (as lang.error))
+  (type-definition Pair
+    (record-type
+      (field first
+        (value-type int))
+      (field second
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3))
+      (var-def
+        (variable $desugar$4))
+      (var-def
+        (variable $desugar$5 (expr
+          (lambda
+            (function $worker:main:nilWorker () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (expression-stmt
+                  (invocation io println (
+                    (literal nil))))))))))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:main:scalarWorker () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 42))))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $worker:main:structuredWorker () (
+              (user-defined-type Pair))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (mapping-constructor-expr
+                    (key-value
+                      (literal first)
+                      (literal 1))
+                    (key-value
+                      (literal second)
+                      (literal two))))))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (lambda
+            (function $worker:main:errorWorker () (
+              (error-type))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (error-constructor-expr (
+                    (literal normal error value))))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$5 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$6 ())))
+      (assignment
+        (simple-var-ref $desugar$3)
+        (start-action
+          (invocation $desugar$7 ())))
+      (assignment
+        (simple-var-ref $desugar$4)
+        (start-action
+          (invocation $desugar$8 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable nilResult (type
+          (value-type null)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nilResult))))
+      (var-def
+        (variable scalar (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$2)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref scalar))))
+      (var-def
+        (variable pair (type
+          (user-defined-type Pair)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$3)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref pair)
+            (literal first)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref pair)
+            (literal second)))))
+      (var-def
+        (variable e (type
+          (error-type)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$4)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.error message (
+            (simple-var-ref e)))))))))

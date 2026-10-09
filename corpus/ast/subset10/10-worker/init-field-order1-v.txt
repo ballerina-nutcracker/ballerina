@@ -1,0 +1,76 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function spin () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable acc (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (literal 5000))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref acc)
+            (simple-var-ref i))
+          (compound-assignment +
+            (simple-var-ref i)
+            (literal 1))))
+      (return
+        (simple-var-ref acc))))
+  (class-definition Holder
+    (variable value (type
+      (value-type int)) (expr
+      (invocation spin ())))
+    (variable seen (type
+      (value-type int)) (expr
+      (unary-expr -
+        (literal 1))))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (named-worker reader (
+          (value-type int))
+          (block-function-body
+            (return
+              (field-based-access value
+                (simple-var-ref self)))))
+        (var-def
+          (variable observed (type
+            (value-type int)) (expr
+            (single-wait-action
+              (simple-var-ref reader)))))
+        (lock
+          (block-stmt
+            (assignment
+              (field-based-access seen
+                (simple-var-ref self))
+              (simple-var-ref observed))))))
+    (function sawInitializedField () (
+      (value-type boolean))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (binary-expr ==
+                (field-based-access seen
+                  (simple-var-ref self))
+                (invocation spin ()))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sawInitializedField expr:
+            (simple-var-ref h) ())))))))

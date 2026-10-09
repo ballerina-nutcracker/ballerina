@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: Undefined
+  --> return-type-undefined1-e.bal:20:22
+   |
+20 |     worker w returns Undefined { // @error unknown type
+   |                      ^^^^^^^^^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: named worker not allowed here
+  --> lock2-e.bal:28:9
+   |
+28 |         int result = wait w; // @error named worker not allowed here
+   |         ^^^

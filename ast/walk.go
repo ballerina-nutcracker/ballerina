@@ -214,9 +214,23 @@ func Walk(v Visitor, node BLangNode) {
 		walkTypeDescriptor(v, node.TypeDescriptor)
 
 	case *BLangBlockFunctionBody:
+		for _, stmt := range node.InitStmts {
+			Walk(v, stmt.(BLangNode))
+		}
+		for _, worker := range node.Workers {
+			Walk(v, worker)
+		}
 		for _, stmt := range node.Stmts {
 			Walk(v, stmt.(BLangNode))
 		}
+
+	case *BLangNamedWorkerDeclaration:
+		attachments := node.GetAnnotationAttachments()
+		for i := range attachments {
+			Walk(v, &attachments[i])
+		}
+		Walk(v, node.ReturnType)
+		Walk(v, node.Body)
 
 	case *BLangExprFunctionBody:
 		if node.Expr != nil {

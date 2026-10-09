@@ -44,6 +44,10 @@
   - Currently only supports range, list, map and XML subtypes, and [iterable objects](https://ballerina.io/spec/lang/master/#section_5.8.2)
 - [Match statement](https://ballerina.io/spec/lang/master/#match-stmt)
   - Currently only supports [const-pattern](https://ballerina.io/spec/lang/master/#const-pattern) and [wildcard-match-pattern](https://ballerina.io/spec/lang/master/#wildcard-match-pattern)
+- [Named workers](https://ballerina.io/spec/lang/master/#section_7.3.2) ([`named-worker-decl`](https://ballerina.io/spec/lang/master/#named-worker-decl))
+  - Only in a `block-function-body`, with optional annotations and return type
+  - [`wait`](https://ballerina.io/spec/lang/master/#wait-action) on a worker name has the worker's return type as its eventual type
+  - Message passing (send, receive, flush), `fork`, `transactional` workers and `on fail` are not supported
 
 ## Expressions
 

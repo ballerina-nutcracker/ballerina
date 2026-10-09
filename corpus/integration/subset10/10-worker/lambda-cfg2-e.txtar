@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> lambda-cfg2-e.bal:22:24
+   |
+22 |                 return x; // @error variable used before initialization
+   |                        ^

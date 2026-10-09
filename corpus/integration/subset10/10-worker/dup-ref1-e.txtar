@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> dup-ref1-e.bal:27:27
+   |
+27 |         int second = wait w; // @error duplicate reference in the other arm
+   |                           ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> dup-ref1-e.bal:37:23
+   |
+37 |     int second = wait w; // @error duplicate sequential reference
+   |                       ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> dup-ref1-e.bal:45:37
+   |
+45 |     future<int> chosen = flag ? w : w; // @error duplicate reference in conditional arms
+   |                                     ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> dup-ref1-e.bal:53:40
+   |
+53 |     var both = wait {first: w, second: w}; // @error repeated within one multiple wait
+   |                                        ^

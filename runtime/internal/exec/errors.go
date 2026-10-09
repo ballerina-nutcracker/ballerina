@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -147,21 +148,39 @@ func formatRuntimePanic(message string, stack []string) string {
 	return strings.TrimSuffix(b.String(), "\n")
 }
 
-func isDesugaredFunction(functionKey string) bool {
-	name := functionKey
-	if idx := strings.LastIndex(name, ":"); idx != -1 {
-		name = name[idx+1:]
+// desugaredFunctionPrefixes are the generated-function key prefixes the
+// compiler hands out, shared with the sites that generate them.
+var desugaredFunctionPrefixes = []string{
+	constants.DefaultParamFunctionPrefix,
+	constants.AnonFunctionPrefix,
+	constants.WorkerClosurePrefix,
+}
+
+// functionName drops the org/module prefix of a function key. The cut is at
+// the first colon because a generated name may itself contain colons.
+func functionName(functionKey string) string {
+	if idx := strings.Index(functionKey, ":"); idx != -1 {
+		return functionKey[idx+1:]
 	}
-	return strings.HasPrefix(name, "$default$") ||
-		strings.HasPrefix(name, "$anonFunc$")
+	return functionKey
+}
+
+func isDesugaredFunction(functionKey string) bool {
+	name := functionName(functionKey)
+	for _, prefix := range desugaredFunctionPrefixes {
+		if strings.HasPrefix(name, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func prettyFunctionName(functionKey string) string {
 	// For anonymous single-file modules, drop the module prefix and keep only the function name.
 	// Example: "$anon/stack-overflow:main" -> "main"
 	if strings.HasPrefix(functionKey, "$anon/") {
-		if idx := strings.LastIndex(functionKey, ":"); idx != -1 && idx+1 < len(functionKey) {
-			return functionKey[idx+1:]
+		if name := functionName(functionKey); name != "" {
+			return name
 		}
 	}
 	return functionKey

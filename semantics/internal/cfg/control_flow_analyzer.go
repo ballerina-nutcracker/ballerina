@@ -76,11 +76,26 @@ type PackageCFG struct {
 	funcCfgs   map[model.SymbolRef]functionCFG
 	methodCfgs map[model.SymbolRef]map[model.SymbolRef]functionCFG
 	lambdaCfgs []lambdaCFG
+	// workers holds every named worker body, keyed by the worker's own symbol.
+	// A worker body is an independent graph, so it sits here as a peer of the
+	// module-level functions rather than nested under the function declaring
+	// it, and every whole-package pass sees it without a second level.
+	workers map[model.SymbolRef]workerCFG
+}
+
+// workerCFG is a named worker body's graph together with its declaration,
+// which the explicit-return analysis needs for the worker's return type.
+type workerCFG struct {
+	cfg  functionCFG
+	decl *ast.BLangNamedWorkerDeclaration
 }
 
 func (cfg *PackageCFG) lookupFunctionCfg(ref model.SymbolRef) (functionCFG, bool) {
 	if fcfg, ok := cfg.funcCfgs[ref]; ok {
 		return fcfg, true
+	}
+	if worker, ok := cfg.workers[ref]; ok {
+		return worker.cfg, true
 	}
 	for _, classMethods := range cfg.methodCfgs {
 		if fcfg, ok := classMethods[ref]; ok {
@@ -93,6 +108,11 @@ func (cfg *PackageCFG) lookupFunctionCfg(ref model.SymbolRef) (functionCFG, bool
 func (cfg *PackageCFG) allFunctionCfgs(yield func(model.SymbolRef, *functionCFG) bool) {
 	for ref, fcfg := range cfg.funcCfgs {
 		if !yield(ref, &fcfg) {
+			return
+		}
+	}
+	for ref, worker := range cfg.workers {
+		if !yield(ref, &worker.cfg) {
 			return
 		}
 	}
@@ -116,36 +136,41 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	cfg := &PackageCFG{
 		funcCfgs:   make(map[model.SymbolRef]functionCFG),
 		methodCfgs: make(map[model.SymbolRef]map[model.SymbolRef]functionCFG),
+		workers:    make(map[model.SymbolRef]workerCFG),
 	}
 	var wg sync.WaitGroup
 	var mu sync.Mutex
+	addWorkers := func(workers []workerCFG) {
+		for _, worker := range workers {
+			cfg.workers[worker.decl.Symbol()] = worker
+		}
+	}
 	for _, fn := range pkg.Functions {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			fnCfg := analyzeFunction(ctx, fn)
+		wg.Go(func() {
+			fnCfg, workers := analyzeFunction(ctx, fn)
 			mu.Lock()
 			cfg.funcCfgs[fn.Symbol()] = fnCfg
+			addWorkers(workers)
 			mu.Unlock()
-		}()
+		})
 	}
 	if pkg.InitFunction != nil {
-		wg.Add(1)
 		initFn := pkg.InitFunction
-		go func() {
-			defer wg.Done()
-			fnCfg := analyzeFunction(ctx, initFn)
+		wg.Go(func() {
+			fnCfg, workers := analyzeFunction(ctx, initFn)
 			mu.Lock()
 			cfg.funcCfgs[initFn.Symbol()] = fnCfg
+			addWorkers(workers)
 			mu.Unlock()
-		}()
+		})
 	}
 	analyzeClassBody := func(dest map[model.SymbolRef]functionCFG, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
 		analyzeMethod := func(sym model.SymbolRef, body ast.FunctionBodyNode) {
 			wg.Go(func() {
-				fnCfg := analyzeFunctionBody(ctx, body)
+				fnCfg, workers := analyzeFunctionBody(ctx, body)
 				mu.Lock()
 				dest[sym] = fnCfg
+				addWorkers(workers)
 				mu.Unlock()
 			})
 		}
@@ -171,9 +196,10 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	}
 	for _, fn := range collectLambdaFunctions(pkg) {
 		wg.Go(func() {
-			fnCfg := analyzeFunction(ctx, fn)
+			fnCfg, workers := analyzeFunction(ctx, fn)
 			mu.Lock()
 			cfg.lambdaCfgs = append(cfg.lambdaCfgs, lambdaCFG{fn: fn, cfg: fnCfg})
+			addWorkers(workers)
 			mu.Unlock()
 		})
 	}
@@ -205,24 +231,27 @@ func (c *lambdaCollector) Visit(node ast.BLangNode) ast.Visitor {
 
 func (c *lambdaCollector) VisitTypeData(*ast.TypeData) ast.Visitor { return c }
 
-func analyzeFunction(ctx *context.CompilerContext, fn *ast.BLangFunction) functionCFG {
+func analyzeFunction(ctx *context.CompilerContext, fn *ast.BLangFunction) (functionCFG, []workerCFG) {
 	return analyzeFunctionBody(ctx, fn.Body)
 }
 
-func analyzeFunctionBody(ctx *context.CompilerContext, body ast.FunctionBodyNode) functionCFG {
+// analyzeFunctionBody returns the graph of body together with the graphs of
+// the named workers it declares.
+func analyzeFunctionBody(ctx *context.CompilerContext, body ast.FunctionBodyNode) (functionCFG, []workerCFG) {
 	tyCtx := semtypes.ContextFrom(ctx.GetTypeEnv())
 	analyzer := functionControlFlowAnalyzer{
 		ctx:   ctx,
 		tyCtx: tyCtx,
 	}
-	return analyzer.analyzeBody(body)
+	return analyzer.analyzeBody(body), analyzer.workers
 }
 
 type functionControlFlowAnalyzer struct {
-	ctx   *context.CompilerContext
-	tyCtx semtypes.Context
-	bbs   []basicBlock
-	loops []loopControlFlowData
+	ctx     *context.CompilerContext
+	tyCtx   semtypes.Context
+	bbs     []basicBlock
+	loops   []loopControlFlowData
+	workers []workerCFG
 }
 
 type loopControlFlowData struct {
@@ -277,7 +306,31 @@ func (analyzer *functionControlFlowAnalyzer) analyzeExprFunctionBody(fnBody *ast
 func (analyzer *functionControlFlowAnalyzer) analyzeBlockFunctionBody(fnBody *ast.BLangBlockFunctionBody) {
 	rootBB := basicBlock{}
 	analyzer.bbs = append(analyzer.bbs, rootBB)
-	_ = analyzer.analyzeStatements(rootBB.ref(), fnBody.Stmts)
+	curBB := rootBB.ref()
+	if len(fnBody.InitStmts) > 0 {
+		curBB = analyzer.analyzeStatements(curBB, fnBody.InitStmts).nextBB
+	}
+	curBB = analyzer.analyzeNamedWorkers(curBB, fnBody.Workers)
+	_ = analyzer.analyzeStatements(curBB, fnBody.Stmts)
+}
+
+// analyzeNamedWorkers records the worker startup point in the default worker's
+// graph and builds a separate graph for each worker body; no edge joins a
+// worker body back to the default worker.
+func (analyzer *functionControlFlowAnalyzer) analyzeNamedWorkers(
+	curBB bbRef,
+	workers []*ast.BLangNamedWorkerDeclaration,
+) bbRef {
+	for _, worker := range workers {
+		if curBB == terminalBB {
+			analyzer.ctx.SemanticError("Unreachable code", worker.GetPosition())
+			curBB = analyzer.createNewBB()
+		}
+		analyzer.addNode(curBB, worker)
+		workerAnalyzer := functionControlFlowAnalyzer{ctx: analyzer.ctx, tyCtx: analyzer.tyCtx}
+		analyzer.workers = append(analyzer.workers, workerCFG{cfg: workerAnalyzer.analyzeBody(worker.Body), decl: worker})
+	}
+	return curBB
 }
 
 func (analyzer *functionControlFlowAnalyzer) analyzeStatements(curBB bbRef, statements []ast.StatementNode) stmtEffect {

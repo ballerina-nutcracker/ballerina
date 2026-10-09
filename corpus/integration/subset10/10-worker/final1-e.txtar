@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to potentially initialized final 'x'
+  --> final1-e.bal:21:9
+   |
+21 |         x = 2; // @error final already initialized in the worker
+   |         ^
