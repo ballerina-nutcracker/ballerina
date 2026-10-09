@@ -47,7 +47,7 @@ main() -> nil{
     GOTO bb4;
   }
   bb4 {
-    %5 = newStream stream %3
+    %5 = newStream stream<int> %3
     a = %5;
     %7 = streamNext a
     %8 = println(%7) -> bb5;
@@ -69,10 +69,10 @@ main() -> nil{
     GOTO bb9;
   }
   bb9 {
-    %13 = newStream stream %11
+    %13 = newStream stream<int> %11
     b = %13;
     %15 = ConstantLoad s
-    %16 = newMap {| s: stream, never... |}{%15=b}
+    %16 = newMap {| s: stream<int>, never... |}{%15=b}
     h = %16;
     %19 = ConstantLoad s
     %18 = h[%19];
@@ -82,17 +82,17 @@ main() -> nil{
   }
   bb10 {
     x = a;
-    %24 = x is stream
+    %24 = x is stream<int>
     %25 = %24;
     %26 = println(%25) -> bb11;
   }
   bb11 {
-    %27 = x is stream
+    %27 = x is stream<int>
     %28 = %27;
     %29 = println(%28) -> bb12;
   }
   bb12 {
-    %30 = x is stream
+    %30 = x is stream<int, error>
     %31 = %30;
     %32 = println(%31) -> bb13;
   }

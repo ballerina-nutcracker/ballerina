@@ -139,6 +139,8 @@ func (s *toStringState) subtypeToString(sub basicSubtype) string {
 			return s.bddTypedescToString(st)
 		case btFuture:
 			return s.bddFutureToString(st)
+		case btStream:
+			return s.bddStreamToString(st)
 		default:
 			name := strings.TrimPrefix(sub.basicTypeCode.String(), "BT_")
 			return strings.ToLower(name)
@@ -307,6 +309,29 @@ func (s *toStringState) bddFutureToString(bdd bdd) string {
 		return "future"
 	}
 	return "future<" + s.semTypeToString(eventualType) + ">"
+}
+
+func (s *toStringState) bddStreamToString(bdd bdd) string {
+	return bddFormulaToString(s.cx, bdd, s.streamAtomToString)
+}
+
+func (s *toStringState) streamAtomToString(atom atom) string {
+	if atom == atomListTwoElement {
+		return "stream"
+	}
+	key := atom.canonicalKey()
+	if s.visited[key] {
+		return "..."
+	}
+	s.visited[key] = true
+	defer delete(s.visited, key)
+	atomic := s.cx.ListAtomType(atom)
+	valueTy := CellInnerVal(listMemberAt(atomic.members, atomic.rest, 0))
+	completionTy := CellInnerVal(listMemberAt(atomic.members, atomic.rest, 1))
+	if IsSameType(s.cx, completionTy, Nil) {
+		return "stream<" + s.semTypeToString(valueTy) + ">"
+	}
+	return "stream<" + s.semTypeToString(valueTy) + ", " + s.semTypeToString(completionTy) + ">"
 }
 
 func (s *toStringState) bddMappingToString(bdd bdd) string {

@@ -455,7 +455,7 @@ cd
     GOTO bb72;
   }
   bb72 {
-    %253 = newStream stream %251
+    %253 = newStream stream<int, nil|error> %251
     strm = %253;
     streamVal = strm;
     %256 = toBalString(streamVal) -> bb73;

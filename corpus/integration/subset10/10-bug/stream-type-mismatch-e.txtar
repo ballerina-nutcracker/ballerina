@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got future<stream<future<...>>>
+  --> stream-type-mismatch-e.bal:39:13
+   |
+39 |     int i = f; // @error recursive stream nested in a future
+   |             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got stream&¬stream<int>
+  --> stream-type-mismatch-e.bal:33:17
+   |
+33 |         int i = s; // @error stream that is not stream<int>
+   |                 ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected stream<boolean>, got stream<int>|stream<string, error>
+  --> stream-type-mismatch-e.bal:25:25
+   |
+25 |     stream<boolean> s = u; // @error union of streams
+   |                         ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected stream<int>, got stream<int, error>
+  --> stream-type-mismatch-e.bal:20:21
+   |
+20 |     stream<int> s = e; // @error completion type of stream<int> does not allow error
+   |                     ^
