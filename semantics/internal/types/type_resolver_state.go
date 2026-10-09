@@ -158,6 +158,13 @@ func setMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField, valueTy se
 	}
 }
 
+func setErrorConstructorDefaults(t typeResolver, node *ast.BLangErrorConstructorExpr, defaults []model.FieldDefault) {
+	if t.isEphemeral() {
+		return
+	}
+	node.FieldDefaults = defaults
+}
+
 func setMappingConstructorInherentType(t typeResolver, node *ast.BLangMappingConstructorExpr, atom semtypes.MappingAtomicType, defaults []model.FieldDefault) {
 	if t.isEphemeral() {
 		return

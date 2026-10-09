@@ -524,6 +524,7 @@ type (
 		ErrorTypeRef   *BLangUserDefinedType
 		PositionalArgs []BLangExpression
 		NamedArgs      []BLangNamedArgsExpression
+		FieldDefaults  []model.FieldDefault
 	}
 
 	BLangTypeTestExpr struct {
