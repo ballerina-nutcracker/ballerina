@@ -1626,6 +1626,10 @@ func analyzeErrorConstructorExpr[A analyzer](a A, expr *ast.BLangErrorConstructo
 		}
 		providedFields = append(providedFields, semtypes.FieldFrom(name, namedArgTy, false, false))
 	}
+	for _, fd := range expr.FieldDefaults {
+		fieldType := semtypes.MappingMemberTypeInnerValProj(tyCtx, detailTy, semtypes.StringConst(fd.FieldName))
+		providedFields = append(providedFields, semtypes.FieldFrom(fd.FieldName, fieldType, false, false))
+	}
 
 	providedDetailDef := semtypes.NewMappingDefinition()
 	providedDetailTy := providedDetailDef.Define(tyCtx.Env(), providedFields, semtypes.Never)

@@ -1,0 +1,157 @@
+(defaultCount
+  (bb0 () ()
+    (return
+      (literal 5))
+  )
+)
+(inlineParam
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e))))
+  )
+)
+(inlineReturn
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal ret))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable e1 (type
+        (user-defined-type DetailError)) (expr
+        (error-constructor-expr (
+          (literal explicit)) (
+          (named-arg code
+            (literal 1)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e1))))
+    (var-def
+      (variable e2 (type
+        (user-defined-type DetailError)) (expr
+        (error-constructor-expr (
+          (literal defaulted))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e2))))
+    (var-def
+      (variable e3 (type
+        (user-defined-type DetailError)) (expr
+        (error-constructor-expr (
+          (literal all)) (
+          (named-arg code
+            (literal 2))
+          (named-arg reason
+            (literal bad)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e3))))
+    (var-def
+      (variable e4 (type
+        (error-type)) (expr
+        (error-constructor-expr
+          (user-defined-type DetailError) (
+          (literal typeRef)) (
+          (named-arg reason
+            (literal ref)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e4))))
+    (var-def
+      (variable e5 (type
+        (error-type
+          (user-defined-type OpenDetail))) (expr
+        (error-constructor-expr (
+          (literal open)) (
+          (named-arg extra
+            (literal true)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e5))))
+    (var-def
+      (variable e6 (type
+        (user-defined-type InlineError)) (expr
+        (error-constructor-expr (
+          (literal inlineDef))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e6))))
+    (var-def
+      (variable e7 (type
+        (error-type
+          (record-type
+            (field tag
+              (value-type string)
+              (literal local))))) (expr
+        (error-constructor-expr (
+          (literal inlineLocal))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e7))))
+    (var-def
+      (variable e8 (type
+        (error-type
+          (user-defined-type ComputedDetail))) (expr
+        (error-constructor-expr (
+          (literal computed)) (
+          (named-arg count
+            (literal 1)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e8))))
+    (var-def
+      (variable e9 (type
+        (error-type
+          (user-defined-type ComputedDetail))) (expr
+        (error-constructor-expr (
+          (literal computed))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e9))))
+    (expression-stmt
+      (invocation io println (
+        (invocation inlineReturn ()))))
+    (expression-stmt
+      (invocation inlineParam (
+        (error-constructor-expr (
+          (literal param))))))
+    (var-def
+      (variable e11 (type
+        (user-defined-type IntersectedError)) (expr
+        (error-constructor-expr (
+          (literal intersected))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e11))))
+    (var-def
+      (variable e12 (type
+        (user-defined-type NarrowedError)) (expr
+        (error-constructor-expr (
+          (literal narrowed)) (
+          (named-arg x
+            (literal 1)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e12))))
+    (var-def
+      (variable cause (type
+        (error-type)) (expr
+        (error-constructor-expr (
+          (literal cause))))))
+    (var-def
+      (variable e10 (type
+        (user-defined-type DetailError)) (expr
+        (error-constructor-expr (
+          (literal withCause)
+          (simple-var-ref cause)) (
+          (named-arg code
+            (literal 5)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e10))))
+  )
+)

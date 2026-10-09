@@ -1,0 +1,16 @@
+-- stdout --
+error("explicit",code=1,reason="unknown")
+error("defaulted",code=42,reason="unknown")
+error("all",code=2,reason="bad")
+error DetailError ("typeRef",reason="ref",code=42)
+error("open",extra=true,count=7)
+error("inlineDef",z=3)
+error("inlineLocal",tag="local")
+error("computed",count=1)
+error("computed",count=5)
+error("ret",r=10)
+error("param",p=9)
+error("intersected",x=300,label="ok")
+error("narrowed",x=1,label="ok")
+error("withCause",error("cause"),code=5,reason="unknown")
+-- stderr --
