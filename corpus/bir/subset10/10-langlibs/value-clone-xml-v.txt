@@ -1,0 +1,153 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad text
+    %2 = newXMLText(%1)
+    %3 = ConstantLoad c
+    %4 = newXMLComment(%3)
+    %5 = newXMLSequence{%2, %4}
+    %6 = ConstantLoad id
+    %7 = ConstantLoad 1
+    %8 = newMap {| string... |}{%6=%7}
+    %9 = ConstantLoad xmlns:ns
+    %10 = ConstantLoad urn:x
+    %11 = newMap {| string... |}{%9=%10}
+    %12 = newXMLElement("p", %5, %8, %11)
+    element = %12;
+    %14 = clone(element) -> bb1;
+  }
+  bb1 {
+    elementClone = %14;
+    %16 = println(elementClone) -> bb2;
+  }
+  bb2 {
+    %17 = == elementClone element;
+    %18 = %17;
+    %19 = println(%18) -> bb3;
+  }
+  bb3 {
+    %20 = unknown elementClone element;
+    %21 = %20;
+    %22 = println(%21) -> bb4;
+  }
+  bb4 {
+    %23 = newXMLElement("a", ())
+    first = %23;
+    %25 = newXMLElement("b", ())
+    second = %25;
+    %27 = + first second;
+    sequence = %27;
+    %29 = clone(sequence) -> bb5;
+  }
+  bb5 {
+    sequenceClone = %29;
+    %31 = println(sequenceClone) -> bb6;
+  }
+  bb6 {
+    %32 = == sequenceClone sequence;
+    %33 = %32;
+    %34 = println(%33) -> bb7;
+  }
+  bb7 {
+    %35 = unknown sequenceClone sequence;
+    %36 = %35;
+    %37 = println(%36) -> bb8;
+  }
+  bb8 {
+    $desugar$0 = sequenceClone;
+    %39 = iterator($desugar$0) -> bb9;
+  }
+  bb9 {
+    $desugar$1 = %39;
+    GOTO bb10;
+  }
+  bb10 {
+    %41 = ConstantLoad true
+    %41 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 12
+    %0 = (1, $desugar$1).next() -> bb13;
+  }
+  bb12 {
+    %42 = ConstantLoad note
+    %43 = newXMLComment(%42)
+    comment = %43;
+    %46 = clone(comment) -> bb18;
+  }
+  bb13 {
+    $desugar$3 = %0;
+    %2 = $desugar$3 is nil
+    %2 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb15 {
+    %4 = ConstantLoad value
+    %3 = $desugar$3[%4];
+    item = %3;
+    %6 = unknown item (1, first);
+    %7 = %6;
+    %8 = println(%7) -> bb16;
+  }
+  bb16 {
+    %9 = unknown item (1, second);
+    %10 = %9;
+    %11 = println(%10) -> bb17;
+  }
+  bb17 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb18 {
+    %45 = == %46 comment;
+    %47 = %45;
+    %48 = println(%47) -> bb19;
+  }
+  bb19 {
+    %50 = clone(comment) -> bb20;
+  }
+  bb20 {
+    %49 = unknown %50 comment;
+    %51 = %49;
+    %52 = println(%51) -> bb21;
+  }
+  bb21 {
+    %53 = ConstantLoad target
+    %54 = ConstantLoad data
+    %55 = newXMLPI(%53, %54)
+    instruction = %55;
+    %58 = clone(instruction) -> bb22;
+  }
+  bb22 {
+    %57 = == %58 instruction;
+    %59 = %57;
+    %60 = println(%59) -> bb23;
+  }
+  bb23 {
+    %62 = clone(instruction) -> bb24;
+  }
+  bb24 {
+    %61 = unknown %62 instruction;
+    %63 = %61;
+    %64 = println(%63) -> bb25;
+  }
+  bb25 {
+    %65 = ConstantLoad hello
+    %66 = newXMLText(%65)
+    text = %66;
+    %69 = clone(text) -> bb26;
+  }
+  bb26 {
+    %68 = unknown %69 text;
+    %70 = %68;
+    %71 = println(%70) -> bb27;
+  }
+  bb27 {
+    return;
+  }
+}
