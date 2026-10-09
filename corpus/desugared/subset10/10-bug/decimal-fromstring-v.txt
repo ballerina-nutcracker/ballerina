@@ -1,0 +1,90 @@
+(package
+  (import-package ballerina lang decimal (as decimal))
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation decimal fromString (
+              (literal 1.)))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation decimal fromString (
+              (literal 1.e5)))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation decimal fromString (
+              (literal 00.5)))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation decimal fromString (
+              (literal 00)))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation decimal fromString (
+              (literal -01.5)))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation decimal fromString (
+              (literal 1e+)))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation decimal fromString (
+              (literal NaN)))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation decimal fromString (
+              (literal Infinity)))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation decimal fromString (
+              (literal 1_000)))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation decimal fromString (
+              (literal  1)))
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation decimal fromString (
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation decimal fromString (
+            (literal +12.30))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation decimal fromString (
+            (literal .5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation decimal fromString (
+            (literal -.5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation decimal fromString (
+            (literal 1e005))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation decimal fromString (
+            (literal 1.2E-3)))))))))
