@@ -181,6 +181,16 @@ func (c *CompilerContext) SymbolIsPublic(symbol model.SymbolRef) bool {
 	return c.env.SymbolIsPublic(symbol)
 }
 
+// SymbolMembers returns the members of a record, object type or class
+// symbol, including those added by type inclusion.
+func (c *CompilerContext) SymbolMembers(symbol model.SymbolRef) []model.InclusionMember {
+	carrier, ok := c.env.GetSymbol(symbol).(model.MemberCarrier)
+	if !ok {
+		return nil
+	}
+	return carrier.Members()
+}
+
 func (c *CompilerContext) SymbolIsClass(symbol model.SymbolRef) bool {
 	return c.env.SymbolIsClass(symbol)
 }

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to final field 'a'
+  --> final-field-included-e.bal:32:9
+   |
+32 |         self.a = 3; // @error included final field assigned outside init
+   |         ^^^^^^

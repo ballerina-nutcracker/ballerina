@@ -1,0 +1,87 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable a (type
+      (value-type int)))
+    (variable b (type
+      (value-type int)))
+    (variable values (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))) (expr
+      (list-constructor-expr
+        (literal 0))))
+    (variable count (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function init (
+      (variable a (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access a
+            (simple-var-ref self))
+          (simple-var-ref a))
+        (if
+          (binary-expr >
+            (simple-var-ref a)
+            (literal 0))
+          (block-stmt
+            (assignment
+              (field-based-access b
+                (simple-var-ref self))
+              (literal 1))) (
+          (block-stmt
+            (assignment
+              (field-based-access b
+                (simple-var-ref self))
+              (literal 2)))))))
+    (function add (
+      (variable v (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (field-based-access values
+              (simple-var-ref self))
+            (literal 0))
+          (simple-var-ref v))
+        (expression-stmt
+          (invocation push expr:
+            (field-based-access values
+              (simple-var-ref self)) (
+            (simple-var-ref v))))
+        (compound-assignment +
+          (field-based-access count
+            (simple-var-ref self))
+          (literal 1)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type Counter)) (expr
+          (new (
+            (literal 5))))))
+      (expression-stmt
+        (invocation add expr:
+          (simple-var-ref c) (
+          (literal 7))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access b
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access values
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access count
+            (simple-var-ref c))))))))

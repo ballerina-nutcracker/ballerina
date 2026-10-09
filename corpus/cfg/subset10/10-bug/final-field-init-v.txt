@@ -1,0 +1,74 @@
+(Counter
+  (init
+    (bb0 () (bb1 bb3)
+      (assignment
+        (field-based-access a
+          (simple-var-ref self))
+        (simple-var-ref a))
+      (binary-expr >
+        (simple-var-ref a)
+        (literal 0))
+    )
+    (bb1 (bb0) (bb2)
+      (assignment
+        (field-based-access b
+          (simple-var-ref self))
+        (literal 1))
+    )
+    (bb2 (bb1 bb3) ())
+    (bb3 (bb0) (bb2)
+      (assignment
+        (field-based-access b
+          (simple-var-ref self))
+        (literal 2))
+    )
+  )
+  (add
+    (bb0 () ()
+      (assignment
+        (index-based-access
+          (field-based-access values
+            (simple-var-ref self))
+          (literal 0))
+        (simple-var-ref v))
+      (expression-stmt
+        (invocation lang.array push (
+          (field-based-access values
+            (simple-var-ref self))
+          (simple-var-ref v))))
+      (compound-assignment +
+        (field-based-access count
+          (simple-var-ref self))
+        (literal 1))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (new (
+          (literal 5))))))
+    (expression-stmt
+      (invocation add expr:
+        (simple-var-ref c) (
+        (literal 7))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access b
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access values
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access count
+          (simple-var-ref c)))))
+  )
+)

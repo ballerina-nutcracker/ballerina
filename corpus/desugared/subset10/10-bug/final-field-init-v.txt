@@ -1,0 +1,105 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (class-definition Counter
+    (variable a (type
+      (value-type int)))
+    (variable b (type
+      (value-type int)))
+    (variable values (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable count (type
+      (value-type int)))
+    (function init (
+      (variable a (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal values))
+          (list-constructor-expr
+            (literal 0)))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal count))
+          (literal 0))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (simple-var-ref a))
+        (if
+          (binary-expr >
+            (simple-var-ref a)
+            (literal 0))
+          (block-stmt
+            (assignment
+              (index-based-access
+                (simple-var-ref self)
+                (literal b))
+              (literal 1))) (
+          (block-stmt
+            (assignment
+              (index-based-access
+                (simple-var-ref self)
+                (literal b))
+              (literal 2)))))))
+    (function add (
+      (variable v (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (index-based-access
+              (simple-var-ref self)
+              (literal values))
+            (literal 0))
+          (simple-var-ref v))
+        (expression-stmt
+          (invocation lang.array push (
+            (index-based-access
+              (simple-var-ref self)
+              (literal values))
+            (simple-var-ref v))))
+        (compound-assignment +
+          (index-based-access
+            (simple-var-ref self)
+            (literal count))
+          (literal 1)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type Counter)) (expr
+          (new (
+            (literal 5))))))
+      (expression-stmt
+        (invocation add expr:
+          (simple-var-ref c) (
+          (literal 7))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal a)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal b)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal values)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal count))))))))
