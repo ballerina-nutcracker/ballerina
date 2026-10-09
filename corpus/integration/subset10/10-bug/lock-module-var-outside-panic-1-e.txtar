@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-panic-1-e.bal:20:11
+   |
+20 |     check e; // @error
+   |           ^
+
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-panic-1-e.bal:24:16
+   |
+24 |     checkpanic e; // @error
+   |                ^
+
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-panic-1-e.bal:28:17
+   |
+28 |     return trap e; // @error
+   |                 ^
+
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-module-var-outside-panic-1-e.bal:32:11
+   |
+32 |     panic e; // @error
+   |           ^
