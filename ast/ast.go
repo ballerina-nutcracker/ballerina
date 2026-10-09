@@ -285,7 +285,14 @@ func (b *bLangInvokableNodeBase) SetAttached()      { b.flags |= model.FlagAttac
 func (b *bLangInvokableNodeBase) Flags() model.Flag { return b.flags }
 
 func (b *bLangInvokableNodeBase) FuncSymbolFlags() model.FuncSymbolFlags {
-	return model.FuncSymbolFlags(b.flags)
+	var flags model.FuncSymbolFlags
+	if b.IsIsolated() {
+		flags |= model.FuncSymbolFlagIsolated
+	}
+	if b.IsTransactional() {
+		flags |= model.FuncSymbolFlagTransactional
+	}
+	return flags
 }
 
 func (b *bLangInvokableNodeBase) Parameters() []Param {

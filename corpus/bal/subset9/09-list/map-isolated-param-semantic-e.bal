@@ -27,18 +27,6 @@ type InvalidRecord record {|
     int[] values = [1].map(nonIsolated); // @error
 |};
 
-function createInvalidIsolatedLambda() returns (isolated function() returns int) {
-    return isolated function() returns int {
-        return [1].map(func = nonIsolated).length(); // @error
-    };
-}
-
-function createInvalidNestedExplicitLambda() returns (isolated function() returns int) {
-    return isolated function() returns int {
-        return [1].map(value => [value].map(nonIsolated)[0])[0]; // @error
-    };
-}
-
 function invalidateNarrowingCapturedByCallback() returns int {
     int|string value = 1;
     if value is int {

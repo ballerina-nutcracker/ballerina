@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> dependent-fn-non-isolated-call-e.bal:22:19
+   |
+22 |     int n = check convert(1); // @error
+   |                   ^^^^^^^^^^
