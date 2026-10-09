@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> dependent-method-isolation-call-e.bal:26:19
+   |
+26 |     int b = check c.nonIso(); // @error
+   |                   ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> dependent-method-isolation-call-e.bal:27:19
+   |
+27 |     int d = check c.pubNonIso(); // @error
+   |                   ^^^^^^^^^^^^^

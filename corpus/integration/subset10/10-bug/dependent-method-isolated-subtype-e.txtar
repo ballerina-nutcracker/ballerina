@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected object { isolated function get(typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table }, got object { function get(typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table; public function init() returns nil }
+  --> dependent-method-isolated-subtype-e.bal:41:19
+   |
+41 |     IsoGetter d = new NonIsoImpl(); // @error
+   |                   ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected object { isolated function get(typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table }, got object { public function get(typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table; public function init() returns nil }
+  --> dependent-method-isolated-subtype-e.bal:42:19
+   |
+42 |     IsoGetter e = new PubNonIsoImpl(); // @error
+   |                   ^^^^^^^^^^^^^^^^^^^
