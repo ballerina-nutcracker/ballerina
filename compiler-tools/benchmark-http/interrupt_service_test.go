@@ -39,12 +39,10 @@ const serviceLeakHelperEnv = "HTTPBENCH_SERVICE_LEAK_PID_FILE"
 // registered on the cleanup stack, plus the interrupt handler installed by run.
 // Signalling the helper must not strand the service.
 func TestInterruptStopsService(t *testing.T) {
+	t.Parallel()
 	pidFile := filepath.Join(t.TempDir(), "service.pid")
 	cmd := exec.Command(os.Args[0], "-test.run=TestServiceLeakHelperProcess")
-	cmd.Env = append(os.Environ(),
-		serviceLeakHelperEnv+"="+pidFile,
-		interruptHelperEnv+"="+filepath.Join(t.TempDir(), "unused"),
-	)
+	cmd.Env = append(os.Environ(), serviceLeakHelperEnv+"="+pidFile)
 	// Own process group: the signal below must reach only the helper, not this
 	// test binary.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}

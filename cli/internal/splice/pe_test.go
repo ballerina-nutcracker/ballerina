@@ -15,7 +15,7 @@
 // under the License.
 //
 // Payload-round-trip, PE-validity, and execution coverage for PE live in
-// corpus/cli_integration_test.go (TestBalBuildWindowsTarget*), testing
+// corpus/cli_integration_test.go (TestBalCLI/BalBuildWindowsTarget*), testing
 // the same code through the real bal build CLI. This file only covers
 // rejection paths a real balrt stub can't exercise.
 
@@ -137,7 +137,7 @@ func TestEmbedPE_FailsClearlyWhenHeaderSlackInsufficient(t *testing.T) {
 func TestEmbedPE_RejectsAlreadyPackedInput(t *testing.T) {
 	t.Parallel()
 	packedOnce := filepath.Join(t.TempDir(), "packed-once.exe")
-	if err := EmbedPE(windowsAmd64StubPath, []byte("payload"), packedOnce); err != nil {
+	if err := EmbedPE(crossBuiltStub(t, "windows", "amd64"), []byte("payload"), packedOnce); err != nil {
 		t.Fatalf("first EmbedPE: %v", err)
 	}
 

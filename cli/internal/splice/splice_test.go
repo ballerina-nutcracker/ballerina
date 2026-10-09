@@ -25,55 +25,23 @@ import (
 	"testing"
 )
 
-// Real cross-compiled balrt binaries, built once in TestMain and shared
-// read-only by every test below. Cross-compiled regardless of host so
-// these tests run anywhere.
-var (
-	linuxAmd64StubPath   string
-	windowsAmd64StubPath string
-	darwinArm64StubPath  string
-)
-
-func TestMain(m *testing.M) {
-	os.Exit(runTestMain(m))
-}
-
-func runTestMain(m *testing.M) int {
-	tmpDir, err := os.MkdirTemp("", "splice-test-*")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "creating temp dir:", err)
-		return 1
-	}
-	defer func() { _ = os.RemoveAll(tmpDir) }()
-
+// crossBuiltStub cross-builds a real balrt binary for goos/goarch into
+// t.TempDir(), regardless of host, so these tests run anywhere.
+func crossBuiltStub(t *testing.T, goos, goarch string) string {
+	t.Helper()
 	repoRoot, err := moduleRoot()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+		t.Fatal(err)
 	}
-
-	stubs := []struct {
-		dst          *string
-		goos, goarch string
-	}{
-		{&linuxAmd64StubPath, "linux", "amd64"},
-		{&windowsAmd64StubPath, "windows", "amd64"},
-		{&darwinArm64StubPath, "darwin", "arm64"},
+	name := "balrt-" + goos + "-" + goarch
+	if goos == "windows" {
+		name += ".exe"
 	}
-	for _, s := range stubs {
-		name := "balrt-" + s.goos + "-" + s.goarch
-		if s.goos == "windows" {
-			name += ".exe"
-		}
-		outPath := filepath.Join(tmpDir, name)
-		if err := crossBuildBalrt(repoRoot, outPath, s.goos, s.goarch); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return 1
-		}
-		*s.dst = outPath
+	outPath := filepath.Join(t.TempDir(), name)
+	if err := crossBuildBalrt(repoRoot, outPath, goos, goarch); err != nil {
+		t.Fatal(err)
 	}
-
-	return m.Run()
+	return outPath
 }
 
 // moduleRoot resolves the repo root from this package's own directory:
@@ -115,7 +83,7 @@ func crossBuildBalrt(repoRoot, outPath, goos, goarch string) error {
 func TestEmbed_RejectsUnknownTargetOS(t *testing.T) {
 	t.Parallel()
 	outPath := filepath.Join(t.TempDir(), "packed")
-	if err := Embed(linuxAmd64StubPath, []byte("payload"), outPath, "plan9"); err == nil {
+	if err := Embed(crossBuiltStub(t, "linux", "amd64"), []byte("payload"), outPath, "plan9"); err == nil {
 		t.Fatal("expected an error for an unrecognized targetOS")
 	}
 }

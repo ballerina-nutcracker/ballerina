@@ -4,6 +4,7 @@ linters:
   default: standard
   enable:
     - depguard
+    - usetesting
     - dupl
     - exhaustive
     - iface
@@ -13,6 +14,8 @@ linters:
     - wastedassign
     - forbidigo
   settings:
+    usetesting:
+      os-temp-dir: true
     reassign:
       patterns:
         - ".*"

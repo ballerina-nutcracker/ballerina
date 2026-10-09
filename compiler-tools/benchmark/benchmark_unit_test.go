@@ -139,11 +139,7 @@ func TestRequireMemoryTool(t *testing.T) {
 }
 
 func TestRunRequiresHyperfineInTimeMode(t *testing.T) {
-	oldPath := os.Getenv("PATH")
-	if err := os.Setenv("PATH", t.TempDir()); err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.Setenv("PATH", oldPath) }()
+	t.Setenv("PATH", t.TempDir())
 
 	b := &benchmark{config: config{mode: timeMode, target: "missing.bal"}}
 	if err := b.run(); err == nil || !strings.Contains(err.Error(), "hyperfine is required") {
@@ -386,11 +382,7 @@ exit 1
 
 func prependPath(t *testing.T, dir string) {
 	t.Helper()
-	oldPath := os.Getenv("PATH")
-	if err := os.Setenv("PATH", dir+string(os.PathListSeparator)+oldPath); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Setenv("PATH", oldPath) })
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
 func memoryCommandOutputForMiB(mib int) string {

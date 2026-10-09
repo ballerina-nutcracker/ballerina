@@ -154,7 +154,7 @@ func TestResolveTargetPlatform(t *testing.T) {
 // Non-native cross-compile ResolveStub coverage (unsupported-platform
 // rejection, correct-platform-among-several selection, Windows .exe suffix)
 // moved to corpus-level tests against the real bal build CLI:
-// TestBalBuildUnsupportedTargetPlatform and TestBalBuildCrossCompile
+// TestBalCLI/BalBuildUnsupportedTargetPlatform and TestBalCLI/BalBuildCrossCompile
 // (corpus/cli_integration_test.go).
 
 // TestTryLoadFrom_LinuxELFSection covers embed_linux.go's tryLoadFrom

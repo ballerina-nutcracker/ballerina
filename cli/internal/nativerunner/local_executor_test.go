@@ -462,7 +462,7 @@ func TestLoadCachedBinary(t *testing.T) {
 
 // Fingerprint-differs-by-target-platform coverage (different targets don't
 // collide, same target is stable/cached) moved to a corpus-level test
-// against the real bal build CLI: TestBalBuildNativeDependencyCacheByTarget
+// against the real bal build CLI: TestBalCLI/BalBuildNativeDependencyCacheByTarget
 // (corpus/cli_integration_test.go).
 
 // TestCrossCompileEnv checks the build env has exactly one

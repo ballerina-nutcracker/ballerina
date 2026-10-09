@@ -28,83 +28,35 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"testing"
 	"time"
-)
-
-// sharedBalBinary is built once and reused by tests that just need a working
-// `bal`, so the worktree checkout + build isn't repeated per test.
-var (
-	sharedBalOnce sync.Once
-	sharedBalPath string
-	sharedBalErr  error
-	// Recorded for TestMain: the shared checkout outlives every individual
-	// test, so t.Cleanup cannot tear it down. Guarded because the interrupt
-	// handler reads them while ensureSharedBalBinary may still be writing.
-	sharedBalMu       sync.Mutex
-	sharedBalRoot     string
-	sharedBalWorktree string
 )
 
 // interruptHelperEnv names the marker file the re-executed helper process
 // writes from its cleanup; see TestInterruptRunsCleanupBeforeExit.
 const interruptHelperEnv = "HTTPBENCH_INTERRUPT_HELPER_MARKER"
 
-// TestMain tears down the shared checkout. Without it every invocation of this
-// package's tests leaks a git worktree registration plus ~420MB of checkout.
-func TestMain(m *testing.M) {
-	// The helper process installs its own handler and must not race this one
-	// to os.Exit.
-	stop := func() {}
-	if os.Getenv(interruptHelperEnv) == "" {
-		stop = onInterrupt(cleanupSharedBal)
-	}
-	code := m.Run()
-	stop()
-	cleanupSharedBal() // not deferred: os.Exit below would skip it
-	os.Exit(code)
-}
-
-func cleanupSharedBal() {
-	sharedBalMu.Lock()
-	worktree, root := sharedBalWorktree, sharedBalRoot
-	sharedBalMu.Unlock()
-	if worktree != "" {
-		removeWorktree(worktree)
-	}
-	if root != "" {
-		_ = os.RemoveAll(root)
-	}
-}
-
-func ensureSharedBalBinary(t *testing.T) string {
+// buildBalFromHEAD checks HEAD out into t.TempDir() and builds bal there.
+// The worktree registration is removed when the test finishes or the process
+// is interrupted.
+func buildBalFromHEAD(t *testing.T) string {
 	t.Helper()
 	skipWorktreeIntegrationOnWindows(t)
-	sharedBalOnce.Do(func() {
-		root, err := os.MkdirTemp("", "httpbench-shared-bal-*")
-		if err != nil {
-			sharedBalErr = err
-			return
-		}
-		sharedBalMu.Lock()
-		sharedBalRoot = root
-		sharedBalMu.Unlock()
-		wt, err := checkoutWorktree(root, "shared", "HEAD")
-		if err != nil {
-			sharedBalErr = err
-			return
-		}
-		sharedBalMu.Lock()
-		sharedBalWorktree = wt
-		sharedBalMu.Unlock()
-		sharedBalPath, sharedBalErr = buildInterpreter(wt)
-	})
-	if sharedBalErr != nil {
-		t.Fatalf("failed to build shared bal binary for tests: %v", sharedBalErr)
+	wt, err := checkoutWorktree(t.TempDir(), "head", "HEAD")
+	if err != nil {
+		t.Fatalf("checking out HEAD: %v", err)
 	}
-	return sharedBalPath
+	stop := onInterrupt(func() { removeWorktree(wt) })
+	t.Cleanup(func() {
+		stop()
+		removeWorktree(wt)
+	})
+	bal, err := buildInterpreter(wt)
+	if err != nil {
+		t.Fatalf("building bal: %v", err)
+	}
+	return bal
 }
 
 // skipWorktreeIntegrationOnWindows skips real git-worktree checkout/build
@@ -377,7 +329,7 @@ func TestCheckoutWorktreeIsolatesRolesForSameRef(t *testing.T) {
 }
 
 func TestBuildInterpreterProducesRunnableBinary(t *testing.T) {
-	bin := ensureSharedBalBinary(t)
+	bin := buildBalFromHEAD(t)
 	info, err := os.Stat(bin)
 	if err != nil {
 		t.Fatalf("stat built interpreter: %v", err)
@@ -470,7 +422,7 @@ func TestMeasureOnceFailsFastWhenPortBusy(t *testing.T) {
 func TestMeasureOnceProducesSample(t *testing.T) {
 	requireWrk(t)
 
-	bal := ensureSharedBalBinary(t)
+	bal := buildBalFromHEAD(t)
 	helloFile := filepath.Join(t.TempDir(), "hello.bal")
 	if err := os.WriteFile(helloFile, helloSource, 0o644); err != nil {
 		t.Fatalf("writing hello.bal: %v", err)

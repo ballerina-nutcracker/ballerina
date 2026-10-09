@@ -16,7 +16,7 @@
 //
 // Payload-round-trip, section-preservation, strict-codesign-validation,
 // and execution coverage for Mach-O live in
-// corpus/cli_integration_test.go (TestBalBuildDarwin*), testing the same
+// corpus/cli_integration_test.go (TestBalCLI/BalBuildDarwin*), testing the same
 // code through the real bal build CLI, on both the linker-signed
 // (arm64, host) and from-scratch (amd64, cross-compiled) signing paths.
 // This file only covers rejection paths a real balrt stub can't
@@ -106,7 +106,7 @@ func TestEmbedMachO_FailsClearlyWhenHeaderSlackInsufficient(t *testing.T) {
 func TestEmbedMachO_RejectsAlreadyPackedInput(t *testing.T) {
 	t.Parallel()
 	packedOnce := filepath.Join(t.TempDir(), "packed-once")
-	if err := EmbedMachO(darwinArm64StubPath, []byte("payload"), packedOnce); err != nil {
+	if err := EmbedMachO(crossBuiltStub(t, "darwin", "arm64"), []byte("payload"), packedOnce); err != nil {
 		t.Fatalf("first EmbedMachO: %v", err)
 	}
 

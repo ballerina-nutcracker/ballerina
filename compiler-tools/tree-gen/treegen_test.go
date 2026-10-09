@@ -23,18 +23,18 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"testing"
 )
 
 const integrationCoverDirEnv = "CODECOV_INTEGRATION_COVERDIR"
 
-var (
-	treeGenOnce     sync.Once
-	treeGenBinPath  string
-	treeGenCoverDir string
-	treeGenBuildErr error
-)
+// treeGenCLI runs tree-gen through a coverage-instrumented binary when
+// integration coverage is requested, and through `go run` otherwise.
+type treeGenCLI struct {
+	modDir   string
+	binPath  string
+	coverDir string
+}
 
 func TestGenerateFile(t *testing.T) {
 	t.Parallel()
@@ -98,7 +98,7 @@ func TestGenerateFile(t *testing.T) {
 
 func TestCLI(t *testing.T) {
 	t.Parallel()
-	mod := moduleDir(t)
+	cli := newTreeGenCLI(t, moduleDir(t))
 	tests := []cliCase{
 		{
 			name: "generates main output",
@@ -188,7 +188,7 @@ func TestCLI(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			runCLICase(t, mod, tc)
+			runCLICase(t, cli, tc)
 		})
 	}
 }
@@ -221,52 +221,37 @@ func moduleDir(t *testing.T) string {
 	return wd
 }
 
-func goRunTreeGen(t *testing.T, dir string, args ...string) ([]byte, error) {
+func newTreeGenCLI(t *testing.T, modDir string) treeGenCLI {
 	t.Helper()
-	if err := ensureTreeGenCoveredBinary(); err != nil {
-		return nil, err
+	coverDir, err := resolveIntegrationCoverDir()
+	if err != nil {
+		t.Fatal(err)
 	}
-	var cmd *exec.Cmd
-	if treeGenBinPath != "" {
-		cmd = exec.Command(treeGenBinPath, args...)
-		cmd.Dir = dir
-		cmd.Env = append(os.Environ(), "GOCOVERDIR="+treeGenCoverDir)
-	} else {
-		cmd = exec.Command("go", append([]string{"run", "."}, args...)...)
-		cmd.Dir = dir
+	if coverDir == "" {
+		return treeGenCLI{modDir: modDir}
 	}
-	return cmd.CombinedOutput()
+	name := "tree-gen"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	binPath := filepath.Join(t.TempDir(), name)
+	if err := buildTreeGenBinary(coverDir, modDir, binPath); err != nil {
+		t.Fatal(err)
+	}
+	return treeGenCLI{modDir: modDir, binPath: binPath, coverDir: coverDir}
 }
 
-func ensureTreeGenCoveredBinary() error {
-	treeGenOnce.Do(func() {
-		var err error
-		treeGenCoverDir, err = resolveIntegrationCoverDir()
-		if err != nil {
-			treeGenBuildErr = err
-			return
-		}
-		if treeGenCoverDir == "" {
-			return
-		}
-		wd, err := os.Getwd()
-		if err != nil {
-			treeGenBuildErr = err
-			return
-		}
-		tmpDir, err := os.MkdirTemp("", "tree-gen-cli")
-		if err != nil {
-			treeGenBuildErr = err
-			return
-		}
-		name := "tree-gen"
-		if runtime.GOOS == "windows" {
-			name += ".exe"
-		}
-		treeGenBinPath = filepath.Join(tmpDir, name)
-		treeGenBuildErr = buildTreeGenBinary(treeGenCoverDir, wd, treeGenBinPath)
-	})
-	return treeGenBuildErr
+func goRunTreeGen(t *testing.T, cli treeGenCLI, args ...string) ([]byte, error) {
+	t.Helper()
+	var cmd *exec.Cmd
+	if cli.binPath != "" {
+		cmd = exec.Command(cli.binPath, args...)
+		cmd.Env = append(os.Environ(), "GOCOVERDIR="+cli.coverDir)
+	} else {
+		cmd = exec.Command("go", append([]string{"run", "."}, args...)...)
+	}
+	cmd.Dir = cli.modDir
+	return cmd.CombinedOutput()
 }
 
 func buildTreeGenBinary(coverDir, modDir, outputPath string) error {
@@ -311,7 +296,7 @@ func runGenerateCase(t *testing.T, tc generateCase) {
 	assertFileContent(t, outputPath, tc.wantOutput)
 }
 
-func runCLICase(t *testing.T, mod string, tc cliCase) {
+func runCLICase(t *testing.T, cli treeGenCLI, tc cliCase) {
 	t.Helper()
 	workDir := t.TempDir()
 	for rel, content := range tc.files {
@@ -321,7 +306,7 @@ func runCLICase(t *testing.T, mod string, tc cliCase) {
 		mustWriteFile(t, filepath.Join(workDir, rel), content)
 	}
 	args := resolveCasePaths(workDir, tc.args)
-	out, err := goRunTreeGen(t, mod, args...)
+	out, err := goRunTreeGen(t, cli, args...)
 	if tc.wantErrContains != "" {
 		if err == nil {
 			t.Fatalf("expected command to fail, output: %q", string(out))
