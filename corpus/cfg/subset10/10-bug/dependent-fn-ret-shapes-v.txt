@@ -1,0 +1,21 @@
+(annotatedRet
+)
+(arrayInUnionRet
+)
+(arrayRet
+)
+(fixedArrayRet
+)
+(intersectionRet
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal declared))))
+  )
+)
+(nilUnionRet
+)
+(unionRet
+)

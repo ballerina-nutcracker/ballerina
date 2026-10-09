@@ -77,10 +77,21 @@ type typeResolutionValidator struct {
 	t     *testing.T
 	ctx   *context.CompilerContext
 	tyCtx semtypes.Context
+	// dependentReturnType is the return type descriptor of the dependently typed function being walked.
+	// Its type descriptor only gets a type per call site, after monomorphization, so only its annotations
+	// are validated.
+	dependentReturnType *ast.BLangReturnTypeDescriptor
 }
 
 func (v *typeResolutionValidator) Visit(node ast.BLangNode) ast.Visitor {
 	if node == nil {
+		return nil
+	}
+	if rt, ok := node.(*ast.BLangReturnTypeDescriptor); ok && rt == v.dependentReturnType {
+		attachments := rt.GetAnnotationAttachments()
+		for i := range attachments {
+			ast.Walk(v, &attachments[i])
+		}
 		return nil
 	}
 
@@ -101,6 +112,15 @@ func (v *typeResolutionValidator) Visit(node ast.BLangNode) ast.Visitor {
 		symbol := nodeWithSymbol.Symbol()
 		// Skip constant symbols (kind: 1) since they're resolved during semantic analysis
 		if v.ctx.SymbolKind(symbol) == model.SymbolKindConstant {
+			return v
+		}
+		if paramTypes, _, dependent := v.ctx.DependentlyTypedFunctionType(symbol); dependent {
+			for i, ty := range paramTypes {
+				if semtypes.IsZero(ty) {
+					v.t.Errorf("parameter %d of dependently typed function at %v does not have type set", i, node.GetPosition())
+				}
+			}
+			v.dependentReturnType = node.(ast.InvokableNode).GetReturnTypeDescriptor()
 			return v
 		}
 		if semtypes.IsZero(v.ctx.SymbolType(symbol)) {

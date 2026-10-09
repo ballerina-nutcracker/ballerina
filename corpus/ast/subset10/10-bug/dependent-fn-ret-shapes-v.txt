@@ -1,0 +1,84 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function unionRet (
+    (variable val (type
+      (value-type int)))
+    (variable T (type
+      (constrained-type
+        (value-type typedesc)
+        (value-type anydata))) (expr <>))) (
+    (union-type
+      (user-defined-type T)
+      (error-type)))
+    (extern-function-body))
+  (function arrayRet (
+    (variable T (type
+      (value-type typedesc)) (expr <>))) (
+    (array-type
+      (user-defined-type T) dimensions: 1 ([])))
+    (extern-function-body))
+  (function fixedArrayRet (
+    (variable T (type
+      (value-type typedesc)) (expr <>))) (
+    (array-type
+      (user-defined-type T) dimensions: 1 ([
+      (literal 2)])))
+    (extern-function-body))
+  (function arrayInUnionRet (
+    (variable T (type
+      (constrained-type
+        (value-type typedesc)
+        (value-type anydata))) (expr <>))) (
+    (array-type
+      (union-type
+        (user-defined-type T)
+        (error-type)) dimensions: 1 ([])))
+    (extern-function-body))
+  (function nilUnionRet (
+    (variable T (type
+      (constrained-type
+        (value-type typedesc)
+        (union-type
+          (value-type int)
+          (value-type string)))) (expr <>))) (
+    (union-type
+      (user-defined-type T)
+      (value-type null)))
+    (extern-function-body))
+  (function intersectionRet (
+    (variable T (type
+      (constrained-type
+        (value-type typedesc)
+        (value-type anydata))) (expr <>))) (
+    (union-type
+      (intersection-type
+        (user-defined-type T)
+        (value-type readonly))
+      (error-type)))
+    (extern-function-body))
+  (annotation Marker
+    (attach-point function))
+  (annotation ReturnMarker
+    (attach-point return))
+  (function annotatedRet (
+    (variable a (type
+      (value-type string)))
+    (variable T (type
+      (constrained-type
+        (value-type typedesc)
+        (value-type anydata))) (expr <>))) (
+    (annotation-attachment ReturnMarker
+      (literal true))
+    (union-type
+      (user-defined-type T)
+      (error-type)))
+    (extern-function-body)
+    (annotation-attachment Marker
+      (literal true)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal declared)))))))

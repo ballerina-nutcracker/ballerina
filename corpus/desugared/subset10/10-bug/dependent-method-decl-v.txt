@@ -1,0 +1,90 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Store
+    (function init () ()
+      (block-function-body))
+    (function get (
+      (variable key (type
+        (value-type string)))
+      (variable td (type
+        (constrained-type
+          (value-type typedesc)
+          (value-type anydata))) (expr <>))) (
+      (union-type
+        (user-defined-type td)
+        (error-type)))
+      (extern-function-body)))
+  (class-definition Client
+    (function init () ()
+      (block-function-body))
+    (function $remote$fetch (
+      (variable targetType (type
+        (constrained-type
+          (value-type typedesc)
+          (value-type anydata))) (expr <>))) (
+      (union-type
+        (user-defined-type targetType)
+        (error-type)))
+      (extern-function-body))
+    (resource-function get name:items
+      (param id
+        (value-type int))
+      (variable targetType (type
+        (constrained-type
+          (value-type typedesc)
+          (value-type anydata))) (expr <>))
+      (union-type
+        (user-defined-type targetType)
+        (error-type))
+      (extern-function-body)))
+  (function useStore (
+    (variable s (type
+      (user-defined-type Store)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (checked-expr
+            (invocation get expr:
+              (simple-var-ref s) (
+              (literal key)
+              (typedesc-expr)))))))))
+  (function useClient (
+    (variable c (type
+      (user-defined-type Client)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type string)) (expr
+          (checked-expr
+            (client-resource-access get expr:
+              (simple-var-ref c) name:items computed:
+              (literal 1)
+              (typedesc-expr))))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (checked-expr
+            (remote-method-call fetch expr:
+              (simple-var-ref c) (
+              (typedesc-expr)))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (user-defined-type Store)) (expr
+          (new ()))))
+      (var-def
+        (variable _ (type
+          (user-defined-type Client)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (literal declared)))))))
