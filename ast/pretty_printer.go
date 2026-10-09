@@ -80,6 +80,10 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printBlockFunctionBody(t)
 	case *BLangExprFunctionBody:
 		p.printExprFunctionBody(t)
+	case *BLangExternFunctionBody:
+		p.StartNode()
+		p.PrintString("extern-function-body")
+		p.EndNode()
 	case *BLangVariable:
 		if t.IsConstant() {
 			p.printConstant(t)
@@ -124,6 +128,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printNamedArgsExpression(t)
 	case *BLangDefaultArg:
 		p.PrintString("<default>")
+	case *BLangInferredTypedescDefault:
+		p.PrintString("<>")
 	case *BLangValueType:
 		p.printValueType(t)
 	case *BLangBuiltInRefTypeNode:
