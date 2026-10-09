@@ -1,0 +1,21 @@
+(failingDefault
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal default failed))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable counter (type
+        (user-defined-type Counter)) (expr
+        (checked-expr
+          (invocation lang.value cloneWithType (
+            (mapping-constructor-expr)
+            (typedesc-expr)))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref counter))
+  )
+)

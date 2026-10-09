@@ -110,6 +110,7 @@ func NewRuntime(platform pal.Platform, tyEnv semtypes.Env) *Runtime {
 		LookupFunction: func(cx *extern.Context, org, module, name string) (any, bool) {
 			return exec.LookupFunction(cx.Env, org, module, name)
 		},
+		RecordFieldDefault: exec.RecordFieldDefault,
 	}, extern.MetadataHandles{
 		Signature:         exec.FunctionSignature,
 		Metadata:          exec.FunctionMetadata,
@@ -138,6 +139,7 @@ func (rt *Runtime) registry() *modules.Registry {
 func (rt *Runtime) Init(pkg bir.BIRPackage) error {
 	rt.transition(StateInitializing)
 	rt.registry().RegisterModule(pkg.PackageID, modules.NewBIRModule(semtypes.ContextFrom(rt.env.TypeEnv), &pkg, nil))
+	rt.registry().RegisterRecordDefaults(pkg.RecordDefaults)
 	if err := rt.recordLifecycleHooks(&pkg); err != nil {
 		return rt.abortInitialization(err)
 	}

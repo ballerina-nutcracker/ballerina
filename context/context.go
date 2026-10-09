@@ -226,6 +226,10 @@ func (c *CompilerContext) MappingDefaults(mat *semtypes.MappingAtomicType) ([]mo
 	return c.env.MappingDefaults(mat)
 }
 
+func (c *CompilerContext) MappingDefaultsSnapshot() map[*semtypes.MappingAtomicType][]model.FieldDefault {
+	return c.env.MappingDefaultsSnapshot()
+}
+
 func (c *CompilerContext) SetObjectMethodTable(mat *semtypes.MappingAtomicType, table model.MethodTable) {
 	c.env.SetObjectMethodTable(mat, table)
 }

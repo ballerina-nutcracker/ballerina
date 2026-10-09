@@ -71,6 +71,10 @@ type (
 		StartFunction         *BIRFunction
 		GracefulStopFunction  *BIRFunction
 		ImmediateStopFunction *BIRFunction
+		// RecordDefaults maps the mapping atom of each record type with field
+		// defaults, including imported ones, to the default functions of its
+		// fields. Only atoms in the package's type pool are serialized.
+		RecordDefaults map[*semtypes.MappingAtomicType][]MappingConstructorDefaultEntry
 	}
 
 	ObjectField struct {

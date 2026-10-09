@@ -81,6 +81,7 @@ type DispatchHandles struct {
 	LookupFunction       func(*Context, string, string, string) (any, bool)                    // org, module, name
 	Invoke               func(*Context, any, []values.BalValue) (values.BalValue, error)
 	Start                func(*Context, any, []values.BalValue) (<-chan values.BalValue, error)
+	RecordFieldDefault   func(*Context, *semtypes.MappingAtomicType, string) (func() values.BalValue, bool) // record atom, field
 }
 
 // MetadataHandles carry runtime introspection implementations independently
@@ -153,6 +154,19 @@ func (c *Context) ObjectAnnotations(obj *values.Object) (values.AnnotationValues
 // every value that could.
 func (c *Context) TypeAnnotations(td *values.TypeDesc) (TypeAnnotations, bool) {
 	return c.Env.metadata.TypeAnnotations(c, td)
+}
+
+// RecordFieldDefault returns a function evaluating the default value of field
+// in the record type whose mapping atom is atom. The bool is false if that
+// field declares no default the runtime can evaluate.
+func (c *Context) RecordFieldDefault(atom *semtypes.MappingAtomicType, field string) (func() values.BalValue, bool) {
+	return c.Env.dispatch.RecordFieldDefault(c, atom, field)
+}
+
+// CloneWithType performs the cloneWithType abstract operation, filling missing
+// record fields from their declared defaults.
+func (c *Context) CloneWithType(value values.BalValue, targetType semtypes.SemType) (values.BalValue, *values.Error) {
+	return values.CloneWithType(c.TypeCtx(), value, targetType, c.RecordFieldDefault)
 }
 
 // InvokeMethod calls the method captured by h. For object and remote

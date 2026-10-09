@@ -1,0 +1,41 @@
+module $anon.. v 0.0.0;
+failingDefault() -> int{
+  bb0 {
+    %1 = ConstantLoad default failed
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %2 = newMap {| never... |}{}
+    %3 = ConstantLoad typedesc
+    %4 = cloneWithType(%2,%3) -> bb1;
+  }
+  bb1 {
+    %5 = %4 is error
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+  bb3 {
+    %1 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    counter = %1;
+    %7 = counter;
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = failingDefault() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
