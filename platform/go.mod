@@ -5,3 +5,5 @@ go 1.27
 toolchain go1.27.1
 
 require golang.org/x/sys v0.45.0
+
+require github.com/fsnotify/fsnotify v1.10.1

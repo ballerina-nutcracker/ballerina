@@ -307,6 +307,56 @@ func (p *testPal) Platform() pal.Platform {
 				}
 				return os.OpenFile(path, flag, 0o644)
 			},
+			Getwd: os.Getwd,
+			Abs: func(path string) (string, error) {
+				return palnative.Abs(normalizePath(path))
+			},
+			Mkdir: func(path string) error {
+				return os.Mkdir(normalizePath(path), 0o755)
+			},
+			MkdirAll: func(path string) error {
+				return os.MkdirAll(normalizePath(path), 0o755)
+			},
+			Remove: func(path string) error {
+				return os.Remove(normalizePath(path))
+			},
+			RemoveAll: func(path string) error {
+				return os.RemoveAll(normalizePath(path))
+			},
+			Rename: func(oldPath, newPath string) error {
+				return os.Rename(normalizePath(oldPath), normalizePath(newPath))
+			},
+			CreateFile: func(path string) error {
+				f, err := os.OpenFile(normalizePath(path), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+				if err != nil {
+					return err
+				}
+				return f.Close()
+			},
+			Stat: func(path string) (*pal.FileInfo, error) {
+				return palnative.Stat(normalizePath(path))
+			},
+			Lstat: func(path string) (*pal.FileInfo, error) {
+				return palnative.Lstat(normalizePath(path))
+			},
+			ReadDir: func(path string) ([]pal.FileInfo, error) {
+				return palnative.ReadDir(normalizePath(path))
+			},
+			Copy: func(src, dst string, opts pal.CopyOptions) error {
+				return palnative.CopyFS(normalizePath(src), normalizePath(dst), opts)
+			},
+			CreateTemp: func(prefix, suffix, dir string) (string, error) {
+				return palnative.CreateTemp(prefix, suffix, normalizePath(dir))
+			},
+			CreateTempDir: func(prefix, suffix, dir string) (string, error) {
+				return palnative.CreateTempDir(prefix, suffix, normalizePath(dir))
+			},
+			Readlink: func(path string) (string, error) {
+				return os.Readlink(normalizePath(path))
+			},
+			Watch: func(path string, recursive bool, handler pal.WatchHandler) (pal.WatchHandle, error) {
+				return palnative.Watch(normalizePath(path), recursive, handler)
+			},
 		},
 		OS: pal.OS{
 			GetEnv:      os.Getenv,

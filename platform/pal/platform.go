@@ -69,6 +69,28 @@ type (
 		// OpenWritable opens path for streaming writes, truncating unless appendMode
 		// is set. Close flushes and releases the handle.
 		OpenWritable func(path string, appendMode bool) (io.WriteCloser, error)
+		Getwd        func() (string, error)
+		// Abs makes path absolute against the working directory without
+		// resolving "." or ".." segments, like Java's Path.toAbsolutePath.
+		Abs           func(path string) (string, error)
+		Mkdir         func(path string) error
+		MkdirAll      func(path string) error
+		Remove        func(path string) error
+		RemoveAll     func(path string) error
+		Rename        func(oldPath, newPath string) error
+		CreateFile    func(path string) error
+		Stat          func(path string) (*FileInfo, error)
+		Lstat         func(path string) (*FileInfo, error)
+		ReadDir       func(path string) ([]FileInfo, error)
+		Copy          func(src, dst string, opts CopyOptions) error
+		CreateTemp    func(prefix, suffix, dir string) (string, error)
+		CreateTempDir func(prefix, suffix, dir string) (string, error)
+		Readlink      func(path string) (string, error)
+		// Watch starts monitoring path for filesystem changes, optionally
+		// descending into subdirectories, delivering each change to handler on
+		// a platform-owned goroutine. The returned handle's Close stops
+		// watching and releases OS resources (e.g. inotify/kqueue handles).
+		Watch func(path string, recursive bool, handler WatchHandler) (WatchHandle, error)
 	}
 	OS struct {
 		GetEnv      func(name string) string
@@ -216,3 +238,50 @@ type (
 		Close() error                       // immediate: close all connections now
 	}
 )
+
+// FileInfo carries metadata for a single filesystem entry.
+type FileInfo struct {
+	AbsPath    string
+	Size       int64
+	ModifiedAt time.Time
+	IsDir      bool
+	IsSymlink  bool
+	IsReadable bool
+	IsWritable bool
+}
+
+// CopyOptions controls the behavior of FS.Copy.
+type CopyOptions struct {
+	ReplaceExisting bool
+	CopyAttributes  bool
+	NoFollowLinks   bool
+}
+
+// WatchOp identifies the kind of filesystem change reported by FS.Watch.
+type WatchOp uint8
+
+const (
+	WatchCreate WatchOp = iota
+	WatchModify
+	WatchDelete
+)
+
+// WatchEvent carries a single filesystem change notification from FS.Watch.
+// When Err is set the event reports a watch failure instead, such as dropped
+// events after a queue overflow, and Path and Op are unset.
+type WatchEvent struct {
+	Path string
+	Op   WatchOp
+	Err  error
+}
+
+// WatchHandler receives filesystem change notifications from FS.Watch. It is
+// invoked on a platform-owned goroutine, independent of the strand that
+// called FS.Watch.
+type WatchHandler func(WatchEvent)
+
+// WatchHandle is an opaque handle to an active filesystem watch, returned by
+// FS.Watch. Close stops watching and releases OS resources.
+type WatchHandle interface {
+	Close() error
+}

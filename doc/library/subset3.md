@@ -1,13 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module —
-Avro binary serialization and deserialization driven by an Avro schema string —
-plus stream-based file read/write additions and byte channels in the `io`
-module, building on the language's new `stream` type, with client-side
-response data binding, XML payloads, and `anydata` resource returns for the
-`http` module, and the new `ballerina/protobuf` package, providing the protobuf
-well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the
-scalar wrapper types) used by generated gRPC client/service code.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; and the new `file` module.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -39,23 +32,12 @@ Every mapping the module specification defines is supported in both directions.
 
 ### Target-type binding
 
-`fromAvro` infers `targetType` from the contextually expected type, so
-`Person p = check schema.fromAvro(data);` binds the decoded payload to `Person`.
-Without a contextually expected type the compiler reports `cannot infer typedesc
-argument for parameter 'targetType'` — pass `targetType = Person` explicitly in
-that case.
+`fromAvro` infers `targetType` from the contextually expected type, so `Person p = check schema.fromAvro(data);` binds the decoded payload to `Person`. Without a contextually expected type the compiler reports `cannot infer typedesc argument for parameter 'targetType'` — pass `targetType = Person` explicitly in that case.
 
-Records, enums, tuples, singletons, `map<T>`, `T[]`, `json`, `map<json>`,
-`anydata` and nilable forms of all of these are accepted as targets, along with
-numeric widening from `int` to `float` and `decimal`. A `readonly &`
-intersection of any of these is accepted too and binds to a frozen value.
+Records, enums, tuples, singletons, `map<T>`, `T[]`, `json`, `map<json>`, `anydata` and nilable forms of all of these are accepted as targets, along with numeric widening from `int` to `float` and `decimal`. A `readonly &` intersection of any of these is accepted too and binds to a frozen value.
 ## [io](https://github.com/ballerina-platform/module-ballerina-io/blob/master/docs/spec/spec.md)
 
-Subset 2 covered console printing and whole-file I/O (string, lines, bytes,
-JSON, XML). Subset 3 adds stream-based file reading and writing, built on the
-language's new `stream` type, plus byte channels — the low-level, object-based
-`ReadableByteChannel`/`WritableByteChannel` API for reading and writing bytes
-incrementally, either from a file or from an in-memory byte array.
+Subset 2 covered console printing and whole-file I/O (string, lines, bytes, JSON, XML). Subset 3 adds stream-based file reading and writing, built on the language's new `stream` type, plus byte channels — the low-level, object-based `ReadableByteChannel`/`WritableByteChannel` API for reading and writing bytes incrementally, either from a file or from an in-memory byte array.
 
 ### Stream-based file read/write
 
@@ -84,8 +66,7 @@ incrementally, either from a file or from an in-memory byte array.
 | `WritableByteChannel.write(content, offset)` | Writes `content[offset:]`; `offset` is an index into `content`, not a file seek offset; returns the number of bytes written |
 | `WritableByteChannel.close()` | Releases the channel's underlying resources; a second `close()` call errors |
 
-CSV/record channels are out of scope for this subset and remain
-`Not Yet Supported`.
+CSV/record channels are out of scope for this subset and remain `Not Yet Supported`.
 
 ### Data channels
 
@@ -117,8 +98,7 @@ CSV/record channels are out of scope for this subset and remain
 | `WritableCharacterChannel.writeProperties(properties, comment)` | Writes a `map<string>` in `.properties` format with a leading comment and timestamp header |
 | `WritableCharacterChannel.close()` | Closes the character channel and the wrapped byte channel; a second `close()` call errors |
 
-The `LineStream` and `BlockStream` public helper classes are not declared;
-`lineStream()` and `blockStream()` return plain stream values instead.
+The `LineStream` and `BlockStream` public helper classes are not declared; `lineStream()` and `blockStream()` return plain stream values instead.
 
 ## [http](https://github.com/ballerina-platform/module-ballerina-http/blob/master/docs/spec/spec.md)
 
@@ -221,3 +201,20 @@ resource function get album() returns xml {
 | `protobuf.types.duration`, `protobuf.types.empty`, `protobuf.types.struct`, `protobuf.types.timestamp`, `protobuf.types.wrappers` context record types | Supported |
 
 Not covered in this subset: arbitrary user-defined message record (de)serialization via the `@protobuf:Descriptor` annotation — blocked on `typeof` support rather than on the library — and the `.proto`-to-Ballerina code generator (`ballerina/grpc` and its tooling are not ported).
+
+## [file](https://github.com/ballerina-platform/module-ballerina-file/blob/master/docs/spec/spec.md)
+
+File, directory, and path manipulation utilities.
+
+| Feature | Notes |
+|---|---|
+| `create` / `remove` / `rename` / `copy` | Create, remove (non-recursive and recursive), rename/move, and copy (with `REPLACE_EXISTING`, `COPY_ATTRIBUTES`, `NO_FOLLOW_LINKS` options) files and directories |
+| `getMetaData` | File size, modification time, permissions, and type |
+| `readDir` | Read directory contents |
+| `createTemp` / `createTempDir` | Create a temporary file / directory |
+| `test` | Test file/directory properties: `EXISTS`, `IS_DIR`, `IS_SYMLINK`, `READABLE`, `WRITABLE` |
+| `getCurrentDir` | Get the current working directory |
+| `getAbsolutePath` / `isAbsolutePath` / `basename` / `parentPath` / `normalizePath` / `splitPath` / `joinPath` / `relativePath` | Cross-platform path manipulation |
+| `Listener` / `Service` | Directory change listener: attaches a service whose `onCreate`/`onModify`/`onDelete` remote methods are dispatched on filesystem changes under the configured `path` (optionally `recursive`) |
+
+`file:Error`'s `distinct` subtypes (`FileNotFoundError`, `PermissionError`, etc.) are declared as plain type aliases of `Error` instead — they are structurally identical at runtime, so `error is file:FileNotFoundError`-style checks don't narrow. `file:Service` is likewise declared as a plain (non-`distinct`) `service object {}` marker instead of jBallerina's `distinct service object {}`. Unlike jBallerina, `gracefulStop()` closes the underlying OS watch immediately (same as `immediateStop()`) rather than leaving it running until process exit, and `attach()` returns its "at least one resource required" validation error through its `error?` return type instead of throwing it.
