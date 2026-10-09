@@ -1,0 +1,211 @@
+module $anon.. v 0.0.0;
+class Emit {
+  n int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad n
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  next() -> nil|{| value: int, never... |}{
+    bb0 {
+      %4 = ConstantLoad n
+      %3 = self[%4];
+      %5 = %3;
+      %6 = ConstantLoad 1
+      %7 = %6;
+      %2 = >= %5 %7;
+      %2 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 1
+      %0 = ConstantLoad <nil>
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+    bb2 {
+      PushScopeFrame 9
+      %0 = ConstantLoad n
+      %1 = (1, self)[%0];
+      %2 = %1;
+      %3 = ConstantLoad 1
+      %4 = %3;
+      %5 = + %2 %4;
+      (1, self)[%0] = %5;
+      %6 = ConstantLoad value
+      %7 = ConstantLoad 1
+      %8 = newMap {| value: int, never... |}{%6=%7}
+      (1, %0) = %8;
+      PopScopeFrame
+      return;
+    }
+  }
+}
+class StrEmit {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  next() -> nil|{| value: string, never... |}{
+    bb0 {
+      %2 = ConstantLoad <nil>
+      %0 = %2;
+      return;
+    }
+  }
+}
+toParameterized(stream) -> stream{
+  bb0 {
+    t = s;
+    %0 = t;
+    return;
+  }
+}
+toBare(stream) -> stream{
+  bb0 {
+    t = s;
+    %0 = t;
+    return;
+  }
+}
+toAliased(stream) -> stream{
+  bb0 {
+    t = s;
+    %0 = t;
+    return;
+  }
+}
+isParameterized(any) -> boolean{
+  bb0 {
+    %2 = v is stream
+    %0 = %2;
+    return;
+  }
+}
+isValueAny(any) -> boolean{
+  bb0 {
+    %2 = v is stream
+    %0 = %2;
+    return;
+  }
+}
+closeNonInt(stream) -> nil|error{
+  bb0 {
+    %2 = s is stream
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad <nil>
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %0 = streamClose (1, s)
+    c = %0;
+    (1, %0) = c;
+    PopScopeFrame
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Emit
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %5 = newStream stream %3
+    bare = %5;
+    %7 = isParameterized(bare) -> bb5;
+  }
+  bb5 {
+    %8 = %7;
+    %9 = println(%8) -> bb6;
+  }
+  bb6 {
+    %10 = isValueAny(bare) -> bb7;
+  }
+  bb7 {
+    %11 = %10;
+    %12 = println(%11) -> bb8;
+  }
+  bb8 {
+    %13 = toParameterized(bare) -> bb9;
+  }
+  bb9 {
+    %14 = toBare(%13) -> bb10;
+  }
+  bb10 {
+    %15 = isParameterized(%14) -> bb11;
+  }
+  bb11 {
+    %16 = %15;
+    %17 = println(%16) -> bb12;
+  }
+  bb12 {
+    %18 = toAliased(bare) -> bb13;
+  }
+  bb13 {
+    %19 = isParameterized(%18) -> bb14;
+  }
+  bb14 {
+    %20 = %19;
+    %21 = println(%20) -> bb15;
+  }
+  bb15 {
+    %22 = toAliased(bare) -> bb16;
+  }
+  bb16 {
+    %23 = streamNext %22
+    %24 = println(%23) -> bb17;
+  }
+  bb17 {
+    %25 = newObject $anon/.:StrEmit
+    %26 = %25.init() -> bb18;
+  }
+  bb18 {
+    %28 = %26 is nil
+    %28 ? bb19 : bb20;
+  }
+  bb19 {
+    %27 = %25;
+    GOTO bb21;
+  }
+  bb20 {
+    %27 = %26;
+    GOTO bb21;
+  }
+  bb21 {
+    %29 = newStream stream %27
+    strs = %29;
+    %31 = closeNonInt(strs) -> bb22;
+  }
+  bb22 {
+    %32 = println(%31) -> bb23;
+  }
+  bb23 {
+    return;
+  }
+}

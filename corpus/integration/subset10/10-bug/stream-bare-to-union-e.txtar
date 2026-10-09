@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected stream, got stream
+  --> stream-bare-to-union-e.bal:18:56
+   |
+18 |     stream<any|error, error>|stream<any|error, ()> _ = s; // @error
+   |                                                        ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected stream, got stream
+  --> stream-bare-to-union-e.bal:19:29
+   |
+19 |     stream<any, error?> _ = s; // @error
+   |                             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected stream, got stream
+  --> stream-bare-to-union-e.bal:20:51
+   |
+20 |     stream<any, error?>|stream<error, error?> _ = s; // @error
+   |                                                   ^

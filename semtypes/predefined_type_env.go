@@ -56,12 +56,13 @@ type predefinedTypeEnv struct {
 	_cellAtomicObjectMemberVisibility *cellAtomicType
 	_cellAtomicMappingArray           *cellAtomicType
 	_cellAtomicMappingArrayRO         *cellAtomicType
+	_cellAtomicErrorOrNil             *cellAtomicType
 
 	// ListAtomicType fields
 	_listAtomicMapping        *ListAtomicType
 	_listAtomicMappingRO      *ListAtomicType
 	_listAtomicThreeElementRO *ListAtomicType
-	_listAtomicTwoElement     *ListAtomicType
+	_listAtomicStreamTop      *ListAtomicType
 	_listAtomicThreeElement   *ListAtomicType
 	_listAtomicRO             *ListAtomicType
 
@@ -87,7 +88,7 @@ type predefinedTypeEnv struct {
 	_atomCellValRO                  *typeAtom
 	_atomListMapping                *typeAtom
 	_atomListMappingRO              *typeAtom
-	_atomListTwoElement             *typeAtom
+	_atomListStreamTop              *typeAtom
 	_atomMappingObject              *typeAtom
 	_atomMappingObjectMember        *typeAtom
 	_atomMappingObjectMemberRO      *typeAtom
@@ -95,6 +96,7 @@ type predefinedTypeEnv struct {
 	_atomCellMappingArrayRO         *typeAtom
 	_atomListThreeElement           *typeAtom
 	_atomListThreeElementRO         *typeAtom
+	_atomCellErrorOrNil             *typeAtom
 }
 
 // Package-level singleton instance
@@ -352,24 +354,44 @@ func (p *predefinedTypeEnv) atomCellUndef() *typeAtom {
 	return p._atomCellUndef
 }
 
-// listAtomicTwoElement returns the ListAtomicType for two-element list with cellSemtypeVal and cellSemtypeUndef
-func (p *predefinedTypeEnv) listAtomicTwoElement() *ListAtomicType {
-	if p._listAtomicTwoElement == nil {
-		val := listAtomicTypeFrom(fixedLengthArrayFrom([]SemType{cellSemtypeVal}, 2), cellSemtypeUndef)
-		p._listAtomicTwoElement = &val
-		p.addInitializedListAtom(&val)
+// cellAtomicErrorOrNil returns the cellAtomicType for error? with limited mutability
+func (p *predefinedTypeEnv) cellAtomicErrorOrNil() *cellAtomicType {
+	if p._cellAtomicErrorOrNil == nil {
+		val := cellAtomicTypeFrom(Union(Error, Nil), CellMutabilityLimited)
+		p._cellAtomicErrorOrNil = &val
+		p.addInitializedCellAtom(&val)
 	}
-	return p._listAtomicTwoElement
+	return p._cellAtomicErrorOrNil
 }
 
-// atomListTwoElement returns the typeAtom for list two element
-func (p *predefinedTypeEnv) atomListTwoElement() *typeAtom {
-	if p._atomListTwoElement == nil {
-		listAtomicTwoElement := p.listAtomicTwoElement()
-		atomListTwoElement := createTypeAtom(p.listAtomIndex(listAtomicTwoElement), listAtomicTwoElement)
-		p._atomListTwoElement = &atomListTwoElement
+// atomCellErrorOrNil returns the typeAtom for cell error?
+func (p *predefinedTypeEnv) atomCellErrorOrNil() *typeAtom {
+	if p._atomCellErrorOrNil == nil {
+		cellAtomicErrorOrNil := p.cellAtomicErrorOrNil()
+		atomCellErrorOrNil := createTypeAtom(p.cellAtomIndex(cellAtomicErrorOrNil), cellAtomicErrorOrNil)
+		p._atomCellErrorOrNil = &atomCellErrorOrNil
 	}
-	return p._atomListTwoElement
+	return p._atomCellErrorOrNil
+}
+
+// listAtomicStreamTop returns the ListAtomicType [any|error, error?] underlying the stream top type
+func (p *predefinedTypeEnv) listAtomicStreamTop() *ListAtomicType {
+	if p._listAtomicStreamTop == nil {
+		val := listAtomicTypeFrom(fixedLengthArrayFrom([]SemType{cellSemtypeVal, cellSemtypeErrorOrNil}, 2), cellSemtypeUndef)
+		p._listAtomicStreamTop = &val
+		p.addInitializedListAtom(&val)
+	}
+	return p._listAtomicStreamTop
+}
+
+// atomListStreamTop returns the typeAtom for the stream top list
+func (p *predefinedTypeEnv) atomListStreamTop() *typeAtom {
+	if p._atomListStreamTop == nil {
+		listAtomicStreamTop := p.listAtomicStreamTop()
+		atomListStreamTop := createTypeAtom(p.listAtomIndex(listAtomicStreamTop), listAtomicStreamTop)
+		p._atomListStreamTop = &atomListStreamTop
+	}
+	return p._atomListStreamTop
 }
 
 // cellAtomicValRO returns the cellAtomicType for ValReadonly with no mutability

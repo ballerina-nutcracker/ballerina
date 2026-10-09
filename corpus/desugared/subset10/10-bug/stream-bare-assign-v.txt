@@ -1,0 +1,219 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition E
+    (error-type
+      (constrained-type
+        (builtin-ref-type map)
+        (union-type
+          (value-type anydata)
+          (value-type readonly)))))
+  (class-definition Emit
+    (variable n (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal n))
+          (literal 0))))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type int)))
+        (value-type null)))
+      (block-function-body
+        (if
+          (binary-expr >=
+            (index-based-access
+              (simple-var-ref self)
+              (literal n))
+            (literal 1))
+          (block-stmt
+            (return
+              (literal <nil>))) ())
+        (block-stmt
+          (compound-assignment +
+            (index-based-access
+              (simple-var-ref self)
+              (literal n))
+            (literal 1))
+          (return
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal 1))))))))
+  (class-definition StrEmit
+    (function init () ()
+      (block-function-body))
+    (function next () (
+      (union-type
+        (record-type
+          (field value
+            (value-type string)))
+        (value-type null)))
+      (block-function-body
+        (return
+          (literal <nil>)))))
+  (function toParameterized (
+    (variable s (type
+      (builtin-ref-type stream)))) (
+    (stream-type
+      (union-type
+        (value-type any)
+        (error-type))
+      (union-type
+        (error-type)
+        (value-type null))))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (stream-type
+            (union-type
+              (value-type any)
+              (error-type))
+            (union-type
+              (error-type)
+              (value-type null)))) (expr
+          (simple-var-ref s))))
+      (return
+        (simple-var-ref t))))
+  (function toBare (
+    (variable s (type
+      (stream-type
+        (union-type
+          (value-type any)
+          (error-type))
+        (union-type
+          (error-type)
+          (value-type null)))))) (
+    (builtin-ref-type stream))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (builtin-ref-type stream)) (expr
+          (simple-var-ref s))))
+      (return
+        (simple-var-ref t))))
+  (function toAliased (
+    (variable s (type
+      (builtin-ref-type stream)))) (
+    (stream-type
+      (union-type
+        (value-type any)
+        (error-type))
+      (union-type
+        (user-defined-type E)
+        (value-type null))))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (stream-type
+            (union-type
+              (value-type any)
+              (error-type))
+            (union-type
+              (user-defined-type E)
+              (value-type null)))) (expr
+          (simple-var-ref s))))
+      (return
+        (simple-var-ref t))))
+  (function isParameterized (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (stream-type
+            (union-type
+              (value-type any)
+              (error-type))
+            (union-type
+              (error-type)
+              (value-type null)))))))
+  (function isValueAny (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (stream-type
+            (value-type any)
+            (union-type
+              (error-type)
+              (value-type null)))))))
+  (function closeNonInt (
+    (variable s (type
+      (builtin-ref-type stream)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref s)
+          (stream-type
+            (value-type int)))
+        (block-stmt
+          (return
+            (literal <nil>))) ())
+      (block-stmt
+        (var-def
+          (variable c (type
+            (union-type
+              (error-type)
+              (value-type null))) (expr
+            (invocation close expr:
+              (simple-var-ref s) ()))))
+        (return
+          (simple-var-ref c)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable bare (type
+          (builtin-ref-type stream)) (expr
+          (new (
+            (new
+              (user-defined-type Emit) ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isParameterized (
+            (simple-var-ref bare))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isValueAny (
+            (simple-var-ref bare))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isParameterized (
+            (invocation toBare (
+              (invocation toParameterized (
+                (simple-var-ref bare))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isParameterized (
+            (invocation toAliased (
+              (simple-var-ref bare))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation next expr:
+            (invocation toAliased (
+              (simple-var-ref bare))) ()))))
+      (var-def
+        (variable strs (type
+          (stream-type
+            (value-type string)
+            (value-type null))) (expr
+          (new (
+            (new
+              (user-defined-type StrEmit) ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation closeNonInt (
+            (simple-var-ref strs)))))))))

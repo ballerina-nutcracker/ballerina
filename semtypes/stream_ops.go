@@ -21,13 +21,13 @@ type streamOps struct{}
 var _ basicTypeOps = &streamOps{}
 
 func streamSubtypeComplement(t subtypeData) subtypeData {
-	return bddSubtypeDiff(listSubtypeTwoElement, t)
+	return bddSubtypeDiff(listSubtypeStreamTop, t)
 }
 
 func streamSubtypeIsEmpty(cx Context, t subtypeData) bool {
 	b := t.(bdd)
 	if bddPosMaybeEmpty(b) {
-		b = bddIntersect(b, listSubtypeTwoElement)
+		b = bddIntersect(b, listSubtypeStreamTop)
 	}
 	return listSubtypeIsEmpty(cx, b)
 }
