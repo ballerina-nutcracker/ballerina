@@ -67,7 +67,7 @@ func testBIRSerializationRoundtrip(t *testing.T, testPair test_util.TestCase) {
 	// Step 2: Serialize and deserialize every package into a fresh env,
 	// preserving topological order so stdlib packages are interpreted before
 	// the consumer that depends on them.
-	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 	freshCtx := context.NewCompilerContext(freshEnv)
 	deserializedPkgs := make([]*bir.BIRPackage, 0, len(birPkgs))
 	for _, pkg := range birPkgs {

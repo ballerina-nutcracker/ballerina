@@ -59,6 +59,8 @@ func ResolveSymbols(
 	moduleVisibility map[PackageIdentifier]ModuleVisibility,
 	defaultOrg, currentPackageName string,
 ) (model.Scope, model.ExportedSymbolSpace, map[string]model.ExportedSymbolSpace) {
+	span := ctx.StartPackageSpan("Symbol Resolution", &pkgID)
+	defer span.End()
 	internalPublicSymbols := make(map[symbols.PackageIdentifier]model.ExportedSymbolSpace, len(publicSymbols))
 	for id, symbolSpace := range publicSymbols {
 		internalPublicSymbols[symbols.PackageIdentifier{OrgName: id.OrgName, ModuleName: id.ModuleName}] = symbolSpace
@@ -71,7 +73,7 @@ func ResolveSymbols(
 			Exported:    visibility.Exported,
 		}
 	}
-	return symbols.Resolve(ctx, pkgID, compilationUnits, implicitImports, internalPublicSymbols, internalModuleVisibility, defaultOrg, currentPackageName)
+	return symbols.Resolve(ctx, pkgID, compilationUnits, implicitImports, internalPublicSymbols, internalModuleVisibility, defaultOrg, currentPackageName, span)
 }
 
 // ResolvePublicNodeTypes resolves the types exposed by a package.
@@ -80,7 +82,9 @@ func ResolvePublicNodeTypes(
 	pkg *ast.BLangPackage,
 	importedSymbols map[string]model.ExportedSymbolSpace,
 ) {
-	semantictypes.ResolvePublicNodes(ctx, pkg, importedSymbols)
+	span := ctx.StartPackageSpan("Top-Level Type Resolution", pkg.PackageID)
+	defer span.End()
+	semantictypes.ResolvePublicNodes(ctx, pkg, importedSymbols, span)
 }
 
 // ResolvePrivateNodesTypes resolves package-local nodes and function bodies.
@@ -89,7 +93,9 @@ func ResolvePrivateNodesTypes(
 	pkg *ast.BLangPackage,
 	importedSymbols map[string]model.ExportedSymbolSpace,
 ) {
-	semantictypes.ResolvePrivateNodes(ctx, pkg, importedSymbols)
+	span := ctx.StartPackageSpan("Local Type Resolution", pkg.PackageID)
+	defer span.End()
+	semantictypes.ResolvePrivateNodes(ctx, pkg, importedSymbols, span)
 }
 
 // AnalyzeSemantics performs semantic analysis on a resolved package.
@@ -98,7 +104,9 @@ func AnalyzeSemantics(
 	pkg *ast.BLangPackage,
 	importedSymbols map[string]model.ExportedSymbolSpace,
 ) {
-	analysis.Analyze(ctx, pkg, importedSymbols)
+	span := ctx.StartPackageSpan("Semantic Analysis", pkg.PackageID)
+	defer span.End()
+	analysis.Analyze(ctx, pkg, importedSymbols, span)
 }
 
 // PackageCFG is the public handle for a package control-flow graph.
@@ -108,12 +116,16 @@ type PackageCFG struct {
 
 // CreateControlFlowGraph builds control-flow graphs for a package.
 func CreateControlFlowGraph(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
-	return &PackageCFG{graph: cfg.Build(ctx, pkg)}
+	span := ctx.StartPackageSpan("CFG Creation", pkg.PackageID)
+	defer span.End()
+	return &PackageCFG{graph: cfg.Build(ctx, pkg, span)}
 }
 
 // AnalyzeCFG performs reachability, return, and initialization analyses.
 func AnalyzeCFG(ctx *context.CompilerContext, pkg *ast.BLangPackage, graph *PackageCFG) {
-	cfg.Analyze(ctx, pkg, graph.graph)
+	span := ctx.StartPackageSpan("CFG Analysis", pkg.PackageID)
+	defer span.End()
+	cfg.Analyze(ctx, pkg, graph.graph, span)
 }
 
 // PrintCFGDot renders graph in Graphviz DOT format.

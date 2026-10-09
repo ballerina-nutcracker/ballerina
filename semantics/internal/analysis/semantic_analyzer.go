@@ -57,6 +57,7 @@ type (
 		importedPkgs     map[string]*ast.BLangImportPackage
 		importedSymbols  map[string]model.ExportedSymbolSpace
 		moduleVarMetaMap map[model.SymbolRef]varDeclMetadata
+		span             context.TraceSpan
 	}
 	constantAnalyzer struct {
 		analyzerBase
@@ -329,9 +330,10 @@ func (la *loopAnalyzer) internalErr(message string, loc diagnostics.Location) {
 	la.parent.ctx().InternalError(message, loc)
 }
 
-func newSemanticAnalyzer(ctx *context.CompilerContext) *semanticAnalyzer {
+func newSemanticAnalyzer(ctx *context.CompilerContext, span context.TraceSpan) *semanticAnalyzer {
 	return &semanticAnalyzer{
 		compilerCtx:      ctx,
+		span:             span,
 		typeCtx:          semtypes.ContextFrom(ctx.GetTypeEnv()),
 		importedPkgs:     make(map[string]*ast.BLangImportPackage),
 		importedSymbols:  make(map[string]model.ExportedSymbolSpace),
@@ -339,8 +341,13 @@ func newSemanticAnalyzer(ctx *context.CompilerContext) *semanticAnalyzer {
 	}
 }
 
-func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
-	analyzer := newSemanticAnalyzer(ctx)
+func Analyze(
+	ctx *context.CompilerContext,
+	pkg *ast.BLangPackage,
+	importedSymbols map[string]model.ExportedSymbolSpace,
+	parent context.TraceSpan,
+) {
+	analyzer := newSemanticAnalyzer(ctx, parent)
 	analyzer.analyze(pkg, importedSymbols)
 }
 
@@ -350,9 +357,72 @@ func (sa *semanticAnalyzer) analyze(pkg *ast.BLangPackage, importedSymbols map[s
 		importedSymbols = make(map[string]model.ExportedSymbolSpace)
 	}
 	sa.importedSymbols = importedSymbols
+	metadataSpan := sa.span.StartChild("Module Variable Metadata", "")
 	sa.moduleVarMetaMap = sa.buildModuleVarMetadata()
+	metadataSpan.End()
+	isolationSpan := sa.span.StartChild("Module Isolation Validation", "")
 	sa.validateModuleLevelIsolatedDecls(pkg)
-	ast.Walk(sa, pkg)
+	isolationSpan.End()
+	sa.walkTopLevelNodes(pkg)
+}
+
+// walkTopLevelNodes walks the package like ast.Walk, bracketing each
+// top-level node with its own span.
+func (sa *semanticAnalyzer) walkTopLevelNodes(pkg *ast.BLangPackage) {
+	visitor := sa.Visit(pkg)
+	if visitor == nil {
+		return
+	}
+	for member := range pkg.Members() {
+		span := sa.span.StartChild(sa.memberSpanLabel(pkg, member))
+		ast.Walk(visitor, member)
+		span.End()
+	}
+	visitor.Visit(nil)
+}
+
+func (sa *semanticAnalyzer) memberSpanLabel(pkg *ast.BLangPackage, member ast.BLangNode) (operation, identity string) {
+	switch member := member.(type) {
+	case *ast.BLangImportPackage:
+		return "Import", member.Alias.GetValue()
+	case *ast.BLangXMLNS:
+		return "XML Namespace", xmlnsPrefix(member)
+	case *ast.BLangVariable:
+		if member.IsConstant() {
+			return "Constant", traceIdentity(member.Name)
+		}
+		return "Global Variable", traceIdentity(member.Name)
+	case *ast.BLangService:
+		return "Service", sa.compilerCtx.SymbolName(member.Symbol())
+	case *ast.BLangFunction:
+		if member == pkg.InitFunction {
+			return "Init Function", traceIdentity(member.Name)
+		}
+		return "Function", traceIdentity(member.Name)
+	case *ast.BLangTypeDefinition:
+		return "Type Definition", traceIdentity(member.Name)
+	case *ast.BLangAnnotation:
+		return "Annotation", traceIdentity(member.Name)
+	case *ast.BLangClassDefinition:
+		return "Class Definition", traceIdentity(member.Name)
+	default:
+		return fmt.Sprintf("%T", member), ""
+	}
+}
+
+// traceIdentity renders a node's name for a span label.
+func traceIdentity(name ast.IdentifierNode) string {
+	if name == nil {
+		return ""
+	}
+	return name.GetValue()
+}
+
+func xmlnsPrefix(xmlns *ast.BLangXMLNS) string {
+	if prefix := xmlns.GetPrefix(); prefix != nil {
+		return prefix.GetValue()
+	}
+	return ""
 }
 
 func (sa *semanticAnalyzer) moduleVarMetadata(ref model.SymbolRef) (varDeclMetadata, bool) {

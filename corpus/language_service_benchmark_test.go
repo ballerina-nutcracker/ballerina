@@ -47,7 +47,7 @@ func benchmarkLanguageServiceFile(b *testing.B, name, inputPath string) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for b.Loop() {
-			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOptions{})
 			cx := context.NewCompilerContext(env)
 			_, err := testphases.RunPipelineWithContent(env, cx, nil, testphases.PhaseDesugar, inputPath, content)
 			if err != nil {

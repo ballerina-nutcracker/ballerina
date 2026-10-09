@@ -80,11 +80,16 @@ func reachableFromEntry(fcfg *functionCFG) []bool {
 // without an initializer when the variable is possibly assigned already.
 // Locals are checked in every function; final module variables are checked in
 // the module init function.
-func analyzeFinalReassignments(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func analyzeFinalReassignments(
+	ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Final Reassignment Analysis", "")
+	defer span.End()
 	moduleFinals := deferredFinalModuleVars(pkg)
 	var wg sync.WaitGroup
 	for _, fn := range common.PackageFunctionDecls(pkg) {
 		wg.Go(func() {
+			fnSpan := span.StartChild("Final Reassignment", traceIdentity(fn.GetName()))
+			defer fnSpan.End()
 			fnCfg, ok := cfg.lookupFunctionCfg(fn.Symbol())
 			if !ok {
 				return

@@ -40,35 +40,8 @@ func Walk(v Visitor, node BLangNode) {
 	switch node := node.(type) {
 	// Section 1: Top-Level/Package Declarations
 	case *BLangPackage:
-		for i := range node.Imports {
-			Walk(v, node.Imports[i])
-		}
-		for i := range node.XmlnsList {
-			Walk(v, node.XmlnsList[i])
-		}
-		for i := range node.Constants {
-			Walk(v, node.Constants[i])
-		}
-		for i := range node.GlobalVars {
-			Walk(v, node.GlobalVars[i])
-		}
-		for i := range node.Services {
-			Walk(v, node.Services[i])
-		}
-		for i := range node.Functions {
-			Walk(v, node.Functions[i])
-		}
-		for i := range node.TypeDefinitions {
-			Walk(v, node.TypeDefinitions[i])
-		}
-		for i := range node.Annotations {
-			Walk(v, node.Annotations[i])
-		}
-		if node.InitFunction != nil {
-			Walk(v, node.InitFunction)
-		}
-		for i := range node.ClassDefinitions {
-			Walk(v, node.ClassDefinitions[i])
+		for member := range node.Members() {
+			Walk(v, member)
 		}
 
 	case *BLangCompilationUnit:

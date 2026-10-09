@@ -112,6 +112,12 @@ type typeResolver interface {
 
 	ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool
 	opaqueContext() *opaque.Context
+
+	// traceSpan is the span definition-level children attach to, and
+	// setTraceSpan makes a definition's own span the current one so the
+	// dependencies it pulls in nest beneath it.
+	traceSpan() context.TraceSpan
+	setTraceSpan(span context.TraceSpan)
 }
 
 type resolverContext uint8
@@ -222,6 +228,10 @@ type packageTypeResolver struct {
 	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
 	opaqueCtx      *opaque.Context
 	ephemeralState ephemeralState
+	// span is the phase span definition children attach to. Top-level
+	// resolution is sequential, so a definition resolver can swap it for its
+	// own span while it runs; the concurrent body phase never writes it.
+	span context.TraceSpan
 
 	deferredEmptinessChecks []deferredEmptinessCheck
 }
@@ -258,6 +268,8 @@ func (t *packageTypeResolver) drainDeferredEmptinessChecks() {
 func (t *packageTypeResolver) typeContext() semtypes.Context        { return t.tyCtx }
 func (t *packageTypeResolver) expectedReturnType() semtypes.SemType { return semtypes.SemType{} }
 func (t *packageTypeResolver) parent() typeResolver                 { return nil }
+func (t *packageTypeResolver) traceSpan() context.TraceSpan         { return t.span }
+func (t *packageTypeResolver) setTraceSpan(span context.TraceSpan)  { t.span = span }
 func (t *packageTypeResolver) typeEnv() semtypes.Env                { return t.ctx.GetTypeEnv() }
 func (t *packageTypeResolver) isEphemeral() bool                    { return t.ephemeralState.depth > 0 }
 func (t *packageTypeResolver) opaqueContext() *opaque.Context {
@@ -439,12 +451,23 @@ type functionTypeResolver struct {
 	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
 	opaqueCtx      *opaque.Context
 	ephemeralState *ephemeralState
+	// span is the body's own span when one was started for it; the zero handle
+	// defers to the enclosing resolver.
+	span context.TraceSpan
 }
 
 func (f *functionTypeResolver) typeContext() semtypes.Context        { return f.tyCtx }
 func (f *functionTypeResolver) expectedReturnType() semtypes.SemType { return f.retTy }
 func (f *functionTypeResolver) parent() typeResolver                 { return f.parentResolver }
-func (f *functionTypeResolver) typeEnv() semtypes.Env                { return f.parentResolver.typeEnv() }
+func (f *functionTypeResolver) setTraceSpan(span context.TraceSpan)  { f.span = span }
+
+func (f *functionTypeResolver) traceSpan() context.TraceSpan {
+	if f.span == (context.TraceSpan{}) {
+		return f.parentResolver.traceSpan()
+	}
+	return f.span
+}
+func (f *functionTypeResolver) typeEnv() semtypes.Env { return f.parentResolver.typeEnv() }
 func (f *functionTypeResolver) isEphemeral() bool {
 	state := resolverEphemeralState(f)
 	return state != nil && state.depth > 0
@@ -697,7 +720,13 @@ func (f *functionTypeResolver) nextMonoFnName(origName string) string {
 	return fmt.Sprintf("$mono$%s$%d", origName, idx)
 }
 
-func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace, moduleScope model.Scope) *packageTypeResolver {
+func newPackageTypeResolver(
+	ctx *context.CompilerContext,
+	pkg *ast.BLangPackage,
+	importedSymbols map[string]model.ExportedSymbolSpace,
+	moduleScope model.Scope,
+	span context.TraceSpan,
+) *packageTypeResolver {
 	return &packageTypeResolver{
 		ctx:                  ctx,
 		tyCtx:                semtypes.ContextFrom(ctx.GetTypeEnv()),
@@ -712,7 +741,29 @@ func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage,
 		classDefnNodes:       make(map[model.SymbolRef]*ast.BLangClassDefinition),
 		monoCounters:         make(map[string]int),
 		scope:                moduleScope,
+		span:                 span,
 	}
+}
+
+// startDefinitionSpan brackets one definition's resolution and makes its span
+// the current one, so dependencies resolved recursively inside it are charged
+// to it. The returned function restores the previous span and ends the new one.
+func startDefinitionSpan(t typeResolver, operation, identity string) func() {
+	previous := t.traceSpan()
+	span := previous.StartChild(operation, identity)
+	t.setTraceSpan(span)
+	return func() {
+		t.setTraceSpan(previous)
+		span.End()
+	}
+}
+
+// traceIdentity renders a node's name for a span label.
+func traceIdentity(name ast.IdentifierNode) string {
+	if name == nil {
+		return ""
+	}
+	return name.GetValue()
 }
 
 func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) bool {
@@ -775,8 +826,13 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 }
 
 // ResolvePublicNodeTypes resolves types of public symbols. After this dependencies can use the ExportedSymbolSpace for this package.
-func ResolvePublicNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
-	t := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
+func ResolvePublicNodes(
+	ctx *context.CompilerContext,
+	pkg *ast.BLangPackage,
+	importedSymbols map[string]model.ExportedSymbolSpace,
+	parent context.TraceSpan,
+) {
+	t := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope, parent)
 	t.resolveTopLevelTypes(pkg)
 	mergeImplicitImports(pkg, t.implicitImports)
 }
@@ -792,12 +848,17 @@ func mergeImplicitImports(pkg *ast.BLangPackage, imports map[string]ast.BLangImp
 }
 
 // ResolvePrivateNodesTypes resolves the types private nodes within the package. Then can be executed concurrently
-func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
-	p := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
+func ResolvePrivateNodes(
+	ctx *context.CompilerContext,
+	pkg *ast.BLangPackage,
+	importedSymbols map[string]model.ExportedSymbolSpace,
+	parent context.TraceSpan,
+) {
+	p := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope, parent)
 	fns := common.PackageFunctionDecls(pkg)
 
 	allImports := make(map[string]ast.BLangImportPackage)
-	resolveFieldInitsInScope := func(owner model.SymbolRef, scope model.Scope, fields []*ast.BLangVariable) {
+	resolveFieldInitsInScope := func(owner model.SymbolRef, scope model.Scope, fields []*ast.BLangVariable, span context.TraceSpan) {
 		ft := &functionTypeResolver{
 			atomSideTableBase: newAtomSideTableBase(),
 			parentResolver:    p,
@@ -807,6 +868,7 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 			xmlStepOwner:      p.getSymbol(owner).Name(),
 			scope:             scope,
 			ephemeralState:    &ephemeralState{},
+			span:              span,
 		}
 		for _, fieldNode := range fields {
 			field := fieldNode
@@ -818,11 +880,15 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 	}
 	for i := range pkg.ClassDefinitions {
 		c := pkg.ClassDefinitions[i]
-		resolveFieldInitsInScope(c.Symbol(), c.Scope(), c.Fields)
+		span := parent.StartChild("Class Field Inits", traceIdentity(c.Name))
+		resolveFieldInitsInScope(c.Symbol(), c.Scope(), c.Fields, span)
+		span.End()
 	}
 	for i := range pkg.Services {
 		s := pkg.Services[i]
-		resolveFieldInitsInScope(s.Symbol(), s.Scope(), s.Fields)
+		span := parent.StartChild("Service Field Inits", p.symbolName(s.Symbol()))
+		resolveFieldInitsInScope(s.Symbol(), s.Scope(), s.Fields, span)
+		span.End()
 	}
 
 	resolvers := make([]*functionTypeResolver, len(fns))
@@ -836,7 +902,9 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 		wg.Add(1)
 		go func(idx int, f common.FunctionDecl) {
 			defer wg.Done()
-			resolvers[idx] = resolveFunctionBody(p, f)
+			span := parent.StartChild("Function Body", traceIdentity(f.GetName()))
+			defer span.End()
+			resolvers[idx] = resolveFunctionBody(p, f, span)
 		}(i, fn)
 	}
 	wg.Wait()
@@ -892,6 +960,7 @@ func (c *constantDepCollector) Visit(node ast.BLangNode) ast.Visitor {
 func (c *constantDepCollector) VisitTypeData(_ *ast.TypeData) ast.Visitor { return c }
 
 func resolvePackageConstants(t *packageTypeResolver, pkg *ast.BLangPackage) bool {
+	defer startDefinitionSpan(t, "Package Constants", "")()
 	order, ok := topologicallySortConstants(t, pkg.Constants)
 	if !ok {
 		return false
@@ -1056,7 +1125,7 @@ func resolveInvokableSignature(t typeResolver, fn common.FunctionDecl, fnSym mod
 	return fnType, true
 }
 
-func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functionTypeResolver {
+func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl, span context.TraceSpan) *functionTypeResolver {
 	fnSymbol := p.getSymbol(fn.Symbol())
 	fnSym, ok := fnSymbol.(model.FunctionSymbol)
 	if !ok {
@@ -1073,6 +1142,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 		scope:             fn.Scope(),
 		context:           resolverContextForFunction(fn.IsIsolated()),
 		ephemeralState:    &ephemeralState{},
+		span:              span,
 	}
 	if !isPolymorphicFnSymbol(fnSym) {
 		ft.retTy = fnSym.TypedSignature().ReturnType
@@ -1239,6 +1309,7 @@ func annotationMapListType(t typeResolver) semtypes.SemType {
 }
 
 func resolveAnnotationDeclaration(t typeResolver, annotation *ast.BLangAnnotation) bool {
+	defer startDefinitionSpan(t, "Annotation", traceIdentity(annotation.Name))()
 	if annotation.Name != nil {
 		setOtherNodesAsNever(annotation.Name)
 	}
@@ -2101,6 +2172,7 @@ func resolveFunctionSignature(t typeResolver, fn *ast.BLangFunction, depth int) 
 	if ty := t.symbolType(fn.Symbol()); !semtypes.IsZero(ty) {
 		return ty, true
 	}
+	defer startDefinitionSpan(t, "Function Signature", traceIdentity(fn.Name))()
 	fnSymbol := fnSym.(model.FunctionSymbol)
 	fnType, ok := resolveInvokableSignature(t, fn, fnSymbol, fn.GetParameters(), depth)
 	if !ok {
@@ -2619,6 +2691,7 @@ func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth 
 	if ty := t.symbolType(defn.Symbol()); !semtypes.IsZero(ty) {
 		return true
 	}
+	defer startDefinitionSpan(t, "Type Definition", traceIdentity(defn.Name))()
 	if defn.GetName() != nil {
 		setOtherNodesAsNever(defn.GetName())
 	}
@@ -2663,6 +2736,7 @@ func resolveClassTypeDefinition(t typeResolver, classDef *ast.BLangClassDefiniti
 	if ty := t.symbolType(classDef.Symbol()); !semtypes.IsZero(ty) {
 		return true
 	}
+	defer startDefinitionSpan(t, "Class Type", traceIdentity(classDef.Name))()
 	if classDef.GetName() != nil {
 		setOtherNodesAsNever(classDef.GetName())
 	}
@@ -3042,6 +3116,7 @@ func resolveClassDefinitionType(t typeResolver, classDef *ast.BLangClassDefiniti
 }
 
 func resolveServiceType(t typeResolver, svc *ast.BLangService, depth int, attachPointBound semtypes.SemType) bool {
+	defer startDefinitionSpan(t, "Service", t.symbolName(svc.Symbol()))()
 	typeData := svc.GetTypeData()
 	var serviceTy semtypes.SemType
 	if typeData.TypeDescriptor != nil {
@@ -3684,6 +3759,7 @@ func resolveGlobalVarInit(t typeResolver, node *ast.BLangVariable) bool {
 	if node.Expr == nil {
 		return true
 	}
+	defer startDefinitionSpan(t, "Global Variable", traceIdentity(node.Name))()
 	if node.TypeNode() == nil {
 		if pt, ok := t.(*packageTypeResolver); ok {
 			return pt.ensureResolved(node.Symbol(), 0)
@@ -8491,6 +8567,7 @@ func resolveConstant(t typeResolver, constant *ast.BLangVariable) bool {
 	if !semtypes.IsZero(t.symbolType(constant.Symbol())) {
 		return true
 	}
+	defer startDefinitionSpan(t, "Constant", traceIdentity(constant.Name))()
 	if constant.Expr == nil {
 		t.internalError("constant expression is nil", constant.GetPosition())
 		return false

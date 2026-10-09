@@ -1123,6 +1123,31 @@ func (b *BLangXMLNS) GetPrefix() *BLangIdentifier {
 	return b.prefix
 }
 
+// Members yields the package's top-level nodes in traversal order.
+func (b *BLangPackage) Members() iter.Seq[BLangNode] {
+	return func(yield func(BLangNode) bool) {
+		_ = yieldAll(yield, b.Imports) &&
+			yieldAll(yield, b.XmlnsList) &&
+			yieldAll(yield, b.Constants) &&
+			yieldAll(yield, b.GlobalVars) &&
+			yieldAll(yield, b.Services) &&
+			yieldAll(yield, b.Functions) &&
+			yieldAll(yield, b.TypeDefinitions) &&
+			yieldAll(yield, b.Annotations) &&
+			(b.InitFunction == nil || yield(b.InitFunction)) &&
+			yieldAll(yield, b.ClassDefinitions)
+	}
+}
+
+func yieldAll[N BLangNode](yield func(BLangNode) bool, nodes []N) bool {
+	for _, node := range nodes {
+		if !yield(node) {
+			return false
+		}
+	}
+	return true
+}
+
 func (b *BLangPackage) GetImports() []*BLangImportPackage {
 	return b.Imports
 }
