@@ -148,7 +148,7 @@ func validateLockStmt(a analyzer, lock *ast.BLangLock) bool {
 	if !resolveRestricted(a, lock) {
 		return false
 	}
-	if !validateLockInvocations(a, &lock.Body) {
+	if !validateLockInvocations(a, &lock.Body, true) {
 		return false
 	}
 	if !validateLockBody(a, lock) {
@@ -174,7 +174,10 @@ func resolveRestricted(a analyzer, lock *ast.BLangLock) bool {
 }
 
 // validateLockInvocations enforces all invocations within lock statement must be to isolated functions.
-func validateLockInvocations(a analyzer, body ast.BLangNode) bool {
+// Invalid invocations inside lambdas passed to isolated parameters are reported when those
+// lambdas are analyzed as isolated functions (a lock always gives them an isolated expected
+// type), so reportInvocations is false for them.
+func validateLockInvocations(a analyzer, body ast.BLangNode, reportInvocations bool) bool {
 	ok := true
 	everyNode(a, body, func(_ analyzer, inner ast.BLangNode) bool {
 		switch n := inner.(type) {
@@ -186,17 +189,21 @@ func validateLockInvocations(a analyzer, body ast.BLangNode) bool {
 			return false
 		case *ast.BLangInvocation:
 			if loc, invalid := isolatedInvocationViolation(a, n); invalid {
-				a.semanticErr("invocation of a non-isolated function inside lock statement", loc)
+				if reportInvocations {
+					a.semanticErr("invocation of a non-isolated function inside lock statement", loc)
+				}
 				ok = false
 			}
 			for _, lambda := range isolatedParamLambdas(a.ctx(), n) {
-				if !validateLockInvocations(a, lambda.Function.Body.(ast.BLangNode)) {
+				if !validateLockInvocations(a, lambda.Function.Body.(ast.BLangNode), false) {
 					ok = false
 				}
 			}
 		case *ast.BLangRemoteMethodCallAction, *ast.BLangClientResourceAccessAction:
 			if !isIsolatedInvocationTarget(a, n.(ast.Invocable)) {
-				a.semanticErr("invocation of a non-isolated function inside lock statement", n.GetPosition())
+				if reportInvocations {
+					a.semanticErr("invocation of a non-isolated function inside lock statement", n.GetPosition())
+				}
 				ok = false
 			}
 		}

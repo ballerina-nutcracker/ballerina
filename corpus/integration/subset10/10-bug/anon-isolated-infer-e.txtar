@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> anon-isolated-infer-e.bal:22:49
+   |
+22 |     isolated function () returns int f1 = () => g; // @error
+   |                                                 ^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> anon-isolated-infer-e.bal:25:55
+   |
+25 |     (isolated function () returns int)|int f4 = () => g; // @error
+   |                                                       ^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> anon-isolated-infer-e.bal:26:86
+   |
+26 |     isolated function () returns (isolated function () returns int) f5 = () => () => g; // @error
+   |                                                                                      ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> anon-isolated-infer-e.bal:23:49
+   |
+23 |     isolated function () returns int f2 = () => m; // @error
+   |                                                 ^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> anon-isolated-infer-e.bal:24:49
+   |
+24 |     isolated function () returns int f3 = () => nonIso(); // @error
+   |                                                 ^^^^^^^^
