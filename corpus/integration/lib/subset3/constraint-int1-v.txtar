@@ -1,0 +1,17 @@
+-- stdout --
+ok: 30
+ValidationError: Validation failed for '$:minValue' constraint(s).
+ValidationError: Validation failed for '$:maxValue' constraint(s).
+ok: 18
+ok: 100
+ValidationError: Validation failed for '$:minValueExclusive' constraint(s).
+ValidationError: Validation failed for '$:maxValueExclusive' constraint(s).
+ok: 5
+ok: 999
+ValidationError: Validation failed for '$:maxDigits' constraint(s).
+ok: -999
+ValidationError: Validation failed for '$:maxDigits' constraint(s).
+ValidationError: must be positive.
+ValidationError: Validation failed for '$:maxValue' constraint(s).
+ok: 3
+-- stderr --
