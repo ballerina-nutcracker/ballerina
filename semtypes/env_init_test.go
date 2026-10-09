@@ -22,6 +22,7 @@ import (
 // TestEnvInitAtomTable tests environment initialization with atom table
 // Ported from EnvInitTest.java:testEnvInitAtomTable()
 func TestEnvInitAtomTable(t *testing.T) {
+	t.Parallel()
 	env := CreateTypeEnv()
 
 	// Ensure atoms are in the table by calling Env methods
@@ -51,11 +52,11 @@ func TestEnvInitAtomTable(t *testing.T) {
 	cellAtomicUndef := cellAtomicTypeFrom(Undef, CellMutabilityNone)
 	typeAtom8 := env.cellAtom(&cellAtomicUndef)
 
-	listAtomicTwoElement := listAtomicTypeFrom(
-		fixedLengthArrayFrom([]SemType{cellSemtypeVal}, 2),
+	listAtomicStreamTop := listAtomicTypeFrom(
+		fixedLengthArrayFrom([]SemType{cellSemtypeVal, cellSemtypeErrorOrNil}, 2),
 		cellSemtypeUndef,
 	)
-	typeAtom9 := env.listAtom(&listAtomicTwoElement)
+	typeAtom9 := env.listAtom(&listAtomicStreamTop)
 
 	// Now check the atomTable
 	env.atomTableMutex.Lock()
@@ -112,9 +113,9 @@ func TestEnvInitAtomTable(t *testing.T) {
 	assertEqual(t, ta8.AtomicType, &cellAtomicUndef)
 	assertEqual(t, ta8, *typeAtom8)
 
-	ta9, ok := atomTable[&listAtomicTwoElement]
-	assertTrue(t, ok, "listAtomicTwoElement should be in atomTable")
-	assertEqual(t, ta9.AtomicType, &listAtomicTwoElement)
+	ta9, ok := atomTable[&listAtomicStreamTop]
+	assertTrue(t, ok, "listAtomicStreamTop should be in atomTable")
+	assertEqual(t, ta9.AtomicType, &listAtomicStreamTop)
 	assertEqual(t, ta9, *typeAtom9)
 }
 
