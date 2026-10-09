@@ -426,6 +426,7 @@ func (f *functionTypeResolver) isEphemeral() bool {
 	state := resolverEphemeralState(f)
 	return state != nil && state.depth > 0
 }
+
 func (f *functionTypeResolver) opaqueContext() *opaque.Context {
 	if f.opaqueCtx == nil {
 		f.opaqueCtx = opaque.NewContext(f.tyCtx)
@@ -6429,7 +6430,7 @@ func resolveAndExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr) (
 	return resultTy, effect, true
 }
 
-func resolveAndExprInner(t typeResolver, _ *binding, lhsTy semtypes.SemType, lhsEffect expressionEffect, rhs ast.BLangActionOrExpression, _ diagnostics.Location) (semtypes.SemType, expressionEffect, bool) {
+func resolveAndExprInner(t typeResolver, chain *binding, lhsTy semtypes.SemType, lhsEffect expressionEffect, rhs ast.BLangActionOrExpression, _ diagnostics.Location) (semtypes.SemType, expressionEffect, bool) {
 	rhsResult, ok := resolveActionOrExpression(t, lhsEffect.ifTrue, rhs, semtypes.SemType{})
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -6445,12 +6446,24 @@ func resolveAndExprInner(t typeResolver, _ *binding, lhsTy semtypes.SemType, lhs
 		resultTy = rhsTy
 	}
 
-	// The RHS was checked on lhsEffect.ifTrue, so both RHS outcomes still have it as
-	// an ancestor and the merges compose the full chains directly. A capture the RHS
-	// makes therefore also reaches the false outcome, where the RHS did not run; that
-	// over-approximation is the same conservative direction as the loop policy.
-	ifTrue := mergeChains(t, lhsEffect.ifTrue, rhsEffect.ifTrue, semtypes.Intersect)
-	ifFalse := mergeChains(t, lhsEffect.ifFalse, mergeChains(t, lhsEffect.ifTrue, rhsEffect.ifFalse, semtypes.Intersect), semtypes.Union)
+	if effect, isSingleton := singletonResultEffect(chain, resultTy); isSingleton {
+		return resultTy, effect, true
+	}
+
+	var ifTrue, ifFalse *binding
+	{
+		t1 := lhsEffect.ifTrue
+		t2 := rhsEffect.ifTrue
+		ifTrue = mergeChains(t, t1, t2, semtypes.Intersect)
+	}
+	{
+		t1 := lhsEffect.ifFalse
+		t3 := lhsEffect.ifTrue
+		t4 := rhsEffect.ifFalse
+		t2 := mergeChains(t, t3, t4, semtypes.Intersect)
+		ifFalse = mergeChains(t, t1, t2, semtypes.Union)
+	}
+
 	return resultTy, expressionEffect{ifTrue: ifTrue, ifFalse: ifFalse}, true
 }
 
@@ -6468,7 +6481,7 @@ func resolveOrExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr) (s
 	return resultTy, effect, true
 }
 
-func resolveOrExprInner(t typeResolver, _ *binding, lhsTy semtypes.SemType, lhsEffect expressionEffect, rhs ast.BLangActionOrExpression, _ diagnostics.Location) (semtypes.SemType, expressionEffect, bool) {
+func resolveOrExprInner(t typeResolver, chain *binding, lhsTy semtypes.SemType, lhsEffect expressionEffect, rhs ast.BLangActionOrExpression, _ diagnostics.Location) (semtypes.SemType, expressionEffect, bool) {
 	rhsResult, ok := resolveActionOrExpression(t, lhsEffect.ifFalse, rhs, semtypes.SemType{})
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -6484,10 +6497,24 @@ func resolveOrExprInner(t typeResolver, _ *binding, lhsTy semtypes.SemType, lhsE
 		resultTy = rhsTy
 	}
 
-	// The RHS was checked on lhsEffect.ifFalse, so both RHS outcomes still have it as
-	// an ancestor and the merges compose the full chains directly.
-	ifTrue := mergeChains(t, lhsEffect.ifTrue, mergeChains(t, lhsEffect.ifFalse, rhsEffect.ifTrue, semtypes.Intersect), semtypes.Union)
-	ifFalse := mergeChains(t, lhsEffect.ifFalse, rhsEffect.ifFalse, semtypes.Intersect)
+	if effect, isSingleton := singletonResultEffect(chain, resultTy); isSingleton {
+		return resultTy, effect, true
+	}
+
+	var ifTrue, ifFalse *binding
+	{
+		t1 := lhsEffect.ifTrue
+		t3 := lhsEffect.ifFalse
+		t4 := rhsEffect.ifTrue
+		t2 := mergeChains(t, t3, t4, semtypes.Intersect)
+		ifTrue = mergeChains(t, t1, t2, semtypes.Union)
+	}
+	{
+		t1 := lhsEffect.ifFalse
+		t2 := rhsEffect.ifFalse
+		ifFalse = mergeChains(t, t1, t2, semtypes.Intersect)
+	}
+
 	return resultTy, expressionEffect{ifTrue: ifTrue, ifFalse: ifFalse}, true
 }
 
@@ -9022,7 +9049,8 @@ var _ model.MonomorphicFunctionSymbol = &monomorphicOpaqueFn{}
 // private to the function that chose it.
 func materializeOpaqueFn(t typeResolver, sym *model.OpaqueFunctionSymbol,
 	polymorphicRef model.SymbolRef, sig model.TypedFunctionSignature,
-	loc diagnostics.Location) (model.SymbolRef, bool) {
+	loc diagnostics.Location,
+) (model.SymbolRef, bool) {
 	mono := &monomorphicOpaqueFn{
 		FunctionSymbol: model.NewFunctionSymbol(sym.Name(), sig, true, loc),
 		poly:           polymorphicRef,

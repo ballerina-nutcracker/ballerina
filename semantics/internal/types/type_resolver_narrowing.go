@@ -298,17 +298,14 @@ type prefixBinding struct {
 // and resolveDefaultExpression, each of which returns the chain the construction
 // leaves behind rather than the body's own.
 func accumPrefix(t typeResolver, chain, ancestor *binding, accum map[model.SymbolRef]prefixBinding, groups *[]model.CaptureGroupRef) semtypes.SemType {
-	var accumDefault semtypes.SemType
 	for c := chain; c != ancestor; c = c.prev {
 		if c.isCaptureEntry() {
 			*groups = append(*groups, c.captures)
 			continue
 		}
 		if !semtypes.IsZero(c.defaultType) {
-			if semtypes.IsZero(accumDefault) {
-				accumDefault = c.defaultType
-			}
-			continue
+			// An unreachable marker overrides every narrowing below it (spec issue #1029).
+			return c.defaultType
 		}
 		if _, seen := accum[c.ref]; seen {
 			continue
@@ -319,7 +316,7 @@ func accumPrefix(t typeResolver, chain, ancestor *binding, accum map[model.Symbo
 			assignmentPositions: c.assignmentPositions,
 		}
 	}
-	return accumDefault
+	return semtypes.SemType{}
 }
 
 // ancestorBinding is the contribution of a side that introduces no refinement of
