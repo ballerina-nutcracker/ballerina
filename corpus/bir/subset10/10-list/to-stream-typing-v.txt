@@ -1,5 +1,5 @@
 module $anon.. v 0.0.0;
-allListUnion([int...]|[string...]) -> stream{
+allListUnion([int...]|[string...]) -> stream<int|string>{
   bb0 {
     %2 = toStream(values) -> bb1;
   }

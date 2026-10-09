@@ -1,5 +1,5 @@
 module $anon.. v 0.0.0;
-makeStream([int...]) -> stream{
+makeStream([int...]) -> stream<int>{
   bb0 {
     %2 = toStream(values) -> bb1;
   }
@@ -8,7 +8,7 @@ makeStream([int...]) -> stream{
     return;
   }
 }
-takeNext(stream) -> nil|{| value: int, never... |}{
+takeNext(stream<int>) -> nil|{| value: int, never... |}{
   bb0 {
     %2 = streamNext s
     %0 = %2;

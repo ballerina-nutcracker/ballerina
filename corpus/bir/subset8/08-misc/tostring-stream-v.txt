@@ -63,7 +63,7 @@ main() -> nil{
     GOTO bb4;
   }
   bb4 {
-    %5 = newStream stream %3
+    %5 = newStream stream<int, nil|error> %3
     s = %5;
     %7 = println(s) -> bb5;
   }

@@ -1,5 +1,5 @@
 module $anon.. v 0.0.0;
-printNext(stream) -> nil{
+printNext(stream<int>) -> nil{
   bb0 {
     %2 = streamNext values
     next = %2;
