@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> main.bal:20:5
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'string', got '17'
+  --> main.bal:20:15
    |
 20 |     foo:hello(17); // @error
-   |     ^^^^^^^^^^^^^
+   |               ^^

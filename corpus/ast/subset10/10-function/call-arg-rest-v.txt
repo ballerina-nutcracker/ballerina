@@ -1,0 +1,76 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation sum ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sum (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sum (
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation scaled (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation scaled (
+            (literal 2)
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation scaled (
+            (literal 2)
+            (literal 5)
+            (literal 6)
+            (literal 7))))))))
+  (function sum () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (foreach
+        (var-def
+          (variable v (type
+            (value-type int))))
+        (simple-var-ref values)
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref total)
+            (simple-var-ref v))))
+      (return
+        (simple-var-ref total))))
+  (function scaled (
+    (variable factor (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (foreach
+        (var-def
+          (variable v (type
+            (value-type int))))
+        (simple-var-ref values)
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref total)
+            (binary-expr *
+              (simple-var-ref factor)
+              (simple-var-ref v)))))
+      (return
+        (simple-var-ref total)))))

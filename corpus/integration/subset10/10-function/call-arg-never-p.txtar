@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: never returns
+        at neverReturn(call-arg-never-p.bal:23)
+           main(call-arg-never-p.bal:18)

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing required parameter 'b'
+  --> call-arg-never-missing-e.bal:18:13
+   |
+18 |     int a = intReturn(neverReturn()); // @error
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^

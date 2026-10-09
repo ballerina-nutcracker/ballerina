@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'int', got 'true'
+  --> call-arg-langlib-method-e.bal:20:9
+   |
+20 |         true); // @error
+   |         ^^^^

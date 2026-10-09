@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'int', got '"ten"'
+  --> call-arg-resource-method-e.bal:25:31
+   |
+25 |     int _ = store->/items.get("ten"); // @error
+   |                               ^^^^^

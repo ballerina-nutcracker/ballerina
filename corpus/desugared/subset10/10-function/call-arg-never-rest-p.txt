@@ -1,0 +1,29 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation count ()))))
+      (var-def
+        (variable n (type
+          (value-type int)) (expr
+          (invocation count (
+            (invocation neverReturn ()))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref n))))))
+  (function neverReturn () (
+    (value-type never))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal never returns))))))
+  (function count () (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation lang.array length (
+          (simple-var-ref values)))))))

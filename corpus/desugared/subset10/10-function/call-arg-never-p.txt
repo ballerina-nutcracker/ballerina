@@ -1,0 +1,29 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (value-type int)) (expr
+          (invocation intReturn (
+            (invocation neverReturn ()))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref a))))
+  (function neverReturn () (
+    (value-type never))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal never returns))))))
+  (function intReturn (
+    (variable a (type
+      (value-type never)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (value-type never)) (expr
+          (simple-var-ref a))))
+      (return
+        (literal 1)))))

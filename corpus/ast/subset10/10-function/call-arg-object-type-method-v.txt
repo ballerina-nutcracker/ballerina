@@ -1,0 +1,36 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Shape
+    (object-type
+      (method-decl scale (
+        (param factor
+          (value-type int))) (
+        (value-type int)))))
+  (class-definition Square
+    (variable side (type
+      (value-type int)) (expr
+      (literal 2)))
+    (function scale (
+      (variable factor (type
+        (value-type int)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (field-based-access side
+              (simple-var-ref self))
+            (simple-var-ref factor))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (user-defined-type Shape)) (expr
+          (new
+            (user-defined-type Square) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation scale expr:
+            (simple-var-ref s) (
+            (literal 3)))))))))

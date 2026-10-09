@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> call-arg-object-union-method-e.bal:31:9
+   |
+31 |     _ = s.scale("two"); // @error
+   |         ^^^^^^^^^^^^^^

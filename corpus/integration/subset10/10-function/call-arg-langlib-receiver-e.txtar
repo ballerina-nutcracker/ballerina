@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'string', got '1'
+  --> call-arg-langlib-receiver-e.bal:18:23
+   |
+18 |     _ = string:length(1); // @error
+   |                       ^

@@ -1,0 +1,116 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation sum ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sum (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sum (
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation scaled (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation scaled (
+            (literal 2)
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation scaled (
+            (literal 2)
+            (literal 5)
+            (literal 6)
+            (literal 7))))))))
+  (function sum () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref values))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable v (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1)))))
+          (compound-assignment +
+            (simple-var-ref total)
+            (simple-var-ref v))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$1)
+              (numeric-literal 1)))))
+      (return
+        (simple-var-ref total))))
+  (function scaled (
+    (variable factor (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref values))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable v (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1)))))
+          (compound-assignment +
+            (simple-var-ref total)
+            (binary-expr *
+              (simple-var-ref factor)
+              (simple-var-ref v)))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$1)
+              (numeric-literal 1)))))
+      (return
+        (simple-var-ref total)))))

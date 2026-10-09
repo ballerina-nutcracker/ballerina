@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got never
+  --> call-arg-never-int-param-e.bal:18:23
+   |
+18 |     int a = intReturn(neverReturn()); // @error never is only accepted where never is expected
+   |                       ^^^^^^^^^^^^^

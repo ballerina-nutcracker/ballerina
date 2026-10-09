@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> narrowing-e.bal:21:41
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'int', got 'string'
+  --> narrowing-e.bal:21:51
    |
 21 |     int result = value is int ? value : acceptInt(value); // @error
-   |                                         ^^^^^^^^^^^^^^^^
+   |                                                   ^^^^^

@@ -1,0 +1,29 @@
+(intReturn
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type never)) (expr
+        (simple-var-ref a))))
+    (return
+      (literal 1))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (value-type int)) (expr
+        (invocation intReturn (
+          (invocation neverReturn ()))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref a))
+  )
+)
+(neverReturn
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal never returns))))
+  )
+)

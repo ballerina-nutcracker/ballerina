@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible arguments for function call
-  --> incl-record-param-rest-named-3-e.bal:32:5
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'int', got '"30"'
+  --> incl-record-param-rest-named-3-e.bal:32:31
    |
 32 |     foo(name = "Alice", age = "30", city = "New York", country = "USA"); // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |                               ^^^^

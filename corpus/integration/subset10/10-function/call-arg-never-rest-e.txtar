@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'never', got '"s"'
+  --> call-arg-never-rest-e.bal:32:17
+   |
+32 |     _ = l.count("s"); // @error
+   |                 ^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'never', got '1'
+  --> call-arg-never-rest-e.bal:30:17
+   |
+30 |     _ = c.count(1); // @error
+   |                 ^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'never', got '2'
+  --> call-arg-never-rest-e.bal:28:14
+   |
+28 |     _ = f(1, 2); // @error
+   |              ^
