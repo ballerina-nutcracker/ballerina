@@ -1,0 +1,80 @@
+module $anon.. v 0.0.0;
+bt  int:Unsigned8;
+checked  int;
+dc  decimal;
+doubled  [int...];
+fl  float;
+fn  function() returns int;
+ie  int|error;
+inferred  3;
+mi  {| int... |};
+ns  nil|string;
+r  {| a: int, b: string, anydata... |};
+ro  readonly&[int...];
+s8  int:Signed8;
+tup  [int, string, never...];
+widened  int|string;
+intOrErr() -> int|error{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = println(doubled) -> bb1;
+  }
+  bb1 {
+    %2 = println(inferred) -> bb2;
+  }
+  bb2 {
+    %3 = println(widened) -> bb3;
+  }
+  bb3 {
+    %4 = ConstantLoad  
+    %5 = ConstantLoad  
+    %6 = ConstantLoad  
+    %7 = println(fl,%4,dc,%5,bt,%6,s8) -> bb4;
+  }
+  bb4 {
+    %8 = ConstantLoad  
+    %9 = ConstantLoad  
+    %10 = println(ro,%8,mi,%9,r) -> bb5;
+  }
+  bb5 {
+    %11 = ConstantLoad  
+    %12 = ConstantLoad  
+    %13 = ConstantLoad  
+    %14 = fn() -> bb6;
+  }
+  bb6 {
+    %15 = %14;
+    %16 = ConstantLoad  
+    %17 = println(ie,%11,ns,%12,checked,%13,%15,%16,tup) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %2 = ConstantLoad a
+    %3 = get(mi,%2) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %1 = + %4 %6;
+    %0 = %1;
+    return;
+  }
+}
+$default$0() -> string{
+  bb0 {
+    %1 = ConstantLoad d
+    %0 = %1;
+    return;
+  }
+}

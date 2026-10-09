@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected error|object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init() returns nil; public function start() returns nil|error }, got 3
+  --> module-var-init-listener-e.bal:36:27
+   |
+36 | listener TestListener l = 3; // @error
+   |                           ^

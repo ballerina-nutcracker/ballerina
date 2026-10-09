@@ -1,0 +1,56 @@
+(intOrErr
+  (bb0 () ()
+    (return
+      (literal 5))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref doubled))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref inferred))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref widened))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fl)
+        (literal  )
+        (simple-var-ref dc)
+        (literal  )
+        (simple-var-ref bt)
+        (literal  )
+        (simple-var-ref s8))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ro)
+        (literal  )
+        (simple-var-ref mi)
+        (literal  )
+        (simple-var-ref r))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ie)
+        (literal  )
+        (simple-var-ref ns)
+        (literal  )
+        (simple-var-ref checked)
+        (literal  )
+        (invocation fn ())
+        (literal  )
+        (simple-var-ref tup))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (invocation lang.map get (
+          (simple-var-ref mi)
+          (literal a)))
+        (literal 1)))
+  )
+)

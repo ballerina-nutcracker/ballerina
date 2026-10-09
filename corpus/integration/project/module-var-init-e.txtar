@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "other"
+  --> other.bal:16:13
+   |
+16 | int other = "other"; // @error
+   |             ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "q"
+  --> modules/child1/child1.bal:17:24
+   |
+17 | public final int bad = "q"; // @error
+   |                        ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got string
+  --> main.bal:19:17
+   |
+19 | int fromConst = child1:str; // @error
+   |                 ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got string
+  --> main.bal:20:16
+   |
+20 | int fromCall = child1:getStr(); // @error
+   |                ^^^^^^^^^^^^^^^

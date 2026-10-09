@@ -91,6 +91,8 @@ var (
 		"subset9/09-template-expr/template-query-xml-sequence-fv.bal",
 		// https://github.com/ballerina-nutcracker/ballerina/issues/538
 		"subset9/09-object/readonly-distinct-object-fe.bal",
+		// https://github.com/ballerina-nutcracker/ballerina/issues/987
+		"subset10/10-bug/lock-module-var-outside-computed-key-1-e.bal",
 	}
 
 	// Skip project-level integration tests with non-deterministic output.
