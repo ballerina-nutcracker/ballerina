@@ -1,0 +1,49 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: int literal out of range: 0x8000000000000001
+  --> int-literal-out-of-range-e.bal:27:14
+   |
+27 |     int f = -0x8000000000000001; // @error out of range for int
+   |              ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: int literal out of range: 0xFFFFFFFFFFFFFFFFFF
+  --> int-literal-out-of-range-e.bal:26:13
+   |
+26 |     int e = 0xFFFFFFFFFFFFFFFFFF; // @error out of range for int
+   |             ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: int literal out of range: 9223372036854775808
+  --> int-literal-out-of-range-e.bal:21:13
+   |
+21 |     int b = 9223372036854775808; // @error out of range for int
+   |             ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: int literal out of range: 99999999999999999999
+  --> int-literal-out-of-range-e.bal:20:13
+   |
+20 |     int a = 99999999999999999999; // @error out of range for int
+   |             ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: int literal out of range: 99999999999999999999
+  --> int-literal-out-of-range-e.bal:22:14
+   |
+22 |     int c = -99999999999999999999; // @error out of range for int
+   |              ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: int literal out of range: 99999999999999999999
+  --> int-literal-out-of-range-e.bal:23:16
+   |
+23 |     io:println(99999999999999999999); // @error out of range for int
+   |                ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: int literal out of range: 99999999999999999999
+  --> int-literal-out-of-range-e.bal:25:10
+   |
+25 |     x += 99999999999999999999; // @error out of range for int
+   |          ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: int literal out of range: 99999999999999999999
+  --> int-literal-out-of-range-e.bal:28:19
+   |
+28 |     int|float g = 99999999999999999999; // @error out of range for int
+   |                   ^^^^^^^^^^^^^^^^^^^^
