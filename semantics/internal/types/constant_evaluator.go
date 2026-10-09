@@ -78,9 +78,15 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 		return nil, true
 	case *ast.BLangMappingConstructorExpr:
 		for _, field := range e.Fields {
+			if spread, isSpread := field.(*ast.BLangMappingSpreadField); isSpread {
+				if offender, ok := isConstantExpression(t, spread.Expr); !ok {
+					return offender, false
+				}
+				continue
+			}
 			kv, isKeyValue := field.(*ast.BLangMappingKeyValueField)
 			if !isKeyValue {
-				continue
+				return expr, false
 			}
 			if kv.Key != nil && kv.Key.Kind == ast.MappingKeyComputed {
 				if offender, ok := isConstantExpression(t, kv.Key.Expr); !ok {
@@ -220,9 +226,24 @@ func (e *constantExpressionEvaluator) evaluateConstantReference(ref model.Symbol
 func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLangMappingConstructorExpr) (values.BalValue, bool) {
 	entries := make([]values.MapEntry, 0, len(expr.Fields))
 	for _, field := range expr.Fields {
+		if spread, ok := field.(*ast.BLangMappingSpreadField); ok {
+			value, ok := e.evaluate(spread.Expr)
+			if !ok {
+				return nil, false
+			}
+			mapping, ok := value.(*values.Map)
+			if !ok {
+				return e.semanticFailure("constant mapping spread field must be a mapping", spread.Expr.GetPosition())
+			}
+			for _, key := range mapping.Keys() {
+				member, _ := mapping.Get(key)
+				entries = append(entries, values.MapEntry{Key: key, Value: member})
+			}
+			continue
+		}
 		kv, ok := field.(*ast.BLangMappingKeyValueField)
 		if !ok {
-			return e.unsupportedFailure("constant mapping spread field not implemented", field.GetPosition())
+			return e.internalFailure(fmt.Sprintf("unexpected constant mapping field %T", field), field.GetPosition())
 		}
 		key, ok := e.constantMappingKey(kv)
 		if !ok {

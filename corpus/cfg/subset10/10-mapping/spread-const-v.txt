@@ -1,0 +1,35 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref D))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref SPREAD))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref D)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref D)
+          (literal b)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref D)
+          (record-type
+            (field a
+              (finite-type
+                (literal 1)))
+            (field b
+              (finite-type
+                (literal 2))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref D)
+          (value-type readonly)))))
+  )
+)

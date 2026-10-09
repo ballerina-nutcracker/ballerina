@@ -536,6 +536,13 @@ type (
 		ValueExpr BLangExpression
 	}
 
+	// BLangMappingSpreadField is a `...expr` field of a mapping constructor. The field itself
+	// produces no value, so its own type is never; Expr keeps its resolved mapping type.
+	BLangMappingSpreadField struct {
+		bLangNodeBase
+		Expr BLangExpression
+	}
+
 	BLangMappingConstructorExpr struct {
 		bLangExpressionBase
 		Fields             []MappingField
@@ -746,6 +753,7 @@ var (
 	_ BLangNode       = &BLangTypeConversionExpr{}
 	_ BLangNode       = &BLangMappingConstructorExpr{}
 	_ BLangNode       = &BLangMappingKeyValueField{}
+	_ BLangNode       = &BLangMappingSpreadField{}
 	_ BLangNode       = &BLangTrapExpr{}
 	_ BLangNode       = &BLangNewExpression{}
 )
@@ -1239,6 +1247,10 @@ func (b *BLangMappingKeyValueField) GetValue() BLangExpression {
 
 func (b *BLangMappingKeyValueField) IsKeyValueField() bool {
 	return true
+}
+
+func (b *BLangMappingSpreadField) IsKeyValueField() bool {
+	return false
 }
 
 // IsReadonly reports whether the named field carried an explicit readonly prefix.

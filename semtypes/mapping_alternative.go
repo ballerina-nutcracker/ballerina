@@ -39,6 +39,13 @@ func (a MappingAlternative) Atomic() *MappingAtomicType {
 	return a.pos
 }
 
+// HasNegativeAtoms reports whether this alternative is constrained by negated mapping atoms,
+// which narrowing introduces. The positive atom alone does not describe such an alternative: it
+// retains members and shapes the negated atoms exclude.
+func (a MappingAlternative) HasNegativeAtoms() bool {
+	return len(a.neg) != 0
+}
+
 func MappingAlternatives(cx Context, t SemType) []MappingAlternative {
 	if t.some() == 0 {
 		if (t.all() & Mapping.all()) == 0 {
@@ -82,6 +89,13 @@ func intersectMappingAtoms(env Env, atoms []*MappingAtomicType) (SemType, *Mappi
 	typeAtom := env.mappingAtom(atom)
 	ty := createBasicSemType(btMapping, bddAtom(typeAtom))
 	return ty, atom, true
+}
+
+// MappingFieldTypeAllowed reports whether a constructor field of type actual may be used where
+// the inherent type expects expected. Numeric operands are accepted across numeric types because
+// the field expression is re-resolved against the expected type.
+func MappingFieldTypeAllowed(cx Context, actual, expected SemType) bool {
+	return mappingAlternativeFieldTypeAllowed(cx, actual, expected)
 }
 
 func mappingAlternativeFieldTypeAllowed(cx Context, actual, expected SemType) bool {

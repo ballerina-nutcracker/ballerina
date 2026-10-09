@@ -1,0 +1,8 @@
+-- stdout --
+{"a":1,"b":2}
+{"x":0}
+1
+2
+true
+true
+-- stderr --
