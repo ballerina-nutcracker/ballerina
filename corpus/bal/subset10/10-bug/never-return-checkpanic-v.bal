@@ -16,21 +16,17 @@
 
 import ballerina/io;
 
-// A branch of a class init that panics never completes normally, so it does
-// not need to initialize the field.
-class Holder {
-    final int x;
-
-    function init(boolean flag) {
-        if flag {
-            self.x = 4;
-        } else {
-            panic error("cannot initialize");
-        }
-    }
+// Returning a checkpanic whose operand is always an error always panics, so it
+// can end a function that never returns.
+function abort(string msg) returns never {
+    error e = error(msg);
+    return checkpanic e;
 }
 
 public function main() {
-    Holder h = new (true);
-    io:println(h.x); // @output 4
+    boolean ok = true;
+    if !ok {
+        abort("unreachable");
+    }
+    io:println("done"); // @output done
 }

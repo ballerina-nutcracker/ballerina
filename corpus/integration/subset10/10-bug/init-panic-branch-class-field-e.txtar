@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: field 'x' is not initialized
-  --> init-panic-branch-class-field-e.bal:19:5
+  --> init-panic-branch-class-field-e.bal:20:5
    |
-19 |     int x; // @error
+20 |     int x; // @error
    |     ^^^^^^

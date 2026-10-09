@@ -14,23 +14,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
-// A branch of a class init that panics never completes normally, so it does
-// not need to initialize the field.
+// The panicking branch of a class init is taken at runtime.
 class Holder {
     final int x;
 
     function init(boolean flag) {
         if flag {
-            self.x = 4;
+            self.x = 1;
         } else {
-            panic error("cannot initialize");
+            panic error("cannot initialize"); // @panic
         }
     }
 }
 
 public function main() {
-    Holder h = new (true);
-    io:println(h.x); // @output 4
+    Holder _ = new (false);
 }

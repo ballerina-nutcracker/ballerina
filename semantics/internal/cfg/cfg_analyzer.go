@@ -145,7 +145,7 @@ func analyzeFunctionNeverReturn(ctx *context.CompilerContext, fn invokableNode, 
 		if !bb.isTerminal() || !bb.isReachable() {
 			continue
 		}
-		if terminalBlockHasPanic(bb) {
+		if bb.panics {
 			continue
 		}
 		ctx.SemanticError("expected panic", positionForMissingReturn(bb, fn))
@@ -169,14 +169,6 @@ func terminalBlockHasReturnOrPanic(bb basicBlock) bool {
 	default:
 		return false
 	}
-}
-
-func terminalBlockHasPanic(bb basicBlock) bool {
-	if len(bb.nodes) == 0 {
-		return false
-	}
-	_, ok := bb.nodes[len(bb.nodes)-1].(*ast.BLangPanic)
-	return ok
 }
 
 func positionForMissingReturn(bb basicBlock, fn ast.BLangNode) diagnostics.Location {

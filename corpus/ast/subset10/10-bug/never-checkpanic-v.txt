@@ -1,0 +1,34 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function abort (
+    (variable msg (type
+      (value-type string)))) (
+    (value-type never))
+    (block-function-body
+      (var-def
+        (variable e (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (simple-var-ref msg))))))
+      (expression-stmt
+        (check-panicked-expr
+          (simple-var-ref e)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable ok (type
+          (value-type boolean)) (expr
+          (literal true))))
+      (if
+        (unary-expr !
+          (simple-var-ref ok))
+        (block-stmt
+          (expression-stmt
+            (invocation abort (
+              (literal unreachable))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (literal done))))))))

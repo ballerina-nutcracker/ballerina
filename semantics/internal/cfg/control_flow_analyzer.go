@@ -345,8 +345,7 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 	case *ast.BLangExpressionStmt:
 		analyzer.addNode(curBB, stmt)
 		if expr, ok := s.Expr.(ast.BLangExpression); ok && alwaysTerminatesViaCheck(analyzer.tyCtx, expr) {
-			_, isCheckPanic := expr.(*ast.BLangCheckPanickedExpr)
-			analyzer.bbs[curBB].panics = isCheckPanic
+			analyzer.bbs[curBB].panics = isCheckPanic(expr)
 			return terminatedEffect()
 		}
 		return continueEffect(curBB)
@@ -392,8 +391,16 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 
 func (analyzer *functionControlFlowAnalyzer) analyzeReturn(curBB bbRef, stmt *ast.BLangReturn) stmtEffect {
 	analyzer.addNode(curBB, stmt)
+	if expr, ok := stmt.Expr.(ast.BLangExpression); ok && isCheckPanic(expr) {
+		analyzer.bbs[curBB].panics = alwaysTerminatesViaCheck(analyzer.tyCtx, expr)
+	}
 	// Return terminates execution - current block has no children
 	return terminatedEffect()
+}
+
+func isCheckPanic(expr ast.BLangExpression) bool {
+	_, ok := expr.(*ast.BLangCheckPanickedExpr)
+	return ok
 }
 
 func (analyzer *functionControlFlowAnalyzer) analyzePanic(curBB bbRef, stmt *ast.BLangPanic) stmtEffect {

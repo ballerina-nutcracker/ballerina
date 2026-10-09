@@ -14,23 +14,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
+// A panic inside a loop does not excuse the path that skips the loop body.
+int value; // @error
+int[] xs = [1, 2, 3];
 
-// A branch of a class init that panics never completes normally, so it does
-// not need to initialize the field.
-class Holder {
-    final int x;
-
-    function init(boolean flag) {
-        if flag {
-            self.x = 4;
-        } else {
-            panic error("cannot initialize");
+function init() {
+    foreach int x in xs {
+        if x < 0 {
+            panic error("negative");
         }
+        value = x;
     }
 }
 
 public function main() {
-    Holder h = new (true);
-    io:println(h.x); // @output 4
 }

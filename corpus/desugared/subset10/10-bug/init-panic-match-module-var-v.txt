@@ -1,0 +1,40 @@
+(package
+  (import-package ballerina io (as io))
+  (variable value (type
+    (value-type int)))
+  (variable mode (type
+    (value-type int)))
+  (function init () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (simple-var-ref mode)
+        (literal 1))
+      (match
+        (simple-var-ref mode)
+        (match-clause
+          (const-pattern
+            (literal 1))
+          (block-stmt
+            (assignment
+              (simple-var-ref value)
+              (literal 10))))
+        (match-clause
+          (const-pattern
+            (literal 2))
+          (block-stmt
+            (assignment
+              (simple-var-ref value)
+              (literal 20))))
+        (match-clause
+          (wildcard-match-pattern)
+          (block-stmt
+            (panic
+              (error-constructor-expr (
+                (literal unknown mode)))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref value)))))))

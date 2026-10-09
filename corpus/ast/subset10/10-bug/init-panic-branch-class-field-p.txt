@@ -1,0 +1,29 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (class-definition Holder
+    (variable x (type
+      (value-type int)))
+    (function init (
+      (variable flag (type
+        (value-type boolean)))) (
+      (value-type null))
+      (block-function-body
+        (if
+          (simple-var-ref flag)
+          (block-stmt
+            (assignment
+              (field-based-access x
+                (simple-var-ref self))
+              (literal 1))) (
+          (block-stmt
+            (panic
+              (error-constructor-expr (
+                (literal cannot initialize))))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable _ (type
+          (user-defined-type Holder)) (expr
+          (new (
+            (literal false)))))))))

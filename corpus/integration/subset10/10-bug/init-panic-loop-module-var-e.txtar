@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: variable 'value' is not initialized
-  --> init-panic-branch-module-var-e.bal:19:5
+  --> init-panic-loop-module-var-e.bal:18:5
    |
-19 | int value; // @error
+18 | int value; // @error
    |     ^^^^^

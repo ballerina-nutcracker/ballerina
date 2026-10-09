@@ -1,0 +1,71 @@
+module $anon.. v 0.0.0;
+class Holder {
+  x int
+
+  init(int) -> nil{
+    bb0 {
+      %4 = v;
+      %5 = ConstantLoad 0
+      %6 = %5;
+      %3 = < %4 %6;
+      %3 ? bb1 : bb5;
+    }
+    bb1 {
+      PushScopeFrame 5
+      %0 = ConstantLoad negative
+      %1 = newError error(%0)
+      e = %1;
+      %4 = e is error
+      %4 ? bb2 : bb3;
+    }
+    bb2 {
+      (1, %7) = e;
+      PopScopeFrame
+      panic %7;
+    }
+    bb3 {
+      %3 = e;
+      GOTO bb4;
+    }
+    bb4 {
+      PopScopeFrame
+      GOTO bb5;
+    }
+    bb5 {
+      PushScopeFrame 1
+      %0 = ConstantLoad x
+      (1, self)[%0] = (1, v);
+      PopScopeFrame
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Holder
+    %2 = ConstantLoad 3
+    %3 = %1.init(%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    h = %4;
+    %8 = ConstantLoad x
+    %7 = h[%8];
+    %9 = %7;
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

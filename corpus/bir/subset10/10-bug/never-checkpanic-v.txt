@@ -1,0 +1,45 @@
+module $anon.. v 0.0.0;
+abort(string) -> never{
+  bb0 {
+    %2 = newError error(msg)
+    e = %2;
+    %5 = e is error
+    %5 ? bb1 : bb2;
+  }
+  bb1 {
+    panic e;
+  }
+  bb2 {
+    %4 = e;
+    GOTO bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad true
+    ok = %1;
+    %3 = ! ok;
+    %3 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unreachable
+    %1 = abort(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 2
+    %0 = ConstantLoad done
+    %1 = println(%0) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    return;
+  }
+}

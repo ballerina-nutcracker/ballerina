@@ -16,21 +16,24 @@
 
 import ballerina/io;
 
-// A branch of a class init that panics never completes normally, so it does
-// not need to initialize the field.
-class Holder {
-    final int x;
+// A match clause that panics does not need to initialize the module variable.
+int value;
+int mode = 1;
 
-    function init(boolean flag) {
-        if flag {
-            self.x = 4;
-        } else {
-            panic error("cannot initialize");
+function init() {
+    match mode {
+        1 => {
+            value = 10;
+        }
+        2 => {
+            value = 20;
+        }
+        _ => {
+            panic error("unknown mode");
         }
     }
 }
 
 public function main() {
-    Holder h = new (true);
-    io:println(h.x); // @output 4
+    io:println(value); // @output 10
 }

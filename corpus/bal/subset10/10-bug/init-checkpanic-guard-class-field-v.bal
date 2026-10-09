@@ -16,21 +16,20 @@
 
 import ballerina/io;
 
-// A branch of a class init that panics never completes normally, so it does
-// not need to initialize the field.
+// A checkpanic guard clause in a class init does not need to initialize fields.
 class Holder {
     final int x;
 
-    function init(boolean flag) {
-        if flag {
-            self.x = 4;
-        } else {
-            panic error("cannot initialize");
+    function init(int v) {
+        if v < 0 {
+            error e = error("negative");
+            checkpanic e;
         }
+        self.x = v;
     }
 }
 
 public function main() {
-    Holder h = new (true);
-    io:println(h.x); // @output 4
+    Holder h = new (3);
+    io:println(h.x); // @output 3
 }

@@ -152,7 +152,7 @@ func (a *uninitAnalyzer) analyzeBlock(bb *basicBlock, state *initState) *initSta
 	return state
 }
 
-// uninitializedNames returns the names that are not initialized on all paths that complete normally.
+// uninitializedNames returns the names that are not initialized on all terminal paths that do not panic.
 func (a *uninitAnalyzer) uninitializedNames() []string {
 	var result []string
 	for _, name := range a.names {
