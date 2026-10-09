@@ -11,7 +11,7 @@ main() -> nil{
     %8 = ConstantLoad 20
     %9 = %8;
     %10 = ConstantLoad 1
-    %11 = unknown %10;
+    %11 = - %10;
     %12 = %11;
     %13 = indexOf(arr,%9,%12) -> bb1;
   }

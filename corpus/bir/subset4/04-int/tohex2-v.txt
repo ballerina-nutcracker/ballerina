@@ -26,7 +26,7 @@ main() -> nil{
   }
   bb5 {
     %15 = ConstantLoad 1
-    %16 = unknown %15;
+    %16 = - %15;
     %17 = %16;
     %18 = toHexString(%17) -> bb6;
   }
@@ -43,7 +43,7 @@ main() -> nil{
   }
   bb9 {
     %24 = ConstantLoad 170
-    %25 = unknown %24;
+    %25 = - %24;
     %26 = %25;
     %27 = toHexString(%26) -> bb10;
   }
@@ -60,7 +60,7 @@ main() -> nil{
   }
   bb13 {
     %34 = ConstantLoad 9223372036854775807
-    %35 = unknown %34;
+    %35 = - %34;
     %36 = %35;
     %37 = ConstantLoad 1
     %38 = %37;

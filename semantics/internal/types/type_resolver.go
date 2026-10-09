@@ -5699,21 +5699,17 @@ func resolveUnaryExpr(t typeResolver, chain *binding, expr *ast.BLangUnaryExpr, 
 			t.semanticError(fmt.Sprintf("expect int type for %s", string(expr.GetOperatorKind())), expr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		if semtypes.IsSameType(t.typeContext(), underlyingTy, semtypes.Int) {
-			resultTy = underlyingTy
+		shape := semtypes.SingleShape(underlyingTy)
+		if shape.IsEmpty() {
+			resultTy = semtypes.Int
 			break
 		}
-		shape := semtypes.SingleShape(underlyingTy)
-		if !shape.IsEmpty() {
-			value, ok := shape.Get().Value.(int64)
-			if !ok {
-				t.internalError(fmt.Sprintf("unexpected singleton type for %s: %T", string(expr.GetOperatorKind()), shape.Get().Value), expr.GetPosition())
-				return semtypes.SemType{}, expressionEffect{}, false
-			}
-			resultTy = semtypes.IntConst(^value)
-		} else {
-			resultTy = underlyingTy
+		value, ok := shape.Get().Value.(int64)
+		if !ok {
+			t.internalError(fmt.Sprintf("unexpected singleton type for %s: %T", string(expr.GetOperatorKind()), shape.Get().Value), expr.GetPosition())
+			return semtypes.SemType{}, expressionEffect{}, false
 		}
+		resultTy = semtypes.IntConst(^value)
 
 	case model.OperatorKind_NOT:
 		if semtypes.IsSubtype(t.typeContext(), exprTy, semtypes.Boolean) {
@@ -5743,7 +5739,7 @@ func resolveUnaryExpr(t typeResolver, chain *binding, expr *ast.BLangUnaryExpr, 
 func negateNumericType(exprTy semtypes.SemType) semtypes.SemType {
 	shape := semtypes.SingleShape(exprTy)
 	if shape.IsEmpty() {
-		return exprTy
+		return semtypes.WidenToBasicTypes(exprTy)
 	}
 	switch v := shape.Get().Value.(type) {
 	case int64:
@@ -5754,7 +5750,7 @@ func negateNumericType(exprTy semtypes.SemType) semtypes.SemType {
 		result := v.Neg()
 		return semtypes.DecimalConst(*result)
 	default:
-		return exprTy
+		return semtypes.WidenToBasicTypes(exprTy)
 	}
 }
 

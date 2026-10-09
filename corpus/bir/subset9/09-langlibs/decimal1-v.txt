@@ -13,7 +13,7 @@ main() -> nil{
     %6 = ConstantLoad 2.2
     %7 = %6;
     %8 = ConstantLoad 0.3
-    %9 = unknown %8;
+    %9 = - %8;
     %10 = %9;
     %11 = sum(%5,%7,%10) -> bb3;
   }
@@ -27,7 +27,7 @@ main() -> nil{
     %16 = ConstantLoad 2.2
     %17 = %16;
     %18 = ConstantLoad 3.0
-    %19 = unknown %18;
+    %19 = - %18;
     %20 = %19;
     %21 = max(%15,%17,%20) -> bb5;
   }
@@ -41,7 +41,7 @@ main() -> nil{
     %26 = ConstantLoad 2.2
     %27 = %26;
     %28 = ConstantLoad 3.0
-    %29 = unknown %28;
+    %29 = - %28;
     %30 = %29;
     %31 = min(%25,%27,%30) -> bb7;
   }
@@ -51,7 +51,7 @@ main() -> nil{
   }
   bb8 {
     %34 = ConstantLoad 1.23
-    %35 = unknown %34;
+    %35 = - %34;
     %36 = %35;
     %37 = abs(%36) -> bb9;
   }
@@ -83,7 +83,7 @@ main() -> nil{
   }
   bb14 {
     %54 = ConstantLoad 1.2
-    %55 = unknown %54;
+    %55 = - %54;
     %56 = %55;
     %57 = floor(%56) -> bb15;
   }
@@ -93,7 +93,7 @@ main() -> nil{
   }
   bb16 {
     %60 = ConstantLoad 1.2
-    %61 = unknown %60;
+    %61 = - %60;
     %62 = %61;
     %63 = ceiling(%62) -> bb17;
   }

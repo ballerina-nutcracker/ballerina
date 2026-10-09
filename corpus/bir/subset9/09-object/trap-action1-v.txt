@@ -170,7 +170,7 @@ main() -> nil{
   }
   bb29 {
     remoteError = %3;
-    %6 = unknown remoteError failure;
+    %6 = === remoteError failure;
     %7 = %6;
     %8 = println(%7) -> bb30;
   }
@@ -187,7 +187,7 @@ main() -> nil{
   }
   bb33 {
     resourceError = %9;
-    %13 = unknown resourceError failure;
+    %13 = === resourceError failure;
     %14 = %13;
     %15 = println(%14) -> bb34;
   }

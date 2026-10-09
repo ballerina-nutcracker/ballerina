@@ -37,7 +37,7 @@ main() -> nil{
   }
   bb8 {
     %20 = ConstantLoad 4
-    %21 = unknown %20;
+    %21 = - %20;
     %22 = %21;
     %23 = foo(%22) -> bb9;
   }
@@ -82,7 +82,7 @@ foo(any) -> int{
   }
   bb5 {
     PushScopeFrame 1
-    %0 = unknown (2, v);
+    %0 = - (2, v);
     (2, %0) = %0;
     PopScopeFrame
     PopScopeFrame

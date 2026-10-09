@@ -5,7 +5,7 @@ main() -> nil{
     %2 = newArray [any...][%1]{}
     v = %2;
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     i = %5;
     %7 = ConstantLoad 0
     v[i] = %7;

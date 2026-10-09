@@ -4,7 +4,7 @@ main() -> nil{
     %1 = ConstantLoad abc
     s = %1;
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     i = %4;
     %6 = s[i];
     %7 = println(%6) -> bb1;

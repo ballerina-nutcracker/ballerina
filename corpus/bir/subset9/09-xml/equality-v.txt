@@ -45,12 +45,12 @@ main() -> nil{
     %40 = println(%39) -> bb2;
   }
   bb2 {
-    %41 = unknown e1 e3;
+    %41 = === e1 e3;
     %42 = %41;
     %43 = println(%42) -> bb3;
   }
   bb3 {
-    %44 = unknown e1 e2;
+    %44 = === e1 e2;
     %45 = %44;
     %46 = println(%45) -> bb4;
   }
@@ -67,12 +67,12 @@ main() -> nil{
     %56 = println(%55) -> bb5;
   }
   bb5 {
-    %57 = unknown c1 c3;
+    %57 = === c1 c3;
     %58 = %57;
     %59 = println(%58) -> bb6;
   }
   bb6 {
-    %60 = unknown c1 c2;
+    %60 = === c1 c2;
     %61 = %60;
     %62 = println(%61) -> bb7;
   }
@@ -91,12 +91,12 @@ main() -> nil{
     %74 = println(%73) -> bb8;
   }
   bb8 {
-    %75 = unknown p1 p3;
+    %75 = === p1 p3;
     %76 = %75;
     %77 = println(%76) -> bb9;
   }
   bb9 {
-    %78 = unknown p1 p2;
+    %78 = === p1 p2;
     %79 = %78;
     %80 = println(%79) -> bb10;
   }
@@ -115,7 +115,7 @@ main() -> nil{
     %92 = println(%91) -> bb11;
   }
   bb11 {
-    %93 = unknown t1 t2;
+    %93 = === t1 t2;
     %94 = %93;
     %95 = println(%94) -> bb12;
   }
@@ -145,7 +145,7 @@ main() -> nil{
     %116 = println(%115) -> bb14;
   }
   bb14 {
-    %117 = unknown s1 s2;
+    %117 = === s1 s2;
     %118 = %117;
     %119 = println(%118) -> bb15;
   }

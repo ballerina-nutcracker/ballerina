@@ -19,7 +19,7 @@ main() -> nil{
     %12 = ConstantLoad 1
     %13 = %12;
     %14 = ConstantLoad 1
-    %15 = unknown %14;
+    %15 = - %14;
     %16 = %15;
     %17 = f(%13,%16) -> bb3;
   }
