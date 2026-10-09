@@ -1,0 +1,46 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (value-type float)) (expr
+        (literal 1e+20))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref f))))
+    (var-def
+      (variable g (type
+        (value-type float)) (expr
+        (literal 1.8446744073709552e+19))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref g))))
+    (var-def
+      (variable d (type
+        (value-type decimal)) (expr
+        (literal 99999999999999999999))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d))))
+    (var-def
+      (variable dh (type
+        (value-type decimal)) (expr
+        (literal 4722366482869645213695))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref dh))))
+    (var-def
+      (variable m (type
+        (value-type int)) (expr
+        (literal -9223372036854775808))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+    (var-def
+      (variable n (type
+        (value-type int)) (expr
+        (literal 9223372036854775807))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+  )
+)

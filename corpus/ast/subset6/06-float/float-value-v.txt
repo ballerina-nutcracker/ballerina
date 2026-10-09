@@ -235,7 +235,7 @@
       (var-def
         (variable f1 (type
           (value-type float)) (expr
-          (literal 1e+30))))
+          (literal 999999999999999999999999999999))))
       (expression-stmt
         (invocation io println (
           (binary-expr ==

@@ -20,7 +20,6 @@ package nodebuilder
 import (
 	"fmt"
 	"iter"
-	"math"
 	"strconv"
 	"strings"
 
@@ -1097,30 +1096,23 @@ func (n *nodeBuilder) getIntegerLiteral(literal st.Node, textValue string) any {
 		if textValue[0] == '0' && len(textValue) > 1 {
 			n.cx.SyntaxError("invalid integer literal: leading zero", n.getPosition(literal))
 		}
-		return n.parseLong(literal, textValue, textValue, 10)
+		return parseLong(textValue, textValue, 10)
 	case st.HEX_INTEGER_LITERAL_TOKEN:
 		processedNodeValue := strings.ToLower(textValue)
 		processedNodeValue = strings.ReplaceAll(processedNodeValue, "0x", "")
-		return n.parseLong(literal, textValue, processedNodeValue, 16)
+		return parseLong(textValue, processedNodeValue, 16)
 	default:
 		n.internalError("unexpected integer literal token kind", literal)
 		return nil
 	}
 }
 
-// parseLong parses a long integer value
-func (n *nodeBuilder) parseLong(literal st.Node, originalNodeValue, processedNodeValue string, radix int) any {
+// parseLong parses a long integer value. Out-of-range literals keep their
+// original text so that the type resolver can report them.
+func parseLong(originalNodeValue, processedNodeValue string, radix int) any {
 	val, err := strconv.ParseInt(processedNodeValue, radix, 64)
 	if err != nil {
-		fVal, fErr := strconv.ParseFloat(processedNodeValue, 64)
-		if fErr != nil {
-			n.internalError("failed to parse numeric literal", literal)
-			return originalNodeValue
-		}
-		if math.IsInf(fVal, 0) {
-			return originalNodeValue
-		}
-		return fVal
+		return originalNodeValue
 	}
 	return val
 }
@@ -2361,14 +2353,12 @@ func (n *nodeBuilder) transformUnaryExpression(unaryBLangExpression *st.UnaryExp
 
 // foldNegativeIntLiteral folds `-N` into a single int literal when `N` is an
 // integer literal whose positive value overflows int64 but the negated value
-// fits (e.g. `-9223372036854775808`). Without this fold, `N` is parsed as a
-// float (losing precision) and later coerced back to int, corrupting the
-// value used at runtime (e.g. for `<decimal>-9223372036854775808`).
+// fits (e.g. `-9223372036854775808`).
 func foldNegativeIntLiteral(lit *ast.BLangLiteral) bool {
 	if lit.GetLiteralKind() != ast.LiteralKindInt {
 		return false
 	}
-	if _, isFloat := lit.GetValue().(float64); !isFloat {
+	if _, isOutOfRange := lit.GetValue().(string); !isOutOfRange {
 		return false
 	}
 	raw := lit.OriginalValue

@@ -19,6 +19,7 @@ package types
 import (
 	"fmt"
 	"maps"
+	"math/big"
 	"slices"
 	"sort"
 	"strconv"
@@ -3383,15 +3384,9 @@ func resolveAsInt(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bool) 
 	switch v := n.GetValue().(type) {
 	case int64:
 		intVal = v
-	case float64:
-		intVal = int64(v)
 	case string:
-		parsed, err := strconv.ParseInt(v, 0, 64)
-		if err != nil {
-			t.syntaxError(fmt.Sprintf("invalid int literal: %s", v), n.GetPosition())
-			return semtypes.SemType{}, false
-		}
-		intVal = parsed
+		t.semanticError(fmt.Sprintf("int literal out of range: %s", v), n.GetPosition())
+		return semtypes.SemType{}, false
 	default:
 		t.internalError(fmt.Sprintf("unexpected int literal value type: %T", n.GetValue()), n.GetPosition())
 		return semtypes.SemType{}, false
@@ -3404,7 +3399,7 @@ func resolveAsFloat(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bool
 	var floatVal float64
 	switch v := n.GetValue().(type) {
 	case string:
-		parsed, ok := parseFloatValue(t, v, n.GetPosition())
+		parsed, ok := parseFloatValue(t, outOfRangeIntLiteralDigits(n, v), n.GetPosition())
 		if !ok {
 			return semtypes.SemType{}, false
 		}
@@ -3425,7 +3420,7 @@ func resolveAsDecimal(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bo
 	var decVal *decimal.Decimal
 	switch v := n.GetValue().(type) {
 	case string:
-		parsed, ok := parseDecimalValue(t, stripFloatingPointTypeSuffix(v), n.GetPosition())
+		parsed, ok := parseDecimalValue(t, stripFloatingPointTypeSuffix(outOfRangeIntLiteralDigits(n, v)), n.GetPosition())
 		if !ok {
 			return semtypes.SemType{}, false
 		}
@@ -3462,6 +3457,19 @@ func stripFloatingPointTypeSuffix(s string) string {
 		return s[:len(s)-1]
 	}
 	return s
+}
+
+// outOfRangeIntLiteralDigits returns the decimal digits of an int literal that
+// did not fit in int; text of other literals is returned unchanged.
+func outOfRangeIntLiteralDigits(n *ast.BLangLiteral, text string) string {
+	if n.GetLiteralKind() != ast.LiteralKindInt || !balCommon.HasHexIndicator(text) {
+		return text
+	}
+	val, ok := new(big.Int).SetString(text, 0)
+	if !ok {
+		return text
+	}
+	return val.String()
 }
 
 func parseFloatValue(t typeResolver, strValue string, pos diagnostics.Location) (float64, bool) {

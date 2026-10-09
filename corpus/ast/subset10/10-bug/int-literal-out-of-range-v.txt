@@ -1,0 +1,48 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (value-type float)) (expr
+          (literal 99999999999999999999))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref f))))
+      (var-def
+        (variable g (type
+          (value-type float)) (expr
+          (literal 0x10000000000000000))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref g))))
+      (var-def
+        (variable d (type
+          (value-type decimal)) (expr
+          (literal 99999999999999999999))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref d))))
+      (var-def
+        (variable dh (type
+          (value-type decimal)) (expr
+          (literal 0xFFFFFFFFFFFFFFFFFF))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref dh))))
+      (var-def
+        (variable m (type
+          (value-type int)) (expr
+          (literal -9223372036854775808))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref m))))
+      (var-def
+        (variable n (type
+          (value-type int)) (expr
+          (literal 9223372036854775807))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref n)))))))
