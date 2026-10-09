@@ -64,7 +64,7 @@
       (var-def
         (variable tooBig (type
           (value-type decimal)) (expr
-          (literal 9.223372036854776E+18))))
+          (literal 9223372036854775808))))
       (var-def
         (variable tooBigJson (type
           (builtin-ref-type json)) (expr
