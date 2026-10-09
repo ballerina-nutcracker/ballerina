@@ -1,0 +1,56 @@
+(Client
+  (Client.$resource$get$0
+  )
+  ($remote$fetch
+  )
+)
+(Store
+  (get
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (user-defined-type Store)) (expr
+        (new ()))))
+    (var-def
+      (variable _ (type
+        (user-defined-type Client)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (literal declared))))
+  )
+)
+(useClient
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type string)) (expr
+        (checked-expr
+          (client-resource-access get expr:
+            (simple-var-ref c) name:items computed:
+            (literal 1)
+            (typedesc-expr))))))
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (checked-expr
+          (remote-method-call fetch expr:
+            (simple-var-ref c) (
+            (typedesc-expr)))))))
+  )
+)
+(useStore
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation get expr:
+            (simple-var-ref s) (
+            (literal key)
+            (typedesc-expr)))))))
+  )
+)

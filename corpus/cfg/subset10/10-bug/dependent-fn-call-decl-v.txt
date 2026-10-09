@@ -1,0 +1,32 @@
+(baz
+)
+(explicitTypedesc
+  (bb0 () ()
+    (return
+      (invocation baz (
+        (literal 1)
+        (typedesc-expr
+          (value-type string)))))
+  )
+)
+(inferredTypedesc
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (value-type int)) (expr
+        (invocation baz (
+          (literal 2)
+          (typedesc-expr))))))
+    (return
+      (simple-var-ref value))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal declared))))
+  )
+)
+(untyped
+)

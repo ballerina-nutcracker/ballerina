@@ -1,0 +1,134 @@
+module $anon.. v 0.0.0;
+class Store {
+
+  get(){
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class Client {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  $remote$fetch(){
+  }
+
+  resource get items/[int] Client.$resource$get$0(){
+  }
+}
+useStore(object { function get(string, typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table; public function init() returns nil }) -> nil|error{
+  bb0 {
+    %3 = ConstantLoad key
+    %4 = ConstantLoad typedesc
+    %5 = s.get(%3,%4) -> bb1;
+  }
+  bb1 {
+    %6 = %5 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+  bb3 {
+    %2 = %5;
+    GOTO bb4;
+  }
+  bb4 {
+    _ = %2;
+    return;
+  }
+}
+useClient(client object { public remote function $remote$fetch(typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table; public function init() returns nil }) -> nil|error{
+  bb0 {
+    %3 = ConstantLoad items
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %6 = ConstantLoad typedesc
+    %7 = c->[%3,%5].get(%6) -> bb1;
+  }
+  bb1 {
+    %8 = %7 is error
+    %8 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %7;
+    return;
+  }
+  bb3 {
+    %2 = %7;
+    GOTO bb4;
+  }
+  bb4 {
+    _ = %2;
+    %11 = ConstantLoad typedesc
+    %12 = c.$remote$fetch(%11) -> bb5;
+  }
+  bb5 {
+    %13 = %12 is error
+    %13 ? bb6 : bb7;
+  }
+  bb6 {
+    %0 = %12;
+    return;
+  }
+  bb7 {
+    %10 = %12;
+    GOTO bb8;
+  }
+  bb8 {
+    _ = %10;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Store
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    _ = %3;
+    %6 = newObject $anon/.:Client
+    %7 = %6.init() -> bb5;
+  }
+  bb5 {
+    %9 = %7 is nil
+    %9 ? bb6 : bb7;
+  }
+  bb6 {
+    %8 = %6;
+    GOTO bb8;
+  }
+  bb7 {
+    %8 = %7;
+    GOTO bb8;
+  }
+  bb8 {
+    _ = %8;
+    %11 = ConstantLoad declared
+    %12 = println(%11) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}

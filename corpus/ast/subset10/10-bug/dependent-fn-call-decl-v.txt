@@ -1,0 +1,43 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function untyped (
+    (variable val (type
+      (value-type int)))
+    (variable retTy (type
+      (value-type typedesc)) (expr <>))) (
+    (user-defined-type retTy))
+    (extern-function-body))
+  (function baz (
+    (variable val (type
+      (value-type int)))
+    (variable retTy (type
+      (constrained-type
+        (value-type typedesc)
+        (value-type anydata))) (expr <>))) (
+    (user-defined-type retTy))
+    (extern-function-body))
+  (function explicitTypedesc () (
+    (value-type string))
+    (block-function-body
+      (return
+        (invocation baz (
+          (literal 1)
+          (typedesc-expr
+            (value-type string)))))))
+  (function inferredTypedesc () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (value-type int)) (expr
+          (invocation baz (
+            (literal 2))))))
+      (return
+        (simple-var-ref value))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal declared)))))))
