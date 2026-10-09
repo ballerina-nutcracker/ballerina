@@ -1,0 +1,21 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable k (type
+        (value-type string)) (expr
+        (literal a))))
+    (var-def
+      (variable r (type
+        (user-defined-type R)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))
+          (computed-key-value
+            (simple-var-ref k)
+            (literal 2))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (simple-var-ref r))
+  )
+)

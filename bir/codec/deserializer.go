@@ -658,18 +658,8 @@ func (br *birReader) readInstruction(varMap map[int32]*bir.BIRLocalVariableDcl) 
 		lhsOp := br.readOperand(varMap)
 		var isReadonly bool
 		br.read(&isReadonly)
-		valuesCount := br.readLength()
-		values := make([]bir.MappingConstructorEntry, valuesCount)
-		for k := 0; k < int(valuesCount); k++ {
-			var isKeyValuePair bool
-			br.read(&isKeyValuePair)
-			if !isKeyValuePair {
-				panic("spread entries in mapping constructors are not supported")
-			}
-			keyOp := br.readOperand(varMap)
-			valueOp := br.readOperand(varMap)
-			values[k] = bir.NewMappingConstructorKeyValueEntry(keyOp, valueOp)
-		}
+		values := br.readMappingConstructorEntries(varMap)
+		computedValues := br.readMappingConstructorEntries(varMap)
 		defaultsCount := br.readLength()
 		defaults := make([]bir.MappingConstructorDefaultEntry, defaultsCount)
 		for k := 0; k < int(defaultsCount); k++ {
@@ -683,10 +673,11 @@ func (br *birReader) readInstruction(varMap map[int32]*bir.BIRLocalVariableDcl) 
 				BIRNodeBase: bir.BIRNodeBase{Pos: pos},
 				LhsOp:       lhsOp,
 			},
-			Type:       ty,
-			Values:     values,
-			Defaults:   defaults,
-			IsReadonly: isReadonly,
+			Type:           ty,
+			Values:         values,
+			ComputedValues: computedValues,
+			Defaults:       defaults,
+			IsReadonly:     isReadonly,
 		}
 	case bir.InstructionKindNewError:
 		ty := br.readType()
@@ -1035,6 +1026,22 @@ func (br *birReader) readCallContinuation(varMap map[int32]*bir.BIRLocalVariable
 	}
 	thenBBId := br.readStringCPEntry()
 	return lhsOp, &bir.BIRBasicBlock{ID: thenBBId}
+}
+
+func (br *birReader) readMappingConstructorEntries(varMap map[int32]*bir.BIRLocalVariableDcl) []bir.MappingConstructorEntry {
+	count := br.readLength()
+	entries := make([]bir.MappingConstructorEntry, count)
+	for k := 0; k < int(count); k++ {
+		var isKeyValuePair bool
+		br.read(&isKeyValuePair)
+		if !isKeyValuePair {
+			panic("spread entries in mapping constructors are not supported")
+		}
+		keyOp := br.readOperand(varMap)
+		valueOp := br.readOperand(varMap)
+		entries[k] = bir.NewMappingConstructorKeyValueEntry(keyOp, valueOp)
+	}
+	return entries
 }
 
 func (br *birReader) readOperand(varMap map[int32]*bir.BIRLocalVariableDcl) *bir.BIROperand {

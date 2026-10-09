@@ -1685,10 +1685,14 @@ func (p *PrettyPrinter) printReadonlyFields(names []string) {
 	p.EndNode()
 }
 
-// Mapping key-value field printer: prints as (key-value (key) (value))
+// Mapping key-value field printer: prints as (key-value (key) (value)) or (computed-key-value (key) (value))
 func (p *PrettyPrinter) printMappingKeyValueField(kv *BLangMappingKeyValueField) {
 	p.StartNode()
-	p.PrintString("key-value")
+	if kv.Key != nil && kv.Key.Kind == MappingKeyComputed {
+		p.PrintString("computed-key-value")
+	} else {
+		p.PrintString("key-value")
+	}
 	p.indentLevel++
 	if kv.Key != nil && kv.Key.Expr != nil {
 		p.PrintInner(kv.Key.Expr.(BLangNode))

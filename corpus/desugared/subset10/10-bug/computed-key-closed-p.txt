@@ -1,0 +1,22 @@
+(package
+  (type-definition R
+    (record-type
+      (field a optional
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable k (type
+          (value-type string)) (expr
+          (literal b))))
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (simple-var-ref k)
+              (literal 1))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref r)))))

@@ -309,8 +309,29 @@ func (p *PrettyPrinter) PrintNewArray(array *NewArray) string {
 }
 
 func (p *PrettyPrinter) PrintNewMap(m *NewMap) string {
+	values := p.printMappingConstructorEntries(m.Values)
+	defaults := strings.Builder{}
+	for i, def := range m.Defaults {
+		if i > 0 {
+			defaults.WriteString(", ")
+		}
+		defaults.WriteString(def.FieldName)
+		defaults.WriteString("=")
+		defaults.WriteString(def.FunctionLookupKey)
+	}
+	result := fmt.Sprintf("%s = newMap %s{%s}", p.PrintOperand(*m.LhsOp), p.PrintSemType(m.Type), values)
+	if defaults.Len() > 0 {
+		result += fmt.Sprintf(" defaults{%s}", defaults.String())
+	}
+	if len(m.ComputedValues) > 0 {
+		result += fmt.Sprintf(" computed{%s}", p.printMappingConstructorEntries(m.ComputedValues))
+	}
+	return result
+}
+
+func (p *PrettyPrinter) printMappingConstructorEntries(entries []MappingConstructorEntry) string {
 	values := strings.Builder{}
-	for i, entry := range m.Values {
+	for i, entry := range entries {
 		if i > 0 {
 			values.WriteString(", ")
 		}
@@ -323,19 +344,7 @@ func (p *PrettyPrinter) PrintNewMap(m *NewMap) string {
 			values.WriteString(p.PrintOperand(*entry.ValueOp()))
 		}
 	}
-	defaults := strings.Builder{}
-	for i, def := range m.Defaults {
-		if i > 0 {
-			defaults.WriteString(", ")
-		}
-		defaults.WriteString(def.FieldName)
-		defaults.WriteString("=")
-		defaults.WriteString(def.FunctionLookupKey)
-	}
-	if defaults.Len() > 0 {
-		return fmt.Sprintf("%s = newMap %s{%s} defaults{%s}", p.PrintOperand(*m.LhsOp), p.PrintSemType(m.Type), values.String(), defaults.String())
-	}
-	return fmt.Sprintf("%s = newMap %s{%s}", p.PrintOperand(*m.LhsOp), p.PrintSemType(m.Type), values.String())
+	return values.String()
 }
 
 func (p *PrettyPrinter) PrintNewError(e *NewError) string {

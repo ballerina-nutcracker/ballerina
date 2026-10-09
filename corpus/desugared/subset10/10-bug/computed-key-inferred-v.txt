@@ -1,0 +1,133 @@
+(package
+  (import-package ballerina io (as io))
+  (function isOpenWithIntRest (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (record-type
+            (field b
+              (value-type string))
+            (rest
+              (value-type int)))))))
+  (function isOpenWithIntOrStringRest (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (record-type
+            (field b
+              (value-type string))
+            (rest
+              (union-type
+                (value-type int)
+                (value-type string))))))))
+  (function isClosed (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (record-type
+            (field b
+              (value-type string)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable k (type
+          (value-type string)) (expr
+          (literal a))))
+      (var-def
+        (variable m (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (simple-var-ref k)
+              (literal 1))
+            (key-value
+              (literal b)
+              (literal s))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref m)
+            (literal b))
+          (index-based-access
+            (simple-var-ref m)
+            (simple-var-ref k)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isOpenWithIntRest (
+            (simple-var-ref m))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isClosed (
+            (simple-var-ref m))))))
+      (var-def
+        (variable j (type
+          (value-type string)) (expr
+          (literal c))))
+      (var-def
+        (variable u (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (simple-var-ref k)
+              (literal 1))
+            (key-value
+              (literal b)
+              (literal s))
+            (computed-key-value
+              (simple-var-ref j)
+              (literal t))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isOpenWithIntOrStringRest (
+            (simple-var-ref u)))
+          (invocation isOpenWithIntRest (
+            (simple-var-ref u))))))
+      (var-def
+        (variable n (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (simple-var-ref k)
+              (literal 1))))))
+      (var-def
+        (variable z (type
+          (value-type string)) (expr
+          (literal z))))
+      (assignment
+        (index-based-access
+          (simple-var-ref n)
+          (simple-var-ref z))
+        (literal 42))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref n))))
+      (var-def
+        (variable l (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (simple-var-ref k)
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))))))
+      (var-def
+        (variable li (type
+          (union-type
+            (array-type
+              (value-type int) dimensions: 1 ([]))
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref l)
+            (simple-var-ref k)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref li)))))))

@@ -1,0 +1,80 @@
+(build
+  (bb0 () ()
+    (return
+      (mapping-constructor-expr
+        (computed-key-value
+          (checked-expr
+            (invocation keyOrError (
+              (simple-var-ref bad))))
+          (literal 1))))
+  )
+)
+(key
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal key )
+        (simple-var-ref k))))
+    (return
+      (simple-var-ref k))
+  )
+)
+(keyOrError
+  (bb0 () (bb1 bb2)
+    (simple-var-ref bad)
+  )
+  (bb1 (bb0) ()
+    (return
+      (error-constructor-expr (
+        (literal bad key))))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal z))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (computed-key-value
+            (invocation key (
+              (literal k1)))
+            (invocation val (
+              (literal 1))))
+          (key-value
+            (literal a)
+            (invocation val (
+              (literal 2))))
+          (computed-key-value
+            (invocation key (
+              (literal k2)))
+            (invocation val (
+              (literal 3))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+    (expression-stmt
+      (invocation io println (
+        (invocation build (
+          (literal false))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation build (
+          (literal true))))))
+  )
+)
+(val
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal val )
+        (simple-var-ref v))))
+    (return
+      (simple-var-ref v))
+  )
+)

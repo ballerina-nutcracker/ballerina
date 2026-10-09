@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: inherent type violation: cannot mutate readonly field 'a'
+        at main(computed-key-readonly-field-p.bal:24)

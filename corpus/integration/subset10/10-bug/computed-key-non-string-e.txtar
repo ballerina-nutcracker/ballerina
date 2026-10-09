@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got int
+  --> computed-key-non-string-e.bal:19:34
+   |
+19 |     record {| int[] a?; |} m = {[i]: [1]}; // @error
+   |                                  ^

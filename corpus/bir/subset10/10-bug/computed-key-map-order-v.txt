@@ -1,0 +1,30 @@
+module $anon.. v 0.0.0;
+moduleKey  string;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad b
+    localKey = %1;
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad 2
+    %6 = ConstantLoad c
+    %7 = ConstantLoad d
+    %5 = + %6 %7;
+    %8 = ConstantLoad 3
+    %9 = ConstantLoad e
+    %10 = ConstantLoad 4
+    %11 = newMap {| int... |}{%9=%10} computed{moduleKey=%3, localKey=%4, %5=%8}
+    m = %11;
+    %13 = println(m) -> bb1;
+  }
+  bb1 {
+    %14 = ConstantLoad 5
+    %15 = ConstantLoad name
+    %16 = ConstantLoad x
+    %17 = newMap {| name: string, int... |}{%15=%16} computed{localKey=%14}
+    inferred = %17;
+    %19 = println(inferred) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

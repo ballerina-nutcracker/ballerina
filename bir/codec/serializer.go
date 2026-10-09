@@ -317,15 +317,8 @@ func (bw *birWriter) writeInstruction(buf *bytes.Buffer, instr bir.BIRInstructio
 		bw.writeType(buf, instr.Type)
 		bw.writeOperand(buf, instr.LhsOp)
 		write(buf, instr.IsReadonly)
-		bw.writeLength(buf, len(instr.Values))
-		for _, entry := range instr.Values {
-			write(buf, entry.IsKeyValuePair())
-			if entry.IsKeyValuePair() {
-				kvEntry := entry.(*bir.MappingConstructorKeyValueEntry)
-				bw.writeOperand(buf, kvEntry.KeyOp())
-				bw.writeOperand(buf, kvEntry.ValueOp())
-			}
-		}
+		bw.writeMappingConstructorEntries(buf, instr.Values)
+		bw.writeMappingConstructorEntries(buf, instr.ComputedValues)
 		bw.writeLength(buf, len(instr.Defaults))
 		for _, def := range instr.Defaults {
 			bw.writeStringCPEntry(buf, def.FieldName)
@@ -422,6 +415,18 @@ func (bw *birWriter) writeInstruction(buf *bytes.Buffer, instr bir.BIRInstructio
 		bw.writeOperand(buf, instr.LhsOp)
 	default:
 		panic(fmt.Sprintf("unsupported instruction type: %T", instr))
+	}
+}
+
+func (bw *birWriter) writeMappingConstructorEntries(buf *bytes.Buffer, entries []bir.MappingConstructorEntry) {
+	bw.writeLength(buf, len(entries))
+	for _, entry := range entries {
+		write(buf, entry.IsKeyValuePair())
+		if entry.IsKeyValuePair() {
+			kvEntry := entry.(*bir.MappingConstructorKeyValueEntry)
+			bw.writeOperand(buf, kvEntry.KeyOp())
+			bw.writeOperand(buf, kvEntry.ValueOp())
+		}
 	}
 }
 

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "x"
+  --> computed-key-singleton-e.bal:24:30
+   |
+24 |     R r = {a: 0, b: "", [k]: "x"}; // @error
+   |                              ^^^

@@ -1,0 +1,8 @@
+-- stdout --
+s1
+true
+false
+truefalse
+{"a":1,"z":42}
+[1,2]
+-- stderr --

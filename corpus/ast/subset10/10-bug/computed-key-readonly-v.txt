@@ -1,0 +1,79 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field a readonly
+        (value-type int))
+      (rest
+        (value-type int))))
+  (function isReadonly (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type readonly)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable k (type
+          (value-type string)) (expr
+          (literal a))))
+      (var-def
+        (variable m (type
+          (intersection-type
+            (value-type readonly)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (simple-var-ref k)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref m)
+          (invocation isReadonly (
+            (simple-var-ref m))))))
+      (var-def
+        (variable ra (type
+          (intersection-type
+            (value-type readonly)
+            (constrained-type
+              (builtin-ref-type map)
+              (array-type
+                (value-type int) dimensions: 1 ([]))))) (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (simple-var-ref k)
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref ra)
+              (simple-var-ref k)))))))
+      (var-def
+        (variable r (type
+          (intersection-type
+            (value-type readonly)
+            (user-defined-type R))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))
+            (computed-key-value
+              (simple-var-ref k)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref r))
+          (invocation isReadonly (
+            (simple-var-ref r)))))))))
