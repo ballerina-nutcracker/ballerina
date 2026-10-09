@@ -40,6 +40,8 @@ type basicBlock struct {
 	children []int
 	// Nodes inside this block.
 	nodes []ast.Node
+	// true if this block ends by panicking (panic statement or a checkpanic that always panics)
+	panics bool
 }
 
 type bbRef int
@@ -343,6 +345,8 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 	case *ast.BLangExpressionStmt:
 		analyzer.addNode(curBB, stmt)
 		if expr, ok := s.Expr.(ast.BLangExpression); ok && alwaysTerminatesViaCheck(analyzer.tyCtx, expr) {
+			_, isCheckPanic := expr.(*ast.BLangCheckPanickedExpr)
+			analyzer.bbs[curBB].panics = isCheckPanic
 			return terminatedEffect()
 		}
 		return continueEffect(curBB)
@@ -394,6 +398,7 @@ func (analyzer *functionControlFlowAnalyzer) analyzeReturn(curBB bbRef, stmt *as
 
 func (analyzer *functionControlFlowAnalyzer) analyzePanic(curBB bbRef, stmt *ast.BLangPanic) stmtEffect {
 	analyzer.addNode(curBB, stmt)
+	analyzer.bbs[curBB].panics = true
 	return terminatedEffect()
 }
 

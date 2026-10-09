@@ -1,0 +1,29 @@
+(package
+  (import-package ballerina io (as io))
+  (variable value (type
+    (value-type int)))
+  (variable flag (type
+    (value-type boolean)))
+  (function init () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (simple-var-ref flag)
+        (literal true))
+      (if
+        (unary-expr !
+          (simple-var-ref flag))
+        (block-stmt
+          (panic
+            (error-constructor-expr (
+              (literal cannot initialize))))) ())
+      (block-stmt
+        (assignment
+          (simple-var-ref value)
+          (literal 2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref value)))))))

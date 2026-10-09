@@ -1,0 +1,8 @@
+module $anon.. v 0.0.0;
+flag  boolean;
+value  int;
+main() -> nil{
+  bb0 {
+    return;
+  }
+}
