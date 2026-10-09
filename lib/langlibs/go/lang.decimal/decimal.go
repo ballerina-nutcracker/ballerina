@@ -17,6 +17,8 @@
 package decimalruntime
 
 import (
+	"regexp"
+
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -27,6 +29,8 @@ const (
 	orgName    = "ballerina"
 	moduleName = "lang.decimal"
 )
+
+var decimalFloatingPointStringPattern = regexp.MustCompile(`^[+-]?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$`)
 
 func initDecimalModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "sum", decimalSum)
@@ -95,7 +99,11 @@ func decimalCeiling(_ *extern.Context, args []values.BalValue) (values.BalValue,
 }
 
 func decimalFromString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	n, err := decimal.FromLiteral(args[0].(string))
+	s := args[0].(string)
+	if !decimalFloatingPointStringPattern.MatchString(s) {
+		return values.NewErrorWithMessage("invalid decimal floating point string: " + s), nil
+	}
+	n, err := decimal.FromLiteral(s)
 	if err != nil {
 		return values.NewErrorWithMessage(err.Error()), nil
 	}
