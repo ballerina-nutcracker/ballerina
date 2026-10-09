@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:19:5
+   |
+19 |     _ += 1; // @error
+   |     ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:21:10
+   |
+21 |     x += _; // @error
+   |          ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:22:13
+   |
+22 |     int y = _; // @error
+   |             ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:23:9
+   |
+23 |     foo(_); // @error
+   |         ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:24:13
+   |
+24 |     int z = '_; // @error
+   |             ^^

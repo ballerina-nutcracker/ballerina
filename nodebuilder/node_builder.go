@@ -959,6 +959,12 @@ func (n *nodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, to
 		}
 		return n.badIdentifier(token)
 	}
+	if isWildcardIdentifierToken(token) {
+		if n.mode != nodeBuilderModeRecover {
+			n.cx.SyntaxError("'_' is a keyword, and may not be used as an identifier", pos)
+		}
+		return n.badIdentifier(token)
+	}
 	if token.IsMissing() || isUnsupportedIdentifierToken(token) {
 		if n.mode != nodeBuilderModeRecover {
 			n.cx.InternalError("invalid identifier", pos)
@@ -971,7 +977,11 @@ func (n *nodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, to
 }
 
 func isUnsupportedIdentifierToken(token st.Token) bool {
-	return token.Text() == "'" || token.Text() == "_" || token.Text() == "'_"
+	return token.Text() == "'"
+}
+
+func isWildcardIdentifierToken(token st.Token) bool {
+	return !token.IsMissing() && (token.Text() == "_" || token.Text() == "'_")
 }
 
 func (n *nodeBuilder) createIdentifierNodeFromModulePrefixToken(pos diagnostics.Location, token st.Token) ast.IdentifierNode {
