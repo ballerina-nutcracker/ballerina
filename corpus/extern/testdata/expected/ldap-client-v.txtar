@@ -1,0 +1,17 @@
+-- stdout --
+true
+SUCCESS
+Doe
+John Doe
+SUCCESS
+true
+false
+SUCCESS
+true
+1
+John Doe
+SUCCESS
+SUCCESS
+true
+false
+-- stderr --
