@@ -4326,9 +4326,9 @@ func resolveNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpression, e
 }
 
 func resolveObjectNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpression, determinedTy semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
-	// A new expression inside a trial is an argument of an outer new expression, whose dependencies already include
-	// these arguments.
-	if !t.isEphemeral() && !resolveNewArgumentDependencies(t, e.ArgsExprs) {
+	// An expression inside a trial is part of the root of an outer trial, whose dependencies were resolved before that
+	// trial started.
+	if !t.isEphemeral() && !resolveTrialDependencies(t, e.ArgsExprs) {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	candidates, ok := constructibleAlternatives(t, e, determinedTy)
@@ -4460,12 +4460,12 @@ func resolveObjectInitArgs(t typeResolver, chain *binding, e *ast.BLangNewExpres
 	return args, semtypes.FunctionReturnType(cx, alternative.InitFunctionType(), argList), chain, true
 }
 
-type newArgumentDependencyResolver struct {
+type trialDependencyResolver struct {
 	t  typeResolver
 	ok bool
 }
 
-func (r *newArgumentDependencyResolver) Visit(node ast.BLangNode) ast.Visitor {
+func (r *trialDependencyResolver) Visit(node ast.BLangNode) ast.Visitor {
 	if node == nil || !r.ok {
 		return nil
 	}
@@ -4478,12 +4478,12 @@ func (r *newArgumentDependencyResolver) Visit(node ast.BLangNode) ast.Visitor {
 	return r
 }
 
-func (r *newArgumentDependencyResolver) VisitTypeData(_ *ast.TypeData) ast.Visitor { return r }
+func (r *trialDependencyResolver) VisitTypeData(_ *ast.TypeData) ast.Visitor { return r }
 
-func resolveNewArgumentDependencies(t typeResolver, args []ast.BLangExpression) bool {
-	resolver := &newArgumentDependencyResolver{t: t, ok: true}
-	for _, arg := range args {
-		ast.Walk(resolver, arg)
+func resolveTrialDependencies(t typeResolver, roots []ast.BLangExpression) bool {
+	resolver := &trialDependencyResolver{t: t, ok: true}
+	for _, root := range roots {
+		ast.Walk(resolver, root)
 		if !resolver.ok {
 			return false
 		}
