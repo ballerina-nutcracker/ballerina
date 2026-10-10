@@ -1,0 +1,32 @@
+(abort
+  (bb0 () ()
+    (var-def
+      (variable e (type
+        (error-type)) (expr
+        (error-constructor-expr (
+          (simple-var-ref msg))))))
+    (expression-stmt
+      (check-panicked-expr
+        (simple-var-ref e)))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable ok (type
+        (value-type boolean)) (expr
+        (literal true))))
+    (unary-expr !
+      (simple-var-ref ok))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation abort (
+        (literal unreachable))))
+  )
+  (bb2 (bb1 bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (literal done))))
+  )
+)

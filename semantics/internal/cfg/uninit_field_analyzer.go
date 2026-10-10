@@ -152,7 +152,7 @@ func (a *uninitAnalyzer) analyzeBlock(bb *basicBlock, state *initState) *initSta
 	return state
 }
 
-// uninitializedNames returns the names that are not initialized on all terminal paths.
+// uninitializedNames returns the names that are not initialized on all terminal paths that do not panic.
 func (a *uninitAnalyzer) uninitializedNames() []string {
 	var result []string
 	for _, name := range a.names {
@@ -165,7 +165,7 @@ func (a *uninitAnalyzer) uninitializedNames() []string {
 
 func (a *uninitAnalyzer) isInitializedAtAllTerminals(name string) bool {
 	for _, bb := range a.fcfg.bbs {
-		if !bb.isTerminal() || !bb.isReachable() {
+		if !bb.isTerminal() || !bb.isReachable() || bb.panics {
 			continue
 		}
 		if !a.states[bb.id].exit.isInitialized(name) {

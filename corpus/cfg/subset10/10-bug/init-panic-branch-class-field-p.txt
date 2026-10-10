@@ -1,0 +1,28 @@
+(Holder
+  (init
+    (bb0 () (bb1 bb3)
+      (simple-var-ref flag)
+    )
+    (bb1 (bb0) (bb2)
+      (assignment
+        (field-based-access x
+          (simple-var-ref self))
+        (literal 1))
+    )
+    (bb2 (bb1) ())
+    (bb3 (bb0) ()
+      (panic
+        (error-constructor-expr (
+          (literal cannot initialize))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (user-defined-type Holder)) (expr
+        (new (
+          (literal false))))))
+  )
+)

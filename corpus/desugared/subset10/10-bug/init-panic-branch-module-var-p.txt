@@ -1,0 +1,24 @@
+(package
+  (variable value (type
+    (value-type int)))
+  (variable flag (type
+    (value-type boolean)))
+  (function init () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (simple-var-ref flag)
+        (literal false))
+      (if
+        (simple-var-ref flag)
+        (block-stmt
+          (assignment
+            (simple-var-ref value)
+            (literal 1))) (
+        (block-stmt
+          (panic
+            (error-constructor-expr (
+              (literal cannot initialize)))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

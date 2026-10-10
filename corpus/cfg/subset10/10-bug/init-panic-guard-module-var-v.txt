@@ -1,0 +1,23 @@
+(init
+  (bb0 () (bb1 bb2)
+    (unary-expr !
+      (simple-var-ref flag))
+  )
+  (bb1 (bb0) ()
+    (panic
+      (error-constructor-expr (
+        (literal cannot initialize))))
+  )
+  (bb2 (bb0) ()
+    (assignment
+      (simple-var-ref value)
+      (literal 2))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref value))))
+  )
+)

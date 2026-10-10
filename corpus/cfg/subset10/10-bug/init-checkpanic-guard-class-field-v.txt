@@ -1,0 +1,38 @@
+(Holder
+  (init
+    (bb0 () (bb1 bb2)
+      (binary-expr <
+        (simple-var-ref v)
+        (literal 0))
+    )
+    (bb1 (bb0) ()
+      (var-def
+        (variable e (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal negative))))))
+      (expression-stmt
+        (check-panicked-expr
+          (simple-var-ref e)))
+    )
+    (bb2 (bb0) ()
+      (assignment
+        (field-based-access x
+          (simple-var-ref self))
+        (simple-var-ref v))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable h (type
+        (user-defined-type Holder)) (expr
+        (new (
+          (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref h)))))
+  )
+)

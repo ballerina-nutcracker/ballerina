@@ -1,0 +1,28 @@
+(init
+  (bb0 () (bb2 bb3 bb4)
+    (simple-var-ref mode)
+  )
+  (bb1 (bb2 bb3) ())
+  (bb2 (bb0) (bb1)
+    (assignment
+      (simple-var-ref value)
+      (literal 10))
+  )
+  (bb3 (bb0) (bb1)
+    (assignment
+      (simple-var-ref value)
+      (literal 20))
+  )
+  (bb4 (bb0) ()
+    (panic
+      (error-constructor-expr (
+        (literal unknown mode))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref value))))
+  )
+)

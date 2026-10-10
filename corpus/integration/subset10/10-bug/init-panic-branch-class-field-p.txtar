@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: cannot initialize
+        at Holder.init(init-panic-branch-class-field-p.bal:25)
+           main(init-panic-branch-class-field-p.bal:31)
