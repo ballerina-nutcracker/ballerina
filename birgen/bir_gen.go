@@ -1557,14 +1557,19 @@ func mappingConstructorExpression(ctx context, curBB *bir.BIRBasicBlock, expr *a
 			return expressionEffect{}, false
 		}
 	}
+	defaults := mappingConstructorDefaults(ctx, expr.FieldDefaults)
+	return mappingConstructorExpressionInner(ctx, curBB, expr.GetDeterminedType(), fields, defaults, ctx.function().loc(expr.GetPosition()))
+}
+
+func mappingConstructorDefaults(ctx context, fieldDefaults []model.FieldDefault) []bir.MappingConstructorDefaultEntry {
 	var defaults []bir.MappingConstructorDefaultEntry
-	for _, fd := range expr.FieldDefaults {
+	for _, fd := range fieldDefaults {
 		defaults = append(defaults, bir.MappingConstructorDefaultEntry{
 			FieldName:         fd.FieldName,
 			FunctionLookupKey: buildFunctionLookupKeyFromSymbol(ctx.function().pkgCtx, fd.FnRef),
 		})
 	}
-	return mappingConstructorExpressionInner(ctx, curBB, expr.GetDeterminedType(), fields, defaults, ctx.function().loc(expr.GetPosition()))
+	return defaults
 }
 
 func mappingKeyName(ctx context, key *ast.BLangMappingKey) (string, bool) {
@@ -1628,12 +1633,13 @@ func errorConstructorExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast
 
 	// Detail from named args
 	var detailOp *bir.BIROperand
-	if len(expr.NamedArgs) > 0 {
+	if len(expr.NamedArgs) > 0 || len(expr.FieldDefaults) > 0 {
 		var fields []mappingField
 		for _, namedArg := range expr.NamedArgs {
 			fields = append(fields, mappingField{key: namedArg.Name.GetValue(), value: namedArg.Expr})
 		}
-		detailEffect, ok := mappingConstructorExpressionInner(ctx, curBB, semtypes.Mapping, fields, nil, ctx.function().loc(expr.GetPosition()))
+		defaults := mappingConstructorDefaults(ctx, expr.FieldDefaults)
+		detailEffect, ok := mappingConstructorExpressionInner(ctx, curBB, semtypes.Mapping, fields, defaults, ctx.function().loc(expr.GetPosition()))
 		if !ok {
 			return detailEffect, false
 		}

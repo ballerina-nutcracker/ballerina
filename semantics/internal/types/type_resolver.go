@@ -5776,6 +5776,7 @@ func resolveErrorConstructorExpr(t typeResolver, chain *binding, expr *ast.BLang
 	}
 
 	expr.SetDeterminedType(errorTy)
+	expr.FieldDefaults = errorDetailDefaults(t, errorTy, expr.NamedArgs)
 
 	for _, arg := range expr.PositionalArgs {
 		if _, ok := resolveActionOrExpression(t, chain, arg, semtypes.SemType{}); !ok {
@@ -5788,6 +5789,62 @@ func resolveErrorConstructorExpr(t typeResolver, chain *binding, expr *ast.BLang
 		}
 	}
 	return errorTy, defaultExpressionEffect(chain), true
+}
+
+// errorDetailDefaults returns the defaults of the detail record fields that namedArgs omit. It
+// returns nil when more than one intersected record would supply such defaults.
+func errorDetailDefaults(t typeResolver, errorTy semtypes.SemType, namedArgs []ast.BLangNamedArgsExpression) []model.FieldDefault {
+	detailTy, ok := semtypes.ErrorDetailType(t.typeContext(), errorTy)
+	if !ok {
+		return nil
+	}
+	alts := semtypes.MappingAlternatives(t.typeContext(), detailTy)
+	if len(alts) != 1 {
+		return nil
+	}
+	provided := make(map[string]bool, len(namedArgs))
+	for _, namedArg := range namedArgs {
+		provided[namedArg.Name.GetValue()] = true
+	}
+	var recordAtom *semtypes.MappingAtomicType
+	var defaults []model.FieldDefault
+	for _, atom := range alts[0].PositiveAtoms() {
+		atomDefaults, _ := t.mappingDefaults(atom)
+		omitted := omittedFieldDefaults(atomDefaults, provided)
+		if len(omitted) == 0 {
+			continue
+		}
+		if recordAtom != nil {
+			return nil
+		}
+		recordAtom, defaults = atom, omitted
+	}
+	if recordAtom == nil || !defaultsFitDetail(t.typeContext(), recordAtom, alts[0].Atomic(), defaults) {
+		return nil
+	}
+	return defaults
+}
+
+func omittedFieldDefaults(defaults []model.FieldDefault, provided map[string]bool) []model.FieldDefault {
+	var omitted []model.FieldDefault
+	for _, fd := range defaults {
+		if !provided[fd.FieldName] {
+			omitted = append(omitted, fd)
+		}
+	}
+	return omitted
+}
+
+// defaultsFitDetail reports whether every default declared by recordAtom produces a value of the
+// corresponding field type in detailAtom, which other intersected atoms may have narrowed.
+func defaultsFitDetail(cx semtypes.Context, recordAtom, detailAtom *semtypes.MappingAtomicType, defaults []model.FieldDefault) bool {
+	for _, fd := range defaults {
+		defaultTy := semtypes.Intersect(recordAtom.FieldInnerVal(fd.FieldName), semtypes.ValReadonly)
+		if !semtypes.IsSubtype(cx, defaultTy, detailAtom.FieldInnerVal(fd.FieldName)) {
+			return false
+		}
+	}
+	return true
 }
 
 func resolveUnaryExpr(t typeResolver, chain *binding, expr *ast.BLangUnaryExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
