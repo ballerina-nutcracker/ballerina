@@ -72,9 +72,9 @@ class Surviving {
       (value-type int)
       (expr-function-body
         (invocation useMembers ())))
-    (bad-top-level)
-    (bad-top-level)
-    (bad-top-level))
+    (bad-top-level field)
+    (bad-top-level function)
+    (bad-top-level function))
   (function independent () (
     (value-type null))
     (block-function-body)))

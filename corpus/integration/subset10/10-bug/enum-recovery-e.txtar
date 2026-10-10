@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: missing expression
+  --> enum-recovery-e.bal:19:22
+   |
+19 | enum Colour { R, G = } // @error
+   |

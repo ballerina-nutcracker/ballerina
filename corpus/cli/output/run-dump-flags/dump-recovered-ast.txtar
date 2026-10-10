@@ -2,7 +2,7 @@
 -- stderr --
 (compilation-unit (position 1:1 1:1)
 (package-id $anon . 0.0.0)
-  (bad-top-level (position 1:1 18:1))
+  (bad-top-level variable (position 1:1 18:1))
   (function (position 18:1 22:1) main () (
     (value-type (position <built-in>) null))
     (block-function-body (position 19:17 22:1)

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: missing enum member
+  --> enum-empty-e.bal:17:1
+   |
+17 | enum E {} // @error
+   | ^^^^^^^^^

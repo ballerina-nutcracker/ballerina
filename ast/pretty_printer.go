@@ -303,7 +303,7 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	case *BLangXMLNS:
 		p.printXMLNS(t)
 	case *BLangBadTopLevelNode:
-		p.printBadNode("bad-top-level")
+		p.printBadNode("bad-top-level " + t.GetRecoveredKind().String())
 	case *BLangBadStmt:
 		p.printBadNode("bad-stmt")
 	case *BLangBadExprOrAction:
