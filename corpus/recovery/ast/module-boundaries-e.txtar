@@ -1,0 +1,55 @@
+-- module-boundaries-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+int a = 1 + ; // @error
+int b = mod:_; // @error
+mod:_ c = 1; // @error
+const d = 1 + ; // @error
+const mod:_ e = 1; // @error
+type A mod:_; // @error
+type B mod:; // @error
+const _ = 1; // @error
+@mod:_ int annotated = 1; // @error
+@mod:_{} function attached() {} // @error
+function valid() {}
+-- ast --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (variable (position 1:1 18:1) a (type
+    (value-type (position 1:1 17:5) int)) (expr
+    (bad-expr-or-action (position 17:9 17:13))))
+  (variable (position 18:1 19:1) b (type
+    (value-type (position 18:1 18:5) int)) (expr
+    (bad-expr-or-action (position 18:9 18:14))))
+  (variable (position 19:1 20:1) c (type
+    (bad-type (position 19:1 19:7))) (expr
+    (literal (position 19:11 19:12) 1)))
+  (const (position 20:1 21:1) d () (
+    (bad-expr-or-action (position 20:11 20:15))))
+  (const (position 21:1 22:1) e (
+    (bad-type (position 21:7 21:13))) (
+    (literal (position 21:17 21:18) 1)))
+  (type-definition (position 22:1 23:1) A
+    (bad-type (position 22:8 22:13)))
+  (type-definition (position 23:1 24:1) B
+    (bad-type (position 23:8 23:12)))
+  (bad-top-level (position 24:1 25:1))
+  (bad-top-level (position 25:1 26:1))
+  (bad-top-level (position 26:1 27:1))
+  (function (position 27:1 28:1) valid () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 27:18 28:1))))

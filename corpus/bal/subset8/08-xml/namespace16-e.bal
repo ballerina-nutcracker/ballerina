@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string FIRST = SECOND; // @error
-const string SECOND = FIRST;
+const string FIRST = SECOND;
+const string SECOND = FIRST; // @error
 
 xmlns FIRST as cyclic;

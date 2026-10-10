@@ -1,0 +1,121 @@
+-- lambda-explicit-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function consume(int value) returns int => value;
+function consumeFunction(function() returns int callable) returns int => callable();
+
+function explicitBodies() {
+    int|string captured = 1;
+    if captured is int {
+        var broken = function(int x) returns int => captured + x + missing; // @error
+        consume(broken(2)); // @error expression value must be assigned
+        consume(captured); // @error capture effect survives body failure
+        var block = function(int x) returns int {
+            consume(missingBlock); // @error
+            return x;
+        };
+        consume(block(3)); // @error expression value must be assigned
+        var complete = function(int x) returns int => x + 1;
+        consume(complete(4)); // @error expression value must be assigned
+    }
+}
+-- ast --
+(package
+  (function consume (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function consumeFunction (
+    (variable callable (type
+      (function-type () (
+        (value-type int)))))) (
+    (value-type int))
+    (expr-function-body
+      (invocation callable ())))
+  (function explicitBodies () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable captured (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 1))))
+      (if
+        (type-test-expr is
+          (simple-var-ref captured)
+          (value-type int))
+        (block-stmt
+          (var-def
+            (variable broken (expr
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable x (type
+                    (value-type int)))) (
+                  (value-type int))
+                  (expr-function-body
+                    (binary-expr +
+                      (binary-expr +
+                        (simple-var-ref captured)
+                        (simple-var-ref x))
+                      (simple-var-ref missing))))))))
+          (expression-stmt
+            (invocation consume (
+              (invocation broken (
+                (literal 2))))))
+          (expression-stmt
+            (invocation consume (
+              (simple-var-ref captured))))
+          (var-def
+            (variable block (expr
+              (lambda
+                (function $anonFunc$_1 (
+                  (variable x (type
+                    (value-type int)))) (
+                  (value-type int))
+                  (block-function-body
+                    (expression-stmt
+                      (invocation consume (
+                        (simple-var-ref missingBlock))))
+                    (return
+                      (simple-var-ref x))))))))
+          (expression-stmt
+            (invocation consume (
+              (invocation block (
+                (literal 3))))))
+          (var-def
+            (variable complete (expr
+              (lambda
+                (function $anonFunc$_2 (
+                  (variable x (type
+                    (value-type int)))) (
+                  (value-type int))
+                  (expr-function-body
+                    (binary-expr +
+                      (simple-var-ref x)
+                      (literal 1))))))))
+          (expression-stmt
+            (invocation consume (
+              (invocation complete (
+                (literal 4))))))) ())
+      (block-stmt))))
+(lambda-types
+  ($anonFunc$_0 [callable=function(int) returns int] [function=never] [name=never] [expression-body=unresolved])
+  ($anonFunc$_1 [callable=function(int) returns int] [function=never] [name=never])
+  ($anonFunc$_2 [callable=function(int) returns int] [function=never] [name=never] [expression-body=never]))

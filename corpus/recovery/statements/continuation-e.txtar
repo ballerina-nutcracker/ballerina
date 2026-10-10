@@ -1,0 +1,228 @@
+-- continuation-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function brokenBody() returns int {
+    int bad = ; // @error
+    int '_ = 1; // @error bad statement
+    int| malformedType = 1; // @error
+    int unknown = absent + 1; // @error
+    int invocation = probe(absentArgument); // @error
+    unknown = 2;
+    var unavailable = absentInferred; // @error
+    int dependent = unavailable + 1; // @error unused dependent
+    { int nested = missing; probe("inner"); } // @error
+    if (true && ) { probe("skippedBad"); } // @error
+    if missingCondition { probe("skipped"); } // @error
+    if true { int badInner = ; probe("innerIf"); } // @error
+    while missingLoop { probe("skipped"); } // @error
+    foreach var item in missingCollection { probe("skipped"); } // @error
+    foreach Unknown item in [1] { probe("skipped"); } // @error
+    match missingMatch { _ => { probe("skipped"); } } // @error
+    match 1 { missingPattern => { probe("skipped"); } } // @error
+    match 1 { _ if missingGuard => { probe("skipped"); } } // @error
+    probe("outer"); // @error later outer sibling resolved
+    int later = 4;
+    return later;
+}
+function probe(int value) returns int => value;
+function unavailableSignature(Unknown value) returns int { // @error
+    probe("signatureSkipped");
+    return 1;
+}
+class Survivor {
+    function method() returns int {
+        int bad = ; // @error
+        return 5;
+    }
+}
+function callers(Survivor survivor) returns int {
+    int named = brokenBody();
+    int method = survivor.method();
+    return named + method;
+}
+-- ast --
+(package
+  (class-definition Survivor
+    (function method () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable bad (type
+            (value-type int)) (expr
+            (bad-expr-or-action))))
+        (return
+          (literal 5)))))
+  (function brokenBody () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (bad-expr-or-action))))
+      (bad-stmt)
+      (bad-stmt)
+      (var-def
+        (variable unknown (type
+          (value-type int)) (expr
+          (binary-expr +
+            (simple-var-ref absent)
+            (literal 1)))))
+      (var-def
+        (variable invocation (type
+          (value-type int)) (expr
+          (invocation probe (
+            (simple-var-ref absentArgument))))))
+      (assignment
+        (simple-var-ref unknown)
+        (literal 2))
+      (var-def
+        (variable unavailable (expr
+          (simple-var-ref absentInferred))))
+      (var-def
+        (variable dependent (type
+          (value-type int)) (expr
+          (binary-expr +
+            (simple-var-ref unavailable)
+            (literal 1)))))
+      (block-stmt
+        (var-def
+          (variable nested (type
+            (value-type int)) (expr
+            (simple-var-ref missing))))
+        (expression-stmt
+          (invocation probe (
+            (literal inner)))))
+      (if
+        (group-expr
+          (bad-expr-or-action))
+        (block-stmt
+          (expression-stmt
+            (invocation probe (
+              (literal skippedBad))))) ())
+      (block-stmt
+        (if
+          (simple-var-ref missingCondition)
+          (block-stmt
+            (expression-stmt
+              (invocation probe (
+                (literal skipped))))) ())
+        (block-stmt
+          (if
+            (literal true)
+            (block-stmt
+              (var-def
+                (variable badInner (type
+                  (value-type int)) (expr
+                  (bad-expr-or-action))))
+              (expression-stmt
+                (invocation probe (
+                  (literal innerIf))))) ())
+          (block-stmt
+            (while
+              (simple-var-ref missingLoop)
+              (block-stmt
+                (expression-stmt
+                  (invocation probe (
+                    (literal skipped))))))
+            (foreach
+              (var-def
+                (variable item))
+              (simple-var-ref missingCollection)
+              (block-stmt
+                (expression-stmt
+                  (invocation probe (
+                    (literal skipped))))))
+            (foreach
+              (var-def
+                (variable item (type
+                  (user-defined-type Unknown))))
+              (list-constructor-expr
+                (literal 1))
+              (block-stmt
+                (expression-stmt
+                  (invocation probe (
+                    (literal skipped))))))
+            (match
+              (simple-var-ref missingMatch)
+              (match-clause
+                (wildcard-match-pattern)
+                (block-stmt
+                  (expression-stmt
+                    (invocation probe (
+                      (literal skipped)))))))
+            (match
+              (literal 1)
+              (match-clause
+                (const-pattern
+                  (simple-var-ref missingPattern))
+                (block-stmt
+                  (expression-stmt
+                    (invocation probe (
+                      (literal skipped)))))))
+            (match
+              (literal 1)
+              (match-clause
+                (wildcard-match-pattern)
+                (match-guard
+                  (simple-var-ref missingGuard))
+                (block-stmt
+                  (expression-stmt
+                    (invocation probe (
+                      (literal skipped)))))))
+            (expression-stmt
+              (invocation probe (
+                (literal outer))))
+            (var-def
+              (variable later (type
+                (value-type int)) (expr
+                (literal 4))))
+            (return
+              (simple-var-ref later)))))))
+  (function probe (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function unavailableSignature (
+    (variable value (type
+      (user-defined-type Unknown)))) (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation probe (
+          (literal signatureSkipped))))
+      (return
+        (literal 1))))
+  (function callers (
+    (variable survivor (type
+      (user-defined-type Survivor)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable named (type
+          (value-type int)) (expr
+          (invocation brokenBody ()))))
+      (var-def
+        (variable method (type
+          (value-type int)) (expr
+          (invocation method expr:
+            (simple-var-ref survivor) ()))))
+      (return
+        (binary-expr +
+          (simple-var-ref named)
+          (simple-var-ref method))))))

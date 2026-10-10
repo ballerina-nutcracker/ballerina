@@ -310,8 +310,6 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printBadNode("bad-expr-or-action")
 	case *BLangBadTypeNode:
 		p.printBadNode("bad-type")
-	case *BLangBadIdentifier:
-		p.printBadNode("bad-identifier")
 	default:
 		if p.Fallback != nil {
 			p.Fallback(p, node)
@@ -427,6 +425,9 @@ func (p *PrettyPrinter) printPackage(node *BLangPackage) {
 	})
 	for _, function := range sortedFunctions {
 		p.PrintInner(function)
+	}
+	for _, badNode := range node.BadTopLevelNodes {
+		p.PrintInner(badNode)
 	}
 	p.indentLevel--
 	p.EndNode()
@@ -809,9 +810,6 @@ func (p *PrettyPrinter) printVarRef(node *BLangVarRef) {
 }
 
 func printableIdentifierValue(identifier IdentifierNode) string {
-	if _, ok := identifier.(*BLangBadIdentifier); ok {
-		return "<BAD>"
-	}
 	return identifier.GetValue()
 }
 
@@ -2349,6 +2347,9 @@ func (p *PrettyPrinter) printClassDefinition(node *BLangClassDefinition) {
 	for _, rm := range node.ResourceMethods {
 		p.PrintInner(rm)
 	}
+	for _, badNode := range node.BadTopLevelNodes {
+		p.PrintInner(badNode)
+	}
 	p.indentLevel--
 	p.EndNode()
 }
@@ -2401,6 +2402,9 @@ func (p *PrettyPrinter) printService(node *BLangService) {
 	}
 	for _, rm := range node.ResourceMethods {
 		p.PrintInner(rm)
+	}
+	for _, badNode := range node.BadTopLevelNodes {
+		p.PrintInner(badNode)
 	}
 	p.indentLevel--
 	p.EndNode()

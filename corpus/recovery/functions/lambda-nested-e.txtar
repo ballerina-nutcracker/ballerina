@@ -1,0 +1,110 @@
+-- lambda-nested-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function consume(int value) returns int => value;
+function consumeFunction(function() returns int callable) returns int => callable();
+
+function nestedBodies() {
+    int|string before = 1;
+    int|string after = 2;
+    if before is int {
+        if after is int {
+            var enclosing = function() returns int {
+                consumeFunction(function() returns int => before + missingNested); // @error
+                consume(after); // @error capture after nested failure in enclosing context
+                return 1;
+            };
+            consume(enclosing()); // @error expression value must be assigned
+            consume(before); // @error nested capture propagated
+            consume(after); // @error enclosing capture context restored
+        }
+    }
+}
+-- ast --
+(package
+  (function consume (
+    (variable value (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref value)))
+  (function consumeFunction (
+    (variable callable (type
+      (function-type () (
+        (value-type int)))))) (
+    (value-type int))
+    (expr-function-body
+      (invocation callable ())))
+  (function nestedBodies () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable before (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 1))))
+      (var-def
+        (variable after (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 2))))
+      (if
+        (type-test-expr is
+          (simple-var-ref before)
+          (value-type int))
+        (block-stmt
+          (if
+            (type-test-expr is
+              (simple-var-ref after)
+              (value-type int))
+            (block-stmt
+              (var-def
+                (variable enclosing (expr
+                  (lambda
+                    (function $anonFunc$_0 () (
+                      (value-type int))
+                      (block-function-body
+                        (expression-stmt
+                          (invocation consumeFunction (
+                            (lambda
+                              (function $anonFunc$_1 () (
+                                (value-type int))
+                                (expr-function-body
+                                  (binary-expr +
+                                    (simple-var-ref before)
+                                    (simple-var-ref missingNested))))))))
+                        (expression-stmt
+                          (invocation consume (
+                            (simple-var-ref after))))
+                        (return
+                          (literal 1))))))))
+              (expression-stmt
+                (invocation consume (
+                  (invocation enclosing ()))))
+              (expression-stmt
+                (invocation consume (
+                  (simple-var-ref before))))
+              (expression-stmt
+                (invocation consume (
+                  (simple-var-ref after))))) ())
+          (block-stmt)) ())
+      (block-stmt))))
+(lambda-types
+  ($anonFunc$_0 [callable=function() returns int] [function=never] [name=never])
+  ($anonFunc$_1 [callable=function() returns int] [function=never] [name=never] [expression-body=unresolved]))

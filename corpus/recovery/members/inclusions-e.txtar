@@ -1,0 +1,113 @@
+-- inclusions-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+type ObjectBase object {
+    int inheritedValue;
+};
+type RecordBase record {
+    int inheritedValue;
+};
+type NotStructured int;
+
+class MixedClass {
+    *MissingClassBase; // @error
+    *NotStructured; // @error
+    *ObjectBase;
+    function read() returns int => inheritedValue + missingClassReadValue; // @error
+}
+type MixedObject object {
+    *MissingObjectBase; // @error
+    *NotStructured; // @error
+    *ObjectBase;
+    int localValue;
+};
+class ObjectConsumer {
+    *MixedObject;
+    function read() returns int => inheritedValue + localValue;
+}
+type MixedRecord record {
+    *MissingRecordBase; // @error
+    *NotStructured; // @error
+    *RecordBase;
+    int localValue;
+};
+function readClass(MixedClass value) returns int => value.read();
+function readObject(MixedObject value) returns int => value.inheritedValue;
+function readRecord(MixedRecord value) returns int => value.inheritedValue;
+function readConsumer(ObjectConsumer value) returns int => value.read();
+-- ast --
+(package
+  (type-definition ObjectBase
+    (object-type
+      (field inheritedValue
+        (value-type int))))
+  (type-definition RecordBase
+    (record-type
+      (field inheritedValue
+        (value-type int))))
+  (type-definition NotStructured
+    (value-type int))
+  (type-definition MixedObject
+    (object-type
+      (field localValue
+        (value-type int))))
+  (type-definition MixedRecord
+    (record-type
+      (field localValue
+        (value-type int))))
+  (class-definition MixedClass
+    (function read () (
+      (value-type int))
+      (expr-function-body
+        (binary-expr +
+          (simple-var-ref inheritedValue)
+          (simple-var-ref missingClassReadValue)))))
+  (class-definition ObjectConsumer
+    (function read () (
+      (value-type int))
+      (expr-function-body
+        (binary-expr +
+          (simple-var-ref inheritedValue)
+          (simple-var-ref localValue)))))
+  (function readClass (
+    (variable value (type
+      (user-defined-type MixedClass)))) (
+    (value-type int))
+    (expr-function-body
+      (invocation read expr:
+        (simple-var-ref value) ())))
+  (function readObject (
+    (variable value (type
+      (user-defined-type MixedObject)))) (
+    (value-type int))
+    (expr-function-body
+      (field-based-access inheritedValue
+        (simple-var-ref value))))
+  (function readRecord (
+    (variable value (type
+      (user-defined-type MixedRecord)))) (
+    (value-type int))
+    (expr-function-body
+      (field-based-access inheritedValue
+        (simple-var-ref value))))
+  (function readConsumer (
+    (variable value (type
+      (user-defined-type ObjectConsumer)))) (
+    (value-type int))
+    (expr-function-body
+      (invocation read expr:
+        (simple-var-ref value) ()))))

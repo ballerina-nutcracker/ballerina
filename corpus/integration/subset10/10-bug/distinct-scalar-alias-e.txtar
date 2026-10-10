@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: only object and error types can be distinct
+  --> distinct-scalar-alias-e.bal:18:1
+   |
+18 | type D distinct I; // @error distinct is not permitted for scalar aliases
+   | ^^^^^^^^^^^^^^^^^^

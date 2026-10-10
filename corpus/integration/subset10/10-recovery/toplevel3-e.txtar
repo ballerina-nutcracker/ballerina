@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> toplevel3-e.bal:17:22
+   |
+17 | public const int C = 1 + "x"; // @error
+   |                      ^^^^^^^
+
+error[SEMANTIC_ERROR]: expect numeric, string, or xml types for +
+  --> toplevel3-e.bal:18:22
+   |
+18 | public const int D = true + 1; // @error
+   |                      ^^^^^^^^

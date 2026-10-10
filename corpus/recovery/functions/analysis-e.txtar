@@ -1,0 +1,139 @@
+-- analysis-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function ordinary() returns int => 1;
+int missingInitializer = missingGlobal + 1; // @error
+Unknown abandoned = ordinary(); // @error
+
+function analysis() {
+    int broken = missingLocal + ordinary(); // @error
+    if missingCondition { // @error
+        ordinary();
+    }
+    int later = "wrong"; // @error independent semantic analysis
+    var defaultError = function(int x = "wrong") returns int => missingBody; // @error default and body
+    var signatureError = isolated function(int x = ordinary()) returns int => missingSignatureBody; // @error independent isolated default
+    var isolatedBody = isolated function() returns int => ordinary() + missingIsolated; // @error no isolation cascade
+    var nested = isolated function() returns int {
+        var inner = function() returns int => ordinary() + missingNested; // @error no nested isolation cascade
+        if missingNestedCondition { // @error skip dependent isolation checks
+            ordinary();
+        }
+        int isolatedDefault = "wrong"; // @error independent nested semantic analysis
+        return 1;
+    };
+    int finalSibling = "wrong"; // @error independent semantic analysis
+}
+-- ast --
+(package
+  (variable missingInitializer (type
+    (value-type int)) (expr
+    (binary-expr +
+      (simple-var-ref missingGlobal)
+      (literal 1))))
+  (variable abandoned (type
+    (user-defined-type Unknown)) (expr
+    (invocation ordinary ())))
+  (function ordinary () (
+    (value-type int))
+    (expr-function-body
+      (literal 1)))
+  (function analysis () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable broken (type
+          (value-type int)) (expr
+          (binary-expr +
+            (simple-var-ref missingLocal)
+            (invocation ordinary ())))))
+      (if
+        (simple-var-ref missingCondition)
+        (block-stmt
+          (expression-stmt
+            (invocation ordinary ()))) ())
+      (block-stmt
+        (var-def
+          (variable later (type
+            (value-type int)) (expr
+            (literal wrong))))
+        (var-def
+          (variable defaultError (expr
+            (lambda
+              (function $anonFunc$_0 (
+                (variable x (type
+                  (value-type int)) (expr
+                  (literal wrong)))) (
+                (value-type int))
+                (expr-function-body
+                  (simple-var-ref missingBody)))))))
+        (var-def
+          (variable signatureError (expr
+            (lambda
+              (function $anonFunc$_1 (
+                (variable x (type
+                  (value-type int)) (expr
+                  (invocation ordinary ())))) (
+                (value-type int))
+                (expr-function-body
+                  (simple-var-ref missingSignatureBody)))))))
+        (var-def
+          (variable isolatedBody (expr
+            (lambda
+              (function $anonFunc$_2 () (
+                (value-type int))
+                (expr-function-body
+                  (binary-expr +
+                    (invocation ordinary ())
+                    (simple-var-ref missingIsolated))))))))
+        (var-def
+          (variable nested (expr
+            (lambda
+              (function $anonFunc$_3 () (
+                (value-type int))
+                (block-function-body
+                  (var-def
+                    (variable inner (expr
+                      (lambda
+                        (function $anonFunc$_4 () (
+                          (value-type int))
+                          (expr-function-body
+                            (binary-expr +
+                              (invocation ordinary ())
+                              (simple-var-ref missingNested))))))))
+                  (if
+                    (simple-var-ref missingNestedCondition)
+                    (block-stmt
+                      (expression-stmt
+                        (invocation ordinary ()))) ())
+                  (block-stmt
+                    (var-def
+                      (variable isolatedDefault (type
+                        (value-type int)) (expr
+                        (literal wrong))))
+                    (return
+                      (literal 1)))))))))
+        (var-def
+          (variable finalSibling (type
+            (value-type int)) (expr
+            (literal wrong))))))))
+(lambda-types
+  ($anonFunc$_0 [callable=function(int) returns int] [function=never] [name=never] [expression-body=unresolved])
+  ($anonFunc$_1 [callable=isolated function(int) returns int] [function=never] [name=never] [expression-body=unresolved])
+  ($anonFunc$_2 [callable=isolated function() returns int] [function=never] [name=never] [expression-body=unresolved])
+  ($anonFunc$_3 [callable=isolated function() returns int] [function=never] [name=never])
+  ($anonFunc$_4 [callable=function() returns int] [function=never] [name=never] [expression-body=unresolved]))

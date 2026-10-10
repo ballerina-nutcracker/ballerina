@@ -56,6 +56,8 @@ func ToPackageFromCompilationUnits(cx *context.CompilerContext, compilationUnits
 func addCompilationUnitNodesToPackage(cx *context.CompilerContext, pkg *ast.BLangPackage, compilationUnit *ast.BLangCompilationUnit) {
 	for _, node := range compilationUnit.GetTopLevelNodes() {
 		switch node := node.(type) {
+		case *ast.BLangBadTopLevelNode:
+			pkg.BadTopLevelNodes = append(pkg.BadTopLevelNodes, node)
 		case *ast.BLangImportPackage:
 			pkg.Imports = append(pkg.Imports, node)
 		case *ast.BLangVariable:

@@ -895,6 +895,21 @@ func buildExpectedStdout(outputs []outputAnn) string {
 	return b.String()
 }
 
+// ValidateErrorMarkers checks source-located diagnostics and @error markers in both directions.
+// Unlike suffix-based validation, it also accepts a source with neither errors nor markers.
+func ValidateErrorMarkers(t *testing.T, inputPath, content string, result projects.DiagnosticResult, de *diagnostics.DiagnosticEnv) {
+	t.Helper()
+	anns := annotations{}
+	if fa := parseAnnotationsInFile(content); fa != nil {
+		anns[inputPath] = fa
+	}
+	diags := resolveErrorDiagnostics(result, de)
+	if !hasErrorAnnotation(anns) && len(diags) == 0 {
+		return
+	}
+	assertErrorAnnotations(t, anns, diags)
+}
+
 func assertErrorAnnotations(t *testing.T, anns annotations, diags []ResolvedDiag) {
 	t.Helper()
 	if !hasErrorAnnotation(anns) {

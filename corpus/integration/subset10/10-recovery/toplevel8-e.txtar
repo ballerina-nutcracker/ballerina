@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate field name 'x'
+  --> toplevel8-e.bal:17:39
+   |
+17 | public type A record { B b; string x; string x; }; // @error
+   |                                       ^^^^^^^^^

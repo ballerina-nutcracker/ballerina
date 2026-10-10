@@ -35,9 +35,10 @@ type analyzer interface {
 	getSymbol(ref model.SymbolRef) model.Symbol
 	internalError(message string, loc diagnostics.Location)
 	importedPackage(alias string) *ast.BLangImportPackage
+	// Diagnostic reporting does not stop traversal; analysis helpers return
+	// false or visitors return nil to abandon dependent checks.
 	unimplementedErr(message string, loc diagnostics.Location)
 	semanticErr(message string, loc diagnostics.Location)
-	syntaxErr(message string, loc diagnostics.Location)
 	internalErr(message string, loc diagnostics.Location)
 	parentAnalyzer() analyzer
 	loc() diagnostics.Location
@@ -196,7 +197,7 @@ func (la *loopAnalyzer) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 }
 
 func (fa *functionAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
-	if node == nil {
+	if node == nil || analysisPrerequisitesUnavailable(fa, node) {
 		return nil
 	}
 	switch node.(type) {
@@ -269,10 +270,6 @@ func (sa *semanticAnalyzer) semanticErr(message string, loc diagnostics.Location
 	sa.compilerCtx.SemanticError(message, loc)
 }
 
-func (sa *semanticAnalyzer) syntaxErr(message string, loc diagnostics.Location) {
-	sa.compilerCtx.SyntaxError(message, loc)
-}
-
 func (sa *semanticAnalyzer) internalErr(message string, loc diagnostics.Location) {
 	sa.compilerCtx.InternalError(message, loc)
 }
@@ -281,52 +278,16 @@ func (sa *semanticAnalyzer) internalError(message string, loc diagnostics.Locati
 	sa.compilerCtx.InternalError(message, loc)
 }
 
-func (ca *constantAnalyzer) unimplementedErr(message string, loc diagnostics.Location) {
-	ca.parentAnalyzer().ctx().Unimplemented(message, loc)
+func (ab *analyzerBase) unimplementedErr(message string, loc diagnostics.Location) {
+	ab.ctx().Unimplemented(message, loc)
 }
 
-func (ca *constantAnalyzer) semanticErr(message string, loc diagnostics.Location) {
-	ca.parentAnalyzer().ctx().SemanticError(message, loc)
+func (ab *analyzerBase) semanticErr(message string, loc diagnostics.Location) {
+	ab.ctx().SemanticError(message, loc)
 }
 
-func (ca *constantAnalyzer) syntaxErr(message string, loc diagnostics.Location) {
-	ca.parentAnalyzer().ctx().SyntaxError(message, loc)
-}
-
-func (ca *constantAnalyzer) internalErr(message string, loc diagnostics.Location) {
-	ca.parentAnalyzer().ctx().InternalError(message, loc)
-}
-
-func (fa *functionAnalyzer) unimplementedErr(message string, loc diagnostics.Location) {
-	fa.parent.ctx().Unimplemented(message, loc)
-}
-
-func (fa *functionAnalyzer) semanticErr(message string, loc diagnostics.Location) {
-	fa.parent.ctx().SemanticError(message, loc)
-}
-
-func (fa *functionAnalyzer) syntaxErr(message string, loc diagnostics.Location) {
-	fa.parent.ctx().SyntaxError(message, loc)
-}
-
-func (fa *functionAnalyzer) internalErr(message string, loc diagnostics.Location) {
-	fa.parent.ctx().InternalError(message, loc)
-}
-
-func (la *loopAnalyzer) unimplementedErr(message string, loc diagnostics.Location) {
-	la.parent.ctx().Unimplemented(message, loc)
-}
-
-func (la *loopAnalyzer) semanticErr(message string, loc diagnostics.Location) {
-	la.parent.ctx().SemanticError(message, loc)
-}
-
-func (la *loopAnalyzer) syntaxErr(message string, loc diagnostics.Location) {
-	la.parent.ctx().SyntaxError(message, loc)
-}
-
-func (la *loopAnalyzer) internalErr(message string, loc diagnostics.Location) {
-	la.parent.ctx().InternalError(message, loc)
+func (ab *analyzerBase) internalErr(message string, loc diagnostics.Location) {
+	ab.ctx().InternalError(message, loc)
 }
 
 func newSemanticAnalyzer(ctx *context.CompilerContext) *semanticAnalyzer {
@@ -366,7 +327,7 @@ func createConstantAnalyzer(parent analyzer, constant *ast.BLangVariable) *const
 }
 
 func (sa *semanticAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
-	if node == nil {
+	if node == nil || analysisPrerequisitesUnavailable(sa, node) {
 		// Done
 		return nil
 	}
@@ -507,7 +468,10 @@ func initializeInvokableAnalyzer(parent analyzer, function invokableSignatureNod
 	fa.retTy = fnSymbol.TypedSignature().ReturnType
 	validateDefaultParamTypes(parent, function)
 	if function.IsIsolated() && !function.IsNative() {
-		validateIsolatedFunction(fa, function)
+		fn, isFunction := function.(*ast.BLangFunction)
+		if !isFunction || !lambdaExpressionBodyUnresolved(fn) {
+			validateIsolatedFunction(fa, function)
+		}
 		validateIsolatedDefaultParams(fa, function)
 	}
 	return fa
@@ -564,6 +528,9 @@ func validateIsolatedDefaultParams[A analyzer](a A, function invokableSignatureN
 			parent = fa.locals
 		}
 		expr := param.Expr.(ast.BLangNode)
+		if analysisPrerequisitesUnavailable(a, expr) {
+			continue
+		}
 		validateIsolatedCapture(a, parent, expr)
 		isIsolatedFunctionInner(a, expr, parent)
 	}
@@ -669,7 +636,6 @@ func validateDefaultParamTypes(a analyzer, function invokableSignatureNode) {
 		paramTy := param.GetDeterminedType()
 		exprTy := param.Expr.(ast.BLangExpression).GetDeterminedType()
 		if semtypes.IsZero(exprTy) {
-			a.internalErr("default expression has no determined type", param.Expr.(ast.BLangNode).GetPosition())
 			continue
 		}
 		if !semtypes.IsSubtype(a.tyCtx(), exprTy, paramTy) {
@@ -754,21 +720,6 @@ func (la *lockAnalyzer) loc() diagnostics.Location { return la.lock.GetPosition(
 
 func (la *lockAnalyzer) ctx() *context.CompilerContext { return la.parent.ctx() }
 func (la *lockAnalyzer) tyCtx() semtypes.Context       { return la.parent.tyCtx() }
-func (la *lockAnalyzer) unimplementedErr(m string, l diagnostics.Location) {
-	la.parent.ctx().Unimplemented(m, l)
-}
-
-func (la *lockAnalyzer) semanticErr(m string, l diagnostics.Location) {
-	la.parent.ctx().SemanticError(m, l)
-}
-
-func (la *lockAnalyzer) syntaxErr(m string, l diagnostics.Location) {
-	la.parent.ctx().SyntaxError(m, l)
-}
-
-func (la *lockAnalyzer) internalErr(m string, l diagnostics.Location) {
-	la.parent.ctx().InternalError(m, l)
-}
 
 // enclosingLockAnalyzer walks the analyzer parent chain looking for a
 // lockAnalyzer that is in the same closure as `a`. The search stops at
@@ -799,7 +750,7 @@ func enclosingLockAnalyzer(a analyzer) *lockAnalyzer {
 }
 
 func (ca *constantAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
-	if node == nil {
+	if node == nil || analysisPrerequisitesUnavailable(ca, node) {
 		// Done
 		return nil
 	}
@@ -841,7 +792,6 @@ func (ca *constantAnalyzer) Visit(node ast.BLangNode) ast.Visitor {
 func validateResolvedType[A analyzer](a A, expr ast.BLangActionOrExpression, expectedType semtypes.SemType) bool {
 	resolvedTy := expr.GetDeterminedType()
 	if semtypes.IsZero(resolvedTy) {
-		a.internalErr(fmt.Sprintf("expression type not resolved for %T", expr), expr.GetPosition())
 		return false
 	}
 
@@ -868,6 +818,9 @@ func validateResolvedType[A analyzer](a A, expr ast.BLangActionOrExpression, exp
 // descends into expressions, so each case must analyze every child expression ast.Walk visits and
 // walk its type-node children.
 func analyzeActionOrExpression[A analyzer](a A, expr ast.BLangActionOrExpression, expectedType semtypes.SemType) bool {
+	if analysisPrerequisitesUnavailable(a, expr) {
+		return false
+	}
 	switch expr := expr.(type) {
 	case *ast.BLangLiteral:
 		return validateResolvedType(a, expr, expectedType)
@@ -1393,11 +1346,50 @@ func enclosingFunctionIsIsolated(a analyzer) bool {
 	return fa.function.IsIsolated()
 }
 
+func lambdaExpressionBodyUnresolved(fn *ast.BLangFunction) bool {
+	body, ok := fn.Body.(*ast.BLangExprFunctionBody)
+	return ok && semtypes.IsZero(body.GetDeterminedType())
+}
+
+func analysisPrerequisitesUnavailable(a analyzer, node ast.BLangNode) bool {
+	switch n := node.(type) {
+	case *ast.BLangBadTopLevelNode, *ast.BLangBadStmt, *ast.BLangBadExprOrAction, *ast.BLangBadTypeNode, *ast.BLangInferredTypedescDefault:
+		return true
+	case *ast.BLangVarRef:
+		return !ast.SymbolIsSet(n) || semtypes.IsZero(n.GetDeterminedType())
+	case *ast.BLangService:
+		return semtypes.IsZero(n.GetDeterminedType()) || semtypes.IsZero(n.GetTypeData().Type) || semtypes.IsZero(n.AttachPointType)
+	case invokableSignatureNode:
+		return invokableSignatureUnresolved(a, n)
+	case ast.StatementNode, ast.BLangActionOrExpression:
+		return semtypes.IsZero(node.GetDeterminedType())
+	case *ast.BLangVariable:
+		return semtypes.IsZero(n.GetDeterminedType()) || n.Expr != nil && semtypes.IsZero(n.Expr.GetDeterminedType())
+	}
+	return false
+}
+
+func invokableSignatureUnresolved(a analyzer, fn invokableSignatureNode) bool {
+	if !ast.SymbolIsSet(fn) {
+		return true
+	}
+	sym := a.ctx().GetSymbol(fn.Symbol())
+	if _, ok := sym.(model.DependentlyTypedFunctionSymbol); ok {
+		return false
+	}
+	if _, ok := sym.(*model.OpaqueFunctionSymbol); ok {
+		return false
+	}
+	function, ok := sym.(model.FunctionSymbol)
+	return !ok || semtypes.IsZero(function.TypedSignature().ReturnType)
+}
+
 func analyzeLambdaFunction[A analyzer](a A, expr *ast.BLangLambdaFunction) bool {
 	fa := initializeFunctionAnalyzer(a, expr.Function)
 	fa.isLambda = true
 	fn := expr.Function
-	if fn.IsIsolated() && fn.Body != nil && !enclosingFunctionIsIsolated(a) {
+	bodyUnresolved := lambdaExpressionBodyUnresolved(fn)
+	if !bodyUnresolved && fn.IsIsolated() && fn.Body != nil && !enclosingFunctionIsIsolated(a) {
 		validateIsolatedCapture(a, enclosingFunctionLocals(a), fn.Body.(ast.BLangNode))
 	}
 	// Walk params + body directly rather than the BLangFunction node
@@ -1414,7 +1406,7 @@ func analyzeLambdaFunction[A analyzer](a A, expr *ast.BLangLambdaFunction) bool 
 	if returnType := fn.ReturnTypeDescriptorNode(); returnType != nil {
 		ast.Walk(fa, returnType)
 	}
-	if fn.Body != nil {
+	if fn.Body != nil && !bodyUnresolved {
 		ast.Walk(fa, fn.GetBody().(ast.BLangNode))
 	}
 	return true
@@ -1888,6 +1880,9 @@ func walkVariableDefNonExprChildren(a ast.Visitor, varDef *ast.BLangVariableDef)
 }
 
 func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
+	if analysisPrerequisitesUnavailable(a, node) {
+		return nil
+	}
 	switch n := node.(type) {
 	case *ast.BLangFunction:
 		if _, isOpaque := a.ctx().GetSymbol(n.Symbol()).(*model.OpaqueFunctionSymbol); isOpaque {
@@ -2074,21 +2069,30 @@ func analyzeClassLikeDefn[A analyzer](a A, fields []*ast.BLangVariable, initFn *
 // (used by both classes and services).
 func analyzeClassBodyMembers[A analyzer](a A, fields []*ast.BLangVariable, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, enclosing *enclosingClassBody) {
 	for _, field := range fields {
+		if analysisPrerequisitesUnavailable(a, field) {
+			continue
+		}
 		if field.Expr != nil {
 			expectedType := a.ctx().SymbolType(field.Symbol())
 			analyzeActionOrExpression(a, field.Expr.(ast.BLangExpression), expectedType)
 		}
 	}
-	if initFn != nil {
+	if initFn != nil && !invokableSignatureUnresolved(a, initFn) {
 		fa := initializeMethodAnalyzer(a, initFn, enclosing)
 		walkMethodBody(fa, initFn)
 	}
 	for _, named := range common.MethodsInResolutionOrder(methods) {
 		method := named.Method
+		if invokableSignatureUnresolved(a, method) {
+			continue
+		}
 		fa := initializeMethodAnalyzer(a, method, enclosing)
 		walkMethodBody(fa, method)
 	}
 	for _, rm := range resourceMethods {
+		if invokableSignatureUnresolved(a, rm) {
+			continue
+		}
 		fa := initializeResourceMethodAnalyzer(a, rm, enclosing)
 		validateResourceMethodReturnType(a, fa.retTy, rm)
 		walkMethodBody(fa, rm)
@@ -2389,6 +2393,9 @@ type everyNodeVisitor[A analyzer] struct {
 func (v *everyNodeVisitor[A]) Visit(node ast.BLangNode) ast.Visitor {
 	if node == nil {
 		return v
+	}
+	if analysisPrerequisitesUnavailable(v.analyzer, node) {
+		return nil
 	}
 	if !v.predicate(v.analyzer, node) {
 		v.result = false

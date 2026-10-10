@@ -1,0 +1,44 @@
+-- minutiae-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+// doc
+function _() {} // @error
+function foo() {
+    { int '_ = 1; int good = 2; } // @error
+    int later = 3;
+}
+function valid() {}
+-- ast --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (bad-top-level (position 1:1 19:1))
+  (function (position 19:1 23:1) foo () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 19:16 23:1)
+      (block-stmt (position 20:1 21:1)
+        (bad-stmt (position 20:7 20:19))
+        (var-def (position 20:19 20:33)
+          (variable (position 20:19 20:33) good (type
+            (value-type (position 20:19 20:23) int)) (expr
+            (literal (position 20:30 20:31) 2)))))
+      (var-def (position 21:1 22:1)
+        (variable (position 21:1 22:1) later (type
+          (value-type (position 21:1 21:9) int)) (expr
+          (literal (position 21:17 21:18) 3))))))
+  (function (position 23:1 24:1) valid () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 23:18 24:1))))

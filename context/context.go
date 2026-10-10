@@ -18,6 +18,7 @@
 package context
 
 import (
+	"slices"
 	"sync"
 	"time"
 
@@ -282,10 +283,14 @@ func (c *CompilerContext) addDiagnostic(code string, severity diagnostics.Diagno
 }
 
 func (c *CompilerContext) HasDiagnostics() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	return len(c.diagnostics) > 0
 }
 
 func (c *CompilerContext) HasErrors() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	for _, diag := range c.diagnostics {
 		switch diag.DiagnosticInfo().Severity() {
 		case diagnostics.Error, diagnostics.Fatal:
@@ -296,7 +301,9 @@ func (c *CompilerContext) HasErrors() bool {
 }
 
 func (c *CompilerContext) Diagnostics() []diagnostics.Diagnostic {
-	return c.diagnostics
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return slices.Clone(c.diagnostics)
 }
 
 func NewCompilerContext(env *CompilerEnvironment) *CompilerContext {

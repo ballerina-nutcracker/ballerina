@@ -1,0 +1,987 @@
+-- annotation-access-parallel-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+annotation int A on type; // @error
+type T int;
+
+function f0() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f1() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f2() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f3() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f4() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f5() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f6() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f7() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f8() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f9() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f10() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f11() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f12() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f13() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f14() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f15() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f16() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f17() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f18() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f19() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f20() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f21() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f22() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f23() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f24() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f25() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f26() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f27() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f28() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f29() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f30() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f31() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f32() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f33() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f34() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f35() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f36() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f37() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f38() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+function f39() {
+    typedesc t = T;
+    any value = t.@A;
+    int bad = 1 + "bad"; // @error
+}
+
+-- ast --
+(package
+  (annotation A
+    (value-type int)
+    (attach-point type))
+  (type-definition T
+    (value-type int))
+  (function f0 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f1 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f2 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f3 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f4 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f5 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f6 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f7 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f8 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f9 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f10 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f11 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f12 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f13 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f14 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f15 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f16 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f17 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f18 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f19 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f20 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f21 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f22 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f23 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f24 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f25 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f26 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f27 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f28 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f29 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f30 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f31 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f32 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f33 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f34 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f35 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f36 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f37 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f38 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad)))))))
+  (function f39 () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (value-type typedesc)) (expr
+          (simple-var-ref T))))
+      (var-def
+        (variable value (type
+          (value-type any)) (expr
+          (annot-access-expr A
+            (simple-var-ref t)))))
+      (var-def
+        (variable bad (type
+          (value-type int)) (expr
+          (binary-expr +
+            (literal 1)
+            (literal bad))))))))

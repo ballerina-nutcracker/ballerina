@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect numeric, string, or xml types for +
+  --> toplevel4-e.bal:19:22
+   |
+19 | public const int C = true + 1; // @error
+   |                      ^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid cycle detected for B
+  --> toplevel4-e.bal:18:7
+   |
+18 | const B = A + 1; // @error
+   |       ^

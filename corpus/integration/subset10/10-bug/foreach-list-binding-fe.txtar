@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: LIST_BINDING_PATTERN unimplemented
+  --> foreach-list-binding-fe.bal:19:24
+   |
+19 |     foreach [int, int] [a, b] in xs { // @error unsupported list binding must diagnose, not crash
+   |                        ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: binding pattern is not implemented
+  --> foreach-list-binding-fe.bal:19:24
+   |
+19 |     foreach [int, int] [a, b] in xs { // @error unsupported list binding must diagnose, not crash
+   |                        ^^^^^^

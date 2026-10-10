@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: invalid cycle detected for FIRST
-  --> namespace16-e.bal:17:14
+error[SEMANTIC_ERROR]: invalid cycle detected for SECOND
+  --> namespace16-e.bal:18:14
    |
-17 | const string FIRST = SECOND; // @error
-   |              ^^^^^
+18 | const string SECOND = FIRST; // @error
+   |              ^^^^^^

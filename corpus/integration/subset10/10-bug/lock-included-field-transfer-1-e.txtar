@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: assignment in a lock statement to a target defined outside the lock must use a plain variable name on the left-hand side
+  --> lock-included-field-transfer-1-e.bal:31:13
+   |
+31 |             self.f = guard; // @error target outside lock must be a plain variable name
+   |             ^^^^^^^^^^^^^^^

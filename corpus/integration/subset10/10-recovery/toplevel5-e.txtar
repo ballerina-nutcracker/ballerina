@@ -1,0 +1,33 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> toplevel5-e.bal:22:16
+   |
+22 | public int g = 1 + "x"; // @error
+   |                ^^^^^^^
+
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> toplevel5-e.bal:24:25
+   |
+24 | public listener int l = 1 + "l"; // @error
+   |                         ^^^^^^^
+
+error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
+  --> toplevel5-e.bal:20:8
+   |
+20 | type A int & string; // @error
+   |        ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
+  --> toplevel5-e.bal:46:8
+   |
+46 | type B string & int; // @error
+   |        ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: service type must be a subtype of service object {}
+  --> toplevel5-e.bal:43:1
+   |
+43 | service 123 on new Listener() { // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+44 | }
+   | ^
