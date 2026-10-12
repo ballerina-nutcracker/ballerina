@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+  --> isolation3-e.bal:22:20
+   |
+22 |             return x; // @error captured local of an isolated method is not final
+   |                    ^
