@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker 'named' is referenced more than once
+  --> fork-function-worker-ref1-e.bal:30:18
+   |
+30 |     int a = wait named; // @error named is also referenced by fork worker f
+   |                  ^^^^^
+
+error[SEMANTIC_ERROR]: worker 'named' is referenced more than once
+  --> fork-function-worker-ref1-e.bal:43:25
+   |
+43 |             return wait named; // @error named is also referenced by fork worker f
+   |                         ^^^^^

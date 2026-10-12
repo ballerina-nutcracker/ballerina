@@ -1,0 +1,23 @@
+(main
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref w))))
+    (var-def
+      (variable result (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (simple-var-ref w))
+  )
+)

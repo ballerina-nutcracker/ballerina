@@ -165,7 +165,8 @@ type asyncSendCollector struct {
 
 func (c *asyncSendCollector) Visit(node ast.BLangNode) ast.Visitor {
 	switch node := node.(type) {
-	case *ast.BLangLambdaFunction, *ast.BLangFunction, *ast.BLangClassDefinition:
+	case *ast.BLangLambdaFunction, *ast.BLangFunction, *ast.BLangClassDefinition,
+		*ast.BLangFork, *ast.BLangNamedWorkerDeclaration:
 		return nil
 	case *ast.BLangWorkerAsyncSendAction:
 		c.sends = append(c.sends, node)

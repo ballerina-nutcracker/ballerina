@@ -1,0 +1,83 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromModuleInit))))
+    (var-def
+      (variable h (type
+        (user-defined-type Holder)) (expr
+        (new ()))))
+    (var-def
+      (variable fieldInit (type
+        (function-type () (
+          (value-type int)))) (expr
+        (field-based-access fieldInit
+          (simple-var-ref h)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation fieldInit ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation withDefault ( <default>)))))
+  )
+)
+(withDefault
+  (bb0 () ()
+    (return
+      (invocation f ()))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 20))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 300))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 20))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 300))
+  )
+)

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: fixed-length array size must be a singleton int
+  --> fork-types2-e.bal:24:30
+   |
+24 |         worker w returns int[n] { // @error the length must be a constant
+   |                              ^
+
+error[SEMANTIC_ERROR]: fixed-length array size must be non-negative
+  --> fork-types2-e.bal:39:30
+   |
+39 |         worker w returns int[N] { // @error the length must not be negative
+   |                              ^

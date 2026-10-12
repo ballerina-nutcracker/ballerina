@@ -1,0 +1,33 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unreachable code
+  --> fork-unreachable2-e.bal:21:5
+   |
+21 |     fork { // @error unreachable fork statement
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |         worker a {
+   |         ^^^^^^^^^^
+23 |             1 -> b;
+   |             ^^^^^^^
+24 |         }
+   |         ^
+25 |         worker b {
+   |         ^^^^^^^^^^
+26 |             int _ = <- a;
+   |             ^^^^^^^^^^^^^
+27 |         }
+   |         ^
+28 |     }
+   |     ^
+
+error[SEMANTIC_ERROR]: Unreachable code
+  --> fork-unreachable2-e.bal:35:9
+   |
+35 |         fork { // @error unreachable fork statement
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 |             worker w {
+   |             ^^^^^^^^^^
+37 |             }
+   |             ^
+38 |         }
+   |         ^

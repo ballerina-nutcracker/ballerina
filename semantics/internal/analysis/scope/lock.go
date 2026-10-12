@@ -140,6 +140,14 @@ func lockResourceAccess(cx Context, call *ast.BLangClientResourceAccessAction, _
 	}
 }
 
+// ForkOutsideLock: a fork statement may not occur lexically within a lock
+// statement, including within a closure defined in a lock body.
+func ForkOutsideLock(cx Context, fork *ast.BLangFork) {
+	if lexicallyInLock(cx) {
+		cx.SemanticErr("cannot use a fork statement inside a lock statement", fork.GetPosition())
+	}
+}
+
 // startOutsideLock: a start action may not occur lexically within a lock
 // statement, including within a closure defined in a lock body.
 func startOutsideLock(cx Context, start *ast.BLangStartAction) {

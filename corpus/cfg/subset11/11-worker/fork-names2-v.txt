@@ -1,0 +1,112 @@
+(forksAroundLambda
+  (bb0 () (bb1)
+    (var-def
+      (variable sum (type
+        (value-type int)) (expr
+        (literal 0))))
+    (literal true)
+  )
+  (bb1 (bb0) (bb2)
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (compound-assignment +
+      (simple-var-ref sum)
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+  (bb2 (bb1) (bb3)
+    (literal true)
+  )
+  (bb3 (bb2) (bb4)
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 10))))
+    (compound-assignment +
+      (simple-var-ref sum)
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+  (bb4 (bb3) (bb5)
+    (var-def
+      (variable g (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (fork
+                (named-worker w (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (literal 100)))))
+              (return
+                (single-wait-action
+                  (simple-var-ref w)))))))))
+    (literal true)
+  )
+  (bb5 (bb4) (bb6)
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1000))))
+    (compound-assignment +
+      (simple-var-ref sum)
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+  (bb6 (bb5) ()
+    (return
+      (binary-expr +
+        (simple-var-ref sum)
+        (invocation g ())))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation forksAroundLambda ()))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 100))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 10))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 100))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1000))
+  )
+)

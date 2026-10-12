@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: host
+  --> fork-self-ref1-e.bal:39:37
+   |
+39 |                     return isFuture(host); // @error host is not in scope in its own body
+   |                                     ^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: w
+  --> fork-self-ref1-e.bal:27:29
+   |
+27 |             return isFuture(w); // @error w is not in scope in its own body
+   |                             ^

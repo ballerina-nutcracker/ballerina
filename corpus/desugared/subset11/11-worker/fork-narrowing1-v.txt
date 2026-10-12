@@ -1,0 +1,123 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function notCaptured (
+    (variable arg (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (simple-var-ref arg))))
+      (var-def
+        (variable u (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (simple-var-ref arg))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:notCaptured:fork0:w () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (assignment
+                  (simple-var-ref u)
+                  (literal changed))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (single-wait-action
+          (simple-var-ref $desugar$1)))
+      (if
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type int))
+        (block-stmt
+          (return
+            (simple-var-ref v))) ())
+      (block-stmt
+        (return
+          (literal 0)))))
+  (function finalCaptured (
+    (variable arg (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (simple-var-ref arg))))
+      (if
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type int))
+        (block-stmt
+          (var-def
+            (variable $desugar$0 (expr
+              (invocation lang.__internal createLatch ()))))
+          (var-def
+            (variable $desugar$1))
+          (var-def
+            (variable $desugar$2 (expr
+              (lambda
+                (function $worker:finalCaptured:fork0:w () (
+                  (value-type int))
+                  (block-function-body
+                    (expression-stmt
+                      (invocation lang.__internal waitOnLatch (
+                        (simple-var-ref $desugar$0))))
+                    (return
+                      (simple-var-ref v))))))))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (start-action
+              (invocation $desugar$2 ())))
+          (expression-stmt
+            (invocation lang.__internal openLatch (
+              (simple-var-ref $desugar$0))))
+          (var-def
+            (variable r (type
+              (value-type int)) (expr
+              (single-wait-action
+                (simple-var-ref $desugar$1)))))
+          (return
+            (binary-expr +
+              (simple-var-ref r)
+              (simple-var-ref v)))) ())
+      (block-stmt
+        (return
+          (literal 0)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation notCaptured (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation finalCaptured (
+            (literal 2)))))))))

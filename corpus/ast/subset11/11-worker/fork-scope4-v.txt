@@ -1,0 +1,83 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function localNamedLikeWorker () (
+    (value-type int))
+    (block-function-body
+      (fork
+        (named-worker w (
+          (value-type int))
+          (block-function-body
+            (var-def
+              (variable w (type
+                (value-type int)) (expr
+                (literal 5))))
+            (return
+              (binary-expr +
+                (simple-var-ref w)
+                (literal 1))))))
+      (return
+        (single-wait-action
+          (simple-var-ref w)))))
+  (function nestedForkWorkerNamedLikeWorker () (
+    (value-type int))
+    (block-function-body
+      (fork
+        (named-worker w (
+          (value-type int))
+          (block-function-body
+            (fork
+              (named-worker w (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (literal 20)))))
+            (var-def
+              (variable inner (type
+                (value-type int)) (expr
+                (single-wait-action
+                  (simple-var-ref w)))))
+            (return
+              (binary-expr +
+                (simple-var-ref inner)
+                (literal 1))))))
+      (return
+        (single-wait-action
+          (simple-var-ref w)))))
+  (function lambdaParamNamedLikeWorker () (
+    (value-type int))
+    (block-function-body
+      (fork
+        (named-worker w (
+          (value-type int))
+          (block-function-body
+            (var-def
+              (variable f (expr
+                (lambda
+                  (function $anonFunc$_0 (
+                    (variable w (type
+                      (value-type int)))) (
+                    (value-type int))
+                    (block-function-body
+                      (return
+                        (binary-expr *
+                          (simple-var-ref w)
+                          (literal 2)))))))))
+            (return
+              (invocation f (
+                (literal 150)))))))
+      (return
+        (single-wait-action
+          (simple-var-ref w)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation localNamedLikeWorker ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation nestedForkWorkerNamedLikeWorker ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lambdaParamNamedLikeWorker ())))))))

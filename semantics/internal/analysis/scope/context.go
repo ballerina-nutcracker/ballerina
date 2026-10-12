@@ -117,6 +117,9 @@ type (
 		id       ScopeID
 		kind     functionKind
 		isolated bool
+		// workerRegions maps each worker of a region declared in this closure to
+		// the reference table of its region.
+		workerRegions map[model.SymbolRef]*workerRegion
 	}
 
 	lockContext struct {
@@ -147,17 +150,6 @@ type (
 		ruleBase
 		factsBase
 	}
-
-	// workerRegionContext owns the value references to the workers of one
-	// worker region, started together at the region's start point.
-	workerRegionContext struct {
-		contextBase
-		ruleBase
-		factsBase
-		// refs maps each named worker of the region to the one value reference
-		// already seen for it, nil until one is.
-		refs map[model.SymbolRef]*ast.BLangVarRef
-	}
 )
 
 var (
@@ -167,7 +159,6 @@ var (
 	_ Context = (*isolatedExprContext)(nil)
 	_ Context = (*factsContext)(nil)
 	_ Context = (*repeatedRegionContext)(nil)
-	_ Context = (*workerRegionContext)(nil)
 )
 
 func (c contextBase) parent() Context { return c.outer }
@@ -286,11 +277,12 @@ func NewLambda(parent Context, node invokableSignatureNode) Context {
 
 func newFunctionContext(parent Context, node invokableSignatureNode) *functionContext {
 	fc := &functionContext{
-		contextBase: contextBase{outer: parent},
-		factsBase:   factsBase{need: false},
-		locals:      make(map[model.SymbolRef]VarDecl),
-		symbol:      node.Symbol(),
-		id:          nextScopeID(parent),
+		contextBase:   contextBase{outer: parent},
+		factsBase:     factsBase{need: false},
+		locals:        make(map[model.SymbolRef]VarDecl),
+		workerRegions: make(map[model.SymbolRef]*workerRegion),
+		symbol:        node.Symbol(),
+		id:            nextScopeID(parent),
 	}
 	if sig, ok := parent.CompilerCtx().FunctionTypedSignature(node.Symbol()); ok {
 		fc.retTy = sig.ReturnType
@@ -309,11 +301,12 @@ func finishFunctionContext(fc *functionContext, node invokableSignatureNode) Con
 func NewExpressionClosure(parent Context, kind ClosureKind) Context {
 	enclosing, hasEnclosing := EnclosingFunction(parent)
 	fc := &functionContext{
-		contextBase: contextBase{outer: parent},
-		factsBase:   factsBase{need: false},
-		locals:      make(map[model.SymbolRef]VarDecl),
-		id:          nextScopeID(parent),
-		kind:        fnExpressionClosure,
+		contextBase:   contextBase{outer: parent},
+		factsBase:     factsBase{need: false},
+		locals:        make(map[model.SymbolRef]VarDecl),
+		workerRegions: make(map[model.SymbolRef]*workerRegion),
+		id:            nextScopeID(parent),
+		kind:          fnExpressionClosure,
 	}
 	if hasEnclosing {
 		fc.class, fc.self = enclosing.class, enclosing.self

@@ -1,0 +1,110 @@
+(inInitStatements
+  (bb0 () ()
+    (named-worker f (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 10))))
+    (named-worker g (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 20))))
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (single-wait-action
+            (simple-var-ref f)))))
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref g)))))
+    (var-def
+      (variable y (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref x)
+          (simple-var-ref y)))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation siblingDeclaredLater ()))
+    (expression-stmt
+      (invocation inInitStatements ()))
+  )
+)
+(siblingDeclaredLater
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (single-wait-action
+              (simple-var-ref b)))))
+        (return
+          (binary-expr +
+            (simple-var-ref x)
+            (literal 1)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref b)))))
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (literal 1)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(worker f
+  (bb0 () ()
+    (return
+      (literal 10))
+  )
+)
+(worker g
+  (bb0 () ()
+    (return
+      (literal 20))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (single-wait-action
+        (simple-var-ref f)))
+  )
+)

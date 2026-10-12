@@ -1,0 +1,46 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable count (type
+      (value-type int)) (expr
+      (literal 7)))
+    (function bump () (
+      (value-type int))
+      (block-function-body
+        (fork
+          (named-worker w (
+            (value-type int))
+            (block-function-body
+              (compound-assignment +
+                (field-based-access count
+                  (simple-var-ref self))
+                (literal 1))
+              (return
+                (field-based-access count
+                  (simple-var-ref self))))))
+        (var-def
+          (variable r (type
+            (value-type int)) (expr
+            (single-wait-action
+              (simple-var-ref w)))))
+        (return
+          (binary-expr +
+            (simple-var-ref r)
+            (field-based-access count
+              (simple-var-ref self)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type Counter)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation bump expr:
+            (simple-var-ref c) ()))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access count
+            (simple-var-ref c))))))))

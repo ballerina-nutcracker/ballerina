@@ -1,0 +1,137 @@
+module $anon.. v 0.0.0;
+counter  int;
+bump() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %5 = closure_fp $anon/.:$worker:bump:fork0:a
+    $desugar$3 = %5;
+    %7 = closure_fp $anon/.:$worker:bump:fork0:b
+    $desugar$4 = %7;
+    %9 = start $desugar$3() isolated=true -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %9;
+    %10 = start $desugar$4() isolated=true -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %10;
+    %11 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %12 = wait {a: $desugar$1, b: $desugar$2} -> bb5;
+  }
+  bb5 {
+    %13 = %12;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = bump() -> bb1;
+  }
+  bb1 {
+    lock-start "$anon/.:counter" GOTO bb2;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = println(counter) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    lock-end "$anon/.:counter" GOTO bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$worker:bump:fork0:a() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 0
+    $desugar$0 = %2;
+    %4 = ConstantLoad 2000
+    $desugar$1 = %4;
+    GOTO bb2;
+  }
+  bb2 {
+    %7 = $desugar$0;
+    %8 = $desugar$1;
+    %6 = < %7 %8;
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 5
+    _ = (1, $desugar$0);
+    lock-start "$anon/.:counter" GOTO bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    PushScopeFrame 3
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = + counter %2;
+    counter = %0;
+    PopScopeFrame
+    lock-end "$anon/.:counter" GOTO bb6;
+  }
+  bb6 {
+    %2 = (1, $desugar$0);
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %1 = + %2 %4;
+    (1, $desugar$0) = %1;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
+$worker:bump:fork0:b() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 0
+    $desugar$0 = %2;
+    %4 = ConstantLoad 2000
+    $desugar$1 = %4;
+    GOTO bb2;
+  }
+  bb2 {
+    %7 = $desugar$0;
+    %8 = $desugar$1;
+    %6 = < %7 %8;
+    %6 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 5
+    _ = (1, $desugar$0);
+    lock-start "$anon/.:counter" GOTO bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    PushScopeFrame 3
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %0 = + counter %2;
+    counter = %0;
+    PopScopeFrame
+    lock-end "$anon/.:counter" GOTO bb6;
+  }
+  bb6 {
+    %2 = (1, $desugar$0);
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %1 = + %2 %4;
+    (1, $desugar$0) = %1;
+    PopScopeFrame
+    GOTO bb2;
+  }
+}

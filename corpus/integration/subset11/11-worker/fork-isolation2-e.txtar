@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> fork-isolation2-e.bal:34:13
+   |
+34 |             mutableGlobal = 2; // @error access of mutable module-level state
+   |             ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> fork-isolation2-e.bal:25:20
+   |
+25 |             return notIsolated(); // @error invocation of a non-isolated function
+   |                    ^^^^^^^^^^^^^

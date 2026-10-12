@@ -1,0 +1,42 @@
+module $anon.. v 0.0.0;
+boom() -> int{
+  bb0 {
+    %1 = ConstantLoad boom
+    %2 = newError error(%1)
+    panic %2;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:main:fork0:a
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    _ = %8;
+    return;
+  }
+}
+$worker:main:fork0:a() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = boom() -> bb2;
+  }
+  bb2 {
+    %0 = %2;
+    return;
+  }
+}

@@ -1,0 +1,87 @@
+(laterForkWorkerWaits
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (single-wait-action
+              (simple-var-ref a)))))
+        (return
+          (binary-expr +
+            (simple-var-ref x)
+            (literal 1)))))
+    (return
+      (single-wait-action
+        (simple-var-ref b)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation laterForkWorkerWaits ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation nestedBlockWaits (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation nestedBlockWaits (
+          (literal false))))))
+  )
+)
+(nestedBlockWaits
+  (bb0 () (bb1 bb2)
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 3))))
+    (simple-var-ref flag)
+  )
+  (bb1 (bb0) ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (return
+      (simple-var-ref x))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 0))
+  )
+)
+(worker a
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(worker a
+  (bb0 () ()
+    (return
+      (literal 3))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (literal 1)))
+  )
+)
