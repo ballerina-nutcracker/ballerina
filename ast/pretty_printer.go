@@ -1230,8 +1230,13 @@ func (p *PrettyPrinter) printBlockFunctionBody(node *BLangBlockFunctionBody) {
 	for _, stmt := range node.InitStmts {
 		p.PrintInner(stmt.(BLangNode))
 	}
-	for _, worker := range node.Workers {
-		p.PrintInner(worker)
+	if node.Region != nil {
+		for _, worker := range node.Region.Workers {
+			p.PrintInner(worker)
+		}
+		for _, stmt := range node.Region.DefaultWorker.Stmts {
+			p.PrintInner(stmt.(BLangNode))
+		}
 	}
 	for _, stmt := range node.Stmts {
 		p.PrintInner(stmt.(BLangNode))
