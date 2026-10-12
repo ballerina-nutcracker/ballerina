@@ -144,7 +144,7 @@ type (
 		DefaultWorker *BLangDefaultWorker
 		// NamePrefix makes the generated names of the region's workers unique
 		// within the enclosing function: "" for a body, "fork<N>" for the N-th
-		// fork of the module-level function.
+		// fork of the enclosing function body.
 		NamePrefix string
 	}
 

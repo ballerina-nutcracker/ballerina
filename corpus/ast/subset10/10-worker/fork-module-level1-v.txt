@@ -1,0 +1,82 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable moduleInit (type
+    (function-type () (
+      (value-type int)))) (expr
+    (lambda
+      (function $anonFunc$_0 () (
+        (value-type int))
+        (block-function-body
+          (fork
+            (named-worker w (
+              (value-type int))
+              (block-function-body
+                (return
+                  (literal 1)))))
+          (return
+            (single-wait-action
+              (simple-var-ref w))))))))
+  (variable fromModuleInit (type
+    (value-type int)) (expr
+    (invocation moduleInit ())))
+  (class-definition Holder
+    (variable fieldInit (type
+      (function-type () (
+        (value-type int)))) (expr
+      (lambda
+        (function $anonFunc$_1 () (
+          (value-type int))
+          (block-function-body
+            (fork
+              (named-worker w (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (literal 20)))))
+            (return
+              (single-wait-action
+                (simple-var-ref w)))))))))
+  (function withDefault (
+    (variable f (type
+      (function-type () (
+        (value-type int)))) (expr
+      (lambda
+        (function $anonFunc$_2 () (
+          (value-type int))
+          (block-function-body
+            (fork
+              (named-worker w (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (literal 300)))))
+            (return
+              (single-wait-action
+                (simple-var-ref w))))))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation f ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fromModuleInit))))
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (new ()))))
+      (var-def
+        (variable fieldInit (type
+          (function-type () (
+            (value-type int)))) (expr
+          (field-based-access fieldInit
+            (simple-var-ref h)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fieldInit ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation withDefault ())))))))

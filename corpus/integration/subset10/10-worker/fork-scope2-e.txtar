@@ -1,0 +1,21 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: inner
+  --> fork-scope2-e.bal:48:25
+   |
+48 |             return wait inner; // @error inner is only in scope in host after the nested fork
+   |                         ^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: later
+  --> fork-scope2-e.bal:30:24
+   |
+30 |             io:println(later); // @error later is declared after the fork
+   |                        ^^^^^
+
+error[SEMANTIC_ERROR]: Variable already defined: a
+  --> fork-scope2-e.bal:22:9
+   |
+22 |         worker a { // @error Variable already defined: a
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |         }
+   |         ^

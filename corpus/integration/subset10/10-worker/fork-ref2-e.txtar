@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker 'b' is referenced more than once
+  --> fork-ref2-e.bal:28:18
+   |
+28 |     int y = wait b; // @error b is already referenced by its sibling a
+   |                  ^

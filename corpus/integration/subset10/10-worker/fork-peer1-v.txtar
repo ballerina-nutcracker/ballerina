@@ -1,0 +1,3 @@
+-- stdout --
+{"named":7,"b":"x"}
+-- stderr --

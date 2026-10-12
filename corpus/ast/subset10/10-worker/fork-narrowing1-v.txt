@@ -1,0 +1,89 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function notCaptured (
+    (variable arg (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (simple-var-ref arg))))
+      (var-def
+        (variable u (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (simple-var-ref arg))))
+      (fork
+        (named-worker w (
+          (value-type null))
+          (block-function-body
+            (assignment
+              (simple-var-ref u)
+              (literal changed)))))
+      (expression-stmt
+        (single-wait-action
+          (simple-var-ref w)))
+      (if
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type int))
+        (block-stmt
+          (return
+            (simple-var-ref v))) ())
+      (block-stmt
+        (return
+          (literal 0)))))
+  (function finalCaptured (
+    (variable arg (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (simple-var-ref arg))))
+      (if
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type int))
+        (block-stmt
+          (fork
+            (named-worker w (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref v)))))
+          (var-def
+            (variable r (type
+              (value-type int)) (expr
+              (single-wait-action
+                (simple-var-ref w)))))
+          (return
+            (binary-expr +
+              (simple-var-ref r)
+              (simple-var-ref v)))) ())
+      (block-stmt
+        (return
+          (literal 0)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation notCaptured (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation finalCaptured (
+            (literal 2)))))))))
