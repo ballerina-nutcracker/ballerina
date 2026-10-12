@@ -8,11 +8,12 @@ This module provides the HTTP client and listener APIs for building and consumin
 
 **Service / Listener** — an HTTP listener with configurable host, TLS, HTTP version, and request limits; service definition with path-based routing and resource function dispatch; automatic binding of path parameters, query parameters, headers, and payloads in resource signatures; caller-based response dispatch; request/response interceptor pipeline; service-level and resource-level annotations (`@http:ServiceConfig`, `@http:ResourceConfig`, `@http:Payload`, `@http:Header`, `@http:Query`, `@http:Cache`); CORS configuration; listener authentication and authorization (File user store, LDAP, JWT, OAuth2); status code response types from resources; and SSE streaming responses.
 
-The Go Native Interpreter supports the **HTTP client subset**: the nine core remote methods (including `forward`), TLS/mTLS (PEM-based), redirect following, connection pooling, and both manual payload extraction and automatic response data binding to the contextually expected type. It also supports a native **listener**: creating an `http:Listener`, attaching and detaching services, and starting and stopping it (`'start`, `gracefulStop`, `immediateStop`); attached services are dispatched by path-based routing to resource functions. See the Listener and Service tables below for the current support status of listener configuration, TLS, and broader service-side features.
+The Go Native Interpreter supports the **HTTP client subset**: the nine core remote methods (including `forward`), the client resource access syntax (`client->/albums/[id]`) for all seven accessors, TLS/mTLS (PEM-based), redirect following, connection pooling, and both manual payload extraction and automatic response data binding to the contextually expected type. It also supports a native **listener**: creating an `http:Listener`, attaching and detaching services, and starting and stopping it (`'start`, `gracefulStop`, `immediateStop`); attached services are dispatched by path-based routing to resource functions. See the Listener and Service tables below for the current support status of listener configuration, TLS, and broader service-side features.
 
 ## Key Functionalities
 
 - Send HTTP requests using GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, and custom verbs.
+- Address a resource with the client resource access syntax (`client->/albums/[id].put(payload)`), passing query parameters as named arguments.
 - Forward inbound requests to upstream services preserving method, headers, and body (`forward`).
 - Configure request timeout, HTTP version (1.1/2.0), redirect behaviour, connection pool settings, and compression negotiation.
 - Secure connections with TLS and mutual TLS using PEM certificate and key files.
@@ -32,27 +33,41 @@ import ballerina/io;
 
 public function main() returns error? {
     // Plain HTTP client with a 10-second timeout and custom pool settings
-    http:Client client = check new ("http://httpbin.org", {
+    http:Client httpClient = check new ("http://httpbin.org", {
         timeout: 10,
         poolConfig: {maxIdleConnections: 50}
     });
 
     // GET request
-    http:Response getResp = check client->get("/get");
+    http:Response getResp = check httpClient->get("/get");
     io:println("Status: ", getResp.statusCode);
     json body = check getResp.getJsonPayload();
     io:println("Body: ", body);
 
     // POST request with a JSON payload
     json payload = {name: "Alice", age: 30};
-    http:Response postResp = check client->post("/post", payload);
+    http:Response postResp = check httpClient->post("/post", payload);
     io:println("POST status: ", postResp.statusCode);
+
+    // Client resource access syntax: path segments and query parameters.
+    // The payload binds to the expected type, as with the remote methods.
+    http:Response albumResp = check httpClient->/albums/[42]/tracks;
+    io:println("Resource status: ", albumResp.statusCode);
+
+    json album = check httpClient->/albums/[42];
+    io:println("Album: ", album);
+
+    http:Response searchResp = check httpClient->/albums(genre = "rock", 'limit = 10);
+    io:println("Search status: ", searchResp.statusCode);
+
+    http:Response createResp = check httpClient->/albums.post({name: "Kind of Blue"});
+    io:println("Created: ", createResp.statusCode);
 
     // Forward an inbound request to an upstream service
     http:Request req = new;
     req.method = "PUT";
     req.setJsonPayload({id: 1, data: "updated"});
-    http:Response fwdResp = check client->forward("/resource/1", req);
+    http:Response fwdResp = check httpClient->forward("/resource/1", req);
     io:println("Forward status: ", fwdResp.statusCode);
 
     // TLS client with a custom CA certificate
@@ -90,7 +105,7 @@ Support Levels:
 | Content-Type inference from payload type | Supported | `string` → `text/plain`, `xml` → `application/xml`, `byte[]` → `application/octet-stream`, all other `anydata` values → `application/json`. `RequestMessage` is `anydata\|Request`; `mime:Entity[]` and `stream<byte[], io:Error?>` messages are not supported. |
 | Media type override | Supported | `mediaType` parameter on body-carrying methods overrides the inferred Content-Type. |
 | TLS and mutual TLS (mTLS) | Partially Supported | PEM-file-based CA trust (`cert` as a string path) and client certificate/key pairs (`key` as `CertKey`) are supported. `crypto:TrustStore`, `crypto:KeyStore`, password-protected private keys (`keyPassword`), OCSP/CRL certificate revocation (`certValidation`), and TLS session timeout (`sessionTimeout`) are not supported. |
-| Client-side response data binding | Partially Supported | Every method except `head` takes a `TargetType targetType = <>` parameter inferred from the contextually expected type. An `http:Response` target (or any union containing it) yields the raw response; any other `anydata` target is deserialised from the body according to the `Content-Type` header. `stream<SseEvent, error?>` targets are not available, and jBallerina's `data.jsondata` projection options are not applied. An `application/xml` or `text/xml` body binds to an `xml` target, including a narrower one such as `xml:Element` when the parsed value inhabits it; an empty body for a non-nilable `xml` target returns an error named `NoContentError`, unlike the `string` and `byte[]` builders below. Conversion uses the same routine as `lang.value:fromJsonWithType`, so declared union member order is not honoured and record field defaults are not injected. An empty body binds to `()` for a nilable target; for a non-nilable `string` or `byte[]` target it binds to `""` or `[]` rather than raising jBallerina's `NoContentError`, which is not declared here. A target narrower than the type its builder produces — an enum or a singleton for `text/plain`, a closed all-string record for `application/x-www-form-urlencoded`, a tuple or fixed-length array for `application/octet-stream` — is converted to that target, and a body that does not fit it returns an `error`. The nilable form of such a target (`Colour?`, `Form?`) binds the same way, with an absent body giving `()`; a narrow target that is not nilable instead receives the builder's empty value and rejects it unless the narrow type admits it. |
+| Client-side response data binding | Partially Supported | Every remote and resource method except `head` takes a `TargetType targetType = <>` parameter inferred from the contextually expected type. An `http:Response` target (or any union containing it) yields the raw response; any other `anydata` target is deserialised from the body according to the `Content-Type` header. `stream<SseEvent, error?>` targets are not available, and jBallerina's `data.jsondata` projection options are not applied. An `application/xml` or `text/xml` body binds to an `xml` target, including a narrower one such as `xml:Element` when the parsed value inhabits it; an empty body for a non-nilable `xml` target returns an error named `NoContentError`, unlike the `string` and `byte[]` builders below. Conversion uses the same routine as `lang.value:fromJsonWithType`, so declared union member order is not honoured and record field defaults are not injected. An empty body binds to `()` for a nilable target; for a non-nilable `string` or `byte[]` target it binds to `""` or `[]` rather than raising jBallerina's `NoContentError`, which is not declared here. A target narrower than the type its builder produces — an enum or a singleton for `text/plain`, a closed all-string record for `application/x-www-form-urlencoded`, a tuple or fixed-length array for `application/octet-stream` — is converted to that target, and a body that does not fit it returns an `error`. The nilable form of such a target (`Colour?`, `Form?`) binds the same way, with an absent body giving `()`; a narrow target that is not nilable instead receives the builder's empty value and rejects it unless the narrow type admits it. |
 | Status code response binding | Not Yet Supported | `StatusCodeClient` and `getStatusCodeRecord()` are not implemented. |
 | Status code error mapping | Partially Supported | When data binding is active, a 4xx or 5xx response yields an `error` whose message is the reason phrase and whose detail carries `statusCode`, `headers`, and `body`. The distinct types `http:ClientRequestError` and `http:RemoteServerError` are not declared, so the two cases cannot be distinguished with an `is` check, and `error:detail()` is not available to read the detail. |
 | Client authentication | Not Yet Supported | The `auth` field in `ClientConfiguration` is absent. BasicAuth (`CredentialsConfig`), BearerToken, self-signed JWT (`JwtIssuerConfig`), and all OAuth2 grant types are not supported. |
@@ -109,7 +124,7 @@ Support Levels:
 | Proxy support | Supported | `ProxyConfig` is supported via the top-level `proxy` field in `ClientConfiguration`. Proxy auth (`userName`/`password`) is forwarded via HTTP CONNECT for HTTPS targets and `Proxy-Authorization` for HTTP targets. The deprecated `http1Settings.proxy` path is not supported (we have no `http1Settings`). DNS resolution of the proxy hostname is lazy (per-request) rather than eager at client init — initialization does not fail on an unresolvable proxy host. |
 | Async request submission | Not Yet Supported | `submit`, `getResponse`, and `HttpFuture` are not implemented. |
 | HTTP/2 server push | Not Yet Supported | `hasPromise`, `getNextPromise`, `getPromisedResponse`, and `rejectPromise` are not implemented. |
-| Resource function call syntax | Not Yet Supported | The `client->/path.get(...)` path-template syntax is not supported; use the remote method form instead. |
+| Resource function call syntax | Partially Supported | All seven accessors (`get`, `post`, `put`, `patch`, `delete`, `head`, `options`) are callable with the client resource access syntax — `client->/albums/[id].get(...)`, with `get` implied when no accessor is named. Path segments are typed `PathParamType` (`boolean\|int\|float\|decimal\|string`) values, and query parameters are passed as named arguments collected by the `*QueryParams` included record parameter. Every accessor except `head` takes a `TargetType targetType = <>` parameter and binds the payload exactly as the remote methods do (see *Client-side response data binding*). The `@http:Query` annotation for overriding a query parameter's name on the wire is not supported. |
 
 ### Request
 
@@ -189,4 +204,6 @@ Support Levels:
 - **A nil target type discards the payload.** jBallerina routes a `()` target through the string payload builder, so a non-empty body is handed back as a `string` even though `()` was requested. The Go-native version returns `()` and drops the body, keeping the bound value inside the requested type.
 - **Status-code error messages use the registered reason phrase.** jBallerina reports the reason phrase the server actually sent. The PAL transport contract surfaces only the status code, so the Go-native version derives the message from the status code's registered phrase (for example `Not Found` for 404). A code outside the IANA registry — 499, which nginx sends for a client-closed request, among others — has no registered phrase, and the message becomes `status code <code>` rather than being left empty.
 - **A status error with an absent body keeps its reason phrase.** jBallerina extracts the error response body with the builder its `Content-Type` selects, and an extraction failure replaces the reason phrase with `http:ApplicationResponseError creation failed: <code> response payload extraction failed`. A 4xx or 5xx sent with `Content-Type: application/json` and no body at all trips that path, because a JSON decoder rejects an empty document. The Go-native version treats an absent body as having no payload, so the message stays the reason phrase and the error detail's `body` is `()`.
+- **Request targets are percent-encoded, where jBallerina leaves them mostly raw.** jBallerina builds the request target by string concatenation and lets Netty encode only the space, so a path or query value carrying a delimiter changes the request's meaning — `q=a&b=c` arrives as two query parameters, and `<`, `>`, `"`, `|`, `\`, `^`, `` ` ``, `{`, `}` and non-ASCII bytes go out raw in a technically invalid request line. The Go-native version escapes path segments through Go's `net/url` and query keys and values with `url.QueryEscape`, so a delimiter inside a value stays inside that value and every target is a valid URI. Two consequences: a space in a query value becomes `+` rather than `%20`, and a literal `%` that does not begin a valid escape (`/a%b`) makes Go's URL parser reject the path, returning an `error` where jBallerina sends it raw. This is a deliberate choice of the stricter behaviour over byte-level parity, and is open to revisiting if a real client depends on jBallerina's raw form.
+- **Path and query values use Ballerina's `toString`, not Java's.** jBallerina renders a path segment or query value with Java's `String.valueOf`, which for `float` is `Double.toString` — so it emits `1.0E10` and `1.0E-7`, diverging from what `lang.float:toString` produces for the same value. The Go-native version renders every segment and query value with Ballerina's own `toString` semantics, giving `1e10` and `1e-7`; `int`, `boolean`, `decimal` and `string` are unaffected and match jBallerina exactly. This keeps one rendering rule across the language and the library instead of reproducing a Java-specific format, and is likewise open to revisiting.
 - **`gracefulStop` waits for in-flight requests to drain.** In jBallerina, `gracefulStop` effectively behaves like an immediate stop — it returns promptly without waiting for active requests, so calling it from within a resource on its own listener succeeds. The Go-native version implements the `http:Listener` contract literally and blocks until in-flight requests complete or the graceful-stop timeout (default 60s) elapses. A resource that calls `gracefulStop` on the listener serving it therefore self-deadlocks until the timeout elapses and then returns an error, rather than succeeding.

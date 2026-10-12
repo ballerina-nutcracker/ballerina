@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected boolean|int|float|decimal|string|[boolean|int|float|decimal|string...], got {| id: int, never... |}
+  --> http-client-resource-query-e.bal:31:46
+   |
+31 |     http:Response _ = check c->/albums(tag = album); // @error record is not a QueryParamType
+   |                                              ^^^^^
