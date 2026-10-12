@@ -2119,6 +2119,7 @@ func finishResolveClassDefinition(ms *compilationUnitSymbolResolver, blockRes *b
 	}
 
 	selfSymbol := model.NewVariableSymbol("self", false, false, false, diagnostics.NewBuiltinLocation())
+	selfSymbol.SetFinal()
 	blockRes.AddSymbol("self", &selfSymbol)
 
 	for _, field := range fields {

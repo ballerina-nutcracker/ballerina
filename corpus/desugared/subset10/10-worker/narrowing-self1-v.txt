@@ -1,0 +1,93 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (import-package ballerina lang value (as lang.value))
+  (type-definition Named
+    (object-type
+      (method-decl name () (
+        (value-type string)))))
+  (class-definition Box
+    (variable n (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal n))
+          (literal 1))))
+    (function describe () (
+      (value-type string))
+      (block-function-body
+        (if
+          (type-test-expr !is
+            (simple-var-ref self)
+            (user-defined-type Named))
+          (block-stmt
+            (return
+              (literal unnamed))) ())
+        (var-def
+          (variable $desugar$0 (expr
+            (invocation lang.__internal createLatch ()))))
+        (var-def
+          (variable $desugar$1))
+        (var-def
+          (variable $desugar$2))
+        (var-def
+          (variable $desugar$3 (expr
+            (lambda
+              (function $worker:Box.describe:$function () (
+                (value-type string))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (var-def
+                    (variable n (type
+                      (value-type int)) (expr
+                      (single-wait-action
+                        (simple-var-ref $desugar$2)))))
+                  (return
+                    (binary-expr +
+                      (invocation name expr:
+                        (simple-var-ref self) ())
+                      (invocation lang.value toString (
+                        (simple-var-ref n)))))))))))
+        (var-def
+          (variable $desugar$4 (expr
+            (lambda
+              (function $worker:Box.describe:w () (
+                (value-type int))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (return
+                    (index-based-access
+                      (simple-var-ref self)
+                      (literal n)))))))))
+        (assignment
+          (simple-var-ref $desugar$1)
+          (start-action
+            (invocation $desugar$3 ())))
+        (assignment
+          (simple-var-ref $desugar$2)
+          (start-action
+            (invocation $desugar$4 ())))
+        (expression-stmt
+          (invocation lang.__internal openLatch (
+            (simple-var-ref $desugar$0))))
+        (return
+          (single-wait-action
+            (simple-var-ref $desugar$1))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (user-defined-type Box)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe expr:
+            (simple-var-ref b) ())))))))
