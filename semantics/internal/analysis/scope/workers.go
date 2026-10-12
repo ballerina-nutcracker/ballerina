@@ -29,15 +29,21 @@ import (
 func NewWorker(parent Context, worker *ast.BLangNamedWorkerDeclaration) Context {
 	enclosing, _ := EnclosingFunction(parent)
 	fc := &functionContext{
-		contextBase: contextBase{outer: parent},
-		locals:      make(map[model.SymbolRef]VarDecl),
-		retTy:       semtypes.FutureEventualType(parent.TyCtx(), parent.CompilerCtx().SymbolType(worker.Symbol())),
-		id:          nextScopeID(parent),
-		kind:        fnWorker,
+		contextBase:   contextBase{outer: parent},
+		locals:        make(map[model.SymbolRef]VarDecl),
+		workerRegions: make(map[model.SymbolRef]*workerRegion),
+		retTy:         semtypes.FutureEventualType(parent.TyCtx(), parent.CompilerCtx().SymbolType(worker.Symbol())),
+		id:            nextScopeID(parent),
+		kind:          fnWorker,
 	}
 	fc.class, fc.self = enclosing.class, enclosing.self
 	fc.isolated = enclosing.IsIsolated()
 	fc.active = closureRules(fc.isolated)
+	if _, inLock := EnclosingLock(parent); inLock {
+		// A fork in a lock is rejected, but its workers still may not call
+		// non-isolated functions or start strands.
+		fc.active = append(fc.active, lockCallRules())
+	}
 	return fc
 }
 
@@ -49,15 +55,40 @@ func NewRepeatedRegion(parent Context) Context {
 	return &repeatedRegionContext{contextBase: contextBase{outer: parent}, ruleBase: ruleBase{active: parent.rules()}}
 }
 
-// NewWorkerRegion pushes the scope of a worker region, started at the point
-// where it is created. It records the named workers of the region, none of
-// which has been referenced yet.
-func NewWorkerRegion(parent Context, workers []*ast.BLangNamedWorkerDeclaration) Context {
-	refs := make(map[model.SymbolRef]*ast.BLangVarRef, len(workers))
-	for _, worker := range workers {
-		refs[worker.Symbol()] = nil
+// workerRegion tracks the value references to the workers of one region.
+type workerRegion struct {
+	// owner is the context current at the region's start point.
+	owner Context
+	refs  map[model.SymbolRef]*ast.BLangVarRef
+}
+
+// DeclareWorkerRegion records the named workers of a region started at the
+// current point of cx, none of which has been referenced yet. The innermost
+// closure keeps the region, so the statements after its start point see it.
+func DeclareWorkerRegion(cx Context, workers []*ast.BLangNamedWorkerDeclaration) {
+	fc, ok := innermostFunction(cx)
+	if !ok {
+		// Sanity check: a worker region is only declared while validating a
+		// function body, so a function context always encloses it.
+		cx.InternalErr("worker region outside a function body", workers[0].GetPosition())
+		return
 	}
-	return &workerRegionContext{contextBase: contextBase{outer: parent}, ruleBase: ruleBase{active: parent.rules()}, refs: refs}
+	region := &workerRegion{owner: cx, refs: make(map[model.SymbolRef]*ast.BLangVarRef, len(workers))}
+	for _, worker := range workers {
+		region.refs[worker.Symbol()] = nil
+		fc.workerRegions[worker.Symbol()] = region
+	}
+}
+
+func lookupWorkerRegion(cx Context, sym model.SymbolRef) (*workerRegion, bool) {
+	for cur := cx; cur != nil; cur = cur.parent() {
+		if fc, ok := cur.(*functionContext); ok {
+			if region, found := fc.workerRegions[sym]; found {
+				return region, true
+			}
+		}
+	}
+	return nil, false
 }
 
 // ReferenceWorker reports whether a reference to a worker name is valid. A
@@ -70,35 +101,37 @@ func ReferenceWorker(cx Context, ref *ast.BLangVarRef) bool {
 	if cx.CompilerCtx().GetSymbol(sym).Kind() != model.SymbolKindWorker {
 		return true
 	}
+	region, ok := lookupWorkerRegion(cx, sym)
+	if !ok {
+		// Sanity check: symbol resolution only makes a worker name visible inside
+		// the region that declares it.
+		cx.InternalErr("worker referenced outside any region that declares it", ref.GetPosition())
+		return false
+	}
 	// A reference repeats if it sits in a loop or a closure between it and the
 	// region's start point. A worker body is transparent: it runs exactly once
 	// per execution of the region.
 	repeatable := false
 	for cur := cx; cur != nil; cur = cur.parent() {
-		switch c := cur.(type) {
-		case *repeatedRegionContext:
-			repeatable = true
-		case *functionContext:
-			if c.kind != fnWorker {
-				repeatable = true
-			}
-		case *workerRegionContext:
-			seen, declaresWorker := c.refs[sym]
-			if !declaresWorker {
-				continue
-			}
-			if seen != nil {
+		if cur == region.owner {
+			if region.refs[sym] != nil {
 				return invalidWorkerReference(cx, sym, ref, "is referenced more than once")
 			}
 			if repeatable {
 				return invalidWorkerReference(cx, sym, ref, "may be evaluated more than once")
 			}
-			c.refs[sym] = ref
+			region.refs[sym] = ref
 			return true
 		}
+		switch c := cur.(type) {
+		case *repeatedRegionContext:
+			repeatable = true
+		case *functionContext:
+			repeatable = repeatable || c.kind != fnWorker
+		}
 	}
-	// Sanity check: the walk above returns at the region's owner, and symbol
-	// resolution only makes a worker name visible inside the region.
+	// Sanity check: lookupWorkerRegion found the region among the enclosing
+	// contexts, so the walk above reaches its owner.
 	cx.InternalErr("worker referenced outside the region that declares it", ref.GetPosition())
 	return false
 }
@@ -115,4 +148,25 @@ func innermostFunction(cx Context) (*functionContext, bool) {
 		}
 	}
 	return nil, false
+}
+
+// RejectForkInLock reports a fork statement lexically inside a lock statement,
+// also through the closures between them, and whether there was none. A fork in
+// a method of an object constructor inside a lock is reported as unimplemented.
+func RejectForkInLock(cx Context, fork *ast.BLangFork) bool {
+	inMethod := false
+	for cur := cx; cur != nil; cur = cur.parent() {
+		switch c := cur.(type) {
+		case *functionContext:
+			inMethod = inMethod || c.kind == fnMethod
+		case *lockContext:
+			if inMethod {
+				cx.UnimplementedErr("fork statements in an object constructor inside a lock statement are not supported", fork.GetPosition())
+			} else {
+				cx.SemanticErr("cannot use a fork statement inside a lock statement", fork.GetPosition())
+			}
+			return false
+		}
+	}
+	return true
 }

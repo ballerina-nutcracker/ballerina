@@ -1,0 +1,46 @@
+(boom
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal b panicked))))
+  )
+)
+(main
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-sync-send-action b
+            (literal 1)))))
+    (named-worker b (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation boom ()))
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (worker-receive-action a))))))
+    (expression-stmt
+      (single-wait-action
+        (simple-var-ref a)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-sync-send-action b
+        (literal 1)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (expression-stmt
+      (invocation boom ()))
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+  )
+)

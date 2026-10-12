@@ -1,0 +1,10 @@
+-- stdout --
+{"a":1,"b":3}
+{"a":1,"b":"x"}
+true
+{"b":1,"c":2}
+'int' from string: invalid number format: not a number
+true
+'int' from string: invalid number format: bad
+true
+-- stderr --

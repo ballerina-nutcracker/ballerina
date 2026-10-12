@@ -1,0 +1,149 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function refInLoop () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable sum (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 1))))
+      (var-def
+        (variable $desugar$1 (expr
+          (literal 3))))
+      (while
+        (binary-expr <=
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
+          (var-def
+            (variable $desugar$2 (expr
+              (invocation lang.__internal createLatch ()))))
+          (var-def
+            (variable $desugar$3))
+          (var-def
+            (variable $desugar$4 (expr
+              (lambda
+                (function $worker:refInLoop:fork0:w () (
+                  (value-type int))
+                  (block-function-body
+                    (expression-stmt
+                      (invocation lang.__internal waitOnLatch (
+                        (simple-var-ref $desugar$2))))
+                    (return
+                      (simple-var-ref i))))))))
+          (assignment
+            (simple-var-ref $desugar$3)
+            (start-action
+              (invocation $desugar$4 ())))
+          (expression-stmt
+            (invocation lang.__internal openLatch (
+              (simple-var-ref $desugar$2))))
+          (compound-assignment +
+            (simple-var-ref sum)
+            (single-wait-action
+              (simple-var-ref $desugar$3)))
+          (assignment
+            (simple-var-ref $desugar$0)
+            (binary-expr +
+              (simple-var-ref $desugar$0)
+              (numeric-literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref sum))))))
+  (function waitsOnFunctionWorker () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:waitsOnFunctionWorker:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$3 (expr
+                    (invocation lang.__internal createLatch ()))))
+                (var-def
+                  (variable $desugar$4))
+                (var-def
+                  (variable $desugar$5 (expr
+                    (lambda
+                      (function $worker:waitsOnFunctionWorker:fork0:f () (
+                        (value-type int))
+                        (block-function-body
+                          (expression-stmt
+                            (invocation lang.__internal waitOnLatch (
+                              (simple-var-ref $desugar$3))))
+                          (var-def
+                            (variable x (type
+                              (value-type int)) (expr
+                              (single-wait-action
+                                (simple-var-ref $desugar$2)))))
+                          (return
+                            (binary-expr *
+                              (simple-var-ref x)
+                              (literal 2)))))))))
+                (assignment
+                  (simple-var-ref $desugar$4)
+                  (start-action
+                    (invocation $desugar$5 ())))
+                (expression-stmt
+                  (invocation lang.__internal openLatch (
+                    (simple-var-ref $desugar$3))))
+                (var-def
+                  (variable r (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$4)))))
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref r))))))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $worker:waitsOnFunctionWorker:named () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 5))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$6 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$7 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation refInLoop ()))
+      (expression-stmt
+        (invocation waitsOnFunctionWorker ())))))

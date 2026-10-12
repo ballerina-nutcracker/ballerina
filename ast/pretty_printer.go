@@ -154,6 +154,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printWhile(t)
 	case *BLangLock:
 		p.printLock(t)
+	case *BLangFork:
+		p.printFork(t)
 	case *BLangForeach:
 		p.printForeach(t)
 	case *BLangArrayType:
@@ -1573,6 +1575,17 @@ func (p *PrettyPrinter) printLock(node *BLangLock) {
 	p.PrintString("lock")
 	p.indentLevel++
 	p.PrintInner(&node.Body)
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printFork(node *BLangFork) {
+	p.StartNode()
+	p.PrintString("fork")
+	p.indentLevel++
+	for _, worker := range node.Region.Workers {
+		p.PrintInner(worker)
+	}
 	p.indentLevel--
 	p.EndNode()
 }

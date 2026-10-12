@@ -272,6 +272,11 @@ func resolveMessagePeer(resolver symbolResolver, peer *ast.BLangWorkerPeer, pos 
 			invalidate(group)
 			return nil, model.SymbolRef{}, false
 		}
+		if !group.hasDefaultWorker() {
+			ctx.SemanticError("worker interactions are only allowed between peers", peer.Pos)
+			invalidate(group)
+			return nil, model.SymbolRef{}, false
+		}
 		peer.Symbol = group.defaultWorker
 		return group, worker, true
 	}
@@ -287,7 +292,7 @@ func resolveMessagePeer(resolver symbolResolver, peer *ast.BLangWorkerPeer, pos 
 		}
 	}
 	if lookup, found := resolver.GetSymbol(peer.Name); found && ctx.GetSymbol(lookup.ref).Kind() == model.SymbolKindWorker {
-		ctx.Unimplemented("worker message send/receive is not supported here", peer.Pos)
+		ctx.SemanticError("worker interactions are only allowed between peers", peer.Pos)
 		invalidate(enclosingGroupOf(owner, lookup.ref))
 	} else {
 		ctx.SemanticError("undefined worker '"+peer.Name+"'", peer.Pos)

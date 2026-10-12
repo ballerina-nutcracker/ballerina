@@ -303,13 +303,16 @@ func validateBlockFunctionBody(cx scope.Context, body *ast.BLangBlockFunctionBod
 }
 
 // validateWorkerRegion validates each named worker and the default worker's
-// statements under the region's scope, which owns the references to its workers.
+// statements. The region is declared first, so the references to its workers
+// from the workers and from the statements after it are tracked together.
 func validateWorkerRegion(cx scope.Context, region *ast.WorkerRegion) {
-	regionCx := scope.NewWorkerRegion(cx, region.Workers)
+	scope.DeclareWorkerRegion(cx, region.Workers)
 	for _, worker := range region.Workers {
-		validateNamedWorker(regionCx, worker)
+		validateNamedWorker(cx, worker)
 	}
-	validateBlock(regionCx, region.DefaultWorker.Stmts)
+	if region.DefaultWorker != nil {
+		validateBlock(cx, region.DefaultWorker.Stmts)
+	}
 }
 
 // validateNamedWorker validates a worker's annotations and its body under the

@@ -41,6 +41,9 @@ type nodeBuilder struct {
 	currentCompUnit      *ast.BLangCompilationUnit
 	cx                   *context.CompilerContext
 	rangeOf              rangeFn
+	// forkCount is the number of forks built so far in the function body
+	// being built.
+	forkCount int
 }
 
 func (n *nodeBuilder) de() *diagnostics.DiagnosticEnv {
@@ -3148,8 +3151,15 @@ func (n *nodeBuilder) transformForkStatement(forkStatementNode *st.ForkStatement
 	if !n.expectNode(forkStatementNode) {
 		return nil, false
 	}
-	n.unimplemented("fork statements are not supported", forkStatementNode)
-	return nil, false
+	namePrefix := "fork" + strconv.Itoa(n.forkCount)
+	n.forkCount++
+	workers, ok := n.generateNamedWorkerDeclarations(forkStatementNode.NamedWorkerDeclarations())
+	if !ok {
+		return nil, false
+	}
+	fork := &ast.BLangFork{Region: &ast.WorkerRegion{Workers: workers, NamePrefix: namePrefix}}
+	fork.SetPosition(n.getPosition(forkStatementNode))
+	return fork, true
 }
 
 func (n *nodeBuilder) transformForEachStatement(forEachStatementNode *st.ForEachStatementNode) (*ast.BLangForeach, bool) {
@@ -3334,12 +3344,15 @@ func (n *nodeBuilder) transformFunctionBodyBlock(functionBodyBlockNode *st.Funct
 	if !n.expectNode(functionBodyBlockNode) || !n.expectToken(functionBodyBlockNode.OpenBraceToken()) {
 		return nil, false
 	}
+	enclosingForkCount := n.forkCount
+	n.forkCount = 0
+	defer func() { n.forkCount = enclosingForkCount }()
 	bLFuncBody := &ast.BLangBlockFunctionBody{}
 	if namedWorkerDeclarator := functionBodyBlockNode.NamedWorkerDeclarator(); namedWorkerDeclarator != nil {
 		if !n.expectNode(namedWorkerDeclarator) {
 			return nil, false
 		}
-		workers, ok := n.generateNamedWorkerDeclarations(namedWorkerDeclarator)
+		workers, ok := n.generateNamedWorkerDeclarations(namedWorkerDeclarator.NamedWorkerDeclarations())
 		if !ok {
 			return nil, false
 		}
@@ -3376,9 +3389,8 @@ func newDefaultWorker(stmts []ast.StatementNode, bodyPos diagnostics.Location) *
 }
 
 func (n *nodeBuilder) generateNamedWorkerDeclarations(
-	namedWorkerDeclarator *st.NamedWorkerDeclarator,
+	declarations st.NodeList[*st.NamedWorkerDeclarationNode],
 ) ([]*ast.BLangNamedWorkerDeclaration, bool) {
-	declarations := namedWorkerDeclarator.NamedWorkerDeclarations()
 	workers := make([]*ast.BLangNamedWorkerDeclaration, 0, declarations.Size())
 	for declaration := range declarations.Iterator() {
 		worker, ok := n.transformNamedWorkerDeclaration(declaration)

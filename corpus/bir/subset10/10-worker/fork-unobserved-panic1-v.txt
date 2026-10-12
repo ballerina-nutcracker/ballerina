@@ -1,0 +1,56 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %5 = closure_fp $anon/.:$worker:main:fork0:failing
+    $desugar$3 = %5;
+    %7 = closure_fp $anon/.:$worker:main:fork0:other
+    $desugar$4 = %7;
+    %9 = start $desugar$3() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %9;
+    %10 = start $desugar$4() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %10;
+    %11 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %12 = wait $desugar$2 -> bb5;
+  }
+  bb5 {
+    result = %12;
+    %14 = println(result) -> bb6;
+  }
+  bb6 {
+    %15 = ConstantLoad main done
+    %16 = println(%15) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}
+$worker:main:fork0:failing() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad unobserved
+    %3 = newError error(%2)
+    panic %3;
+  }
+}
+$worker:main:fork0:other() -> string{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad other done
+    %0 = %2;
+    return;
+  }
+}

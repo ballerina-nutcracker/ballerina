@@ -313,6 +313,11 @@ func Walk(v Visitor, node BLangNode) {
 	case *BLangLock:
 		Walk(v, &node.Body)
 
+	case *BLangFork:
+		for _, worker := range node.Region.Workers {
+			Walk(v, worker)
+		}
+
 	case *BLangMatchStatement:
 		if node.Expr != nil {
 			Walk(v, node.Expr.(BLangNode))
