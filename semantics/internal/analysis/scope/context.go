@@ -117,9 +117,6 @@ type (
 		id       ScopeID
 		kind     functionKind
 		isolated bool
-		// workerRefs maps each named worker declared in the function's body to
-		// the one value reference already seen for it, nil until one is.
-		workerRefs map[model.SymbolRef]*ast.BLangVarRef
 	}
 
 	lockContext struct {
@@ -150,6 +147,17 @@ type (
 		ruleBase
 		factsBase
 	}
+
+	// workerRegionContext owns the value references to the workers of one
+	// worker region, started together at the region's start point.
+	workerRegionContext struct {
+		contextBase
+		ruleBase
+		factsBase
+		// refs maps each named worker of the region to the one value reference
+		// already seen for it, nil until one is.
+		refs map[model.SymbolRef]*ast.BLangVarRef
+	}
 )
 
 var (
@@ -159,6 +167,7 @@ var (
 	_ Context = (*isolatedExprContext)(nil)
 	_ Context = (*factsContext)(nil)
 	_ Context = (*repeatedRegionContext)(nil)
+	_ Context = (*workerRegionContext)(nil)
 )
 
 func (c contextBase) parent() Context { return c.outer }
