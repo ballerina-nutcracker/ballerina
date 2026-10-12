@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker can't send/receive to itself
+  --> fork-peer2-e.bal:67:18
+   |
+67 |             1 -> a; // @error a worker can't send to itself
+   |                  ^
+
+error[SEMANTIC_ERROR]: worker interactions are only allowed between peers
+  --> fork-peer2-e.bal:23:24
+   |
+23 |             int _ = <- a; // @error workers of different forks aren't peers
+   |                        ^
+
+error[SEMANTIC_ERROR]: worker interactions are only allowed between peers
+  --> fork-peer2-e.bal:33:26
+   |
+33 |                     1 -> sib; // @error inner isn't a peer of host's siblings
+   |                          ^^^
+
+error[SEMANTIC_ERROR]: worker interactions are only allowed between peers
+  --> fork-peer2-e.bal:49:18
+   |
+49 |             1 -> inner; // @error the forking worker isn't a peer of the workers it forks
+   |                  ^^^^^
+
+error[SEMANTIC_ERROR]: worker interactions are only allowed between peers
+  --> fork-peer2-e.bal:60:14
+   |
+60 |         1 -> a; // @error a function-level worker isn't a peer of the workers it forks
+   |              ^

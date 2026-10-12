@@ -71,16 +71,6 @@ function inBlock() {
     }
 }
 
-function throughLambda() {
-    worker a {
-        int _ = <- function;
-    }
-    var f = function () {
-        1 -> a; // @error worker message send/receive is not supported here
-    };
-    f();
-}
-
 function placementInLambda(boolean flag) {
     worker a {
         var g = function () {

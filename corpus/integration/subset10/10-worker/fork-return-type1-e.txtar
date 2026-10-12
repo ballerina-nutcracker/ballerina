@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: error type of check expression is not a subtype of the enclosing function's return type
+  --> fork-return-type1-e.bal:34:21
+   |
+34 |             int x = check int:fromString("1"); // @error w can't return an error
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got 1
+  --> fork-return-type1-e.bal:24:20
+   |
+24 |             return 1; // @error w returns nil
+   |                    ^
