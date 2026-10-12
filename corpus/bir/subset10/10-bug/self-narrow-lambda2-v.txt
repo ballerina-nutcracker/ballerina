@@ -1,0 +1,71 @@
+module $anon.. v 0.0.0;
+class Box {
+
+  describe() -> string{
+    bb0 {
+      %2 = self is object { function name() returns string }
+      %2 ? bb1 : bb3;
+    }
+    bb1 {
+      PushScopeFrame 3
+      %0 = closure_fp $anon/.:$anonFunc$_0
+      f = %0;
+      %2 = f() -> bb2;
+    }
+    bb2 {
+      (1, %0) = %2;
+      PopScopeFrame
+      return;
+    }
+    bb3 {
+      PushScopeFrame 1
+      %0 = ConstantLoad unnamed
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Box
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    b = %3;
+    %6 = b.describe() -> bb5;
+  }
+  bb5 {
+    %7 = println(%6) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+$anonFunc$_0() -> string{
+  bb0 {
+    %1 = (2, self).name() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
