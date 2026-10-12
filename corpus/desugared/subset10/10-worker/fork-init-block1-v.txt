@@ -1,0 +1,103 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function nestedInitFork (
+    (variable flag (type
+      (value-type boolean)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable sum (type
+          (value-type int)) (expr
+          (literal 0))))
+      (if
+        (simple-var-ref flag)
+        (block-stmt
+          (var-def
+            (variable $desugar$0 (expr
+              (invocation lang.__internal createLatch ()))))
+          (var-def
+            (variable $desugar$1))
+          (var-def
+            (variable $desugar$2 (expr
+              (lambda
+                (function $worker:nestedInitFork:fork0:w () (
+                  (value-type int))
+                  (block-function-body
+                    (expression-stmt
+                      (invocation lang.__internal waitOnLatch (
+                        (simple-var-ref $desugar$0))))
+                    (return
+                      (literal 1))))))))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (start-action
+              (invocation $desugar$2 ())))
+          (expression-stmt
+            (invocation lang.__internal openLatch (
+              (simple-var-ref $desugar$0))))
+          (compound-assignment +
+            (simple-var-ref sum)
+            (single-wait-action
+              (simple-var-ref $desugar$1)))) ())
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$4))
+      (var-def
+        (variable $desugar$5))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:nestedInitFork:$function () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$3))))
+                (var-def
+                  (variable r (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$5)))))
+                (return
+                  (binary-expr +
+                    (simple-var-ref sum)
+                    (simple-var-ref r)))))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $worker:nestedInitFork:w () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$3))))
+                (return
+                  (literal 10))))))))
+      (assignment
+        (simple-var-ref $desugar$4)
+        (start-action
+          (invocation $desugar$6 ())))
+      (assignment
+        (simple-var-ref $desugar$5)
+        (start-action
+          (invocation $desugar$7 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$3))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$4)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation nestedInitFork (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation nestedInitFork (
+            (literal false)))))))))

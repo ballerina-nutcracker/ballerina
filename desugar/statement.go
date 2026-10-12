@@ -42,6 +42,8 @@ func walkStatement(cx *functionContext, node ast.StatementNode) desugaredNode[as
 		return walkDo(cx, stmt)
 	case *ast.BLangLock:
 		return walkLock(cx, stmt)
+	case *ast.BLangFork:
+		return walkFork(cx, stmt)
 	case *ast.BLangForeach:
 		return visitForEach(cx, stmt)
 	case *ast.BLangVariableDef:

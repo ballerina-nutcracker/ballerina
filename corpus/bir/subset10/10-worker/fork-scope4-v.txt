@@ -1,0 +1,174 @@
+module $anon.. v 0.0.0;
+localNamedLikeWorker() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:localNamedLikeWorker:fork0:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+nestedForkWorkerNamedLikeWorker() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:nestedForkWorkerNamedLikeWorker:fork0:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+lambdaParamNamedLikeWorker() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:lambdaParamNamedLikeWorker:fork0:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = localNamedLikeWorker() -> bb1;
+  }
+  bb1 {
+    %2 = %1;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    %4 = nestedForkWorkerNamedLikeWorker() -> bb3;
+  }
+  bb3 {
+    %5 = %4;
+    %6 = println(%5) -> bb4;
+  }
+  bb4 {
+    %7 = lambdaParamNamedLikeWorker() -> bb5;
+  }
+  bb5 {
+    %8 = %7;
+    %9 = println(%8) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = w;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$worker:lambdaParamNamedLikeWorker:fork0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = fp $anon/.:$anonFunc$_0
+    f = %2;
+    %4 = ConstantLoad 150
+    %5 = %4;
+    %6 = f(%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+$worker:localNamedLikeWorker:fork0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 5
+    w = %2;
+    %5 = w;
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    %0 = %4;
+    return;
+  }
+}
+$worker:nestedForkWorkerNamedLikeWorker.$worker:nestedForkWorkerNamedLikeWorker:fork0:w:fork1:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 20
+    %0 = %2;
+    return;
+  }
+}
+$worker:nestedForkWorkerNamedLikeWorker:fork0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = createLatch() -> bb2;
+  }
+  bb2 {
+    $desugar$0 = %2;
+    %5 = closure_fp $anon/.:$worker:nestedForkWorkerNamedLikeWorker.$worker:nestedForkWorkerNamedLikeWorker:fork0:w:fork1:w
+    $desugar$2 = %5;
+    %7 = start $desugar$2() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$1 = %7;
+    %8 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %9 = wait $desugar$1 -> bb5;
+  }
+  bb5 {
+    inner = %9;
+    %12 = inner;
+    %13 = ConstantLoad 1
+    %14 = %13;
+    %11 = + %12 %14;
+    %0 = %11;
+    return;
+  }
+}

@@ -1,0 +1,47 @@
+(main
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1)))
+      (annotation-attachment config
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal alpha)))))
+    (named-worker v (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 2)))
+      (annotation-attachment config
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal beta)))))
+    (var-def
+      (variable result (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (multiple-wait-action w
+          (simple-var-ref w) v
+          (simple-var-ref v)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)
+(worker v
+  (bb0 () ()
+    (return
+      (literal 2))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)

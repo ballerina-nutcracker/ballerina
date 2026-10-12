@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> fork-narrowing1-e.bal:28:16
+   |
+28 |         return v; // @error v is captured by a fork worker
+   |                ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> fork-narrowing1-e.bal:44:16
+   |
+44 |         return v; // @error v is captured by the fork workers
+   |                ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> fork-narrowing1-e.bal:57:24
+   |
+57 |                 return v; // @error v is captured by worker a
+   |                        ^

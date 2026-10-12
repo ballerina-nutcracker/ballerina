@@ -1,0 +1,95 @@
+module $anon.. v 0.0.0;
+class Counter {
+  count int
+
+  bump() -> int{
+    bb0 {
+      %2 = createLatch() -> bb1;
+    }
+    bb1 {
+      $desugar$0 = %2;
+      %5 = closure_fp $anon/.:$worker:Counter.bump:fork0:w
+      $desugar$2 = %5;
+      %7 = start $desugar$2() isolated=false -> bb2;
+    }
+    bb2 {
+      $desugar$1 = %7;
+      %8 = openLatch($desugar$0) -> bb3;
+    }
+    bb3 {
+      %9 = wait $desugar$1 -> bb4;
+    }
+    bb4 {
+      r = %9;
+      %12 = r;
+      %14 = ConstantLoad count
+      %13 = self[%14];
+      %15 = %13;
+      %11 = + %12 %15;
+      %0 = %11;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 7
+      %3 = ConstantLoad count
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Counter
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %3;
+    %6 = c.bump() -> bb5;
+  }
+  bb5 {
+    %7 = %6;
+    %8 = println(%7) -> bb6;
+  }
+  bb6 {
+    %10 = ConstantLoad count
+    %9 = c[%10];
+    %11 = %9;
+    %12 = println(%11) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}
+$worker:Counter.bump:fork0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad count
+    %3 = (1, self)[%2];
+    %4 = %3;
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %7 = + %4 %6;
+    (1, self)[%2] = %7;
+    %9 = ConstantLoad count
+    %8 = (1, self)[%9];
+    %0 = %8;
+    return;
+  }
+}
