@@ -1,0 +1,98 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Box
+    (variable n (type
+      (value-type int)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access n
+            (simple-var-ref self))
+          (literal 3))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (field-based-access n
+                (simple-var-ref self)))))))
+    (function getInWorker () (
+      (value-type int))
+      (block-function-body
+        (named-worker w (
+          (value-type int))
+          (block-function-body
+            (lock
+              (block-stmt
+                (return
+                  (field-based-access n
+                    (simple-var-ref self)))))))
+        (return
+          (single-wait-action
+            (simple-var-ref w))))))
+  (function capturesIsolated () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (intersection-type
+            (value-type readonly)
+            (array-type
+              (value-type int) dimensions: 1 ([])))) (expr
+          (list-constructor-expr
+            (literal 2)))))
+      (var-def
+        (variable box (type
+          (user-defined-type Box)) (expr
+          (new ()))))
+      (var-def
+        (variable one (type
+          (function-type () (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (return
+                  (literal 1))))))))
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (binary-expr +
+              (binary-expr +
+                (index-based-access
+                  (simple-var-ref arr)
+                  (literal 0))
+                (invocation getInWorker expr:
+                  (simple-var-ref box) ()))
+              (invocation one ())))))
+      (return
+        (single-wait-action
+          (simple-var-ref w)))))
+  (function capturesParam (
+    (variable p (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (simple-var-ref p))))
+      (return
+        (single-wait-action
+          (simple-var-ref w)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation capturesIsolated ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation capturesParam (
+            (literal 4)))))))))
