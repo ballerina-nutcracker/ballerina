@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing return statement
+  --> fork-cfg1-e.bal:19:9
+   |
+19 |         worker w returns int { // @error missing return
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |         }
+   |         ^
+
+error[SEMANTIC_ERROR]: missing return statement
+  --> fork-cfg1-e.bal:27:13
+   |
+27 |             worker w returns int { // @error missing return
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 |             }
+   |             ^
+
+error[SEMANTIC_ERROR]: missing return statement
+  --> fork-cfg1-e.bal:37:17
+   |
+37 |                 worker w returns int { // @error missing return
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 |                 }
+   |                 ^
+
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> fork-cfg1-e.bal:48:20
+   |
+48 |             return seed * 2; // @error captured variable is not initialized at the fork
+   |                    ^^^^
+
+error[SEMANTIC_ERROR]: worker can terminate before running all its message actions
+  --> fork-cfg1-e.bal:59:17
+   |
+59 |                 return; // @error a can terminate before sending
+   |                 ^^^^^^^

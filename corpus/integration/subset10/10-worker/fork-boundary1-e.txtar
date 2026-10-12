@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: break statement not allowed outside loop
+  --> fork-boundary1-e.bal:21:17
+   |
+21 |                 break; // @error the loop is outside the worker
+   |                 ^^^^^^
+
+error[SEMANTIC_ERROR]: continue statement not allowed outside loop
+  --> fork-boundary1-e.bal:31:17
+   |
+31 |                 continue; // @error the loop is outside the worker
+   |                 ^^^^^^^^^

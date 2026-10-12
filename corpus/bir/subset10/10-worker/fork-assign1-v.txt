@@ -1,0 +1,60 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    x = %1;
+    %3 = ConstantLoad a
+    s = %3;
+    %5 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %5;
+    %9 = closure_fp $anon/.:$worker:main:fork0:w
+    $desugar$3 = %9;
+    %11 = closure_fp $anon/.:$worker:main:fork0:v
+    $desugar$4 = %11;
+    %13 = start $desugar$3() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %13;
+    %14 = start $desugar$4() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %14;
+    %15 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %16 = wait {w: $desugar$1, v: $desugar$2} -> bb5;
+  }
+  bb5 {
+    %17 = %16;
+    %18 = x;
+    %19 = println(%18) -> bb6;
+  }
+  bb6 {
+    %20 = println(s) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}
+$worker:main:fork0:v() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad b
+    (1, s) = %2;
+    return;
+  }
+}
+$worker:main:fork0:w() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 5
+    (1, x) = %2;
+    return;
+  }
+}

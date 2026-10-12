@@ -1,0 +1,35 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Variable already defined: b
+  --> fork-collision1-e.bal:24:13
+   |
+24 |             int b = 1; // @error Variable already defined: b
+   |             ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Variable already defined: w
+  --> fork-collision1-e.bal:39:9
+   |
+39 |         int w = 1; // @error Variable already defined: w
+   |         ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Variable already defined: w
+  --> fork-collision1-e.bal:64:13
+   |
+64 |             worker w { // @error Variable already defined: w
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+65 |             }
+   |             ^
+
+error[SEMANTIC_ERROR]: Variable already defined: w
+  --> fork-collision1-e.bal:72:9
+   |
+72 |         worker w { // @error Variable already defined: w
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+73 |         }
+   |         ^
+
+error[SEMANTIC_ERROR]: Variable already defined: x
+  --> fork-collision1-e.bal:50:13
+   |
+50 |             int x = 2; // @error Variable already defined: x
+   |             ^^^^^^^^^^

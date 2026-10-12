@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "x"
+  --> fork-types3-e.bal:35:21
+   |
+35 |             int v = <- a; // @error a sends a string
+   |                     ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "x"
+  --> fork-types3-e.bal:44:20
+   |
+44 |             return "x"; // @error w returns int
+   |                    ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got int
+  --> fork-types3-e.bal:25:16
+   |
+25 |     string s = wait w; // @error w's eventual type is int
+   |                ^^^^^^

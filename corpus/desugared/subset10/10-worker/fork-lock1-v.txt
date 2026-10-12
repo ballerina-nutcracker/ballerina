@@ -1,0 +1,114 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (variable counter (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref counter)
+        (literal 0))))
+  (function bump () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $worker:bump:fork0:a () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$0 (expr
+                    (literal 0))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (literal 2000))))
+                (while
+                  (binary-expr <
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1))
+                  (block-stmt
+                    (var-def
+                      (variable _ (type
+                        (value-type int)) (expr
+                        (simple-var-ref $desugar$0))))
+                    (lock
+                      (block-stmt
+                        (compound-assignment +
+                          (simple-var-ref counter)
+                          (literal 1))))
+                    (assignment
+                      (simple-var-ref $desugar$0)
+                      (binary-expr +
+                        (simple-var-ref $desugar$0)
+                        (numeric-literal 1)))))))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (lambda
+            (function $worker:bump:fork0:b () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$0 (expr
+                    (literal 0))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (literal 2000))))
+                (while
+                  (binary-expr <
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1))
+                  (block-stmt
+                    (var-def
+                      (variable _ (type
+                        (value-type int)) (expr
+                        (simple-var-ref $desugar$0))))
+                    (lock
+                      (block-stmt
+                        (compound-assignment +
+                          (simple-var-ref counter)
+                          (literal 1))))
+                    (assignment
+                      (simple-var-ref $desugar$0)
+                      (binary-expr +
+                        (simple-var-ref $desugar$0)
+                        (numeric-literal 1)))))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action isolated
+          (invocation $desugar$3 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action isolated
+          (invocation $desugar$4 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (assignment
+        (wildcard-binding-pattern)
+        (multiple-wait-action a
+          (simple-var-ref $desugar$1) b
+          (simple-var-ref $desugar$2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation bump ()))
+      (lock
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref counter)))))))))

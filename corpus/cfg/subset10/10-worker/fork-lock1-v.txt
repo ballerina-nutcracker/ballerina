@@ -1,0 +1,84 @@
+(bump
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (foreach
+          (var-def
+            (variable _ (type
+              (value-type int))))
+          (binary-expr ..<
+            (literal 0)
+            (literal 2000))
+          (block-stmt
+            (lock
+              (block-stmt
+                (compound-assignment +
+                  (simple-var-ref counter)
+                  (literal 1))))))))
+    (named-worker b (
+      (value-type null))
+      (block-function-body
+        (foreach
+          (var-def
+            (variable _ (type
+              (value-type int))))
+          (binary-expr ..<
+            (literal 0)
+            (literal 2000))
+          (block-stmt
+            (lock
+              (block-stmt
+                (compound-assignment +
+                  (simple-var-ref counter)
+                  (literal 1))))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (multiple-wait-action a
+        (simple-var-ref a) b
+        (simple-var-ref b)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation bump ()))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref counter))))
+  )
+)
+(worker a
+  (bb0 () (bb1))
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (literal 2000))
+    (var-def
+      (variable _ (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref counter)
+      (literal 1))
+  )
+  (bb3 (bb1) ())
+)
+(worker b
+  (bb0 () (bb1))
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (literal 2000))
+    (var-def
+      (variable _ (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref counter)
+      (literal 1))
+  )
+  (bb3 (bb1) ())
+)

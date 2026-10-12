@@ -1,0 +1,251 @@
+module $anon.. v 0.0.0;
+innerWaitsOnOuterSibling() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %5 = closure_fp $anon/.:$worker:innerWaitsOnOuterSibling:fork0:host
+    $desugar$3 = %5;
+    %7 = closure_fp $anon/.:$worker:innerWaitsOnOuterSibling:fork0:sib
+    $desugar$4 = %7;
+    %9 = start $desugar$3() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %9;
+    %10 = start $desugar$4() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %10;
+    %11 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %12 = wait $desugar$1 -> bb5;
+  }
+  bb5 {
+    r = %12;
+    %14 = r;
+    %15 = println(%14) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+messagesAtBothLevels() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = createWorkerMessage() -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %3;
+    %7 = closure_fp $anon/.:$worker:messagesAtBothLevels:fork0:host
+    $desugar$4 = %7;
+    %9 = closure_fp $anon/.:$worker:messagesAtBothLevels:fork0:sib$body
+    $desugar$5 = %9;
+    %11 = closure_fp $anon/.:$worker:messagesAtBothLevels:fork0:sib
+    $desugar$7 = %11;
+    %13 = start $desugar$4() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %13;
+    %14 = start $desugar$7() isolated=false -> bb4;
+  }
+  bb4 {
+    $desugar$3 = %14;
+    %15 = openLatch($desugar$0) -> bb5;
+  }
+  bb5 {
+    %16 = wait $desugar$2 -> bb6;
+  }
+  bb6 {
+    r = %16;
+    %18 = r;
+    %19 = println(%18) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = innerWaitsOnOuterSibling() -> bb1;
+  }
+  bb1 {
+    %2 = messagesAtBothLevels() -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$worker:innerWaitsOnOuterSibling.$worker:innerWaitsOnOuterSibling:fork0:host:fork1:inner() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = wait (2, $desugar$2) -> bb2;
+  }
+  bb2 {
+    s = %2;
+    %5 = s;
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    %0 = %4;
+    return;
+  }
+}
+$worker:innerWaitsOnOuterSibling:fork0:host() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = createLatch() -> bb2;
+  }
+  bb2 {
+    $desugar$0 = %2;
+    %5 = closure_fp $anon/.:$worker:innerWaitsOnOuterSibling.$worker:innerWaitsOnOuterSibling:fork0:host:fork1:inner
+    $desugar$2 = %5;
+    %7 = start $desugar$2() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$1 = %7;
+    %8 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %9 = wait $desugar$1 -> bb5;
+  }
+  bb5 {
+    %0 = %9;
+    return;
+  }
+}
+$worker:innerWaitsOnOuterSibling:fork0:sib() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 10
+    %0 = %2;
+    return;
+  }
+}
+$worker:messagesAtBothLevels.$worker:messagesAtBothLevels:fork0:host:fork1:x() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = (1, $desugar$4)() -> bb2;
+  }
+  bb2 {
+    $desugar$5 = %2;
+    %4 = ConstantLoad 1
+    %5 = newArray list[%4]{(1, $desugar$1)}
+    %6 = ConstantLoad 1
+    %7 = newArray list[%6]{(1, $desugar$3)}
+    %8 = awaitWorkerMessageDelivery(%5,%7) -> bb3;
+  }
+  bb3 {
+    %0 = $desugar$5;
+    return;
+  }
+}
+$worker:messagesAtBothLevels.$worker:messagesAtBothLevels:fork0:host:fork1:x$body() -> nil{
+  bb0 {
+    %1 = (1, base);
+    %2 = setWorkerMessageValue((1, $desugar$1),%1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$worker:messagesAtBothLevels.$worker:messagesAtBothLevels:fork0:host:fork1:y() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = getWorkerMessageValue((1, $desugar$1),(1, $desugar$2)) -> bb2;
+  }
+  bb2 {
+    v = %2;
+    %5 = v;
+    %6 = ConstantLoad 2
+    %7 = %6;
+    %4 = * %5 %7;
+    %0 = %4;
+    return;
+  }
+}
+$worker:messagesAtBothLevels:fork0:host() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = getWorkerMessageValue((1, $desugar$1),(1, $desugar$3)) -> bb2;
+  }
+  bb2 {
+    base = %2;
+    %4 = createLatch() -> bb3;
+  }
+  bb3 {
+    $desugar$0 = %4;
+    %6 = createWorkerMessage() -> bb4;
+  }
+  bb4 {
+    $desugar$1 = %6;
+    %10 = closure_fp $anon/.:$worker:messagesAtBothLevels.$worker:messagesAtBothLevels:fork0:host:fork1:x$body
+    $desugar$4 = %10;
+    %12 = closure_fp $anon/.:$worker:messagesAtBothLevels.$worker:messagesAtBothLevels:fork0:host:fork1:x
+    $desugar$6 = %12;
+    %14 = closure_fp $anon/.:$worker:messagesAtBothLevels.$worker:messagesAtBothLevels:fork0:host:fork1:y
+    $desugar$7 = %14;
+    %16 = start $desugar$6() isolated=false -> bb5;
+  }
+  bb5 {
+    $desugar$2 = %16;
+    %17 = start $desugar$7() isolated=false -> bb6;
+  }
+  bb6 {
+    $desugar$3 = %17;
+    %18 = openLatch($desugar$0) -> bb7;
+  }
+  bb7 {
+    %19 = wait $desugar$3 -> bb8;
+  }
+  bb8 {
+    %0 = %19;
+    return;
+  }
+}
+$worker:messagesAtBothLevels:fork0:sib() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = (1, $desugar$5)() -> bb2;
+  }
+  bb2 {
+    $desugar$6 = %2;
+    %4 = ConstantLoad 1
+    %5 = newArray list[%4]{(1, $desugar$1)}
+    %6 = ConstantLoad 1
+    %7 = newArray list[%6]{(1, $desugar$2)}
+    %8 = awaitWorkerMessageDelivery(%5,%7) -> bb3;
+  }
+  bb3 {
+    %0 = $desugar$6;
+    return;
+  }
+}
+$worker:messagesAtBothLevels:fork0:sib$body() -> nil{
+  bb0 {
+    %1 = ConstantLoad 21
+    %2 = %1;
+    %3 = setWorkerMessageValue((1, $desugar$1),%2) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

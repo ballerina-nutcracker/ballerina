@@ -1,0 +1,60 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation nestedInitFork (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation nestedInitFork (
+          (literal false))))))
+  )
+)
+(nestedInitFork
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable sum (type
+        (value-type int)) (expr
+        (literal 0))))
+    (simple-var-ref flag)
+  )
+  (bb1 (bb0) (bb2)
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (compound-assignment +
+      (simple-var-ref sum)
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+  (bb2 (bb1 bb0) ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 10))))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (return
+      (binary-expr +
+        (simple-var-ref sum)
+        (simple-var-ref r)))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 10))
+  )
+)

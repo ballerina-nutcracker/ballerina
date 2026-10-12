@@ -1,0 +1,11 @@
+-- stdout --
+1
+{"b":2,"c":3}
+d
+after fork
+worker done
+slow
+in n
+true
+19
+-- stderr --

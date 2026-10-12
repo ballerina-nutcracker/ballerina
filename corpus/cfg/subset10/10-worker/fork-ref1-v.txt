@@ -1,0 +1,94 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation refInLoop ()))
+    (expression-stmt
+      (invocation waitsOnFunctionWorker ()))
+  )
+)
+(refInLoop
+  (bb0 () (bb1)
+    (var-def
+      (variable sum (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ...
+      (literal 1)
+      (literal 3))
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref i))))
+    (compound-assignment +
+      (simple-var-ref sum)
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref sum))))
+  )
+)
+(waitsOnFunctionWorker
+  (bb0 () ()
+    (named-worker named (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 5))))
+    (named-worker f (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (single-wait-action
+              (simple-var-ref named)))))
+        (return
+          (binary-expr *
+            (simple-var-ref x)
+            (literal 2)))))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(worker f
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref named)))))
+    (return
+      (binary-expr *
+        (simple-var-ref x)
+        (literal 2)))
+  )
+)
+(worker named
+  (bb0 () ()
+    (return
+      (literal 5))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (simple-var-ref i))
+  )
+)

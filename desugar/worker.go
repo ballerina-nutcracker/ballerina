@@ -26,6 +26,14 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
+// walkFork lowers a fork to the statements that start its workers, followed by
+// opening their latch. Its latch, message handles and future slots are locals
+// of the enclosing block, so every execution of the fork gets new ones.
+func walkFork(cx *functionContext, fork *ast.BLangFork) desugaredNode[ast.StatementNode] {
+	stmts, openLatch := lowerWorkerRegion(cx, fork.Region, fork.GetPosition())
+	return desugaredNode[ast.StatementNode]{initStmts: stmts, replacementNode: openLatch}
+}
+
 // desugarBodyWorkerRegion lowers the worker region of a block function body
 // to existing language constructs. The emitted sequence is:
 //
