@@ -49,47 +49,42 @@ func NewRepeatedRegion(parent Context) Context {
 	return &repeatedRegionContext{contextBase: contextBase{outer: parent}, ruleBase: ruleBase{active: parent.rules()}}
 }
 
-// DeclareWorkers records the named workers declared in the body of the
-// innermost function, none of which has been referenced yet.
-func DeclareWorkers(cx Context, workers []*ast.BLangNamedWorkerDeclaration) {
-	fc, ok := innermostFunction(cx)
-	if !ok || fc.kind == fnWorker {
-		// Sanity check: named workers are only declared while validating a
-		// function body, so a non-worker function context always encloses them.
-		cx.InternalErr("named workers outside a function body", workers[0].GetPosition())
-		return
-	}
-	fc.workerRefs = make(map[model.SymbolRef]*ast.BLangVarRef, len(workers))
+// NewWorkerRegion pushes the scope of a worker region, started at the point
+// where it is created. It records the named workers of the region, none of
+// which has been referenced yet.
+func NewWorkerRegion(parent Context, workers []*ast.BLangNamedWorkerDeclaration) Context {
+	refs := make(map[model.SymbolRef]*ast.BLangVarRef, len(workers))
 	for _, worker := range workers {
-		fc.workerRefs[worker.Symbol()] = nil
+		refs[worker.Symbol()] = nil
 	}
+	return &workerRegionContext{contextBase: contextBase{outer: parent}, ruleBase: ruleBase{active: parent.rules()}, refs: refs}
 }
 
 // ReferenceWorker reports whether a reference to a worker name is valid. A
 // worker may be referenced as a value at most once per execution of the
-// function body that declares it, so both a second reference and a reference
-// that may execute repeatedly are rejected. A reference to anything other
-// than a worker is valid.
+// region that declares it, so both a second reference and a reference that may
+// execute repeatedly are rejected. A reference to anything other than a worker
+// is valid.
 func ReferenceWorker(cx Context, ref *ast.BLangVarRef) bool {
 	sym := ref.Symbol()
 	if cx.CompilerCtx().GetSymbol(sym).Kind() != model.SymbolKindWorker {
 		return true
 	}
-	// A reference repeats if it sits in a region that runs many times per call,
-	// or in a closure over a worker declared further out. A worker body is
-	// transparent: it runs exactly once per call of the declaring function.
+	// A reference repeats if it sits in a loop or a closure between it and the
+	// region's start point. A worker body is transparent: it runs exactly once
+	// per execution of the region.
 	repeatable := false
 	for cur := cx; cur != nil; cur = cur.parent() {
 		switch c := cur.(type) {
 		case *repeatedRegionContext:
 			repeatable = true
 		case *functionContext:
-			if c.kind == fnWorker {
-				continue
-			}
-			seen, declaresWorker := c.workerRefs[sym]
-			if !declaresWorker {
+			if c.kind != fnWorker {
 				repeatable = true
+			}
+		case *workerRegionContext:
+			seen, declaresWorker := c.refs[sym]
+			if !declaresWorker {
 				continue
 			}
 			if seen != nil {
@@ -98,13 +93,13 @@ func ReferenceWorker(cx Context, ref *ast.BLangVarRef) bool {
 			if repeatable {
 				return invalidWorkerReference(cx, sym, ref, "may be evaluated more than once")
 			}
-			c.workerRefs[sym] = ref
+			c.refs[sym] = ref
 			return true
 		}
 	}
-	// Sanity check: the walk above returns at the function that declares the
-	// worker, and symbol resolution only makes a worker name visible there.
-	cx.InternalErr("worker referenced outside the function that declares it", ref.GetPosition())
+	// Sanity check: the walk above returns at the region's owner, and symbol
+	// resolution only makes a worker name visible inside the region.
+	cx.InternalErr("worker referenced outside the region that declares it", ref.GetPosition())
 	return false
 }
 

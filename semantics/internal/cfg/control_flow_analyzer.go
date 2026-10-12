@@ -309,8 +309,12 @@ func (analyzer *functionControlFlowAnalyzer) analyzeBlockFunctionBody(fnBody *as
 	if len(fnBody.InitStmts) > 0 {
 		curBB = analyzer.analyzeStatements(curBB, fnBody.InitStmts).nextBB
 	}
-	curBB = analyzer.analyzeNamedWorkers(curBB, fnBody.Workers)
-	_ = analyzer.analyzeStatements(curBB, fnBody.Stmts)
+	if fnBody.Region == nil {
+		_ = analyzer.analyzeStatements(curBB, fnBody.Stmts)
+		return
+	}
+	curBB = analyzer.analyzeNamedWorkers(curBB, fnBody.Region.Workers)
+	_ = analyzer.analyzeStatements(curBB, fnBody.Region.DefaultWorker.Stmts)
 }
 
 // analyzeNamedWorkers records the worker startup point in the default worker's

@@ -3344,16 +3344,35 @@ func (n *nodeBuilder) transformFunctionBodyBlock(functionBodyBlockNode *st.Funct
 			return nil, false
 		}
 		bLFuncBody.InitStmts = n.generateBLangStatements(namedWorkerDeclarator.WorkerInitStatements(), namedWorkerDeclarator)
-		bLFuncBody.Workers = workers
+		if len(workers) > 0 {
+			bLFuncBody.Region = &ast.WorkerRegion{Workers: workers}
+		}
 	}
 	statements := []ast.StatementNode{}
 	n.generateAndAddBLangStatements(functionBodyBlockNode.Statements(), &statements, 0, functionBodyBlockNode)
 	if !n.expectToken(functionBodyBlockNode.CloseBraceToken()) || !n.expectOptionalToken(functionBodyBlockNode.SemicolonToken()) {
 		return nil, false
 	}
-	bLFuncBody.Stmts = statements
 	bLFuncBody.SetPosition(n.getPosition(functionBodyBlockNode))
+	if bLFuncBody.Region == nil {
+		bLFuncBody.Stmts = statements
+	} else {
+		bLFuncBody.Region.DefaultWorker = newDefaultWorker(statements, bLFuncBody.GetPosition())
+	}
 	return bLFuncBody, true
+}
+
+// newDefaultWorker builds the default worker of a body with named workers. It
+// spans its statements and the body's closing brace, where it terminates.
+func newDefaultWorker(stmts []ast.StatementNode, bodyPos diagnostics.Location) *ast.BLangDefaultWorker {
+	worker := &ast.BLangDefaultWorker{Stmts: stmts}
+	end := diagnostics.EndLocation(bodyPos)
+	if len(stmts) == 0 {
+		worker.SetPosition(end)
+	} else {
+		worker.SetPosition(diagnostics.SpanLocations(stmts[0].GetPosition(), end))
+	}
+	return worker
 }
 
 func (n *nodeBuilder) generateNamedWorkerDeclarations(

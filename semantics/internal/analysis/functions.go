@@ -290,18 +290,26 @@ func validateBody(cx scope.Context, body ast.FunctionBodyNode) bool {
 	}
 }
 
-// validateBlockFunctionBody validates the three regions of a block function
-// body in execution order: the default worker's initialization statements, the
-// named workers, and the remaining default-worker statements.
+// validateBlockFunctionBody validates the regions of a block function body in
+// execution order: the default worker's initialization statements, then the
+// worker region (the named workers, followed by the default worker's
+// statements).
 func validateBlockFunctionBody(cx scope.Context, body *ast.BLangBlockFunctionBody) {
-	if len(body.Workers) > 0 {
-		scope.DeclareWorkers(cx, body.Workers)
-	}
 	validateBlock(cx, body.InitStmts)
-	for _, worker := range body.Workers {
-		validateNamedWorker(cx, worker)
-	}
 	validateBlock(cx, body.Stmts)
+	if body.Region != nil {
+		validateWorkerRegion(cx, body.Region)
+	}
+}
+
+// validateWorkerRegion validates each named worker and the default worker's
+// statements under the region's scope, which owns the references to its workers.
+func validateWorkerRegion(cx scope.Context, region *ast.WorkerRegion) {
+	regionCx := scope.NewWorkerRegion(cx, region.Workers)
+	for _, worker := range region.Workers {
+		validateNamedWorker(regionCx, worker)
+	}
+	validateBlock(regionCx, region.DefaultWorker.Stmts)
 }
 
 // validateNamedWorker validates a worker's annotations and its body under the

@@ -159,16 +159,18 @@ type workerMessageGroup struct {
 	withModuleLevelNodes bool
 }
 
-func newWorkerMessageGroup(body *ast.BLangBlockFunctionBody, withModuleLevelNodes bool) *workerMessageGroup {
+func newWorkerMessageGroup(region *ast.WorkerRegion, withModuleLevelNodes bool) *workerMessageGroup {
 	group := &workerMessageGroup{
 		states:               make(workerStateMap),
-		defaultWorker:        body.DefaultWorker,
 		namedWorkers:         make(map[string]model.SymbolRef),
 		sendMessages:         make(map[model.SymbolRef]*[]model.WorkerMessageRef),
 		withModuleLevelNodes: withModuleLevelNodes,
 	}
-	group.addWorker(body.DefaultWorker, &body.DefaultWorkerSendMessages)
-	for _, worker := range body.Workers {
+	if defaultWorker := region.DefaultWorker; defaultWorker != nil {
+		group.defaultWorker = defaultWorker.Symbol()
+		group.addWorker(defaultWorker.Symbol(), &defaultWorker.SendMessages)
+	}
+	for _, worker := range region.Workers {
 		if worker.Symbol().IsEmpty() {
 			// The declaration was already rejected.
 			group.invalid = true
@@ -178,6 +180,10 @@ func newWorkerMessageGroup(body *ast.BLangBlockFunctionBody, withModuleLevelNode
 		group.addWorker(worker.Symbol(), &worker.SendMessages)
 	}
 	return group
+}
+
+func (g *workerMessageGroup) hasDefaultWorker() bool {
+	return !g.defaultWorker.IsEmpty()
 }
 
 func (g *workerMessageGroup) addWorker(worker model.SymbolRef, sendMessages *[]model.WorkerMessageRef) {

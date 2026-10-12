@@ -79,14 +79,14 @@ func walkBlockStmt(cx *functionContext, stmt *ast.BLangBlockStmt) desugaredNode[
 
 func walkBlockFunctionBody(cx *functionContext, body *ast.BLangBlockFunctionBody) {
 	allStmts := walkStatementList(cx, body.InitStmts)
-	if len(body.Workers) == 0 {
+	if body.Region == nil {
 		allStmts = append(allStmts, walkStatementList(cx, body.Stmts)...)
 	} else {
-		allStmts = append(allStmts, desugarWorkerRegion(cx, body)...)
+		allStmts = append(allStmts, desugarBodyWorkerRegion(cx, body)...)
 	}
 
 	body.InitStmts = nil
-	body.Workers = nil
+	body.Region = nil
 	body.Stmts = allStmts
 }
 

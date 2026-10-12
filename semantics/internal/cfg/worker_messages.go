@@ -33,9 +33,9 @@ func analyzeWorkerMessageTermination(ctx *context.CompilerContext, pkg *ast.BLan
 	ast.Walk(finder, pkg)
 	tyCtx := semtypes.ContextFrom(ctx.GetTypeEnv())
 	for _, body := range finder.bodies {
-		defaultStmts := append(append([]ast.StatementNode{}, body.InitStmts...), body.Stmts...)
+		defaultStmts := append(append([]ast.StatementNode{}, body.InitStmts...), body.Region.DefaultWorker.Stmts...)
 		checkWorkerMessageTermination(ctx, tyCtx, defaultStmts)
-		for _, worker := range body.Workers {
+		for _, worker := range body.Region.Workers {
 			checkWorkerMessageTermination(ctx, tyCtx, worker.Body.Stmts)
 		}
 	}
@@ -46,7 +46,7 @@ type workerBodyFinder struct {
 }
 
 func (f *workerBodyFinder) Visit(node ast.BLangNode) ast.Visitor {
-	if body, ok := node.(*ast.BLangBlockFunctionBody); ok && len(body.Workers) > 0 {
+	if body, ok := node.(*ast.BLangBlockFunctionBody); ok && body.Region != nil {
 		f.bodies = append(f.bodies, body)
 	}
 	return f

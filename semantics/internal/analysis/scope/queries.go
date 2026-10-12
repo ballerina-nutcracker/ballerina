@@ -31,7 +31,7 @@ func EnclosingFunction(cx Context) (FunctionInfo, bool) {
 			return FunctionInfo{}, false
 		case *functionContext:
 			return FunctionInfo{class: c.class, RetTy: c.retTy, symbol: c.symbol, self: c.self, ID: c.id, kind: c.kind, isolated: c.isolated}, true
-		case *lockContext, *isolatedExprContext, *repeatedRegionContext:
+		case *lockContext, *isolatedExprContext, *repeatedRegionContext, *workerRegionContext:
 			continue
 		default:
 			cx.InternalErr("unknown context", diagnostics.NewBuiltinLocation())
@@ -63,7 +63,7 @@ func LookupLocal(cx Context, sym model.SymbolRef) (VarDecl, ScopeID, bool) {
 			if md, ok := c.locals[sym]; ok {
 				return md, c.id, true
 			}
-		case *lockContext, *isolatedExprContext, *repeatedRegionContext:
+		case *lockContext, *isolatedExprContext, *repeatedRegionContext, *workerRegionContext:
 			continue
 		default:
 			cx.InternalErr("unknown context", diagnostics.NewBuiltinLocation())
@@ -84,7 +84,7 @@ func inLockLocals(cx Context, sym model.SymbolRef) bool {
 		case *lockContext:
 			_, ok := c.locals[sym]
 			return ok
-		case *isolatedExprContext, *repeatedRegionContext:
+		case *isolatedExprContext, *repeatedRegionContext, *workerRegionContext:
 			continue
 		default:
 			cx.InternalErr("unknown context", diagnostics.NewBuiltinLocation())
@@ -146,7 +146,7 @@ func defineLocal(cx Context, sym model.SymbolRef, md VarDecl) {
 			return
 		case *lockContext:
 			c.locals[sym] = struct{}{}
-		case *isolatedExprContext, *repeatedRegionContext:
+		case *isolatedExprContext, *repeatedRegionContext, *workerRegionContext:
 			continue
 		default:
 			cx.InternalErr("unknown context", diagnostics.NewBuiltinLocation())
@@ -181,7 +181,7 @@ func innermostLock(cx Context) (*lockContext, bool) {
 			return nil, false
 		case *lockContext:
 			return c, true
-		case *isolatedExprContext, *repeatedRegionContext:
+		case *isolatedExprContext, *repeatedRegionContext, *workerRegionContext:
 			continue
 		default:
 			cx.InternalErr("unknown context", diagnostics.NewBuiltinLocation())
