@@ -1452,7 +1452,25 @@ func analyzeFieldBasedAccess[A analyzer](a A, expr *ast.BLangFieldBaseAccess, ex
 	if !analyzeActionOrExpression(a, expr.Expr, semtypes.SemType{}) {
 		return false
 	}
+	if expr.IsLexpr() && isReadonlyObjectFieldUpdate(a, expr) {
+		a.semanticErr(fmt.Sprintf("cannot update field '%s' of a readonly object", expr.Field.GetValue()), expr.GetPosition())
+		return false
+	}
 	return validateResolvedType(a, expr, expectedType)
+}
+
+// isReadonlyObjectFieldUpdate reports whether the lvalue access updates a field of a readonly
+// object. Only the enclosing class's init may assign such a field, and only through self.
+func isReadonlyObjectFieldUpdate(a analyzer, expr *ast.BLangFieldBaseAccess) bool {
+	tyCtx := a.tyCtx()
+	containerTy := expr.Expr.GetDeterminedType()
+	if !semtypes.IsSubtype(tyCtx, containerTy, semtypes.Object) {
+		return false
+	}
+	if !semtypes.ObjectMemberIsImmutable(tyCtx, expr.Field.GetValue(), containerTy) {
+		return false
+	}
+	return !common.IsSelfFieldAccess(expr) || !inInitFunction(a)
 }
 
 func analyzeIndexBasedAccess[A analyzer](a A, expr *ast.BLangIndexBasedAccess, expectedType semtypes.SemType) bool {
