@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: object member 'f' is not visible here
+  --> member-access-private-method1-e.bal:27:16
+   |
+27 |     io:println(a.f()); // @error private method is not visible outside the class
+   |                ^^^^^

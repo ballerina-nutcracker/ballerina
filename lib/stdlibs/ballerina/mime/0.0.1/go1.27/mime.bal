@@ -640,10 +640,9 @@ public isolated function base64Encode((string|byte[]|io:ReadableByteChannel) con
         }
         var encoded = externBase64Encode(content, charset);
         if encoded is byte[] {
-            io:ReadableByteChannel result = new;
-            io:Error? attachErr = result.attachBytes(encoded);
-            if attachErr is io:Error {
-                return error EncodeError("base64 encoding failed: " + attachErr.message());
+            var result = io:createReadableChannel(encoded);
+            if result is io:Error {
+                return error EncodeError("base64 encoding failed: " + result.message());
             }
             return result;
         }
@@ -669,10 +668,9 @@ public isolated function base64Decode((string|byte[]|io:ReadableByteChannel) con
         }
         var decoded = externBase64Decode(content, charset);
         if decoded is byte[] {
-            io:ReadableByteChannel result = new;
-            io:Error? attachErr = result.attachBytes(decoded);
-            if attachErr is io:Error {
-                return error DecodeError("base64 decoding failed: " + attachErr.message());
+            var result = io:createReadableChannel(decoded);
+            if result is io:Error {
+                return error DecodeError("base64 decoding failed: " + result.message());
             }
             return result;
         }
