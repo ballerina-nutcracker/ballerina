@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: field 'y' is not initialized
+  --> uninit-init-multi-exit-e.bal:34:5
+   |
+34 |     int y; // @error
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: variable 'h' is not initialized
+  --> uninit-init-multi-exit-e.bal:21:5
+   |
+21 | int h; // @error
+   |     ^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> uninit-dead-branch-join-e.bal:24:13
+   |
+24 |             io:println("dead"); // @error
+   |             ^^^^^^^^^^^^^^^^^^^
