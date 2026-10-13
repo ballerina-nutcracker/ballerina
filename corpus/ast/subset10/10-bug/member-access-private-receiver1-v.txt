@@ -1,0 +1,196 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition RO
+    (variable x (type
+      (value-type int)))
+    (function init (
+      (variable x (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access x
+            (simple-var-ref self))
+          (simple-var-ref x))))
+    (function dbl () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (field-based-access x
+              (simple-var-ref self))
+            (literal 2)))))
+    (function peer (
+      (variable o (type
+        (user-defined-type RO)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (field-based-access x
+              (simple-var-ref o))
+            (invocation dbl expr:
+              (simple-var-ref o) ()))))))
+  (class-definition A
+    (variable x (type
+      (value-type int)))
+    (function init (
+      (variable x (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access x
+            (simple-var-ref self))
+          (simple-var-ref x))))
+    (function dbl () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (field-based-access x
+              (simple-var-ref self))
+            (literal 2)))))
+    (function mixed (
+      (variable o (type
+        (union-type
+          (user-defined-type A)
+          (user-defined-type M))))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (field-based-access x
+            (simple-var-ref o)))))
+    (function nil (
+      (variable o (type
+        (union-type
+          (user-defined-type A)
+          (value-type null))))) (
+      (value-type int))
+      (block-function-body
+        (if
+          (type-test-expr is
+            (simple-var-ref o)
+            (value-type null))
+          (block-stmt
+            (return
+              (unary-expr -
+                (literal 1)))) ())
+        (block-stmt
+          (return
+            (binary-expr +
+              (field-based-access x
+                (simple-var-ref o))
+              (invocation dbl expr:
+                (simple-var-ref o) ()))))))
+    (function ro (
+      (variable o (type
+        (intersection-type
+          (value-type readonly)
+          (user-defined-type A))))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (field-based-access x
+              (simple-var-ref o))
+            (invocation dbl expr:
+              (simple-var-ref o) ())))))
+    (function viaAlias (
+      (variable o (type
+        (user-defined-type TA)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (field-based-access x
+            (simple-var-ref o))))))
+  (type-definition TA
+    (user-defined-type A))
+  (class-definition distinct D
+    (variable x (type
+      (value-type int)) (expr
+      (literal 3)))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (return
+          (field-based-access x
+            (simple-var-ref self)))))
+    (function peer (
+      (variable o (type
+        (user-defined-type D)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (field-based-access x
+              (simple-var-ref o))
+            (invocation get expr:
+              (simple-var-ref o) ()))))))
+  (class-definition I
+    (variable x (type
+      (value-type int)) (expr
+      (literal 4)))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (field-based-access x
+                (simple-var-ref self))))))))
+  (class-definition M
+    (variable x (type
+      (value-type int)) (expr
+      (literal 8))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (user-defined-type A)) (expr
+          (new (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation peer expr:
+            (new
+              (user-defined-type RO) (
+              (literal 2))) (
+            (new
+              (user-defined-type RO) (
+              (literal 3))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation nil expr:
+            (simple-var-ref a) (
+            (simple-var-ref a))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation nil expr:
+            (simple-var-ref a) (
+            (literal <nil>))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation viaAlias expr:
+            (simple-var-ref a) (
+            (simple-var-ref a))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation mixed expr:
+            (simple-var-ref a) (
+            (new
+              (user-defined-type M) ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation peer expr:
+            (new
+              (user-defined-type D) ()) (
+            (new
+              (user-defined-type D) ()))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (new
+              (user-defined-type I) ()) ())))))))
