@@ -434,6 +434,8 @@ type functionTypeResolver struct {
 	xmlStepCounter       int
 	scope                model.Scope
 	context              resolverContext
+	// privateRegion is the visibility region of the enclosing class's private members, empty outside a class.
+	privateRegion string
 	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
 	opaqueCtx      *opaque.Context
 	ephemeralState *ephemeralState
@@ -806,9 +808,11 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 	p := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
 	fns := common.PackageFunctionDecls(pkg)
 
+	privateRegions := methodPrivateRegions(p, pkg)
 	allImports := make(map[string]ast.BLangImportPackage)
 	resolveFieldInitsInScope := func(owner model.SymbolRef, scope model.Scope, fields []*ast.BLangVariable) {
 		ft := &functionTypeResolver{
+			privateRegion:     classPrivateRegion(p, owner),
 			atomSideTableBase: newAtomSideTableBase(),
 			parentResolver:    p,
 			tyCtx:             semtypes.ContextFrom(p.typeEnv()),
@@ -849,7 +853,7 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 		wg.Add(1)
 		go func(idx int, f common.FunctionDecl) {
 			defer wg.Done()
-			resolvers[idx] = resolveFunctionBody(p, f)
+			resolvers[idx] = resolveFunctionBody(p, f, privateRegions[f.Symbol()])
 		}(i, fn)
 	}
 	wg.Wait()
@@ -1078,7 +1082,31 @@ func resolveInvokableSignature(t typeResolver, fn common.FunctionDecl, fnSym mod
 	return fnType, true
 }
 
-func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functionTypeResolver {
+// methodPrivateRegions maps each class and service method to the visibility region of its owner's private members.
+func methodPrivateRegions(p *packageTypeResolver, pkg *ast.BLangPackage) map[model.SymbolRef]string {
+	regions := make(map[model.SymbolRef]string)
+	addMethods := func(owner model.SymbolRef, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
+		region := classPrivateRegion(p, owner)
+		if initFn != nil {
+			regions[initFn.Symbol()] = region
+		}
+		for _, method := range methods {
+			regions[method.Symbol()] = region
+		}
+		for _, method := range resourceMethods {
+			regions[method.Symbol()] = region
+		}
+	}
+	for _, c := range pkg.ClassDefinitions {
+		addMethods(c.Symbol(), c.InitFunction, c.Methods, c.ResourceMethods)
+	}
+	for _, s := range pkg.Services {
+		addMethods(s.Symbol(), s.InitFunction, s.Methods, s.ResourceMethods)
+	}
+	return regions
+}
+
+func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl, privateRegion string) *functionTypeResolver {
 	if !ast.SymbolIsSet(fn) {
 		return nil
 	}
@@ -1100,6 +1128,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 		xmlStepOwner:      fnSym.Name(),
 		scope:             fn.Scope(),
 		context:           resolverContextForFunction(fn.IsIsolated()),
+		privateRegion:     privateRegion,
 		ephemeralState:    &ephemeralState{},
 	}
 	if !isPolymorphicFnSymbol(fnSym) {
@@ -2474,6 +2503,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 		xmlStepOwner:      fnSym.Name(),
 		scope:             e.Function.Scope(),
 		context:           resolverContextForFunction(fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0),
+		privateRegion:     resolverPrivateRegion(t),
 		ephemeralState:    resolverEphemeralState(t),
 	}
 
@@ -2580,6 +2610,7 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		xmlStepOwner:      fnSym.Name(),
 		scope:             e.Function.Scope(),
 		context:           resolverContextForFunction(flags&model.FuncSymbolFlagIsolated != 0),
+		privateRegion:     resolverPrivateRegion(t),
 		ephemeralState:    resolverEphemeralState(t),
 	}
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
@@ -6822,6 +6853,9 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 			t.semanticError("field not found in object type", expr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
+		if !checkObjectMemberVisible(t, containerExprTy, key, expr.GetPosition()) {
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
 	case semtypes.IsSubtype(tyCtx, containerExprTy, semtypes.Union(semtypes.Mapping, semtypes.Nil)):
 		containerNilable := !semtypes.IsSubtype(t.typeContext(), containerExprTy, semtypes.Mapping)
 		mappingTy := containerExprTy
@@ -7064,6 +7098,9 @@ func isRemoteMethod(t typeResolver, objType semtypes.SemType, methodName string)
 func resolveObjectMethodCall(t typeResolver, chain *binding, expr *ast.BLangInvocation, methodSymbol *common.DeferredMethodSymbol, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	recieverTy := expr.Expr.GetDeterminedType()
 	if methodRef, found := sourceObjectMethodSymbol(t, recieverTy, methodSymbol.MethodName()); found {
+		if !checkObjectMemberVisible(t, recieverTy, methodSymbol.MethodName(), expr.GetPosition()) {
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
 		expr.SetSymbol(methodRef)
 		return resolveFunctionCall(t, chain, expr, methodRef, expectedType)
 	}
@@ -7126,6 +7163,9 @@ func finishResolveMethodCall(t typeResolver, chain *binding, receiverTy semtypes
 		} else {
 			t.semanticError("method not found: "+model.StripRemotePrefix(methodName), node.GetPosition())
 		}
+		return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
+	}
+	if !checkObjectMemberVisible(t, receiverTy, methodName, node.GetPosition()) {
 		return model.SymbolRef{}, semtypes.SemType{}, expressionEffect{}, false
 	}
 	paramListTy := semtypes.FunctionParamListType(t.typeContext(), fnTy)
@@ -9151,6 +9191,62 @@ func memberVisibility(t typeResolver, isPublic bool, privateOwner string) string
 		return modulePath + ":" + privateOwner
 	}
 	return modulePath
+}
+
+var visibilityKey = semtypes.StringConst("visibility")
+
+// checkObjectMemberVisible reports an error unless the member of objectTy is visible from the code being resolved:
+// public members everywhere, module members within their module and private members within their class's methods.
+func checkObjectMemberVisible(t typeResolver, objectTy semtypes.SemType, name string, pos diagnostics.Location) bool {
+	cx := t.typeContext()
+	visibilityTy := objectMemberVisibility(cx, objectTy, name)
+	regions := []string{semtypes.VisibilityPublic, memberVisibility(t, false, "")}
+	if region := resolverPrivateRegion(t); region != "" {
+		regions = append(regions, region)
+	}
+	// A member of a non-union receiver has a single region, which needs no subtype check.
+	if shape := semtypes.SingleShape(visibilityTy); shape.IsPresent() {
+		if region, ok := shape.Get().Value.(string); ok && slices.Contains(regions, region) {
+			return true
+		}
+	} else if semtypes.IsSubtype(cx, visibilityTy, stringUnion(regions)) {
+		return true
+	}
+	t.semanticError(fmt.Sprintf("object member '%s' is not visible here", name), pos)
+	return false
+}
+
+func stringUnion(values []string) semtypes.SemType {
+	ty := semtypes.Never
+	for _, value := range values {
+		ty = semtypes.Union(ty, semtypes.StringConst(value))
+	}
+	return ty
+}
+
+// objectMemberVisibility returns the type of the visibility region of the named member of objectTy.
+func objectMemberVisibility(cx semtypes.Context, objectTy semtypes.SemType, name string) semtypes.SemType {
+	// Reading the member off the sole object atom is much cheaper than projecting the object type.
+	if atom, ok := semtypes.ObjectPositiveAtom(cx, objectTy); ok {
+		return semtypes.MappingMemberTypeInner(cx, atom.FieldInnerVal(name), visibilityKey)
+	}
+	return semtypes.ObjectMemberVisibility(cx, semtypes.StringConst(name), objectTy)
+}
+
+// classPrivateRegion returns the visibility region of the private members of the class or service owner.
+func classPrivateRegion(t typeResolver, owner model.SymbolRef) string {
+	return memberVisibility(t, false, t.symbolName(owner))
+}
+
+func resolverPrivateRegion(t typeResolver) string {
+	switch resolver := t.(type) {
+	case *functionTypeResolver:
+		return resolver.privateRegion
+	case *loopTypeResolver:
+		return resolverPrivateRegion(resolver.parentResolver)
+	default:
+		return ""
+	}
 }
 
 func privateOwner(isPrivate bool, owner string) string {

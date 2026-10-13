@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-service1-e.bal:50:23
+   |
+50 |         self.count += a.x; // @error private field of A is not visible in a service method
+   |                       ^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-service1-e.bal:54:16
+   |
+54 |         return a.x; // @error private field of A is not visible in a service resource method
+   |                ^^^

@@ -1,0 +1,113 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition A
+    (variable x (type
+      (value-type int)))
+    (function init (
+      (variable x (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access x
+            (simple-var-ref self))
+          (simple-var-ref x))))
+    (function adder () (
+      (function-type (
+        (user-defined-type A)) (
+        (value-type int))))
+      (block-function-body
+        (return
+          (lambda
+            (function $anonFunc$_0 (
+              (variable other (type
+                (user-defined-type A)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (binary-expr +
+                    (field-based-access x
+                      (simple-var-ref self))
+                    (invocation double expr:
+                      (simple-var-ref other) ())))))))))
+    (function double () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (field-based-access x
+              (simple-var-ref self))
+            (literal 2)))))
+    (function sum (
+      (variable other (type
+        (user-defined-type A)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (binary-expr +
+              (field-based-access x
+                (simple-var-ref self))
+              (field-based-access x
+                (simple-var-ref other)))
+            (invocation double expr:
+              (simple-var-ref other) ())))))
+    (function sumAll (
+      (variable others (type
+        (array-type
+          (user-defined-type A) dimensions: 1 ([]))))) (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable total (type
+            (value-type int)) (expr
+            (literal 0))))
+        (foreach
+          (var-def
+            (variable other (type
+              (user-defined-type A))))
+          (simple-var-ref others)
+          (block-stmt
+            (compound-assignment +
+              (simple-var-ref total)
+              (field-based-access x
+                (simple-var-ref other)))))
+        (return
+          (simple-var-ref total)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (user-defined-type A)) (expr
+          (new (
+            (literal 1))))))
+      (var-def
+        (variable b (type
+          (user-defined-type A)) (expr
+          (new (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sum expr:
+            (simple-var-ref a) (
+            (simple-var-ref b))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sumAll expr:
+            (simple-var-ref a) (
+            (list-constructor-expr
+              (simple-var-ref a)
+              (simple-var-ref b)))))))
+      (var-def
+        (variable adder (type
+          (function-type (
+            (user-defined-type A)) (
+            (value-type int)))) (expr
+          (invocation adder expr:
+            (simple-var-ref a) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation adder (
+            (simple-var-ref b)))))))))

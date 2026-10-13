@@ -1,0 +1,285 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition A
+    (variable x (type
+      (value-type int)))
+    (variable y (type
+      (value-type int)) (expr
+      (literal 10)))
+    (variable getter (type
+      (function-type (
+        (user-defined-type A)) (
+        (value-type int)))) (expr
+      (lambda
+        (function $anonFunc$_0 (
+          (variable o (type
+            (user-defined-type A)))) (
+          (value-type int))
+          (block-function-body
+            (return
+              (field-based-access x
+                (simple-var-ref o))))))))
+    (function init (
+      (variable x (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access x
+            (simple-var-ref self))
+          (simple-var-ref x))))
+    (function arrow () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable f (type
+            (function-type (
+              (user-defined-type A)) (
+              (value-type int)))) (expr
+            (lambda
+              (function $anonFunc$_3 (
+                (variable o)) ()
+                (expr-function-body
+                  (field-based-access x
+                    (simple-var-ref o))))))))
+        (return
+          (invocation f (
+            (simple-var-ref self))))))
+    (function bump (
+      (variable other (type
+        (user-defined-type A)))) (
+      (value-type null))
+      (block-function-body
+        (compound-assignment +
+          (field-based-access x
+            (simple-var-ref other))
+          (literal 1))
+        (compound-assignment -
+          (field-based-access y
+            (simple-var-ref other))
+          (literal 1))))
+    (function double () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (field-based-access x
+              (simple-var-ref self))
+            (literal 2)))))
+    (function narrowed (
+      (variable v (type
+        (union-type
+          (user-defined-type A)
+          (value-type int))))) (
+      (value-type int))
+      (block-function-body
+        (if
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type A))
+          (block-stmt
+            (return
+              (invocation double expr:
+                (simple-var-ref v) ()))) ())
+        (block-stmt
+          (return
+            (simple-var-ref v)))))
+    (function nested () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable f (expr
+            (lambda
+              (function $anonFunc$_1 () (
+                (value-type int))
+                (block-function-body
+                  (var-def
+                    (variable g (expr
+                      (lambda
+                        (function $anonFunc$_2 () (
+                          (value-type int))
+                          (block-function-body
+                            (return
+                              (binary-expr +
+                                (invocation double expr:
+                                  (simple-var-ref self) ())
+                                (field-based-access y
+                                  (simple-var-ref self))))))))))
+                  (return
+                    (invocation g ()))))))))
+        (return
+          (invocation f ()))))
+    (function query (
+      (variable xs (type
+        (array-type
+          (user-defined-type A) dimensions: 1 ([]))))) (
+      (array-type
+        (value-type int) dimensions: 1 ([])))
+      (block-function-body
+        (return
+          (query-expr
+            (from-clause
+              (var-def
+                (variable o (type
+                  (user-defined-type A))))
+              (simple-var-ref xs))
+            (select-clause
+              (field-based-access y
+                (simple-var-ref o)))))))
+    (function sumWhile (
+      (variable xs (type
+        (array-type
+          (user-defined-type A) dimensions: 1 ([]))))) (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable i (type
+            (value-type int)) (expr
+            (literal 0))))
+        (var-def
+          (variable total (type
+            (value-type int)) (expr
+            (literal 0))))
+        (while
+          (binary-expr <
+            (simple-var-ref i)
+            (invocation length expr:
+              (simple-var-ref xs) ()))
+          (block-stmt
+            (compound-assignment +
+              (simple-var-ref total)
+              (field-based-access x
+                (index-based-access
+                  (simple-var-ref xs)
+                  (simple-var-ref i))))
+            (compound-assignment +
+              (simple-var-ref i)
+              (literal 1))))
+        (return
+          (simple-var-ref total)))))
+  (class-definition R
+    (variable v (type
+      (value-type int)) (expr
+      (literal 5)))
+    (function priv () (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (function $remote$rem () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (field-based-access v
+              (simple-var-ref self))
+            (invocation priv expr:
+              (simple-var-ref self) ())))))
+    (resource-function get name:val
+      (value-type int)
+      (block-function-body
+        (return
+          (binary-expr +
+            (field-based-access v
+              (simple-var-ref self))
+            (invocation priv expr:
+              (simple-var-ref self) ()))))))
+  (class-definition M
+    (variable m (type
+      (value-type int)) (expr
+      (literal 1))))
+  (function readModuleMember (
+    (variable m (type
+      (user-defined-type M)))) (
+    (value-type int))
+    (block-function-body
+      (compound-assignment +
+        (field-based-access m
+          (simple-var-ref m))
+        (literal 2))
+      (return
+        (field-based-access m
+          (simple-var-ref m)))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (user-defined-type A)) (expr
+          (new (
+            (literal 1))))))
+      (var-def
+        (variable b (type
+          (user-defined-type A)) (expr
+          (new (
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation nested expr:
+            (simple-var-ref a) ()))))
+      (expression-stmt
+        (invocation bump expr:
+          (simple-var-ref a) (
+          (simple-var-ref b))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sumWhile expr:
+            (simple-var-ref a) (
+            (list-constructor-expr
+              (simple-var-ref a)
+              (simple-var-ref b)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation arrow expr:
+            (simple-var-ref b) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation query expr:
+            (simple-var-ref a) (
+            (list-constructor-expr
+              (simple-var-ref a)
+              (simple-var-ref b)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation narrowed expr:
+            (simple-var-ref a) (
+            (simple-var-ref b))))))
+      (var-def
+        (variable g (type
+          (function-type (
+            (user-defined-type A)) (
+            (value-type int)))) (expr
+          (field-based-access getter
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation g (
+            (simple-var-ref b))))))
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (new ()))))
+      (var-def
+        (variable v (type
+          (value-type int)) (expr
+          (client-resource-access get expr:
+            (simple-var-ref r) name:val))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v))))
+      (var-def
+        (variable w (type
+          (value-type int)) (expr
+          (remote-method-call rem expr:
+            (simple-var-ref r) ()))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref w))))
+      (expression-stmt
+        (invocation io println (
+          (invocation readModuleMember (
+            (new
+              (user-defined-type M) ())))))))))

@@ -1,0 +1,120 @@
+(A
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access x
+          (simple-var-ref self))
+        (simple-var-ref x))
+    )
+  )
+  (adder
+    (bb0 () ()
+      (return
+        (lambda
+          (function $anonFunc$_0 (
+            (variable other (type
+              (user-defined-type A)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (binary-expr +
+                  (field-based-access x
+                    (simple-var-ref self))
+                  (invocation double expr:
+                    (simple-var-ref other) ())))))))
+    )
+  )
+  (double
+    (bb0 () ()
+      (return
+        (binary-expr *
+          (field-based-access x
+            (simple-var-ref self))
+          (literal 2)))
+    )
+  )
+  (sum
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (binary-expr +
+            (field-based-access x
+              (simple-var-ref self))
+            (field-based-access x
+              (simple-var-ref other)))
+          (invocation double expr:
+            (simple-var-ref other) ())))
+    )
+  )
+  (sumAll
+    (bb0 () (bb1)
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+    )
+    (bb1 (bb0 bb2) (bb2 bb3)
+      (simple-var-ref others)
+      (var-def
+        (variable other (type
+          (user-defined-type A))))
+    )
+    (bb2 (bb1) (bb1)
+      (compound-assignment +
+        (simple-var-ref total)
+        (field-based-access x
+          (simple-var-ref other)))
+    )
+    (bb3 (bb1) ()
+      (return
+        (simple-var-ref total))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (user-defined-type A)) (expr
+        (new (
+          (literal 1))))))
+    (var-def
+      (variable b (type
+        (user-defined-type A)) (expr
+        (new (
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sum expr:
+          (simple-var-ref a) (
+          (simple-var-ref b))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sumAll expr:
+          (simple-var-ref a) (
+          (list-constructor-expr
+            (simple-var-ref a)
+            (simple-var-ref b)))))))
+    (var-def
+      (variable adder (type
+        (function-type (
+          (user-defined-type A)) (
+          (value-type int)))) (expr
+        (invocation adder expr:
+          (simple-var-ref a) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation adder (
+          (simple-var-ref b))))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (field-based-access x
+          (simple-var-ref self))
+        (invocation double expr:
+          (simple-var-ref other) ())))
+  )
+)

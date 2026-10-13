@@ -1,0 +1,378 @@
+module $anon.. v 0.0.0;
+class RO {
+  x int
+
+  dbl() -> int{
+    bb0 {
+      %4 = ConstantLoad x
+      %3 = self[%4];
+      %5 = %3;
+      %6 = ConstantLoad 2
+      %7 = %6;
+      %2 = * %5 %7;
+      %0 = %2;
+      return;
+    }
+  }
+
+  init(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad x
+      self[%3] = x;
+      return;
+    }
+  }
+
+  peer(object { private function dbl() returns int; public function init(int) returns nil; function peer(...) returns int; private int x }) -> int{
+    bb0 {
+      %5 = ConstantLoad x
+      %4 = o[%5];
+      %6 = %4;
+      %7 = o.dbl() -> bb1;
+    }
+    bb1 {
+      %8 = %7;
+      %3 = + %6 %8;
+      %0 = %3;
+      return;
+    }
+  }
+}
+class A {
+  x int
+
+  dbl() -> int{
+    bb0 {
+      %4 = ConstantLoad x
+      %3 = self[%4];
+      %5 = %3;
+      %6 = ConstantLoad 2
+      %7 = %6;
+      %2 = * %5 %7;
+      %0 = %2;
+      return;
+    }
+  }
+
+  init(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad x
+      self[%3] = x;
+      return;
+    }
+  }
+
+  mixed(object { private function dbl() returns int; public function init(int) returns nil; function mixed(...|object { public function init() returns nil; int x }) returns int; function nil(nil|...) returns int; function ro(readonly&...) returns int; function viaAlias(...) returns int; private int x }|object { public function init() returns nil; int x }) -> int{
+    bb0 {
+      %4 = ConstantLoad x
+      %3 = o[%4];
+      %0 = %3;
+      return;
+    }
+  }
+
+  nil(nil|object { private function dbl() returns int; public function init(int) returns nil; function mixed(...|object { public function init() returns nil; int x }) returns int; function nil(nil|...) returns int; function ro(readonly&...) returns int; function viaAlias(...) returns int; private int x }) -> int{
+    bb0 {
+      %3 = o is nil
+      %3 ? bb1 : bb2;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %0 = ConstantLoad 1
+      %1 = unknown %0;
+      (1, %0) = %1;
+      PopScopeFrame
+      return;
+    }
+    bb2 {
+      PushScopeFrame 6
+      %2 = ConstantLoad x
+      %1 = (1, o)[%2];
+      %3 = %1;
+      %4 = (1, o).dbl() -> bb3;
+    }
+    bb3 {
+      %5 = %4;
+      %0 = + %3 %5;
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+  }
+
+  ro(readonly&object { private function dbl() returns int; public function init(int) returns nil; function mixed(...|object { public function init() returns nil; int x }) returns int; function nil(nil|...) returns int; function ro(readonly&...) returns int; function viaAlias(...) returns int; private int x }) -> int{
+    bb0 {
+      %5 = ConstantLoad x
+      %4 = o[%5];
+      %6 = %4;
+      %7 = o.dbl() -> bb1;
+    }
+    bb1 {
+      %8 = %7;
+      %3 = + %6 %8;
+      %0 = %3;
+      return;
+    }
+  }
+
+  viaAlias(object { private function dbl() returns int; public function init(int) returns nil; function mixed(...|object { public function init() returns nil; int x }) returns int; function nil(nil|...) returns int; function ro(readonly&...) returns int; function viaAlias(...) returns int; private int x }) -> int{
+    bb0 {
+      %4 = ConstantLoad x
+      %3 = o[%4];
+      %0 = %3;
+      return;
+    }
+  }
+}
+class D {
+  x int
+
+  get() -> int{
+    bb0 {
+      %3 = ConstantLoad x
+      %2 = self[%3];
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 3
+      %3 = ConstantLoad x
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  peer(object&object { private function get() returns int; public function init() returns nil; function peer(object&...) returns int; private int x }) -> int{
+    bb0 {
+      %5 = ConstantLoad x
+      %4 = o[%5];
+      %6 = %4;
+      %7 = o.get() -> bb1;
+    }
+    bb1 {
+      %8 = %7;
+      %3 = + %6 %8;
+      %0 = %3;
+      return;
+    }
+  }
+}
+class I {
+  x int
+
+  get() -> int{
+    bb0 {
+      lock-start "$anon/.:I.x" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %1 = ConstantLoad x
+      %0 = (1, self)[%1];
+      (1, %0) = %0;
+      PopScopeFrame
+      lock-end "$anon/.:I.x" GOTO bb2;
+    }
+    bb2 {
+      return;
+    }
+    bb3 {
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 4
+      %3 = ConstantLoad x
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+class M {
+  x int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 8
+      %3 = ConstantLoad x
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:A
+    %2 = ConstantLoad 1
+    %3 = %1.init(%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    a = %4;
+    %7 = newObject $anon/.:RO
+    %8 = ConstantLoad 2
+    %9 = %7.init(%8) -> bb5;
+  }
+  bb5 {
+    %11 = %9 is nil
+    %11 ? bb6 : bb7;
+  }
+  bb6 {
+    %10 = %7;
+    GOTO bb8;
+  }
+  bb7 {
+    %10 = %9;
+    GOTO bb8;
+  }
+  bb8 {
+    %12 = newObject $anon/.:RO
+    %13 = ConstantLoad 3
+    %14 = %12.init(%13) -> bb9;
+  }
+  bb9 {
+    %16 = %14 is nil
+    %16 ? bb10 : bb11;
+  }
+  bb10 {
+    %15 = %12;
+    GOTO bb12;
+  }
+  bb11 {
+    %15 = %14;
+    GOTO bb12;
+  }
+  bb12 {
+    %17 = %10.peer(%15) -> bb13;
+  }
+  bb13 {
+    %18 = %17;
+    %19 = println(%18) -> bb14;
+  }
+  bb14 {
+    %20 = a.nil(a) -> bb15;
+  }
+  bb15 {
+    %21 = %20;
+    %22 = println(%21) -> bb16;
+  }
+  bb16 {
+    %23 = ConstantLoad <nil>
+    %24 = %23;
+    %25 = a.nil(%24) -> bb17;
+  }
+  bb17 {
+    %26 = %25;
+    %27 = println(%26) -> bb18;
+  }
+  bb18 {
+    %28 = a.viaAlias(a) -> bb19;
+  }
+  bb19 {
+    %29 = %28;
+    %30 = println(%29) -> bb20;
+  }
+  bb20 {
+    %31 = newObject $anon/.:M
+    %32 = %31.init() -> bb21;
+  }
+  bb21 {
+    %34 = %32 is nil
+    %34 ? bb22 : bb23;
+  }
+  bb22 {
+    %33 = %31;
+    GOTO bb24;
+  }
+  bb23 {
+    %33 = %32;
+    GOTO bb24;
+  }
+  bb24 {
+    %35 = a.mixed(%33) -> bb25;
+  }
+  bb25 {
+    %36 = %35;
+    %37 = println(%36) -> bb26;
+  }
+  bb26 {
+    %38 = newObject $anon/.:D
+    %39 = %38.init() -> bb27;
+  }
+  bb27 {
+    %41 = %39 is nil
+    %41 ? bb28 : bb29;
+  }
+  bb28 {
+    %40 = %38;
+    GOTO bb30;
+  }
+  bb29 {
+    %40 = %39;
+    GOTO bb30;
+  }
+  bb30 {
+    %42 = newObject $anon/.:D
+    %43 = %42.init() -> bb31;
+  }
+  bb31 {
+    %45 = %43 is nil
+    %45 ? bb32 : bb33;
+  }
+  bb32 {
+    %44 = %42;
+    GOTO bb34;
+  }
+  bb33 {
+    %44 = %43;
+    GOTO bb34;
+  }
+  bb34 {
+    %46 = %40.peer(%44) -> bb35;
+  }
+  bb35 {
+    %47 = %46;
+    %48 = println(%47) -> bb36;
+  }
+  bb36 {
+    %49 = newObject $anon/.:I
+    %50 = %49.init() -> bb37;
+  }
+  bb37 {
+    %52 = %50 is nil
+    %52 ? bb38 : bb39;
+  }
+  bb38 {
+    %51 = %49;
+    GOTO bb40;
+  }
+  bb39 {
+    %51 = %50;
+    GOTO bb40;
+  }
+  bb40 {
+    %53 = %51.get() -> bb41;
+  }
+  bb41 {
+    %54 = %53;
+    %55 = println(%54) -> bb42;
+  }
+  bb42 {
+    return;
+  }
+}

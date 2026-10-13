@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: object member 'b' is not visible here
+  --> main.bal:51:12
+   |
+51 |     return v.b; // @error module-level member of an object intersection
+   |            ^^^
+
+error[SEMANTIC_ERROR]: object member 'm' is not visible here
+  --> main.bal:36:12
+   |
+36 |     return r.m; // @error module-level field of an imported readonly class
+   |            ^^^
+
+error[SEMANTIC_ERROR]: object member 'm' is not visible here
+  --> main.bal:40:12
+   |
+40 |     return c.m; // @error module-level field via a readonly intersection
+   |            ^^^
+
+error[SEMANTIC_ERROR]: object member 'm' is not visible here
+  --> main.bal:47:12
+   |
+47 |     return c.m; // @error module-level field after nil narrowing
+   |            ^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> main.bal:27:16
+   |
+27 |         return other.x + self.x; // @error private member of foo:C is not visible in a same-named local class
+   |                ^^^^^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> main.bal:32:12
+   |
+32 |     return r.x; // @error private field of an imported readonly class
+   |            ^^^
