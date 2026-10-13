@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> uninit-foreach-dead-code-e.bal:24:9
+   |
+24 |         int x = 1; // @error
+   |         ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unreachable code
+  --> uninit-foreach-dead-code-e.bal:25:12
+   |
+25 |         if false { // @error
+   |            ^^^^^
+
+error[SEMANTIC_ERROR]: unreachable code
+  --> uninit-foreach-dead-code-e.bal:26:13
+   |
+26 |             x = 2; // @error
+   |             ^^^^^^
+
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> uninit-foreach-dead-code-e.bal:28:20
+   |
+28 |         io:println(x); // @error spurious, see https://github.com/ballerina-nutcracker/ballerina/issues/1236
+   |                    ^
