@@ -2230,26 +2230,15 @@ func (n *nodeBuilder) transformCheckExpression(checkBLangExpression *st.CheckExp
 }
 
 func (n *nodeBuilder) transformFieldAccessExpression(fieldAccessBLangExpression *st.FieldAccessExpressionNode) ast.BLangNode {
-	fieldName := fieldAccessBLangExpression.FieldName()
-	if fieldName.Kind() == st.QUALIFIED_NAME_REFERENCE {
-		n.unimplemented("transformFieldAccessExpression: QUALIFIED_NAME_REFERENCE unsupported", fieldName)
-		return nil
-	}
-
-	bLFieldBasedAccess := &ast.BLangFieldBaseAccess{}
-	simpleNameRef := fieldName.(*st.SimpleNameReferenceNode)
-	bLFieldBasedAccess.Field = n.createIdentifierNodeFromToken(n.getPosition(fieldAccessBLangExpression.FieldName()), simpleNameRef.Name())
-
 	containerExpr := fieldAccessBLangExpression.Expression()
+	var expr ast.BLangExpression
 	if containerExpr.Kind() == st.BRACED_EXPRESSION {
-		bracedExpr := containerExpr.(*st.BracedExpressionNode)
-		bLFieldBasedAccess.Expr = n.createExpression(bracedExpr.Expression())
+		expr = n.createExpression(containerExpr.(*st.BracedExpressionNode).Expression())
 	} else {
-		bLFieldBasedAccess.Expr = n.createExpression(containerExpr)
+		expr = n.createExpression(containerExpr)
 	}
-
-	bLFieldBasedAccess.SetPosition(n.getPosition(fieldAccessBLangExpression))
-	return bLFieldBasedAccess
+	pkgAlias, field := n.createFieldAccessName(fieldAccessBLangExpression.FieldName())
+	return ast.NewBLangFieldBaseAccess(n.getPosition(fieldAccessBLangExpression), expr, pkgAlias, field, false)
 }
 
 func (n *nodeBuilder) transformFunctionCallExpression(functionCallBLangExpression *st.FunctionCallExpressionNode) ast.BLangNode {
@@ -4639,12 +4628,6 @@ func (n *nodeBuilder) transformAnnotAccessExpression(annotAccessBLangExpression 
 }
 
 func (n *nodeBuilder) transformOptionalFieldAccessExpression(optionalFieldAccessBLangExpression *st.OptionalFieldAccessExpressionNode) ast.BLangNode {
-	fieldName := optionalFieldAccessBLangExpression.FieldName()
-	if fieldName.Kind() == st.QUALIFIED_NAME_REFERENCE {
-		n.internalError("transformOptionalFieldAccessExpression: unexpected QUALIFIED_NAME_REFERENCE", fieldName)
-		return nil
-	}
-
 	containerExpr := optionalFieldAccessBLangExpression.Expression()
 	var expr ast.BLangExpression
 	if containerExpr.Kind() == st.BRACED_EXPRESSION {
@@ -4652,13 +4635,17 @@ func (n *nodeBuilder) transformOptionalFieldAccessExpression(optionalFieldAccess
 	} else {
 		expr = n.createExpression(containerExpr)
 	}
+	pkgAlias, field := n.createFieldAccessName(optionalFieldAccessBLangExpression.FieldName())
+	return ast.NewBLangFieldBaseAccess(n.getPosition(optionalFieldAccessBLangExpression), expr, pkgAlias, field, true)
+}
+
+func (n *nodeBuilder) createFieldAccessName(fieldName st.Node) (pkgAlias ast.IdentifierNode, field ast.IdentifierNode) {
+	if fieldName.Kind() == st.QUALIFIED_NAME_REFERENCE {
+		nameReference := n.createBLangNameReference(fieldName)
+		return nameReference[0], nameReference[1]
+	}
 	simpleNameRef := fieldName.(*st.SimpleNameReferenceNode)
-	return ast.NewBLangFieldBaseAccess(
-		n.getPosition(optionalFieldAccessBLangExpression),
-		expr,
-		n.createIdentifierNodeFromToken(n.getPosition(fieldName), simpleNameRef.Name()),
-		true,
-	)
+	return nil, n.createIdentifierNodeFromToken(n.getPosition(fieldName), simpleNameRef.Name())
 }
 
 func (n *nodeBuilder) transformConditionalExpression(conditionalBLangExpression *st.ConditionalExpressionNode) ast.BLangNode {

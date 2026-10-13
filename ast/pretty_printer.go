@@ -2255,7 +2255,11 @@ func (p *PrettyPrinter) printFieldBaseAccess(node *BLangFieldBaseAccess) {
 	} else {
 		p.PrintString("field-based-access")
 	}
-	p.PrintString(node.Field.GetValue())
+	if node.PkgAlias != nil {
+		p.PrintString(node.PkgAlias.GetValue() + ":" + node.Field.GetValue())
+	} else {
+		p.PrintString(node.Field.GetValue())
+	}
 	p.indentLevel++
 	p.PrintInner(node.Expr.(BLangNode))
 	p.indentLevel--
