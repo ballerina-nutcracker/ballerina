@@ -5,12 +5,12 @@ main() -> nil{
     %2 = ConstantLoad 2
     %3 = ConstantLoad next
     %4 = ConstantLoad <nil>
-    %5 = newMap {| next: nil|{| next: nil|..., value: int, never... |}, value: int, never... |}{%1=%2, %3=%4}
+    %5 = newMap {| next: nil|..., value: int, never... |}{%1=%2, %3=%4}
     leaf = %5;
     %7 = ConstantLoad value
     %8 = ConstantLoad 1
     %9 = ConstantLoad next
-    %10 = newMap {| next: nil|{| next: nil|..., value: int, never... |}, value: int, never... |}{%7=%8, %9=leaf}
+    %10 = newMap {| next: nil|..., value: int, never... |}{%7=%8, %9=leaf}
     head = %10;
     %12 = newMap {| next: nil|{| next: nil|..., value: int, never... |}, value: int, never... |}{...head}
     copied = %12;
