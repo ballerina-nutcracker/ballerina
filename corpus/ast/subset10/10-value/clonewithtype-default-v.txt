@@ -154,6 +154,17 @@
               (value-type int)
               (literal 1))) dimensions: 1 ([]))
         (list-constructor-expr))))
+  (type-definition Coded
+    (record-type
+      (field code
+        (value-type int))))
+  (type-definition Located
+    (record-type
+      (field loc
+        (union-type
+          (user-defined-type Address)
+          (user-defined-type Coded))
+        (mapping-constructor-expr))))
   (function main () (
     (union-type
       (error-type)
@@ -487,6 +498,26 @@
           (type-test-expr is
             (simple-var-ref captured)
             (error-type)))))
+      (var-def
+        (variable locatedData (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal loc)
+              (mapping-constructor-expr
+                (key-value
+                  (literal city)
+                  (literal Galle))))))))
+      (var-def
+        (variable located (type
+          (user-defined-type Located)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (simple-var-ref locatedData) (
+              (simple-var-ref Located)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref located))))
       (var-def
         (variable missingName (type
           (builtin-ref-type json)) (expr

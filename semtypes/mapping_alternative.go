@@ -56,6 +56,9 @@ func MappingAlternatives(cx Context, t SemType) []MappingAlternative {
 			posAtoms[i] = cx.MappingAtomType(bddPath.pos[i])
 		}
 		intersectionSemType, intersectionAtomType, ok := intersectMappingAtoms(cx.Env(), posAtoms)
+		if ok && len(bddPath.pos) == 1 {
+			intersectionSemType = createBasicSemType(btMapping, bddAtom(bddPath.pos[0]))
+		}
 		if ok {
 			negAtoms := make([]MappingAtomicType, len(bddPath.neg))
 			for i := 0; i < len(bddPath.neg); i++ {

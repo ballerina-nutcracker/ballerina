@@ -142,6 +142,17 @@
               (value-type int)
               (literal 1))) dimensions: 1 ([]))
         (list-constructor-expr))))
+  (type-definition Coded
+    (record-type
+      (field code
+        (value-type int))))
+  (type-definition Located
+    (record-type
+      (field loc
+        (union-type
+          (user-defined-type Address)
+          (user-defined-type Coded))
+        (mapping-constructor-expr))))
   (function defaultId () (
     (value-type int))
     (block-function-body
@@ -416,7 +427,7 @@
       (var-def
         (variable $desugar$0 (expr
           (lambda
-            (function $default$23 () ()
+            (function $default$24 () ()
               (block-function-body
                 (return
                   (literal fast))))))))
@@ -441,7 +452,7 @@
       (var-def
         (variable $desugar$1 (expr
           (lambda
-            (function $default$24 () ()
+            (function $default$25 () ()
               (block-function-body
                 (return
                   (literal t))))))))
@@ -507,7 +518,7 @@
       (var-def
         (variable $desugar$2 (expr
           (lambda
-            (function $default$25 () ()
+            (function $default$26 () ()
               (block-function-body
                 (return
                   (simple-var-ref base))))))))
@@ -527,6 +538,26 @@
           (type-test-expr is
             (simple-var-ref captured)
             (error-type)))))
+      (var-def
+        (variable locatedData (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal loc)
+              (mapping-constructor-expr
+                (key-value
+                  (literal city)
+                  (literal Galle))))))))
+      (var-def
+        (variable located (type
+          (user-defined-type Located)) (expr
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref locatedData)
+              (simple-var-ref Located)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref located))))
       (var-def
         (variable missingName (type
           (builtin-ref-type json)) (expr
@@ -638,4 +669,8 @@
   (function $default$22 () ()
     (block-function-body
       (return
-        (literal 1)))))
+        (literal 1))))
+  (function $default$23 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr)))))

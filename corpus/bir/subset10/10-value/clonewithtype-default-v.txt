@@ -383,7 +383,7 @@ main() -> nil|error{
     %168 = println(order) -> bb70;
   }
   bb70 {
-    %169 = fp $anon/.:$default$23
+    %169 = fp $anon/.:$default$24
     $desugar$0 = %169;
     %172 = ConstantLoad level
     %173 = ConstantLoad 2
@@ -408,7 +408,7 @@ main() -> nil|error{
     %179 = println(local) -> bb75;
   }
   bb75 {
-    %180 = fp $anon/.:$default$24
+    %180 = fp $anon/.:$default$25
     $desugar$1 = %180;
     %183 = newMap {| never... |}{}
     %184 = ConstantLoad typedesc
@@ -500,7 +500,7 @@ main() -> nil|error{
   bb95 {
     %214 = ConstantLoad 5
     base = %214;
-    %216 = closure_fp $anon/.:$default$25
+    %216 = closure_fp $anon/.:$default$26
     $desugar$2 = %216;
     %218 = newMap {| never... |}{}
     %219 = ConstantLoad typedesc
@@ -513,20 +513,46 @@ main() -> nil|error{
     %224 = println(%223) -> bb97;
   }
   bb97 {
-    %225 = ConstantLoad age
-    %226 = ConstantLoad 3
-    %227 = newMap {| json... |}{%225=%226}
-    missingName = %227;
-    %229 = ConstantLoad typedesc
-    %230 = cloneWithType(missingName,%229) -> bb98;
+    %225 = ConstantLoad loc
+    %226 = ConstantLoad city
+    %227 = ConstantLoad Galle
+    %228 = newMap {| json... |}{%226=%227}
+    %229 = newMap {| json... |}{%225=%228}
+    locatedData = %229;
+    %232 = ConstantLoad typedesc
+    %233 = cloneWithType(locatedData,%232) -> bb98;
   }
   bb98 {
-    noDefault = %230;
-    %232 = noDefault is error
-    %233 = %232;
-    %234 = println(%233) -> bb99;
+    %234 = %233 is error
+    %234 ? bb99 : bb100;
   }
   bb99 {
+    %0 = %233;
+    return;
+  }
+  bb100 {
+    %231 = %233;
+    GOTO bb101;
+  }
+  bb101 {
+    located = %231;
+    %236 = println(located) -> bb102;
+  }
+  bb102 {
+    %237 = ConstantLoad age
+    %238 = ConstantLoad 3
+    %239 = newMap {| json... |}{%237=%238}
+    missingName = %239;
+    %241 = ConstantLoad typedesc
+    %242 = cloneWithType(missingName,%241) -> bb103;
+  }
+  bb103 {
+    noDefault = %242;
+    %244 = noDefault is error
+    %245 = %244;
+    %246 = println(%245) -> bb104;
+  }
+  bb104 {
     return;
   }
 }
@@ -702,21 +728,28 @@ $default$22() -> int{
     return;
   }
 }
-$default$23() -> string{
+$default$23() -> {| city: string, country: string, never... |}|{| code: int, never... |}{
   bb0 {
-    %1 = ConstantLoad fast
+    %1 = newMap {| city: string, country: string, never... |}{} defaults{city=$anon/.:$default$1, country=$anon/.:$default$2}
     %0 = %1;
     return;
   }
 }
 $default$24() -> string{
   bb0 {
+    %1 = ConstantLoad fast
+    %0 = %1;
+    return;
+  }
+}
+$default$25() -> string{
+  bb0 {
     %1 = ConstantLoad t
     %0 = %1;
     return;
   }
 }
-$default$25() -> int{
+$default$26() -> int{
   bb0 {
     %0 = (1, base);
     return;

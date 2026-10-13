@@ -18,5 +18,6 @@
 {"inner":{},"z":1}
 {}
 true
+{"loc":{"city":"Galle","country":"Sri Lanka"}}
 true
 -- stderr --
