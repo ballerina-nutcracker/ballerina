@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: object member 'hidden' is not visible here
+  --> main.bal:28:12
+   |
+28 |     return c.hidden(); // @error private method is not visible outside its class
+   |            ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: object member 'mod' is not visible here
+  --> main.bal:32:5
+   |
+32 |     c.mod = 1; // @error module-level field is not assignable outside its module
+   |     ^^^^^
+
+error[SEMANTIC_ERROR]: object member 'mod' is not visible here
+  --> main.bal:37:16
+   |
+37 |         return c.mod; // @error module-level field is not visible in a lambda outside its module
+   |                ^^^^^
+
+error[SEMANTIC_ERROR]: object member 'modOnly' is not visible here
+  --> main.bal:20:12
+   |
+20 |     return t.modOnly; // @error module-level member of an object type is not visible outside its module
+   |            ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: object member 'secret' is not visible here
+  --> main.bal:24:12
+   |
+24 |     return c.secret; // @error private field is not visible outside its class
+   |            ^^^^^^^^

@@ -91,6 +91,14 @@ func ObjectMemberKind(ctx Context, name, ty SemType) SemType {
 
 // ObjectMemberVisibility returns the type of the member's visibility region string
 func ObjectMemberVisibility(ctx Context, name, ty SemType) SemType {
+	// Reading the member off the sole object atom is much cheaper than projecting the object type.
+	if shape := SingleShape(name); shape.IsPresent() {
+		if memberName, ok := shape.Get().Value.(string); ok {
+			if atom, ok := ObjectPositiveAtom(ctx, ty); ok {
+				return MappingMemberTypeInner(ctx, atom.FieldInnerVal(memberName), StringConst("visibility"))
+			}
+		}
+	}
 	objectTy := convertObjectToMappingTy(ctx, ty)
 	if IsZero(objectTy) {
 		return SemType{}

@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: object member 'f' is not visible here
+  --> member-access-private-ref1-e.bal:34:13
+   |
+34 |     var g = a.f; // @error private method is not visible outside the class
+   |             ^^^
+
+error[SEMANTIC_ERROR]: object member 'f' is not visible here
+  --> member-access-private-ref1-e.bal:43:12
+   |
+43 |     return v.f(); // @error f is private in A
+   |            ^^^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-ref1-e.bal:39:12
+   |
+39 |     return v.x; // @error x is private in A
+   |            ^^^

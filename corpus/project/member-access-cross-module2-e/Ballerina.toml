@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "memberaccesscrossmodule2"
+version = "0.1.0"
