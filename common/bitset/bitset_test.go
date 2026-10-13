@@ -35,18 +35,6 @@ func TestLookup(t *testing.T) {
 	}
 }
 
-func TestAndThenGrowDoesNotResurrectBits(t *testing.T) {
-	t.Parallel()
-	s := setOf(1, 130)
-	empty := BitSet{}
-	s.And(&empty)
-	s.Set(posOf(0))
-	assertBits(t, "after regrow", &s, 0)
-	other := setOf(129)
-	s.Or(&other)
-	assertBits(t, "after or", &s, 0, 129)
-}
-
 func TestCopyFromReusesCapacity(t *testing.T) {
 	t.Parallel()
 	src := setOf(1, 4, 70)

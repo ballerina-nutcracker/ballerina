@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> uninit-word-boundary-e.bal:89:16
+   |
+89 |     io:println(v64); // @error
+   |                ^^^
