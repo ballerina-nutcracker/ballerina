@@ -50,7 +50,7 @@ public class MyListener {
         io:println("immediate stop");
     }
 
-    function trigger(string message) {
+    public function trigger(string message) {
         var svc = self.s;
         if svc == () {
             panic error("no service");

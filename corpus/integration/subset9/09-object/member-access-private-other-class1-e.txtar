@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-other-class1-e.bal:23:16
+   |
+23 |         return a.x; // @error private field of A is not visible in methods of B
+   |                ^^^
