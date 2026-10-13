@@ -1,0 +1,11 @@
+-- stdout --
+ok: abc
+ValidationError: Validation failed for '$:length' constraint(s).
+ValidationError: Validation failed for '$:length' constraint(s).
+ok: a😀
+ValidationError: Validation failed for '$:length' constraint(s).
+ValidationError: Validation failed for '$:minLength' constraint(s).
+ok: ab
+ValidationError: name is too long!.
+ok: é😀é
+-- stderr --

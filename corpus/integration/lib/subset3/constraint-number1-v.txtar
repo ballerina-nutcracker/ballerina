@@ -1,0 +1,12 @@
+-- stdout --
+ok: 2.5
+ValidationError: Validation failed for '$:maxFractionDigits' constraint(s).
+ValidationError: Validation failed for '$:maxFractionDigits','$:maxIntegerDigits','$:maxValue' constraint(s).
+ValidationError: Validation failed for '$:minValue' constraint(s).
+ok: 3.5
+ValidationError: Validation failed for '$:minValueExclusive' constraint(s).
+ok: 5
+ValidationError: Validation failed for '$:maxValueExclusive' constraint(s).
+ok: 9.99
+ValidationError: Validation failed for '$:minValueExclusive' constraint(s).
+-- stderr --
