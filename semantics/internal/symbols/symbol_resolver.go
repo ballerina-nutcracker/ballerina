@@ -59,6 +59,7 @@ type symbolResolver interface {
 	GetSymbol(name string) (symbolLookup, bool)
 	GetPrefixedSymbol(prefix, name string) (model.SymbolRef, bool)
 	GetAnnotationSymbol(prefix, name string) (model.SymbolRef, bool)
+	markPrefixUsed(prefix string)
 	AddSymbol(name string, symbol model.Symbol)
 	GetPkgID() model.PackageID
 	GetScope() model.BlockLevelScope
@@ -349,16 +350,20 @@ func (ms *compilationUnitSymbolResolver) GetScope() model.BlockLevelScope {
 
 func (ms *compilationUnitSymbolResolver) GetPrefixedSymbol(prefix, name string) (model.SymbolRef, bool) {
 	if prefix != "" {
-		ms.usedPrefixes[prefix] = true
+		ms.markPrefixUsed(prefix)
 	}
 	return ms.scope.GetPrefixedSymbol(prefix, name)
 }
 
 func (ms *compilationUnitSymbolResolver) GetAnnotationSymbol(prefix, name string) (model.SymbolRef, bool) {
 	if prefix != "" {
-		ms.usedPrefixes[prefix] = true
+		ms.markPrefixUsed(prefix)
 	}
 	return ms.scope.GetAnnotationSymbol(prefix, name)
+}
+
+func (ms *compilationUnitSymbolResolver) markPrefixUsed(prefix string) {
+	ms.usedPrefixes[prefix] = true
 }
 
 func (ms *compilationUnitSymbolResolver) AddSymbol(name string, symbol model.Symbol) {
@@ -433,6 +438,10 @@ func (bs *blockSymbolResolver) GetPrefixedSymbol(prefix, name string) (model.Sym
 
 func (bs *blockSymbolResolver) GetAnnotationSymbol(prefix, name string) (model.SymbolRef, bool) {
 	return bs.parent.GetAnnotationSymbol(prefix, name)
+}
+
+func (bs *blockSymbolResolver) markPrefixUsed(prefix string) {
+	bs.parent.markPrefixUsed(prefix)
 }
 
 func (bs *blockSymbolResolver) AddSymbol(name string, symbol model.Symbol) {
@@ -2782,6 +2791,9 @@ func resolveErrorConstructorExpr(r symbolResolver, n *ast.BLangErrorConstructorE
 }
 
 func resolveFieldBaseAccess(r symbolResolver, n *ast.BLangFieldBaseAccess) bool {
+	if n.PkgAlias != nil {
+		r.markPrefixUsed(n.PkgAlias.GetValue())
+	}
 	if common.IsSelfFieldAccess(n) {
 		if classScope, ok := getEnclosingClassBodyScope(r); ok {
 			return resolveSelfFieldAccess(r, n, classScope)

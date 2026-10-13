@@ -284,6 +284,8 @@ type (
 	BLangFieldBaseAccess struct {
 		bLangAccessExpressionBase
 		Field IdentifierNode
+		// PkgAlias is the prefix of a qualified field name (an xml attribute name), nil otherwise
+		PkgAlias IdentifierNode
 		// I think this need a symbol to got to the field definition in type but Expr could be non atomic and
 		// this should still work
 	}
@@ -1206,7 +1208,7 @@ func NewBLangTypeTestExpr(pos Location, expr BLangExpression, ty TypeData, isNeg
 	}
 }
 
-func NewBLangFieldBaseAccess(pos diagnostics.Location, expr BLangExpression, field IdentifierNode, optional bool) *BLangFieldBaseAccess {
+func NewBLangFieldBaseAccess(pos diagnostics.Location, expr BLangExpression, pkgAlias IdentifierNode, field IdentifierNode, optional bool) *BLangFieldBaseAccess {
 	access := &BLangFieldBaseAccess{
 		bLangAccessExpressionBase: bLangAccessExpressionBase{
 			BLangValueExpressionBase: BLangValueExpressionBase{
@@ -1214,7 +1216,8 @@ func NewBLangFieldBaseAccess(pos diagnostics.Location, expr BLangExpression, fie
 			},
 			Expr: expr,
 		},
-		Field: field,
+		Field:    field,
+		PkgAlias: pkgAlias,
 	}
 	if optional {
 		access.flags |= valueExpressionFlagOptionalAccess
