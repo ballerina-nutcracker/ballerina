@@ -3565,17 +3565,12 @@ func (n *nodeBuilder) transformFieldName(fieldName st.Node) (ast.IdentifierNode,
 	return n.transformIdentifier(simpleNameRef.Name()), true
 }
 
-func (n *nodeBuilder) unsupportedQualifiedFieldName(message string, node *st.QualifiedNameReferenceNode) {
-	if !n.expectNode(node) {
-		return
+func (n *nodeBuilder) createFieldAccessName(fieldName st.Node) (ast.IdentifierNode, ast.IdentifierNode, bool) {
+	if _, qualified := fieldName.(*st.QualifiedNameReferenceNode); qualified {
+		return n.createBLangNameReference(fieldName)
 	}
-	if _, ok := n.createBLangModulePrefixIdentifier(node.ModulePrefix()); !ok || !n.expectColon(node.Colon()) {
-		return
-	}
-	if _, ok := n.createBLangIdentifier(asToken(node.Identifier())); !ok {
-		return
-	}
-	n.unimplemented(message, node)
+	field, ok := n.transformFieldName(fieldName)
+	return nil, field, ok
 }
 
 func (n *nodeBuilder) transformFieldAccessExpression(fieldAccessExpression *st.FieldAccessExpressionNode) (*ast.BLangFieldBaseAccess, bool) {
@@ -3586,20 +3581,11 @@ func (n *nodeBuilder) transformFieldAccessExpression(fieldAccessExpression *st.F
 	if !ok || !n.expectToken(fieldAccessExpression.DotToken()) {
 		return nil, false
 	}
-	fieldName := fieldAccessExpression.FieldName()
-	if qualified, ok := fieldName.(*st.QualifiedNameReferenceNode); ok {
-		n.unsupportedQualifiedFieldName("transformFieldAccessExpression: QUALIFIED_NAME_REFERENCE unsupported", qualified)
-		return nil, false
-	}
-	field, ok := n.transformFieldName(fieldName)
+	pkgAlias, field, ok := n.createFieldAccessName(fieldAccessExpression.FieldName())
 	if !ok {
 		return nil, false
 	}
-	bLFieldBasedAccess := &ast.BLangFieldBaseAccess{}
-	bLFieldBasedAccess.Field = field
-	bLFieldBasedAccess.Expr = expr
-	bLFieldBasedAccess.SetPosition(n.getPosition(fieldAccessExpression))
-	return bLFieldBasedAccess, true
+	return ast.NewBLangFieldBaseAccess(n.getPosition(fieldAccessExpression), expr, pkgAlias, field, false), true
 }
 
 func (n *nodeBuilder) transformFunctionCallExpression(functionCallExpression *st.FunctionCallExpressionNode) (*ast.BLangInvocation, bool) {
@@ -5794,16 +5780,11 @@ func (n *nodeBuilder) transformOptionalFieldAccessExpression(optionalFieldAccess
 	if !ok || !n.expectToken(optionalFieldAccessExpression.OptionalChainingToken()) {
 		return nil, false
 	}
-	fieldName := optionalFieldAccessExpression.FieldName()
-	if qualified, ok := fieldName.(*st.QualifiedNameReferenceNode); ok {
-		n.unsupportedQualifiedFieldName("transformOptionalFieldAccessExpression: QUALIFIED_NAME_REFERENCE unsupported", qualified)
-		return nil, false
-	}
-	field, ok := n.transformFieldName(fieldName)
+	pkgAlias, field, ok := n.createFieldAccessName(optionalFieldAccessExpression.FieldName())
 	if !ok {
 		return nil, false
 	}
-	return ast.NewBLangFieldBaseAccess(n.getPosition(optionalFieldAccessExpression), expr, field, true), true
+	return ast.NewBLangFieldBaseAccess(n.getPosition(optionalFieldAccessExpression), expr, pkgAlias, field, true), true
 }
 
 func (n *nodeBuilder) transformConditionalExpression(conditionalExpression *st.ConditionalExpressionNode) (*ast.BLangTernaryExpr, bool) {
