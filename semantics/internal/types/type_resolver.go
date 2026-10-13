@@ -434,8 +434,7 @@ type functionTypeResolver struct {
 	xmlStepCounter       int
 	scope                model.Scope
 	context              resolverContext
-	// privateRegion is the visibility region of the private members of the class enclosing the function, and
-	// empty outside a class.
+	// privateRegion is the visibility region of the enclosing class's private members, empty outside a class.
 	privateRegion string
 	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
 	opaqueCtx      *opaque.Context
@@ -9194,28 +9193,42 @@ func memberVisibility(t typeResolver, isPublic bool, privateOwner string) string
 	return modulePath
 }
 
+var visibilityKey = semtypes.StringConst("visibility")
+
 // checkObjectMemberVisible reports an error unless the member of objectTy is visible from the code being resolved:
 // public members everywhere, module members within their module and private members within their class's methods.
 func checkObjectMemberVisible(t typeResolver, objectTy semtypes.SemType, name string, pos diagnostics.Location) bool {
 	cx := t.typeContext()
 	visibilityTy := objectMemberVisibility(cx, objectTy, name)
-	visibleTy := semtypes.Union(semtypes.StringConst(semtypes.VisibilityPublic),
-		semtypes.StringConst(memberVisibility(t, false, "")))
+	regions := []string{semtypes.VisibilityPublic, memberVisibility(t, false, "")}
 	if region := resolverPrivateRegion(t); region != "" {
-		visibleTy = semtypes.Union(visibleTy, semtypes.StringConst(region))
+		regions = append(regions, region)
 	}
-	if semtypes.IsSubtype(cx, visibilityTy, visibleTy) {
+	// A member of a non-union receiver has a single region, which needs no subtype check.
+	if shape := semtypes.SingleShape(visibilityTy); shape.IsPresent() {
+		if region, ok := shape.Get().Value.(string); ok && slices.Contains(regions, region) {
+			return true
+		}
+	} else if semtypes.IsSubtype(cx, visibilityTy, stringUnion(regions)) {
 		return true
 	}
 	t.semanticError(fmt.Sprintf("object member '%s' is not visible here", name), pos)
 	return false
 }
 
+func stringUnion(values []string) semtypes.SemType {
+	ty := semtypes.Never
+	for _, value := range values {
+		ty = semtypes.Union(ty, semtypes.StringConst(value))
+	}
+	return ty
+}
+
 // objectMemberVisibility returns the type of the visibility region of the named member of objectTy.
 func objectMemberVisibility(cx semtypes.Context, objectTy semtypes.SemType, name string) semtypes.SemType {
 	// Reading the member off the sole object atom is much cheaper than projecting the object type.
 	if atom, ok := semtypes.ObjectPositiveAtom(cx, objectTy); ok {
-		return semtypes.MappingMemberTypeInner(cx, atom.FieldInnerVal(name), semtypes.StringConst("visibility"))
+		return semtypes.MappingMemberTypeInner(cx, atom.FieldInnerVal(name), visibilityKey)
 	}
 	return semtypes.ObjectMemberVisibility(cx, semtypes.StringConst(name), objectTy)
 }
