@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-module-init1-e.bal:22:17
+   |
+22 | public int gx = ga.x; // @error private field is not visible in a module variable initializer
+   |                 ^^^^

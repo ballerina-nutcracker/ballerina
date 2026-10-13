@@ -813,7 +813,7 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 	allImports := make(map[string]ast.BLangImportPackage)
 	resolveFieldInitsInScope := func(owner model.SymbolRef, scope model.Scope, fields []*ast.BLangVariable) {
 		ft := &functionTypeResolver{
-			privateRegion:     memberVisibility(p, false, p.symbolName(owner)),
+			privateRegion:     classPrivateRegion(p, owner),
 			atomSideTableBase: newAtomSideTableBase(),
 			parentResolver:    p,
 			tyCtx:             semtypes.ContextFrom(p.typeEnv()),
@@ -1087,7 +1087,7 @@ func resolveInvokableSignature(t typeResolver, fn common.FunctionDecl, fnSym mod
 func methodPrivateRegions(p *packageTypeResolver, pkg *ast.BLangPackage) map[model.SymbolRef]string {
 	regions := make(map[model.SymbolRef]string)
 	addMethods := func(owner model.SymbolRef, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
-		region := memberVisibility(p, false, p.symbolName(owner))
+		region := classPrivateRegion(p, owner)
 		if initFn != nil {
 			regions[initFn.Symbol()] = region
 		}
@@ -9198,7 +9198,7 @@ func memberVisibility(t typeResolver, isPublic bool, privateOwner string) string
 // public members everywhere, module members within their module and private members within their class's methods.
 func checkObjectMemberVisible(t typeResolver, objectTy semtypes.SemType, name string, pos diagnostics.Location) bool {
 	cx := t.typeContext()
-	visibilityTy := semtypes.ObjectMemberVisibility(cx, semtypes.StringConst(name), objectTy)
+	visibilityTy := objectMemberVisibility(cx, objectTy, name)
 	visibleTy := semtypes.Union(semtypes.StringConst(semtypes.VisibilityPublic),
 		semtypes.StringConst(memberVisibility(t, false, "")))
 	if region := resolverPrivateRegion(t); region != "" {
@@ -9209,6 +9209,20 @@ func checkObjectMemberVisible(t typeResolver, objectTy semtypes.SemType, name st
 	}
 	t.semanticError(fmt.Sprintf("object member '%s' is not visible here", name), pos)
 	return false
+}
+
+// objectMemberVisibility returns the type of the visibility region of the named member of objectTy.
+func objectMemberVisibility(cx semtypes.Context, objectTy semtypes.SemType, name string) semtypes.SemType {
+	// Reading the member off the sole object atom is much cheaper than projecting the object type.
+	if atom, ok := semtypes.ObjectPositiveAtom(cx, objectTy); ok {
+		return semtypes.MappingMemberTypeInner(cx, atom.FieldInnerVal(name), semtypes.StringConst("visibility"))
+	}
+	return semtypes.ObjectMemberVisibility(cx, semtypes.StringConst(name), objectTy)
+}
+
+// classPrivateRegion returns the visibility region of the private members of the class or service owner.
+func classPrivateRegion(t typeResolver, owner model.SymbolRef) string {
+	return memberVisibility(t, false, t.symbolName(owner))
 }
 
 func resolverPrivateRegion(t typeResolver) string {

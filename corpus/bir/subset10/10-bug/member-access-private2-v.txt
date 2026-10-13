@@ -1,0 +1,450 @@
+module $anon.. v 0.0.0;
+class A {
+  x int
+  y int
+  getter function(object { function arrow() returns int; function bump(...) returns nil; private function double() returns int; ... getter; public function init(int) returns nil; function narrowed(int|...) returns int; function nested() returns int; function query([......]) returns [int...]; function sumWhile([......]) returns int; private int x; private int y }) returns int
+
+  arrow() -> int{
+    bb0 {
+      %2 = fp $anon/.:$anonFunc$_3
+      f = %2;
+      %4 = f(self) -> bb1;
+    }
+    bb1 {
+      %0 = %4;
+      return;
+    }
+  }
+
+  bump(object { function arrow() returns int; function bump(...) returns nil; private function double() returns int; function(...) returns int getter; public function init(int) returns nil; function narrowed(int|...) returns int; function nested() returns int; function query([......]) returns [int...]; function sumWhile([......]) returns int; private int x; private int y }) -> nil{
+    bb0 {
+      %3 = ConstantLoad x
+      %4 = other[%3];
+      %5 = %4;
+      %6 = ConstantLoad 1
+      %7 = %6;
+      %8 = + %5 %7;
+      other[%3] = %8;
+      %9 = ConstantLoad y
+      %10 = other[%9];
+      %11 = %10;
+      %12 = ConstantLoad 1
+      %13 = %12;
+      %14 = - %11 %13;
+      other[%9] = %14;
+      return;
+    }
+  }
+
+  double() -> int{
+    bb0 {
+      %4 = ConstantLoad x
+      %3 = self[%4];
+      %5 = %3;
+      %6 = ConstantLoad 2
+      %7 = %6;
+      %2 = * %5 %7;
+      %0 = %2;
+      return;
+    }
+  }
+
+  init(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad 10
+      %4 = ConstantLoad y
+      self[%4] = %3;
+      %5 = fp $anon/.:$anonFunc$_0
+      %6 = ConstantLoad getter
+      self[%6] = %5;
+      %7 = ConstantLoad x
+      self[%7] = x;
+      return;
+    }
+  }
+
+  narrowed(int|object { function arrow() returns int; function bump(...) returns nil; private function double() returns int; function(...) returns int getter; public function init(int) returns nil; function narrowed(int|...) returns int; function nested() returns int; function query([......]) returns [int...]; function sumWhile([......]) returns int; private int x; private int y }) -> int{
+    bb0 {
+      %3 = v is object { function arrow() returns int; function bump(...) returns nil; private function double() returns int; function(...) returns int getter; public function init(int) returns nil; function narrowed(int|...) returns int; function nested() returns int; function query([......]) returns [int...]; function sumWhile([......]) returns int; private int x; private int y }
+      %3 ? bb1 : bb3;
+    }
+    bb1 {
+      PushScopeFrame 1
+      %0 = (1, v).double() -> bb2;
+    }
+    bb2 {
+      (1, %0) = %0;
+      PopScopeFrame
+      return;
+    }
+    bb3 {
+      PushScopeFrame 0
+      (1, %0) = (1, v);
+      PopScopeFrame
+      return;
+    }
+  }
+
+  nested() -> int{
+    bb0 {
+      %2 = closure_fp $anon/.:$anonFunc$_1
+      f = %2;
+      %4 = f() -> bb1;
+    }
+    bb1 {
+      %0 = %4;
+      return;
+    }
+  }
+
+  query([object { function arrow() returns int; function bump(...) returns nil; private function double() returns int; function(...) returns int getter; public function init(int) returns nil; function narrowed(int|...) returns int; function nested() returns int; function query(...) returns [int...]; function sumWhile([......]) returns int; private int x; private int y }...]) -> [int...]{
+    bb0 {
+      $desugar$0 = xs;
+      %4 = length($desugar$0) -> bb1;
+    }
+    bb1 {
+      $desugar$1 = %4;
+      %6 = ConstantLoad 0
+      %7 = newArray list[%6]{}
+      $desugar$2 = %7;
+      %10 = ConstantLoad 0
+      $desugar$3 = %10;
+      GOTO bb2;
+    }
+    bb2 {
+      %13 = $desugar$3;
+      %14 = $desugar$1;
+      %12 = < %13 %14;
+      %12 ? bb3 : bb4;
+    }
+    bb3 {
+      PushScopeFrame 9
+      %0 = (1, $desugar$0)[(1, $desugar$3)];
+      (1, o) = %0;
+      %2 = ConstantLoad y
+      %1 = (1, o)[%2];
+      %3 = %1;
+      %4 = push((1, $desugar$2),%3) -> bb5;
+    }
+    bb4 {
+      %0 = $desugar$2;
+      return;
+    }
+    bb5 {
+      %6 = (1, $desugar$3);
+      %7 = ConstantLoad 1
+      %8 = %7;
+      %5 = + %6 %8;
+      (1, $desugar$3) = %5;
+      PopScopeFrame
+      GOTO bb2;
+    }
+  }
+
+  sumWhile([object { function arrow() returns int; function bump(...) returns nil; private function double() returns int; function(...) returns int getter; public function init(int) returns nil; function narrowed(int|...) returns int; function nested() returns int; function query([......]) returns [int...]; function sumWhile(...) returns int; private int x; private int y }...]) -> int{
+    bb0 {
+      %3 = ConstantLoad 0
+      i = %3;
+      %5 = ConstantLoad 0
+      total = %5;
+      GOTO bb1;
+    }
+    bb1 {
+      %8 = i;
+      %9 = length(xs) -> bb2;
+    }
+    bb2 {
+      %10 = %9;
+      %7 = < %8 %10;
+      %7 ? bb3 : bb4;
+    }
+    bb3 {
+      PushScopeFrame 10
+      %1 = (1, total);
+      %3 = ConstantLoad x
+      %4 = (1, xs)[(1, i)];
+      %2 = %4[%3];
+      %5 = %2;
+      %0 = + %1 %5;
+      (1, total) = %0;
+      %7 = (1, i);
+      %8 = ConstantLoad 1
+      %9 = %8;
+      %6 = + %7 %9;
+      (1, i) = %6;
+      PopScopeFrame
+      GOTO bb1;
+    }
+    bb4 {
+      %0 = total;
+      return;
+    }
+  }
+}
+class R {
+  v int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 5
+      %3 = ConstantLoad v
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  priv() -> int{
+    bb0 {
+      %2 = ConstantLoad 1
+      %0 = %2;
+      return;
+    }
+  }
+
+  $remote$rem() -> int{
+    bb0 {
+      %4 = ConstantLoad v
+      %3 = self[%4];
+      %5 = %3;
+      %6 = self.priv() -> bb1;
+    }
+    bb1 {
+      %7 = %6;
+      %2 = * %5 %7;
+      %0 = %2;
+      return;
+    }
+  }
+
+  resource get val R.$resource$get$0() -> int{
+    bb0 {
+      %4 = ConstantLoad v
+      %3 = self[%4];
+      %5 = %3;
+      %6 = self.priv() -> bb1;
+    }
+    bb1 {
+      %7 = %6;
+      %2 = + %5 %7;
+      %0 = %2;
+      return;
+    }
+  }
+}
+class M {
+  m int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad m
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+readModuleMember(object { public function init() returns nil; int m }) -> int{
+  bb0 {
+    %2 = ConstantLoad m
+    %3 = m[%2];
+    %4 = %3;
+    %5 = ConstantLoad 2
+    %6 = %5;
+    %7 = + %4 %6;
+    m[%2] = %7;
+    %9 = ConstantLoad m
+    %8 = m[%9];
+    %0 = %8;
+    return;
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = newObject $anon/.:A
+    %2 = ConstantLoad 1
+    %3 = %1.init(%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    a = %4;
+    %7 = newObject $anon/.:A
+    %8 = ConstantLoad 5
+    %9 = %7.init(%8) -> bb5;
+  }
+  bb5 {
+    %11 = %9 is nil
+    %11 ? bb6 : bb7;
+  }
+  bb6 {
+    %10 = %7;
+    GOTO bb8;
+  }
+  bb7 {
+    %10 = %9;
+    GOTO bb8;
+  }
+  bb8 {
+    b = %10;
+    %13 = a.nested() -> bb9;
+  }
+  bb9 {
+    %14 = %13;
+    %15 = println(%14) -> bb10;
+  }
+  bb10 {
+    %16 = a.bump(b) -> bb11;
+  }
+  bb11 {
+    %17 = ConstantLoad 2
+    %18 = newArray [object { function arrow() returns int; function bump(...) returns nil; private function double() returns int; function(...) returns int getter; public function init(int) returns nil; function narrowed(int|...) returns int; function nested() returns int; function query([......]) returns [int...]; function sumWhile(...) returns int; private int x; private int y }...][%17]{a, b}
+    %19 = a.sumWhile(%18) -> bb12;
+  }
+  bb12 {
+    %20 = %19;
+    %21 = println(%20) -> bb13;
+  }
+  bb13 {
+    %22 = b.arrow() -> bb14;
+  }
+  bb14 {
+    %23 = %22;
+    %24 = println(%23) -> bb15;
+  }
+  bb15 {
+    %25 = ConstantLoad 2
+    %26 = newArray [object { function arrow() returns int; function bump(...) returns nil; private function double() returns int; function(...) returns int getter; public function init(int) returns nil; function narrowed(int|...) returns int; function nested() returns int; function query(...) returns [int...]; function sumWhile([......]) returns int; private int x; private int y }...][%25]{a, b}
+    %27 = a.query(%26) -> bb16;
+  }
+  bb16 {
+    %28 = println(%27) -> bb17;
+  }
+  bb17 {
+    %29 = a.narrowed(b) -> bb18;
+  }
+  bb18 {
+    %30 = %29;
+    %31 = println(%30) -> bb19;
+  }
+  bb19 {
+    %33 = ConstantLoad getter
+    %32 = a[%33];
+    g = %32;
+    %35 = g(b) -> bb20;
+  }
+  bb20 {
+    %36 = %35;
+    %37 = println(%36) -> bb21;
+  }
+  bb21 {
+    %38 = newObject $anon/.:R
+    %39 = %38.init() -> bb22;
+  }
+  bb22 {
+    %41 = %39 is nil
+    %41 ? bb23 : bb24;
+  }
+  bb23 {
+    %40 = %38;
+    GOTO bb25;
+  }
+  bb24 {
+    %40 = %39;
+    GOTO bb25;
+  }
+  bb25 {
+    r = %40;
+    %43 = ConstantLoad val
+    %44 = r->[%43].get() -> bb26;
+  }
+  bb26 {
+    v = %44;
+    %46 = v;
+    %47 = println(%46) -> bb27;
+  }
+  bb27 {
+    %48 = r.$remote$rem() -> bb28;
+  }
+  bb28 {
+    w = %48;
+    %50 = w;
+    %51 = println(%50) -> bb29;
+  }
+  bb29 {
+    %52 = newObject $anon/.:M
+    %53 = %52.init() -> bb30;
+  }
+  bb30 {
+    %55 = %53 is nil
+    %55 ? bb31 : bb32;
+  }
+  bb31 {
+    %54 = %52;
+    GOTO bb33;
+  }
+  bb32 {
+    %54 = %53;
+    GOTO bb33;
+  }
+  bb33 {
+    %56 = readModuleMember(%54) -> bb34;
+  }
+  bb34 {
+    %57 = %56;
+    %58 = println(%57) -> bb35;
+  }
+  bb35 {
+    return;
+  }
+}
+$anonFunc$_0(object { function arrow() returns int; function bump(...) returns nil; private function double() returns int; function(...) returns int getter; public function init(int) returns nil; function narrowed(int|...) returns int; function nested() returns int; function query([......]) returns [int...]; function sumWhile([......]) returns int; private int x; private int y }) -> int{
+  bb0 {
+    %3 = ConstantLoad x
+    %2 = o[%3];
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_1() -> int{
+  bb0 {
+    %1 = closure_fp $anon/.:$anonFunc$_2
+    g = %1;
+    %3 = g() -> bb1;
+  }
+  bb1 {
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_2() -> int{
+  bb0 {
+    %2 = (2, self).double() -> bb1;
+  }
+  bb1 {
+    %3 = %2;
+    %5 = ConstantLoad y
+    %4 = (2, self)[%5];
+    %6 = %4;
+    %1 = + %3 %6;
+    %0 = %1;
+    return;
+  }
+}
+$anonFunc$_3(object { function arrow() returns int; function bump(...) returns nil; private function double() returns int; function(...) returns int getter; public function init(int) returns nil; function narrowed(int|...) returns int; function nested() returns int; function query([......]) returns [int...]; function sumWhile([......]) returns int; private int x; private int y }) -> int{
+  bb0 {
+    %3 = ConstantLoad x
+    %2 = o[%3];
+    %0 = %2;
+    return;
+  }
+}
