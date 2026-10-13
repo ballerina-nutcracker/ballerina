@@ -891,7 +891,6 @@ func ResolvePrivateNodes(
 	allImports := make(map[string]ast.BLangImportPackage)
 	resolveFieldInitsInScope := func(owner model.SymbolRef, scope model.Scope, fields []*ast.BLangVariable, span context.TraceSpan) {
 		ft := &functionTypeResolver{
-			privateRegion:     memberVisibility(p, false, p.symbolName(owner)),
 			atomSideTableBase: newAtomSideTableBase(),
 			parentResolver:    p,
 			tyCtx:             semtypes.ContextFrom(p.typeEnv()),
@@ -1170,7 +1169,7 @@ func invokableSignatureTypes(t typeResolver, chain *binding, fn common.FunctionD
 func methodPrivateRegions(p *packageTypeResolver, pkg *ast.BLangPackage) map[model.SymbolRef]string {
 	regions := make(map[model.SymbolRef]string)
 	addMethods := func(owner model.SymbolRef, initFn *ast.BLangFunction, methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod) {
-		region := memberVisibility(p, false, p.symbolName(owner))
+		region := classPrivateRegion(p, owner)
 		if initFn != nil {
 			regions[initFn.Symbol()] = region
 		}
@@ -9751,6 +9750,11 @@ func checkObjectMemberVisible(t typeResolver, objectTy semtypes.SemType, name st
 	}
 	t.semanticError(fmt.Sprintf("object member '%s' is not visible here", name), pos)
 	return false
+}
+
+// classPrivateRegion returns the visibility region of the private members of the class or service owner.
+func classPrivateRegion(t typeResolver, owner model.SymbolRef) string {
+	return memberVisibility(t, false, t.symbolName(owner))
 }
 
 func resolverPrivateRegion(t typeResolver) string {

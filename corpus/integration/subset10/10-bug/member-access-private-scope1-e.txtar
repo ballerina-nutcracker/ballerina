@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: object member 'f' is not visible here
+  --> member-access-private-scope1-e.bal:44:16
+   |
+44 |         return a.f(); // @error private method is not visible in a remote method of another class
+   |                ^^^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-scope1-e.bal:26:13
+   |
+26 |     int y = (new A()).x; // @error private field is not visible in a field initializer of another class
+   |             ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-scope1-e.bal:28:16
+   |
+28 |         return o.x; // @error private field is not visible in a lambda in a field initializer of another class
+   |                ^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-scope1-e.bal:34:16
+   |
+34 |         return v.x; // @error private field of A is not visible in methods of B
+   |                ^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-scope1-e.bal:40:16
+   |
+40 |         return a.x; // @error private field is not visible in a resource method of another class
+   |                ^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-scope1-e.bal:52:16
+   |
+52 |         return ga.x; // @error private field is not visible in a lambda outside the class
+   |                ^^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-scope1-e.bal:58:5
+   |
+58 |     ga.x += 1; // @error private field is not visible in a compound assignment outside the class
+   |     ^^^^
