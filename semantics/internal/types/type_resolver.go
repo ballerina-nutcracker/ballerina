@@ -6789,6 +6789,9 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	containerExprTy := containerExprResult.ty
+	if expr.PkgAlias != nil {
+		return resolveXMLAttributeAccess(t, expr, containerExprTy)
+	}
 	key := expr.Field.GetValue()
 	if expr.IsOptionalAccess() {
 		return resolveOptionalFieldBaseAccess(t, chain, expr, containerExprTy, key)
@@ -6857,6 +6860,20 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 	expr.SetDeterminedType(memberTy)
 	expr.Field.SetDeterminedType(semtypes.Never)
 	return memberTy, defaultExpressionEffect(chain), true
+}
+
+func resolveXMLAttributeAccess(t typeResolver, expr *ast.BLangFieldBaseAccess, containerTy semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	if expr.IsLexpr() {
+		t.semanticError("xml attribute access cannot be used as an lvalue", expr.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	if !semtypes.IsSubtype(t.typeContext(), containerTy, semtypes.XML) {
+		t.semanticError("xml attribute access requires an expression of type xml", expr.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	// expr.PkgAlias is not resolved to an xmlns prefix or string constant yet
+	t.unimplemented("XML attribute access not supported", expr.GetPosition()) // https://github.com/ballerina-nutcracker/ballerina/issues/560
+	return semtypes.SemType{}, expressionEffect{}, false
 }
 
 func resolveOptionalFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangFieldBaseAccess, T semtypes.SemType, fieldname string) (semtypes.SemType, expressionEffect, bool) {

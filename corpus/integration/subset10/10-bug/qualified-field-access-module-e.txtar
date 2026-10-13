@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-module-e.bal:21:24
+   |
+21 | final int moduleInit = moduleValue.mod:foo; // @error
+   |                        ^^^^^^^^^^^^^^^^^^^
