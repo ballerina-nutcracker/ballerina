@@ -736,6 +736,14 @@ func TestRecordFieldAnnotations(t *testing.T) {
 				}
 				return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
 			}},
+		{Org: org, Module: module, FuncName: "annotatedFieldsInferred",
+			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				td, err := typedescArg(args)
+				if err != nil {
+					return nil, err
+				}
+				return values.NewErrorWithMessage(strings.Join(sortedAnnotatedFields(ctx, td), ",")), nil
+			}},
 		{Org: org, Module: module, FuncName: "fieldMetaName",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				return metaName(ctx, args, fieldMetaKey)

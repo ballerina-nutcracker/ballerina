@@ -31,7 +31,8 @@
         (checked-expr
           (invocation lang.value cloneWithType (
             (simple-var-ref v)
-            (typedesc-expr)))))))
+            (typedesc-expr
+              (user-defined-type Holder))))))))
     (assignment
       (index-based-access
         (field-based-access m

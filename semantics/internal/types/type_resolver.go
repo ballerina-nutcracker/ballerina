@@ -3605,7 +3605,9 @@ func resolveVariableDefStmt(t typeResolver, chain *binding, s *ast.BLangVariable
 		}
 		exprTy := result.ty
 		effectChain = mergeChains(t, result.effect.ifTrue, result.effect.ifFalse, semtypes.Union)
-		if typeNode == nil {
+		if typeNode != nil {
+			nameInferredTypedescArgs(t, typeNode, variable.Expr)
+		} else {
 			variable.SetDeterminedType(exprTy)
 			updateSymbolType(t, variable, exprTy)
 			if !associateInferredFunctionSignature(t, variable, result.functionSignature) {
@@ -3615,6 +3617,67 @@ func resolveVariableDefStmt(t typeResolver, chain *binding, s *ast.BLangVariable
 	}
 
 	return defaultStmtEffect(effectChain), true
+}
+
+// nameInferredTypedescArgs makes a `<>` typedesc argument of a variable's initializer refer to the
+// variable's declared named type, so it carries that type's annotations.
+func nameInferredTypedescArgs(t typeResolver, typeNode ast.BType, init ast.BLangActionOrExpression) {
+	call, ok := withoutCheck(init).(ast.Invocable)
+	if !ok {
+		return
+	}
+	args := call.CallArgs()
+	for i, arg := range args {
+		td, ok := arg.(*ast.BLangTypedescExpr)
+		if !ok || td.GetTypeDescriptor() != nil {
+			continue
+		}
+		if named := namedTypeOf(t, typeNode, td.Constraint); named != nil {
+			typeRef := *named
+			namedTd := ast.NewBLangTypedescExpr(td.GetPosition(), &typeRef)
+			namedTd.Constraint = td.Constraint
+			namedTd.SetDeterminedType(td.GetDeterminedType())
+			args[i] = namedTd
+		}
+	}
+}
+
+func withoutCheck(expr ast.BLangActionOrExpression) ast.BLangActionOrExpression {
+	for {
+		switch e := expr.(type) {
+		case *ast.BLangCheckedExpr:
+			expr = e.Expr
+		case *ast.BLangCheckPanickedExpr:
+			expr = e.Expr
+		case *ast.BLangGroupExpr:
+			expr = e.Expression
+		default:
+			return expr
+		}
+	}
+}
+
+// namedTypeOf returns the named type in typeDesc, or in one of its union members, that is ty, or nil
+// when there is none or more than one, since their annotations may differ.
+func namedTypeOf(t typeResolver, typeDesc ast.TypeDescriptor, ty semtypes.SemType) *ast.BLangUserDefinedType {
+	matches := namedTypeMatches(t, typeDesc, ty, nil)
+	if len(matches) != 1 {
+		return nil
+	}
+	return matches[0]
+}
+
+func namedTypeMatches(t typeResolver, typeDesc ast.TypeDescriptor, ty semtypes.SemType, matches []*ast.BLangUserDefinedType) []*ast.BLangUserDefinedType {
+	switch n := typeDesc.(type) {
+	case *ast.BLangUserDefinedType:
+		if semtypes.IsSameType(t.typeContext(), n.GetDeterminedType(), ty) {
+			return append(matches, n)
+		}
+	case *ast.BLangUnionTypeNode:
+		matches = namedTypeMatches(t, n.Lhs().TypeDescriptor, ty, matches)
+		return namedTypeMatches(t, n.Rhs().TypeDescriptor, ty, matches)
+	}
+	return matches
 }
 
 // detectGlobalVarInitCycles flags cycles in the dependency graph induced by
@@ -3763,8 +3826,11 @@ func resolveGlobalVarInit(t typeResolver, node *ast.BLangVariable) bool {
 		// and panics if the value is an error.
 		expectedType = semtypes.Union(semType, semtypes.Error)
 	}
-	_, ok := resolveActionOrExpression(t, nil, node.Expr, expectedType)
-	return ok
+	if _, ok := resolveActionOrExpression(t, nil, node.Expr, expectedType); !ok {
+		return false
+	}
+	nameInferredTypedescArgs(t, node.TypeNode(), node.Expr)
+	return true
 }
 
 // resolveServiceAttachedExpressions type-checks the listener expressions in

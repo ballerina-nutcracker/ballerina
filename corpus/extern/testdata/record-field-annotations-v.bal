@@ -50,6 +50,18 @@ type Plain record {|
     int x;
 |};
 
+// Same shape as Person but without its annotations.
+type PersonTwin record {|
+    string name;
+    int age;
+    boolean active?;
+    string dynamic;
+    string sourceAnnotated;
+    string plain;
+|};
+
+Person|error moduleInferred = annotatedFieldsInferred();
+
 public function main() {
     io:println(annotatedFields(Person)); //@output active,age,dynamic,name
     io:println(annotatedFields(Plain)); //@output
@@ -63,9 +75,24 @@ public function main() {
     io:println(hasMarker(Person, "active")); //@output true
     io:println(hasMarker(Person, "name")); //@output false
     io:println(fieldMetaName(Person, "sourceAnnotated")); //@output <absent>
+    Person|error inferred = annotatedFieldsInferred();
+    io:println(inferred is error ? inferred.message() : ""); //@output active,age,dynamic,name
+    Person|error fromModule = moduleInferred;
+    io:println(fromModule is error ? fromModule.message() : ""); //@output active,age,dynamic,name
+    error? checked = inferredThroughCheck();
+    io:println(checked is error ? checked.message() : ""); //@output active,age,dynamic,name
+    Person|PersonTwin|error ambiguous = annotatedFieldsInferred();
+    io:println(ambiguous is error ? ambiguous.message() : ""); //@output
+}
+
+function inferredThroughCheck() returns error? {
+    Person person = check annotatedFieldsInferred();
+    _ = person;
 }
 
 function annotatedFields(typedesc<anydata> td) returns string = external;
+
+function annotatedFieldsInferred(typedesc<anydata> td = <>) returns td|error = external;
 
 function fieldMetaName(typedesc<anydata> td, string fieldName) returns string = external;
 
