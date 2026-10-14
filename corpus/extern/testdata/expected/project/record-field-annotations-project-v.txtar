@@ -7,4 +7,6 @@ imported-createdAt
 imported-name
 name
 imported-name
+type[] age:{type[typeMeta=imported-age]} list:{type[] x[fieldMeta=imported-x]} node:{type[] value[fieldMeta=imported-value] next:<cycle>}
+type[] age:{type[typeMeta=imported-age]} list:{type[] x[fieldMeta=imported-x]} node:{type[] value[fieldMeta=imported-value] next:<cycle>}
 -- stderr --

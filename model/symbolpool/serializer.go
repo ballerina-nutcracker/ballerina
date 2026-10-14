@@ -555,6 +555,9 @@ func (sw *symbolWriter) writeInclusionMembers(buf *bytes.Buffer, members []model
 			if err := sw.writeSymbolRef(buf, member.DefaultFnRef); err != nil {
 				return err
 			}
+			if err := sw.writeSymbolRef(buf, member.TypeRef); err != nil {
+				return err
+			}
 		case *model.MethodDescriptor:
 			if err := write(buf, inclusionMemberTagMethod); err != nil {
 				return err

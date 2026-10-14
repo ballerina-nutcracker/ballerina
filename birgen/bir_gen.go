@@ -18,6 +18,7 @@ package birgen
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -46,6 +47,7 @@ type packageContext struct {
 	// PR-TODO: extract them to memoized types struc
 	stringMapTy      semtypes.SemType // Memoized map<string> type
 	serviceClassKeys map[*ast.BLangService]string
+	typeDescs        map[model.SymbolRef]*values.TypeDesc
 }
 
 func (c *packageContext) typeContext() semtypes.Context {
@@ -382,6 +384,7 @@ func newContext(compilerCtx *compilerctx.CompilerContext, packageID *model.Packa
 		packageID:        packageID,
 		birPkg:           birPkg,
 		serviceClassKeys: make(map[*ast.BLangService]string),
+		typeDescs:        make(map[model.SymbolRef]*values.TypeDesc),
 		typeCtx:          semtypes.TypeCheckContext(compilerCtx.GetTypeEnv()),
 	}
 	return c
@@ -1279,13 +1282,66 @@ func newTypeDescValue(ctx context, constraint semtypes.SemType, typeDesc ast.Typ
 	return newTypeDescValueForSymbol(ctx, constraint, udt.Symbol())
 }
 
+// newTypeDescValueForSymbol returns the typedesc of the named type at symRef. Typedescs are built
+// once per module and shared, so every use of a type, and of its field types, is one value.
 func newTypeDescValueForSymbol(ctx context, constraint semtypes.SemType, symRef model.SymbolRef) *values.TypeDesc {
-	return values.NewTypeDescWithFieldAnnotations(
-		ctx.typeEnv(),
-		constraint,
-		ctx.compilerContext().SymbolAnnotationValues(symRef),
-		ctx.compilerContext().RecordFieldAnnotationValues(symRef),
-	)
+	built := ctx.function().pkgCtx.typeDescs
+	if td, ok := built[symRef]; ok {
+		return td
+	}
+	td := typeDescForSymbol(ctx, constraint, symRef, built)
+	dropUnannotatedFieldTypes(built)
+	return td
+}
+
+// dropUnannotatedFieldTypes removes the field types from which no annotation can be reached, so a
+// typedesc carries nested typedescs only when they have annotations to show.
+func dropUnannotatedFieldTypes(built map[model.SymbolRef]*values.TypeDesc) {
+	annotated := make(map[*values.TypeDesc]bool)
+	for changed := true; changed; {
+		changed = false
+		for _, td := range built {
+			if !annotated[td] && reachesAnnotation(td, annotated) {
+				annotated[td] = true
+				changed = true
+			}
+		}
+	}
+	for _, td := range built {
+		maps.DeleteFunc(td.FieldTypes, func(_ string, fieldTd *values.TypeDesc) bool { return !annotated[fieldTd] })
+	}
+}
+
+func reachesAnnotation(td *values.TypeDesc, annotated map[*values.TypeDesc]bool) bool {
+	if len(td.Annotations) > 0 || len(td.FieldAnnotations) > 0 {
+		return true
+	}
+	for _, fieldTd := range td.FieldTypes {
+		if annotated[fieldTd] {
+			return true
+		}
+	}
+	return false
+}
+
+// typeDescForSymbol builds the typedesc of the named type at symRef together with the typedescs of
+// its fields' named types, reusing the ones in built so that recursive types end in a cycle.
+func typeDescForSymbol(ctx context, constraint semtypes.SemType, symRef model.SymbolRef, built map[model.SymbolRef]*values.TypeDesc) *values.TypeDesc {
+	if td, ok := built[symRef]; ok {
+		return td
+	}
+	cx := ctx.compilerContext()
+	td := values.NewTypeDescWithFieldAnnotations(ctx.typeEnv(), constraint,
+		cx.SymbolAnnotationValues(symRef), cx.RecordFieldAnnotationValues(symRef))
+	built[symRef] = td
+	for _, member := range cx.SymbolMembers(symRef) {
+		field, ok := member.(*model.FieldDescriptor)
+		if !ok || field.TypeRef == (model.SymbolRef{}) {
+			continue
+		}
+		td.FieldTypes[field.MemberName()] = typeDescForSymbol(ctx, cx.SymbolType(field.TypeRef), field.TypeRef, built)
+	}
+	return td
 }
 
 func annotAccessExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangAnnotAccessExpr) (expressionEffect, bool) {
