@@ -62,3 +62,7 @@ public type Outer record {|
 public function outerType() returns typedesc<anydata> {
     return Outer;
 }
+
+public function annotatedFieldsOf(Person|error person) returns string {
+    return person is error ? person.message() : "";
+}

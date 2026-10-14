@@ -134,6 +134,10 @@ func (c *CompilerContext) UpdateFunctionSignatureIncludedRecords(ref model.Funct
 	c.env.UpdateFunctionSignatureIncludedRecords(ref, includedRecords)
 }
 
+func (c *CompilerContext) UpdateFunctionSignatureParamNamedTypes(ref model.FunctionSignatureRef, namedTypes [][]model.SymbolRef) {
+	c.env.UpdateFunctionSignatureParamNamedTypes(ref, namedTypes)
+}
+
 func (c *CompilerContext) GetFunctionSignature(fn model.SymbolRef) (model.UntypedFunctionSignature, bool) {
 	return c.env.GetFunctionSignature(fn)
 }
@@ -194,6 +198,14 @@ func (c *CompilerContext) SymbolMembers(symbol model.SymbolRef) []model.Inclusio
 
 func (c *CompilerContext) SymbolIsClass(symbol model.SymbolRef) bool {
 	return c.env.SymbolIsClass(symbol)
+}
+
+func (c *CompilerContext) SetDeclaredNamedTypes(symbol model.SymbolRef, named []model.SymbolRef) {
+	c.env.SetDeclaredNamedTypes(symbol, named)
+}
+
+func (c *CompilerContext) DeclaredNamedTypes(symbol model.SymbolRef) []model.SymbolRef {
+	return c.env.DeclaredNamedTypes(symbol)
 }
 
 func (c *CompilerContext) ValueSymbolMetadata(symbol model.SymbolRef) (ValueSymbolMetadata, bool) {

@@ -497,6 +497,7 @@ type (
 		// but this will have negative effect on allocations (and GC)
 		Default                []*DefaultableParam
 		IncludedRecordMetadata []*IncludedRecordMetadata
+		ParamNamedTypes        [][]SymbolRef
 		HasRest                bool
 	}
 
@@ -565,6 +566,7 @@ type Param struct {
 	Flag           ParamFlag
 	Default        *DefaultableParam
 	IncludedRecord *IncludedRecordMetadata
+	NamedTypes     []SymbolRef
 }
 
 func NewUntypedFunctionSignature(params []Param, hasRest bool) UntypedFunctionSignature {
@@ -573,11 +575,13 @@ func NewUntypedFunctionSignature(params []Param, hasRest bool) UntypedFunctionSi
 	flags := make([]ParamFlag, size)
 	defaults := make([]*DefaultableParam, size)
 	inclRecord := make([]*IncludedRecordMetadata, size)
+	namedTypes := make([][]SymbolRef, size)
 	for i, param := range params {
 		paramNames[i] = param.Name
 		flags[i] = param.Flag
 		defaults[i] = param.Default
 		inclRecord[i] = param.IncludedRecord
+		namedTypes[i] = param.NamedTypes
 	}
 	return UntypedFunctionSignature{
 		HasRest:                hasRest,
@@ -585,7 +589,15 @@ func NewUntypedFunctionSignature(params []Param, hasRest bool) UntypedFunctionSi
 		ParamFlags:             flags,
 		Default:                defaults,
 		IncludedRecordMetadata: inclRecord,
+		ParamNamedTypes:        namedTypes,
 	}
+}
+
+func (sig UntypedFunctionSignature) NamedTypes(index int) []SymbolRef {
+	if index < 0 || index >= len(sig.ParamNamedTypes) {
+		return nil
+	}
+	return sig.ParamNamedTypes[index]
 }
 
 func (sig *UntypedFunctionSignature) SetIncludedRecordMetadata(index int, metadata IncludedRecordMetadata) {

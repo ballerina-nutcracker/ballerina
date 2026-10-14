@@ -19,6 +19,7 @@ package types
 import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
@@ -125,6 +126,25 @@ func setLaxAccess(t typeResolver, expr *ast.BLangFieldBaseAccess) {
 		return
 	}
 	expr.SetLax()
+}
+
+func setDeclaredNamedTypes(t typeResolver, variable model.SymbolRef, named []model.SymbolRef) {
+	if t.isEphemeral() || len(named) == 0 {
+		return
+	}
+	t.compilerContext().SetDeclaredNamedTypes(variable, named)
+}
+
+func setFunctionSignatureParamNamedTypes(t typeResolver, ref model.FunctionSignatureRef, fn ast.FunctionSignature) {
+	if t.isEphemeral() {
+		return
+	}
+	params := fn.Parameters()
+	namedTypes := make([][]model.SymbolRef, len(params))
+	for i, param := range params {
+		namedTypes[i] = common.NamedTypes(param.Type())
+	}
+	t.compilerContext().UpdateFunctionSignatureParamNamedTypes(ref, namedTypes)
 }
 
 func setTypedescConstraint(t typeResolver, node *ast.BLangTypedescExpr, constraint semtypes.SemType) {

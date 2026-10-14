@@ -1264,7 +1264,12 @@ func generateMultipleWaitAction(ctx context, curBB *bir.BIRBasicBlock, action *a
 
 func typedescExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangTypedescExpr) (expressionEffect, bool) {
 	resultOperand := ctx.addTempVar(expr.Type())
-	td := newTypeDescValue(ctx, expr.Constraint, expr.GetTypeDescriptor())
+	var td *values.TypeDesc
+	if expr.NamedType.IsEmpty() {
+		td = newTypeDescValue(ctx, expr.Constraint, expr.GetTypeDescriptor())
+	} else {
+		td = newTypeDescValueForSymbol(ctx, expr.Constraint, expr.NamedType)
+	}
 	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(resultOperand, td, ctx.function().loc(expr.GetPosition())))
 	return expressionEffect{result: resultOperand,
 		block: curBB,

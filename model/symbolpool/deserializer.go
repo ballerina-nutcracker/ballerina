@@ -467,6 +467,19 @@ func (sr *symbolReader) readInclusionMembers(space *model.SymbolSpace) []model.I
 	return members
 }
 
+func (sr *symbolReader) readSymbolRefs(space *model.SymbolSpace) []model.SymbolRef {
+	var count int64
+	read(sr.r, &count)
+	if count == 0 {
+		return nil
+	}
+	refs := make([]model.SymbolRef, count)
+	for i := range refs {
+		refs[i] = sr.readSymbolRef(space)
+	}
+	return refs
+}
+
 func (sr *symbolReader) readSymbolRef(space *model.SymbolSpace) model.SymbolRef {
 	var tag uint8
 	read(sr.r, &tag)
@@ -698,6 +711,7 @@ func (sr *symbolReader) readUntypedFunctionSignatureParams(space *model.SymbolSp
 				params[i].Default.Symbol = sr.readSymbolRef(space)
 			}
 		}
+		params[i].NamedTypes = sr.readSymbolRefs(space)
 		var hasIncluded bool
 		read(sr.r, &hasIncluded)
 		if !hasIncluded {

@@ -55,3 +55,21 @@ func isValueTypeNode(typeDesc ast.TypeDescriptor, kind ast.TypeKind) bool {
 	valueType, ok := typeDesc.(*ast.BLangValueType)
 	return ok && valueType.TypeKind == kind
 }
+
+func NamedTypes(typeDesc ast.TypeDescriptor) []model.SymbolRef {
+	return appendNamedTypes(nil, typeDesc)
+}
+
+func appendNamedTypes(named []model.SymbolRef, typeDesc ast.TypeDescriptor) []model.SymbolRef {
+	switch n := typeDesc.(type) {
+	case *ast.BLangReturnTypeDescriptor:
+		return appendNamedTypes(named, n.TypeDescriptor)
+	case *ast.BLangUnionTypeNode:
+		named = appendNamedTypes(named, n.Lhs().TypeDescriptor)
+		return appendNamedTypes(named, n.Rhs().TypeDescriptor)
+	}
+	if ref := NamedTypeRef(typeDesc); !ref.IsEmpty() {
+		return append(named, ref)
+	}
+	return named
+}

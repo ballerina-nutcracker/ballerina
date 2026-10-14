@@ -608,6 +608,18 @@ func (sw *symbolWriter) writeSymbolRef(buf *bytes.Buffer, ref model.SymbolRef) e
 	return write(buf, int32(idx))
 }
 
+func (sw *symbolWriter) writeSymbolRefs(buf *bytes.Buffer, refs []model.SymbolRef) error {
+	if err := write(buf, int64(len(refs))); err != nil {
+		return err
+	}
+	for _, ref := range refs {
+		if err := sw.writeSymbolRef(buf, ref); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (sw *symbolWriter) externalSymbolRefIndex(ref model.SymbolRef) int {
 	key := serializedSymbolRefKey{
 		pkg:  sw.compilerEnv.SymbolPackage(ref),
@@ -942,6 +954,9 @@ func (sw *symbolWriter) writeUntypedFunctionSignature(buf *bytes.Buffer, sig mod
 					return err
 				}
 			}
+		}
+		if err := sw.writeSymbolRefs(buf, sig.NamedTypes(i)); err != nil {
+			return err
 		}
 		metadata := sig.IncludedRecordMetadata[i]
 		if err := write(buf, metadata != nil); err != nil {
