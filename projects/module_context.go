@@ -71,6 +71,7 @@ type moduleContext struct {
 	// (birGenAttempted already true) can still recover the diagnostics that attempt
 	// added, by slicing getDiagnostics() from this index.
 	birGenDiagStart int
+	birGenWarnStart int
 
 	// compilationUnits and pkgID bridge parseModule (Phase 1a) to
 	// resolveSymbolsAndTypes (Phase 1b).
@@ -584,6 +585,7 @@ func generateCodeInternal(moduleCtx *moduleContext) bool {
 	}
 	moduleCtx.birGenAttempted = true
 	moduleCtx.birGenDiagStart = len(moduleCtx.getDiagnostics())
+	moduleCtx.birGenWarnStart = len(moduleCtx.getWarnings())
 	moduleCtx.birPkg = birgen.GenBir(moduleCtx.compilerCtx, moduleCtx.bLangPkg)
 	return moduleCtx.birPkg != nil
 }
@@ -614,9 +616,13 @@ func (m *moduleContext) setCompilationState(state moduleCompilationState) {
 	m.stateInitialized = true
 }
 
-// getDiagnostics returns the diagnostics produced during module compilation.
+// getDiagnostics returns the error diagnostics produced during module compilation; warnings are returned by getWarnings.
 func (m *moduleContext) getDiagnostics() []diagnostics.Diagnostic {
 	return m.compilerCtx.Diagnostics()
+}
+
+func (m *moduleContext) getWarnings() []diagnostics.Diagnostic {
+	return m.compilerCtx.Warnings()
 }
 
 // duplicate creates a copy of the context.
