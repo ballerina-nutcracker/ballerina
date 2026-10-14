@@ -324,11 +324,14 @@ func (sr *symbolReader) readTypeSymbol(space *model.SymbolSpace) {
 	sym := model.NewTypeSymbol(name, isPublic, diagnostics.NewBuiltinLocation())
 	sym.SetType(ty)
 	annotations := sr.readAnnotationValues()
+	fieldAnnotations := sr.readFieldAnnotationValues()
 	_ = sr.readInclusionMembers(space)
 	var sigHandle int64
 	read(sr.r, &sigHandle)
+	sym.TypeRef = sr.readSymbolRef(space)
 	ref := addDeserializedSymbol(space, name, &sym)
 	sr.storeAnnotations(ref, annotations)
+	sr.storeRecordFieldAnnotations(ref, fieldAnnotations)
 	if sigHandle >= 0 {
 		sr.env.AssociateFunctionSignature(ref, sr.sigHandles[sigHandle])
 	}
@@ -444,6 +447,7 @@ func (sr *symbolReader) readInclusionMembers(space *model.SymbolSpace) []model.I
 			fd := model.NewFieldDescriptor(name, fdFlags, isPublic)
 			fd.SetMemberType(ty)
 			fd.DefaultFnRef = sr.readSymbolRef(space)
+			fd.TypeRef = sr.readSymbolRef(space)
 			members = append(members, &fd)
 		case inclusionMemberTagMethod:
 			name := sr.readStringCP()

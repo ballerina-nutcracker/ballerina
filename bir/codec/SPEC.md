@@ -10,6 +10,8 @@ The BIR binary file has the following structure:
 +------------------+
 | Constant Pool    | See Constant Pool Format
 +------------------+
+| Type Descriptors | See Type Descriptors
++------------------+
 | Package Data     | See Package Structure
 +------------------+
 ```
@@ -70,9 +72,33 @@ Each entry starts with a 1-byte tag:
 
 Not yet implemented.
 
+## Type Descriptors
+
+Every typedesc constant of the package, written once and referred to by index. An entry's field
+types refer to other entries by index, so a typedesc shared by several types, or a recursive type,
+is written only once. An index may refer to a later entry.
+
+```
++------------------+
+| Count            | int64 (number of typedescs)
++------------------+
+| For each typedesc:
+|   Type           | type pool index (the described type)
+|   Annotations    | annotation values of the type
+|   Field Count    | int64 (fields with annotations)
+|   For each field:|
+|     Name CP      | int32
+|     Annotations  | annotation values of the field
+|   Type Count     | int64 (fields with a named field type)
+|   For each field:|
+|     Name CP      | int32
+|     Typedesc     | int64 (index of the field type's typedesc)
++------------------+
+```
+
 ## Package Structure
 
-After the constant pool, the package data follows:
+After the constant pool and the Type Descriptors section, the package data follows:
 
 ```
 +------------------+
@@ -212,6 +238,7 @@ The value encoding depends on the type tag:
 
 - **STRING**, **CHAR_STRING**, **DECIMAL**: `int32` (CP index to string entry)
 - **NIL**: `int32` (always -1)
+- **TYPEDESC**: `int64` (index in Type Descriptors)
 
 ## Instructions
 

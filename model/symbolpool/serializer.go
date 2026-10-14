@@ -393,7 +393,7 @@ func (sw *symbolWriter) writeSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym 
 	case *model.ErrorTypeSymbol:
 		return sw.writeErrorTypeSymbol(buf, s, sw.symbolAnnotations(ref))
 	case *model.TypeSymbol:
-		return sw.writeTypeSymbol(buf, ref, s, sw.symbolAnnotations(ref))
+		return sw.writeTypeSymbol(buf, ref, s, sw.symbolAnnotations(ref), sw.recordFieldAnnotations(ref))
 	case *model.ConstantValueSymbol:
 		return sw.writeConstantValueSymbol(buf, ref, s)
 	case *model.VariableSymbol:
@@ -435,7 +435,13 @@ func (sw *symbolWriter) writeSymbolBaseWithType(buf *bytes.Buffer, sym model.Sym
 	return writeType(buf, ty)
 }
 
-func (sw *symbolWriter) writeTypeSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym *model.TypeSymbol, annotations values.AnnotationValues) error {
+func (sw *symbolWriter) writeTypeSymbol(
+	buf *bytes.Buffer,
+	ref model.SymbolRef,
+	sym *model.TypeSymbol,
+	annotations values.AnnotationValues,
+	fieldAnnotations values.FieldAnnotationValues,
+) error {
 	if err := write(buf, symTagType); err != nil {
 		return err
 	}
@@ -445,10 +451,16 @@ func (sw *symbolWriter) writeTypeSymbol(buf *bytes.Buffer, ref model.SymbolRef, 
 	if err := sw.writeAnnotationValues(buf, annotations); err != nil {
 		return err
 	}
+	if err := sw.writeFieldAnnotationValues(buf, fieldAnnotations); err != nil {
+		return err
+	}
 	if err := sw.writeInclusionMembers(buf, nil); err != nil {
 		return err
 	}
-	return sw.writeFunctionSignatureIndex(buf, ref)
+	if err := sw.writeFunctionSignatureIndex(buf, ref); err != nil {
+		return err
+	}
+	return sw.writeSymbolRef(buf, sym.TypeRef)
 }
 
 func (sw *symbolWriter) writeRecordSymbol(
@@ -553,6 +565,9 @@ func (sw *symbolWriter) writeInclusionMembers(buf *bytes.Buffer, members []model
 				return err
 			}
 			if err := sw.writeSymbolRef(buf, member.DefaultFnRef); err != nil {
+				return err
+			}
+			if err := sw.writeSymbolRef(buf, member.TypeRef); err != nil {
 				return err
 			}
 		case *model.MethodDescriptor:
