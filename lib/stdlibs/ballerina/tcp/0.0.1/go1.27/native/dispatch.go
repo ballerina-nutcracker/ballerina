@@ -251,7 +251,7 @@ func handleConnection(rt *runtime.Runtime, types tcpTypes, svcObj *values.Object
 	for {
 		n, readErr := conn.Read(buf)
 		if readErr != nil {
-			if !errors.Is(readErr, io.EOF) {
+			if !errors.Is(readErr, io.EOF) && !errors.Is(readErr, net.ErrClosed) && !cs.isClosed() {
 				dispatchOnError(ctx, connSvcObj, tcpError(readErr.Error()))
 			}
 			cs.closeOnce(ctx)

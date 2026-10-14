@@ -72,12 +72,8 @@ public isolated class Listener {
     # ```
     #
     # + localPort - The port number to listen on
-    # + config - Configurations related to the `tcp:Listener`. Note: unlike jBallerina's
-    #            `*ListenerConfiguration` (an included-record parameter, allowing named-arg-style
-    #            `localHost = "x"` at the call site), this is a plain default-valued record
-    #            parameter — pass a record literal (`{localHost: "x"}`) instead. See the
-    #            README's Notable Behavioural Changes for why.
-    public isolated function init(int localPort, ListenerConfiguration config = {}) returns Error? {
+    # + config - Configurations related to the `tcp:Listener`
+    public isolated function init(int localPort, *ListenerConfiguration config) returns Error? {
         return self.initListener(localPort, config);
     }
 
@@ -210,17 +206,13 @@ public isolated client class Client {
 
     # Initializes the TCP client based on the provided configurations.
     # ```ballerina
-    # tcp:Client socketClient = check new ("www.remote.com", 80, {localHost: "localHost"});
+    # tcp:Client socketClient = check new ("www.remote.com", 80, localHost = "localHost");
     # ```
     #
     # + remoteHost - The hostname or the IP address of the remote host
     # + remotePort - The port number of the remote host
-    # + config - Connection-oriented client-related configurations. Note: unlike jBallerina's
-    #            `*ClientConfiguration` (an included-record parameter, allowing named-arg-style
-    #            `localHost = "x"` at the call site), this is a plain default-valued record
-    #            parameter — pass a record literal (`{localHost: "x"}`) instead. See the
-    #            README's Notable Behavioural Changes for why.
-    public isolated function init(string remoteHost, int remotePort, ClientConfiguration config = {}) returns Error? {
+    # + config - Connection-oriented client-related configurations
+    public isolated function init(string remoteHost, int remotePort, *ClientConfiguration config) returns Error? {
         return self.initTcpConnection(remoteHost, remotePort, config);
     }
 

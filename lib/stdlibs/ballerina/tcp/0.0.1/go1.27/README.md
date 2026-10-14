@@ -39,7 +39,7 @@ public function main() returns error? {
     check echoListener.attach(new EchoServer());
     check echoListener.'start();
 
-    tcp:Client socketClient = check new ("localhost", 9000, {});
+    tcp:Client socketClient = check new ("localhost", 9000);
     check socketClient->writeBytes("hello".toBytes());
     readonly & byte[] response = check socketClient->readBytes();
     io:println('string:fromBytes(response));
@@ -85,9 +85,10 @@ Support Levels:
 
 ### Notable Behavioural Changes
 
-- **`Client.init`/`Listener.init` take a plain default-valued configuration record.** jBallerina declares these as `*ClientConfiguration`/`*ListenerConfiguration` included-record parameters, which allow named-argument-style construction at the call site (e.g. `check new("host", 80, localHost = "x")`). This interpreter cannot currently resolve an included-record parameter that follows other positional parameters when the calling module also imports a second package, so this port uses a plain default-valued parameter instead (`ClientConfiguration config = {}` / `ListenerConfiguration config = {}`); call sites pass a record literal instead (`check new("host", 80, {localHost: "x"})`).
 - **A connection is closed if `onConnect` returns an error.** jBallerina leaves the connection open with reads permanently paused in this case — a bug in the reference implementation. This port closes the connection instead.
 - **`onClose` is invoked exactly once.** jBallerina can invoke `onClose` twice for a locally-initiated `Caller.close()` (once synchronously from `close()`, once again from the resulting disconnect event) — a bug in the reference implementation. This port guards with per-connection state so `onClose` fires exactly once regardless of who triggers the close.
 - **`Caller`'s fields are computed once, at accept time.** jBallerina constructs a fresh `Caller` object (recomputing `remoteHost`/`remotePort`/`localHost`/`localPort`/`id`, including a potential reverse-DNS lookup) on every single `onConnect`/`onBytes` dispatch. This port computes these fields once when the connection is accepted and reuses them for its lifetime.
 - **`Listener.immediateStop()` actually stops the listener.** jBallerina's `immediateStop()` is an unimplemented no-op stub (per its own documentation). This port force-closes the listener and every active connection immediately.
 - **`Listener.detach()` validates the given service.** jBallerina's `detach()` clears whatever service is currently attached regardless of the argument passed to it. This port returns an `Error` unless the given service is the one currently attached.
+- **A second `Listener.attach()` returns an `Error`.** jBallerina returns `()` when a service is attached to a listener that already has one. This port returns an `Error` instead, since a `tcp:Listener` dispatches to a single service.
+- **`Caller.remoteHost` is the peer's IP address.** jBallerina performs a reverse-DNS lookup, so a client connecting from `127.0.0.1` is reported as `localhost`. This port reports the address as seen on the socket (e.g. `127.0.0.1`) without resolving a host name.

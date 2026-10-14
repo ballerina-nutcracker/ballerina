@@ -1,0 +1,3 @@
+-- stdout --
+File does not contain valid certificates: /nonexistent/ca.pem
+-- stderr --

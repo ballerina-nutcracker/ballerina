@@ -53,7 +53,7 @@ function init() returns error? {
 // testMain is invoked by the harness while the runtime is parked in the
 // listening state. It drives the live service over a real tcp:Client.
 public function testMain() returns error? {
-    tcp:Client c = check new ("localhost", 19390, {});
+    tcp:Client c = check new ("localhost", 19390);
     check c->writeBytes("hello".toBytes());
     readonly & byte[] echoed = check c->readBytes();
     io:println('string:fromBytes(echoed)); // @output hello

@@ -36,7 +36,7 @@ service on new tcp:Listener(19394) {
 }
 
 public function testMain() returns error? {
-    tcp:Client c = check new ("127.0.0.1", 19394, {});
+    tcp:Client c = check new ("127.0.0.1", 19394);
     check c->writeBytes("hello".toBytes());
     readonly & byte[] echoed = check c->readBytes();
     io:println('string:fromBytes(echoed)); // @output hello

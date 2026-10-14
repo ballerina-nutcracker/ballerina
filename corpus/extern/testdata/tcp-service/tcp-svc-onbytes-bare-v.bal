@@ -47,7 +47,7 @@ function init() returns error? {
 }
 
 public function testMain() returns error? {
-    tcp:Client c = check new ("localhost", 19399, {});
+    tcp:Client c = check new ("localhost", 19399);
     check c->writeBytes("hello".toBytes());
     readonly & byte[] echoed = check c->readBytes();
     io:println('string:fromBytes(echoed)); // @output hello

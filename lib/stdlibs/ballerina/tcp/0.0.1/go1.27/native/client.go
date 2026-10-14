@@ -20,9 +20,9 @@ package native
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -136,7 +136,7 @@ func registerClientFunctions(rt *runtime.Runtime, types tcpTypes) {
 			if localHost != "" {
 				localAddr = net.JoinHostPort(localHost, "0")
 			}
-			address := fmt.Sprintf("%s:%d", remoteHost, remotePort)
+			address := net.JoinHostPort(remoteHost, strconv.FormatInt(remotePort, 10))
 			dialCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			conn, err := rt.Platform().Net.Dial(dialCtx, "tcp", address, localAddr, tlsCfg)
@@ -158,7 +158,7 @@ func registerClientFunctions(rt *runtime.Runtime, types tcpTypes) {
 				return tcpError("Socket connection already closed."), nil
 			}
 			writeTimeout, _ := self.Get("$writeTimeout")
-			_ = conn.SetWriteDeadline(time.Now().Add(writeTimeout.(time.Duration)))
+			_ = conn.SetWriteDeadline(rt.Platform().Time.Now().Add(writeTimeout.(time.Duration)))
 			if _, err := conn.Write(data); err != nil {
 				return classifyWriteErr(err), nil
 			}
@@ -173,7 +173,7 @@ func registerClientFunctions(rt *runtime.Runtime, types tcpTypes) {
 				return tcpError("Socket connection already closed."), nil
 			}
 			timeout, _ := self.Get("$timeout")
-			_ = conn.SetReadDeadline(time.Now().Add(timeout.(time.Duration)))
+			_ = conn.SetReadDeadline(rt.Platform().Time.Now().Add(timeout.(time.Duration)))
 			buf := make([]byte, readBufferSize)
 			n, err := conn.Read(buf)
 			if err != nil {
@@ -189,7 +189,7 @@ func registerClientFunctions(rt *runtime.Runtime, types tcpTypes) {
 			if conn == nil {
 				return nil, nil
 			}
-			if err := conn.Close(); err != nil {
+			if err := conn.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
 				return tcpError("Unable to close the TCP client: " + err.Error()), nil
 			}
 			return nil, nil

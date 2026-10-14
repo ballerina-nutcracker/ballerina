@@ -18,8 +18,9 @@
 package native
 
 import (
-	"fmt"
+	"context"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 
@@ -46,6 +47,7 @@ type listenerState struct {
 	svcObj  *values.Object
 	ln      net.Listener
 	conns   map[net.Conn]struct{}
+	active  sync.WaitGroup
 	stopped bool // set by gracefulStop/immediateStop; makes both idempotent
 }
 
@@ -143,7 +145,7 @@ func registerListenerFunctions(rt *runtime.Runtime, types tcpTypes) {
 				return tcpError("Error initializing the server: no service attached"), nil
 			}
 			svcObj := state.svcObj
-			address := fmt.Sprintf("%s:%d", state.host, state.port)
+			address := net.JoinHostPort(state.host, strconv.Itoa(state.port))
 			tlsCfg := state.tlsCfg
 			state.mu.Unlock()
 
@@ -175,16 +177,7 @@ func registerListenerFunctions(rt *runtime.Runtime, types tcpTypes) {
 			if err := ln.Close(); err != nil {
 				return tcpError("Failed to gracefully shutdown the Listener."), nil
 			}
-			deadline := time.Now().Add(gracefulStopDrainTimeout)
-			for time.Now().Before(deadline) {
-				state.mu.RLock()
-				remaining := len(state.conns)
-				state.mu.RUnlock()
-				if remaining == 0 {
-					break
-				}
-				time.Sleep(50 * time.Millisecond)
-			}
+			waitForDrain(state)
 			return nil, nil
 		})
 
@@ -220,15 +213,38 @@ func acceptLoop(rt *runtime.Runtime, types tcpTypes, state *listenerState, svcOb
 			return
 		}
 		state.mu.Lock()
+		if state.stopped {
+			state.mu.Unlock()
+			_ = conn.Close()
+			return
+		}
 		state.conns[conn] = struct{}{}
+		state.active.Add(1)
 		state.mu.Unlock()
 		go func() {
 			defer func() {
 				state.mu.Lock()
 				delete(state.conns, conn)
 				state.mu.Unlock()
+				state.active.Done()
 			}()
 			handleConnection(rt, types, svcObj, conn)
 		}()
+	}
+}
+
+// waitForDrain must run after state.stopped is set so acceptLoop no longer
+// registers connections concurrently with the Wait.
+func waitForDrain(state *listenerState) {
+	drained := make(chan struct{})
+	go func() {
+		state.active.Wait()
+		close(drained)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), gracefulStopDrainTimeout)
+	defer cancel()
+	select {
+	case <-drained:
+	case <-ctx.Done():
 	}
 }

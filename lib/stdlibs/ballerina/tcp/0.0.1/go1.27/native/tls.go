@@ -110,7 +110,7 @@ func buildClientTLSConfig(rt *runtime.Runtime, secureSocket *values.Map) (*pal.T
 			if cert != "" {
 				data, err := rt.Platform().FS.ReadFile(cert)
 				if err != nil {
-					return nil, tcpError("secureSocket.cert: " + err.Error())
+					return nil, tcpError("File does not contain valid certificates: " + cert)
 				}
 				tlsCfg.CACertPEM = data
 			}

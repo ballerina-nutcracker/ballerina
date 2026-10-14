@@ -44,10 +44,10 @@ function init() returns error? {
 }
 
 public function testMain() returns error? {
-    tcp:Client c = check new ("localhost", 19392, {});
+    tcp:Client c = check new ("localhost", 19392);
     check c->close();
 
     check lifecycleListener.immediateStop();
-    tcp:Client|tcp:Error c2 = new ("localhost", 19392, {});
+    tcp:Client|tcp:Error c2 = new ("localhost", 19392);
     io:println(c2 is tcp:Error); // @output true
 }

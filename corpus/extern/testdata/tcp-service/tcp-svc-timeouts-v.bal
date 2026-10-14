@@ -39,7 +39,7 @@ function init() returns error? {
 }
 
 public function testMain() returns error? {
-    tcp:Client c = check new ("127.0.0.1", 19397, {timeout: 0.05});
+    tcp:Client c = check new ("127.0.0.1", 19397, timeout = 0.05);
     (readonly & byte[])|tcp:Error readResult = c->readBytes();
     io:println(readResult is tcp:Error); // @output true
     check c->close();

@@ -84,7 +84,7 @@ import ballerina/io;
 import ballerina/tcp;
 
 public function main() returns error? {
-    tcp:Client c = check new (%q, %s, {});
+    tcp:Client c = check new (%q, %s);
     check c->writeBytes("hello".toBytes());
     readonly & byte[] echoed = check c->readBytes();
     io:println('string:fromBytes(echoed)); // @output hello
@@ -96,6 +96,8 @@ public function main() returns error? {
     check c->close();
     tcp:Error? afterClose = c->writeBytes("x".toBytes());
     io:println(afterClose is tcp:Error); // @output true
+    tcp:Error? secondClose = c->close();
+    io:println(secondClose is ()); // @output true
     return;
 }
 `, host, port)
@@ -112,6 +114,24 @@ public function main() returns error? {
 		ExpectedPath: filepath.Join(expectedDir, "tcp-client-echo-v.txtar"),
 	}
 	runExtern(t, tc, newTcpPal(), nil)
+}
+
+// TestTcpClientIPv6 exercises a tcp:Listener and tcp:Client bound to the
+// IPv6 loopback address, which must be bracketed when joined with a port.
+func TestTcpClientIPv6(t *testing.T) {
+	skipIfNoLoopback(t)
+	ln, err := net.Listen("tcp", "[::1]:0")
+	if err != nil {
+		t.Skipf("IPv6 loopback unavailable: %v", err)
+	}
+	_ = ln.Close()
+	runExtern(t, fileCase("tcp-service/tcp-svc-ipv6-v"), newTcpPal(), nil)
+}
+
+// TestTcpClientMissingCACert verifies that an unreadable secureSocket.cert
+// file reports jBallerina's error message.
+func TestTcpClientMissingCACert(t *testing.T) {
+	runExtern(t, fileCase("tcp-client-missing-ca-v"), newTcpPal(), nil)
 }
 
 // TestTcpClientTLS exercises the TLS path on both tcp:Listener (CertKey)
@@ -158,26 +178,26 @@ service class EchoServer {
     }
 }
 
-listener tcp:Listener tlsListener = new (19393, {
-    secureSocket: {
+listener tcp:Listener tlsListener = new (19393,
+    secureSocket = {
         key: {certFile: %q, keyFile: %q},
         protocol: {name: tcp:TLS, versions: ["TLSv1.2", "bogus", "TLSv1.3"]},
         ciphers: ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
     }
-});
+);
 
 function init() returns error? {
     check tlsListener.attach(new EchoServer());
 }
 
 public function testMain() returns error? {
-    tcp:Client c = check new ("127.0.0.1", 19393, {
-        secureSocket: {
+    tcp:Client c = check new ("127.0.0.1", 19393,
+        secureSocket = {
             cert: %q,
             protocol: {name: tcp:TLS, versions: ["TLSv1.2", "bogus", "TLSv1.3"]},
             ciphers: ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
         }
-    });
+    );
     check c->writeBytes("hello".toBytes());
     readonly & byte[] echoed = check c->readBytes();
     io:println('string:fromBytes(echoed)); // @output hello

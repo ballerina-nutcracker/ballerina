@@ -2,4 +2,5 @@
 hello
 world
 true
+true
 -- stderr --

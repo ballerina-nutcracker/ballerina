@@ -36,7 +36,7 @@ function init() returns error? {
 }
 
 public function testMain() returns error? {
-    tcp:Client c = check new ("localhost", 19391, {});
+    tcp:Client c = check new ("localhost", 19391);
     // The write's outcome is timing-dependent (the server may already have
     // closed by the time it arrives), so it is deliberately not asserted on.
     tcp:Error? writeResult = c->writeBytes("x".toBytes());
