@@ -103,6 +103,23 @@ func TestTypeDefinitionCompletionConfigs(t *testing.T) {
 	runCompletionConfigs(t, platform, env, configs)
 }
 
+func TestModuleVarContextCompletionConfigs(t *testing.T) {
+	platform, cleanup := palnative.NewPlatform()
+	defer cleanup()
+	env := completionConfigEnv{
+		ConfigDir:   "completion/testdata/module_var_context/config",
+		PackageOrg:  "completion",
+		PackageName: "module_var_context",
+		Repository:  "repository",
+		Packages:    typeDefinitionAvailablePackages,
+	}
+	configs := discoverCompletionConfigs(t, platform, env.ConfigDir)
+	if len(configs) != 1 {
+		t.Fatalf("completion config count = %d, want 1", len(configs))
+	}
+	runCompletionConfigs(t, platform, env, configs)
+}
+
 // discoverCompletionConfigs lists configDir's config JSON files in a
 // deterministic order. Any expected count is the caller's concern, not
 // this generic directory scan's.

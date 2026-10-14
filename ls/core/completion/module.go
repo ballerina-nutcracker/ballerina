@@ -20,7 +20,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
-// moduleHandler offers module-level keywords plus lexically-visible module
+// moduleHandler offers module-level keywords and snippets plus lexically-visible module
 // symbols when the cursor sits directly among a module's top-level nodes
 // (not inside any narrower construct) -- migrated from classify()'s
 // kindModule case verbatim.
@@ -40,5 +40,9 @@ func matchModule(c *cursor) (any, bool) {
 }
 
 func buildModule(c *cursor, _ any) []protocol.CompletionItem {
-	return lexicalItems(c, moduleKeywords)
+	items := make([]protocol.CompletionItem, 0, len(moduleSnippets))
+	for _, id := range moduleSnippets {
+		items = append(items, snippetItem(id, ""))
+	}
+	return lexicalItems(c, items)
 }

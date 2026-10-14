@@ -33,12 +33,12 @@ func expectedTypeCompatible(c *cursor, ty, expected semtypes.SemType) bool {
 	return semtypes.IsSubtype(semtypes.ContextFrom(c.sm.Context().GetTypeEnv()), ty, expected)
 }
 
-func lexicalItems(c *cursor, keywords []string) []protocol.CompletionItem {
+func lexicalItems(c *cursor, extras []protocol.CompletionItem) []protocol.CompletionItem {
 	set := newItemSet()
 	expectedType, hasExpectedType := expectedTypeAt(c)
 	compatible := make(map[string]bool)
-	for _, keyword := range keywords {
-		set.add(keywordItem(keyword))
+	for _, item := range extras {
+		set.add(item)
 	}
 	walkScope(c, func(ref model.SymbolRef) {
 		kind := c.sm.Context().SymbolKind(ref)

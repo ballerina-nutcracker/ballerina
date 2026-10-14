@@ -41,6 +41,7 @@ var handlers = []handler{
 	fieldAccessHandler,
 	invocationHandler,
 	importHandler,
+	functionDefinitionHandler,
 	moduleHandler,
 	blockHandler,
 	lexicalHandler,

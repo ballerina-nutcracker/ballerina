@@ -44,5 +44,9 @@ func matchBlock(c *cursor) (any, bool) {
 }
 
 func buildBlock(c *cursor, _ any) []protocol.CompletionItem {
-	return lexicalItems(c, blockKeywords)
+	keywords := make([]protocol.CompletionItem, 0, len(blockKeywords))
+	for _, keyword := range blockKeywords {
+		keywords = append(keywords, keywordItem(keyword))
+	}
+	return lexicalItems(c, keywords)
 }

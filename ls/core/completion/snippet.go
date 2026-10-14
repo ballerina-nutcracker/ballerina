@@ -33,9 +33,11 @@ func snippetItem(id snippetID, sortText string) protocol.CompletionItem {
 		Label:      def.label,
 		Kind:       protocol.NewOptional(def.kind),
 		Detail:     protocol.NewOptional(def.detail),
-		SortText:   protocol.NewOptional(sortText),
 		FilterText: protocol.NewOptional(def.filter),
 		InsertText: protocol.NewOptional(def.insert),
+	}
+	if sortText != "" {
+		item.SortText = protocol.NewOptional(sortText)
 	}
 	if def.tabStop {
 		item.InsertTextFormat = protocol.NewOptional(protocol.InsertTextFormatSnippet)
