@@ -1437,7 +1437,8 @@ type recordFieldAnnotationSource struct {
 // inclusion boundary; we keep them, because a field pulled in by an inclusion is
 // the same field, and validation driven by field annotations would otherwise
 // silently skip every included field. Aliases (type Alias Base) carry them for
-// the same reason.
+// the same reason, as do types that look through to a record, such as
+// type Arr Base[] or type Frozen Base & readonly.
 //
 // A field the including record declares itself shadows the inherited one, even
 // when it carries no annotations of its own: it is a new declaration, and its
@@ -1472,6 +1473,10 @@ func propagateRecordFieldAnnotations(t typeResolver, pkg *ast.BLangPackage) {
 				continue
 			}
 			sources[defn.Symbol()] = recordFieldAnnotationSource{sources: []model.SymbolRef{typeDesc.Symbol()}}
+		default:
+			if target := lookedThroughType(t, defn.Symbol()); target != (model.SymbolRef{}) {
+				sources[defn.Symbol()] = recordFieldAnnotationSource{sources: []model.SymbolRef{target}}
+			}
 		}
 	}
 	for symbol := range sources {
@@ -1482,6 +1487,27 @@ func propagateRecordFieldAnnotations(t typeResolver, pkg *ast.BLangPackage) {
 			}
 		}
 	}
+}
+
+// lookedThroughType returns the named type that the type definition at symbol ends up referring to
+// through arrays, optional types and `readonly &`, as Inner for `type Arr Inner[]`. It returns the
+// zero symbol if there is none or if the chain is recursive, as in `type T T[]`, since such a type
+// has no record fields.
+func lookedThroughType(t typeResolver, symbol model.SymbolRef) model.SymbolRef {
+	seen := map[model.SymbolRef]bool{symbol: true}
+	target := t.compilerContext().SymbolTypeRef(symbol)
+	for target != (model.SymbolRef{}) {
+		if seen[target] {
+			return model.SymbolRef{}
+		}
+		seen[target] = true
+		next := t.compilerContext().SymbolTypeRef(target)
+		if next == (model.SymbolRef{}) {
+			return target
+		}
+		target = next
+	}
+	return model.SymbolRef{}
 }
 
 // propagatedRecordFieldAnnotations returns the field annotations visible on the
@@ -2827,6 +2853,7 @@ func appendDistinctErrorAtoms(t typeResolver, semType semtypes.SemType, typeDef 
 func addInclusionsToTypeSymbol(t *packageTypeResolver, defn *ast.BLangTypeDefinition) {
 	var members []model.InclusionMember
 	typeDesc := defn.GetTypeData().TypeDescriptor
+	t.compilerContext().SetSymbolTypeRef(defn.Symbol(), common.NamedTypeRef(typeDesc))
 	switch td := typeDesc.(type) {
 	case *ast.BLangRecordType:
 		members = recordTypeMembers(t, td)
@@ -3094,6 +3121,7 @@ func createFieldDescriptor(name string, field ast.BField) model.FieldDescriptor 
 	if field.Default != nil {
 		fd.DefaultFnRef = field.Default.FnRef
 	}
+	fd.TypeRef = common.NamedTypeRef(field.Type)
 	return fd
 }
 

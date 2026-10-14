@@ -357,6 +357,9 @@ type (
 
 	TypeSymbol struct {
 		symbolBase
+		// TypeRef is the named type the definition refers to, looking through arrays, optional
+		// types and `readonly &`, as in `type Arr Inner[]`; the zero symbol if there is none.
+		TypeRef SymbolRef
 	}
 
 	// workerSymbol is the symbol of a named worker declaration. Its resolved
@@ -691,6 +694,7 @@ type FieldDescriptor struct {
 	ty           semtypes.SemType
 	flags        FieldDescriptorFlag
 	DefaultFnRef SymbolRef
+	TypeRef      SymbolRef // named type of the field, looking through arrays, optional types and `readonly &`
 	isPublic     bool
 }
 

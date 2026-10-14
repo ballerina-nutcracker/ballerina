@@ -34,3 +34,37 @@ public type Audited record {|
 // An alias of a record is a plain type symbol, not a record symbol, so its
 // field annotations travel through the symbol pool on a different path.
 public type PersonAlias Person;
+
+public annotation Meta typeMeta on type;
+
+@typeMeta {name: "imported-age"}
+public type Age int;
+
+public type Inner record {|
+    @fieldMeta {name: "imported-x"}
+    int x;
+|};
+
+public type Node record {|
+    @fieldMeta {name: "imported-value"}
+    int value;
+    Node? next;
+|};
+
+public type Outer record {|
+    Age age;
+    Inner[] list;
+    Node node;
+|};
+
+// Named types that look through to a record reach its fields through the symbol pool.
+@typeMeta {name: "imported-list"}
+public type InnerList Inner[];
+
+public type FrozenNode Node & readonly;
+
+// Returns Outer's typedesc from this module, so the typedesc and its nested field types are
+// written into this module's BIR.
+public function outerType() returns typedesc<anydata> {
+    return Outer;
+}
