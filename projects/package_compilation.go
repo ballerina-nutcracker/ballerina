@@ -18,6 +18,7 @@ package projects
 
 import (
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -311,10 +312,12 @@ func (c *PackageCompilation) collectModuleDiagnostics(dst *[]diagnostics.Diagnos
 	isBala := c.getPackageContext().getProject().Kind() == ProjectKindBala
 	for _, moduleCtx := range c.packageResolution.topologicallySortedModuleList {
 		diags := moduleCtx.getDiagnostics()
+		warnings := moduleCtx.getWarnings()
 		if dropBIRDiags && moduleCtx.birGenAttempted {
 			diags = diags[:moduleCtx.birGenDiagStart]
+			warnings = warnings[:moduleCtx.birGenWarnStart]
 		}
-		for _, diag := range diags {
+		for _, diag := range slices.Concat(diags, warnings) {
 			severity := diag.DiagnosticInfo().Severity()
 			if isBala && severity != diagnostics.Error && severity != diagnostics.Fatal {
 				continue
