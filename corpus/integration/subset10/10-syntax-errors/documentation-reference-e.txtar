@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: warning invalid ballerina name reference
+  --> documentation-reference-e.bal:17:19
+   |
+17 | # Calls function `a b c` // @error
+   |                   ^^^^^

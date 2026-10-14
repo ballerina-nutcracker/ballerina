@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> junk-at-eof-e.bal:19:88
+   |
+19 | $ // @error junk is reported at the EOF token, so this file must not end with a newline
+   |

@@ -9,7 +9,8 @@
       (variable td (type
         (constrained-type
           (value-type typedesc)
-          (value-type anydata))) (expr <>))) (
+          (value-type anydata))) (expr
+        (inferred-typedesc-default)))) (
       (union-type
         (user-defined-type td)
         (error-type)))
@@ -21,7 +22,8 @@
       (variable targetType (type
         (constrained-type
           (value-type typedesc)
-          (value-type anydata))) (expr <>))) (
+          (value-type anydata))) (expr
+        (inferred-typedesc-default)))) (
       (union-type
         (user-defined-type targetType)
         (error-type)))
@@ -32,7 +34,8 @@
       (variable targetType (type
         (constrained-type
           (value-type typedesc)
-          (value-type anydata))) (expr <>))
+          (value-type anydata))) (expr
+        (inferred-typedesc-default)))
       (union-type
         (user-defined-type targetType)
         (error-type))

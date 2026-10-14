@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid expression statement
+  --> invalid-expression-statement-e.bal:18:5
+   |
+18 |     1 + 2; // @error
+   |     ^^^^^^

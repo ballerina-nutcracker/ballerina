@@ -10,20 +10,23 @@
     (variable T (type
       (constrained-type
         (value-type typedesc)
-        (value-type anydata))) (expr <>))) (
+        (value-type anydata))) (expr
+      (inferred-typedesc-default)))) (
     (union-type
       (user-defined-type T)
       (error-type)))
     (extern-function-body))
   (function arrayRet (
     (variable T (type
-      (value-type typedesc)) (expr <>))) (
+      (value-type typedesc)) (expr
+      (inferred-typedesc-default)))) (
     (array-type
       (user-defined-type T) dimensions: 1 ([])))
     (extern-function-body))
   (function fixedArrayRet (
     (variable T (type
-      (value-type typedesc)) (expr <>))) (
+      (value-type typedesc)) (expr
+      (inferred-typedesc-default)))) (
     (array-type
       (user-defined-type T) dimensions: 1 ([
       (literal 2)])))
@@ -32,7 +35,8 @@
     (variable T (type
       (constrained-type
         (value-type typedesc)
-        (value-type anydata))) (expr <>))) (
+        (value-type anydata))) (expr
+      (inferred-typedesc-default)))) (
     (array-type
       (union-type
         (user-defined-type T)
@@ -44,7 +48,8 @@
         (value-type typedesc)
         (union-type
           (value-type int)
-          (value-type string)))) (expr <>))) (
+          (value-type string)))) (expr
+      (inferred-typedesc-default)))) (
     (union-type
       (user-defined-type T)
       (value-type null)))
@@ -53,7 +58,8 @@
     (variable T (type
       (constrained-type
         (value-type typedesc)
-        (value-type anydata))) (expr <>))) (
+        (value-type anydata))) (expr
+      (inferred-typedesc-default)))) (
     (union-type
       (intersection-type
         (user-defined-type T)
@@ -66,7 +72,8 @@
     (variable T (type
       (constrained-type
         (value-type typedesc)
-        (value-type anydata))) (expr <>))) (
+        (value-type anydata))) (expr
+      (inferred-typedesc-default)))) (
     (annotation-attachment ReturnMarker
       (literal true))
     (union-type

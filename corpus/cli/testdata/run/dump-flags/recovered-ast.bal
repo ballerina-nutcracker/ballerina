@@ -16,6 +16,16 @@
 
 foo;
 
+# Adds two numbers.
+@display {label: "add"}
+function add(int a, int b) returns int {
+    if a > b {
+        return a;
+    }
+    return a + b;
+}
+
 function main() {
     int x = ;
 }
+$ // junk is reported at the EOF token, so this file must not end with a newline

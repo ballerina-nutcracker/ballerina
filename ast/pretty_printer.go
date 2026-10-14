@@ -81,9 +81,7 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	case *BLangExprFunctionBody:
 		p.printExprFunctionBody(t)
 	case *BLangExternFunctionBody:
-		p.StartNode()
-		p.PrintString("extern-function-body")
-		p.EndNode()
+		p.printLeafNode("extern-function-body")
 	case *BLangVariable:
 		if t.IsConstant() {
 			p.printConstant(t)
@@ -129,7 +127,7 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	case *BLangDefaultArg:
 		p.PrintString("<default>")
 	case *BLangInferredTypedescDefault:
-		p.PrintString("<>")
+		p.printLeafNode("inferred-typedesc-default")
 	case *BLangValueType:
 		p.printValueType(t)
 	case *BLangBuiltInRefTypeNode:
@@ -309,15 +307,15 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	case *BLangXMLNS:
 		p.printXMLNS(t)
 	case *BLangBadTopLevelNode:
-		p.printBadNode("bad-top-level")
+		p.printLeafNode("bad-top-level")
 	case *BLangBadStmt:
-		p.printBadNode("bad-stmt")
+		p.printLeafNode("bad-stmt")
 	case *BLangBadExprOrAction:
-		p.printBadNode("bad-expr-or-action")
+		p.printLeafNode("bad-expr-or-action")
 	case *BLangBadTypeNode:
-		p.printBadNode("bad-type")
+		p.printLeafNode("bad-type")
 	case *BLangBadIdentifier:
-		p.printBadNode("bad-identifier")
+		p.printLeafNode("bad-identifier")
 	default:
 		if p.Fallback != nil {
 			p.Fallback(p, node)
@@ -328,7 +326,7 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	}
 }
 
-func (p *PrettyPrinter) printBadNode(kind string) {
+func (p *PrettyPrinter) printLeafNode(kind string) {
 	p.StartNode()
 	p.PrintString(kind)
 	p.EndNode()
@@ -2478,7 +2476,7 @@ func (p *PrettyPrinter) printFunctionTypeParam(node *BLangFunctionTypeParam) {
 	p.StartNode()
 	p.PrintString("function-type-param")
 	if node.Name != nil {
-		p.PrintInner(node.Name)
+		p.PrintString(printableIdentifierValue(node.Name))
 	}
 	if node.TypeDesc != nil {
 		p.PrintInner(node.TypeDesc.(BLangNode))

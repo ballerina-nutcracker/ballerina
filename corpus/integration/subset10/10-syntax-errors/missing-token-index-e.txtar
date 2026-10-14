@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: expected 'IDENTIFIER_TOKEN'
+  --> missing-token-index-e.bal:19:15
+   |
+19 |     int x = a[]; // @error
+   |
+
+error[SYNTAX_ERROR]: missing key expr in member access expr
+  --> missing-token-index-e.bal:19:15
+   |
+19 |     int x = a[]; // @error
+   |               ^

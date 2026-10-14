@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: missing close paren token
+  --> type-recovery2-e.bal:17:17
+   |
+17 | function f((int a, // @error
+   |
+
+error[SYNTAX_ERROR]: missing close paren token
+  --> type-recovery2-e.bal:18:17
+   |
+18 |         (string b) returns int { // @error
+   |
