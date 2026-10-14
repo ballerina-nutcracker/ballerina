@@ -46,9 +46,7 @@ type packageContext struct {
 	// PR-TODO: extract them to memoized types struc
 	stringMapTy      semtypes.SemType // Memoized map<string> type
 	serviceClassKeys map[*ast.BLangService]string
-	// closureKeys holds the lookup keys of the generated functions that capture
-	// variables of an enclosing function.
-	closureKeys map[string]struct{}
+	closureKeys      map[string]struct{}
 }
 
 func (c *packageContext) typeContext() semtypes.Context {
@@ -459,10 +457,8 @@ func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *bir.BIRPac
 	return birPkg
 }
 
-// collectRecordDefaults returns the field defaults of every record type the package can refer
-// to: those of all loaded modules, and the function-local ones of pkg, which only its record
-// type nodes carry. A default that captures a local variable is left out, since the runtime has
-// no enclosing frame to evaluate it in.
+// collectRecordDefaults returns the field defaults of all loaded modules and of pkg's local record
+// types, leaving out closures, which the runtime has no enclosing frame to evaluate in.
 func collectRecordDefaults(ctx *packageContext, pkg *ast.BLangPackage) map[*semtypes.MappingAtomicType][]bir.MappingConstructorDefaultEntry {
 	collector := &recordDefaultsCollector{
 		ctx:      ctx,

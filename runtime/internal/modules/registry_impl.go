@@ -17,8 +17,6 @@
 package modules
 
 import (
-	"sync"
-
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -45,12 +43,7 @@ type Registry struct {
 	nativeFunctions     map[string]*ExternFunction
 	runtimeBuiltins     map[string]extern.NativeFunc
 	modules             map[string]*BIRModule
-	// recordDefaults maps a record type's mapping atom to the lookup keys of its
-	// field default functions, by field name. It is guarded by recordDefaultsMu
-	// because a module's init can start strands that construct records while a
-	// later module is still being registered.
-	recordDefaults   map[*semtypes.MappingAtomicType]map[string]string
-	recordDefaultsMu sync.RWMutex
+	recordDefaults      map[*semtypes.MappingAtomicType]map[string]string
 }
 
 func NewRegistry(builtins map[string]extern.NativeFunc) *Registry {
@@ -122,6 +115,13 @@ func (r *Registry) RegisterModule(id *model.PackageID, m *BIRModule) *BIRModule 
 				}
 			}
 		}
+		for atom, fields := range m.Pkg.RecordDefaults {
+			keys := make(map[string]string, len(fields))
+			for _, field := range fields {
+				keys[field.FieldName] = field.FunctionLookupKey
+			}
+			r.recordDefaults[atom] = keys
+		}
 	}
 	if id != nil && !id.IsUnnamed() {
 		r.modules[moduleKey(id)] = m
@@ -129,25 +129,7 @@ func (r *Registry) RegisterModule(id *model.PackageID, m *BIRModule) *BIRModule 
 	return m
 }
 
-// RegisterRecordDefaults records the field defaults of the record types a
-// module refers to.
-func (r *Registry) RegisterRecordDefaults(recordDefaults map[*semtypes.MappingAtomicType][]bir.MappingConstructorDefaultEntry) {
-	r.recordDefaultsMu.Lock()
-	defer r.recordDefaultsMu.Unlock()
-	for atom, fields := range recordDefaults {
-		keys := make(map[string]string, len(fields))
-		for _, field := range fields {
-			keys[field.FieldName] = field.FunctionLookupKey
-		}
-		r.recordDefaults[atom] = keys
-	}
-}
-
-// RecordFieldDefault returns the lookup key of the default function of field in
-// the record type whose mapping atom is atom.
 func (r *Registry) RecordFieldDefault(atom *semtypes.MappingAtomicType, field string) (string, bool) {
-	r.recordDefaultsMu.RLock()
-	defer r.recordDefaultsMu.RUnlock()
 	key, ok := r.recordDefaults[atom][field]
 	return key, ok
 }

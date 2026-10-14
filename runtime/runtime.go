@@ -139,7 +139,6 @@ func (rt *Runtime) registry() *modules.Registry {
 func (rt *Runtime) Init(pkg bir.BIRPackage) error {
 	rt.transition(StateInitializing)
 	rt.registry().RegisterModule(pkg.PackageID, modules.NewBIRModule(semtypes.ContextFrom(rt.env.TypeEnv), &pkg, nil))
-	rt.registry().RegisterRecordDefaults(pkg.RecordDefaults)
 	if err := rt.recordLifecycleHooks(&pkg); err != nil {
 		return rt.abortInitialization(err)
 	}

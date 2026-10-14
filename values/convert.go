@@ -88,9 +88,8 @@ func convert(tc semtypes.Context, defaults *deferredDefaults, value BalValue, ta
 	return nil, conversionFailureFor(tc, value, target, children)
 }
 
-// preferCompleteMappings stably moves the mapping candidates source already has every required
-// field of ahead of those that need defaults, so a defaulted member wins only when nothing fits
-// source as it is.
+// preferCompleteMappings moves the mapping candidates source already fits ahead of those that need
+// defaults, keeping their order.
 func preferCompleteMappings(tc semtypes.Context, source *Map, candidates []semtypes.SemType) []semtypes.SemType {
 	complete := make([]semtypes.SemType, 0, len(candidates))
 	var incomplete []semtypes.SemType
@@ -230,9 +229,7 @@ func tryConvertMap(tc semtypes.Context, defaults *deferredDefaults, source *Map,
 	return result, nil
 }
 
-// deferredDefaults holds the defaults of the fields missing from the maps a conversion builds.
-// They are evaluated only once the whole conversion succeeds, so no default runs for a union
-// member that is rejected, at any depth.
+// deferredDefaults holds the missing-field defaults of a conversion until it succeeds.
 type deferredDefaults struct {
 	resolve FieldDefaultFunc
 	fills   []deferredFill

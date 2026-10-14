@@ -55,7 +55,6 @@ func LookupFunction(env *extern.Env, org, module, name string) (any, bool) {
 	return nil, false
 }
 
-// RecordFieldDefault implements extern.DispatchHandles.RecordFieldDefault.
 func RecordFieldDefault(ctx *extern.Context, atom *semtypes.MappingAtomicType, field string) (func() values.BalValue, bool) {
 	reg := ctx.Env.Registry.(*modules.Registry)
 	key, ok := reg.RecordFieldDefault(atom, field)
