@@ -146,6 +146,7 @@ type CompilationOptions struct {
 	optimizeDependencyCompilation optionalBool
 	traceRecovery                 optionalBool
 	stats                         optionalBool
+	generateCode                  optionalBool
 	cloud                         *string
 	dumpCFGFormat                 CFGFormat
 	lockingMode                   PackageLockingMode
@@ -292,6 +293,14 @@ func (c CompilationOptions) Stats() bool {
 	return c.stats.valueOr(false)
 }
 
+// GenerateCode returns whether BIR generation runs as part of Compilation, pipelined into
+// Phase 2 with no barrier. Defaults to true. Callers that only need diagnostics/symbols
+// per compile (e.g. a language server) can set this false; NewBallerinaBackend still
+// generates any missing BIR on demand afterward.
+func (c CompilationOptions) GenerateCode() bool {
+	return c.generateCode.valueOr(true)
+}
+
 // LockingMode returns the package locking mode.
 // Returns PackageLockingModeUnknown if not explicitly set.
 func (c CompilationOptions) LockingMode() PackageLockingMode {
@@ -333,6 +342,7 @@ func (c CompilationOptions) AcceptTheirs(theirs CompilationOptions) CompilationO
 		optimizeDependencyCompilation: acceptOptionalBool(c.optimizeDependencyCompilation, theirs.optimizeDependencyCompilation),
 		traceRecovery:                 acceptOptionalBool(c.traceRecovery, theirs.traceRecovery),
 		stats:                         acceptOptionalBool(c.stats, theirs.stats),
+		generateCode:                  acceptOptionalBool(c.generateCode, theirs.generateCode),
 	}
 
 	// Cloud (*string)
@@ -528,6 +538,13 @@ func (b *CompilationOptionsBuilder) WithTraceRecovery(value bool) *CompilationOp
 // WithStats sets compilation stats collection flag.
 func (b *CompilationOptionsBuilder) WithStats(value bool) *CompilationOptionsBuilder {
 	b.options.stats = optionalBoolOf(value)
+	return b
+}
+
+// WithGenerateCode sets whether BIR generation is pipelined into Compilation. Set false for
+// diagnostics/symbol-only use (e.g. a language server) to skip BIR generation entirely.
+func (b *CompilationOptionsBuilder) WithGenerateCode(value bool) *CompilationOptionsBuilder {
+	b.options.generateCode = optionalBoolOf(value)
 	return b
 }
 

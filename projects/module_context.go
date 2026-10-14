@@ -61,6 +61,15 @@ type moduleContext struct {
 	compilerCtx     *context.CompilerContext
 	importedSymbols map[string]model.ExportedSymbolSpace
 	birPkg          *bir.BIRPackage
+	// birGenAttempted distinguishes "never ran" from "ran and failed" (birPkg
+	// is nil either way), so generateCodeInternal doesn't retry and duplicate
+	// diagnostics.
+	birGenAttempted bool
+
+	// compilationUnits and pkgID bridge parseModule (Phase 1a) to
+	// resolveSymbolsAndTypes (Phase 1b).
+	compilationUnits []*ast.BLangCompilationUnit
+	pkgID            *model.PackageID
 }
 
 // newModuleContext creates a moduleContext from ModuleConfig.
@@ -231,9 +240,9 @@ func (m *moduleContext) getModuleDescDependencies() []ModuleDescriptor {
 	return slices.Clone(m.moduleDescDependencies)
 }
 
-// resolveTypesAndSymbols performs parsing, AST building, symbol resolution, and type resolution.
-// This phase must run sequentially respecting module dependencies.
-func resolveTypesAndSymbols(moduleCtx *moduleContext) {
+// parseModule performs parsing and AST building. Unlike resolveSymbolsAndTypes,
+// it has no dependency on other modules, so it can run concurrently package-wide.
+func parseModule(moduleCtx *moduleContext) {
 	moduleCtx.moduleDiagnostics = nil
 
 	compilerCtx := moduleCtx.compilerCtx
@@ -265,6 +274,21 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 		cu.SetPackageID(pkgID)
 	}
 	compilerCtx.EndStage()
+
+	moduleCtx.compilationUnits = compilationUnits
+	moduleCtx.pkgID = pkgID
+}
+
+// resolveSymbolsAndTypes performs import, symbol, and top-level type resolution.
+// Runs sequentially in topological order, after every dependency has published
+// its symbols.
+func resolveSymbolsAndTypes(moduleCtx *moduleContext) {
+	compilerCtx := moduleCtx.compilerCtx
+	if moduleCtx.compilationUnits == nil || compilerCtx.HasDiagnostics() {
+		return
+	}
+	compilationUnits := moduleCtx.compilationUnits
+	pkgID := moduleCtx.pkgID
 
 	// Resolve symbols and imports before type resolution.
 	publicSymbols := moduleCtx.getProject().Environment().publicSymbols
@@ -316,7 +340,8 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 }
 
 // analyzeAndDesugar performs CFG creation, semantic analysis, CFG analysis, and desugaring.
-// This phase can run in parallel across modules after all modules complete Phase 1.
+// Runs in parallel across modules after Phase 1b; callers typically follow it with
+// generateCodeInternal in the same goroutine, pipelining BIR generation with no barrier.
 func analyzeAndDesugar(moduleCtx *moduleContext) {
 	if moduleCtx.bLangPkg == nil || moduleCtx.compilerCtx == nil {
 		return
@@ -497,10 +522,17 @@ func createModelPackageID(compilerCtx *context.CompilerContext, desc ModuleDescr
 
 // generateCodeInternal generates BIR for this module from the compiled BLangPackage.
 // -> CompilerPhaseRunner.performBirGenPhases(bLangPackage)
+// Idempotent: returns the prior outcome if already attempted, so performCodeGen can
+// safely call this as a backfill without retrying (and duplicating diagnostics for)
+// a failed attempt.
 func generateCodeInternal(moduleCtx *moduleContext) bool {
+	if moduleCtx.birGenAttempted {
+		return moduleCtx.birPkg != nil
+	}
 	if moduleCtx.bLangPkg == nil || moduleCtx.compilerCtx == nil {
 		return false
 	}
+	moduleCtx.birGenAttempted = true
 	moduleCtx.compilerCtx.StartStage(context.StageBIRGeneration)
 	moduleCtx.birPkg = birgen.GenBir(moduleCtx.compilerCtx, moduleCtx.bLangPkg)
 	moduleCtx.compilerCtx.EndStage()

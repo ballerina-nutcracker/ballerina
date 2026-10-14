@@ -501,6 +501,13 @@ func (b *BuildOptionsBuilder) WithLockingMode(mode PackageLockingMode) *BuildOpt
 	return b
 }
 
+// WithGenerateCode sets whether BIR generation is pipelined into Compilation.
+// Delegates to CompilationOptionsBuilder.
+func (b *BuildOptionsBuilder) WithGenerateCode(value bool) *BuildOptionsBuilder {
+	b.compilationOptionsBuilder.WithGenerateCode(value)
+	return b
+}
+
 // Build creates the BuildOptions instance.
 // First builds CompilationOptions, then includes it in the BuildOptions.
 func (b *BuildOptionsBuilder) Build() BuildOptions {
