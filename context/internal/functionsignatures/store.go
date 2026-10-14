@@ -99,6 +99,16 @@ func (s *Store) UpdateIncludedRecords(ref model.FunctionSignatureRef, includedRe
 	s.signatures[index] = sig
 }
 
+func (s *Store) UpdateNamedTypes(ref model.FunctionSignatureRef, paramNamedTypes [][]model.SymbolRef, returnNamedTypes []model.SymbolRef) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	index := signatureIndex(ref)
+	sig := s.signatures[index]
+	sig.ParamNamedTypes = paramNamedTypes
+	sig.ReturnNamedTypes = returnNamedTypes
+	s.signatures[index] = sig
+}
+
 func (s *Store) Get(owner model.SymbolRef) (model.UntypedFunctionSignature, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
