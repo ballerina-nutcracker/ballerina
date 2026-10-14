@@ -19,3 +19,9 @@
 # + e - the error value
 # + return - error message
 public isolated function message(error e) returns string = external;
+
+# Returns the error's cause.
+#
+# + e - the error value
+# + return - error cause
+public isolated function cause(error e) returns error? = external;
