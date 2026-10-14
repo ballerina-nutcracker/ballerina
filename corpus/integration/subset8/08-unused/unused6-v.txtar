@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+warning[WARNING]: unused variable 'i'
+  --> unused6-v.bal:21:9
+   |
+21 |         int i = x; // @warn
+   |         ^^^^^^^^^^

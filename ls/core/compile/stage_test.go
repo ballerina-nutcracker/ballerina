@@ -156,11 +156,14 @@ func TestModuleDriver_UnusedSymbolDoesNotBlockTypeResolution(t *testing.T) {
 	if d.pkgNode == nil {
 		t.Error("pkgNode = nil, want the symbol-resolved package")
 	}
-	if d.symbolResolutionUsable {
-		t.Error("unused-symbol diagnostic must make symbol resolution unusable for Phase 1")
+	if !d.symbolResolutionUsable {
+		t.Error("unused-symbol warning must leave symbol resolution usable for Phase 1")
 	}
-	if !d.diagnosticContext().HasErrors() {
-		t.Error("unused top-level symbol must retain its diagnostic")
+	if d.diagnosticContext().HasErrors() {
+		t.Error("unused top-level symbol must not produce an error")
+	}
+	if warnings := d.diagnosticContext().Warnings(); len(warnings) != 1 {
+		t.Errorf("unused top-level symbol warnings = %d, want 1", len(warnings))
 	}
 }
 

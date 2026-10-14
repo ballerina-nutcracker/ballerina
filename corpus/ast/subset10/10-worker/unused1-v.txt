@@ -1,0 +1,16 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (value-type null))
+        (block-function-body
+          (var-def
+            (variable unused (type
+              (value-type int)) (expr
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (literal main)))))))

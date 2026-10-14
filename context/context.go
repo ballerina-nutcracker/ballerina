@@ -33,6 +33,9 @@ type CompilerContext struct {
 	mu          sync.Mutex
 	diagnostics []diagnostics.Diagnostic
 	warnings    []diagnostics.Diagnostic
+	// unusedInferredVars holds unused single-use var captures, whose diagnostic
+	// depends on their inferred type and so is reported after type resolution.
+	unusedInferredVars map[model.SymbolRef]struct{}
 }
 
 func (c *CompilerContext) DiagnosticEnv() *diagnostics.DiagnosticEnv {
@@ -273,6 +276,21 @@ func (c *CompilerContext) Warning(message string, pos diagnostics.Location) {
 	c.mu.Unlock()
 }
 
+// MarkUnusedInferredVariable records an unused single-use var capture.
+func (c *CompilerContext) MarkUnusedInferredVariable(symbol model.SymbolRef) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.unusedInferredVars[symbol] = struct{}{}
+}
+
+// IsUnusedInferredVariable reports whether symbol was recorded by MarkUnusedInferredVariable.
+func (c *CompilerContext) IsUnusedInferredVariable(symbol model.SymbolRef) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	_, ok := c.unusedInferredVars[symbol]
+	return ok
+}
+
 // Warnings returns the recorded warnings.
 func (c *CompilerContext) Warnings() []diagnostics.Diagnostic {
 	c.mu.Lock()
@@ -319,7 +337,8 @@ func (c *CompilerContext) Diagnostics() []diagnostics.Diagnostic {
 
 func NewCompilerContext(env *CompilerEnvironment) *CompilerContext {
 	return &CompilerContext{
-		env: env,
+		env:                env,
+		unusedInferredVars: make(map[model.SymbolRef]struct{}),
 	}
 }
 

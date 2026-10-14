@@ -19,7 +19,7 @@ function foo() returns int { // @error
 }
 
 function foo() returns int { // @error
-    int unusedLocal = 2; // @error
+    int unusedLocal = 2; // @warn
     return undefinedInDuplicate; // @error
 }
 

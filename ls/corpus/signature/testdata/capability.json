@@ -104,8 +104,8 @@
                 "character": 22
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'count'"
           },
@@ -120,8 +120,8 @@
                 "character": 36
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'title'"
           }

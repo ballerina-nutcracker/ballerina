@@ -33,7 +33,7 @@ isolated class LockRecovery {
             local = 1;
             outside[0] = 1;
         }
-        int later = "wrong"; // @error independent semantic analysis
+        int later = "wrong"; // @warn unused surviving sibling
     }
 }
 -- ast --
@@ -118,11 +118,3 @@ error[SEMANTIC_ERROR]: undefined member 'missing'
    |
 26 |             self.missing += 1; // @error abandoned compound assignment
    |                  ^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> lock-e.bal:35:1
-   |
-35 |         int later = "wrong"; // @error independent semantic analysis
-   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-36 |     }
-   |

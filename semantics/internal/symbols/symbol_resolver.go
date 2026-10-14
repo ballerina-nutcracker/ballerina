@@ -45,14 +45,23 @@ const (
 	varUsed
 )
 
+type bindingUse uint8
+
+const (
+	singleUse bindingUse = iota
+	iterativeUse
+)
+
 type varStatusTracker interface {
-	markInit(sym model.SymbolRef, pos diagnostics.Location)
+	markInit(sym model.SymbolRef, pos diagnostics.Location, inferredSingleUse bool)
 	markUsed(sym model.SymbolRef)
 }
 
 type varDeclInfo struct {
 	varSym model.SymbolRef
 	pos    diagnostics.Location
+	// inferredSingleUse reports whether the variable is a single-use var capture.
+	inferredSingleUse bool
 }
 
 type symbolResolver interface {
@@ -97,10 +106,11 @@ type (
 	}
 
 	varTracker struct {
-		varIndex  map[model.SymbolRef]int
-		declPos   []diagnostics.Location
-		varStatus []varStatus
-		symbol    []model.SymbolRef
+		varIndex          map[model.SymbolRef]int
+		declPos           []diagnostics.Location
+		varStatus         []varStatus
+		symbol            []model.SymbolRef
+		inferredSingleUse []bool
 	}
 
 	moduleAstNode[T ast.BLangNode] struct {
@@ -153,15 +163,17 @@ var (
 	_ varStatusTracker = &varTracker{}
 )
 
-func markInit(resolver symbolResolver, name string, symbol model.SymbolRef, pos diagnostics.Location) {
+// markInit starts tracking whether a declared variable is used; inferredSingleUse
+// reports whether the variable is a single-use var capture.
+func markInit(resolver symbolResolver, name string, symbol model.SymbolRef, pos diagnostics.Location, inferredSingleUse bool) {
 	if isIgnoredDeclName(name) {
 		return
 	}
-	resolver.markInit(symbol, pos)
+	resolver.markInit(symbol, pos, inferredSingleUse)
 }
 
-func (r *compilationUnitSymbolResolver) markInit(sym model.SymbolRef, pos diagnostics.Location) {
-	r.moduleResolver.varTracker.markInit(sym, pos)
+func (r *compilationUnitSymbolResolver) markInit(sym model.SymbolRef, pos diagnostics.Location, inferredSingleUse bool) {
+	r.moduleResolver.varTracker.markInit(sym, pos, inferredSingleUse)
 }
 
 func (r *compilationUnitSymbolResolver) markUsed(sym model.SymbolRef) {
@@ -171,12 +183,12 @@ func (r *compilationUnitSymbolResolver) markUsed(sym model.SymbolRef) {
 	}
 }
 
-func (r *blockSymbolResolver) markInit(sym model.SymbolRef, pos diagnostics.Location) {
+func (r *blockSymbolResolver) markInit(sym model.SymbolRef, pos diagnostics.Location, inferredSingleUse bool) {
 	if r.varTracker == nil {
-		r.parent.markInit(sym, pos)
+		r.parent.markInit(sym, pos, inferredSingleUse)
 		return
 	}
-	r.varTracker.markInit(sym, pos)
+	r.varTracker.markInit(sym, pos, inferredSingleUse)
 }
 
 func (r *blockSymbolResolver) markUsed(sym model.SymbolRef) {
@@ -204,7 +216,7 @@ func (t *varTracker) isTracked(sym model.SymbolRef) bool {
 	return ok
 }
 
-func (t *varTracker) markInit(sym model.SymbolRef, pos diagnostics.Location) {
+func (t *varTracker) markInit(sym model.SymbolRef, pos diagnostics.Location, inferredSingleUse bool) {
 	index := len(t.symbol)
 	if t.varIndex == nil {
 		t.varIndex = make(map[model.SymbolRef]int)
@@ -213,6 +225,7 @@ func (t *varTracker) markInit(sym model.SymbolRef, pos diagnostics.Location) {
 	t.symbol = append(t.symbol, sym)
 	t.declPos = append(t.declPos, pos)
 	t.varStatus = append(t.varStatus, varDeclared)
+	t.inferredSingleUse = append(t.inferredSingleUse, inferredSingleUse)
 }
 
 func (t *varTracker) markUsed(sym model.SymbolRef) {
@@ -227,7 +240,7 @@ func (t *varTracker) getUnused() []varDeclInfo {
 		if status == varUsed {
 			continue
 		}
-		res = append(res, varDeclInfo{t.symbol[i], t.declPos[i]})
+		res = append(res, varDeclInfo{t.symbol[i], t.declPos[i], t.inferredSingleUse[i]})
 	}
 	return res
 }
@@ -961,7 +974,7 @@ func (ms *compilationUnitSymbolResolver) allocateConstantSymbol(constDef *ast.BL
 	symRef := lookup.ref
 	constDef.SetSymbol(symRef)
 	if !isPublic {
-		markInit(ms, name, symRef, constDef.GetPosition())
+		markInit(ms, name, symRef, constDef.GetPosition(), false)
 	}
 	return true
 }
@@ -994,7 +1007,7 @@ func (ms *compilationUnitSymbolResolver) allocateGlobalVarSymbol(globalVar *ast.
 	symRef, _, _ := ms.GetSymbolFromCurrentScope(name)
 	globalVar.SetSymbol(symRef)
 	if !isPublic {
-		markInit(ms, name, symRef, globalVar.GetPosition())
+		markInit(ms, name, symRef, globalVar.GetPosition(), globalVar.IsDeclaredWithVar)
 	}
 	return true
 }
@@ -1054,12 +1067,18 @@ func compilationUnitImports(cu *ast.BLangCompilationUnit) []ast.BLangImportPacka
 	return imports
 }
 
-func reportUnusedVariables(ctx *context.CompilerContext, unused []varDeclInfo) bool {
+// reportUnusedVariables warns about unused variables. Unused single-use var
+// captures are deferred to semantic analysis because their severity depends on
+// the inferred type.
+func reportUnusedVariables(ctx *context.CompilerContext, unused []varDeclInfo) {
 	for _, v := range unused {
+		if v.inferredSingleUse {
+			ctx.MarkUnusedInferredVariable(v.varSym)
+			continue
+		}
 		name := ctx.SymbolName(v.varSym)
-		ctx.SemanticError("unused variable '"+name+"'", v.pos)
+		ctx.Warning("unused variable '"+name+"'", v.pos)
 	}
-	return len(unused) == 0
 }
 
 func reportUnusedImports(resolver *compilationUnitSymbolResolver, imports []ast.BLangImportPackage) bool {
@@ -1159,7 +1178,7 @@ func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams 
 		symbol := model.NewVariableSymbol(name, false, false, true, symbolLocationForNode(param))
 		addSymbolAndSetOnNode(functionResolver, name, &symbol, param)
 		if trackParams {
-			markInit(functionResolver, name, param.Symbol(), param.GetPosition())
+			markInit(functionResolver, name, param.Symbol(), param.GetPosition(), false)
 		}
 	}
 	if restParam != nil {
@@ -1174,12 +1193,12 @@ func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams 
 			symbol := model.NewVariableSymbol(name, false, false, true, symbolLocationForNode(rest))
 			addSymbolAndSetOnNode(functionResolver, name, &symbol, rest)
 			if trackParams {
-				markInit(functionResolver, name, rest.Symbol(), rest.GetPosition())
+				markInit(functionResolver, name, rest.Symbol(), rest.GetPosition(), false)
 			}
 		}
 	}
 	ok = resolveInvokableChildren(functionResolver, fn) && ok
-	ok = reportUnusedVariables(functionResolver.GetCtx(), functionResolver.getUnused()) && ok
+	reportUnusedVariables(functionResolver.GetCtx(), functionResolver.getUnused())
 	return ok
 }
 
@@ -1271,7 +1290,8 @@ func resolveNamedWorker(r *blockSymbolResolver, worker *ast.BLangNamedWorkerDecl
 	}
 	ok = resolveTypeDesc(workerResolver, worker.ReturnType) && ok
 	ok = resolveBlockFunctionBody(workerResolver, worker.Body) && ok
-	return reportUnusedVariables(workerResolver.GetCtx(), workerResolver.getUnused()) && ok
+	reportUnusedVariables(workerResolver.GetCtx(), workerResolver.getUnused())
+	return ok
 }
 
 func isExternalFunctionBody(body ast.FunctionBodyNode) bool {
@@ -1406,7 +1426,7 @@ func resolveLambdaFunction(functionResolver *blockSymbolResolver, parent *blockS
 		}
 		symbol := model.NewVariableSymbol(name, false, false, true, symbolLocationForNode(param))
 		addSymbolAndSetOnNode(functionResolver, name, &symbol, param)
-		markInit(functionResolver, name, param.Symbol(), param.GetPosition())
+		markInit(functionResolver, name, param.Symbol(), param.GetPosition(), false)
 	}
 
 	if restParam := function.RestParam; restParam != nil {
@@ -1419,12 +1439,12 @@ func resolveLambdaFunction(functionResolver *blockSymbolResolver, parent *blockS
 			}
 			symbol := model.NewVariableSymbol(name, false, false, true, symbolLocationForNode(restParam))
 			addSymbolAndSetOnNode(functionResolver, name, &symbol, restParam)
-			markInit(functionResolver, name, restParam.Symbol(), restParam.GetPosition())
+			markInit(functionResolver, name, restParam.Symbol(), restParam.GetPosition(), false)
 		}
 	}
 
 	ok = resolveInvokableChildren(functionResolver, function) && ok
-	ok = reportUnusedVariables(functionResolver.GetCtx(), functionResolver.getUnused()) && ok
+	reportUnusedVariables(functionResolver.GetCtx(), functionResolver.getUnused())
 	return ok
 }
 
@@ -1714,7 +1734,7 @@ func isShadowed(resolver *blockSymbolResolver, name string) bool {
 	return false
 }
 
-func defineVariable(resolver *blockSymbolResolver, variable *ast.BLangVariable, isFinal bool) bool {
+func defineVariable(resolver *blockSymbolResolver, variable *ast.BLangVariable, isFinal bool, use bindingUse) bool {
 	name, ok := declaredName(variable.Name)
 	if !ok {
 		return false
@@ -1728,7 +1748,7 @@ func defineVariable(resolver *blockSymbolResolver, variable *ast.BLangVariable, 
 		symbol.SetFinal()
 	}
 	addSymbolAndSetOnNode(resolver, name, &symbol, variable)
-	markInit(resolver, name, variable.Symbol(), variable.GetPosition())
+	markInit(resolver, name, variable.Symbol(), variable.GetPosition(), use == singleUse && variable.IsDeclaredWithVar)
 	return ok
 }
 
@@ -1742,7 +1762,7 @@ func resolveForeach(bs *blockSymbolResolver, n *ast.BLangForeach) bool {
 	n.SetScope(resolver.scope)
 	if n.VariableDef != nil {
 		variable := n.VariableDef.GetVariable()
-		ok = defineVariable(resolver, variable, true) && ok
+		ok = defineVariable(resolver, variable, true, iterativeUse) && ok
 		ok = resolveVariableChildren(resolver, variable, variable.Symbol()) && ok
 	}
 	ok = resolveBlockStmt(resolver, &n.Body) && ok
@@ -2352,7 +2372,7 @@ func resolveStmt(r *blockSymbolResolver, stmt ast.StatementNode) bool {
 	case *ast.BLangMatchStatement:
 		return resolveMatchStatement(r, n)
 	case *ast.BLangVariableDef:
-		return resolveVariableDef(r, n)
+		return resolveVariableDef(r, n, singleUse)
 	case *ast.BLangReturn:
 		return resolveReturn(r, n)
 	case *ast.BLangPanic:
@@ -2515,7 +2535,7 @@ func resolveOnFailClause(r *blockSymbolResolver, n *ast.BLangOnFailClause) bool 
 		ok = resolveBlockStmt(r, n.Body) && ok
 	}
 	if n.VariableDefinitionNode != nil {
-		ok = resolveVariableDef(r, n.VariableDefinitionNode) && ok
+		ok = resolveVariableDef(r, n.VariableDefinitionNode, singleUse) && ok
 	}
 	return ok
 }
@@ -2558,9 +2578,9 @@ func resolveMatchPattern(r *blockSymbolResolver, mp ast.MatchPatternNode) bool {
 	}
 }
 
-func resolveVariableDef(r *blockSymbolResolver, n *ast.BLangVariableDef) bool {
+func resolveVariableDef(r *blockSymbolResolver, n *ast.BLangVariableDef, use bindingUse) bool {
 	variable := n.GetVariable()
-	ok := defineVariable(r, variable, variable.IsFinal())
+	ok := defineVariable(r, variable, variable.IsFinal(), use)
 	return resolveVariableChildren(r, variable, variable.Symbol()) && ok
 }
 
@@ -2587,7 +2607,7 @@ func resolveQueryClause(r *blockSymbolResolver, clause ast.BLangNode) bool {
 			ok = resolveExpr(r, n.OnClause.OnExpr) && ok
 		}
 		if n.VariableDefinitionNode != nil {
-			ok = resolveVariableDef(r, n.VariableDefinitionNode) && ok
+			ok = resolveVariableDef(r, n.VariableDefinitionNode, iterativeUse) && ok
 		}
 		if n.OnClause.EqualsExpr != nil {
 			ok = resolveExpr(r, n.OnClause.EqualsExpr) && ok
@@ -2596,7 +2616,7 @@ func resolveQueryClause(r *blockSymbolResolver, clause ast.BLangNode) bool {
 	case *ast.BLangLetClause:
 		ok := true
 		for i := range n.LetVarDeclarations {
-			ok = resolveVariableDef(r, &n.LetVarDeclarations[i]) && ok
+			ok = resolveVariableDef(r, &n.LetVarDeclarations[i], singleUse) && ok
 		}
 		return ok
 	case *ast.BLangGroupByClause:
@@ -2610,7 +2630,7 @@ func resolveQueryClause(r *blockSymbolResolver, clause ast.BLangNode) bool {
 			return resolveExpr(r, n.VariableRef)
 		}
 		if n.VariableDef != nil {
-			return resolveVariableDef(r, n.VariableDef)
+			return resolveVariableDef(r, n.VariableDef, singleUse)
 		}
 		return true
 	case *ast.BLangOnClause:
@@ -2658,7 +2678,7 @@ func resolveInputClause(r *blockSymbolResolver, n *ast.BLangInputClause) bool {
 		ok = resolveExpr(r, n.Collection) && ok
 	}
 	if n.VariableDefinitionNode != nil {
-		ok = resolveVariableDef(r, n.VariableDefinitionNode) && ok
+		ok = resolveVariableDef(r, n.VariableDefinitionNode, iterativeUse) && ok
 	}
 	return ok
 }
@@ -2811,7 +2831,7 @@ func resolveQueryExpr(r symbolResolver, n *ast.BLangQueryExpr) bool {
 	}
 	repeated := newAccumBlockResolver(onceEvaluated, n)
 	if from != nil && from.VariableDefinitionNode != nil {
-		ok = resolveVariableDef(repeated, from.VariableDefinitionNode) && ok
+		ok = resolveVariableDef(repeated, from.VariableDefinitionNode, iterativeUse) && ok
 	}
 	for _, clause := range clauses {
 		ok = resolveQueryClause(repeated, clause) && ok

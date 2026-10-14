@@ -1,0 +1,22 @@
+-- stdout --
+item
+item
+[0,0,0,0]
+-- stderr --
+warning[WARNING]: unused variable 'j'
+  --> unused5-v.bal:27:20
+   |
+27 |               join var j in values on 1 equals 1 // @warn
+   |                    ^^^^^
+
+warning[WARNING]: unused variable 'v'
+  --> unused5-v.bal:22:13
+   |
+22 |     foreach var v in values { // @warn
+   |             ^^^^^
+
+warning[WARNING]: unused variable 'w'
+  --> unused5-v.bal:26:20
+   |
+26 |     int[] r = from var w in values // @warn
+   |                    ^^^^^
