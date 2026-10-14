@@ -1,7 +1,0 @@
--- stdout --
--- stderr --
-error[SEMANTIC_ERROR]: unused variable 'unused'
-  --> unused1-e.bal:23:9
-   |
-23 |         int unused = 1; // @error unused variable in the worker body
-   |         ^^^^^^^^^^^^^^^

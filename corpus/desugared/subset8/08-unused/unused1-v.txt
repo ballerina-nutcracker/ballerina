@@ -1,0 +1,8 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 3)))))))

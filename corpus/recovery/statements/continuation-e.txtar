@@ -23,7 +23,7 @@ function brokenBody() returns int {
     int invocation = probe(absentArgument); // @error
     unknown = 2;
     var unavailable = absentInferred; // @error
-    int dependent = unavailable + 1; // @error unused dependent
+    int dependent = unavailable + 1; // @warn unused dependent
     { int nested = missing; probe("inner"); } // @error
     if (true && ) { probe("skippedBad"); } // @error
     if missingCondition { probe("skipped"); } // @error
@@ -338,68 +338,6 @@ error[SEMANTIC_ERROR]: Unknown type: malformedType
    |
 20 |     int| malformedType = 1; // @error
    |          ^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> continuation-e.bal:18:1
-   |
-18 |     int bad = ; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^
-19 |     int '_ = 1; // @error bad statement
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> continuation-e.bal:47:1
-   |
-47 |         int bad = ; // @error
-   |         ^^^^^^^^^^^^^^^^^^^^^
-48 |         return 5;
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'badInner'
-  --> continuation-e.bal:29:15
-   |
-29 |     if true { int badInner = ; probe("innerIf"); } // @error
-   |               ^^^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'dependent'
-  --> continuation-e.bal:25:1
-   |
-25 |     int dependent = unavailable + 1; // @error unused dependent
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-26 |     { int nested = missing; probe("inner"); } // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'invocation'
-  --> continuation-e.bal:22:1
-   |
-22 |     int invocation = probe(absentArgument); // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-23 |     unknown = 2;
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'item'
-  --> continuation-e.bal:31:13
-   |
-31 |     foreach var item in missingCollection { probe("skipped"); } // @error
-   |             ^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'item'
-  --> continuation-e.bal:32:13
-   |
-32 |     foreach Unknown item in [1] { probe("skipped"); } // @error
-   |             ^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'nested'
-  --> continuation-e.bal:26:7
-   |
-26 |     { int nested = missing; probe("inner"); } // @error
-   |       ^^^^^^^^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> continuation-e.bal:41:31
-   |
-41 | function unavailableSignature(Unknown value) returns int { // @error
-   |                               ^^^^^^^^^^^^^
 
 error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
   --> continuation-e.bal:19:9
