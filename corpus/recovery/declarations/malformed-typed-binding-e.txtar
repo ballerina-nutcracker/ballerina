@@ -24,14 +24,24 @@ function surviving() returns int {
 
 public int sibling = surviving();
 -- ast --
-(package
-  (variable sibling (type
-    (value-type int)) (expr
-    (invocation surviving ())))
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (variable (bad-identifier) (type
+    (array-type
+      (value-type int) dimensions: 1 ([]))) (expr
+    (list-constructor-expr
+      (literal 0))))
   (function surviving () (
     (value-type int))
     (block-function-body
-      (bad-stmt)
+      (var-def
+        (variable (bad-identifier) (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 0)))))
       (return
         (literal 7))))
-  (bad-top-level variable))
+  (variable sibling (type
+    (value-type int)) (expr
+    (invocation surviving ()))))

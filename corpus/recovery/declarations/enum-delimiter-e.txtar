@@ -18,17 +18,8 @@
 enum Colour { R, B
 // @error
 -- ast --
-(package
-  (const R enum-member (
-    (value-type string)) (
-    (literal R)))
-  (const B enum-member (
-    (value-type string)) (
-    (literal B)))
-  (type-definition Colour enum
-    (union-type
-      (user-defined-type R)
-      (user-defined-type B)))
+(compilation-unit
+(package-id $anon . 0.0.0)
   (bad-top-level enum))
 -- symbols --
 +Colour +R +B

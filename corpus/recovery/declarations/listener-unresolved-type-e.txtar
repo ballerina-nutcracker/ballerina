@@ -20,7 +20,8 @@ function independent() returns int {
     return 1;
 }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (variable unresolved (type
     (user-defined-type Missing)) (expr
     (new ())))

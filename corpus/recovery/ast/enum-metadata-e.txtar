@@ -38,33 +38,41 @@ public enum Sound {
 -- ast --
 (compilation-unit (position 1:1 1:1)
 (package-id $anon . 0.0.0)
-  (const (position 20:5 20:16) RED enum-member
+  (const (position 20:1 20:16) RED enum-member
     (md-doc (position 19:1 20:1)
       (doc-lines
         (md-doc-line (position 19:1 20:1) "Red documentation."))) (
     (value-type (position <built-in>) string)) (
     (literal (position 20:11 20:16) red)))
-  (const (position 23:5 24:1) BLUE enum-member
+  (const (position 21:1 21:14) BROKEN enum-member (
+    (value-type (position <built-in>) string)) (
+    (simple-var-ref (position 21:14 21:14) (bad-identifier))))
+  (const (position 23:1 24:1) BLUE enum-member
     (md-doc (position 22:1 23:1)
       (doc-lines
         (md-doc-line (position 22:1 23:1) "Blue documentation."))) (
     (value-type (position <built-in>) string)) (
     (literal (position 23:1 24:1) BLUE)))
-  (bad-top-level enum (position 1:1 25:1))
   (type-definition (position 18:1 25:1) Palette enum
     (union-type (position 18:1 25:1)
-      (user-defined-type (position 20:1 20:9) RED)
+      (union-type (position 18:1 25:1)
+        (user-defined-type (position 20:1 20:9) RED)
+        (user-defined-type (position 21:1 21:12) BROKEN))
       (user-defined-type (position 23:1 24:1) BLUE)))
-  (const (position 28:5 28:10) GREEN enum-member
+  (const (position 28:1 28:10) GREEN enum-member
     (md-doc (position 27:1 28:1)
       (doc-lines
         (md-doc-line (position 27:1 28:1) "Green documentation."))) (
     (value-type (position <built-in>) string)) (
     (literal (position 28:1 28:10) GREEN)))
-  (bad-top-level enum (position 25:1 31:1))
+  (const (position 29:1 30:1) FAIL enum-member (
+    (value-type (position <built-in>) string)) (
+    (simple-var-ref (position 30:1 30:1) (bad-identifier))))
   (type-definition (position 25:1 31:1) PrivatePalette enum
-    (user-defined-type (position 28:1 28:10) GREEN))
-  (const (position 34:5 34:7) OK enum-member
+    (union-type (position 25:1 31:1)
+      (user-defined-type (position 28:1 28:10) GREEN)
+      (user-defined-type (position 29:1 29:10) FAIL)))
+  (const (position 34:1 34:7) OK enum-member
     (md-doc (position 33:1 34:1)
       (doc-lines
         (md-doc-line (position 33:1 34:1) "Sound member documentation."))) (

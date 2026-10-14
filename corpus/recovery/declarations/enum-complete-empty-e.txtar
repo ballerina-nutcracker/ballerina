@@ -17,9 +17,8 @@
 
 enum Empty {} // @error
 -- ast --
-(package
-  (type-definition Empty enum
-    (bad-type))
+(compilation-unit
+(package-id $anon . 0.0.0)
   (bad-top-level enum))
 -- symbols --
 +Empty

@@ -30,11 +30,18 @@ class Holder {
 (compilation-unit (position 1:1 1:1)
 (package-id $anon . 0.0.0)
   (bad-top-level import (position 1:1 18:1))
-  (bad-top-level constant (position 18:1 19:1))
-  (bad-top-level listener (position 19:1 20:1))
-  (bad-top-level annotation (position 20:1 21:1))
+  (const (position 18:1 19:1) (bad-identifier) (
+    (value-type (position 18:7 18:11) int)) (
+    (literal (position 18:13 18:14) 1)))
+  (variable (position 19:1 20:1) broken (type
+    (user-defined-type (position 19:10 19:14) Foo)) (expr
+    (simple-var-ref (position 19:23 19:23) (bad-identifier))))
+  (annotation (position 20:1 21:1) (bad-identifier)
+    (value-type (position 20:12 20:19) string))
   (bad-top-level xml-namespace (position 21:1 22:1))
   (bad-top-level service (position 22:1 24:1))
   (class-definition (position 24:1 28:1) Holder
-    (bad-top-level type-inclusion (position 25:1 26:1))
-    (bad-top-level function (position 26:1 27:1))))
+    (resource-function (position 26:1 27:1) get
+      (bad-type (position 26:39 26:39))
+      (block-function-body (position 26:39 27:1)))
+    (bad-top-level type-inclusion (position 25:1 26:1))))

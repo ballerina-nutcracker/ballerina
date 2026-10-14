@@ -18,18 +18,22 @@
 enum { R, B } // @error
 function useMember() returns string { return R; }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (const R enum-member (
     (value-type string)) (
     (literal R)))
   (const B enum-member (
     (value-type string)) (
     (literal B)))
+  (type-definition (bad-identifier) enum
+    (union-type
+      (user-defined-type R)
+      (user-defined-type B)))
   (function useMember () (
     (value-type string))
     (block-function-body
       (return
-        (simple-var-ref R))))
-  (bad-top-level enum))
+        (simple-var-ref R)))))
 -- symbols --
 +R +B

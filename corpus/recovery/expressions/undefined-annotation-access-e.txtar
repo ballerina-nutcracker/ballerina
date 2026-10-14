@@ -20,7 +20,8 @@ function probe() {
     _ = t.@missing; // @error undefined annotation must not panic
 }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (function probe () (
     (value-type null))
     (block-function-body

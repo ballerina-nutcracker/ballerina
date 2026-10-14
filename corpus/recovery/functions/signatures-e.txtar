@@ -32,7 +32,44 @@ function discardedReferences() returns int {
     return later;
 }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function (bad-identifier) () (
+    (value-type null))
+    (block-function-body))
+  (function (bad-identifier) (
+    (variable x (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body))
+  (function ordinary (
+    (variable (bad-identifier) (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body))
+  (function missing (
+    (variable (bad-identifier) (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body))
+  (function rest () (
+    (value-type null))
+    (block-function-body))
+  (function defaults (
+    (variable x (type
+      (value-type int)) (expr
+      (simple-var-ref (bad-identifier))))) (
+    (value-type null))
+    (block-function-body))
+  (function returnsBad () (
+    (bad-type))
+    (block-function-body))
+  (function annotated () (
+    (value-type null))
+    (block-function-body)
+    (annotation-attachment mod (bad-identifier)
+      (literal true)))
+  (bad-top-level function)
   (function valid () (
     (value-type int))
     (expr-function-body
@@ -54,13 +91,4 @@ function discardedReferences() returns int {
           (value-type int)) (expr
           (invocation valid ()))))
       (return
-        (simple-var-ref later))))
-  (bad-top-level function)
-  (bad-top-level function)
-  (bad-top-level function)
-  (bad-top-level function)
-  (bad-top-level function)
-  (bad-top-level function)
-  (bad-top-level function)
-  (bad-top-level function)
-  (bad-top-level function))
+        (simple-var-ref later)))))

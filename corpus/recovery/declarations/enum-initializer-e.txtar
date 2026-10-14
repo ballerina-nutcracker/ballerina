@@ -18,17 +18,22 @@
 public enum Colour { R, G = } // @error
 function useColour() returns Colour { return R; }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (const R enum-member (
     (value-type string)) (
     (literal R)))
+  (const G enum-member (
+    (value-type string)) (
+    (simple-var-ref (bad-identifier))))
   (type-definition Colour enum
-    (user-defined-type R))
+    (union-type
+      (user-defined-type R)
+      (user-defined-type G)))
   (function useColour () (
     (user-defined-type Colour))
     (block-function-body
       (return
-        (simple-var-ref R))))
-  (bad-top-level enum))
+        (simple-var-ref R)))))
 -- symbols --
 +Colour +R -G +useColour

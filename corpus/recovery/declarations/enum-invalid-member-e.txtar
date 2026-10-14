@@ -17,13 +17,18 @@
 
 enum Colour { R, '_ } // @error
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (const R enum-member (
     (value-type string)) (
     (literal R)))
+  (const (bad-identifier) enum-member (
+    (value-type string)) (
+    (literal _)))
   (type-definition Colour enum
-    (user-defined-type R))
-  (bad-top-level enum))
+    (union-type
+      (user-defined-type R)
+      (user-defined-type _))))
 -- symbols --
 +Colour +R -_
 -- diagnostic-counts --

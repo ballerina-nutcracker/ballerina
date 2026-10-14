@@ -17,7 +17,7 @@
 class TestObj {
     function foo(int a) returns string ; // @error
 
-    function bar(string a) returns int ;
+    function bar(string a) returns int ; // @error
 }
 
 function TestObj.foo(int a) returns string { // @error

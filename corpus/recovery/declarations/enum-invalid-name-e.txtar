@@ -17,11 +17,13 @@
 
 enum '_ { R } // @error
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (const R enum-member (
     (value-type string)) (
     (literal R)))
-  (bad-top-level enum))
+  (type-definition (bad-identifier) enum
+    (user-defined-type R)))
 -- symbols --
 +R -_
 -- diagnostic-counts --

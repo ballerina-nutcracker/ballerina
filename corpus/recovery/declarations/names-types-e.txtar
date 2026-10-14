@@ -32,16 +32,31 @@ function discardedReferences() {
     int surviving = 5; // @error unused surviving sibling
 }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (variable (bad-identifier) (type
+    (value-type int)) (expr
+    (literal 1)))
+  (type-definition (bad-identifier)
+    (value-type int))
   (type-definition Broken
     (bad-type))
   (type-definition Nested
-    (bad-type))
+    (array-type
+      (constrained-type
+        (builtin-ref-type map)
+        (bad-type)) dimensions: 1 ([])))
   (function types () (
     (value-type null))
     (block-function-body
-      (bad-stmt)
-      (bad-stmt)
+      (var-def
+        (variable (bad-identifier) (type
+          (value-type int)) (expr
+          (literal 1))))
+      (var-def
+        (variable (bad-identifier) (type
+          (value-type int)) (expr
+          (literal 2))))
       (var-def
         (variable local (type
           (bad-type)) (expr
@@ -53,6 +68,11 @@ function discardedReferences() {
   (function valid () (
     (value-type null))
     (block-function-body))
+  (function discarded (
+    (variable (bad-identifier) (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body))
   (function discardedReferences () (
     (value-type null))
     (block-function-body
@@ -61,7 +81,4 @@ function discardedReferences() {
       (var-def
         (variable surviving (type
           (value-type int)) (expr
-          (literal 5))))))
-  (bad-top-level variable)
-  (bad-top-level type-definition)
-  (bad-top-level function))
+          (literal 5)))))))

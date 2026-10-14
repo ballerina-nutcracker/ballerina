@@ -24,7 +24,8 @@ service class MemberTypes {
     resource function get second() returns xml<int> {} // @error independently resolved resource signature
 }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (class-definition MemberTypes
     (variable firstField (type
       (constrained-type

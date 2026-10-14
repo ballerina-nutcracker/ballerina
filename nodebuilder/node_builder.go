@@ -1812,8 +1812,8 @@ func (n *nodeBuilder) transformServiceDeclaration(serviceDeclarationNode *st.Ser
 		return nil, false
 	}
 
-	members, ok := n.collectClassDefnMembers(serviceDeclarationNode.Members())
-	if !ok || !n.expectToken(serviceDeclarationNode.CloseBraceToken()) ||
+	members := n.collectClassDefnMembers(serviceDeclarationNode.Members())
+	if !n.expectToken(serviceDeclarationNode.CloseBraceToken()) ||
 		!n.expectOptionalToken(serviceDeclarationNode.SemicolonToken()) {
 		return nil, false
 	}
@@ -1821,6 +1821,7 @@ func (n *nodeBuilder) transformServiceDeclaration(serviceDeclarationNode *st.Ser
 	service.Methods = members.Methods
 	service.InitFunction = members.InitFunction
 	service.ResourceMethods = members.ResourceMethods
+	service.BadTopLevelNodes = members.BadTopLevelNodes
 	if len(members.UnresolvedInclusions) > 0 {
 		// Parser should catch these
 		n.cx.InternalError("unexpected inclusions in service decl", members.UnresolvedInclusions[0].GetPosition())
@@ -1905,44 +1906,49 @@ type classDefnMembers struct {
 	InitFunction         *ast.BLangFunction
 	ResourceMethods      []*ast.BLangResourceMethod
 	UnresolvedInclusions []*ast.BLangUserDefinedType
+	BadTopLevelNodes     []*ast.BLangBadTopLevelNode
 }
 
 func newClassDefnMembers() classDefnMembers {
 	return classDefnMembers{Methods: map[string]*ast.BLangFunction{}}
 }
 
-func (n *nodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) (classDefnMembers, bool) {
+// collectClassDefnMembers is the member recovery point: a member that fails to build is replaced by a bad member.
+func (n *nodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) classDefnMembers {
 	members := newClassDefnMembers()
 	for member := range memberNodes.Iterator() {
-		switch member := member.(type) {
-		case *st.ObjectFieldNode:
-			field, ok := n.transformClassField(member)
-			if !ok {
-				return members, false
-			}
-			members.Fields = append(members.Fields, field)
-		case *st.FunctionDefinition:
-			var ok bool
-			if member.Kind() == st.RESOURCE_ACCESSOR_DEFINITION {
-				ok = n.addCollectedResourceMethod(&members, member)
-			} else {
-				ok = n.addCollectedMethod(&members, member)
-			}
-			if !ok {
-				return members, false
-			}
-		case *st.TypeReferenceNode:
-			inclusion, ok := n.transformTypeReference(member)
-			if !ok {
-				return members, false
-			}
-			members.UnresolvedInclusions = append(members.UnresolvedInclusions, inclusion)
-		default:
-			n.internalError("collectClassDefnMembers: unsupported member kind", member)
-			return members, false
+		if !n.addCollectedMember(&members, member) {
+			members.BadTopLevelNodes = append(members.BadTopLevelNodes, n.badTopLevel(member))
 		}
 	}
-	return members, true
+	return members
+}
+
+func (n *nodeBuilder) addCollectedMember(members *classDefnMembers, member st.Node) bool {
+	switch member := member.(type) {
+	case *st.ObjectFieldNode:
+		field, ok := n.transformClassField(member)
+		if !ok {
+			return false
+		}
+		members.Fields = append(members.Fields, field)
+		return true
+	case *st.FunctionDefinition:
+		if member.Kind() == st.RESOURCE_ACCESSOR_DEFINITION {
+			return n.addCollectedResourceMethod(members, member)
+		}
+		return n.addCollectedMethod(members, member)
+	case *st.TypeReferenceNode:
+		inclusion, ok := n.transformTypeReference(member)
+		if !ok {
+			return false
+		}
+		members.UnresolvedInclusions = append(members.UnresolvedInclusions, inclusion)
+		return true
+	default:
+		n.rejectNode(member, "collectClassDefnMembers: unsupported member kind")
+		return false
+	}
 }
 
 func (n *nodeBuilder) transformTypeReference(typeReferenceNode *st.TypeReferenceNode) (*ast.BLangUserDefinedType, bool) {
@@ -2500,14 +2506,15 @@ func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefi
 		return nil, false
 	}
 
-	members, ok := n.collectClassDefnMembers(classDefinitionNode.Members())
-	if !ok || !n.expectToken(classDefinitionNode.CloseBrace()) || !n.expectOptionalToken(classDefinitionNode.SemicolonToken()) {
+	members := n.collectClassDefnMembers(classDefinitionNode.Members())
+	if !n.expectToken(classDefinitionNode.CloseBrace()) || !n.expectOptionalToken(classDefinitionNode.SemicolonToken()) {
 		return nil, false
 	}
 	blangClass.Fields = members.Fields
 	blangClass.Methods = members.Methods
 	blangClass.InitFunction = members.InitFunction
 	blangClass.ResourceMethods = members.ResourceMethods
+	blangClass.BadTopLevelNodes = members.BadTopLevelNodes
 	for _, inclusion := range members.UnresolvedInclusions {
 		blangClass.AddUnresolvedInclusion(inclusion)
 	}
@@ -5652,8 +5659,8 @@ func (n *nodeBuilder) transformOptionalFieldAccessExpression(optionalFieldAccess
 		return nil, false
 	}
 	fieldName := optionalFieldAccessExpression.FieldName()
-	if fieldName.Kind() == st.QUALIFIED_NAME_REFERENCE {
-		n.internalError("transformOptionalFieldAccessExpression: unexpected QUALIFIED_NAME_REFERENCE", fieldName)
+	if qualified, ok := fieldName.(*st.QualifiedNameReferenceNode); ok {
+		n.unsupportedQualifiedFieldName("transformOptionalFieldAccessExpression: QUALIFIED_NAME_REFERENCE unsupported", qualified)
 		return nil, false
 	}
 	field, ok := n.transformFieldName(fieldName)
@@ -7239,9 +7246,40 @@ func createUserDefinedType(pos diagnostics.Location, pkgAlias ast.BLangIdentifie
 }
 
 func (n *nodeBuilder) badTopLevel(node st.Node) *ast.BLangBadTopLevelNode {
-	bad := &ast.BLangBadTopLevelNode{}
-	bad.SetPosition(n.getPosition(node))
-	return bad
+	return ast.NewBLangBadTopLevelNode(n.getPosition(node), badTopLevelKind(node))
+}
+
+func badTopLevelKind(node st.Node) ast.BadTopLevelNodeKind {
+	switch node.Kind() {
+	case st.IMPORT_DECLARATION:
+		return ast.BadTopLevelNodeImport
+	case st.FUNCTION_DEFINITION, st.OBJECT_METHOD_DEFINITION, st.RESOURCE_ACCESSOR_DEFINITION:
+		return ast.BadTopLevelNodeFunction
+	case st.TYPE_DEFINITION:
+		return ast.BadTopLevelNodeTypeDefinition
+	case st.ENUM_DECLARATION:
+		return ast.BadTopLevelNodeEnum
+	case st.CONST_DECLARATION:
+		return ast.BadTopLevelNodeConstant
+	case st.MODULE_VAR_DECL:
+		return ast.BadTopLevelNodeVariable
+	case st.LISTENER_DECLARATION:
+		return ast.BadTopLevelNodeListener
+	case st.CLASS_DEFINITION:
+		return ast.BadTopLevelNodeClass
+	case st.SERVICE_DECLARATION:
+		return ast.BadTopLevelNodeService
+	case st.ANNOTATION_DECLARATION:
+		return ast.BadTopLevelNodeAnnotation
+	case st.MODULE_XML_NAMESPACE_DECLARATION:
+		return ast.BadTopLevelNodeXMLNamespace
+	case st.OBJECT_FIELD:
+		return ast.BadTopLevelNodeField
+	case st.TYPE_REFERENCE:
+		return ast.BadTopLevelNodeTypeInclusion
+	default:
+		return ast.BadTopLevelNodeUnknown
+	}
 }
 
 func (n *nodeBuilder) badStmt(node st.Node) *ast.BLangBadStmt {

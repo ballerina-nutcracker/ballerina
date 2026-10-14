@@ -40,33 +40,45 @@ type RecordWithUnknownInclusion record {
     int good = 1;
 };
 -- ast --
-(package
-  (type-definition RecordWithBadInclusion
-    (bad-type))
-  (type-definition RecordWithUnknownInclusion
-    (record-type
-      (field good
-        (value-type int)
-        (literal 1))))
+(compilation-unit
+(package-id $anon . 0.0.0)
   (class-definition C
+    (variable (bad-identifier) (type
+      (value-type int)))
     (variable goodField (type
       (value-type int)))
+    (function init (
+      (variable (bad-identifier) (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body))
+    (function (bad-identifier) (
+      (variable x (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body))
     (function valid () (
       (value-type null))
       (block-function-body
         (var-def
           (variable x (type
             (value-type int)) (expr
-            (bad-expr-or-action))))
+            (simple-var-ref (bad-identifier)))))
         (var-def
           (variable later (type
             (value-type int)) (expr
             (literal 2))))))
-    (bad-top-level field)
-    (bad-top-level function)
-    (bad-top-level function)
     (bad-top-level type-inclusion)
     (bad-top-level type-inclusion))
+  (function (bad-identifier) () (
+    (value-type null))
+    (block-function-body))
+  (function valid () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable surviving (type
+          (user-defined-type C))))))
   (class-definition InclusionFailure
     (variable good (type
       (value-type int)))
@@ -75,10 +87,12 @@ type RecordWithUnknownInclusion record {
       (expr-function-body
         (field-based-access good
           (simple-var-ref self)))))
-  (function valid () (
-    (value-type null))
-    (block-function-body
-      (var-def
-        (variable surviving (type
-          (user-defined-type C))))))
-  (bad-top-level function))
+  (type-definition RecordWithBadInclusion
+    (record-type
+      (field good
+        (value-type int))))
+  (type-definition RecordWithUnknownInclusion
+    (record-type
+      (field good
+        (value-type int)
+        (literal 1)))))
