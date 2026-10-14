@@ -160,10 +160,7 @@ func argumentIndex(call ast.BLangNode, args []ast.BLangExpression, chain []ast.B
 	callLoc := call.GetPosition()
 	index := -1
 	for i, arg := range args {
-		if arg == nil {
-			continue
-		}
-		if _, bad := arg.(*ast.BLangBadExprOrAction); bad {
+		if arg == nil || isMalformedArgument(arg) {
 			continue
 		}
 		loc := arg.GetPosition()
@@ -186,6 +183,16 @@ func argumentIndex(call ast.BLangNode, args []ast.BLangExpression, chain []ast.B
 		}
 	}
 	return 0, false
+}
+
+// isMalformedArgument reports whether arg is a bad node that spans source text. A zero-width bad
+// node is a missing argument (e.g. foo(1, )), which is still a valid place for signature help.
+func isMalformedArgument(arg ast.BLangExpression) bool {
+	if _, bad := arg.(*ast.BLangBadExprOrAction); !bad {
+		return false
+	}
+	loc := arg.GetPosition()
+	return !locationHasUsableOffsets(loc) || loc.StartOffset() != loc.EndOffset()
 }
 
 func parameterIndex(args []ast.BLangExpression, argument int, sig model.UntypedFunctionSignature) (int, bool) {
