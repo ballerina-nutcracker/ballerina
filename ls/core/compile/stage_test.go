@@ -31,7 +31,7 @@ const recursivePublicTypeSource = "public type Invalid Invalid;\n"
 const unusedTopLevelSource = "const int UNUSED = 1;\n"
 const malformedBodySource = "function broken() {\n    int value = ;\n}\n"
 const malformedSignatureAndBodySource = "function broken(int {\n    int value = ;\n}\n"
-const malformedTopLevelSource = "int value = ;\n"
+const malformedTopLevelSource = "function broken(int {\n}\n"
 
 // breakOutsideLoopSource triggers a diagnostic from inside
 // ResolvePrivateNodesTypes itself (Phase 2 / stage 5's block-statement
@@ -209,22 +209,17 @@ func TestModuleDriver_PublicTypeErrorDoesNotAdvancePhase1(t *testing.T) {
 	}
 }
 
-// TestModuleDriver_MalformedFunctionSignatureRunsSymbolResolutionButUnusable
+// TestModuleDriver_MalformedFunctionSignatureKeepsSymbolResolutionUsable
 // covers a function whose own signature is unparseable, alongside a valid
 // sibling. Parser diagnostics no longer gate ensureSymbolResolved (removed
 // along with the bad-node filtering this driver used to do): symbol
 // resolution still runs so a module's scope (and thus e.g. completion) stays
-// available. Here it also surfaces a genuine new resolver diagnostic (an
-// unused-variable check inside the malformed body), which makes this stage's
-// own result unusable for dependents -- same mechanism
-// TestModuleDriver_ResolverErrorDoesNotAdvancePhase1 covers for a clean
-// duplicate-declaration error, except that a module with bad AST nodes still
-// continues to local type resolution. publishableDiagnostics
-// hides that resolver diagnostic because the module already has a parser
-// diagnostic (see parserDiagnosticCount's doc comment on moduleDriver):
-// mixing "missing close paren token" with "unused variable" would be noise
-// from resolving a subtree the parser already gave up on.
-func TestModuleDriver_MalformedFunctionSignatureRunsSymbolResolutionButUnusable(t *testing.T) {
+// available. The nodebuilder recovers the whole malformed function, body
+// included, as a BLangBadTopLevelNode, so the body's would-be unused-variable
+// error never surfaces and symbol resolution stays usable. Compare
+// TestModuleDriver_MalformedFunctionBodyWithSiblingRetainsSibling, where only
+// the body is malformed and its resolver diagnostic makes this stage unusable.
+func TestModuleDriver_MalformedFunctionSignatureKeepsSymbolResolutionUsable(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
 	applyOpen(t, projSvc, u, malformedSignatureAndBodySource+"\npublic function sibling() {}\n")
@@ -244,8 +239,8 @@ func TestModuleDriver_MalformedFunctionSignatureRunsSymbolResolutionButUnusable(
 	if d.pkgNode == nil {
 		t.Error("pkgNode = nil, want a package built despite the parser diagnostic")
 	}
-	if d.symbolResolutionUsable {
-		t.Error("the malformed body's resolver diagnostic must make symbol resolution unusable")
+	if !d.symbolResolutionUsable {
+		t.Error("a malformed function recovered as a bad top-level node must not add a resolver error")
 	}
 	if got := d.publishableDiagnostics(); len(got) != d.parserDiagnosticCount {
 		t.Errorf("publishableDiagnostics() = %d diagnostics, want exactly the %d parser diagnostics", len(got), d.parserDiagnosticCount)
@@ -253,7 +248,7 @@ func TestModuleDriver_MalformedFunctionSignatureRunsSymbolResolutionButUnusable(
 }
 
 // TestModuleDriver_MalformedTopLevelReachesTopLevelTypeResolved covers a
-// fully unparseable top-level declaration (int value = ;): the parser
+// fully unparseable top-level declaration (function broken(int {}): the parser
 // recovers it as a BLangBadTopLevelNode, which symbol resolution and package
 // assembly both skip cleanly (no symbol allocated, no new diagnostic), so
 // this module's Phase 1 proceeds all the way through top-level type

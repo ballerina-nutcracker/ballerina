@@ -3,7 +3,7 @@
   "sources": {
     "Ballerina.toml": "[package]\norg = \"ls\"\nname = \"malformedprovider\"\nversion = \"0.1.0\"\n",
     "main.bal": "import ls/malformedprovider.greet;\n\npublic function main() {\n    _ = greet:greeting();\n    int unused = 1;\n}\n",
-    "modules/greet/greet.bal": "public function greeting() returns string {\n    return \"hello\";\n}\n\nint broken = ;\n"
+    "modules/greet/greet.bal": "public function greeting() returns string {\n    return \"hello\";\n}\n\nfunction broken(int {\n}\n"
   },
   "messages": [
     {
@@ -25,7 +25,7 @@
           "uri": "file://${root}/modules/greet/greet.bal",
           "languageId": "ballerina",
           "version": 1,
-          "text": "public function greeting() returns string {\n    return \"hello\";\n}\n\nint broken = ;\n"
+          "text": "public function greeting() returns string {\n    return \"hello\";\n}\n\nfunction broken(int {\n}\n"
         }
       }
     },
@@ -85,17 +85,33 @@
             "range": {
               "start": {
                 "line": 4,
-                "character": 13
+                "character": 20
               },
               "end": {
                 "line": 4,
-                "character": 13
+                "character": 20
               }
             },
             "severity": 1,
             "code": "SYNTAX_ERROR",
             "source": "ballerina",
             "message": "missing identifier"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 4,
+                "character": 20
+              },
+              "end": {
+                "line": 4,
+                "character": 20
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing close paren token"
           }
         ]
       }

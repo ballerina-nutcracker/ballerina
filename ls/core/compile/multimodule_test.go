@@ -149,9 +149,9 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testin
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
 	greetURI := fileURI(t, "file://"+greetPath)
 	// A valid sibling declaration (greeting) plus a genuine top-level syntax
-	// error (a malformed variable declarator: a declared type and name with
-	// no initializer expression) in the same file.
-	brokenGreet := "public function greeting() returns string {\n    return \"hello\";\n}\n\nint target = ;\n"
+	// error (a function signature with an unterminated parameter list) in the
+	// same file.
+	brokenGreet := "public function greeting() returns string {\n    return \"hello\";\n}\n\nfunction target(int {\n}\n"
 	applyOpen(t, projSvc, greetURI, brokenGreet)
 
 	proj, err := projSvc.Project(greetURI)
