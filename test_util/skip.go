@@ -186,9 +186,6 @@ var UnsupportedTests = []string{
 	// 	https://github.com/ballerina-nutcracker/ballerina/issues/162
 	"subset8/08-list/10-e.bal",
 	"subset8/08-mapping/9-e.bal",
-
-	// rest param not supported in dependently typed functions
-	"subset8/08-function/dependent-fn-5-e.bal",
 }
 
 // IsUnsupported reports whether the given corpus test path is in

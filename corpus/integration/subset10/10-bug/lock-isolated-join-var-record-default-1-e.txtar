@@ -1,5 +1,11 @@
 -- stdout --
 -- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-isolated-join-var-record-default-1-e.bal:24:36
+   |
+24 |         join record {| int value = seed; |} r in xs on x equals r.value // @error
+   |                                    ^^^^
+
 error[SEMANTIC_ERROR]: access of mutable variable
   --> lock-isolated-join-var-record-default-1-e.bal:24:36
    |

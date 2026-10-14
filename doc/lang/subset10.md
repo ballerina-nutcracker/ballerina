@@ -58,6 +58,7 @@
 - [Wait action](https://ballerina.io/spec/lang/master/#wait-action)
 - [Error constructor](https://ballerina.io/spec/lang/master/#error-constructor-expr)
 - [Check expression](https://ballerina.io/spec/lang/master/#checking-expr)
+  - Currently `check` is not supported in [defaultable parameter expressions](https://ballerina.io/spec/lang/master/#defaultable-param) or [record field default expressions](https://ballerina.io/spec/lang/master/#record-type-descriptor), even when the operand cannot produce an error.
 - [Trap expression](https://ballerina.io/spec/lang/master/#trap-expr)
 - [Type cast expression](https://ballerina.io/spec/lang/master/#type-cast-expr)
 - [New expression](https://ballerina.io/spec/lang/master/#section_6.8.2)

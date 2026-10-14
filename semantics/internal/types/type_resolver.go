@@ -3564,10 +3564,7 @@ func resolveGlobalVarInit(t typeResolver, node *ast.BLangVariable) bool {
 	}
 	expectedType := semType
 	if node.IsListener() {
-		// A listener-decl is allowed to have an init expression whose type
-		// includes error; module init performs the runtime `is error` check
-		// and panics if the value is an error.
-		expectedType = semtypes.Union(semType, semtypes.Error)
+		expectedType = common.ListenerInitExpectedType(semType)
 	}
 	_, ok := resolveActionOrExpression(t, nil, node.Expr, expectedType)
 	return ok
@@ -5064,7 +5061,7 @@ func resolveForeachVariableType(t typeResolver, collection ast.BLangActionOrExpr
 	case semtypes.IsSubtype(ctx, collectionTy, semtypes.String):
 		return semtypes.Char, true
 	default:
-		iterableTy, ok := common.IterableType(t.compilerContext(), t.symbolType)
+		iterableTy, ok := common.IterableType(t.compilerContext())
 		if !ok {
 			t.semanticError("foreach collection must be subtype of object:Iterable", collection.GetPosition())
 			return semtypes.SemType{}, false

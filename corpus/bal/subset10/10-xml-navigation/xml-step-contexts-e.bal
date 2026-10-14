@@ -14,6 +14,7 @@
 // limitations under the License.
 
 int calls = 0;
+isolated int steps = 0;
 
 function nextIndex() returns int {
     calls += 1;
@@ -30,6 +31,7 @@ isolated function methodInIsolatedFunction(xml value) returns xml {
 
 function stepInLock(xml value) {
     lock {
+        steps += 1;
         _ = value/*.slice(0, nextIndex()); // @error
     }
 }
