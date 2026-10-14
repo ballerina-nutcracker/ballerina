@@ -1,0 +1,89 @@
+(main
+  (bb0 () (bb1 bb4)
+    (var-def
+      (variable root (type
+        (error-type)) (expr
+        (error-constructor-expr (
+          (literal root))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation lang.error cause (
+            (simple-var-ref root)))
+          (value-type null)))))
+    (var-def
+      (variable mid (type
+        (error-type)) (expr
+        (error-constructor-expr (
+          (literal mid)
+          (simple-var-ref root))))))
+    (var-def
+      (variable top (type
+        (error-type)) (expr
+        (error-constructor-expr (
+          (literal top)
+          (simple-var-ref mid))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation error message (
+          (simple-var-ref top))))))
+    (var-def
+      (variable cause (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (invocation error cause (
+          (simple-var-ref top))))))
+    (type-test-expr is
+      (simple-var-ref cause)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2 bb3)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref cause))))))
+    (var-def
+      (variable inner (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (invocation lang.error cause (
+          (simple-var-ref cause))))))
+    (type-test-expr is
+      (simple-var-ref inner)
+      (error-type))
+  )
+  (bb2 (bb1) (bb3)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref inner))))))
+  )
+  (bb3 (bb2 bb1) (bb4))
+  (bb4 (bb3 bb0) ()
+    (var-def
+      (variable app (type
+        (user-defined-type AppError)) (expr
+        (error-constructor-expr
+          (user-defined-type AppError) (
+          (literal app)
+          (simple-var-ref top))))))
+    (var-def
+      (variable appCause (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (invocation lang.error cause (
+          (simple-var-ref app))))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref appCause)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref appCause)))
+          (literal none)))))
+  )
+)

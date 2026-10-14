@@ -32,8 +32,14 @@ func errorMessage(_ *extern.Context, args []values.BalValue) (values.BalValue, e
 	return err.Message, nil
 }
 
+func errorCause(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	err := args[0].(*values.Error)
+	return err.Cause, nil
+}
+
 func initErrorModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "message", errorMessage)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "cause", errorCause)
 }
 
 func init() {
