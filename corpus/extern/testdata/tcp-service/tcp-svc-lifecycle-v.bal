@@ -14,40 +14,50 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Exercises Listener.detach (identity-checked, unlike jBallerina's
-// any-detach-clears-whatever's-attached bug) and Listener.immediateStop
-// (a real force-stop in this port, unlike jBallerina's unimplemented stub —
-// see the README's Notable Behavioural Changes).
+// Exercises Listener.detach (identity-checked, unlike jBallerina) and
+// Listener.immediateStop (a real force-stop in this port, unlike jBallerina's
+// unimplemented stub); see the README's Notable Behavioural Changes.
 import ballerina/io;
 import ballerina/tcp;
 
-service class NoopConnService {
+service class EchoConnService {
     *tcp:ConnectionService;
+
+    remote function onBytes(readonly & byte[] data) returns byte[] {
+        return data;
+    }
 }
 
-service class NoopServer {
+service class EchoServer {
     *tcp:Service;
 
     remote function onConnect(tcp:Caller caller) returns tcp:ConnectionService {
         _ = caller.id;
-        return new NoopConnService();
+        return new EchoConnService();
     }
 }
 
 listener tcp:Listener lifecycleListener = new (19392);
 
 function init() returns error? {
-    NoopServer first = new NoopServer();
+    EchoServer first = new EchoServer();
     check lifecycleListener.attach(first);
     check lifecycleListener.detach(first);
-    check lifecycleListener.attach(new NoopServer());
+    check lifecycleListener.attach(new EchoServer());
 }
 
 public function testMain() returns error? {
-    tcp:Client c = check new ("localhost", 19392);
-    check c->close();
+    tcp:Client c = check new ("localhost", 19392, timeout = 2);
+    check c->writeBytes("ping".toBytes());
+    readonly & byte[] echoed = check c->readBytes();
+    io:println('string:fromBytes(echoed)); // @output ping
 
+    // gracefulStop leaves the open connection up; a following immediateStop must still close it.
+    check lifecycleListener.gracefulStop();
     check lifecycleListener.immediateStop();
+    (readonly & byte[])|tcp:Error afterStop = c->readBytes();
+    io:println(afterStop is tcp:Error ? afterStop.message() : "data"); // @output Connection closed by the server.
+    check c->close();
     tcp:Client|tcp:Error c2 = new ("localhost", 19392);
     io:println(c2 is tcp:Error); // @output true
 

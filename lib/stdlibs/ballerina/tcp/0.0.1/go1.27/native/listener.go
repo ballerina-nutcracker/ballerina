@@ -38,7 +38,7 @@ type listenerState struct {
 	svcObj  *values.Object
 	ln      net.Listener
 	conns   map[net.Conn]struct{}
-	stopped bool // set by gracefulStop/immediateStop; makes both idempotent
+	stopped bool // set by gracefulStop/immediateStop; rejects later connections and makes gracefulStop idempotent
 }
 
 func stateOf(self *values.Object) *listenerState {
@@ -171,20 +171,17 @@ func listenerGracefulStop(_ *extern.Context, args []values.BalValue) (values.Bal
 	return nil, nil
 }
 
+// listenerImmediateStop always closes active connections, including those a prior gracefulStop left open.
 func listenerImmediateStop(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	state := stateOf(args[0].(*values.Object))
 	state.mu.Lock()
 	ln := state.ln
-	alreadyStopped := state.stopped
 	state.stopped = true
 	conns := make([]net.Conn, 0, len(state.conns))
 	for c := range state.conns {
 		conns = append(conns, c)
 	}
 	state.mu.Unlock()
-	if alreadyStopped {
-		return nil, nil
-	}
 	if ln != nil {
 		_ = ln.Close()
 	}
