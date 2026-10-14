@@ -91,8 +91,8 @@ public isolated class Listener {
     # + return - An `error` if the listener fails to bind
     public isolated function 'start() returns error? = external;
 
-    # Stops the service listener gracefully. Already-accepted connections are drained before
-    # the listener socket closes.
+    # Stops the service listener gracefully. It stops accepting new connections; already-accepted
+    # connections stay open.
     #
     # + return - An `error` if the listener fails to stop
     public isolated function gracefulStop() returns error? = external;

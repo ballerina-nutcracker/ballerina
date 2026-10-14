@@ -32,6 +32,7 @@ import (
 // TCP reset (RST) via SetLinger(0) surfaces as a non-EOF read error on the
 // server's read loop, which routes to onError rather than a normal close.
 func TestTcpServiceOnError(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 
 	connected := make(chan struct{}, 1)

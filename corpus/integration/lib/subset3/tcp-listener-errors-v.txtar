@@ -1,3 +1,6 @@
 -- stdout --
 File does not contain valid certificates: /nonexistent/ca.pem
+Unable to initialize the tcp listener.
+true true
+true
 -- stderr --

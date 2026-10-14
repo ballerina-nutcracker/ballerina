@@ -22,12 +22,12 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [protobuf](../../lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
 | [random](../../lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
 | [task](../../lib/stdlibs/ballerina/task/0.0.1/go1.27/README.md)               | 15 | 1 | 1 | 88% |
-| [tcp](../../lib/stdlibs/ballerina/tcp/0.0.1/go1.27/README.md)                 | 18 | 1 | 1 | 82% |
+| [tcp](../../lib/stdlibs/ballerina/tcp/0.0.1/go1.27/README.md)                 | 16 | 3 | 1 | 73% |
 | [time](../../lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md)               | 29 | 3 | 0 | 91% |
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **299** | **37** | **70** | **73%** |
+| **Total**                                         | **297** | **39** | **70** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -155,6 +155,7 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **`Listener.immediateStop()` actually stops the listener.** jBallerina's `immediateStop()` is an unimplemented no-op stub (per its own documentation). This port force-closes the listener and every active connection immediately.
 - **`Listener.detach()` validates the given service.** jBallerina's `detach()` clears whatever service is currently attached regardless of the argument passed to it. This port returns an `Error` unless the given service is the one currently attached.
 - **A second `Listener.attach()` returns an `Error`.** jBallerina returns `()` when a service is attached to a listener that already has one. This port returns an `Error` instead, since a `tcp:Listener` dispatches to a single service.
+- **Connections accepted while no service is attached are closed.** jBallerina's `start()` binds without a service and leaves such connections open with nothing reading them. This port also binds, but closes each connection accepted while no service is attached.
 - **`Caller.remoteHost` is the peer's IP address.** jBallerina performs a reverse-DNS lookup, so a client connecting from `127.0.0.1` is reported as `localhost`. This port reports the address as seen on the socket (e.g. `127.0.0.1`) without resolving a host name.
 
 ### time

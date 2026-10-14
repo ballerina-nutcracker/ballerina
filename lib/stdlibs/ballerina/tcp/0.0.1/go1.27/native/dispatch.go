@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -41,10 +40,7 @@ func nextCallerID() string {
 	return strconv.FormatUint(callerIDCounter.Add(1), 10)
 }
 
-// connState is the per-connection state shared between the accept-side read
-// loop and the Caller object's close() method. Guards against jBallerina's
-// double onClose invocation (fix #2 in the README parity notes): closeOnce
-// runs the close+dispatch exactly once regardless of who triggers it first.
+// connState is shared between the read loop and Caller.close so onClose is dispatched exactly once, whichever side closes first.
 type connState struct {
 	mu         sync.Mutex
 	conn       net.Conn
@@ -52,7 +48,8 @@ type connState struct {
 	connSvcObj *values.Object // set once onConnect resolves; nil until then
 }
 
-func (cs *connState) closeOnce(ctx *extern.Context) {
+// closeOnce dispatches onClose before closing the socket, so the peer only observes the close after onClose has run.
+func (cs *connState) closeOnce(rt *runtime.Runtime, ctx *extern.Context) {
 	cs.mu.Lock()
 	if cs.closed {
 		cs.mu.Unlock()
@@ -61,10 +58,12 @@ func (cs *connState) closeOnce(ctx *extern.Context) {
 	cs.closed = true
 	connSvcObj := cs.connSvcObj
 	cs.mu.Unlock()
-	_ = cs.conn.Close()
 	if connSvcObj != nil {
-		invokeOnClose(ctx, connSvcObj)
+		invokeRemote(rt, ctx, connSvcObj, "onClose", func() []values.BalValue {
+			return []values.BalValue{connSvcObj}
+		})
 	}
+	_ = cs.conn.Close()
 }
 
 func (cs *connState) isClosed() bool {
@@ -73,12 +72,7 @@ func (cs *connState) isClosed() bool {
 	return cs.closed
 }
 
-// newCallerObject builds a tcp:Caller instance directly, bypassing the
-// compiled Ballerina init (see caller.bal — every Caller is constructed by
-// native code, never via `new tcp:Caller(...)`). Fields are computed once
-// here and reused for the connection's lifetime, fixing jBallerina's
-// per-dispatch recomputation, including a potential reverse-DNS lookup on
-// every onBytes call (fix #4 in the README parity notes).
+// newCallerObject builds a tcp:Caller natively; its fields are computed once per connection.
 func newCallerObject(conn net.Conn, cs *connState) *values.Object {
 	remoteHost, remotePortStr, _ := net.SplitHostPort(conn.RemoteAddr().String())
 	localHost, localPortStr, _ := net.SplitHostPort(conn.LocalAddr().String())
@@ -110,27 +104,29 @@ func registerCallerClassDef(rt *runtime.Runtime) {
 		},
 	}
 	runtime.RegisterExternClassDef(rt, callerClassDef)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Caller.$remote$writeBytes", callerWriteBytes)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Caller.$remote$close", callerClose(rt))
+}
 
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Caller.$remote$writeBytes",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			data := listToBytes(args[1].(*values.List))
-			cs := connStateOf(self)
-			if cs.isClosed() {
-				return tcpError("Socket connection already closed."), nil
-			}
-			if _, err := cs.conn.Write(data); err != nil {
-				return classifyWriteErr(err), nil
-			}
-			return nil, nil
-		})
+func callerWriteBytes(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	self := args[0].(*values.Object)
+	data := listToBytes(args[1].(*values.List))
+	cs := connStateOf(self)
+	if cs.isClosed() {
+		return tcpError("Socket connection already closed."), nil
+	}
+	if _, err := cs.conn.Write(data); err != nil {
+		return classifyWriteErr(err), nil
+	}
+	return nil, nil
+}
 
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Caller.$remote$close",
-		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			connStateOf(self).closeOnce(ctx)
-			return nil, nil
-		})
+func callerClose(rt *runtime.Runtime) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		self := args[0].(*values.Object)
+		connStateOf(self).closeOnce(rt, ctx)
+		return nil, nil
+	}
 }
 
 func connStateOf(self *values.Object) *connState {
@@ -144,35 +140,54 @@ func isBalError(v values.BalValue) bool {
 	return ok
 }
 
-func invokeOnClose(ctx *extern.Context, connSvcObj *values.Object) {
-	handle, ok := ctx.LookupRemoteMethod(connSvcObj, "onClose")
-	if !ok {
-		return
+// invokeRemote calls a service remote method. A Ballerina panic in the method is logged, as jBallerina does, instead of crashing the interpreter.
+func invokeRemote(rt *runtime.Runtime, ctx *extern.Context, obj *values.Object, method string, buildArgs func() []values.BalValue) (result values.BalValue, ok bool) {
+	handle, found := ctx.LookupRemoteMethod(obj, method)
+	if !found {
+		return nil, false
 	}
-	_, _ = ctx.InvokeMethod(handle, []values.BalValue{connSvcObj})
+	defer func() {
+		if rec := recover(); rec != nil {
+			logError(rt, panicMessage(rec))
+			result, ok = nil, false
+		}
+	}()
+	res, err := ctx.InvokeMethod(handle, buildArgs())
+	return res, err == nil
 }
 
-func dispatchOnError(ctx *extern.Context, connSvcObj *values.Object, tcpErr *values.Error) {
-	handle, ok := ctx.LookupRemoteMethod(connSvcObj, "onError")
-	if !ok {
-		return
-	}
-	_, _ = ctx.InvokeMethod(handle, []values.BalValue{connSvcObj, tcpErr})
+func logError(rt *runtime.Runtime, msg string) {
+	_, _ = rt.Platform().IO.Stderr([]byte("error: " + msg + "\n"))
 }
 
-// onBytesArgs builds the argument list for a resolved onBytes handle by
-// inspecting each declared parameter's type — mirroring jBallerina's own
-// Dispatcher.getOnBytesSignature(), which reflects over the connection
-// service's MethodType.getParameters() and switches on each parameter's
-// type tag (an object-typed parameter gets the Caller; anything else gets
-// the byte data). This lets onBytes be declared either as
-// onBytes(readonly & byte[] data) or onBytes(Caller caller, readonly &
-// byte[] data), in either parameter order, matching jBallerina exactly.
+func panicMessage(rec any) string {
+	switch v := rec.(type) {
+	case *values.Error:
+		return v.Message
+	case error:
+		return v.Error()
+	default:
+		return fmt.Sprintf("%v", rec)
+	}
+}
+
+// withPooledContext runs each dispatch on its own strand context, so a recovered panic never leaves stale state behind for the next dispatch.
+func withPooledContext(rt *runtime.Runtime, fn func(ctx *extern.Context)) {
+	ctx := rt.AcquirePooledContext()
+	defer rt.ReleasePooledContext(ctx)
+	fn(ctx)
+}
+
+func dispatchOnError(rt *runtime.Runtime, ctx *extern.Context, connSvcObj *values.Object, tcpErr *values.Error) {
+	invokeRemote(rt, ctx, connSvcObj, "onError", func() []values.BalValue {
+		return []values.BalValue{connSvcObj, tcpErr}
+	})
+}
+
+// onBytesArgs binds each declared onBytes parameter by type, as jBallerina's Dispatcher.getOnBytesSignature does: an object-typed parameter gets the Caller, anything else gets the data.
 func onBytesArgs(ctx *extern.Context, connSvcObj, callerObj *values.Object, dataList *values.List) []values.BalValue {
 	methodTy := semtypes.ObjectMemberType(ctx.TypeCtx(), semtypes.StringConst(model.RemoteMethodName("onBytes")), connSvcObj.Type)
 	if semtypes.IsZero(methodTy) || !semtypes.IsSubtype(ctx.TypeCtx(), methodTy, semtypes.Function) {
-		// Shouldn't happen — LookupRemoteMethod already confirmed the
-		// method exists — but fall back to the common two-param form.
 		return []values.BalValue{connSvcObj, callerObj, dataList}
 	}
 	paramListTy := semtypes.FunctionParamListType(ctx.TypeCtx(), methodTy)
@@ -191,56 +206,44 @@ func onBytesArgs(ctx *extern.Context, connSvcObj, callerObj *values.Object, data
 	return args
 }
 
-// dispatchOnBytes invokes onBytes, accepting either the
-// onBytes(readonly & byte[]) or onBytes(Caller, readonly & byte[]) form —
-// see onBytesArgs.
-func dispatchOnBytes(ctx *extern.Context, types tcpTypes, callerObj, connSvcObj *values.Object, cs *connState, data []byte) {
-	handle, ok := ctx.LookupRemoteMethod(connSvcObj, "onBytes")
+func dispatchOnBytes(rt *runtime.Runtime, ctx *extern.Context, types tcpTypes, callerObj, connSvcObj *values.Object, cs *connState, data []byte) {
+	result, ok := invokeRemote(rt, ctx, connSvcObj, "onBytes", func() []values.BalValue {
+		return onBytesArgs(ctx, connSvcObj, callerObj, bytesToList(types, ctx, data))
+	})
 	if !ok {
-		return
-	}
-	dataList := bytesToList(types, ctx, data)
-	result, err := ctx.InvokeMethod(handle, onBytesArgs(ctx, connSvcObj, callerObj, dataList))
-	if err != nil {
 		return
 	}
 	switch v := result.(type) {
 	case *values.List:
 		if _, werr := cs.conn.Write(listToBytes(v)); werr != nil {
-			dispatchOnError(ctx, connSvcObj, tcpError("Failed to send data."))
+			dispatchOnError(rt, ctx, connSvcObj, tcpError("Failed to send data."))
 		}
 	case *values.Error:
-		// jBallerina logs and continues rather than closing the connection or
-		// routing to onError — replicated as-is, see README parity notes.
-		fmt.Fprintln(os.Stderr, "tcp: onBytes returned an error:", v.Message)
+		// jBallerina logs a returned error and keeps the connection open without routing it to onError.
+		logError(rt, v.Message)
 	}
 }
 
-// handleConnection owns one accepted connection end-to-end: onConnect once,
-// then a read loop dispatching onBytes/onError, ending in exactly one
-// onClose (fix #2) — see connState.closeOnce.
+// handleConnection owns one accepted connection: onConnect once, then a read loop dispatching onBytes/onError, ending in exactly one onClose.
 func handleConnection(rt *runtime.Runtime, types tcpTypes, svcObj *values.Object, conn net.Conn) {
 	cs := &connState{conn: conn}
 	callerObj := newCallerObject(conn, cs)
 
-	ctx := rt.AcquirePooledContext()
-	defer rt.ReleasePooledContext(ctx)
-	handle, ok := ctx.LookupRemoteMethod(svcObj, "onConnect")
-	if !ok {
-		_ = conn.Close()
-		return
-	}
-	result, err := ctx.InvokeMethod(handle, []values.BalValue{svcObj, callerObj})
-	if err != nil || isBalError(result) {
-		// Fix #3: jBallerina leaves the connection open (and reads paused)
-		// forever when onConnect errors. Close it instead.
+	var result values.BalValue
+	var ok bool
+	withPooledContext(rt, func(ctx *extern.Context) {
+		result, ok = invokeRemote(rt, ctx, svcObj, "onConnect", func() []values.BalValue {
+			return []values.BalValue{svcObj, callerObj}
+		})
+	})
+	if !ok || isBalError(result) {
+		// jBallerina leaves the connection open with reads paused forever here; close it instead.
 		_ = conn.Close()
 		return
 	}
 	connSvcObj, ok := result.(*values.Object)
 	if !ok {
-		// onConnect returned () — no ConnectionService requested. The
-		// handler is expected to have closed the caller itself if desired.
+		// onConnect returned (): no connection service, so the handler owns closing the caller.
 		return
 	}
 	cs.mu.Lock()
@@ -251,14 +254,18 @@ func handleConnection(rt *runtime.Runtime, types tcpTypes, svcObj *values.Object
 	for {
 		n, readErr := conn.Read(buf)
 		if readErr != nil {
-			if !errors.Is(readErr, io.EOF) && !errors.Is(readErr, net.ErrClosed) && !cs.isClosed() {
-				dispatchOnError(ctx, connSvcObj, tcpError(readErr.Error()))
-			}
-			cs.closeOnce(ctx)
+			withPooledContext(rt, func(ctx *extern.Context) {
+				if !errors.Is(readErr, io.EOF) && !errors.Is(readErr, net.ErrClosed) && !cs.isClosed() {
+					dispatchOnError(rt, ctx, connSvcObj, tcpError(readErr.Error()))
+				}
+				cs.closeOnce(rt, ctx)
+			})
 			return
 		}
 		chunk := make([]byte, n)
 		copy(chunk, buf[:n])
-		dispatchOnBytes(ctx, types, callerObj, connSvcObj, cs, chunk)
+		withPooledContext(rt, func(ctx *extern.Context) {
+			dispatchOnBytes(rt, ctx, types, callerObj, connSvcObj, cs, chunk)
+		})
 	}
 }

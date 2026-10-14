@@ -26,12 +26,6 @@ service class EchoService {
     remote function onBytes(tcp:Caller caller, readonly & byte[] data) returns tcp:Error? {
         check caller->writeBytes(data);
     }
-
-    remote function onClose() returns tcp:Error? {
-        // Fires asynchronously relative to the client's own close() call, so
-        // it is not asserted on here to keep this fixture's output
-        // deterministic — see tcp-svc-close-once-v.bal for that assertion.
-    }
 }
 
 service class EchoServer {

@@ -18,11 +18,9 @@
 package native
 
 import (
-	"context"
 	"net"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
@@ -31,14 +29,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-// gracefulStopDrainTimeout bounds how long gracefulStop waits for
-// in-flight connections to close on their own before returning anyway.
-const gracefulStopDrainTimeout = 30 * time.Second
-
-// listenerState is the Go-side state of a tcp:Listener object, stored on the
-// object's "$state" field — mirrors http:Listener's listenerState
-// (lib/stdlibs/ballerina/http/0.0.1/go1.27/native/http_server.go). Unlike
-// http, tcp has no path-based routing: only one service may be attached.
+// listenerState is the Go-side state of a tcp:Listener, stored on its "$state" field. Unlike http, only one service may be attached.
 type listenerState struct {
 	host    string
 	port    int
@@ -47,7 +38,6 @@ type listenerState struct {
 	svcObj  *values.Object
 	ln      net.Listener
 	conns   map[net.Conn]struct{}
-	active  sync.WaitGroup
 	stopped bool // set by gracefulStop/immediateStop; makes both idempotent
 }
 
@@ -74,139 +64,138 @@ func registerListenerFunctions(rt *runtime.Runtime, types tcpTypes) {
 	runtime.RegisterExternClassDef(rt, listenerClassDef)
 	registerCallerClassDef(rt)
 
-	// Default lambda for the optional `name` parameter of attach (defaults to ()).
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "$Listener.attach$default$1",
-		func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) { return nil, nil })
-
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.initListener",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			port := int(args[1].(int64))
-			config := args[2].(*values.Map)
-
-			state := &listenerState{host: "0.0.0.0", port: port, conns: map[net.Conn]struct{}{}}
-			if v, ok := config.Get("localHost"); ok {
-				if s, ok := v.(string); ok && s != "" {
-					state.host = s
-				}
-			}
-			if v, ok := config.Get("secureSocket"); ok {
-				if ssMap, ok := v.(*values.Map); ok {
-					tlsCfg, tlsErr := buildListenerTLSConfig(rt, ssMap)
-					if tlsErr != nil {
-						return tlsErr, nil
-					}
-					state.tlsCfg = tlsCfg
-				}
-			}
-			self.Put("$state", state)
-			return nil, nil
-		})
-
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.attach",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			svcObj, ok := args[1].(*values.Object)
-			if !ok {
-				return tcpError("Listener.attach: expected a service object"), nil
-			}
-			state := stateOf(args[0].(*values.Object))
-			state.mu.Lock()
-			defer state.mu.Unlock()
-			if state.svcObj != nil {
-				return tcpError("Listener.attach: a service is already attached to this listener"), nil
-			}
-			state.svcObj = svcObj
-			return nil, nil
-		})
-
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.detach",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			svcObj := args[1].(*values.Object)
-			state := stateOf(args[0].(*values.Object))
-			state.mu.Lock()
-			defer state.mu.Unlock()
-			if state.svcObj != svcObj {
-				return tcpError("Listener.detach: the given service is not attached to this listener"), nil
-			}
-			state.svcObj = nil
-			return nil, nil
-		})
-
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.start",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			state := stateOf(args[0].(*values.Object))
-			state.mu.Lock()
-			if state.ln != nil {
-				state.mu.Unlock()
-				return nil, nil
-			}
-			if state.svcObj == nil {
-				state.mu.Unlock()
-				return tcpError("Error initializing the server: no service attached"), nil
-			}
-			svcObj := state.svcObj
-			address := net.JoinHostPort(state.host, strconv.Itoa(state.port))
-			tlsCfg := state.tlsCfg
-			state.mu.Unlock()
-
-			ln, err := rt.Platform().Net.Listen("tcp", address, tlsCfg)
-			if err != nil {
-				return tcpError("Error initializing the server: " + err.Error()), nil
-			}
-			state.mu.Lock()
-			state.ln = ln
-			state.mu.Unlock()
-			go acceptLoop(rt, types, state, svcObj)
-			return nil, nil
-		})
-
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.gracefulStop",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			state := stateOf(args[0].(*values.Object))
-			state.mu.Lock()
-			ln := state.ln
-			alreadyStopped := state.stopped
-			state.stopped = true
-			state.mu.Unlock()
-			if alreadyStopped {
-				return nil, nil
-			}
-			if ln == nil {
-				return tcpError("Unable to initialize the tcp listener."), nil
-			}
-			if err := ln.Close(); err != nil {
-				return tcpError("Failed to gracefully shutdown the Listener."), nil
-			}
-			waitForDrain(state)
-			return nil, nil
-		})
-
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.immediateStop",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			state := stateOf(args[0].(*values.Object))
-			state.mu.Lock()
-			ln := state.ln
-			alreadyStopped := state.stopped
-			state.stopped = true
-			conns := make([]net.Conn, 0, len(state.conns))
-			for c := range state.conns {
-				conns = append(conns, c)
-			}
-			state.mu.Unlock()
-			if alreadyStopped {
-				return nil, nil
-			}
-			if ln != nil {
-				_ = ln.Close()
-			}
-			for _, c := range conns {
-				_ = c.Close()
-			}
-			return nil, nil
-		})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "$Listener.attach$default$1", listenerAttachDefaultName)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.initListener", listenerInit(rt))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.attach", listenerAttach)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.detach", listenerDetach)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.start", listenerStart(rt, types))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.gracefulStop", listenerGracefulStop)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.immediateStop", listenerImmediateStop)
 }
 
-func acceptLoop(rt *runtime.Runtime, types tcpTypes, state *listenerState, svcObj *values.Object) {
+func listenerAttachDefaultName(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+	return nil, nil
+}
+
+func listenerInit(rt *runtime.Runtime) extern.NativeFunc {
+	return func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		self := args[0].(*values.Object)
+		port := int(args[1].(int64))
+		config := args[2].(*values.Map)
+
+		state := &listenerState{host: "0.0.0.0", port: port, conns: map[net.Conn]struct{}{}}
+		if v, ok := config.Get("localHost"); ok {
+			if s, ok := v.(string); ok && s != "" {
+				state.host = s
+			}
+		}
+		if v, ok := config.Get("secureSocket"); ok {
+			if ssMap, ok := v.(*values.Map); ok {
+				tlsCfg, tlsErr := buildListenerTLSConfig(rt, ssMap)
+				if tlsErr != nil {
+					return tlsErr, nil
+				}
+				state.tlsCfg = tlsCfg
+			}
+		}
+		self.Put("$state", state)
+		return nil, nil
+	}
+}
+
+func listenerAttach(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	svcObj := args[1].(*values.Object)
+	state := stateOf(args[0].(*values.Object))
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	if state.svcObj != nil {
+		return tcpError("Listener.attach: a service is already attached to this listener"), nil
+	}
+	state.svcObj = svcObj
+	return nil, nil
+}
+
+func listenerDetach(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	svcObj := args[1].(*values.Object)
+	state := stateOf(args[0].(*values.Object))
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	if state.svcObj != svcObj {
+		return tcpError("Listener.detach: the given service is not attached to this listener"), nil
+	}
+	state.svcObj = nil
+	return nil, nil
+}
+
+func listenerStart(rt *runtime.Runtime, types tcpTypes) extern.NativeFunc {
+	return func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		state := stateOf(args[0].(*values.Object))
+		state.mu.Lock()
+		if state.ln != nil {
+			state.mu.Unlock()
+			return nil, nil
+		}
+		address := net.JoinHostPort(state.host, strconv.Itoa(state.port))
+		tlsCfg := state.tlsCfg
+		state.mu.Unlock()
+
+		ln, err := rt.Platform().Net.Listen("tcp", address, tlsCfg)
+		if err != nil {
+			return tcpError("Error initializing the server: " + err.Error()), nil
+		}
+		state.mu.Lock()
+		state.ln = ln
+		state.mu.Unlock()
+		go acceptLoop(rt, types, state)
+		return nil, nil
+	}
+}
+
+// listenerGracefulStop stops accepting new connections and returns at once, leaving open connections up, as jBallerina does.
+func listenerGracefulStop(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	state := stateOf(args[0].(*values.Object))
+	state.mu.Lock()
+	ln := state.ln
+	alreadyStopped := state.stopped
+	state.stopped = true
+	state.mu.Unlock()
+	if alreadyStopped {
+		return nil, nil
+	}
+	if ln == nil {
+		return tcpError("Unable to initialize the tcp listener."), nil
+	}
+	if err := ln.Close(); err != nil {
+		return tcpError("Failed to gracefully shutdown the Listener."), nil
+	}
+	return nil, nil
+}
+
+func listenerImmediateStop(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	state := stateOf(args[0].(*values.Object))
+	state.mu.Lock()
+	ln := state.ln
+	alreadyStopped := state.stopped
+	state.stopped = true
+	conns := make([]net.Conn, 0, len(state.conns))
+	for c := range state.conns {
+		conns = append(conns, c)
+	}
+	state.mu.Unlock()
+	if alreadyStopped {
+		return nil, nil
+	}
+	if ln != nil {
+		_ = ln.Close()
+	}
+	for _, c := range conns {
+		_ = c.Close()
+	}
+	return nil, nil
+}
+
+// acceptLoop reads the attached service per connection, so start() works without a service and attach/detach apply to later connections.
+func acceptLoop(rt *runtime.Runtime, types tcpTypes, state *listenerState) {
 	for {
 		conn, err := state.ln.Accept()
 		if err != nil {
@@ -218,33 +207,21 @@ func acceptLoop(rt *runtime.Runtime, types tcpTypes, state *listenerState, svcOb
 			_ = conn.Close()
 			return
 		}
+		svcObj := state.svcObj
+		if svcObj == nil {
+			state.mu.Unlock()
+			_ = conn.Close()
+			continue
+		}
 		state.conns[conn] = struct{}{}
-		state.active.Add(1)
 		state.mu.Unlock()
 		go func() {
 			defer func() {
 				state.mu.Lock()
 				delete(state.conns, conn)
 				state.mu.Unlock()
-				state.active.Done()
 			}()
 			handleConnection(rt, types, svcObj, conn)
 		}()
-	}
-}
-
-// waitForDrain must run after state.stopped is set so acceptLoop no longer
-// registers connections concurrently with the Wait.
-func waitForDrain(state *listenerState) {
-	drained := make(chan struct{})
-	go func() {
-		state.active.Wait()
-		close(drained)
-	}()
-	ctx, cancel := context.WithTimeout(context.Background(), gracefulStopDrainTimeout)
-	defer cancel()
-	select {
-	case <-drained:
-	case <-ctx.Done():
 	}
 }

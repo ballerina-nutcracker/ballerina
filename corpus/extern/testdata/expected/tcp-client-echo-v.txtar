@@ -3,4 +3,5 @@ hello
 world
 true
 true
+untimed
 -- stderr --

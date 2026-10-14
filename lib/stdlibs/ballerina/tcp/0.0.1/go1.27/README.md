@@ -6,11 +6,11 @@ The Ballerina TCP library provides low-level, connection-oriented TCP client and
 
 ## Key Functionalities
 
-- Connect to a remote host with `hostName`/`port`, optionally binding to a local interface, with independent read and write timeouts.
+- Connect to a remote host with `remoteHost`/`remotePort`, optionally binding to a local interface, with independent read and write timeouts.
 - Send and receive raw bytes over the connection with no framing — each `readBytes()`/`onBytes` call reflects one underlying socket read, exactly as much data as happened to arrive.
 - Secure a client connection with a PEM certificate file, or a listener with a certificate and private key file pair, including TLS version selection and cipher suite restriction.
 - Start a TCP listener, attach a single service to it, and dispatch every accepted connection through `onConnect` to a dedicated, per-connection service instance.
-- Gracefully drain in-flight connections before stopping a listener, or force-stop it and every active connection immediately.
+- Stop a listener gracefully, so it stops accepting new connections while open ones stay up, or force-stop it and every active connection immediately.
 
 ## Examples
 
@@ -61,9 +61,9 @@ Support Levels:
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
 | Client initialization with local interface binding and read/write timeouts | Supported | |
-| Client secure connection using a certificate file path | Supported | |
+| Client secure connection using a certificate file path | Partially Supported | `ClientSecureSocket.handshakeTimeout` and `sessionTimeout` are ignored. |
 | Listener initialization | Supported | |
-| Listener secure connection using a certificate and private key file pair | Supported | |
+| Listener secure connection using a certificate and private key file pair | Partially Supported | `CertKey.keyPassword` is ignored, so an encrypted private key file fails at the TLS handshake. `ListenerSecureSocket.handshakeTimeout` and `sessionTimeout` are ignored. |
 | Client secure connection using a trust store | Cannot Support | Extracting every certificate from a PKCS12 trust store isn't implemented for this module; supplying a trust store value for `ClientSecureSocket.cert` returns an `Error` at runtime. Use a PEM certificate file path instead. |
 | Listener secure connection using a key store | Cannot Support | Supplying a key store value for `ListenerSecureSocket.key` returns an `Error` at runtime. Use a certificate and private key file pair instead. |
 | TLS version selection and cipher suite restriction | Supported | |
@@ -91,4 +91,5 @@ Support Levels:
 - **`Listener.immediateStop()` actually stops the listener.** jBallerina's `immediateStop()` is an unimplemented no-op stub (per its own documentation). This port force-closes the listener and every active connection immediately.
 - **`Listener.detach()` validates the given service.** jBallerina's `detach()` clears whatever service is currently attached regardless of the argument passed to it. This port returns an `Error` unless the given service is the one currently attached.
 - **A second `Listener.attach()` returns an `Error`.** jBallerina returns `()` when a service is attached to a listener that already has one. This port returns an `Error` instead, since a `tcp:Listener` dispatches to a single service.
+- **Connections accepted while no service is attached are closed.** jBallerina's `start()` binds without a service and leaves such connections open with nothing reading them. This port also binds, but closes each connection accepted while no service is attached.
 - **`Caller.remoteHost` is the peer's IP address.** jBallerina performs a reverse-DNS lookup, so a client connecting from `127.0.0.1` is reported as `localhost`. This port reports the address as seen on the socket (e.g. `127.0.0.1`) without resolving a host name.

@@ -14,9 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Verifies fix #3 from the README's Notable Behavioural Changes: jBallerina
-// leaves a connection open (and reads paused) forever when onConnect
-// returns an error; this port closes it instead.
+// jBallerina leaves a connection open with reads paused forever when onConnect
+// returns an error; this port closes it instead (see the README's Notable Behavioural Changes).
 import ballerina/io;
 import ballerina/tcp;
 
@@ -43,4 +42,14 @@ public function testMain() returns error? {
     boolean _ = writeResult is error;
     (readonly & byte[])|tcp:Error readResult = c->readBytes();
     io:println(readResult is tcp:Error); // @output true
+
+    // Once the peer has reset the connection, a write reports it as closed. The first writes may still be buffered locally.
+    tcp:Error? lastWrite = ();
+    foreach int _ in 0 ..< 100 {
+        lastWrite = c->writeBytes("x".toBytes());
+        if lastWrite is tcp:Error {
+            break;
+        }
+    }
+    io:println(lastWrite is tcp:Error ? lastWrite.message() : "no error"); // @output Socket connection already closed.
 }

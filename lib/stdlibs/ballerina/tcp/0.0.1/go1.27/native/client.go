@@ -23,6 +23,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -34,9 +35,7 @@ import (
 
 const defaultTcpTimeout = 300 * time.Second
 
-// readBufferSize bounds a single readBytes()/onBytes() read. There is no
-// framing in this protocol (see README parity notes), so this is purely a
-// buffer allocation size, not a message-size limit.
+// readBufferSize bounds a single readBytes()/onBytes() read; the protocol has no framing, so it is not a message-size limit.
 const readBufferSize = 32 * 1024
 
 func connOf(self *values.Object) net.Conn {
@@ -63,7 +62,7 @@ func classifyReadErr(err error) *values.Error {
 }
 
 func classifyWriteErr(err error) *values.Error {
-	if errors.Is(err, net.ErrClosed) {
+	if errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) {
 		return tcpError("Socket connection already closed.")
 	}
 	var netErr net.Error
@@ -71,6 +70,14 @@ func classifyWriteErr(err error) *values.Error {
 		return tcpError("Write timed out")
 	}
 	return tcpError("Failed to write data: " + err.Error())
+}
+
+// deadlineAfter treats a non-positive timeout as no timeout, matching jBallerina.
+func deadlineAfter(rt *runtime.Runtime, timeout time.Duration) time.Time {
+	if timeout <= 0 {
+		return time.Time{}
+	}
+	return rt.Platform().Time.Now().Add(timeout)
 }
 
 func listToBytes(list *values.List) []byte {
@@ -103,95 +110,101 @@ func registerClientFunctions(rt *runtime.Runtime, types tcpTypes) {
 		},
 	}
 	runtime.RegisterExternClassDef(rt, clientClassDef)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.initTcpConnection", clientInitTcpConnection(rt))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$writeBytes", clientWriteBytes(rt))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$readBytes", clientReadBytes(rt, types))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$close", clientClose)
+}
 
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.initTcpConnection",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			remoteHost := args[1].(string)
-			remotePort := args[2].(int64)
-			config := args[3].(*values.Map)
+func clientInitTcpConnection(rt *runtime.Runtime) extern.NativeFunc {
+	return func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		self := args[0].(*values.Object)
+		remoteHost := args[1].(string)
+		remotePort := args[2].(int64)
+		config := args[3].(*values.Map)
 
-			localHost := ""
-			if v, ok := config.Get("localHost"); ok {
-				localHost, _ = v.(string)
-			}
-			timeout := defaultTcpTimeout
-			if d, ok := decimalArg(config, "timeout"); ok {
-				timeout = decimalToDuration(d)
-			}
-			writeTimeout := defaultTcpTimeout
-			if d, ok := decimalArg(config, "writeTimeout"); ok {
-				writeTimeout = decimalToDuration(d)
-			}
-			var secureSocket *values.Map
-			if v, ok := config.Get("secureSocket"); ok {
-				secureSocket, _ = v.(*values.Map)
-			}
-			tlsCfg, tlsErr := buildClientTLSConfig(rt, secureSocket)
-			if tlsErr != nil {
-				return tlsErr, nil
-			}
+		localHost := ""
+		if v, ok := config.Get("localHost"); ok {
+			localHost, _ = v.(string)
+		}
+		timeout := defaultTcpTimeout
+		if d, ok := decimalArg(config, "timeout"); ok {
+			timeout = decimalToDuration(d)
+		}
+		writeTimeout := defaultTcpTimeout
+		if d, ok := decimalArg(config, "writeTimeout"); ok {
+			writeTimeout = decimalToDuration(d)
+		}
+		var secureSocket *values.Map
+		if v, ok := config.Get("secureSocket"); ok {
+			secureSocket, _ = v.(*values.Map)
+		}
+		tlsCfg, tlsErr := buildClientTLSConfig(rt, secureSocket)
+		if tlsErr != nil {
+			return tlsErr, nil
+		}
 
-			localAddr := ""
-			if localHost != "" {
-				localAddr = net.JoinHostPort(localHost, "0")
-			}
-			address := net.JoinHostPort(remoteHost, strconv.FormatInt(remotePort, 10))
-			dialCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
-			conn, err := rt.Platform().Net.Dial(dialCtx, "tcp", address, localAddr, tlsCfg)
-			if err != nil {
-				return tcpError("Unable to connect with remote host: " + err.Error()), nil
-			}
-			self.Put("$conn", conn)
-			self.Put("$timeout", timeout)
-			self.Put("$writeTimeout", writeTimeout)
-			return nil, nil
-		})
+		localAddr := ""
+		if localHost != "" {
+			localAddr = net.JoinHostPort(localHost, "0")
+		}
+		address := net.JoinHostPort(remoteHost, strconv.FormatInt(remotePort, 10))
+		dialCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		conn, err := rt.Platform().Net.Dial(dialCtx, "tcp", address, localAddr, tlsCfg)
+		if err != nil {
+			return tcpError("Unable to connect with remote host: " + err.Error()), nil
+		}
+		self.Put("$conn", conn)
+		self.Put("$timeout", timeout)
+		self.Put("$writeTimeout", writeTimeout)
+		return nil, nil
+	}
+}
 
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$writeBytes",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			data := listToBytes(args[1].(*values.List))
-			conn := connOf(self)
-			if conn == nil {
-				return tcpError("Socket connection already closed."), nil
-			}
-			writeTimeout, _ := self.Get("$writeTimeout")
-			_ = conn.SetWriteDeadline(rt.Platform().Time.Now().Add(writeTimeout.(time.Duration)))
-			if _, err := conn.Write(data); err != nil {
-				return classifyWriteErr(err), nil
-			}
-			return nil, nil
-		})
+func clientWriteBytes(rt *runtime.Runtime) extern.NativeFunc {
+	return func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		self := args[0].(*values.Object)
+		data := listToBytes(args[1].(*values.List))
+		conn := connOf(self)
+		if conn == nil {
+			return tcpError("Socket connection already closed."), nil
+		}
+		writeTimeout, _ := self.Get("$writeTimeout")
+		_ = conn.SetWriteDeadline(deadlineAfter(rt, writeTimeout.(time.Duration)))
+		if _, err := conn.Write(data); err != nil {
+			return classifyWriteErr(err), nil
+		}
+		return nil, nil
+	}
+}
 
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$readBytes",
-		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			conn := connOf(self)
-			if conn == nil {
-				return tcpError("Socket connection already closed."), nil
-			}
-			timeout, _ := self.Get("$timeout")
-			_ = conn.SetReadDeadline(rt.Platform().Time.Now().Add(timeout.(time.Duration)))
-			buf := make([]byte, readBufferSize)
-			n, err := conn.Read(buf)
-			if err != nil {
-				return classifyReadErr(err), nil
-			}
-			return bytesToList(types, ctx, buf[:n]), nil
-		})
+func clientReadBytes(rt *runtime.Runtime, types tcpTypes) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		self := args[0].(*values.Object)
+		conn := connOf(self)
+		if conn == nil {
+			return tcpError("Socket connection already closed."), nil
+		}
+		timeout, _ := self.Get("$timeout")
+		_ = conn.SetReadDeadline(deadlineAfter(rt, timeout.(time.Duration)))
+		buf := make([]byte, readBufferSize)
+		n, err := conn.Read(buf)
+		if err != nil {
+			return classifyReadErr(err), nil
+		}
+		return bytesToList(types, ctx, buf[:n]), nil
+	}
+}
 
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$close",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			conn := connOf(self)
-			if conn == nil {
-				return nil, nil
-			}
-			if err := conn.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
-				return tcpError("Unable to close the TCP client: " + err.Error()), nil
-			}
-			return nil, nil
-		})
+func clientClose(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	self := args[0].(*values.Object)
+	conn := connOf(self)
+	if conn == nil {
+		return nil, nil
+	}
+	if err := conn.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
+		return tcpError("Unable to close the TCP client: " + err.Error()), nil
+	}
+	return nil, nil
 }

@@ -50,4 +50,12 @@ public function testMain() returns error? {
     check lifecycleListener.immediateStop();
     tcp:Client|tcp:Error c2 = new ("localhost", 19392);
     io:println(c2 is tcp:Error); // @output true
+
+    tcp:Listener bare = check new (19402, localHost = "127.0.0.1");
+    check bare.'start();
+    tcp:Client c3 = check new ("127.0.0.1", 19402, timeout = 2);
+    io:println("connected without a service"); // @output connected without a service
+    (readonly & byte[])|tcp:Error r3 = c3->readBytes();
+    io:println(r3 is tcp:Error ? r3.message() : "data"); // @output Connection closed by the server.
+    check bare.immediateStop();
 }

@@ -1,3 +1,5 @@
 -- stdout --
 true
+connected without a service
+Connection closed by the server.
 -- stderr --

@@ -15,8 +15,8 @@
 // under the License.
 
 // A connection service that closes its own Caller from onBytes gets onClose
-// but no onError, matching jBallerina. gracefulStop waits for the read loop to
-// finish, so any spurious onError would print before "stopped".
+// but no onError, matching jBallerina. onClose runs before the socket closes,
+// so it prints before the client's read observes the close.
 import ballerina/io;
 import ballerina/tcp;
 

@@ -17,9 +17,23 @@
 import ballerina/io;
 import ballerina/tcp;
 
+service class Svc {
+    *tcp:Service;
+}
+
 public function main() {
     tcp:Client|tcp:Error c = new ("127.0.0.1", 1, secureSocket = {cert: "/nonexistent/ca.pem"});
-    if c is tcp:Error {
-        io:println(c.message()); // @output File does not contain valid certificates: /nonexistent/ca.pem
+    io:println(c is tcp:Error ? c.message() : "connected"); // @output File does not contain valid certificates: /nonexistent/ca.pem
+
+    tcp:Listener|tcp:Error l = new (21901);
+    if l is tcp:Error {
+        return;
     }
+    error? g = l.gracefulStop();
+    io:println(g is error ? g.message() : "ok"); // @output Unable to initialize the tcp listener.
+    error? r1 = l.attach(new Svc());
+    error? r2 = l.attach(new Svc());
+    io:println(r1 is (), " ", r2 is error); // @output true true
+    error? d = l.detach(new Svc());
+    io:println(d is error); // @output true
 }

@@ -50,6 +50,7 @@ func (p *tcpPal) Platform() pal.Platform {
 // against a bare Go TCP echo server — no tcp:Listener involved, isolating
 // the client half of the port.
 func TestTcpClientEcho(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -57,20 +58,12 @@ func TestTcpClientEcho(t *testing.T) {
 	}
 	defer func() { _ = ln.Close() }()
 	go func() {
-		conn, err := ln.Accept()
-		if err != nil {
-			return
-		}
-		defer func() { _ = conn.Close() }()
-		buf := make([]byte, 1024)
 		for {
-			n, err := conn.Read(buf)
+			conn, err := ln.Accept()
 			if err != nil {
 				return
 			}
-			if _, err := conn.Write(buf[:n]); err != nil {
-				return
-			}
+			go echoConn(conn)
 		}
 	}()
 
@@ -98,9 +91,15 @@ public function main() returns error? {
     io:println(afterClose is tcp:Error); // @output true
     tcp:Error? secondClose = c->close();
     io:println(secondClose is ()); // @output true
+
+    tcp:Client noTimeout = check new (%q, %s, timeout = 0, writeTimeout = 0);
+    check noTimeout->writeBytes("untimed".toBytes());
+    readonly & byte[] echoed3 = check noTimeout->readBytes();
+    io:println('string:fromBytes(echoed3)); // @output untimed
+    check noTimeout->close();
     return;
 }
-`, host, port)
+`, host, port, host, port)
 
 	tmpDir := t.TempDir()
 	tmpBalFile := filepath.Join(tmpDir, "tcp-client-echo-v.bal")
@@ -119,6 +118,7 @@ public function main() returns error? {
 // TestTcpClientIPv6 exercises a tcp:Listener and tcp:Client bound to the
 // IPv6 loopback address, which must be bracketed when joined with a port.
 func TestTcpClientIPv6(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 	ln, err := net.Listen("tcp", "[::1]:0")
 	if err != nil {
@@ -128,17 +128,12 @@ func TestTcpClientIPv6(t *testing.T) {
 	runExtern(t, fileCase("tcp-service/tcp-svc-ipv6-v"), newTcpPal(), nil)
 }
 
-// TestTcpClientMissingCACert verifies that an unreadable secureSocket.cert
-// file reports jBallerina's error message.
-func TestTcpClientMissingCACert(t *testing.T) {
-	runExtern(t, fileCase("tcp-client-missing-ca-v"), newTcpPal(), nil)
-}
-
 // TestTcpClientTLS exercises the TLS path on both tcp:Listener (CertKey)
 // and tcp:Client (PEM cert path) — the listener and client both run inside
 // the same Ballerina process, mirroring TestLdapClientTLS's use of
 // generateTestCerts.
 func TestTcpClientTLS(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 	caCertPEM, serverCertPEM, serverKeyPEM, _, _ := generateTestCerts(t)
 
@@ -216,4 +211,18 @@ public function testMain() returns error? {
 		ExpectedPath: filepath.Join(expectedDir, "tcp-client-tls-v.txtar"),
 	}
 	runExtern(t, tc, newTcpPal(), nil)
+}
+
+func echoConn(conn net.Conn) {
+	defer func() { _ = conn.Close() }()
+	buf := make([]byte, 1024)
+	for {
+		n, err := conn.Read(buf)
+		if err != nil {
+			return
+		}
+		if _, err := conn.Write(buf[:n]); err != nil {
+			return
+		}
+	}
 }

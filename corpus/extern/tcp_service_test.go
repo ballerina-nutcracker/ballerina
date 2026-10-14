@@ -22,6 +22,7 @@ import "testing"
 // and drives it from testMain via a real tcp:Client, exercising the full
 // listener -> onConnect -> onBytes -> Caller.writeBytes path.
 func TestTcpServiceEcho(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-echo-v"), newTcpPal(), nil)
 }
@@ -29,12 +30,15 @@ func TestTcpServiceEcho(t *testing.T) {
 // TestTcpServiceOnConnectError verifies that a connection is closed (not
 // left stuck forever, as in jBallerina) when onConnect returns an error.
 func TestTcpServiceOnConnectError(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-reject-v"), newTcpPal(), nil)
 }
 
-// TestTcpServiceLifecycle exercises Listener.detach and Listener.immediateStop.
+// TestTcpServiceLifecycle exercises Listener.detach, Listener.immediateStop and
+// starting a listener with no service attached.
 func TestTcpServiceLifecycle(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-lifecycle-v"), newTcpPal(), nil)
 }
@@ -42,6 +46,7 @@ func TestTcpServiceLifecycle(t *testing.T) {
 // TestTcpServiceInline exercises the anonymous
 // `service on new tcp:Listener(...) { ... }` declaration style.
 func TestTcpServiceInline(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-inline-v"), newTcpPal(), nil)
 }
@@ -49,6 +54,7 @@ func TestTcpServiceInline(t *testing.T) {
 // TestTcpServiceTimeouts exercises Client.readBytes' read-timeout error path
 // against a listener that never writes back.
 func TestTcpServiceTimeouts(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-timeouts-v"), newTcpPal(), nil)
 }
@@ -56,14 +62,23 @@ func TestTcpServiceTimeouts(t *testing.T) {
 // TestTcpServiceOnBytesBareForm exercises the bare onBytes(readonly & byte[])
 // signature (no Caller parameter) — see onBytesArgs in native/dispatch.go.
 func TestTcpServiceOnBytesBareForm(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-onbytes-bare-v"), newTcpPal(), nil)
 }
 
 // TestTcpServiceLocalClose verifies that closing the Caller from onBytes
-// dispatches onClose without a spurious onError, and that gracefulStop waits
-// for the connection to drain.
+// dispatches onClose without a spurious onError.
 func TestTcpServiceLocalClose(t *testing.T) {
+	t.Parallel()
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-local-close-v"), newTcpPal(), nil)
+}
+
+// TestTcpServicePanic verifies that a panic in onBytes or onConnect, or an
+// error returned from onBytes, is logged instead of crashing the interpreter.
+func TestTcpServicePanic(t *testing.T) {
+	t.Parallel()
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("tcp-service/tcp-svc-panic-v"), newTcpPal(), nil)
 }
