@@ -64,6 +64,7 @@ type CompilerContext struct {
 	env         *CompilerEnvironment
 	mu          sync.Mutex
 	diagnostics []diagnostics.Diagnostic
+	warnings    []diagnostics.Diagnostic
 	moduleStats *ModuleStats
 	stage       activeStage
 }
@@ -297,6 +298,22 @@ func (c *CompilerContext) SemanticError(message string, pos diagnostics.Location
 	c.addDiagnostic("SEMANTIC_ERROR", diagnostics.Error, message, pos)
 }
 
+// Warning records a warning. Warnings never stop compilation and are exposed only via Warnings.
+func (c *CompilerContext) Warning(message string, pos diagnostics.Location) {
+	code := "WARNING"
+	diagnostic := diagnostics.CreateDiagnostic(diagnostics.NewDiagnosticInfo(&code, message, diagnostics.Warning), pos)
+	c.mu.Lock()
+	c.warnings = append(c.warnings, diagnostic)
+	c.mu.Unlock()
+}
+
+// Warnings returns the recorded warnings.
+func (c *CompilerContext) Warnings() []diagnostics.Diagnostic {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return slices.Clone(c.warnings)
+}
+
 func (c *CompilerContext) addDiagnostic(code string, severity diagnostics.DiagnosticSeverity, message string, pos diagnostics.Location) {
 	diagnostic := diagnostics.CreateDiagnostic(diagnostics.NewDiagnosticInfo(&code, message, severity), pos)
 	c.mu.Lock()
@@ -304,12 +321,16 @@ func (c *CompilerContext) addDiagnostic(code string, severity diagnostics.Diagno
 	c.mu.Unlock()
 }
 
+// HasDiagnostics reports whether any error or fatal diagnostic was recorded.
+// It excludes warnings, which are exposed via Warnings.
 func (c *CompilerContext) HasDiagnostics() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return len(c.diagnostics) > 0
 }
 
+// HasErrors reports whether any error or fatal diagnostic was recorded.
+// It excludes warnings, which are exposed via Warnings.
 func (c *CompilerContext) HasErrors() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -322,6 +343,8 @@ func (c *CompilerContext) HasErrors() bool {
 	return false
 }
 
+// Diagnostics returns the recorded error and fatal diagnostics.
+// It excludes warnings, which are exposed via Warnings.
 func (c *CompilerContext) Diagnostics() []diagnostics.Diagnostic {
 	c.mu.Lock()
 	defer c.mu.Unlock()

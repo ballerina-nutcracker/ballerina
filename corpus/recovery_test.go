@@ -104,6 +104,9 @@ func TestRecovery(t *testing.T) {
 			finalPhaseReached := recoveryPhaseLimit >= finalPhase
 			if finalPhaseReached {
 				testharness.ValidateErrorMarkers(t, sourcePath, content, projects.NewDiagnosticResult(cx.Diagnostics()), cx.DiagnosticEnv())
+				if !astOnly {
+					test_util.AssertWarnMarkersCovered(t, sourcePath, content, cx.Warnings(), cx.DiagnosticEnv())
+				}
 			}
 			for _, section := range archive.Files[3:] {
 				switch section.Name {
