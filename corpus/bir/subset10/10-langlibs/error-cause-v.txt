@@ -1,0 +1,97 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad root
+    %2 = newError error(%1)
+    root = %2;
+    %4 = cause(root) -> bb1;
+  }
+  bb1 {
+    %5 = %4 is nil
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad mid
+    %9 = newError error(%8, root)
+    mid = %9;
+    %11 = ConstantLoad top
+    %12 = newError error(%11, mid)
+    top = %12;
+    %14 = message(top) -> bb3;
+  }
+  bb3 {
+    %15 = println(%14) -> bb4;
+  }
+  bb4 {
+    %16 = cause(top) -> bb5;
+  }
+  bb5 {
+    cause = %16;
+    %18 = cause is error
+    %18 ? bb6 : bb14;
+  }
+  bb6 {
+    PushScopeFrame 5
+    %0 = message((1, cause)) -> bb7;
+  }
+  bb7 {
+    %1 = println(%0) -> bb8;
+  }
+  bb8 {
+    %2 = cause((1, cause)) -> bb9;
+  }
+  bb9 {
+    inner = %2;
+    %4 = inner is error
+    %4 ? bb10 : bb13;
+  }
+  bb10 {
+    PushScopeFrame 2
+    %0 = message((1, inner)) -> bb11;
+  }
+  bb11 {
+    %1 = println(%0) -> bb12;
+  }
+  bb12 {
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb13 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    PushScopeFrame 10
+    %0 = ConstantLoad app
+    %1 = newError error<error>(%0, (1, top))
+    app = %1;
+    %3 = cause(app) -> bb15;
+  }
+  bb15 {
+    appCause = %3;
+    %6 = appCause is error
+    %6 ? bb16 : bb17;
+  }
+  bb16 {
+    %7 = message(appCause) -> bb19;
+  }
+  bb17 {
+    %8 = ConstantLoad none
+    %5 = %8;
+    GOTO bb18;
+  }
+  bb18 {
+    %9 = println(%5) -> bb20;
+  }
+  bb19 {
+    %5 = %7;
+    GOTO bb18;
+  }
+  bb20 {
+    PopScopeFrame
+    return;
+  }
+}
