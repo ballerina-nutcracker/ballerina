@@ -1,0 +1,8 @@
+-- stdout --
+main
+-- stderr --
+warning[WARNING]: unused variable 'unused'
+  --> unused1-v.bal:23:9
+   |
+23 |         int unused = 1; // @warn unused variable in the worker body
+   |         ^^^^^^^^^^^^^^^

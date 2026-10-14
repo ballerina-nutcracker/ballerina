@@ -207,8 +207,8 @@
                 "character": 18
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'value'"
           }
@@ -233,8 +233,8 @@
                 "character": 20
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'updated'"
           }

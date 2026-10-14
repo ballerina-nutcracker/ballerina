@@ -1,7 +1,0 @@
--- stdout --
--- stderr --
-error[SEMANTIC_ERROR]: unused variable 'i'
-  --> unused1-e.bal:19:5
-   |
-19 |     int i = 3; // @error
-   |     ^^^^^^^^^^

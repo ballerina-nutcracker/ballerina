@@ -1,0 +1,20 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal str))))
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (value-type int))
+        (block-stmt
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (simple-var-ref x))))) ())
+      (block-stmt))))

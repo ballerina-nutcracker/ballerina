@@ -1,0 +1,33 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:main:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = ConstantLoad main
+    %9 = println(%8) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$worker:main:w() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    unused = %2;
+    return;
+  }
+}

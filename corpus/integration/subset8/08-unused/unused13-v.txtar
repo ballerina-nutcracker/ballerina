@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+warning[WARNING]: unused variable 'x'
+  --> unused13-v.bal:19:23
+   |
+19 |     var _ = function (int x) returns int { // @warn
+   |                       ^^^^^

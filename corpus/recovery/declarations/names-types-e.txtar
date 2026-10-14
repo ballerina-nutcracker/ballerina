@@ -23,13 +23,13 @@ function types() {
     int '_ = 1; // @error
     int = 2; // @error
     mod:_ local = 3; // @error
-    int later = 4; // @error unused surviving sibling
+    int later = 4; // @warn unused surviving sibling
 }
 function valid() {}
 function discarded(int _) {} // @error discarded signature
 function discardedReferences() {
-    discarded();
-    int surviving = 5; // @error unused surviving sibling
+    discarded(); // @error missing required parameter
+    int surviving = 5; // @warn unused surviving sibling
 }
 -- ast --
 (package
@@ -82,29 +82,11 @@ function discardedReferences() {
           (value-type int)) (expr
           (literal 5)))))))
 -- stderr --
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> names-types-e.bal:25:1
+error[SEMANTIC_ERROR]: missing required parameter '_'
+  --> names-types-e.bal:30:1
    |
-25 |     int later = 4; // @error unused surviving sibling
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-26 | }
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'local'
-  --> names-types-e.bal:24:1
-   |
-24 |     mod:_ local = 3; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
-25 |     int later = 4; // @error unused surviving sibling
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'surviving'
-  --> names-types-e.bal:31:1
-   |
-31 |     int surviving = 5; // @error unused surviving sibling
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-32 | }
-   |
+30 |     discarded(); // @error missing required parameter
+   |     ^^^^^^^^^^^
 
 error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
   --> names-types-e.bal:17:5

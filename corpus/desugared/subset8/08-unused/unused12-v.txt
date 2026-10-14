@@ -1,0 +1,12 @@
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (return
+                  (literal 1)))))))))))

@@ -12,7 +12,7 @@ error[SEMANTIC_ERROR]: Unknown symbol: X
 19 | const Y = root:X; // @error
    |           ^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'Y'
+warning[WARNING]: unused variable 'Y'
   --> modules/cycle/cycle.bal:19:1
    |
 19 | const Y = root:X; // @error

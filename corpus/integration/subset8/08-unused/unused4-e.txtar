@@ -1,7 +1,0 @@
--- stdout --
--- stderr --
-error[SEMANTIC_ERROR]: unused variable 'arr'
-  --> unused4-e.bal:19:5
-   |
-19 |     int[] arr = [10]; // @error
-   |     ^^^^^^^^^^^^^^^^^

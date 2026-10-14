@@ -1,0 +1,21 @@
+(foo
+  (bb0 () (bb1 bb2)
+    (binary-expr ==
+      (simple-var-ref x)
+      (literal 100))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (literal 100))))
+  )
+  (bb2 (bb1 bb0) ())
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation foo (
+        (literal 100))))
+  )
+)

@@ -17,7 +17,7 @@
 
 function nested() {
     if true { int inner = 1; else { int other = 2; } // @error
-    int later = 3; // @error unused surviving sibling
+    int later = 3; // @warn unused surviving sibling
 }
 function valid() {}
 -- ast --
@@ -45,26 +45,6 @@ function valid() {}
     (value-type null))
     (block-function-body)))
 -- stderr --
-error[SEMANTIC_ERROR]: unused variable 'inner'
-  --> nested-block-e.bal:18:15
-   |
-18 |     if true { int inner = 1; else { int other = 2; } // @error
-   |               ^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> nested-block-e.bal:19:1
-   |
-19 |     int later = 3; // @error unused surviving sibling
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-20 | }
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'other'
-  --> nested-block-e.bal:18:37
-   |
-18 |     if true { int inner = 1; else { int other = 2; } // @error
-   |                                     ^^^^^^^^^^^^^^^
-
 error[SYNTAX_ERROR]: missing close brace token
   --> nested-block-e.bal:18:30
    |

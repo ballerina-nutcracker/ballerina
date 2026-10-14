@@ -11,15 +11,15 @@ error[SEMANTIC_ERROR]: resource methods are only allowed in client or service cl
    |
 18 |     resource function get path() returns int { // @error
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-19 |         int unusedLocal = 1; // @error
-   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |         int unusedLocal = 1; // @warn
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 20 |         return undefinedInResource; // @error
    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 21 |     }
    |     ^
 
-error[SEMANTIC_ERROR]: unused variable 'unusedLocal'
+warning[WARNING]: unused variable 'unusedLocal'
   --> 24-e.bal:19:9
    |
-19 |         int unusedLocal = 1; // @error
+19 |         int unusedLocal = 1; // @warn
    |         ^^^^^^^^^^^^^^^^^^^^

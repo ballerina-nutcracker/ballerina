@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-annotation int A on type;
+annotation A on type;
 type T int;
 
 function f0() {
@@ -261,7 +261,6 @@ function f39() {
 -- ast --
 (package
   (annotation A
-    (value-type int)
     (attach-point type))
   (type-definition T
     (value-type int))
@@ -986,642 +985,242 @@ function f39() {
             (literal 1)
             (literal bad))))))))
 -- stderr --
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:101:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:101:15
     |
 101 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-102 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:107:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:107:15
     |
 107 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-108 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:113:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:113:15
     |
 113 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-114 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:119:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:119:15
     |
 119 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-120 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:125:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:125:15
     |
 125 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-126 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:131:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:131:15
     |
 131 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-132 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:137:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:137:15
     |
 137 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-138 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:143:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:143:15
     |
 143 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-144 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:149:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:149:15
     |
 149 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-150 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:155:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:155:15
     |
 155 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-156 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:161:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:161:15
     |
 161 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-162 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:167:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:167:15
     |
 167 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-168 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:173:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:173:15
     |
 173 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-174 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:179:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:179:15
     |
 179 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-180 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:185:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:185:15
     |
 185 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-186 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:191:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:191:15
     |
 191 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-192 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:197:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:197:15
     |
 197 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-198 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:203:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:203:15
     |
 203 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-204 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:209:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:209:15
     |
 209 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-210 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:215:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:215:15
     |
 215 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-216 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:221:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:221:15
     |
 221 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-222 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:227:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:227:15
     |
 227 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-228 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:233:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:233:15
     |
 233 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-234 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:239:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:239:15
     |
 239 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-240 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:245:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:245:15
     |
 245 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-246 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:251:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:251:15
     |
 251 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-252 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-   --> annotation-access-parallel-e.bal:257:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+   --> annotation-access-parallel-e.bal:257:15
     |
 257 |     int bad = 1 + "bad"; // @error
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-258 | }
-    |
+    |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:23:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:23:15
    |
 23 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-24 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:29:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:29:15
    |
 29 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-30 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:35:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:35:15
    |
 35 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-36 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:41:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:41:15
    |
 41 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-42 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:47:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:47:15
    |
 47 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-48 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:53:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:53:15
    |
 53 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-54 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:59:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:59:15
    |
 59 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-60 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:65:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:65:15
    |
 65 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-66 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:71:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:71:15
    |
 71 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-72 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:77:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:77:15
    |
 77 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-78 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:83:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:83:15
    |
 83 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-84 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:89:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:89:15
    |
 89 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-90 | }
-   |
+   |               ^^^^^^^^^
 
-error[SEMANTIC_ERROR]: unused variable 'bad'
-  --> annotation-access-parallel-e.bal:95:1
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> annotation-access-parallel-e.bal:95:15
    |
 95 |     int bad = 1 + "bad"; // @error
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-96 | }
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:100:1
-    |
-100 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-101 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:106:1
-    |
-106 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-107 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:112:1
-    |
-112 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-113 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:118:1
-    |
-118 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-119 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:124:1
-    |
-124 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-125 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:130:1
-    |
-130 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-131 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:136:1
-    |
-136 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-137 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:142:1
-    |
-142 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-143 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:148:1
-    |
-148 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-149 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:154:1
-    |
-154 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-155 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:160:1
-    |
-160 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-161 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:166:1
-    |
-166 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-167 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:172:1
-    |
-172 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-173 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:178:1
-    |
-178 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-179 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:184:1
-    |
-184 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-185 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:190:1
-    |
-190 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-191 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:196:1
-    |
-196 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-197 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:202:1
-    |
-202 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-203 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:208:1
-    |
-208 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-209 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:214:1
-    |
-214 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-215 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:220:1
-    |
-220 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-221 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:226:1
-    |
-226 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-227 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:232:1
-    |
-232 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-233 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:238:1
-    |
-238 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-239 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:244:1
-    |
-244 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-245 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:250:1
-    |
-250 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-251 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-   --> annotation-access-parallel-e.bal:256:1
-    |
-256 |     any value = t.@A;
-    |     ^^^^^^^^^^^^^^^^^
-257 |     int bad = 1 + "bad"; // @error
-    |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:22:1
-   |
-22 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-23 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:28:1
-   |
-28 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-29 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:34:1
-   |
-34 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-35 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:40:1
-   |
-40 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-41 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:46:1
-   |
-46 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-47 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:52:1
-   |
-52 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-53 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:58:1
-   |
-58 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-59 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:64:1
-   |
-64 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-65 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:70:1
-   |
-70 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-71 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:76:1
-   |
-76 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-77 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:82:1
-   |
-82 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-83 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:88:1
-   |
-88 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-89 |     int bad = 1 + "bad"; // @error
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> annotation-access-parallel-e.bal:94:1
-   |
-94 |     any value = t.@A;
-   |     ^^^^^^^^^^^^^^^^^
-95 |     int bad = 1 + "bad"; // @error
-   |
+   |               ^^^^^^^^^

@@ -245,8 +245,8 @@
                 "character": 19
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'unused'"
           }
@@ -271,8 +271,8 @@
                 "character": 21
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'replaced'"
           }
@@ -297,8 +297,8 @@
                 "character": 18
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'ready'"
           }
@@ -323,8 +323,8 @@
                 "character": 18
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'after'"
           }
@@ -349,8 +349,8 @@
                 "character": 18
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'after'"
           }

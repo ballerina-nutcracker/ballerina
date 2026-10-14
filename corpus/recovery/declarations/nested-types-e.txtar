@@ -23,7 +23,7 @@ type UnknownRecord record {
     int surviving;
     AnotherMissingField another; // @error
 };
-function consumeFailed(UnknownArray value) returns int => 1; // @error unused value
+function consumeFailed(UnknownArray value) returns int => 1; // @warn unused value
 class UnknownFields {
     MissingClassField broken; // @error
     int surviving;
@@ -34,7 +34,7 @@ type Independent record {
     int value;
 };
 int unresolvedValue = discardedValue; // @error
-UnknownArray failedValue = []; // @error unused value
+UnknownArray failedValue = []; // @warn unused value
 int independentValue = 3;
 function independent(Independent value) returns int => value.value + independentValue;
 -- ast --
@@ -134,28 +134,6 @@ error[SEMANTIC_ERROR]: Unknown type: MissingSecondField
    |
 30 |     MissingSecondField another; // @error
    |     ^^^^^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'failedValue'
-  --> nested-types-e.bal:36:1
-   |
-36 | UnknownArray failedValue = []; // @error unused value
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-37 | int independentValue = 3;
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'unresolvedValue'
-  --> nested-types-e.bal:35:1
-   |
-35 | int unresolvedValue = discardedValue; // @error
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-36 | UnknownArray failedValue = []; // @error unused value
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> nested-types-e.bal:25:24
-   |
-25 | function consumeFailed(UnknownArray value) returns int => 1; // @error unused value
-   |                        ^^^^^^^^^^^^^^^^^^
 
 error[SYNTAX_ERROR]: missing identifier
   --> nested-types-e.bal:17:26

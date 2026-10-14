@@ -49,6 +49,8 @@ func validateActionOrExpr(cx scope.Context, e ast.BLangActionOrExpression, expec
 
 func validateActionOrExprInner(cx scope.Context, e ast.BLangActionOrExpression, expected semtypes.SemType) (scope.Facts, bool) {
 	switch e := e.(type) {
+	case *ast.BLangBadExprOrAction:
+		return scope.NoFacts, false
 	case *ast.BLangLiteral, *ast.BLangNumericLiteral, *ast.BLangConstRef, *ast.BLangWildCardBindingPattern,
 		*ast.BLangInferredTypedescDefault, *ast.BLangDefaultArg, *ast.BLangXMLPILiteral, *ast.BLangXMLCommentLiteral,
 		*ast.BLangXMLTextLiteral:

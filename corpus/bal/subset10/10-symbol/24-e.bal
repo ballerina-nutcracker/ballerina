@@ -16,7 +16,7 @@
 
 class C {
     resource function get path() returns int { // @error
-        int unusedLocal = 1; // @error
+        int unusedLocal = 1; // @warn
         return undefinedInResource; // @error
     }
 }

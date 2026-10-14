@@ -1,0 +1,8 @@
+-- stdout --
+42
+-- stderr --
+warning[WARNING]: unused variable 'value'
+  --> decls.bal:16:1
+   |
+16 | int value = 7; // @warn
+   | ^^^^^^^^^^^^^^

@@ -101,10 +101,10 @@ type moduleDriver struct {
 // already reported diagnostics.
 func (d *moduleDriver) publishableDiagnostics() []diagnostics.Diagnostic {
 	all := d.ctx.Diagnostics()
-	if d.parserDiagnosticCount > 0 && d.parserDiagnosticCount < len(all) {
+	if d.parserDiagnosticCount > 0 {
 		return all[:d.parserDiagnosticCount]
 	}
-	return all
+	return append(all, d.ctx.Warnings()...)
 }
 
 // newModuleDriver creates a fresh context over env. openText overrides loaded

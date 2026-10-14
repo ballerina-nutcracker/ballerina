@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+warning[WARNING]: unused variable 'x'
+  --> unused5-v.bal:18:1
+   |
+18 | const int x = 2; // @warn
+   | ^^^^^^^^^^^^^^^^
+
+warning[WARNING]: unused variable 'x'
+  --> unused5-v.bal:21:5
+   |
+21 |     string x = "str"; // @warn
+   |     ^^^^^^^^^^^^^^^^^
