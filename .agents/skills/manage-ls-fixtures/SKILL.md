@@ -1,6 +1,6 @@
 ---
 name: manage-ls-fixtures
-description: Create/update golden-JSON LSP fixture tests under ls/corpus and run the LS verification gates. Use during the verify stage of an ls-iteration, or standalone when the user wants LS test scenarios added, updated, or re-goldened.
+description: Create/update golden-JSON LSP fixture tests under ls/corpus and run the LS verification gates. Use during the verify stage of the docs ls-backlog workflow (/Users/wso2/projects/ballerina/ballerina-go/docs/.agents/skills/ls-backlog/SKILL.md), or standalone when the user wants LS test scenarios added, updated, or re-goldened.
 ---
 
 The format contract (fixture layout, JSON shape, driver behavior) lives in `ls/AGENTS.md` — read it first; this skill is the procedure, not the spec.
@@ -26,4 +26,4 @@ go vet ./ls/...
 
 ## The driver
 
-The in-process fake-transport driver (start the LS, feed the fixture as a real JSON-RPC request — real framing, real dispatch — diff against `expected`) **may not exist yet**. If it doesn't, stop: it must be built as an explicit deliverable of an iteration's approved design (see the `ls-iteration` skill, stage 4), not improvised here.
+The in-process fake-transport driver (start the LS, feed the fixture as a real JSON-RPC request — real framing, real dispatch — diff against `expected`) **may not exist yet**. If it doesn't, stop: it must be built as an explicit deliverable of an iteration's approved design (see the docs `ls-backlog` skill: `/Users/wso2/projects/ballerina/ballerina-go/docs/.agents/skills/ls-backlog/SKILL.md`), not improvised here.
