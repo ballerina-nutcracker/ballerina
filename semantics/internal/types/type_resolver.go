@@ -3050,7 +3050,43 @@ func createFieldDescriptor(name string, field ast.BField) model.FieldDescriptor 
 	if field.Default != nil {
 		fd.DefaultFnRef = field.Default.FnRef
 	}
+	fd.TypeRef = namedTypeRef(field.Type)
 	return fd
+}
+
+// namedTypeRef returns the symbol of the named type typeDesc refers to, looking through arrays and
+// optional types, or the zero symbol if there is none.
+func namedTypeRef(typeDesc ast.TypeDescriptor) model.SymbolRef {
+	switch n := typeDesc.(type) {
+	case *ast.BLangUserDefinedType:
+		if ast.SymbolIsSet(n) {
+			return n.Symbol()
+		}
+	case *ast.BLangArrayType:
+		return namedTypeRef(n.Elemtype.TypeDescriptor)
+	case *ast.BLangUnionTypeNode:
+		return namedTypeRefBeside(n.Lhs().TypeDescriptor, n.Rhs().TypeDescriptor, ast.TypeKindNil)
+	case *ast.BLangIntersectionTypeNode:
+		return namedTypeRefBeside(n.Lhs().TypeDescriptor, n.Rhs().TypeDescriptor, ast.TypeKindReadOnly)
+	}
+	return model.SymbolRef{}
+}
+
+// namedTypeRefBeside returns the named type of whichever of lhs and rhs sits beside a value type of
+// kind, as in `T?` or `readonly & T`.
+func namedTypeRefBeside(lhs, rhs ast.TypeDescriptor, kind ast.TypeKind) model.SymbolRef {
+	if isValueTypeNode(lhs, kind) {
+		return namedTypeRef(rhs)
+	}
+	if isValueTypeNode(rhs, kind) {
+		return namedTypeRef(lhs)
+	}
+	return model.SymbolRef{}
+}
+
+func isValueTypeNode(typeDesc ast.TypeDescriptor, kind ast.TypeKind) bool {
+	valueType, ok := typeDesc.(*ast.BLangValueType)
+	return ok && valueType.TypeKind == kind
 }
 
 func resolveClassDefinitionType(t typeResolver, classDef *ast.BLangClassDefinition, depth int) (semtypes.SemType, bool) {
