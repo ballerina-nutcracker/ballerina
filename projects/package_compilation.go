@@ -38,6 +38,7 @@ type PackageCompilation struct {
 	diagnosticResult      DiagnosticResult
 	compilerEnv           *context.CompilerEnvironment
 	compileOnce           sync.Once
+	sourceCompiledModules []ModuleDescriptor
 	compilerPluginManager *compilerPluginResolver
 }
 
@@ -143,6 +144,7 @@ func (c *PackageCompilation) compileModulesInternal() {
 				continue
 			}
 			resolveSymbolsAndTypes(moduleCtx)
+			c.sourceCompiledModules = append(c.sourceCompiledModules, moduleCtx.getDescriptor())
 			if moduleCtx.compilerCtx.HasErrors() {
 				erroredModules[moduleCtx.getModuleID()] = struct{}{}
 			}
@@ -328,6 +330,13 @@ func (c *PackageCompilation) collectModuleDiagnostics(dst *[]diagnostics.Diagnos
 				newPackageDiagnostic(diag, moduleCtx.getDescriptor(), moduleCtx.getProject(), isWorkspaceDep))
 		}
 	}
+}
+
+// SourceCompiledModules returns the modules, including dependencies, that this
+// compilation compiled from source. Modules skipped because a dependency failed
+// or loaded from a cache are not included.
+func (c *PackageCompilation) SourceCompiledModules() []ModuleDescriptor {
+	return slices.Clone(c.sourceCompiledModules)
 }
 
 // Resolution returns the package resolution.
