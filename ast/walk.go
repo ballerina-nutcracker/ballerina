@@ -70,6 +70,9 @@ func Walk(v Visitor, node BLangNode) {
 		for i := range node.ClassDefinitions {
 			Walk(v, node.ClassDefinitions[i])
 		}
+		for i := range node.BadTopLevelNodes {
+			Walk(v, node.BadTopLevelNodes[i])
+		}
 
 	case *BLangCompilationUnit:
 		for _, topLevelNode := range node.TopLevelNodes {
@@ -662,6 +665,9 @@ func Walk(v Visitor, node BLangNode) {
 	case *BLangObjectType:
 		for member := range node.Members() {
 			Walk(v, member.(BLangNode))
+		}
+		for i := range node.BadMembers {
+			Walk(v, node.BadMembers[i])
 		}
 
 	case *BObjectField:

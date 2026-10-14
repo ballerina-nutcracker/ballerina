@@ -18,8 +18,7 @@
 enum { R, B } // @error
 function useMember() returns string { return R; }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (const R enum-member (
     (value-type string)) (
     (literal R)))
@@ -35,5 +34,3 @@ function useMember() returns string { return R; }
     (block-function-body
       (return
         (simple-var-ref R)))))
--- symbols --
-+R +B

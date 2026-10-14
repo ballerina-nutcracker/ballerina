@@ -38,8 +38,16 @@ UnknownArray failedValue = []; // @error unused value
 int independentValue = 3;
 function independent(Independent value) returns int => value.value + independentValue;
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
+  (variable unresolvedValue (type
+    (value-type int)) (expr
+    (simple-var-ref discardedValue)))
+  (variable failedValue (type
+    (user-defined-type UnknownArray)) (expr
+    (list-constructor-expr)))
+  (variable independentValue (type
+    (value-type int)) (expr
+    (literal 3)))
   (type-definition BrokenArray
     (array-type
       (bad-type) dimensions: 1 ([])))
@@ -58,12 +66,10 @@ function independent(Independent value) returns int => value.value + independent
         (value-type int))
       (field another
         (user-defined-type AnotherMissingField))))
-  (function consumeFailed (
-    (variable value (type
-      (user-defined-type UnknownArray)))) (
-    (value-type int))
-    (expr-function-body
-      (literal 1)))
+  (type-definition Independent
+    (record-type
+      (field value
+        (value-type int))))
   (class-definition UnknownFields
     (variable broken (type
       (user-defined-type MissingClassField)))
@@ -77,19 +83,12 @@ function independent(Independent value) returns int => value.value + independent
       (value-type int))
       (expr-function-body
         (simple-var-ref value))))
-  (type-definition Independent
-    (record-type
-      (field value
-        (value-type int))))
-  (variable unresolvedValue (type
-    (value-type int)) (expr
-    (simple-var-ref discardedValue)))
-  (variable failedValue (type
-    (user-defined-type UnknownArray)) (expr
-    (list-constructor-expr)))
-  (variable independentValue (type
-    (value-type int)) (expr
-    (literal 3)))
+  (function consumeFailed (
+    (variable value (type
+      (user-defined-type UnknownArray)))) (
+    (value-type int))
+    (expr-function-body
+      (literal 1)))
   (function independent (
     (variable value (type
       (user-defined-type Independent)))) (

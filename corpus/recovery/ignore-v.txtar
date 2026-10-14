@@ -22,8 +22,7 @@ function ignore() {
 }
 function valid() {}
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function ignore () (
     (value-type null))
     (block-function-body

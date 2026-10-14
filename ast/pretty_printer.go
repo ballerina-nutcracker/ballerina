@@ -432,6 +432,9 @@ func (p *PrettyPrinter) printPackage(node *BLangPackage) {
 	for _, function := range sortedFunctions {
 		p.PrintInner(function)
 	}
+	for _, badNode := range node.BadTopLevelNodes {
+		p.PrintInner(badNode)
+	}
 	p.indentLevel--
 	p.EndNode()
 }
@@ -2194,6 +2197,9 @@ func (p *PrettyPrinter) printObjectType(node *BLangObjectType) {
 	})
 	for _, member := range members {
 		p.PrintInner(member.(BLangNode))
+	}
+	for _, badNode := range node.BadMembers {
+		p.PrintInner(badNode)
 	}
 	p.indentLevel--
 	p.EndNode()

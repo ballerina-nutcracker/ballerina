@@ -1,0 +1,68 @@
+-- params-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function missingComma(int a int b) {} // @error
+function missingFirstType(a, int b) {} // @error
+function missingSecondType(int a, b) {} // @error
+function leadingComma(, int a) {} // @error
+function trailingComma(int a, ) {} // @error
+function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+function valid(int a, int b = 1, int... rest) returns int => a + b + rest.length();
+-- ast --
+(package
+  (function missingFirstType (
+    (variable (bad-identifier) (type
+      (user-defined-type a)))
+    (variable b (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body))
+  (function missingSecondType (
+    (variable a (type
+      (value-type int)))
+    (variable (bad-identifier) (type
+      (user-defined-type b)))) (
+    (value-type null))
+    (block-function-body))
+  (function leadingComma (
+    (variable a (type
+      (bad-type)))) (
+    (value-type null))
+    (block-function-body))
+  (function trailingComma (
+    (variable a (type
+      (value-type int)))
+    (variable (bad-identifier) (type
+      (bad-type)))) (
+    (value-type null))
+    (block-function-body))
+  (function valid (
+    (variable a (type
+      (value-type int)))
+    (variable b (type
+      (value-type int)) (expr
+      (literal 1)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (binary-expr +
+          (simple-var-ref a)
+          (simple-var-ref b))
+        (invocation length expr:
+          (simple-var-ref rest) ()))))
+  (bad-top-level function)
+  (bad-top-level function))

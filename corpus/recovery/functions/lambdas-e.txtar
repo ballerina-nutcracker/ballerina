@@ -30,8 +30,7 @@ function lambdas() {
 }
 function valid() {}
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function lambdas () (
     (value-type null))
     (block-function-body

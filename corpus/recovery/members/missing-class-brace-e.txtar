@@ -21,9 +21,7 @@ class C {
 function valid() { C surviving; } // @error duplicate declaration after class recovery
 function independent(int value) returns int => value;
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
-  (bad-top-level class)
+(package
   (function valid () (
     (value-type null))
     (block-function-body
@@ -46,4 +44,5 @@ function independent(int value) returns int => value;
       (value-type int)))) (
     (value-type int))
     (expr-function-body
-      (simple-var-ref value))))
+      (simple-var-ref value)))
+  (bad-top-level class))

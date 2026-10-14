@@ -29,8 +29,7 @@ function lambdas() {
 }
 function caller() returns int => blockBody() + expressionBody();
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function blockBody () (
     (value-type int))
     (block-function-body

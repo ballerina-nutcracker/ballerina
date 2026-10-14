@@ -23,8 +23,7 @@ function independent() returns int {
     return 1;
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (variable abandoned (type
     (user-defined-type Unknown)) (expr
     (invocation ordinary ())))

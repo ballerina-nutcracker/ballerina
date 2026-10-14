@@ -34,13 +34,18 @@ type DuplicateObject object {
 };
 function valid(DuplicateMembers value) returns int => value.surviving();
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
+  (variable missingInitializer)
   (type-definition Invalid
     (value-type never))
   (type-definition NestedInvalid
     (value-type never))
-  (variable missingInitializer)
+  (type-definition DuplicateObject
+    (object-type
+      (method-decl method () (
+        (value-type int)))
+      (field value
+        (value-type int))))
   (class-definition DuplicateMembers
     (function init () (
       (value-type null))
@@ -54,12 +59,6 @@ function valid(DuplicateMembers value) returns int => value.surviving();
       (expr-function-body
         (invocation method expr:
           (simple-var-ref self) ()))))
-  (type-definition DuplicateObject
-    (object-type
-      (method-decl method () (
-        (value-type int)))
-      (field value
-        (value-type int))))
   (function valid (
     (variable value (type
       (user-defined-type DuplicateMembers)))) (

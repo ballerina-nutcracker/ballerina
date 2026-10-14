@@ -1,0 +1,157 @@
+-- object-type-methods-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+type FunctionTypeFieldMissingName object {
+    function (int a) returns int; // @error
+    function valid() returns int;
+};
+type MissingComma object {
+    function m(int a int b); // @error
+    function valid() returns int;
+};
+type MissingParamName object {
+    function m(int ); // @error
+    function valid() returns int;
+};
+type MissingFirstType object {
+    function m(a, int b); // @error
+    function valid() returns int;
+};
+type MissingSecondType object {
+    function m(int a, b); // @error
+    function valid() returns int;
+};
+type LeadingComma object {
+    function m(, int a); // @error
+    function valid() returns int;
+};
+type TrailingComma object {
+    function m(int a, ); // @error
+    function valid() returns int;
+};
+type MissingDefault object {
+    function m(int x = ); // @error
+    function valid() returns int;
+};
+type Mixed object {
+    function m(int a, string b = , int c = 1, d, int... ); // @error
+    function valid() returns int;
+};
+type MissingReturnType object {
+    function m() returns; // @error
+    function valid() returns int;
+};
+type MissingReturnsKeyword object {
+    function m() int; // @error
+    function valid() returns int;
+};
+type MissingSemicolon object {
+    function m() returns int
+    function valid() returns int; // @error missing semicolon is reported at the next method
+};
+function valid() returns int => 1;
+-- ast --
+(package
+  (type-definition FunctionTypeFieldMissingName
+    (object-type
+      (method-decl valid () (
+        (value-type int)))
+      (bad-top-level field)))
+  (type-definition MissingComma
+    (object-type
+      (method-decl valid () (
+        (value-type int)))
+      (bad-top-level function)))
+  (type-definition MissingParamName
+    (object-type
+      (method-decl m (
+        (param (bad-identifier)
+          (value-type int))) (
+        (value-type null)))
+      (method-decl valid () (
+        (value-type int)))))
+  (type-definition MissingFirstType
+    (object-type
+      (method-decl m (
+        (param (bad-identifier)
+          (user-defined-type a))
+        (param b
+          (value-type int))) (
+        (value-type null)))
+      (method-decl valid () (
+        (value-type int)))))
+  (type-definition MissingSecondType
+    (object-type
+      (method-decl m (
+        (param a
+          (value-type int))
+        (param (bad-identifier)
+          (user-defined-type b))) (
+        (value-type null)))
+      (method-decl valid () (
+        (value-type int)))))
+  (type-definition LeadingComma
+    (object-type
+      (method-decl m (
+        (param a
+          (bad-type))) (
+        (value-type null)))
+      (method-decl valid () (
+        (value-type int)))))
+  (type-definition TrailingComma
+    (object-type
+      (method-decl m (
+        (param a
+          (value-type int))
+        (param (bad-identifier)
+          (bad-type))) (
+        (value-type null)))
+      (method-decl valid () (
+        (value-type int)))))
+  (type-definition MissingDefault
+    (object-type
+      (method-decl m (
+        (param x
+          (value-type int))) (
+        (value-type null)))
+      (method-decl valid () (
+        (value-type int)))))
+  (type-definition Mixed
+    (object-type
+      (method-decl valid () (
+        (value-type int)))
+      (bad-top-level function)))
+  (type-definition MissingReturnType
+    (object-type
+      (method-decl m () (
+        (bad-type)))
+      (method-decl valid () (
+        (value-type int)))))
+  (type-definition MissingReturnsKeyword
+    (object-type
+      (method-decl valid () (
+        (value-type int)))
+      (bad-top-level function)))
+  (type-definition MissingSemicolon
+    (object-type
+      (method-decl valid () (
+        (value-type int)))
+      (bad-top-level function)))
+  (function valid () (
+    (value-type int))
+    (expr-function-body
+      (literal 1))))

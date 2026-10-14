@@ -21,8 +21,7 @@ function nested() {
 }
 function valid() {}
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function nested () (
     (value-type null))
     (block-function-body

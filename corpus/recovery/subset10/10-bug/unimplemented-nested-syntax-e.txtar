@@ -26,8 +26,7 @@ function g() {
 public function main() {
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function f () (
     (union-type
       (error-type)

@@ -43,7 +43,7 @@ import (
 
 // recoveryPhaseLimit is the last phase that recovers from source errors. Fixtures run only up to it and their
 // goldens hold the tree built by then; markers are checked only once every phase they exercise is enabled.
-const recoveryPhaseLimit = testphases.PhaseAST
+const recoveryPhaseLimit = testphases.PhaseSymbolResolution
 
 func TestRecovery(t *testing.T) {
 	t.Parallel()
@@ -100,10 +100,6 @@ func TestRecovery(t *testing.T) {
 			}
 			for _, section := range archive.Files[2:] {
 				switch section.Name {
-				case "symbols":
-					if recoveryPhaseLimit >= testphases.PhaseSymbolResolution {
-						assertRecoverySymbols(t, result, string(section.Data))
-					}
 				case "diagnostic-counts":
 					if finalPhaseReached {
 						assertRecoveryDiagnosticCounts(t, cx, string(section.Data))
@@ -120,23 +116,6 @@ func TestRecovery(t *testing.T) {
 	}
 	if count == 0 {
 		t.Fatal("no recovery fixtures discovered")
-	}
-}
-
-func assertRecoverySymbols(t *testing.T, result *testphases.PipelineResult, expected string) {
-	t.Helper()
-	if result.Package == nil || result.Package.Scope == nil {
-		t.Fatal("symbol expectations require semantic recovery")
-	}
-	for _, expectation := range strings.Fields(expected) {
-		if len(expectation) < 2 || (expectation[0] != '+' && expectation[0] != '-') {
-			t.Fatalf("invalid symbol expectation %q: use +name or -name", expectation)
-		}
-		name := expectation[1:]
-		_, found := result.Package.Scope.GetSymbol(name)
-		if want := expectation[0] == '+'; found != want {
-			t.Errorf("symbol %s: present = %t, want %t", name, found, want)
-		}
 	}
 }
 

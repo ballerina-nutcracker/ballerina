@@ -20,8 +20,7 @@ public function main() {
     int? x = value?.mod:_; // @error
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function main () (
     (value-type null))
     (block-function-body

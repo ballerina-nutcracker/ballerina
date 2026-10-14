@@ -32,8 +32,7 @@ function discardedReferences() {
     int surviving = 5; // @error unused surviving sibling
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (variable (bad-identifier) (type
     (value-type int)) (expr
     (literal 1)))

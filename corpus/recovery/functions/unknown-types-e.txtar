@@ -27,8 +27,26 @@ class Signatures {
 function bodyOnly(int value) returns int => value + ; // @error
 function callBodyOnly(int value) returns int => bodyOnly(value);
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
+  (class-definition Signatures
+    (function anotherUnknown (
+      (variable value (type
+        (user-defined-type MissingOther)))) (
+      (value-type int))
+      (expr-function-body
+        (literal 2)))
+    (function surviving (
+      (variable value (type
+        (value-type int)))) (
+      (value-type int))
+      (expr-function-body
+        (simple-var-ref value)))
+    (function unknown (
+      (variable value (type
+        (user-defined-type MissingMethod)))) (
+      (value-type int))
+      (expr-function-body
+        (literal 1))))
   (function unknownOrdinary (
     (variable value (type
       (user-defined-type Missing)))) (
@@ -54,25 +72,6 @@ function callBodyOnly(int value) returns int => bodyOnly(value);
         (simple-var-ref value)
         (invocation length expr:
           (simple-var-ref labels) ()))))
-  (class-definition Signatures
-    (function anotherUnknown (
-      (variable value (type
-        (user-defined-type MissingOther)))) (
-      (value-type int))
-      (expr-function-body
-        (literal 2)))
-    (function surviving (
-      (variable value (type
-        (value-type int)))) (
-      (value-type int))
-      (expr-function-body
-        (simple-var-ref value)))
-    (function unknown (
-      (variable value (type
-        (user-defined-type MissingMethod)))) (
-      (value-type int))
-      (expr-function-body
-        (literal 1))))
   (function bodyOnly (
     (variable value (type
       (value-type int)))) (

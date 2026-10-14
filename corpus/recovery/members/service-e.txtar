@@ -34,8 +34,15 @@ class Surviving {
     function method() returns int => self.good;
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
+  (class-definition Surviving
+    (variable good (type
+      (value-type int)))
+    (function method () (
+      (value-type int))
+      (expr-function-body
+        (field-based-access good
+          (simple-var-ref self)))))
   (service
     (absolute-resource-path /)
     (on
@@ -75,12 +82,4 @@ class Surviving {
     (bad-top-level function))
   (function independent () (
     (value-type null))
-    (block-function-body))
-  (class-definition Surviving
-    (variable good (type
-      (value-type int)))
-    (function method () (
-      (value-type int))
-      (expr-function-body
-        (field-based-access good
-          (simple-var-ref self))))))
+    (block-function-body)))

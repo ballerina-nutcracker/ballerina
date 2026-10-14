@@ -431,7 +431,7 @@ func (n *nodeBuilder) transformExprKind(node st.Node) (ast.BLangExpression, bool
 }
 
 func (n *nodeBuilder) transformType(node st.Node) ast.BType {
-	typeNode, ok := n.transformTypeKind(node)
+	typeNode, ok := n.transformTypeInner(node)
 	if !ok {
 		if node == nil {
 			return missingNode(&ast.BLangBadTypeNode{})
@@ -441,7 +441,7 @@ func (n *nodeBuilder) transformType(node st.Node) ast.BType {
 	return typeNode
 }
 
-func (n *nodeBuilder) transformTypeKind(node st.Node) (ast.BType, bool) {
+func (n *nodeBuilder) transformTypeInner(node st.Node) (ast.BType, bool) {
 	switch node := node.(type) {
 	case *st.BuiltinSimpleNameReferenceNode:
 		return n.createBuiltInTypeNode(node)
@@ -489,7 +489,7 @@ func (n *nodeBuilder) transformTypeKind(node st.Node) (ast.BType, bool) {
 		}
 		return n.createBuiltInTypeNodeFromToken(node)
 	default:
-		n.rejectNode(node, fmt.Sprintf("transformTypeKind: unsupported node type %T", node))
+		n.rejectNode(node, fmt.Sprintf("transformTypeInner: unsupported node type %T", node))
 		return nil, false
 	}
 }
@@ -6114,7 +6114,7 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 			n.rejectNode(member, "unexpected member kind in object type descriptor")
 		}
 		if !ok {
-			return nil, false
+			objectType.BadMembers = append(objectType.BadMembers, n.badTopLevel(member))
 		}
 	}
 
@@ -6312,33 +6312,36 @@ func (n *nodeBuilder) transformRecordTypeDescriptor(recordTypeDescriptorNode *st
 	recordType := &ast.BLangRecordType{}
 	fields := recordTypeDescriptorNode.Fields()
 	for field := range fields.Iterator() {
-		var ok bool
 		switch field := field.(type) {
 		case *st.RecordFieldNode:
-			ok = n.addRecordField(recordType, field)
-		case *st.RecordFieldWithDefaultValueNode:
-			ok = n.addRecordFieldWithDefaultValue(recordType, field)
-		case *st.TypeReferenceNode:
-			ok = n.expectNode(field) && n.expectToken(field.AsteriskToken())
-			if ok {
-				recordType.TypeInclusions = append(recordType.TypeInclusions, n.transformType(field.TypeName()))
-				ok = n.expectToken(field.SemicolonToken())
+			bField, ok := n.transformRecordField(field)
+			if !ok {
+				return nil, false
 			}
+			recordType.AddField(string(bField.Name), bField)
+		case *st.RecordFieldWithDefaultValueNode:
+			bField, ok := n.transformRecordFieldWithDefaultValue(field)
+			if !ok {
+				return nil, false
+			}
+			recordType.AddField(string(bField.Name), bField)
+		case *st.TypeReferenceNode:
+			inclusion, ok := n.transformRecordTypeInclusion(field)
+			if !ok {
+				return nil, false
+			}
+			recordType.TypeInclusions = append(recordType.TypeInclusions, inclusion)
 		default:
 			n.internalError("unexpected field kind in record type descriptor", field)
-		}
-		if !ok {
 			return nil, false
 		}
 	}
 	if restDesc := recordTypeDescriptorNode.RecordRestDescriptor(); restDesc != nil {
-		if !n.expectNode(restDesc) {
+		restType, ok := n.transformRecordRestDescriptor(restDesc)
+		if !ok {
 			return nil, false
 		}
-		recordType.RestType = n.transformType(restDesc.TypeName())
-		if !n.expectToken(restDesc.EllipsisToken()) || !n.expectToken(restDesc.SemicolonToken()) {
-			return nil, false
-		}
+		recordType.RestType = restType
 	}
 	if !n.expectToken(recordTypeDescriptorNode.BodyEndDelimiter()) {
 		return nil, false
@@ -6348,23 +6351,45 @@ func (n *nodeBuilder) transformRecordTypeDescriptor(recordTypeDescriptorNode *st
 	return recordType, true
 }
 
-func (n *nodeBuilder) addRecordField(recordType *ast.BLangRecordType, recordField *st.RecordFieldNode) bool {
+func (n *nodeBuilder) transformRecordTypeInclusion(typeReference *st.TypeReferenceNode) (ast.BType, bool) {
+	if !n.expectNode(typeReference) || !n.expectToken(typeReference.AsteriskToken()) {
+		return nil, false
+	}
+	inclusion := n.transformType(typeReference.TypeName())
+	if !n.expectToken(typeReference.SemicolonToken()) {
+		return nil, false
+	}
+	return inclusion, true
+}
+
+func (n *nodeBuilder) transformRecordRestDescriptor(restDesc *st.RecordRestDescriptorNode) (ast.BType, bool) {
+	if !n.expectNode(restDesc) {
+		return nil, false
+	}
+	restType := n.transformType(restDesc.TypeName())
+	if !n.expectToken(restDesc.EllipsisToken()) || !n.expectToken(restDesc.SemicolonToken()) {
+		return nil, false
+	}
+	return restType, true
+}
+
+func (n *nodeBuilder) transformRecordField(recordField *st.RecordFieldNode) (ast.BField, bool) {
 	if !n.expectNode(recordField) {
-		return false
+		return ast.BField{}, false
 	}
 	metadata, ok := n.transformMetadata(recordField.Metadata())
 	if !ok {
-		return false
+		return ast.BField{}, false
 	}
 	readonlyKeyword := recordField.ReadonlyKeyword()
 	if !n.expectOptionalToken(readonlyKeyword) {
-		return false
+		return ast.BField{}, false
 	}
 	fieldType := n.transformType(recordField.TypeName())
 	fieldNameToken := recordField.FieldName()
 	questionMarkToken := recordField.QuestionMarkToken()
 	if !n.expectToken(fieldNameToken) || !n.expectOptionalToken(questionMarkToken) || !n.expectToken(recordField.SemicolonToken()) {
-		return false
+		return ast.BField{}, false
 	}
 	fieldName, _ := normalizedIdentifierValue(fieldNameToken.Text())
 	var flags model.Flag
@@ -6376,30 +6401,29 @@ func (n *nodeBuilder) addRecordField(recordType *ast.BLangRecordType, recordFiel
 	}
 	bField := ast.NewBField(n.getPosition(recordField), model.Name(fieldName), fieldType, nil, flags)
 	applyMetadata(metadata, &bField)
-	recordType.AddField(fieldName, bField)
-	return true
+	return bField, true
 }
 
-func (n *nodeBuilder) addRecordFieldWithDefaultValue(recordType *ast.BLangRecordType, recordFieldDV *st.RecordFieldWithDefaultValueNode) bool {
+func (n *nodeBuilder) transformRecordFieldWithDefaultValue(recordFieldDV *st.RecordFieldWithDefaultValueNode) (ast.BField, bool) {
 	if !n.expectNode(recordFieldDV) {
-		return false
+		return ast.BField{}, false
 	}
 	metadata, ok := n.transformMetadata(recordFieldDV.Metadata())
 	if !ok {
-		return false
+		return ast.BField{}, false
 	}
 	readonlyKeyword := recordFieldDV.ReadonlyKeyword()
 	if !n.expectOptionalToken(readonlyKeyword) {
-		return false
+		return ast.BField{}, false
 	}
 	fieldType := n.transformType(recordFieldDV.TypeName())
 	fieldNameToken := recordFieldDV.FieldName()
 	if !n.expectToken(fieldNameToken) || !n.expectToken(recordFieldDV.EqualsToken()) {
-		return false
+		return ast.BField{}, false
 	}
 	defaultExpr := n.transformExpr(recordFieldDV.Expression())
 	if !n.expectToken(recordFieldDV.SemicolonToken()) {
-		return false
+		return ast.BField{}, false
 	}
 	fieldName, _ := normalizedIdentifierValue(fieldNameToken.Text())
 	var flags model.Flag
@@ -6408,8 +6432,7 @@ func (n *nodeBuilder) addRecordFieldWithDefaultValue(recordType *ast.BLangRecord
 	}
 	bField := ast.NewBField(n.getPosition(recordFieldDV), model.Name(fieldName), fieldType, defaultExpr, flags)
 	applyMetadata(metadata, &bField)
-	recordType.AddField(fieldName, bField)
-	return true
+	return bField, true
 }
 
 func (n *nodeBuilder) transformOptionalTypeDescriptor(optionalTypeDescriptorNode *st.OptionalTypeDescriptorNode) (*ast.BLangUnionTypeNode, bool) {
@@ -7253,7 +7276,7 @@ func badTopLevelKind(node st.Node) ast.BadTopLevelNodeKind {
 	switch node.Kind() {
 	case st.IMPORT_DECLARATION:
 		return ast.BadTopLevelNodeImport
-	case st.FUNCTION_DEFINITION, st.OBJECT_METHOD_DEFINITION, st.RESOURCE_ACCESSOR_DEFINITION:
+	case st.FUNCTION_DEFINITION, st.OBJECT_METHOD_DEFINITION, st.RESOURCE_ACCESSOR_DEFINITION, st.METHOD_DECLARATION:
 		return ast.BadTopLevelNodeFunction
 	case st.TYPE_DEFINITION:
 		return ast.BadTopLevelNodeTypeDefinition
