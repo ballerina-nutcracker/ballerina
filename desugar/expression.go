@@ -698,7 +698,7 @@ func synthesizeInferredTypedescArg(cx *functionContext, tdTy semtypes.SemType, p
 	return tdExpr
 }
 
-func assignToLocal(cx *functionContext, initExpr ast.BLangExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangVarRef) {
+func assignToLocal(cx *functionContext, initExpr ast.BLangActionOrExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangVarRef) {
 	ty := initExpr.Type()
 	tempName, tempSymRef := cx.addDesugardSymbol(ty, model.SymbolKindVariable, pos)
 	tempVar := &ast.BLangVariable{Name: newIdentifier(tempName)}
@@ -875,8 +875,7 @@ func walkTypeConversionExpr(cx *functionContext, expr *ast.BLangTypeConversionEx
 	var initStmts []ast.StatementNode
 
 	if expr.Expression != nil {
-		result := walkExpression(cx, expr.Expression)
-		expr.Expression = result.(ast.BLangExpression)
+		expr.Expression = walkExpression(cx, expr.Expression)
 	}
 	if fnType, ok := expr.TypeDescriptor.(*ast.BLangFunctionType); ok {
 		result := desugarFunctionTypeDesc(cx, fnType, cx.currentScope())

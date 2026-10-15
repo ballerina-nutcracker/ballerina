@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: impossible type conversion, intersection is empty
+  --> start-action-cast-e.bal:21:13
+   |
+21 |     int x = <int> start one(); // @error impossible type conversion
+   |             ^^^^^^^^^^^^^^^^^
