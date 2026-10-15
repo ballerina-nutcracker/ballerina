@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: expression expected action found
+  --> start-action-const-cast-e.bal:21:21
+   |
+21 | const int X = <int> start one(); // @error expression expected action found
+   |
