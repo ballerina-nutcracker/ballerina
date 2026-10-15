@@ -1,0 +1,123 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable n (type
+      (value-type int)) (expr
+      (literal 3)))
+    (function next () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (field-based-access n
+              (simple-var-ref self))
+            (literal 1))))))
+  (function one () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 1))))
+  (function times (
+    (variable i (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr *
+          (simple-var-ref i)
+          (literal 10)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable braced (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (type-conversion-expr
+            (start-action
+              (invocation one ()))
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int))))))
+      (var-def
+        (variable bracedValue (type
+          (value-type int)) (expr
+          (check-panicked-expr
+            (single-wait-action
+              (simple-var-ref braced))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref bracedValue))))
+      (var-def
+        (variable bare (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (type-conversion-expr
+            (start-action
+              (invocation times (
+                (literal 2))))
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int))))))
+      (var-def
+        (variable bareValue (type
+          (value-type int)) (expr
+          (check-panicked-expr
+            (single-wait-action
+              (simple-var-ref bare))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref bareValue))))
+      (var-def
+        (variable widened (type
+          (value-type any)) (expr
+          (type-conversion-expr
+            (start-action
+              (invocation times (
+                (literal 3))))
+            (value-type any)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref widened)
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int)))
+        (block-stmt
+          (var-def
+            (variable widenedValue (type
+              (value-type int)) (expr
+              (check-panicked-expr
+                (single-wait-action
+                  (simple-var-ref widened))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref widenedValue))))) ())
+      (block-stmt
+        (var-def
+          (variable c (type
+            (user-defined-type Counter)) (expr
+            (new ()))))
+        (var-def
+          (variable method (type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int))) (expr
+            (type-conversion-expr
+              (start-action
+                (invocation next expr:
+                  (simple-var-ref c) ()))
+              (constrained-type
+                (builtin-ref-type future)
+                (value-type int))))))
+        (var-def
+          (variable methodValue (type
+            (value-type int)) (expr
+            (check-panicked-expr
+              (single-wait-action
+                (simple-var-ref method))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref methodValue))))))))
