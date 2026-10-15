@@ -1,6 +1,16 @@
 (compilation-unit
 (package-id $anon . 0.0.0)
   (import-package ballerina io (as io))
+  (class-definition Client
+    (function $remote$scale (
+      (variable i (type
+        (value-type int)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (simple-var-ref i)
+            (literal 2))))))
   (class-definition Counter
     (variable n (type
       (value-type int)) (expr
@@ -120,4 +130,104 @@
                 (simple-var-ref method))))))
         (expression-stmt
           (invocation io println (
-            (simple-var-ref methodValue))))))))
+            (simple-var-ref methodValue))))
+        (var-def
+          (variable cl (type
+            (user-defined-type Client)) (expr
+            (new ()))))
+        (var-def
+          (variable remoteValue (type
+            (value-type int)) (expr
+            (type-conversion-expr
+              (remote-method-call scale expr:
+                (simple-var-ref cl) (
+                (literal 5)))
+              (value-type int)))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref remoteValue))))
+        (var-def
+          (variable remoteFuture (type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int))) (expr
+            (type-conversion-expr
+              (start-action
+                (remote-method-call scale expr:
+                  (simple-var-ref cl) (
+                  (literal 9))))
+              (constrained-type
+                (builtin-ref-type future)
+                (value-type int))))))
+        (var-def
+          (variable remoteFutureValue (type
+            (value-type int)) (expr
+            (check-panicked-expr
+              (single-wait-action
+                (simple-var-ref remoteFuture))))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref remoteFutureValue))))
+        (var-def
+          (variable nested (type
+            (value-type any)) (expr
+            (type-conversion-expr
+              (type-conversion-expr
+                (start-action
+                  (invocation times (
+                    (literal 6))))
+                (constrained-type
+                  (builtin-ref-type future)
+                  (value-type int)))
+              (value-type any)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref nested)
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)))
+          (block-stmt
+            (var-def
+              (variable nestedValue (type
+                (value-type int)) (expr
+                (check-panicked-expr
+                  (single-wait-action
+                    (simple-var-ref nested))))))
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref nestedValue))))) ())
+        (block-stmt
+          (var-def
+            (variable base (type
+              (value-type int)) (expr
+              (literal 1))))
+          (var-def
+            (variable startLater (expr
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable k (type
+                    (value-type int)))) (
+                  (constrained-type
+                    (builtin-ref-type future)
+                    (value-type int)))
+                  (block-function-body
+                    (return
+                      (type-conversion-expr
+                        (start-action
+                          (invocation times (
+                            (binary-expr +
+                              (simple-var-ref k)
+                              (simple-var-ref base)))))
+                        (constrained-type
+                          (builtin-ref-type future)
+                          (value-type int))))))))))
+          (var-def
+            (variable closureValue (type
+              (value-type int)) (expr
+              (check-panicked-expr
+                (single-wait-action
+                  (invocation startLater (
+                    (literal 6))))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref closureValue)))))))))

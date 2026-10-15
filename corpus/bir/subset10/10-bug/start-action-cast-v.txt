@@ -1,4 +1,23 @@
 module $anon.. v 0.0.0;
+class Client {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  $remote$scale(int) -> int{
+    bb0 {
+      %4 = i;
+      %5 = ConstantLoad 2
+      %6 = %5;
+      %3 = * %4 %6;
+      %0 = %3;
+      return;
+    }
+  }
+}
 class Counter {
   n int
 
@@ -130,7 +149,7 @@ main() -> nil{
     GOTO bb20;
   }
   bb20 {
-    PushScopeFrame 14
+    PushScopeFrame 44
     %0 = newObject $anon/.:Counter
     %1 = %0.init() -> bb21;
   }
@@ -174,7 +193,149 @@ main() -> nil{
     %13 = println(%12) -> bb30;
   }
   bb30 {
+    %14 = newObject $anon/.:Client
+    %15 = %14.init() -> bb31;
+  }
+  bb31 {
+    %17 = %15 is nil
+    %17 ? bb32 : bb33;
+  }
+  bb32 {
+    %16 = %14;
+    GOTO bb34;
+  }
+  bb33 {
+    %16 = %15;
+    GOTO bb34;
+  }
+  bb34 {
+    cl = %16;
+    %19 = ConstantLoad 5
+    %20 = %19;
+    %21 = cl.$remote$scale(%20) -> bb35;
+  }
+  bb35 {
+    %22 = <int>(%21)
+    remoteValue = %22;
+    %24 = remoteValue;
+    %25 = println(%24) -> bb36;
+  }
+  bb36 {
+    %26 = ConstantLoad 9
+    %27 = %26;
+    %28 = start cl.$remote$scale(%27) isolated=false -> bb37;
+  }
+  bb37 {
+    %29 = <future<int>>(%28)
+    remoteFuture = %29;
+    %32 = wait remoteFuture -> bb38;
+  }
+  bb38 {
+    %33 = %32 is error
+    %33 ? bb39 : bb40;
+  }
+  bb39 {
+    (1, %29) = %32;
     PopScopeFrame
+    panic %29;
+  }
+  bb40 {
+    %31 = %32;
+    GOTO bb41;
+  }
+  bb41 {
+    remoteFutureValue = %31;
+    %35 = remoteFutureValue;
+    %36 = println(%35) -> bb42;
+  }
+  bb42 {
+    %37 = ConstantLoad 6
+    %38 = %37;
+    %39 = start times(%38) isolated=false -> bb43;
+  }
+  bb43 {
+    %40 = <future<int>>(%39)
+    %41 = <any>(%40)
+    nested = %41;
+    %43 = nested is future<int>
+    %43 ? bb44 : bb50;
+  }
+  bb44 {
+    PushScopeFrame 6
+    %1 = wait (1, nested) -> bb45;
+  }
+  bb45 {
+    %2 = %1 is error
+    %2 ? bb46 : bb47;
+  }
+  bb46 {
+    (2, %30) = %1;
+    PopScopeFrame
+    PopScopeFrame
+    panic %30;
+  }
+  bb47 {
+    %0 = %1;
+    GOTO bb48;
+  }
+  bb48 {
+    nestedValue = %0;
+    %4 = nestedValue;
+    %5 = println(%4) -> bb49;
+  }
+  bb49 {
+    PopScopeFrame
+    GOTO bb50;
+  }
+  bb50 {
+    PushScopeFrame 13
+    %0 = ConstantLoad 1
+    base = %0;
+    %2 = closure_fp $anon/.:$anonFunc$_0
+    startLater = %2;
+    %5 = ConstantLoad 6
+    %6 = %5;
+    %7 = startLater(%6) -> bb51;
+  }
+  bb51 {
+    %8 = wait %7 -> bb52;
+  }
+  bb52 {
+    %9 = %8 is error
+    %9 ? bb53 : bb54;
+  }
+  bb53 {
+    (2, %31) = %8;
+    PopScopeFrame
+    PopScopeFrame
+    panic %31;
+  }
+  bb54 {
+    %4 = %8;
+    GOTO bb55;
+  }
+  bb55 {
+    closureValue = %4;
+    %11 = closureValue;
+    %12 = println(%11) -> bb56;
+  }
+  bb56 {
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+$anonFunc$_0(int) -> future<int>{
+  bb0 {
+    %3 = k;
+    %4 = (1, base);
+    %2 = + %3 %4;
+    %5 = %2;
+    %6 = start times(%5) isolated=false -> bb1;
+  }
+  bb1 {
+    %7 = <future<int>>(%6)
+    %0 = %7;
     return;
   }
 }

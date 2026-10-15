@@ -41,4 +41,28 @@ public function main() {
     future<int>[] casted = from int i in [7] select <future<int>>(start times(i));
     int castedValue = checkpanic wait casted[0];
     io:println(castedValue); // @output 70
+
+    future<int>[] pending = from int i in [1, 2] select start times(i);
+    int[] waited = from future<int> f in pending select <int> checkpanic wait f;
+    io:println(waited); // @output [10,20]
+
+    future<int>[] ordered = from int i in [3, 1, 2]
+        order by i descending
+        limit 2
+        select <future<int>> start times(i);
+    foreach future<int> f in ordered {
+        int value = checkpanic wait f;
+        io:println(value); // @output 30
+                           // @output 20
+    }
+
+    future<int>[] grouped = from int i in [1, 2, 3]
+        group by int k = i % 2
+        select start times(k);
+    foreach future<int> f in grouped {
+        int value = checkpanic wait f;
+        io:println(value); // @output 10
+                           // @output 0
+    }
+
 }

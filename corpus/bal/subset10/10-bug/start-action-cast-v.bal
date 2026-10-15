@@ -15,6 +15,12 @@
 // under the License.
 import ballerina/io;
 
+client class Client {
+    remote function scale(int i) returns int {
+        return i * 2;
+    }
+}
+
 class Counter {
     int n = 3;
 
@@ -50,4 +56,25 @@ public function main() {
     future<int> method = <future<int>> start c.next();
     int methodValue = checkpanic wait method;
     io:println(methodValue); // @output 4
+
+    Client cl = new;
+    int remoteValue = <int> cl->scale(5);
+    io:println(remoteValue); // @output 10
+
+    future<int> remoteFuture = <future<int>> start cl->scale(9);
+    int remoteFutureValue = checkpanic wait remoteFuture;
+    io:println(remoteFutureValue); // @output 18
+
+    any nested = <any> <future<int>> start times(6);
+    if nested is future<int> {
+        int nestedValue = checkpanic wait nested;
+        io:println(nestedValue); // @output 60
+    }
+
+    int base = 1;
+    var startLater = function(int k) returns future<int> {
+        return <future<int>> start times(k + base);
+    };
+    int closureValue = checkpanic wait startLater(6);
+    io:println(closureValue); // @output 70
 }
