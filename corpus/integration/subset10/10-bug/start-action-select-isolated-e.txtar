@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot start strand inside a lock statement
+  --> start-action-select-isolated-e.bal:33:61
+   |
+33 |         future<int>[] started = from int i in [1, 2] select start isolatedOne(i); // @error cannot start strand inside a lock statement
+   |                                                             ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> start-action-select-isolated-e.bal:28:46
+   |
+28 |     return from int i in [1, 2] select start one(i); // @error start action is not isolated
+   |                                              ^^^^^^
+
+error[SEMANTIC_ERROR]: start action is not isolated
+  --> start-action-select-isolated-e.bal:28:40
+   |
+28 |     return from int i in [1, 2] select start one(i); // @error start action is not isolated
+   |                                        ^^^^^^^^^^^^
