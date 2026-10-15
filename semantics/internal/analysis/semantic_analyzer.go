@@ -1205,12 +1205,9 @@ func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedTy
 					a.semanticErr("let clause supports only initialized simple variable declarations", clause.GetPosition())
 					return false
 				}
-				if !validateQueryWildcardVariableType(a, varDef.Var) {
+				expectedType := a.ctx().SymbolType(varDef.Var.Symbol())
+				if !validateWildcardVariableType(a, varDef.Var, expectedType) {
 					return false
-				}
-				var expectedType semtypes.SemType
-				if ast.SymbolIsSet(varDef.Var) {
-					expectedType = a.ctx().SymbolType(varDef.Var.Symbol())
 				}
 				if !analyzeActionOrExpression(a, varDef.Var.Expr.(ast.BLangExpression), expectedType) {
 					return false
@@ -1903,9 +1900,8 @@ func validateWildcardVariableType[A analyzer](a A, variable *ast.BLangVariable, 
 	return true
 }
 
-// validateQueryWildcardVariableType uses the symbol type because the type resolver sets the determined type of
-// query clause variables to NEVER.
 func validateQueryWildcardVariableType[A analyzer](a A, variable *ast.BLangVariable) bool {
+	// The type resolver sets the determined type of query clause variables to NEVER.
 	return validateWildcardVariableType(a, variable, a.ctx().SymbolType(variable.Symbol()))
 }
 
