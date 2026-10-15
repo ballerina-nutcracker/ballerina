@@ -43,7 +43,7 @@ import (
 
 // recoveryPhaseLimit is the last phase that recovers from source errors. Fixtures run only up to it and their
 // goldens hold the tree built by then; markers are checked only once every phase they exercise is enabled.
-const recoveryPhaseLimit = testphases.PhaseSymbolResolution
+const recoveryPhaseLimit = testphases.PhaseTypeNarrowing
 
 func TestRecovery(t *testing.T) {
 	t.Parallel()

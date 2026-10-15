@@ -40,7 +40,7 @@ function brokenBody() returns int {
 }
 function probe(int value) returns int => value;
 function unavailableSignature(Unknown value) returns int { // @error
-    probe("signatureSkipped");
+    probe("signatureResolved"); // @error body of a never-typed function is resolved
     return 1;
 }
 class Survivor {
@@ -215,7 +215,7 @@ function callers(Survivor survivor) returns int {
     (block-function-body
       (expression-stmt
         (invocation probe (
-          (literal signatureSkipped))))
+          (literal signatureResolved))))
       (return
         (literal 1))))
   (function callers (

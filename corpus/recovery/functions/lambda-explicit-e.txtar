@@ -115,3 +115,7 @@ function explicitBodies() {
               (invocation complete (
                 (literal 4))))))) ())
       (block-stmt))))
+(lambda-types
+  ($anonFunc$_0 [callable=unresolved])
+  ($anonFunc$_1 [callable=function(int) returns int])
+  ($anonFunc$_2 [callable=function(int) returns int]))
