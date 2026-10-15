@@ -1415,7 +1415,7 @@ func compileSingleFileModule(
 		t.Fatalf("parsing %s: %v", balPath, err)
 	}
 	assertNoDiagnostics(t, cx, "Parse")
-	cu := nodebuilder.GetCompilationUnit(cx, st)
+	cu := nodebuilder.GetCompilationUnit(cx, cx.GetDefaultPackage(), st)
 	pkgID := cx.NewPackageID(orgName, nameComps, model.DEFAULT_VERSION)
 	cu.SetPackageID(pkgID)
 	compilationUnits := []*ast.BLangCompilationUnit{cu}

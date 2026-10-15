@@ -76,10 +76,10 @@ func (n *nodeBuilder) unimplemented(message string, node st.Node) {
 	n.cx.Unimplemented(message, n.position(node))
 }
 
-func newNodeBuilder(cx *context.CompilerContext, rangeOf rangeFn) *nodeBuilder {
+func newNodeBuilder(cx *context.CompilerContext, pkgID *model.PackageID, rangeOf rangeFn) *nodeBuilder {
 	nodeBuilder := &nodeBuilder{
 		cx:        cx,
-		PackageID: cx.GetDefaultPackage(),
+		PackageID: pkgID,
 		rangeOf:   rangeOf,
 	}
 	return nodeBuilder

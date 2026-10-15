@@ -28,18 +28,18 @@ import (
 
 // GetCompilationUnit builds the AST of a syntax tree, reporting its syntax errors and substituting bad nodes for
 // the constructs that contain them.
-func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
+func GetCompilationUnit(cx *context.CompilerContext, pkgID *model.PackageID, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
 	span := cx.StartNamedSpan("AST Build", syntaxTree.FilePath())
 	defer span.End()
-	builder := newNodeBuilder(cx, st.Node.TextRange)
+	builder := newNodeBuilder(cx, pkgID, st.Node.TextRange)
 	return builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 }
 
 // GetRecoveredCompilationUnit is GetCompilationUnit with node positions that include surrounding minutiae.
-func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
+func GetRecoveredCompilationUnit(cx *context.CompilerContext, pkgID *model.PackageID, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
 	span := cx.StartNamedSpan("AST Build (recovered)", syntaxTree.FilePath())
 	defer span.End()
-	builder := newNodeBuilder(cx, st.Node.TextRangeWithMinutiae)
+	builder := newNodeBuilder(cx, pkgID, st.Node.TextRangeWithMinutiae)
 	return builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 }
 

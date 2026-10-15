@@ -236,7 +236,7 @@ func compileBundledLib(cx *context.CompilerContext, cache map[string]model.Expor
 		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: parse %s produced diagnostics", lib.balPath)
 	}
 	assemblyDiagnosticBaseline := len(cx.Diagnostics())
-	cu := nodebuilder.GetCompilationUnit(cx, syntaxTree)
+	cu := nodebuilder.GetCompilationUnit(cx, cx.GetDefaultPackage(), syntaxTree)
 	if cu == nil {
 		return model.ExportedSymbolSpace{}, fmt.Errorf("langlib: AST generation failed for %s", lib.balPath)
 	}
