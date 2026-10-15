@@ -1172,6 +1172,9 @@ func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedTy
 	if !analyzeActionOrExpression(a, clauses.fromClause.Collection, semtypes.SemType{}) {
 		return false
 	}
+	if !validateQueryWildcardVariableType(a, clauses.fromClause.VariableDefinitionNode.GetVariable()) {
+		return false
+	}
 	walkVariableDefNonExprChildren(a, clauses.fromClause.VariableDefinitionNode)
 	orderedTy := semtypes.CreateOrdered(a.tyCtx())
 
@@ -1179,6 +1182,9 @@ func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedTy
 		switch clause := queryExpr.QueryClauseList[i].(type) {
 		case *ast.BLangJoinClause:
 			if !analyzeActionOrExpression(a, clause.Collection, semtypes.SemType{}) {
+				return false
+			}
+			if !validateQueryWildcardVariableType(a, clause.VariableDefinitionNode.GetVariable()) {
 				return false
 			}
 			walkVariableDefNonExprChildren(a, clause.VariableDefinitionNode)
@@ -1197,6 +1203,9 @@ func analyzeQueryExpr[A analyzer](a A, queryExpr *ast.BLangQueryExpr, expectedTy
 				varDef := &clause.LetVarDeclarations[i]
 				if varDef.Var == nil || varDef.Var.Expr == nil {
 					a.semanticErr("let clause supports only initialized simple variable declarations", clause.GetPosition())
+					return false
+				}
+				if !validateQueryWildcardVariableType(a, varDef.Var) {
 					return false
 				}
 				var expectedType semtypes.SemType
@@ -1883,14 +1892,29 @@ func analyzeInvocationArgs[A analyzer](a A, inv invocable, paramListTy, expected
 	return validateResolvedType(a, inv, expectedType)
 }
 
+func validateWildcardVariableType[A analyzer](a A, variable *ast.BLangVariable, ty semtypes.SemType) bool {
+	if variable.GetName().GetValue() != string(model.IGNORE) {
+		return true
+	}
+	if !semtypes.IsSubtype(a.tyCtx(), ty, semtypes.Any) {
+		a.semanticErr("wildcard binding pattern type must be a subtype of 'any'", variable.GetPosition())
+		return false
+	}
+	return true
+}
+
+func validateQueryWildcardVariableType[A analyzer](a A, variable *ast.BLangVariable) bool {
+	if !ast.SymbolIsSet(variable) {
+		return true
+	}
+	return validateWildcardVariableType(a, variable, a.ctx().SymbolType(variable.Symbol()))
+}
+
 func analyzeSimpleVariableDef[A analyzer](a A, simpleVariableDef *ast.BLangVariableDef) bool {
 	variable := simpleVariableDef.GetVariable()
 	expectedType := variable.GetDeterminedType()
-	if variable.GetName().GetValue() == string(model.IGNORE) {
-		if !semtypes.IsSubtype(a.tyCtx(), expectedType, semtypes.Any) {
-			a.semanticErr("wildcard binding pattern type must be a subtype of 'any'", variable.GetPosition())
-			return false
-		}
+	if !validateWildcardVariableType(a, variable, expectedType) {
+		return false
 	}
 	if ast.SymbolIsSet(variable) {
 		symbolType := a.ctx().SymbolType(variable.Symbol())
