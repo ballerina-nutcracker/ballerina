@@ -1,0 +1,121 @@
+(Counter
+  (next
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (field-based-access n
+            (simple-var-ref self))
+          (literal 1)))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable braced (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (type-conversion-expr
+          (start-action
+            (invocation one ()))
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))))))
+    (var-def
+      (variable bracedValue (type
+        (value-type int)) (expr
+        (check-panicked-expr
+          (single-wait-action
+            (simple-var-ref braced))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref bracedValue))))
+    (var-def
+      (variable bare (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (type-conversion-expr
+          (start-action
+            (invocation times (
+              (literal 2))))
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))))))
+    (var-def
+      (variable bareValue (type
+        (value-type int)) (expr
+        (check-panicked-expr
+          (single-wait-action
+            (simple-var-ref bare))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref bareValue))))
+    (var-def
+      (variable widened (type
+        (value-type any)) (expr
+        (type-conversion-expr
+          (start-action
+            (invocation times (
+              (literal 3))))
+          (value-type any)))))
+    (type-test-expr is
+      (simple-var-ref widened)
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int)))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable widenedValue (type
+        (value-type int)) (expr
+        (check-panicked-expr
+          (single-wait-action
+            (simple-var-ref widened))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref widenedValue))))
+  )
+  (bb2 (bb1 bb0) ()
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (new ()))))
+    (var-def
+      (variable method (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (type-conversion-expr
+          (start-action
+            (invocation next expr:
+              (simple-var-ref c) ()))
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))))))
+    (var-def
+      (variable methodValue (type
+        (value-type int)) (expr
+        (check-panicked-expr
+          (single-wait-action
+            (simple-var-ref method))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref methodValue))))
+  )
+)
+(one
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(times
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref i)
+        (literal 10)))
+  )
+)

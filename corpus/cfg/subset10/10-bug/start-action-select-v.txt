@@ -1,0 +1,147 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable futures (type
+        (array-type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int)) dimensions: 1 ([]))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable i (type
+                (value-type int))))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3)))
+          (select-clause
+            (start-action
+              (invocation times (
+                (simple-var-ref i)))))))))
+    (var-def
+      (variable results (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref futures)
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int)))))
+  )
+  (bb2 (bb1) (bb1)
+    (var-def
+      (variable value (type
+        (value-type int)) (expr
+        (check-panicked-expr
+          (single-wait-action
+            (simple-var-ref f))))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref results)
+        (simple-var-ref value))))
+  )
+  (bb3 (bb1) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref results))))
+    (var-def
+      (variable filtered (type
+        (array-type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int)) dimensions: 1 ([]))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable i (type
+                (value-type int))))
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3)
+              (literal 4)))
+          (where-clause
+            (binary-expr ==
+              (binary-expr %
+                (simple-var-ref i)
+                (literal 2))
+              (literal 0)))
+          (let-clause
+            (var-def
+              (variable j (type
+                (value-type int)) (expr
+                (binary-expr +
+                  (simple-var-ref i)
+                  (literal 1))))))
+          (select-clause
+            (start-action
+              (invocation times (
+                (simple-var-ref j)))))))))
+  )
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (simple-var-ref filtered)
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int)))))
+  )
+  (bb5 (bb4) (bb4)
+    (var-def
+      (variable value (type
+        (value-type int)) (expr
+        (check-panicked-expr
+          (single-wait-action
+            (simple-var-ref f))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref value))))
+  )
+  (bb6 (bb4) ()
+    (var-def
+      (variable casted (type
+        (array-type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int)) dimensions: 1 ([]))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable i (type
+                (value-type int))))
+            (list-constructor-expr
+              (literal 7)))
+          (select-clause
+            (type-conversion-expr
+              (start-action
+                (invocation times (
+                  (simple-var-ref i))))
+              (constrained-type
+                (builtin-ref-type future)
+                (value-type int))))))))
+    (var-def
+      (variable castedValue (type
+        (value-type int)) (expr
+        (check-panicked-expr
+          (single-wait-action
+            (index-based-access
+              (simple-var-ref casted)
+              (literal 0)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref castedValue))))
+  )
+)
+(times
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref i)
+        (literal 10)))
+  )
+)
