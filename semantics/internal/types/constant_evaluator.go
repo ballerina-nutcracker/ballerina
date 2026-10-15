@@ -48,11 +48,7 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 	case *ast.BLangUnaryExpr:
 		return isConstantExpression(t, e.Expr)
 	case *ast.BLangTypeConversionExpr:
-		operand, ok := e.Expression.(ast.BLangExpression)
-		if !ok {
-			return expr, false
-		}
-		return isConstantExpression(t, operand)
+		return isConstantExpression(t, e.Expression.(ast.BLangExpression))
 	case *ast.BLangGroupExpr:
 		return isConstantExpression(t, e.Expression)
 	case *ast.BLangTypeTestExpr:
@@ -760,11 +756,7 @@ func constantExactEqual(lhs, rhs values.BalValue) bool {
 }
 
 func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangTypeConversionExpr) (values.BalValue, bool) {
-	operand, ok := expr.Expression.(ast.BLangExpression)
-	if !ok {
-		return nil, false
-	}
-	value, ok := e.evaluate(operand)
+	value, ok := e.evaluate(expr.Expression.(ast.BLangExpression))
 	if !ok {
 		return nil, false
 	}

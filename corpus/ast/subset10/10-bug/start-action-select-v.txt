@@ -139,4 +139,132 @@
                 (literal 0)))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref castedValue)))))))
+          (simple-var-ref castedValue))))
+      (var-def
+        (variable pending (type
+          (array-type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))
+            (select-clause
+              (start-action
+                (invocation times (
+                  (simple-var-ref i)))))))))
+      (var-def
+        (variable waited (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable f (type
+                  (constrained-type
+                    (builtin-ref-type future)
+                    (value-type int)))))
+              (simple-var-ref pending))
+            (select-clause
+              (type-conversion-expr
+                (check-panicked-expr
+                  (single-wait-action
+                    (simple-var-ref f)))
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref waited))))
+      (var-def
+        (variable ordered (type
+          (array-type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 3)
+                (literal 1)
+                (literal 2)))
+            (order-by-clause
+              (order-key descending
+                (simple-var-ref i)))
+            (limit-clause
+              (literal 2))
+            (select-clause
+              (type-conversion-expr
+                (start-action
+                  (invocation times (
+                    (simple-var-ref i))))
+                (constrained-type
+                  (builtin-ref-type future)
+                  (value-type int))))))))
+      (foreach
+        (var-def
+          (variable f (type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)))))
+        (simple-var-ref ordered)
+        (block-stmt
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (check-panicked-expr
+                (single-wait-action
+                  (simple-var-ref f))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref value))))))
+      (var-def
+        (variable grouped (type
+          (array-type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)
+                (literal 3)))
+            (group-by-clause
+              (grouping-key
+                (var-def
+                  (variable k (type
+                    (value-type int)) (expr
+                    (binary-expr %
+                      (simple-var-ref i)
+                      (literal 2)))))))
+            (select-clause
+              (start-action
+                (invocation times (
+                  (simple-var-ref k)))))))))
+      (foreach
+        (var-def
+          (variable f (type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)))))
+        (simple-var-ref grouped)
+        (block-stmt
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (check-panicked-expr
+                (single-wait-action
+                  (simple-var-ref f))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref value)))))))))
