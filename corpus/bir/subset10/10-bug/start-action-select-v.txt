@@ -1,4 +1,23 @@
 module $anon.. v 0.0.0;
+class Client {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  $remote$scale(int) -> int{
+    bb0 {
+      %4 = i;
+      %5 = ConstantLoad 2
+      %6 = %5;
+      %3 = * %4 %6;
+      %0 = %3;
+      return;
+    }
+  }
+}
 times(int) -> int{
   bb0 {
     %3 = i;
@@ -754,7 +773,8 @@ main() -> nil{
     %3 = wait f -> bb110;
   }
   bb109 {
-    return;
+    %230 = newObject $anon/.:Client
+    %231 = %230.init() -> bb115;
   }
   bb110 {
     %4 = %3 is error
@@ -782,5 +802,83 @@ main() -> nil{
     (1, $desugar$59) = %8;
     PopScopeFrame
     GOTO bb107;
+  }
+  bb115 {
+    %233 = %231 is nil
+    %233 ? bb116 : bb117;
+  }
+  bb116 {
+    %232 = %230;
+    GOTO bb118;
+  }
+  bb117 {
+    %232 = %231;
+    GOTO bb118;
+  }
+  bb118 {
+    cl = %232;
+    %235 = ConstantLoad 1
+    %236 = ConstantLoad 2
+    %237 = ConstantLoad 2
+    %238 = newArray [int, int, never...][%237]{%235, %236}
+    $desugar$61 = %238;
+    %240 = length($desugar$61) -> bb119;
+  }
+  bb119 {
+    $desugar$62 = %240;
+    %242 = ConstantLoad 0
+    %243 = newArray list[%242]{}
+    $desugar$63 = %243;
+    %246 = ConstantLoad 0
+    $desugar$64 = %246;
+    GOTO bb120;
+  }
+  bb120 {
+    %249 = $desugar$64;
+    %250 = $desugar$62;
+    %248 = < %249 %250;
+    %248 ? bb121 : bb122;
+  }
+  bb121 {
+    PushScopeFrame 10
+    %0 = (1, $desugar$61)[(1, $desugar$64)];
+    (1, i) = %0;
+    %1 = (1, i);
+    %2 = (1, cl).$remote$scale(%1) -> bb123;
+  }
+  bb122 {
+    scaled = $desugar$63;
+    %252 = println(scaled) -> bb125;
+  }
+  bb123 {
+    $desugar$65 = %2;
+    %4 = $desugar$65;
+    %5 = push((1, $desugar$63),%4) -> bb124;
+  }
+  bb124 {
+    %7 = (1, $desugar$64);
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    (1, $desugar$64) = %6;
+    PopScopeFrame
+    GOTO bb120;
+  }
+  bb125 {
+    %253 = ConstantLoad 8
+    %254 = %253;
+    %255 = start times(%254) isolated=false -> bb126;
+  }
+  bb126 {
+    single = %255;
+    %257 = wait single -> bb127;
+  }
+  bb127 {
+    %258 = <any>(%257)
+    waitedAny = %258;
+    %260 = println(waitedAny) -> bb128;
+  }
+  bb128 {
+    return;
   }
 }

@@ -15,6 +15,12 @@
 // under the License.
 import ballerina/io;
 
+client class Client {
+    remote function scale(int i) returns int {
+        return i * 2;
+    }
+}
+
 function times(int i) returns int {
     return i * 10;
 }
@@ -65,4 +71,12 @@ public function main() {
                            // @output 0
     }
 
+
+    Client cl = new;
+    int[] scaled = from int i in [1, 2] select cl->scale(i);
+    io:println(scaled); // @output [2,4]
+
+    future<int> single = start times(8);
+    any waitedAny = <any> wait single;
+    io:println(waitedAny); // @output 80
 }
