@@ -1,7 +1,0 @@
--- stdout --
--- stderr --
-error[SEMANTIC_ERROR]: wildcard binding pattern type must be a subtype of 'any'
-  --> 9-e.bal:20:37
-   |
-20 |     int[] _ = from int x in xs join error _ in es on 1 equals 1 select x; // @error
-   |                                     ^^^^^^^

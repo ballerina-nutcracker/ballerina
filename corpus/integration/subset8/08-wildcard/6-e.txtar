@@ -1,7 +1,0 @@
--- stdout --
--- stderr --
-error[SEMANTIC_ERROR]: wildcard binding pattern type must be a subtype of 'any'
-  --> 6-e.bal:18:37
-   |
-18 |     int[] _ = from int x in [1] let error _ = error("y") select x; // @error
-   |                                     ^^^^^^^^^^^^^^^^^^^^

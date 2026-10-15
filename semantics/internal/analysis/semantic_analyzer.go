@@ -1903,10 +1903,9 @@ func validateWildcardVariableType[A analyzer](a A, variable *ast.BLangVariable, 
 	return true
 }
 
+// validateQueryWildcardVariableType uses the symbol type because the type resolver sets the determined type of
+// query clause variables to NEVER.
 func validateQueryWildcardVariableType[A analyzer](a A, variable *ast.BLangVariable) bool {
-	if !ast.SymbolIsSet(variable) {
-		return true
-	}
 	return validateWildcardVariableType(a, variable, a.ctx().SymbolType(variable.Symbol()))
 }
 
