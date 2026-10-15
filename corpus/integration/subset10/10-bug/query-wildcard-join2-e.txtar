@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: wildcard binding pattern type must be a subtype of 'any'
+  --> query-wildcard-join2-e.bal:21:37
+   |
+21 |     int[] _ = from int x in xs join var _ in es on 1 equals 1 select x; // @error
+   |                                     ^^^^^
