@@ -1,0 +1,18 @@
+-- stdout --
+Unable to store Job : 'DEFAULT.a', because one already exists with this identification.
+Unable to store Job : 'DEFAULT.a', because one already exists with this identification.
+a: 2 b: 2 x: 0
+attached after start: 0
+true
+Service is not found in the listener
+true
+unnamed: 1
+true
+maxCount 0 repeats: true
+services stop with the scheduler: true
+The Scheduler has been shutdown.
+The Scheduler has been shutdown.
+Repeat Interval cannot be zero.
+Repeat interval must be >= 0
+Task coordination through warmBackupConfig is not supported
+-- stderr --

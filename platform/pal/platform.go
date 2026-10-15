@@ -84,6 +84,8 @@ type (
 	Time struct {
 		Now          func() time.Time
 		MonotonicNow func() time.Duration
+		// AfterFunc calls f on its own goroutine once d has elapsed.
+		AfterFunc func(d time.Duration, f func()) Timer
 	}
 	// Net abstracts raw TCP(+TLS) and UDP socket dialing and listening for
 	// non-HTTP wire protocols (e.g. ldap, tcp, udp). HTTP-based stdlibs must
@@ -119,6 +121,11 @@ type (
 		Listen func(cfg ServerConfig, handler http.Handler) (ServerHandle, error)
 	}
 )
+
+// Timer is a pending AfterFunc call. Stop reports whether it prevented the call.
+type Timer interface {
+	Stop() bool
+}
 
 // ProcessHandle is an opaque handle to a running subprocess.
 type ProcessHandle interface {
