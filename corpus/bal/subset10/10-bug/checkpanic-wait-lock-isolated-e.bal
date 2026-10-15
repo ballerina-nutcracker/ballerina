@@ -20,6 +20,14 @@ isolated function numbers() returns int[] {
     return [1, 2, 3];
 }
 
+function checkWait() returns error? {
+    future<int[]> pending = start numbers();
+    lock {
+        int[] waited = check wait pending; // @error access of mutable variable
+        lengths.push(waited.length());
+    }
+}
+
 public function main() {
     future<int[]> pending = start numbers();
     lock {
