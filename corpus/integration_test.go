@@ -672,7 +672,7 @@ func compileModuleFromSource(env *context.CompilerEnvironment, project projects.
 		if cx.HasDiagnostics() {
 			return nil, fmt.Errorf("parsing %s produced diagnostics", relPath)
 		}
-		cu := nodebuilder.GetCompilationUnit(cx, st)
+		cu := nodebuilder.GetCompilationUnit(cx, cx.GetDefaultPackage(), st)
 		syntaxTrees = append(syntaxTrees, cu)
 	}
 

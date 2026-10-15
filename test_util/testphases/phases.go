@@ -188,7 +188,7 @@ func loadBuiltinPublicSymbols(env *context.CompilerEnvironment) map[semantics.Pa
 				break
 			}
 
-			cu := nodebuilder.GetCompilationUnit(cx, st)
+			cu := nodebuilder.GetCompilationUnit(cx, cx.GetDefaultPackage(), st)
 			if cu == nil || cx.HasErrors() {
 				ok = false
 				break
@@ -282,7 +282,7 @@ func RunPipelineWithContent(env *context.CompilerEnvironment, cx *context.Compil
 	}
 
 	// Phase 2: AST
-	result.CompilationUnit = nodebuilder.GetCompilationUnit(cx, syntaxTree)
+	result.CompilationUnit = nodebuilder.GetCompilationUnit(cx, cx.GetDefaultPackage(), syntaxTree)
 	if result.CompilationUnit == nil || cx.HasErrors() {
 		return nil, fmt.Errorf("AST generation failed: compilation unit is nil")
 	}
