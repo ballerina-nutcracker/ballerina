@@ -23,7 +23,6 @@ import (
 	"io"
 	"net"
 	"strconv"
-	"syscall"
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -62,7 +61,7 @@ func classifyReadErr(err error) *values.Error {
 }
 
 func classifyWriteErr(err error) *values.Error {
-	if errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) {
+	if errors.Is(err, net.ErrClosed) || isPeerClosedErr(err) {
 		return tcpError("Socket connection already closed.")
 	}
 	var netErr net.Error
@@ -70,6 +69,15 @@ func classifyWriteErr(err error) *values.Error {
 		return tcpError("Write timed out")
 	}
 	return tcpError("Failed to write data: " + err.Error())
+}
+
+func isPeerClosedErr(err error) bool {
+	for _, errno := range peerClosedErrnos {
+		if errors.Is(err, errno) {
+			return true
+		}
+	}
+	return false
 }
 
 // deadlineAfter treats a non-positive timeout as no timeout, matching jBallerina.
