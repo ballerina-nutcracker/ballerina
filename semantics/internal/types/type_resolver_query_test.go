@@ -423,8 +423,8 @@ func TestResolveQueryExprCollectAggregatesVariables(t *testing.T) {
 	if !semtypes.IsSubtypeSimple(queryTy, semtypes.List) {
 		t.Fatalf("expected collect result type to be a list, got %v", queryTy)
 	}
-	if !semtypes.IsSubtypeSimple(collectXRef.GetDeterminedType(), semtypes.List) {
-		t.Fatalf("expected collect variable reference to be aggregated as a list, got %v", collectXRef.GetDeterminedType())
+	if !semtypes.IsSubtypeSimple(collectXRef.Type(), semtypes.List) {
+		t.Fatalf("expected collect variable reference to be aggregated as a list, got %v", collectXRef.Type())
 	}
 	if len(cx.Diagnostics()) > 0 {
 		t.Fatalf("expected no diagnostics, got %v", cx.Diagnostics())
@@ -458,11 +458,11 @@ func TestResolveQueryExprGroupByClauseAggregatesNonGroupingVars(t *testing.T) {
 	if !semtypes.IsSubtypeSimple(queryTy, semtypes.List) {
 		t.Fatalf("expected query result type to be a list, got %v", queryTy)
 	}
-	if !semtypes.IsSubtypeSimple(groupXRef.GetDeterminedType(), semtypes.Int) {
-		t.Fatalf("expected grouping key variable to remain int, got %v", groupXRef.GetDeterminedType())
+	if !semtypes.IsSubtypeSimple(groupXRef.Type(), semtypes.Int) {
+		t.Fatalf("expected grouping key variable to remain int, got %v", groupXRef.Type())
 	}
-	if !semtypes.IsSubtypeSimple(selectYRef.GetDeterminedType(), semtypes.List) {
-		t.Fatalf("expected non-grouping variable to be aggregated as a non-empty list, got %v", selectYRef.GetDeterminedType())
+	if !semtypes.IsSubtypeSimple(selectYRef.Type(), semtypes.List) {
+		t.Fatalf("expected non-grouping variable to be aggregated as a non-empty list, got %v", selectYRef.Type())
 	}
 	if len(cx.Diagnostics()) > 0 {
 		t.Fatalf("expected no diagnostics, got %v", cx.Diagnostics())
@@ -497,7 +497,7 @@ func TestResolveQueryExprCollectDoesNotReaggregateGroupByVars(t *testing.T) {
 		t.Fatalf("expected collect result type to be a list, got %v", queryTy)
 	}
 	tyCtx := semtypes.ContextFrom(cx.GetTypeEnv())
-	collectYTy := collectYRef.GetDeterminedType()
+	collectYTy := collectYRef.Type()
 	if !semtypes.IsSubtypeSimple(collectYTy, semtypes.List) {
 		t.Fatalf("expected grouped non-key variable to remain a list, got %v", collectYTy)
 	}
@@ -538,8 +538,8 @@ func TestResolveQueryExprGroupByVarDeclaration(t *testing.T) {
 	if !semtypes.IsSubtypeSimple(queryTy, semtypes.List) {
 		t.Fatalf("expected query result type to be a list, got %v", queryTy)
 	}
-	if !semtypes.IsSubtypeSimple(selectNRef.GetDeterminedType(), semtypes.Int) {
-		t.Fatalf("expected grouping variable declaration to be int, got %v", selectNRef.GetDeterminedType())
+	if !semtypes.IsSubtypeSimple(selectNRef.Type(), semtypes.Int) {
+		t.Fatalf("expected grouping variable declaration to be int, got %v", selectNRef.Type())
 	}
 	if len(cx.Diagnostics()) > 0 {
 		t.Fatalf("expected no diagnostics, got %v", cx.Diagnostics())

@@ -102,8 +102,10 @@ func (c *unresolvedChecker) Visit(node ast.BLangNode) ast.Visitor {
 	if node == nil {
 		return nil
 	}
-	if !semtypes.IsZero(node.GetDeterminedType()) {
-		c.t.Errorf("%T at %v has a determined type", node, node.GetPosition())
+	if typed, ok := node.(ast.NodeWithType); ok && !semtypes.IsZero(typed.Type()) {
+		if _, bad := node.(*ast.BLangBadExprOrAction); !bad {
+			c.t.Errorf("%T at %v has a type", node, node.GetPosition())
+		}
 	}
 	switch n := node.(type) {
 	case *ast.BLangNumericLiteral:
@@ -122,7 +124,7 @@ func (c *unresolvedChecker) Visit(node ast.BLangNode) ast.Visitor {
 			c.t.Errorf("field access at %v is marked lax", n.GetPosition())
 		}
 	case *ast.BLangTypeTestExpr:
-		if !semtypes.IsZero(n.Type.Type) {
+		if !semtypes.IsZero(n.TestedType.Type) {
 			c.t.Errorf("type test at %v has a resolved type", n.GetPosition())
 		}
 	case *ast.BLangListConstructorExpr:

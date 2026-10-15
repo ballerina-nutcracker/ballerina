@@ -115,7 +115,7 @@ func selfFieldLockEntry(a analyzer, access *ast.BLangFieldBaseAccess) (string, m
 		if field.Name.GetValue() != fieldName {
 			continue
 		}
-		if isImmutableField(a.tyCtx(), field) {
+		if isImmutableField(a, field) {
 			return "", model.SymbolRef{}, false
 		}
 		pkg := a.ctx().SymbolPackage(field.Symbol())
@@ -265,7 +265,7 @@ func isolatedInvocationViolationInner(ctx *context.CompilerContext, tyCtx semtyp
 		if !sig.IsIsolatedParam(i) {
 			continue
 		}
-		if !semtypes.IsSubtype(tyCtx, arg.GetDeterminedType(), isolatedFn) {
+		if !semtypes.IsSubtype(tyCtx, arg.Type(), isolatedFn) {
 			return arg.GetPosition(), true
 		}
 	}
@@ -458,7 +458,7 @@ func (sa *semanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDecl
 	for i := range sa.pkg.GlobalVars {
 		v := sa.pkg.GlobalVars[i]
 		out[v.Symbol()] = varDeclMetadata{
-			Type:          v.GetDeterminedType(),
+			Type:          sa.ctx().SymbolType(v.Symbol()),
 			Final:         v.IsFinal(),
 			Configurable:  v.IsConfigurable(),
 			Isolated:      v.Flags().Has(model.FlagIsolated),
@@ -468,7 +468,7 @@ func (sa *semanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDecl
 	for i := range sa.pkg.Constants {
 		c := sa.pkg.Constants[i]
 		out[c.Symbol()] = varDeclMetadata{
-			Type:         c.GetDeterminedType(),
+			Type:         sa.ctx().SymbolType(c.Symbol()),
 			Final:        true,
 			Configurable: c.IsConfigurable(),
 			Isolated:     c.Flags().Has(model.FlagIsolated),
@@ -539,7 +539,7 @@ func isIsolatedExpressionInner(a analyzer, expr ast.BLangExpression, checkInvoca
 		return false
 	}
 	tyCtx := a.tyCtx()
-	ty := expr.GetDeterminedType()
+	ty := expr.Type()
 	if semtypes.IsSubtype(tyCtx, ty, semtypes.CreateIsolated(tyCtx)) {
 		return true
 	}
@@ -747,7 +747,7 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	case *ast.BLangVariableDef:
 		v := node.Var
 		visitor.scope.define(v.Symbol(), varDeclMetadata{
-			Type:  v.GetDeterminedType(),
+			Type:  a.ctx().SymbolType(v.Symbol()),
 			Final: v.IsFinal(),
 		})
 		return visitor

@@ -1281,8 +1281,8 @@ func (p *PrettyPrinter) printTypeTestExpr(node *BLangTypeTestExpr) {
 	}
 	p.indentLevel++
 	p.PrintInner(node.Expr.(BLangNode))
-	if node.Type.TypeDescriptor != nil {
-		p.PrintInner(node.Type.TypeDescriptor.(BLangNode))
+	if node.TestedType.TypeDescriptor != nil {
+		p.PrintInner(node.TestedType.TypeDescriptor.(BLangNode))
 	}
 	p.indentLevel--
 	p.EndNode()
@@ -2094,8 +2094,8 @@ func (p *PrettyPrinter) printConstrainedType(node *BLangConstrainedType) {
 	p.StartNode()
 	p.PrintString("constrained-type")
 	p.indentLevel++
-	if node.Type.TypeDescriptor != nil {
-		p.PrintInner(node.Type.TypeDescriptor.(BLangNode))
+	if node.BaseType.TypeDescriptor != nil {
+		p.PrintInner(node.BaseType.TypeDescriptor.(BLangNode))
 	}
 	if node.Constraint.TypeDescriptor != nil {
 		p.PrintInner(node.Constraint.TypeDescriptor.(BLangNode))

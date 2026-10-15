@@ -35,9 +35,9 @@ type nodeCopy struct {
 // backing arrays, maps and non-node pointees with the live node, so a write through those is not detected; only
 // field assignments are.
 type nodeCopier struct {
-	t      typeResolver
-	copies []nodeCopy
-	seen   map[ast.BLangNode]struct{}
+	copies  []nodeCopy
+	seen    map[ast.BLangNode]struct{}
+	badNode ast.BLangNode
 }
 
 func (c *nodeCopier) Visit(node ast.BLangNode) ast.Visitor {
@@ -50,7 +50,9 @@ func (c *nodeCopier) Visit(node ast.BLangNode) ast.Visitor {
 	c.seen[node] = struct{}{}
 	value := reflect.ValueOf(node)
 	if value.Kind() != reflect.Pointer || value.IsNil() {
-		c.t.internalError("ephemeral resolution check requires non-nil pointer AST nodes", diagnostics.Location{})
+		if c.badNode == nil {
+			c.badNode = node
+		}
 		return nil
 	}
 	nodeCopy := nodeCopy{node: node, copy: reflect.New(value.Elem().Type()).Elem()}
@@ -62,9 +64,12 @@ func (c *nodeCopier) Visit(node ast.BLangNode) ast.Visitor {
 func (c *nodeCopier) VisitTypeData(_ *ast.TypeData) ast.Visitor { return c }
 
 func assertUnchanged(t typeResolver, roots []ast.BLangExpression) func() {
-	copier := &nodeCopier{t: t, seen: make(map[ast.BLangNode]struct{})}
+	copier := &nodeCopier{seen: make(map[ast.BLangNode]struct{})}
 	for _, root := range roots {
 		ast.Walk(copier, root)
+	}
+	if copier.badNode != nil {
+		t.internalError("ephemeral resolution check requires non-nil pointer AST nodes", diagnostics.Location{})
 	}
 	return func() {
 		for _, nodeCopy := range copier.copies {

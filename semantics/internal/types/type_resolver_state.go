@@ -37,11 +37,11 @@ type methodSymbolNode interface {
 	SetMethodSymbol(model.SymbolRef)
 }
 
-func setNodeType(t typeResolver, node ast.BLangNode, ty semtypes.SemType) {
+func setNodeType(t typeResolver, node ast.BLangActionOrExpression, ty semtypes.SemType) {
 	if t.isEphemeral() {
 		return
 	}
-	node.SetDeterminedType(ty)
+	ast.SetType(node, ty)
 }
 
 type typeDataNode interface {
@@ -142,8 +142,8 @@ func setNewExpressionResult(t typeResolver, node *ast.BLangNewExpression, args [
 	node.ClassSymbol = classRef
 }
 
-// setMappingKey commits the type of a key whose expression carries a symbol (a `{x}` shorthand key) and the types
-// of the key nodes. A literal key is resolved by the caller.
+// setMappingKey commits the type of a key whose expression carries a symbol (a `{x}` shorthand key). A literal key is
+// resolved by the caller.
 func setMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField, valueTy semtypes.SemType) {
 	if t.isEphemeral() {
 		return
@@ -153,14 +153,9 @@ func setMappingKey(t typeResolver, kv *ast.BLangMappingKeyValueField, valueTy se
 	case ast.BNodeWithSymbol:
 		t.setSymbolType(keyExpr.Symbol(), valueTy)
 		if e, ok := keyExpr.(ast.BLangExpression); ok {
-			e.SetDeterminedType(valueTy)
-		}
-		if ref, ok := keyExpr.(*ast.BLangVarRef); ok {
-			setVarRefIdentifierTypes(t, ref)
+			ast.SetType(e, valueTy)
 		}
 	}
-	kv.Key.SetDeterminedType(semtypes.Never)
-	kv.SetDeterminedType(semtypes.Never)
 }
 
 func setMappingConstructorInherentType(t typeResolver, node *ast.BLangMappingConstructorExpr, atom semtypes.MappingAtomicType, defaults []model.FieldDefault) {
@@ -213,35 +208,9 @@ func setXMLStepLowering(t typeResolver, expr *ast.BLangXMLStepExpression, lowere
 	expr.LoweredExpression = lowered
 }
 
-type neverVisitor struct {
-	t typeResolver
-}
-
-func (v neverVisitor) Visit(node ast.BLangNode) ast.Visitor {
-	if node == nil {
-		return nil
-	}
-	if semtypes.IsZero(node.GetDeterminedType()) {
-		setNodeType(v.t, node, semtypes.Never)
-	}
-	return v
-}
-
-func (v neverVisitor) VisitTypeData(_ *ast.TypeData) ast.Visitor {
-	return v
-}
-
 func setTypeDefinition(t typeResolver, field *semtypes.Definition, defn semtypes.Definition) {
 	if t.isEphemeral() {
 		return
 	}
 	*field = defn
-}
-
-// setOtherNodesAsNever sets the type of every AST node whose determined type is not set to NEVER.
-func setOtherNodesAsNever(t typeResolver, node ast.BLangNode) {
-	if t.isEphemeral() {
-		return
-	}
-	ast.Walk(neverVisitor{t: t}, node)
 }
