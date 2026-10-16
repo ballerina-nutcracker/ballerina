@@ -1,0 +1,12 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (const x (
+    (value-type int)) (
+    (literal 2)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type string)) (expr
+          (literal str)))))))

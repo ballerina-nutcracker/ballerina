@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+warning[WARNING]: unused variable 'arr'
+  --> unused4-v.bal:19:5
+   |
+19 |     int[] arr = [10]; // @warn
+   |     ^^^^^^^^^^^^^^^^^

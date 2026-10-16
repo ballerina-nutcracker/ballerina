@@ -94,6 +94,10 @@ Stages 5–9 then run concurrently across modules. After each of those stages, a
 - `@output`: test cases can write to standard out using `io:println` and use output marker to indicate expected output.
 - `@error`: -e test cases should use error markers to indicate lines where an error is expect. Text after marker is purely for commenting, not validated against actual error.
 - `@panic`: -p test cases should use panic markers to indicate first line which triggers a panic. We validate it is the first line the stack trace. Similar to error markers text after marker is ignored.
+- `@warn`: marks lines expected to carry a warning after the front end pass. Allowed in -v, -p and -e tests and in recovery fixtures. Text after marker is ignored.
+  - `TestSemanticAnalysis` and `TestSemanticAnalysisErrors` validate it in both directions (every `@warn` line has a warning and every warning has a `@warn` line). `TestRecovery` only checks that every `@warn` line has a warning.
+  - Only warnings in the test's own file count, and the marker must sit on the warning's start line.
+- A line may carry several markers, each starting with `//` (e.g. `// @output 3 // @warn`, `// @panic // @warn`, `// @error // @warn`). An `@output` value ends at the next `// @<marker>` on the line.
 
 ## Commit messages and PR titles
 

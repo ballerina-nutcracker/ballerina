@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+warning[WARNING]: unused variable 'f'
+  --> unused12-v.bal:19:5
+   |
+19 |     var f = function () returns int { // @warn
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |         return 1;
+   |         ^^^^^^^^^
+21 |     };
+   |     ^^

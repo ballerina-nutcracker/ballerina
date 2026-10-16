@@ -87,6 +87,9 @@ func TestRecovery(t *testing.T) {
 				}
 			}
 			testharness.ValidateErrorMarkers(t, sourcePath, content, projects.NewDiagnosticResult(cx.Diagnostics()), cx.DiagnosticEnv())
+			if !astOnly {
+				test_util.AssertWarnMarkersCovered(t, sourcePath, content, cx.Warnings(), cx.DiagnosticEnv())
+			}
 			printer := ast.PrettyPrinter{Fallback: printRecoveryFallback, ShowNodeLocations: astOnly, DiagnosticEnv: cx.DiagnosticEnv()}
 			var actualAST string
 			if astOnly {

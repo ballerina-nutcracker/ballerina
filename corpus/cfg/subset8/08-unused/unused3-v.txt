@@ -1,0 +1,25 @@
+(foo
+  (bb0 () (bb1 bb2)
+    (simple-var-ref v)
+  )
+  (bb1 (bb0) ()
+    (var-def
+      (variable b (type
+        (value-type boolean)) (expr
+        (literal true))))
+    (return
+      (literal true))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal false))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation foo (
+          (literal 2))))))
+  )
+)

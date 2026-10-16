@@ -1,0 +1,20 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable _ (expr
+        (lambda
+          (function $anonFunc$_0 (
+            (variable x (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (return
+                (literal 1))))))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)

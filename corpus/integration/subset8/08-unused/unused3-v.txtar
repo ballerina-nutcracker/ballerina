@@ -1,0 +1,8 @@
+-- stdout --
+false
+-- stderr --
+warning[WARNING]: unused variable 'b'
+  --> unused3-v.bal:23:13
+   |
+23 |             boolean b = true; // @warn
+   |             ^^^^^^^^^^^^^^^^^

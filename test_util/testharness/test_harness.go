@@ -791,12 +791,6 @@ type annSourceFile struct {
 	absPath string
 }
 
-var (
-	outputRe = regexp.MustCompile(`(?://)\s*@output\b[ \t]?(.*)$`)
-	errorRe  = regexp.MustCompile(`(?://)\s*@error\b`)
-	panicRe  = regexp.MustCompile(`(?://)\s*@panic\b`)
-)
-
 func parseAnnotations(sources []annSourceFile) (annotations, error) {
 	anns := annotations{}
 	for _, src := range sources {
@@ -813,24 +807,18 @@ func parseAnnotations(sources []annSourceFile) (annotations, error) {
 
 func parseAnnotationsInFile(content string) *fileAnns {
 	var fa fileAnns
-	for i, raw := range strings.Split(content, "\n") {
-		lineNo := i + 1
-		line := strings.TrimSuffix(raw, "\r")
-		commentIdx := strings.Index(line, "//")
-		if commentIdx < 0 {
-			continue
-		}
-		comment := line[commentIdx:]
-		if m := outputRe.FindStringSubmatch(comment); m != nil {
-			fa.outputs = append(fa.outputs, outputAnn{line: lineNo, value: strings.TrimRight(m[1], " \t")})
-			continue
-		}
-		if panicRe.MatchString(comment) {
-			fa.panics = append(fa.panics, panicAnn{line: lineNo})
-			continue
-		}
-		if errorRe.MatchString(comment) {
-			fa.errors = append(fa.errors, errorAnn{line: lineNo})
+	for _, m := range test_util.ParseMarkers(content) {
+		switch m.Kind {
+		case test_util.MarkerOutput:
+			fa.outputs = append(fa.outputs, outputAnn{line: m.Line, value: m.Value})
+		case test_util.MarkerPanic:
+			if n := len(fa.panics); n == 0 || fa.panics[n-1].line != m.Line {
+				fa.panics = append(fa.panics, panicAnn{line: m.Line})
+			}
+		case test_util.MarkerError:
+			if n := len(fa.errors); n == 0 || fa.errors[n-1].line != m.Line {
+				fa.errors = append(fa.errors, errorAnn{line: m.Line})
+			}
 		}
 	}
 	if fa.outputs == nil && fa.errors == nil && fa.panics == nil {

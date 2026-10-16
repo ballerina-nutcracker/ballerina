@@ -23,7 +23,7 @@ function brokenBody() returns int {
     int invocation = probe(absentArgument); // @error
     unknown = 2;
     var unavailable = absentInferred; // @error
-    int dependent = unavailable + 1; // @error unused dependent
+    int dependent = unavailable + 1; // @warn unused dependent
     { int nested = missing; probe("inner"); } // @error
     if (true && ) { probe("skippedBad"); } // @error
     if missingCondition { probe("skipped"); } // @error

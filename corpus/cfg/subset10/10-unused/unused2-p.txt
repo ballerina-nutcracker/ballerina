@@ -1,0 +1,18 @@
+(div
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (binary-expr /
+          (simple-var-ref a)
+          (simple-var-ref b)))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation div (
+        (literal 1)
+        (literal 0))))
+  )
+)

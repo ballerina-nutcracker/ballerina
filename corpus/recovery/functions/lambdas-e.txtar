@@ -26,7 +26,7 @@ function lambdas() {
     var h = function() returns @mod:_ int => 1; // @error
     var validParameterSibling = function(int x) returns int => x;
     var validReturnSibling = function() returns int => 1;
-    int later = validParameterSibling(validReturnSibling()); // @error unused surviving sibling
+    int later = validParameterSibling(validReturnSibling()); // @warn unused surviving sibling
 }
 function valid() {}
 -- ast --

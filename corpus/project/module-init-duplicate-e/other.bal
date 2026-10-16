@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-int y = 0; // @error
+int y = 0; // @warn
 
 function init() { // @error
 }

@@ -533,9 +533,13 @@ func (m *moduleContext) setCompilationState(state moduleCompilationState) {
 	m.stateInitialized = true
 }
 
-// getDiagnostics returns the diagnostics produced during module compilation.
+// getDiagnostics returns the error diagnostics produced during module compilation; warnings are returned by getWarnings.
 func (m *moduleContext) getDiagnostics() []diagnostics.Diagnostic {
 	return m.compilerCtx.Diagnostics()
+}
+
+func (m *moduleContext) getWarnings() []diagnostics.Diagnostic {
+	return m.compilerCtx.Warnings()
 }
 
 // duplicate creates a copy of the context.

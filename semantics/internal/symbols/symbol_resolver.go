@@ -984,7 +984,7 @@ func compilationUnitImports(cu *ast.BLangCompilationUnit) []ast.BLangImportPacka
 func reportUnusedVariables(ctx *context.CompilerContext, unused []varDeclInfo) {
 	for _, v := range unused {
 		name := ctx.SymbolName(v.varSym)
-		ctx.SemanticError("unused variable '"+name+"'", v.pos)
+		ctx.Warning("unused variable '"+name+"'", v.pos)
 	}
 }
 

@@ -17,6 +17,7 @@
 package projects
 
 import (
+	"slices"
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/context"
@@ -35,6 +36,7 @@ type PackageCompilation struct {
 	diagnosticResult      DiagnosticResult
 	compilerEnv           *context.CompilerEnvironment
 	compileOnce           sync.Once
+	sourceCompiledModules []ModuleDescriptor
 	compilerPluginManager any // TODO(P6): CompilerPluginManager once plugin system is migrated
 }
 
@@ -126,6 +128,7 @@ func (c *PackageCompilation) compileModulesInternal() {
 				continue
 			}
 			resolveTypesAndSymbols(moduleCtx)
+			c.sourceCompiledModules = append(c.sourceCompiledModules, moduleCtx.getDescriptor())
 			if moduleCtx.compilerCtx.HasErrors() {
 				erroredModules[moduleCtx.getModuleID()] = struct{}{}
 			}
@@ -188,7 +191,7 @@ func (c *PackageCompilation) compileModulesInternal() {
 func (c *PackageCompilation) collectModuleDiagnostics(dst *[]diagnostics.Diagnostic) {
 	isBala := c.getPackageContext().getProject().Kind() == ProjectKindBala
 	for _, moduleCtx := range c.packageResolution.topologicallySortedModuleList {
-		for _, diag := range moduleCtx.getDiagnostics() {
+		for _, diag := range slices.Concat(moduleCtx.getDiagnostics(), moduleCtx.getWarnings()) {
 			severity := diag.DiagnosticInfo().Severity()
 			if isBala && severity != diagnostics.Error && severity != diagnostics.Fatal {
 				continue
@@ -199,6 +202,13 @@ func (c *PackageCompilation) collectModuleDiagnostics(dst *[]diagnostics.Diagnos
 				newPackageDiagnostic(diag, moduleCtx.getDescriptor(), moduleCtx.getProject(), isWorkspaceDep))
 		}
 	}
+}
+
+// SourceCompiledModules returns the modules, including dependencies, that this
+// compilation compiled from source. Modules skipped because a dependency failed
+// or loaded from a cache are not included.
+func (c *PackageCompilation) SourceCompiledModules() []ModuleDescriptor {
+	return slices.Clone(c.sourceCompiledModules)
 }
 
 // Resolution returns the package resolution.

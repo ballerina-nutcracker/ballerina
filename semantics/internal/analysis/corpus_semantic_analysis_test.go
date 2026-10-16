@@ -18,6 +18,7 @@ package analysis_test
 
 import (
 	"flag"
+	"os"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -67,6 +68,7 @@ func testSemanticAnalysis(t *testing.T, testCase test_util.TestCase) {
 	if cx.HasErrors() {
 		t.Fatalf("compiler context has errors for %s: %v", testCase.InputPath, cx.Diagnostics())
 	}
+	assertWarnMarkers(t, testCase.InputPath, cx)
 
 	// Validate that all expressions have determinedTypes set
 	validator := &semanticAnalysisValidator{t: t, ctx: cx}
@@ -74,6 +76,14 @@ func testSemanticAnalysis(t *testing.T, testCase test_util.TestCase) {
 
 	// If we reach here, semantic analysis completed without panicking
 	t.Logf("Semantic analysis completed successfully for %s", testCase.InputPath)
+}
+
+func assertWarnMarkers(t *testing.T, inputPath string, cx *context.CompilerContext) {
+	content, err := os.ReadFile(inputPath)
+	if err != nil {
+		t.Fatalf("failed to read %s: %v", inputPath, err)
+	}
+	test_util.AssertWarnMarkers(t, inputPath, string(content), cx.Warnings(), cx.DiagnosticEnv())
 }
 
 type semanticAnalysisValidator struct {
@@ -196,6 +206,7 @@ func testSemanticAnalysisError(t *testing.T, testCase test_util.TestCase) {
 		return
 	}
 	_, _ = testphases.RunPipeline(env, cx, langlibs, testphases.PhaseCFGAnalysis, testCase.InputPath)
+	assertWarnMarkers(t, testCase.InputPath, cx)
 
 	// If we reach here without panic, the defer will catch it
 }

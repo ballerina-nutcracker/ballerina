@@ -25,7 +25,7 @@ class C {
     function valid() { int x = ; int later = 2; } // @error
 }
 function _() {} // @error
-function valid() { C surviving; } // @error unused surviving sibling
+function valid() { C surviving; } // @warn unused surviving sibling
 class InclusionFailure {
     *Missing; // @error
     int good;

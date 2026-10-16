@@ -23,7 +23,7 @@ type UnknownRecord record {
     int surviving;
     AnotherMissingField another; // @error
 };
-function consumeFailed(UnknownArray value) returns int => 1; // @error unused value
+function consumeFailed(UnknownArray value) returns int => 1; // @warn unused value
 class UnknownFields {
     MissingClassField broken; // @error
     int surviving;
@@ -34,7 +34,7 @@ type Independent record {
     int value;
 };
 int unresolvedValue = discardedValue; // @error
-UnknownArray failedValue = []; // @error unused value
+UnknownArray failedValue = []; // @warn unused value
 int independentValue = 3;
 function independent(Independent value) returns int => value.value + independentValue;
 -- ast --

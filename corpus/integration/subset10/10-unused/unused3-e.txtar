@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'int', got '"str"'
+  --> unused3-e.bal:20:17
+   |
+20 |     int z = foo("str"); // @error // @warn
+   |                 ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'int', got '"str"'
+  --> unused3-e.bal:24:13
+   |
+24 |     _ = foo("str"); // @error
+   |             ^^^^^
+
+warning[WARNING]: unused variable 'y'
+  --> unused3-e.bal:19:5
+   |
+19 |     int y = 1; // @warn
+   |     ^^^^^^^^^^
+
+warning[WARNING]: unused variable 'z'
+  --> unused3-e.bal:20:5
+   |
+20 |     int z = foo("str"); // @error // @warn
+   |     ^^^^^^^^^^^^^^^^^^^
