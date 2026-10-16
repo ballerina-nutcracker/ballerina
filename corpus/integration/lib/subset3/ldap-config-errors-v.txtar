@@ -1,0 +1,5 @@
+-- stdout --
+clientSecureSocket.cert: crypto:TrustStore is not yet supported; use a PEM certificate file path string instead
+true
+clientSecureSocket.tlsVersions: unsupported TLS version 'TLSv9'
+-- stderr --

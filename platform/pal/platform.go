@@ -150,16 +150,17 @@ type ProcessHandle interface {
 type (
 	// TLSConfig carries TLS settings derived from Ballerina's secureSocket config.
 	TLSConfig struct {
-		InsecureSkipVerify    bool          // secureSocket.enable=false OR verifyHostName=false
-		CACertPEM             []byte        // secureSocket.cert (string PEM file path) → file contents
-		ClientCertPEM         []byte        // secureSocket.key.certFile → file contents
-		ClientKeyPEM          []byte        // secureSocket.key.keyFile  → file contents
-		ServerName            string        // secureSocket.serverName → tls.Config.ServerName (SNI)
-		CipherSuiteNames      []string      // secureSocket.ciphers → IANA names; platform resolves IDs
-		MinVersion            uint16        // secureSocket.protocol.versions min → tls.Config.MinVersion
-		MaxVersion            uint16        // secureSocket.protocol.versions max → tls.Config.MaxVersion
-		HandshakeTimeout      time.Duration // secureSocket.handshakeTimeout → transport.TLSHandshakeTimeout
-		DisableSessionTickets bool          // secureSocket.shareSession=false → tls.Config.SessionTicketsDisabled
+		InsecureSkipVerify       bool          // secureSocket.enable=false OR verifyHostName=false
+		SkipHostnameVerification bool          // skip only the hostname check; the certificate chain is still verified
+		CACertPEM                []byte        // secureSocket.cert (string PEM file path) → file contents
+		ClientCertPEM            []byte        // secureSocket.key.certFile → file contents
+		ClientKeyPEM             []byte        // secureSocket.key.keyFile  → file contents
+		ServerName               string        // secureSocket.serverName → tls.Config.ServerName (SNI)
+		CipherSuiteNames         []string      // secureSocket.ciphers → IANA names; platform resolves IDs
+		MinVersion               uint16        // secureSocket.protocol.versions min → tls.Config.MinVersion
+		MaxVersion               uint16        // secureSocket.protocol.versions max → tls.Config.MaxVersion
+		HandshakeTimeout         time.Duration // secureSocket.handshakeTimeout → transport.TLSHandshakeTimeout
+		DisableSessionTickets    bool          // secureSocket.shareSession=false → tls.Config.SessionTicketsDisabled
 	}
 	// FollowRedirects controls HTTP redirect behaviour, matching Ballerina's http:FollowRedirects.
 	FollowRedirects struct {

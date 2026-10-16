@@ -13,6 +13,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
+| [ldap](../../lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md)               | 15 | 2 | 0 | 83% |
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
 | [math.vector](../../lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
 | [os](../../lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md)                   | 11 | 1 | 0 | 92% |
@@ -20,7 +21,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [random](../../lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
 | [time](../../lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md)               | 29 | 3 | 0 | 91% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
-| **Total**                                         | **178** | **22** | **64** | **67%** |
+| **Total**                                         | **193** | **24** | **64** | **68%** |
 
 ## Notable Behavioural Changes
 
@@ -67,6 +68,16 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 - **Write-from-stream accepts a generic `error?` completion.** jBallerina declares `fileWriteLinesFromStream`/`fileWriteBlocksFromStream` with a `stream<_, io:Error?>` parameter, which rejects a stream held as `stream<_, error?>` (e.g. `stream<byte[], error?> s = check io:fileReadBlocksAsStream(p); check io:fileWriteBlocksFromStream(out, s);` fails to compile in jBallerina). This port widens the parameter completion type to the generic `error?`, so both `io:Error?` and plain `error?` completion streams are accepted. This is a strict superset — every jBallerina-valid call still compiles — and the return type remains the specific `io:Error?`.
 - **`writeVarInt`/`readVarInt` round-trip the full `int` range.** jBallerina's variable-length integer implementation breaks for very large magnitudes: `readVarInt` panics on encodings longer than 8 bytes (so its own `writeVarInt` output for values needing 9-10 bytes cannot be read back), and `writeVarInt(int:MIN_VALUE)` silently writes a single `0x00` byte. This port encodes such values with the minimal correct width and reads encodings up to 10 bytes, so every `int` round-trips; the wire format is identical to jBallerina for all values jBallerina handles correctly.
 - **Unknown charset handling differs between `writeString` and `readString`.** `WritableDataChannel.writeString` surfaces an unsupported charset as a Go error, which the interpreter turns into a panic, matching jBallerina's unchecked `UnsupportedEncodingException`. `ReadableDataChannel.readString` instead returns it as an `io:Error` value.
+
+### ldap
+
+- **Corrected result-code strings for two operation statuses.** jBallerina derives `resultCode` from the underlying LDAP SDK's free-text display name, which for two codes doesn't actually match the declared `Status` enum literal (`StrongAuthRequired` renders as `"STRONG AUTH REQUIRED"` instead of `Status`'s `"STRONGER AUTH REQUIRED"`, and `NotAllowedOnNonLeaf` renders with a hyphen instead of `Status`'s space-separated `"NOT ALLOWED ON NON LEAF"`); the Go-native version emits the string that matches the declared `Status` enum literal for both codes.
+- **Client-side connection failures map to `OTHER`.** LDAP result codes that only ever originate client-side (e.g. connection timeouts, connect failures) have no dedicated `Status` member in either implementation; the Go-native version reports these as `OTHER` rather than an arbitrary unmatched string.
+- **TLS version constraints are connection-scoped.** jBallerina configures `tlsVersions` as a JVM-wide static setting shared by every LDAP connection in the process; the Go-native version scopes it to the individual connection, which is more correct but means concurrent connections with different `tlsVersions` no longer interfere with each other.
+- **A control with no value renders as an empty string instead of failing.** jBallerina's control-to-record conversion unconditionally dereferences the control's value and throws if one is absent; the Go-native version treats a valueless control as an empty string.
+- **`Client.init` takes a plain configuration record.** jBallerina declares this as `*ConnectionConfig config`, an included-record parameter that additionally allows named-argument-style construction at the call site (e.g. `check new (hostName = "x", port = 389, ...)`). This port uses a plain parameter instead (`ConnectionConfig config`, no included-record spread); call sites pass a record literal (`check new ({hostName: "x", port: 389, ...})`), matching `ballerina/tcp` and `ballerina/udp`'s existing workaround for the same underlying gap.
+- **Server error messages include the LDAP result code.** jBallerina's error message is only the server's diagnostic text (e.g. `entry already exists`). The Go-native version reports the full LDAP result, e.g. `LDAP Result Code 68 "Entry Already Exists": entry already exists (ENTRY ALREADY EXISTS)`, because `error:detail()` isn't implemented yet and the message is the only place the result code is visible.
+- **Typed binding converts attribute strings to scalar field types.** jBallerina never parses attribute values, so a target record with an `int`, `boolean`, `float` or `decimal` field panics with a `ConversionError`. The Go-native version parses the string into the field's type (e.g. `"7"` into `int`), and returns an `Error` when the value can't be parsed.
 
 ### log
 

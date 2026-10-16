@@ -1,0 +1,29 @@
+-- stdout --
+true
+{"matchedDN":null,"resultCode":"SUCCESS","diagnosticMessage":null,"operationType":"ADD","referral":[]}
+Doe
+John Doe
+{"cn":"John Doe","objectclass":["top","person"],"sn":"Doe","telephonenumber":"1234567890"}
+["john@example.com","doe@example.com"]
+{"objectClass":["top","person"],"sn":["Doe"]}
+field 'sn' should be of type 'int', found 'Doe'
+missing required field 'mail' of type 'string'
+{"a":"t","code":"007","flag":"1"}
+SUCCESS
+true
+false
+SUCCESS
+true
+1
+John Doe
+[{"cn":"John Doe","objectclass":["top","person"],"sn":"Doe","telephonenumber":"5551234"}]
+SUCCESS
+SUCCESS
+true
+Entry is not found for DN: 'dc=example,dc=com'
+{"description":"dGFiCWhlcmU=","objectsid":"S-1-0x10000000005-7","telephonenumber":"ZGVsf2NoYXI="}
+true
+true
+true
+false
+-- stderr --

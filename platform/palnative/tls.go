@@ -70,6 +70,13 @@ func buildTLSConfig(cfg pal.TLSConfig) (*tls.Config, error) {
 			tlsConfig.VerifyConnection = tlsVerifyConnectionWithCNFallback(pool, cfg.ServerName)
 		}
 	}
+	if cfg.SkipHostnameVerification && !cfg.InsecureSkipVerify {
+		rootCAs := tlsConfig.RootCAs
+		tlsConfig.InsecureSkipVerify = true //nolint:gosec
+		tlsConfig.VerifyConnection = func(cs tls.ConnectionState) error {
+			return tlsVerifyChain(rootCAs, cs)
+		}
+	}
 	if len(cfg.ClientCertPEM) > 0 && len(cfg.ClientKeyPEM) > 0 {
 		cert, err := tls.X509KeyPair(cfg.ClientCertPEM, cfg.ClientKeyPEM)
 		if err != nil {

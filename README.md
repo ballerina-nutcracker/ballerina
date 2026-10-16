@@ -86,9 +86,9 @@ Development is organized by **subsets** of the Ballerina language; each mileston
 
 ## Standard library coverage
 
-**67%** of tracked standard library features are supported across 12 packages: 178 supported, 22 partially supported, 64 not yet supported. See [Standard library support](doc/library/README.md) for per-package coverage and behavioural changes from jBallerina.
+**68%** of tracked standard library features are supported across 13 packages: 193 supported, 24 partially supported, 64 not yet supported. See [Standard library support](doc/library/README.md) for per-package coverage and behavioural changes from jBallerina.
 
-**Supported packages:** [avro](lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md), [crypto](lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md), [file](lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md), [http](lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md), [io](lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md), [log](lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md), [math.vector](lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md), [os](lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md), [protobuf](lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md), [random](lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md), [time](lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md), [url](lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)
+**Supported packages:** [avro](lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md), [crypto](lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md), [file](lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md), [http](lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md), [io](lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md), [ldap](lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md), [log](lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md), [math.vector](lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md), [os](lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md), [protobuf](lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md), [random](lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md), [time](lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md), [url](lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)
 
 ## Contributing
 

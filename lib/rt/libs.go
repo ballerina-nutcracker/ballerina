@@ -36,6 +36,7 @@ import (
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/file/0.0.1/go1.27/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/http/0.0.1/go1.27/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/io/0.0.1/go1.27/native"
+	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/ldap/0.0.1/go1.27/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/log/0.0.1/go1.27/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/os/0.0.1/go1.27/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/modules/types.any/native"

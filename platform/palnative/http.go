@@ -184,7 +184,7 @@ func NewHTTPClient(cfg pal.ClientConfig) (pal.HTTPClient, error) {
 		// Response header size limit (jBallerina default 8192, always set explicitly).
 		MaxResponseHeaderBytes: cfg.ResponseLimits.MaxHeaderSize,
 	}
-	if tlsConfig.VerifyConnection != nil {
+	if tlsConfig.VerifyConnection != nil && !cfg.TLS.SkipHostnameVerification {
 		// The shared callback can't see which host a pooled connection dials, so
 		// non-proxied HTTPS connections rebind it to the dialed host here.
 		// Cloning at dial time picks up the ALPN protocols the transport adds.
@@ -289,6 +289,23 @@ func resolveCipherSuites(names []string) []uint16 {
 	return ids
 }
 
+// tlsVerifyChain verifies the server's certificate chain against rootCAs (the
+// system pool when nil) without checking the hostname.
+func tlsVerifyChain(rootCAs *x509.CertPool, cs tls.ConnectionState) error {
+	if len(cs.PeerCertificates) == 0 {
+		return fmt.Errorf("x509: server presented no certificates")
+	}
+	opts := x509.VerifyOptions{
+		Roots:         rootCAs,
+		Intermediates: x509.NewCertPool(),
+	}
+	for _, cert := range cs.PeerCertificates[1:] {
+		opts.Intermediates.AddCert(cert)
+	}
+	_, err := cs.PeerCertificates[0].Verify(opts)
+	return err
+}
+
 // tlsVerifyConnectionWithCNFallback returns a VerifyConnection callback that verifies the
 // server's certificate chain against rootCAs and falls back to CN-based hostname matching
 // when no SANs are present. Go 1.15+ disabled CN-only hostname verification (RFC 6125 §2.3),
@@ -308,14 +325,7 @@ func tlsVerifyConnectionWithCNFallback(rootCAs *x509.CertPool, expectedServerNam
 		if serverName == "" {
 			return fmt.Errorf("x509: cannot verify certificate hostname: no server name")
 		}
-		opts := x509.VerifyOptions{
-			Roots:         rootCAs,
-			Intermediates: x509.NewCertPool(),
-		}
-		for _, cert := range cs.PeerCertificates[1:] {
-			opts.Intermediates.AddCert(cert)
-		}
-		if _, err := cs.PeerCertificates[0].Verify(opts); err != nil {
+		if err := tlsVerifyChain(rootCAs, cs); err != nil {
 			return err
 		}
 		// Try SAN-based verification first. Only fall back to CN matching for
