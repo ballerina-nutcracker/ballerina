@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: missing map key 'fname2'
+        at main(map-access-remove-missing-p.bal:19)

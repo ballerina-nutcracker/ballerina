@@ -1,0 +1,28 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable namesMap (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type any))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal fname)
+              (literal Supun))
+            (key-value
+              (literal lname)
+              (literal Setunga))
+            (key-value
+              (literal sname)
+              (literal Kevin))
+            (key-value
+              (literal tname)
+              (literal Ratnasekera))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation remove expr:
+          (simple-var-ref namesMap) (
+          (literal fname2)))))))

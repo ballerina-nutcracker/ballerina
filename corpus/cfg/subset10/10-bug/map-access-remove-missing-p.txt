@@ -1,0 +1,27 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable namesMap (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type any))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal fname)
+            (literal Supun))
+          (key-value
+            (literal lname)
+            (literal Setunga))
+          (key-value
+            (literal sname)
+            (literal Kevin))
+          (key-value
+            (literal tname)
+            (literal Ratnasekera))))))
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation lang.map remove (
+        (simple-var-ref namesMap)
+        (literal fname2))))
+  )
+)

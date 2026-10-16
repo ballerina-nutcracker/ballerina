@@ -1,0 +1,21 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad fname
+    %2 = ConstantLoad Supun
+    %3 = ConstantLoad lname
+    %4 = ConstantLoad Setunga
+    %5 = ConstantLoad sname
+    %6 = ConstantLoad Kevin
+    %7 = ConstantLoad tname
+    %8 = ConstantLoad Ratnasekera
+    %9 = newMap {| any... |}{%1=%2, %3=%4, %5=%6, %7=%8}
+    namesMap = %9;
+    %11 = ConstantLoad fname2
+    %12 = remove(namesMap,%11) -> bb1;
+  }
+  bb1 {
+    %13 = %12;
+    return;
+  }
+}
