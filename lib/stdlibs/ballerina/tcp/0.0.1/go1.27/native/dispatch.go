@@ -246,6 +246,15 @@ func handleConnection(rt *runtime.Runtime, types tcpTypes, svcObj *values.Object
 		// onConnect returned (): no connection service, so the handler owns closing the caller.
 		return
 	}
+	var invalid *values.Error
+	withPooledContext(rt, func(ctx *extern.Context) {
+		invalid = validateConnectionService(ctx, types, connSvcObj)
+	})
+	if invalid != nil {
+		logError(rt, invalid.Message)
+		_ = conn.Close()
+		return
+	}
 	cs.mu.Lock()
 	cs.connSvcObj = connSvcObj
 	cs.mu.Unlock()

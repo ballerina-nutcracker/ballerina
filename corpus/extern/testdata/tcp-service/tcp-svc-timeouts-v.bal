@@ -21,6 +21,10 @@ import ballerina/tcp;
 
 service class SilentConnService {
     *tcp:ConnectionService;
+
+    remote function onBytes(readonly & byte[] data) {
+        _ = data;
+    }
 }
 
 service class SilentServer {

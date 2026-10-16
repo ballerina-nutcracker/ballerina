@@ -22,12 +22,12 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [protobuf](../../lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
 | [random](../../lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
 | [task](../../lib/stdlibs/ballerina/task/0.0.1/go1.27/README.md)               | 15 | 1 | 1 | 88% |
-| [tcp](../../lib/stdlibs/ballerina/tcp/0.0.1/go1.27/README.md)                 | 16 | 3 | 1 | 73% |
+| [tcp](../../lib/stdlibs/ballerina/tcp/0.0.1/go1.27/README.md)                 | 16 | 4 | 1 | 70% |
 | [time](../../lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md)               | 29 | 3 | 0 | 91% |
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **297** | **39** | **70** | **73%** |
+| **Total**                                         | **297** | **40** | **70** | **72%** |
 
 ## Notable Behavioural Changes
 

@@ -74,12 +74,13 @@ Support Levels:
 | Stopping a listener gracefully | Supported | |
 | Stopping a listener immediately | Supported | |
 | Dispatching a new connection to a service | Supported | |
-| Dispatching received bytes to a connection service | Supported | Both the `onBytes(readonly & byte[])` and `onBytes(Caller, readonly & byte[])` forms are supported; the resolved method's declared parameter types are inspected at dispatch time, matching jBallerina's own reflection-driven parameter binding. |
+| Dispatching received bytes to a connection service | Supported | Both the `onBytes(readonly & byte[])` and `onBytes(Caller, readonly & byte[])` forms are supported. |
 | Automatically returning bytes from a connection service | Supported | |
 | Dispatching connection errors | Supported | |
 | Dispatching connection close | Supported | |
 | Caller write/close operations and connection identity fields | Supported | |
 | Declaring a listener service inline | Supported | An anonymous `service on new tcp:Listener(...) { ... }` body attaches directly. |
+| Validation of service and connection service methods (compiler plugin rules TCP_101-TCP_110) | Partially Supported | The rules are enforced at runtime instead of compile time. `Listener.attach()` returns an `Error` for a service with a remote method other than `onConnect`. A connection service returned from `onConnect` is checked before any dispatch; if it breaks a rule, the error is logged and the connection is closed. Any object-typed `onBytes` parameter is accepted as the `Caller`, and error messages omit the offending parameter and return types. |
 | Service and connection service as distinct types | Not Yet Supported | jBallerina declares `Service`/`ConnectionService` as `distinct service object` types. This port declares them as plain (non-distinct) `service object` types instead — this interpreter cannot yet attach an anonymous `service on new tcp:Listener(...) { ... }` body to a `distinct service object` target type, and supporting the inline declaration style was prioritized over `distinct` typing. |
 | Error type | Partially Supported | `distinct` error types are not yet supported, so `Error` is currently an alias for `error`. |
 

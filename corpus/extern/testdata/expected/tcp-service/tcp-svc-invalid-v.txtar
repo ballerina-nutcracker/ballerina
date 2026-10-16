@@ -1,0 +1,15 @@
+-- stdout --
+Function `onBytes` not accepted by the service
+11
+-- stderr --
+error: Invalid parameter `x` provided for `onBytes` function
+error: Invalid parameter `data` provided for `onBytes`, function expects `readonly & byte[]`
+error: No parameter provided for `onBytes`, function expects `readonly & byte[]` as a parameter
+error: Provided 3 parameters, `onBytes` can have only 2 parameters
+error: Invalid return type provided for function `onBytes`, return type should be a subtype of `byte[]|ballerina/tcp:Error?`
+error: Invalid parameter `e` provided for `onError`, function expects `ballerina/tcp:Error`
+error: No parameter provided for `onError`, function expects `ballerina/tcp:Error` as a parameter
+error: Provided 1 parameters, `onClose` function cannot have any parameters
+error: Service does not contain `onBytes` function
+error: `remote` keyword expected in `onBytes` function signature.
+error: Function `onFoo` not accepted by the service

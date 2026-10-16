@@ -82,3 +82,11 @@ func TestTcpServicePanic(t *testing.T) {
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-panic-v"), newTcpPal(), nil)
 }
+
+// TestTcpServiceInvalid verifies that services jBallerina's compiler plugin
+// rejects are rejected at attach or when onConnect returns them.
+func TestTcpServiceInvalid(t *testing.T) {
+	t.Parallel()
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("tcp-service/tcp-svc-invalid-v"), newTcpPal(), nil)
+}

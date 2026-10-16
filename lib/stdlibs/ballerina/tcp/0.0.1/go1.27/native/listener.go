@@ -105,6 +105,9 @@ func listenerInit(rt *runtime.Runtime) extern.NativeFunc {
 
 func listenerAttach(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	svcObj := args[1].(*values.Object)
+	if err := validateService(svcObj); err != nil {
+		return err, nil
+	}
 	state := stateOf(args[0].(*values.Object))
 	state.mu.Lock()
 	defer state.mu.Unlock()

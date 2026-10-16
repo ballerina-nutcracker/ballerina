@@ -29,6 +29,10 @@ import ballerina/tcp;
 service class ErrorReportingConnService {
     *tcp:ConnectionService;
 
+    remote function onBytes(readonly & byte[] data) {
+        _ = data;
+    }
+
     remote function onError(readonly & tcp:Error err) returns tcp:Error? {
         _ = err.message();
         signalOnError();
