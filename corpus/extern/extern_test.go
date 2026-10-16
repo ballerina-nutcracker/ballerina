@@ -18,6 +18,7 @@ package extern_test
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -764,6 +765,59 @@ func TestRecordFieldAnnotations(t *testing.T) {
 	runExtern(t, fileCase("record-field-annotations-v"), testharness.NewTestPal(), externs)
 }
 
+func TestNestedTypeAnnotations(t *testing.T) {
+	t.Parallel()
+	const org, module = "$anon", "nested-type-annotations-v"
+	externs := []testharness.ExternRegistration{
+		{Org: org, Module: module, FuncName: "describe", Impl: describeNestedExtern},
+	}
+	runExtern(t, fileCase("nested-type-annotations-v"), testharness.NewTestPal(), externs)
+}
+
+func describeNestedExtern(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	td, ok := args[0].(*values.TypeDesc)
+	if !ok {
+		return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+	}
+	return describeNestedTypeDesc(ctx, td, map[*values.TypeDesc]bool{}), nil
+}
+
+// describeNestedTypeDesc lists the annotations on td and its fields, then describes the typedesc
+// of each field's named type the same way, marking a type already on the path as a cycle.
+func describeNestedTypeDesc(ctx *extern.Context, td *values.TypeDesc, onPath map[*values.TypeDesc]bool) string {
+	onPath[td] = true
+	defer delete(onPath, td)
+	typeAnnotations, _ := ctx.TypeAnnotations(td)
+	parts := []string{"type[" + strings.Join(metaNames(typeAnnotations.Annotations), ",") + "]"}
+	for _, field := range slices.Sorted(maps.Keys(typeAnnotations.Fields)) {
+		parts = append(parts, field+"["+strings.Join(metaNames(typeAnnotations.Fields[field]), ",")+"]")
+	}
+	for _, field := range slices.Sorted(maps.Keys(td.FieldTypes)) {
+		fieldTd := td.FieldTypes[field]
+		if onPath[fieldTd] {
+			parts = append(parts, field+":<cycle>")
+			continue
+		}
+		parts = append(parts, field+":{"+describeNestedTypeDesc(ctx, fieldTd, onPath)+"}")
+	}
+	return strings.Join(parts, " ")
+}
+
+func metaNames(annotations values.AnnotationValues) []string {
+	names := make([]string, 0, len(annotations))
+	for key, value := range annotations {
+		name := key[strings.LastIndex(key, ":")+1:]
+		if meta, ok := value.(*values.Map); ok {
+			if metaName, ok := meta.Get("name"); ok {
+				name += "=" + metaName.(string)
+			}
+		}
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
 func TestRecordFieldAnnotationsStructural(t *testing.T) {
 	const org, module = "$anon", "record-field-annotations-2-v"
 	annotationKey := func(name string) string {
@@ -890,6 +944,7 @@ func TestRecordFieldAnnotationsCrossModule(t *testing.T) {
 				}
 				return name, nil
 			}},
+		{Org: org, Module: module, FuncName: "describeNested", Impl: describeNestedExtern},
 	}
 	runExtern(t, projectCase("record-field-annotations-project-v"), testharness.NewTestPal(), externs)
 }
@@ -1325,8 +1380,10 @@ func TestRecordFieldAnnotationsSymbolPoolRoundtrip(t *testing.T) {
 	rt.Listen()
 	<-rt.ExitStatus
 
+	const nested = "type[] age:{type[typeMeta=imported-age]} list:{type[] x[fieldMeta=imported-x]} " +
+		"node:{type[] value[fieldMeta=imported-value] next:<cycle>}\n"
 	const expected = "name\nimported-name\n<absent>\ncreatedAt,note\nimported-createdAt\n" +
-		"imported-name\nname\nimported-name\n"
+		"imported-name\nname\nimported-name\n" + nested + nested
 	if got := pal.Stdout(); got != expected {
 		t.Errorf("expected %q, got %q", expected, got)
 	}
@@ -1367,6 +1424,7 @@ func registerFieldAnnotationExterns(rt *runtime.Runtime, org, module, fieldMetaK
 			}
 			return name, nil
 		})
+	runtime.RegisterExternFunction(rt, org, module, "describeNested", describeNestedExtern)
 }
 
 // sortedAnnotatedFields lists the annotated field names of td in a stable order.

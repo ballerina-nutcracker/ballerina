@@ -30,10 +30,11 @@ import (
 )
 
 type birReader struct {
-	r   *bytes.Reader
-	cp  []any
-	tp  *semtypes.TypePool
-	ctx *context.CompilerContext
+	r         *bytes.Reader
+	cp        []any
+	tp        *semtypes.TypePool
+	ctx       *context.CompilerContext
+	typeDescs []*values.TypeDesc
 }
 
 func Unmarshal(ctx *context.CompilerContext, data []byte) (*bir.BIRPackage, error) {
@@ -60,6 +61,7 @@ func (br *birReader) readPackage() (pkg *bir.BIRPackage, err error) {
 
 	br.readTypePool()
 	br.readConstantPool()
+	br.readTypeDescs()
 
 	var pkgIdx int32
 	br.read(&pkgIdx)
@@ -1111,6 +1113,32 @@ func (br *birReader) readAnnotationValues() values.AnnotationValues {
 	return annotations
 }
 
+// readTypeDescs reads the Type Descriptors section. Every entry is allocated first, because an entry
+// can refer to a later one, through a field type or a typedesc inside an annotation value.
+func (br *birReader) readTypeDescs() {
+	br.typeDescs = make([]*values.TypeDesc, br.readLength())
+	for i := range br.typeDescs {
+		br.typeDescs[i] = &values.TypeDesc{}
+	}
+	for _, td := range br.typeDescs {
+		ty := br.readType()
+		annotations := br.readAnnotationValues()
+		fieldAnnotations := values.NewFieldAnnotationValues()
+		for range br.readLength() {
+			field := string(br.readStringCPEntry())
+			fieldAnnotations[field] = br.readAnnotationValues()
+		}
+		filled := values.NewTypeDescWithFieldAnnotations(br.ctx.GetTypeEnv(), ty, annotations, fieldAnnotations)
+		for range br.readLength() {
+			field := string(br.readStringCPEntry())
+			var index int64
+			br.read(&index)
+			filled.FieldTypes[field] = br.typeDescs[index]
+		}
+		*td = *filled
+	}
+}
+
 func (br *birReader) readConstValueByTag(tag typeTag) any {
 	switch tag {
 	case typeTagInt,
@@ -1188,15 +1216,9 @@ func (br *birReader) readConstValueByTag(tag typeTag) any {
 		restFiller, _ := values.FillerFactoryFor(tyCtx, atomic.Rest())
 		return values.NewList(ty, atomic, isReadonly, restFiller, int(count), initial)
 	case typeTagTypedesc:
-		ty := br.readType()
-		annotations := br.readAnnotationValues()
-		fieldCount := br.readLength()
-		fieldAnnotations := values.NewFieldAnnotationValues()
-		for range fieldCount {
-			field := string(br.readStringCPEntry())
-			fieldAnnotations[field] = br.readAnnotationValues()
-		}
-		return values.NewTypeDescWithFieldAnnotations(br.ctx.GetTypeEnv(), ty, annotations, fieldAnnotations)
+		var index int64
+		br.read(&index)
+		return br.typeDescs[index]
 	case typeTagRuntimeRef:
 		return &values.RuntimeAnnotationValueRef{
 			Organization: string(br.readStringCPEntry()),
