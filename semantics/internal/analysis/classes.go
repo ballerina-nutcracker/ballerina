@@ -30,9 +30,10 @@ import (
 // validateClass validates a class's members and, for a non-isolated class,
 // each inclusion; an error in one does not abandon the others.
 func validateClass(cx scope.Context, c *ast.BLangClassDefinition) {
-	info := scope.NewClassInfo(cx, c.Name.GetValue(), c.IsIsolated(), c.Fields,
+	fields := common.DeclaredNodes(c.Fields)
+	info := scope.NewClassInfo(cx, c.Name.GetValue(), c.IsIsolated(), fields,
 		memberFieldDescriptors(cx.CompilerCtx().SymbolMembers(c.Symbol())), c.InitFunction)
-	validateClassInner(cx, info, c.Fields, c.InitFunction, common.MethodsInResolutionOrder(c.Methods), c.ResourceMethods)
+	validateClassInner(cx, info, fields, c.InitFunction, common.MethodsInResolutionOrder(c.Methods), c.ResourceMethods)
 	if !c.IsIsolated() {
 		for i := range c.Inclusions {
 			validateInclusionNotIsolated(cx, c.Inclusions[i], c.InclusionPositions[i])
@@ -157,7 +158,9 @@ func validateClassInner(cx scope.Context, info scope.ClassInfo, fields []*ast.BL
 		validateInvokableNode(scope.NewMethod(cx, initFn, info), initFn)
 	}
 	for _, named := range methods {
-		validateInvokableNode(scope.NewMethod(cx, named.Method, info), named.Method)
+		if ast.SymbolIsSet(named.Method) {
+			validateInvokableNode(scope.NewMethod(cx, named.Method, info), named.Method)
+		}
 	}
 	for _, rm := range resourceMethods {
 		validateInvokableNode(scope.NewMethod(cx, rm, info), rm)

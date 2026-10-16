@@ -31,7 +31,7 @@ isolated class LockRecovery {
             }
             int local = 0;
             local = 1;
-            outside[0] = 1; // @error independent lock transfer check
+            outside[0] = 1;
         }
         int later = "wrong"; // @error independent semantic analysis
     }

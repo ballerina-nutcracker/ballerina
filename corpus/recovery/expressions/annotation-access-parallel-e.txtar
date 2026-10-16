@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-annotation int A on type; // @error
+annotation int A on type;
 type T int;
 
 function f0() {

@@ -45,7 +45,7 @@ import (
 // recoveryPhaseLimit is the last phase that recovers from source errors. Fixtures run only up to it and their
 // goldens hold the tree built by then; markers are checked only once every phase they exercise is enabled. A phase
 // that reports an error other than a syntax error also ends the pipeline: only syntax errors are recovered from.
-const recoveryPhaseLimit = testphases.PhaseTypeNarrowing
+const recoveryPhaseLimit = testphases.PhaseSemanticAnalysis
 
 func TestRecovery(t *testing.T) {
 	t.Parallel()

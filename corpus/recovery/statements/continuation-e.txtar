@@ -34,13 +34,13 @@ function brokenBody() returns int {
     match missingMatch { _ => { probe("skipped"); } } // @error
     match 1 { missingPattern => { probe("skipped"); } } // @error
     match 1 { _ if missingGuard => { probe("skipped"); } } // @error
-    probe("outer"); // @error later outer sibling resolved
+    probe("outer");
     int later = 4;
     return later;
 }
 function probe(int value) returns int => value;
 function unavailableSignature(Unknown value) returns int { // @error
-    probe("signatureResolved"); // @error body of a never-typed function is resolved
+    probe("signatureResolved");
     return 1;
 }
 class Survivor {

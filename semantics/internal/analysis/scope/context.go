@@ -28,6 +28,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	semcommon "github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -175,11 +176,11 @@ func (c *packageContext) UnimplementedErr(msg string, loc diagnostics.Location) 
 // to build their metadata, and reports nothing.
 func NewPackage(ctx *context.CompilerContext, tyCtx semtypes.Context, pkg *ast.BLangPackage, imported map[string]model.ExportedSymbolSpace) Context {
 	moduleVars := make(map[model.SymbolRef]VarDecl)
-	for _, v := range pkg.GlobalVars {
+	for _, v := range semcommon.DeclaredNodes(pkg.GlobalVars) {
 		moduleVars[v.Symbol()] = newVarDecl(ctx.SymbolType(v.Symbol()), v.IsFinal(), v.IsConfigurable(),
 			v.Flags().Has(model.FlagIsolated), v.Expr == nil)
 	}
-	for _, c := range pkg.Constants {
+	for _, c := range semcommon.DeclaredNodes(pkg.Constants) {
 		moduleVars[c.Symbol()] = newVarDecl(ctx.SymbolType(c.Symbol()), true, c.IsConfigurable(),
 			c.Flags().Has(model.FlagIsolated), false)
 	}
@@ -324,9 +325,11 @@ func withoutKind(rules []ruleSet, kind ruleKind) []ruleSet {
 func seedParameterLocals(fc *functionContext, node invokableSignatureNode) {
 	params := node.GetParameters()
 	for i := range params {
-		defineParameter(fc, params[i].Symbol())
+		if ast.SymbolIsSet(&params[i]) {
+			defineParameter(fc, params[i].Symbol())
+		}
 	}
-	if rest := node.GetRestParam(); rest != nil {
+	if rest := node.GetRestParam(); rest != nil && ast.SymbolIsSet(rest) {
 		defineParameter(fc, rest.Symbol())
 	}
 	if rm, ok := node.(*ast.BLangResourceMethod); ok {

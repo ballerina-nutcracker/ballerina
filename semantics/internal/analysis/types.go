@@ -24,6 +24,8 @@ import (
 
 func dispatchTypeDesc(cx scope.Context, td ast.TypeDescriptor) bool {
 	switch td := td.(type) {
+	case *ast.BLangBadTypeNode:
+		return false
 	case *ast.BLangValueType, *ast.BLangBuiltInRefTypeNode, *ast.BLangUserDefinedType:
 		return true
 	case *ast.BLangArrayType:

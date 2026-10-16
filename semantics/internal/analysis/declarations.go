@@ -46,16 +46,16 @@ func validatePackage(cx scope.Context, pkg *ast.BLangPackage) {
 			aliases = append(aliases, imp.Alias.GetValue())
 		}
 	}
-	for _, c := range pkg.Constants {
+	for _, c := range common.DeclaredNodes(pkg.Constants) {
 		validateVariable(cx, c, c.GetAssociatedType())
 	}
-	for _, v := range pkg.GlobalVars {
+	for _, v := range common.DeclaredNodes(pkg.GlobalVars) {
 		validateVariable(cx, v, moduleVarExpectedType(v.IsListener(), cx.CompilerCtx().SymbolType(v.Symbol())))
 	}
 	for _, svc := range pkg.Services {
 		validateService(cx, svc)
 	}
-	for _, fn := range pkg.Functions {
+	for _, fn := range common.DeclaredNodes(pkg.Functions) {
 		validateFunction(cx, fn)
 	}
 	for _, td := range pkg.TypeDefinitions {
@@ -67,7 +67,7 @@ func validatePackage(cx scope.Context, pkg *ast.BLangPackage) {
 	if pkg.InitFunction != nil {
 		validateFunction(cx, pkg.InitFunction)
 	}
-	for _, c := range pkg.ClassDefinitions {
+	for _, c := range common.DeclaredNodes(pkg.ClassDefinitions) {
 		validateClass(cx, c)
 	}
 }

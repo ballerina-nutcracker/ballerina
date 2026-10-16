@@ -18,15 +18,15 @@
 function inferredCallable() returns int {
     var unavailable = missing; // @error
     unavailable();
-    probe("later"); // @error later sibling resolved
+    probe("later");
     int later = 1;
     return later;
 }
 
 function unknownCallable() returns int {
     Unknown unavailable; // @error
-    unavailable(); // @error never-typed callee
-    probe("later"); // @error later sibling resolved
+    unavailable();
+    probe("later");
     int later = 2;
     return later;
 }

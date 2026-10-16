@@ -35,8 +35,13 @@ func validateBlock(cx scope.Context, stmts []ast.StatementNode) {
 
 func validateStmt(cx scope.Context, stmt ast.StatementNode) {
 	switch stmt := stmt.(type) {
+	case *ast.BLangBadStmt:
+		// The AST builder already reported the failed statement.
+		return
 	case *ast.BLangVariableDef:
-		validateVariableDef(cx, scope.DefineLocal(cx, stmt))
+		if ast.SymbolIsSet(stmt.Var) {
+			validateVariableDef(cx, scope.DefineLocal(cx, stmt))
+		}
 	case *ast.BLangAssignment:
 		validateAssignment(cx, stmt)
 	case *ast.BLangCompoundAssignment:
@@ -109,7 +114,9 @@ func validateWhile(cx scope.Context, stmt *ast.BLangWhile) {
 // validateForeach validates the collection, the loop variable, the body and
 // the on-fail clause; an error in the header does not abandon the body.
 func validateForeach(cx scope.Context, stmt *ast.BLangForeach) {
-	validateForeachHeader(cx, stmt, scope.DefineBoundLocal(cx, stmt.VariableDef))
+	if ast.SymbolIsSet(stmt.VariableDef.Var) {
+		validateForeachHeader(cx, stmt, scope.DefineBoundLocal(cx, stmt.VariableDef))
+	}
 	validateBlock(cx, stmt.Body.Stmts)
 	if stmt.OnFailClause != nil {
 		validateOnFail(cx, stmt.OnFailClause)
