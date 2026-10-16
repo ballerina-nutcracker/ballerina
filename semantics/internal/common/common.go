@@ -71,6 +71,12 @@ func IterableType(ctx *context.CompilerContext) (semtypes.SemType, bool) {
 	return ctx.SymbolType(ref), true
 }
 
+// DeclaredNodes returns the nodes that declare a symbol. A declaration with a bad name declares none, so it has
+// no type.
+func DeclaredNodes[N ast.NodeWithSymbol](nodes []N) []N {
+	return slices.DeleteFunc(slices.Clone(nodes), func(node N) bool { return !ast.SymbolIsSet(node) })
+}
+
 type NamedClassMethod struct {
 	Name   string
 	Method *ast.BLangFunction
