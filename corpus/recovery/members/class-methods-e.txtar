@@ -53,6 +53,16 @@ function valid() returns int => 1;
         (bad-type builtin (tokens ("int" 23:29 23:32)))))) (
       (value-type null))
       (block-function-body))
+    (function missingBody () (
+      (value-type int))
+      (block-function-body))
+    (function missingComma (
+      (variable a (type
+        (value-type int)))
+      (variable b (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body))
     (function missingDefault (
       (variable x (type
         (value-type int)) (expr
@@ -76,6 +86,17 @@ function valid() returns int => 1;
         (value-type int)))
       (variable (bad-identifier) (type
         (user-defined-type b)))) (
+      (value-type null))
+      (block-function-body))
+    (function mixed (
+      (variable a (type
+        (value-type int)))
+      (variable b (type
+        (value-type string)) (expr
+        (simple-var-ref (bad-identifier))))
+      (variable c (type
+        (value-type int)) (expr
+        (literal 1)))) (
       (value-type null))
       (block-function-body))
     (function next () (
@@ -103,11 +124,206 @@ function valid() returns int => 1;
             (simple-var-ref b))
           (invocation length expr:
             (simple-var-ref rest) ()))))
-    (bad-top-level function (tokens ("function" 19:5 19:13) ("(" 19:26 19:27) ("int" 19:27 19:30) ("int" 19:33 19:36) (")" 19:38 19:39) ("{" 19:40 19:41) ("}" 19:41 19:42)))
-    (bad-top-level function (tokens ("function" 26:5 26:13) ("(" 26:19 26:20) ("int" 26:20 26:23) ("," 26:25 26:26) ("string" 26:27 26:33) ("=" 26:36 26:37) ("," 26:38 26:39) ("int" 26:40 26:43) ("=" 26:46 26:47) ("," 26:49 26:50) (")" 26:61 26:62) ("{" 26:63 26:64) ("}" 26:64 26:65)))
-    (bad-top-level function (tokens ("function" 29:5 29:13) ("(" 29:33 29:34) (")" 29:34 29:35) ("{" 29:40 29:41) ("}" 29:41 29:42)))
-    (bad-top-level function (tokens ("function" 30:5 30:13) ("(" 30:25 30:26) (")" 30:26 30:27) ("returns" 30:28 30:35) ("int" 30:36 30:39))))
+    (bad-top-level function (tokens ("function" 29:5 29:13) ("(" 29:33 29:34) (")" 29:34 29:35) ("{" 29:40 29:41) ("}" 29:41 29:42))))
   (function valid () (
     (value-type int))
     (expr-function-body
       (literal 1))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> class-methods-e.bal:25:37
+   |
+25 |     function missingDefault(int x = ) {} // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> class-methods-e.bal:26:38
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown type: a
+  --> class-methods-e.bal:21:31
+   |
+21 |     function missingFirstType(a, int b) {} // @error
+   |                               ^
+
+error[SEMANTIC_ERROR]: Unknown type: b
+  --> class-methods-e.bal:22:39
+   |
+22 |     function missingSecondType(int a, b) {} // @error
+   |                                       ^
+
+error[SEMANTIC_ERROR]: Unknown type: d
+  --> class-methods-e.bal:26:51
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |                                                   ^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> class-methods-e.bal:18:15
+   |
+18 |     function (int a) {} // @error
+   |               ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> class-methods-e.bal:19:27
+   |
+19 |     function missingComma(int a int b) {} // @error
+   |                           ^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> class-methods-e.bal:22:32
+   |
+22 |     function missingSecondType(int a, b) {} // @error
+   |                                ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> class-methods-e.bal:23:27
+   |
+23 |     function leadingComma(, int a) {} // @error
+   |                           ^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> class-methods-e.bal:24:28
+   |
+24 |     function trailingComma(int a, ) {} // @error
+   |                            ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> class-methods-e.bal:26:20
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |                    ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'b'
+  --> class-methods-e.bal:19:33
+   |
+19 |     function missingComma(int a int b) {} // @error
+   |                                 ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'b'
+  --> class-methods-e.bal:21:34
+   |
+21 |     function missingFirstType(a, int b) {} // @error
+   |                                  ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'b'
+  --> class-methods-e.bal:26:27
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |                           ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'c'
+  --> class-methods-e.bal:26:40
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |                                        ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> class-methods-e.bal:25:29
+   |
+25 |     function missingDefault(int x = ) {} // @error
+   |                             ^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> class-methods-e.bal:23:27
+   |
+23 |     function leadingComma(, int a) {} // @error
+   |                           ^^^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> class-methods-e.bal:29:36
+   |
+29 |     function blockMissingKeyword() int {} // @error
+   |                                    ^^^^^
+
+error[SYNTAX_ERROR]: missing close brace token
+  --> class-methods-e.bal:31:1
+   |
+31 |     function next() returns int => 1; // @error missing body of missingBody is reported at the next method
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> class-methods-e.bal:19:33
+   |
+19 |     function missingComma(int a int b) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing ellipsis token
+  --> class-methods-e.bal:26:52
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing function name
+  --> class-methods-e.bal:18:14
+   |
+18 |     function (int a) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> class-methods-e.bal:20:30
+   |
+20 |     function missingName(int ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> class-methods-e.bal:21:32
+   |
+21 |     function missingFirstType(a, int b) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> class-methods-e.bal:22:40
+   |
+22 |     function missingSecondType(int a, b) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> class-methods-e.bal:24:35
+   |
+24 |     function trailingComma(int a, ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> class-methods-e.bal:25:37
+   |
+25 |     function missingDefault(int x = ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> class-methods-e.bal:26:38
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing open brace token
+  --> class-methods-e.bal:31:1
+   |
+31 |     function next() returns int => 1; // @error missing body of missingBody is reported at the next method
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> class-methods-e.bal:24:35
+   |
+24 |     function trailingComma(int a, ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> class-methods-e.bal:27:41
+   |
+27 |     function blockMissingType() returns {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> class-methods-e.bal:28:40
+   |
+28 |     function exprMissingType() returns => 1; // @error
+   |
+
+error[SYNTAX_ERROR]: parameter after the rest parameter
+  --> class-methods-e.bal:26:52
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |                                                    ^^^^^^^^^

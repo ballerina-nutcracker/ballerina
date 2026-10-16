@@ -24,3 +24,11 @@ function valid() {}
     (value-type (position <built-in>) null))
     (block-function-body (position 17:18 18:1)))
   (bad-top-level trailing-tokens (position 18:1 19:1)))
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> bad-trailing-tokens-e.bal:18:1
+   |
+18 | % // @error
+   | ^^^^^^^^^^^
+19 | 
+   |

@@ -37,3 +37,39 @@ class '_ {} // @error
   (function (bad-identifier) () (
     (value-type null))
     (block-function-body)))
+-- stderr --
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:17:10
+   |
+17 | function _() {} // @error
+   |          ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:18:11
+   |
+18 | const int '_ = 1; // @error
+   |           ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:19:5
+   |
+19 | int '_ = 1; // @error
+   |     ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:20:6
+   |
+20 | type '_ int; // @error
+   |      ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:21:12
+   |
+21 | annotation '_ on type; // @error
+   |            ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:22:7
+   |
+22 | class '_ {} // @error
+   |       ^^^

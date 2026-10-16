@@ -67,3 +67,69 @@ function operators() {
         (variable (position 27:1 28:1) (bad-identifier) (type
           (value-type (position 27:1 27:9) any)) (expr
           (bad-expr-or-action annot-access (position 27:22 27:34) (tokens (".@" 27:29 27:31)))))))))
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:17:19
+   |
+17 | type Optional int $ ?; // @error
+   |                   ^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:18:16
+   |
+18 | type Union int $ | string; // @error
+   |                ^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:19:23
+   |
+19 | type Intersection int $ & readonly; // @error
+   |                       ^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:21:20
+   |
+21 |     any binary = 1 $ + 2; // @error
+   |                    ^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:22:19
+   |
+22 |     any checked = $ check foo(); // @error
+   |                   ^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:23:18
+   |
+23 |     any typeOf = $ typeof data; // @error
+   |                  ^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:24:17
+   |
+24 |     any unary = $ !flag; // @error
+   |                 ^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:25:23
+   |
+25 |     any tested = data $ is int; // @error
+   |                       ^^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:26:19
+   |
+26 |     any trapped = $ trap foo(); // @error
+   |                   ^^^^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:27:27
+   |
+27 |     any annotation = data $ .@tag; // @error
+   |                           ^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:27:9
+   |
+27 |     any annotation = data $ .@tag; // @error
+   |         ^^^^^^^^^^^

@@ -74,3 +74,15 @@ function probe(int value) returns int => value;
     (value-type int))
     (expr-function-body
       (simple-var-ref value))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missing
+  --> unavailable-callable-e.bal:18:23
+   |
+18 |     var unavailable = missing; // @error
+   |                       ^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: Unknown
+  --> unavailable-callable-e.bal:26:1
+   |
+26 |     Unknown unavailable; // @error
+   |     ^^^^^^^^

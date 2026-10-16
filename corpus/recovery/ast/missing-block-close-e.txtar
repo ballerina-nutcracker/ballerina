@@ -26,7 +26,18 @@ function valid() {}
   (function (position 1:1 21:1) foo () (
     (value-type (position <built-in>) null))
     (block-function-body (position 17:16 21:1)
-      (bad-stmt if-else (position 18:1 19:1) (tokens ("if" 18:5 18:7) ("true" 18:8 18:12) ("{" 18:13 18:14) ("int" 18:15 18:18) ("=" 18:25 18:26) (";" 18:28 18:29) ("else" 18:30 18:34) ("{" 18:35 18:36) ("int" 18:37 18:40) ("=" 18:47 18:48) (";" 18:50 18:51) ("}" 18:52 18:53)))
+      (if (position 18:1 19:1)
+        (literal (position 18:8 18:13) true)
+        (block-stmt (position 18:13 18:30)
+          (var-def (position 18:15 18:30)
+            (variable (position 18:15 18:30) inner (type
+              (value-type (position 18:15 18:19) int)) (expr
+              (literal (position 18:27 18:28) 1))))) (
+        (block-stmt (position 18:35 19:1)
+          (var-def (position 18:37 18:52)
+            (variable (position 18:37 18:52) other (type
+              (value-type (position 18:37 18:41) int)) (expr
+              (literal (position 18:49 18:50) 2)))))))
       (var-def (position 19:1 20:1)
         (variable (position 19:1 20:1) later (type
           (value-type (position 19:1 19:9) int)) (expr
@@ -34,3 +45,9 @@ function valid() {}
   (function (position 21:1 22:1) valid () (
     (value-type (position <built-in>) null))
     (block-function-body (position 21:18 22:1))))
+-- stderr --
+error[SYNTAX_ERROR]: missing close brace token
+  --> missing-block-close-e.bal:18:30
+   |
+18 |     if true { int inner = 1; else { int other = 2; } // @error
+   |

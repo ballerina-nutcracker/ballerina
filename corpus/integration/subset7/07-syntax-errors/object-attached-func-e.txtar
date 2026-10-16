@@ -12,6 +12,18 @@ error[SYNTAX_ERROR]: missing equal token
 20 |     function bar(string a) returns int ; // @error
    |
 
+error[SYNTAX_ERROR]: missing external keyword
+  --> object-attached-func-e.bal:18:40
+   |
+18 |     function foo(int a) returns string ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing external keyword
+  --> object-attached-func-e.bal:20:40
+   |
+20 |     function bar(string a) returns int ; // @error
+   |
+
 error[SYNTAX_ERROR]: resource path in function definition
   --> object-attached-func-e.bal:23:21
    |

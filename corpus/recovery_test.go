@@ -17,12 +17,15 @@
 package corpus
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
@@ -74,7 +77,7 @@ func TestRecovery(t *testing.T) {
 				t.Fatalf("expected %s and ast sections in %s", sourceName, inputPath)
 			}
 			content := string(archive.Files[0].Data)
-			sourcePath := filepath.Join(filepath.Dir(inputPath), sourceName)
+			sourcePath := sourceName
 			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 			cx := context.NewCompilerContext(env)
 			astOnly := strings.HasPrefix(filepath.ToSlash(inputPath), "recovery/ast/")
@@ -96,12 +99,13 @@ func TestRecovery(t *testing.T) {
 				}
 			}
 			printer := ast.PrettyPrinter{Fallback: printRecoveryFallback, ShowNodeLocations: astOnly, DiagnosticEnv: cx.DiagnosticEnv()}
-			compareRecoveryGolden(t, inputPath, archive, printRecoveryResult(printer, env, result, completed))
+			actualStderr := printRecoveryDiagnostics(cx, sourcePath, content)
+			compareRecoveryGolden(t, inputPath, archive, printRecoveryResult(printer, env, result, completed), actualStderr)
 			finalPhaseReached := recoveryPhaseLimit >= finalPhase
 			if finalPhaseReached {
 				testharness.ValidateErrorMarkers(t, sourcePath, content, projects.NewDiagnosticResult(cx.Diagnostics()), cx.DiagnosticEnv())
 			}
-			for _, section := range archive.Files[2:] {
+			for _, section := range archive.Files[3:] {
 				switch section.Name {
 				case "diagnostic-counts":
 					if finalPhaseReached {
@@ -214,18 +218,41 @@ func printRecoveryResult(printer ast.PrettyPrinter, env *context.CompilerEnviron
 	return actualAST
 }
 
-func compareRecoveryGolden(t *testing.T, inputPath string, archive *txtar.Archive, actualAST string) {
+// printRecoveryDiagnostics renders every diagnostic as the CLI prints it, sorted like the integration stderr goldens.
+func printRecoveryDiagnostics(cx *context.CompilerContext, sourcePath, content string) string {
+	var stderr bytes.Buffer
+	fsys := fstest.MapFS{sourcePath: {Data: []byte(content)}}
+	testharness.PrintDiagnostics(fsys, &stderr, projects.NewDiagnosticResult(cx.Diagnostics()), cx.DiagnosticEnv())
+	return normalizeIntegrationStderr(stderr.String())
+}
+
+// compareRecoveryGolden compares the ast section and the stderr section that follows it; -update rewrites both,
+// adding the stderr section when it is missing.
+func compareRecoveryGolden(t *testing.T, inputPath string, archive *txtar.Archive, actualAST, actualStderr string) {
 	t.Helper()
-	expectedAST := string(archive.Files[1].Data)
+	hasStderr := len(archive.Files) > 2 && archive.Files[2].Name == "stderr"
 	if *update {
 		archive.Files[1].Data = []byte(actualAST)
+		if hasStderr {
+			archive.Files[2].Data = []byte(actualStderr)
+		} else {
+			archive.Files = slices.Insert(archive.Files, 2, txtar.File{Name: "stderr", Data: []byte(actualStderr)})
+		}
 		if test_util.UpdateTxtarArchiveIfNeeded(t, inputPath, archive.Files) {
-			t.Errorf("updated recovery AST: %s", inputPath)
+			t.Errorf("updated recovery golden: %s", inputPath)
 		}
 		return
 	}
+	if !hasStderr {
+		t.Fatalf("expected a stderr section after the ast section in %s", inputPath)
+	}
+	expectedAST := string(archive.Files[1].Data)
 	if test_util.NormalizeNewlines(expectedAST) != test_util.NormalizeNewlines(actualAST) {
 		t.Errorf("recovery AST mismatch: %s\n%s", inputPath, test_util.FormatExpectedGot(expectedAST, actualAST))
+	}
+	expectedStderr := string(archive.Files[2].Data)
+	if test_util.NormalizeNewlines(expectedStderr) != test_util.NormalizeNewlines(actualStderr) {
+		t.Errorf("recovery stderr mismatch: %s\n%s", inputPath, test_util.FormatExpectedGot(expectedStderr, actualStderr))
 	}
 }
 

@@ -36,11 +36,14 @@ function actions() {
       (var-def (position 18:1 19:1)
         (variable (position 18:1 19:1) a (type
           (value-type (position 18:1 18:9) any)) (expr
-          (bad-expr-or-action start-action (position 18:13 18:23) (tokens ("start" 18:13 18:18) ("(" 18:22 18:23))))))
+          (start-action (position 18:13 18:23)
+            (invocation (position 18:19 18:23) foo ())))))
       (var-def (position 19:1 20:1)
         (variable (position 19:1 20:1) b (type
           (value-type (position 19:1 19:9) any)) (expr
-          (bad-expr-or-action wait-action (position 19:13 19:33) (tokens ("wait" 19:13 19:17) ("{" 19:18 19:19) (":" 19:22 19:23) (":" 19:29 19:30) ("}" 19:32 19:33))))))
+          (multiple-wait-action (position 19:13 19:33) one
+            (simple-var-ref (position 19:24 19:26) f) two
+            (simple-var-ref (position 19:31 19:32) g)))))
       (var-def (position 20:1 21:1)
         (variable (position 20:1 21:1) c (type
           (value-type (position 20:1 20:9) any)) (expr
@@ -58,14 +61,89 @@ function actions() {
       (var-def (position 24:1 25:1)
         (variable (position 24:1 25:1) f (type
           (value-type (position 24:1 24:9) any)) (expr
-          (bad-expr-or-action remote-method-call-action (position 24:13 24:25) (tokens ("->" 24:19 24:21) ("(" 24:24 24:25))))))
+          (remote-method-call (position 24:13 24:25) get expr:
+            (simple-var-ref (position 24:13 24:19) (bad-identifier)) ()))))
       (var-def (position 25:1 26:1)
         (variable (position 25:1 26:1) g (type
           (value-type (position 25:1 25:9) any)) (expr
-          (bad-expr-or-action client-resource-access-action (position 25:13 25:31) (tokens ("->" 25:19 25:21) ("/" 25:21 25:22) ("." 25:26 25:27) ("(" 25:30 25:31))))))
+          (client-resource-access (position 25:13 25:31) get expr:
+            (simple-var-ref (position 25:13 25:19) (bad-identifier)) name:path))))
       (var-def (position 26:1 27:1)
         (variable (position 26:1 27:1) h (type
           (value-type (position 26:1 26:9) any)) (expr
-          (bad-expr-or-action braced-action (position 26:13 26:25) (tokens ("(" 26:13 26:14) ("start" 26:14 26:19) ("(" 26:23 26:24) (")" 26:24 26:25))))))
+          (start-action (position 26:14 26:25)
+            (invocation (position 26:20 26:25) foo ())))))
       (expression-stmt (position 27:1 28:1)
         (bad-expr-or-action query-action (position 27:1 27:28) (tokens ("from" 27:5 27:9) ("int" 27:10 27:13) ("in" 27:16 27:18) ("[" 27:19 27:20) ("]" 27:21 27:22) ("do" 27:23 27:25) ("{" 27:26 27:27) ("}" 27:27 27:28)))))))
+-- stderr --
+error[SYNTAX_ERROR]: missing close paren token
+  --> bad-action-kinds-e.bal:18:23
+   |
+18 |     any a = start foo(; // @error
+   |
+
+error[SYNTAX_ERROR]: missing close paren token
+  --> bad-action-kinds-e.bal:24:25
+   |
+24 |     any f = client->get(; // @error
+   |
+
+error[SYNTAX_ERROR]: missing close paren token
+  --> bad-action-kinds-e.bal:25:31
+   |
+25 |     any g = client->/path.get(; // @error
+   |
+
+error[SYNTAX_ERROR]: missing close paren token
+  --> bad-action-kinds-e.bal:26:25
+   |
+26 |     any h = (start foo(); // @error
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> bad-action-kinds-e.bal:19:26
+   |
+19 |     any b = wait {one: f two: g}; // @error
+   |
+
+error[SYNTAX_ERROR]: qualifier not allowed
+  --> bad-action-kinds-e.bal:24:13
+   |
+24 |     any f = client->get(; // @error
+   |             ^^^^^^
+
+error[SYNTAX_ERROR]: qualifier not allowed
+  --> bad-action-kinds-e.bal:25:13
+   |
+25 |     any g = client->/path.get(; // @error
+   |             ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: transformAsyncSendAction unimplemented
+  --> bad-action-kinds-e.bal:23:1
+   |
+23 |     value -> worker1; // @error
+   |     ^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: transformCommitAction unimplemented
+  --> bad-action-kinds-e.bal:22:13
+   |
+22 |     any e = commit; // @error
+   |             ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: transformFlushAction unimplemented
+  --> bad-action-kinds-e.bal:21:13
+   |
+21 |     any d = flush worker1; // @error
+   |             ^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: transformQueryAction unimplemented
+  --> bad-action-kinds-e.bal:27:1
+   |
+27 |     from int x in [1] do {}; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: transformReceiveAction unimplemented
+  --> bad-action-kinds-e.bal:20:13
+   |
+20 |     any c = <- worker1; // @error
+   |             ^^^^^^^^^^

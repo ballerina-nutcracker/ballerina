@@ -23,5 +23,11 @@ enum '_ { R } // @error
     (literal R)))
   (type-definition (bad-identifier) enum
     (user-defined-type R)))
+-- stderr --
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> enum-invalid-name-e.bal:17:6
+   |
+17 | enum '_ { R } // @error
+   |      ^^^
 -- diagnostic-counts --
 1 '_' is a keyword, and may not be used as an identifier

@@ -40,3 +40,4 @@ function valid() {}
   (function valid () (
     (value-type null))
     (block-function-body)))
+-- stderr --

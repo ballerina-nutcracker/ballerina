@@ -40,3 +40,20 @@ public function main() {
   (function main () (
     (value-type null))
     (block-function-body)))
+-- stderr --
+error[SYNTAX_ERROR]: missing close bracket token
+  --> unimplemented-nested-syntax-e.bal:22:22
+   |
+22 |     [int, int] [a, b = [1, 2]; // @error
+   |
+
+error[SYNTAX_ERROR]: missing close paren token
+  --> unimplemented-nested-syntax-e.bal:18:20
+   |
+18 |     fail error("x" ; // @error
+   |
+-- diagnostic-counts --
+0 transformFailStatement unimplemented
+0 binding pattern is not implemented
+1 missing close paren token
+1 missing close bracket token

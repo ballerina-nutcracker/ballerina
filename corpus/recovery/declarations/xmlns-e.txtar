@@ -59,3 +59,15 @@ function probe(int value) returns int => value;
     (value-type int))
     (expr-function-body
       (simple-var-ref value))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingLocalURI
+  --> xmlns-e.bal:25:11
+   |
+25 |     xmlns missingLocalURI as missingLocal; // @error
+   |           ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingURI
+  --> xmlns-e.bal:19:7
+   |
+19 | xmlns missingURI as missingNS; // @error
+   |       ^^^^^^^^^^^

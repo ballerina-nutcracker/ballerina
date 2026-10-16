@@ -105,3 +105,9 @@ function nestedBodies() {
                   (simple-var-ref after))))) ())
           (block-stmt)) ())
       (block-stmt))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingNested
+  --> lambda-nested-e.bal:26:68
+   |
+26 |                 consumeFunction(function() returns int => before + missingNested); // @error
+   |                                                                    ^^^^^^^^^^^^^
