@@ -1,0 +1,9 @@
+-- stdout --
+ack
+ack
+hello
+Connection closed by the server.
+-- stderr --
+error: boom in onBytes
+error: onBytes failed
+error: boom in onConnect

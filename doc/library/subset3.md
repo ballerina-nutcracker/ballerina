@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; and the new `file` module.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/tcp` package, a raw-bytes TCP client and listener.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -218,3 +218,23 @@ File, directory, and path manipulation utilities.
 | `Listener` / `Service` | Directory change listener: attaches a service whose `onCreate`/`onModify`/`onDelete` remote methods are dispatched on filesystem changes under the configured `path` (optionally `recursive`) |
 
 `file:Error`'s `distinct` subtypes (`FileNotFoundError`, `PermissionError`, etc.) are declared as plain type aliases of `Error` instead — they are structurally identical at runtime, so `error is file:FileNotFoundError`-style checks don't narrow. `file:Service` is likewise declared as a plain (non-`distinct`) `service object {}` marker instead of jBallerina's `distinct service object {}`. Unlike jBallerina, `gracefulStop()` closes the underlying OS watch immediately (same as `immediateStop()`) rather than leaving it running until process exit, and `attach()` returns its "at least one resource required" validation error through its `error?` return type instead of throwing it.
+
+## [tcp](https://github.com/ballerina-platform/module-ballerina-tcp/blob/master/docs/spec/spec.md)
+
+Connection-oriented TCP client and listener that exchange raw bytes with no framing.
+
+| Feature | Notes |
+|---|---|
+| `new tcp:Client(remoteHost, remotePort, config)` | Connects to the remote host, optionally binding to `localHost`, with a `timeout` for reads and a `writeTimeout` for writes |
+| `Client->writeBytes(data)` / `Client->readBytes()` / `Client->close()` | Send raw bytes, read the bytes from one socket read, and close the connection |
+| `ClientSecureSocket` | TLS on the client with a PEM certificate file in `cert`, plus `protocol` versions and `ciphers`. A `crypto:TrustStore` returns `tcp:Error` |
+| `new tcp:Listener(localPort, config)` | Binds on `localHost` (all interfaces by default) |
+| `ListenerSecureSocket` | TLS on the listener with a certificate and private key file pair in `key`, plus `protocol` versions and `ciphers`. A `crypto:KeyStore` returns `tcp:Error` |
+| `Listener.attach` / `detach` / `'start` / `gracefulStop` / `immediateStop` | One service per listener. `'start` after a stop binds again. `gracefulStop` stops accepting while open connections stay up; `immediateStop` also closes every open connection |
+| `tcp:Service.onConnect(caller)` | Called for each accepted connection; returns the `tcp:ConnectionService` that handles it |
+| `tcp:ConnectionService.onBytes` / `onError` / `onClose` | `onBytes(readonly & byte[])` or `onBytes(Caller, readonly & byte[])`; returned bytes are written back to the peer. `onError(tcp:Error)` and `onClose()` are optional |
+| `tcp:Caller` | `writeBytes`, `close`, and the `remoteHost`, `remotePort`, `localHost`, `localPort` and `id` fields |
+
+The service rules that jBallerina's compiler plugin enforces are checked at runtime: `attach` returns `tcp:Error` for an invalid `tcp:Service`, and an invalid connection service returned from `onConnect` is logged and its connection closed. `tcp:Service`, `tcp:ConnectionService` and `tcp:Error` are not `distinct` types.
+
+Not covered in this subset: `ClientSecureSocket.handshakeTimeout`/`sessionTimeout`, `ListenerSecureSocket.handshakeTimeout`/`sessionTimeout`, and `CertKey.keyPassword` (an encrypted private key fails at the TLS handshake).

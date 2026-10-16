@@ -1,0 +1,6 @@
+-- stdout --
+onBytes hello
+onClose
+stopped
+true
+-- stderr --
