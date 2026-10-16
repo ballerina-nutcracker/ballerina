@@ -19,7 +19,7 @@ function blockMissingType() returns {} // @error
 function exprMissingType() returns => 1; // @error
 function blockMissingKeyword() int {} // @error
 function exprMissingKeyword() int => 1; // @error
-function valid() returns int => 1;
+function valid() returns int => 1; // @error missing close brace of blockMissingKeyword
 -- ast --
 (package
   (function blockMissingType () (
@@ -29,9 +29,75 @@ function valid() returns int => 1;
     (bad-type simple-reference))
     (expr-function-body
       (literal 1)))
+  (function exprMissingKeyword () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable (bad-identifier) (type
+          (value-type int)) (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable (bad-identifier))) ()
+              (expr-function-body
+                (literal 1)))))))))
   (function valid () (
     (value-type int))
     (expr-function-body
       (literal 1)))
-  (bad-top-level function (tokens ("function" 19:1 19:9) ("(" 19:29 19:30) (")" 19:30 19:31) ("{" 19:36 19:37) ("}" 19:37 19:38)))
-  (bad-top-level function (tokens ("function" 20:1 20:9) ("(" 20:28 20:29) (")" 20:29 20:30) ("int" 20:31 20:34) ("=>" 20:35 20:37) (";" 20:39 20:40))))
+  (bad-top-level function (tokens ("function" 19:1 19:9) ("(" 19:29 19:30) (")" 19:30 19:31) ("{" 19:36 19:37) ("}" 19:37 19:38))))
+(lambda-types
+  ($anonFunc$_0 [callable=never]))
+-- stderr --
+error[SEMANTIC_ERROR]: cannot infer anonymous function parameter types without an expected function type
+  --> returns-e.bal:20:35
+   |
+20 | function exprMissingKeyword() int => 1; // @error
+   |                                   ^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> returns-e.bal:19:32
+   |
+19 | function blockMissingKeyword() int {} // @error
+   |                                ^^^^^
+
+error[SYNTAX_ERROR]: missing close brace token
+  --> returns-e.bal:21:1
+   |
+21 | function valid() returns int => 1; // @error missing close brace of blockMissingKeyword
+   |
+
+error[SYNTAX_ERROR]: missing equal token
+  --> returns-e.bal:20:35
+   |
+20 | function exprMissingKeyword() int => 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> returns-e.bal:20:35
+   |
+20 | function exprMissingKeyword() int => 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> returns-e.bal:20:35
+   |
+20 | function exprMissingKeyword() int => 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing open brace token
+  --> returns-e.bal:20:31
+   |
+20 | function exprMissingKeyword() int => 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> returns-e.bal:17:37
+   |
+17 | function blockMissingType() returns {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> returns-e.bal:18:36
+   |
+18 | function exprMissingType() returns => 1; // @error
+   |

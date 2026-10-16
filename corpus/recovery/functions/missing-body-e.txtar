@@ -20,6 +20,9 @@ function next() returns int => 1; // @error missing body of noBody is reported a
 function valid() returns int => next();
 -- ast --
 (package
+  (function noBody () (
+    (value-type int))
+    (block-function-body))
   (function next () (
     (value-type int))
     (expr-function-body
@@ -27,5 +30,16 @@ function valid() returns int => next();
   (function valid () (
     (value-type int))
     (expr-function-body
-      (invocation next ())))
-  (bad-top-level function (tokens ("function" 17:1 17:9) ("(" 17:16 17:17) (")" 17:17 17:18) ("returns" 17:19 17:26) ("int" 17:27 17:30))))
+      (invocation next ()))))
+-- stderr --
+error[SYNTAX_ERROR]: missing close brace token
+  --> missing-body-e.bal:18:1
+   |
+18 | function next() returns int => 1; // @error missing body of noBody is reported at the next declaration
+   |
+
+error[SYNTAX_ERROR]: missing open brace token
+  --> missing-body-e.bal:18:1
+   |
+18 | function next() returns int => 1; // @error missing body of noBody is reported at the next declaration
+   |

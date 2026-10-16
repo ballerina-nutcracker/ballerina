@@ -94,3 +94,35 @@ isolated class LockRecovery {
           (variable later (type
             (value-type int)) (expr
             (literal wrong))))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingCondition
+  --> lock-e.bal:27:16
+   |
+27 |             if missingCondition { // @error abandoned compound statement
+   |                ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: undefined member 'anotherMissing'
+  --> lock-e.bal:28:22
+   |
+28 |                 self.anotherMissing = 1; // @error symbol resolution still visits body
+   |                      ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: undefined member 'missing'
+  --> lock-e.bal:25:18
+   |
+25 |             self.missing = 1; // @error abandoned assignment
+   |                  ^^^^^^^^
+
+error[SEMANTIC_ERROR]: undefined member 'missing'
+  --> lock-e.bal:26:18
+   |
+26 |             self.missing += 1; // @error abandoned compound assignment
+   |                  ^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> lock-e.bal:35:1
+   |
+35 |         int later = "wrong"; // @error independent semantic analysis
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 |     }
+   |

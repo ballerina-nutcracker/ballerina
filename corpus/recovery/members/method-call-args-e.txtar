@@ -62,7 +62,10 @@ function valid(C obj) returns C => new C(obj.m(1, b = 3));
       (user-defined-type C)))) (
     (value-type int))
     (expr-function-body
-      (bad-expr-or-action method-call (tokens ("." 22:48 22:49) ("(" 22:50 22:51) (")" 22:54 22:55)))))
+      (invocation m expr:
+        (simple-var-ref obj) (
+        (literal 1)
+        (literal 2)))))
   (function namedMissingValue (
     (variable obj (type
       (user-defined-type C)))) (
@@ -85,7 +88,10 @@ function valid(C obj) returns C => new C(obj.m(1, b = 3));
   (function newMissingComma () (
     (user-defined-type C))
     (expr-function-body
-      (bad-expr-or-action explicit-new (tokens ("new" 25:41 25:44) ("(" 25:46 25:47) (")" 25:50 25:51)))))
+      (new
+        (user-defined-type C) (
+        (literal 1)
+        (literal 2)))))
   (function newNamedMissingValue () (
     (user-defined-type C))
     (expr-function-body
@@ -113,3 +119,51 @@ function valid(C obj) returns C => new C(obj.m(1, b = 3));
           (literal 1)
           (named-arg b
             (literal 3)))))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> method-call-args-e.bal:23:63
+   |
+23 | function namedMissingValue(C obj) returns int => obj.m(1, b = ); // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> method-call-args-e.bal:26:59
+   |
+26 | function newNamedMissingValue() returns C => new C(1, b = ); // @error
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> method-call-args-e.bal:22:53
+   |
+22 | function missingComma(C obj) returns int => obj.m(1 2); // @error
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> method-call-args-e.bal:25:49
+   |
+25 | function newMissingComma() returns C => new C(1 2); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> method-call-args-e.bal:23:63
+   |
+23 | function namedMissingValue(C obj) returns int => obj.m(1, b = ); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> method-call-args-e.bal:26:59
+   |
+26 | function newNamedMissingValue() returns C => new C(1, b = ); // @error
+   |
+
+error[SYNTAX_ERROR]: named arg followed by positional arg
+  --> method-call-args-e.bal:24:63
+   |
+24 | function positionalAfterNamed(C obj) returns int => obj.m(a = 1, 2); // @error
+   |                                                               ^^^^
+
+error[SYNTAX_ERROR]: named arg followed by positional arg
+  --> method-call-args-e.bal:27:59
+   |
+27 | function newPositionalAfterNamed() returns C => new C(a = 1, 2); // @error
+   |                                                           ^^^^

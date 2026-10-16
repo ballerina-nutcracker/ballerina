@@ -16,12 +16,33 @@
 // under the License.
 
 enum Palette { RED BLUE, GREEN } // @error
-function usePalette() returns Palette { return GREEN; } // @error cascades from the discarded enum
+function usePalette() returns Palette { return GREEN; }
 -- ast --
 (package
+  (const RED enum-member (
+    (value-type string)) (
+    (simple-var-ref BLUE)))
+  (const GREEN enum-member (
+    (value-type string)) (
+    (literal GREEN)))
+  (type-definition Palette enum
+    (union-type
+      (user-defined-type RED)
+      (user-defined-type GREEN)))
   (function usePalette () (
     (user-defined-type Palette))
     (block-function-body
       (return
-        (simple-var-ref GREEN))))
-  (bad-top-level enum (tokens ("enum" 17:1 17:5) ("{" 17:14 17:15) ("," 17:24 17:25) ("}" 17:32 17:33))))
+        (simple-var-ref GREEN)))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: BLUE
+  --> enum-missing-comma-e.bal:17:20
+   |
+17 | enum Palette { RED BLUE, GREEN } // @error
+   |                    ^^^^
+
+error[SYNTAX_ERROR]: missing equal token
+  --> enum-missing-comma-e.bal:17:20
+   |
+17 | enum Palette { RED BLUE, GREEN } // @error
+   |

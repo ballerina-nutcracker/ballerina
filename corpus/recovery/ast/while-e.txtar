@@ -57,7 +57,9 @@ function valid() {} // @error missing close brace of missingCloseBrace
     (value-type (position <built-in>) null))
     (block-function-body (position 19:22 25:1)
       (while (position 20:1 23:1)
-        (bad-expr-or-action function-call (position 20:11 20:18) (tokens ("(" 20:12 20:13) (")" 20:16 20:17)))
+        (invocation (position 20:11 20:18) f (
+          (literal (position 20:13 20:15) 1)
+          (literal (position 20:15 20:16) 2)))
         (block-stmt (position 20:18 23:1)
           (var-def (position 21:1 22:1)
             (variable (position 21:1 22:1) a (type
@@ -77,7 +79,10 @@ function valid() {} // @error missing close brace of missingCloseBrace
           (simple-var-ref (position 27:11 27:13) x)
           (literal (position 27:15 27:17) 0))
         (block-stmt (position 27:17 31:1)
-          (bad-stmt variable-declaration (position 28:1 28:19) (tokens ("int" 28:9 28:12) ("=" 28:15 28:16)))
+          (var-def (position 28:1 28:19)
+            (variable (position 28:1 28:19) a (type
+              (value-type (position 28:1 28:13) int)) (expr
+              (literal (position 28:17 28:19) 1))))
           (var-def (position 28:19 29:1)
             (variable (position 28:19 29:1) b (type
               (value-type (position 28:19 28:23) int)) (expr
@@ -95,12 +100,61 @@ function valid() {} // @error missing close brace of missingCloseBrace
       (value-type (position 34:27 34:31) int)))) (
     (value-type (position <built-in>) null))
     (block-function-body (position 34:34 38:1)
-      (bad-stmt while (position 35:1 36:1) (tokens ("while" 35:5 35:10) (">" 35:13 35:14) ("int" 35:17 35:20) ("=" 35:23 35:24) (";" 35:26 35:27) ("}" 35:28 35:29)))
+      (while (position 35:1 36:1)
+        (binary-expr (position 35:11 35:17) >
+          (simple-var-ref (position 35:11 35:13) x)
+          (literal (position 35:15 35:17) 0))
+        (block-stmt (position 35:17 36:1)
+          (var-def (position 35:17 35:28)
+            (variable (position 35:17 35:28) a (type
+              (value-type (position 35:17 35:21) int)) (expr
+              (literal (position 35:25 35:26) 1))))))
       (var-def (position 36:1 37:1)
         (variable (position 36:1 37:1) after (type
           (value-type (position 36:1 36:9) int)) (expr
           (literal (position 36:17 36:18) 1))))))
-  (bad-top-level function (position 38:1 43:1) (tokens ("function" 39:1 39:9) ("(" 39:27 39:28) ("int" 39:28 39:31) (")" 39:33 39:34) ("{" 39:35 39:36) ("while" 40:5 40:10) (">" 40:13 40:14) ("{" 40:17 40:18) ("int" 40:19 40:22) ("=" 40:25 40:26) (";" 40:28 40:29) ("int" 41:5 41:8) ("=" 41:15 41:16) (";" 41:18 41:19) ("}" 42:1 42:2)))
+  (function (position 38:1 43:1) missingCloseBrace (
+    (variable (position 39:28 39:33) x (type
+      (value-type (position 39:28 39:32) int)))) (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 39:35 43:1)
+      (while (position 40:1 43:1)
+        (binary-expr (position 40:11 40:17) >
+          (simple-var-ref (position 40:11 40:13) x)
+          (literal (position 40:15 40:17) 0))
+        (block-stmt (position 40:17 43:1)
+          (var-def (position 40:19 41:1)
+            (variable (position 40:19 41:1) a (type
+              (value-type (position 40:19 40:23) int)) (expr
+              (literal (position 40:27 40:28) 1))))
+          (var-def (position 41:1 42:1)
+            (variable (position 41:1 42:1) after (type
+              (value-type (position 41:1 41:9) int)) (expr
+              (literal (position 41:17 41:18) 1))))))))
   (function (position 43:1 44:1) valid () (
     (value-type (position <built-in>) null))
     (block-function-body (position 43:18 44:1))))
+-- stderr --
+error[SYNTAX_ERROR]: missing close brace token
+  --> while-e.bal:43:1
+   |
+43 | function valid() {} // @error missing close brace of missingCloseBrace
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> while-e.bal:20:15
+   |
+20 |     while f(1 2) { // @error
+   |
+
+error[SYNTAX_ERROR]: missing open brace token
+  --> while-e.bal:35:17
+   |
+35 |     while x > 0 int a = 1; } // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> while-e.bal:28:19
+   |
+28 |         int a = 1 int b = 2; // @error
+   |

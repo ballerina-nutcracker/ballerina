@@ -39,3 +39,15 @@ function useColour() returns Colour { return B; }
     (block-function-body
       (return
         (simple-var-ref B)))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: 
+  --> enum-member-e.bal:17:18
+   |
+17 | enum Colour { R, , B } // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> enum-member-e.bal:17:18
+   |
+17 | enum Colour { R, , B } // @error
+   |
