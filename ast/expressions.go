@@ -260,7 +260,7 @@ const (
 type (
 	BLangTypeConversionExpr struct {
 		bLangExpressionBase
-		Expression     BLangExpression
+		Expression     BLangActionOrExpression
 		TypeDescriptor BType
 	}
 
@@ -1097,7 +1097,7 @@ func (b *BLangInvocation) GetPackageAlias() IdentifierNode {
 	return b.PkgAlias
 }
 
-func (b *BLangTypeConversionExpr) GetExpression() BLangExpression {
+func (b *BLangTypeConversionExpr) GetExpression() BLangActionOrExpression {
 	return b.Expression
 }
 

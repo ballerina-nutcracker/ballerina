@@ -1656,7 +1656,12 @@ func appendQuerySelectResultStmts(
 	bodyStmts []ast.StatementNode,
 ) ([]ast.StatementNode, bool) {
 	selectResult := walkExpression(cx, selectClause.Expression)
-	selectExpr := selectResult.(ast.BLangExpression)
+	selectExpr, isExpr := selectResult.(ast.BLangExpression)
+	if !isExpr {
+		selectVarDef, selectRef := assignToLocal(cx, selectResult, selectClause.GetPosition())
+		bodyStmts = append(bodyStmts, selectVarDef)
+		selectExpr = selectRef
+	}
 
 	switch queryExpr.QueryConstructType {
 	case ast.TypeKindMap:

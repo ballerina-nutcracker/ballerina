@@ -78,7 +78,7 @@ type (
 	}
 	BLangSelectClause struct {
 		bLangNodeBase
-		Expression BLangExpression
+		Expression BLangActionOrExpression
 	}
 	BLangOnConflictClause struct {
 		bLangNodeBase
@@ -150,7 +150,7 @@ func NewBLangLimitClause(pos Location, expr BLangExpression) *BLangLimitClause {
 	return &BLangLimitClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr}
 }
 
-func NewBLangSelectClause(pos Location, expr BLangExpression) *BLangSelectClause {
+func NewBLangSelectClause(pos Location, expr BLangActionOrExpression) *BLangSelectClause {
 	return &BLangSelectClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr}
 }
 
@@ -259,7 +259,7 @@ func (b *BLangLimitClause) GetExpression() BLangExpression {
 	return b.Expression
 }
 
-func (b *BLangSelectClause) GetExpression() BLangExpression {
+func (b *BLangSelectClause) GetExpression() BLangActionOrExpression {
 	return b.Expression
 }
 
@@ -267,7 +267,7 @@ func (b *BLangOnConflictClause) GetExpression() BLangExpression {
 	return b.Expression
 }
 
-func (b *BLangCollectClause) GetExpression() BLangExpression {
+func (b *BLangCollectClause) GetExpression() BLangActionOrExpression {
 	return b.Expression
 }
 

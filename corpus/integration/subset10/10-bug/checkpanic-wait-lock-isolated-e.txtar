@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> checkpanic-wait-lock-isolated-e.bal:26:24
+   |
+26 |         int[] waited = check wait pending; // @error access of mutable variable
+   |                        ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> checkpanic-wait-lock-isolated-e.bal:34:24
+   |
+34 |         int[] waited = <int[]> checkpanic wait pending; // @error access of mutable variable
+   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

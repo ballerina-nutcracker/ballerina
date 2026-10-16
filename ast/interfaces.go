@@ -239,7 +239,7 @@ type FromClauseNode = InputClauseNode
 
 type SelectClauseNode interface {
 	Node
-	GetExpression() BLangExpression
+	GetExpression() BLangActionOrExpression
 }
 
 type CollectClauseNode = SelectClauseNode

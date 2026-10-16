@@ -3149,7 +3149,7 @@ func (n *nodeBuilder) transformTypeCastExpression(typeCastBLangExpression *st.Ty
 		n.internalError("type cast param node type is not present", typeCastBLangExpression)
 		return n.badExprOrAction(typeCastBLangExpression)
 	}
-	typeConversionNode.Expression = n.createExpression(typeCastBLangExpression.Expression())
+	typeConversionNode.Expression = n.createActionOrExpression(typeCastBLangExpression.Expression())
 	annotations := typeCastParamNode.Annotations()
 	if annotations.Size() > 0 {
 		n.unimplemented("type cast annotations are not yet implemented", annotations.Get(0))
@@ -4305,7 +4305,7 @@ func (n *nodeBuilder) transformQueryPipeline(queryPipelineNode *st.QueryPipeline
 }
 
 func (n *nodeBuilder) transformSelectClause(selectClauseNode *st.SelectClauseNode) ast.BLangNode {
-	return ast.NewBLangSelectClause(n.getPosition(selectClauseNode), n.createExpression(selectClauseNode.Expression()))
+	return ast.NewBLangSelectClause(n.getPosition(selectClauseNode), n.createActionOrExpression(selectClauseNode.Expression()))
 }
 
 func (n *nodeBuilder) transformCollectClause(collectClauseNode *st.CollectClauseNode) ast.BLangNode {
