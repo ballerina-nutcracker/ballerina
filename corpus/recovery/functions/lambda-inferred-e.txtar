@@ -61,4 +61,4 @@ function inferredBody() {
         (invocation consume (
           (literal 2)))))))
 (lambda-types
-  ($anonFunc$_0 [callable=unresolved]))
+  ($anonFunc$_0 [callable=never]))

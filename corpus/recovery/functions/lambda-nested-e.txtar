@@ -107,4 +107,4 @@ function nestedBodies() {
       (block-stmt))))
 (lambda-types
   ($anonFunc$_0 [callable=function() returns int])
-  ($anonFunc$_1 [callable=unresolved]))
+  ($anonFunc$_1 [callable=never]))

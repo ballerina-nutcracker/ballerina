@@ -93,5 +93,5 @@ function caller() returns int => blockBody() + expressionBody();
         (invocation blockBody ())
         (invocation expressionBody ())))))
 (lambda-types
-  ($anonFunc$_0 [callable=unresolved])
+  ($anonFunc$_0 [callable=never])
   ($anonFunc$_1 [callable=function() returns int]))

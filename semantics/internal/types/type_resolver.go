@@ -3702,9 +3702,11 @@ func resolveDefaultExpression(
 	return result, true
 }
 
+// resolveActionOrExpression resolves expr against expectedType. An expression that fails to resolve has type never.
 func resolveActionOrExpression(t typeResolver, chain *binding, expr ast.BLangActionOrExpression, expectedType semtypes.SemType) (expressionResult, bool) {
 	result, ok := resolveExpressionInner(t, chain, expr, expectedType)
 	if !ok {
+		setNodeType(t, expr, semtypes.Never)
 		return expressionResult{}, false
 	}
 	// A constant-valued condition marks its impossible outcome here. The possible
