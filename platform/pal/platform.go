@@ -123,6 +123,9 @@ type (
 		// address. The returned net.PacketConn's ReadFrom/WriteTo carry an
 		// explicit per-datagram peer address, unlike DialPacket's net.Conn.
 		ListenPacket func(network, address string) (net.PacketConn, error)
+		// ResolvePacketAddr resolves a "host:port" address (performing a name
+		// lookup if needed) into a peer address usable with PacketConn.WriteTo.
+		ResolvePacketAddr func(network, address string) (net.Addr, error)
 	}
 	HTTP struct {
 		// NewClient builds an outbound HTTP client (native: net/http; WASM: fetch).

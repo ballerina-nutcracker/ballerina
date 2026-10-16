@@ -173,10 +173,11 @@ func NewPlatform() (pal.Platform, func()) {
 			Listen:    Listen,
 		},
 		Net: pal.Net{
-			Dial:         Dial,
-			Listen:       ListenTCP,
-			DialPacket:   DialPacket,
-			ListenPacket: ListenPacket,
+			Dial:              Dial,
+			Listen:            ListenTCP,
+			DialPacket:        DialPacket,
+			ListenPacket:      ListenPacket,
+			ResolvePacketAddr: ResolvePacketAddr,
 		},
 		Signals: signals,
 	}, cleanupSignals

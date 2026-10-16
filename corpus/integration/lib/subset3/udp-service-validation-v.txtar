@@ -1,0 +1,16 @@
+-- stdout --
+Provided 3 parameters, `onBytes` can have only 2 parameters
+Invalid parameter `data` provided for `onBytes`, function expects `readonly & byte[]`.
+Invalid parameter `data` provided for `onBytes`, function expects `readonly & byte[]`.
+Invalid parameter `data` provided for `onDatagram`, function expects `readonly & udp:Datagram`.
+No parameter provided for `onBytes`, function expects `readonly & byte[]` as a parameter.
+Invalid parameter `e` provided for `onError`, function expects `udp:Error`.
+No parameter provided for `onError`, function expects `udp:Error` as a parameter.
+`remote` keyword expected in `onBytes` function signature.
+Service does not contain `onDatagram` or `onBytes` function.
+Service cannot contain both `onDatagram` and `onBytes` functions.
+Function `onFoo` not accepted by the service
+Invalid return type provided for function `onBytes`, return type should be a subtype of `byte[] | udp:Datagram | udp:Error?`
+Invalid return type provided for function `onError`, return type should be a subtype of `udp:Error | ()`
+attached
+-- stderr --

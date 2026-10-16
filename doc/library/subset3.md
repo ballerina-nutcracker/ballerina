@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; and the new `file` module.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -218,3 +218,21 @@ File, directory, and path manipulation utilities.
 | `Listener` / `Service` | Directory change listener: attaches a service whose `onCreate`/`onModify`/`onDelete` remote methods are dispatched on filesystem changes under the configured `path` (optionally `recursive`) |
 
 `file:Error`'s `distinct` subtypes (`FileNotFoundError`, `PermissionError`, etc.) are declared as plain type aliases of `Error` instead — they are structurally identical at runtime, so `error is file:FileNotFoundError`-style checks don't narrow. `file:Service` is likewise declared as a plain (non-`distinct`) `service object {}` marker instead of jBallerina's `distinct service object {}`. Unlike jBallerina, `gracefulStop()` closes the underlying OS watch immediately (same as `immediateStop()`) rather than leaving it running until process exit, and `attach()` returns its "at least one resource required" validation error through its `error?` return type instead of throwing it.
+
+## [udp](https://github.com/ballerina-platform/module-ballerina-udp/blob/master/docs/spec/spec.md)
+
+Types: `udp:Client`, `udp:ConnectClient`, `udp:Listener`, `udp:Caller` (classes), `udp:Service`, `udp:Datagram`, `udp:ClientConfiguration`, `udp:ConnectClientConfiguration`, `udp:ListenerConfiguration`, `udp:Error`.
+
+| Feature | Notes |
+|---|---|
+| `new udp:Client(config)` | Connectionless client bound to `localHost` (all interfaces when omitted) with a read `timeout` |
+| `Client->sendDatagram(datagram)` / `Client->receiveDatagram()` / `Client->close()` | Payloads larger than 8192 bytes are sent as multiple datagrams, as in jBallerina. `receiveDatagram()` returns a `readonly & udp:Datagram` whose `remoteHost`/`remotePort` are the sender's |
+| `new udp:ConnectClient(remoteHost, remotePort, config)` | Connection-oriented client that only exchanges datagrams with the given peer |
+| `ConnectClient->writeBytes(data)` / `ConnectClient->readBytes()` / `ConnectClient->close()` | `readBytes()` returns `readonly & byte[]` |
+| `new udp:Listener(localPort, config)` | Binds on `start()`; `attach`, `detach`, `start`, `gracefulStop` and `immediateStop` are supported, and a stopped listener can be started again |
+| `udp:Service` | Declares exactly one of `onBytes(readonly & byte[] data, udp:Caller caller)` or `onDatagram(readonly & udp:Datagram datagram, udp:Caller caller)`, plus an optional `onError(udp:Error err)`. The `Caller` parameter is optional and parameters may appear in either order. A returned `byte[]` or `udp:Datagram` is sent as a reply; the service is validated when it is attached |
+| `Caller->sendBytes(data)` / `Caller->sendDatagram(datagram)` | Reply to the sender or send to any destination |
+
+`config` is a plain record parameter, so pass a record literal (`{localHost: "x"}`) rather than named arguments. `remoteHost` is reported as an IP address without a reverse-DNS lookup. Service methods are checked by `Listener.attach()` instead of at compile time. `udp:Service` is a plain (non-`distinct`) service object type and `udp:Error` is an alias of `error`.
+
+Not covered in this subset: a listener restricted to one remote peer (`ListenerConfiguration.remoteHost`/`remotePort`) and `distinct` error types.
