@@ -1,0 +1,8 @@
+-- stdout --
+Héllo= softbreak
+quoted-printable
+Hello
+BASE64
+a=3Db
+x
+-- stderr --

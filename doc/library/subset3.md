@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; and the new `file` module.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/mime` module for MIME media types, entities, and multipart bodies.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -218,3 +218,19 @@ File, directory, and path manipulation utilities.
 | `Listener` / `Service` | Directory change listener: attaches a service whose `onCreate`/`onModify`/`onDelete` remote methods are dispatched on filesystem changes under the configured `path` (optionally `recursive`) |
 
 `file:Error`'s `distinct` subtypes (`FileNotFoundError`, `PermissionError`, etc.) are declared as plain type aliases of `Error` instead — they are structurally identical at runtime, so `error is file:FileNotFoundError`-style checks don't narrow. `file:Service` is likewise declared as a plain (non-`distinct`) `service object {}` marker instead of jBallerina's `distinct service object {}`. Unlike jBallerina, `gracefulStop()` closes the underlying OS watch immediately (same as `immediateStop()`) rather than leaving it running until process exit, and `attach()` returns its "at least one resource required" validation error through its `error?` return type instead of throwing it.
+
+## [mime](https://github.com/ballerina-platform/module-ballerina-mime/blob/master/docs/spec/spec.md)
+
+`ballerina/mime` provides media type parsing, content disposition handling, MIME entity header/body management, multipart bodies, and Base64 encoding/decoding.
+
+Types: `mime:MediaType`, `mime:ContentDisposition`, `mime:Entity` (class); `mime:Error` and subtypes (`InvalidContentTypeError`, `ParserError`, `HeaderNotFoundError`, `EncodeError`, `DecodeError`) as plain `error` aliases — `distinct` is not yet supported.
+
+| Feature | Notes |
+|---|---|
+| `getMediaType(contentType)` / `getContentDispositionObject(contentDisposition)` | Parse a `Content-Type` / `Content-Disposition` header value |
+| Entity header and content metadata | `setHeader`/`getHeader`/`getHeaders`/`getHeaderNames`/`addHeader`/`removeHeader`/`removeAllHeaders`/`hasHeader`; `setContentType`/`getContentType`/`setContentId`/`getContentId`/`setContentLength`/`getContentLength`/`setContentDisposition`/`getContentDisposition` |
+| Entity body — text, JSON, XML, byte array | `setText`/`getText`, `setJson`/`getJson`, `setXml`/`getXml`, `setByteArray`/`getByteArray`; every accessor lazily converts from whatever the body was actually set as, matching jBallerina's data-source model |
+| `setBody(string\|xml\|json\|byte[]\|Entity[])` | Generic body dispatch by argument type |
+| `setFileAsEntityBody(filePath, contentType?)` | Sets the file as a lazy byte-channel data source, read on demand by whichever accessor materializes the body first, matching jBallerina; a failed file open panics, matching jBallerina's own `checkpanic io:openReadableFile` |
+| Multipart bodies | `setBodyParts`/`getBodyParts` — `message/*` bodies return a `ParserError`; jBallerina silently returns an empty array for these instead |
+| `base64Encode`/`base64Decode`/`base64EncodeBlob`/`base64DecodeBlob` | Accept `string`, `byte[]`, or an `io:ReadableByteChannel` (read fully, result handed back as a freshly-constructed channel; charset does not apply to the channel form, matching jBallerina) |

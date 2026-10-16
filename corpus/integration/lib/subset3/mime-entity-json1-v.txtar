@@ -1,0 +1,11 @@
+-- stdout --
+{"z":1.0, "a":"<b>&", "n":null, "t":true, "i":-3, "d":2.50}
+{"z":1.0,"a":"<b>&","n":null,"t":true,"i":-3,"d":2.50}
+{"nested":{"x":[1, 2.5, -0.0], "y":{}}, "e":[], "s":"a/b"}
+{"nested":{"x":[1,2.5,-0.0],"y":{}},"e":[],"s":"a/b"}
+{"s":"q\"u\\o\/t\te"}
+plain/x
+plain/x
+Error occurred while extracting text data from entity
+
+-- stderr --

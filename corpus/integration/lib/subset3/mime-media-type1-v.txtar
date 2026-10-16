@@ -1,0 +1,12 @@
+-- stdout --
+application
+json
+
+application/json
+UTF-8
+application
+svg+xml
+xml
+application/svg+xml
+invalid content type
+-- stderr --
