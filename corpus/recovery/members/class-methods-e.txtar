@@ -35,7 +35,6 @@ class C {
 function valid() returns int => 1;
 -- ast --
 (package
-  (import-package ballerina lang array (as lang.array))
   (class-definition C
     (function (bad-identifier) (
       (variable a (type
@@ -102,8 +101,8 @@ function valid() returns int => 1;
           (binary-expr +
             (simple-var-ref a)
             (simple-var-ref b))
-          (invocation lang.array length (
-            (simple-var-ref rest))))))
+          (invocation length expr:
+            (simple-var-ref rest) ()))))
     (bad-top-level function)
     (bad-top-level function)
     (bad-top-level function)

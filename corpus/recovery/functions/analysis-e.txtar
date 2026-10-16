@@ -131,9 +131,3 @@ function analysis() {
           (variable finalSibling (type
             (value-type int)) (expr
             (literal wrong))))))))
-(lambda-types
-  ($anonFunc$_0 [callable=never])
-  ($anonFunc$_1 [callable=never])
-  ($anonFunc$_2 [callable=never])
-  ($anonFunc$_3 [callable=isolated function() returns int])
-  ($anonFunc$_4 [callable=never]))

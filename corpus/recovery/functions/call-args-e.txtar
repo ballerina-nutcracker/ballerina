@@ -48,10 +48,12 @@ function valid() returns int => callee(1, b = 3);
     (value-type int))
     (expr-function-body
       (invocation callee (
-        (bad-expr-or-action) <default>))))
+        (named-arg a
+          (bad-expr-or-action))))))
   (function valid () (
     (value-type int))
     (expr-function-body
       (invocation callee (
         (literal 1)
-        (literal 3))))))
+        (named-arg b
+          (literal 3)))))))

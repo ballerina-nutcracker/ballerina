@@ -83,7 +83,7 @@ function discardedReferences() returns int {
       (var-def
         (variable defaultResult (type
           (value-type int)) (expr
-          (invocation defaults ( <default>)))))
+          (invocation defaults ()))))
       (var-def
         (variable later (type
           (value-type int)) (expr

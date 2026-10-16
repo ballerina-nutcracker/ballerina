@@ -29,7 +29,8 @@ function unsupported() {
     transaction {} // @error
 }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (function main () (
     (value-type null))
     (block-function-body

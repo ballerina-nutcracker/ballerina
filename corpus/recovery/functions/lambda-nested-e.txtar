@@ -105,6 +105,3 @@ function nestedBodies() {
                   (simple-var-ref after))))) ())
           (block-stmt)) ())
       (block-stmt))))
-(lambda-types
-  ($anonFunc$_0 [callable=function() returns int])
-  ($anonFunc$_1 [callable=never]))
