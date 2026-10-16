@@ -27,9 +27,9 @@ type Valid record {| int a; string...; |};
 -- ast --
 (package
   (type-definition MissingType
-    (bad-type))
+    (bad-type record (tokens ("record" 17:18 17:24) ("{|" 17:25 17:27) ("int" 18:5 18:8) (";" 18:10 18:11) ("|}" 20:1 20:3))))
   (type-definition MissingSemicolon
-    (bad-type))
+    (bad-type record (tokens ("record" 21:23 21:29) ("{|" 21:30 21:32) ("int" 22:5 22:8) (";" 22:10 22:11) ("..." 23:20 23:23) ("|}" 24:1 24:3))))
   (type-definition Valid
     (record-type
       (field a

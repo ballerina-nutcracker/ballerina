@@ -40,14 +40,14 @@ function valid(int a, int b = 1, int... rest) returns int => a + b + rest.length
     (block-function-body))
   (function leadingComma (
     (variable a (type
-      (bad-type)))) (
+      (bad-type builtin (tokens ("int" 20:25 20:28)))))) (
     (value-type null))
     (block-function-body))
   (function trailingComma (
     (variable a (type
       (value-type int)))
     (variable (bad-identifier) (type
-      (bad-type)))) (
+      (bad-type simple-reference)))) (
     (value-type null))
     (block-function-body))
   (function valid (
@@ -64,5 +64,5 @@ function valid(int a, int b = 1, int... rest) returns int => a + b + rest.length
           (simple-var-ref b))
         (invocation length expr:
           (simple-var-ref rest) ()))))
-  (bad-top-level function)
-  (bad-top-level function))
+  (bad-top-level function (tokens ("function" 17:1 17:9) ("(" 17:22 17:23) ("int" 17:23 17:26) ("int" 17:29 17:32) (")" 17:34 17:35) ("{" 17:36 17:37) ("}" 17:37 17:38)))
+  (bad-top-level function (tokens ("function" 22:1 22:9) ("(" 22:15 22:16) ("int" 22:16 22:19) ("," 22:21 22:22) ("string" 22:23 22:29) ("=" 22:32 22:33) ("," 22:34 22:35) ("int" 22:36 22:39) ("=" 22:42 22:43) ("," 22:45 22:46) (")" 22:57 22:58) ("{" 22:59 22:60) ("}" 22:60 22:61))))

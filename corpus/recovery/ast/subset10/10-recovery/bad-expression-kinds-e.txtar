@@ -1,0 +1,119 @@
+-- bad-expression-kinds-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function expressions() {
+    any a = (1 + 2; // @error
+    any b = {key: 1 other: 2}; // @error
+    any c = [1 2]; // @error
+    any d = data[0; // @error
+    any e = <int value; // @error
+    any f = new(1; // @error
+    any i = error("bad"; // @error
+    any j = base16 `gg`; // @error
+    any k = transactional; // @error
+    any raw = `hello ${value}`; // @error
+    any l = table [{key: 1}]; // @error
+    any query = table from var x in [1] select x; // @error
+    any prompt = natural {say hello}; // @error
+    any conditional = flag ? first second; // @error
+    any filter = data.<item; // @error
+    any step = data/<item>.foo(1; // @error
+    any n = (x y) => x; // @error
+}
+function defaults(typedesc<any> t = <,>) {} // @error
+-- ast --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (function (position 1:1 36:1) expressions () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 17:24 36:1)
+      (var-def (position 18:1 19:1)
+        (variable (position 18:1 19:1) a (type
+          (value-type (position 18:1 18:9) any)) (expr
+          (bad-expr-or-action braced (position 18:13 18:19) (tokens ("(" 18:13 18:14) ("+" 18:16 18:17))))))
+      (var-def (position 19:1 20:1)
+        (variable (position 19:1 20:1) b (type
+          (value-type (position 19:1 19:9) any)) (expr
+          (bad-expr-or-action mapping-constructor (position 19:13 19:30) (tokens ("{" 19:13 19:14) (":" 19:17 19:18) (":" 19:26 19:27) ("}" 19:29 19:30))))))
+      (var-def (position 20:1 21:1)
+        (variable (position 20:1 21:1) c (type
+          (value-type (position 20:1 20:9) any)) (expr
+          (bad-expr-or-action list-constructor (position 20:13 20:18) (tokens ("[" 20:13 20:14) ("]" 20:17 20:18))))))
+      (var-def (position 21:1 22:1)
+        (variable (position 21:1 22:1) d (type
+          (value-type (position 21:1 21:9) any)) (expr
+          (bad-expr-or-action indexed (position 21:13 21:19) (tokens ("[" 21:17 21:18))))))
+      (var-def (position 22:1 23:1)
+        (variable (position 22:1 23:1) e (type
+          (value-type (position 22:1 22:9) any)) (expr
+          (bad-expr-or-action type-cast (position 22:13 22:23) (tokens ("<" 22:13 22:14) ("int" 22:14 22:17))))))
+      (var-def (position 23:1 24:1)
+        (variable (position 23:1 24:1) f (type
+          (value-type (position 23:1 23:9) any)) (expr
+          (bad-expr-or-action implicit-new (position 23:13 23:18) (tokens ("new" 23:13 23:16) ("(" 23:16 23:17))))))
+      (var-def (position 24:1 25:1)
+        (variable (position 24:1 25:1) i (type
+          (value-type (position 24:1 24:9) any)) (expr
+          (bad-expr-or-action error-constructor (position 24:13 24:24) (tokens ("error" 24:13 24:18) ("(" 24:18 24:19))))))
+      (var-def (position 25:1 26:1)
+        (variable (position 25:1 26:1) j (type
+          (value-type (position 25:1 25:9) any)) (expr
+          (bad-expr-or-action byte-array-literal (position 25:13 25:24) (tokens ("base16" 25:13 25:19) ("`" 25:20 25:21) ("`" 25:23 25:24))))))
+      (var-def (position 26:1 27:1)
+        (variable (position 26:1 27:1) k (type
+          (value-type (position 26:1 26:9) any)) (expr
+          (bad-expr-or-action transactional (position 26:13 26:26) (tokens ("transactional" 26:13 26:26))))))
+      (var-def (position 27:1 28:1)
+        (variable (position 27:1 28:1) raw (type
+          (value-type (position 27:1 27:9) any)) (expr
+          (bad-expr-or-action template (position 27:15 27:31) (tokens ("`" 27:15 27:16) ("${" 27:22 27:24) ("}" 27:29 27:30) ("`" 27:30 27:31))))))
+      (var-def (position 28:1 29:1)
+        (variable (position 28:1 29:1) l (type
+          (value-type (position 28:1 28:9) any)) (expr
+          (bad-expr-or-action table-constructor (position 28:13 28:29) (tokens ("table" 28:13 28:18) ("[" 28:19 28:20) ("{" 28:20 28:21) (":" 28:24 28:25) ("}" 28:27 28:28) ("]" 28:28 28:29))))))
+      (var-def (position 29:1 30:1)
+        (variable (position 29:1 30:1) query (type
+          (value-type (position 29:1 29:9) any)) (expr
+          (bad-expr-or-action query (position 29:17 29:49) (tokens ("table" 29:17 29:22) ("from" 29:23 29:27) ("var" 29:28 29:31) ("in" 29:34 29:36) ("[" 29:37 29:38) ("]" 29:39 29:40) ("select" 29:41 29:47))))))
+      (var-def (position 30:1 31:1)
+        (variable (position 30:1 31:1) prompt (type
+          (value-type (position 30:1 30:9) any)) (expr
+          (bad-expr-or-action natural (position 30:18 30:37) (tokens ("natural" 30:18 30:25) ("{" 30:26 30:27) ("}" 30:36 30:37))))))
+      (var-def (position 31:1 32:1)
+        (variable (position 31:1 32:1) conditional (type
+          (value-type (position 31:1 31:9) any)) (expr
+          (bad-expr-or-action conditional (position 31:23 31:42) (tokens ("?" 31:28 31:29))))))
+      (var-def (position 32:1 33:1)
+        (variable (position 32:1 33:1) filter (type
+          (value-type (position 32:1 32:9) any)) (expr
+          (bad-expr-or-action xml-filter (position 32:18 32:28) (tokens (".<" 32:22 32:24))))))
+      (var-def (position 33:1 34:1)
+        (variable (position 33:1 34:1) step (type
+          (value-type (position 33:1 33:9) any)) (expr
+          (bad-expr-or-action xml-step (position 33:16 33:33) (tokens ("/<" 33:20 33:22) (">" 33:26 33:27) ("." 33:27 33:28) ("(" 33:31 33:32))))))
+      (var-def (position 34:1 35:1)
+        (variable (position 34:1 35:1) n (type
+          (value-type (position 34:1 34:9) any)) (expr
+          (bad-expr-or-action implicit-anonymous-function (position 34:13 34:23) (tokens ("(" 34:13 34:14) (")" 34:17 34:18) ("=>" 34:19 34:21))))))))
+  (function (position 36:1 37:1) defaults (
+    (variable (position 36:19 36:40) t (type
+      (constrained-type (position 36:19 36:33)
+        (value-type (position 36:19 36:33) typedesc)
+        (value-type (position 36:28 36:31) any))) (expr
+      (bad-expr-or-action inferred-typedesc-default (position 36:37 36:40) (tokens ("<" 36:37 36:38) (">" 36:39 36:40)))))) (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 36:42 37:1))))

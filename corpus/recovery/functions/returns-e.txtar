@@ -23,15 +23,15 @@ function valid() returns int => 1;
 -- ast --
 (package
   (function blockMissingType () (
-    (bad-type))
+    (bad-type simple-reference))
     (block-function-body))
   (function exprMissingType () (
-    (bad-type))
+    (bad-type simple-reference))
     (expr-function-body
       (literal 1)))
   (function valid () (
     (value-type int))
     (expr-function-body
       (literal 1)))
-  (bad-top-level function)
-  (bad-top-level function))
+  (bad-top-level function (tokens ("function" 19:1 19:9) ("(" 19:29 19:30) (")" 19:30 19:31) ("{" 19:36 19:37) ("}" 19:37 19:38)))
+  (bad-top-level function (tokens ("function" 20:1 20:9) ("(" 20:28 20:29) (")" 20:29 20:30) ("int" 20:31 20:34) ("=>" 20:35 20:37) (";" 20:39 20:40))))

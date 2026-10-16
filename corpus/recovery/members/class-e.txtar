@@ -76,8 +76,8 @@ type RecordWithUnknownInclusion record {
           (variable later (type
             (value-type int)) (expr
             (literal 2))))))
-    (bad-top-level type-inclusion)
-    (bad-top-level type-inclusion))
+    (bad-top-level type-inclusion (tokens ("*" 22:5 22:6) (":" 22:9 22:10) (";" 22:11 22:12)))
+    (bad-top-level type-inclusion (tokens ("*" 23:5 23:6) (";" 23:6 23:7))))
   (class-definition InclusionFailure
     (variable good (type
       (value-type int)))

@@ -37,4 +37,4 @@ public function main() {
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (bad-expr-or-action)))))))
+          (bad-expr-or-action optional-field-access (tokens ("?." 19:19 19:21) (":" 19:24 19:25)))))))))

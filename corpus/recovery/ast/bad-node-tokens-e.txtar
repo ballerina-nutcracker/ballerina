@@ -1,0 +1,40 @@
+-- bad-node-tokens-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+public enum NodeType {
+    OTHER_NODE = "OTHER",
+    SUPER_NODE = constants: // @error
+}
+
+enum Shade {
+    DARK = "d",
+    LIGHT BRIGHT = "b" // @error
+}
+-- ast --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (const (position 18:1 18:25) OTHER_NODE enum-member (
+    (value-type (position <built-in>) string)) (
+    (literal (position 18:18 18:25) OTHER)))
+  (const (position 19:1 20:1) SUPER_NODE enum-member (
+    (value-type (position <built-in>) string)) (
+    (bad-expr-or-action var-ref (position 19:18 20:1) (tokens (":" 19:27 19:28)))))
+  (type-definition (position 1:1 21:1) NodeType enum
+    (union-type (position 1:1 21:1)
+      (user-defined-type (position 18:1 18:16) OTHER_NODE)
+      (user-defined-type (position 19:1 19:16) SUPER_NODE)))
+  (bad-top-level enum (position 21:1 26:1) (tokens ("enum" 22:1 22:5) ("{" 22:12 22:13) ("=" 23:10 23:11) ("," 23:15 23:16) ("=" 24:18 24:19) ("}" 25:1 25:2))))

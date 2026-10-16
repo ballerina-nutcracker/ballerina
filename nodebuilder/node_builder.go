@@ -173,7 +173,7 @@ func (n *nodeBuilder) transformTopLevel(node st.Node) ast.TopLevelNode {
 	topLevel, ok := n.transformTopLevelKind(node)
 	if !ok {
 		if node == nil {
-			return missingNode(&ast.BLangBadTopLevelNode{})
+			return ast.NewBLangBadTopLevelNode(diagnostics.NewBuiltinLocation(), ast.BadTopLevelNodeMissing, nil)
 		}
 		return n.badTopLevel(node)
 	}
@@ -214,7 +214,7 @@ func (n *nodeBuilder) transformStatement(node st.StatementNode) ast.StatementNod
 	stmt, ok := n.transformStatementKind(node)
 	if !ok {
 		if node == nil {
-			return missingNode(&ast.BLangBadStmt{})
+			return ast.NewBLangBadStmt(diagnostics.NewBuiltinLocation(), ast.BadStmtMissing, nil)
 		}
 		return n.badStmt(node)
 	}
@@ -277,7 +277,7 @@ func (n *nodeBuilder) transformActionOrExpr(node st.Node) ast.BLangActionOrExpre
 	actionOrExpr, ok := n.transformActionOrExprKind(node)
 	if !ok {
 		if node == nil {
-			return missingNode(&ast.BLangBadExprOrAction{})
+			return ast.NewBLangBadExprOrAction(diagnostics.NewBuiltinLocation(), ast.BadExprMissing, nil)
 		}
 		return n.badExprOrAction(node)
 	}
@@ -320,7 +320,7 @@ func (n *nodeBuilder) transformExpr(node st.Node) ast.BLangExpression {
 	expr, ok := n.transformExprKind(node)
 	if !ok {
 		if node == nil {
-			return missingNode(&ast.BLangBadExprOrAction{})
+			return ast.NewBLangBadExprOrAction(diagnostics.NewBuiltinLocation(), ast.BadExprMissing, nil)
 		}
 		return n.badExprOrAction(node)
 	}
@@ -434,7 +434,7 @@ func (n *nodeBuilder) transformType(node st.Node) ast.BType {
 	typeNode, ok := n.transformTypeInner(node)
 	if !ok {
 		if node == nil {
-			return missingNode(&ast.BLangBadTypeNode{})
+			return ast.NewBLangBadTypeNode(diagnostics.NewBuiltinLocation(), ast.BadTypeMissing, nil)
 		}
 		return n.badTypeNode(node)
 	}
@@ -1410,7 +1410,7 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) *ast.BL
 
 	if eofToken := modulePartNode.EofToken(); !n.expectToken(eofToken) {
 		if eofToken == nil {
-			compilationUnit.AddTopLevelNode(missingNode(&ast.BLangBadTopLevelNode{}))
+			compilationUnit.AddTopLevelNode(ast.NewBLangBadTopLevelNode(diagnostics.NewBuiltinLocation(), ast.BadTopLevelNodeMissing, nil))
 		} else {
 			compilationUnit.AddTopLevelNode(n.badTopLevel(eofToken))
 		}
@@ -7269,14 +7269,15 @@ func createUserDefinedType(pos diagnostics.Location, pkgAlias ast.BLangIdentifie
 }
 
 func (n *nodeBuilder) badTopLevel(node st.Node) *ast.BLangBadTopLevelNode {
-	return ast.NewBLangBadTopLevelNode(n.getPosition(node), badTopLevelKind(node))
+	return ast.NewBLangBadTopLevelNode(n.getPosition(node), n.badTopLevelKind(node), n.recoveredTokens(node))
 }
 
-func badTopLevelKind(node st.Node) ast.BadTopLevelNodeKind {
+func (n *nodeBuilder) badTopLevelKind(node st.Node) ast.BadTopLevelNodeKind {
 	switch node.Kind() {
 	case st.IMPORT_DECLARATION:
 		return ast.BadTopLevelNodeImport
-	case st.FUNCTION_DEFINITION, st.OBJECT_METHOD_DEFINITION, st.RESOURCE_ACCESSOR_DEFINITION, st.METHOD_DECLARATION:
+	case st.FUNCTION_DEFINITION, st.OBJECT_METHOD_DEFINITION, st.RESOURCE_ACCESSOR_DEFINITION, st.METHOD_DECLARATION,
+		st.RESOURCE_ACCESSOR_DECLARATION:
 		return ast.BadTopLevelNodeFunction
 	case st.TYPE_DEFINITION:
 		return ast.BadTopLevelNodeTypeDefinition
@@ -7300,27 +7301,279 @@ func badTopLevelKind(node st.Node) ast.BadTopLevelNodeKind {
 		return ast.BadTopLevelNodeField
 	case st.TYPE_REFERENCE:
 		return ast.BadTopLevelNodeTypeInclusion
+	case st.EOF_TOKEN:
+		return ast.BadTopLevelNodeTrailingTokens
 	default:
-		return ast.BadTopLevelNodeUnknown
+		n.internalError(fmt.Sprintf("badTopLevelKind: unclassified node kind %s", node.Kind()), node)
+		return ast.BadTopLevelNodeMissing
 	}
 }
 
 func (n *nodeBuilder) badStmt(node st.Node) *ast.BLangBadStmt {
-	bad := &ast.BLangBadStmt{}
-	bad.SetPosition(n.getPosition(node))
-	return bad
+	return ast.NewBLangBadStmt(n.getPosition(node), n.badStmtKind(node), n.recoveredTokens(node))
+}
+
+func (n *nodeBuilder) badStmtKind(node st.Node) ast.BadStmtKind {
+	switch node.(type) {
+	case *st.AssignmentStatementNode:
+		return ast.BadStmtAssignment
+	case *st.CompoundAssignmentStatementNode:
+		return ast.BadStmtCompoundAssignment
+	case *st.VariableDeclarationNode:
+		return ast.BadStmtVariableDeclaration
+	case *st.BlockStatementNode:
+		return ast.BadStmtBlock
+	case *st.BreakStatementNode:
+		return ast.BadStmtBreak
+	case *st.FailStatementNode:
+		return ast.BadStmtFail
+	case *st.ExpressionStatementNode:
+		return ast.BadStmtExpression
+	case *st.ContinueStatementNode:
+		return ast.BadStmtContinue
+	case *st.IfElseStatementNode:
+		return ast.BadStmtIfElse
+	case *st.WhileStatementNode:
+		return ast.BadStmtWhile
+	case *st.PanicStatementNode:
+		return ast.BadStmtPanic
+	case *st.ReturnStatementNode:
+		return ast.BadStmtReturn
+	case *st.LocalTypeDefinitionStatementNode:
+		return ast.BadStmtLocalTypeDefinition
+	case *st.LockStatementNode:
+		return ast.BadStmtLock
+	case *st.ForkStatementNode:
+		return ast.BadStmtFork
+	case *st.ForEachStatementNode:
+		return ast.BadStmtForEach
+	case *st.XMLNamespaceDeclarationNode:
+		return ast.BadStmtXMLNamespace
+	case *st.TransactionStatementNode:
+		return ast.BadStmtTransaction
+	case *st.RollbackStatementNode:
+		return ast.BadStmtRollback
+	case *st.RetryStatementNode:
+		return ast.BadStmtRetry
+	case *st.MatchStatementNode:
+		return ast.BadStmtMatch
+	case *st.DoStatementNode:
+		return ast.BadStmtDo
+	default:
+		n.internalError(fmt.Sprintf("badStmtKind: unclassified node type %T", node), node)
+		return ast.BadStmtMissing
+	}
 }
 
 func (n *nodeBuilder) badExprOrAction(node st.Node) *ast.BLangBadExprOrAction {
-	bad := &ast.BLangBadExprOrAction{}
-	bad.SetPosition(n.getPosition(node))
-	return bad
+	return ast.NewBLangBadExprOrAction(n.getPosition(node), n.badExprKind(node), n.recoveredTokens(node))
+}
+
+func (n *nodeBuilder) badExprKind(node st.Node) ast.BadExprKind {
+	switch node := node.(type) {
+	case *st.RemoteMethodCallActionNode:
+		return ast.BadExprRemoteMethodCallAction
+	case *st.ClientResourceAccessActionNode:
+		return ast.BadExprClientResourceAccessAction
+	case *st.StartActionNode:
+		return ast.BadExprStartAction
+	case *st.WaitActionNode:
+		return ast.BadExprWaitAction
+	case *st.QueryActionNode:
+		return ast.BadExprQueryAction
+	case *st.AsyncSendActionNode:
+		return ast.BadExprAsyncSendAction
+	case *st.SyncSendActionNode:
+		return ast.BadExprSyncSendAction
+	case *st.ReceiveActionNode:
+		return ast.BadExprReceiveAction
+	case *st.CommitActionNode:
+		return ast.BadExprCommitAction
+	case *st.FlushActionNode:
+		return ast.BadExprFlushAction
+	case *st.BracedExpressionNode:
+		if node.Kind() == st.BRACED_ACTION {
+			return ast.BadExprBracedAction
+		}
+	}
+	kind := node.Kind()
+	switch {
+	case isSimpleLiteral(kind):
+		return ast.BadExprSimpleLiteral
+	case kind == st.SIMPLE_NAME_REFERENCE || kind == st.QUALIFIED_NAME_REFERENCE || kind == st.IDENTIFIER_TOKEN:
+		return ast.BadExprVarRef
+	case isType(kind):
+		return ast.BadExprTypedesc
+	}
+	switch node.(type) {
+	case *st.BracedExpressionNode:
+		return ast.BadExprBraced
+	case *st.BinaryExpressionNode:
+		return ast.BadExprBinary
+	case *st.CheckExpressionNode:
+		return ast.BadExprCheck
+	case *st.FieldAccessExpressionNode:
+		return ast.BadExprFieldAccess
+	case *st.FunctionCallExpressionNode:
+		return ast.BadExprFunctionCall
+	case *st.MethodCallExpressionNode:
+		return ast.BadExprMethodCall
+	case *st.MappingConstructorExpressionNode:
+		return ast.BadExprMappingConstructor
+	case *st.IndexedExpressionNode:
+		return ast.BadExprIndexed
+	case *st.TypeofExpressionNode:
+		return ast.BadExprTypeof
+	case *st.UnaryExpressionNode:
+		return ast.BadExprUnary
+	case *st.InferredTypedescDefaultNode:
+		return ast.BadExprInferredTypedescDefault
+	case *st.ObjectConstructorExpressionNode:
+		return ast.BadExprObjectConstructor
+	case *st.TypeTestExpressionNode:
+		return ast.BadExprTypeTest
+	case *st.TrapExpressionNode:
+		return ast.BadExprTrap
+	case *st.ListConstructorExpressionNode:
+		return ast.BadExprListConstructor
+	case *st.TypeCastExpressionNode:
+		return ast.BadExprTypeCast
+	case *st.TableConstructorExpressionNode:
+		return ast.BadExprTableConstructor
+	case *st.LetExpressionNode:
+		return ast.BadExprLet
+	case *st.TemplateExpressionNode:
+		return ast.BadExprTemplate
+	case *st.ExplicitAnonymousFunctionExpressionNode:
+		return ast.BadExprExplicitAnonymousFunction
+	case *st.ImplicitAnonymousFunctionExpressionNode:
+		return ast.BadExprImplicitAnonymousFunction
+	case *st.ExplicitNewExpressionNode:
+		return ast.BadExprExplicitNew
+	case *st.ImplicitNewExpressionNode:
+		return ast.BadExprImplicitNew
+	case *st.QueryExpressionNode:
+		return ast.BadExprQuery
+	case *st.AnnotAccessExpressionNode:
+		return ast.BadExprAnnotAccess
+	case *st.OptionalFieldAccessExpressionNode:
+		return ast.BadExprOptionalFieldAccess
+	case *st.ConditionalExpressionNode:
+		return ast.BadExprConditional
+	case *st.TransactionalExpressionNode:
+		return ast.BadExprTransactional
+	case *st.ByteArrayLiteralNode:
+		return ast.BadExprByteArrayLiteral
+	case *st.XMLFilterExpressionNode:
+		return ast.BadExprXMLFilter
+	case *st.XMLStepExpressionNode:
+		return ast.BadExprXMLStep
+	case *st.RequiredExpressionNode:
+		return ast.BadExprRequired
+	case *st.ErrorConstructorExpressionNode:
+		return ast.BadExprErrorConstructor
+	case *st.NaturalExpressionNode:
+		return ast.BadExprNatural
+	case *st.PositionalArgumentNode:
+		return ast.BadExprPositionalArgument
+	case *st.NamedArgumentNode:
+		return ast.BadExprNamedArgument
+	case *st.RestArgumentNode:
+		return ast.BadExprRestArgument
+	case *st.WildcardBindingPatternNode:
+		return ast.BadExprWildcardBindingPattern
+	case *st.BasicLiteralNode:
+		return ast.BadExprBasicLiteral
+	default:
+		n.internalError(fmt.Sprintf("badExprKind: unclassified node type %T", node), node)
+		return ast.BadExprMissing
+	}
 }
 
 func (n *nodeBuilder) badTypeNode(node st.Node) *ast.BLangBadTypeNode {
-	bad := &ast.BLangBadTypeNode{}
-	bad.SetPosition(n.getPosition(node))
-	return bad
+	return ast.NewBLangBadTypeNode(n.getPosition(node), n.badTypeKind(node), n.recoveredTokens(node))
+}
+
+func (n *nodeBuilder) badTypeKind(node st.Node) ast.BadTypeKind {
+	switch node := node.(type) {
+	case *st.BuiltinSimpleNameReferenceNode:
+		return ast.BadTypeBuiltin
+	case *st.NilTypeDescriptorNode:
+		return ast.BadTypeNil
+	case *st.QualifiedNameReferenceNode:
+		return ast.BadTypeQualifiedReference
+	case *st.SimpleNameReferenceNode:
+		return ast.BadTypeSimpleReference
+	case *st.ObjectTypeDescriptorNode:
+		return ast.BadTypeObject
+	case *st.RecordTypeDescriptorNode:
+		return ast.BadTypeRecord
+	case *st.OptionalTypeDescriptorNode:
+		return ast.BadTypeOptional
+	case *st.MapTypeDescriptorNode:
+		return ast.BadTypeMap
+	case *st.UnionTypeDescriptorNode:
+		return ast.BadTypeUnion
+	case *st.StreamTypeDescriptorNode:
+		return ast.BadTypeStream
+	case *st.TableTypeDescriptorNode:
+		return ast.BadTypeTable
+	case *st.FunctionTypeDescriptorNode:
+		return ast.BadTypeFunction
+	case *st.TupleTypeDescriptorNode:
+		return ast.BadTypeTuple
+	case *st.ParenthesisedTypeDescriptorNode:
+		return ast.BadTypeParenthesised
+	case *st.IntersectionTypeDescriptorNode:
+		return ast.BadTypeIntersection
+	case *st.SingletonTypeDescriptorNode:
+		return ast.BadTypeSingleton
+	case *st.ArrayTypeDescriptorNode:
+		return ast.BadTypeArray
+	case *st.TypeReferenceTypeDescNode:
+		return ast.BadTypeTypeReference
+	case *st.DistinctTypeDescriptorNode:
+		return ast.BadTypeDistinct
+	case *st.ParameterizedTypeDescriptorNode:
+		return ast.BadTypeParameterized
+	case st.Token:
+		if node.Kind() == st.IDENTIFIER_TOKEN {
+			return ast.BadTypeSimpleReference
+		}
+		return ast.BadTypeBuiltin
+	default:
+		n.internalError(fmt.Sprintf("badTypeKind: unclassified node type %T", node), node)
+		return ast.BadTypeMissing
+	}
+}
+
+// recoveredTokens collects, in source order, the keyword and punctuation tokens present in the source span of node.
+// Token positions never include minutiae, whichever range the builder uses for nodes.
+func (n *nodeBuilder) recoveredTokens(node st.Node) []ast.RecoveredToken {
+	var tokens []ast.RecoveredToken
+	var visit func(st.Node)
+	visit = func(node st.Node) {
+		switch node := node.(type) {
+		case nil:
+		case st.Token:
+			if node.IsMissing() || !isKeywordOrPunctuation(node.Kind()) {
+				return
+			}
+			textRange := node.TextRange()
+			pos := diagnostics.NewLocation(n.de(), getFileName(node), textRange.StartOffset, textRange.EndOffset)
+			tokens = append(tokens, ast.NewRecoveredToken(pos, node.Kind().StrValue()))
+		case st.NonTerminalNode:
+			for child := range node.ChildNodes() {
+				visit(child)
+			}
+		}
+	}
+	visit(node)
+	return tokens
+}
+
+func isKeywordOrPunctuation(kind st.SyntaxKind) bool {
+	return kind < st.TYPE_DOC_REFERENCE_TOKEN
 }
 
 func (n *nodeBuilder) badIdentifier(token st.Token) *ast.BLangBadIdentifier {

@@ -1,0 +1,49 @@
+-- bad-type-kinds-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+type Nil (; // @error
+type Map map<int; // @error
+type Stream stream<int; // @error
+type Function function(int; // @error
+type Tuple [int string]; // @error
+type Paren (int; // @error
+type Array int[2; // @error
+type Parameter typedesc<int; // @error
+type R record { distinct error e; }; // @error
+-- ast --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (type-definition (position 1:1 18:1) Nil
+    (bad-type nil (position 17:10 17:11) (tokens ("(" 17:10 17:11))))
+  (type-definition (position 18:1 19:1) Map
+    (bad-type map (position 18:10 18:17) (tokens ("map" 18:10 18:13) ("<" 18:13 18:14) ("int" 18:14 18:17))))
+  (type-definition (position 19:1 20:1) Stream
+    (bad-type stream (position 19:13 19:23) (tokens ("stream" 19:13 19:19) ("<" 19:19 19:20) ("int" 19:20 19:23))))
+  (type-definition (position 20:1 21:1) Function
+    (bad-type function (position 20:15 20:27) (tokens ("function" 20:15 20:23) ("(" 20:23 20:24) ("int" 20:24 20:27))))
+  (type-definition (position 21:1 22:1) Tuple
+    (bad-type tuple (position 21:12 21:24) (tokens ("[" 21:12 21:13) ("int" 21:13 21:16) ("string" 21:17 21:23) ("]" 21:23 21:24))))
+  (type-definition (position 22:1 23:1) Paren
+    (bad-type parenthesised (position 22:12 22:16) (tokens ("(" 22:12 22:13) ("int" 22:13 22:16))))
+  (type-definition (position 23:1 24:1) Array
+    (bad-type array (position 23:12 23:17) (tokens ("int" 23:12 23:15) ("[" 23:15 23:16))))
+  (type-definition (position 24:1 25:1) Parameter
+    (bad-type parameterized (position 24:16 24:28) (tokens ("typedesc" 24:16 24:24) ("<" 24:24 24:25) ("int" 24:25 24:28))))
+  (type-definition (position 25:1 26:1) R
+    (record-type (position 25:8 25:36)
+      (field e
+        (bad-type distinct (position 25:17 25:32) (tokens ("distinct" 25:17 25:25) ("error" 25:26 25:31)))))))

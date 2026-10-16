@@ -64,7 +64,7 @@ function valid() {}
         (variable d (expr
           (lambda
             (function $anonFunc$_3 () (
-              (bad-type))
+              (bad-type qualified-reference (tokens (":" 21:35 21:36))))
               (expr-function-body
                 (literal 1)))))))
       (var-def
@@ -76,7 +76,7 @@ function valid() {}
                 (literal 1)))))))
       (var-def
         (variable f (expr
-          (bad-expr-or-action))))
+          (bad-expr-or-action explicit-anonymous-function (tokens ("isolated" 23:13 23:21) ("function" 23:31 23:39) ("(" 23:39 23:40) (")" 23:40 23:41) ("returns" 23:42 23:49) ("int" 23:50 23:53) ("=>" 23:54 23:56))))))
       (var-def
         (variable g (expr
           (lambda
