@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "init"
+  --> annotation-method-value-e.bal:25:25
+   |
+25 |     @methodInfo {value: "init"} // @error
+   |                         ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "ret"
+  --> annotation-method-value-e.bal:32:56
+   |
+32 |     remote function call() returns @returnInfo {value: "ret"} int { // @error
+   |                                                        ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible types for ==
+  --> annotation-method-value-e.bal:31:25
+   |
+31 |     @methodInfo {value: 1 == "a"} // @error
+   |                         ^^^^^^^^

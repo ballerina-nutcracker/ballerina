@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "str"
+  --> annotation-service-value-e.bal:51:22
+   |
+51 | @serviceInfo {value: "str"} // @error
+   |                      ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "str"
+  --> annotation-service-value-e.bal:57:63
+   |
+57 |     resource function get count() returns @returnInfo {value: "str"} int { // @error
+   |                                                               ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got true
+  --> annotation-service-value-e.bal:53:24
+   |
+53 |     @fieldInfo {value: true} // @error
+   |                        ^^^^
+
+error[SEMANTIC_ERROR]: incompatible types for ==
+  --> annotation-service-value-e.bal:56:25
+   |
+56 |     @methodFlag {value: 1 == "a"} // @error
+   |                         ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible types for ==
+  --> annotation-service-value-e.bal:62:22
+   |
+62 | @serviceFlag {value: 1 == "a"} // @error
+   |                      ^^^^^^^^

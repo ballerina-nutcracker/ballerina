@@ -19,6 +19,7 @@ package analysis
 import (
 	"fmt"
 	"reflect"
+	"slices"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
@@ -463,6 +464,8 @@ type invokableSignatureNode interface {
 	RequiredParameters() []ast.BLangVariable
 	GetRestParam() *ast.BLangVariable
 	GetBody() ast.FunctionBodyNode
+	GetAnnotationAttachments() []ast.BLangAnnotationAttachment
+	GetReturnTypeDescriptor() *ast.BLangReturnTypeDescriptor
 }
 
 // initializeInvokableAnalyzer builds the functionAnalyzer shared by plain
@@ -692,17 +695,21 @@ func buildResourceMethodLocals(parent analyzer, method *ast.BLangResourceMethod)
 	return scope
 }
 
-// walkMethodBody descends through a method's body using the provided
-// functionAnalyzer. We avoid walking the BLangFunction node itself because
+// walkMethodBody descends through a method's annotations, parameters, return
+// type annotations and body using the provided functionAnalyzer. We avoid walking the BLangFunction node itself because
 // functionAnalyzer.Visit on that node would re-initialize a fresh analyzer
 // (losing context like enclosingClass).
 func walkMethodBody(fa *functionAnalyzer, method invokableSignatureNode) {
+	walkAnnotationAttachments(fa, method.GetAnnotationAttachments())
 	params := method.GetParameters()
 	for i := range params {
 		ast.Walk(fa, &params[i])
 	}
 	if restParam := method.GetRestParam(); restParam != nil {
 		ast.Walk(fa, restParam)
+	}
+	if ret := method.GetReturnTypeDescriptor(); ret != nil {
+		walkAnnotationAttachments(fa, ret.GetAnnotationAttachments())
 	}
 	if method.GetBody() == nil {
 		return
@@ -1905,11 +1912,45 @@ func analyzeSimpleVariableDef[A analyzer](a A, simpleVariableDef *ast.BLangVaria
 	return true
 }
 
+func walkAnnotationAttachments(a ast.Visitor, attachments []ast.BLangAnnotationAttachment) {
+	for i := range attachments {
+		ast.Walk(a, &attachments[i])
+	}
+}
+
+// walkTypeDefinitionFieldAnnotations walks the field annotations of a type definition's own record or
+// object type, not those of nested or inline types.
+func walkTypeDefinitionFieldAnnotations(a ast.Visitor, defn *ast.BLangTypeDefinition) {
+	// Only these field annotations are resolved by the type resolver.
+	switch typeDesc := defn.GetTypeData().TypeDescriptor.(type) {
+	case *ast.BLangRecordType:
+		for _, field := range typeDesc.FieldPtrs() {
+			walkAnnotationAttachments(a, field.GetAnnotationAttachments())
+		}
+	case *ast.BLangObjectType:
+		for _, field := range objectFieldsInSourceOrder(typeDesc) {
+			walkAnnotationAttachments(a, field.GetAnnotationAttachments())
+		}
+	}
+}
+
+func objectFieldsInSourceOrder(typeDesc *ast.BLangObjectType) []*ast.BObjectField {
+	var fields []*ast.BObjectField
+	for member := range typeDesc.Members() {
+		if field, ok := member.(*ast.BObjectField); ok {
+			fields = append(fields, field)
+		}
+	}
+	slices.SortFunc(fields, func(a, b *ast.BObjectField) int {
+		aPos, bPos := a.GetPosition(), b.GetPosition()
+		return aPos.StartOffset() - bPos.StartOffset()
+	})
+	return fields
+}
+
 // walkVariableNonExprChildren walks the children ast.Walk visits for a variable, except its initializer.
 func walkVariableNonExprChildren(a ast.Visitor, v *ast.BLangVariable) {
-	for i := range v.AnnAttachments {
-		ast.Walk(a, &v.AnnAttachments[i])
-	}
+	walkAnnotationAttachments(a, v.AnnAttachments)
 	if tn := v.TypeNode(); tn != nil {
 		ast.Walk(a, tn.(ast.BLangNode))
 	}
@@ -2026,6 +2067,9 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 	case *ast.BLangPanic:
 		analyzeActionOrExpression(a, n.Expr, semtypes.Error)
 		return nil
+	case *ast.BLangTypeDefinition:
+		walkTypeDefinitionFieldAnnotations(a, n)
+		return a
 	case *ast.BLangRecordType:
 		validateRecordFieldDefaults(a, n)
 		return nil
@@ -2035,10 +2079,12 @@ func visitInner[A analyzer](a A, node ast.BLangNode) ast.Visitor {
 		}
 		return nil
 	case *ast.BLangClassDefinition:
+		walkAnnotationAttachments(a, n.AnnAttachments)
 		analyzeClassLikeDefn(a, n.Fields, n.InitFunction, n.Methods, n.ResourceMethods, n.Inclusions,
 			n.InclusionPositions, n.IsIsolated(), enclosingFromClass(a.ctx(), n))
 		return nil
 	case *ast.BLangService:
+		walkAnnotationAttachments(a, n.AnnAttachments)
 		for _, expr := range n.AttachedExprs {
 			ast.Walk(a, expr.(ast.BLangNode))
 		}
@@ -2114,6 +2160,7 @@ func analyzeClassBodyMembers[A analyzer](a A, fields []*ast.BLangVariable, initF
 		if analysisPrerequisitesUnavailable(a, field) {
 			continue
 		}
+		walkAnnotationAttachments(a, field.AnnAttachments)
 		if field.Expr != nil {
 			expectedType := a.ctx().SymbolType(field.Symbol())
 			analyzeActionOrExpression(a, field.Expr.(ast.BLangExpression), expectedType)

@@ -1,0 +1,49 @@
+module $anon.. v 0.0.0;
+moduleVar  {| c: int, never... |};
+paramValue({| b: int, never... |}) -> int{
+  bb0 {
+    %3 = ConstantLoad b
+    %2 = param[%3];
+    %0 = %2;
+    return;
+  }
+}
+returnValue() -> {| d: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad d
+    %2 = ConstantLoad 3
+    %3 = newMap {| d: int, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad b
+    %2 = ConstantLoad 1
+    %3 = newMap {| b: int, never... |}{%1=%2}
+    %4 = paramValue(%3) -> bb1;
+  }
+  bb1 {
+    %5 = %4;
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad c
+    %7 = moduleVar[%8];
+    %9 = %7;
+    %10 = println(%9) -> bb3;
+  }
+  bb3 {
+    %12 = ConstantLoad d
+    %13 = returnValue() -> bb4;
+  }
+  bb4 {
+    %11 = %13[%12];
+    %14 = %11;
+    %15 = println(%14) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

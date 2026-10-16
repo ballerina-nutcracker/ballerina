@@ -1,0 +1,49 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "str"
+  --> annotation-class-value-e.bal:33:20
+   |
+33 | @classInfo {value: "str"} // @error
+   |                    ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "str"
+  --> annotation-class-value-e.bal:39:48
+   |
+39 |     function get() returns @returnInfo {value: "str"} int { // @error
+   |                                                ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "str"
+  --> annotation-class-value-e.bal:51:22
+   |
+51 | @serviceInfo {value: "str"} // @error
+   |                      ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got true
+  --> annotation-class-value-e.bal:35:24
+   |
+35 |     @fieldInfo {value: true} // @error
+   |                        ^^^^
+
+error[SEMANTIC_ERROR]: incompatible types for ==
+  --> annotation-class-value-e.bal:38:25
+   |
+38 |     @methodFlag {value: 1 == "a"} // @error
+   |                         ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible types for ==
+  --> annotation-class-value-e.bal:44:20
+   |
+44 | @classFlag {value: 1 == "a"} // @error
+   |                    ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible types for ==
+  --> annotation-class-value-e.bal:55:22
+   |
+55 | @serviceFlag {value: 1 == "a"} // @error
+   |                      ^^^^^^^^
+
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'value'
+  --> annotation-class-value-e.bal:46:5
+   |
+46 |     @methodFlag // @error
+   |     ^^^^^^^^^^^

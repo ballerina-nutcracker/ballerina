@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "str"
+  --> annotation-type-field-value-e.bal:25:30
+   |
+25 |     @recordFieldInfo {value: "str"} // @error
+   |                              ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "str"
+  --> annotation-type-field-value-e.bal:33:30
+   |
+33 |     @objectFieldInfo {value: "str"} // @error
+   |                              ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got 1.5
+  --> annotation-type-field-value-e.bal:36:30
+   |
+36 |     @objectFieldInfo {value: 1.5} // @error
+   |                              ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got true
+  --> annotation-type-field-value-e.bal:30:30
+   |
+30 |     @objectFieldInfo {value: true} // @error
+   |                              ^^^^

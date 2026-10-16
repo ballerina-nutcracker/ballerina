@@ -1,0 +1,141 @@
+module $anon.. v 0.0.0;
+$annotation$0  any;
+$annotation$1  any;
+$annotation$2  any;
+mutableValue  int;
+@$anon/.:0.0.0:classInfo(runtime-ref($anon/.:$annotation$1)) class Counter {
+  count int
+
+  get() -> int{
+    bb0 {
+      lock-start "$anon/.:Counter.count" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %1 = ConstantLoad count
+      %0 = (1, self)[%1];
+      (1, %0) = %0;
+      PopScopeFrame
+      lock-end "$anon/.:Counter.count" GOTO bb2;
+    }
+    bb2 {
+      return;
+    }
+    bb3 {
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad count
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+@$anon/.:0.0.0:serviceInfo(runtime-ref($anon/.:$annotation$2)) class Service {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  $remote$call() -> int{
+    bb0 {
+      %2 = ConstantLoad 1
+      %0 = %2;
+      return;
+    }
+  }
+}
+computeValue() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Counter
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    counter = %3;
+    %6 = counter.get() -> bb5;
+  }
+  bb5 {
+    %7 = %6;
+    %8 = println(%7) -> bb6;
+  }
+  bb6 {
+    %9 = ConstantLoad a
+    %10 = ConstantLoad 1
+    %11 = newMap {| a: int, never... |}{%9=%10}
+    rec = %11;
+    %14 = ConstantLoad a
+    %13 = rec[%14];
+    %15 = %13;
+    %16 = println(%15) -> bb7;
+  }
+  bb7 {
+    %17 = ConstantLoad typedesc
+    %18 = ConstantLoad $anon/.:0.0.0:classInfo
+    %19 = .@ %17 %18;
+    classValue = %19;
+    %21 = classValue is {| value: int, never... |}
+    %21 ? bb8 : bb10;
+  }
+  bb8 {
+    PushScopeFrame 4
+    %1 = ConstantLoad value
+    %0 = (1, classValue)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 5
+    %0 = ConstantLoad typedesc
+    %1 = ConstantLoad $anon/.:0.0.0:serviceInfo
+    %2 = .@ %0 %1;
+    serviceValue = %2;
+    %4 = serviceValue is {| value: int, never... |}
+    %4 ? bb11 : bb13;
+  }
+  bb11 {
+    PushScopeFrame 4
+    %1 = ConstantLoad value
+    %0 = (1, serviceValue)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb12;
+  }
+  bb12 {
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb13 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}

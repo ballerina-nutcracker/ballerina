@@ -1,0 +1,83 @@
+(Counter
+  (init
+    (bb0 () ())
+  )
+  (get
+    (bb0 () ()
+      (return
+        (field-based-access count
+          (simple-var-ref self)))
+    )
+  )
+)
+(Service
+  ($remote$call
+    (bb0 () ()
+      (return
+        (literal 1))
+    )
+  )
+)
+(computeValue
+  (bb0 () ()
+    (literal 42)
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable counter (type
+        (user-defined-type Counter)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation get expr:
+          (simple-var-ref counter) ()))))
+    (var-def
+      (variable rec (type
+        (user-defined-type Rec)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref rec)))))
+    (var-def
+      (variable classValue (type
+        (union-type
+          (user-defined-type Info)
+          (value-type null))) (expr
+        (annot-access-expr classInfo
+          (simple-var-ref Counter)))))
+    (type-test-expr is
+      (simple-var-ref classValue)
+      (user-defined-type Info))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref classValue)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable serviceValue (type
+        (union-type
+          (user-defined-type Info)
+          (value-type null))) (expr
+        (annot-access-expr serviceInfo
+          (simple-var-ref Service)))))
+    (type-test-expr is
+      (simple-var-ref serviceValue)
+      (user-defined-type Info))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref serviceValue)))))
+  )
+  (bb4 (bb3 bb2) ())
+)

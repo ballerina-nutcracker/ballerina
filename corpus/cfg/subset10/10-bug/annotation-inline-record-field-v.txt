@@ -1,0 +1,35 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation paramValue (
+          (mapping-constructor-expr
+            (key-value
+              (literal b)
+              (literal 1))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access c
+          (simple-var-ref moduleVar)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access d
+          (invocation returnValue ())))))
+  )
+)
+(paramValue
+  (bb0 () ()
+    (return
+      (field-based-access b
+        (simple-var-ref param)))
+  )
+)
+(returnValue
+  (bb0 () ()
+    (return
+      (mapping-constructor-expr
+        (key-value
+          (literal d)
+          (literal 3))))
+  )
+)

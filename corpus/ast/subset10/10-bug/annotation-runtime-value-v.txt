@@ -1,0 +1,163 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Info
+    (record-type
+      (field value
+        (value-type int))))
+  (type-definition Flag
+    (record-type
+      (field value
+        (value-type boolean))))
+  (annotation classInfo
+    (user-defined-type Info)
+    (attach-point class))
+  (annotation serviceInfo
+    (user-defined-type Info)
+    (attach-point service))
+  (annotation fieldInfo
+    (user-defined-type Info)
+    (attach-point objectfield))
+  (annotation recordFieldInfo
+    (user-defined-type Info)
+    (attach-point recordfield))
+  (annotation methodFlag
+    (user-defined-type Flag)
+    (attach-point objectfunction))
+  (annotation returnInfo
+    (user-defined-type Info)
+    (attach-point return))
+  (variable mutableValue (type
+    (value-type int)) (expr
+    (literal 9)))
+  (function computeValue () (
+    (value-type int))
+    (expr-function-body
+      (literal 42)))
+  (class-definition Counter
+    (annotation-attachment classInfo
+      (mapping-constructor-expr
+        (key-value
+          (literal value)
+          (simple-var-ref mutableValue))))
+    (variable count (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function init () (
+      (value-type null))
+      (block-function-body)
+      (annotation-attachment methodFlag
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (binary-expr >
+              (simple-var-ref mutableValue)
+              (literal 1))))))
+    (function get () (
+      (annotation-attachment returnInfo
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (simple-var-ref mutableValue))))
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (field-based-access count
+                (simple-var-ref self))))))
+      (annotation-attachment methodFlag
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (binary-expr >
+              (invocation computeValue ())
+              (literal 1)))))))
+  (class-definition Service
+    (annotation-attachment serviceInfo
+      (mapping-constructor-expr
+        (key-value
+          (literal value)
+          (invocation computeValue ()))))
+    (function $remote$call () (
+      (annotation-attachment returnInfo
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (invocation computeValue ()))))
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1)))
+      (annotation-attachment methodFlag
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (binary-expr >
+              (simple-var-ref mutableValue)
+              (literal 1)))))))
+  (type-definition Rec
+    (record-type
+      (field a
+        (annotation-attachment recordFieldInfo
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (invocation computeValue ()))))
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable counter (type
+          (user-defined-type Counter)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref counter) ()))))
+      (var-def
+        (variable rec (type
+          (user-defined-type Rec)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref rec)))))
+      (var-def
+        (variable classValue (type
+          (union-type
+            (user-defined-type Info)
+            (value-type null))) (expr
+          (annot-access-expr classInfo
+            (simple-var-ref Counter)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref classValue)
+          (user-defined-type Info))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access value
+                (simple-var-ref classValue)))))) ())
+      (block-stmt
+        (var-def
+          (variable serviceValue (type
+            (union-type
+              (user-defined-type Info)
+              (value-type null))) (expr
+            (annot-access-expr serviceInfo
+              (simple-var-ref Service)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref serviceValue)
+            (user-defined-type Info))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (field-based-access value
+                  (simple-var-ref serviceValue)))))) ())
+        (block-stmt)))))

@@ -1,0 +1,71 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Info
+    (record-type
+      (field value
+        (value-type int))))
+  (annotation recordFieldInfo
+    (user-defined-type Info)
+    (attach-point recordfield))
+  (function paramValue (
+    (variable param (type
+      (record-type
+        (field b
+          (annotation-attachment recordFieldInfo
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal 1))))
+          (value-type int)))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (field-based-access b
+          (simple-var-ref param)))))
+  (variable moduleVar (type
+    (record-type
+      (field c
+        (annotation-attachment recordFieldInfo
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 2))))
+        (value-type int)))) (expr
+    (mapping-constructor-expr
+      (key-value
+        (literal c)
+        (literal 2)))))
+  (function returnValue () (
+    (record-type
+      (field d
+        (annotation-attachment recordFieldInfo
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 3))))
+        (value-type int))))
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal d)
+            (literal 3))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation paramValue (
+            (mapping-constructor-expr
+              (key-value
+                (literal b)
+                (literal 1))))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access c
+            (simple-var-ref moduleVar)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access d
+            (invocation returnValue ()))))))))
