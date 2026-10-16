@@ -323,6 +323,57 @@ func TestPack_EmitBala_NoBallerinaToml(t *testing.T) {
 	}
 }
 
+// TestPack_IncludeOverlappingReadmeNotDuplicated checks that an include pattern
+// matching the bundled readme path doesn't write docs/README.md twice, and
+// that the package readme (not the included file that happens to land at the
+// same bala path) wins — matching jBallerina, which bundles docs before
+// includes.
+func TestPack_IncludeOverlappingReadmeNotDuplicated(t *testing.T) {
+	t.Parallel()
+	source, err := filepath.Abs(filepath.Join("testdata", "include-overlaps-readme-project"))
+	if err != nil {
+		t.Fatalf("abs source: %v", err)
+	}
+	result, err := loadProject(source)
+	if err != nil {
+		t.Fatalf("load source project: %v", err)
+	}
+
+	pkg := result.Project().CurrentPackage()
+	if pkg == nil {
+		t.Fatal("source project has no CurrentPackage")
+	}
+
+	balaPath, err := projects.NewBallerinaBackend(pkg.Compilation()).EmitBala(t.TempDir())
+	if err != nil {
+		t.Fatalf("EmitBala: %v", err)
+	}
+
+	zr, err := zip.OpenReader(balaPath)
+	if err != nil {
+		t.Fatalf("open bala: %v", err)
+	}
+	defer func() { _ = zr.Close() }()
+
+	count := 0
+	for _, f := range zr.File {
+		if f.Name == "docs/README.md" {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("docs/README.md appears %d times in the bala, want exactly 1", count)
+	}
+
+	got, err := readZipEntry(balaPath, "docs/README.md")
+	if err != nil {
+		t.Fatalf("readZipEntry: %v", err)
+	}
+	if want := "PACKAGE README\n"; got != want {
+		t.Errorf("docs/README.md content = %q, want %q (the package readme, not the included docs/README.md source file)", got, want)
+	}
+}
+
 // readZipEntry opens the archive at path and returns the contents of the entry
 // with the given name. Returns an error if the entry is missing.
 func readZipEntry(archive, name string) (string, error) {

@@ -77,6 +77,9 @@ func TestBalCLI(t *testing.T) {
 		{"BalRunWorkspaceCorpus", testBalRunWorkspaceCorpus},
 		{"BalRunTargetDir", testBalRunTargetDir},
 		{"BalPackCorpus", testBalPackCorpus},
+		{"BalPackCorpus_IncludeField", testBalPackCorpus_IncludeField},
+		{"BalPackCorpus_InvalidIncludePattern", testBalPackCorpus_InvalidIncludePattern},
+		{"BalPackCorpus_IncludeFieldFromWorkspaceMember", testBalPackCorpus_IncludeFieldFromWorkspaceMember},
 		{"BalPackTargetDir", testBalPackTargetDir},
 		{"BalBuildCorpus", testBalBuildCorpus},
 		{"BalBuildTargetDir", testBalBuildTargetDir},
@@ -460,6 +463,112 @@ func testBalPackTargetDir(t *testing.T, cli *balCLI) {
 	if _, err := os.Stat(balaPath); err != nil {
 		t.Fatalf("expected bala at %s: %v", balaPath, err)
 	}
+}
+
+// testBalPackCorpus_IncludeField exercises the package manifest's `include`
+// glob patterns end-to-end through the real `bal pack` binary: it packs
+// corpus/cli/testdata/pack/includes/project (include = ["docs/**",
+// "assets/*.txt", "!assets/secret.txt"]) and asserts the produced .bala
+// contains the matched files and excludes the negated one.
+// Java equivalent: TestBalaWriter#testBuildProjectWithIncludes.
+func testBalPackCorpus_IncludeField(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
+
+	workDir := t.TempDir()
+	copyDir(t, filepath.Join(repoRoot, "corpus", "cli", "testdata", "pack", "includes", "project"), workDir)
+
+	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "pack", workDir)
+	if exitCode != 0 {
+		t.Fatalf("bal pack failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+	}
+
+	balaPath := filepath.Join(workDir, "target", "bala", "testorg-includespkg-any-0.1.0.bala")
+	zr, err := zip.OpenReader(balaPath)
+	if err != nil {
+		t.Fatalf("open bala %s: %v", balaPath, err)
+	}
+	defer func() { _ = zr.Close() }()
+
+	entries := make(map[string]bool, len(zr.File))
+	for _, f := range zr.File {
+		entries[f.Name] = true
+	}
+
+	for _, want := range []string{"docs/guide.md", "assets/data.txt"} {
+		if !entries[want] {
+			t.Errorf("bala missing included entry %q, got entries: %v", want, entryNames(entries))
+		}
+	}
+	if entries["assets/secret.txt"] {
+		t.Error("bala contains assets/secret.txt, which the !assets/secret.txt pattern should have excluded")
+	}
+}
+
+// testBalPackCorpus_InvalidIncludePattern checks that a malformed include
+// glob fails bal pack with a user-facing error.
+func testBalPackCorpus_InvalidIncludePattern(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
+
+	workDir := t.TempDir()
+	copyDir(t, filepath.Join(repoRoot, "corpus", "cli", "testdata", "pack", "invalid-include", "project"), workDir)
+
+	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "pack", workDir)
+	if exitCode == 0 {
+		t.Fatalf("expected bal pack to fail for an invalid include pattern, got success\nstdout: %s", stdout)
+	}
+	if !strings.Contains(stderr, "invalid include pattern") {
+		t.Errorf("expected 'invalid include pattern' in stderr, got: %s", stderr)
+	}
+}
+
+// testBalPackCorpus_IncludeFieldFromWorkspaceMember checks include-pattern
+// matching end-to-end for a workspace member, whose SourceRoot() is its own
+// subdirectory (e.g. "pkga") rather than fsys's own root: zip paths must
+// come out root-relative ("assets/data.txt"), not prefixed with the
+// member's own directory name.
+func testBalPackCorpus_IncludeFieldFromWorkspaceMember(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
+
+	workDir := t.TempDir()
+	copyDir(t, filepath.Join(repoRoot, "corpus", "cli", "testdata", "pack", "workspace-member-includes", "project"), workDir)
+	memberDir := filepath.Join(workDir, "pkga")
+
+	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "pack", memberDir)
+	if exitCode != 0 {
+		t.Fatalf("bal pack failed: exit=%d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)
+	}
+
+	balaPath := filepath.Join(memberDir, "target", "bala", "testorg-pkgaincludes-any-0.1.0.bala")
+	zr, err := zip.OpenReader(balaPath)
+	if err != nil {
+		t.Fatalf("open bala %s: %v", balaPath, err)
+	}
+	defer func() { _ = zr.Close() }()
+
+	entries := make(map[string]bool, len(zr.File))
+	for _, f := range zr.File {
+		entries[f.Name] = true
+	}
+
+	if !entries["assets/data.txt"] {
+		t.Errorf("bala missing included entry %q, got entries: %v", "assets/data.txt", entryNames(entries))
+	}
+	if entries["pkga/assets/data.txt"] {
+		t.Error("bala contains assets/data.txt prefixed with the member's own directory name (\"pkga/\"), want it root-relative")
+	}
+	if entries["assets/secret.txt"] {
+		t.Error("bala contains assets/secret.txt, which the !assets/secret.txt pattern should have excluded")
+	}
+}
+
+// entryNames returns the keys of a zip-entry presence map, for error messages.
+func entryNames(entries map[string]bool) []string {
+	names := make([]string, 0, len(entries))
+	for name := range entries {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 // testBalBuildCorpus exercises `bal build` end-to-end: it runs `bal build` on

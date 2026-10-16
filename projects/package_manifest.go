@@ -36,6 +36,7 @@ type PackageManifest struct {
 	keywords         []string
 	exportedModules  []string
 	modules          []ManifestModule
+	include          []string
 	repository       string
 	ballerinaVersion string
 	visibility       string
@@ -207,6 +208,11 @@ func (m PackageManifest) Modules() []ManifestModule {
 	return slices.Clone(m.modules)
 }
 
+// Include returns a copy of the declared include glob patterns.
+func (m PackageManifest) Include() []string {
+	return slices.Clone(m.include)
+}
+
 // Repository returns the package repository URL.
 func (m PackageManifest) Repository() string {
 	return m.repository
@@ -250,6 +256,7 @@ type PackageManifestParams struct {
 	Keywords         []string
 	ExportedModules  []string
 	Modules          []ManifestModule
+	Include          []string
 	Repository       string
 	BallerinaVersion string
 	Visibility       string
@@ -287,6 +294,7 @@ func NewPackageManifestFromParams(params PackageManifestParams) PackageManifest 
 		keywords:         slices.Clone(params.Keywords),
 		exportedModules:  exportedModules,
 		modules:          slices.Clone(params.Modules),
+		include:          slices.Clone(params.Include),
 		repository:       params.Repository,
 		ballerinaVersion: params.BallerinaVersion,
 		visibility:       params.Visibility,

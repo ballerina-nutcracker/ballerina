@@ -82,14 +82,26 @@ func requireWrk(t *testing.T) {
 	}
 }
 
+// findFreePort returns a port the OS reports as free at the moment it's
+// closed. Nothing stops another process from grabbing that exact ephemeral
+// port before the caller gets to use it, so this retries a few times if
+// portOpen still sees it occupied right after close, rather than handing
+// back a port that's already flaky by construction.
 func findFreePort(t *testing.T) int {
 	t.Helper()
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("listen: %v", err)
+	for range 10 {
+		ln, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			t.Fatalf("listen: %v", err)
+		}
+		port := ln.Addr().(*net.TCPAddr).Port
+		_ = ln.Close()
+		if !portOpen(port) {
+			return port
+		}
 	}
-	defer func() { _ = ln.Close() }()
-	return ln.Addr().(*net.TCPAddr).Port
+	t.Fatal("findFreePort: could not find a port that stayed free after close")
+	return 0
 }
 
 func TestSanitize(t *testing.T) {

@@ -1,0 +1,7 @@
+[package]
+org = "testorg"
+name = "includeoverlapsreadmeproject"
+version = "0.1.0"
+readme = "README.md"
+
+include = ["docs/**"]

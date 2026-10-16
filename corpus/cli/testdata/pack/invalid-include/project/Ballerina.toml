@@ -1,0 +1,6 @@
+[package]
+org = "testorg"
+name = "invalidincludepkg"
+version = "0.1.0"
+
+include = ["docs/[abc"]
