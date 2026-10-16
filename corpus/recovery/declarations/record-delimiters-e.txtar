@@ -21,9 +21,9 @@ type Valid record {| int a; |};
 -- ast --
 (package
   (type-definition MissingOpenBar
-    (bad-type))
+    (bad-type record (tokens ("record" 17:21 17:27) ("{" 17:28 17:29) ("int" 17:30 17:33) (";" 17:35 17:36))))
   (type-definition MissingCloseBar
-    (bad-type))
+    (bad-type record (tokens ("record" 18:22 18:28) ("{|" 18:29 18:31) ("int" 18:32 18:35) (";" 18:37 18:38))))
   (type-definition Valid
     (record-type
       (field a

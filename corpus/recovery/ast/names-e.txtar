@@ -39,10 +39,10 @@ function valid() {}
           (simple-var-ref (position 18:9 18:14) value)))
       (assignment (position 19:1 20:1)
         (simple-var-ref (position 19:1 19:7) x)
-        (bad-expr-or-action (position 19:9 19:21)))
+        (bad-expr-or-action optional-field-access (position 19:9 19:21) (tokens ("?." 19:14 19:16) (":" 19:19 19:20))))
       (assignment (position 20:1 21:1)
         (simple-var-ref (position 20:1 20:7) x)
-        (bad-expr-or-action (position 20:9 20:22)))
+        (bad-expr-or-action optional-field-access (position 20:9 20:22) (tokens ("?." 20:14 20:16) (":" 20:19 20:20))))
       (assignment (position 21:1 22:1)
         (simple-var-ref (position 21:1 21:7) x)
         (remote-method-call (position 21:9 21:17) (bad-identifier) expr:

@@ -50,11 +50,11 @@ function independent(Independent value) returns int => value.value + independent
     (literal 3)))
   (type-definition BrokenArray
     (array-type
-      (bad-type) dimensions: 1 ([])))
+      (bad-type qualified-reference (tokens (":" 17:25 17:26))) dimensions: 1 ([])))
   (type-definition BrokenTuple
     (tuple-type
       (value-type int)
-      (bad-type)))
+      (bad-type qualified-reference (tokens (":" 18:31 18:32)))))
   (type-definition UnknownArray
     (array-type
       (user-defined-type MissingElement) dimensions: 1 ([])))

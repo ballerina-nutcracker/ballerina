@@ -28,4 +28,4 @@ function valid() returns int => next();
     (value-type int))
     (expr-function-body
       (invocation next ())))
-  (bad-top-level function))
+  (bad-top-level function (tokens ("function" 17:1 17:9) ("(" 17:16 17:17) (")" 17:17 17:18) ("returns" 17:19 17:26) ("int" 17:27 17:30))))

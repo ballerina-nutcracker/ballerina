@@ -26,5 +26,5 @@ function surviving(int value) returns int => value;
     (value-type int))
     (expr-function-body
       (simple-var-ref value)))
-  (bad-top-level function)
-  (bad-top-level function))
+  (bad-top-level function (tokens ("function" 17:1 17:9) ("(" 17:16 17:17) (")" 17:17 17:18) ("returns" 17:19 17:26) ("int" 17:27 17:30) (";" 17:30 17:31)))
+  (bad-top-level function (tokens ("function" 18:1 18:9) ("(" 18:16 18:17) (")" 18:17 18:18) ("returns" 18:19 18:26) ("int" 18:27 18:30) (";" 18:30 18:31))))

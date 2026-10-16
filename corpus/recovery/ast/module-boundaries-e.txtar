@@ -38,19 +38,19 @@ function valid() {}
     (value-type (position 18:1 18:5) int)) (expr
     (simple-var-ref (position 18:9 18:14) mod (bad-identifier))))
   (variable (position 19:1 20:1) c (type
-    (bad-type (position 19:1 19:7))) (expr
+    (bad-type qualified-reference (position 19:1 19:7) (tokens (":" 19:4 19:5)))) (expr
     (literal (position 19:11 19:12) 1)))
   (const (position 20:1 21:1) d () (
     (binary-expr (position 20:11 20:15) +
       (literal (position 20:11 20:13) 1)
       (simple-var-ref (position 20:15 20:15) (bad-identifier)))))
   (const (position 21:1 22:1) e (
-    (bad-type (position 21:7 21:13))) (
+    (bad-type qualified-reference (position 21:7 21:13) (tokens (":" 21:10 21:11)))) (
     (literal (position 21:17 21:18) 1)))
   (type-definition (position 22:1 23:1) A
-    (bad-type (position 22:8 22:13)))
+    (bad-type qualified-reference (position 22:8 22:13) (tokens (":" 22:11 22:12))))
   (type-definition (position 23:1 24:1) B
-    (bad-type (position 23:8 23:12)))
+    (bad-type qualified-reference (position 23:8 23:12) (tokens (":" 23:11 23:12))))
   (const (position 24:1 25:1) (bad-identifier) () (
     (literal (position 24:11 24:12) 1)))
   (variable (position 25:1 26:1) annotated (type

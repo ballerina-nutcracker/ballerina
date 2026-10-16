@@ -46,7 +46,7 @@ function valid() returns int => 1;
     (variable valid (type
       (value-type int)) (expr
       (literal 3)))
-    (bad-top-level field))
+    (bad-top-level field (tokens ("int" 23:5 23:8) ("=" 23:26 23:27))))
   (function valid () (
     (value-type int))
     (expr-function-body

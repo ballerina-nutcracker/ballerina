@@ -45,4 +45,4 @@ function independent(int value) returns int => value;
     (value-type int))
     (expr-function-body
       (simple-var-ref value)))
-  (bad-top-level class))
+  (bad-top-level class (tokens ("class" 17:1 17:6) ("{" 17:9 17:10) (";" 18:5 18:6))))

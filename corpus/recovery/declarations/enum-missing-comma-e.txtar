@@ -24,4 +24,4 @@ function usePalette() returns Palette { return GREEN; } // @error cascades from 
     (block-function-body
       (return
         (simple-var-ref GREEN))))
-  (bad-top-level enum))
+  (bad-top-level enum (tokens ("enum" 17:1 17:5) ("{" 17:14 17:15) ("," 17:24 17:25) ("}" 17:32 17:33))))

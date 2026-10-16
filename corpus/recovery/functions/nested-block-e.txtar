@@ -25,7 +25,7 @@ function valid() {}
   (function nested () (
     (value-type null))
     (block-function-body
-      (bad-stmt)
+      (bad-stmt if-else (tokens ("if" 18:5 18:7) ("true" 18:8 18:12) ("{" 18:13 18:14) ("int" 18:15 18:18) ("=" 18:25 18:26) (";" 18:28 18:29) ("else" 18:30 18:34) ("{" 18:35 18:36) ("int" 18:37 18:40) ("=" 18:47 18:48) (";" 18:50 18:51) ("}" 18:52 18:53)))
       (var-def
         (variable later (type
           (value-type int)) (expr
