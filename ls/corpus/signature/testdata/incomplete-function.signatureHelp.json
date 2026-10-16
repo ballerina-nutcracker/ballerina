@@ -126,7 +126,31 @@
     {
       "jsonrpc": "2.0",
       "id": 2,
-      "result": null
+      "result": {
+        "signatures": [
+          {
+            "label": "foo(int count, string title)",
+            "parameters": [
+              {
+                "label": "int count",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`count**"
+                }
+              },
+              {
+                "label": "string title",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`string`title**"
+                }
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": 1
+      }
     }
   ]
 }
