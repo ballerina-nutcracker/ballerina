@@ -20,6 +20,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -42,6 +43,7 @@ type Registry struct {
 	nativeFunctions     map[string]*ExternFunction
 	runtimeBuiltins     map[string]extern.NativeFunc
 	modules             map[string]*BIRModule
+	recordDefaults      map[*semtypes.MappingAtomicType]map[string]string
 }
 
 func NewRegistry(builtins map[string]extern.NativeFunc) *Registry {
@@ -52,6 +54,7 @@ func NewRegistry(builtins map[string]extern.NativeFunc) *Registry {
 		nativeFunctions:     make(map[string]*ExternFunction),
 		runtimeBuiltins:     builtins,
 		modules:             make(map[string]*BIRModule),
+		recordDefaults:      make(map[*semtypes.MappingAtomicType]map[string]string),
 	}
 }
 
@@ -112,11 +115,23 @@ func (r *Registry) RegisterModule(id *model.PackageID, m *BIRModule) *BIRModule 
 				}
 			}
 		}
+		for atom, fields := range m.Pkg.RecordDefaults {
+			keys := make(map[string]string, len(fields))
+			for _, field := range fields {
+				keys[field.FieldName] = field.FunctionLookupKey
+			}
+			r.recordDefaults[atom] = keys
+		}
 	}
 	if id != nil && !id.IsUnnamed() {
 		r.modules[moduleKey(id)] = m
 	}
 	return m
+}
+
+func (r *Registry) RecordFieldDefault(atom *semtypes.MappingAtomicType, field string) (string, bool) {
+	key, ok := r.recordDefaults[atom][field]
+	return key, ok
 }
 
 func (r *Registry) registerFunctionDescriptor(fn *bir.BIRFunction) {
