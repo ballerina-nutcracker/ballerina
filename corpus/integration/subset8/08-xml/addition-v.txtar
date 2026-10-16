@@ -1,0 +1,11 @@
+-- stdout --
+abcdef
+defabc
+abc&lt;item/&gt;
+textx
+xtext
+textghi
+ghitext
+<item/>def
+def<item/>
+-- stderr --

@@ -6234,10 +6234,7 @@ func resolveAdditiveExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryEx
 	if expr.GetOperatorKind() == model.OperatorKind_SUB {
 		supportedTypes = semtypes.Number
 	}
-	operandExpectedType := semtypes.Union(supportedTypes, semtypes.XML)
-	if !semtypes.IsZero(expectedType) {
-		operandExpectedType = semtypes.Intersect(operandExpectedType, expectedType)
-	}
+	operandExpectedType := additiveOperandExpectedType(supportedTypes, expr.GetOperatorKind(), expectedType)
 	lhsResult, ok := resolveActionOrExpression(t, chain, expr.LhsExpr, operandExpectedType)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -6251,15 +6248,34 @@ func resolveAdditiveExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryEx
 	return resultTy, effect, true
 }
 
+func operatorOperandTypeName(t typeResolver, ty semtypes.SemType) string {
+	if semtypes.ContainsBasicType(ty, semtypes.Nil) {
+		underlyingTy := semtypes.Diff(ty, semtypes.Nil)
+		if !semtypes.IsEmpty(t.typeContext(), underlyingTy) {
+			return semtypes.ToString(t.typeContext(), underlyingTy) + "?"
+		}
+	}
+	return semtypes.ToString(t.typeContext(), ty)
+}
+
+func additiveOperandExpectedType(supportedTypes semtypes.SemType, op model.OperatorKind, expectedType semtypes.SemType) semtypes.SemType {
+	operandExpectedType := semtypes.Union(supportedTypes, semtypes.XML)
+	if semtypes.IsZero(expectedType) {
+		return operandExpectedType
+	}
+	operandExpectedType = semtypes.Intersect(operandExpectedType, expectedType)
+	if op == model.OperatorKind_ADD && semtypes.ContainsBasicType(expectedType, semtypes.XML) {
+		operandExpectedType = semtypes.Union(operandExpectedType, semtypes.String)
+	}
+	return operandExpectedType
+}
+
 func resolveAdditiveExprInner(t typeResolver, chain *binding, lhsTy semtypes.SemType, rhs ast.BLangActionOrExpression, op model.OperatorKind, expectedType semtypes.SemType, pos diagnostics.Location) (semtypes.SemType, expressionEffect, bool) {
 	supportedTypes := additiveSupportedTypes
 	if op == model.OperatorKind_SUB {
 		supportedTypes = semtypes.Number
 	}
-	operandExpectedType := semtypes.Union(supportedTypes, semtypes.XML)
-	if !semtypes.IsZero(expectedType) {
-		operandExpectedType = semtypes.Intersect(operandExpectedType, expectedType)
-	}
+	operandExpectedType := additiveOperandExpectedType(supportedTypes, op, expectedType)
 	rhsResult, ok := resolveActionOrExpression(t, chain, rhs, operandExpectedType)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -6274,7 +6290,32 @@ func resolveAdditiveExprInner(t typeResolver, chain *binding, lhsTy semtypes.Sem
 		return singletonTy, defaultExpressionEffect(chain), true
 	}
 
+	originalLhsTy, originalRhsTy := lhsTy, rhsTy
 	lhsTy, rhsTy, nilLifted := nilLiftedUnderlyingType(lhsTy, rhsTy)
+
+	if nilLifted && op == model.OperatorKind_ADD &&
+		!semtypes.IsEmpty(t.typeContext(), lhsTy) && !semtypes.IsEmpty(t.typeContext(), rhsTy) &&
+		((semtypes.IsSubtype(t.typeContext(), lhsTy, semtypes.XML) && semtypes.IsSubtype(t.typeContext(), rhsTy, semtypes.String)) ||
+			(semtypes.IsSubtype(t.typeContext(), lhsTy, semtypes.String) && semtypes.IsSubtype(t.typeContext(), rhsTy, semtypes.XML))) {
+		t.semanticError(fmt.Sprintf("operator '%s' not defined for '%s' and '%s'", op,
+			operatorOperandTypeName(t, originalLhsTy), operatorOperandTypeName(t, originalRhsTy)), pos)
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+
+	if op == model.OperatorKind_ADD && !nilLifted {
+		var resultTy semtypes.SemType
+		switch {
+		case !semtypes.IsEmpty(t.typeContext(), lhsTy) && !semtypes.IsEmpty(t.typeContext(), rhsTy) &&
+			semtypes.IsSubtype(t.typeContext(), lhsTy, semtypes.XML) && semtypes.IsSubtype(t.typeContext(), rhsTy, semtypes.String):
+			resultTy = semtypes.XMLSequence(semtypes.Union(lhsTy, semtypes.XMLText))
+		case !semtypes.IsEmpty(t.typeContext(), lhsTy) && !semtypes.IsEmpty(t.typeContext(), rhsTy) &&
+			semtypes.IsSubtype(t.typeContext(), lhsTy, semtypes.String) && semtypes.IsSubtype(t.typeContext(), rhsTy, semtypes.XML):
+			resultTy = semtypes.XMLSequence(semtypes.Union(semtypes.XMLText, rhsTy))
+		}
+		if !semtypes.IsZero(resultTy) {
+			return resultTy, defaultExpressionEffect(chain), true
+		}
+	}
 
 	numLhsBits := semtypes.NBasicTypes(lhsTy)
 	numRhsBits := semtypes.NBasicTypes(rhsTy)

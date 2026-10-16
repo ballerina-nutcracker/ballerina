@@ -1,0 +1,63 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad abc
+    %2 = newXMLText(%1)
+    text = %2;
+    %4 = ConstantLoad def
+    suffix = %4;
+    %6 = + text suffix;
+    %7 = println(%6) -> bb1;
+  }
+  bb1 {
+    %8 = + suffix text;
+    %9 = println(%8) -> bb2;
+  }
+  bb2 {
+    %11 = ConstantLoad <item/>
+    %10 = + text %11;
+    %12 = println(%10) -> bb3;
+  }
+  bb3 {
+    %13 = ConstantLoad text
+    %14 = newXMLText(%13)
+    textSubtype = %14;
+    %16 = ConstantLoad x
+    charSubtype = %16;
+    %18 = ConstantLoad ghi
+    wordSubtype = %18;
+    %20 = + textSubtype charSubtype;
+    appendedText = %20;
+    %22 = + charSubtype textSubtype;
+    prependedText = %22;
+    %24 = + textSubtype wordSubtype;
+    textSequence = %24;
+    %26 = + wordSubtype textSubtype;
+    prependedSequence = %26;
+    %28 = println(appendedText) -> bb4;
+  }
+  bb4 {
+    %29 = println(prependedText) -> bb5;
+  }
+  bb5 {
+    %30 = println(textSequence) -> bb6;
+  }
+  bb6 {
+    %31 = println(prependedSequence) -> bb7;
+  }
+  bb7 {
+    %32 = newXMLElement("item", ())
+    element = %32;
+    %34 = + element suffix;
+    elementWithText = %34;
+    %36 = + suffix element;
+    textWithElement = %36;
+    %38 = println(elementWithText) -> bb8;
+  }
+  bb8 {
+    %39 = println(textWithElement) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}
