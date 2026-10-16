@@ -59,10 +59,3 @@ probe.sh stop
 
 Socket path defaults to `/tmp/ls-nvim-harness.sock`; override with
 `LS_HARNESS_SOCK` to run multiple sessions concurrently.
-
-## Non-goals
-
-- No pass/fail assertions or golden comparisons — that's `ls/corpus`.
-- Not a CI gate — this is a manual/agent-driven exploration tool.
-- Only wraps the handful of requests useful for interactive probing;
-  `raw` covers everything else rather than growing a wrapper per method.
