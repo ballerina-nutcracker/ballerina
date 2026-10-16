@@ -20,7 +20,8 @@
         (checked-expr
           (invocation lang.value cloneWithType (
             (simple-var-ref v1)
-            (typedesc-expr)))))))
+            (typedesc-expr
+              (user-defined-type R))))))))
     (expression-stmt
       (invocation io println (
         (simple-var-ref r1))))
@@ -30,7 +31,8 @@
         (checked-expr
           (invocation lang.value cloneWithType (
             (simple-var-ref v1)
-            (typedesc-expr)))))))
+            (typedesc-expr
+              (user-defined-type Rb))))))))
     (expression-stmt
       (invocation io println (
         (simple-var-ref r1b))))
@@ -50,7 +52,8 @@
         (checked-expr
           (invocation lang.value cloneWithType (
             (simple-var-ref v2)
-            (typedesc-expr)))))))
+            (typedesc-expr
+              (user-defined-type R))))))))
     (expression-stmt
       (invocation io println (
         (simple-var-ref r2))))
@@ -71,7 +74,8 @@
           (error-type))) (expr
         (invocation lang.value cloneWithType (
           (simple-var-ref v3)
-          (typedesc-expr))))))
+          (typedesc-expr
+            (user-defined-type R)))))))
     (type-test-expr is
       (simple-var-ref r3)
       (error-type))

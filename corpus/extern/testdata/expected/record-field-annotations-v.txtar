@@ -11,4 +11,8 @@ second
 true
 false
 <absent>
+active,age,dynamic,name
+active,age,dynamic,name
+active,age,dynamic,name
+
 -- stderr --
