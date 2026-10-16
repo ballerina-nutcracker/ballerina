@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: wildcard binding pattern type must be a subtype of 'any'
+  --> query-wildcard-from3-e.bal:20:20
+   |
+20 |     int[] _ = from int|error _ in es select 2; // @error
+   |                    ^^^^^^^^^^^

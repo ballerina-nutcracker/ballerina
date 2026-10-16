@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: wildcard binding pattern type must be a subtype of 'any'
+  --> query-wildcard-let2-e.bal:19:37
+   |
+19 |     int[] _ = from int x in [1] let var _ = error("y") select x; // @error
+   |                                     ^^^^^^^^^^^^^^^^^^
