@@ -69,7 +69,6 @@ type typeResolver interface {
 	semanticError(message string, loc diagnostics.Location)
 	internalError(message string, loc diagnostics.Location)
 	unimplemented(message string, loc diagnostics.Location)
-	syntaxError(message string, loc diagnostics.Location)
 
 	// Symbol management (proxied from CompilerContext)
 	symbolType(ref model.SymbolRef) semtypes.SemType
@@ -278,13 +277,6 @@ func (t *packageTypeResolver) unimplemented(msg string, loc diagnostics.Location
 	t.ctx.Unimplemented(msg, loc)
 }
 
-func (t *packageTypeResolver) syntaxError(msg string, loc diagnostics.Location) {
-	if t.isEphemeral() {
-		return
-	}
-	t.ctx.SyntaxError(msg, loc)
-}
-
 func (t *packageTypeResolver) symbolType(ref model.SymbolRef) semtypes.SemType {
 	return t.ctx.SymbolType(ref)
 }
@@ -451,13 +443,6 @@ func (f *functionTypeResolver) internalError(msg string, loc diagnostics.Locatio
 func (f *functionTypeResolver) unimplemented(msg string, loc diagnostics.Location) {
 	noteEphemeralUnimplemented(f)
 	f.parentResolver.unimplemented(msg, loc)
-}
-
-func (f *functionTypeResolver) syntaxError(msg string, loc diagnostics.Location) {
-	if f.isEphemeral() {
-		return
-	}
-	f.parentResolver.syntaxError(msg, loc)
 }
 
 func (f *functionTypeResolver) symbolType(ref model.SymbolRef) semtypes.SemType {
@@ -3363,7 +3348,7 @@ func parseFloatValue(t typeResolver, strValue string, pos diagnostics.Location) 
 	strValue = strings.TrimRight(strValue, "fF")
 	f, err := strconv.ParseFloat(strValue, 64)
 	if err != nil {
-		t.syntaxError(fmt.Sprintf("invalid float literal: %s", strValue), pos)
+		t.semanticError(fmt.Sprintf("invalid float literal: %s", strValue), pos)
 		return 0, false
 	}
 	return f, true
@@ -3372,7 +3357,7 @@ func parseFloatValue(t typeResolver, strValue string, pos diagnostics.Location) 
 func parseDecimalValue(t typeResolver, strValue string, pos diagnostics.Location) (*decimal.Decimal, bool) {
 	d, err := decimal.FromLiteral(strValue)
 	if err != nil {
-		t.syntaxError(fmt.Sprintf("invalid decimal literal: %s", strValue), pos)
+		t.semanticError(fmt.Sprintf("invalid decimal literal: %s", strValue), pos)
 		return decimal.FromInt64(0), false
 	}
 	return d, true

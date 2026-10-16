@@ -46,6 +46,8 @@ linters:
           msg: "analysis: semtypes values are read-only here"
         - pattern: ^context\.CompilerContext\.(Diagnostics|HasErrors|HasDiagnostics|DiagnosticEnv)$
           msg: "analysis: no code may ask whether anything was reported"
+        - pattern: ^context\.CompilerContext\.SyntaxError$
+          msg: syntax errors are reported only by the parser and the node builder
       analyze-types: true
     depguard:
       rules:
