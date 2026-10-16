@@ -134,22 +134,18 @@ func listenerStart(rt *runtime.Runtime, types tcpTypes) extern.NativeFunc {
 	return func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		state := stateOf(args[0].(*values.Object))
 		state.mu.Lock()
-		if state.ln != nil {
-			state.mu.Unlock()
-			return nil, nil
+		defer state.mu.Unlock()
+		if state.ln != nil && !state.stopped {
+			return tcpError("Error initializing the server: Address already in use"), nil
 		}
 		address := net.JoinHostPort(state.host, strconv.Itoa(state.port))
-		tlsCfg := state.tlsCfg
-		state.mu.Unlock()
-
-		ln, err := rt.Platform().Net.Listen("tcp", address, tlsCfg)
+		ln, err := rt.Platform().Net.Listen("tcp", address, state.tlsCfg)
 		if err != nil {
 			return tcpError("Error initializing the server: " + err.Error()), nil
 		}
-		state.mu.Lock()
 		state.ln = ln
-		state.mu.Unlock()
-		go acceptLoop(rt, types, state)
+		state.stopped = false
+		go acceptLoop(rt, types, state, ln)
 		return nil, nil
 	}
 }
@@ -195,9 +191,9 @@ func listenerImmediateStop(_ *extern.Context, args []values.BalValue) (values.Ba
 }
 
 // acceptLoop reads the attached service per connection, so start() works without a service and attach/detach apply to later connections.
-func acceptLoop(rt *runtime.Runtime, types tcpTypes, state *listenerState) {
+func acceptLoop(rt *runtime.Runtime, types tcpTypes, state *listenerState, ln net.Listener) {
 	for {
-		conn, err := state.ln.Accept()
+		conn, err := ln.Accept()
 		if err != nil {
 			return
 		}

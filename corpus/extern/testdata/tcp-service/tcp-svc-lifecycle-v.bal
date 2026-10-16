@@ -14,9 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Exercises Listener.detach (identity-checked, unlike jBallerina) and
+// Exercises Listener.detach (identity-checked, unlike jBallerina),
 // Listener.immediateStop (a real force-stop in this port, unlike jBallerina's
-// unimplemented stub); see the README's Notable Behavioural Changes.
+// unimplemented stub), and restarting a stopped listener; see the README's
+// Notable Behavioural Changes.
 import ballerina/io;
 import ballerina/tcp;
 
@@ -68,4 +69,18 @@ public function testMain() returns error? {
     (readonly & byte[])|tcp:Error r3 = c3->readBytes();
     io:println(r3 is tcp:Error ? r3.message() : "data"); // @output Connection closed by the server.
     check bare.immediateStop();
+
+    tcp:Listener restartable = check new (19405, localHost = "127.0.0.1");
+    check restartable.attach(new EchoServer());
+    check restartable.'start();
+    error? secondStart = restartable.'start();
+    io:println(secondStart is error ? secondStart.message() : "started twice"); // @output Error initializing the server: Address already in use
+    check restartable.gracefulStop();
+    check restartable.'start();
+    tcp:Client c4 = check new ("127.0.0.1", 19405, timeout = 2);
+    check c4->writeBytes("pong".toBytes());
+    readonly & byte[] restarted = check c4->readBytes();
+    io:println('string:fromBytes(restarted)); // @output pong
+    check c4->close();
+    check restartable.immediateStop();
 }

@@ -4,4 +4,6 @@ Connection closed by the server.
 true
 connected without a service
 Connection closed by the server.
+Error initializing the server: Address already in use
+pong
 -- stderr --
