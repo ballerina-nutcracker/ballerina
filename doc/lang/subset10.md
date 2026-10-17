@@ -57,7 +57,7 @@
 - [Start action](https://ballerina.io/spec/lang/master/#start-action)
 - [Wait action](https://ballerina.io/spec/lang/master/#wait-action)
 - [Error constructor](https://ballerina.io/spec/lang/master/#error-constructor-expr)
-- [Check expression](https://ballerina.io/spec/lang/master/#checking-expr)
+- [Checking expression](https://ballerina.io/spec/lang/master/#checking-expr) (`check` and `checkpanic`)
 - [Trap expression](https://ballerina.io/spec/lang/master/#trap-expr)
 - [Type cast expression](https://ballerina.io/spec/lang/master/#type-cast-expr)
 - [New expression](https://ballerina.io/spec/lang/master/#section_6.8.2)
@@ -107,6 +107,28 @@
   - numeric ops `+`, `-`
   - bitwise complement `~`
 
+
+# Spec deviations
+
+These are intentional departures from the [language specification](https://ballerina.io/spec/lang/2024R1/) that we intend to retain, unlike temporary subset restrictions. Comparisons below were validated with jBallerina 2201.13.4.
+
+## Matching jBallerina
+
+- [Implicit `new` expressions](https://ballerina.io/spec/lang/master/#section_6.8.2) accept an applicable contextually expected type that is a union of object types.
+  - For each member of union we check if that members `init` function is compatible with the passed in arguments.
+  - If this leads one and only one member that member is selected as the contextually expected type.
+  - Note that contextually expected type can't contain `stream` and `object` subtypes at the same time.
+  - The following argument expressions are currently unsupported when the applicable contextually expected type is a union of class types:
+    - Calls to dependently-typed functions, including nested calls
+    - Query expressions with multiple `from` clauses
+    - Query expressions over collections other than lists or mappings
+    - Optional XML attribute access
+    - Calls with named arguments when the callee's parameter signature is unavailable
+    - Anonymous functions containing client resource access actions with non-atomic receivers or ambiguous dispatch
+
+## Deviations from jBallerina
+
+- A [lock statement](https://ballerina.io/spec/lang/master/#lock-stmt) must have exactly one restricted variable (spec allows for none).
 
 # Subset restrictions
 
@@ -265,7 +287,6 @@
   - Other expressions that merely evaluate to a compatible function value do not retain the parameter names and defaults required for named and default arguments.
 - Named arguments and omitted defaultable arguments are supported for method calls and client remote method call actions only when the receiver type has one positive object atom. The receiver may also be `readonly & T`, where `T` has one positive object atom.
   - Type narrowing does not necessarily produce such a receiver type; for example, a receiver that still has multiple object alternatives is unsupported for named and default arguments.
-- Object constructor calls support named and default arguments while selecting a unique class from an object union; they do not have the atomic-target restriction above.
 
 ### Other invocation restrictions
 
