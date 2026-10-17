@@ -24,7 +24,8 @@ function inferredBody() {
     consume(2); // @error expression value must be assigned
 }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (function consume (
     (variable value (type
       (value-type int)))) (
@@ -60,5 +61,3 @@ function inferredBody() {
       (expression-stmt
         (invocation consume (
           (literal 2)))))))
-(lambda-types
-  ($anonFunc$_0 [callable=unresolved] [function=unresolved] [name=unresolved] [expression-body=unresolved]))

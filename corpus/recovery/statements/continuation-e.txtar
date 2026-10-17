@@ -55,26 +55,25 @@ function callers(Survivor survivor) returns int {
     return named + method;
 }
 -- ast --
-(package
-  (class-definition Survivor
-    (function method () (
-      (value-type int))
-      (block-function-body
-        (var-def
-          (variable bad (type
-            (value-type int)) (expr
-            (bad-expr-or-action))))
-        (return
-          (literal 5)))))
+(compilation-unit
+(package-id $anon . 0.0.0)
   (function brokenBody () (
     (value-type int))
     (block-function-body
       (var-def
         (variable bad (type
           (value-type int)) (expr
-          (bad-expr-or-action))))
-      (bad-stmt)
-      (bad-stmt)
+          (simple-var-ref (bad-identifier)))))
+      (var-def
+        (variable (bad-identifier) (type
+          (value-type int)) (expr
+          (literal 1))))
+      (var-def
+        (variable (bad-identifier) (type
+          (union-type
+            (value-type int)
+            (user-defined-type malformedType))) (expr
+          (literal 1))))
       (var-def
         (variable unknown (type
           (value-type int)) (expr
@@ -108,7 +107,9 @@ function callers(Survivor survivor) returns int {
             (literal inner)))))
       (if
         (group-expr
-          (bad-expr-or-action))
+          (binary-expr &&
+            (literal true)
+            (simple-var-ref (bad-identifier))))
         (block-stmt
           (expression-stmt
             (invocation probe (
@@ -127,7 +128,7 @@ function callers(Survivor survivor) returns int {
               (var-def
                 (variable badInner (type
                   (value-type int)) (expr
-                  (bad-expr-or-action))))
+                  (simple-var-ref (bad-identifier)))))
               (expression-stmt
                 (invocation probe (
                   (literal innerIf))))) ())
@@ -208,6 +209,16 @@ function callers(Survivor survivor) returns int {
           (literal signatureSkipped))))
       (return
         (literal 1))))
+  (class-definition Survivor
+    (function method () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable bad (type
+            (value-type int)) (expr
+            (simple-var-ref (bad-identifier)))))
+        (return
+          (literal 5)))))
   (function callers (
     (variable survivor (type
       (user-defined-type Survivor)))) (

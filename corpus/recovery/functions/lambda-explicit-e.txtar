@@ -34,7 +34,8 @@ function explicitBodies() {
     }
 }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (function consume (
     (variable value (type
       (value-type int)))) (
@@ -115,7 +116,3 @@ function explicitBodies() {
               (invocation complete (
                 (literal 4))))))) ())
       (block-stmt))))
-(lambda-types
-  ($anonFunc$_0 [callable=function(int) returns int] [function=never] [name=never] [expression-body=unresolved])
-  ($anonFunc$_1 [callable=function(int) returns int] [function=never] [name=never])
-  ($anonFunc$_2 [callable=function(int) returns int] [function=never] [name=never] [expression-body=never]))

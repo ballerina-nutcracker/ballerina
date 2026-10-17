@@ -17,9 +17,12 @@
 
 enum Colour { G = } // @error
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (const G enum-member (
+    (value-type string)) (
+    (simple-var-ref (bad-identifier))))
   (type-definition Colour enum
-    (bad-type))
-  (bad-top-level enum))
+    (user-defined-type G)))
 -- symbols --
 +Colour -G

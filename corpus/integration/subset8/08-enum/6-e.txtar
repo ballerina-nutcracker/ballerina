@@ -11,9 +11,3 @@ error[SYNTAX_ERROR]: missing identifier
    |
 21 |     123, // @error
    |
-
-error[SYNTAX_ERROR]: missing identifier
-  --> 6-e.bal:22:1
-   |
-22 |     , // @error
-   |

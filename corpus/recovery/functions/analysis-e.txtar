@@ -39,7 +39,12 @@ function analysis() {
     int finalSibling = "wrong"; // @error independent semantic analysis
 }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function ordinary () (
+    (value-type int))
+    (expr-function-body
+      (literal 1)))
   (variable missingInitializer (type
     (value-type int)) (expr
     (binary-expr +
@@ -48,10 +53,6 @@ function analysis() {
   (variable abandoned (type
     (user-defined-type Unknown)) (expr
     (invocation ordinary ())))
-  (function ordinary () (
-    (value-type int))
-    (expr-function-body
-      (literal 1)))
   (function analysis () (
     (value-type null))
     (block-function-body
@@ -131,9 +132,3 @@ function analysis() {
           (variable finalSibling (type
             (value-type int)) (expr
             (literal wrong))))))))
-(lambda-types
-  ($anonFunc$_0 [callable=function(int) returns int] [function=never] [name=never] [expression-body=unresolved])
-  ($anonFunc$_1 [callable=isolated function(int) returns int] [function=never] [name=never] [expression-body=unresolved])
-  ($anonFunc$_2 [callable=isolated function() returns int] [function=never] [name=never] [expression-body=unresolved])
-  ($anonFunc$_3 [callable=isolated function() returns int] [function=never] [name=never])
-  ($anonFunc$_4 [callable=function() returns int] [function=never] [name=never] [expression-body=unresolved]))

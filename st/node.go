@@ -522,6 +522,23 @@ func (n *NodeList[T]) Iterator() iter.Seq[T] {
 	}
 }
 
+// SeparatedElements yields each element of a separated list paired with the separator token that
+// follows it, or nil for the last element. Valid only for lists declared MULTIPLE_SEPARATED in nodes.json.
+func (n *NodeList[T]) SeparatedElements() iter.Seq2[T, Token] {
+	return func(yield func(T, Token) bool) {
+		for i := 0; i < n.size; i += 2 {
+			element := n.nonTerminalNode.ChildInBucket(i).(T)
+			var separator Token
+			if i+1 < n.size {
+				separator = n.nonTerminalNode.ChildInBucket(i + 1).(Token)
+			}
+			if !yield(element, separator) {
+				return
+			}
+		}
+	}
+}
+
 type DocumentMemberDeclarationNode struct {
 	NonTerminalNodeBase
 }

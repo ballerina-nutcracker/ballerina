@@ -17,17 +17,8 @@
 
 enum Palette RED, BLUE } // @error
 -- ast --
-(package
-  (const RED enum-member (
-    (value-type string)) (
-    (literal RED)))
-  (const BLUE enum-member (
-    (value-type string)) (
-    (literal BLUE)))
-  (type-definition Palette enum
-    (union-type
-      (user-defined-type RED)
-      (user-defined-type BLUE)))
+(compilation-unit
+(package-id $anon . 0.0.0)
   (bad-top-level enum))
 -- symbols --
 +Palette +RED +BLUE

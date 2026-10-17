@@ -21,7 +21,8 @@ class MemberTypes {
 }
 function independent(int value) returns int => value;
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (class-definition MemberTypes
     (function surviving (
       (variable value (type

@@ -1,19 +1,7 @@
 -- stdout --
 -- stderr --
-error[SYNTAX_ERROR]: missing close brace token
-  --> return-e.bal:22:1
-   |
-22 | // @error
-   |
-
 error[SYNTAX_ERROR]: missing open brace token
   --> return-e.bal:19:28
-   |
-19 | function add(int a, int b) return int { // @error
-   |
-
-error[SYNTAX_ERROR]: missing semicolon token
-  --> return-e.bal:19:39
    |
 19 | function add(int a, int b) return int { // @error
    |

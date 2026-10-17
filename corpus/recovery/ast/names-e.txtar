@@ -35,7 +35,8 @@ function valid() {}
     (block-function-body (position 17:16 28:1)
       (assignment (position 18:1 19:1)
         (simple-var-ref (position 18:1 18:7) x)
-        (bad-expr-or-action (position 18:9 18:18)))
+        (optional-field-based-access (position 18:9 18:18) (bad-identifier)
+          (simple-var-ref (position 18:9 18:14) value)))
       (assignment (position 19:1 20:1)
         (simple-var-ref (position 19:1 19:7) x)
         (bad-expr-or-action (position 19:9 19:21)))
@@ -44,21 +45,37 @@ function valid() {}
         (bad-expr-or-action (position 20:9 20:22)))
       (assignment (position 21:1 22:1)
         (simple-var-ref (position 21:1 21:7) x)
-        (bad-expr-or-action (position 21:9 21:17)))
+        (remote-method-call (position 21:9 21:17) (bad-identifier) expr:
+          (simple-var-ref (position 21:9 21:11) ep) ()))
       (var-def (position 22:1 23:1)
         (variable (position 22:1 23:1) a (type
           (user-defined-type (position 22:1 22:7) C)) (expr
-          (bad-expr-or-action (position 22:11 22:21)))))
+          (new (position 22:11 22:21) (
+            (named-arg (position 22:15 22:20) (bad-identifier)
+              (literal (position 22:19 22:20) 1)))))))
       (var-def (position 23:1 24:1)
         (variable (position 23:1 24:1) b (type
           (user-defined-type (position 23:1 23:7) C)) (expr
-          (bad-expr-or-action (position 23:11 23:24)))))
+          (new (position 23:11 23:24)
+            (user-defined-type (position 23:15 23:16) C) (
+            (named-arg (position 23:17 23:23) (bad-identifier)
+              (literal (position 23:22 23:23) 1)))))))
       (assignment (position 24:1 25:1)
         (simple-var-ref (position 24:1 24:7) x)
-        (bad-expr-or-action (position 24:9 24:41)))
+        (lambda (position 24:9 24:41)
+          (function (position 24:9 24:41) $anonFunc$_0 (
+            (variable (position 24:18 24:23) (bad-identifier) (type
+              (value-type (position 24:18 24:22) int)))) (
+            (value-type (position 24:33 24:37) int))
+            (expr-function-body (position 24:37 24:41)
+              (literal (position 24:40 24:41) 1)))))
       (assignment (position 25:1 26:1)
         (simple-var-ref (position 25:1 25:7) x)
-        (bad-expr-or-action (position 25:9 25:15)))
+        (lambda (position 25:9 25:15)
+          (function (position 25:9 25:15) $anonFunc$_1 (
+            (variable (position 25:10 25:11) (bad-identifier))) ()
+            (expr-function-body (position 25:14 25:15)
+              (literal (position 25:14 25:15) 1)))))
       (assignment (position 26:1 27:1)
         (simple-var-ref (position 26:1 26:7) x)
         (literal (position 26:9 26:10) 1))))

@@ -34,21 +34,21 @@ class Surviving {
     function method() returns int => self.good;
 }
 -- ast --
-(package
-  (class-definition Surviving
-    (variable good (type
-      (value-type int)))
-    (function method () (
-      (value-type int))
-      (expr-function-body
-        (field-based-access good
-          (simple-var-ref self)))))
+(compilation-unit
+(package-id $anon . 0.0.0)
   (service
     (absolute-resource-path /)
     (on
     (simple-var-ref endpoint))
+    (variable (bad-identifier) (type
+      (value-type int)))
     (variable goodField (type
       (value-type int)))
+    (function init (
+      (variable (bad-identifier) (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body))
     (function useMembers () (
       (value-type int))
       (block-function-body
@@ -63,7 +63,7 @@ class Surviving {
         (var-def
           (variable x (type
             (value-type int)) (expr
-            (bad-expr-or-action))))
+            (simple-var-ref (bad-identifier)))))
         (var-def
           (variable later (type
             (value-type int)) (expr
@@ -72,9 +72,15 @@ class Surviving {
       (value-type int)
       (expr-function-body
         (invocation useMembers ())))
-    (bad-top-level field)
-    (bad-top-level function)
     (bad-top-level function))
   (function independent () (
     (value-type null))
-    (block-function-body)))
+    (block-function-body))
+  (class-definition Surviving
+    (variable good (type
+      (value-type int)))
+    (function method () (
+      (value-type int))
+      (expr-function-body
+        (field-based-access good
+          (simple-var-ref self))))))

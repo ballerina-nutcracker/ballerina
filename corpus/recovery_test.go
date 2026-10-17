@@ -41,9 +41,9 @@ import (
 	"golang.org/x/tools/txtar"
 )
 
-// recoveryPhaseLimit is the last phase that recovers from source errors. Fixtures run only up to it,
-// and are checked against their markers and goldens only once every phase they exercise is enabled.
-const recoveryPhaseLimit = testphases.PhaseParse
+// recoveryPhaseLimit is the last phase that recovers from source errors. Fixtures run only up to it and their
+// goldens hold the tree built by then; markers are checked only once every phase they exercise is enabled.
+const recoveryPhaseLimit = testphases.PhaseAST
 
 func TestRecovery(t *testing.T) {
 	t.Parallel()
@@ -92,24 +92,22 @@ func TestRecovery(t *testing.T) {
 					t.Errorf("recovery pipeline reported an internal error: %s", diagnostic.String())
 				}
 			}
-			if recoveryPhaseLimit < finalPhase {
-				return
-			}
-			testharness.ValidateErrorMarkers(t, sourcePath, content, projects.NewDiagnosticResult(cx.Diagnostics()), cx.DiagnosticEnv())
 			printer := ast.PrettyPrinter{Fallback: printRecoveryFallback, ShowNodeLocations: astOnly, DiagnosticEnv: cx.DiagnosticEnv()}
-			var actualAST string
-			if astOnly {
-				actualAST = printer.Print(result.CompilationUnit)
-			} else {
-				actualAST = printer.Print(result.Package) + printLambdaResolutionTypes(semtypes.ContextFrom(env.GetTypeEnv()), result.Package)
+			compareRecoveryGolden(t, inputPath, archive, printRecoveryResult(printer, env, result))
+			finalPhaseReached := recoveryPhaseLimit >= finalPhase
+			if finalPhaseReached {
+				testharness.ValidateErrorMarkers(t, sourcePath, content, projects.NewDiagnosticResult(cx.Diagnostics()), cx.DiagnosticEnv())
 			}
-			compareRecoveryGolden(t, inputPath, archive, actualAST)
 			for _, section := range archive.Files[2:] {
 				switch section.Name {
 				case "symbols":
-					assertRecoverySymbols(t, result, string(section.Data))
+					if recoveryPhaseLimit >= testphases.PhaseSymbolResolution {
+						assertRecoverySymbols(t, result, string(section.Data))
+					}
 				case "diagnostic-counts":
-					assertRecoveryDiagnosticCounts(t, cx, string(section.Data))
+					if finalPhaseReached {
+						assertRecoveryDiagnosticCounts(t, cx, string(section.Data))
+					}
 				default:
 					t.Fatalf("unexpected section %s in %s", section.Name, inputPath)
 				}
@@ -223,6 +221,19 @@ func writeLambdaResolutionType(sb *strings.Builder, typeContext semtypes.Context
 		value = semtypes.ToString(typeContext, ty)
 	}
 	fmt.Fprintf(sb, " [%s=%s]", label, value)
+}
+
+// printRecoveryResult prints the furthest tree the pipeline built: the compilation unit until symbol
+// resolution assembles the package.
+func printRecoveryResult(printer ast.PrettyPrinter, env *context.CompilerEnvironment, result *testphases.PipelineResult) string {
+	if result.Package == nil {
+		return printer.Print(result.CompilationUnit)
+	}
+	actualAST := printer.Print(result.Package)
+	if recoveryPhaseLimit >= testphases.PhaseTypeResolution {
+		actualAST += printLambdaResolutionTypes(semtypes.ContextFrom(env.GetTypeEnv()), result.Package)
+	}
+	return actualAST
 }
 
 func compareRecoveryGolden(t *testing.T, inputPath string, archive *txtar.Archive, actualAST string) {

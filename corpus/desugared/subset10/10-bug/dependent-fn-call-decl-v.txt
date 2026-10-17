@@ -4,7 +4,8 @@
     (variable val (type
       (value-type int)))
     (variable retTy (type
-      (value-type typedesc)) (expr <>))) (
+      (value-type typedesc)) (expr
+      (inferred-typedesc-default)))) (
     (user-defined-type retTy))
     (extern-function-body))
   (function baz (
@@ -13,7 +14,8 @@
     (variable retTy (type
       (constrained-type
         (value-type typedesc)
-        (value-type anydata))) (expr <>))) (
+        (value-type anydata))) (expr
+      (inferred-typedesc-default)))) (
     (user-defined-type retTy))
     (extern-function-body))
   (function explicitTypedesc () (

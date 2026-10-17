@@ -29,16 +29,20 @@ function lambdas() {
 }
 function caller() returns int => blockBody() + expressionBody();
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (function blockBody () (
     (value-type int))
     (block-function-body
       (var-def
         (variable broken (type
           (value-type int)) (expr
-          (bad-expr-or-action))))
+          (simple-var-ref (bad-identifier)))))
       (block-stmt
-        (bad-stmt)
+        (var-def
+          (variable (bad-identifier) (type
+            (value-type int)) (expr
+            (literal 1))))
         (var-def
           (variable inner (type
             (value-type int)) (expr
@@ -52,7 +56,9 @@ function caller() returns int => blockBody() + expressionBody();
   (function expressionBody () (
     (value-type int))
     (expr-function-body
-      (bad-expr-or-action)))
+      (binary-expr +
+        (literal 1)
+        (simple-var-ref (bad-identifier)))))
   (function lambdas () (
     (value-type null))
     (block-function-body
@@ -62,7 +68,9 @@ function caller() returns int => blockBody() + expressionBody();
             (function $anonFunc$_0 () (
               (value-type int))
               (expr-function-body
-                (bad-expr-or-action)))))))
+                (binary-expr +
+                  (literal 1)
+                  (simple-var-ref (bad-identifier)))))))))
       (var-def
         (variable block (expr
           (lambda
@@ -72,7 +80,7 @@ function caller() returns int => blockBody() + expressionBody();
                 (var-def
                   (variable broken (type
                     (value-type int)) (expr
-                    (bad-expr-or-action))))
+                    (simple-var-ref (bad-identifier)))))
                 (return
                   (literal 1))))))))
       (var-def
@@ -85,6 +93,3 @@ function caller() returns int => blockBody() + expressionBody();
       (binary-expr +
         (invocation blockBody ())
         (invocation expressionBody ())))))
-(lambda-types
-  ($anonFunc$_0 [callable=function() returns int] [function=never] [name=never] [expression-body=unresolved])
-  ($anonFunc$_1 [callable=function() returns int] [function=never] [name=never]))

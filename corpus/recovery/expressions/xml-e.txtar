@@ -21,11 +21,16 @@ function xmlNames() {
 }
 function valid() {}
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (function xmlNames () (
     (value-type null))
     (block-function-body
-      (bad-stmt)
+      (assignment
+        (simple-var-ref x)
+        (xml-filter-expression
+          (simple-var-ref value)
+          (xml-name-pattern-qualified-identifier mod (bad-identifier))))
       (var-def
         (variable later (type
           (value-type int)) (expr

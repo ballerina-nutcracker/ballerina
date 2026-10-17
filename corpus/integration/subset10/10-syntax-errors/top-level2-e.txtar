@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> top-level2-e.bal:17:28
+   |
+17 | function f() returns int $ { // @error
+   |                            ^
+
+error[SYNTAX_ERROR]: invalid token
+  --> top-level2-e.bal:21:28
+   |
+21 | function g() returns int $ { // @error
+   |                            ^

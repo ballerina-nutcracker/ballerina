@@ -19,13 +19,10 @@ function method() returns int; // @error missing body
 function method() returns int; // @error duplicate declaration and missing body
 function surviving(int value) returns int => value;
 -- ast --
-(package
-  (function method () (
-    (value-type int))
-    (extern-function-body))
-  (function method () (
-    (value-type int))
-    (extern-function-body))
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (bad-top-level function)
+  (bad-top-level function)
   (function surviving (
     (variable value (type
       (value-type int)))) (

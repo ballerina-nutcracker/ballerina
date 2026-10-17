@@ -18,17 +18,13 @@
 enum Palette { RED BLUE, GREEN } // @error
 function usePalette() returns Palette { return GREEN; }
 -- ast --
-(package
-  (const GREEN enum-member (
-    (value-type string)) (
-    (literal GREEN)))
-  (type-definition Palette enum
-    (user-defined-type GREEN))
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (bad-top-level enum)
   (function usePalette () (
     (user-defined-type Palette))
     (block-function-body
       (return
-        (simple-var-ref GREEN))))
-  (bad-top-level enum))
+        (simple-var-ref GREEN)))))
 -- symbols --
 +Palette -RED -BLUE +GREEN +usePalette

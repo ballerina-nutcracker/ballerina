@@ -19,12 +19,6 @@ error[SYNTAX_ERROR]: missing annotation name
    | ^
 
 error[SYNTAX_ERROR]: missing annotation name
-  --> missing-name-e.bal:25:1
-   |
-25 | @ // @error missing annotation name
-   | ^
-
-error[SYNTAX_ERROR]: missing annotation name
   --> missing-name-e.bal:29:1
    |
 29 | @ {} // @error missing annotation name

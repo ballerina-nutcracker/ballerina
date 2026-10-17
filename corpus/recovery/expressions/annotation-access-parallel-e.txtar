@@ -259,7 +259,8 @@ function f39() {
 }
 
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (annotation A
     (value-type int)
     (attach-point type))

@@ -35,55 +35,76 @@ function names() {
 }
 function valid() {}
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (function names () (
     (value-type null))
     (block-function-body
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
+        (simple-var-ref mod (bad-identifier)))
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
-      (bad-stmt)
+        (simple-var-ref mod (bad-identifier)))
+      (var-def
+        (variable (bad-identifier) (type
+          (value-type int)) (expr
+          (literal 1))))
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
+        (simple-var-ref mod (bad-identifier)))
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
+        (simple-var-ref (bad-identifier) name))
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
+        (invocation mod (bad-identifier) (
+          (literal 1))))
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
+        (invocation foo (
+          (named-arg (bad-identifier)
+            (literal 1)))))
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
+        (invocation foo (
+          (named-arg (bad-identifier)
+            (literal 1)))))
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
+        (field-based-access (bad-identifier)
+          (simple-var-ref value)))
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
+        (optional-field-based-access (bad-identifier)
+          (simple-var-ref value)))
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
+        (remote-method-call (bad-identifier) expr:
+          (simple-var-ref ep) ()))
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
+        (remote-method-call method expr:
+          (simple-var-ref ep) (
+          (named-arg (bad-identifier)
+            (literal 1)))))
       (assignment
         (simple-var-ref x)
-        (bad-expr-or-action))
+        (annot-access-expr mod (bad-identifier)
+          (simple-var-ref Target)))
       (var-def
         (variable c (type
           (user-defined-type C)) (expr
-          (bad-expr-or-action))))
+          (new
+            (user-defined-type C) (
+            (named-arg (bad-identifier)
+              (literal 1)))))))
       (var-def
         (variable d (type
           (user-defined-type C)) (expr
-          (bad-expr-or-action))))
+          (new (
+            (named-arg (bad-identifier)
+              (literal 1)))))))
       (var-def
         (variable later (type
           (value-type int)) (expr

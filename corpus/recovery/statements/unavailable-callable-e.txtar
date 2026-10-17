@@ -33,7 +33,8 @@ function unknownCallable() returns int {
 
 function probe(int value) returns int => value;
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (function inferredCallable () (
     (value-type int))
     (block-function-body

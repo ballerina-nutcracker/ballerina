@@ -1014,6 +1014,9 @@ func walkClassDefnBody(v Visitor, b *classDefnBase) {
 	for _, field := range b.Fields {
 		Walk(v, field)
 	}
+	for _, badNode := range b.BadTopLevelNodes {
+		Walk(v, badNode)
+	}
 	WalkTypeData(v, &b.typeData)
 }
 

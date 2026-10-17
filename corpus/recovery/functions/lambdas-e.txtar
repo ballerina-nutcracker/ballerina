@@ -30,38 +30,76 @@ function lambdas() {
 }
 function valid() {}
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (function lambdas () (
     (value-type null))
     (block-function-body
       (var-def
         (variable a (expr
-          (bad-expr-or-action))))
+          (lambda
+            (function $anonFunc$_0 (
+              (variable (bad-identifier) (type
+                (value-type int)))) (
+              (value-type int))
+              (expr-function-body
+                (literal 1)))))))
       (var-def
         (variable b (expr
-          (bad-expr-or-action))))
+          (lambda
+            (function $anonFunc$_1 () (
+              (value-type int))
+              (expr-function-body
+                (literal 1)))))))
       (var-def
         (variable c (expr
-          (bad-expr-or-action))))
+          (lambda
+            (function $anonFunc$_2 (
+              (variable x (type
+                (value-type int)) (expr
+                (simple-var-ref (bad-identifier))))) (
+              (value-type int))
+              (expr-function-body
+                (literal 1)))))))
       (var-def
         (variable d (expr
-          (bad-expr-or-action))))
+          (lambda
+            (function $anonFunc$_3 () (
+              (bad-type))
+              (expr-function-body
+                (literal 1)))))))
       (var-def
         (variable e (expr
-          (bad-expr-or-action))))
+          (lambda
+            (function $anonFunc$_4 (
+              (variable (bad-identifier))) ()
+              (expr-function-body
+                (literal 1)))))))
       (var-def
         (variable f (expr
           (bad-expr-or-action))))
       (var-def
         (variable g (expr
-          (bad-expr-or-action))))
+          (lambda
+            (function $anonFunc$_5 (
+              (variable x (type
+                (value-type int)))) (
+              (value-type int))
+              (expr-function-body
+                (simple-var-ref x)))))))
       (var-def
         (variable h (expr
-          (bad-expr-or-action))))
+          (lambda
+            (function $anonFunc$_6 () (
+              (annotation-attachment mod (bad-identifier)
+                (literal true))
+              (value-type int))
+              (expr-function-body
+                (literal 1)))))))
       (var-def
         (variable validParameterSibling (expr
           (lambda
-            (function $anonFunc$_0 (
+            (function $anonFunc$_7 (
               (variable x (type
                 (value-type int)))) (
               (value-type int))
@@ -70,7 +108,7 @@ function valid() {}
       (var-def
         (variable validReturnSibling (expr
           (lambda
-            (function $anonFunc$_1 () (
+            (function $anonFunc$_8 () (
               (value-type int))
               (expr-function-body
                 (literal 1)))))))
@@ -82,6 +120,3 @@ function valid() {}
   (function valid () (
     (value-type null))
     (block-function-body)))
-(lambda-types
-  ($anonFunc$_0 [callable=function(int) returns int] [function=never] [name=never] [expression-body=never])
-  ($anonFunc$_1 [callable=function() returns int] [function=never] [name=never] [expression-body=never]))

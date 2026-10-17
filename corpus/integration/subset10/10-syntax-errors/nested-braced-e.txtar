@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: missing close paren token
+  --> nested-braced-e.bal:20:15
+   |
+20 |     if a + (b { // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> nested-braced-e.bal:22:13
+   |
+22 |     int c = ; // @error
+   |
