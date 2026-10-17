@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> uninit-init-dead-return-e.bal:24:13
+   |
+24 |             return; // @error
+   |             ^^^^^^^
+
+error[SEMANTIC_ERROR]: unreachable code
+  --> uninit-init-dead-return-e.bal:34:9
+   |
+34 |         return; // @error
+   |         ^^^^^^^
