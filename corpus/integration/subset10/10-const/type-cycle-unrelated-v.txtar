@@ -1,0 +1,3 @@
+-- stdout --
+[null,{"a":1},{"b":null},{"c":{"x":2},"d":3}]
+-- stderr --

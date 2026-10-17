@@ -1,0 +1,15 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (user-defined-type Rec)) (expr
+        (list-constructor-expr
+          (literal <nil>)
+          (simple-var-ref C)
+          (simple-var-ref D)
+          (simple-var-ref E)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)

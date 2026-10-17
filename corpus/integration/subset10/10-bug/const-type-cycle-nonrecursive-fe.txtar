@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: cyclic reference between constant 'C' and its type is not supported
+  --> const-type-cycle-nonrecursive-fe.bal:19:16
+   |
+19 | const map<Rec> C = {}; // @error
+   |                ^

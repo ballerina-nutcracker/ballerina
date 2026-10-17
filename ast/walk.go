@@ -678,6 +678,9 @@ func Walk(v Visitor, node BLangNode) {
 		for _, param := range node.RequiredParams {
 			Walk(v, param.TypeDesc.(BLangNode))
 		}
+		if node.RestParam != nil {
+			Walk(v, node.RestParam.TypeDesc.(BLangNode))
+		}
 		if node.ReturnTypeDescriptor != nil {
 			Walk(v, node.ReturnTypeDescriptor.(BLangNode))
 		}

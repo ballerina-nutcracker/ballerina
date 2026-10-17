@@ -1,0 +1,23 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %2 = ConstantLoad {"a":1}
+    %3 = ConstantLoad {"b":null}
+    %4 = ConstantLoad {"c":{"x":2},"d":3}
+    %5 = ConstantLoad 4
+    %6 = newArray [nil|[nil|..., nil|readonly&{| a: 1, never... |}, nil|readonly&{| b: nil, never... |}, nil|readonly&{| c: {| x: 2, never... |}, d: 3, never... |}, never...], nil|readonly&{| a: 1, never... |}, nil|readonly&{| b: nil, never... |}, nil|readonly&{| c: {| x: 2, never... |}, d: 3, never... |}, never...][%5]{%1, %2, %3, %4}
+    r = %6;
+    %8 = println(r) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}

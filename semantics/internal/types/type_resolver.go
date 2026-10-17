@@ -9020,6 +9020,14 @@ func resolveConstant(t typeResolver, constant *ast.BLangVariable) bool {
 
 	var annotationType semtypes.SemType
 	if typeNode := constant.TypeNode(); typeNode != nil {
+		// A type still being resolved depends on this constant. The emptiness and
+		// subtype checks below need every recursive atom the annotation reaches to
+		// be defined, which is not the case while that type is being resolved.
+		if refersToResolvingType(packageResolver(t), typeNode) {
+			t.unimplemented(fmt.Sprintf("cyclic reference between constant '%s' and its type is not supported", constant.Name.GetValue()),
+				constant.Name.GetPosition())
+			return false
+		}
 		var ok bool
 		annotationType, _, ok = resolveBType(t, nil, typeNode, 0)
 		if !ok {
@@ -9069,6 +9077,64 @@ func resolveConstant(t typeResolver, constant *ast.BLangVariable) bool {
 
 	return true
 }
+
+// refersToResolvingType reports whether typeNode refers, directly or through
+// other type or class definitions of this module, to a type whose resolution
+// is in progress.
+func refersToResolvingType(p *packageTypeResolver, typeNode ast.BType) bool {
+	if len(p.resolvingTypes) == 0 {
+		return false
+	}
+	finder := &resolvingTypeRefFinder{p: p, visited: make(map[model.SymbolRef]bool)}
+	ast.Walk(finder, typeNode.(ast.BLangNode))
+	return finder.found
+}
+
+type resolvingTypeRefFinder struct {
+	p       *packageTypeResolver
+	visited map[model.SymbolRef]bool
+	found   bool
+}
+
+func (f *resolvingTypeRefFinder) Visit(node ast.BLangNode) ast.Visitor {
+	if f.found {
+		return nil
+	}
+	switch n := node.(type) {
+	case ast.BLangExpression, ast.FunctionBodyNode:
+		// Expressions, such as field defaults, and method bodies do not
+		// contribute to a type.
+		return nil
+	case *ast.BLangUserDefinedType:
+		f.visitSymbol(n.Symbol())
+	case *ast.BLangObjectType:
+		for _, inc := range n.Inclusions {
+			f.visitSymbol(inc)
+		}
+	}
+	return f
+}
+
+func (f *resolvingTypeRefFinder) visitSymbol(sym model.SymbolRef) {
+	if f.found || f.visited[sym] {
+		return
+	}
+	f.visited[sym] = true
+	if slices.Contains(f.p.resolvingTypes, sym) {
+		f.found = true
+		return
+	}
+	if defn, ok := f.p.typeDefnNodes[sym]; ok {
+		ast.Walk(f, defn.GetTypeData().TypeDescriptor.(ast.BLangNode))
+	} else if classDef, ok := f.p.classDefnNodes[sym]; ok {
+		ast.Walk(f, classDef)
+		for _, inc := range classDef.Inclusions {
+			f.visitSymbol(inc)
+		}
+	}
+}
+
+func (f *resolvingTypeRefFinder) VisitTypeData(*ast.TypeData) ast.Visitor { return f }
 
 func validConstantType(t typeResolver, ty semtypes.SemType) bool {
 	cx := t.typeContext()

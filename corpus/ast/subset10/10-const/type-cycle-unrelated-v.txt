@@ -1,0 +1,76 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Rec
+    (tuple-type
+      (union-type
+        (user-defined-type Rec)
+        (value-type null))
+      (union-type
+        (user-defined-type C)
+        (value-type null))
+      (union-type
+        (user-defined-type D)
+        (value-type null))
+      (union-type
+        (user-defined-type E)
+        (value-type null))))
+  (type-definition Other
+    (record-type
+      (field o
+        (union-type
+          (user-defined-type Other)
+          (value-type null)))))
+  (type-definition WithDefault
+    (record-type
+      (field x
+        (value-type int)
+        (literal 1))))
+  (const C (
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (literal 1)))))
+  (const D (
+    (constrained-type
+      (builtin-ref-type map)
+      (union-type
+        (user-defined-type Other)
+        (value-type null)))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal b)
+        (literal <nil>)))))
+  (const E (
+    (constrained-type
+      (builtin-ref-type map)
+      (union-type
+        (user-defined-type WithDefault)
+        (user-defined-type int Signed32)))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal c)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 2))))
+      (key-value
+        (literal d)
+        (literal 3)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type Rec)) (expr
+          (list-constructor-expr
+            (literal <nil>)
+            (simple-var-ref C)
+            (simple-var-ref D)
+            (simple-var-ref E)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r)))))))

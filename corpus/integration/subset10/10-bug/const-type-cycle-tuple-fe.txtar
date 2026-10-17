@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: cyclic reference between constant 'C' and its type is not supported
+  --> const-type-cycle-tuple-fe.bal:19:17
+   |
+19 | const map<Rec?> C = {a: ()}; // @error
+   |                 ^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: cyclic reference between constant 'C' and its type is not supported
+  --> const-type-cycle-object-inclusion-fe.bal:23:33
+   |
+23 | const map<object { *ObjBase; }> C = {}; // @error
+   |                                 ^

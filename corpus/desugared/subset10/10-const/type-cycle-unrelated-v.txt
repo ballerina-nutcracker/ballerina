@@ -1,0 +1,45 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Rec
+    (tuple-type
+      (union-type
+        (user-defined-type Rec)
+        (value-type null))
+      (union-type
+        (user-defined-type C)
+        (value-type null))
+      (union-type
+        (user-defined-type D)
+        (value-type null))
+      (union-type
+        (user-defined-type E)
+        (value-type null))))
+  (type-definition Other
+    (record-type
+      (field o
+        (union-type
+          (user-defined-type Other)
+          (value-type null)))))
+  (type-definition WithDefault
+    (record-type
+      (field x
+        (value-type int)
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type Rec)) (expr
+          (list-constructor-expr
+            (literal <nil>)
+            (literal {"a":1})
+            (literal {"b":null})
+            (literal {"c":{"x":2},"d":3})))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 1)))))
