@@ -46,3 +46,31 @@ type Valid record {| int a?; |};
     (record-type
       (field a optional
         (value-type int)))))
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> record-optional-fields-e.bal:22:12
+   |
+22 |     int a? = ; // @error
+   |            ^^^^^^^^^^^^^
+23 |     int valid;
+   |
+
+error[SYNTAX_ERROR]: invalid token
+  --> record-optional-fields-e.bal:30:12
+   |
+30 |     int a? = ; // @error
+   |            ^^^^^^^^^^^^^
+31 |     int valid;
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-optional-fields-e.bal:18:10
+   |
+18 |     int ?; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-optional-fields-e.bal:26:10
+   |
+26 |     int ?; // @error
+   |

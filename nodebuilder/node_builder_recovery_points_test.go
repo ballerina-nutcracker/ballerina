@@ -60,7 +60,7 @@ func TestRecoveryPointsProduceBadNodes(t *testing.T) {
 		},
 		{
 			name:   "expression",
-			source: "function f() {\n    int x =\n        (1 + 2;\n}",
+			source: "function f() {\n    int x =\n        (1 + 2 $);\n}",
 			recover: func(t *testing.T, n *nodeBuilder, root st.Node) (ast.Node, st.Node) {
 				node := findSTNode[*st.BracedExpressionNode](t, root)
 				return n.transformExpr(node), node
@@ -69,7 +69,7 @@ func TestRecoveryPointsProduceBadNodes(t *testing.T) {
 		},
 		{
 			name:   "action or expression",
-			source: "function f() {\n    int x =\n        (1 + 2;\n}",
+			source: "function f() {\n    int x =\n        (1 + 2 $);\n}",
 			recover: func(t *testing.T, n *nodeBuilder, root st.Node) (ast.Node, st.Node) {
 				node := findSTNode[*st.BracedExpressionNode](t, root)
 				return n.transformActionOrExpr(node), node
@@ -78,7 +78,7 @@ func TestRecoveryPointsProduceBadNodes(t *testing.T) {
 		},
 		{
 			name:   "type",
-			source: "function f(\n    (int a) { }",
+			source: "function f((int $) a) { }",
 			recover: func(t *testing.T, n *nodeBuilder, root st.Node) (ast.Node, st.Node) {
 				node := findSTNode[*st.ParenthesisedTypeDescriptorNode](t, root)
 				return n.transformType(node), node

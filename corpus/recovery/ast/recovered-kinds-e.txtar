@@ -75,3 +75,101 @@ public function main() {
           (bad-expr-or-action sync-send-action (position 35:13 35:20) (tokens ("->>" 35:15 35:18))))))
       (bad-stmt match (position 36:1 37:1) (tokens ("match" 36:5 36:10) ("{" 36:13 36:14) ("[" 36:15 36:16) ("var" 36:16 36:19) ("," 36:21 36:22) ("..." 36:23 36:26) ("]" 36:26 36:27) ("=>" 36:28 36:30) ("{" 36:31 36:32) ("}" 36:32 36:33) ("}" 36:34 36:35)))
       (bad-stmt transaction (position 37:1 38:1) (tokens ("transaction" 37:5 37:16) ("{" 37:17 37:18) ("commit" 37:19 37:25) (";" 37:25 37:26) ("}" 37:27 37:28))))))
+-- stderr --
+error[SYNTAX_ERROR]: missing expression
+  --> recovered-kinds-e.bal:22:11
+   |
+22 | service / on { // @error
+   |           ^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovered-kinds-e.bal:17:18
+   |
+17 | import ballerina/; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovered-kinds-e.bal:18:11
+   |
+18 | const int = 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovered-kinds-e.bal:19:23
+   |
+19 | listener Foo broken = ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovered-kinds-e.bal:20:19
+   |
+20 | annotation string ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovered-kinds-e.bal:21:24
+   |
+21 | xmlns "urn:example" as ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovered-kinds-e.bal:25:6
+   |
+25 |     *; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovered-kinds-e.bal:34:12
+   |
+34 |     foo(...); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> recovered-kinds-e.bal:36:26
+   |
+36 |     match x { [var p, ...] => {} } // @error
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> recovered-kinds-e.bal:26:39
+   |
+26 |     resource function get .() returns { } // @error
+   |
+
+error[SYNTAX_ERROR]: missing var keyword
+  --> recovered-kinds-e.bal:36:26
+   |
+36 |     match x { [var p, ...] => {} } // @error
+   |
+
+fatal[UNIMPLEMENTED_ERROR]: binding-pattern assignment is not implemented
+  --> recovered-kinds-e.bal:32:1
+   |
+32 |     [a, b] = [1, 2]; // @error
+   |     ^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: transformLetExpression unimplemented
+  --> recovered-kinds-e.bal:33:13
+   |
+33 |     int l = let int y = 1 in y; // @error
+   |             ^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: transformSyncSendAction unimplemented
+  --> recovered-kinds-e.bal:35:13
+   |
+35 |     int x = a ->> b; // @error
+   |             ^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: transformTableTypeDescriptor unimplemented
+  --> recovered-kinds-e.bal:29:9
+   |
+29 | type Tb table<map<int>>; // @error
+   |         ^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: transformTransactionStatement unimplemented
+  --> recovered-kinds-e.bal:37:1
+   |
+37 |     transaction { commit; } // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 | }
+   |

@@ -985,3 +985,643 @@ function f39() {
           (binary-expr +
             (literal 1)
             (literal bad))))))))
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:101:1
+    |
+101 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+102 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:107:1
+    |
+107 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+108 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:113:1
+    |
+113 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+114 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:119:1
+    |
+119 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+120 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:125:1
+    |
+125 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+126 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:131:1
+    |
+131 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+132 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:137:1
+    |
+137 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+138 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:143:1
+    |
+143 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+144 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:149:1
+    |
+149 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+150 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:155:1
+    |
+155 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+156 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:161:1
+    |
+161 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+162 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:167:1
+    |
+167 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+168 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:173:1
+    |
+173 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+174 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:179:1
+    |
+179 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+180 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:185:1
+    |
+185 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+186 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:191:1
+    |
+191 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+192 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:197:1
+    |
+197 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+198 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:203:1
+    |
+203 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+204 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:209:1
+    |
+209 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+210 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:215:1
+    |
+215 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+216 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:221:1
+    |
+221 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+222 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:227:1
+    |
+227 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+228 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:233:1
+    |
+233 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+234 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:239:1
+    |
+239 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+240 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:245:1
+    |
+245 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+246 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:251:1
+    |
+251 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+252 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+   --> annotation-access-parallel-e.bal:257:1
+    |
+257 |     int bad = 1 + "bad"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+258 | }
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:23:1
+   |
+23 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:29:1
+   |
+29 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:35:1
+   |
+35 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:41:1
+   |
+41 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+42 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:47:1
+   |
+47 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+48 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:53:1
+   |
+53 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+54 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:59:1
+   |
+59 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+60 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:65:1
+   |
+65 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+66 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:71:1
+   |
+71 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+72 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:77:1
+   |
+77 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+78 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:83:1
+   |
+83 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+84 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:89:1
+   |
+89 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+90 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> annotation-access-parallel-e.bal:95:1
+   |
+95 |     int bad = 1 + "bad"; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+96 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:100:1
+    |
+100 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+101 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:106:1
+    |
+106 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+107 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:112:1
+    |
+112 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+113 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:118:1
+    |
+118 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+119 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:124:1
+    |
+124 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+125 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:130:1
+    |
+130 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+131 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:136:1
+    |
+136 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+137 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:142:1
+    |
+142 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+143 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:148:1
+    |
+148 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+149 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:154:1
+    |
+154 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+155 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:160:1
+    |
+160 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+161 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:166:1
+    |
+166 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+167 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:172:1
+    |
+172 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+173 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:178:1
+    |
+178 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+179 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:184:1
+    |
+184 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+185 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:190:1
+    |
+190 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+191 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:196:1
+    |
+196 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+197 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:202:1
+    |
+202 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+203 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:208:1
+    |
+208 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+209 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:214:1
+    |
+214 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+215 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:220:1
+    |
+220 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+221 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:226:1
+    |
+226 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+227 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:232:1
+    |
+232 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+233 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:238:1
+    |
+238 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+239 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:244:1
+    |
+244 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+245 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:250:1
+    |
+250 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+251 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+   --> annotation-access-parallel-e.bal:256:1
+    |
+256 |     any value = t.@A;
+    |     ^^^^^^^^^^^^^^^^^
+257 |     int bad = 1 + "bad"; // @error
+    |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:22:1
+   |
+22 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+23 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:28:1
+   |
+28 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+29 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:34:1
+   |
+34 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+35 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:40:1
+   |
+40 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+41 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:46:1
+   |
+46 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+47 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:52:1
+   |
+52 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+53 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:58:1
+   |
+58 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+59 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:64:1
+   |
+64 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+65 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:70:1
+   |
+70 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+71 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:76:1
+   |
+76 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+77 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:82:1
+   |
+82 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+83 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:88:1
+   |
+88 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+89 |     int bad = 1 + "bad"; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> annotation-access-parallel-e.bal:94:1
+   |
+94 |     any value = t.@A;
+   |     ^^^^^^^^^^^^^^^^^
+95 |     int bad = 1 + "bad"; // @error
+   |

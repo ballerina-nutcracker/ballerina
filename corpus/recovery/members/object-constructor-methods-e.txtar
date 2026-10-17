@@ -41,3 +41,183 @@ function valid() returns int => 1;
     (value-type int))
     (expr-function-body
       (literal 1))))
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'obj'
+  --> object-constructor-methods-e.bal:1:1
+   |
+ 1 | // Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2 | //
+   | ^^
+ 3 | // WSO2 LLC. licenses this file to you under the Apache License,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 4 | // Version 2.0 (the "License"); you may not use this file except
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 5 | // in compliance with the License.
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 6 | // You may obtain a copy of the License at
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 7 | //
+   | ^^
+ 8 | // http://www.apache.org/licenses/LICENSE-2.0
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 | //
+   | ^^
+10 | // Unless required by applicable law or agreed to in writing,
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | // software distributed under the License is distributed on an
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+12 | // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+13 | // KIND, either express or implied.  See the License for the
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 | // specific language governing permissions and limitations
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15 | // under the License.
+   | ^^^^^^^^^^^^^^^^^^^^^
+16 | 
+   | 
+17 | var obj = object {
+   | ^^^^^^^^^^^^^^^^^^
+18 |     function (int a) {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     function missingComma(int a int b) {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |     function missingName(int ) {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |     function missingFirstType(a, int b) {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |     function missingSecondType(int a, b) {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |     function leadingComma(, int a) {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |     function trailingComma(int a, ) {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |     function missingDefault(int x = ) {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 |     function blockMissingType() returns {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 |     function exprMissingType() returns => 1; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 |     function blockMissingKeyword() int {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 |     function missingBody() returns int
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 |     function next() returns int => 1; // @error missing body of missingBody is reported at the next method
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 |     function valid(int a, int b = 1, int... rest) returns int => a + b + rest.length();
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 | };
+   | ^^
+34 | function valid() returns int => 1;
+   |
+
+error[SYNTAX_ERROR]: invalid token
+  --> object-constructor-methods-e.bal:23:27
+   |
+23 |     function leadingComma(, int a) {} // @error
+   |                           ^
+
+error[SYNTAX_ERROR]: invalid token
+  --> object-constructor-methods-e.bal:29:36
+   |
+29 |     function blockMissingKeyword() int {} // @error
+   |                                    ^^^
+
+error[SYNTAX_ERROR]: missing close brace token
+  --> object-constructor-methods-e.bal:31:1
+   |
+31 |     function next() returns int => 1; // @error missing body of missingBody is reported at the next method
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> object-constructor-methods-e.bal:19:33
+   |
+19 |     function missingComma(int a int b) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing ellipsis token
+  --> object-constructor-methods-e.bal:26:52
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing function name
+  --> object-constructor-methods-e.bal:18:14
+   |
+18 |     function (int a) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-constructor-methods-e.bal:20:30
+   |
+20 |     function missingName(int ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-constructor-methods-e.bal:21:32
+   |
+21 |     function missingFirstType(a, int b) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-constructor-methods-e.bal:22:40
+   |
+22 |     function missingSecondType(int a, b) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-constructor-methods-e.bal:24:35
+   |
+24 |     function trailingComma(int a, ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-constructor-methods-e.bal:25:37
+   |
+25 |     function missingDefault(int x = ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-constructor-methods-e.bal:26:38
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-constructor-methods-e.bal:26:52
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing open brace token
+  --> object-constructor-methods-e.bal:31:1
+   |
+31 |     function next() returns int => 1; // @error missing body of missingBody is reported at the next method
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> object-constructor-methods-e.bal:24:35
+   |
+24 |     function trailingComma(int a, ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> object-constructor-methods-e.bal:27:41
+   |
+27 |     function blockMissingType() returns {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> object-constructor-methods-e.bal:28:40
+   |
+28 |     function exprMissingType() returns => 1; // @error
+   |
+
+error[SYNTAX_ERROR]: parameter after the rest parameter
+  --> object-constructor-methods-e.bal:26:54
+   |
+26 |     function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |                                                      ^^^

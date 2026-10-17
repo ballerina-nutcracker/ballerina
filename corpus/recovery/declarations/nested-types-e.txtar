@@ -98,3 +98,73 @@ function independent(Independent value) returns int => value.value + independent
         (field-based-access value
           (simple-var-ref value))
         (simple-var-ref independentValue)))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: discardedValue
+  --> nested-types-e.bal:35:23
+   |
+35 | int unresolvedValue = discardedValue; // @error
+   |                       ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: AnotherMissingField
+  --> nested-types-e.bal:23:1
+   |
+23 |     AnotherMissingField another; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingClassField
+  --> nested-types-e.bal:27:1
+   |
+27 |     MissingClassField broken; // @error
+   |     ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingElement
+  --> nested-types-e.bal:19:19
+   |
+19 | type UnknownArray MissingElement[]; // @error
+   |                   ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingField
+  --> nested-types-e.bal:21:1
+   |
+21 |     MissingField broken; // @error
+   |     ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: MissingSecondField
+  --> nested-types-e.bal:30:1
+   |
+30 |     MissingSecondField another; // @error
+   |     ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'failedValue'
+  --> nested-types-e.bal:36:1
+   |
+36 | UnknownArray failedValue = []; // @error unused value
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+37 | int independentValue = 3;
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'unresolvedValue'
+  --> nested-types-e.bal:35:1
+   |
+35 | int unresolvedValue = discardedValue; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 | UnknownArray failedValue = []; // @error unused value
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> nested-types-e.bal:25:24
+   |
+25 | function consumeFailed(UnknownArray value) returns int => 1; // @error unused value
+   |                        ^^^^^^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> nested-types-e.bal:17:26
+   |
+17 | type BrokenArray missing:[]; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> nested-types-e.bal:18:32
+   |
+18 | type BrokenTuple [int, missing:]; // @error
+   |

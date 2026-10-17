@@ -37,4 +37,32 @@ enum Shade {
     (union-type (position 1:1 21:1)
       (user-defined-type (position 18:1 18:16) OTHER_NODE)
       (user-defined-type (position 19:1 19:16) SUPER_NODE)))
-  (bad-top-level enum (position 21:1 26:1) (tokens ("enum" 22:1 22:5) ("{" 22:12 22:13) ("=" 23:10 23:11) ("," 23:15 23:16) ("=" 24:18 24:19) ("}" 25:1 25:2))))
+  (const (position 23:1 23:15) DARK enum-member (
+    (value-type (position <built-in>) string)) (
+    (literal (position 23:12 23:15) d)))
+  (const (position 24:1 24:11) LIGHT enum-member (
+    (value-type (position <built-in>) string)) (
+    (literal (position 24:1 24:11) LIGHT)))
+  (const (position 24:11 25:1) BRIGHT enum-member (
+    (value-type (position <built-in>) string)) (
+    (literal (position 24:20 25:1) b)))
+  (type-definition (position 21:1 26:1) Shade enum
+    (union-type (position 21:1 26:1)
+      (union-type (position 21:1 26:1)
+        (user-defined-type (position 23:1 23:10) DARK)
+        (user-defined-type (position 24:1 24:11) LIGHT))
+      (user-defined-type (position 24:11 24:18) BRIGHT))))
+-- stderr --
+error[SYNTAX_ERROR]: intervening whitespaces are not allowed
+  --> bad-node-tokens-e.bal:19:27
+   |
+19 |     SUPER_NODE = constants: // @error
+   |                           ^^^^^^^^^^^
+20 | }
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> bad-node-tokens-e.bal:24:11
+   |
+24 |     LIGHT BRIGHT = "b" // @error
+   |

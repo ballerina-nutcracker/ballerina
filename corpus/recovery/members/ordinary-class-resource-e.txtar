@@ -40,3 +40,11 @@ function independent(int value) returns int => value;
     (value-type int))
     (expr-function-body
       (simple-var-ref value))))
+-- stderr --
+error[SEMANTIC_ERROR]: resource methods are only allowed in client or service classes
+  --> ordinary-class-resource-e.bal:18:1
+   |
+18 |     resource function get second() returns xml<int> {} // @error resource in ordinary class
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     function surviving(int value) returns int => value;
+   |

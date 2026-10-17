@@ -48,7 +48,9 @@ function valid() {}
     (value-type (position <built-in>) null))
     (block-function-body (position 19:22 25:1)
       (if (position 20:1 23:1)
-        (bad-expr-or-action function-call (position 20:8 20:15) (tokens ("(" 20:9 20:10) (")" 20:13 20:14)))
+        (invocation (position 20:8 20:15) f (
+          (literal (position 20:10 20:12) 1)
+          (literal (position 20:12 20:13) 2)))
         (block-stmt (position 20:15 23:1)
           (var-def (position 21:1 22:1)
             (variable (position 21:1 22:1) a (type
@@ -69,7 +71,10 @@ function valid() {}
           (simple-var-ref (position 27:8 27:10) x)
           (literal (position 27:12 27:14) 0))
         (block-stmt (position 27:14 31:1)
-          (bad-stmt variable-declaration (position 28:1 28:19) (tokens ("int" 28:9 28:12) ("=" 28:15 28:16)))
+          (var-def (position 28:1 28:19)
+            (variable (position 28:1 28:19) a (type
+              (value-type (position 28:1 28:13) int)) (expr
+              (literal (position 28:17 28:19) 1))))
           (var-def (position 28:19 29:1)
             (variable (position 28:19 29:1) b (type
               (value-type (position 28:19 28:23) int)) (expr
@@ -86,3 +91,15 @@ function valid() {}
   (function (position 33:1 35:1) valid () (
     (value-type (position <built-in>) null))
     (block-function-body (position 34:18 35:1))))
+-- stderr --
+error[SYNTAX_ERROR]: missing comma token
+  --> if-e.bal:20:12
+   |
+20 |     if f(1 2) { // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> if-e.bal:28:19
+   |
+28 |         int a = 1 int b = 2; // @error
+   |

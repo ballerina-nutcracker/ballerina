@@ -21,10 +21,26 @@ type Valid record {| int a; |};
 -- ast --
 (package
   (type-definition MissingOpenBar
-    (bad-type record (tokens ("record" 17:21 17:27) ("{" 17:28 17:29) ("int" 17:30 17:33) (";" 17:35 17:36))))
+    (record-type
+      (field a
+        (value-type int))))
   (type-definition MissingCloseBar
-    (bad-type record (tokens ("record" 18:22 18:28) ("{|" 18:29 18:31) ("int" 18:32 18:35) (";" 18:37 18:38))))
+    (record-type
+      (field a
+        (value-type int))))
   (type-definition Valid
     (record-type
       (field a
         (value-type int)))))
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> record-delimiters-e.bal:17:37
+   |
+17 | type MissingOpenBar record { int a; |}; // @error
+   |                                     ^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> record-delimiters-e.bal:18:39
+   |
+18 | type MissingCloseBar record {| int a; }; // @error
+   |                                       ^

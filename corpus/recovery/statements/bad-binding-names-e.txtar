@@ -31,3 +31,9 @@ function loop() {
         (list-constructor-expr
           (literal 1))
         (block-stmt)))))
+-- stderr --
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-binding-names-e.bal:18:17
+   |
+18 |     foreach int '_ in [1] { // @error
+   |                 ^^^

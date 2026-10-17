@@ -36,7 +36,9 @@ function valid() returns int => callee(1, b = 3);
   (function missingComma () (
     (value-type int))
     (expr-function-body
-      (bad-expr-or-action function-call (tokens ("(" 18:46 18:47) (")" 18:50 18:51)))))
+      (invocation callee (
+        (literal 1)
+        (literal 2)))))
   (function namedMissingValue () (
     (value-type int))
     (expr-function-body
@@ -57,3 +59,27 @@ function valid() returns int => callee(1, b = 3);
         (literal 1)
         (named-arg b
           (literal 3)))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> call-args-e.bal:19:59
+   |
+19 | function namedMissingValue() returns int => callee(1, b = ); // @error
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> call-args-e.bal:18:49
+   |
+18 | function missingComma() returns int => callee(1 2); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> call-args-e.bal:19:59
+   |
+19 | function namedMissingValue() returns int => callee(1, b = ); // @error
+   |
+
+error[SYNTAX_ERROR]: named arg followed by positional arg
+  --> call-args-e.bal:20:59
+   |
+20 | function positionalAfterNamed() returns int => callee(a = 1, 2); // @error
+   |                                                           ^^^^
