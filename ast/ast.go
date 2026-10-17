@@ -167,7 +167,6 @@ type (
 		Methods                         map[string]*BLangFunction
 		ResourceMethods                 []*BLangResourceMethod
 		Fields                          []*BLangVariable
-		BadTopLevelNodes                []*BLangBadTopLevelNode
 		Inclusions                      []model.SymbolRef      // This needs to be symbol because it could be a class definition as well
 		InclusionPositions              []diagnostics.Location // Positions of each inclusion, parallel to Inclusions
 		flags                           model.Flag
@@ -213,7 +212,6 @@ type (
 		Annotations      []*BLangAnnotation
 		InitFunction     *BLangFunction
 		ClassDefinitions []*BLangClassDefinition
-		BadTopLevelNodes []*BLangBadTopLevelNode
 		PackageID        *model.PackageID
 		Scope            model.Scope
 	}

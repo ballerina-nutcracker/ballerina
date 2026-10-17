@@ -324,9 +324,6 @@ func (v *lockBodyVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	if n == nil {
 		return v
 	}
-	if analysisPrerequisitesUnavailable(v.a, n) {
-		return nil
-	}
 	switch node := n.(type) {
 	case *ast.BLangLambdaFunction, *ast.BLangFunction:
 		return nil
@@ -373,18 +370,18 @@ func (v *lockBodyVisitor) isIsolatedExpression(expr ast.BLangExpression) bool {
 
 // checkAssignment validates transfer in for assignment.
 func (v *lockBodyVisitor) checkAssignment(lhs ast.BLangExpression, rhs ast.BLangActionOrExpression, pos diagnostics.Location) {
-	if analysisPrerequisitesUnavailable(v.a, lhs) || analysisPrerequisitesUnavailable(v.a, rhs) {
-		return
-	}
-	lhsRef, ok := exprRef(v.a, lhs)
-	if !ok {
-		return
-	}
-	lhsRef = v.a.ctx().UnnarrowedSymbol(lhsRef)
-	if lhsRef == v.lock.RestrictedSymbol {
+	// If the LHS targets the restricted variable, no check.
+	if v.assignsRestricted(lhs) {
 		return
 	}
 	// If the LHS is a local declared inside the lock body, no check.
+	lhsRef, ok := exprRef(v.a, lhs)
+	if !ok {
+		v.ok = false
+		v.a.internalErr("failed to find variable symbol", lhs.GetPosition())
+		return
+	}
+	lhsRef = v.a.ctx().UnnarrowedSymbol(lhsRef)
 	if _, isLocal := v.locals[lhsRef]; isLocal {
 		return
 	}
@@ -404,6 +401,22 @@ func (v *lockBodyVisitor) checkAssignment(lhs ast.BLangExpression, rhs ast.BLang
 		v.a.semanticErr("access of mutable variable", rhs.GetPosition())
 		v.ok = false
 	}
+}
+
+// assignsRestricted reports whether lhs targets the lock's restricted variable.
+// findRestrictedVariable now returns a uniform SymbolRef in both module-var
+// and self-field cases, so this is a single ref-equality test on the LHS
+// base symbol.
+func (v *lockBodyVisitor) assignsRestricted(lhs ast.BLangExpression) bool {
+	lhsRef, ok := exprRef(v.a, lhs)
+	if !ok {
+		v.ok = false
+		v.a.internalErr("failed to find variable symbol", lhs.GetPosition())
+		// avoid continuing the validation
+		return true
+	}
+	lhsRef = v.a.ctx().UnnarrowedSymbol(lhsRef)
+	return v.lock.RestrictedSymbol == lhsRef
 }
 
 // containsTransferInRef reports whether expr's subtree contains any reference
@@ -444,9 +457,6 @@ func (sa *semanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDecl
 	out := make(map[model.SymbolRef]varDeclMetadata)
 	for i := range sa.pkg.GlobalVars {
 		v := sa.pkg.GlobalVars[i]
-		if analysisPrerequisitesUnavailable(sa, v) {
-			continue
-		}
 		out[v.Symbol()] = varDeclMetadata{
 			Type:          v.GetDeterminedType(),
 			Final:         v.IsFinal(),
@@ -457,9 +467,6 @@ func (sa *semanticAnalyzer) buildModuleVarMetadata() map[model.SymbolRef]varDecl
 	}
 	for i := range sa.pkg.Constants {
 		c := sa.pkg.Constants[i]
-		if analysisPrerequisitesUnavailable(sa, c) {
-			continue
-		}
 		out[c.Symbol()] = varDeclMetadata{
 			Type:         c.GetDeterminedType(),
 			Final:        true,
@@ -628,9 +635,6 @@ func inInitFunction(a analyzer) bool {
 // expression.
 func (sa *semanticAnalyzer) validateModuleLevelIsolatedDecls(pkg *ast.BLangPackage) {
 	check := func(expr ast.BLangExpression, sym model.SymbolRef) {
-		if analysisPrerequisitesUnavailable(sa, expr) {
-			return
-		}
 		vs, ok := sa.ctx().GetSymbol(sym).(model.ValueSymbol)
 		if !ok || !vs.IsIsolated() {
 			return
@@ -738,9 +742,6 @@ func (visitor *isolatedFnVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	if n == nil {
 		return visitor
 	}
-	if analysisPrerequisitesUnavailable(visitor.a, n) {
-		return nil
-	}
 	a := visitor.a
 	switch node := n.(type) {
 	case *ast.BLangVariableDef:
@@ -811,9 +812,6 @@ func (visitor *isolatedFnVisitor) walkInvocableOperands(call ast.Invocable) {
 
 func (visitor *isolatedFnVisitor) walkLambda(node *ast.BLangLambdaFunction) {
 	fn := node.Function
-	if lambdaExpressionBodyUnresolved(fn) || fn.GetBody() == nil {
-		return
-	}
 	validateIsolatedCapture(visitor.a, visitor.scope, fn.GetBody().(ast.BLangNode))
 	inner := newLocalScope(visitor.scope)
 	for _, param := range fn.RequiredParams {
@@ -853,9 +851,6 @@ type captureVisitor struct {
 func (v *captureVisitor) Visit(n ast.BLangNode) ast.Visitor {
 	if n == nil {
 		return v
-	}
-	if analysisPrerequisitesUnavailable(v.a, n) {
-		return nil
 	}
 	switch n.(type) {
 	case *ast.BLangLambdaFunction, *ast.BLangFunction:

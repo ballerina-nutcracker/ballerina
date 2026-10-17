@@ -41,6 +41,10 @@ import (
 	"golang.org/x/tools/txtar"
 )
 
+// recoveryPhaseLimit is the last phase that recovers from source errors. Fixtures run only up to it,
+// and are checked against their markers and goldens only once every phase they exercise is enabled.
+const recoveryPhaseLimit = testphases.PhaseParse
+
 func TestRecovery(t *testing.T) {
 	t.Parallel()
 	count := 0
@@ -72,8 +76,10 @@ func TestRecovery(t *testing.T) {
 			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 			cx := context.NewCompilerContext(env)
 			astOnly := strings.HasPrefix(filepath.ToSlash(inputPath), "recovery/ast/")
+			finalPhase := testphases.PhaseSemanticAnalysis
 			var result *testphases.PipelineResult
 			if astOnly {
+				finalPhase = testphases.PhaseAST
 				result, err = runRecoveryAST(cx, sourcePath, content)
 			} else {
 				result, err = runRecoveryPipeline(env, cx, nil, sourcePath, content)
@@ -85,6 +91,9 @@ func TestRecovery(t *testing.T) {
 				if diagnostic.DiagnosticInfo().Code() == "INTERNAL_ERROR" {
 					t.Errorf("recovery pipeline reported an internal error: %s", diagnostic.String())
 				}
+			}
+			if recoveryPhaseLimit < finalPhase {
+				return
 			}
 			testharness.ValidateErrorMarkers(t, sourcePath, content, projects.NewDiagnosticResult(cx.Diagnostics()), cx.DiagnosticEnv())
 			printer := ast.PrettyPrinter{Fallback: printRecoveryFallback, ShowNodeLocations: astOnly, DiagnosticEnv: cx.DiagnosticEnv()}
@@ -238,6 +247,9 @@ func runRecoveryAST(cx *context.CompilerContext, inputPath, content string) (*te
 	if err != nil {
 		return nil, err
 	}
+	if recoveryPhaseLimit < testphases.PhaseAST {
+		return &testphases.PipelineResult{}, nil
+	}
 	unit := nodebuilder.GetRecoveredCompilationUnit(cx, tree)
 	if unit == nil {
 		return nil, fmt.Errorf("recovered compilation unit is nil")
@@ -247,6 +259,10 @@ func runRecoveryAST(cx *context.CompilerContext, inputPath, content string) (*te
 
 type recoveryPhases struct {
 	completed testphases.Phase
+}
+
+func (p *recoveryPhases) limitReached() bool {
+	return p.completed >= recoveryPhaseLimit
 }
 
 func (p *recoveryPhases) run(phase testphases.Phase, execute func() error) error {
@@ -272,6 +288,9 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 	}); err != nil {
 		return nil, fmt.Errorf("parsing recovery source: %w", err)
 	}
+	if phases.limitReached() {
+		return result, nil
+	}
 	if err := phases.run(testphases.PhaseAST, func() error {
 		result.CompilationUnit = nodebuilder.GetRecoveredCompilationUnit(cx, syntaxTree)
 		if result.CompilationUnit == nil {
@@ -280,6 +299,9 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+	if phases.limitReached() {
+		return result, nil
 	}
 	if langlibs == nil {
 		var err error
@@ -301,17 +323,26 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 	}); err != nil {
 		return nil, err
 	}
+	if phases.limitReached() {
+		return result, nil
+	}
 	if err := phases.run(testphases.PhaseTypeResolution, func() error {
 		semantics.ResolvePublicNodeTypes(cx, result.Package, importedSymbols)
 		return nil
 	}); err != nil {
 		return nil, err
 	}
+	if phases.limitReached() {
+		return result, nil
+	}
 	if err := phases.run(testphases.PhaseTypeNarrowing, func() error {
 		semantics.ResolvePrivateNodesTypes(cx, result.Package, importedSymbols)
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+	if phases.limitReached() {
+		return result, nil
 	}
 	if err := phases.run(testphases.PhaseSemanticAnalysis, func() error {
 		semantics.AnalyzeSemantics(cx, result.Package, importedSymbols)

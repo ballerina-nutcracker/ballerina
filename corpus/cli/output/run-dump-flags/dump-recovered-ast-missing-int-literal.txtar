@@ -1,0 +1,22 @@
+-- stdout --
+-- stderr --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (function (position 1:1 20:1) main () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 17:17 20:1)
+      (var-def (position 18:1 19:1)
+        (variable (position 18:1 19:1) x (type
+          (finite-type (position 18:1 18:7)
+            (unary-expr (position 18:1 18:7) -
+              (bad-expr-or-action (position 18:7 18:7))))) (expr
+          (literal (position 18:11 18:12) 1)))))))
+error[SYNTAX_ERROR]: missing decimal integer literal
+  --> missing-int-literal.bal:18:7
+   |
+18 |     - x = 1;
+   |       
+
+ballerina: compilation contains errors
+-- exitcode --
+1

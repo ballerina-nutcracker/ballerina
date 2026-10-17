@@ -14,9 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const A = B + 1;
-const B = A + 1; // @error
-public const int C = true + 1; // @error
-
-public function main() {
+function main() {
+    - x = 1;
 }

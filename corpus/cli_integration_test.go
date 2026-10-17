@@ -174,6 +174,7 @@ func testBalVersion(t *testing.T, cli *balCLI) {
 func testBalRunDumpFlags(t *testing.T, cli *balCLI) {
 	singleBal := filepath.Join("corpus", "cli", "testdata", "run", "single-bal-files", "run-and-print.bal")
 	recoveryBal := filepath.Join("corpus", "cli", "testdata", "run", "dump-flags", "recovered-ast.bal")
+	missingIntLiteralBal := filepath.Join("corpus", "cli", "testdata", "run", "dump-flags", "missing-int-literal.bal")
 
 	tests := []struct {
 		name   string
@@ -186,6 +187,7 @@ func testBalRunDumpFlags(t *testing.T, cli *balCLI) {
 		{"dump-tokens", "--dump-tokens", "dump-tokens.txtar", singleBal},
 		{"dump-ast", "--dump-ast", "dump-ast.txtar", singleBal},
 		{"dump-recovered-ast", "--dump-recovered-ast", "dump-recovered-ast.txtar", recoveryBal},
+		{"dump-recovered-ast-missing-int-literal", "--dump-recovered-ast", "dump-recovered-ast-missing-int-literal.txtar", missingIntLiteralBal},
 		{"dump-cfg", "--dump-cfg", "dump-cfg.txtar", singleBal},
 	}
 	balBin, repoRoot, coverDir := cli.debugBin, cli.repoRoot, cli.coverDir

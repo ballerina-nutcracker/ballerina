@@ -46,7 +46,6 @@ type nodeBuilder struct {
 	currentCompUnit      *ast.BLangCompilationUnit
 	cx                   *context.CompilerContext
 	mode                 nodeBuilderMode
-	undiagnosedMalformed bool
 }
 
 func (n *nodeBuilder) de() *diagnostics.DiagnosticEnv {
@@ -584,9 +583,6 @@ func (n *nodeBuilder) getPosition(node st.Node) diagnostics.Location {
 }
 
 func (n *nodeBuilder) getRecoveryPosition(node st.Node) diagnostics.Location {
-	if node == nil {
-		return diagnostics.NewBuiltinLocation()
-	}
 	return n.location(node, node.TextRangeWithMinutiae())
 }
 
@@ -799,16 +795,16 @@ func createIdentifier(pos diagnostics.Location, value, originalValue *string) as
 	if value == nil {
 		return ast.NewBLangIdentifier(pos, "", "")
 	}
-	identifierValue := normalizedIdentifierValue(*value)
+	identifierValue, _ := normalizedIdentifierValue(*value)
 	return ast.NewBLangIdentifier(pos, identifierValue, *originalValue)
 }
 
-func normalizedIdentifierValue(value string) string {
+func normalizedIdentifierValue(value string) (string, bool) {
 	const IDENTIFIER_LITERAL_PREFIX = "'"
 	if len(value) > 0 && value[0:1] == IDENTIFIER_LITERAL_PREFIX {
-		return value[1:]
+		return value[1:], true
 	}
-	return value
+	return value, false
 }
 
 func (n *nodeBuilder) createIgnoreIdentifier(node st.Node) ast.BLangIdentifier {
@@ -821,16 +817,6 @@ func (n *nodeBuilder) createIgnoreIdentifier(node st.Node) ast.BLangIdentifier {
 // createTypeNode creates a type node from a syntax tree node
 // This delegates to the appropriate Transform method based on the node type
 func (n *nodeBuilder) createTypeNode(typeNode st.Node) ast.TypeDescriptor {
-	switch typeNode.(type) {
-	case *st.SimpleNameReferenceNode, *st.QualifiedNameReferenceNode, *st.BuiltinSimpleNameReferenceNode:
-		if n.malformedNameReference(typeNode) {
-			return n.badTypeNode(typeNode)
-		}
-	default:
-		if n.malformedSyntax(typeNode, nil) {
-			return n.badTypeNode(typeNode)
-		}
-	}
 	result, err := n.createTypeNodeInner(typeNode)
 	if err == nil {
 		return result
@@ -915,7 +901,10 @@ func (n *nodeBuilder) createBuiltInTypeNode(typeNode st.Node) ast.TypeDescriptor
 		if simpleNameRef.Kind() == st.VAR_TYPE_DESC {
 			return nil
 		} else if simpleNameRef.Name().IsMissing() {
-			return n.badTypeNode(typeNode)
+			name := n.getNextMissingNodeName(n.PackageID, simpleNameRef.Name())
+			identifier := createIdentifier(n.getPosition(simpleNameRef.Name()), &name, &name)
+			pkgAlias := ast.BLangIdentifier{}
+			return createUserDefinedType(n.getPosition(typeNode), pkgAlias, identifier)
 		}
 		typeText = simpleNameRef.Name().Text()
 	} else {
@@ -960,16 +949,29 @@ func setIdentifierValue(identifier ast.IdentifierNode, value string) {
 	if identifier, ok := identifier.(*ast.BLangIdentifier); ok {
 		identifier.Value = value
 	}
+	// We ignore immutable identifiers such as BLangBadIdentifier.
 }
 
 func (n *nodeBuilder) createIdentifierNodeFromToken(pos diagnostics.Location, token st.Token) ast.IdentifierNode {
+	if token == nil {
+		if n.mode != nodeBuilderModeRecover {
+			n.cx.InternalError("missing identifier token", pos)
+		}
+		return n.badIdentifier(token)
+	}
+	if token.IsMissing() || token.Text() == "'" {
+		if n.mode != nodeBuilderModeRecover {
+			n.cx.InternalError("invalid identifier", pos)
+		}
+		return n.badIdentifier(token)
+	}
 	identifierName := token.Text()
+	if identifierName == "_" || identifierName == "'_" {
+		n.cx.SyntaxError("'_' is a keyword, and may not be used as an identifier", pos)
+		return n.badIdentifier(token)
+	}
 	identifier := createIdentifier(pos, &identifierName, &identifierName)
 	return &identifier
-}
-
-func isUnsupportedIdentifierText(text string) bool {
-	return text == "'" || text == "_" || text == "'_"
 }
 
 func (n *nodeBuilder) createIdentifierNodeFromModulePrefixToken(pos diagnostics.Location, token st.Token) ast.IdentifierNode {
@@ -1288,7 +1290,6 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLa
 	compilationUnit := ast.BLangCompilationUnit{}
 	n.currentCompUnit = &compilationUnit
 	defer func() { n.currentCompUnit = nil }()
-	n.undiagnosedMalformed = hasUndiagnosedMalformedSyntax(modulePartNode.InternalNode())
 	compilationUnit.SetPackageID(n.PackageID)
 	pos := n.getPosition(modulePartNode)
 
@@ -1320,8 +1321,14 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) ast.BLa
 	for member := range members.Iterator() {
 		// Dispatch to transformSyntaxNode which handles all node types
 		var memberNode st.Node = member
-		if memberNode.HasDiagnostics() && n.mode != nodeBuilderModeRecover {
-			continue
+		if memberNode.HasDiagnostics() {
+			if n.mode != nodeBuilderModeRecover {
+				continue
+			}
+			if memberNode.Kind() != st.FUNCTION_DEFINITION {
+				compilationUnit.AddTopLevelNode(n.badTopLevel(memberNode))
+				continue
+			}
 		}
 		node, err := n.transformTopLevel(memberNode)
 		if err != nil {
@@ -1464,12 +1471,6 @@ func (n *nodeBuilder) transformTopLevel(node st.Node) (ast.TopLevelNode, error) 
 }
 
 func (n *nodeBuilder) transformTopLevelInner(node st.Node) (ast.TopLevelNode, error) {
-	if enum, ok := node.(*st.EnumDeclarationNode); ok && n.mode == nodeBuilderModeRecover {
-		return n.recoverEnumDeclaration(enum), nil
-	}
-	if n.malformedDeclaration(node) {
-		return n.badTopLevel(node), nil
-	}
 	transformedNode := n.transformSyntaxNode(node)
 	topLevel, ok := transformedNode.(ast.TopLevelNode)
 	if !ok {
@@ -1614,7 +1615,7 @@ func (n *nodeBuilder) transformTypeDefinition(typeDefinitionNode *st.TypeDefinit
 	if distinctTypeDescriptorNode, ok := typeDescriptorNode.(*st.DistinctTypeDescriptorNode); ok {
 		innerTypeDescriptorNode := distinctTypeDescriptorNode.TypeDescriptor()
 		if innerTypeDescriptorNode == nil || !isAllowedDistinctTypeDescriptor(innerTypeDescriptorNode.Kind()) {
-			n.cx.SemanticError("only object and error types can be distinct", n.getPosition(distinctTypeDescriptorNode))
+			n.cx.SyntaxError("only object and error types can be distinct", n.getPosition(distinctTypeDescriptorNode))
 			neverType := &ast.BLangValueType{TypeKind: ast.TypeKindNever}
 			neverType.SetPosition(n.getPosition(distinctTypeDescriptorNode))
 			typeDef.SetTypeData(ast.TypeData{TypeDescriptor: neverType})
@@ -1652,7 +1653,6 @@ func (n *nodeBuilder) transformServiceDeclaration(serviceDeclarationNode *st.Ser
 	n.populateServiceAttachedExprs(&service, serviceDeclarationNode)
 
 	members := n.collectClassDefnMembers(serviceDeclarationNode.Members())
-	service.BadTopLevelNodes = members.BadTopLevelNodes
 	service.Fields = members.Fields
 	service.Methods = members.Methods
 	service.InitFunction = members.InitFunction
@@ -1680,6 +1680,9 @@ func serviceQualifierFlags(node *st.ServiceDeclarationNode) model.Flag {
 
 func (n *nodeBuilder) populateServiceAttachPoint(service *ast.BLangService, node *st.ServiceDeclarationNode) {
 	paths := node.AbsoluteResourcePath()
+	if node.HasDiagnostics() {
+		return
+	}
 	if paths.Size() > 0 {
 		service.AbsoluteResourcePath = []ast.BLangIdentifier{}
 	}
@@ -1724,7 +1727,6 @@ type classDefnMembers struct {
 	InitFunction         *ast.BLangFunction
 	ResourceMethods      []*ast.BLangResourceMethod
 	UnresolvedInclusions []*ast.BLangUserDefinedType
-	BadTopLevelNodes     []*ast.BLangBadTopLevelNode
 }
 
 func newClassDefnMembers() classDefnMembers {
@@ -1735,10 +1737,6 @@ func (n *nodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) 
 	members := newClassDefnMembers()
 	for i := 0; i < memberNodes.Size(); i++ {
 		member := memberNodes.Get(i)
-		if n.malformedDeclaration(member) {
-			members.BadTopLevelNodes = append(members.BadTopLevelNodes, n.badTopLevel(member))
-			continue
-		}
 		switch member.Kind() {
 		case st.OBJECT_FIELD:
 			field := n.transformClassField(member.(*st.ObjectFieldNode))
@@ -1750,11 +1748,7 @@ func (n *nodeBuilder) collectClassDefnMembers(memberNodes st.NodeList[st.Node]) 
 			members.ResourceMethods = append(members.ResourceMethods, rm)
 		case st.TYPE_REFERENCE:
 			typeRef := member.(*st.TypeReferenceNode)
-			if inclusion, ok := n.createTypeNode(typeRef.TypeName()).(*ast.BLangUserDefinedType); ok {
-				members.UnresolvedInclusions = append(members.UnresolvedInclusions, inclusion)
-			} else {
-				members.BadTopLevelNodes = append(members.BadTopLevelNodes, n.badTopLevel(member))
-			}
+			members.UnresolvedInclusions = append(members.UnresolvedInclusions, n.createTypeNode(typeRef.TypeName()).(*ast.BLangUserDefinedType))
 		default:
 			n.internalError("collectClassDefnMembers: unsupported member kind", member)
 		}
@@ -1771,7 +1765,7 @@ func (n *nodeBuilder) addCollectedMethod(members *classDefnMembers, funcDef *st.
 	funcName := bLFunction.Name.GetValue()
 	if model.Name(funcName) == model.USER_DEFINED_INIT_SUFFIX {
 		if members.InitFunction != nil {
-			n.cx.SemanticError("redeclared symbol 'init'", bLFunction.GetPosition())
+			n.cx.SyntaxError("redeclared symbol 'init'", bLFunction.GetPosition())
 			return
 		}
 		members.InitFunction = bLFunction
@@ -1782,7 +1776,7 @@ func (n *nodeBuilder) addCollectedMethod(members *classDefnMembers, funcDef *st.
 		setIdentifierValue(bLFunction.Name, funcName)
 	}
 	if _, exists := members.Methods[funcName]; exists {
-		n.cx.SemanticError("redeclared symbol '"+model.StripRemotePrefix(funcName)+"'", bLFunction.GetPosition())
+		n.cx.SyntaxError("redeclared symbol '"+model.StripRemotePrefix(funcName)+"'", bLFunction.GetPosition())
 		return
 	}
 	members.Methods[funcName] = bLFunction
@@ -1823,9 +1817,6 @@ func (n *nodeBuilder) transformVariableDeclaration(variableDeclarationNode *st.V
 		variableDeclarationNode.Initializer(),
 		variableDeclarationNode.FinalKeyword(),
 	)
-	if varNode.Var == nil {
-		return n.badStmt(variableDeclarationNode)
-	}
 	annotations := variableDeclarationNode.Annotations()
 	n.addAnnotationAttachments(annotations, varNode.Var)
 
@@ -1879,9 +1870,6 @@ func (n *nodeBuilder) createBLangVarDef(location diagnostics.Location, typedBind
 func (n *nodeBuilder) transformBlockStatement(blockStatementNode *st.BlockStatementNode) ast.BLangNode {
 	bLBlockStmt := ast.BLangBlockStmt{}
 	bLBlockStmt.Stmts = n.generateBLangStatements(blockStatementNode.Statements(), blockStatementNode)
-	if n.malformedSyntax(blockStatementNode.OpenBraceToken(), nil) || n.malformedSyntax(blockStatementNode.CloseBraceToken(), nil) {
-		bLBlockStmt.Stmts = append(bLBlockStmt.Stmts, n.badStmt(blockStatementNode))
-	}
 	bLBlockStmt.SetPosition(n.getPosition(blockStatementNode))
 	return &bLBlockStmt
 }
@@ -1903,9 +1891,6 @@ func (n *nodeBuilder) transformStatement(statement st.StatementNode) ast.Stateme
 }
 
 func (n *nodeBuilder) transformStatementInner(statement st.StatementNode) (ast.StatementNode, error) {
-	if n.malformedStatement(statement) {
-		return n.badStmt(statement), nil
-	}
 	if statement == nil {
 		return nil, fmt.Errorf("statement is nil")
 	}
@@ -2027,13 +2012,13 @@ func (n *nodeBuilder) createActionOrExpression(actionOrExpression st.Node) ast.B
 }
 
 func (n *nodeBuilder) createActionOrExpressionInner(actionOrExpression st.Node) (ast.BLangActionOrExpression, error) {
-	if n.malformedExpression(actionOrExpression) {
-		return n.badExprOrAction(actionOrExpression), nil
-	}
 	if actionOrExpression == nil {
 		return nil, fmt.Errorf("missing action or expression")
 	}
 	if isSimpleLiteral(actionOrExpression.Kind()) {
+		if literal, ok := actionOrExpression.(*st.BasicLiteralNode); ok && literal.LiteralToken().IsMissing() {
+			return n.badExprOrAction(actionOrExpression), nil
+		}
 		result, ok := n.createSimpleLiteral(actionOrExpression).(ast.BLangActionOrExpression)
 		if !ok {
 			return nil, fmt.Errorf("syntax node %T transformed to non-action-or-expression node", actionOrExpression)
@@ -2167,9 +2152,6 @@ func (n *nodeBuilder) transformForEachStatement(forEachStatementNode *st.ForEach
 		nil,
 		nil,
 	)
-	if varDef.Var == nil {
-		return n.badStmt(forEachStatementNode)
-	}
 	body := n.transformBlockStatement(forEachStatementNode.BlockStatement()).(*ast.BLangBlockStmt)
 	body.SetPosition(n.getPosition(forEachStatementNode.BlockStatement()))
 	var onFailClause *ast.BLangOnFailClause
@@ -2600,7 +2582,7 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 		switch member.Kind() {
 		case st.OBJECT_FIELD:
 			objectField := member.(*st.ObjectFieldNode)
-			fieldName := normalizedIdentifierValue(objectField.FieldName().Text())
+			fieldName, _ := normalizedIdentifierValue(objectField.FieldName().Text())
 			vis := objectField.VisibilityQualifier()
 			bField := ast.NewBObjectField(
 				n.getPosition(objectField),
@@ -2610,11 +2592,11 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 			)
 			n.populateMetadata(objectField.Metadata(), bField)
 			if objectType.AddMember(bField) {
-				n.cx.SemanticError("redeclared symbol '"+fieldName+"'", bField.GetPosition())
+				n.cx.SyntaxError("redeclared symbol '"+fieldName+"'", bField.GetPosition())
 			}
 		case st.METHOD_DECLARATION:
 			methodDecl := member.(*st.MethodDeclarationNode)
-			methodName := normalizedIdentifierValue(methodDecl.MethodName().Text())
+			methodName, _ := normalizedIdentifierValue(methodDecl.MethodName().Text())
 			methodKind := ast.ObjectMemberKindMethod
 			isPublic := false
 			isIsolated := false
@@ -2691,7 +2673,7 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 			}
 
 			if objectType.AddMember(bMethod) {
-				n.cx.SemanticError("redeclared symbol '"+model.StripRemotePrefix(bMethod.Name())+"'", bMethod.GetPosition())
+				n.cx.SyntaxError("redeclared symbol '"+model.StripRemotePrefix(bMethod.Name())+"'", bMethod.GetPosition())
 			}
 		case st.TYPE_REFERENCE:
 			typeRef := member.(*st.TypeReferenceNode)
@@ -2717,7 +2699,7 @@ func (n *nodeBuilder) transformRecordTypeDescriptor(recordTypeDescriptorNode *st
 		switch field.Kind() {
 		case st.RECORD_FIELD:
 			recordField := field.(*st.RecordFieldNode)
-			fieldName := normalizedIdentifierValue(recordField.FieldName().Text())
+			fieldName, _ := normalizedIdentifierValue(recordField.FieldName().Text())
 			var flags model.Flag
 			if recordField.ReadonlyKeyword() != nil {
 				flags |= model.FlagReadonly
@@ -2736,7 +2718,7 @@ func (n *nodeBuilder) transformRecordTypeDescriptor(recordTypeDescriptorNode *st
 			recordType.AddField(fieldName, bField)
 		case st.RECORD_FIELD_WITH_DEFAULT_VALUE:
 			recordFieldDV := field.(*st.RecordFieldWithDefaultValueNode)
-			fieldName := normalizedIdentifierValue(recordFieldDV.FieldName().Text())
+			fieldName, _ := normalizedIdentifierValue(recordFieldDV.FieldName().Text())
 			var flags model.Flag
 			if recordFieldDV.ReadonlyKeyword() != nil {
 				flags |= model.FlagReadonly
@@ -2837,9 +2819,6 @@ func (n *nodeBuilder) transformModuleVariableDeclaration(moduleVariableDeclarati
 	typedBindingPattern := moduleVariableDeclarationNode.TypedBindingPattern()
 	pos := n.getPositionWithoutMetadata(moduleVariableDeclarationNode)
 	nameNode := n.getBLangVariableNode(typedBindingPattern.BindingPattern(), pos)
-	if nameNode == nil {
-		return n.badTopLevel(moduleVariableDeclarationNode)
-	}
 
 	typeDesc := typedBindingPattern.TypeDescriptor()
 	isDeclaredWithVar := typeDesc != nil && isDeclaredWithVar(typeDesc)
@@ -2856,7 +2835,7 @@ func (n *nodeBuilder) transformModuleVariableDeclaration(moduleVariableDeclarati
 	simpleVar.SetPosition(pos)
 
 	if simpleVar.IsDeclaredWithVar && simpleVar.TypeNode() == nil && simpleVar.Expr == nil {
-		n.cx.SemanticError("var-declared module variable must have an initializer expression for type inference", pos)
+		n.cx.SyntaxError("var-declared module variable must have an initializer expression for type inference", pos)
 		return simpleVar
 	}
 	n.populateMetadata(moduleVariableDeclarationNode.Metadata(), simpleVar)
@@ -3068,9 +3047,6 @@ func (n *nodeBuilder) transformFunctionBodyBlock(functionBodyBlockNode *st.Funct
 
 	n.generateAndAddBLangStatements(functionBodyBlockNode.Statements(), &stmtList, 0, functionBodyBlockNode)
 
-	if n.malformedSyntax(functionBodyBlockNode.OpenBraceToken(), nil) || n.malformedSyntax(functionBodyBlockNode.CloseBraceToken(), nil) {
-		stmtList = append(stmtList, n.badStmt(functionBodyBlockNode))
-	}
 	bLFuncBody.Stmts = stmtList
 	bLFuncBody.SetPosition(n.getPosition(functionBodyBlockNode))
 	return bLFuncBody
@@ -4144,9 +4120,6 @@ func (n *nodeBuilder) transformFunctionSignature(functionSignatureNode *st.Funct
 }
 
 func (n *nodeBuilder) transformExplicitAnonymousFunctionExpression(anonFuncExprNode *st.ExplicitAnonymousFunctionExpressionNode) ast.BLangNode {
-	if n.malformedSyntax(anonFuncExprNode, func(node st.Node) bool { return node == anonFuncExprNode.FunctionBody() }) {
-		return n.badExprOrAction(anonFuncExprNode)
-	}
 	name := n.cx.GetNextAnonymousFunctionKey(n.PackageID)
 	ident := createIdentifier(diagnostics.NewBuiltinLocation(), &name, &name)
 	data := ast.InvokableData{
@@ -4164,11 +4137,7 @@ func (n *nodeBuilder) transformExplicitAnonymousFunctionExpression(anonFuncExprN
 
 func (n *nodeBuilder) transformExpressionFunctionBody(expressionFunctionBodyNode *st.ExpressionFunctionBodyNode) ast.BLangNode {
 	exprBody := &ast.BLangExprFunctionBody{}
-	if n.malformedSyntax(expressionFunctionBodyNode.RightDoubleArrow(), nil) || n.malformedSyntax(expressionFunctionBodyNode.Semicolon(), nil) {
-		exprBody.Expr = n.badExprOrAction(expressionFunctionBodyNode)
-	} else {
-		exprBody.Expr = n.createExpression(expressionFunctionBodyNode.Expression())
-	}
+	exprBody.Expr = n.createExpression(expressionFunctionBodyNode.Expression())
 	exprBody.SetPosition(n.getPosition(expressionFunctionBodyNode))
 	return exprBody
 }
@@ -4401,7 +4370,6 @@ func (n *nodeBuilder) transformImplicitAnonymousFunctionExpression(node *st.Impl
 		}
 	default:
 		n.cx.SyntaxError("invalid parameter list in inferred anonymous function expression", n.getPosition(node.Params()))
-		return n.badExprOrAction(node)
 	}
 	fn.RequiredParams = make([]ast.BLangVariable, len(paramNodes))
 	for i, param := range paramNodes {
@@ -4412,7 +4380,6 @@ func (n *nodeBuilder) transformImplicitAnonymousFunctionExpression(node *st.Impl
 			paramValue := paramName.Text()
 			if paramValue == "_" || paramValue == "'_" {
 				n.cx.SyntaxError("'_' cannot be used as an identifier", paramPos)
-				return n.badExprOrAction(node)
 			}
 			ident = createIdentifier(paramPos, &paramValue, &paramValue)
 		}
@@ -4697,63 +4664,6 @@ func (n *nodeBuilder) transformEnumDeclaration(enumDeclarationNode *st.EnumDecla
 		memberTypeNodes = append(memberTypeNodes, n.createTypeNode(enumMember.Identifier()))
 	}
 
-	typeDescriptor := n.createEnumMemberUnion(enumDeclarationNode, memberTypeNodes)
-	if typeDescriptor == nil {
-		neverType := &ast.BLangValueType{TypeKind: ast.TypeKindNever}
-		neverType.SetPosition(diagnostics.NewBuiltinLocation())
-		typeDescriptor = neverType
-	}
-	typeDef := n.createEnumTypeDefinition(enumDeclarationNode, typeDescriptor)
-	if len(memberTypeNodes) == 0 {
-		n.cx.SyntaxError("missing enum member", typeDef.Name.GetPosition())
-	}
-	return typeDef
-}
-
-func (n *nodeBuilder) recoverEnumDeclaration(node *st.EnumDeclarationNode) ast.TopLevelNode {
-	name := node.Identifier()
-	malformed := n.malformedSyntax(node, func(child st.Node) bool {
-		_, member := child.(*st.EnumMemberNode)
-		return member || child == name
-	})
-	usableName := name != nil && !name.IsMissing() && !n.malformedSyntax(name, nil)
-	malformed = malformed || !usableName
-	validMembers := make([]*st.EnumMemberNode, 0)
-	members := node.EnumMemberList()
-	for member := range members.Iterator() {
-		enumMember, ok := member.(*st.EnumMemberNode)
-		if !ok {
-			continue
-		}
-		if enumMember.Identifier() == nil || enumMember.Identifier().IsMissing() || n.malformedSyntax(enumMember, nil) {
-			malformed = true
-			continue
-		}
-		validMembers = append(validMembers, enumMember)
-	}
-	if !malformed {
-		return n.transformEnumDeclaration(node).(*ast.BLangTypeDefinition)
-	}
-	publicQualifier := node.Qualifier() != nil && node.Qualifier().Kind() == st.PUBLIC_KEYWORD
-	memberTypes := make([]ast.TypeDescriptor, 0, len(validMembers))
-	for _, member := range validMembers {
-		n.currentCompUnit.AddTopLevelNode(n.transformEnumMemberWithVisibility(member, publicQualifier))
-		memberTypes = append(memberTypes, n.createTypeNode(member.Identifier()))
-	}
-	bad := n.badTopLevel(node)
-	if !usableName {
-		return bad
-	}
-	n.currentCompUnit.AddTopLevelNode(bad)
-	typeDescriptor := n.createEnumMemberUnion(node, memberTypes)
-	if typeDescriptor == nil {
-		typeDescriptor = n.badTypeNode(node)
-	}
-	return n.createEnumTypeDefinition(node, typeDescriptor)
-}
-
-func (n *nodeBuilder) createEnumTypeDefinition(enumDeclarationNode *st.EnumDeclarationNode, typeDescriptor ast.TypeDescriptor) *ast.BLangTypeDefinition {
-	publicQualifier := enumDeclarationNode.Qualifier() != nil && enumDeclarationNode.Qualifier().Kind() == st.PUBLIC_KEYWORD
 	identifierPos := n.getPosition(enumDeclarationNode.Identifier())
 	identifier := n.createIdentifierNodeFromToken(identifierPos, enumDeclarationNode.Identifier())
 	var documentation *ast.BLangMarkdownDocumentation
@@ -4764,25 +4674,27 @@ func (n *nodeBuilder) createEnumTypeDefinition(enumDeclarationNode *st.EnumDecla
 	if publicQualifier {
 		flags |= model.FlagPublic
 	}
-	typeDef := ast.NewBLangTypeDefinitionWithData(n.getPositionWithoutMetadata(enumDeclarationNode), identifier, ast.TypeData{TypeDescriptor: typeDescriptor}, documentation, flags)
+	typeDef := ast.NewBLangTypeDefinitionWithData(n.getPositionWithoutMetadata(enumDeclarationNode), identifier, ast.TypeData{}, documentation, flags)
 	typeDef.SetPosition(n.getPositionWithoutMetadata(enumDeclarationNode))
-	return typeDef
-}
 
-func (n *nodeBuilder) createEnumMemberUnion(enumDeclarationNode *st.EnumDeclarationNode, memberTypeNodes []ast.TypeDescriptor) ast.TypeDescriptor {
-	if len(memberTypeNodes) == 0 {
-		return nil
+	if len(memberTypeNodes) > 0 {
+		current := memberTypeNodes[0]
+		for i := 1; i < len(memberTypeNodes); i++ {
+			current = ast.NewBLangUnionTypeNode(
+				typeDef.GetPosition(),
+				ast.TypeData{TypeDescriptor: current},
+				ast.TypeData{TypeDescriptor: memberTypeNodes[i]},
+			)
+		}
+		typeDef.SetTypeData(ast.TypeData{TypeDescriptor: current})
+	} else {
+		neverType := &ast.BLangValueType{TypeKind: ast.TypeKindNever}
+		neverType.SetPosition(diagnostics.NewBuiltinLocation())
+		typeDef.SetTypeData(ast.TypeData{TypeDescriptor: neverType})
+		n.cx.SyntaxError("missing enum member", typeDef.Name.GetPosition())
 	}
-	pos := n.getPositionWithoutMetadata(enumDeclarationNode)
-	current := memberTypeNodes[0]
-	for i := 1; i < len(memberTypeNodes); i++ {
-		current = ast.NewBLangUnionTypeNode(
-			pos,
-			ast.TypeData{TypeDescriptor: current},
-			ast.TypeData{TypeDescriptor: memberTypeNodes[i]},
-		)
-	}
-	return current
+
+	return typeDef
 }
 
 func (n *nodeBuilder) transformEnumMember(enumMemberNode *st.EnumMemberNode) ast.BLangNode {
@@ -5480,7 +5392,6 @@ func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefi
 	blangClass.Name = nameIdentifier
 
 	members := n.collectClassDefnMembers(classDefinitionNode.Members())
-	blangClass.BadTopLevelNodes = members.BadTopLevelNodes
 	blangClass.Fields = members.Fields
 	blangClass.Methods = members.Methods
 	blangClass.InitFunction = members.InitFunction
@@ -6024,6 +5935,13 @@ func createUserDefinedType(pos diagnostics.Location, pkgAlias ast.BLangIdentifie
 	return &userDefinedType
 }
 
+func (n *nodeBuilder) getNextMissingNodeName(pkgID *model.PackageID, node st.Node) string {
+	if n.mode != nodeBuilderModeRecover {
+		n.internalError("missing type-name token", node)
+	}
+	return n.cx.GetNextAnonymousTypeKey(pkgID)
+}
+
 func (n *nodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode, varPos diagnostics.Location) *ast.BLangVariable {
 	var varName st.Token
 	switch bindingPattern.Kind() {
@@ -6034,7 +5952,10 @@ func (n *nodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode,
 		return simpleVar
 	case st.MAPPING_BINDING_PATTERN, st.LIST_BINDING_PATTERN, st.ERROR_BINDING_PATTERN, st.REST_BINDING_PATTERN:
 		n.unimplemented("binding pattern is not implemented", bindingPattern)
-		return nil
+		name := n.badIdentifier(nil)
+		simpleVar := ast.NewBLangVariable(varPos, name, nil, nil, false, 0)
+		simpleVar.SetPosition(varPos)
+		return simpleVar
 	case st.CAPTURE_BINDING_PATTERN:
 		fallthrough
 	default:
@@ -6055,43 +5976,9 @@ func (n *nodeBuilder) getBLangVariableNode(bindingPattern st.BindingPatternNode,
 }
 
 func (n *nodeBuilder) badTopLevel(node st.Node) *ast.BLangBadTopLevelNode {
-	return ast.NewBLangBadTopLevelNode(n.getRecoveryPosition(node), recoveredTopLevelKind(node))
-}
-
-func recoveredTopLevelKind(node st.Node) ast.BadTopLevelNodeKind {
-	if node == nil {
-		return ast.BadTopLevelNodeUnknown
-	}
-	switch node.Kind() {
-	case st.IMPORT_DECLARATION:
-		return ast.BadTopLevelNodeImport
-	case st.FUNCTION_DEFINITION, st.OBJECT_METHOD_DEFINITION, st.RESOURCE_ACCESSOR_DEFINITION:
-		return ast.BadTopLevelNodeFunction
-	case st.TYPE_DEFINITION:
-		return ast.BadTopLevelNodeTypeDefinition
-	case st.ENUM_DECLARATION:
-		return ast.BadTopLevelNodeEnum
-	case st.CONST_DECLARATION:
-		return ast.BadTopLevelNodeConstant
-	case st.MODULE_VAR_DECL:
-		return ast.BadTopLevelNodeVariable
-	case st.LISTENER_DECLARATION:
-		return ast.BadTopLevelNodeListener
-	case st.CLASS_DEFINITION:
-		return ast.BadTopLevelNodeClass
-	case st.SERVICE_DECLARATION:
-		return ast.BadTopLevelNodeService
-	case st.ANNOTATION_DECLARATION:
-		return ast.BadTopLevelNodeAnnotation
-	case st.MODULE_XML_NAMESPACE_DECLARATION:
-		return ast.BadTopLevelNodeXMLNamespace
-	case st.OBJECT_FIELD:
-		return ast.BadTopLevelNodeField
-	case st.TYPE_REFERENCE:
-		return ast.BadTopLevelNodeTypeInclusion
-	default:
-		return ast.BadTopLevelNodeUnknown
-	}
+	bad := &ast.BLangBadTopLevelNode{}
+	bad.SetPosition(n.getRecoveryPosition(node))
+	return bad
 }
 
 func (n *nodeBuilder) badStmt(node st.Node) *ast.BLangBadStmt {
@@ -6120,324 +6007,12 @@ func (n *nodeBuilder) badTypeNode(node st.Node) *ast.BLangBadTypeNode {
 	return bad
 }
 
-func isUnderscoreIdentifier(token st.Token) bool {
-	return token.Text() == "_" || token.Text() == "'_"
-}
-
-func isQuotedUnderscoreModulePrefix(token st.Token) bool {
-	if token.Text() != "'_" {
-		return false
+func (n *nodeBuilder) badIdentifier(token st.Token) *ast.BLangBadIdentifier {
+	if token == nil {
+		return ast.NewBLangBadIdentifier(diagnostics.NewBuiltinLocation(), "", "", false)
 	}
-	parent := token.Parent()
-	return parent != nil && parent.Kind() == st.QUALIFIED_NAME_REFERENCE && parent.ChildInBucket(0) == token
-}
-
-// TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
-func (n *nodeBuilder) malformedSyntax(node st.Node, skip func(st.Node) bool) bool {
-	if node == nil || (skip != nil && skip(node)) {
-		return false
-	}
-	if !n.mayBeMalformed(node) {
-		return false
-	}
-	if node.Kind() == st.WILDCARD_BINDING_PATTERN {
-		return false
-	}
-	if token, ok := node.(st.Token); ok {
-		if token.IsMissing() || token.HasDiagnostics() {
-			return true
-		}
-		if token.Kind() == st.IDENTIFIER_TOKEN && token.Text() == "'" {
-			n.cx.SyntaxError("invalid identifier", n.getPosition(token))
-			return true
-		}
-		if token.Kind() == st.IDENTIFIER_TOKEN && isUnderscoreIdentifier(token) && !isQuotedUnderscoreModulePrefix(token) {
-			n.cx.SyntaxError("'_' is a keyword, and may not be used as an identifier", n.getPosition(token))
-			return true
-		}
-		return false
-	}
-	if attach, ok := node.(*st.AnnotationAttachPointNode); ok {
-		var parts []string
-		identifiers := attach.Identifiers()
-		for token := range identifiers.Iterator() {
-			parts = append(parts, token.Text())
-		}
-		if _, ok := annotationAttachPointFromParts(parts); !ok && !node.HasDiagnostics() {
-			n.cx.SyntaxError("unknown annotation attach point '"+strings.Join(parts, " ")+"'", n.getPosition(node))
-			return true
-		}
-	}
-	malformed := false
-	childDiagnostics := false
-	if nt, ok := node.(st.NonTerminalNode); ok {
-		for child := range nt.ChildNodes() {
-			if child == nil {
-				continue
-			}
-			childDiagnostics = childDiagnostics || child.HasDiagnostics()
-			if n.malformedSyntax(child, skip) {
-				malformed = true
-			}
-		}
-	}
-	return malformed || (node.HasDiagnostics() && !childDiagnostics)
-}
-
-func (n *nodeBuilder) mayBeMalformed(node st.Node) bool {
-	return n.undiagnosedMalformed || node.HasDiagnostics()
-}
-
-// hasUndiagnosedMalformedSyntax reports whether the tree contains syntax that malformedSyntax treats as malformed
-// without the parser having attached a diagnostic to it. It walks the internal tree to avoid creating facades.
-func hasUndiagnosedMalformedSyntax(node st.STNode) bool {
-	if node == nil {
-		return false
-	}
-	if token, ok := node.(st.STToken); ok {
-		return token.IsMissing() || (token.Kind() == st.IDENTIFIER_TOKEN && isUnsupportedIdentifierText(token.Text()))
-	}
-	if attachPoint, ok := node.(*st.STAnnotationAttachPointNode); ok && !isKnownAnnotationAttachPoint(attachPoint) {
-		return true
-	}
-	for i := range node.BucketCount() {
-		if hasUndiagnosedMalformedSyntax(node.ChildInBucket(i)) {
-			return true
-		}
-	}
-	return false
-}
-
-func isKnownAnnotationAttachPoint(attachPoint *st.STAnnotationAttachPointNode) bool {
-	identifiers, ok := attachPoint.Identifiers.(*st.STNodeList)
-	if !ok {
-		return false
-	}
-	parts := make([]string, 0, identifiers.Size())
-	for i := range identifiers.Size() {
-		token, ok := identifiers.Get(i).(st.STToken)
-		if !ok {
-			return false
-		}
-		parts = append(parts, token.Text())
-	}
-	_, known := annotationAttachPointFromParts(parts)
-	return known
-}
-
-// TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
-func (n *nodeBuilder) malformedDeclaration(node st.Node) bool {
-	var body st.Node
-	var members []st.Node
-	switch node := node.(type) {
-	case *st.ModuleVariableDeclarationNode:
-		members = append(members, node.TypedBindingPattern().TypeDescriptor(), node.Initializer())
-	case *st.ConstantDeclarationNode:
-		members = append(members, node.TypeDescriptor(), node.Initializer())
-	case *st.TypeDefinitionNode:
-		members = append(members, node.TypeDescriptor())
-	case *st.FunctionDefinition:
-		body = node.FunctionBody()
-	case *st.ClassDefinitionNode:
-		memberNodes := node.Members()
-		for member := range memberNodes.Iterator() {
-			members = append(members, member)
-		}
-	case *st.ServiceDeclarationNode:
-		memberNodes := node.Members()
-		for member := range memberNodes.Iterator() {
-			members = append(members, member)
-		}
-	}
-	return n.malformedSyntax(node, func(child st.Node) bool {
-		if child == body {
-			return true
-		}
-		for _, member := range members {
-			if child == member {
-				return true
-			}
-		}
-		return false
-	})
-}
-
-func expressionBoundary(node st.Node) bool {
-	if isType(node.Kind()) || isSimpleLiteral(node.Kind()) {
-		return true
-	}
-	switch node.Kind() {
-	case st.SIMPLE_NAME_REFERENCE, st.QUALIFIED_NAME_REFERENCE, st.BINARY_EXPRESSION,
-		st.BRACED_EXPRESSION, st.UNARY_EXPRESSION, st.FUNCTION_CALL, st.METHOD_CALL,
-		st.FIELD_ACCESS, st.OPTIONAL_FIELD_ACCESS, st.REMOTE_METHOD_CALL_ACTION,
-		st.INDEXED_EXPRESSION, st.MAPPING_CONSTRUCTOR, st.EXPLICIT_NEW_EXPRESSION, st.IMPLICIT_NEW_EXPRESSION,
-		st.LIST_CONSTRUCTOR, st.EXPLICIT_ANONYMOUS_FUNCTION_EXPRESSION, st.IMPLICIT_ANONYMOUS_FUNCTION_EXPRESSION:
-		return true
-	default:
-		return false
-	}
-}
-
-// TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
-func (n *nodeBuilder) malformedStatement(node st.Node) bool {
-	if _, ok := node.(*st.BlockStatementNode); ok || node == nil || !n.mayBeMalformed(node) {
-		return false
-	}
-	if !node.HasDiagnostics() {
-		switch statement := node.(type) {
-		case *st.VariableDeclarationNode:
-			annotations := statement.Annotations()
-			if annotations.Size() == 0 {
-				switch binding := statement.TypedBindingPattern().BindingPattern().(type) {
-				case *st.CaptureBindingPatternNode:
-					return n.malformedSyntax(binding.VariableName(), nil)
-				case *st.WildcardBindingPatternNode:
-					return false
-				}
-			}
-		case *st.AssignmentStatementNode:
-			if expressionBoundary(statement.VarRef()) && expressionBoundary(statement.Expression()) {
-				return false
-			}
-		case *st.ReturnStatementNode:
-			if statement.Expression() == nil || expressionBoundary(statement.Expression()) {
-				return false
-			}
-		}
-	}
-	return n.malformedSyntax(node, func(child st.Node) bool {
-		return child != node && (expressionBoundary(child) || child.Kind() == st.BLOCK_STATEMENT)
-	})
-}
-
-func (n *nodeBuilder) malformedNameReference(node st.Node) bool {
-	if !n.mayBeMalformed(node) {
-		return false
-	}
-	if node.HasDiagnostics() {
-		return n.malformedSyntax(node, nil)
-	}
-	switch reference := node.(type) {
-	case *st.SimpleNameReferenceNode:
-		return n.malformedSyntax(reference.Name(), nil)
-	case *st.BuiltinSimpleNameReferenceNode:
-		return n.malformedSyntax(reference.Name(), nil)
-	case *st.QualifiedNameReferenceNode:
-		prefixMalformed := n.malformedSyntax(reference.ModulePrefix(), nil)
-		identifierMalformed := n.malformedSyntax(reference.Identifier(), nil)
-		return prefixMalformed || identifierMalformed
-	default:
-		return n.malformedSyntax(node, nil)
-	}
-}
-
-// TODO(#1139): remove this classifier in favor of syntax-tree recovery information.
-func (n *nodeBuilder) malformedExpression(node st.Node) bool {
-	if node == nil || !n.mayBeMalformed(node) {
-		return false
-	}
-	scanSyntax := node.HasDiagnostics()
-	if !scanSyntax {
-		switch expression := node.(type) {
-		case *st.SimpleNameReferenceNode, *st.QualifiedNameReferenceNode, *st.BuiltinSimpleNameReferenceNode:
-			return n.malformedNameReference(expression)
-		case *st.FunctionCallExpressionNode:
-			if n.malformedNameReference(expression.FunctionName()) {
-				return true
-			}
-		case *st.MethodCallExpressionNode:
-			if n.malformedNameReference(expression.MethodName()) {
-				return true
-			}
-		case *st.RemoteMethodCallActionNode:
-			if n.malformedNameReference(expression.MethodName()) {
-				return true
-			}
-		case *st.FieldAccessExpressionNode:
-			return n.malformedNameReference(expression.FieldName())
-		case *st.OptionalFieldAccessExpressionNode:
-			return n.malformedNameReference(expression.FieldName())
-		case *st.AnnotAccessExpressionNode:
-			return n.malformedNameReference(expression.AnnotTagReference())
-		case *st.ExplicitAnonymousFunctionExpressionNode:
-			return n.malformedSyntax(expression, func(child st.Node) bool { return child == expression.FunctionBody() })
-		case *st.ImplicitAnonymousFunctionExpressionNode:
-			return n.malformedSyntax(expression, func(child st.Node) bool { return child == expression.Expression() })
-		case *st.BinaryExpressionNode, *st.BracedExpressionNode, *st.UnaryExpressionNode,
-			*st.ListConstructorExpressionNode, *st.IndexedExpressionNode,
-			*st.ExplicitNewExpressionNode, *st.ImplicitNewExpressionNode:
-		default:
-			scanSyntax = !isSimpleLiteral(node.Kind())
-		}
-	}
-	var arguments st.NodeList[st.FunctionArgumentNode]
-	switch call := node.(type) {
-	case *st.FunctionCallExpressionNode:
-		arguments = call.Arguments()
-	case *st.MethodCallExpressionNode:
-		arguments = call.Arguments()
-	case *st.RemoteMethodCallActionNode:
-		arguments = call.Arguments()
-	case *st.ExplicitNewExpressionNode:
-		if argList := call.ParenthesizedArgList(); argList != nil {
-			arguments = argList.Arguments()
-		}
-	case *st.ImplicitNewExpressionNode:
-		if argList := call.ParenthesizedArgList(); argList != nil {
-			arguments = argList.Arguments()
-		}
-	}
-	for argument := range arguments.Iterator() {
-		if named, ok := argument.(*st.NamedArgumentNode); ok && n.malformedSyntax(named.ArgumentName(), nil) {
-			return true
-		}
-	}
-	if !scanSyntax {
-		return false
-	}
-	if lambda, ok := node.(*st.ExplicitAnonymousFunctionExpressionNode); ok {
-		return n.malformedSyntax(node, func(child st.Node) bool { return child == lambda.FunctionBody() })
-	}
-	if lambda, ok := node.(*st.ImplicitAnonymousFunctionExpressionNode); ok {
-		return n.malformedSyntax(node, func(child st.Node) bool { return child == lambda.Expression() })
-	}
-	return n.malformedSyntax(node, func(child st.Node) bool {
-		if child == node || !expressionBoundary(child) {
-			return false
-		}
-		if reference, ok := child.(*st.SimpleNameReferenceNode); ok {
-			if reference.Name().IsMissing() {
-				return false
-			}
-		}
-		switch enclosing := node.(type) {
-		case *st.FunctionCallExpressionNode:
-			if child == enclosing.FunctionName() {
-				return false
-			}
-		case *st.MethodCallExpressionNode:
-			if child == enclosing.MethodName() {
-				return false
-			}
-		case *st.FieldAccessExpressionNode:
-			if child == enclosing.FieldName() {
-				return false
-			}
-		case *st.OptionalFieldAccessExpressionNode:
-			if child == enclosing.FieldName() {
-				return false
-			}
-		case *st.RemoteMethodCallActionNode:
-			if child == enclosing.MethodName() {
-				return false
-			}
-		case *st.AnnotAccessExpressionNode:
-			if child == enclosing.AnnotTagReference() {
-				return false
-			}
-		}
-		return true
-	})
+	value, isLiteral := normalizedIdentifierValue(token.Text())
+	return ast.NewBLangBadIdentifier(n.getRecoveryPosition(token), value, token.Text(), isLiteral)
 }
 
 func (n *nodeBuilder) syntaxError(node st.Node) {

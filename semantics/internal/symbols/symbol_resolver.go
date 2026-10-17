@@ -1570,7 +1570,10 @@ func visitInnerSymbolResolver[T symbolResolver](resolver T, node ast.BLangNode) 
 	case *ast.BLangUserDefinedType:
 		referUserDefinedType(resolver, n)
 	case *ast.BLangObjectType:
-		inclusions, positions, _, _ := resolveObjectInclusions(resolver, n.PopUnresolvedInclusions())
+		inclusions, positions, _, ok := resolveObjectInclusions(resolver, n.PopUnresolvedInclusions())
+		if !ok {
+			return nil
+		}
 		n.Inclusions, n.InclusionPositions = inclusions, positions
 	case *ast.BLangRecordType:
 		resolveRecordTypeSymbols(resolver, n)
@@ -1607,12 +1610,13 @@ func resolveQuerySymbols[T symbolResolver](resolver T, query *ast.BLangQueryExpr
 // default with its own closure resolver.
 func resolveRecordTypeSymbols[T symbolResolver](resolver T, recordType *ast.BLangRecordType) {
 	inclusions, positions, ok := resolveRecordTypeInclusions(resolver, recordType.TypeInclusions)
+	if !ok {
+		return
+	}
 	recordType.Inclusions, recordType.InclusionPositions = inclusions, positions
 	allocateRecordDefaultSymbols(resolver, recordType)
-	if ok {
-		for _, inclusion := range recordType.TypeInclusions {
-			ast.Walk(resolver, inclusion.(ast.BLangNode))
-		}
+	for _, inclusion := range recordType.TypeInclusions {
+		ast.Walk(resolver, inclusion.(ast.BLangNode))
 	}
 	for _, field := range recordType.FieldPtrs() {
 		attachments := field.GetAnnotationAttachments()
@@ -1684,30 +1688,25 @@ func resolveSymbolRef[T symbolResolver](
 	target symbolRefNode,
 	unknownMessage string,
 ) bool {
-	symRef, ok := lookupSymbolRef(resolver, name, prefix)
-	if !ok {
-		if prefix != "" {
-			unknownMessage = "Unknown symbol"
-		}
-		semanticError(resolver, unknownMessage+": "+name, pos)
-		return false
-	}
-	target.SetSymbol(symRef)
-	return true
-}
-
-func lookupSymbolRef[T symbolResolver](resolver T, name, prefix string) (model.SymbolRef, bool) {
 	if prefix != "" {
-		return resolver.GetPrefixedSymbol(prefix, name)
+		symRef, ok := resolver.GetPrefixedSymbol(prefix, name)
+		if !ok {
+			semanticError(resolver, "Unknown symbol: "+name, pos)
+			return false
+		}
+		target.SetSymbol(symRef)
+	} else {
+		lookup, ok := resolver.GetSymbol(name)
+		if !ok {
+			semanticError(resolver, unknownMessage+": "+name, pos)
+			return false
+		}
+		if lookup.captured {
+			resolver.recordCapture(lookup.ref)
+		}
+		target.SetSymbol(lookup.ref)
 	}
-	lookup, ok := resolver.GetSymbol(name)
-	if !ok {
-		return model.SymbolRef{}, false
-	}
-	if lookup.captured {
-		resolver.recordCapture(lookup.ref)
-	}
-	return lookup.ref, true
+	return true
 }
 
 func resolveAnnotationReference[T symbolResolver](resolver T, pkgAlias, name ast.IdentifierNode, pos diagnostics.Location, target symbolRefNode) {
@@ -1825,9 +1824,6 @@ func (bs *blockSymbolResolver) VisitTypeData(typeData *ast.TypeData) ast.Visitor
 }
 
 func setTypeDescriptorSymbol[T symbolResolver](resolver T, td ast.TypeDescriptor) {
-	if _, bad := td.(ast.BLangBadNode); bad {
-		return
-	}
 	if bNodeWithSymbol, ok := td.(ast.BNodeWithSymbol); ok {
 		if ast.SymbolIsSet(bNodeWithSymbol) {
 			return
@@ -1987,11 +1983,9 @@ func resolveObjectInclusions[T symbolResolver](resolver T, unresolvedInclusions 
 	inclusions := make([]model.SymbolRef, 0, len(unresolvedInclusions))
 	positions := make([]diagnostics.Location, 0, len(unresolvedInclusions))
 	var includedFields []inclusionMemberForSymbolResolution
-	resolved := true
 	for _, inc := range unresolvedInclusions {
 		if !referUserDefinedType(resolver, inc) {
-			resolved = false
-			continue
+			return nil, nil, nil, false
 		}
 		symRef := inc.Symbol()
 		if tDefn, ok := localTypeDefns[symRef]; ok {
@@ -2035,7 +2029,7 @@ func resolveObjectInclusions[T symbolResolver](resolver T, unresolvedInclusions 
 		inclusions = append(inclusions, symRef)
 		positions = append(positions, inc.GetPosition())
 	}
-	return inclusions, positions, includedFields, resolved
+	return inclusions, positions, includedFields, true
 }
 
 // allocateRecordDefaultSymbols allocates a module unique function symbol and the scope owning the
@@ -2062,20 +2056,14 @@ func resolveRecordTypeInclusions[T symbolResolver](resolver T, typeInclusions []
 	localTypeDefns := resolver.GetTypeDefns()
 	var inclusions []model.SymbolRef
 	var positions []diagnostics.Location
-	resolved := true
 	for _, inc := range typeInclusions {
-		if _, bad := inc.(ast.BLangBadNode); bad {
-			resolved = false
-			continue
-		}
 		udt, ok := inc.(*ast.BLangUserDefinedType)
 		if !ok {
 			ctx.SemanticError("type inclusion must be a user-defined type", inc.(ast.BLangNode).GetPosition())
 			continue
 		}
 		if !referUserDefinedType(resolver, udt) {
-			resolved = false
-			continue
+			return nil, nil, false
 		}
 		symRef := udt.Symbol()
 		if tDefn, ok := localTypeDefns[symRef]; ok {
@@ -2098,7 +2086,7 @@ func resolveRecordTypeInclusions[T symbolResolver](resolver T, typeInclusions []
 		inclusions = append(inclusions, symRef)
 		positions = append(positions, udt.GetPosition())
 	}
-	return inclusions, positions, resolved
+	return inclusions, positions, true
 }
 
 func collectTransitiveFields(ctx *context.CompilerContext, inclusions []model.SymbolRef, directFields []inclusionMemberForSymbolResolution, localTypeDefns map[model.SymbolRef]*ast.BLangTypeDefinition, localClassDefns map[model.SymbolRef]*ast.BLangClassDefinition) []inclusionMemberForSymbolResolution {
@@ -2215,7 +2203,10 @@ func resolveClassDefinition(ms *compilationUnitSymbolResolver, classDef *ast.BLa
 		ast.Walk(classResolver, &classDef.AnnAttachments[i])
 	}
 
-	inclusions, positions, includedFields, _ := resolveObjectInclusions(ms, classDef.PopUnresolvedInclusions())
+	inclusions, positions, includedFields, ok := resolveObjectInclusions(ms, classDef.PopUnresolvedInclusions())
+	if !ok {
+		return
+	}
 	classDef.Inclusions, classDef.InclusionPositions = inclusions, positions
 	allocateObjectResourceMethodSymbols(ms, classResolver, classDef, networkClassSym, isNetworkClass)
 
