@@ -69,7 +69,6 @@ type typeResolver interface {
 	semanticError(message string, loc diagnostics.Location)
 	internalError(message string, loc diagnostics.Location)
 	unimplemented(message string, loc diagnostics.Location)
-	syntaxError(message string, loc diagnostics.Location)
 
 	// Symbol management (proxied from CompilerContext)
 	symbolType(ref model.SymbolRef) semtypes.SemType
@@ -278,13 +277,6 @@ func (t *packageTypeResolver) unimplemented(msg string, loc diagnostics.Location
 	t.ctx.Unimplemented(msg, loc)
 }
 
-func (t *packageTypeResolver) syntaxError(msg string, loc diagnostics.Location) {
-	if t.isEphemeral() {
-		return
-	}
-	t.ctx.SyntaxError(msg, loc)
-}
-
 func (t *packageTypeResolver) symbolType(ref model.SymbolRef) semtypes.SemType {
 	return t.ctx.SymbolType(ref)
 }
@@ -451,13 +443,6 @@ func (f *functionTypeResolver) internalError(msg string, loc diagnostics.Locatio
 func (f *functionTypeResolver) unimplemented(msg string, loc diagnostics.Location) {
 	noteEphemeralUnimplemented(f)
 	f.parentResolver.unimplemented(msg, loc)
-}
-
-func (f *functionTypeResolver) syntaxError(msg string, loc diagnostics.Location) {
-	if f.isEphemeral() {
-		return
-	}
-	f.parentResolver.syntaxError(msg, loc)
 }
 
 func (f *functionTypeResolver) symbolType(ref model.SymbolRef) semtypes.SemType {
@@ -782,7 +767,7 @@ func mergeImplicitImports(pkg *ast.BLangPackage, imports map[string]ast.BLangImp
 // ResolvePrivateNodesTypes resolves the types private nodes within the package. Then can be executed concurrently
 func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
 	p := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
-	fns := declaredNodes(common.PackageFunctionDecls(pkg))
+	fns := common.DeclaredNodes(common.PackageFunctionDecls(pkg))
 
 	allImports := make(map[string]ast.BLangImportPackage)
 	resolveFieldInitsInScope := func(owner model.SymbolRef, scope model.Scope, fields []*ast.BLangVariable) {
@@ -804,7 +789,7 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 		}
 		maps.Copy(allImports, ft.implicitImports)
 	}
-	for _, c := range declaredNodes(pkg.ClassDefinitions) {
+	for _, c := range common.DeclaredNodes(pkg.ClassDefinitions) {
 		resolveFieldInitsInScope(c.Symbol(), c.Scope(), c.Fields)
 	}
 	for i := range pkg.Services {
@@ -851,12 +836,6 @@ func isPolymorphicFnSymbol(sym model.FunctionSymbol) bool {
 	default:
 		return false
 	}
-}
-
-// declaredNodes returns the nodes that declare a symbol. A declaration with a bad name declares none, so it has
-// no type.
-func declaredNodes[N ast.NodeWithSymbol](nodes []N) []N {
-	return slices.DeleteFunc(slices.Clone(nodes), func(node N) bool { return !ast.SymbolIsSet(node) })
 }
 
 func resolvePackageConstants(t *packageTypeResolver, constants []*ast.BLangVariable) {
@@ -1098,40 +1077,40 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 }
 
 func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
-	for _, defn := range declaredNodes(pkg.TypeDefinitions) {
+	for _, defn := range common.DeclaredNodes(pkg.TypeDefinitions) {
 		t.typeDefnNodes[defn.Symbol()] = defn
 	}
-	for _, classDef := range declaredNodes(pkg.ClassDefinitions) {
+	for _, classDef := range common.DeclaredNodes(pkg.ClassDefinitions) {
 		t.classDefnNodes[classDef.Symbol()] = classDef
 	}
-	for _, constant := range declaredNodes(pkg.Constants) {
+	for _, constant := range common.DeclaredNodes(pkg.Constants) {
 		t.packageConstants[constant.Symbol()] = constant
 	}
-	for _, fn := range declaredNodes(pkg.Functions) {
+	for _, fn := range common.DeclaredNodes(pkg.Functions) {
 		t.functionNodes[fn.Symbol()] = fn
 	}
-	for _, gv := range declaredNodes(pkg.GlobalVars) {
+	for _, gv := range common.DeclaredNodes(pkg.GlobalVars) {
 		t.globalVarNodes[gv.Symbol()] = gv
 	}
 
 	// A top-level node that fails to resolve has no type; the rest are still resolved so each reports its own
 	// diagnostics.
-	for _, defn := range declaredNodes(pkg.TypeDefinitions) {
+	for _, defn := range common.DeclaredNodes(pkg.TypeDefinitions) {
 		t.ensureResolved(defn.Symbol(), 0)
 	}
-	for _, classDef := range declaredNodes(pkg.ClassDefinitions) {
+	for _, classDef := range common.DeclaredNodes(pkg.ClassDefinitions) {
 		t.ensureResolved(classDef.Symbol(), 0)
 	}
-	for _, annotation := range declaredNodes(pkg.Annotations) {
+	for _, annotation := range common.DeclaredNodes(pkg.Annotations) {
 		resolveAnnotationDeclaration(t, annotation)
 	}
-	for _, fn := range declaredNodes(pkg.Functions) {
+	for _, fn := range common.DeclaredNodes(pkg.Functions) {
 		resolveFunctionSignature(t, nil, fn, 0)
 	}
 	if pkg.InitFunction != nil {
 		resolveFunctionSignature(t, nil, pkg.InitFunction, 0)
 	}
-	for _, gv := range declaredNodes(pkg.GlobalVars) {
+	for _, gv := range common.DeclaredNodes(pkg.GlobalVars) {
 		if gv.TypeNode() == nil {
 			// An inferred global's type comes from its initializer, resolved
 			// lazily via ensureResolved; this only stamps the name node.
@@ -1140,18 +1119,18 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 		}
 		t.ensureResolved(gv.Symbol(), 0)
 	}
-	for _, xmlns := range declaredNodes(pkg.XmlnsList) {
+	for _, xmlns := range common.DeclaredNodes(pkg.XmlnsList) {
 		resolveXMLNS(t, nil, xmlns)
 	}
-	resolvePackageConstants(t, declaredNodes(pkg.Constants))
+	resolvePackageConstants(t, common.DeclaredNodes(pkg.Constants))
 	// Annotation values can depend on constants, so resolve them after constants
 	// have been folded even though the annotated type/function nodes were
 	// resolved earlier in the top-level pass.
 	resolveTopLevelAnnotationAttachments(t, pkg)
-	for _, gv := range declaredNodes(pkg.GlobalVars) {
+	for _, gv := range common.DeclaredNodes(pkg.GlobalVars) {
 		resolveGlobalVarInit(t, gv)
 	}
-	detectGlobalVarInitCycles(t, declaredNodes(pkg.GlobalVars))
+	detectGlobalVarInitCycles(t, common.DeclaredNodes(pkg.GlobalVars))
 	attachPointBound := common.ListenerAttachPointBound(t.typeContext())
 	validateListenerVars(t, pkg, attachPointBound)
 	for i := range pkg.Services {
@@ -3028,7 +3007,7 @@ func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefini
 		resolveFunctionSignature(t, nil, method, depth+1)
 	}
 
-	for _, rm := range declaredNodes(resourceMethods) {
+	for _, rm := range common.DeclaredNodes(resourceMethods) {
 		resolveResourceMethodSignature(t, isClient, isService, rm, depth+1)
 	}
 
@@ -3369,7 +3348,7 @@ func parseFloatValue(t typeResolver, strValue string, pos diagnostics.Location) 
 	strValue = strings.TrimRight(strValue, "fF")
 	f, err := strconv.ParseFloat(strValue, 64)
 	if err != nil {
-		t.syntaxError(fmt.Sprintf("invalid float literal: %s", strValue), pos)
+		t.semanticError(fmt.Sprintf("invalid float literal: %s", strValue), pos)
 		return 0, false
 	}
 	return f, true
@@ -3378,7 +3357,7 @@ func parseFloatValue(t typeResolver, strValue string, pos diagnostics.Location) 
 func parseDecimalValue(t typeResolver, strValue string, pos diagnostics.Location) (*decimal.Decimal, bool) {
 	d, err := decimal.FromLiteral(strValue)
 	if err != nil {
-		t.syntaxError(fmt.Sprintf("invalid decimal literal: %s", strValue), pos)
+		t.semanticError(fmt.Sprintf("invalid decimal literal: %s", strValue), pos)
 		return decimal.FromInt64(0), false
 	}
 	return d, true
@@ -3564,10 +3543,7 @@ func resolveGlobalVarInit(t typeResolver, node *ast.BLangVariable) bool {
 	}
 	expectedType := semType
 	if node.IsListener() {
-		// A listener-decl is allowed to have an init expression whose type
-		// includes error; module init performs the runtime `is error` check
-		// and panics if the value is an error.
-		expectedType = semtypes.Union(semType, semtypes.Error)
+		expectedType = common.ListenerInitExpectedType(semType)
 	}
 	_, ok := resolveActionOrExpression(t, nil, node.Expr, expectedType)
 	return ok
@@ -3589,7 +3565,7 @@ func resolveServiceAttachedExpressions(t typeResolver, svc *ast.BLangService) bo
 // semantic error otherwise.
 func validateListenerVars(t typeResolver, pkg *ast.BLangPackage, attachPointBound semtypes.SemType) {
 	tyCtx := t.typeContext()
-	for _, gv := range declaredNodes(pkg.GlobalVars) {
+	for _, gv := range common.DeclaredNodes(pkg.GlobalVars) {
 		if !gv.IsListener() {
 			continue
 		}
@@ -3726,9 +3702,11 @@ func resolveDefaultExpression(
 	return result, true
 }
 
+// resolveActionOrExpression resolves expr against expectedType. An expression that fails to resolve has type never.
 func resolveActionOrExpression(t typeResolver, chain *binding, expr ast.BLangActionOrExpression, expectedType semtypes.SemType) (expressionResult, bool) {
 	result, ok := resolveExpressionInner(t, chain, expr, expectedType)
 	if !ok {
+		setNodeType(t, expr, semtypes.Never)
 		return expressionResult{}, false
 	}
 	// A constant-valued condition marks its impossible outcome here. The possible
@@ -5064,7 +5042,7 @@ func resolveForeachVariableType(t typeResolver, collection ast.BLangActionOrExpr
 	case semtypes.IsSubtype(ctx, collectionTy, semtypes.String):
 		return semtypes.Char, true
 	default:
-		iterableTy, ok := common.IterableType(t.compilerContext(), t.symbolType)
+		iterableTy, ok := common.IterableType(t.compilerContext())
 		if !ok {
 			t.semanticError("foreach collection must be subtype of object:Iterable", collection.GetPosition())
 			return semtypes.SemType{}, false

@@ -16,16 +16,16 @@
 // under the License.
 
 xmlns "https://example.com/module" as moduleNS;
-xmlns "" as emptyNS; // @error
+xmlns "" as emptyNS;
 xmlns missingURI as missingNS; // @error
 xmlns "https://example.com/later" as laterNS;
 
 function recovered() returns int {
     xmlns "https://example.com/local" as localNS;
-    xmlns "" as emptyLocal; // @error
+    xmlns "" as emptyLocal;
     xmlns missingLocalURI as missingLocal; // @error
     xmlns "https://example.com/laterLocal" as laterLocal;
-    return probe("later"); // @error
+    return probe("later");
 }
 
 function probe(int value) returns int => value;

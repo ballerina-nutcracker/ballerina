@@ -80,7 +80,8 @@ function valid(C obj) returns C => new C(obj.m(1, b = 3));
     (expr-function-body
       (invocation m expr:
         (simple-var-ref obj) (
-        (bad-expr-or-action) <default>))))
+        (named-arg a
+          (bad-expr-or-action))))))
   (function newMissingComma () (
     (user-defined-type C))
     (expr-function-body
@@ -98,7 +99,8 @@ function valid(C obj) returns C => new C(obj.m(1, b = 3));
     (expr-function-body
       (new
         (user-defined-type C) (
-        (bad-expr-or-action) <default>))))
+        (named-arg a
+          (bad-expr-or-action))))))
   (function valid (
     (variable obj (type
       (user-defined-type C)))) (
@@ -109,4 +111,5 @@ function valid(C obj) returns C => new C(obj.m(1, b = 3));
         (invocation m expr:
           (simple-var-ref obj) (
           (literal 1)
-          (literal 3))) <default>)))))
+          (named-arg b
+            (literal 3)))))))))

@@ -24,7 +24,6 @@ function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
 function valid(int a, int b = 1, int... rest) returns int => a + b + rest.length();
 -- ast --
 (package
-  (import-package ballerina lang array (as lang.array))
   (function missingFirstType (
     (variable (bad-identifier) (type
       (user-defined-type a)))
@@ -63,7 +62,7 @@ function valid(int a, int b = 1, int... rest) returns int => a + b + rest.length
         (binary-expr +
           (simple-var-ref a)
           (simple-var-ref b))
-        (invocation lang.array length (
-          (simple-var-ref rest))))))
+        (invocation length expr:
+          (simple-var-ref rest) ()))))
   (bad-top-level function)
   (bad-top-level function))

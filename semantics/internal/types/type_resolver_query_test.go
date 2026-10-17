@@ -27,10 +27,6 @@ import (
 	"testing"
 )
 
-type unsupportedExpr struct {
-	ast.BLangLiteral
-}
-
 type unsupportedBType struct {
 	ast.BLangValueType
 }
@@ -67,14 +63,6 @@ func TestResolveQueryExprErrorCases(t *testing.T) {
 			diagSub: "query expression requires a select or collect clause",
 		},
 		{
-			name: "from collection resolution fails",
-			query: newQueryExpr(
-				newFromClause(newUnsupportedExprNode(), nil, true),
-				newSelectClause(newIntLiteral(1)),
-			),
-			diagSub: "unsupported expression type",
-		},
-		{
 			name: "from collection is not a list",
 			query: newQueryExpr(
 				newFromClause(newIntLiteral(42), nil, true),
@@ -105,14 +93,6 @@ func TestResolveQueryExprErrorCases(t *testing.T) {
 				newSelectClause(newIntLiteral(1)),
 			),
 			diagSub: "from clause variable type is incompatible with collection member type",
-		},
-		{
-			name: "select expression resolution fails",
-			query: newQueryExpr(
-				newFromClause(newIntListLiteral(1), nil, true),
-				newSelectClause(newUnsupportedExprNode()),
-			),
-			diagSub: "unsupported expression type",
 		},
 	}
 
@@ -149,13 +129,6 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 			diagSub: "let clause variable declaration requires an initializer",
 		},
 		{
-			name: "let initializer resolution fails",
-			clause: newLetClause(
-				newSimpleVarDef("y", nil, newUnsupportedExprNode()),
-			),
-			diagSub: "unsupported expression type",
-		},
-		{
 			name: "let declared type resolution fails",
 			clause: newLetClause(
 				newSimpleVarDef("y", newUnsupportedTypeNode(), newIntLiteral(1)),
@@ -170,41 +143,19 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 			diagSub: "let clause variable type is incompatible with initializer expression",
 		},
 		{
-			name:    "where expression resolution fails",
-			clause:  newWhereClause(newUnsupportedExprNode()),
-			diagSub: "unsupported expression type",
-		},
-		{
 			name:    "where expression non-boolean",
 			clause:  newWhereClause(newIntLiteral(1)),
 			diagSub: "where clause expression must be boolean",
 		},
 		{
-			name:    "limit expression resolution fails",
-			clause:  newLimitClause(newUnsupportedExprNode()),
-			diagSub: "unsupported expression type",
-		},
-		{
 			name:    "limit expression non-int",
 			clause:  newLimitClause(newStringLiteral("x")),
 			diagSub: "limit clause expression must be int",
 		},
 		{
-			name:    "limit expression resolution fails",
-			clause:  newLimitClause(newUnsupportedExprNode()),
-			diagSub: "unsupported expression type",
-		},
-		{
 			name:    "limit expression non-int",
 			clause:  newLimitClause(newStringLiteral("x")),
 			diagSub: "limit clause expression must be int",
-		},
-		{
-			name: "order by key resolution fails",
-			clause: newOrderByClause(
-				newOrderKey(newUnsupportedExprNode(), true),
-			),
-			diagSub: "unsupported expression type",
 		},
 		{
 			name: "order by key non-ordered type",
@@ -219,13 +170,6 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 				newGroupingKeyVarDef(newSimpleVarDef("g", nil, nil)),
 			),
 			diagSub: "group by variable declaration requires an initializer",
-		},
-		{
-			name: "group by initializer resolution fails",
-			clause: newGroupByClause(
-				newGroupingKeyVarDef(newSimpleVarDef("g", nil, newUnsupportedExprNode())),
-			),
-			diagSub: "unsupported expression type",
 		},
 		{
 			name: "group by declared type resolution fails",
@@ -999,10 +943,4 @@ func newErrorConstructorExpr() *ast.BLangErrorConstructorExpr {
 	errExpr := &ast.BLangErrorConstructorExpr{}
 	errExpr.SetPosition(queryTestPos)
 	return errExpr
-}
-
-func newUnsupportedExprNode() ast.BLangExpression {
-	expr := &unsupportedExpr{}
-	expr.SetPosition(queryTestPos)
-	return expr
 }

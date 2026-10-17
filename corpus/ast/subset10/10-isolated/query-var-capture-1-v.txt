@@ -1,0 +1,80 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition F
+    (function-type () (
+      (value-type int))))
+  (function q1 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (let-clause
+            (var-def
+              (variable f (type
+                (user-defined-type F)) (expr
+                (lambda
+                  (function $anonFunc$_0 () (
+                    (value-type int))
+                    (block-function-body
+                      (return
+                        (simple-var-ref x)))))))))
+          (select-clause
+            (invocation f ()))))))
+  (function q2 (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (query-expr
+          (from-clause
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (simple-var-ref xs))
+          (let-clause
+            (var-def
+              (variable y (type
+                (value-type int)) (expr
+                (binary-expr +
+                  (simple-var-ref x)
+                  (literal 1))))))
+          (let-clause
+            (var-def
+              (variable f (type
+                (user-defined-type F)) (expr
+                (lambda
+                  (function $anonFunc$_1 () (
+                    (value-type int))
+                    (block-function-body
+                      (return
+                        (simple-var-ref y)))))))))
+          (select-clause
+            (invocation f ()))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation q1 (
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation q2 (
+            (list-constructor-expr
+              (literal 1)
+              (literal 2))))))))))

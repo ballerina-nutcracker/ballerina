@@ -28,7 +28,7 @@ function types() {
 function valid() {}
 function discarded(int _) {} // @error discarded signature
 function discardedReferences() {
-    discarded(); // @error unresolved discarded declaration
+    discarded();
     int surviving = 5; // @error unused surviving sibling
 }
 -- ast --

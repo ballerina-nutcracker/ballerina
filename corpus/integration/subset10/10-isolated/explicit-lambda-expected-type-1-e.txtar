@@ -1,0 +1,21 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected isolated function(int) returns int, got function(int) returns int
+  --> explicit-lambda-expected-type-1-e.bal:24:12
+   |
+24 |     IF h = function(int y) returns int { // @error not isolated
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |         return y;
+   |         ^^^^^^^^^
+26 |     };
+   |     ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected isolated function(int) returns int, got function(int) returns int
+  --> explicit-lambda-expected-type-1-e.bal:31:12
+   |
+31 |     IF h = function(int y) returns int { // @error not isolated
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 |         return y + g;
+   |         ^^^^^^^^^^^^^
+33 |     };
+   |     ^

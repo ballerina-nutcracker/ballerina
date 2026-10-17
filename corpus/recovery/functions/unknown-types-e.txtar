@@ -28,7 +28,6 @@ function bodyOnly(int value) returns int => value + ; // @error
 function callBodyOnly(int value) returns int => bodyOnly(value);
 -- ast --
 (package
-  (import-package ballerina lang array (as lang.array))
   (class-definition Signatures
     (function anotherUnknown (
       (variable value (type
@@ -71,8 +70,8 @@ function callBodyOnly(int value) returns int => bodyOnly(value);
     (expr-function-body
       (binary-expr +
         (simple-var-ref value)
-        (invocation lang.array length (
-          (simple-var-ref labels))))))
+        (invocation length expr:
+          (simple-var-ref labels) ()))))
   (function bodyOnly (
     (variable value (type
       (value-type int)))) (
