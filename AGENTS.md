@@ -120,9 +120,12 @@ Stages 5–9 then run concurrently across modules. After each of those stages, a
 
 ## AST
 
-- Each ast node has a type representing the value you get after evaluating that node
-  - For expressions this needs to be determined.
-  - For all other nodes (declarations, statements, identifiers, etc) which don't produce a value this is always NEVER
+- Expressions and actions have the type of the value they evaluate to (`ast.NodeWithType`, read via `Type()`)
+- Type descriptors expose the type they denote through the same `Type()` method (backed by their `TypeData.Type`)
+- All other nodes (declarations, statements, identifiers, etc) have no type. Get a relevant type from the node's
+  symbol, or from its child type descriptor when it has no symbol
+- Set an expression's type with `ast.SetType` (interface values) or the `Ty` field (concrete node pointers). Inside
+  the type resolver use `setNodeType` / `setTypeData` instead, so nothing is written during candidate trials
 
 ## Type
 

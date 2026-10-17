@@ -25,7 +25,7 @@ function inferredCallable() returns int {
 
 function unknownCallable() returns int {
     Unknown unavailable; // @error
-    unavailable();
+    unavailable(); // @error never-typed callee
     probe("later"); // @error later sibling resolved
     int later = 2;
     return later;

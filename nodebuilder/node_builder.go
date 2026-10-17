@@ -6472,7 +6472,7 @@ func (n *nodeBuilder) transformMapTypeDescriptor(mapTypeDescriptorNode *st.MapTy
 		return nil, false
 	}
 	constrainedType := &ast.BLangConstrainedType{
-		Type:       ast.TypeData{TypeDescriptor: refType},
+		BaseType:   ast.TypeData{TypeDescriptor: refType},
 		Constraint: ast.TypeData{TypeDescriptor: constraint},
 	}
 	constrainedType.SetPosition(refType.GetPosition())
@@ -6849,7 +6849,7 @@ func (n *nodeBuilder) transformFutureTypeDescriptor(node *st.ParameterizedTypeDe
 		return nil, false
 	}
 	constrainedType := &ast.BLangConstrainedType{
-		Type:       ast.TypeData{TypeDescriptor: base},
+		BaseType:   ast.TypeData{TypeDescriptor: base},
 		Constraint: ast.TypeData{TypeDescriptor: constraint},
 	}
 	constrainedType.SetPosition(pos)
@@ -6873,7 +6873,7 @@ func (n *nodeBuilder) transformTypedescTypeDescriptor(node *st.ParameterizedType
 	base := &ast.BLangValueType{}
 	base.SetPosition(n.getPosition(node))
 	base.TypeKind = ast.TypeKindTypeDesc
-	constrainedType.Type = ast.TypeData{TypeDescriptor: base}
+	constrainedType.BaseType = ast.TypeData{TypeDescriptor: base}
 	constrainedType.Constraint = ast.TypeData{TypeDescriptor: constraint}
 	return constrainedType, true
 }
@@ -6896,7 +6896,7 @@ func (n *nodeBuilder) transformXMLTypeDescriptor(parameterizedTypeDescriptorNode
 	}
 	refType.SetPosition(pos)
 	constrainedType := &ast.BLangConstrainedType{
-		Type:       ast.TypeData{TypeDescriptor: refType},
+		BaseType:   ast.TypeData{TypeDescriptor: refType},
 		Constraint: ast.TypeData{TypeDescriptor: constraint},
 	}
 	constrainedType.SetPosition(pos)

@@ -16,6 +16,8 @@
 
 package ast
 
+import "github.com/ballerina-nutcracker/ballerina/semtypes"
+
 type BadTopLevelNodeKind uint8
 
 const (
@@ -118,6 +120,8 @@ func (*BLangBadExprOrAction) actionOrExpression() {}
 func (*BLangBadExprOrAction) expressionNode()     {}
 func (*BLangBadExprOrAction) actionNode()         {}
 func (*BLangBadExprOrAction) isLExpr()            {}
+
+func (*BLangBadExprOrAction) Type() semtypes.SemType { return semtypes.Never }
 
 func (*BLangBadTypeNode) badNode() {}
 

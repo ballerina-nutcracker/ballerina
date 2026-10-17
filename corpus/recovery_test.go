@@ -43,7 +43,7 @@ import (
 
 // recoveryPhaseLimit is the last phase that recovers from source errors. Fixtures run only up to it and their
 // goldens hold the tree built by then; markers are checked only once every phase they exercise is enabled.
-const recoveryPhaseLimit = testphases.PhaseSymbolResolution
+const recoveryPhaseLimit = testphases.PhaseTypeNarrowing
 
 func TestRecovery(t *testing.T) {
 	t.Parallel()
@@ -177,17 +177,12 @@ func printLambdaResolutionTypes(typeContext semtypes.Context, pkg *ast.BLangPack
 		sb.WriteString("\n  (")
 		if lambda.Function == nil {
 			sb.WriteString("<missing-function>")
-			writeLambdaResolutionType(&sb, typeContext, "callable", lambda.GetDeterminedType())
+			writeLambdaResolutionType(&sb, typeContext, "callable", lambda.Type())
 			sb.WriteString(")")
 			continue
 		}
 		sb.WriteString(lambda.Function.Name.GetValue())
-		writeLambdaResolutionType(&sb, typeContext, "callable", lambda.GetDeterminedType())
-		writeLambdaResolutionType(&sb, typeContext, "function", lambda.Function.GetDeterminedType())
-		writeLambdaResolutionType(&sb, typeContext, "name", lambda.Function.Name.GetDeterminedType())
-		if body, ok := lambda.Function.Body.(*ast.BLangExprFunctionBody); ok {
-			writeLambdaResolutionType(&sb, typeContext, "expression-body", body.GetDeterminedType())
-		}
+		writeLambdaResolutionType(&sb, typeContext, "callable", lambda.Type())
 		sb.WriteString(")")
 	}
 	sb.WriteString(")\n")

@@ -484,7 +484,7 @@ func Walk(v Visitor, node BLangNode) {
 		if node.Expr != nil {
 			Walk(v, node.Expr.(BLangNode))
 		}
-		WalkTypeData(v, &node.Type)
+		WalkTypeData(v, &node.TestedType)
 
 	case *BLangCommitExpr:
 		panic("unimplemented")
@@ -627,7 +627,7 @@ func Walk(v Visitor, node BLangNode) {
 		WalkTypeData(v, &node.DetailType)
 
 	case *BLangConstrainedType:
-		WalkTypeData(v, &node.Type)
+		WalkTypeData(v, &node.BaseType)
 		WalkTypeData(v, &node.Constraint)
 	case *BLangStreamType:
 		WalkTypeData(v, &node.ValueType)

@@ -165,7 +165,7 @@ func MappingKeyName(ctx *context.CompilerContext, key *ast.BLangMappingKey) (str
 // must have when the constructor has type mappingTy with atomic type mat.
 func MappingFieldExpectedType(ctx *context.CompilerContext, tc semtypes.Context, mappingTy semtypes.SemType, mat *semtypes.MappingAtomicType, kv *ast.BLangMappingKeyValueField) (semtypes.SemType, bool) {
 	if kv.Key.Kind == ast.MappingKeyComputed {
-		keyTy := semtypes.Intersect(kv.Key.Expr.GetDeterminedType(), semtypes.String)
+		keyTy := semtypes.Intersect(kv.Key.Expr.Type(), semtypes.String)
 		return semtypes.MappingMemberTypeInnerVal(tc, mappingTy, keyTy), true
 	}
 	keyName, ok := MappingKeyName(ctx, kv.Key)

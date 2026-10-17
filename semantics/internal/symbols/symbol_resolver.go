@@ -1513,7 +1513,6 @@ func defineFunctionTypeParam(paramScope model.Scope, param *ast.BLangFunctionTyp
 	paramScope.AddSymbol(name, &symbol)
 	ref, _ := paramScope.GetSymbol(name)
 	param.SymbolRef = ref
-	param.Name.SetDeterminedType(semtypes.Never)
 	return true
 }
 
@@ -2671,7 +2670,7 @@ func resolveExpr(r symbolResolver, expr ast.BLangActionOrExpression) bool {
 		return ok
 	case *ast.BLangTypeTestExpr:
 		ok := resolveOptionalExpr(r, n.Expr)
-		return resolveTypeData(r, &n.Type) && ok
+		return resolveTypeData(r, &n.TestedType) && ok
 	case *ast.BLangVarRef:
 		return referSimpleVariableReference(r, n)
 	case *ast.BLangConstRef:
@@ -2689,8 +2688,6 @@ func resolveExpr(r symbolResolver, expr ast.BLangActionOrExpression) bool {
 		rootNeeds := map[string]model.SymbolRef{}
 		ok := resolveXMLElementLiteralNamespaces(r, r.GetScope(), n, rootNeeds)
 		return mergeNamespaces(r, n, rootNeeds) && ok
-	case *ast.BLangXMLAttribute:
-		return resolveOptionalExpr(r, n.Value)
 	case *ast.BLangXMLPILiteral, *ast.BLangXMLCommentLiteral, *ast.BLangXMLTextLiteral:
 		return true
 	case *ast.BLangXMLFilterExpression:
@@ -2898,7 +2895,7 @@ func resolveTypeDesc(r symbolResolver, td ast.TypeDescriptor) bool {
 	case *ast.BLangErrorTypeNode:
 		return resolveTypeData(r, &n.DetailType)
 	case *ast.BLangConstrainedType:
-		ok := resolveTypeData(r, &n.Type)
+		ok := resolveTypeData(r, &n.BaseType)
 		return resolveTypeData(r, &n.Constraint) && ok
 	case *ast.BLangStreamType:
 		ok := resolveTypeData(r, &n.ValueType)
