@@ -32,8 +32,7 @@ function discardedReferences() returns int {
     return later;
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function (bad-identifier) () (
     (value-type null))
     (block-function-body))
@@ -69,7 +68,6 @@ function discardedReferences() returns int {
     (block-function-body)
     (annotation-attachment mod (bad-identifier)
       (literal true)))
-  (bad-top-level function)
   (function valid () (
     (value-type int))
     (expr-function-body
@@ -91,4 +89,5 @@ function discardedReferences() returns int {
           (value-type int)) (expr
           (invocation valid ()))))
       (return
-        (simple-var-ref later)))))
+        (simple-var-ref later))))
+  (bad-top-level function))

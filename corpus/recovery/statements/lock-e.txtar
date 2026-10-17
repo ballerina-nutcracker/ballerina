@@ -37,8 +37,7 @@ isolated class LockRecovery {
     }
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (variable outside (type
     (array-type
       (value-type int) dimensions: 1 ([]))) (expr

@@ -213,6 +213,7 @@ type (
 		Annotations      []*BLangAnnotation
 		InitFunction     *BLangFunction
 		ClassDefinitions []*BLangClassDefinition
+		BadTopLevelNodes []*BLangBadTopLevelNode
 		PackageID        *model.PackageID
 		Scope            model.Scope
 	}

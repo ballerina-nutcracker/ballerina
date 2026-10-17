@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: a
+  --> 3-e.bal:18:15
+   |
+18 |     int _ = f(a) + g(b); // @error
+   |               ^
+
+error[SEMANTIC_ERROR]: Unknown symbol: b
+  --> 3-e.bal:18:22
+   |
+18 |     int _ = f(a) + g(b); // @error
+   |                      ^
+
+error[SEMANTIC_ERROR]: Unknown symbol: f
+  --> 3-e.bal:18:13
+   |
+18 |     int _ = f(a) + g(b); // @error
+   |             ^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: g
+  --> 3-e.bal:18:20
+   |
+18 |     int _ = f(a) + g(b); // @error
+   |                    ^^^^

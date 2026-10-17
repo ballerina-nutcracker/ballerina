@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: undefinedInConst
+  --> 19-e.bal:18:15
+   |
+18 | const int C = undefinedInConst; // @error
+   |               ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'C'
+  --> 19-e.bal:17:11
+   |
+17 | const int C = 1; // @error
+   |           ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'C'
+  --> 19-e.bal:18:11
+   |
+18 | const int C = undefinedInConst; // @error
+   |           ^

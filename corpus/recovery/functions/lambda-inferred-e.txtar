@@ -24,8 +24,7 @@ function inferredBody() {
     consume(2); // @error expression value must be assigned
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function consume (
     (variable value (type
       (value-type int)))) (

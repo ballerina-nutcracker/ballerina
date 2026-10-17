@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: undefinedInResource
+  --> 24-e.bal:20:16
+   |
+20 |         return undefinedInResource; // @error
+   |                ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: resource methods are only allowed in client or service classes
+  --> 24-e.bal:18:5
+   |
+18 |     resource function get path() returns int { // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |         int unusedLocal = 1; // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |         return undefinedInResource; // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |     }
+   |     ^
+
+error[SEMANTIC_ERROR]: unused variable 'unusedLocal'
+  --> 24-e.bal:19:9
+   |
+19 |         int unusedLocal = 1; // @error
+   |         ^^^^^^^^^^^^^^^^^^^^

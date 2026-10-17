@@ -55,8 +55,17 @@ function callers(Survivor survivor) returns int {
     return named + method;
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
+  (class-definition Survivor
+    (function method () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable bad (type
+            (value-type int)) (expr
+            (simple-var-ref (bad-identifier)))))
+        (return
+          (literal 5)))))
   (function brokenBody () (
     (value-type int))
     (block-function-body
@@ -209,16 +218,6 @@ function callers(Survivor survivor) returns int {
           (literal signatureSkipped))))
       (return
         (literal 1))))
-  (class-definition Survivor
-    (function method () (
-      (value-type int))
-      (block-function-body
-        (var-def
-          (variable bad (type
-            (value-type int)) (expr
-            (simple-var-ref (bad-identifier)))))
-        (return
-          (literal 5)))))
   (function callers (
     (variable survivor (type
       (user-defined-type Survivor)))) (

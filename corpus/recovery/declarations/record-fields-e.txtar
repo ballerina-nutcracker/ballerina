@@ -1,0 +1,126 @@
+-- record-fields-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+type OpenMissingType record {
+    a; // @error
+    int valid;
+};
+type OpenMissingTypeWithDefault record {
+    a = 1; // @error
+    int valid;
+};
+type OpenMissingName record {
+    int; // @error
+    int valid;
+};
+type OpenMissingNameWithDefault record {
+    int = 1; // @error
+    int valid;
+};
+type OpenMissingDefault record {
+    int a = ; // @error
+    int valid;
+};
+type ClosedMissingType record {|
+    a; // @error
+    int valid;
+|};
+type ClosedMissingTypeWithDefault record {|
+    a = 1; // @error
+    int valid;
+|};
+type ClosedMissingName record {|
+    int; // @error
+    int valid;
+|};
+type ClosedMissingNameWithDefault record {|
+    int = 1; // @error
+    int valid;
+|};
+type ClosedMissingDefault record {|
+    int a = ; // @error
+    int valid;
+|};
+type OpenMissingSemicolon record {
+    int a = 1
+    int valid; // @error missing semicolon is reported at the next field
+};
+type ClosedMissingSemicolon record {|
+    int a = 1
+    int valid; // @error missing semicolon is reported at the next field
+|};
+type OpenInclusionMissingSemicolon record {
+    *MissingRecordBase
+    int valid; // @error missing semicolon is reported at the next field
+};
+type ClosedInclusionMissingSemicolon record {|
+    *MissingRecordBase
+    int valid; // @error missing semicolon is reported at the next field
+|};
+type MissingInclusionType record {
+    *; // @error
+    int valid;
+};
+type Valid record {| int a; |};
+-- ast --
+(package
+  (type-definition OpenMissingType
+    (bad-type))
+  (type-definition OpenMissingTypeWithDefault
+    (bad-type))
+  (type-definition OpenMissingName
+    (bad-type))
+  (type-definition OpenMissingNameWithDefault
+    (bad-type))
+  (type-definition OpenMissingDefault
+    (record-type
+      (field a
+        (value-type int)
+        (simple-var-ref (bad-identifier)))
+      (field valid
+        (value-type int))))
+  (type-definition ClosedMissingType
+    (bad-type))
+  (type-definition ClosedMissingTypeWithDefault
+    (bad-type))
+  (type-definition ClosedMissingName
+    (bad-type))
+  (type-definition ClosedMissingNameWithDefault
+    (bad-type))
+  (type-definition ClosedMissingDefault
+    (record-type
+      (field a
+        (value-type int)
+        (simple-var-ref (bad-identifier)))
+      (field valid
+        (value-type int))))
+  (type-definition OpenMissingSemicolon
+    (bad-type))
+  (type-definition ClosedMissingSemicolon
+    (bad-type))
+  (type-definition OpenInclusionMissingSemicolon
+    (bad-type))
+  (type-definition ClosedInclusionMissingSemicolon
+    (bad-type))
+  (type-definition MissingInclusionType
+    (record-type
+      (field valid
+        (value-type int))))
+  (type-definition Valid
+    (record-type
+      (field a
+        (value-type int)))))

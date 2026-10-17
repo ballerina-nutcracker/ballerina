@@ -34,8 +34,7 @@ function explicitBodies() {
     }
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (function consume (
     (variable value (type
       (value-type int)))) (

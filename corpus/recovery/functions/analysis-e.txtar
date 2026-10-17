@@ -39,12 +39,7 @@ function analysis() {
     int finalSibling = "wrong"; // @error independent semantic analysis
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
-  (function ordinary () (
-    (value-type int))
-    (expr-function-body
-      (literal 1)))
+(package
   (variable missingInitializer (type
     (value-type int)) (expr
     (binary-expr +
@@ -53,6 +48,10 @@ function analysis() {
   (variable abandoned (type
     (user-defined-type Unknown)) (expr
     (invocation ordinary ())))
+  (function ordinary () (
+    (value-type int))
+    (expr-function-body
+      (literal 1)))
   (function analysis () (
     (value-type null))
     (block-function-body

@@ -1,0 +1,91 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: dependently typed function must be external
+  --> 29-e.bal:60:5
+   |
+60 |     function m(typedesc<anydata> td = <>) returns td { // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+61 |         return 1;
+   |         ^^^^^^^^^
+62 |     }
+   |     ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'C'
+  --> 29-e.bal:17:7
+   |
+17 | class C { // @error
+   |       ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'C'
+  --> 29-e.bal:23:7
+   |
+23 | class C { // @error
+   |       ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'D'
+  --> 29-e.bal:56:7
+   |
+56 | class D { // @error
+   |       ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'D'
+  --> 29-e.bal:59:7
+   |
+59 | class D { // @error
+   |       ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'K'
+  --> 29-e.bal:29:14
+   |
+29 | client class K { // @error
+   |              ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'K'
+  --> 29-e.bal:32:14
+   |
+32 | client class K { // @error
+   |              ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'M'
+  --> 29-e.bal:38:14
+   |
+38 | client class M { // @error
+   |              ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'M'
+  --> 29-e.bal:41:7
+   |
+41 | class M { // @error
+   |       ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'Q'
+  --> 29-e.bal:47:7
+   |
+47 | class Q { // @error
+   |       ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'Q'
+  --> 29-e.bal:50:14
+   |
+50 | client class Q { // @error
+   |              ^
+
+error[SEMANTIC_ERROR]: resource methods are only allowed in client or service classes
+  --> 29-e.bal:24:5
+   |
+24 |     resource function get path() returns int { // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |         return 1;
+   |         ^^^^^^^^^
+26 |     }
+   |     ^
+
+error[SEMANTIC_ERROR]: resource methods are only allowed in client or service classes
+  --> 29-e.bal:42:5
+   |
+42 |     resource function get path() returns int { // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+43 |         return 1;
+   |         ^^^^^^^^^
+44 |     }
+   |     ^

@@ -30,8 +30,7 @@ function recovered() returns int {
 
 function probe(int value) returns int => value;
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (xmlns
     (literal https://example.com/module) as moduleNS)
   (xmlns

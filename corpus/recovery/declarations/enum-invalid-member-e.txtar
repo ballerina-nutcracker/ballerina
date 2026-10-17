@@ -17,8 +17,7 @@
 
 enum Colour { R, '_ } // @error
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (const R enum-member (
     (value-type string)) (
     (literal R)))
@@ -29,7 +28,5 @@ enum Colour { R, '_ } // @error
     (union-type
       (user-defined-type R)
       (user-defined-type _))))
--- symbols --
-+Colour +R -_
 -- diagnostic-counts --
 1 '_' is a keyword, and may not be used as an identifier

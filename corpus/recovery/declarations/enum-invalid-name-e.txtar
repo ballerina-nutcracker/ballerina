@@ -17,14 +17,11 @@
 
 enum '_ { R } // @error
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (const R enum-member (
     (value-type string)) (
     (literal R)))
   (type-definition (bad-identifier) enum
     (user-defined-type R)))
--- symbols --
-+R -_
 -- diagnostic-counts --
 1 '_' is a keyword, and may not be used as an identifier

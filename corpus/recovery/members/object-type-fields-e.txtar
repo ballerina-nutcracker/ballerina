@@ -1,0 +1,65 @@
+-- object-type-fields-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+type MissingType object {
+    x; // @error
+    int valid;
+};
+type MissingName object {
+    int; // @error
+    int valid;
+};
+type MissingSemicolon object {
+    int missingSemicolon
+    int valid; // @error missing semicolon is reported at the next field
+};
+type InclusionMissingSemicolon object {
+    *MissingObjectBase
+    int valid; // @error missing semicolon is reported at the next field
+};
+type MissingCloseBrace object {
+    int a;
+; // @error
+function valid() returns int => 1;
+-- ast --
+(package
+  (type-definition MissingType
+    (object-type
+      (field valid
+        (value-type int))
+      (bad-top-level field)))
+  (type-definition MissingName
+    (object-type
+      (field valid
+        (value-type int))
+      (bad-top-level field)))
+  (type-definition MissingSemicolon
+    (object-type
+      (field valid
+        (value-type int))
+      (bad-top-level field)))
+  (type-definition InclusionMissingSemicolon
+    (object-type
+      (field valid
+        (value-type int))
+      (bad-top-level type-inclusion)))
+  (type-definition MissingCloseBrace
+    (bad-type))
+  (function valid () (
+    (value-type int))
+    (expr-function-body
+      (literal 1))))

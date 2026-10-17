@@ -16,15 +16,12 @@
 // under the License.
 
 enum Palette { RED BLUE, GREEN } // @error
-function usePalette() returns Palette { return GREEN; }
+function usePalette() returns Palette { return GREEN; } // @error cascades from the discarded enum
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
-  (bad-top-level enum)
+(package
   (function usePalette () (
     (user-defined-type Palette))
     (block-function-body
       (return
-        (simple-var-ref GREEN)))))
--- symbols --
-+Palette -RED -BLUE +GREEN +usePalette
+        (simple-var-ref GREEN))))
+  (bad-top-level enum))

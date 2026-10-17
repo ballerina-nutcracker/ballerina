@@ -40,8 +40,16 @@ type RecordWithUnknownInclusion record {
     int good = 1;
 };
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
+  (type-definition RecordWithBadInclusion
+    (record-type
+      (field good
+        (value-type int))))
+  (type-definition RecordWithUnknownInclusion
+    (record-type
+      (field good
+        (value-type int)
+        (literal 1))))
   (class-definition C
     (variable (bad-identifier) (type
       (value-type int)))
@@ -70,15 +78,6 @@ type RecordWithUnknownInclusion record {
             (literal 2))))))
     (bad-top-level type-inclusion)
     (bad-top-level type-inclusion))
-  (function (bad-identifier) () (
-    (value-type null))
-    (block-function-body))
-  (function valid () (
-    (value-type null))
-    (block-function-body
-      (var-def
-        (variable surviving (type
-          (user-defined-type C))))))
   (class-definition InclusionFailure
     (variable good (type
       (value-type int)))
@@ -87,12 +86,12 @@ type RecordWithUnknownInclusion record {
       (expr-function-body
         (field-based-access good
           (simple-var-ref self)))))
-  (type-definition RecordWithBadInclusion
-    (record-type
-      (field good
-        (value-type int))))
-  (type-definition RecordWithUnknownInclusion
-    (record-type
-      (field good
-        (value-type int)
-        (literal 1)))))
+  (function (bad-identifier) () (
+    (value-type null))
+    (block-function-body))
+  (function valid () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable surviving (type
+          (user-defined-type C)))))))

@@ -18,8 +18,5 @@
 enum Colour { R, B
 // @error
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (bad-top-level enum))
--- symbols --
-+Colour +R +B

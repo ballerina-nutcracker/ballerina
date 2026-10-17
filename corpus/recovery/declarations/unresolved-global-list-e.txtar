@@ -24,8 +24,7 @@ function independent() returns int {
     return values[0];
 }
 -- ast --
-(compilation-unit
-(package-id $anon . 0.0.0)
+(package
   (variable outside (type
     (tuple-type)) (expr
     (list-constructor-expr

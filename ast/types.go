@@ -143,6 +143,7 @@ type (
 		Inclusions         []model.SymbolRef      // This needs to be symbol because it could be a class definition as well
 		InclusionPositions []diagnostics.Location // Positions of each inclusion, parallel to Inclusions
 		members            map[string]ObjectMember
+		BadMembers         []*BLangBadTopLevelNode
 		Definition         semtypes.Definition
 		Isolated           bool
 		NetworkQuals       ObjectNetworkQuals
