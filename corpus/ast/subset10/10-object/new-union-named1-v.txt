@@ -1,0 +1,96 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition IntOptions
+    (record-type
+      (field width
+        (value-type int)
+        (literal 1))
+      (field height
+        (value-type int)
+        (literal 2))))
+  (type-definition StringOptions
+    (record-type
+      (field label
+        (value-type string)
+        (literal none))))
+  (class-definition IntShape
+    (variable area (type
+      (value-type int)))
+    (function init (
+      (variable scale (type
+        (value-type int)))
+      (variable options (type
+        (user-defined-type IntOptions)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access area
+            (simple-var-ref self))
+          (binary-expr *
+            (binary-expr *
+              (simple-var-ref scale)
+              (field-based-access width
+                (simple-var-ref options)))
+            (field-based-access height
+              (simple-var-ref options)))))))
+  (class-definition StringShape
+    (variable label (type
+      (value-type string)))
+    (function init (
+      (variable scale (type
+        (value-type int)))
+      (variable options (type
+        (user-defined-type StringOptions)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access label
+            (simple-var-ref self))
+          (field-based-access label
+            (simple-var-ref options)))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref scale)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (union-type
+            (user-defined-type IntShape)
+            (user-defined-type StringShape))) (expr
+          (new (
+            (named-arg scale
+              (literal 2))
+            (named-arg width
+              (literal 3)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref a)
+          (user-defined-type IntShape))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access area
+                (simple-var-ref a)))))) ())
+      (block-stmt
+        (var-def
+          (variable b (type
+            (union-type
+              (user-defined-type IntShape)
+              (user-defined-type StringShape))) (expr
+            (new (
+              (literal 1)
+              (named-arg label
+                (literal box)))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref b)
+            (user-defined-type StringShape))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (field-based-access label
+                  (simple-var-ref b)))))) ())
+        (block-stmt)))))

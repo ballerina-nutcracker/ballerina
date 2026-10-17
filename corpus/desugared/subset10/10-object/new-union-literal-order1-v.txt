@@ -1,0 +1,175 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Decimal
+    (variable value (type
+      (value-type decimal)))
+    (function init (
+      (variable value (type
+        (value-type decimal)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref value)))))
+  (class-definition Float
+    (variable value (type
+      (value-type float)))
+    (function init (
+      (variable value (type
+        (value-type float)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref value))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition HexFloat
+    (variable value (type
+      (value-type float)))
+    (function init (
+      (variable value (type
+        (value-type float)))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref value))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition HexDecimal
+    (variable value (type
+      (value-type decimal)))
+    (function init (
+      (variable value (type
+        (value-type decimal)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref value))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d (type
+          (union-type
+            (user-defined-type Decimal)
+            (user-defined-type Float))) (expr
+          (new (
+            (literal 1.50))))))
+      (var-def
+        (variable e (type
+          (union-type
+            (user-defined-type Float)
+            (user-defined-type Decimal))) (expr
+          (new (
+            (literal 1.50))))))
+      (if
+        (binary-expr &&
+          (type-test-expr is
+            (simple-var-ref d)
+            (user-defined-type Decimal))
+          (type-test-expr is
+            (simple-var-ref e)
+            (user-defined-type Decimal)))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref d)
+                (literal value))
+              (literal  )
+              (index-based-access
+                (simple-var-ref e)
+                (literal value)))))) ())
+      (block-stmt
+        (var-def
+          (variable f (type
+            (union-type
+              (user-defined-type Decimal)
+              (user-defined-type Float))) (expr
+            (new (
+              (literal 1.5)
+              (literal 1))))))
+        (var-def
+          (variable g (type
+            (union-type
+              (user-defined-type Float)
+              (user-defined-type Decimal))) (expr
+            (new (
+              (literal 1.5)
+              (literal 1))))))
+        (if
+          (binary-expr &&
+            (type-test-expr is
+              (simple-var-ref f)
+              (user-defined-type Float))
+            (type-test-expr is
+              (simple-var-ref g)
+              (user-defined-type Float)))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (index-based-access
+                  (simple-var-ref f)
+                  (literal value))
+                (literal  )
+                (index-based-access
+                  (simple-var-ref g)
+                  (literal value)))))) ())
+        (block-stmt
+          (var-def
+            (variable h (type
+              (union-type
+                (user-defined-type HexFloat)
+                (user-defined-type HexDecimal))) (expr
+              (new (
+                (literal 5)
+                (literal x))))))
+          (var-def
+            (variable i (type
+              (union-type
+                (user-defined-type HexDecimal)
+                (user-defined-type HexFloat))) (expr
+              (new (
+                (literal 5)
+                (literal 1))))))
+          (if
+            (binary-expr &&
+              (type-test-expr is
+                (simple-var-ref h)
+                (user-defined-type HexFloat))
+              (type-test-expr is
+                (simple-var-ref i)
+                (user-defined-type HexDecimal)))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (index-based-access
+                    (simple-var-ref h)
+                    (literal value))
+                  (literal  )
+                  (index-based-access
+                    (simple-var-ref i)
+                    (literal value)))))) ())
+          (block-stmt))))))

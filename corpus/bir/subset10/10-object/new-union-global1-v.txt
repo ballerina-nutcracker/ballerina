@@ -1,0 +1,50 @@
+module $anon.. v 0.0.0;
+box  object { public function init(int, int) returns nil; int value }|object { public function init(string, int) returns nil; string value };
+later  int;
+class IntBox {
+  value int
+
+  init(int,int) -> nil{
+    bb0 {
+      %5 = value;
+      %6 = marker;
+      %4 = + %5 %6;
+      %7 = ConstantLoad value
+      self[%7] = %4;
+      return;
+    }
+  }
+}
+class StringBox {
+  value string
+
+  init(string,int) -> nil{
+    bb0 {
+      %4 = ConstantLoad value
+      self[%4] = value;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = box is object { public function init(int, int) returns nil; int value }
+    %1 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 3
+    %1 = ConstantLoad value
+    %0 = box[%1];
+    %2 = println(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inferred anonymous function parameters are not supported while selecting among candidate types
+  --> new-union-xml1-fv.bal:48:41
+   |
+48 |     IntList|StringList l = new (arr.map(v => v + 1), 1); // @error
+   |                                         ^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inferred anonymous function parameters are not supported while selecting among candidate types
+  --> new-union-xml1-fv.bal:48:41
+   |
+48 |     IntList|StringList l = new (arr.map(v => v + 1), 1); // @error
+   |                                         ^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: xml step expressions are not supported while selecting among candidate types
+  --> new-union-xml1-fv.bal:46:31
+   |
+46 |     XmlArg|StringArg s = new (x/<a>, 1); // @error
+   |                               ^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: xml step expressions are not supported while selecting among candidate types
+  --> new-union-xml1-fv.bal:46:31
+   |
+46 |     XmlArg|StringArg s = new (x/<a>, 1); // @error
+   |                               ^^^^^

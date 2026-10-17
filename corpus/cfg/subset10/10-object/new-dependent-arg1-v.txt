@@ -1,0 +1,96 @@
+(FloatHolder
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access v
+          (simple-var-ref self))
+        (simple-var-ref v))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(IntHolder
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access v
+          (simple-var-ref self))
+        (binary-expr +
+          (simple-var-ref v)
+          (simple-var-ref marker)))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable j (type
+        (builtin-ref-type json)) (expr
+        (literal 1))))
+    (var-def
+      (variable h (type
+        (union-type
+          (user-defined-type IntHolder)
+          (user-defined-type FloatHolder))) (expr
+        (new (
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref j)
+              (typedesc-expr))))
+          (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref h)
+          (user-defined-type IntHolder)))))
+    (var-def
+      (variable h2 (type
+        (union-type
+          (user-defined-type FloatHolder)
+          (user-defined-type IntHolder))) (expr
+        (new (
+          (checked-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref j)
+              (typedesc-expr))))
+          (literal x))))))
+    (type-test-expr is
+      (simple-var-ref h2)
+      (user-defined-type FloatHolder))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access v
+          (simple-var-ref h2)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable d (type
+        (builtin-ref-type json)) (expr
+        (literal 2))))
+    (var-def
+      (variable h3 (type
+        (union-type
+          (user-defined-type IntHolder)
+          (user-defined-type FloatHolder))) (expr
+        (new (
+          (checked-expr
+            (invocation lang.value fromJsonWithType (
+              (simple-var-ref d)
+              (typedesc-expr))))
+          (literal 1))))))
+    (type-test-expr is
+      (simple-var-ref h3)
+      (user-defined-type IntHolder))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access v
+          (simple-var-ref h3)))))
+  )
+  (bb4 (bb3 bb2) ())
+)

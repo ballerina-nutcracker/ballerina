@@ -1,0 +1,77 @@
+(IntShape
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access area
+          (simple-var-ref self))
+        (binary-expr *
+          (binary-expr *
+            (simple-var-ref scale)
+            (field-based-access width
+              (simple-var-ref options)))
+          (field-based-access height
+            (simple-var-ref options))))
+    )
+  )
+)
+(StringShape
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access label
+          (simple-var-ref self))
+        (field-based-access label
+          (simple-var-ref options)))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref scale))))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable a (type
+        (union-type
+          (user-defined-type IntShape)
+          (user-defined-type StringShape))) (expr
+        (new (
+          (literal 2)
+          (mapping-constructor-expr
+            (key-value
+              (literal width)
+              (literal 3))))))))
+    (type-test-expr is
+      (simple-var-ref a)
+      (user-defined-type IntShape))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access area
+          (simple-var-ref a)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable b (type
+        (union-type
+          (user-defined-type IntShape)
+          (user-defined-type StringShape))) (expr
+        (new (
+          (literal 1)
+          (mapping-constructor-expr
+            (key-value
+              (literal label)
+              (literal box))))))))
+    (type-test-expr is
+      (simple-var-ref b)
+      (user-defined-type StringShape))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access label
+          (simple-var-ref b)))))
+  )
+  (bb4 (bb3 bb2) ())
+)

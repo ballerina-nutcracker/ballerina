@@ -1,0 +1,259 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition IntArgs
+    (variable value (type
+      (value-type int)))
+    (variable flag (type
+      (value-type boolean)))
+    (function init (
+      (variable value (type
+        (value-type int)))
+      (variable flag (type
+        (value-type boolean)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (simple-var-ref value))
+        (assignment
+          (field-based-access flag
+            (simple-var-ref self))
+          (simple-var-ref flag)))))
+  (class-definition StringArgs
+    (variable value (type
+      (value-type string)))
+    (variable flag (type
+      (value-type boolean)))
+    (function init (
+      (variable value (type
+        (value-type string)))
+      (variable flag (type
+        (value-type boolean)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (simple-var-ref value))
+        (assignment
+          (field-based-access flag
+            (simple-var-ref self))
+          (simple-var-ref flag)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (literal 1))))
+      (var-def
+        (variable y (type
+          (value-type boolean)) (expr
+          (literal true))))
+      (var-def
+        (variable b (type
+          (value-type boolean)) (expr
+          (literal false))))
+      (var-def
+        (variable c (type
+          (value-type boolean)) (expr
+          (literal true))))
+      (var-def
+        (variable a (type
+          (union-type
+            (user-defined-type IntArgs)
+            (user-defined-type StringArgs))) (expr
+          (new (
+            (ternary-expr
+              (type-test-expr is
+                (simple-var-ref x)
+                (value-type int))
+              (simple-var-ref x)
+              (literal 0))
+            (binary-expr &&
+              (binary-expr ==
+                (simple-var-ref x)
+                (literal 1))
+              (simple-var-ref y)))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref a)
+          (user-defined-type IntArgs))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access value
+                (simple-var-ref a))
+              (literal  )
+              (field-based-access flag
+                (simple-var-ref a)))))) ())
+      (block-stmt
+        (var-def
+          (variable o (type
+            (union-type
+              (user-defined-type IntArgs)
+              (user-defined-type StringArgs))) (expr
+            (new (
+              (ternary-expr
+                (type-test-expr is
+                  (simple-var-ref x)
+                  (value-type string))
+                (simple-var-ref x)
+                (literal none))
+              (binary-expr ||
+                (simple-var-ref b)
+                (simple-var-ref c)))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref o)
+            (user-defined-type StringArgs))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (field-based-access value
+                  (simple-var-ref o))
+                (literal  )
+                (field-based-access flag
+                  (simple-var-ref o)))))) ())
+        (block-stmt
+          (var-def
+            (variable fx (type
+              (union-type
+                (value-type int)
+                (value-type string))) (expr
+              (literal 1))))
+          (if
+            (type-test-expr is
+              (simple-var-ref fx)
+              (value-type int))
+            (block-stmt
+              (var-def
+                (variable f (type
+                  (function-type () (
+                    (value-type boolean)))) (expr
+                  (lambda
+                    (function $anonFunc$_0 () (
+                      (value-type boolean))
+                      (block-function-body
+                        (var-def
+                          (variable inner (type
+                            (union-type
+                              (user-defined-type IntArgs)
+                              (user-defined-type StringArgs))) (expr
+                            (new (
+                              (ternary-expr
+                                (type-test-expr is
+                                  (simple-var-ref fx)
+                                  (value-type int))
+                                (simple-var-ref fx)
+                                (literal 0))
+                              (literal true))))))
+                        (return
+                          (type-test-expr is
+                            (simple-var-ref inner)
+                            (user-defined-type IntArgs)))))))))
+              (expression-stmt
+                (invocation io println (
+                  (invocation f ()))))) ())
+          (block-stmt
+            (var-def
+              (variable z (type
+                (union-type
+                  (value-type int)
+                  (value-type string))) (expr
+                (literal q))))
+            (var-def
+              (variable t (type
+                (union-type
+                  (user-defined-type IntArgs)
+                  (user-defined-type StringArgs))) (expr
+                (new (
+                  (ternary-expr
+                    (type-test-expr is
+                      (simple-var-ref z)
+                      (value-type int))
+                    (literal a)
+                    (simple-var-ref z))
+                  (binary-expr &&
+                    (type-test-expr is
+                      (simple-var-ref z)
+                      (value-type string))
+                    (binary-expr >
+                      (invocation length expr:
+                        (simple-var-ref z) ())
+                      (literal 0))))))))
+            (if
+              (type-test-expr is
+                (simple-var-ref t)
+                (user-defined-type StringArgs))
+              (block-stmt
+                (expression-stmt
+                  (invocation io println (
+                    (field-based-access value
+                      (simple-var-ref t))
+                    (literal  )
+                    (field-based-access flag
+                      (simple-var-ref t)))))) ())
+            (block-stmt
+              (var-def
+                (variable u (type
+                  (union-type
+                    (error-type)
+                    (value-type string))) (expr
+                  (error-constructor-expr (
+                    (literal failed))))))
+              (var-def
+                (variable m (type
+                  (union-type
+                    (user-defined-type IntArgs)
+                    (user-defined-type StringArgs))) (expr
+                  (new (
+                    (ternary-expr
+                      (type-test-expr is
+                        (simple-var-ref u)
+                        (error-type))
+                      (invocation message expr:
+                        (simple-var-ref u) ())
+                      (simple-var-ref u))
+                    (literal true))))))
+              (if
+                (type-test-expr is
+                  (simple-var-ref m)
+                  (user-defined-type StringArgs))
+                (block-stmt
+                  (expression-stmt
+                    (invocation io println (
+                      (field-based-access value
+                        (simple-var-ref m)))))) ())
+              (block-stmt
+                (var-def
+                  (variable i (type
+                    (value-type int)) (expr
+                    (literal 0))))
+                (while
+                  (binary-expr <
+                    (simple-var-ref i)
+                    (literal 1))
+                  (block-stmt
+                    (var-def
+                      (variable w (type
+                        (union-type
+                          (user-defined-type IntArgs)
+                          (user-defined-type StringArgs))) (expr
+                        (new (
+                          (simple-var-ref i)
+                          (binary-expr ==
+                            (simple-var-ref i)
+                            (literal 0)))))))
+                    (expression-stmt
+                      (invocation io println (
+                        (type-test-expr is
+                          (simple-var-ref w)
+                          (user-defined-type IntArgs)))))
+                    (compound-assignment +
+                      (simple-var-ref i)
+                      (literal 1))))))))))))

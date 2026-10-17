@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: failed to find a suitable object type
+  --> new-union-typedesc1-e.bal:35:25
+   |
+35 |     First|Second none = new (<int[NEGATIVE]>x, 1); // @error failed to find a suitable object type
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: fixed-length array size must be non-negative
+  --> new-union-typedesc1-e.bal:34:40
+   |
+34 |     First|object {} single = new (<int[NEGATIVE]>x, 1); // @error fixed-length array size must be non-negative
+   |                                        ^^^^^^^^

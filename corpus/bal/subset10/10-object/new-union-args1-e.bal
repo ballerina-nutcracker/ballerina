@@ -29,8 +29,10 @@ public function main() {
     First|Second unsuitable = new (name = "x"); // @error failed to find a suitable object type
     NoInit extra = new (1); // @error too many arguments
     object {} anonymous = new (); // @error object type cannot be instantiated without a class
+    First|object {} precise = new ("x"); // @error the only class is selected, so its argument is reported
     var _ = ambiguous;
     var _ = unsuitable;
     var _ = extra;
     var _ = anonymous;
+    var _ = precise;
 }

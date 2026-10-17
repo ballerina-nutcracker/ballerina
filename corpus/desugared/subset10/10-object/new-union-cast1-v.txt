@@ -1,0 +1,115 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang string (as lang.string))
+  (class-definition Fixed
+    (variable values (type
+      (array-type
+        (value-type int) dimensions: 1 ([
+        (literal 2)]))))
+    (variable length (type
+      (value-type int)))
+    (function init (
+      (variable values (type
+        (array-type
+          (value-type int) dimensions: 1 ([
+          (literal 2)]))))
+      (variable length (type
+        (value-type int)))
+      (variable pushed (type
+        (value-type null)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal values))
+          (simple-var-ref values))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal length))
+          (simple-var-ref length))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref pushed)))))))
+  (class-definition Text
+    (variable values (type
+      (value-type string)))
+    (function init (
+      (variable values (type
+        (value-type string)))
+      (variable length (type
+        (value-type int)))
+      (variable pushed (type
+        (value-type null)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal values))
+          (simple-var-ref values))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref length))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref pushed)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable fixed (type
+          (array-type
+            (value-type int) dimensions: 1 ([
+            (literal 2)]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable x (type
+          (value-type anydata)) (expr
+          (simple-var-ref fixed))))
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (literal abc))))
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable f (type
+          (union-type
+            (user-defined-type Fixed)
+            (user-defined-type Text))) (expr
+          (new (
+            (type-conversion-expr
+              (simple-var-ref x)
+              (array-type
+                (value-type int) dimensions: 1 ([
+                (literal 2)])))
+            (invocation lang.string length (
+              (simple-var-ref s)))
+            (invocation lang.array push (
+              (simple-var-ref arr)
+              (literal 3))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref f)
+          (user-defined-type Fixed))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref f)
+                (literal values))
+              (literal  )
+              (index-based-access
+                (simple-var-ref f)
+                (literal length))
+              (literal  )
+              (simple-var-ref arr))))) ())
+      (block-stmt))))

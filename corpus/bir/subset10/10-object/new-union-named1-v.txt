@@ -1,0 +1,137 @@
+module $anon.. v 0.0.0;
+class IntShape {
+  area int
+
+  init(int,{| height: int, width: int, never... |}) -> nil{
+    bb0 {
+      %6 = scale;
+      %8 = ConstantLoad width
+      %7 = options[%8];
+      %9 = %7;
+      %5 = * %6 %9;
+      %10 = %5;
+      %12 = ConstantLoad height
+      %11 = options[%12];
+      %13 = %11;
+      %4 = * %10 %13;
+      %14 = ConstantLoad area
+      self[%14] = %4;
+      return;
+    }
+  }
+}
+class StringShape {
+  label string
+
+  init(int,{| label: string, never... |}) -> nil{
+    bb0 {
+      %5 = ConstantLoad label
+      %4 = options[%5];
+      %6 = ConstantLoad label
+      self[%6] = %4;
+      _ = scale;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:IntShape
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad width
+    %4 = ConstantLoad 3
+    %5 = newMap {| height: int, width: int, never... |}{%3=%4} defaults{width=$anon/.:$default$0, height=$anon/.:$default$1}
+    %6 = %1.init(%2,%5) -> bb1;
+  }
+  bb1 {
+    %8 = %6 is nil
+    %8 ? bb2 : bb3;
+  }
+  bb2 {
+    %7 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %7 = %6;
+    GOTO bb4;
+  }
+  bb4 {
+    a = %7;
+    %10 = a is object { int area; public function init(int, {| height: int, width: int, never... |}) returns nil }
+    %10 ? bb5 : bb7;
+  }
+  bb5 {
+    PushScopeFrame 4
+    %1 = ConstantLoad area
+    %0 = (1, a)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb7 {
+    PushScopeFrame 10
+    %0 = newObject $anon/.:StringShape
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad label
+    %3 = ConstantLoad box
+    %4 = newMap {| label: string, never... |}{%2=%3} defaults{label=$anon/.:$default$2}
+    %5 = %0.init(%1,%4) -> bb8;
+  }
+  bb8 {
+    %7 = %5 is nil
+    %7 ? bb9 : bb10;
+  }
+  bb9 {
+    %6 = %0;
+    GOTO bb11;
+  }
+  bb10 {
+    %6 = %5;
+    GOTO bb11;
+  }
+  bb11 {
+    b = %6;
+    %9 = b is object { public function init(int, {| label: string, never... |}) returns nil; string label }
+    %9 ? bb12 : bb14;
+  }
+  bb12 {
+    PushScopeFrame 3
+    %1 = ConstantLoad label
+    %0 = (1, b)[%1];
+    %2 = println(%0) -> bb13;
+  }
+  bb13 {
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb14 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> string{
+  bb0 {
+    %1 = ConstantLoad none
+    %0 = %1;
+    return;
+  }
+}

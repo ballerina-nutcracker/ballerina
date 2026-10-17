@@ -33,6 +33,10 @@ func (a MappingAlternative) Type() SemType {
 	return a.semType
 }
 
+func (a MappingAlternative) HasNegativeAtoms() bool {
+	return len(a.neg) > 0
+}
+
 // Atomic returns the intersected positive mapping atom of this alternative. It is nil for the
 // alternative produced for the Mapping top, so callers must handle a nil result.
 func (a MappingAlternative) Atomic() *MappingAtomicType {
@@ -84,13 +88,6 @@ func intersectMappingAtoms(env Env, atoms []*MappingAtomicType) (SemType, *Mappi
 	return ty, atom, true
 }
 
-func mappingAlternativeFieldTypeAllowed(cx Context, actual, expected SemType) bool {
-	if IsSubtype(cx, expected, Number) && IsSubtype(cx, actual, Number) {
-		return true
-	}
-	return IsSubtype(cx, actual, expected)
-}
-
 // MappingAlternativeAllowsFields checks if a given mapping alternative can be used to construct a mapping value using given fields and default fields.
 // NOTE: default fields are not part of the semtype so we allow them to be injected from outside.
 func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields []MappingFieldInfo, defaultableFields func(*MappingAtomicType) []string) bool {
@@ -101,7 +98,7 @@ func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields [
 			expectedTy := CellInnerVal(pos.rest)
 			for _, each := range fields {
 				fieldTy := each.Type
-				if !mappingAlternativeFieldTypeAllowed(cx, fieldTy, expectedTy) {
+				if !IsSubtype(cx, fieldTy, expectedTy) {
 					return false
 				}
 			}
@@ -121,7 +118,7 @@ func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields [
 					}
 					matchedWithNamed[j] = true
 					expectedType := CellInnerVal(pos.types[i])
-					if !mappingAlternativeFieldTypeAllowed(cx, f.Type, expectedType) {
+					if !IsSubtype(cx, f.Type, expectedType) {
 						return false
 					}
 					matched = true
@@ -143,7 +140,7 @@ func MappingAlternativeAllowsFields(cx Context, alt MappingAlternative, fields [
 					return false
 				}
 				ty := fields[i].Type
-				if !mappingAlternativeFieldTypeAllowed(cx, ty, expectedTy) {
+				if !IsSubtype(cx, ty, expectedTy) {
 					return false
 				}
 			}

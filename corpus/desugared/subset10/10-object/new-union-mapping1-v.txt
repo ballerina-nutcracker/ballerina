@@ -1,0 +1,158 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type decimal))
+      (field y
+        (value-type decimal)
+        (literal 2.5))))
+  (class-definition DecMap
+    (variable values (type
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type decimal))))
+    (function init (
+      (variable values (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type decimal))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal values))
+          (simple-var-ref values))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition FloatMap
+    (variable values (type
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type float))))
+    (function init (
+      (variable values (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type float))))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal values))
+          (simple-var-ref values))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition PointHolder
+    (variable point (type
+      (user-defined-type Point)))
+    (function init (
+      (variable point (type
+        (user-defined-type Point)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal point))
+          (simple-var-ref point))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition StringHolder
+    (variable point (type
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type string))))
+    (function init (
+      (variable point (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type string))))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal point))
+          (simple-var-ref point))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable m (type
+          (union-type
+            (user-defined-type DecMap)
+            (user-defined-type FloatMap))) (expr
+          (new (
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (literal 1.50)))
+            (literal 1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref m)
+          (user-defined-type DecMap))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (index-based-access
+                  (simple-var-ref m)
+                  (literal values))
+                (literal a)))))) ())
+      (block-stmt
+        (var-def
+          (variable x (type
+            (value-type decimal)) (expr
+            (literal 1.25))))
+        (var-def
+          (variable p (type
+            (union-type
+              (user-defined-type PointHolder)
+              (user-defined-type StringHolder))) (expr
+            (new (
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (simple-var-ref x)))
+              (literal 0))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref p)
+            (user-defined-type PointHolder))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (index-based-access
+                  (index-based-access
+                    (simple-var-ref p)
+                    (literal point))
+                  (literal x))
+                (literal  )
+                (index-based-access
+                  (index-based-access
+                    (simple-var-ref p)
+                    (literal point))
+                  (literal y)))))) ())
+        (block-stmt))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 2.5)))))

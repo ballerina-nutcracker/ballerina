@@ -61,6 +61,11 @@
 - [Trap expression](https://ballerina.io/spec/lang/master/#trap-expr)
 - [Type cast expression](https://ballerina.io/spec/lang/master/#type-cast-expr)
 - [New expression](https://ballerina.io/spec/lang/master/#section_6.8.2)
+  - When selecting among multiple candidate object types, resolving the arguments has the following restrictions:
+    - [Query expressions](https://ballerina.io/spec/lang/master/#query-expr) are not supported during candidate selection.
+    - [Anonymous functions with inferred parameter types](https://ballerina.io/spec/lang/master/#infer-anonymous-function-expr) are not supported during candidate selection when they have one or more parameters. Parameterless inferred functions and explicitly typed anonymous functions do not have this restriction.
+    - [XML step expressions](https://ballerina.io/spec/lang/master/#xml-step-expr) are not supported during candidate selection.
+    - Inline type descriptors that declare symbols are not supported during candidate selection: object types with method declarations, function types with named parameters (including rest parameters), and record types with field defaults. References to named types do not have this restriction.
 - [List constructor](https://ballerina.io/spec/lang/master/#list-constructor-expr)
 - [Mapping constructor](https://ballerina.io/spec/lang/master/#mapping-constructor-expr)
   - Currently [spread-field](https://ballerina.io/spec/lang/master/#spread-field) not supported

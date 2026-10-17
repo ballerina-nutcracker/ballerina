@@ -1,0 +1,117 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition IntOptions
+    (record-type
+      (field width
+        (value-type int)
+        (literal 1))
+      (field height
+        (value-type int)
+        (literal 2))))
+  (type-definition StringOptions
+    (record-type
+      (field label
+        (value-type string)
+        (literal none))))
+  (class-definition IntShape
+    (variable area (type
+      (value-type int)))
+    (function init (
+      (variable scale (type
+        (value-type int)))
+      (variable options (type
+        (user-defined-type IntOptions)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal area))
+          (binary-expr *
+            (binary-expr *
+              (simple-var-ref scale)
+              (index-based-access
+                (simple-var-ref options)
+                (literal width)))
+            (index-based-access
+              (simple-var-ref options)
+              (literal height)))))))
+  (class-definition StringShape
+    (variable label (type
+      (value-type string)))
+    (function init (
+      (variable scale (type
+        (value-type int)))
+      (variable options (type
+        (user-defined-type StringOptions)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal label))
+          (index-based-access
+            (simple-var-ref options)
+            (literal label)))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref scale)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (union-type
+            (user-defined-type IntShape)
+            (user-defined-type StringShape))) (expr
+          (new (
+            (literal 2)
+            (mapping-constructor-expr
+              (key-value
+                (literal width)
+                (literal 3))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref a)
+          (user-defined-type IntShape))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref a)
+                (literal area)))))) ())
+      (block-stmt
+        (var-def
+          (variable b (type
+            (union-type
+              (user-defined-type IntShape)
+              (user-defined-type StringShape))) (expr
+            (new (
+              (literal 1)
+              (mapping-constructor-expr
+                (key-value
+                  (literal label)
+                  (literal box))))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref b)
+            (user-defined-type StringShape))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (index-based-access
+                  (simple-var-ref b)
+                  (literal label)))))) ())
+        (block-stmt))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal 2))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (literal none)))))

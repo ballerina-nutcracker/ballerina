@@ -1,0 +1,119 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition IntBox
+    (variable value (type
+      (value-type int)))
+    (function init (
+      (variable value (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref value)))))
+  (class-definition StringBox
+    (variable value (type
+      (value-type string)))
+    (function init (
+      (variable value (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref value)))))
+  (class-definition IntOuter
+    (variable inner (type
+      (union-type
+        (user-defined-type IntBox)
+        (user-defined-type StringBox))))
+    (function init (
+      (variable inner (type
+        (union-type
+          (user-defined-type IntBox)
+          (user-defined-type StringBox))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal inner))
+          (simple-var-ref inner))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition StringOuter
+    (variable inner (type
+      (union-type
+        (user-defined-type IntBox)
+        (user-defined-type StringBox))))
+    (function init (
+      (variable inner (type
+        (union-type
+          (user-defined-type IntBox)
+          (user-defined-type StringBox))))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal inner))
+          (simple-var-ref inner))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (union-type
+            (user-defined-type IntOuter)
+            (user-defined-type StringOuter))) (expr
+          (new (
+            (new (
+              (literal 5)))
+            (literal 1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref o)
+          (user-defined-type IntOuter))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (type-test-expr is
+                (index-based-access
+                  (simple-var-ref o)
+                  (literal inner))
+                (user-defined-type IntBox)))))) ())
+      (block-stmt
+        (var-def
+          (variable s (type
+            (union-type
+              (user-defined-type IntOuter)
+              (user-defined-type StringOuter))) (expr
+            (new (
+              (new (
+                (literal five)))
+              (literal x))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref s)
+            (user-defined-type StringOuter))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (type-test-expr is
+                  (index-based-access
+                    (simple-var-ref s)
+                    (literal inner))
+                  (user-defined-type StringBox)))))) ())
+        (block-stmt)))))
