@@ -12,7 +12,7 @@ main() -> nil{
     GOTO bb3;
   }
   bb2 {
-    %5 = unknown base;
+    %5 = - base;
     GOTO bb3;
   }
   bb3 {
@@ -53,7 +53,7 @@ main() -> nil{
     GOTO bb12;
   }
   bb11 {
-    %19 = unknown base;
+    %19 = - base;
     GOTO bb12;
   }
   bb12 {

@@ -111,7 +111,7 @@ foo(int|float|string,int|float|string) -> int{
   bb4 {
     PushScopeFrame 2
     %0 = ConstantLoad 1
-    %1 = unknown %0;
+    %1 = - %0;
     (1, %0) = %1;
     PopScopeFrame
     return;
@@ -141,7 +141,7 @@ bar(int|float|string,int|float|string) -> float{
   bb4 {
     PushScopeFrame 2
     %0 = ConstantLoad 1
-    %1 = unknown %0;
+    %1 = - %0;
     (1, %0) = %1;
     PopScopeFrame
     return;
@@ -171,7 +171,7 @@ baz(int|float|string,int|float|string) -> int|string{
   bb4 {
     PushScopeFrame 2
     %0 = ConstantLoad 1
-    %1 = unknown %0;
+    %1 = - %0;
     (1, %0) = %1;
     PopScopeFrame
     return;

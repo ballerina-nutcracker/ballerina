@@ -26,7 +26,7 @@ main() -> nil{
     %15 = ConstantLoad 9223372036854775806
     %16 = %15;
     %17 = ConstantLoad 1
-    %18 = unknown %17;
+    %18 = - %17;
     %19 = %18;
     %20 = mul(%16,%19) -> bb5;
   }
@@ -60,7 +60,7 @@ main() -> nil{
     %37 = ConstantLoad 1
     %38 = %37;
     %39 = ConstantLoad 1
-    %40 = unknown %39;
+    %40 = - %39;
     %41 = %40;
     %42 = mul(%38,%41) -> bb11;
   }
@@ -94,7 +94,7 @@ main() -> nil{
     %59 = ConstantLoad 0
     %60 = %59;
     %61 = ConstantLoad 1
-    %62 = unknown %61;
+    %62 = - %61;
     %63 = %62;
     %64 = mul(%60,%63) -> bb17;
   }
@@ -104,7 +104,7 @@ main() -> nil{
   }
   bb18 {
     %67 = ConstantLoad 1
-    %68 = unknown %67;
+    %68 = - %67;
     %69 = %68;
     %70 = ConstantLoad 1
     %71 = %70;
@@ -116,7 +116,7 @@ main() -> nil{
   }
   bb20 {
     %75 = ConstantLoad 1
-    %76 = unknown %75;
+    %76 = - %75;
     %77 = %76;
     %78 = ConstantLoad 0
     %79 = %78;
@@ -128,10 +128,10 @@ main() -> nil{
   }
   bb22 {
     %83 = ConstantLoad 1
-    %84 = unknown %83;
+    %84 = - %83;
     %85 = %84;
     %86 = ConstantLoad 1
-    %87 = unknown %86;
+    %87 = - %86;
     %88 = %87;
     %89 = mul(%85,%88) -> bb23;
   }
@@ -141,7 +141,7 @@ main() -> nil{
   }
   bb24 {
     %92 = ConstantLoad 9223372036854775806
-    %93 = unknown %92;
+    %93 = - %92;
     %94 = %93;
     %95 = ConstantLoad 1
     %96 = %95;
@@ -153,7 +153,7 @@ main() -> nil{
   }
   bb26 {
     %100 = ConstantLoad 9223372036854775806
-    %101 = unknown %100;
+    %101 = - %100;
     %102 = %101;
     %103 = ConstantLoad 0
     %104 = %103;
@@ -165,10 +165,10 @@ main() -> nil{
   }
   bb28 {
     %108 = ConstantLoad 9223372036854775806
-    %109 = unknown %108;
+    %109 = - %108;
     %110 = %109;
     %111 = ConstantLoad 1
-    %112 = unknown %111;
+    %112 = - %111;
     %113 = %112;
     %114 = mul(%110,%113) -> bb29;
   }

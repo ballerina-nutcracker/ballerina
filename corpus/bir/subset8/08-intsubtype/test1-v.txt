@@ -22,25 +22,25 @@ main() -> nil{
   }
   bb4 {
     %13 = ConstantLoad 1
-    %14 = unknown %13;
+    %14 = - %13;
     %15 = %14;
     %16 = d(%15) -> bb5;
   }
   bb5 {
     %17 = ConstantLoad 127
-    %18 = unknown %17;
+    %18 = - %17;
     %19 = %18;
     %20 = d(%19) -> bb6;
   }
   bb6 {
     %21 = ConstantLoad 128
-    %22 = unknown %21;
+    %22 = - %21;
     %23 = %22;
     %24 = d(%23) -> bb7;
   }
   bb7 {
     %25 = ConstantLoad 129
-    %26 = unknown %25;
+    %26 = - %25;
     %27 = %26;
     %28 = d(%27) -> bb8;
   }
@@ -86,25 +86,25 @@ main() -> nil{
   }
   bb16 {
     %53 = ConstantLoad 32768
-    %54 = unknown %53;
+    %54 = - %53;
     %55 = %54;
     %56 = d(%55) -> bb17;
   }
   bb17 {
     %57 = ConstantLoad 32769
-    %58 = unknown %57;
+    %58 = - %57;
     %59 = %58;
     %60 = d(%59) -> bb18;
   }
   bb18 {
     %61 = ConstantLoad 2147483648
-    %62 = unknown %61;
+    %62 = - %61;
     %63 = %62;
     %64 = d(%63) -> bb19;
   }
   bb19 {
     %65 = ConstantLoad 2147483649
-    %66 = unknown %65;
+    %66 = - %65;
     %67 = %66;
     %68 = d(%67) -> bb20;
   }

@@ -14,7 +14,7 @@ main() -> nil{
     %11 = n;
     %12 = ConstantLoad <nil>
     %13 = %12;
-    %10 = unknown %11 %13;
+    %10 = === %11 %13;
     %14 = %10;
     %15 = println(%14) -> bb1;
   }

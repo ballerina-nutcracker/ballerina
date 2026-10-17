@@ -26,7 +26,7 @@ main() -> nil{
     %15 = ConstantLoad 2
     %16 = %15;
     %17 = ConstantLoad 1
-    %18 = unknown %17;
+    %18 = - %17;
     %19 = %18;
     %20 = eq(%16,%19) -> bb5;
   }
@@ -69,7 +69,7 @@ main() -> nil{
   }
   bb12 {
     %44 = ConstantLoad 1
-    %45 = unknown %44;
+    %45 = - %44;
     %46 = %45;
     %47 = ConstantLoad 17
     %48 = %47;

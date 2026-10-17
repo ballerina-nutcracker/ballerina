@@ -7,9 +7,9 @@ main() -> nil{
     %6 = x;
     %7 = ConstantLoad 4
     %8 = %7;
-    %5 = unknown %6 %8;
+    %5 = >> %6 %8;
     %9 = %5;
-    %3 = unknown %4 %9;
+    %3 = >> %4 %9;
     x = %3;
     %10 = x;
     %11 = println(%10) -> bb1;

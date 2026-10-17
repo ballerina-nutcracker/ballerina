@@ -444,7 +444,7 @@ $xmlStep$main$3(xml:Element) -> xml{
   }
   bb1 {
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = %4;
     %6 = $stepIndex(%2,%5) -> bb2;
   }

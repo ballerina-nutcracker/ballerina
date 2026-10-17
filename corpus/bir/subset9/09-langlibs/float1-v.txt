@@ -49,7 +49,7 @@ main() -> nil{
     %26 = ConstantLoad 2.25
     %27 = %26;
     %28 = ConstantLoad 0.75
-    %29 = unknown %28;
+    %29 = - %28;
     %30 = %29;
     %31 = sum(%25,%27,%30) -> bb11;
   }
@@ -70,7 +70,7 @@ main() -> nil{
     %39 = ConstantLoad 2.25
     %40 = %39;
     %41 = ConstantLoad 0.75
-    %42 = unknown %41;
+    %42 = - %41;
     %43 = %42;
     %44 = max(%38,%40,%43) -> bb15;
   }
@@ -91,7 +91,7 @@ main() -> nil{
     %52 = ConstantLoad 2.25
     %53 = %52;
     %54 = ConstantLoad 0.75
-    %55 = unknown %54;
+    %55 = - %54;
     %56 = %55;
     %57 = min(%51,%53,%56) -> bb19;
   }
@@ -101,7 +101,7 @@ main() -> nil{
   }
   bb20 {
     %60 = ConstantLoad 1.25
-    %61 = unknown %60;
+    %61 = - %60;
     %62 = %61;
     %63 = abs(%62) -> bb21;
   }
@@ -219,7 +219,7 @@ main() -> nil{
     %132 = ConstantLoad 1.2345
     %133 = %132;
     %134 = ConstantLoad 400
-    %135 = unknown %134;
+    %135 = - %134;
     %136 = %135;
     %137 = round(%133,%136) -> bb43;
   }
@@ -229,10 +229,10 @@ main() -> nil{
   }
   bb44 {
     %140 = ConstantLoad 1.2345
-    %141 = unknown %140;
+    %141 = - %140;
     %142 = %141;
     %143 = ConstantLoad 309
-    %144 = unknown %143;
+    %144 = - %143;
     %145 = %144;
     %146 = round(%142,%145) -> bb45;
   }
@@ -244,7 +244,7 @@ main() -> nil{
     %149 = ConstantLoad 1.79e+308
     %150 = %149;
     %151 = ConstantLoad 1
-    %152 = unknown %151;
+    %152 = - %151;
     %153 = %152;
     %154 = round(%150,%153) -> bb47;
   }
@@ -265,7 +265,7 @@ main() -> nil{
   }
   bb50 {
     %164 = ConstantLoad 1.2
-    %165 = unknown %164;
+    %165 = - %164;
     %166 = %165;
     %167 = floor(%166) -> bb51;
   }
@@ -275,7 +275,7 @@ main() -> nil{
   }
   bb52 {
     %170 = ConstantLoad 1.2
-    %171 = unknown %170;
+    %171 = - %170;
     %172 = %171;
     %173 = ceiling(%172) -> bb53;
   }
@@ -523,7 +523,7 @@ main() -> nil{
   }
   bb106 {
     %40 = ConstantLoad 10.2453
-    %41 = unknown %40;
+    %41 = - %40;
     %42 = %41;
     %43 = toHexString(%42) -> bb107;
   }

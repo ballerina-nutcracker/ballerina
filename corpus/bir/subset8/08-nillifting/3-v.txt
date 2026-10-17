@@ -18,7 +18,7 @@ main() -> nil{
     GOTO bb3;
   }
   bb2 {
-    %11 = unknown %7 b;
+    %11 = | %7 b;
     GOTO bb3;
   }
   bb3 {
@@ -38,7 +38,7 @@ main() -> nil{
     GOTO bb7;
   }
   bb6 {
-    %19 = unknown %15 b;
+    %19 = | %15 b;
     GOTO bb7;
   }
   bb7 {
@@ -53,7 +53,7 @@ main() -> nil{
     GOTO bb10;
   }
   bb9 {
-    %24 = unknown %20 c;
+    %24 = | %20 c;
     GOTO bb10;
   }
   bb10 {
@@ -74,7 +74,7 @@ main() -> nil{
     GOTO bb14;
   }
   bb13 {
-    %33 = unknown %29 d;
+    %33 = | %29 d;
     GOTO bb14;
   }
   bb14 {
@@ -94,7 +94,7 @@ main() -> nil{
     GOTO bb18;
   }
   bb17 {
-    %41 = unknown %37 b;
+    %41 = | %37 b;
     GOTO bb18;
   }
   bb18 {
@@ -109,7 +109,7 @@ main() -> nil{
     GOTO bb21;
   }
   bb20 {
-    %46 = unknown %42 c;
+    %46 = | %42 c;
     GOTO bb21;
   }
   bb21 {
@@ -124,7 +124,7 @@ main() -> nil{
     GOTO bb24;
   }
   bb23 {
-    %51 = unknown %47 d;
+    %51 = | %47 d;
     GOTO bb24;
   }
   bb24 {
@@ -143,7 +143,7 @@ main() -> nil{
     GOTO bb28;
   }
   bb27 {
-    %58 = unknown %54 b;
+    %58 = << %54 b;
     GOTO bb28;
   }
   bb28 {
