@@ -1,0 +1,219 @@
+module $anon.. v 0.0.0;
+defaultCount() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+inlineReturn() -> error<readonly&{| r: int, never... |}>{
+  bb0 {
+    %1 = ConstantLoad ret
+    %2 = newMap mapping{} defaults{r=$anon/.:$default$7}
+    %3 = newError error<readonly&{| r: int, never... |}>(%1, %2)
+    %0 = %3;
+    return;
+  }
+}
+inlineParam(error<readonly&{| p: int, never... |}>) -> nil{
+  bb0 {
+    %2 = println(e) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad explicit
+    %2 = ConstantLoad code
+    %3 = ConstantLoad 1
+    %4 = newMap mapping{%2=%3} defaults{reason=$anon/.:$default$1}
+    %5 = newError error<readonly&{| code: int, reason: string, never... |}>(%1, %4)
+    e1 = %5;
+    %7 = println(e1) -> bb1;
+  }
+  bb1 {
+    %8 = ConstantLoad defaulted
+    %9 = newMap mapping{} defaults{code=$anon/.:$default$0, reason=$anon/.:$default$1}
+    %10 = newError error<readonly&{| code: int, reason: string, never... |}>(%8, %9)
+    e2 = %10;
+    %12 = println(e2) -> bb2;
+  }
+  bb2 {
+    %13 = ConstantLoad all
+    %14 = ConstantLoad code
+    %15 = ConstantLoad 2
+    %16 = ConstantLoad reason
+    %17 = ConstantLoad bad
+    %18 = newMap mapping{%14=%15, %16=%17}
+    %19 = newError error<readonly&{| code: int, reason: string, never... |}>(%13, %18)
+    e3 = %19;
+    %21 = println(e3) -> bb3;
+  }
+  bb3 {
+    %22 = ConstantLoad typeRef
+    %23 = ConstantLoad reason
+    %24 = ConstantLoad ref
+    %25 = newMap mapping{%23=%24} defaults{code=$anon/.:$default$0}
+    %26 = newError error<readonly&{| code: int, reason: string, never... |}>(%22, %25)
+    e4 = %26;
+    %28 = println(e4) -> bb4;
+  }
+  bb4 {
+    %29 = ConstantLoad open
+    %30 = ConstantLoad extra
+    %31 = ConstantLoad true
+    %32 = newMap mapping{%30=%31} defaults{count=$anon/.:$default$2}
+    %33 = newError error<readonly&{| count: int, anydata... |}>(%29, %32)
+    e5 = %33;
+    %35 = println(e5) -> bb5;
+  }
+  bb5 {
+    %36 = ConstantLoad inlineDef
+    %37 = newMap mapping{} defaults{z=$anon/.:$default$3}
+    %38 = newError error<readonly&{| z: int, never... |}>(%36, %37)
+    e6 = %38;
+    %40 = println(e6) -> bb6;
+  }
+  bb6 {
+    %41 = fp $anon/.:$default$9
+    $desugar$0 = %41;
+    %43 = ConstantLoad inlineLocal
+    %44 = newMap mapping{} defaults{tag=$anon/.:$default$9}
+    %45 = newError error<readonly&{| tag: string, never... |}>(%43, %44)
+    e7 = %45;
+    %47 = println(e7) -> bb7;
+  }
+  bb7 {
+    %48 = ConstantLoad computed
+    %49 = ConstantLoad count
+    %50 = ConstantLoad 1
+    %51 = newMap mapping{%49=%50}
+    %52 = newError error<readonly&{| count: int, never... |}>(%48, %51)
+    e8 = %52;
+    %54 = println(e8) -> bb8;
+  }
+  bb8 {
+    %55 = ConstantLoad computed
+    %56 = newMap mapping{} defaults{count=$anon/.:$default$4}
+    %57 = newError error<readonly&{| count: int, never... |}>(%55, %56)
+    e9 = %57;
+    %59 = println(e9) -> bb9;
+  }
+  bb9 {
+    %60 = inlineReturn() -> bb10;
+  }
+  bb10 {
+    %61 = println(%60) -> bb11;
+  }
+  bb11 {
+    %62 = ConstantLoad param
+    %63 = newMap mapping{} defaults{p=$anon/.:$default$8}
+    %64 = newError error<readonly&{| p: int, never... |}>(%62, %63)
+    %65 = inlineParam(%64) -> bb12;
+  }
+  bb12 {
+    %66 = ConstantLoad intersected
+    %67 = newMap mapping{} defaults{x=$anon/.:$default$5, label=$anon/.:$default$6}
+    %68 = newError error<readonly&{| label: string, x: int, never... |}&{| label: string, x: int, never... |}>(%66, %67)
+    e11 = %68;
+    %70 = println(e11) -> bb13;
+  }
+  bb13 {
+    %71 = ConstantLoad narrowed
+    %72 = ConstantLoad x
+    %73 = ConstantLoad 1
+    %74 = newMap mapping{%72=%73} defaults{label=$anon/.:$default$6}
+    %75 = newError error<readonly&{| label: string, x: int, never... |}&{| label: string, x: int:Unsigned8, never... |}>(%71, %74)
+    e12 = %75;
+    %77 = println(e12) -> bb14;
+  }
+  bb14 {
+    %78 = ConstantLoad cause
+    %79 = newError error(%78)
+    cause = %79;
+    %81 = ConstantLoad withCause
+    %82 = ConstantLoad code
+    %83 = ConstantLoad 5
+    %84 = newMap mapping{%82=%83} defaults{reason=$anon/.:$default$1}
+    %85 = newError error<readonly&{| code: int, reason: string, never... |}>(%81, cause, %84)
+    e10 = %85;
+    %87 = println(e10) -> bb15;
+  }
+  bb15 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> string{
+  bb0 {
+    %1 = ConstantLoad unknown
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 7
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 3
+    %0 = %1;
+    return;
+  }
+}
+$default$4() -> int{
+  bb0 {
+    %1 = defaultCount() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$default$5() -> int{
+  bb0 {
+    %1 = ConstantLoad 300
+    %0 = %1;
+    return;
+  }
+}
+$default$6() -> string{
+  bb0 {
+    %1 = ConstantLoad ok
+    %0 = %1;
+    return;
+  }
+}
+$default$7() -> int{
+  bb0 {
+    %1 = ConstantLoad 10
+    %0 = %1;
+    return;
+  }
+}
+$default$8() -> int{
+  bb0 {
+    %1 = ConstantLoad 9
+    %0 = %1;
+    return;
+  }
+}
+$default$9() -> string{
+  bb0 {
+    %1 = ConstantLoad local
+    %0 = %1;
+    return;
+  }
+}

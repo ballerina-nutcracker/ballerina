@@ -24,9 +24,10 @@ type MappingFieldInfo struct {
 }
 
 type MappingAlternative struct {
-	semType SemType
-	pos     *MappingAtomicType
-	neg     []MappingAtomicType
+	semType  SemType
+	pos      *MappingAtomicType
+	posAtoms []*MappingAtomicType
+	neg      []MappingAtomicType
 }
 
 func (a MappingAlternative) Type() SemType {
@@ -37,6 +38,12 @@ func (a MappingAlternative) Type() SemType {
 // alternative produced for the Mapping top, so callers must handle a nil result.
 func (a MappingAlternative) Atomic() *MappingAtomicType {
 	return a.pos
+}
+
+// PositiveAtoms returns the positive mapping atoms whose intersection is Atomic. It is empty for
+// the alternative produced for the Mapping top.
+func (a MappingAlternative) PositiveAtoms() []*MappingAtomicType {
+	return a.posAtoms
 }
 
 func MappingAlternatives(cx Context, t SemType) []MappingAlternative {
@@ -61,7 +68,7 @@ func MappingAlternatives(cx Context, t SemType) []MappingAlternative {
 			for i := 0; i < len(bddPath.neg); i++ {
 				negAtoms[i] = *cx.MappingAtomType(bddPath.neg[i])
 			}
-			alts = append(alts, MappingAlternative{semType: intersectionSemType, pos: intersectionAtomType, neg: negAtoms})
+			alts = append(alts, MappingAlternative{semType: intersectionSemType, pos: intersectionAtomType, posAtoms: posAtoms, neg: negAtoms})
 		}
 	}
 	return alts

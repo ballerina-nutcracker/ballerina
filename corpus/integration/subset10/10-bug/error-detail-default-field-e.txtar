@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: error detail arguments are incompatible with error detail type
+  --> error-detail-default-field-e.bal:43:21
+   |
+43 |     DetailError e = error("missing"); // @error code has no default
+   |                     ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error detail arguments are incompatible with error detail type
+  --> error-detail-default-field-e.bal:48:31
+   |
+48 |     CodeError|ReasonError e = error("ambiguous"); // @error union of error types has no single detail type
+   |                               ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error detail arguments are incompatible with error detail type
+  --> error-detail-default-field-e.bal:53:23
+   |
+53 |     NarrowedError e = error("narrowed"); // @error default of x does not fit byte
+   |                       ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error detail arguments are incompatible with error detail type
+  --> error-detail-default-field-e.bal:58:26
+   |
+58 |     ConflictingError e = error("conflicting"); // @error both intersected records declare defaults
+   |                          ^^^^^^^^^^^^^^^^^^^^
