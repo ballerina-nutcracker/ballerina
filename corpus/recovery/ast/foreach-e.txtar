@@ -61,7 +61,7 @@ function valid() {} // @error missing close brace of missingCloseBrace
         (var-def (position 20:13 20:19)
           (variable (position 20:13 20:19) i (type
             (value-type (position 20:13 20:17) int))))
-        (bad-expr-or-action (position 20:22 20:29))
+        (bad-expr-or-action function-call (position 20:22 20:29) (tokens ("(" 20:23 20:24) (")" 20:27 20:28)))
         (block-stmt (position 20:29 23:1)
           (var-def (position 21:1 22:1)
             (variable (position 21:1 22:1) a (type
@@ -85,7 +85,7 @@ function valid() {} // @error missing close brace of missingCloseBrace
             (value-type (position 27:13 27:17) int))))
         (simple-var-ref (position 27:22 27:25) xs)
         (block-stmt (position 27:25 31:1)
-          (bad-stmt (position 28:1 28:19))
+          (bad-stmt variable-declaration (position 28:1 28:19) (tokens ("int" 28:9 28:12) ("=" 28:15 28:16)))
           (var-def (position 28:19 29:1)
             (variable (position 28:19 29:1) b (type
               (value-type (position 28:19 28:23) int)) (expr
@@ -106,12 +106,12 @@ function valid() {} // @error missing close brace of missingCloseBrace
         (value-type (position 34:34 34:37) int) dimensions: 1 ([]))))) (
     (value-type (position <built-in>) null))
     (block-function-body (position 34:44 38:1)
-      (bad-stmt (position 35:1 36:1))
+      (bad-stmt foreach (position 35:1 36:1) (tokens ("foreach" 35:5 35:12) ("int" 35:13 35:16) ("in" 35:19 35:21) ("int" 35:25 35:28) ("=" 35:31 35:32) (";" 35:34 35:35) ("}" 35:36 35:37)))
       (var-def (position 36:1 37:1)
         (variable (position 36:1 37:1) after (type
           (value-type (position 36:1 36:9) int)) (expr
           (literal (position 36:17 36:18) 1))))))
-  (bad-top-level function (position 38:1 43:1))
+  (bad-top-level function (position 38:1 43:1) (tokens ("function" 39:1 39:9) ("(" 39:27 39:28) ("int" 39:28 39:31) ("," 39:33 39:34) ("int" 39:35 39:38) ("[" 39:38 39:39) ("]" 39:39 39:40) (")" 39:43 39:44) ("{" 39:45 39:46) ("foreach" 40:5 40:12) ("int" 40:13 40:16) ("in" 40:19 40:21) ("{" 40:25 40:26) ("int" 40:27 40:30) ("=" 40:33 40:34) (";" 40:36 40:37) ("int" 41:5 41:8) ("=" 41:15 41:16) (";" 41:18 41:19) ("}" 42:1 42:2)))
   (function (position 43:1 44:1) valid () (
     (value-type (position <built-in>) null))
     (block-function-body (position 43:18 44:1))))

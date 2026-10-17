@@ -18,4 +18,4 @@
 enum Empty {} // @error
 -- ast --
 (package
-  (bad-top-level enum))
+  (bad-top-level enum (tokens ("enum" 17:1 17:5) ("{" 17:12 17:13) ("}" 17:13 17:14))))

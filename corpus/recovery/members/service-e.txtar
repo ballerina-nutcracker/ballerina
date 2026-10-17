@@ -79,7 +79,7 @@ class Surviving {
       (value-type int)
       (expr-function-body
         (invocation useMembers ())))
-    (bad-top-level function))
+    (bad-top-level function (tokens ("resource" 21:5 21:13) ("function" 21:14 21:22) ("(" 21:31 21:32) ("int" 21:32 21:35) (")" 21:37 21:38) ("{" 21:39 21:40) ("}" 21:40 21:41))))
   (function independent () (
     (value-type null))
     (block-function-body)))

@@ -39,12 +39,12 @@ function discardedReferences() {
   (type-definition (bad-identifier)
     (value-type int))
   (type-definition Broken
-    (bad-type))
+    (bad-type qualified-reference (tokens (":" 19:16 19:17))))
   (type-definition Nested
     (array-type
       (constrained-type
         (builtin-ref-type map)
-        (bad-type)) dimensions: 1 ([])))
+        (bad-type qualified-reference (tokens (":" 20:20 20:21)))) dimensions: 1 ([])))
   (function types () (
     (value-type null))
     (block-function-body
@@ -58,7 +58,7 @@ function discardedReferences() {
           (literal 2))))
       (var-def
         (variable local (type
-          (bad-type)) (expr
+          (bad-type qualified-reference (tokens (":" 24:8 24:9)))) (expr
           (literal 3))))
       (var-def
         (variable later (type

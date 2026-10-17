@@ -70,12 +70,12 @@ function valid() returns int => 1;
     (object-type
       (method-decl valid () (
         (value-type int)))
-      (bad-top-level field)))
+      (bad-top-level field (tokens ("function" 18:5 18:13) ("(" 18:14 18:15) ("int" 18:15 18:18) (")" 18:20 18:21) ("returns" 18:22 18:29) ("int" 18:30 18:33) (";" 18:33 18:34)))))
   (type-definition MissingComma
     (object-type
       (method-decl valid () (
         (value-type int)))
-      (bad-top-level function)))
+      (bad-top-level function (tokens ("function" 22:5 22:13) ("(" 22:15 22:16) ("int" 22:16 22:19) ("int" 22:22 22:25) (")" 22:27 22:28) (";" 22:28 22:29)))))
   (type-definition MissingParamName
     (object-type
       (method-decl m (
@@ -108,7 +108,7 @@ function valid() returns int => 1;
     (object-type
       (method-decl m (
         (param a
-          (bad-type))) (
+          (bad-type builtin (tokens ("int" 38:18 38:21))))) (
         (value-type null)))
       (method-decl valid () (
         (value-type int)))))
@@ -118,7 +118,7 @@ function valid() returns int => 1;
         (param a
           (value-type int))
         (param (bad-identifier)
-          (bad-type))) (
+          (bad-type simple-reference))) (
         (value-type null)))
       (method-decl valid () (
         (value-type int)))))
@@ -134,23 +134,23 @@ function valid() returns int => 1;
     (object-type
       (method-decl valid () (
         (value-type int)))
-      (bad-top-level function)))
+      (bad-top-level function (tokens ("function" 50:5 50:13) ("(" 50:15 50:16) ("int" 50:16 50:19) ("," 50:21 50:22) ("string" 50:23 50:29) ("=" 50:32 50:33) ("," 50:34 50:35) ("int" 50:36 50:39) ("=" 50:42 50:43) ("," 50:45 50:46) (")" 50:57 50:58) (";" 50:58 50:59)))))
   (type-definition MissingReturnType
     (object-type
       (method-decl m () (
-        (bad-type)))
+        (bad-type simple-reference)))
       (method-decl valid () (
         (value-type int)))))
   (type-definition MissingReturnsKeyword
     (object-type
       (method-decl valid () (
         (value-type int)))
-      (bad-top-level function)))
+      (bad-top-level function (tokens ("function" 58:5 58:13) ("(" 58:15 58:16) (")" 58:16 58:17) (";" 58:21 58:22)))))
   (type-definition MissingSemicolon
     (object-type
       (method-decl valid () (
         (value-type int)))
-      (bad-top-level function)))
+      (bad-top-level function (tokens ("function" 62:5 62:13) ("(" 62:15 62:16) (")" 62:16 62:17) ("returns" 62:18 62:25) ("int" 62:26 62:29)))))
   (function valid () (
     (value-type int))
     (expr-function-body

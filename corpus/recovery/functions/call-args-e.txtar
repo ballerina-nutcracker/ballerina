@@ -36,7 +36,7 @@ function valid() returns int => callee(1, b = 3);
   (function missingComma () (
     (value-type int))
     (expr-function-body
-      (bad-expr-or-action)))
+      (bad-expr-or-action function-call (tokens ("(" 18:46 18:47) (")" 18:50 18:51)))))
   (function namedMissingValue () (
     (value-type int))
     (expr-function-body
@@ -49,7 +49,7 @@ function valid() returns int => callee(1, b = 3);
     (expr-function-body
       (invocation callee (
         (named-arg a
-          (bad-expr-or-action))))))
+          (bad-expr-or-action simple-literal))))))
   (function valid () (
     (value-type int))
     (expr-function-body

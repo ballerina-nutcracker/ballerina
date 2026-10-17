@@ -61,7 +61,7 @@ function discardedReferences() returns int {
     (value-type null))
     (block-function-body))
   (function returnsBad () (
-    (bad-type))
+    (bad-type qualified-reference (tokens (":" 23:34 23:35))))
     (block-function-body))
   (function annotated () (
     (value-type null))
@@ -90,4 +90,4 @@ function discardedReferences() returns int {
           (invocation valid ()))))
       (return
         (simple-var-ref later))))
-  (bad-top-level function))
+  (bad-top-level function (tokens ("public" 25:1 25:7) ("function" 25:15 25:23) ("(" 25:34 25:35) (")" 25:35 25:36) ("{" 25:37 25:38) ("}" 25:38 25:39))))
