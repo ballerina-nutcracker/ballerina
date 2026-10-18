@@ -4363,27 +4363,20 @@ func resolveTypeTestExpr(t typeResolver, chain *binding, e *ast.BLangTypeTestExp
 	if !isVarRef || !canNarrow(t, chain, ref) {
 		return resultTy, defaultExpressionEffect(chain), true
 	}
-	tx := t.symbolType(ref)
-	ref = t.unnarrowedSymbol(ref)
-	trueTy := semtypes.Intersect(tx, testedTy)
-	trueSym := narrowSymbol(t, ref, trueTy)
-	trueChain := &binding{ref: ref, narrowedSymbol: trueSym, prev: chain}
-	falseTy := semtypes.Diff(tx, testedTy)
-	falseSym := narrowSymbol(t, ref, falseTy)
-	falseChain := &binding{ref: ref, narrowedSymbol: falseSym, prev: chain}
+	effect := narrowByType(t, chain, ref, testedTy)
 	functionSignatures, ok := typeTestFunctionSignatureRefs(t, e.TestedType.TypeDescriptor, e.GetPosition())
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	if e.IsNegation() {
-		trueChain, falseChain = falseChain, trueChain
+		effect.ifTrue, effect.ifFalse = effect.ifFalse, effect.ifTrue
 		functionSignatures.ifTrue, functionSignatures.ifFalse = functionSignatures.ifFalse, functionSignatures.ifTrue
 	}
-	if !associateTypeTestFunctionSignature(t, trueChain.narrowedSymbol, functionSignatures.ifTrue, e.GetPosition()) ||
-		!associateTypeTestFunctionSignature(t, falseChain.narrowedSymbol, functionSignatures.ifFalse, e.GetPosition()) {
+	if !associateTypeTestFunctionSignature(t, effect.ifTrue.narrowedSymbol, functionSignatures.ifTrue, e.GetPosition()) ||
+		!associateTypeTestFunctionSignature(t, effect.ifFalse.narrowedSymbol, functionSignatures.ifFalse, e.GetPosition()) {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	return resultTy, expressionEffect{ifTrue: trueChain, ifFalse: falseChain}, true
+	return resultTy, effect, true
 }
 
 type typeTestFunctionSignatures struct {
@@ -6428,14 +6421,7 @@ func buildEqualityNarrowing(t typeResolver, chain *binding, ref model.SymbolRef,
 	if !canNarrow(t, chain, ref) {
 		return defaultExpressionEffect(chain)
 	}
-	symbolTy := t.symbolType(ref)
-	trueTy := semtypes.Intersect(symbolTy, singletonTy)
-	trueSym := narrowSymbol(t, ref, trueTy)
-	trueChain := &binding{ref: ref, narrowedSymbol: trueSym, prev: chain}
-	falseTy := semtypes.Diff(symbolTy, singletonTy)
-	falseSym := narrowSymbol(t, ref, falseTy)
-	falseChain := &binding{ref: ref, narrowedSymbol: falseSym, prev: chain}
-	return expressionEffect{ifTrue: trueChain, ifFalse: falseChain}
+	return narrowByType(t, chain, ref, singletonTy)
 }
 
 var additiveSupportedTypes = semtypes.Union(semtypes.Union(semtypes.Number, semtypes.String), semtypes.XML)
