@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-// jBallerina does not infer anonymous function parameter types against a union of object types either.
 
 class IntFn {
     function init(function (int) returns int callback, int marker) {
@@ -22,30 +21,17 @@ class IntFn {
     }
 }
 
-class FloatFn {
-    function init(function (float) returns float callback, string marker) {
+class StrFn {
+    function init(function (string) returns string callback, int marker) {
         var _ = callback;
         var _ = marker;
     }
 }
 
-class Outer {
-    function init(IntFn|FloatFn inner, int marker) {
-        var _ = inner;
-        var _ = marker;
-    }
-}
-
-class OtherOuter {
-    function init(IntFn|FloatFn inner, string marker) {
-        var _ = inner;
-        var _ = marker;
-    }
-}
-
 public function main() {
-    IntFn|FloatFn f = new (v => v + 1, 1); // @error
-    Outer|OtherOuter o = new (new (v => v + 1, 1), 1); // @error
+    IntFn|StrFn f = new (v => <v>1, 1); // @error
+    int[] arr = [1];
+    IntFn|StrFn g = new (v => arr.map(y => <v>y)[0], 1); // @error
     var _ = f;
-    var _ = o;
+    var _ = g;
 }

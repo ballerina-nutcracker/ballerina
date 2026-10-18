@@ -1,0 +1,79 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable hs (type
+          (union-type
+            (array-type
+              (function-type (
+                (value-type int)) (
+                (value-type int))) dimensions: 1 ([]))
+            (tuple-type
+              (value-type string)
+              (value-type string)))) (expr
+          (list-constructor-expr
+            (lambda
+              (function $anonFunc$_0 (
+                (variable p)) ()
+                (expr-function-body
+                  (binary-expr *
+                    (simple-var-ref p)
+                    (literal 2)))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref hs)
+          (array-type
+            (function-type (
+              (value-type int)) (
+              (value-type int))) dimensions: 1 ([])))
+        (block-stmt
+          (var-def
+            (variable h (expr
+              (index-based-access
+                (simple-var-ref hs)
+                (literal 0)))))
+          (expression-stmt
+            (invocation io println (
+              (invocation h (
+                (literal 3))))))) ())
+      (block-stmt
+        (var-def
+          (variable fs (type
+            (union-type
+              (array-type
+                (function-type (
+                  (value-type int)) (
+                  (value-type int))) dimensions: 1 ([]))
+              (array-type
+                (function-type (
+                  (value-type string)) (
+                  (value-type string))) dimensions: 1 ([])))) (expr
+            (list-constructor-expr
+              (lambda
+                (function $anonFunc$_1 (
+                  (variable p)) ()
+                  (expr-function-body
+                    (binary-expr *
+                      (simple-var-ref p)
+                      (literal 2)))))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref fs)
+            (array-type
+              (function-type (
+                (value-type int)) (
+                (value-type int))) dimensions: 1 ([])))
+          (block-stmt
+            (var-def
+              (variable h (expr
+                (index-based-access
+                  (simple-var-ref fs)
+                  (literal 0)))))
+            (expression-stmt
+              (invocation io println (
+                (invocation h (
+                  (literal 3))))))) ())
+        (block-stmt)))))

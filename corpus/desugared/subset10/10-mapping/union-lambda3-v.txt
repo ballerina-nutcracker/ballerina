@@ -1,0 +1,58 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (type-definition A
+    (record-type
+      (field v
+        (array-type
+          (value-type int) dimensions: 2 ([][])))
+      (field m
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field v
+        (array-type
+          (value-type string) dimensions: 2 ([][])))
+      (field m
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable r (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal v)
+              (invocation lang.array map (
+                (simple-var-ref arr)
+                (lambda
+                  (function $anonFunc$_0 (
+                    (variable x)) ()
+                    (expr-function-body
+                      (invocation lang.array map (
+                        (simple-var-ref arr)
+                        (lambda
+                          (function $anonFunc$_1 (
+                            (variable y)) ()
+                            (expr-function-body
+                              (binary-expr +
+                                (binary-expr *
+                                  (simple-var-ref x)
+                                  (literal 10))
+                                (simple-var-ref y)))))))))))))
+            (key-value
+              (literal m)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r)))))))

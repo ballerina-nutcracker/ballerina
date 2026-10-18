@@ -64,11 +64,13 @@
 - [New expression](https://ballerina.io/spec/lang/master/#section_6.8.2)
   - When selecting among multiple candidate object types, resolving the arguments has the following restrictions:
     - [Query expressions](https://ballerina.io/spec/lang/master/#query-expr) are not supported during candidate selection.
-    - [Anonymous functions with inferred parameter types](https://ballerina.io/spec/lang/master/#infer-anonymous-function-expr) are not supported during candidate selection when they have one or more parameters. Parameterless inferred functions and explicitly typed anonymous functions do not have this restriction.
+    - An explicitly typed [anonymous function](https://ballerina.io/spec/lang/master/#anonymous-function-expr) nested inside an [anonymous function with inferred parameter types](https://ballerina.io/spec/lang/master/#infer-anonymous-function-expr) is checked from its signature only during candidate selection, so errors in its body that depend on the candidate don't rule that candidate out.
     - [XML step expressions](https://ballerina.io/spec/lang/master/#xml-step-expr) are not supported during candidate selection.
     - Inline record and object type descriptors, and inline function types with named parameters (including rest parameters), are not supported during candidate selection. References to named types do not have this restriction.
 - [List constructor](https://ballerina.io/spec/lang/master/#list-constructor-expr)
+  - When selecting among multiple candidate inherent types, resolving the members has the same restrictions as resolving the arguments of a new expression that selects among candidate object types (see New expression above).
 - [Mapping constructor](https://ballerina.io/spec/lang/master/#mapping-constructor-expr)
+  - When selecting among multiple candidate inherent types, resolving the field values has the same restrictions as resolving the arguments of a new expression that selects among candidate object types (see New expression above).
   - Currently [spread-field](https://ballerina.io/spec/lang/master/#spread-field) not supported
 - [XML template expression](https://ballerina.io/spec/lang/master/#xml-template-expr)
   - Supports interpolation in XML content and attributes

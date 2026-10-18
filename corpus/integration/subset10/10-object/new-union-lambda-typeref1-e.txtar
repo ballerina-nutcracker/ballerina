@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: failed to find a suitable object type
+  --> new-union-lambda-typeref1-e.bal:32:21
+   |
+32 |     IntFn|StrFn f = new (v => <v>1, 1); // @error
+   |                     ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: failed to find a suitable object type
+  --> new-union-lambda-typeref1-e.bal:34:21
+   |
+34 |     IntFn|StrFn g = new (v => arr.map(y => <v>y)[0], 1); // @error
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

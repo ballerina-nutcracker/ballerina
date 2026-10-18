@@ -2387,10 +2387,6 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		t.semanticError("anonymous function parameters are incompatible with the expected function type", e.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	if len(params) > 0 && t.isEphemeral() {
-		t.unimplemented("inferred anonymous function parameters are not supported while selecting among candidate types", e.GetPosition())
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
 	paramTypes := make([]semtypes.SemType, len(params))
 	for i := range params {
 		paramTy := semtypes.ListMemberTypeInnerVal(cx, paramListTy, semtypes.IntConst(int64(i)))
@@ -2398,7 +2394,9 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 			t.semanticError("cannot infer anonymous function parameter type", params[i].GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		updateSymbolType(t, &params[i], paramTy)
+		if !t.isEphemeral() {
+			updateSymbolType(t, &params[i], paramTy)
+		}
 		paramTypes[i] = paramTy
 	}
 
@@ -2436,6 +2434,9 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 	}
 	outerChain := addCaptureGroup(chain, e.Function.CaptureGroup())
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: outerChain}
+	if t.isEphemeral() {
+		boundaryChain = bindInferredParams(t, boundaryChain, params, paramTypes)
+	}
 	body := e.Function.Body.(*ast.BLangExprFunctionBody)
 	returnResult, ok := resolveActionOrExpression(ft, boundaryChain, body.Expr, expectedReturnTy)
 	if !ok {
@@ -2453,6 +2454,16 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 	}
 	setNodeType(t, e, fnType)
 	return fnType, defaultExpressionEffect(outerChain), true
+}
+
+// bindInferredParams gives each inferred parameter its type for the current candidate trial on the body's chain,
+// leaving the parameter symbols themselves untouched.
+func bindInferredParams(t typeResolver, chain *binding, params []ast.BLangVariable, paramTypes []semtypes.SemType) *binding {
+	for i := range params {
+		ref := params[i].Symbol()
+		chain = &binding{ref: ref, narrowedSymbol: narrowSymbol(t, ref, paramTypes[i]), prev: chain, flags: bindingFlagInferredParam}
+	}
+	return chain
 }
 
 func resolveTypeData(t typeResolver, chain *binding, typeData *ast.TypeData) (semtypes.SemType, *binding, bool) {
@@ -8075,6 +8086,9 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 		symbol := ty.Symbol()
 		if ty.PkgAlias.GetValue() != "" {
 			return t.symbolType(symbol), chain, true
+		}
+		if t.isEphemeral() {
+			symbol = lookupDeclaredSymbol(chain, symbol)
 		}
 		if !t.ensureResolved(symbol, depth) {
 			return semtypes.SemType{}, chain, false
