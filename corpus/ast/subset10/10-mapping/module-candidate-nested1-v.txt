@@ -1,0 +1,81 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (type-definition C
+    (record-type
+      (field y
+        (union-type
+          (tuple-type
+            (value-type int))
+          (tuple-type
+            (value-type string))))))
+  (type-definition D
+    (record-type
+      (field y
+        (value-type int))))
+  (variable g (type
+    (array-type
+      (union-type
+        (user-defined-type A)
+        (user-defined-type B)) dimensions: 1 ([]))) (expr
+    (list-constructor-expr
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal 1)))
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal s))))))
+  (variable h (type
+    (union-type
+      (user-defined-type C)
+      (user-defined-type D))) (expr
+    (mapping-constructor-expr
+      (key-value
+        (literal y)
+        (list-constructor-expr
+          (literal s))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref g)
+              (literal 0))
+            (user-defined-type A)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref g)
+              (literal 1))
+            (user-defined-type B)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref h)
+            (user-defined-type C)))))
+      (var-def
+        (variable c (type
+          (user-defined-type C)) (expr
+          (type-conversion-expr
+            (simple-var-ref h)
+            (user-defined-type C)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (field-based-access y
+              (simple-var-ref c))
+            (tuple-type
+              (value-type string)))))))))

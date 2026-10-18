@@ -4553,10 +4553,6 @@ func resolveMappingConstructorExpr(t typeResolver, chain *binding, e *ast.BLangM
 	if len(candidates) == 1 {
 		return finishMappingConstructor(t, chain, e, candidates[0])
 	}
-	if _, moduleLevel := t.(*packageTypeResolver); moduleLevel {
-		t.unimplemented("mapping constructors with more than one applicable type are not supported at module level", e.GetPosition())
-		return expressionResult{}, false
-	}
 	// A constructor inside a trial is part of an outer trial root, whose dependencies are already resolved.
 	if !t.isEphemeral() && !resolveTrialDependencies(t, []ast.BLangExpression{e}) {
 		return expressionResult{}, false
@@ -5463,10 +5459,6 @@ func resolveListConstructorExpr(t typeResolver, chain *binding, expr *ast.BLangL
 	spread := listSpreadMembers(chain, expr)
 	if len(candidates) == 1 {
 		return finishListConstructor(t, chain, expr, spread, candidates[0])
-	}
-	if _, moduleLevel := t.(*packageTypeResolver); moduleLevel {
-		t.unimplemented("list constructors with more than one applicable type are not supported at module level", expr.GetPosition())
-		return expressionResult{}, false
 	}
 	// A constructor inside a trial is part of an outer trial root, whose dependencies are already resolved.
 	if !t.isEphemeral() && !resolveTrialDependencies(t, []ast.BLangExpression{expr}) {

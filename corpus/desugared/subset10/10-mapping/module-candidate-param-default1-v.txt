@@ -1,0 +1,78 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (function f (
+    (variable p (type
+      (union-type
+        (user-defined-type A)
+        (user-defined-type B))) (expr
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal s)))))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref p)
+          (user-defined-type B)))))
+  (function g (
+    (variable p (type
+      (union-type
+        (user-defined-type A)
+        (user-defined-type B))) (expr
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (invocation count ())))))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref p)
+          (user-defined-type A)))))
+  (function count () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (invocation $default$0 ()))))
+          (invocation f (
+            (simple-var-ref $desugar$0)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$1 ()))))
+          (invocation g (
+            (simple-var-ref $desugar$1)))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal s))))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (invocation count ())))))))

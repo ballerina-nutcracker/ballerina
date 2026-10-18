@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> module-candidate-default-ambiguous1-e.bal:26:13
+   |
+26 |     A|B f = {x: "s"}; // @error ambiguous inherent type
+   |             ^^^^^^^^
+
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> module-candidate-default-ambiguous1-e.bal:29:20
+   |
+29 | function f(A|B p = {x: "s"}) { // @error ambiguous inherent type
+   |                    ^^^^^^^^
