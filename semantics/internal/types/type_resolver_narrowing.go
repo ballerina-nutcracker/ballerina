@@ -201,6 +201,19 @@ func narrowSymbol(t typeResolver, underlying model.SymbolRef, ty semtypes.SemTyp
 	return narrowedSymbol
 }
 
+// narrowByType splits the current type of ref, which may be a narrowed symbol, by ty: the true outcome narrows the
+// base symbol to the part inside ty and the false outcome to the rest.
+func narrowByType(t typeResolver, chain *binding, ref model.SymbolRef, ty semtypes.SemType) expressionEffect {
+	symbolTy := t.symbolType(ref)
+	base := t.unnarrowedSymbol(ref)
+	trueSym := narrowSymbol(t, base, semtypes.Intersect(symbolTy, ty))
+	falseSym := narrowSymbol(t, base, semtypes.Diff(symbolTy, ty))
+	return expressionEffect{
+		ifTrue:  &binding{ref: base, narrowedSymbol: trueSym, prev: chain},
+		ifFalse: &binding{ref: base, narrowedSymbol: falseSym, prev: chain},
+	}
+}
+
 func unnarrowSymbol(t typeResolver, chain *binding, symbol model.SymbolRef) statementEffect {
 	return unnarrowSymbolAt(t, chain, symbol, diagnostics.Location{})
 }
