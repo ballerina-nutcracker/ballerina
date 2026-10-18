@@ -1,0 +1,106 @@
+(FloatFn
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callback))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(IntFn
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callback))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(OtherOuter
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref inner))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(Outer
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref inner))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (union-type
+          (user-defined-type IntFn)
+          (user-defined-type FloatFn))) (expr
+        (new (
+          (lambda
+            (function $anonFunc$_0 (
+              (variable v)) ()
+              (expr-function-body
+                (binary-expr +
+                  (simple-var-ref v)
+                  (literal 1)))))
+          (literal 1))))))
+    (var-def
+      (variable o (type
+        (union-type
+          (user-defined-type Outer)
+          (user-defined-type OtherOuter))) (expr
+        (new (
+          (new (
+            (lambda
+              (function $anonFunc$_1 (
+                (variable v)) ()
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref v)
+                    (literal 1)))))
+            (literal 1)))
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref f)
+          (user-defined-type IntFn)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref o)
+          (user-defined-type Outer)))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref v)
+      (literal 1))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref v)
+      (literal 1))
+  )
+)

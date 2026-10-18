@@ -27,25 +27,8 @@ class StringArg {
     }
 }
 
-class IntList {
-    function init(int[] values, int marker) {
-        var _ = values;
-        var _ = marker;
-    }
-}
-
-class StringList {
-    function init(int[] values, string marker) {
-        var _ = values;
-        var _ = marker;
-    }
-}
-
 public function main() {
     xml x = xml `<root><a>1</a></root>`;
     XmlArg|StringArg s = new (x/<a>, 1); // @error
-    int[] arr = [1, 2];
-    IntList|StringList l = new (arr.map(v => v + 1), 1); // @error
     var _ = s;
-    var _ = l;
 }

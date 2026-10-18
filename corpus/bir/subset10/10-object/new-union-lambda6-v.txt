@@ -1,0 +1,42 @@
+module $anon.. v 0.0.0;
+f  object { public function init(function(int) returns int, int) returns nil }|object { public function init(function(string) returns string, int) returns nil };
+class IntFn {
+
+  init(function(int) returns int,int) -> nil{
+    bb0 {
+      _ = callback;
+      _ = marker;
+      return;
+    }
+  }
+}
+class StrFn {
+
+  init(function(string) returns string,int) -> nil{
+    bb0 {
+      _ = callback;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = f is object { public function init(function(int) returns int, int) returns nil }
+    %2 = %1;
+    %3 = println(%2) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = v;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}

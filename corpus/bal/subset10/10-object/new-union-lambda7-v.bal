@@ -13,22 +13,24 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-class WithFn {
-    function init(function (int) returns int callback, int marker) {
+
+import ballerina/io;
+
+class BitFn {
+    function init(function (int) returns 0|1 callback, int marker) {
         var _ = callback;
         var _ = marker;
     }
 }
 
-class WithInt {
-    function init(int value, string marker) {
-        var _ = value;
+class StrFn {
+    function init(function (string) returns string callback, int marker) {
+        var _ = callback;
         var _ = marker;
     }
 }
 
 public function main() {
-    // Only WithFn accepts the lambda, but its parameter cannot be inferred while selecting a candidate.
-    WithFn|WithInt w = new (v => v + 1, 1); // @error
-    var _ = w;
+    BitFn|StrFn f = new (v => v == 1 ? v : 0, 1);
+    io:println(f is BitFn); // @output true
 }
