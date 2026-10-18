@@ -130,8 +130,9 @@ type deferredEmptinessCheck struct {
 }
 
 // resolutionStatus tracks lazy resolution progress for cycle detection.
-// resolutionFailed marks a constant whose resolution already reported a
-// diagnostic, so a constant that refers to it fails without reporting another.
+// resolutionFailed marks a constant or a global variable whose resolution
+// already reported a diagnostic, so a reference to it fails without reporting
+// another.
 type resolutionStatus int
 
 const (
@@ -708,6 +709,8 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 		switch t.lazyResolutionStatus[ref] {
 		case resolutionDone:
 			return true
+		case resolutionFailed:
+			return false
 		case resolutionInProgress:
 			var pos diagnostics.Location
 			if gv.Name != nil {
@@ -723,7 +726,11 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 			} else {
 				_, ok = resolveSimpleVariable(t, nil, gv)
 			}
-			t.lazyResolutionStatus[ref] = resolutionDone
+			if ok {
+				t.lazyResolutionStatus[ref] = resolutionDone
+			} else {
+				t.lazyResolutionStatus[ref] = resolutionFailed
+			}
 			return ok
 		}
 	}
