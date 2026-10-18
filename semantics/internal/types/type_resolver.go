@@ -682,6 +682,10 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 	if !semtypes.IsZero(t.symbolType(ref)) {
 		return true
 	}
+	if t.isEphemeral() {
+		t.internalError("unresolved symbol reached ephemeral resolution", diagnostics.Location{})
+		return false
+	}
 	if defn, ok := t.typeDefnNodes[ref]; ok {
 		return t.resolveTypeOnce(ref, func() bool { return resolveTypeDefinition(t, defn, depth) })
 	}
