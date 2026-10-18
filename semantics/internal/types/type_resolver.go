@@ -7957,6 +7957,19 @@ func typeDescriptorDeclaresSymbols(btype ast.BType) bool {
 	return false
 }
 
+// isDefinitionSet reports whether resolving btype reuses an existing atom. When it returns false, resolving btype
+// defines a new atom and registers metadata for it, mapping defaults for a record type or a method table for an
+// object type, outside the ephemeral-gated state.
+func isDefinitionSet(btype ast.BType) bool {
+	switch ty := btype.(type) {
+	case *ast.BLangRecordType:
+		return ty.Definition != nil
+	case *ast.BLangObjectType:
+		return ty.Definition != nil
+	}
+	return true
+}
+
 func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth int) (_ semtypes.SemType, _ *binding, ok bool) {
 	// closeDefinition closes the definition a descriptor created if the descriptor fails.
 	var closeDefinition func()
@@ -7967,6 +7980,10 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 	}()
 	if t.isEphemeral() && typeDescriptorDeclaresSymbols(btype) {
 		t.unimplemented("type descriptors that declare symbols are not supported while selecting among candidate types", btype.(ast.BLangNode).GetPosition())
+		return semtypes.SemType{}, chain, false
+	}
+	if t.isEphemeral() && !isDefinitionSet(btype) {
+		t.unimplemented("inline record and object type descriptors are not supported while selecting among candidate types", btype.(ast.BLangNode).GetPosition())
 		return semtypes.SemType{}, chain, false
 	}
 	switch ty := btype.(type) {

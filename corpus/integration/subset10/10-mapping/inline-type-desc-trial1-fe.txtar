@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline record and object type descriptors are not supported while selecting among candidate types
+  --> inline-type-desc-trial1-fe.bal:27:22
+   |
+27 |     A|B r = {x: v is record {| int a; |}}; // @error inline record type descriptor in a candidate trial
+   |                      ^^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inline record and object type descriptors are not supported while selecting among candidate types
+  --> inline-type-desc-trial1-fe.bal:27:22
+   |
+27 |     A|B r = {x: v is record {| int a; |}}; // @error inline record type descriptor in a candidate trial
+   |                      ^^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inline record and object type descriptors are not supported while selecting among candidate types
+  --> inline-type-desc-trial1-fe.bal:28:22
+   |
+28 |     A|B o = {x: v is object { int a; }}; // @error inline object type descriptor in a candidate trial
+   |                      ^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inline record and object type descriptors are not supported while selecting among candidate types
+  --> inline-type-desc-trial1-fe.bal:28:22
+   |
+28 |     A|B o = {x: v is object { int a; }}; // @error inline object type descriptor in a candidate trial
+   |                      ^^^^^^^^^^^^^^^^^
