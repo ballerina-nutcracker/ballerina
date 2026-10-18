@@ -73,13 +73,18 @@ func (c *trialDependencyRefCollector) Visit(node ast.BLangNode) ast.Visitor {
 		if symbol := ref.(ast.BNodeWithSymbol).Symbol(); !symbol.IsEmpty() {
 			c.refs = append(c.refs, symbol)
 		}
+	case *ast.BLangInvocation:
+		// A method call still carries a deferred method symbol; its receiver's type is reached through other refs.
+		if symbol, ok := ref.RawSymbol.(*model.SymbolRef); ok && symbol != nil && !symbol.IsEmpty() {
+			c.refs = append(c.refs, *symbol)
+		}
 	}
 	return c
 }
 
 func (c *trialDependencyRefCollector) VisitTypeData(_ *ast.TypeData) ast.Visitor { return c }
 
-// collectTrialDependencyRefs returns the symbols roots refer to, in pre-order, keeping duplicates.
+// collectTrialDependencyRefs returns the symbols roots refer to or call, in pre-order, keeping duplicates.
 func collectTrialDependencyRefs(roots []ast.BLangExpression) []model.SymbolRef {
 	c := &trialDependencyRefCollector{}
 	for _, root := range roots {
