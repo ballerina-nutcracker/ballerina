@@ -14,14 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// fingerprint.go implements design item 4: a per-module public-API
-// structural fingerprint, used to prune a reset module's dependents back out
-// of the reset scope when its exported surface didn't actually change (e.g. a
-// function-body-only edit). Built entirely from already-public compiler APIs
-// — context.CompilerContext.GetTypeEnv/SymbolName/SymbolKind/SymbolType,
-// semtypes.TypeCheckContext/ToString, and
-// model.ExportedSymbolSpace.PublicMainSymbols/AnnotationSpaces — no
-// compiler-package change needed.
 package compile
 
 import (
@@ -35,14 +27,8 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
-// fingerprint is a per-module public-API structural summary. valid is false
-// when no reliable fingerprint could be computed — the module has
-// unresolved-symbol errors (a degenerate type would produce a false-positive
-// "changed" signal), or semtypes.ToString panicked on an unhandled type
-// shape. Two invalid fingerprints are never considered equal to each other:
-// an invalid fingerprint carries no information, so treating "unknown" as
-// "unchanged" would incorrectly prune a dependent that may genuinely need
-// resetting.
+// fingerprint summarizes exported names, kinds, and types. Invalid fingerprints
+// never compare equal.
 type fingerprint struct {
 	value string
 	valid bool
@@ -53,10 +39,8 @@ func (a fingerprint) equal(b fingerprint) bool {
 	return a.valid && b.valid && a.value == b.value
 }
 
-// computeFingerprint builds ctx's exported public-API fingerprint: a sorted,
-// deterministic hash of name+kind+ToString(type) for every exported symbol
-// in exported. Returns an invalid fingerprint if ctx has errors or if
-// rendering any symbol's type panics.
+// computeFingerprint hashes sorted name/kind/type entries for public main and
+// annotation symbols. Context errors or a panic produce an invalid fingerprint.
 func computeFingerprint(ctx *context.CompilerContext, exported model.ExportedSymbolSpace) (fp fingerprint) {
 	if ctx.HasErrors() {
 		return fingerprint{}

@@ -23,8 +23,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 )
 
-// makeEntry builds an indexEntry stand-in for index unit tests (the index only
-// stores the entry; it never compiles, so a nil project is safe).
+// makeEntry builds index test state without a loaded project.
 func makeEntry(root string, openDocs int, t time.Time) *indexEntry {
 	return &indexEntry{project: nil, sourceRoot: root, lastTouched: t, openDocs: openDocs}
 }
@@ -39,14 +38,11 @@ func TestProjectIndexEvictsBackgroundFirst(t *testing.T) {
 	base := time.Unix(1000, 0)
 	idx := newProjectIndex(2, func() time.Time { return base })
 
-	// Two background entries, then one active entry.
 	idx.entries["/bg1"] = makeEntry("/bg1", 0, base.Add(1*time.Second))
 	idx.entries["/act1"] = makeEntry("/act1", 1, base.Add(2*time.Second))
-	// Fill to capacity with a third (active) — triggers eviction on put.
 	newEntry := makeEntry("/new1", 1, base.Add(3*time.Second))
 	idx.putExisting(newEntry, bus)
 
-	// The least-recently-touched background entry (/bg1) should be evicted.
 	if _, ok := idx.entries["/bg1"]; ok {
 		t.Fatal("expected background entry /bg1 to be evicted")
 	}
@@ -69,7 +65,6 @@ func TestProjectIndexEvictsLRUActiveWhenAllActive(t *testing.T) {
 
 	idx.entries["/a1"] = makeEntry("/a1", 1, base.Add(1*time.Second))
 	idx.entries["/a2"] = makeEntry("/a2", 1, base.Add(2*time.Second))
-	// All entries active; adding a third evicts the LRU active (/a1).
 	newEntry := makeEntry("/a3", 1, base.Add(3*time.Second))
 	idx.putExisting(newEntry, bus)
 

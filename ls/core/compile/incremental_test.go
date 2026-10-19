@@ -21,26 +21,8 @@ import (
 	"testing"
 )
 
-// TestPackageDriver_UnchangedModule_CarriesForwardSameDriverInstance is
-// design item 1 + item 4's combined regression check: after a body-only edit
-// to greet (signature unchanged), a second generation seeded with the first
-// generation's committed carry-forward state must:
-//   - NOT reuse greet's own prior moduleDriver — greet itself is dirty (its
-//     text changed) and must be rebuilt fresh.
-//   - reuse consumer's prior moduleDriver unchanged, even though consumer is
-//     topologically downstream of greet — this is only possible if design
-//     item 4's fingerprint pruning fired (consumer would otherwise fall
-//     inside topoTailScope's over-invalidated suffix and get rebuilt just for
-//     following greet in topo order). This is the one assertion that only
-//     passes if pruning specifically targets greet's true dependents, since
-//     topoTailScope alone would rebuild it regardless.
-//
-// standalone (no dependency relationship to greet at all) is deliberately not
-// asserted to keep the same driver instance: whether topoTailScope's
-// over-invalidated suffix happens to include it depends on where the
-// topological sort places an unrelated, dependency-free module — an
-// accepted, unspecified detail of the fast path (see reset_scope.go). Its
-// diagnostics must still surface either way, which is asserted below.
+// A body edit rebuilds greet but preserves consumer's driver after fingerprint
+// pruning. Standalone's diagnostic remains visible whether rebuilt or adopted.
 func TestPackageDriver_UnchangedModule_CarriesForwardSameDriverInstance(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg1, _ := openMultimoduleFixture(t, projSvc)
@@ -58,8 +40,6 @@ func TestPackageDriver_UnchangedModule_CarriesForwardSameDriverInstance(t *testi
 
 	dir := multimoduleFixtureDir(t)
 	greetURI := fileURI(t, "file://"+filepath.Join(dir, "modules", "greet", "greet.bal"))
-	// Body-only edit: greet's signature (returns string) is unchanged, so its
-	// fingerprint must be unchanged too.
 	applyOpen(t, projSvc, greetURI, "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n")
 
 	proj, err := projSvc.Project(greetURI)
@@ -81,18 +61,11 @@ func TestPackageDriver_UnchangedModule_CarriesForwardSameDriverInstance(t *testi
 		t.Error("consumer (dependent of greet, but greet's fingerprint is unchanged) must carry forward the exact same driver instance — item 4 pruning did not fire")
 	}
 
-	// The carried-forward modules' diagnostics must still be reachable
-	// through the new generation (the trap: silently dropping them from
-	// pd.drivers would make their diagnostics vanish from allDiagnostics).
 	if n, ok := moduleDiagCount(t, gen2, pkg2, "multimoduleproject.standalone"); !ok || n != 1 {
 		t.Errorf("gen2 standalone diagnostics = %d ok=%v, want 1 (carried forward, not lost)", n, ok)
 	}
 }
 
-// TestPackageDriver_AllDirty_NoPriorState_FullResetScope verifies the "first
-// generation ever" (or extractForURI's nil-priorState) case: every module is
-// in the reset scope, matching pre-ticket-28 full-rebuild-every-time
-// behavior exactly.
 func TestPackageDriver_AllDirty_NoPriorState_FullResetScope(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -108,9 +81,7 @@ func TestPackageDriver_AllDirty_NoPriorState_FullResetScope(t *testing.T) {
 	}
 }
 
-// TestPackageDriver_Aborted_StopsBetweenModules verifies design item 5:
-// a stale() that flips true after the first module processed stops the
-// Phase 1 loop before any further module is reached.
+// Supersession after the first local driver is created prevents reaching a second.
 func TestPackageDriver_Aborted_StopsBetweenModules(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -128,8 +99,6 @@ func TestPackageDriver_Aborted_StopsBetweenModules(t *testing.T) {
 	}
 }
 
-// TestPackageDriver_AbortedFromStart_NoModulesReached verifies a
-// generation superseded before it starts touches nothing.
 func TestPackageDriver_AbortedFromStart_NoModulesReached(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)

@@ -113,9 +113,8 @@ func lastGen(c *genCollector) uint64 {
 	return s[len(s)-1]
 }
 
-// TestSnapshotStoreStaleGate verifies the core invariant: a stable snapshot
-// whose generation is no longer current is discarded (CE-E3) and not stored,
-// while a current-generation snapshot is stored and publishes CE-E1.
+// The stale gate preserves the prior snapshot and emits cancellation rather
+// than success for a superseded generation.
 func TestSnapshotStoreStaleGate(t *testing.T) {
 	bus := event.New()
 	defer bus.Close()
@@ -168,9 +167,7 @@ func TestSnapshotStoreEvictRoot(t *testing.T) {
 	}
 }
 
-// TestEngineSingleFlightAndStaleGate verifies branch 3 end-to-end via real
-// compiles: two rapid updates (gen 1, gen 2) publish a stable snapshot only
-// for the latest generation; gen 1's result is gated out by the stale gate.
+// Rapid updates leave generation 2 stable and emit cancellation for generation 1.
 func TestEngineSingleFlightAndStaleGate(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	succeeded := collectGen(t, bus, event.CompilationSucceeded)
@@ -187,16 +184,12 @@ func TestEngineSingleFlightAndStaleGate(t *testing.T) {
 	if !ok || snap.Key().Generation != 2 {
 		t.Fatalf("stable gen = %v ok=%v, want 2", snap.Key().Generation, ok)
 	}
-	// gen 1 must have been gated out (CE-E3) since gen 2 superseded it before
-	// gen 1 published.
 	if len(cancelled.slice()) == 0 {
 		t.Fatalf("expected at least one CE-E3 for the superseded generation, got %v", cancelled.slice())
 	}
 }
 
-// TestEnginePanicRecovery verifies a panicking compile publishes CE-E2 (not a
-// crash) and stores no snapshot; the worker survives for the next cycle. Uses
-// the internal compileFunc seam to inject a panicking compile.
+// An injected compiler panic emits failure; a subsequent real cycle succeeds.
 func TestEnginePanicRecovery(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	failed := collectGen(t, bus, event.CompilationFailed)
@@ -212,7 +205,6 @@ func TestEnginePanicRecovery(t *testing.T) {
 		t.Fatal("panicking compile must not store a snapshot")
 	}
 
-	// Worker survives: restore the real compile and run a clean cycle.
 	succeeded := collectGen(t, bus, event.CompilationSucceeded)
 	svc.compileFn = realCompilePackage
 	updateDoc(t, projects, "file:///workspace/panic.bal", "public function main() {}\n", 2)
@@ -222,17 +214,13 @@ func TestEnginePanicRecovery(t *testing.T) {
 	}
 }
 
-// TestEngineResolutionVsCompilationClassification verifies branch 2: a cycle
-// whose resolution had errors publishes CE-E5a only (no CE-E5b); a clean cycle
-// publishes CE-E5a + CE-E5b. The resolution-error flag is driven through the
-// internal compileFunc seam (a genuine dependency-resolution error is hard to
-// trigger from a single .bal fixture).
+// Injected resolution errors suppress CompilationDiagnosticsReady without
+// suppressing ResolutionDiagnosticsReady.
 func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	e5a := collectGen(t, bus, event.ResolutionDiagnosticsReady)
 	e5b := collectGen(t, bus, event.CompilationDiagnosticsReady)
 
-	// Resolution-error cycle: CE-E5a only.
 	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult {
 		return cycleResult{resolutionErrored: true, byFile: map[string][]CompilerDiagnostic{}, resByFile: map[string][]CompilerDiagnostic{}}
 	}
@@ -245,7 +233,6 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 		t.Fatalf("resolution-error cycle: E5b=%d, want 0", len(e5b.slice()))
 	}
 
-	// Clean cycle: CE-E5a + CE-E5b.
 	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult {
 		return cycleResult{byFile: map[string][]CompilerDiagnostic{}, resByFile: map[string][]CompilerDiagnostic{}}
 	}
@@ -259,24 +246,14 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	}
 }
 
-// TestEngineCleanCycleEmitsE5aAndE5b is the real-compile half of the
-// resolution-vs-compilation equivalence (design branch 2). A clean-resolution
-// file compiled for real (no compileFunc seam) must emit both CE-E5a
-// (resolution diagnostics ready) and CE-E5b (compilation diagnostics ready)
-// for the same generation. The resolution-error half (CE-E5a only) is covered
-// by TestEngineResolutionVsCompilationClassification via the compileFunc seam:
-// a real dependency-resolution error requires a bala-repository dependency
-// failure that is not reachable through a single .bal compile, and the
-// design's "undeclared module import" example is a compilation (semantic)
-// error in this compiler, not a resolution error.
+// A real compile with clean package resolution emits both diagnostics-ready
+// events for the same generation.
 func TestEngineCleanCycleEmitsE5aAndE5b(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	e5a := collectGen(t, bus, event.ResolutionDiagnosticsReady)
 	e5b := collectGen(t, bus, event.CompilationDiagnosticsReady)
 
-	// Real compile (default compileFn): a clean file with an unused variable,
-	// whose diagnostic is a compilation (Phase-2) diagnostic, not a resolution
-	// diagnostic.
+	// The unused variable is a compiler diagnostic, not a package-resolution error.
 	openDoc(t, projects, "file:///workspace/clean.bal", "public function main() {\n int x = 1;\n}\n", 1)
 	svc.Flush()
 
@@ -291,9 +268,6 @@ func TestEngineCleanCycleEmitsE5aAndE5b(t *testing.T) {
 	}
 }
 
-// TestEngineDiagnosticsFor verifies DiagnosticsFor returns the stable
-// snapshot's diagnostics grouped by open document, with the snapshot's
-// generation.
 func TestEngineDiagnosticsFor(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	_ = bus
@@ -312,12 +286,7 @@ func TestEngineDiagnosticsFor(t *testing.T) {
 	}
 }
 
-// TestEngineCancelSupersedesInFlight verifies the $/cancelRequest mapping
-// (design branch 3): Cancel bumps the in-flight root's generation so the
-// running compile finishes but its result is gated out at the stale-
-// publication gate (CE-E3), no CE-E1 is emitted, and no stable snapshot is
-// stored. Go cannot interrupt the compile, so a blocking compileFunc stands
-// in for a compile in flight; Cancel is issued while it is blocked.
+// Cancel supersedes a blocked cycle; releasing it emits cancellation, not success.
 func TestEngineCancelSupersedesInFlight(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	succeeded := collectGen(t, bus, event.CompilationSucceeded)
@@ -327,7 +296,7 @@ func TestEngineCancelSupersedesInFlight(t *testing.T) {
 	release := make(chan struct{})
 	var releaseOnce sync.Once
 	releaseNow := func() { releaseOnce.Do(func() { close(release) }) }
-	defer releaseNow() // always unblock the in-flight compile so Shutdown can drain
+	defer releaseNow()
 	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult {
 		close(started)
 		<-release
@@ -335,14 +304,14 @@ func TestEngineCancelSupersedesInFlight(t *testing.T) {
 	}
 
 	openDoc(t, projects, "file:///workspace/cancel.bal", "public function main() {}\n", 1)
-	<-started // the in-flight compile (gen 1) is now running
+	<-started
 
 	svc.Cancel()
 	if g, ok := projects.Generation("/workspace/cancel.bal"); !ok || g != 2 {
 		t.Fatalf("after Cancel: generation = %d ok=%v, want 2", g, ok)
 	}
 
-	releaseNow() // let the in-flight compile finish
+	releaseNow()
 	svc.Flush()
 
 	if len(succeeded.slice()) != 0 {

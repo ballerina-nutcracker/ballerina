@@ -33,12 +33,7 @@ func moduleIDFor(t *testing.T, pkg *projects.Package, name string) projects.Modu
 	return module.ModuleID()
 }
 
-// TestTopoTailScope_IncludesEverythingFromEarliestDirtyOnward verifies design
-// item 1's fast path: dirtying greet (the multimodule fixture's root
-// dependency — main -> consumer -> greet) must pull every module topo-ordered
-// at or after it into the reset scope, including standalone even though
-// standalone has no real dependency edge to greet — the deliberate
-// over-invalidation ls-ref's modulesFromTopoOrder accepts.
+// Dirtying greet includes greet, consumer, and main in the topological suffix.
 func TestTopoTailScope_IncludesEverythingFromEarliestDirtyOnward(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -59,8 +54,6 @@ func TestTopoTailScope_IncludesEverythingFromEarliestDirtyOnward(t *testing.T) {
 	}
 }
 
-// TestTopoTailScope_EmptyDirtyProducesEmptyScope verifies the "nothing
-// changed" case: an empty dirty set produces an empty (not full) reset scope.
 func TestTopoTailScope_EmptyDirtyProducesEmptyScope(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -73,10 +66,7 @@ func TestTopoTailScope_EmptyDirtyProducesEmptyScope(t *testing.T) {
 	}
 }
 
-// TestDependentClosure_OnlyTrueDependents verifies the precise BFS fallback:
-// dirtying greet must reach exactly its transitive dependents (consumer,
-// main) and must NOT pull in standalone, which has no dependency edge to
-// greet at all — the precision topoTailScope deliberately trades away.
+// The dependent closure includes consumer and main, but excludes standalone.
 func TestDependentClosure_OnlyTrueDependents(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -101,10 +91,6 @@ func TestDependentClosure_OnlyTrueDependents(t *testing.T) {
 	}
 }
 
-// TestModuleTextHash_StableForUnchangedContent_DiffersOnEdit verifies the
-// dirty-set seed: hashing the same module twice (no edit in between)
-// produces the same hash, and hashing after a real content edit produces a
-// different one.
 func TestModuleTextHash_StableForUnchangedContent_DiffersOnEdit(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)

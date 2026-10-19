@@ -33,18 +33,10 @@ const malformedBodySource = "function broken() {\n    int value = ;\n}\n"
 const malformedSignatureAndBodySource = "function broken(int {\n    int value = ;\n}\n"
 const malformedTopLevelSource = "function broken(int {\n}\n"
 
-// breakOutsideLoopSource triggers a diagnostic from inside
-// ResolvePrivateNodesTypes itself (Phase 2 / stage 5's block-statement
-// resolution reports "break statement not allowed outside loop") rather than
-// from symbol resolution (stage 3) or semantic analysis (stage 6) — the
-// signature and every earlier stage resolve this module diagnostic-free.
+// breakOutsideLoopSource reports an error during local type resolution.
 const breakOutsideLoopSource = "function main() {\n    break;\n}\n"
 
-// oneSemanticErrorSource produces exactly one SEMANTIC_ERROR diagnostic
-// ("incompatible type"), surfacing only during AnalyzeSemantics (stage 6) —
-// confirmed empirically: parsing, symbol resolution, top-level and local type
-// resolution all complete diagnostic-free for this fixture; only
-// AnalyzeSemantics reports the type mismatch.
+// oneSemanticErrorSource reports one type mismatch during semantic analysis.
 const oneSemanticErrorSource = "public function main() {\n    int x = \"hello\";\n    _ = x;\n}\n"
 
 // defaultModuleFor returns proj's default module plus the project's shared
@@ -118,10 +110,7 @@ func TestModuleDriver_ResolverErrorDoesNotAdvancePhase1(t *testing.T) {
 	}
 }
 
-// TestModuleDriver_UnresolvedReferenceReachesLocalTypeResolved covers a
-// cleanly parsed module referencing an unknown name: the reference is bound
-// to a stand-in symbol (bindUnresolvedReferences), so type resolution runs
-// without panicking, while semantic analysis still never runs.
+// Unknown variable references use stand-in symbols through local type resolution.
 func TestModuleDriver_UnresolvedReferenceReachesLocalTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -147,9 +136,7 @@ func TestModuleDriver_UnresolvedReferenceReachesLocalTypeResolved(t *testing.T) 
 	}
 }
 
-// TestModuleDriver_UnusedSymbolDoesNotBlockTypeResolution covers a module
-// whose only error is an unused symbol: symbol resolution is unusable for
-// dependents, but no symbol is left unresolved, so type resolution still runs.
+// Unused-symbol errors mark resolution unusable without blocking type resolution.
 func TestModuleDriver_UnusedSymbolDoesNotBlockTypeResolution(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -209,16 +196,7 @@ func TestModuleDriver_PublicTypeErrorDoesNotAdvancePhase1(t *testing.T) {
 	}
 }
 
-// TestModuleDriver_MalformedFunctionSignatureKeepsSymbolResolutionUsable
-// covers a function whose own signature is unparseable, alongside a valid
-// sibling. Parser diagnostics no longer gate ensureSymbolResolved (removed
-// along with the bad-node filtering this driver used to do): symbol
-// resolution still runs so a module's scope (and thus e.g. completion) stays
-// available. The nodebuilder recovers the whole malformed function, body
-// included, as a BLangBadTopLevelNode, so the body's would-be unused-variable
-// error never surfaces and symbol resolution stays usable. Compare
-// TestModuleDriver_MalformedFunctionBodyWithSiblingRetainsSibling, where only
-// the body is malformed and its resolver diagnostic makes this stage unusable.
+// A recovered malformed signature adds no resolver error alongside a valid sibling.
 func TestModuleDriver_MalformedFunctionSignatureKeepsSymbolResolutionUsable(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -247,12 +225,7 @@ func TestModuleDriver_MalformedFunctionSignatureKeepsSymbolResolutionUsable(t *t
 	}
 }
 
-// TestModuleDriver_MalformedTopLevelReachesTopLevelTypeResolved covers a
-// fully unparseable top-level declaration (function broken(int {}): the parser
-// recovers it as a BLangBadTopLevelNode, which symbol resolution and package
-// assembly both skip cleanly (no symbol allocated, no new diagnostic), so
-// this module's Phase 1 proceeds all the way through top-level type
-// resolution using only the parser's own diagnostic.
+// A recovered bad top-level node retains its parser diagnostic through Phase 1.
 func TestModuleDriver_MalformedTopLevelReachesTopLevelTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -282,13 +255,7 @@ func TestModuleDriver_MalformedTopLevelReachesTopLevelTypeResolved(t *testing.T)
 	}
 }
 
-// TestModuleDriver_MalformedTopLevelReachesLocalTypeResolved covers ticket
-// 58: a module whose only diagnostic is the parser's own (from the recovered
-// bad top-level node) must still reach stageLocalTypeResolved, since Phase 2
-// itself adds no new error for this recovery-mode node (ticket 40). Semantic
-// analysis must not run even so -- it stays gated on the untouched blanket
-// d.ctx.HasDiagnostics() check, which still sees the pre-existing parser
-// diagnostic.
+// A parser diagnostic permits local type resolution but blocks semantic analysis.
 func TestModuleDriver_MalformedTopLevelReachesLocalTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -318,13 +285,7 @@ func TestModuleDriver_MalformedTopLevelReachesLocalTypeResolved(t *testing.T) {
 	}
 }
 
-// TestModuleDriver_LocalTypeErrorStopsBeforeSemanticAnalysis covers the other
-// half of ticket 58: a module where Phase 2 (ResolvePrivateNodesTypes) itself
-// reports a new error ("break statement not allowed outside loop") still
-// reaches stageLocalTypeResolved -- mirroring how ensureTopLevelTypeResolved
-// advances d.stage even when its own result is unusable -- but with
-// localTypeResolutionUsable left false, which keeps semantic analysis's own
-// blanket HasDiagnostics() gate from ever letting it run.
+// A local-type error advances the stage but blocks semantic analysis.
 func TestModuleDriver_LocalTypeErrorStopsBeforeSemanticAnalysis(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -354,12 +315,7 @@ func TestModuleDriver_LocalTypeErrorStopsBeforeSemanticAnalysis(t *testing.T) {
 	}
 }
 
-// TestModuleDriver_MalformedFunctionBodyReachesLocalTypeResolved covers a
-// function with a valid signature but a malformed body (missing initializer
-// expression). Walking the body surfaces new resolver diagnostics (unknown
-// symbol / unused variable), so symbol resolution is unusable for dependents,
-// but a module with bad AST nodes still runs through local type resolution
-// (moduleDriver.hasBadNodes) and never reaches semantic analysis.
+// This recovered body adds resolver errors but still reaches local type resolution.
 func TestModuleDriver_MalformedFunctionBodyReachesLocalTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -391,14 +347,7 @@ func TestModuleDriver_MalformedFunctionBodyReachesLocalTypeResolved(t *testing.T
 	}
 }
 
-// TestModuleDriver_MalformedFunctionBodyWithSiblingRetainsSibling is the
-// sibling-bearing variant of the test above: symbol resolution is unusable
-// for the same reason, but the valid sibling function
-// must still appear in pkgNode -- nodebuilder no longer truncates package
-// assembly at the first bad node it can't classify (see
-// nodebuilder/mod.go's BLangBadTopLevelNode case), and this driver no longer
-// drops the sibling's compilation unit outright the way the removed
-// filtering used to.
+// A malformed body does not remove its valid sibling from the package node.
 func TestModuleDriver_MalformedFunctionBodyWithSiblingRetainsSibling(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -457,7 +406,6 @@ func TestModuleDriver_IdempotentOnAlreadyCompletedStage(t *testing.T) {
 		t.Fatalf("diagnostics after first advance = %d, want 1", first)
 	}
 
-	// Re-requesting a stage already reached must not re-run it.
 	d.advanceTo(stageSemanticAnalyzed, module, input)
 	second := len(d.diagnosticContext().Diagnostics())
 	if second != first {
@@ -468,19 +416,7 @@ func TestModuleDriver_IdempotentOnAlreadyCompletedStage(t *testing.T) {
 	}
 }
 
-// TestModuleDriver_SecondGenerationOverSameModuleDoesNotPanic simulates an
-// edit to an already-open file (didChange on main.bal, valid -> erroring)
-// and drives two moduleDriver generations over the same shared
-// CompilerEnvironment/DiagnosticEnv. The second generation re-parses the
-// edited content without panicking: ensureParsed skips RegisterFile for
-// already-registered names (alreadyRegistered/markRegistered, multimodule.go)
-// rather than re-registering under the same name, since RegisterFile panics on
-// a same-name/different-content collision by design and nothing downstream
-// reads DiagnosticEnv's stored content back. The edit direction is
-// deliberately valid -> erroring (not the reverse) so the assertions cannot
-// pass vacuously: a gen2 that silently no-ops (e.g. because it read a stale,
-// empty module handle) would report zero diagnostics and an unreached stage,
-// both of which are asserted against here.
+// Re-parsing edited text retains the file index and isolates each driver's diagnostics.
 func TestModuleDriver_SecondGenerationOverSameModuleDoesNotPanic(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")

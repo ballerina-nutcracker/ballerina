@@ -14,15 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package workspace provides ProjectService, the core service that owns
-// document lifecycle state (open/change/close) and the source-root-keyed
-// project index. Apply carries resolved full text — the server resolves
-// protocol.TextEdit ranges to full text before calling Apply, keeping this
-// package protocol-free.
-//
-// Project discovery and loading use a host-supplied directory opener. Open
-// editor buffers overlay folder-relative source names at load time; subsequent
-// content edits flow through OpenText without rereading source files.
+// Package workspace owns open-document state and the project index. Changes
+// carry full text, and project discovery uses a host-supplied directory opener.
+// Open buffers overlay source files at load time and supply live text to compiles.
 package workspace
 
 import (
@@ -37,8 +31,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
-// defaultMaxProjects is the conservative Phase-B count bound for the project
-// index. ADR-057's weighted 2048MB budget is deferred.
+// defaultMaxProjects bounds the number of cached projects.
 const defaultMaxProjects = 32
 
 // Option configures a ProjectService at construction.
@@ -75,9 +68,7 @@ const (
 	ChangeClose
 )
 
-// DocumentChange describes a single document lifecycle mutation. The server
-// resolves protocol.TextEdit ranges to full Text before constructing a
-// DocumentChange, so this type carries no protocol types.
+// DocumentChange describes a document lifecycle mutation with resolved full text.
 type DocumentChange struct {
 	Kind       ChangeKind
 	URI        DocumentURI
@@ -86,12 +77,8 @@ type DocumentChange struct {
 	LanguageID string // valid for ChangeOpen
 }
 
-// Snapshot is a plain-struct, value-type view of a document's current state.
-// No refcount or Release method ships in Phase B — there is no refcount state.
-// Ticket 09 wraps Snapshot with a release func() when the dual-snapshot engine
-// adds refcounting. SourceRoot is set on Apply for observability/testability.
-// Generation (ticket 09) is the per-source-root monotonic counter of the
-// publish that produced this snapshot.
+// Snapshot is a value view of an open document's text and publication metadata.
+// Generation is zero when no successful publication has been recorded.
 type Snapshot struct {
 	Text       string
 	Version    int32
@@ -119,15 +106,11 @@ type WatchedFileChange struct {
 	URI  DocumentURI
 }
 
-// ProjectService owns document lifecycle state and the source-root-keyed
-// project index. It absorbs the former server.documentStore, replacing the
-// string-keyed map with a DocumentURI-keyed map, and replaces the compile-owned
-// synthetic filesystem with folder-relative project loading and in-place
-// publication (ticket 28).
+// ProjectService owns open-document state and the source-root-keyed project index.
 type ProjectService struct {
 	openDir      func(string) fs.FS
 	bus          *event.Bus
-	mu           sync.RWMutex // guards the documents map (concurrent engine reads under 09)
+	mu           sync.RWMutex // guards documents and pendingRoots
 	documents    map[DocumentURI]Snapshot
 	pendingRoots map[DocumentURI]string // recovery membership only; guarded by mu
 	index        *projectIndex
@@ -135,9 +118,8 @@ type ProjectService struct {
 	repositories []projects.Repository
 }
 
-// New creates a ProjectService wired to a directory opener and synchronous
-// event bus. The bus receives ProjectRegistered/ProjectEvicted/
-// ProjectKindTransitioned events. Options configure the index bound.
+// New creates a ProjectService with a host directory opener and an event bus.
+// Options configure the project count bound and package repositories.
 func New(openDir func(string) fs.FS, bus *event.Bus, opts ...Option) *ProjectService {
 	now := time.Now
 	s := &ProjectService{
@@ -154,8 +136,8 @@ func New(openDir func(string) fs.FS, bus *event.Bus, opts ...Option) *ProjectSer
 	return s
 }
 
-// applyDocumentMap carries the 07 logic: version monotonicity checking and text
-// accumulation in the documents map.
+// applyDocumentMap updates document state, rejecting non-increasing versions
+// and updates or closes for unknown documents.
 func (s *ProjectService) applyDocumentMap(change DocumentChange) (Snapshot, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -195,28 +177,14 @@ func (s *ProjectService) applyDocumentMap(change DocumentChange) (Snapshot, erro
 	}
 }
 
-// Apply applies a document lifecycle change: update the documents map,
-// resolve the source root (memoized), and — for open/update — load a fresh
-// project through the source overlay so open buffers are authoritative, then
-// atomically replace the index entry. context.Context declares that
-// cancellation flows through ctx; it is checked for Err() before publication.
-// Phase B's calls are synchronous (no goroutines).
-//
-// The project is reloaded per publication rather than reusing a cached
-// project's environment: the compiler's DiagnosticEnv is a per-Load singleton
-// that panics on re-registration of a changed file (a documented latent
-// limitation — see the skipped TestProjectDuplicate). The index still provides
-// source-root memoization (the expensive ADR-048 walk) and count-bounding.
-// Ticket 28 drops the former ADR-042 modifier chain (Document.Modify()
-// .WithContent().Apply() → setCurrentPackage): edits publish in place (see
-// publish/documentInCurrentPackage) and the compile package's incremental
-// moduleDriver reset picks up the new content via OpenText instead.
+// Apply updates document state and publishes a generation for open/update.
+// Existing documents with unchanged import sets reuse the loaded project;
+// missing documents or changed import sets trigger a reload. Cancellation is
+// checked after storing text and discovering the root, before publication.
+// Close removes the buffer without publishing.
 func (s *ProjectService) Apply(ctx context.Context, change DocumentChange) (Snapshot, error) {
 	if change.Kind == ChangeClose {
-		// Resolve first (the document is still open) to find the index entry,
-		// then remove from the map and decrement the open-doc count. No
-		// publication on close — the document stays in the package until
-		// eviction or a watched-file delete.
+
 		sourceRoot, err := s.findSourceRootMemoized(change.URI)
 		if err == nil {
 			if entry, ok := s.index.get(sourceRoot); ok && entry.openDocs > 0 {
@@ -248,8 +216,7 @@ func (s *ProjectService) Apply(ctx context.Context, change DocumentChange) (Snap
 		return snap, err
 	}
 	snap.Generation = gen
-	// Persist SourceRoot + Generation into the documents-map view so
-	// OpenDocumentsUnder and Snapshot reflect the publish.
+
 	s.mu.Lock()
 	if cur, ok := s.documents[change.URI]; ok {
 		cur.SourceRoot = sourceRoot
@@ -263,21 +230,9 @@ func (s *ProjectService) Apply(ctx context.Context, change DocumentChange) (Snap
 	return snap, nil
 }
 
-// publish is ticket 28's incremental publication model: the first publish for
-// a source root does one projects.Load to seed the persistent per-source-root
-// CompilerEnvironment and initial package, and publishes ProjectRegistered (08
-// behavior) + ProjectUpdated. Subsequent content publishes reuse the SAME
-// project and the SAME immutable *projects.Package — the document's new text
-// already landed in the documents map (applyDocumentMap, before publish is
-// called), which OpenText exposes as the live-buffer override the compile
-// package's driver reads instead of the frozen Document.TextDocument(). This
-// drops the ADR-042 modifier chain (Document.Modify().WithContent().Apply(),
-// which used to cascade a brand-new Package/Module/Document graph on every
-// edit): the compiler's Package graph now only changes on a genuine
-// structural reload (a new/removed file), triggering the incremental
-// moduleDriver reset (ls/core/compile) for the affected module(s) instead of
-// a full from-scratch rebuild. If the document is not yet in the package (a
-// new file opened after the seed load), it falls back to a fresh Load.
+// publish advances an existing project's generation for content-only edits.
+// Initial loads, missing documents, and changed import sets reload the project
+// and publish lifecycle events.
 func (s *ProjectService) publish(change DocumentChange, sourceRoot string) (uint64, error) {
 	s.mu.Lock()
 	entry, ok := s.index.get(sourceRoot)
@@ -294,18 +249,13 @@ func (s *ProjectService) publish(change DocumentChange, sourceRoot string) (uint
 		return gen, nil
 	}
 	s.mu.Unlock()
-	// Document not in the current package (new file): fall back to a fresh
-	// Load, advancing the generation.
+
 	gen := s.reloadAt(sourceRoot, change.URI)
 	s.publishLifecycle(sourceRoot, gen)
 	return gen, nil
 }
 
-// documentInCurrentPackage reports whether change's document is already part
-// of project's current package. It performs no mutation — content updates
-// live only in the documents map (see OpenText) — this is purely the
-// new-file-detection gate that decides whether publish can bump the
-// generation in place or must fall back to a fresh Load.
+// documentInCurrentPackage reports whether the loaded package contains change.URI.
 func (s *ProjectService) documentInCurrentPackage(project projects.Project, change DocumentChange) bool {
 	pkg := project.CurrentPackage()
 	if pkg == nil {
@@ -326,11 +276,8 @@ func (s *ProjectService) documentInCurrentPackage(project projects.Project, chan
 	return module.Document(docID) != nil
 }
 
-// importSetChanged reports whether change's live text declares a different
-// import set than the same document in the project's current package. A
-// package resolves its dependencies once from the text it was loaded with, so
-// a changed import set needs a fresh Load. Only syntactically complete import
-// declarations count, so a half-typed import does not reload.
+// importSetChanged compares complete import declarations against loaded text,
+// ignoring aliases, ordering, and declarations with diagnostics.
 func (s *ProjectService) importSetChanged(project projects.Project, change DocumentChange) bool {
 	name, contained := s.Paths(project).NameOf(change.URI)
 	if !contained {
@@ -348,8 +295,7 @@ func (s *ProjectService) importSetChanged(project projects.Project, change Docum
 	return !sameImportSet(live, importSet(doc.SyntaxTree()))
 }
 
-// publishLifecycle publishes ProjectRegistered (first load / kind transition,
-// 08 behavior) followed by ProjectUpdated (WM-E4) for the given generation.
+// publishLifecycle publishes ProjectRegistered followed by ProjectUpdated.
 func (s *ProjectService) publishLifecycle(sourceRoot string, gen uint64) {
 	if s.bus == nil {
 		return
@@ -358,7 +304,7 @@ func (s *ProjectService) publishLifecycle(sourceRoot string, gen uint64) {
 	s.bus.Publish(event.NewProjectUpdatedEvent(sourceRoot, gen))
 }
 
-// publishUpdated publishes ProjectUpdated (WM-E4) for the given generation.
+// publishUpdated publishes ProjectUpdated for the given generation.
 func (s *ProjectService) publishUpdated(sourceRoot string, gen uint64) {
 	if s.bus == nil {
 		return
@@ -366,11 +312,9 @@ func (s *ProjectService) publishUpdated(sourceRoot string, gen uint64) {
 	s.bus.Publish(event.NewProjectUpdatedEvent(sourceRoot, gen))
 }
 
-// reloadAt builds a fresh source overlay for the root, loads a brand-new project
-// (fresh CompilerEnvironment and DiagnosticEnv), and atomically replaces the
-// index entry with a fresh lifetime generation stamp. The open-doc count is
-// preserved from any existing entry. A load failure is non-fatal: the
-// documents map is still updated, and the next change retries.
+// reloadAt loads through a fresh overlay and replaces the index entry with a
+// new generation, preserving any existing open-doc count. A load failure
+// returns zero without replacing the entry.
 func (s *ProjectService) reloadAt(sourceRoot string, u DocumentURI) uint64 {
 	paths := SourcePaths{root: sourceRoot}
 	loadName := "."
@@ -399,8 +343,8 @@ func (s *ProjectService) reloadAt(sourceRoot string, u DocumentURI) uint64 {
 	return s.index.putExisting(entry, s.bus)
 }
 
-// Generation returns the per-source-root monotonic generation counter for the
-// last accepted publish, or 0/false if the root is unknown.
+// Generation returns the root's current generation, including supersessions,
+// or 0/false if the root is unknown.
 func (s *ProjectService) Generation(root string) (uint64, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -411,21 +355,14 @@ func (s *ProjectService) Generation(root string) (uint64, bool) {
 	return entry.generation, true
 }
 
-// Supersede bumps the source root's generation counter without publishing, so
-// any in-flight compile cycle for root is gated out at the stale-publication
-// gate (CE-E3): the running compile finishes but its result is discarded. It
-// is the $/cancelRequest mapping (design branch 3) — Go cannot interrupt a
-// compile, so cancellation is boundary-only via the generation counter. It is
-// a no-op for an unknown root and does not touch the debounce timers (owned
-// by the compile engine) or close the bus.
+// Supersede advances root's generation without publishing. It is a no-op for
+// an unknown root and does not alter compile timers or the event bus.
 func (s *ProjectService) Supersede(root string) {
 	s.index.supersede(root)
 }
 
-// CurrentProject returns the published project for a source root plus its
-// generation. Used by the compile engine to capture the package to compile.
-// The project's current package is read under the state lock so it cannot
-// race with a concurrent Apply's index-entry swap (a structural reload).
+// CurrentProject returns the indexed project and generation for root, or
+// nil/0/false if no project is loaded.
 func (s *ProjectService) CurrentProject(root string) (projects.Project, uint64, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -436,10 +373,7 @@ func (s *ProjectService) CurrentProject(root string) (projects.Project, uint64, 
 	return entry.project, entry.generation, true
 }
 
-// OpenDocumentsUnder returns the open file: DocumentURIs resolved to root, in
-// stable (URI-sorted) iteration order. Used by the server CE subscriber
-// (branch 10) to publish diagnostics for every open document in the accepted
-// root.
+// OpenDocumentsUnder returns open file URIs resolved to root, sorted by URI.
 func (s *ProjectService) OpenDocumentsUnder(root string) []DocumentURI {
 	s.mu.RLock()
 	var open []DocumentURI
@@ -467,8 +401,7 @@ func (s *ProjectService) OpenDocumentsUnder(root string) []DocumentURI {
 	return out
 }
 
-// findSourceRootMemoized is the ADR-048 step 1 for a file: URI: find the
-// project source root, memoized by file path. It is file:-only in 08.
+// findSourceRootMemoized discovers a file URI's project key and caches it by path.
 func (s *ProjectService) findSourceRootMemoized(u DocumentURI) (string, error) {
 	filePath := u.Path()
 	if root, ok := s.index.lookupSourceRoot(filePath); ok {
@@ -519,11 +452,8 @@ func (s *ProjectService) Paths(project projects.Project) SourcePaths {
 	return s.index.paths(project)
 }
 
-// Project returns the resolved project for a file: URI from the index. It is
-// the exported accessor CompilationService uses to read the published
-// CurrentPackage via a direct reference. It does not auto-load: a source root
-// that was never Apply'd (or was evicted) returns nil, so Compile returns an
-// empty result.
+// Project discovers a file URI's root and returns its indexed project. It
+// does not load projects; an unregistered or evicted root returns nil.
 func (s *ProjectService) Project(u DocumentURI) (projects.Project, error) {
 	sourceRoot, err := s.findSourceRootMemoized(u)
 	if err != nil {
@@ -536,8 +466,7 @@ func (s *ProjectService) Project(u DocumentURI) (projects.Project, error) {
 	return entry.project, nil
 }
 
-// Snapshot returns the current snapshot for the given URI, replacing the
-// former documentStore.document lookup.
+// Snapshot returns the current open-document state for the given URI.
 func (s *ProjectService) Snapshot(u DocumentURI) (Snapshot, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -545,11 +474,8 @@ func (s *ProjectService) Snapshot(u DocumentURI) (Snapshot, bool) {
 	return snap, ok
 }
 
-// DocumentText returns u's current text: the live open-buffer content if the
-// document is open, otherwise the loaded project's frozen document text (the
-// same content the compile engine's documentText fallback reads for a
-// document that was never opened through the workspace). A document whose
-// root is unknown or not yet loaded reports ok=false.
+// DocumentText returns open-buffer text, falling back to the loaded document's
+// text. It returns false if neither source is available.
 func (s *ProjectService) DocumentText(u DocumentURI) (string, bool) {
 	if snap, ok := s.Snapshot(u); ok {
 		return snap.Text, true
@@ -592,11 +518,9 @@ func (s *ProjectService) OpenText(project projects.Project, name string) (string
 	return snap.Text, ok
 }
 
-// ApplyWatchedFile routes a didChangeWatchedFiles event. Ballerina.toml
-// create/delete/change triggers an atomic ADR-024 kind transition (or reload);
-// a source-file delete while not open drops the stale index entry so the next
-// didOpen/didChange reloads fresh from disk (no modifier chain on the cached
-// project, avoiding the DiagnosticEnv same-name/different-doc panic).
+// ApplyWatchedFile rediscovers projects after Ballerina.toml changes and
+// removes indexed projects for deleted, closed source files. It ignores
+// non-file URIs and does not observe ctx cancellation.
 func (s *ProjectService) ApplyWatchedFile(ctx context.Context, change WatchedFileChange) error {
 	_ = ctx
 	if !change.URI.IsFile() {
@@ -612,10 +536,9 @@ func (s *ProjectService) ApplyWatchedFile(ctx context.Context, change WatchedFil
 	}
 }
 
-// applyBallerinaTomlChange handles create/delete/change of a Ballerina.toml:
-// invalidate affected current projects before discovery, then re-resolve all
-// open documents. A discovery failure leaves buffers intact without exposing
-// a stale project; successful discovery reloads each distinct project once.
+// applyBallerinaTomlChange invalidates affected projects and rediscovers their
+// open documents. Discovery errors retain buffers without restoring stale
+// projects; successful discovery attempts one reload per distinct root.
 func (s *ProjectService) applyBallerinaTomlChange(kind WatchedFileKind, tomlPath string) error {
 	dir := filepath.Dir(tomlPath)
 	documents, previous := s.invalidateProjectsUnder(dir)
@@ -654,8 +577,8 @@ func (s *ProjectService) applyBallerinaTomlChange(kind WatchedFileKind, tomlPath
 	return nil
 }
 
-// Invalidate owning projects and containing merge destinations as units, so
-// their open documents outside the manifest directory are also rediscovered.
+// invalidateProjectsUnder removes affected owning projects and containing
+// merge destinations, retaining their open buffers for rediscovery.
 func (s *ProjectService) invalidateProjectsUnder(dir string) ([]DocumentURI, map[string]uint64) {
 	var documents []DocumentURI
 	previous := make(map[string]uint64)
@@ -704,8 +627,8 @@ func (s *ProjectService) invalidateProjectsUnder(dir string) ([]DocumentURI, map
 	return documents, previous
 }
 
-// recoveryRoot is called with mu held. Keep the last owning project while a
-// manifest transition is unresolved, even if partial discovery changed the memo.
+// recoveryRoot returns pending transition membership before the current memo.
+// The caller must hold mu.
 func (s *ProjectService) recoveryRoot(u DocumentURI) (string, bool) {
 	if root, pending := s.pendingRoots[u]; pending {
 		return root, true
@@ -713,13 +636,8 @@ func (s *ProjectService) recoveryRoot(u DocumentURI) (string, bool) {
 	return s.index.lookupSourceRoot(u.Path())
 }
 
-// applySourceFileChange handles create/change/delete of a .bal file. In 08:
-// a deleted on-disk file that is not open drops the stale index entry so the
-// next didOpen/didChange reloads fresh from disk (the fresh Load excludes the
-// deleted file). Create/change on disk need no action — the next Load/Reload
-// picks them up via ReadDir. A file that is still open keeps its overlay; the
-// document stays in the package until close. This avoids the modifier chain
-// (and the DiagnosticEnv same-name/different-doc panic) on the cached project.
+// applySourceFileChange removes the memoized owning project for a deleted,
+// closed file. Other changes leave the index untouched.
 func (s *ProjectService) applySourceFileChange(kind WatchedFileKind, filePath string) error {
 	if kind != WatchedFileDelete {
 		return nil
@@ -734,7 +652,7 @@ func (s *ProjectService) applySourceFileChange(kind WatchedFileKind, filePath st
 	}
 	s.mu.RUnlock()
 	if open {
-		return nil // still open — overlay keeps content; no action in 09
+		return nil
 	}
 	sourceRoot, ok := s.index.lookupSourceRoot(filePath)
 	if !ok {
@@ -744,14 +662,8 @@ func (s *ProjectService) applySourceFileChange(kind WatchedFileKind, filePath st
 	return nil
 }
 
-// Shutdown marks every known source root's generation superseded so in-flight
-// compile cycles gate their results out at the stale-publication gate (CE-E3).
-// It does NOT close the event bus — the wiring closes the bus last, after the
-// compile engine's Shutdown has drained its worker pool and bus.Flush()ed the
-// CRITICAL delivery channels — and it does NOT stop the debounce timers,
-// which are owned by the compile engine (CompilationService). This keeps the
-// branch-9 shutdown ordering (workspace supersede → compile drain+Flush → bus
-// Close) and the engine-owned-timer boundary accurate.
+// Shutdown supersedes all indexed generations without closing the event bus
+// or stopping compile timers. It does not observe ctx cancellation.
 func (s *ProjectService) Shutdown(ctx context.Context) error {
 	_ = ctx
 	s.index.supersedeAll()

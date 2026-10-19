@@ -14,51 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// multimodule.go implements packageDriver, which orchestrates moduleDriver
-// across every module of a package for one generation, replicating the
-// Phase 1 -> Phase 2 barrier projects/package_compilation.go's
-// compileModulesInternal implements (its two loops, ~line 113 and ~line 144)
-// using only the compiler's public per-stage API and pkg's public accessors —
-// this package cannot see moduleContext/PackageCompilation internals. See
-// docs/adr/2026-08-28-ls-owned-staged-compilation-pipeline.md's "Phase 1 ->
-// Phase 2 barrier" bullet.
-//
-// Scope: Phase 1 also materializes every resolved external dependency
-// package (stdlib, Central, BALA, path, or workspace) before this driver's
-// editable modules run. Their exported symbols are supplied to local import
-// resolution and their package nodes become completion projections; no
-// external module advances beyond top-level type resolution.
-//
-// Phase 2 runs sequentially, not in parallel like
-// projects/package_compilation.go's goroutine-per-module loop. A module
-// skipped in Phase 1 (dependencyErrored) never reaches stageParsed, and every
-// ensureX stage function cascades back down to ensureParsed for a module
-// that hasn't reached it yet. Phase 2 excludes Phase-1-skipped modules by
-// construction (see phase2Eligible), so this cascade is not reachable today —
-// but running Phase 2 sequentially removes the question entirely rather than
-// depending on that exclusion staying correct, and keeps this driver free of
-// the goroutine/panic-recovery plumbing package_compilation.go needs for its
-// parallel Phase 2. There is no performance requirement in this ticket that
-// forces parallelism.
-//
-// Concurrency: two independent packageDriver runs can legitimately execute
-// concurrently over the same shared CompilerEnvironment — CompilationService's
-// background runCycle and Compile()'s inline extractForURI fallback are
-// exactly such a pair, since Compile() has no coordination with the
-// background cycle (it only reads the stable-snapshot cache first; on a miss
-// it drives inline), so the two can race on the same package the first time a
-// root is compiled. This is safe without any lock owned by this package:
-// CompilerEnvironment's shared mutable state is guarded field-by-field at its
-// own boundary (symbolSpaces via symbolSpacesMu, DiagnosticEnv and
-// functionSignatures.Store via their own internal RWMutexes, symbolAnnotations/
-// underlyingSymbol as sync.Map, packageInterner via its own rwLock, typeEnv via
-// its own internal mutexes) — see context/env.go. The one field that was
-// missing this, anonTypeCount/anonFuncCount, is now guarded by
-// CompilerEnvironment's own anonCountMu (context/env.go), matching the
-// symbolSpacesMu pattern. A whole-driver-run lock here would be the wrong
-// layer: CompilerEnvironment is designed to be read/written concurrently by
-// its own accessors, so serializing entire packageDriver runs against it
-// would only hide bugs in that per-field locking rather than fix anything.
 package compile
 
 import (
@@ -73,24 +28,8 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
-// registeredNames tracks, per shared DiagnosticEnv, which registration keys
-// moduleDriver.ensureParsed has already registered. diagnostics.RegisterFile
-// panics on a same-name/different-content re-registration (a genuine name
-// collision, by design — see tools/diagnostics/diagnostic_env.go); ensureParsed
-// re-runs over the same module on every edit generation with the module's
-// current (possibly-changed) content, so it must not call RegisterFile a
-// second time for a name it has already registered. This is safe because
-// nothing in this package's diagnostic-extraction path (extractByFile,
-// extractForURI) reads DiagnosticEnv's stored content back — they resolve
-// positions from their own freshly-fetched document text against the
-// Location's raw byte offsets, keyed only by env.FileName(loc)'s registration
-// key. RegisterFile's role for this driver is therefore only to mint a
-// stable fileIndex once per name, via NewLocation's env.FileIndex(fileName);
-// re-registering under the same name would never be observed by any reader.
-// Entries are never evicted (one per distinct DiagnosticEnv for the process
-// lifetime — bounded by the number of source roots ever opened in this
-// session), the same accepted growth tradeoff as CompilerEnvironment's other
-// per-environment state.
+// registeredNames retains registration keys per DiagnosticEnv for the process
+// lifetime, including environments replaced by reloads.
 var (
 	registeredNamesMu sync.Mutex
 	registeredNames   = make(map[*diagnostics.DiagnosticEnv]map[string]bool)
@@ -116,22 +55,14 @@ func markRegistered(env *diagnostics.DiagnosticEnv, name string) {
 	names[name] = true
 }
 
-// migratedLangLibs mirrors projects/module_context.go's bundledLangLibs name
-// list (unexported there) so seedMigratedLangLibs can be reimplemented here
-// without reaching into projects internals.
+// migratedLangLibs lists the bundled libraries loaded for implicit imports.
 var migratedLangLibs = []string{
 	"lang.__internal", "lang.int", "lang.boolean", "lang.decimal", "lang.error",
 	"lang.string", "lang.value", "lang.xml", "lang.float", "lang.array",
 	"lang.map", "lang.object",
 }
 
-// seedMigratedLangLibs adds already-published migrated lang libraries from
-// publicSymbols to implicitImports, mirroring
-// projects/module_context.go:456-466 (unexported there, reimplemented here
-// against packageDriver's own local publicSymbols map instead of
-// projects.Environment's private one). A no-op until a lib has been
-// compiled — this package's local map only ever contains modules of the
-// package packageDriver is driving.
+// seedMigratedLangLibs adds available bundled-library symbols to implicitImports.
 func seedMigratedLangLibs(implicitImports map[string]model.ExportedSymbolSpace, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace) {
 	for _, name := range migratedLangLibs {
 		if space, ok := publicSymbols[semantics.PackageIdentifier{OrgName: "ballerina", ModuleName: name}]; ok {
@@ -140,40 +71,23 @@ func seedMigratedLangLibs(implicitImports map[string]model.ExportedSymbolSpace, 
 	}
 }
 
-// packageIdentifierFor builds the key module_context.go:296-299 publishes a
-// module's exported symbol space under, from public ModuleDescriptor
-// accessors only.
+// packageIdentifierFor returns the module's organization/name symbol-space key.
 func packageIdentifierFor(module *projects.Module) semantics.PackageIdentifier {
 	desc := module.Descriptor()
 	return semantics.PackageIdentifier{OrgName: desc.Org().Value(), ModuleName: desc.Name().String()}
 }
 
-// packageDriver drives a package's own modules through the LS stage ladder
-// for one generation. One packageDriver corresponds to one generation-advance
-// over the whole package (or a single targeted module plus its same-package
-// dependencies); it owns one moduleDriver per module reached and one
-// publicSymbols map local to this run (never projects.Environment's private
-// field — see the ADR).
-//
-// priorState (design item 1) is the previous committed generation's
-// carry-forward state, or nil for a run that never participates in carry-
-// forward (extractForURI's single-module path — see gen_state.go's doc
-// comment). When non-nil, a module outside the computed resetScope is adopted
-// from priorState instead of rebuilt (adoptCarriedForward) — its moduleDriver
-// (and thus its diagnostics, still reachable via allDiagnostics) carries
-// forward by reference, untouched. stale (design item 5) is checked between
-// modules in runPhase1/advanceAll/advanceModule's loops so a superseded
-// generation aborts early instead of finishing wasted work; nil means never
-// stale (extractForURI has no generation to compare against).
+// packageDriver runs dependency-ordered Phase 1 before sequential Phase 2.
+// External dependencies stop at top-level type resolution. Unchanged modules
+// outside resetScope reuse prior drivers; stale, when set, checks supersession.
 type packageDriver struct {
 	pkg *projects.Package
 	env *context.CompilerEnvironment
 
 	drivers       map[projects.ModuleID]*moduleDriver
 	publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace
-	// externalProjections are read-only StageSymbolResolved completion indexes.
-	// Unlike publicSymbols, they may retain diagnosed dependencies and are never
-	// supplied to semantic resolution of the editable package.
+	// externalProjections retains dependencies that reached symbol resolution,
+	// including diagnosed modules, for feature queries rather than resolution.
 	externalProjections   map[semantics.PackageIdentifier]ExternalModuleProjection
 	externalMaterializing map[semantics.PackageIdentifier]bool
 	externalSymbolsReady  bool
@@ -194,12 +108,8 @@ type packageDriver struct {
 	order []*projects.Module
 }
 
-// newPackageDriver constructs a packageDriver for one generation-advance over
-// pkg, sharing pkg's project's CompilerEnvironment (reused across
-// generations, per the ADR's re-entrancy rule) but owning fresh per-module
-// CompilerContexts and its own local publicSymbols map. openText, priorState
-// and stale are ticket 28's additions (see the type doc comment); any/all may
-// be nil.
+// newPackageDriver shares pkg's compiler environment and creates run-local
+// maps. openText, priorState, and stale may be nil.
 func newPackageDriver(pkg *projects.Package, openText textProvider, priorState *packageGenState, stale func() bool) *packageDriver {
 	return &packageDriver{
 		pkg:                   pkg,
@@ -216,19 +126,12 @@ func newPackageDriver(pkg *projects.Package, openText textProvider, priorState *
 	}
 }
 
-// aborted reports whether a newer generation has already superseded this run
-// (design item 5). Callers check this between modules/stages and abort
-// cleanly (no cleanup needed — a packageDriver's state is local to this run
-// and is never published unless the caller commits it).
+// aborted reports whether the run's supersession check is set and true.
 func (pd *packageDriver) aborted() bool {
 	return pd.stale != nil && pd.stale()
 }
 
-// topoModules returns pkg's own modules in dependency order, using
-// pkg.Resolution().ModuleDependencyGraph() (public, independent of
-// pkg.Compilation()) -> ToTopologicallySortedList(). A descriptor the graph
-// carries for an external dependency (pkg.ModuleByName returns nil for it)
-// is skipped — external packages are out of this driver's scope.
+// topoModules caches the dependency-ordered modules found in pkg.
 func (pd *packageDriver) topoModules() []*projects.Module {
 	if pd.order != nil {
 		return pd.order
@@ -258,20 +161,15 @@ func (pd *packageDriver) driverFor(module *projects.Module) *moduleDriver {
 	return d
 }
 
-// resolutionInputFor builds this module's moduleResolutionInput against
-// packageDriver's shared, growing publicSymbols map — the same map every
-// module in this generation reads from and, on success, publishes into.
+// resolutionInputFor supplies the run's published symbols and implicit imports.
 func (pd *packageDriver) resolutionInputFor(module *projects.Module) moduleResolutionInput {
 	implicit := make(map[string]model.ExportedSymbolSpace)
 	seedMigratedLangLibs(implicit, pd.publicSymbols)
 	return newModuleResolutionInput(module.Descriptor().Org().Value(), implicit, pd.publicSymbols)
 }
 
-// loadImplicitLangLibs compiles the implicit lang libraries ahead of the
-// root package's own resolution, the way the CLI does
-// (projects/package_resolution.go bundledLangLibs). Only the root driver
-// calls it: a dependency's libraries are already in the shared
-// publicSymbols and externalMaterializing guard.
+// loadImplicitLangLibs materializes bundled libraries before local resolution,
+// excluding the root package itself.
 func (pd *packageDriver) loadImplicitLangLibs() {
 	root := pd.pkg.Descriptor()
 	for _, name := range migratedLangLibs {
@@ -312,10 +210,9 @@ func (pd *packageDriver) loadResolvedDependencySymbols() {
 	}
 }
 
-// loadResolvedDependency materializes one resolved dependency's Phase-1
-// symbols. A dependency is optional for the local package's semantic view:
-// failures, including compiler panics from malformed package content, leave
-// this generation without that projection rather than aborting its cycle.
+// loadResolvedDependency materializes a dependency's Phase-1 symbols and
+// completion projection. Resolution failures and panics return without
+// aborting the local cycle.
 func (pd *packageDriver) loadResolvedDependency(descriptor projects.PackageDescriptor) {
 	packageID := semantics.PackageIdentifier{OrgName: descriptor.Org().Value(), ModuleName: descriptor.Name().String()}
 	if pd.externalMaterializing[packageID] {
@@ -364,9 +261,7 @@ func (pd *packageDriver) loadResolvedDependency(descriptor projects.PackageDescr
 	}
 }
 
-// dependencyPriorState selects the prior generation's snapshots belonging to
-// pkg. ModuleID includes its PackageID, so snapshots from unrelated packages
-// cannot collide with the dependency's module state.
+// dependencyPriorState selects prior snapshots by pkg's module IDs.
 func (pd *packageDriver) dependencyPriorState(pkg *projects.Package) *packageGenState {
 	if pd.priorState == nil {
 		return nil
@@ -380,11 +275,8 @@ func (pd *packageDriver) dependencyPriorState(pkg *projects.Package) *packageGen
 	return &packageGenState{modules: modules}
 }
 
-// dependencyErrored reports whether any of module's direct same-package
-// dependencies already failed Phase 1, mirroring
-// projects/package_compilation.go:100-111's dependencyErrored closure
-// (unexported there) using the public DependencyGraph.DirectDependencies
-// instead of the private descToModule/erroredModules pair it closes over.
+// dependencyErrored reports whether a direct same-package dependency failed
+// Phase 1.
 func (pd *packageDriver) dependencyErrored(module *projects.Module, depGraph *projects.DependencyGraph[projects.ModuleDescriptor]) bool {
 	for _, depDesc := range depGraph.DirectDependencies(module.Descriptor()) {
 		depModule := pd.pkg.ModuleByName(depDesc.Name())
@@ -398,12 +290,9 @@ func (pd *packageDriver) dependencyErrored(module *projects.Module, depGraph *pr
 	return false
 }
 
-// ensureResetScope computes design item 1's reset scope, memoized for this
-// packageDriver instance. Every module gets a textHash regardless of whether
-// it turns out dirty (needed to build the next generation's carry-forward
-// state either way). With no priorState (extractForURI's single-module
-// path — see the type doc comment), the whole scope is "reset everything",
-// matching pre-ticket-28 behavior exactly (every module always rebuilt fresh).
+// ensureResetScope caches document hashes and the modules to rebuild. Without
+// prior state it resets every supplied module; otherwise it uses a topological
+// suffix for a complete module list or a dependent closure for a partial list.
 func (pd *packageDriver) ensureResetScope(modules []*projects.Module, depGraph *projects.DependencyGraph[projects.ModuleDescriptor]) {
 	if pd.resetScopeReady {
 		return
@@ -446,13 +335,8 @@ func (pd *packageDriver) ensureResetScope(modules []*projects.Module, depGraph *
 	}
 }
 
-// adoptCarriedForward carries module's prior-generation moduleDriver forward
-// by reference instead of rebuilding it, populating this generation's
-// drivers/publicSymbols/phase1Errored exactly as a fresh Phase 1 run would
-// have, so allDiagnostics and dependency resolution both see it as if it had
-// just run. Returns false (nothing adopted) if priorState has no snapshot for
-// module — the caller then falls through to a full reset instead of silently
-// dropping the module.
+// adoptCarriedForward restores a prior driver and its Phase-1 status, publishing
+// exports only for a non-errored snapshot. It returns false if no snapshot exists.
 func (pd *packageDriver) adoptCarriedForward(module *projects.Module) bool {
 	if pd.priorState == nil {
 		return false
@@ -471,14 +355,8 @@ func (pd *packageDriver) adoptCarriedForward(module *projects.Module) bool {
 	return true
 }
 
-// recordFingerprintAndPrune computes module's public-API fingerprint (design
-// item 4) after its Phase 1 succeeds and records it for this generation's
-// carry-forward commit. If the fingerprint is unchanged from the prior
-// committed generation's, module's direct dependents are pruned back out of
-// the reset scope (unless independently dirty from their own edit) — they
-// keep referencing the prior generation's state untouched instead of being
-// rebuilt just because they transitively followed a reset module in topo
-// order.
+// recordFingerprintAndPrune records module's public-API fingerprint. If unchanged,
+// it removes direct dependents from resetScope unless they are directly dirty.
 func (pd *packageDriver) recordFingerprintAndPrune(module *projects.Module, d *moduleDriver) {
 	id := module.ModuleID()
 	fp := computeFingerprint(d.diagnosticContext(), d.exported)
@@ -505,23 +383,10 @@ func (pd *packageDriver) recordFingerprintAndPrune(module *projects.Module, d *m
 	}
 }
 
-// runPhase1Module advances module through Phase 1 (parse -> symbol
-// resolution -> top-level type resolution), mirroring
-// projects/module_context.go's resolveTypesAndSymbols publish-then-continue
-// ordering: a module is marked errored when a Phase 1 stage did not execute
-// or did not produce a usable result. Parser diagnostics from recovered units
-// do not prevent a stage from executing. publicSymbols is published only after
-// usable symbol resolution, before top-level type resolution runs, so a later
-// top-level-type error does not retroactively un-publish an already-valid
-// symbol space. If module's own direct
-// dependency already errored in this generation, module is skipped entirely
-// (never reaches driverFor/ensureParsed), matching
-// package_compilation.go:124-127.
-//
-// A module outside the reset scope is adopted from the prior generation
-// (adoptCarriedForward) instead of run through any of this — design item 1.
-// On success, its fingerprint is recorded and may prune its own dependents
-// out of the reset scope — design item 4.
+// runPhase1Module adopts prior state or advances through top-level type
+// resolution. A failed direct dependency skips the module. Usable symbols
+// are published before top-level type resolution; a later error leaves them
+// published but marks the module errored for dependent gating.
 func (pd *packageDriver) runPhase1Module(module *projects.Module, depGraph *projects.DependencyGraph[projects.ModuleDescriptor]) {
 	id := module.ModuleID()
 	if !pd.resetScope[id] && pd.adoptCarriedForward(module) {
@@ -550,19 +415,15 @@ func (pd *packageDriver) runPhase1Module(module *projects.Module, depGraph *proj
 	pd.recordFingerprintAndPrune(module, d)
 }
 
-// markPhase1Errored records that module's Phase 1 result is unusable, so its
-// symbols are never published and its dependents are skipped. The module
-// itself still finishes Phase 1 and remains eligible for Phase 2 (see
-// ensureTopLevelTypeResolved's doc comment).
+// markPhase1Errored marks module for dependent gating and attempts to finish
+// its top-level type resolution. Already-published symbols are retained.
 func (pd *packageDriver) markPhase1Errored(module *projects.Module, d *moduleDriver, input moduleResolutionInput) {
 	pd.phase1Errored[module.ModuleID()] = true
 	d.advanceTo(stageTopLevelTypeResolved, module, input)
 }
 
-// runPhase1 advances every module in modules through Phase 1, in topological
-// order (sequential — symbol/top-level-type resolution of a module needs its
-// dependencies' published symbol spaces). Checks aborted() between modules
-// (design item 5).
+// runPhase1 advances modules in the supplied order, checking supersession
+// between modules.
 func (pd *packageDriver) runPhase1(modules []*projects.Module) {
 	depGraph := pd.pkg.Resolution().ModuleDependencyGraph()
 	pd.ensureResetScope(modules, depGraph)
@@ -574,12 +435,8 @@ func (pd *packageDriver) runPhase1(modules []*projects.Module) {
 	}
 }
 
-// phase2Eligible reports whether module reached at least
-// stageTopLevelTypeResolved and so may proceed into Phase 2, even if its
-// Phase 1 result was unusable (it then runs Phase 2 for its own LS features;
-// semantic analysis still refuses on its diagnostics). A module never reached by Phase 1 (e.g. because an
-// earlier caller only drove a prefix of the topological order — see
-// advanceModule) is not eligible either.
+// phase2Eligible returns a driver that reached top-level type resolution,
+// including one with diagnostics.
 func (pd *packageDriver) phase2Eligible(module *projects.Module) (*moduleDriver, bool) {
 	id := module.ModuleID()
 	d, ok := pd.drivers[id]
@@ -589,14 +446,8 @@ func (pd *packageDriver) phase2Eligible(module *projects.Module) (*moduleDriver,
 	return d, true
 }
 
-// advanceAll drives every module of pkg to target: Phase 1 across the whole
-// package, then Phase 2 for every Phase-1-eligible module, sequentially.
-// Unlike package_compilation.go:139-143, a module failing Phase 1 does not
-// stop the others: its dependents were already skipped, and every other
-// module is independent of it. Checks
-// aborted() between modules (design item 5): a superseded generation stops
-// early rather than finishing wasted work. The caller must check aborted()
-// itself before relying on or committing this run's results.
+// advanceAll runs Phase 1 package-wide, then advances eligible modules to
+// target sequentially. Callers must check aborted before committing results.
 func (pd *packageDriver) advanceAll(target moduleStage) {
 	pd.loadImplicitLangLibs()
 	pd.loadResolvedDependencySymbols()
@@ -617,17 +468,8 @@ func (pd *packageDriver) advanceAll(target moduleStage) {
 	}
 }
 
-// advanceModule drives targetModule's same-package dependencies through
-// Phase 1 only as far as targetModule itself (topological order, early
-// return once targetModule is reached — modules ordered after it are never
-// compiled, mirroring ls-ref's prepareSymbolResolution pattern the ADR cites),
-// then drives targetModule alone through Phase 2 up to target. It is the
-// single-module path Compile's inline fallback (extractForURI) uses instead
-// of driving the whole package, so a single-file diagnostic read does not pay
-// for every other module's Phase 2. This path never participates in
-// carry-forward (see gen_state.go): the caller always constructs pd with a
-// nil priorState, so every module here is always rebuilt fresh, matching
-// pre-ticket-28 behavior exactly.
+// advanceModule runs Phase 1 through targetModule's topological prefix, then
+// advances only targetModule to target.
 func (pd *packageDriver) advanceModule(target moduleStage, targetModule *projects.Module) {
 	pd.loadImplicitLangLibs()
 	pd.loadResolvedDependencySymbols()
@@ -649,14 +491,8 @@ func (pd *packageDriver) advanceModule(target moduleStage, targetModule *project
 	d.advanceTo(target, targetModule, pd.resolutionInputFor(targetModule))
 }
 
-// allDiagnostics collects every reached module's diagnostics in topological
-// order. Each module's diagnostics live on that module's own CompilerContext:
-// a fresh one for a module reset this generation, or the prior generation's
-// carried-forward one for a module adoptCarriedForward adopted untouched
-// (design item 1) — either way pd.drivers holds exactly one moduleDriver per
-// module reached, so this never double-counts within a generation, and an
-// unedited module's diagnostics keep surfacing instead of silently vanishing
-// once it's no longer reset every generation.
+// allDiagnostics collects publishable diagnostics in local module dependency
+// order, including diagnostics from carried-forward drivers.
 func (pd *packageDriver) allDiagnostics() []diagnostics.Diagnostic {
 	var all []diagnostics.Diagnostic
 	for _, module := range pd.topoModules() {
@@ -669,14 +505,8 @@ func (pd *packageDriver) allDiagnostics() []diagnostics.Diagnostic {
 	return all
 }
 
-// snapshotForCommit builds this generation's carry-forward state (design
-// item 1) for every module this run actually reached (a module skipped
-// entirely via dependencyErrored cascade has no driver and is omitted, same
-// as allDiagnostics/moduleDiagCount). A carried-forward module's fingerprint
-// is copied from the prior generation unchanged (it was never recomputed this
-// generation — recordFingerprintAndPrune only runs for a module actually
-// reset). The caller (realCompilePackage) must not call this if aborted()
-// is true — a superseded run's partial state must never be committed.
+// snapshotForCommit collects reached local and external module state, retaining
+// prior fingerprints for adopted modules. Callers must reject aborted runs.
 func (pd *packageDriver) snapshotForCommit() map[projects.ModuleID]moduleGenSnapshot {
 	out := make(map[projects.ModuleID]moduleGenSnapshot, len(pd.dependencySnapshots)+len(pd.drivers))
 	for id, snapshot := range pd.dependencySnapshots {

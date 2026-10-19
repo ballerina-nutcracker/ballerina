@@ -43,8 +43,7 @@ func fileURI(t *testing.T, raw string) workspace.DocumentURI {
 	return u
 }
 
-// applyOpen publishes content through the workspace source overlay so
-// Compile reads the published CurrentPackage.
+// applyOpen stores a version-1 buffer and publishes its workspace generation.
 func applyOpen(t *testing.T, projects *workspace.ProjectService, u workspace.DocumentURI, text string) {
 	t.Helper()
 	if _, err := projects.Apply(context.Background(), workspace.DocumentChange{

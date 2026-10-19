@@ -21,9 +21,6 @@ import (
 	"testing"
 )
 
-// TestTieredCriticalDeliversAsync verifies a TierCritical subscriber receives
-// events on a dedicated drainer goroutine (not the publishing goroutine), and
-// that Flush drains all queued events.
 func TestTieredCriticalDeliversAsync(t *testing.T) {
 	bus := New()
 	defer bus.Close()
@@ -53,11 +50,8 @@ func TestTieredCriticalDeliversAsync(t *testing.T) {
 	}
 }
 
-// TestTieredCriticalDropsOnFull verifies that a saturated CRITICAL channel
-// drops (and never blocks the publisher), and that the drop is observable as
-// a missing delivery after Flush. Uses a channel cap of 1 via
-// WithCriticalCapacity and a handler that blocks until released so the channel
-// fills.
+// A blocked handler lets the bounded channel fill, so publishing more than
+// its capacity must drop events.
 func TestTieredCriticalDropsOnFull(t *testing.T) {
 	bus := New()
 	defer bus.Close()
@@ -72,25 +66,22 @@ func TestTieredCriticalDropsOnFull(t *testing.T) {
 		delivered++
 	})
 
-	// Publish many events; the channel (cap 256) fills, excess are dropped.
 	for i := 0; i < 300; i++ {
 		bus.Publish(NewProjectUpdatedEvent("/r", uint64(i+1)))
 	}
-	close(block) // let the drainer drain whatever is queued
-	bus.Flush()  // drain
+	close(block)
+	bus.Flush()
 
 	mu.Lock()
 	defer mu.Unlock()
-	// At most 256 (cap) can be delivered; the rest are dropped. We assert the
-	// drop happened (delivered < 300) without the publisher ever blocking.
+	// Up to criticalCapacity queued events plus one in-flight event can arrive.
 	if delivered >= 300 {
 		t.Fatalf("expected some CRITICAL drops; delivered = %d", delivered)
 	}
 }
 
-// TestTieredCoalesceableLastWins verifies a TierCoalesceable subscriber keeps
-// only the latest event per CoalesceKey: publishing three events for the same
-// key before the drainer runs delivers only the last generation.
+// Pending events with the same key are replaced; an in-flight event is not
+// coalesced.
 func TestTieredCoalesceableLastWins(t *testing.T) {
 	bus := New()
 	defer bus.Close()
@@ -118,9 +109,6 @@ func TestTieredCoalesceableLastWins(t *testing.T) {
 	}
 }
 
-// TestTieredBestEffortHeadDrops verifies a TierBestEffort subscriber with a
-// small ring drops the oldest events when full (head-drop), delivering at most
-// the capacity newest.
 func TestTieredBestEffortHeadDrops(t *testing.T) {
 	bus := New()
 	defer bus.Close()
@@ -143,10 +131,8 @@ func TestTieredBestEffortHeadDrops(t *testing.T) {
 
 	mu.Lock()
 	defer mu.Unlock()
-	// The ring keeps the newest bestEffortCapacity events; the drainer may
-	// have one event in flight when it blocked, so up to cap+1 are delivered.
-	// The headline assertion: drops happened (delivered < 100) and the newest
-	// generation survived (head-drop keeps the newest).
+	// The ring keeps the newest bestEffortCapacity events, with at most one
+	// additional event in flight.
 	if len(received) >= 100 {
 		t.Fatalf("expected best-effort drops; delivered = %d", len(received))
 	}
@@ -159,8 +145,6 @@ func TestTieredBestEffortHeadDrops(t *testing.T) {
 	}
 }
 
-// TestFlushIsNoOpForInlineSubscribers verifies Flush returns promptly when
-// only inline (08) subscribers are registered.
 func TestFlushIsNoOpForInlineSubscribers(t *testing.T) {
 	bus := New()
 	defer bus.Close()
@@ -171,8 +155,6 @@ func TestFlushIsNoOpForInlineSubscribers(t *testing.T) {
 	bus.Flush() // must not hang
 }
 
-// TestNewEventTypesGeneration verifies the 09 event types carry Generation and
-// that 08 events return 0.
 func TestNewEventTypesGeneration(t *testing.T) {
 	if g := NewProjectUpdatedEvent("/r", 7).Generation(); g != 7 {
 		t.Fatalf("ProjectUpdated Generation = %d, want 7", g)

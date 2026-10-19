@@ -25,16 +25,8 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
-// applyModifierChainDirect bakes content into filePath's document via
-// projects' own Document.Modify().WithContent().Apply() (the ADR-042
-// modifier chain ticket 28 stopped calling from ls/core/workspace), directly
-// against project, bypassing the workspace entirely. The old-path oracle
-// below needs pkg.Compilation() to see edited content the way it always
-// did pre-ticket-28; since ls/core/workspace's Apply no longer pushes edits
-// into the immutable Package graph (see workspace.go's publish), the oracle
-// reaches for the modifier chain itself instead, exactly reproducing the
-// pre-ticket-28 mechanism it is meant to be a regression check against. It
-// returns the new current package the modifier chain cascades onto project.
+// applyModifierChainDirect updates the project document through its modifier
+// and returns the new package, bypassing workspace buffers.
 func applyModifierChainDirect(t *testing.T, project projects.Project, filePath, content string) *projects.Package {
 	t.Helper()
 	pkg := project.CurrentPackage()
@@ -54,10 +46,8 @@ func applyModifierChainDirect(t *testing.T, project projects.Project, filePath, 
 	return project.CurrentPackage()
 }
 
-// oldPathExtract replicates the pre-ticket-37 extraction logic (pkg.Compilation()
-// + Document.SyntaxTree().FilePath()-keyed resolution) verbatim, as a
-// regression oracle: realCompilePackage/extractForURI must produce
-// diagnostics equivalent in shape/content to what this produced.
+// oldPathExtract supplies a pkg.Compilation-based diagnostic oracle keyed by
+// syntax-tree file paths.
 func oldPathExtract(pkg *projects.Package) (byFile, resByFile map[string][]CompilerDiagnostic, resErr bool) {
 	comp := pkg.Compilation()
 	env := comp.DiagnosticEnv()
@@ -130,10 +120,7 @@ func shapesFor(diags []CompilerDiagnostic) []diagShape {
 	return shapes
 }
 
-// assertSameShape asserts got and want have the same file-key set and, per
-// file, the same (Code, Message) multiset — a shape/content equivalence
-// check, not byte-for-byte, since the two paths reach the same diagnostics
-// through different orchestration layers.
+// assertSameShape compares file keys and per-file (Code, Message) multisets.
 func assertSameShape(t *testing.T, label string, got, want map[string][]CompilerDiagnostic) {
 	t.Helper()
 	for fname := range want {
@@ -173,22 +160,12 @@ func keysOf(m map[string][]CompilerDiagnostic) []string {
 	return keys
 }
 
-// TestRealCompilePackage_MatchesOldPackageCompilationPath is the regression
-// check the ADR's Verification section requires: realCompilePackage
-// (packageDriver) must produce diagnostics equivalent in shape/content to
-// the old pkg.Compilation()-based path, for a multi-module fixture with a
-// real diagnostic in a *named* module (greet, an edge target — the case
-// where the registration-key scheme change matters, and where a
-// topoModules() double-count would show up as a doubled diagnostic list).
-// The old-path and new-path packages are two independent loads of the same
-// on-disk fixture+edit (separate ProjectServices/environments), so neither
-// side's registration observes the other's.
+// Independent package loads compare staged diagnostics with pkg.Compilation
+// after an edit in a named dependency module.
 func TestRealCompilePackage_MatchesOldPackageCompilationPath(t *testing.T) {
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
-	// Body-only edit: an AnalyzeSemantics-stage error inside greet.bal (an
-	// edge target — consumer imports it), the case the ADR's Verification
-	// section calls out ("a real diagnostic in a named module").
+	// The edit introduces one semantic-analysis error in greet.
 	editedGreet := "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n"
 
 	newSvc := newProjectOnlyService(t)
@@ -219,10 +196,6 @@ func TestRealCompilePackage_MatchesOldPackageCompilationPath(t *testing.T) {
 		t.Errorf("resolutionErrored = %v, want %v", newResult.resolutionErrored, wantResErr)
 	}
 
-	// The regression check must not pass vacuously: greet's own file must
-	// carry exactly one diagnostic on both sides, and that count must not be
-	// doubled by a topoModules() duplicate (see the packageDriver test
-	// suite's duplicate-node investigation).
 	if got := len(newResult.byFile[greetPath]); got != 1 {
 		t.Fatalf("byFile[%s] = %d diagnostics, want exactly 1 (not doubled, not vacuously empty)", greetPath, got)
 	}
@@ -231,10 +204,7 @@ func TestRealCompilePackage_MatchesOldPackageCompilationPath(t *testing.T) {
 	}
 }
 
-// TestExtractForURI_MatchesOldPackageCompilationPath is the extractForURI
-// half of the same regression check: Compile()'s inline fallback must
-// produce the same diagnostics for greet.bal as the old
-// pkg.Compilation()-based extractForURI did.
+// The inline fallback matches pkg.Compilation's diagnostic code and message.
 func TestExtractForURI_MatchesOldPackageCompilationPath(t *testing.T) {
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
@@ -272,8 +242,7 @@ func TestExtractForURI_MatchesOldPackageCompilationPath(t *testing.T) {
 	}
 }
 
-// oldExtractForURI replicates the pre-ticket-37 extractForURI (pkg.Compilation()
-// based) verbatim, as a regression oracle.
+// oldExtractForURI supplies a pkg.Compilation-based single-file diagnostic oracle.
 func oldExtractForURI(project projects.Project, pkg *projects.Package, fileName string) []CompilerDiagnostic {
 	docID, ok := project.DocumentID(fileName)
 	if !ok {

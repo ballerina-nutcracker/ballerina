@@ -26,19 +26,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
-// newProjectOnlyService builds a *workspace.ProjectService with no
-// CompilationService wired to its bus — deliberately, not an oversight.
-// newTestServices (compile_test.go) wires a real CompilationService with
-// WithDebounce(0), which fires a background compile (realCompilePackage,
-// itself a packageDriver run) on every published edit. These packageDriver
-// tests drive their own foreground packageDriver over the same package/
-// environment; using newTestServices here would run two independent
-// packageDriver instances concurrently over the same shared environment,
-// which production handles safely (CompilerEnvironment guards its own shared
-// state field-by-field — see multimodule.go's Concurrency doc comment) but
-// would make these tests' assertions racy against a concurrently-mutating
-// background compile — so these tests avoid the background compiler
-// entirely instead, to keep foreground driver behavior deterministic.
+// newProjectOnlyService creates a workspace without a background compiler.
 func newProjectOnlyService(t *testing.T) *workspace.ProjectService {
 	t.Helper()
 	bus := event.New()
@@ -46,12 +34,8 @@ func newProjectOnlyService(t *testing.T) *workspace.ProjectService {
 	return workspace.New(os.DirFS, bus)
 }
 
-// multimoduleFixtureDir returns the absolute path to the on-disk fixture at
-// testdata/multimodule: a real package with a genuine cross-module import
-// chain (main -> consumer -> greet) plus an unrelated sibling module
-// (standalone) with its own fixed diagnostic, used to verify the Phase 1 ->
-// Phase 2 barrier and per-generation diagnostic scoping without touching
-// projects/testdata fixtures owned by another package.
+// multimoduleFixtureDir locates the main -> consumer -> greet fixture and its
+// independent standalone module with one semantic diagnostic.
 func multimoduleFixtureDir(t *testing.T) string {
 	t.Helper()
 	dir, err := filepath.Abs(filepath.Join("testdata", "multimodule"))
@@ -70,9 +54,7 @@ func mustReadFixture(t *testing.T, path string) string {
 	return string(b)
 }
 
-// openMultimoduleFixture opens main.bal from the multimodule fixture,
-// loading the whole package (consumer.bal, greet.bal and standalone.bal read
-// from disk), and returns the resulting *projects.Package.
+// openMultimoduleFixture opens main.bal and loads its containing package.
 func openMultimoduleFixture(t *testing.T, projSvc *workspace.ProjectService) (*projects.Package, workspace.DocumentURI) {
 	t.Helper()
 	dir := multimoduleFixtureDir(t)
@@ -100,10 +82,7 @@ func moduleDiagCount(t *testing.T, pd *packageDriver, pkg *projects.Package, mod
 	return len(d.diagnosticContext().Diagnostics()), true
 }
 
-// moduleDriverFor returns this generation's moduleDriver for moduleName,
-// reaching directly into pd.drivers (package-internal — this test file is
-// package compile) rather than through moduleDiagCount's diagnostics-only
-// view, so a test can inspect pkgNode/units directly (ticket 38).
+// moduleDriverFor returns the run's driver for moduleName.
 func moduleDriverFor(t *testing.T, pd *packageDriver, pkg *projects.Package, moduleName string) (*moduleDriver, bool) {
 	t.Helper()
 	module := pkg.ModuleByName(mustModuleName(t, pkg, moduleName))
@@ -111,9 +90,7 @@ func moduleDriverFor(t *testing.T, pd *packageDriver, pkg *projects.Package, mod
 	return d, ok
 }
 
-// mustModuleName finds the ModuleName among pkg's modules whose full String()
-// equals name (e.g. "multimoduleproject.consumer"), so tests don't need to
-// hand-construct a projects.ModuleName (unexported-field-only construction).
+// mustModuleName finds a module by its full name, failing the test if absent.
 func mustModuleName(t *testing.T, pkg *projects.Package, name string) projects.ModuleName {
 	t.Helper()
 	for _, id := range pkg.ModuleIDs() {
@@ -129,16 +106,8 @@ func mustModuleName(t *testing.T, pkg *projects.Package, name string) projects.M
 	return projects.ModuleName{}
 }
 
-// TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents verifies
-// that a module-local syntax error does not gate that module's own Phase 1
-// (runPhase1Module's doc comment: "Parser diagnostics from recovered units
-// do not prevent a stage from executing"): the malformed declaration
-// recovers as a clean BLangBadTopLevelNode that symbol/top-level-type
-// resolution skip without adding a new error, so the module's valid sibling
-// declaration is still resolved, its exports are still published, and its
-// dependents still proceed through Phase 1. Only the parser's own
-// diagnostic is published (publishableDiagnostics), never mixed with
-// resolver/type diagnostics from resolving the rest of the file.
+// A recovered bad top-level declaration preserves valid exports and allows
+// dependents to proceed; only parser diagnostics are published.
 func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -146,9 +115,6 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testin
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
 	greetURI := fileURI(t, "file://"+greetPath)
-	// A valid sibling declaration (greeting) plus a genuine top-level syntax
-	// error (a function signature with an unterminated parameter list) in the
-	// same file.
 	brokenGreet := "public function greeting() returns string {\n    return \"hello\";\n}\n\nfunction target(int {\n}\n"
 	applyOpen(t, projSvc, greetURI, brokenGreet)
 
@@ -180,11 +146,7 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testin
 	if !d.diagnosticContext().HasDiagnostics() {
 		t.Fatal("greet's parser diagnostic must be retained")
 	}
-	// Ticket 58 narrowed ensureLocalTypeResolved's gate to
-	// !d.topLevelTypeResolutionUsable, so a lone parser diagnostic no longer
-	// blocks Phase 2's local-type-resolution stage the way it used to;
-	// semantic analysis still never runs, since ensureSemanticAnalyzed keeps
-	// its own untouched blanket d.ctx.HasDiagnostics() gate.
+	// Parser diagnostics permit local type resolution, but not semantic analysis.
 	if d.currentStage() != stageLocalTypeResolved {
 		t.Fatalf("greet stage = %v, want stageLocalTypeResolved", d.currentStage())
 	}
@@ -209,11 +171,7 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testin
 	}
 }
 
-// TestPackageDriver_CrossModuleImport_PublishesExportedSymbols verifies
-// Phase 1 -> Phase 2 barrier correctness across a real multi-module package:
-// consumer (which imports greet) must see greet's exported symbols and
-// compile with zero diagnostics, and main (which imports consumer) likewise.
-// The unrelated standalone module keeps its own fixed diagnostic.
+// Cross-module imports resolve while standalone retains its own diagnostic.
 func TestPackageDriver_CrossModuleImport_PublishesExportedSymbols(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -244,13 +202,7 @@ func TestPackageDriver_CrossModuleImport_PublishesExportedSymbols(t *testing.T) 
 	}
 }
 
-// TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic verifies
-// that a Phase 1 (symbol/top-level-type resolution) error in a dependency
-// (greet) causes its dependent (consumer) and consumer's own dependent
-// (main) to be skipped entirely — never reaching driverFor/ensureParsed —
-// without a nil-pointer panic, mirroring
-// projects/package_compilation.go:100-111's dependencyErrored gate. The
-// unrelated standalone module is unaffected.
+// A dependency's Phase-1 error skips transitive dependents, not independent modules.
 func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -261,8 +213,6 @@ func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing
 	brokenGreet := "public function greeting() returns UndefinedType {\n    return \"hello\";\n}\n"
 	applyOpen(t, projSvc, greetURI, brokenGreet)
 
-	// Re-resolve the package: applyOpen's modifier chain publishes a new
-	// current package on the same project.
 	proj, err := projSvc.Project(greetURI)
 	if err != nil || proj == nil {
 		t.Fatalf("Project: %v", err)
@@ -304,9 +254,6 @@ func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing
 		}
 	}
 
-	// Unlike projects/package_compilation.go:139-143, greet's Phase 1 failure
-	// does not skip Phase 2 package-wide: standalone does not depend on greet,
-	// so it still runs Phase 2 and surfaces its own fixed semantic error.
 	n, ok = moduleDiagCount(t, pd, pkg, "multimoduleproject.standalone")
 	if !ok {
 		t.Fatal("module \"multimoduleproject.standalone\" was never driven")
@@ -320,14 +267,7 @@ func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing
 	}
 }
 
-// TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration
-// verifies: an edit to greet's body only (its public signature — and
-// therefore its exported symbol space — is unchanged) produces a new
-// diagnostic on greet in the next generation, while consumer (a downstream
-// dependent whose Phase 1 view of greet did not change) and the unrelated
-// standalone module keep their diagnostics unchanged, with no
-// cross-generation accumulation (each generation uses a fresh packageDriver
-// with fresh per-module CompilerContexts).
+// Fresh runs isolate diagnostics across a body edit that leaves exports unchanged.
 func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg1, _ := openMultimoduleFixture(t, projSvc)
@@ -347,9 +287,7 @@ func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
 	greetURI := fileURI(t, "file://"+greetPath)
-	// Body-only edit: the signature (returns string) is unchanged, so
-	// greet's exported symbol space is unchanged too — only its own
-	// AnalyzeSemantics-stage diagnostic count should change.
+	// The unchanged signature now has a body-level type mismatch.
 	editedGreet := "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n"
 	applyOpen(t, projSvc, greetURI, editedGreet)
 
@@ -375,24 +313,12 @@ func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration
 		t.Errorf("gen2 standalone diagnostics = %d ok=%v, want 1 (unchanged, not duplicated)", n, ok)
 	}
 
-	// gen1's own driver set must be untouched by gen2 running.
 	if n, ok := moduleDiagCount(t, gen1, pkg1, "multimoduleproject.greet"); !ok || n != 0 {
 		t.Errorf("gen1 greet diagnostics after gen2 ran = %d ok=%v, want unchanged 0", n, ok)
 	}
 }
 
-// TestPackageDriver_DependencyPublicSurfaceBroken_DependentDriverNeverExists
-// makes ticket 38 scenario 2's "no driver, so no pkgNode and no units either"
-// conclusion explicit, rather than inferred the way
-// TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic's
-// moduleDiagCount ok=false checks do. Same fixture mutation as that test
-// (greet's return type changed to an UndefinedType, breaking greet's public
-// signature): consumer's dependency (greet) fails Phase 1, so
-// dependencyErrored (multimodule.go) causes consumer to be skipped before
-// driverFor is ever called — pd.drivers must have no entry for consumer at
-// all, meaning there is no moduleDriver instance whose pkgNode/units a
-// completion fallback (ticket 37's Option D) could ever read for consumer in
-// this generation.
+// An unresolved public type in greet leaves consumer without a driver.
 func TestPackageDriver_DependencyPublicSurfaceBroken_DependentDriverNeverExists(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -426,35 +352,8 @@ func TestPackageDriver_DependencyPublicSurfaceBroken_DependentDriverNeverExists(
 	}
 }
 
-// TestPackageDriver_DependencyBodyOnlyError_DependentCarriesForwardPkgNode
-// resolves ticket 37's open question for ticket 38 scenario 3: when a
-// dependency's error is body-only (its exported public surface is
-// unchanged), is the dependent module pulled into the reset scope and
-// rebuilt, or does it adopt its own prior generation via
-// adoptCarriedForward and keep a fully usable pkgNode untouched?
-//
-// Answer, established by direct observation below: the dependent (consumer)
-// is NOT pulled into the reset scope (pd.resetScope[consumerID] is false)
-// and adopts the exact same *moduleDriver instance* its previous generation
-// finished with — its pkgNode is still populated and its diagnostics are
-// still 0, exactly as if nothing had happened.
-//
-// This is not a coincidence of this one fixture: recordFingerprintAndPrune
-// (multimodule.go) computes a module's fingerprint immediately after Phase 1
-// (parse -> symbol resolution -> top-level/public-node type resolution),
-// strictly before Phase 2 (local/body type resolution and semantic
-// analysis) ever runs (advanceAll, multimodule.go). A "body-only" error, by
-// construction, only ever surfaces during Phase 2
-// (semantics.ResolvePrivateNodesTypes / AnalyzeSemantics — semantics.go's
-// doc comment), so Phase 1 always completes clean for a genuinely body-only
-// error, and the fingerprint computed from that clean context is always
-// valid and (for an unchanged signature) unchanged. There is no reachable
-// case in this architecture where a body-only error causes phase1Errored —
-// that would require Phase 1 itself to inspect function-body content, which
-// it structurally does not (ResolveSymbols/ResolvePublicNodeTypes only see
-// package symbols and public node types, not private/body nodes). So
-// scenario 2's cascade-skip path and scenario 3's carry-forward path are
-// mutually exclusive by construction, not just by this fixture's luck.
+// This semantic-analysis error leaves greet's Phase-1 fingerprint unchanged,
+// and consumer retains its prior driver and package node.
 func TestPackageDriver_DependencyBodyOnlyError_DependentCarriesForwardPkgNode(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg1, _ := openMultimoduleFixture(t, projSvc)
@@ -481,9 +380,7 @@ func TestPackageDriver_DependencyBodyOnlyError_DependentCarriesForwardPkgNode(t 
 
 	dir := multimoduleFixtureDir(t)
 	greetURI := fileURI(t, "file://"+filepath.Join(dir, "modules", "greet", "greet.bal"))
-	// Body-only edit: greet's signature (returns string) is unchanged, so
-	// this only ever surfaces in AnalyzeSemantics (Phase 2), never in Phase
-	// 1's symbol/top-level-type resolution.
+	// The type mismatch surfaces during semantic analysis.
 	applyOpen(t, projSvc, greetURI, "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n")
 
 	proj, err := projSvc.Project(greetURI)
@@ -518,8 +415,6 @@ func TestPackageDriver_DependencyBodyOnlyError_DependentCarriesForwardPkgNode(t 
 		t.Errorf("gen2 consumer diagnostics = %d ok=%v, want 0 (unaffected)", n, ok)
 	}
 
-	// greet itself, by contrast, is directly dirty (its own text changed) and
-	// must be rebuilt fresh, with its new body error visible.
 	greetGen2, ok := moduleDriverFor(t, gen2, pkg2, "multimoduleproject.greet")
 	if !ok {
 		t.Fatal("gen2 greet driver must exist")
@@ -531,27 +426,3 @@ func TestPackageDriver_DependencyBodyOnlyError_DependentCarriesForwardPkgNode(t 
 		t.Errorf("gen2 greet diagnostics = %d ok=%v, want 1 (its own new body error)", n, ok)
 	}
 }
-
-// TestModuleDriver_ZeroDocuments_NeverConstructedThroughPublicAPI documents,
-// rather than tests, ticket 38 scenario 4 (d.stage < stageParsed because
-// ensureParsed built zero units). This is not reasonably constructible
-// through the public projects/workspace API:
-//
-//   - ensureParsed (stage.go:191-229) only ends up with zero units if either
-//     module.DocumentIDs() is empty or every module.Document(docID) is nil,
-//     or parser.GetSyntaxTree returns a nil *st.SyntaxTree.
-//   - parser.GetSyntaxTree (parser.go:14682-14692) never returns a nil tree
-//     or a non-nil error for any input, including an empty string — so that
-//     branch is dead in practice, confirmed by reading its implementation.
-//   - A named or default module is only discovered by projects' loader when
-//     it has at least one .bal file backing it; there is no public
-//     workspace/projects API to open a module with zero documents (a module
-//     directory containing zero .bal files does not become a Module at all).
-//
-// So the only way to reach d.stage < stageParsed after advanceTo is called
-// is a module that was never really loaded in the first place — not a real
-// LS scenario, and not something this test file forces through unexported
-// internals. A completion fallback (ticket 37's Option D) reaching this
-// branch would only ever see the zero-value moduleDriver{} it started from
-// (pkgNode nil, units nil, stage stageUnstarted), which is already
-// vacuously true of every fresh moduleDriver before advanceTo runs at all.

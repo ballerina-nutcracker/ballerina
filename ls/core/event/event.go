@@ -14,16 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package event provides the synchronous core event bus carrying
-// project-lifecycle events for the language server core. The bus is a leaf
-// package (stdlib-only) with inline dispatch: Publish calls each matching
-// subscriber's handler synchronously on the calling goroutine, in
-// registration order, before returning. No goroutines, no queues, no tiers.
-//
-// Ticket 08 ships the bus infrastructure and three workspace-manager (WM)
-// lifecycle event types: ProjectRegistered, ProjectEvicted, and
-// ProjectKindTransitioned. Ticket 09 extends the same bus with ProjectUpdated
-// (WM-E4), compilation-engine (CE) lifecycle events, and async delivery.
+// Package event provides project and compilation lifecycle events for the
+// language server core. Subscribers receive events inline on the publishing
+// goroutine or asynchronously through per-subscriber tiered queues.
 package event
 
 import (
@@ -31,11 +24,8 @@ import (
 	"sync"
 )
 
-// Logf is a minimal structured-logging hook. It exists so this stdlib-only
-// leaf package (see the package doc) can report panic/drop conditions without
-// importing observability or platform/pal. New defaults it to a no-op;
-// production wiring (cli/cmd/langserver.go) passes an adapter closing over a
-// real *observability.Logger via WithLogf.
+// Logf reports subscriber panics and dropped events without a logging-library
+// dependency. New defaults it to a no-op; WithLogf supplies a hook.
 type Logf func(msg string, args ...any)
 
 func noopLogf(string, ...any) {}
@@ -44,56 +34,53 @@ func noopLogf(string, ...any) {}
 type Kind uint8
 
 const (
-	// ProjectRegistered is published when a project is first loaded into the
-	// index (WM-E1).
+	// ProjectRegistered reports a project load or reload attempt.
 	ProjectRegistered Kind = iota
 	// ProjectEvicted is published when a project is removed from the index,
-	// either by LRU eviction or a kind transition (WM-E2).
+	// either by LRU eviction or a kind transition.
 	ProjectEvicted
-	// ProjectKindTransitioned is published when a project's kind changes
-	// atomically (e.g. SingleFile→Build on Ballerina.toml creation) (WM-E3).
+	// ProjectKindTransitioned reports a manifest create/delete reload of a
+	// previously indexed root.
 	ProjectKindTransitioned
-	// ProjectUpdated is published inline by Apply after every content republish
-	// (WM-E4). Tier: CRITICAL.
+	// ProjectUpdated is published after a content republish.
 	ProjectUpdated
-	// CompilationStarted is published when a compile cycle begins (CE-E4).
+	// CompilationStarted identifies a compile-cycle start. The compilation
+	// service does not currently publish it.
 	CompilationStarted
-	// CompilationSucceeded is published when a stable snapshot is stored
-	// (CE-E1). Tier: CRITICAL.
+	// CompilationSucceeded is published when a stable snapshot is stored.
 	CompilationSucceeded
-	// CompilationFailed is published when a compile errors or panics (CE-E2).
-	// Tier: CRITICAL.
+	// CompilationFailed is published when a compile panics.
 	CompilationFailed
-	// CompilationCancelled is published when a cycle is superseded/dropped at
-	// the stale-publication gate (CE-E3, NOT mid-compile interrupt). Tier:
-	// COALESCEABLE.
+	// CompilationCancelled is published when a cycle is superseded before
+	// compilation or stable publication, not interrupted mid-compile.
 	CompilationCancelled
-	// ResolutionDiagnosticsReady is published after a cycle with resolution
-	// diagnostics (CE-E5a). Tier: BEST_EFFORT.
+	// ResolutionDiagnosticsReady is published with each stable snapshot,
+	// even when its resolution diagnostics are empty.
 	ResolutionDiagnosticsReady
 	// CompilationDiagnosticsReady is published after a cycle with a clean
-	// resolution, carrying compilation diagnostics (CE-E5b). Tier: BEST_EFFORT.
+	// resolution, carrying compilation diagnostics.
 	CompilationDiagnosticsReady
 )
 
 // Event is the interface every bus event implements. SourceRoot is the
-// core-internal source-root key (ADR-053), never a DocumentURI. Generation is
-// the per-source-root monotonic counter (added in 09); 08 events return 0.
+// core-internal source-root key, not a DocumentURI. Generation identifies a
+// source-root revision; registration, eviction, and kind-transition events
+// return zero.
 type Event interface {
 	Kind() Kind
 	SourceRoot() string
 	Generation() uint64
 }
 
-// Tier selects a subscriber's delivery semantics. Translates Java ADR-032
-// DeliveryChannel tiers to per-subscriber Go channels + drainer goroutines.
+// Tier selects a subscriber's asynchronous delivery semantics.
 type Tier uint8
 
 const (
 	// TierCritical: bounded buffered channel; on a full channel the event is
 	// dropped and logged. Never coalesced.
 	TierCritical Tier = iota
-	// TierCoalesceable: last-write-wins per CoalesceKey.
+	// TierCoalesceable: last-write-wins for pending events of the same kind
+	// and source root.
 	TierCoalesceable
 	// TierBestEffort: bounded ring buffer, head-drop on full.
 	TierBestEffort
@@ -103,11 +90,10 @@ const (
 type CoalesceKey struct {
 	Kind        Kind
 	SourceRoot  string
-	DocumentURI string // empty for source-root-scoped events (CE-E3)
+	DocumentURI string // not populated by the bus
 }
 
-// criticalCapacity is the per-subscriber CRITICAL channel cap. Generous: a
-// dropped CRITICAL event leaks a resource.
+// criticalCapacity is the per-subscriber CRITICAL channel capacity.
 const criticalCapacity = 256
 
 // bestEffortCapacity is the per-subscriber BEST_EFFORT ring cap.
@@ -119,11 +105,11 @@ type EvictionReason uint8
 const (
 	// EvictionLRU is the count-bounded background-preferred eviction.
 	EvictionLRU EvictionReason = iota
-	// EvictionKindTransition is eviction as part of an atomic kind transition.
+	// EvictionKindTransition is invalidation during manifest rediscovery.
 	EvictionKindTransition
 )
 
-// ProjectRegisteredEvent is published when a project enters the index.
+// ProjectRegisteredEvent reports a project load or reload attempt.
 type ProjectRegisteredEvent struct {
 	root string
 }
@@ -155,9 +141,9 @@ func (e ProjectEvictedEvent) Kind() Kind         { return ProjectEvicted }
 func (e ProjectEvictedEvent) SourceRoot() string { return e.root }
 func (e ProjectEvictedEvent) Generation() uint64 { return 0 }
 
-// ProjectKindTransitionedEvent is published when a project's kind changes
-// atomically (e.g. SingleFile→Build). The old and new source roots may differ
-// when the project root identity changes.
+// ProjectKindTransitionedEvent reports a manifest create/delete reload of a
+// previously indexed root. The workspace publisher supplies the same root
+// as both oldRoot and newRoot.
 type ProjectKindTransitionedEvent struct {
 	oldRoot string
 	newRoot string
@@ -178,8 +164,8 @@ func (e ProjectKindTransitionedEvent) Kind() Kind         { return ProjectKindTr
 func (e ProjectKindTransitionedEvent) SourceRoot() string { return e.newRoot }
 func (e ProjectKindTransitionedEvent) Generation() uint64 { return 0 }
 
-// ProjectUpdatedEvent is published inline by Apply after a content republish
-// (WM-E4). It carries the new generation for the source root.
+// ProjectUpdatedEvent carries the source root's new generation after a content
+// republish.
 type ProjectUpdatedEvent struct {
 	root       string
 	generation uint64
@@ -194,7 +180,8 @@ func (e ProjectUpdatedEvent) Kind() Kind         { return ProjectUpdated }
 func (e ProjectUpdatedEvent) SourceRoot() string { return e.root }
 func (e ProjectUpdatedEvent) Generation() uint64 { return e.generation }
 
-// CompilationStartedEvent is published when a compile cycle begins (CE-E4).
+// CompilationStartedEvent identifies a compile-cycle start. The compilation
+// service does not currently publish it.
 type CompilationStartedEvent struct {
 	root       string
 	generation uint64
@@ -209,8 +196,7 @@ func (e CompilationStartedEvent) Kind() Kind         { return CompilationStarted
 func (e CompilationStartedEvent) SourceRoot() string { return e.root }
 func (e CompilationStartedEvent) Generation() uint64 { return e.generation }
 
-// CompilationSucceededEvent is published when a stable snapshot is stored
-// (CE-E1). DescriptorName is for observability only.
+// CompilationSucceededEvent is published when a stable snapshot is stored.
 type CompilationSucceededEvent struct {
 	root       string
 	descriptor string
@@ -229,7 +215,7 @@ func (e CompilationSucceededEvent) Kind() Kind         { return CompilationSucce
 func (e CompilationSucceededEvent) SourceRoot() string { return e.root }
 func (e CompilationSucceededEvent) Generation() uint64 { return e.generation }
 
-// CompilationFailedEvent is published when a compile errors or panics (CE-E2).
+// CompilationFailedEvent is published when a compile panics.
 type CompilationFailedEvent struct {
 	root       string
 	generation uint64
@@ -244,8 +230,8 @@ func (e CompilationFailedEvent) Kind() Kind         { return CompilationFailed }
 func (e CompilationFailedEvent) SourceRoot() string { return e.root }
 func (e CompilationFailedEvent) Generation() uint64 { return e.generation }
 
-// CompilationCancelledEvent is published when a cycle is superseded/dropped at
-// the stale-publication gate (CE-E3).
+// CompilationCancelledEvent is published when a cycle is superseded before
+// compilation or stable publication.
 type CompilationCancelledEvent struct {
 	root       string
 	generation uint64
@@ -260,8 +246,8 @@ func (e CompilationCancelledEvent) Kind() Kind         { return CompilationCance
 func (e CompilationCancelledEvent) SourceRoot() string { return e.root }
 func (e CompilationCancelledEvent) Generation() uint64 { return e.generation }
 
-// ResolutionDiagnosticsReadyEvent is published after a cycle with resolution
-// diagnostics (CE-E5a).
+// ResolutionDiagnosticsReadyEvent is published with each stable snapshot,
+// even when its resolution diagnostics are empty.
 type ResolutionDiagnosticsReadyEvent struct {
 	root       string
 	descriptor string
@@ -281,7 +267,7 @@ func (e ResolutionDiagnosticsReadyEvent) SourceRoot() string { return e.root }
 func (e ResolutionDiagnosticsReadyEvent) Generation() uint64 { return e.generation }
 
 // CompilationDiagnosticsReadyEvent is published after a cycle with a clean
-// resolution, carrying compilation diagnostics (CE-E5b).
+// resolution, carrying compilation diagnostics.
 type CompilationDiagnosticsReadyEvent struct {
 	root       string
 	descriptor string
@@ -300,10 +286,9 @@ func (e CompilationDiagnosticsReadyEvent) Kind() Kind         { return Compilati
 func (e CompilationDiagnosticsReadyEvent) SourceRoot() string { return e.root }
 func (e CompilationDiagnosticsReadyEvent) Generation() uint64 { return e.generation }
 
-// Bus is the event bus. It dispatches events to inline (08) subscribers
-// synchronously on the publishing goroutine, and to tiered (09) subscribers
-// asynchronously on per-subscriber drainer goroutines. A panicking handler
-// is recovered and logged; delivery continues to the next subscriber.
+// Bus dispatches events inline on the publishing goroutine or asynchronously
+// on per-subscriber drainer goroutines. Handler panics are recovered and logged
+// without stopping subsequent deliveries.
 type Bus struct {
 	mu          sync.Mutex
 	closed      bool
@@ -314,8 +299,8 @@ type Bus struct {
 // Option configures a Bus at construction time.
 type Option func(*Bus)
 
-// WithLogf injects a structured-logging hook for panic/drop reporting. The
-// default (unset) is a no-op, so existing New() call sites need no change.
+// WithLogf injects a structured-logging hook for panic/drop reporting.
+// A nil hook leaves the no-op default unchanged.
 func WithLogf(logf Logf) Option {
 	return func(b *Bus) {
 		if logf != nil {
@@ -339,7 +324,7 @@ type tierDelivery struct {
 	pending  map[CoalesceKey]Event // COALESCEABLE only (under coaMu)
 	ring     []Event               // BEST_EFFORT only (under ringMu)
 	ringMu   sync.Mutex
-	ringHead int // BEST_EFFORT: next write slot (overwrites oldest when full)
+	ringHead int // BEST_EFFORT: oldest event's slot
 	ringLen  int // BEST_EFFORT: current count
 	coaMu    sync.Mutex
 	flushReq chan chan struct{} // flush sends a chan; drainer closes it when idle
@@ -370,8 +355,8 @@ func (b *Bus) Subscribe(kinds []Kind, handler func(Event)) {
 }
 
 // SubscribeWithTier registers handler for the given kinds, delivered on a
-// per-subscriber channel with the given tier semantics. The handler is called
-// on a dedicated drainer goroutine for that registration, NOT on the
+// per-subscriber queue with the given tier semantics. The handler is called
+// on a dedicated drainer goroutine for that registration, not on the
 // publishing goroutine. SubscribeWithTier after Close is a no-op.
 func (b *Bus) SubscribeWithTier(kinds []Kind, tier Tier, handler func(Event)) {
 	b.mu.Lock()
@@ -384,9 +369,9 @@ func (b *Bus) SubscribeWithTier(kinds []Kind, tier Tier, handler func(Event)) {
 	go d.run(handler)
 }
 
-// Publish dispatches e to every matching subscriber: inline subscribers are
-// called on the caller's goroutine (08 behavior); tiered subscribers receive
-// e on their per-subscriber channel (async). Publish after Close is a no-op.
+// Publish dispatches e to every matching subscriber in registration order:
+// inline handlers run on the caller's goroutine; tiered events are queued for
+// asynchronous delivery. Publish after Close is a no-op.
 func (b *Bus) Publish(e Event) {
 	b.mu.Lock()
 	if b.closed {
@@ -409,11 +394,9 @@ func (b *Bus) Publish(e Event) {
 	}
 }
 
-// Flush blocks until every tiered subscriber's channel is empty AND its drainer
-// goroutine has finished processing every queued event (no in-flight handler
-// call). Inline (08) subscribers are already drained by Publish returning. It
-// is the deterministic drain point the corpus driver uses instead of timing
-// sleeps.
+// Flush waits for tiered subscribers to drain their queues and finish handler
+// calls. Publishers must be quiescent to guarantee all subscribers are idle
+// when it returns. Inline handlers finish before their Publish call returns.
 func (b *Bus) Flush() {
 	b.mu.Lock()
 	subs := make([]busSubscriber, len(b.subscribers))
@@ -429,7 +412,7 @@ func (b *Bus) Flush() {
 
 // Close stops accepting new subscribers, drops further publishes, and signals
 // every tiered drainer goroutine to exit (draining CRITICAL channels first).
-// It is idempotent and safe to call last.
+// Repeated calls are no-ops.
 func (b *Bus) Close() {
 	b.mu.Lock()
 	if b.closed {
@@ -468,7 +451,6 @@ func (b *Bus) deliver(handler func(Event), e Event) {
 	handler(e)
 }
 
-// newTierDelivery builds the per-subscriber delivery state for a tier.
 func newTierDelivery(tier Tier, logf Logf) *tierDelivery {
 	d := &tierDelivery{tier: tier, logf: logf, done: make(chan struct{}), flushReq: make(chan chan struct{}, 1)}
 	switch tier {
@@ -484,7 +466,7 @@ func newTierDelivery(tier Tier, logf Logf) *tierDelivery {
 	return d
 }
 
-// enqueue hands e to the drainer without blocking the publisher.
+// enqueue queues e without waiting for a handler to consume it.
 func (d *tierDelivery) enqueue(e Event) {
 	switch d.tier {
 	case TierCritical:
@@ -520,9 +502,7 @@ func (d *tierDelivery) enqueue(e Event) {
 	}
 }
 
-// run is the drainer goroutine for a tiered subscription. Handlers run
-// serially in this goroutine, so the drainer is "idle" exactly when it is not
-// inside a handler call and its queue is empty.
+// run delivers a tiered subscription's events serially.
 func (d *tierDelivery) run(handler func(Event)) {
 	defer close(d.done)
 	for {
@@ -614,10 +594,9 @@ func (d *tierDelivery) takeRing() (Event, bool) {
 	return e, true
 }
 
-// flush blocks until the drainer has drained its queue and finished every
-// in-flight handler call. The drainer serializes handler calls, so closing
-// the flush-request chan is the deterministic idle point. It may loop if
-// events arrived between the drain and the idle point.
+// flush requests a drain, waits for its handlers to finish, and retries if
+// more events are queued. Concurrent publishers can enqueue again after the
+// idle check.
 func (d *tierDelivery) flush() {
 	for {
 		req := make(chan struct{})
@@ -646,10 +625,9 @@ func (d *tierDelivery) idle() bool {
 	return d.ringLen == 0
 }
 
-// close drains the CRITICAL channel (so queued events are delivered) then
-// signals the drainer to exit. COALESCEABLE/BEST_EFFORT queues are dropped on
-// close per ADR-032. It is idempotent-safe because Close is guarded by the
-// bus's closed flag.
+// close signals the drainer to exit and waits for it. CRITICAL events are
+// drained; other tiers may leave pending events undelivered. Bus.Close guards
+// against repeated calls.
 func (d *tierDelivery) close() {
 	if d.tier == TierCritical {
 		close(d.events)

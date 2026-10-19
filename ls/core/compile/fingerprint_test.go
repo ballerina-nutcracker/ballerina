@@ -81,9 +81,6 @@ func TestComputeFingerprint_ErroredContext_Invalid(t *testing.T) {
 	if fp.valid {
 		t.Errorf("expected an invalid fingerprint for an errored context, got %+v", fp)
 	}
-	// Two invalid fingerprints must never compare equal — an invalid
-	// fingerprint carries no information, so "unknown == unknown" would
-	// incorrectly prune a dependent that may genuinely need resetting.
 	if fp.equal(fp) {
 		t.Error("an invalid fingerprint must never equal anything, including itself")
 	}

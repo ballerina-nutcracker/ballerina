@@ -32,15 +32,13 @@ type indexEntry struct {
 	project     projects.Project
 	paths       SourcePaths
 	sourceRoot  string
-	lastTouched time.Time // LRU stamp, updated on every resolve/publish hit
-	openDocs    int       // count of open DocumentURIs resolved to this source root
+	lastTouched time.Time // LRU stamp
+	openDocs    int       // zero marks a background entry for eviction
 	generation  uint64    // monotonic lifetime stamp, never reused when a root returns
 }
 
-// projectIndex is a count-bounded, source-root-keyed LRU cache of loaded
-// projects, with a filePath→sourceRoot memo for the ADR-048 root-walk. It is
-// unexported and behind ProjectService. Under ticket 09 the async compile
-// engine reads it concurrently with Apply, so every method is mutex-guarded.
+// projectIndex is a count-bounded LRU project cache with a file-path-to-root
+// memo. Its mutex guards index operations; get returns a live entry.
 type projectIndex struct {
 	mu               sync.Mutex
 	entries          map[string]*indexEntry // sourceRoot → entry
@@ -71,9 +69,7 @@ func (i *projectIndex) get(sourceRoot string) (*indexEntry, bool) {
 	return entry, true
 }
 
-// peek returns a copy of the entry without updating the LRU stamp. Used
-// by the async compile engine's read-only accessors (Generation/
-// CurrentProject) so frequent reads do not thrash the LRU order.
+// peek returns an entry copy without updating its LRU stamp.
 func (i *projectIndex) peek(sourceRoot string) (*indexEntry, bool) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -121,11 +117,8 @@ func (i *projectIndex) advanceLocked(entry *indexEntry) uint64 {
 	return entry.generation
 }
 
-// put stores a new entry. If the index is full, it evicts the
-// least-recently-touched background entry (openDocs == 0) first; only if every
-// entry is active does it evict the LRU active entry. Eviction publishes
-// ProjectEvicted on the bus. Returns the stored entry and the evicted root
-// (empty if none).
+// put updates an existing entry's project and LRU stamp or inserts a new entry,
+// evicting via evictLRU when full. It returns the stored entry and evicted root.
 func (i *projectIndex) put(entry *indexEntry, bus *event.Bus) (*indexEntry, string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -209,8 +202,7 @@ func (i *projectIndex) memoSourceRoot(filePath, sourceRoot string) {
 	i.pathToSourceRoot[filePath] = sourceRoot
 }
 
-// invalidateUnder removes memo entries whose file path is under dir (or equals
-// dir) — used when Ballerina.toml is created/deleted/changed under dir.
+// invalidateUnder removes memo entries whose file path is under or equal to dir.
 func (i *projectIndex) invalidateUnder(dir string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -221,22 +213,12 @@ func (i *projectIndex) invalidateUnder(dir string) {
 	}
 }
 
-// supersede advances the source root's generation counter without publishing,
-// so any in-flight compile cycle for root observes a generation that no longer
-// matches its own and is gated out at the stale-publication gate (CE-E3). It
-// is a no-op for an unknown root. It does not touch debounce timers
-// (engine-owned) or close the bus.
+// supersede advances root's generation without publishing; unknown roots are ignored.
 func (i *projectIndex) supersede(root string) {
 	i.advance(root)
 }
 
-// supersedeAll advances every known source root's generation counter without
-// publishing, so any in-flight compile cycle for those roots observes a
-// generation that no longer matches its own and is gated out at the
-// stale-publication gate (CE-E3). It is the workspace's contribution to
-// shutdown; the compile engine's own closed flag provides the same gating
-// defensively. It does not touch debounce timers (engine-owned) or close the
-// bus (the wiring closes the bus last so the compile engine can Flush first).
+// supersedeAll advances every indexed root's generation without publishing.
 func (i *projectIndex) supersedeAll() {
 	i.mu.Lock()
 	defer i.mu.Unlock()

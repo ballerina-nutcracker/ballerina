@@ -21,8 +21,7 @@ import (
 	"testing"
 )
 
-// recordingLogf collects every call so tests can assert on message/attrs
-// without depending on any particular logging library.
+// recordingLogf collects calls without a logging-library dependency.
 type recordingLogf struct {
 	mu    sync.Mutex
 	calls []logCall
@@ -45,9 +44,6 @@ func (r *recordingLogf) count() int {
 	return len(r.calls)
 }
 
-// TestDefaultLogfIsNoop verifies New() without WithLogf never panics on a
-// subscriber panic even though nothing consumes the drop/panic message — the
-// ~15 existing New() call sites elsewhere in the repo must not need to change.
 func TestDefaultLogfIsNoop(t *testing.T) {
 	bus := New()
 	defer bus.Close()
@@ -55,8 +51,6 @@ func TestDefaultLogfIsNoop(t *testing.T) {
 	bus.Publish(NewProjectRegisteredEvent("/r"))
 }
 
-// TestWithLogfReceivesInlineSubscriberPanic verifies an inline (Subscribe)
-// subscriber panic is reported through the injected Logf, not bare log.Printf.
 func TestWithLogfReceivesInlineSubscriberPanic(t *testing.T) {
 	var rec recordingLogf
 	bus := New(WithLogf(rec.logf))
@@ -68,8 +62,6 @@ func TestWithLogfReceivesInlineSubscriberPanic(t *testing.T) {
 	}
 }
 
-// TestWithLogfReceivesCriticalDrop verifies a dropped CRITICAL event (channel
-// full) is reported through the injected Logf.
 func TestWithLogfReceivesCriticalDrop(t *testing.T) {
 	var rec recordingLogf
 	bus := New(WithLogf(rec.logf))
@@ -90,8 +82,6 @@ func TestWithLogfReceivesCriticalDrop(t *testing.T) {
 	}
 }
 
-// TestWithLogfReceivesTieredSubscriberPanic verifies a tiered (async)
-// subscriber panic is reported through the injected Logf.
 func TestWithLogfReceivesTieredSubscriberPanic(t *testing.T) {
 	var rec recordingLogf
 	bus := New(WithLogf(rec.logf))

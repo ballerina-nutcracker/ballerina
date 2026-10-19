@@ -42,7 +42,6 @@ func TestSubscribeFiltersByKind(t *testing.T) {
 	bus.Publish(NewProjectRegisteredEvent("/r"))
 	bus.Publish(NewProjectEvictedEvent("/r", EvictionLRU))
 	bus.Publish(NewProjectKindTransitionedEvent("/old", "/new"))
-	// registered → second subscriber; evicted → first; transitioned → second
 	want := []Kind{ProjectRegistered, ProjectEvicted, ProjectKindTransitioned}
 	if len(got) != len(want) {
 		t.Fatalf("got %d events, want %d", len(got), len(want))

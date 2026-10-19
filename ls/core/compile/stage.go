@@ -14,16 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// stage.go implements the LS-owned per-module staged compilation driver
-// (ticket 37). It bypasses projects.PackageCompilation and calls the
-// compiler's public per-stage API directly: parser.GetSyntaxTree,
-// nodebuilder compilation-unit builders, then semantics.ResolveSymbols,
-// ResolvePublicNodeTypes, ResolvePrivateNodesTypes, AnalyzeSemantics,
-// CreateControlFlowGraph, AnalyzeCFG in that order (semantics/semantics.go's
-// doc comment documents this order). moduleDriver drives one module through
-// this ladder; packageDriver (multimodule.go) orchestrates it across a
-// package's modules, respecting the Phase 1 -> Phase 2 barrier. See
-// docs/adr/2026-08-28-ls-owned-staged-compilation-pipeline.md.
 package compile
 
 import (
@@ -40,12 +30,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
-// moduleStage is the LS-owned stage ladder for a single module's staged
-// compilation. It is a new type owned by this package, not
-// context.CompilationStage (a stats-only marker with no gating) or
-// projects.moduleCompilationState (near-dead: only two of its ten states are
-// ever set) — both dead/near-dead in packages the LS no longer routes
-// compilation through, per the ADR.
+// moduleStage records the last completed stage of a module's LS compilation.
 type moduleStage int
 
 const (
@@ -59,12 +44,7 @@ const (
 	stageCFGAnalyzed
 )
 
-// moduleResolutionInput carries the cross-module inputs a single module's
-// symbol resolution needs. In this phase (single-module case) these are
-// always empty: no dependency modules are compiled through this driver yet,
-// and projects.Environment's publicSymbols map has no public accessor —
-// deliberately not added here; wiring a module's real dependencies through
-// the Phase 1 -> Phase 2 barrier is phase 2 (multi-module) scope.
+// moduleResolutionInput carries cross-module symbol-resolution inputs.
 type moduleResolutionInput struct {
 	defaultOrg       string
 	implicitImports  map[string]model.ExportedSymbolSpace
@@ -72,9 +52,7 @@ type moduleResolutionInput struct {
 	moduleVisibility map[semantics.PackageIdentifier]semantics.ModuleVisibility
 }
 
-// newModuleResolutionInput builds a moduleResolutionInput, defaulting nil
-// maps to empty ones (map fields are always initialized per repo convention;
-// semantics.ResolveSymbols also writes into implicitImports).
+// newModuleResolutionInput defaults nil maps to empty maps.
 func newModuleResolutionInput(defaultOrg string, implicitImports map[string]model.ExportedSymbolSpace, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace) moduleResolutionInput {
 	if implicitImports == nil {
 		implicitImports = make(map[string]model.ExportedSymbolSpace)
@@ -90,23 +68,8 @@ func newModuleResolutionInput(defaultOrg string, implicitImports map[string]mode
 	}
 }
 
-// moduleDriver advances a single module through the LS stage ladder,
-// bypassing projects.PackageCompilation. It calls the compiler's public
-// per-stage API directly over a *context.CompilerContext constructed fresh at
-// driver-construction time — one moduleDriver instance corresponds to one
-// generation-advance, per the ADR's re-entrancy rule. The
-// *context.CompilerEnvironment behind that context is supplied by the caller
-// and is expected to be the same shared instance reused across generations;
-// diagnostics live on this driver's own fresh context and never accumulate
-// on the shared environment or leak into another driver instance.
-//
-// Every ensureX method re-checks its own prerequisite via d.stage (never a
-// proxy condition, e.g. a nil-check standing in for the stage) before doing
-// any work, and is a no-op once d.stage has already reached or passed its
-// target. This is the idempotency guard the ADR requires, and specifically
-// avoids ls-ref's runModuleLocalTypeResolution asymmetry bug
-// (ls-ref/lsp/diagnostics.go:262-279, which checks module.Package == nil
-// instead of the stage field like its sibling stage functions).
+// moduleDriver advances a module using a fresh compiler context over a shared
+// environment. Completed stages are not rerun.
 type moduleDriver struct {
 	ctx       *context.CompilerContext
 	stage     moduleStage
@@ -120,39 +83,24 @@ type moduleDriver struct {
 	symbolResolutionUsable       bool
 	topLevelTypeResolutionUsable bool
 	localTypeResolutionUsable    bool
-	// typeResolvable reports whether type resolution may run on this module:
-	// symbol resolution either added no errors or left no symbol unresolved
-	// (hasUnresolvedSymbols).
+	// typeResolvable permits type resolution after usable symbol resolution
+	// or after all remaining symbol references have been bound.
 	typeResolvable bool
-	// hasBadNodes records that at least one compilation unit was built by the
-	// recovering node builder, i.e. the module's AST carries bad nodes. Such a
-	// module never runs semantic analysis or anything after it.
+	// hasBadNodes records use of the recovering node builder and blocks
+	// semantic analysis and later stages.
 	hasBadNodes bool
 	pkgNode     *ast.BLangPackage
 	imported    map[string]model.ExportedSymbolSpace
 	exported    model.ExportedSymbolSpace
 	cfg         *semantics.PackageCFG
 
-	// parserDiagnosticCount is the number of diagnostics on d.ctx at the end
-	// of ensureParsed -- i.e. the parser's own diagnostics, before any later
-	// stage runs. A module with parser diagnostics still advances through
-	// symbol/top-level-type resolution (see runPhase1Module's doc comment:
-	// "Parser diagnostics from recovered units do not prevent a stage from
-	// executing"), so its scope/pkgNode stay available to LS features like
-	// completion. But diagnostics a later stage adds on top of an existing
-	// parser diagnostic are usually artifacts of resolving a malformed
-	// subtree, not independently meaningful errors, so publishableDiagnostics
-	// hides them: a module with any parser diagnostic publishes only that
-	// diagnostic, never a mix of syntax and resolver/semantic diagnostics.
+	// parserDiagnosticCount captures diagnostics before symbol resolution.
+	// When nonzero, publishableDiagnostics omits later-stage diagnostics.
 	parserDiagnosticCount int
 }
 
-// publishableDiagnostics returns the diagnostics this driver's module should
-// report to the client. If the module has a parser diagnostic, later-stage
-// diagnostics are suppressed (see parserDiagnosticCount's doc comment) so
-// only the parser diagnostics are published; symbol/type resolution still
-// runs internally so completion and other features keep working off the
-// module's scope.
+// publishableDiagnostics suppresses later-stage diagnostics when parsing
+// already reported diagnostics.
 func (d *moduleDriver) publishableDiagnostics() []diagnostics.Diagnostic {
 	all := d.ctx.Diagnostics()
 	if d.parserDiagnosticCount > 0 && d.parserDiagnosticCount < len(all) {
@@ -161,12 +109,8 @@ func (d *moduleDriver) publishableDiagnostics() []diagnostics.Diagnostic {
 	return all
 }
 
-// newModuleDriver constructs a driver for one generation-advance of a single
-// module, over the shared compiler environment env. openText (ticket 28) is
-// consulted for a document's live content before falling back to the
-// document's own (possibly stale) TextDocument(); stale (design item 5) is
-// checked at the top of advanceTo so a superseded generation aborts between
-// stage advances instead of finishing wasted work. Both may be nil.
+// newModuleDriver creates a fresh context over env. openText overrides loaded
+// document text; stale is checked on entry to advanceTo. Both may be nil.
 func newModuleDriver(env *context.CompilerEnvironment, openText textProvider, stale func() bool) *moduleDriver {
 	return &moduleDriver{ctx: context.NewCompilerContext(env), openText: openText, stale: stale,
 		sources: make(map[projects.DocumentID]string), sourceIDs: make(map[string]projects.DocumentID)}
@@ -183,11 +127,8 @@ func (d *moduleDriver) diagnosticContext() *context.CompilerContext {
 	return d.ctx
 }
 
-// advanceTo drives module forward through the ladder up to (and including)
-// target only, stopping early if an earlier stage produced diagnostics that
-// gate further progress (mirroring projects/module_context.go's per-stage
-// gates). Requesting a stage the module has already reached, or passed, is a
-// no-op.
+// advanceTo attempts target and its prerequisites unless superseded. Stage
+// gates can stop progress early; completed stages are no-ops.
 func (d *moduleDriver) advanceTo(target moduleStage, module *projects.Module, input moduleResolutionInput) {
 	if d.stale != nil && d.stale() {
 		return
@@ -210,32 +151,8 @@ func (d *moduleDriver) advanceTo(target moduleStage, module *projects.Module, in
 	}
 }
 
-// ensureParsed registers the module's source documents with the shared
-// DiagnosticEnv and drives them through parsing and AST build (compiler
-// stages 1-2, folded into the LS's single Parsed rung — the stage ladder has
-// no separate ASTBuilt rung). Test documents are out of scope for this
-// phase. A name is only ever passed to DiagnosticEnv.RegisterFile once per
-// env, tracked via alreadyRegistered/markRegistered (multimodule.go) — a
-// later generation over an edited module skips the call entirely rather
-// than re-registering under the same name, since RegisterFile panics on a
-// same-name/different-content collision by design and nothing downstream
-// reads DiagnosticEnv's stored content back (see registeredNames' doc
-// comment in multimodule.go for why that's safe).
-//
-// The registration key is moduleFileRegistrationKey(module, doc.Name()), not
-// Document.Name() alone (a bare filename). A bare filename collides across
-// modules with same-basename files (e.g. two named modules each with a
-// "types.bal") — a real risk once this driver spans more than one module.
-// moduleFileRegistrationKey rebuilds the same globally-unique composition
-// documentContext.registrationKey() uses internally (source root + module
-// path segment + name), from public API only: this package cannot see
-// documentContext or its diagKeyPrefix. projects.Project.DocumentPath was
-// considered instead (it is public) but rejected — it is unreliable for a
-// SingleFileProject, whose DocumentPath returns the document's bare name
-// rather than a source-root-joined path (projects/single_file_project.go's
-// documentPath field is set to just the file's base name at load time), so
-// it cannot be used as a collision-free, URI-comparable key uniformly across
-// project kinds.
+// ensureParsed registers untracked source names and builds compilation units,
+// capturing each document's parser input. Test documents are excluded.
 func (d *moduleDriver) ensureParsed(module *projects.Module) {
 	if d.stage >= stageParsed {
 		return
@@ -320,16 +237,8 @@ func (d *moduleDriver) ensureSymbolResolved(module *projects.Module, input modul
 	d.stage = stageSymbolResolved
 }
 
-// ensureTopLevelTypeResolved resolves the types of the module's top-level
-// (public) nodes (compiler stage 4). Requires stageSymbolResolved.
-//
-// Stages 3-5 run even if an earlier stage added errors, as long as symbol
-// resolution left no symbol unresolved (typeResolvable): the LS resolves as
-// much of an erroneous module as it can so features keep working. The
-// *Usable flags only record whether a stage's own result is error-free, which
-// decides whether the module's symbols are published to dependents
-// (packageDriver). Semantic analysis onward keep the
-// strict gate: they never run on a module with any diagnostic.
+// ensureTopLevelTypeResolved resolves top-level types when typeResolvable is
+// true, even with prior diagnostics. Usability records only newly added errors.
 func (d *moduleDriver) ensureTopLevelTypeResolved(module *projects.Module, input moduleResolutionInput) {
 	if d.stage >= stageTopLevelTypeResolved {
 		return
@@ -344,9 +253,7 @@ func (d *moduleDriver) ensureTopLevelTypeResolved(module *projects.Module, input
 	d.stage = stageTopLevelTypeResolved
 }
 
-// hasNewErrorsSince reports whether a stage added an error or fatal diagnostic
-// after diagnosticCount, so diagnostics from earlier stages do not make a
-// later stage's result unusable.
+// hasNewErrorsSince checks for error or fatal diagnostics after diagnosticCount.
 func (d *moduleDriver) hasNewErrorsSince(diagnosticCount int) bool {
 	for _, diagnostic := range d.ctx.Diagnostics()[diagnosticCount:] {
 		switch diagnostic.DiagnosticInfo().Severity() {
@@ -410,10 +317,8 @@ func (d *moduleDriver) ensureCFGBuilt(module *projects.Module, input moduleResol
 	d.stage = stageCFGBuilt
 }
 
-// ensureCFGAnalyzed runs reachability and explicit-return analysis over the
-// control-flow graph (compiler stage 8). Requires stageCFGBuilt. No
-// desugar/BIR stage exists in this ladder — the LS stops here, matching
-// ls-ref.
+// ensureCFGAnalyzed runs reachability and explicit-return analysis (compiler
+// stage 8), the final LS stage. Requires stageCFGBuilt.
 func (d *moduleDriver) ensureCFGAnalyzed(module *projects.Module, input moduleResolutionInput) {
 	if d.stage >= stageCFGAnalyzed {
 		return
@@ -430,9 +335,7 @@ func (d *moduleDriver) ensureCFGAnalyzed(module *projects.Module, input moduleRe
 	d.stage = stageCFGAnalyzed
 }
 
-// newPackageID builds a model.PackageID from the module descriptor, mirroring
-// projects.createModelPackageID (unexported, package-internal there) using
-// only projects' public ModuleDescriptor accessors.
+// newPackageID interns the module descriptor's identity in the shared environment.
 func (d *moduleDriver) newPackageID(desc projects.ModuleDescriptor) *model.PackageID {
 	orgName := model.Name(desc.Org().Value())
 	parts := strings.Split(desc.Name().String(), ".")
@@ -447,10 +350,8 @@ func (d *moduleDriver) newPackageID(desc projects.ModuleDescriptor) *model.Packa
 	return d.ctx.NewPackageID(orgName, nameComps, version)
 }
 
-// moduleFileRegistrationKey mirrors projects' buildDiagKeyPrefix within a
-// compiler environment. Workspace names are relative; external packages keep
-// their org/name/version::docName namespace. SourcePaths translates only
-// workspace names to editor identities.
+// moduleFileRegistrationKey prefixes workspace document names with the loaded
+// source root and named-module path. BALA names use org/module/version::docName.
 func moduleFileRegistrationKey(module *projects.Module, docName string) string {
 	desc := module.Descriptor()
 	project := module.Project()

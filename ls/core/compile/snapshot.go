@@ -23,18 +23,14 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
-// CompilationKey is the supersession group. SourceRoot is the ADR-053
-// core-internal key; Generation is the per-source-root monotonic counter.
+// CompilationKey identifies a project root and its generation.
 type CompilationKey struct {
 	SourceRoot string
 	Generation uint64
 }
 
-// StableSnapshot is the frozen, fully-materialised result of the last
-// successful accepted cycle for a (sourceRoot, generation). Synchronous, never
-// cancelled. Its Package and diagnostics live on the persistent per-source-root
-// CompilerEnvironment, so its symbols and file indices stay valid for the
-// snapshot's life (until the source root is evicted).
+// StableSnapshot holds a completed cycle's project, package, and extracted
+// diagnostics. Acceptance does not imply the source is error-free.
 type StableSnapshot struct {
 	key               CompilationKey
 	project           projects.Project
@@ -51,7 +47,7 @@ func (s StableSnapshot) Key() CompilationKey { return s.key }
 // Project returns the published project.
 func (s StableSnapshot) Project() projects.Project { return s.project }
 
-// Package returns the modifier-chain package whose compile fired.
+// Package returns the package captured for the cycle.
 func (s StableSnapshot) Package() *projects.Package { return s.pkg }
 
 // Diagnostics returns all diagnostics across files (flattened), for
@@ -64,7 +60,7 @@ func (s StableSnapshot) Diagnostics() []CompilerDiagnostic {
 	return all
 }
 
-// InProgressSnapshot is the current generation's pending/running compilation.
+// InProgressSnapshot identifies a cycle currently executing in runCycle.
 type InProgressSnapshot struct {
 	key    CompilationKey
 	done   <-chan struct{}
@@ -77,27 +73,23 @@ func (s InProgressSnapshot) Key() CompilationKey { return s.key }
 // Done returns a channel closed when the cycle finishes.
 func (s InProgressSnapshot) Done() <-chan struct{} { return s.done }
 
-// SnapshotStore is the bounded dual-snapshot repository (ADR-058). Stable
-// snapshots are retained by count (latest per source root, plus a global LRU
-// bound); one in-progress slot per source root. The stale-publication gate
-// runs in publishStable: a snapshot whose generation is no longer current is
-// discarded (CE-E3) and never stored.
+// SnapshotStore retains the latest stable snapshot and one in-progress slot
+// per root. Stable roots are count-bounded in insertion order. publishStable
+// rejects snapshots that fail its current-generation check.
 type SnapshotStore struct {
 	mu         sync.Mutex
 	stable     map[string]StableSnapshot
 	inProgress map[string]InProgressSnapshot
-	order      []string // LRU order of stable roots (front = oldest)
+	order      []string // insertion order of stable roots (front = oldest)
 	maxStable  int
 	genFn      func(string) (uint64, bool)
 
 	changedMu sync.Mutex
-	changed   chan struct{} // closed and replaced on every mutation (notifyChange)
+	changed   chan struct{} // closed on notification; recreated on demand
 }
 
-// notifyChange wakes every store waiter: each mutation closes the current
-// channel and lazily mints a fresh one on next demand. Sealed-generation
-// readers (SealedModuleFor) use this to observe a cycle's setInProgress/
-// storeStable/clearInProgress transitions without polling.
+// notifyChange closes the current notification channel; changeCh recreates it
+// on demand.
 func (s *SnapshotStore) notifyChange() {
 	s.changedMu.Lock()
 	if s.changed != nil {
@@ -180,12 +172,10 @@ func (s *SnapshotStore) clearInProgress(root string) {
 	s.notifyChange()
 }
 
-// publishStable runs on the compile goroutine: (1) stale gate, (2) store the
-// snapshot synchronously, (3) publish CE-E1 (CRITICAL), CE-E5a (BEST_EFFORT),
-// and — if resolution was clean — CE-E5b (BEST_EFFORT). A stale snapshot
-// (its generation no longer current) is discarded with CE-E3 (COALESCEABLE)
-// and not stored. The store-write precedes all Publish calls so any CE-E5a/E5b
-// handler reads a populated store.
+// publishStable checks the live generation, stores accepted snapshots, then
+// publishes success and diagnostics-ready events. Resolution errors suppress
+// CompilationDiagnosticsReady; stale snapshots emit CompilationCancelled.
+// With a nil bus, nothing is stored or published.
 func (s *SnapshotStore) publishStable(snap StableSnapshot, bus *event.Bus) {
 	if bus == nil {
 		return
@@ -203,8 +193,8 @@ func (s *SnapshotStore) publishStable(snap StableSnapshot, bus *event.Bus) {
 	}
 }
 
-// storeStable records the snapshot, evicting an LRU stable root when the bound
-// is exceeded (never evicting the just-stored root).
+// storeStable records the snapshot, evicting the earliest inserted root when
+// a new root exceeds the bound. Updating a root does not change its position.
 func (s *SnapshotStore) storeStable(snap StableSnapshot) {
 	s.mu.Lock()
 	root := snap.key.SourceRoot

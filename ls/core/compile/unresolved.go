@@ -24,17 +24,8 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
-// The compiler's type resolution assumes symbol resolution resolved every
-// symbol, and panics on an empty one inside a goroutine the LS cannot
-// recover. The LS still wants to type-resolve erroneous modules, so after
-// symbol resolution it binds every unresolved variable reference (a
-// half-typed name, or the parser's placeholder for a missing expression) to a
-// stand-in symbol of type never, and keeps the module out of type resolution
-// only if some other kind of symbol is still unresolved.
-
-// bindUnresolvedReferences binds every unresolved variable reference in pkg
-// to one fresh stand-in symbol of type never. never is a subtype of every
-// type, so the stand-in adds as few new type errors as possible.
+// bindUnresolvedReferences binds unresolved variable references in pkg to a
+// shared, lazily created stand-in symbol of type never.
 func bindUnresolvedReferences(ctx *context.CompilerContext, pkgID model.PackageID, pkg *ast.BLangPackage) {
 	binder := &unresolvedReferenceBinder{bind: func() model.SymbolRef {
 		return newStandInSymbol(ctx, pkgID)
@@ -76,8 +67,8 @@ func (b *unresolvedReferenceBinder) standInSymbol() model.SymbolRef {
 	return b.standIn
 }
 
-// hasUnresolvedSymbols reports whether any node of pkg still has an empty
-// symbol, i.e. one bindUnresolvedReferences could not bind.
+// hasUnresolvedSymbols checks for unresolved symbol-bearing nodes outside
+// bad subtrees.
 func hasUnresolvedSymbols(pkg *ast.BLangPackage) bool {
 	finder := &unresolvedSymbolFinder{}
 	ast.Walk(finder, pkg)
@@ -104,10 +95,8 @@ func (f *unresolvedSymbolFinder) Visit(node ast.BLangNode) ast.Visitor {
 
 func (f *unresolvedSymbolFinder) VisitTypeData(*ast.TypeData) ast.Visitor { return f }
 
-// symbolUnresolved reports whether node carries a symbol that symbol
-// resolution left empty. An invocation's Symbol() panics before type
-// resolution when its RawSymbol is still a deferred method symbol (resolved
-// by type resolution itself), so invocations are checked via RawSymbol.
+// symbolUnresolved checks symbol-bearing nodes, allowing deferred invocation
+// symbols that type resolution has not yet resolved.
 func symbolUnresolved(node ast.BLangNode) bool {
 	if invocation, ok := node.(*ast.BLangInvocation); ok {
 		if invocation.RawSymbol == nil {

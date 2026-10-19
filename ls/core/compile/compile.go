@@ -14,20 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package compile provides CompilationService, the core compilation engine.
-// Ticket 09 implements the resolution-first, bounded, single-flight-per-root
-// dual-snapshot compiler engine: Apply publishes a package (modifier chain on
-// a persistent per-source-root CompilerEnvironment) and ProjectUpdated (WM-E4);
-// the engine's CompilationPipeline subscriber (CRITICAL) enqueues a compile
-// cycle for (root, generation) on a bounded worker pool. A cycle runs the
-// modifier-chain package's PackageCompilation (panic-recovered → CE-E2), then
-// SnapshotStore.publishStable runs the stale-publication gate, stores the
-// stable snapshot, and publishes CE-E1 / CE-E5a / CE-E5b. The server consumes
-// CE-E5a/E5b out-of-band to publish publishDiagnostics.
-//
-// The synchronous Compile(ctx, CompileRequest) is retained as the fast path for
-// semtic-query consumers (10/11): it reads SnapshotStore.Stable first (cache
-// hit) and falls back to compiling inline.
+// Package compile provides staged compilation with a bounded worker pool,
+// one running cycle and one latest-wins pending cycle per project root.
+// Accepted generations supply stable diagnostics and sealed semantic views.
 package compile
 
 import (
@@ -76,10 +65,7 @@ type CompilerDiagnostic struct {
 	Message   string
 }
 
-// projectReader is the read-only view of the workspace the engine uses
-// (CurrentProject/Generation/OpenDocumentsUnder). *workspace.ProjectService
-// satisfies it; the concrete direct reference is retained for Compile's
-// inline fallback.
+// projectReader is the engine's read-only workspace view.
 type projectReader interface {
 	CurrentProject(root string) (projects.Project, uint64, bool)
 	Generation(root string) (uint64, bool)
@@ -94,15 +80,9 @@ type cycleResult struct {
 	descriptor        string
 }
 
-// compileCycle carries a compile's per-cycle inputs beyond the package
-// itself: openText resolves a document's live open-buffer content (design
-// item 2, replacing the dropped ADR-042 modifier chain); priorState is the
-// previous committed generation's carry-forward state (design item 1, nil for
-// a run that never participates in carry-forward); stale reports whether a
-// newer generation has already superseded this one (design item 5); commit
-// persists this generation's per-module state as the next generation's
-// carry-forward state (nil for a run that must never commit — see
-// gen_state.go's doc comment on why only the background cycle path does).
+// compileCycle supplies live text, prior module state, a supersession check,
+// and a callback to commit the next generation's module state. Nil callbacks
+// disable their respective operations.
 type compileCycle struct {
 	openText   textProvider
 	priorState *packageGenState
@@ -110,10 +90,8 @@ type compileCycle struct {
 	commit     func(map[projects.ModuleID]moduleGenSnapshot)
 }
 
-// compileFunc runs a package's compile and extracts its diagnostics. It may
-// panic (the compiler re-panics on Phase-2 failures); the engine recovers and
-// publishes CE-E2. The default is realCompilePackage; an internal seam allows
-// tests to inject a panicking compile.
+// compileFunc compiles a package and extracts diagnostics. runCycle recovers
+// panics and publishes CompilationFailed.
 type compileFunc func(pkg *projects.Package, cyc compileCycle) cycleResult
 
 // Option configures the CompilationService at construction.
@@ -128,7 +106,7 @@ func WithMaxWorkers(n int) Option {
 	}
 }
 
-// WithMaxStableSnapshots overrides the stable-snapshot count bound (ADR-058).
+// WithMaxStableSnapshots overrides the stable-snapshot count bound.
 func WithMaxStableSnapshots(n int) Option {
 	return func(s *CompilationService) {
 		if n > 0 {
@@ -137,19 +115,19 @@ func WithMaxStableSnapshots(n int) Option {
 	}
 }
 
-// WithDebounce overrides the per-source-root debounce. 0 disables debounce
-// (each change compiles immediately, deterministically — the corpus setting).
+// WithDebounce overrides the per-source-root debounce. Zero disables the timer;
+// changes are enqueued immediately.
 func WithDebounce(d time.Duration) Option {
 	return func(s *CompilationService) {
 		s.debounce = d
 	}
 }
 
-// WithQueueDepth overrides the pending-queue depth. The model is depth-1
-// latest-wins; deeper values are stored but the engine keeps one pending slot.
+// WithQueueDepth is reserved and has no effect. Each root has one latest-wins
+// pending slot.
 func WithQueueDepth(n int) Option {
 	return func(s *CompilationService) {
-		_ = n // depth-1 latest-wins is the Phase-C bound; reserved.
+		_ = n
 	}
 }
 
@@ -183,9 +161,8 @@ type CompilationService struct {
 	genStatesMu sync.Mutex
 	genStates   map[string]*packageGenState
 
-	// failedGens records, per source root, the generation whose cycle panicked
-	// (CE-E2) so SealedModuleFor's wait can short-circuit instead of reschedul-
-	// ing a deterministically re-panicking cycle. Guarded by cycleMu.
+	// failedGens holds failed-generation markers checked by sealed reads;
+	// guarded by cycleMu.
 	failedGens map[string]uint64
 
 	shutdownOnce sync.Once
@@ -248,16 +225,9 @@ func defaultMaxWorkers() int {
 	return n
 }
 
-// handleLifecycle maintains the known-roots set and evicts snapshots when a
-// root is evicted (inline, 08 behavior retained). ProjectRegistered also
-// evicts any carry-forward genState for the root (design item 1): it fires
-// both for a brand-new root and for workspace's "document not in current
-// package" fallback reload, which mints a fresh Package/CompilerEnvironment —
-// any old genState's ModuleIDs and moduleDrivers refer to the discarded
-// generation, so they must not be carried forward into the new one. Losing a
-// still-valid genState this way is safe, just a missed optimization for one
-// generation: the next compile's dirty-set computation simply misses every
-// lookup and resets everything, identical to a first-ever compile.
+// handleLifecycle tracks known roots and clears module state and failure
+// markers on registration, eviction, or kind transition. Evictions and
+// transitions also remove the old root's snapshots.
 func (s *CompilationService) handleLifecycle(e event.Event) {
 	s.knownRootsMu.Lock()
 	defer s.knownRootsMu.Unlock()
@@ -291,10 +261,7 @@ func (s *CompilationService) isKnown(root string) bool {
 	return ok
 }
 
-// enqueueCycle is the CRITICAL-tier subscriber for ProjectUpdated. It captures
-// the published package and enqueues a compile cycle for (root, generation),
-// respecting the depth-1 latest-wins single-flight queue. With a non-zero
-// debounce it coalesces rapid changes via a per-root timer.
+// enqueueCycle handles ProjectUpdated, debouncing per root when configured.
 func (s *CompilationService) enqueueCycle(e event.Event) {
 	root := e.SourceRoot()
 	gen := e.Generation()
@@ -372,12 +339,8 @@ func (s *CompilationService) submit(req *cycleRequest) {
 	}()
 }
 
-// newCompileCycle builds the background cycle's compileCycle: the current
-// carry-forward state for req.root, a superseded check comparing the live
-// workspace generation against req.gen (design item 5), and a commit
-// callback that persists the run's per-module state as the next generation's
-// carry-forward state — only this path (the background runCycle) ever reads
-// or writes genState (see gen_state.go's doc comment).
+// newCompileCycle captures prior module state and generation callbacks for
+// a background cycle.
 func (s *CompilationService) newCompileCycle(req *cycleRequest) compileCycle {
 	root := req.root
 	gen := req.gen
@@ -386,12 +349,7 @@ func (s *CompilationService) newCompileCycle(req *cycleRequest) compileCycle {
 		priorState: s.genStateFor(root),
 		stale: func() bool {
 			current, ok := s.reader.Generation(root)
-			// !ok (root unknown — e.g. evicted mid-cycle) counts as
-			// superseded too, matching runCycle's own initial check: a root
-			// with no live generation cannot possibly still be the current
-			// one, and committing carry-forward state for a dead root would
-			// let ProjectEvicted's evictGenState be silently undone by a
-			// straggling in-flight cycle finishing after it.
+
 			return !ok || current != gen
 		},
 		commit: func(modules map[projects.ModuleID]moduleGenSnapshot) {
@@ -400,9 +358,8 @@ func (s *CompilationService) newCompileCycle(req *cycleRequest) compileCycle {
 	}
 }
 
-// runCycle runs one compile cycle: pre-compile stale check, compile
-// (panic-recovered → CE-E2), then SnapshotStore.publishStable (gate + store +
-// CE-E1/E5a/E5b).
+// runCycle rejects obsolete requests, recovers compiler panics, and submits
+// completed diagnostics to the stable-publication gate.
 func (s *CompilationService) runCycle(req *cycleRequest) {
 	if s.isClosed() {
 		return
@@ -464,24 +421,20 @@ func (s *CompilationService) finishCycle(root string) {
 	}
 }
 
-// Flush blocks until every in-flight compile has finished and every CE event
-// has been delivered and drained by the tiered bus. It is the deterministic
-// sync point the corpus driver uses instead of timing sleeps. Production code
-// does not call it. With WithDebounce(0) (the corpus setting) it needs only
-// pool-idle + bus-drain.
+// Flush drains incoming events, waits for queued and running compiles, then
+// drains outgoing events. It does not wait for armed debounce timers.
 func (s *CompilationService) Flush() {
-	// 1. Drain incoming lifecycle events (ProjectUpdated) so the pipeline
-	//    drainer enqueues compile cycles on the pool.
+
 	if s.bus != nil {
 		s.bus.Flush()
 	}
-	// 2. Wait for every in-flight compile to finish.
+
 	s.cycleMu.Lock()
 	for !s.allIdleLocked() {
 		s.idleCond.Wait()
 	}
 	s.cycleMu.Unlock()
-	// 3. Drain the outgoing CE events the compiles published.
+
 	if s.bus != nil {
 		s.bus.Flush()
 	}
@@ -501,17 +454,15 @@ func (s *CompilationService) allIdleLocked() bool {
 	return true
 }
 
-// Shutdown stops accepting new cycles, stops debounce timers, bounded-waits for
-// in-flight compiles to finish (their results are gated out by the closed
-// flag), flushes the bus, and clears the snapshot store. It is idempotent.
+// Shutdown stops accepting cycles and stops debounce timers, waits for the
+// worker pool to drain, flushes the bus, and clears snapshots. It is idempotent.
 func (s *CompilationService) Shutdown() {
 	s.shutdownOnce.Do(func() {
 		s.cycleMu.Lock()
 		s.closed = true
 		s.cycleMu.Unlock()
 		s.stopDebounceTimers()
-		// Bounded-wait for in-flight compiles to finish. They observe s.closed
-		// and skip publication; the worker pool drains.
+
 		s.cycleMu.Lock()
 		for !s.allIdleLocked() {
 			s.idleCond.Wait()
@@ -524,15 +475,9 @@ func (s *CompilationService) Shutdown() {
 	})
 }
 
-// Cancel is the $/cancelRequest mapping (design branch 3). Go cannot interrupt
-// a running compile, so cancellation is boundary-only: it bumps the workspace
-// generation of every root with an in-flight or depth-1 pending cycle, so the
-// running compile finishes but its result is gated out at the stale-
-// publication gate (CE-E3) and the pending cycle is dropped on dequeue. It
-// does not stop debounce timers or close the bus. Per-root identification of
-// the cancelled request is deferred to 10/11 — 09 has no cancellable
-// per-document request to map a $/cancelRequest id to a source root — so
-// Cancel applies to every active root.
+// Cancel supersedes every root with a running or pending cycle. Cycles check
+// supersession at compilation boundaries and before stable publication.
+// Debounce timers and the event bus are unchanged.
 func (s *CompilationService) Cancel() {
 	if s.isClosed() {
 		return
@@ -584,11 +529,9 @@ func (s *CompilationService) DiagnosticsFor(root string) (diags map[workspace.Do
 	return out, snap.key.Generation, true
 }
 
-// Compile is the synchronous fast path for semantic-query consumers (10/11).
-// It reads SnapshotStore.Stable first (cache hit — the perf win over 08's
-// recompile-per-change) and falls back to compiling the published package
-// inline. No diagnostic publication happens here under 09; that moves to the
-// server CE subscriber.
+// Compile returns the latest stored diagnostics for the document, falling
+// back to an inline compile if no stable snapshot exists. It does not check
+// the snapshot's generation, publish diagnostics, or observe ctx cancellation.
 func (s *CompilationService) Compile(ctx context.Context, req CompileRequest) (CompileResult, error) {
 	_ = ctx
 	project, err := s.projects.Project(req.URI)
@@ -617,20 +560,9 @@ func (s *CompilationService) Compile(ctx context.Context, req CompileRequest) (C
 	return CompileResult{Diagnostics: diags}, nil
 }
 
-// extractForURI extracts the diagnostics for a single file path (the 08
-// inline path, retained as Compile's fallback). It drives only the target
-// module and its same-package dependencies (packageDriver.advanceModule)
-// instead of the whole package, so a single-file diagnostic read does not
-// pay for every other module's Phase 2 — ticket 37's per-module granularity.
-// This is Compile()'s only caller, and it can run concurrently with
-// CompilationService's background runCycle (realCompilePackage) over the same
-// package the first time a root is compiled; that's safe without a lock here
-// because CompilerEnvironment guards its own shared state field-by-field —
-// see multimodule.go's Concurrency doc comment. It never participates in
-// carry-forward (passes nil priorState/stale to newPackageDriver — see
-// gen_state.go's doc comment), so it always drives a fresh, uncommitted
-// compile of just the target module's prefix, exactly as it did before
-// ticket 28.
+// extractForURI compiles the topological prefix through the target module's
+// Phase 1, then only that module's Phase 2. It returns diagnostics for fileName
+// without reading or committing carried-forward state.
 func extractForURI(project projects.Project, pkg *projects.Package, fileName string, openText textProvider) []CompilerDiagnostic {
 	docID, ok := project.DocumentID(fileName)
 	if !ok {
@@ -671,36 +603,9 @@ func extractForURI(project projects.Project, pkg *projects.Package, fileName str
 	return diags
 }
 
-// realCompilePackage runs the package's compile and extracts all diagnostics
-// grouped by file, plus the resolution subset and the resolution-error flag
-// (branch 2: resolution vs compilation classification). It drives every
-// module of pkg through the LS staged driver (ticket 37, packageDriver)
-// instead of pkg.Compilation(). pkg.Resolution() is independent of
-// pkg.Compilation() and is unchanged code-wise: the resolution subset/flag
-// still come from it directly. But this call site's *behavior* does change
-// under ticket 28, not just "stay latent": pkg.Resolution() memoizes once per
-// Package instance (packageContext.resolutionOnce). Pre-ticket-28, the
-// modifier chain minted a fresh Package (and thus a fresh packageContext) on
-// every edit, so an import-statement edit genuinely got a fresh resolution
-// pass every time. Ticket 28 keeps the same Package instance across every
-// generation for a given source root (required for the carry-forward/
-// fingerprint design), so pkg.Resolution() now computes once, ever, per
-// source root, and an edit that changes only import statements no longer
-// re-runs resolution diagnostics at all. This is a real, ticket-28-introduced
-// regression for import-level diagnostics, not fixable from ls/ alone (it
-// needs a projects-side resolution-invalidation hook) — flagged as an
-// escalation candidate in this ticket's implementation report, not silently
-// worked around. It can run concurrently with extractForURI over the same
-// CompilerEnvironment without a lock here — see multimodule.go's Concurrency
-// doc comment.
-//
-// cyc.priorState/stale/commit (design items 1/4/5) drive this generation's
-// reset scope and persist its result as the next generation's carry-forward
-// state; cyc.openText (design item 2) supplies live document content in
-// place of the dropped modifier chain. A superseded run (cyc.stale fires
-// mid-advanceAll) returns an empty cycleResult without committing — the
-// caller's existing stale-publication gate (SnapshotStore.publishStable)
-// discards it regardless, so this is purely a wasted-work reduction.
+// realCompilePackage drives all modules, commits module state unless aborted,
+// and extracts file diagnostics plus the package-resolution diagnostics.
+// An aborted run returns an empty result without committing.
 func realCompilePackage(pkg *projects.Package, cyc compileCycle) cycleResult {
 	descriptor := pkg.Descriptor().Name().Value()
 	compEnv := pkg.Project().Environment().CompilerEnvironment()
@@ -731,13 +636,8 @@ type docInfo struct {
 	lineStarts []int
 }
 
-// buildDocIndex maps every document in pkg to its docInfo, keyed by
-// moduleFileRegistrationKey(module, doc.Name()) — the same key
-// moduleDriver.ensureParsed registers documents under in the shared
-// DiagnosticEnv, so a diagnostic's Location resolves via env.FileName back to
-// its source text without calling Document.SyntaxTree() (which would parse
-// through the module's own private, module-owned CompilerContext under a
-// different key scheme and a different lifecycle than this driver's).
+// buildDocIndex indexes live document text and line starts by compiler
+// registration name.
 func buildDocIndex(pkg *projects.Package, openText textProvider) map[string]docInfo {
 	idx := make(map[string]docInfo)
 	for _, moduleID := range pkg.ModuleIDs() {
@@ -758,14 +658,8 @@ func buildDocIndex(pkg *projects.Package, openText textProvider) map[string]docI
 	return idx
 }
 
-// extractByFile groups compileDiags and resDiags by the env.FileName key,
-// resolving each key against pkg's own documents (buildDocIndex), reading
-// each document's live open-buffer text (openText, design item 2) in place of
-// the dropped modifier chain's baked-in content. Documents are resolved
-// within the captured immutable package so the extraction never reads the
-// project's live currentPackage (which a concurrent Apply's index-entry swap
-// may replace). Diagnostics whose file is not a document in the package
-// (dependency/manifest diags) are skipped.
+// extractByFile groups diagnostics by compiler registration name using pkg's
+// documents and live text. Diagnostics outside those documents are skipped.
 func extractByFile(pkg *projects.Package, compileDiags, resDiags []diagnostics.Diagnostic, env *diagnostics.DiagnosticEnv, openText textProvider) (byFile, resByFile map[string][]CompilerDiagnostic) {
 	byFile = make(map[string][]CompilerDiagnostic)
 	resByFile = make(map[string][]CompilerDiagnostic)

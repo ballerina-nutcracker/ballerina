@@ -43,30 +43,23 @@ type DocumentURI struct {
 	path   string
 }
 
-// NewFileURI parses raw as a file: URI and returns a DocumentURI. Returns an
-// error if raw is not a valid file: URI. This replaces the former isFileURI
-// bool check — callers handle the error instead of a false return.
+// NewFileURI parses and canonicalizes a local, absolute file: URI. Unsupported
+// authorities, queries, fragments, and path forms return an error.
 func NewFileURI(raw string) (DocumentURI, error) {
 	return newURI(raw, schemeFile)
 }
 
-// NewExprURI parses raw as an expr: URI and returns a DocumentURI.
-// Phase-A scope: the constructor validates scheme; expr: is not admitted
-// end-to-end until ticket 08.
+// NewExprURI parses raw as an expr: URI and validates its scheme.
 func NewExprURI(raw string) (DocumentURI, error) {
 	return newURI(raw, schemeExpr)
 }
 
-// NewAIURI parses raw as an ai: URI and returns a DocumentURI.
-// Phase-A scope: the constructor validates scheme; ai: is not admitted
-// end-to-end until ticket 08.
+// NewAIURI parses raw as an ai: URI and validates its scheme.
 func NewAIURI(raw string) (DocumentURI, error) {
 	return newURI(raw, schemeAI)
 }
 
-// NewBalaURI parses raw as a bala: URI and returns a DocumentURI.
-// Phase-A scope: the constructor validates scheme; bala: is not admitted
-// end-to-end until ticket 08.
+// NewBalaURI parses raw as a bala: URI and validates its scheme.
 func NewBalaURI(raw string) (DocumentURI, error) {
 	return newURI(raw, schemeBala)
 }
@@ -113,8 +106,8 @@ func (u DocumentURI) IsFile() bool {
 	return u.scheme == schemeFile
 }
 
-// Path returns the file system path for a file: URI. It panics for non-file
-// schemes per ADR-034 — non-file schemes do not have a file system path.
+// Path returns the native filesystem path for a file: URI and panics for
+// non-file schemes.
 func (u DocumentURI) Path() string {
 	if u.scheme != schemeFile {
 		panic(fmt.Sprintf("uri: Path() called on non-file scheme %q", u.scheme))
@@ -122,12 +115,13 @@ func (u DocumentURI) Path() string {
 	return u.path
 }
 
-// Identity returns the canonical URI identity (only drive-letter case is folded).
+// Identity returns the URI identity. File URIs have canonical escaping and
+// uppercase drive letters; non-file URIs retain their input spelling.
 func (u DocumentURI) Identity() string {
 	return u.raw
 }
 
-// String returns the canonical URI string.
+// String returns the same URI string as Identity.
 func (u DocumentURI) String() string {
 	return u.raw
 }

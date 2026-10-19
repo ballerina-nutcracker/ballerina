@@ -166,12 +166,11 @@ func spacesAfterAdvance(t *testing.T, source string) int {
 	return symbolSpaceCount(pkg)
 }
 
-// newDriverOnlyProjectService has no CompilationService, so no background
-// cycle races the test's own packageDriver on the shared environment.
 func intAndStringSource(importedLib string) string {
 	return "import ballerina/" + importedLib + ";\n\npublic function main() {\n    int|error n = int:fromString(\"1\");\n    int m = string:length(\"a\");\n}\n"
 }
 
+// newDriverOnlyProjectService creates a workspace without a background compiler.
 func newDriverOnlyProjectService(t *testing.T) *workspace.ProjectService {
 	t.Helper()
 	bus := event.New()

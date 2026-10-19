@@ -14,13 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// reset_scope.go computes design item 1's reset scope: the set of modules a
-// generation must rebuild from scratch, mirroring ls-ref's
-// modulesFromTopoOrder (server.go:592-601, the fast topo-tail path) and
-// dependentClosure (server.go:603-635, the precise reverse-BFS fallback used
-// when topo order can't be trusted). Everything outside the reset scope
-// carries forward the prior generation's moduleDriver by reference — see
-// packageDriver.adoptCarriedForward in multimodule.go.
 package compile
 
 import (
@@ -31,10 +24,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
-// moduleTextHash returns a deterministic hash of module's own document set
-// (name + live content per document, sorted by name), used to seed the dirty
-// set a reset scope is computed from: a module whose hash differs from its
-// last-committed generation's hash has genuinely changed content.
+// moduleTextHash hashes source-document names and live text, sorted by name.
 func moduleTextHash(module *projects.Module, openText textProvider) string {
 	type namedText struct {
 		name string
@@ -61,13 +51,9 @@ func moduleTextHash(module *projects.Module, openText textProvider) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-// topoTailScope returns every module from the earliest dirty module's
-// topological position onward (ls-ref's modulesFromTopoOrder fast path).
-// This deliberately over-invalidates: a module later in topo order with no
-// real dependency edge to what changed is still included, the same
-// simplification ls-ref accepts rather than requiring an exact reverse
-// dependency graph up front. Returns an empty (non-nil) scope if dirty is
-// empty.
+// topoTailScope returns the suffix from the first dirty module, including
+// unrelated modules later in the supplied order. No dirty module yields an
+// empty, non-nil scope.
 func topoTailScope(modules []*projects.Module, dirty map[projects.ModuleID]bool) map[projects.ModuleID]bool {
 	firstDirty := -1
 	for i, m := range modules {
@@ -86,13 +72,7 @@ func topoTailScope(modules []*projects.Module, dirty map[projects.ModuleID]bool)
 	return scope
 }
 
-// reverseDependents builds the reverse (dependent) edges of pkg's own-module
-// dependency graph from projects.DependencyGraph's forward-only
-// DirectDependencies: for every module, every direct dependency it names
-// gains that module as one of its direct dependents. Used both by
-// dependentClosure (the BFS fallback) and by packageDriver's fingerprint
-// pruning (design item 4), which needs a fingerprint-unchanged module's
-// direct dependents specifically, not a full closure.
+// reverseDependents maps each same-package dependency to its direct dependents.
 func reverseDependents(pkg *projects.Package, depGraph *projects.DependencyGraph[projects.ModuleDescriptor]) map[projects.ModuleID][]projects.ModuleID {
 	reverse := make(map[projects.ModuleID][]projects.ModuleID)
 	for _, id := range pkg.ModuleIDs() {
@@ -103,7 +83,7 @@ func reverseDependents(pkg *projects.Package, depGraph *projects.DependencyGraph
 		for _, depDesc := range depGraph.DirectDependencies(module.Descriptor()) {
 			depModule := pkg.ModuleByName(depDesc.Name())
 			if depModule == nil {
-				continue // external dependency: not tracked by this driver
+				continue
 			}
 			depID := depModule.ModuleID()
 			reverse[depID] = append(reverse[depID], id)
@@ -112,11 +92,7 @@ func reverseDependents(pkg *projects.Package, depGraph *projects.DependencyGraph
 	return reverse
 }
 
-// dependentClosure returns dirty's transitive closure over reverse (every
-// module reachable by repeatedly following "is a direct dependent of"),
-// mirroring ls-ref's dependentModuleClosure — the precise fallback used when
-// topological order isn't available/trustworthy for the fast topoTailScope
-// path.
+// dependentClosure returns dirty modules and their transitive dependents.
 func dependentClosure(dirty map[projects.ModuleID]bool, reverse map[projects.ModuleID][]projects.ModuleID) map[projects.ModuleID]bool {
 	scope := make(map[projects.ModuleID]bool, len(dirty))
 	queue := make([]projects.ModuleID, 0, len(dirty))
@@ -138,8 +114,7 @@ func dependentClosure(dirty map[projects.ModuleID]bool, reverse map[projects.Mod
 	return scope
 }
 
-// allModuleIDs returns every module's ID as a fully-populated scope (the "no
-// carry-forward data yet, reset everything" case).
+// allModuleIDs returns a scope containing every supplied module.
 func allModuleIDs(modules []*projects.Module) map[projects.ModuleID]bool {
 	scope := make(map[projects.ModuleID]bool, len(modules))
 	for _, m := range modules {

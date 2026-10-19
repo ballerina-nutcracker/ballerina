@@ -14,18 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// document_text.go supplies documentText, ticket 28's replacement for reading
-// a document's content straight off projects.Document.TextDocument(). Ticket
-// 28 drops the ADR-042 modifier chain (Document.Modify().WithContent()
-// .Apply()), which used to be the only way an edit's new content ever reached
-// the compiler's Package graph. Without it, a document's projects.Document
-// stays frozen at whatever content it had when the package was first loaded;
-// the workspace package's open-buffer map (ls/core/workspace.ProjectService
-// .OpenText) becomes the single source of truth for a document's current
-// text once it is open. documentText checks that live buffer first, falling
-// back to the frozen TextDocument() for a document that was never opened
-// through the workspace (e.g. an unopened dependency file read straight off
-// disk at Load time).
 package compile
 
 import "github.com/ballerina-nutcracker/ballerina/projects"
