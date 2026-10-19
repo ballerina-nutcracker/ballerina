@@ -98,10 +98,16 @@ service class OnCloseWithParam {
     }
 }
 
-service class NoOnBytes {
+service class TwoParamOnError {
     *tcp:ConnectionService;
 
-    remote function onClose() {
+    remote function onBytes(readonly & byte[] data) {
+        _ = data;
+    }
+
+    remote function onError(tcp:Error e, int x) {
+        _ = e.message();
+        _ = x;
     }
 }
 
@@ -154,7 +160,7 @@ function pickConnectionService() returns tcp:ConnectionService {
             return new OnCloseWithParam();
         }
         9 => {
-            return new NoOnBytes();
+            return new TwoParamOnError();
         }
         10 => {
             return new LocalOnBytes();

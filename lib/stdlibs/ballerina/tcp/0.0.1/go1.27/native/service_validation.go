@@ -43,11 +43,6 @@ func validateConnectionService(ctx *extern.Context, types tcpTypes, connSvcObj *
 	if err := rejectUnknownRemoteMethods(connSvcObj, onBytes, onError, onClose); err != nil {
 		return err
 	}
-	if _, ok := ctx.LookupRemoteMethod(connSvcObj, onBytes); !ok {
-		if _, plain := connSvcObj.MethodLookupKey(onBytes); !plain {
-			return tcpError("Service does not contain `onBytes` function")
-		}
-	}
 	tc := ctx.TypeCtx()
 	dataTy := semtypes.Intersect(types.byteArrTy, semtypes.ValReadonly)
 	optionalErrTy := semtypes.Union(semtypes.Error, semtypes.Nil)
