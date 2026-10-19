@@ -17,6 +17,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
 | [math.vector](../../lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
 | [mime](../../lib/stdlibs/ballerina/mime/0.0.1/go1.27/README.md)               | 15 | 2 | 2 | 79% |
+| [mqtt](../../lib/stdlibs/ballerina/mqtt/0.0.1/go1.27/README.md)               | 21 | 1 | 3 | 84% |
 | [os](../../lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md)                   | 11 | 1 | 0 | 92% |
 | [protobuf](../../lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
 | [random](../../lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
@@ -25,7 +26,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **259** | **29** | **69** | **72%** |
+| **Total**                                         | **280** | **30** | **72** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -96,6 +97,14 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 - **A scalar JSON body can be read with `getJson()`.** jBallerina fails with a `ParserError` wrapping a Java `ClassCastException` when the body is a JSON scalar such as `12`; the Go-native version returns the scalar value.
 - **The byte form of a JSON body is always valid JSON.** jBallerina's `getByteArray()` on a `setJson` body writes string contents unescaped (so `"` or a newline inside a string yields invalid JSON) and panics with a `TypeCastError` when the body is a top-level JSON array; the Go-native version escapes strings the same way `getText()` does and serializes arrays.
 - **Parameter and header order is deterministic but not jBallerina's.** `MediaType.parameters` (and therefore `MediaType.toString()`) keeps the order the parameters appear in the source string; jBallerina's order follows Java `Hashtable` hashing. Headers of a decoded multipart part are added in sorted name order, since Go's multipart reader does not keep their wire order.
+
+### mqtt
+
+- **Invalid QoS values and topics return an error instead of panicking.** jBallerina lets Paho's `IllegalArgumentException` escape `publish`, `subscribe`, `Caller->respond`, `Listener.'start` and client initialization (will message), so an out-of-range QoS or a malformed topic name or filter panics with `java.lang.IllegalArgumentException`; the Go-native version returns an `mqtt:Error` with Paho's validation message (or `Invalid QoS value: <n>. Allowed values are 0, 1 and 2` where Paho gives none) — reported as https://github.com/ballerina-platform/ballerina-library/issues/9328.
+- **QoS 0 publishes do not consume a message ID.** jBallerina's Paho client assigns a message ID to every publish, so a QoS 0 delivery token carries a non-zero `messageId` and later publishes and subscriptions get the next IDs; the Go-native version follows the MQTT protocol, which assigns no packet identifier to QoS 0 messages, so a QoS 0 delivery token has `messageId` 0 and subsequent IDs are one lower than on jBallerina.
+- **Errors printed by the listener have no stack frames.** jBallerina prints an error returned by `onMessage`, `onError` or `onComplete` (or a connection error with no `onError`) as `error: <message> <detail>` followed by the Ballerina call stack; the Go-native version prints only the `error: <message> <detail>` line because error values do not carry a call stack.
+- **TLS certificates are verified more strictly.** jBallerina accepts a server certificate that matches the host only through its Common Name, and a self-signed trusted certificate that has expired; the Go-native version uses Go's TLS verification, which requires the host in the certificate's Subject Alternative Name and rejects expired certificates, failing the connection with `Untranslated MqttException - RC: 0`.
+- **Certificate and key paths in errors are not made absolute.** jBallerina reports a missing certificate or key file with its absolute path; the Go-native version reports the path as it was configured.
 
 ### os
 
