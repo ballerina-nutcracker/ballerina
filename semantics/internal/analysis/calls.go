@@ -120,7 +120,7 @@ func validateStart(cx scope.Context, start *ast.BLangStartAction, expected semty
 	if !ok {
 		return scope.NoFacts, false
 	}
-	call, ok := validateActionOrExpr(cx, start.Call, callExpected)
+	call, ok := validateActionOrExpr(scope.NewStartCall(cx), start.Call, callExpected)
 	if !ok {
 		return scope.NoFacts, false
 	}

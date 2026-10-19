@@ -77,7 +77,6 @@ func lockCallRules() ruleSet {
 		invocation:     lockInvocation,
 		remoteCall:     lockRemoteCall,
 		resourceAccess: lockResourceAccess,
-		startAction:    lockStartAction,
 	}
 }
 
@@ -182,8 +181,10 @@ func ApplyResourceAccess(cx Context, call *ast.BLangClientResourceAccessAction, 
 	}
 }
 
-// ApplyStartAction runs the active rules for a start action.
+// ApplyStartAction checks that a start action is not lexically within a lock,
+// then runs the active rules for it.
 func ApplyStartAction(cx Context, start *ast.BLangStartAction, f Facts) {
+	startOutsideLock(cx, start)
 	rules := cx.rules()
 	common.Assert(func() bool { return activationConsistent(cx, rules) })
 	for i := len(rules) - 1; i >= 0; i-- {

@@ -31,7 +31,9 @@ const (
 )
 
 // Facts are properties of an expression synthesized bottom-up while it is
-// validated.
+// validated. They are synthesized only under a context that demands them
+// (NewLock, NewIsolatedExpr, NewStartCall, NewIsolatedVarInit); elsewhere
+// they carry no meaning and must not be read.
 type Facts struct{ bits uint8 }
 
 // NoFacts holds no property.
@@ -41,8 +43,12 @@ var NoFacts Facts
 var AllFacts = Facts{bits: factAll}
 
 // FactsOfType holds Isolated and IsolatedTransferred iff e's determined type
-// is a subtype of Isolated; e is an expression or an action.
+// is a subtype of Isolated, or NoFacts where no consumer demands facts; e is
+// an expression or an action.
 func FactsOfType(cx Context, e ast.BLangActionOrExpression) Facts {
+	if !cx.factsNeeded() {
+		return NoFacts
+	}
 	tyCtx := cx.TyCtx()
 	if semtypes.IsSubtype(tyCtx, e.Type(), semtypes.CreateIsolated(tyCtx)) {
 		return Facts{bits: factIsolated | factIsolatedTransferred}
@@ -56,8 +62,12 @@ func Meet(a, b Facts) Facts { return Facts{bits: a.bits & b.bits} }
 // Either holds the properties a or b holds.
 func Either(a, b Facts) Facts { return Facts{bits: a.bits | b.bits} }
 
-// CallFacts are the facts of call given the fold of its operands.
+// CallFacts are the facts of call given the fold of its operands, or NoFacts
+// where no consumer demands facts.
 func CallFacts(cx Context, call ast.Invocable, operands Facts) Facts {
+	if !cx.factsNeeded() {
+		return NoFacts
+	}
 	if inv, ok := call.(*ast.BLangInvocation); ok {
 		return invocationFacts(cx, inv, operands)
 	}
