@@ -23,7 +23,6 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
@@ -42,10 +41,9 @@ import (
 // entirely instead, to keep foreground driver behavior deterministic.
 func newProjectOnlyService(t *testing.T) *workspace.ProjectService {
 	t.Helper()
-	platform, _ := palnative.NewPlatform()
 	bus := event.New()
 	t.Cleanup(func() { bus.Close() })
-	return workspace.New(platform, bus)
+	return workspace.New(os.DirFS, bus)
 }
 
 // multimoduleFixtureDir returns the absolute path to the on-disk fixture at

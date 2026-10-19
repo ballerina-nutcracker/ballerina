@@ -89,6 +89,10 @@ jobs:
         run: |
           choco install hyperfine make -y
 
+      - name: Test language-server native paths and project discovery
+        shell: bash
+        run: go test ./ls/core/workspace ./projects -run '^(TestWindows|TestFindProjectRoot)'
+
       - name: Run all modules
         shell: bash
         run: make test

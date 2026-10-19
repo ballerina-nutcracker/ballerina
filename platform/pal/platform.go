@@ -26,7 +26,6 @@ package pal
 import (
 	"context"
 	"io"
-	"io/fs"
 	"net"
 	"net/http"
 	"time"
@@ -67,9 +66,6 @@ type (
 		ReadFile   func(path string) ([]byte, error)
 		WriteFile  func(path string, data []byte) error
 		AppendFile func(path string, data []byte) error
-		Stat       func(path string) (fs.FileInfo, error)
-		ReadDir    func(path string) ([]fs.DirEntry, error)
-		MkdirAll   func(path string, perm fs.FileMode) error
 		// OpenReadable opens path for streaming reads. Close releases the handle.
 		OpenReadable func(path string) (io.ReadCloser, error)
 		// OpenWritable opens path for streaming writes, truncating unless appendMode

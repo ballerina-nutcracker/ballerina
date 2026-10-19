@@ -74,6 +74,7 @@ type SealedModule struct {
 	stage               Stage
 	sources             map[projects.DocumentID]string
 	sourceIDs           map[string]projects.DocumentID
+	paths               workspace.SourcePaths
 }
 
 // PackageNode returns the sealed module's package node (nil only for a module
@@ -93,13 +94,20 @@ func (m SealedModule) Stage() Stage { return m.stage }
 
 // SourceText returns the exact parser input pinned to this module's AST.
 func (m SealedModule) SourceText(uri workspace.DocumentURI) (string, bool) {
-	id, ok := m.sourceIDs[uri.Path()]
+	name, ok := m.NameOf(uri)
+	if !ok {
+		return "", false
+	}
+	id, ok := m.sourceIDs[name]
 	if !ok {
 		return "", false
 	}
 	text, ok := m.sources[id]
 	return text, ok
 }
+
+// NameOf uses the root pinned to this sealed generation, never live discovery.
+func (m SealedModule) NameOf(uri workspace.DocumentURI) (string, bool) { return m.paths.NameOf(uri) }
 
 func (m SealedModule) ExternalModuleProjection(org, name string) (ExternalModuleProjection, bool) {
 	projection, ok := m.externalProjections[semantics.PackageIdentifier{OrgName: org, ModuleName: name}]
@@ -122,15 +130,20 @@ func (s *CompilationService) SealedModuleFor(ctx stdcontext.Context, u workspace
 	if err != nil || project == nil {
 		return SealedModule{}, false
 	}
-	root := project.SourceRoot()
-	if !s.isKnown(root) {
+	root, err := s.projects.ProjectKey(u)
+	if err != nil || !s.isKnown(root) {
 		return SealedModule{}, false
 	}
 	snap, ok := s.awaitStableGeneration(ctx, root)
 	if !ok {
 		return SealedModule{}, false
 	}
-	docID, ok := snap.project.DocumentID(u.Path())
+	paths := s.projects.Paths(snap.project)
+	name, ok := paths.NameOf(u)
+	if !ok {
+		return SealedModule{}, false
+	}
+	docID, ok := snap.project.DocumentID(name)
 	if !ok {
 		return SealedModule{}, false
 	}
@@ -161,6 +174,7 @@ func (s *CompilationService) SealedModuleFor(ctx stdcontext.Context, u workspace
 		stage:               d.stage,
 		sources:             d.sources,
 		sourceIDs:           d.sourceIDs,
+		paths:               paths,
 	}, true
 }
 

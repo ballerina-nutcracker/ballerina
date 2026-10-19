@@ -577,7 +577,9 @@ func (s *CompilationService) DiagnosticsFor(root string) (diags map[workspace.Do
 	}
 	out := make(map[workspace.DocumentURI][]CompilerDiagnostic)
 	for _, u := range s.reader.OpenDocumentsUnder(root) {
-		out[u] = snap.diagsForFile(u.Path())
+		if name, ok := s.projects.Paths(snap.project).NameOf(u); ok {
+			out[u] = snap.diagsForFile(name)
+		}
 	}
 	return out, snap.key.Generation, true
 }
@@ -590,19 +592,28 @@ func (s *CompilationService) DiagnosticsFor(root string) (diags map[workspace.Do
 func (s *CompilationService) Compile(ctx context.Context, req CompileRequest) (CompileResult, error) {
 	_ = ctx
 	project, err := s.projects.Project(req.URI)
-	if err == nil && project != nil {
-		if snap, ok := s.store.Stable(project.SourceRoot()); ok {
-			return CompileResult{Diagnostics: snap.diagsForFile(req.URI.Path())}, nil
-		}
+	if err != nil || project == nil {
+		return CompileResult{}, nil
 	}
-	if project == nil || !s.isKnown(project.SourceRoot()) {
+	root, err := s.projects.ProjectKey(req.URI)
+	if err != nil {
+		return CompileResult{}, nil
+	}
+	name, ok := s.projects.Paths(project).NameOf(req.URI)
+	if !ok {
+		return CompileResult{}, nil
+	}
+	if snap, ok := s.store.Stable(root); ok {
+		return CompileResult{Diagnostics: snap.diagsForFile(name)}, nil
+	}
+	if !s.isKnown(root) {
 		return CompileResult{}, nil
 	}
 	pkg := project.CurrentPackage()
 	if pkg == nil {
 		return CompileResult{}, nil
 	}
-	diags := extractForURI(project, pkg, req.URI.Path(), s.openText)
+	diags := extractForURI(project, pkg, name, s.openText)
 	return CompileResult{Diagnostics: diags}, nil
 }
 

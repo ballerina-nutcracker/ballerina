@@ -17,13 +17,13 @@ package compile
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
@@ -163,14 +163,12 @@ func TestEditWithoutImportChangeKeepsPackageAndCarriesForward(t *testing.T) {
 
 func openExternalDependencyServices(t *testing.T, source string) (*workspace.ProjectService, *CompilationService, workspace.DocumentURI) {
 	t.Helper()
-	platform, cleanup := palnative.NewPlatform()
-	t.Cleanup(cleanup)
 	root := t.TempDir()
-	writeExternalDependencyFixture(t, platform, root)
+	writeExternalDependencyFixture(t, root)
 
 	bus := event.New()
-	repository := workspace.NewFileSystemRepository(platform, filepath.Join(root, "repository"))
-	ps := workspace.New(platform, bus, workspace.WithRepositories([]projects.Repository{repository}))
+	repository := projects.NewFileSystemRepository(os.DirFS(filepath.Join(root, "repository")), ".")
+	ps := workspace.New(os.DirFS, bus, workspace.WithRepositories([]projects.Repository{repository}))
 	svc := New(ps, bus, WithDebounce(0))
 	t.Cleanup(func() { svc.Shutdown(); bus.Close() })
 	u := fileURI(t, "file://"+filepath.Join(root, "main.bal"))

@@ -18,6 +18,10 @@ package server
 
 import (
 	"bytes"
+	"io"
+	"io/fs"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -26,8 +30,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
-	"github.com/ballerina-nutcracker/ballerina/platform/pal"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
 
 // newLoggingBatchServer builds a batch-driven Server (see cancellation_test.go)
@@ -36,15 +38,94 @@ import (
 // handleMessage.
 func newLoggingBatchServer(t *testing.T) (*Server, *batchTransport, *bytes.Buffer) {
 	t.Helper()
-	platform, _ := palnative.NewPlatform()
 	bus := event.New()
-	projects := workspace.New(platform, bus)
+	projects := workspace.New(os.DirFS, bus)
 	compiler := compile.New(projects, bus, compile.WithDebounce(0))
 	t.Cleanup(func() { compiler.Shutdown(); bus.Close() })
 	var logBuf bytes.Buffer
-	logger := observability.New(pal.IO{Stderr: func(p []byte) (int, error) { return logBuf.Write(p) }}, pal.OS{})
+	logger := observability.New(&logBuf)
 	bt := &batchTransport{}
 	return New(bt, projects, compiler, bus, WithLogger(logger)), bt, &logBuf
+}
+
+func TestHostSelectedFileOutputReplacesStderr(t *testing.T) {
+	var stderr, fileOutput bytes.Buffer
+	selected := io.Writer(&stderr)
+	selected = &fileOutput
+	bus := event.New()
+	defer bus.Close()
+	service := workspace.New(os.DirFS, bus)
+	compiler := compile.New(service, bus, compile.WithDebounce(0))
+	defer compiler.Shutdown()
+	transport := &batchTransport{}
+	srv := New(transport, service, compiler, bus, WithLogger(observability.New(selected)))
+	responses, err := runBatch(t, srv, transport, []protocol.Message{
+		reqMessage(`1`, "initialize", map[string]any{}),
+		reqMessage(`2`, "shutdown", nil),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(responses) != 2 || string(responses[0].ID) != "1" || string(responses[1].ID) != "2" {
+		t.Fatalf("invalid protocol output: %+v", responses)
+	}
+	if stderr.Len() != 0 || !strings.Contains(fileOutput.String(), "method=shutdown") {
+		t.Fatalf("stderr=%q selected output=%q", stderr.String(), fileOutput.String())
+	}
+}
+
+type discoveryErrorFS struct{}
+
+func (discoveryErrorFS) Open(string) (fs.File, error) { return nil, fs.ErrPermission }
+
+func TestDiscoveryErrorsAreLoggedWithoutClientNotifications(t *testing.T) {
+	root := t.TempDir()
+	opener := func(dir string) fs.FS {
+		if dir == root {
+			return discoveryErrorFS{}
+		}
+		return os.DirFS(dir)
+	}
+	bus := event.New()
+	defer bus.Close()
+	service := workspace.New(opener, bus)
+	compiler := compile.New(service, bus, compile.WithDebounce(0))
+	defer compiler.Shutdown()
+	var logs bytes.Buffer
+	transport := &batchTransport{}
+	srv := New(transport, service, compiler, bus, WithLogger(observability.New(&logs)))
+	uri, err := workspace.FileURIFromPath(filepath.Join(root, "main.bal"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := workspace.FileURIFromPath(filepath.Join(root, "Ballerina.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	responses, err := runBatch(t, srv, transport, []protocol.Message{
+		reqMessage(`1`, "initialize", map[string]any{}),
+		notifMessage("textDocument/didOpen", map[string]any{"textDocument": map[string]any{"uri": uri.String(), "languageId": "ballerina", "version": 1, "text": "public function main() {}"}}),
+		notifMessage("textDocument/didChange", map[string]any{"textDocument": map[string]any{"uri": uri.String(), "version": 2}, "contentChanges": []any{map[string]any{"range": map[string]any{"start": map[string]any{"line": 0, "character": 0}, "end": map[string]any{"line": 0, "character": 0}}, "text": " "}}}),
+		notifMessage("workspace/didChangeWatchedFiles", map[string]any{"changes": []any{map[string]any{"uri": manifest.String(), "type": 1}}}),
+		notifMessage("$pal/flush", map[string]any{}),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(responses) != 1 || string(responses[0].ID) != "1" {
+		t.Fatalf("unexpected client output: %+v", responses)
+	}
+	for _, method := range []string{"textDocument/didOpen", "textDocument/didChange", "workspace/didChangeWatchedFiles"} {
+		found := false
+		for line := range strings.SplitSeq(logs.String(), "\n") {
+			if strings.Contains(line, "level=ERROR") && strings.Contains(line, "method="+method) && strings.Contains(line, "permission denied") {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("missing correlated discovery error for %s: %s", method, logs.String())
+		}
+	}
 }
 
 // TestRequestScopedLoggerReachesEveryDispatchPath verifies a request-scoped

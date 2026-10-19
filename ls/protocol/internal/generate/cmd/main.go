@@ -28,7 +28,6 @@ import (
 	"path/filepath"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol/internal/generate"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
 
 func main() {
@@ -68,13 +67,15 @@ func main() {
 		log.Fatalf("generate: %v", err)
 	}
 
-	plat, _ := palnative.NewPlatform()
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		log.Fatalf("create output directory: %v", err)
+	}
 	typesPath := filepath.Join(outDir, generate.TypesFileName)
 	jsonPath := filepath.Join(outDir, generate.JSONFileName)
-	if err := plat.FS.WriteFile(typesPath, typesSrc); err != nil {
+	if err := os.WriteFile(typesPath, typesSrc, 0o644); err != nil {
 		log.Fatalf("write %s: %v", typesPath, err)
 	}
-	if err := plat.FS.WriteFile(jsonPath, jsonSrc); err != nil {
+	if err := os.WriteFile(jsonPath, jsonSrc, 0o644); err != nil {
 		log.Fatalf("write %s: %v", jsonPath, err)
 	}
 	fmt.Printf("generated %s and %s\n", typesPath, jsonPath)

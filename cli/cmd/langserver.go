@@ -23,7 +23,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/ls/server"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 
 	"github.com/spf13/cobra"
 )
@@ -47,12 +46,9 @@ var startLangServerCmd = &cobra.Command{
 }
 
 func startLangServer(cmd *cobra.Command, args []string) error {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-
-	logger := observability.New(platform.IO, platform.OS)
+	logger := observability.New(os.Stderr)
 	bus := event.New(event.WithLogf(func(msg string, args ...any) { logger.Warn(msg, args...) }))
-	projects := workspace.New(platform, bus)
+	projects := workspace.New(os.DirFS, bus)
 	compiler := compile.New(projects, bus)
 	srv := server.New(stdioTransport{}, projects, compiler, bus, server.WithLogger(logger))
 

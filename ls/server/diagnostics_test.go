@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"io"
+	"os"
 	"testing"
 	"time"
 
@@ -27,13 +28,11 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
 
 func newCoreServices() (*workspace.ProjectService, *compile.CompilationService, *event.Bus) {
-	platform, _ := palnative.NewPlatform()
 	bus := event.New()
-	projects := workspace.New(platform, bus)
+	projects := workspace.New(os.DirFS, bus)
 	return projects, compile.New(projects, bus, compile.WithDebounce(0)), bus
 }
 
@@ -397,9 +396,8 @@ func TestDedupNotStaleAfterEviction(t *testing.T) {
 	serverRead, clientWrite := io.Pipe()
 	clientRead, serverWrite := io.Pipe()
 	transport := pipeTransport{reader: serverRead, writer: serverWrite}
-	platform, _ := palnative.NewPlatform()
 	bus := event.New()
-	projects := workspace.New(platform, bus, workspace.WithMaxProjects(1))
+	projects := workspace.New(os.DirFS, bus, workspace.WithMaxProjects(1))
 	compiler := compile.New(projects, bus, compile.WithDebounce(0))
 	server := New(transport, projects, compiler, bus)
 	done := make(chan error, 1)

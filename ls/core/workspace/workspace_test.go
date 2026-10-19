@@ -18,15 +18,14 @@ package workspace
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
 
 func newTestProjectService() *ProjectService {
-	platform, _ := palnative.NewPlatform()
-	return New(platform, event.New())
+	return New(os.DirFS, event.New())
 }
 
 func fileURI(t *testing.T, raw string) DocumentURI {

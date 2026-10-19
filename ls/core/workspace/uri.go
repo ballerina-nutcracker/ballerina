@@ -19,6 +19,9 @@ package workspace
 import (
 	"fmt"
 	"net/url"
+	"path/filepath"
+	"runtime"
+	"strings"
 )
 
 type scheme string
@@ -78,7 +81,24 @@ func newURI(raw string, expected scheme) (DocumentURI, error) {
 	}
 	u := DocumentURI{scheme: scheme(parsed.Scheme), raw: raw}
 	if parsed.Scheme == string(schemeFile) {
-		u.path = parsed.Path
+		p := parsed.Path
+		if parsed.Host != "" || parsed.User != nil || parsed.Opaque != "" || parsed.RawQuery != "" || parsed.Fragment != "" || !strings.HasPrefix(p, "/") || strings.HasPrefix(p, "//") || strings.ContainsAny(p, "\\\\\x00") {
+			return DocumentURI{}, fmt.Errorf("uri: unsupported file URI %q", raw)
+		}
+		if len(p) >= 3 && p[2] == ':' {
+			if !isDriveLetter(p[1]) || len(p) < 4 || p[3] != '/' {
+				return DocumentURI{}, fmt.Errorf("uri: drive-relative path %q", raw)
+			}
+			p = "/" + strings.ToUpper(p[1:2]) + p[2:]
+		}
+		u.raw = (&url.URL{Scheme: "file", Path: p}).String()
+		if runtime.GOOS == "windows" {
+			if len(p) < 4 || p[2] != ':' {
+				return DocumentURI{}, fmt.Errorf("uri: expected absolute drive path %q", raw)
+			}
+			p = p[1:]
+		}
+		u.path = filepath.FromSlash(p)
 	}
 	return u, nil
 }
@@ -102,13 +122,26 @@ func (u DocumentURI) Path() string {
 	return u.path
 }
 
-// Identity returns a stable string suitable for use as a map key or
-// comparison basis. The identity is the raw URI string.
+// Identity returns the canonical URI identity (only drive-letter case is folded).
 func (u DocumentURI) Identity() string {
 	return u.raw
 }
 
-// String returns the raw URI string.
+// String returns the canonical URI string.
 func (u DocumentURI) String() string {
 	return u.raw
+}
+
+func isDriveLetter(c byte) bool { return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' }
+
+// FileURIFromPath converts an absolute native path without consulting the host filesystem.
+func FileURIFromPath(p string) (DocumentURI, error) {
+	if strings.HasPrefix(p, `\\`) || strings.HasPrefix(p, "//") || !filepath.IsAbs(p) {
+		return DocumentURI{}, fmt.Errorf("uri: unsupported native path %q", p)
+	}
+	p = filepath.ToSlash(p)
+	if runtime.GOOS == "windows" {
+		p = "/" + p
+	}
+	return NewFileURI((&url.URL{Scheme: "file", Path: p}).String())
 }

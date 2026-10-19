@@ -22,13 +22,13 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"os"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
 
 // batchTransport is a buffered transport: the driver frames a batch of
@@ -46,9 +46,8 @@ func (t *batchTransport) Write(p []byte) (int, error) { return t.writer.Write(p)
 
 func newBatchServer(t *testing.T) (*Server, *batchTransport) {
 	t.Helper()
-	platform, _ := palnative.NewPlatform()
 	bus := event.New()
-	projects := workspace.New(platform, bus)
+	projects := workspace.New(os.DirFS, bus)
 	compiler := compile.New(projects, bus, compile.WithDebounce(0))
 	t.Cleanup(func() { compiler.Shutdown(); bus.Close() })
 	bt := &batchTransport{}

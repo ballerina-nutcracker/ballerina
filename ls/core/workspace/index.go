@@ -17,7 +17,9 @@
 package workspace
 
 import (
+	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -28,10 +30,11 @@ import (
 // indexEntry is one slot in the source-root-keyed project index.
 type indexEntry struct {
 	project     projects.Project
+	paths       SourcePaths
 	sourceRoot  string
 	lastTouched time.Time // LRU stamp, updated on every resolve/publish hit
 	openDocs    int       // count of open DocumentURIs resolved to this source root
-	generation  uint64    // per-source-root monotonic counter (ticket 09), bumped on every accepted publish
+	generation  uint64    // monotonic lifetime stamp, never reused when a root returns
 }
 
 // projectIndex is a count-bounded, source-root-keyed LRU cache of loaded
@@ -43,6 +46,7 @@ type projectIndex struct {
 	entries          map[string]*indexEntry // sourceRoot → entry
 	pathToSourceRoot map[string]string      // filePath → sourceRoot (memo)
 	maxProjects      int
+	lastGeneration   uint64 // lifetime high-water mark; survives entry eviction
 	now              func() time.Time
 }
 
@@ -67,32 +71,54 @@ func (i *projectIndex) get(sourceRoot string) (*indexEntry, bool) {
 	return entry, true
 }
 
-// peek returns the entry for sourceRoot without updating the LRU stamp. Used
+// peek returns a copy of the entry without updating the LRU stamp. Used
 // by the async compile engine's read-only accessors (Generation/
 // CurrentProject) so frequent reads do not thrash the LRU order.
 func (i *projectIndex) peek(sourceRoot string) (*indexEntry, bool) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	entry, ok := i.entries[sourceRoot]
-	return entry, ok
+	if !ok {
+		return nil, false
+	}
+	snapshot := *entry
+	return &snapshot, true
 }
 
-// putExisting stores an entry, replacing any existing entry for the same
-// source root. If the index is full and this is a new source root, it evicts
+// putExisting assigns a fresh generation and stores the entry, replacing any
+// existing entry for the same root. If the index is full for a new root, it evicts
 // the least-recently-touched background entry first. Eviction publishes
 // ProjectEvicted on the bus.
-func (i *projectIndex) putExisting(entry *indexEntry, bus *event.Bus) {
+func (i *projectIndex) putExisting(entry *indexEntry, bus *event.Bus) uint64 {
 	i.mu.Lock()
 	defer i.mu.Unlock()
+	gen := i.advanceLocked(entry)
 	if _, ok := i.entries[entry.sourceRoot]; ok {
 		entry.lastTouched = i.now()
 		i.entries[entry.sourceRoot] = entry
-		return
+		return gen
 	}
 	if len(i.entries) >= i.maxProjects {
 		i.evictLRULocked(bus)
 	}
 	i.entries[entry.sourceRoot] = entry
+	return gen
+}
+
+func (i *projectIndex) advance(root string) (uint64, bool) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	entry, ok := i.entries[root]
+	if !ok {
+		return 0, false
+	}
+	return i.advanceLocked(entry), true
+}
+
+func (i *projectIndex) advanceLocked(entry *indexEntry) uint64 {
+	i.lastGeneration++
+	entry.generation = i.lastGeneration
+	return entry.generation
 }
 
 // put stores a new entry. If the index is full, it evicts the
@@ -201,11 +227,7 @@ func (i *projectIndex) invalidateUnder(dir string) {
 // is a no-op for an unknown root. It does not touch debounce timers
 // (engine-owned) or close the bus.
 func (i *projectIndex) supersede(root string) {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	if entry, ok := i.entries[root]; ok {
-		entry.generation++
-	}
+	i.advance(root)
 }
 
 // supersedeAll advances every known source root's generation counter without
@@ -219,7 +241,7 @@ func (i *projectIndex) supersedeAll() {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	for _, entry := range i.entries {
-		entry.generation++
+		i.advanceLocked(entry)
 	}
 }
 
@@ -229,18 +251,22 @@ func sortDocumentURIs(us []DocumentURI) {
 	sort.Slice(us, func(i, j int) bool { return us[i].String() < us[j].String() })
 }
 
-// isAncestor reports whether dir is an ancestor of path (dir == path or path is
-// under dir), using forward-slash semantics.
-func isAncestor(dir, path string) bool {
+// isAncestor compares native path components, not string prefixes.
+func isAncestor(dir, file string) bool {
 	if dir == "" {
 		return false
 	}
-	if path == dir {
-		return true
+	rel, err := filepath.Rel(dir, file)
+	return err == nil && rel != ".." && !strings.HasPrefix(filepath.ToSlash(rel), "../")
+}
+
+func (i *projectIndex) paths(project projects.Project) SourcePaths {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	for _, entry := range i.entries {
+		if entry.project == project {
+			return entry.paths
+		}
 	}
-	prefix := dir
-	if prefix[len(prefix)-1] != '/' {
-		prefix += "/"
-	}
-	return len(path) > len(prefix) && path[:len(prefix)] == prefix
+	return SourcePaths{}
 }

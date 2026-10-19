@@ -18,18 +18,17 @@ package compile
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
 
 func newTestServices(t *testing.T) (*workspace.ProjectService, *CompilationService) {
 	t.Helper()
-	platform, _ := palnative.NewPlatform()
 	bus := event.New()
-	projects := workspace.New(platform, bus)
+	projects := workspace.New(os.DirFS, bus)
 	svc := New(projects, bus, WithDebounce(0))
 	t.Cleanup(func() { svc.Shutdown(); bus.Close() })
 	return projects, svc
@@ -44,7 +43,7 @@ func fileURI(t *testing.T, raw string) workspace.DocumentURI {
 	return u
 }
 
-// applyOpen publishes content through the workspace (fresh palFS + Load) so
+// applyOpen publishes content through the workspace source overlay so
 // Compile reads the published CurrentPackage.
 func applyOpen(t *testing.T, projects *workspace.ProjectService, u workspace.DocumentURI, text string) {
 	t.Helper()

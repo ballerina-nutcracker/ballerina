@@ -207,6 +207,7 @@ func TestRealCompilePackage_MatchesOldPackageCompilationPath(t *testing.T) {
 	if err != nil || oldProj == nil {
 		t.Fatalf("old-path Project: %v", err)
 	}
+	greetPath, _ = newSvc.Paths(newProj).NameOf(newGreetURI)
 	oldPkg := applyModifierChainDirect(t, oldProj, greetPath, editedGreet)
 
 	newResult := realCompilePackage(newPkg, compileCycle{openText: newSvc.OpenText})
@@ -248,6 +249,7 @@ func TestExtractForURI_MatchesOldPackageCompilationPath(t *testing.T) {
 		t.Fatalf("new-path Project: %v", err)
 	}
 	newPkg := newProj.CurrentPackage()
+	greetPath, _ = newSvc.Paths(newProj).NameOf(newGreetURI)
 	newDiags := extractForURI(newProj, newPkg, greetPath, newSvc.OpenText)
 
 	oldSvc := newProjectOnlyService(t)

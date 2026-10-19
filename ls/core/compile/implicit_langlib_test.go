@@ -17,12 +17,12 @@ package compile
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
@@ -174,11 +174,9 @@ func intAndStringSource(importedLib string) string {
 
 func newDriverOnlyProjectService(t *testing.T) *workspace.ProjectService {
 	t.Helper()
-	platform, cleanup := palnative.NewPlatform()
-	t.Cleanup(cleanup)
 	bus := event.New()
 	t.Cleanup(bus.Close)
-	return workspace.New(platform, bus)
+	return workspace.New(os.DirFS, bus)
 }
 
 func symbolSpaceCount(pkg *projects.Package) int {

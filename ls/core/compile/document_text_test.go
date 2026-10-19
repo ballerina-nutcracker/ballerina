@@ -21,16 +21,8 @@ import (
 	"testing"
 )
 
-// TestDocumentText_RegistrationKeyMatchesWorkspaceOpenTextKey guards the one
-// silent-failure-mode point in design item 2's plumbing: documentText looks
-// up a document's live buffer content by moduleFileRegistrationKey(module,
-// doc.Name()), and workspace.ProjectService.OpenText is keyed by the
-// didOpen/didChange URI's Path(). If these two ever diverge for a named
-// module in a build project, documentText's openText lookup silently misses
-// and falls back to stale content — no panic, no error, just wrong
-// diagnostics at wrong offsets. This asserts the two keys are identical for a
-// real named-module document, not just for the default module (which every
-// other test in this package already exercises implicitly).
+// Compiler registration and editor-name translation must agree for named
+// modules, or live-buffer lookups silently fall back to frozen source text.
 func TestDocumentText_RegistrationKeyMatchesWorkspaceOpenTextKey(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -40,7 +32,8 @@ func TestDocumentText_RegistrationKeyMatchesWorkspaceOpenTextKey(t *testing.T) {
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
 	greetURI := fileURI(t, "file://"+greetPath)
 
-	docID, ok := pkg.Project().DocumentID(greetURI.Path())
+	name, _ := projSvc.Paths(pkg.Project()).NameOf(greetURI)
+	docID, ok := pkg.Project().DocumentID(name)
 	if !ok {
 		t.Fatalf("DocumentID(%s): not found", greetURI.Path())
 	}
@@ -50,7 +43,7 @@ func TestDocumentText_RegistrationKeyMatchesWorkspaceOpenTextKey(t *testing.T) {
 	}
 
 	key := moduleFileRegistrationKey(greetModule, doc.Name())
-	if key != greetURI.Path() {
-		t.Fatalf("moduleFileRegistrationKey = %q, want it to equal the workspace URI path %q (openText lookups key off the URI path — a mismatch here silently falls back to stale content)", key, greetURI.Path())
+	if key != name {
+		t.Fatalf("moduleFileRegistrationKey = %q, want translated compiler name %q", key, name)
 	}
 }

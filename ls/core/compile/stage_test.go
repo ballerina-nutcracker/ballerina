@@ -501,7 +501,8 @@ func TestModuleDriver_SecondGenerationOverSameModuleDoesNotPanic(t *testing.T) {
 	if got := len(gen1.diagnosticContext().Diagnostics()); got != 0 {
 		t.Fatalf("gen1 diagnostics = %d, want 0 (valid source)", got)
 	}
-	idx1 := env1.DiagnosticEnv().FileIndex(u.Path())
+	name, _ := projSvc.Paths(proj1).NameOf(u)
+	idx1 := env1.DiagnosticEnv().FileIndex(name)
 
 	updateDoc(t, projSvc, "file:///workspace/main.bal", oneSemanticErrorSource, 2)
 
@@ -536,7 +537,7 @@ func TestModuleDriver_SecondGenerationOverSameModuleDoesNotPanic(t *testing.T) {
 		t.Errorf("gen1 diagnostics after gen2 ran = %d, want unchanged 0 (no cross-generation leak)", got)
 	}
 
-	idx2 := env1.DiagnosticEnv().FileIndex(u.Path())
+	idx2 := env1.DiagnosticEnv().FileIndex(name)
 	if idx2 != idx1 {
 		t.Errorf("FileIndex(%q) changed across generations (%d -> %d) — ensureParsed skips re-registration for already-registered names, so the index must stay stable", u.Path(), idx1, idx2)
 	}

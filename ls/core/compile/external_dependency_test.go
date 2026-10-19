@@ -17,20 +17,19 @@ package compile
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
-	"github.com/ballerina-nutcracker/ballerina/platform/pal"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
 const externalDependencySource = "import acme/dep;\n\npublic function main() {\n    dep:Public value = {};\n}\n"
 
 func TestPackageDriver_UnchangedExternalDependencyCarriesForward(t *testing.T) {
-	_, projectService, packageOne, documentURI := openExternalDependencyFixture(t)
+	projectService, packageOne, documentURI := openExternalDependencyFixture(t)
 	generationOne := newPackageDriver(packageOne, projectService.OpenText, nil, nil)
 	generationOne.advanceAll(stageTopLevelTypeResolved)
 	committed := generationOne.snapshotForCommit()
@@ -61,7 +60,7 @@ func TestPackageDriver_UnchangedExternalDependencyCarriesForward(t *testing.T) {
 }
 
 func TestPackageDriver_EditedExternalDependencyRecompiles(t *testing.T) {
-	_, projectService, packageOne, documentURI := openExternalDependencyFixture(t)
+	projectService, packageOne, documentURI := openExternalDependencyFixture(t)
 	generationOne := newPackageDriver(packageOne, projectService.OpenText, nil, nil)
 	generationOne.advanceAll(stageTopLevelTypeResolved)
 	committed := generationOne.snapshotForCommit()
@@ -104,17 +103,15 @@ func TestPackageDriver_EditedExternalDependencyRecompiles(t *testing.T) {
 	}
 }
 
-func openExternalDependencyFixture(t *testing.T) (pal.Platform, *workspace.ProjectService, *projects.Package, workspace.DocumentURI) {
+func openExternalDependencyFixture(t *testing.T) (*workspace.ProjectService, *projects.Package, workspace.DocumentURI) {
 	t.Helper()
-	platform, cleanup := palnative.NewPlatform()
-	t.Cleanup(cleanup)
 	root := t.TempDir()
-	writeExternalDependencyFixture(t, platform, root)
+	writeExternalDependencyFixture(t, root)
 
 	bus := event.New()
 	t.Cleanup(bus.Close)
-	repository := workspace.NewFileSystemRepository(platform, filepath.Join(root, "repository"))
-	projectService := workspace.New(platform, bus, workspace.WithRepositories([]projects.Repository{repository}))
+	repository := projects.NewFileSystemRepository(os.DirFS(filepath.Join(root, "repository")), ".")
+	projectService := workspace.New(os.DirFS, bus, workspace.WithRepositories([]projects.Repository{repository}))
 	documentPath := filepath.Join(root, "main.bal")
 	documentURI := fileURI(t, "file://"+documentPath)
 	applyOpen(t, projectService, documentURI, externalDependencySource)
@@ -126,10 +123,10 @@ func openExternalDependencyFixture(t *testing.T) (pal.Platform, *workspace.Proje
 	if packageNode == nil {
 		t.Fatal("CurrentPackage() = nil")
 	}
-	return platform, projectService, packageNode, documentURI
+	return projectService, packageNode, documentURI
 }
 
-func writeExternalDependencyFixture(t *testing.T, platform pal.Platform, root string) {
+func writeExternalDependencyFixture(t *testing.T, root string) {
 	t.Helper()
 	files := map[string]string{
 		"Ballerina.toml": "[package]\norg = \"test\"\nname = \"main\"\nversion = \"0.1.0\"\n",
@@ -141,10 +138,10 @@ func writeExternalDependencyFixture(t *testing.T, platform pal.Platform, root st
 	}
 	for name, content := range files {
 		fileName := filepath.Join(root, name)
-		if err := platform.FS.MkdirAll(filepath.Dir(fileName), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(fileName), 0o755); err != nil {
 			t.Fatalf("MkdirAll(%s): %v", filepath.Dir(fileName), err)
 		}
-		if err := platform.FS.WriteFile(fileName, []byte(content)); err != nil {
+		if err := os.WriteFile(fileName, []byte(content), 0o644); err != nil {
 			t.Fatalf("WriteFile(%s): %v", fileName, err)
 		}
 	}

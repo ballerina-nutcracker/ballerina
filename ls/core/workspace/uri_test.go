@@ -137,6 +137,32 @@ func TestPathPanicsForNonFileSchemes(t *testing.T) {
 	}
 }
 
+func TestFileURIDriveIdentityAndEscaping(t *testing.T) {
+	lower, err := NewFileURI("file:///c:/Work/a%20b%23.bal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	upper, err := NewFileURI("file:///C:/Work/a%20b%23.bal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if lower != upper || lower.String() != "file:///C:/Work/a%20b%23.bal" {
+		t.Fatalf("identities: %v, %v", lower, upper)
+	}
+	other, err := NewFileURI("file:///C:/work/a%20b%23.bal")
+	if err != nil || lower == other {
+		t.Fatalf("component case was lost: %v, %v", other, err)
+	}
+}
+
+func TestFileURIRejectsUnsupportedPaths(t *testing.T) {
+	for _, raw := range []string{"file://server/share/main.bal", "file:////server/share/main.bal", "file:C:app.bal", "file:///C:app.bal", "file:relative.bal", "file:///a\\\\b", "file:///a?query", "file:///a#fragment"} {
+		if _, err := NewFileURI(raw); err == nil {
+			t.Errorf("accepted %q", raw)
+		}
+	}
+}
+
 func TestDocumentURIComparableAsMapKey(t *testing.T) {
 	u1, _ := NewFileURI("file:///workspace/main.bal")
 	u2, _ := NewFileURI("file:///workspace/main.bal")

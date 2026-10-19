@@ -447,14 +447,10 @@ func (d *moduleDriver) newPackageID(desc projects.ModuleDescriptor) *model.Packa
 	return d.ctx.NewPackageID(orgName, nameComps, version)
 }
 
-// moduleFileRegistrationKey composes a globally-unique DiagnosticEnv
-// registration key for a document, mirroring the shape of
-// projects/module_context.go's private buildDiagKeyPrefix (bala dependency:
-// "<org>/<name>/<version>::<docName>"; everything else: "<sourceRoot>/[
-// modules/<modulePart>/]<docName>", with the modules/ segment only for a
-// named module). For a build or single-file project this composition equals
-// the document's absolute file path, so it doubles as the key Compile's
-// callers already use (a request URI path) with no separate translation.
+// moduleFileRegistrationKey mirrors projects' buildDiagKeyPrefix within a
+// compiler environment. Workspace names are relative; external packages keep
+// their org/name/version::docName namespace. SourcePaths translates only
+// workspace names to editor identities.
 func moduleFileRegistrationKey(module *projects.Module, docName string) string {
 	desc := module.Descriptor()
 	project := module.Project()

@@ -18,27 +18,25 @@ package compile
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
 
 func TestSealedSourceRetainsParserInputAcrossEditAndEviction(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
 	bus := event.New()
 	defer bus.Close()
-	projects := workspace.New(platform, bus)
+	projects := workspace.New(os.DirFS, bus)
 	compiler := New(projects, bus, WithDebounce(0))
 	defer compiler.Shutdown()
 	root := t.TempDir()
-	if err := platform.FS.WriteFile(filepath.Join(root, "Ballerina.toml"), []byte("[package]\norg = \"testorg\"\nname = \"source66\"\nversion = \"0.1.0\"\n")); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "Ballerina.toml"), []byte("[package]\norg = \"testorg\"\nname = \"source66\"\nversion = \"0.1.0\"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := platform.FS.WriteFile(filepath.Join(root, "main.bal"), []byte("public function main() {}\n")); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "main.bal"), []byte("public function main() {}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	uri := fileURI(t, "file://"+filepath.Join(root, "main.bal"))
@@ -65,7 +63,7 @@ func TestSealedSourceRetainsParserInputAcrossEditAndEviction(t *testing.T) {
 	}
 	other := fileURI(t, "file://"+filepath.Join(root, "other.bal"))
 	otherText := "function sibling() {}\n"
-	if err := platform.FS.WriteFile(other.Path(), []byte(otherText)); err != nil {
+	if err := os.WriteFile(other.Path(), []byte(otherText), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	applyOpen(t, projects, other, otherText)
@@ -73,7 +71,8 @@ func TestSealedSourceRetainsParserInputAcrossEditAndEviction(t *testing.T) {
 	if !ok {
 		t.Fatal("reloaded view unavailable")
 	}
-	if reloaded.sourceIDs[uri.Path()] == old.sourceIDs[uri.Path()] {
+	name, _ := reloaded.NameOf(uri)
+	if reloaded.sourceIDs[name] == old.sourceIDs[name] {
 		t.Fatal("structural reload did not mint a new document identity")
 	}
 	if text, ok := reloaded.SourceText(uri); !ok || text != after {
@@ -103,7 +102,7 @@ func TestSealedSourceCarriesForwardWithAST(t *testing.T) {
 	consumerID := moduleIDFor(t, pkg, "multimoduleproject.consumer")
 	consumer := state[consumerID].driver
 	consumerURI := fileURI(t, "file://"+filepath.Join(multimoduleFixtureDir(t), "modules", "consumer", "consumer.bal"))
-	view := SealedModule{sources: consumer.sources, sourceIDs: consumer.sourceIDs}
+	view := SealedModule{sources: consumer.sources, sourceIDs: consumer.sourceIDs, paths: projects.Paths(pkg.Project())}
 	original, ok := view.SourceText(consumerURI)
 	if !ok || original == "" {
 		t.Fatal("source missing from initial AST")
@@ -120,7 +119,7 @@ func TestSealedSourceCarriesForwardWithAST(t *testing.T) {
 	if carried != consumer {
 		t.Fatal("unchanged consumer driver was not reused")
 	}
-	newView := SealedModule{sources: carried.sources, sourceIDs: carried.sourceIDs}
+	newView := SealedModule{sources: carried.sources, sourceIDs: carried.sourceIDs, paths: projects.Paths(project)}
 	if text, ok := newView.SourceText(consumerURI); !ok || text != original {
 		t.Fatalf("carried source = %q %v", text, ok)
 	}

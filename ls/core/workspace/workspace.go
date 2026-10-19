@@ -20,26 +20,20 @@
 // protocol.TextEdit ranges to full text before calling Apply, keeping this
 // package protocol-free.
 //
-// Ticket 08 replaces the Phase-A single-file synthetic overlayFS (owned by
-// compile) with a PAL-backed, overlay-augmented io/fs.FS owned here: the
-// project index resolves file: URIs to source roots (ADR-048 three-step) and
-// projects.Load reads through palFS. Ticket 28 drops the former ADR-042
-// modifier chain: Apply publishes in place, updating the documents map only
-// (see publish/OpenText) instead of cascading a new immutable
-// Package/Module/Document graph on every edit. A synchronous event bus
-// carries project-lifecycle events.
+// Project discovery and loading use a host-supplied directory opener. Open
+// editor buffers overlay folder-relative source names at load time; subsequent
+// content edits flow through OpenText without rereading source files.
 package workspace
 
 import (
 	"context"
 	"fmt"
 	"io/fs"
-	"path"
+	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
-	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
@@ -66,17 +60,6 @@ func WithRepositories(repositories []projects.Repository) Option {
 	return func(s *ProjectService) {
 		s.repositories = repositories
 	}
-}
-
-// NewFileSystemRepository creates a package repository backed by platform's
-// filesystem. It is suitable for callers that must keep repository access on
-// PAL rather than constructing an operating-system filesystem directly.
-func NewFileSystemRepository(platform pal.Platform, basePath string) projects.Repository {
-	return projects.NewFileSystemRepository(palFS{
-		pal:      platform.FS,
-		overlays: make(map[string][]byte),
-		now:      time.Now,
-	}, basePath)
 }
 
 // ChangeKind discriminates the kind of DocumentChange.
@@ -139,31 +122,31 @@ type WatchedFileChange struct {
 // ProjectService owns document lifecycle state and the source-root-keyed
 // project index. It absorbs the former server.documentStore, replacing the
 // string-keyed map with a DocumentURI-keyed map, and replaces the compile-owned
-// synthetic overlayFS with PAL-backed project loading and in-place
+// synthetic filesystem with folder-relative project loading and in-place
 // publication (ticket 28).
 type ProjectService struct {
-	platform     pal.Platform
+	openDir      func(string) fs.FS
 	bus          *event.Bus
 	mu           sync.RWMutex // guards the documents map (concurrent engine reads under 09)
 	documents    map[DocumentURI]Snapshot
+	pendingRoots map[DocumentURI]string // recovery membership only; guarded by mu
 	index        *projectIndex
 	now          func() time.Time
-	stat         func(string) (fs.FileInfo, error)
 	repositories []projects.Repository
 }
 
-// New creates a ProjectService wired to the given PAL platform and synchronous
+// New creates a ProjectService wired to a directory opener and synchronous
 // event bus. The bus receives ProjectRegistered/ProjectEvicted/
 // ProjectKindTransitioned events. Options configure the index bound.
-func New(platform pal.Platform, bus *event.Bus, opts ...Option) *ProjectService {
+func New(openDir func(string) fs.FS, bus *event.Bus, opts ...Option) *ProjectService {
 	now := time.Now
 	s := &ProjectService{
-		platform:  platform,
-		bus:       bus,
-		documents: make(map[DocumentURI]Snapshot),
-		index:     newProjectIndex(defaultMaxProjects, now),
-		now:       now,
-		stat:      platform.FS.Stat,
+		openDir:      openDir,
+		bus:          bus,
+		documents:    make(map[DocumentURI]Snapshot),
+		pendingRoots: make(map[DocumentURI]string),
+		index:        newProjectIndex(defaultMaxProjects, now),
+		now:          now,
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -205,6 +188,7 @@ func (s *ProjectService) applyDocumentMap(change DocumentChange) (Snapshot, erro
 			return Snapshot{}, fmt.Errorf("workspace: document not open: %s", change.URI)
 		}
 		delete(s.documents, change.URI)
+		delete(s.pendingRoots, change.URI)
 		return Snapshot{}, nil
 	default:
 		return Snapshot{}, fmt.Errorf("workspace: unknown change kind %d", change.Kind)
@@ -213,7 +197,7 @@ func (s *ProjectService) applyDocumentMap(change DocumentChange) (Snapshot, erro
 
 // Apply applies a document lifecycle change: update the documents map,
 // resolve the source root (memoized), and — for open/update — load a fresh
-// project through palFS so the open-buffer overlay is authoritative, then
+// project through the source overlay so open buffers are authoritative, then
 // atomically replace the index entry. context.Context declares that
 // cancellation flows through ctx; it is checked for Err() before publication.
 // Phase B's calls are synchronous (no goroutines).
@@ -248,7 +232,7 @@ func (s *ProjectService) Apply(ctx context.Context, change DocumentChange) (Snap
 	}
 	sourceRoot, err := s.findSourceRootMemoized(change.URI)
 	if err != nil {
-		return snap, nil // source root unresolved — document map still updated
+		return snap, err
 	}
 	if change.Kind == ChangeOpen {
 		if entry, ok := s.index.get(sourceRoot); ok {
@@ -271,6 +255,9 @@ func (s *ProjectService) Apply(ctx context.Context, change DocumentChange) (Snap
 		cur.SourceRoot = sourceRoot
 		cur.Generation = gen
 		s.documents[change.URI] = cur
+		if gen != 0 {
+			delete(s.pendingRoots, change.URI)
+		}
 	}
 	s.mu.Unlock()
 	return snap, nil
@@ -296,24 +283,22 @@ func (s *ProjectService) publish(change DocumentChange, sourceRoot string) (uint
 	entry, ok := s.index.get(sourceRoot)
 	if !ok || entry.project == nil {
 		s.mu.Unlock()
-		s.reloadAt(sourceRoot, change.URI, 0)
-		s.publishLifecycle(sourceRoot, 1)
-		return 1, nil
+		gen := s.reloadAt(sourceRoot, change.URI)
+		s.publishLifecycle(sourceRoot, gen)
+		return gen, nil
 	}
-	if s.documentInCurrentPackage(entry.project, change) && !importSetChanged(entry.project, change) {
-		entry.generation++
-		gen := entry.generation
+	if s.documentInCurrentPackage(entry.project, change) && !s.importSetChanged(entry.project, change) {
+		gen, _ := s.index.advance(sourceRoot)
 		s.mu.Unlock()
 		s.publishUpdated(sourceRoot, gen)
 		return gen, nil
 	}
-	oldGen := entry.generation
 	s.mu.Unlock()
 	// Document not in the current package (new file): fall back to a fresh
 	// Load, advancing the generation.
-	s.reloadAt(sourceRoot, change.URI, oldGen)
-	s.publishLifecycle(sourceRoot, oldGen+1)
-	return oldGen + 1, nil
+	gen := s.reloadAt(sourceRoot, change.URI)
+	s.publishLifecycle(sourceRoot, gen)
+	return gen, nil
 }
 
 // documentInCurrentPackage reports whether change's document is already part
@@ -326,7 +311,11 @@ func (s *ProjectService) documentInCurrentPackage(project projects.Project, chan
 	if pkg == nil {
 		return false
 	}
-	docID, ok := project.DocumentID(change.URI.Path())
+	name, contained := s.Paths(project).NameOf(change.URI)
+	if !contained {
+		return false
+	}
+	docID, ok := project.DocumentID(name)
 	if !ok {
 		return false
 	}
@@ -342,8 +331,12 @@ func (s *ProjectService) documentInCurrentPackage(project projects.Project, chan
 // package resolves its dependencies once from the text it was loaded with, so
 // a changed import set needs a fresh Load. Only syntactically complete import
 // declarations count, so a half-typed import does not reload.
-func importSetChanged(project projects.Project, change DocumentChange) bool {
-	docID, ok := project.DocumentID(change.URI.Path())
+func (s *ProjectService) importSetChanged(project projects.Project, change DocumentChange) bool {
+	name, contained := s.Paths(project).NameOf(change.URI)
+	if !contained {
+		return false
+	}
+	docID, ok := project.DocumentID(name)
 	if !ok {
 		return false
 	}
@@ -373,27 +366,37 @@ func (s *ProjectService) publishUpdated(sourceRoot string, gen uint64) {
 	s.bus.Publish(event.NewProjectUpdatedEvent(sourceRoot, gen))
 }
 
-// reloadAt builds a fresh palFS for the source root, loads a brand-new project
+// reloadAt builds a fresh source overlay for the root, loads a brand-new project
 // (fresh CompilerEnvironment and DiagnosticEnv), and atomically replaces the
-// index entry. The open-doc count and the generation (advanced from prevGen)
-// are preserved from any existing entry. A load failure is non-fatal: the
+// index entry with a fresh lifetime generation stamp. The open-doc count is
+// preserved from any existing entry. A load failure is non-fatal: the
 // documents map is still updated, and the next change retries.
-func (s *ProjectService) reloadAt(sourceRoot string, u DocumentURI, prevGen uint64) {
-	fsys := s.buildPalFS(sourceRoot)
-	project, err := s.loadProject(fsys, sourceRoot, u.Path())
+func (s *ProjectService) reloadAt(sourceRoot string, u DocumentURI) uint64 {
+	paths := SourcePaths{root: sourceRoot}
+	loadName := "."
+	if sourceRoot == u.Path() {
+		paths.root = filepath.Dir(sourceRoot)
+		loadName = filepath.Base(sourceRoot)
+	}
+	fsys := s.buildOverlay(paths)
+	result, err := projects.Load(fsys, loadName, projects.ProjectLoadConfig{Repositories: s.repositories})
+	project := result.Project()
 	if err != nil || project == nil {
-		return
+		return 0
+	}
+	if root := project.SourceRoot(); root != "" && root != "." {
+		paths.prefix = root + "/"
 	}
 	entry := &indexEntry{
 		project:     project,
+		paths:       paths,
 		sourceRoot:  sourceRoot,
 		lastTouched: s.now(),
-		generation:  prevGen + 1,
 	}
 	if old, ok := s.index.get(sourceRoot); ok {
 		entry.openDocs = old.openDocs
 	}
-	s.index.putExisting(entry, s.bus)
+	return s.index.putExisting(entry, s.bus)
 }
 
 // Generation returns the per-source-root monotonic generation counter for the
@@ -479,67 +482,41 @@ func (s *ProjectService) findSourceRootMemoized(u DocumentURI) (string, error) {
 	return root, nil
 }
 
-// findSourceRoot walks up from filePath looking for Ballerina.toml (build/
-// workspace project); on no hit for a .bal file it returns the file's
-// directory (single-file project root). It is the expensive step and is
-// memoized by resolve.
+// findSourceRoot returns a package directory or the distinct single-file key.
 func (s *ProjectService) findSourceRoot(filePath string) (string, error) {
-	dir := path.Dir(filePath)
-	for {
-		tomlPath := path.Join(dir, projects.BallerinaTomlFile)
-		if info, err := s.stat(tomlPath); err == nil && !info.IsDir() {
-			return dir, nil
-		}
-		parent := path.Dir(dir)
-		if parent == dir {
-			break
-		}
-		dir = parent
+	root, found, err := projects.FindProjectRoot(s.openDir, filePath)
+	if err != nil {
+		return "", err
 	}
-	// No Ballerina.toml ancestor: single-file project rooted at the file's
-	// directory (matching loadSingleFileProject's sourceDir = path.Dir).
-	return path.Dir(filePath), nil
+	if found {
+		return root, nil
+	}
+	return filePath, nil
 }
 
-// buildPalFS constructs an overlay-augmented filesystem carrying the current
-// open-buffer contents for files under sourceRoot. Open buffers win on
-// ReadFile/Stat so a single-file non-disk URI (and overlay-over-disk edits)
-// load from the buffer, not disk.
-func (s *ProjectService) buildPalFS(sourceRoot string) palFS {
+func (s *ProjectService) buildOverlay(paths SourcePaths) overlayFS {
 	overlays := make(map[string][]byte)
 	s.mu.RLock()
 	for u, snap := range s.documents {
 		if !u.IsFile() {
 			continue
 		}
-		p := u.Path()
-		if p == sourceRoot || isAncestor(sourceRoot, p) {
-			overlays[p] = []byte(snap.Text)
+		if name, ok := (SourcePaths{root: paths.root}).NameOf(u); ok {
+			overlays[name] = []byte(snap.Text)
 		}
 	}
 	s.mu.RUnlock()
-	return palFS{pal: s.platform.FS, overlays: overlays, now: s.now}
+	return overlayFS{base: s.openDir(paths.root), overlays: overlays, now: s.now}
 }
 
-// loadProject loads the project at sourceRoot through palFS. For a
-// single-file source root (no Ballerina.toml), it loads the single .bal file;
-// the overlay lets a non-disk file load from its buffer.
-func (s *ProjectService) loadProject(fsys palFS, sourceRoot, filePath string) (projects.Project, error) {
-	// A single-file root: no Ballerina.toml at sourceRoot → load the file
-	// directly (palFS overlays the buffer for a non-disk URI).
-	tomlPath := path.Join(sourceRoot, projects.BallerinaTomlFile)
-	if info, err := fsys.Stat(tomlPath); err != nil || info.IsDir() {
-		result, err := projects.Load(fsys, filePath, projects.ProjectLoadConfig{Repositories: s.repositories})
-		if err != nil {
-			return nil, err
-		}
-		return result.Project(), nil
-	}
-	result, err := projects.Load(fsys, sourceRoot, projects.ProjectLoadConfig{Repositories: s.repositories})
-	if err != nil {
-		return nil, err
-	}
-	return result.Project(), nil
+// ProjectKey returns workspace identity, not the project's relative load name.
+func (s *ProjectService) ProjectKey(u DocumentURI) (string, error) {
+	return s.findSourceRootMemoized(u)
+}
+
+// Paths captures the name conversion metadata for a loaded project.
+func (s *ProjectService) Paths(project projects.Project) SourcePaths {
+	return s.index.paths(project)
 }
 
 // Project returns the resolved project for a file: URI from the index. It is
@@ -581,7 +558,11 @@ func (s *ProjectService) DocumentText(u DocumentURI) (string, bool) {
 	if err != nil || project == nil {
 		return "", false
 	}
-	docID, ok := project.DocumentID(u.Path())
+	name, contained := s.Paths(project).NameOf(u)
+	if !contained {
+		return "", false
+	}
+	docID, ok := project.DocumentID(name)
 	if !ok {
 		return "", false
 	}
@@ -600,22 +581,15 @@ func (s *ProjectService) DocumentText(u DocumentURI) (string, bool) {
 	return doc.TextDocument().String(), true
 }
 
-// OpenText returns the current open-buffer text for filePath, if a document
-// at that path is open. This is ticket 28's replacement for the ADR-042
-// modifier chain's role of feeding edited content to the compiler: since
-// publish no longer pushes edits into the immutable projects.Package graph,
-// the compile package's driver reads a document's live content from here
-// (falling back to the frozen Document.TextDocument() for a document that
-// isn't open) instead.
-func (s *ProjectService) OpenText(filePath string) (string, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	for u, snap := range s.documents {
-		if u.IsFile() && u.Path() == filePath {
-			return snap.Text, true
-		}
+// OpenText resolves a compiler name within its owning project to a live
+// editor buffer. Relative names from different projects never share buffers.
+func (s *ProjectService) OpenText(project projects.Project, name string) (string, bool) {
+	u, ok := s.Paths(project).URIOf(name)
+	if !ok {
+		return "", false
 	}
-	return "", false
+	snap, ok := s.Snapshot(u)
+	return snap.Text, ok
 }
 
 // ApplyWatchedFile routes a didChangeWatchedFiles event. Ballerina.toml
@@ -629,7 +603,7 @@ func (s *ProjectService) ApplyWatchedFile(ctx context.Context, change WatchedFil
 		return nil
 	}
 	filePath := change.URI.Path()
-	base := path.Base(filePath)
+	base := filepath.Base(filePath)
 	switch base {
 	case projects.BallerinaTomlFile:
 		return s.applyBallerinaTomlChange(change.Kind, filePath)
@@ -639,75 +613,104 @@ func (s *ProjectService) ApplyWatchedFile(ctx context.Context, change WatchedFil
 }
 
 // applyBallerinaTomlChange handles create/delete/change of a Ballerina.toml:
-// atomically invalidate the source-root memo, re-resolve, and reload the
-// project fresh so the new kind (single-file ↔ build) or new manifest takes
-// effect. Create/delete publish ProjectKindTransitioned when the source root
-// identity is unchanged, or ProjectEvicted(oldRoot)+ProjectRegistered(newRoot)
-// when the root identity changes (ADR-024). A content change publishes
-// ProjectRegistered (a manifest reload is a replacement). With no open doc
-// under dir, only the memo is invalidated; the next didOpen reloads the new kind.
+// invalidate affected current projects before discovery, then re-resolve all
+// open documents. A discovery failure leaves buffers intact without exposing
+// a stale project; successful discovery reloads each distinct project once.
 func (s *ProjectService) applyBallerinaTomlChange(kind WatchedFileKind, tomlPath string) error {
-	dir := path.Dir(tomlPath)
-	anchor, oldRoot, found := s.findAnchorUnder(dir)
-	s.index.invalidateUnder(dir)
-	if !found {
-		return nil
-	}
-	newRoot, err := s.findSourceRootMemoized(anchor)
-	if err != nil {
-		return nil
-	}
-	prevGen := uint64(0)
-	if oldEntry, ok := s.index.get(oldRoot); ok {
-		prevGen = oldEntry.generation
-	}
-	s.reloadAt(newRoot, anchor, prevGen)
-	if s.bus == nil {
-		return nil
-	}
-	newGen := prevGen + 1
-	if kind == WatchedFileCreate || kind == WatchedFileDelete {
-		if oldRoot == newRoot {
-			s.bus.Publish(event.NewProjectKindTransitionedEvent(oldRoot, newRoot))
-		} else {
-			s.bus.Publish(event.NewProjectEvictedEvent(oldRoot, event.EvictionKindTransition))
-			s.bus.Publish(event.NewProjectRegisteredEvent(newRoot))
+	dir := filepath.Dir(tomlPath)
+	documents, previous := s.invalidateProjectsUnder(dir)
+	roots := make(map[DocumentURI]string)
+	for _, u := range documents {
+		root, err := s.findSourceRootMemoized(u)
+		if err != nil {
+			return err
 		}
-	} else {
-		s.bus.Publish(event.NewProjectRegisteredEvent(newRoot))
+		roots[u] = root
 	}
-	s.bus.Publish(event.NewProjectUpdatedEvent(newRoot, newGen))
+	generations := make(map[string]uint64)
+	for _, u := range documents {
+		root := roots[u]
+		gen, loaded := generations[root]
+		if !loaded {
+			gen = s.reloadAt(root, u)
+			generations[root] = gen
+			if s.bus != nil && (kind == WatchedFileCreate || kind == WatchedFileDelete) && previous[root] != 0 {
+				s.bus.Publish(event.NewProjectKindTransitionedEvent(root, root))
+				s.publishUpdated(root, gen)
+			} else {
+				s.publishLifecycle(root, gen)
+			}
+		}
+		s.mu.Lock()
+		snap := s.documents[u]
+		snap.SourceRoot = root
+		snap.Generation = gen
+		s.documents[u] = snap
+		if gen != 0 {
+			delete(s.pendingRoots, u)
+		}
+		s.mu.Unlock()
+	}
 	return nil
 }
 
-// findAnchorUnder returns an open document under dir (or equal to dir) to
-// anchor a kind-transition reload, plus the source root that doc resolved to
-// before the transition. The anchor is the first matching open file: URI; the
-// old root is taken from the filePath→sourceRoot memo (falling back to dir for
-// a single-file doc that was never memoized).
-func (s *ProjectService) findAnchorUnder(dir string) (DocumentURI, string, bool) {
-	s.mu.RLock()
-	var found DocumentURI
-	foundOK := false
-	var oldRoot string
+// Invalidate owning projects and containing merge destinations as units, so
+// their open documents outside the manifest directory are also rediscovered.
+func (s *ProjectService) invalidateProjectsUnder(dir string) ([]DocumentURI, map[string]uint64) {
+	var documents []DocumentURI
+	previous := make(map[string]uint64)
+	s.mu.Lock()
 	for u := range s.documents {
 		if !u.IsFile() {
 			continue
 		}
-		p := u.Path()
-		if p == dir || isAncestor(dir, p) {
-			r, ok := s.index.lookupSourceRoot(p)
-			if !ok {
-				r = dir
+		root, known := s.recoveryRoot(u)
+		if !isAncestor(dir, u.Path()) && !(known && isAncestor(root, dir)) {
+			continue
+		}
+		if known {
+			previous[root] = 0
+			if entry, ok := s.index.peek(root); ok {
+				previous[root] = entry.generation
 			}
-			found = u
-			oldRoot = r
-			foundOK = true
-			break
 		}
 	}
-	s.mu.RUnlock()
-	return found, oldRoot, foundOK
+	for u, snap := range s.documents {
+		if !u.IsFile() {
+			continue
+		}
+		root, known := s.recoveryRoot(u)
+		_, affectedProject := previous[root]
+		if !isAncestor(dir, u.Path()) && !affectedProject {
+			continue
+		}
+		if known {
+			s.pendingRoots[u] = root
+		}
+		documents = append(documents, u)
+		snap.SourceRoot = ""
+		snap.Generation = 0
+		s.documents[u] = snap
+	}
+	s.mu.Unlock()
+	s.index.invalidateUnder(dir)
+	for root := range previous {
+		s.index.remove(root)
+		if s.bus != nil {
+			s.bus.Publish(event.NewProjectEvictedEvent(root, event.EvictionKindTransition))
+		}
+	}
+	sortDocumentURIs(documents)
+	return documents, previous
+}
+
+// recoveryRoot is called with mu held. Keep the last owning project while a
+// manifest transition is unresolved, even if partial discovery changed the memo.
+func (s *ProjectService) recoveryRoot(u DocumentURI) (string, bool) {
+	if root, pending := s.pendingRoots[u]; pending {
+		return root, true
+	}
+	return s.index.lookupSourceRoot(u.Path())
 }
 
 // applySourceFileChange handles create/change/delete of a .bal file. In 08:

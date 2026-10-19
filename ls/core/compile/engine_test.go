@@ -18,12 +18,12 @@ package compile
 
 import (
 	"context"
+	"os"
 	"sync"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	proj "github.com/ballerina-nutcracker/ballerina/projects"
 )
 
@@ -47,9 +47,8 @@ func makeStableSnap(root string, gen uint64, byFile, resByFile map[string][]Comp
 // a deferred shutdown so async cycles drain before the test ends.
 func newEngineTestServices(t *testing.T) (*workspace.ProjectService, *CompilationService, *event.Bus) {
 	t.Helper()
-	platform, _ := palnative.NewPlatform()
 	bus := event.New()
-	projects := workspace.New(platform, bus)
+	projects := workspace.New(os.DirFS, bus)
 	svc := New(projects, bus, WithDebounce(0), WithMaxWorkers(2))
 	t.Cleanup(func() { svc.Shutdown(); bus.Close() })
 	return projects, svc, bus
@@ -184,7 +183,7 @@ func TestEngineSingleFlightAndStaleGate(t *testing.T) {
 	if len(succeeded.slice()) == 0 || lastGen(succeeded) != 2 {
 		t.Fatalf("CE-E1 gens = %v, want last == 2", succeeded.slice())
 	}
-	snap, ok := svc.store.Stable("/workspace")
+	snap, ok := svc.store.Stable("/workspace/sf.bal")
 	if !ok || snap.Key().Generation != 2 {
 		t.Fatalf("stable gen = %v ok=%v, want 2", snap.Key().Generation, ok)
 	}
@@ -301,7 +300,7 @@ func TestEngineDiagnosticsFor(t *testing.T) {
 	u := openDoc(t, projects, "file:///workspace/df.bal", "public function main() {\n int x = 1;\n}\n", 1)
 	svc.Flush()
 
-	diags, gen, ok := svc.DiagnosticsFor("/workspace")
+	diags, gen, ok := svc.DiagnosticsFor(u.Path())
 	if !ok {
 		t.Fatal("expected stable snapshot for /workspace")
 	}
@@ -339,7 +338,7 @@ func TestEngineCancelSupersedesInFlight(t *testing.T) {
 	<-started // the in-flight compile (gen 1) is now running
 
 	svc.Cancel()
-	if g, ok := projects.Generation("/workspace"); !ok || g != 2 {
+	if g, ok := projects.Generation("/workspace/cancel.bal"); !ok || g != 2 {
 		t.Fatalf("after Cancel: generation = %d ok=%v, want 2", g, ok)
 	}
 

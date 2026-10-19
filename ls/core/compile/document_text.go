@@ -30,28 +30,16 @@ package compile
 
 import "github.com/ballerina-nutcracker/ballerina/projects"
 
-// textProvider resolves a document's live, currently-open-buffer content by
-// its absolute file path. It is nil for callers that have no live-buffer
-// source (e.g. package-level Go tests constructing a packageDriver directly)
-// — documentText falls back to the document's own TextDocument() in that
-// case, matching pre-ticket-28 behavior exactly.
-type textProvider func(filePath string) (string, bool)
+// textProvider scopes compiler-relative names to their owning project. External
+// packages have no editor buffers and fall back to their frozen source text.
+type textProvider func(project projects.Project, name string) (string, bool)
 
-// documentText returns doc's current text: openText's live buffer content if
-// one exists for doc's file path, otherwise doc's own (possibly stale)
-// TextDocument(). The lookup key is moduleFileRegistrationKey(module,
-// doc.Name()), not project.DocumentPath(doc.DocumentID()) — the latter is
-// unreliable for a SingleFileProject, whose DocumentPath returns the
-// document's bare name rather than a source-root-joined path (see
-// moduleFileRegistrationKey's own doc comment in stage.go), so it would never
-// match the absolute path openText's caller (workspace.ProjectService
-// .OpenText) is keyed by. moduleFileRegistrationKey's composition equals the
-// document's absolute file path for a build or single-file project, which is
-// exactly the URI path a didChange/didOpen resolves to.
+// documentText reads the live editor buffer through the project's compiler
+// registration name, falling back to the document captured at load time.
 func documentText(module *projects.Module, doc *projects.Document, openText textProvider) string {
 	if openText != nil {
 		path := moduleFileRegistrationKey(module, doc.Name())
-		if text, ok := openText(path); ok {
+		if text, ok := openText(module.Project(), path); ok {
 			return text
 		}
 	}
