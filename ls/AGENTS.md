@@ -1,4 +1,4 @@
-Conventions for the Ballerina language server (`ls/` tree). Root `AGENTS.md` rules (unexported-by-default, `*Base` embedding, `SymbolRef` map keys, PAL, license headers) all apply here too. The iteration process — research, HIL design gate, record — is the `ls-iteration` skill (`.agents/skills/ls-iteration/`); research source paths are in its `sources.md`.
+Conventions for the Ballerina language server (`ls/` tree). Root `AGENTS.md` rules (unexported-by-default, `*Base` embedding, `SymbolRef` map keys, platform boundaries, license headers) all apply here too. The iteration process — research, HIL design gate, record — is the `ls-iteration` skill (`.agents/skills/ls-iteration/`); research source paths are in its `sources.md`.
 
 ## Package roles
 
@@ -12,11 +12,15 @@ Handlers must not talk to the transport directly; they take typed params and ret
 
 - Positions on the wire are UTF-16 code-unit based (LSP default). Compiler positions are byte/rune based — convert at the protocol boundary, never inside handlers or compiler code.
 - Target protocol version is 3.18. Go has no public 3.18 library; the protocol package is ours. gopls (path in the skill's `sources.md`) is the reference for framing/dispatch patterns.
-- All I/O — including the stdio transport — goes through PAL.
+- The host injects transport streams, filesystem access and a log writer. No direct production filesystem access inside `ls/` (the offline protocol generator is exempt).
+- Keep project keys, filesystem roots and compiler names distinct; single files sharing a folder need separate keys.
+- Logs must never reach protocol output. The host owns the log writer; the server must not close it.
 
 ## Testing — golden JSON fixtures
 
 Prefer fixture tests over Go unit tests, same philosophy as the compiler corpus: if a scenario can't be driven through a real LSP request against a `.bal` fixture, question whether it can happen in the real world.
+
+Use injected filesystems in tests; keep fixture writes in temporary directories and separate from production filesystem access.
 
 Layout, per feature:
 
