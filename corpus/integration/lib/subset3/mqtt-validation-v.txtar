@@ -1,0 +1,15 @@
+-- stdout --
+qos 3: Invalid QoS value: 3. Allowed values are 0, 1 and 2 (mqtt:Error=true)
+qos -1: Invalid QoS value: -1. Allowed values are 0, 1 and 2 (mqtt:Error=true)
+wildcard topic: The topic name MUST NOT contain any wildcard characters (#+) (mqtt:Error=true)
+single-level wildcard topic: The topic name MUST NOT contain any wildcard characters (#+) (mqtt:Error=true)
+empty topic: Invalid topic length, should be in range[1, 65535]! (mqtt:Error=true)
+misplaced #: Invalid usage of multi-level wildcard in topic string: validation-v/#/x (mqtt:Error=true)
+# not a level: Invalid usage of multi-level wildcard in topic string: validation-v# (mqtt:Error=true)
++ not a level: Invalid usage of single-level wildcard in topic string 'validation-v/a+'! (mqtt:Error=true)
+subscription qos 3: Invalid QoS value: 3. Allowed values are 0, 1 and 2 (mqtt:Error=true)
+valid filters: ok
+will topic: The topic name MUST NOT contain any wildcard characters (#+) (mqtt:Error=true)
+will qos: Invalid QoS value: 5. Allowed values are 0, 1 and 2 (mqtt:Error=true)
+listener start: Invalid usage of multi-level wildcard in topic string: validation-v/a/#/b (mqtt:Error=true)
+-- stderr --

@@ -1,0 +1,20 @@
+# Mosquitto broker for the ballerina/mqtt corpus tests, mirroring module-ballerina-mqtt's
+# tests/resources/compose.yaml. Started and stopped by .github/scripts/run_native_tests.py.
+services:
+    mosquitto:
+        image: 'eclipse-mosquitto:2'
+        hostname: mosquitto
+        container_name: ballerina-mqtt-test
+        ports:
+            - '1883:1883'
+            - '1884:1884'
+            - '8883:8883'
+            - '8884:8884'
+            - '8888:8888'
+        volumes:
+            - ./mosquitto_password.txt:/mosquitto/passwd_file
+            - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+            - ./certs/client.crt:/mosquitto/ca.crt
+            - ./certs/server.crt:/mosquitto/server.crt
+            - ./certs/server.key:/mosquitto/server.key
+            - ./certs/client.crt:/mosquitto/cacerts/client.crt

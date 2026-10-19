@@ -20,12 +20,15 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -147,9 +150,27 @@ func TestLibIntegration(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
+			if isMqttTest(tc) && !mqttBrokerAvailable() {
+				t.Skipf("Skipping %s: no MQTT broker on %s (start one with docker compose -f corpus/lib/resources/mqtt/compose.yaml up -d)", tc.Name, mqttBrokerAddress)
+			}
 			runHarnessCase(t, tc)
 		})
 	}
+}
+
+const mqttBrokerAddress = "localhost:1883"
+
+var mqttBrokerAvailable = sync.OnceValue(func() bool {
+	conn, err := net.DialTimeout("tcp", mqttBrokerAddress, 2*time.Second)
+	if err != nil {
+		return false
+	}
+	_ = conn.Close()
+	return true
+})
+
+func isMqttTest(tc test_util.TestCase) bool {
+	return strings.HasPrefix(filepath.Base(tc.InputPath), "mqtt-")
 }
 
 func TestProjectIntegration(t *testing.T) {

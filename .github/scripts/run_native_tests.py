@@ -4,8 +4,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
 import re
+import shutil
+import socket
 import subprocess
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import NamedTuple
@@ -16,6 +20,12 @@ TIMEOUT = "2h"
 PROFILE_LINE_PATTERN = re.compile(
     r"^(.+):([0-9]+\.[0-9]+,[0-9]+\.[0-9]+\s+[0-9]+\s+[0-9]+)$"
 )
+
+
+MQTT_COMPOSE_FILE = Path("corpus/lib/resources/mqtt/compose.yaml")
+MQTT_CONTAINER = "ballerina-mqtt-test"
+MQTT_PORT = 1883
+MQTT_STARTUP_TIMEOUT_SECONDS = 60
 
 
 class ModuleInfo(NamedTuple):
@@ -226,6 +236,51 @@ def normalize_all_coverage_profiles(
             )
 
 
+def mqtt_broker_running() -> bool:
+    result = subprocess.run(
+        ["docker", "ps", "--filter", f"name={MQTT_CONTAINER}", "--format", "{{.Names}}"],
+        capture_output=True,
+        text=True,
+    )
+    return MQTT_CONTAINER in result.stdout
+
+
+def wait_for_port(port: int, timeout_seconds: int) -> bool:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        try:
+            with socket.create_connection(("localhost", port), timeout=1):
+                return True
+        except OSError:
+            time.sleep(1)
+    return False
+
+
+def start_mqtt_broker(repo_root: Path) -> bool:
+    """Starts the Mosquitto broker used by the ballerina/mqtt corpus tests, like the
+    startMqttServer Gradle task of module-ballerina-mqtt. Returns True only if this call
+    started it. The mqtt tests skip themselves when no broker is reachable."""
+    if platform.system() == "Windows" or shutil.which("docker") is None:
+        print("Docker is unavailable; ballerina/mqtt corpus tests will be skipped")
+        return False
+    if mqtt_broker_running():
+        print("MQTT broker is already running")
+        return False
+    print("Starting MQTT broker")
+    result = subprocess.run(["docker", "compose", "-f", str(repo_root / MQTT_COMPOSE_FILE), "up", "-d"])
+    if result.returncode != 0:
+        print("Failed to start the MQTT broker; ballerina/mqtt corpus tests will be skipped")
+        return False
+    if not wait_for_port(MQTT_PORT, MQTT_STARTUP_TIMEOUT_SECONDS):
+        print("MQTT broker did not become reachable; ballerina/mqtt corpus tests will be skipped")
+    return True
+
+
+def stop_mqtt_broker(repo_root: Path) -> None:
+    print("Stopping MQTT broker")
+    subprocess.run(["docker", "compose", "-f", str(repo_root / MQTT_COMPOSE_FILE), "rm", "-svf"])
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--with-coverage", action="store_true")
@@ -246,10 +301,15 @@ def main() -> int:
     workspace_packages = (
         discover_all_workspace_packages(repo_root, modules) if args.with_coverage else ""
     )
-    if run_modules_in_parallel(
-        repo_root, modules, args.with_coverage, go_parallel, args.race, workspace_packages
-    ):
-        return 1
+    started_broker = start_mqtt_broker(repo_root)
+    try:
+        if run_modules_in_parallel(
+            repo_root, modules, args.with_coverage, go_parallel, args.race, workspace_packages
+        ):
+            return 1
+    finally:
+        if started_broker:
+            stop_mqtt_broker(repo_root)
 
     if args.with_coverage:
         prefix_map = build_module_prefix_map(modules)
