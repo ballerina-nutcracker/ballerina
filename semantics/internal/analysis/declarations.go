@@ -100,11 +100,17 @@ func validateVariable(cx scope.Context, v *ast.BLangVariable, expected semtypes.
 		}
 	}
 	if v.Expr != nil {
-		f, ok := validateActionOrExpr(cx, v.Expr, expected)
+		md, isModuleVar := cx.ModuleVar(v.Symbol())
+		isolatedVar := isModuleVar && md.IsIsolated()
+		exprCx := cx
+		if isolatedVar {
+			exprCx = scope.NewIsolatedVarInit(cx, v)
+		}
+		f, ok := validateActionOrExpr(exprCx, v.Expr, expected)
 		if !ok {
 			return false
 		}
-		if md, isModuleVar := cx.ModuleVar(v.Symbol()); isModuleVar && md.IsIsolated() && !f.Isolated() {
+		if isolatedVar && !f.Isolated() {
 			cx.SemanticErr("initializer of an isolated variable must be an isolated expression", v.Expr.GetPosition())
 			return false
 		}
