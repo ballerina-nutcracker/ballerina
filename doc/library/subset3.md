@@ -383,7 +383,7 @@ Connection-oriented TCP client and listener that exchange raw bytes with no fram
 | `tcp:ConnectionService.onBytes` / `onError` / `onClose` | `onBytes(readonly & byte[])` or `onBytes(Caller, readonly & byte[])`; returned bytes are written back to the peer. `onError(tcp:Error)` and `onClose()` are optional |
 | `tcp:Caller` | `writeBytes`, `close`, and the `remoteHost`, `remotePort`, `localHost`, `localPort` and `id` fields |
 
-The service rules that jBallerina's compiler plugin enforces are checked at runtime: `attach` returns `tcp:Error` for an invalid `tcp:Service`, and an invalid connection service returned from `onConnect` is logged and its connection closed. `tcp:Service`, `tcp:ConnectionService` and `tcp:Error` are not `distinct` types.
+The service rules that jBallerina's compiler plugin enforces on `service on` declarations are checked at runtime, for service classes as well: `attach` returns `tcp:Error` for an invalid `tcp:Service`, and an invalid connection service returned from `onConnect` is logged and its connection closed. `tcp:Service`, `tcp:ConnectionService` and `tcp:Error` are not `distinct` types.
 
 Not covered in this subset: `ClientSecureSocket.handshakeTimeout`/`sessionTimeout`, `ListenerSecureSocket.handshakeTimeout`/`sessionTimeout`, and `CertKey.keyPassword` (an encrypted private key fails at the TLS handshake).
 
