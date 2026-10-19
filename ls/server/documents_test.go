@@ -23,7 +23,7 @@ import (
 )
 
 func TestApplyChangesUTF16(t *testing.T) {
-	result, ok := applyChanges("😀x\n", []protocol.TextDocumentContentChangeEvent{
+	result, ok := applyChanges("𐐀x\n", []protocol.TextDocumentContentChangeEvent{
 		protocol.NewTextDocumentContentChangeEventTextDocumentContentChangePartial(protocol.TextDocumentContentChangePartial{
 			Range: protocol.Range{
 				Start: protocol.Position{Line: 0, Character: 2},
@@ -32,8 +32,8 @@ func TestApplyChangesUTF16(t *testing.T) {
 			Text: "y",
 		}),
 	})
-	if !ok || result != "😀y\n" {
-		t.Fatalf("applyChanges = %q ok=%v, want %q", result, ok, "😀y\n")
+	if !ok || result != "𐐀y\n" {
+		t.Fatalf("applyChanges = %q ok=%v, want %q", result, ok, "𐐀y\n")
 	}
 }
 

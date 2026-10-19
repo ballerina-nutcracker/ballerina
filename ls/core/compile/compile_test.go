@@ -125,9 +125,9 @@ func TestByteOffsetToLineCharUTF16(t *testing.T) {
 		{name: "crlf single break line1 start", text: "ab\r\ncd", offset: 4, wantLine: 1, wantChar: 0, wantOK: true},
 		{name: "crlf at cr belongs to line0 end", text: "ab\r\ncd", offset: 2, wantLine: 0, wantChar: 2, wantOK: true},
 		{name: "cr-only break", text: "ab\rcd", offset: 3, wantLine: 1, wantChar: 0, wantOK: true},
-		{name: "surrogate pair byte char", text: "😀x", offset: 4, wantLine: 0, wantChar: 4, wantOK: true},
-		{name: "offset after surrogate at ascii", text: "😀x", offset: 5, wantLine: 0, wantChar: 5, wantOK: true},
-		{name: "surrogate on later line", text: "😀\n😀z", offset: 9, wantLine: 1, wantChar: 4, wantOK: true},
+		{name: "surrogate pair byte char", text: "𐐀x", offset: 4, wantLine: 0, wantChar: 4, wantOK: true},
+		{name: "offset after surrogate at ascii", text: "𐐀x", offset: 5, wantLine: 0, wantChar: 5, wantOK: true},
+		{name: "surrogate on later line", text: "𐐀\n𐐀z", offset: 9, wantLine: 1, wantChar: 4, wantOK: true},
 		{name: "negative offset invalid", text: "abc", offset: -1, wantOK: false},
 		{name: "offset past end invalid", text: "abc", offset: 4, wantOK: false},
 	}

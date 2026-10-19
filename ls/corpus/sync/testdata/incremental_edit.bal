@@ -1,1 +1,1 @@
-string emoji = "😀";
+string emoji = "𐐀";
