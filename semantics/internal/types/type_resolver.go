@@ -2478,23 +2478,6 @@ func resolveTypeData(t typeResolver, chain *binding, typeData *ast.TypeData) (se
 	return ty, chain, true
 }
 
-// setRecordDefaultFnSignature populates the signature of the record field default function symbol
-// allocated during symbol resolution, now that the field type is known.
-func setRecordDefaultFnSignature(t typeResolver, fnRef model.SymbolRef, fieldTy semtypes.SemType, loc diagnostics.Location) {
-	if fnRef.IsEmpty() {
-		t.internalError("record field default function symbol not allocated", loc)
-		return
-	}
-	fnSymbol := t.getSymbol(fnRef).(model.FunctionSymbol)
-	sig := model.TypedFunctionSignature{ReturnType: fieldTy}
-	fnSymbol.SetTypedSignature(sig)
-	t.setSymbolType(fnRef, typeFromFunctionSignature(t, sig))
-	handle := t.allocateFunctionSignature(nil, false)
-	if !t.associateFunctionSignature(fnRef, handle) {
-		t.internalError("function signature already set", loc)
-	}
-}
-
 func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth int) bool {
 	if ty := t.symbolType(defn.Symbol()); !semtypes.IsZero(ty) {
 		return true
@@ -7920,7 +7903,7 @@ func resolveStreamCompletionType(t typeResolver, chain *binding, typeData *ast.T
 }
 
 // typeDescriptorDeclaresSymbols reports whether resolving btype writes symbol state: method symbols of an object
-// type, named parameters of a function type, or the default function of a record field.
+// type or named parameters of a function type.
 func typeDescriptorDeclaresSymbols(btype ast.BType) bool {
 	switch ty := btype.(type) {
 	case *ast.BLangObjectType:
@@ -7936,12 +7919,6 @@ func typeDescriptorDeclaresSymbols(btype ast.BType) bool {
 			}
 		}
 		return ty.RestParam != nil && !ty.RestParam.SymbolRef.IsEmpty()
-	case *ast.BLangRecordType:
-		for _, field := range ty.FieldPtrs() {
-			if field.Default != nil {
-				return true
-			}
-		}
 	}
 	return false
 }
@@ -8277,7 +8254,6 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 				if ok {
 					chain = sequentialChain(t, defaultResult.effect)
 				}
-				setRecordDefaultFnSignature(t, field.Default.FnRef, fieldTy, field.GetPosition())
 			}
 			ro := field.IsReadonly()
 			opt := field.IsOptional()
