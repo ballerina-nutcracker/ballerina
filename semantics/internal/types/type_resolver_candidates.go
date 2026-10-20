@@ -17,6 +17,8 @@
 package types
 
 import (
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
@@ -25,6 +27,20 @@ type ephemeralState struct {
 	// unimplementedReported records that a trial reported an unimplemented error. Compilation fails on that
 	// diagnostic, so a new expression whose trials all failed does not add its own.
 	unimplementedReported bool
+	// symbolTypes shadows the compiler context's symbol types while a trial runs. It is non-nil exactly while
+	// depth > 0 and is shared by every trial in the nesting: a trial writes a symbol's type before reading it, so
+	// stale entries from sibling candidates or inner trials are overwritten before they can be read.
+	symbolTypes map[model.SymbolRef]semtypes.SemType
+}
+
+func (s *ephemeralState) lookupSymbolType(ref model.SymbolRef) (semtypes.SemType, bool) {
+	ty, ok := s.symbolTypes[ref]
+	return ty, ok
+}
+
+// setSymbolType records a trial-local symbol type. Callers guarantee depth > 0, so the map exists.
+func (s *ephemeralState) setSymbolType(ref model.SymbolRef, ty semtypes.SemType) {
+	s.symbolTypes[ref] = ty
 }
 
 func noteEphemeralUnimplemented(t typeResolver) {
@@ -51,9 +67,15 @@ func enterEphemeral(t typeResolver) func() {
 	if state == nil {
 		return func() {}
 	}
+	if state.depth == 0 {
+		state.symbolTypes = make(map[model.SymbolRef]semtypes.SemType)
+	}
 	state.depth++
 	return func() {
 		state.depth--
+		if state.depth == 0 {
+			state.symbolTypes = nil
+		}
 	}
 }
 

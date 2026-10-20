@@ -280,10 +280,17 @@ func (t *packageTypeResolver) unimplemented(msg string, loc diagnostics.Location
 }
 
 func (t *packageTypeResolver) symbolType(ref model.SymbolRef) semtypes.SemType {
+	if ty, ok := t.ephemeralState.lookupSymbolType(ref); ok {
+		return ty
+	}
 	return t.ctx.SymbolType(ref)
 }
 
 func (t *packageTypeResolver) setSymbolType(ref model.SymbolRef, ty semtypes.SemType) {
+	if t.isEphemeral() {
+		t.ephemeralState.setSymbolType(ref, ty)
+		return
+	}
 	t.ctx.SetSymbolType(ref, ty)
 }
 
@@ -465,12 +472,22 @@ func (f *functionTypeResolver) unimplemented(msg string, loc diagnostics.Locatio
 	f.parentResolver.unimplemented(msg, loc)
 }
 
+// symbolType returns the trial overlay entry for ref when one exists, else the compiler-context type.
 func (f *functionTypeResolver) symbolType(ref model.SymbolRef) semtypes.SemType {
-	return f.parentResolver.symbolType(ref)
+	if f.ephemeralState != nil {
+		if ty, ok := f.ephemeralState.lookupSymbolType(ref); ok {
+			return ty
+		}
+	}
+	return f.compilerContext().SymbolType(ref)
 }
 
 func (f *functionTypeResolver) setSymbolType(ref model.SymbolRef, ty semtypes.SemType) {
-	f.parentResolver.setSymbolType(ref, ty)
+	if f.isEphemeral() {
+		f.ephemeralState.setSymbolType(ref, ty)
+		return
+	}
+	f.compilerContext().SetSymbolType(ref, ty)
 }
 
 func (f *functionTypeResolver) getSymbol(ref model.SymbolRef) model.Symbol {
@@ -2412,9 +2429,7 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 			t.semanticError("cannot infer anonymous function parameter type", params[i].GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		if !t.isEphemeral() {
-			updateSymbolType(t, &params[i], paramTy)
-		}
+		updateSymbolType(t, &params[i], paramTy)
 		paramTypes[i] = paramTy
 	}
 
@@ -2453,9 +2468,6 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 	}
 	outerChain := addCaptureGroup(chain, e.Function.CaptureGroup())
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: outerChain}
-	if t.isEphemeral() {
-		boundaryChain = bindInferredParams(t, boundaryChain, params, paramTypes)
-	}
 	body := e.Function.Body.(*ast.BLangExprFunctionBody)
 	returnResult, ok := resolveActionOrExpression(ft, boundaryChain, body.Expr, expectedReturnTy)
 	if !ok {
@@ -2473,16 +2485,6 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 	}
 	setNodeType(t, e, fnType)
 	return fnType, defaultExpressionEffect(outerChain), true
-}
-
-// bindInferredParams gives each inferred parameter its type for the current candidate trial on the body's chain,
-// leaving the parameter symbols themselves untouched.
-func bindInferredParams(t typeResolver, chain *binding, params []ast.BLangVariable, paramTypes []semtypes.SemType) *binding {
-	for i := range params {
-		ref := params[i].Symbol()
-		chain = &binding{ref: ref, narrowedSymbol: narrowSymbol(t, ref, paramTypes[i]), prev: chain, flags: bindingFlagInferredParam}
-	}
-	return chain
 }
 
 func resolveTypeData(t typeResolver, chain *binding, typeData *ast.TypeData) (semtypes.SemType, *binding, bool) {
@@ -4852,16 +4854,26 @@ func resolveTypeConversionExpr(t typeResolver, chain *binding, e *ast.BLangTypeC
 
 // Helper functions for expression type checking
 
+// queryResolution is the state the resolver builds up while resolving one query expression.
+type queryResolution struct {
+	expr *ast.BLangQueryExpr
+	// nonGroupingKeys holds, per group by clause, the names of the query variables the clause aggregated.
+	nonGroupingKeys map[*ast.BLangGroupByClause]*balCommon.OrderedSet[string]
+}
+
+func newQueryResolution(expr *ast.BLangQueryExpr) *queryResolution {
+	return &queryResolution{
+		expr:            expr,
+		nonGroupingKeys: make(map[*ast.BLangGroupByClause]*balCommon.OrderedSet[string]),
+	}
+}
+
 func resolveQueryExpr(
 	t typeResolver,
 	chain *binding,
 	expr *ast.BLangQueryExpr,
 	expectedType semtypes.SemType,
 ) (semtypes.SemType, expressionEffect, bool) {
-	if t.isEphemeral() {
-		t.unimplemented("query expressions are not supported while selecting among candidate types", expr.GetPosition())
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
 	if len(expr.QueryClauseList) < 2 {
 		t.semanticError("query expression requires from and select clauses", expr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -4898,6 +4910,7 @@ func resolveQueryExpr(
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 
+	q := newQueryResolution(expr)
 	collectionResult, ok := resolveActionOrExpression(t, chain, fromClause.Collection, semtypes.SemType{})
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -4934,7 +4947,7 @@ func resolveQueryExpr(
 		updateSymbolType(t, varDef.Var, variableTy)
 	}
 
-	queryChain, ok := resolveQueryIntermediateClauses(t, chain, expr, lastClauseIndex)
+	queryChain, ok := resolveQueryIntermediateClauses(t, chain, q, lastClauseIndex)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -4978,8 +4991,11 @@ func resolveQueryExpr(
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 		collectChain := queryChain
-		groupAggregatedSymbols := queryGroupAggregatedSymbolsBeforeClause(expr, lastClauseIndex)
-		for _, variable := range queryVariablesBeforeClause(expr, lastClauseIndex) {
+		groupAggregatedSymbols, ok := queryGroupAggregatedSymbolsBeforeClause(t, q, lastClauseIndex)
+		if !ok {
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
+		for _, variable := range queryVariablesBeforeClause(q.expr, lastClauseIndex) {
 			if groupAggregatedSymbols[variable.symbol] {
 				continue
 			}
@@ -5114,20 +5130,27 @@ func queryVariablesBeforeClause(queryExpr *ast.BLangQueryExpr, endIndex int) []q
 	return variables
 }
 
-func queryGroupAggregatedSymbolsBeforeClause(queryExpr *ast.BLangQueryExpr, endIndex int) map[model.SymbolRef]bool {
+// queryGroupAggregatedSymbolsBeforeClause returns the symbols the group by clauses before endIndex aggregated. Every
+// such clause resolved before this is called, so a clause without recorded keys is a compiler bug.
+func queryGroupAggregatedSymbolsBeforeClause(t typeResolver, q *queryResolution, endIndex int) (map[model.SymbolRef]bool, bool) {
 	aggregated := make(map[model.SymbolRef]bool)
 	for i := 0; i < endIndex; i++ {
-		groupByClause, ok := queryExpr.QueryClauseList[i].(*ast.BLangGroupByClause)
-		if !ok || groupByClause.NonGroupingKeys == nil {
+		groupByClause, ok := q.expr.QueryClauseList[i].(*ast.BLangGroupByClause)
+		if !ok {
 			continue
 		}
-		for _, variable := range queryVariablesBeforeClause(queryExpr, i) {
-			if variable.name != "" && groupByClause.NonGroupingKeys.Contains(variable.name) {
+		nonGroupingKeys, ok := q.nonGroupingKeys[groupByClause]
+		if !ok {
+			t.internalError("group by clause has no non-grouping keys", groupByClause.GetPosition())
+			return nil, false
+		}
+		for _, variable := range queryVariablesBeforeClause(q.expr, i) {
+			if variable.name != "" && nonGroupingKeys.Contains(variable.name) {
 				aggregated[variable.symbol] = true
 			}
 		}
 	}
-	return aggregated
+	return aggregated, true
 }
 
 func appendQueryVariableInfo(
@@ -5221,11 +5244,11 @@ func resolveQueryGroupingKeyVarDef(t typeResolver, chain *binding, varDef *ast.B
 func resolveQueryGroupByClause(
 	t typeResolver,
 	chain *binding,
-	queryExpr *ast.BLangQueryExpr,
+	q *queryResolution,
 	clause *ast.BLangGroupByClause,
 	clauseIndex int,
 ) (*binding, bool) {
-	queryVariables := queryVariablesBeforeClause(queryExpr, clauseIndex)
+	queryVariables := queryVariablesBeforeClause(q.expr, clauseIndex)
 	nonGroupingKeys := &balCommon.OrderedSet[string]{}
 	for _, variable := range queryVariables {
 		if variable.name != "" && variable.name != "_" {
@@ -5264,7 +5287,7 @@ func resolveQueryGroupByClause(
 			return nil, false
 		}
 	}
-	setGroupByNonGroupingKeys(t, clause, nonGroupingKeys)
+	q.nonGroupingKeys[clause] = nonGroupingKeys
 
 	resultChain := chain
 	for _, variable := range queryVariables {
@@ -5275,10 +5298,10 @@ func resolveQueryGroupByClause(
 	return resultChain, true
 }
 
-func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryExpr *ast.BLangQueryExpr, selectClauseIndex int) (*binding, bool) {
+func resolveQueryIntermediateClauses(t typeResolver, chain *binding, q *queryResolution, selectClauseIndex int) (*binding, bool) {
 	currentChain := chain
 	for i := 1; i < selectClauseIndex; i++ {
-		switch clause := queryExpr.QueryClauseList[i].(type) {
+		switch clause := q.expr.QueryClauseList[i].(type) {
 		case *ast.BLangJoinClause:
 			collectionResult, ok := resolveActionOrExpression(t, currentChain, clause.Collection, semtypes.SemType{})
 			if !ok {
@@ -5381,7 +5404,7 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, queryExpr *
 			currentChain = effect.ifTrue
 		case *ast.BLangGroupByClause:
 			var ok bool
-			currentChain, ok = resolveQueryGroupByClause(t, currentChain, queryExpr, clause, i)
+			currentChain, ok = resolveQueryGroupByClause(t, currentChain, q, clause, i)
 			if !ok {
 				return nil, false
 			}
@@ -8040,9 +8063,6 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 		symbol := ty.Symbol()
 		if ty.PkgAlias.GetValue() != "" {
 			return t.symbolType(symbol), chain, true
-		}
-		if t.isEphemeral() {
-			symbol = lookupDeclaredSymbol(chain, symbol)
 		}
 		if !t.ensureResolved(symbol, depth) {
 			return semtypes.SemType{}, chain, false

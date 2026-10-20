@@ -109,6 +109,7 @@ func TestResolveQueryExprErrorCases(t *testing.T) {
 }
 
 func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name    string
 		clause  ast.BLangNode
@@ -245,13 +246,14 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
 			query := newQueryExpr(
 				newFromClause(newIntListLiteral(1), nil, true),
 				testCase.clause,
 				newSelectClause(newIntLiteral(1)),
 			)
 			resolver, cx := newTestQueryResolver()
-			_, ok := resolveQueryIntermediateClauses(resolver, nil, query, len(query.QueryClauseList)-1)
+			_, ok := resolveQueryIntermediateClauses(resolver, nil, newQueryResolution(query), len(query.QueryClauseList)-1)
 			if ok {
 				t.Fatalf("expected resolveQueryIntermediateClauses to fail")
 			}
