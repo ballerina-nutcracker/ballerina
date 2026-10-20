@@ -17,7 +17,6 @@
 package types
 
 import (
-	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
@@ -69,9 +68,10 @@ const (
 )
 
 // selectCandidate runs trial for each candidate while t is ephemeral and returns the only candidate whose trial
-// succeeded. A trial resolves roots against its candidate without committing anything, so the caller resolves roots
-// again, for real, against the selected candidate.
-func selectCandidate[C any](t typeResolver, candidates []C, roots []ast.BLangExpression, trial func(C) bool) (C, candidateOutcome) {
+// succeeded. A trial resolves the expression's operands against its candidate without committing anything except
+// the XML step lowering (see resolveXMLStepExpr), so the caller resolves them again, for real, against the selected
+// candidate.
+func selectCandidate[C any](t typeResolver, candidates []C, trial func(C) bool) (C, candidateOutcome) {
 	var selected C
 	state := resolverEphemeralState(t)
 	if len(candidates) < 2 || state == nil {
@@ -80,7 +80,7 @@ func selectCandidate[C any](t typeResolver, candidates []C, roots []ast.BLangExp
 	}
 	outerUnimplemented := state.unimplementedReported
 	state.unimplementedReported = false
-	survivors := runTrials(t, candidates, roots, trial)
+	survivors := runTrials(t, candidates, trial)
 	unimplemented := state.unimplementedReported
 	state.unimplementedReported = outerUnimplemented || unimplemented
 	switch {
@@ -95,15 +95,12 @@ func selectCandidate[C any](t typeResolver, candidates []C, roots []ast.BLangExp
 	}
 }
 
-func runTrials[C any](t typeResolver, candidates []C, roots []ast.BLangExpression, trial func(C) bool) []C {
+func runTrials[C any](t typeResolver, candidates []C, trial func(C) bool) []C {
 	exitEphemeral := enterEphemeral(t)
 	defer exitEphemeral()
 	var survivors []C
 	for _, candidate := range candidates {
-		checkUnchanged := assertUnchanged(t, roots)
-		ok := trial(candidate)
-		checkUnchanged()
-		if ok {
+		if trial(candidate) {
 			survivors = append(survivors, candidate)
 		}
 	}

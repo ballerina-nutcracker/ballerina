@@ -14,6 +14,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//go:build debug
+import ballerina/io;
 
-package types
+function show(any v) {
+    io:println(v is [xml, xml, xml, int]); // @output true
+    io:println(v is [xml, xml, xml, string]); // @output false
+}
+
+public function main() {
+    xml x = xml `<root><a>1</a><a>2</a></root>`;
+    [xml, xml, xml, int]|[xml, xml, xml, string] l = [x/<a>, x/<a>[1], x/<a>.get(0), 1];
+    show(l);
+    io:println(l); // @output [<a>1</a><a>2</a>,<a>2</a>,<a>1</a>,1]
+}

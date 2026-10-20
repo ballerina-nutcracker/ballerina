@@ -1,0 +1,13 @@
+-- stdout --
+A
+{"v":<a>1</a><a>2</a>,"m":1}
+[xml, string]
+[<a>2</a>,"s"]
+[function (xml) returns xml[], int]
+A
+{"v":<a>1</a>,"m":1}
+[xml, int]
+[<a>1</a>,7]
+[function (xml) returns xml[], int]
+[<a>1</a>,<b>2</b>]
+-- stderr --

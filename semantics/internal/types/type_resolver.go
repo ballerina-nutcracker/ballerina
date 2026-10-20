@@ -202,12 +202,13 @@ type packageTypeResolver struct {
 	// lazyResolutionStatus tracks per-symbol resolution progress (for both
 	// constants and module-level vars) for cycle detection.
 	// Absence means resolution has not started.
-	lazyResolutionStatus  map[model.SymbolRef]resolutionStatus
-	functionNodes         map[model.SymbolRef]*ast.BLangFunction
-	typeDefnNodes         map[model.SymbolRef]*ast.BLangTypeDefinition
-	classDefnNodes        map[model.SymbolRef]*ast.BLangClassDefinition
-	monoCounters          map[string]int
-	xmlStepCounter        int
+	lazyResolutionStatus map[model.SymbolRef]resolutionStatus
+	functionNodes        map[model.SymbolRef]*ast.BLangFunction
+	typeDefnNodes        map[model.SymbolRef]*ast.BLangTypeDefinition
+	classDefnNodes       map[model.SymbolRef]*ast.BLangClassDefinition
+	monoCounters         map[string]int
+	// xmlStepCounters holds the next index per owner name; a lambda resolver shares its enclosing body's table.
+	xmlStepCounters       map[string]int
 	annotationGlobalCount int
 	scope                 model.Scope
 	context               resolverContext
@@ -369,9 +370,29 @@ func xmlStepFnName(owner string, idx int) string {
 }
 
 func (t *packageTypeResolver) nextXMLStepFnName() string {
-	idx := t.xmlStepCounter
-	t.xmlStepCounter++
-	return xmlStepFnName(moduleXMLStepOwner, idx)
+	return xmlStepFnName(moduleXMLStepOwner, nextXMLStepIndex(t.xmlStepCounters, moduleXMLStepOwner))
+}
+
+func nextXMLStepIndex(counters map[string]int, owner string) int {
+	idx := counters[owner]
+	counters[owner] = idx + 1
+	return idx
+}
+
+// resolverXMLStepCounters returns the counter table of the body enclosing t, for a lambda resolver to share.
+func resolverXMLStepCounters(t typeResolver) map[string]int {
+	switch resolver := t.(type) {
+	case *packageTypeResolver:
+		return resolver.xmlStepCounters
+	case *functionTypeResolver:
+		return resolver.xmlStepCounters
+	case *loopTypeResolver:
+		return resolverXMLStepCounters(resolver.parentResolver)
+	default:
+		// Unreachable: these are the only resolver kinds. The fresh table keeps the caller from writing a nil map.
+		t.internalError(fmt.Sprintf("no xml step counters for resolver %T", t), diagnostics.Location{})
+		return make(map[string]int)
+	}
 }
 
 func (t *packageTypeResolver) packageID() *model.PackageID { return t.pkg.PackageID }
@@ -388,9 +409,6 @@ func (t *packageTypeResolver) lookupImportedSymbols(name string) (model.Exported
 }
 
 func (t *packageTypeResolver) addImplicitImport(name string, imp ast.BLangImportPackage) {
-	if t.isEphemeral() {
-		return
-	}
 	t.implicitImports[name] = imp
 }
 
@@ -407,7 +425,8 @@ type functionTypeResolver struct {
 	implicitImports map[string]ast.BLangImportPackage
 	monoCounters    map[string]int
 	xmlStepOwner    string
-	xmlStepCounter  int
+	// xmlStepCounters holds the next index per owner name; a lambda resolver shares its enclosing body's table.
+	xmlStepCounters map[string]int
 	scope           model.Scope
 	context         resolverContext
 	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
@@ -531,9 +550,6 @@ func (f *functionTypeResolver) lookupImportedSymbols(name string) (model.Exporte
 }
 
 func (f *functionTypeResolver) addImplicitImport(name string, imp ast.BLangImportPackage) {
-	if f.isEphemeral() {
-		return
-	}
 	f.implicitImports[name] = imp
 }
 
@@ -644,9 +660,7 @@ func setResolverContext(t typeResolver, flag resolverContext, enabled bool) func
 }
 
 func (f *functionTypeResolver) nextXMLStepFnName() string {
-	idx := f.xmlStepCounter
-	f.xmlStepCounter++
-	return xmlStepFnName(f.xmlStepOwner, idx)
+	return xmlStepFnName(f.xmlStepOwner, nextXMLStepIndex(f.xmlStepCounters, f.xmlStepOwner))
 }
 
 func (f *functionTypeResolver) packageID() *model.PackageID { return f.parentResolver.packageID() }
@@ -671,6 +685,7 @@ func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage,
 		typeDefnNodes:        make(map[model.SymbolRef]*ast.BLangTypeDefinition),
 		classDefnNodes:       make(map[model.SymbolRef]*ast.BLangClassDefinition),
 		monoCounters:         make(map[string]int),
+		xmlStepCounters:      make(map[string]int),
 		scope:                moduleScope,
 	}
 }
@@ -789,6 +804,7 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 			implicitImports:   make(map[string]ast.BLangImportPackage),
 			monoCounters:      make(map[string]int),
 			xmlStepOwner:      p.getSymbol(owner).Name(),
+			xmlStepCounters:   make(map[string]int),
 			scope:             scope,
 			ephemeralState:    &ephemeralState{},
 		}
@@ -1062,6 +1078,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
 		xmlStepOwner:      fnSym.Name(),
+		xmlStepCounters:   make(map[string]int),
 		scope:             fn.Scope(),
 		context:           resolverContextForFunction(fn.IsIsolated()),
 		ephemeralState:    &ephemeralState{},
@@ -2330,6 +2347,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
 		xmlStepOwner:      fnSym.Name(),
+		xmlStepCounters:   resolverXMLStepCounters(t),
 		scope:             e.Function.Scope(),
 		context:           resolverContextForFunction(fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0),
 		ephemeralState:    resolverEphemeralState(t),
@@ -2428,6 +2446,7 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
 		xmlStepOwner:      fnSym.Name(),
+		xmlStepCounters:   resolverXMLStepCounters(t),
 		scope:             e.Function.Scope(),
 		context:           resolverContextForFunction(flags&model.FuncSymbolFlagIsolated != 0),
 		ephemeralState:    resolverEphemeralState(t),
@@ -4178,7 +4197,7 @@ func resolveObjectNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpress
 	if len(candidates) == 1 {
 		return finishObjectNew(t, chain, e, determinedTy, candidates[0])
 	}
-	selected, outcome := selectCandidate(t, candidates, e.ArgsExprs, func(candidate constructibleAlternative) bool {
+	selected, outcome := selectCandidate(t, candidates, func(candidate constructibleAlternative) bool {
 		_, _, _, ok := resolveObjectInitArgs(t, chain, e, candidate.alternative, candidate.table)
 		return ok
 	})
@@ -4544,7 +4563,7 @@ func resolveMappingConstructorExpr(t typeResolver, chain *binding, e *ast.BLangM
 	if !t.isEphemeral() && !resolveTrialDependencies(t, []ast.BLangExpression{e}) {
 		return expressionResult{}, false
 	}
-	selected, outcome := selectCandidate(t, candidates, []ast.BLangExpression{e}, func(candidate mappingCandidate) bool {
+	selected, outcome := selectCandidate(t, candidates, func(candidate mappingCandidate) bool {
 		_, ok := finishMappingConstructor(t, chain, e, candidate)
 		return ok
 	})
@@ -5451,7 +5470,7 @@ func resolveListConstructorExpr(t typeResolver, chain *binding, expr *ast.BLangL
 	if !t.isEphemeral() && !resolveTrialDependencies(t, []ast.BLangExpression{expr}) {
 		return expressionResult{}, false
 	}
-	selected, outcome := selectCandidate(t, candidates, []ast.BLangExpression{expr}, func(candidate listCandidate) bool {
+	selected, outcome := selectCandidate(t, candidates, func(candidate listCandidate) bool {
 		_, ok := finishListConstructor(t, chain, expr, spread, candidate)
 		return ok
 	})
@@ -9096,22 +9115,20 @@ func resolveXMLFilterExpr(t typeResolver, chain *binding, expr *ast.BLangXMLFilt
 }
 
 func resolveXMLStepExpr(t typeResolver, chain *binding, expr *ast.BLangXMLStepExpression, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
-	if t.isEphemeral() {
-		t.unimplemented("xml step expressions are not supported while selecting among candidate types", expr.GetPosition())
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
-	lowered := expr.LoweredExpression
-	if lowered == nil {
-		var ok bool
-		if lowered, ok = lowerXMLStepExpr(t, expr); !ok {
+	if expr.LoweredExpression == nil {
+		lowered, ok := lowerXMLStepExpr(t, expr)
+		if !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
+		// This is the one AST write allowed while the resolver is ephemeral. The lowering does not depend on the
+		// candidate being tried, so the first resolution to reach the step makes it for all of them, and it is
+		// stored before resolving so a trial that fails on the step still leaves it for the next one.
+		expr.LoweredExpression = lowered
 	}
-	result, ok := resolveActionOrExpression(t, chain, lowered, expectedType)
+	result, ok := resolveActionOrExpression(t, chain, expr.LoweredExpression, expectedType)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	setXMLStepLowering(t, expr, lowered)
 	setNodeType(t, expr, result.ty)
 	return result.ty, result.effect, true
 }

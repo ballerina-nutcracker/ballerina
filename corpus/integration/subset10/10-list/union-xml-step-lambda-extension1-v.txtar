@@ -1,0 +1,12 @@
+-- stdout --
+C
+{"v":<a><b>1</b></a><a><b>2</b></a>,"m":1.5}
+[xml, string]
+[<a><b>2</b></a>,"s"]
+[xml, int]
+[<b>1</b><b>2</b>,1]
+[function (xml) returns xml[], int]
+[<b>1</b><b>2</b>,<a><b>1</b></a><a><b>2</b></a>]
+[function (xml, int) returns xml, int]
+<a><b>2</b></a>
+-- stderr --
