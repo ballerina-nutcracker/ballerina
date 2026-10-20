@@ -13,22 +13,40 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
+import ballerina/io;
+
 class XmlArg {
+    xml value;
+    int marker;
+
     function init(xml value, int marker) {
-        var _ = value;
-        var _ = marker;
+        self.value = value;
+        self.marker = marker;
     }
 }
 
 class StringArg {
+    xml value;
+    string marker;
+
     function init(xml value, string marker) {
-        var _ = value;
-        var _ = marker;
+        self.value = value;
+        self.marker = marker;
     }
+}
+
+function show(any v) {
+    io:println(v is XmlArg); // @output true
+    io:println(v is StringArg); // @output false
 }
 
 public function main() {
     xml x = xml `<root><a>1</a></root>`;
-    XmlArg|StringArg s = new (x/<a>, 1); // @error
-    var _ = s;
+    XmlArg|StringArg s = new (x/<a>, 1);
+    show(s);
+    if s is XmlArg {
+        io:println(s.value); // @output <a>1</a>
+        io:println(s.marker); // @output 1
+    }
 }

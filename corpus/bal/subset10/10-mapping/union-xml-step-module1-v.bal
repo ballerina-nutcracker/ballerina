@@ -14,12 +14,27 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//go:build !debug
+import ballerina/io;
 
-package types
+type A record {|
+    xml v;
+    int m;
+|};
 
-import "github.com/ballerina-nutcracker/ballerina/ast"
+type B record {|
+    xml v;
+    string m;
+|};
 
-func assertUnchanged(_ typeResolver, _ []ast.BLangExpression) func() {
-	return func() {}
+xml x = xml `<root><a>1</a></root>`;
+A|B m = {v: x/<a>, m: 1};
+
+function show(any v) {
+    io:println(v is A); // @output true
+    io:println(v is B); // @output false
+}
+
+public function main() {
+    show(m);
+    io:println(m); // @output {"v":<a>1</a>,"m":1}
 }
