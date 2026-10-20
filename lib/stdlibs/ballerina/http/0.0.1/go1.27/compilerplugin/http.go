@@ -80,23 +80,17 @@ func validateResource(
 	resource *ast.BLangResourceMethod,
 ) {
 	requestParamCount := 0
-	var unsupportedParam *ast.BLangVariable
 	for i := range resource.RequiredParams {
 		param := &resource.RequiredParams[i]
 		if semtypes.IsSubtype(typeCtx, compilerCtx.SymbolType(param.Symbol()), requestType) {
 			requestParamCount++
-		} else if unsupportedParam == nil {
-			unsupportedParam = param
 		}
 	}
 	if requestParamCount > 1 {
 		compilerCtx.SemanticError("http resource method must have at most one http:Request parameter", resource.ParamListPos)
 		return
 	}
-	switch {
-	case unsupportedParam != nil:
-		compilerCtx.Unimplemented("http resource method parameters other than http:Request", unsupportedParam.GetPosition())
-	case resource.RestParam != nil:
+	if resource.RestParam != nil {
 		compilerCtx.Unimplemented("http resource method rest parameters", resource.RestParam.GetPosition())
 	}
 }
