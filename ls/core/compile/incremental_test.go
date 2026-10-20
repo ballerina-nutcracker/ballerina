@@ -21,8 +21,6 @@ import (
 	"testing"
 )
 
-// A body edit rebuilds greet but preserves consumer's driver after fingerprint
-// pruning. Standalone's diagnostic remains visible whether rebuilt or adopted.
 func TestPackageDriver_UnchangedModule_CarriesForwardSameDriverInstance(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg1, _ := openMultimoduleFixture(t, projSvc)
@@ -81,7 +79,6 @@ func TestPackageDriver_AllDirty_NoPriorState_FullResetScope(t *testing.T) {
 	}
 }
 
-// Supersession after the first local driver is created prevents reaching a second.
 func TestPackageDriver_Aborted_StopsBetweenModules(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)

@@ -36,8 +36,8 @@ type StableSnapshot struct {
 	project           projects.Project
 	pkg               *projects.Package
 	descriptor        string
-	byFile            map[string][]CompilerDiagnostic // fileName -> all diagnostics
-	resByFile         map[string][]CompilerDiagnostic // fileName -> resolution subset
+	byFile            map[string][]CompilerDiagnostic
+	resByFile         map[string][]CompilerDiagnostic
 	resolutionErrored bool
 }
 
@@ -50,8 +50,8 @@ func (s StableSnapshot) Project() projects.Project { return s.project }
 // Package returns the package captured for the cycle.
 func (s StableSnapshot) Package() *projects.Package { return s.pkg }
 
-// Diagnostics returns all diagnostics across files (flattened), for
-// observability. The server publishes per-document via DiagnosticsFor.
+// Diagnostics returns compilation diagnostics across files in unspecified order.
+// Package-resolution diagnostics are excluded.
 func (s StableSnapshot) Diagnostics() []CompilerDiagnostic {
 	var all []CompilerDiagnostic
 	for _, ds := range s.byFile {
@@ -88,8 +88,6 @@ type SnapshotStore struct {
 	changed   chan struct{} // closed on notification; recreated on demand
 }
 
-// notifyChange closes the current notification channel; changeCh recreates it
-// on demand.
 func (s *SnapshotStore) notifyChange() {
 	s.changedMu.Lock()
 	if s.changed != nil {
@@ -137,7 +135,6 @@ func (s *SnapshotStore) InProgress(root string) (InProgressSnapshot, bool) {
 	return ip, ok
 }
 
-// latestStableGen returns the generation of the latest stable for root, or 0.
 func (s *SnapshotStore) latestStableGen(root string) uint64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -147,7 +144,6 @@ func (s *SnapshotStore) latestStableGen(root string) uint64 {
 	return 0
 }
 
-// currentGeneration reads the live generation for root via the workspace.
 func (s *SnapshotStore) currentGeneration(root string) (uint64, bool) {
 	if s.genFn == nil {
 		return 0, false
@@ -155,8 +151,7 @@ func (s *SnapshotStore) currentGeneration(root string) (uint64, bool) {
 	return s.genFn(root)
 }
 
-// setInProgress records the in-progress cycle for root (overwriting any
-// prior slot, which is by construction already finished).
+// Per-root single-flight scheduling ensures the previous cycle has finished.
 func (s *SnapshotStore) setInProgress(root string, ip InProgressSnapshot) {
 	s.mu.Lock()
 	s.inProgress[root] = ip
@@ -164,7 +159,6 @@ func (s *SnapshotStore) setInProgress(root string, ip InProgressSnapshot) {
 	s.notifyChange()
 }
 
-// clearInProgress removes the in-progress slot for root.
 func (s *SnapshotStore) clearInProgress(root string) {
 	s.mu.Lock()
 	delete(s.inProgress, root)
@@ -211,7 +205,6 @@ func (s *SnapshotStore) storeStable(snap StableSnapshot) {
 	s.notifyChange()
 }
 
-// evictRoot drops the stable and in-progress state for root.
 func (s *SnapshotStore) evictRoot(root string) {
 	s.mu.Lock()
 	delete(s.stable, root)
@@ -226,7 +219,6 @@ func (s *SnapshotStore) evictRoot(root string) {
 	s.notifyChange()
 }
 
-// evictAll drops every stable and in-progress snapshot (shutdown).
 func (s *SnapshotStore) evictAll() {
 	s.mu.Lock()
 	s.stable = make(map[string]StableSnapshot)
@@ -236,8 +228,6 @@ func (s *SnapshotStore) evictAll() {
 	s.notifyChange()
 }
 
-// diagsForFile returns the all-diagnostics slice for a fileName within the
-// snapshot, or nil. Used by CompilationService.DiagnosticsFor.
 func (s StableSnapshot) diagsForFile(fileName string) []CompilerDiagnostic {
 	if s.byFile == nil {
 		return nil

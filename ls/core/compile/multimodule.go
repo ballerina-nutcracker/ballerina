@@ -35,15 +35,12 @@ var (
 	registeredNames   = make(map[*diagnostics.DiagnosticEnv]map[string]bool)
 )
 
-// alreadyRegistered reports whether name has already been registered with
-// env by a previous ensureParsed call (this or an earlier generation).
 func alreadyRegistered(env *diagnostics.DiagnosticEnv, name string) bool {
 	registeredNamesMu.Lock()
 	defer registeredNamesMu.Unlock()
 	return registeredNames[env][name]
 }
 
-// markRegistered records that name has been registered with env.
 func markRegistered(env *diagnostics.DiagnosticEnv, name string) {
 	registeredNamesMu.Lock()
 	defer registeredNamesMu.Unlock()
@@ -62,7 +59,6 @@ var migratedLangLibs = []string{
 	"lang.map", "lang.object",
 }
 
-// seedMigratedLangLibs adds available bundled-library symbols to implicitImports.
 func seedMigratedLangLibs(implicitImports map[string]model.ExportedSymbolSpace, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace) {
 	for _, name := range migratedLangLibs {
 		if space, ok := publicSymbols[semantics.PackageIdentifier{OrgName: "ballerina", ModuleName: name}]; ok {
@@ -71,7 +67,6 @@ func seedMigratedLangLibs(implicitImports map[string]model.ExportedSymbolSpace, 
 	}
 }
 
-// packageIdentifierFor returns the module's organization/name symbol-space key.
 func packageIdentifierFor(module *projects.Module) semantics.PackageIdentifier {
 	desc := module.Descriptor()
 	return semantics.PackageIdentifier{OrgName: desc.Org().Value(), ModuleName: desc.Name().String()}
@@ -108,8 +103,7 @@ type packageDriver struct {
 	order []*projects.Module
 }
 
-// newPackageDriver shares pkg's compiler environment and creates run-local
-// maps. openText, priorState, and stale may be nil.
+// openText, priorState, and stale may be nil.
 func newPackageDriver(pkg *projects.Package, openText textProvider, priorState *packageGenState, stale func() bool) *packageDriver {
 	return &packageDriver{
 		pkg:                   pkg,
@@ -126,12 +120,10 @@ func newPackageDriver(pkg *projects.Package, openText textProvider, priorState *
 	}
 }
 
-// aborted reports whether the run's supersession check is set and true.
 func (pd *packageDriver) aborted() bool {
 	return pd.stale != nil && pd.stale()
 }
 
-// topoModules caches the dependency-ordered modules found in pkg.
 func (pd *packageDriver) topoModules() []*projects.Module {
 	if pd.order != nil {
 		return pd.order
@@ -149,8 +141,7 @@ func (pd *packageDriver) topoModules() []*projects.Module {
 	return modules
 }
 
-// driverFor returns this generation's moduleDriver for module, creating one
-// (with a fresh CompilerContext over the shared environment) on first use.
+// New drivers use fresh compiler contexts over the shared environment.
 func (pd *packageDriver) driverFor(module *projects.Module) *moduleDriver {
 	id := module.ModuleID()
 	if d, ok := pd.drivers[id]; ok {
@@ -161,7 +152,6 @@ func (pd *packageDriver) driverFor(module *projects.Module) *moduleDriver {
 	return d
 }
 
-// resolutionInputFor supplies the run's published symbols and implicit imports.
 func (pd *packageDriver) resolutionInputFor(module *projects.Module) moduleResolutionInput {
 	implicit := make(map[string]model.ExportedSymbolSpace)
 	seedMigratedLangLibs(implicit, pd.publicSymbols)
@@ -261,7 +251,6 @@ func (pd *packageDriver) loadResolvedDependency(descriptor projects.PackageDescr
 	}
 }
 
-// dependencyPriorState selects prior snapshots by pkg's module IDs.
 func (pd *packageDriver) dependencyPriorState(pkg *projects.Package) *packageGenState {
 	if pd.priorState == nil {
 		return nil
@@ -275,8 +264,6 @@ func (pd *packageDriver) dependencyPriorState(pkg *projects.Package) *packageGen
 	return &packageGenState{modules: modules}
 }
 
-// dependencyErrored reports whether a direct same-package dependency failed
-// Phase 1.
 func (pd *packageDriver) dependencyErrored(module *projects.Module, depGraph *projects.DependencyGraph[projects.ModuleDescriptor]) bool {
 	for _, depDesc := range depGraph.DirectDependencies(module.Descriptor()) {
 		depModule := pd.pkg.ModuleByName(depDesc.Name())
@@ -383,10 +370,9 @@ func (pd *packageDriver) recordFingerprintAndPrune(module *projects.Module, d *m
 	}
 }
 
-// runPhase1Module adopts prior state or advances through top-level type
-// resolution. A failed direct dependency skips the module. Usable symbols
-// are published before top-level type resolution; a later error leaves them
-// published but marks the module errored for dependent gating.
+// Failed Phase-1 dependencies skip the module. Usable symbols are published
+// before top-level type resolution; later errors retain those symbols but
+// block dependents.
 func (pd *packageDriver) runPhase1Module(module *projects.Module, depGraph *projects.DependencyGraph[projects.ModuleDescriptor]) {
 	id := module.ModuleID()
 	if !pd.resetScope[id] && pd.adoptCarriedForward(module) {
@@ -422,8 +408,6 @@ func (pd *packageDriver) markPhase1Errored(module *projects.Module, d *moduleDri
 	d.advanceTo(stageTopLevelTypeResolved, module, input)
 }
 
-// runPhase1 advances modules in the supplied order, checking supersession
-// between modules.
 func (pd *packageDriver) runPhase1(modules []*projects.Module) {
 	depGraph := pd.pkg.Resolution().ModuleDependencyGraph()
 	pd.ensureResetScope(modules, depGraph)
@@ -435,8 +419,7 @@ func (pd *packageDriver) runPhase1(modules []*projects.Module) {
 	}
 }
 
-// phase2Eligible returns a driver that reached top-level type resolution,
-// including one with diagnostics.
+// Earlier diagnostics do not exclude a driver that reached top-level type resolution.
 func (pd *packageDriver) phase2Eligible(module *projects.Module) (*moduleDriver, bool) {
 	id := module.ModuleID()
 	d, ok := pd.drivers[id]

@@ -28,13 +28,13 @@ import (
 	"strings"
 )
 
-// OutputPaths names the generated files.
+// TypesFileName and JSONFileName name the generator's output files.
 const (
 	TypesFileName = "types_generated.go"
 	JSONFileName  = "json_generated.go"
 )
 
-// Generate emits the generated Go source for the parsed metamodel.
+// Generate returns type declarations and JSON methods for pm, in that order.
 func Generate(pm *ParsedModel, modelBytes []byte) ([]byte, []byte, error) {
 	reg, err := NewTypeRegistry(pm)
 	if err != nil {
@@ -292,8 +292,7 @@ func (g *generator) writeBaseAliases(out io.Writer) {
 
 func (g *generator) writeAlias(out io.Writer, a *TypeAlias) {
 	if isAnonymousType(a.Type) {
-		// The alias name owns the anonymous underlying type; the declaration is
-		// emitted by writeGeneratedType using the alias name.
+		// writeGeneratedType emits the underlying type under the alias name.
 		return
 	}
 	g.writeDoc(out, a.Documentation, a.Since, a.Deprecated)
@@ -423,9 +422,7 @@ func (g *generator) writeStructure(out io.Writer, s *Structure) {
 }
 
 func (g *generator) writeRequestNotificationTypes(out io.Writer) {
-	// Anonymous request/notification params/result types that are not named in the
-	// metamodel are already generated via the type registry. This section is reserved
-	// for future request/notification metadata constants.
+	// Request and notification types are emitted through the type registry.
 }
 
 func (g *generator) fieldGoType(t *Type, optional bool, ctx []string) string {
@@ -571,14 +568,12 @@ func sha256sum(b []byte) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// sortStrings returns a sorted copy of s.
 func sortStrings(s []string) []string {
 	out := append([]string{}, s...)
 	sort.Strings(out)
 	return out
 }
 
-// jsonString returns a compact JSON representation of v.
 func jsonString(v any) string {
 	b, _ := json.Marshal(v)
 	return string(b)

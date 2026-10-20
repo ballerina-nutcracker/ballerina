@@ -36,13 +36,13 @@ func Parse(modelJSON, schemaJSON []byte) (*ParsedModel, error) {
 		return nil, fmt.Errorf("parse metamodel: %w", err)
 	}
 	pm := &ParsedModel{
-		Model:           model,
-		Structures:      make(map[string]*Structure),
-		Enumerations:    make(map[string]*Enumeration),
-		TypeAliases:     make(map[string]*TypeAlias),
-		References:      make(map[string]*Type),
-		RequestMethods:  make(map[string]*Request),
-		NotifyMethods:   make(map[string]*Notification),
+		Model:          model,
+		Structures:     make(map[string]*Structure),
+		Enumerations:   make(map[string]*Enumeration),
+		TypeAliases:    make(map[string]*TypeAlias),
+		References:     make(map[string]*Type),
+		RequestMethods: make(map[string]*Request),
+		NotifyMethods:  make(map[string]*Notification),
 	}
 	for _, s := range model.Structures {
 		if _, dup := pm.Structures[s.Name]; dup {
@@ -85,13 +85,13 @@ func Parse(modelJSON, schemaJSON []byte) (*ParsedModel, error) {
 
 // ParsedModel is an indexed view of the metamodel.
 type ParsedModel struct {
-	Model           Model
-	Structures      map[string]*Structure
-	Enumerations    map[string]*Enumeration
-	TypeAliases     map[string]*TypeAlias
-	References      map[string]*Type
-	RequestMethods  map[string]*Request
-	NotifyMethods   map[string]*Notification
+	Model          Model
+	Structures     map[string]*Structure
+	Enumerations   map[string]*Enumeration
+	TypeAliases    map[string]*TypeAlias
+	References     map[string]*Type
+	RequestMethods map[string]*Request
+	NotifyMethods  map[string]*Notification
 }
 
 func validateWithSchema(modelJSON, schemaJSON []byte) error {
@@ -118,8 +118,7 @@ func validateWithSchema(modelJSON, schemaJSON []byte) error {
 	return nil
 }
 
-// embeddedLoader blocks remote schema fetches. The metamodel schema is
-// self-contained, so any remote reference is a mistake.
+// embeddedLoader restricts schema resolution to resources supplied to the compiler.
 type embeddedLoader struct{}
 
 func (embeddedLoader) Load(url string) (any, error) {
@@ -130,8 +129,7 @@ func (embeddedLoader) LoadFromPath(path string) (any, error) {
 	return nil, fmt.Errorf("path schema fetch disabled: %s", path)
 }
 
-// addLineNumbers injects a synthetic "line" field into every object that
-// follows a '{'+newline delimiter, matching gopls's approach.
+// addLineNumbers annotates objects opened with "{\n" for diagnostic locations.
 func addLineNumbers(buf []byte) []byte {
 	var ans []byte
 	for linecnt, i := 1, 0; i < len(buf); i++ {
@@ -241,7 +239,6 @@ func (pm *ParsedModel) validateReferences() error {
 	return nil
 }
 
-// walkType recursively visits t and its component types.
 func (pm *ParsedModel) walkType(t *Type, f func(*Type) error) error {
 	if t == nil {
 		return nil
@@ -415,7 +412,7 @@ func NullFreeItems(t *Type) []*Type {
 	return out
 }
 
-// CountUnions returns the total number of union types reachable from t.
+// CountUnions counts unions along array, map, and item type paths in t.
 func CountUnions(t *Type) int {
 	count := 0
 	if t == nil {
@@ -440,7 +437,7 @@ func CountUnions(t *Type) int {
 	return count
 }
 
-// DeepCopy returns a deep copy of t.
+// DeepCopy copies t and its typed children; raw map and slice values remain shared.
 func DeepCopy(t *Type) *Type {
 	if t == nil {
 		return nil
@@ -461,7 +458,7 @@ func DeepCopy(t *Type) *Type {
 	return cp
 }
 
-// NormalizeLiteral converts a literal type's Value from raw map into a Type.
+// NormalizeLiteral copies a literal type with Value decoded into []Property.
 func NormalizeLiteral(t *Type) *Type {
 	if t == nil || t.Kind != KindLiteral {
 		return t
@@ -472,7 +469,7 @@ func NormalizeLiteral(t *Type) *Type {
 	return out
 }
 
-// NeedPointer reports whether a Go type string is a pointer-like reference type.
+// NeedPointer reports whether goType is a supported built-in scalar name or any.
 func NeedPointer(goType string) bool {
 	if goType == "" {
 		return false

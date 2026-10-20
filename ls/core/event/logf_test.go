@@ -21,7 +21,6 @@ import (
 	"testing"
 )
 
-// recordingLogf collects calls without a logging-library dependency.
 type recordingLogf struct {
 	mu    sync.Mutex
 	calls []logCall

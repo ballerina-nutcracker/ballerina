@@ -48,9 +48,7 @@ type Response struct {
 	Result  any             `json:"result"`
 }
 
-// Notification is the generic JSON-RPC notification envelope used to send
-// notifications from the server to the client. The Params field carries the
-// notification-specific payload as an arbitrary value.
+// Notification is a JSON-RPC notification envelope with a typed or untyped payload.
 type Notification struct {
 	JSONRPC string `json:"jsonrpc"`
 	Method  string `json:"method"`

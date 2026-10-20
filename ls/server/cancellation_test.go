@@ -31,11 +31,8 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
-// batchTransport is a buffered transport: the driver frames a batch of
-// messages into the reader, runs Serve (which returns on EOF), and reads the
-// server's framed responses from the writer. Unlike io.Pipe, writes never
-// block, so async request goroutines can reply while Serve is still draining
-// (via $pal/flushRequests) without deadlocking the driver.
+// Buffered writes let request goroutines reply while Serve drains them via
+// $pal/flushRequests, without requiring a concurrent reader.
 type batchTransport struct {
 	reader *bytes.Reader
 	writer bytes.Buffer
@@ -54,9 +51,7 @@ func newBatchServer(t *testing.T) (*Server, *batchTransport) {
 	return New(bt, projects, compiler, bus), bt
 }
 
-// runBatch frames messages into the transport, runs Serve to EOF, and returns
-// the decoded responses plus the Serve error (errServerExited is mapped to nil
-// by Serve itself; other lifecycle errors are returned for the test to check).
+// Callers must drain tracked requests before Serve returns to avoid racing response reads.
 func runBatch(t *testing.T, srv *Server, bt *batchTransport, messages []protocol.Message) ([]protocol.Message, error) {
 	t.Helper()
 	var input bytes.Buffer
@@ -104,9 +99,6 @@ func mustFindResponse(t *testing.T, responses []protocol.Message, id string) pro
 	return protocol.Message{}
 }
 
-// TestRegistryEntryRemovedOnCompletion verifies a tracked request's registry
-// entry is removed once its goroutine completes, so the id is free to reuse
-// and a later $/cancelRequest for it is a lookup miss.
 func TestRegistryEntryRemovedOnCompletion(t *testing.T) {
 	srv, bt := newBatchServer(t)
 	runBatch(t, srv, bt, []protocol.Message{
@@ -121,9 +113,6 @@ func TestRegistryEntryRemovedOnCompletion(t *testing.T) {
 	}
 }
 
-// TestCancelAfterCompletionIsNoop verifies a $/cancelRequest for an
-// already-completed request produces no response: the entry has been removed,
-// so the cancel is a lookup miss.
 func TestCancelAfterCompletionIsNoop(t *testing.T) {
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
@@ -147,16 +136,13 @@ func TestCancelAfterCompletionIsNoop(t *testing.T) {
 	}
 }
 
-// TestDuplicateRequestIDRejectedKeepsOriginal verifies a new request reusing
-// an in-flight id is rejected with Invalid Request (-32600) and does not
-// replace the original registry entry — the original still completes normally.
 func TestDuplicateRequestIDRejectedKeepsOriginal(t *testing.T) {
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
 		notifMessage("initialized", map[string]any{}),
 		reqMessage(`"d1"`, "$pal/blockRequest", map[string]any{}),
-		reqMessage(`"d1"`, "$pal/blockRequest", map[string]any{}), // duplicate
+		reqMessage(`"d1"`, "$pal/blockRequest", map[string]any{}),
 		notifMessage("$pal/releaseRequest", map[string]any{"id": "d1"}),
 		notifMessage("$pal/flushRequests", map[string]any{}),
 	})
@@ -164,19 +150,15 @@ func TestDuplicateRequestIDRejectedKeepsOriginal(t *testing.T) {
 		t.Fatalf("Serve: %v", err)
 	}
 	rejection := mustFindResponse(t, responses, `"d1"`)
-	// Two responses share id "d1": the -32600 rejection and the original's
-	// result. findResponse returns the first; verify it is the rejection.
+	// The duplicate is rejected before release lets the original request reply.
 	if rejection.Error == nil || rejection.Error.Code != rpcInvalidRequest {
 		t.Fatalf("duplicate response = %+v, want Invalid Request -32600", rejection)
 	}
-	// Registry must be empty after the original completed.
 	if entry := srv.registry.lookup(`"d1"`); entry != nil {
 		t.Fatal("registry still has entry for \"d1\" after completion")
 	}
 }
 
-// TestCancelProducesExactlyOneReply verifies a duplicate $/cancelRequest for
-// the same in-flight id yields exactly one -32800 reply (the reply guard).
 func TestCancelProducesExactlyOneReply(t *testing.T) {
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
@@ -199,9 +181,6 @@ func TestCancelProducesExactlyOneReply(t *testing.T) {
 	}
 }
 
-// TestShutdownDrainsTrackedRequests verifies shutdown cancels and drains
-// in-flight tracked requests before replying: the blocked request's -32800
-// reply precedes the shutdown response.
 func TestShutdownDrainsTrackedRequests(t *testing.T) {
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
@@ -224,9 +203,6 @@ func TestShutdownDrainsTrackedRequests(t *testing.T) {
 	}
 }
 
-// TestExitWithoutShutdownDrains verifies exit without shutdown still drains
-// in-flight tracked requests (writing their -32800 replies) before returning
-// the exit-without-shutdown error.
 func TestExitWithoutShutdownDrains(t *testing.T) {
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
@@ -244,16 +220,13 @@ func TestExitWithoutShutdownDrains(t *testing.T) {
 	}
 }
 
-// TestCancelIDKeyDistinguishesStringAndInteger verifies the canonical registry
-// key is the raw JSON of the id, so a string "5" and an integer 5 are distinct
-// ids: cancelling one does not cancel the other.
 func TestCancelIDKeyDistinguishesStringAndInteger(t *testing.T) {
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
 		notifMessage("initialized", map[string]any{}),
-		reqMessage(`"5"`, "$pal/blockRequest", map[string]any{}), // string id "5"
-		reqMessage(`5`, "$pal/blockRequest", map[string]any{}),   // integer id 5
+		reqMessage(`"5"`, "$pal/blockRequest", map[string]any{}),
+		reqMessage(`5`, "$pal/blockRequest", map[string]any{}),
 		notifMessage("$/cancelRequest", map[string]any{"id": "5"}),
 		notifMessage("$pal/releaseRequest", map[string]any{"id": 5}),
 		notifMessage("$pal/flushRequests", map[string]any{}),

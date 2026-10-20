@@ -23,7 +23,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 )
 
-// makeEntry builds index test state without a loaded project.
 func makeEntry(root string, openDocs int, t time.Time) *indexEntry {
 	return &indexEntry{project: nil, sourceRoot: root, lastTouched: t, openDocs: openDocs}
 }

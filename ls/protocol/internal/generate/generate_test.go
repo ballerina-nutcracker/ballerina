@@ -26,10 +26,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
-// defaultMetamodelPath returns a plausible external location for the LSP 3.18
-// metamodel when the caller has not set LSP_METAMODEL or LSP_METAMODEL_SCHEMA.
-// It is intentionally outside the repository so the generator does not vendor
-// the upstream model.
 func defaultMetamodelPath() string {
 	return "/Users/wso2/projects/resources/language-server-protocol/_specifications/lsp/3.18/metaModel/metaModel.json"
 }
@@ -268,8 +264,8 @@ func TestSmallModelGenerates(t *testing.T) {
 	}
 }
 
-func intType() *Type   { return &Type{Kind: KindBase, Name: "integer"} }
-func strType() *Type   { return &Type{Kind: KindBase, Name: "string"} }
+func intType() *Type { return &Type{Kind: KindBase, Name: "integer"} }
+func strType() *Type { return &Type{Kind: KindBase, Name: "string"} }
 func refType(name string) *Type {
 	return &Type{Kind: KindReference, Name: name}
 }

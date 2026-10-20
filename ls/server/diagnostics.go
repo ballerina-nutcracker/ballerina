@@ -23,10 +23,7 @@ import (
 
 const diagnosticSource = "ballerina"
 
-// UTF-16 boundary: The helpers below convert core CompilerDiagnostic values
-// (byte-offset-derived positions) to protocol.Diagnostic with UTF-16 character
-// positions. Core must not import ls/protocol; the conversion stays here.
-
+// Compiler columns are byte offsets; LSP columns count UTF-16 code units.
 func convertDiagnostics(diags []compile.CompilerDiagnostic, text string) []protocol.Diagnostic {
 	if len(diags) == 0 {
 		return nil

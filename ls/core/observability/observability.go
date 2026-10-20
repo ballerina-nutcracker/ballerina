@@ -23,7 +23,7 @@ import (
 
 const defaultLevel = slog.LevelInfo
 
-// Logger preserves slog's structured logging API and request correlation.
+// Logger wraps slog.Logger with a With method that returns a *Logger.
 type Logger struct{ *slog.Logger }
 
 // New writes Info and higher records to output. A nil writer discards output.
@@ -38,5 +38,5 @@ func New(output io.Writer) *Logger {
 // NewNoop is the quiet default for services without an injected logger.
 func NewNoop() *Logger { return New(io.Discard) }
 
-// With returns a child logger carrying the supplied correlation attributes.
+// With returns a child logger carrying the supplied attributes.
 func (l *Logger) With(args ...any) *Logger { return &Logger{Logger: l.Logger.With(args...)} }

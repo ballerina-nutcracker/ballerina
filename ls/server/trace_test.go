@@ -16,25 +16,12 @@
 
 package server
 
-// TestInitializeTraceFieldAcceptedWithoutError and
-// TestSetTraceIsAcceptAndDiscardNoop pin the observability strategy ADR's
-// decision that initialize's trace field and $/setTrace are accept-and-discard
-// no-ops: parsed without erroring, nothing stored, no behavior change. Both
-// scenarios start green (the pre-existing json.Unmarshal-the-whole-blob
-// handling and the pre-existing notification default case already produce
-// this behavior); they pin the decision so a future change can't silently
-// regress it into an error or a stored/observable side effect.
-
 import (
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
-// TestInitializeTraceFieldAcceptedWithoutError verifies an initialize request
-// carrying a "trace" field is accepted (a normal InitializeResult, not an
-// error/dropped response) — the server never errors on trace, and never
-// echoes it back.
 func TestInitializeTraceFieldAcceptedWithoutError(t *testing.T) {
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
@@ -49,9 +36,6 @@ func TestInitializeTraceFieldAcceptedWithoutError(t *testing.T) {
 	}
 }
 
-// TestSetTraceIsAcceptAndDiscardNoop verifies $/setTrace produces no response
-// (it is a notification) and no observable behavior change: a request sent
-// immediately after still completes normally.
 func TestSetTraceIsAcceptAndDiscardNoop(t *testing.T) {
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{

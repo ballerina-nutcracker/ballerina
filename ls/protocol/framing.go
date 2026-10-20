@@ -25,11 +25,13 @@ import (
 	"strings"
 )
 
+// Transport carries framed JSON-RPC messages in both directions.
 type Transport interface {
 	io.Reader
 	io.Writer
 }
 
+// ReadMessage reads one Content-Length-framed JSON-RPC message.
 func ReadMessage(reader *bufio.Reader) (Message, error) {
 	contentLength := -1
 	for {
@@ -64,6 +66,8 @@ func ReadMessage(reader *bufio.Reader) (Message, error) {
 	return message, nil
 }
 
+// WriteMessage writes message as Content-Length-framed JSON.
+// Callers must serialize writes to the same stream.
 func WriteMessage(writer io.Writer, message any) error {
 	payload, err := json.Marshal(message)
 	if err != nil {

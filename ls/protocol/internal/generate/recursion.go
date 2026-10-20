@@ -20,17 +20,14 @@ import (
 	"fmt"
 )
 
-// RecursionDetector identifies named types that participate in recursive
-// value paths so the generator can break cycles with pointers.
+// RecursionDetector stores recursion flags used to select pointer types.
 type RecursionDetector struct {
 	recursive map[string]bool
 }
 
-// NewRecursionDetector analyzes the parsed model and marks every named type
-// that is reachable from itself through value positions.
+// NewRecursionDetector builds type dependencies and computes recursion flags.
 func NewRecursionDetector(pm *ParsedModel, reg *TypeRegistry) *RecursionDetector {
 	d := &RecursionDetector{recursive: make(map[string]bool)}
-	// Build a value dependency graph between named types.
 	deps := make(map[string]map[string]bool)
 	for name := range pm.Structures {
 		deps[GoName(name)] = make(map[string]bool)
@@ -42,7 +39,6 @@ func NewRecursionDetector(pm *ParsedModel, reg *TypeRegistry) *RecursionDetector
 		deps[GoName(a.Name)] = make(map[string]bool)
 		d.collectDeps(a.Type, GoName(a.Name), deps[GoName(a.Name)])
 	}
-	// Compute reachability (transitive closure) and mark self-reachable nodes.
 	for name := range deps {
 		seen := make(map[string]bool)
 		d.reachable(name, name, deps, seen, 0)
@@ -50,7 +46,7 @@ func NewRecursionDetector(pm *ParsedModel, reg *TypeRegistry) *RecursionDetector
 	return d
 }
 
-// IsRecursive reports whether the named type participates in a recursive path.
+// IsRecursive reports whether name is marked recursive.
 func (d *RecursionDetector) IsRecursive(name string) bool {
 	return d.recursive[name]
 }
@@ -63,8 +59,6 @@ func (d *RecursionDetector) collectDeps(t *Type, from string, out map[string]boo
 	case KindReference:
 		out[GoName(t.Name)] = true
 	case KindArray:
-		// Array elements do not create a value-cycle by themselves; pointers
-		// are handled separately in the generator for array-of-self.
 		d.collectDeps(t.Element, from, out)
 	case KindMap:
 		if t.Key != nil {
@@ -86,7 +80,6 @@ func (d *RecursionDetector) collectDeps(t *Type, from string, out map[string]boo
 
 func (d *RecursionDetector) reachable(start, current string, deps map[string]map[string]bool, seen map[string]bool, depth int) {
 	if depth > 200 {
-		// Defensive limit; a well-formed metamodel should not exceed this.
 		return
 	}
 	if seen[current] {
@@ -114,8 +107,7 @@ func (d *RecursionDetector) ElementPointerFor(name string) bool {
 	return d.IsRecursive(name)
 }
 
-// ValidateNoDirectRecursion returns an error for impossible direct field
-// recursion that cannot be broken with a pointer.
+// ValidateNoDirectRecursion rejects properties that directly reference their containing structure.
 func ValidateNoDirectRecursion(pm *ParsedModel, reg *TypeRegistry) error {
 	for name := range pm.Structures {
 		for _, p := range reg.FlattenedProperties(name) {

@@ -47,7 +47,8 @@ func (p SourcePaths) NameOf(u DocumentURI) (string, bool) {
 	return p.prefix + name, true
 }
 
-// URIOf reverses a compiler name. External/BALA keys are never workspace paths.
+// URIOf maps a compiler registration name to an editor URI.
+// Names must be valid relative paths within the project's compiler namespace.
 func (p SourcePaths) URIOf(name string) (DocumentURI, bool) {
 	if p.root == "" || !filepath.IsAbs(p.root) || !validSourceName(name) {
 		return DocumentURI{}, false

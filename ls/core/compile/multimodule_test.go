@@ -54,7 +54,6 @@ func mustReadFixture(t *testing.T, path string) string {
 	return string(b)
 }
 
-// openMultimoduleFixture opens main.bal and loads its containing package.
 func openMultimoduleFixture(t *testing.T, projSvc *workspace.ProjectService) (*projects.Package, workspace.DocumentURI) {
 	t.Helper()
 	dir := multimoduleFixtureDir(t)
@@ -82,7 +81,6 @@ func moduleDiagCount(t *testing.T, pd *packageDriver, pkg *projects.Package, mod
 	return len(d.diagnosticContext().Diagnostics()), true
 }
 
-// moduleDriverFor returns the run's driver for moduleName.
 func moduleDriverFor(t *testing.T, pd *packageDriver, pkg *projects.Package, moduleName string) (*moduleDriver, bool) {
 	t.Helper()
 	module := pkg.ModuleByName(mustModuleName(t, pkg, moduleName))
@@ -90,7 +88,6 @@ func moduleDriverFor(t *testing.T, pd *packageDriver, pkg *projects.Package, mod
 	return d, ok
 }
 
-// mustModuleName finds a module by its full name, failing the test if absent.
 func mustModuleName(t *testing.T, pkg *projects.Package, name string) projects.ModuleName {
 	t.Helper()
 	for _, id := range pkg.ModuleIDs() {
@@ -106,8 +103,6 @@ func mustModuleName(t *testing.T, pkg *projects.Package, name string) projects.M
 	return projects.ModuleName{}
 }
 
-// A recovered bad top-level declaration preserves valid exports and allows
-// dependents to proceed; only parser diagnostics are published.
 func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -171,7 +166,6 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testin
 	}
 }
 
-// Cross-module imports resolve while standalone retains its own diagnostic.
 func TestPackageDriver_CrossModuleImport_PublishesExportedSymbols(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -202,7 +196,6 @@ func TestPackageDriver_CrossModuleImport_PublishesExportedSymbols(t *testing.T) 
 	}
 }
 
-// A dependency's Phase-1 error skips transitive dependents, not independent modules.
 func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -267,7 +260,6 @@ func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing
 	}
 }
 
-// Fresh runs isolate diagnostics across a body edit that leaves exports unchanged.
 func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg1, _ := openMultimoduleFixture(t, projSvc)
@@ -287,7 +279,6 @@ func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
 	greetURI := fileURI(t, "file://"+greetPath)
-	// The unchanged signature now has a body-level type mismatch.
 	editedGreet := "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n"
 	applyOpen(t, projSvc, greetURI, editedGreet)
 
@@ -318,7 +309,6 @@ func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration
 	}
 }
 
-// An unresolved public type in greet leaves consumer without a driver.
 func TestPackageDriver_DependencyPublicSurfaceBroken_DependentDriverNeverExists(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -352,8 +342,6 @@ func TestPackageDriver_DependencyPublicSurfaceBroken_DependentDriverNeverExists(
 	}
 }
 
-// This semantic-analysis error leaves greet's Phase-1 fingerprint unchanged,
-// and consumer retains its prior driver and package node.
 func TestPackageDriver_DependencyBodyOnlyError_DependentCarriesForwardPkgNode(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg1, _ := openMultimoduleFixture(t, projSvc)

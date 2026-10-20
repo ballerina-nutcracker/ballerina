@@ -34,7 +34,6 @@ type fingerprint struct {
 	valid bool
 }
 
-// equal reports whether a and b are both valid and carry the same value.
 func (a fingerprint) equal(b fingerprint) bool {
 	return a.valid && b.valid && a.value == b.value
 }
@@ -75,8 +74,6 @@ func computeFingerprint(ctx *context.CompilerContext, exported model.ExportedSym
 	return fingerprint{value: hex.EncodeToString(h.Sum(nil)), valid: true}
 }
 
-// fingerprintEntry renders one exported symbol's name+kind+type as a single
-// deterministic string.
 func fingerprintEntry(ctx *context.CompilerContext, tcx semtypes.Context, ref model.SymbolRef) string {
 	name := ctx.SymbolName(ref)
 	kind := ctx.SymbolKind(ref)

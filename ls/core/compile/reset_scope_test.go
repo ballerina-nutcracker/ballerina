@@ -22,8 +22,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
-// moduleIDFor resolves name (e.g. "multimoduleproject.greet") to its
-// ModuleID within pkg, failing the test if not found.
 func moduleIDFor(t *testing.T, pkg *projects.Package, name string) projects.ModuleID {
 	t.Helper()
 	module := pkg.ModuleByName(mustModuleName(t, pkg, name))
@@ -33,7 +31,6 @@ func moduleIDFor(t *testing.T, pkg *projects.Package, name string) projects.Modu
 	return module.ModuleID()
 }
 
-// Dirtying greet includes greet, consumer, and main in the topological suffix.
 func TestTopoTailScope_IncludesEverythingFromEarliestDirtyOnward(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
@@ -66,7 +63,6 @@ func TestTopoTailScope_EmptyDirtyProducesEmptyScope(t *testing.T) {
 	}
 }
 
-// The dependent closure includes consumer and main, but excludes standalone.
 func TestDependentClosure_OnlyTrueDependents(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)

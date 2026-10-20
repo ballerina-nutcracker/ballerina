@@ -31,7 +31,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
-// defaultMaxProjects bounds the number of cached projects.
 const defaultMaxProjects = 32
 
 // Option configures a ProjectService at construction.
@@ -46,9 +45,8 @@ func WithMaxProjects(n int) Option {
 	}
 }
 
-// WithRepositories configures package repositories used when the workspace
-// loads projects. Normal construction leaves repositories unset, retaining
-// projects.Load's default repository universe.
+// WithRepositories sets the repositories used to load projects.
+// If unset, projects.Load uses its default repositories.
 func WithRepositories(repositories []projects.Repository) Option {
 	return func(s *ProjectService) {
 		s.repositories = repositories
@@ -136,8 +134,6 @@ func New(openDir func(string) fs.FS, bus *event.Bus, opts ...Option) *ProjectSer
 	return s
 }
 
-// applyDocumentMap updates document state, rejecting non-increasing versions
-// and updates or closes for unknown documents.
 func (s *ProjectService) applyDocumentMap(change DocumentChange) (Snapshot, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -255,7 +251,6 @@ func (s *ProjectService) publish(change DocumentChange, sourceRoot string) (uint
 	return gen, nil
 }
 
-// documentInCurrentPackage reports whether the loaded package contains change.URI.
 func (s *ProjectService) documentInCurrentPackage(project projects.Project, change DocumentChange) bool {
 	pkg := project.CurrentPackage()
 	if pkg == nil {
@@ -295,7 +290,6 @@ func (s *ProjectService) importSetChanged(project projects.Project, change Docum
 	return !sameImportSet(live, importSet(doc.SyntaxTree()))
 }
 
-// publishLifecycle publishes ProjectRegistered followed by ProjectUpdated.
 func (s *ProjectService) publishLifecycle(sourceRoot string, gen uint64) {
 	if s.bus == nil {
 		return
@@ -304,7 +298,6 @@ func (s *ProjectService) publishLifecycle(sourceRoot string, gen uint64) {
 	s.bus.Publish(event.NewProjectUpdatedEvent(sourceRoot, gen))
 }
 
-// publishUpdated publishes ProjectUpdated for the given generation.
 func (s *ProjectService) publishUpdated(sourceRoot string, gen uint64) {
 	if s.bus == nil {
 		return
@@ -355,8 +348,7 @@ func (s *ProjectService) Generation(root string) (uint64, bool) {
 	return entry.generation, true
 }
 
-// Supersede advances root's generation without publishing. It is a no-op for
-// an unknown root and does not alter compile timers or the event bus.
+// Supersede advances root's generation without publishing; unknown roots are ignored.
 func (s *ProjectService) Supersede(root string) {
 	s.index.supersede(root)
 }
@@ -401,7 +393,6 @@ func (s *ProjectService) OpenDocumentsUnder(root string) []DocumentURI {
 	return out
 }
 
-// findSourceRootMemoized discovers a file URI's project key and caches it by path.
 func (s *ProjectService) findSourceRootMemoized(u DocumentURI) (string, error) {
 	filePath := u.Path()
 	if root, ok := s.index.lookupSourceRoot(filePath); ok {
@@ -442,12 +433,14 @@ func (s *ProjectService) buildOverlay(paths SourcePaths) overlayFS {
 	return overlayFS{base: s.openDir(paths.root), overlays: overlays, now: s.now}
 }
 
-// ProjectKey returns workspace identity, not the project's relative load name.
+// ProjectKey discovers a file URI's workspace key: a package directory or
+// a single-file path, not the project's relative load name.
 func (s *ProjectService) ProjectKey(u DocumentURI) (string, error) {
 	return s.findSourceRootMemoized(u)
 }
 
-// Paths captures the name conversion metadata for a loaded project.
+// Paths returns name conversion metadata for an indexed project, or a zero value
+// if the project is not indexed.
 func (s *ProjectService) Paths(project projects.Project) SourcePaths {
 	return s.index.paths(project)
 }
@@ -662,8 +655,8 @@ func (s *ProjectService) applySourceFileChange(kind WatchedFileKind, filePath st
 	return nil
 }
 
-// Shutdown supersedes all indexed generations without closing the event bus
-// or stopping compile timers. It does not observe ctx cancellation.
+// Shutdown supersedes all indexed generations without closing the event bus.
+// It does not observe ctx cancellation.
 func (s *ProjectService) Shutdown(ctx context.Context) error {
 	_ = ctx
 	s.index.supersedeAll()

@@ -50,8 +50,6 @@ func TestTieredCriticalDeliversAsync(t *testing.T) {
 	}
 }
 
-// A blocked handler lets the bounded channel fill, so publishing more than
-// its capacity must drop events.
 func TestTieredCriticalDropsOnFull(t *testing.T) {
 	bus := New()
 	defer bus.Close()
@@ -60,7 +58,7 @@ func TestTieredCriticalDropsOnFull(t *testing.T) {
 	var delivered int32
 	var mu sync.Mutex
 	bus.SubscribeWithTier([]Kind{ProjectUpdated}, TierCritical, func(e Event) {
-		<-block // stall the drainer so the channel fills
+		<-block
 		mu.Lock()
 		defer mu.Unlock()
 		delivered++
@@ -152,7 +150,7 @@ func TestFlushIsNoOpForInlineSubscribers(t *testing.T) {
 	bus.Subscribe(nil, func(Event) { close(done) })
 	bus.Publish(NewProjectRegisteredEvent("/r"))
 	<-done
-	bus.Flush() // must not hang
+	bus.Flush()
 }
 
 func TestNewEventTypesGeneration(t *testing.T) {

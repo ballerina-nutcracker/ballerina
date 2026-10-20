@@ -27,7 +27,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
-// indexEntry is one slot in the source-root-keyed project index.
 type indexEntry struct {
 	project     projects.Project
 	paths       SourcePaths
@@ -41,8 +40,8 @@ type indexEntry struct {
 // memo. Its mutex guards index operations; get returns a live entry.
 type projectIndex struct {
 	mu               sync.Mutex
-	entries          map[string]*indexEntry // sourceRoot → entry
-	pathToSourceRoot map[string]string      // filePath → sourceRoot (memo)
+	entries          map[string]*indexEntry
+	pathToSourceRoot map[string]string
 	maxProjects      int
 	lastGeneration   uint64 // lifetime high-water mark; survives entry eviction
 	now              func() time.Time
@@ -57,7 +56,6 @@ func newProjectIndex(maxProjects int, now func() time.Time) *projectIndex {
 	}
 }
 
-// get returns the entry for sourceRoot, updating its LRU stamp.
 func (i *projectIndex) get(sourceRoot string) (*indexEntry, bool) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -117,8 +115,8 @@ func (i *projectIndex) advanceLocked(entry *indexEntry) uint64 {
 	return entry.generation
 }
 
-// put updates an existing entry's project and LRU stamp or inserts a new entry,
-// evicting via evictLRU when full. It returns the stored entry and evicted root.
+// put preserves existing entry metadata except project and lastTouched.
+// It returns the stored entry and evicted root.
 func (i *projectIndex) put(entry *indexEntry, bus *event.Bus) (*indexEntry, string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -187,7 +185,6 @@ func (i *projectIndex) removeLocked(sourceRoot string) {
 	}
 }
 
-// lookupSourceRoot returns the memoized source root for filePath, if present.
 func (i *projectIndex) lookupSourceRoot(filePath string) (string, bool) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -195,14 +192,12 @@ func (i *projectIndex) lookupSourceRoot(filePath string) (string, bool) {
 	return root, ok
 }
 
-// memoSourceRoot records filePath → sourceRoot.
 func (i *projectIndex) memoSourceRoot(filePath, sourceRoot string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	i.pathToSourceRoot[filePath] = sourceRoot
 }
 
-// invalidateUnder removes memo entries whose file path is under or equal to dir.
 func (i *projectIndex) invalidateUnder(dir string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -213,12 +208,10 @@ func (i *projectIndex) invalidateUnder(dir string) {
 	}
 }
 
-// supersede advances root's generation without publishing; unknown roots are ignored.
 func (i *projectIndex) supersede(root string) {
 	i.advance(root)
 }
 
-// supersedeAll advances every indexed root's generation without publishing.
 func (i *projectIndex) supersedeAll() {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -227,8 +220,6 @@ func (i *projectIndex) supersedeAll() {
 	}
 }
 
-// sortDocumentURIs sorts document URIs by their string form for stable
-// iteration order.
 func sortDocumentURIs(us []DocumentURI) {
 	sort.Slice(us, func(i, j int) bool { return us[i].String() < us[j].String() })
 }

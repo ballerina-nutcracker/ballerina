@@ -22,8 +22,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/semantics"
 )
 
-// moduleGenSnapshot retains a committed driver, Phase-1 status, exports,
-// fingerprints, source hash, and external feature projections.
 type moduleGenSnapshot struct {
 	driver              *moduleDriver
 	errored             bool
@@ -40,7 +38,6 @@ type packageGenState struct {
 	modules map[projects.ModuleID]moduleGenSnapshot
 }
 
-// genStateFor returns root's module state, creating an empty state on first use.
 func (s *CompilationService) genStateFor(root string) *packageGenState {
 	s.genStatesMu.Lock()
 	defer s.genStatesMu.Unlock()
@@ -52,14 +49,12 @@ func (s *CompilationService) genStateFor(root string) *packageGenState {
 	return st
 }
 
-// setGenState replaces root's carried-forward module state.
 func (s *CompilationService) setGenState(root string, modules map[projects.ModuleID]moduleGenSnapshot) {
 	s.genStatesMu.Lock()
 	defer s.genStatesMu.Unlock()
 	s.genStates[root] = &packageGenState{modules: modules}
 }
 
-// evictGenState drops root's carried-forward module state.
 func (s *CompilationService) evictGenState(root string) {
 	s.genStatesMu.Lock()
 	defer s.genStatesMu.Unlock()

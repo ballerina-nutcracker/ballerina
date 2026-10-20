@@ -20,49 +20,31 @@ import (
 	"testing"
 )
 
-// TestNumericIDCancelCorpus drives a real $/cancelRequest against an in-flight
-// $pal/blockRequest whose id is an integer. The cancelled request must reply
-// with exactly one RequestCancelled (-32800) error; $/cancelRequest itself
-// writes no response.
 func TestNumericIDCancelCorpus(t *testing.T) {
 	runTranscript(t, "cancellation/testdata/numeric-id-cancel.json")
 }
 
-// TestStringIDCancelCorpus covers the string-id variant of cancellation.
 func TestStringIDCancelCorpus(t *testing.T) {
 	runTranscript(t, "cancellation/testdata/string-id-cancel.json")
 }
 
-// TestCancelExactlyOnceCorpus verifies a duplicate $/cancelRequest for the
-// same in-flight id produces a single -32800 reply, not two.
 func TestCancelExactlyOnceCorpus(t *testing.T) {
 	runTranscript(t, "cancellation/testdata/cancel-exactly-once.json")
 }
 
-// TestCancelNoopCorpus verifies unknown-id and malformed-param
-// $/cancelRequest notifications are no-ops: they write no response and the
-// blocked request completes normally when released.
 func TestCancelNoopCorpus(t *testing.T) {
 	runTranscript(t, "cancellation/testdata/cancel-noop.json")
 }
 
-// TestDuplicateInflightIDRejectedCorpus verifies a new request reusing an
-// in-flight id is rejected with Invalid Request (-32600) and does not replace
-// the original registry entry (the original still completes normally).
 func TestDuplicateInflightIDRejectedCorpus(t *testing.T) {
 	runTranscript(t, "cancellation/testdata/duplicate-inflight-id-rejected.json")
 }
 
-// TestNormalCompletionCorpus verifies a tracked request that is released
-// (not cancelled) replies with its result.
 func TestNormalCompletionCorpus(t *testing.T) {
 	runTranscript(t, "cancellation/testdata/normal-completion.json")
 }
 
-// TestOrderedNotificationsDuringCancelCorpus verifies document notifications
-// remain synchronously processed in order while a request is blocked: a
-// didClose's publishDiagnostics is written before the cancelled request's
-// -32800 reply.
+// didClose must clear diagnostics before the blocked request's cancellation reply.
 func TestOrderedNotificationsDuringCancelCorpus(t *testing.T) {
 	runTranscript(t, "cancellation/testdata/ordered-notifications-during-cancel.json")
 }

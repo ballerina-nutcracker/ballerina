@@ -48,8 +48,8 @@ type ExternalModuleProjection struct {
 	Symbols     model.ExportedSymbolSpace
 }
 
-// SealedModule exposes committed module state for read-only queries, retaining
-// its context, parser input, document identities, and path metadata.
+// SealedModule exposes committed module state for read-only queries.
+// Callers must not mutate the returned compiler context, AST, or symbols.
 type SealedModule struct {
 	pkgNode             *ast.BLangPackage
 	externalProjections map[semantics.PackageIdentifier]ExternalModuleProjection
@@ -87,9 +87,10 @@ func (m SealedModule) SourceText(uri workspace.DocumentURI) (string, bool) {
 	return text, ok
 }
 
-// NameOf uses the root pinned to this sealed generation, never live discovery.
+// NameOf returns the compiler name using captured paths, not live discovery.
 func (m SealedModule) NameOf(uri workspace.DocumentURI) (string, bool) { return m.paths.NameOf(uri) }
 
+// ExternalModuleProjection returns a dependency's read-only AST and exports.
 func (m SealedModule) ExternalModuleProjection(org, name string) (ExternalModuleProjection, bool) {
 	projection, ok := m.externalProjections[semantics.PackageIdentifier{OrgName: org, ModuleName: name}]
 	return projection, ok
@@ -207,7 +208,6 @@ func (s *CompilationService) ensureCycleQueued(root string, gen uint64) {
 	s.enqueueImmediately(root, gen)
 }
 
-// cycleQueuedOrRunning checks running, pending, and debounce-armed cycles.
 func (s *CompilationService) cycleQueuedOrRunning(root string) bool {
 	s.cycleMu.Lock()
 	inFlight := s.inFlight[root]
@@ -222,7 +222,6 @@ func (s *CompilationService) cycleQueuedOrRunning(root string) bool {
 	return armed
 }
 
-// waitStoreChange waits for a store notification, retry interval, or cancellation.
 func (s *CompilationService) waitStoreChange(ctx stdcontext.Context, retryInterval time.Duration) bool {
 	select {
 	case <-s.store.changeCh():

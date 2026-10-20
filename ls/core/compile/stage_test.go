@@ -23,7 +23,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
-// validSource has no diagnostics through any stage.
 const validSource = "public function main() {}\n"
 
 const duplicateTopLevelSource = "public function duplicate() {}\npublic function duplicate() {}\n"
@@ -39,8 +38,6 @@ const breakOutsideLoopSource = "function main() {\n    break;\n}\n"
 // oneSemanticErrorSource reports one type mismatch during semantic analysis.
 const oneSemanticErrorSource = "public function main() {\n    int x = \"hello\";\n    _ = x;\n}\n"
 
-// defaultModuleFor returns proj's default module plus the project's shared
-// compiler environment.
 func defaultModuleFor(t *testing.T, proj projects.Project) (*projects.Module, *context.CompilerEnvironment) {
 	t.Helper()
 	pkg := proj.CurrentPackage()
@@ -110,7 +107,6 @@ func TestModuleDriver_ResolverErrorDoesNotAdvancePhase1(t *testing.T) {
 	}
 }
 
-// Unknown variable references use stand-in symbols through local type resolution.
 func TestModuleDriver_UnresolvedReferenceReachesLocalTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -136,7 +132,6 @@ func TestModuleDriver_UnresolvedReferenceReachesLocalTypeResolved(t *testing.T) 
 	}
 }
 
-// Unused-symbol errors mark resolution unusable without blocking type resolution.
 func TestModuleDriver_UnusedSymbolDoesNotBlockTypeResolution(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -196,7 +191,6 @@ func TestModuleDriver_PublicTypeErrorDoesNotAdvancePhase1(t *testing.T) {
 	}
 }
 
-// A recovered malformed signature adds no resolver error alongside a valid sibling.
 func TestModuleDriver_MalformedFunctionSignatureKeepsSymbolResolutionUsable(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -225,7 +219,6 @@ func TestModuleDriver_MalformedFunctionSignatureKeepsSymbolResolutionUsable(t *t
 	}
 }
 
-// A recovered bad top-level node retains its parser diagnostic through Phase 1.
 func TestModuleDriver_MalformedTopLevelReachesTopLevelTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -255,7 +248,6 @@ func TestModuleDriver_MalformedTopLevelReachesTopLevelTypeResolved(t *testing.T)
 	}
 }
 
-// A parser diagnostic permits local type resolution but blocks semantic analysis.
 func TestModuleDriver_MalformedTopLevelReachesLocalTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -285,7 +277,6 @@ func TestModuleDriver_MalformedTopLevelReachesLocalTypeResolved(t *testing.T) {
 	}
 }
 
-// A local-type error advances the stage but blocks semantic analysis.
 func TestModuleDriver_LocalTypeErrorStopsBeforeSemanticAnalysis(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -315,7 +306,6 @@ func TestModuleDriver_LocalTypeErrorStopsBeforeSemanticAnalysis(t *testing.T) {
 	}
 }
 
-// This recovered body adds resolver errors but still reaches local type resolution.
 func TestModuleDriver_MalformedFunctionBodyReachesLocalTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")
@@ -347,7 +337,6 @@ func TestModuleDriver_MalformedFunctionBodyReachesLocalTypeResolved(t *testing.T
 	}
 }
 
-// A malformed body does not remove its valid sibling from the package node.
 func TestModuleDriver_MalformedFunctionBodyWithSiblingRetainsSibling(t *testing.T) {
 	projSvc, _ := newTestServices(t)
 	u := fileURI(t, "file:///workspace/main.bal")

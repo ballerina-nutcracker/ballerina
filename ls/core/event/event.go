@@ -24,8 +24,8 @@ import (
 	"sync"
 )
 
-// Logf reports subscriber panics and dropped events without a logging-library
-// dependency. New defaults it to a no-op; WithLogf supplies a hook.
+// Logf reports subscriber panics and dropped events. Hooks may be called
+// concurrently; New uses a no-op unless WithLogf supplies a hook.
 type Logf func(msg string, args ...any)
 
 func noopLogf(string, ...any) {}
@@ -76,13 +76,11 @@ type Event interface {
 type Tier uint8
 
 const (
-	// TierCritical: bounded buffered channel; on a full channel the event is
-	// dropped and logged. Never coalesced.
+	// TierCritical drops and logs incoming events when its bounded channel is full.
 	TierCritical Tier = iota
-	// TierCoalesceable: last-write-wins for pending events of the same kind
-	// and source root.
+	// TierCoalesceable replaces pending events of the same kind and source root.
 	TierCoalesceable
-	// TierBestEffort: bounded ring buffer, head-drop on full.
+	// TierBestEffort drops the oldest queued event when its bounded ring is full.
 	TierBestEffort
 )
 
@@ -93,10 +91,8 @@ type CoalesceKey struct {
 	DocumentURI string // not populated by the bus
 }
 
-// criticalCapacity is the per-subscriber CRITICAL channel capacity.
 const criticalCapacity = 256
 
-// bestEffortCapacity is the per-subscriber BEST_EFFORT ring cap.
 const bestEffortCapacity = 64
 
 // EvictionReason describes why a project was evicted.
@@ -299,8 +295,7 @@ type Bus struct {
 // Option configures a Bus at construction time.
 type Option func(*Bus)
 
-// WithLogf injects a structured-logging hook for panic/drop reporting.
-// A nil hook leaves the no-op default unchanged.
+// WithLogf sets the panic/drop logging hook. A nil hook leaves the default unchanged.
 func WithLogf(logf Logf) Option {
 	return func(b *Bus) {
 		if logf != nil {
@@ -315,7 +310,6 @@ type busSubscriber struct {
 	tier    *tierDelivery // nil for inline subscribers
 }
 
-// tierDelivery is the per-subscriber async delivery state.
 type tierDelivery struct {
 	tier     Tier
 	logf     Logf
@@ -341,10 +335,9 @@ func New(opts ...Option) *Bus {
 	return b
 }
 
-// Subscribe registers handler for the given kinds. Kinds filters by
-// membership; an empty slice subscribes to all kinds. Subscribers are called
-// in registration order on the publishing goroutine (inline delivery).
-// Subscribe after Close is a no-op.
+// Subscribe registers an inline handler; empty kinds matches all events.
+// Handlers run in registration order on the publishing goroutine and may run
+// concurrently when Publish calls overlap. Subscribe after Close is a no-op.
 func (b *Bus) Subscribe(kinds []Kind, handler func(Event)) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -354,10 +347,9 @@ func (b *Bus) Subscribe(kinds []Kind, handler func(Event)) {
 	b.subscribers = append(b.subscribers, busSubscriber{kinds: kinds, handler: handler})
 }
 
-// SubscribeWithTier registers handler for the given kinds, delivered on a
-// per-subscriber queue with the given tier semantics. The handler is called
-// on a dedicated drainer goroutine for that registration, not on the
-// publishing goroutine. SubscribeWithTier after Close is a no-op.
+// SubscribeWithTier registers a queued handler; empty kinds matches all events.
+// Each registration has a dedicated drainer goroutine using the given tier.
+// SubscribeWithTier after Close is a no-op.
 func (b *Bus) SubscribeWithTier(kinds []Kind, tier Tier, handler func(Event)) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -396,7 +388,8 @@ func (b *Bus) Publish(e Event) {
 
 // Flush waits for tiered subscribers to drain their queues and finish handler
 // calls. Publishers must be quiescent to guarantee all subscribers are idle
-// when it returns. Inline handlers finish before their Publish call returns.
+// when it returns. Do not call Flush from a tiered handler.
+// Inline handlers finish before their Publish call returns.
 func (b *Bus) Flush() {
 	b.mu.Lock()
 	subs := make([]busSubscriber, len(b.subscribers))
@@ -410,8 +403,9 @@ func (b *Bus) Flush() {
 	}
 }
 
-// Close stops accepting new subscribers, drops further publishes, and signals
-// every tiered drainer goroutine to exit (draining CRITICAL channels first).
+// Close stops accepting subscribers and publishes, then waits for tiered drainers
+// to exit. Critical queues are drained; other tiers may discard pending events.
+// Close must not overlap Publish or Flush or run in a tiered handler.
 // Repeated calls are no-ops.
 func (b *Bus) Close() {
 	b.mu.Lock()
@@ -466,7 +460,6 @@ func newTierDelivery(tier Tier, logf Logf) *tierDelivery {
 	return d
 }
 
-// enqueue queues e without waiting for a handler to consume it.
 func (d *tierDelivery) enqueue(e Event) {
 	switch d.tier {
 	case TierCritical:
@@ -502,7 +495,6 @@ func (d *tierDelivery) enqueue(e Event) {
 	}
 }
 
-// run delivers a tiered subscription's events serially.
 func (d *tierDelivery) run(handler func(Event)) {
 	defer close(d.done)
 	for {
@@ -532,8 +524,6 @@ func (d *tierDelivery) run(handler func(Event)) {
 	}
 }
 
-// drainCritical delivers every event currently buffered in the events
-// channel. It is called from the drainer goroutine.
 func (d *tierDelivery) drainCritical(handler func(Event)) {
 	for {
 		select {
@@ -545,7 +535,6 @@ func (d *tierDelivery) drainCritical(handler func(Event)) {
 	}
 }
 
-// drainSignal delivers every coalesced/ring event currently pending.
 func (d *tierDelivery) drainSignal(handler func(Event)) {
 	for {
 		var e Event
@@ -608,8 +597,6 @@ func (d *tierDelivery) flush() {
 	}
 }
 
-// idle reports whether the tier's queue is empty. Called after a flush
-// request completes; if non-empty (a publish raced), flush retries.
 func (d *tierDelivery) idle() bool {
 	if d.tier == TierCritical {
 		return len(d.events) == 0
@@ -625,9 +612,6 @@ func (d *tierDelivery) idle() bool {
 	return d.ringLen == 0
 }
 
-// close signals the drainer to exit and waits for it. CRITICAL events are
-// drained; other tiers may leave pending events undelivered. Bus.Close guards
-// against repeated calls.
 func (d *tierDelivery) close() {
 	if d.tier == TierCritical {
 		close(d.events)

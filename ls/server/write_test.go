@@ -25,11 +25,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
-// TestWriteSerializesConcurrentFrames verifies writeMu serializes framed
-// writes so concurrent writes from the Serve goroutine and the CE-subscriber
-// goroutine cannot interleave header/body bytes. Two goroutines each write N
-// frames; the output must parse as 2*N clean frames (ls/AGENTS.md URI-unit-test
-// exception).
 func TestWriteSerializesConcurrentFrames(t *testing.T) {
 	var buf bytes.Buffer
 	s := &Server{transport: pipeTransport{writer: &buf}}
@@ -58,8 +53,6 @@ func TestWriteSerializesConcurrentFrames(t *testing.T) {
 	}
 	wg.Wait()
 
-	// The buffer must parse cleanly into exactly perGoroutine*goroutines
-	// frames; any interleaving would corrupt framing and yield a parse error.
 	reader := bufio.NewReader(bytes.NewReader(buf.Bytes()))
 	count := 0
 	for {

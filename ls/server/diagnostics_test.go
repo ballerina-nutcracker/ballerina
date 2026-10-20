@@ -327,12 +327,8 @@ func TestPublishDiagnosticsTransportErrorReachesServe(t *testing.T) {
 			Text:       "public function main() {}\n",
 		},
 	})
-	// Under ticket 09 didOpen no longer writes synchronously; publishDiagnostics
-	// arrives out-of-band via the CE subscriber. Closing the client's write end
-	// (EOF to the server) lets Serve return. The async CE publish, running on a
-	// drainer goroutine against the already-closed server write end, must not
-	// crash the server; its write error is contained by writeMu + the engine's
-	// shutdown drain.
+	// Diagnostic writes are asynchronous; EOF lets Serve return independently
+	// of publication to the closed output.
 	_ = clientWrite.Close()
 	select {
 	case err := <-done:
@@ -345,17 +341,11 @@ func TestPublishDiagnosticsTransportErrorReachesServe(t *testing.T) {
 	_ = clientRead.Close()
 }
 
-// TestCancelRequestRoutesAsNotification verifies the $/cancelRequest mapping
-// (design branch 3) at the protocol/server routing boundary: it is handled as
-// a notification (no response is written), it does not crash the dispatch
-// loop, and the server continues processing subsequent notifications. The
-// semantic effect (CE-E3 gating) is covered by the compile-engine test.
 func TestCancelRequestRoutesAsNotification(t *testing.T) {
 	session := newTestSession(t, true)
 	defer session.close()
 
-	// $/cancelRequest before any document: Cancel applies to zero active roots
-	// (a no-op) and must not produce a response or break the dispatch loop.
+	// The initialize request has already completed, so cancellation is a no-op.
 	session.sendNotification("$/cancelRequest", protocol.CancelParams{
 		ID: protocol.NewOrCancelParamsIdString("1"),
 	})
@@ -370,9 +360,6 @@ func TestCancelRequestRoutesAsNotification(t *testing.T) {
 		},
 	})
 
-	// The first message the client receives must be the publishDiagnostics for
-	// the didOpen — proving $/cancelRequest wrote no response and dispatch
-	// continued normally.
 	published := decodePublishDiagnostics(t, session.receive(t))
 	if published.URI != uri {
 		t.Fatalf("first message URI = %q, want %q (a $/cancelRequest response must not precede it)", published.URI, uri)
@@ -385,13 +372,8 @@ func TestCancelRequestRoutesAsNotification(t *testing.T) {
 	}
 }
 
-// TestDedupNotStaleAfterEviction verifies the CE publish dedup does not
-// suppress a reloaded source root's diagnostics behind a stale high-water
-// mark left by an evicted previous incarnation. With WithMaxProjects(1):
-// open /a (gen 1, publish), close /a (background), open /b (evicts /a,
-// clearing lastPublished["/a"]), then reopen /a — its gen-1 reload must
-// still publish. Without the ProjectEvicted clear (or with a <= guard) the
-// reload's first publish would be dropped.
+// Reloaded roots restart at generation 1; deduplication must not retain the
+// evicted root's publication claim.
 func TestDedupNotStaleAfterEviction(t *testing.T) {
 	serverRead, clientWrite := io.Pipe()
 	clientRead, serverWrite := io.Pipe()
@@ -416,22 +398,19 @@ func TestDedupNotStaleAfterEviction(t *testing.T) {
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{URI: uriA, LanguageID: "ballerina", Version: 1, Text: text},
 	})
-	_ = decodePublishDiagnostics(t, session.receive(t)) // gen 1 for /a
+	_ = decodePublishDiagnostics(t, session.receive(t))
 
 	session.sendNotification("textDocument/didClose", protocol.DidCloseTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uriA},
 	})
-	_ = decodePublishDiagnostics(t, session.receive(t)) // clear for /a
+	_ = decodePublishDiagnostics(t, session.receive(t))
 
-	// Open /b: with WithMaxProjects(1) this evicts /a (the only, now-background,
-	// root), publishing ProjectEvicted and clearing the dedup mark for /a.
+	// At capacity, opening /b evicts the closed root /a.
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{URI: uriB, LanguageID: "ballerina", Version: 1, Text: text},
 	})
-	_ = decodePublishDiagnostics(t, session.receive(t)) // gen 1 for /b
+	_ = decodePublishDiagnostics(t, session.receive(t))
 
-	// Reopen /a: the root reloads at gen 1. The dedup must NOT suppress this
-	// behind the stale lastPublished["/a"] == 1 from the first incarnation.
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{URI: uriA, LanguageID: "ballerina", Version: 1, Text: text},
 	})
@@ -450,9 +429,6 @@ func TestDedupNotStaleAfterEviction(t *testing.T) {
 	}
 }
 
-// recv returns a channel that yields the next framed message, so a test can
-// select on it with a timeout instead of blocking forever when a publish is
-// wrongly suppressed.
 func (s *testSession) recv() <-chan protocol.Message {
 	ch := make(chan protocol.Message, 1)
 	go func() { ch <- s.receive(s.t) }()

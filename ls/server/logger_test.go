@@ -32,10 +32,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
-// newLoggingBatchServer builds a batch-driven Server (see cancellation_test.go)
-// wired to an observability.Logger backed by a captured stderr buffer, so
-// tests can assert a request-scoped logger reached every dispatch path from
-// handleMessage.
 func newLoggingBatchServer(t *testing.T) (*Server, *batchTransport, *bytes.Buffer) {
 	t.Helper()
 	bus := event.New()
@@ -128,11 +124,6 @@ func TestDiscoveryErrorsAreLoggedWithoutClientNotifications(t *testing.T) {
 	}
 }
 
-// TestRequestScopedLoggerReachesEveryDispatchPath verifies a request-scoped
-// logger carrying method (+id for requests) is attached at handleMessage for
-// every category of inbound message: a lifecycle request (initialize), a
-// notification, and a tracked request — not just the two methods
-// dispatchTracked itself covers.
 func TestRequestScopedLoggerReachesEveryDispatchPath(t *testing.T) {
 	srv, bt, logBuf := newLoggingBatchServer(t)
 	_, err := runBatch(t, srv, bt, []protocol.Message{
@@ -148,7 +139,6 @@ func TestRequestScopedLoggerReachesEveryDispatchPath(t *testing.T) {
 	}
 	out := logBuf.String()
 
-	// Lifecycle and tracked requests: method+id both present.
 	for _, want := range []string{
 		`method=initialize`, `id="\"1\""`,
 		`method=$pal/blockRequest`, `id="\"b1\""`,
@@ -158,7 +148,6 @@ func TestRequestScopedLoggerReachesEveryDispatchPath(t *testing.T) {
 			t.Errorf("log output missing %q; got:\n%s", want, out)
 		}
 	}
-	// Notification: method present (notifications carry no id).
 	if !strings.Contains(out, "method=initialized") {
 		t.Errorf("log output missing notification method=initialized; got:\n%s", out)
 	}

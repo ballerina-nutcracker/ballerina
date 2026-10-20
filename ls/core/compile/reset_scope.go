@@ -24,7 +24,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
-// moduleTextHash hashes source-document names and live text, sorted by name.
 func moduleTextHash(module *projects.Module, openText textProvider) string {
 	type namedText struct {
 		name string
@@ -114,7 +113,6 @@ func dependentClosure(dirty map[projects.ModuleID]bool, reverse map[projects.Mod
 	return scope
 }
 
-// allModuleIDs returns a scope containing every supplied module.
 func allModuleIDs(modules []*projects.Module) map[projects.ModuleID]bool {
 	scope := make(map[projects.ModuleID]bool, len(modules))
 	for _, m := range modules {

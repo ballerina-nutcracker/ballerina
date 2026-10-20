@@ -18,12 +18,12 @@ package generate
 
 // Model is the parsed LSP metamodel with source line numbers attached.
 type Model struct {
-	Version       Metadata       `json:"metaData"`
-	Requests      []*Request     `json:"requests"`
+	Version       Metadata        `json:"metaData"`
+	Requests      []*Request      `json:"requests"`
 	Notifications []*Notification `json:"notifications"`
-	Structures    []*Structure   `json:"structures"`
-	Enumerations  []*Enumeration `json:"enumerations"`
-	TypeAliases   []*TypeAlias   `json:"typeAliases"`
+	Structures    []*Structure    `json:"structures"`
+	Enumerations  []*Enumeration  `json:"enumerations"`
+	TypeAliases   []*TypeAlias    `json:"typeAliases"`
 }
 
 // Metadata describes the metamodel version.
@@ -82,15 +82,15 @@ type Structure struct {
 
 // Enumeration is a parsed LSP enumeration.
 type Enumeration struct {
-	Documentation        string           `json:"documentation"`
-	Name                 string           `json:"name"`
-	Proposed             bool             `json:"proposed"`
-	Since                string           `json:"since"`
-	Deprecated           string           `json:"deprecated"`
-	SupportsCustomValues bool             `json:"supportsCustomValues"`
-	Type                 *Type            `json:"type"`
+	Documentation        string             `json:"documentation"`
+	Name                 string             `json:"name"`
+	Proposed             bool               `json:"proposed"`
+	Since                string             `json:"since"`
+	Deprecated           string             `json:"deprecated"`
+	SupportsCustomValues bool               `json:"supportsCustomValues"`
+	Type                 *Type              `json:"type"`
 	Values               []EnumerationEntry `json:"values"`
-	Line                 int              `json:"line"`
+	Line                 int                `json:"line"`
 }
 
 // EnumerationEntry is a single enum value.
@@ -134,11 +134,11 @@ type Type struct {
 	Element *Type   `json:"element"` // array
 	Name    string  `json:"name"`    // base, reference
 	Key     *Type   `json:"key"`     // map
-	Value   any     `json:"value"`   // map (value type), stringLiteral, integerLiteral (raw value), literal (map)
+	Value   any     `json:"value"`   // map value type, literal object, or string/integer/boolean literal value
 	Line    int     `json:"line"`
 }
 
-// TypeKind enumerates the known LSP type kinds.
+// KindAnd and the other Kind constants identify LSP metamodel type expressions.
 const (
 	KindAnd            = "and"
 	KindArray          = "array"
@@ -155,13 +155,13 @@ const (
 
 // BaseTypes enumerates the primitive names allowed in the metamodel.
 var BaseTypes = map[string]bool{
-	"URI":          true,
-	"DocumentUri":  true,
-	"integer":      true,
-	"uinteger":     true,
-	"decimal":      true,
-	"RegExp":       true,
-	"string":       true,
-	"boolean":      true,
-	"null":         true,
+	"URI":         true,
+	"DocumentUri": true,
+	"integer":     true,
+	"uinteger":    true,
+	"decimal":     true,
+	"RegExp":      true,
+	"string":      true,
+	"boolean":     true,
+	"null":        true,
 }

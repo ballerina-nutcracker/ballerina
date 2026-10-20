@@ -26,15 +26,13 @@ import (
 type TypeRegistry struct {
 	pm *ParsedModel
 
-	// Names assigned to generated anonymous types.
+	// Anonymous types are keyed by object identity.
 	typeNames map[*Type]string
-	// Set of names already assigned.
 	usedNames map[string]bool
 	// Order in which generated types were discovered.
 	genOrder []*Type
 	// Resolved property sets for structures (flattened extends/mixins).
-	structProps map[string][]Property
-	// Union nullability wrappers already emitted to avoid duplicates.
+	structProps   map[string][]Property
 	unionWrappers map[string]bool
 }
 
@@ -47,7 +45,6 @@ func NewTypeRegistry(pm *ParsedModel) (*TypeRegistry, error) {
 		structProps:   make(map[string][]Property),
 		unionWrappers: make(map[string]bool),
 	}
-	// Pre-populate named references.
 	for name := range pm.References {
 		reg.typeNames[&Type{Kind: KindReference, Name: name}] = GoName(name)
 		reg.usedNames[GoName(name)] = true
@@ -61,7 +58,6 @@ func NewTypeRegistry(pm *ParsedModel) (*TypeRegistry, error) {
 			reg.genOrder = append(reg.genOrder, a.Type)
 		}
 	}
-	// Flatten structure inheritance.
 	for _, s := range pm.Structures {
 		props, err := reg.flattenStructure(s)
 		if err != nil {
@@ -69,7 +65,6 @@ func NewTypeRegistry(pm *ParsedModel) (*TypeRegistry, error) {
 		}
 		reg.structProps[s.Name] = props
 	}
-	// Name anonymous types reachable from named declarations and request/notification metadata.
 	for _, s := range reg.sortedStructureSlice() {
 		for _, p := range s.Properties {
 			reg.nameType(p.Type, []string{s.Name, p.Name})
@@ -88,7 +83,6 @@ func NewTypeRegistry(pm *ParsedModel) (*TypeRegistry, error) {
 		reg.nameType(n.Params, []string{"Param", n.Method})
 		reg.nameType(n.RegistrationOptions, []string{"RegOpt", n.Method})
 	}
-	// Ensure all generated types have valid, non-colliding names.
 	if err := reg.checkGeneratedNames(); err != nil {
 		return nil, err
 	}
@@ -123,12 +117,11 @@ func (reg *TypeRegistry) FlattenedProperties(name string) []Property {
 	return reg.structProps[name]
 }
 
-// GeneratedName returns the generated name for an anonymous type.
+// GeneratedName returns a reference's Go name or a registered name for t.
 func (reg *TypeRegistry) GeneratedName(t *Type) (string, bool) {
 	if t == nil {
 		return "", false
 	}
-	// Normalize a reference to use the canonical reference object in our map.
 	if t.Kind == KindReference {
 		return GoName(t.Name), true
 	}
@@ -141,7 +134,7 @@ func (reg *TypeRegistry) GeneratedTypes() []*Type {
 	return reg.genOrder
 }
 
-// IsUnion reports whether t is a generated union (or nullable union).
+// IsUnion reports whether t has union kind.
 func (reg *TypeRegistry) IsUnion(t *Type) bool {
 	if t == nil {
 		return false
@@ -221,7 +214,6 @@ func compatibleProperties(a, b Property) bool {
 	return false
 }
 
-// isAnonymousType reports whether t is an unnamed composite type.
 func isAnonymousType(t *Type) bool {
 	if t == nil {
 		return false
@@ -275,9 +267,7 @@ func (reg *TypeRegistry) nameType(t *Type, path []string) string {
 		}
 		return name
 	case KindOr:
-		// If the union is just a nullable wrapper around a single non-null type,
-		// we still generate a named union wrapper for the non-null shape so
-		// that Optional/Nullable wrappers can refer to it unambiguously.
+		// Nullable unions keep a named non-null shape for presence wrappers.
 		name := reg.allocateName(ContextName("Or", path), t)
 		for i, it := range t.Items {
 			reg.nameType(it, append(path, fmt.Sprintf("Item%d", i)))
@@ -291,7 +281,6 @@ func (reg *TypeRegistry) nameType(t *Type, path []string) string {
 		return name
 	case KindLiteral:
 		name := reg.allocateName(ContextName("Lit", path), t)
-		// Literal properties are raw maps in the model; normalize for generation.
 		_ = NormalizeLiteral(t)
 		return name
 	default:
@@ -313,7 +302,6 @@ func (reg *TypeRegistry) allocateName(candidate string, t *Type) string {
 	return name
 }
 
-// typeNamesByValue is no longer used; kept for compatibility.
 func (reg *TypeRegistry) typeNamesByValue(name string) (*Type, bool) {
 	for tp, nm := range reg.typeNames {
 		if nm == name {
@@ -324,7 +312,6 @@ func (reg *TypeRegistry) typeNamesByValue(name string) (*Type, bool) {
 }
 
 func (reg *TypeRegistry) checkGeneratedNames() error {
-	// Every generated type must have a valid identifier name.
 	for _, t := range reg.genOrder {
 		name, ok := reg.typeNames[t]
 		if !ok || name == "" {

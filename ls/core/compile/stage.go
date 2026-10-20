@@ -44,7 +44,6 @@ const (
 	stageCFGAnalyzed
 )
 
-// moduleResolutionInput carries cross-module symbol-resolution inputs.
 type moduleResolutionInput struct {
 	defaultOrg       string
 	implicitImports  map[string]model.ExportedSymbolSpace
@@ -52,7 +51,6 @@ type moduleResolutionInput struct {
 	moduleVisibility map[semantics.PackageIdentifier]semantics.ModuleVisibility
 }
 
-// newModuleResolutionInput defaults nil maps to empty maps.
 func newModuleResolutionInput(defaultOrg string, implicitImports map[string]model.ExportedSymbolSpace, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace) moduleResolutionInput {
 	if implicitImports == nil {
 		implicitImports = make(map[string]model.ExportedSymbolSpace)
@@ -116,13 +114,10 @@ func newModuleDriver(env *context.CompilerEnvironment, openText textProvider, st
 		sources: make(map[projects.DocumentID]string), sourceIDs: make(map[string]projects.DocumentID)}
 }
 
-// currentStage returns the stage this driver's module has reached.
 func (d *moduleDriver) currentStage() moduleStage {
 	return d.stage
 }
 
-// diagnosticContext returns the fresh per-generation CompilerContext this
-// driver's diagnostics live on.
 func (d *moduleDriver) diagnosticContext() *context.CompilerContext {
 	return d.ctx
 }
@@ -200,8 +195,6 @@ func (d *moduleDriver) ensureParsed(module *projects.Module) {
 	d.stage = stageParsed
 }
 
-// ensureSymbolResolved binds imports and resolves the module's own symbols
-// (compiler stage 3). Requires stageParsed; a no-op if already reached.
 func (d *moduleDriver) ensureSymbolResolved(module *projects.Module, input moduleResolutionInput) {
 	if d.stage >= stageSymbolResolved {
 		return
@@ -253,7 +246,6 @@ func (d *moduleDriver) ensureTopLevelTypeResolved(module *projects.Module, input
 	d.stage = stageTopLevelTypeResolved
 }
 
-// hasNewErrorsSince checks for error or fatal diagnostics after diagnosticCount.
 func (d *moduleDriver) hasNewErrorsSince(diagnosticCount int) bool {
 	for _, diagnostic := range d.ctx.Diagnostics()[diagnosticCount:] {
 		switch diagnostic.DiagnosticInfo().Severity() {
@@ -264,8 +256,6 @@ func (d *moduleDriver) hasNewErrorsSince(diagnosticCount int) bool {
 	return false
 }
 
-// ensureLocalTypeResolved resolves types of function bodies and other inner
-// nodes (compiler stage 5). Requires stageTopLevelTypeResolved.
 func (d *moduleDriver) ensureLocalTypeResolved(module *projects.Module, input moduleResolutionInput) {
 	if d.stage >= stageLocalTypeResolved {
 		return
@@ -280,9 +270,7 @@ func (d *moduleDriver) ensureLocalTypeResolved(module *projects.Module, input mo
 	d.stage = stageLocalTypeResolved
 }
 
-// ensureSemanticAnalyzed runs semantic analysis (compiler stage 6). Requires
-// stageLocalTypeResolved. Never runs for a module with bad AST nodes or with
-// any diagnostic from an earlier stage.
+// Semantic analysis is blocked by recovered AST nodes or any prior diagnostic.
 func (d *moduleDriver) ensureSemanticAnalyzed(module *projects.Module, input moduleResolutionInput) {
 	if d.stage >= stageSemanticAnalyzed {
 		return
@@ -299,8 +287,6 @@ func (d *moduleDriver) ensureSemanticAnalyzed(module *projects.Module, input mod
 	d.stage = stageSemanticAnalyzed
 }
 
-// ensureCFGBuilt builds the module's control-flow graph (compiler stage 7).
-// Requires stageSemanticAnalyzed.
 func (d *moduleDriver) ensureCFGBuilt(module *projects.Module, input moduleResolutionInput) {
 	if d.stage >= stageCFGBuilt {
 		return
@@ -317,8 +303,7 @@ func (d *moduleDriver) ensureCFGBuilt(module *projects.Module, input moduleResol
 	d.stage = stageCFGBuilt
 }
 
-// ensureCFGAnalyzed runs reachability and explicit-return analysis (compiler
-// stage 8), the final LS stage. Requires stageCFGBuilt.
+// CFG analysis is the final LS stage; desugaring and BIR generation are excluded.
 func (d *moduleDriver) ensureCFGAnalyzed(module *projects.Module, input moduleResolutionInput) {
 	if d.stage >= stageCFGAnalyzed {
 		return
@@ -335,7 +320,6 @@ func (d *moduleDriver) ensureCFGAnalyzed(module *projects.Module, input moduleRe
 	d.stage = stageCFGAnalyzed
 }
 
-// newPackageID interns the module descriptor's identity in the shared environment.
 func (d *moduleDriver) newPackageID(desc projects.ModuleDescriptor) *model.PackageID {
 	orgName := model.Name(desc.Org().Value())
 	parts := strings.Split(desc.Name().String(), ".")

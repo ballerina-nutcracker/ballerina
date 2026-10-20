@@ -27,7 +27,6 @@ func GoName(s string) string {
 	if s == "" {
 		return ""
 	}
-	// LSP id/uri conventions
 	switch s {
 	case "id":
 		return "ID"
@@ -39,7 +38,6 @@ func GoName(s string) string {
 	} else if strings.HasSuffix(s, "Uri") {
 		s = s[:len(s)-3] + "URI"
 	}
-	// Export by uppercasing first rune.
 	runes := []rune(s)
 	if len(runes) > 0 {
 		runes[0] = unicode.ToUpper(runes[0])
@@ -62,11 +60,9 @@ func ContextName(prefix string, path []string) string {
 	parts := make([]string, 0, len(path)+1)
 	parts = append(parts, prefix)
 	for _, p := range path {
-		// Sanitize path components into identifier pieces.
 		parts = append(parts, sanitizePathPart(p))
 	}
 	nm := strings.Join(parts, "")
-	// Avoid leading digits from numeric path parts.
 	if len(nm) > 0 && nm[0] >= '0' && nm[0] <= '9' {
 		nm = "X" + nm
 	}
@@ -74,7 +70,6 @@ func ContextName(prefix string, path []string) string {
 }
 
 func sanitizePathPart(s string) string {
-	// Keep alphanumerics; capitalize after separators.
 	var b strings.Builder
 	capNext := true
 	for _, r := range s {
@@ -146,7 +141,7 @@ func ClassifyPresence(optional bool, t *Type) Presence {
 	}
 }
 
-// PresenceWrapper returns the Go wrapper type name for a presence class.
+// PresenceWrapper wraps inner in the Go presence type selected by p.
 func PresenceWrapper(p Presence, inner string) string {
 	switch p {
 	case OptionalNonNull:
@@ -160,8 +155,7 @@ func PresenceWrapper(p Presence, inner string) string {
 	}
 }
 
-// IsDirectScalar reports whether a Go type expression names a scalar kind
-// that is passed by value and can be stored directly inside an Optional.
+// IsDirectScalar reports whether goType is a supported scalar name or DocumentURI.
 func IsDirectScalar(goType string) bool {
 	switch goType {
 	case "bool", "string", "int", "int32", "int64", "uint32", "uint64", "float64", "DocumentURI":
@@ -170,8 +164,7 @@ func IsDirectScalar(goType string) bool {
 	return false
 }
 
-// IsEnumTypeName is used during generation to decide whether a type
-// expression resolves to an enum. It is populated by the type graph.
+// IsEnumTypeName is an optional predicate for enum type names.
 var IsEnumTypeName func(name string) bool
 
 // GoTypeFor returns the Go type expression for a resolved type, applying

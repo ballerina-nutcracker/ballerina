@@ -22,12 +22,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
-// UTF-16 boundary: The helpers below resolve protocol.TextEdit ranges
-// (UTF-16 code-unit positions) to byte offsets in the full text. The server
-// does this before calling workspace.Apply with resolved full text, keeping
-// ls/core protocol-free. These helpers stay in ls/server per the core-service
-// seam design.
-
+// Resolve UTF-16 edit ranges here so workspace receives full text, not protocol positions.
 func applyChanges(text string, changes []protocol.TextDocumentContentChangeEvent) (string, bool) {
 	if len(changes) == 0 {
 		return "", false

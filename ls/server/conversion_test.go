@@ -72,14 +72,13 @@ func TestConvertDiagnosticsEmptyReturnsNil(t *testing.T) {
 
 func TestConvertDiagnosticsSurrogatePairUTF16(t *testing.T) {
 	text := "𐐀x\n"
-	// 𐐀 is 4 bytes (1 UTF-16 code unit pair = 2), x is 1 byte (1 UTF-16 unit)
-	// Byte offset 4 = after 𐐀, char 2 in UTF-16
+	// 𐐀 occupies four UTF-8 bytes but two UTF-16 code units.
 	diags := []compile.CompilerDiagnostic{
 		{
 			StartLine: 0,
-			StartChar: 4, // byte offset 4 = after 𐐀
+			StartChar: 4,
 			EndLine:   0,
-			EndChar:   5, // byte offset 5 = after x
+			EndChar:   5,
 			Severity:  compile.SeverityError,
 			Code:      "TEST",
 			Message:   "test",

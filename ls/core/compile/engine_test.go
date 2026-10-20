@@ -27,7 +27,6 @@ import (
 	proj "github.com/ballerina-nutcracker/ballerina/projects"
 )
 
-// makeStableSnap builds a StableSnapshot for the store unit tests.
 func makeStableSnap(root string, gen uint64, byFile, resByFile map[string][]CompilerDiagnostic) StableSnapshot {
 	if byFile == nil {
 		byFile = map[string][]CompilerDiagnostic{}
@@ -113,8 +112,6 @@ func lastGen(c *genCollector) uint64 {
 	return s[len(s)-1]
 }
 
-// The stale gate preserves the prior snapshot and emits cancellation rather
-// than success for a superseded generation.
 func TestSnapshotStoreStaleGate(t *testing.T) {
 	bus := event.New()
 	defer bus.Close()
@@ -167,7 +164,6 @@ func TestSnapshotStoreEvictRoot(t *testing.T) {
 	}
 }
 
-// Rapid updates leave generation 2 stable and emit cancellation for generation 1.
 func TestEngineSingleFlightAndStaleGate(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	succeeded := collectGen(t, bus, event.CompilationSucceeded)
@@ -189,7 +185,6 @@ func TestEngineSingleFlightAndStaleGate(t *testing.T) {
 	}
 }
 
-// An injected compiler panic emits failure; a subsequent real cycle succeeds.
 func TestEnginePanicRecovery(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	failed := collectGen(t, bus, event.CompilationFailed)
@@ -214,8 +209,6 @@ func TestEnginePanicRecovery(t *testing.T) {
 	}
 }
 
-// Injected resolution errors suppress CompilationDiagnosticsReady without
-// suppressing ResolutionDiagnosticsReady.
 func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	e5a := collectGen(t, bus, event.ResolutionDiagnosticsReady)
@@ -246,8 +239,6 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	}
 }
 
-// A real compile with clean package resolution emits both diagnostics-ready
-// events for the same generation.
 func TestEngineCleanCycleEmitsE5aAndE5b(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	e5a := collectGen(t, bus, event.ResolutionDiagnosticsReady)
@@ -286,7 +277,6 @@ func TestEngineDiagnosticsFor(t *testing.T) {
 	}
 }
 
-// Cancel supersedes a blocked cycle; releasing it emits cancellation, not success.
 func TestEngineCancelSupersedesInFlight(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	succeeded := collectGen(t, bus, event.CompilationSucceeded)

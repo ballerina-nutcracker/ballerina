@@ -31,7 +31,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
-// CompileRequest carries the document URI to compile.
+// CompileRequest identifies the document to compile.
 type CompileRequest struct {
 	URI workspace.DocumentURI
 }
@@ -51,10 +51,8 @@ const (
 	SeverityHint
 )
 
-// CompilerDiagnostic is a core-defined diagnostic with byte-offset-derived
-// positions. StartLine/StartChar/EndLine/EndChar use byte character offsets
-// within each line (not UTF-16 code units). The server converts these to
-// protocol.Position at the boundary.
+// CompilerDiagnostic uses zero-based lines and byte columns, not UTF-16 code
+// units. The server converts positions at the protocol boundary.
 type CompilerDiagnostic struct {
 	StartLine uint32
 	StartChar uint32
@@ -65,14 +63,12 @@ type CompilerDiagnostic struct {
 	Message   string
 }
 
-// projectReader is the engine's read-only workspace view.
 type projectReader interface {
 	CurrentProject(root string) (projects.Project, uint64, bool)
 	Generation(root string) (uint64, bool)
 	OpenDocumentsUnder(root string) []workspace.DocumentURI
 }
 
-// cycleResult is the extracted outcome of one compile, grouped by file.
 type cycleResult struct {
 	byFile            map[string][]CompilerDiagnostic
 	resByFile         map[string][]CompilerDiagnostic
@@ -131,9 +127,7 @@ func WithQueueDepth(n int) Option {
 	}
 }
 
-// CompilationService is the dual-snapshot compilation engine. It holds a direct
-// *workspace.ProjectService read reference and the SnapshotStore, and
-// subscribes to ProjectUpdated (CRITICAL) to enqueue compile cycles.
+// CompilationService schedules per-project compilation and retains stable results.
 type CompilationService struct {
 	projects  *workspace.ProjectService
 	reader    projectReader
@@ -176,11 +170,8 @@ type cycleRequest struct {
 	project projects.Project
 }
 
-// New creates a CompilationService wired to the project service (direct read
-// reference) and the event bus. It subscribes to ProjectUpdated (CRITICAL) to
-// enqueue compile cycles, and to ProjectRegistered/ProjectEvicted/
-// ProjectKindTransitioned (inline) to maintain the known-roots set and evict
-// snapshots.
+// New creates a compilation service subscribed to workspace updates and lifecycle
+// events. Call Shutdown before closing the bus.
 func New(projectService *workspace.ProjectService, bus *event.Bus, opts ...Option) *CompilationService {
 	s := &CompilationService{
 		projects:       projectService,
@@ -261,7 +252,6 @@ func (s *CompilationService) isKnown(root string) bool {
 	return ok
 }
 
-// enqueueCycle handles ProjectUpdated, debouncing per root when configured.
 func (s *CompilationService) enqueueCycle(e event.Event) {
 	root := e.SourceRoot()
 	gen := e.Generation()
@@ -281,8 +271,7 @@ func (s *CompilationService) isClosed() bool {
 	return s.closed
 }
 
-// scheduleDebounced resets the per-root debounce timer to fire with the latest
-// generation (coalescing rapid changes into one cycle).
+// Debounced cycles use the latest generation recorded for the root.
 func (s *CompilationService) scheduleDebounced(root string, gen uint64) {
 	s.debounceMu.Lock()
 	defer s.debounceMu.Unlock()
@@ -319,7 +308,7 @@ func (s *CompilationService) enqueueImmediately(root string, gen uint64) {
 		return
 	}
 	if s.inFlight[root] {
-		s.pending[root] = req // depth-1 latest-wins
+		s.pending[root] = req
 		s.cycleMu.Unlock()
 		return
 	}
@@ -328,8 +317,7 @@ func (s *CompilationService) enqueueImmediately(root string, gen uint64) {
 	s.submit(req)
 }
 
-// submit runs a cycle on the worker pool. The workSem bounds concurrent
-// compiles across roots to maxWorkers.
+// workSem bounds concurrent compiles across roots.
 func (s *CompilationService) submit(req *cycleRequest) {
 	s.workSem <- struct{}{}
 	go func() {
@@ -339,8 +327,6 @@ func (s *CompilationService) submit(req *cycleRequest) {
 	}()
 }
 
-// newCompileCycle captures prior module state and generation callbacks for
-// a background cycle.
 func (s *CompilationService) newCompileCycle(req *cycleRequest) compileCycle {
 	root := req.root
 	gen := req.gen
@@ -403,9 +389,8 @@ func (s *CompilationService) runCycle(req *cycleRequest) {
 	s.store.publishStable(snap, s.bus)
 }
 
-// finishCycle runs after a cycle's worker slot is freed. If a pending
-// (superseding) cycle exists for the root it starts it (in-flight stays
-// true); otherwise the root is idle and Flush/Shutdown waiters are woken.
+// finishCycle runs after releasing the worker slot. The root stays in flight
+// until its latest pending cycle finishes.
 func (s *CompilationService) finishCycle(root string) {
 	s.cycleMu.Lock()
 	p := s.pending[root]
@@ -510,11 +495,9 @@ func (s *CompilationService) stopDebounceTimers() {
 	s.debounceGens = make(map[string]uint64)
 }
 
-// DiagnosticsFor returns the per-open-document diagnostics from the latest
-// stable snapshot for root, keyed by open-document URI, plus the snapshot's
-// generation. ok is false if no stable snapshot exists. Diagnostics are
-// core-defined; the server converts. The caller performs the generation-
-// staleness guard before publishing.
+// DiagnosticsFor returns the latest stable diagnostics for open documents and
+// the snapshot's generation, or ok=false if none exists. Callers must check
+// generation freshness before publishing.
 func (s *CompilationService) DiagnosticsFor(root string) (diags map[workspace.DocumentURI][]CompilerDiagnostic, generation uint64, ok bool) {
 	snap, has := s.store.Stable(root)
 	if !has {
@@ -629,15 +612,11 @@ func realCompilePackage(pkg *projects.Package, cyc compileCycle) cycleResult {
 	}
 }
 
-// docInfo caches a document's text and precomputed line starts for
-// diagnostic conversion.
 type docInfo struct {
 	text       string
 	lineStarts []int
 }
 
-// buildDocIndex indexes live document text and line starts by compiler
-// registration name.
 func buildDocIndex(pkg *projects.Package, openText textProvider) map[string]docInfo {
 	idx := make(map[string]docInfo)
 	for _, moduleID := range pkg.ModuleIDs() {
@@ -683,8 +662,6 @@ func extractByFile(pkg *projects.Package, compileDiags, resDiags []diagnostics.D
 	return byFile, resByFile
 }
 
-// convertDiag converts one compiler diagnostic to a CompilerDiagnostic using
-// the document text and precomputed line starts.
 func convertDiag(text string, lineStarts []int, diag diagnostics.Diagnostic) CompilerDiagnostic {
 	location := diag.Location()
 	startLine, startChar, ok := byteOffsetToLineChar(text, lineStarts, location.StartOffset())

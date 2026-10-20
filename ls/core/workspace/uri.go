@@ -33,10 +33,8 @@ const (
 	schemeBala scheme = "bala"
 )
 
-// DocumentURI is a validated document URI identity value. Construction is via
-// NewFileURI, NewExprURI, NewAIURI, or NewBalaURI, each of which parses and
-// validates the scheme. All fields are comparable, so DocumentURI can be used
-// directly as a map key.
+// DocumentURI is a comparable URI identity suitable for map keys.
+// Use the scheme-specific constructors to parse and validate input.
 type DocumentURI struct {
 	scheme scheme
 	raw    string

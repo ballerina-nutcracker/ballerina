@@ -18,9 +18,6 @@ package compile
 
 import "testing"
 
-// buildFingerprint drives a single module (default module of a fresh
-// single-file project) through symbol resolution + top-level type resolution
-// and returns its computed public-API fingerprint.
 func buildFingerprint(t *testing.T, source string) fingerprint {
 	t.Helper()
 	projSvc, _ := newTestServices(t)

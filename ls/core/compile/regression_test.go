@@ -25,8 +25,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
-// applyModifierChainDirect updates the project document through its modifier
-// and returns the new package, bypassing workspace buffers.
+// Bypass workspace buffers so pkg.Compilation sees the edited document.
 func applyModifierChainDirect(t *testing.T, project projects.Project, filePath, content string) *projects.Package {
 	t.Helper()
 	pkg := project.CurrentPackage()
@@ -99,8 +98,6 @@ func oldPathExtract(pkg *projects.Package) (byFile, resByFile map[string][]Compi
 	return byFile, resByFile, resErr
 }
 
-// diagShape is the (Code, Message) pair a shape comparison checks, ignoring
-// ordering within a file's diagnostic list.
 type diagShape struct {
 	Code    string
 	Message string
@@ -120,7 +117,6 @@ func shapesFor(diags []CompilerDiagnostic) []diagShape {
 	return shapes
 }
 
-// assertSameShape compares file keys and per-file (Code, Message) multisets.
 func assertSameShape(t *testing.T, label string, got, want map[string][]CompilerDiagnostic) {
 	t.Helper()
 	for fname := range want {
@@ -160,12 +156,9 @@ func keysOf(m map[string][]CompilerDiagnostic) []string {
 	return keys
 }
 
-// Independent package loads compare staged diagnostics with pkg.Compilation
-// after an edit in a named dependency module.
 func TestRealCompilePackage_MatchesOldPackageCompilationPath(t *testing.T) {
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
-	// The edit introduces one semantic-analysis error in greet.
 	editedGreet := "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n"
 
 	newSvc := newProjectOnlyService(t)
@@ -204,7 +197,6 @@ func TestRealCompilePackage_MatchesOldPackageCompilationPath(t *testing.T) {
 	}
 }
 
-// The inline fallback matches pkg.Compilation's diagnostic code and message.
 func TestExtractForURI_MatchesOldPackageCompilationPath(t *testing.T) {
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
