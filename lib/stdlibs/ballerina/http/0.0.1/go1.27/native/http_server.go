@@ -43,15 +43,18 @@ import (
 // services. The program stays alive while the runtime is in its listening
 // state — the runtime lifecycle owns signal handling and shutdown.
 type listenerState struct {
-	types       *httpTypes
-	host        string
-	port        int
-	timeout     time.Duration
-	httpVersion string
-	tlsCfg      *pal.ServerTLSConfig
-	mu          sync.RWMutex
-	services    []*serviceEntry
-	server      pal.ServerHandle
+	types         *httpTypes
+	requestTy     semtypes.SemType
+	headersTy     semtypes.SemType
+	createHeaders extern.FunctionHandle
+	host          string
+	port          int
+	timeout       time.Duration
+	httpVersion   string
+	tlsCfg        *pal.ServerTLSConfig
+	mu            sync.RWMutex
+	services      []*serviceEntry
+	server        pal.ServerHandle
 }
 
 type serviceEntry struct {
@@ -84,15 +87,22 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 		func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) { return nil, nil })
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.initNative",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			port := int(args[1].(int64))
+			createHeaders, signature, err := resolveSignatureTypes(ctx)
+			if err != nil {
+				return nil, err
+			}
 			state := &listenerState{
-				types:       types,
-				host:        "0.0.0.0",
-				port:        port,
-				timeout:     60 * time.Second,
-				httpVersion: "2.0",
+				types:         types,
+				requestTy:     signature.Params[0].Type,
+				headersTy:     signature.ReturnType,
+				createHeaders: createHeaders,
+				host:          "0.0.0.0",
+				port:          port,
+				timeout:       60 * time.Second,
+				httpVersion:   "2.0",
 			}
 			if len(args) > 2 {
 				if cfg, ok := args[2].(*values.Map); ok {
@@ -252,6 +262,17 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			}
 			return nil, nil
 		})
+}
+
+// resolveSignatureTypes looks up createHeaders, whose signature gives the http:Request and
+// http:Headers types, since stdlib natives cannot name a Ballerina type directly.
+func resolveSignatureTypes(ctx *extern.Context) (extern.FunctionHandle, extern.FunctionSignature, error) {
+	fn, found := ctx.LookupFunction(orgName, moduleName, "createHeaders")
+	signature, ok := ctx.FunctionSignature(fn)
+	if !found || !ok || len(signature.Params) != 1 {
+		return fn, signature, fmt.Errorf("http: cannot resolve the Request and Headers types from 'createHeaders'")
+	}
+	return fn, signature, nil
 }
 
 // extractAttachPath converts the Ballerina attach-point value to a base path string.
@@ -468,24 +489,15 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 			continue
 		}
 		var invocationArgs []values.BalValue
-		switch {
-		case extraArgs == 1:
-			// The resource declares a single parameter beyond its path params; inject the request.
-			req, err := buildRequestFromHTTP(r)
-			if err != nil {
-				writeErrorJSON(rt, w, r, http.StatusBadRequest, "failed to read request body: "+err.Error())
+		if extraArgs > 0 {
+			args, bindErr := resourceArgs(ctx, state, handle, accessorKey, r)
+			if bindErr != nil {
+				writeErrorJSON(rt, w, r, bindErr.status, bindErr.message)
 				return
 			}
-			invocationArgs = []values.BalValue{req}
-		case extraArgs > 1:
-			// More than one non-path parameter is not a supported resource signature.
-			writeErrorJSON(rt, w, r, http.StatusInternalServerError, "resource method has an unsupported parameter signature")
-			return
-		default:
-			// Resource takes no Request parameter; discard the body.
-			if r.Body != nil {
-				_ = r.Body.Close()
-			}
+			invocationArgs = args
+		} else {
+			closeBody(r)
 		}
 		result, err := ctx.InvokeMethod(handle, invocationArgs)
 		if err != nil {
