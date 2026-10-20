@@ -67,14 +67,14 @@ func TestTcpServiceOnBytesBareForm(t *testing.T) {
 	runExtern(t, fileCase("tcp-service/tcp-svc-onbytes-bare-v"), newTcpPal(), nil)
 }
 
-// TestTcpServiceLocalClose verifies that closing the Caller from onBytes
-// dispatches onClose without a spurious onError.
 func TestTcpServiceOnCloseOnly(t *testing.T) {
 	t.Parallel()
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-onclose-only-v"), newTcpPal(), nil)
 }
 
+// TestTcpServiceLocalClose verifies that closing the Caller from onBytes
+// dispatches onClose without a spurious onError.
 func TestTcpServiceLocalClose(t *testing.T) {
 	t.Parallel()
 	skipIfNoLoopback(t)

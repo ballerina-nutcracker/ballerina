@@ -380,7 +380,7 @@ Connection-oriented TCP client and listener that exchange raw bytes with no fram
 | `ListenerSecureSocket` | TLS on the listener with a certificate and private key file pair in `key`, plus `protocol` versions and `ciphers`. A `crypto:KeyStore` returns `tcp:Error` |
 | `Listener.attach` / `detach` / `'start` / `gracefulStop` / `immediateStop` | One service per listener. `'start` after a stop binds again. `gracefulStop` stops accepting while open connections stay up; `immediateStop` also closes every open connection |
 | `tcp:Service.onConnect(caller)` | Called for each accepted connection; returns the `tcp:ConnectionService` that handles it |
-| `tcp:ConnectionService.onBytes` / `onError` / `onClose` | `onBytes(readonly & byte[])` or `onBytes(Caller, readonly & byte[])`; returned bytes are written back to the peer. `onError(tcp:Error)` and `onClose()` are optional |
+| `tcp:ConnectionService.onBytes` / `onError` / `onClose` | `onBytes(readonly & byte[])` or `onBytes(Caller, readonly & byte[])`; returned bytes are written back to the peer; `onError(tcp:Error)`; `onClose()`. All three are optional; without `onBytes`, received bytes are dropped |
 | `tcp:Caller` | `writeBytes`, `close`, and the `remoteHost`, `remotePort`, `localHost`, `localPort` and `id` fields |
 
 The service rules that jBallerina's compiler plugin enforces on `service on` declarations are checked at runtime, for service classes as well: `attach` returns `tcp:Error` for an invalid `tcp:Service`, and an invalid connection service returned from `onConnect` is logged and its connection closed. `tcp:Service`, `tcp:ConnectionService` and `tcp:Error` are not `distinct` types.
