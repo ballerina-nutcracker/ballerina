@@ -5375,9 +5375,7 @@ func (n *nodeBuilder) transformGroupByClause(groupByClauseNode *st.GroupByClause
 		!n.expectToken(groupByClauseNode.ByKeyword()) {
 		return nil, false
 	}
-	groupByClause := &ast.BLangGroupByClause{
-		NonGroupingKeys: &balCommon.UnorderedSet[string]{},
-	}
+	groupByClause := &ast.BLangGroupByClause{}
 	groupByClause.SetPosition(n.getPosition(groupByClauseNode))
 	groupingKeys := groupByClauseNode.GroupingKey()
 	for node, separator := range groupingKeys.SeparatedElements() {

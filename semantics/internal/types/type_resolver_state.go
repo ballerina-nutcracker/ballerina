@@ -18,7 +18,6 @@ package types
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
-	balCommon "github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
@@ -179,13 +178,6 @@ func setListConstructorInherentType(t typeResolver, node *ast.BLangListConstruct
 			break
 		}
 	}
-}
-
-func setGroupByNonGroupingKeys(t typeResolver, clause *ast.BLangGroupByClause, keys balCommon.Set[string]) {
-	if t.isEphemeral() {
-		return
-	}
-	clause.NonGroupingKeys = keys
 }
 
 func setFunctionTypedSignature(t typeResolver, sym model.FunctionSymbol, sig model.TypedFunctionSignature) {

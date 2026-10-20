@@ -28,9 +28,6 @@ type bindingFlags uint8
 const (
 	bindingFlagFunctionBoundary bindingFlags = 1 << iota
 	bindingFlagQueryAggregated
-	// bindingFlagInferredParam marks an entry that gives an inferred lambda parameter its declared type during a
-	// candidate trial.
-	bindingFlagInferredParam
 )
 
 type binding struct {
@@ -170,18 +167,6 @@ func lookupQueryAggregatedBindingInner(chain *binding, ref model.SymbolRef, cros
 		return !crossedBoundary && !chain.isUnnarrowing() && chain.hasFlag(bindingFlagQueryAggregated)
 	}
 	return lookupQueryAggregatedBindingInner(chain.prev, ref, crossedBoundary)
-}
-
-// lookupDeclaredSymbol returns the symbol carrying ref's declared type: the narrowed symbol of the nearest entry
-// that declares an inferred lambda parameter during a candidate trial, otherwise ref itself. Conditional refinements
-// are ignored, and the walk continues across function boundaries and captures.
-func lookupDeclaredSymbol(chain *binding, ref model.SymbolRef) model.SymbolRef {
-	for c := chain; c != nil; c = c.prev {
-		if c.ref == ref && c.hasFlag(bindingFlagInferredParam) {
-			return c.narrowedSymbol
-		}
-	}
-	return ref
 }
 
 func lookupBindingInner(t typeResolver, chain *binding, ref model.SymbolRef, crossedBoundary bool) (model.SymbolRef, bool) {

@@ -13,22 +13,18 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-class IntList {
-    function init(int[] values, int marker) {
-        var _ = values;
-        var _ = marker;
-    }
-}
+import ballerina/io;
 
-class StringList {
-    function init(string[] values, string marker) {
-        var _ = values;
-        var _ = marker;
-    }
-}
+type Item record {|
+    int id;
+|};
 
 public function main() {
-    int[] values = [1, 2, 3];
-    IntList|StringList l = new (from int v in values select v * 2, 1); // @error
-    var _ = l;
+    int[] arr = [1, 2];
+    [Item[], int]|[string[], int] r = [from int x in arr select {id: x * 3}, 1];
+    io:println(r); // @output [[{"id":3},{"id":6}],1]
+    io:println(r is [Item[], int]); // @output true
+    [[int[]]|[string[]], int]|[[boolean[]]|[string[]], int] o = [[from int x in arr select x + 1], 1];
+    io:println(o); // @output [[[2,3]],1]
+    io:println(o[0] is [int[]]); // @output true
 }
