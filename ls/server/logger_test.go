@@ -103,7 +103,7 @@ func TestDiscoveryErrorsAreLoggedWithoutClientNotifications(t *testing.T) {
 		notifMessage("textDocument/didOpen", map[string]any{"textDocument": map[string]any{"uri": uri.String(), "languageId": "ballerina", "version": 1, "text": "public function main() {}"}}),
 		notifMessage("textDocument/didChange", map[string]any{"textDocument": map[string]any{"uri": uri.String(), "version": 2}, "contentChanges": []any{map[string]any{"range": map[string]any{"start": map[string]any{"line": 0, "character": 0}, "end": map[string]any{"line": 0, "character": 0}}, "text": " "}}}),
 		notifMessage("workspace/didChangeWatchedFiles", map[string]any{"changes": []any{map[string]any{"uri": manifest.String(), "type": 1}}}),
-		notifMessage("$pal/flush", map[string]any{}),
+		notifMessage("$test/flush", map[string]any{}),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -129,9 +129,9 @@ func TestRequestScopedLoggerReachesEveryDispatchPath(t *testing.T) {
 	_, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
 		notifMessage("initialized", map[string]any{}),
-		reqMessage(`"b1"`, "$pal/blockRequest", map[string]any{}),
-		notifMessage("$pal/releaseRequest", map[string]any{"id": "b1"}),
-		notifMessage("$pal/flushRequests", map[string]any{}),
+		reqMessage(`"b1"`, "$test/blockRequest", map[string]any{}),
+		notifMessage("$test/releaseRequest", map[string]any{"id": "b1"}),
+		notifMessage("$test/flushRequests", map[string]any{}),
 		reqMessage(`"sh"`, "shutdown", nil),
 	})
 	if err != nil {
@@ -141,7 +141,7 @@ func TestRequestScopedLoggerReachesEveryDispatchPath(t *testing.T) {
 
 	for _, want := range []string{
 		`method=initialize`, `id="\"1\""`,
-		`method=$pal/blockRequest`, `id="\"b1\""`,
+		`method=$test/blockRequest`, `id="\"b1\""`,
 		`method=shutdown`, `id="\"sh\""`,
 	} {
 		if !strings.Contains(out, want) {

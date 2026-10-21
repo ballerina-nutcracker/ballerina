@@ -1,0 +1,48 @@
+{
+  "source": "",
+  "sources": {
+    "main.bal": "// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).\n//\n// WSO2 LLC. licenses this file to you under the Apache License,\n// Version 2.0 (the \"License\"); you may not use this file except\n// in compliance with the License.\n// You may obtain a copy of the License at\n//\n// http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing,\n// software distributed under the License is distributed on an\n// \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n// KIND, either express or implied. See the License for the\n// specific language governing permissions and limitations\n// under the License.\n\npublic function main() {}\n"
+  },
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$pal/writeFile",
+      "params": {
+        "path": "main.bal",
+        "content": ""
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 99,
+      "method": "shutdown",
+      "params": null
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 99,
+      "result": null
+    }
+  ]
+}

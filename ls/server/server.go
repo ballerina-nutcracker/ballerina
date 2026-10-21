@@ -36,13 +36,13 @@ import (
 const (
 	publishDiagnosticsMethod = "textDocument/publishDiagnostics"
 	// Corpus synchronization point for out-of-band diagnostic notifications.
-	flushMethod    = "$pal/flush"
+	flushMethod    = "$test/flush"
 	cancelMethod   = "$/cancelRequest"
 	setTraceMethod = "$/setTrace"
 	// Corpus-only methods let tests control request completion and wait for replies.
-	testBlockMethod        = "$pal/blockRequest"
-	testReleaseMethod      = "$pal/releaseRequest"
-	testFlushRequestMethod = "$pal/flushRequests"
+	testBlockMethod        = "$test/blockRequest"
+	testReleaseMethod      = "$test/releaseRequest"
+	testFlushRequestMethod = "$test/flushRequests"
 )
 
 var (
@@ -478,7 +478,7 @@ func (s *Server) handleTestReleaseRequest(params json.RawMessage) error {
 }
 
 // Flush waits for queued and running compiles, diagnostic writes, and tiered
-// event delivery. It is the corpus synchronization point for $pal/flush.
+// event delivery. It is the corpus synchronization point for $test/flush.
 // Callers must stop new work first; armed debounce timers are not drained.
 func (s *Server) Flush() {
 	if s.compiler != nil {

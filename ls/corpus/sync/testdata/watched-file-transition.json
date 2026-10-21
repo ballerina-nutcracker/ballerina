@@ -29,12 +29,12 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flush",
+      "method": "$test/flush",
       "params": {}
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/writeFile",
+      "method": "$test/writeFile",
       "params": {
         "path": "Ballerina.toml",
         "content": "[package]\norg = \"ls\"\nname = \"wtransition\"\nversion = \"0.1.0\"\n"
@@ -79,7 +79,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flush",
+      "method": "$test/flush",
       "params": {}
     },
     {
@@ -102,7 +102,8 @@
             "openClose": true,
             "change": 2,
             "save": true
-          }        }
+          }
+        }
       }
     },
     {

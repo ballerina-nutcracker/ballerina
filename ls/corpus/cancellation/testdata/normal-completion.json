@@ -16,19 +16,19 @@
     {
       "jsonrpc": "2.0",
       "id": 20,
-      "method": "$pal/blockRequest",
+      "method": "$test/blockRequest",
       "params": {}
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/releaseRequest",
+      "method": "$test/releaseRequest",
       "params": {
         "id": 20
       }
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     }
   ],
@@ -42,7 +42,8 @@
             "openClose": true,
             "change": 2,
             "save": true
-          }        }
+          }
+        }
       }
     },
     {

@@ -32,7 +32,7 @@ import (
 )
 
 // Buffered writes let request goroutines reply while Serve drains them via
-// $pal/flushRequests, without requiring a concurrent reader.
+// $test/flushRequests, without requiring a concurrent reader.
 type batchTransport struct {
 	reader *bytes.Reader
 	writer bytes.Buffer
@@ -104,9 +104,9 @@ func TestRegistryEntryRemovedOnCompletion(t *testing.T) {
 	runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
 		notifMessage("initialized", map[string]any{}),
-		reqMessage(`"r1"`, "$pal/blockRequest", map[string]any{}),
-		notifMessage("$pal/releaseRequest", map[string]any{"id": "r1"}),
-		notifMessage("$pal/flushRequests", map[string]any{}),
+		reqMessage(`"r1"`, "$test/blockRequest", map[string]any{}),
+		notifMessage("$test/releaseRequest", map[string]any{"id": "r1"}),
+		notifMessage("$test/flushRequests", map[string]any{}),
 	})
 	if entry := srv.registry.lookup(`"r1"`); entry != nil {
 		t.Fatal("registry still has entry for completed request \"r1\"")
@@ -118,11 +118,11 @@ func TestCancelAfterCompletionIsNoop(t *testing.T) {
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
 		notifMessage("initialized", map[string]any{}),
-		reqMessage(`"c1"`, "$pal/blockRequest", map[string]any{}),
-		notifMessage("$pal/releaseRequest", map[string]any{"id": "c1"}),
-		notifMessage("$pal/flushRequests", map[string]any{}),
+		reqMessage(`"c1"`, "$test/blockRequest", map[string]any{}),
+		notifMessage("$test/releaseRequest", map[string]any{"id": "c1"}),
+		notifMessage("$test/flushRequests", map[string]any{}),
 		notifMessage("$/cancelRequest", map[string]any{"id": "c1"}),
-		notifMessage("$pal/flushRequests", map[string]any{}),
+		notifMessage("$test/flushRequests", map[string]any{}),
 	})
 	if err != nil {
 		t.Fatalf("Serve: %v", err)
@@ -141,10 +141,10 @@ func TestDuplicateRequestIDRejectedKeepsOriginal(t *testing.T) {
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
 		notifMessage("initialized", map[string]any{}),
-		reqMessage(`"d1"`, "$pal/blockRequest", map[string]any{}),
-		reqMessage(`"d1"`, "$pal/blockRequest", map[string]any{}),
-		notifMessage("$pal/releaseRequest", map[string]any{"id": "d1"}),
-		notifMessage("$pal/flushRequests", map[string]any{}),
+		reqMessage(`"d1"`, "$test/blockRequest", map[string]any{}),
+		reqMessage(`"d1"`, "$test/blockRequest", map[string]any{}),
+		notifMessage("$test/releaseRequest", map[string]any{"id": "d1"}),
+		notifMessage("$test/flushRequests", map[string]any{}),
 	})
 	if err != nil {
 		t.Fatalf("Serve: %v", err)
@@ -164,10 +164,10 @@ func TestCancelProducesExactlyOneReply(t *testing.T) {
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
 		notifMessage("initialized", map[string]any{}),
-		reqMessage(`"e1"`, "$pal/blockRequest", map[string]any{}),
+		reqMessage(`"e1"`, "$test/blockRequest", map[string]any{}),
 		notifMessage("$/cancelRequest", map[string]any{"id": "e1"}),
 		notifMessage("$/cancelRequest", map[string]any{"id": "e1"}),
-		notifMessage("$pal/flushRequests", map[string]any{}),
+		notifMessage("$test/flushRequests", map[string]any{}),
 	})
 	if err != nil {
 		t.Fatalf("Serve: %v", err)
@@ -186,7 +186,7 @@ func TestShutdownDrainsTrackedRequests(t *testing.T) {
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
 		notifMessage("initialized", map[string]any{}),
-		reqMessage(`"sd"`, "$pal/blockRequest", map[string]any{}),
+		reqMessage(`"sd"`, "$test/blockRequest", map[string]any{}),
 		reqMessage(`"sh"`, "shutdown", nil),
 		notifMessage("exit", map[string]any{}),
 	})
@@ -208,7 +208,7 @@ func TestExitWithoutShutdownDrains(t *testing.T) {
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
 		notifMessage("initialized", map[string]any{}),
-		reqMessage(`"xd"`, "$pal/blockRequest", map[string]any{}),
+		reqMessage(`"xd"`, "$test/blockRequest", map[string]any{}),
 		notifMessage("exit", map[string]any{}),
 	})
 	if !errors.Is(err, errExitedWithoutShutdown) {
@@ -225,11 +225,11 @@ func TestCancelIDKeyDistinguishesStringAndInteger(t *testing.T) {
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
 		notifMessage("initialized", map[string]any{}),
-		reqMessage(`"5"`, "$pal/blockRequest", map[string]any{}),
-		reqMessage(`5`, "$pal/blockRequest", map[string]any{}),
+		reqMessage(`"5"`, "$test/blockRequest", map[string]any{}),
+		reqMessage(`5`, "$test/blockRequest", map[string]any{}),
 		notifMessage("$/cancelRequest", map[string]any{"id": "5"}),
-		notifMessage("$pal/releaseRequest", map[string]any{"id": 5}),
-		notifMessage("$pal/flushRequests", map[string]any{}),
+		notifMessage("$test/releaseRequest", map[string]any{"id": 5}),
+		notifMessage("$test/flushRequests", map[string]any{}),
 	})
 	if err != nil {
 		t.Fatalf("Serve: %v", err)

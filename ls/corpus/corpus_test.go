@@ -64,7 +64,7 @@ type diskWriteAction struct {
 	remove  bool
 }
 
-const diskWriteMethod = "$pal/writeFile"
+const diskWriteMethod = "$test/writeFile"
 const diskDeleteMethod = "$test/deleteFile"
 
 func TestCorpus(t *testing.T)             { runTranscript(t, "sync/testdata/incremental_edit.initialize.json") }
