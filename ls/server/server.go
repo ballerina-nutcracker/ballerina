@@ -35,29 +35,11 @@ import (
 
 const (
 	publishDiagnosticsMethod = "textDocument/publishDiagnostics"
-	// flushMethod is the corpus-only sentinel notification that triggers a
-	// deterministic drain of the async compile engine + CE delivery so the
-	// driver can read publishDiagnostics written out-of-band. It is never sent
-	// by a real client.
-	flushMethod = "$pal/flush"
-	// cancelMethod is the standard LSP $/cancelRequest notification. It maps
-	// a request id to context cancellation of that in-flight request only — it
-	// does not call CompilationService.Cancel or supersede any source root
-	// (see requestRegistry). Unknown, malformed, completed, and duplicate
-	// cancellation notifications are no-ops.
-	cancelMethod = "$/cancelRequest"
-	// setTraceMethod is the standard LSP $/setTrace notification. The server
-	// accepts it (and initialize's trace field) but implements both as
-	// accept-and-discard no-ops — verbosity is fixed at process start, not
-	// runtime-adjustable (observability strategy ADR).
+	// Corpus synchronization point for out-of-band diagnostic notifications.
+	flushMethod    = "$pal/flush"
+	cancelMethod   = "$/cancelRequest"
 	setTraceMethod = "$/setTrace"
-	// testBlockMethod, testReleaseMethod, and testFlushRequestsMethod are
-	// corpus-only sentinels (like flushMethod) that form the deterministic
-	// test seam for request cancellation: a $pal/blockRequest request holds
-	// until either $pal/releaseRequest (normal completion) or its context is
-	// cancelled by $/cancelRequest; $pal/flushRequests waits for every tracked
-	// request goroutine to finish so the driver can read replies without races.
-	// They are never sent by a real client.
+	// Corpus-only methods let tests control request completion and wait for replies.
 	testBlockMethod        = "$pal/blockRequest"
 	testReleaseMethod      = "$pal/releaseRequest"
 	testFlushRequestMethod = "$pal/flushRequests"
@@ -68,20 +50,12 @@ var (
 	errExitedWithoutShutdown = errors.New("language server exited without shutdown")
 )
 
-// rpcError codes for request cancellation dispatch. RequestCancelled is the
-// LSP -32800 code; InvalidRequest is the JSON-RPC -32600 code used when a new
-// request reuses an in-flight request id.
+// Error codes from LSP (RequestCancelled) and JSON-RPC 2.0.
 const (
 	rpcRequestCancelled = -32800
 	rpcInvalidRequest   = -32600
 )
 
-// requestEntry is the server-private registry record for one in-flight
-// non-lifecycle request: the request's child context cancel function, a
-// reply guard ensuring exactly one JSON-RPC response is written per request,
-// and (for the corpus-only $pal/blockRequest seam) a one-shot release channel
-// created at registration time so $pal/releaseRequest can find it without
-// racing the blocked goroutine's startup.
 type requestEntry struct {
 	cancel      context.CancelFunc
 	replyOnce   sync.Once
@@ -93,10 +67,6 @@ func (e *requestEntry) closeRelease() {
 	e.releaseOnce.Do(func() { close(e.release) })
 }
 
-// requestRegistry canonically keys valid string and integer JSON-RPC ids to
-// their in-flight request entry. A new request reusing an in-flight id is
-// rejected (register returns false) and cannot replace the original entry;
-// the entry is removed when its goroutine completes.
 type requestRegistry struct {
 	mu      sync.Mutex
 	entries map[string]*requestEntry
@@ -106,11 +76,6 @@ func newRequestRegistry() *requestRegistry {
 	return &requestRegistry{entries: make(map[string]*requestEntry)}
 }
 
-// register derives a cancellable child of parent for the tracked request.
-// parent carries the request-scoped logger attached at handleMessage (value
-// only, no cancellation of its own), so deriving from it rather than
-// context.Background() leaves cancellation semantics unchanged while making
-// the logger reachable inside dispatchTracked's handlers via ctx.
 func (r *requestRegistry) register(id string, parent context.Context) (*requestEntry, context.Context, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -135,8 +100,6 @@ func (r *requestRegistry) unregister(id string) {
 	r.mu.Unlock()
 }
 
-// cancelAll cancels every in-flight request's context. Used by shutdown/exit
-// to drain tracked work before completing the lifecycle transition.
 func (r *requestRegistry) cancelAll() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -145,6 +108,7 @@ func (r *requestRegistry) cancelAll() {
 	}
 }
 
+// Server handles LSP messages and publishes workspace diagnostics.
 type Server struct {
 	transport      protocol.Transport
 	projects       *workspace.ProjectService
@@ -154,14 +118,14 @@ type Server struct {
 	initialized    bool
 	shuttingDown   bool
 
-	writeMu sync.Mutex // serializes framed writes (Serve + CE subscriber)
+	writeMu sync.Mutex // Prevents interleaved frames from concurrent response and diagnostic writes.
 
-	ceDone        sync.WaitGroup // tracks in-flight CE→publish tasks (flush)
+	ceDone        sync.WaitGroup // Diagnostic writes must finish before Flush returns.
 	lastPubMu     sync.Mutex
-	lastPublished map[string]uint64 // per-root generation dedup for CE publishing
+	lastPublished map[string]uint64 // Root generations already claimed for diagnostic publication.
 
-	registry  *requestRegistry // in-flight non-lifecycle requests
-	requestWG sync.WaitGroup   // tracks in-flight request goroutines (drain)
+	registry  *requestRegistry
+	requestWG sync.WaitGroup
 
 	logger *observability.Logger
 }
@@ -169,10 +133,8 @@ type Server struct {
 // Option configures a Server at construction time.
 type Option func(*Server)
 
-// WithLogger injects the observability facade the server attaches
-// request-scoped (method+id) child loggers from at handleMessage. The
-// default (unset) is observability.NewNoop(), so existing New() call sites
-// need no change.
+// WithLogger sets the logger used to derive request-scoped loggers.
+// Logging is disabled by default; a nil logger leaves the current logger unchanged.
 func WithLogger(logger *observability.Logger) Option {
 	return func(s *Server) {
 		if logger != nil {
@@ -181,10 +143,8 @@ func WithLogger(logger *observability.Logger) Option {
 	}
 }
 
-// New creates a Server with the given transport and core services. The bus is
-// used to subscribe to CE-E5a/E5b for out-of-band diagnostic publication. The
-// services are injected explicitly — the corpus driver wires
-// workspace.New(openDir, bus) and compile.New(projects, bus).
+// New creates a Server using the supplied transport and services, then applies
+// opts in order. A non-nil bus enables event-driven diagnostic publication.
 func New(transport protocol.Transport, projects *workspace.ProjectService, compiler *compile.CompilationService, bus *event.Bus, opts ...Option) *Server {
 	s := &Server{
 		transport:     transport,
@@ -203,11 +163,6 @@ func New(transport protocol.Transport, projects *workspace.ProjectService, compi
 	return s
 }
 
-// subscribeEvictions clears the per-root generation dedup mark when a source
-// root is evicted (WM-E2), so a subsequent reload — which restarts the
-// generation counter at 1 — is not suppressed behind the evicted root's stale
-// high-water mark. Without this the dedup in publishRootDiagnostics could drop
-// the reload's first diagnostics.
 func (s *Server) subscribeEvictions(bus *event.Bus) {
 	if bus == nil {
 		return
@@ -219,6 +174,8 @@ func (s *Server) subscribeEvictions(bus *event.Bus) {
 	})
 }
 
+// Serve reads and dispatches LSP messages until EOF, exit, or an error.
+// An exit without a preceding shutdown returns an error.
 func (s *Server) Serve() error {
 	reader := bufio.NewReader(s.transport)
 	for {
@@ -238,19 +195,8 @@ func (s *Server) Serve() error {
 	}
 }
 
-// requestLoggerCtxKey is the unexported context key the request-scoped
-// logger is stored under. Kept private to this package — observability
-// exposes no context-embedding API of its own (ticket 41 ADR scopes the
-// facade to a concrete *Logger, not a context convention).
 type requestLoggerCtxKey struct{}
 
-// withRequestLogger attaches a child of s.logger carrying "method" (and,
-// for requests, "id") to ctx. This runs at handleMessage — the single
-// universal entry point for every inbound message — so the correlated
-// logger is available for every dispatch path reached from here: lifecycle
-// requests, notifications, and tracked requests alike, not just the methods
-// dispatchTracked's switch happens to cover. Notifications carry no id, so
-// only "method" is attached for them.
 func (s *Server) withRequestLogger(ctx context.Context, message protocol.Message) context.Context {
 	logger := s.logger.With("method", message.Method)
 	if idKey, ok := requestIDKey(message.ID); ok {
@@ -259,8 +205,6 @@ func (s *Server) withRequestLogger(ctx context.Context, message protocol.Message
 	return context.WithValue(ctx, requestLoggerCtxKey{}, logger)
 }
 
-// loggerFromContext returns the request-scoped logger attached by
-// withRequestLogger, or a no-op logger if ctx carries none.
 func loggerFromContext(ctx context.Context) *observability.Logger {
 	if logger, ok := ctx.Value(requestLoggerCtxKey{}).(*observability.Logger); ok {
 		return logger
@@ -285,8 +229,7 @@ func (s *Server) handleRequest(ctx context.Context, message protocol.Message) er
 	return s.handleTrackedRequest(ctx, message)
 }
 
-// handleLifecycleRequest runs initialize/shutdown synchronously in the Serve
-// loop — they are control-plane transitions, not tracked cancellable work.
+// Lifecycle transitions run on the Serve goroutine, outside request cancellation.
 func (s *Server) handleLifecycleRequest(ctx context.Context, message protocol.Message) error {
 	if s.shuttingDown && message.Method != "shutdown" {
 		return nil
@@ -312,10 +255,6 @@ func (s *Server) handleLifecycleRequest(ctx context.Context, message protocol.Me
 	})
 }
 
-// handleTrackedRequest runs a non-lifecycle request in a tracked goroutine
-// with a cancellable context. A new request reusing an in-flight id is
-// rejected with Invalid Request (-32600) and does not replace the original
-// registry entry. New work is gated out once the server is shutting down.
 func (s *Server) handleTrackedRequest(ctx context.Context, message protocol.Message) error {
 	if s.shuttingDown {
 		return nil
@@ -333,6 +272,7 @@ func (s *Server) handleTrackedRequest(ctx context.Context, message protocol.Mess
 		})
 	}
 	if message.Method == testBlockMethod {
+		// Initialize before dispatch so a release cannot race the worker's startup.
 		entry.release = make(chan struct{})
 	}
 	s.requestWG.Add(1)
@@ -370,10 +310,7 @@ func (s *Server) handleTrackedRequest(ctx context.Context, message protocol.Mess
 	return nil
 }
 
-// trackedResult is the outcome of a non-lifecycle request handler. A concrete
-// handler error (non-nil err) wins over cancellation only if the handler
-// returned it; a handler that observes its context being cancelled returns
-// errRequestCancelled so the reply is the -32800 error.
+// Handler errors take precedence over context cancellation when forming the reply.
 type trackedResult struct {
 	result  any
 	err     *protocol.RPCError
@@ -403,10 +340,8 @@ func (s *Server) handleShutdown(_ context.Context) (any, bool) {
 	return nil, true
 }
 
-// cancelAndDrainTrackedRequests cancels every in-flight non-lifecycle request
-// and waits for their goroutines to finish (each writes its detached
-// RequestCancelled reply under writeMu) before returning. Used by shutdown
-// (before the workspace/compiler drain) and exit (before ending the loop).
+// Tracked handlers must finish before shutdown tears down workspace/compiler state
+// or exit ends the Serve loop.
 func (s *Server) cancelAndDrainTrackedRequests() {
 	s.registry.cancelAll()
 	s.requestWG.Wait()
@@ -450,9 +385,7 @@ func (s *Server) handleNotification(ctx context.Context, message protocol.Messag
 	case "initialized":
 		return nil
 	case setTraceMethod:
-		// Accept-and-discard no-op: verbosity is fixed at process start
-		// (observability strategy ADR); dynamic trace control is unimplemented
-		// by design, matching gopls/rust-analyzer precedent.
+		// Runtime trace control is unsupported.
 		return nil
 	case flushMethod:
 		return s.handleFlush()
@@ -478,21 +411,12 @@ func (s *Server) handleNotification(ctx context.Context, message protocol.Messag
 	}
 }
 
-// handleFlush is the corpus-only $pal/flush notification handler.
 func (s *Server) handleFlush() error {
 	s.Flush()
 	return nil
 }
 
-// handleCancelRequest parses the $/cancelRequest notification's id and
-// cancels only that in-flight request's context. It does not call
-// CompilationService.Cancel, supersede a source root, or write a response —
-// the cancelled request's goroutine writes the detached RequestCancelled reply
-// itself. Unknown, malformed, completed, and duplicate cancellation
-// notifications are no-ops: a malformed payload or non-string/non-integer id
-// fails to decode and is ignored; an id with no registry entry is a lookup
-// miss; an already-completed request's entry has been unregistered; a repeat
-// cancel simply re-invokes an already-cancelled context's cancel (idempotent).
+// The request goroutine owns the response, including cancellation errors.
 func (s *Server) handleCancelRequest(params json.RawMessage) error {
 	var cancelParams protocol.CancelParams
 	if err := json.Unmarshal(params, &cancelParams); err != nil {
@@ -508,9 +432,7 @@ func (s *Server) handleCancelRequest(params json.RawMessage) error {
 	return nil
 }
 
-// cancelIDKey renders a CancelParams id as the canonical registry key, so a
-// string id "1" (key `"1"`) and an integer id 1 (key `1`) remain distinct at
-// cancellation and registration.
+// JSON encoding keeps string and integer IDs distinct: "1" is not 1.
 func cancelIDKey(id protocol.OrCancelParamsId) (string, bool) {
 	payload, err := json.Marshal(id)
 	if err != nil {
@@ -527,13 +449,6 @@ func requestIDKey(raw json.RawMessage) (string, bool) {
 	return cancelIDKey(id)
 }
 
-// handleTestBlockRequest is the corpus-only $pal/blockRequest handler: it
-// holds the request until $pal/releaseRequest closes its release channel
-// (normal completion → {"released": true}) or its context is cancelled by
-// $/cancelRequest (→ RequestCancelled -32800). The release channel is created
-// on the registry entry at registration time (in the Serve goroutine), so a
-// subsequent $pal/releaseRequest finds it without racing this goroutine's
-// startup. It never touches the compiler.
 func (s *Server) handleTestBlockRequest(ctx context.Context, message protocol.Message) trackedResult {
 	idKey, _ := requestIDKey(message.ID)
 	entry := s.registry.lookup(idKey)
@@ -545,9 +460,6 @@ func (s *Server) handleTestBlockRequest(ctx context.Context, message protocol.Me
 	}
 }
 
-// handleTestReleaseRequest closes the release channel of the in-flight
-// $pal/blockRequest with the matching id, letting it complete normally. An
-// unknown, completed, or malformed id is a no-op.
 func (s *Server) handleTestReleaseRequest(params json.RawMessage) error {
 	var p struct {
 		ID json.RawMessage `json:"id"`
@@ -565,11 +477,9 @@ func (s *Server) handleTestReleaseRequest(params json.RawMessage) error {
 	return nil
 }
 
-// Flush is the deterministic drain point: it waits for the compile engine's
-// in-flight cycles, the server's in-flight CE→publish tasks, and the tiered
-// bus delivery, so all out-of-band publishDiagnostics have been written. It is
-// the corpus driver's sync point (the $pal/flush sentinel); production code
-// does not call it.
+// Flush waits for queued and running compiles, diagnostic writes, and tiered
+// event delivery. It is the corpus synchronization point for $pal/flush.
+// Callers must stop new work first; armed debounce timers are not drained.
 func (s *Server) Flush() {
 	if s.compiler != nil {
 		s.compiler.Flush()
@@ -580,8 +490,6 @@ func (s *Server) Flush() {
 	}
 }
 
-// handleDidOpen applies the open and returns nil — diagnostics arrive later via
-// the CE subscriber (branch 5). No synchronous Compile or publishDiagnostics.
 func (s *Server) handleDidOpen(ctx context.Context, params json.RawMessage) error {
 	var didOpen protocol.DidOpenTextDocumentParams
 	if json.Unmarshal(params, &didOpen) != nil {
@@ -604,8 +512,6 @@ func (s *Server) handleDidOpen(ctx context.Context, params json.RawMessage) erro
 	return nil
 }
 
-// handleDidChange applies the update and returns nil — diagnostics arrive later
-// via the CE subscriber (branch 5).
 func (s *Server) handleDidChange(ctx context.Context, params json.RawMessage) error {
 	var didChange protocol.DidChangeTextDocumentParams
 	if json.Unmarshal(params, &didChange) != nil {
@@ -635,8 +541,6 @@ func (s *Server) handleDidChange(ctx context.Context, params json.RawMessage) er
 	return nil
 }
 
-// handleDidClose applies the close and synchronously clears diagnostics for the
-// document (LSP clients expect diagnostics cleared on close).
 func (s *Server) handleDidClose(params json.RawMessage) error {
 	var didClose protocol.DidCloseTextDocumentParams
 	if json.Unmarshal(params, &didClose) != nil {
@@ -677,10 +581,6 @@ func (s *Server) publishDiagnostics(uri string, version int32, includeVersion bo
 	}
 }
 
-// write serializes a framed write: marshal, build the full framed message in a
-// buffer (header+body), and Write once under writeMu so concurrent writes from
-// the Serve goroutine and the CE-subscriber goroutine cannot interleave
-// header/body bytes (gopls conn.writeMu precedent).
 func (s *Server) write(message any) error {
 	payload, err := json.Marshal(message)
 	if err != nil {
@@ -697,12 +597,6 @@ func (s *Server) write(message any) error {
 	return err
 }
 
-// subscribeDiagnostics wires the server's out-of-band diagnostic publication
-// (branch 5). It subscribes to CE-E5a/CE-E5b (BEST_EFFORT) and, on each event,
-// reads the stable snapshot via compile.DiagnosticsFor, applies the
-// generation-staleness guard per document, converts to protocol.Diagnostic, and
-// writes publishDiagnostics per open document via s.write. Each publish task
-// increments s.ceDone so the flush sentinel can wait for it.
 func (s *Server) subscribeDiagnostics(bus *event.Bus) {
 	if bus == nil {
 		return
@@ -715,17 +609,8 @@ func (s *Server) subscribeDiagnostics(bus *event.Bus) {
 	})
 }
 
-// publishRootDiagnostics publishes the current stable snapshot's diagnostics
-// for every open document under root, gated by the event's generation. Under
-// the no-mid-cycle-hooks model (branch 2) a clean cycle emits both CE-E5a and
-// CE-E5b for the same generation, each carrying the complete post-cycle set;
-// a resolution-error cycle emits CE-E5a only. The publish is therefore
-// first-wins per generation: whichever of CE-E5a/CE-E5b delivers first
-// publishes the complete set for the cycle and the other is a no-op. This is
-// robust to a BEST_EFFORT drop of either event (the survivor still publishes)
-// and to a source-root reload, which restarts the generation counter at 1 —
-// an exact-equality guard (not <=) avoids suppressing the reload's diagnostics
-// behind a stale high-water mark left by the previous incarnation.
+// Both diagnostics-ready events refer to the same stable snapshot. Claim each
+// generation once to avoid duplicate publication when both events arrive.
 func (s *Server) publishRootDiagnostics(root string, gen uint64) {
 	if g, ok := s.projects.Generation(root); !ok || g != gen {
 		return
@@ -769,11 +654,6 @@ func (s *Server) publishRootDiagnostics(root string, gen uint64) {
 	}
 }
 
-// handleDidChangeWatchedFiles routes workspace/didChangeWatchedFiles to the
-// project service. Only file: URIs are admitted — non-file: events are ignored,
-// matching the file:-only routing of 09. Watched-file republishes flow through
-// ApplyWatchedFile (which bumps the generation and publishes ProjectUpdated);
-// diagnostics arrive later via the CE subscriber.
 func (s *Server) handleDidChangeWatchedFiles(ctx context.Context, params json.RawMessage) error {
 	var didChange protocol.DidChangeWatchedFilesParams
 	if json.Unmarshal(params, &didChange) != nil {
