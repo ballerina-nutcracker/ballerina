@@ -1,0 +1,7 @@
+-- stdout --
+{"title":"Dune","year":1965,"author":"Herbert"}
+{"title":"Emma","year":1815,"author":"Austen"}
+{"title":"Dune","year":1965,"author":"Herbert"}
+error: required field 'title' not present in JSON
+error: required field 'year' not present in JSON
+-- stderr --

@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: the value has a cyclic reference
+        at main(jsondata-tojson-cyclic-p.bal:23)

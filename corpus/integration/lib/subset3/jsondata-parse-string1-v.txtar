@@ -1,0 +1,103 @@
+-- stdout --
+{"id":"o-1","items":[{"name":"pen","qty":2},{"name":"ink","qty":1}],"tags":{"priority":"high"}}
+{"id":"o-1"}
+error: undefined field 'items'
+{"kind":"square","size":{"side":2}}
+{"kind":"circle","size":{"radius":3}}
+[1,"two",3]
+["x","y"]
+{"a":4}
+{"a":[1,-2,3.5,true,false,null,"s",{"b":[]},{}]}
+[{"x":1},[2,[3]],"y"]
+{"a":{"b":{"c":[1,2]}}}
+[]
+{}
+[1,2]
+[113,34,98,92,115,47,98,8,102,12,110,10,114,13,116,9]
+éA😀
+[107,101,121,10]
+[97,34]
+[92]
+42
+-7
+5
+error: incompatible expected type 'int' for value '1.5'
+error: incompatible expected type 'int' for value '9223372036854775808'
+2.0
+150.0
+error: incompatible expected type 'float' for value '1.5f'
+Infinity
+12.340
+1E+2
+1
+error: incompatible expected type 'decimal' for value '0x10'
+7
+7.25
+-0.0
+255
+error: incompatible expected type 'byte' for value '256'
+error: incompatible expected type 'lang.int:Signed8' for value '-129'
+65535
+true
+true
+true
+true
+false
+false
+error: incompatible expected type 'boolean' for value 'tru'
+error: incompatible expected type 'boolean' for value 'fals'
+
+error: incompatible expected type '()' for value 'nul'
+error: incompatible expected type 'int' for value 'x1'
+plain
+error: incompatible expected type 'int' for value '5'
+error: incompatible expected type 'string' for value '5'
+x
+error: incompatible expected type 'lang.string:Char' for value 'xy'
+B
+error: incompatible expected type '("A"|"B"|"C")' for value 'D'
+2
+error: incompatible expected type '(1|2|3)' for value '4'
+true
+
+{"id":"1"}
+error: incompatible value 'null' for type 'string' in field 'note'
+{"id":"1","note":null}
+error: required field 'note' not present in JSON
+error: incompatible value 'x' for type 'int' in field 'a'
+error: undefined field 'b'
+{"a":1}
+[1,2]
+error: array size is not compatible with the expected size
+error: array size is not compatible with the expected size
+[9,""]
+error: incompatible expected type 'int' for value 'x'
+error: invalid type 'int' expected 'list type'
+error: invalid type 'int' expected 'map type'
+error: invalid type for field 'a'
+{"a":2}
+error: 'empty JSON document' at line: '1' column: '1'
+error: 'empty JSON document' at line: '1' column: '3'
+error: 'JSON document has already ended' at line: '1' column: '10'
+error: 'expected ':'' at line: '1' column: '6'
+error: 'expected ',' or '}'' at line: '1' column: '9'
+error: 'expected ',' or ']'' at line: '1' column: '5'
+error: 'expected '"' or '}'' at line: '1' column: '2'
+error: 'expected '"'' at line: '1' column: '9'
+error: 'unexpected end of JSON document' at line: '1' column: '8'
+error: 'unexpected end of JSON document' at line: '1' column: '5'
+error: 'unexpected end of JSON document' at line: '1' column: '5'
+error: 'unexpected end of JSON document' at line: '1' column: '4'
+error: 'unexpected end of JSON document' at line: '1' column: '8'
+error: 'expected 'escaped characters'' at line: '1' column: '4'
+error: 'expected 'hexadecimal value of an unicode character'' at line: '1' column: '6'
+error: 'expected ':'' at line: '3' column: '7'
+error: 'JSON document has already ended' at line: '3' column: '3'
+error: 'expected ',' or '}'' at line: '1' column: '9'
+error: 'expected ',' or ']'' at line: '1' column: '6'
+error: 'expected 'escaped characters'' at line: '1' column: '10'
+error: 'expected 'hexadecimal value of an unicode character'' at line: '1' column: '7'
+error: 'expected 'hexadecimal value of an unicode character'' at line: '1' column: '11'
+error: 'expected 'hexadecimal value of an unicode character'' at line: '1' column: '7'
+error: 'expected 'escaped characters'' at line: '1' column: '9'
+-- stderr --

@@ -1,0 +1,7 @@
+-- stdout --
+true incompatible value 'x' for type 'int' in field 'a'
+true incompatible expected type 'json' for value ''
+true incompatible expected type 'decimal' for value '1e6145'
+true invalid JSON document
+true required field 'a' not present in JSON
+-- stderr --

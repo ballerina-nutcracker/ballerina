@@ -10,6 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
+| [data.jsondata](../../lib/stdlibs/ballerina/data.jsondata/0.0.1/go1.27/README.md) | 3 | 8 | 3 | 21% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 12 | 36 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
@@ -26,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **281** | **36** | **69** | **73%** |
+| **Total**                                         | **284** | **44** | **72** | **71%** |
 
 ## Notable Behavioural Changes
 
@@ -44,6 +45,15 @@ Consolidated from each package's README. Only permanent divergences are listed h
 ### crypto
 
 - **AES-CBC and AES-ECB always apply PKCS7 padding.** jBallerina selects PKCS5 or no padding based on the `padding` parameter value; the Go-native version always applies PKCS7 padding for CBC and ECB modes regardless of the parameter — Go's `cipher` package does not expose a separate no-padding mode. Programs relying on `NONE` padding will produce incorrect output.
+
+### data.jsondata
+
+- **Parsing a stream returns errors instead of panicking.** jBallerina's `parseStream` lets every conversion and syntax error escape as a panic even though it declares `returns t|Error`; the Go-native version returns a `jsondata:Error` with the same message, as the signature describes.
+- **An incomplete document is reported as a module error.** jBallerina reports a document that ends right after a field's `:` as a plain `error` with the message `invalid JSON document`, which then fails its own `t|Error` return type and panics with a `TypeCastError`; the Go-native version returns a `jsondata:Error` with the same message. A decimal token out of the `decimal` range is likewise returned as a `jsondata:Error` instead of panicking.
+- **An empty list member is reported as an error.** For input such as `[1,,2]`, jBallerina throws a Java `StringIndexOutOfBoundsException`; the Go-native version returns a `jsondata:Error` naming the expected type and the empty value.
+- **A failed parse does not affect the next one.** jBallerina reuses one parser per thread and keeps the characters of a token it failed in the middle of, so the first token of the next parse on that thread is read with them prepended; the Go-native version starts every parse from an empty state.
+- **The first missing required field is reported in field-name order.** When several required fields are absent, jBallerina reports the first one in Java `HashMap` order; the Go-native version reports the first one in code-point order of the field names, so the message is deterministic.
+- **Compiler-plugin checks run when the type is used.** jBallerina's compiler plugin rejects a record whose `@jsondata:Name` overrides clash, and an `xml` or `table` target of `parseString`, `parseBytes` or `parseStream`, as compile errors. This port has no compiler plugin, so those programs compile and the parse functions return a `jsondata:Error` (`duplicate field '<name>'`, `unsupported type '<type>'`) when they are called with such a target.
 
 ### file
 
