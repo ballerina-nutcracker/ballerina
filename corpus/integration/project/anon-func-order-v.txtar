@@ -1,0 +1,10 @@
+-- stdout --
+function testorg/anon_func_order_v:$anonFunc$_0
+function testorg/anon_func_order_v:$anonFunc$_1
+function testorg/anon_func_order_v:$anonFunc$_2
+function testorg/anon_func_order_v:$anonFunc$_3
+function testorg/anon_func_order_v:$anonFunc$_4
+function testorg/anon_func_order_v:$anonFunc$_5
+function testorg/anon_func_order_v:$anonFunc$_6
+function testorg/anon_func_order_v:$anonFunc$_7
+-- stderr --
