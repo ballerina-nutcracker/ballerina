@@ -29,11 +29,11 @@ service on new mqtt:Listener(mqtt:DEFAULT_URL, "responder", "demo/request") {
 }
 
 public function main() returns error? {
-    mqtt:Client client = check new (mqtt:DEFAULT_URL, "requester");
-    check client->subscribe("demo/response");
-    stream<mqtt:Message, error?> responses = check client->receive();
+    mqtt:Client mqttClient = check new (mqtt:DEFAULT_URL, "requester");
+    check mqttClient->subscribe("demo/response");
+    stream<mqtt:Message, error?> responses = check mqttClient->receive();
 
-    mqtt:DeliveryToken token = check client->publish("demo/request", {
+    mqtt:DeliveryToken token = check mqttClient->publish("demo/request", {
         payload: "hello".toBytes(),
         properties: {responseTopic: "demo/response", correlationData: "req-1".toBytes()}
     });
