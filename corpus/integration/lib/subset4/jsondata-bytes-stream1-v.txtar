@@ -1,0 +1,14 @@
+-- stdout --
+{"name":"Ké","age":40}
+[3,4]
+error: 'empty JSON document' at line: '1' column: '1'
+error: incompatible expected type 'int' for value '7'
+{"emoji":"😀"}
+{"name":"Ké","age":40}
+[1,2]
+error: required field 'age' not present in JSON
+error: 'expected ':'' at line: '1' column: '6'
+error: stream failure
+error: 'empty JSON document' at line: '1' column: '1'
+123
+-- stderr --
