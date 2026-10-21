@@ -18,7 +18,10 @@
 package native
 
 import (
+	"fmt"
 	"sync"
+
+	"github.com/eclipse/paho.golang/paho"
 
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
@@ -57,6 +60,11 @@ type listenerState struct {
 	mu      sync.Mutex
 	service *values.Object
 	started bool
+	// subMu serialises the broker round-trips of start, attach and detach without holding mu,
+	// which the incoming-message path takes.
+	subMu         sync.Mutex
+	subscriptions []paho.SubscribeOptions
+	subscribed    bool
 }
 
 type callerState struct {
@@ -128,9 +136,19 @@ func (m *mqttModule) listenerInit(ctx *extern.Context, args []values.BalValue) (
 	return nil, nil
 }
 
-func (m *mqttModule) listenerAttach(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+// listenerAttach re-subscribes the listener's topics when a service is attached again
+// after detach.
+func (m *mqttModule) listenerAttach(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	ls := listenerOf(args[0].(*values.Object))
 	svc, _ := args[1].(*values.Object)
+	ls.subMu.Lock()
+	defer ls.subMu.Unlock()
+	if ls.subscriptions != nil && !ls.subscribed {
+		if mErr := ls.conn.subscribe(ls.subscriptions); mErr != nil {
+			return toBalError(ctx, mErr)
+		}
+		ls.subscribed = true
+	}
 	ls.mu.Lock()
 	ls.service = svc
 	startDispatcher := !ls.started
@@ -142,10 +160,17 @@ func (m *mqttModule) listenerAttach(_ *extern.Context, args []values.BalValue) (
 	return nil, nil
 }
 
+// listenerDetach unsubscribes the listener's topics and drops the service but keeps the
+// broker connection open, as clarified in ballerina-library#9326.
 func (m *mqttModule) listenerDetach(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	ls := listenerOf(args[0].(*values.Object))
-	if mErr := ls.conn.disconnect(); mErr != nil {
-		return toBalError(ctx, mErr)
+	ls.subMu.Lock()
+	defer ls.subMu.Unlock()
+	if ls.subscribed {
+		if mErr := ls.conn.unsubscribe(ls.subscriptions); mErr != nil {
+			return toBalError(ctx, mErr)
+		}
+		ls.subscribed = false
 	}
 	ls.setService(nil)
 	return nil, nil
@@ -158,7 +183,14 @@ func (m *mqttModule) listenerStart(ctx *extern.Context, args []values.BalValue) 
 	if mErr != nil {
 		return toBalError(ctx, mErr)
 	}
-	return result(ctx, ls.conn.subscribe(options))
+	ls.subMu.Lock()
+	defer ls.subMu.Unlock()
+	if mErr := ls.conn.subscribe(options); mErr != nil {
+		return toBalError(ctx, mErr)
+	}
+	ls.subscriptions = options
+	ls.subscribed = true
+	return nil, nil
 }
 
 func (m *mqttModule) listenerGracefulStop(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -224,7 +256,7 @@ func (m *mqttModule) handleEvent(ls *listenerState, svc *values.Object, event li
 			m.printError(nil, err)
 			return
 		}
-		m.printError(ctx.InvokeMethod(handle, []values.BalValue{svc, token}))
+		m.printPanic(m.invokeTrapped(ctx, handle, []values.BalValue{svc, token}))
 	case eventError:
 		m.invokeOnError(ctx, svc, event.err)
 	}
@@ -251,7 +283,9 @@ func (m *mqttModule) invokeOnMessage(ctx *extern.Context, ls *listenerState, svc
 		caller.(*values.Object).Put(callerStateField, &callerState{listener: ls, message: msg})
 		args = append(args, caller)
 	}
-	m.printError(ctx.InvokeMethod(handle, args))
+	if panicErr := m.invokeTrapped(ctx, handle, args); panicErr != nil {
+		m.invokeOnError(ctx, svc, panicErr)
+	}
 }
 
 func (m *mqttModule) invokeOnError(ctx *extern.Context, svc *values.Object, mErr *mqttError) {
@@ -265,7 +299,37 @@ func (m *mqttModule) invokeOnError(ctx *extern.Context, svc *values.Object, mErr
 		m.printError(errValue, nil)
 		return
 	}
-	m.printError(ctx.InvokeMethod(handle, []values.BalValue{svc, errValue}))
+	m.printPanic(m.invokeTrapped(ctx, handle, []values.BalValue{svc, errValue}))
+}
+
+// invokeTrapped calls a service method, prints an error it returns and returns a panic it
+// raises, as jBallerina's listener callback does instead of crashing the process.
+func (m *mqttModule) invokeTrapped(ctx *extern.Context, handle extern.MethodHandle, args []values.BalValue) (panicErr *mqttError) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			ctx.ReleaseAllHeldLocks()
+			panicErr = newError(panicMessage(rec))
+		}
+	}()
+	m.printError(ctx.InvokeMethod(handle, args))
+	return nil
+}
+
+func (m *mqttModule) printPanic(panicErr *mqttError) {
+	if panicErr != nil {
+		m.printError(nil, panicErr)
+	}
+}
+
+func panicMessage(r any) string {
+	switch v := r.(type) {
+	case *values.Error:
+		return v.Message
+	case error:
+		return v.Error()
+	default:
+		return fmt.Sprintf("%v", r)
+	}
 }
 
 func callerOf(self *values.Object) *callerState {
@@ -274,19 +338,19 @@ func callerOf(self *values.Object) *callerState {
 	return cs
 }
 
-// callerComplete acknowledges the message in manualAcks mode. Like jBallerina, the
-// acknowledgement is sent asynchronously and its outcome is not reported.
-func (m *mqttModule) callerComplete(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+// callerComplete acknowledges the message in manualAcks mode and reports a failure to do so,
+// as clarified in ballerina-library#9326.
+func (m *mqttModule) callerComplete(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	cs := callerOf(args[0].(*values.Object))
-	if cs.listener.manualAcks {
-		go cs.listener.conn.ack(cs.message)
+	if !cs.listener.manualAcks {
+		return nil, nil
 	}
-	return nil, nil
+	return result(ctx, cs.listener.conn.complete(cs.message))
 }
 
 // callerRespond publishes the response to the request's response topic, carrying the
-// request's correlation data. Like jBallerina, the publish is asynchronous and only a missing
-// response topic is reported; onComplete is invoked once the response is delivered.
+// request's correlation data, and reports a failed publish (ballerina-library#9326).
+// onComplete is invoked once the response is delivered.
 func (m *mqttModule) callerRespond(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	cs := callerOf(args[0].(*values.Object))
 	response, _ := args[1].(*values.Map)
@@ -303,11 +367,10 @@ func (m *mqttModule) callerRespond(ctx *extern.Context, args []values.BalValue) 
 	}
 	ls := cs.listener
 	topic := props.ResponseTopic
-	go func() {
-		packetID, mErr := ls.conn.publish(topic, msg)
-		if mErr == nil {
-			ls.events.put(listenerEvent{kind: eventComplete, packetID: packetID, topic: topic})
-		}
-	}()
+	packetID, mErr := ls.conn.publish(topic, msg)
+	if mErr != nil {
+		return toBalError(ctx, mErr)
+	}
+	ls.events.put(listenerEvent{kind: eventComplete, packetID: packetID, topic: topic})
 	return nil, nil
 }

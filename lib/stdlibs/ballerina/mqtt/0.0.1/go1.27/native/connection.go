@@ -386,6 +386,23 @@ func (c *connection) subscribe(subscriptions []paho.SubscribeOptions) *mqttError
 	return nil
 }
 
+func (c *connection) unsubscribe(subscriptions []paho.SubscribeOptions) *mqttError {
+	link, mErr := c.connectedLink()
+	if mErr != nil {
+		return mErr
+	}
+	topics := make([]string, len(subscriptions))
+	for i, sub := range subscriptions {
+		topics[i] = sub.Topic
+	}
+	ctx, cancel := link.operationContext()
+	defer cancel()
+	if _, err := link.client.Unsubscribe(ctx, &paho.Unsubscribe{Topics: topics}); err != nil {
+		return c.operationError(link, err)
+	}
+	return nil
+}
+
 // operationError reports a failed publish/subscribe with the reason the connection dropped,
 // as Paho Java does, when the failure was caused by the connection going away.
 func (c *connection) operationError(link *activeLink, err error) *mqttError {
@@ -400,6 +417,22 @@ func (c *connection) operationError(link *activeLink, err error) *mqttError {
 
 func (c *connection) ack(msg receivedMessage) {
 	_ = msg.client.Ack(msg.publish)
+}
+
+// complete acknowledges a message on behalf of Caller->complete, failing when the connection
+// it arrived on is no longer the live one.
+func (c *connection) complete(msg receivedMessage) *mqttError {
+	link, mErr := c.connectedLink()
+	if mErr != nil {
+		return mErr
+	}
+	if link.client != msg.client {
+		return newReasonError(reasonClientNotConnected, nil)
+	}
+	if err := msg.client.Ack(msg.publish); err != nil {
+		return newErrorWithCause(err.Error(), err)
+	}
+	return nil
 }
 
 func (c *connection) disconnect() *mqttError {

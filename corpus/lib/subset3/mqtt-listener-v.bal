@@ -69,6 +69,35 @@ isolated service class OnlyOnError {
     }
 }
 
+isolated service class Panicking {
+    *mqtt:Service;
+
+    remote function onMessage(mqtt:Message message) returns error? {
+        panic error("onMessage panicked on " + check string:fromBytes(message.payload));
+    }
+
+    remote function onError(mqtt:Error err) returns error? {
+        check report("onError " + err.message());
+    }
+}
+
+service class StoppingResponder {
+    *mqtt:Service;
+    private final mqtt:Listener owner;
+
+    function init(mqtt:Listener owner) {
+        self.owner = owner;
+    }
+
+    remote function onMessage(mqtt:Message message, mqtt:Caller caller) returns error? {
+        check self.owner.immediateStop();
+        mqtt:Error? responded = caller->respond({payload: message.payload});
+        mqtt:Error? completed = caller->complete();
+        check report(string `respond: ${responded is mqtt:Error ? responded.message() : "ok"}, complete: ${
+            completed is mqtt:Error ? completed.message() : "ok"}`);
+    }
+}
+
 function nextEvent(stream<mqtt:Message, error?> events) returns string|error {
     record {|mqtt:Message value;|}? next = check events.next();
     return next is () ? "end of stream" : string:fromBytes(next.value.payload);
@@ -118,16 +147,37 @@ public function main() returns error? {
     _ = check c->publish("listener-v/none", {payload: "n".toBytes()});
     io:println(check nextEvent(events)); // @output onError method onMessage not found
 
+    // A panic in onMessage is reported to onError.
+    mqtt:Listener panicking = check new (mqtt:DEFAULT_URL, "listener-v-panicking", "listener-v/panic");
+    check panicking.attach(new Panicking());
+    check panicking.'start();
+    _ = check c->publish("listener-v/panic", {payload: "p".toBytes()});
+    io:println(check nextEvent(events)); // @output onError onMessage panicked on p
+
+    // Caller->respond and Caller->complete report failures, here a connection already stopped.
+    mqtt:Listener stopping = check new (mqtt:DEFAULT_URL, "listener-v-stopping", "listener-v/stop", manualAcks = true);
+    check stopping.attach(new StoppingResponder(stopping));
+    check stopping.'start();
+    _ = check c->publish("listener-v/stop", {payload: "s".toBytes(), properties: {responseTopic: "listener-v/replies"}});
+    io:println(check nextEvent(events)); // @output respond: Client is not connected, complete: Client is not connected
+
     // Starting without a service subscribes and drops incoming messages.
     mqtt:Listener unattached = check new (mqtt:DEFAULT_URL, "listener-v-unattached", "listener-v/unattached");
     check unattached.'start();
     _ = check c->publish("listener-v/unattached", {payload: "dropped".toBytes()});
 
-    // detach disconnects the listener, so a later gracefulStop finds it disconnected.
+    // detach unsubscribes but keeps the connection; attaching again re-subscribes.
     mqtt:Error? r = echo.detach(new Echo());
     io:println("detach: ", r is mqtt:Error ? r.message() : "ok"); // @output detach: ok
+    r = echo.detach(new Echo());
+    io:println("detach again: ", r is mqtt:Error ? r.message() : "ok"); // @output detach again: ok
+    check echo.attach(new Echo());
+    _ = check c->publish("listener-v/echo1", {payload: "c".toBytes()});
+    io:println(check nextEvent(events)); // @output echo c qos=1
+    r = echo.detach(new Echo());
+    io:println("detach: ", r is mqtt:Error ? r.message() : "ok"); // @output detach: ok
     r = echo.gracefulStop();
-    io:println("gracefulStop after detach: ", r is mqtt:Error ? r.message() : "ok"); // @output gracefulStop after detach: Client is disconnected
+    io:println("gracefulStop after detach: ", r is mqtt:Error ? r.message() : "ok"); // @output gracefulStop after detach: ok
 
     r = responder.gracefulStop();
     io:println("gracefulStop: ", r is mqtt:Error ? r.message() : "ok"); // @output gracefulStop: ok
@@ -135,6 +185,8 @@ public function main() returns error? {
     io:println("gracefulStop again: ", r is mqtt:Error ? r.message() : "ok"); // @output gracefulStop again: Client is closed
     r = noOnMessage.immediateStop();
     io:println("immediateStop: ", r is mqtt:Error ? r.message() : "ok"); // @output immediateStop: ok
+    r = panicking.gracefulStop();
+    io:println("gracefulStop panicking: ", r is mqtt:Error ? r.message() : "ok"); // @output gracefulStop panicking: ok
     r = unattached.immediateStop();
     io:println("immediateStop unattached: ", r is mqtt:Error ? r.message() : "ok"); // @output immediateStop unattached: ok
 

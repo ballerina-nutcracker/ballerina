@@ -207,11 +207,11 @@ Types: `mqtt:Client`, `mqtt:Listener`, `mqtt:Caller` (classes), `mqtt:Service`, 
 | Feature | Notes |
 |---|---|
 | `new mqtt:Listener(serverUri, clientId, subscriptions, *config)` | Connects on initialization; subscribes when started. `manualAcks` defers acknowledgement to `mqtt:Caller->complete()` |
-| `attach` / `detach` / `'start` / `gracefulStop` / `immediateStop` | Usable directly or through module-level `listener` and `service on` declarations. `detach` disconnects the listener, as in jBallerina |
+| `attach` / `detach` / `'start` / `gracefulStop` / `immediateStop` | Usable directly or through module-level `listener` and `service on` declarations. `detach` unsubscribes the listener's topics but keeps the connection, and attaching again re-subscribes (jBallerina disconnects) |
 | `onMessage(mqtt:Message)` / `onMessage(mqtt:Message, mqtt:Caller)` | Invoked once per message, one message at a time |
-| `onError(mqtt:Error)` | Invoked when the network connection is lost or the service has no `onMessage`; errors with no `onError` are printed to stderr |
+| `onError(mqtt:Error)` | Invoked when the network connection is lost, the service has no `onMessage`, or `onMessage` panics (jBallerina prints the panic); errors with no `onError` are printed to stderr |
 | `onComplete(mqtt:DeliveryToken)` | Invoked when a `Caller->respond()` reply has been delivered |
-| `Caller->respond(message)` / `Caller->complete()` | Replies to the request's `responseTopic` with its `correlationData`, and acknowledges the message in `manualAcks` mode |
+| `Caller->respond(message)` / `Caller->complete()` | Replies to the request's `responseTopic` with its `correlationData`, and acknowledges the message in `manualAcks` mode. Both return an `mqtt:Error` when the reply or acknowledgement fails (jBallerina returns `()`) |
 
 ### Connection and security
 

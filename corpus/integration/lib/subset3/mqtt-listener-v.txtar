@@ -5,10 +5,16 @@ re: q1 correlation=c-1
 onComplete listener-v/replies
 respond failed: Response topic is not set
 onError method onMessage not found
+onError onMessage panicked on p
+respond: Client is not connected, complete: Client is not connected
 detach: ok
-gracefulStop after detach: Client is disconnected
+detach again: ok
+echo c qos=1
+detach: ok
+gracefulStop after detach: ok
 gracefulStop: ok
 gracefulStop again: Client is closed
 immediateStop: ok
+gracefulStop panicking: ok
 immediateStop unattached: ok
 -- stderr --
