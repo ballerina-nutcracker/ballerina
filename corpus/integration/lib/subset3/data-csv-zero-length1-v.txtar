@@ -1,0 +1,31 @@
+-- stdout --
+[]
+[]
+[]
+[]
+[]
+error Error ("invalid range for the skipLines field. Start value must be less than or equal to end value.")
+error Error ("no matching header value is found for the required field 'a'")
+error Error ("value 'x' cannot be cast into 'int'")
+error Error ("value 'x' cannot be cast into 'int'")
+error Error ("value 'x' cannot be cast into 'int'")
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+[]
+error Error ("value 'a\nx' cannot be cast into 'typedesc ({| a: int, anydata... |}|{| b: int, never... |})[0]'")
+error Error ("source value cannot converted in to the '({| a: int, anydata... |}|{| b: int, never... |})[0]'")
+error Error ("value '[97,10,120]' cannot be cast into 'typedesc ({| a: int, anydata... |}|{| b: int, never... |})[0]'")
+[]
+[]
+[[],[]]
+[[]]
+[[]]
+error Error ("invalid array size for expected array type, cannot be greater than '0'")
+error Error ("invalid array size for expected array type, cannot be greater than '0'")
+-- stderr --
