@@ -242,11 +242,7 @@ func parseModule(moduleCtx *moduleContext) {
 
 	compilerCtx := moduleCtx.compilerCtx
 
-	// Computed up front (depends only on the module descriptor, not on anything
-	// parsed) so AST-building below can give every node its own module's package
-	// ID instead of the shared default — modules build concurrently, and the
-	// default is one shared instance, so anonymous-name counters keyed by it
-	// would interleave nondeterministically across modules.
+	// Per-module package ID so anonymous-name counters don't interleave across concurrently built modules.
 	pkgID := createModelPackageID(compilerCtx, moduleCtx.moduleDescriptor)
 
 	// Parse all source and test documents in parallel.
