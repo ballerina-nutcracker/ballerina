@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected false|{| absentAsNilableType: boolean, nilAsOptionalField: boolean, anydata... |}, got true
+  --> jsondata-api2-e.bal:20:48
+   |
+20 |     jsondata:Options _ = {allowDataProjection: true}; // @error
+   |                                                ^^^^
