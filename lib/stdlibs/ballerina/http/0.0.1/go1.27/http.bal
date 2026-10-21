@@ -795,10 +795,12 @@ public isolated class Listener {
 # EXECUTE, and FORWARD.
 #
 # **Supported methods:** `get`, `post`, `put`, `patch`, `delete`, `head`, `options`,
-# `execute`, `forward`.
+# `execute`, `forward`, and the same seven accessors as resource methods
+# (`client->/path.get(...)`).
 #
 # **Not supported:** `submit`/`getResponse`, HTTP/2 server push methods
-# (`hasPromise`, `getNextPromise`, etc.), and resource function syntax (`client->/path.get(...)`).
+# (`hasPromise`, `getNextPromise`, etc.), and the `@http:Query` annotation on resource
+# method query parameters.
 #
 # **Message body:** The `message` parameter accepts `RequestMessage` (`anydata|Request|mime:Entity[]`).
 # The `Content-Type` is inferred when not explicitly overridden via `mediaType`:
