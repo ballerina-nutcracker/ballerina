@@ -175,7 +175,7 @@ service class EchoServer {
 
 listener tcp:Listener tlsListener = new (19393,
     secureSocket = {
-        key: {certFile: %q, keyFile: %q},
+        key: <tcp:CertKey>{certFile: %q, keyFile: %q},
         protocol: {name: tcp:TLS, versions: ["TLSv1.2", "bogus", "TLSv1.3"]},
         ciphers: ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
     }
