@@ -65,7 +65,6 @@
   - When selecting among multiple candidate object types, resolving the arguments has the following restrictions:
     - [Query expressions](https://ballerina.io/spec/lang/master/#query-expr) are not supported during candidate selection.
     - An explicitly typed [anonymous function](https://ballerina.io/spec/lang/master/#anonymous-function-expr) nested inside an [anonymous function with inferred parameter types](https://ballerina.io/spec/lang/master/#infer-anonymous-function-expr) is checked from its signature only during candidate selection, so errors in its body that depend on the candidate don't rule that candidate out.
-    - Inline record and object type descriptors, and inline function types with named parameters (including rest parameters), are not supported during candidate selection. References to named types do not have this restriction.
 - [List constructor](https://ballerina.io/spec/lang/master/#list-constructor-expr)
   - When selecting among multiple candidate inherent types, resolving the members has the same restrictions as resolving the arguments of a new expression that selects among candidate object types (see New expression above).
 - [Mapping constructor](https://ballerina.io/spec/lang/master/#mapping-constructor-expr)

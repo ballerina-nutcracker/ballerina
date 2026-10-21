@@ -7921,40 +7921,6 @@ func resolveStreamCompletionType(t typeResolver, chain *binding, typeData *ast.T
 	return resolveTypeDataPair(t, chain, typeData, depth)
 }
 
-// typeDescriptorDeclaresSymbols reports whether resolving btype writes symbol state: method symbols of an object
-// type or named parameters of a function type.
-func typeDescriptorDeclaresSymbols(btype ast.BType) bool {
-	switch ty := btype.(type) {
-	case *ast.BLangObjectType:
-		for m := range ty.Members() {
-			if _, isMethod := m.(*ast.BMethodDecl); isMethod {
-				return true
-			}
-		}
-	case *ast.BLangFunctionType:
-		for i := range ty.RequiredParams {
-			if !ty.RequiredParams[i].SymbolRef.IsEmpty() {
-				return true
-			}
-		}
-		return ty.RestParam != nil && !ty.RestParam.SymbolRef.IsEmpty()
-	}
-	return false
-}
-
-// isDefinitionSet reports whether resolving btype reuses an existing atom. When it returns false, resolving btype
-// defines a new atom and registers metadata for it, mapping defaults for a record type or a method table for an
-// object type, outside the ephemeral-gated state.
-func isDefinitionSet(btype ast.BType) bool {
-	switch ty := btype.(type) {
-	case *ast.BLangRecordType:
-		return ty.Definition != nil
-	case *ast.BLangObjectType:
-		return ty.Definition != nil
-	}
-	return true
-}
-
 func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth int) (_ semtypes.SemType, _ *binding, ok bool) {
 	// closeDefinition closes the definition a descriptor created if the descriptor fails.
 	var closeDefinition func()
@@ -7963,14 +7929,6 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			closeDefinition()
 		}
 	}()
-	if t.isEphemeral() && typeDescriptorDeclaresSymbols(btype) {
-		t.unimplemented("type descriptors that declare symbols are not supported while selecting among candidate types", btype.(ast.BLangNode).GetPosition())
-		return semtypes.SemType{}, chain, false
-	}
-	if t.isEphemeral() && !isDefinitionSet(btype) {
-		t.unimplemented("inline record and object type descriptors are not supported while selecting among candidate types", btype.(ast.BLangNode).GetPosition())
-		return semtypes.SemType{}, chain, false
-	}
 	switch ty := btype.(type) {
 	case *ast.BLangReturnTypeDescriptor:
 		return resolveBType(t, chain, ty.TypeDescriptor, depth)
@@ -8240,6 +8198,8 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 		}
 
 		seen := make(map[string]bool)
+		resolvedFields := make(map[string]bool)
+		resolvedDefaults := make(map[string]bool)
 		var fields []semtypes.Field
 		// TODO: need to think of a way to unify this with objects
 		for name, field := range ty.FieldPtrs() {
@@ -8254,6 +8214,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 				// A field whose type fails to resolve is left out of the record type.
 				continue
 			}
+			resolvedFields[name] = true
 			if incMembers, exists := result.includedFields[name]; exists {
 				for _, incMember := range incMembers {
 					if !semtypes.IsSubtype(t.typeContext(), fieldTy, incMember.MemberType()) {
@@ -8272,6 +8233,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 				// The field's type does not depend on its default, so the field is kept even if the default fails.
 				if ok {
 					chain = sequentialChain(t, defaultResult.effect)
+					resolvedDefaults[name] = true
 				}
 			}
 			ro := field.IsReadonly()
@@ -8312,7 +8274,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 		}
 		semType := d.Define(t.typeEnv(), fields, rest)
 		mat := semtypes.ToMappingAtomicType(t.typeContext(), semType)
-		t.setMappingDefaults(mat, recordFieldDefaults(t, ty))
+		t.setMappingDefaults(mat, recordFieldDefaults(t, ty, resolvedFields, resolvedDefaults))
 		return semType, chain, true
 	case *ast.BLangFunctionType:
 		if ty.IsAnyFunction() {
@@ -8612,15 +8574,13 @@ func validateOverridesAndMerge(t typeResolver, directMembers []directMember, inc
 	return members, true
 }
 
-func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType) []model.FieldDefault {
-	directFields := make(map[string]bool)
+func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType, resolvedFields, resolvedDefaults map[string]bool) []model.FieldDefault {
 	var defaults []model.FieldDefault
 	for name, field := range recordTy.FieldPtrs() {
-		if semtypes.IsZero(field.Type.Type()) {
+		if !resolvedFields[name] {
 			continue
 		}
-		directFields[name] = true
-		if field.Default != nil {
+		if field.Default != nil && resolvedDefaults[name] {
 			defaults = append(defaults, model.FieldDefault{FieldName: name, FnRef: field.Default.FnRef})
 		}
 	}
@@ -8632,7 +8592,7 @@ func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType) []model.
 			continue
 		}
 		for _, fieldDefault := range carrier.FieldDefaults() {
-			if directFields[fieldDefault.FieldName] || inherited[fieldDefault.FieldName] {
+			if resolvedFields[fieldDefault.FieldName] || inherited[fieldDefault.FieldName] {
 				continue
 			}
 			inherited[fieldDefault.FieldName] = true

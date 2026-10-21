@@ -1,0 +1,166 @@
+module $anon.. v 0.0.0;
+class Runner {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  run(int) -> int{
+    bb0 {
+      %4 = p;
+      %5 = ConstantLoad 1
+      %6 = %5;
+      %3 = + %4 %6;
+      %0 = %3;
+      return;
+    }
+  }
+}
+class First {
+  result int
+
+  init(object { function run(int) returns int },int) -> nil{
+    bb0 {
+      %4 = marker;
+      %5 = runner.run(%4) -> bb1;
+    }
+    bb1 {
+      %6 = ConstantLoad result
+      self[%6] = %5;
+      return;
+    }
+  }
+}
+class Second {
+  result int
+
+  init(object { function run(int) returns int },string) -> nil{
+    bb0 {
+      %4 = length(marker) -> bb1;
+    }
+    bb1 {
+      %5 = %4;
+      %6 = runner.run(%5) -> bb2;
+    }
+    bb2 {
+      %7 = ConstantLoad result
+      self[%7] = %6;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Runner
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    v = %3;
+    %6 = newObject $anon/.:First
+    %7 = <object { function run(int) returns int }>(v)
+    %8 = ConstantLoad 4
+    %9 = %6.init(%7,%8) -> bb5;
+  }
+  bb5 {
+    %11 = %9 is nil
+    %11 ? bb6 : bb7;
+  }
+  bb6 {
+    %10 = %6;
+    GOTO bb8;
+  }
+  bb7 {
+    %10 = %9;
+    GOTO bb8;
+  }
+  bb8 {
+    a = %10;
+    %13 = newObject $anon/.:Second
+    %14 = <object { function run(int) returns int }>(v)
+    %15 = ConstantLoad ab
+    %16 = %13.init(%14,%15) -> bb9;
+  }
+  bb9 {
+    %18 = %16 is nil
+    %18 ? bb10 : bb11;
+  }
+  bb10 {
+    %17 = %13;
+    GOTO bb12;
+  }
+  bb11 {
+    %17 = %16;
+    GOTO bb12;
+  }
+  bb12 {
+    b = %17;
+    %21 = a is object { public function init(object { function run(int) returns int }, int) returns nil; int result }
+    %21 ? bb13 : bb14;
+  }
+  bb13 {
+    %22 = ConstantLoad First
+    %20 = %22;
+    GOTO bb15;
+  }
+  bb14 {
+    %23 = ConstantLoad Second
+    %20 = %23;
+    GOTO bb15;
+  }
+  bb15 {
+    %24 = println(%20) -> bb16;
+  }
+  bb16 {
+    %26 = ConstantLoad result
+    %25 = a[%26];
+    %27 = %25;
+    %28 = println(%27) -> bb17;
+  }
+  bb17 {
+    %30 = b is object { public function init(object { function run(int) returns int }, int) returns nil; int result }
+    %30 ? bb18 : bb19;
+  }
+  bb18 {
+    %31 = ConstantLoad First
+    %29 = %31;
+    GOTO bb20;
+  }
+  bb19 {
+    %32 = ConstantLoad Second
+    %29 = %32;
+    GOTO bb20;
+  }
+  bb20 {
+    %33 = println(%29) -> bb21;
+  }
+  bb21 {
+    %35 = ConstantLoad result
+    %34 = b[%35];
+    %36 = %34;
+    %37 = println(%36) -> bb22;
+  }
+  bb22 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}

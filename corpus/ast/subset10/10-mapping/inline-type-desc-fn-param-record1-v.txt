@@ -1,0 +1,102 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field f
+        (function-type (
+          (record-type
+            (field a
+              (value-type int)
+              (literal 1))
+            (field b
+              (value-type int)))) (
+          (value-type int))))
+      (field m
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field f
+        (function-type (
+          (record-type
+            (field a
+              (value-type int)
+              (literal 1))
+            (field b
+              (value-type int)))) (
+          (value-type int))))
+      (field m
+        (value-type string))))
+  (function sum (
+    (variable r (type
+      (record-type
+        (field a
+          (value-type int)
+          (literal 1))
+        (field b
+          (value-type int)))) (expr
+      (mapping-constructor-expr
+        (key-value
+          (literal b)
+          (literal 2)))))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (field-based-access a
+          (simple-var-ref r))
+        (field-based-access b
+          (simple-var-ref r)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable h (type
+          (value-type any)) (expr
+          (simple-var-ref sum))))
+      (var-def
+        (variable x (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal f)
+              (type-conversion-expr
+                (simple-var-ref h)
+                (function-type (
+                  (record-type
+                    (field a
+                      (value-type int)
+                      (literal 1))
+                    (field b
+                      (value-type int)))) (
+                  (value-type int)))))
+            (key-value
+              (literal m)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref x)
+            (user-defined-type A)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type A))
+        (block-stmt
+          (var-def
+            (variable g (type
+              (function-type (
+                (record-type
+                  (field a
+                    (value-type int)
+                    (literal 1))
+                  (field b
+                    (value-type int)))) (
+                (value-type int)))) (expr
+              (field-based-access f
+                (simple-var-ref x)))))
+          (expression-stmt
+            (invocation io println (
+              (invocation g ()))))) ())
+      (block-stmt))))
