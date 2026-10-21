@@ -1,0 +1,22 @@
+-- stdout --
+[{"a":1,"b":"x"}]
+error Error ("no mapping field in the expected type for header 'c'")
+[{"a":1,"b":"x","c":9}]
+[{"a":1,"b":2}]
+error Error ("no matching header value is found for the required field 'b'")
+error Error ("no matching header value is found for the required field 'a'")
+[{"a":1,"b":null}]
+error Error ("value 'z' cannot be cast into 'int'")
+[{"a":1,"b":null},{"a":2,"b":null},{"a":3,"b":null}]
+[{"a":1,"b":2}]
+[{"a":1,"b":2,"c":"null"}]
+[{"a":1,"c":"x","b":null}]
+error Error ("no matching header value is found for the required field 'b'")
+error Error ("value 'null' cannot be cast into 'int?'")
+[{"1":1,"2":"x"},{"1":2,"2":"y"}]
+error Error ("invalid number of headers")
+[{"a":1,"b":"x"},{"a":2,"b":"y"}]
+[{"a":1},{}]
+[{"a":1,"b":"x"}]
+error Error ("duplicate header found: 'a'")
+-- stderr --

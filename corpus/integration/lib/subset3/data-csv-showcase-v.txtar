@@ -1,0 +1,10 @@
+-- stdout --
+[{"id":1,"name":"Doe, John","salary":100.5},{"id":2,"name":"Jane","salary":null}]
+[[2,"Jane"]]
+[["id","name","salary"],["1","Doe, John","100.50"],["2","Jane","null"]]
+[{"id":3,"name":"Max","salary":9.0}]
+[{"id":4,"name":"Ann","salary":7.25}]
+[["Doe, John",1,100.5],["Jane",2,null]]
+[{"id":5,"name":"Kim"}]
+error Error ("value 'x' cannot be cast into 'int'")
+-- stderr --

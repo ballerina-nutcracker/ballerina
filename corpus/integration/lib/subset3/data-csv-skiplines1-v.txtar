@@ -1,0 +1,15 @@
+-- stdout --
+[{"a":2,"b":"y"},{"a":4,"b":"w"}]
+[{"a":1,"b":"x"},{"a":4,"b":"w"}]
+[{"a":1,"b":"x"},{"a":2,"b":"y"}]
+[{"a":1,"b":"x"}]
+[{"a":1,"b":"x"},{"a":2,"b":"y"},{"a":3,"b":"z"}]
+error Error ("invalid range for the skipLines field. Start value must be less than or equal to end value.")
+error Error ("invalid input for the skipLines field. Both start and end values must be integers.")
+error Error ("invalid range for the skipLines field. Start value must be less than or equal to end value.")
+error Error ("invalid range for the skipLines field. Start value must be less than or equal to end value.")
+error Error ("invalid input for the skipLines field. Both start and end values must be integers.")
+[]
+[{"a":2,"b":"y"}]
+error Error ("invalid range for the skipLines field. Start value must be less than or equal to end value.")
+-- stderr --

@@ -1,0 +1,18 @@
+-- stdout --
+error Error ("error while reading the csv data 'expected 'escaped characters'' in line: '2', column: '6'")
+error Error ("error while reading the csv data 'expected 'hexadecimal value of an unicode character'' in line: '2', column: '7'")
+error Error ("error while reading the csv data 'expected 'escaped characters'' in line: '1', column: '2'")
+error Error ("error while reading the csv data 'Invalid token found' in line: '2', column: '0'")
+error Error ("provided header row is empty")
+error Error ("provided header row is empty")
+error Error ("provided header row is empty")
+error Error ("provided header row is empty")
+error Error ("provided header row is empty")
+error Error ("no matching header value is found for the required field 'a'")
+error Error ("no mapping type found for value '2.5' in key 'a'")
+error Error ("no mapping type found for value '1234.5678' in key 'a'")
+error Error ("no mapping type found for value '1,234,567' in key 'a'")
+error Error ("expected type cannot contains types other than basic types, 'int[]' not allowed")
+[{"a":"x"}]
+[{"a":1}]
+-- stderr --
