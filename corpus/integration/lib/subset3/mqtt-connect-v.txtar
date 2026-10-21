@@ -10,6 +10,7 @@ credentials: connected
 serverUris: connected
 serverUris all down: Unable to connect to server (mqtt:Error=true)
 invalid serverUris: no NetworkModule installed for scheme "http" of URI "http://localhost:1883" (mqtt:Error=true)
+empty serverUris: connected
 empty client id: connected
 options: connected
 will: connected

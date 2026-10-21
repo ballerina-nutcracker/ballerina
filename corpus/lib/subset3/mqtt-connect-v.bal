@@ -64,6 +64,8 @@ public function main() returns error? {
     check connect("serverUris all down", mqtt:DEFAULT_URL, "connect-v-10", connectionConfig = {serverUris: ["tcp://localhost:1", "tcp://localhost:2"]});
     // @output invalid serverUris: no NetworkModule installed for scheme "http" of URI "http://localhost:1883" (mqtt:Error=true)
     check connect("invalid serverUris", mqtt:DEFAULT_URL, "connect-v-11", connectionConfig = {serverUris: ["http://localhost:1883"]});
+    // @output empty serverUris: connected
+    check connect("empty serverUris", mqtt:DEFAULT_URL, "connect-v-17", connectionConfig = {serverUris: []});
 
     check connect("empty client id", mqtt:DEFAULT_URL, ""); // @output empty client id: connected
     // @output options: connected

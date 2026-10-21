@@ -153,7 +153,7 @@ func (opts *connectionOptions) applyConnectionConfig(platform pal.Platform, conn
 	if cleanStart, ok := mapBool(connConfig, "cleanStart"); ok {
 		opts.cleanStart = cleanStart
 	}
-	if uris, ok := mapGetList(connConfig, "serverUris"); ok {
+	if uris, ok := mapGetList(connConfig, "serverUris"); ok && uris.Len() > 0 {
 		parsed := make([]serverURI, 0, uris.Len())
 		for i := 0; i < uris.Len(); i++ {
 			raw, _ := uris.Get(i).(string)
