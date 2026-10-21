@@ -10,6 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
+| [data.csv](../../lib/stdlibs/ballerina/data.csv/0.0.1/go1.27/README.md)       | 16 | 7 | 4 | 59% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 12 | 36 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
@@ -26,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **281** | **36** | **69** | **73%** |
+| **Total**                                         | **297** | **43** | **73** | **72%** |
 
 ## Notable Behavioural Changes
 
@@ -44,6 +45,19 @@ Consolidated from each package's README. Only permanent divergences are listed h
 ### crypto
 
 - **AES-CBC and AES-ECB always apply PKCS7 padding.** jBallerina selects PKCS5 or no padding based on the `padding` parameter value; the Go-native version always applies PKCS7 padding for CBC and ECB modes regardless of the parameter — Go's `cipher` package does not expose a separate no-padding mode. Programs relying on `NONE` padding will produce incorrect output.
+
+### data.csv
+
+- **The character U+FFFF is ordinary data.** jBallerina uses U+FFFF as its end-of-input marker, so the character in the input makes the parser loop forever; the Go-native version parses it as any other character.
+- **Fail-safe recovery skips exactly the offending line.** jBallerina locates the line to resume at within its current 1024-character read buffer only, so beyond the first buffer it drops the rest of the buffer, logs an empty offending row, or never terminates; the Go-native version always resumes at the line after the one that raised the error, logs that line as the offending row, and reports its physical line number as the row.
+- **Fail-safe log files contain valid JSON.** jBallerina builds each JSON log line by concatenating the values without escaping them, so a row or message containing a quote produces an invalid line; the Go-native version escapes the values.
+- **The options value is not modified.** jBallerina rewrites the options value it is given, so passing the same value to a second call silently resets `nilAsOptionalField` and `absentAsNilableType`; the Go-native version leaves the options value unchanged.
+- **An exponent with an explicit plus sign is parsed in full.** jBallerina's number parsing stops at `E+`, so `1E+5` converts to `1.0`; the Go-native version converts it to `100000.0`.
+- **Integer subtype ranges are checked on the full value.** jBallerina checks the `byte`, `int:Signed8`, `int:Signed16`, `int:Unsigned8` and `int:Unsigned16` ranges on the value truncated to 32 bits, so `4294967297` converts to the byte `1`; the Go-native version rejects any value outside the range.
+- **A tuple whose members share one type behaves as a closed array.** Types are structural in the Go-native version, so `[int, int]` cannot be told apart from `int[2]`; its size errors name an array type instead of a tuple type, and its header row is checked against the array size.
+- **Option characters outside the Basic Multilingual Plane match whole characters.** jBallerina compares the delimiter, text enclosure, escape and comment characters with single UTF-16 code units, so such a character never matches; the Go-native version matches the whole character.
+- **An unpaired escaped UTF-16 surrogate becomes U+FFFD.** jBallerina keeps a lone surrogate from a `\u` escape in the string; Go strings cannot hold one, so the Go-native version substitutes the replacement character. An escaped surrogate pair forms one character in both.
+- **Byte-block streams keep bytes with the value 0xFF.** jBallerina's stream reader returns the byte 0xFF as the end-of-stream marker, so `parseStream` input in an encoding that uses that byte is cut short; the Go-native version reads every byte.
 
 ### file
 
