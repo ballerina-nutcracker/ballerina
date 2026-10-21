@@ -411,29 +411,21 @@ func parseDocumentsParallel(
 	testDocIDs []DocumentID,
 	testDocContextMap map[DocumentID]*documentContext,
 ) []*st.SyntaxTree {
-	var (
-		mu          sync.Mutex
-		wg          sync.WaitGroup
-		syntaxTrees []*st.SyntaxTree
-	)
+	var wg sync.WaitGroup
 
-	// Parse source documents - collect syntax trees
-	for _, docID := range srcDocIDs {
+	// One slot per document so results stay in document order.
+	treesBySlot := make([]*st.SyntaxTree, len(srcDocIDs))
+	for i, docID := range srcDocIDs {
 		docCtx := srcDocContextMap[docID]
 		if docCtx == nil {
 			continue
 		}
 
 		wg.Add(1)
-		go func(dc *documentContext) {
+		go func(dc *documentContext, slot int) {
 			defer wg.Done()
-			st := dc.parse(compilerCtx)
-			if st != nil {
-				mu.Lock()
-				syntaxTrees = append(syntaxTrees, st)
-				mu.Unlock()
-			}
-		}(docCtx)
+			treesBySlot[slot] = dc.parse(compilerCtx)
+		}(docCtx, i)
 	}
 
 	// Parse test documents - no syntax trees collected
@@ -451,6 +443,13 @@ func parseDocumentsParallel(
 	}
 
 	wg.Wait()
+
+	syntaxTrees := make([]*st.SyntaxTree, 0, len(treesBySlot))
+	for _, tree := range treesBySlot {
+		if tree != nil {
+			syntaxTrees = append(syntaxTrees, tree)
+		}
+	}
 	return syntaxTrees
 }
 
