@@ -2057,13 +2057,14 @@ func pathParamType() semtypes.SemType {
 // resourceRequestPath renders client resource access path segments and query parameters into a
 // request path: segments are joined with "/", then any query parameters are appended after "?".
 // An empty segment list yields "/". Every segment and query value is rendered with Ballerina's
-// own `toString` semantics, and query keys and values are percent-encoded by net/url — see the
-// README's "Notable Behavioural Changes" for how both differ from jBallerina's wire format.
+// own `toString` semantics, then each segment is percent-encoded with url.PathEscape and each
+// query key and value with url.QueryEscape — see the README's "Notable Behavioural Changes" for
+// how both differ from jBallerina's wire format.
 func resourceRequestPath(segments *values.List, params values.BalValue) string {
 	var sb strings.Builder
 	for i := range segments.Len() {
 		sb.WriteByte('/')
-		sb.WriteString(balString(segments.Get(i)))
+		sb.WriteString(url.PathEscape(balString(segments.Get(i))))
 	}
 	if sb.Len() == 0 {
 		sb.WriteByte('/')

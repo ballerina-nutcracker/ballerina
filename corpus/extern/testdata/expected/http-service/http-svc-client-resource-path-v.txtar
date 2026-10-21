@@ -8,6 +8,7 @@
 /p/1.0/2.500
 /p/albums/tracks
 /p/albums/tracks
+/p/a%2Fb/a%3Fb/a%25b/a%20b
 /p/albums?tag=rock&count=3&exact=true
 /p/albums?tags=rock,jazz,folk
 /p/albums?ratio=1.5&big=1e10&dec=2.500
