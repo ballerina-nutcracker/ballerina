@@ -1,0 +1,15 @@
+-- stdout --
+[{"a":"1"},{"a":"x"}]
+[{"a":1},{"a":2}]
+[["1"],["x"]]
+[{"a":1}]
+[["x"]]
+[{"a":1},{"a":3}]
+true
+error Error ("source value cannot converted in to the '({| b: int, never... |}|{| b: boolean, never... |})[]'")
+[["a"],["1"]]
+error Error ("source value cannot converted in to the '({| a: int, never... |}|{| a: string, never... |})[]'")
+[{"a":1}]
+[{"a":1}]
+[{"a":"1"},{"a":"x"}]
+-- stderr --
