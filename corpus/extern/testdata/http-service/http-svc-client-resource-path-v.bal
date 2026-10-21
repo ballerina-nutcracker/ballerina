@@ -91,6 +91,10 @@ public function testMain() returns error? {
     http:Response computed = check c->/p/[seg]/["tracks"];
     io:println(check computed.getHeader("x-raw-path")); // @output /p/albums/tracks
 
+    // A delimiter inside a segment value stays inside that segment.
+    http:Response escaped = check c->/p/["a/b"]/["a?b"]/["a%b"]/["a b"];
+    io:println(check escaped.getHeader("x-raw-path")); // @output /p/a%2Fb/a%3Fb/a%25b/a%20b
+
     // Query parameters are appended after "?" and joined with "&", in the order
     // the named arguments were written.
     http:Response query = check c->/p/albums(tag = "rock", count = 3, exact = true);
