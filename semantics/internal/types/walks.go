@@ -78,6 +78,9 @@ func (c *trialDependencyRefCollector) Visit(node ast.BLangNode) ast.Visitor {
 		if symbol, ok := ref.RawSymbol.(*model.SymbolRef); ok && symbol != nil && !symbol.IsEmpty() {
 			c.refs = append(c.refs, *symbol)
 		}
+	case *ast.BLangObjectType:
+		// Object type inclusions are held as symbols, not as walked type descriptor nodes.
+		c.refs = append(c.refs, ref.Inclusions...)
 	}
 	return c
 }

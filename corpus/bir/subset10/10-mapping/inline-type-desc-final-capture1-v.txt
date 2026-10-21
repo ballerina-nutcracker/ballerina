@@ -1,0 +1,48 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 5
+    k = %1;
+    %3 = ConstantLoad a
+    %4 = ConstantLoad 2
+    %5 = newMap {| a: int, never... |}{%3=%4}
+    value = %5;
+    v = value;
+    %8 = ConstantLoad x
+    %9 = v is {| a: int, never... |}
+    %10 = newMap {| x: boolean, never... |}{%8=%9}
+    tested = %10;
+    %12 = ConstantLoad x
+    %15 = ConstantLoad a
+    %16 = <{| a: int, never... |}>(v)
+    %14 = %16[%15];
+    %17 = %14;
+    %18 = ConstantLoad 2
+    %19 = %18;
+    %13 = == %17 %19;
+    %20 = newMap {| x: boolean, never... |}{%12=%13}
+    cast = %20;
+    %22 = ConstantLoad x
+    %24 = closure_fp $anon/.:$default$2
+    $desugar$0 = %24;
+    %25 = v is function(int) returns nil
+    %26 = newMap {| x: boolean, never... |}{%22=%25}
+    param = %26;
+    %28 = println(tested) -> bb1;
+  }
+  bb1 {
+    %29 = println(cast) -> bb2;
+  }
+  bb2 {
+    %30 = println(param) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %0 = (1, k);
+    return;
+  }
+}
