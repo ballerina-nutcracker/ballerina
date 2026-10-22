@@ -16,6 +16,7 @@
 
 import ballerina/http;
 import ballerina/io;
+import ballerina/mime;
 
 public function main() returns error? {
     // ---- Request.setPayload ----
@@ -35,6 +36,15 @@ public function main() returns error? {
     io:println(reqJsonMap["name"]); // @output Alice
     io:println(reqJsonMap["age"]);  // @output 30
 
+    http:Request reqXml = new;
+    reqXml.setPayload(xml `<greeting>hello</greeting>`);
+    io:println(reqXml.getContentType());      // @output application/xml
+    io:println(check reqXml.getXmlPayload()); // @output <greeting>hello</greeting>
+
+    http:Request reqXmlCustomType = new;
+    reqXmlCustomType.setPayload(xml `<a/>`, "text/xml");
+    io:println(reqXmlCustomType.getContentType()); // @output text/xml
+
     // ---- Response.setPayload ----
     http:Response resText = new;
     resText.setPayload("resp text");
@@ -50,4 +60,18 @@ public function main() returns error? {
     resJson.setPayload(resPayload);
     json resJsonResult = check resJson.getJsonPayload();
     io:println(resJsonResult); // @output [1,2,3]
+
+    http:Response resXml = new;
+    resXml.setPayload(xml `<item id="1"/>`);
+    io:println(resXml.getContentType());      // @output application/xml
+    io:println(check resXml.getXmlPayload()); // @output <item id="1"/>
+
+    // ---- XML body part in a multipart payload ----
+    mime:Entity xmlPart = new;
+    xmlPart.setXml(xml `<note>multipart</note>`);
+    http:Request reqMultipartXml = new;
+    reqMultipartXml.setPayload([xmlPart]);
+    mime:Entity[] xmlParts = check reqMultipartXml.getBodyParts();
+    io:println(check xmlParts[0].getXml());                // @output <note>multipart</note>
+    io:println(check xmlParts[0].getHeader("content-type")); // @output application/xml
 }

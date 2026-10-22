@@ -3,7 +3,14 @@ plain text
 3
 Alice
 30
+application/xml
+<greeting>hello</greeting>
+text/xml
 resp text
 3
 [1,2,3]
+application/xml
+<item id="1"/>
+<note>multipart</note>
+application/xml
 -- stderr --

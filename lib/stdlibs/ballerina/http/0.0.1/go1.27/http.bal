@@ -401,11 +401,13 @@ public class Response {
 
     # Sets the response body, dispatching to the specific setter based on the runtime type of `payload`.
     #
-    # + payload - A `string`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the response body
+    # + payload - A `string`, `xml`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the response body
     # + contentType - Optional MIME type overriding the type-inferred default
-    public isolated function setPayload(json|byte[]|mime:Entity[] payload, string? contentType = ()) {
+    public isolated function setPayload(json|xml|byte[]|mime:Entity[] payload, string? contentType = ()) {
         if payload is string {
             self.setTextPayload(payload, contentType);
+        } else if payload is xml {
+            self.setXmlPayload(payload, contentType);
         } else if payload is byte[] {
             self.setBinaryPayload(payload, contentType);
         } else if payload is mime:Entity[] {
@@ -578,11 +580,13 @@ public class Request {
 
     # Sets the request body, dispatching to the specific setter based on the runtime type of `payload`.
     #
-    # + payload - A `string`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the request body
+    # + payload - A `string`, `xml`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the request body
     # + contentType - Optional MIME type overriding the type-inferred default
-    public isolated function setPayload(json|byte[]|mime:Entity[] payload, string? contentType = ()) {
+    public isolated function setPayload(json|xml|byte[]|mime:Entity[] payload, string? contentType = ()) {
         if payload is string {
             self.setTextPayload(payload, contentType);
+        } else if payload is xml {
+            self.setXmlPayload(payload, contentType);
         } else if payload is byte[] {
             self.setBinaryPayload(payload, contentType);
         } else if payload is mime:Entity[] {
