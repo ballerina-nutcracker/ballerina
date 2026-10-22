@@ -395,6 +395,52 @@ func compressionModeOf(self *values.Object) string {
 	return "AUTO"
 }
 
+// sendSimpleFunc issues a request with no payload; exactly one of the two results is non-nil.
+type sendSimpleFunc func(ctx *extern.Context, verb, path string, self *values.Object,
+	headersArg values.BalValue) (*values.Object, values.BalValue)
+
+// sendBodyFunc issues a request carrying a payload; exactly one of the two results is non-nil.
+type sendBodyFunc func(ctx *extern.Context, verb, path string, self *values.Object,
+	msg, headersArg, mediaTypeArg values.BalValue) (*values.Object, values.BalValue)
+
+// clientResourceHead implements the head resource accessor: args = [self, path, headers, params].
+func clientResourceHead(verb string, send sendSimpleFunc) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		path := resourceRequestPath(args[1].(*values.List), args[3])
+		resp, errVal := send(ctx, verb, path, args[0].(*values.Object), args[2])
+		if errVal != nil {
+			return errVal, nil
+		}
+		return resp, nil
+	}
+}
+
+// clientResourceSimple implements the get and options resource accessors:
+// args = [self, path, headers, targetType, params].
+func clientResourceSimple(verb string, send sendSimpleFunc, types *httpTypes) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		path := resourceRequestPath(args[1].(*values.List), args[4])
+		resp, errVal := send(ctx, verb, path, args[0].(*values.Object), args[2])
+		if errVal != nil {
+			return errVal, nil
+		}
+		return bindResponse(ctx, types, resp, args[3]), nil
+	}
+}
+
+// clientResourceBody implements the post, put, patch and delete resource accessors:
+// args = [self, path, message, headers, mediaType, targetType, params].
+func clientResourceBody(verb string, send sendBodyFunc, types *httpTypes) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		path := resourceRequestPath(args[1].(*values.List), args[6])
+		resp, errVal := send(ctx, verb, path, args[0].(*values.Object), args[2], args[3], args[4])
+		if errVal != nil {
+			return errVal, nil
+		}
+		return bindResponse(ctx, types, resp, args[5]), nil
+	}
+}
+
 func initHttpModule(rt *runtime.Runtime) {
 	env := rt.GetTypeEnv()
 	jsonTy := semtypes.CreateJSON(semtypes.ContextFrom(env))
@@ -454,7 +500,7 @@ func initHttpModule(rt *runtime.Runtime) {
 	// sendBody issues a request carrying a payload and returns the raw Response. It backs
 	// post, put, patch and delete in both their remote and client-resource forms. Exactly one
 	// of the two results is non-nil.
-	sendBody := func(ctx *extern.Context, verb, path string, self *values.Object,
+	var sendBody sendBodyFunc = func(ctx *extern.Context, verb, path string, self *values.Object,
 		msg, headersArg, mediaTypeArg values.BalValue) (*values.Object, values.BalValue) {
 		reqHeaders := extractHeaders(headersArg)
 		contentType := overridingContentType(reqHeaders, mediaTypeArg)
@@ -481,7 +527,7 @@ func initHttpModule(rt *runtime.Runtime) {
 	// sendSimple issues a request with no payload and returns the raw Response. It backs get,
 	// head and options in both their remote and client-resource forms. Exactly one of the two
 	// results is non-nil.
-	sendSimple := func(ctx *extern.Context, verb, path string, self *values.Object,
+	var sendSimple sendSimpleFunc = func(ctx *extern.Context, verb, path string, self *values.Object,
 		headersArg values.BalValue) (*values.Object, values.BalValue) {
 		reqHeaders := applyCompressionHeaders(compressionModeOf(self), extractHeaders(headersArg))
 		urlVal, _ := self.Get("url")
@@ -547,42 +593,16 @@ func initHttpModule(rt *runtime.Runtime) {
 
 	for idx, accessor := range clientResourceAccessors {
 		verb := strings.ToUpper(accessor)
+		var impl extern.NativeFunc
 		switch accessor {
 		case "head":
-			// args = [self, path, headers, params]
-			runtime.RegisterExternFunction(rt, orgName, moduleName, clientResourceExternKey(accessor, idx),
-				func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-					path := resourceRequestPath(args[1].(*values.List), args[3])
-					resp, errVal := sendSimple(ctx, verb, path, args[0].(*values.Object), args[2])
-					if errVal != nil {
-						return errVal, nil
-					}
-					return resp, nil
-				})
+			impl = clientResourceHead(verb, sendSimple)
 		case "get", "options":
-			// args = [self, path, headers, targetType, params]
-			runtime.RegisterExternFunction(rt, orgName, moduleName, clientResourceExternKey(accessor, idx),
-				func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-					path := resourceRequestPath(args[1].(*values.List), args[4])
-					resp, errVal := sendSimple(ctx, verb, path, args[0].(*values.Object), args[2])
-					if errVal != nil {
-						return errVal, nil
-					}
-					return bindResponse(ctx, &types, resp, args[3]), nil
-				})
+			impl = clientResourceSimple(verb, sendSimple, &types)
 		default:
-			// args = [self, path, message, headers, mediaType, targetType, params]
-			runtime.RegisterExternFunction(rt, orgName, moduleName, clientResourceExternKey(accessor, idx),
-				func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-					path := resourceRequestPath(args[1].(*values.List), args[6])
-					resp, errVal := sendBody(ctx, verb, path, args[0].(*values.Object),
-						args[2], args[3], args[4])
-					if errVal != nil {
-						return errVal, nil
-					}
-					return bindResponse(ctx, &types, resp, args[5]), nil
-				})
+			impl = clientResourceBody(verb, sendBody, &types)
 		}
+		runtime.RegisterExternFunction(rt, orgName, moduleName, clientResourceExternKey(accessor, idx), impl)
 	}
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseHeader",
