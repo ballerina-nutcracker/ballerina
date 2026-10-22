@@ -46,5 +46,11 @@ public function main() returns error? {
     io:println(req.getContentType()); // @output multipart/mixed
     r = check c->post("/echo-multipart", req);
     io:println(check r.getTextPayload()); // @output multipart/mixed count=1 1:hello world
+
+    r = check c->post("/echo-multipart", [textPart], mediaType = "multipart/mixed");
+    io:println(check r.getTextPayload()); // @output multipart/mixed count=1 1:hello world
+
+    r = check c->execute("POST", "/echo-multipart", [textPart], headers = {"Content-Type": "multipart/related"});
+    io:println(check r.getTextPayload()); // @output multipart/related count=1 1:hello world
     return;
 }

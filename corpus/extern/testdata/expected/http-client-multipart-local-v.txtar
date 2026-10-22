@@ -4,4 +4,6 @@ multipart/form-data count=1 1:[multipart/mixed count=1 1:inner-text]
 multipart/form-data count=0
 multipart/mixed
 multipart/mixed count=1 1:hello world
+multipart/mixed count=1 1:hello world
+multipart/related count=1 1:hello world
 -- stderr --

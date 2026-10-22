@@ -447,6 +447,7 @@ func initHttpModule(rt *runtime.Runtime) {
 		var bodyReader io.Reader
 		var contentLength int64
 		contentType := ""
+		bodyContentType := ""
 		if len(args) > 2 && args[2] != nil {
 			var ct string
 			var err error
@@ -455,6 +456,7 @@ func initHttpModule(rt *runtime.Runtime) {
 				return values.NewErrorWithMessage(err.Error()), nil
 			}
 			contentType = ct
+			bodyContentType = ct
 		}
 		var reqHeaders map[string][]string
 		if len(args) > 3 {
@@ -471,6 +473,7 @@ func initHttpModule(rt *runtime.Runtime) {
 				contentType = mt
 			}
 		}
+		contentType = keepBodyBoundary(contentType, bodyContentType)
 		reqHeaders = applyCompressionHeaders(compressionModeOf(self), reqHeaders)
 		urlVal, _ := self.Get("url")
 		clientHandle, _ := self.Get("$httpClient")
@@ -873,6 +876,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			var bodyReader io.Reader
 			var contentLength int64
 			contentType := ""
+			bodyContentType := ""
 			if len(args) > 3 && args[3] != nil {
 				var ct string
 				var err error
@@ -881,6 +885,7 @@ func initHttpModule(rt *runtime.Runtime) {
 					return values.NewErrorWithMessage(err.Error()), nil
 				}
 				contentType = ct
+				bodyContentType = ct
 			}
 			var reqHeaders map[string][]string
 			if len(args) > 4 {
@@ -897,6 +902,7 @@ func initHttpModule(rt *runtime.Runtime) {
 					contentType = mt
 				}
 			}
+			contentType = keepBodyBoundary(contentType, bodyContentType)
 			reqHeaders = applyCompressionHeaders(compressionModeOf(self), reqHeaders)
 			urlVal, _ := self.Get("url")
 			clientHandle, _ := self.Get("$httpClient")
@@ -1941,6 +1947,13 @@ func withBoundary(contentType, boundary string) string {
 		return contentType
 	}
 	return contentType + "; boundary=" + boundary
+}
+
+// keepBodyBoundary carries the boundary the multipart body was encoded with over to a
+// Content-Type that a header or mediaType argument overrode, so the body stays parsable.
+func keepBodyBoundary(contentType, bodyContentType string) string {
+	_, boundary, _ := mimenative.MultipartBoundary(bodyContentType)
+	return withBoundary(contentType, boundary)
 }
 
 // encodeMultipartBody serializes a mime:Entity[] for the wire, using the boundary in
