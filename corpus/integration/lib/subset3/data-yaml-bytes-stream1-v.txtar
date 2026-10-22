@@ -1,0 +1,11 @@
+-- stdout --
+{"name":"café"}
+{"a":"b"}
+{"a":"�"}
+{"name":"café","age":3}
+Error occurred while reading the stream: required field 'age' not present in YAML
+'unexpected event' at line: '1' column: '4'
+'invalid yaml document' at line: '1' column: '0'
+Error occurred while reading the stream: boom
+true
+-- stderr --
