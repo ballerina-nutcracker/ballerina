@@ -11,7 +11,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
-| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 11 | 37 | 38% |
+| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 32 | 11 | 34 | 42% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
 | [ldap](../../lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md)               | 15 | 2 | 0 | 83% |
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
@@ -26,7 +26,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **281** | **35** | **70** | **73%** |
+| **Total**                                         | **284** | **35** | **67** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -69,6 +69,8 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **A multipart part that cannot be encoded fails the send.** jBallerina writes a part whose Content-Type names an unsupported charset (for example `charset=bogus-cs`) as-is. The Go-native version encodes each part in its charset when the message is sent, so a client call returns `failed to encode multipart body: <charset>` and a listener answers a returned `Response` holding such a part with a 500 carrying the same message.
 - **A multipart body set on an outbound message is decoded.** jBallerina's `getBodyParts()` decodes only an inbound body, so on a `Request` or `Response` whose body was set with `setTextPayload` or `setBinaryPayload` it returns an empty `mime:Entity[]`. The Go-native version decodes such a body too, so a well-formed one yields its parts and one holding no part returns an error, as an inbound body does.
 - **Malformed percent-encoding in a form body returns an error.** jBallerina's `getFormParams()` panics with a Java `IllegalArgumentException` (`URLDecoder: Illegal hex characters in escape (%) pattern`) on a body such as `a=%ZZ`. The Go-native version returns the `form data decode failure` error that jBallerina's `getFormParams()` declares for a decode failure, with the decoding error as its cause.
+- **A failing byte-stream response body aborts the connection.** When a byte stream sent as a response body returns an error, jBallerina stops writing and leaves the response open and incomplete; the Go-native version aborts the connection, so the client sees the body fail instead of waiting on it.
+- **Server-Sent Events are parsed as in module-ballerina-http#2752.** Released jBallerina versions join multiple `data` lines without a separator and end an event only at `\n\n`, `\r\r` or `\r\n\r\n`; the Go-native version joins `data` lines with `\n` and ends an event at any two consecutive line breaks, following the WHATWG event-stream format as #2752 does.
 
 ### io
 
