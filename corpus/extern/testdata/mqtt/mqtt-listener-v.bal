@@ -102,6 +102,32 @@ service class StoppingResponder {
     }
 }
 
+service class DetachingResponder {
+    *mqtt:Service;
+    private final mqtt:Listener owner;
+
+    function init(mqtt:Listener owner) {
+        self.owner = owner;
+    }
+
+    remote function onMessage(mqtt:Message message, mqtt:Caller caller) returns error? {
+        check caller->respond({payload: message.payload});
+        check self.owner.detach(self);
+    }
+
+    remote function onComplete(mqtt:DeliveryToken token) returns error? {
+        check report("onComplete after detach " + token.topic);
+    }
+}
+
+isolated service class RetainedEcho {
+    *mqtt:Service;
+
+    remote function onMessage(mqtt:Message message) returns error? {
+        check report("retained-echo " + check string:fromBytes(message.payload));
+    }
+}
+
 function nextEvent(stream<mqtt:Message, error?> events) returns string|error {
     record {|mqtt:Message value;|}? next = check events.next();
     return next is () ? "end of stream" : string:fromBytes(next.value.payload);
@@ -170,6 +196,26 @@ public function main() returns error? {
     check unattached.'start();
     _ = check c->publish("listener-v/unattached", {payload: "dropped".toBytes()});
 
+    // onComplete still reaches the service that responded even if it detached in between.
+    mqtt:Listener detaching = check new (BROKER_URL, "listener-v-detaching", "listener-v/detach-req");
+    check detaching.attach(new DetachingResponder(detaching));
+    check detaching.'start();
+    _ = check c->publish("listener-v/detach-req", {payload: "d".toBytes(),
+        properties: {responseTopic: "listener-v/detach-replies"}});
+    io:println(check nextEvent(events)); // @output onComplete after detach listener-v/detach-replies
+
+    // A repeated 'start() does not subscribe again, so a retained message is delivered once.
+    _ = check c->publish("listener-v/retained", {payload: "kept".toBytes(), qos: 1, retained: true});
+    mqtt:Listener restarted = check new (BROKER_URL, "listener-v-restarted", "listener-v/retained");
+    check restarted.attach(new RetainedEcho());
+    check restarted.'start();
+    check restarted.'start();
+    _ = check c->publish("listener-v/retained", {payload: "after".toBytes(), qos: 1});
+    io:println(check nextEvent(events)); // @output retained-echo kept
+    io:println(check nextEvent(events)); // @output retained-echo after
+    check restarted.gracefulStop();
+    _ = check c->publish("listener-v/retained", {payload: [], qos: 1, retained: true});
+
     // detach unsubscribes but keeps the connection; attaching again re-subscribes.
     mqtt:Error? r = echo.detach(new Echo());
     io:println("detach: ", r is mqtt:Error ? r.message() : "ok"); // @output detach: ok
@@ -191,6 +237,8 @@ public function main() returns error? {
     io:println("immediateStop: ", r is mqtt:Error ? r.message() : "ok"); // @output immediateStop: ok
     r = panicking.gracefulStop();
     io:println("gracefulStop panicking: ", r is mqtt:Error ? r.message() : "ok"); // @output gracefulStop panicking: ok
+    r = detaching.gracefulStop();
+    io:println("gracefulStop detaching: ", r is mqtt:Error ? r.message() : "ok"); // @output gracefulStop detaching: ok
     r = unattached.immediateStop();
     io:println("immediateStop unattached: ", r is mqtt:Error ? r.message() : "ok"); // @output immediateStop unattached: ok
 

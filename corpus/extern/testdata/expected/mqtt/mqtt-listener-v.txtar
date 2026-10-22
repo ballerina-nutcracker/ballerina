@@ -7,6 +7,9 @@ respond failed: Response topic is not set
 onError method onMessage not found
 onError onMessage panicked on p
 respond: Client is not connected, complete: Client is not connected
+onComplete after detach listener-v/detach-replies
+retained-echo kept
+retained-echo after
 detach: ok
 detach again: ok
 echo c qos=1
@@ -16,5 +19,6 @@ gracefulStop: ok
 gracefulStop again: Client is closed
 immediateStop: ok
 gracefulStop panicking: ok
+gracefulStop detaching: ok
 immediateStop unattached: ok
 -- stderr --
