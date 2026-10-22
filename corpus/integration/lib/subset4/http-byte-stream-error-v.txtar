@@ -1,0 +1,10 @@
+-- stdout --
+error GenericClientError ("Error occurred while retrieving the byte stream from the response",error GenericMimeError ("The array size of a byte stream must be positive, but was 0"))
+error GenericClientError ("Error occurred while retrieving the byte stream from the response",error GenericMimeError ("The array size of a byte stream must be positive, but was -4"))
+error GenericClientError ("Error occurred while retrieving the byte stream from the response",error ParserError ("Byte stream is not available but payload can be obtain either as xml, json, string or byte[] type"))
+error GenericClientError ("Error occurred while retrieving the byte stream from the request",error ParserError ("Byte stream is not available as payload"))
+error GenericClientError ("Error occurred while retrieving the byte stream from the request",error ParserError ("Byte stream is not available since payload contains a set of body parts"))
+error NoContentError ("No content",error ParserError ("Error occurred while extracting text data from entity",error NoContentError ("Empty content")))
+error NoContentError ("No content",error ParserError ("Error occurred while extracting json data from entity",error NoContentError ("Empty content")))
+error NoContentError ("No content",error ParserError ("Error occurred while extracting text data from entity",error NoContentError ("Empty content")))
+-- stderr --

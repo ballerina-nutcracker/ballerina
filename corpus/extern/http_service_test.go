@@ -160,6 +160,15 @@ func TestHttpServiceMultipartResponse(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-multipart-response-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceStream exercises byte-stream and Server-Sent Event bodies end to end: a
+// resource returning a byte-stream response or an event stream, reading a chunked request body
+// with getByteStream, and an event stream whose error is sent as a final error event.
+func TestHttpServiceStream(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-stream-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceHTTP10Fallback verifies that a listener configured with
 // HTTP_1_0 (accepted by the enum but unsupported by the Go HTTP runtime)
 // falls back to HTTP/1.1 with a warning instead of forwarding "1.0" to the
