@@ -1261,23 +1261,24 @@ func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage)
 	propagateRecordFieldAnnotations(t, pkg)
 	for i := range pkg.ClassDefinitions {
 		classDef := pkg.ClassDefinitions[i]
+		isService := classDef.IsService()
 		classPoint := ast.PointClass
-		if classDef.IsService() {
+		if isService {
 			classPoint = ast.PointService
 		}
 		resolveAnnotationAttachments(t, classDef, classPoint, symbolAnnotationSink(t, classDef.Symbol()))
-		resolveClassBodyAnnotationAttachments(t, classDef.Fields, classDef.InitFunction, classDef.Methods, classDef.ResourceMethods)
+		resolveClassBodyAnnotationAttachments(t, classDef.Fields, classDef.InitFunction, classDef.Methods, classDef.ResourceMethods, isService)
 	}
 	for i := range pkg.Services {
 		svc := pkg.Services[i]
 		resolveAnnotationAttachments(t, svc, ast.PointService, symbolAnnotationSink(t, svc.Symbol()))
-		resolveClassBodyAnnotationAttachments(t, svc.Fields, svc.InitFunction, svc.Methods, svc.ResourceMethods)
+		resolveClassBodyAnnotationAttachments(t, svc.Fields, svc.InitFunction, svc.Methods, svc.ResourceMethods, true)
 	}
 	for i := range pkg.Functions {
-		resolveFunctionAnnotationAttachments(t, pkg.Functions[i], false)
+		resolveInvokableAnnotationAttachments(t, pkg.Functions[i], ast.PointFunction)
 	}
 	if pkg.InitFunction != nil {
-		resolveFunctionAnnotationAttachments(t, pkg.InitFunction, false)
+		resolveInvokableAnnotationAttachments(t, pkg.InitFunction, ast.PointFunction)
 	}
 	for i := range pkg.Constants {
 		resolveAnnotationAttachments(t, pkg.Constants[i], ast.PointConst, nil)
@@ -1294,32 +1295,24 @@ func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage)
 }
 
 func resolveClassBodyAnnotationAttachments(t typeResolver, fields []*ast.BLangVariable, initFn *ast.BLangFunction,
-	methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod,
+	methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, isService bool,
 ) {
 	for _, field := range fields {
 		resolveAnnotationAttachments(t, field, ast.PointObjectField, nil)
 	}
 	if initFn != nil {
-		resolveFunctionAnnotationAttachments(t, initFn, true)
+		resolveInvokableAnnotationAttachments(t, initFn, ast.PointObjectMethod)
 	}
 	for _, method := range common.MethodsInResolutionOrder(methods) {
-		resolveFunctionAnnotationAttachments(t, method.Method, true)
+		point := ast.PointObjectMethod
+		if isService && method.Method.IsRemote() {
+			point = ast.PointServiceRemote
+		}
+		resolveInvokableAnnotationAttachments(t, method.Method, point)
 	}
 	for _, method := range resourceMethods {
 		resolveInvokableAnnotationAttachments(t, method, ast.PointObjectMethod)
 	}
-}
-
-func resolveFunctionAnnotationAttachments(
-	t typeResolver,
-	fn *ast.BLangFunction,
-	attached bool,
-) {
-	point := ast.PointFunction
-	if attached {
-		point = ast.PointObjectMethod
-	}
-	resolveInvokableAnnotationAttachments(t, fn, point)
 }
 
 func resolveInvokableAnnotationAttachments(

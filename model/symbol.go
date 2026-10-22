@@ -1138,25 +1138,12 @@ func (as *AnnotationSymbol) AllowsAttachPoint(point string) bool {
 	if as.attachPoints == 0 {
 		return true
 	}
-	if as.hasAttachPoint(point) {
-		return true
-	}
-	if point == "recordfield" || point == "objectfield" {
-		if as.hasAttachPoint("field") || as.hasSourceAttachPoint("field") {
-			return true
-		}
-	}
-	return as.hasSourceAttachPoint(point)
+	points := compatibleAnnotationAttachPoints(point)
+	return as.attachPoints.has(points | points<<sourceAnnotationAttachPointShift)
 }
 
 func (as *AnnotationSymbol) IsRuntimeVisibleAt(point string) bool {
-	if as.attachPoints == 0 {
-		return true
-	}
-	if point == "recordfield" || point == "objectfield" {
-		return as.hasAttachPoint(point) || as.hasAttachPoint("field")
-	}
-	return as.hasAttachPoint(point)
+	return as.attachPoints == 0 || as.attachPoints.has(compatibleAnnotationAttachPoints(point))
 }
 
 func AnnotationKey(pkg PackageIdentifier, name string) string {
@@ -1167,14 +1154,18 @@ func SourceAnnotationAttachPointKey(point string) string {
 	return sourceAnnotationAttachPointPrefix + point
 }
 
-func (as *AnnotationSymbol) hasAttachPoint(point string) bool {
-	bit, ok := annotationAttachPointBit(point)
-	return ok && as.attachPoints.has(bit)
-}
-
-func (as *AnnotationSymbol) hasSourceAttachPoint(point string) bool {
-	bit, ok := annotationAttachPointBit(point)
-	return ok && as.attachPoints.has(bit<<sourceAnnotationAttachPointShift)
+func compatibleAnnotationAttachPoints(point string) annotationAttachPointSet {
+	bit, _ := annotationAttachPointBit(point)
+	switch point {
+	case "serviceremotefunction":
+		objectFunction, _ := annotationAttachPointBit("objectfunction")
+		return bit | objectFunction
+	case "recordfield", "objectfield":
+		field, _ := annotationAttachPointBit("field")
+		return bit | field
+	default:
+		return bit
+	}
 }
 
 func (s annotationAttachPointSet) has(bit annotationAttachPointSet) bool {
