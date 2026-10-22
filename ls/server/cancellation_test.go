@@ -101,13 +101,15 @@ func mustFindResponse(t *testing.T, responses []protocol.Message, id string) pro
 
 func TestRegistryEntryRemovedOnCompletion(t *testing.T) {
 	srv, bt := newBatchServer(t)
-	runBatch(t, srv, bt, []protocol.Message{
+	if _, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
 		notifMessage("initialized", map[string]any{}),
 		reqMessage(`"r1"`, "$test/blockRequest", map[string]any{}),
 		notifMessage("$test/releaseRequest", map[string]any{"id": "r1"}),
 		notifMessage("$test/flushRequests", map[string]any{}),
-	})
+	}); err != nil {
+		t.Fatal(err)
+	}
 	if entry := srv.registry.lookup(`"r1"`); entry != nil {
 		t.Fatal("registry still has entry for completed request \"r1\"")
 	}

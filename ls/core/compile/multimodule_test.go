@@ -105,7 +105,7 @@ func mustModuleName(t *testing.T, pkg *projects.Package, name string) projects.M
 
 func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
-	pkg, _ := openMultimoduleFixture(t, projSvc)
+	openMultimoduleFixture(t, projSvc)
 
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
@@ -117,7 +117,7 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testin
 	if err != nil || proj == nil {
 		t.Fatalf("Project: %v", err)
 	}
-	pkg = proj.CurrentPackage()
+	pkg := proj.CurrentPackage()
 
 	pd := newPackageDriver(pkg, projSvc.OpenText, nil, nil)
 	func() {
@@ -198,7 +198,7 @@ func TestPackageDriver_CrossModuleImport_PublishesExportedSymbols(t *testing.T) 
 
 func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
-	pkg, _ := openMultimoduleFixture(t, projSvc)
+	openMultimoduleFixture(t, projSvc)
 
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
@@ -210,7 +210,7 @@ func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing
 	if err != nil || proj == nil {
 		t.Fatalf("Project: %v", err)
 	}
-	pkg = proj.CurrentPackage()
+	pkg := proj.CurrentPackage()
 
 	pd := newPackageDriver(pkg, projSvc.OpenText, nil, nil)
 	func() {
@@ -311,7 +311,7 @@ func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration
 
 func TestPackageDriver_DependencyPublicSurfaceBroken_DependentDriverNeverExists(t *testing.T) {
 	projSvc := newProjectOnlyService(t)
-	pkg, _ := openMultimoduleFixture(t, projSvc)
+	openMultimoduleFixture(t, projSvc)
 
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
@@ -323,7 +323,7 @@ func TestPackageDriver_DependencyPublicSurfaceBroken_DependentDriverNeverExists(
 	if err != nil || proj == nil {
 		t.Fatalf("Project: %v", err)
 	}
-	pkg = proj.CurrentPackage()
+	pkg := proj.CurrentPackage()
 
 	pd := newPackageDriver(pkg, projSvc.OpenText, nil, nil)
 	pd.advanceAll(stageCFGAnalyzed)

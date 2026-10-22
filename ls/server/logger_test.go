@@ -46,8 +46,7 @@ func newLoggingBatchServer(t *testing.T) (*Server, *batchTransport, *bytes.Buffe
 
 func TestHostSelectedFileOutputReplacesStderr(t *testing.T) {
 	var stderr, fileOutput bytes.Buffer
-	selected := io.Writer(&stderr)
-	selected = &fileOutput
+	selected := io.Writer(&fileOutput)
 	bus := event.New()
 	defer bus.Close()
 	service := workspace.New(os.DirFS, bus)

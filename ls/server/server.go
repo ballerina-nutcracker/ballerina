@@ -284,27 +284,27 @@ func (s *Server) handleTrackedRequest(ctx context.Context, message protocol.Mess
 			return
 		}
 		entry.replyOnce.Do(func() {
-			if res.err != nil {
-				s.write(protocol.ErrorResponse{
-					JSONRPC: "2.0",
-					ID:      message.ID,
-					Error:   *res.err,
-				})
-				return
-			}
-			if reqCtx.Err() != nil {
-				s.write(protocol.ErrorResponse{
-					JSONRPC: "2.0",
-					ID:      message.ID,
-					Error:   protocol.RPCError{Code: rpcRequestCancelled, Message: "request cancelled"},
-				})
-				return
-			}
-			s.write(protocol.Response{
+			var reply any = protocol.Response{
 				JSONRPC: "2.0",
 				ID:      message.ID,
 				Result:  res.result,
-			})
+			}
+			if res.err != nil {
+				reply = protocol.ErrorResponse{
+					JSONRPC: "2.0",
+					ID:      message.ID,
+					Error:   *res.err,
+				}
+			} else if reqCtx.Err() != nil {
+				reply = protocol.ErrorResponse{
+					JSONRPC: "2.0",
+					ID:      message.ID,
+					Error:   protocol.RPCError{Code: rpcRequestCancelled, Message: "request cancelled"},
+				}
+			}
+			if err := s.write(reply); err != nil {
+				loggerFromContext(ctx).Error("response write failed", "error", err)
+			}
 		})
 	}()
 	return nil
@@ -649,7 +649,9 @@ func (s *Server) publishRootDiagnostics(root string, gen uint64) {
 			if note == nil {
 				return
 			}
-			s.write(*note)
+			if err := s.write(*note); err != nil {
+				s.logger.Error("diagnostics write failed", "error", err)
+			}
 		}()
 	}
 }

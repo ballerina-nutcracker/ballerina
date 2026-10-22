@@ -60,6 +60,6 @@ func startLangServer(cmd *cobra.Command, args []string) error {
 	// Defers run LIFO, so execution order is projects → compiler → bus.
 	defer bus.Close()
 	defer compiler.Shutdown()
-	defer projects.Shutdown(context.Background())
+	defer func() { _ = projects.Shutdown(context.Background()) }()
 	return srv.Serve()
 }

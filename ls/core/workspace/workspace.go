@@ -581,7 +581,7 @@ func (s *ProjectService) invalidateProjectsUnder(dir string) ([]DocumentURI, map
 			continue
 		}
 		root, known := s.recoveryRoot(u)
-		if !isAncestor(dir, u.Path()) && !(known && isAncestor(root, dir)) {
+		if !isAncestor(dir, u.Path()) && (!known || !isAncestor(root, dir)) {
 			continue
 		}
 		if known {
