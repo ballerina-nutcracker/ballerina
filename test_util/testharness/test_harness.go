@@ -396,14 +396,6 @@ func (p *testPal) Platform() pal.Platform {
 				return &stubHTTP{}, nil
 			},
 		},
-		// Real sockets, so socket-based stdlibs (e.g. mqtt) can reach the test broker.
-		Net: pal.Net{
-			Dial:              palnative.Dial,
-			Listen:            palnative.ListenTCP,
-			DialPacket:        palnative.DialPacket,
-			ListenPacket:      palnative.ListenPacket,
-			ResolvePacketAddr: palnative.ResolvePacketAddr,
-		},
 		Signals: p.signalSrc,
 	}
 }
