@@ -1,5 +1,5 @@
 -- stdout --
-true
+multipart/form-data
 2
 hello world
 form-data;name="field1"
@@ -10,5 +10,13 @@ form-data;name="field1"
 hello world
 2
 2
-true
+multipart/mixed
+multipart/mixed
+hi
+multipart/mixed
+hi
+multipart/form-data
+1
+multipart/form-data
+1
 -- stderr --

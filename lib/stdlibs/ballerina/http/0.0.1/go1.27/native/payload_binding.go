@@ -20,6 +20,8 @@
 package native
 
 import (
+	"fmt"
+
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
@@ -38,18 +40,18 @@ func outboundPayload(ctx *extern.Context, types *httpTypes, v values.BalValue) (
 		if !semtypes.IsZero(p.Type) && semtypes.IsSubtype(ctx.TypeCtx(), p.Type, types.byteArrTy) {
 			return p.ToByteSlice(), "application/octet-stream", nil
 		}
-		if p.Len() > 0 {
-			if parts, ok := entityListToParts(p); ok {
-				data, contentType, err := encodeMultipartBody(ctx, parts, "multipart/form-data")
-				if err == nil {
-					return data, contentType, nil
-				}
+		// A list holding objects can only be a mime:Entity[], since anydata excludes objects.
+		if !semtypes.IsZero(p.Type) && !semtypes.IsSubtype(ctx.TypeCtx(), p.Type, types.anydataTy) {
+			data, boundary, err := encodeMultipartBody(ctx, p, "multipart/form-data")
+			if err != nil {
+				return nil, "", fmt.Errorf("failed to encode multipart body: %w", err)
 			}
+			return data, withBoundary("multipart/form-data", boundary), nil
 		}
 	}
 	b, err := toJSONBytes(v)
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("failed to serialize body to JSON: %w", err)
 	}
 	return b, "application/json", nil
 }

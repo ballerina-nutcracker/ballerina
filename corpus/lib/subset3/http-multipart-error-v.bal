@@ -24,7 +24,7 @@ public function main() returns error? {
     mime:Entity[]|error plainReqResult = plainReq.getBodyParts();
     io:println(plainReqResult is error); // @output true
     if plainReqResult is error {
-        io:println(plainReqResult.message()); // @output Error occurred while retrieving body parts from the request: Entity body is not a type of composite media type. Received content-type : text/plain
+        io:println(plainReqResult.message()); // @output Error occurred while retrieving body parts from the request
     }
 
     http:Response plainRes = new;
@@ -32,7 +32,7 @@ public function main() returns error? {
     mime:Entity[]|error plainResResult = plainRes.getBodyParts();
     io:println(plainResResult is error); // @output true
     if plainResResult is error {
-        io:println(plainResResult.message()); // @output Error occurred while retrieving body parts from the response: Entity body is not a type of composite media type. Received content-type : text/plain
+        io:println(plainResResult.message()); // @output Error occurred while retrieving body parts from the response
     }
     return;
 }

@@ -106,6 +106,7 @@ type httpTypes struct {
 	jsonListTy  semtypes.SemType
 	jsonMapTy   semtypes.SemType
 	mapStringTy semtypes.SemType
+	anydataTy   semtypes.SemType
 }
 
 // 8 KB matches Netty's HttpObjectDecoder.maxChunkSize used by jBallerina's transport.
@@ -116,6 +117,7 @@ const eagerBufferThreshold = 8192
 // lazy — stream (io.ReadCloser) has not been read yet;
 // materialized — the body has been read into buf.
 type requestBodyHolder struct {
+	bodyPartsBase
 	once          sync.Once
 	stream        io.ReadCloser
 	buf           []byte
@@ -158,6 +160,7 @@ func (h *requestBodyHolder) takeStream() io.ReadCloser {
 // streaming — stream (io.ReadCloser) is available;
 // materialized — the body has been read into buf.
 type responseBodyHolder struct {
+	bodyPartsBase
 	once    sync.Once
 	stream  io.ReadCloser
 	buf     []byte
@@ -404,10 +407,11 @@ func initHttpModule(rt *runtime.Runtime) {
 		jsonMapTy:   jsonMapMd.Define(env, nil, jsonTy),
 		jsonListTy:  jsonListLd.Define(env, nil, semtypes.ListRest(jsonTy)),
 		mapStringTy: strMapMd.Define(env, nil, semtypes.String),
+		anydataTy:   semtypes.CreateAnydata(semtypes.ContextFrom(env)),
 	}
 
 	// msgToBody converts a Ballerina RequestMessage value to (io.Reader, contentLength, contentType).
-	msgToBody := func(ctx *extern.Context, msg values.BalValue) (io.Reader, int64, string) {
+	msgToBody := func(ctx *extern.Context, msg values.BalValue) (io.Reader, int64, string, error) {
 		// An http:Request carries its own body and content-type; every other
 		// RequestMessage is serialised the same way a resource return value is. jBallerina
 		// uses the Request object as-is (http_commons.bal:97-99), so an absent Content-Type
@@ -420,19 +424,19 @@ func initHttpModule(rt *runtime.Runtime) {
 			bodyVal, _ := req.Get("$body")
 			holder, ok := bodyVal.(*requestBodyHolder)
 			if !ok {
-				return bytes.NewReader([]byte{}), 0, ct
+				return bytes.NewReader([]byte{}), 0, ct, nil
 			}
 			buf := holder.materialize()
 			if holder.readErr != nil {
-				return nil, 0, "json_error"
+				return nil, 0, "", fmt.Errorf("failed to read request body: %w", holder.readErr)
 			}
-			return bytes.NewReader(buf), int64(len(buf)), ct
+			return bytes.NewReader(buf), int64(len(buf)), holder.wireContentType(ct), nil
 		}
 		b, ct, err := outboundPayload(ctx, &types, msg)
 		if err != nil {
-			return nil, 0, "json_error"
+			return nil, 0, "", err
 		}
-		return bytes.NewReader(b), int64(len(b)), ct
+		return bytes.NewReader(b), int64(len(b)), ct, nil
 	}
 
 	// execBody serves post, put, patch and delete, whose parameter lists are identical:
@@ -445,9 +449,10 @@ func initHttpModule(rt *runtime.Runtime) {
 		contentType := ""
 		if len(args) > 2 && args[2] != nil {
 			var ct string
-			bodyReader, contentLength, ct = msgToBody(ctx, args[2])
-			if bodyReader == nil && ct == "json_error" {
-				return values.NewErrorWithMessage("failed to serialize body to JSON"), nil
+			var err error
+			bodyReader, contentLength, ct, err = msgToBody(ctx, args[2])
+			if err != nil {
+				return values.NewErrorWithMessage(err.Error()), nil
 			}
 			contentType = ct
 		}
@@ -870,9 +875,10 @@ func initHttpModule(rt *runtime.Runtime) {
 			contentType := ""
 			if len(args) > 3 && args[3] != nil {
 				var ct string
-				bodyReader, contentLength, ct = msgToBody(ctx, args[3])
-				if bodyReader == nil && ct == "json_error" {
-					return values.NewErrorWithMessage("failed to serialize body to JSON"), nil
+				var err error
+				bodyReader, contentLength, ct, err = msgToBody(ctx, args[3])
+				if err != nil {
+					return values.NewErrorWithMessage(err.Error()), nil
 				}
 				contentType = ct
 			}
@@ -947,6 +953,10 @@ func initHttpModule(rt *runtime.Runtime) {
 			contentType := ""
 			if cts, ok := reqHeaders["content-type"]; ok && len(cts) > 0 {
 				contentType = cts[0]
+				if holder, ok := bodyVal.(*requestBodyHolder); ok && holder.boundary != "" {
+					contentType = holder.wireContentType(contentType)
+					reqHeaders["content-type"] = []string{contentType}
+				}
 			}
 
 			urlVal, _ := self.Get("url")
@@ -1059,26 +1069,11 @@ func initHttpModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Response.setBodyParts",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
-			parts, ok := entityListToParts(args[1])
-			if !ok {
-				return values.NewErrorWithMessage("setBodyParts: expected Entity[]"), nil
-			}
-			var newContentType string
-			if len(args) > 2 {
-				newContentType, _ = args[2].(string)
-			}
-			existingContentType := ""
-			if v, ok := responseHeaders(self).Get("content-type"); ok {
-				if list, ok := v.(*values.List); ok && list.Len() > 0 {
-					existingContentType, _ = list.Get(0).(string)
-				}
-			}
-			data, finalContentType, err := encodeMultipartBody(ctx, parts, resolveMultipartContentType(existingContentType, newContentType))
-			if err != nil {
-				return values.NewErrorWithMessage("setBodyParts: " + err.Error()), nil
-			}
-			self.Put("body", &responseBodyHolder{buf: data})
-			responseHeaders(self).Put(ctx.TypeCtx(), "content-type", newListValue([]values.BalValue{finalContentType}))
+			contentType := payloadContentType(responseContentType(self), optionalArg(args, 2), "multipart/form-data")
+			holder := &responseBodyHolder{}
+			holder.buf, holder.readErr = holder.setParts(ctx, args[1].(*values.List), contentType)
+			self.Put("body", holder)
+			responseHeaders(self).Put(ctx.TypeCtx(), "content-type", newListValue([]values.BalValue{contentType}))
 			return nil, nil
 		})
 
@@ -1088,23 +1083,16 @@ func initHttpModule(rt *runtime.Runtime) {
 			bodyVal, _ := self.Get("body")
 			var raw []byte
 			if holder, ok := bodyVal.(*responseBodyHolder); ok {
+				if holder.parts != nil {
+					return holder.parts, nil
+				}
 				var err error
 				raw, err = holder.materialize()
 				if err != nil {
-					return values.NewErrorWithMessage(err.Error()), nil
+					return bodyPartsError("response", err), nil
 				}
 			}
-			contentType := ""
-			if v, ok := responseHeaders(self).Get("content-type"); ok {
-				if list, ok := v.(*values.List); ok && list.Len() > 0 {
-					contentType, _ = list.Get(0).(string)
-				}
-			}
-			parts, err := getMultipartBodyParts(ctx, raw, contentType, "response")
-			if err != nil {
-				return values.NewErrorWithMessage(err.Error()), nil
-			}
-			return parts, nil
+			return getMultipartBodyParts(ctx, raw, responseContentType(self), "response"), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Response.setHeader",
@@ -1379,28 +1367,12 @@ func initHttpModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Request.setBodyParts",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
-			parts, ok := entityListToParts(args[1])
-			if !ok {
-				return values.NewErrorWithMessage("setBodyParts: expected Entity[]"), nil
-			}
-			var newContentType string
-			if len(args) > 2 {
-				newContentType, _ = args[2].(string)
-			}
-			existingContentType := ""
-			if hdrs, ok := requestHeadersMap(ctx.TypeCtx(), self); ok {
-				if v, ok := hdrs.Get("content-type"); ok {
-					if list, ok := v.(*values.List); ok && list.Len() > 0 {
-						existingContentType, _ = list.Get(0).(string)
-					}
-				}
-			}
-			data, finalContentType, err := encodeMultipartBody(ctx, parts, resolveMultipartContentType(existingContentType, newContentType))
-			if err != nil {
-				return values.NewErrorWithMessage("setBodyParts: " + err.Error()), nil
-			}
-			self.Put("$body", &requestBodyHolder{buf: data})
-			setRequestHeader(self, "content-type", finalContentType, ctx.TypeCtx())
+			tc := ctx.TypeCtx()
+			contentType := payloadContentType(requestContentType(tc, self), optionalArg(args, 2), "multipart/form-data")
+			holder := &requestBodyHolder{}
+			holder.buf, holder.readErr = holder.setParts(ctx, args[1].(*values.List), contentType)
+			self.Put("$body", holder)
+			setRequestHeader(self, "content-type", contentType, tc)
 			return nil, nil
 		})
 
@@ -1411,21 +1383,15 @@ func initHttpModule(rt *runtime.Runtime) {
 			holder, _ := bodyVal.(*requestBodyHolder)
 			var raw []byte
 			if holder != nil {
+				if holder.parts != nil {
+					return holder.parts, nil
+				}
 				raw = holder.materialize()
-			}
-			contentType := ""
-			if hdrs, ok := requestHeadersMap(ctx.TypeCtx(), self); ok {
-				if v, ok := hdrs.Get("content-type"); ok {
-					if list, ok := v.(*values.List); ok && list.Len() > 0 {
-						contentType, _ = list.Get(0).(string)
-					}
+				if holder.readErr != nil {
+					return bodyPartsError("request", holder.readErr), nil
 				}
 			}
-			parts, err := getMultipartBodyParts(ctx, raw, contentType, "request")
-			if err != nil {
-				return values.NewErrorWithMessage(err.Error()), nil
-			}
-			return parts, nil
+			return getMultipartBodyParts(ctx, raw, requestContentType(ctx.TypeCtx(), self), "request"), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Request.setHeader",
@@ -1948,64 +1914,65 @@ func toJSONBytes(v values.BalValue) ([]byte, error) {
 	return values.ToJSONByteArray(v)
 }
 
-// entityListToParts converts a Ballerina mime:Entity[] argument to native part objects.
-func entityListToParts(arg values.BalValue) ([]*values.Object, bool) {
-	list, ok := arg.(*values.List)
-	if !ok {
-		return nil, false
+// bodyPartsBase keeps the parts given to setBodyParts, which getBodyParts returns as-is, and
+// the boundary used to encode them, which only goes on the wire Content-Type as in jBallerina.
+type bodyPartsBase struct {
+	parts    *values.List
+	boundary string
+}
+
+// setParts stores parts and encodes them once up front; an encoding error is kept as the
+// body's read error so it surfaces when the body is read or sent.
+func (b *bodyPartsBase) setParts(ctx *extern.Context, parts *values.List, contentType string) ([]byte, error) {
+	b.parts = parts
+	data, boundary, err := encodeMultipartBody(ctx, parts, contentType)
+	b.boundary = boundary
+	return data, err
+}
+
+func (b *bodyPartsBase) wireContentType(contentType string) string {
+	return withBoundary(contentType, b.boundary)
+}
+
+// withBoundary adds boundary to a multipart contentType that does not carry one yet.
+func withBoundary(contentType, boundary string) string {
+	baseType, existing, _ := mimenative.MultipartBoundary(contentType)
+	if boundary == "" || existing != "" || !strings.HasPrefix(baseType, "multipart/") {
+		return contentType
 	}
+	return contentType + "; boundary=" + boundary
+}
+
+// encodeMultipartBody serializes a mime:Entity[] for the wire, using the boundary in
+// contentType or generating one, and returns the boundary used.
+func encodeMultipartBody(ctx *extern.Context, list *values.List, contentType string) (data []byte, usedBoundary string, err error) {
 	parts := make([]*values.Object, list.Len())
-	for i := range list.Len() {
-		part, ok := list.Get(i).(*values.Object)
-		if !ok {
-			return nil, false
-		}
-		parts[i] = part
+	for i := range parts {
+		parts[i] = list.Get(i).(*values.Object)
 	}
-	return parts, true
-}
-
-// resolveMultipartContentType mirrors jBallerina's http_commons.bal `setBodyParts` helper:
-// an explicit override wins, otherwise the request/response's own existing Content-Type is
-// kept (if set), otherwise it falls back to mime:Entity's own multipart/form-data default.
-func resolveMultipartContentType(existingContentType, newContentType string) string {
-	if newContentType != "" {
-		return newContentType
-	}
-	if existingContentType != "" {
-		return existingContentType
-	}
-	return "multipart/form-data"
-}
-
-// encodeMultipartBody serializes body parts for wire transmission, generating a boundary if
-// contentType doesn't already carry one, and returns the finalized Content-Type header value.
-func encodeMultipartBody(ctx *extern.Context, parts []*values.Object, contentType string) (data []byte, finalContentType string, err error) {
 	_, boundary, _ := mimenative.MultipartBoundary(contentType)
-	data, usedBoundary, err := mimenative.EncodeMultipart(ctx, parts, boundary)
-	if err != nil {
-		return nil, "", err
-	}
-	if boundary != "" {
-		return data, contentType, nil
-	}
-	return data, contentType + "; boundary=" + usedBoundary, nil
+	return mimenative.EncodeMultipart(ctx, parts, boundary)
+}
+
+// bodyPartsError mirrors jBallerina, which keeps the mime error as the cause.
+// kind is "request" or "response".
+func bodyPartsError(kind string, cause error) *values.Error {
+	return values.NewError(semtypes.Error, "Error occurred while retrieving body parts from the "+kind,
+		values.NewErrorWithMessage(cause.Error()), "", nil)
 }
 
 // getMultipartBodyParts decodes a raw request/response body into mime:Entity[] body parts.
-// kind is "request" or "response", used only to word the error message.
-func getMultipartBodyParts(ctx *extern.Context, raw []byte, contentType, kind string) (*values.List, error) {
+func getMultipartBodyParts(ctx *extern.Context, raw []byte, contentType, kind string) values.BalValue {
 	baseType, boundary, isComposite := mimenative.MultipartBoundary(contentType)
 	if !isComposite {
 		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
-		return nil, fmt.Errorf("Error occurred while retrieving body parts from the %s: "+
-			"Entity body is not a type of composite media type. Received content-type : %s", kind, baseType)
+		return bodyPartsError(kind, fmt.Errorf("Entity body is not a type of composite media type. "+
+			"Received content-type : %s", baseType))
 	}
 	parts, err := mimenative.DecodeMultipart(ctx, raw, boundary)
 	if err != nil {
 		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
-		return nil, fmt.Errorf("Error occurred while retrieving body parts from the %s: "+
-			"Error occurred while extracting body parts from entity: %s", kind, err.Error())
+		return bodyPartsError(kind, fmt.Errorf("Error occurred while extracting body parts from entity: %w", err))
 	}
-	return parts, nil
+	return parts
 }
