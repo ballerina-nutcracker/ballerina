@@ -1,0 +1,15 @@
+-- stdout --
+application/octet-stream
+server stream
+bytes=10000 blocks=3
+{"data":"hello"}
+{"data":"a\nb","id":"1","event":"update"}
+text/event-stream
+no-cache,public
+["data: hello\n\nid: 1\nevent: update\ndata: a\ndata: b\n\n"]
+no-store
+["data: ok\n\nevent: error\ndata: db down\n\n"]
+500
+true
+-- stderr --
+time=<TIME> level=ERROR module="" message="unable to obtain byte array" error=error("db down")

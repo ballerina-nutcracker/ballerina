@@ -1,0 +1,13 @@
+-- stdout --
+error PayloadBindingClientError ("invalid payload target type. The response is not of text/event-stream content type.")
+error GenericClientError ("Error occurred while retrieving the byte stream from the response",error ParserError ("Byte stream is not available as payload"))
+["data: ok\n\nevent: error\ndata: db down\n\n"]
+["event: error\ndata: Invalid value provided as event: at least one field is expected to be present in the SseEvent record.\n\n"]
+true
+{"value":{"data":"a"}}
+error("connection reset")
+-- stderr --
+time=<TIME> level=ERROR module="" message="unable to obtain byte array" error=error("db down")
+time=<TIME> level=ERROR module="" message="unable to obtain byte array" error=error("Invalid value provided as event: at least one field is expected to be present in the SseEvent record.")
+time=<TIME> level=ERROR module="" message="failed to construct SseEvent" error=error("invalid UTF-8 byte array")
+time=<TIME> level=ERROR module="" message="failed to construct SseEvent" error=error("connection reset")
