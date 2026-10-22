@@ -189,6 +189,9 @@ func (m *mqttModule) listenerStart(ctx *extern.Context, args []values.BalValue) 
 	}
 	ls.subMu.Lock()
 	defer ls.subMu.Unlock()
+	if ls.subscribed {
+		return nil, nil
+	}
 	if mErr := ls.conn.subscribe(options); mErr != nil {
 		return toBalError(ctx, mErr)
 	}
