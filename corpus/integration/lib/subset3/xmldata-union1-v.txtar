@@ -1,0 +1,21 @@
+-- stdout --
+{"r":{"b":"s"},"id":"1"}
+{"r":{"b":"s"},"id":"1"}
+{"r":{"a":1},"id":"1"}
+{"r":{"a":1},"id":"1"}
+E: field 'r' cannot be converted
+E: field 'r' cannot be converted
+{"r":[{"a":1},{"b":"y"}]}
+{"r":[{"a":1},{"b":"y"}]}
+{"v":1}
+{"v":1}
+{"v":true}
+{"v":true}
+{"v":"text"}
+{"v":"text"}
+{"r":{"x":"y"}}
+{"r":{"x":"y"}}
+{"b":"s"}
+{"a":1}
+true
+-- stderr --

@@ -1,0 +1,60 @@
+-- stdout --
+{"isbn":"978-0","id":601970,"title":"Dune","author":{"name":"Herbert","country":"US"},"tag":["scifi","classic"],"price":10.50,"available":true,"rating":4.5}
+{"isbn":"978-0","id":601970,"title":"Dune","author":{"name":"Herbert","country":"US"},"tag":["scifi","classic"],"price":10.50,"available":true,"rating":4.5}
+{"id":601970}
+{"id":601970}
+E: undefined field 'isbn'
+E: undefined field 'isbn'
+E: 'string' value 'x' cannot be converted to 'int'
+E: 'string' value 'x' cannot be converted to 'int'
+E: expected 'int' value for the field 'id' found 'array' value
+E: expected 'int' value for the field 'id' found 'array' value
+E: required field 'id' not present in XML
+E: required field 'id' not present in XML
+{"tag":["a","b"]}
+{"tag":["a","b"]}
+E: array size is not compatible with the expected size
+E: array size is not compatible with the expected size
+{"tag":["a",""]}
+{"tag":["a",""]}
+E: invalid rest type 'byte'
+E: unsupported input type
+E: invalid rest type 'byte'
+E: unsupported input type
+E: 'string' value 'C' cannot be converted to '("A"|"B")'
+E: 'string' value 'C' cannot be converted to '("A"|"B")'
+E: invalid rest type 'byte'
+E: 'string' value '256' cannot be converted to 'byte'
+E: invalid rest type 'byte'
+E: unsupported input type
+E: invalid rest type 'byte'
+{"b":false,"f":2.5,"i":1,"n":4,"y":3}
+{"b":false,"f":0.0,"i":0,"n":null,"y":0}
+E: field 'b' cannot be converted into the type 'boolean'
+{"t":"  spaced  "}
+{"t":"  spaced  "}
+{"t":"a & <b> A"}
+{"t":"a &amp; &lt;b&gt; A"}
+{"t":" <raw> "}
+{"t":" &lt;raw&gt; "}
+{"t":"z"}
+{"t":"xyz"}
+{"t":"xz"}
+{"t":"xz"}
+E: invalid type expected 'int' but found 'string'
+E: invalid type expected 'int' but found 'string'
+E: field 't' cannot be converted into the type 'string'
+E: field 't' cannot be converted into the type 'string'
+{"t":"v"}
+E: xml root element is missing
+{"person":[{"name":"A","age":1},{"name":"B","age":2}],"score":[7,8]}
+{"person":[{"name":"A","age":1},{"name":"B","age":2}],"score":[7,8]}
+{"a":{"b":{"c":"deep"}}}
+{"a":{"b":{"c":"deep"}}}
+E: undefined field 'd'
+E: undefined field 'd'
+E: required field 'c' not present in XML
+E: required field 'c' not present in XML
+E: xml root element is missing
+E: xml root element is missing
+-- stderr --

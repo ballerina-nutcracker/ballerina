@@ -10,6 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
+| [data.xmldata](../../lib/stdlibs/ballerina/data.xmldata/0.0.1/go1.27/README.md) | 2 | 8 | 7 | 12% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 12 | 36 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
@@ -26,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **281** | **36** | **69** | **73%** |
+| **Total**                                         | **283** | **44** | **76** | **70%** |
 
 ## Notable Behavioural Changes
 
@@ -44,6 +45,13 @@ Consolidated from each package's README. Only permanent divergences are listed h
 ### crypto
 
 - **AES-CBC and AES-ECB always apply PKCS7 padding.** jBallerina selects PKCS5 or no padding based on the `padding` parameter value; the Go-native version always applies PKCS7 padding for CBC and ECB modes regardless of the parameter — Go's `cipher` package does not expose a separate no-padding mode. Programs relying on `NONE` padding will produce incorrect output.
+
+### data.xmldata
+
+- **Malformed XML is described by the Go XML tokenizer.** jBallerina reports a syntax error with the Woodstox parser's message and position (for example `Unexpected EOF in prolog` followed by `at [row,col {unknown-source}]: [1,2]`); the Go-native version reports the error found by `encoding/xml`, the tokenizer the interpreter itself uses for XML, after the same `failed to parse xml: ` prefix.
+- **A parse error for a union target is returned as a module error.** When the target type contains a union of records, jBallerina parses the text into an XML value first and returns that parse error as a plain `error`, which then fails its own `t|Error` return type and panics with a `TypeCastError`; the Go-native version returns an `xmldata:Error`.
+- **The first missing required field is reported in field-name order.** When several required fields are absent, jBallerina reports the first one in Java `HashMap` order; the Go-native version reports the first one in code-point order of the field names, so the message is deterministic.
+- **Compiler-plugin checks run when the type is used, or not at all.** jBallerina's compiler plugin rejects a record whose `@xmldata:Name` overrides clash, and a target that is not a record type such as `map<string>`, as compile errors. This port has no compiler plugin, so those programs compile: a clashing record makes the conversion functions return an `xmldata:Error` (`duplicate field '<name>'`), and a map target is converted by `parseAsType` and rejected by the other parse functions with `invalid type expected 'record' but found ''` (a `map<anydata>` target, being the same type as `record {}` at runtime, is converted as one).
 
 ### file
 

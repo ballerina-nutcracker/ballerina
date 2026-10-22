@@ -1,0 +1,7 @@
+-- stdout --
+true
+true
+Invalid XML found: 'validating XML against an XSD file is not supported'
+duplicate field 'b'
+duplicate field 'b'
+-- stderr --

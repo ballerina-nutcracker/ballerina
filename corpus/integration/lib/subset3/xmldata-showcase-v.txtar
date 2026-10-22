@@ -1,0 +1,14 @@
+-- stdout --
+601970 Dune en Herbert ["scifi","classic"] 10.50 true 978-0
+US
+2
+{"id":7}
+true
+{"name":"Main","owner":"Ann","count":3}
+{"code":"A1","itemName":"Pen"}
+{"title":"Emma"}
+{"attr_lang":"si","text":"hello"}
+'string' value 'x' cannot be converted to 'int'
+true
+true
+-- stderr --

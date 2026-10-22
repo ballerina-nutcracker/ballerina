@@ -1,0 +1,8 @@
+-- stdout --
+{"name":"Ké","age":40}
+{"name":"😀","age":1}
+{"name":"Ké","age":40}
+{"name":"B","age":2}
+E: required field 'age' not present in XML
+true
+-- stderr --

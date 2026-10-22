@@ -1,0 +1,38 @@
+-- stdout --
+{"id":"1","x":"t","y":[{"z":2,"w":{"k":"v","#content":3}},{"z":4}],"q":{"a":1,"#content":"txt"}}
+{"id":"1","x":"t","y":[{"z":2,"w":{"k":"v","#content":3}},{"z":4}],"q":{"a":1,"#content":"txt"}}
+{"id":"1","x":["t","u"],"y":[{"a":1},"v"]}
+{"id":"1","x":["t","u"],"y":[{"a":1},{"a":2,"#content":"v"}]}
+{"id":"1","n":1.5,"b":true}
+{"id":"1","n":1.5,"b":true}
+{"id":"1","x":2}
+{"id":"1","x":2}
+{"id":"1","x":"2","y":"3"}
+{"id":"1","x":"2","y":"3"}
+E: expected 'string' value for the field 'x' found 'array' value
+E: expected 'string' value for the field 'x' found 'array' value
+E: 'string' value 'z' cannot be converted to 'int'
+E: 'string' value 'z' cannot be converted to 'int'
+{"id":"1","x":{"v":"p"},"y":{"v":"q"}}
+{"id":"1","x":{"v":"p"},"y":{"v":"q"}}
+{"id":"1","x":["p","q"],"y":["r"]}
+{"id":"1","x":["p","q"],"y":["r"]}
+{"id":"1","x":{"p":[1,2]},"s":9}
+{"id":"1","x":{"p":[1,2]},"s":9}
+{"m":{"p":"1","q":"2"},"n":{"r":3}}
+{"m":{"p":"1","q":"2"},"n":{"r":3}}
+E: 'string' value 'y' cannot be converted to 'int'
+E: 'string' value 'y' cannot be converted to 'int'
+{"m":[{"a":"1"},{"b":"2"}]}
+{"m":[{"a":"1"},{"b":"2"}]}
+{"data":{"a":1,"b":["t","u"],"c":{"x":1,"#content":"z"}}}
+{"data":{"a":1,"b":["t","u"],"c":{"x":1,"#content":"z"}}}
+{"data":"plain"}
+{"data":"plain"}
+{"data":{"k":"v","#content":"plain"}}
+{"data":{"k":"v","#content":"plain"}}
+{"items":[{"a":1},2]}
+{"items":[{"a":1},2]}
+E: undefined field 'c'
+E: undefined field 'c'
+-- stderr --
