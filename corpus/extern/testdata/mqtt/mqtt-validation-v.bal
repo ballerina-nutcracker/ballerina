@@ -15,11 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Requires an MQTT v5 broker on mqtt:DEFAULT_URL (see corpus/lib/resources/mqtt/compose.yaml).
+// Runs against the in-process broker started by corpus/extern/mqtt_test.go.
 // Invalid QoS values and topics are returned as mqtt:Error (jBallerina panics instead; see
 // https://github.com/ballerina-platform/ballerina-library/issues/9328).
 import ballerina/io;
 import ballerina/mqtt;
+
+isolated function brokerUrl(string listenerId) returns string = external;
+
+final string BROKER_URL = brokerUrl("anon");
 
 function show(string label, any|error result) {
     if result is error {
@@ -141,7 +145,7 @@ service class GenericParams {
 }
 
 public function main() returns error? {
-    mqtt:Client c = check new (mqtt:DEFAULT_URL, "validation-v-client");
+    mqtt:Client c = check new (BROKER_URL, "validation-v-client");
     byte[] payload = "x".toBytes();
 
     mqtt:DeliveryToken|mqtt:Error token = c->publish("validation-v/t", {payload, qos: 3});
@@ -166,28 +170,28 @@ public function main() returns error? {
     r = c->subscribe(["#", "+", "validation-v/+/x/#"]);
     show("valid filters", r); // @output valid filters: ok
 
-    mqtt:Client|mqtt:Error willClient = new (mqtt:DEFAULT_URL, "validation-v-will", willDetails = {
+    mqtt:Client|mqtt:Error willClient = new (BROKER_URL, "validation-v-will", willDetails = {
         destinationTopic: "validation-v/will/#",
         willMessage: {payload}
     });
     show("will topic", willClient); // @output will topic: The topic name MUST NOT contain any wildcard characters (#+) (mqtt:Error=true)
-    willClient = new (mqtt:DEFAULT_URL, "validation-v-will", willDetails = {
+    willClient = new (BROKER_URL, "validation-v-will", willDetails = {
         destinationTopic: "validation-v/will",
         willMessage: {payload, qos: 5}
     });
     show("will qos", willClient); // @output will qos: Invalid QoS value: 5. Allowed values are 0, 1 and 2 (mqtt:Error=true)
 
-    mqtt:Client|mqtt:Error configClient = new (mqtt:DEFAULT_URL, "validation-v-config", connectionConfig = {keepAliveInterval: -1});
+    mqtt:Client|mqtt:Error configClient = new (BROKER_URL, "validation-v-config", connectionConfig = {keepAliveInterval: -1});
     show("negative keep alive", configClient); // @output negative keep alive: Invalid keep alive interval: -1. Allowed values are 0 to 65535 (mqtt:Error=true)
-    configClient = new (mqtt:DEFAULT_URL, "validation-v-config", connectionConfig = {keepAliveInterval: 65536});
+    configClient = new (BROKER_URL, "validation-v-config", connectionConfig = {keepAliveInterval: 65536});
     show("keep alive overflow", configClient); // @output keep alive overflow: Invalid keep alive interval: 65536. Allowed values are 0 to 65535 (mqtt:Error=true)
-    configClient = new (mqtt:DEFAULT_URL, "validation-v-config", connectionConfig = {connectionTimeout: -1});
+    configClient = new (BROKER_URL, "validation-v-config", connectionConfig = {connectionTimeout: -1});
     show("negative connection timeout", configClient); // @output negative connection timeout: Invalid connection timeout: -1. The value must not be negative (mqtt:Error=true)
-    mqtt:Listener|mqtt:Error configListener = new (mqtt:DEFAULT_URL, "validation-v-config-listener", "validation-v/t",
+    mqtt:Listener|mqtt:Error configListener = new (BROKER_URL, "validation-v-config-listener", "validation-v/t",
         connectionConfig = {keepAliveInterval: -1});
     show("listener negative keep alive", configListener); // @output listener negative keep alive: Invalid keep alive interval: -1. Allowed values are 0 to 65535 (mqtt:Error=true)
 
-    mqtt:Listener sigListener = check new (mqtt:DEFAULT_URL, "validation-v-signatures", "validation-v/sig");
+    mqtt:Listener sigListener = check new (BROKER_URL, "validation-v-signatures", "validation-v/sig");
     show("extra param", sigListener.attach(new ExtraParam())); // @output extra param: Invalid method parameter. Only mqtt:Caller is allowed (mqtt:Error=true)
     show("wrong message param", sigListener.attach(new WrongMessageParam())); // @output wrong message param: Invalid method parameter. Only mqtt:Message is allowed. (mqtt:Error=true)
     show("no params", sigListener.attach(new NoParams())); // @output no params: Must have the required parameter mqtt:Message and optional parameter mqtt:Caller. (mqtt:Error=true)
@@ -200,7 +204,7 @@ public function main() returns error? {
     show("generic params", sigListener.attach(new GenericParams())); // @output generic params: ok
     check sigListener.gracefulStop();
 
-    mqtt:Listener|mqtt:Error lsnr = new (mqtt:DEFAULT_URL, "validation-v-listener", "validation-v/a/#/b");
+    mqtt:Listener|mqtt:Error lsnr = new (BROKER_URL, "validation-v-listener", "validation-v/a/#/b");
     if lsnr is mqtt:Listener {
         check lsnr.attach(new Svc());
         r = lsnr.'start();

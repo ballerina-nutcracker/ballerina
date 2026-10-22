@@ -15,11 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Requires an MQTT v5 broker on mqtt:DEFAULT_URL (see corpus/lib/resources/mqtt/compose.yaml).
+// Runs against the in-process broker started by corpus/extern/mqtt_test.go.
 // Service methods report back over the "listener-v/events" topic so the output order is
 // decided by a single stream rather than by thread scheduling.
 import ballerina/io;
 import ballerina/mqtt;
+
+isolated function brokerUrl(string listenerId) returns string = external;
+
+final string BROKER_URL = brokerUrl("anon");
 
 const EVENTS = "listener-v/events";
 
@@ -31,7 +35,7 @@ isolated function report(string event) returns error? {
         reports += 1;
         id = reports;
     }
-    mqtt:Client reporter = check new (mqtt:DEFAULT_URL, "listener-v-reporter-" + id.toString());
+    mqtt:Client reporter = check new (BROKER_URL, "listener-v-reporter-" + id.toString());
     _ = check reporter->publish(EVENTS, {payload: event.toBytes(), qos: 1});
     check reporter->disconnect();
     check reporter->close();
@@ -104,12 +108,12 @@ function nextEvent(stream<mqtt:Message, error?> events) returns string|error {
 }
 
 public function main() returns error? {
-    mqtt:Client c = check new (mqtt:DEFAULT_URL, "listener-v-client");
+    mqtt:Client c = check new (BROKER_URL, "listener-v-client");
     check c->subscribe([EVENTS, "listener-v/replies"]);
     stream<mqtt:Message, error?> events = check c->receive();
 
     // Subscriptions given as a string[] use the default QoS 1.
-    mqtt:Listener echo = check new (mqtt:DEFAULT_URL, "listener-v-echo", ["listener-v/echo1", "listener-v/echo2"]);
+    mqtt:Listener echo = check new (BROKER_URL, "listener-v-echo", ["listener-v/echo1", "listener-v/echo2"]);
     check echo.attach(new Echo(), "ignored-name");
     check echo.'start();
     _ = check c->publish("listener-v/echo1", {payload: "a".toBytes(), qos: 2});
@@ -118,7 +122,7 @@ public function main() returns error? {
     io:println(check nextEvent(events)); // @output echo b qos=0
 
     // Request/response through mqtt:Caller in manualAcks mode.
-    mqtt:Listener responder = check new (mqtt:DEFAULT_URL, "listener-v-responder",
+    mqtt:Listener responder = check new (BROKER_URL, "listener-v-responder",
         [{topic: "listener-v/req", qos: 2}], manualAcks = true);
     check responder.attach(new Responder());
     check responder.'start();
@@ -141,28 +145,28 @@ public function main() returns error? {
     io:println(check nextEvent(events)); // @output respond failed: Response topic is not set
 
     // A service without onMessage gets the failure through onError.
-    mqtt:Listener noOnMessage = check new (mqtt:DEFAULT_URL, "listener-v-no-on-message", {topic: "listener-v/none"});
+    mqtt:Listener noOnMessage = check new (BROKER_URL, "listener-v-no-on-message", {topic: "listener-v/none"});
     check noOnMessage.attach(new OnlyOnError());
     check noOnMessage.'start();
     _ = check c->publish("listener-v/none", {payload: "n".toBytes()});
     io:println(check nextEvent(events)); // @output onError method onMessage not found
 
     // A panic in onMessage is reported to onError.
-    mqtt:Listener panicking = check new (mqtt:DEFAULT_URL, "listener-v-panicking", "listener-v/panic");
+    mqtt:Listener panicking = check new (BROKER_URL, "listener-v-panicking", "listener-v/panic");
     check panicking.attach(new Panicking());
     check panicking.'start();
     _ = check c->publish("listener-v/panic", {payload: "p".toBytes()});
     io:println(check nextEvent(events)); // @output onError onMessage panicked on p
 
     // Caller->respond and Caller->complete report failures, here a connection already stopped.
-    mqtt:Listener stopping = check new (mqtt:DEFAULT_URL, "listener-v-stopping", "listener-v/stop", manualAcks = true);
+    mqtt:Listener stopping = check new (BROKER_URL, "listener-v-stopping", "listener-v/stop", manualAcks = true);
     check stopping.attach(new StoppingResponder(stopping));
     check stopping.'start();
     _ = check c->publish("listener-v/stop", {payload: "s".toBytes(), properties: {responseTopic: "listener-v/replies"}});
     io:println(check nextEvent(events)); // @output respond: Client is not connected, complete: Client is not connected
 
     // Starting without a service subscribes and drops incoming messages.
-    mqtt:Listener unattached = check new (mqtt:DEFAULT_URL, "listener-v-unattached", "listener-v/unattached");
+    mqtt:Listener unattached = check new (BROKER_URL, "listener-v-unattached", "listener-v/unattached");
     check unattached.'start();
     _ = check c->publish("listener-v/unattached", {payload: "dropped".toBytes()});
 

@@ -15,10 +15,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Requires an MQTT v5 broker on mqtt:DEFAULT_URL (see corpus/lib/resources/mqtt/compose.yaml).
+// Runs against the in-process broker started by corpus/extern/mqtt_test.go.
 import ballerina/io;
 import ballerina/lang.runtime;
 import ballerina/mqtt;
+
+isolated function brokerUrl(string listenerId) returns string = external;
+
+final string BROKER_URL = brokerUrl("anon");
 
 const REQ_TOPIC = "showcase/request";
 const RESP_TOPIC = "showcase/response";
@@ -38,11 +42,11 @@ isolated service class Responder {
 }
 
 public function main() returns error? {
-    mqtt:Listener lsnr = check new (mqtt:DEFAULT_URL, "showcase-listener", {topic: REQ_TOPIC, qos: 1}, manualAcks = true);
+    mqtt:Listener lsnr = check new (BROKER_URL, "showcase-listener", {topic: REQ_TOPIC, qos: 1}, manualAcks = true);
     check lsnr.attach(new Responder());
     check lsnr.'start();
 
-    mqtt:Client c = check new (mqtt:DEFAULT_URL, "showcase-client", connectionConfig = {keepAliveInterval: 30, cleanStart: true});
+    mqtt:Client c = check new (BROKER_URL, "showcase-client", connectionConfig = {keepAliveInterval: 30, cleanStart: true});
     boolean connected = check c->isConnected();
     io:println("connected: ", connected); // @output connected: true
 

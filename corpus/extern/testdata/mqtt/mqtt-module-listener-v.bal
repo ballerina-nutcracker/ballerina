@@ -15,13 +15,17 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Requires an MQTT v5 broker on mqtt:DEFAULT_URL (see corpus/lib/resources/mqtt/compose.yaml).
+// Runs against the in-process broker started by corpus/extern/mqtt_test.go.
 // Module-level listeners are attached, started and gracefully stopped by the program
 // lifecycle; the output does not depend on when the listeners start relative to main.
 import ballerina/io;
 import ballerina/mqtt;
 
-listener mqtt:Listener moduleListener = new (mqtt:DEFAULT_URL, "module-listener-v-1", "module-listener-v/a");
+isolated function brokerUrl(string listenerId) returns string = external;
+
+final string BROKER_URL = brokerUrl("anon");
+
+listener mqtt:Listener moduleListener = new (BROKER_URL, "module-listener-v-1", "module-listener-v/a");
 
 service on moduleListener {
     remote function onMessage(mqtt:Message message) returns error? {
@@ -30,7 +34,7 @@ service on moduleListener {
 }
 
 // The cast avoids an ambiguous module-level list constructor (#1319).
-service on new mqtt:Listener(mqtt:DEFAULT_URL, "module-listener-v-2", <mqtt:Subscription[]>[{topic: "module-listener-v/b", qos: 0}]) {
+service on new mqtt:Listener(BROKER_URL, "module-listener-v-2", <mqtt:Subscription[]>[{topic: "module-listener-v/b", qos: 0}]) {
     remote function onMessage(mqtt:Message message, mqtt:Caller caller) returns error? {
         check caller->complete();
         io:println("unexpected message on ", message.topic);

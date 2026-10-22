@@ -8,11 +8,11 @@ mtls with credentials: published to tls-v/t
 untrusted server: Untranslated MqttException - RC: 0
 mtls without client key: Untranslated MqttException - RC: 0
 tls on tcp uri: The specified SocketFactory type does not match the broker URI
-missing cert: Failed to get the public key from Crypto API. Certificate file not found at: lib/resources/mqtt/certs/missing.crt
-missing key: Failed to get the private key from Crypto API. Key file not found at: lib/resources/mqtt/certs/missing.key
+missing cert: Failed to get the public key from Crypto API. Certificate file not found at: testdata/mqtt/certs/missing.crt
+missing key: Failed to get the private key from Crypto API. Key file not found at: testdata/mqtt/certs/missing.key
 invalid cert: Failed to get the public key from Crypto API. Unable to do public key operations: x509: malformed tbs certificate
 invalid key: Failed to get the private key from Crypto API. Failed to parse private key information from the given input
-encrypted key: Failed to get the private key from Crypto API. Encrypted private keys are not supported: lib/resources/mqtt/certs/client-encrypted.key
+encrypted key: Failed to get the private key from Crypto API. Encrypted private keys are not supported: testdata/mqtt/certs/client-encrypted.key
 trust store: crypto:TrustStore is not supported as the mqtt:SecureSocket cert; provide a PEM certificate file path
 key store: crypto:KeyStore is not supported as the mqtt:SecureSocket key; provide an mqtt:CertKey
 -- stderr --

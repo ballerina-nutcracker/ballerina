@@ -15,15 +15,34 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Requires the broker from corpus/lib/resources/mqtt/compose.yaml (anonymous on 1883,
-// password-protected on 1884).
+// Runs against the in-process broker started by corpus/extern/mqtt_test.go, which has an
+// anonymous and a password-protected listener.
 import ballerina/io;
 import ballerina/mqtt;
+
+isolated function brokerUrl(string listenerId) returns string = external;
+
+final string BROKER_URL = brokerUrl("anon");
+final string PASSWORD_URL = brokerUrl("password");
 
 function connect(string label, string url, string clientId, *mqtt:ClientConfiguration config) returns error? {
     mqtt:Client|mqtt:Error c = new (url, clientId, config);
     if c is mqtt:Error {
         io:println(label, ": ", c.message(), " (mqtt:Error=", c is mqtt:Error, ")");
+        return;
+    }
+    io:println(label, ": connected");
+    check c->disconnect();
+    check c->close();
+}
+
+// The CONNACK reason code of a rejected login depends on the broker (Mosquitto sends 135, Not
+// authorized; mochi-mqtt sends 134, Bad User Name or Password), so either message is accepted.
+function login(string label, string clientId, *mqtt:ConnectionConfiguration connectionConfig) returns error? {
+    mqtt:Client|mqtt:Error c = new (PASSWORD_URL, clientId, connectionConfig = connectionConfig);
+    if c is mqtt:Error {
+        boolean loginRejected = c.message() == "Not authorized." || c.message() == "Bad User Name or Password.";
+        io:println(label, ": login rejected=", loginRejected, " (mqtt:Error=", c is mqtt:Error, ")");
         return;
     }
     io:println(label, ": connected");
@@ -49,27 +68,25 @@ public function main() returns error? {
     check connect("no scheme", "localhost:1883", "connect-v-3");
     // @output ws scheme: WebSocket broker URIs are not supported: ws://localhost:1883 (mqtt:Error=true)
     check connect("ws scheme", "ws://localhost:1883", "connect-v-4");
-    check connect("default port", "tcp://localhost", "connect-v-5"); // @output default port: connected
 
-    check connect("no credentials", "tcp://localhost:1884", "connect-v-6"); // @output no credentials: Not authorized. (mqtt:Error=true)
-    // @output wrong credentials: Not authorized. (mqtt:Error=true)
-    check connect("wrong credentials", "tcp://localhost:1884", "connect-v-7", connectionConfig = {username: "mqttuser", password: "password"});
-    // @output credentials: connected
-    check connect("credentials", "tcp://localhost:1884", "connect-v-8", connectionConfig = {username: "ballerina", password: "ballerinamqtt"});
+    check login("no credentials", "connect-v-6"); // @output no credentials: login rejected=true (mqtt:Error=true)
+    // @output wrong credentials: login rejected=true (mqtt:Error=true)
+    check login("wrong credentials", "connect-v-7", username = "mqttuser", password = "password");
+    check login("credentials", "connect-v-8", username = "ballerina", password = "ballerinamqtt"); // @output credentials: connected
 
     // serverUris replace the constructor URI and are tried in order.
     // @output serverUris: connected
-    check connect("serverUris", "tcp://localhost:1", "connect-v-9", connectionConfig = {serverUris: ["tcp://localhost:2", mqtt:DEFAULT_URL]});
+    check connect("serverUris", "tcp://localhost:1", "connect-v-9", connectionConfig = {serverUris: ["tcp://localhost:2", BROKER_URL]});
     // @output serverUris all down: Unable to connect to server (mqtt:Error=true)
-    check connect("serverUris all down", mqtt:DEFAULT_URL, "connect-v-10", connectionConfig = {serverUris: ["tcp://localhost:1", "tcp://localhost:2"]});
+    check connect("serverUris all down", BROKER_URL, "connect-v-10", connectionConfig = {serverUris: ["tcp://localhost:1", "tcp://localhost:2"]});
     // @output invalid serverUris: no NetworkModule installed for scheme "http" of URI "http://localhost:1883" (mqtt:Error=true)
-    check connect("invalid serverUris", mqtt:DEFAULT_URL, "connect-v-11", connectionConfig = {serverUris: ["http://localhost:1883"]});
+    check connect("invalid serverUris", BROKER_URL, "connect-v-11", connectionConfig = {serverUris: ["http://localhost:1883"]});
     // @output empty serverUris: connected
-    check connect("empty serverUris", mqtt:DEFAULT_URL, "connect-v-17", connectionConfig = {serverUris: []});
+    check connect("empty serverUris", BROKER_URL, "connect-v-17", connectionConfig = {serverUris: []});
 
-    check connect("empty client id", mqtt:DEFAULT_URL, ""); // @output empty client id: connected
+    check connect("empty client id", BROKER_URL, ""); // @output empty client id: connected
     // @output options: connected
-    check connect("options", mqtt:DEFAULT_URL, "connect-v-12", connectionConfig = {
+    check connect("options", BROKER_URL, "connect-v-12", connectionConfig = {
         keepAliveInterval: 10,
         connectionTimeout: 5,
         cleanStart: false,
@@ -77,7 +94,7 @@ public function main() returns error? {
         maxReconnectDelay: 2000
     });
     // @output will: connected
-    check connect("will", mqtt:DEFAULT_URL, "connect-v-13", willDetails = {
+    check connect("will", BROKER_URL, "connect-v-13", willDetails = {
         destinationTopic: "connect-v/will",
         willMessage: {payload: "bye".toBytes(), qos: 1, retained: false}
     });
@@ -85,5 +102,5 @@ public function main() returns error? {
     check listen("listener refused", "tcp://localhost:1", "connect-v-14"); // @output listener refused: Unable to connect to server
     // @output listener http scheme: no NetworkModule installed for scheme "http" of URI "http://localhost:1"
     check listen("listener http scheme", "http://localhost:1", "connect-v-15");
-    check listen("listener", mqtt:DEFAULT_URL, "connect-v-16"); // @output listener: connected
+    check listen("listener", BROKER_URL, "connect-v-16"); // @output listener: connected
 }

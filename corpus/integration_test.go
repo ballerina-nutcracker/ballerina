@@ -20,15 +20,12 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"net"
 	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
-	"sync"
 	"testing"
-	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -40,8 +37,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/model/symbolpool"
 	"github.com/ballerina-nutcracker/ballerina/nodebuilder"
 	"github.com/ballerina-nutcracker/ballerina/parser"
-	"github.com/ballerina-nutcracker/ballerina/platform/pal"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/semantics"
@@ -152,43 +147,9 @@ func TestLibIntegration(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
-			if !isMqttTest(tc) {
-				runHarnessCase(t, tc)
-				return
-			}
-			if !mqttBrokerAvailable() {
-				t.Skipf("Skipping %s: no MQTT broker on %s (start one with docker compose -f corpus/lib/resources/mqtt/compose.yaml up -d)", tc.Name, mqttBrokerAddress)
-			}
-			runHarnessCaseWithPal(t, tc, &mqttPal{TestPal: testharness.NewTestPal()})
+			runHarnessCase(t, tc)
 		})
 	}
-}
-
-const mqttBrokerAddress = "localhost:1883"
-
-var mqttBrokerAvailable = sync.OnceValue(func() bool {
-	conn, err := net.DialTimeout("tcp", mqttBrokerAddress, 2*time.Second)
-	if err != nil {
-		return false
-	}
-	_ = conn.Close()
-	return true
-})
-
-func isMqttTest(tc test_util.TestCase) bool {
-	return strings.HasPrefix(filepath.Base(tc.InputPath), "mqtt-")
-}
-
-// mqttPal wraps the in-memory TestPal with real TCP dialing so only the mqtt tests can reach
-// the test broker.
-type mqttPal struct {
-	testharness.TestPal
-}
-
-func (p *mqttPal) Platform() pal.Platform {
-	base := p.TestPal.Platform()
-	base.Net = pal.Net{Dial: palnative.Dial}
-	return base
 }
 
 func TestProjectIntegration(t *testing.T) {
@@ -227,19 +188,16 @@ func TestWorkspaceIntegration(t *testing.T) {
 // runHarnessCase wires Run + Validate/Update for one TestCase, applying the
 // integration-level skip lists before invoking the harness.
 func runHarnessCase(t *testing.T, tc test_util.TestCase) {
-	runHarnessCaseWithPal(t, tc, testharness.NewTestPal())
-}
-
-func runHarnessCaseWithPal(t *testing.T, tc test_util.TestCase, testPal testharness.TestPal) {
 	if harnessSkip(tc) {
 		t.Skipf("Skipping integration test for %s", tc.Name)
 	}
-	testharness.Run(t, tc, testPal, nil)
+	pal := testharness.NewTestPal()
+	testharness.Run(t, tc, pal, nil)
 	if *update {
-		testharness.Update(t, tc, testPal)
+		testharness.Update(t, tc, pal)
 		return
 	}
-	testharness.Validate(t, tc, testPal)
+	testharness.Validate(t, tc, pal)
 }
 
 func harnessSkip(tc test_util.TestCase) bool {

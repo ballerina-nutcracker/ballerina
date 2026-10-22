@@ -15,12 +15,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Requires an MQTT v5 broker on mqtt:DEFAULT_URL (see corpus/lib/resources/mqtt/compose.yaml).
+// Runs against the in-process broker started by corpus/extern/mqtt_test.go.
 // The broker drops a connection when another client takes over its client ID or when the
 // client sends an empty SUBSCRIBE.
 import ballerina/io;
 import ballerina/lang.runtime;
 import ballerina/mqtt;
+
+isolated function brokerUrl(string listenerId) returns string = external;
+
+final string BROKER_URL = brokerUrl("anon");
 
 function waitFor(mqtt:Client c, boolean expected) returns boolean|error {
     foreach int _ in 0 ..< 100 {
@@ -33,11 +37,21 @@ function waitFor(mqtt:Client c, boolean expected) returns boolean|error {
     return !expected;
 }
 
+const SERVER_DISCONNECTED = "The Server Disconnected the client.";
+
+function withoutDisconnectReason(string message) returns string {
+    int prefixLength = SERVER_DISCONNECTED.length();
+    if message.length() >= prefixLength && message.substring(0, prefixLength) == SERVER_DISCONNECTED {
+        return SERVER_DISCONNECTED;
+    }
+    return message;
+}
+
 public function main() returns error? {
     // The taken-over client reconnects automatically and takes the client ID back.
-    mqtt:Client resilient = check new (mqtt:DEFAULT_URL, "reconnect-v-shared",
+    mqtt:Client resilient = check new (BROKER_URL, "reconnect-v-shared",
         connectionConfig = {automaticReconnect: true, maxReconnectDelay: 1000});
-    mqtt:Client intruder = check new (mqtt:DEFAULT_URL, "reconnect-v-shared");
+    mqtt:Client intruder = check new (BROKER_URL, "reconnect-v-shared");
     io:println("intruder dropped: ", !check waitFor(intruder, false)); // @output intruder dropped: true
     io:println("resilient connected: ", check waitFor(resilient, true)); // @output resilient connected: true
     mqtt:Error? r = intruder->disconnect();
@@ -47,12 +61,13 @@ public function main() returns error? {
     check resilient->close();
 
     // An empty SUBSCRIBE is a protocol violation; the client sends it like Paho Java does and
-    // reports the server-initiated disconnect.
-    mqtt:Client c = check new (mqtt:DEFAULT_URL, "reconnect-v-empty");
+    // reports the server-initiated disconnect. The DISCONNECT reason code in the message depends
+    // on the broker (Mosquitto sends 129, Malformed packet; mochi-mqtt sends 130, Protocol error).
+    mqtt:Client c = check new (BROKER_URL, "reconnect-v-empty");
     string[] none = [];
     r = c->subscribe(none);
-    // @output empty subscribe: The Server Disconnected the client. Disconnect RC: 129
-    io:println("empty subscribe: ", r is mqtt:Error ? r.message() : "ok");
+    // @output empty subscribe: The Server Disconnected the client.
+    io:println("empty subscribe: ", r is mqtt:Error ? withoutDisconnectReason(r.message()) : "ok");
     io:println("connected: ", check waitFor(c, false)); // @output connected: false
     r = c->reconnect();
     io:println("reconnect: ", r is mqtt:Error ? r.message() : "ok"); // @output reconnect: ok

@@ -15,9 +15,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Requires an MQTT v5 broker on mqtt:DEFAULT_URL (see corpus/lib/resources/mqtt/compose.yaml).
+// Runs against the in-process broker started by corpus/extern/mqtt_test.go.
 import ballerina/io;
 import ballerina/mqtt;
+
+isolated function brokerUrl(string listenerId) returns string = external;
+
+final string BROKER_URL = brokerUrl("anon");
 
 function printNext(stream<mqtt:Message, error?> s) returns error? {
     record {|mqtt:Message value;|}? next = check s.next();
@@ -39,7 +43,7 @@ function readOne(stream<mqtt:Message, error?> s) returns string|error {
 }
 
 public function main() returns error? {
-    mqtt:Client c = check new (mqtt:DEFAULT_URL, "client-v-main");
+    mqtt:Client c = check new (BROKER_URL, "client-v-main");
 
     // Every subscription shape: string, string[], Subscription and Subscription[].
     check c->subscribe("client-v/a");

@@ -15,10 +15,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Requires an MQTT v5 broker on mqtt:DEFAULT_URL (see corpus/lib/resources/mqtt/compose.yaml).
+// Runs against the in-process broker started by corpus/extern/mqtt_test.go.
 import ballerina/io;
 import ballerina/lang.runtime;
 import ballerina/mqtt;
+
+isolated function brokerUrl(string listenerId) returns string = external;
+
+final string BROKER_URL = brokerUrl("anon");
 
 function show(string label, any|error result) {
     if result is error {
@@ -40,7 +44,7 @@ function waitUntilConnected(mqtt:Client c) returns boolean|error {
 }
 
 public function main() returns error? {
-    mqtt:Client c = check new (mqtt:DEFAULT_URL, "lifecycle-v-client");
+    mqtt:Client c = check new (BROKER_URL, "lifecycle-v-client");
 
     mqtt:Error? r = c->reconnect();
     show("reconnect while connected", r); // @output reconnect while connected: Client is connected (mqtt:Error=true)
