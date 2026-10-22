@@ -1,0 +1,21 @@
+-- stdout --
+text/event-stream
+false
+{"data":"first"}
+{"data":"a\nb","id":"7","retry":3000,"event":"update"}
+{"comment":"keep-alive"}
+[": c\nid: 1\nevent: e\nretry: 5\ndata: x\ndata: y\ndata: z\ndata: \n\ndata: \n\n"]
+text/event-stream
+{"data":"one","comment":"ping"}
+{"data":"","id":"5","event":" spaced"}
+{"data":"crlf"}
+{}
+{"data":"line1\nline2"}
+{}
+{"data":"m"}
+{"data":"next"}
+{"data":"café"}
+{"value":{"data":"a"}}
+true
+true
+-- stderr --

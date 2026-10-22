@@ -1,0 +1,14 @@
+-- stdout --
+application/octet-stream
+ab|cd|
+text/csv
+application/pdf
+application/x-ndjson
+one|two|three|
+0
+application/octet-stream
+p|q|
+text/plain
+r|
+true
+-- stderr --
