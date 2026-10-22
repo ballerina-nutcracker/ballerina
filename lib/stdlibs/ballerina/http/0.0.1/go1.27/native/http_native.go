@@ -124,6 +124,7 @@ type requestBodyHolder struct {
 	buf           []byte
 	readErr       error
 	contentLength int64 // -1 if unknown; >=0 is the known byte count
+	streamBody
 }
 
 func (h *requestBodyHolder) materialize() []byte {
@@ -166,6 +167,7 @@ type responseBodyHolder struct {
 	stream  io.ReadCloser
 	buf     []byte
 	readErr error // set if the stream returned an error during materialization
+	streamBody
 }
 
 func (h *responseBodyHolder) materialize() ([]byte, error) {
@@ -365,6 +367,7 @@ func goCtxOrBackground(_ *extern.Context) context.Context {
 // avoids re-allocating it on every request.
 var requestMethodKeyCache = makeMethodKeys("ballerina/http:Request.", []string{
 	"setTextPayload", "setJsonPayload", "setXmlPayload", "setBinaryPayload", "setBodyParts", "getBodyParts",
+	"getByteStream", "setByteStream",
 	"setHeader", "addHeader", "removeHeader", "removeAllHeaders", "getHeaderNames",
 	"setContentType", "getContentType", "getTextPayload", "getJsonPayload", "getXmlPayload",
 	"getBinaryPayload",
@@ -412,10 +415,10 @@ func initHttpModule(rt *runtime.Runtime) {
 		anydataTy:   semtypes.CreateAnydata(semtypes.ContextFrom(env)),
 	}
 
-	// msgToBody converts a Ballerina RequestMessage value to (io.Reader, contentLength, contentType).
+	// msgToBody converts a Ballerina RequestMessage value to its body and content type.
 	// contentType, when non-empty, is the Content-Type a header or mediaType argument fixed; it
 	// replaces the inferred one, and multipart parts are encoded with its boundary.
-	msgToBody := func(ctx *extern.Context, msg values.BalValue, contentType string) (io.Reader, int64, string, error) {
+	msgToBody := func(ctx *extern.Context, msg values.BalValue, contentType string) (outboundBody, string, error) {
 		// An http:Request carries its own body and content-type; every other
 		// RequestMessage is serialised the same way a resource return value is. jBallerina
 		// uses the Request object as-is (http_commons.bal:97-99), so an absent Content-Type
@@ -428,27 +431,36 @@ func initHttpModule(rt *runtime.Runtime) {
 			bodyVal, _ := req.Get("$body")
 			holder, ok := bodyVal.(*requestBodyHolder)
 			if !ok {
-				return bytes.NewReader([]byte{}), 0, ct, nil
+				return outboundBody{reader: bytes.NewReader([]byte{})}, ct, nil
 			}
 			if holder.parts != nil {
 				data, wireCT, err := encodeMultipartBody(ctx, holder.parts, ct)
 				if err != nil {
-					return nil, 0, "", err
+					return outboundBody{}, "", err
 				}
 				setRequestHeader(req, "content-type", wireCT, ctx.TypeCtx())
-				return bytes.NewReader(data), int64(len(data)), wireCT, nil
+				return outboundBody{reader: bytes.NewReader(data), length: int64(len(data))}, wireCT, nil
+			}
+			if holder.source != nil {
+				return outboundBody{source: holder.source}, ct, nil
 			}
 			buf := holder.materialize()
 			if holder.readErr != nil {
-				return nil, 0, "", fmt.Errorf("failed to read request body: %w", holder.readErr)
+				return outboundBody{}, "", fmt.Errorf("failed to read request body: %w", holder.readErr)
 			}
-			return bytes.NewReader(buf), int64(len(buf)), ct, nil
+			return outboundBody{reader: bytes.NewReader(buf), length: int64(len(buf))}, ct, nil
+		}
+		if source, ok := msg.(*values.Stream); ok {
+			if contentType == "" {
+				contentType = "application/octet-stream"
+			}
+			return outboundBody{source: source}, contentType, nil
 		}
 		b, ct, err := outboundPayload(ctx, &types, msg, contentType)
 		if err != nil {
-			return nil, 0, "", err
+			return outboundBody{}, "", err
 		}
-		return bytes.NewReader(b), int64(len(b)), ct, nil
+		return outboundBody{reader: bytes.NewReader(b), length: int64(len(b))}, ct, nil
 	}
 
 	// send issues a request and returns the raw Response; msg, headersArg and mediaTypeArg may
@@ -457,11 +469,10 @@ func initHttpModule(rt *runtime.Runtime) {
 		msg, headersArg, mediaTypeArg values.BalValue) (*values.Object, values.BalValue) {
 		reqHeaders := extractHeaders(headersArg)
 		contentType := overridingContentType(reqHeaders, mediaTypeArg)
-		var bodyReader io.Reader
-		var contentLength int64
+		var body outboundBody
 		if msg != nil {
 			var err error
-			bodyReader, contentLength, contentType, err = msgToBody(ctx, msg, contentType)
+			body, contentType, err = msgToBody(ctx, msg, contentType)
 			if err != nil {
 				return nil, values.NewErrorWithMessage(err.Error())
 			}
@@ -469,8 +480,8 @@ func initHttpModule(rt *runtime.Runtime) {
 		reqHeaders = applyCompressionHeaders(compressionModeOf(self), reqHeaders)
 		urlVal, _ := self.Get("url")
 		clientHandle, _ := self.Get("$httpClient")
-		statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
-			goCtxOrBackground(ctx), verb, urlVal.(string)+path, bodyReader, contentLength, contentType, reqHeaders)
+		statusCode, respHeaders, respBodyStream, err := sendRequest(ctx, clientHandle.(pal.HTTPClient),
+			verb, urlVal.(string)+path, body, contentType, reqHeaders)
 		if err != nil {
 			return nil, values.NewErrorWithMessage(err.Error())
 		}
@@ -901,8 +912,7 @@ func initHttpModule(rt *runtime.Runtime) {
 
 			// Obtain the request body as an io.Reader for streaming passthrough.
 			bodyVal, _ := reqObj.Get("$body")
-			var bodyReader io.Reader
-			var forwardContentLength int64
+			var body outboundBody
 			contentType := ""
 			if cts, ok := reqHeaders["content-type"]; ok && len(cts) > 0 {
 				contentType = cts[0]
@@ -912,31 +922,37 @@ func initHttpModule(rt *runtime.Runtime) {
 				if err != nil {
 					return values.NewErrorWithMessage(err.Error()), nil
 				}
-				bodyReader = bytes.NewReader(data)
-				forwardContentLength = int64(len(data))
+				body = outboundBody{reader: bytes.NewReader(data), length: int64(len(data))}
 				contentType = wireCT
 				reqHeaders["content-type"] = []string{contentType}
 				setRequestHeader(reqObj, "content-type", contentType, ctx.TypeCtx())
 			} else if ok {
-				if stream := holder.takeStream(); stream != nil {
-					bodyReader = stream
-					forwardContentLength = holder.contentLength
-				} else {
-					buf := holder.materialize()
-					if holder.readErr != nil {
-						return values.NewErrorWithMessage("failed to read request body: " + holder.readErr.Error()), nil
-					}
-					if len(buf) > 0 {
-						bodyReader = bytes.NewReader(buf)
-						forwardContentLength = int64(len(buf))
+				switch {
+				case holder.source != nil:
+					body.source = holder.source
+				case holder.reader != nil:
+					// getByteStream has taken the body; forward whatever it has not read.
+					body = outboundBody{reader: holder.reader, length: -1}
+					holder.reader = nil
+				default:
+					if stream := holder.takeStream(); stream != nil {
+						body = outboundBody{reader: stream, length: holder.contentLength}
+					} else {
+						buf := holder.materialize()
+						if holder.readErr != nil {
+							return values.NewErrorWithMessage("failed to read request body: " + holder.readErr.Error()), nil
+						}
+						if len(buf) > 0 {
+							body = outboundBody{reader: bytes.NewReader(buf), length: int64(len(buf))}
+						}
 					}
 				}
 			}
 
 			urlVal, _ := self.Get("url")
 			clientHandle, _ := self.Get("$httpClient")
-			statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
-				goCtxOrBackground(ctx), method, urlVal.(string)+path, bodyReader, forwardContentLength, contentType, reqHeaders)
+			statusCode, respHeaders, respBodyStream, err := sendRequest(ctx, clientHandle.(pal.HTTPClient),
+				method, urlVal.(string)+path, body, contentType, reqHeaders)
 			if err != nil {
 				return values.NewErrorWithMessage(err.Error()), nil
 			}
@@ -1132,6 +1148,9 @@ func initHttpModule(rt *runtime.Runtime) {
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			bodyVal, _ := self.Get("body")
+			if err := streamedBodyNoContent(bodyVal, "text"); err != nil {
+				return err, nil
+			}
 			if holder, ok := bodyVal.(*responseBodyHolder); ok {
 				buf, err := holder.materialize()
 				if err != nil {
@@ -1150,6 +1169,9 @@ func initHttpModule(rt *runtime.Runtime) {
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			bodyVal, _ := self.Get("body")
+			if err := streamedBodyNoContent(bodyVal, "json"); err != nil {
+				return err, nil
+			}
 			var body []byte
 			if holder, ok := bodyVal.(*responseBodyHolder); ok {
 				var err error
@@ -1173,6 +1195,9 @@ func initHttpModule(rt *runtime.Runtime) {
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			bodyVal, _ := self.Get("body")
+			if err := streamedBodyNoContent(bodyVal, "text"); err != nil {
+				return err, nil
+			}
 			holder := bodyVal.(*responseBodyHolder)
 			body, err := holder.materialize()
 			if err != nil {
@@ -1450,6 +1475,9 @@ func initHttpModule(rt *runtime.Runtime) {
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			bodyVal, _ := self.Get("$body")
+			if err := streamedBodyNoContent(bodyVal, "text"); err != nil {
+				return err, nil
+			}
 			holder, _ := bodyVal.(*requestBodyHolder)
 			if holder == nil {
 				return "", nil
@@ -1466,6 +1494,9 @@ func initHttpModule(rt *runtime.Runtime) {
 
 			self := args[0].(*values.Object)
 			bodyVal, _ := self.Get("$body")
+			if err := streamedBodyNoContent(bodyVal, "json"); err != nil {
+				return err, nil
+			}
 			holder, _ := bodyVal.(*requestBodyHolder)
 			var body []byte
 			if holder != nil {
@@ -1487,6 +1518,9 @@ func initHttpModule(rt *runtime.Runtime) {
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			bodyVal, _ := self.Get("$body")
+			if err := streamedBodyNoContent(bodyVal, "text"); err != nil {
+				return err, nil
+			}
 			holder, _ := bodyVal.(*requestBodyHolder)
 			var body []byte
 			if holder != nil {
@@ -1621,6 +1655,7 @@ func initHttpModule(rt *runtime.Runtime) {
 
 	// Server-side: register the http:Listener class and its native methods.
 	registerListenerExterns(rt, &types)
+	registerStreamExterns(rt, &types)
 }
 
 // splitOutsideQuotes splits s on every occurrence of sep that is not inside a
@@ -1823,6 +1858,7 @@ func extractHeaders(arg values.BalValue) map[string][]string {
 // a constant map built once and shared read-only across all Response objects.
 var responseMethodKeyCache = makeMethodKeys("ballerina/http:Response.", []string{
 	"setTextPayload", "setJsonPayload", "setXmlPayload", "setBinaryPayload", "setBodyParts", "getBodyParts",
+	"getByteStream", "setByteStream", "getSseEventStream", "setSseEventStream",
 	"setHeader", "addHeader", "removeHeader", "removeAllHeaders",
 	"setContentType", "getContentType", "getTextPayload", "getJsonPayload", "getXmlPayload",
 	"getBinaryPayload",
@@ -1846,6 +1882,7 @@ func buildResponse(tc semtypes.Context, statusCode int, respHeaders map[string][
 		headersMap.Put(tc, strings.ToLower(k), newListValue(items))
 	}
 	holder := eagerBufferResponse(respHeaders, bodyStream)
+	holder.fromWire = true
 	return values.NewObject(
 		semtypes.Object,
 		map[string]values.BalValue{
