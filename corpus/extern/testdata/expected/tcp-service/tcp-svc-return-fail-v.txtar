@@ -1,0 +1,5 @@
+-- stdout --
+onError: Socket connection already closed.
+onClose
+onError count: 1
+-- stderr --

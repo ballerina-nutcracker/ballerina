@@ -61,7 +61,7 @@ func classifyReadErr(err error) *values.Error {
 }
 
 func classifyWriteErr(err error) *values.Error {
-	if errors.Is(err, net.ErrClosed) || isPeerClosedErr(err) {
+	if isConnGoneErr(err) {
 		return tcpError("Socket connection already closed.")
 	}
 	var netErr net.Error
@@ -69,6 +69,11 @@ func classifyWriteErr(err error) *values.Error {
 		return tcpError("Write timed out")
 	}
 	return tcpError("Failed to write data: " + err.Error())
+}
+
+// isConnGoneErr reports a write that failed because either side closed the connection; jBallerina has usually closed the channel by then, so it reports it as already closed.
+func isConnGoneErr(err error) bool {
+	return errors.Is(err, net.ErrClosed) || isPeerClosedErr(err)
 }
 
 func isPeerClosedErr(err error) bool {

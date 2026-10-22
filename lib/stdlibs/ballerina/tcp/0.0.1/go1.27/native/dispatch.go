@@ -104,21 +104,25 @@ func registerCallerClassDef(rt *runtime.Runtime) {
 		},
 	}
 	runtime.RegisterExternClassDef(rt, callerClassDef)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "Caller.$remote$writeBytes", callerWriteBytes)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Caller.$remote$writeBytes", callerWriteBytes(rt))
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Caller.$remote$close", callerClose(rt))
 }
 
-func callerWriteBytes(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	self := args[0].(*values.Object)
-	data := listToBytes(args[1].(*values.List))
-	cs := connStateOf(self)
-	if cs.isClosed() {
-		return tcpError("Socket connection already closed."), nil
+// callerWriteBytes closes the connection when a write fails, as Netty's auto-close does in jBallerina.
+func callerWriteBytes(rt *runtime.Runtime) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		self := args[0].(*values.Object)
+		data := listToBytes(args[1].(*values.List))
+		cs := connStateOf(self)
+		if cs.isClosed() {
+			return tcpError("Socket connection already closed."), nil
+		}
+		if _, err := cs.conn.Write(data); err != nil {
+			cs.closeOnce(rt, ctx)
+			return classifyWriteErr(err), nil
+		}
+		return nil, nil
 	}
-	if _, err := cs.conn.Write(data); err != nil {
-		return classifyWriteErr(err), nil
-	}
-	return nil, nil
 }
 
 func callerClose(rt *runtime.Runtime) extern.NativeFunc {
@@ -215,12 +219,26 @@ func dispatchOnBytes(rt *runtime.Runtime, ctx *extern.Context, types tcpTypes, c
 	}
 	switch v := result.(type) {
 	case *values.List:
-		if _, werr := cs.conn.Write(listToBytes(v)); werr != nil {
-			dispatchOnError(rt, ctx, connSvcObj, tcpError("Failed to send data."))
-		}
+		sendReturnedBytes(rt, ctx, connSvcObj, cs, listToBytes(v))
 	case *values.Error:
 		// jBallerina logs a returned error and keeps the connection open without routing it to onError.
 		logError(rt, v.Message)
+	}
+}
+
+// sendReturnedBytes routes a failed write of onBytes' return value to onError and then closes the connection, as jBallerina does.
+func sendReturnedBytes(rt *runtime.Runtime, ctx *extern.Context, connSvcObj *values.Object, cs *connState, data []byte) {
+	if cs.isClosed() {
+		dispatchOnError(rt, ctx, connSvcObj, tcpError("Socket connection already closed."))
+		return
+	}
+	if _, err := cs.conn.Write(data); err != nil {
+		if isConnGoneErr(err) {
+			dispatchOnError(rt, ctx, connSvcObj, tcpError("Socket connection already closed."))
+		} else {
+			dispatchOnError(rt, ctx, connSvcObj, tcpError("Failed to send data."))
+		}
+		cs.closeOnce(rt, ctx)
 	}
 }
 

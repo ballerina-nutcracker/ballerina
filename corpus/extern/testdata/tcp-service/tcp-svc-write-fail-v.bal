@@ -16,16 +16,22 @@
 
 // Exercises Caller write failures once the peer has gone away: the client
 // writes then closes, so the server's later writes hit a reset connection.
-// onBytes retries caller->writeBytes until it fails, then returns the data,
-// whose write also fails and is routed to onError as "Failed to send data.".
+// The first failed caller->writeBytes closes the connection (dispatching
+// onClose), as Netty's auto-close does in jBallerina, so later writes and the
+// byte[] returned from onBytes fail as "Socket connection already closed."
+// and the read loop reports no further onError.
 import ballerina/io;
 import ballerina/lang.runtime;
 import ballerina/tcp;
 
-isolated boolean sendFailed = false;
+isolated int errorCount = 0;
 
 service class PeerGoneConnService {
     *tcp:ConnectionService;
+
+    remote function onClose() {
+        io:println("onClose"); // @output onClose
+    }
 
     remote function onBytes(tcp:Caller caller, readonly & byte[] data) returns byte[] {
         tcp:Error? writeErr = ();
@@ -37,15 +43,15 @@ service class PeerGoneConnService {
             runtime:sleep(0.01);
         }
         io:println("caller write: ", writeErr is tcp:Error ? writeErr.message() : "no error"); // @output caller write: Socket connection already closed.
+        tcp:Error? againErr = caller->writeBytes(data);
+        io:println("caller write again: ", againErr is tcp:Error ? againErr.message() : "no error"); // @output caller write again: Socket connection already closed.
         return data;
     }
 
     remote function onError(readonly & tcp:Error err) {
-        if err.message() == "Failed to send data." {
-            io:println("onError: ", err.message()); // @output onError: Failed to send data.
-            lock {
-                sendFailed = true;
-            }
+        io:println("onError: ", err.message()); // @output onError: Socket connection already closed.
+        lock {
+            errorCount += 1;
         }
     }
 }
@@ -65,9 +71,9 @@ function init() returns error? {
     check peerGoneListener.attach(new PeerGoneServer());
 }
 
-function isSendFailed() returns boolean {
+function errors() returns int {
     lock {
-        return sendFailed;
+        return errorCount;
     }
 }
 
@@ -76,11 +82,12 @@ public function testMain() returns error? {
     check c->writeBytes("hello".toBytes());
     check c->close();
     foreach int _ in 0 ..< 500 {
-        if isSendFailed() {
+        if errors() > 0 {
             break;
         }
         runtime:sleep(0.01);
     }
-    io:println("send failed: ", isSendFailed()); // @output send failed: true
+    runtime:sleep(0.2);
+    io:println("onError count: ", errors()); // @output onError count: 1
     check peerGoneListener.gracefulStop();
 }
