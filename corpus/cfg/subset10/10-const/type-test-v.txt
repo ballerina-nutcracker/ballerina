@@ -24,5 +24,14 @@
     (expression-stmt
       (invocation io println (
         (simple-var-ref I))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref J))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref K))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref L))))
   )
 )
