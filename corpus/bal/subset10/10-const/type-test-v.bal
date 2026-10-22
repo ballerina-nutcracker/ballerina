@@ -25,6 +25,9 @@ const F = 1.5 is int|float;
 const G = () is ();
 const H = [1, 2] is int[];
 const I = {a: 1} !is map<string>;
+const J = [1, 2] is readonly;
+const K = 2.5d is decimal;
+const L = B is true;
 
 public function main() {
     io:println(B); // @output true
@@ -35,4 +38,7 @@ public function main() {
     io:println(G); // @output true
     io:println(H); // @output true
     io:println(I); // @output true
+    io:println(J); // @output true
+    io:println(K); // @output true
+    io:println(L); // @output true
 }
