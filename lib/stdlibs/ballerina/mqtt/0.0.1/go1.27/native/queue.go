@@ -34,14 +34,16 @@ func newBlockingQueue[T any]() *blockingQueue[T] {
 	return q
 }
 
-func (q *blockingQueue[T]) put(item T) {
+// put reports false when the queue is already closed and the item was dropped.
+func (q *blockingQueue[T]) put(item T) bool {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	if q.closed {
-		return
+		return false
 	}
 	q.items = append(q.items, item)
 	q.cond.Signal()
+	return true
 }
 
 // take returns false once the queue is closed and drained.
@@ -71,6 +73,5 @@ func (q *blockingQueue[T]) close() {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	q.closed = true
-	q.items = nil
 	q.cond.Broadcast()
 }

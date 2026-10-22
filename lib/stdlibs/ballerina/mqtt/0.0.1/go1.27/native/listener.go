@@ -43,7 +43,10 @@ const (
 )
 
 type listenerEvent struct {
-	kind     listenerEventKind
+	kind listenerEventKind
+	// service is set on completion events, which go to the service that handled the request
+	// even if it has since been detached.
+	service  *values.Object
 	message  receivedMessage
 	packetID uint16
 	topic    string
@@ -69,6 +72,7 @@ type listenerState struct {
 
 type callerState struct {
 	listener *listenerState
+	service  *values.Object
 	message  receivedMessage
 }
 
@@ -227,6 +231,9 @@ func (m *mqttModule) dispatch(ls *listenerState) {
 			return
 		}
 		svc := ls.currentService()
+		if event.kind == eventComplete {
+			svc = event.service
+		}
 		if svc == nil {
 			if event.kind == eventMessage {
 				ls.conn.ack(event.message)
@@ -280,7 +287,7 @@ func (m *mqttModule) invokeOnMessage(ctx *extern.Context, ls *listenerState, svc
 			m.printError(nil, err)
 			return
 		}
-		caller.(*values.Object).Put(callerStateField, &callerState{listener: ls, message: msg})
+		caller.(*values.Object).Put(callerStateField, &callerState{listener: ls, service: svc, message: msg})
 		args = append(args, caller)
 	}
 	if panicErr := m.invokeTrapped(ctx, handle, args); panicErr != nil {
@@ -371,6 +378,8 @@ func (m *mqttModule) callerRespond(ctx *extern.Context, args []values.BalValue) 
 	if mErr != nil {
 		return toBalError(ctx, mErr)
 	}
-	ls.events.put(listenerEvent{kind: eventComplete, packetID: packetID, topic: topic})
+	if !ls.events.put(listenerEvent{kind: eventComplete, service: cs.service, packetID: packetID, topic: topic}) {
+		return toBalError(ctx, newReasonError(reasonClientClosed, nil))
+	}
 	return nil, nil
 }

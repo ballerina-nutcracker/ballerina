@@ -68,7 +68,7 @@ func (m *mqttModule) clientInit(ctx *extern.Context, args []values.BalValue) (va
 		return toBalError(ctx, mErr)
 	}
 	responses := newBlockingQueue[receivedMessage]()
-	conn := newConnection(m.rt.Platform(), opts, connectionHandlers{onMessage: responses.put})
+	conn := newConnection(m.rt.Platform(), opts, connectionHandlers{onMessage: func(msg receivedMessage) { responses.put(msg) }})
 	if mErr := conn.connect(); mErr != nil {
 		return toBalError(ctx, mErr)
 	}
