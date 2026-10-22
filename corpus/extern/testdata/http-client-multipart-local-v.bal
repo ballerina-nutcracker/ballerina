@@ -27,11 +27,24 @@ public function main() returns error? {
     mime:Entity jsonPart = new;
     jsonPart.setJson({x: 1});
 
-    // POST a multipart body (mime:Entity[] via the widened RequestMessage) — exercises
-    // msgToBody's Entity[] branch, which serializes via mime's EncodeMultipart and
-    // auto-generates a boundary. The server parses the multipart body itself and echoes
-    // a deterministic, boundary-independent summary back.
     http:Response r = check c->post("/echo-multipart", [textPart, jsonPart]);
-    io:println(check r.getTextPayload()); // @output count=2 1:hello world 2:{"x":1}
+    io:println(check r.getTextPayload()); // @output multipart/form-data count=2 1:hello world 2:{"x":1}
+
+    mime:Entity inner = new;
+    inner.setText("inner-text");
+    mime:Entity wrap = new;
+    wrap.setBodyParts([inner], "multipart/mixed");
+    r = check c->post("/echo-multipart", [wrap]);
+    io:println(check r.getTextPayload()); // @output multipart/form-data count=1 1:[multipart/mixed count=1 1:inner-text]
+
+    mime:Entity[] none = [];
+    r = check c->post("/echo-multipart", none);
+    io:println(check r.getTextPayload()); // @output multipart/form-data count=0
+
+    http:Request req = new;
+    req.setBodyParts([textPart], "multipart/mixed");
+    io:println(req.getContentType()); // @output multipart/mixed
+    r = check c->post("/echo-multipart", req);
+    io:println(check r.getTextPayload()); // @output multipart/mixed count=1 1:hello world
     return;
 }

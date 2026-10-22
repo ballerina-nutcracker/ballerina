@@ -18,13 +18,6 @@ import ballerina/http;
 import ballerina/mime;
 import ballerina/io;
 
-isolated function hasPrefix(string value, string prefix) returns boolean {
-    if value.length() < prefix.length() {
-        return false;
-    }
-    return value.substring(0, prefix.length()) == prefix;
-}
-
 public function main() returns error? {
     mime:Entity part1 = new;
     part1.setText("hello world");
@@ -37,7 +30,7 @@ public function main() returns error? {
     // ---- Request.setBodyParts / getBodyParts round-trip ----
     http:Request req = new;
     req.setBodyParts([part1, part2]);
-    io:println(hasPrefix(req.getContentType(), "multipart/form-data")); // @output true
+    io:println(req.getContentType()); // @output multipart/form-data
 
     mime:Entity[] reqParts = check req.getBodyParts();
     io:println(reqParts.length());                                        // @output 2
@@ -72,5 +65,35 @@ public function main() returns error? {
     // ---- explicit content-type override ----
     http:Request req2 = new;
     req2.setBodyParts([part1], "multipart/mixed");
-    io:println(hasPrefix(req2.getContentType(), "multipart/mixed")); // @output true
+    io:println(req2.getContentType()); // @output multipart/mixed
+
+    // ---- an existing Content-Type is kept ----
+    mime:Entity hiPart = new;
+    hiPart.setText("hi");
+    http:Request reqWithType = new;
+    reqWithType.setHeader("Content-Type", "multipart/mixed");
+    reqWithType.setBodyParts([hiPart]);
+    io:println(reqWithType.getContentType()); // @output multipart/mixed
+    mime:Entity[] keptReqParts = check reqWithType.getBodyParts();
+    io:println(check keptReqParts[0].getText()); // @output hi
+    http:Response resWithType = new;
+    resWithType.setHeader("Content-Type", "multipart/mixed");
+    resWithType.setBodyParts([hiPart]);
+    io:println(resWithType.getContentType()); // @output multipart/mixed
+    mime:Entity[] keptResParts = check resWithType.getBodyParts();
+    io:println(check keptResParts[0].getText()); // @output hi
+
+    // ---- a part that fails to encode still sets the parts and Content-Type ----
+    mime:Entity badCharsetPart = new;
+    badCharsetPart.setText("x", "text/plain; charset=bogus-cs");
+    http:Request badReq = new;
+    badReq.setBodyParts([badCharsetPart]);
+    io:println(badReq.getContentType()); // @output multipart/form-data
+    mime:Entity[] badReqParts = check badReq.getBodyParts();
+    io:println(badReqParts.length()); // @output 1
+    http:Response badRes = new;
+    badRes.setBodyParts([badCharsetPart]);
+    io:println(badRes.getContentType()); // @output multipart/form-data
+    mime:Entity[] badResParts = check badRes.getBodyParts();
+    io:println(badResParts.length()); // @output 1
 }

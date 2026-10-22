@@ -630,6 +630,11 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 				"unexpected return type from resource method")
 			return
 		}
+		if holder.parts != nil && holder.readErr != nil {
+			writeErrorJSON(rt, w, r, http.StatusInternalServerError,
+				"failed to encode multipart body: "+holder.readErr.Error())
+			return
+		}
 		writeResponseObject(w, v, holder)
 	default:
 		writeAnydataResult(rt, ctx, types, w, r, accessor, v)
@@ -701,6 +706,9 @@ func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *res
 				}
 			}
 		}
+	}
+	if ct := w.Header().Get("Content-Type"); ct != "" && holder.boundary != "" {
+		w.Header().Set("Content-Type", holder.wireContentType(ct))
 	}
 	// WriteHeader must be called before writing the body; once body bytes
 	// start flowing via writeStream, headers are already committed, so a write error here

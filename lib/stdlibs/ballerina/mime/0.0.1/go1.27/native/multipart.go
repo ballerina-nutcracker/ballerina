@@ -187,11 +187,11 @@ func EncodeMultipart(ctx *extern.Context, parts []*values.Object, boundary strin
 		}
 	}
 	for _, part := range parts {
-		pw, err := w.CreatePart(entityHeaders(part))
+		header, partData, err := encodePart(ctx, part)
 		if err != nil {
 			return nil, "", err
 		}
-		partData, err := bytesForBody(ctx, part)
+		pw, err := w.CreatePart(header)
 		if err != nil {
 			return nil, "", err
 		}
@@ -204,6 +204,45 @@ func EncodeMultipart(ctx *extern.Context, parts []*values.Object, boundary strin
 		return nil, "", err
 	}
 	return buf.Bytes(), usedBoundary, nil
+}
+
+// encodePart returns a part's wire header and body. A part whose body is itself body parts
+// is encoded recursively, and a generated boundary is added to the header written for it.
+func encodePart(ctx *extern.Context, part *values.Object) (textproto.MIMEHeader, []byte, error) {
+	header := entityHeaders(part)
+	body := getEntityBody(part)
+	if body == nil || body.kind != bodyParts {
+		data, err := bytesForBody(ctx, part)
+		return header, data, err
+	}
+	nested := make([]*values.Object, body.parts.Len())
+	for i := range nested {
+		nested[i], _ = body.parts.Get(i).(*values.Object)
+	}
+	contentType, found := entityHeaderValue(part, "content-type")
+	if !found {
+		contentType = "multipart/form-data"
+	}
+	_, boundary, _ := MultipartBoundary(contentType)
+	data, usedBoundary, err := EncodeMultipart(ctx, nested, boundary)
+	if err != nil {
+		return nil, nil, err
+	}
+	if boundary == "" {
+		setHeaderValue(header, "Content-Type", contentType+"; boundary="+usedBoundary)
+	}
+	return header, data, nil
+}
+
+// setHeaderValue replaces name's value in header, keeping the casing of an existing key.
+func setHeaderValue(header textproto.MIMEHeader, name, value string) {
+	for key := range header {
+		if strings.EqualFold(key, name) {
+			header[key] = []string{value}
+			return
+		}
+	}
+	header[name] = []string{value}
 }
 
 // entityHeaders reads an Entity's headerNames/headerMap fields back into a MIME header,
