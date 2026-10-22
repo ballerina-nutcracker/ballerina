@@ -151,5 +151,16 @@ public function testMain() returns error? {
     int|error mismatched = c->/albums/[9](tag = "folk");
     io:println(mismatched is error); // @output true
 
+    // A transport failure surfaces as an error from every accessor shape.
+    http:Client closed = check new http:Client("http://127.0.0.1:1", {});
+    http:Response|error closedGet = closed->/albums;
+    io:println(closedGet is error); // @output true
+
+    http:Response|error closedHead = closed->/albums.head();
+    io:println(closedHead is error); // @output true
+
+    http:Response|error closedPost = closed->/albums.post("x");
+    io:println(closedPost is error); // @output true
+
     return;
 }
