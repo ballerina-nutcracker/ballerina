@@ -16,7 +16,8 @@
 
 // A connection service that closes its own Caller from onBytes gets onClose
 // but no onError, matching jBallerina. onClose runs before the socket closes,
-// so it prints before the client's read observes the close.
+// so it prints before the client's read observes the close. A write on the
+// closed Caller fails, and returning that error from onBytes logs it.
 import ballerina/io;
 import ballerina/tcp;
 
@@ -27,6 +28,7 @@ service class ClosingConnService {
         io:println("onBytes ", check 'string:fromBytes(data)); // @output onBytes hello
         check caller->close();
         check caller->close();
+        return caller->writeBytes(data);
     }
 
     remote function onError(readonly & tcp:Error err) {

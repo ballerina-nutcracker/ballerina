@@ -96,3 +96,19 @@ func TestTcpServiceInvalid(t *testing.T) {
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-svc-invalid-v"), newTcpPal(), nil)
 }
+
+// TestTcpServiceWriteFail verifies that Caller writes and data returned from
+// onBytes fail once the peer has closed and reset the connection.
+func TestTcpServiceWriteFail(t *testing.T) {
+	t.Parallel()
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("tcp-service/tcp-svc-write-fail-v"), newTcpPal(), nil)
+}
+
+// TestTcpClientWriteTimeout verifies that Client.writeBytes fails with a
+// write timeout when the peer stops reading.
+func TestTcpClientWriteTimeout(t *testing.T) {
+	t.Parallel()
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("tcp-service/tcp-client-write-timeout-v"), newTcpPal(), nil)
+}

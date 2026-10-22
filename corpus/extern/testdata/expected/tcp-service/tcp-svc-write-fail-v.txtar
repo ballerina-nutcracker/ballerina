@@ -1,0 +1,5 @@
+-- stdout --
+caller write: Socket connection already closed.
+onError: Failed to send data.
+send failed: true
+-- stderr --
