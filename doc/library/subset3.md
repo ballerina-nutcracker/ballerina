@@ -221,7 +221,7 @@ Types: `mqtt:Client`, `mqtt:Listener`, `mqtt:Caller` (classes), `mqtt:Service`, 
 | Connection options | `keepAliveInterval`, `connectionTimeout`, `cleanStart`, `serverUris` (tried in order), `automaticReconnect`, `maxReconnectDelay`, and `willDetails` |
 | TLS / mutual TLS | `SecureSocket.cert` as a PEM file path, `SecureSocket.key` as an `mqtt:CertKey` with an unencrypted PEM key, and `SecureSocket.protocol` |
 
-Not covered in this subset: `crypto:TrustStore` / `crypto:KeyStore` TLS and encrypted private keys, `ws://` / `wss://` broker URIs, and jBallerina's compile-time service validation.
+Not covered in this subset: `crypto:TrustStore` / `crypto:KeyStore` TLS and encrypted private keys, and `ws://` / `wss://` broker URIs. jBallerina's compile-time service validation is applied when a service is attached: an invalid service method signature makes `attach` return an `mqtt:Error` with the compiler plugin's message.
 
 ## [protobuf](https://github.com/ballerina-platform/module-ballerina-protobuf/blob/master/docs/spec/spec.md)
 

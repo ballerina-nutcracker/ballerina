@@ -140,11 +140,18 @@ func (m *mqttModule) listenerInit(ctx *extern.Context, args []values.BalValue) (
 	return nil, nil
 }
 
-// listenerAttach re-subscribes the listener's topics when a service is attached again
-// after detach.
+// listenerAttach validates the service's method signatures and re-subscribes the listener's
+// topics when a service is attached again after detach.
 func (m *mqttModule) listenerAttach(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	ls := listenerOf(args[0].(*values.Object))
 	svc, _ := args[1].(*values.Object)
+	mErr, err := validateService(ctx, svc)
+	if err != nil {
+		return nil, err
+	}
+	if mErr != nil {
+		return toBalError(ctx, mErr)
+	}
 	ls.subMu.Lock()
 	defer ls.subMu.Unlock()
 	if ls.subscriptions != nil && !ls.subscribed {

@@ -37,6 +37,109 @@ isolated service class Svc {
     }
 }
 
+service class ExtraParam {
+    *mqtt:Service;
+
+    remote function onMessage(mqtt:Message message, int extra) {
+        _ = message;
+        io:println(extra + 1);
+    }
+}
+
+service class WrongMessageParam {
+    *mqtt:Service;
+
+    remote function onMessage(string message) {
+        _ = message;
+    }
+}
+
+service class NoParams {
+    *mqtt:Service;
+
+    remote function onMessage() {
+    }
+}
+
+service class TooManyParams {
+    *mqtt:Service;
+
+    remote function onMessage(mqtt:Message message, mqtt:Caller caller, int extra) {
+        _ = message;
+        _ = caller;
+        _ = extra;
+    }
+}
+
+service class WrongReturn {
+    *mqtt:Service;
+
+    remote function onMessage(mqtt:Message message) returns string {
+        return message.topic ?: "";
+    }
+}
+
+service class WrongErrorParam {
+    *mqtt:Service;
+
+    remote function onMessage(mqtt:Message message) {
+        _ = message;
+    }
+
+    remote function onError(string err) {
+        _ = err;
+    }
+}
+
+service class WrongCompleteParam {
+    *mqtt:Service;
+
+    remote function onMessage(mqtt:Message message) {
+        _ = message;
+    }
+
+    remote function onComplete(mqtt:Message token) {
+        _ = token;
+    }
+}
+
+service class ExtraRemoteMethod {
+    *mqtt:Service;
+
+    remote function onMessage(mqtt:Message message) {
+        _ = message;
+    }
+
+    remote function onRequest(mqtt:Message message) {
+        _ = message;
+    }
+}
+
+service class NonRemoteOnError {
+    *mqtt:Service;
+
+    remote function onMessage(mqtt:Message message) {
+        _ = message;
+    }
+
+    function onError(mqtt:Error err) {
+        _ = err.message();
+    }
+}
+
+service class GenericParams {
+    *mqtt:Service;
+
+    remote function onMessage(anydata message, mqtt:Caller caller) returns error? {
+        _ = message;
+        _ = caller;
+    }
+
+    remote function onError(error err) returns mqtt:Error? {
+        _ = err.message();
+    }
+}
+
 public function main() returns error? {
     mqtt:Client c = check new (mqtt:DEFAULT_URL, "validation-v-client");
     byte[] payload = "x".toBytes();
@@ -83,6 +186,19 @@ public function main() returns error? {
     mqtt:Listener|mqtt:Error configListener = new (mqtt:DEFAULT_URL, "validation-v-config-listener", "validation-v/t",
         connectionConfig = {keepAliveInterval: -1});
     show("listener negative keep alive", configListener); // @output listener negative keep alive: Invalid keep alive interval: -1. Allowed values are 0 to 65535 (mqtt:Error=true)
+
+    mqtt:Listener sigListener = check new (mqtt:DEFAULT_URL, "validation-v-signatures", "validation-v/sig");
+    show("extra param", sigListener.attach(new ExtraParam())); // @output extra param: Invalid method parameter. Only mqtt:Caller is allowed (mqtt:Error=true)
+    show("wrong message param", sigListener.attach(new WrongMessageParam())); // @output wrong message param: Invalid method parameter. Only mqtt:Message is allowed. (mqtt:Error=true)
+    show("no params", sigListener.attach(new NoParams())); // @output no params: Must have the required parameter mqtt:Message and optional parameter mqtt:Caller. (mqtt:Error=true)
+    show("too many params", sigListener.attach(new TooManyParams())); // @output too many params: Invalid method parameter count. Only mqtt:Caller and mqtt:Message are allowed. (mqtt:Error=true)
+    show("wrong return", sigListener.attach(new WrongReturn())); // @output wrong return: Invalid return type. Only error? or mqtt:Error? is allowed. (mqtt:Error=true)
+    show("wrong error param", sigListener.attach(new WrongErrorParam())); // @output wrong error param: Invalid method parameter. Only mqtt:Error or error is allowed (mqtt:Error=true)
+    show("wrong complete param", sigListener.attach(new WrongCompleteParam())); // @output wrong complete param: Invalid method parameter. Only mqtt:DeliveryToken is allowed (mqtt:Error=true)
+    show("extra remote method", sigListener.attach(new ExtraRemoteMethod())); // @output extra remote method: Invalid remote method. (mqtt:Error=true)
+    show("non-remote onError", sigListener.attach(new NonRemoteOnError())); // @output non-remote onError: Method must have the remote qualifier. (mqtt:Error=true)
+    show("generic params", sigListener.attach(new GenericParams())); // @output generic params: ok
+    check sigListener.gracefulStop();
 
     mqtt:Listener|mqtt:Error lsnr = new (mqtt:DEFAULT_URL, "validation-v-listener", "validation-v/a/#/b");
     if lsnr is mqtt:Listener {

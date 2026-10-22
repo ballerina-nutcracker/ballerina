@@ -86,7 +86,7 @@ Development is organized by **subsets** of the Ballerina language; each mileston
 
 ## Standard library coverage
 
-**73%** of tracked standard library features are supported across 18 packages: 280 supported, 30 partially supported, 72 not yet supported. See [Standard library support](doc/library/README.md) for per-package coverage and behavioural changes from jBallerina.
+**73%** of tracked standard library features are supported across 18 packages: 280 supported, 31 partially supported, 71 not yet supported. See [Standard library support](doc/library/README.md) for per-package coverage and behavioural changes from jBallerina.
 
 **Supported packages:** [avro](lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md), [crypto](lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md), [file](lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md), [http](lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md), [io](lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md), [ldap](lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md), [log](lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md), [math.vector](lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md), [mime](lib/stdlibs/ballerina/mime/0.0.1/go1.27/README.md), [mqtt](lib/stdlibs/ballerina/mqtt/0.0.1/go1.27/README.md), [os](lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md), [protobuf](lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md), [random](lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md), [task](lib/stdlibs/ballerina/task/0.0.1/go1.27/README.md), [time](lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md), [udp](lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md), [url](lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md), [uuid](lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)
 

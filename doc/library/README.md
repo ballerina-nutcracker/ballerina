@@ -17,7 +17,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
 | [math.vector](../../lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
 | [mime](../../lib/stdlibs/ballerina/mime/0.0.1/go1.27/README.md)               | 15 | 2 | 2 | 79% |
-| [mqtt](../../lib/stdlibs/ballerina/mqtt/0.0.1/go1.27/README.md)               | 21 | 1 | 3 | 84% |
+| [mqtt](../../lib/stdlibs/ballerina/mqtt/0.0.1/go1.27/README.md)               | 21 | 2 | 2 | 84% |
 | [os](../../lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md)                   | 11 | 1 | 0 | 92% |
 | [protobuf](../../lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
 | [random](../../lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
@@ -26,7 +26,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **280** | **30** | **72** | **73%** |
+| **Total**                                         | **280** | **31** | **71** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -108,6 +108,7 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 - **detach keeps the broker connection.** jBallerina's `Listener.detach` disconnects the listener from the broker; the Go-native version unsubscribes the listener's topics and keeps the connection, so attaching a service again re-subscribes them, as the maintainers specified in https://github.com/ballerina-platform/ballerina-library/issues/9326.
 - **TLS certificates are verified more strictly.** jBallerina accepts a server certificate that matches the host only through its Common Name, and a self-signed trusted certificate that has expired; the Go-native version uses Go's TLS verification, which requires the host in the certificate's Subject Alternative Name and rejects expired certificates, failing the connection with `Untranslated MqttException - RC: 0`.
 - **Certificate and key paths in errors are not made absolute.** jBallerina reports a missing certificate or key file with its absolute path; the Go-native version reports the path as it was configured.
+- **Service methods are validated when the service is attached, not at compile time.** jBallerina's compiler plugin rejects an invalid mqtt `service` declaration (an unknown remote method, a non-`remote` handler, or a wrong parameter count, parameter type or return type) as a compile error, but its `attach()` accepts any `service class` value and binds whatever values it dispatches to the parameters. This port has no compiler plugin, so `Listener.attach()` applies the same rules to every service, including `service class` values jBallerina would accept, and returns an `mqtt:Error` carrying the plugin's message; a module-level `service on new mqtt:Listener(...)` declaration with an invalid service fails at program start-up.
 
 ### os
 

@@ -62,3 +62,7 @@ function createCaller() returns Caller {
 function createStreamIterator() returns StreamIterator {
     return new;
 }
+
+isolated function serviceParamTypes() returns [typedesc<Message>, typedesc<Caller>, typedesc<Error>, typedesc<DeliveryToken>] {
+    return [Message, Caller, Error, DeliveryToken];
+}
