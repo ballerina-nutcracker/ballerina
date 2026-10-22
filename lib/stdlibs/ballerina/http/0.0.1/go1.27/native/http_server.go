@@ -395,6 +395,9 @@ func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandl
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
+				if rec == http.ErrAbortHandler {
+					panic(rec)
+				}
 				msg := panicMessage(rec)
 				logMsg := fmt.Sprintf("error [ballerina/http]: panic while handling %s %s: %s\n", r.Method, r.URL.Path, msg)
 				_, _ = rt.Platform().IO.Stderr([]byte(logMsg))
@@ -492,7 +495,7 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 			writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResult(rt, ctx, state.types, w, r, accessorKey, result)
+		writeResult(rt, ctx, state.types, w, r, accessorKey, result, state.timeout)
 		return
 	}
 	// The path matched a service but no resource under the requested method. If
@@ -574,6 +577,7 @@ func buildRequest(method, rawPath, httpVersion string, headers map[string][]stri
 	default:
 		holder = &requestBodyHolder{buf: []byte{}, contentLength: 0}
 	}
+	holder.fromWire = true
 	return values.NewObject(
 		semtypes.Object,
 		map[string]values.BalValue{
@@ -617,7 +621,7 @@ func writeErrorJSON(rt *runtime.Runtime, w http.ResponseWriter, r *http.Request,
 // writeResult writes a Ballerina resource method return value as an HTTP response,
 // following jBallerina's Caller.returnResponse (http_connection.bal:141-196).
 func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
-	w http.ResponseWriter, r *http.Request, accessor string, result values.BalValue) {
+	w http.ResponseWriter, r *http.Request, accessor string, result values.BalValue, timeout time.Duration) {
 	switch v := result.(type) {
 	case nil:
 		w.WriteHeader(http.StatusAccepted)
@@ -640,7 +644,15 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 			holder = &responseBodyHolder{buf: data}
 			wireContentType = ct
 		}
-		writeResponseObject(w, v, holder, wireContentType)
+		writeResponseObject(w, v, holder, wireContentType, timeout)
+	case *values.Stream:
+		resp, err := createSSEResponse(ctx, v)
+		if err != nil {
+			writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Message)
+			return
+		}
+		holder, _ := responseBodyOf(resp)
+		writeResponseObject(w, resp, holder, "", timeout)
 	default:
 		writeAnydataResult(rt, ctx, types, w, r, accessor, v)
 	}
@@ -681,7 +693,8 @@ func writeAnydataResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTyp
 
 // wireContentType, when non-empty, replaces the Content-Type header, carrying the boundary a
 // multipart body was encoded with.
-func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *responseBodyHolder, wireContentType string) {
+func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *responseBodyHolder, wireContentType string,
+	timeout time.Duration) {
 	statusCodeVal, _ := resp.Get("statusCode")
 	statusCode := http.StatusOK
 	// Go's WriteHeader panics outside [100, 999]; fall back to 200 for an
@@ -722,7 +735,14 @@ func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *res
 	// WriteHeader must be called before writing the body; once body bytes
 	// start flowing via writeStream, headers are already committed, so a write error here
 	// can't be recovered with a JSON error body.
+	if holder.noCache && w.Header().Get("Cache-Control") == "" {
+		w.Header().Set("Cache-Control", "no-cache,public")
+	}
 	w.WriteHeader(statusCode)
+	if holder.source != nil {
+		writeStreamedBody(w, holder.source, w.Header().Get("Content-Type"), timeout)
+		return
+	}
 	_ = holder.writeStream(w)
 }
 

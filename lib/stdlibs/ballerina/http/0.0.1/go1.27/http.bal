@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/io;
 import ballerina/mime;
 import ballerina/url;
 
@@ -399,11 +400,50 @@ public class Response {
     #            (`multipart/*` or `message/*`) media type, or the body cannot be decoded
     public isolated function getBodyParts() returns mime:Entity[]|error = external;
 
+    # Returns the response body as a stream of byte arrays. Multipart bodies are read with
+    # `getBodyParts` instead.
+    #
+    # + arraySize - The size of each byte array; every array except the last is filled to this
+    #               size. Defaults to 8 KB
+    # + return - The byte stream, or an `error` if `arraySize` is not positive or the body cannot
+    #            be read as a stream
+    public isolated function getByteStream(int arraySize = 8192) returns stream<byte[], io:Error?>|error {
+        return getByteStream(self, arraySize);
+    }
+
+    # Sets the response body to a byte stream, defaulting Content-Type to `application/octet-stream`.
+    #
+    # + byteStream  - The byte stream to send as the body
+    # + contentType - Optional MIME type; defaults to `application/octet-stream` when a
+    #                 Content-Type is not already set
+    public isolated function setByteStream(stream<byte[], io:Error?> byteStream, string? contentType = ()) = external;
+
+    # Returns the response body as a stream of Server-Sent Events.
+    #
+    # + return - The event stream, or an `error` if the response is not of `text/event-stream`
+    #            content type or the body cannot be read as a stream
+    public isolated function getSseEventStream() returns stream<SseEvent, error?>|error {
+        return getSseEventStream(self);
+    }
+
+    # Sets the response body to a stream of Server-Sent Events with Content-Type
+    # `text/event-stream`. When the response is sent, `Cache-Control: no-cache,public` is added
+    # unless the response already has a Cache-Control header.
+    #
+    # + eventStream - The event stream to send as the body
+    public isolated function setSseEventStream(stream<SseEvent, error?>|stream<SseEvent, error> eventStream) {
+        self.setByteStream(new (new SseEventToByteStreamGenerator(eventStream)), mime:TEXT_EVENT_STREAM);
+        externSetNoCache(self);
+    }
+
     # Sets the response body, dispatching to the specific setter based on the runtime type of `payload`.
     #
-    # + payload - A `string`, `xml`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the response body
-    # + contentType - Optional MIME type overriding the type-inferred default
-    public isolated function setPayload(json|xml|byte[]|mime:Entity[] payload, string? contentType = ()) {
+    # + payload - A `string`, `xml`, `byte[]`, `mime:Entity[]`, byte stream, event stream, or other
+    #             JSON-compatible value to set as the response body
+    # + contentType - Optional MIME type overriding the type-inferred default; ignored for an event
+    #                 stream, which is always sent as `text/event-stream`
+    public isolated function setPayload(json|xml|byte[]|mime:Entity[]|stream<byte[], io:Error?>|stream<SseEvent, error?> payload,
+            string? contentType = ()) {
         if payload is string {
             self.setTextPayload(payload, contentType);
         } else if payload is xml {
@@ -412,6 +452,10 @@ public class Response {
             self.setBinaryPayload(payload, contentType);
         } else if payload is mime:Entity[] {
             self.setBodyParts(payload, contentType);
+        } else if payload is stream<byte[], io:Error?> {
+            self.setByteStream(payload, contentType);
+        } else if payload is stream<SseEvent, error?> {
+            self.setSseEventStream(payload);
         } else {
             self.setJsonPayload(payload, contentType);
         }
@@ -578,11 +622,31 @@ public class Request {
     #            (`multipart/*` or `message/*`) media type, or the body cannot be decoded
     public isolated function getBodyParts() returns mime:Entity[]|error = external;
 
+    # Returns the request body as a stream of byte arrays. Multipart bodies are read with
+    # `getBodyParts` instead.
+    #
+    # + arraySize - The size of each byte array; every array except the last is filled to this
+    #               size. Defaults to 8 KB
+    # + return - The byte stream, or an `error` if `arraySize` is not positive or the body cannot
+    #            be read as a stream
+    public isolated function getByteStream(int arraySize = 8192) returns stream<byte[], io:Error?>|error {
+        return getByteStream(self, arraySize);
+    }
+
+    # Sets the request body to a byte stream, defaulting Content-Type to `application/octet-stream`.
+    #
+    # + byteStream  - The byte stream to send as the body
+    # + contentType - Optional MIME type; defaults to `application/octet-stream` when a
+    #                 Content-Type is not already set
+    public isolated function setByteStream(stream<byte[], io:Error?> byteStream, string? contentType = ()) = external;
+
     # Sets the request body, dispatching to the specific setter based on the runtime type of `payload`.
     #
-    # + payload - A `string`, `xml`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the request body
+    # + payload - A `string`, `xml`, `byte[]`, `mime:Entity[]`, byte stream, or other JSON-compatible
+    #             value to set as the request body
     # + contentType - Optional MIME type overriding the type-inferred default
-    public isolated function setPayload(json|xml|byte[]|mime:Entity[] payload, string? contentType = ()) {
+    public isolated function setPayload(json|xml|byte[]|mime:Entity[]|stream<byte[], io:Error?> payload,
+            string? contentType = ()) {
         if payload is string {
             self.setTextPayload(payload, contentType);
         } else if payload is xml {
@@ -591,6 +655,8 @@ public class Request {
             self.setBinaryPayload(payload, contentType);
         } else if payload is mime:Entity[] {
             self.setBodyParts(payload, contentType);
+        } else if payload is stream<byte[], io:Error?> {
+            self.setByteStream(payload, contentType);
         } else {
             self.setJsonPayload(payload, contentType);
         }
@@ -669,14 +735,12 @@ isolated function addFormParam(map<string> parameters, string data, int entrySta
 }
 
 // Represents an HTTP outbound request entity. Accepts any `anydata` value (including `xml`),
-// an existing `Request` object, or a multipart body (`mime:Entity[]`). The `stream` subtype
-// of jBallerina's `RequestMessage` is not supported in this implementation.
-public type RequestMessage anydata|Request|mime:Entity[];
+// an existing `Request` object, a multipart body (`mime:Entity[]`), or a byte stream.
+public type RequestMessage anydata|Request|mime:Entity[]|stream<byte[], io:Error?>;
 
 # Represents the types of the `targetType` parameter of the client remote methods.
-# The `stream<SseEvent, error?>` member of jBallerina's `TargetType` is not supported
-# in this implementation, since Server-Sent Events are not available.
-public type TargetType typedesc<Response|anydata>;
+# A `stream<SseEvent, error?>` target reads a `text/event-stream` response as Server-Sent Events.
+public type TargetType typedesc<Response|anydata|stream<SseEvent, error?>>;
 
 // Represents HTTP methods.
 public enum Method {
@@ -778,11 +842,13 @@ public isolated class Listener {
 # **Not supported:** `submit`/`getResponse`, HTTP/2 server push methods
 # (`hasPromise`, `getNextPromise`, etc.), and resource function syntax (`client->/path.get(...)`).
 #
-# **Message body:** The `message` parameter accepts `RequestMessage` (`anydata|Request|mime:Entity[]`).
+# **Message body:** The `message` parameter accepts `RequestMessage`
+# (`anydata|Request|mime:Entity[]|stream<byte[], io:Error?>`).
 # The `Content-Type` is inferred when not explicitly overridden via `mediaType`:
 # - `string` → `text/plain`
 # - `xml` → `application/xml`
 # - `byte[]` → `application/octet-stream`
+# - `stream<byte[], io:Error?>` → `application/octet-stream`, sent chunked
 # - `http:Request` → content type and body taken from the request
 # - `mime:Entity[]` → `multipart/form-data`
 # - everything else → serialised as `application/json`
@@ -793,7 +859,8 @@ public isolated class Listener {
 # expected type through the `targetType` parameter. `http:Response` (or any union
 # containing it) yields the raw response; any other `anydata` type is deserialised from
 # the response body according to the `Content-Type` header. An `xml` target is bound from
-# an `application/xml` or `text/xml` body. When there is no contextually expected type
+# an `application/xml` or `text/xml` body, and a `stream<http:SseEvent, error?>` target reads a
+# `text/event-stream` response as Server-Sent Events. When there is no contextually expected type
 # (for example when assigning to
 # `var`), pass the target explicitly: `c->get("/path", targetType = http:Response)`.
 #
