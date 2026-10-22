@@ -61,9 +61,8 @@ public function testMain() returns error? {
     io:println(check floats.getHeader("x-raw-path")); // @output /p/1.0/1.5/-2.75
 
     // Outside [1e-3, 1e7) a float switches to scientific notation, rendered the
-    // way lang.float:toString renders it (jBallerina's client would send
-    // "1.0E10" here, because it formats path segments with Java's
-    // Double.toString rather than with float:toString).
+    // way this port's float:toString renders it (jBallerina sends "1.0E10",
+    // which is what its own float:toString gives).
     http:Response sci = check c->/p/[1.0e10]/[1.0e-7];
     io:println(check sci.getHeader("x-raw-path")); // @output /p/1e10/1e-7
 

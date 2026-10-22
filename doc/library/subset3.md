@@ -227,9 +227,9 @@ An array-valued query parameter is rendered as a single comma-joined pair rather
 Two renderings deliberately differ from jBallerina's wire format, in both cases by preferring the Go-native or language-consistent behaviour over byte-level parity. Each is recorded in the [`http` README](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md) under **Notable Behavioural Changes** and is open to revisiting:
 
 - **Values use Ballerina's `toString`.** jBallerina formats a segment with Java's `String.valueOf`, so a `float` goes out as `Double.toString` gives it — `1.0E10`. Here every segment and query value goes through Ballerina's own `toString`, giving `1e10`. `int`, `boolean`, `decimal` and `string` are identical either way; a whole float still keeps its `.0` and a decimal still keeps its trailing zeros.
-- **Query components are escaped.** jBallerina concatenates the target and lets the transport encode only the space, so a value containing `&` or `=` silently splits into extra parameters. Here keys and values are escaped with `url.QueryEscape`, so such a value stays one parameter — at the cost of a space rendering as `+` rather than `%20`.
+- **Path segments and query components are escaped.** jBallerina concatenates the target and lets the transport encode only the space, so a segment containing `/` splits into two and a query value containing `&` or `=` silently splits into extra parameters. Here segments are escaped with `url.PathEscape` and query keys and values with `url.QueryEscape`, so such a value stays one segment or parameter — at the cost of a query space rendering as `+` rather than `%20`.
 
-Not covered in this subset: the `@http:Query` annotation for renaming a query parameter on the wire.
+Not covered in this subset: the `@http:Query` annotation for renaming a query parameter on the wire, and rest-spread path segments (`client->/p/[...segs]`).
 
 ### Response
 
