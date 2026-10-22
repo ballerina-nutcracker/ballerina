@@ -624,68 +624,45 @@ public class Request {
     }
 }
 
-// Splits `formData` (already percent-decoded) on `&` into name/value pairs delimited by the
-// first `=` in each pair, mirroring jBallerina's `getFormDataMap`. Byte-level scanning is used
-// because this port's `lang.string` has no `indexOf`/`split`; splitting only on the single-byte
-// ASCII delimiters `&` (38) and `=` (61) is safe over decoded UTF-8 text since those byte values
-// never occur inside a multi-byte codepoint. Byte offsets are converted to codepoint offsets
-// before calling `substring` so multi-byte UTF-8 content decodes correctly.
+// Decodes `formData` and then splits it on `&` into name/value pairs delimited by the first `=`
+// in each pair. Decoding before splitting mirrors jBallerina's `getFormParams`, so an encoded
+// `%26` or `%3D` acts as a delimiter there too. A single pass over the UTF-8 bytes tracks the
+// codepoint offset `substring` expects; `&` (38) and `=` (61) never occur inside a multi-byte
+// codepoint.
 isolated function parseFormData(string formData) returns map<string>|error {
     map<string> parameters = {};
     if formData.length() == 0 {
         return parameters;
     }
     string decodedValue = check url:decode(formData, "UTF-8");
-    byte[] allBytes = decodedValue.toBytes();
-    int totalLength = allBytes.length();
-    if indexOfByte(allBytes, 61, 0) == -1 {
+    int entryStart = 0;
+    int equalsIndex = -1;
+    int charIndex = 0;
+    boolean hasEquals = false;
+    foreach byte b in decodedValue.toBytes() {
+        if b == 38 {
+            addFormParam(parameters, decodedValue, entryStart, equalsIndex, charIndex);
+            entryStart = charIndex + 1;
+            equalsIndex = -1;
+        } else if b == 61 && equalsIndex == -1 {
+            equalsIndex = charIndex;
+            hasEquals = true;
+        }
+        if b < 128 || b >= 192 {
+            charIndex += 1;
+        }
+    }
+    if !hasEquals {
         return error("Datasource does not contain form data");
     }
-    int entryStart = 0;
-    while entryStart <= totalLength {
-        int ampIndex = indexOfByte(allBytes, 38, entryStart);
-        int entryEnd = totalLength;
-        if ampIndex != -1 {
-            entryEnd = ampIndex;
-        }
-        int equalsIndex = indexOfByte(allBytes, 61, entryStart);
-        if equalsIndex != -1 && equalsIndex < entryEnd {
-            string name = decodedValue.substring(byteOffsetToCharOffset(allBytes, entryStart),
-                    byteOffsetToCharOffset(allBytes, equalsIndex));
-            string value = decodedValue.substring(byteOffsetToCharOffset(allBytes, equalsIndex + 1),
-                    byteOffsetToCharOffset(allBytes, entryEnd));
-            parameters[name.trim()] = value.trim();
-        }
-        entryStart = entryEnd + 1;
-    }
+    addFormParam(parameters, decodedValue, entryStart, equalsIndex, charIndex);
     return parameters;
 }
 
-isolated function indexOfByte(byte[] data, int target, int startIndex) returns int {
-    int i = startIndex;
-    int len = data.length();
-    while i < len {
-        if data[i] == target {
-            return i;
-        }
-        i += 1;
+isolated function addFormParam(map<string> parameters, string data, int entryStart, int equalsIndex, int entryEnd) {
+    if equalsIndex != -1 {
+        parameters[data.substring(entryStart, equalsIndex).trim()] = data.substring(equalsIndex + 1, entryEnd).trim();
     }
-    return -1;
-}
-
-// Counts UTF-8 lead bytes (values outside the 0x80-0xBF continuation-byte range) up to
-// `byteOffset`, converting a byte-array index into the codepoint index `substring` expects.
-isolated function byteOffsetToCharOffset(byte[] data, int byteOffset) returns int {
-    int charOffset = 0;
-    int i = 0;
-    while i < byteOffset {
-        byte b = data[i];
-        if b < 128 || b >= 192 {
-            charOffset += 1;
-        }
-        i += 1;
-    }
-    return charOffset;
 }
 
 // Represents an HTTP outbound request entity. Accepts any `anydata` value (including `xml`),

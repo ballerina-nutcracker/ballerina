@@ -34,4 +34,11 @@ public function main() returns error? {
     emptyBody.setTextPayload("", contentType = "application/x-www-form-urlencoded");
     map<string> emptyParams = check emptyBody.getFormParams();
     io:println(emptyParams.length()); // @output 0
+
+    // jBallerina decodes the body before splitting, so encoded `&` and `=` act as delimiters.
+    http:Request encodedDelims = new;
+    encodedDelims.setTextPayload("name=a%26b%3Dc&k=v=w&city=%E0%B6%9A%E0%B7%9C%E0%B7%85%E0%B6%B9&z=%20end%20",
+            contentType = "application/x-www-form-urlencoded");
+    map<string> encodedParams = check encodedDelims.getFormParams();
+    io:println(encodedParams); // @output {"name":"a","b":"c","k":"v=w","city":"කොළඹ","z":"end"}
 }
