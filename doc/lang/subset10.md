@@ -13,6 +13,7 @@
 - [Annotation declarations and attachments](https://ballerina.io/spec/lang/master/#section_9.1)
   - Supports source-only, runtime, marker and repeated annotations
   - Supports annotation values evaluated from constant and runtime expressions
+  - Supports `service remote function` annotations on remote methods of service classes and service declarations, including `object function` annotation compatibility
 - [Module variable declarations](https://ballerina.io/spec/lang/master/#module-var-decl)
 - [Module listener declarations](https://ballerina.io/spec/lang/master/#section_8.3.1)
 - [Service declarations](https://ballerina.io/spec/lang/master/#section_8.3.2)
