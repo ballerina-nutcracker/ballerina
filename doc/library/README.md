@@ -10,6 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
+| [data.yaml](../../lib/stdlibs/ballerina/data.yaml/0.0.1/go1.27/README.md)     | 16 | 5 | 2 | 70% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 12 | 36 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
@@ -26,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **281** | **36** | **69** | **73%** |
+| **Total**                                         | **297** | **41** | **71** | **72%** |
 
 ## Notable Behavioural Changes
 
@@ -44,6 +45,22 @@ Consolidated from each package's README. Only permanent divergences are listed h
 ### crypto
 
 - **AES-CBC and AES-ECB always apply PKCS7 padding.** jBallerina selects PKCS5 or no padding based on the `padding` parameter value; the Go-native version always applies PKCS7 padding for CBC and ECB modes regardless of the parameter — Go's `cipher` package does not expose a separate no-padding mode. Programs relying on `NONE` padding will produce incorrect output.
+
+### data.yaml
+
+- **Errors are returned instead of panics.** jBallerina panics with a Java exception for many inputs, such as non-numeric text for an `int`, `float`, `decimal` or `byte` target, a malformed `!!int` or `!!float` value, a `!!str` tag on an empty node, a mapping bound to a list type, two empty documents, a negative `indentationPolicy`, and `()` in a value passed to `toYamlString`; the Go-native version returns a `yaml:Error` for each, and writes `()` as `null`.
+- **Scalars fold and chomp as YAML 1.2 specifies.** jBallerina joins the lines of a double-quoted scalar without a space, drops empty lines from single-quoted, plain and folded scalars, drops leading empty lines and kept trailing lines of block scalars, and misplaces content with an indentation indicator inside a collection; the Go-native version applies the YAML 1.2 rules, so `"x\n  y"` is `x y` rather than `xy`. A block scalar that ends the input still ends with a line break, as in jBallerina.
+- **The escape `\\` is one backslash.** jBallerina turns `\\` in a double-quoted scalar into two backslashes; the Go-native version produces one.
+- **Values at the root of a list target keep their text.** When the target can hold several documents, jBallerina first reads each value as JSON and converts that JSON's text, so `[007, 1.50]` binds to `string[]` as `["7", "1.5"]` and decimals lose precision; the Go-native version converts the YAML text directly, giving `["007", "1.50"]`.
+- **toYamlString quotes strings that would not read back unchanged.** jBallerina writes strings as they are, replaces a newline with the letter `n`, and never escapes embedded quotes, so `""`, `true`, `123`, `a: b` or `- x` come back as different values; the Go-native version writes such strings double-quoted with escapes, and `''` for a single quote inside single quotes.
+- **Tagged values must fit the expected type.** jBallerina stores a value with an `!!int`, `!!float`, `!!bool` or `!!null` tag without checking it, so a `map<int>` can hold `true`; the Go-native version reports the value as incompatible. It also accepts `!!seq` and `!!map` on matching collections, which jBallerina rejects.
+- **Integer subtype ranges are checked on the full value.** jBallerina checks the `int:Signed8`, `int:Signed16`, `int:Unsigned8` and `int:Unsigned16` ranges on the value truncated to 32 bits; the Go-native version rejects any value outside the range.
+- **A map or rest field value that does not convert is dropped.** jBallerina drops such a value unless the conversion fails with a number format exception, in which case it panics; the Go-native version drops every value that does not convert.
+- **An empty value for a non-nilable type is an error.** jBallerina stores `()` for `a:` whatever the field type; the Go-native version reports it as incompatible unless the type allows nil.
+- **An error from the source stream is returned.** jBallerina's `parseStream` ignores an error from the byte-block stream and parses the bytes read so far; the Go-native version returns `Error occurred while reading the stream: ` followed by the stream's error message.
+- **A leading byte-order mark is ignored.** jBallerina rejects input that starts with U+FEFF; the Go-native version skips it.
+- **More valid YAML is accepted.** jBallerina rejects an anchor on a flow collection used as a mapping value, a second explicit `?` key in a mapping, an empty mapping value at the end of the input, and anonymous read-only record types; the Go-native version accepts them. A merge key `<<` is read as an ordinary key rather than causing an error, since neither version merges mappings.
+- **Tuple reordering matches documents by conversion.** With `enableYamlStreamReorder`, jBallerina matches a document to a tuple member by comparing Java type hashes; the Go-native version gives each document to the first unfilled member it converts to, which gives the same result for record and basic member types.
 
 ### file
 
