@@ -18,7 +18,10 @@ package native
 
 import (
 	"errors"
+	"io"
+	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -47,5 +50,45 @@ func TestBuildRequestFromHTTPBodyReadError(t *testing.T) {
 	}
 	if err.Error() != "connection reset" {
 		t.Fatalf("buildRequestFromHTTP: expected the underlying read error to propagate, got %q", err)
+	}
+}
+
+// TestBufferedRelayBodyReadError covers a relayed body short enough to be buffered whose backend
+// fails mid-body: the read error fails the response, before or after its headers are sent. In
+// jBallerina no module service backend makes such a relay fail, so it is not a corpus test.
+func TestBufferedRelayBodyReadError(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		received string
+		sent     bool
+	}{{"", false}, {"abcdefg", true}} {
+		body := io.NopCloser(io.MultiReader(strings.NewReader(tc.received), failingReadCloser{}))
+		holder := eagerBufferResponse(map[string][]string{"Content-Length": {"100"}}, body)
+		rec := httptest.NewRecorder()
+		dw := &deferredHeaderWriter{ResponseWriter: rec, status: http.StatusOK}
+		if err := holder.writeStream(dw, false, 0); err == nil {
+			t.Fatalf("received %q: expected the read error, got nil", tc.received)
+		}
+		if dw.sent != tc.sent {
+			t.Fatalf("received %q: headers sent = %v, want %v", tc.received, dw.sent, tc.sent)
+		}
+		if rec.Body.String() != tc.received {
+			t.Fatalf("received %q: wrote %q", tc.received, rec.Body.String())
+		}
+	}
+}
+
+// TestWriteBodyFailure checks the bare 500 drops the headers the service set.
+func TestWriteBodyFailure(t *testing.T) {
+	t.Parallel()
+	rec := httptest.NewRecorder()
+	rec.Header().Set("X-Svc", "set")
+	rec.Header().Set("Content-Length", "100")
+	writeBodyFailure(rec, httptest.NewRequest("GET", "/", nil))
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want 500", rec.Code)
+	}
+	if got := rec.Header(); len(got) != 2 || got.Get("Content-Length") != "0" || got.Get("Connection") != "close" {
+		t.Fatalf("headers = %v, want only Content-Length: 0 and Connection: close", got)
 	}
 }
