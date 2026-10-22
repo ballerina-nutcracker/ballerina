@@ -1,0 +1,91 @@
+# Ballerina Data YAML Library
+
+## Overview
+
+The `data.yaml` module converts between YAML and Ballerina values. It parses YAML text, bytes and byte-block streams into the `anydata` subtype inferred from the call site, binding records, maps, arrays, tuples, unions and scalars with optional data projection, and writes `anydata` values as YAML in block or flow style. It supports the failsafe, JSON and core schemas, anchors and aliases, explicit tags, YAML streams of several documents, field name annotations and constraint validation. The Go Native Interpreter currently supports parsing, binding and writing, with field name annotations limited to the record type the typedesc names and without constraint validation.
+
+## Key Functionalities
+
+- Parse a YAML string, byte array or byte-block stream into records, maps, arrays, tuples, unions, scalars, `json` or `anydata`.
+- Read block and flow collections, every scalar style, comments, anchors and aliases, explicit tags, directives and several documents.
+- Bind several documents to a list or tuple, optionally matching documents to tuple members by type.
+- Control data projection, nil handling, anchor redefinition and duplicate keys.
+- Write a value as YAML with configurable indentation, flow style, quoting, canonical tags and document streams.
+
+## Examples
+
+```ballerina
+import ballerina/data.yaml;
+import ballerina/io;
+
+type Server record {|
+    string host;
+    int port;
+    string[] tags;
+|};
+
+public function main() returns error? {
+    Server server = check yaml:parseString(string `host: localhost
+port: 8080
+tags: [api, v1]`);
+    io:println(server);
+
+    int[] documents = check yaml:parseString("--- 1\n--- 2");
+    io:println(documents);
+
+    io:println(check yaml:toYamlString({name: "demo", ports: [80, 443]}));
+}
+```
+
+## Go Native Interpreter Support Status
+
+This library is currently being migrated to Go to support the Ballerina Native Interpreter. The table below outlines the current support level for various features of this library in the Go implementation.
+
+Support Levels:
+
+- **Supported**: Fully implemented and tested in the Go version.
+- **Partially Supported**: Implemented but lacking some edge cases, options, or sub-features. (See comments).
+- **Not Yet Supported**: Planned for migration, but not yet implemented.
+- **Cannot Support**: Cannot be implemented in the Go version due to technical limitations or architectural differences. (See comments).
+
+| Feature/API | Support Status | Comments / Limitations |
+|---|---|---|
+| Parse a YAML string | Supported | `parseString` |
+| Parse a byte array | Supported | `parseBytes` decodes UTF-8 and replaces malformed bytes with U+FFFD, as jBallerina's default charset does. |
+| Parse a byte-block stream | Supported | `parseStream` |
+| Write a value as YAML | Supported | `toYamlString`. As in jBallerina, `blockLevel` and `schema` of `WriteConfig` have no effect. |
+| Block and flow collections, scalar styles, comments and documents | Supported | |
+| Anchors and aliases | Supported | `allowAnchorRedefinition` |
+| Explicit tags | Supported | As in jBallerina, only `!!str`, `!!int`, `!!float`, `!!bool`, `!!null`, `!!seq` and `!!map` are accepted, and the failsafe schema accepts none. |
+| Directives | Supported | As in jBallerina, a `%TAG` directive may only name the `tag:yaml.org,2002:` prefix. |
+| Explicit keys | Supported | As in jBallerina, a key must be a scalar. |
+| Schemas | Supported | `FAILSAFE_SCHEMA`, `JSON_SCHEMA`, `CORE_SCHEMA`. As in jBallerina, untagged scalars are converted by the expected type, and the schema decides which plain words a string may not be. |
+| Record targets | Partially Supported | Open, closed, optional, nilable and rest fields are supported. Field default values are not filled in, so a defaulted field without a key is reported as missing (ballerina-nutcracker/ballerina#1378), and declared fields follow the key order rather than the declaration order (ballerina-nutcracker/ballerina#1381). |
+| Map, array, tuple, json and anydata targets | Supported | |
+| Union targets | Partially Supported | Scalars try the members in jBallerina's priority order. Collections try the members in a fixed order instead of the declaration order, which native code cannot see (ballerina-nutcracker/ballerina#1380). |
+| Read-only targets | Supported | |
+| Several documents | Supported | A list, tuple, `json`, `anydata` or union with such a member binds every document; any other type binds the first. |
+| Data projection options | Supported | `allowDataProjection`, `nilAsOptionalField`, `absentAsNilableType`, `enableYamlStreamReorder` |
+| Duplicate keys | Supported | `allowMapEntryRedefinition` |
+| Field name annotation | Partially Supported | `@yaml:Name` renames fields of the record type a typedesc names, such as `yaml:parseString(s, {}, Person)`. An inferred typedesc, and records nested in the target, carry no field annotations (ballerina-nutcracker/ballerina#1136, ballerina-nutcracker/ballerina#1379). |
+| Constraint validation | Not Yet Supported | `enableConstraintValidation` is accepted and ignored until `ballerina/constraint` is ported (ballerina-nutcracker/ballerina#732). |
+| Compile-time validation of target types | Not Yet Supported | The jBallerina compiler plugin diagnostics are not emitted. An inferred target type that is not a subtype of `anydata` is not rejected at compile time (ballerina-nutcracker/ballerina#1388). |
+| Type names in error messages | Partially Supported | Types are shown in their structural form, such as `{\| int... \|}` for `map<int>`, because declared type names are not available at runtime (ballerina-nutcracker/ballerina#1354). |
+| Syntax error messages | Partially Supported | Errors use jBallerina's messages and line and column format, but the position, and for some malformed inputs the message, can differ because the parser is a separate implementation. |
+| Module error type | Supported | `yaml:Error` is a `distinct` error, as in jBallerina. |
+
+### Notable Behavioural Changes
+
+- **Errors are returned instead of panics.** jBallerina panics with a Java exception for many inputs, such as non-numeric text for an `int`, `float`, `decimal` or `byte` target, a malformed `!!int` or `!!float` value, a `!!str` tag on an empty node, a mapping bound to a list type, two empty documents, a negative `indentationPolicy`, and `()` in a value passed to `toYamlString`; the Go-native version returns a `yaml:Error` for each, and writes `()` as `null`.
+- **Scalars fold and chomp as YAML 1.2 specifies.** jBallerina joins the lines of a double-quoted scalar without a space, drops empty lines from single-quoted, plain and folded scalars, drops leading empty lines and kept trailing lines of block scalars, and misplaces content with an indentation indicator inside a collection; the Go-native version applies the YAML 1.2 rules, so `"x\n  y"` is `x y` rather than `xy`. A block scalar that ends the input still ends with a line break, as in jBallerina.
+- **The escape `\\` is one backslash.** jBallerina turns `\\` in a double-quoted scalar into two backslashes; the Go-native version produces one.
+- **Values at the root of a list target keep their text.** When the target can hold several documents, jBallerina first reads each value as JSON and converts that JSON's text, so `[007, 1.50]` binds to `string[]` as `["7", "1.5"]` and decimals lose precision; the Go-native version converts the YAML text directly, giving `["007", "1.50"]`.
+- **toYamlString quotes strings that would not read back unchanged.** jBallerina writes strings as they are, replaces a newline with the letter `n`, and never escapes embedded quotes, so `""`, `true`, `123`, `a: b` or `- x` come back as different values; the Go-native version writes such strings double-quoted with escapes, and `''` for a single quote inside single quotes.
+- **Tagged values must fit the expected type.** jBallerina stores a value with an `!!int`, `!!float`, `!!bool` or `!!null` tag without checking it, so a `map<int>` can hold `true`; the Go-native version reports the value as incompatible. It also accepts `!!seq` and `!!map` on matching collections, which jBallerina rejects.
+- **Integer subtype ranges are checked on the full value.** jBallerina checks the `int:Signed8`, `int:Signed16`, `int:Unsigned8` and `int:Unsigned16` ranges on the value truncated to 32 bits; the Go-native version rejects any value outside the range.
+- **A map or rest field value that does not convert is dropped.** jBallerina drops such a value unless the conversion fails with a number format exception, in which case it panics; the Go-native version drops every value that does not convert.
+- **An empty value for a non-nilable type is an error.** jBallerina stores `()` for `a:` whatever the field type; the Go-native version reports it as incompatible unless the type allows nil.
+- **An error from the source stream is returned.** jBallerina's `parseStream` ignores an error from the byte-block stream and parses the bytes read so far; the Go-native version returns `Error occurred while reading the stream: ` followed by the stream's error message.
+- **A leading byte-order mark is ignored.** jBallerina rejects input that starts with U+FEFF; the Go-native version skips it.
+- **More valid YAML is accepted.** jBallerina rejects an anchor on a flow collection used as a mapping value, a second explicit `?` key in a mapping, an empty mapping value at the end of the input, and anonymous read-only record types; the Go-native version accepts them. A merge key `<<` is read as an ordinary key rather than causing an error, since neither version merges mappings.
+- **Tuple reordering matches documents by conversion.** With `enableYamlStreamReorder`, jBallerina matches a document to a tuple member by comparing Java type hashes; the Go-native version gives each document to the first unfilled member it converts to, which gives the same result for record and basic member types.
