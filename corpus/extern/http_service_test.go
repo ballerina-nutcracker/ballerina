@@ -117,6 +117,7 @@ func TestHttpServiceRequestAccessors(t *testing.T) {
 // body sent by the client.
 func TestHttpServiceMultipartRequest(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-multipart-request-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
@@ -135,6 +136,7 @@ func TestHttpServiceRequestMutators(t *testing.T) {
 // body sent by the server.
 func TestHttpServiceMultipartResponse(t *testing.T) {
 	skipIfNoLoopback(t)
+	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-multipart-response-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
