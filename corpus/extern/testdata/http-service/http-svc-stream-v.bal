@@ -16,6 +16,7 @@
 
 import ballerina/http;
 import ballerina/io;
+import ballerina/lang.runtime;
 
 class Chunks {
     private final string[] parts;
@@ -99,6 +100,28 @@ class FailingEvents {
     }
 }
 
+class Ticks {
+    private final int count;
+    private final decimal gap;
+    private int sent = 0;
+
+    isolated function init(int count, decimal gap) {
+        self.count = count;
+        self.gap = gap;
+    }
+
+    public isolated function next() returns record {|http:SseEvent value;|}|error? {
+        if self.sent >= self.count {
+            return;
+        }
+        if self.sent > 0 {
+            runtime:sleep(self.gap);
+        }
+        self.sent += 1;
+        return {value: {data: self.sent.toString()}};
+    }
+}
+
 class Numbers {
     public isolated function next() returns record {|int value;|}? {
         return;
@@ -138,6 +161,14 @@ service /streams on new http:Listener(19503) {
 
     resource function get failing() returns stream<http:SseEvent, error?> {
         return new (new FailingEvents());
+    }
+
+    resource function get ticks() returns stream<http:SseEvent, error?> {
+        return new (new Ticks(5, 0.2));
+    }
+
+    resource function get stalled() returns stream<http:SseEvent, error?> {
+        return new (new Ticks(2, 1.5));
     }
 
     resource function get numbers() returns stream<int> {
@@ -184,6 +215,24 @@ public function testMain() returns error? {
     http:Response failing = check c->get("/failing");
     // @output ["data: ok\n\nevent: error\ndata: db down\n\n"]
     io:println([check failing.getTextPayload()]);
+
+    // The client timeout is an idle timeout: a stream that keeps delivering outlives it, and
+    // one that stalls for longer fails.
+    http:Client impatient = check new ("http://localhost:19503/streams", {timeout: 0.5});
+    stream<http:SseEvent, error?> ticks = check impatient->get("/ticks");
+    int received = 0;
+    record {|http:SseEvent value;|}? tick = check ticks.next();
+    while tick is record {|http:SseEvent value;|} {
+        received += 1;
+        tick = check ticks.next();
+    }
+    io:println(received); // @output 5
+
+    stream<http:SseEvent, error?> stalled = check impatient->get("/stalled");
+    io:println(check stalled.next()); // @output {"value":{"data":"1"}}
+    record {|http:SseEvent value;|}|error? afterStall = stalled.next();
+    // @output Error occurred while reading stream: Idle timeout triggered while reading inbound response entity body
+    io:println(afterStall is error ? afterStall.message() : "no timeout");
 
     http:Response numbers = check c->get("/numbers");
     io:println(numbers.statusCode); // @output 500
