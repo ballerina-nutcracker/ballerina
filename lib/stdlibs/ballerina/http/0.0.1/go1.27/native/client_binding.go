@@ -57,6 +57,9 @@ func bindResponse(ctx *extern.Context, types *httpTypes, resp *values.Object, ta
 	if statusCode >= 400 && statusCode <= 599 {
 		return statusCodeError(ctx, types, resp, statusCode)
 	}
+	if !semtypes.IsSubtype(tc, target, types.anydataTy) {
+		return bindEventStream(ctx, resp, targetArg)
+	}
 	result := performDataBinding(ctx, types, resp, target)
 	if _, failed := result.(*values.Error); failed {
 		// A mismatch error (e.g. incompatibleTargetError) can return
