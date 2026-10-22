@@ -74,6 +74,16 @@ public function main() returns error? {
     });
     show("will qos", willClient); // @output will qos: Invalid QoS value: 5. Allowed values are 0, 1 and 2 (mqtt:Error=true)
 
+    mqtt:Client|mqtt:Error configClient = new (mqtt:DEFAULT_URL, "validation-v-config", connectionConfig = {keepAliveInterval: -1});
+    show("negative keep alive", configClient); // @output negative keep alive: Invalid keep alive interval: -1. Allowed values are 0 to 65535 (mqtt:Error=true)
+    configClient = new (mqtt:DEFAULT_URL, "validation-v-config", connectionConfig = {keepAliveInterval: 65536});
+    show("keep alive overflow", configClient); // @output keep alive overflow: Invalid keep alive interval: 65536. Allowed values are 0 to 65535 (mqtt:Error=true)
+    configClient = new (mqtt:DEFAULT_URL, "validation-v-config", connectionConfig = {connectionTimeout: -1});
+    show("negative connection timeout", configClient); // @output negative connection timeout: Invalid connection timeout: -1. The value must not be negative (mqtt:Error=true)
+    mqtt:Listener|mqtt:Error configListener = new (mqtt:DEFAULT_URL, "validation-v-config-listener", "validation-v/t",
+        connectionConfig = {keepAliveInterval: -1});
+    show("listener negative keep alive", configListener); // @output listener negative keep alive: Invalid keep alive interval: -1. Allowed values are 0 to 65535 (mqtt:Error=true)
+
     mqtt:Listener|mqtt:Error lsnr = new (mqtt:DEFAULT_URL, "validation-v-listener", "validation-v/a/#/b");
     if lsnr is mqtt:Listener {
         check lsnr.attach(new Svc());

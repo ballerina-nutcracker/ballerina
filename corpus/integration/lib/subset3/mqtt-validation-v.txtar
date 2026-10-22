@@ -11,5 +11,9 @@ subscription qos 3: Invalid QoS value: 3. Allowed values are 0, 1 and 2 (mqtt:Er
 valid filters: ok
 will topic: The topic name MUST NOT contain any wildcard characters (#+) (mqtt:Error=true)
 will qos: Invalid QoS value: 5. Allowed values are 0, 1 and 2 (mqtt:Error=true)
+negative keep alive: Invalid keep alive interval: -1. Allowed values are 0 to 65535 (mqtt:Error=true)
+keep alive overflow: Invalid keep alive interval: 65536. Allowed values are 0 to 65535 (mqtt:Error=true)
+negative connection timeout: Invalid connection timeout: -1. The value must not be negative (mqtt:Error=true)
+listener negative keep alive: Invalid keep alive interval: -1. Allowed values are 0 to 65535 (mqtt:Error=true)
 listener start: Invalid usage of multi-level wildcard in topic string: validation-v/a/#/b (mqtt:Error=true)
 -- stderr --

@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"math"
 	"net"
 	"net/url"
 	"strings"
@@ -145,9 +146,15 @@ func (opts *connectionOptions) applyConnectionConfig(platform pal.Platform, conn
 		opts.maxReconnectDelay = time.Duration(delay) * time.Millisecond
 	}
 	if keepAlive, ok := mapInt(connConfig, "keepAliveInterval"); ok {
+		if keepAlive < 0 || keepAlive > math.MaxUint16 {
+			return newError(fmt.Sprintf("Invalid keep alive interval: %d. Allowed values are 0 to %d", keepAlive, math.MaxUint16))
+		}
 		opts.keepAlive = uint16(keepAlive)
 	}
 	if timeout, ok := mapInt(connConfig, "connectionTimeout"); ok {
+		if timeout < 0 {
+			return newError(fmt.Sprintf("Invalid connection timeout: %d. The value must not be negative", timeout))
+		}
 		opts.connectTimeout = time.Duration(timeout) * time.Second
 	}
 	if cleanStart, ok := mapBool(connConfig, "cleanStart"); ok {

@@ -89,7 +89,7 @@ Support Levels:
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
 | Username and password authentication | Supported | |
-| Connection options | Supported | `keepAliveInterval`, `connectionTimeout`, `cleanStart`, `serverUris`, `automaticReconnect` and `maxReconnectDelay`. |
+| Connection options | Supported | `keepAliveInterval`, `connectionTimeout`, `cleanStart`, `serverUris`, `automaticReconnect` and `maxReconnectDelay`. A negative `keepAliveInterval` or `connectionTimeout`, or a `keepAliveInterval` above 65535, returns an `mqtt:Error`. |
 | TLS with a trusted certificate file | Supported | `SecureSocket.cert` as a PEM certificate file path. |
 | Mutual TLS with a certificate and key file | Partially Supported | `SecureSocket.key` as an `mqtt:CertKey` with an unencrypted PEM key. Encrypted private keys (`keyPassword` on an encrypted key) are not supported yet; see [#1338](https://github.com/ballerina-nutcracker/ballerina/issues/1338). |
 | TLS with a trust store or key store | Not Yet Supported | `crypto:TrustStore` as `SecureSocket.cert` and `crypto:KeyStore` as `SecureSocket.key` return an `mqtt:Error`; see [#1338](https://github.com/ballerina-nutcracker/ballerina/issues/1338). |
