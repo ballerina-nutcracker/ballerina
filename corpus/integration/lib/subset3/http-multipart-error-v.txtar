@@ -2,5 +2,5 @@
 true
 Error occurred while retrieving body parts from the request
 true
-Error occurred while retrieving body parts from the response
+Error occurred while retrieving body parts from the response: Entity body is not a type of composite media type. Received content-type : text/plain
 -- stderr --

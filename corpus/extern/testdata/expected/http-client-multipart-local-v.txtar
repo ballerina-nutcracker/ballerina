@@ -6,4 +6,7 @@ multipart/mixed
 multipart/mixed count=1 1:hello world
 multipart/mixed count=1 1:hello world
 multipart/related count=1 1:hello world
+multipart/mixed count=1 1:hello world
+multipart/form-data count=1 1:after
+failed to encode multipart body: bogus-cs
 -- stderr --
