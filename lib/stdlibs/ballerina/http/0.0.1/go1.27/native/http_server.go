@@ -630,12 +630,17 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 				"unexpected return type from resource method")
 			return
 		}
-		if holder.parts != nil && holder.readErr != nil {
-			writeErrorJSON(rt, w, r, http.StatusInternalServerError,
-				"failed to encode multipart body: "+holder.readErr.Error())
-			return
+		wireContentType := ""
+		if holder.parts != nil {
+			data, ct, err := encodeMultipartBody(ctx, holder.parts, responseContentType(v))
+			if err != nil {
+				writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Error())
+				return
+			}
+			holder = &responseBodyHolder{buf: data}
+			wireContentType = ct
 		}
-		writeResponseObject(w, v, holder)
+		writeResponseObject(w, v, holder, wireContentType)
 	default:
 		writeAnydataResult(rt, ctx, types, w, r, accessor, v)
 	}
@@ -657,7 +662,7 @@ func responseBodyOf(obj *values.Object) (*responseBodyHolder, bool) {
 // resource reached by a POST stays 200 — matching jBallerina.
 func writeAnydataResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 	w http.ResponseWriter, r *http.Request, accessor string, v values.BalValue) {
-	body, contentType, err := outboundPayload(ctx, types, v)
+	body, contentType, err := outboundPayload(ctx, types, v, "")
 	if err != nil {
 		writeErrorJSON(rt, w, r, http.StatusInternalServerError,
 			"failed to serialize resource return value: "+err.Error())
@@ -674,7 +679,9 @@ func writeAnydataResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTyp
 	_, _ = w.Write(body)
 }
 
-func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *responseBodyHolder) {
+// wireContentType, when non-empty, replaces the Content-Type header, carrying the boundary a
+// multipart body was encoded with.
+func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *responseBodyHolder, wireContentType string) {
 	statusCodeVal, _ := resp.Get("statusCode")
 	statusCode := http.StatusOK
 	// Go's WriteHeader panics outside [100, 999]; fall back to 200 for an
@@ -707,8 +714,8 @@ func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *res
 			}
 		}
 	}
-	if ct := w.Header().Get("Content-Type"); ct != "" && holder.boundary != "" {
-		w.Header().Set("Content-Type", holder.wireContentType(ct))
+	if wireContentType != "" {
+		w.Header().Set("Content-Type", wireContentType)
 	}
 	// WriteHeader must be called before writing the body; once body bytes
 	// start flowing via writeStream, headers are already committed, so a write error here

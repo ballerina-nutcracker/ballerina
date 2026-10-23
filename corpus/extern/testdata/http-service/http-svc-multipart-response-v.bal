@@ -35,6 +35,23 @@ service /multiparts on new http:Listener(19502) {
         resp.setBodyParts([textPart, jsonPart]);
         return resp;
     }
+
+    resource function get ownBoundary() returns http:Response {
+        mime:Entity part = new;
+        part.setText("own boundary");
+        http:Response resp = new;
+        resp.setBodyParts([part]);
+        resp.setHeader("Content-Type", "multipart/mixed; boundary=zz");
+        return resp;
+    }
+
+    resource function get bogus() returns http:Response {
+        mime:Entity part = new;
+        part.setText("x", "text/plain; charset=bogus-cs");
+        http:Response resp = new;
+        resp.setBodyParts([part]);
+        return resp;
+    }
 }
 
 public function testMain() returns error? {
@@ -46,4 +63,14 @@ public function testMain() returns error? {
     io:println(check parts[0].getText()); // @output server part
     map<json> j = <map<json>>check parts[1].getJson();
     io:println(j["ok"]); // @output true
+
+    r = check c->get("/multiparts/ownBoundary");
+    io:println(r.getContentType()); // @output multipart/mixed; boundary=zz
+    mime:Entity[] ownParts = check r.getBodyParts();
+    io:println(check ownParts[0].getText()); // @output own boundary
+
+    r = check c->get("/multiparts/bogus");
+    io:println(r.statusCode); // @output 500
+    map<json> errBody = <map<json>>check r.getJsonPayload();
+    io:println(errBody["message"]); // @output failed to encode multipart body: bogus-cs
 }

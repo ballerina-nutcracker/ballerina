@@ -52,5 +52,21 @@ public function main() returns error? {
 
     r = check c->execute("POST", "/echo-multipart", [textPart], headers = {"Content-Type": "multipart/related"});
     io:println(check r.getTextPayload()); // @output multipart/related count=1 1:hello world
+
+    r = check c->post("/echo-multipart", [textPart], mediaType = "multipart/mixed; boundary=myb");
+    io:println(check r.getTextPayload()); // @output multipart/mixed count=1 1:hello world
+
+    mime:Entity editedPart = new;
+    editedPart.setText("before");
+    http:Request editedReq = new;
+    editedReq.setBodyParts([editedPart]);
+    editedPart.setText("after");
+    r = check c->post("/echo-multipart", editedReq);
+    io:println(check r.getTextPayload()); // @output multipart/form-data count=1 1:after
+
+    mime:Entity badPart = new;
+    badPart.setText("x", "text/plain; charset=bogus-cs");
+    http:Response|error badResult = c->post("/echo-multipart", [badPart]);
+    io:println(badResult is error ? badResult.message() : "sent"); // @output failed to encode multipart body: bogus-cs
     return;
 }
