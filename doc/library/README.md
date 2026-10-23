@@ -9,7 +9,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | Package                                           | Supported | Partially Supported | Not Yet Supported | Support % |
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
-| [cache](../../lib/stdlibs/ballerina/cache/0.0.1/go1.27/README.md)             | 16 | 0 | 0 | 94% |
+| [cache](../../lib/stdlibs/ballerina/cache/0.0.1/go1.27/README.md)             | 16 | 0 | 1 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 12 | 36 | 38% |
@@ -27,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **297** | **36** | **69** | **74%** |
+| **Total**                                         | **297** | **36** | **70** | **74%** |
 
 ## Notable Behavioural Changes
 
@@ -44,7 +44,6 @@ Consolidated from each package's README. Only permanent divergences are listed h
 
 ### cache
 
-- **Invalid literal configurations fail at run time instead of compile time.** jBallerina's compiler plugin rejects a cache declared with an invalid literal `capacity`, `evictionFactor`, `defaultMaxAge`, `cleanupInterval` or `evictionPolicy` (diagnostics `CACHE_101` to `CACHE_105`); the Go-native interpreter has no compiler plugins, so the same configuration compiles and `Cache.init` panics with the validation message. The plugin also rejects the valid `cache:CacheConfig c = {evictionPolicy: cache:LRU};` with `CACHE_105` because it compares the source text with the constant's value; the Go-native version accepts it.
 - **Keys are listed from least to most recently used.** jBallerina returns `keys()` in the iteration order of a Java `ConcurrentHashMap`, which depends on key hashes and was never specified; the Go-native version returns them in recency order.
 - **Capacities above the 32-bit range are honoured.** jBallerina narrows `capacity` to a Java `int`, so `capacity = 4294967297` behaves as a capacity of 1 during eviction while `capacity()` still returns 4294967297; the Go-native version uses the full `int` value.
 

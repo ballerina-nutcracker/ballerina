@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `ballerina/cache` library provides an in-memory, LRU-evicting key-value cache with per-entry and default expiry and an optional periodic cleanup task, plus an abstract cache object type for custom implementations. The Go Native Interpreter supports the whole runtime API; only jBallerina's compile-time validation of literal cache configurations is not available.
+The `ballerina/cache` library provides an in-memory, LRU-evicting key-value cache with per-entry and default expiry and an optional periodic cleanup task, plus an abstract cache object type for custom implementations. The Go Native Interpreter supports the whole runtime API; jBallerina's compile-time validation of literal cache configurations is not yet supported.
 
 ## Key Functionalities
 
@@ -55,7 +55,7 @@ Support Levels:
 | Cache configuration record | Supported | `cache:CacheConfig`; the fields carry no `@constraint` annotations because `ballerina/constraint` is not yet ported — `Cache.init` checks the same bounds itself |
 | Eviction policy | Supported | `cache:EvictionPolicy` with `LRU` |
 | Cache creation and configuration validation | Supported | An invalid configuration panics with the `constraint:validate` message jBallerina produces, e.g. `Validation failed for '$.capacity:minValue' constraint(s).` |
-| Compile-time configuration validation | Cannot Support | jBallerina's compiler plugin (`CACHE_101`–`CACHE_105`) has no equivalent; see Notable Behavioural Changes |
+| Compile-time configuration validation | Not Yet Supported | jBallerina's compiler plugin (`CACHE_101`–`CACHE_105`) needs compiler plugin support in the interpreter; until then an invalid literal configuration compiles and `Cache.init` panics with the validation message at run time |
 | Add an entry | Supported | `put`; a `()` value returns a `cache:Error` |
 | Read an entry | Supported | `get`; marks the entry most recently used and removes it if it has expired |
 | Discard an entry | Supported | `invalidate` |
@@ -70,6 +70,5 @@ Support Levels:
 
 ### Notable Behavioural Changes
 
-- **Invalid literal configurations fail at run time instead of compile time.** jBallerina's compiler plugin rejects a cache declared with an invalid literal `capacity`, `evictionFactor`, `defaultMaxAge`, `cleanupInterval` or `evictionPolicy` (diagnostics `CACHE_101` to `CACHE_105`); the Go-native interpreter has no compiler plugins, so the same configuration compiles and `Cache.init` panics with the validation message. The plugin also rejects the valid `cache:CacheConfig c = {evictionPolicy: cache:LRU};` with `CACHE_105` because it compares the source text with the constant's value; the Go-native version accepts it.
 - **Keys are listed from least to most recently used.** jBallerina returns `keys()` in the iteration order of a Java `ConcurrentHashMap`, which depends on key hashes and was never specified; the Go-native version returns them in recency order.
 - **Capacities above the 32-bit range are honoured.** jBallerina narrows `capacity` to a Java `int`, so `capacity = 4294967297` behaves as a capacity of 1 during eviction while `capacity()` still returns 4294967297; the Go-native version uses the full `int` value.
