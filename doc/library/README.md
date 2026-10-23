@@ -29,7 +29,8 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                                                     | **291** | **36** | **73** | **73%** |
+| [zip](../../lib/stdlibs/ballerina/zip/0.0.1/go1.27/README.md)                 | 26 | 1 | 0 | 96% |
+| **Total**                                                                     | **317** | **37** | **73** | **74%** |
 
 <!-- END stdlib-coverage-table -->
 
@@ -182,6 +183,11 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **`toString` and `toBytes` reject a `Uuid` record whose `node` is not an unsigned 48-bit integer.** jBallerina's `toString` formats a negative or oversized node verbatim and returns a string that is not a valid UUID, and `toBytes` then fails with `Invalid UUID string provided`; the Go-native version returns a `uuid:Error` stating that the node must be an unsigned 48-bit integer (wrapped in `Failed to convert UUID record to a string` for `toBytes`).
 - **`toString` and `toBytes` zero-pad every field of a `Uuid` record to its full width.** jBallerina pads `timeLow` to 8 hex digits and `node` to 12, but `timeMid` and `timeHiAndVersion` to only 2 and the clock-sequence bytes not at all, so `toString({timeLow: 1, timeMid: 2, timeHiAndVersion: 3, clockSeqHiAndReserved: 4, clockSeqLo: 5, node: 6})` returns `00000001-02-03-45-000000000006`, which is not a valid UUID, and `toBytes` on the same record fails with `Invalid UUID string provided`. The Go-native version pads `timeMid` and `timeHiAndVersion` to 4 hex digits and each clock-sequence byte to 2, so `toString` returns `00000001-0002-0003-0405-000000000006` and `toBytes` succeeds.
 - **`createType5AsRecord` error message names type 5.** When `createType5AsString` fails, jBallerina wraps the cause in `Failed to create UUID of type 3` (a copy-paste error); the Go-native version uses `Failed to create UUID of type 5`.
+
+### zip
+
+- **Compressed output differs.** jBallerina deflates entries with zlib; the Go-native version uses Go's `compress/flate`, which encodes the same content at the same level into different bytes — the content and CRC-32 of each entry are the same, but `compressedSize` and the size of the archive are not, and for very small entries the Go output is a few bytes larger.
+- **Extraction limits on deflated entries stop at a different point.** jBallerina inflates a deflated entry 512 compressed bytes at a time and judges `maxTotalSize` and `maxCompressionRatio` against whatever each step produces; the Go-native version judges each full 8 KiB of output — both stop with the same `LimitExceededError` and message, but a deflated entry can trip a ratio limit after a different number of bytes, and the partial file a `maxTotalSize` limit leaves behind can be a different size or absent. Stored entries stop at the same point.
 
 The remaining packages (`math.vector`, `url`) have **no** notable behavioural changes compared to the original jBallerina implementation for their currently supported features.
 
