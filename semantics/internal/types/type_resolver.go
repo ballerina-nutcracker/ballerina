@@ -923,7 +923,7 @@ func ResolvePrivateNodes(
 		for _, fieldNode := range fields {
 			field := fieldNode
 			if field.Expr != nil {
-				resolveActionOrExpressionWithNamedTypes(ft, nil, field.Expr.(ast.BLangExpression), field.TypeNode().Type(), common.NamedTypes(field.TypeNode()))
+				resolveWithNamedTypes(ft, nil, field.Expr.(ast.BLangExpression), field.TypeNode().Type(), ft.compilerContext().DeclaredNamedTypes(field.Symbol()))
 			}
 		}
 		maps.Copy(allImports, ft.implicitImports)
@@ -1205,7 +1205,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl, span co
 	}
 	if !isPolymorphicFnSymbol(fnSym) {
 		ft.retTy = fnSym.TypedSignature().ReturnType
-		ft.retNamedTypes = common.NamedTypes(fn.ReturnType())
+		ft.retNamedTypes = sigReturnNamedTypes(p, fn.Symbol())
 	}
 	body := fn.GetBody()
 	if body == nil {
@@ -1218,7 +1218,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl, span co
 	case *ast.BLangBlockFunctionBody:
 		resolveBlockFunctionBody(ft, nil, body)
 	case *ast.BLangExprFunctionBody:
-		resolveActionOrExpressionWithNamedTypes(ft, nil, body.Expr, ft.retTy, ft.retNamedTypes)
+		resolveWithNamedTypes(ft, nil, body.Expr, ft.retTy, ft.retNamedTypes)
 	default:
 		p.internalError("unexpected function body kind", body.GetPosition())
 	}
@@ -1934,7 +1934,7 @@ func resolveAssignment(t typeResolver, chain *binding, s assignmentNode) (statem
 		}
 		lhsTy = lhsResult.ty
 	}
-	rhsResult, ok := resolveActionOrExpressionWithNamedTypes(t, chain, s.GetExpression(), lhsTy, assignedNamedTypes(t, s.GetVariable()))
+	rhsResult, ok := resolveWithNamedTypes(t, chain, s.GetExpression(), lhsTy, assignedNamedTypes(t, s.GetVariable()))
 	if !ok {
 		return statementEffect{}, false
 	}
@@ -2019,7 +2019,7 @@ func resolveStatement(t typeResolver, chain *binding, stmt ast.StatementNode) (s
 		return statementEffect{result, false}, true
 	case *ast.BLangReturn:
 		if s.Expr != nil {
-			if _, ok := resolveActionOrExpressionWithNamedTypes(t, chain, s.Expr, t.expectedReturnType(), t.expectedReturnNamedTypes()); !ok {
+			if _, ok := resolveWithNamedTypes(t, chain, s.Expr, t.expectedReturnType(), t.expectedReturnNamedTypes()); !ok {
 				return defaultStmtEffect(chain), false
 			}
 		}
@@ -2205,7 +2205,7 @@ func finalizeResolvedFunctionSignature(t typeResolver, fn ast.FunctionSignature)
 
 func finalizeFunctionSignature(t typeResolver, fn ast.FunctionSignature, sig model.UntypedFunctionSignature, ref model.FunctionSignatureRef, paramTypes []semtypes.SemType) bool {
 	setDefaultableParamFnSignatures(t, sig, paramTypes, fn.GetPosition())
-	setFunctionSignatureParamNamedTypes(t, ref, fn)
+	setSignatureNamedTypes(t, ref, fn)
 	return validateIncludedRecordParams(t, fn, ref, sig)
 }
 
@@ -2543,7 +2543,7 @@ func resolveNamedWorker(
 		parentResolver:    t,
 		tyCtx:             semtypes.ContextFrom(t.typeEnv()),
 		retTy:             returnTy,
-		retNamedTypes:     common.NamedTypes(worker.ReturnType),
+		retNamedTypes:     common.NamedTypes(t.compilerContext(), worker.ReturnType),
 		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
 		scope:             worker.Scope(),
@@ -2587,7 +2587,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 		parentResolver:    t,
 		tyCtx:             semtypes.ContextFrom(t.typeEnv()),
 		retTy:             fnSym.TypedSignature().ReturnType,
-		retNamedTypes:     common.NamedTypes(e.Function.ReturnType()),
+		retNamedTypes:     sigReturnNamedTypes(t, e.Function.Symbol()),
 		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
 		xmlStepOwner:      fnSym.Name(),
@@ -2606,7 +2606,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 	case *ast.BLangBlockFunctionBody:
 		resolveBlockFunctionBody(ft, boundaryChain, body)
 	case *ast.BLangExprFunctionBody:
-		if _, ok := resolveActionOrExpressionWithNamedTypes(ft, boundaryChain, body.Expr, ft.retTy, ft.retNamedTypes); !ok {
+		if _, ok := resolveWithNamedTypes(ft, boundaryChain, body.Expr, ft.retTy, ft.retNamedTypes); !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
 	}
@@ -3688,7 +3688,6 @@ func lookupSymbol(t typeResolver, chain *binding, ref model.SymbolRef) model.Sym
 func resolveVariableDefStmt(t typeResolver, chain *binding, s *ast.BLangVariableDef) (statementEffect, bool) {
 	variable := s.GetVariable()
 	typeNode := variable.TypeNode()
-	namedTypes := common.NamedTypes(typeNode)
 	if typeNode != nil {
 		semType, typeChain, ok := resolveBType(t, chain, typeNode, 0)
 		if !ok {
@@ -3697,7 +3696,6 @@ func resolveVariableDefStmt(t typeResolver, chain *binding, s *ast.BLangVariable
 		}
 		chain = typeChain
 		updateSymbolType(t, variable, semType)
-		setDeclaredNamedTypes(t, variable.Symbol(), namedTypes)
 		if fnType, ok := typeNode.(*ast.BLangFunctionType); ok {
 			if !finalizeResolvedFunctionSignature(t, fnType) {
 				return defaultStmtEffect(chain), false
@@ -3713,7 +3711,7 @@ func resolveVariableDefStmt(t typeResolver, chain *binding, s *ast.BLangVariable
 		} else if typeNode != nil {
 			expectedType = typeNode.Type()
 		}
-		result, ok := resolveActionOrExpressionWithNamedTypes(t, chain, variable.Expr, expectedType, namedTypes)
+		result, ok := resolveWithNamedTypes(t, chain, variable.Expr, expectedType, t.compilerContext().DeclaredNamedTypes(variable.Symbol()))
 		if !ok {
 			return defaultStmtEffect(chain), false
 		}
@@ -3812,7 +3810,6 @@ func resolveGlobalVarType(t typeResolver, node *ast.BLangVariable) bool {
 		return false
 	}
 	updateSymbolType(t, node, semType)
-	setDeclaredNamedTypes(t, node.Symbol(), common.NamedTypes(typeNode))
 	if fnType, ok := typeNode.(*ast.BLangFunctionType); ok {
 		return finalizeResolvedFunctionSignature(t, fnType)
 	}
@@ -3839,7 +3836,7 @@ func resolveGlobalVarInit(t typeResolver, node *ast.BLangVariable) bool {
 	if node.IsListener() {
 		expectedType = common.ListenerInitExpectedType(semType)
 	}
-	_, ok := resolveActionOrExpressionWithNamedTypes(t, nil, node.Expr, expectedType, common.NamedTypes(node.TypeNode()))
+	_, ok := resolveWithNamedTypes(t, nil, node.Expr, expectedType, t.compilerContext().DeclaredNamedTypes(node.Symbol()))
 	return ok
 }
 
@@ -3952,15 +3949,14 @@ func resolveSimpleVariableInner(t typeResolver, chain *binding, node *ast.BLangV
 		if isParameterDeclaration(t, node) {
 			// A parameter's initializer is a deferred default provider, not part of
 			// the enclosing function's flow.
-			defaultResult, ok := resolveDefaultExpression(t, chain, node, node.Expr, semType, common.NamedTypes(typeNode))
+			defaultResult, ok := resolveDefaultExpression(t, chain, node, node.Expr, semType,
+				t.compilerContext().DeclaredNamedTypes(node.Symbol()))
 			if !ok {
 				return chain, false
 			}
 			chain = sequentialChain(t, defaultResult.effect)
 		} else {
-			namedTypes := common.NamedTypes(typeNode)
-			setDeclaredNamedTypes(t, node.Symbol(), namedTypes)
-			initResult, ok := resolveActionOrExpressionWithNamedTypes(t, chain, node.Expr, semType, namedTypes)
+			initResult, ok := resolveWithNamedTypes(t, chain, node.Expr, semType, t.compilerContext().DeclaredNamedTypes(node.Symbol()))
 			if !ok {
 				return chain, false
 			}
@@ -3991,7 +3987,7 @@ func resolveDefaultExpression(
 ) (expressionResult, bool) {
 	constructionChain := addCaptureGroup(chain, owner.CaptureGroup())
 	bodyChain := &binding{flags: bindingFlagFunctionBoundary, prev: constructionChain}
-	result, ok := resolveActionOrExpressionWithNamedTypes(t, bodyChain, expr, expectedType, namedTypes)
+	result, ok := resolveWithNamedTypes(t, bodyChain, expr, expectedType, namedTypes)
 	if !ok {
 		return expressionResult{}, false
 	}
@@ -4001,10 +3997,10 @@ func resolveDefaultExpression(
 
 // resolveActionOrExpression resolves expr against expectedType. An expression that fails to resolve has type never.
 func resolveActionOrExpression(t typeResolver, chain *binding, expr ast.BLangActionOrExpression, expectedType semtypes.SemType) (expressionResult, bool) {
-	return resolveActionOrExpressionWithNamedTypes(t, chain, expr, expectedType, nil)
+	return resolveWithNamedTypes(t, chain, expr, expectedType, nil)
 }
 
-func resolveActionOrExpressionWithNamedTypes(t typeResolver, chain *binding, expr ast.BLangActionOrExpression, expectedType semtypes.SemType, namedTypes []model.SymbolRef) (expressionResult, bool) {
+func resolveWithNamedTypes(t typeResolver, chain *binding, expr ast.BLangActionOrExpression, expectedType semtypes.SemType, namedTypes []model.SymbolRef) (expressionResult, bool) {
 	result, ok := resolveExpressionInner(t, chain, expr, expectedType, namedTypes)
 	if !ok {
 		setNodeType(t, expr, semtypes.Never)
@@ -4060,11 +4056,11 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		case *ast.BLangInvocation:
 			return returnedFunction(withRawSymbol(result, e.RawSymbol), true)
 		case *ast.BLangGroupExpr:
-			return resolveActionOrExpressionWithNamedTypes(t, chain, e.Expression, expectedType, namedTypes)
+			return resolveWithNamedTypes(t, chain, e.Expression, expectedType, namedTypes)
 		case *ast.BLangTypeConversionExpr:
 			return convertedFunction(result, true, e)
 		case *ast.BLangNamedArgsExpression:
-			return resolveActionOrExpressionWithNamedTypes(t, chain, e.Expr, expectedType, namedTypes)
+			return resolveWithNamedTypes(t, chain, e.Expr, expectedType, namedTypes)
 		case *ast.BLangLambdaFunction:
 			ref, _ := t.functionSignatureRef(e.Function.Symbol())
 			return withFunctionSignature(result, true, ref)
@@ -4122,7 +4118,7 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 	case *ast.BLangErrorConstructorExpr:
 		return resolved(resolveErrorConstructorExpr(t, chain, e, expectedType))
 	case *ast.BLangGroupExpr:
-		result, ok := resolveActionOrExpressionWithNamedTypes(t, chain, e.Expression, expectedType, namedTypes)
+		result, ok := resolveWithNamedTypes(t, chain, e.Expression, expectedType, namedTypes)
 		if ok {
 			setNodeType(t, e, result.ty)
 		}
@@ -4149,7 +4145,7 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 	case *ast.BLangTrapExpr:
 		return resolved(resolveTrapExpr(t, chain, e, expectedType, namedTypes))
 	case *ast.BLangNamedArgsExpression:
-		result, ok := resolveActionOrExpressionWithNamedTypes(t, chain, e.Expr, expectedType, namedTypes)
+		result, ok := resolveWithNamedTypes(t, chain, e.Expr, expectedType, namedTypes)
 		if !ok {
 			return expressionResult{}, false
 		}
@@ -4582,7 +4578,7 @@ func resolveObjectInitArgs(t typeResolver, chain *binding, e *ast.BLangNewExpres
 	paramListTy := semtypes.FunctionParamListType(cx, alternative.InitFunctionType())
 	argTys, chain, ok := resolveArgsWithNamedTypes(t, args, chain, func(i int) semtypes.SemType {
 		return semtypes.ListMemberTypeInnerVal(cx, paramListTy, semtypes.IntConst(int64(i)))
-	}, signature.NamedTypes)
+	}, signature.ParamNamedTypesAt)
 	if !ok {
 		return nil, semtypes.SemType{}, chain, false
 	}
@@ -4802,7 +4798,7 @@ func resolveMultipleWaitAction(t typeResolver, chain *binding, e *ast.BLangMulti
 }
 
 func resolveTrapExpr(t typeResolver, chain *binding, e *ast.BLangTrapExpr, expectedType semtypes.SemType, namedTypes []model.SymbolRef) (semtypes.SemType, expressionEffect, bool) {
-	exprResult, ok := resolveActionOrExpressionWithNamedTypes(t, chain, e.Expr, expectedType, namedTypes)
+	exprResult, ok := resolveWithNamedTypes(t, chain, e.Expr, expectedType, namedTypes)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -4817,7 +4813,7 @@ func resolveCheckedExpr(t typeResolver, chain *binding, e *ast.BLangCheckedExpr,
 	if !semtypes.IsZero(expectedType) {
 		innerExpected = semtypes.Union(expectedType, semtypes.Error)
 	}
-	exprResult, ok := resolveActionOrExpressionWithNamedTypes(t, chain, e.Expr, innerExpected, namedTypes)
+	exprResult, ok := resolveWithNamedTypes(t, chain, e.Expr, innerExpected, namedTypes)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -6932,11 +6928,11 @@ func resolveTernaryExpr(t typeResolver, chain *binding, expr *ast.BLangTernaryEx
 		thenExpected, thenNamedTypes = semtypes.SemType{}, nil
 	}
 
-	thenResult, ok := resolveActionOrExpressionWithNamedTypes(t, conditionResult.effect.ifTrue, expr.ThenExpr, thenExpected, thenNamedTypes)
+	thenResult, ok := resolveWithNamedTypes(t, conditionResult.effect.ifTrue, expr.ThenExpr, thenExpected, thenNamedTypes)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	elseResult, ok := resolveActionOrExpressionWithNamedTypes(t, conditionResult.effect.ifFalse, expr.ElseExpr, elseExpected, elseNamedTypes)
+	elseResult, ok := resolveWithNamedTypes(t, conditionResult.effect.ifFalse, expr.ElseExpr, elseExpected, elseNamedTypes)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -6969,7 +6965,7 @@ func resolveNilConditionalExpr(t typeResolver, chain *binding, expr *ast.BLangNi
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 	// The LHS is always evaluated, so the RHS is checked on its outgoing chain.
-	rhsResult, ok := resolveActionOrExpressionWithNamedTypes(t, sequentialChain(t, lhsResult.effect), expr.RhsExpr, expectedType, namedTypes)
+	rhsResult, ok := resolveWithNamedTypes(t, sequentialChain(t, lhsResult.effect), expr.RhsExpr, expectedType, namedTypes)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -7977,7 +7973,7 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, args
 				return paramTypes[i]
 			}
 			return semtypes.Never
-		}, paramNamedTypes(t, fnSymbol))
+		}, sigParamNamedTypes(t, fnSymbol))
 		if !ok {
 			return callArgsResult{}, false
 		}
@@ -8006,7 +8002,7 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, args
 				return sig.ParamTypes[i]
 			}
 			return sig.RestParamType
-		}, paramNamedTypes(t, fnSymbol))
+		}, sigParamNamedTypes(t, fnSymbol))
 		if !ok {
 			return callArgsResult{}, false
 		}
@@ -8041,7 +8037,7 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, args
 		}
 		argTys, chain, ok := resolveArgsWithNamedTypes(t, lowered, chain, func(i int) semtypes.SemType {
 			return semtypes.ListMemberTypeInnerVal(t.typeContext(), paramListTy, semtypes.IntConst(int64(i)))
-		}, paramNamedTypes(t, narrowedSymbol))
+		}, sigParamNamedTypes(t, narrowedSymbol))
 		if !ok {
 			return callArgsResult{}, false
 		}
@@ -8297,13 +8293,13 @@ func lowerInferredTypedescDefaultArg(t typeResolver, constraint, expectedType se
 			pos,
 		)
 	}
-	expr := &ast.BLangTypedescExpr{Constraint: inferred, NamedType: namedTypeOf(t, namedTypes, inferred)}
+	expr := &ast.BLangTypedescExpr{Constraint: inferred, NamedType: matchingNamedType(t, namedTypes, inferred)}
 	expr.SetPosition(pos)
 	return expr, nil
 }
 
-// namedTypeOf is empty when more than one named type matches ty, since their annotations may differ.
-func namedTypeOf(t typeResolver, namedTypes []model.SymbolRef, ty semtypes.SemType) model.SymbolRef {
+// matchingNamedType is empty when more than one named type matches ty, since their annotations may differ.
+func matchingNamedType(t typeResolver, namedTypes []model.SymbolRef, ty semtypes.SemType) model.SymbolRef {
 	var match model.SymbolRef
 	for _, ref := range namedTypes {
 		refTy := t.symbolType(ref)
@@ -8489,7 +8485,7 @@ func resolveArgsWithNamedTypes(t typeResolver, args []ast.BLangExpression, chain
 		if paramNamedTypes != nil {
 			namedTypes = paramNamedTypes(i)
 		}
-		tyResult, ok := resolveActionOrExpressionWithNamedTypes(t, chain, arg, paramType(i), namedTypes)
+		tyResult, ok := resolveWithNamedTypes(t, chain, arg, paramType(i), namedTypes)
 		if !ok {
 			return nil, chain, false
 		}
@@ -8500,12 +8496,20 @@ func resolveArgsWithNamedTypes(t typeResolver, args []ast.BLangExpression, chain
 	return tys, chain, true
 }
 
-func paramNamedTypes(t typeResolver, fn model.SymbolRef) func(int) []model.SymbolRef {
+func sigReturnNamedTypes(t typeResolver, fn model.SymbolRef) []model.SymbolRef {
 	sig, ok := t.functionSignature(fn)
 	if !ok {
 		return nil
 	}
-	return sig.NamedTypes
+	return sig.ReturnNamedTypes
+}
+
+func sigParamNamedTypes(t typeResolver, fn model.SymbolRef) func(int) []model.SymbolRef {
+	sig, ok := t.functionSignature(fn)
+	if !ok {
+		return nil
+	}
+	return sig.ParamNamedTypesAt
 }
 
 func hasIncludedRecordParam(sig model.UntypedFunctionSignature, nRequired int) bool {
@@ -9024,7 +9028,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			if field.Default != nil {
 				restoreContext := setIsolatedXMLStepContext(t, true)
 				defaultResult, ok := resolveDefaultExpression(t, chain, field, field.Default.Expr, fieldTy,
-					common.NamedTypes(field.Type))
+					common.NamedTypes(t.compilerContext(), field.Type))
 				restoreContext()
 				// The field's type does not depend on its default, so the field is kept even if the default fails.
 				if ok {
@@ -9096,7 +9100,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			}
 			if ty.RequiredParams[i].InitExpr != nil {
 				defaultResult, ok := resolveDefaultExpression(t, chain, ty.RequiredParams[i], ty.RequiredParams[i].InitExpr, paramTy,
-					common.NamedTypes(ty.RequiredParams[i].TypeDesc))
+					common.NamedTypes(t.compilerContext(), ty.RequiredParams[i].TypeDesc))
 				if !ok {
 					return semtypes.SemType{}, chain, false
 				}

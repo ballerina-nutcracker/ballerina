@@ -128,26 +128,19 @@ func setLaxAccess(t typeResolver, expr *ast.BLangFieldBaseAccess) {
 	expr.SetLax()
 }
 
-func setDeclaredNamedTypes(t typeResolver, variable model.SymbolRef, named []model.SymbolRef) {
-	if t.isEphemeral() || len(named) == 0 {
-		return
-	}
-	t.compilerContext().SetDeclaredNamedTypes(variable, named)
-}
-
-func setFunctionSignatureParamNamedTypes(t typeResolver, ref model.FunctionSignatureRef, fn ast.FunctionSignature) {
+func setSignatureNamedTypes(t typeResolver, ref model.FunctionSignatureRef, fn ast.FunctionSignature) {
 	if t.isEphemeral() {
 		return
 	}
 	params := fn.Parameters()
-	namedTypes := make([][]model.SymbolRef, len(params), len(params)+1)
+	paramNamedTypes := make([][]model.SymbolRef, len(params), len(params)+1)
 	for i, param := range params {
-		namedTypes[i] = common.NamedTypes(param.Type())
+		paramNamedTypes[i] = common.NamedTypes(t.compilerContext(), param.Type())
 	}
 	if rest := fn.RestParameter(); rest != nil {
-		namedTypes = append(namedTypes, common.NamedTypes(rest.Type()))
+		paramNamedTypes = append(paramNamedTypes, common.NamedTypes(t.compilerContext(), rest.Type()))
 	}
-	t.compilerContext().UpdateFunctionSignatureParamNamedTypes(ref, namedTypes)
+	t.compilerContext().UpdateFunctionSignatureNamedTypes(ref, paramNamedTypes, common.NamedTypes(t.compilerContext(), fn.ReturnType()))
 }
 
 func setTypedescConstraint(t typeResolver, node *ast.BLangTypedescExpr, constraint semtypes.SemType) {
