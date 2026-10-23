@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'string', got '1'
+  --> cache1-e.bal:21:17
+   |
+21 |     check c.put(1, "v"); // @error
+   |                 ^
+
+error[SEMANTIC_ERROR]: missing required parameter 'key'
+  --> cache1-e.bal:23:11
+   |
+23 |     check c.invalidate(); // @error
+   |           ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: too many arguments
+  --> cache1-e.bal:22:16
+   |
+22 |     _ = c.size("k"); // @error
+   |                ^^^

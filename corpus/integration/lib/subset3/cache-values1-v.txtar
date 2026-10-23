@@ -1,0 +1,16 @@
+-- stdout --
+42 1.5 2.5
+str false empty key
+[1,"two"] {"a":1}
+Ann 30
+hello
+[1,2]
+43 11
+Cache entry from the given key: nope, is not available.
+false 10
+true v 11 100
+false ["float","decimal","string","boolean","list","map","record","object","shared","int"]
+true v 1 -1
+false []
+only strings: x
+-- stderr --
