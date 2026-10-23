@@ -346,8 +346,8 @@ func (c *CompilerEnvironment) UpdateFunctionSignatureIncludedRecords(ref model.F
 	c.functionSignatures.UpdateIncludedRecords(ref, includedRecords)
 }
 
-func (c *CompilerEnvironment) UpdateFunctionSignatureParamNamedTypes(ref model.FunctionSignatureRef, namedTypes [][]model.SymbolRef) {
-	c.functionSignatures.UpdateParamNamedTypes(ref, namedTypes)
+func (c *CompilerEnvironment) UpdateFunctionSignatureNamedTypes(ref model.FunctionSignatureRef, paramNamedTypes [][]model.SymbolRef, returnNamedTypes []model.SymbolRef) {
+	c.functionSignatures.UpdateNamedTypes(ref, paramNamedTypes, returnNamedTypes)
 }
 
 func (c *CompilerEnvironment) GetFunctionSignature(fn model.SymbolRef) (model.UntypedFunctionSignature, bool) {
@@ -431,16 +431,16 @@ func (c *CompilerEnvironment) SymbolIsClass(symbol model.SymbolRef) bool {
 	return ok
 }
 
-func (c *CompilerEnvironment) SetDeclaredNamedTypes(symbol model.SymbolRef, named []model.SymbolRef) {
-	c.declaredNamedTypes.Store(symbol, named)
+func (c *CompilerEnvironment) SetDeclaredNamedTypes(symbol model.SymbolRef, namedTypes []model.SymbolRef) {
+	c.declaredNamedTypes.Store(symbol, namedTypes)
 }
 
 func (c *CompilerEnvironment) DeclaredNamedTypes(symbol model.SymbolRef) []model.SymbolRef {
-	named, ok := c.declaredNamedTypes.Load(symbol)
+	namedTypes, ok := c.declaredNamedTypes.Load(symbol)
 	if !ok {
 		return nil
 	}
-	return named.([]model.SymbolRef)
+	return namedTypes.([]model.SymbolRef)
 }
 
 type ValueSymbolMetadata struct {
