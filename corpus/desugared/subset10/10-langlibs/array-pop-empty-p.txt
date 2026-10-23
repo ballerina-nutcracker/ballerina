@@ -1,0 +1,14 @@
+(package
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation lang.array pop (
+          (simple-var-ref arr)))))))

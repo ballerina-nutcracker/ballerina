@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: inherent type violation
+        at main(array-unshift-tuple-member-type-p.bal:19)

@@ -1,0 +1,16 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad hello
+    %3 = ConstantLoad world
+    %4 = ConstantLoad 3
+    %5 = newArray [int, string...][%4]{%1, %2, %3}
+    t = %5;
+    %7 = shift(t) -> bb1;
+  }
+  bb1 {
+    %8 = %7;
+    return;
+  }
+}

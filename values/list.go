@@ -19,6 +19,7 @@ package values
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"unsafe"
 
@@ -130,6 +131,19 @@ func (l *List) Append(tc semtypes.Context, vs ...BalValue) {
 		l.checkMemberType(tc, base+i, v)
 	}
 	l.elems = append(l.elems, vs...)
+}
+
+// Prepend adds values at the head, checking them and the members they shift
+// against the inherent member types of the slots they land in.
+func (l *List) Prepend(tc semtypes.Context, vs ...BalValue) {
+	l.checkMutable()
+	for i, v := range vs {
+		l.checkMemberType(tc, i, v)
+	}
+	for idx := range min(l.atomic.FixedLength(), len(l.elems)) {
+		l.checkMemberType(tc, idx+len(vs), l.elems[idx])
+	}
+	l.elems = slices.Concat(vs, l.elems)
 }
 
 // RemoveAt removes and returns the element at idx, shifting subsequent elements down.

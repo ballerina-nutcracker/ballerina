@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot push to a fixed-length list
+  --> push-fixed-length-union1-e.bal:20:5
+   |
+20 |     either.push(2); // @error cannot push to a fixed-length list
+   |     ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot push to a fixed-length list
+  --> push-fixed-length-union1-e.bal:24:5
+   |
+24 |     tuples.push(2); // @error cannot push to a fixed-length list
+   |     ^^^^^^^^^^^^^^
