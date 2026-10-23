@@ -1,0 +1,39 @@
+-- stdout --
+19
+unix.txt dir=false link=false mode=420 method=DEFLATE comment=plain
+mac.txt dir=false link=false mode=384 method=DEFLATE comment=absent
+fat.txt dir=false link=false mode=absent method=DEFLATE comment=absent
+typeonly.txt dir=false link=false mode=0 method=DEFLATE comment=absent
+setuid dir=false link=false mode=2541 method=DEFLATE comment=absent
+link dir=false link=true mode=511 method=DEFLATE comment=absent
+FATDIR\ dir=true link=false mode=absent method=DEFLATE comment=absent
+dosdir dir=false link=false mode=absent method=DEFLATE comment=absent
+ts.txt dir=false link=false mode=420 method=DEFLATE comment=absent
+neg.txt dir=false link=false mode=420 method=DEFLATE comment=absent
+ntfs.txt dir=false link=false mode=420 method=DEFLATE comment=bad?
+stored.txt dir=false link=false mode=420 method=STORE comment=absent
+dup.txt dir=false link=false mode=420 method=DEFLATE comment=absent
+dup.txt dir=false link=false mode=420 method=DEFLATE comment=absent
+café.txt dir=false link=false mode=absent method=DEFLATE comment=absent
+bad�.txt dir=false link=false mode=420 method=DEFLATE comment=absent
+enc.txt dir=false link=false mode=420 method=DEFLATE comment=absent
+bzip.txt dir=false link=false mode=420 method=OTHER comment=absent
+dir/ dir=true link=false mode=493 method=DEFLATE comment=absent
+[1600000000,0]
+[0,0]
+[1700000000,0.123456700]
+14 14 1844343581
+true false
+first
+target.txt
+0
+cp437
+ts.txt 1
+true
+cannot read entry 'enc.txt': encrypted entries are not supported
+true
+entry 'bzip.txt' uses a compression method that is not supported
+true
+the archive contains no entry named 'missing.txt'
+true
+-- stderr --

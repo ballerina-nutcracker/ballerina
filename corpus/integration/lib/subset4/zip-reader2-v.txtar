@@ -1,0 +1,30 @@
+-- stdout --
+65536
+5
+4464
+end
+cannot read the entry: the stream is closed
+cannot read the entry: the stream is closed
+cannot read the entry: the stream is closed
+cannot read the entry: the stream is closed
+true
+cannot read the archive: it is closed
+cannot read the archive: it is closed
+cannot read the archive: it is closed
+cannot read the archive: it is closed
+cannot read the archive: it is closed
+cannot read the archive: it is closed
+good content
+true the content of entry 'broken.txt' could not be read
+cannot read the content of the entry
+true the content of entry 'broken.txt' could not be read
+false
+big64.txt 13
+zip64 content
+0
+FileSystemError: ': no file exists at that path
+FileSystemError: ': it is a directory
+InvalidArchiveError: ': it is not a valid ZIP archive
+InvalidArchiveError: ': it is not a valid ZIP archive
+InvalidArchiveError: ': it is not a valid ZIP archive
+-- stderr --
