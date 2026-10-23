@@ -1,0 +1,10 @@
+-- stdout --
+true
+false false
+true true
+false
+3 true
+false true
+2
+1 ["kept"]
+-- stderr --
