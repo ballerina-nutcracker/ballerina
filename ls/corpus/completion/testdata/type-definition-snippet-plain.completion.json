@@ -165,6 +165,29 @@
           ]
         },
         {
+          "label": "ballerina/cache",
+          "kind": 9,
+          "detail": "Module",
+          "sortText": "076",
+          "filterText": "cache",
+          "insertText": "cache",
+          "additionalTextEdits": [
+            {
+              "range": {
+                "start": {
+                  "line": 0,
+                  "character": 0
+                },
+                "end": {
+                  "line": 0,
+                  "character": 0
+                }
+              },
+              "newText": "import ballerina/cache;\n"
+            }
+          ]
+        },
+        {
           "label": "ballerina/crypto",
           "kind": 9,
           "detail": "Module",

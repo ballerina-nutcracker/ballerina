@@ -11,6 +11,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | Package                                                                       | Supported | Partially Supported | Not Yet Supported | Support % |
 |-------------------------------------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
+| [cache](../../lib/stdlibs/ballerina/cache/0.0.1/go1.27/README.md)             | 16 | 0 | 1 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 12 | 36 | 38% |
@@ -29,7 +30,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                                                     | **291** | **36** | **73** | **73%** |
+| **Total**                                                                     | **307** | **36** | **74** | **73%** |
 
 <!-- END stdlib-coverage-table -->
 
@@ -47,6 +48,14 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **A `bytes`/`fixed` schema requires a value whose own type is `byte[]`.** An `int[]` is rejected even when every value happens to fit in a byte (0-255) — including a bare list literal such as `schema.toAvro([1, 2, 3])`, which carries no `byte[]` type of its own since `toAvro` takes `anydata`; declare the value as `byte[]` first. jBallerina agrees this should be an error but does not implement it as one: passing a plain `int[]`, in range or not, throws an uncaught `NullPointerException` instead of returning an error.
 - **Avro map keys are encoded in insertion order.** jBallerina iterates a Java `HashMap`, so the key order in an encoded Avro map is unspecified; the Go-native version writes keys in the Ballerina value's insertion order — the Avro encoding does not constrain map key order and readers are insensitive to it.
 - **A `fixed` schema with `"size": 0` is rejected.** jBallerina's underlying Avro library accepts a zero-size `fixed` type, which always encodes to zero bytes. The Go-native version's underlying codec requires a size greater than zero and rejects the schema itself with an `avro:Error` from `new`. Zero-size `fixed` types have no practical use and are not expected to appear in real schemas.
+
+### cache
+
+- **Keys are listed from least to most recently used.** jBallerina returns `keys()` in the iteration order of a Java `ConcurrentHashMap`, which depends on key hashes and was never specified; the Go-native version returns them in recency order.
+- **Capacities above the 32-bit range are honoured.** jBallerina narrows `capacity` to a Java `int`, so `capacity = 4294967297` behaves as a capacity of 1 during eviction while `capacity()` still returns 4294967297 ([ballerina-library#9403](https://github.com/ballerina-platform/ballerina-library/issues/9403)); the Go-native version uses the full `int` value.
+- **An eviction count above the capacity empties the cache.** For capacities above 2^24, the 32-bit float product `capacity * evictionFactor` can round up past `capacity` (e.g. `capacity = 16777219, evictionFactor = 1.0` gives 16777220); jBallerina then fails the `put` with a `NullPointerException`, while the Go-native version evicts every entry and inserts the new one.
+- **Concurrent `invalidate` calls on one key succeed once.** jBallerina's `invalidate` checks `hasKey` and then removes the entry as two separate steps, so two strands invalidating the same key can both return `()` ([ballerina-library#9693](https://github.com/ballerina-platform/ballerina-library/issues/9693)); the Go-native version checks and removes the entry in one step, so one call succeeds and the other returns a `cache:Error`.
+- **Separate caches never share entries.** When strands put entries into two different caches at the same time, jBallerina can store an entry in the wrong cache, so each cache ends up holding some of the other's keys ([ballerina-library#9405](https://github.com/ballerina-platform/ballerina-library/issues/9405)); the Go-native version keeps each cache's entries and lock separate.
 
 ### crypto
 
