@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: callback is not callable with an accumulator and the array member type
+  --> array-reduce-bad-callback-e.bal:19:23
+   |
+19 |     _ = values.reduce(isolated function(int acc, string v) returns int => acc + v.length(), 0); // @error callback is not callable with the array member type
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: callback return type must be a subtype of its accumulator parameter type
+  --> array-reduce-bad-callback-e.bal:20:23
+   |
+20 |     _ = values.reduce(isolated function(int acc, int v) returns int|string => v > 1 ? acc : "x", 0); // @error callback return type must fit its accumulator
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -23,3 +23,15 @@ error[SEMANTIC_ERROR]: cannot push to a fixed-length list
    |
 25 |     e.push(1); // @error
    |     ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot push to a fixed-length list
+  --> push7-e.bal:28:5
+   |
+28 |     either.push(2); // @error
+   |     ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot push to a fixed-length list
+  --> push7-e.bal:31:5
+   |
+31 |     tuples.push(2); // @error
+   |     ^^^^^^^^^^^^^^

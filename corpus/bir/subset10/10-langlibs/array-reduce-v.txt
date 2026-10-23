@@ -1,0 +1,243 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 4
+    %5 = ConstantLoad 4
+    %6 = newArray [int...][%5]{%1, %2, %3, %4}
+    values = %6;
+    %8 = fp $anon/.:$anonFunc$_0
+    %9 = ConstantLoad 0
+    %10 = %9;
+    %11 = reduce(values,%8,%10) -> bb1;
+  }
+  bb1 {
+    %12 = %11;
+    %13 = println(%12) -> bb2;
+  }
+  bb2 {
+    %14 = ConstantLoad 0
+    %15 = newArray [int...][%14]{}
+    empty = %15;
+    %17 = fp $anon/.:$anonFunc$_1
+    %18 = ConstantLoad 42
+    %19 = %18;
+    %20 = reduce(empty,%17,%19) -> bb3;
+  }
+  bb3 {
+    %21 = %20;
+    %22 = println(%21) -> bb4;
+  }
+  bb4 {
+    %23 = fp $anon/.:$anonFunc$_2
+    %24 = ConstantLoad >
+    %25 = reduce(values,%23,%24) -> bb5;
+  }
+  bb5 {
+    joined = %25;
+    %27 = println(joined) -> bb6;
+  }
+  bb6 {
+    %29 = fp $anon/.:$anonFunc$_3
+    %30 = ConstantLoad 0
+    %31 = %30;
+    %32 = reduce(values,%29,%31) -> bb7;
+  }
+  bb7 {
+    %33 = %32;
+    %34 = ConstantLoad 4
+    %35 = %34;
+    %28 = / %33 %35;
+    avg = %28;
+    %37 = avg;
+    %38 = println(%37) -> bb8;
+  }
+  bb8 {
+    %39 = ConstantLoad 1
+    %40 = ConstantLoad a
+    %41 = ConstantLoad 2
+    %42 = newArray [int, string, never...][%41]{%39, %40}
+    t = %42;
+    %44 = fp $anon/.:$anonFunc$_4
+    %45 = ConstantLoad 
+    %46 = reduce(t,%44,%45) -> bb9;
+  }
+  bb9 {
+    mixed = %46;
+    %48 = println(mixed) -> bb10;
+  }
+  bb10 {
+    %49 = fp $anon/.:$anonFunc$_5
+    %50 = ConstantLoad 0
+    %51 = %50;
+    %52 = reduce(values,%49,%51) -> bb11;
+  }
+  bb11 {
+    %53 = %52;
+    %54 = println(%53) -> bb12;
+  }
+  bb12 {
+    %55 = fp $anon/.:$anonFunc$_6
+    %56 = ConstantLoad 1
+    %57 = %56;
+    %58 = reduce(values,%55,%57) -> bb13;
+  }
+  bb13 {
+    product = %58;
+    %60 = product;
+    %61 = println(%60) -> bb14;
+  }
+  bb14 {
+    %62 = fp $anon/.:$anonFunc$_7
+    %63 = ConstantLoad 0
+    %64 = %63;
+    %65 = reduce(values,%62,%64) -> bb15;
+  }
+  bb15 {
+    total = %65;
+    %67 = total;
+    %68 = println(%67) -> bb16;
+  }
+  bb16 {
+    %69 = fp $anon/.:$anonFunc$_8
+    %70 = ConstantLoad 0
+    %71 = %70;
+    %72 = reduce(values,%69,%71) -> bb17;
+  }
+  bb17 {
+    scaled = %72;
+    %74 = scaled;
+    %75 = println(%74) -> bb18;
+  }
+  bb18 {
+    %76 = fp $anon/.:$anonFunc$_9
+    %77 = ConstantLoad 0
+    %78 = %77;
+    %79 = reduce(values,%76,%78) -> bb19;
+  }
+  bb19 {
+    widened = %79;
+    %81 = widened;
+    %82 = println(%81) -> bb20;
+  }
+  bb20 {
+    %83 = fp $anon/.:$anonFunc$_10
+    %84 = ConstantLoad 0
+    %85 = %84;
+    %86 = reduce(values,%83,%85) -> bb21;
+  }
+  bb21 {
+    %87 = %86;
+    %88 = println(%87) -> bb22;
+  }
+  bb22 {
+    return;
+  }
+}
+$anonFunc$_0(int,int) -> int{
+  bb0 {
+    %4 = acc;
+    %5 = v;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_1(int,int) -> int{
+  bb0 {
+    %4 = acc;
+    %5 = v;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_2(string,int) -> string{
+  bb0 {
+    %4 = v;
+    %5 = toString(%4) -> bb1;
+  }
+  bb1 {
+    %3 = + acc %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_3(float,int) -> float{
+  bb0 {
+    %4 = acc;
+    %5 = <float>(v)
+    %6 = %5;
+    %3 = + %4 %6;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_4(string,int|string) -> string{
+  bb0 {
+    %4 = toString(v) -> bb1;
+  }
+  bb1 {
+    %3 = + acc %4;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_5(int,int) -> int{
+  bb0 {
+    %4 = acc;
+    %5 = v;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_6(int,int) -> int{
+  bb0 {
+    %4 = acc;
+    %5 = v;
+    %3 = * %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_7(int,int) -> int{
+  bb0 {
+    %4 = acc;
+    %5 = v;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_8(float,int) -> float{
+  bb0 {
+    %4 = acc;
+    %5 = <float>(v)
+    %6 = %5;
+    %3 = + %4 %6;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_9(int,int) -> int{
+  bb0 {
+    %4 = acc;
+    %5 = v;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_10(float,int) -> float{
+  bb0 {
+    %4 = acc;
+    %5 = <float>(v)
+    %6 = %5;
+    %3 = + %4 %6;
+    %0 = %3;
+    return;
+  }
+}
