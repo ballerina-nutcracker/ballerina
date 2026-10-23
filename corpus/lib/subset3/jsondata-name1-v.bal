@@ -25,6 +25,17 @@ type Book record {|
     string author;
 |};
 
+type Alias record {|
+    string value;
+|};
+
+annotation Alias FieldName on record field;
+
+type Movie record {|
+    @FieldName {value: "movie-title"}
+    string title;
+|};
+
 function show(anydata|error v) {
     if v is error {
         io:println("error: ", v.message());
@@ -50,4 +61,7 @@ public function main() {
     Book|error b5 = jsondata:parseString(string `{"book-title":"Dune","author":"Herbert"}`, {}, Book);
     show(b5);
     // @output error: required field 'year' not present in JSON
+    Movie|error m1 = jsondata:parseString(string `{"title":"Arrival"}`, {}, Movie);
+    show(m1);
+    // @output {"title":"Arrival"}
 }

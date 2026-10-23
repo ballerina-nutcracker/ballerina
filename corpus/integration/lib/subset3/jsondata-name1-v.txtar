@@ -4,4 +4,5 @@
 {"title":"Dune","year":1965,"author":"Herbert"}
 error: required field 'title' not present in JSON
 error: required field 'year' not present in JSON
+{"title":"Arrival"}
 -- stderr --

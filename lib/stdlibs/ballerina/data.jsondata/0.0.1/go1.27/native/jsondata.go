@@ -18,7 +18,6 @@ package native
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -96,19 +95,18 @@ func newTyperFor(ctx *extern.Context, td *values.TypeDesc) *typer {
 	return newTyper(ctx.TypeCtx(), semtypes.Diff(td.Constraint(), semtypes.Error), fieldKeys(ctx, td))
 }
 
+const nameAnnotationKey = "ballerina/data.jsondata:0.0.1:Name"
+
 func fieldKeys(ctx *extern.Context, td *values.TypeDesc) map[string]string {
 	annotations, _ := ctx.TypeAnnotations(td)
 	keys := make(map[string]string)
 	for field, fieldAnnotations := range annotations.Fields {
-		for key, value := range fieldAnnotations {
-			config, ok := value.(*values.Map)
-			if !ok || !strings.HasSuffix(key, "Name") {
-				continue
-			}
-			if name, ok := config.Get("value"); ok {
-				keys[field] = fmt.Sprint(name)
-				break
-			}
+		config, ok := fieldAnnotations[nameAnnotationKey].(*values.Map)
+		if !ok {
+			continue
+		}
+		if name, ok := config.Get("value"); ok {
+			keys[field] = fmt.Sprint(name)
 		}
 	}
 	return keys
