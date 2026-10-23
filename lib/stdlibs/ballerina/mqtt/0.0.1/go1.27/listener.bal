@@ -30,7 +30,7 @@ public isolated class Listener {
     # + subscriptions - The topics to be subscribed to
     # + return - `mqtt:Error` if an error occurs while creating the listener or else `()`
     public isolated function init(string serverUri, string clientId, string|string[]|Subscription|Subscription[] subscriptions, *ListenerConfiguration config) returns Error? {
-        self.mqttSubscriptions = checkpanic processSubscriptions(subscriptions).cloneWithType();
+        self.mqttSubscriptions = check toReadOnlySubscriptions(subscriptions);
         check self.externInit(serverUri, clientId, config);
     }
 

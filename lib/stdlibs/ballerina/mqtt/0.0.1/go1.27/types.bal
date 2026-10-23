@@ -38,7 +38,7 @@ public type Message record {|
 
 # Properties of an MQTT message.
 #
-# + responseTopic - The topic to send the response to in reqeust response scenario
+# + responseTopic - The topic to send the response to in request response scenario
 # + correlationData - The correlation data to uniquely identify the message
 public type MessageProperties record {|
     string responseTopic?;

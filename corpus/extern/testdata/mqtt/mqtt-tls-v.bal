@@ -33,6 +33,7 @@ const SERVER_CERT = "testdata/mqtt/certs/server.crt";
 const CLIENT_CERT = "testdata/mqtt/certs/client.crt";
 const CLIENT_KEY = "testdata/mqtt/certs/client.key";
 const CLIENT_ENCRYPTED_KEY = "testdata/mqtt/certs/client-encrypted.key";
+const CLIENT_CORRUPT_KEY = "testdata/mqtt/certs/client-corrupt.key";
 
 function connect(string label, string url, string clientId, mqtt:ConnectionConfiguration connectionConfig) returns error? {
     mqtt:Client|mqtt:Error c = new (url, clientId, connectionConfig = connectionConfig);
@@ -77,6 +78,8 @@ public function main() returns error? {
     check connect("invalid cert", TLS_URL, "tls-v-12", {secureSocket: {cert: CLIENT_KEY}});
     // @output invalid key: Failed to get the private key from Crypto API. Failed to parse private key information from the given input
     check connect("invalid key", MTLS_URL, "tls-v-13", {secureSocket: {cert: SERVER_CERT, key: {certFile: CLIENT_CERT, keyFile: "testdata/mqtt/mqtt-tls-v.bal"}}});
+    // @output corrupt key: Failed to get the private key from Crypto API. Failed to parse private key information from the given input
+    check connect("corrupt key", MTLS_URL, "tls-v-17", {secureSocket: {cert: SERVER_CERT, key: {certFile: CLIENT_CERT, keyFile: CLIENT_CORRUPT_KEY}}});
 
     // Not yet supported: encrypted private keys and PKCS#12 trust/key stores.
     // @output encrypted key: Failed to get the private key from Crypto API. Encrypted private keys are not supported: testdata/mqtt/certs/client-encrypted.key

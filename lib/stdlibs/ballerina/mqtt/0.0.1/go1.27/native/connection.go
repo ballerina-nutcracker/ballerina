@@ -310,7 +310,7 @@ func (c *connection) reconnectCycle(stop chan struct{}) {
 		}
 		c.setState(stateDisconnected)
 		if delay < c.opts.maxReconnectDelay {
-			delay *= 2
+			delay = min(delay*2, c.opts.maxReconnectDelay)
 		}
 	}
 }

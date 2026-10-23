@@ -300,7 +300,21 @@ func readPrivateKey(platform pal.Platform, path string) ([]byte, *mqttError) {
 	if block.Type == "ENCRYPTED PRIVATE KEY" || strings.Contains(block.Headers["Proc-Type"], "ENCRYPTED") {
 		return nil, newError(prefix + "Encrypted private keys are not supported: " + path)
 	}
+	if !isParsablePrivateKey(block.Bytes) {
+		return nil, newError(prefix + "Failed to parse private key information from the given input")
+	}
 	return data, nil
+}
+
+func isParsablePrivateKey(der []byte) bool {
+	if _, err := x509.ParsePKCS8PrivateKey(der); err == nil {
+		return true
+	}
+	if _, err := x509.ParsePKCS1PrivateKey(der); err == nil {
+		return true
+	}
+	_, err := x509.ParseECPrivateKey(der)
+	return err == nil
 }
 
 func mapGetMap(m *values.Map, key string) (*values.Map, bool) {

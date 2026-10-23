@@ -26,7 +26,16 @@ isolated function processSubscriptions(string|string[]|Subscription|Subscription
             mqttSubscriptions.push({topic: topic});
         }
     } else if subscriptions is Subscription[] {
-        mqttSubscriptions = checkpanic subscriptions.cloneWithType();
+        mqttSubscriptions = subscriptions;
+    }
+    return mqttSubscriptions;
+}
+
+isolated function toReadOnlySubscriptions(string|string[]|Subscription|Subscription[] subscriptions)
+        returns Subscription[] & readonly|Error {
+    Subscription[] & readonly|error mqttSubscriptions = processSubscriptions(subscriptions).cloneWithType();
+    if mqttSubscriptions is error {
+        return error Error(mqttSubscriptions.message(), mqttSubscriptions);
     }
     return mqttSubscriptions;
 }

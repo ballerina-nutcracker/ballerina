@@ -26,6 +26,7 @@ type blockingQueue[T any] struct {
 	cond   *sync.Cond
 	items  []T
 	closed bool
+	epoch  uint64
 }
 
 func newBlockingQueue[T any]() *blockingQueue[T] {
@@ -46,15 +47,16 @@ func (q *blockingQueue[T]) put(item T) bool {
 	return true
 }
 
-// take returns false once the queue is closed and drained.
+// take returns false once the queue is closed and drained, or when clear runs while it waits.
 func (q *blockingQueue[T]) take() (T, bool) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	for len(q.items) == 0 && !q.closed {
+	epoch := q.epoch
+	for len(q.items) == 0 && !q.closed && q.epoch == epoch {
 		q.cond.Wait()
 	}
 	var zero T
-	if len(q.items) == 0 {
+	if len(q.items) == 0 || q.epoch != epoch {
 		return zero, false
 	}
 	item := q.items[0]
@@ -63,10 +65,13 @@ func (q *blockingQueue[T]) take() (T, bool) {
 	return item, true
 }
 
+// clear drops pending items and releases every blocked take, leaving the queue open for new takers.
 func (q *blockingQueue[T]) clear() {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	q.items = nil
+	q.epoch++
+	q.cond.Broadcast()
 }
 
 func (q *blockingQueue[T]) close() {

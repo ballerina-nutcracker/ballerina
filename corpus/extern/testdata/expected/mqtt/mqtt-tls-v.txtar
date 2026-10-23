@@ -12,6 +12,7 @@ missing cert: Failed to get the public key from Crypto API. Certificate file not
 missing key: Failed to get the private key from Crypto API. Key file not found at: testdata/mqtt/certs/missing.key
 invalid cert: Failed to get the public key from Crypto API. Unable to do public key operations: x509: malformed tbs certificate
 invalid key: Failed to get the private key from Crypto API. Failed to parse private key information from the given input
+corrupt key: Failed to get the private key from Crypto API. Failed to parse private key information from the given input
 encrypted key: Failed to get the private key from Crypto API. Encrypted private keys are not supported: testdata/mqtt/certs/client-encrypted.key
 trust store: crypto:TrustStore is not supported as the mqtt:SecureSocket cert; provide a PEM certificate file path
 key store: crypto:KeyStore is not supported as the mqtt:SecureSocket key; provide an mqtt:CertKey
