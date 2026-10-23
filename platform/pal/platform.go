@@ -89,6 +89,18 @@ type (
 		CreateTempDir func(prefix, suffix, dir string) (string, error)
 		Readlink      func(path string) (string, error)
 		Watch         func(path string, recursive bool, handler WatchHandler) (WatchHandle, error)
+		// OpenRandomAccess opens path for positional reads. Close releases the handle.
+		OpenRandomAccess func(path string) (RandomAccessFile, error)
+		// CreateSeekable opens path for writing without creating missing parents. When exclusive is
+		// set it fails with fs.ErrExist if anything is at path, a dangling link included; otherwise
+		// it follows links and truncates an existing file.
+		CreateSeekable func(path string, exclusive bool) (SeekableFile, error)
+		// RealPath returns the absolute path of an existing file with every link resolved.
+		RealPath func(path string) (string, error)
+		// SameFile reports whether both paths, with links followed, name the same file.
+		SameFile func(first, second string) (bool, error)
+		// Chtimes sets the modification time of path, following links and keeping its access time.
+		Chtimes func(path string, modified time.Time) error
 	}
 	OS struct {
 		GetEnv      func(name string) string
@@ -281,6 +293,24 @@ type FileInfo struct {
 	IsSymlink  bool
 	IsReadable bool
 	IsWritable bool
+	// Permissions holds the rwx bits of the file; it is meaningful only when HasPermissions is set,
+	// which is the case on platforms with POSIX permissions.
+	Permissions    uint32
+	HasPermissions bool
+}
+
+// RandomAccessFile is a file opened for positional reads by FS.OpenRandomAccess.
+type RandomAccessFile interface {
+	io.ReaderAt
+	io.Closer
+	Size() int64
+}
+
+// SeekableFile is a file opened for writing by FS.CreateSeekable.
+type SeekableFile interface {
+	io.Writer
+	io.Seeker
+	io.Closer
 }
 
 // CopyOptions controls the behavior of FS.Copy.

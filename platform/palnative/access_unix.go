@@ -26,3 +26,5 @@ import "golang.org/x/sys/unix"
 func isDirWritable(path string) bool {
 	return unix.Access(path, unix.W_OK) == nil
 }
+
+const hasPosixPermissions = true
