@@ -15,24 +15,15 @@
 package main
 
 import (
-	"context"
+	"errors"
+	"fmt"
 	"os"
-
-	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
-	"github.com/ballerina-nutcracker/ballerina/ls/server"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 
 	"github.com/spf13/cobra"
 )
-
-// stdioTransport adapts the process stdin/stdout pair into a single
-// protocol.Transport (io.Reader + io.Writer) for the LSP server.
-type stdioTransport struct{}
-
-func (stdioTransport) Read(p []byte) (int, error)  { return os.Stdin.Read(p) }
-func (stdioTransport) Write(p []byte) (int, error) { return os.Stdout.Write(p) }
 
 var startLangServerCmd = &cobra.Command{
 	Use:   "start-language-server",
@@ -41,25 +32,39 @@ var startLangServerCmd = &cobra.Command{
 	Protocol (LSP) over standard input/output. Editors and extensions
 	launch this command and communicate via JSON-RPC framed with
 	Content-Length headers.`,
-	Args: cobra.NoArgs,
-	RunE: startLangServer,
+	Args:   cobra.NoArgs,
+	Hidden: true,
+	RunE:   startLangServer,
 }
 
 func startLangServer(cmd *cobra.Command, args []string) error {
-	logger := observability.New(os.Stderr)
-	bus := event.New(event.WithLogf(func(msg string, args ...any) { logger.Warn(msg, args...) }))
-	projects := workspace.New(os.DirFS, bus)
-	compiler := compile.New(projects, bus)
-	srv := server.New(stdioTransport{}, projects, compiler, bus, server.WithLogger(logger))
-
-	// Bounded shutdown drain (branch 9 ordering): the workspace marks every
-	// in-flight generation superseded; the compile engine then stops its
-	// debounce timers, bounded-waits for in-flight compiles to finish (their
-	// results gated out by the closed flag), and bus.Flush()es the CRITICAL
-	// delivery channels; the bus closes last so that Flush drains before close.
-	// Defers run LIFO, so execution order is projects → compiler → bus.
-	defer bus.Close()
-	defer compiler.Shutdown()
-	defer func() { _ = projects.Shutdown(context.Background()) }()
-	return srv.Serve()
+	executable, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("locating bal for language server: %w", err)
+	}
+	executable, err = filepath.EvalSymlinks(executable)
+	if err != nil {
+		return fmt.Errorf("resolving bal for language server: %w", err)
+	}
+	name := "bal-language-server"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	child := exec.Command(filepath.Join(filepath.Dir(executable), name))
+	child.Stdin, child.Stdout, child.Stderr = os.Stdin, os.Stdout, os.Stderr
+	if err := child.Start(); err != nil {
+		return fmt.Errorf("starting %s: %w", name, err)
+	}
+	if err := child.Wait(); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			code := exitErr.ExitCode()
+			if code < 0 {
+				code = 1
+			}
+			os.Exit(code)
+		}
+		return fmt.Errorf("waiting for %s: %w", name, err)
+	}
+	return nil
 }
