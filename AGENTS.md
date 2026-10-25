@@ -2,18 +2,7 @@ This document defines how AI/code agents should work with this repository: codin
 
 ## Coding style
 
-- Don't make symbols public unless asked for or needed
-- Constructor methods should provide data for all the fields unless there is default initialization
-  - Map values should always be initialized to an empty map
-
-- If multiple structs need to hold same set of fields and implement methods on those fields add \*Base struct and use type inclusion on other structs
-  - Make this base struct private
-  - Implement the relevant methods on the base struct
-
-- Don't add comments explaining each line of code. If you need to add comments to describe a block of statements then you should extract them to
-  a function with meaningful name.
-
-- Each bal/go file should have the correct license header
+Follow [the coding-style guide](doc/guides/CODING_STYLE.md) when adding or editing code.
 
 ## Scripts
 
@@ -22,7 +11,7 @@ This document defines how AI/code agents should work with this repository: codin
 
 ## PAL (Platform Abstraction Layer)
 
-- All platform interactions (e.g. io, http, fs) must go through PAL, not the underlying platform directly.
+- Platform interactions in compiler/interpreter execution (e.g. io, http, fs) must go through PAL. PAL implementations and developer tooling may use platform APIs directly.
 
 ## Symbols
 
@@ -57,53 +46,28 @@ Stages 5–9 then run concurrently across modules. After each of those stages, a
 
 ## Tests
 
-- IMPORTANT: prefer adding corpus tests over adding unit tests for modules. If you can't write a corpus test to validate a scenario then that means that scenario can't happen in real world
+- Prefer corpus tests for behaviour reachable from Ballerina source. Use focused Go tests for infrastructure, failure injection, and external interface contracts that corpus tests cannot exercise. Do not add tests or guards for states the compiler/runtime guarantees are impossible.
+- Use the [manage-corpus-tests skill](.agents/skills/manage-corpus-tests/SKILL.md) as the authoritative source for corpus layout, naming, markers, golden regeneration, and validation.
 
-### Corpus layout
+Choose the corpus category that matches the behaviour:
 
-- `corpus/bal/` and per-stage golden dirs (`corpus/ast/`, `corpus/cfg/`, `corpus/desugared/`, `corpus/bir/`) — compiler pipeline corpus walked by `*/corpus_*_test.go` in each package
-- `corpus/recovery/` — `.txtar` fixtures with embedded Ballerina source and recovered AST goldens, run by `TestRecovery`. `corpus/recovery/ast/` exercises parsing and recovered AST construction only; other recovery fixtures continue through semantic analysis despite source diagnostics. All fixtures validate `@error` markers and reject panics and `INTERNAL_ERROR` diagnostics. Update a fixture with `go test ./corpus -run 'TestRecovery/<fixture>' -update`.
-- `corpus/lib/` — standard-library corpus, a sibling root of `corpus/bal/` (not nested under it). These exercise native Go the compiler never sees, so they have **no per-stage goldens**; their only goldens are the end-to-end `corpus/integration/lib/**.txtar`, run by `TestLibIntegration`. The stage packages do not see them at all: `corpus/lib/` is outside `corpus/bal/`, so `GetValidAndPanicTests` never picks it up and the per-stage drivers are unchanged. `TestLibIntegration` compiles and runs each test through the whole pipeline and validates its `@output`/`@error`/`@panic` markers, which is the coverage a stage driver would have added
-- `corpus/*_test.go` (`package corpus`) — end-to-end integration drivers (CLI, extern, package resolution, BIR roundtrip, etc.)
-- `corpus/<area>/testdata/` — fixtures for integration drivers (`extern/`, `cli/`, `package-resolution/`, etc.); no Go files in fixture dirs except embedded native modules under test balas
+- `corpus/bal/`: language and compiler pipeline behaviour.
+- `corpus/project/`: behaviour requiring a multi-file or multi-module project.
+- `corpus/recovery/`: parser and compiler recovery from source errors.
+- `corpus/lib/`: standard-library behaviour.
 
-### Corpus tests
+## Language support documentation
 
-- We have 3 kinds of tests indicated by file name in `./corpus/bal`
-  1. valid tests (`*-v.bal`)
-     These are expected to run end to end and generate output (outputs are indicated with `@output` comments)
-  2. error tests (`*-e.bal`)
-     These have errors that should be detected before interpreter (error lines are marked with `@error` comments)
-  3. panic tests (`*-p.bal`)
-     These would trigger runtime panics in the interpreter
-  4. future tests (*-f{v|e|p}.bal)
-     These are valid tests within the current scope but we have decided not to support. These will trigger unimplemented error at places marked with error markers.
+- For every language feature or language bug fix in the compilation pipeline (stages 1–10), update the relevant `doc/lang/subset*.md` support or restriction entry as part of the same change. Interpreter-only changes (stage 11) do not require subset documentation updates.
+- Use the [filling-subset-doc skill](.agents/skills/filling-subset-doc/SKILL.md). Unless the user specifies a subset, update the highest numbered subset and preserve historical release subsets.
 
-- Name corpus `.bal` files without leading zeros in numeric parts (e.g. `1-e.bal`, `call2-v.bal`, `div1-p.bal`; not `01-e.bal` or `call02-v.bal`). When you add or rename a test, update the matching expected files under `./corpus/$stage` and any `corpus/integration` `.txtar` lines that cite the file name.
+## Commits and PR titles
 
-- For valid tests for each stage we have expected output defined in `./corpus/$stage` directory. We have corpus tests that generate the actual output and compare against them
-  - Each corpus test accepts `-update` flag that will update expected output to match actual output
-  - Each corpus tests will run the interpreter up to that stage.
-- IMPORTANT: This is the preferred way of testing for any interpreter stage.
-
-- Project test cases ends up in `./corpus/project/` and project names fallow the same convention.
-
-- Standard-library test cases end up in `./corpus/lib/subset<N>/` and follow the same naming convention. Add the golden with `go test ./corpus -update`; there is no per-stage golden to add.
-
-#### Test markers
-- `@output`: test cases can write to standard out using `io:println` and use output marker to indicate expected output.
-- `@error`: -e test cases should use error markers to indicate lines where an error is expect. Text after marker is purely for commenting, not validated against actual error.
-- `@panic`: -p test cases should use panic markers to indicate first line which triggers a panic. We validate it is the first line the stack trace. Similar to error markers text after marker is ignored.
-
-## Commit messages and PR titles
-
-- Every commit subject and the PR title must follow Conventional Commits: `<type>(<optional scope>): <description>` (`.github/workflows/lint-pr.yml`, enforced by `.github/scripts/validate_commits.py`)
-- Allowed types: `feat`, `fix`, `build`, `chore`, `ci`, `docs`, `style`, `refactor`, `perf`, `test`, `revert`
-- Max subject length is 72 characters
-- The description must start with a lowercase letter
-- A breaking-change marker (`!` before the colon, e.g. `feat!: ...`) is allowed
-- Scope is optional and unrestricted (no allowed-scope list is configured)
-- Merge commits are exempt from this check
+- Keep commits atomic: each commit should contain one coherent change, including its tests and documentation, and should build and pass its relevant tests independently. Split unrelated changes into separate commits.
+- When correcting a bug or omission in an earlier commit you authored on the current branch or active PR stack, create a fixup with `git commit --fixup=<target-sha>` instead of a separate ordinary commit. Split corrections by their target commits.
+- Only target commits in the active branch or stack that have not landed on `main`. If the faulty commit is already on `main`, create a new ordinary fix commit.
+- Before opening a PR, autosquash agent-authored fixups into their target commits so each change is represented by one atomic commit. Fixup commits must not land on `main`.
+- Commit subjects and PR titles must follow Conventional Commits (`<type>(<optional scope>): <description>`). The exact rules are defined in `.github/scripts/validate_commits.py`; validate a subject with `python3 .github/scripts/validate_commits.py "<subject>"`. Merge commits are exempt.
 
 ## Commands
 
@@ -112,7 +76,7 @@ Stages 5–9 then run concurrently across modules. After each of those stages, a
 ## Profiling
 
 - In order to profile a `.bal` file first you need to get a debug build (`go build -tags debug -o bal-debug ./cli/cmd`)
-- Then run the debug build against the bal file `./bal-debug [flag] -prof <path to bal file>`.
+- Then run the debug build against the bal file `./bal-debug run --prof <path to bal file>`.
 
 ### Opening interactive profiler on long running processes
 
@@ -129,5 +93,5 @@ Stages 5–9 then run concurrently across modules. After each of those stages, a
 
 ## Type
 
-- To check if a type is singleton type and get it's value use `semtype:SingleShape`
+- To check if a type is singleton type and get it's value use `semtypes.SingleShape`
 - If you run into type-check issues, use the debug build tag to enable more detailed type error messages.

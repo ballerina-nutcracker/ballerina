@@ -197,14 +197,14 @@ Each `lib/subset<N>` is a released library-support milestone, documented in `doc
 
 ### Test conventions
 
-- Suffixes per `AGENTS.md`: `*-v.bal` (valid, end-to-end with `@output` markers), `*-e.bal` (compile-time errors, `@error` markers), `*-p.bal` (runtime panics, `@panic` markers), `*-f{v|e|p}.bal` (future, scope-deferred).
+- Suffixes per the [manage-corpus-tests skill](../manage-corpus-tests/SKILL.md): `*-v.bal` (valid, end-to-end with `@output` markers), `*-e.bal` (compile-time errors, `@error` markers), `*-p.bal` (runtime panics, `@panic` markers), `*-f{v|e|p}.bal` (future, scope-deferred).
 - Name files **without leading zeros** in numeric parts (e.g. `print1-v.bal`, not `print01-v.bal`).
 - **`*-v.bal` tests must produce empty stderr.** If the stdlib writes to stderr (e.g. logging), structure the test to avoid it — for `log`-style modules, use filtered log levels so nothing is emitted.
 - Hand off golden-file regeneration to the **`manage-corpus-tests`** skill:
   ```shell
-  go test ./corpus -update
+  go test ./corpus -run 'TestLibIntegration/lib/subset<N>/<test-file>.bal' -update
   ```
-  Then review `git diff corpus/` before committing (and revert any unrelated golden drift `-update` introduces — see `manage-corpus-tests`).
+  Scope `-run` to each new or changed test; an unscoped `-update` regenerates every integration golden in `./corpus`, including unrelated ones. Then review `git diff corpus/` before committing (and revert any unrelated golden drift `-update` introduces — see `manage-corpus-tests`).
 
 ### Coverage target
 
@@ -221,7 +221,7 @@ go tool cover -func=/tmp/<name>-coverage.out | grep total
 ```
 If the total is below 80%, find the gaps with `go tool cover -func=/tmp/<name>-coverage.out` (sort by the trailing `%` column) or `go tool cover -html=/tmp/<name>-coverage.out` for an annotated view, then add corpus `.bal` cases to exercise the missing branches — repeat until ≥80%. Do not move on to Step 9 with a known shortfall.
 
-**Drive coverage from `.bal`, not Go unit tests.** The coverage harness runs `./corpus/...` under `-coverpkg=./lib/stdlibs/...`, so a corpus test that calls your extern functions exercises and measures the native Go through the full compiler → BIR → interpreter pipeline. Reach for a Go unit test (`native/<name>_test.go`) **only** for branches genuinely unreachable from Ballerina — defensive type/arity guards, nil guards, interface-contract paths — and keep them minimal with a comment stating why they cannot be hit from `.bal`. Do not add a wrong-type extern arg guard at all (the type checker rejects wrong types at compile time; use `x, _ := args[i].(T)`). See the **`manage-corpus-tests`** skill's "Test philosophy" section.
+**Drive coverage from `.bal`, not Go unit tests.** The coverage harness runs `./corpus/...` under `-coverpkg=./lib/stdlibs/...`, so a corpus test that calls your extern functions exercises and measures the native Go through the full compiler → BIR → interpreter pipeline. Reach for a Go unit test (`native/<name>_test.go`) **only** for branches genuinely unreachable from Ballerina — defensive type/arity guards, nil guards, interface-contract paths — and keep them minimal with a comment stating why they cannot be hit from `.bal`. Do not add a wrong-type extern arg guard at all (the type checker rejects wrong types at compile time; use `x, _ := args[i].(T)`). See the [manage-corpus-tests "Test selection and layout" section](../manage-corpus-tests/SKILL.md#test-selection-and-layout).
 
 ## 9. README
 

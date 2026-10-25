@@ -1,43 +1,57 @@
 ---
 name: manage-corpus-tests
-description: Creating/updating corpus tests
+description: Add or update this repository's Ballerina corpus fixtures, markers, and stage/integration goldens.
 ---
 
-## Test philosophy: corpus tests are primary, Go unit tests are the exception
+## Test selection and layout
 
-Prefer a corpus `.bal` test over a Go unit test for **everything reachable from Ballerina source**. A corpus test runs the full compiler → BIR → interpreter pipeline, so it catches compiler, BIR, and runtime issues — a Go unit test that calls a native helper directly only exercises the runtime. If you cannot write a corpus test for a scenario, that scenario generally cannot happen in the real world.
+Prefer corpus tests for behaviour reachable from Ballerina source, including malformed but well-typed values. Use focused Go tests only when a corpus test cannot exercise the scenario, and explain why when it is not obvious.
 
-Corpus tests also **count toward native Go coverage**: the coverage harness runs `./corpus/...` under `-coverpkg=./lib/stdlibs/...`, so the interpreter executing native code during a corpus run is measured. You do **not** need Go unit tests to hit a coverage target — drive the native code from `.bal` instead.
+Remove unreachable native implementation branches or helpers rather than adding tests for them. Focused Go tests remain appropriate for infrastructure and external interface contracts that corpus tests cannot exercise.
 
-Write a Go unit test **only** for code that genuinely cannot execute through Ballerina, and keep it minimal:
-- **Defensive type/arity guards.** The type checker guarantees extern argument types and arity, so a wrong-type or missing-argument fallback can never be hit from `.bal` (passing the wrong type is a *compile* error — see any `*-e.bal` `@error argument type mismatch`). Codebase convention is to not write these guards at all: extern args use `x, _ := args[i].(T)`, not `if !ok { return error }`.
-- **Nil guards** on values that are never nil when they arrive from Ballerina (e.g. a `*decimal.Decimal` argument).
-- **Interface-contract paths** the runtime never triggers (e.g. a `transform.Transformer` `ErrShortDst` branch when `x/text` sizes its own buffers).
+Corpus execution contributes to native Go coverage when the coverage harness instruments the workspace packages. Add corpus cases to cover native behaviour; separate Go unit tests are not needed solely to meet a coverage target.
 
-When a unit test is justified, say *why it is unreachable from Ballerina* in a comment so the exception is auditable.
+- `corpus/bal/`: compiler pipeline fixtures, with goldens in `corpus/ast/`, `corpus/cfg/`, `corpus/desugared/`, `corpus/bir/`, and `corpus/integration/`.
+- `corpus/project/`: project fixtures for behaviour requiring multiple files or modules; use the same outcome suffixes as `.bal` fixtures.
+- `corpus/recovery/`: `.txtar` fixtures with embedded Ballerina source and recovered AST goldens, run by `TestRecovery`. `corpus/recovery/ast/` exercises parsing and recovered AST construction only; other recovery fixtures continue through semantic analysis despite source diagnostics. All fixtures validate `@error` markers and reject panics and `INTERNAL_ERROR` diagnostics.
+- `corpus/lib/subset<N>/`: standard-library fixtures. These are outside `corpus/bal/`, so per-stage drivers do not discover them. Their only goldens are `corpus/integration/lib/**.txtar`, updated through `TestLibIntegration`, which runs the full pipeline and validates the source markers.
+- `corpus/*_test.go`: end-to-end integration drivers for CLI, extern, package resolution, BIR roundtrip, and other areas. Their fixtures live under `corpus/<area>/testdata/`; no Go files belong in those fixture directories except embedded native modules under test balas.
 
-**Remove dead code rather than test it.** Any Go code that can never execute through Ballerina (an unused helper, a wrong-type error branch the compiler already rejects) is redundant even when a unit test covers it — delete the code and the test. The exemption is only for genuine edge-case / error-handling branches that *can* be reached with a malformed but well-typed value (bad charset name, malformed date string, out-of-range offset) — cover those from `.bal`.
+## Fixture naming
+
+Add new language fixtures under the highest numbered `corpus/bal/subset<N>/`, including regressions for features introduced in earlier subsets. Use `<id>-<feature>/` for feature tests and `<id>-bug/` for bug regressions. Keep matching goldens and embedded source paths aligned. Library fixtures use a separate release numbering track under `corpus/lib/subset<N>/`; do not infer their subset from the latest language subset. Choosing a library subset is a release-scoping decision: confirm it with the developer, as described in the [add-stdlib-support skill](../add-stdlib-support/SKILL.md).
+
+- `*-v.bal`: valid, runs end to end; expected stdout uses `@output` markers.
+- `*-e.bal`: compilation errors at `@error` markers.
+- `*-p.bal`: runtime panic at the first stack frame marked `@panic`.
+- `*-f{v|e|p}.bal`: deferred support, with unimplemented diagnostics at error markers.
+
+Use no leading zeros in numeric filename parts: `1-e.bal`, `call2-v.bal`, or `div1-p.bal`. When adding or renaming a fixture, update its corresponding stage goldens and integration `.txtar` references.
 
 ## Test markers
-+ corpus tests use the following comments as markers
-  + `@output <expected output>`
-    - Test harness parses the file top to bottom extracting the expected output and compares it against stdout.
-    - Generally it is a good idea to put this right next to the print function call
-  + `@error`
-    - Test harness validates that each frontend error covers one of these markers
-      - For errors that are covered by multiple lines it is sufficient to have one marker in one of those lines
-    - IMPORTANT: Test harness doesn't validate error messages
-  + `@panic`
-    - When there is a runtime panic, test harness validates that the top stack frame location (file:line) matches this annotation
+
+- `@output <expected output>`: expected stdout, collected in source order. Place it next to the corresponding print call where practical.
+- `@error`: an expected frontend diagnostic must cover the marked line. One marker within a multi-line diagnostic's range is sufficient. Marker text does not validate diagnostic wording.
+- `@panic`: the expected first runtime stack frame's file and line. Marker text does not validate panic wording.
 
 ## Updating corpus tests
-+ In order to update golden files used for tests, run the tests with `--update` flag.
-  + example: `go test ./corpus --update`
-  + golden stage files for a `.bal` are produced by several packages — regenerate across `./ast/... ./semantics/... ./desugar/... ./bir/... ./corpus/` to cover ast/cfg/desugared/bir/integration goldens.
-  + Standard-library tests live under `corpus/lib/` (a sibling of `corpus/bal/`, discovered separately) and have no per-stage goldens at all — only `corpus/integration/lib/**.txtar`, via the `TestLibIntegration` driver in `corpus/integration_test.go`. The per-stage drivers never see them -- `corpus/lib/` sits outside `corpus/bal/`, so stage discovery does not reach it and those test files are untouched. `TestLibIntegration` runs the full pipeline per test and validates its `@output`/`@error`/`@panic` markers.
-+ You will get test failures for any file that got updated.
-+ Then use git diff on all updated golden files to confirm changes match with the expectations
-+ **Watch for unrelated drift.** `--update` may rewrite goldens for files you never touched (some stages have non-deterministic ordering, e.g. const/record-field iteration). After updating, `git status` and revert any change outside the files you added/edited (`git checkout <path>`) so the changeset stays scoped to your work.
 
-## Validating corpus tests
-+ It is a good idea to validate output by running corpus files against the java implementation using `bal run $file`
+Record the initial working-tree changes before regenerating goldens. Run the relevant driver with `-update`, scoped with `-run` to the affected fixtures where possible:
+
+| Golden | Driver package |
+|---|---|
+| `corpus/ast/` | `./nodebuilder` |
+| `corpus/cfg/` | `./semantics/internal/cfg` |
+| `corpus/desugared/` | `./desugar` |
+| `corpus/bir/` | `./birgen` |
+| `corpus/integration/` | `./corpus` |
+
+For example, `go test ./corpus -run 'TestIntegration/<fixture>' -update`. Use the actual subtest path reported by the driver. Run the relevant semantic tests under `./semantics/...` as well when changing compiler behaviour.
+
+For recovery fixtures, use `go test ./corpus -run 'TestRecovery/<fixture>' -update`.
+
+Review the diff against the intended behaviour, then rerun the same selection without `-update` to verify it passes. If regeneration introduces unrelated drift, undo only the changes introduced by that run. Preserve pre-existing staged, unstaged, and untracked work; do not restore whole files that already contained user edits.
+
+## Validating behaviour
+
+Derive expected language behaviour from the Ballerina specification. Use `run-jballerina` as a cross-check, and report disagreements between the specification and jBallerina rather than copying the Java implementation's behaviour into expectations. A regenerated golden records actual output; it does not establish that the output is correct.
