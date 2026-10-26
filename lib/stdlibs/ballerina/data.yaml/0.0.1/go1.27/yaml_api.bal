@@ -14,8 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const NEW_LINE_CHARACTER = "\n";
-
 # Converts YAML string to subtype of anydata.
 #
 # ```ballerina
@@ -72,20 +70,8 @@ public isolated function parseStream(stream<byte[], error?> s,
 # + yamlValue - Input yaml value
 # + config - Options used to get desired toString representation
 # + return - On success, returns to string value, else returns an `yaml:Error`
-public isolated function toYamlString(anydata yamlValue, WriteConfig config = {}) returns string|Error {
-    string[] lines = check toYamlStringArray(yamlValue, config);
-    string result = "";
-    foreach int i in 0 ..< lines.length() {
-        if i > 0 {
-            result += NEW_LINE_CHARACTER;
-        }
-        result += lines[i];
-    }
-    return result;
-}
-
-isolated function toYamlStringArray(anydata yamlValue, WriteConfig config = {})
-    returns string[]|Error = external;
+public isolated function toYamlString(anydata yamlValue, WriteConfig config = {})
+    returns string|Error = external;
 
 # Represents the YAML schema available for the parser.
 #
