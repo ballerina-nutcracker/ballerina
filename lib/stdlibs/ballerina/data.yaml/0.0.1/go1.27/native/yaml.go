@@ -92,7 +92,7 @@ func initYamlModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseString", parseString)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseBytes", parseBytes)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseStream", parseStream)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "toYamlStringArray", toYamlStringArray)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "toYamlString", toYamlString)
 }
 
 func parseString(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
