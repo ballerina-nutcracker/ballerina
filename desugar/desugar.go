@@ -135,6 +135,10 @@ func (ctx *packageContext) getSymbol(ref model.SymbolRef) model.Symbol {
 	return ctx.compilerCtx.GetSymbol(ref)
 }
 
+func (ctx *packageContext) unnarrowedSymbol(ref model.SymbolRef) model.SymbolRef {
+	return ctx.compilerCtx.UnnarrowedSymbol(ref)
+}
+
 func (ctx *packageContext) functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool) {
 	return ctx.compilerCtx.GetFunctionSignature(ref)
 }
@@ -312,6 +316,10 @@ func (ctx *functionContext) getSymbol(ref model.SymbolRef) model.Symbol {
 	return ctx.pkgCtx.getSymbol(ref)
 }
 
+func (ctx *functionContext) unnarrowedSymbol(ref model.SymbolRef) model.SymbolRef {
+	return ctx.pkgCtx.unnarrowedSymbol(ref)
+}
+
 func (ctx *functionContext) typeEnv() semtypes.Env {
 	return ctx.pkgCtx.typeEnv()
 }
@@ -324,6 +332,7 @@ type desugarContext interface {
 	setSymbolType(ref model.SymbolRef, ty semtypes.SemType)
 	symbolType(ref model.SymbolRef) semtypes.SemType
 	getSymbol(ref model.SymbolRef) model.Symbol
+	unnarrowedSymbol(ref model.SymbolRef) model.SymbolRef
 	functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool)
 	functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature
 	associateFunctionSignature(source, target model.SymbolRef)
@@ -1445,7 +1454,7 @@ func createDefaultClosure(ctx desugarContext, def *model.DefaultableParam, expr 
 	defaultClosure := createDefaultValueFunction(fnName, expr, requiredParams)
 	defaultClosure.SetSymbol(symRef)
 	defaultClosure.SetScope(fnScope)
-	remapSymbolRefs(defaultClosure.Body.(ast.BLangNode), symbolMapping)
+	remapSymbolRefs(defaultClosure.Body.(ast.BLangNode), symbolMapping, ctx.unnarrowedSymbol)
 	return defaultClosure
 }
 
@@ -1563,13 +1572,14 @@ func desugarClassMethodDefaults(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 }
 
 type symbolRemapper struct {
-	mapping map[model.SymbolRef]model.SymbolRef
+	mapping  map[model.SymbolRef]model.SymbolRef
+	unnarrow func(model.SymbolRef) model.SymbolRef
 }
 
 func (r symbolRemapper) Visit(node ast.BLangNode) ast.Visitor {
 	if ref, ok := node.(ast.BNodeWithSymbol); ok {
 		oldSym := ref.Symbol()
-		if newSym, found := r.mapping[oldSym]; found {
+		if newSym, found := r.mapping[r.unnarrow(oldSym)]; found {
 			ref.SetSymbol(newSym)
 		}
 	}
@@ -1581,13 +1591,13 @@ func (r symbolRemapper) VisitTypeData(_ *ast.TypeData) ast.Visitor {
 }
 
 // remapSymbolRefs updates symbols based on the mapping given
-func remapSymbolRefs(node ast.BLangNode, mapping map[model.SymbolRef]model.SymbolRef) {
+func remapSymbolRefs(node ast.BLangNode, mapping map[model.SymbolRef]model.SymbolRef, unnarrow func(model.SymbolRef) model.SymbolRef) {
 	if len(mapping) == 0 {
 		return
 	}
 	// This runs on source defaults before desugaring, so the tree cannot yet
 	// contain desugar-only nodes that ast.Walk does not know about.
-	ast.Walk(symbolRemapper{mapping: mapping}, node)
+	ast.Walk(symbolRemapper{mapping: mapping, unnarrow: unnarrow}, node)
 }
 
 // DesugarPackage returns a desugared package (may be new or same instance)
