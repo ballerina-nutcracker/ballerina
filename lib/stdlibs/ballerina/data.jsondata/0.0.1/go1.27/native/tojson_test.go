@@ -26,7 +26,7 @@ import (
 
 func TestToJSONBoundsTheDepth(t *testing.T) {
 	t.Parallel()
-	typer := newTyper(semtypes.ContextFrom(semtypes.CreateTypeEnv()), semtypes.Never, nil)
+	typer := newTyper(newTypeCache(), semtypes.ContextFrom(semtypes.CreateTypeEnv()), semtypes.Never, nil)
 	nested := func(depth int) values.BalValue {
 		v := values.BalValue(values.NewList(typer.jsonListTy, typer.jsonList, false, nil, 0, nil))
 		for range depth - 1 {

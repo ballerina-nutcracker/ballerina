@@ -35,34 +35,41 @@ func init() {
 }
 
 func initJsondataModule(rt *runtime.Runtime) {
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseAsType", parseAsType)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseString", parseString)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseBytes", parseBytes)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseStream", parseStream)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "externToJson", toJson)
+	cache := newTypeCache()
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseAsType", withTypeCache(cache, parseAsType))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseString", withTypeCache(cache, parseString))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseBytes", withTypeCache(cache, parseBytes))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseStream", withTypeCache(cache, parseStream))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "externToJson", withTypeCache(cache, toJson))
 }
 
-func parseAsType(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+func withTypeCache(cache *typeCache, impl func(*typeCache, *extern.Context, []values.BalValue) (values.BalValue, error)) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return impl(cache, ctx, args)
+	}
+}
+
+func parseAsType(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	opts, _ := args[1].(*values.Map)
 	td, _ := args[2].(*values.TypeDesc)
-	t := newTyperFor(ctx, td)
+	t := newTyperFor(cache, ctx, td)
 	result, err := traverse(t, readProjection(opts), args[0], t.root)
 	return toResult(ctx, result, err)
 }
 
-func parseString(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+func parseString(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	input, _ := args[0].(string)
-	return parseText(ctx, utf16FromString(input), args[1], args[2])
+	return parseText(cache, ctx, utf16FromString(input), args[1], args[2])
 }
 
-func parseBytes(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+func parseBytes(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	input, _ := args[0].(*values.List)
-	return parseUTF8(ctx, input.ToByteSlice(), args[1], args[2])
+	return parseUTF8(cache, ctx, input.ToByteSlice(), args[1], args[2])
 }
 
 // parseStream reads the whole byte-block stream before parsing. Unlike jBallerina, which treats an error from
 // the stream as the end of the input, an error from the stream is returned as a jsondata:Error.
-func parseStream(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+func parseStream(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	byteStream, _ := args[0].(*values.Stream)
 	var input []byte
 	for {
@@ -77,7 +84,7 @@ func parseStream(ctx *extern.Context, args []values.BalValue) (values.BalValue, 
 		block, _ := record.Get("value")
 		input = append(input, block.(*values.List).ToByteSlice()...)
 	}
-	return parseUTF8(ctx, input, args[1], args[2])
+	return parseUTF8(cache, ctx, input, args[1], args[2])
 }
 
 func streamError(ctx *extern.Context, cause *values.Error) (values.BalValue, error) {
@@ -88,32 +95,32 @@ func streamError(ctx *extern.Context, cause *values.Error) (values.BalValue, err
 	return result, err
 }
 
-func parseUTF8(ctx *extern.Context, input []byte, optsArg, tdArg values.BalValue) (values.BalValue, error) {
+func parseUTF8(cache *typeCache, ctx *extern.Context, input []byte, optsArg, tdArg values.BalValue) (values.BalValue, error) {
 	text, err := utf16FromBytes(input)
 	if err != nil {
 		return toResult(ctx, nil, err)
 	}
-	return parseText(ctx, text, optsArg, tdArg)
+	return parseText(cache, ctx, text, optsArg, tdArg)
 }
 
-func parseText(ctx *extern.Context, input []uint16, optsArg, tdArg values.BalValue) (values.BalValue, error) {
+func parseText(cache *typeCache, ctx *extern.Context, input []uint16, optsArg, tdArg values.BalValue) (values.BalValue, error) {
 	opts, _ := optsArg.(*values.Map)
 	td, _ := tdArg.(*values.TypeDesc)
-	t := newTyperFor(ctx, td)
+	t := newTyperFor(cache, ctx, td)
 	result, err := parse(t, readProjection(opts), input, t.root)
 	return toResult(ctx, result, err)
 }
 
-func toJson(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	t := newTyper(ctx.TypeCtx(), semtypes.Never, nil)
+func toJson(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	t := newTyper(cache, ctx.TypeCtx(), semtypes.Never, nil)
 	result, err := t.toJSON(args[0], make(map[values.BalValue]struct{}))
 	return toResult(ctx, result, err)
 }
 
 // newTyperFor drops error from the typedesc constraint: an inferred typedesc can wrongly carry the module's
 // distinct error type (ballerina-nutcracker/ballerina#1383).
-func newTyperFor(ctx *extern.Context, td *values.TypeDesc) *typer {
-	return newTyper(ctx.TypeCtx(), semtypes.Diff(td.Constraint(), semtypes.Error), fieldKeys(ctx, td))
+func newTyperFor(cache *typeCache, ctx *extern.Context, td *values.TypeDesc) *typer {
+	return newTyper(cache, ctx.TypeCtx(), semtypes.Diff(td.Constraint(), semtypes.Error), fieldKeys(ctx, td))
 }
 
 const nameAnnotationKey = "ballerina/data.jsondata:0.0.1:Name"

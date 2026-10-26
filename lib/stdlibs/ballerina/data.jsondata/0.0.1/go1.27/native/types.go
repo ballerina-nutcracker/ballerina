@@ -19,6 +19,7 @@ package native
 import (
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
@@ -123,6 +124,7 @@ func emptyFieldSet() *fieldSet {
 // typer answers the type questions the jBallerina implementation answers through its runtime type API.
 type typer struct {
 	tc            semtypes.Context
+	cache         *typeCache
 	jsonTy        semtypes.SemType
 	anydataTy     semtypes.SemType
 	jsonMapTy     semtypes.SemType
@@ -137,7 +139,7 @@ type typer struct {
 	rootFieldKeys map[string]string
 }
 
-func newTyper(tc semtypes.Context, root semtypes.SemType, rootFieldKeys map[string]string) *typer {
+func newTyper(cache *typeCache, tc semtypes.Context, root semtypes.SemType, rootFieldKeys map[string]string) *typer {
 	jsonTy := semtypes.CreateJSON(tc)
 	jsonMapTy := semtypes.Intersect(jsonTy, semtypes.Mapping)
 	jsonListTy := semtypes.Intersect(jsonTy, semtypes.List)
@@ -146,6 +148,7 @@ func newTyper(tc semtypes.Context, root semtypes.SemType, rootFieldKeys map[stri
 	anydataListTy := semtypes.Intersect(anydataTy, semtypes.List)
 	return &typer{
 		tc:            tc,
+		cache:         cache,
 		jsonTy:        jsonTy,
 		anydataTy:     anydataTy,
 		jsonMapTy:     jsonMapTy,
@@ -161,7 +164,122 @@ func newTyper(tc semtypes.Context, root semtypes.SemType, rootFieldKeys map[stri
 	}
 }
 
+// typeCache holds the classification of each structured type a runtime has parsed into. Classifying a
+// mapping or list type intersects its atoms, which mints runtime atoms, so it must happen once per type
+// rather than once per value.
+type typeCache struct {
+	mu       sync.Mutex
+	interner *semtypes.SemTypeInterner
+	// infos is keyed by the type without its value part (see cacheKey) and holds one entry per value part.
+	infos map[semtypes.InternHandle][]typeInfo
+	// enclosing holds, for each member type of a classified type not classified yet, the types enclosing it.
+	enclosing map[semtypes.InternHandle]*enclosingType
+	sameType  func(semtypes.Context, semtypes.SemType, semtypes.SemType) bool
+}
+
+// enclosingType is a classified type and, through outer, the types it is a member of.
+type enclosingType struct {
+	ti    typeInfo
+	outer *enclosingType
+}
+
+func newTypeCache() *typeCache {
+	return &typeCache{
+		interner:  semtypes.NewSemtypeInterner(),
+		infos:     make(map[semtypes.InternHandle][]typeInfo),
+		enclosing: make(map[semtypes.InternHandle]*enclosingType),
+		sameType:  semtypes.IsSameType,
+	}
+}
+
+func (c *typeCache) getOrClassify(tc semtypes.Context, ty semtypes.SemType, classify func(semtypes.SemType) typeInfo) typeInfo {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	handle := c.cacheKey(ty)
+	if ti, ok := c.lookup(tc, handle, ty); ok {
+		return ti
+	}
+	outer := c.enclosing[handle]
+	delete(c.enclosing, handle)
+	// A member of a recursive type can be a new copy of an enclosing type; reusing that classification keeps
+	// nested values of the type from minting a new copy at every level.
+	for e := outer; e != nil; e = e.outer {
+		if c.sameType(tc, ty, e.ti.ty) {
+			c.infos[handle] = append(c.infos[handle], e.ti)
+			return e.ti
+		}
+	}
+	ti := classify(ty)
+	c.infos[handle] = append(c.infos[handle], ti)
+	enclosing := &enclosingType{ti: ti, outer: outer}
+	for _, member := range memberTypes(ti) {
+		if !cacheable(member) {
+			continue
+		}
+		memberHandle := c.cacheKey(member)
+		if _, ok := c.infos[memberHandle]; ok {
+			continue
+		}
+		if _, ok := c.enclosing[memberHandle]; !ok {
+			c.enclosing[memberHandle] = enclosing
+		}
+	}
+	return ti
+}
+
+// cacheKey interns ty without its value part, which keeps the subtype data of its other basic types, so a
+// copy of ty gets the same key even though the interner never matches a proper subtype of a value type.
+func (c *typeCache) cacheKey(ty semtypes.SemType) semtypes.InternHandle {
+	return c.interner.Intern(semtypes.Diff(ty, valueTypes))
+}
+
+func (c *typeCache) lookup(tc semtypes.Context, handle semtypes.InternHandle, ty semtypes.SemType) (typeInfo, bool) {
+	value := semtypes.Intersect(ty, valueTypes)
+	for _, ti := range c.infos[handle] {
+		if semtypes.IsSameType(tc, value, semtypes.Intersect(ti.ty, valueTypes)) {
+			return ti, true
+		}
+	}
+	return typeInfo{}, false
+}
+
+// memberTypes lists the types the members of a value of the classified type are converted to.
+func memberTypes(ti typeInfo) []semtypes.SemType {
+	switch {
+	case ti.mapping != nil:
+		names := ti.mapping.FieldNames()
+		members := make([]semtypes.SemType, 0, len(names)+1)
+		for _, name := range names {
+			members = append(members, ti.mapping.FieldInnerVal(name))
+		}
+		return append(members, ti.mapping.Rest())
+	case ti.list != nil:
+		members := make([]semtypes.SemType, 0, ti.list.FixedLength()+1)
+		for i := range ti.list.FixedLength() {
+			members = append(members, ti.list.MemberAtInnerVal(i))
+		}
+		return append(members, ti.list.Rest())
+	default:
+		return ti.members
+	}
+}
+
+var valueTypes = semtypes.Union(semtypes.Union(semtypes.Int, semtypes.Float), semtypes.Union(semtypes.Decimal, semtypes.String))
+
+// cacheable reports whether ty is worth caching: only mapping and list types are costly to classify.
+func cacheable(ty semtypes.SemType) bool {
+	basic := semtypes.WidenToBasicTypes(ty)
+	return semtypes.ContainsBasicType(basic, semtypes.Mapping) || semtypes.ContainsBasicType(basic, semtypes.List)
+}
+
 func (t *typer) classify(ty semtypes.SemType) typeInfo {
+	if !cacheable(ty) {
+		return t.classifyType(ty)
+	}
+	return t.cache.getOrClassify(t.tc, ty, t.classifyType)
+}
+
+func (t *typer) classifyType(ty semtypes.SemType) typeInfo {
 	if semtypes.IsSameType(t.tc, ty, t.jsonTy) {
 		return typeInfo{kind: kindJSON, ty: ty}
 	}
