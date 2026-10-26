@@ -33,12 +33,30 @@ type Transport interface {
 
 // ReadMessage reads one Content-Length-framed JSON-RPC message.
 func ReadMessage(reader *bufio.Reader) (Message, error) {
+	payload, err := ReadFrame(reader)
+	if err != nil {
+		return Message{}, err
+	}
+	var message Message
+	if err := json.Unmarshal(payload, &message); err != nil {
+		return Message{}, err
+	}
+	return message, nil
+}
+
+// ReadFrame reads a complete Content-Length-framed body without decoding JSON.
+func ReadFrame(reader *bufio.Reader) ([]byte, error) {
 	contentLength := -1
+	started := false
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			return Message{}, err
+			if err == io.EOF && (started || len(line) > 0) {
+				err = io.ErrUnexpectedEOF
+			}
+			return nil, err
 		}
+		started = true
 		line = strings.TrimRight(line, "\r\n")
 		if line == "" {
 			break
@@ -49,21 +67,20 @@ func ReadMessage(reader *bufio.Reader) (Message, error) {
 		}
 		contentLength, err = strconv.Atoi(strings.TrimSpace(value))
 		if err != nil || contentLength < 0 {
-			return Message{}, fmt.Errorf("invalid Content-Length header")
+			return nil, fmt.Errorf("invalid Content-Length header")
 		}
 	}
 	if contentLength < 0 {
-		return Message{}, fmt.Errorf("missing Content-Length header")
+		return nil, fmt.Errorf("missing Content-Length header")
 	}
 	payload := make([]byte, contentLength)
 	if _, err := io.ReadFull(reader, payload); err != nil {
-		return Message{}, err
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+		return nil, err
 	}
-	var message Message
-	if err := json.Unmarshal(payload, &message); err != nil {
-		return Message{}, err
-	}
-	return message, nil
+	return payload, nil
 }
 
 // WriteMessage writes message as Content-Length-framed JSON.

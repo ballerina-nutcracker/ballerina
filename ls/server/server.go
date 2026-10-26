@@ -52,8 +52,12 @@ var (
 
 // Error codes from LSP (RequestCancelled) and JSON-RPC 2.0.
 const (
-	rpcRequestCancelled = -32800
-	rpcInvalidRequest   = -32600
+	rpcRequestCancelled     = -32800
+	rpcInvalidRequest       = -32600
+	rpcServerNotInitialized = -32002
+	rpcMethodNotFound       = -32601
+	rpcInvalidParams        = -32602
+	rpcParseError           = -32700
 )
 
 type requestEntry struct {
@@ -179,14 +183,14 @@ func (s *Server) subscribeEvictions(bus *event.Bus) {
 func (s *Server) Serve() error {
 	reader := bufio.NewReader(s.transport)
 	for {
-		message, err := protocol.ReadMessage(reader)
+		payload, err := protocol.ReadFrame(reader)
 		if errors.Is(err, io.EOF) {
 			return nil
 		}
 		if err != nil {
 			return err
 		}
-		if err := s.handleMessage(message); err != nil {
+		if err := s.handlePayload(payload); err != nil {
 			if errors.Is(err, errServerExited) {
 				return nil
 			}
@@ -222,6 +226,15 @@ func (s *Server) handleMessage(message protocol.Message) error {
 }
 
 func (s *Server) handleRequest(ctx context.Context, message protocol.Message) error {
+	if s.shuttingDown {
+		return s.writeError(message.ID, rpcInvalidRequest, "server is shutting down")
+	}
+	if !s.initialized && message.Method != "initialize" {
+		return s.writeError(message.ID, rpcServerNotInitialized, "server not initialized")
+	}
+	if s.initialized && message.Method == "initialize" {
+		return s.writeError(message.ID, rpcInvalidRequest, "already initialized")
+	}
 	switch message.Method {
 	case "initialize", "shutdown":
 		return s.handleLifecycleRequest(ctx, message)
@@ -231,22 +244,16 @@ func (s *Server) handleRequest(ctx context.Context, message protocol.Message) er
 
 // Lifecycle transitions run on the Serve goroutine, outside request cancellation.
 func (s *Server) handleLifecycleRequest(ctx context.Context, message protocol.Message) error {
-	if s.shuttingDown && message.Method != "shutdown" {
-		return nil
-	}
 	var result any
 	var ok bool
 	switch message.Method {
 	case "initialize":
 		result, ok = s.handleInitialize(ctx, message.Params)
 		if !ok {
-			return nil
+			return s.writeError(message.ID, rpcInvalidParams, "invalid initialize parameters")
 		}
 	case "shutdown":
-		result, ok = s.handleShutdown(ctx)
-		if !ok {
-			return nil
-		}
+		s.handleShutdown()
 	}
 	return s.write(protocol.Response{
 		JSONRPC: "2.0",
@@ -256,20 +263,13 @@ func (s *Server) handleLifecycleRequest(ctx context.Context, message protocol.Me
 }
 
 func (s *Server) handleTrackedRequest(ctx context.Context, message protocol.Message) error {
-	if s.shuttingDown {
-		return nil
-	}
 	idKey, valid := requestIDKey(message.ID)
 	if !valid {
 		return nil
 	}
 	entry, reqCtx, ok := s.registry.register(idKey, ctx)
 	if !ok {
-		return s.write(protocol.ErrorResponse{
-			JSONRPC: "2.0",
-			ID:      message.ID,
-			Error:   protocol.RPCError{Code: rpcInvalidRequest, Message: "request id already in flight"},
-		})
+		return s.writeError(message.ID, rpcInvalidRequest, "request id already in flight")
 	}
 	if message.Method == testBlockMethod {
 		// Initialize before dispatch so a release cannot race the worker's startup.
@@ -284,25 +284,16 @@ func (s *Server) handleTrackedRequest(ctx context.Context, message protocol.Mess
 			return
 		}
 		entry.replyOnce.Do(func() {
-			var reply any = protocol.Response{
-				JSONRPC: "2.0",
-				ID:      message.ID,
-				Result:  res.result,
+			if res.err == nil && reqCtx.Err() != nil {
+				res.err = &protocol.RPCError{Code: rpcRequestCancelled, Message: "request cancelled"}
 			}
+			var err error
 			if res.err != nil {
-				reply = protocol.ErrorResponse{
-					JSONRPC: "2.0",
-					ID:      message.ID,
-					Error:   *res.err,
-				}
-			} else if reqCtx.Err() != nil {
-				reply = protocol.ErrorResponse{
-					JSONRPC: "2.0",
-					ID:      message.ID,
-					Error:   protocol.RPCError{Code: rpcRequestCancelled, Message: "request cancelled"},
-				}
+				err = s.writeError(message.ID, res.err.Code, res.err.Message)
+			} else {
+				err = s.write(protocol.Response{JSONRPC: "2.0", ID: message.ID, Result: res.result})
 			}
-			if err := s.write(reply); err != nil {
+			if err != nil {
 				loggerFromContext(ctx).Error("response write failed", "error", err)
 			}
 		})
@@ -322,12 +313,12 @@ func (s *Server) dispatchTracked(ctx context.Context, message protocol.Message) 
 	case testBlockMethod:
 		return s.handleTestBlockRequest(ctx, message)
 	}
-	return trackedResult{}
+	return trackedResult{err: &protocol.RPCError{Code: rpcMethodNotFound, Message: "method not found"}, handled: true}
 }
 
-func (s *Server) handleShutdown(_ context.Context) (any, bool) {
+func (s *Server) handleShutdown() {
 	if s.shuttingDown {
-		return nil, true
+		return
 	}
 	s.shuttingDown = true
 	s.cancelAndDrainTrackedRequests()
@@ -337,7 +328,6 @@ func (s *Server) handleShutdown(_ context.Context) (any, bool) {
 	if s.compiler != nil {
 		s.compiler.Shutdown()
 	}
-	return nil, true
 }
 
 // Tracked handlers must finish before shutdown tears down workspace/compiler state
@@ -579,6 +569,14 @@ func (s *Server) publishDiagnostics(uri string, version int32, includeVersion bo
 		Method:  publishDiagnosticsMethod,
 		Params:  params,
 	}
+}
+
+func (s *Server) writeError(id json.RawMessage, code int, message string) error {
+	return s.write(protocol.ErrorResponse{
+		JSONRPC: "2.0",
+		ID:      id,
+		Error:   protocol.RPCError{Code: code, Message: message},
+	})
 }
 
 func (s *Server) write(message any) error {

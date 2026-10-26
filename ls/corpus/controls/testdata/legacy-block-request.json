@@ -44,6 +44,14 @@
     },
     {
       "jsonrpc": "2.0",
+      "id": 20,
+      "error": {
+        "code": -32601,
+        "message": "method not found"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
       "id": 99,
       "result": null
     }
