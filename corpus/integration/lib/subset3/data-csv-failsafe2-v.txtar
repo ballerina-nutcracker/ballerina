@@ -6,4 +6,7 @@
 [{"a":1,"b":"x"},{"a":2,"b":"y"},{"a":3,"b":"z"}]
 "location":{"row":3,"column":1},"message":"value 'x' cannot be cast into 'int'"}
 "location":{"row":5,"column":1},"message":"value 'y' cannot be cast into 'int'"}
+[{"a":1,"b":"x"},{"a":3,"b":"z"}]
+"location":{"row":3,"column":3},"message":"invalid number of headers"}
+"location":{"row":2,"column":1},"message":"no mapping type found for value 'x' in key 'a'"}
 -- stderr --

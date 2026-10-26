@@ -175,7 +175,8 @@ func (m *csvModule) parseInput(cfg *config, t *typer, root semtypes.SemType, inp
 // parseIntoUnion reads the rows as map<string> values and converts them as a whole to the first member
 // type that every row fits, as jBallerina does for union types.
 func (m *csvModule) parseIntoUnion(cfg *config, t *typer, root semtypes.SemType, input, sourceText string) (values.BalValue, error) {
-	rows, err := m.parseAsStringMaps(cfg, t, input)
+	parseLogger := newFailSafeLogger(m.rt, cfg.failSafe, true)
+	rows, err := m.parseAsStringMaps(cfg, t, input, parseLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -184,8 +185,7 @@ func (m *csvModule) parseIntoUnion(cfg *config, t *typer, root semtypes.SemType,
 	traversalCfg.headerRows = 0
 	traversalCfg.customHeaders = nil
 	traversalCfg.headerOrder = nil
-	logger := newFailSafeLogger(m.rt, cfg.failSafe, false)
-	result, err := newTraversal(&traversalCfg, t, logger).traverse(rows, root)
+	result, err := newTraversal(&traversalCfg, t, parseLogger.withoutConsole()).traverse(rows, root)
 	if err != nil && cfg.enableConstraintValidation {
 		// jBallerina hands the traversal's error value to constraint validation, which fails on it with a
 		// non-csv exception that the entry point reports as this generic cast error.
@@ -194,10 +194,10 @@ func (m *csvModule) parseIntoUnion(cfg *config, t *typer, root semtypes.SemType,
 	return result, err
 }
 
-func (m *csvModule) parseAsStringMaps(cfg *config, t *typer, input string) ([]values.BalValue, error) {
+func (m *csvModule) parseAsStringMaps(cfg *config, t *typer, input string, logger *failSafeLogger) ([]values.BalValue, error) {
 	shape := t.rowShapeOf(t.classify(t.stringMapTy))
 	memberCfg := cfg.unionMemberConfig()
-	p := newParser(memberCfg, t, &shape, -1, newFailSafeLogger(m.rt, cfg.failSafe, true))
+	p := newParser(memberCfg, t, &shape, -1, logger)
 	if err := feedAll(p, input); err != nil {
 		return nil, err
 	}
