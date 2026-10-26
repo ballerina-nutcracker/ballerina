@@ -45,6 +45,60 @@ service class CountingService {
     }
 }
 
+isolated int inboxChanges = 0;
+isolated int outboxChanges = 0;
+
+@ftp:ServiceConfig {path: "/inbox"}
+service class InboxService {
+    *ftp:Service;
+
+    remote function onFileChange(ftp:WatchEvent event) returns error? {
+        if event.addedFiles.length() > 0 {
+            lock {
+                inboxChanges += 1;
+            }
+        }
+    }
+}
+
+@ftp:ServiceConfig {path: "/outbox"}
+service class OutboxService {
+    *ftp:Service;
+
+    remote function onFileChange(ftp:WatchEvent event) returns error? {
+        if event.addedFiles.length() > 0 {
+            lock {
+                outboxChanges += 1;
+            }
+        }
+    }
+}
+
+function waitForOutbox(int target) {
+    foreach int _ in 0 ..< 200 {
+        int seen;
+        lock {
+            seen = outboxChanges;
+        }
+        if seen >= target {
+            return;
+        }
+        runtime:sleep(0.05);
+    }
+}
+
+function inboxCount() returns int {
+    lock {
+        return inboxChanges;
+    }
+}
+
+function outboxCount() returns int {
+    lock {
+        return outboxChanges;
+    }
+}
+
 public function main() returns error? {
     ftp:Client lax = check new ({
         host: "127.0.0.1",
@@ -120,5 +174,30 @@ public function main() returns error? {
     lock {
         io:println(changes >= 2); // @output true
     }
+    runtime:sleep(0.5);
+    check watcher.gracefulStop();
+
+    check lax->putText("/inbox/a.txt", "a");
+    check lax->putText("/outbox/b.txt", "b");
+    ftp:Listener paths = check new ({
+        host: "127.0.0.1",
+        port: ftpPort(),
+        auth: {credentials: {username: "ballerina", password: "ballerina"}},
+        pollingInterval: 0.2
+    });
+    check paths.attach(new InboxService(), ["inbox", "orders"]);
+    check paths.attach(new OutboxService());
+    check paths.'start();
+    waitForOutbox(1);
+    io:println(inboxCount() >= 1); // @output true
+    check paths.detach(new InboxService());
+    waitForOutbox(outboxCount() + 2);
+    int inboxAfterDetach = inboxCount();
+    int outboxAfterDetach = outboxCount();
+    waitForOutbox(outboxAfterDetach + 2);
+    io:println(outboxCount() >= outboxAfterDetach + 2); // @output true
+    io:println(inboxCount() == inboxAfterDetach); // @output true
+    check paths.detach(new InboxService());
+    check paths.gracefulStop();
     check lax->close();
 }

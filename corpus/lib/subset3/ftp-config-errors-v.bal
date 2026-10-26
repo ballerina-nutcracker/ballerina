@@ -102,6 +102,33 @@ public function main() {
     // @output InvalidConfigError: retryConfig.maxWaitInterval must be greater than 0.
     // @output InvalidConfigError: retryConfig.maxWaitInterval must be greater than or equal to retryConfig.interval.
 
+    report(new ftp:Client({port: 0}));
+    // @output InvalidConfigError: Port must be between 1 and 65535 (got: 0)
+    report(new ftp:Client({protocol: ftp:SFTP, port: 65536}));
+    // @output InvalidConfigError: Port must be between 1 and 65535 (got: 65536)
+    report(new ftp:Listener({port: -21}));
+    // @output InvalidConfigError: Port must be between 1 and 65535 (got: -21)
+
+    ftp:CircuitBreakerConfig[] breakers = [
+        {failureCategories: []},
+        {failureThreshold: 1.5},
+        {rollingWindow: {requestVolumeThreshold: 0}},
+        {resetTime: 0},
+        {rollingWindow: {bucketSize: 0}},
+        {rollingWindow: {timeWindow: 5, bucketSize: 10}},
+        {rollingWindow: {timeWindow: 25, bucketSize: 10}}
+    ];
+    foreach ftp:CircuitBreakerConfig circuitBreaker in breakers {
+        report(new ftp:Client({port: 1, circuitBreaker}));
+    }
+    // @output InvalidConfigError: Circuit breaker failureCategories must not be empty
+    // @output InvalidConfigError: Circuit breaker failureThreshold must be between 0.0 and 1.0
+    // @output InvalidConfigError: Circuit breaker requestVolumeThreshold must be greater than 0
+    // @output InvalidConfigError: Circuit breaker resetTime must be greater than 0
+    // @output InvalidConfigError: Circuit breaker bucketSize must be greater than 0
+    // @output InvalidConfigError: Circuit breaker timeWindow must be greater than or equal to bucketSize
+    // @output InvalidConfigError: Circuit breaker timeWindow must be evenly divisible by bucketSize
+
     report(new ftp:Client({auth: {privateKey: {path: "/key"}}}));
     // @output Error: privateKey can only be used with SFTP protocol.
     report(new ftp:Client({protocol: ftp:SFTP, auth: {secureSocket: {}}}));
@@ -172,7 +199,8 @@ public function main() {
         // @output Invalid regex pattern '[' in fileDependencyConditions.targetPattern: error parsing regexp: missing closing ]: `[`
         // @output Too many parameters for 'onFileText'. Format-specific handlers accept at most 3 parameters: (content, fileInfo?, caller?).
         // @output Binding XML content to a record type is not yet supported
-        error? attachedWithName = ftpListener.attach(new EmptyPathService(), ["ignored"]);
-        io:println(attachedWithName is error ? attachedWithName.message() : "ignored"); // @output ignored
+        error? attachedWithNames = ftpListener.attach(new EmptyPathService(), ["inbox", "orders"]);
+        io:println(attachedWithNames is error ? attachedWithNames.message() : "attached");
+        // @output The 'path' field cannot be empty in @ftp:ServiceConfig annotation.
     }
 }

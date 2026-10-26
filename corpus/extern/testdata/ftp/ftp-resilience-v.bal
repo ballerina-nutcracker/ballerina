@@ -21,6 +21,10 @@ import ballerina/lang.runtime;
 
 function ftpPort() returns int = external;
 
+function busyPort() returns int = external;
+
+function busyReplies() returns int = external;
+
 function scrub(string message) returns string {
     string port = ":" + ftpPort().toString();
     string result = message;
@@ -66,19 +70,27 @@ public function main() returns error? {
     ftp:Client retrying = check connect(retryConfig = fastRetry);
     var missingText = retrying->getText("/missing.txt");
     io:println(describe(missingText));
-    // @output AllRetryAttemptsFailedError: Operation 'getText' failed after 2 retry attempts: Failed to read file: ftp://ballerina:***@127.0.0.1:PORT/missing.txt not found
+    // @output Error: Failed to read file: ftp://ballerina:***@127.0.0.1:PORT/missing.txt not found
+    io:println(missingText is ftp:FileNotFoundError); // @output true
     var missingBytes = retrying->getBytes("/missing.txt");
-    io:println(describe(missingBytes));
-    // @output AllRetryAttemptsFailedError: Operation 'getBytes' failed after 2 retry attempts: Failed to read file: ftp://ballerina:***@127.0.0.1:PORT/missing.txt not found
+    io:println(missingBytes is ftp:FileNotFoundError); // @output true
     check retrying->putText("/bad.json", "{");
     json|ftp:Error badJson = retrying->getJson("/bad.json");
-    io:println(badJson is ftp:AllRetryAttemptsFailedError); // @output true
+    io:println(badJson is ftp:Error && !(badJson is ftp:AllRetryAttemptsFailedError)); // @output true
     xml|ftp:Error missingXml = retrying->getXml("/missing.xml");
-    io:println(missingXml is ftp:AllRetryAttemptsFailedError); // @output true
+    io:println(missingXml is ftp:FileNotFoundError); // @output true
     check retrying->putText("/ok.txt", "fine");
     var okText = retrying->getText("/ok.txt");
     io:println(okText); // @output fine
     check retrying->close();
+
+    ftp:Client busy = check new ({host: "127.0.0.1", port: busyPort(), retryConfig: fastRetry});
+    var busyText = busy->getText("/busy.txt");
+    io:println(busyText is ftp:AllRetryAttemptsFailedError); // @output true
+    string busyMessage = busyText is error ? busyText.message() : "";
+    io:println(busyMessage.indexOf("Operation 'getText' failed after 2 retry attempts: ") == 0); // @output true
+    io:println(busyReplies()); // @output 3
+    check busy->close();
 
     ftp:CircuitBreakerConfig breaker = {
         rollingWindow: {requestVolumeThreshold: 2, timeWindow: 10, bucketSize: 1},
@@ -89,7 +101,7 @@ public function main() returns error? {
     ftp:Client guarded = check connect(breaker, fastRetry);
     check guarded->putText("/present.txt", "here");
     var first = guarded->getText("/missing.txt");
-    io:println(describe(first)); // @output CircuitBreakerOpenError: FTP server unavailable. Circuit breaker is OPEN. Retry in 1 seconds.
+    io:println(first is ftp:FileNotFoundError); // @output true
     var opened = guarded->exists("/present.txt");
     io:println(describe(opened)); // @output CircuitBreakerOpenError: FTP server unavailable. Circuit breaker is OPEN. Retry in 1 seconds.
     io:println(opened is ftp:ServiceUnavailableError); // @output true
@@ -113,24 +125,4 @@ public function main() returns error? {
     var stillClosed = selective->exists("/missing.txt");
     io:println(stillClosed); // @output false
     check selective->close();
-
-    ftp:CircuitBreakerConfig[] invalid = [
-        {failureCategories: []},
-        {failureThreshold: 1.5},
-        {rollingWindow: {requestVolumeThreshold: 0}},
-        {resetTime: 0},
-        {rollingWindow: {bucketSize: 0}},
-        {rollingWindow: {timeWindow: 5, bucketSize: 10}},
-        {rollingWindow: {timeWindow: 25, bucketSize: 10}}
-    ];
-    foreach ftp:CircuitBreakerConfig config in invalid {
-        io:println(describe(connect(config)));
-    }
-    // @output Error: Circuit breaker failureCategories must not be empty
-    // @output Error: Circuit breaker failureThreshold must be between 0.0 and 1.0
-    // @output Error: Circuit breaker requestVolumeThreshold must be greater than 0
-    // @output Error: Circuit breaker resetTime must be greater than 0
-    // @output Error: Circuit breaker bucketSize must be greater than 0
-    // @output Error: Circuit breaker timeWindow must be greater than or equal to bucketSize
-    // @output Error: Circuit breaker timeWindow must be evenly divisible by bucketSize
 }

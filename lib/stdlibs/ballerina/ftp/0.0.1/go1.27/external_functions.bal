@@ -54,6 +54,8 @@ isolated function isDirectory(Client clientEndpoint, string path) returns boolea
 
 isolated function poll(Listener listenerEndpoint) returns Error? = external;
 
+isolated function pollAttached(Listener listenerEndpoint) returns Error? = external;
+
 isolated function initListener(Listener listenerEndpoint, ListenerConfiguration config)
         returns Error? = external;
 

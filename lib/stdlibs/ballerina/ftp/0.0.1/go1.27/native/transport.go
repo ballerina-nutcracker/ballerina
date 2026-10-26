@@ -71,11 +71,7 @@ func dialSession(platform pal.Platform, ep *endpoint) (session, error) {
 }
 
 func (ep *endpoint) address() string {
-	port := ep.port
-	if port < 0 {
-		port = defaultPort(ep.protocol)
-	}
-	return net.JoinHostPort(ep.host, strconv.FormatInt(port, 10))
+	return net.JoinHostPort(ep.host, strconv.FormatInt(ep.port, 10))
 }
 
 func dialTCP(platform pal.Platform, ep *endpoint, address string) (net.Conn, error) {

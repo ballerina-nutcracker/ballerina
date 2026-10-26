@@ -83,6 +83,7 @@ func (m *ftpModule) registerListenerExterns() {
 	register("register", m.register)
 	register("deregister", m.deregister)
 	register("poll", m.poll)
+	register("pollAttached", m.pollAttached)
 	register("cleanup", m.cleanup)
 }
 
@@ -354,7 +355,51 @@ func (m *ftpModule) callerFor(ctx *extern.Context, state *listenerState) (*value
 	return caller, nil
 }
 
-func (m *ftpModule) deregister(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+// deregister removes the service of the same type and closes the connections only it used; the
+// shared consumer and caller of the deprecated single-path mode go with the last service.
+func (m *ftpModule) deregister(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	state := listenerStateOf(args[0].(*values.Object))
+	if state == nil {
+		return nil, nil
+	}
+	typeKey := serviceTypeKey(args[1].(*values.Object))
+	state.mu.Lock()
+	var removed *serviceContext
+	var remaining []*serviceContext
+	for _, sc := range state.services {
+		if removed == nil && serviceTypeKey(sc.svc) == typeKey {
+			removed = sc
+			continue
+		}
+		remaining = append(remaining, sc)
+	}
+	if removed == nil {
+		state.mu.Unlock()
+		return nil, nil
+	}
+	state.services = remaining
+	delete(state.typeKeys, typeKey)
+	var con *consumer
+	var caller *values.Object
+	if state.multiPath {
+		con, caller = removed.consumer, removed.caller
+	} else if len(remaining) == 0 {
+		con, caller = state.legacyCon, state.shared
+	}
+	if len(remaining) == 0 {
+		state.legacyCon = nil
+		state.shared = nil
+		state.modeSet = false
+	}
+	state.mu.Unlock()
+	if con != nil {
+		_ = con.remote.close()
+	}
+	if caller != nil {
+		if err := closeCaller(ctx, caller); err != nil {
+			return m.errorResult(ctx, newError(kindError, "Error occurred while closing the caller: "+err.Error()))
+		}
+	}
 	return nil, nil
 }
 
@@ -409,6 +454,15 @@ func closeCaller(ctx *extern.Context, caller *values.Object) error {
 }
 
 func (m *ftpModule) poll(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return m.pollServices(ctx, args, true)
+}
+
+// pollAttached is the scheduled poll: once every service has been detached it has nothing to do.
+func (m *ftpModule) pollAttached(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return m.pollServices(ctx, args, false)
+}
+
+func (m *ftpModule) pollServices(ctx *extern.Context, args []values.BalValue, requireServices bool) (values.BalValue, error) {
 	state := listenerStateOf(args[0].(*values.Object))
 	if state == nil {
 		return m.errorResult(ctx, newError(kindError, "FTP listener is not initialized. Attach a service before polling."))
@@ -416,6 +470,9 @@ func (m *ftpModule) poll(ctx *extern.Context, args []values.BalValue) (values.Ba
 	state.mu.Lock()
 	if len(state.services) == 0 {
 		state.mu.Unlock()
+		if !requireServices {
+			return nil, nil
+		}
 		return m.errorResult(ctx, newError(kindError, "FTP listener is not initialized. Attach a service before polling."))
 	}
 	if state.polling {
