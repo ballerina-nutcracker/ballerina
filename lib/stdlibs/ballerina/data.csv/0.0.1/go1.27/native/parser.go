@@ -91,7 +91,7 @@ type parser struct {
 	arraySize              int
 	rows                   []values.BalValue
 
-	skipLines []int64
+	skipLines skipSet
 	skipReady bool
 
 	failSafe *failSafeLogger
@@ -696,7 +696,7 @@ func (p *parser) isSkipped(rowIndex int) (bool, error) {
 		p.skipLines = skip
 		p.skipReady = true
 	}
-	return slices.Contains(p.skipLines, int64(rowIndex)), nil
+	return p.skipLines.contains(int64(rowIndex)), nil
 }
 
 func (p *parser) addHeadersAsTheFirstElementIfApplicable() error {

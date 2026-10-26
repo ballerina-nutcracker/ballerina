@@ -17,6 +17,7 @@
 package native
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -132,9 +133,24 @@ func (c *config) converter(t *typer) *converter {
 	return &converter{t: t, nilValue: c.nilValue, locale: localeFor(c.locale)}
 }
 
-// skipDataRows is CsvUtils.getSkipDataRows: the 1-based data rows to skip, from either a list of row
-// numbers or a "start-end" range.
-func (c *config) skipDataRows() ([]int64, error) {
+// skipSet is the 1-based data rows to skip, either listed or as an inclusive range; a range is not
+// expanded so a huge range costs nothing.
+type skipSet struct {
+	rows       []int64
+	start, end int64
+	isRange    bool
+}
+
+func (s skipSet) contains(row int64) bool {
+	if s.isRange {
+		return row >= s.start && row <= s.end
+	}
+	return slices.Contains(s.rows, row)
+}
+
+// skipDataRows is CsvUtils.getSkipDataRows: the data rows to skip, from either a list of row numbers or a
+// "start-end" range.
+func (c *config) skipDataRows() (skipSet, error) {
 	switch v := c.skipLines.(type) {
 	case *values.List:
 		rows := make([]int64, 0, v.Len())
@@ -142,34 +158,30 @@ func (c *config) skipDataRows() ([]int64, error) {
 			n, _ := v.Get(i).(int64)
 			rows = append(rows, n)
 		}
-		return rows, nil
+		return skipSet{rows: rows}, nil
 	case string:
 		return skipRange(v)
 	}
-	return nil, nil
+	return skipSet{}, nil
 }
 
-func skipRange(spec string) ([]int64, error) {
+func skipRange(spec string) (skipSet, error) {
 	parts := strings.Split(spec, "-")
 	for len(parts) > 0 && parts[len(parts)-1] == "" {
 		parts = parts[:len(parts)-1]
 	}
 	if len(parts) != 2 {
-		return nil, skipLinesRangeError()
+		return skipSet{}, skipLinesRangeError()
 	}
 	start, startErr := strconv.ParseInt(parts[0], 10, 32)
 	end, endErr := strconv.ParseInt(parts[1], 10, 32)
 	if startErr != nil || endErr != nil {
-		return nil, skipLinesValueError()
+		return skipSet{}, skipLinesValueError()
 	}
-	if end-start+1 <= 0 {
-		return nil, skipLinesRangeError()
+	if end < start {
+		return skipSet{}, skipLinesRangeError()
 	}
-	rows := make([]int64, 0, end-start+1)
-	for n := start; n <= end; n++ {
-		rows = append(rows, n)
-	}
-	return rows, nil
+	return skipSet{start: start, end: end, isRange: true}, nil
 }
 
 func get(m *values.Map, key string) values.BalValue {

@@ -26,6 +26,9 @@ public function main() {
     io:println(csv:parseString("a,b\n1,x\n2,y\n3,z\n4,w", {skipLines: "2-3"}, Rows));
     io:println(csv:parseString("a,b\n1,x\n2,y", {skipLines: [0, -1, 9]}, Rows));
     io:println(csv:parseString("a,b\n1,x\n2,y", {skipLines: "+2-2"}, Rows));
+    // A range is tested by its endpoints, so a huge range does not allocate per row.
+    io:println(csv:parseString("a,b\n1,x\n2,y\n3,z", {skipLines: "2-2147483647"}, Rows));
+    io:println(csv:transform([{"a": 1, "b": "x"}, {"a": 2, "b": "y"}], {skipLines: "1-2147483647"}, Rows));
     // Blank and comment lines are not data rows.
     io:println(csv:parseString("a,b\n1,x\n\n# c\n2,y\n3,z", {skipLines: [2]}, Rows));
     // Invalid ranges.
@@ -44,6 +47,8 @@ public function main() {
 // @output [{"a":1,"b":"x"},{"a":4,"b":"w"}]
 // @output [{"a":1,"b":"x"},{"a":2,"b":"y"}]
 // @output [{"a":1,"b":"x"}]
+// @output [{"a":1,"b":"x"}]
+// @output []
 // @output [{"a":1,"b":"x"},{"a":2,"b":"y"},{"a":3,"b":"z"}]
 // @output error Error ("invalid range for the skipLines field. Start value must be less than or equal to end value.")
 // @output error Error ("invalid input for the skipLines field. Both start and end values must be integers.")

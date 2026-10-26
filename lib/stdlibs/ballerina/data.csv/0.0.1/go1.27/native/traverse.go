@@ -143,7 +143,7 @@ func (tr *traversal) isSkipped(rowNumber int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return slices.Contains(skip, int64(rowNumber)), nil
+	return skip.contains(int64(rowNumber)), nil
 }
 
 // tolerate logs a row error that failSafe allows and reports whether the traversal continues.
