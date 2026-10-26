@@ -19,6 +19,7 @@ package server
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -55,11 +56,12 @@ func (t pipeTransport) Read(p []byte) (int, error)  { return t.reader.Read(p) }
 func (t pipeTransport) Write(p []byte) (int, error) { return t.writer.Write(p) }
 
 type testSession struct {
-	t       *testing.T
-	server  *Server
-	clientW io.Writer
-	clientR *bufio.Reader
-	done    chan error
+	t              *testing.T
+	server         *Server
+	clientW        io.Writer
+	clientR        *bufio.Reader
+	closeTransport func()
+	done           chan error
 }
 
 func newTestSession(t *testing.T, versionSupport bool) *testSession {
@@ -74,8 +76,15 @@ func newTestSession(t *testing.T, versionSupport bool) *testSession {
 		clientW: clientWrite,
 		clientR: bufio.NewReader(clientRead),
 		done:    make(chan error, 1),
+		closeTransport: func() {
+			_ = clientWrite.Close()
+			_ = clientRead.Close()
+			_ = serverRead.Close()
+			_ = serverWrite.Close()
+		},
 	}
 	t.Cleanup(func() { compiler.Shutdown(); bus.Close() })
+	t.Cleanup(session.closeTransport)
 	go func() { session.done <- session.server.Serve() }()
 	session.initialize(versionSupport)
 	return session
@@ -96,7 +105,7 @@ func (s *testSession) initialize(versionSupport bool) {
 		ProcessID:    protocol.NullNullable[protocol.OrInitializeParamsProcessId](),
 		RootURI:      protocol.NullNullable[protocol.OrInitializeParamsRootUri](),
 	})
-	response := s.receive(s.t)
+	response := s.receive(s.t, "initialize", `"1"`)
 	if response.Method != "" || len(response.ID) == 0 {
 		s.t.Fatalf("expected initialize response, got %+v", response)
 	}
@@ -133,19 +142,41 @@ func (s *testSession) sendNotification(method string, params any) {
 	}
 }
 
-func (s *testSession) receive(t *testing.T) protocol.Message {
+func (s *testSession) receive(t *testing.T, method, id string) protocol.Message {
 	t.Helper()
-	message, err := protocol.ReadMessage(s.clientR)
-	if err != nil {
-		t.Fatalf("read message: %v", err)
+	expected := method
+	if id != "" {
+		expected = fmt.Sprintf("%s (request ID %s)", method, id)
 	}
-	return message
+	type readResult struct {
+		message protocol.Message
+		err     error
+	}
+	result := make(chan readResult, 1)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		message, err := protocol.ReadMessage(s.clientR)
+		result <- readResult{message: message, err: err}
+	}()
+	defer func() { <-done }()
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+	select {
+	case read := <-result:
+		if read.err != nil {
+			t.Fatalf("read message for %s: %v", expected, read.err)
+		}
+		return read.message
+	case <-timer.C:
+		s.closeTransport()
+		t.Fatalf("timeout waiting for %s after five seconds", expected)
+		return protocol.Message{}
+	}
 }
 
 func (s *testSession) close() {
-	if c, ok := s.clientW.(io.Closer); ok {
-		_ = c.Close()
-	}
+	s.closeTransport()
 	<-s.done
 }
 
@@ -176,7 +207,7 @@ func TestPublishDiagnosticsAfterOpenChangeClose(t *testing.T) {
 		},
 	})
 
-	published := decodePublishDiagnostics(t, session.receive(t))
+	published := decodePublishDiagnostics(t, session.receive(t, "textDocument/publishDiagnostics", ""))
 	if published.URI != uri {
 		t.Fatalf("URI = %q, want %q", published.URI, uri)
 	}
@@ -229,7 +260,7 @@ func TestPublishDiagnosticsAfterOpenChangeClose(t *testing.T) {
 		},
 	})
 
-	cleared := decodePublishDiagnostics(t, session.receive(t))
+	cleared := decodePublishDiagnostics(t, session.receive(t, "textDocument/publishDiagnostics", ""))
 	if cleared.URI != uri {
 		t.Fatalf("cleared URI = %q, want %q", cleared.URI, uri)
 	}
@@ -243,7 +274,7 @@ func TestPublishDiagnosticsAfterOpenChangeClose(t *testing.T) {
 	session.sendNotification("textDocument/didClose", protocol.DidCloseTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
 	})
-	onCloseMessage := session.receive(t)
+	onCloseMessage := session.receive(t, "textDocument/publishDiagnostics", "")
 	onClose := decodePublishDiagnostics(t, onCloseMessage)
 	var onCloseParams struct {
 		Diagnostics json.RawMessage `json:"diagnostics"`
@@ -279,7 +310,7 @@ func TestPublishDiagnosticsOmitsVersionWithoutSupport(t *testing.T) {
 			Text:       "public function main() {}\n",
 		},
 	})
-	published := decodePublishDiagnostics(t, session.receive(t))
+	published := decodePublishDiagnostics(t, session.receive(t, "textDocument/publishDiagnostics", ""))
 	if published.Version.IsSet() {
 		t.Fatalf("Version = %v, want not set without versionSupport", published.Version)
 	}
@@ -310,7 +341,7 @@ func TestPublishDiagnosticsIgnoresNonFileURI(t *testing.T) {
 			Text:       "public function main() {}\n",
 		},
 	})
-	published := decodePublishDiagnostics(t, session.receive(t))
+	published := decodePublishDiagnostics(t, session.receive(t, "textDocument/publishDiagnostics", ""))
 	if published.URI != uri {
 		t.Fatalf("URI = %q, want the file: document only", published.URI)
 	}
@@ -327,7 +358,16 @@ func TestPublishDiagnosticsTransportErrorReachesServe(t *testing.T) {
 	go func() { done <- server.Serve() }()
 	t.Cleanup(func() { compiler.Shutdown(); bus.Close() })
 
-	session := &testSession{t: t, server: server, clientW: clientWrite, clientR: bufio.NewReader(clientRead), done: done}
+	session := &testSession{
+		t: t, server: server, clientW: clientWrite, clientR: bufio.NewReader(clientRead), done: done,
+		closeTransport: func() {
+			_ = clientWrite.Close()
+			_ = clientRead.Close()
+			_ = serverRead.Close()
+			_ = serverWrite.Close()
+		},
+	}
+	t.Cleanup(session.closeTransport)
 	session.initialize(true)
 
 	if err := serverWrite.Close(); err != nil {
@@ -375,7 +415,7 @@ func TestCancelRequestRoutesAsNotification(t *testing.T) {
 		},
 	})
 
-	published := decodePublishDiagnostics(t, session.receive(t))
+	published := decodePublishDiagnostics(t, session.receive(t, "textDocument/publishDiagnostics", ""))
 	if published.URI != uri {
 		t.Fatalf("first message URI = %q, want %q (a $/cancelRequest response must not precede it)", published.URI, uri)
 	}
@@ -400,9 +440,18 @@ func TestDedupNotStaleAfterEviction(t *testing.T) {
 	server := New(transport, projects, compiler, bus)
 	done := make(chan error, 1)
 	go func() { done <- server.Serve() }()
-	t.Cleanup(func() { compiler.Shutdown(); bus.Close(); _ = clientWrite.Close(); _ = clientRead.Close(); <-done })
+	t.Cleanup(func() { compiler.Shutdown(); bus.Close(); <-done })
 
-	session := &testSession{t: t, server: server, clientW: clientWrite, clientR: bufio.NewReader(clientRead), done: done}
+	session := &testSession{
+		t: t, server: server, clientW: clientWrite, clientR: bufio.NewReader(clientRead), done: done,
+		closeTransport: func() {
+			_ = clientWrite.Close()
+			_ = clientRead.Close()
+			_ = serverRead.Close()
+			_ = serverWrite.Close()
+		},
+	}
+	t.Cleanup(session.closeTransport)
 	session.initialize(true)
 
 	uriA := tempFileURI(t, "dedup-a.bal")
@@ -412,39 +461,28 @@ func TestDedupNotStaleAfterEviction(t *testing.T) {
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{URI: uriA, LanguageID: "ballerina", Version: 1, Text: text},
 	})
-	_ = decodePublishDiagnostics(t, session.receive(t))
+	_ = decodePublishDiagnostics(t, session.receive(t, "textDocument/publishDiagnostics", ""))
 
 	session.sendNotification("textDocument/didClose", protocol.DidCloseTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uriA},
 	})
-	_ = decodePublishDiagnostics(t, session.receive(t))
+	_ = decodePublishDiagnostics(t, session.receive(t, "textDocument/publishDiagnostics", ""))
 
 	// At capacity, opening B evicts the closed root A.
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{URI: uriB, LanguageID: "ballerina", Version: 1, Text: text},
 	})
-	_ = decodePublishDiagnostics(t, session.receive(t))
+	_ = decodePublishDiagnostics(t, session.receive(t, "textDocument/publishDiagnostics", ""))
 
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{URI: uriA, LanguageID: "ballerina", Version: 1, Text: text},
 	})
 
-	select {
-	case msg := <-session.recv():
-		published := decodePublishDiagnostics(t, msg)
-		if published.URI != uriA {
-			t.Fatalf("reopen publish URI = %q, want %q", published.URI, uriA)
-		}
-		if len(published.Diagnostics) == 0 {
-			t.Fatal("reopen publish dropped the reload's diagnostics (dedup stale after eviction)")
-		}
-	case <-time.After(3 * time.Second):
-		t.Fatal("reopen of evicted root produced no publishDiagnostics (dedup suppressed the reload)")
+	published := decodePublishDiagnostics(t, session.receive(t, "textDocument/publishDiagnostics", ""))
+	if published.URI != uriA {
+		t.Fatalf("reopen publish URI = %q, want %q", published.URI, uriA)
 	}
-}
-
-func (s *testSession) recv() <-chan protocol.Message {
-	ch := make(chan protocol.Message, 1)
-	go func() { ch <- s.receive(s.t) }()
-	return ch
+	if len(published.Diagnostics) == 0 {
+		t.Fatal("reopen publish dropped the reload's diagnostics (dedup stale after eviction)")
+	}
 }

@@ -27,7 +27,7 @@ func TestShutdownThenExitStopsServer(t *testing.T) {
 	session := newTestSession(t, false)
 
 	session.sendRequest("2", "shutdown", nil)
-	response := session.receive(t)
+	response := session.receive(t, "shutdown", `"2"`)
 	if string(response.ID) != `"2"` {
 		t.Fatalf("shutdown response ID = %s, want \"2\"", response.ID)
 	}
