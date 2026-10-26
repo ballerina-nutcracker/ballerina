@@ -8022,21 +8022,21 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 		}
 		return semTy, chain, true
 	case *ast.BLangUnionTypeNode:
-		lhs, chain, ok := resolveTypeDataPair(t, chain, ty.Lhs(), depth+1)
+		lhs, chain, ok := resolveTypeDataPair(t, chain, ty.Lhs(), depth)
 		if !ok {
 			return semtypes.SemType{}, chain, false
 		}
-		rhs, chain, ok := resolveTypeDataPair(t, chain, ty.Rhs(), depth+1)
+		rhs, chain, ok := resolveTypeDataPair(t, chain, ty.Rhs(), depth)
 		if !ok {
 			return semtypes.SemType{}, chain, false
 		}
 		return semtypes.Union(lhs, rhs), chain, true
 	case *ast.BLangIntersectionTypeNode:
-		lhs, chain, ok := resolveTypeDataPair(t, chain, ty.Lhs(), depth+1)
+		lhs, chain, ok := resolveTypeDataPair(t, chain, ty.Lhs(), depth)
 		if !ok {
 			return semtypes.SemType{}, chain, false
 		}
-		rhs, chain, ok := resolveTypeDataPair(t, chain, ty.Rhs(), depth+1)
+		rhs, chain, ok := resolveTypeDataPair(t, chain, ty.Rhs(), depth)
 		if !ok {
 			return semtypes.SemType{}, chain, false
 		}
