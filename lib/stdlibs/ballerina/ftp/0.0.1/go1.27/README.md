@@ -59,7 +59,7 @@ Support Levels:
 
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
-| Client initialization and configuration validation | Supported | An out-of-range `port` falls back to the protocol default without an error, as in jBallerina (spec question ballerina-platform/ballerina-library#9385). |
+| Client initialization and configuration validation | Supported | A `port` outside 1–65535 and an invalid `circuitBreaker` fail with an `ftp:InvalidConfigError` before connecting, the intended behaviour confirmed in ballerina-platform/ballerina-library#9385; jBallerina 2.22.0 falls back to the default port and reports breaker errors as `ftp:Error` after connecting |
 | FTP connections | Supported | Directories are listed with `LIST`, as commons-vfs does |
 | FTPS connections | Partially Supported | Explicit and implicit modes, PEM `cert` paths and PKCS12 `crypto:TrustStore`/`crypto:KeyStore` files, and `verifyHostName` are supported. `dataChannelProtection` and JKS stores are not; see Notable Behavioural Changes |
 | SFTP connections | Partially Supported | Password, keyboard-interactive and private-key (optionally encrypted) authentication, `preferredMethods` and `sftpSshKnownHosts` are supported. `GSSAPI_WITH_MIC`, `sftpCompression` and `sftpSessionTimeout` have no effect; see Notable Behavioural Changes |
@@ -75,10 +75,10 @@ Support Levels:
 | Write bytes, text and JSON | Supported | `putBytes`, `putText`, `putJson`, with `OVERWRITE` or `APPEND` |
 | Write XML | Partially Supported | `putXml` writes `xml` values. Converting a record needs `data.xmldata` and returns an `ftp:Error` |
 | Write CSV | Supported | `putCsv` with `string[][]` or `record {}[]`; the header and quoting rules match jBallerina |
-| Write from streams | Supported | `putBytesAsStream`, `putCsvAsStream` |
+| Write from streams | Supported | `putBytesAsStream`, `putCsvAsStream`. A record stream written with `APPEND` gets no header row, as `putCsv` (ballerina-platform/ballerina-library#9385); jBallerina 2.22.0 writes one |
 | File and directory management | Supported | `mkdir`, `rmdir`, `delete`, `rename`, `move`, `copy`, `exists`, `size`, `list`, `isDirectory`. `list` order is unspecified |
 | Deprecated untyped operations | Supported | `get`, `put` (including ZIP compression) and `append`. ZIP naming follows jBallerina (ballerina-platform/ballerina-library#9382) |
-| Retry | Supported | `retryConfig` retries every failure of a whole-file read except an open circuit, as jBallerina does (spec question ballerina-platform/ballerina-library#9385) |
+| Retry | Supported | `retryConfig` retries only transient failures of a whole-file read: 4xx server replies and broken or unreachable connections. Other errors, such as `FileNotFoundError` and `ContentBindingError`, return at once, as intended per ballerina-platform/ballerina-library#9385; jBallerina 2.22.0 retries every error |
 | Circuit breaker | Supported | `circuitBreaker` with rolling windows, failure categories and the `HALF_OPEN` trial |
 | Close | Supported | `close` |
 
@@ -86,8 +86,8 @@ Support Levels:
 
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
-| Listener initialization and lifecycle | Supported | `start`, `attach`, `detach`, `gracefulStop`, `immediateStop`, `poll`. Polling runs on a `task:Listener`. As in jBallerina, `detach` stops polling for every service and `attach` with a `string[]` name does nothing |
-| Service configuration | Supported | `@ftp:ServiceConfig` per service, or the deprecated listener-level `path`, `fileNamePattern`, `fileAgeFilter` and `fileDependencyConditions`. Configuration errors surface at `attach`, as in jBallerina (spec question ballerina-platform/ballerina-library#9385) |
+| Listener initialization and lifecycle | Supported | `start`, `attach`, `detach`, `gracefulStop`, `immediateStop`, `poll`. Polling runs on a `task:Listener`. `detach` removes only that service and `attach` accepts a `string[]` name, as intended per ballerina-platform/ballerina-library#9385; jBallerina 2.22.0 stops polling for every service on `detach` and ignores `attach` with a `string[]` name |
+| Service configuration | Supported | `@ftp:ServiceConfig` per service, or the deprecated listener-level `path`, `fileNamePattern`, `fileAgeFilter` and `fileDependencyConditions`. Configuration errors surface at `attach`, as in jBallerina (ballerina-platform/ballerina-library#9385) |
 | File filtering | Supported | File name patterns, age filters and dependency conditions; patterns use Go regular expressions (see Notable Behavioural Changes) |
 | Change detection | Supported | As in jBallerina, every file that passes the filters is reported on every poll, deletions are not reported once the directory is empty, and listener paths and URIs carry the password (ballerina-platform/ballerina-library#9380, #9381, #9286, #9288) |
 | Format-specific content handlers | Partially Supported | `onFile` (`byte[]` or a byte stream), `onFileText`, `onFileJson` and `onFileXml` with `xml` content are supported. `onFileCsv` and `onFileXml` with a record type need `data.csv`/`data.xmldata` and are rejected at `attach` |

@@ -174,12 +174,6 @@ func (m *ftpModule) initEndpoint(ctx *extern.Context, args []values.BalValue) (v
 	if err != nil {
 		return m.errorResult(ctx, err)
 	}
-	remote, err := connect(platform, ep)
-	if err != nil {
-		return m.errorResult(ctx, err)
-	}
-	state.remote = remote
-	obj.Put(clientStateField, state)
 	if cbConfig := getMap(config, "circuitBreaker"); cbConfig != nil {
 		breaker, err := newCircuitBreaker(cbConfig, platform.Time.Now)
 		if err != nil {
@@ -187,6 +181,12 @@ func (m *ftpModule) initEndpoint(ctx *extern.Context, args []values.BalValue) (v
 		}
 		state.breaker = breaker
 	}
+	remote, err := connect(platform, ep)
+	if err != nil {
+		return m.errorResult(ctx, err)
+	}
+	state.remote = remote
+	obj.Put(clientStateField, state)
 	return nil, nil
 }
 
@@ -388,7 +388,7 @@ func (m *ftpModule) putBytesAsStream(ctx *extern.Context, args []values.BalValue
 }
 
 func (m *ftpModule) putCsvAsStream(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	first := true
+	first := !writeOption(args[3])
 	return m.writeStream(ctx, args, func(v values.BalValue) []byte {
 		var row string
 		switch t := v.(type) {

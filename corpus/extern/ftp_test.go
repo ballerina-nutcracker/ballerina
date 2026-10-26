@@ -53,6 +53,7 @@ func runFtp(t *testing.T, name string) {
 		"ftpsPort":             f.ftpsPort,
 		"ftpsImplicitPort":     f.ftpsImplicitPort,
 		"sftpPort":             f.sftpPort,
+		"busyPort":             f.busyPort,
 		"certPath":             f.certPath,
 		"keyPath":              f.keyPath,
 		"encryptedKeyPath":     f.encryptedKeyPath,
@@ -65,6 +66,8 @@ func runFtp(t *testing.T, name string) {
 	for fn, v := range fixtures {
 		externs = append(externs, testharness.ExternRegistration{Org: "$anon", Module: name, FuncName: fn, Impl: value(v)})
 	}
+	externs = append(externs, testharness.ExternRegistration{Org: "$anon", Module: name, FuncName: "busyReplies",
+		Impl: func(*extern.Context, []values.BalValue) (values.BalValue, error) { return f.busyReplies.Load(), nil }})
 	runExtern(t, fileCase("ftp/"+name), &ftpPal{TestPal: testharness.NewTestPal()}, externs)
 }
 

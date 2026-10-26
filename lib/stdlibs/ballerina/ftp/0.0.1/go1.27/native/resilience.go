@@ -19,7 +19,10 @@ package native
 
 import (
 	"errors"
+	"io"
 	"math"
+	"net"
+	"net/textproto"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,6 +30,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 	"github.com/ballerina-nutcracker/ballerina/values"
+	"github.com/pkg/sftp"
 )
 
 func sleep(platform pal.Platform, d time.Duration) {
@@ -37,10 +41,10 @@ func sleep(platform pal.Platform, d time.Duration) {
 
 // withRetry runs op once and then up to count more times, waiting interval seconds before the
 // first retry and multiplying the wait by backOffFactor (capped at maxWaitInterval) after that.
-// Every error is retried except an open circuit, matching FtpRetryHelper.
+// Only transient failures are retried (ballerina-platform/ballerina-library#9385).
 func withRetry[T any](platform pal.Platform, settings *retrySettings, name string, op func() (T, error)) (T, error) {
 	result, err := op()
-	if err == nil || settings == nil || isCircuitOpen(err) {
+	if err == nil || settings == nil || !isRetryable(err) {
 		return result, err
 	}
 	wait := settings.interval
@@ -50,7 +54,7 @@ func withRetry[T any](platform pal.Platform, settings *retrySettings, name strin
 		}
 		sleep(platform, time.Duration(int64(wait*1000))*time.Millisecond)
 		result, err = op()
-		if err == nil || isCircuitOpen(err) {
+		if err == nil || !isRetryable(err) {
 			return result, err
 		}
 	}
@@ -62,9 +66,28 @@ func withRetry[T any](platform pal.Platform, settings *retrySettings, name strin
 	}
 }
 
-func isCircuitOpen(err error) bool {
-	var typed *ftpError
-	return errors.As(err, &typed) && typed.kind == kindCircuitBreakerOpen
+// isRetryable reports whether a failure may succeed on a later attempt: a 4xx reply from the
+// server or a broken or unreachable connection.
+func isRetryable(err error) bool {
+	switch asFtpError(err).kind {
+	case kindServiceUnavailable:
+		return true
+	case kindFileNotFound, kindFileAlreadyExists, kindInvalidConfig, kindContentBinding,
+		kindCircuitBreakerOpen, kindAllRetryAttemptsFailed:
+		return false
+	}
+	var reply *textproto.Error
+	if errors.As(err, &reply) {
+		return isServiceUnavailableCode(reply.Code)
+	}
+	var netErr net.Error
+	if errors.As(err, &netErr) || errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) ||
+		errors.Is(err, net.ErrClosed) || errors.Is(err, sftp.ErrSSHFxConnectionLost) ||
+		errors.Is(err, sftp.ErrSSHFxNoConnection) {
+		return true
+	}
+	category, ok := categorize(err)
+	return ok && category != categoryAuthentication
 }
 
 type circuitState int
@@ -132,19 +155,19 @@ func newCircuitBreaker(config *values.Map, now func() time.Time) (*circuitBreake
 	}
 	switch {
 	case len(cb.categories) == 0:
-		return nil, newError(kindError, "Circuit breaker failureCategories must not be empty")
+		return nil, newError(kindInvalidConfig, "Circuit breaker failureCategories must not be empty")
 	case cb.threshold < 0 || cb.threshold > 1:
-		return nil, newError(kindError, "Circuit breaker failureThreshold must be between 0.0 and 1.0")
+		return nil, newError(kindInvalidConfig, "Circuit breaker failureThreshold must be between 0.0 and 1.0")
 	case cb.volume <= 0:
-		return nil, newError(kindError, "Circuit breaker requestVolumeThreshold must be greater than 0")
+		return nil, newError(kindInvalidConfig, "Circuit breaker requestVolumeThreshold must be greater than 0")
 	case cb.resetMs <= 0:
-		return nil, newError(kindError, "Circuit breaker resetTime must be greater than 0")
+		return nil, newError(kindInvalidConfig, "Circuit breaker resetTime must be greater than 0")
 	case cb.bucketMs <= 0:
-		return nil, newError(kindError, "Circuit breaker bucketSize must be greater than 0")
+		return nil, newError(kindInvalidConfig, "Circuit breaker bucketSize must be greater than 0")
 	case cb.windowMs < cb.bucketMs:
-		return nil, newError(kindError, "Circuit breaker timeWindow must be greater than or equal to bucketSize")
+		return nil, newError(kindInvalidConfig, "Circuit breaker timeWindow must be greater than or equal to bucketSize")
 	case cb.windowMs%cb.bucketMs != 0:
-		return nil, newError(kindError, "Circuit breaker timeWindow must be evenly divisible by bucketSize")
+		return nil, newError(kindInvalidConfig, "Circuit breaker timeWindow must be evenly divisible by bucketSize")
 	}
 	cb.buckets = make([]bucket, cb.windowMs/cb.bucketMs)
 	cb.startMs = cb.nowMs()

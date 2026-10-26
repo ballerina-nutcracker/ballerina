@@ -64,10 +64,7 @@ func connectURL(ep *endpoint, p string) string {
 	if ep.hasPassword {
 		userInfo = url.UserPassword(ep.username, ep.password)
 	}
-	host := ep.host
-	if ep.port > 0 {
-		host += ":" + formatInt(ep.port)
-	}
+	host := ep.host + ":" + formatInt(ep.port)
 	u := url.URL{Scheme: ep.protocol, User: userInfo, Host: host, Path: p}
 	s := u.String()
 	if ep.hasPassword && ep.password == "" {
@@ -98,7 +95,7 @@ func vfsRootURI(ep *endpoint, masked bool) string {
 	}
 	b.WriteByte('@')
 	b.WriteString(ep.host)
-	if ep.port > 0 && ep.port != defaultPort(ep.protocol) {
+	if ep.port != defaultPort(ep.protocol) {
 		b.WriteByte(':')
 		b.WriteString(formatInt(ep.port))
 	}

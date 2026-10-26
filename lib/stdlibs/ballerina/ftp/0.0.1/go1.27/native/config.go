@@ -163,12 +163,12 @@ func parseCredentials(config *values.Map, ep *endpoint) {
 	}
 }
 
-func parsePort(config *values.Map) int64 {
+func parsePort(config *values.Map) (int64, error) {
 	port := getInt(config, "port")
-	if port <= 0 || port > 65535 {
-		return -1
+	if port < 1 || port > 65535 {
+		return 0, newError(kindInvalidConfig, "Port must be between 1 and 65535 (got: "+formatInt(port)+")")
 	}
-	return port
+	return port, nil
 }
 
 func validateAuthProtocol(auth *values.Map, protocol string) error {
@@ -300,7 +300,11 @@ func parseAuth(config *values.Map, platform pal.Platform, msgs endpointMessages)
 	ep := &endpoint{protocol: protocol, userDirIsRoot: getBool(config, "userDirIsRoot")}
 	ep.host, _ = getString(config, "host")
 	parseCredentials(config, ep)
-	ep.port = parsePort(config)
+	port, err := parsePort(config)
+	if err != nil {
+		return nil, err
+	}
+	ep.port = port
 	ep.preferredMethods = []string{"PUBLICKEY", "PASSWORD"}
 	if protocol == protocolFTPS {
 		ep.tlsConfig = &pal.TLSConfig{}

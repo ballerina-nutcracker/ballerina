@@ -4,6 +4,16 @@ InvalidConfigError: retryConfig.interval must be greater than 0.
 InvalidConfigError: retryConfig.backOffFactor must be greater than or equal to 1.0.
 InvalidConfigError: retryConfig.maxWaitInterval must be greater than 0.
 InvalidConfigError: retryConfig.maxWaitInterval must be greater than or equal to retryConfig.interval.
+InvalidConfigError: Port must be between 1 and 65535 (got: 0)
+InvalidConfigError: Port must be between 1 and 65535 (got: 65536)
+InvalidConfigError: Port must be between 1 and 65535 (got: -21)
+InvalidConfigError: Circuit breaker failureCategories must not be empty
+InvalidConfigError: Circuit breaker failureThreshold must be between 0.0 and 1.0
+InvalidConfigError: Circuit breaker requestVolumeThreshold must be greater than 0
+InvalidConfigError: Circuit breaker resetTime must be greater than 0
+InvalidConfigError: Circuit breaker bucketSize must be greater than 0
+InvalidConfigError: Circuit breaker timeWindow must be greater than or equal to bucketSize
+InvalidConfigError: Circuit breaker timeWindow must be evenly divisible by bucketSize
 Error: privateKey can only be used with SFTP protocol.
 Error: secureSocket can only be used with FTPS protocol.
 InvalidConfigError: privateKey path cannot be empty.
@@ -37,5 +47,5 @@ fileAgeFilter.minAge (10.0) must not exceed fileAgeFilter.maxAge (5.0)
 Invalid regex pattern '[' in fileDependencyConditions.targetPattern: error parsing regexp: missing closing ]: `[`
 Too many parameters for 'onFileText'. Format-specific handlers accept at most 3 parameters: (content, fileInfo?, caller?).
 Binding XML content to a record type is not yet supported
-ignored
+The 'path' field cannot be empty in @ftp:ServiceConfig annotation.
 -- stderr --
