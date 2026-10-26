@@ -165,6 +165,12 @@ public function main() {
     float|error n23 = jsondata:parseString("1e400");
     show(n23);
     // @output Infinity
+    float|error n24 = jsondata:parseString("+NaN");
+    show(n24);
+    // @output NaN
+    float|error n25 = jsondata:parseString("-NaN");
+    show(n25);
+    // @output NaN
     decimal|error n9 = jsondata:parseString("12.340");
     show(n9);
     // @output 12.340

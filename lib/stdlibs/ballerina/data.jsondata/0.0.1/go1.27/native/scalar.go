@@ -224,6 +224,9 @@ func parseJavaDouble(value string) (float64, bool) {
 	if !javaDoublePattern.MatchString(trimmed) {
 		return 0, false
 	}
+	if strings.TrimLeft(trimmed, "+-") == "NaN" {
+		trimmed = "NaN"
+	}
 	f, err := strconv.ParseFloat(trimmed, 64)
 	if err != nil && !isRangeError(err) {
 		return 0, false

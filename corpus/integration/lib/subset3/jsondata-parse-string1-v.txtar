@@ -27,6 +27,8 @@ error: incompatible expected type 'int' for value '9223372036854775808'
 150.0
 error: incompatible expected type 'float' for value '1.5f'
 Infinity
+NaN
+NaN
 12.340
 1E+2
 1
