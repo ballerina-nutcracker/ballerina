@@ -321,7 +321,7 @@ func startBusyFTPServer(t *testing.T) (int64, *atomic.Int64) {
 }
 
 func serveBusyFTP(conn net.Conn, busyReplies *atomic.Int64) {
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	reply := func(line string) bool {
 		_, err := io.WriteString(conn, line+"\r\n")
 		return err == nil
