@@ -92,7 +92,7 @@ func testLanguageServerLauncher(t *testing.T, cli *balCLI) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer stdin.Close()
+		defer func() { _ = stdin.Close() }()
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			t.Fatal(err)

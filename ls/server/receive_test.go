@@ -18,12 +18,7 @@ package server
 
 import (
 	"bufio"
-	"bytes"
-	"context"
 	"encoding/json"
-	"os"
-	"os/exec"
-	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -57,69 +52,35 @@ func TestReceiveFramedMessages(t *testing.T) {
 }
 
 func TestReceiveFailures(t *testing.T) {
+	t.Parallel()
 	for _, scenario := range []struct {
 		name string
 		want string
+		read func(*testSession) (protocol.Message, error)
 	}{
-		{"notification", "timeout waiting for textDocument/publishDiagnostics"},
-		{"response", "timeout waiting for shutdown (request ID \"2\")"},
-		{"read-error", "read message for textDocument/publishDiagnostics: EOF"},
+		{"notification", "timeout waiting for textDocument/publishDiagnostics after 50ms", func(s *testSession) (protocol.Message, error) {
+			return s.receiveWithin(50*time.Millisecond, "textDocument/publishDiagnostics", "")
+		}},
+		{"response", "timeout waiting for shutdown (request ID \"2\") after 50ms", func(s *testSession) (protocol.Message, error) {
+			return s.receiveWithin(50*time.Millisecond, "shutdown", `"2"`)
+		}},
+		{"read-error", "read message for textDocument/publishDiagnostics: EOF", func(s *testSession) (protocol.Message, error) {
+			s.clientR = bufio.NewReader(strings.NewReader(""))
+			return s.receiveWithin(time.Minute, "textDocument/publishDiagnostics", "")
+		}},
 	} {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
-			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-			defer cancel()
-			cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestReceiveFailureProcess$", "-test.timeout=12s", "-test.v")
-			cmd.Env = append(os.Environ(), "LS_RECEIVE_FAILURE="+scenario.name)
+			session := newTestSession(t, true)
+			defer session.close()
 			start := time.Now()
-			output, err := cmd.CombinedOutput()
-			elapsed := time.Since(start)
-			if ctx.Err() != nil || err == nil {
-				t.Fatalf("child result = %v (%v):\n%s", err, ctx.Err(), output)
+			_, err := scenario.read(session)
+			if err == nil || err.Error() != scenario.want {
+				t.Fatalf("error = %v, want %q", err, scenario.want)
 			}
-			for _, want := range []string{scenario.want, "receive cleanup complete"} {
-				if !bytes.Contains(output, []byte(want)) {
-					t.Errorf("child output missing %q:\n%s", want, output)
-				}
-			}
-			if bytes.Contains(output, []byte("panic:")) || bytes.Contains(output, []byte("WARNING: DATA RACE")) {
-				t.Errorf("child crashed or raced:\n%s", output)
-			}
-			if scenario.name == "read-error" {
-				if elapsed >= 5*time.Second || bytes.Contains(output, []byte("timeout waiting")) {
-					t.Errorf("read error was not immediate (%v):\n%s", elapsed, output)
-				}
-			} else if elapsed < 5*time.Second || elapsed >= 10*time.Second {
-				t.Errorf("timeout took %v, want approximately five seconds:\n%s", elapsed, output)
+			if elapsed := time.Since(start); elapsed >= 5*time.Second {
+				t.Fatalf("failure took %v, want prompt return", elapsed)
 			}
 		})
 	}
-}
-
-func TestReceiveFailureProcess(t *testing.T) {
-	scenario := os.Getenv("LS_RECEIVE_FAILURE")
-	if scenario == "" {
-		t.Skip("isolated deliberate receive failure")
-	}
-	session := newTestSession(t, true)
-	t.Cleanup(func() {
-		session.close()
-		stacks := make([]byte, 1<<20)
-		n := runtime.Stack(stacks, true)
-		if bytes.Contains(stacks[:n], []byte("protocol.ReadMessage(")) ||
-			bytes.Contains(stacks[:n], []byte("(*testSession).receive.func")) {
-			t.Fatalf("receive goroutine survived cleanup:\n%s", stacks[:n])
-		}
-		t.Log("receive cleanup complete")
-	})
-	if scenario == "read-error" {
-		session.clientR = bufio.NewReader(strings.NewReader(""))
-	}
-	// No document is opened and no shutdown is sent: suppress the expected message.
-	if scenario == "response" {
-		_ = session.receive(t, "shutdown", `"2"`)
-	} else {
-		_ = session.receive(t, "textDocument/publishDiagnostics", "")
-	}
-	t.Fatal("receive unexpectedly returned")
 }

@@ -142,8 +142,18 @@ func (s *testSession) sendNotification(method string, params any) {
 	}
 }
 
+const receiveTimeout = 5 * time.Second
+
 func (s *testSession) receive(t *testing.T, method, id string) protocol.Message {
 	t.Helper()
+	message, err := s.receiveWithin(receiveTimeout, method, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return message
+}
+
+func (s *testSession) receiveWithin(timeout time.Duration, method, id string) (protocol.Message, error) {
 	expected := method
 	if id != "" {
 		expected = fmt.Sprintf("%s (request ID %s)", method, id)
@@ -160,18 +170,17 @@ func (s *testSession) receive(t *testing.T, method, id string) protocol.Message 
 		result <- readResult{message: message, err: err}
 	}()
 	defer func() { <-done }()
-	timer := time.NewTimer(5 * time.Second)
+	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 	select {
 	case read := <-result:
 		if read.err != nil {
-			t.Fatalf("read message for %s: %v", expected, read.err)
+			return protocol.Message{}, fmt.Errorf("read message for %s: %w", expected, read.err)
 		}
-		return read.message
+		return read.message, nil
 	case <-timer.C:
 		s.closeTransport()
-		t.Fatalf("timeout waiting for %s after five seconds", expected)
-		return protocol.Message{}
+		return protocol.Message{}, fmt.Errorf("timeout waiting for %s after %v", expected, timeout)
 	}
 }
 
