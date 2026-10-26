@@ -14,8 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Code generated from the Language Server Protocol 3.18 metamodel.
-// DO NOT EDIT.
+// Code generated from the Language Server Protocol 3.18 metamodel. DO NOT EDIT.
 
 package protocol
 

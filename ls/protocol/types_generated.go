@@ -14,11 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Code generated from the Language Server Protocol 3.18 metamodel.
+// Code generated from the Language Server Protocol 3.18 metamodel. DO NOT EDIT.
 // LSP version: 3.18.0
 // Source commit: 25005c80d9ec5e366c51108a4981ef264fe058e7
 // Metamodel SHA-256: 50b5f057b4c9098cb90b34cecb39d24dcdc20e39f848538adceabbe78f85774c
-// DO NOT EDIT.
 
 package protocol
 
