@@ -406,16 +406,21 @@ func (b *rowBuilder) has(key string) bool {
 	return false
 }
 
-// build creates the row value. As jBallerina's record creation does, a required field that never
-// received a value is present with value `()`.
+// build creates the row value. As jBallerina's record creation does, a required nilable field that never
+// received a value is present with value `()`; a required non-nilable one is an error.
 func (b *rowBuilder) build(t *typer) (values.BalValue, error) {
 	s := b.shape
 	if s.isMapping() {
 		entries := b.declared
 		for _, name := range s.fieldOrder {
-			if f := s.fields[name]; !f.optional && !b.has(name) {
-				entries = append(entries, values.MapEntry{Key: name, Value: nil})
+			f := s.fields[name]
+			if f.optional || b.has(name) {
+				continue
 			}
+			if !f.nilable {
+				return nil, missingFieldError(name)
+			}
+			entries = append(entries, values.MapEntry{Key: name, Value: nil})
 		}
 		entries = append(entries, b.rest...)
 		return values.NewMap(s.ty, s.mapping, s.readonly, entries), nil

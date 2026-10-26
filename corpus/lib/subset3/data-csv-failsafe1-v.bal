@@ -31,7 +31,7 @@ public function main() returns error? {
     io:println(reopened is Rows && reopened.length() == 2 && reopened[1].b == "y\" ,\"q\nz,1\n3,w");
     io:println(csv:parseString("a,b\n1,x\nz,y", {failSafe: {}}, Rows));
     io:println(csv:parseString("a,b\n1,x\n2,\\x", {failSafe: {}}, Rows));
-    // A row missing a required field is logged and kept.
+    // A row missing a required field is logged and skipped.
     io:println(csv:parseString("a,b\n1,x\n2\n3,w", {failSafe: {}}, Rows));
     // Some errors are never tolerated.
     io:println(csv:parseString("", {failSafe: {}}, Rows));
@@ -76,7 +76,7 @@ public function main() returns error? {
 // @output true
 // @output [{"a":1,"b":"x"}]
 // @output [{"a":1,"b":"x"}]
-// @output [{"a":1,"b":"x"},{"a":2,"b":null},{"a":3,"b":"w"}]
+// @output [{"a":1,"b":"x"},{"a":3,"b":"w"}]
 // @output error Error ("provided header row is empty")
 // @output [{"a":1,"b":"q"}]
 // @output [{"a":1,"b":"q"}]
