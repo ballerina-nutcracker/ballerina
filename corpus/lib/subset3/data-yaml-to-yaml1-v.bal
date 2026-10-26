@@ -55,6 +55,8 @@ public function main() {
     // isStream writes each member of a list as a document.
     show(yaml:toYamlString([1, "a", {b: 2}, [3]], {isStream: true}));
     show(yaml:toYamlString([], {isStream: true}));
+    // isStream on a non-list value writes nested sequences normally (ballerina-platform/ballerina-library#9679).
+    show(yaml:toYamlString({a: [1, 2]}, {isStream: true}));
     show(yaml:toYamlString([]));
     show(yaml:toYamlString({}));
     show(yaml:toYamlString("Simple Scalar"));
@@ -141,6 +143,10 @@ public function main() {
 // @output - 3
 // @output --
 // @output 
+// @output --
+// @output a:
+// @output - 1
+// @output - 2
 // @output --
 // @output -
 // @output --

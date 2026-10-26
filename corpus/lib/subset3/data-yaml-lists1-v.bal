@@ -64,6 +64,8 @@ public function main() {
     // Closed arrays and tuples drop extra members unless projection is disabled, and pad missing ones.
     show(yaml:parseString("[1, 2, 3]", {}, Fixed));
     show(yaml:parseString("[1, 2, 3]", {allowDataProjection: false}, Fixed));
+    // An open array binds normally with projection disabled (ballerina-platform/ballerina-library#9678).
+    show(yaml:parseString("[1, 2]", {allowDataProjection: false}, Ints));
     show(yaml:parseString("[1]", {}, Fixed));
     show(yaml:parseString("[1, a, b]", {}, Pair));
     show(yaml:parseString("[1, a, b]", {allowDataProjection: false}, Pair));
@@ -103,6 +105,7 @@ public function main() {
 // @output invalid type 'int[]' expected 'map type'
 // @output [1,2]
 // @output array size is not compatible with the expected size
+// @output [1,2]
 // @output [1,0]
 // @output [1,"a"]
 // @output array size is not compatible with the expected size

@@ -5,6 +5,7 @@ incompatible expected type 'int[]' for value '5'
 invalid type 'int[]' expected 'map type'
 [1,2]
 array size is not compatible with the expected size
+[1,2]
 [1,0]
 [1,"a"]
 array size is not compatible with the expected size
