@@ -47,7 +47,7 @@ public function main() {
     io:println(csv:parseString("a,b,c\n1,x,9", {}, WithRest));
     io:println(csv:parseString("a\n1", {}, WithRest));
     io:println(csv:parseString("a,b\n1", {}, Pairs));
-    // Closed inner arrays.
+    // `int[2][]` is a closed outer array of two open `int[]` rows; missing rows are filled with `[]`.
     io:println(csv:parseString("a,b,c\n1,2,3", {}, Pair2));
     io:println(csv:parseString("a,b,c\n1,2,3", {allowDataProjection: false}, Pair2));
     io:println(csv:parseString("a,b\n1,2", {}, Pair3));
@@ -57,6 +57,7 @@ public function main() {
     io:println(csv:parseString("a,b\n1,x", {outputWithHeaders: true}, Strings));
     io:println(csv:parseString("1,b\n1,x", {outputWithHeaders: true}, Anydata));
     io:println(csv:parseString("a,b\n1,x", {outputWithHeaders: true}, Ints));
+    // As in jBallerina, a header row with no data rows after it gives no rows.
     io:println(csv:parseString("a,b", {outputWithHeaders: true}, Strings));
     io:println(csv:parseString("a,b\n1,x\n2,y", {outputWithHeaders: true, skipLines: [1]}, Strings));
     io:println(csv:parseString("1,x", {header: (), outputWithHeaders: true, customHeadersIfHeadersAbsent: ["p", "q"]}, Strings));
