@@ -92,6 +92,10 @@ func TestMqttShowcase(t *testing.T) {
 	runMqtt(t, "mqtt-showcase-v")
 }
 
+func TestMqttStreamClose(t *testing.T) {
+	runMqtt(t, "mqtt-stream-close-v")
+}
+
 func TestMqttTLS(t *testing.T) {
 	runMqtt(t, "mqtt-tls-v")
 }

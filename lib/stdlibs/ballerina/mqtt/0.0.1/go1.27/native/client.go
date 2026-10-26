@@ -132,7 +132,7 @@ func (m *mqttModule) clientReceive(ctx *extern.Context, args []values.BalValue) 
 		return nil, err
 	}
 	iterator := v.(*values.Object)
-	iterator.Put(queueField, cs.responses)
+	iterator.Put(queueField, cs.responses.newReader())
 	next := func() values.BalValue { return m.invokeIteratorMethod(iterator, "next") }
 	closeFn := func() values.BalValue { return m.invokeIteratorMethod(iterator, "close") }
 	return values.NewStream(td.Constraint(), next, closeFn), nil
@@ -152,11 +152,11 @@ func (m *mqttModule) invokeIteratorMethod(iterator *values.Object, name string) 
 func (m *mqttModule) streamNextResult(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	self, _ := args[0].(*values.Object)
 	v, _ := self.Get(queueField)
-	queue, ok := v.(*blockingQueue[receivedMessage])
+	reader, ok := v.(*queueReader[receivedMessage])
 	if !ok {
 		return nil, nil
 	}
-	msg, ok := queue.take()
+	msg, ok := reader.take()
 	if !ok {
 		return nil, nil
 	}
@@ -166,8 +166,8 @@ func (m *mqttModule) streamNextResult(ctx *extern.Context, args []values.BalValu
 func (m *mqttModule) streamClose(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	self, _ := args[0].(*values.Object)
 	if v, _ := self.Get(queueField); v != nil {
-		if queue, ok := v.(*blockingQueue[receivedMessage]); ok {
-			queue.clear()
+		if reader, ok := v.(*queueReader[receivedMessage]); ok {
+			reader.close()
 		}
 	}
 	self.Put(queueField, nil)
