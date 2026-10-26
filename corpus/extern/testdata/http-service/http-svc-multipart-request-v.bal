@@ -34,7 +34,23 @@ service /multiparts on new http:Listener(19500) {
         resp.setJsonPayload(result);
         return resp;
     }
+
+    resource function post relay(http:Request req) returns http:Response|error {
+        mime:Entity p = new;
+        p.setText("forwarded part");
+        req.setBodyParts([p], "multipart/mixed");
+        http:Response resp = check upstream->forward("/multiparts/echo", req);
+        resp.setHeader("x-relayed-content-type", req.getContentType());
+        return resp;
+    }
+
+    resource function post echo(http:Request req) returns string|error {
+        mime:Entity[] parts = check req.getBodyParts();
+        return string `${req.getContentType()} count=${parts.length()} 1:${check parts[0].getText()}`;
+    }
 }
+
+final http:Client upstream = check new ("http://localhost:19500");
 
 public function testMain() returns error? {
     http:Client c = check new http:Client("http://localhost:19500", {});
@@ -50,4 +66,12 @@ public function testMain() returns error? {
     http:Response r = check c->post("/multiparts/decode", [textPart, jsonPart]);
     io:println(r.statusCode); // @output 200
     io:println(check r.getTextPayload()); // @output {"count":2,"disposition":"form-data;name=\"field1\"","text":"hello world","x":42}
+
+    r = check c->post("/multiparts/relay", [textPart]);
+    io:println(r.statusCode); // @output 201
+    string echoed = check r.getTextPayload();
+    io:println(echoed.indexOf("multipart/mixed; boundary=") == 0); // @output true
+    io:println(echoed.includes(" count=1 1:forwarded part")); // @output true
+    string relayedContentType = check r.getHeader("x-relayed-content-type");
+    io:println(echoed.indexOf(relayedContentType + " ") == 0); // @output true
 }
