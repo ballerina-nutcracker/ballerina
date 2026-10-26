@@ -17,6 +17,7 @@
 package extern_test
 
 import (
+	"bufio"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -33,6 +34,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -56,6 +59,8 @@ type ftpFixture struct {
 	ftpsPort         int64
 	ftpsImplicitPort int64
 	sftpPort         int64
+	busyPort         int64
+	busyReplies      *atomic.Int64
 	certPath         string
 	keyPath          string
 	encryptedKeyPath string
@@ -93,21 +98,42 @@ func (d *ftpTestDriver) GetTLSConfig() (*tls.Config, error) {
 	return d.tls, nil
 }
 
-// listenAll binds every test server on the dual-stack wildcard address, as ftpserverlib binds its
-// passive data ports: a more specific bind could otherwise be handed the same port number and
-// capture another server's data connections.
-func listenAll(t *testing.T) net.Listener {
+// listenLoopback binds a test server on 127.0.0.1, so the kernel never hands it a port another
+// process already holds there; a wildcard bind can share such a port on macOS, and connections
+// to 127.0.0.1 then reach the other process.
+func listenLoopback(t *testing.T) net.Listener {
 	t.Helper()
-	ln, err := net.Listen("tcp", ":0")
+	ln, err := net.Listen("tcp4", "127.0.0.1:0")
 	if err != nil {
 		t.Fatalf("listen: %v", err)
 	}
 	return ln
 }
 
+// loopbackPassivePorts hands ftpserverlib passive ports below the ephemeral range that are free
+// on 127.0.0.1, for the same reason: ftpserverlib binds its passive listeners on the wildcard.
+// Ports come from one process-wide cursor so a probe never shadows another server's listener.
+type loopbackPassivePorts struct{}
+
+var nextPassivePort atomic.Int64
+
+func (loopbackPassivePorts) FetchNext() (int, int, bool) {
+	for range 100 {
+		port := 30000 + int(nextPassivePort.Add(1)%10000)
+		ln, err := net.Listen("tcp4", "127.0.0.1:"+strconv.Itoa(port))
+		if err == nil {
+			_ = ln.Close()
+			return port, port, true
+		}
+	}
+	return 0, 0, false
+}
+
+func (loopbackPassivePorts) NumberAttempts() int { return 100 }
+
 func startFTPServer(t *testing.T, tlsConfig *tls.Config, mode ftpserver.TLSRequirement) int64 {
 	t.Helper()
-	ln := listenAll(t)
+	ln := listenLoopback(t)
 	var err error
 	if err != nil {
 		t.Fatalf("listen: %v", err)
@@ -116,9 +142,10 @@ func startFTPServer(t *testing.T, tlsConfig *tls.Config, mode ftpserver.TLSRequi
 		fs:  afero.NewMemMapFs(),
 		tls: tlsConfig,
 		settings: &ftpserver.Settings{
-			Listener:    ln,
-			TLSRequired: mode,
-			IdleTimeout: 30,
+			Listener:                 ln,
+			TLSRequired:              mode,
+			IdleTimeout:              30,
+			PassiveTransferPortRange: loopbackPassivePorts{},
 		},
 	}
 	if mode == ftpserver.ImplicitEncryption {
@@ -229,7 +256,7 @@ func startSFTPServer(t *testing.T, clientKey ssh.PublicKey) (int64, ssh.PublicKe
 		},
 	}
 	config.AddHostKey(hostSigner)
-	ln := listenAll(t)
+	ln := listenLoopback(t)
 	t.Cleanup(func() { _ = ln.Close() })
 	handlers := sftp.InMemHandler()
 	go func() {
@@ -274,6 +301,57 @@ func serveSFTP(conn net.Conn, config *ssh.ServerConfig, handlers sftp.Handlers) 
 	}
 }
 
+// startBusyFTPServer starts a server that accepts logins but answers every other command with a
+// 421 reply, so each read fails transiently; it counts the replies it sent.
+func startBusyFTPServer(t *testing.T) (int64, *atomic.Int64) {
+	t.Helper()
+	ln := listenLoopback(t)
+	t.Cleanup(func() { _ = ln.Close() })
+	busyReplies := &atomic.Int64{}
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			go serveBusyFTP(conn, busyReplies)
+		}
+	}()
+	return int64(ln.Addr().(*net.TCPAddr).Port), busyReplies
+}
+
+func serveBusyFTP(conn net.Conn, busyReplies *atomic.Int64) {
+	defer conn.Close()
+	reply := func(line string) bool {
+		_, err := io.WriteString(conn, line+"\r\n")
+		return err == nil
+	}
+	if !reply("220 busy test server") {
+		return
+	}
+	lines := bufio.NewScanner(conn)
+	for lines.Scan() {
+		command, _, _ := strings.Cut(lines.Text(), " ")
+		switch strings.ToUpper(command) {
+		case "USER":
+			reply("331 password required")
+		case "PASS":
+			reply("230 logged in")
+		case "FEAT":
+			reply("211 no features")
+		case "TYPE", "NOOP", "OPTS":
+			reply("200 ok")
+		case "QUIT":
+			reply("221 bye")
+			return
+		default:
+			busyReplies.Add(1)
+			reply("421 Service not available, closing control connection")
+			return
+		}
+	}
+}
+
 func startFtpFixture(t *testing.T) *ftpFixture {
 	t.Helper()
 	dir := t.TempDir()
@@ -292,6 +370,7 @@ func startFtpFixture(t *testing.T) *ftpFixture {
 	if err := os.WriteFile(badKnownHosts, []byte(badLine), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	busyPort, busyReplies := startBusyFTPServer(t)
 	hashedKnownHosts := filepath.Join(dir, "known_hosts_hashed")
 	hashedLine := knownhosts.HashHostname("[127.0.0.1]:"+strconv.FormatInt(sftpPort, 10)) + " " +
 		string(ssh.MarshalAuthorizedKey(hostKey))
@@ -303,6 +382,8 @@ func startFtpFixture(t *testing.T) *ftpFixture {
 		ftpsPort:         startFTPServer(t, tlsConfig, ftpserver.MandatoryEncryption),
 		ftpsImplicitPort: startFTPServer(t, tlsConfig, ftpserver.ImplicitEncryption),
 		sftpPort:         sftpPort,
+		busyPort:         busyPort,
+		busyReplies:      busyReplies,
 		certPath:         certPath,
 		keyPath:          keyPath,
 		encryptedKeyPath: encryptedKeyPath,

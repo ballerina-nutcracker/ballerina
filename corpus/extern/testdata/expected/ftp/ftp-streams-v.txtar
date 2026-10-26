@@ -4,6 +4,8 @@
 Iterator error: source broken
 a,"b,c"
 d,e
+x,1
+"y""z",2
 name,qty
 x,1
 "y""z",2

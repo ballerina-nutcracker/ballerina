@@ -31,6 +31,18 @@ type Row record {|
     int qty;
 |};
 
+// CSV rows end with the platform line separator, as in jBallerina; drop the carriage returns
+// Windows adds so the expected output is the same everywhere.
+function unixLines(string text) returns string {
+    string result = text;
+    int? i = result.indexOf("\r");
+    while i is int {
+        result = result.substring(0, i) + result.substring(i + 1);
+        i = result.indexOf("\r");
+    }
+    return result;
+}
+
 public function main() returns error? {
     ftp:Client c = check new ({
         host: "127.0.0.1",
@@ -57,9 +69,13 @@ public function main() returns error? {
     Row[] rows = [{name: "x", qty: 1}, {name: "y\"z", qty: 2}];
     check c->putCsvAsStream("/s/lines.csv", rows.toStream(), ftp:APPEND);
     string csv = check c->getText("/s/lines.csv");
-    io:print(csv); // @output a,"b,c"
+    io:print(unixLines(csv)); // @output a,"b,c"
     // @output d,e
-    // @output name,qty
+    // @output x,1
+    // @output "y""z",2
+    check c->putCsvAsStream("/s/rows.csv", rows.toStream());
+    csv = check c->getText("/s/rows.csv");
+    io:print(unixLines(csv)); // @output name,qty
     // @output x,1
     // @output "y""z",2
 
