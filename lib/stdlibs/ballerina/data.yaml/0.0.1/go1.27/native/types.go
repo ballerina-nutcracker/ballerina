@@ -76,9 +76,8 @@ var scalarBasicTypes = []struct {
 	{semtypes.String, kindString},
 }
 
-// typer answers the type questions the jBallerina implementation answers through its runtime type API.
-type typer struct {
-	tc            semtypes.Context
+// yamlTypes holds the types the module defines once, when it is initialised.
+type yamlTypes struct {
 	jsonTy        semtypes.SemType
 	anydataTy     semtypes.SemType
 	anydataListTy semtypes.SemType
@@ -91,16 +90,15 @@ type typer struct {
 	anydataMap    *semtypes.MappingAtomicType
 }
 
-func newTyper(tc semtypes.Context) *typer {
-	env := tc.Env()
+func newYamlTypes(env semtypes.Env) *yamlTypes {
+	tc := semtypes.ContextFrom(env)
 	anydataTy := semtypes.CreateAnydata(tc)
 	anydataListTy := defineArray(env, anydataTy)
 	jsonTy := semtypes.CreateJSON(tc)
 	jsonListTy := defineArray(env, jsonTy)
 	jsonMapTy := defineMap(env, nil, jsonTy)
 	anydataMapTy := defineMap(env, nil, anydataTy)
-	return &typer{
-		tc:            tc,
+	return &yamlTypes{
 		jsonTy:        jsonTy,
 		anydataTy:     anydataTy,
 		anydataListTy: anydataListTy,
@@ -112,6 +110,16 @@ func newTyper(tc semtypes.Context) *typer {
 		anydataMapTy:  anydataMapTy,
 		anydataMap:    semtypes.ToMappingAtomicType(tc, anydataMapTy),
 	}
+}
+
+// typer answers the type questions the jBallerina implementation answers through its runtime type API.
+type typer struct {
+	*yamlTypes
+	tc semtypes.Context
+}
+
+func newTyper(types *yamlTypes, tc semtypes.Context) *typer {
+	return &typer{yamlTypes: types, tc: tc}
 }
 
 func (t *typer) classify(ty semtypes.SemType) typeInfo {
