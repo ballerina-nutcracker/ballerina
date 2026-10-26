@@ -27,6 +27,7 @@ invalid type '{| int... |}' expected 'list type'
 {"1":"a","null":"b","a b":"c","d":"e"}
 'cannot have duplicate map entries for '${key.toString()}' at line: '2' column: '3'
 {"a":2}
+{"a":3,"b":2}
 {"a":null,"b":2,"c":null}
 {"name":"a","age":1}
 -- stderr --

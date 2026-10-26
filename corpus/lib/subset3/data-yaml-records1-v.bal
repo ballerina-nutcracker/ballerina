@@ -105,6 +105,7 @@ public function main() {
     show(yaml:parseString("1: a\nnull: b\n\"a b\": c\n? d\n: e"));
     show(yaml:parseString("a: 1\na: 2"));
     show(yaml:parseString("a: 1\na: 2", {allowMapEntryRedefinition: true}));
+    show(yaml:parseString("a: 1\nb: 2\na: 3", {allowMapEntryRedefinition: true}));
     show(yaml:parseString("{a, b: 2, c: }"));
     // Non-list targets read the first document only.
     show(yaml:parseString("name: a\nage: 1\n---\nname: b\nage: 2", {}, Closed));
@@ -138,5 +139,6 @@ public function main() {
 // @output {"1":"a","null":"b","a b":"c","d":"e"}
 // @output 'cannot have duplicate map entries for '${key.toString()}' at line: '2' column: '3'
 // @output {"a":2}
+// @output {"a":3,"b":2}
 // @output {"a":null,"b":2,"c":null}
 // @output {"name":"a","age":1}
