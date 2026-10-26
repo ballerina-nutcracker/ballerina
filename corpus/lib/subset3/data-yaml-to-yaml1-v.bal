@@ -50,6 +50,7 @@ public function main() {
     show(yaml:toYamlString({a: "it's", b: 1}, {forceQuotes: true, useSingleQuotes: true}));
     show(yaml:toYamlString([1, "a", {b: 2}, [3]], {isStream: true}));
     show(yaml:toYamlString([], {isStream: true}));
+    show(yaml:toYamlString({a: [1, 2]}, {isStream: true}));
     show(yaml:toYamlString([]));
     show(yaml:toYamlString({}));
     show(yaml:toYamlString("Simple Scalar"));
@@ -132,6 +133,10 @@ public function main() {
 // @output - 3
 // @output --
 // @output 
+// @output --
+// @output a:
+// @output - 1
+// @output - 2
 // @output --
 // @output -
 // @output --
