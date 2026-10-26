@@ -20,6 +20,8 @@ import ballerina/io;
 
 type Row record {|int a; string b;|};
 
+type Other record {|string a; int b;|};
+
 function printRows(string log) returns error? {
     foreach string line in check io:fileReadLines(log) {
         int? i = line.indexOf("\"location\"");
@@ -43,6 +45,14 @@ public function main() returns error? {
     io:println(rows);
     check printRows(log2);
 
+    // A union element type logs from both the parse and the conversion stage; OVERWRITE truncates once.
+    string log3 = check file:joinPath(dir, "rows3.log");
+    check io:fileWriteString(log3, "stale");
+    csv:FailSafeOptions fs3 = {enableConsoleLogs: false, fileOutputMode: {filePath: log3, contentType: csv:METADATA, fileWriteOption: csv:OVERWRITE}};
+    (Row|Other)[]|csv:Error unionRows = csv:parseString("a,b\n1,x\n2,y,9\nx,y\n3,z", {failSafe: fs3});
+    io:println(unionRows);
+    check printRows(log3);
+
     check file:remove(dir, file:RECURSIVE);
 }
 
@@ -53,3 +63,6 @@ public function main() returns error? {
 // @output [{"a":1,"b":"x"},{"a":2,"b":"y"},{"a":3,"b":"z"}]
 // @output "location":{"row":3,"column":1},"message":"value 'x' cannot be cast into 'int'"}
 // @output "location":{"row":5,"column":1},"message":"value 'y' cannot be cast into 'int'"}
+// @output [{"a":1,"b":"x"},{"a":3,"b":"z"}]
+// @output "location":{"row":3,"column":3},"message":"invalid number of headers"}
+// @output "location":{"row":2,"column":1},"message":"no mapping type found for value 'x' in key 'a'"}

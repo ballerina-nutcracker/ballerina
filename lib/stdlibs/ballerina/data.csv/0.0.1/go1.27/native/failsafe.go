@@ -66,6 +66,17 @@ func newFailSafeLogger(rt *runtime.Runtime, options *values.Map, withConsole boo
 	return logger
 }
 
+// withoutConsole returns a copy that never prints to the console and shares the log file, so an
+// OVERWRITE log is truncated once per call.
+func (l *failSafeLogger) withoutConsole() *failSafeLogger {
+	if l == nil {
+		return nil
+	}
+	c := *l
+	c.console = false
+	return &c
+}
+
 // log records a tolerated error at a 1-based row and column. Only a failure to write the log file is
 // returned.
 func (l *failSafeLogger) log(err error, row, column int, offendingRow string) error {
