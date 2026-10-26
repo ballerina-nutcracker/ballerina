@@ -1,0 +1,9 @@
+-- stdout --
+[]
+"location":{"row":2,"column":1},"message":"value 'x' cannot be cast into 'int'"}
+"location":{"row":3,"column":1},"message":"value 'y' cannot be cast into 'int'"}
+"location":{"row":4,"column":1},"message":"value 'z' cannot be cast into 'int'"}
+[{"a":1,"b":"x"},{"a":2,"b":"y"},{"a":3,"b":"z"}]
+"location":{"row":3,"column":1},"message":"value 'x' cannot be cast into 'int'"}
+"location":{"row":5,"column":1},"message":"value 'y' cannot be cast into 'int'"}
+-- stderr --
