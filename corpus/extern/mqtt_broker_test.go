@@ -60,7 +60,7 @@ var mqttListenerSpecs = []mqttListenerSpec{
 func startMqttBroker(t *testing.T) map[string]string {
 	t.Helper()
 	server := mochi.New(&mochi.Options{Logger: slog.New(slog.NewTextHandler(io.Discard, nil))})
-	t.Cleanup(func() { _ = server.Close() })
+	t.Cleanup(func() { closeMqttBroker(server) })
 	loginRequired := map[string]bool{}
 	for _, spec := range mqttListenerSpecs {
 		loginRequired[spec.id] = spec.requireLogin
@@ -85,6 +85,20 @@ func startMqttBroker(t *testing.T) map[string]string {
 		t.Fatalf("starting mqtt broker: %v", err)
 	}
 	return urls
+}
+
+// closeMqttBroker bounds the broker shutdown: mochi v2.7.9 can deadlock in Close when a client
+// attaches while it closes, as GetByListener re-takes a read lock a waiting writer blocks.
+func closeMqttBroker(server *mochi.Server) {
+	done := make(chan struct{})
+	go func() {
+		_ = server.Close()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+	}
 }
 
 func mqttServerTLSConfig(t *testing.T, clientAuth tls.ClientAuthType) *tls.Config {
