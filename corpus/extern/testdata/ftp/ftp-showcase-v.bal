@@ -46,6 +46,18 @@ service class JsonService {
     }
 }
 
+// CSV rows end with the platform line separator, as in jBallerina; drop the carriage returns
+// Windows adds so the expected output is the same everywhere.
+function unixLines(string text) returns string {
+    string result = text;
+    int? i = result.indexOf("\r");
+    while i is int {
+        result = result.substring(0, i) + result.substring(i + 1);
+        i = result.indexOf("\r");
+    }
+    return result;
+}
+
 public function main() returns error? {
     ftp:Client ftpClient = check new ({
         host: "127.0.0.1",
@@ -70,7 +82,7 @@ public function main() returns error? {
 
     check ftpClient->putCsv("/data/rows.csv", [["id", "name"], ["1", "a,b"]]);
     var r2 = check ftpClient->getText("/data/rows.csv");
-    io:println(r2); // @output id,name
+    io:println(unixLines(r2)); // @output id,name
     // @output 1,"a,b"
     // @output
 

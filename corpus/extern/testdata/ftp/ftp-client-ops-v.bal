@@ -49,6 +49,18 @@ type OpenItem record {
     int id;
 };
 
+// CSV rows end with the platform line separator, as in jBallerina; drop the carriage returns
+// Windows adds so the expected output is the same everywhere.
+function unixLines(string text) returns string {
+    string result = text;
+    int? i = result.indexOf("\r");
+    while i is int {
+        result = result.substring(0, i) + result.substring(i + 1);
+        i = result.indexOf("\r");
+    }
+    return result;
+}
+
 public function main() returns error? {
     ftp:Client c = check new ({
         host: "127.0.0.1",
@@ -103,7 +115,7 @@ public function main() returns error? {
     check c->putCsv("/rows.csv", rows);
     check c->putCsv("/rows.csv", rows, ftp:APPEND);
     string csv = check c->getText("/rows.csv");
-    io:print(csv); // @output name,qty,note
+    io:print(unixLines(csv)); // @output name,qty,note
     // @output a,1,"x,y"
     // @output "b""c",2,
     // @output a,1,"x,y"
