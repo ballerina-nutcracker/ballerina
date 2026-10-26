@@ -41,12 +41,12 @@ type (
 )
 
 func (b *benchmark) run() error {
-	if b.mode == timeMode {
-		if _, err := exec.LookPath("hyperfine"); err != nil {
-			return fmt.Errorf("hyperfine is required but was not found in PATH; please install it and retry: %w", err)
+	if b.mode == memoryMode {
+		if err := requireMemoryTool(); err != nil {
+			return err
 		}
-	} else if err := requireMemoryTool(); err != nil {
-		return err
+	} else if _, err := exec.LookPath("hyperfine"); err != nil {
+		return fmt.Errorf("hyperfine is required but was not found in PATH; please install it and retry: %w", err)
 	}
 
 	pruneWorktrees()
@@ -68,6 +68,10 @@ func (b *benchmark) run() error {
 	}
 	c.add(func() { _ = os.RemoveAll(workRoot) })
 	b.workRoot = workRoot
+
+	if b.mode == scalingMode {
+		return b.runScaling(&c, target)
+	}
 
 	baseWorktree, err := b.checkoutWorktree(b.baseRef)
 	if err != nil {
@@ -194,10 +198,20 @@ func (b *benchmark) hyperfineFlags() []string {
 }
 
 func (b *benchmark) runHyperfine(cmds []string, jsonExportPath string) (*benchExport, error) {
+	return b.runHyperfineWithEnv(cmds, jsonExportPath, nil)
+}
+
+// runHyperfineWithEnv appends env to the inherited environment of hyperfine,
+// and so of every command it benchmarks.
+func (b *benchmark) runHyperfineWithEnv(cmds []string, jsonExportPath string, env []string) (*benchExport, error) {
 	args := b.hyperfineFlags()
 	args = append(args, "--export-json", jsonExportPath)
 	args = append(args, cmds...)
-	if err := runCmd(".", "hyperfine", args...); err != nil {
+	c := exec.Command("hyperfine", args...)
+	c.Env = append(os.Environ(), env...)
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+	if err := c.Run(); err != nil {
 		return nil, fmt.Errorf("failed to run hyperfine: %w", err)
 	}
 	return parseHyperfineExport(jsonExportPath)

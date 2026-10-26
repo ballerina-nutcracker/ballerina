@@ -38,6 +38,7 @@ const (
 	integrationSinglePath  = "./testdata/single-file/1-v.bal"
 	integrationDirPath     = "./testdata/directory"
 	integrationProjectPath = "./testdata/project"
+	integrationScalingPath = "./testdata/scaling"
 	benchmarkTool          = "bal-benchmark-tool"
 	integrationCoverDirEnv = "CODECOV_INTEGRATION_COVERDIR"
 )
@@ -153,6 +154,41 @@ func TestBenchmarkBinaryRunExportsHTMLForPackageTarget(t *testing.T) {
 	text := string(htmlReport)
 	if !strings.Contains(text, target.label) {
 		t.Fatalf("expected report to include package label %q", target.label)
+	}
+}
+
+func TestBenchmarkBinaryScalingModeFailsOnlyQuadraticFixture(t *testing.T) {
+	skipUnlessBenchmarkIntegration(t)
+
+	bin := buildBenchmarkBinary(t)
+	summaryPath := filepath.Join(t.TempDir(), "summary.md")
+	result := runBenchmarkBinary(t, bin,
+		"--mode", "scaling",
+		"--warmup", "0",
+		"--runs", "1",
+		"--export-summary", summaryPath,
+		headRef, integrationScalingPath,
+	)
+	var exitErr *exec.ExitError
+	if !errors.As(result.err, &exitErr) || exitErr.ExitCode() != scalingExceededExitCode {
+		t.Fatalf("expected exit code %d, got %v\nstdout:\n%s\nstderr:\n%s", scalingExceededExitCode, result.err, result.stdout, result.stderr)
+	}
+	summary, err := os.ReadFile(summaryPath)
+	if err != nil {
+		t.Fatalf("expected summary at %q: %v", summaryPath, err)
+	}
+	for _, want := range []string{"linear-v.bal", "quadratic-v.bal", "**1 of 2 case(s) scale super-linearly.**"} {
+		if !strings.Contains(string(summary), want) {
+			t.Fatalf("summary does not contain %q:\n%s", want, summary)
+		}
+	}
+	for _, line := range strings.Split(string(summary), "\n") {
+		if strings.Contains(line, "linear-v.bal") && !strings.HasSuffix(line, "| pass |") && !strings.Contains(line, "quadratic") {
+			t.Fatalf("linear fixture did not pass: %s", line)
+		}
+		if strings.Contains(line, "quadratic-v.bal") && !strings.HasSuffix(line, "| **fail** |") {
+			t.Fatalf("quadratic fixture did not fail: %s", line)
+		}
 	}
 }
 
@@ -598,7 +634,7 @@ func skipUnlessBenchmarkIntegration(t *testing.T) {
 	if err := exec.Command("git", "rev-parse", "--verify", headRef).Run(); err != nil {
 		t.Skipf("skipping benchmark integration test because head ref %q is unavailable: %v", headRef, err)
 	}
-	for _, p := range append(integrationTargets, integrationDirPath, integrationProjectPath) {
+	for _, p := range append(integrationTargets, integrationDirPath, integrationProjectPath, integrationScalingPath) {
 		if _, err := os.Stat(p); err != nil {
 			t.Fatalf("benchmark target %q is unavailable: %v", p, err)
 		}

@@ -17,13 +17,21 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 )
 
+// scalingExceededExitCode separates a failing scaling verdict from a tool or
+// workload failure, which exits 1.
+const scalingExceededExitCode = 2
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		if errors.Is(err, errScalingExceeded) {
+			os.Exit(scalingExceededExitCode)
+		}
 		os.Exit(1)
 	}
 }
