@@ -8159,6 +8159,9 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 		if defn := ty.Definition; defn != nil {
 			return defn.GetSemType(t.typeEnv()), chain, true
 		}
+		d := semtypes.NewStreamDefinition()
+		setTypeDefinition(t, &ty.Definition, &d)
+		closeDefinition = func() { defineNeverStream(t, &d) }
 		valueTy, chain, ok := resolveTypeDataPair(t, chain, &ty.ValueType, depth+1)
 		if !ok {
 			return semtypes.SemType{}, chain, false
@@ -8167,6 +8170,8 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 		if !ok {
 			return semtypes.SemType{}, chain, false
 		}
+		streamTy := d.Define(t.typeEnv(), valueTy, completionTy)
+		closeDefinition = nil
 		if !semtypes.IsSubtype(t.typeContext(), completionTy, semtypes.Union(semtypes.Error, semtypes.Nil)) {
 			t.semanticError(
 				"stream completion type must be a subtype of error?",
@@ -8174,9 +8179,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			)
 			return semtypes.SemType{}, chain, false
 		}
-		d := semtypes.NewStreamDefinition()
-		setTypeDefinition(t, &ty.Definition, &d)
-		return d.Define(t.typeEnv(), valueTy, completionTy), chain, true
+		return streamTy, chain, true
 	case *ast.BLangTupleTypeNode:
 		defn := ty.Definition
 		if defn == nil {
@@ -8372,6 +8375,10 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 
 func defineNeverList(t typeResolver, d *semtypes.ListDefinition) {
 	d.Define(t.typeEnv(), nil, semtypes.ListRest(semtypes.Never))
+}
+
+func defineNeverStream(t typeResolver, d *semtypes.StreamDefinition) {
+	d.Define(t.typeEnv(), semtypes.Never, semtypes.Never)
 }
 
 func defineNeverMapping(t typeResolver, d *semtypes.MappingDefinition) {
