@@ -1,0 +1,33 @@
+-- stdout --
+secret data
+secret data
+ConnectionError
+true
+true
+ConnectionError
+connected
+connected
+ConnectionError
+ConnectionError
+No preferred auth method is specified in the SFTP client configurations
+connected
+ConnectionError
+ConnectionError
+Error
+true
+one+two
+["c.txt","sub"]
+sftp 7 true
+[111,110,101,43,116,119,111]
+true
+false
+dir true -
+seven.txt false 7
+todir true -
+tofile false 7
+secret data
+secret data
+ConnectionError
+ConnectionError
+true
+-- stderr --
