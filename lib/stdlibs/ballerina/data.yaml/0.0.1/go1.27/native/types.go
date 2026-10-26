@@ -349,34 +349,30 @@ func (s *rowShape) remainingFields() map[string]*recordField {
 	return remaining
 }
 
-// rowBuilder accumulates one row value.
+// rowBuilder accumulates one row value. positions holds the index of each key within declared or rest.
 type rowBuilder struct {
-	shape    *rowShape
-	declared []values.MapEntry
-	rest     []values.MapEntry
-	items    []values.BalValue
+	shape     *rowShape
+	declared  []values.MapEntry
+	rest      []values.MapEntry
+	positions map[string]int
+	items     []values.BalValue
 }
 
 func newRowBuilder(shape *rowShape) *rowBuilder {
-	return &rowBuilder{shape: shape}
+	return &rowBuilder{shape: shape, positions: make(map[string]int)}
 }
 
 func (b *rowBuilder) put(key string, v values.BalValue) {
+	entries := &b.rest
 	if _, declared := b.shape.fields[key]; declared {
-		b.declared = upsert(b.declared, key, v)
+		entries = &b.declared
+	}
+	if i, ok := b.positions[key]; ok {
+		(*entries)[i].Value = v
 		return
 	}
-	b.rest = upsert(b.rest, key, v)
-}
-
-func upsert(entries []values.MapEntry, key string, v values.BalValue) []values.MapEntry {
-	for i := range entries {
-		if entries[i].Key == key {
-			entries[i].Value = v
-			return entries
-		}
-	}
-	return append(entries, values.MapEntry{Key: key, Value: v})
+	b.positions[key] = len(*entries)
+	*entries = append(*entries, values.MapEntry{Key: key, Value: v})
 }
 
 func (b *rowBuilder) set(index int, v values.BalValue) {
