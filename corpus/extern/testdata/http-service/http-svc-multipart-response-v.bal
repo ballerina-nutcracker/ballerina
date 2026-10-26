@@ -61,6 +61,10 @@ public function testMain() returns error? {
     mime:Entity[] parts = check r.getBodyParts();
     io:println(parts.length()); // @output 2
     io:println(check parts[0].getText()); // @output server part
+    parts[0].setText("edited part");
+    mime:Entity[] again = check r.getBodyParts();
+    io:println(parts === again); // @output true
+    io:println(check again[0].getText()); // @output edited part
     map<json> j = <map<json>>check parts[1].getJson();
     io:println(j["ok"]); // @output true
 

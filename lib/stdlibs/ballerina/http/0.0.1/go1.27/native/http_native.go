@@ -1072,18 +1072,20 @@ func initHttpModule(rt *runtime.Runtime) {
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			bodyVal, _ := self.Get("body")
-			var raw []byte
-			if holder, ok := bodyVal.(*responseBodyHolder); ok {
-				if holder.parts != nil {
-					return holder.parts, nil
-				}
-				var err error
-				raw, err = holder.materialize()
-				if err != nil {
-					return bodyPartsError("response", err), nil
-				}
+			holder, ok := bodyVal.(*responseBodyHolder)
+			if !ok {
+				return getMultipartBodyParts(ctx, nil, responseContentType(self), "response"), nil
 			}
-			return getMultipartBodyParts(ctx, raw, responseContentType(self), "response"), nil
+			if holder.parts != nil {
+				return holder.parts, nil
+			}
+			raw, err := holder.materialize()
+			if err != nil {
+				return bodyPartsError("response", err), nil
+			}
+			result := getMultipartBodyParts(ctx, raw, responseContentType(self), "response")
+			holder.cacheDecodedParts(raw, result)
+			return result, nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Response.setHeader",
@@ -1369,18 +1371,20 @@ func initHttpModule(rt *runtime.Runtime) {
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			bodyVal, _ := self.Get("$body")
-			holder, _ := bodyVal.(*requestBodyHolder)
-			var raw []byte
-			if holder != nil {
-				if holder.parts != nil {
-					return holder.parts, nil
-				}
-				raw = holder.materialize()
-				if holder.readErr != nil {
-					return bodyPartsError("request", holder.readErr), nil
-				}
+			holder, ok := bodyVal.(*requestBodyHolder)
+			if !ok {
+				return getMultipartBodyParts(ctx, nil, requestContentType(ctx.TypeCtx(), self), "request"), nil
 			}
-			return getMultipartBodyParts(ctx, raw, requestContentType(ctx.TypeCtx(), self), "request"), nil
+			if holder.parts != nil {
+				return holder.parts, nil
+			}
+			raw := holder.materialize()
+			if holder.readErr != nil {
+				return bodyPartsError("request", holder.readErr), nil
+			}
+			result := getMultipartBodyParts(ctx, raw, requestContentType(ctx.TypeCtx(), self), "request")
+			holder.cacheDecodedParts(raw, result)
+			return result, nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Request.setHeader",
@@ -1903,11 +1907,19 @@ func toJSONBytes(v values.BalValue) ([]byte, error) {
 	return values.ToJSONByteArray(v)
 }
 
-// bodyPartsBase keeps the parts given to setBodyParts. As in jBallerina, getBodyParts returns
-// them as-is and they are serialized only when the message is sent, against the Content-Type
-// it is sent with.
+// bodyPartsBase keeps the parts given to setBodyParts or decoded by getBodyParts. As in
+// jBallerina, getBodyParts returns them as-is and they are serialized only when the message is
+// sent, against the Content-Type it is sent with.
 type bodyPartsBase struct {
 	parts *values.List
+}
+
+// cacheDecodedParts keeps parts decoded from a non-empty body, as jBallerina does, so edits to
+// them are seen by later getBodyParts calls and sent by forward. An empty body stays as it is.
+func (b *bodyPartsBase) cacheDecodedParts(raw []byte, result values.BalValue) {
+	if parts, ok := result.(*values.List); ok && len(raw) > 0 {
+		b.parts = parts
+	}
 }
 
 // withBoundary adds boundary to a multipart contentType that does not carry one yet.
