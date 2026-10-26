@@ -1,4 +1,8 @@
 -- stdout --
 200
 {"count":2,"disposition":"form-data;name=\"field1\"","text":"hello world","x":42}
+201
+true
+true
+true
 -- stderr --
