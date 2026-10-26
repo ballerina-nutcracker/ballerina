@@ -1,0 +1,83 @@
+name: PR Benchmark Scaling
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmark-scaling-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Scaling check on PR head
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.27.1"
+
+      - name: Install hyperfine
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y hyperfine
+
+      - name: Build benchmark tool
+        working-directory: compiler-tools/benchmark
+        run: go build -o "$GITHUB_WORKSPACE/bin/benchmark" .
+
+      - name: Run scaling benchmark
+        run: |
+          mkdir -p benchmark-output
+          status=0
+          "$GITHUB_WORKSPACE/bin/benchmark" \
+            --mode scaling \
+            --runs 3 \
+            --warmup 1 \
+            --export-summary benchmark-output/summary.md \
+            HEAD \
+            corpus/bench/11-bench > benchmark-output/run.log 2>&1 || status=$?
+          echo "$status" > benchmark-output/status
+
+      - name: Publish summary
+        if: ${{ always() }}
+        run: |
+          if [ -f benchmark-output/summary.md ]; then
+            cat benchmark-output/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload benchmark artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-scaling-pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            benchmark-output/summary.md
+            benchmark-output/run.log
+          if-no-files-found: error
+
+      - name: Gate on super-linear scaling
+        run: |
+          status=$(cat benchmark-output/status)
+          if [ "$status" = "2" ]; then
+            echo "::error::A workload in corpus/bench/11-bench scales super-linearly — see the job summary."
+            exit 1
+          fi
+          if [ "$status" != "0" ] || [ ! -f benchmark-output/summary.md ]; then
+            echo "::error::Scaling benchmark failed to run (exit $status) — see the run log:"
+            cat benchmark-output/run.log || true
+            exit 1
+          fi
+          echo "Every workload scales within the configured ratio."

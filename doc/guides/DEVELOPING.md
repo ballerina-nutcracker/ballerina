@@ -112,7 +112,7 @@ These are the packages that register the `-update` flag for refreshing golden ou
 go test -run='^$' -bench=. -benchtime=1x -timeout 2h ./corpus
 ```
 
-Pull requests get automatic time and memory benchmark comparisons against `main`.
+Pull requests get automatic time and memory benchmark comparisons against `main`, and a scaling check that fails when a workload in `corpus/bench/11-bench/` slows down super-linearly as its input grows. See [`compiler-tools/benchmark/README.md`](../../compiler-tools/benchmark/README.md#scaling-mode) for the scaling mode and how to add a workload.
 
 ### WASM
 
