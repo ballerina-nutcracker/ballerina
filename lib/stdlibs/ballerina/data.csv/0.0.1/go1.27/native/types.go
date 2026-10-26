@@ -85,9 +85,8 @@ var scalarBasicTypes = []struct {
 	{semtypes.String, kindString},
 }
 
-// typer answers the type questions the jBallerina implementation answers through its runtime type API.
-type typer struct {
-	tc            semtypes.Context
+// csvTypes are the fixed types the conversions check against, defined once per runtime.
+type csvTypes struct {
 	jsonTy        semtypes.SemType
 	anydataTy     semtypes.SemType
 	stringMapTy   semtypes.SemType
@@ -98,14 +97,13 @@ type typer struct {
 	anydataList   *semtypes.ListAtomicType
 }
 
-func newTyper(tc semtypes.Context) *typer {
-	env := tc.Env()
+func newCsvTypes(env semtypes.Env) *csvTypes {
+	tc := semtypes.ContextFrom(env)
 	stringMapTy := defineMap(env, nil, semtypes.String)
 	stringListTy := defineArray(env, semtypes.String)
 	anydataTy := semtypes.CreateAnydata(tc)
 	anydataListTy := defineArray(env, anydataTy)
-	return &typer{
-		tc:            tc,
+	return &csvTypes{
 		jsonTy:        semtypes.CreateJSON(tc),
 		anydataTy:     anydataTy,
 		stringMapTy:   stringMapTy,
@@ -115,6 +113,16 @@ func newTyper(tc semtypes.Context) *typer {
 		anydataListTy: anydataListTy,
 		anydataList:   semtypes.ToListAtomicType(env, anydataListTy),
 	}
+}
+
+// typer answers the type questions the jBallerina implementation answers through its runtime type API.
+type typer struct {
+	*csvTypes
+	tc semtypes.Context
+}
+
+func newTyper(tc semtypes.Context, types *csvTypes) *typer {
+	return &typer{csvTypes: types, tc: tc}
 }
 
 func (t *typer) classify(ty semtypes.SemType) typeInfo {
