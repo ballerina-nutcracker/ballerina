@@ -453,7 +453,7 @@ func (p *parser) parseBlockMapping() (*node, error) {
 		return nil, err
 	}
 	m := &node{kind: nodeMapping}
-	keys := make(map[string]bool)
+	keys := make(map[string]int)
 	for {
 		tok, err := p.peek()
 		if err != nil {
@@ -515,25 +515,22 @@ func (p *parser) parseBlockMappingPart() (*node, error) {
 	return p.parseNode(true, true)
 }
 
-// addPair adds a key-value pair to a mapping. Keys must be scalars; a repeated key is an error unless
-// allowMapEntryRedefinition is set, in which case the last value wins.
-func (p *parser) addPair(m *node, keys map[string]bool, key, value *node) error {
+// addPair adds a key-value pair to a mapping; keys holds the index of each key's pair. Keys must be
+// scalars; a repeated key is an error unless allowMapEntryRedefinition is set, in which case the last
+// value replaces the earlier one in the key's first position, as in jBallerina.
+func (p *parser) addPair(m *node, keys map[string]int, key, value *node) error {
 	if key.kind != nodeScalar {
 		return p.s.errorHere("expected a key for the block mapping")
 	}
 	name := keyString(key)
-	if keys[name] {
+	if i, ok := keys[name]; ok {
 		if !p.options.allowMapEntryRedefinition {
 			return p.s.errorHere("cannot have duplicate map entries for '${key.toString()}")
 		}
-		for i := range m.pairs {
-			if keyString(m.pairs[i].key) == name {
-				m.pairs = append(m.pairs[:i], m.pairs[i+1:]...)
-				break
-			}
-		}
+		m.pairs[i].value = value
+		return nil
 	}
-	keys[name] = true
+	keys[name] = len(m.pairs)
 	m.pairs = append(m.pairs, pair{key: key, value: value})
 	return nil
 }
@@ -601,7 +598,7 @@ func (p *parser) parseFlowPair() (*node, error) {
 		return nil, err
 	}
 	m := &node{kind: nodeMapping}
-	if err := p.addPair(m, map[string]bool{}, key, value); err != nil {
+	if err := p.addPair(m, map[string]int{}, key, value); err != nil {
 		return nil, err
 	}
 	return m, nil
@@ -658,7 +655,7 @@ func (p *parser) parseFlowMapping() (*node, error) {
 		return nil, err
 	}
 	m := &node{kind: nodeMapping}
-	keys := make(map[string]bool)
+	keys := make(map[string]int)
 	first := true
 	for {
 		tok, err := p.peek()
