@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to potentially initialized final field 'value'
+  --> final-field-init-assign-then-if-e.bal:24:13
+   |
+24 |             self.value = 2; // @error possibly assigned already
+   |             ^^^^^^^^^^

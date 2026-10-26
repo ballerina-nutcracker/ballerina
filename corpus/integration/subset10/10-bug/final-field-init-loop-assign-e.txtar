@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to potentially initialized final field 'value'
+  --> final-field-init-loop-assign-e.bal:23:13
+   |
+23 |             self.value = i; // @error assigned again on the next iteration
+   |             ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: field 'value' is not initialized
+  --> final-field-init-loop-assign-e.bal:19:5
+   |
+19 |     final int value; // @error not initialized when the loop body never runs
+   |     ^^^^^^^^^^^^^^^^
