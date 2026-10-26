@@ -44,6 +44,20 @@ service /multiparts on new http:Listener(19500) {
         return resp;
     }
 
+    resource function post count(http:Request req) returns string|error {
+        mime:Entity[] parts = check req.getBodyParts();
+        return parts.length().toString();
+    }
+
+    resource function post edit(http:Request req) returns http:Response|error {
+        mime:Entity[] parts = check req.getBodyParts();
+        parts[0].setText("edited part");
+        mime:Entity[] again = check req.getBodyParts();
+        http:Response resp = check upstream->forward("/multiparts/echo", req);
+        resp.setHeader("x-same-parts", (parts === again).toString());
+        return resp;
+    }
+
     resource function post echo(http:Request req) returns string|error {
         mime:Entity[] parts = check req.getBodyParts();
         return string `${req.getContentType()} count=${parts.length()} 1:${check parts[0].getText()}`;
@@ -74,4 +88,21 @@ public function testMain() returns error? {
     io:println(echoed.includes(" count=1 1:forwarded part")); // @output true
     string relayedContentType = check r.getHeader("x-relayed-content-type");
     io:println(echoed.indexOf(relayedContentType + " ") == 0); // @output true
+
+    http:Request noPart = new;
+    noPart.setTextPayload("garbage", "multipart/form-data; boundary=zzz");
+    r = check c->post("/multiparts/count", noPart);
+    io:println(r.statusCode); // @output 500
+
+    http:Request emptyBody = new;
+    emptyBody.setTextPayload("", "multipart/form-data; boundary=zzz");
+    r = check c->post("/multiparts/count", emptyBody);
+    io:println(check r.getTextPayload()); // @output 0
+
+    mime:Entity secondPart = new;
+    secondPart.setText("second part");
+    r = check c->post("/multiparts/edit", [textPart, secondPart]);
+    io:println(check r.getHeader("x-same-parts")); // @output true
+    string edited = check r.getTextPayload();
+    io:println(edited.includes(" count=2 1:edited part")); // @output true
 }
