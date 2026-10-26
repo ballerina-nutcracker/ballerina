@@ -185,7 +185,7 @@ func TestFileURIRejectsUnsupportedPaths(t *testing.T) {
 
 func TestDocumentURIComparableAsMapKey(t *testing.T) {
 	t.Parallel()
-	u1 := tempFileURI(t, "main.bal")
+	u1 := tempFileURI(t)
 	u2, err := NewFileURI(u1.String())
 	if err != nil {
 		t.Fatal(err)

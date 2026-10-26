@@ -207,10 +207,7 @@ func (s *ProjectService) Apply(ctx context.Context, change DocumentChange) (Snap
 	if err := ctx.Err(); err != nil {
 		return snap, fmt.Errorf("workspace: cancelled before publication: %w", err)
 	}
-	gen, err := s.publish(change, sourceRoot)
-	if err != nil {
-		return snap, err
-	}
+	gen := s.publish(change, sourceRoot)
 	snap.Generation = gen
 
 	s.mu.Lock()
@@ -229,26 +226,26 @@ func (s *ProjectService) Apply(ctx context.Context, change DocumentChange) (Snap
 // publish advances an existing project's generation for content-only edits.
 // Initial loads, missing documents, and changed import sets reload the project
 // and publish lifecycle events.
-func (s *ProjectService) publish(change DocumentChange, sourceRoot string) (uint64, error) {
+func (s *ProjectService) publish(change DocumentChange, sourceRoot string) uint64 {
 	s.mu.Lock()
 	entry, ok := s.index.get(sourceRoot)
 	if !ok || entry.project == nil {
 		s.mu.Unlock()
 		gen := s.reloadAt(sourceRoot, change.URI)
 		s.publishLifecycle(sourceRoot, gen)
-		return gen, nil
+		return gen
 	}
 	if s.documentInCurrentPackage(entry.project, change) && !s.importSetChanged(entry.project, change) {
-		gen, _ := s.index.advance(sourceRoot)
+		gen := s.index.advance(sourceRoot)
 		s.mu.Unlock()
 		s.publishUpdated(sourceRoot, gen)
-		return gen, nil
+		return gen
 	}
 	s.mu.Unlock()
 
 	gen := s.reloadAt(sourceRoot, change.URI)
 	s.publishLifecycle(sourceRoot, gen)
-	return gen, nil
+	return gen
 }
 
 func (s *ProjectService) documentInCurrentPackage(project projects.Project, change DocumentChange) bool {

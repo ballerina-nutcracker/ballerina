@@ -29,9 +29,9 @@ func newTestProjectService() *ProjectService {
 	return New(os.DirFS, event.New())
 }
 
-func tempFileURI(t *testing.T, name string) DocumentURI {
+func tempFileURI(t *testing.T) DocumentURI {
 	t.Helper()
-	u, err := FileURIFromPath(filepath.Join(t.TempDir(), name))
+	u, err := FileURIFromPath(filepath.Join(t.TempDir(), "main.bal"))
 	if err != nil {
 		t.Fatalf("FileURIFromPath: %v", err)
 	}
@@ -41,7 +41,7 @@ func tempFileURI(t *testing.T, name string) DocumentURI {
 func TestApplyOpenStoresDocument(t *testing.T) {
 	t.Parallel()
 	svc := newTestProjectService()
-	u := tempFileURI(t, "main.bal")
+	u := tempFileURI(t)
 	snap, err := svc.Apply(context.Background(), DocumentChange{
 		Kind:       ChangeOpen,
 		URI:        u,
@@ -64,7 +64,7 @@ func TestApplyOpenStoresDocument(t *testing.T) {
 func TestApplyUpdateChecksVersionMonotonicity(t *testing.T) {
 	t.Parallel()
 	svc := newTestProjectService()
-	u := tempFileURI(t, "main.bal")
+	u := tempFileURI(t)
 	if _, err := svc.Apply(context.Background(), DocumentChange{
 		Kind: ChangeOpen, URI: u, Text: "current", Version: 2, LanguageID: "ballerina",
 	}); err != nil {
@@ -93,7 +93,7 @@ func TestApplyUpdateChecksVersionMonotonicity(t *testing.T) {
 func TestApplyUpdateRejectsUnknownDocument(t *testing.T) {
 	t.Parallel()
 	svc := newTestProjectService()
-	u := tempFileURI(t, "main.bal")
+	u := tempFileURI(t)
 	if _, err := svc.Apply(context.Background(), DocumentChange{
 		Kind: ChangeUpdate, URI: u, Text: "x", Version: 1,
 	}); err == nil {
@@ -104,7 +104,7 @@ func TestApplyUpdateRejectsUnknownDocument(t *testing.T) {
 func TestApplyCloseRemovesDocument(t *testing.T) {
 	t.Parallel()
 	svc := newTestProjectService()
-	u := tempFileURI(t, "main.bal")
+	u := tempFileURI(t)
 	if _, err := svc.Apply(context.Background(), DocumentChange{
 		Kind: ChangeOpen, URI: u, Text: "abc", Version: 1, LanguageID: "ballerina",
 	}); err != nil {
@@ -123,7 +123,7 @@ func TestApplyCloseRemovesDocument(t *testing.T) {
 func TestApplyCloseRejectsUnknownDocument(t *testing.T) {
 	t.Parallel()
 	svc := newTestProjectService()
-	u := tempFileURI(t, "main.bal")
+	u := tempFileURI(t)
 	if _, err := svc.Apply(context.Background(), DocumentChange{
 		Kind: ChangeClose, URI: u,
 	}); err == nil {
@@ -134,7 +134,7 @@ func TestApplyCloseRejectsUnknownDocument(t *testing.T) {
 func TestApplyClosePreservesLanguageID(t *testing.T) {
 	t.Parallel()
 	svc := newTestProjectService()
-	u := tempFileURI(t, "main.bal")
+	u := tempFileURI(t)
 	if _, err := svc.Apply(context.Background(), DocumentChange{
 		Kind: ChangeOpen, URI: u, Text: "abc", Version: 1, LanguageID: "ballerina",
 	}); err != nil {

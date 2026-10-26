@@ -99,14 +99,14 @@ func (i *projectIndex) putExisting(entry *indexEntry, bus *event.Bus) uint64 {
 	return gen
 }
 
-func (i *projectIndex) advance(root string) (uint64, bool) {
+func (i *projectIndex) advance(root string) uint64 {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	entry, ok := i.entries[root]
 	if !ok {
-		return 0, false
+		return 0
 	}
-	return i.advanceLocked(entry), true
+	return i.advanceLocked(entry)
 }
 
 func (i *projectIndex) advanceLocked(entry *indexEntry) uint64 {
