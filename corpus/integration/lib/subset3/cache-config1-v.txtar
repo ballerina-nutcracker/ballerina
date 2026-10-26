@@ -15,5 +15,4 @@ Validation failed for '$.capacity:minValue','$.cleanupInterval:minValueExclusive
 Validation failed for '$.capacity:minValue','$.cleanupInterval:minValueExclusive','$.defaultMaxAge:minValue','$.evictionFactor:maxValue' constraint(s).
 5 LRU
 true
-true
 -- stderr --

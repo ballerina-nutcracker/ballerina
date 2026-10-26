@@ -58,11 +58,25 @@ public function main() {
     cache:Cache fromRecord = new (config);
     io:println(fromRecord.capacity(), " ", cache:LRU); // @output 5 LRU
 
-    // A cleanup interval this short puts the first run's start time in the past by the time it is scheduled.
+    // A sub-millisecond cleanup interval can never be scheduled. Whether the start time is already in the past or the
+    // interval truncates to zero milliseconds depends on whether the wall clock ticked between the two clock reads.
     decimal interval = 0.000001;
     cache:Cache|error tooShort = trap new cache:Cache(cleanupInterval = interval);
     if tooShort is cache:Error {
-        io:println(tooShort.message().indexOf("Failed to schedule the cleanup task: Invalid time: ") == 0); // @output true
-        io:println(tooShort.message().includes(". Scheduled time should be greater than the current time")); // @output true
+        io:println(isSubMillisecondScheduleError(tooShort.message())); // @output true
+    } else {
+        io:println("unexpected: ", tooShort is error ? tooShort.message() : "scheduled");
     }
+}
+
+function isSubMillisecondScheduleError(string message) returns boolean {
+    string prefix = "Failed to schedule the cleanup task: ";
+    if message == prefix + "Repeat Interval cannot be zero." {
+        return true;
+    }
+    string pastStartSuffix = ". Scheduled time should be greater than the current time";
+    string pastStartPrefix = prefix + "Invalid time: ";
+    int suffixStart = message.length() - pastStartSuffix.length();
+    return suffixStart > pastStartPrefix.length() && message.indexOf(pastStartPrefix) == 0
+        && message.substring(suffixStart) == pastStartSuffix;
 }
