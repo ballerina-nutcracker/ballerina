@@ -78,7 +78,7 @@ Support Levels:
 
 ### Notable Behavioural Changes
 
-- **A `byte[]` multipart body is decoded.** jBallerina's `getBodyParts()` decodes only a byte-channel body (an inbound HTTP body or `setFileAsEntityBody`) and returns an empty `Entity[]` for a `setByteArray` body; the Go-native version decodes a `byte[]` body too, and reports a missing boundary as a `ParserError`.
+- **A `byte[]` multipart body is decoded.** jBallerina's `getBodyParts()` decodes only a byte-channel body (an inbound HTTP body or `setFileAsEntityBody`) and returns an empty `Entity[]` for a `setByteArray` body; the Go-native version decodes a `byte[]` body too, and reports a missing boundary, or a non-empty body holding no part, as a `ParserError`.
 - **Invalid content type messages are not wrapped.** jBallerina's `getMediaType()` puts the string form of an inner error into the message, e.g. `error InvalidContentTypeError ("Unable to find a sub type.")`; the Go-native version returns the javax.activation parse message itself, e.g. `Unable to find a sub type.`.
 - **Content disposition parameter names are case-insensitive.** jBallerina only recognises lower-case `name` and `filename`, so `FORM-DATA; NAME="n"; FileName="f"` leaves both quoted in `parameters`, and `toString()` throws a Java `NullPointerException` for some unquoted values or values containing `;`; the Go-native version matches `name` and `filename` case-insensitively (as RFC 2183 specifies), unquotes them into the `name` and `fileName` fields, and never fails in `toString()`.
 - **A scalar JSON body can be read with `getJson()`.** jBallerina fails with a `ParserError` wrapping a Java `ClassCastException` when the body is a JSON scalar such as `12`; the Go-native version returns the scalar value.

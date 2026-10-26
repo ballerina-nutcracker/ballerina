@@ -34,5 +34,19 @@ public function main() returns error? {
     if plainResResult is error {
         io:println(plainResResult.message()); // @output Error occurred while retrieving body parts from the response: Entity body is not a type of composite media type. Received content-type : text/plain
     }
+
+    http:Request noPartReq = new;
+    noPartReq.setTextPayload("garbage", "multipart/form-data; boundary=zzz");
+    mime:Entity[]|error noPartReqResult = noPartReq.getBodyParts();
+    if noPartReqResult is error {
+        io:println(noPartReqResult.message()); // @output Error occurred while retrieving body parts from the request
+    }
+
+    http:Response noPartRes = new;
+    noPartRes.setBinaryPayload("garbage".toBytes(), "multipart/form-data; boundary=zzz");
+    mime:Entity[]|error noPartResResult = noPartRes.getBodyParts();
+    if noPartResResult is error {
+        io:println(noPartResResult.message()); // @output Error occurred while retrieving body parts from the response: Error occurred while extracting body parts from entity: Missing start boundary
+    }
     return;
 }
